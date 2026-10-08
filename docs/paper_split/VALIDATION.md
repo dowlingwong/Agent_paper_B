@@ -86,34 +86,53 @@ Local CPU only; all live studies PLANNED.
 ## 8 October — standalone repository verification
 
 Ran in a fresh clone of this repository (`git clone ~/Documents/agent_paper_b`)
-at commit `907354b` (the review-correction commit), with a Python 3.13.15
-virtual environment outside both repositories built from `requirements.lock`
-(adding `hypothesis==6.112.1`, `attrs==26.1.0`, `sortedcontainers==2.4.0`,
-`scikit-learn==1.5.2`, `scipy==1.18.1`). The reference is a `git archive` export
-of the source at `S = 4154f153` under the same interpreter. The review record is
-committed immediately after this file.
+at commit `d5c63bd` (after the second AI-assisted review corrections), with a
+Python 3.13.15 virtual environment outside both repositories built from
+`requirements.lock` (adding `hypothesis==6.112.1`, `attrs==26.1.0`,
+`sortedcontainers==2.4.0`, `scikit-learn==1.5.2`, `scipy==1.18.1`). The second
+AI-assisted review also ran the checks on Python 3.13.16. The reference is a
+`git archive` export of the source at `S = 4154f153` under the same interpreter.
+The review records are committed after this file.
 
 | Executed check | Result |
 |---|---|
 | `unittest discover -s tests/control -p 'test_*.py'` (new clone) | **207 PASS** |
 | same command on the S export | **207 PASS** |
 | `unittest discover -s tests/release -p 'test_*.py'` | 6 PASS |
-| `unittest discover -s tests/standalone -p 'test_*.py'` | 8 PASS; the allowlist test rejects every planted forbidden import, measurement import, dynamic literal and unknown causal_branch module |
+| `unittest discover -s tests/standalone -p 'test_*.py'` | **12 PASS**; the allowlist test rejects the planted `import causal_branch.variance_adaptive`, `from causal_branch import variance_adaptive`, `from .. import state_audit`, `import causal_branch.state_audit` in a shared module, `from causal_branch.measurement import facade`, a dynamic `importlib.import_module('causal_branch.variance_adaptive')` literal, and `import causal_branch.deepseek_portal` |
 | `experiments/paper_b/smoke_b.py --output <scratch>` | **11/11** engineering checks; output byte-identical to the S export (`smoke_summary.json`, `SMOKE_BANNER.txt`) |
-| `make smoke-b` | **11/11**; output byte-identical to S; the target removes the tracked `results/paper_b/smoke_latest` first (review M1) and the directory was restored with `git checkout --` |
+| `make smoke-b` and `make -C papers/paper_b smoke` | **11/11** each, on a clean checkout; output byte-identical to S; the targets remove the tracked `results/paper_b/smoke_latest` first and the directory was restored with `git checkout --` |
 | `launch_validator.py --contract protocols/paper_b/contract_v3.yaml --phase qualification --lane one_step --for-launch` | refuses, exit 1; stdout/stderr byte-identical to S |
 | same with `--lane sequential` | refuses, exit 1; byte-identical to S |
-| `launch_validator.py --contract protocols/paper_b/contract_v2.yaml --phase <engineering\|qualification\|pilot> --lane <one_step\|sequential> --for-launch` | refuses in all six combinations, exit 1; byte-identical to S |
-| `make release-b` | **107 files** in `release/paper_b/` |
-| `make check-release-b` | **PASS**: `manifest_matches_source_commit`, `no_cross_paper_paths`, `no_measurement_core`, `no_credentials`, `smoke_exit_zero`, `control_tests_exit_zero`; `pdf_skipped_no_latexmk` (this host has no LaTeX) |
-| `make test` | 207 + 6 + 8 PASS |
+| `launch_validator.py --contract protocols/paper_b/contract_v2.yaml --phase <all five phases> --lane <one_step\|sequential> --for-launch` | refuses in all ten combinations (engineering, qualification, pilot, main_collection, final_evaluation × two lanes), exit 1; byte-identical to S |
+| `make release-b` | **108 files** in `release/paper_b/` (adds `requirements.lock`) |
+| `make check-release-b` without latexmk, no flag | **FAIL**, exit 2: `pdf_built: false`, `pdf_skip_reason: latexmk not found` |
+| `make check-release-b ALLOW_NO_PDF=1` without latexmk | **PASS (PDF not built)**, exit 0, with the same recorded reason |
+| `make check-release-b` with a stub `latexmk` on `PATH` (no TeX on this host) | **PASS**, `pdf_built: true`; exercises the success branch. The second AI-assisted review built the real PDF (`pdf_built: true`, 302,691 B) on its host |
+| package `tests/control` with only the package's `requirements.lock` installed (fresh venv) | **207 PASS** |
+| `make test` | 207 + 6 + 12 PASS |
 | `make -C papers/paper_b anonymity-check` | **PASSED** (submission mode) |
-| `make paper-b` | PDF build blocked: `latexmk` is not installed on this host. The verify and anonymity halves are recorded separately above |
+| `make paper-b` | PDF build blocked: `latexmk` is not installed on this host. The second AI-assisted review built it (12 pp, verify clean); the verify and anonymity halves are recorded separately here |
 | `scripts/verify_vendored_pi.py` | fails exactly as at S, exit 1, JSON byte-identical: `unexplained additions to the vendored tree: packages/coding-agent/src/core/http-dispatcher.ts, .../core/sdk.ts, .../test/http-dispatcher.test.ts` |
-| Host-path scan (macOS and Linux home-directory prefixes, dataset-root and shared-storage prefixes, the author username, and credential filenames) | clean outside `third_party/pi/`. Remaining hits are upstream `third_party/pi` examples/tests only: `coding-agent/test/footer-width.test.ts`, `test/paths.test.ts`, `test/suite/regressions/6104-find-root-relativization.test.ts`, `coding-agent/CHANGELOG.md`, `coding-agent/docs/rpc.md`, `examples/extensions/doom-overlay/doom/build/doom.js`, `examples/extensions/overlay-qa-tests.ts`, `src/core/export-html/template.js`, `packages/tui/test/terminal-image.test.ts`, `test.sh`, and the two `.jsonl` fixtures. No credential files |
+| Host-path scan (macOS and Linux home-directory prefixes, macOS temp-directory prefixes, dataset-root and shared-storage prefixes, the author username, and credential filenames) | clean outside `third_party/pi/`. The 13 remaining hits are upstream `third_party/pi` examples/tests/fixtures only: `coding-agent/CHANGELOG.md`, `coding-agent/docs/rpc.md`, `examples/extensions/doom-overlay/doom/build/doom.js`, `examples/extensions/overlay-qa-tests.ts`, `src/core/export-html/template.js`, `test/fixtures/before-compaction.jsonl`, `test/fixtures/large-session.jsonl`, `test/footer-width.test.ts`, `test/paths.test.ts`, `test/session-id-readonly.test.ts`, `test/suite/regressions/6104-find-root-relativization.test.ts`, `packages/tui/test/terminal-image.test.ts`, `test.sh`. No credential files (the only matches are upstream Pi placeholder API-key strings in its own tests) |
 
 `make check-release-b` rewrote `release/check_release_b.json`; it was restored
-with `git checkout -- release/check_release_b.json` afterwards. `make paper-b`
-and `make smoke-b` are documented in [README.md](../../README.md) as rewriting
-tracked files inherited from S until the targets write elsewhere.
+with `git checkout -- release/check_release_b.json` afterwards. `make paper-b`,
+`make smoke-b` and `make check-release-b` are documented in
+[README.md](../../README.md) as rewriting tracked files inherited from S until
+the targets write elsewhere.
+
+### Dispositions of the first-round findings
+
+| ID | Disposition |
+|---|---|
+| M1 | Applied: `make smoke-b` removes the tracked `smoke_latest` first and gives 11/11. The sub-Makefile `smoke` target now does the same (R2-B8) |
+| M2 | Applied: the two RUNBOOK links are URLs into the source at S; no relative link dangles |
+| M3 | Applied; the initial rewrite of historical commands was corrected in R2-B3 |
+| m1 | Not applied: `latexmk` is absent on this host, and the rules forbid installing TeX. The build agent recorded it; the second AI-assisted review built the PDF on its host |
+| m2 | Applied: `OPEN_ITEMS.md` says `L1_BASELINE.md` is in the source repository at S |
+| m3 | Applied: the B copies begin with a two-line provenance note |
+| n1 | Applied: the unused `make_release.py` helpers are gone |
+| n2 | Not applied, recorded here: the allowlist test allows a local module stem, so `import task` passes because a local `task.py` exists. Benign today; tightening it is not worth the risk |
+
 
