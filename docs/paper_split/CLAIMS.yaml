@@ -1,6 +1,5 @@
-# Copied from the source repository at S = 4154f153, 7 October 2026; this file
-# keeps the B claim entries B-C1..B-C7 and the B prior-disclosure entry. The
-# source copy in agent-checkpoint-intervention is the historical one.
+# Copied from the source repository at S = 4154f153, 7 October 2026; this file keeps the B claim entries B-C1..B-C7 and the B prior-disclosure entry.
+# The source copy in agent-checkpoint-intervention is the historical one.
 ledger:
 - claim_id: B-C1
   paper: B

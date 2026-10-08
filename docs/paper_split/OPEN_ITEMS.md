@@ -152,8 +152,8 @@ blocks the CPU checks; the first three block the live lane.
 
 - [ ] Record the R2 fix round in STATUS and VALIDATION.
 - [ ] Pre-existing failures outside the split: 89 failing/erroring test IDs
-  (L1_BASELINE.md), and `protocols/` registration tests (F2). These do not block
-  B but are not claimed to pass.
+  (recorded in `L1_BASELINE.md` in the source repository at S), and `protocols/`
+  registration tests (F2). These do not block B but are not claimed to pass.
 
 ---
 

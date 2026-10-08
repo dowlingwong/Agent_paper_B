@@ -1,6 +1,5 @@
-# Copied from the source repository at S = 4154f153, 7 October 2026; this file
-# keeps the B-owned and SHARED inventory entries. The source copy in
-# agent-checkpoint-intervention is the historical one.
+# Copied from the source repository at S = 4154f153, 7 October 2026; this file keeps the B-owned and SHARED inventory entries.
+# The source copy in agent-checkpoint-intervention is the historical one.
 split:
   date: '2026-09-24'
   pre_split_commit: 6ebc608b

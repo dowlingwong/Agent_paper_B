@@ -50,19 +50,6 @@ PAPER_B_ALLOWLIST = [
 ]
 
 
-def _iter_files(path: Path):
-    if path.is_file():
-        yield path
-        return
-    for child in sorted(path.rglob("*")):
-        if child.is_file():
-            yield child
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
 def paper_b_member(name: str) -> bool:
     """Whether a path under a B allowlist entry belongs in B's package."""
     rel = Path(name)

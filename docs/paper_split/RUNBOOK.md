@@ -1,8 +1,7 @@
-# Paper B runbook: intervention control
-
-> Copied from the source repository at S = 4154f153, 7 October 2026; this file keeps the general rules
-> and the Paper B sections (§5–§7 as re-ordered by §11.4, §9, §10, §11.1–§11.4, §12.2, §12.2a, §12.3, §14.2, §15).
+> Copied from the source repository at S = 4154f153, 7 October 2026; this file keeps the general rules and the Paper B sections (§5–§7 as re-ordered by §11.4, §9, §10, §11.1–§11.4, §12.2, §12.2a, §12.3, §14.2, §15).
 > The source copy in agent-checkpoint-intervention is the historical one.
+
+# Paper B runbook: intervention control
 
 This is the Paper B view of the shared A/B runbook v2.4. Section 12 (B
 decisions) and §12.2a (controller design v2) govern where they differ from
@@ -27,7 +26,7 @@ manuscript again. Both old branch tips are incorporated into main. The pasted
 repair commit 1fdbfc82 remains unavailable; verify each reported repair from the
 actual tree. The open repair queue is in [STATUS.md](STATUS.md); the full
 continuation report is archived at
-[CONTINUATION_2026-09-26.md](../../archive/planning_2026-09-26/paper_split_reviews/CONTINUATION_2026-09-26.md).
+[CONTINUATION_2026-09-26.md](https://github.com/dowlingwong/agent-checkpoint-intervention/blob/4154f153/archive/planning_2026-09-26/paper_split_reviews/CONTINUATION_2026-09-26.md).
 
 This implementation round delivers local code, protocols, manuscripts, tests,
 engineering-only fixtures, A reproduction and independent release verification.
@@ -429,7 +428,7 @@ novelty argument**. They do not change the evidence rules in §§2–8.
    still holds the Round-7 exam and the certification record. §4 (P1)
    only asks for audit and repair. That is necessary, but it will not make the
    paper interesting to a reader. The work that does is in the separate
-   [PAPER_A_TMLR_RUNBOOK.md](PAPER_A_TMLR_RUNBOOK.md), and P1 now points there.
+   [PAPER_A_TMLR_RUNBOOK.md](https://github.com/dowlingwong/agent-checkpoint-intervention/blob/4154f153/docs/paper_split/PAPER_A_TMLR_RUNBOOK.md), and P1 now points there.
 2. **B's contribution is still a list of standard ingredients.** SCOPE and the
    B abstract say what is new is "the budgeted, feasibility- and harm-constrained
    allocation problem". The September 24 plan (§2.2) itself calls masks,

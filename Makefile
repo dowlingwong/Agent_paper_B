@@ -15,8 +15,11 @@ paper-b:
 	$(MAKE) -C papers/paper_b pdf verify anonymity-check PYTHON=$(PYTHON)
 
 # Engineering-only smoke path: closed synthetic workload through the B schema,
-# learner and evaluator.  Never a pilot and never a real-agent result.
+# learner and evaluator.  Never a pilot and never a real-agent result.  The
+# tracked smoke_latest directory is rewritten; restore it with
+# `git checkout -- results/paper_b/smoke_latest`.
 smoke-b:
+	rm -rf results/paper_b/smoke_latest
 	PYTHONPATH=$(SCAFFOLD_SRC) $(PYTHON) experiments/paper_b/smoke_b.py --output results/paper_b/smoke_latest
 
 # Build the B release package from the allowlist.  Requires a clean tree.
