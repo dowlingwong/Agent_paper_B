@@ -11,6 +11,22 @@ Planned work is not completed work. No paid run or submission has been made. No
 model call has been made. B's analysis side runs on CPU; the live lane is not
 built.
 
+## 8 October — D-ATT2 rejected as written; revision prepared
+
+The author withheld complete approval and adopted specific subitems. The
+[revised B1/B2](OPEN_ITEMS.md#b1-blocker-task-realism-attempt-2-unsealed),
+[design](../../experiments/paper_b/task_cc_v2/ATTEMPT2_DESIGN.md) and
+[diff](DATT2_REVISION_20261008.diff) are prepared for inspection. Development
+cohorts now separate realism/screen/pilot; test is final-only. Screen balancing,
+pilot artificial mixture and schema-aware canonical weight conversion are
+specified. The [7/8 reach record](../../experiments/paper_b/task_cc_v2/ATTEMPT2_PRESEAL_RECORD.md)
+is author-supplied, not recomputed. Streams 20–23 remain unevaluated.
+
+**STOP:** balanced-realism adopt/decline and complete revised D-ATT2 approval
+are pending. No seal/hash, outcome code, generation, realism/model/Ada run or
+new challenge. B2 scoped core recheck stays closed; author novelty/BAVAR and
+overall readiness stay open.
+
 ## 8 October — B2 repairs checked; task approval STOP reached
 
 Independent AI-assisted B2 review found two major and two minor defects;

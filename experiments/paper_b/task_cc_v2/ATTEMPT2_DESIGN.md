@@ -2,7 +2,7 @@
 
 Status: **PROPOSED, UNSEALED, NOT IMPLEMENTED OR RUN**. Prepared 8 October
 2026 for D-ATT2. This is the second and last bounded task attempt under P-B1.
-No number below is a result. Mechanisms and constants are specified for review;
+D-ATT2 is NOT APPROVED as a complete design. The author adopted the end-of-run R4, behaviour changes, never-as-control (144 leaves), symmetry-aware metric, information surfaces and CPU caps, subject to the revisions below and another pre-seal inspection. The supplied 7/8 reach is a recorded pre-seal fact; no utility or RNG-stream outcome has been produced. Mechanisms and constants are specified for review;
 no generator, seed search, candidate run or outcome-producing code has run.
 
 ## 📋 Question, unit and unchanged science
@@ -51,9 +51,7 @@ mechanism change.
 
 An executor fits a binary linear classifier on labeled tabular batches. The
 candidate consists of an executable feature decoder, weights and intercept.
-The deployment service has a versioned signed feature-permutation map. An
-initial integration mismatch and a later schema migration are sampled
-independently of behaviour, policy, utility and family selection. Ordinary
+The deployment service has a versioned signed feature-permutation map. Mismatch and migration classes are assigned before generation for the balanced development-screen law; the separate pilot law is an explicitly artificial independent random mixture. Neither assignment uses behaviour, policy or utility. Ordinary
 refitting can learn a classifier from the visible data, including fitting on
 the latest raw batch alone; the task is therefore solvable without verification.
 
@@ -70,7 +68,7 @@ that possibility is part of the never/refit control, not forbidden.
 Response is frozen for both checkpoints: evaluate current candidate and one
 reconciled alternative; accept the alternative only if its diagnostic accuracy
 is strictly higher; otherwise retain the current candidate. The reconciled
-alternative changes the decoder to the currently probed map and performs one
+alternative first converts weights from their recorded fitting schema to canonical order, then sets the decoder to the inverse current map and performs one
 bounded optimizer update using visible fitting rows only. Verifier-owned
 labeled diagnostics are used for selection, never gradient fitting. The tool
 returns the exact executable candidate it evaluated. The task does not reuse
@@ -107,10 +105,10 @@ possible now/later/never winners, **not guarantees or family assignments**.
 
 The eight-slot clock is identical across tails. The checkpoint trigger is
 completion of slot four, without looking at outcomes. Reaching c2 uses the
-same outcome-blind hash gate as attempt 1 (nominal .70); unreached roots
+same outcome-blind hash gate as attempt 1 (nominal .70). The author reports that fixed IDs a2-r0…a2-r7 reach in 7/8 cases (.875); this fact is recorded in the pre-seal package without choosing new IDs. Unreached roots
 remain under their registered fallback. For such roots, no new batch/migration
 is revealed; the final four slots continue on the original visible batch.
-The realised reach fraction may fail R7; it is never resampled to pass.
+The supplied .875 reach lies within R7’s [.5,.9] interval; this is a known pre-seal property, not evidence from the realism run. Execution still records reach and early termination, and never resamples IDs.
 
 ## 🧮 Fully specified pre-run law and behaviours
 
@@ -125,10 +123,10 @@ reported before the author approves/seals it. No outcome-based choices remain.
 | Teacher | Independent standard-normal coefficient vector normalized to unit length; intercept 0; binary label is sign(wᵀx), flipped independently with probability .20 |
 | Rows | Each root: dev0 80, dev1 80, dev2 80, audit1 80, audit2 80, hidden 500; independent draws within its family; fixed row IDs identify every split |
 | Feature names | Eight neutral field names; numerical family descriptor and data define distinctness, not cosmetic renaming |
-| Initial map | Identity with probability .65; otherwise independent uniform signed permutation of 8 fields (reject identity only, no utility evaluation) |
-| Migration | Independent Bernoulli(.35) at c2; when present draw a new signed permutation, rejecting only equality to the old map |
+| Initial map | Screen: class from fixed family-index rule; pilot: identity with probability .65, otherwise uniform nonidentity signed permutation. Realism balancing choice remains pending. Final law frozen separately before any final test generation/outcome |
+| Migration | Screen: fixed family class; pilot: independent Bernoulli(.35). When migration is present draw a new signed permutation, rejecting only equality to old map; final law remains a separate freeze |
 | Training coordinates | dev0 canonical; dev1 serialized using the initial map, revealed at c1 after prefix; dev2 serialized using the current map; audit inputs serialize using their checkpoint's map; hidden serializes using the final actual map |
-| Candidate initial state | Identity decoder, zero weights/intercept; prefix uses four ordinary updates on canonical dev0; all tails inherit this exact candidate/workspace/session prefix |
+| Candidate initial state | weight_schema_version=canonical, identity decoder, zero weights/intercept; prefix uses four ordinary updates on canonical dev0; all tails inherit this exact candidate/workspace/session prefix |
 | Optimizer | Logistic cross-entropy SGD, learning rate .10, L2 penalty .001, batch size 16, no momentum; sigmoid inputs clipped to [-30,30]; float64; per-action keyed minibatch selection |
 | Ordinary fit selection | Alternate one pooled and one latest-only alternative, one gradient/evaluation per slot; exact transforms, incumbent selection and minibatch keys are specified below |
 | Verifier probes | 16 probes, +e_j and −e_j for j=1…8, encoded by current map; return correspondence, not teacher or future state; audit uses the separate 80-row checkpoint diagnostic split |
@@ -145,8 +143,7 @@ behaviour distinctions. Candidate-search counts 2/16/32 from stump fitting
 are not carried to SGD: the declared eight post-c1 slots replace that
 candidate-search control, with no mechanism-specific hand-authored strategy.
 Each verifies when the regime requires it and submits its retained visible candidate at the fixed deadline. Repetition seeds differ only within-root
-optimizer row order. This behavioural-interface change is part of D-ATT2,
-not an already adopted change to the scientific contract.
+optimizer row order. The author adopted this behavioural-interface change as a D-ATT2 subitem; complete design approval and contract binding remain pending.
 
 The competent R4 control uses all eight features and .80 fitting fraction,
 identical fitting alternatives and slot budget to typical. It can select
@@ -155,14 +152,43 @@ input information is fixed here and cannot be weakened to make R4 pass.
 
 ## 🗂️ Families, partitions and leakage audit
 
-Generate exactly **88 families**, once: 48 development, 32 test, 8 posttrain.
-IDs are partition-qualified; partition assignment precedes data generation.
-The CPU realism run uses the first eight development families, one root each.
-The screen uses the first eight test families; pilot uses all 32 test families,
-with the existing two roots × two repetitions × three leaves counts. Development
-fitting never consumes test/posttrain families or descendants. Posttrain
-collection remains a later separately authorized extension; merely defining
-its eight families supplies no model-training data or authorization.
+Reserve exactly **88 disjoint family IDs**: 48 development, 32 test,
+8 posttrain. The development cohorts are disjoint: **0–7 realism, 8–15 screen,
+16–47 pilot**. Screen uses eight families × two roots × two repetitions ×
+three regimes = 96 leaves; pilot uses 32 families with the same per-family
+counts = 384 leaves. Neither consumes test families. Test families 0–31 are
+held out for final collection; its complete final law must be frozen and
+committed before any final test family generation, fitting or final outcome.
+Posttrain remains separately authorized and does not consume either cohort.
+
+The screen is balanced over four initial-mismatch × migration classes,
+**two families per class**. For development family f in 8…15 let k=(f−8) mod 4:
+0=(no mismatch,no migration), 1=(no mismatch,migration),
+2=(mismatch,no migration), 3=(mismatch,migration). All roots in a screen family
+inherit its class. For mismatch=false use identity; for mismatch=true draw
+nonidentity M1 from stream 21. For migration=false use M2=M1; for migration=true
+draw M2 unequal to M1 from stream 23. No Bernoulli gates 20/22 are drawn for
+screen. Assignment precedes generation and does not guarantee regime winners.
+Screen reports conditional operability/cost by class; it does not estimate
+the prevalence or value of the pilot mixture.
+
+The pilot keeps the original independent random mixture: initial mismatch
+Bernoulli(.35), migration Bernoulli(.35), per root, with no class balancing,
+selection or redraw. Label this **artificial mixture**, not naturally observed
+class prevalence. Realism families 0–7: **balanced/random choice pending the
+author’s bracketed adopt/decline answer**. If balanced is adopted, use k=f mod 4
+with the same mapping (two families each); if declined, retain the pilot’s
+random artificial mixture. No law is silently chosen while this answer is open.
+
+After the eventual seal, generate development families under the approved
+cohort laws once. Do not evaluate RNG streams **20–23 before the seal**, for
+any cohort or purpose. Final test and posttrain data remain ungenerated until
+their respective approved freezes. Apply distinctness/leakage audits to each
+new cohort and all previously generated cohorts; a failure stops without
+redrawing. Development fitting uses only the development cohorts permitted
+by the phase protocol; test/posttrain families and descendants stay excluded.
+The final law is an explicit later author freeze, not an implementer choice
+made after seeing final outcomes.
 
 Family law descriptors comprise normalized teacher coefficients and covariance.
 For two families define distance as the maximum of teacher Euclidean distance
@@ -236,9 +262,12 @@ Any structural/leakage preflight failure after the seal stops for the author;
 no generator rejection/resampling is added except the explicitly declared
 identity/equality rejection for signed permutations. One independent challenge
 is used before sealing. No substantive mechanism or threshold repair is allowed
-after outcomes: recommend **execution-bug fixes only**, each transparently
-recorded. The author approves this repair interpretation under D-ATT2; the
-contract's general one-repair field is not permission to tune this attempt.
+after outcomes: **execution-bug fixes only**, adopted by the author. An
+execution bug is a **test-demonstrable mismatch between code and sealed text**.
+Every fix must cite the exact sealed provision and a failing-before/passing-after
+test, preserve completed evidence and receive a dated record. Disappointing
+outcomes, low power or a mechanism working as specified are not execution bugs.
+The general one-repair field never permits substantive tuning of this attempt.
 
 P-B1, verbatim from OPEN_ITEMS §B1:
 
@@ -251,18 +280,31 @@ P-B1, verbatim from OPEN_ITEMS §B1:
 
 This revision answers B1–B3, M1–M2 and N1–N2 in
 `docs/paper_split/ATTEMPT2_CHALLENGE_20261008.md`. The original challenge verdict
-is preserved. These details supersede any shorter table wording above. They
-are proposals for D-ATT2, not adopted changes or measured outcomes.
+is preserved. These details supersede any shorter table wording above. The author’s revision decisions below supersede the earlier proposals. The complete design remains unapproved and unsealed; adopted subitems do not authorize implementation or execution.
 
 ### B1/B2: coordinates, executable response and slot schedule
 
-For a column canonical vector x, the deployment serialization is z=Mx, where
-M is a signed permutation matrix. The candidate stores D (raw-to-model decoder),
-w and b, and predicts label `1{wᵀDz+b >= 0}` on deployment input. Canonical dev0
-is explicitly tagged canonical and uses `1{wᵀx+b >= 0}` in a pooled candidate;
-raw dev1/dev2 uses Dz. No tool guesses a batch's provenance. Before any audit
-D=I. A latest-only candidate uses D=I and raw coordinates, making the same
-candidate class capable of learning deployment predictions without a map.
+For canonical column x, schema v serializes z=M_v x. A candidate stores
+`weight_schema_version` B, decoder D, weights w and intercept b; deployment
+prediction is `1{wᵀDz+b >= 0}`. B is the coefficient coordinate basis:
+canonical has M_B=I, raw schema v has M_B=M_v. Each fit also records its batch
+schema versions and conversion assumptions. This separates the coefficient
+basis from possibly incorrect ordinary conversion guesses; mixed provenance
+is not silently labelled an audited fit.
+
+Candidates begin in canonical basis. A latest-raw fit records the **actual
+visible batch version v** as B=v, even if the executor does not know M_v.
+The candidate does not contain the protected true map. The independent audit
+sandbox can resolve a recorded historical schema version from its versioned
+registry for conversion; this is internal audit input, never ordinary-fit input
+or an extra visible disclosure. Future maps and hidden outcomes remain forbidden.
+
+For canonical dev0, fitting in basis B uses `estimated_M_B x`; for raw batch
+version v it uses `estimated_M_B estimated_M_vᵀ z`. Before any audit, estimates are identity. After an audit, use a version’s disclosed cached map when available; for an unprobed version use the most recently disclosed map as an explicitly stale guess. No true registry lookup is allowed to ordinary fitting. Both ordinary control and verified executor have the same conversion
+code; only authorized audit information differs. Visible checks follow the
+same batch conversion. The coefficient-basis tag remains B on pooled updates,
+even if a recorded conversion guess is wrong. The tag records the intended
+feature basis, not a claim that all gradients were in true canonical order.
 
 The prefix fits canonical dev0. After the shared prefix is frozen, independent
 raw dev1 is released at c1. This addition is proposed to resolve the challenge's
@@ -271,17 +313,21 @@ by a deployment mismatch. At c2 reached roots receive raw dev2 and the new
 map becomes active before the decision; the inherited candidate is not claimed
 to have trained on dev2. Unreached roots receive no dev2 and retain M1.
 
-Each ordinary action creates one alternative from the incumbent. Odd-numbered
-ordinary actions use pooled mode: keep D,w,b and fit one minibatch from all
-visible fitting rows, canonical rows directly and raw rows through D. Even
-ordinary actions use latest mode: set D'=I and w'=Dᵀw, b'=b, which preserves the incumbent's deployment predictions for the unrestricted typical/careful class; careless truncates coordinates 4–7 to zero after this rebase, and uses the same restriction in selection; fit one minibatch using only the most
-recent raw batch (dev0 directly during prefix). The pooled/latest counter counts ordinary actions only, continues across c2 and is restored at forks. The prefix also alternates these actions on canonical dev0, where D=I and both modes use dev0. After each action compare the updated
-alternative and incumbent on the fixed held-out fraction of the most recent
-visible batch, using that batch's provenance. Strictly higher accuracy adopts
-the alternative; ties retain the incumbent. No fitting on check rows, no
-hidden accuracy and no candidate-dependent selection of batches is permitted.
-An imperfect pooled-coordinate assumption is allowed; the alternate latest
-path and its equivalent inference rebase prevent crippling the competent control.
+Each ordinary action creates one alternative from the incumbent. Odd actions
+use pooled mode: keep B,w,b and fit one minibatch from all visible fitting
+rows with the conversions above. Even actions use latest mode: for latest
+raw version v set B'=v, D'=I and w'=Dᵀw, b'=b; these weights are now explicitly
+in that raw version’s basis. This preserves current deployment predictions for
+typical/careful. Careless truncates model coordinates 4–7 to zero after the
+rebase and uses the same restriction in fitting and selection. Prefix latest
+mode uses canonical dev0 and leaves B=canonical, D=I. The pooled/latest counter
+counts ordinary actions only, continues across c2 and is restored at forks.
+After each action compare alternative and incumbent on the fixed held-out
+fraction of the newest visible batch; strict improvement adopts, ties retain.
+On a pooled action set D to estimated_M_B estimated_M_currentᵀ, using the same recorded guesses as its current raw-batch conversion; a new unaudited version uses the explicitly stale guess, never a hidden map. Every adopted alternative retains its B, D, cached map versions, fit-provenance
+record and batch version. No fitting on check rows or hidden selection occurs.
+At an unaudited migration the incumbent D remains stale; a latest-mode raw fit
+can adapt in the new raw basis without recovering canonical correspondence.
 
 One work slot is one minibatch gradient plus selection on the latest visible
 check rows. It is a constructed action-cost unit, not a measured elapsed time.
@@ -292,14 +338,25 @@ uses the corresponding mean residual without L2. Every ordinary action costs
 one slot even on rejection; all its fitting/selection work is recorded.
 
 The verifier first obtains 16 basis probes and the checkpoint audit split.
-It constructs exactly one alternative with D'=M_currentᵀ, **keeps w,b**
-(no prediction-preserving rebase), then performs one pooled minibatch gradient
-under the reconciled decoder using visible fitting rows only. It compares
-that alternative to the unchanged incumbent on all 80 current audit rows,
-serialized with M_current; strict improvement returns the alternative,
-otherwise the exact incumbent. Careless restricts gradients and predictions
-to model-coordinate positions 0–3, including in this response; typical/careful
-use all eight. Decoder correspondence is the full map for every behaviour.
+It constructs exactly one alternative by first resolving the candidate’s
+recorded basis B and converting **w_canonical=M_Bᵀw**, b unchanged. For B=canonical
+this is the identity conversion. Only then set B'=canonical and
+**D'=M_currentᵀ**, and perform the declared one pooled minibatch update in
+canonical order using visible fitting rows only. The source schema tag, internal
+registry lookup version and conversion digest are recorded host-side. Unknown
+or inconsistent schema tags are an integrity refusal, not a guess.
+
+Without the gradient, the conversion preserves the semantic canonical
+classifier `wᵀM_B x`, then evaluates it in the current deployment schema;
+it does not reinterpret raw-trained weights as canonical weights. This works
+both for an unchanged schema and migration from the weights’ fitting version
+to the current version. The ordinary candidate remains untouched if selection
+rejects the response. Compare alternative and incumbent on the 80 current
+audit rows; strict improvement adopts, ties retain the exact incumbent with
+its original tag/decoder. Careless’s four-coordinate restriction applies after
+canonical conversion and is recorded; typical/careful use all eight. Response
+conversion and schema metadata must round-trip with the executable candidate.
+
 The full probe/diagnostic response occupies two slots including its one
 gradient. The same two-slot tariff holds even if the response is rejected.
 
@@ -337,12 +394,11 @@ complete row-normal matrix first, then its label-flip vector in row order.
 Initial-map gate=20, initial permutation=21, migration gate=22, migration
 permutation=23. Permutations use rng.permutation(8), then eight independent
 rng.integers(0,2) signs; reject only the specified identity/equal-map event,
-using the next draw in that same stream. No map rejection reads a candidate.
+using the next draw in that same stream. Screen uses its fixed classes instead of streams 20/22; the pilot uses all four streams under its random artificial mixture. No map rejection reads a candidate. **Nobody evaluates streams 20–23 before the seal**, including exploratory class counts, manifest generation or smoke probes.
 
 PCG64 SeedSequence entropy remains `[20261008, partition, family, root, stream]`.
 Two roots, indexed 0/1, are specified per generated family; CPU realism uses
-only root 0 of development families 0–7. Family parameters are shared within
-family; rows and maps are independent across its two roots. All three
+only root 0 of development families 0–7. Family parameters are shared within family; rows are independent across roots. Screen class indicators are fixed per family, but conditional map permutations are root-specific. Pilot indicators and maps are independent across roots. Realism law awaits the explicit balancing answer. All three
 behaviours and regimes share each root's task rows/maps/labels/reach. Repetitions
 0/1 change optimization samples only, using stream index
 `1000 + 100*repetition + 10*phase + action_index`, phase prefix=0,
@@ -358,15 +414,13 @@ Each (root, behaviour, repetition) has one prefix and c1 fork shared across
 now/continue. Reached later/never fork at the same c2 state. Prefixes across
 behaviours or repetitions need not match; restoration digests are compared
 only for the forks actually sharing them. CPU root IDs remain a2-r0…a2-r7;
-other IDs are `a2-{partition}-f{family}-r{root}`. Reach is the unchanged
-attempt-1 hash predicate, independent of maps and labels. No IDs are searched.
+other IDs are `a2-{partition}-f{family}-r{root}`. Reach is the unchanged attempt-1 hash predicate, independent of maps and labels. The author-provided 7/8 reach for the eight realism IDs is recorded in ATTEMPT2_PRESEAL_RECORD.md and must be included in the later seal package; no IDs are searched or changed. No reach computation is needed to implement this document revision.
 
 The sealed implementation constructs a canonical JSON manifest, UTF-8 with
 sorted keys and compact separators plus newline, containing namespace,
 family/root/split IDs, seed keys, row and parameter SHA-256 digests. Arrays
 are encoded little-endian float64 in C row order; labels uint8; no outcome
-field affects manifest generation. Generate all 88 families once, audit them,
-and use the fixed eight realism families without replacements. The eventual
+field affects manifest generation. Generate each approved cohort once after its freeze, audit it against already generated cohorts, and use its fixed IDs without replacements. No held-out final-test generation occurs before the final-law freeze. The eventual
 command is `python -m experiments.paper_b.task_cc_v2.realism --output
 results/paper_b/task_realism_v2_<UTC> --design
 experiments/paper_b/task_cc_v2/ATTEMPT2_DESIGN.sha256`; existing output refuses.
@@ -381,7 +435,7 @@ ddof=0. R1 applies the original literal rule to these family means: now wins
 if now>=later and now>=never; later wins if later>now and later>=never;
 never wins if never>now and never>later. Report exact equality counts too.
 R2 is SD over eight families of u[later]-u[never], >.02 for each behaviour.
-R4 is max over eight families of u[now]-u[never], >.02 for typical; this explicitly proposes terminal, budget-matched comparison instead of attempt 1's isolated c1 refit diagnostic, so the comparison accounts for the work debit and must be adopted under D-ATT2; show every
+R4 is max over eight families of u[now]-u[never], >.02 for typical; the author adopted this terminal, budget-matched comparison in place of attempt 1’s isolated c1 refit diagnostic, accounting for the work debit; show every
 family gain and corresponding careless/careful controls descriptively.
 R5 requires at least one family with u[now]<u[never] or u[later]<u[never],
 for each behaviour. R6 uses mean and SD of eight typical-never family means,
@@ -430,7 +484,7 @@ ordinary-action count, consumed slots, verifier-used flag and (at c2) its
 reached flag. H2 retains H1 and current values with checkpoint-prefixed keys.
 It does not consume raw seed/IDs/paths, map matrices, candidate coefficient
 vectors, protected diagnostics or host truth. Recorder alone receives the
-listed ground-truth metadata. This descriptor definition requires D-ATT2;
+listed ground-truth metadata. The author adopted these information surfaces;
 configurator feature-map changes remain governed by their separate decisions.
 
 ## 📋 Approval and implementation boundary
@@ -443,8 +497,22 @@ Only then write `ATTEMPT2_DESIGN.sha256`, commit and push the approved design
 and hash, and implement new files under this directory. No baseline task,
 fixture, contract value or claim is silently changed by approval of a draft.
 
+Before sealing, the author must inspect this revision/diff and resolve the pending realism balancing choice. No RNG streams 20–23, outcome-producing code or design hash may be generated beforehand. The seal package must include this design and ATTEMPT2_PRESEAL_RECORD.md.
+
 Implementation files (after seal): generator, executable candidate, task tools,
 prompts and realism runner. Tests cover family distinctness, partition separation,
 hidden-test isolation, forked clock/optimizer restoration and executable candidate
 round-trip. After one realism run, record the full R1–R9 table and all outcomes,
 PASS or FAIL. Passing is never presumed from this mechanistic argument.
+
+## Author D-ATT2 revision disposition — 8 October 2026
+
+Complete approval: **withheld**. Adopted subitems: terminal R4; behaviour changes;
+never-as-control, 144 leaves; symmetry-aware metric; information surfaces; CPU
+caps; execution-bug-only repairs defined by test-demonstrable code/sealed-text
+mismatch. Required revisions incorporated: disjoint development phase cohorts;
+balanced screen, separate artificial-mixture pilot; recorded fitting schema and
+canonical weight conversion before decoder replacement; supplied 7/8 reach
+in the pre-seal package; no evaluation of RNG streams 20–23 before seal.
+Balanced realism: **pending explicit adopt/decline**. No scientific or runtime
+record is authorized by these partial decisions.

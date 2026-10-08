@@ -18,42 +18,62 @@ Owner: **W** = work any agent can do · **D** = decision by Dowling ·
 
 ## Paper B — ICML 2027 target
 
-### B1. Blocker: task realism (TASK_REALISM_REPORT.md)
+### B1. Blocker: task realism (attempt 2, unsealed)
 
-- [ ] **Task redesign, attempt 2** (W, under adopted P-B1). The F9 check FAILED
-  after its one allowed repair: for the typical behaviour, no family is now-best
-  (R1) and the verifier never beats ordinary refitting (R4; best −0.04 U). Ada
-  tooling (F10) is stopped. See P-B1.
-  - [ ] attempt 1 kept unchanged as a recorded failure;
-  - [ ] before running: freeze where verification gets diagnostic value beyond
-    refitting, where waiting has a real information-versus-delay tradeoff, and
-    the qualification thresholds;
-  - [ ] no families added just to manufacture now/later/never winners;
-  - [ ] failure disposition (adopted P-B1): if attempt 2 fails substantive
-    realism criteria, stop this task/verifier setup and drop its ICML 2027
-    route. Execution bugs may be fixed transparently; mechanisms and thresholds
-    are not tuned against the result.
+- [ ] **Task redesign, attempt 2** (W/D, P-B1). Attempt 1 remains a recorded
+  failure: typical R1/R4 failed. Task-dependent Ada work remains blocked;
+  D-F10 permits the stated model-free exception only.
+- [x] Preserve attempt-1 code/results at the author-approved `b09c85a` citation
+  baseline; do not rerun it for parameter search.
+- [x] Complete the single AI-assisted challenge and retain its original NO
+  verdict; written dispositions are in the [revised design](../../experiments/paper_b/task_cc_v2/ATTEMPT2_DESIGN.md).
+- [x] Record the author’s partial D-ATT2 adoption: end-of-run R4 (> .02),
+  behaviour changes, never-as-control (144 leaves), symmetry-aware metric,
+  information surfaces, CPU caps and execution-bug-only repairs.
+- [x] Revise cohorts: development **0–7 realism, 8–15 screen, 16–47 pilot**;
+  test reserved for final collection under a law frozen before final outcomes.
+  No final test generation before that law freeze.
+- [x] Define balanced screen: four mismatch × migration classes, two families
+  each, `k=(family_index−8) mod 4`, assigned before generation. Pilot uses its
+  separate independent random law, explicitly labelled **artificial mixture**.
+- [ ] **Balanced realism families: adopt / decline** (D). Bracketed choice is
+  unanswered; neither balancing nor random mixture is silently adopted.
+- [x] Specify candidate fitting-schema provenance and audit conversion
+  `w_canonical=M_fittedᵀw` before `D=M_currentᵀ`; preserve schema metadata in
+  executable round-trips and rejection/fork restoration.
+- [x] Prepare [pre-seal reach record](../../experiments/paper_b/task_cc_v2/ATTEMPT2_PRESEAL_RECORD.md):
+  author-supplied **7/8 (.875)** for `a2-r0`…`a2-r7`; not recomputed here.
+- [ ] **STOP D-ATT2:** author inspects revised B1/B2 and diff and approves the
+  complete design before any seal, outcome code or generation. **Nobody
+  evaluates RNG streams 20–23 before the seal.**
+- [ ] Seal the approved design and pre-seal record; then implement and run
+  realism once. No families added/redrawn to manufacture winners.
+- [x] Execution bug defined by the author as a **test-demonstrable mismatch
+  between code and sealed text**; each repair records the provision, a test
+  failing before/passing after, and preserves completed evidence. No substantive
+  post-outcome mechanism/threshold tuning.
+- [ ] failure disposition (adopted P-B1): if attempt 2 fails substantive
+  realism criteria, stop this task/verifier setup and drop its ICML 2027
+  route. Execution bugs may be fixed transparently; mechanisms and thresholds
+  are not tuned against the result.
 
 ### B2. Before B can be called design-ready
 
-- [ ] Re-review the 28 Sept R2 fix commits (`d6b3bd3e`…`b9b56265`) independently
-  against the 27 Sept review, whose verdict was "design-ready: no" (blockers C1,
-  M1/M2, N2/N3). The re-review must establish that the evaluated controllers can
-  differ, that the corrected continuation target addresses the bias, and that
-  the reported allowance/tax matches the stated analysis (W, separate session).
+- [x] Independent AI-assisted review of the imported B controller/evaluation
+  code and bounded repair recheck, committed in `d9c5e30`. All four new findings
+  closed; scoped core verdict **design-ready: yes**. 212 control tests pass;
+  original findings/evidence retained in [review](B2_REREVIEW_20261008.md) and
+  [recheck](B2_REPAIR_RECHECK_20261008.md). No source/Paper A checkout was read.
 - [ ] Novelty and overlap verdict on B_NOVELTY_MEMO.md and
-  [PRIOR_DISCLOSURE.md](PRIOR_DISCLOSURE.md) §7 (D). Task realism and
-  implementation correctness are separate gates; both must pass before
-  "design-ready".
-- [ ] Read the BAVAR / Strategic Verification preprint (preprints.org
-  202608.2057) by hand; automated access is blocked. Then fix or confirm the
-  related-work text and the comparator description (D).
+  [PRIOR_DISCLOSURE.md](PRIOR_DISCLOSURE.md) §7 (D). B1 realism, code correctness
+  and author novelty remain distinct; overall readiness is withheld.
+- [ ] Read BAVAR / Strategic Verification (preprints.org 202608.2057) by hand,
+  then fix or confirm related work and comparator description (D).
 - [ ] Build F10 qualification/screen tooling (`run_screen.py`,
-  `bind_runtime_artifacts.py`) (W). Author D-F10 (8 Oct) permits pre-B1
-  **model-free parts only**: no task-mechanism-specific code, live mode
-  refuses, and nothing is sent to an endpoint. All other work waits for B1
-  and later gates. If attempt 2 fails, shelve this tooling; it is not a reason
-  for another attempt.
+  `bind_runtime_artifacts.py`) (W). D-F10 permits pre-B1 **model-free parts
+  only**: no task-mechanism-specific code, live mode refuses, no endpoint
+  dispatch. Task-dependent/live work waits for B1 and later gates. Shelve this
+  tooling if attempt 2 fails; it never justifies another attempt.
 
 ### B3. Design work (RUNBOOK §14.2)
 
@@ -206,7 +226,7 @@ All other rows remain pending; none is an evidence-run authorization.
 | D-GOV1/2 | Stage 5 | pending; schema/ledger/adjudication, default no panel |
 | D-PT1/2/3 | after screen | pending; post-freeze extension and separate budget |
 | B2-N / B2-BAVAR | before 15 Nov | pending; author's verdict and hand-reading |
-| D-ATT2 | Stage 2 | STOP: proposed design and single challenge/dispositions exist; author approval needed before seal/code |
+| D-ATT2 | Stage 2 | NOT APPROVED as written; partial subitems adopted, required revisions prepared; balanced realism adopt/decline and complete revised approval pending |
 | Evidence authorizations | per phase | absent; author must create and commit each himself |
 
 Stage 1's decision STOP is closed: the author answered all five now items,
@@ -222,3 +242,7 @@ own author-created, author-committed authorization records.
 [B2 original review](B2_REREVIEW_20261008.md) preserved; [repair recheck](B2_REPAIR_RECHECK_20261008.md) resolves both major and both minor findings. Scoped code verdict is design-ready yes, with 212 control tests passing. Author B2-N/B2-BAVAR remain open.
 
 [Attempt-2 draft](../../experiments/paper_b/task_cc_v2/ATTEMPT2_DESIGN.md) includes proposed fixes to the [single challenge](ATTEMPT2_CHALLENGE_20261008.md). D-ATT2 is the next STOP; no hash, task outcome code or run exists. Proposed changes include SGD instead of stumps, canonical-prefix/raw-batch deployment audit, fixed eight-slot tails, exact replay/aggregation rules, symmetry-aware family audit, and terminal budget-matched R4 comparison with unchanged .02 threshold. None is adopted by this status record.
+
+## D-ATT2 revision decision — 8 October 2026
+
+The author rejected the previous complete draft and requested a pre-seal revision/diff. The B1/B2 section above records the supplied corrections and partial adoptions. The new test families are final-only, screen is development-balanced, pilot is a separate artificial mixture, and audit weight conversion precedes decoder replacement. The complete design remains unapproved; no seal/RNG/task execution is authorized.

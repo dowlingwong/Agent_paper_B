@@ -313,19 +313,26 @@ Recommendation: Author hand-reading, with claim-specific notes; no AI-assisted r
 
 Source: OPEN_ITEMS.md §B2; execution §3.
 
-### D-ATT2 — Approve the bounded attempt-2 design
+### D-ATT2 — Revised proposal; complete approval withheld
 
-Needed: Stage 2, before sealing or outcome code. Author answer: pending.
+Needed: before sealing or outcome code. Author answer: **not approved as written**.
 
-Attempt 1 remains unchanged from the author-approved citation baseline. The [attempt-2 design](../../experiments/paper_b/task_cc_v2/ATTEMPT2_DESIGN.md) is proposed and unsealed. The single [AI-assisted challenge](ATTEMPT2_CHALLENGE_20261008.md) originally found three blockers, two major and two minor issues; its NO verdict is preserved, and the design now contains written dispositions. No task outcome code or run exists.
+The author adopted end-of-run R4, behaviour changes, never-as-control (144
+leaves), symmetry-aware metric, information surfaces and CPU caps. Repairs
+are execution-bug-only, meaning a test-demonstrable code/sealed-text mismatch.
 
-The concrete approval covers: deployment-contract diagnostics and canonical-prefix/raw dev1/dev2 batches; linear SGD replacing stump search; the eight-slot fixed horizon and two-slot audit response; 48/32/8 disjoint families with symmetry-aware .10 near-duplicate exclusion; exact RNG/pairing/visibility/aggregation; 144 CPU leaves with never reused as competent control; 30-minute/1-GiB CPU caps; execution-bug-only repairs and P-B1 verbatim. R1–R9 numeric thresholds stay fixed. R4 explicitly changes from an isolated c1 diagnostic to the terminal budget-matched now-versus-never comparison, preserving >.02; this interpretive change requires your adoption. This approval is not GPU/model or phase authorization.
+Required revisions now appear in the [design](../../experiments/paper_b/task_cc_v2/ATTEMPT2_DESIGN.md):
+development 0–7 realism / 8–15 balanced screen / 16–47 artificial-mixture pilot;
+held-out final-test law frozen before final generation/outcomes; candidate
+fitting-schema tag and canonical weight conversion before current inverse
+decoder; [author-supplied 7/8 reach](../../experiments/paper_b/task_cc_v2/ATTEMPT2_PRESEAL_RECORD.md)
+in the future seal package; no evaluation of RNG streams 20–23 before seal.
 
-Options: Approve the complete challenged design now with an execution-bug-only repair allowance; or reject it and revise before any seal/run.
-
-Recommendation: Execution-bug fixes only, each recorded; seal mechanisms, R1–R9, families/partitions, thresholds, CPU budget and P-B1 failure disposition before implementation. One realism run; no outcome-based tuning.
-
-Source: OPEN_ITEMS.md §B1; execution Stage 2.2–2.6.
+**Pending choice:** balanced realism families, adopt or decline. If adopted,
+use family index mod 4 to assign two families per class; if declined retain
+the random artificial mixture. This choice and complete revised D-ATT2 approval
+remain with the author. Requested deliverable: revised OPEN_ITEMS B1/B2 and
+[D-ATT2 diff](DATT2_REVISION_20261008.diff). No design hash, outcome code or run.
 
 ### Authorizations — Author creates and commits run authorization
 

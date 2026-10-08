@@ -242,3 +242,20 @@ Code moves to Ada only through GitHub. No GPU inventory, foreign-process investi
 Additional checks: 6 release tests and 12 standalone tests pass. An engineering-only smoke at a new scratch output passed 11/11; tracked smoke fixtures were not modified. The portable repair probe exited 0. Both reproduction-package SHA-256 manifests validate; added document host-path scan passes; five protected pins and RUNBOOK §14.2 remain unchanged. `git diff --check` passes. No manuscript change was made in this step.
 
 B2 fixes, original/rechecked AI-assisted reviews and CPU validation artifacts committed as `d9c5e30`; source/test hashes match the reviewed bytes. The separate handoff commit contains only proposed task design/challenge/interface and status/decision records.
+
+## 8 October — D-ATT2 revision, documentation only
+
+Authority: author rejected complete draft and supplied four corrections plus
+partial adoptions. Edited design/decision/status text and prepared reach record
+and review diff. No task code, RNG calls, generation, outcome probes or new
+independent challenge. Supplied 7/8 reach recorded as author-provided, not
+reproduced. No protected contract/fixture/authorization or B2 implementation
+changed. Validation is a static text/link/partition-rule check and diff check;
+no scientific or runtime readiness is claimed. Balanced realism remains pending.
+
+Static checks PASS: only six expected Markdown design/governance files changed;
+no implementation/contract/fixture/authorization change. Screen index rule
+assigns exactly two families per class; no RNG or task module is used. Revised
+weight-conversion text and pre-seal stream prohibition present; old test-cohort
+and keep-raw-weights rules absent. Task directory contains Markdown only and
+no seal hash. Added-content host-path scan and `git diff --check` PASS.

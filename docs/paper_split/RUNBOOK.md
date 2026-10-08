@@ -691,3 +691,22 @@ are proposals only. Numeric R1–R9 thresholds, P-B1 and §14.2 remain unchanged
 The B2 execution corrections are scoped to the existing adopted controller
 and tuning protocol, with a separate AI-assisted repair recheck; author
 novelty/BAVAR decisions and overall scientific readiness remain open.
+
+## 18. D-ATT2 revision decision — 8 October 2026
+
+Author: “Not approved as written.” Before any seal, revise development cohorts
+to 0–7 realism, 8–15 screen, 16–47 pilot; hold test for final collection under
+a final law frozen before final outcomes. Balance screen over mismatch ×
+migration with two families per class by a pre-generation family-index rule;
+pilot retains its separate random law, labelled an artificial mixture.
+Candidates record the fitting schema; audit converts weights to canonical
+order before setting the inverse-current-map decoder. Include the supplied
+7/8 reach of a2-r0…r7 in the seal package; nobody evaluates RNG streams
+20–23 before seal.
+
+Adopted subitems: end-of-run R4, behaviours, never-as-control (144 leaves),
+symmetry-aware metric, information surfaces and CPU caps. Execution-bug-only
+repairs; an execution bug is a test-demonstrable mismatch between code and
+sealed text. Balanced realism adopt/decline is unanswered. Show revised B1/B2
+and the diff before sealing. Complete approval and implementation remain
+withheld. No contract field or authorization record is changed here.
