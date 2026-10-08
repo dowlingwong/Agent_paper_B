@@ -32,9 +32,9 @@ route.**
 
 ## Version pointers (copied from S)
 
-- Last source-bound packages: A 85 files, **B 53 files, source `12507267`**
-  (`release/*_manifest.json`, `release/check_release_*.json`). The B manifest and
-  check report are kept here as at S.
+- Last source-bound package: **B 53 files, source `12507267`**
+  (`release/paper_b_manifest.json`, `release/check_release_b.json`). The B
+  manifest and check report are kept here as at S.
 
 ## 30 September — TKV2017 recommendations adopted
 
