@@ -5,20 +5,22 @@ Python file under B's code roots and collects:
 
 - ``import x`` / ``from x import y`` module names, resolving relative imports
   against the ``causal_branch`` package root;
-- the string literal first argument of ``importlib.import_module(...)`` and
-  ``importlib.util.spec_from_file_location(...)`` calls.
+- the literal module name in ``importlib.import_module(...)`` and
+  ``__import__(...)`` calls;
+- the literal path in ``importlib.util.spec_from_file_location(...)`` calls
+  (checked separately: it must resolve inside this repository).
 
 Every ``causal_branch`` name must be in :data:`ALLOWED_CAUSAL_BRANCH`; every
-non-``causal_branch`` name must be in the standard library or
-:data:`ALLOWED_THIRD_PARTY`.  The measurement core is forbidden by name, with
-``variance_adaptive`` called out explicitly.
+other name must be in the standard library, :data:`ALLOWED_THIRD_PARTY`, or a
+local module of this repository.  The measurement core is forbidden by name,
+with ``variance_adaptive`` called out explicitly.
 
-**What this test cannot see.**  It only understands literal module names.  A
-computed module name — built at run time from a variable, ``getattr``,
-``__import__`` with a non-literal, or an ``importlib`` call whose argument is not
-a string literal — is invisible to it.  It also does not execute imports, so a
-conditionally executed import that is still syntactically present is caught, but
-a module assembled dynamically is not.
+**What this test cannot see.**  It only understands literal module names and
+literal file paths.  A computed module name or path — built at run time from a
+variable, ``getattr``, ``__import__`` with a non-literal, or an ``importlib``
+call whose argument is not a string literal — is invisible to it.  It also does
+not execute imports, so a conditionally executed import that is still
+syntactically present is caught, but a module assembled dynamically is not.
 """
 
 from __future__ import annotations
@@ -77,9 +79,7 @@ ALLOWED_CAUSAL_BRANCH = {
     "causal_branch.adapters.pi_agent",
 }
 
-ALLOWED_CAUSAL_BRANCH_PREFIXES = (
-    "causal_branch.control",
-)
+ALLOWED_CAUSAL_BRANCH_PREFIXES = ("causal_branch.control",)
 
 #: Paper A's measurement core.  B does not import it.
 FORBIDDEN_CAUSAL_BRANCH = {
@@ -96,7 +96,24 @@ ALLOWED_THIRD_PARTY = {
     "release_provenance",
 }
 
-DYNAMIC_CALLS = {"import_module", "spec_from_file_location", "__import__"}
+_IMPORT_CALLS = {"import_module", "__import__"}
+_FILE_CALLS = {"spec_from_file_location"}
+
+SKIP_PARTS = {".git", "third_party", "__pycache__", ".venv", "node_modules"}
+
+
+def _local_module_names() -> set[str]:
+    names = set()
+    for path in ROOT.rglob("*.py"):
+        if any(part in SKIP_PARTS for part in path.relative_to(ROOT).parts):
+            continue
+        names.add(path.stem)
+        if path.name == "__init__.py":
+            names.add(path.parent.name)
+    return names
+
+
+LOCAL_MODULES = _local_module_names()
 
 
 def _iter_py(path: Path):
@@ -116,12 +133,14 @@ def _mod_of(path: Path) -> str | None:
     return ".".join(rel.parts)
 
 
-def imports_from_source(source: str, filename: str, mod_of=None) -> set[str]:
-    """The literal module names a source string imports.
+def _literal_string(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    return None
 
-    ``mod_of`` resolves the package context for relative imports; pass ``None``
-    for a synthetic fixture that has no file on disk.
-    """
+
+def imports_from_source(source: str, filename: str, mod_of=None) -> set[str]:
+    """The literal module names a source string imports."""
     found: set[str] = set()
     tree = ast.parse(source, filename=filename)
     for node in ast.walk(tree):
@@ -142,10 +161,25 @@ def imports_from_source(source: str, filename: str, mod_of=None) -> set[str]:
         elif isinstance(node, ast.Call):
             func = node.func
             name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", None)
-            if name in DYNAMIC_CALLS and node.args:
-                first = node.args[0]
-                if isinstance(first, ast.Constant) and isinstance(first.value, str):
-                    found.add(first.value)
+            if name in _IMPORT_CALLS and node.args:
+                literal = _literal_string(node.args[0])
+                if literal:
+                    found.add(literal)
+    return found
+
+
+def dynamic_file_literals(source: str, filename: str) -> list[str]:
+    """Literal paths passed to ``spec_from_file_location``."""
+    found = []
+    tree = ast.parse(source, filename=filename)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", None)
+            if name in _FILE_CALLS and len(node.args) >= 2:
+                literal = _literal_string(node.args[1])
+                if literal:
+                    found.append(literal)
     return found
 
 
@@ -187,7 +221,19 @@ class ImportAllowlistTest(unittest.TestCase):
                     top = _top(name)
                     if top in sys.stdlib_module_names or top in ALLOWED_THIRD_PARTY:
                         continue
+                    if top in LOCAL_MODULES:
+                        continue
                     offenders.append(f"{path}: {name}")
+        self.assertEqual(offenders, [])
+
+    def test_dynamic_file_literals_stay_inside_the_repository(self):
+        offenders: list[str] = []
+        for root in ROOTS:
+            for path in _iter_py(root):
+                for literal in dynamic_file_literals(path.read_text(), str(path)):
+                    resolved = (path.parent / literal).resolve()
+                    if not str(resolved).startswith(str(ROOT.resolve())):
+                        offenders.append(f"{path}: {literal}")
         self.assertEqual(offenders, [])
 
     def test_rejects_planted_forbidden_import(self):
