@@ -61,17 +61,19 @@ SHA-256-pinned fixtures).
 
 | File | Reason |
 |---|---|
-| `.gitignore` | comment naming an author dataset path replaced with a neutral phrase (path-only) |
+| `.gitignore` | comment naming an author dataset path replaced with a neutral phrase, and a `!results/paper_b/**/*.jsonl` exception added for B's governance ledgers (path/tooling-only) |
+| `Makefile` | root Makefile replaced with B-only targets (tooling-only) |
+| `README.md` | replaced with this repository's README (tooling-only) |
 | `docs/paper_split/B_INFRA_CONSTRUCTION_PLAN_20261005.md` | provenance note prepended |
 | `docs/paper_split/FIX_QUEUE_20260927.md` | author host path and username redacted (path-only) |
 | `docs/paper_split/FIX_REPORT_20260927.md` | author host path redacted (path-only) |
 | `docs/paper_split/INDEPENDENT_REVIEW_20260927.md` | author name/username/host path redacted (path-only) |
 | `docs/paper_split/REVIEWER_PROMPT_20260927.md` | author host path redacted (path-only) |
-| `papers/paper_b/Makefile` | `anonymity-check` points at the copied `scripts/check_anonymity.sh` (path-only) |
+| `papers/paper_b/Makefile` | `anonymity-check` points at the copied `scripts/check_anonymity.sh`; `smoke` removes the tracked `smoke_latest` first (path/tooling-only) |
 | `pyproject.toml` | `testpaths` set to this repository's test directories (tooling-only) |
-| `release/check_release_b.json` | author host path in the recorded command redacted (path-only) |
-| `scripts/check_release_independence.py` | B-only; adds the control-test step and a measurement-core check (tooling-only) |
-| `scripts/make_release.py` | B-only allowlist: measurement core dropped, closure modules added (tooling-only) |
+| `release/check_release_b.json` | the author host path in the recorded command and both `cwd` values redacted (path-only) |
+| `scripts/check_release_independence.py` | B-only; control-test step, measurement-core check, relative `cwd` recording, and the `--allow-no-pdf` opt-out (tooling-only) |
+| `scripts/make_release.py` | B-only allowlist (measurement core dropped, closure modules and `requirements.lock` added) and the package README contract/requirements text (tooling-only) |
 | `scripts/release_provenance.py` | anchored on `papers/paper_b/main.tex` (tooling-only) |
 | `scripts/run_local_soak.py` | author-specific binary default replaced with a neutral placeholder (path-only) |
 | `scripts/verify_vendored_pi.py` | provenance record read from `protocols/pi_model_data_provenance.json` (path-only) |
@@ -88,18 +90,21 @@ repository at S.
 
 ### New files not present at S
 
-`Makefile`, `README.md`, `PROVENANCE.md`, `tests/standalone/test_import_allowlist.py`,
-`papers/paper_b/scripts/check_anonymity.sh` (copied from another path),
-`protocols/pi_model_data_provenance.json` (copied from another path), and
+`PROVENANCE.md`, `tests/standalone/test_import_allowlist.py`,
+`papers/paper_b/scripts/check_anonymity.sh` (copied from another path; the source
+was mode 100644 and it is stored here as 100644),
+`protocols/pi_model_data_provenance.json` (copied from another path),
 `docs/paper_split/B_INFRA_CONSTRUCTION_PLAN_20261006.md` (untracked in the source
-working tree at S).
+working tree at S), and the two AI-assisted review records
+`docs/paper_split/B_REPO_REVIEW_20261008.md` and
+`docs/paper_split/B_REPO_REVIEW2_20261008.md`.
 
 ## Licences actually present
 
 | Component | Licence | Evidence |
 |---|---|---|
 | `third_party/pi/` | MIT | `third_party/pi/LICENSE` (Copyright 2025 Mario Zechner; SHA-256 `0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48`, per the vendor verifier) |
-| `third_party/pi/.../doom-overlay/doom/build/doom.wasm` | GPL-2.0 | built from `doomgeneric` (GPL); the binary sits in an example extension only |
+| `third_party/pi/.../doom-overlay/doom/build/doom.wasm` | GPL (version per upstream doomgeneric, not re-checked) | built from `doomgeneric` (github.com/ozkl/doomgeneric) via `doom/build.sh` and `doom/doomgeneric_pi.c`; the binary sits in an example extension only |
 | `third_party/pi/.../src/core/export-html/vendor/highlight.min.js` | BSD-3-Clause | licence header in the file (Highlight.js v11.9.0) |
 | Copied harness schema (`control/reliability_schema/`) | MIT | header in `events.py` and `adjudication.py`; upstream commit `da8dcbd1a9821b852173cbe4805dbd1304ba1d17` |
 | Kev (`jaredpalmer/kev`) and CLM (`Contrastive-LM/CLM`) | Apache-2.0 as stated in plan v3.1 | licence files are not in this repository — **not re-checked** |
