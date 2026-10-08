@@ -20,4 +20,4 @@ runtime = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["experiment_scaffold/tests", "protocols"]
+testpaths = ["tests/control", "tests/release", "tests/standalone"]

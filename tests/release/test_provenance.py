@@ -21,9 +21,9 @@ class ProvenanceTest(unittest.TestCase):
             return subprocess.check_output(['git', *args], cwd=self.root, stderr=subprocess.PIPE).decode().strip()
         self.git = git
         git('init')
-        pin = self.root / 'protocols/paper_a/RELEASE_PIN.yaml'
-        pin.parent.mkdir(parents=True)
-        pin.write_text('status: candidate\n')
+        anchor = self.root / 'papers/paper_b/main.tex'
+        anchor.parent.mkdir(parents=True)
+        anchor.write_text('\\documentclass{article}\n')
         (self.root / 'sample.txt').write_text('committed evidence\n')
         (self.package / 'sample.txt').write_bytes((self.root / 'sample.txt').read_bytes())
         git('add', '.')
@@ -35,6 +35,16 @@ class ProvenanceTest(unittest.TestCase):
 
     def test_accepts_matching_committed_package(self):
         self.assertEqual(verify_manifest(self.root, self.package, self.manifest), [])
+
+    def test_rejects_missing_manuscript_anchor(self):
+        # A commit that removes papers/paper_b/main.tex is not a valid source
+        # commit for the B release, even if every listed file resolves.
+        self.git('rm', 'papers/paper_b/main.tex')
+        self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid',
+                 'commit', '-m', 'drop anchor')
+        self.manifest['source_commit'] = self.git('rev-parse', 'HEAD')
+        errors = verify_manifest(self.root, self.package, self.manifest)
+        self.assertTrue(any('anchor' in e for e in errors), errors)
 
     def test_rejects_package_tampering_even_with_updated_manifest(self):
         data = b'changed evidence\n'

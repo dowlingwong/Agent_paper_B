@@ -17,9 +17,9 @@ def verify_manifest(root: Path, package: Path, manifest: dict) -> list[str]:
         if source != resolved:
             errors.append('source_commit must be a full commit hash')
         git(root, 'merge-base', '--is-ancestor', source, 'HEAD')
-        git(root, 'show', source + ':protocols/paper_a/RELEASE_PIN.yaml')
+        git(root, 'show', source + ':papers/paper_b/main.tex')
     except subprocess.CalledProcessError:
-        return ['source commit is absent, not an ancestor, or lacks the release pin']
+        return ['source commit is absent, not an ancestor, or lacks the B manuscript anchor']
     if manifest.get('source_commit_dirty') is not False:
         errors.append('source_commit_dirty is not false')
     rows = manifest.get('files', [])
