@@ -223,3 +223,22 @@ Code edits are docstring citations only. No independent review is claimed.
 The PDF is a validation build, not a result/release artifact; tracked
 `papers/paper_b/main.pdf` is restored after inspection as required by execution
 §2.8. No full-page-limit readiness or full-manuscript review is asserted.
+
+## 8 October — Stage 2 draft, B2 execution fixes and Ada B-only clone
+
+Based on `b09c85a`. Task design/challenge are reasoning-only: no sampling, outcome-producing task code, seal hash or realism execution. The single independent AI-assisted challenge is preserved with its original NO verdict; proposed pre-seal dispositions are in the draft. D-ATT2 remains a STOP.
+
+| Executed check | Observed result |
+|---|---|
+| Fresh B-only GitHub clone + locked Python 3.13.4 B2 review | 207 control tests pass; two major/two minor defects reproduced; original report/logs/probes retained |
+| Repaired `python -m unittest discover -s tests/control -v` | 212 tests in 6.927 s, OK; log in `results/validation_logs/B2_REPAIR_FULL_20261008/control_tests.txt` |
+| Same-review independent repair recheck | 29 targeted tests pass; five regressions detect original code and pass repairs; masks preserved through bootstrap; selected model/target cutoff match; negative bounds and accounting retained |
+| Ada SSH, authorized clone only | `zhixu_experiment` DNS failure; configured `experiment_zhixu` succeeds. HTTPS GitHub clone lacked credential; existing SSH GitHub key succeeds, remote B-only clone HEAD `b09c85a0cd67a67cf4c1f5918091a4ae41ee6173`, clean |
+| Ada `python3 --version`, `node --version`, command lookup | Defaults Python 3.10.12 / Node 12.22.9; no python3.11/12/13 or uv found on PATH. No pinned B environment/build exists yet |
+| B Pi interface source inspection | Note prepared; native fixture/Node/runtime tests not executed |
+
+Code moves to Ada only through GitHub. No GPU inventory, foreign-process investigation, model endpoint, Paper A resource, authorization command/record or pilot was touched. D-ADA1 access/clone is partial adoption, not execution clearance. Raw repair outputs remain in scratch; repository copies remove workstation checkout paths, with hashes regenerated for those portable copies. Source hashes reviewed independently are unchanged.
+
+Additional checks: 6 release tests and 12 standalone tests pass. An engineering-only smoke at a new scratch output passed 11/11; tracked smoke fixtures were not modified. The portable repair probe exited 0. Both reproduction-package SHA-256 manifests validate; added document host-path scan passes; five protected pins and RUNBOOK §14.2 remain unchanged. `git diff --check` passes. No manuscript change was made in this step.
+
+B2 fixes, original/rechecked AI-assisted reviews and CPU validation artifacts committed as `d9c5e30`; source/test hashes match the reviewed bytes. The separate handoff commit contains only proposed task design/challenge/interface and status/decision records.

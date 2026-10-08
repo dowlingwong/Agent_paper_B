@@ -199,14 +199,14 @@ All other rows remain pending; none is an evidence-run authorization.
 | D-DEC1 | Stage 4 | pending; positive temperature and recorded transported seeds |
 | D-CAP1 | Stage 5 | pending; separate engineering allowance; explicit qualification accounting |
 | D-RES1 | Stage 5 | pending; bounded supervised infrastructure resumption |
-| D-ADA1 | by 20 Oct | pending; B-only access, clone, one free card, free port, Ada plan |
+| D-ADA1 | by 20 Oct | partially answered: author authorized Ada B-only access/clone; completed through existing SSH key. Card, port and execution plan remain pending |
 | D-DAC2 | after measurement | pending; conditional Kev-4B primary, CLM ablation |
 | D-DAC3–6 | before pilot | pending; questions/max_chars, features, projection, Kev size |
 | D-REF1 | Stage 4 | pending; descriptive oracle/random references |
 | D-GOV1/2 | Stage 5 | pending; schema/ledger/adjudication, default no panel |
 | D-PT1/2/3 | after screen | pending; post-freeze extension and separate budget |
 | B2-N / B2-BAVAR | before 15 Nov | pending; author's verdict and hand-reading |
-| D-ATT2 | Stage 2 | pending; challenged design does not yet exist |
+| D-ATT2 | Stage 2 | STOP: proposed design and single challenge/dispositions exist; author approval needed before seal/code |
 | Evidence authorizations | per phase | absent; author must create and commit each himself |
 
 Stage 1's decision STOP is closed: the author answered all five now items,
@@ -214,5 +214,11 @@ recorded here and in RUNBOOK §16. D-ROUTE retains route after pilot; plan
 IP10.4 and execution Stage 8 now agree. Citation repairs are recorded above.
 B1/B2 and all live gates remain open. Next Stage 2 STOP is D-ATT2: author
 approval of the independently challenged design before sealing and outcome
-code. Ada/model work remains unapproved, and evidence phases require their
+code. Ada access/clone is authorized; GPU/model work remains unapproved, and evidence phases require their
 own author-created, author-committed authorization records.
+
+## 8 October — current B2 and attempt-2 disposition
+
+[B2 original review](B2_REREVIEW_20261008.md) preserved; [repair recheck](B2_REPAIR_RECHECK_20261008.md) resolves both major and both minor findings. Scoped code verdict is design-ready yes, with 212 control tests passing. Author B2-N/B2-BAVAR remain open.
+
+[Attempt-2 draft](../../experiments/paper_b/task_cc_v2/ATTEMPT2_DESIGN.md) includes proposed fixes to the [single challenge](ATTEMPT2_CHALLENGE_20261008.md). D-ATT2 is the next STOP; no hash, task outcome code or run exists. Proposed changes include SGD instead of stumps, canonical-prefix/raw-batch deployment audit, fixed eight-slot tails, exact replay/aggregation rules, symmetry-aware family audit, and terminal budget-matched R4 comparison with unchanged .02 threshold. None is adopted by this status record.

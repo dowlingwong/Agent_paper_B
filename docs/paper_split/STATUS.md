@@ -11,6 +11,35 @@ Planned work is not completed work. No paid run or submission has been made. No
 model call has been made. B's analysis side runs on CPU; the live lane is not
 built.
 
+## 8 October — B2 repairs checked; task approval STOP reached
+
+Independent AI-assisted B2 review found two major and two minor defects;
+all four execution fixes are committed as `d9c5e30` and rechecked in [B2_REPAIR_RECHECK_20261008.md](B2_REPAIR_RECHECK_20261008.md).
+Scoped controller/evaluation-core verdict: **design-ready yes**; 212 control
+tests pass. Five new regression tests detect the original defects. B1,
+author novelty/BAVAR readings and overall scientific readiness remain open.
+The original review and reproduction outputs are retained.
+
+Attempt-2 [design](../../experiments/paper_b/task_cc_v2/ATTEMPT2_DESIGN.md)
+is proposed and unsealed. Its single [AI-assisted challenge](ATTEMPT2_CHALLENGE_20261008.md)
+found three blockers, two major and two minor issues. The design contains
+written pre-seal dispositions; the original NO verdict is preserved. No
+outcome code, generator, realism run or seal hash exists. **STOP D-ATT2:**
+author must approve the proposed task law and explicit changes before sealing.
+
+The author's latest message authorized B-only Ada access/clone. The configured
+SSH alias is `experiment_zhixu`; the requested spelling `zhixu_experiment`
+failed resolution. HTTPS clone lacked GitHub credentials; existing Ada SSH
+key access succeeded, and a new B-only clone exists at `<B_ADA_CHECKOUT>`
+(home-relative `Agent_paper_B`) on `b09c85a`. Default Python 3.10.12 and Node
+12.22.9 differ from pins 3.13.4 and 22.19.0; the remote environment is not
+qualified. No GPU/card/port/model inspection or process was performed.
+Full D-ADA1 execution details, D-CAP1, D-DEC1, D-RES1 and personally committed
+phase authorization records remain outstanding. No pilot was dispatched.
+
+IP2 [interface note](B_PI_INTERFACE_NOTE_20261008.md) is prepared by source
+inspection within B only. Native fixture/runtime tests remain unperformed.
+
 ## 8 October — author decisions recorded; Stage 1 closed
 
 The author answered D-PLAN, D-DAC1, D-F10, D-INFRA-RB and D-ROUTE in the

@@ -672,3 +672,22 @@ and separate budget authorization. Each evidence phase still requires its own
 author-created, author-committed authorization record before execution.
 P-B1 and P-B2 remain unchanged. The source repository and Paper A remain
 off limits under the kickoff; no template-reading suggestion overrides that.
+
+## 17. Ada access granted; pre-seal task STOP — 8 October 2026
+
+The author authorized B-only Ada access and cloning in the takeover chat.
+The configured alias `experiment_zhixu` reaches Ada; a new B-only
+`Agent_paper_B` clone was created through GitHub using its existing SSH key.
+This partially answers D-ADA1, without changing the one-card co-tenant rule,
+resource caps, pending execution choices or personally committed phase records.
+The requested pilot remains downstream of B1, B2, tooling, smoke, both-lane
+qualification and screen. No GPU/model or evidence run was dispatched.
+
+The attempt-2 design is proposed, independently challenged once, and revised
+with written pre-seal dispositions. D-ATT2 approval is still required before
+a seal or outcome code. SGD, additional canonical-prefix/raw-batch structure,
+work slots, symmetry-aware near-duplicate test and terminal R4 interpretation
+are proposals only. Numeric R1–R9 thresholds, P-B1 and §14.2 remain unchanged.
+The B2 execution corrections are scoped to the existing adopted controller
+and tuning protocol, with a separate AI-assisted repair recheck; author
+novelty/BAVAR decisions and overall scientific readiness remain open.

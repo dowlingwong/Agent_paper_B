@@ -317,9 +317,11 @@ Source: OPEN_ITEMS.md §B2; execution §3.
 
 Needed: Stage 2, before sealing or outcome code. Author answer: pending.
 
-Attempt 1 failed and remains unchanged. The attempt-2 design and independent challenge do not exist yet; this is an advance checklist, not a request to approve an unseen design.
+Attempt 1 remains unchanged from the author-approved citation baseline. The [attempt-2 design](../../experiments/paper_b/task_cc_v2/ATTEMPT2_DESIGN.md) is proposed and unsealed. The single [AI-assisted challenge](ATTEMPT2_CHALLENGE_20261008.md) originally found three blockers, two major and two minor issues; its NO verdict is preserved, and the design now contains written dispositions. No task outcome code or run exists.
 
-Options: Approve the complete challenged design later with an execution-bug-only repair allowance; or reject it and revise before any seal/run.
+The concrete approval covers: deployment-contract diagnostics and canonical-prefix/raw dev1/dev2 batches; linear SGD replacing stump search; the eight-slot fixed horizon and two-slot audit response; 48/32/8 disjoint families with symmetry-aware .10 near-duplicate exclusion; exact RNG/pairing/visibility/aggregation; 144 CPU leaves with never reused as competent control; 30-minute/1-GiB CPU caps; execution-bug-only repairs and P-B1 verbatim. R1–R9 numeric thresholds stay fixed. R4 explicitly changes from an isolated c1 diagnostic to the terminal budget-matched now-versus-never comparison, preserving >.02; this interpretive change requires your adoption. This approval is not GPU/model or phase authorization.
+
+Options: Approve the complete challenged design now with an execution-bug-only repair allowance; or reject it and revise before any seal/run.
 
 Recommendation: Execution-bug fixes only, each recorded; seal mechanisms, R1–R9, families/partitions, thresholds, CPU budget and P-B1 failure disposition before implementation. One realism run; no outcome-based tuning.
 
@@ -345,3 +347,7 @@ in force. One Ada card, no foreign compute context, zero new spend. The source
 repository and Paper A are off limits; code crosses machines only via GitHub.
 No real-agent result, independent-review verdict, or submission readiness is
 claimed by this sheet.
+
+## 8 October — Ada access answer received
+
+The author authorized access to Ada and cloning B in the latest chat. B-only cloning succeeded through the existing server SSH key using configured alias `experiment_zhixu`; no credential was copied. Treat D-ADA1 as partially answered: one-card co-tenant rule still binds, and card/port/run plan choices remain pending. Runtime defaults differ from the pins; no GPU/model/pilot work has run. D-CAP1/D-DEC1/D-RES1 and each personally created/committed authorization remain required.
