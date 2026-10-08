@@ -69,11 +69,12 @@ Local CPU only; all live studies PLANNED.
 ## 8 October — standalone repository verification
 
 Ran in a fresh clone of this repository (`git clone ~/Documents/agent_paper_b`)
-at commit `82c30a3`, with a Python 3.13.15 virtual environment outside both
-repositories built from `requirements.lock` (adding `hypothesis==6.112.1`,
-`attrs==26.1.0`, `sortedcontainers==2.4.0`, `scikit-learn==1.5.2`,
-`scipy==1.18.1`). The reference is a `git archive` export of the source at
-`S = 4154f153` under the same interpreter.
+at commit `907354b` (the review-correction commit), with a Python 3.13.15
+virtual environment outside both repositories built from `requirements.lock`
+(adding `hypothesis==6.112.1`, `attrs==26.1.0`, `sortedcontainers==2.4.0`,
+`scikit-learn==1.5.2`, `scipy==1.18.1`). The reference is a `git archive` export
+of the source at `S = 4154f153` under the same interpreter. The review record is
+committed immediately after this file.
 
 | Executed check | Result |
 |---|---|
@@ -82,6 +83,7 @@ repositories built from `requirements.lock` (adding `hypothesis==6.112.1`,
 | `unittest discover -s tests/release -p 'test_*.py'` | 6 PASS |
 | `unittest discover -s tests/standalone -p 'test_*.py'` | 8 PASS; the allowlist test rejects every planted forbidden import, measurement import, dynamic literal and unknown causal_branch module |
 | `experiments/paper_b/smoke_b.py --output <scratch>` | **11/11** engineering checks; output byte-identical to the S export (`smoke_summary.json`, `SMOKE_BANNER.txt`) |
+| `make smoke-b` | **11/11**; output byte-identical to S; the target removes the tracked `results/paper_b/smoke_latest` first (review M1) and the directory was restored with `git checkout --` |
 | `launch_validator.py --contract protocols/paper_b/contract_v3.yaml --phase qualification --lane one_step --for-launch` | refuses, exit 1; stdout/stderr byte-identical to S |
 | same with `--lane sequential` | refuses, exit 1; byte-identical to S |
 | `launch_validator.py --contract protocols/paper_b/contract_v2.yaml --phase <engineering\|qualification\|pilot> --lane <one_step\|sequential> --for-launch` | refuses in all six combinations, exit 1; byte-identical to S |
@@ -91,7 +93,7 @@ repositories built from `requirements.lock` (adding `hypothesis==6.112.1`,
 | `make -C papers/paper_b anonymity-check` | **PASSED** (submission mode) |
 | `make paper-b` | PDF build blocked: `latexmk` is not installed on this host. The verify and anonymity halves are recorded separately above |
 | `scripts/verify_vendored_pi.py` | fails exactly as at S, exit 1, JSON byte-identical: `unexplained additions to the vendored tree: packages/coding-agent/src/core/http-dispatcher.ts, .../core/sdk.ts, .../test/http-dispatcher.test.ts` |
-| Host-path scan (`/home/`, `/Users/`, `/data1/`, `/ceph/`, author username, credentials) | clean outside `third_party/pi/`. Remaining hits are upstream `third_party/pi` examples/tests only: `coding-agent/test/footer-width.test.ts`, `test/paths.test.ts`, `test/suite/regressions/6104-find-root-relativization.test.ts`, `coding-agent/CHANGELOG.md`, `coding-agent/docs/rpc.md`, `examples/extensions/doom-overlay/doom/build/doom.js`, `examples/extensions/overlay-qa-tests.ts`, `src/core/export-html/template.js`, `packages/tui/test/terminal-image.test.ts`, `test.sh`, and the two `.jsonl` fixtures. No credential files |
+| Host-path scan (macOS and Linux home-directory prefixes, dataset-root and shared-storage prefixes, the author username, and credential filenames) | clean outside `third_party/pi/`. Remaining hits are upstream `third_party/pi` examples/tests only: `coding-agent/test/footer-width.test.ts`, `test/paths.test.ts`, `test/suite/regressions/6104-find-root-relativization.test.ts`, `coding-agent/CHANGELOG.md`, `coding-agent/docs/rpc.md`, `examples/extensions/doom-overlay/doom/build/doom.js`, `examples/extensions/overlay-qa-tests.ts`, `src/core/export-html/template.js`, `packages/tui/test/terminal-image.test.ts`, `test.sh`, and the two `.jsonl` fixtures. No credential files |
 
 `make check-release-b` rewrote `release/check_release_b.json`; it was restored
 with `git checkout -- release/check_release_b.json` afterwards. `make paper-b`
