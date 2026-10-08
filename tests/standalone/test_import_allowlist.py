@@ -4,7 +4,8 @@ This replaces the repository-wide ``check_split.py``.  It walks the AST of every
 Python file under B's code roots and collects:
 
 - ``import x`` / ``from x import y`` module names, resolving relative imports
-  against the ``causal_branch`` package root;
+  against the ``causal_branch`` package root and expanding ``from pkg import
+  name`` to ``pkg.name`` when that name is a module;
 - the literal module name in ``importlib.import_module(...)`` and
   ``__import__(...)`` calls;
 - the literal path in ``importlib.util.spec_from_file_location(...)`` calls
@@ -46,6 +47,9 @@ ROOTS = [
     ROOT / "scripts/make_release.py",
     ROOT / "scripts/check_release_independence.py",
     ROOT / "scripts/release_provenance.py",
+    # The copied shared modules B depends on (closure and live lane).
+    *sorted((PKG / "causal_branch").glob("*.py")),
+    PKG / "causal_branch/adapters",
 ]
 
 #: Every causal_branch module B is allowed to name.  Sourced from the measured
@@ -91,9 +95,10 @@ FORBIDDEN_CAUSAL_BRANCH = {
     "causal_branch.variance_adaptive",
 }
 
+#: Third-party packages B may import.  Local repository modules are handled
+#: separately by :data:`LOCAL_MODULES`.
 ALLOWED_THIRD_PARTY = {
     "numpy", "yaml", "sklearn", "hypothesis", "torch", "clm",
-    "release_provenance",
 }
 
 _IMPORT_CALLS = {"import_module", "__import__"}
@@ -139,6 +144,21 @@ def _literal_string(node: ast.AST) -> str | None:
     return None
 
 
+def _is_submodule(package: str, name: str) -> bool:
+    """Whether ``package.name`` is (or would be) a module rather than an attribute.
+
+    Inside ``causal_branch`` a name counts as a submodule when it is a file or
+    package in this repository or a known forbidden module (which is absent).
+    """
+    if package != "causal_branch" and not package.startswith("causal_branch."):
+        return False
+    full = f"{package}.{name}"
+    if full in FORBIDDEN_CAUSAL_BRANCH:
+        return True
+    target = PKG.joinpath(*full.split("."))
+    return target.with_suffix(".py").is_file() or (target / "__init__.py").is_file()
+
+
 def imports_from_source(source: str, filename: str, mod_of=None) -> set[str]:
     """The literal module names a source string imports."""
     found: set[str] = set()
@@ -155,9 +175,16 @@ def imports_from_source(source: str, filename: str, mod_of=None) -> set[str]:
                 pkg = base.split(".")[:-1] if Path(filename).name != "__init__.py" else base.split(".")
                 up = node.level - 1
                 basepkg = pkg[: len(pkg) - up]
-                found.add(".".join(basepkg + ([node.module] if node.module else [])))
+                base_name = ".".join(basepkg + ([node.module] if node.module else []))
             elif node.module:
-                found.add(node.module)
+                base_name = node.module
+            else:
+                continue
+            found.add(base_name)
+            # ``from pkg import name`` may import the submodule ``pkg.name``.
+            for alias in node.names:
+                if alias.name != "*" and _is_submodule(base_name, alias.name):
+                    found.add(f"{base_name}.{alias.name}")
         elif isinstance(node, ast.Call):
             func = node.func
             name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", None)
@@ -236,9 +263,37 @@ class ImportAllowlistTest(unittest.TestCase):
                         offenders.append(f"{path}: {literal}")
         self.assertEqual(offenders, [])
 
+    def test_shared_modules_are_scanned(self):
+        # The copied shared modules are roots, so a forbidden import there is
+        # caught by the real scan.
+        shared = (PKG / "causal_branch/checkpoint.py").resolve()
+        scanned = {p.resolve() for root in ROOTS for p in _iter_py(root)}
+        self.assertIn(shared, scanned)
+
     def test_rejects_planted_forbidden_import(self):
         planted = "import causal_branch.variance_adaptive\n"
         names = _causal_branch_names(imports_from_source(planted, "planted.py"))
+        self.assertTrue(names & FORBIDDEN_CAUSAL_BRANCH)
+
+    def test_rejects_planted_from_causal_branch_import(self):
+        planted = "from causal_branch import variance_adaptive\n"
+        names = _causal_branch_names(imports_from_source(planted, "planted.py"))
+        self.assertTrue(names & FORBIDDEN_CAUSAL_BRANCH)
+
+    def test_rejects_planted_relative_from_import(self):
+        # ``from .. import state_audit`` in a module under control/ resolves to
+        # ``causal_branch.state_audit``.
+        filename = str(PKG / "causal_branch/control/planted.py")
+        planted = "from .. import state_audit\n"
+        names = _causal_branch_names(imports_from_source(planted, filename, _mod_of))
+        self.assertTrue(names & FORBIDDEN_CAUSAL_BRANCH)
+
+    def test_rejects_planted_shared_module_import(self):
+        # A forbidden import planted in a copied shared module is caught.
+        shared = (PKG / "causal_branch/checkpoint.py").read_text()
+        names = _causal_branch_names(
+            imports_from_source(shared + "\nimport causal_branch.state_audit\n", str(PKG / "causal_branch/checkpoint.py"), _mod_of)
+        )
         self.assertTrue(names & FORBIDDEN_CAUSAL_BRANCH)
 
     def test_rejects_planted_measurement_import(self):
