@@ -1,0 +1,295 @@
+diff --git a/experiment_scaffold/src/causal_branch/control/evaluate_tree.py b/experiment_scaffold/src/causal_branch/control/evaluate_tree.py
+index b920830..b6666e3 100644
+--- a/experiment_scaffold/src/causal_branch/control/evaluate_tree.py
++++ b/experiment_scaffold/src/causal_branch/control/evaluate_tree.py
+@@ -87,6 +87,8 @@ class EvaluationReport:
+     regimes: dict = field(default_factory=dict)
+     #: fixed now/later/never values (reference only; they ignore the budget)
+     fixed_values: dict = field(default_factory=dict)
++    #: allocator units only; excludes training, model tokens and elapsed time
++    resource_accounting: dict = field(default_factory=dict)
+ 
+ 
+ def _value(rows, regimes) -> float:
+@@ -96,30 +98,46 @@ def _value(rows, regimes) -> float:
+     return float(np.mean([r[field[regimes[r.get("draw_id", r["root_id"])]]] for r in rows]))
+ 
+ 
+-def _run_allocator(rows, scores, params, q):
++def _allocation_result(rows, scores, params, q):
++    """Preserve eligibility and accounting, including on resampled rows.
++
++    Legacy rows without masks declare both checkpoints feasible.
++    """
+     roots = [
+         AllocatorRoot(
+             root_id=r.get("draw_id", r["root_id"]),
+             s1=scores[r["root_id"]]["s1"], s2=scores[r["root_id"]]["s2"],
+             reached2=bool(r["reached2"]), terminated=bool(r.get("terminated", False)),
++            feasible1=bool(r.get("feasible1", True)),
++            feasible2=bool(r.get("feasible2", True)),
+             family=r["family"], split=r.get("split", ""),
+         )
+         for r in rows
+     ]
+-    return allocate(roots, budget=budget_for(len(roots), q), params=params, q=q).regimes
++    return allocate(roots, budget=budget_for(len(roots), q), params=params, q=q)
++
++
++def _run_allocator(rows, scores, params, q):
++    return _allocation_result(rows, scores, params, q).regimes
+ 
+ 
+-def _calibrate(controller, model, dev_rows, dev_views, q):
++def _calibrate(controller, model, dev_rows, dev_views, q, *, models_by_c2=None):
+     """Pick the controller's own (c1, c2, R) from its grid on development data.
+ 
+     Every controller has the same number of candidate configurations; the first
+     best configuration in grid order wins, so calibration is deterministic.
+     """
+ 
+-    scores = controller.score(model, dev_views)
++    # The proposed rule's continuation target depends on the candidate c2.
++    # Cache its three existing fits; no additional allocation configurations.
++    scores_by_c2 = ({c2: controller.score(fitted, dev_views)
++                     for c2, fitted in models_by_c2.items()}
++                    if models_by_c2 is not None else None)
++    scores = controller.score(model, dev_views) if scores_by_c2 is None else None
+     best, best_value = None, -np.inf
+     for params in controller.grid():
+-        regimes = _run_allocator(dev_rows, scores, params, q)
++        candidate_scores = scores_by_c2[params.c2] if scores_by_c2 is not None else scores
++        regimes = _run_allocator(dev_rows, candidate_scores, params, q)
+         value = _value(dev_rows, regimes)
+         if value > best_value:
+             best, best_value = params, value
+@@ -186,10 +204,10 @@ def _calibration(pred, target) -> dict:
+     return out
+ 
+ 
+-def _null_diagnostics(dev_rows, rows, scores):
++def _null_diagnostics(dev_rows, rows, scores, *, c2=0.0):
+     """Out-of-fold calibration/ranking on development and test heterogeneity."""
+ 
+-    fit = cross_fitted_scores(dev_rows)
++    fit = cross_fitted_scores(dev_rows, c2=c2)
+     oof = fit.scores
+     imm_dev = np.array([r["u_now"] - r["u_never"] for r in dev_rows])
+     cont_dev = np.array([r["u_later"] - r["u_never"] for r in dev_rows])
+@@ -212,6 +230,7 @@ def _null_diagnostics(dev_rows, rows, scores):
+         "vwait": _calibration(vwait_dev, [fit.targets[r["root_id"]] for r in dev_rows]),
+     }
+     return {
++        "continuation_target_c2": c2,
+         "oof_calibration": calibration,
+         "oof_corr_a1_immediate": _corr(a1_dev, imm_dev),
+         "oof_corr_a2_continuation": _corr(a2_dev, cont_dev),
+@@ -268,13 +287,32 @@ def evaluate_tree(dev_rows, test_rows, *, q: float = 0.25, n_bootstrap: int = 20
+     controllers = _controllers()
+     dev_views = decision_views(dev_rows)
+     test_views = decision_views(test_rows)
+-    models = {name: c.fit(dev_rows) for name, c in controllers.items()}
+-    params = {name: _calibrate(controllers[name], models[name], dev_rows, dev_views, q)
+-              for name in controllers}
++    models, params = {}, {}
++    for name, controller in controllers.items():
++        candidate_models = None
++        if isinstance(controller, ProposedTiming):
++            candidate_models = {c2: controller.fit(dev_rows, c2=c2)
++                                for c2 in dict.fromkeys(p.c2 for p in controller.grid())}
++            model = next(iter(candidate_models.values()))
++        else:
++            model = controller.fit(dev_rows)
++        params[name] = _calibrate(controller, model, dev_rows, dev_views, q,
++                                  models_by_c2=candidate_models)
++        models[name] = (candidate_models[params[name].c2]
++                        if candidate_models is not None else model)
+     scores = {name: controllers[name].score(models[name], test_views) for name in controllers}
+     budget = budget_for(len(test_rows), q)
+-    regimes = {name: _run_allocator(test_rows, scores[name], params[name], q)
+-               for name in models}
++    allocations = {name: _allocation_result(test_rows, scores[name], params[name], q)
++                   for name in models}
++    regimes = {name: result.regimes for name, result in allocations.items()}
++    resource_accounting = {
++        name: {"realized_calls": result.realized_calls,
++               "unspent_calls": result.unspent_calls,
++               "allocator_work": result.work,
++               "work_per_call": 1.0,
++               "scope": "allocator units; excludes fitting, model tokens and elapsed time"}
++        for name, result in allocations.items()
++    }
+     values = {name: _value(test_rows, regimes[name]) for name in models}
+ 
+     families, index = _family_index(test_rows)
+@@ -321,7 +359,8 @@ def evaluate_tree(dev_rows, test_rows, *, q: float = 0.25, n_bootstrap: int = 20
+         readings[key] = reading
+         precision[key] = half
+ 
+-    diagnostics = _null_diagnostics(dev_rows, test_rows, scores["proposed"])
++    diagnostics = _null_diagnostics(dev_rows, test_rows, scores["proposed"],
++                                     c2=models["proposed"]["c2"])
+     matching = matching_report(list(controllers.values()))
+     fixed_values = {regime: _value(test_rows, FixedRegimeController(regime).regimes(test_rows))
+                     for regime in ("now", "later", "never")}
+@@ -347,7 +386,7 @@ def evaluate_tree(dev_rows, test_rows, *, q: float = 0.25, n_bootstrap: int = 20
+     # by the two contrasts themselves.
+     p_report = p_grid_report(per_family_gains, p_grid, alpha=0.05,
+                              m=DERIVED_M, checkpoints=2)
+-    family_bounds, _ = simultaneous_family_bounds(per_family_gains, 0.05, 0.0)
++    _, family_bounds = simultaneous_family_bounds(per_family_gains, 0.05, 0.0)
+     working = CheckpointAllowance(WORKING_P, "sensitivity_assumption")
+     p_path = path_allowance(working, working)
+     tax = 2.0 * DERIVED_M * p_path
+@@ -381,4 +420,5 @@ def evaluate_tree(dev_rows, test_rows, *, q: float = 0.25, n_bootstrap: int = 20
+                             matching=matching, n_roots=len(test_rows),
+                             n_families=len(families), budget=budget,
+                             params={k: (v.c1, v.c2, v.reserve) for k, v in params.items()},
+-                            regimes=regimes, fixed_values=fixed_values)
++                            regimes=regimes, fixed_values=fixed_values,
++                            resource_accounting=resource_accounting)
+diff --git a/experiment_scaffold/src/causal_branch/control/timing.py b/experiment_scaffold/src/causal_branch/control/timing.py
+index 3d4ed31..c3e1807 100644
+--- a/experiment_scaffold/src/causal_branch/control/timing.py
++++ b/experiment_scaffold/src/causal_branch/control/timing.py
+@@ -347,8 +347,13 @@ class ProposedTiming:
+     l2: float = RIDGE_L2
+     n_folds: int = N_FOLDS
+ 
+-    def fit(self, rows) -> dict:
+-        return fit_global(rows, l2=self.l2, n_folds=self.n_folds)
++    def fit(self, rows, *, c2: float | None = None) -> dict:
++        """Fit continuation value for the requested second-stage cutoff.
++
++        ``None`` preserves the default median out-of-fold cutoff. Calibration
++        supplies each candidate cutoff explicitly and retains its matching fit.
++        """
++        return fit_global(rows, l2=self.l2, n_folds=self.n_folds, c2=c2)
+ 
+     def score(self, model: dict, views) -> dict[str, dict[str, float]]:
+         return {rid: dict(v, s1=v["a1"] - v["vwait"], s2=v["a2"])
+diff --git a/tests/control/test_evaluate_tree.py b/tests/control/test_evaluate_tree.py
+index 43da0f9..0842b44 100644
+--- a/tests/control/test_evaluate_tree.py
++++ b/tests/control/test_evaluate_tree.py
+@@ -3,6 +3,7 @@ import inspect
+ import sys
+ import unittest
+ from pathlib import Path
++from unittest.mock import patch
+ 
+ import numpy as np
+ 
+@@ -113,6 +114,66 @@ class TestHarness(unittest.TestCase):
+                      "vwait_sd", "vwait_heterogeneity_ci", "a2_ranking_quality"):
+             self.assertIn(diag, report.diagnostics)
+ 
++    def test_selected_continuation_cutoff_matches_scored_model_and_diagnostics(self):
++        seen = []
++        original = timing.ProposedTiming.score
++
++        def observe(controller, model, views):
++            seen.append((model["c2"], set(views)))
++            return original(controller, model, views)
++
++        with patch.object(timing.ProposedTiming, "score", observe):
++            report = run_evaluation(_context_rows("d", 240, 30),
++                                    _context_rows("t", 240, 31), n_bootstrap=12)
++        test_cutoffs = [c2 for c2, ids in seen if "t0" in ids]
++        self.assertEqual(test_cutoffs, [report.params["proposed"][1]])
++        self.assertEqual(report.diagnostics["continuation_target_c2"], test_cutoffs[0])
++        self.assertEqual({c2 for c2, ids in seen if "d0" in ids}, set(timing.GRID_C))
++        self.assertEqual(timing.ProposedTiming().tuning_configs, 27)
++
++    def test_masks_survive_evaluation_and_bootstrap_with_all_roots_in_denominator(self):
++        self.dev = [dict(r, feasible1=False, feasible2=False) for r in self.dev]
++        self.test = [dict(r, feasible1=False, feasible2=False) for r in self.test]
++        allocations = []
++        original = evaluate_tree.allocate
++
++        def observe(roots, **kwargs):
++            result = original(roots, **kwargs)
++            allocations.append((roots, result))
++            return result
++
++        with patch.object(evaluate_tree, "allocate", observe):
++            report = run_evaluation(self.dev, self.test, n_bootstrap=12)
++        self.assertTrue(any("__" in r.root_id for roots, _ in allocations for r in roots))
++        self.assertTrue(all(result.realized_calls == 0 for _, result in allocations))
++        self.assertEqual(report.n_roots, len(self.test))
++        for name in report.regimes:
++            self.assertEqual(set(report.regimes[name].values()), {"never"})
++            self.assertEqual(report.values[name], np.mean([r["u_never"] for r in self.test]))
++            self.assertEqual(report.resource_accounting[name]["unspent_calls"], report.budget)
++
++    def test_phase_specific_masks_and_resource_accounting(self):
++        for phase in (1, 2):
++            with self.subTest(phase=phase):
++                dev = [dict(r, **{f"feasible{phase}": False}) for r in self.dev]
++                test = [dict(r, **{f"feasible{phase}": False}) for r in self.test]
++                report = run_evaluation(dev, test, n_bootstrap=12)
++                prohibited = "now" if phase == 1 else "later"
++                for name, regimes in report.regimes.items():
++                    self.assertNotIn(prohibited, regimes.values())
++                    calls = sum(r != "never" for r in regimes.values())
++                    accounting = report.resource_accounting[name]
++                    self.assertEqual(accounting["realized_calls"], calls)
++                    self.assertEqual(accounting["unspent_calls"], report.budget - calls)
++                    self.assertEqual(accounting["allocator_work"], calls)
++
++    def test_nonqualifying_family_bounds_are_preserved(self):
++        dev = [dict(r, feasible1=False, feasible2=False) for r in self.dev]
++        test = [dict(r, feasible1=False, feasible2=False) for r in self.test]
++        report = run_evaluation(dev, test, n_bootstrap=12)
++        self.assertEqual(set(report.n1["family_bounds_at_p0"]), set(report.contrasts))
++        self.assertTrue(all(b < 0 for b in report.n1["family_bounds_at_p0"].values()))
++
+     def test_n1_wired_into_evaluation(self):
+         report = run_evaluation(self.dev, self.test, n_bootstrap=40, seed=4)
+         n1 = report.n1
+diff --git a/tests/control/test_timing.py b/tests/control/test_timing.py
+index 0ca25e2..2e3690d 100644
+--- a/tests/control/test_timing.py
++++ b/tests/control/test_timing.py
+@@ -18,6 +18,7 @@ from causal_branch.control.timing import (  # noqa: E402
+     _fold_of,
+     cross_fitted_scores,
+     decision_views,
++    fit_global,
+     matching_report,
+ )
+ 
+@@ -59,6 +60,33 @@ def _null_fixture(seed=0, n=30, n_families=5):
+ 
+ 
+ class TestProposedRule(unittest.TestCase):
++    def test_explicit_cutoff_changes_continuation_policy_fit(self):
++        # A bounded constant-gain world: verifying later gains .05. The two
++        # existing grid cutoffs admit all or no second-stage verifications,
++        # so a reused median-cutoff fit cannot represent both policies.
++        rows = [_row(f"r{i}", f"f{i % 5}", i / 30, (i % 3) / 3,
++                     u_now=0.5, u_later=0.55, u_never=0.5)
++                for i in range(30)]
++        controller = ProposedTiming()
++        views = decision_views(rows)
++        admit = controller.fit(rows, c2=0.0)
++        deny = controller.fit(rows, c2=0.1)
++        self.assertEqual(admit["c2"], 0.0)
++        self.assertEqual(deny["c2"], 0.1)
++        admit_scores = controller.score(admit, views)
++        deny_scores = controller.score(deny, views)
++        for rid in views:
++            self.assertGreater(admit_scores[rid]["vwait"], 0.04)
++            self.assertEqual(deny_scores[rid]["vwait"], 0.0)
++            self.assertEqual(admit_scores[rid]["a1"], deny_scores[rid]["a1"])
++            self.assertEqual(admit_scores[rid]["a2"], deny_scores[rid]["a2"])
++        # Omitting c2 keeps the established default rather than choosing a
++        # calibration-grid value behind the caller's back.
++        default = controller.fit(rows)
++        previous_default = fit_global(rows, l2=controller.l2, n_folds=controller.n_folds)
++        self.assertEqual(default["c2"], previous_default["c2"])
++        np.testing.assert_array_equal(default["w_wait"], previous_default["w_wait"])
++
+     def test_max_bias_correction(self):
+         """M1/M2: the corrected target is centred on zero *and* clearly below naive.
+ 

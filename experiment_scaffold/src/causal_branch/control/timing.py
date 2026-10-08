@@ -347,8 +347,13 @@ class ProposedTiming:
     l2: float = RIDGE_L2
     n_folds: int = N_FOLDS
 
-    def fit(self, rows) -> dict:
-        return fit_global(rows, l2=self.l2, n_folds=self.n_folds)
+    def fit(self, rows, *, c2: float | None = None) -> dict:
+        """Fit continuation value for the requested second-stage cutoff.
+
+        ``None`` preserves the default median out-of-fold cutoff. Calibration
+        supplies each candidate cutoff explicitly and retains its matching fit.
+        """
+        return fit_global(rows, l2=self.l2, n_folds=self.n_folds, c2=c2)
 
     def score(self, model: dict, views) -> dict[str, dict[str, float]]:
         return {rid: dict(v, s1=v["a1"] - v["vwait"], s2=v["a2"])

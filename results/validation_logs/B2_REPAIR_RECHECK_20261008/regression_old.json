@@ -1,0 +1,46 @@
+{
+  "code_root": "/private/tmp/B2_rereview_20261008",
+  "results": {
+    "TestProposedRule.test_explicit_cutoff_changes_continuation_policy_fit": {
+      "testsRun": 1,
+      "failures": 0,
+      "errors": 1,
+      "details": [
+        "Traceback (most recent call last):\n  File \"<B_MAC_CHECKOUT>/tests/control/test_timing.py\", line 72, in test_explicit_cutoff_changes_continuation_policy_fit\n    admit = controller.fit(rows, c2=0.0)\nTypeError: ProposedTiming.fit() got an unexpected keyword argument 'c2'\n"
+      ]
+    },
+    "TestHarness.test_selected_continuation_cutoff_matches_scored_model_and_diagnostics": {
+      "testsRun": 1,
+      "failures": 1,
+      "errors": 0,
+      "details": [
+        "Traceback (most recent call last):\n  File \"<B_MAC_CHECKOUT>/tests/control/test_evaluate_tree.py\", line 129, in test_selected_continuation_cutoff_matches_scored_model_and_diagnostics\n    self.assertEqual(test_cutoffs, [report.params[\"proposed\"][1]])\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Lists differ: [0.06618655012568458] != [-0.5]\n\nFirst differing element 0:\n0.06618655012568458\n-0.5\n\n- [0.06618655012568458]\n+ [-0.5]\n"
+      ]
+    },
+    "TestHarness.test_masks_survive_evaluation_and_bootstrap_with_all_roots_in_denominator": {
+      "testsRun": 1,
+      "failures": 1,
+      "errors": 0,
+      "details": [
+        "Traceback (most recent call last):\n  File \"<B_MAC_CHECKOUT>/tests/control/test_evaluate_tree.py\", line 148, in test_masks_survive_evaluation_and_bootstrap_with_all_roots_in_denominator\n    self.assertTrue(all(result.realized_calls == 0 for _, result in allocations))\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n"
+      ]
+    },
+    "TestHarness.test_phase_specific_masks_and_resource_accounting": {
+      "testsRun": 1,
+      "failures": 1,
+      "errors": 1,
+      "details": [
+        "Traceback (most recent call last):\n  File \"<B_MAC_CHECKOUT>/tests/control/test_evaluate_tree.py\", line 163, in test_phase_specific_masks_and_resource_accounting\n    self.assertNotIn(prohibited, regimes.values())\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'now' unexpectedly found in dict_values(['now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'now', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never', 'never'])\n",
+        "Traceback (most recent call last):\n  File \"<B_MAC_CHECKOUT>/tests/control/test_evaluate_tree.py\", line 165, in test_phase_specific_masks_and_resource_accounting\n    accounting = report.resource_accounting[name]\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'EvaluationReport' object has no attribute 'resource_accounting'\n"
+      ]
+    },
+    "TestHarness.test_nonqualifying_family_bounds_are_preserved": {
+      "testsRun": 1,
+      "failures": 1,
+      "errors": 0,
+      "details": [
+        "Traceback (most recent call last):\n  File \"<B_MAC_CHECKOUT>/tests/control/test_evaluate_tree.py\", line 174, in test_nonqualifying_family_bounds_are_preserved\n    self.assertEqual(set(report.n1[\"family_bounds_at_p0\"]), set(report.contrasts))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Items in the second set but not the first:\n'proposed-bavar'\n'proposed-myopic'\n"
+      ]
+    }
+  }
+}

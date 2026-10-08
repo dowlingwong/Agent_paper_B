@@ -3,6 +3,7 @@ import inspect
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 
@@ -112,6 +113,66 @@ class TestHarness(unittest.TestCase):
         for diag in ("oof_corr_a1_immediate", "oof_corr_a2_continuation",
                      "vwait_sd", "vwait_heterogeneity_ci", "a2_ranking_quality"):
             self.assertIn(diag, report.diagnostics)
+
+    def test_selected_continuation_cutoff_matches_scored_model_and_diagnostics(self):
+        seen = []
+        original = timing.ProposedTiming.score
+
+        def observe(controller, model, views):
+            seen.append((model["c2"], set(views)))
+            return original(controller, model, views)
+
+        with patch.object(timing.ProposedTiming, "score", observe):
+            report = run_evaluation(_context_rows("d", 240, 30),
+                                    _context_rows("t", 240, 31), n_bootstrap=12)
+        test_cutoffs = [c2 for c2, ids in seen if "t0" in ids]
+        self.assertEqual(test_cutoffs, [report.params["proposed"][1]])
+        self.assertEqual(report.diagnostics["continuation_target_c2"], test_cutoffs[0])
+        self.assertEqual({c2 for c2, ids in seen if "d0" in ids}, set(timing.GRID_C))
+        self.assertEqual(timing.ProposedTiming().tuning_configs, 27)
+
+    def test_masks_survive_evaluation_and_bootstrap_with_all_roots_in_denominator(self):
+        self.dev = [dict(r, feasible1=False, feasible2=False) for r in self.dev]
+        self.test = [dict(r, feasible1=False, feasible2=False) for r in self.test]
+        allocations = []
+        original = evaluate_tree.allocate
+
+        def observe(roots, **kwargs):
+            result = original(roots, **kwargs)
+            allocations.append((roots, result))
+            return result
+
+        with patch.object(evaluate_tree, "allocate", observe):
+            report = run_evaluation(self.dev, self.test, n_bootstrap=12)
+        self.assertTrue(any("__" in r.root_id for roots, _ in allocations for r in roots))
+        self.assertTrue(all(result.realized_calls == 0 for _, result in allocations))
+        self.assertEqual(report.n_roots, len(self.test))
+        for name in report.regimes:
+            self.assertEqual(set(report.regimes[name].values()), {"never"})
+            self.assertEqual(report.values[name], np.mean([r["u_never"] for r in self.test]))
+            self.assertEqual(report.resource_accounting[name]["unspent_calls"], report.budget)
+
+    def test_phase_specific_masks_and_resource_accounting(self):
+        for phase in (1, 2):
+            with self.subTest(phase=phase):
+                dev = [dict(r, **{f"feasible{phase}": False}) for r in self.dev]
+                test = [dict(r, **{f"feasible{phase}": False}) for r in self.test]
+                report = run_evaluation(dev, test, n_bootstrap=12)
+                prohibited = "now" if phase == 1 else "later"
+                for name, regimes in report.regimes.items():
+                    self.assertNotIn(prohibited, regimes.values())
+                    calls = sum(r != "never" for r in regimes.values())
+                    accounting = report.resource_accounting[name]
+                    self.assertEqual(accounting["realized_calls"], calls)
+                    self.assertEqual(accounting["unspent_calls"], report.budget - calls)
+                    self.assertEqual(accounting["allocator_work"], calls)
+
+    def test_nonqualifying_family_bounds_are_preserved(self):
+        dev = [dict(r, feasible1=False, feasible2=False) for r in self.dev]
+        test = [dict(r, feasible1=False, feasible2=False) for r in self.test]
+        report = run_evaluation(dev, test, n_bootstrap=12)
+        self.assertEqual(set(report.n1["family_bounds_at_p0"]), set(report.contrasts))
+        self.assertTrue(all(b < 0 for b in report.n1["family_bounds_at_p0"].values()))
 
     def test_n1_wired_into_evaluation(self):
         report = run_evaluation(self.dev, self.test, n_bootstrap=40, seed=4)

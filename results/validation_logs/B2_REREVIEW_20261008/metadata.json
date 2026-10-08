@@ -1,0 +1,17 @@
+{
+  "reviewed_commit": "b09c85a0cd67a67cf4c1f5918091a4ae41ee6173",
+  "python": "3.13.4",
+  "requirements_lock_sha256": "989ba06706612668afe9b80f341680038a3b399838f4fa3abb8e5b078d71e73c",
+  "test_count": 207,
+  "test_seconds": 31.281,
+  "test_exit_code": 0,
+  "clone_tracked_files_unchanged": true,
+  "probe_exit_codes": {
+    "identity": 0,
+    "maxbias": 0,
+    "maxbias2": 0,
+    "eval_semantics": 0,
+    "harness": 0,
+    "planted_maxbias_test": 0
+  }
+}

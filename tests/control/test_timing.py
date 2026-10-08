@@ -18,6 +18,7 @@ from causal_branch.control.timing import (  # noqa: E402
     _fold_of,
     cross_fitted_scores,
     decision_views,
+    fit_global,
     matching_report,
 )
 
@@ -59,6 +60,33 @@ def _null_fixture(seed=0, n=30, n_families=5):
 
 
 class TestProposedRule(unittest.TestCase):
+    def test_explicit_cutoff_changes_continuation_policy_fit(self):
+        # A bounded constant-gain world: verifying later gains .05. The two
+        # existing grid cutoffs admit all or no second-stage verifications,
+        # so a reused median-cutoff fit cannot represent both policies.
+        rows = [_row(f"r{i}", f"f{i % 5}", i / 30, (i % 3) / 3,
+                     u_now=0.5, u_later=0.55, u_never=0.5)
+                for i in range(30)]
+        controller = ProposedTiming()
+        views = decision_views(rows)
+        admit = controller.fit(rows, c2=0.0)
+        deny = controller.fit(rows, c2=0.1)
+        self.assertEqual(admit["c2"], 0.0)
+        self.assertEqual(deny["c2"], 0.1)
+        admit_scores = controller.score(admit, views)
+        deny_scores = controller.score(deny, views)
+        for rid in views:
+            self.assertGreater(admit_scores[rid]["vwait"], 0.04)
+            self.assertEqual(deny_scores[rid]["vwait"], 0.0)
+            self.assertEqual(admit_scores[rid]["a1"], deny_scores[rid]["a1"])
+            self.assertEqual(admit_scores[rid]["a2"], deny_scores[rid]["a2"])
+        # Omitting c2 keeps the established default rather than choosing a
+        # calibration-grid value behind the caller's back.
+        default = controller.fit(rows)
+        previous_default = fit_global(rows, l2=controller.l2, n_folds=controller.n_folds)
+        self.assertEqual(default["c2"], previous_default["c2"])
+        np.testing.assert_array_equal(default["w_wait"], previous_default["w_wait"])
+
     def test_max_bias_correction(self):
         """M1/M2: the corrected target is centred on zero *and* clearly below naive.
 

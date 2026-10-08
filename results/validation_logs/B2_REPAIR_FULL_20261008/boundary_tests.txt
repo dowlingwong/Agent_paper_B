@@ -1,0 +1,12 @@
+/private/tmp/B2_rereview_env/bin/python -m unittest discover -s tests/release -p 'test_*.py'
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.712s
+
+OK
+/private/tmp/B2_rereview_env/bin/python -m unittest discover -s tests/standalone -p 'test_*.py'
+............
+----------------------------------------------------------------------
+Ran 12 tests in 0.850s
+
+OK

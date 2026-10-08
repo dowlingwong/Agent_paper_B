@@ -1,0 +1,16 @@
+{
+  "current": {
+    "testsRun": 1,
+    "failures": 0,
+    "errors": 0,
+    "details": []
+  },
+  "reconstructed_old": {
+    "testsRun": 1,
+    "failures": 1,
+    "errors": 0,
+    "details": [
+      "Traceback (most recent call last):\n  File \"/private/tmp/B2_rereview_20261008/tests/control/test_timing.py\", line 82, in test_max_bias_correction\n    self.assertLess(abs(float(vwait_means.mean())), 3.0 * se_v + 0.01)\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 0.10615049514879508 not less than np.float64(0.055799633686644375)\n"
+    ]
+  }
+}

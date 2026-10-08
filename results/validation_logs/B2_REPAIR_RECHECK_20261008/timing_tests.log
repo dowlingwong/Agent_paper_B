@@ -1,0 +1,20 @@
+test_bavar_scores_checkpoint2_from_h2 (test_timing.TestControllerImplementations.test_bavar_scores_checkpoint2_from_h2) ... ok
+test_checkpoint1_view_has_no_later_information (test_timing.TestControllerImplementations.test_checkpoint1_view_has_no_later_information) ... ok
+test_fixed_regimes (test_timing.TestControllerImplementations.test_fixed_regimes) ... ok
+test_myopic_cannot_reserve_and_the_ablation_can (test_timing.TestControllerImplementations.test_myopic_cannot_reserve_and_the_ablation_can) ... ok
+test_proposed_s1_reorders_relative_to_myopic (test_timing.TestControllerImplementations.test_proposed_s1_reorders_relative_to_myopic) ... ok
+test_scores_do_not_move_when_outcomes_are_poisoned (test_timing.TestControllerImplementations.test_scores_do_not_move_when_outcomes_are_poisoned) ... ok
+test_scoring_refuses_raw_rows (test_timing.TestControllerImplementations.test_scoring_refuses_raw_rows) ... ok
+test_matched_controllers_pass (test_timing.TestMatchingReport.test_matched_controllers_pass) ... ok
+test_mismatched_capacity_fails (test_timing.TestMatchingReport.test_mismatched_capacity_fails) ... ok
+test_mismatched_folds_fails (test_timing.TestMatchingReport.test_mismatched_folds_fails) ... ok
+test_explicit_cutoff_changes_continuation_policy_fit (test_timing.TestProposedRule.test_explicit_cutoff_changes_continuation_policy_fit) ... ok
+test_fold_leakage_is_absent (test_timing.TestProposedRule.test_fold_leakage_is_absent) ... ok
+test_folds_keep_families_whole (test_timing.TestProposedRule.test_folds_keep_families_whole) ... ok
+test_max_bias_correction (test_timing.TestProposedRule.test_max_bias_correction)
+M1/M2: the corrected target is centred on zero *and* clearly below naive. ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.359s
+
+OK

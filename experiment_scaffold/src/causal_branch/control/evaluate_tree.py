@@ -87,6 +87,8 @@ class EvaluationReport:
     regimes: dict = field(default_factory=dict)
     #: fixed now/later/never values (reference only; they ignore the budget)
     fixed_values: dict = field(default_factory=dict)
+    #: allocator units only; excludes training, model tokens and elapsed time
+    resource_accounting: dict = field(default_factory=dict)
 
 
 def _value(rows, regimes) -> float:
@@ -96,30 +98,46 @@ def _value(rows, regimes) -> float:
     return float(np.mean([r[field[regimes[r.get("draw_id", r["root_id"])]]] for r in rows]))
 
 
-def _run_allocator(rows, scores, params, q):
+def _allocation_result(rows, scores, params, q):
+    """Preserve eligibility and accounting, including on resampled rows.
+
+    Legacy rows without masks declare both checkpoints feasible.
+    """
     roots = [
         AllocatorRoot(
             root_id=r.get("draw_id", r["root_id"]),
             s1=scores[r["root_id"]]["s1"], s2=scores[r["root_id"]]["s2"],
             reached2=bool(r["reached2"]), terminated=bool(r.get("terminated", False)),
+            feasible1=bool(r.get("feasible1", True)),
+            feasible2=bool(r.get("feasible2", True)),
             family=r["family"], split=r.get("split", ""),
         )
         for r in rows
     ]
-    return allocate(roots, budget=budget_for(len(roots), q), params=params, q=q).regimes
+    return allocate(roots, budget=budget_for(len(roots), q), params=params, q=q)
 
 
-def _calibrate(controller, model, dev_rows, dev_views, q):
+def _run_allocator(rows, scores, params, q):
+    return _allocation_result(rows, scores, params, q).regimes
+
+
+def _calibrate(controller, model, dev_rows, dev_views, q, *, models_by_c2=None):
     """Pick the controller's own (c1, c2, R) from its grid on development data.
 
     Every controller has the same number of candidate configurations; the first
     best configuration in grid order wins, so calibration is deterministic.
     """
 
-    scores = controller.score(model, dev_views)
+    # The proposed rule's continuation target depends on the candidate c2.
+    # Cache its three existing fits; no additional allocation configurations.
+    scores_by_c2 = ({c2: controller.score(fitted, dev_views)
+                     for c2, fitted in models_by_c2.items()}
+                    if models_by_c2 is not None else None)
+    scores = controller.score(model, dev_views) if scores_by_c2 is None else None
     best, best_value = None, -np.inf
     for params in controller.grid():
-        regimes = _run_allocator(dev_rows, scores, params, q)
+        candidate_scores = scores_by_c2[params.c2] if scores_by_c2 is not None else scores
+        regimes = _run_allocator(dev_rows, candidate_scores, params, q)
         value = _value(dev_rows, regimes)
         if value > best_value:
             best, best_value = params, value
@@ -186,10 +204,10 @@ def _calibration(pred, target) -> dict:
     return out
 
 
-def _null_diagnostics(dev_rows, rows, scores):
+def _null_diagnostics(dev_rows, rows, scores, *, c2=0.0):
     """Out-of-fold calibration/ranking on development and test heterogeneity."""
 
-    fit = cross_fitted_scores(dev_rows)
+    fit = cross_fitted_scores(dev_rows, c2=c2)
     oof = fit.scores
     imm_dev = np.array([r["u_now"] - r["u_never"] for r in dev_rows])
     cont_dev = np.array([r["u_later"] - r["u_never"] for r in dev_rows])
@@ -212,6 +230,7 @@ def _null_diagnostics(dev_rows, rows, scores):
         "vwait": _calibration(vwait_dev, [fit.targets[r["root_id"]] for r in dev_rows]),
     }
     return {
+        "continuation_target_c2": c2,
         "oof_calibration": calibration,
         "oof_corr_a1_immediate": _corr(a1_dev, imm_dev),
         "oof_corr_a2_continuation": _corr(a2_dev, cont_dev),
@@ -268,13 +287,32 @@ def evaluate_tree(dev_rows, test_rows, *, q: float = 0.25, n_bootstrap: int = 20
     controllers = _controllers()
     dev_views = decision_views(dev_rows)
     test_views = decision_views(test_rows)
-    models = {name: c.fit(dev_rows) for name, c in controllers.items()}
-    params = {name: _calibrate(controllers[name], models[name], dev_rows, dev_views, q)
-              for name in controllers}
+    models, params = {}, {}
+    for name, controller in controllers.items():
+        candidate_models = None
+        if isinstance(controller, ProposedTiming):
+            candidate_models = {c2: controller.fit(dev_rows, c2=c2)
+                                for c2 in dict.fromkeys(p.c2 for p in controller.grid())}
+            model = next(iter(candidate_models.values()))
+        else:
+            model = controller.fit(dev_rows)
+        params[name] = _calibrate(controller, model, dev_rows, dev_views, q,
+                                  models_by_c2=candidate_models)
+        models[name] = (candidate_models[params[name].c2]
+                        if candidate_models is not None else model)
     scores = {name: controllers[name].score(models[name], test_views) for name in controllers}
     budget = budget_for(len(test_rows), q)
-    regimes = {name: _run_allocator(test_rows, scores[name], params[name], q)
-               for name in models}
+    allocations = {name: _allocation_result(test_rows, scores[name], params[name], q)
+                   for name in models}
+    regimes = {name: result.regimes for name, result in allocations.items()}
+    resource_accounting = {
+        name: {"realized_calls": result.realized_calls,
+               "unspent_calls": result.unspent_calls,
+               "allocator_work": result.work,
+               "work_per_call": 1.0,
+               "scope": "allocator units; excludes fitting, model tokens and elapsed time"}
+        for name, result in allocations.items()
+    }
     values = {name: _value(test_rows, regimes[name]) for name in models}
 
     families, index = _family_index(test_rows)
@@ -321,7 +359,8 @@ def evaluate_tree(dev_rows, test_rows, *, q: float = 0.25, n_bootstrap: int = 20
         readings[key] = reading
         precision[key] = half
 
-    diagnostics = _null_diagnostics(dev_rows, test_rows, scores["proposed"])
+    diagnostics = _null_diagnostics(dev_rows, test_rows, scores["proposed"],
+                                     c2=models["proposed"]["c2"])
     matching = matching_report(list(controllers.values()))
     fixed_values = {regime: _value(test_rows, FixedRegimeController(regime).regimes(test_rows))
                     for regime in ("now", "later", "never")}
@@ -347,7 +386,7 @@ def evaluate_tree(dev_rows, test_rows, *, q: float = 0.25, n_bootstrap: int = 20
     # by the two contrasts themselves.
     p_report = p_grid_report(per_family_gains, p_grid, alpha=0.05,
                              m=DERIVED_M, checkpoints=2)
-    family_bounds, _ = simultaneous_family_bounds(per_family_gains, 0.05, 0.0)
+    _, family_bounds = simultaneous_family_bounds(per_family_gains, 0.05, 0.0)
     working = CheckpointAllowance(WORKING_P, "sensitivity_assumption")
     p_path = path_allowance(working, working)
     tax = 2.0 * DERIVED_M * p_path
@@ -381,4 +420,5 @@ def evaluate_tree(dev_rows, test_rows, *, q: float = 0.25, n_bootstrap: int = 20
                             matching=matching, n_roots=len(test_rows),
                             n_families=len(families), budget=budget,
                             params={k: (v.c1, v.c2, v.reserve) for k, v in params.items()},
-                            regimes=regimes, fixed_values=fixed_values)
+                            regimes=regimes, fixed_values=fixed_values,
+                            resource_accounting=resource_accounting)

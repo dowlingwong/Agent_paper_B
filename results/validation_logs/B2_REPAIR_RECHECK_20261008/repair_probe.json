@@ -1,0 +1,727 @@
+{
+  "cutoff": {
+    "score_calls": [
+      {
+        "c2": -0.5,
+        "split": "dev"
+      },
+      {
+        "c2": 0.0,
+        "split": "dev"
+      },
+      {
+        "c2": 0.1,
+        "split": "dev"
+      },
+      {
+        "c2": 0.0,
+        "split": "test"
+      }
+    ],
+    "selected": 0.0,
+    "diagnostic": 0.0
+  },
+  "grids": {
+    "proposed": {
+      "count": 27,
+      "l2": 0.01,
+      "folds": 5,
+      "tuples": [
+        [
+          -0.5,
+          -0.5,
+          0
+        ],
+        [
+          -0.5,
+          0.0,
+          0
+        ],
+        [
+          -0.5,
+          0.1,
+          0
+        ],
+        [
+          -0.25,
+          -0.5,
+          0
+        ],
+        [
+          -0.25,
+          0.0,
+          0
+        ],
+        [
+          -0.25,
+          0.1,
+          0
+        ],
+        [
+          -0.1,
+          -0.5,
+          0
+        ],
+        [
+          -0.1,
+          0.0,
+          0
+        ],
+        [
+          -0.1,
+          0.1,
+          0
+        ],
+        [
+          -0.05,
+          -0.5,
+          0
+        ],
+        [
+          -0.05,
+          0.0,
+          0
+        ],
+        [
+          -0.05,
+          0.1,
+          0
+        ],
+        [
+          0.0,
+          -0.5,
+          0
+        ],
+        [
+          0.0,
+          0.0,
+          0
+        ],
+        [
+          0.0,
+          0.1,
+          0
+        ],
+        [
+          0.05,
+          -0.5,
+          0
+        ],
+        [
+          0.05,
+          0.0,
+          0
+        ],
+        [
+          0.05,
+          0.1,
+          0
+        ],
+        [
+          0.1,
+          -0.5,
+          0
+        ],
+        [
+          0.1,
+          0.0,
+          0
+        ],
+        [
+          0.1,
+          0.1,
+          0
+        ],
+        [
+          0.2,
+          -0.5,
+          0
+        ],
+        [
+          0.2,
+          0.0,
+          0
+        ],
+        [
+          0.2,
+          0.1,
+          0
+        ],
+        [
+          0.3,
+          -0.5,
+          0
+        ],
+        [
+          0.3,
+          0.0,
+          0
+        ],
+        [
+          0.3,
+          0.1,
+          0
+        ]
+      ]
+    },
+    "myopic": {
+      "count": 27,
+      "l2": 0.01,
+      "folds": 5,
+      "tuples": [
+        [
+          -0.5,
+          -0.5,
+          0
+        ],
+        [
+          -0.5,
+          0.0,
+          0
+        ],
+        [
+          -0.5,
+          0.1,
+          0
+        ],
+        [
+          -0.25,
+          -0.5,
+          0
+        ],
+        [
+          -0.25,
+          0.0,
+          0
+        ],
+        [
+          -0.25,
+          0.1,
+          0
+        ],
+        [
+          -0.1,
+          -0.5,
+          0
+        ],
+        [
+          -0.1,
+          0.0,
+          0
+        ],
+        [
+          -0.1,
+          0.1,
+          0
+        ],
+        [
+          -0.05,
+          -0.5,
+          0
+        ],
+        [
+          -0.05,
+          0.0,
+          0
+        ],
+        [
+          -0.05,
+          0.1,
+          0
+        ],
+        [
+          0.0,
+          -0.5,
+          0
+        ],
+        [
+          0.0,
+          0.0,
+          0
+        ],
+        [
+          0.0,
+          0.1,
+          0
+        ],
+        [
+          0.05,
+          -0.5,
+          0
+        ],
+        [
+          0.05,
+          0.0,
+          0
+        ],
+        [
+          0.05,
+          0.1,
+          0
+        ],
+        [
+          0.1,
+          -0.5,
+          0
+        ],
+        [
+          0.1,
+          0.0,
+          0
+        ],
+        [
+          0.1,
+          0.1,
+          0
+        ],
+        [
+          0.2,
+          -0.5,
+          0
+        ],
+        [
+          0.2,
+          0.0,
+          0
+        ],
+        [
+          0.2,
+          0.1,
+          0
+        ],
+        [
+          0.3,
+          -0.5,
+          0
+        ],
+        [
+          0.3,
+          0.0,
+          0
+        ],
+        [
+          0.3,
+          0.1,
+          0
+        ]
+      ]
+    },
+    "bavar": {
+      "count": 27,
+      "l2": 0.01,
+      "folds": 5,
+      "tuples": [
+        [
+          -0.5,
+          -0.5,
+          0
+        ],
+        [
+          -0.5,
+          -0.5,
+          1
+        ],
+        [
+          -0.5,
+          -0.5,
+          2
+        ],
+        [
+          -0.5,
+          0.0,
+          0
+        ],
+        [
+          -0.5,
+          0.0,
+          1
+        ],
+        [
+          -0.5,
+          0.0,
+          2
+        ],
+        [
+          -0.5,
+          0.1,
+          0
+        ],
+        [
+          -0.5,
+          0.1,
+          1
+        ],
+        [
+          -0.5,
+          0.1,
+          2
+        ],
+        [
+          0.0,
+          -0.5,
+          0
+        ],
+        [
+          0.0,
+          -0.5,
+          1
+        ],
+        [
+          0.0,
+          -0.5,
+          2
+        ],
+        [
+          0.0,
+          0.0,
+          0
+        ],
+        [
+          0.0,
+          0.0,
+          1
+        ],
+        [
+          0.0,
+          0.0,
+          2
+        ],
+        [
+          0.0,
+          0.1,
+          0
+        ],
+        [
+          0.0,
+          0.1,
+          1
+        ],
+        [
+          0.0,
+          0.1,
+          2
+        ],
+        [
+          0.1,
+          -0.5,
+          0
+        ],
+        [
+          0.1,
+          -0.5,
+          1
+        ],
+        [
+          0.1,
+          -0.5,
+          2
+        ],
+        [
+          0.1,
+          0.0,
+          0
+        ],
+        [
+          0.1,
+          0.0,
+          1
+        ],
+        [
+          0.1,
+          0.0,
+          2
+        ],
+        [
+          0.1,
+          0.1,
+          0
+        ],
+        [
+          0.1,
+          0.1,
+          1
+        ],
+        [
+          0.1,
+          0.1,
+          2
+        ]
+      ]
+    },
+    "constant_reserve": {
+      "count": 27,
+      "l2": 0.01,
+      "folds": 5,
+      "tuples": [
+        [
+          -0.5,
+          -0.5,
+          0
+        ],
+        [
+          -0.5,
+          -0.5,
+          1
+        ],
+        [
+          -0.5,
+          -0.5,
+          2
+        ],
+        [
+          -0.5,
+          0.0,
+          0
+        ],
+        [
+          -0.5,
+          0.0,
+          1
+        ],
+        [
+          -0.5,
+          0.0,
+          2
+        ],
+        [
+          -0.5,
+          0.1,
+          0
+        ],
+        [
+          -0.5,
+          0.1,
+          1
+        ],
+        [
+          -0.5,
+          0.1,
+          2
+        ],
+        [
+          0.0,
+          -0.5,
+          0
+        ],
+        [
+          0.0,
+          -0.5,
+          1
+        ],
+        [
+          0.0,
+          -0.5,
+          2
+        ],
+        [
+          0.0,
+          0.0,
+          0
+        ],
+        [
+          0.0,
+          0.0,
+          1
+        ],
+        [
+          0.0,
+          0.0,
+          2
+        ],
+        [
+          0.0,
+          0.1,
+          0
+        ],
+        [
+          0.0,
+          0.1,
+          1
+        ],
+        [
+          0.0,
+          0.1,
+          2
+        ],
+        [
+          0.1,
+          -0.5,
+          0
+        ],
+        [
+          0.1,
+          -0.5,
+          1
+        ],
+        [
+          0.1,
+          -0.5,
+          2
+        ],
+        [
+          0.1,
+          0.0,
+          0
+        ],
+        [
+          0.1,
+          0.0,
+          1
+        ],
+        [
+          0.1,
+          0.0,
+          2
+        ],
+        [
+          0.1,
+          0.1,
+          0
+        ],
+        [
+          0.1,
+          0.1,
+          1
+        ],
+        [
+          0.1,
+          0.1,
+          2
+        ]
+      ]
+    }
+  },
+  "mask_checks": [
+    {
+      "masks": {
+        "feasible1": false,
+        "feasible2": false
+      },
+      "allocation_calls": 196,
+      "bootstrap_allocation_calls": 80,
+      "n_roots": 240,
+      "budget": 60,
+      "resource_accounting": {
+        "proposed": {
+          "realized_calls": 0,
+          "unspent_calls": 60,
+          "allocator_work": 0.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        },
+        "myopic": {
+          "realized_calls": 0,
+          "unspent_calls": 60,
+          "allocator_work": 0.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        },
+        "bavar": {
+          "realized_calls": 0,
+          "unspent_calls": 60,
+          "allocator_work": 0.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        },
+        "constant_reserve": {
+          "realized_calls": 0,
+          "unspent_calls": 60,
+          "allocator_work": 0.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        }
+      },
+      "family_bounds": {
+        "proposed-myopic": -0.7841002756996854,
+        "proposed-bavar": -0.7841002756996854
+      }
+    },
+    {
+      "masks": {
+        "feasible1": false
+      },
+      "allocation_calls": 196,
+      "bootstrap_allocation_calls": 80,
+      "n_roots": 240,
+      "budget": 60,
+      "resource_accounting": {
+        "proposed": {
+          "realized_calls": 60,
+          "unspent_calls": 0,
+          "allocator_work": 60.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        },
+        "myopic": {
+          "realized_calls": 60,
+          "unspent_calls": 0,
+          "allocator_work": 60.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        },
+        "bavar": {
+          "realized_calls": 60,
+          "unspent_calls": 0,
+          "allocator_work": 60.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        },
+        "constant_reserve": {
+          "realized_calls": 60,
+          "unspent_calls": 0,
+          "allocator_work": 60.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        }
+      },
+      "family_bounds": {
+        "proposed-myopic": -0.7841002756996854,
+        "proposed-bavar": -0.7841002756996854
+      }
+    },
+    {
+      "masks": {
+        "feasible2": false
+      },
+      "allocation_calls": 196,
+      "bootstrap_allocation_calls": 80,
+      "n_roots": 240,
+      "budget": 60,
+      "resource_accounting": {
+        "proposed": {
+          "realized_calls": 60,
+          "unspent_calls": 0,
+          "allocator_work": 60.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        },
+        "myopic": {
+          "realized_calls": 60,
+          "unspent_calls": 0,
+          "allocator_work": 60.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        },
+        "bavar": {
+          "realized_calls": 60,
+          "unspent_calls": 0,
+          "allocator_work": 60.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        },
+        "constant_reserve": {
+          "realized_calls": 60,
+          "unspent_calls": 0,
+          "allocator_work": 60.0,
+          "work_per_call": 1.0,
+          "scope": "allocator units; excludes fitting, model tokens and elapsed time"
+        }
+      },
+      "family_bounds": {
+        "proposed-myopic": -0.7976075054335405,
+        "proposed-bavar": -0.7976075054335405
+      }
+    }
+  ],
+  "passed": true
+}

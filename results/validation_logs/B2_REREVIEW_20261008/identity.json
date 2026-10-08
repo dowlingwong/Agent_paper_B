@@ -1,0 +1,167 @@
+[
+  {
+    "seed": 11,
+    "vwait_sd": 0.10929245289841158,
+    "proposed_myopic_agreement": 0.9833333333333333,
+    "myopic_constant_agreement": 0.5833333333333334,
+    "params": {
+      "proposed": [
+        0.3,
+        -0.5,
+        0
+      ],
+      "myopic": [
+        0.3,
+        -0.5,
+        0
+      ],
+      "bavar": [
+        -0.5,
+        -0.5,
+        2
+      ],
+      "constant_reserve": [
+        -0.5,
+        -0.5,
+        2
+      ]
+    },
+    "bavar_reached_s2_sd": 0.21138359928993225,
+    "contrasts": {
+      "proposed-myopic": {
+        "point": 3.168622627158779e-05,
+        "adjusted_lcb": -0.0010251110232593215,
+        "adjusted_ucb": 0.0015515924184744824,
+        "n_draws": 100,
+        "policies_distinct": true,
+        "degenerate_interval": false,
+        "identical_draw_fraction": 0.1,
+        "reading_precondition_met": true
+      },
+      "proposed-bavar": {
+        "point": 0.027251658651395005,
+        "adjusted_lcb": 0.019643926689399644,
+        "adjusted_ucb": 0.03783645581065148,
+        "n_draws": 100,
+        "policies_distinct": true,
+        "degenerate_interval": false,
+        "identical_draw_fraction": 0.0,
+        "reading_precondition_met": true
+      }
+    },
+    "readings": {
+      "proposed-myopic": "equivalence",
+      "proposed-bavar": "supported"
+    }
+  },
+  {
+    "seed": 21,
+    "vwait_sd": 0.11190078345771147,
+    "proposed_myopic_agreement": 0.9166666666666666,
+    "myopic_constant_agreement": 0.5666666666666667,
+    "params": {
+      "proposed": [
+        0.3,
+        -0.5,
+        0
+      ],
+      "myopic": [
+        0.3,
+        -0.5,
+        0
+      ],
+      "bavar": [
+        -0.5,
+        -0.5,
+        2
+      ],
+      "constant_reserve": [
+        -0.5,
+        -0.5,
+        2
+      ]
+    },
+    "bavar_reached_s2_sd": 0.20704589544051416,
+    "contrasts": {
+      "proposed-myopic": {
+        "point": 0.0031733147781657367,
+        "adjusted_lcb": 0.0005016037999512765,
+        "adjusted_ucb": 0.008202427874342519,
+        "n_draws": 100,
+        "policies_distinct": true,
+        "degenerate_interval": false,
+        "identical_draw_fraction": 0.0,
+        "reading_precondition_met": true
+      },
+      "proposed-bavar": {
+        "point": 0.018530562632360303,
+        "adjusted_lcb": 0.008213192885900564,
+        "adjusted_ucb": 0.03012511719248783,
+        "n_draws": 100,
+        "policies_distinct": true,
+        "degenerate_interval": false,
+        "identical_draw_fraction": 0.0,
+        "reading_precondition_met": true
+      }
+    },
+    "readings": {
+      "proposed-myopic": "supported",
+      "proposed-bavar": "supported"
+    }
+  },
+  {
+    "seed": 31,
+    "vwait_sd": 0.11200534417276925,
+    "proposed_myopic_agreement": 0.8416666666666667,
+    "myopic_constant_agreement": 0.575,
+    "params": {
+      "proposed": [
+        0.2,
+        -0.5,
+        0
+      ],
+      "myopic": [
+        0.3,
+        -0.5,
+        0
+      ],
+      "bavar": [
+        -0.5,
+        -0.5,
+        2
+      ],
+      "constant_reserve": [
+        -0.5,
+        -0.5,
+        2
+      ]
+    },
+    "bavar_reached_s2_sd": 0.22004523775700127,
+    "contrasts": {
+      "proposed-myopic": {
+        "point": -0.0005158460786772734,
+        "adjusted_lcb": -0.004098335420407434,
+        "adjusted_ucb": 0.00215455976219862,
+        "n_draws": 100,
+        "policies_distinct": true,
+        "degenerate_interval": false,
+        "identical_draw_fraction": 0.0,
+        "reading_precondition_met": true
+      },
+      "proposed-bavar": {
+        "point": 0.020451797398776228,
+        "adjusted_lcb": 0.012268850308955522,
+        "adjusted_ucb": 0.028404826892165717,
+        "n_draws": 100,
+        "policies_distinct": true,
+        "degenerate_interval": false,
+        "identical_draw_fraction": 0.0,
+        "reading_precondition_met": true
+      }
+    },
+    "readings": {
+      "proposed-myopic": "equivalence",
+      "proposed-bavar": "supported"
+    }
+  }
+]

@@ -1,0 +1,106 @@
+{
+  "allowance_calls": [
+    [
+      0.02,
+      0.02,
+      "sensitivity_assumption",
+      "sensitivity_assumption"
+    ]
+  ],
+  "empty_surviving_grid": {
+    "p_grid_report": {
+      "proposed-myopic": null,
+      "proposed-bavar": null
+    },
+    "family_bounds_at_p0": {},
+    "p_semantics": "grid values are per-checkpoint allowances p1 = p2 = p; p_path = min(1, p1 + p2); population tax = 2 * m * p_path",
+    "working_p": 0.02,
+    "p_path": 0.04,
+    "derived_m": 3,
+    "population_tax_2mp": 0.24,
+    "population_bound_at_working_p": {
+      "proposed-myopic": -0.2398340498717179,
+      "proposed-bavar": -0.23529291803933614
+    },
+    "audit_arithmetic": {
+      "ucb_24_zero_miss": 0.1173461561549487,
+      "audits_for_0.02": 149
+    },
+    "interference_scope": "covers allocation interference under the derived m <= 3 (derivation in N1_DISPLACEMENT.md; bound reproduced by the 2026-09-27 independent review, finding N5)"
+  },
+  "tax_checks": {
+    "proposed-myopic": {
+      "lcb": 0.00016595012828208303,
+      "reported": -0.2398340498717179,
+      "expected": -0.2398340498717179
+    },
+    "proposed-bavar": {
+      "lcb": 0.004707081960663866,
+      "reported": -0.23529291803933614,
+      "expected": -0.23529291803933614
+    }
+  },
+  "zero_allowance": {
+    "p_path": 0.0,
+    "tax": 0.0,
+    "bounds": {
+      "proposed-myopic": 0.000331472234342417,
+      "proposed-bavar": 0.010424535470631685
+    },
+    "lcbs": {
+      "proposed-myopic": 0.000331472234342417,
+      "proposed-bavar": 0.010424535470631685
+    }
+  },
+  "identical_policies": {
+    "contrasts": {
+      "proposed-myopic": {
+        "point": 0.0,
+        "adjusted_lcb": 0.0,
+        "adjusted_ucb": 0.0,
+        "n_draws": 50,
+        "policies_distinct": false,
+        "degenerate_interval": true,
+        "identical_draw_fraction": 1.0,
+        "reading_precondition_met": false
+      },
+      "proposed-bavar": {
+        "point": 0.015357247854194567,
+        "adjusted_lcb": 0.0035855677165716974,
+        "adjusted_ucb": 0.026811171629862227,
+        "n_draws": 50,
+        "policies_distinct": true,
+        "degenerate_interval": false,
+        "identical_draw_fraction": 0.0,
+        "reading_precondition_met": true
+      }
+    },
+    "readings": {
+      "proposed-myopic": "inconclusive",
+      "proposed-bavar": "supported"
+    }
+  },
+  "scoring_outcome_invariance": true,
+  "raw_rows_refused": true,
+  "all_infeasible_adapter": {
+    "evaluated_calls": 60,
+    "direct_calls": 0
+  },
+  "all_infeasible_harness_calls": {
+    "proposed": 60,
+    "myopic": 60,
+    "bavar": 60,
+    "constant_reserve": 60
+  },
+  "family_bounds_return_order": {
+    "qualifying": {},
+    "all_bounds": {
+      "negative": -0.8066036458008113
+    },
+    "reported_field": {}
+  },
+  "independent_displacement": {
+    "trials": 72000,
+    "max_changed_roots": 3
+  }
+}

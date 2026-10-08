@@ -1,0 +1,20 @@
+test_entrypoint_executes_public_functions (test_evaluate_tree.TestCoverage.test_entrypoint_executes_public_functions) ... ok
+test_calibrated_params_follow_each_controllers_grid (test_evaluate_tree.TestEvaluatedPathGuards.test_calibrated_params_follow_each_controllers_grid) ... ok
+test_identical_policies_never_read_as_equivalence (test_evaluate_tree.TestEvaluatedPathGuards.test_identical_policies_never_read_as_equivalence) ... ok
+test_proposed_differs_from_myopic_where_waiting_value_has_its_own_context (test_evaluate_tree.TestEvaluatedPathGuards.test_proposed_differs_from_myopic_where_waiting_value_has_its_own_context) ... ok
+test_bound_uses_working_p_even_when_no_grid_value_survives (test_evaluate_tree.TestHarness.test_bound_uses_working_p_even_when_no_grid_value_survives) ... ok
+test_development_test_family_leakage_rejected (test_evaluate_tree.TestHarness.test_development_test_family_leakage_rejected) ... ok
+test_displacement_within_derived_bound (test_evaluate_tree.TestHarness.test_displacement_within_derived_bound) ... ok
+test_end_to_end_report (test_evaluate_tree.TestHarness.test_end_to_end_report) ... ok
+test_masks_survive_evaluation_and_bootstrap_with_all_roots_in_denominator (test_evaluate_tree.TestHarness.test_masks_survive_evaluation_and_bootstrap_with_all_roots_in_denominator) ... ok
+test_n1_wired_into_evaluation (test_evaluate_tree.TestHarness.test_n1_wired_into_evaluation) ... ok
+test_nonqualifying_family_bounds_are_preserved (test_evaluate_tree.TestHarness.test_nonqualifying_family_bounds_are_preserved) ... ok
+test_one_p_mapping_for_grid_tax_and_bound (test_evaluate_tree.TestHarness.test_one_p_mapping_for_grid_tax_and_bound) ... ok
+test_out_of_fold_calibration_diagnostics (test_evaluate_tree.TestHarness.test_out_of_fold_calibration_diagnostics) ... ok
+test_phase_specific_masks_and_resource_accounting (test_evaluate_tree.TestHarness.test_phase_specific_masks_and_resource_accounting) ... ok
+test_selected_continuation_cutoff_matches_scored_model_and_diagnostics (test_evaluate_tree.TestHarness.test_selected_continuation_cutoff_matches_scored_model_and_diagnostics) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 2.236s
+
+OK
