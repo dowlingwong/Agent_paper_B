@@ -1,0 +1,1442 @@
+# Copied from the source repository at S = 4154f153, 7 October 2026; this file
+# keeps the B-owned and SHARED inventory entries. The source copy in
+# agent-checkpoint-intervention is the historical one.
+split:
+  date: '2026-09-24'
+  pre_split_commit: 6ebc608b
+  branch: paper-split-2026-09-24
+  archive_record: archive/pre_split_2026-09-24/README.md
+papers:
+  B:
+    root: papers/paper_b
+    entrypoint: papers/paper_b/main.tex
+    class: ICML 2026 development kit (icml2026.sty); swap at ICML 2027 kit release
+    contract: protocols/paper_b/contract_v2.yaml
+    results_namespace: results/paper_b
+    experiments_namespace: experiments/paper_b
+  SHARED:
+    measurement_core: experiment_scaffold/src/causal_branch/measurement/__init__.py
+    canonical_primitives:
+    - experiment_scaffold/src/causal_branch/state_audit.py
+    - experiment_scaffold/src/causal_branch/replay_validity.py
+    - experiment_scaffold/src/causal_branch/finite_repeat_identification.py
+    - experiment_scaffold/src/causal_branch/finite_budget_decisions.py
+    rule: control may import measurement; measurement never imports control
+objects:
+- source_path: papers/paper_b/appendices/B_proofs.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/figures/architecture.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/figures/risk_vs_advantage.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/legacy/appendices/F_faults.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases; historical fault designs
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/figures/abc_checklist_table.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/figures/coverage_table.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/figures/state_audit_results.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/sections/01_motivation.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/sections/04_branch_experiment.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/sections/05_constraints.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases; constraints/cost source (K=8 family historical)
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/sections/06_policy.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases; policy/learner source; E3 registration retained
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/sections/07_evaluation.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/sections/07b_experiments.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/sections/08_study_logic.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/sections/09_limitations.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/legacy/sections/10_related.tex
+  owner: B
+  object_type: historical_source
+  destination: retain
+  topic: pre-split source fragment for B authorship; excluded from builds/releases
+  evidence_status: HISTORICAL
+  validation: not in any build
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: papers/paper_b/main.tex
+  owner: B
+  object_type: infrastructure
+  destination: entrypoint
+  topic: ICML development-template build; research draft
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies:
+  - papers/paper_b/sections/00_abstract.tex
+  - papers/paper_b/sections/01_introduction.tex
+  - papers/paper_b/sections/02_problem.tex
+  - papers/paper_b/sections/03_regimes.tex
+  - papers/paper_b/sections/04_data.tex
+  - papers/paper_b/sections/05_method.tex
+  - papers/paper_b/sections/06_theory.tex
+  - papers/paper_b/sections/07_experiments.tex
+  - papers/paper_b/sections/08_statistics.tex
+  - papers/paper_b/sections/09_limitations.tex
+  - papers/paper_b/sections/10_related.tex
+  - papers/paper_b/sections/11_bridge.tex
+  - papers/paper_b/figures/architecture.tex
+  - papers/paper_b/figures/risk_vs_advantage.tex
+  - papers/paper_b/appendices/B_proofs.tex
+  build_role: reachable
+- source_path: papers/paper_b/sections/00_abstract.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/01_introduction.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/02_problem.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/03_regimes.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/04_data.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/05_method.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/06_theory.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/07_experiments.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/08_statistics.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/09_limitations.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/10_related.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: papers/paper_b/sections/11_bridge.tex
+  owner: B
+  object_type: manuscript_section
+  destination: retain
+  topic: compiled into Paper B; results PLANNED
+  evidence_status: PLANNED
+  validation: make -C papers/paper_b verify
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+  build_role: reachable
+- source_path: label:as:baseline
+  owner: SHARED
+  object_type: assumption
+  destination: papers/paper_a/sections/06a_theory.tex
+  topic: baseline availability; used by both papers
+  evidence_status: PROVED_CHECKED
+  validation: python3 papers/paper_a/verify_replay_validity.py; python3 papers/paper_a/verify_finite_repeat.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:as:unit
+  owner: SHARED
+  object_type: assumption
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: one checkpoint per root; template clustering
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:as:frozen
+  owner: B
+  object_type: assumption
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: frozen comparator/class before calibration
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:as:continuity
+  owner: B
+  object_type: assumption
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: continuous ranking scores
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:thm:ordinal
+  owner: B
+  object_type: theorem
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: 'ordinal sufficiency (PRIOR ART: Okati 2021; Fernandez-Loria & Provost 2022; Kamran 2024)'
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:thm:refinement
+  owner: B
+  object_type: theorem
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: representation loss lower bound
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:def:actionable
+  owner: B
+  object_type: definition
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: actionable value
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:prop:certification
+  owner: B
+  object_type: proposition
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: joint certification and price; scope redesigned for B; N=291 family historical
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:thm:safe
+  owner: B
+  object_type: theorem
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: pessimistic gated deviation, uniform in prevalence
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:cor:interval
+  owner: B
+  object_type: corollary
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: guarantee interval / break-even prevalence
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:cor:proposal
+  owner: B
+  object_type: corollary
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: proposal-agnostic safe improvement
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:prop:l0
+  owner: B
+  object_type: proposition
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: single random-checkpoint deployment
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:prop:transfer
+  owner: B
+  object_type: proposition
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: repeated-deployment transfer bound
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: label:rem:transfer-fails
+  owner: B
+  object_type: remark
+  destination: papers/paper_b/sections/06_theory.tex
+  topic: registered-scale transfer counterexample
+  evidence_status: PROVED_CHECKED
+  validation: proof in papers/paper_b/appendices/B_proofs.tex; arithmetic checks in papers/paper_a/verify_theory.py
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/state_audit.py
+  owner: SHARED
+  object_type: infrastructure
+  destination: measurement core
+  topic: closed fixture, audit, record pipeline, LCB
+  evidence_status: VERIFIED_EXISTING
+  validation: python3 -m unittest discover -s experiment_scaffold/tests -p 'test_state_audit*.py'
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/measurement/__init__.py
+  owner: SHARED
+  object_type: infrastructure
+  destination: measurement core
+  topic: declared shared measurement facade
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies:
+  - experiment_scaffold/src/causal_branch/finite_budget_decisions.py
+  - experiment_scaffold/src/causal_branch/finite_repeat_identification.py
+  - experiment_scaffold/src/causal_branch/replay_validity.py
+  - experiment_scaffold/src/causal_branch/state_audit.py
+- source_path: experiment_scaffold/src/causal_branch/control
+  owner: B
+  object_type: infrastructure
+  destination: control package
+  topic: B schema, learners, allocator, evaluator, world
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make smoke-b; make test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: protocols/paper_b/contract_v1.yaml
+  owner: B
+  object_type: config
+  destination: protocols/paper_b
+  topic: Historical b_v1 draft retained byte-for-byte; rejected by active consumers
+  evidence_status: HISTORICAL
+  validation: historical byte preservation
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: historical_preserve
+  dependencies: []
+- source_path: protocols/paper_b/launch_validator.py
+  owner: B
+  object_type: infrastructure
+  destination: protocols/paper_b
+  topic: rejects missing required fields
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiments/paper_b/smoke_b.py
+  owner: B
+  object_type: infrastructure
+  destination: experiments/paper_b
+  topic: B engineering smoke driver (ENGINEERING_ONLY)
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make smoke-b
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/allocation.py
+  - experiment_scaffold/src/causal_branch/control/evaluate.py
+  - experiment_scaffold/src/causal_branch/control/learners.py
+  - experiment_scaffold/src/causal_branch/control/schema.py
+  - experiment_scaffold/src/causal_branch/control/world.py
+- source_path: tests/control/test_b_contract.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: B negative tests
+  evidence_status: VERIFIED_EXISTING
+  validation: make test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/allocation.py
+  - experiment_scaffold/src/causal_branch/control/evaluate.py
+  - experiment_scaffold/src/causal_branch/control/schema.py
+  - experiment_scaffold/src/causal_branch/control/world.py
+- source_path: tests/check_split.py
+  owner: SHARED
+  object_type: infrastructure
+  destination: tests/
+  topic: split-integrity checker
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: papers/paper_b/references.bib
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiments/paper_b/figures/gain_vs_budget.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiments/paper_b/figures/runtime_table.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiments/paper_b/figures/tradeoff.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiments/paper_b/figures/risk_vs_advantage.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiments/paper_b/figures/availability_cost.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiments/paper_b/figures/_slot.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiments/paper_b/figures/support_table.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/world.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/schema.py
+- source_path: experiment_scaffold/src/causal_branch/control/__init__.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/allocation.py
+  - experiment_scaffold/src/causal_branch/control/evaluate.py
+  - experiment_scaffold/src/causal_branch/control/learners.py
+  - experiment_scaffold/src/causal_branch/control/schema.py
+  - experiment_scaffold/src/causal_branch/control/world.py
+- source_path: experiment_scaffold/src/causal_branch/control/evaluate_tree.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Single evaluation harness; N1 in evaluation; allocator-displacement check
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: c1a6e7c7
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/allocator.py
+  - experiment_scaffold/src/causal_branch/control/replay_validity.py
+  - experiment_scaffold/src/causal_branch/control/timing.py
+  - experiment_scaffold/src/causal_branch/control/branch_tree.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_evaluate_tree.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: End-to-end harness, N1 wiring, displacement bound and public-function coverage
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: c1a6e7c7
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/evaluate_tree.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiment_scaffold/src/causal_branch/control/timing.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Cross-fitted continuation-value proposed rule and comparators (design v2)
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 2f46e858
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_timing.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: Max-bias, fold-leakage, comparator-identity, context-dependence and matching tests
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 2f46e858
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/timing.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiment_scaffold/src/causal_branch/control/allocator.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Shared two-phase hard-budget allocator for every controller
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 2ccbe7ea
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_allocator.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: Two-phase allocator unit tests and a hypothesis hard-budget property
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 2ccbe7ea
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/allocator.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiment_scaffold/src/causal_branch/control/bounds.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Shared one-sided Hoeffding radius derived from the declared contrast range
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: f7f5a070
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiment_scaffold/src/causal_branch/control/replay_validity.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Population-scoped replay allowance (2p); no pointwise gate
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 09131bdb
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/bounds.py
+- source_path: experiment_scaffold/src/causal_branch/control/branch_tree.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: b_branch_v2 records, real-fork tree driver, converter and original-root estimators
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 6b8b7a86
+  dependencies:
+  - experiment_scaffold/src/causal_branch/branching.py
+  - experiment_scaffold/src/causal_branch/checkpoint.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiment_scaffold/src/causal_branch/control/controllers.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Matched two-checkpoint controllers, budget matching, cost ledger, RF witness
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: ef0c1505
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/learners.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/allocation.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/evaluate.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/allocation.py
+  - experiment_scaffold/src/causal_branch/control/schema.py
+- source_path: experiment_scaffold/src/causal_branch/control/schema.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: tests/control/test_allocation_boundaries.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Active split-owned source; no evidence promotion
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 80a634d0084c5af54efd74d8d9695ad9669ec1d1
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/allocation.py
+- source_path: tests/control/test_evaluator_repairs.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Bootstrap, denominator, completeness, lineage and learner-alignment counterexamples
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make test-split
+  source_revision: 6fb1c1716be46cbeb69aace7f9a9dc603ffc0d48
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/evaluate.py
+  - experiment_scaffold/src/causal_branch/control/learners.py
+  - experiment_scaffold/src/causal_branch/control/schema.py
+  - experiments/paper_b/smoke_b.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: protocols/paper_b/contract_v2.yaml
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Single active draft b_v2; no live run authorized
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 1d474f1511effa6876ec0047930bca0707e8fad8
+  dependencies:
+  - protocols/paper_b/launch_validator.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_contract_v2.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Positive synthetic phase fixtures and missing/stale/cross-lane/version refusals
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 1d474f1511effa6876ec0047930bca0707e8fad8
+  dependencies:
+  - protocols/paper_b/launch_validator.py
+  - protocols/paper_b/contract_v2.yaml
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiment_scaffold/src/causal_branch/control/tree.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Three-leaf closed CPU fixtures, no learner
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 6399a913f1992e13f096d14047e947faef17fa61
+  dependencies:
+  - protocols/paper_b/contract_v2.yaml
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc/task.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: 'Candidate-consistency task: fit tool, verifier, frozen response rule, hidden eval'
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: fff91719
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/branch_tree.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc/law.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Frozen development-screen law, four mechanism classes, two families each
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: fff91719
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc/pilot_law.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Separate pilot generator/law, frozen before pilot outcomes (not run)
+  evidence_status: PLANNED
+  validation: make check-split test-split
+  source_revision: fff91719
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc/witnesses.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Executable fixed-policy witnesses through the real fork path; stop-condition checks
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: fff91719
+  dependencies:
+  - experiments/paper_b/task_cc/task.py
+  - experiments/paper_b/task_cc/law.py
+  - experiment_scaffold/src/causal_branch/control/branch_tree.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc/__init__.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Candidate-consistency task package
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: fff91719
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc_live/cc_live_generator.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Live task family generator on bundled tabular data (train/dev1/dev2/hidden)
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 5e52264e
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc_live/cc_live_candidate.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Executable decision-stump candidate, fit tool and frozen verifier
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 5e52264e
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc_live/cc_live_task.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: 'Live task adapter: visible dev batches, online checkpoint 2, hidden grade'
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 5e52264e
+  dependencies:
+  - experiments/paper_b/task_cc_live/cc_live_candidate.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc_live/cc_live_tools.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Pi tool definitions and exact candidate submission schema
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 5e52264e
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc_live/cc_live_prompts.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Live task prompts with the exact submission format
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 5e52264e
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc_live/cc_live_realism.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Task-realism checks with scripted careless/typical/careful behaviours
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split; run cc_live_realism.py
+  source_revision: 0ba57b71
+  dependencies:
+  - experiments/paper_b/task_cc_live/cc_live_task.py
+  - experiments/paper_b/task_cc_live/cc_live_generator.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc_live/cc_live_run_task.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: CPU run of the live task through the real fork path with the mock provider
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 5e52264e
+  dependencies:
+  - experiments/paper_b/task_cc_live/cc_live_generator.py
+  - experiments/paper_b/task_cc_live/cc_live_task.py
+  - experiment_scaffold/src/causal_branch/control/branch_tree.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/task_cc_live/__init__.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Live candidate-consistency task package
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 5e52264e
+  dependencies: []
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_task_cc_live.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: Live task generator, fit/verifier, hidden isolation and fork path
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 5e52264e
+  dependencies:
+  - experiments/paper_b/task_cc_live/cc_live_task.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/tree_fixtures.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Three-leaf closed CPU fixtures, no learner
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 6399a913f1992e13f096d14047e947faef17fa61
+  dependencies:
+  - protocols/paper_b/contract_v2.yaml
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_tree.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Three-leaf closed CPU fixtures, no learner
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 6399a913f1992e13f096d14047e947faef17fa61
+  dependencies:
+  - protocols/paper_b/contract_v2.yaml
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_no_hidden_gate.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: 'AST guard: no controller reads a replay allowance or imports replay_validity'
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 64c74bda
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/controllers.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_task_cc.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: Candidate-consistency witnesses, hidden-label isolation, frozen-law hashes
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: fff91719
+  dependencies:
+  - experiments/paper_b/task_cc/task.py
+  - experiments/paper_b/task_cc/law.py
+  - experiments/paper_b/task_cc/witnesses.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_branch_tree.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: Real-fork tree driver, b_branch_v2 converter rejections, original-root estimators
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 6b8b7a86
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/branch_tree.py
+  - experiment_scaffold/src/causal_branch/control/evaluate.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_controllers.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: Matched controllers, budget matching, cost ledger, ridge equivalence, RF witness
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: ef0c1505
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/controllers.py
+  - experiment_scaffold/src/causal_branch/control/tree.py
+  - experiment_scaffold/src/causal_branch/control/learners.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_replay_validity.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: Population-scoped replay allowance; pointwise refusal, union bound, audit arithmetic
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 09131bdb
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/replay_validity.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: tests/control/test_u_semantics.py
+  owner: B
+  object_type: infrastructure
+  destination: tests/control
+  topic: U-primary semantics (invalid, collection failure, unavailable, channel mixing)
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 8cbde2d3
+  dependencies:
+  - experiment_scaffold/src/causal_branch/control/schema.py
+  - experiment_scaffold/src/causal_branch/control/evaluate.py
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: protocols/paper_b/design_decisions_20260927b.yaml
+  owner: B
+  object_type: prospective_design
+  destination: retain
+  topic: 'Controller design v2 addendum: controller, allocator, N1 m, task realism'
+  evidence_status: PLANNED
+  validation: make check-split; parse YAML
+  source_revision: 7d1e83f7
+  dependencies:
+  - protocols/paper_b/design_decisions_20260927.yaml
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: protocols/paper_b/design_decisions_20260927.yaml
+  owner: B
+  object_type: prospective_design
+  destination: retain
+  topic: Immediate B decisions; not launch authorization or qualification evidence
+  evidence_status: PLANNED
+  validation: make check-split; parse YAML and reconcile bounded development leaves
+  source_revision: 96aada3936c3fac7a7142af52d4e63de82631eeb
+  dependencies:
+  - docs/paper_split/B_DECISIONS_20260927.md
+  - protocols/paper_b/contract_v2.yaml
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+- source_path: experiments/paper_b/configurator_scripted.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiments/paper_b/task_cc_live/cc_live_agent.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: protocols/paper_b/contract_v3.yaml
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/executor.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/governance.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/reliability_schema/__init__.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/reliability_schema/adjudication.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/reliability_schema/events.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/configurator/__init__.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/configurator/encoder.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/configurator/heads.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: experiment_scaffold/src/causal_branch/control/configurator/serialiser.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: tests/control/test_configurator.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: tests/control/test_executor.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+- source_path: tests/control/test_governance.py
+  owner: B
+  object_type: infrastructure
+  destination: retain
+  topic: Paper B work in progress (DAC configurator, executor, governance, reliability schema; B session 2026-10-04/05), committed at the author's request on 2026-10-06; not reviewed
+  evidence_status: IMPLEMENTED_UNRUN
+  validation: make check-split test-split
+  source_revision: 76605de9
+  prior_disclosure: docs/paper_split/PRIOR_DISCLOSURE.md
+  mutation_policy: live_revision
+  dependencies: []
+planning_cleanup:
+  date: '2026-09-26'
+  canonical_runbook: docs/paper_split/RUNBOOK.md
+  implementation_prompt: https://github.com/dowlingwong/agent-checkpoint-intervention/blob/4154f153/docs/paper_split/IMPLEMENTATION_PROMPT.md
+  relocation_manifest: https://github.com/dowlingwong/agent-checkpoint-intervention/blob/4154f153/archive/planning_2026-09-26/MOVED_FILES.json
+  policy: Historical source paths above remain as-of-split provenance; resolve relocated planning documents through the manifest or original commit.
+  sequential_scope: B core plus a gated two-decision extension; B-C5 remains PLANNED.
+  contract_migration: b_v2 is active; v1 is historical. Only engineering and qualification are implemented.
+field_policy: source_revision records the reviewed parent snapshot for this inventory update; dependencies list local source imports/inputs, not installed third-party packages. Historical source identities remain as-of-split provenance.

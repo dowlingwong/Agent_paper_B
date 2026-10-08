@@ -1,0 +1,196 @@
+# Copied from the source repository at S = 4154f153, 7 October 2026; this file
+# keeps the B claim entries B-C1..B-C7 and the B prior-disclosure entry. The
+# source copy in agent-checkpoint-intervention is the historical one.
+ledger:
+- claim_id: B-C1
+  paper: B
+  statement: The first study's decision problem is a precisely defined one-step continue/verify choice at an online-reachable checkpoint under a frozen continuation, with pre-treatment feasibility, development-fitted cost predictions and evaluation-only counterfactual harm.
+  status: PLANNED
+  source_labels:
+  - sec:b-problem
+  - sec:b-regimes
+  - tab:option-boundaries
+  assumptions: []
+  proof_paths: []
+  experiment_ids:
+  - B0
+  - B1
+  raw_artifacts:
+  - protocols/paper_b/contract_v2.yaml
+  analysis_command: .venv/bin/python protocols/paper_b/launch_validator.py --phase engineering --lane one_step
+  figure_or_table:
+  - fig:b-architecture
+  known_limitations:
+  - contract open decisions are null; not launchable
+  nearest_prior:
+  - Calibration Is Not Control (fixed action menu; no mask/cost/harm record)
+  new_increment: explicit feasibility, predicted allocation costs and separately evaluated counterfactual harm
+  review_result: blocked
+- claim_id: B-C2
+  paper: B
+  statement: 'HISTORICAL / equivalence check: with identical ridge features, penalties and rows, the advantage learner and the action-value difference are the same estimator; the old H2 superiority hypothesis is withdrawn.'
+  status: HISTORICAL
+  source_labels:
+  - sec:b-equivalence
+  - app:b-ridge
+  assumptions:
+  - identical ridge design matrices, penalties and paired rows
+  proof_paths:
+  - papers/paper_b/appendices/B_proofs.tex
+  experiment_ids:
+  - B4
+  raw_artifacts:
+  - experiment_scaffold/src/causal_branch/control/learners.py
+  - experiment_scaffold/src/causal_branch/control/controllers.py
+  analysis_command: .venv/bin/python -m unittest discover -s tests/control -p 'test_controllers.py'
+  figure_or_table:
+  - tab:b-figure-slots
+  known_limitations:
+  - an implementation equivalence check, not a hypothesis and not a contribution
+  nearest_prior:
+  - action-conditioned controller of arXiv:2606.21399 (inspected scope)
+  new_increment: none; retained only to prevent re-claiming algebraically identical estimators
+  review_result: pass
+- claim_id: B-C3
+  paper: B
+  statement: A small-family conservative selection with an explicit simultaneous error allocation can retain mean gain while limiting no-injected-fault degradation.
+  status: PLANNED
+  source_labels:
+  - sec:b-conservative
+  assumptions:
+  - independent calibration templates; predeclared harm tolerance; family fixed before calibration
+  proof_paths: []
+  experiment_ids:
+  - B3
+  raw_artifacts:
+  - experiment_scaffold/src/causal_branch/control/allocation.py
+  analysis_command: python3 -m unittest discover -s tests/control -p 'test_*.py'
+  figure_or_table:
+  - tab:b-figure-slots
+  known_limitations:
+  - selection is a bound, not a certificate; mean statements do not imply per-checkpoint benefit
+  nearest_prior:
+  - pessimistic policy improvement; SNPL-style simultaneous safety
+  new_increment: small-family scope with explicit error allocation and fallback, no inherited 291-bound family
+  review_result: blocked
+- claim_id: B-C4
+  paper: B
+  statement: The ordinal-sufficiency result is prior art; the first study tests learned-policy superiority, not the oracle ordering.
+  status: HISTORICAL
+  source_labels: []
+  assumptions: []
+  proof_paths:
+  - papers/paper_b/archive/B1_20260927/appendices/B_proofs.tex
+  experiment_ids: []
+  raw_artifacts:
+  - sources/POSITIONING_AUDIT_2026-08-16.md
+  analysis_command: null
+  figure_or_table: []
+  known_limitations:
+  - published in substance (Okati et al. 2021; Fernandez-Loria & Provost 2022; Kamran et al. 2024)
+  nearest_prior:
+  - budgeted triage; uplift ordinal condition; AUTOC allocation
+  new_increment: 'explicit_or_background: background only; cited, not re-claimed'
+  review_result: pass
+- claim_id: B-C5
+  paper: B
+  statement: 'SUPERSEDED by B-C6 (N2): the two-checkpoint timing comparison is now the primary claim, not a future-work prospect.'
+  status: HISTORICAL
+  source_labels:
+  - sec:b-bridge
+  assumptions: []
+  proof_paths: []
+  experiment_ids: []
+  raw_artifacts: []
+  analysis_command: null
+  figure_or_table: []
+  known_limitations:
+  - kept for history; do not cite as an active claim
+  nearest_prior:
+  - method-level contextual and sequential control comparison remains required
+  new_increment: none; superseded by B-C6
+  review_result: pass
+- claim_id: B-C6
+  paper: B
+  statement: 'N2 (primary, PLANNED): the frozen cross-fitted continuation-value timing rule improves the original-root mean U against BOTH a repeated-myopic controller and a BAVAR-inspired context-dependent VOI scheduler at the same allowed verifier and total-work budgets, with simultaneous intervals over the two contrasts and template families as units. The rule is a budget-constrained heuristic, never optimal; the constant reserve is an ablation only; B''s contribution is the agent setting and the paired counterfactual measurement design, not a new timing method.'
+  status: PLANNED
+  source_labels:
+  - sec:b-problem
+  - sec:policy
+  - eq:primary-contrasts
+  - eq:original-root-value
+  assumptions:
+  - candidate-consistency task (B6)
+  - template-family clusters and splits
+  - all original roots including early-terminal and infeasible
+  - at most one verification per root
+  - matched allowed budgets
+  proof_paths: []
+  experiment_ids:
+  - B-screen
+  - B-pilot
+  raw_artifacts:
+  - experiments/paper_b/task_cc
+  - experiment_scaffold/src/causal_branch/control/branch_tree.py
+  - experiment_scaffold/src/causal_branch/control/timing.py
+  - experiment_scaffold/src/causal_branch/control/evaluate_tree.py
+  analysis_command: '.venv/bin/python -m unittest discover -s tests/control -p ''test_*.py''  # engineering only; the live screen and pilot need Ada qualification'
+  figure_or_table:
+  - fig:timing
+  - tab:b-cap
+  known_limitations:
+  - PLANNED; no live result
+  - falsified if the adjusted LCB does not exceed 0 for either comparator, or the adjusted UCB is below the 0.02 target
+  - an interval spanning 0.02 is inconclusive with no budget expansion
+  - task realism FAILED R1 and R4 for the typical behaviour after one repair pass (see TASK_REALISM_REPORT.md)
+  - the proposed-vs-myopic contrast is exactly zero when waiting value depends only on the same H1 context as immediate value (every linear score then ranks roots alike); any reading other than inconclusive requires distinct realized policies and a nonzero-width interval
+  - 'in a CPU save-for-later probe with a shared (c1,c2) grid the proposed rule matched repeated-myopic (mean contrast -0.001 over 5 worlds): a tuned one-step cutoff can capture most waiting value'
+  nearest_prior:
+  - Calibration Is Not Control arXiv:2606.21399 (single-checkpoint action conditioning)
+  - 'BAVAR / Strategic Verification for Long-Running LLM Agents, preprints.org 202608.2057 (timing, reserve signals; UNVERIFIED at source: automated access blocked 2026-09-27 and 2026-09-29; no section attributed until an author reads it)'
+  - Calibrate-Then-Act arXiv:2602.16699 (Ding, Tomlin & Durrett; verified at source)
+  new_increment: original-root, action-dependent two-checkpoint timing evaluation under matched allowed budgets and an explicit replay-uncertainty contract; not a new timing method
+  review_result: blocked
+- claim_id: B-C7
+  paper: B
+  statement: 'N1 (validity constraint, PLANNED): under a declared joint discrepancy event of probability at most p, bounded utility, a fixed policy and the companion''s calibration independence, the population gain lower bound loses at most 2p.'
+  status: PLANNED
+  source_labels:
+  - prop:n1-population
+  - sec:b-theory
+  assumptions:
+  - declared joint discrepancy event with probability <= p
+  - U in [0,1]
+  - fixed policy
+  - companion calibration independence
+  - population scope only
+  proof_paths:
+  - papers/paper_b/appendices/B_proofs.tex
+  experiment_ids:
+  - B-pilot
+  raw_artifacts:
+  - experiment_scaffold/src/causal_branch/control/replay_validity.py
+  analysis_command: .venv/bin/python -m unittest discover -s tests/control -p 'test_replay_validity.py'
+  figure_or_table:
+  - tab:b-figure-slots
+  known_limitations:
+  - p is a sensitivity assumption on the grid {0,.005,.01,.02,.05,.10} with working value .02, never measured
+  - 'for the batch-allocated two-checkpoint contrasts each grid value is a per-checkpoint allowance (p1 = p2 = p), p_path = min(1, p1 + p2), and the population tax is 2*m*p_path with the derived displacement m <= 3 (N1_DISPLACEMENT.md): .24 U at the working p; the grid, tax and reported bound use this one mapping'
+  - no pointwise gate LCB(w)-2p from a global p
+  - the binary R=1 sharper endpoint is not applied to continuous U
+  - falsified by a counterexample satisfying the assumptions
+  - practical value falsified if the allowance does not improve the declared utility/harm tradeoff at equal allowed resources, including always-abstain
+  nearest_prior:
+  - partial identification under contamination (Altschuler et al. 2019)
+  - anonymous companion 2p bounded-outcome corollary
+  - Strategic Verification (timing; source not verified here)
+  new_increment: application of the companion's population bound as a validity constraint on the timing comparison; not a new safety theorem
+  review_result: blocked
+blocked_claims:
+- claim_id: B-prior-disclosure
+  affected_claims:
+  - B-C1
+  - B-C2
+  - B-C3
+  blocker: KDD ETAAI manuscript absent from repository; runbook overlap claim unverifiable
+  next_action: author supplies the ETAAI manuscript/DOI; append to PRIOR_DISCLOSURE.md
