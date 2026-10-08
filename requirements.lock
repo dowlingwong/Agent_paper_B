@@ -1,0 +1,25 @@
+# Committed dependency lockfile for Round 7.
+#
+# The scaffold uses StrEnum (Python 3.11+). The interpreter is pinned by
+# .python-version; the runtime dependencies are pinned here exactly so that
+# `make doctor` and a fresh checkout agree on the environment used for all
+# Round 7 artifacts. Regenerate with:
+#   python3 -c "import importlib.metadata as m; print('\n'.join(f'{d}=={m.version(d)}' for d in ['PyYAML','numpy','scipy']))"
+# against the pinned interpreter.
+
+PyYAML==6.0.3
+numpy==2.3.0
+# R0 certificate regeneration: installed with .venv/bin/python -m pip install scipy.
+scipy==1.18.1
+# B4 CINC-style one-step RF witness (200 trees, depth 6), CPU-only. Installed
+# with .venv/bin/python -m pip install "scikit-learn==1.5.2". The control
+# modules import it lazily inside RFWitness.fit; nothing else needs it.
+scikit-learn==1.5.2
+joblib==1.6.0
+threadpoolctl==3.7.0
+cloudpickle==3.1.2
+# F4 property-based allocator tests. Installed with
+# .venv/bin/python -m pip install "hypothesis==6.112.1".
+hypothesis==6.112.1
+attrs==26.1.0
+sortedcontainers==2.4.0

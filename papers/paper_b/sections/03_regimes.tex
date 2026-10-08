@@ -1,0 +1,55 @@
+\section{Regime semantics and the verification-and-response rule}
+\label{sec:b-regimes}
+
+The three regimes share one fixed verifier and one fixed response rule, frozen
+before any data are collected.  A change to either is a new action version and
+invalidates the qualification of the affected branches.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.14\linewidth}p{0.44\linewidth}p{0.34\linewidth}@{}}
+\toprule
+Regime & Action & Termination \\
+\midrule
+$g_0$ & Continue with the frozen agent policy $\rho$; no verifier call. & Runs to the registered horizon; the root's ordinary outcome. \\
+$g_{\mathrm{now}}$ & Call the fixed verifier at checkpoint 1, apply the frozen response rule, then resume $\rho$. & Response rule leaves or replaces the candidate; $\rho$ runs to the horizon. \\
+$g_{\mathrm{later}}$ & Continue to checkpoint 2; if reached, call the same verifier and apply the same response rule, then resume $\rho$; else continue. & Falls back to $g_0$ when checkpoint 2 is not reached. \\
+\bottomrule
+\end{tabular}
+\caption{Regime semantics.  At most one verifier call per root.  Verification
+that only logs a diagnosis without changing the continuation is a different
+treatment and is not any of the three regimes.}
+\label{tab:option-boundaries}
+\end{table}
+
+\paragraph{The candidate-consistency task.}
+The regime is instantiated on a new two-checkpoint \emph{candidate-consistency}
+task.  A fit tool returns the exact executable candidate it evaluated (the
+corrected evaluated-candidate interface); the verifier checks consistency of
+that candidate against \emph{visible} development diagnostics; and the frozen
+response rule replaces the candidate only on a strict visible development
+improvement, with ties leaving it unchanged.  Checkpoint 2 arises online after
+legitimate new visible information (for example a second development batch),
+never from future leakage.  The hidden evaluation is separate and is never
+visible to the agent or the verifier.  The task/verifier bindings are frozen
+(\cref{sec:b-experiments}).
+
+\paragraph{The verifier contract.}
+$g_v$ is defined by a frozen tuple: its input (the declared visible development
+surface and the executable candidate), its model/tool binding and version, its
+output schema, its error handling, the result-to-response rule, its maximum work
+(token, time and call ceilings), its termination condition and the point at
+which control returns to $\rho$.  ``Independent verifier'' means only
+\emph{separately invoked and unable to access hidden evaluation labels};
+independence of errors is not inferred from a different prompt or model name.
+
+\paragraph{Feasibility and unavailable actions.}
+$A_{g_v}$ is determined before the call from the pre-treatment state and recorded
+with its reason and evidence.  When the verifier is unavailable the root falls
+back to continue, the attempted-invalid-action event is reported, and the root
+remains in the original-root analysis.  A controller asked to use an unavailable
+action does not receive a substituted outcome.
+
+

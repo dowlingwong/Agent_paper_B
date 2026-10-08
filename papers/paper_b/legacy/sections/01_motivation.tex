@@ -1,0 +1,62 @@
+\section{Extended motivation and design history}
+\label{sec:motivation}
+
+This appendix expands \cref{sec:main-introduction} with the external evidence,
+the design decisions that were taken and retired, and the reasoning behind the
+registered positive condition.  It is not a second statement of the paper's
+contributions: those are stated once, in the body, and this section is
+subordinate to them wherever the two could be read differently.
+
+Runtime evaluation of agents already shows the gap this paper is built to
+measure.  In one batch of tasks, a single lifecycle-wide harness patch rescued
+six baseline failures and regressed one baseline success in the same batch;
+across a frontier model's 39 valid patches, 21 reduced batch success; and the
+worst affected batch fell from 7/10 to 0/10 \citep{harnessr12026}.  Their own
+diagnosis is blunt: ``a plausible diagnosis can still compile into overly
+aggressive runtime behavior.''  This motivates but does not identify the
+checkpoint-level regimes we define: a single flipped rollout is one realization
+of a stochastic process, not an estimate of the effect of intervening at that
+checkpoint, and we do not treat it as one.
+
+Those observations are someone else's.  Our initial design simulation found
+that targeting a semantic fault at checkpoints the registered risk score places
+low raises apparent power sharply.  That result is now treated as a warning,
+not an operating point: score-conditioned placement constructs an anti-ordered
+population using the score under test.  Prediction-conditioned selection also
+changes which outcomes later become visible in deployed online systems, an
+adjacent feedback problem documented as a winner's-curse effect
+\citep{staleness2026}.  The primary positive condition is
+therefore a randomized, risk-blind feature-engineering--configuration
+interaction, while the targeted injector is retained only as a historical
+adversarial-stress calculation (\cref{sec:experiments,app:faults}).  These are
+design decisions; no result from ongoing execution is admitted here.
+
+The question is simple.  An autonomous experiment agent periodically reaches a
+checkpoint at which someone must decide whether to let it continue, verify its
+work, or recover it.  Predicting whether the checkpoint will fail is one
+question; measuring whether intervening would have helped is a different one.
+We ask when the first suffices to answer the second, and how to act on the
+answer without making a running system worse.  Both questions are stated here
+as precise, testable claims with an instrument that would settle them.  With no
+qualifying result admitted, they remain predictions rather than findings.
+
+The observation that prediction and intervention value differ is established
+\citep{interventionparadox2026,calibrationnotcontrol2026}; related production
+systems also report that better offline prediction or supervision need not
+translate proportionally into better constrained placement, serving, or
+orchestration decisions \citep{fleda2026,staleness2026,ajs2026,gstar2026}.
+We take the separation as the starting point rather than the contribution.  The
+primary research question is
+prospective and causal: within a registered population of eligible checkpoints,
+\emph{when} do the two come apart, and can a one-step policy exploit the
+difference to select among feasible regimes better than the strongest
+constrained non-personalized policy?  ``Better'' means higher independently
+validated completion probability at a registered prevalence, subject to
+no-fault noninferiority, invalid-output tolerances, and resource constraints.
+These are planned questions, not findings.
+
+The theoretical results are individually elementary and are presented as such in
+\cref{sec:theory}.  What the one-step restriction buys is that their hypotheses
+become properties of the design rather than assumptions; the contribution the
+body claims is the measurement contract of \cref{sec:main-scope}, not the
+arguments themselves.

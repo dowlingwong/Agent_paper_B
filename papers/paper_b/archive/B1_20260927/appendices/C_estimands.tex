@@ -1,0 +1,44 @@
+\section{Prevalence and break-even calculations}
+\label{app:estimands}
+
+For any policy $d$, deployment gain is affine in prevalence:
+\begin{equation}
+ G(d;p)=G_0(d)+p\{G_1(d)-G_0(d)\}.
+\end{equation}
+Since the curve is affine, the set $\{p\in[0,1]:G(d;p)\ge0\}$ is a closed
+subinterval of $[0,1]$, and three cases exhaust it.  If $G_0(d)\ge0$ and
+$G_1(d)\ge0$ the gain is non-negative throughout.  If both are negative it is
+negative throughout.  Otherwise the two have strictly opposite signs, the
+crossing is unique, and it is
+\begin{equation}
+ p_{\mathrm{BE}}=-\frac{G_0(d)}{G_1(d)-G_0(d)}.
+\end{equation}
+This expression is valid in the mixed-sign case regardless of whether
+$G_1(d)>G_0(d)$ or $G_1(d)<G_0(d)$; the sign of $G_1-G_0$ determines only
+whether the admissible region lies above or below $p_{\mathrm{BE}}$.  In the
+two same-sign cases the formula either returns a value outside $[0,1]$ or is
+undefined at $G_1=G_0$, and the interval is read off directly instead.  Note
+that $G_0(d)\ge0$ alone does not make the policy safe: it makes it safe
+\emph{at} $p=0$, and the gain can still cross into negative territory as
+prevalence rises.  The same mixture representation is used componentwise for raw costs
+and for invalid-output rates.
+
+By \cref{cor:interval} this algebra is not merely descriptive.  Applied to
+$\Gamma_j=V_j(d^\dagger)-V_j(d^\star_{\mathrm{fixed}})$ it delimits the set of
+prevalences over which the guarantee of \cref{thm:safe} holds, and
+under the gate of \eqref{eq:gated-rule} that set is all of $[0,1]$.  Reported
+prevalence curves carry the interval as a marked region.
+
+The retained (deferred) ordinal-sufficiency estimand fixes a budget-matched verification
+capacity: $\mathcal R_{\mathrm{rank}}(q)$ of \eqref{eq:rank-regret} compares
+selection by a baseline failure-risk score against selection by the verification
+advantage itself, requiring held-out or cross-fitted effect scores, a matched verification
+count (the capacity $q$), and the common baseline--verification availability
+domain; heterogeneous resource cost is a separate, unregistered secondary
+(\cref{app:b-analysis}), not part of the registered match.  It does not identify
+repeated intervention value or optimal recovery.  \Cref{thm:ordinal} gives it a
+one-sided inferential structure: the quantity is non-negative and vanishes at
+every capacity exactly when the two scores induce the same ordering, so the null
+\eqref{eq:null} is a statement about ordinal sufficiency, and the construction
+following \eqref{eq:construction} shows that two populations with identical
+risk-score distributions can sit at opposite extremes of it.

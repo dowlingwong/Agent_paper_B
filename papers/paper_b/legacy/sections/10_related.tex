@@ -1,0 +1,303 @@
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Failure prediction versus intervention value.}
+The observation that a failure score is not a decision rule is established, and
+we do not claim it.  \citet{interventionparadox2026} show that a critic with
+strong offline discrimination can nonetheless degrade agent performance;
+\citet{calibrationnotcontrol2026} name \emph{intervention advantage} as the
+decision quantity, formalise the mismatch as target error, and introduce
+\emph{prefix branching} --- executing candidate actions from an identical
+trajectory state --- showing that recalibration improves prediction while
+leaving control regret unchanged; \citet{agentforesight2026} supply online
+prefix-based warning.  In a non-agentic capacity-constrained placement system,
+\citet{fleda2026} likewise observe sub-linear prediction-to-decision transfer.
+
+Our starting point is theirs, and what we add is downstream of it.  We do not
+claim the separation between prediction and intervention value; that is
+\citet{interventionparadox2026} and \citet{calibrationnotcontrol2026}, and
+before them the uplift and welfare-maximization literatures cited in
+\cref{sec:main-scope}.  First, the decision object here is the maximum over the
+\emph{feasible} set, \eqref{eq:actionable}, under a pre-treatment availability
+mask: none of the above defines what happens when the action under study is
+unavailable, which is why \cref{thm:refinement} needs the mask as a policy
+input.  Second, \cref{thm:ordinal} states the separation as a sharp null rather
+than establishing it; the argument is a rearrangement inequality and is claimed
+only as the definition of what the deferred policy-ranking study would test,
+not as a result.  Third,
+prefix branching establishes that intervention advantage is \emph{measurable}
+from a reconstructed prefix, and its authors do check the reconstruction:
+\citet{calibrationnotcontrol2026} replay each prefix into the environment state
+reached by the base trajectory, verify step-by-step agreement, discard any
+mismatch (reporting a $100\%$ match rate on retained data), and repeat
+branching on an exact-replayable shallow subset (their \S3, B.1, B.7).  What
+that check does not do is report fidelity \emph{per state layer}, quantify the
+contrast bias that an undetected mismatch would induce, or carry replay
+uncertainty into the decision that the measured advantage is used for; and it
+does not certify a deployable policy.  Those are the gaps E0-M addresses, and
+that \cref{sec:replay-validity} states as an identification limit
+with the paired-reference evidence that removes it.  \Cref{thm:safe,prop:certification} address
+what it takes to go from a measured advantage to a rule that provably does not
+make a running system worse, under simultaneous no-fault, invalid-output and
+cost constraints, at a prevalence that differs from the experimental sampling
+ratio.
+
+\paragraph{Agent replay, intervention, and recovery.}
+\citet{causalagentreplay2026} model a run as a structural causal model and
+re-execute forward under a step intervention to attribute failure;
+\citet{causalflow2026} pair attribution with counterfactual repair;
+\citet{civex2026} map proposed actions to causal queries and return
+execute/reject/experiment/abstain verdicts, a verdict space close to our regime
+set; \citet{dover2025} debug multi-agent systems by intervening on messages and
+plans, \citet{agentcheck2026} supply a reproduce--intervene--mitigate workbench,
+and \citet{whentoolsfail2026} perturb tools and measure replanning.  These
+establish that branching and repair are implementable.
+
+\paragraph{Harness and runtime optimization.}
+The contrast above is about \emph{prediction versus intervention value}; the one
+drawn here is about \emph{optimizing the artifact versus deciding when to deploy
+it}.  A parallel literature optimises the runtime around a frozen model rather
+than the model itself: whole-harness systems search or synthesise harnesses
+\citep{metaharness2026,autoharness2026,ahe2026,harnessx2026}, extend the
+editable surface to lifecycle interventions \citep{lifeharness2026}, or convert
+recurring failures into scoped, regression-checked repairs
+\citep{harnessfix2026,selfharness2026}; a learned-editor line post-trains
+policies that edit skills, contexts, or harness controllers
+\citep{skillr12026,codeskill2026,selfevolve2026,harnessbridge2026,
+harnessrlcontrol2026,hase2026}.  \citet{harnessr12026} is the closest of these
+to ours: it post-trains a dedicated engineer with online reinforcement learning
+to emit lifecycle-wide executable patches --- episode initialisation,
+pre-decision context, a pre-action guardrail that may rewrite or veto, and
+post-feedback recovery --- rewarded by rerunning the same task batch under the
+installed patch.
+
+We claim no priority over executable interventions and do not distinguish
+ourselves by completeness: a patch of that kind already carries a host-runtime
+contract, can block, rewrite or force an action, can trigger recovery, and is
+followed by a frozen target.  The complementary problem is ours.  Given such a
+procedure as a candidate regime, \emph{when should it be deployed at a
+particular checkpoint}, and can that deployment policy be identified and
+certified under availability, clean-run harm, invalid-output and resource
+constraints?  The exchange runs one way: a harness engineer supplies elements of
+$\Gset$, and \cref{thm:safe} bounds what installing one can cost --- including
+the degradation their own matched-baseline comparison records.
+
+One granularity difference is worth stating rather than eliding.  Their overlay
+is installed once and governs every subsequent decision in a batch, whereas $g$
+is executed at a single registered checkpoint.  What transfers is the hook body
+--- the recovery routine, the guardrail --- instantiated as a one-step regime,
+not the batch-level overlay.
+
+\citet{gstar2026} is the closest orchestration comparison: it trains an offline
+dispatcher to select ready nodes in a multi-agent DAG under resource limits.
+Here the object is instead whether to interrupt at one saved scientific-agent
+checkpoint, with every feasible registered regime re-executed and its causal
+value certified under availability and vector constraints.  G-STAR also notes
+that online exploration and training/evaluation cost can be hard to bound.
+
+The two literatures also differ in how an unavailable or broken intervention is
+accounted for.  In the harness branch an invalid patch earns reward zero,
+conflating ``could not be applied'' with ``was applied and did not help''.  Our
+pre-treatment availability mask $A_{ig}$ keeps the two distinct: a masked regime
+is never assigned, while a failure caused by an assigned regime remains an
+outcome of that regime (\cref{sec:branch}).
+
+\paragraph{Dynamic treatment regimes.}
+The formulation of complete regimes and their values is standard in the
+potential-outcome literature on dynamic treatment regimes
+\citep{murphy2003,murphybingham2009}, and current SMART practice supplies
+inference for embedded multistage regimes \citep{tsiatis2024}.  This paper is
+the degenerate one-stage case of that machinery.  We claim no methodological
+contribution to it; we claim that it is the right frame for the problem and that
+the one-stage restriction is what makes the guarantees verifiable rather than
+assumed.  Causally, the design is a one-stage dynamic treatment regime;
+computationally, policy learning over the feasible set is a full-feedback
+constrained contextual-bandit problem, and the two views are complementary.
+
+\paragraph{Automated feature engineering and joint search.}
+MORE-FE evolves feature-transformation programs with separate signals for
+format, executability, predictive performance, and semantic novelty
+\citep{morefe2026}; CoFEH interleaves feature engineering and hyperparameter
+optimization to avoid rejecting transformations that look weak under a fixed
+downstream configuration \citep{cofeh2026}.  These systems study how candidate
+interventions are generated and how search effort is allocated between
+interacting AutoML components.  Our question begins after a candidate regime is
+frozen: whether it should be deployed at a saved checkpoint, what harm and
+vector cost deployment causes, and whether the resulting policy can be
+certified.  Neither system is therefore our estimator or safety baseline, and
+neither must be a direct comparator to define this adjacent-work boundary.
+CoFEH supplies qualitative motivation for F2-FEHPO; MORE-FE's executability and
+quality signals motivate keeping unavailability distinct from post-assignment
+failure.  Neither validates our checkpoint instrument or identifies our causal
+effects.
+
+\paragraph{Partial identification, repetition, and outside evidence.}
+Robust best-arm identification under reward contamination shows that
+contamination leaves arm means only partially identified.  Decisions then
+depend on effective gaps that subtract the contamination allowance
+\citep{altschuler2019,mukherjee2021}.  The mean-only condition $\tilde a>2p$ of
+\cref{thm:replay-limit} is that phenomenon in our notation.  Treatment choice
+under partial identification supplies the decision theory: the conservative
+rule used here (certify when the lower end of the identified set clears the
+threshold) is standard, and minimax-regret alternatives exist
+\citep{manski2000,stoye2012,montielolea2023}.  What neither literature
+addresses is repeated sampling at a latent unit.  $R$ restorations of one
+checkpoint reveal the depth-$R$ observation moments of that checkpoint's success
+probabilities, and the relevant theory is that of truncated moment problems
+and mixture identifiability \citep{karlinstudden1966,kemperman1968,schmudgen2017,teicher1963}.
+The extremal problem of \cref{thm:finite-repeat} is a worst-case tail mass
+over a moment set, the kind of quantity studied for robust risk measures
+\citep{rockafellar2000,zhu2009,bertsimas2005}.  When references are available,
+combining many replays with a few reference executions is two-phase sampling
+\citep{neyman1938,cochran1977}, and prediction-powered inference gives modern
+rectified estimators \citep{angelopoulos2023ppi}; we claim nothing new there.
+Variance-adaptive confidence bounds for bounded means are established
+\citep{maurer2009,waudbysmith2024}; the scaffold uses one as a separate method,
+not a contribution.
+
+\paragraph{Credit assignment, grouping, and fixed-state intervention.}
+Three families target different objects.  Association-based methods score
+steps from observed trajectories or trajectory graphs \citep{g2po2026,salt2026}.
+One of them normalises privileged teacher scores within a step and gates them
+by their association with return, using prompt groups at completion level and
+anchor-state groups at step level \citep{adrs2026}.  Its association statement
+concerns the gate's reliability within a batch, not causal identification of a
+fixed-state effect; \cref{rem:association} makes the relation to
+\cref{thm:ordinal} exact.  AgentOPSD instead scores a turn by how much it
+revises a running success belief, read as evidence for eventual success, and
+states that the belief is relative support rather than a calibrated
+probability; at $\gamma=1$ its recursion is Wald's log-likelihood-ratio
+accumulation over turns \citep{agentopsd2026}.  Each estimates from logs a
+quantity the instrument executes; the deferred policy-ranking study would carry
+an unregistered descriptive secondary ranking checkpoints by a risk-revision score
+$r(z_t)-r(z_{t-1})$, the belief-revision analogue (\cref{rem:association}).
+Group-based methods compare returns across prompt or
+recurring-state groups \citep{gigpo2025}, and history-context inconsistency and
+its bias--variance trade-off are studied explicitly \citep{hgpo2026}.  CRAFT
+estimates a group-level counterfactual supported by sibling rollouts, and states
+that connecting it to a per-trajectory, fixed-state intervention requires an
+additional assumption \citep[Sec.~3.1]{craft2026}; that distinction is theirs.
+Branching methods fork rollouts at selected steps
+\citep{arpo2025,treerl2025,at2po2026}, so alternatives \emph{are} executed
+there, but under the training policy rather than as complete oversight regimes
+with a frozen continuation and restoration evidence.  A recent self-improvement
+loop goes further and scores alternative exploration policies by replaying a
+recorded discovery tree, revealing one stored child per node and nothing where
+no branch was recorded \citep{dreamrsi2026}: a replay simulator over the recorded
+support at depth one, which is the $R=1$ case of \cref{thm:finite-repeat} with an
+availability mask induced by the behaviour policy rather than declared before
+treatment.  Its online phase resumes saved workspaces without restoration
+evidence, so the same-effective-state condition E0 tests applies to it
+unchanged.  The adopted estimator
+comparison of \cref{app:secondary} contrasts a single fork and context matching
+with repeated-branch measurement on the same checkpoints.  It uses generic
+diagnostics and is not an implementation of any of these methods.
+
+\paragraph{Separating execution, audit, and consequence.}
+Automated research pipelines separate machine-checked proof soundness from the
+faithfulness of the formal statement to the intended claim, and from the
+research significance of the result.  In CausalSmith the faithfulness audit is
+performed by language-model agents, and the significance signal is reported
+without being treated as validated \citep[Secs.~5.1--5.3]{causalforge2026}.  The
+analogy to our three layers is complementary rather than formal: execution
+records which regime ran, audits test a declared scope, and measurements assess
+whether the distinction changes decisions.  Where their faithfulness audit is a
+language-model judgment whose error rate is not estimated \citep[Sec.~7]{causalforge2026},
+the replay audit here is mechanical over declared layers, and its detection and
+false-alarm rates on deliberately defective restorations are themselves a
+registered measurement (E0-M, \cref{app:e0m-detection}).
+
+\paragraph{Safe policy improvement and pessimism.}
+\Cref{thm:safe} is an instance of the pessimistic argument developed in
+\citet{laroche2019,kumar2020,xie2021}, and \citet{limasrebro2022} give
+lower-confidence-bound policy learning in a one-decision setting.  Dream-RSI
+selects the replay-best meta-policy with an in-sample no-worse guarantee on the
+fixed history \citep{dreamrsi2026}; \cref{thm:safe} is the held-out, pessimistic
+form of that selection step.  What is not
+covered there is selection restricted to a \emph{certified-feasible} subset
+defined by simultaneously estimated constraints, with a per-context availability
+mask, and a guarantee that holds uniformly over prevalence.  That
+combination is the content of \cref{thm:safe,prop:certification}, and it is
+small.  We present it as such.
+
+\paragraph{Reinforcement-learning readings of the design.}
+%% Bibliographic fields for sutton1999, li2006, kearns2002sparse, kakade2002,
+%% kearnssingh2002, jin2021, watkins1992, achiam2017, howard1966, pan2022 and
+%% gigpo2025 were checked field-by-field against publisher or primary records
+%% before these \cite calls were emitted, per README.md "Conventions".
+The correspondence in \cref{tab:bellman-dictionary} is a dictionary, not a
+method, and each entry has an established home.  The \emph{intervention option}
+inside a complete regime --- precondition, action, result-contingent response,
+terminal condition --- is an option in the sense of \citet{sutton1999}, with the
+availability mask as initiation-set membership and the variable duration of the
+option the reason the checkpoint process is semi-Markov until the grid is fixed.
+The registered representation $Z=f(H)$ is a state abstraction, and
+conditional-mean sufficiency \eqref{eq:conditional-mean-sufficiency} is
+$Q$-irrelevance of that abstraction in the taxonomy of \citet{li2006}.
+Restore-and-branch is generative-model access --- reset to a state and sample its
+successors --- the standard assumption of sample-complexity theory, and the
+branch design is the depth-one case of the sparse-sampling planner of
+\citet{kearns2002sparse}; what differs here is that the access is tested by E0
+rather than assumed, and that it is tested only at the checkpoints the design
+samples.  The constrained program of \cref{sec:constraints} is a constrained
+decision problem with explicit expected-cost tolerances rather than a
+scalarised reward \citep{achiam2017}.  The gated rule of \cref{thm:safe} is
+pessimistic value iteration at horizon one on a tabular partition
+\citep{jin2021}, in the line cited above \citep{laroche2019,kumar2020,xie2021};
+that line supplies conservative value estimation under distribution shift, not
+the held-out simultaneous bounds \cref{thm:safe} consumes, which are
+\cref{prop:certification}'s union bound and nothing else.  The transfer bound of
+\cref{prop:transfer} is the performance-difference lemma of \citet{kakade2002}
+combined with the finite-horizon occupancy coupling of \citet{kearnssingh2002}.
+Sequential $Q$-learning on this data is named only as what the data cannot
+support: its convergence conditions require repeated sampling of every action at
+every state \citep{watkins1992}, and depth-one branching never samples a
+post-intervention state.  None of these correspondences is claimed as a
+contribution, and none of them identifies anything: a Bellman recursion is an
+accounting identity for whichever kernel generated the data.  They fix what a
+sequential extension would have to add, which \cref{sec:bellman} quantifies, and
+that is the only use made of them.
+
+\paragraph{Harm estimands and capacity-constrained oversight.}
+\citet{kallus2022} shows that the fraction of units negatively affected is not
+point-identified from ordinary experimental marginals.  That result governs
+designs assigning one arm per unit; executing every feasible arm at the same
+checkpoint identifies instead the fraction of \emph{checkpoints} at which a
+regime is harmful in expectation, \eqref{eq:harm-fraction}, which is weaker than
+an individual-level claim and stronger than an average.
+\citet{oversightcapacity2026} study guard calibration under a bounded human
+review capacity; our budget-matched capacity-$q$ comparison shares that
+constraint structure, but asks which score should fill the capacity rather than
+how large the capacity should be.
+
+\paragraph{Evaluation environments.}
+MLGym \citep{mlgym2025}, MLAgentBench \citep{mlagentbench2024}, MLE-bench
+\citep{mlebench2024} and Agents' Last Exam \citep{ale2026} are referenced by the
+tiers of \cref{tab:tiers}, with MLGym only as historical material in the
+current protocol.  None documents restorable mid-trajectory executable state,
+which is why \cref{sec:experiments} makes that a gate rather than an assumption.
+
+\paragraph{What we do not claim.}
+We do not claim the first failure taxonomy, fault-injection framework,
+early-warning monitor, recovery benchmark, or counterfactual re-execution of
+agent trajectories, and we do not claim harness editing, program repair, or
+workflow synthesis; each exists in the work cited above.  The adjacent
+production observations we draw on --- sub-linear transfer in storage
+placement, winner's-curse selection feedback in online learning, latency-aware
+scheduling, and multi-agent orchestration --- are non-agentic and non-causal:
+they motivate the question, and we do not claim that they ground
+identification, support a theorem, establish effects at scientific-agent
+checkpoints, or justify the one-step restriction.  We do not claim that
+prediction and intervention value come apart --- that is
+\citet{interventionparadox2026} and \citet{calibrationnotcontrol2026} --- only
+that \cref{thm:ordinal} says precisely when they do.  We do not claim a new
+safe-reinforcement-learning algorithm, calibration metric, agent architecture,
+or released artifact, and we do not claim that any empirical statement here has
+been tested: none has.  Nor do we claim the instrument of \cref{sec:evaluation}
+exists --- only that \cref{sec:experiments} specifies what would establish that
+it does.
+
+\input{figures/coverage_table}
+\Cref{tab:abc-mapping} maps this paper against the ABC benchmark-reporting
+checklist item by item, with the owner of each outstanding item named.
+\input{figures/abc_checklist_table}

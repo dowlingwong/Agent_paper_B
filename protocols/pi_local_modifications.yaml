@@ -1,0 +1,73 @@
+# Vendored Pi local-modification ledger.
+#
+# `scripts/verify_vendored_pi.py` classifies any vendored file that differs from
+# the pristine manifest as `unexplained` and FAILS, unless it appears here with
+# the exact digest recorded below. This record therefore does not weaken the
+# vendor gate: an approved patch is pinned to one byte-exact content, and any
+# further edit — including an edit to the approved patch itself — reverts to
+# `unexplained` until it is reviewed and re-recorded.
+#
+# `dist/` is excluded from the pristine manifest, so the rebuilt JavaScript is
+# not listed here. The reproducibility claim is that rebuilding `packages/ai`
+# from these exact sources on the pinned Node 22.19.0 produces the shipped dist;
+# `build_command` records how.
+schema_version: 0.1
+contract_version: Contract A v1.4-rc-deepseek
+status: recorded_pending_replacement_signature
+upstream_commit: 086c32e74530564922d011ade23ff582c9d63116
+pristine_manifest: scripts/pi_pristine_manifest.txt
+pristine_manifest_sha256: d4228eae4bf89ea3d1319d96f3245f390938a0b39794faf86f634d4fe5946c2c
+build_command: >-
+  cd third_party/pi/packages/ai &&
+  PATH="$HOME/.local/node-v22.19.0/bin:$PWD/../../node_modules/.bin:$PATH"
+  npm run build:offline
+
+modifications:
+  - path: packages/ai/src/api/openai-completions.ts
+    pristine_sha256: 7e23913de9151f509ada89f0dc566c18c9af0d3323e31dc49804c1d891c8f571
+    patched_sha256: 31e618d72ae76aa6572d1fd36885f426b764e834c20d6906fedeca31164e5147
+    work_package: WP2
+    behavior_changed: >-
+      Records the provider's own per-completion identity and accounting on the
+      assistant message: `system_fingerprint` (first nonempty value observed,
+      with a mid-stream change throwing immediately), the raw `chunk.model`, the
+      raw `chunk.created` provider time, and the raw usage block. Adds no
+      request-side behavior and changes no existing field's semantics.
+    why_a_patch_was_required: >-
+      The stream handler discarded `system_fingerprint` entirely, and
+      `responseModel` is populated only when the provider substitutes a
+      different model — so with a correctly-answering provider there was no
+      value to check. The fatal identity rule requires proof per completion,
+      which no native Pi interface exposes. An empirical probe before the patch
+      confirmed `message_end` carried none of these fields.
+    scientific_state_surface: >-
+      Does not touch assignment, risk, adjudication, sibling isolation, or
+      evidence state. It is read-only with respect to the request: it observes
+      what the provider returned and records it.
+    tests:
+      - experiment_scaffold/tests/test_substrate_identity.py::RealPiLedgerTests
+      - experiment_scaffold/tests/test_substrate_identity.py::AdapterLedgerTests
+
+  - path: packages/ai/src/types.ts
+    pristine_sha256: 62e6982bdd44e602ff53fcdcf2c4dfd1120bd9db207695ddf27e723ed9a0f73e
+    patched_sha256: 609d806b75212252f6dc3fe5ed6b2b3e090ff41a33cd65eb1d1a994b70d1d90b
+    work_package: WP2
+    behavior_changed: >-
+      Adds four optional fields to `AssistantMessage`: `providerModel`,
+      `systemFingerprint`, `providerCreated`, `providerUsage`. Purely additive;
+      no existing field is renamed, removed, or given new semantics.
+    why_a_patch_was_required: >-
+      The fields written by the stream patch need a declared type. Existing
+      fields could not be reused: `responseModel` is deliberately conditional,
+      and Pi's normalized `Usage` cannot represent a provider-specific split
+      such as DeepSeek's prompt_cache_hit_tokens / prompt_cache_miss_tokens,
+      which the expense ledger reconciles against.
+    scientific_state_surface: none
+    tests:
+      - experiment_scaffold/tests/test_substrate_identity.py::CompletionFromMessageTests
+
+invariants:
+  - A modified vendored file absent from this ledger fails vendor verification.
+  - A modified vendored file whose digest differs from `patched_sha256` fails
+    vendor verification.
+  - This ledger authorizes no execution and promotes no claim.

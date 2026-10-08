@@ -1,0 +1,67 @@
+# Paper B prospective experimental contract (version b_v1).
+#
+# This is a NEW study contract.  It does not inherit the historical E3/E4
+# registrations, the 800x5 ceiling, the 500/750-root proposals, the success
+# windows, or the N=291 certification family.  Those remain historical records
+# under protocols/ and are not inputs here.
+#
+# Fields marked `null` are deliberate open decisions: a launch validator
+# rejects them.  Do not fill unknown counts, thresholds or approval records
+# with invented values.
+protocol_version: b_v1
+status: draft
+
+population:
+  task_law: "registered template distribution over D7-style experimentation tasks; templates are the independent unit"
+  independent_unit: template
+  checkpoint_rule: "first completed candidate evaluation satisfying fixed structural criteria, executable online before any intervention"
+  reachability_handling: "roots that never reach an eligible checkpoint are recorded as reachability rows and reported; they are not dropped"
+  condition_mixture: "four declared conditions (repairable mismatch, non-actionable fault, latent semantic inconsistency, no injected fault) assigned independently of the monitor score"
+
+runtime:
+  model_revision: null
+  harness_commit: null
+  tool_versions: null
+  state_boundary: "declared restoration surface (workspace, environment, session, budget counters, external tools, caches, randomness)"
+
+actions:
+  continue: "g0: continue with frozen rho; no external call"
+  verify_and_response: "gv: fixed verifier input, output schema, result-to-response rule, maximum work, termination, then resume rho"
+  recovery: "g_r is optional and not part of the first study; requires stable precondition, rollback boundary, repair action, continuation contract"
+
+outcomes:
+  primary: null
+  binary_success_definition: "independently adjudicated validated completion by the registered horizon"
+  utility_definition: null
+  invalid_and_missing_policy: "invalid output is a separate outcome; collection failure is a separate data-integrity status; no outcome is assigned to an unavailable action"
+
+allocation:
+  mode: batch
+  primary_capacity: 0.25
+  secondary_capacities: [0.05, 0.10, 0.50]
+  cost_definition: "incremental verifier cost vector; verifier overhead reported separately from total cost"
+
+learning:
+  feature_allowlist: "registered pre-treatment representation Z and feasibility mask M only"
+  comparator_family: "matched linear/MLP family, same tuning budget for risk, deficit, advantage and action-value learners"
+  selection_rule: "small threshold/allocation family selected on validation; conservative gate on independent calibration templates"
+
+statistics:
+  split_manifest: "qualification | pilot | train | validation | calibration | test; template-level disjointness"
+  primary_estimand: "D_O(q) = G_O(d_adv,q) - G_O(d_risk,q) on common feasible support, q=0.25 primary"
+  independent_unit_count: null
+  repetitions: "R in {2,3,4} per action per checkpoint; repetition is not an independent unit"
+  inference_method: "paired template-aware cluster bootstrap; retraining variability stated separately"
+  multiplicity: "one explicit simultaneous error allocation over the chosen policy family and endpoints"
+  practical_gain_target: null
+  harm_tolerance: null
+  safety_claim_level: empirical
+
+resources:
+  runtime_ceiling: null
+  storage_ceiling: null
+  monetary_ceiling: null
+  retry_rule: "resume by completed immutable task IDs; retries never replace a scientific failure"
+
+qualification_report: null
+freeze_commit: null

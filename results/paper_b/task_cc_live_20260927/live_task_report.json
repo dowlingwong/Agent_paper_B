@@ -1,0 +1,135 @@
+{
+  "banner": "ENGINEERING_ONLY",
+  "families": [
+    {
+      "dataset": "breast_cancer",
+      "family_id": 0,
+      "tree": {
+        "later": 0.94,
+        "n_repetitions": 2,
+        "never": 0.9,
+        "now": 0.64,
+        "reached2": true,
+        "root_id": "live-0",
+        "schema": "b_branch_v2",
+        "split": "engineering",
+        "template_family_id": "live-family-0"
+      }
+    },
+    {
+      "dataset": "wine",
+      "family_id": 1,
+      "tree": {
+        "later": 0.92,
+        "n_repetitions": 2,
+        "never": 0.92,
+        "now": 0.92,
+        "reached2": true,
+        "root_id": "live-1",
+        "schema": "b_branch_v2",
+        "split": "engineering",
+        "template_family_id": "live-family-1"
+      }
+    },
+    {
+      "dataset": "breast_cancer",
+      "family_id": 2,
+      "tree": {
+        "later": 0.88,
+        "n_repetitions": 2,
+        "never": 0.9,
+        "now": 0.74,
+        "reached2": true,
+        "root_id": "live-2",
+        "schema": "b_branch_v2",
+        "split": "engineering",
+        "template_family_id": "live-family-2"
+      }
+    },
+    {
+      "dataset": "wine",
+      "family_id": 3,
+      "tree": {
+        "later": 0.92,
+        "n_repetitions": 2,
+        "never": 0.9,
+        "now": 0.9,
+        "reached2": true,
+        "root_id": "live-3",
+        "schema": "b_branch_v2",
+        "split": "engineering",
+        "template_family_id": "live-family-3"
+      }
+    },
+    {
+      "dataset": "breast_cancer",
+      "family_id": 4,
+      "tree": {
+        "later": 0.6,
+        "n_repetitions": 2,
+        "never": 0.98,
+        "now": 0.98,
+        "reached2": true,
+        "root_id": "live-4",
+        "schema": "b_branch_v2",
+        "split": "engineering",
+        "template_family_id": "live-family-4"
+      }
+    },
+    {
+      "dataset": "wine",
+      "family_id": 5,
+      "tree": {
+        "later": 0.94,
+        "n_repetitions": 2,
+        "never": 0.92,
+        "now": 0.58,
+        "reached2": true,
+        "root_id": "live-5",
+        "schema": "b_branch_v2",
+        "split": "engineering",
+        "template_family_id": "live-family-5"
+      }
+    },
+    {
+      "dataset": "breast_cancer",
+      "family_id": 6,
+      "tree": {
+        "later": 0.78,
+        "n_repetitions": 2,
+        "never": 0.88,
+        "now": 0.82,
+        "reached2": true,
+        "root_id": "live-6",
+        "schema": "b_branch_v2",
+        "split": "engineering",
+        "template_family_id": "live-family-6"
+      }
+    },
+    {
+      "dataset": "wine",
+      "family_id": 7,
+      "tree": {
+        "later": 0.72,
+        "n_repetitions": 2,
+        "never": 0.84,
+        "now": 0.8,
+        "reached2": true,
+        "root_id": "live-7",
+        "schema": "b_branch_v2",
+        "split": "engineering",
+        "template_family_id": "live-family-7"
+      }
+    }
+  ],
+  "later_best": 3,
+  "law_hash": "2e7bd89608988e1124305907bba5a4af2899997cedf86e6d8854c1bc3cc00dd3",
+  "never_best": 3,
+  "now_best": 2,
+  "pi_path_note": "real Pi adapter not exercised: it requires the built Node runtime and a model endpoint (offline CPU constraint); the toy adapter MockModelProvider path is used instead and no model is called",
+  "tools": [
+    "fit_candidate",
+    "verify_candidate",
+    "submit_candidate"
+  ]
+}

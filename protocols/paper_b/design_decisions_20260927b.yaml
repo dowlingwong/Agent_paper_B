@@ -1,0 +1,57 @@
+# Addendum to protocols/paper_b/design_decisions_20260927.yaml (do not rewrite
+# the original).  Records controller design v2, the allocator, N1's displacement
+# constant and the task-realism outcome.  Prospective; no launch authorization.
+schema: b_design_decisions_addendum_v1
+date: '2026-09-27'
+status: prospective_working_design
+specification: docs/paper_split/B_CONTROLLER_DESIGN_20260927.md
+addendum_report: docs/paper_split/FIX_REPORT_20260927.md
+launch_authorization: false
+scientific_evidence: false
+
+controller_v2:
+  proposed: cross_fitted_continuation_value_timing
+  continuation_target: out_of_fold_second_stage_decision_times_observed_paired_outcome
+  checkpoint1_score: A1_hat_minus_Vwait_hat
+  folds: template_family
+  optimality_claim: false
+  note: budget-constrained heuristic; standard optimal-stopping methodology applied, not new
+  primary_comparators: [repeated_myopic, bavar_inspired_voi]
+  ablations: [constant_reserve]
+  diagnostics: [fixed_now, fixed_later, fixed_never]
+  retired: [sampling_only_variant]
+
+allocator:
+  name: two_phase_hard_budget
+  budget: floor(0.25 * N_original)
+  max_verifications_per_root: 1
+  phase1: rank feasible roots by s1; verify s1 > c1 up to B - R
+  phase2: rank reached unverified feasible roots by s2; verify s2 > c2 until exhausted
+  tie_break: outcome_blind_sha256_of_root_id
+  infeasible: continue fallback
+  early_terminated: skipped
+  unspent_capacity: retained
+
+n1:
+  location: evaluation_only
+  controllers_use_p: false
+  population_tax: 2 * m * p_path
+  m: 3
+  m_status: provisional_derivation_pending_independent_review
+  displacement_check: evaluate_tree.displacement_check (empirical max 3)
+  interference_scope: covers allocation interference under the derived m (pending independent review)
+  reference: docs/paper_split/N1_DISPLACEMENT.md
+
+task_realism:
+  runner: experiments/paper_b/task_cc_live/cc_live_realism.py
+  report: docs/paper_split/TASK_REALISM_REPORT.md
+  repair_passes: 1
+  verdict: fail
+  failed_checks: [R1_decision_room, R4_verifier_not_redundant]
+  passed_checks: [R2, R3, R5, R6, R7, R8, R9]
+  consequence: F10 (Ada tooling) stopped per the fix queue
+
+citations_verified:
+  - calibratethenact: "arXiv 2602.16699v3, verified at source 2026-09-27"
+  - ernst_fitted_q: "JMLR 6(18):503-556, verified at source 2026-09-27"
+  - bavar: "preprints.org 202608.2057; page could not be re-fetched (bot protection); author re-check required"

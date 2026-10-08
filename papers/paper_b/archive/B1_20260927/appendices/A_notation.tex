@@ -1,0 +1,89 @@
+\section{Authoritative notation}
+\label{app:b-notation}
+\label{app:notation}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lp{0.72\linewidth}@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$S_i$ & Latent physical computational state before treatment \\
+$X_i$ & Augmented Markov state: $S_i$, $H_i$, the stratum $J_i$, remaining budget, remaining horizon (\cref{sec:b-problem}) \\
+$H_i$ & Recorded pre-treatment checkpoint history \\
+$Z_i=f(H_i)$ & Registered policy representation \\
+$A_{ig}$, $M_i$ & Pre-treatment regime availability and feasible mask \\
+$E_{ig}$ & Execution indicator for the regime-$g$ branch at checkpoint $i$; see \cref{sec:theory} \\
+$J_i$ & Randomized sham ($0$) or injected-fault ($1$) assignment \\
+$g_0$ & No intervention followed by $\rho$ \\
+$g_v$ & Independent verification, response rule $\kappa_v$, then continuation/terminal action \\
+$g_r^{(f)}$ & Family-specific rollback, recomputation, postcondition, then response \\
+$\rho$, $T$ & Frozen continuation policy and finite downstream horizon \\
+$Y_i^g$ & Indicator of independently validated completion under feasible regime $g$ \\
+$I_i^g$ & Indicator of invalid scientific output under feasible regime $g$ \\
+$C_i^g$ & Raw resource-cost vector under feasible regime $g$ \\
+$\mu_g(z)$ & Availability-domain conditional mean $\E[Y_i^g\mid Z_i=z]$ \\
+$\mu^{(j)}_g(z,m)$ & Stratum-specific conditional regime value, $\E[Y_i^g\mid Z_i=z,M_i=m,J_i=j]$ \\
+$\mathrm{AV}^{(j)}(z,m)$ & Actionable value, \eqref{eq:actionable} \\
+$d_g(x)$; $a^{(j)}_g(z,m)$ & State (checkpoint) effect $Q^\rho_\tau(x,g)-Q^\rho_\tau(x,g_0)$; representation-cell effect $\E[d_g(X)\mid Z=z,M=m,J=j]$ \\
+$\Delta^{(j)}_g(z,m)$ & Pointwise advantage over the comparator, \eqref{eq:pointwise-advantage} \\
+$\Dcal_H$, $\Dcal_Z$ & Policy classes measurable w.r.t.\ $H$ and w.r.t.\ $(Z,M)$ \\
+$\mathrm{Ref}_j$ & Refinement loss of the registered representation, \eqref{eq:refinement} \\
+$W=(Z,M)$ & Representation--mask pair of an eligible checkpoint; argument of the ranking scores \\
+$a_v(w)$ & Verification advantage $\mu_{g_v}(w)-\mu_{g_0}(w)$ at $w=(z,m)$ on the common-availability domain \\
+$r$, $S_q(\cdot)$ & Baseline failure-risk score (registered as a function of $z$ alone); upper $q$-fraction selected by a score \\
+$\mathcal R_{\mathrm{rank}}(q)$ & Budget-matched risk-ranking regret, \eqref{eq:rank-regret} \\
+$V_j(d)$ & Policy value conditional on $J=j$ \\
+$p$ & Deployment prevalence of the registered fault \\
+$\eta$, $\xi$, $B_k$ & No-fault margin; invalid-output tolerance; expected-cost budget for component $k$ \\
+$\delta$, $K$, $|\Dcal|$ & Certification error level; number of cost components; candidate-class size \\
+$d^\dagger$ & Learned availability-aware one-step policy, \eqref{eq:gated-rule} \\
+$d^\star_{\mathrm{fixed}}$, $d^\star$ & Strongest certified non-personalized availability-aware comparator \\
+\bottomrule
+\end{tabular}
+\caption{Definitions used throughout the protocol.}
+\label{tab:notation}
+\end{table}
+
+\paragraph{Bellman reading.}
+Let $\tau$ be the sampled checkpoint and $X$ the augmented state there, and let
+$V^\rho_\tau$, $Q^\rho_\tau$ and $A^\rho_\tau=Q^\rho_\tau-V^\rho_\tau$ be the
+state-value, action-value and advantage functions of the baseline controller
+that selects $g_0$ at every checkpoint, so that $Q^\rho_\tau(X,g)$ is the value
+of one deviation to $g$ at $\tau$ followed by $\rho$.  The arguments are $X$ and
+not $H$ deliberately: the stratum $J$, the remaining budget, and the remaining
+horizon all enter the transition kernel, and a value written on the recorded
+history alone would have to be re-indexed by $j$ to be conditioned on $J=j$.
+\Cref{tab:bellman-dictionary} records how the objects of \cref{tab:notation}
+read in those terms.  It is a dictionary, not a method; \cref{sec:b-theory} says
+what it is used for, and \cref{sec:b-data} --- not this table --- is what
+identifies anything.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{3.0cm}p{5.5cm}p{4.7cm}@{}}
+\toprule
+Paper object & Bellman object & Comment \\
+\midrule
+$\mu^{(j)}_g(z,m)$ & $\E[\,Q^\rho_\tau(X,g)\mid Z=z,M=m,J=j\,]$ & action value of the baseline, aggregated to $(Z,M)$ within the stratum \\
+baseline failure risk $r$ & $1-\E[V^\rho_\tau(X)\mid Z]$ & a state value; the deferred policy-ranking study ranks $A^\rho$ against $1-V^\rho$, not $V^\rho$ \\
+$a_v(w)$; $\mathrm{AV}^{(j)}(z,m)$ & $\E[A^\rho_\tau(X,g_v)\mid W]$; $\max_g\E[A^\rho_\tau(X,g)\mid Z,M,J]$ & advantages; the maximum is \emph{outside} the conditional expectation \\
+$\Delta^{(j)}_g(z,m)$ against $d^\star$ & $\E[\,Q^\rho_\tau(X,g)-Q^\rho_\tau(X,d^\star(Z,M))\mid Z,M,J\,]$ & advantage of one deviation over another \\
+harm endpoints & $\Prb\{A^\rho_\tau(X,g)<0\}$ (state) and $\Prb\{\E[A^\rho_\tau(X,g)\mid Z,M,J]<0\}$ (cell) & different endpoints; the adopted bracket targets the state fraction \\
+$V_j(d)$ & value of ``$d$ at $\tau$, $\rho$ elsewhere'' & a single-deviation policy; see \cref{prop:l0} for its trajectory reading \\
+$V^{*H}_j$, $V^{*Z}_j$ (\cref{thm:refinement}) & $\E[\max_g\mu^{(j)}_g(H)]$ and $\E[\max_g\mu^{(j)}_g(Z,M)]$, i.e.\ maxima of \emph{conditional means} at two resolutions & one step of value iteration at $H$- versus $Z$-resolution; both are at most $\E[\max_g Q^\rho_\tau(X,g)]$, and neither equals it \\
+availability mask $M$ & initiation-set membership of each intervention option & the option, not the complete regime, is the primitive action \\
+gate family \eqref{eq:gate-family} & size of the tabular action-value table over (cell, mask, regime, stratum) & \cref{prop:certification} prices the table \\
+restore-and-branch & generative-model access: reset to $(\tau,X)$, sample $X'\sim P_g$ & tested by E0 at the sampled checkpoints only, never at post-intervention states \\
+the branch design & depth-one sparse sampling with Monte-Carlo leaf evaluation under $\rho$ & one backup at one random depth \\
+learner of \cref{sec:rl} & masked \emph{policy-score} learner: it maximises \eqref{eq:rl-objective}, an estimated expected advantage, and never regresses $Q^\rho$ & not an action-value regression; a fitted-$Q^\rho$ baseline would be a separate, currently unregistered candidate (\cref{app:label-use}) \\
+\bottomrule
+\end{tabular}
+\caption{Bellman reading of the design.  Every entry is a relabelling of a
+quantity already defined; none changes an estimand, and none of them
+identifies one: identification is \cref{sec:b-data} and the runtime qualification gate.}
+\label{tab:bellman-dictionary}
+\end{table}

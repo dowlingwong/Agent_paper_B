@@ -1,0 +1,139 @@
+%% Paper B — verification timing under replay uncertainty.  Development
+%% template: the ICML 2026 style kit (icml2026.sty / icml2026.bst); swap in the
+%% official ICML 2027 kit when it is published.  Double-blind while the package
+%% is loaded without [accepted]/[preprint].
+%%
+%% Research-draft status: sections contain PLANNED results only.  No fabricated
+%% curves or performance numbers.  Build:  make pdf  (from papers/paper_b/).
+
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{icml2026}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{amsthm}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,fit,positioning,shapes.geometric}
+\usepackage[capitalize,noabbrev]{cleveref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black
+}
+
+\newcommand{\Gset}{\mathcal{G}}
+\newcommand{\Dcal}{\mathcal{D}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prb}{\mathbb{P}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\crefname{theorem}{Theorem}{Theorems}
+\Crefname{theorem}{Theorem}{Theorems}
+\crefname{proposition}{Proposition}{Propositions}
+\Crefname{proposition}{Proposition}{Propositions}
+\crefname{lemma}{Lemma}{Lemmas}
+\Crefname{lemma}{Lemma}{Lemmas}
+\crefname{corollary}{Corollary}{Corollaries}
+\Crefname{corollary}{Corollary}{Corollaries}
+\crefname{definition}{Definition}{Definitions}
+\Crefname{definition}{Definition}{Definitions}
+\crefname{assumption}{Assumption}{Assumptions}
+\Crefname{assumption}{Assumption}{Assumptions}
+\crefname{example}{Example}{Examples}
+\Crefname{example}{Example}{Examples}
+\crefname{remark}{Remark}{Remarks}
+\Crefname{remark}{Remark}{Remarks}
+
+\icmltitlerunning{When to Spend a Verification Budget under Replay Uncertainty}
+
+\begin{document}
+
+\twocolumn[
+  \icmltitle{When to Spend a Verification Budget under Replay Uncertainty}
+
+  \begin{icmlauthorlist}
+    \icmlauthor{Anonymous Authors}{anon}
+  \end{icmlauthorlist}
+  \icmlaffiliation{anon}{Anonymous Affiliation, Anonymous City, Anonymous Country}
+  \icmlcorrespondingauthor{Anonymous Authors}{anonymous@example.org}
+
+  \icmlkeywords{verification timing, agent oversight, replay uncertainty,
+    budgeted decision making, sequential control}
+
+  \vskip 0.3in
+]
+
+% The development style prints an ICML under-review notice by default.  This
+% paper is a research draft, not a submission, so the notice is replaced with
+% the honest status.  It must be redefined before the notice is printed.
+\makeatletter
+\renewcommand{\Notice@String}{Research draft: results are planned; no experimental claims.}
+\makeatother
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+\input{sections/00_abstract}
+\end{abstract}
+
+\input{sections/01_introduction}
+\input{sections/02_problem}
+\input{sections/03_regimes}
+\input{sections/04_data}
+\input{sections/05_method}
+\input{sections/06_theory}
+\input{sections/07_experiments}
+\input{sections/08_statistics}
+\input{sections/09_limitations}
+\input{sections/10_related}
+\input{sections/11_bridge}
+
+\input{figures/architecture}
+\input{figures/risk_vs_advantage}
+
+\section*{Reproducibility statement}
+The prospective experimental contract is machine-readable
+(\texttt{protocols/paper\_b/contract\_v2.yaml}; v1 is historical) and a launch
+validator refuses to run with missing required fields.  The executable
+candidate-consistency task, the \texttt{b\_branch\_v2} tree records and the
+engineering smoke path (\texttt{make smoke-b}) run on CPU and report
+\texttt{ENGINEERING\_ONLY}.  No scientific result is reported in this draft; the
+contract's runtime, artifact, split and provenance bindings stay null until they
+are bound on the substrate.
+
+\section*{AI use statement}
+Generative-AI tools assisted with editorial restructuring and software
+implementation.  The authors selected the research question, protocol, formal
+claims, and analysis, checked the resulting text and citations, and take
+responsibility for the submission.
+
+\bibliographystyle{icml2026}
+\bibliography{references}
+
+\newpage
+\onecolumn
+\appendix
+\input{appendices/B_proofs}
+
+\end{document}

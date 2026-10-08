@@ -1,0 +1,79 @@
+\section{Dataset generation and the runtime qualification boundary}
+\label{sec:b-data}
+
+\subsection{Collection sequence}
+
+One root is generated as follows:
+\begin{enumerate}[label=(\arabic*),leftmargin=2em]
+\item Run the prefix once to the declared checkpoint under the frozen agent.
+\item Quiesce execution: finish or cancel in-flight tools according to the
+  contract.
+\item Capture the live declared state and write a manifest (state surface,
+  hashes, versions, budget counters).
+\item Create isolated sibling states immediately.
+\item Randomize or counterbalance branch execution order by a predeclared rule.
+\item Execute $g_0$ and each feasible intervention for $R$ repetitions each.
+\item Resume the same $\rho$ under the registered horizon and budget semantics.
+\item Adjudicate final artifacts with a hidden, regime-blind evaluator.
+\item Write append-only records and branch accounting.
+\end{enumerate}
+
+Live forking reduces historical reconstruction requirements; it does not prove
+equal effective state.  If the runtime only supports restarting from a
+serialized transcript, the operation is described as \emph{re-instantiation},
+and the interface is validated as such; it is not called an exact process fork.
+
+\subsection{Declared state surface}
+
+The outcome-relevant subset of the following is checked and versioned:
+workspace files, permissions and artifact versions; tool/process state,
+subprocesses and job IDs; environment and library versions; history, prompt,
+model identity and decoding settings; RNG state and the seed-coupling rule;
+budget counters, elapsed time and remaining horizon; caches, mutable shared
+stores, symlink targets and provider sessions; and network/external services if
+allowed.  A pure output-neutral cache need not invalidate causal outcomes merely
+because it is warm; its effect is tested on both the outcomes and the chosen
+cost endpoint, and if wall-time budget makes cache warmth outcome-relevant it is
+included in the contract.  Reference validity cannot be established by
+comparing two implementations that share the same hidden defect; the
+independently justified reference boundary is stated with the contract.
+
+\subsection{The qualification gate (B-Q)}
+
+A separate pool with engineering labels is used.  Required checks: identical
+serialized starting payloads where equality is claimed; immutable read-only
+inputs and isolated writable state; no cross-branch mutable links, queues or
+counters; pre-treatment mask and feature construction; stable
+action/continuation/adjudicator versions; branch-order and seed-handling checks;
+deterministic known-answer controls and stochastic-law diagnostics where
+relevant; and explicit missing-state and tool-failure handling.  Tolerances are
+matched to the state contract before the scientific pilot; arbitrary determinism
+is not required from a genuinely stochastic model.  An engineering qualification
+check is evidence about declared components, not proof of all hidden
+dependencies: unresolved outcome-relevant state blocks causal wording for that
+substrate.  Only after B-Q passes for a specific runtime/configuration, with a
+bounded statement of what was checked, may new pilot branch contrasts be
+interpreted scientifically.
+
+\subsection{Branch record schema}
+
+Every branch record carries: schema version, paper, study, protocol hash, run
+id, template id, root id, checkpoint id and rule version, split, evaluator-only
+condition label, runtime manifest hash, snapshot and history hashes, feature
+registry version, pre-treatment features and mask, availability evidence hash,
+action id and version, continuation version, repetition id, seed-coupling id,
+branch order, the outcome fields (success, utility, invalid), the cost vector,
+execution status and failure reason, adjudicator version, and artifact hashes.
+The learner dataset is a restricted projection of this record.  The outcome
+table and the evaluator-only metadata are not reachable through feature
+construction, and the projection is validated by a leak test that must fail
+when the projection is given access to either.
+
+\subsection{Splits}
+
+Qualification and pilot pools are disjoint from final evaluation.  Training fits
+representations and learners; validation selects architecture, hyperparameters
+and candidate policies; calibration fixes conservative thresholds and selection;
+the final test evaluates frozen policies.  Splitting is at the template level:
+multiple roots, seeds, fault variants or tasks generated from one template stay
+in one split, and shared task datasets are recorded at that level too.

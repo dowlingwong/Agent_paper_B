@@ -1,0 +1,29 @@
+\section{Bridge to recovery and sequential control}
+\label{sec:b-bridge}
+
+\paragraph{Recovery (optional extension).}
+A recovery action $g_r$ becomes a first-study candidate only with a stable
+precondition, a declared rollback boundary, a repair action and a continuation
+contract.  It must then demonstrate an increment over continue/verify under the
+same branch budget and information, and it is evaluated as a third action with
+its own feasibility mask and cost vector.  A generic unconstrained ``try again''
+is not comparable and is not reported as recovery.
+
+\paragraph{Sequential control and DAC/RL (future work).}
+Extending the decision to every checkpoint changes the problem in three ways
+that must be earned rather than assumed.  First, the continuation is no longer
+frozen: the value of acting at $t$ depends on the policy that acts later, and
+the branch design no longer supplies a single backup.  Second, coverage becomes
+policy-dependent: pessimistic value iteration requires uniform confidence
+validity over the states the new policy reaches, and those include
+post-intervention states that depth-one branching never re-enters; the one-step
+result of \cref{prop:transfer,rem:transfer-fails} makes this gap explicit and
+shows a registered-scale construction in which the repeated controller loses
+while every one-step quantity is positive.  Third, the allocation problem
+becomes a sequential decision under a budget, i.e.\ a constrained
+semi-Markov decision process over checkpoints with option durations and cost
+accumulation; the one-step problem in this paper is its first backup, and the
+constraint structure is a natural fit for constrained RL or decision-focused
+allocation methods.  None of that is claimed here.  A depth-two branching pilot
+that measures the post-intervention span would be the first instrument
+requirement of that program, and it is not part of this paper.

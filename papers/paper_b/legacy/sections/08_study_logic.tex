@@ -1,0 +1,159 @@
+\section{Instrument gate, pilot, confirmatory study, and stopping rules}
+\label{sec:stages}
+
+\paragraph{The instrument gate comes first, and it is the study's central risk.}
+Because the design is exhaustive re-execution rather than randomized treatment
+(\cref{sec:causal}), every estimand and \cref{thm:safe} itself depend on
+branches beginning from an identical restored state.  Runtime integration
+therefore starts with one minimal toy task, one restored checkpoint, and three
+isolated branches, and must demonstrate restoration of the five registered
+layers --- workspace, executable environment, session history, budget counters,
+and declared external tool state --- with the feasible mask reproduced under its
+own check rather than as a sixth layer; isolation of branches
+against cross-branch writes \emph{and} against shared external state such as
+local inference caches, shared process state, and shared tool sessions; evaluator
+integrity; and trace completeness.  This stage validates infrastructure only and
+supplies no scientific evidence.  Its result is reported whichever way it falls:
+a failed gate is a finding about benchmark readiness, not a reason to weaken
+\cref{sec:causal}.
+
+If the gate passes, a later engineering dry run may validate intervention
+semantics and cost capture; it cannot estimate effects or rank policies.  A
+developmental pilot may then estimate eligible-checkpoint yield, restoration and
+instrumentation reliability, availability per regime, raw cost distributions,
+adjudicator agreement, paired root-level variance, within-root stochastic
+variance, and whether recovery semantics remain coherent.  Pilot data are
+excluded from confirmatory inference.  For E3, the approved claim and root-count
+rule are frozen before the pilot and its output is only a go/no-go assessment;
+failure requires a new scientific approval rather than threshold adaptation.
+For E4, \cref{eq:sample-ceiling} separately fixes the certification ceiling and
+the pilot reports whether the achievable root count clears it.
+
+Before pair construction, a seeded group-disjoint allocation carves a
+\emph{pair-development} subset from the training acquisition pool; the
+remainder is the model-training pool.  Only pair-development data may
+instantiate $P$, $\lambda_0$, and $\lambda_P$, and the split manifest and exact
+pair are hash-bound before the pilot.  Pilot, selection, calibration, and final
+roots remain disjoint from both training subsets.
+
+After the pilot, the finite candidate class and the model-training, selection,
+calibration, and untouched final-evaluation splits are frozen.  Candidate
+training uses only the model-training remainder; selection and simultaneous
+certification use their declared held-out splits.  Reporting a pre-registered comparator on the
+final split is not selecting on it: only choices made after seeing final data
+trigger simultaneous coverage.  The confirmatory estimand \eqref{eq:personalization}
+is one pre-registered contrast, and the final split contributes a single
+ordinary confidence interval for it --- a curve over the registered prevalence
+grid, with the guarantee interval of \cref{cor:interval} marked.  The remaining
+members of the comparator hierarchy of \cref{sec:policy} are reported on the
+final split descriptively, with point estimates and, where prespecified, their
+own intervals, but no selection among them is made from those data; if a
+comparison or prevalence point not registered in advance is added on final data,
+simultaneous coverage is constructed for that selection instead.  Root and
+template clustering, unequal availability, missing checkpoint blocks, and all
+certification conditions enter the confirmatory sample projection.
+
+Training the parametric policies of $\Dcal$ is permitted entirely inside the
+model-training remainder, as \cref{sec:rl} specifies; it does not reintroduce sequential
+positivity, because the decision remains one-step and every feasible arm is
+branched.  What the frozen protocol prohibits is precise: re-fitting any
+candidate, adjusting the registered gate, relaxing a constraint, or reselecting
+the prevalence point after the candidate class is frozen.  The gate is a
+registered procedure --- applying it on calibration data produces the derived
+deployment rules $d^\dagger$ and $d_{\mathrm{C,cert}}$
+of \cref{sec:policy}, which is the certification step, not adaptive reuse.  The
+model-training remainder fits the unconstrained and constrained policy members; the selection split fixes architecture,
+hyperparameters, checkpoint and the optimistic controller's point estimates; the
+calibration split constructs the simultaneous bounds, forms the gate of
+\cref{cor:proposal}, and determines the certified set; the untouched final split
+evaluates the frozen policy alone, after which no policy swap, gate adjustment,
+constraint relaxation, or prevalence reselection is permitted.
+
+The branching data would be a full-feedback contextual-bandit benchmark ---
+every feasible action observed conditional on pre-treatment feasibility, with
+clean counterfactuals and randomised fault assignment --- and their release is a
+conditional deliverable of the program rather than a claimed contribution of
+this paper.  Release is nevertheless conditional on licensing, runtime and model
+terms, storage and versioning, and contamination control; if any of those
+conditions cannot be met, the paper reports which one blocked release rather
+than silently dropping the deliverable.
+
+\paragraph{Claim hierarchy.}
+In the retained historical plan E3 was primary, E4 the safety claim, E1/E2
+supporting, and E5 robustness.  All of these are now deferred; the completed
+claims of this report are M1--M3, and none of the studies below has run.  E3 and
+E4 retain separate feasibility conditions and verdicts.  E4 is deferred from
+the execution program by decision, not by blocker; its theory is
+retained unchanged and its conditions below are stated for a reinstatement.
+E3 is deferred by the same route decision and is not the current primary claim.
+
+\emph{Ordinal sufficiency} tests the null \eqref{eq:null} by budget-matched
+capacity-$q$ selection under a risk score against a cross-fitted $a_v$, on the
+domain where $g_0$ and $g_v$ are jointly available, across a declared capacity
+grid.  It needs no recovery regime, so it stays identified even if recovery
+semantics prove incoherent, and its null is sharp rather than conventional; it
+is the cheapest identified comparison in the design and not a fallback.
+
+\emph{The E4 safety claim, certified personalization,} tests whether
+\eqref{eq:personalization} is positive on the final holdout while the constraints of \cref{prop:certification}
+are met, with the guarantee interval of \cref{cor:interval} marked on the
+reported prevalence curve.  Its endpoints include the fallback rate of
+\eqref{eq:gated-rule} --- a controller that never deviates is safe and useless
+--- and the no-fault harm fraction \eqref{eq:harm-fraction}, a primary endpoint
+and not a robustness check.
+
+\paragraph{Numeric gates.}
+The full design proceeds only if all of the following hold.  These values are
+registered in advance and are not to be relaxed afterwards.  G1 is measured on
+a dedicated pre-pilot instrument pool, not on pilot data.
+
+\begin{enumerate}[label=(G\arabic*),leftmargin=3em]
+\item \textbf{Restoration.} At least $0.95$ of attempted checkpoint restoration
+  \emph{blocks} --- a block being the parent together with every fresh sibling ---
+  reproduce all five registered layers exactly: workspace, executable
+  environment, session history, budget counters, and declared external tool
+  state.  The availability mask is not a layer and is reproduced under its own
+  check.  Zero detected cross-branch writes and zero detected shared-state leaks
+  are required across at least $200$ valid completed branch triples, with
+  complete passing isolation probes and no unresolved required check.  Absence
+  of evidence is never zero leakage.
+\item \textbf{Availability.} Each regime class is available at at least $0.30$ of
+  eligible checkpoints, and the three-way common-availability domain covers at
+  least $0.20$, so that action-ranking contrasts are estimable rather than
+  nominal.
+\item \textbf{E4 certification ceiling} \emph{(if E4 is reinstated).} The projected E4 confirmatory root count clears the
+  value \eqref{eq:sample-ceiling} returns at the registered class sizes and
+  margins $(|\Dcal|,B,K,\delta,\eta)$, after inflation for root and template
+  clustering and for invalidated checkpoint blocks.
+\item \textbf{Adjudication.} Independent adjudicator agreement on terminal
+  category is at least $\kappa=0.75$, with execution correctness and scientific
+  validity scored separately.
+\item \textbf{Recovery coherence.} For each fault family, the recovery
+  precondition, rollback boundary, recomputation rule, and machine-checkable
+  postcondition are demonstrated on at least $20$ checkpoints, with a
+  postcondition false-pass rate below $0.05$.
+\end{enumerate}
+
+\paragraph{Stopping and reframing.}
+If (G1) fails, no confirmatory causal claim is made and the paper reports the
+instrument result.  If (G2), (G3), or (G5) fails while $g_0$ and $g_v$
+remain available and the approved E3 precision target remains feasible, the
+study may proceed with ordinal sufficiency alone and the certified-personalization
+claim is withdrawn, not weakened.  If the
+personalization estimand \eqref{eq:personalization} is non-positive on the final
+holdout, or the no-fault constraint cannot be certified, the successful-policy
+claim is stopped and the work is reported as causal characterization.
+
+The stopping rule keeps its force, and what it gates is the framing, not the
+paper.  If the null \eqref{eq:null} is rejected, the actionability gap exists
+and risk-ranked budgets misallocate.  If it is not rejected, the study may say
+only that ordinal insufficiency was not established at the registered
+capacities and precision; it reports simultaneous confidence intervals and the
+design's power against prespecified alternatives.  Failure to reject cannot
+establish ordinal sufficiency.  An approximate-sufficiency claim would require
+a separately registered equivalence tolerance and simultaneous upper confidence
+bounds below that tolerance across the capacity grid.  Neither outcome is a
+failure of the study, but only rejection licenses the insufficiency
+claim; the E0-M, E2 and harm measurements do not depend on it.  With E3
+deferred, this stopping rule governs a future execution and does not gate the
+completed measurement panels.

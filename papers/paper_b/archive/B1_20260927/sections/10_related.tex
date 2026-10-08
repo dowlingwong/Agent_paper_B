@@ -1,0 +1,66 @@
+\section{Related work and the nearest-prior boundary}
+\label{sec:related}
+
+\paragraph{Intervention value at checkpoints.}
+\citet{calibrationnotcontrol2026} names intervention advantage as the decision
+quantity, formalises the prediction/control mismatch as target error, and
+introduces prefix branching: candidate actions are executed from an identical
+trajectory state, with reconstruction checked by step-by-step agreement and
+mismatches discarded, and a repeated shallow-prefix probe on an exact-replayable
+subset.  The inspected version records a fixed action menu and no pre-treatment
+availability record; its cost accounting and harm endpoints were not read in the
+available scope.  This paper does not contest that prefix branching measures
+intervention value.  It asks the allocation question that remains after
+feasibility, cost and harm are made first-class and observed before treatment,
+and it tests fitted policies under matched information rather than the
+population ordering.  \citet{interventionparadox2026} show that a critic with
+strong offline discrimination can degrade agent performance and decompose the
+effect into recovery and disruption; the no-fault stratum here is a designed
+endpoint, not a rediscovery of that observation.
+\citet{harnessr12026} learn lifecycle-wide executable interventions and report
+that many valid patches reduce batch success; we ask when a proposed
+intervention should be deployed at a particular checkpoint, under a budget.
+
+\paragraph{Replay and measurement preconditions.}
+\citet{causalagentreplay2026} re-execute trajectories under step interventions
+to attribute failure, reporting an action-match rate; real side-effecting tools
+are out of scope there.  \citet{replaygap2026} fork trajectories by replaying
+logged actions into a fresh container with a matched control arm and report
+reconstruction rates, with two arms and fixed fork points.  Replay fidelity has
+been measured by action-match and reconstruction rates; the measurement
+contract this paper assumes --- per-layer restoration, pre-treatment
+availability, and an explicit identified set for the intended effect under an
+unaudited discrepancy --- is developed separately and cited, not re-derived
+here.
+
+\paragraph{Ordinal sufficiency and selective prediction.}
+The condition under which an outcome ranking coincides with an effect ranking is
+established in budgeted triage \citep{okati2021}, in the uplift literature under
+monotone treatment amplification \citep{fernandezloria2022}, and for allocation
+at every budget fraction \citep{kamran2024}.  Selective prediction and
+risk--coverage rank by confidence to decide whether to abstain; here the ranked
+object is a causal contrast between executed options, one of which can harm a
+clean checkpoint, and the budget is spent on intervention rather than
+abstention.  The exact ordinal result is cited as prior art; what this paper
+tests is whether \emph{fitted} policies differ at matched information.
+
+\paragraph{Uplift, dynamic treatment regimes, and safe improvement.}
+Uplift modelling and policy learning establish that the ranking needed for
+treatment can differ from outcome risk
+\citep{rzepakowski2012,kitagawa2018,atheywager2021}; learning to defer supplies
+the finite-capacity version \citep{madras2018,mozannar2020}; dynamic treatment
+regimes supply the complete-regime semantics
+\citep{murphy2003,murphybingham2009}.  The single-checkpoint contrast is a
+\emph{blip}, and the one-step restriction keeps the hypotheses checkable rather
+than assumed \citep{deepblip2025}.  Pessimistic policy improvement supplies the
+held-out safety argument \citep{laroche2019,kumar2020,xie2021}; simultaneous
+distribution-free safety over guardrail outcomes is established independently
+\citep{snpl2025}, and the gate here differs by the availability mask and by the
+explicitly narrowed scope of the first study.
+
+\paragraph{What this paper does not claim.}
+It does not claim that prediction and intervention value come apart; it does not
+claim the ordinal-sufficiency theorem; it does not claim a new general
+identification theorem for replay; it does not claim a new safety theorem from a
+union bound; and it does not claim real-agent results before the qualification
+and pilot gates pass.

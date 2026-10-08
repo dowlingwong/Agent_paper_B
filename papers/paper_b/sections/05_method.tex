@@ -1,0 +1,111 @@
+\section{The proposed timing rule, comparators and the shared allocator}
+\label{sec:policy}
+
+All controllers act on one shared information set and tuning protocol: the same
+decision view (H\textsubscript{1} at checkpoint 1, H\textsubscript{2} at
+checkpoint 2, remaining budget and progress), the same model family and capacity,
+the same template-family folds, and the same tuning budget.  Controllers never
+read a replay allowance, leaf outcomes or hidden data: at a decision point a
+controller receives only a decision view that exposes $H_1$ (or, at checkpoint 2,
+$H_2$) and refuses any read of outcomes or hidden data.  Outcomes enter only as
+training labels on development families.
+
+\subsection{The proposed rule: fitted continuation-value timing}
+\label{sec:b-proposed}
+
+The proposed rule is standard optimal-stopping methodology --- least-squares
+continuation-value estimation \citep{longstaffschwartz2001} and two-step fitted
+Q-evaluation \citep{ernst2005} --- \emph{applied} to agent verification timing.
+It is a \textbf{budget-constrained heuristic, not the optimal policy for the
+batch-constrained problem}, and it is never described as optimal.
+
+Folds are split by template family; each fold keeps all of a family's roots,
+descendants and repetitions together, and every quantity for a root comes from
+models fitted without its family.  On the other folds we
+\begin{enumerate}[label=(\arabic*),leftmargin=2em]
+\item regress the paired contrast $U^{\text{later}}-U^{\text{never}}$ on
+  $H_2$ over reached roots, giving $\hat A_2^{(-k)}$; the implementable
+  decision is $\hat d_2^{(-k)}(H_2)=\mathbf 1\{\hat A_2^{(-k)}(H_2)>c_2\}$ with
+  $c_2$ calibrated on development folds.  Inside the training folds, each root's
+  decision comes from a second-stage model fitted without that root's own
+  family (a nested cross-fit), so the decision is independent of the root's own
+  paired outcome;
+\item form the continuation target $Y_{\text{wait}} =
+  \text{reached}_2\cdot \hat d_2^{(-k)}(H_2)\cdot(U^{\text{later}}-U^{\text{never}})$
+  and regress it on $H_1$ to get $\hat V_{\text{wait}}(H_1)$ --- the value of the
+  \emph{fitted} second-stage policy.  The positive part is not used: an
+  independent noisy estimate has an upward-biased positive part, and an
+  in-sample decision selects on the same noise and inherits that bias;
+\item regress $U^{\text{now}}-U^{\text{never}}$ on $H_1$ to get $\hat A_1(H_1)$;
+\item score $s_1^{\text{prop}}(H_1)=\hat A_1(H_1)-\hat V_{\text{wait}}(H_1)$ (the
+  net value of using the verification now rather than keeping it) and
+  $s_2=\hat A_2$.
+\end{enumerate}
+
+\subsection{Primary comparators and ablations}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.16\linewidth}p{0.38\linewidth}p{0.38\linewidth}@{}}
+\toprule
+Role & Controller & Checkpoint 2 \\
+\midrule
+Primary & repeated-myopic: $\hat A_1(H_1)$, verify if $>c_1$; no reserve & $\hat A_2(H_2)>c_2$ \\
+Primary & BAVAR-inspired context-dependent VOI scheduler (below) & same construction on $H_2$ \\
+Ablation & constant reserve: $\hat A_1(H_1)>\tau$, plus a tuned constant reserve $R$ & $\hat A_2(H_2)>c_2$ \\
+Diagnostic & fixed now / later / never & --- \\
+\bottomrule
+\end{tabular}
+\caption{Matched controllers.  Each calibrates its own parameters from 27
+candidate configurations on the same development data.  The proposed rule and
+repeated-myopic share one $(c_1,c_2)$ grid with no constant reserve, so their
+contrast isolates the checkpoint-1 score; the BAVAR-inspired scheduler and the
+constant-reserve ablation tune a hard reserve $R$.  Identical numeric cutoffs are
+not required.}
+\label{tab:b-comparators}
+\end{table}
+
+\textbf{BAVAR-inspired context-dependent VOI scheduler.}  One learned scorer per
+checkpoint over the signals this task provides: the decision history ($H_1$ or
+$H_2$, which carries whatever actor-uncertainty or criticality features the task
+exposes), the expected information value (the predicted immediate verification
+gain $\hat A_1$ or $\hat A_2$), verifier reliability (the development-data
+probability that verifying improves $U$) and the product of the last two, plus a
+hard reserve tuned on development data.  Each scorer is a ridge fit to the
+paired outcome at its checkpoint.  It is an \emph{adaptation} of BAVAR
+\citep{adeli2026bavar}, not a reproduction.  Deviations: there is no
+actor-sampling uncertainty model (uncertainty and criticality enter only as
+history features); progress enters only through the separate per-checkpoint
+scorers, and remaining budget through the shared allocator's reserve, not as
+scorer inputs; there is a single verifier (no multi-verifier choice or
+allocation); there is no RL training loop; and the reserve is a tuned constant,
+not a learned deferral policy.  Beating the constant-reserve ablation says
+nothing about BAVAR.
+
+\subsection{The shared executable allocator}
+\label{sec:b-allocator}
+
+The same allocator is used by every controller; controllers differ only in their
+scores $s_1,s_2$, cutoffs $c_1,c_2$ and reservation $R$.  For a batch of $N$
+original roots the hard budget is $B=\lfloor .25\,N\rfloor$ verifier calls, with
+at most one call per root.  Phase 1 ranks feasible roots by $s_1$ (ties by a
+declared outcome-blind hash of the root id) and verifies the top roots with
+$s_1>c_1$, up to $B-R$.  Phase 2 ranks reached, unverified, feasible roots by
+$s_2$ and verifies the top roots with $s_2>c_2$ until capacity is exhausted.
+Infeasible roots fall back to continue; early-terminated roots never enter phase
+2; unspent capacity stays unspent.  Realized calls, unspent calls and total work
+are reported per controller.
+
+\subsection{Matching and the equivalence check}
+\label{sec:b-equivalence}
+
+All controllers share the decision view, model family, capacity, folds and number
+of tuning configurations; \texttt{matching\_report} checks this substantively and
+fails on any mismatch.  The historical ``advantage allocation beats the plain
+action-conditioned value'' hypothesis cannot hold for the implemented
+estimators: with identical ridge designs, penalties and paired rows, ridge is
+linear, so the two are the same estimator.  That comparison is retained only as
+an \emph{implementation equivalence check} (agreement within $10^{-12}$), not a
+hypothesis and not a contribution.

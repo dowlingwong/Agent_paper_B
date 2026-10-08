@@ -1,0 +1,59 @@
+\section{Continue and verify: regime semantics}
+\label{sec:b-regimes}
+
+The first study's action set has two members.  Their semantics are fixed
+before any data are collected; a change to either is a new action version and
+invalidates the qualification of the affected branches.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.14\linewidth}p{0.40\linewidth}p{0.38\linewidth}@{}}
+\toprule
+Regime & Action & Termination \\
+\midrule
+$g_0$ & Continue with the frozen agent policy $\rho$; no external call. & Runs to the registered horizon; the root's ordinary outcome. \\
+$g_v$ & Invoke the fixed verifier on the declared verifier input, apply the fixed result-to-response rule, then resume $\rho$. & The response rule either leaves the candidate unchanged or replaces it according to the rule; then $\rho$ runs to the horizon. \\
+\bottomrule
+\end{tabular}
+\caption{Regime semantics for the first study.  Verification that only logs a
+diagnosis without changing the continuation is a different treatment and is not
+$g_v$.}
+\label{tab:option-boundaries}
+\end{table}
+
+\paragraph{The verifier contract.}
+$g_v$ is defined by a frozen tuple: the verifier's input (the declared state
+surface and the candidate artifact), its model/tool binding and version, its
+output schema, its error handling, the result-to-response rule that maps a
+verifier verdict to a change in the continuation, its maximum work (token,
+time and call ceilings), its termination condition, and the point at which
+control returns to $\rho$.  ``Independent verifier'' is used only in the defined
+sense of \emph{separately invoked and unable to access hidden evaluation
+labels}; independence of errors is not inferred from a different prompt or model
+name, and no verifier is described as independent without those properties.
+
+\paragraph{Feasibility.}
+$A_{ig_v}$ is determined before the intervention from the pre-treatment state
+and recorded with its reason and evidence.  Three cases are kept distinct:
+\begin{itemize}[leftmargin=1.4em]
+\item \emph{Unavailable}: the verifier's declared input is absent, so no
+  counterfactual outcome is assigned under that action definition.  The
+  checkpoint contributes to the feasible-support analysis only through the
+  reported unavailable stratum.
+\item \emph{Feasible but the verifier times out or errors}: the branch remains
+  an outcome of $g_v$, with the execution status and failure reason recorded.
+\item \emph{Evaluator or collection failure}: retained as a separate
+  data-integrity status and handled by the predeclared missing-data rule; it is
+  not interchangeable with task failure.
+\end{itemize}
+A controller asked to use an unavailable action falls back to $g_0$ explicitly,
+and the attempted-invalid-action event is reported.
+
+\paragraph{Recovery is optional and not in the first study.}
+A recovery action $g_r$ enters only with a stable precondition, a declared
+rollback boundary, a repair action and a continuation contract; a generic
+unconstrained ``try again'' is not a comparable regime.  The first study
+therefore reports continue/verify only, and \cref{sec:b-bridge} states the
+increment a qualified $g_r$ would have to demonstrate.

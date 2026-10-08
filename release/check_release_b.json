@@ -1,0 +1,41 @@
+{
+  "checks": {
+    "manifest_matches_source_commit": true,
+    "no_credentials": true,
+    "no_cross_paper_paths": true,
+    "pdf_built": true,
+    "pdf_bytes": 509555,
+    "smoke_exit_zero": true
+  },
+  "commands": [
+    {
+      "command": "latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex",
+      "cwd": "/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/release-b-iyzglg65/paper_b/papers/paper_b",
+      "exit_code": 0,
+      "stderr_tail": [
+        "Latexmk: Missing bbl file 'main.bbl' in following:",
+        " No file main.bbl."
+      ],
+      "stdout_tail": [
+        "Latexmk: Log file says output to 'main.pdf'",
+        "Latexmk: Found bibliography file(s):",
+        "  ./references.bib",
+        "Latexmk: All targets () are up-to-date"
+      ]
+    },
+    {
+      "command": "python experiments/paper_b/smoke_b.py --output results/paper_b/smoke_release_check",
+      "cwd": "/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/release-b-iyzglg65/paper_b",
+      "exit_code": 0,
+      "stderr_tail": [],
+      "stdout_tail": [
+        "  records: train=309 calibration=171 test=195",
+        "  D_S(q=0.25) = +0.0000 CI [-0.1672, +0.2500] (feasible checkpoints=15, templates=10, selected=4)",
+        "  conservative selection: chosen=None fallback=True (family=2, delta=0.05)",
+        "smoke-b: all 11 engineering checks passed -> results/paper_b/smoke_release_check"
+      ]
+    }
+  ],
+  "paper": "b",
+  "source_commit": "125072671c5269230719a8d201a86abe6fa39efb"
+}

@@ -1,0 +1,119 @@
+\section{Registered fault mechanisms and the separation requirement}
+\label{app:faults}
+
+\emph{Status.} This appendix is a retained registered design for the deferred
+program; none of the fault families has been executed on a live agent, and the
+completed measurement panels do not depend on it.  In the retained plan,
+\cref{thm:ordinal} would make the design uninformative unless the positive
+population can order baseline risk and verification advantage differently.  It
+does not license creating that population by conditioning fault placement on the
+risk score under test.  The machine-readable declaration is
+\texttt{protocols/fault\_families.yaml}; it is frozen and approved under
+\texttt{Contract A v1.3-rc}, the version the signed records carry
+(\cref{app:protocol} states how that string relates to the local lineage).
+
+\subsection{Three experimental roles}
+
+\Cref{tab:fault-roles} states the three families and what each may support.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lp{3.1cm}p{6.6cm}@{}}
+\toprule
+Family & Role & Assignment and interpretation \\
+\midrule
+F1-ORD & Historical mechanically observable contrast & MLGym-specific provenance or dependency corruption retained as a design diagnostic; it is not ported to the controlled substrate and is not an ordering control. \\
+F2-FEHPO & Deferred positive & Risk-blind eligible-checkpoint sampling followed by randomized matched-versus-mismatched feature-pipeline configuration.  In the retained plan this family alone was intended to support the ordinal-insufficiency claim. \\
+F2-ADV & Historical adversarial-stress contrast & Lower-risk-tercile semantic corruption from the MLGym precursor.  It is not executed in the current protocol and cannot establish or rescue the primary claim. \\
+\bottomrule
+\end{tabular}
+\caption{The three Round-5 experimental roles.  ``Natural'' describes the
+F2-FEHPO semantic interaction; assignment remains randomized.}
+\label{tab:fault-roles}
+\end{table}
+
+F1-ORD records the two earlier exact-postcondition mechanisms: substituting an
+altered solver heuristic and redirecting a trusted data or configuration
+dependency to a stale manifest.  Their previous simulated Spearman correlation
+of about $+0.32$ and $51\%$ advantage loss do not establish a near-null control.
+W5 therefore retires the formal equivalence procedure and reports both mechanisms
+only as historical MLGym-specific contrasts.  Reinstating a control would require
+a new same-substrate mechanism, procedure, power analysis, and approval.
+
+The authors saw the earlier F1 precursor result before
+$\delta_{F1}=0.01$ was proposed, so no blindness or outcome-blindness claim is
+made.  The candidate meant at most
+one expected validated completion per one hundred selected checkpoints at every
+registered capacity, but it is not an active tolerance because the formal
+control was retired before any new equivalence run.
+
+F2-FEHPO formalizes a natural semantic error: a feature pipeline appears weak
+under a fixed, inherited, or mismatched downstream configuration and is judged
+intrinsically poor, although it becomes valuable under a registered matched
+configuration.  CoFEH calls the corresponding sequential-search failure
+\emph{greedy myopia} and documents that feature engineering and hyperparameter
+optimization can interact \citep{cofeh2026}.  This supports plausibility only;
+it does not establish occurrence at agent checkpoints, identify our
+intervention effect, validate an injector, or supply a completion-effect prior.
+The exact task, feature candidate, and configuration pair are frozen in the
+pair artifact (\texttt{protocols/f2\_fehpo\_pair.yaml}), instantiated on the
+seeded group-disjoint pair-development subset after the production
+checkpoint-restoration capability audit passed.
+
+The injector-only record contains the assigned configuration pair and clean
+counterfactual, but it is excluded from the agent, verifier, policy input, and
+availability decision.  Verification may diagnose only the registered
+pipeline--configuration mismatch.  Recovery applies only the registered
+matched configuration and then invokes the same continuation horizon; it may
+not become unconstrained hyperparameter search.
+
+\subsection{Historical separation calculation}
+\label{app:separation}
+
+The initial calculation of \cref{tab:separation} remains useful as a design
+audit, not as the operative F2-FEHPO power report.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}p{3.0cm}ccp{4.8cm}@{}}
+\toprule
+Simulated population & Spearman $\rho(r,a_v)$ & Advantage lost & Current reading \\
+\midrule
+F1 precursor & $+0.32$ & $51\%$ & Not convincingly near-null; historical contrast only \\
+Untargeted semantic precursor & $-0.06$ & $62\%$ & Risk-blind but underpowered in this synthetic model \\
+F2-ADV targeted precursor & $-0.38$ & $81\%$ & Anti-ordered adversarial stress population \\
+\bottomrule
+\end{tabular}
+\caption{Historical synthetic separation at capacity $q=0.25$.  These values
+motivate redesign and diagnostics; none is agent evidence.}
+\label{tab:separation}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}rcccc@{}}
+\toprule
+Roots $n$ & $R{=}6$ & $R{=}12$ & $R{=}24$ & $R{=}48$ \\
+\midrule
+$400$  & $0.10$ & $0.40$ & $0.65$ & $0.93$ \\
+$800$  & $0.25$ & $0.60$ & $0.98$ & $1.00$ \\
+$1600$ & $0.68$ & $0.95$ & $1.00$ & $1.00$ \\
+\bottomrule
+\end{tabular}
+\caption{Historical rejection rates for the F2-ADV precursor, $q=0.25$ and a
+one-sided $5\%$ procedure.  The table is an adversarial-stress calculation and
+must not be cited as F2-FEHPO power.}
+\label{tab:faultpower}
+\end{table}
+
+Within-checkpoint repetitions can reduce measurement noise but never increase
+the number of roots or of independent templates.  The frozen F2-FEHPO report registers 500
+E3 roots (maximum authorized 750) --- a count now contested, see
+\cref{app:e3-estimator} --- the candidate repetition set $\{1,2,4,8\}$, and the
+paired-seed rule.  $R=1$ is admissible but unpowered; only $\{2,4,8\}$ carry the
+powered comparison.  After a qualifying disjoint pilot, the
+mechanical R5-2B amendment selects the within-checkpoint repetition count
+without consulting the E3 effect.  F1-ORD and F2-ADV remain historical contrasts.  If
+F2-FEHPO is infeasible or underpowered, the
+confirmatory claim is withdrawn or changed through a new scientific approval;
+historical contrasts are never promoted.

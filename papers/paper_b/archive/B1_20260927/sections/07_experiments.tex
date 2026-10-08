@@ -1,0 +1,133 @@
+\section{Experimental plan}
+\label{sec:b-experiments}
+
+No result in this section exists yet.  Every performance number is
+\emph{planned}; the figure and table slots name the generating script and the
+dataset they require, and none of them contains a fabricated curve.
+
+\subsection{Hypotheses}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.07\linewidth}p{0.52\linewidth}p{0.35\linewidth}@{}}
+\toprule
+ID & Hypothesis & Falsified by \\
+\midrule
+H1 & The learned advantage allocation beats the matched failure-risk allocation
+at the primary capacity on held-out templates. & $D_O(q)$ not distinguishable
+from zero at $q=0.25$. \\
+H2 & The learned advantage allocation beats the plain action-conditioned value
+controller at the same capacity and information. & Same contrast against
+baseline (f). \\
+H3 & Conservative selection retains a positive mean gain while limiting
+no-injected-fault degradation relative to always-verify. & Gain collapses, or
+no-fault degradation exceeds the predeclared tolerance at every qualifying
+operating point. \\
+H4 & The interaction of feasibility, cost and harm changes a meaningful
+decision: capacity spent on unavailable checkpoints, or on checkpoints whose
+verification is harmful, changes the achieved gain. & The no-feasibility or
+no-harm ablations leave the allocation unchanged in the qualified pool. \\
+\bottomrule
+\end{tabular}
+\caption{Planned hypotheses and their falsifiers.  H1--H3 are the empirical
+core; H4 is a focused structural check, not a sweep.}
+\label{tab:b-hypotheses}
+\end{table}
+
+\subsection{Studies}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.06\linewidth}p{0.40\linewidth}p{0.44\linewidth}@{}}
+\toprule
+ID & Question & Data and method \\
+\midrule
+B0 & Can the declared live checkpoint be branched consistently? & B-Q pool and
+controlled fixture checks; runtime boundary and qualification report. \\
+B1 & Is the task/intervention pair scientifically and computationally usable? &
+Disjoint pilot, fixed mechanics, bounded candidate count; yield, feasibility,
+variance, effect uncertainty, runtime and scale estimate. \\
+B2 & Do learned advantage allocations improve over strong matched alternatives? &
+Held-out branch data and matched budgets; policy value differences, support,
+intervals and allocation curves. \\
+B3 & What is gained and lost by conservative selection? & Frozen policy family,
+independent calibration/test; utility, invalidity, no-injected-fault
+performance, cost and intervention rate. \\
+B4 & Which structural assumptions matter? & Small predeclared ablations: mask
+removed, cost ignored, harm ignored. \\
+\bottomrule
+\end{tabular}
+\caption{First-study sequence.  B5 (recovery) and B6 (second deployment
+replication) are optional and not on the critical path.}
+\label{tab:b-studies}
+\end{table}
+
+\subsection{Pilot envelope and decision points}
+
+The planning envelope is $20$--$40$ independent development templates, one
+checkpoint per root, $R=2$--$4$ repetitions, if compute permits; it is a
+development suggestion, not a powered sample-size claim.  The pilot verifies
+action semantics and endpoint validity, estimates runtime per
+prefix/branch/adjudication, measures feasibility and checkpoint reachability,
+estimates paired outcome variation and template clustering, checks whether
+intervention effects are learnable with available features, and estimates
+final-test precision for the actual paired policy contrast.  The smallest
+scientifically useful gain $\epsilon$, a harm tolerance and a resource ceiling
+are recorded before final-test outcomes and are not weakened afterwards.  If
+the planned precision is unaffordable, claims are narrowed or the study is
+changed prospectively; that is not disguised as the original confirmatory run.
+Counts are reported separately as templates, roots, checkpoints, repetitions
+and executed arms.
+
+\subsection{Required figures and tables (slots)}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.24\linewidth}p{0.34\linewidth}p{0.34\linewidth}@{}}
+\toprule
+Artifact & Scientific role & Required data / generator \\
+\midrule
+Risk/deficit versus advantage & Actionability patterns with uncertainty &
+Out-of-sample predictions plus grouped held-out outcome summaries;
+\texttt{experiments/paper\_b/figures/risk\_vs\_advantage.py} \\
+Gain versus budget & Primary matched allocation comparison &
+Frozen policies, paired evaluation and uncertainty;
+\texttt{experiments/paper\_b/figures/gain\_vs\_budget.py} \\
+Utility--harm--intervention tradeoff & What conservative selection buys and
+costs & Calibration-defined operating points and held-out metrics;
+\texttt{experiments/paper\_b/figures/tradeoff.py} \\
+Availability/cost interaction & Why the combined decision problem matters &
+Qualified masks and predeclared cost conditions;
+\texttt{experiments/paper\_b/figures/availability\_cost.py} \\
+Dataset/support table & Effective sample sizes and exclusions & All roots
+including unreachable, unavailable, failed and invalid;
+\texttt{experiments/paper\_b/figures/support\_table.py} \\
+Runtime/resource table & Feasibility and overhead & Prefix, branch, verifier,
+snapshot and adjudication costs;
+\texttt{experiments/paper\_b/figures/runtime\_table.py} \\
+\bottomrule
+\end{tabular}
+\caption{Figure and table slots for the first study.  Each generator is a slot
+that must read a qualified dataset; none is populated with invented numbers.}
+\label{tab:b-figure-slots}
+\end{table}
+
+\subsection{What a rejection does and does not establish}
+\label{sec:b-rejection}
+
+A positive held-out $D_O(q)$ demonstrates superiority of the two implemented
+policies under the studied law.  It does \emph{not} by itself reject the
+proposition that true outcome risk and true advantage have identical
+orderings: estimation error in the learned risk model can make it suboptimal
+even under that population null.  The primary null is therefore stated as a
+comparison of the frozen learned policies; risk calibration and discrimination
+are reported with matched model capacity; and the exact ordinal-sufficiency
+theorem is reserved for population quantities and known-truth constructions.
+Non-rejection is inconclusive: it does not establish equivalent orderings or the
+absence of actionable heterogeneity.

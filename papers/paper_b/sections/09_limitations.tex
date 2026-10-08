@@ -1,0 +1,38 @@
+\section{Limitations}
+\label{sec:b-limitations}
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Two-checkpoint scope.} The controller acts at most once, across at
+  most two online checkpoints, under a frozen continuation.  Deployment value
+  describes a controller that meets the design's checkpoint rule; a stopping-time
+  or every-checkpoint deployment adds selection, coverage and post-intervention
+  support terms the design does not estimate.
+\item \textbf{Replay allowance is an assumption.} The $2p$ population shift is a
+  sensitivity assumption on the registered grid, never a measured quantity
+  (\cref{sec:b-theory}).  An understated $p$ is a sensitivity failure, not a
+  refutation of the conditional proposition; zero misses in a finite audit panel
+  do not certify a small $p$.
+\item \textbf{Task mechanism.} The candidate-consistency mechanism classes
+  establish that regime differences can exist under specified conditions; they do
+  not establish prevalence in natural deployments.  The screen law is an
+  artificial diagnostic law, not natural prevalence.
+\item \textbf{Feasibility is a registry claim.} The mask is only as valid as its
+  registry and evaluator.  Withholding verifier access synthetically is a
+  capacity condition, not evidence of natural unavailability.
+\item \textbf{Frozen continuation and representation.} Values are relative to the
+  registered $\rho$ and horizon.  The representation may discard decision-relevant
+  history; representation adequacy is separate and not assumed.
+\item \textbf{Finite data and multiplicity.} Effective sample sizes at small
+  capacities can be much smaller than root counts.  A cluster bootstrap is
+  asymptotic and is not a distribution-free finite-sample certificate; no
+  per-root i.i.d.\ certificate is claimed.
+\item \textbf{Substrate and external validity.} Effects are scoped to the
+  specified model, harness, continuation, verifier and task distribution.  No
+  effect for another model, prompt, tool policy or workload is identified.
+\item \textbf{Safety language.} Empirical harm endpoints, certified
+  noninferiority and individual harm probability are distinct claims with
+  distinct evidence requirements; none is upgraded by a passing test or a LaTeX
+  build.
+\item \textbf{Batch versus streaming.} Batch top-$q$ results do not establish
+  streaming rate guarantees; the two are reported separately.
+\end{itemize}

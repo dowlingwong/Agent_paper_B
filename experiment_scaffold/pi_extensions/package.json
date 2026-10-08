@@ -1,0 +1,9 @@
+{
+  "name": "causal-branch-pi-extensions",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.84.2",
+    "typebox": "^0.34.0"
+  }
+}

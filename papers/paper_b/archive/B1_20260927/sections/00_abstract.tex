@@ -1,0 +1,20 @@
+Decision-time intervention for autonomous experimentation agents is usually
+studied as a prediction problem: estimate which checkpoints are likely to fail,
+then act on the ranking.  We study the decision problem directly, at a single
+online-reachable checkpoint where a controller must choose between continuing
+the frozen agent policy and invoking an independent verifier whose result can
+change the continuation.  Feasibility is observed before treatment. Verification cost is measured per
+branch, while harm to runs that would otherwise succeed is a counterfactual
+quantity estimated from paired outcomes, not an observed decision-time feature.  We specify a
+prospective branch-data contract for this problem, specify qualification of the runtime boundary
+that licenses causal reading of branch contrasts, and compare outcome-based
+allocation (failure risk, utility deficit) with action-conditioned allocation
+under matched information, capacity and branch budget.  A conservative
+selection rule with an explicitly allocated one-sided bound is specified so
+that the first study can report what protection costs in intervention rate and
+value.  The paper contributes a research design, a measurement contract and an
+engineering smoke path; no real-agent experimental result is reported here, and
+every performance number is marked planned.  The ordinal-sufficiency theorem
+that motivates the comparison is prior art and is cited as such; what is new is
+the budgeted, feasibility- and harm-constrained allocation problem and the
+matched-information test of fitted policies on it.

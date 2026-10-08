@@ -1,0 +1,141 @@
+\section{Planned evaluation: the candidate-consistency task}
+\label{sec:b-experiments}
+
+No result in this section exists yet.  Every performance number is
+\emph{planned}; the figure and table slots name the generating script and the
+data they require, and none contains a fabricated curve.
+
+\subsection{Task and model}
+
+The task is a new B-only two-checkpoint \emph{candidate-consistency} task
+(\cref{sec:b-regimes}).  A fit tool returns the exact executable candidate it
+evaluated; the verifier checks consistency against visible development
+diagnostics; the frozen response rule replaces a candidate only on a strict
+visible development improvement, with ties leaving it unchanged; checkpoint 2
+arises online after a second development batch; and the hidden evaluation is
+separate.  The four mechanism classes demonstrated by executable fixed-policy
+witnesses through the real adapter are \emph{now-best}, \emph{later-best},
+\emph{never-best}, and an \emph{uninformative-or-harmful} check
+(\cref{sec:b-witnesses}).  The sole initial model candidate is
+Devstral-Small-2-24B-Instruct-2512 on the planned Ada substrate; exact artifact
+and runtime hashes are bound before qualification.  No model search is planned.
+
+\subsection{Mechanism witnesses}
+\label{sec:b-witnesses}
+
+Before any live screen, fixed-policy witnesses demonstrate the expected regime
+ordering under the declared costs, and that ordinary refitting can make the
+verifier redundant is checked explicitly.  The witnesses run through the actual
+adapter/fork path with a scripted policy on CPU; supplied tree-leaf constants
+are not acceptable.  A stop condition is recorded if ordinary refitting makes
+the verifier redundant or if no legitimate later-information mechanism exists;
+either is a legitimate outcome, not a failure.  The development screen generator
+and law are frozen and hashed; the pilot generator and law are a separate
+artifact, frozen before pilot outcomes.
+
+\subsection{Primary outcomes and comparators}
+
+The primary outcome is $U$, the hidden-test accuracy of the final valid
+candidate in $[0,1]$ (\cref{sec:b-statistics}).  The primary comparators are the
+repeated-myopic controller and the BAVAR-inspired context-dependent VOI
+scheduler; the constant-reserve controller is an ablation, and fixed never,
+verify-now and verify-later are diagnostics (\cref{sec:policy}).  All controllers receive the same allowed verifier and
+total-work budgets.
+
+\subsection{Evaluation harness and readings}
+\label{sec:b-readings}
+
+A single entrypoint fits the controllers on development template families,
+freezes them, and evaluates them on held-out families.  The shared allocator
+(\cref{sec:b-allocator}) is re-run on each held-out batch \emph{and inside every
+bootstrap draw} (a template-family cluster bootstrap with shared draws); policy
+value is the mean $U$ over \emph{all} original roots, taken from the selected
+leaves.  The two primary contrasts, proposed $-$ repeated-myopic and proposed $-$
+BAVAR-inspired, use simultaneous intervals (Bonferroni over 2).  Each contrast is
+read exactly as registered: \emph{supported} if the adjusted lower confidence
+bound exceeds zero; \emph{practically large} if it exceeds the $0.02$ target;
+\emph{equivalence} if the adjusted interval lies within $(-0.02,0.02)$;
+\emph{not practically useful} if the adjusted upper bound is below $0.02$ and the
+precision target was met; otherwise \emph{inconclusive}, with no budget
+expansion.  Any reading other than inconclusive also requires that the two
+realized policies differ on the held-out batch and that the adjusted interval
+has nonzero width: identical policies give a zero contrast by construction,
+which is an implementation artifact and not evidence of equivalence.
+
+\paragraph{Nulls are not explanations.}
+Similar controller performance does not show that waiting value is constant, and
+similarity to myopic does not show that checkpoint 2 is uninformative.  Before
+interpreting any null we report, always: the achieved precision against the
+$0.02$ target; out-of-fold calibration (slope, intercept and out-of-sample
+reliability) and ranking of $\hat A_1$, $\hat A_2$ and $\hat V_{\text{wait}}$; the estimated heterogeneity of $\hat V_{\text{wait}}$
+across roots with its uncertainty; and the ranking quality of $\hat A_2$ at
+checkpoint 2.
+
+\subsection{Screen and pilot design and cap}
+\label{sec:b-cap}
+
+The bounded screen and pilot are development data, not confirmatory tests.  The
+first applicable ceiling binds:
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.30\linewidth}p{0.62\linewidth}@{}}
+\toprule
+Item & Registered value \\
+\midrule
+Screen & 8 template families $\times$ 2 roots $\times$ 2 repetitions $\times$ 3 leaves $=96$ \\
+Pilot & 32 disjoint families $\times$ 2 $\times$ 2 $\times$ 3 $=384$ \\
+Integrity controls & 32 reserved leaves (not best-seed retries) \\
+Max terminal leaves & 512 \\
+Max generated tokens & 2{,}000{,}000 \\
+Max collection wall / accelerator & 10 h / 20 accelerator-h \\
+Max new retained bytes & 10 GiB \\
+New paid spend & zero; existing capacity must be confirmed and metered \\
+Repair / challenge & one substantive repair pass; one independent challenge \\
+\bottomrule
+\end{tabular}
+\caption{Screen and pilot caps from the registered design.  Prefix
+continuation, second-checkpoint work, verifier overhead, failed attempts and
+storage all count.  Three leaves are not the same cost as three one-step tails.}
+\label{tab:b-cap}
+\end{table}
+
+The screen checks operability, reachability and integrity under predeclared
+rules; the pilot checks temporal decision room, competition with
+repeated-myopic and the BAVAR-inspired scheduler, harm, sensitivity and cost.  Final sample size is not fixed here; it
+is determined from pilot variance and cost before final outcomes, and the
+COMBINE / CORE\_ONLY route is decided before confirmatory outcomes.
+
+\subsection{Required figures and tables (slots)}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.26\linewidth}p{0.34\linewidth}p{0.32\linewidth}@{}}
+\toprule
+Artifact & Scientific role & Required data / generator \\
+\midrule
+Timing contrast & Verify-now minus never and frozen controller versus both primary comparators & Executed three-regime trees; \texttt{experiments/paper\_b/figures/timing\_contrast.py} \\
+Population-bound sensitivity & Largest surviving $p$ per conclusion & Frozen-policy results over the $p$ grid; \texttt{experiments/paper\_b/figures/p\_sensitivity.py} \\
+Reachability / support & Original-root denominators and unreachable checkpoint 2 & All roots including early-terminal and infeasible; \texttt{experiments/paper\_b/figures/support\_table.py} \\
+Cost ledger & Prefix, checkpoint-2, verifier, failed-attempt and storage cost & Per-leaf ledger; \texttt{experiments/paper\_b/figures/cost\_ledger.py} \\
+Equivalence check table & Ridge advantage vs action-value agreement & Identical designs; \texttt{experiments/paper\_b/figures/ridge\_equivalence.py} \\
+\bottomrule
+\end{tabular}
+\caption{Figure and table slots.  Each generator is a slot that must read a
+qualified dataset; none is populated with invented numbers.}
+\label{tab:b-figure-slots}
+\end{table}
+
+\subsection{What a rejection does and does not establish}
+\label{sec:b-rejection}
+
+No advantage over a capacity- and budget-matched repeated one-step rule in a
+world with a prespecified valuable later opportunity falsifies N2.  A result
+that disappears when unreachable descendants stay in the original-root
+denominator falsifies the claim rather than supporting it.  Sibling leakage
+invalidates the evaluation.  Non-rejection is inconclusive; it establishes
+neither equivalent orderings nor the absence of a temporal effect.

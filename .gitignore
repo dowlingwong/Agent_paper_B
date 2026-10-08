@@ -1,0 +1,96 @@
+# --- LaTeX build intermediates -----------------------------------------------
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.blg
+*.bbl
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+# Note: main.pdf IS tracked — it is the deliverable. .bbl is ignored here but
+# arXiv submission requires it; regenerate with `make pdf` before uploading.
+
+# --- Python -------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# --- OS -----------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# --- Third-party papers -------------------------------------------------------
+# Copies of other people's PDFs are read locally, never redistributed. This repo
+# gates on licensing elsewhere (MLGym CC BY-NC); the same discipline applies here.
+# All of them live under ref/ since 2026-09-05; reference/ was merged into it.
+ref/**/*.pdf
+
+# Hands-on Modern RL (https://github.com/walkinglabs/hands-on-modern-rl), the
+# docs/ subtree of a third-party course under CC BY-NC-SA 4.0. The chapter text
+# is tracked so it is searchable from any checkout; the ~110 MB of images, GIFs,
+# fonts and site build config is not. See ref/handsonmodernrl/ATTRIBUTION.md.
+ref/handsonmodernrl/**
+!ref/handsonmodernrl/**/
+!ref/handsonmodernrl/**/*.md
+
+# --- Experiment outputs -------------------------------------------------------
+# Run manifests belong under evidence/ and are committed deliberately, not by
+# accident. Large branch traces are not committed at all.
+evidence/**/traces/
+*.jsonl
+!evidence/**/ledgers/
+!evidence/**/ledgers/*.jsonl
+!evidence/**/logs/
+!evidence/**/logs/*.log
+
+# Dataset payloads live on shared storage (normally a path on shared storage), never
+# inside the repository. Only their pinned registry and per-run hashes belong here.
+experiment_scaffold/datasets/
+
+# --- Vendored Pi (third_party/pi/) -------------------------------------------
+# The vendored source is committed; build products and dependency trees are not.
+third_party/pi/node_modules/
+third_party/pi/**/dist/
+third_party/pi/**/*.wasm
+third_party/pi/**/.turbo/
+third_party/pi/**/.cache/
+
+# Atomic-write temporaries. write_atomic() writes `<name>.partial` and renames;
+# a `.partial` left behind is an interrupted write, never a deliverable, and
+# committing one would put a half-written artifact in the evidence tree.
+*.partial
+
+# session scratch (files the sandbox cannot unlink)
+_to_delete/
+
+# --- Paper A/B split generated artifacts --------------------------------------
+# A's full evidence reproduction is regenerable with `make reproduce-a`; the
+# canonical artifacts live under evidence/ (never modified).  Keep the small
+# report, ignore the bulk.
+results/paper_a/reproduction_*/synthetic_v3/
+results/paper_a/reproduction_*/summary_v3/
+results/paper_a/reproduction_*/workload_v1_final/
+results/paper_a/figures/*/
+# Release packages are regenerable with `make release-a` / `make release-b`;
+# their manifests, READMEs and independence checks are committed.
+release/paper_a/
+release/paper_b/
+release/supplement_a/
+
+# Preserved local pre-split build leftovers (not release inputs).
+/archive/local_paper_build_2026-09-26/
+
+# L5/L7 local PDF reading and render intermediates; provenance hashes are tracked.
+/ref/etaai_2026/*.txt
+/ref/paper_split_l7/*.txt
+/results/validation_logs/L5-render/*.png
+/results/validation_logs/L7-figure-*.png

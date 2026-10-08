@@ -1,0 +1,113 @@
+\section{Outcomes, allocation estimands, and inference}
+\label{sec:b-statistics}
+
+\subsection{Outcomes}
+
+The following variables are kept distinct: $S\in\{0,1\}$, the prespecified
+binary valid success; $U\in[0,1]$, the prespecified terminal utility where
+meaningful; $I\in\{0,1\}$, invalid output or scientific invalidity; the measured
+resource vector $C$; and execution status with failure reason.  Utility is
+defined before final evaluation, with its direction, normalization, clipping,
+failure/invalid-output treatment and cross-task aggregation frozen.  Reference
+anchors are not estimated from held-out controller outcomes.  Utility is not
+scored only on successful or valid branches; the all-assigned-arm endpoint is
+defined and validity is reported separately, and a missing score caused by
+collection failure is not interchangeable with task failure.  Continuous
+utility can be more informative but does not automatically reduce required
+sample size; its variance, range and learning difficulty are verified in the
+pilot before it is made primary.
+
+When utility is primary, the two parallel channels are
+\begin{equation}
+ \begin{aligned}
+ r_S(w)&=1-\E[S^0\mid W=w], & a_S(w)&=\E[S^v-S^0\mid W=w],\\
+ r_U(w)&=1-\E[U^0\mid W=w], & a_U(w)&=\E[U^v-U^0\mid W=w],
+ \end{aligned}
+ \label{eq:b-channels}
+\end{equation}
+with $r_U$ a utility-deficit score and not a failure probability.  For a clean
+risk-versus-effect argument the comparison is $r_S$ against $a_S$ on $S$, and
+$r_U$ against $a_U$ on $U$; comparing binary failure risk with utility advantage
+is useful operationally but mixes the effect distinction with a target change,
+and that change is controlled and disclosed when it is made.
+
+\subsection{Allocation estimands}
+
+For outcome $O\in\{S,U\}$, let $d_q(w)$ indicate verification at capacity $q$
+and $a_O$ the conditional advantage of verification.  The gain per eligible
+checkpoint is
+\begin{equation}
+ G_O(d_q)=\E\big[d_q(W)\,(O^v-O^0)\mid M_v=1\big],
+ \label{eq:b-gain}
+\end{equation}
+and the primary empirical comparison is
+\begin{equation}
+ D_O(q)=G_O(d_{\mathrm{adv}},q)-G_O(d_{\mathrm{risk}},q).
+ \label{eq:b-primary-estimand}
+\end{equation}
+This differs by a factor of $q$ from a conditional selected-set mean when both
+policies select exactly $q$; plots and units state which quantity is shown.
+Full-population policy value with fallback is reported alongside, where
+verification is unavailable, and both denominators --- common feasible support
+and all eligible checkpoints --- are reported.
+
+Capacities are $q=0.25$ primary, with $q\in\{0.05,0.10,0.50\}$ descriptive
+unless the protocol explicitly allocates multiplicity.  This is a new choice,
+not an inherited registration.
+
+\paragraph{Batch allocation versus streaming deployment.}
+\emph{Batch allocation} chooses the top-$q$ among the current batch using only
+contexts, with an exact count budget.  \emph{Streaming deployment} uses
+thresholds fixed on development or calibration data, and reports the achieved
+rate and any budget overrun.  Batch evaluation does not by itself validate a
+streaming rate guarantee; a hard batch limit requires its own operational
+allocation rule, and the paper never labels a batch result as a streaming
+guarantee.
+
+\paragraph{Cost budgets.}
+For cost budgets it is stated whether $C$ is verifier overhead or incremental
+total cost.  Costs need not be positive if an intervention avoids future work;
+a benefit/cost ratio requires positive costs and an appropriate single-constraint
+relaxation, and otherwise an explicit constrained allocator is used.  Realized
+future costs are never deployment inputs for ranking.
+
+\subsection{Splits and inference}
+
+The workflow is: qualification and pilot disjoint from final evaluation;
+training fits representations and learners; validation selects architecture,
+hyperparameters and candidate policies; calibration fixes conservative
+thresholds and selection; final test evaluates frozen policies.  Splitting is at
+the largest relevant dependence unit, and multiple roots, seeds, fault variants
+or tasks generated from one template remain in one split.
+
+On a final set of unseen templates, both arms' outcomes evaluate a frozen policy
+using the same paired checkpoint records; independent extra selection
+repetitions are not needed if test outcomes were never used for ranking or
+fitting.  If a diagnostic does select by estimated test effects, it uses
+separate repetitions and is labelled a diagnostic.  Inference uses paired
+policy contrasts and template-aware uncertainty, and states whether it is
+conditional on the trained model or includes retraining variability.  A cluster
+bootstrap is asymptotic and is not a distribution-free finite-sample
+certificate; when batch top-$q$ policies are evaluated, resampling respects
+batches/clusters and recomputes the permitted context-only allocation.  Rare
+high-value events, small $q$ and concentrated support can make effective sample
+sizes much smaller than root counts; selected checkpoints and distinct templates
+per budget and stratum are reported.
+
+\subsection{Conservative control and safety language}
+
+The planned route is the small-family procedure of \cref{sec:b-conservative}:
+a correctly ranged one-sided bound with an explicit simultaneous error
+allocation over the family's endpoints, evaluated on independent calibration
+templates, with fallback to continue when no member qualifies.  The capacity
+grid is
+\begin{equation}
+ q\in\{0.05,0.10,0.25,0.50\},
+ \label{eq:main-capacities}
+\end{equation}
+with $0.25$ primary.  Reported no-injected-fault quantities are: average utility
+change, invalidity, thresholded catastrophic regression if prespecified,
+intervention rate, fallback rate and resource use.  State-harm fractions require
+sufficient within-checkpoint information and their own identification analysis;
+they are not computed from separate stochastic branch marginals as if they were
+identified.

@@ -1,0 +1,242 @@
+\section{Policy objective, comparators, and heterogeneity}
+\label{sec:policy}
+
+The experimental sham/fault sampling ratio does not define deployment value.
+For deployment fault prevalence $p$,
+\begin{equation}
+ V(d;p)=pV_1(d)+(1-p)V_0(d),\qquad
+ G(d;p)=pG_1(d)+(1-p)G_0(d).
+ \label{eq:prevalence-value}
+\end{equation}
+Cost and invalid-output curves use the same mixture.  Curves will be reported
+for $p\in[0,1]$, with $p\in[0,0.25]$ marked only as the provisional plausible
+operating region.  Values outside that interval are possible, not forbidden.
+
+Candidate policies come from a finite, prospectively specified class $\Dcal$
+mapping $(Z,M)$ to an available regime; a policy is eligible only if held-out
+estimates certify \cref{eq:noninferiority,eq:cost-constraint,eq:invalid-constraint}
+simultaneously (\cref{prop:certification}).  The learned policy $d^\dagger$ is
+the gated deviation from the non-personalized comparator of
+\eqref{eq:gated-rule}, and \cref{thm:safe} gives the sense in which it cannot do
+worse.  This is finite-class held-out policy selection under availability
+masking, not a new safe reinforcement-learning algorithm.
+
+The comparator hierarchy is: $g_0$; the best fixed feasible intervention rule;
+a random matched-cost intervention; failure-risk-gated verification;
+effect-gated verification; an \emph{optimistic} controller using point estimates
+of regime value from the selection split, greedily, without the lower confidence
+bound; the two parametric policy candidates, the \emph{unconstrained policy}
+and \emph{constrained policy}; and the two derived deployment rules, the
+\emph{certified constrained policy} (the constrained policy under
+the pessimistic gate of \cref{cor:proposal}) and the learned multi-action policy
+$d^\dagger$ of \eqref{eq:gated-rule}.  The optimistic arm isolates the
+contribution of pessimism: if optimistic and gated controllers perform
+identically, the lower confidence bound is doing no work and \cref{thm:safe} is
+decoration; if the optimistic controller wins on mean completion while breaching
+the no-fault tolerance, that is the trade-off the theorem exists to manage,
+reported in those terms.  Every comparator uses the same availability mask,
+prevalence, budgets, constraints, and final data.
+Because a single named regime may be unavailable at some checkpoints, the
+strongest non-personalized comparator is an availability-aware fixed-priority
+rule selected from a registered class $\Dcal_{\mathrm{fixed}}$:
+\begin{equation}
+ d^\star_{\mathrm{fixed}}(p)
+ =\argmax_{d\in\Dcal_{\mathrm{fixed}}\,:\,d\text{ certified}} V(d;p).
+\end{equation}
+The $\argmax$ is evaluated on the calibration split, so the comparator is frozen
+before final evaluation.  It is $p$-indexed: \eqref{eq:personalization}
+therefore compares the gated policy against a \emph{different} fixed rule at
+each prevalence, which is the honest reading of ``the strongest fixed
+rule at this deployment condition'' rather than a single winner chosen once.
+The confirmatory personalization estimand is
+\begin{equation}
+ G_{\mathrm{personal}}(p)
+ =V(d^\dagger;p)-V(d^\star_{\mathrm{fixed}};p).
+ \label{eq:personalization}
+\end{equation}
+
+\paragraph{The registered candidate class.}
+The classes are finite and are enumerated here; nothing else enters the
+multiplicity count of \cref{prop:certification}.  The non-personalized class
+$\Dcal_{\mathrm{fixed}}$ contains six fixed, availability-aware rules: $g_0$;
+always-verify; always-recover (the family-specific recovery regime when
+available); a random matched-cost intervention; verification gated on a
+predicted baseline failure risk above a registered threshold; and verification
+gated on an estimated verification effect above a registered threshold.  The
+candidate class $\Dcal$ is $\Dcal_{\mathrm{fixed}}$ together with three
+policies whose realized form is determined before the calibration data are
+observed: the optimistic controller (its point estimates of regime value come
+from the selection split), and the two parametric policies fit by the one-step
+learner of \cref{sec:rl}, the unconstrained and constrained policy members.
+Architecture, hyperparameters and checkpoint are fixed on the selection split.
+So $|\Dcal|=9$.  Each learned policy is one frozen policy; internal hyperparameter
+and checkpoint variants are selected within the selection split and do not
+inflate the class.
+
+Two deployment rules are \emph{derived}, not members of $\Dcal$: $d^\dagger$
+and the certified constrained policy, the constrained policy with
+the pessimistic gate of \cref{cor:proposal} applied on calibration data.  Their
+realized form depends on the calibration bounds, so they carry no
+pre-registered value bound; their safety is inherited from
+\cref{thm:safe,cor:proposal} rather than from membership, their constraints are
+measured directly, and their value is reported from the untouched final split as
+\cref{sec:stages} prescribes.  In the terms of \cref{as:frozen}, members of
+$\Dcal$ are realized policies determined before the calibration data are
+observed, and a rule obtained by applying a registered gate to a proposal is an
+output of the procedure rather than a member.  \emph{Constrained} is not
+\emph{certified}: the constraints of the constrained policy hold
+on the training split only, and certification is the separate step of
+\cref{prop:certification} that applies to whichever member of $\Dcal$ is
+eventually proposed.  The oracle branch-selection upper bound is an evaluation
+reference and is not a member of $\Dcal$.
+
+\subsection{One-step policy learning}
+\label{sec:rl}
+
+The learned policy is the strongest \emph{opponent} the certification of
+\cref{sec:experiments} is measured against, not the method of this paper: it
+supplies none of the mathematics --- that is
+\cref{thm:ordinal,thm:refinement,thm:safe,prop:certification} --- and it is
+precisely the thing that would break the no-fault line, which is why
+$\Delta_{\mathrm{certification}}$ of \cref{sec:experiments} is worth measuring.
+Exhaustive branches give action-specific outcome, harm, invalidity and cost
+feedback for every feasible arm, which is what makes such an opponent trainable
+at all.
+
+Branching makes the intervention value of every feasible action quantitative at
+each checkpoint, so the opponent is trained by \emph{masked full-information
+contextual policy learning}.  This is a one-step structured decision with
+action-specific feedback for every feasible registered regime, not a
+token-level relative-policy objective.  The context at checkpoint $i$ is
+$x_i=(Z_i,M_i)$; the action is a regime $g\in\Gset(H_i)$; the frozen
+continuation and the branch design supply terminal outcomes $Y^g_i$, $I^g_i$ and
+$C^g_i$ for every feasible $g$.  A masked policy over the structured decision
+space is
+\begin{equation}
+ \pi_\theta(g\mid Z,M)\;\propto\;M_{g}\,\exp s_\theta(Z,g),
+ \label{eq:masked-policy}
+\end{equation}
+with the mask applied to the logits, where $s_\theta$ is a small MLP or linear
+score over the registered representation --- not a token-level language model,
+because the decision space is a handful of structured actions.
+
+The training signal is the checkpoint-relative advantage.  Let
+$\pi_{\mathrm{ref}}$ be a registered reference distribution over the feasible
+set (uniform, or the comparator-induced distribution), and let
+$\widehat\mu_{ig}$ be the cell-level estimate of $\mu^{(J_i)}_g$ at checkpoint
+$i$.  The advantage of regime $g$ at $i$ is
+\begin{equation}
+ \widehat A_{ig}=\widehat\mu_{ig}-\sum_{h}\pi_{\mathrm{ref}}(h\mid x_i)\,\widehat\mu_{ih},
+ \label{eq:checkpoint-advantage}
+\end{equation}
+Because $\sum_g\pi_{\mathrm{ref}}(g\mid x_i)=1$, these advantages are zero-sum
+within a checkpoint,
+$\sum_g\pi_{\mathrm{ref}}(g\mid x_i)\widehat A_{ig}=0$: the horizon-one,
+regime-level analogue of the step-shared zero-sum shaping of
+\citet[Prop.~2]{adrs2026}.\footnote{No potential-based invariance argument is
+needed here. At horizon one there is no downstream policy for a potential to be
+invariant under, because the frozen continuation is part of every regime and the
+branch is the only backup.}
+The two terms are \emph{cross-fitted}: repetitions within each
+checkpoint--regime cell are split, the selected term estimated on one half and
+the evaluated term on the other.  Using the same $\widehat\mu$ in both terms is
+selection on noise --- the identical mechanism that produced a large positive bias
+under the null in \cref{sec:experiments}.  The objective is
+\begin{equation}
+ \widehat J(\theta)=\frac1N\sum_i\sum_{g}\pi_\theta(g\mid Z_i,M_i)\,\widehat A_{ig},
+ \label{eq:rl-objective}
+\end{equation}
+summed over the feasible set only.  Full feedback holds \emph{conditional on
+pre-treatment feasibility}, $\Prb(E_{ig}=1\mid A_{ig}=1)=1$; masked arms are
+restricted, not missing, so no action-assignment positivity must be defended on
+the feasible set.
+
+It is worth being exact about what \eqref{eq:rl-objective} is, because the
+Bellman reading of \cref{app:notation} invites a wrong identification.  The
+objective is a \emph{policy score}: $\theta$ enters only through the masked
+softmax \eqref{eq:masked-policy}, and the advantages $\widehat A_{ig}$ are
+plug-in cell-level quantities held fixed during the optimisation.  The
+procedure therefore never regresses $Q^\rho$ onto its inputs, never forms a
+temporal-difference residual, and is not an action-value network.  A fitted
+$Q^\rho$ regression --- one model trained on full-arm terminal outcomes with
+the controller's observation $(z,m)$ and the regime as input --- is a coherent
+alternative that would need no bootstrap term either, since at horizon one the
+branch \emph{is} the backup; it is proposed in \cref{app:analysis} as an
+additional baseline rather than as a description of this learner, it is not a
+member of $\Dcal$, and a variant given the full state $X$ would be an oracle
+diagnostic rather than a deployable comparator.  The cell-level
+estimates $\widehat\mu_{ig}$ that feed \eqref{eq:checkpoint-advantage} are
+produced by the frozen score library --- penalised logistic regression and
+shallow gradient-boosted trees, hyperparameters chosen from a frozen grid by
+template-grouped inner cross-validation --- which fits a probability for the
+risk score and a real-valued paired advantage for the effect score.  That
+library is what the repository implements; nothing in it is a $Q$-learner.  Although $J_i$ is not a deployment feature, it enters the
+objective through the stratum mixture used to evaluate policies at a prevalence
+point, $\widehat V(\pi;p)=p\widehat V_1(\pi)+(1-p)\widehat V_0(\pi)$.  The
+procedure is a standard masked full-information contextual policy learner; the novelty is the
+branch design and the constraints, not the optimizer.  The policy is fit on the
+training split, hyperparameters and checkpoint fixed on the selection split, and
+the result is the unconstrained-policy member of $\Dcal$.
+
+The constrained candidate maximizes the same value subject to the no-fault,
+invalid-output and vector-cost constraints of \cref{sec:constraints}, via the
+Lagrangian
+\begin{equation}
+ \max_\theta\ \widehat V(\pi_\theta;p)-\lambda_0\,\hat g(\pi_\theta)-\lambda_1\,\hat r(\pi_\theta)-\sum_k\lambda_{2k}\,\hat c_k(\pi_\theta),
+ \label{eq:rl-lagrangian}
+\end{equation}
+where $\hat g,\hat r,\hat c_k$ are the training-split violations of
+\cref{eq:noninferiority,eq:invalid-constraint,eq:cost-constraint}.  The
+multipliers are hyperparameters fixed on the \emph{selection split}: tuning them
+against calibration data would make the constrained policy calibration-dependent
+and violate \cref{as:frozen}.  \emph{Constrained} is not \emph{certified}: the
+constraints hold on the training split only, and certification is the separate
+held-out step of \cref{prop:certification}.  The result is the
+constrained-policy member of $\Dcal$.
+
+\subsection*{The actionability gap (deferred)}
+
+\emph{Status.} The two studies named here are deferred and this subsection is a
+retained design description, not a result.  Supporting study E2 would
+characterize how far baseline failure risk and actionable value
+\eqref{eq:actionable} come apart; study E3 would test whether the
+separation makes risk ordinally insufficient for allocating verification.  Three
+regimes are distinguishable, and E2 would report their mass by fault family,
+propagation depth, remaining budget, availability, and verifier reliability:
+
+\begin{enumerate}[label=(\roman*),leftmargin=2.2em]
+\item \emph{High baseline risk, low actionable value.}  The trajectory is
+  already beyond the reach of any available regime, so a warning is correct and
+  useless.
+\item \emph{Moderate baseline risk, high actionable value.}  A cheap available
+  intervention prevents propagation, so the most valuable warning is one a
+  risk-ranked monitor would suppress.
+\item \emph{Low baseline risk, individually harmful regimes.}  The checkpoint is
+  clean and some available regime damages it; this is
+  \eqref{eq:harm-fraction} restricted to $J=0$.
+\end{enumerate}
+
+Regime (iii) is invisible to any procedure whose output is a failure
+probability, because such a procedure has no representation for the damage an
+intervention does.  The external evidence for this heterogeneity is given in
+\cref{sec:main-introduction}: it motivates, but does not identify, these
+checkpoint-level regimes.  The prediction is that all three regimes carry
+non-negligible mass and that regime (iii) is non-empty in the no-fault stratum.
+The deferred gap would have to be supported by the approved risk-blind
+F2-FEHPO design.
+The earlier F1-ORD and F2-ADV calculations are historical substrate-specific
+contrasts only; neither is a second positive family or can rescue F2-FEHPO.
+
+Two conditions must both hold before useful personalization is claimed:
+action-ranking changes replicate across prespecified strata under
+\cref{prop:certification}'s procedure, and \cref{eq:personalization} is positive
+on the final holdout.  Exploratory heterogeneity may generate later hypotheses
+but cannot substitute for either.
+
+\paragraph{Falsification.}  If the registered one-sided test rejects
+\eqref{eq:null}, risk ranking is shown to misallocate at at least one registered
+capacity.  If it does not reject, ordinal insufficiency has not been established
+at the achieved precision; this is not evidence that the orderings are
+equivalent.  The insufficiency framing is then withdrawn, with simultaneous intervals
+and power reported.  Approximate sufficiency would require a separately
+registered equivalence margin and upper-bound procedure.

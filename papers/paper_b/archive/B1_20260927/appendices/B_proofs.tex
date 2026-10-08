@@ -1,0 +1,419 @@
+\section{Proofs of the retained decision-theoretic results}
+\label{app:b-proofs}
+
+\Cref{as:baseline,as:unit,as:frozen,as:continuity} are in force as stated in
+\cref{sec:b-theory}; each proof names the ones it uses.  Throughout,
+expectations conditional on $J=j$ are taken over the population of eligible
+checkpoints in that stratum, and $\Gset(H_i)$ is identified with
+$\Gset(M_i)=\{g:A_{ig}=1\}$.  All regime sets are finite, so pointwise
+maximisers admit measurable selections (take the least index among maximisers).
+
+The ordinal-sufficiency theorem is the known advantage-threshold result of the
+budgeted-triage literature restated ordinally (Okati et al., 2021;
+Fern\'andez-Lor\'ia and Provost, 2022; Kamran et al., 2024); the proof is
+retained for completeness and the paper does not claim it as new.  The
+certification proposition is stated at the scope actually planned for the
+first study; the historical $N=291$ family is not inherited.
+
+\subsection{Proof of \texorpdfstring{\cref{thm:ordinal}}{the ordinal-sufficiency theorem}}
+
+Throughout this proof $W=(Z,M)$ ranges over the common-availability domain and
+both scores are read as functions of $w$; the argument uses only that $a_v$ and
+$r$ are real-valued measurable scores on a common probability space, so the
+special case $r(w)=r(z)$ of the registered risk score is covered without change.
+
+Let $\tau$ satisfy $\Prb(a_v(W)\ge\tau)=q$; such a $\tau$ exists and
+$\Prb(a_v(W)=\tau)=0$ by \cref{as:continuity}.  Write
+$S^*=S_q(a_v)=\{w:a_v(w)\ge\tau\}$ and let $S$ be any measurable set with
+$\Prb(W\in S)=q$; continuity of the allocating score guarantees that
+$S=S_q(r)$ is such a set.
+
+\paragraph{Optimality of the upper level set.}
+Decomposing over the symmetric difference,
+\begin{equation}
+ \int_{S^*}a_v\,d\Prb-\int_{S}a_v\,d\Prb
+ =\int_{S^*\setminus S}a_v\,d\Prb-\int_{S\setminus S^*}a_v\,d\Prb .
+ \label{eq:symdiff}
+\end{equation}
+On $S^*\setminus S$ we have $a_v\ge\tau$, and on $S\setminus S^*$ we have
+$a_v<\tau$.  Moreover $\Prb(S^*\setminus S)=\Prb(S^*)-\Prb(S^*\cap S)
+=q-\Prb(S^*\cap S)=\Prb(S)-\Prb(S\cap S^*)=\Prb(S\setminus S^*)$.  Hence
+\begin{equation}
+ \int_{S^*}a_v\,d\Prb-\int_{S}a_v\,d\Prb
+ \ \ge\ \tau\,\Prb(S^*\setminus S)-\tau\,\Prb(S\setminus S^*)=0 .
+ \label{eq:np}
+\end{equation}
+Dividing by $q$ and applying this with $S=S_q(r)$ gives
+$\mathcal R_{\mathrm{rank}}(q)\ge0$.
+
+\paragraph{The equality case.}
+Rewriting \eqref{eq:symdiff} and \eqref{eq:np},
+\begin{equation}
+ \int_{S^*}a_v\,d\Prb-\int_{S}a_v\,d\Prb
+ =\int_{S^*\setminus S}(a_v-\tau)\,d\Prb+\int_{S\setminus S^*}(\tau-a_v)\,d\Prb,
+\end{equation}
+both integrands being non-negative.  So $\mathcal R_{\mathrm{rank}}(q)=0$ forces
+$a_v=\tau$ almost everywhere on $S^*\setminus S$ and on $S\setminus S^*$.
+Continuity of the law of $a_v(W)$ gives $\Prb(a_v(W)=\tau)=0$, hence
+$\Prb(S^*\setminus S)=\Prb(S\setminus S^*)=0$: the two selected sets coincide up
+to a null set.
+
+If this holds for every $q\in(0,1)$ then $S_q(r)\doteq S_q(a_v)$ for every $q$,
+so $r$ and $a_v$ have the same family of upper level sets up to null sets, which
+is exactly the statement that they induce the same ordering almost everywhere.
+The converse is immediate: identical orderings give identical upper level sets
+at every capacity, hence equality at every $q$. \qed
+
+\begin{remark}[Association versus ordinal sufficiency]
+\label{rem:association}
+Let $s$ be any monitor score and $\Delta_v$ the verification advantage on the
+common domain, both with continuous laws.  (i)~If $s$ and $\Delta_v$ induce the
+same ordering almost everywhere --- the null of \cref{thm:ordinal} --- then
+$\operatorname{Cov}(s,\Delta_v)\ge0$, since comonotone random variables have
+non-negative covariance.  (ii)~The converse fails, and fails exactly where the
+budget is spent: for any $q\in(0,1)$ there is a joint law with
+$\operatorname{Cov}(s,\Delta_v)>0$ and $\mathcal R_{\mathrm{rank}}(q)>0$.  Give
+the top-$q$ mass of $s$ an advantage concentrated near zero and set
+$\Delta_v=s$ on the remaining $1-q$; the covariance stays positive, while the
+top-$q$ set under $s$ is not the top-$q$ set under $\Delta_v$, so the advantage
+mass lost on the selected fraction, $q\,\mathcal R_{\mathrm{rank}}(q)$, is
+positive.  (iii)~Even the perturbation $\Delta_v=s+\varepsilon N$ with $N$
+independent has $\operatorname{Cov}(s,\Delta_v)=\operatorname{Var}(s)>0$ for
+every $\varepsilon>0$ while $\mathcal R_{\mathrm{rank}}(q)>0$ at every $q$, so a
+merely noisy but monotone monitor is not ordinally sufficient either.  Hence a
+return-association gate of the kind used to weight privileged credit
+\citep[Prop.~1]{adrs2026} is implied by, but does not imply, the ordering E3
+tests, and it says nothing about the top-$q$ set that a fixed verification count
+actually spends.
+\end{remark}
+
+With $2\times10^5$ seeded draws and $s\sim\mathrm{Unif}(0,1)$: construction~(ii)
+at $q=0.05$ has $\operatorname{Cov}\approx0.060$, and the advantage mass lost on
+the selected fraction is $q\,\mathcal R_{\mathrm{rank}}(q)\approx0.046$ at
+$q=0.05$ and $\approx0.024$ at $q=0.5$; construction~(iii) at
+$\varepsilon=0.05$ has
+$\operatorname{Cov}\approx0.083=\operatorname{Var}(s)$ and
+$q\,\mathcal R_{\mathrm{rank}}(q)\approx1.2\times10^{-3}$ at each of the four
+registered capacities of \eqref{eq:main-capacities}; the comonotone control
+gives $\mathcal R_{\mathrm{rank}}\equiv0$.  These values are reproduced in
+\texttt{verify\_theory.py}.
+
+\subsection{Verification of the construction in \texorpdfstring{\eqref{eq:construction}}{the construction equation}}
+
+Let $Z\sim\mathrm{Unif}[0,1]$ with the mask degenerate, so that $W$ is identified
+with $Z$, and set $r(z)=z$ and $a_v(z)=\tfrac12-z$; both laws are
+continuous, so \cref{thm:ordinal} applies.  Selecting the upper $q$-fraction by
+$r$ gives $S_q(r)=[1-q,1]$, on which $\E[Z]=1-\tfrac q2$, so
+\begin{equation}
+ \E\big[a_v(Z)\mid Z\in S_q(r)\big]=\tfrac12-\big(1-\tfrac q2\big)=\tfrac q2-\tfrac12 .
+\end{equation}
+Selecting by $a_v$ instead favours small $z$, giving $S_q(a_v)=[0,q]$, on which
+$\E[Z]=\tfrac q2$, so
+$\E[a_v(Z)\mid Z\in S_q(a_v)]=\tfrac12-\tfrac q2$.  Subtracting,
+\begin{equation}
+ \mathcal R_{\mathrm{rank}}(q)=\Big(\tfrac12-\tfrac q2\Big)-\Big(\tfrac q2-\tfrac12\Big)=1-q,
+\end{equation}
+strictly positive for every $q\in(0,1)$ and approaching the maximal attainable
+regret as the verification capacity shrinks.  Replacing $a_v$ by $z-\tfrac12$
+leaves the law of $r(Z)$ unchanged and yields
+$\mathcal R_{\mathrm{rank}}\equiv0$.  The two populations are therefore
+indistinguishable by any functional of the risk-score distribution alone, and
+differ maximally in whether that score is usable for allocation.
+
+\subsection{Proof of \texorpdfstring{\cref{thm:refinement}}{the refinement theorem}}
+
+\paragraph{Measurability of the feasible set.}
+By definition $M_i=(A_{ig}:g\in\Gset)$ with
+$A_{ig}=\mathbf 1\{g\in\Gset(H_i)\}$, so $\Gset(H_i)$ is a deterministic
+function of $M_i$.  Hence $\Gset(H_i)$ is $\sigma(Z_i,M_i)$-measurable, and the
+maximisations below range over a set both policy classes can identify.
+
+\paragraph{The two suprema.}
+Let $d\in\Dcal_H$.  Since $d(H)$ is $H$-measurable and takes values in
+$\Gset(H)$, the tower property gives
+\begin{equation}
+ V_j(d)=\E\big[Y^{d(H)}\mid J=j\big]
+       =\E\big[\mu^{(j)}_{d(H)}(H)\mid J=j\big]
+       \le\E\Big[\max_{g\in\Gset(H)}\mu^{(j)}_g(H)\;\Big|\;J=j\Big].
+\end{equation}
+The bound is attained by the $H$-measurable selector
+$d(H)\in\argmax_{g\in\Gset(H)}\mu^{(j)}_g(H)$, which establishes the expression
+for $V^{*H}_j$.  For $d\in\Dcal_Z$ the identical argument, conditioning on
+$(Z,M)$ rather than $H$, gives
+$V_j(d)=\E[\mu^{(j)}_{d(Z,M)}(Z,M)\mid J=j]$ and the expression for $V^{*Z}_j$;
+here the attaining selector is $(Z,M)$-measurable precisely because $\Gset(H)$
+is, by the previous paragraph.
+
+\paragraph{Non-negativity of the refinement loss.}
+Since $\sigma(Z,M)\subseteq\sigma(H)$, the tower property gives
+$\mu^{(j)}_g(Z,M)=\E[\mu^{(j)}_g(H)\mid Z,M,J=j]$ for every $g$ available at the
+checkpoint.  For each such $g$,
+\begin{equation}
+ \mu^{(j)}_g(H)\le\max_{g'\in\Gset(H)}\mu^{(j)}_{g'}(H)
+ \quad\text{pointwise,}
+\end{equation}
+so taking $\E[\,\cdot\mid Z,M,J=j]$ on both sides,
+\begin{equation}
+ \mu^{(j)}_g(Z,M)\le\E\Big[\max_{g'\in\Gset(H)}\mu^{(j)}_{g'}(H)\;\Big|\;Z,M,J=j\Big].
+\end{equation}
+The right-hand side does not depend on $g$, so the inequality survives taking
+the maximum over $g\in\Gset(H)$ on the left --- this is the conditional Jensen
+inequality for the convex map $\max$.  Taking $\E[\,\cdot\mid J=j]$ and applying
+the tower property once more yields $V^{*Z}_j\le V^{*H}_j$, i.e.
+$\mathrm{Ref}_j\ge0$.
+
+\paragraph{Sufficiency.}
+If the stratum-wise form of \eqref{eq:conditional-mean-sufficiency} holds, then
+$\mu^{(j)}_g(H)=\mu^{(j)}_g(Z,M)$ almost surely for every available $g$.  The
+two maxima therefore coincide almost surely, and $\mathrm{Ref}_j=0$.
+
+\paragraph{The estimable lower bound.}
+If $\sigma(Z)\subseteq\sigma(Z')\subseteq\sigma(H)$ then every $(Z,M)$-measurable
+policy is $(Z',M)$-measurable and every $(Z',M)$-measurable policy is
+$H$-measurable, so $\Dcal_Z\subseteq\Dcal_{Z'}\subseteq\Dcal_H$ and the suprema
+are ordered: $V^{*Z}_j\le V^{*Z'}_j\le V^{*H}_j$.  Subtracting $V^{*Z}_j$ gives
+\eqref{eq:refinement-bound}. \qed
+
+\medskip
+Only the last display is estimable: $V^{*Z'}_j-V^{*Z}_j$ compares two policy
+classes whose members can both be evaluated on held-out branches, whereas
+$V^{*H}_j$ requires conditional means at checkpoint resolution.  This asymmetry
+is the reason \eqref{eq:conditional-mean-sufficiency} admits falsification but
+not confirmation.
+
+\begin{remark}[Where the conditional expectations may not be dropped]
+\label{rem:aggregation}
+Both suprema in \cref{thm:refinement} are expectations of a maximum of
+\emph{conditional means}, and the Bellman reading of \cref{sec:bellman} does not
+license replacing either by an expectation of a maximum of the state-level
+action value.  Writing $\mu^{(j)}_g(H)=\E[Q^\rho_\tau(X,g)\mid H,J=j]$, the same
+conditional Jensen step used above gives
+\begin{equation}
+ V^{*Z}_j\;\le\;V^{*H}_j
+ =\E\Big[\max_{g\in\Gset(H)}\E\big[Q^\rho_\tau(X,g)\mid H,J=j\big]\Big]
+ \;\le\;\E\Big[\max_{g\in\Gset(H)}Q^\rho_\tau(X,g)\;\Big|\;J=j\Big],
+ \label{eq:aggregation-chain}
+\end{equation}
+and the last inequality is generally strict: the right-hand side is the value of
+a policy that could see the residual randomness in $X$ beyond $H$, which no
+admissible policy can.  Only the two left-hand quantities are policy values in
+$\Dcal_H$ and $\Dcal_Z$, and only their difference is what E1 estimates.  The
+same point applies one level down: the actionable value \eqref{eq:actionable} is
+$\max_g$ of conditional means and is \emph{not} $\E[\max_g A^\rho\mid Z,M,J]$.
+A dictionary row that dropped the inner conditional expectation would silently
+substitute an unattainable oracle for the estimand.
+\end{remark}
+
+\subsection{Proof of \texorpdfstring{\cref{prop:certification}}{the certification proposition}}
+
+There are $|\Dcal|$ policies and, for each, $K+3$ bounds: one for the value used
+in selection, one for the no-fault contrast of \eqref{eq:noninferiority}, one
+for the invalid-output rate of \eqref{eq:invalid-constraint}, and one for each of
+the $K$ cost components of \eqref{eq:cost-constraint}.  Together with the gate
+family of \eqref{eq:gate-family}, the combined family has $N=|\Dcal|(K+3)+F_{\mathrm{gate}}$
+members.  Allocating $\delta/N$ to each and applying a union bound, the
+probability that any bound in the combined family fails is at most $\delta$;
+in particular every certification bound is valid, and every gate bound is valid
+(which is exactly the uniform-validity hypothesis of \cref{thm:safe}).
+
+On the complement $\mathcal E'$, every certification bound is valid.  A policy
+$d$ that is certified --- its bounds place it inside every constraint ---
+therefore has its true quantities inside every constraint on $\mathcal E'$, so
+$d\in\mathcal C$; holding for all $d$ at once gives
+$\widehat{\mathcal C}\subseteq\mathcal C$, and any policy selected from
+$\widehat{\mathcal C}$ by any rule --- including one that depends on which
+constraints certified --- satisfies every constraint.  It is this last clause
+that requires simultaneity over $\Dcal$: without it, $\widehat{\mathcal C}$ is a
+random set whose selection event is not controlled by per-policy coverage.
+
+For the half-width, let member $k$ be the mean of $n_k$ independent
+contributions $X_1,\dots,X_{n_k}$, each in an interval of length $R_k$.
+Hoeffding's inequality gives
+$\Prb(|\widehat\theta_k-\theta_k|\ge\varepsilon)\le
+2\exp(-2n_k\varepsilon^2/R_k^2)$.  Setting the right-hand side equal to
+$\delta/N$ and solving gives \eqref{eq:halfwidth}; certification of a
+constraint with true slack $s_k$ requires $\varepsilon_k(n_k)\le s_k$, which
+rearranges to \eqref{eq:sample-ceiling}.  For the clustered form, let the
+member be $\sum_c w_c m_c$ over independent clusters $c$ with $\sum_c w_c=1$
+and each $m_c$ in an interval of length $R_k$.  The summands $w_cm_c$ are
+independent with ranges $w_cR_k$, so Hoeffding gives
+$\Prb(|\sum_c w_c(m_c-\E m_c)|\ge\varepsilon)\le
+2\exp\!\big(-2\varepsilon^2/(R_k^2\sum_c w_c^2)\big)$, and solving at
+$\delta/N$ yields $\varepsilon_k=R_k\sqrt{\log(2N/\delta)\sum_cw_c^2/2}$.  With
+$w_c=1/n_k$ this is \eqref{eq:halfwidth}; with a single cluster
+$\sum_cw_c^2=1$ and the width is at least $R_k\sqrt{\log(2N/\delta)/2}$, which
+exceeds $R_k$ for every $N\ge 2$ and $\delta\le 1/2$, so one cluster never
+certifies whatever its size. \qed
+
+\medskip
+At $\delta=0.05$, $K=8$, $|\Dcal|=9$, $F_{\mathrm{gate}}\le 192$ and $s=0.05$, the
+combined family has $N=291$ members and the argument of the logarithm is
+$2\cdot291/0.05=1.164\times10^{4}$, so with $R_k=1$ and $n_k=n$ the historical
+unit-range, equal-count, independent-unit illustration gives
+$n\ge 9.362/(2\times0.0025)=1.87\times10^{3}$.  That figure is \emph{superseded}
+as a planning number (author instruction A9, 2026-09-23): the body states no
+bound-derived count, and the corrected stratum-wise recomputation under the
+frozen selection split is recorded in the analysis plan.  The derivation is kept
+here only to show how the old illustration behaved.  For the no-fault member,
+$R_k=2$ and the same slack needs $R_k^2=4$ times the unit-range count of
+independent units; for a gate member on one cell and stratum, $n_k$ is that
+cell's own count.  The bound
+is conservative in variance, so a variance-adaptive construction with the
+pilot's observed variance will be smaller, but it is not conservative in range
+or in unit: a unit-range figure quoted for a range-two member, or a root count
+quoted for a template count, understates the requirement.
+
+\subsection{Proof of \texorpdfstring{\cref{thm:safe}}{the safe-branching theorem}}
+
+Work on the event $\mathcal E$, of probability at least $1-\delta$, on which
+every bound is valid.
+
+By the tower property, for any $(Z,M)$-measurable policy $d$,
+\begin{equation}
+ V_j(d)=\E\big[\mu^{(j)}_{d(Z,M)}(Z,M)\mid J=j\big],
+\end{equation}
+so that, using \eqref{eq:pointwise-advantage},
+\begin{equation}
+ V_j(d^\dagger)-V_j(d^\star)
+ =\E\big[\Delta^{(j)}_{d^\dagger(Z,M)}(Z,M)\mid J=j\big].
+ \label{eq:one-step-pd}
+\end{equation}
+This is the one-step performance-difference identity; it is exact and consists
+of a single term because the decision is taken once.
+
+Partition the eligible support by the deviation set
+\begin{equation}
+ \mathcal N=\Big\{(z,m):\max_{g:A_g=1}\ \min_{j'\in\{0,1\}}
+ \mathrm{LCB}_\delta\big[\Delta^{(j')}_g(c(z,m))\big]>0\Big\}.
+\end{equation}
+All bounds are the cell-level bounds of \eqref{eq:cell-advantage}; with
+cell-measurable policies the integrand $\Delta^{(j)}_{d(Z,M)}(Z,M)$ equals the
+cell-level advantage of the regime selected at $c(Z,M)$, so cell-level validity
+applies pointwise in the integrand.
+
+Off $\mathcal N$, rule \eqref{eq:gated-rule} sets $d^\dagger(z,m)=d^\star(z,m)$,
+and by \eqref{eq:pointwise-advantage},
+$\Delta^{(j)}_{d^\star(z,m)}(z,m)=\mu^{(j)}_{d^\star(z,m)}(z,m)-
+\mu^{(j)}_{d^\star(z,m)}(z,m)=0$ identically.  The integrand contributes
+exactly zero; this is the consequence of defining the advantage against the
+comparator rather than against $g_0$.
+
+On $\mathcal N$, let $g^\dagger(z,m)$ be the selected regime.  It attains a
+positive value of $\min_{j'}\mathrm{LCB}_\delta[\Delta^{(j')}_{g^\dagger}]$, so
+for \emph{each} $j\in\{0,1\}$,
+\begin{equation}
+ \Delta^{(j)}_{g^\dagger}(c(z,m))\ \ge\ \mathrm{LCB}_\delta\big[\Delta^{(j)}_{g^\dagger}(c(z,m))\big]\ >\ 0
+ \qquad\text{on }\mathcal E,
+\end{equation}
+the first inequality by validity and the second by the gate.  Taking the
+minimum over $j$ before gating is what makes this hold in both strata rather
+than in one.
+
+Every value of the integrand in \eqref{eq:one-step-pd} is therefore
+non-negative, giving $V_j(d^\dagger)\ge V_j(d^\star)$ for $j=0,1$.  Finally, for
+any $p\in[0,1]$,
+\begin{equation}
+ V(d^\dagger;p)-V(d^\star;p)
+ =p\big\{V_1(d^\dagger)-V_1(d^\star)\big\}+(1-p)\big\{V_0(d^\dagger)-V_0(d^\star)\big\}\ \ge\ 0,
+\end{equation}
+since both weights and both brackets are non-negative.  The deviation set
+$\mathcal N$ does not depend on $p$, so a single event $\mathcal E$ carries the
+conclusion for every $p$ at once. \qed
+
+\begin{remark}[Where each hypothesis is used]
+Freezing $d^\star$ before the bounds are constructed keeps the target of
+inference fixed: $\Delta^{(j)}_g$ has a population value whether or not the
+comparator was adapted, and the defect of reusing calibration data is not that
+the quantity stops being a population quantity but that the coverage statement
+then refers to a data-dependent estimand, voiding the declared selection and
+certification argument.  Uniform validity over the eligible support licenses the
+partition: a bound valid only marginally would not survive conditioning on
+$d^\dagger$ having chosen to deviate.  Under full-arm execution every feasible
+regime is executed at every sampled checkpoint, so within the cells the
+sampling law reaches the \emph{coverage} half is a property of the design ---
+provided restoration and isolation hold, which is the instrument gate; a cell
+with no sampled checkpoints has no bound and the gate falls back there.  The \emph{statistical} half is not: uniform validity of the gate family
+of \cref{eq:gate-family} is established on held-out data by a union bound over
+the registered finite partition, union-bounded together with the certification
+family of \cref{prop:certification}, and the cell count $B$ enters the combined
+ceiling \eqref{eq:sample-ceiling}.
+\end{remark}
+\begin{remark}[What is not guaranteed]
+\Cref{thm:safe} bounds the completion probability and nothing else.  It does not
+bound invalid-output rates, cost, or the number of checkpoints at which an
+individual regime is harmful; those are separate constraints with their own
+tolerances, certified under \cref{prop:certification} and measured directly.
+\end{remark}
+
+\subsection{Proof of \texorpdfstring{\cref{cor:interval}}{the guarantee-interval corollary}}
+
+$\Gamma(p)=p\Gamma_1+(1-p)\Gamma_0=\Gamma_0+p(\Gamma_1-\Gamma_0)$ is affine in
+$p$.  The set on which an affine function of one variable is non-negative is a
+closed half-line, all of $\mathbb R$, or empty; intersecting with $[0,1]$ gives a
+closed subinterval.  If $\Gamma_0$ and $\Gamma_1$ have strictly opposite signs
+then $\Gamma_1\neq\Gamma_0$ and the unique root of $\Gamma$ is
+\begin{equation}
+ p=\frac{-\Gamma_0}{\Gamma_1-\Gamma_0},
+\end{equation}
+which lies in $(0,1)$, and is the break-even prevalence of
+\cref{app:estimands} with $G$ replaced by $\Gamma$.  Under the gate of
+\eqref{eq:gated-rule}, \cref{thm:safe} gives $\Gamma_0\ge0$ and $\Gamma_1\ge0$,
+so $\Gamma(p)\ge0$ throughout $[0,1]$. \qed
+
+\subsection{Proof of \texorpdfstring{\cref{cor:proposal}}{the proposal corollary}}
+
+Work on the event $\mathcal E$, of probability at least $1-\delta$, on which
+every bound is valid.  By (b) and (c), $d_{\mathrm{prop}}(z,m)\in\Gset(z,m)$ at
+every eligible checkpoint, so $\Delta^{(j)}_{d_{\mathrm{prop}}(z,m)}(c(z,m))$ and
+its lower confidence bound are defined wherever the checkpoint is eligible.
+Partition the eligible support by the proposal-deviation set
+\begin{equation}
+ \mathcal N_p=\Big\{(z,m):\min_{j'\in\{0,1\}}\mathrm{LCB}_\delta
+ \big[\Delta^{(j')}_{d_{\mathrm{prop}}(z,m)}(c(z,m))\big]>0\Big\}.
+\end{equation}
+Off $\mathcal N_p$, rule \eqref{eq:proposal-rule} returns $d^\star$, so by
+\eqref{eq:pointwise-advantage} the integrand in the one-step identity
+\eqref{eq:one-step-pd} is zero.  On $\mathcal N_p$, rule \eqref{eq:proposal-rule}
+deviates to $d_{\mathrm{prop}}(z,m)$, and for each $j\in\{0,1\}$,
+\begin{equation}
+ \Delta^{(j)}_{d_{\mathrm{prop}}(z,m)}(c(z,m))\ \ge\
+ \mathrm{LCB}_\delta\big[\Delta^{(j)}_{d_{\mathrm{prop}}(z,m)}(c(z,m))\big]\ >\ 0
+ \qquad\text{on }\mathcal E,
+\end{equation}
+the first inequality by validity and the second by the gate.  Every value of the
+integrand is therefore non-negative in both strata, giving
+$V_j(d^{\dagger}_{\mathrm{prop}})\ge V_j(d^\star)$ for $j=0,1$, and the 
+prevalence-weighting step of the proof of \cref{thm:safe} carries the conclusion
+to every $p\in[0,1]$ at once, since $\mathcal N_p$ does not depend on $p$. \qed
+
+\medskip
+Hypothesis (a) is not used in this argument: on a validity event covering every
+available regime, the selection rule by which the proposal was chosen is
+irrelevant.  It is a protocol condition --- the validity event is constructed on
+held-out data over a finite registered class, so a proposal that consumes
+calibration feedback produces candidates the registered allocation does not
+count, and an engine emitting a fresh arbitrary patch at deployment time is not
+covered even though the proof would go through for a fixed one.
+
+\begin{remark}[Two legitimate constructions of a proposal policy]
+Option A --- a \emph{frozen patch library}: the engineer generates patches on
+the registered pair-development subset only; validated patches are frozen into a finite regime set
+that enters branching and certification like any other $g$, so (b) holds by
+construction.
+
+Option B --- \emph{the frozen generator as one stochastic regime}: define
+$g_{\mathrm{HR1}}$ as ``invoke the frozen engineer under fixed decoding,
+validator and response rules''.  Individual patches may differ; the randomness
+is absorbed into $Y^{g_{\mathrm{HR1}}}$, estimated by repeated branches.  This is
+clean only with all five: a registered checkpoint-level input contract; fixed
+decoding and validator rules; pre-treatment availability; a frozen model and
+version; and repeated branch evaluation.
+
+The first condition of Option B is the binding one: a generator such as the
+harness engineer of \cref{sec:related} consumes a \emph{batch of failures},
+whereas our regime fires at a \emph{single checkpoint}.  Without an adapter that
+restates its input contract at checkpoint granularity, only its hook design
+transfers --- the recovery routine and the guardrail as one-step regimes --- not
+the published generator; building that adapter is research, not integration.
+\end{remark}
+

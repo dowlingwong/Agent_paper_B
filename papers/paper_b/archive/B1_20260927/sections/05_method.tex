@@ -1,0 +1,128 @@
+\section{Method: action values, baselines, and conservative allocation}
+\label{sec:policy}
+
+\subsection{Outcomes and constraints}
+
+For a policy $d$ and stratum $j\in\{0,1\}$ (no injected fault, injected fault),
+define the stratum value and gain over continuation:
+\begin{equation}
+ V_j(d)=\E[Y_i^{d(Z_i,M_i)}\mid J_i=j],\qquad
+ G_j(d)=V_j(d)-V_j(g_0).
+ \label{eq:stratum-values}
+\end{equation}
+Deployment prevalence $p$ mixes the strata:
+\begin{equation}
+ V(d;p)=pV_1(d)+(1-p)V_0(d),\qquad
+ G(d;p)=pG_1(d)+(1-p)G_0(d),
+ \label{eq:prevalence-value}
+\end{equation}
+and cost and invalid-output curves use the same mixture.  The constraints the
+first study actually enforces are:
+\begin{align}
+ V_0(d)&\ge V_0(g_0)-\eta, \label{eq:noninferiority}\\
+ C_k(d;p)&\le B_k=\beta_k\,C_k(g_0;p)\quad\text{for each constrained component }k,
+ \label{eq:cost-constraint}\\
+ R(d;p)&=p\,\E[I_i^{d}\mid J_i=1]+(1-p)\,\E[I_i^{d}\mid J_i=0]\le\xi.
+ \label{eq:invalid-constraint}
+\end{align}
+No-fault noninferiority \eqref{eq:noninferiority} is average no-fault
+performance degradation, not an individually harmed fraction; $J=0$ means the
+registered fault was not injected and does not guarantee baseline success.
+Cost remains a vector: input and output tokens, API expense, CPU and GPU time,
+wall time, external calls, storage and network use, human escalation time, and
+artifact rewrites are reported; the first study constrains the verifier's
+incremental cost components and reports the rest descriptively rather than
+inheriting a fixed $K=8$ certification mandate.  The historical
+$K=8$/$N=291$ family is a historical registration
+(\texttt{protocols/endpoint\_registry.yaml}) and is not inherited.
+
+\subsection{Actionable value}
+
+The actionable value of a checkpoint, defined at \cref{def:actionable} in
+\cref{sec:b-theory}, is the largest improvement any available regime achieves
+over no intervention.  It cannot detect harm on its own: harm is a property of
+an individual regime, and the decision-relevant quantity is whether some
+available $g$ carries a negative contrast at a checkpoint.  The two are
+reported together.
+
+\subsection{Baselines and the proposed controller}
+\label{sec:rl}
+
+All policies share one information set: the pre-treatment features $W=(Z,M)$,
+the same permitted model capacity, the same tuning budget and the same branch
+data.  The baseline family is:
+\begin{enumerate}[label=(\alph*),leftmargin=2em]
+\item \textbf{continue everywhere};
+\item \textbf{random feasible allocation} at the same capacity;
+\item \textbf{always verify where feasible}, reported as a full-budget
+  reference and not a matched-count comparator when the feasible rate is below
+  one;
+\item \textbf{learned failure-risk allocation}: fit $r_S(w)=1-\E[S^0\mid W=w]$
+  (or the utility deficit $r_U$ when $U$ is primary) and spend the capacity on
+  the highest predicted deficit;
+\item \textbf{a transparent predeclared heuristic} over available diagnostics;
+\item \textbf{a plain action-conditioned value controller}: fit
+  $\hat q(w,g)$ for the two actions and act on
+  $\argmax_g \hat q(w,g)$ with feasibility masking --- the closest
+  implementation of the nearest prior's action-conditioned selection;
+\item \textbf{learned advantage allocation}: fit
+  $\hat a(w)=\widehat{\E[O^{g_v}-O^{g_0}\mid W=w]}$ and spend the capacity on
+  the largest predicted advantage;
+\item \textbf{the same advantage learner with the conservative selection rule
+  below}.
+\end{enumerate}
+Risk and effect learners receive the same permitted $W$, model family, capacity
+and tuning budget; the historical $r(Z)$-only score is a secondary baseline, and
+richer effect features are never the sole explanation of a claimed target
+advantage.  No learner sees condition labels, hidden outcomes, root-identity
+shortcuts, sibling results or privileged reference state at deployment.
+
+The learned advantage policy is a one-step masked policy score, not a
+regression of a Bellman object:
+\begin{equation}
+ \widehat J(\theta)=\frac1N\sum_i\sum_{g}\pi_\theta(g\mid Z_i,M_i)\,\widehat A_{ig},
+ \qquad
+ \pi_\theta(g\mid Z,M)\propto M_g\exp s_\theta(Z,g),
+ \label{eq:rl-objective}
+\end{equation}
+summed over the feasible set only, with checkpoint-relative advantages
+$\widehat A_{ig}=\widehat\mu_{ig}-\sum_h\pi_{\mathrm{ref}}(h\mid x_i)\widehat\mu_{ih}$
+estimated from branch records.  Full feedback holds conditional on
+pre-treatment feasibility, $\Prb(E_{ig}=1\mid A_{ig}=1)=1$, so no
+action-assignment positivity must be defended on the feasible set.
+
+\subsection{Conservative selection}
+\label{sec:b-conservative}
+
+The first study uses a small deployable policy family, not a cell-wise
+certification construction:
+\begin{enumerate}[label=(\arabic*),leftmargin=2em]
+\item Fit the advantage learner on training data.
+\item Construct a small threshold/allocation family on validation data.
+\item On independent calibration templates, evaluate paired policy gains,
+  no-injected-fault degradation, invalidity and budget.
+\item Spend one explicitly allocated simultaneous error budget over the
+  family's endpoints, with correctly ranged one-sided bounds.
+\item Choose a qualifying policy or fall back to continue everywhere.
+\item Report final-test performance of that frozen decision.
+\end{enumerate}
+A mean-gain guarantee and no-injected-fault noninferiority are population
+statements; they do not imply that every checkpoint is helped.  If a
+per-context lower-confidence gate is used instead, the conditional mean being
+bounded is defined explicitly, coverage across cells/actions/selection is
+stated, the comparator is fixed or its selection accounted for, insufficient
+support returns to fallback, and no neural confidence score, ensemble spread or
+predictive interval is treated as a valid mean-advantage bound without
+justification.  A rough conditional improvement statement is permissible only
+under its stated assumptions: if simultaneously
+$L_g(w)\le Q(w,g)-Q(w,d_0(w))$ and the policy deviates from a feasible
+comparator $d_0$ only where $L_g(w)>0$, then the gated policy has nonnegative
+population mean advantage on the covered distribution.  This is a standard
+pessimistic argument, not a new theorem, and generalization outside the covered
+support or to repeated intervention requires new evidence.
+
+Three vocabulary rules are enforced in the paper and in every generated table:
+\emph{empirical protection} means observed held-out harm metrics improved;
+\emph{certified noninferiority} requires the stated bound, independence, error
+allocation and a predeclared tolerance; and \emph{individual harm probability}
+is not identified merely from separate stochastic branch marginals.

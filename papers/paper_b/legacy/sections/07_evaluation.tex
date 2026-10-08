@@ -1,0 +1,131 @@
+\section{Instrument: harness, restoration surface, and benchmark tiers}
+\label{sec:evaluation}
+
+\emph{Status.} This appendix specifies the instrument that \emph{would} realise
+the causal contract; the benchmark tiers, fault families and gates below are a
+retained registered plan and none of them has been executed on a live agent.  The
+policy-ranking study named in the tiers is deferred, and the instrument gate is
+unopened.  The causal contract of \cref{sec:contract,sec:causal} is
+benchmark-independent, and each requirement below is written so that it is
+checkable before any scientific run.
+
+\subsection{Agent harness}
+
+The signed R5-2A record binds the controlled tabular runtime, model, and
+environment.  Pi remains non-qualifying until a replacement audit and signature
+bind its exact stack; current Pi runs cannot count as E0.  The deterministic
+fixture is likewise not scientific.  In the
+harness-optimization literature of \cref{sec:related} the harness is the object
+being edited; here it is pinned precisely because it is \emph{not} the object of
+study --- the intervention is the one-step regime at a checkpoint, not the
+runtime that carries it.  A second local model family may be declared as a
+generalisation probe and would be reported separately, never pooled.  Workload
+seeds, sampler settings, and model randomness are recorded, and deterministic
+behavior is claimed only if the production audit demonstrates it.
+
+\subsection{The restoration surface}
+
+Branching requires that every component of the checkpoint state be restored, not
+merely the parts that are convenient to snapshot.  \Cref{tab:restoration}
+enumerates the surface and, for each layer, the mechanism and its current
+manuscript-admitted evidential status: \textbf{D} documented by an authoritative source,
+\textbf{T} demonstrated only in this project's deterministic scaffold,
+\textbf{U} unverified by a qualifying E0.  Local smoke, profiling, or a
+non-qualifying capability audit cannot promote these labels.
+
+\begin{table}[ht]
+\centering\small
+\begin{tabular}{@{}p{3.3cm}p{6.3cm}p{2.1cm}c@{}}
+\toprule
+Layer & Mechanism & Failure mode & Status \\
+\midrule
+Workspace filesystem & Content-addressed snapshot and restore of the task tree & Silent partial restore & T \\
+Executable environment & Container image digest pinned; dependency lock recorded & Drift across branches & U \\
+Agent session state & Controlled-agent history and sampler configuration replayed into the pinned local runtime & Truncated history or configuration drift & U \\
+Budget counters & Token, spend, and wall-clock ledger restored to the checkpoint value & Branch inherits sibling spend & T \\
+External tool state & Declared inside or outside the experimental boundary; anything inside must be snapshottable & Undeclared shared state & U \\
+Local inference cache & Disabled or isolated by branch in the production adapter; never treated as restored state & Cross-branch dependence or branch-position effects & U \\
+Sampling randomness & Local seed and sampler settings recorded; deterministic support tested rather than assumed & False determinism claim & U \\
+\bottomrule
+\end{tabular}
+\caption{Restoration surface.  A checkpoint is eligible only when every layer is
+demonstrated; local cache state is disabled or isolated and tested by branch
+position rather than claimed to be restored (\cref{sec:cache}).}
+\label{tab:restoration}
+\end{table}
+
+\subsection{Cache accounting for local and API-backed execution}
+\label{sec:cache}
+
+Sibling branches share the trajectory prefix by construction.  In an API-backed
+deployment with a provider cache, branch order can therefore change billed cost
+for identical work.  Under the illustrative registered price vector, the
+first-versus-cache-warm ratio is $3.6\times$, $5.9\times$, and $8.2\times$ over
+the three $50$k--$600$k prefix scenarios.  These are design calculations for
+API-backed deployments, not an operating range of the registered study, whose
+production candidate uses pinned local inference and local metering.
+
+This has two consequences the protocol must absorb.
+
+\emph{Cost.}  The registered constraint \eqref{eq:cost-constraint} is evaluated
+on cache-neutralised resource components and the local meter records the
+corresponding runtime use.  Provider-billed reconciliation is not applicable to
+this substrate.  A later hosted-endpoint adapter would require a new approval,
+a billing-precision tolerance, and provider-cache reconciliation before E0.
+
+\emph{Outcomes.}  The production adapter disables or branch-isolates local
+inference caches and E0 still compares outcomes across branch positions.  A
+detected cache or position dependence is an interference finding that invalidates
+the isolation premise of \cref{sec:causal}, not a nuisance to adjust away.
+
+\subsection{Benchmark tiers}
+
+The tiers carry distinct, non-interchangeable roles, reported per tier rather
+than pooled; Tier~4 is a declared negative control on executability
+(\cref{tab:tiers}, \cref{app:protocol}).  Tier~1 has two components: the
+primary F2-FEHPO substrate, confirmatory only under its active R5-2A signature;
+the current controlled-runtime signature excludes Pi.  The earlier MLGym F1-ORD and F2-ADV calculations are historical
+substrate-specific contrasts only; they are not executed in the current protocol
+and cannot establish, gate, replicate, or rescue F2-FEHPO.  Tier~0 is a
+non-qualifying infrastructure smoke test and never validates E0.
+
+Licensing is a design constraint rather than a footnote.  MLGym is excluded from
+the current protocol; any future use or redistribution requires a new scope and
+licence decision, and task-level dataset terms are checked separately.  Public tasks additionally
+create contamination risk, requiring version pinning, disclosure of model
+training-date limitations, and avoidance of protected evaluation material.
+MLE-bench Lite is held out until after the confirmatory freeze precisely so that
+its grading infrastructure remains uncontaminated by design iteration.
+
+\subsection{Fault families}
+
+Three roles are separated because \cref{thm:ordinal} requires the primary
+positive population to arise independently of the risk score being tested.
+
+\textbf{F1-ORD, historical provenance/dependency contrast.}  The earlier MLGym
+calculation substituted a dependency, manifest, or artefact with a
+machine-checkable postcondition.  It is not ported to the controlled substrate
+and no formal equivalence tolerance is active; it remains a non-transferable
+historical design diagnostic.  Because the authors saw the F1 precursor result
+before proposing $\delta_{F1}=0.01$, no blindness or outcome-blindness claim is
+made; \cref{app:faults} records the retired control.
+
+\textbf{F2-FEHPO, primary randomized positive condition.}  An eligible feature
+pipeline appears weak under a mismatched or inherited model configuration but
+becomes valuable under a registered matched configuration.  Eligibility and
+randomized matched-versus-mismatched assignment use pre-treatment state and
+never read the risk score.  CoFEH documents the motivating greedy-myopia
+mechanism in joint feature engineering and hyperparameter optimization
+\citep{cofeh2026}; whether it occurs at these agent checkpoints remains an
+empirical question.
+
+\textbf{F2-ADV, historical adversarial-stress contrast.}  The previous
+lower-risk-tercile MLGym calculations describe an intentionally anti-ordered
+population.  They are not ported or executed in the current protocol and cannot
+establish or rescue the primary ordinal-insufficiency claim.
+
+\Cref{app:faults} gives the frozen machine-readable semantics and records the
+historical simulation without treating it as the operative power calculation.
+The F2-FEHPO pair, E3 root count, and repetition rule are hash-bound; R5-2B
+selects the count mechanically after a disjoint pilot.  Runtime replacement
+requires re-binding before E0.

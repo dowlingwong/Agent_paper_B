@@ -1,0 +1,94 @@
+\section{Introduction}
+\label{sec:b-introduction}
+
+An autonomous experimentation agent can fail in ways that a warning score
+foresees but no single response repairs.  The same warning can justify
+continuing, invoking an independent verifier, or rolling back to a known-good
+state; the options differ in benefit, in resource cost, and in whether they
+damage a checkpoint that would have succeeded on its own
+\citep{interventionparadox2026,harnessr12026}.  Branching from a saved
+checkpoint is the natural way to observe those differences: restore the state,
+execute each option, compare \citep{calibrationnotcontrol2026,causalagentreplay2026,replaygap2026}.
+But a branch contrast is a measurement before it is a decision, and the
+measurement has preconditions --- the option must be applicable, and every
+branch must begin from an equivalent executable state --- that are the subject
+of separate work \citep{zhang2026ca}.  This paper takes those preconditions as
+an explicit contract and asks the decision question: \emph{how should a
+controller allocate feasible interventions under resource and harm
+constraints?}
+
+\paragraph{What is already established, and what this paper adds.}
+The closest prior work, \citet{calibrationnotcontrol2026}, names
+\emph{intervention advantage} as the decision quantity, formalises the
+prediction/control mismatch as target error, and introduces \emph{prefix
+branching}: candidate actions are executed from an identical trajectory state
+and the resulting action-conditioned outcomes support an intervention decision.
+That paper already establishes that prediction and intervention value come
+apart, and the repository record of its inspected scope shows a fixed action
+menu, reconstruction checks with mismatch rejection, and a repeated
+shallow-prefix probe.  \citet{interventionparadox2026} show that a critic with
+strong offline discrimination can still degrade agent performance, decomposing
+the effect into recovery and disruption.  \citet{harnessr12026} learn
+lifecycle-wide executable interventions and report that many valid patches
+reduce batch success.  The ordinal condition under which an outcome ranking
+coincides with an effect ranking is established in the budgeted-triage and
+uplift literatures \citep{okati2021,fernandezloria2022,kamran2024}; we cite it
+rather than re-claim it.
+
+What those results do not supply is a decision procedure for the situation in
+which the three constraints interact: the action may be \emph{unavailable} at
+the offered checkpoint, verification has a \emph{cost} that competes with other
+checkpoints, and an intervention can \emph{harm} a run that was on track.  A
+controller that ranks by failure risk or by a utility deficit ignores
+feasibility and cost; a controller that intervenes everywhere ignores harm; and
+a controller that ranks by estimated advantage still needs a rule for how much
+of its budget to spend and what evidence licenses the spend.  The contribution
+of this paper is to pose that allocation problem precisely, specify the branch
+data that make it answerable, and define a comparison that can falsify the
+proposed increment.
+
+\paragraph{The proposed contribution, in falsifiable form.}
+At an online-reachable decision checkpoint, with one continue/verify decision
+under a frozen continuation, we compare two allocation policies at matched
+information, capacity and branch budget:
+\begin{enumerate}[label=(B\arabic*),leftmargin=2.6em]
+\item an \emph{outcome-based} policy that spends its budget on the highest
+  predicted failure risk (and, when utility is primary, the largest predicted
+  utility deficit); and
+\item an \emph{action-conditioned} policy that spends its budget on the largest
+  estimated verification advantage, with feasibility, cost and harm handled
+  explicitly.
+\end{enumerate}
+The study is designed to falsify the claim that the action-conditioned
+allocation is better under the studied law: if the paired held-out gain
+difference $D_O(q)$ of \cref{eq:b-primary-estimand} is indistinguishable from
+zero at the primary capacity, the increment does not survive its own test.  The
+conservative-selection component is falsified if it removes the benefit it is
+meant to protect, or if its bound cannot be defended at the stated scope.  Both
+outcomes are reportable; neither is a failure of the design.
+
+\paragraph{What this paper is not.}
+It is not a claim that prediction and intervention value come apart --- that is
+\citet{interventionparadox2026} and \citet{calibrationnotcontrol2026}.  It is
+not a new general identification theorem for replay; the measurement conditions
+are handled by a separate contract and cited.  It is not sequential
+reinforcement learning: the controller acts once, at one checkpoint, and the
+continuation is frozen.  Recovery is not in the first study; it appears only as
+an optional third action with a defined precondition, rollback boundary and
+continuation contract, and sequential decision-making is future work
+(\cref{sec:b-bridge}).  And it is not an empirical result: the paper reports a
+design, a contract and an engineering smoke path, with every performance number
+marked \emph{planned} (\cref{sec:b-experiments}).
+
+\paragraph{Organisation.}
+\Cref{sec:b-problem} fixes the one-decision problem and the online checkpoint
+rule.  \Cref{sec:b-regimes} defines the continue and verify regimes.
+\Cref{sec:b-data} gives the dataset-generation contract and the runtime
+qualification boundary.  \Cref{sec:policy} presents the action-value baseline
+and the proposed conservative allocation procedure.  \Cref{sec:b-theory}
+records the retained decision theory and its attribution.
+\Cref{sec:b-experiments} is the experimental plan with hypotheses, baselines
+and figure slots.  \Cref{sec:b-statistics} fixes outcomes, splits, estimands
+and inference.  \Cref{sec:b-limitations} states limitations, and
+\cref{sec:related} positions the work against the nearest priors.
+\Cref{sec:b-bridge} sketches the bridge to recovery and sequential control.

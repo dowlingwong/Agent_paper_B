@@ -1,0 +1,99 @@
+schema: b_design_decisions_v1
+date: '2026-09-27'
+status: prospective_working_design
+report: docs/paper_split/B_DECISIONS_20260927.md
+launch_authorization: false
+scientific_evidence: false
+supersedes_calendar_waits: true
+route:
+  target: ICML_2027
+  official_deadline_verified: false
+  development: bounded_N2_timing_with_N1_validity_constraint
+  current_submission_readiness: no_go
+  n1_alone_automatically_sufficient: false
+outcome:
+  primary: U
+  definition: hidden-test accuracy of final valid candidate in [0,1]
+  invalid_or_no_candidate_at_horizon: 0
+  invalid_flag_retained: true
+  collection_failure: separate_integrity_status_not_zero
+  unavailable_action: no_observed_outcome_use_registered_deployment_fallback
+  secondary: [binary_validated_completion, validity, individual_degradation_frequency]
+allocation:
+  primary_q: 0.25
+  descriptive_q: [0.05, 0.10, 0.50]
+  one_step: ceil(q * n_feasible); report effective capacity
+  sequential: floor(q * n_original_roots); report effective capacity
+  max_verifications_per_root: 1
+  budget_matching: same_allowed_verifier_and_total_work_budgets
+  unspent_capacity: retained
+statistics:
+  primary_sequential_estimand: paired mean utility contrast on all original roots
+  primary_comparators: [repeated_myopic, frozen_reserve_voi]
+  utility_risk_comparator: utility_deficit
+  practical_gain_target: 0.02
+  no_injected_fault_mean_harm_tolerance: 0.02
+  harm_reference: never_verify
+  independent_unit: template_family
+  batch_coupling: must be accounted for; no per-root iid certificate
+  safety_claim_level: empirical
+  final_sample_size: null
+  final_sample_size_reason: determine from pilot variability and cost before final outcomes
+  multiplicity: simultaneous intervals for the two primary comparator contrasts
+  practical_falsifier: adjusted upper confidence bound below 0.02
+  inconclusive: target crossed by interval; no positive claim or automatic budget extension
+replay:
+  provenance_kind: sensitivity_assumption
+  working_p: 0.02
+  grid: [0.0, 0.005, 0.01, 0.02, 0.05, 0.10]
+  measured_p: null
+  population_contrast_tax: 2*p under declared joint-event assumptions
+  pointwise_global_p_gate_permitted: false
+  sequential_scope: joint p_path covering compared regimes and decision histories
+  checkpoint_union_bound: min(1,p1+p2) only with valid checkpoint bounds
+  conditional_stratum_allowances: separately justified or explicitly assumed
+  repeats_per_root: 2
+  condition_prevalence_symbol: omega
+model:
+  sole_candidate: mistralai/Devstral-Small-2-24B-Instruct-2512
+  substrate_candidate: existing_planned_Ada
+  exact_artifact_and_runtime_bindings: null
+  further_model_search: false
+task:
+  direction: new_B_only_two_checkpoint_candidate_consistency
+  old_lambda_repair_mechanism: rejected
+  hidden_labels_visible_to_agent_or_verifier: false
+  verifier_response: frozen strict visible-development improvement; ties do not rewrite
+  required_real_adapter_witnesses: [now_best, later_best, never_best, uninformative_or_harmful_check]
+  screen_law: balanced mechanism classes; two fresh template families per class
+  pilot_generator_and_law: must be frozen before pilot outcomes
+  final_generator_and_law: must be frozen before final outcomes
+bounded_development:
+  scope: combined_screen_and_pilot_not_final_collection
+  screen: {template_families: 8, roots_per_family: 2, repetitions: 2, leaves_per_tree: 3, leaves: 96}
+  pilot: {template_families: 32, roots_per_family: 2, repetitions: 2, leaves_per_tree: 3, leaves: 384}
+  screen_pilot_templates_disjoint: true
+  reserved_integrity_control_leaves: 32
+  max_terminal_leaves: 512
+  max_generated_tokens_all_calls: 2000000
+  max_aggregate_collection_wall_seconds: 36000
+  max_accelerator_hours: 20
+  max_new_retained_bytes: 10737418240
+  max_new_spend_commitment: 0
+  existing_capacity: availability and existing authorization must be verified; meter usage
+  stop: first applicable ceiling or integrity failure
+  retries: preserve every attempt and immutable task ID; no replacement of scientific failures
+  allowed_substantive_repair_passes: 1
+  independent_challenges: 1
+  final_collection_budget: null
+  final_budget_reason: separate pre-final authorization and power/cost decision required
+implementation:
+  active_contract: protocols/paper_b/contract_v2.yaml
+  active_contract_rebound_by_this_document: false
+  migration_required:
+    - U pipeline and revised original-root primary estimand
+    - scoped population gate and p_path provenance
+    - real fork-path trees and matched reserve/VOI comparator
+    - task, evaluator, split and runtime immutable bindings
+    - phase-specific admission checks before any live phase
+    - fresh design-bound reports and authorization

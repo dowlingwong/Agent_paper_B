@@ -1,0 +1,73 @@
+\section{Analysis plan and estimator notes}
+\label{app:b-analysis}
+
+\emph{Status.} This appendix records the analysis conventions the first study
+uses and points at the historical full plan for the deferred E3 design.  No
+analysis here has been executed on agent data.
+
+\subsection{Units, clustering, and folds}
+
+Roots instantiated from one task template are dependent, so template identity
+induces within-cluster dependence that the design does not remove.  Task
+templates are grouped before splitting, so two instances of one template cannot
+straddle a fold; the clustering level fixes the resampling unit of the cluster
+bootstrap, and the effective cluster count follows from that level rather than
+from the root count.  Every distribution-free statement for $n$ independent
+units is a statement about independent \emph{templates}, and reading $n$ as the
+root count is anticonservative.  Splits are training, selection, calibration and
+an untouched final evaluation set, frozen after the pilot.
+
+\subsection{Minimum detectable effects}
+
+For a within-checkpoint contrast of a binary outcome with $R$ repetitions per
+arm and between-checkpoint standard deviation $\sigma_b$, the minimum detectable
+effect at $80\%$ power and two-sided $5\%$ level is
+$(z_{0.975}+z_{0.80})\sqrt{(\sigma_b^2+0.5/R)/n}$.  This is a generic planning
+baseline; the operative final-test precision is computed from pilot variance
+with conservative uncertainty and recorded before outcomes.
+
+\subsection{Risk-ranking regret: the registered estimand}
+\label{app:e3-estimator}
+
+For a capacity $q\in(0,1)$ and a score $s$, let $S_q(s)$ denote the upper
+$q$-fraction of the eligible population under $s$.  With $a_v(w)$ the
+verification advantage on the common-availability domain, the budget-matched
+risk-ranking regret is
+\begin{equation}
+ \mathcal R_{\mathrm{rank}}(q)
+ =\E\big[a_v(W)\mid W\in S_q(a_v)\big]-\E\big[a_v(W)\mid W\in S_q(r)\big].
+ \label{eq:b-rank-regret}
+\end{equation}
+The registered grid is $q\in\{0.05,0.10,0.25,0.50\}$; the effect score is fitted
+on template-grouped folds and evaluated on independent repetitions.  The
+forbidden plug-in procedure --- using the same noisy per-checkpoint estimate to
+select and evaluate --- is a selection-on-noise estimator and is not used; the
+estimator audit reproduces the large positive bias it induces under a
+simulated zero-regret null.  The full historical specification, including the
+retired F1 equivalence design and the F2-FEHPO power report, is preserved in
+the repository; this appendix does not re-register it.  The first study's
+primary null is the frozen-learned-policy comparison of
+\cref{sec:b-rejection}, and $\mathcal R_{\mathrm{rank}}$ is reported as a
+population-level descriptive target.
+
+\subsection{Descriptive action-value baseline}
+\label{app:label-use}
+
+The plain action-conditioned baseline (f) of \cref{sec:policy} regresses the
+branch outcome on the controller's observation $(Z,M)$ and the regime.  It is a
+coherent deployable learner and is reported as such; a regression on the full
+state $X$ would estimate the action value itself but is an oracle diagnostic,
+because $X$ carries the latent stratum and post-intervention state.  Neither is
+the masked policy-score learner of \cref{eq:rl-objective}.
+
+\subsection{Proposed extensions}
+\label{app:extensions}
+
+Four extensions are specified outside this manuscript in
+\texttt{docs/paper\_track/} and are named so the boundary between them and the
+first study is explicit: a prospective verifier-information study separating
+the information a verifier supplies from the response it triggers; a
+matching-diagnostic study for coarse-matching distortion; a calibration-size
+sensitivity study; and the recovery extension of \cref{sec:b-bridge}.  Each
+carries its own candidate registry and none is part of the first study's
+confirmatory claims.

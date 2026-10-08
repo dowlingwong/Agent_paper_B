@@ -1,0 +1,73 @@
+\section{Branch experiment and checkpoint instrumentation}
+\label{sec:branch}
+
+The root trajectory is the independent experimental unit.  A root is assigned
+to $J=0$ (sham) or $J=1$ (injected fault) before eligible checkpoint selection.
+Exactly one checkpoint is chosen by randomized eligible checkpoint selection
+within the registered window of each root.  This prevents multiple checkpoints
+with shared ancestry from being counted as independent units in the primary
+analysis.  At the selected checkpoint, the version-locked availability registry
+is evaluated from pre-treatment evidence and its structured decisions are
+recorded, a restorable snapshot is frozen, and every feasible registered regime
+is executed.  Downstream
+repetitions within checkpoint--regime cells measure stochastic variation but
+do not increase the number of roots, and roots sharing a task template are not
+independent: the template is the independent unit.
+
+Branch order and workload seeds are randomized by a registered scheduler.
+Where appropriate, the same workload seed couples regimes within a repetition
+to reduce variance while leaving each regime's marginal estimand unchanged.
+The pinned local runtime records sampler settings and model seeds, but no
+deterministic claim is made unless the production capability audit demonstrates
+it.  Any uncoupled model randomness is recorded as such.
+
+Instrumentation records experiment, template, root, checkpoint, branch,
+regime, repetition, ancestry, availability status and reason codes, availability
+evidence hash, registry and evaluator versions, fault assignment, workload seed,
+model-seed claim, continuation version, verifier result, terminal category,
+failure class, outcome, artifact hashes, raw resource use, and timestamps.
+A failed restore, incomplete manifest, or cross-branch write is a checkpoint
+instrumentation failure and invalidates the checkpoint block.  A regime
+declared unavailable before treatment is not assigned.  A failure caused by an
+assigned regime remains an outcome.  Missingness after regime initiation is
+post-treatment missingness and cannot be recoded as pre-treatment
+unavailability.
+
+Inference must preserve the design: branch repetitions are paired within a
+checkpoint, roots are the primary clusters, and task-template clustering is
+addressed by the registered analysis or by defining templates as fixed strata.
+
+\subsection{Failures that execute cleanly but change the estimand}
+\label{app:failure-taxonomy}
+
+Every row of \cref{tab:failure-taxonomy} describes a branch contrast that runs
+without error and still estimates something other than the declared comparison.
+The controls test \emph{specified} defects; they do not establish universal
+detection.  The declared allowance $p$ is a hypothesis carried with its
+provenance --- a validated allowance, a structural coupling, or a sensitivity
+value --- and the fourth column prices what remains identified if the audit
+misses the defect.  Excluding a checkpoint by the registered pre-treatment availability
+rule is legitimate even when the analyst applies that already-recorded rule later.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}p{2.7cm}p{3.1cm}p{4.0cm}p{4.4cm}@{}}
+\toprule
+Failure & What it changes & Evidence or control & If it escapes the audit \\
+\midrule
+Unavailable verification coded as zero & The feasible-domain contrast becomes an all-root coded contrast & Frozen pre-treatment mask; explicit target and denominator; \eqref{eq:availability-identity} & Point-identified bias $-u(\delta_F+b_U)$, sign set by $b_U$ \\
+Cases selected by post-execution success or completion & The population, and potentially a selection bias & Pre-treatment domain; attempted failures and missingness dispositions retained & Target population changed; not recoverable from the replay stream alone \\
+Sibling file, tool, or budget leakage & The initial state or the continuation distribution & Isolation probes, and separate E0-M perturbation comparisons & Enters $p$; $I_R$ widens (\cref{thm:finite-repeat}); replay decides iff $\tilde a>2p$, repetition only if $\tilde a>p/(1-p)$, else only a localising audit or valid reference \\
+A required state layer fails restoration & The executable starting state & Layer-specific checks with versioned evidence & As the previous row: enters $p$; replay only clears $2p$ \\
+Cache or sampling dependence violates the declared contract & The outcome distribution, the cost, or the pairing assumptions & Separate order and cache diagnostics; declared sampling semantics (\cref{as:iid-reps}) & As the previous row: enters $p$; the pairing contract is \cref{as:iid-reps} \\
+Unregistered continuation or scoring differences & The treatment definition or the measured outcome & Continuation digest; regime-independent adjudication and semantic checks & Treatment or outcome redefined; no allowance covers it, so declared out of scope \\
+Checkpoint sampler departs from the registered law & The target checkpoint population, and possibly the score support & Sampler audit and risk-blind selection & Reweighting identified only if the realised law is recorded \\
+Reported harm resolution differs from estimator resolution & A state-level versus a representation-average safety target & Claim-to-estimator crosswalk; \eqref{eq:harm-fraction} & A different estimand, not a biased one \\
+An unaudited discrepancy that the audit cannot see & The intended contrast, by up to the tail terms of \cref{thm:finite-repeat} & A declared allowance with provenance; a localising audit or a valid reference (\cref{prop:localising}) & Carried by the declared allowance; $I_R$ prices it, a valid reference removes it \\
+\bottomrule
+\end{tabular}
+\caption{Clean executions that change the estimand.  Controls test specified defects, not all defects.}
+\label{tab:failure-taxonomy}
+\end{table}

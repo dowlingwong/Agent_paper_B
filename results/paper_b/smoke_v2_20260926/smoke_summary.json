@@ -1,0 +1,274 @@
+{
+  "banner": "ENGINEERING_ONLY",
+  "checks": [
+    {
+      "check": "all pairwise split and descendant isolation",
+      "detail": "template-family, template and root identities checked across all three splits",
+      "passed": true
+    },
+    {
+      "check": "train: schema + duplicate units",
+      "detail": "309 records",
+      "passed": true
+    },
+    {
+      "check": "calibration: schema + duplicate units",
+      "detail": "171 records",
+      "passed": true
+    },
+    {
+      "check": "test: schema + duplicate units",
+      "detail": "195 records",
+      "passed": true
+    },
+    {
+      "check": "projection leak-free on every record",
+      "detail": "condition label and outcomes not reachable through the projection",
+      "passed": true
+    },
+    {
+      "check": "feasibility semantics",
+      "detail": "unavailable gv carries no outcome",
+      "passed": true
+    },
+    {
+      "check": "matched decision-score class",
+      "detail": "{\"checks\": {\"decision_parameters\": true, \"family\": true, \"features\": true, \"regularisation\": true, \"training_units_per_head\": true, \"tuning_candidates\": true}, \"learners\": {\"action_value\": {\"decision_parameters\": [2], \"family\": [\"_Ridge\"], \"features\": [\"z\"], \"fitted_heads\": 2, \"regularisation\": [0.01], \"training_units_per_head\": [33], \"tuning_candidates\": 1}, \"advantage\": {\"decision_parameters\": [2], \"family\": [\"_Ridge\"], \"features\": [\"z\"], \"fitted_heads\": 1, \"regularisation\": [0.01], \"training_units_per_head\": [33], \"tuning_candidates\": 1}, \"deficit\": {\"decision_parameters\": [2], \"family\": [\"_Ridge\"], \"features\": [\"z\"], \"fitted_heads\": 1, \"regularisation\": [0.01], \"training_units_per_head\": [33], \"tuning_candidates\": 1}, \"risk\": {\"decision_parameters\": [2], \"family\": [\"_Ridge\"], \"features\": [\"z\"], \"fitted_heads\": 1, \"regularisation\": [0.01], \"training_units_per_head\": [33], \"tuning_candidates\": 1}}, \"limitation\": \"Action value fits two outcome heads; others fit one. Raw fit work is not equal; the linear contrast class and one fixed tuning candidate are matched.\", \"matched_decision_class\": true}",
+      "passed": true
+    },
+    {
+      "check": "paired evaluation produced a comparison",
+      "detail": "1 comparison(s)",
+      "passed": true
+    },
+    {
+      "check": "conservative selection returns a decision",
+      "detail": "chosen=None, fallback=True",
+      "passed": true
+    }
+  ],
+  "checks_passed": true,
+  "comparison_primary": [
+    {
+      "bootstrap_undefined": 0,
+      "bootstrap_valid": 200,
+      "capacity": 0.25,
+      "d_ci": [
+        0.0,
+        0.0
+      ],
+      "d_value": 0.0,
+      "evaluations": {
+        "action_value": {
+          "achieved_capacity": 0.26666666666666666,
+          "capacity": 0.25,
+          "gain_ci": [
+            -0.07352941176470588,
+            0.029457720588235304
+          ],
+          "gain_feasible": -0.016666666666666666,
+          "gain_full_population": -0.008333333333333333,
+          "gain_selected_only": -0.0625,
+          "n_eligible_checkpoints": 30,
+          "n_feasible_checkpoints": 15,
+          "n_roots": 30,
+          "n_selected": 4,
+          "n_templates": 10,
+          "name": "action_value",
+          "selected_incremental_cost": {
+            "verifier_calls": 4.0
+          }
+        },
+        "advantage": {
+          "achieved_capacity": 0.26666666666666666,
+          "capacity": 0.25,
+          "gain_ci": [
+            -0.07352941176470588,
+            0.029457720588235304
+          ],
+          "gain_feasible": -0.016666666666666666,
+          "gain_full_population": -0.008333333333333333,
+          "gain_selected_only": -0.0625,
+          "n_eligible_checkpoints": 30,
+          "n_feasible_checkpoints": 15,
+          "n_roots": 30,
+          "n_selected": 4,
+          "n_templates": 10,
+          "name": "advantage",
+          "selected_incremental_cost": {
+            "verifier_calls": 4.0
+          }
+        },
+        "deficit": {
+          "achieved_capacity": 0.26666666666666666,
+          "capacity": 0.25,
+          "gain_ci": [
+            -0.07352941176470588,
+            0.029457720588235304
+          ],
+          "gain_feasible": -0.016666666666666666,
+          "gain_full_population": -0.008333333333333333,
+          "gain_selected_only": -0.0625,
+          "n_eligible_checkpoints": 30,
+          "n_feasible_checkpoints": 15,
+          "n_roots": 30,
+          "n_selected": 4,
+          "n_templates": 10,
+          "name": "deficit",
+          "selected_incremental_cost": {
+            "verifier_calls": 4.0
+          }
+        },
+        "risk": {
+          "achieved_capacity": 0.26666666666666666,
+          "capacity": 0.25,
+          "gain_ci": [
+            -0.07352941176470588,
+            0.029457720588235304
+          ],
+          "gain_feasible": -0.016666666666666666,
+          "gain_full_population": -0.008333333333333333,
+          "gain_selected_only": -0.0625,
+          "n_eligible_checkpoints": 30,
+          "n_feasible_checkpoints": 15,
+          "n_roots": 30,
+          "n_selected": 4,
+          "n_templates": 10,
+          "name": "risk",
+          "selected_incremental_cost": {
+            "verifier_calls": 4.0
+          }
+        }
+      },
+      "outcome": "S",
+      "primary_comparator": "action_value",
+      "primary_policy": "advantage",
+      "support_note": "eligible one-checkpoint roots=30, feasible=15; template families=10; unrepresented non-reaching roots are not inferred"
+    }
+  ],
+  "conservative_selection": {
+    "bounds": {
+      "advantage": -0.9945812063681271,
+      "risk": -0.9945812063681271
+    },
+    "chosen": null,
+    "degradation_upper": {
+      "advantage": 0.9945812063681271,
+      "risk": 0.9945812063681271
+    },
+    "delta": 0.05,
+    "fallback": true,
+    "family_size": 2,
+    "reason": "no family member has a positive lower bound within the harm tolerance"
+  },
+  "counts": {
+    "calibration_templates": 8,
+    "test_checkpoints": 30,
+    "test_checkpoints_with_gv": 15,
+    "test_templates": 10,
+    "train_templates": 14
+  },
+  "harm_scope": "overall fixture mean degradation; no clean-stratum guarantee",
+  "known_truth_world": {
+    "mean_success_g0": 0.5583333333333333,
+    "mean_success_gv": 0.3333333333333333
+  },
+  "learner_matching": {
+    "checks": {
+      "decision_parameters": true,
+      "family": true,
+      "features": true,
+      "regularisation": true,
+      "training_units_per_head": true,
+      "tuning_candidates": true
+    },
+    "learners": {
+      "action_value": {
+        "decision_parameters": [
+          2
+        ],
+        "family": [
+          "_Ridge"
+        ],
+        "features": [
+          "z"
+        ],
+        "fitted_heads": 2,
+        "regularisation": [
+          0.01
+        ],
+        "training_units_per_head": [
+          33
+        ],
+        "tuning_candidates": 1
+      },
+      "advantage": {
+        "decision_parameters": [
+          2
+        ],
+        "family": [
+          "_Ridge"
+        ],
+        "features": [
+          "z"
+        ],
+        "fitted_heads": 1,
+        "regularisation": [
+          0.01
+        ],
+        "training_units_per_head": [
+          33
+        ],
+        "tuning_candidates": 1
+      },
+      "deficit": {
+        "decision_parameters": [
+          2
+        ],
+        "family": [
+          "_Ridge"
+        ],
+        "features": [
+          "z"
+        ],
+        "fitted_heads": 1,
+        "regularisation": [
+          0.01
+        ],
+        "training_units_per_head": [
+          33
+        ],
+        "tuning_candidates": 1
+      },
+      "risk": {
+        "decision_parameters": [
+          2
+        ],
+        "family": [
+          "_Ridge"
+        ],
+        "features": [
+          "z"
+        ],
+        "fitted_heads": 1,
+        "regularisation": [
+          0.01
+        ],
+        "training_units_per_head": [
+          33
+        ],
+        "tuning_candidates": 1
+      }
+    },
+    "limitation": "Action value fits two outcome heads; others fit one. Raw fit work is not equal; the linear contrast class and one fixed tuning candidate are matched.",
+    "matched_decision_class": true
+  },
+  "numpy": "2.3.0",
+  "python": "3.12.7",
+  "seed": 20260924,
+  "streaming_thresholds_frozen_on_train": {
+    "advantage": -0.07648754620616914,
+    "risk": 0.6836657029439563
+  },
+  "warning": "This is an engineering smoke test on a closed synthetic workload. It is not a real-agent result, not a pilot, and no number here may be reported as scientific evidence."
+}

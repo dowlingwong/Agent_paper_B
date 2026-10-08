@@ -1,0 +1,20 @@
+\section{Deferred: recovery and unrestricted sequential control}
+\label{sec:b-bridge}
+
+\paragraph{Recovery (future work).}
+A recovery action would require a stable precondition, a declared rollback
+boundary, a repair action and a continuation contract; it is not part of this
+study and is recorded only as future work.
+
+\paragraph{Unrestricted sequential control (future work).}
+Extending the decision to every checkpoint changes the problem in ways that must
+be earned rather than assumed.  The continuation is no longer frozen, coverage
+becomes policy-dependent, and the post-intervention states a later policy reaches
+are not re-entered by this design's depth-two branching, so a pessimistic value
+argument would need uniform confidence validity over those states.  The
+allocation problem also becomes a sequential decision under a budget.  A
+depth-two branching pilot that measures the post-intervention span would be the
+first instrument requirement of that program, and it is not part of this paper.
+Any sequential conservative guarantee would need its own trajectory-level
+argument and independent calibration; otherwise only empirical bounds are
+reported.

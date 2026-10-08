@@ -1,0 +1,898 @@
+\section{Theory}
+\label{sec:theory}
+
+One reading organises everything that follows.  The design is a horizon-one
+decision process with a context-dependent action set: at a sampled checkpoint
+the controller selects one intervention option from the feasible set, the frozen
+continuation $\rho$ then runs to the horizon, and validated completion is the
+terminal reward.  Every quantity the branch design estimates is therefore a
+Bellman object of the baseline controller that never intervenes.  Writing
+$V^\rho$ and $Q^\rho$ for its state- and action-value functions at the sampled
+checkpoint, evaluated at the augmented state $X$ of \cref{sec:b-problem}, the
+conditional regime value $\mu_g$ is an aggregate of $Q^\rho(\cdot,g)$, baseline
+failure \emph{risk} is $1-V^\rho$, and verification advantage and actionable
+value are advantages $A^\rho=Q^\rho-V^\rho$; a branch is a Monte-Carlo backup of
+$Q^\rho$ from a restored state, and the availability mask is membership in an
+option's initiation set.  \Cref{tab:bellman-dictionary} in \cref{app:notation}
+gives the full correspondence.  The reading is used for two purposes only.  It
+states the retained policy-ranking result in familiar terms --- \cref{thm:ordinal} is the exact
+condition under which the failure-risk function $1-V^\rho$ ranks the advantage
+function $A^\rho(\cdot,g_v)$; ranking by $V^\rho$ itself is the same comparison
+with the sign reversed, and it is failure risk that a monitor reports --- and,
+in \cref{sec:bellman}, it makes the one-step restriction a quantified choice
+rather than a scoping sentence.  It is not a method: the learner of
+\cref{sec:rl} remains a one-step full-information procedure that optimises a
+masked policy score rather than regressing an action value, and no sequential
+value iteration is proposed.  Nor is it an identification argument.  A Bellman
+recursion is an accounting identity for whichever kernel generated the data; it
+is \cref{sec:b-data} and the runtime qualification gate, not the recursion, that decide
+whether that kernel is the one the branches executed.
+
+Four results.  Each determines a component of the design or a prediction in
+\cref{sec:policy,sec:b-experiments}; none requires data; all concern quantities the
+branch design already estimates.  The first supplies the sharp null of the
+population-level ranking comparison: exactly when a baseline failure-risk score suffices to
+allocate a verification budget --- in the reading above, exactly when $1-V^\rho$ ranks
+$A^\rho(\cdot,g_v)$ (\cref{thm:ordinal}).  The remaining results are the machinery that makes
+acting on that answer legitimate --- a bound on the loss from registering a
+representation (\cref{thm:refinement}), a pessimistic gated rule that cannot
+make a running system worse (\cref{thm:safe,cor:proposal}), and the simultaneous
+certification that prices the whole procedure (\cref{prop:certification}).
+
+The results are individually elementary, and we state that plainly: the
+contribution is the object they apply to, together with the observation that
+\emph{the one-step restriction makes their hypotheses verifiable rather than
+assumed}.  A sequential safe-improvement guarantee of the kind in
+\cref{thm:safe} would require uniform confidence validity over the states
+reachable under the new policy, which is unknown and demands a positivity
+assumption over a sequential action space.  Executing every feasible regime at a
+single randomly selected checkpoint removes that problem for the
+\emph{action}: conditional on a checkpoint being sampled, every regime feasible
+there is executed, so action-assignment positivity holds by construction rather
+than by assumption.  It does not promise that every cell of a partition is
+sampled: a cell the registered sampling law gives zero or negligible mass
+receives no branches, and the gate treats it as uncovered and uncertifiable
+rather than as certified by default.
+
+Two things must be kept apart.  Exhaustive execution supplies
+\emph{coverage}: every feasible regime is executed at every eligible checkpoint,
+so for the execution indicator $E_{ig}$ $\Prb(E_{ig}=1\mid A_{ig}=1)=1$.  It does
+not supply \emph{statistical} validity: the uniform confidence bounds
+\cref{thm:safe} requires are the gate family of \cref{eq:gate-family}, which
+depends on a registered finite partition of the representation space, the sample
+size, and a simultaneous union bound over the gate and certification families on
+held-out calibration data.  \textbf{Full-arm execution makes every feasible
+action observable; it does not by itself validate conditional confidence
+bounds.}
+\section{Retained decision theory}
+\label{sec:b-theory}
+
+This section records the decision-theoretic results the first study builds on.
+They are \emph{retained, not newly claimed}: the ordinal-sufficiency theorem is
+the known advantage-threshold result of the budgeted-triage literature in
+ordinal form \citep{okati2021,fernandezloria2022,kamran2024}, and the
+pessimistic gate is a standard one-step safe-improvement argument.  What the
+paper tests is the behaviour of \emph{fitted} policies under matched
+information, budget and feasibility --- a comparison the population-level
+results below do not settle --- together with the operational question of how
+action feasibility, verification cost and clean-run harm interact in
+allocation.
+
+One reading organises everything that follows.  The design is a horizon-one
+decision process with a context-dependent action set: at a sampled checkpoint
+the controller selects one intervention option from the feasible set, the frozen
+continuation $\rho$ then runs to the horizon, and validated completion is the
+terminal reward.  Every quantity the branch design estimates is therefore a
+Bellman object of the baseline controller that never intervenes.  Writing
+$V^\rho$ and $Q^\rho$ for its state- and action-value functions at the sampled
+checkpoint, evaluated at the augmented state $X$ of \cref{sec:b-problem}, the
+conditional regime value $\mu_g$ is an aggregate of $Q^\rho(\cdot,g)$, baseline
+failure \emph{risk} is $1-V^\rho$, and verification advantage and actionable
+value are advantages $A^\rho=Q^\rho-V^\rho$; a branch is a Monte-Carlo backup of
+$Q^\rho$ from a restored state, and the availability mask is membership in an
+option's initiation set.  \Cref{tab:bellman-dictionary} in \cref{app:b-notation}
+gives the full correspondence.  The reading is used for two purposes only.  It
+states the retained policy-ranking result in familiar terms --- \cref{thm:ordinal} is the exact
+condition under which the failure-risk function $1-V^\rho$ ranks the advantage
+function $A^\rho(\cdot,g_v)$; ranking by $V^\rho$ itself is the same comparison
+with the sign reversed, and it is failure risk that a monitor reports --- and,
+in \cref{sec:bellman}, it makes the one-step restriction a quantified choice
+rather than a scoping sentence.  It is not a method: the learner of
+\cref{sec:rl} remains a one-step full-information procedure that optimises a
+masked policy score rather than regressing an action value, and no sequential
+value iteration is proposed.  Nor is it an identification argument.  A Bellman
+recursion is an accounting identity for whichever kernel generated the data; it
+is the branch-data contract and the runtime qualification boundary
+(\cref{sec:b-data}), not the recursion, that decide whether that kernel is the
+one the branches executed.
+
+What the retained results determine.  Each fixes a component of the design or a
+prediction in \cref{sec:policy,sec:b-experiments}; none requires data.  The
+first supplies the sharp null of the population-level comparison: exactly when
+a baseline failure-risk score suffices to allocate a verification budget --- in
+the reading above, exactly when $1-V^\rho$ ranks $A^\rho(\cdot,g_v)$
+(\cref{thm:ordinal}).  The remaining results are the machinery that makes acting
+on that answer legitimate --- a bound on the loss from registering a
+representation (\cref{thm:refinement}), a pessimistic gated rule that cannot
+make a running system worse (\cref{thm:safe,cor:proposal}), and a simultaneous
+certification whose scope the first study narrows rather than inherits
+(\cref{prop:certification}).
+
+The results are individually elementary, and we state that plainly: the
+contribution of this paper is not these theorems but the decision problem they
+are applied to, together with the observation that
+\emph{the one-step restriction makes their hypotheses verifiable rather than
+assumed}.  A sequential safe-improvement guarantee of the kind in
+\cref{thm:safe} would require uniform confidence validity over the states
+reachable under the new policy, which is unknown and demands a positivity
+assumption over a sequential action space.  Executing every feasible regime at a
+single randomly selected checkpoint removes that problem for the
+\emph{action}: conditional on a checkpoint being sampled, every regime feasible
+there is executed, so action-assignment positivity holds by construction rather
+than by assumption.  It does not promise that every cell of a partition is
+sampled: a cell the registered sampling law gives zero or negligible mass
+receives no branches, and the gate treats it as uncovered and uncertifiable
+rather than as certified by default.
+
+Two things must be kept apart.  Exhaustive execution supplies
+\emph{coverage}: every feasible regime is executed at every eligible checkpoint,
+so for the execution indicator $E_{ig}$ $\Prb(E_{ig}=1\mid A_{ig}=1)=1$.  It does
+not supply \emph{statistical} validity: the uniform confidence bounds
+\cref{thm:safe} requires are the gate family of \cref{eq:gate-family}, which
+depends on a registered finite partition of the representation space, the sample
+size, and a simultaneous union bound over the gate and certification families on
+held-out calibration data.  \textbf{Full-arm execution makes every feasible
+action observable; it does not by itself validate conditional confidence
+bounds.}
+
+Throughout, $\mu^{(j)}_g(z,m)=\E[Y^g_i\mid Z_i=z,M_i=m,J_i=j]$ denotes the
+stratum-specific conditional regime value, defined where $g$ is available.
+
+
+Throughout, $\mu^{(j)}_g(z,m)=\E[Y^g_i\mid Z_i=z,M_i=m,J_i=j]$ denotes the
+stratum-specific conditional regime value, defined where $g$ is available.
+
+\paragraph{Standing assumptions.}
+The following are used throughout and are collected here so that each result can
+name the ones it needs.  \Cref{as:baseline,as:unit} are enforced by the design;
+\cref{as:frozen} by the protocol; \cref{as:continuity} is a regularity condition
+whose failure mode is described below.
+
+\begin{assumption}[Baseline availability]
+\label{as:baseline}
+$A_{i,g_0}=1$ at every eligible checkpoint: no intervention is always feasible.
+This is what makes $G_j(d)$ in \eqref{eq:stratum-values} well defined, and what
+makes \eqref{eq:actionable} a maximum over a non-empty set.
+\end{assumption}
+
+\begin{assumption}[One checkpoint per root; consistency under a regime]
+\label{as:unit}
+Exactly one checkpoint is sampled per root trajectory, and roots are independent
+\emph{across clusters}, a cluster being the task template a root is instantiated
+from.  For a policy $d$, the composite potential outcome satisfies
+$Y^{d(Z_i,M_i)}_i=\sum_{g}\mathbf 1\{d(Z_i,M_i)=g\}\,Y^g_i$, so that
+$\E[Y^{d(Z,M)}\mid Z,M,J]=\mu^{(J)}_{d(Z,M)}(Z,M)$.
+\end{assumption}
+
+The clustered form is the operative one, because the design instantiates several
+roots from each template; independence at root resolution is not available and is
+not assumed.  The two halves of \cref{as:unit} are used in different places, and
+it is worth separating them.  Consistency is what
+\cref{thm:refinement,thm:safe,cor:proposal} consume: those are conditional-mean
+identities and tower-property arguments, and they hold whatever the dependence
+between units.  Independence enters only through the confidence bounds priced in
+\cref{prop:certification}, so every finite-sample count there is a count of
+independent \emph{clusters} and reading it as a root count is anticonservative.
+
+\begin{assumption}[Frozen comparator]
+\label{as:frozen}
+$d^\star\in\Dcal_{\mathrm{fixed}}$ and the candidate class $\Dcal$ are fixed
+before the data used to construct confidence bounds are observed, so that the
+advantage \eqref{eq:pointwise-advantage} is a fixed population quantity and the
+coverage statements of \cref{prop:certification}, stated in full below, refer
+to a fixed estimand.  \Cref{sec:policy} is authoritative about class membership,
+derived gated outputs, and the split at which each object is frozen; reusing
+calibration data to adapt a member would instead make the target data-dependent.
+\end{assumption}
+
+\begin{assumption}[Continuity of the ranking scores]
+\label{as:continuity}
+On the common-availability domain, $a_v(W)$ and the score used to allocate
+capacity have continuous distributions, where $W=(Z,M)$.
+\end{assumption}
+
+\Cref{as:continuity} is needed only for \cref{thm:ordinal}, and only to make
+capacity-$q$ selection unambiguous.  Under atoms, the upper level set need not
+have probability exactly $q$; the registered analysis then uses randomised
+tie-breaking at the boundary, both directions of \cref{thm:ordinal} continue to
+hold with ``the same ordering'' read up to ties, and the equality case
+identifies the selected sets only up to the atom.  We record this rather than
+assume it away because a discrete risk score --- a bucketed monitor, say --- is
+the likely case in practice.
+
+\subsection{When does baseline failure risk rank verification value?}
+
+The retained policy-ranking result concerns the cheapest identified comparison in the design:
+verification against no intervention, on the domain where both are available.
+Write $W=(Z,M)$ for the representation--mask pair of an eligible checkpoint and
+let $a_v(w)=\mu_{g_v}(w)-\mu_{g_0}(w)$ on that domain.  Let $r$ be any baseline
+failure-risk score on the same domain --- the registered risk score is a
+function of $z$ alone, which is the special case $r(w)=r(z)$ --- and for a
+capacity $q\in(0,1)$ let $S_q(s)$ denote the upper $q$-fraction of the eligible
+population under score $s$.  The budget-matched risk-ranking regret is
+\begin{equation}
+ \mathcal R_{\mathrm{rank}}(q)
+ =\E\big[a_v(W)\mid W\in S_q(a_v)\big]-\E\big[a_v(W)\mid W\in S_q(r)\big].
+ \label{eq:rank-regret}
+\end{equation}
+Carrying the mask is not decoration.  Two checkpoints with identical $z$ but
+different availability patterns are different conditioning cells and need not
+share a verification advantage, so a regret written on $z$ alone would average
+over a distinction the instrument was built to record.  The next statement is
+\cref{thm:ordinal} with the mask carried explicitly.
+
+\begin{theorem}[Ordinal sufficiency]
+\label{thm:ordinal}
+Under \cref{as:continuity}, $\mathcal R_{\mathrm{rank}}(q)\ge0$ for every $q\in(0,1)$, and
+\begin{equation}
+ \begin{aligned}
+ \mathcal R_{\mathrm{rank}}(q)=0\ \text{ for every }q\in(0,1)
+ &\quad\Longleftrightarrow\quad\\[-2pt]
+ &r\ \text{and}\ a_v\ \text{induce the same ordering almost everywhere.}
+ \end{aligned}
+\end{equation}
+\end{theorem}
+
+\Cref{thm:ordinal} says that baseline failure risk $1-V^\rho$ ranks the
+advantage function $A^\rho(\cdot,g_v)$ at every capacity if and only if the two
+induce the same ordering almost everywhere; it converts a vague methodological
+complaint into a hypothesis with a sharp null.  The sign matters and is not
+cosmetic: the top-$q$ set under $r=1-V^\rho$ is the \emph{bottom}-$q$ set under
+$V^\rho$, so ``$V^\rho$ ranks $A^\rho$'' is a different --- and, except in
+degenerate cases, incompatible --- hypothesis.  The theorem depends on the score
+only through the ordering it induces, so any strictly \emph{increasing}
+transform of $r$ may be substituted freely; a strictly \emph{decreasing} one,
+such as $V^\rho$ itself, may not.  The registered allocator spends its budget on
+the highest failure risk, and that is the score the null is written on.  Write
+\begin{equation}
+ H_0:\quad\text{baseline failure risk is ordinally sufficient for verification advantage.}
+ \label{eq:null}
+\end{equation}
+Under $H_0$, ranking checkpoints by predicted failure risk allocates a fixed
+verification budget exactly as well as ranking them by the causal effect of
+verifying, at every capacity, and the actionable-value framing of
+\cref{def:actionable} buys nothing.  Rejecting $H_0$ is the precise sense in
+which prediction and intervention value come apart.  This comparison requires
+only $g_0$ and $g_v$, so it remains identified even if recovery semantics prove
+incoherent.
+
+\Cref{thm:ordinal} quantifies over an arbitrary score $r$; the registered test
+does not.  It instantiates $r$ as one registered score: the cross-fitted
+probability of baseline failure, fitted out of fold on the registered $Z$ alone,
+on the same selection repetitions and template-grouped folds as the effect score,
+from a learner library and hyperparameter grid frozen before any outcome
+(\cref{app:e3-estimator}).  What is frozen before execution is the library and
+the fitting procedure, not fitted weights.  A rejection therefore establishes
+that \emph{that} score is ordinally insufficient on this population, not that no
+risk score could be sufficient; because the two scores share data, folds and the
+gradient-boosted family and differ in the label and in whether the mask enters, a
+weak hand-built monitor is not an available explanation.  The paper claims only the former, and the scope of the
+insufficiency framing should be read at that width.
+
+The capacity-constrained shape has an adjacent empirical analogue: forecasting
+improvements in storage placement produced monotone but sub-linear downstream
+utility once the placement frontier was largely correct \citep{fleda2026}.
+That observation motivates a descriptive transfer diagnostic; it is not
+evidence for this theorem.
+
+The null is not vacuous and the alternative is attainable.  Let $Z\sim
+\mathrm{Unif}[0,1]$ with $r(z)=z$.  If $a_v(z)=z-\tfrac12$ the two orderings
+agree and $\mathcal R_{\mathrm{rank}}\equiv0$.  If instead
+$a_v(z)=\tfrac12-z$, then $S_q(r)=[1-q,1]$ while $S_q(a_v)=[0,q]$, and
+\begin{equation}
+ \mathcal R_{\mathrm{rank}}(q)
+ =\Big(\tfrac12-\tfrac q2\Big)-\Big(\tfrac q2-\tfrac12\Big)=1-q>0
+ \quad\text{for every }q\in(0,1).
+ \label{eq:construction}
+\end{equation}
+Two populations with identical risk-score distributions therefore differ
+maximally in whether that score is usable for allocation.  Which case obtains on
+real checkpoints is an empirical question, and it is the one
+\cref{sec:b-experiments} is organised around.
+
+\paragraph{What the theory requires of the instrument.}
+\Cref{eq:construction} also constrains the fault mechanisms of
+\cref{sec:b-data}: under corruption detectable exactly when it is damaging
+--- a substituted dependency, an altered manifest --- baseline risk and
+verification advantage co-order, $H_0$ is not rejected, and the design has
+measured its own injector.  Reaching the alternative requires a semantic fault
+family --- an invalid inference drawn from a valid computation, with no trace
+anomaly and no privileged rollback boundary.  The theory determines a
+requirement on the instrument rather than inheriting one from it.
+
+\subsection{Representations, representation loss, and why the mask is a policy input}
+
+Write $\Dcal_H$ for the set of policies measurable with respect to $H_i$ and
+$\Dcal_Z$ for those measurable with respect to $(Z_i,M_i)$; every policy in
+either class selects a regime that is available at the checkpoint.  Let
+$\mu^{(j)}_g(H)=\E[Y^g\mid H,J=j]$ and define the best achievable stratum values
+\begin{equation}
+ V^{*H}_j=\sup_{d\in\Dcal_H}V_j(d),
+ \qquad
+ V^{*Z}_j=\sup_{d\in\Dcal_Z}V_j(d),
+ \qquad
+ \mathrm{Ref}_j=V^{*H}_j-V^{*Z}_j .
+ \label{eq:refinement}
+\end{equation}
+
+The representation question needs one definition.  Say that $Z$ is
+conditionally-mean sufficient for the registered decision problem when
+\begin{equation}
+ \E[Y^g_i\mid H_i,J_i=j]=\E[Y^g_i\mid Z_i,M_i,J_i=j]
+ \quad\text{for every feasible }g,
+ \label{eq:conditional-mean-sufficiency}
+\end{equation}
+which is what would be required to claim no decision-relevant conditional-mean
+loss relative to policies using the complete history.
+
+\begin{theorem}[Representation loss]
+\label{thm:refinement}
+Assume \cref{as:unit}.  The feasible set $\Gset(H_i)$ is $M_i$-measurable.  Consequently
+\begin{equation}
+ V^{*H}_j=\E\Big[\max_{g\in\Gset(H)}\mu^{(j)}_g(H)\;\Big|\;J=j\Big],
+ \qquad
+ V^{*Z}_j=\E\Big[\max_{g\in\Gset(H)}\mu^{(j)}_g(Z,M)\;\Big|\;J=j\Big],
+\end{equation}
+and $\mathrm{Ref}_j\ge 0$.  If conditional-mean sufficiency
+\eqref{eq:conditional-mean-sufficiency} holds, then $\mathrm{Ref}_j=0$.
+Finally, for any representation $Z'$ with $\sigma(Z)\subseteq\sigma(Z')\subseteq
+\sigma(H)$,
+\begin{equation}
+ \mathrm{Ref}_j\;\ge\;V^{*Z'}_j-V^{*Z}_j\;\ge\;0 .
+ \label{eq:refinement-bound}
+\end{equation}
+\end{theorem}
+
+The measurability clause is not a technicality.  By construction
+$M_i=(A_{ig}:g\in\Gset)$ with $A_{ig}=\mathbf 1\{g\in\Gset(H_i)\}$, so
+$\Gset(H_i)$ is recoverable from $M_i$ alone; without the mask, the maximisation
+defining $V^{*Z}_j$ would range over a set the policy cannot identify.
+\Cref{thm:refinement} is therefore the formal reason the mask is a policy input
+rather than a nuisance.
+
+\Cref{eq:refinement-bound} makes representation adequacy an empirical question.
+$\mathrm{Ref}_j$ is not identified, because $\mu^{(j)}_g(H)$ is not estimable at
+checkpoint resolution, but $V^{*Z'}_j-V^{*Z}_j$ is estimable from the same
+branch data for any richer registered $Z'$: a representation audit returns a
+lower bound on representation loss rather than a verdict.  This is the estimand
+of the representation experiment in \cref{sec:b-experiments}.
+
+\subsection{Actionable value}
+
+\begin{definition}[Actionable value]
+\label{def:actionable}
+The actionable value of a checkpoint at stratum $j$ is
+\begin{equation}
+ \mathrm{AV}^{(j)}(z,m)=\max_{g\,:\,m_g=1}\big\{\mu^{(j)}_g(z,m)-\mu^{(j)}_{g_0}(z,m)\big\},
+ \label{eq:actionable}
+\end{equation}
+the largest improvement any available regime achieves over no intervention.
+\end{definition}
+
+By \cref{as:baseline}, $g_0$ is an admissible element of the maximisation, so
+$\mathrm{AV}^{(j)}\ge0$ pointwise, with equality exactly when no available regime improves
+on continuing.  Actionable value therefore cannot detect harm on its own, and
+should not be asked to: harm is a property of an \emph{individual} regime, not
+of the best one, and the decision-relevant quantity is whether some available
+$g$ carries a negative contrast at a checkpoint.  The
+two are reported together, and neither substitutes for the other.
+
+This is a substantive difference from formulations that measure advantage
+against a baseline policy which may itself intervene; there the analogous
+quantity can go negative, and a single number conflates ``nothing helps'' with
+``acting hurts''.  Separating them is what allows the no-fault stratum to carry
+its own endpoint.
+
+Actionable value is the quantity a controller needs and a failure-risk score
+does not supply: baseline risk $1-\mu^{(j)}_{g_0}(z,m)$ measures what happens if
+nothing is done, $\mathrm{AV}^{(j)}$ measures what any available action can still change,
+and \cref{thm:ordinal} establishes the exact condition under which the first
+determines the second.
+
+\subsection{Certification under simultaneous constraints}
+
+A policy is eligible only if it certifies no-fault noninferiority
+\eqref{eq:noninferiority}, the invalid-output bound
+\eqref{eq:invalid-constraint}, and each of the $K$ cost components
+\eqref{eq:cost-constraint}.  Write $\widehat{\mathcal C}$ for the resulting
+certified set and $\mathcal C$ for the policies that truly satisfy all
+constraints.  $\widehat{\mathcal C}$ is a random set whose selection event is not
+controlled by per-constraint allocation without simultaneity over $\Dcal$.  The
+$K+3$ bounds per member --- value, noninferiority, invalidity, and $K$ cost ---
+form the \emph{certification family}, union-bounded on the same held-out data
+with the gate family of \cref{eq:gate-family} defined in the next subsection, so
+the price below covers both.  Derived deployment rules such as $d^\dagger$ and
+$\mathrm{rl}_{\mathrm{constrained,certified}}$ of \cref{sec:policy} are not
+members: their safety is the content of \cref{thm:safe,cor:proposal}, and their
+value is reported from the untouched final split.
+
+\begin{proposition}[Joint certification and its price]
+\label{prop:certification}
+Let $\Dcal$ be finite.  The protocol constructs one simultaneous family on the
+held-out calibration data whose members are the certification bounds --- for
+each member of $\Dcal$, one value, one no-fault noninferiority, one
+invalid-output, and $K$ cost bounds --- together with the gate family of
+\cref{eq:gate-family}, of combined size
+\begin{equation}
+ N=|\Dcal|(K+3)+F_{\mathrm{gate}} .
+ \label{eq:combined-family}
+\end{equation}
+Suppose this combined family is simultaneously valid at level $1-\delta$.  Then
+$\Prb(\widehat{\mathcal C}\subseteq\mathcal C)\ge 1-\delta$, and any policy
+selected from $\widehat{\mathcal C}$ satisfies every constraint with probability
+at least $1-\delta$ jointly; simultaneously, the gate-family members deliver the
+uniform-validity hypothesis of \cref{thm:safe}.  Allocating $\delta/N$ to each
+member suffices.  For a member $k$ whose contribution per independent unit is
+bounded in an interval of length $R_k$ and which is averaged over $n_k$
+independent units, a two-sided Hoeffding half-width at that allocation is
+\begin{equation}
+ \varepsilon_k(n_k)=R_k\sqrt{\frac{\log\!\big(2N/\delta\big)}{2n_k}},
+ \label{eq:halfwidth}
+\end{equation}
+and this Hoeffding half-width falls below a true slack $s_k>0$ only when
+\begin{equation}
+ n_k\;\ge\;\frac{R_k^{2}\,\log\!\big(2N/\delta\big)}{2s_k^{2}} .
+ \label{eq:sample-ceiling}
+\end{equation}
+When the independent units are clusters of unequal size with declared weights
+$w_c$ summing to one, the same argument applied to the weighted mean of cluster
+contributions gives $\varepsilon_k=R_k\sqrt{\log(2N/\delta)\sum_c w_c^{2}/2}$,
+which reduces to \eqref{eq:halfwidth} with $n_k=1/\sum_c w_c^2$ at equal
+weights.
+\end{proposition}
+
+Four things about \eqref{eq:halfwidth} are load-bearing and were previously
+elided.  The range $R_k$ is member-specific: a completion rate in $[0,1]$ has
+$R_k=1$, a paired contrast or a no-fault difference in $[-1,1]$ has $R_k=2$ and
+needs \emph{four times} as many independent units for the same width, and a
+cost component has whatever bounded range its registry ceiling fixes.  The
+count $n_k$ is member-specific too: a gate bound on one cell, mask and stratum
+is averaged over the units sampled into that cell, not over all roots, so
+sparse cells have wide bounds and cells with no sampled units have none.  The
+independent unit is the task template; the weighted form above is the one the
+scaffold implements, and reading $n_k$ as a root count is anticonservative
+whenever roots share a template.  Finally, \eqref{eq:halfwidth} is a planning
+width for this particular bound: \eqref{eq:sample-ceiling} is neither a sample
+size that every valid procedure needs nor a power guarantee.  A bound certifies
+with high probability only when the slack exceeds roughly twice the half-width,
+because the estimate itself fluctuates on that scale.  It is a worst-case bound, so a variance-adaptive
+construction using pilot variance will be tighter; the allocation $\delta/N$ is
+unaffected, since it concerns which bounds hold together, not how each is built.
+
+\Cref{eq:sample-ceiling} is a planning width for a member of the
+certification family, not a sample-size mandate.  The historical manuscript
+priced a family with $N=291$ members at the registered values $\delta=0.05$,
+$K=8$, $|\Dcal|=9$, $B=8$, $|\mathcal M|\le4$, $|\Gset|=3$; that family and its
+count are a \emph{historical registration} and are not inherited by the first
+study here.  The planned route is a small deployable policy family: fit the
+advantage learner on training data, construct a small threshold/allocation family
+on validation data, evaluate paired policy gains and no-injected-fault
+degradation on independent calibration templates, and spend one explicitly
+allocated simultaneous error budget over that family's endpoints.  A
+bound-derived count is reported as a planning width for whichever member is
+actually certified, with member-specific ranges and the independent unit being
+the template rather than the root.  A design that cannot clear its planning
+width coarsens the partition, reduces the policy family, or abandons the
+certified claim in favour of the descriptive contract before, not after, the
+confirmatory data are seen.
+
+\subsection{Availability-masked pessimistic safe improvement}
+
+Let $d^\star\in\Dcal_{\mathrm{fixed}}$ be the non-personalized comparator, frozen
+before the certification data are observed.  Define the pointwise advantage of
+an available regime relative to that comparator,
+\begin{equation}
+ \Delta^{(j)}_g(z,m)=\mu^{(j)}_g(z,m)-\mu^{(j)}_{d^\star(z,m)}(z,m),
+ \label{eq:pointwise-advantage}
+\end{equation}
+which is defined wherever $A_g=1$, without a common-domain restriction, because
+$d^\star(z,m)$ is available by construction; with cell-measurable policies the
+cell-level value \eqref{eq:cell-advantage} agrees with it on each cell.  Let
+$\mathrm{LCB}_\delta[\cdot]$ denote lower confidence bounds computed from the
+held-out branch data.  The learned policy is defined as a \emph{gated deviation}
+from the comparator, evaluated at the cell containing the checkpoint,
+\begin{equation}
+ d^\dagger(c)=
+ \begin{cases}
+  \displaystyle\argmax_{g\,:\,A_g=1}\;\min_{j\in\{0,1\}}\mathrm{LCB}_\delta\big[\Delta^{(j)}_g(c)\big],
+   & \text{if }\displaystyle\max_{g\,:\,A_g=1}\;\min_{j\in\{0,1\}}\mathrm{LCB}_\delta\big[\Delta^{(j)}_g(c)\big]>0,\\[2ex]
+  d^\star(c), & \text{otherwise.}
+ \end{cases}
+ \label{eq:gated-rule}
+\end{equation}
+where $d^\dagger(z,m)=d^\dagger(c(z,m))$ recovers the policy on the original
+space.
+
+\paragraph{The gate family.}
+\Cref{thm:safe} below requires lower confidence bounds simultaneously valid over
+the eligible support.  As written that is a function-class statement, so the
+protocol registers, before calibration, a finite partition of the representation
+space into $B$ cells, with $c(z,m)$ denoting the cell containing $(z,m)$.  The
+policy class is restricted to cell-measurable policies, $d(z,m)=d(c(z,m))$, and
+every quantity the gate uses is defined at cell resolution: the conditional
+advantage given cell $c$ is
+\begin{equation}
+ \Delta^{(j)}_g(c)=\mu^{(j)}_g(c)-\mu^{(j)}_{d^\star(c)}(c),
+ \qquad
+ \mu^{(j)}_g(c)=\E\big[Y^g_i\mid c(Z_i,M_i)=c,\ J_i=j\big],
+ \label{eq:cell-advantage}
+\end{equation}
+defined wherever $g$ is available.  This is not a patch: binning $Z$ into cells
+is a coarsening of the registered representation, and the loss it induces is
+exactly what \cref{thm:refinement} bounds, so the partition is a representation
+choice the theory already prices.  The gate then evaluates one lower confidence
+bound per cell, mask pattern, available regime, and stratum, so the family has at
+most
+\begin{equation}
+ F_{\mathrm{gate}}\;\le\;B\,|\mathcal M|\,|\Gset|\,2 ,
+ \label{eq:gate-family}
+\end{equation}
+members, where $\mathcal M$ is the set of mask patterns ($|\mathcal M|\le4$ by
+\cref{as:baseline}) and $\Gset$ the registered regime set.  A union bound over
+this family on the held-out calibration data delivers exactly the cell-level
+uniform-validity hypothesis that \cref{thm:safe} consumes.  This is the gate
+family.  It is distinct from, and union-bounded together with, the
+certification family of \cref{prop:certification}; \cref{prop:certification} is
+cited only for the latter, never for the gate bounds.
+
+\begin{theorem}[Safe improvement, uniform in prevalence]
+\label{thm:safe}
+Assume \cref{as:baseline,as:unit,as:frozen}, and that with probability at least
+$1-\delta$ the gate bounds are
+simultaneously valid, $\mathrm{LCB}_\delta[\Delta^{(j)}_g(c)]\le
+\Delta^{(j)}_g(c)$ for every available $g$, every cell $c$ in the registered
+partition, and $j\in\{0,1\}$.  Then with probability at least $1-\delta$,
+\begin{equation}
+ V_j(d^\dagger)\ge V_j(d^\star)\ \text{ for }j=0,1,
+ \qquad\text{and hence}\qquad
+ V(d^\dagger;p)\ge V(d^\star;p)\ \text{ for every }p\in[0,1]
+ \label{eq:safe-improvement}
+\end{equation}
+simultaneously.
+\end{theorem}
+
+Three features distinguish \eqref{eq:safe-improvement} from its sequential
+antecedents.  The one-step performance difference is exact and consists of a
+single term, so no occupancy measure or remaining-horizon factor appears.  The
+uniform-validity hypothesis is over the registered partition, on which
+full-arm execution supplies feedback for every feasible regime at every
+\emph{sampled} checkpoint --- cells the sampling law does not reach stay
+uncovered and are never deviated on --- and it is discharged by a union bound
+over the gate family of \cref{eq:gate-family} ---
+whereas a sequential design would need the hypothesis over a policy-dependent
+reachable set, requiring a positivity assumption the design cannot enforce.  The
+mask enters: the comparator is context-dependent, so \eqref{eq:pointwise-advantage}
+is well defined without a common-domain restriction.
+
+Two degenerate cases are informative rather than pathological.  If the deviation
+set is empty the rule returns $d^\dagger=d^\star$ and
+\eqref{eq:safe-improvement} holds with equality: the guarantee holds vacuously,
+which is why the fallback rate is a reported endpoint.  If the uniform-validity
+hypothesis fails the theorem says nothing --- it does not degrade gracefully ---
+so bound-family coverage is checked directly on held-out branches and a
+controller whose bounds fail is reported as unguaranteed rather than shipped
+with a caveat.
+
+Two design choices in \eqref{eq:gated-rule} are load-bearing.  Defining the
+advantage against $d^\star$ rather than $g_0$ makes the fallback branch
+contribute exactly zero rather than an unsigned quantity.  Taking the minimum
+over $j$ before gating buys uniformity in $p$: the policy deviates only where
+the action helps whether or not the registered fault was injected, so the
+no-fault constraint \eqref{eq:noninferiority} is enforced pointwise.  A weaker
+mixture gate is available when that is too conservative, at the cost of
+uniformity.
+
+\begin{corollary}[Guarantee interval]
+\label{cor:interval}
+Let $\Gamma_j=V_j(d^\dagger)-V_j(d^\star)$ and
+$\Gamma(p)=p\Gamma_1+(1-p)\Gamma_0$.  Then $\{p\in[0,1]:\Gamma(p)\ge0\}$ is a
+closed subinterval of $[0,1]$.  If $\Gamma_0$ and $\Gamma_1$ have strictly
+opposite signs its finite endpoint is $-\Gamma_0/(\Gamma_1-\Gamma_0)$, the
+break-even prevalence of \cref{app:estimands}.  Under the gate of
+\eqref{eq:gated-rule} the interval is all of $[0,1]$.
+\end{corollary}
+
+\Cref{cor:interval} gives the break-even algebra of \cref{app:estimands} an
+operational reading: it is not a descriptive calculation but the boundary of the
+region over which the certificate holds.
+
+The proof of \cref{thm:safe} never uses \emph{how} the candidate regime was
+produced, so the guarantee extends to any proposal policy.
+
+\begin{corollary}[Proposal-agnostic safe improvement]
+\label{cor:proposal}
+Let $d_{\mathrm{prop}}$ be a proposal policy that is (a) frozen independently of
+the calibration data, (b) restricted to the registered feasible set,
+$d_{\mathrm{prop}}(z,m)\in\Gset(z,m)$ at every eligible checkpoint, and (c)
+depends only on pre-treatment information, in particular on availability
+determined before treatment, and is cell-measurable.  Define the gated deviation
+toward $d_{\mathrm{prop}}$,
+\begin{equation}
+ \begin{aligned}
+ d^{\dagger}_{\mathrm{prop}}(c)&=
+ \begin{cases}
+  d_{\mathrm{prop}}(c), & \text{if }\displaystyle\min_{j\in\{0,1\}}\mathrm{LCB}_\delta\big[\Delta^{(j)}_{d_{\mathrm{prop}}(c)}(c)\big]>0,\\[1ex]
+  d^\star(c), & \text{otherwise,}
+ \end{cases}\\
+ d^{\dagger}_{\mathrm{prop}}(z,m)&=d^{\dagger}_{\mathrm{prop}}(c(z,m)).
+ \end{aligned}
+ \label{eq:proposal-rule}
+\end{equation}
+Under the hypotheses of \cref{thm:safe}, with probability at least $1-\delta$,
+\begin{equation}
+ V_j(d^{\dagger}_{\mathrm{prop}})\ge V_j(d^\star)\ \text{ for }j=0,1,
+ \qquad\text{and hence}\qquad
+ V(d^{\dagger}_{\mathrm{prop}};p)\ge V(d^\star;p)\ \text{ for every }p\in[0,1]
+ \label{eq:proposal-safe}
+\end{equation}
+simultaneously, regardless of the quality of $d_{\mathrm{prop}}$.
+\end{corollary}
+
+\Cref{thm:safe} is the special case of \cref{cor:proposal} with
+$d_{\mathrm{prop}}(z,m)=\argmax_{g\,:\,A_g=1}\min_{j\in\{0,1\}}
+\mathrm{LCB}_\delta[\Delta^{(j)}_g(c(z,m))]$.  The conditions on
+$d_{\mathrm{prop}}$ are each load-bearing, and in different ways.  Restriction
+to the registered feasible set is needed for \cref{thm:safe} itself: a regime
+never branched has no bound to gate on, so a proposal that emits a patch outside
+$\Gset$ at deployment time carries no guarantee.  Independence from the
+calibration data is needed not by the proof --- the gate family of
+\cref{eq:gate-family} is valid however the proposal was produced --- but by the
+certification argument: a proposal fit on the calibration data could not be a
+member of the pre-registered class $\Dcal$, so \cref{prop:certification} would
+not certify its constraints and the target of inference would be data-dependent
+(\cref{as:frozen}).  Pre-treatment availability keeps the choice a policy rather
+than a post-treatment selection.  In short, (a) is a condition for the hypothesis
+to be \emph{attainable}, not for the argument to be \emph{valid}; the proof
+consumes only the validity event and the mask.  This is a certification result,
+not an RL result, and it is what makes the design useful to the
+harness-optimization literature of \cref{sec:related}: \emph{the proposal
+proposes; the gate certifies}.
+
+\paragraph{Dependency.}  \Cref{thm:safe} is void if branches do not begin from
+an identical restored state.  Its hypotheses are guaranteed by the design only
+insofar as restoration fidelity and branch isolation are demonstrated, which is
+the object of the instrument gate in \cref{sec:b-experiments} and not something this
+paper assumes.
+
+%% --- M2: inserted from notes/mdp_framing/checkpoint_mdp.tex (argument order preserved) ---
+\subsection{The design as a one-step Bellman backup}
+\label{sec:bellman}
+
+The reading that opened this section is now used for its second purpose: it
+fixes what a sequential extension would have to add, and prices it.  Index the
+eligible checkpoints of a root by $t=1,\dots,T$ and let $X_t$ be the augmented
+state of \cref{sec:b-problem} at checkpoint $t$ --- history, latent stratum,
+remaining budget, remaining horizon.  The primitive action is the
+\emph{intervention option} of \cref{tab:option-boundaries}, not the complete
+regime: the option initiates where $A_{ig}=1$, runs its registered action and
+frozen response rule, and terminates at its postcondition, after which $\rho$
+resumes.  The complete regime is that option \emph{plus} $\rho$ to the horizon,
+which is why a complete regime cannot also serve as the next-checkpoint
+primitive.  Options have variable duration and consume budget, so the process
+over checkpoints is properly semi-Markov; it reduces to a finite-horizon MDP
+because the protocol fixes the eligible grid and because elapsed time and
+remaining budget are carried inside $X_t$.  With that reduction the kernel is
+\begin{equation}
+ P_{t,g}(x'\mid x)=\Prb\{X_{t+1}=x'\mid X_t=x,\ \text{execute option }g,\ \text{then }\rho
+ \text{ to the next decision point}\},
+ \label{eq:checkpoint-kernel}
+\end{equation}
+for $g\in\Gset(x)$, with terminal reward $Y=R(X_{T+1})\in\{0,1\}$ and absorbing
+states for early termination.  The baseline controller selects $g_0$ at every
+checkpoint (\cref{as:baseline} makes it admissible).  Write $V^\rho_t$,
+$Q^\rho_t$, and $A^\rho_t=Q^\rho_t-V^\rho_t$ for its value, action-value, and
+advantage functions, so that
+$Q^\rho_t(x,g)=\sum_{x'}P_{t,g}(x'\mid x)V^\rho_{t+1}(x')$ is the value of a
+single deviation to $g$ at $(t,x)$ with future choices at the baseline.  A
+branch restored at $(t,x)$ executes the option and then $\rho$, so its potential
+outcome has mean $Q^\rho_t(x,g)$: with $\tau$ the sampled checkpoint,
+\begin{equation}
+ \begin{aligned}
+ \mu^{(j)}_g(z,m)&=\E\big[Q^\rho_\tau(X,g)\mid Z=z,M=m,J=j\big],\\
+ 1-\mu^{(j)}_{g_0}&=1-\E[V^\rho_\tau(X)\mid\cdot],
+ \qquad
+ a_v=\E[A^\rho_\tau(X,g_v)\mid\cdot].
+ \end{aligned}
+ \label{eq:bellman-dictionary}
+\end{equation}
+Two aggregation points are load-bearing.  Conditioning on $J=j$ conditions on a
+\emph{component of the state} rather than refining a history-measurable value:
+had $Q^\rho$ been written on $H$ alone, the kernel would still depend on $j$ and
+the value would have to be re-indexed as $Q^{\rho,j}$ before \eqref{eq:bellman-dictionary}
+could be read.  And the conditioning law in \eqref{eq:bellman-dictionary} is the
+registered root-and-checkpoint sampling law, so $\mu^{(j)}_g$ describes the
+design's own population; a deployment mixture is formed from the stratum values
+by \eqref{eq:prevalence-value} and by no other route.
+
+Baseline failure risk is a \emph{state value}; verification advantage and
+actionable value \eqref{eq:actionable} are \emph{advantages}; and
+\cref{thm:ordinal} is the exact condition under which failure risk ranks the
+advantage function.  \Cref{thm:refinement} is the value loss of the state
+abstraction $Z=f(H)$ under one step of value iteration, with
+\eqref{eq:conditional-mean-sufficiency} the condition that the abstraction be
+$Q^\rho$-irrelevant; note that both $V^{*H}_j$ and $V^{*Z}_j$ are expectations
+of maxima of \emph{conditional means}, and that
+$\E[\max_g\mu^{(j)}_g(H)]\le\E[\max_g Q^\rho_\tau(X,g)]$ with the gap the
+residual stochasticity a maximum of conditional means correctly declines to
+claim.  \Cref{thm:safe} is pessimistic value iteration at horizon one on the
+registered partition, and the gate family \eqref{eq:gate-family} is the size of
+that tabular action-value table.  The branch design is depth-one sparse sampling
+under generative-model access --- reset to a state, sample its successors --- at
+the checkpoints the design samples and nowhere else, and E0 tests whether that
+access exists rather than assuming it.  The learner of \cref{sec:rl} is a masked
+policy-score learner: it maximises the estimated expected advantage
+\eqref{eq:rl-objective} over a masked softmax and never regresses $Q^\rho$.  It
+needs no bootstrap term for the same reason a fitted-$Q^\rho$ regression would
+not: at horizon one the branch is the backup.  A fitted regression of the
+outcome on the controller's observation $(z,m)$ and the regime is a coherent
+\emph{alternative} deployable learner and is proposed as such in
+\cref{app:b-analysis}; a regression on the full state $X$ would estimate
+$Q^\rho(X,g)$ itself but is an oracle diagnostic, since $X$ carries the latent
+stratum.  Neither is what \cref{sec:rl} implements, and neither is a member of
+the registered class $\Dcal$.
+
+What the reading buys is a formula for the sentence that opens this section.
+Let $d$ be a cell-measurable rule with $d(c)\in\Gset(c)$, let $d^\rho_t$ be
+the state distribution of $\rho$ at checkpoint $t$, and define
+\begin{equation}
+ \begin{aligned}
+ \bar E_t(d)&=\E_{x\sim d^\rho_t}\big[A^\rho_t(x,d(x))\big],\\
+ \alpha^{\mathrm{eff}}_t(d)&=\E_{x\sim d^\rho_t}
+   \Big[\tfrac12\big\|P_{t,d(x)}(\cdot\mid x)-P_{t,g_0}(\cdot\mid x)\big\|_1\Big]
+ \;\le\;\Prb_{x\sim d^\rho_t}\{d(x)\neq g_0\}.
+ \end{aligned}
+ \label{eq:transfer-terms}
+\end{equation}
+$\bar E_t$ is the mean advantage of $d$ over $g_0$ at checkpoint $t$, and
+$\alpha^{\mathrm{eff}}_t$ is the kernel deviation the rule induces, bounded by
+its intervention rate.  The bound is at $X$ resolution: a verification that
+passes and continues still decrements the budget and appends the verifier's
+output to $H_{t+1}$, so its kernel deviation is not zero.  Reducing
+$\alpha^{\mathrm{eff}}$ for verification to the intervention rate times the
+rate at which the response rule fires requires the additional assumption that
+the pass branch changes only $V^\rho$-irrelevant coordinates of $H$ --- an
+assumption of the same shape as \eqref{eq:conditional-mean-sufficiency}, to be
+stated and audited rather than presumed.  Because $d$ is cell-measurable, the
+window averages $\bar E=\frac1T\sum_t\bar E_t=\sum_c\Prb(c)\,\Delta_{d(c)}(c)$
+and $\bar\alpha$ are identified by the design.
+
+\begin{proposition}[Single random-checkpoint deployment]
+\label{prop:l0}
+Let $\mathcal W$ be the eligible window realised along a $\rho$-trajectory and,
+conditional on $\mathcal W$, let $\tau$ be uniform on $\mathcal W$.  Deploy $d$
+at $\tau$ and $g_0$ elsewhere.  Then
+$V^{\mathrm{L0}}(d)-V^\rho=\E\big[\tfrac1{|\mathcal W|}\sum_{t\in\mathcal W}A^\rho_t(X_t,d(X_t))\big]
+=\sum_c\Prb(c)\,\Delta_{d(c)}(c)$ exactly, where $\Prb(c)$ is the cell mass
+under the design's sampling of $(\text{root},\tau)$, and under the gate of
+\eqref{eq:gated-rule} this is non-negative.
+\end{proposition}
+
+\begin{proof}
+Eligibility at $t$ is determined by $H_t$, and before $\tau$ the two policies
+agree, so conditional on $\mathcal W$ and $\tau=t$ the state $X_t$ has $\rho$'s
+law.  The value difference is then $A^\rho_t(X_t,d(X_t))$ in expectation; average
+over $\tau$ given $\mathcal W$ and then over roots.  The cell form follows
+because $d$ is constant on cells and the design samples $(\text{root},\tau)$
+exactly this way.
+\end{proof}
+
+\Cref{prop:l0} is the trajectory-level content of \cref{thm:safe}: the
+certificate covers a controller that intervenes once, at a checkpoint drawn as
+the design draws it.  Online, that deployment is implementable as stated only
+when the window is known in advance (a fixed checkpoint grid); a stopping-time
+deployment adds a selection term the design does not estimate.  A controller
+that acts at every checkpoint is a different object.
+
+\begin{proposition}[Transfer to repeated deployment]
+\label{prop:transfer}
+Let $\pi_d$ select $d$ at every checkpoint, and let
+$\mathrm{sp}_t(d)=\sup A^\rho_t(\cdot,d(\cdot))-\inf A^\rho_t(\cdot,d(\cdot))$
+over the union of the supports of $d^{\pi_d}_t$ and $d^\rho_t$, both read at
+$X$ resolution.  Then
+\begin{equation}
+ V^{\pi_d}-V^\rho
+ =\sum_{t=1}^T\E_{x\sim d^{\pi_d}_t}\big[A^\rho_t(x,d(x))\big]
+ \;\ge\;\sum_{t=1}^T\Big(\bar E_t(d)-\mathrm{sp}_t(d)\,\min\Big\{1,\sum_{s<t}\alpha^{\mathrm{eff}}_s(d)\Big\}\Big),
+ \label{eq:transfer-bound}
+\end{equation}
+and since $\mathrm{sp}_t\le2$ and $\alpha^{\mathrm{eff}}_s\le\alpha_s$,
+$V^{\pi_d}-V^\rho\ge T\,\bar E(d)-2T(T-1)\,\bar\alpha(d)$ in terms of window
+averages alone.
+\end{proposition}
+
+\begin{proof}
+The identity is the performance-difference lemma \citep{kakade2002}, by telescoping
+$V^{\pi_d}_t-V^\rho_t$ along $\pi_d$'s occupancy.  For the bound, write
+$d^{\pi_d}_{t+1}-d^\rho_{t+1}=(d^{\pi_d}_t-d^\rho_t)P_{\pi_d}+d^\rho_t(P_{\pi_d}-P_\rho)$;
+the first term has $\ell_1$ norm at most $\|d^{\pi_d}_t-d^\rho_t\|_1$ and the
+second at most $2\alpha^{\mathrm{eff}}_t$, so the total-variation distance
+between the two occupancies at $t$ is at most
+$\min\{1,\sum_{s<t}\alpha^{\mathrm{eff}}_s\}$ (the simulation lemma,
+\citealp{kearnssingh2002}).  For any
+$f$ and distributions $p,q$, $|\E_pf-\E_qf|\le\mathrm{span}(f)\,\mathrm{TV}(p,q)$
+with the span over the union of supports; apply it to
+$f=A^\rho_t(\cdot,d(\cdot))$ at each $t$.
+\end{proof}
+
+The per-checkpoint form of \eqref{eq:transfer-bound} is attained: in every
+case of the two-state example below its right-hand side equals
+$V^{\pi_d}-V^\rho$ exactly, so the constant $\mathrm{sp}_t$ cannot be
+improved in general.  The window-averaged form is a relaxation and is not
+attained; on random checkpoint MDPs it runs at about $-11$ against an actual
+improvement of about $+0.1$, and it should be read only as the form
+expressible in window averages.  The certificate transfers to repeated
+deployment when
+\begin{equation}
+ \bar E(d)\;>\;\mathrm{sp}_{\max}(d)\,(T-1)\,\bar\alpha(d),\qquad \mathrm{sp}_{\max}(d)=\max_t\mathrm{sp}_t(d),
+ \label{eq:transfer-condition}
+\end{equation}
+the mean certified one-step advantage exceeding the largest span of the
+advantage times the deviation accumulated over the window.  One might object that the
+worst-case span of $2$ is what makes this vacuous, and the objection is
+correct as far as it goes: on random checkpoint MDPs the realised span of
+$A^\rho$ is about $0.3$, the window-averaged form with the constant $2$ is
+informative (above $-1$) in under $2\%$ of draws, and the span-refined form
+in about $95\%$.  What the refinement does not do is make the condition
+certifiable from the design.  The span is over the states the \emph{controller}
+reaches, which include post-intervention states from which depth-one branching
+never re-branches: the design observes $Y$ along those continuations but never
+estimates $A^\rho$ there.  Replacing $\mathrm{sp}_t$ by the span over $\rho$'s
+support --- the only span the branches identify --- yields a quantity that is
+not a bound: in the example below with $\varepsilon=0$ it certifies an
+improvement of $+0.05$ while the controller loses $0.05$.  Even with the
+correct span the refined bound certifies improvement in well under $10\%$ of
+random draws.  So the one-step restriction is not an artifact of a loose
+constant.  It is the statement that one scalar --- the span of the one-step
+advantage over post-intervention states --- is decision-relevant and
+unmeasured, and that is the same coverage gap a sequential optimum would face:
+$V^*$ needs backups at post-intervention states, and pessimistic value
+iteration under a coverage assumption is the known remedy.  A depth-two
+branching pilot would measure that scalar directly; it is a new instrument
+requirement, not part of this submission.
+
+\begin{remark}[Transfer fails at the registered scale]
+\label{rem:transfer-fails}
+Let two states $a,b$ share a cell.  Under $\rho$, $a$ leads to $b$ with
+probability $\varepsilon=0.05$ and otherwise to a state $x$ with success
+probability $0.85$; from $b$ the baseline succeeds with probability $0.90$.
+Verification at $a$ routes to $b$; verification at $b$ succeeds with
+probability $0.80$.  Then $A^\rho(a,g_v)=+0.0475$, $A^\rho(b,g_v)=-0.100$,
+the cell's verification advantage is $+0.0405$, and the gated rule verifies on
+the cell.  $V^\rho=0.8525$, $V^{\mathrm{L0}}=0.8738$, and the repeated
+controller scores $0.8000$: every advantage and the loss are at the scale of
+the no-fault margin $\eta=0.05$.  (With $x$ succeeding at $0.50$ and
+verification at $b$ escalating, the same construction gives $V^\rho=0.52$,
+$V^{\mathrm{L0}}=0.69$ and $V^{\pi_d}=0$.  Completion is binary, so absolute
+harm can never exceed $1$ and is bounded here by $V^\rho=0.52$; what the variant
+shows is that the loss is not confined to the $\eta$ scale but can consume the
+entire baseline value.)  State $b$ carries $5\%$ of $\rho$'s mass and all of the
+controller's.  That is a \emph{coverage} failure --- the density ratio between
+the two occupancies is $20$ on the state that decides the outcome --- and not
+yet the strict positivity failure named at the start of this section, because
+$b$ is visited under $\rho$ and could in principle be branched from.  Now
+set $\varepsilon=0$, so that $b$ is a post-intervention state $\rho$ never
+visits, which \emph{is} a support failure: no amount of depth-one sampling
+under $\rho$ reaches it.  The cell's advantage is $A^\rho(a,g_v)=+0.05$, the gate fires,
+$V^{\mathrm{L0}}-V^\rho=+0.025$, and the repeated controller loses $0.05$.
+The span of $A^\rho$ over $\rho$'s support at the second checkpoint is $0$
+(only $x$ is visited, and $d(x)=g_0$), so the on-support version of
+\eqref{eq:transfer-bound} evaluates to $+0.05$ and certifies an improvement
+that does not exist, while the union-support form gives $-0.05$, which is
+exact.  In random checkpoint MDPs the failure is rare and small: at the
+registered seed the repeated cell-level rule is worse than $\rho$ in $0$ of
+$1{,}500$ draws without post-intervention states and in $2$ of $1{,}500$ with
+them (losses of $3\times10^{-5}$ and $3\times10^{-3}$, in both cases with
+mass routed onto states $\rho$ never visits), and the on-support form of the
+bound was never violated by chance.  The failure is structural, not typical,
+and the bound is what separates the two.
+\end{remark}

@@ -1,0 +1,62 @@
+\section{The two-checkpoint problem and the original-root population}
+\label{sec:b-problem}
+
+\paragraph{Population and unit.}
+The population is a distribution over \emph{template families}.  A template
+family generates one or more \emph{roots}; each root is one independent run of
+the frozen agent and contributes one \emph{original-root} analysis unit.  The
+template family is the independent statistical unit: roots, repetitions, seeds
+and sibling branches generated from one family stay in one cluster and one
+split, and are never split across development, calibration and test
+(\cref{sec:b-data,sec:b-statistics}).  All estimands are means over the original
+root population, including roots that terminate early or at which a checkpoint
+action is infeasible.  Conditioning on reaching checkpoint 2 is not permitted in
+the primary estimand.
+
+\paragraph{Two online checkpoints.}
+Each root has at most two eligible checkpoints, $t=1,2$.  Both are defined by a
+predeclared rule that is executable from information available at the time
+(\emph{the first / second completed candidate evaluation on the root that
+satisfies fixed structural criteria}); the rule never depends on the eventual
+trajectory's future, and its version is recorded on every branch record.  If a
+root does not reach checkpoint 2, that fact is recorded and the root is analysed
+under its registered fallback, not dropped.
+
+\paragraph{One verification, three regimes.}
+A fixed verification-and-response regime $g_v$ may be used at most once per root.
+This yields exactly three complete regimes on one tree per original root:
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{verify-now} ($g_{\mathrm{now}}$): spend verification at
+  checkpoint 1, apply the frozen response rule, then run the frozen continuation
+  $\rho$ to the horizon.
+\item \textbf{continue$\to$verify-at-2} ($g_{\mathrm{later}}$): continue to
+  checkpoint 2; if it is reached, spend the verification there and apply the
+  frozen response rule; if it is not reached, fall back to continue.
+\item \textbf{never} ($g_0$): continue under $\rho$ throughout.
+\end{itemize}
+The three tails are generated from the \emph{same} prefix to checkpoint 1, so
+the prefix is shared once per root.  Verify-now and continue share the prefix;
+the continue branch forks at checkpoint 2 into verify-at-2 and never.  A learned
+stopping time and unrestricted sequential control are deferred
+(\cref{sec:b-bridge}).
+
+\paragraph{Feasibility, termination and integrity.}
+At each checkpoint the controller observes pre-treatment information $W=(Z,M)$:
+a registered representation $Z$ of the recorded history and a feasibility mask
+$M=(A_g)$ over the declared action set.  Three cases are kept distinct:
+\emph{unavailable} (the verifier's declared input is absent, so the action has no
+observed outcome and the root follows its registered continue fallback, staying
+in the original-root analysis); \emph{feasible but the verifier times out or
+errors} (still an outcome of $g_v$, with execution status retained); and
+\emph{collection failure} (a data-integrity status, never a utility value, and
+never silently set to zero).  Early termination and infeasibility are properties
+of a root, not reasons to remove it.
+
+\paragraph{Why timing is not the one-step ranking question.}
+Prior checkpoint-control work ranks feasible actions at a single checkpoint
+\citep{calibrationnotcontrol2026}.  That question cannot represent the cost of
+acting early: a myopic rule that spends its one verification on the largest
+one-step advantage observes nothing about the later opportunity it forfeits.
+The two-checkpoint design makes that opportunity observable on the same tree, so
+the timing comparison is answerable without a second collection.  This is the
+narrower contribution the design targets.

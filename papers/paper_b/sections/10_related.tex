@@ -1,0 +1,102 @@
+\section{Related work and the nearest-prior boundary}
+\label{sec:related}
+
+\paragraph{Intervention value at checkpoints.}
+\Citet{calibrationnotcontrol2026}, \S3--4, executes continue, the benchmark
+intervention and quit from each selected prefix, names \emph{intervention
+advantage} as the decision quantity, and selects conservatively with a random
+forest and a per-tree uncertainty penalty.  On interactive benchmarks it replays
+the original trajectory, checks step agreement and \emph{discards} mismatches
+(their \S3; Appendix B.1), so its reported match rate is a property of retained
+rows, not an unconditional reconstruction guarantee.  That paper already
+establishes prefix branching, action conditioning and conservative
+action-value selection; neither branch labels, risk insufficiency nor an LCB
+alone can carry a new contribution here.  We ask the timing question it does not
+pose --- whether acting on one-step advantage spends the single verification too
+early --- and compare fitted timing controllers under matched allowed budgets on
+one shared tree.
+
+\paragraph{Verification timing and budget deferral.}
+\Citet{adeli2026bavar} studies strategic verification for long-running agents and
+discusses verification timing, finite budgets, deferral for information and
+reserving resources for later checks.  Our BAVAR-inspired scheduler is a
+context-dependent reserve scheduler in that spirit, restricted to the signals a
+single-verifier two-checkpoint task provides (\cref{sec:policy} lists the
+signals it uses and its deviations).  A constant-reserve ablation is reported
+separately; only the context-dependent scheduler is a primary comparison.
+% UNVERIFIED CITATION (review M-2): the preprint page blocks automated access
+% (checked 2026-09-27 and 2026-09-29), so the bibliographic data and the
+% description above have not been checked at source. No section of the preprint
+% is attributed until an author reads it.
+
+\paragraph{Cost-aware information gathering.}
+\Citet{calibratethenact2026} formalises cost--uncertainty tradeoffs and
+cost-aware exploration in LLM agents (retrieval-augmented QA and a file-reading
+coding task).  Our narrower contribution is the agent setting and the paired
+counterfactual measurement design for original-root, action-dependent
+two-checkpoint timing under an explicit replay-uncertainty contract, with
+matched timing baselines.  It is a candidate contribution requiring
+demonstration, not a new timing method.
+
+\paragraph{Continuation-value and fitted-Q methodology.}
+The proposed rule applies least-squares continuation-value estimation
+\citep{longstaffschwartz2001} and fitted Q-iteration \citep{ernst2005} to agent
+verification timing; the methodology is standard and is not claimed as new.
+
+\paragraph{Lifecycle-wide interventions.}
+\Citet{harnessr12026} reruns a full task batch after lifecycle hooks are
+installed, keeps original successes in the batch, and reports that many valid
+patches reduce batch success (\S3.1--3.2).  That is a transductive, whole-batch
+rerun objective with lifecycle hooks, not a one-verification timing gate; we ask
+when a proposed verification should be spent at a particular checkpoint under a
+budget.
+
+\paragraph{Replay and measurement preconditions.}
+\Citet{causalagentreplay2026} re-execute trajectories under step interventions to
+attribute failure, reporting an action-match rate, with side-effecting tools out
+of scope.  \Citet{replaygap2026} fork trajectories by replaying logged actions
+into a fresh container with a matched control arm and report reconstruction
+rates.  Replay fidelity is measured there by action-match and reconstruction
+rates.  The measurement contract this paper assumes --- per-layer restoration
+and an explicit identified set for the intended effect under an unaudited
+discrepancy --- is developed separately by the anonymous companion and applied
+here; it is not re-derived.
+
+\paragraph{Population information from repeated observations.}
+\citet{tian2017populations} study population recovery from few repeated
+binomial observations per entity. For B, this motivates separating independent
+family count from within-root replay depth and considering information sharing
+across training tasks. Such an estimator would be a proposed comparator, not a
+result reported here. Our primary utility is bounded continuous accuracy, so a
+binomial likelihood cannot simply be imposed on it. Nor does population
+recovery alone identify context-specific continuation values or establish a
+verification-timing advantage.
+
+\paragraph{Positioning and contribution.}
+The anonymous companion \citep{companion2026} establishes the population-scoped
+$2p$ allowance used in \cref{prop:n1-population}; B applies it and does not
+claim it as a new safety theorem.  The two papers are one program: the companion
+fixes what a branch contrast identifies, and this paper asks when to spend a
+verification budget under that constraint.  B's contribution is the agent
+setting, the paired counterfactual measurement design, and convincing evidence
+on it with explicitly scoped replay sensitivity.  It is \emph{not} a new timing
+method, not an optimality claim, and not a claim that branch trees are the only
+way to learn or evaluate a timing policy.
+
+\paragraph{Ordinal sufficiency and selective prediction (displaced).}
+The condition under which an outcome ranking coincides with an effect ranking is
+established in budgeted triage \citep{okati2021}, in the uplift literature under
+monotone treatment amplification \citep{fernandezloria2022}, and for allocation
+at every budget fraction \citep{kamran2024}.  The exact ordinal result is prior
+art; the implemented ridge advantage and action-value estimators are in fact the
+same estimator, which is why that comparison is retained only as an equivalence
+check (\cref{sec:b-equivalence}).  The fuller inherited ordinal, abstraction and
+price-theoretic discussion is preserved in
+\texttt{papers/paper\_b/archive/B1\_20260927/}.
+
+\paragraph{What this paper does not claim.}
+It does not claim that prediction and intervention value come apart; it does not
+claim the ordinal-sufficiency theorem; it does not claim a new general
+identification theorem for replay; it does not claim a new safety theorem from a
+union bound; and it reports no real-agent result before the qualification and
+pilot gates pass.

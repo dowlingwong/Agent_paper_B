@@ -1,0 +1,177 @@
+# Active b_v2 contract. Migrated 2026-09-27 from
+# protocols/paper_b/design_decisions_20260927.yaml (B7). Live phases remain
+# PLANNED; every runtime/artifact/split/qualification binding stays null.
+protocol_version: b_v2
+status: draft
+record_schema: b_branch_v2
+population:
+  task_law: null
+  independent_unit: template_family
+  checkpoint_rule: null
+  reachability_handling: every original root is analysed; roots that never reach
+    checkpoint 2, and unavailable verification, stay in the population under the
+    registered fallback; no conditioning on reaching checkpoint 2
+  condition_mixture: null
+runtime:
+  model_revision: null
+  model_artifact_hash: null
+  harness_commit: null
+  task_generator_hash: null
+  evaluator_revision: null
+  tool_versions: null
+  state_boundary: declared restoration surface (workspace, environment, session,
+    budget counters, external tools, caches, randomness)
+  continuation_revision: null
+  verifier_revision: null
+  response_rule: null
+actions:
+  continue: 'g0: continue with frozen rho; no external call'
+  verify_and_response: 'gv: fixed verifier input, output schema, result-to-response
+    rule, maximum work, termination, then resume rho'
+  verify_later: continue to checkpoint 2; verify if reached and feasible with
+    remaining budget, otherwise continue under the registered fallback
+outcomes:
+  primary: U
+  utility_definition: hidden-test accuracy of the final valid candidate in [0,1];
+    invalid or no candidate is exactly 0 with its reason retained
+  binary_success_definition: independently adjudicated validated completion by the
+    registered horizon (secondary)
+  invalid_and_missing_policy: invalid output carries U=0 with outcome_invalid=1 and
+    invalid_reason; collection failure is a separate integrity status and is never
+    read as 0; no outcome is assigned to an unavailable action
+  secondary:
+  - binary_validated_completion
+  - validity
+  - individual_degradation_frequency
+allocation:
+  mode: original_root_tree
+  primary_capacity: 0.25
+  descriptive_capacities:
+  - 0.05
+  - 0.10
+  - 0.50
+  one_step_rule: ceil(q * n_feasible); report effective capacity
+  tree_rule: floor(q * N_original); at most one verifier call per root
+  max_verifications_per_root: 1
+  allocator: two_phase_hard_budget
+  allocator_phase1: rank feasible roots by s1, verify s1 > c1 up to B - R
+  allocator_phase2: rank reached unverified feasible roots by s2, verify s2 > c2
+    until capacity is exhausted
+  allocator_tie_break: outcome_blind_sha256_of_root_id
+  unspent_capacity: retained
+  budget_matching: same allowed verifier-call and total-work budgets for every
+    controller; realized use reported separately; unspent capacity stays unspent
+  cost_definition: incremental verifier cost vector; prefix, checkpoint-2,
+    verifier overhead, failed attempts and storage reported separately from total
+    cost
+learning:
+  feature_allowlist: registered pre-treatment representation Z and feasibility mask
+    M only
+  comparator_family: matched linear/linear-contrast family, same tuning budget for
+    the utility-deficit, advantage and action-value learners
+  selection_rule: cross-fitted continuation-value timing score plus a reserve
+    threshold fixed on development data; frozen before the pilot
+  proposed_controller: cross_fitted_continuation_value_timing
+  continuation_target: out_of_fold_second_stage_decision_times_observed_paired_outcome
+  optimality_claim: false
+  primary_comparators:
+  - repeated_myopic
+  - bavar_inspired_voi
+  ablations:
+  - constant_reserve
+  diagnostic_variants:
+  - never
+  - verify_now
+  - verify_later
+  utility_risk_comparator: utility_deficit
+  failure_risk_role: secondary
+  h2_status: HISTORICAL; ridge advantage vs action-value is an implementation
+    equivalence check (agreement within 1e-12), not a hypothesis
+statistics:
+  split_manifest: null
+  primary_estimand: paired original-root mean U contrast of the frozen
+    two-checkpoint controller against each primary comparator, over all original
+    roots
+  independent_unit_count: null
+  repetitions: 2
+  inference_method: template-family cluster bootstrap with shared draws across
+    policies; batch coupling accounted for; no per-root i.i.d. certificate
+  multiplicity: simultaneous intervals for the two primary comparator contrasts
+  practical_gain_target: 0.02
+  no_injected_fault_mean_harm_tolerance: 0.02
+  harm_reference: never_verify
+  practical_falsifier: adjusted upper confidence bound below 0.02
+  inconclusive: target crossed by the interval; no positive claim or automatic
+    budget extension
+  safety_claim_level: empirical
+resources:
+  runtime_ceiling: null
+  storage_ceiling: null
+  monetary_ceiling: null
+  retry_rule: resume by completed immutable task IDs; retries never replace a
+    scientific failure
+  budget_caps:
+    max_terminal_leaves: 512
+    max_generated_tokens_all_calls: 2000000
+    max_aggregate_collection_wall_seconds: 36000
+    max_accelerator_hours: 20
+    max_new_retained_bytes: 10737418240
+    max_new_spend_commitment: 0
+  stop_rule: first applicable ceiling or integrity failure stops collection
+  allowed_substantive_repair_passes: 1
+  independent_challenges: 1
+qualification_report: null
+freeze_commit: null
+engineering:
+  banner: ENGINEERING_ONLY
+  backend: closed_fixture
+  external_runtime: false
+  model_calls: false
+lanes:
+  one_step:
+    engineering_fixture: experiments/paper_b/smoke_b.py
+    decision_count: 1
+    engineering_fixture_sha256: f9aa1df53206845670d928388bf8c166ad30b00fa3fc0f07fb15a839f0ff00be
+  sequential:
+    engineering_fixture: experiments/paper_b/task_cc/witnesses.py
+    decision_count: 2
+    engineering_fixture_sha256: 127fe8cd8c021789186219d345c179128d00f01151394cb777b6616a9812d722
+    record_schema: b_branch_v2
+qualification:
+  one_step:
+    pool: null
+    checks: null
+    units: null
+    engineering_report: null
+    authorization: null
+  sequential:
+    pool: null
+    checks: null
+    units: null
+    engineering_report: null
+    authorization: null
+replay_allowance:
+  p: null
+  provenance: null
+  provenance_kind: sensitivity_assumption
+  working_p: 0.02
+  grid:
+  - 0.0
+  - 0.005
+  - 0.01
+  - 0.02
+  - 0.05
+  - 0.10
+  measured_p: null
+  p_path: null
+  R: 2
+  population_contrast_tax: 2*m*p_path under declared joint-event assumptions and
+    the derived allocation-displacement constant m
+  displacement_m: 3
+  pointwise_global_p_gate_permitted: false
+  checkpoint_union_bound: min(1, p1 + p2) only with valid checkpoint bounds
+  interference_scope: covers allocation interference under the derived m (pending
+    independent review)
+design_decisions:
+  path: protocols/paper_b/design_decisions_20260927.yaml
+  sha256: 61c971558a388dd45d3f7bffa5b7b050ee7897d72fbb107a37d0b0664e428aad

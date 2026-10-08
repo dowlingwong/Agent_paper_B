@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-sys-paper"
+version = "0.0.1"
+description = "Pre-empirical causal-inference study: when to interrupt an autonomous experiment agent"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+# Planning/validation runtime used by the root Makefile and the protocol
+# validator. Versions are pinned exactly in requirements.lock; the ranges below
+# are floors for development convenience only. requirements.lock is
+# authoritative — `make doctor` (protocols/environment_doctor.py) enforces it
+# exactly, and no environment satisfying only these ranges is valid.
+runtime = [
+    "PyYAML>=6.0",
+    "numpy>=1.24",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["experiment_scaffold/tests", "protocols"]

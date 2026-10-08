@@ -1,0 +1,41 @@
+% Two-checkpoint tree for Paper B.  The prefix to checkpoint 1 is shared once
+% per root; verify-now and continue fork there; the continue branch forks again
+% at checkpoint 2 into verify-at-2 and continue.  At most one verifier call per
+% root.  No curve in this figure is data.
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=5mm and 9mm,
+  box/.style={draw, rounded corners, align=center, inner sep=3pt, font=\small, minimum height=6.5mm},
+  rnd/.style={box, draw=violet!70!black, fill=violet!8},
+  fixed/.style={box, draw=black!60, fill=black!3},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[fixed] (prefix) {shared prefix to\\checkpoint 1 ($\rho$ frozen)};
+\node[rnd, right=of prefix] (cp1) {checkpoint-1 capture\\isolated siblings};
+\node[fixed, above right=6mm and 12mm of cp1] (now) {$g_{\mathrm{now}}$: verify now\\$\to$ frozen response $\to\rho$};
+\node[fixed, below right=6mm and 12mm of cp1] (later) {$g_{\mathrm{later}}$: continue to\\checkpoint 2};
+\node[rnd, right=of later] (cp2) {checkpoint-2 capture\\when reached};
+\node[fixed, above right=4mm and 9mm of cp2] (v2) {verify at 2\\$\to$ frozen response};
+\node[fixed, below right=4mm and 9mm of cp2] (never) {$g_0$: never verify\\$\to\rho$};
+\draw[arrow] (prefix) -- (cp1);
+\draw[arrow] (cp1) -- (now);
+\draw[arrow] (cp1) -- (later);
+\draw[arrow] (later) -- (cp2);
+\draw[arrow] (cp2) -- (v2);
+\draw[arrow] (cp2) -- (never);
+\end{tikzpicture}%
+}
+\par\smallskip
+\parbox{0.95\textwidth}{\centering\footnotesize
+   At most one verifier call per root; the same frozen verifier and response rule
+   are used at checkpoint 1 and checkpoint 2.  Roots that never reach
+   checkpoint 2, or at which the verifier is unavailable, stay in the
+   original-root analysis under the registered fallback.}
+\caption{The two-checkpoint regime tree on one original root.  The prefix to
+checkpoint 1 is shared; verify-now and continue fork there; the continue branch
+forks again at checkpoint 2 into verify-at-2 and continue.  All original roots,
+including early-terminal and infeasible ones, enter the estimand.}
+\label{fig:b-architecture}
+\end{figure*}

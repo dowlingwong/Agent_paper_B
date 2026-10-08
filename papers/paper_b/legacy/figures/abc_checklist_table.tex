@@ -1,0 +1,52 @@
+% Mapping to the Agentic Benchmark Checklist (ABC). Three statuses per row, kept
+% apart on purpose: whether the item APPLIES to this design, what IMPLEMENTATION
+% evidence exists (an artifact in the tree), and what EMPIRICAL evidence exists
+% (none: no scientific run has occurred). A planned or unrun check is never an
+% empirical status. Item codes and wording as read from arXiv:2507.02825v5
+% (Figures 2--4); the full source-linked ledger with file:line evidence is
+% docs/paper_track/W8_AGENTIC_BENCHMARK_CHECKLIST_MAPPING.md.
+\begin{table}[p]
+\centering\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.09\linewidth}p{0.06\linewidth}p{0.55\linewidth}p{0.24\linewidth}@{}}
+\toprule
+Item & Applies & Implementation evidence (artifact) & Empirical evidence \\
+\midrule
+\multicolumn{4}{@{}l}{\emph{Task validity (\S4.1, T.1--T.10)}}\\
+T.1 & yes & none: versions are digest-pinned, not stated in the prompt; owner: author at R5-2A & none (pre-empirical) \\
+T.2 & yes & local inference; bounded identical transport retries (\texttt{retry\_policy.py}) & none \\
+T.3 & yes & identity failure ends the run non-qualifying with events preserved (\texttt{e0\_ledger.py}); provider errors recorded, never scored & none \\
+T.4 & yes & fresh workspace, session and process per branch; parent truncated before forking; every sibling verified on five layers before treatment (\texttt{e0\_executor.py}) & none \\
+T.5 & yes & hidden table bound outside the workspace; candidate scored by the independent restricted-AST adjudicator; oracle outside every workspace; denylisted path segments & none \\
+T.6 & yes & hash-bound protocol tree and binding slots; seven measured slots null, no signed \emph{replacement} R5-2A; owner: author & none \\
+T.7--T.8 & yes & development pools probed by the ideal solver; final suite not generated; owner: author & none \\
+T.9 & yes & registered reference procedure and reachability probe & none \\
+T.10 & yes & development-round outlier disclosure; scientific pilot not run & none \\
+\midrule
+\multicolumn{4}{@{}l}{\emph{Outcome validity (\S4.2, O.a.1--O.i.1)}}\\
+O.a.1--O.b.2 & n.a. & outcome is a postcondition on a submitted artifact scored on hidden data, not string matching & --- \\
+O.b.3, O.h.2 & yes & difficulty window registered; guessing rate unmeasured; owner: author & none \\
+O.c.1--O.c.2 & n.a. & deterministic restricted-AST adjudicator; no LLM judge & --- \\
+O.d.1--O.e.3 & n.a. & no unit- or fuzz-test scoring & --- \\
+O.f.1 & n.a. & no end-to-end workflow test as outcome & --- \\
+O.f.2 & yes & adjudicator deterministic by construction; G4 agreement not run; owner: author & none \\
+O.g.1--O.g.3 & n.a. & outcome is a scored artifact, not a target state & --- \\
+O.h.1 & yes & frozen tool interface; write-then-submit rule; schema validity reported & none \\
+O.i.1 & yes & construct stated as an empirical question; no measurement & none \\
+\midrule
+\multicolumn{4}{@{}l}{\emph{Benchmark reporting (\S4.3, R.1--R.13)}}\\
+R.1 & yes & not released (anonymous submission); owner: author & --- \\
+R.2 & yes & harness, restoration surface and digest bindings specified & documentary \\
+R.3--R.4 & yes & synthetic tasks in a seed/index namespace ledger; content-identity guard & documentary \\
+R.5--R.6 & yes & study table, claim specification, formal estimands & documentary \\
+R.7 & yes & failure disposition, forbidden repairs, disclosed limitations & documentary \\
+R.8--R.9 & yes & E0-M contrast distortion designed on a disjoint pool (unsigned candidate); not run & none \\
+R.10 & yes & registered for E3/E4; descriptive specification for E0-M/E1/E2/E5 adopted & documentary \\
+R.11 & yes & status ladders, forbidden promotions, kill rule, both-outcomes reading & documentary \\
+R.12 & yes & registered comparator classes (E4 deferred; set unchanged) & none \\
+R.13 & yes & no trivial-agent task baseline registered; owner: author & none \\
+\bottomrule
+\end{tabular}
+\caption{Mapping to the Agentic Benchmark Checklist of \citet{abc2025} (43 item codes as read from the v5 figures).  ``Applies'' says whether the item is about something this design does; ``implementation evidence'' names an artifact in the tree or its absence; ``empirical evidence'' is none for every item because no scientific run has occurred.  Documentary evidence is not empirical evidence.}
+\label{tab:abc-mapping}
+\end{table}

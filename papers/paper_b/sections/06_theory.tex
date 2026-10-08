@@ -1,0 +1,80 @@
+\section{Population-scoped discrepancy allowance}
+\label{sec:b-theory}
+
+The measurement precondition is an explicitly sourced allowance for
+outcome-relevant reconstruction error, not sampling uncertainty.  Let $D$ be a
+declared \emph{joint discrepancy event} covering the relevant decision
+information and both regime outcomes, with $\Prb(D)\le p$.  Utility lies in
+$[0,1]$, so every signed contrast $d(W)\,(U^v-U^0)$ lies in $[-1,1]$.
+
+\begin{proposition}[population bound; application of the companion's Theorem]
+\label{prop:n1-population}
+Under the declared joint discrepancy event of probability at most $p$, bounded
+utility, a \emph{fixed} policy $d$, and the companion's calibration
+independence, a population lower confidence bound on the intended contrast loses
+at most $2p$: if $L$ is a valid lower bound for the no-discrepancy population
+gain $G(d)=\E[d(W)(U^v-U^0)]$, then $L-2p$ is a valid lower bound for the
+population gain under the declared class.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+The contrast is unchanged off $D$.  On $D$ the integrand lies in $[-1,1]$, so
+moving any mass at most $p$ between the two regime outcomes changes the
+population mean by at most $2p$.  This is the $2p$ perturbation bound of the
+anonymous companion's bounded-outcome corollary \citep{companion2026}, applied
+to a fixed policy at population scope; it is not a new safety theorem.
+\end{proof}
+
+\paragraph{Scope: no pointwise gate.}
+A global $p$ supports a \emph{population} statement for a fixed policy only.  It
+does \emph{not} justify a pointwise gate $\mathrm{LCB}(w)-2p$ applied per
+checkpoint, nor a conditional clean-stratum guarantee without a separately
+justified conditional allowance; selection can concentrate every defect.  The
+binary $R=1$ sharper endpoint of the companion does not transfer to continuous
+$U$ without a new derivation and is not used here.
+
+\paragraph{Finite frozen families.}
+Selecting among a finite frozen policy family uses \emph{simultaneous} population
+lower bounds (a stated Bonferroni or equivalent allocation), and the procedure
+abstains if no member qualifies.  Selection never proceeds by the pointwise rule
+above.
+
+\paragraph{Path allowance and allocation interference.}
+For the two-checkpoint comparison the allowance is $p_{\text{path}}$, covering
+the decision histories and the compared regime outcomes.  When only
+checkpoint-wise bounds $p_1,p_2$ are available, they combine by the justified
+union bound $\min(1,p_1+p_2)$, not by independence; a one-step allowance does not
+automatically qualify a two-step trajectory.  Because all controllers share one
+batch allocator, a wrong score at one root can change another root's allocation.
+The population tax is therefore $2\,m\,p_{\text{path}}$, where $m$ is the maximum
+number of roots whose realized regime can change when one root's recorded
+information changes.  For the two-phase hard-budget allocator we derive $m\le 3$
+(the root itself, at most one root displaced in phase 1, and at most one in phase
+2 through the capacity shift); a single-root perturbation check attains 3.
+\textbf{N1 qualifies conclusions; it does not produce a measurement-aware
+controller or a deployment safety guarantee.}  In the sensitivity analysis each
+grid value $p$ is a per-checkpoint allowance ($p_1=p_2=p$), so
+$p_{\text{path}}=\min(1,2p)$; at the working value $p=0.02$ the population tax is
+$2\cdot 3\cdot 0.04=0.24$ in $U$.  The same mapping is used for the grid, the
+tax and the reported bound.  The p-grid report states that it covers allocation
+interference under the derived $m\le 3$; the bound was reproduced by an
+independent AI-assisted review, which is not a human proof review.
+
+\paragraph{Provenance and sensitivity.}
+The allowance is a \emph{sensitivity assumption} on the registered grid
+$\{0,\,0.005,\,0.01,\,0.02,\,0.05,\,0.10\}$ with working value $0.02$; it is
+never called measured.  The evaluation reports the largest $p$ at which each
+frozen conclusion survives, adjusted if that largest $p$ is itself searched.
+The contract records
+\texttt{replay\_allowance.provenance\_kind}$\in\{\text{sensitivity\_assumption},\allowbreak
+\text{validated\_evidence}\}$ and keeps \texttt{measured\_p} null until evidence
+exists.  Task-condition prevalence is renamed $\omega$ to avoid collision with
+the replay allowance $p$.
+
+\paragraph{Equivalence and displaced theory.}
+The ridge advantage/action-value identity is an implementation equivalence check
+(\cref{sec:b-equivalence}), and the nonlinear direct-contrast versus two-head
+comparison is at most a matched secondary ablation.  The inherited ordinal,
+abstraction and price-theoretic material that is not needed for these claims is
+preserved in \texttt{papers/paper\_b/archive/B1\_20260927/} and is not part of
+the main narrative or the claim ledger.

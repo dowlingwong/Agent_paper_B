@@ -1,0 +1,91 @@
+\section{Outcomes, original-root estimands and inference}
+\label{sec:b-statistics}
+
+\subsection{Outcomes}
+
+The primary outcome is $U$, the hidden-test accuracy of the final valid candidate
+in $[0,1]$.  The following are kept distinct: $U$; the binary validated
+completion $S$ and validity; individual degradation frequency; the measured
+resource vector; execution status; and data-integrity status.
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Invalid or no candidate at the horizon:} $U=0$ with the explicit
+  invalid flag \texttt{outcome\_invalid}$=1$ and its \texttt{invalid\_reason}
+  retained.
+\item \textbf{Collection failure:} an integrity status
+  (\texttt{ok}$\mid$\texttt{collection\_failure}$\mid$\texttt{infrastructure\_stop}),
+  \emph{never} a utility value.  The evaluator refuses to analyse it as $0$.
+\item \textbf{Unavailable action:} no observed outcome; the root follows its
+  registered continue fallback and remains in the original-root analysis.
+\end{itemize}
+
+A contrast may not mix $S$ and $U$ as if they were one outcome.  $U$ is not
+scored only on successful or valid branches, and a missing score caused by
+collection failure is never interchangeable with task failure.  Utility
+direction, normalization and clipping are frozen before test inspection.
+
+\subsection{Original-root estimand}
+
+For a policy $d$, the original-root value is
+\begin{equation}
+ \theta(d)=\E_{\text{original roots}}\big[\,U^{\,d,\text{fallback}}\,\big],
+ \label{eq:original-root-value}
+\end{equation}
+where the expectation ranges over all original roots, including early-terminal
+roots and roots at which the checkpoint action is infeasible, with the
+registered fallback applied.  There is no conditioning on reaching checkpoint 2,
+no transplanted checkpoint-2 state and at most one verification per root.  The
+one-step and tree estimands are reported separately and never share a confidence
+guarantee automatically.
+
+\subsection{Primary contrasts and multiplicity}
+
+The two primary contrasts are
+\begin{equation}
+ D_{\mathrm{myopic}}=\theta(d_{\mathrm{frozen}})-\theta(d_{\mathrm{myopic}}),
+ \qquad
+ D_{\mathrm{VOI}}=\theta(d_{\mathrm{frozen}})-\theta(d_{\mathrm{VOI}}),
+ \label{eq:primary-contrasts}
+\end{equation}
+where $d_{\mathrm{VOI}}$ is the BAVAR-inspired context-dependent VOI scheduler
+(\cref{sec:policy}), tested with \emph{simultaneous} intervals over the two
+contrasts.  The sampling
+unit is the template family; roots and sibling branches generated from one family
+share their cluster and split.  A contrast is \emph{supported} when its adjusted
+lower confidence bound exceeds zero; the practical target is $0.02\,U$; a
+contrast whose adjusted upper bound is below $0.02$ rejects the practical target;
+an interval spanning the target is \emph{inconclusive}, with no positive claim
+and no automatic budget expansion.
+
+\subsection{Allocation and budget conventions}
+
+The primary capacity is $q=0.25$, with $q\in\{0.05,0.10,0.50\}$ descriptive
+only.  The one-step lane preserves the $\lceil q\,n_{\text{feasible}}\rceil$
+convention and reports effective capacity for small batches.  The original-root
+tree evaluation registers $\lfloor q\,N_{\text{original}}\rfloor$ as the total
+verifier-call budget with at most one call per root.  The two denominators are
+never exchanged, and unspent capacity stays unspent.  Matched \emph{allowed}
+budgets need not produce equal realized call counts; realized calls and work are
+reported separately.
+
+\subsection{Harm}
+
+The mean no-injected-fault utility loss is at most $0.02$ versus never-verify;
+this is an empirical endpoint, not a per-person no-harm guarantee and not a bound
+on the probability of any degradation
+(\texttt{safety\_claim\_level: empirical}).  Individual degradation frequency
+and the invalid-output rate are reported separately.  An integrity violation
+stops collection and is not covered by the utility harm allowance.
+
+\subsection{Resampling and batch coupling}
+
+Inference uses a template-family cluster bootstrap with \emph{shared} draws across
+policies on the same resampled families, so paired contrasts use the same
+resample.  Batch top-$q$ decisions couple roots within a batch; where such a
+policy is evaluated, resampling uses independent batches or a stated empirical
+bootstrap and recomputes the permitted context-only allocation.  A bootstrap that
+recomputes allocation is empirical inference, not a replacement safety theorem,
+and no per-root i.i.d.\ certificate is claimed.  Rare high-value events, small
+$q$ and concentrated support can make effective sample sizes much smaller than
+root counts; selected roots and distinct template families per budget and
+stratum are reported.

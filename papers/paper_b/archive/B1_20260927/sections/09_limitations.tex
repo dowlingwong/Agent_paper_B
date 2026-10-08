@@ -1,0 +1,39 @@
+\section{Limitations}
+\label{sec:b-limitations}
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{One-step scope.} The controller acts once, at one checkpoint,
+  under a frozen continuation.  Deployment value therefore describes a
+  controller that intervenes at a checkpoint drawn as the design draws it; a
+  stopping-time or every-checkpoint deployment adds selection and coverage terms
+  the design does not estimate (\cref{sec:bellman}).  No global guarantee over
+  reachable states is claimed.
+\item \textbf{Fault prevalence.} Controlled mechanisms establish that a
+  difference can exist under specified conditions; they do not establish
+  prevalence in natural deployments.  If only controlled faults support the
+  result, the paper is framed accordingly, and no-injected-fault results are
+  reported separately rather than averaged in.
+\item \textbf{Feasibility is a registry claim.} The mask is only as valid as its
+  registry and evaluator.  Withholding verifier access synthetically is an
+  experimental capacity condition, not evidence of natural unavailability, and
+  it is recorded whether it changes available information, cost or baseline
+  behaviour.
+\item \textbf{Frozen continuation and representation.} Values are relative to
+  the registered $\rho$ and horizon.  The registered representation may discard
+  decision-relevant history; representation adequacy is a separate estimable
+  question and is not assumed by the controller.
+\item \textbf{Finite data and multiplicity.} Effective sample sizes at small
+  capacities can be much smaller than root counts; per-cell claims are reported
+  with their support and abstain when support is insufficient.  A cluster
+  bootstrap is asymptotic.
+\item \textbf{Substrate and external validity.} Effects are scoped to the
+  specified model, harness, continuation and task distribution.  The first study
+  identifies no effects for another model, prompt, tool policy or workload; a
+  second deployment is a scoped replication, not an automatic broad claim.
+\item \textbf{Safety language.} Empirical protection, certified noninferiority
+  and individual harm probability are distinct claims with distinct evidence
+  requirements (\cref{sec:b-conservative}); none is upgraded by a passing test
+  or a LaTeX build.
+\item \textbf{Batch versus streaming.} Batch results do not establish streaming
+  rate guarantees; the two are reported separately.
+\end{itemize}

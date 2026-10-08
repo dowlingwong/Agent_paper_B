@@ -1,0 +1,279 @@
+{
+  "built_utc": "2026-09-26T08:39:56.522877+00:00",
+  "file_count": 53,
+  "files": [
+    {
+      "bytes": 9211,
+      "path": "docs/paper_split/CLAIMS.yaml",
+      "sha256": "d702d886d286b66c67ba6166541adf3927635b179b39813d19fbccb11d6875ba"
+    },
+    {
+      "bytes": 8513,
+      "path": "docs/paper_split/PRIOR_DISCLOSURE.md",
+      "sha256": "2f89d89ae74277429592fed6c5c421584f883b57b5e6bc405483dbbbb6272195"
+    },
+    {
+      "bytes": 8708,
+      "path": "docs/paper_split/SCOPE.md",
+      "sha256": "49bab8cbb965a9d2d44ee44dee3682c073bf3e7405f604c656c0c7a5c6eac235"
+    },
+    {
+      "bytes": 8053,
+      "path": "docs/paper_split/VALIDATION.md",
+      "sha256": "fed9172af02f37966a35dafa5d848c9cb1e7ee3aef081dbc353aeefd92623cd1"
+    },
+    {
+      "bytes": 8761,
+      "path": "experiment_scaffold/src/causal_branch/checkpoint.py",
+      "sha256": "ebf59b17f16420634c534342dab844c1b041a9fdfb2b8948f0817bd98537668d"
+    },
+    {
+      "bytes": 1588,
+      "path": "experiment_scaffold/src/causal_branch/control/__init__.py",
+      "sha256": "b09dab9a746882366fce62483361c9dad96bb4308c8dde0b90d46bc55bd561b5"
+    },
+    {
+      "bytes": 5617,
+      "path": "experiment_scaffold/src/causal_branch/control/allocation.py",
+      "sha256": "2b5878d09f80c822630ec8553e901b7be899bb7ebe3374f67b9e316df0b0376c"
+    },
+    {
+      "bytes": 7524,
+      "path": "experiment_scaffold/src/causal_branch/control/evaluate.py",
+      "sha256": "2d88be88c1e89c03fd1e7827b39511333b1b9915477f1e93aae8b3283ac6552a"
+    },
+    {
+      "bytes": 5187,
+      "path": "experiment_scaffold/src/causal_branch/control/learners.py",
+      "sha256": "bf49becf7d26553eb3b4a71ef847f34d2659a442d9df5516449e19e2928ef3ac"
+    },
+    {
+      "bytes": 7240,
+      "path": "experiment_scaffold/src/causal_branch/control/schema.py",
+      "sha256": "84a26f981c98b942fe6a64e77e72fac2afef796bd22bc0852867eb0b2ba98784"
+    },
+    {
+      "bytes": 7688,
+      "path": "experiment_scaffold/src/causal_branch/control/world.py",
+      "sha256": "c5bf4b8cd8934466f3923e2db15b1a14e5789acfc78f168f8922ff33f4505dee"
+    },
+    {
+      "bytes": 11054,
+      "path": "experiment_scaffold/src/causal_branch/finite_budget_decisions.py",
+      "sha256": "55f1feafcc5b7b58c0f4083cbfd031d123c63576d8ca515df074ea90956e70c7"
+    },
+    {
+      "bytes": 18424,
+      "path": "experiment_scaffold/src/causal_branch/finite_repeat_identification.py",
+      "sha256": "13627f9af64fe15b57ded1ff99af4e54754cde1ce6b14bc1e51b0814229b4a81"
+    },
+    {
+      "bytes": 2332,
+      "path": "experiment_scaffold/src/causal_branch/measurement/__init__.py",
+      "sha256": "e14696a737765a4c82cba6e2417c555e8a633dcec2bb9f8ccb2167c3350d5de0"
+    },
+    {
+      "bytes": 58658,
+      "path": "experiment_scaffold/src/causal_branch/replay_validity.py",
+      "sha256": "b8a799c3b2c7a6b9e1dcd6f7152a7aa9e3b7edb1fdeeb0b6b6aa79310dc526cc"
+    },
+    {
+      "bytes": 5831,
+      "path": "experiment_scaffold/src/causal_branch/state_audit.py",
+      "sha256": "a528796a03c52641e12d5957cfe9b54e809187791baeb1c3b9feb89ec0d7ba7c"
+    },
+    {
+      "bytes": 7802,
+      "path": "experiment_scaffold/src/causal_branch/variance_adaptive.py",
+      "sha256": "b64f38838abca66e89eb56485b1a548ad7731d829384e0f71a5b559d152bc03a"
+    },
+    {
+      "bytes": 411,
+      "path": "experiments/paper_b/figures/README.md",
+      "sha256": "f698e83e7b3adb28c715e27a7469124673eb551000e207eb81595aa4ab2ab05a"
+    },
+    {
+      "bytes": 1113,
+      "path": "experiments/paper_b/figures/_slot.py",
+      "sha256": "3834c501cf929cde82fc327f15725600d3c797fd413abcd40586b727afeeee8b"
+    },
+    {
+      "bytes": 308,
+      "path": "experiments/paper_b/figures/availability_cost.py",
+      "sha256": "cf009fe7a4e3e38ff15638956f466f5ac283d0853989e2dbb65b756fc58b76d9"
+    },
+    {
+      "bytes": 302,
+      "path": "experiments/paper_b/figures/gain_vs_budget.py",
+      "sha256": "365e9db6b1f3d6a1b10468a1f3195ddc746277bbfd478a94eb600a05c1168c36"
+    },
+    {
+      "bytes": 308,
+      "path": "experiments/paper_b/figures/risk_vs_advantage.py",
+      "sha256": "96980e783674418117c62bdb421188f54a03ae007ede7f6c590f05861c660659"
+    },
+    {
+      "bytes": 300,
+      "path": "experiments/paper_b/figures/runtime_table.py",
+      "sha256": "abccd707e3b3a536dd0b9dd691e94df96bc19f457a4a1864440ead53ee48063e"
+    },
+    {
+      "bytes": 300,
+      "path": "experiments/paper_b/figures/support_table.py",
+      "sha256": "5f19c34fc9ab4f608150467cec9f293db07e932cce65585a5b07899b6cf98e28"
+    },
+    {
+      "bytes": 290,
+      "path": "experiments/paper_b/figures/tradeoff.py",
+      "sha256": "0bad38c3781bf1500e92ab580f1946be36d9a79efd77348aae7bb7d05112e2a4"
+    },
+    {
+      "bytes": 12124,
+      "path": "experiments/paper_b/smoke_b.py",
+      "sha256": "86bd8c50ad4c9356c78d75dc6abb0429af63c9c4eb209b00e03e909dadf26e82"
+    },
+    {
+      "bytes": 1248,
+      "path": "papers/paper_b/Makefile",
+      "sha256": "9b17d464ef15dd778790d88df7c5d7e6d079ad33c657da9f86608a1fe342d3a0"
+    },
+    {
+      "bytes": 6551,
+      "path": "papers/paper_b/appendices/A_notation.tex",
+      "sha256": "de4d24853ab5b5522effa07cb04b759ff5be2d39860763e6dea41df3d5212b51"
+    },
+    {
+      "bytes": 23101,
+      "path": "papers/paper_b/appendices/B_proofs.tex",
+      "sha256": "a4b51f1c4ce5ef577006a77c2d26f5d497a8188c313d1f652917a077dfa9b7f2"
+    },
+    {
+      "bytes": 2629,
+      "path": "papers/paper_b/appendices/C_estimands.tex",
+      "sha256": "d0604b00f8857004988f4a582330494c7123626a1340fc99e1391d2364734719"
+    },
+    {
+      "bytes": 3849,
+      "path": "papers/paper_b/appendices/D_analysis.tex",
+      "sha256": "a061847e997b8c21ac68b9b1a50ad63c98d56a9976ce2e00d217ce5a47438454"
+    },
+    {
+      "bytes": 2335,
+      "path": "papers/paper_b/figures/architecture.tex",
+      "sha256": "2985d0b7408426a5c7a3b2a6e3c5f17aaf4a598f3e49d261e96df1149efbcd97"
+    },
+    {
+      "bytes": 6918,
+      "path": "papers/paper_b/figures/risk_vs_advantage.tex",
+      "sha256": "5124af2e7aa794bb5833048ecaf87ee4da2ce9ad9f7364f2adef961985ef7762"
+    },
+    {
+      "bytes": 27147,
+      "path": "papers/paper_b/icml2026.bst",
+      "sha256": "0ec3d5eb9b02efb7e0b44a32f3775882f42a743d0bdc618f34e6936309b98764"
+    },
+    {
+      "bytes": 27344,
+      "path": "papers/paper_b/icml2026.sty",
+      "sha256": "13f4114a5fc66c6c6656d1ab2ff85e471869fac0057a7e0e95442ca7f192de22"
+    },
+    {
+      "bytes": 4699,
+      "path": "papers/paper_b/main.tex",
+      "sha256": "50913eaaa24889bd61b0bbabf515e464a3a64562f9ae489dcb195b4402a3d86d"
+    },
+    {
+      "bytes": 54874,
+      "path": "papers/paper_b/references.bib",
+      "sha256": "ffcbc6e9328de8f3d4525fd14faadbbc5c1e76a994d365004e4c17d2aab50821"
+    },
+    {
+      "bytes": 1581,
+      "path": "papers/paper_b/sections/00_abstract.tex",
+      "sha256": "df7abbba48706ea0a439c5f5ac0b66a5824437f2c340c3dc826027ec8397eb32"
+    },
+    {
+      "bytes": 5986,
+      "path": "papers/paper_b/sections/01_introduction.tex",
+      "sha256": "6207d9e010d0475d7f0d42e71fac9a4fb4033455ccb30ca2854c5d006f749222"
+    },
+    {
+      "bytes": 3504,
+      "path": "papers/paper_b/sections/02_problem.tex",
+      "sha256": "8ee11e7895fd29254675c07930ef19194fe6a54b60f991e279cb3dc86e915a0d"
+    },
+    {
+      "bytes": 3197,
+      "path": "papers/paper_b/sections/03_regimes.tex",
+      "sha256": "460ead9fe02fbfda86d7ff0a1226bf194cb9a8a0deeabdc3b7eb60dd5797f7b7"
+    },
+    {
+      "bytes": 4574,
+      "path": "papers/paper_b/sections/04_data.tex",
+      "sha256": "c8f60a943401f0d619245b6724b4acd31b8edfddfdc7ba676716bf8305aac0b4"
+    },
+    {
+      "bytes": 6643,
+      "path": "papers/paper_b/sections/05_method.tex",
+      "sha256": "183d049a98f522730846ad88523b37e8c46a9a64d0d26049aeccce1a95d8ec8e"
+    },
+    {
+      "bytes": 52322,
+      "path": "papers/paper_b/sections/06_theory.tex",
+      "sha256": "927b4e51d3f7c8830348f579071f1a11e4e7dc8bf716fc7427a86a8886bc1a41"
+    },
+    {
+      "bytes": 6314,
+      "path": "papers/paper_b/sections/07_experiments.tex",
+      "sha256": "fe574ddd38668f27df0d860eb011f91f76997a8e7073a86a356ed92cbe1309df"
+    },
+    {
+      "bytes": 5913,
+      "path": "papers/paper_b/sections/08_statistics.tex",
+      "sha256": "5fb8995c36c5147784a3608010828de0c6efdb46fca00fe38c1db1909bb73afa"
+    },
+    {
+      "bytes": 2418,
+      "path": "papers/paper_b/sections/09_limitations.tex",
+      "sha256": "9ece93c863d74141915f84ac200b23b6eb49ae13ccf2b0fafb87e1b232c8b907"
+    },
+    {
+      "bytes": 4252,
+      "path": "papers/paper_b/sections/10_related.tex",
+      "sha256": "d1068c90d1823c46653ed431e1665afd15b3ef868d73f063a2bcfbcec3eafec6"
+    },
+    {
+      "bytes": 1896,
+      "path": "papers/paper_b/sections/11_bridge.tex",
+      "sha256": "a890eb7134189e913b8e90a1fb45c4e84836f6ada0f18ce1f3820cc281c50506"
+    },
+    {
+      "bytes": 3520,
+      "path": "protocols/paper_b/contract_v1.yaml",
+      "sha256": "357230c5deb35284a09a197500adb23d0b040e93920bd9bc06161185210594ce"
+    },
+    {
+      "bytes": 5697,
+      "path": "protocols/paper_b/launch_validator.py",
+      "sha256": "40aa240dcc28c12460facdf353ec6235f610f08ed3d4b296fa83c4daf9000bd4"
+    },
+    {
+      "bytes": 1437,
+      "path": "tests/control/test_allocation_boundaries.py",
+      "sha256": "b385a6108089acbb51aa8da21c69fa4240659562a64bf0eae39551e516ceab9c"
+    },
+    {
+      "bytes": 8661,
+      "path": "tests/control/test_b_contract.py",
+      "sha256": "ae0b0d5c1b3719ece6e6668a66738db3f24c8fcc3e6ae5866869982716eb6566"
+    }
+  ],
+  "generated_files": [
+    "README.md",
+    "MANIFEST.json"
+  ],
+  "release": "paper_b_v2_integration",
+  "source_commit": "125072671c5269230719a8d201a86abe6fa39efb",
+  "source_commit_dirty": false,
+  "title": "Paper B release (budgeted intervention control)"
+}

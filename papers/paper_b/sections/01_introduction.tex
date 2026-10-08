@@ -1,0 +1,87 @@
+\section{Introduction}
+\label{sec:b-introduction}
+
+An autonomous experimentation agent that can call a verifier faces a timing
+question before it faces a ranking question.  A verification budget spent at an
+early checkpoint may repair a candidate that the frozen continuation would have
+carried to failure; the same budget spent at a later checkpoint may act on
+information that does not exist yet.  Spending early can therefore improve a
+result, consume resources without benefit, or remove a more valuable later
+opportunity \citep{calibrationnotcontrol2026,harnessr12026}.  This paper studies
+the timing question directly for a fixed verification-and-response regime that
+may be used \emph{at most once} across two online checkpoints.
+
+\paragraph{Problem.}
+Along each \emph{original root} (one independent run of the frozen agent from a
+task template) two online checkpoints are eligible.  A controller may spend its
+single verification at checkpoint 1, reserve it and spend it at checkpoint 2 if
+that checkpoint is reached, or never verify.  Early termination and
+infeasibility are part of the problem: a root that ends before checkpoint 2, or
+at which verification is unavailable, remains in the original-root population
+and is analysed under its registered fallback.  The regime is fixed and frozen:
+the verifier checks consistency against \emph{visible} development diagnostics,
+and the response rule replaces a candidate only on a strict visible improvement,
+leaving ties unchanged.  The hidden evaluation is never visible to the agent or
+the verifier.
+
+\paragraph{Primary hypothesis (N2).}
+The frozen two-checkpoint controller improves the original-root mean utility $U$
+against \emph{both} a repeated-myopic controller and a BAVAR-inspired
+context-dependent VOI scheduler, at the same allowed verifier and total-work
+budgets.  The two
+primary contrasts are tested with simultaneous intervals, with template families
+as the sampling units and a prespecified treatment of batch coupling
+(\cref{sec:b-statistics}).  Decision rules follow the registered design: a
+contrast is supported when its adjusted lower confidence bound exceeds zero; the
+practical target is $0.02\,U$; a contrast whose adjusted upper bound is below
+$0.02$ rejects the practical target; an interval spanning the target is
+inconclusive, with no automatic budget expansion.
+
+\paragraph{Validity constraint (N1).}
+Policy assessment separates sampling uncertainty from an explicitly conditional
+allowance for outcome-relevant reconstruction error.  Under a declared joint
+discrepancy event of probability at most $p$, bounded utility, a fixed policy
+and the required calibration independence, the population gain lower bound loses
+at most $2p$; this is an application of the measurement bound of the anonymous
+companion paper \citep{companion2026}, not a new safety theorem
+(\cref{sec:b-theory}).  There is no
+pointwise gate from a global $p$: a finite frozen policy family instead receives
+simultaneous population lower bounds and abstains if none qualifies.  For the
+two-checkpoint comparison the allowance is a joint path allowance $p_{\text{path}}$
+covering the decision histories and the compared regime outcomes.
+
+\paragraph{Falsifiers.}
+N2 is falsified if the adjusted lower confidence bound does not exceed zero for
+either primary comparator, or if the adjusted upper bound falls below the
+$0.02$ practical target; an interval that spans the target is inconclusive.
+N1's mathematical claim is falsified by a counterexample satisfying its stated
+assumptions.  Its practical claim is falsified if adding the allowance does not
+improve the declared utility/harm tradeoff at equal allowed resources, including
+the always-abstain controller that satisfies validity while failing the
+practical contribution.  Understated $p$ is a sensitivity failure, not a
+refutation of the conditional proposition.
+
+\paragraph{What this paper is not.}
+It is not a claim that prediction and intervention value come apart; that is
+prior work \citep{interventionparadox2026,calibrationnotcontrol2026}.  It is not
+a new general identification theorem for replay; the measurement preconditions
+are developed by the anonymous companion and assumed here as a contract.  It
+does not claim the historical ordinal-sufficiency identity as its contribution;
+with identical ridge features, penalties and rows the advantage learner and the
+action-value difference are the same estimator, and that comparison is retained
+only as an implementation equivalence check
+(\cref{sec:b-theory,sec:b-equivalence}).  It reports no live result: every
+performance number is marked \emph{planned}
+(\cref{sec:b-experiments}).
+
+\paragraph{Organisation.}
+\Cref{sec:b-problem} states the two-checkpoint problem and the original-root
+population.  \Cref{sec:b-regimes} fixes the three regimes on one tree.
+\Cref{sec:b-data} gives the branch-record schema and the runtime qualification
+boundary.  \Cref{sec:policy} defines the matched controllers and total-work
+accounting.  \Cref{sec:b-theory} states the scoped population proposition and
+the equivalence check.  \Cref{sec:b-experiments} is the planned evaluation with
+the candidate-consistency task.  \Cref{sec:b-statistics} fixes outcomes,
+allocation estimands and inference.  \Cref{sec:b-limitations} states
+limitations, \cref{sec:related} positions the work at method level, and
+\cref{sec:b-bridge} records the deferral of unrestricted sequential control.

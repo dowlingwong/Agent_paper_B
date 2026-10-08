@@ -1,0 +1,68 @@
+\section{Proofs and equivalence checks}
+\label{app:b-proofs}
+
+This appendix contains only the proofs needed by the claims of the main text.
+The inherited ordinal, abstraction and price-theoretic material that is not
+needed is preserved in \texttt{papers/paper\_b/archive/B1\_20260927/}.
+
+\subsection{The population-scoped discrepancy allowance}
+
+\begin{proof}[Proof of \cref{prop:n1-population}]
+Let $d$ be a fixed policy.  Write the signed contrast integrand
+$h(W)=d(W)\,(U^v(W)-U^0(W))$, with $h(W)\in[-1,1]$ because $U\in[0,1]$ and
+$d\in\{0,1\}$.  Let $D$ be the declared joint discrepancy event with
+$\Prb(D)\le p$.  Off $D$ the intended and discrepancy-world regime outputs agree,
+so the integrand is unchanged.  On $D$, the two regime outcomes can each move by
+up to $1$, so for any $W\in D$ the integrand can change by at most $2$; the
+contribution of $D$ to the population mean therefore changes by at most
+$2\,\Prb(D)\le 2p$.  Combining the unchanged off-$D$ part with the bounded on-$D$
+part gives
+\[
+ \big|\,G_{\text{discrepancy}}(d)-G(d)\,\big|\le 2p .
+\]
+Hence any valid lower bound $L\le G(d)$ for the intended population gain remains
+valid for $G_{\text{discrepancy}}(d)$ after subtracting $2p$, i.e.\
+$L-2p\le G_{\text{discrepancy}}(d)$.  The result is a population statement for a
+\emph{fixed} policy; selection over a family is handled by simultaneous bounds in
+the main text.
+\end{proof}
+
+\paragraph{Why the pointwise gate is not available.}
+The $2p$ shift is a bound on a population mean, not on a pointwise conditional
+mean.  A gate of the form $\mathrm{LCB}(w)-2p>0$ applied per checkpoint would
+require a conditional allowance that is not implied by the global event; the
+main text therefore forbids it and uses simultaneous population bounds for
+family selection.
+
+\subsection{Ridge advantage/action-value equivalence}
+\label{app:b-ridge}
+
+Let $B$ be the common ridge fitting operator on paired rows, with identical
+design matrices, penalties and rows for the advantage learner and the
+action-value learner.  Ridge is affine in the response and the two learners share
+the same design matrix, so
+\[
+ \widehat{\text{adv}} = B\,(y_v-y_0)=B\,y_v-B\,y_0
+ = \widehat{q}_v-\widehat{q}_0 ,
+\]
+up to floating-point error.  On identical designs the two estimators must agree
+to within $10^{-12}$; this is an implementation equivalence check, not a
+hypothesis and not a contribution.
+
+\subsection{Corrected conditional-expectation statement}
+\label{app:b-conditional}
+
+An earlier inherited version of this appendix asserted that, with
+cell-measurable policies, the integrand equals the cell-level advantage of the
+regime selected in its cell, so that cell-level validity applies
+\emph{pointwise}.  That pointwise equality does not hold in general: the
+integrand is a random function whose realised value depends on the within-cell
+state, whereas the cell-level advantage is a conditional mean.  What holds is
+only the \emph{conditional-expectation} identity
+\[
+ \E\!\left[\,\Delta^{(j)}_{d(Z,M)}(Z,M)\ \middle|\ c(Z,M)\,\right]
+ = \Delta^{(j)}_{\text{selected at }c(Z,M)}\big(c(Z,M)\big),
+\]
+because conditioning on the cell fixes the selected regime.  Cell-level validity
+therefore transfers through the conditional expectation, not through a pointwise
+equality.  This corrects the inherited assertion.

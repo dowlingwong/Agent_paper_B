@@ -1,0 +1,150 @@
+% ---------------------------------------------------------------------------
+% Teaser figure: risk ranking vs. advantage ranking at a matched budget.
+% Requires (already in main.tex): tikz + arrows.meta, positioning.
+% Placed at the head of the first-use section (submission_sections/04_primary_test).
+% ---------------------------------------------------------------------------
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize,
+  cp/.style={draw=black!45,rounded corners=1pt,minimum width=5.6mm,minimum height=5.6mm,
+             inner sep=0pt,align=center,line width=.4pt},
+  arrow/.style={-{Latex[length=1.6mm]},line width=.5pt,black!65},
+]
+
+% ===================== PANEL (a) : the two orderings =====================
+\begin{scope}[shift={(0,0)}]
+
+  \node[anchor=west,font=\sffamily\scriptsize\bfseries] at (-0.35,1.62) {(a) same checkpoints, two orderings};
+
+  % --- row 1 : ordered by baseline failure risk ---
+  \node[anchor=east,align=right,font=\sffamily\scriptsize] at (-0.45,0.75)
+    {rank by\\baseline risk $r(z)$};
+  \foreach \i/\lab/\adv in {0/A/1, 1/B/0, 2/C/3, 3/D/1, 4/E/2, 5/F/0,
+                            6/G/3, 7/H/1, 8/I/2, 9/J/0, 10/K/1, 11/L/0} {
+    \pgfmathsetmacro\shade{int(8 + 26*\adv)}
+    \node[cp,fill=teal!\shade] (r\i) at (\i*0.66,0.75) {\lab};
+  }
+  % budget box
+  \draw[draw=orange!80!black,line width=.9pt,rounded corners=2pt]
+    (-0.36,0.41) rectangle (1.68,1.09);
+
+  % --- row 2 : ordered by verification advantage ---
+  \node[anchor=east,align=right,font=\sffamily\scriptsize] at (-0.45,-0.15)
+    {rank by verification\\advantage $a_v(z)$};
+  \foreach \i/\lab/\adv in {0/C/3, 1/G/3, 2/E/2, 3/I/2, 4/A/1, 5/D/1,
+                            6/H/1, 7/K/1, 8/B/0, 9/F/0, 10/J/0, 11/L/0} {
+    \pgfmathsetmacro\shade{int(8 + 26*\adv)}
+    \node[cp,fill=teal!\shade] (a\i) at (\i*0.66,-0.15) {\lab};
+  }
+  \draw[draw=teal!70!black,line width=.9pt,rounded corners=2pt]
+    (-0.36,-0.49) rectangle (1.68,0.19);
+
+  % budget bracket + captured totals
+  \node[anchor=north,font=\sffamily\scriptsize,text=orange!75!black] at (0.66,1.44)
+    {budget $b$};
+  \node[anchor=west,font=\sffamily\scriptsize,text=orange!75!black] at (7.95,0.75)
+    {captures $4$};
+  \node[anchor=west,font=\sffamily\scriptsize,text=teal!60!black]   at (7.95,-0.15)
+    {captures $8$};
+
+  % shade legend
+  \node[anchor=east,font=\sffamily\scriptsize,text=black!60] at (0.10,-1.00)
+    {verification advantage $a_v(z)$:};
+  \foreach \k/\adv in {0/0, 1/1, 2/2, 3/3} {
+    \pgfmathsetmacro\shade{int(8 + 26*\adv)}
+    \node[cp,minimum width=4.0mm,minimum height=4.0mm,fill=teal!\shade]
+      at (0.34+\k*0.34,-1.00) {};
+  }
+  \node[anchor=west,font=\sffamily\scriptsize,text=black!60] at (1.60,-1.00)
+    {none $\rightarrow$ large};
+
+\end{scope}
+
+% ===================== PANEL (b) : the capture curve =====================
+\begin{scope}[shift={(0,-4.35)}]
+
+  \node[anchor=west,font=\sffamily\scriptsize\bfseries] at (-0.35,2.72)
+    {(b) budget-matched regret at every capacity};
+
+  \def\W{7.1}   % axis width
+  \def\H{2.25}  % axis height
+
+  % axes
+  \draw[arrow] (0,0) -- (\W+0.30,0)
+    node[anchor=west,font=\sffamily\scriptsize,text=black!75] {capacity $q$};
+  \draw[arrow] (0,0) -- (0,\H+0.34);
+  \node[anchor=south,rotate=90,font=\sffamily\scriptsize,text=black!75,align=center]
+    at (-0.62,\H/2) {verification advantage\\captured};
+
+  \foreach \x/\lab in {0/0, 0.25/, 0.5/, 0.75/, 1/1} {
+    \draw[black!45] (\x*\W,0) -- (\x*\W,-0.07)
+      node[anchor=north,font=\sffamily\scriptsize,text=black!65] {\lab};
+  }
+  \node[anchor=north,font=\sffamily\scriptsize,text=black!65] at (0,-0.07) {$0$};
+
+  % --- shaded regret region between the two curves ---
+  \fill[orange!16]
+    (0,0)
+    -- plot[smooth] coordinates {(0.05*\W,0.170*\H) (0.10*\W,0.330*\H) (0.20*\W,0.560*\H)
+        (0.30*\W,0.715*\H) (0.40*\W,0.825*\H) (0.50*\W,0.900*\H) (0.60*\W,0.950*\H)
+        (0.70*\W,0.980*\H) (0.85*\W,0.998*\H) (1*\W,1*\H)}
+    -- plot[smooth] coordinates {(1*\W,1*\H) (0.85*\W,0.945*\H) (0.70*\W,0.845*\H)
+        (0.60*\W,0.745*\H) (0.50*\W,0.635*\H) (0.40*\W,0.520*\H) (0.30*\W,0.400*\H)
+        (0.20*\W,0.278*\H) (0.10*\W,0.150*\H) (0.05*\W,0.075*\H) (0,0)}
+    -- cycle;
+
+  % --- advantage (oracle) ranking : solid teal ---
+  \draw[teal!70!black,line width=1.0pt,smooth]
+    plot coordinates {(0,0) (0.05*\W,0.170*\H) (0.10*\W,0.330*\H) (0.20*\W,0.560*\H)
+      (0.30*\W,0.715*\H) (0.40*\W,0.825*\H) (0.50*\W,0.900*\H) (0.60*\W,0.950*\H)
+      (0.70*\W,0.980*\H) (0.85*\W,0.998*\H) (1*\W,1*\H)};
+  \node[anchor=south,font=\sffamily\scriptsize,text=teal!55!black]
+    at (0.47*\W,0.925*\H) {rank by advantage};
+
+  % --- risk ranking : dashed orange ---
+  \draw[orange!80!black,line width=1.0pt,dash pattern=on 2.2pt off 1.6pt,smooth]
+    plot coordinates {(0,0) (0.05*\W,0.075*\H) (0.10*\W,0.150*\H) (0.20*\W,0.278*\H)
+      (0.30*\W,0.400*\H) (0.40*\W,0.520*\H) (0.50*\W,0.635*\H) (0.60*\W,0.745*\H)
+      (0.70*\W,0.845*\H) (0.85*\W,0.945*\H) (1*\W,1*\H)};
+  \node[anchor=north,font=\sffamily\scriptsize,text=orange!75!black]
+    at (0.68*\W,0.700*\H) {rank by baseline risk};
+
+  % --- name the band, rotated to follow it ---
+  \node[font=\sffamily\scriptsize,text=black!70,rotate=33]
+    at (0.265*\W,0.500*\H) {budget-matched regret};
+
+  % --- operating budget marker ---
+  \draw[black!55,dotted,line width=.7pt] (0.10*\W,0) -- (0.10*\W,0.345*\H);
+  \draw[{Latex[length=1.2mm]}-{Latex[length=1.2mm]},black!75,line width=.55pt]
+    (0.10*\W,0.152*\H) -- (0.10*\W,0.328*\H);
+  \node[anchor=north,font=\sffamily\scriptsize,text=black!70] at (0.10*\W,-0.07)
+    {$q^{\star}$};
+  \node[anchor=north west,font=\sffamily\scriptsize,text=black!55]
+    at (0.085*\W,-0.32) {audit budget};
+
+  % --- the theorem, inline, in the empty lower-right ---
+  \node[anchor=south east,align=left,font=\sffamily\scriptsize,text=black!80,
+        draw=black!25,rounded corners=2pt,inner sep=3.5pt,fill=black!3]
+    at (1.0*\W,0.055*\H)
+    {shaded area $=0$ at \emph{every} $q$\\
+     $\iff$ risk is ordinally sufficient};
+
+\end{scope}
+\end{tikzpicture}%
+}
+\caption{\textbf{A failure score is not an allocation rule.}
+Given capacity to verify only a fraction $q$ of checkpoints, the standard
+protocol audits the top $q$ by predicted failure risk.
+\textbf{(a)} Risk order and verification-advantage order are different
+permutations of the same population: at budget $b=3$ the risk rule selects
+$\{A,B,C\}$ and captures advantage $4$, while the advantage rule selects
+$\{C,G,E\}$ and captures $8$.
+\textbf{(b)} The gap between the two capture curves is the budget-matched
+risk-ranking regret. It vanishes at \emph{every} capacity if and only if
+baseline failure risk is ordinally sufficient for verification advantage
+(\cref{thm:ordinal}) --- a sharp null this design is built to test.
+\emph{Schematic: no experimental data are shown.}}
+\label{fig:teaser}
+\end{figure}

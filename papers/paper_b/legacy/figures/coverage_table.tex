@@ -1,0 +1,51 @@
+\subsection{Coverage of prior branching and replay designs}
+\label{app:coverage}
+
+\Cref{tab:coverage} records, for the designs this paper is positioned against,
+which elements of the measurement contract each source states or demonstrates,
+at the granularity a reader can check.  Every cell is backed by a row of
+\texttt{paper/figures/coverage\_sources.csv} naming the version read, the
+section, and the supporting excerpt or the bounded search scope; a negative cell
+is a statement about the inspected scope only, never about the paper as a
+whole.  The row for this paper is a registered plan: no scientific experiment has been
+run --- three development exams have --- so nothing in it is demonstrated.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+Design & Mask & Restore & Layers & All arms & Frozen $\rho$ & Harm & Leak bias & Provenance \\
+\midrule
+ReplayGap \citep{replaygap2026} & -- & D & -- & n.a. & n.a. & -- & -- & P \\
+Reset credit \citep{resetcredit2026} & n.a. & n.a. & -- & n.a. & P & -- & -- & ? \\
+Shepherd \citep{shepherd2026} & -- & D & -- & -- & ? & ? & -- & P \\
+Causal Agent Replay \citep{causalagentreplay2026} & -- & n.a. & -- & n.a. & P & -- & -- & P \\
+Calibration Is Not Control \citep{calibrationnotcontrol2026} & -- & D & ? & D & ? & ? & ? & ? \\
+Credit-assignment survey \citep{zhang2026ca} & -- & P & P & -- & P & -- & -- & P \\
+GiGPO \citep{gigpo2025} & -- & n.a. & n.a. & -- & -- & -- & -- & n.a. \\
+HGPO \citep{hgpo2026} & -- & n.a. & n.a. & -- & -- & -- & -- & n.a. \\
+ARPO \citep{arpo2025} & -- & ? & -- & -- & -- & -- & -- & -- \\
+This paper (registered plan) & P & P & P & P & P & P & P & P \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Coverage matrix.}  Columns: \emph{Mask} --- which regimes were
+applicable is recorded \emph{before} treatment as causal bookkeeping;
+\emph{Restore} --- branches resume from restored executable environment state,
+not a re-fed text prefix; \emph{Layers} --- restoration fidelity reported per
+state layer; \emph{All arms} --- every feasible alternative executed from the
+same branch point; \emph{Frozen $\rho$} --- all branches continue under one
+fixed policy to a fixed horizon; \emph{Harm} --- the fraction of branch points
+harmed in conditional mean is a target; \emph{Leak bias} --- the contrast bias
+a failed or partial restoration induces is measured; \emph{Provenance} --- the
+reinstated hidden states and seeds are declared (the text re-feed / decoder-state
+resume / environment-checkpoint restore distinction of \citealp{zhang2026ca}).
+Cells: D~= demonstrated (a measurement is reported); P~= specified or proposed;
+--~= not reported in the inspected scope; ?~= scope not readable; n.a.~= not
+applicable to that design.  Calibration Is Not Control executes every candidate
+\emph{action} from a restored prefix, which is an ``all arms'' D at the level
+of primitive actions; our arms are complete oversight regimes followed by
+$\rho$.  Sources and scopes: \texttt{coverage\_sources.csv}.}
+\label{tab:coverage}
+\end{table}

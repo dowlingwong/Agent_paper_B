@@ -1,0 +1,130 @@
+\section{No-fault, cost, invalid-output, and operational constraints}
+\label{sec:constraints}
+
+For a policy $d$ and stratum $j\in\{0,1\}$, define
+\begin{equation}
+ V_j(d)=\E[Y_i^{d(Z_i,M_i)}\mid J_i=j],\qquad
+ G_j(d)=V_j(d)-V_j(g_0).
+ \label{eq:stratum-values}
+\end{equation}
+No-fault noninferiority is
+\begin{equation}
+ V_0(d)\ge V_0(g_0)-\eta.
+ \label{eq:noninferiority}
+\end{equation}
+This is average no-fault performance degradation, not an individually harmed
+fraction.  The condition $J=0$ means that the registered fault was not injected;
+it does not guarantee baseline success.  New invalidity, unnecessary
+abstention, latency, unwanted state change, and escalation are reported as
+separate no-fault endpoints.
+
+Cost remains a vector containing input and output tokens, API expense, CPU and
+GPU time, wall time, verifier and tool calls, storage and network use, human
+escalation or adjudication time, and artifact rewrites.  Of these, the eight
+constrained components $k$ are input and output tokens, API expense, CPU and
+GPU seconds, wall time, external calls (with verifier, tool, and controller
+calls collapsed into a single component), and human minutes; storage, network
+use, and artifact rewrites are reported audit fields rather than constrained
+components.  This is what fixes $K=8$ and hence the certification family and
+sample ceiling of \cref{eq:combined-family,eq:sample-ceiling}.  For each
+component $k$, write the deployment-weighted expected cost using the same
+prevalence mixture as \eqref{eq:prevalence-value},
+\begin{equation}
+ C_k(d;p)=p\,\E\big[C^{d(Z_i,M_i)}_{ik}\mid J_i=1\big]
+ +(1-p)\,\E\big[C^{d(Z_i,M_i)}_{ik}\mid J_i=0\big],
+ \label{eq:cost-mixture}
+\end{equation}
+and impose the population constraint
+\begin{equation}
+ C_k(d;p)\le B_k=\beta_k\,C_k(g_0;p),
+ \label{eq:cost-constraint}
+\end{equation}
+so that each budget is stated as a multiple $\beta_k$ of what the no-intervention
+regime spends on the same component at the same prevalence, rather than as an
+absolute figure that would not survive a change of workload.  Because costs are
+nonnegative, a component on which $g_0$ spends nothing constrains every
+candidate to zero in that component as well; no additive floor is inferred.
+A hard per-regime
+execution ceiling applies as an operational feasibility rule only, and is not
+interchangeable with expected population budgets; no scalar cost is defined until
+empirical cost distributions are observed and exchange rates approved.  Hard
+ceilings are safety rails, not treatment definitions: their target binding rate
+is exactly zero, they are not part of the estimand, and the binding rate is
+reported per regime in E0, the pilot, and the confirmatory run whatever the
+outcome.  A ceiling that binds even occasionally would bind disproportionately on
+recovery, the intrinsically most expensive regime, mechanically biasing the
+verification-versus-recovery comparison this study exists to measure; any nonzero
+binding rate is therefore a reported protocol deviation, never a post-hoc ceiling
+increase.
+
+Policy-level accounting charges the decision procedure once: monitor and
+availability evaluation, gate arithmetic, and their calls, compute, and latency
+are allocated into the existing eight constrained components rather than added
+as a ninth.  The formal comparator is a monitored policy that always continues,
+so the decision procedure's overhead appears on both sides of
+\eqref{eq:cost-constraint}; the literal unmonitored variant is retained as a
+descriptive operational-cost sensitivity.  Each $\beta_k$ is justified under
+that convention before the contract is frozen.
+
+Which components can bind is a property of the bound substrate, and the registry
+is deliberately larger than any one substrate needs.  Under the \emph{signed}
+tabular cost contract three constrained components are structurally zero for
+every regime: API expense, because there is no provider; human minutes, because
+there is no human in the loop; and accelerator seconds, because that substrate
+is CPU-only.  Their constraints are vacuously satisfied under the zero-baseline
+rule and can never bind.  Under the local-GPU successor the third of these
+becomes live --- serving the model locally makes GPU seconds non-zero on every
+branch --- and its ceiling is then derived from the substrate's own soak and
+enforced like any other live component.  The successor cost contract that makes
+that substitution is prepared and unsigned; until it is signed, the signed
+contract's three structural zeros are what the guard enforces.  A hosted endpoint would invert the first case in the same way,
+with API expense falling hardest on the most expensive regime.  Either
+substitution changes the character of the certification family rather than a
+value in it, which is precisely why these components are retained rather than
+dropped: the registry must not depend on a
+substrate that happens not to incur API, GPU, or human cost.  A paper about when
+to interrupt an agent prices human time at zero only because every regime is
+machine-executed and ``interruption'' means controller intervention, not a human
+call-out.  The cost of retaining $K=8$ is at most twelve roots out of the sample
+ceiling, because $N$ enters that bound only through a logarithm.
+
+Invalid-output rates are constrained analogously,
+\begin{equation}
+ R(d;p)=p\E[I_i^{d(Z_i,M_i)}\mid J_i=1]
+ +(1-p)\E[I_i^{d(Z_i,M_i)}\mid J_i=0]
+ \le \xi.
+ \label{eq:invalid-constraint}
+\end{equation}
+Here $\xi$ is a single tolerance on the prevalence-weighted invalid-output rate.
+Stratum-specific tolerances $\xi_0,\xi_1$ may additionally be registered, in
+which case they are separate constraints and enter the multiplicity count of
+\cref{prop:certification} as such; the mixture bound does not imply them and is
+not implied by them.
+
+The values $\eta=0.05$ and $\xi=0.02$ remain planning values and cannot be
+selected for power.  The approved cost contract instead fixes the monitored
+comparator and $\beta_k=1.25$.  Signed structural ceilings are substrate-bound:
+a replacement must reapprove its own before E0, and the generic $1.5\times$
+value is inactive.  \Cref{tab:ceiling} shows what each margin costs in roots --- the
+dependence on $\eta$ is quadratic, so setting it is a sample-size decision as
+much as a substantive one, and precisely why it may not be set by looking at
+the sample.
+
+Constraint \eqref{eq:cost-constraint} is evaluated on cache-neutralised resource
+components; a locally served substrate reports the corresponding local meter, and
+a hosted one reports the provider meter beside it.  Where inference is hosted, a
+shared provider cache can make billed cost depend on branch order
+(\cref{sec:cache}), which is why the constraint is not written on billed cost.
+The illustrative billing calculation is a design calculation, not a measurement
+from this study.
+
+One consequence must be stated rather than left implicit.  A per-branch ceiling
+on a constrained component is enforced by the budget guard, which terminates the
+branch in the budget-exhaustion category, and that category scores zero
+completion.  A binding per-branch expense ceiling would therefore depress the
+measured success of the most expensive regime through a billing mechanism, in
+exactly the way a binding wall-clock rail would through a timing one.  Such
+ceilings are safety rails with a target binding rate of zero, derived from each
+regime's own structural maximum; the binding rate is reported per regime, and a
+non-zero rate is a protocol deviation rather than a data point --- never resolved
+by raising the ceiling after the fact.

@@ -1,0 +1,474 @@
+[
+  {
+    "schema_version": "b_tree_v1",
+    "banner": "ENGINEERING_ONLY",
+    "root": {
+      "root_id": "early_use_optimal",
+      "template_family_id": "family",
+      "split": "engineering",
+      "budget": 1.0,
+      "cost_now": 1.0,
+      "cost_later": 1.0,
+      "reaches_after_continue": true,
+      "reaches_after_verify": false,
+      "terminated_after_continue": false,
+      "available_now": true,
+      "available_later": true,
+      "never": 0.0,
+      "now": 1.0,
+      "later": 0.5,
+      "immediate_gain": 0.0
+    },
+    "leaves": [
+      {
+        "root_id": "early_use_optimal",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_now",
+        "action1": "verify",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 1.0
+      },
+      {
+        "root_id": "early_use_optimal",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_later",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "verify",
+        "budget_after1": 1.0,
+        "budget_final": 0.0,
+        "outcome": 0.5
+      },
+      {
+        "root_id": "early_use_optimal",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "never",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      }
+    ]
+  },
+  {
+    "schema_version": "b_tree_v1",
+    "banner": "ENGINEERING_ONLY",
+    "root": {
+      "root_id": "save_for_later",
+      "template_family_id": "family",
+      "split": "engineering",
+      "budget": 1.0,
+      "cost_now": 1.0,
+      "cost_later": 1.0,
+      "reaches_after_continue": true,
+      "reaches_after_verify": false,
+      "terminated_after_continue": false,
+      "available_now": true,
+      "available_later": true,
+      "never": 0.0,
+      "now": 0.2,
+      "later": 1.0,
+      "immediate_gain": 0.0
+    },
+    "leaves": [
+      {
+        "root_id": "save_for_later",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_now",
+        "action1": "verify",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 0.2
+      },
+      {
+        "root_id": "save_for_later",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_later",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "verify",
+        "budget_after1": 1.0,
+        "budget_final": 0.0,
+        "outcome": 1.0
+      },
+      {
+        "root_id": "save_for_later",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "never",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      }
+    ]
+  },
+  {
+    "schema_version": "b_tree_v1",
+    "banner": "ENGINEERING_ONLY",
+    "root": {
+      "root_id": "no_useful_later",
+      "template_family_id": "family",
+      "split": "engineering",
+      "budget": 1.0,
+      "cost_now": 1.0,
+      "cost_later": 1.0,
+      "reaches_after_continue": true,
+      "reaches_after_verify": false,
+      "terminated_after_continue": false,
+      "available_now": true,
+      "available_later": true,
+      "never": 0.0,
+      "now": 1.0,
+      "later": 0.0,
+      "immediate_gain": 0.0
+    },
+    "leaves": [
+      {
+        "root_id": "no_useful_later",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_now",
+        "action1": "verify",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 1.0
+      },
+      {
+        "root_id": "no_useful_later",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_later",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "verify",
+        "budget_after1": 1.0,
+        "budget_final": 0.0,
+        "outcome": 0.0
+      },
+      {
+        "root_id": "no_useful_later",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "never",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      }
+    ]
+  },
+  {
+    "schema_version": "b_tree_v1",
+    "banner": "ENGINEERING_ONLY",
+    "root": {
+      "root_id": "early_termination",
+      "template_family_id": "family",
+      "split": "engineering",
+      "budget": 1.0,
+      "cost_now": 1.0,
+      "cost_later": 1.0,
+      "reaches_after_continue": true,
+      "reaches_after_verify": false,
+      "terminated_after_continue": true,
+      "available_now": true,
+      "available_later": true,
+      "never": 0.0,
+      "now": 1.0,
+      "later": 1.0,
+      "immediate_gain": 0.0
+    },
+    "leaves": [
+      {
+        "root_id": "early_termination",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_now",
+        "action1": "verify",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 1.0
+      },
+      {
+        "root_id": "early_termination",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_later",
+        "action1": "continue",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      },
+      {
+        "root_id": "early_termination",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "never",
+        "action1": "continue",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      }
+    ]
+  },
+  {
+    "schema_version": "b_tree_v1",
+    "banner": "ENGINEERING_ONLY",
+    "root": {
+      "root_id": "unreachable_checkpoint2",
+      "template_family_id": "family",
+      "split": "engineering",
+      "budget": 1.0,
+      "cost_now": 1.0,
+      "cost_later": 1.0,
+      "reaches_after_continue": false,
+      "reaches_after_verify": false,
+      "terminated_after_continue": false,
+      "available_now": true,
+      "available_later": true,
+      "never": 0.0,
+      "now": 1.0,
+      "later": 1.0,
+      "immediate_gain": 0.0
+    },
+    "leaves": [
+      {
+        "root_id": "unreachable_checkpoint2",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_now",
+        "action1": "verify",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 1.0
+      },
+      {
+        "root_id": "unreachable_checkpoint2",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_later",
+        "action1": "continue",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      },
+      {
+        "root_id": "unreachable_checkpoint2",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "never",
+        "action1": "continue",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      }
+    ]
+  },
+  {
+    "schema_version": "b_tree_v1",
+    "banner": "ENGINEERING_ONLY",
+    "root": {
+      "root_id": "exhausted_budget",
+      "template_family_id": "family",
+      "split": "engineering",
+      "budget": 0.0,
+      "cost_now": 1.0,
+      "cost_later": 1.0,
+      "reaches_after_continue": true,
+      "reaches_after_verify": false,
+      "terminated_after_continue": false,
+      "available_now": true,
+      "available_later": true,
+      "never": 0.0,
+      "now": 1.0,
+      "later": 1.0,
+      "immediate_gain": 0.0
+    },
+    "leaves": [
+      {
+        "root_id": "exhausted_budget",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_now",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 0.0
+      },
+      {
+        "root_id": "exhausted_budget",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_later",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 0.0
+      },
+      {
+        "root_id": "exhausted_budget",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "never",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 0.0
+      }
+    ]
+  },
+  {
+    "schema_version": "b_tree_v1",
+    "banner": "ENGINEERING_ONLY",
+    "root": {
+      "root_id": "unavailable_later",
+      "template_family_id": "family",
+      "split": "engineering",
+      "budget": 1.0,
+      "cost_now": 1.0,
+      "cost_later": 1.0,
+      "reaches_after_continue": true,
+      "reaches_after_verify": false,
+      "terminated_after_continue": false,
+      "available_now": true,
+      "available_later": false,
+      "never": 0.0,
+      "now": 1.0,
+      "later": 1.0,
+      "immediate_gain": 0.0
+    },
+    "leaves": [
+      {
+        "root_id": "unavailable_later",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_now",
+        "action1": "verify",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 1.0
+      },
+      {
+        "root_id": "unavailable_later",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_later",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      },
+      {
+        "root_id": "unavailable_later",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "never",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      }
+    ]
+  },
+  {
+    "schema_version": "b_tree_v1",
+    "banner": "ENGINEERING_ONLY",
+    "root": {
+      "root_id": "greedy_fails",
+      "template_family_id": "family",
+      "split": "engineering",
+      "budget": 1.0,
+      "cost_now": 1.0,
+      "cost_later": 1.0,
+      "reaches_after_continue": true,
+      "reaches_after_verify": false,
+      "terminated_after_continue": false,
+      "available_now": true,
+      "available_later": true,
+      "never": 0.0,
+      "now": 0.2,
+      "later": 1.0,
+      "immediate_gain": 0.1
+    },
+    "leaves": [
+      {
+        "root_id": "greedy_fails",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_now",
+        "action1": "verify",
+        "reached2": false,
+        "action2": "continue",
+        "budget_after1": 0.0,
+        "budget_final": 0.0,
+        "outcome": 0.2
+      },
+      {
+        "root_id": "greedy_fails",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "verify_later",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "verify",
+        "budget_after1": 1.0,
+        "budget_final": 0.0,
+        "outcome": 1.0
+      },
+      {
+        "root_id": "greedy_fails",
+        "template_family_id": "family",
+        "split": "engineering",
+        "regime": "never",
+        "action1": "continue",
+        "reached2": true,
+        "action2": "continue",
+        "budget_after1": 1.0,
+        "budget_final": 1.0,
+        "outcome": 0.0
+      }
+    ]
+  }
+]

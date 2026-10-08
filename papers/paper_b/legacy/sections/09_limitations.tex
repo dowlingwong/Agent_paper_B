@@ -1,0 +1,199 @@
+\section{Limitations, external validity, licensing, and escalation}
+\label{sec:limitations}
+
+\emph{Status.} Most of this section scopes the deferred real-agent program, and
+is retained so its limitations are on record; the completed evidence is the
+closed-fixture and synthetic work of \cref{sec:main-measurements,sec:main-primary}.
+The live substrate below has not been qualified and no confirmatory result
+exists.  The closed-fixture and synthetic evidence is external-validity narrow in
+the same directions stated here, and the negative cost result is not a
+cost-superiority claim.
+
+The intervention is one-step and all values depend on the declared continuation
+policy, horizon, agent/model version, fault mechanism, task frame, availability
+rules, and adjudication procedure.  Two scope boundaries follow from the
+sampling scheme rather than from the substrate, and are stated separately
+because they survive a perfect instrument.  First, \emph{deployment timing}: the
+checkpoint is drawn uniformly from a completed trajectory's realised eligible
+window, so \cref{prop:l0} certifies a controller that intervenes once at a
+checkpoint drawn that way.  That is implementable online only when the window is
+known in advance; a stopping-time rule --- ``intervene at the first checkpoint
+whose cell is positive'' --- adds a selection term the design does not estimate,
+so any online reading of the guarantee is scoped to restored-checkpoint
+intervention.  Second, \emph{successor coverage}: the design restores the
+sampled checkpoint and never a state reached after an intervention, so the span
+of the one-step advantage over post-intervention states is decision-relevant and
+unmeasured (\cref{prop:transfer,rem:transfer-fails}).  A depth-two pilot would
+sample a \emph{declared} successor distribution; it would not establish a global
+advantage span over all reachable states, and no such bound is claimed.  Neither this design nor predictive accuracy
+establishes representation sufficiency; \cref{thm:refinement} bounds the
+resulting loss from below but cannot certify its absence.  Full-arm branching
+estimates regime means for the sampled stochastic execution process.  It does
+not identify individual treatment effects, the fraction of individual
+\emph{trajectories} harmed, or the benefits of repeated adaptive intervention.
+It does identify the fraction of \emph{checkpoints} at which a regime is harmful
+in expectation, \eqref{eq:harm-fraction}, because every arm is executed at the
+same checkpoint; the sharp non-identification results for the harmed fraction
+concern designs that assign one arm per unit and do not bind here.  Unequal or
+selective regime availability can restrict comparisons to small common domains.
+
+The one-step restriction also bounds interaction cost: production orchestration
+work reports that online exploration and training/evaluation budgets can be
+hard to bound under strict API-cost constraints \citep{gstar2026}.
+
+The theoretical results are individually elementary and are presented as such.
+\Cref{thm:safe} is a one-step instance of a pessimistic safe-improvement
+argument, \cref{prop:certification} a union bound, \cref{thm:ordinal} a
+rearrangement inequality.  What is claimed is the object they are applied to and
+the observation that the one-step design makes their hypotheses verifiable
+rather than assumed.  A reader who expects new machinery will not find it.
+One verifiability cost is stated rather than hidden: the safe-improvement gate
+operates on a registered finite partition of the representation space
+(\cref{eq:gate-family}), so its guarantee is uniform within each cell, and the
+cell count $B$ trades gating precision against the multiplicity it adds to the
+sample ceiling.
+
+The signed initial substrate and any approved replacement narrow the empirical
+population to autonomous ML experimentation.  Concretely, the confirmatory tier
+is a single synthetic fault family (F2-FEHPO) on one version-bound agent harness
+against a single bound inference substrate, with MLGym excluded and F1-ORD and F2-ADV retained only
+as historical contrasts; the title asks about autonomous experiment agents in
+general, but the deferred confirmatory evidence would bear on this one
+substrate only.  It cannot support claims about other sciences,
+signal analysis, or deployment systems without prospective adapters and new
+validation.  Public tasks also create contamination risk, which requires
+version pinning, disclosure of model training-date limitations where known, and
+avoidance of protected evaluation material.  Benchmark code and each dataset
+must be used under their own licenses.  MLGym is excluded from the current
+protocol; its noncommercial restriction remains a material constraint on any
+future interface-transfer study rather than a footnote.
+
+Model, quantization, hardware, decoding, prompt, tools, and harness are parts of
+the instrument.  History replay cannot restore undeclared process or cache
+state; E0 probes this risk, but its verdict is version-bound.
+
+How strong ``version-bound'' can be is itself substrate-dependent, and this is
+why the study serves its model locally.  Under local inference the instrument is
+byte-identical for the life of the study and every layer named above is bound by
+digest.  A hosted endpoint admits no such binding: the provider can change
+weights, quantization, serving stack, or routing behind a stable model
+identifier, and behavioural fingerprinting from a fixed prompt set detects that
+change after the fact rather than preventing it, with real
+provider-to-provider and within-provider variation reported for identical
+nominal models \citep{fingerprints2026}.  Under a hosted substrate the
+reproducibility claim would be narrower --- a change detected mid-study
+invalidates the affected stage rather than being repairable --- and the inference
+cache would stop being a layer the evaluator can disable or isolate.  We
+evaluated such a substrate and rejected it on those grounds, at the cost of a
+smaller model than a hosted endpoint would have supplied.  That trade is the
+substantive limitation of the choice: control and auditability were bought with
+capability, and the population narrows accordingly.
+
+Local execution does not imply deterministic generation, and no such claim is
+made.  Reduction order in accelerator kernels, batching, sampler state, and
+server-side prefix caching can each change a completion under a fixed prompt,
+seed, and decoding configuration; model sampling randomness is one of the two
+declared non-restorable layers for exactly this reason.  The protocol therefore
+registers a repeated-request test --- one fixed prompt, seed, sampling
+configuration, and tool result replayed across cold servers, a warm server with
+reuse disabled, and concurrent workers --- and reports the achieved exact-match
+rate rather than asserting reproducibility.  That rate is also the floor against
+which E0-M is read: two correctly isolated siblings may differ for reasons
+unrelated to leakage, so a sibling-divergence signal is interpretable only
+relative to the substrate's own reproducibility.
+
+One structural property should be stated apart from any claim about results.  A
+branch is executed by one worker against one model instance, so accelerator
+count is a throughput parameter: adding independently isolated workers can
+shorten elapsed time without changing the estimand, allocation rule, or
+analysis.  That does not extend to accelerator \emph{class}.  A wall rail
+converts generation speed into a condition on measurability, so a candidacy
+verdict under a fixed elapsed-time contract is jointly a property of the model
+and the device, and model, quantization, runtime, harness and accelerator class
+are all bound together.
+
+The completed candidacy exam (\cref{app:model-qualification}) ran twelve
+candidates on two leased 48~GiB RTX 6000 Ada GPUs and selected Devstral Small
+2 24B \emph{provisionally}; earlier development rounds are archived in the evidence record and are not
+pooled with it.  Qwen3-8B
+remains the recorded engineering control until a successor decision replaces
+it.  A provisional candidacy selection is not a substrate qualification:
+nothing in that exam measured restoration, isolation, determinism or resource
+ceilings, and E0 cannot open until the model smoke, the realistic soak, the
+derived ceilings, the replacement R5-2A signature and a separate execution
+authorization are all complete.  G1 is unchanged --- at least 200 valid
+completed branch triples, restoration rate at least 0.95, and zero detected
+leakage.
+
+Three limits of the exam's own design survive it.  Thirty roots resolve a
+success rate only to about three roots, and each root is adjudicated on 40
+hidden rows, so the screen decides eligibility and licenses no ranking of
+models (\cref{app:model-qualification}).  Requiring a model to reach
+75\% of a registered reference procedure before any restoration measurement may be
+attempted conflates task competence with instrument observability, and
+separating operational E0 eligibility from task-yield ranking remains an open
+design item.  The tabular family is also the easy case: the workloads that
+would test the instrument where it matters --- multi-file coding tasks and
+notebook-style analyses, against an agentic screen such as ASI-Bench --- are
+named here as the planned harder material and are not part of this round's
+registration.
+
+The accessibility statement is correspondingly narrow.  The complete local
+instrument is controllable on a two-GPU laboratory allocation, and independent
+workers make accelerator count primarily a throughput parameter.  A separate
+development program also exercises the harness on four laboratory-owned legacy
+12~GiB accelerators, one worker per card; that demonstrates feasibility on the
+hardware the authors have, not reproducibility across small laboratories, and it
+is not the confirmatory substrate.  Accelerator count is a throughput parameter
+only where each branch is served by one model instance: a two-card layer-split
+server makes two cards jointly implement one branch, which is a different
+deployment rather than a faster one.  Total GPU-hours, wall time, peak memory,
+storage, software and licence requirements will be reported from the soak and
+E0 rather than projected from candidacy alone.
+
+As of 2026-09-08 the realistic soak has been \emph{executed} on the local
+two-GPU deployment and the E0 run has not.  The soak is engineering
+qualification of the instrument's substrate, is registered as non-qualifying,
+and produces no scientific evidence: 256 synthetic roots and 768 branches, all
+settled, with zero prompt-cache reuse measured over $6.56\times10^{7}$ prompt
+tokens, a peak of 21{,}135~MiB on one card, 172.9~MB of workspace storage and
+3.098~kWh.  Two facts about it qualify every cost figure quoted from this
+round.  First, accelerator time is not one quantity: the artifact's
+\texttt{gpu\_hours} is summed client-side branch latency across concurrent
+workers (14.512 worker-hours), whereas utilisation-weighted card time over the
+same interval is 9.138 card-hours and lease occupancy is 16.642 card-hours;
+these are three different measurements and are not interchangeable.  Second,
+the run exceeded its own frozen accelerator cap on two of those three readings,
+which is recorded as a protocol deviation rather than resolved by relabelling
+the cap.  The measured slots derived from it remain \emph{unbound} pending
+author decisions, and the serving runtime has since been repaired, so the
+deployment is not described here as qualified.  E0 remains not run and no
+pilot or confirmatory result exists.
+
+Responsible escalation is an intended safe terminal response when a regime's
+registered rule concludes that continuation cannot be justified.  It is not
+scientific success and does not receive primary completion credit, but it must
+never be merged with producing an invalid scientific output.  Rates, latency,
+human burden, and downstream disposition of escalation are reported separately.
+The final terminal-utility ordering remains an author decision before
+confirmatory registration.
+
+\paragraph{Future work.}
+Three extensions follow from the contract rather than from any result.  Given
+cheap continuation labels and expensive paired labels, how a fixed branch budget
+should be split is the same two-phase sampling problem
+\cref{sec:main-measurements} already declares open
+\citep{neyman1938,angelopoulos2023ppi}; it is stated as an extension of that
+problem, not a new one.  Whether a model trained on corrupted replay labels
+inherits a systematic allocation error needs a defective pool far larger than the
+E0-M extension carries.  Richer representations --- a text encoder over $H$, and
+transfer across templates, fault families and harnesses --- are out of scope: one
+synthetic fault family on one version-bound substrate identifies neither.  A
+transfer claim would also have to say which property is claimed to transfer:
+ranking quality and calibration are separate axes and move independently under
+distribution shift \citep{damani2025rlcr}, so a monitor that orders checkpoints
+well on an unseen fault family may still be badly calibrated on it, and the
+converse.  The positioning against rollout-supervised value heads and process
+reward models \citep{mathshepherd2024,agentprm_choudhury2025,agentprm_xi2025},
+which the draft already distinguishes as value targets under a completer policy,
+is left to a fuller treatment.  No results are promised.

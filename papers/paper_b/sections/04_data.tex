@@ -1,0 +1,69 @@
+\section{Branch-tree records and the runtime qualification boundary}
+\label{sec:b-data}
+
+\subsection{Collection through the real fork path}
+
+One root is generated as follows.  The prefix runs once under the frozen agent
+to checkpoint 1 and is captured.  The live declared state is quiesced and
+manifested (state surface, hashes, versions, budget counters), and isolated
+sibling states are created immediately.  The verify-now tail and the continue
+tail are then executed; on the continue branch, checkpoint 2 is captured when
+reached and forks into verify-at-2 and continue.  Branch order and seed coupling
+follow a predeclared rule.  Final artifacts are adjudicated by a hidden,
+regime-blind evaluator on the registered horizon, and append-only records are
+written.  The tree is executed through the actual adapter/fork path
+(\cref{sec:b-experiments}); supplied leaf constants are not an acceptable
+substitute for executed outcomes.
+
+\subsection{The \texttt{b\_branch\_v2} record}
+\label{sec:b-branch-schema}
+
+Every node carries a schema version, paper/study/protocol hash, run/template/root
+identifiers, split, checkpoint id and rule version, and an evaluator-only
+condition label.  Every branch additionally carries:
+\begin{itemize}[leftmargin=1.4em]
+\item \texttt{decision\_index} and \texttt{parent\_branch\_id};
+\item \texttt{history\_hash\_at\_decision}, so a checkpoint-2 state transplanted
+  from another branch is detectable and rejected;
+\item \texttt{remaining\_budget} at the decision;
+\item checkpoint-2 features and feasibility mask, recorded only when reached;
+\item \texttt{reached} and \texttt{terminated\_before\_decision};
+\item repetition identifiers per decision;
+\item the cost-ledger entry;
+\item execution status, failure reason and \texttt{integrity\_status}.
+\end{itemize}
+All descendants inherit the root, template family and split of their origin.
+The learner dataset is a restricted projection of the record; the outcome table
+and the evaluator-only metadata are unreachable through feature construction,
+and a leak test must fail when the projection is given access to either.  The
+converter from records to tree recomputes the three regimes and rejects a
+checkpoint-2 state transplanted from another branch, a denominator conditioned
+on both policies reaching checkpoint 2, lineage or split leakage, and a second
+verification in one root.
+
+\subsection{The qualification gate (B-Q)}
+
+A separate engineering pool with known labels is used.  Required checks:
+identical serialized starting payloads where equality is claimed; immutable
+read-only inputs and isolated writable state; no cross-branch mutable links,
+queues or counters; pre-treatment mask and feature construction; stable
+action/continuation/adjudicator versions; branch-order and seed-handling checks;
+deterministic known-answer controls and stochastic-law diagnostics where
+relevant; explicit missing-state and tool-failure handling; and fork
+reachability and integrity.  Tolerances are matched to the state contract before
+the scientific pilot.  A qualification check is evidence about declared
+components, not proof of all hidden dependencies; unresolved outcome-relevant
+state blocks causal wording for that substrate.  Only after B-Q passes for a
+specific runtime/configuration may new branch contrasts be interpreted
+scientifically.
+
+\subsection{Splits}
+
+Qualification, screen, pilot and final pools are disjoint at the template-family
+level.  A single registry spans both the one-step and two-checkpoint lanes: a
+template family used for training, validation or calibration cannot enter the
+final test, and screen and pilot families are disjoint.  Training fits
+representations and learners; validation selects architecture and candidate
+policies; calibration fixes thresholds and the frozen controller; the final test
+evaluates the frozen controller.  No test-time feature may contain future
+outcomes, treatment effects or injector labels.

@@ -1,0 +1,15 @@
+{
+  "banner": "ENGINEERING_ONLY",
+  "original_roots": 8,
+  "means": {
+    "verify_now": 0.675,
+    "verify_later": 0.3125,
+    "never": 0.0
+  },
+  "protocol_version": "b_v2",
+  "lane": "sequential",
+  "phase": "engineering",
+  "passed": true,
+  "design_sha256": "765f503e5ec46c15702986972bab23b0bc428d7b812fbd64e768226e24722b0d",
+  "note": "Fixed fixture regimes only; no sequential learner; no scientific result"
+}

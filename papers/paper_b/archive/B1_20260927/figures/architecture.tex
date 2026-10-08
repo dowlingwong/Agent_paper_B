@@ -1,0 +1,40 @@
+% Branch-data to policy-evaluation architecture for Paper B.  Violet elements
+% are randomized; teal elements are learned or selected; the evaluation path is
+% frozen before final-test outcomes are read.
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=6mm and 8mm,
+  box/.style={draw, rounded corners, align=center, inner sep=3pt, font=\small, minimum height=7mm},
+  rnd/.style={box, draw=violet!70!black, fill=violet!8},
+  learn/.style={box, draw=teal!70!black, fill=teal!8},
+  fixed/.style={box, draw=black!60, fill=black!3},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[fixed] (prefix) {prefix to the online-reachable\\checkpoint ($\rho$ frozen)};
+\node[rnd, right=of prefix] (fork) {isolated sibling states\\branch order randomized};
+\node[fixed, right=of fork] (branches) {$g_0$ and $g_v$,\\$R$ repetitions each};
+\node[fixed, right=of branches] (adj) {regime-blind\\adjudication};
+\node[learn, below=12mm of adj] (outcomes) {outcome table\\$S,U,I,C$};
+\node[learn, left=of outcomes] (learners) {risk / deficit / advantage\\learners (same $W$ and capacity)};
+\node[learn, left=of learners] (policies) {allocation policies\\top-$q$, threshold family};
+\node[learn, left=of policies] (gate) {calibration gate\\one-sided bound, fallback};
+\node[fixed, below=10mm of policies] (test) {frozen final-test evaluation\\on unseen templates};
+\draw[arrow] (prefix) -- (fork);
+\draw[arrow] (fork) -- (branches);
+\draw[arrow] (branches) -- (adj);
+\draw[arrow] (adj) -- (outcomes);
+\draw[arrow] (outcomes) -- (learners);
+\draw[arrow] (learners) -- (policies);
+\draw[arrow] (policies) -- (gate);
+\draw[arrow] (gate.south) |- (test.east);
+\draw[arrow] (test.west) -| (prefix.south);
+\node[font=\footnotesize, below=2mm of test, text width=13cm, align=center] {Evaluation is a matched comparison: the same information, capacity and branch budget reach every learner; the test split is read once.};
+\end{tikzpicture}
+\caption{First-study architecture.  The branch data are generated once per
+checkpoint; risk, deficit and advantage learners see the same permitted
+information and capacity; allocation policies are selected on validation and
+gated on independent calibration templates; the frozen decision is evaluated
+once on unseen templates.  No curve in this figure is data.}
+\label{fig:b-architecture}
+\end{figure*}
