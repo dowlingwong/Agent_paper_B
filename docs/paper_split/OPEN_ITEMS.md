@@ -3,7 +3,7 @@
 
 # Open items — Paper B
 
-As of 7 October 2026 for Paper B (RUNBOOK v2.4 plus the adopted decisions below).
+As of 8 October 2026 for Paper B (RUNBOOK v2.4 plus the adopted decisions below).
 
 This is the checklist of what is still open for B. [RUNBOOK.md](RUNBOOK.md)
 remains the plan authority and [STATUS.md](STATUS.md) the progress log; this
@@ -85,9 +85,15 @@ Owner: **W** = work any agent can do · **D** = decision by Dowling ·
 - [ ] D-DAC1–6: adopt the DAC framing; choose the primary encoder slot (Kev or
   CLM) and size; freeze the Kev question set or the CLM variant; choose the
   primary feature set and projection. All before any pilot outcome (D).
-- [ ] B-DAC4 history capture in the tree driver and live task. Prerequisite for
-  any text encoder (W).
-- [ ] B-DAC5 contract v3 configurator fields, once D-DAC1–6 are decided (W, then D).
+- [x] B-DAC4 history capture **on the scripted executor path**: H₁/H₂ from
+  session entries (`control/executor.py`, imported at `a93e2b7`; 207 control
+  tests revalidated at `1554732`, takeover record `3f93c31`).
+  - [ ] Pi-native history translation and capture remain open (IP2; no live
+    session has been exercised). This does not complete history capture on all paths.
+- [x] B-DAC5 **draft scaffold fields** in `protocols/paper_b/contract_v3.yaml`
+  (import `a93e2b7`; both draft launch refusals revalidated in `3f93c31`).
+  - [ ] Adopted values, bindings, encoder extensions and qualification remain
+    open pending D-DAC1–6 and later evidence; v2 stays active and v3 draft.
 - [ ] B-DAC6 configurator provenance in `matching_report` (W).
 - [ ] B-DAC7 encoder binding: Kev pinned revision offline on the Mac, or CLM
   pooling server and head hash on Ada (X/D).
@@ -130,8 +136,10 @@ blocks the CPU checks; the first three block the live lane.
   if the live lane is built here.
 - [ ] **Card selection for B's Ada runs** is undecided (ports 18081/18082 are
   assigned to E0; A's E-R2 holds 18083). Confirm ownership on the host.
-- [ ] **Stale 5–6 October B records and §B6** (plan v3.1 IP0 step 1): add the
-  5–6 Oct entries to STATUS/VALIDATION and update §B6's B-DAC4/5.
+- [x] **Stale 5–6 October B records and §B6** reconciled in the Stage 1
+  STATUS/VALIDATION entries and scoped B-DAC4/5 checkboxes; evidence is the
+  committed plan v3.1, imported executor/ledger/v3 files, and current takeover
+  checks. Historical checks remain labeled source-reported, not rerun today.
 - [ ] **`make doctor` / `make bootstrap`** are named in copied files but absent
   from this repository's Makefile.
 - [ ] **Make targets that rewrite tracked files:** `make paper-b`, `make smoke-b`
@@ -142,13 +150,14 @@ blocks the CPU checks; the first three block the live lane.
 - [ ] **`*.jsonl` in `.gitignore`.** The inherited rule ignores `*.jsonl`; a
   new exception `!results/paper_b/**/*.jsonl` keeps B's governance ledgers
   (`events.jsonl`, `timing.jsonl`) committable under `results/paper_b/`.
-- [ ] **GitHub repository name and first push.** The author creates the remote
-  and chooses its name; there is no remote in this repository.
+- [x] **GitHub repository name and first push.** `Agent_paper_B` is the
+  author-specified remote; `git ls-remote origin main` verified `1554732`
+  and then Stage 0 `3f93c31`. This supersedes the copied no-remote statement.
 - [ ] **Phase 3 in the source repository** (removing B from
   `agent-checkpoint-intervention`) waits for Paper A's submission.
-- [ ] **Paper B work after S still lands in the source repository** until the
-  author switches to this one. Reconcile before treating this repository as
-  authoritative.
+- [x] **Paper B authority switched** by the author's 8 October kickoff:
+  all takeover work lands in `Agent_paper_B` (Stage 0 `3f93c31`). No post-S
+  inspection or modification of the off-limits source repository was performed.
 
 ---
 
@@ -167,3 +176,34 @@ blocks the CPU checks; the first three block the live lane.
 |---|---|
 | P-B1 | One new bounded task attempt; attempt 1 preserved; mechanisms, thresholds, budget and failure disposition frozen before running; failure stops this setup and its ICML 2027 route. |
 | P-B2 | Internal cutoffs 15 Nov (both lanes qualified) and 30 Nov (pilot done, route chosen, design frozen, budget authorized); missing either retargets B beyond ICML 2027. |
+
+## Pending author decisions — 8 October takeover
+
+[Decision sheet](B_DECISION_SHEET_20261008.md); [fresh-session B2 prompt](B2_REREVIEW_PROMPT_20261008.md).
+These rows are proposals awaiting answers, not adopted decisions.
+
+| ID | Needed | Status / recommendation |
+|---|---|---|
+| D-PLAN | now | pending; adopt v3.1 with Agent_paper_B identity |
+| D-DAC1 | now | pending; DAC framing with two deviations, no method claim |
+| D-F10 | now | pending; model-free CPU exception only |
+| D-INFRA-RB | now | pending; re-point the two missing-document citations |
+| D-ROUTE | now | pending; explicit gate-order reconciliation (screen vs pilot) |
+| D-DEC1 | Stage 4 | pending; positive temperature and recorded transported seeds |
+| D-CAP1 | Stage 5 | pending; separate engineering allowance; explicit qualification accounting |
+| D-RES1 | Stage 5 | pending; bounded supervised infrastructure resumption |
+| D-ADA1 | by 20 Oct | pending; B-only access, clone, one free card, free port, Ada plan |
+| D-DAC2 | after measurement | pending; conditional Kev-4B primary, CLM ablation |
+| D-DAC3–6 | before pilot | pending; questions/max_chars, features, projection, Kev size |
+| D-REF1 | Stage 4 | pending; descriptive oracle/random references |
+| D-GOV1/2 | Stage 5 | pending; schema/ledger/adjudication, default no panel |
+| D-PT1/2/3 | after screen | pending; post-freeze extension and separate budget |
+| B2-N / B2-BAVAR | before 15 Nov | pending; author's verdict and hand-reading |
+| D-ATT2 | Stage 2 | pending; challenged design does not yet exist |
+| Evidence authorizations | per phase | absent; author must create and commit each himself |
+
+**STOP:** Stage 1 handoff prepared; its done-when is not met until the author
+answers the now items and they are recorded here and in a dated RUNBOOK
+amendment. RUNBOOK §12.2–§12.3 versus execution Stage 8.4 disagree about route
+order; no gate amendment has been inferred. The missing-runbook citations
+remain unchanged until D-INFRA-RB. B1/B2 and all live gates remain open.

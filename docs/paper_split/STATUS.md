@@ -11,6 +11,44 @@ Planned work is not completed work. No paid run or submission has been made. No
 model call has been made. B's analysis side runs on CPU; the live lane is not
 built.
 
+## 8 October — Stage 1 records and author handoff
+
+Stage 0 committed and pushed as `3f93c31`; remote full hash verified as
+`3f93c31412a5a62227547ff1a814c3cbc33a4336`.
+[Decision sheet](B_DECISION_SHEET_20261008.md) and
+[B2 re-review prompt](B2_REREVIEW_PROMPT_20261008.md) prepared. The reviewer
+prompt applies the author's source/Paper A exclusion and distinguishes
+historical-code reconstruction from an actual historical-source check.
+It has not been dispatched; no independent review verdict exists.
+
+OPEN_ITEMS now scopes B-DAC4 as complete for the scripted executor and open
+for Pi; B-DAC5 has draft v3 fields while adopted values/bindings remain open.
+The stale no-remote/authority entries are reconciled to the author's kickoff.
+The execution runbook suggests route after screen; scientific RUNBOOK
+§12.2–§12.3 says after pilot. D-ROUTE requests an explicit author amendment.
+Nothing in the scientific RUNBOOK, contracts, fixtures or claims was changed.
+
+**STOP:** author answers needed for D-PLAN, D-DAC1, D-F10, D-INFRA-RB and
+D-ROUTE. Stage 1 is prepared, not accepted/complete. Stages 2–5 have not
+started. No Ada, model call, realism run, authorization or submission.
+
+## 5–6 October — imported engineering work, records reconciled 8 October
+
+Historical, source-reported entry from plan v3.1 (basis and §0.3, IP2/IP4,
+§8): source `9de9c908`, merged in `f463209d`, imported into B at `a93e2b7`.
+The scripted executor has three regimes, chained filesystem/session forks,
+one-verification guard and H₁/H₂ capture; the deterministic ledger exports
+back to trees and detects tampering; contract v3 is a draft with null
+bindings; the configurator is a scaffold, not a bound model. The plan reports
+6 October CPU checks: **207 control tests and smoke 11/11**. These historical
+checks were not run by this session; the Stage 0 fresh-clone checks separately
+revalidate the current imported code. No historical source checkout was read.
+
+The 28 September controller-fix round is described in FIX_REPORT and the
+independent-review records copied into B. Current CPU checks pass, but the
+B2 re-review of those fixes, author novelty verdict and BAVAR hand-reading
+remain open; recording the fixes does not close B2.
+
 ## 8 October — takeover, Stage 0
 
 8 Oct: takeover; [this runbook](B_EXECUTION_RUNBOOK_20261008.md) is the

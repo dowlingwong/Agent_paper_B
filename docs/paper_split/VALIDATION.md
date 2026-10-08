@@ -168,3 +168,36 @@ Received runbook SHA-256 (before host-example normalization):
 `8d80a3ff1d65a7598da9b8200993f9f9d0bbfcc0a05811fdc9830f14b5567969`.
 Home-directory examples in the committed copy use logical placeholders;
 no science field or execution gate was changed.
+
+## 5–6 October — historical engineering checks, reconciled 8 October
+
+Source-reported only, from committed
+`B_INFRA_CONSTRUCTION_PLAN_20261006.md` (basis, §0.3, §8).
+Source implementation `9de9c908`, merge `f463209d`; imported at `a93e2b7`.
+These are not commands newly executed during takeover. The retained plan
+names the check entrypoints but not their full historical shell invocations;
+no invocation or log has been invented here.
+
+| Check named in retained record | Recorded observation |
+|---|---|
+| `tests/control` (6 Oct, Python 3.13, CPU) | 207 PASS reported by plan v3.1 |
+| `smoke_b.py` (6 Oct, CPU) | 11/11 ENGINEERING_ONLY reported by plan v3.1 |
+| executor / ledger / configurator / draft contract inspection | Plan records scripted executor (11 tests), ledger (8 tests), configurator scaffold, v3 draft; independently inspected in B during takeover, no Pi/model execution |
+
+## 8 October — Stage 1 documentation verification
+
+Based on Stage 0 `3f93c31`. Documentation changes only. No new scientific
+run or implementation test is needed for the decision-sheet handoff.
+
+| Executed check | Observed result |
+|---|---|
+| `git diff --check` (Stage 0) | PASS |
+| Added-content host-path and credential-pattern scan (Python, Stage 0) | PASS; existing inherited content excluded, full new runbook scanned |
+| `git push origin main`; `git ls-remote origin main` (Stage 0) | Pushed and verified `3f93c31412a5a62227547ff1a814c3cbc33a4336` |
+| Stage 1 Python document check: added-content hygiene, local links, decision-ID coverage, review-scope constraint | PASS: 17 local links resolve; all 24 decision contexts/options/recommendations present; one H1 per new file; source/Paper A exclusion retained |
+| `git diff --check` (Stage 1) | PASS |
+
+The historical 28 September fix-round checks remain in the copied records;
+no new historical commit validation is claimed. The B2 prompt is prepared,
+not a completed review. Stage 1 author answers and science amendments remain
+pending; no authorization record has been created or modified.
