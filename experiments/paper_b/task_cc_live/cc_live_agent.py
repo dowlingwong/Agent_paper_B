@@ -1,6 +1,7 @@
 """Scripted agent backend and task tools for the candidate-consistency task.
 
-Runbook reference: ``docs/paper_split/B_INFRA_RUNBOOK_20261005.md`` §4 step 1.
+References: ``docs/paper_split/B_INFRA_CONSTRUCTION_PLAN_20261006.md`` IP2
+and ``docs/paper_split/B_EXECUTION_RUNBOOK_20261008.md`` Stage 4.1.
 
 ``CandidateTaskTools`` is the task side of the three agent tools (fit, verify,
 submit) plus the checkpoint-2 data arrival and the hidden-test grade; it reuses

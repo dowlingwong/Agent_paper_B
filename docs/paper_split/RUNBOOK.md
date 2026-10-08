@@ -634,18 +634,41 @@ replay acquisition and more general dynamic algorithm configuration are separate
 extensions, not completed contributions introduced by a new citation.
 
 
-## 15. Proposed: DAC framing and the configurator (4 October, not adopted)
+## 15. DAC framing adopted 8 October; configurator choices remain proposed
 
 [B_DAC_CONFIGURATOR_AMENDMENT_20261004.md](B_DAC_CONFIGURATOR_AMENDMENT_20261004.md)
-proposes amending the §14.2 "RL/DAC connection" paragraph: DAC becomes B's
-framing vocabulary (budget-constrained, two-step, no method claim). It also
+proposed DAC framing, which the author adopted on 8 October as framing only
+(§16). The §14.2 caveats remain word for word. It also
 proposes a configurator: serialiser → frozen encoder slot (Kev or CLM) →
 outcome-blind projection → the existing shared ridge heads. Encoder weights are
-not updated. Decisions D-DAC1–6 are the author's, before any pilot outcome.
-Until they are adopted, §14.2 stands. A CPU scaffold exists (ENGINEERING
+not updated. D-DAC1 is adopted; D-DAC2–6 remain the author's decisions before
+any pilot outcome. §14.2 stands unchanged. A CPU scaffold exists (ENGINEERING
 ONLY). [B_READINESS_AUDIT_20261004.md](B_READINESS_AUDIT_20261004.md) records
 that B is not ready to run (gaps G1–G8). The amendment changes none of §12's
 estimands, gates or cutoffs.
 
 [^tmlr]: TMLR acceptance criteria, checked September 26, 2026: https://jmlr.org/tmlr/acceptance-criteria.html
 [^temporl]: Biedenkapp et al., TempoRL: Learning When to Act (ICML 2021), temporal commitment as a decision: https://proceedings.mlr.press/v139/biedenkapp21a.html
+
+## 16. Author decisions — 8 October 2026 takeover amendment
+
+Authority: the author's answers in the takeover chat on 8 October 2026,
+recorded in [B_DECISION_SHEET_20261008.md](B_DECISION_SHEET_20261008.md)
+and OPEN_ITEMS. This closes Stage 1's decision gate. No GPU/model work,
+evidence-producing run, authorization record or scientific result is
+approved by this amendment. All unaddressed author decisions remain open.
+
+| ID | Adopted answer and boundaries |
+|---|---|
+| D-PLAN | Adopt infrastructure plan v3.1 with three corrections: repository is `Agent_paper_B` (IP0.3 creation obsolete); IP10.4 route order follows D-ROUTE; ports 18081/18082 are not assumed to belong to B. Adoption authorizes no GPU/model work. |
+| D-DAC1 | Adopt budget-constrained DAC as framing only, state both deviations in the manuscript, and preserve §14.2's caveats word for word. Full history is kept; no Markov, optimality or RL-method claim. Configurator decisions D-DAC2–6 remain open. |
+| D-F10 | Before B1, model-free tooling only: no task-mechanism-specific code, live mode refuses, and nothing is sent to an endpoint. If attempt 2 fails, shelve the tooling; it never justifies another attempt. |
+| D-INFRA-RB | Re-point both missing-document citations to plan v3.1 IP2 and execution Stage 4.1. The author reports searching all local/remote source branches and finding no committed copy; citation-bearing code originated in source `9de9c908` in the 4–5 Oct session. A later supplied copy may be added as a historical record. No source/other-machine search was performed by the takeover agent. |
+| D-ROUTE | Retain the route decision **after the pilot**, before confirmatory outcomes. Correct execution Stage 8 and plan IP10.4; §12.2–§12.3's scientific order is preserved. The author's answer rejects the agent's after-screen recommendation. |
+
+Adopted sequence: qualification of both lanes → screen → pilot → author
+route decision (COMBINE / CORE_ONLY / narrow report) → final design freeze
+and separate budget authorization. Each evidence phase still requires its own
+author-created, author-committed authorization record before execution.
+P-B1 and P-B2 remain unchanged. The source repository and Paper A remain
+off limits under the kickoff; no template-reading suggestion overrides that.

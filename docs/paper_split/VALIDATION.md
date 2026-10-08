@@ -201,3 +201,25 @@ The historical 28 September fix-round checks remain in the copied records;
 no new historical commit validation is claimed. The B2 prompt is prepared,
 not a completed review. Stage 1 author answers and science amendments remain
 pending; no authorization record has been created or modified.
+
+## 8 October — Stage 1 author adoption and corrections
+
+Based on `9491356`. Authority: the author's five answers in the chat,
+recorded in RUNBOOK §16, OPEN_ITEMS and the decision sheet. D-ROUTE retains
+route after pilot; D-DAC1 framing only; no GPU/model/evidence authorization.
+Code edits are docstring citations only. No independent review is claimed.
+
+| Executed check | Observed result |
+|---|---|
+| Python comparison of RUNBOOK §14.2 against pre-edit text | PASS: entire subsection byte-identical; caveats preserved word for word |
+| Python SHA-256 comparison of `smoke_b.py`, `task_cc/witnesses.py`, `design_decisions_20260927.yaml`, contract v2 and v3 | PASS: all 5 unchanged |
+| Python AST comparison of both citation-bearing modules, excluding module docstring | PASS: executable ASTs unchanged; missing-runbook reference removed from both |
+| Python stage/plan route-order assertions | PASS: pilot authorization → pilot → route in Stage 8; pilot → route in IP10.4 |
+| Python added-content host-path/credential scan and changed-path authorization check | PASS; no authorization record changed |
+| `make paper-b` | PASS: PDF now 13 pages (previous draft 12); verify clean; submission-mode anonymity PASS |
+| `pdfinfo papers/paper_b/main.pdf`; `pdftotext -layout papers/paper_b/main.pdf <scratch>/paper.txt`; text/log inspection | 13 pages; both DAC deviations, full history and caveats present; inherited development-style warning/underfull boxes remain, no citation/reference errors |
+| `pdftoppm -f 1 -l 2 -scale-to 1600 -png papers/paper_b/main.pdf <scratch>/page`; same with `-f 13 -l 13`; image inspection | Pages 1, 2 and 13 inspected: framing/caveats legible, no clipping or overlap on these pages; final appendix page retained |
+
+The PDF is a validation build, not a result/release artifact; tracked
+`papers/paper_b/main.pdf` is restored after inspection as required by execution
+§2.8. No full-page-limit readiness or full-manuscript review is asserted.

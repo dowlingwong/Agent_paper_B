@@ -48,8 +48,12 @@ Owner: **W** = work any agent can do · **D** = decision by Dowling ·
 - [ ] Read the BAVAR / Strategic Verification preprint (preprints.org
   202608.2057) by hand; automated access is blocked. Then fix or confirm the
   related-work text and the comparator description (D).
-- [ ] Build the F10 qualification/screen tooling (`run_screen.py`,
-  `bind_runtime_artifacts.py`) only after B1 passes (W).
+- [ ] Build F10 qualification/screen tooling (`run_screen.py`,
+  `bind_runtime_artifacts.py`) (W). Author D-F10 (8 Oct) permits pre-B1
+  **model-free parts only**: no task-mechanism-specific code, live mode
+  refuses, and nothing is sent to an endpoint. All other work waits for B1
+  and later gates. If attempt 2 fails, shelve this tooling; it is not a reason
+  for another attempt.
 
 ### B3. Design work (RUNBOOK §14.2)
 
@@ -82,9 +86,10 @@ Owner: **W** = work any agent can do · **D** = decision by Dowling ·
 
 ### B6. Configurator / DAC framing (proposed 4 Oct; B_DAC_CONFIGURATOR_AMENDMENT_20261004.md)
 
-- [ ] D-DAC1–6: adopt the DAC framing; choose the primary encoder slot (Kev or
-  CLM) and size; freeze the Kev question set or the CLM variant; choose the
-  primary feature set and projection. All before any pilot outcome (D).
+- [x] D-DAC1: DAC framing only adopted by author on 8 Oct (RUNBOOK §16);
+  both deviations stated in manuscript §2; §14.2 caveats unchanged.
+- [ ] D-DAC2–6: choose primary encoder slot (Kev or CLM) and size; freeze
+  questions/max_chars; choose feature set and projection before pilot outcomes (D).
 - [x] B-DAC4 history capture **on the scripted executor path**: H₁/H₂ from
   session entries (`control/executor.py`, imported at `a93e2b7`; 207 control
   tests revalidated at `1554732`, takeover record `3f93c31`).
@@ -107,11 +112,12 @@ Open items specific to this repository, created by the Phase 1–2 copy from
 `agent-checkpoint-intervention` at S = 4154f153 (7 October 2026). None of these
 blocks the CPU checks; the first three block the live lane.
 
-- [ ] **Missing `B_INFRA_RUNBOOK_20261005.md`.** `control/executor.py` and
-  `experiments/paper_b/cc_live_agent.py` cite
-  `docs/paper_split/B_INFRA_RUNBOOK_20261005.md`, which exists in no ref of the
-  source repository. Commit it from the machine that holds it, or re-point both
-  citations.
+- [x] **Missing infrastructure-runbook citations resolved** under author
+  D-INFRA-RB (8 Oct): `control/executor.py` and
+  `experiments/paper_b/task_cc_live/cc_live_agent.py` now cite plan v3.1 IP2
+  and execution Stage 4.1. The author reports no committed copy in any source
+  branch, with the code originating in `9de9c908`; not independently searched
+  by takeover. A later supplied copy is historical, not a prerequisite.
 - [ ] **`verify_vendored_pi.py` fails at S.** The verifier reports three files
   under `third_party/pi/packages/coding-agent` changed in `6d4642b6` that are
   missing from `protocols/pi_local_modifications.yaml`. The failure is inherited
@@ -177,18 +183,19 @@ blocks the CPU checks; the first three block the live lane.
 | P-B1 | One new bounded task attempt; attempt 1 preserved; mechanisms, thresholds, budget and failure disposition frozen before running; failure stops this setup and its ICML 2027 route. |
 | P-B2 | Internal cutoffs 15 Nov (both lanes qualified) and 30 Nov (pilot done, route chosen, design frozen, budget authorized); missing either retargets B beyond ICML 2027. |
 
-## Pending author decisions — 8 October takeover
+## Author decision table — 8 October takeover
 
 [Decision sheet](B_DECISION_SHEET_20261008.md); [fresh-session B2 prompt](B2_REREVIEW_PROMPT_20261008.md).
-These rows are proposals awaiting answers, not adopted decisions.
+The five now items below are author decisions, recorded in RUNBOOK §16.
+All other rows remain pending; none is an evidence-run authorization.
 
 | ID | Needed | Status / recommendation |
 |---|---|---|
-| D-PLAN | now | pending; adopt v3.1 with Agent_paper_B identity |
-| D-DAC1 | now | pending; DAC framing with two deviations, no method claim |
-| D-F10 | now | pending; model-free CPU exception only |
-| D-INFRA-RB | now | pending; re-point the two missing-document citations |
-| D-ROUTE | now | pending; explicit gate-order reconciliation (screen vs pilot) |
+| D-PLAN | now | adopted 8 Oct: adopt with three corrections; no GPU/model work |
+| D-DAC1 | now | adopted 8 Oct: adopt framing only; caveats unchanged |
+| D-F10 | now | adopted 8 Oct: yes with stated model-free limits; shelve on failure |
+| D-INFRA-RB | now | adopted 8 Oct: re-point to plan IP2 and execution Stage 4.1 |
+| D-ROUTE | now | adopted 8 Oct: after pilot; reject after-screen recommendation |
 | D-DEC1 | Stage 4 | pending; positive temperature and recorded transported seeds |
 | D-CAP1 | Stage 5 | pending; separate engineering allowance; explicit qualification accounting |
 | D-RES1 | Stage 5 | pending; bounded supervised infrastructure resumption |
@@ -202,8 +209,10 @@ These rows are proposals awaiting answers, not adopted decisions.
 | D-ATT2 | Stage 2 | pending; challenged design does not yet exist |
 | Evidence authorizations | per phase | absent; author must create and commit each himself |
 
-**STOP:** Stage 1 handoff prepared; its done-when is not met until the author
-answers the now items and they are recorded here and in a dated RUNBOOK
-amendment. RUNBOOK §12.2–§12.3 versus execution Stage 8.4 disagree about route
-order; no gate amendment has been inferred. The missing-runbook citations
-remain unchanged until D-INFRA-RB. B1/B2 and all live gates remain open.
+Stage 1's decision STOP is closed: the author answered all five now items,
+recorded here and in RUNBOOK §16. D-ROUTE retains route after pilot; plan
+IP10.4 and execution Stage 8 now agree. Citation repairs are recorded above.
+B1/B2 and all live gates remain open. Next Stage 2 STOP is D-ATT2: author
+approval of the independently challenged design before sealing and outcome
+code. Ada/model work remains unapproved, and evidence phases require their
+own author-created, author-committed authorization records.

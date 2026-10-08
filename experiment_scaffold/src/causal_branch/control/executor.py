@@ -1,6 +1,7 @@
 """Agent tree executor: one root's three trajectories through an agent backend.
 
-Runbook reference: ``docs/paper_split/B_INFRA_RUNBOOK_20261005.md`` §4 step 1.
+References: ``docs/paper_split/B_INFRA_CONSTRUCTION_PLAN_20261006.md`` IP2
+and ``docs/paper_split/B_EXECUTION_RUNBOOK_20261008.md`` Stage 4.1.
 
 ``execute_tree_v2`` (``branch_tree.py``) drives a Python task object; it never
 runs an agent.  This module grows the same three-regime tree -- verify at

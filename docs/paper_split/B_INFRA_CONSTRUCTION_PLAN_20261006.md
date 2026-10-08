@@ -3,8 +3,11 @@
 
 # Paper B infrastructure-construction plan, v3.1 — DAC framing with a post-trainable configurator
 
-6 October 2026. **Status: DRAFT v3.1, prepared by an AI agent (Claude), revised
-after an independent AI-assisted review of v3 (21 findings, §9); not adopted.**
+6 October 2026 draft; adopted 8 October 2026. **Status: ADOPTED v3.1, prepared by an AI agent (Claude), revised
+after an independent AI-assisted review of v3 (21 findings, §9).
+Adopted by the author on 8 October with three corrections (RUNBOOK §16):
+Agent_paper_B repository; route after pilot; no B ownership assumed for ports
+18081/18082. Adoption authorizes no GPU/model work.**
 Supersedes `B_INFRA_CONSTRUCTION_PLAN_20261005.md` (v1, committed) and the v2
 revision that exists only as the project document
 `reviews/2026-10-05_paper_b_infra_construction_plan.md`. v3 is re-based on what
@@ -49,7 +52,7 @@ and encoder workstreams are called *tracks*.
 |---|---|
 | Paper A (TMLR, Tier 1) | Per the 5 Oct records: reviewer items A-R1–A-R6 implemented, two AI-assisted review rounds patched, Ada packs for E-R3 (CPU) and E-R2 (one card) frozen and dry-run. Open: the two Ada runs, post-run text, final-commit release and supplement, author items (ETAAI public declaration, author list, final read). |
 | Paper B (ICML 2027 target) | Analysis side complete on CPU; executor, ledger and contract v3 committed, **scripted backend only**. Blocked scientifically by B1 (attempt 1 failed realism; one attempt left under P-B1) and B2 (re-review, novelty verdict, BAVAR read). No model call has been made. |
-| Repository split | **Phase 0 done**: B's work is committed and pushed (`f463209d`). **Phases 1–2 not done**: no `agent-verification-timing` repository on this machine. Phase 3 (removing B here) waits for A's submission. |
+| Repository split | At adoption (8 Oct): B is authoritative in `Agent_paper_B`, with fresh-clone Stage 0 verified and pushed (`3f93c31`). IP0.3 creation is obsolete. The source remains off limits; no source cleanup is authorized. |
 | Shared records | `STATUS.md`, `OPEN_ITEMS.md` have no entry for the 5–6 Oct B work; OPEN_ITEMS B6 still lists B-DAC4/5 as open. |
 
 ### 0.2 Can Paper B stand alone with the whole ecosystem it needs?
@@ -213,13 +216,14 @@ the path.
 
 1. Add the 5–6 Oct entries to `STATUS.md` and `VALIDATION.md` (207 tests,
    smoke 11/11) and update OPEN_ITEMS B6.
-2. Fix the dangling reference: `executor.py:3` and `cc_live_agent.py:3` cite
-   `docs/paper_split/B_INFRA_RUNBOOK_20261005.md`, which is not in the
-   repository. Commit it from the machine that holds it, or re-point both.
-3. Create `agent-verification-timing` from snapshot `S = f463209d` following
-   `AB_REPO_SPLIT_CHECKLIST_20261005.md` Phases 1–2, adding
-   `causal_branch/pi_fork.py` to the "code B imports" list and the items of
-   §0.2 to the live-lane list.
+2. **Resolved under D-INFRA-RB (8 Oct):** both `executor.py` and
+   `task_cc_live/cc_live_agent.py` now cite this plan IP2 and execution
+   Stage 4.1. The author reports that the missing runbook was never committed;
+   a later supplied copy may be preserved as a historical record.
+3. **Obsolete under D-PLAN (8 Oct):** repository creation was completed
+   before takeover. Use the existing `Agent_paper_B` GitHub repository; its
+   import snapshot is `4154f153`, with import commit `a93e2b7`. Do not create
+   another repository or alter the source. Stage 0 verified the fresh clone.
 4. B-only Makefile, `PROVENANCE.md` (with licences), B copies of the shared
    records, an import-allowlist test replacing `check_split.py`.
 
@@ -322,19 +326,21 @@ checks on Pi-format sessions (IP2 step 3).
 
 ### IP5 — Live tooling on Ada (W, then X)
 
-Gate: OPEN_ITEMS B2 says the F10 tooling is built "only after B1 passes".
-Building the model-free parts earlier needs the waiver D-F10; without it this
-package starts after the realism run.
+Gate, amended by author D-F10 (8 Oct): model-free parts may be built before
+B1 passes. Before B1: no task-mechanism-specific code, live mode refuses, and
+nothing is sent to an endpoint. If attempt 2 fails, shelve this tooling; its
+existence does not justify another attempt. Other parts still wait for B1 and
+their later authorization gates.
 
 1. **Decoding (D-DEC1).** The E0 Devstral binding has temperature 0.0, and
    the design requires ≥ 2 stochastic repetitions per leaf. Decide B's
    temperature and the per-repetition seed rule, and how the seed reaches
    llama-server (the adapter has no seed parameter today). Only the GGUF and
    the server build are reused from E0.
-2. `protocols/paper_b/endpoint_b.json`. Ports: the E0 file assigns
-   18081/18082 to its two workers and A's runbook describes them as "Paper B
-   and a foreign tenant" — **confirm ownership on the host before binding**;
-   A's E-R2 holds 18083.
+2. `protocols/paper_b/endpoint_b.json`. Under D-PLAN (8 Oct), ports
+   18081/18082 are **not assumed to be B's**. Confirm ownership on the host
+   before any binding; Paper A and port 18083 remain off limits. The proposed
+   B port is chosen under D-ADA1 and must be free at pre-flight.
 3. `experiments/paper_b/run_screen.py`: modes `dry` (scripted, CPU), `smoke`,
    `live`; `--integrity-controls 32`; `--enforce-budget-caps` (512 terminal
    leaves, 2M generated tokens, 10 h, 20 accelerator-hours, 10 GiB, zero new
@@ -477,8 +483,10 @@ encoder call; compares hashes. Tested first on a scripted dry run.
    transcripts do not exist before the gate).
 3. **15 Nov go/no-go**: both lanes qualified **and** B1 **and** B2 closed;
    otherwise retarget beyond ICML 2027 (P-B2).
-4. Screen (96 leaves + 32 controls) → route → **implement the validator's
-   pilot phase** (it refuses today) → pilot (384) → freeze → authorise.
+4. Screen (96 leaves + 32 controls) → **implement the validator's pilot
+   phase** (it refuses today) → author authorizes pilot → pilot (384) →
+   author route decision → freeze → authorize final budget. D-ROUTE (8 Oct)
+   retains route **after the pilot**, before confirmatory outcomes.
 
 ### IP11 — Evaluating a post-trained configurator (after the freeze; D-PT3)
 
@@ -540,7 +548,7 @@ D-GOV1 keep the meaning of plan v2 (v1 called them D-DAC7/D-DAC8).
 
 | ID | Decision | Recommendation |
 |---|---|---|
-| D-DAC1 | DAC as framing vocabulary, two declared deviations | adopt |
+| D-DAC1 | DAC as framing vocabulary, two declared deviations | adopted 8 Oct as framing only; §14.2 caveats unchanged |
 | D-DAC2 | primary encoder | **Kev-4B primary, CLM ablation**, confirmed only after IP6 step 1. For: runs offline on the Mac, calibrated, inspectable. Against: CLM is the model trained on agent trajectories; Kev-4B's long-state training is documents and developer tooling, not agent logs. |
 | D-DAC3 | one question set and one `max_chars` for both models | freeze after IP6 step 2 |
 | D-DAC4 | primary feature set | `telemetry+embedding`; each alone as ablations |
@@ -553,9 +561,9 @@ D-GOV1 keep the meaning of plan v2 (v1 called them D-DAC7/D-DAC8).
 | D-GOV2 | visual panel | default no; static report if wanted |
 | D-DEC1 (new) | B's decoding temperature and per-repetition seed rule | required; temperature > 0 with recorded seeds |
 | D-CAP1 (new) | do smoke / single-root / qualification leaves count toward the 512? | declare a small separate engineering allowance |
-| D-F10 (new) | may model-free tooling (`run_screen --mode dry`, binder) be built before B1 passes? | yes for model-free parts only; otherwise IP5 slips a week |
+| D-F10 | model-free tooling before B1 | adopted 8 Oct: no task-mechanism-specific code, live refuses, no endpoint dispatch; shelve if attempt 2 fails |
 | D-REF1 (new) | add descriptive oracle and budget-matched random references | adopt as descriptive only |
-| — | approve creating `agent-verification-timing` from `f463209d`; Ada reservations and port ownership; whether any Modal spend is ever authorised (default no) | |
+| D-PLAN / D-ADA1 | repository identity adopted; Ada access and port ownership remain open | `Agent_paper_B`; repo-creation step obsolete; no assumed ownership of 18081/18082; no GPU/model work or spend authorized |
 
 ## 8. What was verified, and what was not
 

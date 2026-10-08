@@ -1,6 +1,25 @@
 \section{The two-checkpoint problem and the original-root population}
 \label{sec:b-problem}
 
+\paragraph{Budget-constrained dynamic algorithm configuration (DAC).}
+We frame verification timing as configuring the executor agent's action at
+two checkpoints. Two deviations from standard DAC delimit this framing.
+First, instances are budget-coupled: the shared two-phase allocator enforces
+$B=\lfloor qN\rfloor$ across a batch of original roots, rather than choosing
+an unconstrained policy independently for each instance. Second, the horizon
+and action set are minimal: two decision points, continue or verify, and at
+most one verification per root. This is a bounded DAC instance, not a DAC
+benchmark or a new RL method, and no optimality claim is made.
+
+Full history is kept: $H_2$ contains $H_1$. No Markov guarantee is claimed
+for a compressed representation. A compressed state needs a justified Markov
+assumption; otherwise retain history or acknowledge partial observability.
+Population estimation supplies neither that assumption nor a theorem that
+learned timing beats tuned rules. Keep the current two-checkpoint problem
+bounded; adaptive replay acquisition and more general dynamic algorithm
+configuration are separate extensions, not completed contributions introduced
+by a new citation.
+
 \paragraph{Population and unit.}
 The population is a distribution over \emph{template families}.  A template
 family generates one or more \emph{roots}; each root is one independent run of

@@ -1,97 +1,113 @@
 # Paper B author decision sheet — 8 October 2026
 
-Status: **PENDING AUTHOR ANSWERS**. Prepared by Codex (AI-assisted).
-Recommendations are proposals, not author decisions or run authorizations.
+Status: **NOW ITEMS ANSWERED AND RECORDED, 8 OCTOBER 2026**. Prepared by Codex
+(AI-assisted); answers below are the author's. Original recommendations are
+retained as proposal history, not overriding the answers or run authorizations.
 Stage 0 commit: `3f93c31`; fresh clone tests 207/6/12, smoke 11/11, real PDF
-12 pages. Stage 1 stops here; Stages 2–5 have not started.
+12 pages. Stage 1 is closed by these recorded answers; later decisions and
+STOPs remain in force. Stages 2–5 have not started.
 
-## 📋 Reply needed now
+## 📋 Author answers recorded
 
-| ID | Recommended answer | Author answer |
+| ID | Original recommendation | Author answer |
 |---|---|---|
-| D-PLAN | Adopt v3.1 using Agent_paper_B, subject to D-ROUTE | pending |
-| D-DAC1 | Adopt DAC framing, both deviations, no method claim | pending |
-| D-F10 | Permit model-free CPU tooling before B1 only | pending |
-| D-INFRA-RB | Re-point the two missing-document citations | pending |
-| D-ROUTE | Explicitly amend route to after screen / before pilot | pending |
+| D-PLAN | Adopt v3.1 using Agent_paper_B, subject to D-ROUTE | adopt with three corrections; no GPU/model work |
+| D-DAC1 | Adopt DAC framing, both deviations, no method claim | adopt framing only; caveats unchanged |
+| D-F10 | Permit model-free CPU tooling before B1 only | yes with stated model-free limits; shelve on failure |
+| D-INFRA-RB | Re-point the two missing-document citations | re-point to plan IP2 and execution Stage 4.1 |
+| D-ROUTE | Explicitly amend route to after screen / before pilot | after pilot; reject after-screen recommendation |
 
 The first four are the execution runbook's "now" items. D-ROUTE is an
 additional reconciliation STOP found while reading the scientific authority.
-Please answer all five; the later decisions below can wait for their stages.
-Your answers will be recorded in OPEN_ITEMS and as a dated RUNBOOK amendment.
-No recommendation in this file has been adopted.
+All five now have author answers, recorded in OPEN_ITEMS and RUNBOOK §16.
+The other decisions below remain pending until their stages. No Ada access,
+GPU/model run or phase authorization follows from closing Stage 1.
 
 ```mermaid
 flowchart LR
     accTitle: Paper B Takeover Decision Gate
-    accDescr: Stage 0 checks are complete. Stage 1 waits for recorded author answers before later work begins.
+    accDescr: Stage 0 checks are complete. Stage 1 author answers are recorded. Later work still follows its own decision and authorization gates.
     checks["Stage 0 checks complete"] --> sheet["Decision sheet and review prompt"]
     sheet --> author_answers{"Author answers recorded?"}
     author_answers -->|Pending| stop["STOP and wait"]
     author_answers -->|Yes| later_work["Stages 2 to 5 within their gates"]
 ```
 
-## 🔍 Context, options and recommendations
+## 🔍 Handoff context, options and author answers
+
+For the five answered items, the context and options below preserve the
+pre-answer handoff. The recorded author answer governs; recommendations
+remain historical. Other items still await their named-stage decisions.
 
 ### D-PLAN — Adopt infrastructure plan v3.1
 
-Needed: now. Author answer: pending.
+Needed: now. Author answer recorded 8 October 2026.
 
 Plan v3.1 is still a draft, based on the source snapshot, and its repository-creation description is stale. Stage 0 verified the existing Agent_paper_B remote. Adopting infrastructure work does not resolve B1/B2 or authorize GPU/model work.
 
 Options: Adopt v3.1 with Agent_paper_B as the repository and the execution runbook as the stage order; or keep it draft and specify revisions.
 
-Recommendation: Adopt with the corrected repository identity. Resolve the route-order discrepancy under D-ROUTE below; preserve frozen science otherwise.
+Original recommendation: Adopt with the corrected repository identity. Resolve the route-order discrepancy under D-ROUTE below; preserve frozen science otherwise.
 
 Source: B_INFRA_CONSTRUCTION_PLAN_20261006.md §7; B_EXECUTION_RUNBOOK_20261008.md §3.
 
+Author answer: Adopt v3.1 with three recorded corrections: repository is Agent_paper_B (IP0.3 repository creation is obsolete); IP10.4 route order changes per D-ROUTE; ports 18081/18082 are not assumed to be B's. Adoption authorizes no GPU or model work.
+
 ### D-DAC1 — Adopt DAC framing
 
-Needed: now. Author answer: pending.
+Needed: now. Author answer recorded 8 October 2026.
 
 RUNBOOK §15 labels DAC framing proposed; §14.2 remains authoritative. The amendment §1 declares budget-coupled instances and a minimal two-checkpoint binary action space as deviations from standard DAC.
 
 Options: Adopt budget-constrained DAC vocabulary with both deviations and no method or optimality claim; or retain verification-timing vocabulary.
 
-Recommendation: Adopt the framing only. Outcome U, controllers, allocator, comparators and estimands stay fixed.
+Original recommendation: Adopt the framing only. Outcome U, controllers, allocator, comparators and estimands stay fixed.
 
 Source: B_DAC_CONFIGURATOR_AMENDMENT_20261004.md §1, §6; RUNBOOK.md §14.2, §15.
 
+Author answer: Adopt as framing only. State both deviations in the manuscript. Keep §14.2's caveats word for word: full history is kept, and there is no Markov, optimality or RL-method claim.
+
 ### D-F10 — Allow early model-free live tooling
 
-Needed: now. Author answer: pending.
+Needed: now. Author answer recorded 8 October 2026.
 
 OPEN_ITEMS B2 currently stops F10 until B1 passes. Plan IP5 proposes an exception to build the dry runner, binder logic and endpoint draft before the one remaining realism attempt passes.
 
 Options: Allow model-free CPU work only before B1; or retain the existing B1-first gate.
 
-Recommendation: Allow only the model-free parts, with live refusal and no endpoint dispatch. Ada engineering still needs D-ADA1 and D-CAP1, and evidence runs still need author-created committed authorization.
+Original recommendation: Allow only the model-free parts, with live refusal and no endpoint dispatch. Ada engineering still needs D-ADA1 and D-CAP1, and evidence runs still need author-created committed authorization.
 
 Source: B_INFRA_CONSTRUCTION_PLAN_20261006.md IP5; OPEN_ITEMS.md §B2.
 
+Author answer: Yes, model-free parts only. No task-mechanism-specific code; live mode refuses; nothing is sent to an endpoint. If attempt 2 fails, shelve this tooling; it is not a reason for another attempt. Reword the F10 line under OPEN_ITEMS B2.
+
 ### D-INFRA-RB — Resolve missing infrastructure-runbook citations
 
-Needed: now. Author answer: pending.
+Needed: now. Author answer recorded 8 October 2026.
 
 executor.py and task_cc_live/cc_live_agent.py cite B_INFRA_RUNBOOK_20261005.md, which the standalone records report absent. The source and other checkouts are off limits to this takeover, so I have not searched them.
 
 Options: Author supplies the missing document into B for a reviewed commit; or approve re-pointing both citations to B_EXECUTION_RUNBOOK_20261008.md Stage 4 / IP2.
 
-Recommendation: Re-point the citations to the committed execution runbook; change only the references after approval.
+Original recommendation: Re-point the citations to the committed execution runbook; change only the references after approval.
 
 Source: OPEN_ITEMS.md standalone missing-runbook item; B_EXECUTION_RUNBOOK_20261008.md §3.
 
+Author answer: Re-point both citations to plan v3.1 IP2 and execution Stage 4.1. The author reports searching every local and remote branch of the source and finding that the missing file was never committed; citation-bearing code came in with 9de9c908 in the 4–5 Oct session. The other named working copy is absent on the author's Mac. If a copy is later supplied from the Mac mini, add it as a historical record.
+
 ### D-ROUTE — Resolve screen-versus-pilot route order
 
-Needed: now, with D-PLAN. Author answer: pending.
+Needed: now, with D-PLAN. Author answer recorded 8 October 2026.
 
 RUNBOOK §12.2 says the route is decided after the pilot, and §12.3 gives screen → pilot → route. Plan v3.1 IP10 and execution Stage 8 step 4 instead give screen → route → pilot. Gate order is frozen science under execution §2.2; committing the supplied execution order has not amended this scientific gate.
 
 Options: Author explicitly amends RUNBOOK to route after the screen and before the pilot; or retains route after the pilot and requests aligned execution/plan text.
 
-Recommendation: Adopt the explicit after-screen amendment to match the requested execution order; in either case decide before confirmatory outcomes. No later stage proceeds on an inferred resolution.
+Original recommendation: Adopt the explicit after-screen amendment to match the requested execution order; in either case decide before confirmatory outcomes. No later stage proceeds on an inferred resolution.
 
 Source: RUNBOOK.md §12.2, §12.3; B_INFRA_CONSTRUCTION_PLAN_20261006.md IP10.4; B_EXECUTION_RUNBOOK_20261008.md Stage 8.4.
+
+Author answer: Keep the route decision after the pilot, rejecting Codex's after-screen recommendation. Fix execution Stage 8 and plan IP10.4; decide before confirmatory outcomes.
 
 ### D-DEC1 — Freeze decoding and repetition seeds
 

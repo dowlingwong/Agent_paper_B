@@ -18,7 +18,7 @@ This runbook does not change B's science. Science means the estimands, the outco
 
 ## 0. The situation in one page
 
-**The paper.** *When should an executor agent spend its one verification?* At two checkpoints the agent can continue, verify now, or keep its single verification for later. This runs under a hard verification budget (q = 0.25) and under replay uncertainty, and the primary outcome is U, the hidden-test accuracy of the final candidate. The framing is budget-constrained dynamic algorithm configuration (DAC) with a learned configurator. That framing is proposed and not yet formally adopted (D-DAC1). The target is ICML 2027.
+**The paper.** *When should an executor agent spend its one verification?* At two checkpoints the agent can continue, verify now, or keep its single verification for later. This runs under a hard verification budget (q = 0.25) and under replay uncertainty, and the primary outcome is U, the hidden-test accuracy of the final candidate. The framing is budget-constrained dynamic algorithm configuration (DAC) with a learned configurator. That framing was adopted on 8 October as framing only (D-DAC1; RUNBOOK §16). The target is ICML 2027.
 
 **What exists, all on CPU and all with scripted or mock agents:**
 - paired tree records (`b_branch_v2`);
@@ -59,8 +59,8 @@ If attempt 2 fails, most of this runbook stops at Stage 2 (§5 says what to do t
 | Where you work | On the Mac working copy, on Ada, or both. Code moves between machines **only through GitHub**: commit, push, then pull on the other machine. Never copy files by hand between checkouts. Stage 0 establishes what you can reach. |
 | Source repository (read only for B) | Mac: `<SOURCE_REPO>`. B was copied out at **S = `4154f153`**, and no B file changed there after S (checked on 8 Oct). Paper A lives there. **Never change it for B.** |
 | Plan authority (science) | `docs/paper_split/RUNBOOK.md`: the B sections of runbook v2.4, with §12.2 decisions, §12.2a controller design v2, §12.3 gate sequence and §14.2 TKV lessons. Also `B_DECISIONS_20260927.md` and `B_CONTROLLER_DESIGN_20260927.md`. |
-| Infrastructure plan | `docs/paper_split/B_INFRA_CONSTRUCTION_PLAN_20261006.md`, **v3.1, draft, not adopted** (D-PLAN in §3). Packages IP0–IP11, the decisions in its §7 and the risks in §5. This runbook orders that plan; it does not repeat its detail. |
-| DAC / configurator proposal | `B_DAC_CONFIGURATOR_AMENDMENT_20261004.md` (not adopted; D-DAC1–6) |
+| Infrastructure plan | `docs/paper_split/B_INFRA_CONSTRUCTION_PLAN_20261006.md`, **v3.1, adopted 8 Oct with three corrections** (RUNBOOK §16). Packages IP0–IP11, the decisions in its §7 and the risks in §5. This runbook orders that plan; it does not repeat its detail. |
+| DAC / configurator proposal | `B_DAC_CONFIGURATOR_AMENDMENT_20261004.md` (D-DAC1 framing adopted 8 Oct; D-DAC2–6 pending) |
 | Readiness audit (4 Oct) | `B_READINESS_AUDIT_20261004.md` (gaps G1–G8) |
 | Task attempt 1 (keep unchanged) | `experiments/paper_b/task_cc_live/` (`cc_live_generator.py`, `cc_live_realism.py` with frozen `THRESHOLDS` R1–R9) and `results/paper_b/task_realism_20260927/` |
 | Contracts and validator | `protocols/paper_b/contract_v{1,2,3}.yaml` (v2 active, v3 draft), `launch_validator.py`, `QUALIFICATION_AND_SCREEN_LAUNCH_SPEC.md`, `design_decisions_20260927{,b}.yaml` |
@@ -324,9 +324,12 @@ Order by the critical path. Detail is in plan v3.1.
 
 **Done when** each sub-item's done-when in plan v3.1 holds and is recorded.
 
-### Stage 5 — Live tooling (W; after B1 PASS, or earlier for model-free parts under D-F10)
+### Stage 5 — Live tooling (W; after B1 PASS; earlier model-free exception adopted under D-F10)
 
-Plan v3.1 IP5 and IP7 step 1, plus lessons L1–L3.
+Plan v3.1 IP5 and IP7 step 1, plus lessons L1–L3. Under author D-F10
+(8 Oct), pre-B1 work contains no task-mechanism-specific code, live mode
+refuses, and nothing is sent to an endpoint. Shelve it if attempt 2 fails;
+it does not justify another attempt.
 
 1. **`protocols/paper_b/endpoint_b.json`**, with the port chosen under D-ADA1.
 2. **`experiments/paper_b/run_screen.py`.**
@@ -384,15 +387,15 @@ Plan v3.1 IP5 and IP7 step 1, plus lessons L1–L3.
    - **Go:** continue with Stage 8.
    - **No-go:** record it; B is retargeted beyond ICML 2027 (P-B2); go to §5.
 
-### Stage 8 — Screen, route, pilot, freeze (X + D; 16–30 Nov)
+### Stage 8 — Screen, pilot, route, freeze (X + D; 16–30 Nov)
 
 1. **STOP:** the author authorises the screen (record on Ada).
 2. You run the screen: 96 leaves plus 32 integrity controls, under the predeclared operability and reachability rules (launch spec §3–4). It runs detached under the supervisor; check it at least every few hours. Then analyse, commit from Ada, and push.
 3. Write a screen report: operability, reachability, cost per leaf, infrastructure stops and resumptions. **Independent review** of the screen analysis.
-4. **STOP:** the author takes the route decision (COMBINE / CORE_ONLY / narrow report) from the screen report, before any confirmatory outcome.
-5. Implement the validator's `pilot` phase (it refuses today), with tests. Review it together with step 8.
-6. **STOP:** the author authorises the pilot.
-7. You run the pilot: 384 leaves. Fit the configurator heads on development families only. Run the matching report.
+4. Implement the validator's `pilot` phase (it refuses today), with tests. Review it together with step 8.
+5. **STOP:** the author authorises the pilot.
+6. You run the pilot: 384 leaves. Fit the configurator heads on development families only. Run the matching report.
+7. **STOP:** after the pilot, the author takes the route decision (COMBINE / CORE_ONLY / narrow report), before any confirmatory outcome. This retains RUNBOOK §12.2–§12.3 under D-ROUTE (8 Oct); the route is not selected from the screen alone.
 8. From the pilot's variance and cost, write the final design and its budget: size, leaves, tokens, accelerator-hours, wall time on a shared host, resumption budget. **Independent review** of the frozen design.
 9. **STOP, by 30 Nov:** the author freezes the design and authorises the final budget. Missing this retargets B (P-B2).
 
@@ -531,3 +534,14 @@ and port 18083) are off limits; code moves between machines only through
 GitHub; never describe an AI-assisted review as human; stop at every STOP and
 wait for me. Begin with Stages 0 and 1 and send me the decision sheet.
 ```
+
+## 8. Author adoption corrections — 8 October 2026
+
+RUNBOOK §16 and the decision sheet record D-PLAN, D-DAC1, D-F10,
+D-INFRA-RB and D-ROUTE. Plan v3.1 is adopted with the existing
+Agent_paper_B repository (IP0.3 obsolete), route after pilot, and no assumed
+B ownership of ports 18081/18082. DAC is framing only, with both deviations
+and unchanged §14.2 caveats. Model-free pre-B1 work has the D-F10 limits.
+The two missing-document citations now point to plan IP2 and Stage 4.1.
+Stage 1's author-decision STOP is satisfied by the recorded answers; later
+STOPs remain in force. No GPU/model work or evidence phase is authorized.

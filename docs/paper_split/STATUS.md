@@ -11,6 +11,35 @@ Planned work is not completed work. No paid run or submission has been made. No
 model call has been made. B's analysis side runs on CPU; the live lane is not
 built.
 
+## 8 October — author decisions recorded; Stage 1 closed
+
+The author answered D-PLAN, D-DAC1, D-F10, D-INFRA-RB and D-ROUTE in the
+chat. RUNBOOK §16, OPEN_ITEMS and the decision sheet record the answers.
+Plan v3.1 is adopted with Agent_paper_B (IP0.3 obsolete), route after pilot,
+and no assumed B ownership of ports 18081/18082. The after-screen
+recommendation was rejected; the plan and execution Stage 8 now preserve
+RUNBOOK's screen → pilot → route order. No scientific gate was moved.
+
+DAC framing only is adopted; manuscript §2 states budget-coupled instances
+and the minimal horizon/action set, retains full history and disclaims a
+Markov guarantee, optimality and an RL-method contribution. RUNBOOK §14.2
+is byte-identical to its pre-adoption text. Configurator choices remain open.
+F10's pre-B1 exception contains no task-mechanism-specific code, refuses live
+mode and sends nothing to an endpoint; shelf it if attempt 2 fails.
+
+Both docstring citations now point to plan IP2 and execution Stage 4.1.
+The author's source-branch search is recorded as author-reported; this
+session did not access the source, Paper A, other checkouts or Ada.
+The citation-bearing source commit `9de9c908` is historical provenance.
+
+Stage 1's done-when is satisfied. The next task-stage STOP is D-ATT2 after
+design and independent challenge, before sealing/implementation. No attempt-2
+outcome, F10 implementation, model run or authorization was produced here.
+Validation: §14.2 and five fixtures/contracts unchanged; executable ASTs
+unchanged; manuscript builds to 13 pages with clean verify/anonymity checks,
+and pages 1/2/13 visually inspected. This remains a research draft.
+Commands and observations are recorded in VALIDATION.
+
 ## 8 October — Stage 1 records and author handoff
 
 Stage 0 committed and pushed as `3f93c31`; remote full hash verified as
