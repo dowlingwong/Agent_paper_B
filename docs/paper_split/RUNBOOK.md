@@ -1,4 +1,4 @@
-> Copied from the source repository at S = 4154f153, 7 October 2026; this file keeps the general rules and the Paper B sections (§5–§7 as re-ordered by §11.4, §9, §10, §11.1–§11.4, §12.2, §12.2a, §12.3, §14.2, §15).
+> Copied from the source repository at S = 4154f153, 7 October 2026; this file keeps the general rules (§1–§3, §8, §9, §10) and the Paper B sections (§5–§7 as re-ordered by §11.4, §11.1–§11.4, §12.2, §12.2a, §12.3, §14.2, §15).
 > The source copy in agent-checkpoint-intervention is the historical one.
 
 # Paper B runbook: intervention control

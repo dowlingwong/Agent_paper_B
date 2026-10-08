@@ -134,10 +134,14 @@ blocks the CPU checks; the first three block the live lane.
   5–6 Oct entries to STATUS/VALIDATION and update §B6's B-DAC4/5.
 - [ ] **`make doctor` / `make bootstrap`** are named in copied files but absent
   from this repository's Makefile.
-- [ ] **Make targets that rewrite tracked files:** `make paper-b`, `make smoke-b`,
-  `make release-b` and `make check-release-b` rewrite files inherited from S
+- [ ] **Make targets that rewrite tracked files:** `make paper-b`, `make smoke-b`
+  and `make check-release-b` rewrite files inherited from S
   (the PDF, `results/paper_b/smoke_latest/`, `release/check_release_b.json`).
   Restore them with `git checkout -- <files>` until the targets write elsewhere.
+  `make release-b` writes only the ignored `release/paper_b/`.
+- [ ] **`*.jsonl` in `.gitignore`.** The inherited rule ignores `*.jsonl`; a
+  new exception `!results/paper_b/**/*.jsonl` keeps B's governance ledgers
+  (`events.jsonl`, `timing.jsonl`) committable under `results/paper_b/`.
 - [ ] **GitHub repository name and first push.** The author creates the remote
   and chooses its name; there is no remote in this repository.
 - [ ] **Phase 3 in the source repository** (removing B from

@@ -51,6 +51,9 @@ evidence/**/traces/
 !evidence/**/ledgers/*.jsonl
 !evidence/**/logs/
 !evidence/**/logs/*.log
+# B's governance ledgers (events.jsonl, timing.jsonl) are committed deliberately
+# under results/paper_b/; the inherited *.jsonl rule would otherwise drop them.
+!results/paper_b/**/*.jsonl
 
 # Dataset payloads live on shared storage (normally a path on shared storage), never
 # inside the repository. Only their pinned registry and per-run hashes belong here.

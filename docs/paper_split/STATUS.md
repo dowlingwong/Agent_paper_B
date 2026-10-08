@@ -25,6 +25,17 @@ side passes on CPU, but B is **not ready to run**. F9 realism still fails
 transcripts are recorded, and the contract bindings are null. No experiment,
 model call or status change.
 
+Copied from S (the 4 October "decisions adopted" entry, B sentence): the author
+adopted P-B1 and P-B2 with corrections. **B: one bounded task attempt with a
+fixed failure disposition; cutoffs 15 Nov and 30 Nov 2026 for the ICML 2027
+route.**
+
+## Version pointers (copied from S)
+
+- Last source-bound packages: A 85 files, **B 53 files, source `12507267`**
+  (`release/*_manifest.json`, `release/check_release_*.json`). The B manifest and
+  check report are kept here as at S.
+
 ## 30 September — TKV2017 recommendations adopted
 
 RUNBOOK §14 makes the recommendations actionable. B-TKV1 (budget separation)

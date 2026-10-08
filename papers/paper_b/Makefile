@@ -19,8 +19,10 @@ anonymity-check:
 
 # Engineering-only smoke path: closed test workload through the B schema,
 # learner and evaluator.  It never touches real-agent data or credentials and
-# reports ENGINEERING_ONLY.
+# reports ENGINEERING_ONLY.  The tracked smoke_latest directory is rewritten;
+# restore it with `git checkout -- results/paper_b/smoke_latest`.
 smoke: python-check
+	rm -rf ../../results/paper_b/smoke_latest
 	$(PYTHON) ../../experiments/paper_b/smoke_b.py --output ../../results/paper_b/smoke_latest
 
 .PHONY: python-check

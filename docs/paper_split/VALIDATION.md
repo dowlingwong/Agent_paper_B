@@ -30,6 +30,23 @@ Source: working tree based on `b9b56265`.
 |---|---|
 | `make -C papers/paper_b verify` | PASS; citations/references resolved |
 
+## 26 September — integration/repair `12507267` and the L8–L10 rows
+
+Copied from the source repository at S = 4154f153, where these rows describe the
+source commit `12507267`; the B halves only.
+
+| Check | Result |
+|---|---|
+| `make test-split` | 14 measurement + 20 control + 5 release tests pass |
+| `make paper-a paper-b` | verify clean; A 42 pp, B 27 pp; A theory checks pass |
+| `make release-a release-b` + `check_release_independence.py --paper a/b` | PASS: A 85 files, B 53 files; hashes match source; clean build (quick mode); B smoke exits 0 (ENGINEERING_ONLY, not an endorsement of its bootstrap estimates) |
+
+| Commit / item | Commands | Observed result |
+|---|---|---|
+| L8 | `make smoke-b B_SMOKE_OUTPUT=results/paper_b/smoke_v2_20260926`; `make path-check check-split test-split`; control repair tests; `git diff --check` | PASS: 33 control tests (13 added counterexample tests), 5 release; 9 engineering smoke checks. Old smoke preserved. New output is ENGINEERING_ONLY, not a result or pilot. Logs: `results/validation_logs/L8/`. |
+| L9 | `make path-check check-split test-split`; `protocols/paper_b/launch_validator.py --phase engineering --lane one_step`; default draft `--for-launch`; v1 byte comparison with `1d474f15` | PASS: 43 control, 5 release tests. Engineering accepts; draft launch refuses as expected. Later phases refuse "phase not yet implemented". Historical v1 byte-identical. Logs: `results/validation_logs/L9/`. No execution authorization claimed. |
+| L10 | `make path-check check-split test-split`; `experiments/paper_b/tree_fixtures.py --output results/paper_b/tree_v1_20260926` | PASS: 49 control, 5 release tests; eight ENGINEERING_ONLY fixed trees. No sequential learner or scientific result. Logs: `results/validation_logs/L10/`. |
+
 ## 2026-09-27 queue (NEXT_WORK_QUEUE v2, B rows)
 
 Interpreter: a Python 3.12 venv outside the repository
@@ -38,13 +55,13 @@ PLANNED; no model, GPU, network, release, push or merge was run.
 
 | Commit / item | Commands | Observed result |
 |---|---|---|
-| B7 | `make path-check check-split test-split`; `protocols/validate_claims.py`; `make -C papers/paper_b verify`; `launch_validator.py --phase engineering --lane one_step/sequential`; `--phase qualification --lane one_step` | PASS. `contract_v2.yaml` migrated deliberately. Validator accepts `b_branch_v2`; engineering PASS both lanes; qualification REFUSES on the unbound Devstral/runtime/task-generator/evaluator/split/p bindings; pilot/main/final still refuse; `budget_cap_errors` added and tested. 106 control + 5 release tests pass; claims validator PASS. |
+| B7 | `make path-check check-split test-split`; `protocols/validate_claims.py`; `make paper-a paper-b` (source repository; B half relevant); `launch_validator.py --phase engineering --lane one_step/sequential`; `--phase qualification --lane one_step` | PASS. `contract_v2.yaml` migrated deliberately. Validator accepts `b_branch_v2`; engineering PASS both lanes; qualification REFUSES on the unbound Devstral/runtime/task-generator/evaluator/split/p bindings; pilot/main/final still refuse; `budget_cap_errors` added and tested. 106 control + 5 release tests pass; claims validator PASS. |
 | B6 | `make path-check check-split test-split`; `experiments/paper_b/task_cc/witnesses.py --output results/paper_b/task_cc_screen_20260927` | PASS/WITNESSES_OK. New B-only task; eight executable fixed-policy witnesses (2 families each) run through the B5 real-fork driver: **all eight orderings hold**. Frozen screen law hash `ade3c319…`; pilot-law hash `449b97c3…` (not run). 6 new tests; 105 control tests. Output ENGINEERING_ONLY. |
 | B5 | `make path-check check-split test-split`; `unittest discover -s tests/control -p 'test_branch_tree.py'` | PASS. New `control/branch_tree.py`; `records_to_tree` rejects transplanted checkpoint-2 state, reached-only denominator, leakage and a second verification; original-root estimators with family-cluster bootstrap. 10 new tests; 99 control tests. |
 | B4 | `make path-check check-split test-split`; `unittest discover -s tests/control -p 'test_controllers.py'`; `pip install scikit-learn==1.5.2` | PASS. New `control/controllers.py`; `allowed_tree_budget` uses `floor(q*N_original)`; `assert_matched_allowed_budgets`; `BudgetReport`; `RFWitness`; ridge equivalence at 1e-12. 13 new tests; 89 control tests. |
 | B3 | `make path-check check-split test-split`; `unittest discover -s tests/control -p 'test_replay_validity.py'` | PASS. New `control/replay_validity.py`; scalar-only `population_lower_bound`, simultaneous family bounds, `p_grid_report`, `path_allowance`. 16 new tests including the planted-defect world. 76 control tests. |
 | B2 | `make path-check check-split test-split`; `experiments/paper_b/smoke_b.py --output results/paper_b/smoke_v2_20260927` | PASS. `schema.py` adds `invalid_reason`/`integrity_status`; U primary. 11 engineering checks pass, ENGINEERING_ONLY. New `tests/control/test_u_semantics.py` (11 tests). 60 control tests. |
-| B1 | `make -C papers/paper_b verify`; `sh papers/paper_b/scripts/check_anonymity.sh --mode submission`; `make check-split`; greps; `pdftotext \| wc -w` | PASS. Rewrote abstract and all 12 sections around the two-checkpoint timing spine; displaced sections moved to `papers/paper_b/archive/B1_20260927/`. B builds clean at 11 pages. Anonymity PASS. No pointwise `LCB(w)-2p`; no `\input` of A files. No model call. |
+| B1 | `make -C papers/paper_b verify`; `sh papers/paper_a/scripts/check_anonymity.sh --mode submission` (source repository; script now copied to `papers/paper_b/scripts/`); `make check-split`; greps; `pdftotext \| wc -w` | PASS. Rewrote abstract and all 12 sections around the two-checkpoint timing spine; displaced sections moved to `papers/paper_b/archive/B1_20260927/`. B builds clean at 11 pages. Anonymity PASS. No pointwise `LCB(w)-2p`; no `\input` of A files. No model call. |
 
 ## 2026-09-27 fix queue (F0–F13, B rows)
 
@@ -61,9 +78,9 @@ Local CPU only; all live studies PLANNED.
 | F7 | `make path-check check-split test-split`; `unittest discover -s tests/control -p 'test_evaluate_tree.py'` | PASS. New `control/evaluate_tree.py`; N1 wired in evaluation; `N1_DISPLACEMENT.md` derives m ≤ 3. 142 control tests. |
 | F8 | `make path-check check-split test-split`; `experiments/paper_b/task_cc_live/cc_live_run_task.py --output results/paper_b/task_cc_live_20260927`; `unittest discover -s tests/control -p 'test_task_cc_live.py'` | PASS. New `experiments/paper_b/task_cc_live/`; 8 families (now-best 2, later-best 3, never-best 3). 8 tests; 150 control tests. ENGINEERING_ONLY. |
 | F9 | `experiments/paper_b/task_cc_live/cc_live_realism.py --output results/paper_b/task_realism_20260927`; `make check-split test-split` | **FAIL after one recorded repair pass.** R1 and R4 fail for the *typical* behaviour. R2/R3/R5/R6/R7/R8/R9 pass. F10 stops. See [TASK_REALISM_REPORT.md](TASK_REALISM_REPORT.md). |
-| F11 | `make -C papers/paper_b verify`; `sh papers/paper_b/scripts/check_anonymity.sh --mode submission`; greps; `pdfinfo` | PASS. §5/§6 rewritten to design v2; N1 as qualifying conclusions. B builds clean at 12 pages; anonymity PASS. |
+| F11 | `make -C papers/paper_b verify`; `sh papers/paper_a/scripts/check_anonymity.sh --mode submission` (source repository; script now copied to `papers/paper_b/scripts/`); greps; `pdfinfo` | PASS. §5/§6 rewritten to design v2; N1 as qualifying conclusions. B builds clean at 12 pages; anonymity PASS. |
 | F10 | — | Not implemented. F9 FAIL stops F10 per the fix queue. |
-| F12 | `make path-check check-split test-split`; `protocols/validate_claims.py`; `make -C papers/paper_b verify` | PASS. Added `design_decisions_20260927b.yaml`; contract comparators/allocator/N1; CLAIMS B-C6 aligned. 150 control tests. |
+| F12 | `make path-check check-split test-split`; `protocols/validate_claims.py`; `make paper-a paper-b` (source repository; B half relevant) | PASS. Added `design_decisions_20260927b.yaml`; contract comparators/allocator/N1; CLAIMS B-C6 aligned. 150 control tests. |
 | F13 | 9 planted bugs applied in place, relevant test run, restored | PASS. Every plant caught. No test needed adding. 150 control tests. |
 
 ## 8 October — standalone repository verification

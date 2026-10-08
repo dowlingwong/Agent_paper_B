@@ -21,14 +21,16 @@ built yet (see [docs/paper_split/OPEN_ITEMS.md](docs/paper_split/OPEN_ITEMS.md))
 
 ## Environment
 
-Python 3.11+ (the repository pins 3.13.4 in `.python-version`). The locked test
-dependencies are in `requirements.lock`. A virtual environment outside the
-repository is recommended:
+Python 3.11+; the repository pins 3.13.4 in `.python-version`. The locked test
+dependencies are in `requirements.lock`. A virtual environment at `.venv/`
+(ignored; the Makefile uses it automatically when present):
 
 ```sh
 uv venv --python 3.13 .venv
 uv pip sync --python .venv/bin/python requirements.lock
 ```
+
+The CPU checks were also run on Python 3.13.15 and 3.13.16.
 
 ## Checks
 
