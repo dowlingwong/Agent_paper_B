@@ -47,6 +47,7 @@ PAPER_B_ALLOWLIST = [
     "docs/paper_split/PRIOR_DISCLOSURE.md",
     "docs/paper_split/CLAIMS.yaml",
     "docs/paper_split/VALIDATION.md",
+    "requirements.lock",
 ]
 
 
@@ -113,8 +114,9 @@ a real-agent result.
 
 ## Contract
 
-`protocols/paper_b/contract_v3.yaml` is the active prospective contract; v2 and
-v1 are historical.  The launch validator rejects missing required fields:
+`protocols/paper_b/contract_v2.yaml` is the active prospective contract; v3 is a
+draft and not adopted; v1 is historical.  The launch validator rejects missing
+required fields:
 
 ```sh
 python3 protocols/paper_b/launch_validator.py --for-launch   # exits 1 while draft
@@ -122,7 +124,8 @@ python3 protocols/paper_b/launch_validator.py --for-launch   # exits 1 while dra
 
 ## Requirements
 
-- Python 3.11+, NumPy, PyYAML
+- Python 3.11+ and the pinned packages in `requirements.lock` (NumPy, PyYAML,
+  SciPy, scikit-learn, hypothesis)
 - TeX Live with latexmk and the ICML development style kit
 """
 
