@@ -68,5 +68,33 @@ Local CPU only; all live studies PLANNED.
 
 ## 8 October — standalone repository verification
 
-Filled in by the build agent; commands ran in a fresh clone of this repository
-at the recorded commit.
+Ran in a fresh clone of this repository (`git clone ~/Documents/agent_paper_b`)
+at commit `82c30a3`, with a Python 3.13.15 virtual environment outside both
+repositories built from `requirements.lock` (adding `hypothesis==6.112.1`,
+`attrs==26.1.0`, `sortedcontainers==2.4.0`, `scikit-learn==1.5.2`,
+`scipy==1.18.1`). The reference is a `git archive` export of the source at
+`S = 4154f153` under the same interpreter.
+
+| Executed check | Result |
+|---|---|
+| `unittest discover -s tests/control -p 'test_*.py'` (new clone) | **207 PASS** |
+| same command on the S export | **207 PASS** |
+| `unittest discover -s tests/release -p 'test_*.py'` | 6 PASS |
+| `unittest discover -s tests/standalone -p 'test_*.py'` | 8 PASS; the allowlist test rejects every planted forbidden import, measurement import, dynamic literal and unknown causal_branch module |
+| `experiments/paper_b/smoke_b.py --output <scratch>` | **11/11** engineering checks; output byte-identical to the S export (`smoke_summary.json`, `SMOKE_BANNER.txt`) |
+| `launch_validator.py --contract protocols/paper_b/contract_v3.yaml --phase qualification --lane one_step --for-launch` | refuses, exit 1; stdout/stderr byte-identical to S |
+| same with `--lane sequential` | refuses, exit 1; byte-identical to S |
+| `launch_validator.py --contract protocols/paper_b/contract_v2.yaml --phase <engineering\|qualification\|pilot> --lane <one_step\|sequential> --for-launch` | refuses in all six combinations, exit 1; byte-identical to S |
+| `make release-b` | **107 files** in `release/paper_b/` |
+| `make check-release-b` | **PASS**: `manifest_matches_source_commit`, `no_cross_paper_paths`, `no_measurement_core`, `no_credentials`, `smoke_exit_zero`, `control_tests_exit_zero`; `pdf_skipped_no_latexmk` (this host has no LaTeX) |
+| `make test` | 207 + 6 + 8 PASS |
+| `make -C papers/paper_b anonymity-check` | **PASSED** (submission mode) |
+| `make paper-b` | PDF build blocked: `latexmk` is not installed on this host. The verify and anonymity halves are recorded separately above |
+| `scripts/verify_vendored_pi.py` | fails exactly as at S, exit 1, JSON byte-identical: `unexplained additions to the vendored tree: packages/coding-agent/src/core/http-dispatcher.ts, .../core/sdk.ts, .../test/http-dispatcher.test.ts` |
+| Host-path scan (`/home/`, `/Users/`, `/data1/`, `/ceph/`, author username, credentials) | clean outside `third_party/pi/`. Remaining hits are upstream `third_party/pi` examples/tests only: `coding-agent/test/footer-width.test.ts`, `test/paths.test.ts`, `test/suite/regressions/6104-find-root-relativization.test.ts`, `coding-agent/CHANGELOG.md`, `coding-agent/docs/rpc.md`, `examples/extensions/doom-overlay/doom/build/doom.js`, `examples/extensions/overlay-qa-tests.ts`, `src/core/export-html/template.js`, `packages/tui/test/terminal-image.test.ts`, `test.sh`, and the two `.jsonl` fixtures. No credential files |
+
+`make check-release-b` rewrote `release/check_release_b.json`; it was restored
+with `git checkout -- release/check_release_b.json` afterwards. `make paper-b`
+and `make smoke-b` are documented in [README.md](../../README.md) as rewriting
+tracked files inherited from S until the targets write elsewhere.
+
