@@ -27,9 +27,10 @@ release-b:
 	$(PYTHON) scripts/make_release.py
 
 # Verify the built package in a clean directory: manifest provenance, no Paper A
-# or measurement-core paths, PDF build, smoke and the control tests.
+# or measurement-core paths, PDF build, smoke and the control tests.  A host
+# without latexmk fails the check unless ALLOW_NO_PDF=1 is given.
 check-release-b:
-	$(PYTHON) scripts/check_release_independence.py
+	$(PYTHON) scripts/check_release_independence.py $(if $(ALLOW_NO_PDF),--allow-no-pdf,)
 
 test: test-control test-release test-standalone
 

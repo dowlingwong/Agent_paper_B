@@ -5,9 +5,14 @@ Proves the package builds its PDF, runs its engineering smoke path and passes
 its own control tests with no Paper A paths, no measurement core, no model
 weights, no network and no credentials.
 
+A host without ``latexmk`` fails the check (as at S). Pass ``--allow-no-pdf``
+(``make check-release-b ALLOW_NO_PDF=1``) to accept a host that cannot build the
+PDF: the report records ``pdf_built: false`` with a reason and the check prints
+``PASS (PDF not built)``.
+
 Usage::
 
-    python3 scripts/check_release_independence.py
+    python3 scripts/check_release_independence.py [--allow-no-pdf]
 """
 
 from __future__ import annotations
@@ -43,11 +48,17 @@ FORBIDDEN_MEASUREMENT = (
 )
 
 
-def _run(command: list[str], cwd: Path, env: dict | None = None) -> dict:
+def _run(command: list[str], cwd: Path, package: Path, env: dict | None = None) -> dict:
     proc = subprocess.run(command, cwd=cwd, capture_output=True, text=True, env=env)
+    display = [Path(c).name if c == sys.executable else c for c in command]
+    try:
+        rel = cwd.relative_to(package)
+        cwd_str = str(rel) if str(rel) != "." else "."
+    except ValueError:
+        cwd_str = "<outside package>"
     return {
-        "command": " ".join(command),
-        "cwd": str(cwd),
+        "command": " ".join(display),
+        "cwd": cwd_str,
         "exit_code": proc.returncode,
         "stdout_tail": proc.stdout.strip().splitlines()[-4:],
         "stderr_tail": proc.stderr.strip().splitlines()[-4:],
@@ -56,7 +67,9 @@ def _run(command: list[str], cwd: Path, env: dict | None = None) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Release independence check (Paper B)")
-    parser.parse_args()
+    parser.add_argument("--allow-no-pdf", action="store_true",
+                        help="accept a host without latexmk; records pdf_built: false with a reason")
+    args = parser.parse_args()
 
     source = ROOT / "release" / "paper_b"
     if not source.is_dir():
@@ -90,25 +103,27 @@ def main() -> int:
         creds = [p for p in paths if Path(p).name in credential_names]
         report["checks"]["no_credentials"] = not creds
 
-        # 3. Build the manuscript from the package only. The build is skipped,
-        #    with a recorded flag, on a host without latexmk; the control tests
-        #    below still prove the package's code is complete.
+        # 3. Build the manuscript from the package only. A host without latexmk
+        #    fails the check (as at S) unless --allow-no-pdf is given.
         paper_dir = clean / "papers/paper_b"
         if shutil.which("latexmk"):
             report["commands"].append(
-                _run(["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", "main.tex"], paper_dir)
+                _run(["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", "main.tex"], paper_dir, clean)
             )
             built = report["commands"][-1]["exit_code"] == 0 and (paper_dir / "main.pdf").is_file()
             report["checks"]["pdf_built"] = built
             if built:
                 report["checks"]["pdf_bytes"] = (paper_dir / "main.pdf").stat().st_size
         else:
+            report["checks"]["pdf_built"] = False
+            report["checks"]["pdf_skip_reason"] = "latexmk not found"
             report["checks"]["pdf_skipped_no_latexmk"] = True
 
         # 4. Engineering smoke path.
         report["commands"].append(
             _run(
                 [sys.executable, "experiments/paper_b/smoke_b.py", "--output", "results/paper_b/smoke_release_check"],
+                clean,
                 clean,
             )
         )
@@ -117,15 +132,22 @@ def main() -> int:
         # 5. The package runs its own control tests from its own source tree.
         env = dict(os.environ, PYTHONPATH=str(clean / "experiment_scaffold/src"))
         report["commands"].append(
-            _run([sys.executable, "-m", "unittest", "discover", "-s", "tests/control", "-p", "test_*.py"], clean, env)
+            _run([sys.executable, "-m", "unittest", "discover", "-s", "tests/control", "-p", "test_*.py"], clean, clean, env)
         )
         report["checks"]["control_tests_exit_zero"] = report["commands"][-1]["exit_code"] == 0
 
     ok = all(
         value for key, value in report["checks"].items()
-        if key.startswith(("no_", "pdf_", "smoke_", "control_", "manifest_"))
+        if key.startswith(("no_", "smoke_", "control_", "manifest_"))
     )
-    print(f"check-release-b: {'PASS' if ok else 'FAIL'}")
+    pdf_ok = report["checks"].get("pdf_built") is True or (
+        args.allow_no_pdf and report["checks"].get("pdf_skipped_no_latexmk") is True
+    )
+    ok = ok and pdf_ok
+    if ok and report["checks"].get("pdf_skipped_no_latexmk") and args.allow_no_pdf:
+        print("check-release-b: PASS (PDF not built)")
+    else:
+        print(f"check-release-b: {'PASS' if ok else 'FAIL'}")
     for key, value in report["checks"].items():
         print(f"  {key}: {value}")
     (ROOT / "release/check_release_b.json").write_text(

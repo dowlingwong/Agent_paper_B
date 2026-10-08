@@ -10,7 +10,7 @@
   "commands": [
     {
       "command": "latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex",
-      "cwd": "/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/release-b-iyzglg65/paper_b/papers/paper_b",
+      "cwd": "<tmp>/release-b-.../paper_b/papers/paper_b",
       "exit_code": 0,
       "stderr_tail": [
         "Latexmk: Missing bbl file 'main.bbl' in following:",
@@ -25,7 +25,7 @@
     },
     {
       "command": "python experiments/paper_b/smoke_b.py --output results/paper_b/smoke_release_check",
-      "cwd": "/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/release-b-iyzglg65/paper_b",
+      "cwd": "<tmp>/release-b-.../paper_b",
       "exit_code": 0,
       "stderr_tail": [],
       "stdout_tail": [
