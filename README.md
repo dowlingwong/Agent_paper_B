@@ -1,6 +1,7 @@
 # Paper B — when should an executor agent spend its one verification
 
-This is the standalone repository for Paper B (ICML 2027 target). It was copied
+This is the standalone repository for Paper B (ICML 2027 target).
+Authoritative remote: [Agent_paper_B](https://github.com/dowlingwong/Agent_paper_B). It was copied
 from the joint Paper A/B repository `agent-checkpoint-intervention` at snapshot
 `S = 4154f153` (7 October 2026); see [PROVENANCE.md](PROVENANCE.md) for the path
 map, the files that differ from S and the licences.

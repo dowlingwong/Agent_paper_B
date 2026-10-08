@@ -1,5 +1,7 @@
 # Provenance
 
+- **Destination:** [Agent_paper_B](https://github.com/dowlingwong/Agent_paper_B).
+
 This repository was created on 8 October 2026 by copying Paper B out of the
 joint Paper A/B repository. The source repository is unchanged.
 

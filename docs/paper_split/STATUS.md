@@ -11,6 +11,35 @@ Planned work is not completed work. No paid run or submission has been made. No
 model call has been made. B's analysis side runs on CPU; the live lane is not
 built.
 
+## 8 October — takeover, Stage 0
+
+8 Oct: takeover; [this runbook](B_EXECUTION_RUNBOOK_20261008.md) is the
+execution order. The author's kickoff establishes this repository as the
+B authority. Science remains governed by RUNBOOK v2.4; plan v3.1 and DAC
+framing are pending author decisions. The source repository and Paper A
+were not accessed. Source-reading suggestions in the supplied runbook do
+not override the author's narrower scope instruction.
+
+GitHub `main` was verified at `1554732b1a769abb7138bfa75250e3543fc09121`.
+A fresh GitHub clone at that commit, Python **3.13.4**, dependencies from
+`requirements.lock`: **207 control + 6 release + 12 standalone tests PASS**;
+smoke **11/11 ENGINEERING_ONLY**; v3 qualification launches REFUSE for both
+lanes (draft and missing bindings/authorization); manuscript **12 pages**,
+verify clean, anonymity PASS. The inherited three-file Pi verifier failure
+was reproduced and left unchanged. Generated tracked files were restored
+in the scratch clone; its tree is clean. See VALIDATION's takeover rows.
+
+Machines: the Mac checkout and GitHub fetch are reachable; real TeX Live
+2023 / latexmk is available on the Mac and built the PDF. Ada access, B's
+clone path, GitHub credentials there, GPU contexts and ports are **not
+verified**; no SSH or GPU command was issued. D-ADA1 is pending and gates
+the later read-only pre-flight. The source repository is off limits.
+
+The supplied runbook was moved from `docs/` to its canonical `docs/paper_split/`
+path. Home-directory examples were replaced with logical placeholders to
+satisfy §2.8; its rules and stage text were preserved. README and PROVENANCE
+had no URL placeholder at takeover, so the verified destination URL was added.
+
 ## 4 October — DAC/configurator amendment proposed; readiness audit
 
 At the author's request:

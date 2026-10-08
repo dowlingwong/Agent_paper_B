@@ -136,3 +136,35 @@ the targets write elsewhere.
 | n2 | Not applied, recorded here: the allowlist test allows a local module stem, so `import task` passes because a local `task.py` exists. Benign today; tightening it is not worth the risk |
 
 
+
+## 8 October — Stage 0 takeover, fresh GitHub clone
+
+Source: `1554732b1a769abb7138bfa75250e3543fc09121`. Fresh clone from
+`https://github.com/dowlingwong/Agent_paper_B.git` into a scratch directory.
+Python 3.13.4, as pinned; all dependencies installed from `requirements.lock`.
+CPU engineering checks only; no model, GPU or task-realism rerun.
+
+| Executed command / inspection | Observed result |
+|---|---|
+| `git remote -v`; `git ls-remote origin main` | Correct B URL; remote `1554732b1a769abb7138bfa75250e3543fc09121`. Initial sandbox DNS attempt failed; permitted network retry succeeded. |
+| `git status --short`; `rg --files --hidden -g AGENTS.md -g '!.git'` | Only received runbook untracked; only AGENTS is inside vendored Pi (no edits there). |
+| `git clone https://github.com/dowlingwong/Agent_paper_B.git <scratch>/b0` | Fresh clone succeeded at required commit. |
+| `python3.13 --version`; `python3.13 -m venv .venv`; `.venv/bin/python -m pip install -r requirements.lock`; `.venv/bin/python -m pip check` | Python 3.13.4; 10 locked distributions installed; no broken requirements. |
+| `make test` | 207 control, 6 release, 12 standalone PASS; test execution 29.992 / 0.680 / 0.707 seconds. |
+| `make smoke-b` | 11/11 PASS; ENGINEERING_ONLY; train/calibration/test records 309/171/195. |
+| `.venv/bin/python protocols/paper_b/launch_validator.py --contract protocols/paper_b/contract_v3.yaml --phase qualification --lane one_step --for-launch` | Structure OK; exit 1; refuses draft, null runtime/task/configurator/split/budget bindings and missing qualification/engineering/authorization records. |
+| Same command with `--lane sequential` | Structure OK; exit 1; same expected refusal classes. |
+| `make paper-b` | Real PDF: 12 pages, 302688 bytes; verify clean; anonymity PASS (submission mode). |
+| `.venv/bin/python scripts/verify_vendored_pi.py` | Exit 1; inherited unexplained files: `packages/coding-agent/src/core/http-dispatcher.ts`, `packages/coding-agent/src/core/sdk.ts`, `packages/coding-agent/test/http-dispatcher.test.ts`; ledger not changed. |
+| `git restore -- results/paper_b/smoke_latest papers/paper_b/main.pdf`; `git status --short` (scratch clone) | Tracked build/smoke outputs restored; clean scratch tree. |
+| `command -v python3.13`; `command -v latexmk` | Both available on Mac; Ada not contacted pending D-ADA1. |
+
+The optional `uv python list --only-installed` probe failed because the default
+cache is outside the writable roots; the pinned system interpreter was used
+instead. A sandboxed local process-list probe was denied, and the permitted
+retry identified only the Stage 0 test process. No test repair was needed.
+
+Received runbook SHA-256 (before host-example normalization):
+`8d80a3ff1d65a7598da9b8200993f9f9d0bbfcc0a05811fdc9830f14b5567969`.
+Home-directory examples in the committed copy use logical placeholders;
+no science field or execution gate was changed.
