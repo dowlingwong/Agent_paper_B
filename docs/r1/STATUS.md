@@ -5,7 +5,7 @@ Newest entry first. Only this file says what is done.
 ## 9 October 2026 (night) — build batch 1: L3, L5, L6
 
 All ENGINEERING_ONLY: no evidence. Harness work is on branch `r1` of
-`~/Documents/autoresearch_harness`, based on `da8dcbd` (6 commits, not pushed).
+`~/Documents/autoresearch_harness`, based on `da8dcbd` (7 commits, not pushed).
 
 ### L3 — the four harness defects (one commit each)
 
@@ -51,7 +51,7 @@ Files changed: `src/autoresearch/manager/prompt_manager.py`,
   campaign; `TestControlViewLeak` (4 tests) rejects audit metrics, future
   records and sibling outcomes.
 
-### L6 — actions (efca691)
+### L6 — actions (efca691, 201e025)
 
 - `TrialDecision.SKIPPED` + `TrialState.SKIPPED` (PROPOSED → SKIPPED) with
   `TrialRecord` validation for skipped records (no metric, execution FAILED,
