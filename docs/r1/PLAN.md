@@ -294,6 +294,14 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | D19 | Worker backend **`LocalWorker`**; do not initialise the claw-code submodule. |
 | D20 | **ML-research benchmarks only** (MLGym, MLAgentBench, MLE-bench Lite plus an OpenML pool). Not needed in this batch. |
 
+**Decided 9 Oct 2026 by the author (recorded from `prompts/BUILD_BATCH2_PROMPT.md`).** These rows are fixed, not proposals.
+
+| ID | Decision (decided 9 Oct 2026 by the author) |
+|---|---|
+| D15 | Manager model for local runs: **`qwen2.5-coder:7b` via Ollama, pinned by digest**. |
+| Verify split policy | Keep the **default `"fixed"` for every node**. The Phase 0 noise pilot (E1) measures train-seed versus split-seed noise per node before anything changes. |
+| D20 (OpenML pool, batch 2) | The local OpenML pool for this batch is **5 small binary-classification datasets** selected by the L8 criteria (binary; ≤20k rows and ≤100 features; preferably OpenML-CC18; seconds per run on CPU; permissive licence), recorded with their IDs. |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |
