@@ -2,6 +2,96 @@
 
 Newest entry first. Only this file says what is done.
 
+## 9 October 2026 — batch 1 review and fixes
+
+All ENGINEERING_ONLY. Seven review findings on harness branch `r1` (at
+`201e025`) fixed, one commit each, then `r1` merged into harness `main`.
+Tests ran in a Linux VM (Python 3.11.16, env built outside the repo; the
+macOS `.venv` was not touched).
+
+### Findings and commits (harness)
+
+- **F1 (MAJOR) revise ignored its feedback — `8086f97`.** E1 `revise` now
+  calls `propose_next_trial(..., revision_feedback=feedback)`.
+  `LangGraphManager` adds a REVISION REQUEST block to the prompt and records
+  `extra.revision_feedback` only when feedback is given; the default prompt is
+  byte-identical (golden sha256 test). `revise` is also masked out for
+  managers whose `propose_next_trial` lacks the keyword, so it cannot fall
+  back to a plain resample. This answers open question 4 of the previous
+  entry: the feedback channel is the `revision_feedback` keyword.
+- **F2 (MAJOR) verify could run unseeded — `5ec9e9d`.** The E2 mask uses
+  `hasattr(worker, "run_trial_at_seed")` (real and dry loops), and
+  `_run_worker_at_seed` raises `SeedInjectionUnsupportedError` instead of
+  falling back to `run_trial`.
+- **F3 (MAJOR) demote could revert verified keeps — `ddba025`.** The mask
+  input is now `top_of_stack_unverified`; `_perform_demote` pops exactly the
+  top entry and refuses an empty stack or a verified top.
+- **F4 (MAJOR) coupled seeds — `81c5bd5`.** `lr_synthetic` builds its dataset
+  from `AR_SPLIT_SEED` and trains with `AR_TRAIN_SEED` (both default 42);
+  `openml_*` `SPLIT_SEED` defaults to 42 independently. `_run_verify` and
+  `run_real_campaign` take `verify_split_policy` (`"fixed"` default, or
+  `"vary"`), recorded as `extra.control.verify.split_policy`.
+  `LocalWorker.run_trial_at_seed(split_seed=None)` now keeps the worker's
+  configured split seed, so "fixed" really re-runs on the campaign's split.
+- **F5 (MINOR) LLM calls counted for deterministic managers — `04ba041`.**
+  Proposals count against `max_llm_calls` only when
+  `not getattr(manager, "deterministic", False)`, in both campaign loops.
+- **F6 (MINOR) infeasible choice crashed the campaign — `6756d68`.**
+  `_require_feasible` is gone. A masked-out or epoch-unsupported action emits
+  `control_decision_rejected` `{epoch, action, mask}` and the trial continues.
+- **F7 (MINOR) docs — `d9b4401`.** Docstrings (`run_real_campaign`,
+  `run_dry_campaign`, controller module, `ComputeBudget`, `seeds`), the README
+  R1 section and `CLAUDE.md` updated. `run_dry_campaign` is documented as
+  continue-only; its `NotImplementedError` message now says so.
+
+New tests: `tests/stage2/test_r1_review_fixes.py` (21 tests). Every finding
+has at least one test that failed on the pre-fix code and passes after it. A
+few companion tests guard behaviour that was already right and pass on both:
+the F1 golden default prompt, the F2 mask with a seeded worker, the F3
+single-top demote, and F5 counting for an LLM manager. Two existing tests
+were adapted:
+- `test_r1_l6.py`: the mask test uses the renamed keyword. The six-trial
+  scripted run now demotes at trial 4 and verifies at trial 5, because a
+  demote right after a verified keep is no longer feasible.
+- `test_r1_defects.py` L3.4: with the dataset now fixed, train seeds 7 and 8
+  give the same `lr_synthetic` val_score (0.921357). The different-seed check
+  uses train seed 100 and tests the split seed separately.
+
+### Checks (Linux VM)
+
+| Run | Passed | Failed | Errors |
+|---|---|---|---|
+| Baseline, `r1` at `201e025` | 299 | 9 | 1 |
+| After fixes, `r1` at `d9b4401` | 320 | 9 | 1 |
+| `main` after merge (`3c80b53`) | 320 | 9 | 1 |
+
+- The failures and the error are identical across all three runs and are
+  environmental: the 9 failures are the same set as the macOS baseline (missing
+  untracked ledgers, figures and paper sections; `/bin/zsh`), and the error is
+  the `src.autoresearch_worker` collection error.
+- **The L5 golden-fixture regression (`test_r1_l5.py`) passes on Linux**, at
+  baseline and after every fix. The fixture was not edited.
+- The tree of `main` after the merge is identical to `r1`.
+
+### Merge and push
+
+- Harness merge commit on `main`: **`3c80b53`** ("Merge r1: R1 build batch 1
+  (L3, L5, L6) with review fixes"); `r1` is checked out again.
+- `git push origin main r1` **failed**: `fatal: could not read Username for
+  'https://github.com': terminal prompts disabled`. The VM has no GitHub
+  credentials, and none were configured. Push both branches from the Mac.
+- This STATUS commit's own push is attempted right after it is made; the
+  result is in the session reply. It is expected to fail the same way.
+
+### Observation for the author
+
+- On `lr_synthetic` the training seed now barely moves the metric (≤ 1e-4 on
+  val_score, often 0 at 6 dp), while the split seed moves it by about 0.01.
+  Under the default `"fixed"` policy, verify's paired deltas on this node
+  will therefore be almost entirely the candidate-versus-incumbent difference,
+  with little seed noise. Choose whether `lr_synthetic` verify should use
+  `"vary"`.
+
 ## 9 October 2026 (night) — build batch 1: L3, L5, L6
 
 All ENGINEERING_ONLY: no evidence. Harness work is on branch `r1` of
