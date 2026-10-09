@@ -710,3 +710,321 @@ repairs; an execution bug is a test-demonstrable mismatch between code and
 sealed text. Balanced realism adopt/decline is unanswered. Show revised B1/B2
 and the diff before sealing. Complete approval and implementation remain
 withheld. No contract field or authorization record is changed here.
+
+## 19. External critique — 9 October 2026 (PROPOSED; nothing adopted)
+
+AI-assisted (Claude), from reading the B manuscript and contract v3 at
+`c5d55f6`, the attempt-1 realism report (`task_realism_20260927`) and the
+source repository at `882b8954`. Not an independent review. It adopts nothing
+and changes no estimand, gate, threshold, cutoff, seal, contract field or
+authorization; every response below is an author decision listed in
+[OPEN_ITEMS](OPEN_ITEMS.md) §B7. The critique's full text and the joint A/B
+mapping are in the project record `reviews/2026-10-09_external_critique_mapping.md`.
+
+### 19.1 The critique in brief
+
+The framing has depth, but formal definitions, identification boundaries,
+registrations, the checkpoint protocol and paper structure are research
+preparation, not a scientific result. What decides the paper is whether an
+experiment reveals a phenomenon not clearly identified before, with a credible
+mechanism. With only a formal MDP, definitions, an execution protocol and case
+studies, and no reliable intervention-effect estimates, a reviewer reads it as a
+refined evaluation proposal. Four questions are named as worth studying:
+
+- **Q1** Q^ρ vs Q*: after one intervention, continuing a fixed policy is not
+  long-run optimal control.
+- **Q2** Full state X vs observed (Z, M): logs and memory are not automatically
+  a Markov state.
+- **Q3** Identification limits of checkpoint restoration: replay from a
+  restored state does not by itself identify the deployed intervention effect.
+- **Q4** rank P(F | Z_t) ≠ rank ΔV(Z_t): called the most testable. The content
+  is not the inequality but *under which conditions* the rankings differ
+  systematically and *how much decision loss* that causes.
+
+### 19.2 Where each question sits in B now
+
+| Q | Status in B (evidence) | Proposed treatment |
+|---|---|---|
+| Q1 | Values are relative to the frozen ρ (§2 of the manuscript; Limitations); unrestricted sequential control is deferred (§11). | The three-regime tree is the narrowest observable piece of the Q^ρ/Q* gap: g_later vs g_now is the value of keeping an option that a ρ-relative one-step rule cannot see. Say so in "Why timing is not the one-step ranking question" (R-2). No claim about Q*. |
+| Q2 | Full history kept, no Markov claim (§2); "representation adequacy is separate and not assumed" (Limitations). | If D-DAC4 is adopted, frame its feature-map ablations as a partial test (R-3). No new collection. |
+| Q3 | Paper A's contribution; B applies it as Prop. N1 (§6). | Consequence for B's readings: R-4. |
+| Q4 | The manuscript disclaims it as prior art (§1 "What this paper is not"; §10). **But contract v3 still carries `utility_risk_comparator: utility_deficit` and `failure_risk_role: secondary`, and `UtilityDeficitLearner` / `FailureRiskLearner` exist in `control/learners.py` and run in `smoke_b.py`, while the manuscript's comparator table has no risk-ranked controller.** Contract and manuscript disagree. | R-1. |
+
+### 19.3 Proposed responses (author decisions)
+
+**R-1 — risk-ranked allocation as a descriptive secondary comparator (answers
+Q4; zero extra leaves).** Rank roots in both allocator phases by the
+utility-deficit score 1 − Ê[U^0 | W] (binary failure risk as a further
+secondary), with the same allocator, budgets and held-out families as every
+other controller. Every input is already on the three-leaf tree: the never leaf
+labels risk, and the now/later leaves give the advantages. It costs no leaves,
+tokens or accelerator time. Report the policy-value loss of risk ranking
+against the proposed controller and against an advantage-ranked myopic rule,
+with the same family-cluster bootstrap and a per-family breakdown.
+- *Mechanism, stated before data.* Risk and advantage rankings coincide under
+  monotone treatment amplification (okati2021, fernandezloria2022, kamran2024).
+  B's task contains an explicit route that breaks that condition: verification
+  can replace a candidate that would have done fine (harm). Attempt 1 recorded
+  harm in 5–8 of 8 families per scripted behaviour. The comparator therefore
+  tests a predicted mechanism and is not a search.
+- *Novelty framing.* An agent-setting measurement of decision loss with a
+  pre-stated mechanism. Not the ordinal theorem, which stays credited as prior
+  art.
+- *Boundaries.* Declared before the screen authorization (the screen produces
+  U-labelled data). Descriptive and secondary, outside the two primary contrasts
+  and their Bonferroni allocation. Whichever way the author decides, reconcile
+  contract v3's `utility_risk_comparator` / `failure_risk_role` with the
+  manuscript.
+
+**R-2 — name the Q^ρ/Q* piece (text only).** In §2, state that V_wait and its
+reported heterogeneity are the part of the gap between ρ-relative one-step value
+and non-myopic value that this design can observe, under one verification and
+two checkpoints.
+
+**R-3 — feature-map ablations as a partial X-vs-(Z, M) test (framing;
+contingent on D-DAC4).** Under the same allocator and budget, the held-out U
+difference between feature maps (telemetry, embedding, both) lower-bounds the
+decision value of history that a compressed representation discards, *for that
+learner class*. It does not establish Markov sufficiency of any map.
+
+**R-4 — compute and predeclare the N1 survival region now (arithmetic, not an
+outcome).** With §6's registered values the population tax is
+2·m·p_path = 12p (m ≤ 3, p_path = 2p). The practical target is 0.02 U. At the
+smallest nonzero grid value p = 0.005 the tax is 0.06; at the working value
+p = 0.02 it is 0.24. A contrast of the target size therefore survives *no*
+nonzero grid value, and the reported "largest surviving p" will be about L/12
+(≈ 0.0017 for L = 0.02).
+- State this in §6/§8 before outcomes, so that it is a predeclared reading and
+  not a post-hoc disappointment.
+- Whether to add a separately labelled no-interference reading (m = 1,
+  tax 4p) is an author decision, allowed only with its justification written
+  before outcomes.
+- *Link to A.* A's E-R2 v2.1 clean-vs-clean arm measures the seed-matched
+  nondeterminism floor on the same model and host family B plans to use. If
+  that floor, read as an outcome-changing discrepancy rate, exceeds roughly
+  0.002, B's N1-qualified readings carry no information at measured noise.
+  Whether seed-matched nondeterminism belongs to B's discrepancy event D, or is
+  sampling noise absorbed by repetitions and common random numbers, is a
+  definition that must be written before the pilot. B uses A's number only after
+  A releases it, under the A/B independence rules.
+
+### 19.4 The deeper risk: planted mechanisms
+
+The four mechanism classes are built into the task law, and R1 requires every
+regime to win in at least one family. If attempt 2 passes and the pilot shows a
+timing effect, a reviewer can say the design detected what it planted. The
+Limitations section already concedes "existence, not prevalence". Attempt 1's
+failure was informative in itself: under the "typical" behaviour
+verify_gain_max = −0.04 and now-best held in 0 of 8 families, so ordinary
+refitting made the verifier redundant (R4).
+
+- **M-1 (text).** Call the study what it is, a controlled mechanism study with
+  an LLM executor, in the abstract and introduction. Rest the "phenomenon" claim
+  on what is not planted: how the real executor's behaviour distributes roots
+  over the planted classes, and whether learned timing recovers that from W.
+- **M-2.** R-1's decision loss is a quantity the task law does not fix
+  directly.
+- **M-3 (option; separate allowance).** A small natural-workload probe:
+  three-leaf trees on non-constructed ML tasks with the same verifier and
+  response regime, reporting only whether any regime difference appears and how
+  large it is. Descriptive, outside the 512-leaf cap, with its own allowance and
+  its own author-committed authorization. Only after the attempt-2 verdict, and
+  only if it does not endanger 15 November. A null is a reportable limitation,
+  never grounds for another task attempt (P-B1 unchanged).
+
+### 19.5 What closes the gap fastest (in order)
+
+1. **By ~19 October, with the attempt-2 verdict:** the B2-N novelty verdict and
+   BAVAR hand-read (already open), now including the R-1 decision.
+2. **Before the screen authorization:** decide R-1, R-2 and R-4's text;
+   reconcile contract v3's risk-comparator fields with the manuscript.
+3. D-ATT2 → seal → one realism run. Gate and failure disposition unchanged.
+4. When A releases E-R2 v2.1, read its clean-vs-clean floor against R-4.
+5. **Minimal publishable result** (proposed wording, to be stated in §12 terms):
+   held-out primary contrasts with intervals, the R-1 decision-loss estimate and
+   the N1 survival reading. Without the first, B is a design paper and the
+   30 November rule applies.
+
+### 19.6 Process note (the critique's main charge)
+
+Since 26 September B has accumulated many planning and review records and no
+outcome. Proposed rule (author decision): until the attempt-2 realism verdict,
+add no B planning amendments beyond those needed to seal attempt 2 and to
+decide §B7, and run no review rounds beyond the one already allowed.
+
+## 20. Author decisions — 9 October 2026 (after §19)
+
+Authority: the author's answers on 9 October 2026, given in the coordinating
+chat session (Claude) after the §19 mapping and a follow-up problem review.
+Recorded here and in OPEN_ITEMS' decision table. The four decisions below are
+adopted. Items marked *proposed* are implementation details: the agent writes
+them into the attempt-2 design, and the author approves or changes them at the
+D-ATT2 STOP before the seal. No seal, outcome code, GPU/model work or
+authorization record is approved by this section. Ground rule 2 (science
+frozen) is lifted only for the changes named here.
+
+**Findings behind D-AGENCY, D-COMPLY and D-TESTPOOL** (AI-assisted, 9 Oct):
+
+- **F-a — the executor LLM has almost no decisions.**
+  - `fit_candidate` takes no arguments (`control/executor.py`, `TOOL_NAMES` and
+    `ToolHandlers`; B_PI_INTERFACE_NOTE: "use `{}` for fit").
+  - Fitting mode, data and the slot schedule are task code, and
+    careless/typical/careful are scripted parameters.
+  - The LLM's remaining freedom adds noise, not agency: how many fits it runs,
+    whether it submits early, whether it calls verify, and copying candidate
+    JSON into submit.
+- **F-b — verification compliance.** `PROMPT_VERIFY_AVAILABLE` says "use
+  verify_candidate at most once", which makes verification optional.
+  ATTEMPT2_DESIGN requires "exactly one verifier invocation per verified tail".
+  A g_now or g_later tail can therefore go untreated.
+- **F-c — test families.** ATTEMPT2_DESIGN reserves exactly 32 test families.
+  Manuscript §7 says the final sample size "is determined from pilot variance
+  and cost before final outcomes".
+- **F-d — timing headroom.** With q = .25 the controllers differ on at most
+  half the roots, so the 0.02 U target may sit near what timing can produce at
+  all. D-HEADROOM checks this.
+
+### 20.1 D-AGENCY — the executor LLM makes real in-task decisions (adopted)
+
+The LLM decides how to fit, what to keep and when to stop. The verification
+regime stays the controller's treatment (D-COMPLY).
+
+*Proposed interface.* These are the only tools the LLM sees:
+
+| Tool | Slots | Behaviour |
+|---|---|---|
+| `fit_candidate(mode, batches, fraction)` | 1 | `mode` ∈ {pooled, latest}. `batches` is a subset of the visible batch IDs; pooled only, while latest uses the newest batch. `fraction` ∈ {.6, .8, .9} of each batch's fitting rows. Creates one alternative from the incumbent and returns its `candidate_id` with the visible check accuracy of the alternative and the incumbent. |
+| `select_candidate(candidate_id)` | 0 | Makes any previously returned candidate the incumbent. |
+| `submit_candidate(candidate_id)` | — | Ends the tail; unused slots are forfeited. At the deadline the incumbent is submitted automatically. |
+
+- Candidates are referenced by ID. The LLM never copies candidate JSON, so a
+  transcription error can no longer change an outcome.
+- `verify_candidate` leaves the LLM's tool list (D-COMPLY).
+- The Pi extension's tool set (B_PI_INTERFACE_NOTE, IP2) changes to fit,
+  select and submit.
+
+*Proposed scripted behaviours.* They become policies over the same interface,
+so CPU realism exercises exactly what the LLM can do:
+
+| Behaviour | Fitting | Adoption | Stopping |
+|---|---|---|---|
+| careless | pooled over all batches, fraction .6 | always adopts the new alternative | never stops early |
+| typical | alternates pooled and latest, fraction .8 | adopts on strict visible improvement (the current attempt-2 rule) | — |
+| careful | fraction .9; compares pooled with latest and drops a batch whose inclusion lowers visible check accuracy | adopts on strict improvement | — |
+
+- R4's competent ordinary-refit control is the typical policy without
+  verification. Its information is unchanged.
+
+*Conflict for D-ATT2.* The adopted careless trait "updates only the first four
+model coordinates" has no counterpart in the LLM's interface. The author either
+adds an argument the LLM may choose (for example `features: all | first4`) or
+drops the trait. Neither is assumed.
+
+*Proposed new pre-seal check.* The author adopts or declines it; R1–R9 and
+their thresholds are unchanged.
+- **R10 (agency):** in CPU realism, mean never-tail U of careful minus careless
+  exceeds .02. If the interface's choices cannot move U, the LLM is decorative
+  again.
+- **Live qualification (descriptive):** report the fraction of roots whose LLM
+  action sequences differ between the two repetitions, and the LLM's never-tail
+  mean U against the three scripted policies.
+
+*Manuscript.* §3 and §7 describe the LLM's choice set and the boundary between
+the agent's choices and the controller's treatment.
+
+### 20.2 D-COMPLY — verification is a harness-executed treatment (adopted)
+
+- At a verified checkpoint the harness invokes the verifier **exactly once**
+  and applies the frozen response rule before control returns.
+- The LLM receives the result, the disclosed correspondence and the selected
+  candidate's ID, as an observation at the start of its next turn.
+- Unverified tails contain no verification event.
+- Prompts before the treatment event say nothing about verification
+  availability, so arms stay blind until treatment.
+- The tree converter refuses a verified tail with 0 or ≥ 2 verifier
+  invocations, and the invocation count is recorded per tail.
+- New prompts and the new handler go in new files. Attempt 1's
+  `PROMPT_VERIFY_*` and the pinned fixtures stay unchanged.
+
+### 20.3 D-TESTPOOL — test families match the manuscript (adopted: remove the inconsistency)
+
+*Default* (the author may reverse it at D-ATT2): keep the manuscript's science
+and change the unsealed reservation.
+- Reserve a test pool of 128 family IDs (test 0–127) instead of exactly 32.
+- Before the final-law freeze, fix N_final from pilot variance and the
+  authorizable budget.
+- Use test families 0…N_final−1 in index order, with no selection. Unused IDs
+  stay ungenerated.
+- Development (48) and posttrain (8) are unchanged.
+- Needing more than 128 requires a recorded amendment before generation.
+- Manuscript §7 states that test families are reserved and used in index
+  order.
+
+### 20.4 D-HEADROOM — timing headroom before any Ada step (adopted)
+
+After the CPU realism run, and before Stages 6–8, compute from the realism
+leaves, per behaviour, with typical as the decision row:
+
+**Inputs.** Per root: u_now, u_later and u_never (the mean of the two
+repetitions) and the reached flag. N = 8 roots; B = ⌊.25 N⌋ = 2.
+
+**Policies.**
+- θ_OT, hindsight-oracle timing: choose at most B roots, and for each either now
+  or later (later only if reached), to maximize total U; all other roots are
+  never.
+- θ_ORM, hindsight-oracle repeated-myopic:
+  1. Phase 1 verifies now the top roots by u_now − u_never > 0, up to B.
+  2. Phase 2 spends the remaining capacity on reached, unverified roots by
+     u_later − u_never > 0.
+
+**Output.** H = θ_OT − θ_ORM. Also report θ_OT − θ_never and the per-root
+contributions.
+
+**Rule.** If H for typical is below 0.02, STOP before any Ada step. The author
+then reconsiders the N2 practical target, the route or the venue. This is not
+an automatic P-B1 failure and not a licence to tune mechanisms; P-B1 is
+unchanged.
+
+**Interpretation, stated in the report.** H is the value of reserving a
+verification when both rules know every outcome. It is **not** an upper bound
+on the learned contrast D_myopic, because a learned myopic rule can fall further
+below its oracle. A D ≥ 0.02 alongside H < 0.02 would come from myopic
+estimation error, not from timing value, and timing value is what N2 claims.
+
+**Conditions.**
+- With 8 roots, H is noisy: it is a go/no-go screen, not an estimate.
+- Any change to the 0.02 target after seeing H is informed by development-data
+  outcomes and is disclosed as such.
+- The definition and its script are sealed with the attempt-2 design, before
+  realism outcomes exist.
+- D-REF1 is adopted only for this use of the hindsight oracle. Oracle and random
+  references in the final report remain D-REF1 (pending).
+
+### 20.5 R-1 and R-4 adopted as written in §19.3
+
+**R-1.**
+- Risk-ranked (utility-deficit) allocation is a descriptive secondary
+  comparator, and binary failure risk a further secondary one.
+- Zero extra leaves; outside the two primary contrasts and their Bonferroni
+  allocation.
+- Declared in the manuscript's comparator table (§5) and reporting section (§8)
+  before the screen authorization.
+- Contract v3 (draft) gains an explicit list of descriptive secondary
+  comparators, consistent with `utility_risk_comparator` and
+  `failure_risk_role`.
+
+**R-4.** The N1 survival arithmetic is predeclared in §6 and §8. Two
+sub-decisions stay open as §19.3 says:
+- a separately justified m = 1 reading;
+- whether seed-matched nondeterminism belongs to D, decided before the pilot.
+
+### 20.6 Order and schedule
+
+1. D-AGENCY, D-COMPLY, D-TESTPOOL and the D-HEADROOM definition with its script
+   go into ATTEMPT2_DESIGN. They are shown to the author with the diff at the
+   D-ATT2 STOP and sealed together.
+2. The R-1 and R-4 manuscript and contract edits depend on no outcome. They can
+   go in now and must be in before the screen authorization.
+3. The interface change adds design and implementation work, so the ~19 Oct
+   target for the attempt-2 verdict is at risk. The agent reports a revised
+   estimate against the 15 Nov cutoff.

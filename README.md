@@ -1,4 +1,16 @@
-# Paper B — when should an executor agent spend its one verification
+# Paper B — learned control of governed autoresearch loops (route R1)
+
+> **Start here: [docs/r1/PLAN.md](docs/r1/PLAN.md)** (canonical plan, 9 Oct 2026),
+> [docs/r1/RUNBOOK.md](docs/r1/RUNBOOK.md) and [docs/r1/STATUS.md](docs/r1/STATUS.md).
+> The earlier route (two-checkpoint verification timing, candidate-consistency
+> task) is retired. Its plans are in `archive/old_b_2026-10-09/`; the code,
+> protocols, manuscript (`papers/paper_b/`) and release tooling described below
+> are **legacy** and are kept only because tests import them (PLAN §8).
+> Every `docs/paper_split/...` path below now lives under
+> `archive/old_b_2026-10-09/docs_paper_split/`.
+
+## Legacy description (old route)
+
 
 This is the standalone repository for Paper B (ICML 2027 target).
 Authoritative remote: [Agent_paper_B](https://github.com/dowlingwong/Agent_paper_B). It was copied

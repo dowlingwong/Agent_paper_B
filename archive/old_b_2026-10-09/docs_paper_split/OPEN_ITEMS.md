@@ -126,6 +126,53 @@ Owner: **W** = work any agent can do · **D** = decision by Dowling ·
 
 ---
 
+### B7. External critique responses (proposed 9 Oct; [RUNBOOK §19](RUNBOOK.md#19-external-critique--9-october-2026-proposed-nothing-adopted))
+
+AI-assisted proposals; none adopted. Each is an author decision (D) unless
+marked W.
+
+- [ ] **R-1** Risk-ranked (utility-deficit) allocation as a descriptive
+  secondary comparator, zero extra leaves, pre-stated harm mechanism.
+  **Adopted 9 Oct (RUNBOOK §20.5)**; manuscript and contract edits open (W),
+  due before the screen authorization.
+- [ ] Reconcile contract v3 `utility_risk_comparator: utility_deficit` /
+  `failure_risk_role: secondary` with the manuscript's comparator table,
+  whichever way R-1 goes (W after D).
+- [ ] **R-2** One paragraph in §2 naming V_wait as the observable piece of the
+  Q^ρ/Q* gap (D, then W).
+- [ ] **R-3** Frame D-DAC4 feature-map ablations as a partial X-vs-(Z, M) test;
+  contingent on D-DAC4 (D).
+- [ ] **R-4** Predeclare the N1 survival arithmetic in §6/§8 (tax = 12p; a
+  0.02 U contrast survives no nonzero grid value). **Adopted 9 Oct
+  (RUNBOOK §20.5)**; text open (W). Still open (D): a separately justified
+  m = 1 reading; whether seed-matched nondeterminism belongs to D (before the
+  pilot).
+- [ ] **M-1** Abstract and intro call B a controlled mechanism study with an
+  LLM executor (D, then W).
+- [ ] **M-3** Natural-workload probe: adopt / decline; if adopted, it gets its
+  own allowance and authorization after the attempt-2 verdict (D/X).
+- [ ] **Minimal publishable result** wording (§19.5 item 5) stated in §12
+  terms (D).
+- [ ] **Process rule** §19.6: adopt / decline (D).
+
+### B8. Author decisions of 9 October ([RUNBOOK §20](RUNBOOK.md#20-author-decisions--9-october-2026-after-19))
+
+- [ ] **D-AGENCY** (adopted): write the LLM's choice interface (fit with mode /
+  batches / fraction, select, submit by ID) and the scripted behaviours as
+  policies over it into ATTEMPT2_DESIGN (W); resolve the careless
+  first-four-coordinates conflict (D, at D-ATT2); adopt / decline proposed R10
+  and the live agency report (D, at D-ATT2).
+- [ ] **D-COMPLY** (adopted): verification executed by the harness exactly once
+  per verified tail; `verify_candidate` removed from the LLM's tools; converter
+  refuses 0 or ≥ 2 invocations; new prompts in new files (W).
+- [ ] **D-TESTPOOL** (adopted, default reversible at D-ATT2): reserve test IDs
+  0–127; N_final fixed from the pilot before the final-law freeze; index order;
+  manuscript §7 wording (W).
+- [ ] **D-HEADROOM** (adopted): define and script H = θ_OT − θ_ORM at q = .25
+  on the realism leaves; seal with the design; STOP before Ada if H(typical)
+  < 0.02 (W, then D).
+- [ ] Revised estimate for the attempt-2 verdict against 15 Nov (W).
+
 ## Standalone repository
 
 Open items specific to this repository, created by the Phase 1–2 copy from
@@ -222,11 +269,16 @@ All other rows remain pending; none is an evidence-run authorization.
 | D-ADA1 | by 20 Oct | partially answered: author authorized Ada B-only access/clone; completed through existing SSH key. Card, port and execution plan remain pending |
 | D-DAC2 | after measurement | pending; conditional Kev-4B primary, CLM ablation |
 | D-DAC3–6 | before pilot | pending; questions/max_chars, features, projection, Kev size |
-| D-REF1 | Stage 4 | pending; descriptive oracle/random references |
+| D-REF1 | Stage 4 | pending; descriptive oracle/random references. 9 Oct: hindsight oracle adopted only for D-HEADROOM (RUNBOOK §20.4) |
 | D-GOV1/2 | Stage 5 | pending; schema/ledger/adjudication, default no panel |
 | D-PT1/2/3 | after screen | pending; post-freeze extension and separate budget |
 | B2-N / B2-BAVAR | before 15 Nov | pending; author's verdict and hand-reading |
 | D-ATT2 | Stage 2 | NOT APPROVED as written; partial subitems adopted, required revisions prepared; balanced realism adopt/decline and complete revised approval pending |
+| D-AGENCY | at D-ATT2 | adopted 9 Oct: LLM makes in-task choices; interface details proposed (RUNBOOK §20.1) |
+| D-COMPLY | at D-ATT2 | adopted 9 Oct: harness-executed verification, exactly once per verified tail (§20.2) |
+| D-TESTPOOL | at D-ATT2 | adopted 9 Oct: test pool 0–127, N_final from pilot, index order (default; reversible at D-ATT2) (§20.3) |
+| D-HEADROOM | before Stage 6 | adopted 9 Oct: oracle timing headroom on realism leaves; STOP before Ada if < 0.02 (§20.4) |
+| R-1 / R-4 | before screen authorization | adopted 9 Oct as in RUNBOOK §19.3; R-4 sub-decisions open (§20.5) |
 | Evidence authorizations | per phase | absent; author must create and commit each himself |
 
 Stage 1's decision STOP is closed: the author answered all five now items,
