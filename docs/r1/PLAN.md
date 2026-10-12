@@ -1,6 +1,6 @@
 # Paper B (route R1) — canonical plan
 
-**Status:** canonical from 9 October 2026. This is the only plan for Paper B. Every plan, runbook, decision sheet, prompt pack and review written for the earlier Paper B route is archived under `archive/old_b_2026-10-09/` and has no authority.
+**Status:** canonical from 9 October 2026; revised 12 October 2026 (R1-REFRAME, R1-INDEX and R1-GATE-FIRST in §1). This is the only plan for Paper B. Every plan, runbook, decision sheet, prompt pack and review written for the earlier Paper B route is archived under `archive/old_b_2026-10-09/` and has no authority.
 
 **Owner:** Dowling Wong (author; decides). This plan was drafted by an AI agent (Claude, coordinating session) from the author's decisions of 9 October 2026 and two AI-assisted inputs in `docs/r1/inputs/`. None of this is human or external review.
 
@@ -28,6 +28,9 @@
 | R1-FORMAT (9 Oct) | **No manuscript format is fixed yet.** The ICML-standard bar (§9) is about content quality, not template or page count. |
 | R1-BENCH (9 Oct) | **ResNet-trigger is removed from the experiments.** Experiments and configurator training use **agent benchmarks** across the board. Which benchmarks is D20 (proposal in §6). |
 | R1-LEDGERS (9 Oct) | The original trial ledgers (1,355 trials) are **lost**. Closes D12: there is no per-trial development analysis. Only aggregate tables survive (§6). |
+| R1-REFRAME (12 Oct) | **Headline: incremental acceptance decisions under noise.** The governed loop is formalised as a noisy sequential selection problem with an incumbent. The paper derives when verify and a raised keep threshold are worth their cost, as functions of \|Δ̂\|/σ_n, ϱ and remaining budget, and characterises the winner's-curse bias of `current_best` and how it drives stagnation. Theory tools: ranking & selection, knowledge gradient (Frazier & Powell), racing (F-Race / irace), best-arm identification. This is B's own theory, not Paper A's (§2, §3 C2). |
+| R1-INDEX (12 Oct) | **The learning question is narrowed:** how much does a learned configurator add *above a theory-grounded index policy* (KG-style or PACE-style)? This replaces "who controls best" as the primary contrast and roughly halves the experiment matrix (§3 C3, §5). The LLM self-control arm stays; a **stronger manager** is used at least as a deployment check (D22). |
+| R1-GATE-FIRST (12 Oct) | **Two questions are answered before any model is built.** (1) Which CPU nodes have enough training-seed and split-seed noise? (2) On a branch table, does hindsight oracle minus the strongest simple baseline (noise-aware threshold or PACE-style gate) exceed the practical target? Kev/CLM architecture selection (D16) and the configurator scaffold (L11) are deferred until the headroom gate passes. If it fails, the fallback paper is C1 + C2 theory, a complete TMLR paper (§3). |
 
 Superseded by this plan:
 - the two-checkpoint verification-timing study (N2) and its N1 replay tax;
@@ -35,7 +38,8 @@ Superseded by this plan:
 - RUNBOOK §16–§20 decisions (D-AGENCY, D-COMPLY, D-TESTPOOL, D-HEADROOM, R-1, R-4 as written);
 - the ICML 2027 route and the 15 / 30 November cutoffs;
 - the Devstral / Ada binding plan;
-- the 9 October prompt pack.
+- the 9 October prompt pack;
+- (12 Oct) the 9 Oct framing of §2–§3 as "who should control the loop", and the 9 Oct §7 proposal as a work item. Both survive only as context where marked.
 
 ## 2. The question
 
@@ -46,18 +50,24 @@ In a governed autoresearch campaign, an LLM manager proposes bounded edits to a 
 
 The correlation is assumed; Phase 0 measures it (inputs §4.4).
 
-**Question.** Who should decide *when and how* to intervene in this loop at matched compute: the LLM itself, a small trained configurator, or a hybrid? And does the problem need RL at all, or is full-information supervised learning on counterfactual labels enough?
+**Question (revised 12 Oct, R1-REFRAME).** The governed loop is a noisy sequential selection problem with an incumbent. Each trial draws a candidate, observes one noisy metric, and accepts or rejects it against an incumbent whose own value is a noisy, selected draw. Three sub-questions:
+
+1. **When is verification worth its cost?** Derive the value of verify (r paired fresh-seed runs) and of a raised keep threshold as functions of the observed margin |Δ̂|/σ_n, the cross-config correlation ϱ and the remaining budget.
+2. **How biased is the incumbent?** Characterise the winner's-curse bias of `current_best` (a maximum of noisy draws) and how it lowers the acceptance rate of later true improvements, i.e. how it drives stagnation.
+3. **How much does learning add?** Above the index policy that follows from 1–2 (KG-style or PACE-style), how much does a learned configurator gain at matched compute, and where does LLM self-control sit?
+
+The 9 Oct question (LLM vs configurator vs hybrid; does the problem need RL) survives inside 3. It is no longer the headline.
 
 ## 3. Planned contributions (claims are falsifiable; none is established)
 
 | ID | Contribution | Kind | Evidence that would establish it |
 |---|---|---|---|
-| C1 | **Measured control errors in governed autoresearch:** false keep, false discard and wasted-run rates per node, from noise-floor measurements and fresh-seed audits of ledgered candidates. | Phenomenon | Phase 0–1 audits on ≥ 10 nodes |
-| C2 | **Loop-level control formulation** with "how to intervene" actions (skip, revise, verify with frozen response, and possibly stop). Includes an identification ladder Q^ρ → V^L0 → V^π linking branch labels to Paper A's replay identification, and a rule for when RL is needed. | Formulation and theory | Proofs or derivations, checked on branch data |
-| C3 | **Matched-compute comparison** on held-out instances: LLM self-control vs trained configurator vs two hybrids, against statistical gates, harness heuristics, an offline-RL controller and HPO-style schedulers. Includes an action ablation showing where the value comes from. | Main empirical result | Phase 3 deployment |
-| C4 | **Configurator training recipe.** Full-information supervised learning on branch labels, then RL only if the ladder shows it is needed. Reports which rung the problem requires. | Method, secondary | Phase 2–3 |
+| C1 | **Measured control errors in governed autoresearch:** false keep, false discard and wasted-run rates per node, from noise-floor measurements (training seed and split seed separately) and fresh-seed audits of ledgered candidates. | Phenomenon | Phase 0–1 audits on nodes with real training- or split-seed noise (D21) |
+| C2 | **Theory of incremental acceptance under noise** (R1-REFRAME). The governed loop as noisy sequential selection with an incumbent: (i) the value of verify and of a raised keep threshold as functions of \|Δ̂\|/σ_n, ϱ and remaining budget; (ii) the winner's-curse bias of `current_best` and its effect on later acceptance (stagnation); (iii) the index policy that follows (KG-style or PACE-style, D23). Built on ranking & selection, knowledge gradient, racing and best-arm identification. The identification ladder Q^ρ → V^L0 → V^π and the rule for when RL is needed remain as a secondary part. | Formulation and theory (main) | Full proofs; predictions checked against measured σ_n and ϱ, and against simulation |
+| C3 | **How much does learning add above the index policy?** (R1-INDEX). On held-out instances at matched compute, the trained configurator (and hybrid H1) is compared with three primary comparators: the C2 index policy, a PACE-style gate and a noise-aware threshold. LLM self-control is an arm, with a stronger manager at least as a deployment check (D22). An action ablation shows where any gain comes from. | Main empirical result | Phase 3 deployment |
+| C4 | **Configurator training recipe** (secondary). Full-information supervised learning on branch labels, then RL only if the ladder shows it is needed. Built only after the headroom gate passes (R1-GATE-FIRST). | Method, secondary | Phase 2–3 |
 
-**Fallback if the headroom gate fails (RUNBOOK Phase 1).** If no learned controller can beat the best simple baseline, the paper becomes C1 + C2 plus a negative C3. That is still a complete journal paper.
+**Fallback if the headroom gate fails (RUNBOOK 0.4b pre-check or 1.5 gate).** If the hindsight oracle cannot beat the best simple baseline by the practical target, nothing is learned and no configurator is built. The paper becomes **C1 + C2 theory**, plus the measured statement that on these nodes there is no room for learning above the index policy. That is a complete TMLR paper.
 
 **Novelty position** (inputs/NOVELTY_SWEEP): no prior work trains a policy for when and how to intervene in an autoresearch keep/discard loop. Each piece, however, has close neighbours:
 - Harness-MDP (2607.05458): small offline-RL controller over a frozen LLM;
@@ -67,17 +77,20 @@ The correlation is assumed; Phase 0 measures it (inputs §4.4).
 - PrimeScientist (2609.17846): budgeted allocation over autoresearch;
 - Rehearse (2607.27687): the LLM judge degrades late in a campaign.
 
-The paper must win on the **combination** and on three differentiators:
-1. a measured, unplanted noise mechanism;
-2. an explicit LLM self-control arm at matched compute;
-3. same-state counterfactual labels with stated identification conditions.
+The paper must win on the **combination** and on three differentiators (revised 12 Oct):
+1. a measured, unplanted noise mechanism (C1);
+2. **a theory of acceptance under noise that is B's own** (C2). It connects the agent loop to ranking & selection, knowledge gradient, racing and best-arm identification. What those classical results do not cover: a proposer whose proposal distribution depends on the ledger, an incumbent-relative keep with restore, and a winner's-curse bias that feeds back into the proposer;
+3. a sharp learning question: the gain above the theory-grounded index policy at matched compute, with an explicit LLM self-control arm (C3).
+
+Same-state counterfactual labels with stated identification conditions stay as a supporting point, not a differentiator. Restore is bit-exact on the CPU nodes (STATUS, L7), so p ≈ 0 there, and p-aware labels are unlikely to change a decision.
 
 Three risks have to be neutralised in the experiments themselves:
 - "it is just HPO scheduling": HPO baselines plus an action ablation;
 - "a small controller over an LLM is known": a self-control failure, a hybrid result, and transfer;
-- "branch labels are standard": measured p, plus a case where p-aware labels change a decision.
+- "branch labels are standard": measured p, plus a case where p-aware labels change a decision;
+- "it is just ranking & selection / racing" (added 12 Oct): state what the classical models assume (i.i.d. arms, a fixed arm set, no incumbent restore), show where the loop departs, and include racing and KG-style baselines.
 
-The sweep is rerun before submission.
+The sweep is rerun before submission. From 12 Oct it also covers ranking & selection, knowledge gradient (Frazier & Powell), racing (F-Race / irace) and best-arm identification, which the 9 Oct sweep did not cover.
 
 ## 4. Setting and estimands (summary; full text in inputs §1–§5)
 
@@ -108,24 +121,32 @@ The sweep is rerun before submission.
 
 ## 5. Arms and baselines
 
+**Primary comparator (R1-INDEX, 12 Oct).** Every learned arm must beat the C2 index policy (KG-style or PACE-style, D23). The primary contrasts are configurator − index policy and H1 − index policy. Configurator vs LLM self-control is secondary.
+
 **Arms**
-1. **LLM self-control.** A side query on a forked context returns an action and per-action scores. It never enters the manager context, and its tokens are charged to the arm.
+1. **LLM self-control.** A side query on a forked context returns an action and per-action scores. It never enters the manager context, and its tokens are charged to the arm. Branch data use the pinned local manager (D15). A stronger manager (D22) runs at least as a deployment check, so the arm is not a strawman.
 2. **Trained configurator.** Architecture is open; see §7.
 3. **Hybrid H1.** The configurator decides *whether/when*; the LLM decides *how*.
-4. **Hybrid H2.** The LLM's scores and rationale are inputs to the configurator.
+4. **Hybrid H2** (secondary; dropped first if the matrix must shrink). The LLM's scores and rationale are inputs to the configurator.
 
-**Baselines**
+**Baselines** (trimmed 12 Oct)
+
+Required:
 - ρ, the default rule;
-- fixed schedules;
-- random at matched realised budget;
-- harness heuristics: repeated-bad and doom-loop skip;
-- a noise-aware keep threshold;
+- the C2 index policy (KG-style or PACE-style);
 - a PACE-style anytime-valid commit gate;
+- a noise-aware keep threshold;
+- a racing-style re-evaluation rule (F-Race / irace style);
+- harness heuristics: repeated-bad and doom-loop skip;
+- random at matched realised budget;
 - an offline-RL (AWR) MLP controller in the style of Harness-MDP;
-- a risk-ranked vs advantage-ranked comparator on Z (answers the earlier critique's ranking question at no extra cost);
-- the two-step continuation-value rule (Longstaff–Schwartz / FQE) for budgeted verify;
-- successive halving / ASHA for the fidelity extension only;
 - a hindsight oracle on the branch table, used for headroom only.
+
+Secondary (appendix; dropped first if compute is short):
+- fixed schedules;
+- a risk-ranked vs advantage-ranked comparator on Z;
+- the two-step continuation-value rule (Longstaff–Schwartz / FQE) for budgeted verify;
+- successive halving / ASHA, for the fidelity extension only.
 
 **Matching.**
 - Every arm faces the same instances, manager, compute C, LLM-call cap and intervention cap.
@@ -141,6 +162,7 @@ The decision is made (R1-BENCH): no ResNet; agent benchmarks throughout. Which b
 | Pool | Candidates | Why | Cost and status |
 |---|---|---|---|
 | Training workhorse (many cheap instances) | OpenML / AutoML-style tabular tasks; existing harness nodes `lr_synthetic`, `openml_*` | Hundreds of instances, CPU-cheap, real seed noise | Seconds per run. 10–20+ tasks to add (small new code). |
+| Noisy CPU nodes (added 12 Oct, D21) | SGD-trained small MLP / small CNN nodes on CPU where the training seed moves the metric; existing nodes run with the split seed varied | C1 and C2 need nodes where the noise exists. On `lr_synthetic` the training seed moves val_score by ≤ 1e-4 while the split seed moves it by ~0.01 (STATUS, 9 Oct). The five OpenML nodes are deterministic at a fixed seed. | Small new code (L8b); E1 measures them |
 | Agent benchmarks, primary | **MLGym-Bench** (13 open-ended AI-research tasks; Gym interface; open-sourced) [arXiv 2502.14499]; **MLAgentBench** (an adapter already exists in the harness) | Recognised ML-research-agent benchmarks; MLGym is built for RL training of agents | Per-task compute varies; the 0.4 pilot measures it. Light tasks for training, heavy ones held out. |
 | Agent benchmark, held out | **MLE-bench Lite** (low-complexity Kaggle split) [arXiv 2410.07095] | Cross-benchmark generalisation is the strongest test of the configurator | Kaggle data and terms, larger compute; evaluation only. |
 | Deployment showcase | autoresearch (Karpathy-style, GPU) | The setting the story starts from | About 5 min per run; deployment only, never branched. |
@@ -154,6 +176,8 @@ The decision is made (R1-BENCH): no ResNet; agent benchmarks throughout. Which b
 - **Harness code.** Local clone at `~/Documents/autoresearch_harness`, cloned 9 Oct 2026 at `da8dcbd`, with submodules not initialised. R1 work goes on branch `r1` (D14).
 
 ## 7. Configurator architecture (proposal for discussion; D16 open)
+
+> **Deferred (R1-GATE-FIRST, 12 Oct).** No architecture is selected and no configurator scaffold is built until the headroom gate passes (RUNBOOK 0.4b pre-check, then 1.5). This section is context for that later decision, not a work item. If the gate fails, it is not needed.
 
 **Verified open candidates** (repository pages read 9 Oct 2026):
 
@@ -241,7 +265,7 @@ They stay where they are only because tests and release tooling import them. RUN
 1. **Clarity and length.** The core argument is concise, and the rest goes to the appendix. No template or page count is fixed yet (R1-FORMAT). TMLR's own regular/long-submission threshold is checked when the format is chosen.
 2. **Baselines.**
    - The strongest relevant baselines, re-implemented and tuned with the same budget as our arms.
-   - At least: a PACE-style gate, an AWR-MLP controller in the style of Harness-MDP, a noise-aware threshold, harness heuristics, and HPO-style schedulers where the action is HPO-like.
+   - At least: the C2 index policy, a PACE-style gate, a racing-style rule, an AWR-MLP controller in the style of Harness-MDP, a noise-aware threshold, harness heuristics, and HPO-style schedulers where the action is HPO-like.
    - No strawmen. The tuning protocol is identical for every arm, and `matching_report` checks it.
 3. **Statistics.**
    - Primary contrasts, sample sizes and analysis are pre-declared.
@@ -251,11 +275,11 @@ They stay where they are only because tests and release tooling import them. RUN
 4. **Ablations and mechanism.**
    - An action ablation.
    - Information ablations (with and without LLM text, with and without remaining budget).
-   - A model-size ablation for family (b).
+   - A model-size ablation for family (b), only if family (b) is trained.
    - The ladder V^ρ ≤ V^L0 ≤ V^greedy ≤ V^RL.
 5. **Generalisation.** Transfer to a held-out benchmark (leave-one-benchmark-out) and a second manager model, both reported.
 6. **Theory.**
-   - C2's statements carry full proofs, an AI-assisted audit and the author's own check.
+   - C2 (acceptance under noise) is the main theory. Its statements carry full proofs, an AI-assisted audit and the author's own check, and its predictions are checked against measured σ_n and ϱ.
    - Assumptions are stated where they are used.
 7. **Reproducibility.**
    - Code, configs, seeds and compute reported per arm.
@@ -263,7 +287,7 @@ They stay where they are only because tests and release tooling import them. RUN
    - Every number regenerated by a script from committed data.
 8. **Positioning.**
    - The novelty sweep is rerun within 4 weeks of submission.
-   - An explicit differentiator against each of the closest works (§3).
+   - An explicit differentiator against each of the closest works (§3), including ranking & selection, knowledge gradient, racing and best-arm identification.
 9. **Honesty.**
    - Negative and null results reported.
    - AI assistance disclosed.
@@ -274,8 +298,9 @@ They stay where they are only because tests and release tooling import them. RUN
 | Milestone | Target |
 |---|---|
 | Phase 0 complete; open decisions taken | ~31 Oct 2026 |
+| C2 theory draft (derivations and simulator, T1–T3) | ~15 Nov 2026 |
 | Phase 1 headroom gate | ~15 Dec 2026 |
-| Phase 2 configurator selected | ~31 Jan 2027 |
+| Phase 2 configurator selected (only if the gate passes) | ~31 Jan 2027 |
 | Phase 3 deployment analysed | ~28 Feb 2027 |
 | TMLR submission | ~31 Mar 2027 |
 
@@ -302,6 +327,14 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | Verify split policy | Keep the **default `"fixed"` for every node**. The Phase 0 noise pilot (E1) measures train-seed versus split-seed noise per node before anything changes. |
 | D20 (OpenML pool, batch 2) | The local OpenML pool for this batch is **5 small binary-classification datasets** selected by the L8 criteria (binary; ≤20k rows and ≤100 features; preferably OpenML-CC18; seconds per run on CPU; permissive licence), recorded with their IDs. |
 
+**Decided 12 Oct 2026 by the author (R1-REFRAME, R1-INDEX, R1-GATE-FIRST).** These rows are fixed, not proposals.
+
+| ID | Decision (decided 12 Oct 2026 by the author) |
+|---|---|
+| R1-REFRAME | The headline is incremental acceptance under noise, and C2 is B's own theory (§1, §3). |
+| R1-INDEX | The primary contrasts are learned arms vs the C2 index policy. LLM self-control stays, with a stronger manager at least as a deployment check (§5). |
+| R1-GATE-FIRST | Phase 0 answers the noise-node and pilot-headroom questions before any model is built. D16 and L11 are deferred until the gate passes. Fallback = C1 + C2 (§3). |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |
@@ -319,11 +352,14 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | D13 | Old B path | **Closed by R1-ROUTE / R1-ARCHIVE** | — |
 | D14 | Code location | Default set 9 Oct: harness changes on branch `r1` of the clone `~/Documents/autoresearch_harness`, pinned by commit from this repo; analysis, plan and manuscript in this repo. Confirm. | 0.1 |
 | D15 | Manager model for experiments | Pinned local open-weight model (Ollama digest); one API model as a deployment check | 0.4 |
-| D16 | Configurator architecture | §7 discussion | Phase 2 |
+| D16 | Configurator architecture | §7 discussion; **deferred until the headroom gate passes** (R1-GATE-FIRST) | Phase 2, only if the gate passes |
 | D17 | Primary venue | **Closed 9 Oct:** TMLR, ICML-standard quality bar (§9) | — |
-| D18 | Practical target and headroom threshold | Set from Phase 0 noise floors | Phase 1 gate |
+| D18 | Practical target and headroom threshold | Set from Phase 0 noise floors | 0.4b pilot pre-check |
 | D20 | Benchmark set and scope | §6 proposal: ML-research agent benchmarks (MLGym, MLAgentBench, MLE-bench Lite) plus an OpenML pool; general agent benchmarks excluded unless the author wants them | 0.4 |
 | D19 | Worker backend | `LocalWorker` (structured edits, no `claw-code` submodule) for CPU nodes; `ClawWorker` only if an arm needs free-form code edits | 0.3 |
+| D21 | Noise nodes | Keep only nodes where the measured training-seed or split-seed noise makes the default rule err at a non-trivial rate. Add SGD-trained CPU nodes if too few qualify. Choose the `fixed` or `vary` split policy per node from E1. | E2 STOP |
+| D22 | Stronger manager for the self-control arm | One API model, or a larger open model on Ada (one card); at least as a deployment check | Phase 3 declaration |
+| D23 | Index policy used as the primary comparator | KG-style (Bayesian; uses σ_n and ϱ) vs PACE-style (anytime-valid e-process); possibly both | After the T2 draft, before 0.4b |
 
 ## 11. Relation to Paper A
 

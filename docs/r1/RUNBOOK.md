@@ -1,6 +1,6 @@
 # Paper B (route R1) — runbook
 
-Canonical plan: [PLAN.md](PLAN.md). This runbook says what to do, in which order, how to tell it is done, and where the author decides. Progress goes only into [STATUS.md](STATUS.md). Drafted 9 October 2026 by an AI agent (Claude); AI-assisted, not human review.
+Canonical plan: [PLAN.md](PLAN.md). Revised 12 October 2026 for R1-REFRAME, R1-INDEX and R1-GATE-FIRST (PLAN §1). This runbook says what to do, in which order, how to tell it is done, and where the author decides. Progress goes only into [STATUS.md](STATUS.md). Drafted 9 October 2026 by an AI agent (Claude); AI-assisted, not human review.
 
 ---
 
@@ -48,6 +48,9 @@ Overview:
 
 ### Execution order: build locally first, then experiment (adopted 9 Oct 2026)
 
+> **Revised order (12 Oct, R1-GATE-FIRST).** L1–L8 are done (STATUS); L2 is covered by the PLAN §10 decisions. E1 moves up, because it needs none of L9–L14 and it decides which nodes the rest is built for. L11 (configurator scaffold) is deferred until the E5 headroom gate passes. A theory track T1–T3 runs in parallel from now. The order is:
+> E1 + T1 → L8b, L9, L10 (+ T2) → E1b (pilot headroom pre-check) → L12, L13, L14 (+ T3) → E2 STOP → E3–E5 → only if the gate passes: L11, E6 → E7, E8.
+
 Detailed specification for L1–L14: [BUILD_RUNBOOK.md](BUILD_RUNBOOK.md). Agent prompts live in `docs/r1/prompts/`; the first is `BUILD_BATCH1_PROMPT.md` (L1, L3, L5, L6).
 
 Steps L1–L14 run on the Mac (CPU, local Ollama model) and produce `ENGINEERING_ONLY` output only. Steps E1–E8 are the experiments. Each step finishes before the next one starts, unless a step says otherwise. Cross-references point to the phase tasks below.
@@ -64,29 +67,41 @@ Steps L1–L14 run on the Mac (CPU, local Ollama model) and produce `ENGINEERING
 | L6 | Actions: skip, revise, verify (fresh-seed re-run, frozen response, demote), stop; unit tests on `lr_synthetic` | new, completes 0.3 | Each action tested |
 | L7 | Restore and branch machinery at E1/E2, including the bit-exact restore audit on CPU nodes | 1.2 (built early) | Audit reproduces original metrics |
 | L8 | Benchmark adapters, local subset: 5 OpenML tasks; check the existing MLAgentBench adapter; 2–3 light MLGym tasks (install and CPU feasibility) | 1.1 (subset) | Smoke campaign per adapter |
+| L8b | Noisy CPU nodes (D21, added 12 Oct): 2–4 SGD-trained small MLP / small CNN nodes on CPU where the training seed moves the metric, with training-seed and split-seed injection as in L3 | 0.4 / 1.1 | Smoke campaign per node; a changed seed changes the metric |
 | L9 | Port B's branch-record schema and cluster bootstrap to trial-epoch sibling sets; leak tests | PLAN §8 | Tests green on fixtures |
-| L10 | Offline baselines on a synthetic branch table: ρ, fixed, random, noise-aware threshold, PACE-style gate, harness heuristics, AWR-MLP, risk-vs-advantage ridge | 1.4 (code) | Scores on the fixture |
-| L11 | Configurator scaffold: compact serialiser (≤ 512 tokens), late-fusion head on ModernBERT-large / Laya, Kev-0.8B wrapper; supervised Brier step, then a REINFORCE step with bounded-Brier reward; runs end-to-end on the Mac (MPS) | 2.2 (code) | Trains and evaluates on the fixture |
+| L10 | Offline baselines on a synthetic branch table: ρ, random, noise-aware threshold, PACE-style gate, racing-style rule, **the C2 index policy (from T2)**, harness heuristics, AWR-MLP, hindsight oracle; secondary: fixed schedules, risk-vs-advantage ridge | 1.4 (code) | Scores on the fixture |
+| L11 | **Deferred until the E5 headroom gate passes (R1-GATE-FIRST).** Configurator scaffold: compact serialiser (≤ 512 tokens), late-fusion head on ModernBERT-large / Laya, Kev-0.8B wrapper; supervised Brier step, then a REINFORCE step with bounded-Brier reward; runs end-to-end on the Mac (MPS) | 2.2 (code) | Trains and evaluates on the fixture |
 | L12 | LLM self-control side query (forked context), scored against the table | 1.4 (code) | Scores logged; manager context untouched |
-| L13 | End-to-end dry run on `lr_synthetic`: campaign with hooks → branches → table → tiny configurator → short deployment → analysis script | — | One command reproduces it |
+| L13 | End-to-end dry run on one noisy CPU node: campaign with hooks → branches → table → index policy and baselines (a stub in place of the configurator) → short deployment → analysis script | — | One command reproduces it |
 | L14 | Phase-0 build review (fresh session) and one correction round | §1 rule 7 | Review filed, fixes in |
+
+**Theory track (added 12 Oct; runs in parallel, on the Mac)**
+
+| # | Step | Done when |
+|---|---|---|
+| T1 | Formal model: the governed loop as noisy sequential selection with an incumbent (proposal law, m = J + η, keep-if-better, restore on non-keep). Literature map: ranking & selection, knowledge gradient (Frazier & Powell), racing (F-Race / irace), best-arm identification, PACE; what each assumes and where the loop departs | A note in `docs/r1/theory/` with the model and the map |
+| T2 | Derivations: (i) the value of verify with r paired runs, and of a threshold z, as functions of \|Δ̂\|/σ_n, ϱ and remaining budget; (ii) the winner's-curse bias of `current_best` and the induced drop in acceptance of later true improvements; (iii) the resulting index policy (D23) | Statements with proofs; index policy implemented for L10 |
+| T3 | Monte-Carlo simulator of the loop that checks T2's predictions, then calibrated with E1's measured σ_n and ϱ | Predicted and simulated error rates agree; plots regenerated by script |
 
 **Experiments**
 
 | # | Step | Phase task | Gate |
 |---|---|---|---|
-| E1 | Noise-floor and cost pilot (`PILOT`): σ_n, ϱ, determinism, run cost, LLM latency, on local nodes and light benchmark tasks | 0.4 | — |
-| E2 | **STOP:** the author sets the remaining decisions, the practical target (D18) and the headroom criterion; checks the premise | 0.6 | Premise holds |
+| E1 | **Now first.** Noise-floor and cost pilot (`PILOT`): σ_n separately for the training seed and the split seed, ϱ, determinism, run cost, LLM latency, on local nodes, the L8b noisy nodes and light benchmark tasks | 0.4 | Answers question 1: which CPU nodes have enough noise |
+| E1b | Pilot headroom pre-check (`PILOT`, not evidence): a small branch table on the 1–2 noisiest nodes from E1; hindsight oracle minus the best simple baseline (noise-aware threshold or PACE-style gate) | 0.4b (new) | Answers question 2. A clear fail goes straight to E2 with the fallback |
+| E2 | **STOP:** the author sets the remaining decisions, D21 (noise nodes), the practical target (D18) and the headroom criterion, and checks the premise with E1 and E1b | 0.6 | Premise holds, or the fallback paper |
 | E3 | Scale the pool: 10–20 OpenML tasks plus MLGym light tasks; noise rows | 1.1 | — |
 | E4 | Pre-declare; authorization note; branch collection on development instances | 1.3 | Authorization |
 | E5 | Offline baselines and LLM self-control on the real table; **headroom gate** | 1.4–1.5 | Gate passes, or the fallback paper |
-| E6 | D16 decided with data; train the configurator families; offline evaluation and ladder; select candidates by the pre-fixed rule | 2.1–2.4 | Selection rule |
+| E6 | **Only if the E5 gate passes:** build L11, then D16 decided with data; train the configurator families; offline evaluation and ladder; select candidates by the pre-fixed rule | 2.1–2.4 | Selection rule |
 | E7 | Pre-declare Phase 3; authorization; deployment on held-out instances and benchmarks (MLAgentBench, MLE-bench Lite subset; autoresearch on GPU) | 3.1–3.2 | Authorization |
 | E8 | Analysis, ablations, transfer; manuscript; rerun the novelty sweep; TMLR | 3.3, Phase 4 | Quality-bar checklist (PLAN §9) |
 
-**Compute**
-- L1–L14, E1 and most of E3–E6 run on the Mac.
-- Ada or TITAN is needed only for the MLE-bench Lite subset, autoresearch, Kev-4B or larger, and any large generative-LLM ablation.
+**Compute** (revised 12 Oct)
+- **Mac** (M1 Pro, 16 GiB, Ollama): all build steps, T1–T3, E1 on the CPU nodes, E1b at pilot scale, E2.
+- **deepthought** (many CPU cores, large RAM and storage, 4 × TITAN 12 GB): E3–E5 at scale (parallel CPU workers, one pinned manager instance per TITAN); MLGym light tasks if Docker or Podman is available there; LLM self-control side queries at scale; Phase 2 small-model training if the gate passes.
+- **Ada** (`ucrtasl`, shared 8 × RTX 6000 Ada 48 GB, one card under the co-tenant rule; tooling must survive periodic server loss): the stronger-manager deployment check (D22) if it is an open model; the autoresearch GPU noise pilot and deployment; the MLE-bench Lite held-out subset; any model above about 4B.
+- The branch data for one table come from one manager backend (D6, D15). A pilot on the Mac and a collection on deepthought use different backends, so the pilot stays `PILOT`.
 
 ### Phase 0 — Foundations and noise floors (target ~31 Oct 2026)
 
@@ -124,9 +139,9 @@ Each defect below is from the problem spec, Appendix A.
 
 #### 0.4 Noise-floor and cost pilot (`PILOT`)
 
-**For each existing CPU node, 2–3 candidate OpenML additions and 2–3 light MLGym / MLAgentBench tasks (no ResNet):**
+**For each existing CPU node, the L8b noisy nodes, 2–3 candidate OpenML additions and 2–3 light MLGym / MLAgentBench tasks (no ResNet):**
 - **Determinism.** Same config and same seed, run twice: is the metric bit-identical? Run on CPU nodes, and on GPU nodes too.
-- **σ_n.** The baseline metric across ≥ 10 seeds.
+- **σ_n.** The baseline metric across ≥ 10 seeds, measured **separately** for the training seed (split fixed) and the split seed (training seed fixed).
 - **ϱ.** The across-seed correlation between the baseline and 5 typical single edits drawn from existing ledgers, at ≥ 10 shared seeds.
 - **Run cost.** Worker wall time.
 
@@ -138,7 +153,15 @@ Each defect below is from the problem spec, Appendix A.
 - `docs/r1/reports/NOISE_FLOOR_<date>.md`;
 - the misclassification rates of the default keep rule implied by the measured σ_n and ϱ (this replaces the illustrative 36 %).
 
-**Accept when:** the report covers every node with numbers and their uncertainty, and the generating script is committed.
+**Accept when:** the report covers every node with numbers and their uncertainty, and the generating script is committed. The report ends with a node table that answers question 1 (R1-GATE-FIRST): which CPU nodes have enough training-seed or split-seed noise for the default rule to err at a non-trivial rate, and under which split policy.
+
+#### 0.4b Pilot headroom pre-check (`PILOT`; added 12 Oct, R1-GATE-FIRST)
+
+This answers question 2 before any model is built. It is not evidence; it decides whether building is worth it.
+- On the 1–2 noisiest nodes from 0.4, use the L7 branch machinery to collect a small branch table: a few roots, the core actions, a short horizon h.
+- Score on it: the hindsight oracle, the noise-aware threshold, the PACE-style gate and, once T2 exists, the C2 index policy.
+- Report oracle minus the best simple baseline per node, with cluster-bootstrap intervals, in `docs/r1/reports/HEADROOM_PILOT_<date>.md`.
+- **Accept when:** the report exists and its script is committed. A clear shortfall against the practical target goes to 0.6, with the fallback paper (PLAN §3) as the default.
 
 #### 0.5 Aggregate-table review (optional, `PILOT`)
 
@@ -155,7 +178,7 @@ The per-trial ledgers are lost. From the surviving aggregate tables, note only w
 
 Record each decision in PLAN §10 with the date.
 
-**Also decide:** whether the node pool needs the OpenML expansion (D10). If C1's error rates are tiny on every node, R1's premise weakens. The author then decides between continuing, narrowing to the nodes where errors are large, or stopping.
+**Also decide:** D21 (noise nodes) from 0.4; whether the 0.4b pre-check leaves enough headroom to build any model, and if not, the fallback paper (R1-GATE-FIRST); whether the node pool needs the OpenML expansion (D10). If C1's error rates are tiny on every node, R1's premise weakens. The author then decides between continuing, narrowing to the nodes where errors are large, or stopping.
 
 **Phase-0 review:** one fresh-session AI-assisted review of 0.2–0.5 plus one correction round.
 
@@ -193,11 +216,11 @@ Add harness adapters for the D20 benchmarks: MLGym tasks, the existing MLAgentBe
 
 #### 1.5 Headroom gate (STOP)
 
-Compute the hindsight-oracle value minus the best simple baseline (noise-aware threshold, PACE-style gate, harness heuristics) per node, with cluster-bootstrap intervals.
+Compute the hindsight-oracle value minus the best simple baseline (noise-aware threshold, PACE-style gate, the C2 index policy, harness heuristics) per node, with cluster-bootstrap intervals.
 
 - **Gate passes** (criterion from 1.3 met) → Phase 2.
 - **Gate fails** → the author chooses one of:
-  1. the fallback paper (C1 + C2 + negative C3; PLAN §3);
+  1. the fallback paper (C1 + C2 theory; PLAN §3);
   2. adding one extension action (scope or fidelity), with its own new pre-declared gate;
   3. stopping.
 
@@ -210,6 +233,8 @@ Also report the LLM self-control's offline value against the oracle and the base
 ### Phase 2 — Configurator (target ~31 Jan 2027)
 
 #### 2.1 STOP — architecture (author, D16)
+
+Reached only if the 1.5 gate passes (R1-GATE-FIRST). L11 is built at this point.
 
 Discuss PLAN §7 with the Phase 1 data in hand: data scale, label noise, latency. Fix:
 - the families to train (a is required);
@@ -254,7 +279,7 @@ Choose at most 2 configurators plus the hybrids, by a rule fixed before 2.3 resu
 #### 3.1 Pre-declaration
 
 Commit, with a hash, before any outcome exists:
-- the primary contrasts (configurator vs LLM self-control; best hybrid vs both; and each against the best simple baseline);
+- the primary contrasts: configurator − C2 index policy and H1 − C2 index policy; secondary: configurator vs LLM self-control, including the stronger manager (D22);
 - the held-out instances;
 - the number of campaigns per instance per arm, from Phase 1–2 variance;
 - compute C and the caps;
@@ -299,7 +324,7 @@ All arms run on held-out instances and held-out benchmarks at matched compute, w
 | Phase 0 noise floors make default-rule errors negligible on every node | 0.6 STOP: the author decides whether to narrow, add nodes or stop. No result is spun into a premise it does not support. |
 | Restore audit cannot reproduce on a node | That node is excluded from branch data, or p is a declared sensitivity value only. It never counts as validated. |
 | Headroom gate fails | 1.5 options; the fallback paper is complete on its own. |
-| Learned configurator does not beat family (a) or the PACE-style gate | Report it. The C3 claim narrows to whatever the data supports. |
+| Learned configurator does not beat the C2 index policy, family (a) or the PACE-style gate | Report it. The C3 claim narrows to whatever the data supports. |
 | LLM self-control is as good as the configurator | Report it; this is a finding, not a failure. |
 | Compute shortfall on GPU nodes | Autoresearch deployment is reduced and labelled. The CPU-node evidence carries the primary claims. |
 
