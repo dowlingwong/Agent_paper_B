@@ -6,6 +6,17 @@ Newest entry first. Only this file says what is done.
 
 
 
+
+## 12 October 2026 — Deepthought duplicate-launch prevention confirmed
+
+AI-assisted ENGINEERING_ONLY shutdown; no inference or evidence.
+
+- SSH to both Deepthought hosts recovered. The old shared batch had no `runner_claim` and no `batch_state.json` on either host; no old runner had launched.
+- Atomically created a permanent migration hold in `/ceph/dwong/r1_batch1_ENGINEERING_ONLY_resume_20261012T191238Z/runner_claim/`, with ENGINEERING_ONLY ownership provenance for Ada migration. The claim is retained and must never be cleared.
+- Stopped only our dedicated `r1_auto_resume_20261012` launch-watcher session on each host. Both stop commands returned zero; the sessions are absent. Other users' jobs and other tmux sessions were untouched.
+- Provenance and the confirmed `duplicate_launch_prevented: true` marker are committed in `results/r1/engineering/Deepthought_shutdown_20261012T200109Z/`. The marker is copied to the fresh Ada batch after syncing this commit, allowing its existing GPU-0-only watcher to proceed when that card has no process.
+- This completes the duplicate-prevention prerequisite. Ada must still wait for unoccupied GPU 0, verify the exact pinned 7B model and demonstrate actual GPU offload before DT1 latency and DT2–DT4. The missing-zsh environmental exception remains in force; all other rules and open E2 decisions remain unchanged.
+
 ## 12 October 2026 — Ada continuation authorized; waiting on both launch prerequisites
 
 AI-assisted ENGINEERING_ONLY setup; no inference or evidence.

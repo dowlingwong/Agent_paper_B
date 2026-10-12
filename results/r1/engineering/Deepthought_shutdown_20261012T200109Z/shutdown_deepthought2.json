@@ -1,0 +1,14 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "purpose": "Permanent migration hold: disable old Deepthought launchers; author authorized Ada GPU 0",
+  "host": "deepthought2",
+  "utc": "2026-10-12T20:00:59.655006+00:00",
+  "migration_to": "ucrtasl",
+  "no_old_runner_launched": true,
+  "no_model_launch": true,
+  "watcher_stop": {
+    "host": "deepthought2",
+    "returncode": 0,
+    "stderr": ""
+  }
+}

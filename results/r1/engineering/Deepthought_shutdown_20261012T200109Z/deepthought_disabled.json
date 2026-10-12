@@ -1,0 +1,49 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "duplicate_launch_prevented": true,
+  "shared_claim": "/ceph/dwong/r1_batch1_ENGINEERING_ONLY_resume_20261012T191238Z/runner_claim",
+  "no_old_runner_launched": true,
+  "watchers_stopped": [
+    "deepthought",
+    "deepthought2"
+  ],
+  "provenance": {
+    "owner.json": {
+      "label": "ENGINEERING_ONLY",
+      "purpose": "Permanent migration hold: disable old Deepthought launchers; author authorized Ada GPU 0",
+      "host": "deepthought2",
+      "utc": "2026-10-12T20:00:59.655006+00:00",
+      "migration_to": "ucrtasl",
+      "no_old_runner_launched": true,
+      "no_model_launch": true
+    },
+    "shutdown_deepthought2.json": {
+      "label": "ENGINEERING_ONLY",
+      "purpose": "Permanent migration hold: disable old Deepthought launchers; author authorized Ada GPU 0",
+      "host": "deepthought2",
+      "utc": "2026-10-12T20:00:59.655006+00:00",
+      "migration_to": "ucrtasl",
+      "no_old_runner_launched": true,
+      "no_model_launch": true,
+      "watcher_stop": {
+        "host": "deepthought2",
+        "returncode": 0,
+        "stderr": ""
+      }
+    },
+    "shutdown_deepthought.json": {
+      "label": "ENGINEERING_ONLY",
+      "host": "deepthought",
+      "utc": "2026-10-12T20:01:09.904722+00:00",
+      "watcher_stopped": true,
+      "stop_returncode": 0,
+      "stderr": "",
+      "shared_migration_hold_verified": true
+    }
+  },
+  "sha256": {
+    "owner.json": "ecd074ac33cd5e81829bb2224f237508ee982e29e16d188256a6ceb88eee8dac",
+    "shutdown_deepthought2.json": "fd30e06bd6df222213084b3091251c2ee0743d836a895accf4f040c5c49e1ab8",
+    "shutdown_deepthought.json": "6a5a8b853d2974d47295375b2f29ae84c31e176bdde2648a3e2798d8944e8f21"
+  }
+}

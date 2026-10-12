@@ -1,0 +1,9 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "host": "deepthought",
+  "utc": "2026-10-12T20:01:09.904722+00:00",
+  "watcher_stopped": true,
+  "stop_returncode": 0,
+  "stderr": "",
+  "shared_migration_hold_verified": true
+}
