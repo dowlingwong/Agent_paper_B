@@ -341,6 +341,7 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | ID | Decision (decided 12 Oct 2026 by the author) |
 |---|---|
 | R1-COMPUTE (batch 1 fallback host) | For Deepthought batch 1, **`deepthought.etp.kit.edu` may be used if a GPU is idle**, in addition to the originally named `deepthought2.etp.kit.edu`. This records the author's reply "Use deepthought.etp.kit.edu if idle". The pinned D15 model, no-Mac-LLM rule, shared-machine constraints and open E2 decisions are unchanged. |
+| R1-COMPUTE (batch 1 automatic resumption) | Author follow-up on 12 Oct: keep checking both authorized Deepthought hosts and automatically resume DT1–DT4 when a GPU has no other user process. **The one-hour GPU wait limit is lifted.** Keep the exact pinned 7B model and all other rules. Before DT1 latency or later campaigns, verify actual GPU offload using Ollama VRAM telemetry and a process on the selected card; CPU fallback is a STOP. |
 
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
