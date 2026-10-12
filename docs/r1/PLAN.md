@@ -334,6 +334,7 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-REFRAME | The headline is incremental acceptance under noise, and C2 is B's own theory (§1, §3). |
 | R1-INDEX | The primary contrasts are learned arms vs the C2 index policy. LLM self-control stays, with a stronger manager at least as a deployment check (§5). |
 | R1-GATE-FIRST | Phase 0 answers the noise-node and pilot-headroom questions before any model is built. D16 and L11 are deferred until the gate passes. Fallback = C1 + C2 (§3). |
+| R1-COMPUTE (12 Oct, evening) | **No LLM runs on the Mac.** Every LLM workload goes to deepthought (deepthought2.etp.kit.edu, `/ceph/dwong/`) or Ada: the manager, LLM self-control side queries, LLM-backed pilots and any model training. The Mac does code, docs, CPU-only pilots with the scripted proposer, and analysis. D15 keeps `qwen2.5-coder:7b` pinned by digest, now served on deepthought. |
 
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|

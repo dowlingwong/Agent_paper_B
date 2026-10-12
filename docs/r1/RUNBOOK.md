@@ -98,8 +98,8 @@ Steps L1–L14 run on the Mac (CPU, local Ollama model) and produce `ENGINEERING
 | E8 | Analysis, ablations, transfer; manuscript; rerun the novelty sweep; TMLR | 3.3, Phase 4 | Quality-bar checklist (PLAN §9) |
 
 **Compute** (revised 12 Oct)
-- **Mac** (M1 Pro, 16 GiB, Ollama): all build steps, T1–T3, E1 on the CPU nodes, E1b at pilot scale, E2.
-- **deepthought** (many CPU cores, large RAM and storage, 4 × TITAN 12 GB): E3–E5 at scale (parallel CPU workers, one pinned manager instance per TITAN); MLGym light tasks if Docker or Podman is available there; LLM self-control side queries at scale; Phase 2 small-model training if the gate passes.
+- **Mac** (M1 Pro, 16 GiB): code, docs, tests, T1–T3, and CPU-only pilots with the scripted proposer (E1, E1b-scripted), analysis, E2. **No LLM runs on the Mac** (R1-COMPUTE, 12 Oct).
+- **deepthought** (deepthought2.etp.kit.edu; code under `/ceph/dwong/`; many CPU cores, large RAM and storage, 4 × TITAN 12 GB): every LLM-backed run with the pinned 7B manager: L4 re-pin, L12 live smoke, the E1b LLM rerun, E3–E5 at scale (parallel CPU workers, one pinned manager instance per TITAN); MLGym light tasks if Docker or Podman is available there; LLM self-control side queries; Phase 2 small-model training if the gate passes. Batch prompt: `docs/r1/prompts/DEEPTHOUGHT_BATCH1_PROMPT.md`.
 - **Ada** (`ucrtasl`, shared 8 × RTX 6000 Ada 48 GB, one card under the co-tenant rule; tooling must survive periodic server loss): the stronger-manager deployment check (D22) if it is an open model; the autoresearch GPU noise pilot and deployment; the MLE-bench Lite held-out subset; any model above about 4B.
 - The branch data for one table come from one manager backend (D6, D15). A pilot on the Mac and a collection on deepthought use different backends, so the pilot stays `PILOT`.
 

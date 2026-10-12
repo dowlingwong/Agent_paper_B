@@ -74,13 +74,16 @@ No tuned arm beats ρ by more than +0.0002 anywhere. The arms are the margin thr
   2. Allow a declared, run-free acceptance rule as an action version: a Bayes/Ladder threshold or a posterior-mean incumbent (D4 amendment). Then rerun E1b with it as a sibling.
   3. Branch E1 skip/revise under a binding LLM-call cap.
 
-## Rerun with the LLM manager (on the Mac, not in the VM)
+## Rerun with the LLM manager (on deepthought; no LLM runs on the Mac, R1-COMPUTE)
+
+Superseded instructions: the deepthought batch prompt `docs/r1/prompts/DEEPTHOUGHT_BATCH1_PROMPT.md` (task DT5) runs this. The commands below show the shape; paths change to `/ceph/dwong/...` on deepthought.
 
 Ollama must be running with `qwen2.5-coder:7b` (digest `dae161e2…`). Time estimate: about 1,700 proposals × 6–12 s ≈ 3–5 h, so run it overnight.
 
 ```sh
-cd ~/Documents/agent_paper_B
-PY=~/Documents/autoresearch_harness/.venv/bin/python
+cd /ceph/dwong/agent_paper_B
+export AR_HARNESS_ROOT=/ceph/dwong/autoresearch_harness
+PY=$AR_HARNESS_ROOT/.venv/bin/python
 $PY -m r1.headroom.e1b_collect --manager langgraph --nodes digits_mlp openml_ionosphere \
     --work /tmp/r1_e1b_llm --workers 2
 # if interrupted: $PY -m r1.headroom.e1b_collect --resume results/r1/pilot/E1b_<stamp> --workers 2
