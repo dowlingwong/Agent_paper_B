@@ -5,6 +5,19 @@ Newest entry first. Only this file says what is done.
 
 
 
+
+## 12 October 2026 — Ada continuation authorized; waiting on both launch prerequisites
+
+AI-assisted ENGINEERING_ONLY setup; no inference or evidence.
+
+- The author explicitly accepted the Ada missing `/bin/zsh` deterministic-extraction failure as environmental; recorded in PLAN §10 at pushed commit `0f25a18`. The recorded suite remains Paper B **65 passed**, harness **347 passed, 10 failed, 1 error**. Only the recorded environment failure set is accepted; all other STOP rules remain.
+- Pushed `ef34671`: Ada-only watcher, fixed to GPU 0 UUID `GPU-9be33fd1-8eeb-497d-772a-87362d6720be`; host/path guards and actual runtime provenance. New scripts compile; no harness behavior was changed. The private fresh checkouts and environment remain under `/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/`.
+- Dedicated Ada tmux `r1_ada_wait_20261012` checks every 60 seconds. It must observe both an unoccupied GPU 0 and a verified `deepthought_disabled.json` before creating one permanent `ada_runner_claim` and invoking DT1–DT4. It never selects another card or clears a claim.
+- **GPU 0 became occupied:** user `vla-reasoning` now holds the selected card (PIDs 116617, 117775, 117778, 117779, 117780 at census). Their jobs were untouched.
+- **Duplicate prevention is still pending:** direct IPv4 SSH to both Deepthought hosts timed out again. No claim was cleared or overwritten and no Ada model was loaded. Shutdown-only monitoring continues for the old shared claim/launchers; the separate Ada experiment monitor has been re-enabled under the author's exception.
+- **DT1–DT4 remain unstarted.** Once both waiting gates pass, the runner must verify `qwen2.5-coder:7b` digest `dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364`, then demonstrate Ollama `size_vram > 0` and an owned process on selected GPU before the latency campaign or later steps. GPU offload has not yet been tested.
+- No additional author decision is needed for the known missing-zsh failure. Other test regressions, model digest changes, CPU fallback or unrecorded experiment decisions remain STOP conditions. E2 decisions remain open; L11 is unbuilt. All outputs remain PILOT or ENGINEERING_ONLY.
+
 ## 12 October 2026 — Ada migration preparation: hard STOP before inference
 
 AI-assisted ENGINEERING_ONLY preparation; no empirical evidence.
