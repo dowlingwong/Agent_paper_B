@@ -2,6 +2,150 @@
 
 Newest entry first. Only this file says what is done.
 
+## 9 October 2026 — build batch 2: L4, L7, L8
+
+All output is ENGINEERING_ONLY or PILOT: no evidence. Harness work is on
+branch `r1` (now pushed), three commits on top of `3c80b53`:
+`3a9f203` (L4), `1a2983b` (L7), `b55209f` (L8). Paper B: `9ff6f2a` (batch-2
+prompt + PLAN §10 rows).
+
+### Machine and baseline
+
+- Apple M1 Pro, 16 GiB RAM, macOS 26.6.2 (build 25G83).
+- Ollama 0.40.2 running locally. D15 model `qwen2.5-coder:7b` already present
+  (no download): digest
+  `dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364`,
+  Q4_K_M, 7.6B params, Apache-2.0.
+- Step-0 baseline (`uv run python -m pytest --continue-on-collection-errors
+  -p no:cacheprovider -q`): **321 passed, 8 failed, 1 error, 4 subtests**. The
+  8 failures are the same environmental set as Linux (3 artifact-manifest,
+  5 KDD paper-section) and the error is the `src.autoresearch_worker`
+  collection error. Linux batch 1 reported 9 failures; on macOS the
+  artifact-report existence test passes because the report is already on disk.
+
+### L4 — pinned local manager model (`3a9f203`)
+
+- Files: `manager/langgraph_manager.py` (per-call latency/usage telemetry in
+  `proposal.extra["llm_call"]`), `control_plane/campaign.py` (emits an
+  `llm_call` event; default controllers emit nothing new),
+  `scripts/run_campaign.py` (`--worker claw|local`, default claw),
+  `scripts/r1_llm_latency.py` (new), `tests/stage2/test_r1_l4.py` (4 tests).
+- Smoke tests, both on `lr_synthetic`:
+  - dry-run with `--llm-stub`: 3 trials, no Ollama, no `llm_call` telemetry.
+  - real `--budget 5` with the pinned model and `LocalWorker` (on a copied
+    node): 5 trials, 3 kept, `net_gain` ~0.00085.
+- PILOT latency (5 real calls, `PILOT` table; output in
+  `experiments/r1/pilot/L4_20261009T151754Z/`):
+
+  | metric | min | median | mean | max |
+  |---|---|---|---|---|
+  | latency (ms) | 5943 | 6203 | 7296 | 12003 |
+  | prompt tokens | 611 | 620 | 618 | 620 |
+  | completion tokens | 83 | 88 | 86.6 | 88 |
+
+  Parse failures: 0/5. Side note: the model is deterministic only in
+  structure; sampling at temperature 0.2 varied the proposals.
+
+### L7 — restore and branching (`1a2983b`)
+
+- Files: new `control_plane/snapshot.py` (`CampaignSnapshot`, capture, write/
+  read, `restore_snapshot`, `SnapshotRecorder`, `FirstActionThenPolicy`,
+  `resume_campaign`, `run_restore_audit`); `control_plane/campaign.py` gains
+  an optional `snapshot_hook` (None by default) invoked at E0/E1/E2 and
+  `initial_current_best` / `initial_incumbent_stack`; `nodes/spec.py` gains
+  `branch_state_paths` (declared per node, defaults in the module);
+  new `scripts/r1_branch.py`; `tests/stage2/test_r1_l7.py` (7 tests).
+- Snapshot contents: editable bytes, the declared non-editable node-state
+  paths (`artifacts`, `results.tsv`, `experiment_memory.jsonl`,
+  `.autoresearch_artifacts`, `run.log`, node-declared caches), ledger prefix,
+  explicit `current_best` and incumbent stack (verified flags), budget and
+  compute-budget states, train/split seeds, manager config, controller
+  identity, and the epoch-local proposal (E1) / provisional record and worker
+  result (E2). Every layer has a SHA-256 hash in `manifest.json`.
+- Restore copytree's into a fresh isolated dir with its own ledger and events;
+  E1/E2 resume uses the captured proposal and does **not** re-call the manager.
+  Forced first actions are honoured; infeasible ones are rejected to
+  `continue` (F6 semantics), which the branch CLI showed for
+  revise/verify/demote/stop at E1.
+- **Restore audit** (exact equality, never a tolerance). Output in
+  `experiments/r1/pilot/L7_20261009T152619Z/`:
+
+  | node | epoch | original metric | replayed metric | reproduced | editable/node_state/ledger hashes match |
+  |---|---|---|---|---|---|
+  | lr_synthetic | E1 | 0.922558 | 0.922558 | yes | yes/yes/yes |
+  | openml_breast_w | E1 | 0.990338 | 0.990338 | yes | yes/yes/yes |
+
+- Branch CLI smoke (`scripts/r1_branch.py`, snapshot at lr_synthetic E1,
+  h=1) wrote `branch_manifest.json`; siblings are isolated (test writes in one
+  branch, checks the other).
+
+### L8 — benchmark adapters (`b55209f`)
+
+- Files: new `nodes/openml_template/` and five node dirs
+  (`openml_breast_w`, `openml_credit_approval`, `openml_diabetes`,
+  `openml_ionosphere`, `openml_wdbc`); five `configs/nodes/openml_*.yaml`;
+  `nodes/registry.py` registers them; `nodes/spec.py` gains `held_out`;
+  `nodes/mlagentbench_vectorization/train.py` reads `AR_SPLIT_SEED` for the
+  random problem; `tests/stage2/test_r1_l8.py` (4 tests).
+- Adapter table (PILOT output in
+  `experiments/r1/pilot/L8_20261009T152916Z/L8_adapters.json`):
+
+  | node | OpenML id | rows | feats | licence | determinism | 3-trial smoke | blocker |
+  |---|---|---|---|---|---|---|---|
+  | openml_breast_w | 15 | 699 | 9 | Public | deterministic (0.993156) | kept/discarded/discarded | — |
+  | openml_credit_approval | 29 | 690 | 15 | Public | deterministic (0.909670) | kept/discarded/discarded | — |
+  | openml_diabetes | 37 | 768 | 8 | Public | deterministic (0.829667) | kept/kept/discarded | — |
+  | openml_ionosphere | 59 | 351 | 34 | Public | deterministic (0.984520) | kept/discarded/discarded | — |
+  | openml_wdbc | 1510 | 569 | 30 | Public | deterministic (0.997642) | kept/discarded/discarded | — |
+  | mlagentbench_vectorization | — | — | — | MIT | **not** deterministic: `speed_score = 1/runtime` is timing-based (24.61 vs 23.85) | kept/discarded/discarded | none; seed injection added for the random problem |
+
+- Held-out marking: `held_out` is a `NodeSpec` field (default false) and is
+  serialised; no node is marked held out yet (MLAgentBench stays a dev node,
+  as the author noted; the MLE-bench Lite subset is not added in this batch).
+- **MLGym feasibility** (`experiments/r1/pilot/L8_20261009T152916Z/mlgym_feasibility.json`):
+  cloned `facebookresearch/MLGym` to
+  `~/Documents/third_party/MLGym` (CC-BY-NC-4.0; 20 task configs). Every task
+  runs inside a Docker/Podman container (`dockerfiles/mlgym.dockerfile`,
+  per-task conda). **Blocker: neither Docker nor Podman is installed or
+  running on this Mac.** No adapter written. Removing the blocker needs
+  Docker Desktop (or Podman + a Linux VM); then light CPU tasks
+  (`titanicSurvival`, `3SATTime`, game-theory tasks) could be attempted,
+  subject to dataset downloads and agent/model configuration.
+
+### Checks
+
+- Full suite after batch 2: **336 passed, 8 failed, 1 error, 4 subtests** =
+  the Step-0 baseline + 15 new tests (L4 4, L7 7, L8 4), with the identical
+  8-failure / 1-error set. The L5 golden regression and every batch-1 test
+  stay green.
+- Default behaviour: `snapshot_hook` is None by default, `initial_*` default to
+  the previous derivation, and no new event is emitted for deterministic
+  managers.
+
+### Not done, and why
+
+- The `SnapshotRecorder` snapshots only the first matching epoch by default;
+  E0 snapshots store no proposal (there is none at E0).
+- `resume_campaign` rebuilds `LocalWorker` and deterministic / LangGraph
+  managers from the manifest; a manager with an injected stub LLM must be
+  passed back in (tests do this).
+- The openml nodes need a one-time OpenML fetch (network); the pilot copies
+  carry `data_cache`, so re-runs are offline.
+
+### Open questions for the author
+
+1. MLGym needs Docker or Podman; installing one is a system change. Proceed?
+2. Should any of the five OpenML nodes be held out, or is the whole OpenML pool
+   training/dev (per PLAN §6, the held-out benchmarks are MLAgentBench and the
+   MLE-bench Lite subset)?
+3. `lr_synthetic` verify: the pilot shows training-seed noise ≤ 1e-4 while
+   split-seed noise is ~0.01. Under the default `"fixed"` split policy,
+   lr_synthetic verify will mostly measure the candidate difference. Confirm
+   `"fixed"` remains the choice for this node.
+4. `mlagentbench_vectorization`'s `speed_score` is timing-based. Keep it as a
+   dev node, or exclude it from branch/label collection where determinism is
+   required?
+
 ## 9 October 2026 — batch 1 review and fixes
 
 All ENGINEERING_ONLY. Seven review findings on harness branch `r1` (at
