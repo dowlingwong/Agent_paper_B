@@ -3,6 +3,18 @@
 Newest entry first. Only this file says what is done.
 
 
+
+## 12 October 2026 — Deepthought batch 1 automatic resumption armed
+
+AI-assisted ENGINEERING_ONLY preparation; model workloads remain PILOT or ENGINEERING_ONLY.
+
+- Author amendment in PLAN §10 (`12db087`): monitor both authorized hosts without the previous one-hour deadline, and resume DT1–DT4 on an unoccupied GPU. The previous stopped attempt and all results are preserved.
+- Both hosts are checked every 60 seconds from dedicated tmux watchers. A shared atomic claim permits one runner only. No other user's session or process is changed.
+- Fresh logs and runtime state: `/ceph/dwong/r1_batch1_ENGINEERING_ONLY_resume_20261012T191238Z/`. The pinned `qwen2.5-coder:7b` digest stays `dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364`; no API or larger model.
+- The runner first loads at most one probe token and requires Ollama `size_vram > 0` plus a process on the selected card before DT1 latency or DT2–DT4. GPU ownership is rechecked before every step. The older host's CUDA compatibility remains unqualified until that check passes.
+- Latest census: Deepthought has another user's PID 1674140 on all four cards despite 0 percent utilization; Deepthought2 has other users' processes on both cards. No model has been started by this resumption at the time of this entry.
+- DT0 and its regression baselines remain as recorded below. DT1–DT4 completion requires the runner's acceptance checks and subsequent status entry; no headroom bracket is available yet. E2 decisions remain open; L11 is not built.
+
 ## 12 October 2026 — Deepthought batch 1: stopped
 
 AI-assisted execution by Codex. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.
