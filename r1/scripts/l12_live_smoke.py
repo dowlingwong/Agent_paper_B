@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the authorized L12 live ENGINEERING_ONLY smoke on a Deepthought host."""
+"""Run the authorized L12 live ENGINEERING_ONLY smoke on Deepthought or Ada."""
 from __future__ import annotations
 
 import argparse
@@ -62,8 +62,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", type=Path)
     args = ap.parse_args()
-    if platform.node().split(".")[0] not in {"deepthought2", "deepthought"}:
-        raise RuntimeError("R1-COMPUTE: this live smoke must run on an author-approved Deepthought host")
+    if platform.node().split(".")[0] not in {"deepthought2", "deepthought", "ucrtasl"}:
+        raise RuntimeError("R1-COMPUTE: this live smoke must run on an author-approved remote host")
     base = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
     if base not in {"http://127.0.0.1:11434", "http://localhost:11434"}:
         raise RuntimeError("Only the dedicated loopback Ollama instance is permitted")

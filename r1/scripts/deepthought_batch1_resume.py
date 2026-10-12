@@ -1,6 +1,7 @@
 """Execute the authorized remote batch, preserving a stopped attempt."""
 from datetime import datetime, timezone
 import hashlib
+import getpass
 import json
 import os
 from pathlib import Path
@@ -15,10 +16,10 @@ from zoneinfo import ZoneInfo
 from xml.etree import ElementTree
 
 BATCH = Path(os.environ['R1_BATCH_DIRECTORY'])
-PAPER = Path('/ceph/dwong/agent_paper_B')
-HARNESS = Path('/ceph/dwong/autoresearch_harness')
+PAPER = Path(os.environ.get('R1_PAPER_ROOT', '/ceph/dwong/agent_paper_B'))
+HARNESS = Path(os.environ.get('AR_HARNESS_ROOT', '/ceph/dwong/autoresearch_harness'))
 PY = str(HARNESS / '.venv/bin/python')
-OLLAMA = str(BATCH / 'ollama_runtime/bin/ollama')
+OLLAMA = os.environ.get('R1_OLLAMA_BINARY', str(BATCH / 'ollama_runtime/bin/ollama'))
 DIGEST = 'dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364'
 MODEL = 'qwen2.5-coder:7b'
 os.environ.update(AR_HARNESS_ROOT=str(HARNESS), OLLAMA_BASE_URL='http://127.0.0.1:11434',
@@ -94,7 +95,7 @@ def check_gpu():
         uuid, pid = [part.strip() for part in row.split(',')]
         if uuid == selected_uuid:
             owner = subprocess.check_output(['ps', '-o', 'user=', '-p', pid], text=True).strip()
-            if owner != 'dwong':
+            if owner != getpass.getuser():
                 raise RuntimeError('STOP: selected GPU now contains another user process; no inference launch')
 
 
@@ -207,10 +208,17 @@ def finish(reason):
 
 def main():
     save()
+    if platform.node().split('.')[0] == 'ucrtasl':
+        authorization = json.loads((BATCH / 'deepthought_disabled.json').read_text())
+        if authorization.get('duplicate_launch_prevented') is not True:
+            raise RuntimeError('STOP: prior Deepthought launch claim is not disabled')
     comparison = json.loads((BATCH / 'postfix_comparison.json').read_text())
     if comparison['new_failures']:
         raise RuntimeError('STOP: tests that passed before now fail: ' + repr(comparison['new_failures']))
     rows, free = gpu_rows()
+    required_uuid = os.environ.get('R1_GPU_UUID')
+    if required_uuid:
+        free = [row for row in free if row.split(',')[1].strip() == required_uuid]
     if not free:
         raise RuntimeError('STOP: the announced free GPU became occupied before serving; no shared-card launch')
     gpu = free[0].split(',')[0].strip()
