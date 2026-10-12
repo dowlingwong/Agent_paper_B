@@ -168,8 +168,6 @@ def collect(out, work, extra):
 
 
 def finish(reason):
-    for name, metadata in json.loads((BATCH / 'repairs.json').read_text()).items():
-        state['steps'].setdefault(name, metadata)
     if state.get('ollama_started_by_batch'):
         stopped = subprocess.run(['tmux', 'kill-session', '-t', 'r1_ollama_resume_20261012'],
                                  capture_output=True, text=True)
@@ -178,37 +176,35 @@ def finish(reason):
     state['finished_utc'] = stamp()
     state['stop_reason'] = reason
     save()
-    before = (BATCH / 'harness_tests.log').read_text().splitlines()[-1]
-    after = (BATCH / 'harness_tests_after.log').read_text().splitlines()[-1]
     day = datetime.now(ZoneInfo('Europe/Berlin')).strftime('%d %B %Y')
-    lines = [f'## {day} — Deepthought batch 1: {"stopped" if reason else "completed"}', '',
-             'AI-assisted execution by Codex. All outputs are PILOT or ENGINEERING_ONLY; none is evidence. This is the author-authorized resumption with no one-hour GPU wait limit; the previous stopped attempt is preserved.', '',
-             f'- **DT0:** deepthought2; Paper B `d55043c`, harness baseline `4e8fd69`; uv environment installed. Harness: {before}. Paper B: 64 passed. OpenML credit-g cache filled successfully.',
-             '- **DT0 environment:** Deepthought2 has 128 logical CPUs, about 1 TiB RAM, two NVIDIA L40S GPUs (46,068 MiB each), driver 570.211.01; nvidia-smi reports CUDA capability 12.8. Docker daemon access is denied; no Podman is installed.',
-             '- **Authorized fallback:** `deepthought.etp.kit.edu` (PLAN §10 author follow-up, commit `ae14877`); 40 CPUs, 503 GiB RAM, four GTX TITAN X GPUs (12,288 MiB each), driver 525.147.05. The fallback was checked without disturbing its occupied GPUs.',
-             '- **Fallback CUDA compatibility is unqualified:** current [Ollama hardware documentation](https://docs.ollama.com/gpu) requires driver 570+ for compute capability 5.0–6.2; GTX TITAN X is 5.2. The installed runtime must demonstrate actual GPU offload before DT1 is accepted; no driver upgrade was attempted.',
-             f'- **Harness repair:** `0e8a817` (pushed): explicit zero `llm_calls` in emitted control decisions. Regression: failed before, 9 targeted tests passed after; full suite: {after}. No newly failing tests; the artifact-report existence flake accounts for one prior failure becoming a pass.',
-             f'- **Preserved engineering logs:** `{BATCH}/` (environment JSON, suite logs, OpenML log, GPU census/wait, official standalone Ollama runtime).',
-             f'- **Model manifest preflight:** registry manifest SHA256 matches the author pin `{DIGEST}`. No inference is implied by this check.', '']
+    lines = [f'## {day} — Remote batch 1: {"stopped" if reason else "completed"}', '',
+             'AI-assisted execution by Codex. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.', '',
+             f'- **Execution host:** `{platform.node()}`. Logs and preserved runtime state: `{BATCH}/`.',
+             f'- **Harness:** `{git_output(HARNESS, "rev-parse", "HEAD")}`; manager `{MODEL}`, pinned digest `{DIGEST}`.',
+             f'- **GPU / offload:** `{state.get("gpu", "not selected")}`; `{json.dumps(state.get("gpu_offload", {}), sort_keys=True)}`.', '']
     for step, data in state['steps'].items():
         lines.append(f'- **{step}:** `{json.dumps(data, sort_keys=True)}`')
     if reason:
         lines += ['', f'**STOP:** {reason}', '',
-                  'DT1–DT4 are accepted only where the step entry above explicitly records completion. Uncompleted steps produced no accepted LLM headroom bracket. L12 smoke script preparation is not a live run.']
-    lines += ['', '- **DT5 task runs not performed:** Deepthought2 denies access to its Docker daemon; Deepthought cannot reach its Docker daemon. Podman is absent from PATH on both hosts. The PILOT precheck JSON and its commit are listed above. No MLGym clone or adapter was created.',
-              '- **Author decisions remain open:** D18, D21, D23, the D4 amendment and any verify split-policy revision. The existing fixed split policy was retained. L11 was not built.', '']
+                  'DT1–DT4 are accepted only where the step entry explicitly records completion. Partial outputs are preserved; no failed model or collection run was retried.']
+    lines += ['', '- **Author decisions remain open:** D18, D21, D23, the D4 amendment and any verify split-policy revision. Fixed split policy retained; L11 was not built.', '']
     status = PAPER / 'docs/r1/STATUS.md'
     old = status.read_text()
     pos = old.index('\n## ')
     status.write_text(old[:pos] + '\n\n' + '\n'.join(lines) + old[pos:])
     state['steps']['STATUS'] = {'completed': True, 'reason': reason}
-    commit(PAPER, 'Record Deepthought batch 1 execution status', ['docs/r1/STATUS.md'], 'STATUS')
+    commit(PAPER, 'Record remote batch 1 execution status', ['docs/r1/STATUS.md'], 'STATUS')
     print('FINISHED', json.dumps(state), flush=True)
 
 
 def main():
     save()
-    if platform.node().split('.')[0] == 'ucrtasl':
+    host = platform.node().split('.')[0]
+    if host not in {'deepthought', 'deepthought2', 'ucrtasl'}:
+        raise RuntimeError('STOP: unauthorized execution host')
+    if host == 'ucrtasl':
+        if os.environ.get('R1_GPU_UUID') != 'GPU-9be33fd1-8eeb-497d-772a-87362d6720be':
+            raise RuntimeError('STOP: Ada batch is restricted to the author-selected GPU 0')
         authorization = json.loads((BATCH / 'deepthought_disabled.json').read_text())
         if authorization.get('duplicate_launch_prevented') is not True:
             raise RuntimeError('STOP: prior Deepthought launch claim is not disabled')
