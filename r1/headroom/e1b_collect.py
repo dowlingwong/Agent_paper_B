@@ -193,7 +193,7 @@ def run_leaf(snapshot_dir: str, inst: str, node: str, action: str, rep: int, see
                "final_files_hash": hashlib.sha256(json.dumps(final_files, sort_keys=True).encode()).hexdigest()[:16],
                "wall_seconds": round(time.perf_counter() - t0, 2)}
     (Path(out_dir) / "leaves" / f"{leaf_id}.json").write_text(json.dumps(payload))
-    shutil.rmtree(into, ignore_errors=True)
+    # Preserve branch ledgers and events for manager/proposal provenance audits.
     return payload
 
 
