@@ -342,6 +342,7 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 |---|---|
 | R1-COMPUTE (batch 1 fallback host) | For Deepthought batch 1, **`deepthought.etp.kit.edu` may be used if a GPU is idle**, in addition to the originally named `deepthought2.etp.kit.edu`. This records the author's reply "Use deepthought.etp.kit.edu if idle". The pinned D15 model, no-Mac-LLM rule, shared-machine constraints and open E2 decisions are unchanged. |
 | R1-COMPUTE (batch 1 automatic resumption) | Author follow-up on 12 Oct: keep checking both authorized Deepthought hosts and automatically resume DT1–DT4 when a GPU has no other user process. **The one-hour GPU wait limit is lifted.** Keep the exact pinned 7B model and all other rules. Before DT1 latency or later campaigns, verify actual GPU offload using Ollama VRAM telemetry and a process on the selected card; CPU fallback is a STOP. |
+| R1-COMPUTE (batch 1 Ada migration) | Author follow-up on 12 Oct: **use Ada GPU 0** (`experiment_zhixu`, hostname `ucrtasl`) for DT1–DT4. Prepare fresh R1 checkouts, run both suites and verify the same pinned 7B model’s actual GPU offload before proceeding. Prevent duplicate runs on Deepthought by disabling the previous launch watchers and retaining their shared claim. All other batch rules and open E2 decisions are unchanged. |
 
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
