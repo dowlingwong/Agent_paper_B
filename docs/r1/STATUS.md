@@ -4,6 +4,21 @@ Newest entry first. Only this file says what is done.
 
 
 
+
+## 12 October 2026 — Ada migration preparation: hard STOP before inference
+
+AI-assisted ENGINEERING_ONLY preparation; no empirical evidence.
+
+- Author authorized Ada GPU 0 for DT1–DT4, fresh checkouts and tests, pinned-model GPU offload, and prevention of duplicate Deepthought runs. Recorded in PLAN §10, commit `b246a4f` (pushed). Ada path/host guards and the duplicate-launch prerequisite were committed as `0d9874b` (pushed); harness code was unchanged.
+- Fresh checkouts and private uv/Python environment: `/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/`. Paper B test HEAD `b246a4f`; harness HEAD `cbbd5fb`. uv 0.13.0, managed Python 3.11.17. Existing Ada checkouts were preserved.
+- Ada GPU 0: NVIDIA RTX 6000 Ada, UUID `GPU-9be33fd1-8eeb-497d-772a-87362d6720be`, no processes at census, about 47 GiB free. Seven other cards were occupied. No GPU process or Ollama server was started by this preparation.
+- Tests: Paper B **65 passed**. Harness **347 passed, 10 failed, 1 error**, four subtests passed. Nine failures and the collection error are the recorded missing paper/artifact/submodule set. The artifact-report existence test returns to its initial failure on a fresh checkout; the prior passing result was already documented as a generated-report flake.
+- **New failure / hard STOP:** `tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::test_claw_worker_deterministic_constant_patch_runs_without_llm`, previously passing on Deepthought, raises `FileNotFoundError: [Errno 2] No such file or directory: /bin/zsh` on Ada. Under batch hard rule 5, this stops DT1–DT4 before inference. No harness fix, shell substitution, submodule initialization or test retry was attempted.
+- Preserved logs and exact test identities: `results/r1/engineering/DT0_Ada_20261012T194751Z/`. Copies remain in the remote engineering scratch directory.
+- **Duplicate prevention remains unconfirmed:** direct IPv4/default SSH to both Deepthought hosts and the existing portal jump routes timed out. Their prior shared claim and tmux launchers could not be inspected or disabled. Ada inference was therefore withheld; there is no Ada/Deepthought duplicate launch by this preparation.
+- **DT1–DT4:** unstarted on Ada; model digest has not been checked through a serving instance, and actual GPU offload has not been demonstrated. The pinned 7B model and all other rules remain unchanged. No headroom bracket is available. No E2 decision was recorded; L11 remains unbuilt.
+- **Needs author / infrastructure:** disposition of the missing-zsh environmental failure under the hard STOP rule, and working SSH access to reserve the old shared claim and stop the old launch watchers before any Ada inference.
+
 ## 12 October 2026 — Deepthought batch 1 automatic resumption armed
 
 AI-assisted ENGINEERING_ONLY preparation; model workloads remain PILOT or ENGINEERING_ONLY.
