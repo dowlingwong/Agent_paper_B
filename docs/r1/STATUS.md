@@ -2,6 +2,31 @@
 
 Newest entry first. Only this file says what is done.
 
+
+## 12 October 2026 — Deepthought batch 1: stopped
+
+AI-assisted execution by Codex. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.
+
+- **DT0:** deepthought2; Paper B `d55043c`, harness baseline `4e8fd69`; uv environment installed. Harness: 9 failed, 347 passed, 1 warning, 1 error, 4 subtests passed in 52.87s. Paper B: 64 passed. OpenML credit-g cache filled successfully.
+- **DT0 environment:** Deepthought2 has 128 logical CPUs, about 1 TiB RAM, two NVIDIA L40S GPUs (46,068 MiB each), driver 570.211.01; nvidia-smi reports CUDA capability 12.8. Docker daemon access is denied; no Podman is installed.
+- **Authorized fallback:** `deepthought.etp.kit.edu` (PLAN §10 author follow-up, commit `ae14877`); 40 CPUs, 503 GiB RAM, four GTX TITAN X GPUs (12,288 MiB each), driver 525.147.05. The fallback was checked without disturbing its occupied GPUs.
+- **Fallback CUDA compatibility is unqualified:** current [Ollama hardware documentation](https://docs.ollama.com/gpu) requires driver 570+ for compute capability 5.0–6.2; GTX TITAN X is 5.2. The installed runtime must demonstrate actual GPU offload before DT1 is accepted; no driver upgrade was attempted.
+- **Harness repair:** `0e8a817` (pushed): explicit zero `llm_calls` in emitted control decisions. Regression: failed before, 9 targeted tests passed after; full suite: 8 failed, 349 passed, 1 warning, 1 error, 4 subtests passed in 34.21s. No newly failing tests; the artifact-report existence flake accounts for one prior failure becoming a pass.
+- **Preserved engineering logs:** `/ceph/dwong/r1_batch1_ENGINEERING_ONLY_20261012_E4cC3e/` (environment JSON, suite logs, OpenML log, GPU census/wait, official standalone Ollama runtime).
+- **Model manifest preflight:** registry manifest SHA256 matches the author pin `dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364`. No inference is implied by this check.
+
+- **COLLECTOR_REPAIR:** `{"commit": "63778d35c1a4aecf91ceb10514e8ae7e333112b7", "completed": true, "reason": "Retain branch directories and ledgers after auditing", "regression": "new test failed before; all 65 R1 tests passed after"}`
+- **HOST_AUTHORIZATION:** `{"commit": "ae1487788c5e93bf007629accfdfdc1403b799fb", "completed": true, "decision": "Author permits deepthought.etp.kit.edu if a GPU is idle"}`
+- **DT5_FEASIBILITY_PRECHECK:** `{"commit": "cbbd5fb2421ea65ccda8a0da2bd7340533488b36", "completed": true, "out": "/ceph/dwong/autoresearch_harness/experiments/r1/pilot/MLGym_dt_20261012T183511Z", "reason": "Deepthought2: Docker daemon permission denied. Deepthought: Docker daemon cannot be reached. Neither host exposes Podman in PATH.", "status": "blocked", "task_runs": 0}`
+- **DT2_SCRIPT_PREPARATION:** `{"checks": "Compilation and ChatOllama/LLMSelfController constructor preflight passed; no invoke, zero model calls", "commit": "ee6eab2d4ef4cd2a7df52cf8515ff60605b2324b", "completed": true, "live_run_completed": false, "script": "r1/scripts/l12_live_smoke.py"}`
+
+**STOP:** RuntimeError: No GPU became idle within the one-hour availability window; other users were undisturbed
+
+DT1–DT4 are accepted only where the step entry above explicitly records completion. Uncompleted steps produced no accepted LLM headroom bracket. L12 smoke script preparation is not a live run.
+
+- **DT5 task runs not performed:** Deepthought2 denies access to its Docker daemon; Deepthought cannot reach its Docker daemon. Podman is absent from PATH on both hosts. The PILOT precheck JSON and its commit are listed above. No MLGym clone or adapter was created.
+- **Author decisions remain open:** D18, D21, D23, the D4 amendment and any verify split-policy revision. The existing fixed split policy was retained. L11 was not built.
+
 ## 12 October 2026 (evening) — steps 1–6 of the revised order; E2 STOP prepared
 
 Executed by an AI agent (Claude) at the author's request. Outputs are PILOT or ENGINEERING_ONLY: no evidence. The work ran in the Linux VM on the Mac (4 cores, 3 GiB, Python 3.11, environment outside the repos). That VM cannot reach Ollama, so no LLM call was made anywhere.
