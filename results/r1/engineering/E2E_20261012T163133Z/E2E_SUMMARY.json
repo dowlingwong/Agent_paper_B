@@ -1,0 +1,27 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "banner": "ENGINEERING_ONLY \u2014 end-to-end plumbing check (L13). Not evidence; numbers are not results.",
+  "utc": "20261012T163133Z",
+  "harness": {
+    "root": "/sessions/rcw-01bdc7uov9ttaxvnrnts7as1/mnt/autoresearch_harness",
+    "commit": "c686517f2f7832f3c70cb9b0131f593cc9a4a615",
+    "branch": "r1",
+    "dirty": false
+  },
+  "table": {
+    "points": 2,
+    "instances": 2
+  },
+  "deployment": {
+    "default": {
+      "trials": 8,
+      "kept": 2,
+      "verifies": 0
+    },
+    "kg_index": {
+      "trials": 8,
+      "kept": 2,
+      "verifies": 0
+    }
+  }
+}

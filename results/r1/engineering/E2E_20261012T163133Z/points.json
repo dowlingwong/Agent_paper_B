@@ -1,0 +1,46 @@
+[
+ {
+  "instance": "digits_mlp__s104",
+  "features": {
+   "node": "digits_mlp",
+   "delta_hat": 0.008357000000000059,
+   "sigma_d": 0.008615525338338686,
+   "sigma_t": 0.0049130342073124625,
+   "sigma_s": 0.0070773845263157435,
+   "remaining_runs": 5.0,
+   "total_runs": 8.0,
+   "budget_index": 3.0,
+   "n_keeps": 1.0,
+   "repeated_bad": 0.0,
+   "r": 2.0
+  },
+  "mask": {
+   "continue": true,
+   "verify": true
+  },
+  "snapshot_hash": "0ec79f9c557b48422c165e2f5604316a5c6554b70a903d08da456fdfb3687f50",
+  "budget_index": 3
+ },
+ {
+  "instance": "digits_mlp__s114",
+  "features": {
+   "node": "digits_mlp",
+   "delta_hat": 0.005570999999999993,
+   "sigma_d": 0.008615525338338686,
+   "sigma_t": 0.0049130342073124625,
+   "sigma_s": 0.0070773845263157435,
+   "remaining_runs": 5.0,
+   "total_runs": 8.0,
+   "budget_index": 3.0,
+   "n_keeps": 1.0,
+   "repeated_bad": 0.0,
+   "r": 2.0
+  },
+  "mask": {
+   "continue": true,
+   "verify": true
+  },
+  "snapshot_hash": "f9de7281768a939276d4a55b10a2dda18c3b0b7f3f9fdca26660a86d57bee9c8",
+  "budget_index": 3
+ }
+]

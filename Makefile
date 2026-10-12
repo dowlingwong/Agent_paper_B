@@ -42,3 +42,13 @@ test-release:
 
 test-standalone:
 	$(PYTHON) -m unittest discover -s tests/standalone -p 'test_*.py'
+
+# --- route R1 (docs/r1) ------------------------------------------------------
+# R1 code runs against the harness checkout in $(AR_HARNESS_ROOT) (default: ../autoresearch_harness).
+R1_PY ?= python3
+
+r1-test:
+	$(R1_PY) -m pytest -q -p no:cacheprovider r1/tests
+
+r1-e2e:
+	$(R1_PY) -m r1.e2e

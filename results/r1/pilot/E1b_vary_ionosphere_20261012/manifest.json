@@ -1,0 +1,78 @@
+{
+  "schema": "r1.e1b_headroom/1",
+  "label": "PILOT",
+  "split": "pilot",
+  "started_utc": "20261012T164607Z",
+  "harness": {
+    "root": "/sessions/rcw-01bdc7uov9ttaxvnrnts7as1/mnt/autoresearch_harness",
+    "commit": "4e8fd6923ec96f34dfb2226c479ba9ed665443ee",
+    "branch": "r1",
+    "dirty": false
+  },
+  "manager_backend": "scripted_random (stand-in; VM cannot reach Ollama)",
+  "manager": {
+    "kind": "scripted",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.2
+  },
+  "nodes": [
+    "openml_ionosphere"
+  ],
+  "instances": 6,
+  "runs": 20,
+  "points": [
+    4,
+    8,
+    12
+  ],
+  "reps": 2,
+  "audit_seeds": 6,
+  "verify_r": 2,
+  "verify_split_policy": "vary",
+  "noise": {
+    "openml_ionosphere": {
+      "sigma_t": 0.0017741197701699456,
+      "sigma_s": 0.038406309460765356,
+      "sigma_d": 0.03844726397749237,
+      "source": "/sessions/rcw-01bdc7uov9ttaxvnrnts7as1/mnt/agent_paper_B/results/r1/pilot/E1_20261012T145353Z/summary.json",
+      "definition": "median sd_joint; components rescaled (v2)"
+    }
+  },
+  "host": {
+    "platform": "Linux-6.8.0-138-generic-aarch64-with-glibc2.35",
+    "python": "3.11.16"
+  },
+  "work": "/tmp/dw_r1/e1bv",
+  "sessions": [
+    {
+      "start_utc": "20261012T164607Z",
+      "done": 6,
+      "jobs_before": 6,
+      "elapsed_seconds": 43.1
+    },
+    {
+      "start_utc": "20261012T164655Z",
+      "done": 26,
+      "jobs_before": 78,
+      "elapsed_seconds": 155.8
+    },
+    {
+      "start_utc": "20261012T164950Z",
+      "done": 25,
+      "jobs_before": 52,
+      "elapsed_seconds": 162.0
+    },
+    {
+      "start_utc": "20261012T165252Z",
+      "done": 26,
+      "jobs_before": 27,
+      "elapsed_seconds": 157.8
+    },
+    {
+      "start_utc": "20261012T165536Z",
+      "done": 1,
+      "jobs_before": 1,
+      "elapsed_seconds": 13.9
+    }
+  ]
+}

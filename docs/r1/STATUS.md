@@ -2,6 +2,67 @@
 
 Newest entry first. Only this file says what is done.
 
+## 12 October 2026 (evening) — steps 1–6 of the revised order; E2 STOP prepared
+
+Executed by an AI agent (Claude) at the author's request. Outputs are PILOT or ENGINEERING_ONLY: no evidence. The work ran in the Linux VM on the Mac (4 cores, 3 GiB, Python 3.11, environment outside the repos). That VM cannot reach Ollama, so no LLM call was made anywhere.
+
+### Harness (`autoresearch_harness`, branch `r1`; not pushed)
+
+| Commit | What |
+|---|---|
+| `423addd` | **L8b:** noisy CPU nodes `digits_mlp` and `tabular_mlp` (sklearn MLP; training and split seeds injected independently); `mlp_synthetic` seed injection with unchanged defaults. 5 tests. |
+| `f0dcd6a` | **L7 fix, found while debugging E1b.** A resumed E2 trial did not restore the incumbent after a discard, dropped verify's evidence, did not charge verify's re-runs, and did not push keeps onto the stack. Every branch dataset collected with earlier code is invalid. 2 tests. |
+| `c686517` | **L12:** `ControlDecision.llm_calls`; controller LLM calls are charged to the LLM-call cap. Default records and events are unchanged. 3 tests. |
+| `4e8fd69` | **L14 review fixes:** resumed E1 charges its run and the revise call; the resume mask respects compute headroom; the new nodes no longer print `test_score`, which the worker would have parsed into the ledger. 2 tests. |
+
+Suite (Linux VM): **347 passed, 9 failed, 1 error**. The failures and the error are the pre-existing environmental set.
+
+### Paper B (`r1/` package; this repo)
+
+- **E1 (step 1):** `r1/noise/`. 1,952 runs over 11 nodes. Report `reports/NOISE_FLOOR_20261012.md`, tables `reports/NOISE_FLOOR_20261012_tables.md`, data `results/r1/pilot/E1_20261012T145353Z/`.
+  - Five nodes qualify under the proposed D21 rule.
+  - The OpenML logistic-regression nodes have zero training-seed noise.
+  - `openml_credit_g` was not measured: there is no data cache and OpenML is blocked from the VM.
+- **T1 (step 1′):** `theory/T1_MODEL.md` (model and literature map; 11 citations checked against their sources).
+- **L8b (step 2):** see the harness table.
+- **L9 (step 3):** `r1/branch/` (r1_branch_v1 schema, sibling table, instance-cluster bootstrap, `matching_report`).
+- **T2 (step 3):** `theory/T2_DERIVATIONS.md` and `r1/theory/acceptance.py` (Propositions 1–5, Monte-Carlo-checked). D23 proposal in §7.
+- **L10 (step 4):** `r1/baselines/` (ρ, always, random-matched, margin threshold, harness heuristic, KG index, ridge advantage, AWR-MLP, naive and leaf-split oracles; PACE-style and racing responses implemented but not scored).
+- **E1b (step 5):**
+  - Main run `results/r1/pilot/E1b_20261012T161034Z/` and sensitivity run `results/r1/pilot/E1b_vary_ionosphere_20261012/`.
+  - Report `reports/HEADROOM_PILOT_20261012.md`.
+  - The first E1b run is kept in `results/r1/pilot/invalid/` and was never analysed (L7 defect).
+  - Headroom ceiling: +0.0006 (`"fixed"`, both nodes) and +0.0025 (`"vary"`, ionosphere). The scripted proposer stood in for the LLM.
+- **L12:** `r1/llm_control.py` (forked side query; stub-LLM tests only).
+- **L13:** `r1/controllers.py`, `r1/e2e.py`, `make r1-e2e`. One run in `results/r1/engineering/E2E_20261012T163133Z/` (produced before the L14 label fix, so its manifest still says PILOT).
+- **T3 (step 6):** `theory/T3_SIMULATION.md`, `r1/theory/simulate.py`, data `results/r1/engineering/T3_20261012T161444Z/`.
+- **L14 (step 6):** `reviews/BUILD_REVIEW_20261012.md`. A fresh-session AI review found 6 MAJOR and 14 MINOR findings. One correction round followed; the items still open are listed in the review.
+- **Tests:** `make r1-test` → 64 passed.
+- **E2 STOP (step 7):** `reports/E2_STOP_MEMO_20261012.md`. **The author decides.** The memo proposes:
+  - the premise C1 holds;
+  - verify-based C3 fails the pre-check;
+  - L11 is not built yet;
+  - next: an overnight LLM rerun of E1b on the Mac, a D4 amendment for run-free acceptance rules, then Phase 1 or the fallback paper.
+
+### Not done, and why
+
+- No LLM ran: the VM cannot reach Ollama. The E1b LLM rerun is a Mac command in the headroom report.
+- Not pushed: neither repo.
+- PACE was not scored: it needs its own `verify:pace` action version (D4).
+- The E1 skip/revise and E0 stop/demote branches were not collected.
+
+## 12 October 2026 — plan revised: R1-REFRAME, R1-INDEX, R1-GATE-FIRST
+
+Planning only; no code and no runs. Author decisions of 12 Oct recorded in PLAN §1 and §10; PLAN §2, §3, §5, §6, §7, §9 and RUNBOOK §3 updated to match. Drafted by an AI agent (Claude) at the author's request.
+
+- **R1-REFRAME.** The headline is incremental acceptance under noise. C2 is now B's own theory: the value of verify and of a raised threshold as functions of |Δ̂|/σ_n, ϱ and remaining budget; the winner's-curse bias of `current_best` and the stagnation it causes; built on ranking & selection, knowledge gradient, racing and best-arm identification. New theory track T1–T3 in the RUNBOOK.
+- **R1-INDEX.** The primary contrasts are learned arms vs the C2 index policy (KG-style or PACE-style, D23). LLM self-control stays, with a stronger manager at least as a deployment check (D22). Baselines split into required and secondary.
+- **R1-GATE-FIRST.** Before any model is built: E1 (noise per training seed and split seed, node selection D21) and a new E1b / 0.4b pilot headroom pre-check. D16 and L11 are deferred until the gate passes. Fallback = C1 + C2.
+- **Compute map** added to RUNBOOK §3: the Mac, deepthought (many CPU cores, 4 × TITAN 12 GB) and Ada (shared 8 × RTX 6000 Ada).
+- **Not committed.** The edits are in the working tree only.
+- **New open decisions:** D21 (noise nodes), D22 (stronger manager), D23 (index policy).
+- **Still open from 9 Oct:** the four batch-2 questions (Docker for MLGym, held-out OpenML nodes, the `lr_synthetic` split policy, `mlagentbench_vectorization`).
+
 ## 9 October 2026 — build batch 2: L4, L7, L8
 
 All output is ENGINEERING_ONLY or PILOT: no evidence. Harness work is on

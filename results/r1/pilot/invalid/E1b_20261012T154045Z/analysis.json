@@ -1,0 +1,385 @@
+{
+ "n_records": 72,
+ "n_points": 36,
+ "n_instances": 12,
+ "per_node": {
+  "digits_mlp": {
+   "n_points": 18,
+   "n_instances": 6,
+   "estimates": {
+    "rho": 0.008511222222222238,
+    "always_verify": 0.00825329166666669,
+    "margin_threshold": 0.008459629629629647,
+    "harness_heuristic": 0.008511222222222238,
+    "kg_index": 0.008511222222222238,
+    "ridge_advantage": 0.008459629629629647,
+    "awr_mlp": 0.00825329166666669,
+    "random_matched": 0.008511222222222238,
+    "oracle_naive": 0.008511222222222238,
+    "oracle_crossfit": 0.008382250000000023
+   },
+   "ci": {
+    "rho": [
+     0.007028240740740756,
+     0.00996843055555557
+    ],
+    "always_verify": [
+     0.006731606481481513,
+     0.009671814814814834
+    ],
+    "margin_threshold": [
+     0.0068602606481481705,
+     0.00996843055555557
+    ],
+    "harness_heuristic": [
+     0.007028240740740756,
+     0.00996843055555557
+    ],
+    "kg_index": [
+     0.007028240740740756,
+     0.00996843055555557
+    ],
+    "ridge_advantage": [
+     0.0068602606481481705,
+     0.00996843055555557
+    ],
+    "awr_mlp": [
+     0.006731606481481513,
+     0.009671814814814834
+    ],
+    "random_matched": [
+     0.007028240740740756,
+     0.00996843055555557
+    ],
+    "oracle_naive": [
+     0.007028240740740756,
+     0.00996843055555557
+    ],
+    "oracle_crossfit": [
+     0.006525287037037062,
+     0.010110250000000006
+    ]
+   },
+   "contrasts": {
+    "always_verify - rho": -0.0002579305555555477,
+    "margin_threshold - rho": -5.159259259259093e-05,
+    "harness_heuristic - rho": 0.0,
+    "kg_index - rho": 0.0,
+    "ridge_advantage - rho": -5.159259259259093e-05,
+    "awr_mlp - rho": -0.0002579305555555477,
+    "random_matched - rho": 0.0,
+    "oracle_naive - rho": 0.0,
+    "oracle_crossfit - rho": -0.00012897222222221436
+   },
+   "contrast_ci": {
+    "always_verify - rho": [
+     -0.0006706064814814613,
+     0.0
+    ],
+    "margin_threshold - rho": [
+     -0.00015477777777777278,
+     0.0
+    ],
+    "harness_heuristic - rho": [
+     0.0,
+     0.0
+    ],
+    "kg_index - rho": [
+     0.0,
+     0.0
+    ],
+    "ridge_advantage - rho": [
+     -0.00015477777777777278,
+     0.0
+    ],
+    "awr_mlp - rho": [
+     -0.0006706064814814613,
+     0.0
+    ],
+    "random_matched - rho": [
+     0.0,
+     0.0
+    ],
+    "oracle_naive - rho": [
+     0.0,
+     0.0
+    ],
+    "oracle_crossfit - rho": [
+     -0.0006838359953703783,
+     0.000399773148148163
+    ]
+   },
+   "verify_rate": {
+    "rho": 0.0,
+    "always_verify": 1.0,
+    "margin_threshold": 0.6111111111111112,
+    "harness_heuristic": 0.0,
+    "kg_index": 0.0,
+    "ridge_advantage": 0.8888888888888888,
+    "awr_mlp": 1.0,
+    "random_matched": 0.0
+   },
+   "best_simple": "rho",
+   "headroom_naive": 0.0,
+   "headroom_crossfit": -0.00012897222222221436,
+   "mean_verify_minus_continue": -0.00025793055555554793,
+   "share_points_verify_changes_leaf": 0.1111111111111111,
+   "mean_cost": {
+    "continue": 12.0,
+    "verify": 12.0
+   }
+  },
+  "openml_ionosphere": {
+   "n_points": 18,
+   "n_instances": 6,
+   "estimates": {
+    "rho": 0.013917597222222099,
+    "always_verify": 0.013917597222222099,
+    "margin_threshold": 0.013917597222222099,
+    "harness_heuristic": 0.013917597222222099,
+    "kg_index": 0.013917597222222099,
+    "ridge_advantage": 0.013917597222222099,
+    "awr_mlp": 0.013917597222222099,
+    "random_matched": 0.013917597222222099,
+    "oracle_naive": 0.013917597222222099,
+    "oracle_crossfit": 0.01029128703703693
+   },
+   "ci": {
+    "rho": [
+     0.0030458611111109893,
+     0.02450268981481467
+    ],
+    "always_verify": [
+     0.0030458611111109893,
+     0.02450268981481467
+    ],
+    "margin_threshold": [
+     0.0030458611111109893,
+     0.02450268981481467
+    ],
+    "harness_heuristic": [
+     0.0030458611111109893,
+     0.02450268981481467
+    ],
+    "kg_index": [
+     0.0030458611111109893,
+     0.02450268981481467
+    ],
+    "ridge_advantage": [
+     0.0030458611111109893,
+     0.02450268981481467
+    ],
+    "awr_mlp": [
+     0.0030458611111109893,
+     0.02450268981481467
+    ],
+    "random_matched": [
+     0.0030458611111109893,
+     0.02450268981481467
+    ],
+    "oracle_naive": [
+     0.0030458611111109893,
+     0.02450268981481467
+    ],
+    "oracle_crossfit": [
+     -0.0015551018518519379,
+     0.02329150925925917
+    ]
+   },
+   "contrasts": {
+    "always_verify - rho": 0.0,
+    "margin_threshold - rho": 0.0,
+    "harness_heuristic - rho": 0.0,
+    "kg_index - rho": 0.0,
+    "ridge_advantage - rho": 0.0,
+    "awr_mlp - rho": 0.0,
+    "random_matched - rho": 0.0,
+    "oracle_naive - rho": 0.0,
+    "oracle_crossfit - rho": -0.003626310185185168
+   },
+   "contrast_ci": {
+    "always_verify - rho": [
+     0.0,
+     0.0
+    ],
+    "margin_threshold - rho": [
+     0.0,
+     0.0
+    ],
+    "harness_heuristic - rho": [
+     0.0,
+     0.0
+    ],
+    "kg_index - rho": [
+     0.0,
+     0.0
+    ],
+    "ridge_advantage - rho": [
+     0.0,
+     0.0
+    ],
+    "awr_mlp - rho": [
+     0.0,
+     0.0
+    ],
+    "random_matched - rho": [
+     0.0,
+     0.0
+    ],
+    "oracle_naive - rho": [
+     0.0,
+     0.0
+    ],
+    "oracle_crossfit - rho": [
+     -0.01014131064814813,
+     0.001196828703703707
+    ]
+   },
+   "verify_rate": {
+    "rho": 0.0,
+    "always_verify": 1.0,
+    "margin_threshold": 1.0,
+    "harness_heuristic": 1.0,
+    "kg_index": 1.0,
+    "ridge_advantage": 1.0,
+    "awr_mlp": 1.0,
+    "random_matched": 1.0
+   },
+   "best_simple": "rho",
+   "headroom_naive": 0.0,
+   "headroom_crossfit": -0.003626310185185168,
+   "mean_verify_minus_continue": 0.0,
+   "share_points_verify_changes_leaf": 0.0,
+   "mean_cost": {
+    "continue": 12.0,
+    "verify": 12.0
+   }
+  },
+  "ALL": {
+   "n_points": 36,
+   "n_instances": 12,
+   "estimates": {
+    "rho": 0.011214409722222169,
+    "always_verify": 0.011085444444444394,
+    "margin_threshold": 0.011188613425925873,
+    "harness_heuristic": 0.011214409722222169,
+    "kg_index": 0.011214409722222169,
+    "ridge_advantage": 0.011188613425925873,
+    "awr_mlp": 0.011085444444444394,
+    "random_matched": 0.011214409722222169,
+    "oracle_naive": 0.011214409722222169,
+    "oracle_crossfit": 0.009336768518518477
+   },
+   "ci": {
+    "rho": [
+     0.005705150983796233,
+     0.01697117256944437
+    ],
+    "always_verify": [
+     0.005541347511574044,
+     0.016901191840277687
+    ],
+    "margin_threshold": [
+     0.00567885815972216,
+     0.0169662281828703
+    ],
+    "harness_heuristic": [
+     0.005705150983796233,
+     0.01697117256944437
+    ],
+    "kg_index": [
+     0.005705150983796233,
+     0.01697117256944437
+    ],
+    "ridge_advantage": [
+     0.00567885815972216,
+     0.0169662281828703
+    ],
+    "awr_mlp": [
+     0.005541347511574044,
+     0.016901191840277687
+    ],
+    "random_matched": [
+     0.005705150983796233,
+     0.01697117256944437
+    ],
+    "oracle_naive": [
+     0.005705150983796233,
+     0.01697117256944437
+    ],
+    "oracle_crossfit": [
+     0.003679424652777733,
+     0.01594018321759256
+    ]
+   },
+   "contrasts": {
+    "always_verify - rho": -0.00012896527777777472,
+    "margin_threshold - rho": -2.579629629629633e-05,
+    "harness_heuristic - rho": 0.0,
+    "kg_index - rho": 0.0,
+    "ridge_advantage - rho": -2.579629629629633e-05,
+    "awr_mlp - rho": -0.00012896527777777472,
+    "random_matched - rho": 0.0,
+    "oracle_naive - rho": 0.0,
+    "oracle_crossfit - rho": -0.0018776412037036921
+   },
+   "contrast_ci": {
+    "always_verify - rho": [
+     -0.0003353032407407315,
+     0.0
+    ],
+    "margin_threshold - rho": [
+     -7.738888888888726e-05,
+     0.0
+    ],
+    "harness_heuristic - rho": [
+     0.0,
+     0.0
+    ],
+    "kg_index - rho": [
+     0.0,
+     0.0
+    ],
+    "ridge_advantage - rho": [
+     -7.738888888888726e-05,
+     0.0
+    ],
+    "awr_mlp - rho": [
+     -0.0003353032407407315,
+     0.0
+    ],
+    "random_matched - rho": [
+     0.0,
+     0.0
+    ],
+    "oracle_naive - rho": [
+     0.0,
+     0.0
+    ],
+    "oracle_crossfit - rho": [
+     -0.005314065104166651,
+     0.0005303716435185348
+    ]
+   },
+   "verify_rate": {
+    "rho": 0.0,
+    "always_verify": 1.0,
+    "margin_threshold": 0.7777777777777778,
+    "harness_heuristic": 0.0,
+    "kg_index": 0.0,
+    "ridge_advantage": 0.9444444444444444,
+    "awr_mlp": 0.9166666666666666,
+    "random_matched": 0.0
+   },
+   "best_simple": "rho",
+   "headroom_naive": 0.0,
+   "headroom_crossfit": -0.0018776412037036921,
+   "mean_verify_minus_continue": -0.00012896527777777396,
+   "share_points_verify_changes_leaf": 0.05555555555555555,
+   "mean_cost": {
+    "continue": 12.0,
+    "verify": 12.0
+   }
+  }
+ }
+}

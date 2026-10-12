@@ -1,0 +1,102 @@
+{
+  "schema": "r1.e1b_headroom/1",
+  "label": "PILOT",
+  "started_utc": "20261012T154045Z",
+  "harness": {
+    "root": "/sessions/rcw-01bdc7uov9ttaxvnrnts7as1/mnt/autoresearch_harness",
+    "commit": "423adddf15d825ed2d248d13d9b89d339055414b",
+    "branch": "r1",
+    "dirty": false
+  },
+  "manager_backend": "scripted_random (stand-in; VM cannot reach Ollama)",
+  "nodes": [
+    "digits_mlp",
+    "openml_ionosphere"
+  ],
+  "instances": 6,
+  "runs": 20,
+  "points": [
+    4,
+    8,
+    12
+  ],
+  "reps": 2,
+  "audit_seeds": 6,
+  "verify_r": 2,
+  "verify_split_policy": "fixed (author decision of 9 Oct)",
+  "noise": {
+    "digits_mlp": {
+      "sigma_t": 0.0049130342073124625,
+      "sigma_s": 0.0070773845263157435,
+      "sigma_d": 0.008615525338338686,
+      "source": "/sessions/rcw-01bdc7uov9ttaxvnrnts7as1/mnt/agent_paper_B/results/r1/pilot/E1_20261012T145353Z/summary.json"
+    },
+    "openml_ionosphere": {
+      "sigma_t": 0.0022519146503013083,
+      "sigma_s": 0.04874965737539719,
+      "sigma_d": 0.04880164150733927,
+      "source": "/sessions/rcw-01bdc7uov9ttaxvnrnts7as1/mnt/agent_paper_B/results/r1/pilot/E1_20261012T145353Z/summary.json"
+    }
+  },
+  "host": {
+    "platform": "Linux-6.8.0-138-generic-aarch64-with-glibc2.35",
+    "python": "3.11.16"
+  },
+  "work": "/tmp/dw_r1/e1b",
+  "sessions": [
+    {
+      "start_utc": "20261012T154045Z",
+      "done": 12,
+      "jobs_before": 12,
+      "elapsed_seconds": 99.9
+    },
+    {
+      "start_utc": "20261012T154229Z",
+      "done": 19,
+      "jobs_before": 156,
+      "elapsed_seconds": 168.1
+    },
+    {
+      "start_utc": "20261012T154528Z",
+      "done": 17,
+      "jobs_before": 137,
+      "elapsed_seconds": 164.1
+    },
+    {
+      "start_utc": "20261012T154820Z",
+      "done": 17,
+      "jobs_before": 120,
+      "elapsed_seconds": 164.2
+    },
+    {
+      "start_utc": "20261012T155123Z",
+      "done": 22,
+      "jobs_before": 103,
+      "elapsed_seconds": 167.7
+    },
+    {
+      "start_utc": "20261012T155443Z",
+      "done": 21,
+      "jobs_before": 81,
+      "elapsed_seconds": 168.4
+    },
+    {
+      "start_utc": "20261012T155754Z",
+      "done": 25,
+      "jobs_before": 60,
+      "elapsed_seconds": 140.2
+    },
+    {
+      "start_utc": "20261012T160043Z",
+      "done": 29,
+      "jobs_before": 35,
+      "elapsed_seconds": 160.4
+    },
+    {
+      "start_utc": "20261012T160647Z",
+      "done": 6,
+      "jobs_before": 6,
+      "elapsed_seconds": 38.2
+    }
+  ]
+}
