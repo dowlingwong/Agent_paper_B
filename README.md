@@ -4,7 +4,7 @@
 > [docs/r1/RUNBOOK.md](docs/r1/RUNBOOK.md) and [docs/r1/STATUS.md](docs/r1/STATUS.md).
 > The earlier route (two-checkpoint verification timing, candidate-consistency
 > task) is retired. Its plans are in `archive/old_b_2026-10-09/`; the code,
-> protocols, manuscript (`papers/paper_b/`) and release tooling described below
+> protocols, manuscript (moved on 13 Oct 2026 to `archive/old_b_2026-10-09/paper_b_manuscript/`) and release tooling described below
 > are **legacy** and are kept only because tests import them (PLAN §8).
 > Every `docs/paper_split/...` path below now lives under
 > `archive/old_b_2026-10-09/docs_paper_split/`.
@@ -24,7 +24,7 @@ built yet (see [docs/paper_split/OPEN_ITEMS.md](docs/paper_split/OPEN_ITEMS.md))
 
 ## Layout
 
-- `papers/paper_b/` — manuscript (ICML 2026 development kit).
+- `archive/old_b_2026-10-09/paper_b_manuscript/` — old manuscript (ICML 2026 development kit); was `papers/paper_b/` until 13 Oct 2026.
 - `protocols/paper_b/` — contract v1/v2/v3, launch validator, design decisions.
 - `experiments/paper_b/` — engineering smoke and CPU fixtures.
 - `experiment_scaffold/src/causal_branch/control/` — B's controller, allocator,
@@ -70,7 +70,7 @@ and `results/paper_b/smoke_latest/`. Until the targets write elsewhere, restore
 the inherited bytes afterwards:
 
 ```sh
-git checkout -- release/check_release_b.json results/paper_b/smoke_latest papers/paper_b/main.pdf
+git checkout -- release/check_release_b.json results/paper_b/smoke_latest archive/old_b_2026-10-09/paper_b_manuscript/main.pdf
 ```
 
 `make release-b` requires a clean tree and writes `release/paper_b/`, which is

@@ -1,7 +1,7 @@
 # Root Makefile — Paper B repository entry points.
 #
-# The manuscript build lives in papers/paper_b/Makefile and is delegated with
-# `-C papers/paper_b`.  Repo-level concerns (control tests, the import
+# The (legacy) manuscript build lives in archive/old_b_2026-10-09/paper_b_manuscript/Makefile and is delegated with
+# `-C archive/old_b_2026-10-09/paper_b_manuscript` (moved there on 13 Oct 2026).  Repo-level concerns (control tests, the import
 # allowlist, the release package) live here.  Never invoke a bare `python3`:
 # the scaffold needs 3.11+ (StrEnum).
 
@@ -12,7 +12,7 @@ SCAFFOLD_SRC := experiment_scaffold/src
 
 # Build the manuscript, run the verify pass and the anonymity audit.
 paper-b:
-	$(MAKE) -C papers/paper_b pdf verify anonymity-check PYTHON=$(PYTHON)
+	$(MAKE) -C archive/old_b_2026-10-09/paper_b_manuscript pdf verify anonymity-check PYTHON=$(PYTHON)
 
 # Engineering-only smoke path: closed synthetic workload through the B schema,
 # learner and evaluator.  Never a pilot and never a real-agent result.  The
