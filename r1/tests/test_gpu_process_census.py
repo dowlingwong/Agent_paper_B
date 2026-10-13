@@ -25,7 +25,7 @@ def checker(outputs):
 
 
 def test_exited_pid_must_be_absent_from_fresh_gpu_census():
-    checker([BUSY, subprocess.CalledProcessError(1, ['ps']), EMPTY])()
+    checker([BUSY, subprocess.CalledProcessError(1, ['ps']), EMPTY, EMPTY])()
 
 
 def test_unidentified_pid_still_on_card_is_rejected():
