@@ -10,6 +10,16 @@ Newest entry first. Only this file says what is done.
 
 
 
+
+## 13 October 2026 — Ownership-census race repaired; DT2–DT4 still unstarted
+
+AI-assisted ENGINEERING_ONLY launcher repair; harness defaults unchanged.
+
+- After DT1 staging recovery, the separate checkpoint successfully loaded the pinned model and generated only its one-token offload probe. Before DT2 it stopped when a GPU PID exited between `nvidia-smi` and `ps`. No DT2–DT4 campaign or collection had started; no failed model/collection is retried.
+- Launcher repair (`beb62b2`, fixture `d255907`, merged/pushed `fb10c1f`) accepts a disappeared PID only after a fresh census proves it absent, then rechecks all remaining process owners. Unknown live owners and other users remain STOP conditions. CPU mocks: 2 failed/1 passed before repair; **all 68 R1 tests passed after**. Logs: `results/r1/engineering/GPU_census_regression_20261013/`.
+- Both prior stopped states and permanent claims are retained. A fresh checkpoint for only the unstarted DT2–DT4 phases is `/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_census_20261013_ly8t2_9l/`; same node/seed/budget/model design and Ada GPU 0 only. DT1's original 10 calls are not repeated. Model pin and actual offload are revalidated before campaigns.
+- DT1 remains accepted and committed in harness `9c4902d`. No E2 decision, L11, API/larger model or Mac inference. PILOT/ENGINEERING_ONLY only.
+
 ## 13 October 2026 — Remote batch 1: stopped
 
 AI-assisted execution by Codex. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.
