@@ -11,6 +11,16 @@ Newest entry first. Only this file says what is done.
 
 
 
+
+## 13 October 2026 — Any-idle-Ada continuation authorized
+
+AI-assisted ENGINEERING_ONLY setup; DT1 remains the accepted PILOT.
+
+- Author now permits **one idle Ada GPU for unstarted DT2–DT4**, instead of waiting for GPU 0. Recorded in PLAN §10, pushed `05af1c1`; selector implementation pushed `fded5fe`. No model, node, seed, budget or analysis design changed.
+- Census: Ada GPU 2 (`GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154`) had no compute or graphics processes; the other seven cards were occupied. Selection is rechecked immediately before serving, and the chosen UUID stays fixed for the continuation.
+- The old GPU-0-only waiting checkpoint had no campaign steps or claim. It now has a permanent migration hold, and only our waiting tmux session `r1_ada_DT2_DT4_census_20261013` was stopped. All earlier claims, stopped states and results remain intact; Deepthought launchers remain disabled.
+- Fresh continuation path: `/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/`. It may execute only unstarted DT2–DT4 after pin and actual GPU offload checks on the selected card. DT1's ten calls are never repeated. Same exact pinned 7B model, one card, no other users disturbed, no API/larger model/Mac inference, PILOT/ENGINEERING_ONLY only; no E2 decisions or L11.
+
 ## 13 October 2026 — Ownership-census race repaired; DT2–DT4 still unstarted
 
 AI-assisted ENGINEERING_ONLY launcher repair; harness defaults unchanged.
