@@ -96,7 +96,17 @@ def check_gpu():
             continue
         uuid, pid = [part.strip() for part in row.split(',')]
         if uuid == selected_uuid:
-            owner = subprocess.check_output(['ps', '-o', 'user=', '-p', pid], text=True).strip()
+            try:
+                owner = subprocess.check_output(['ps', '-o', 'user=', '-p', pid], text=True).strip()
+            except subprocess.CalledProcessError:
+                refreshed = ElementTree.fromstring(subprocess.check_output(['nvidia-smi', '-q', '-x'], text=True))
+                remaining = [p.findtext('pid') for g in refreshed.findall('gpu')
+                             if g.findtext('uuid') == selected_uuid
+                             for p in g.findall('./processes/process_info')]
+                if pid in remaining:
+                    raise RuntimeError('STOP: GPU process owner is unknown and PID remains on selected card')
+                check_gpu()  # Verify every process in a fresh census after the exit race.
+                return
             if owner != getpass.getuser():
                 raise RuntimeError('STOP: selected GPU now contains another user process; no inference launch')
 
