@@ -7,6 +7,25 @@ Newest entry first. Only this file says what is done.
 
 
 
+
+## 13 October 2026 — Remote batch 1: stopped
+
+AI-assisted execution by Codex. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.
+
+- **Execution host:** `ucrtasl`. Logs and preserved runtime state: `/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/`.
+- **Harness:** `cbbd5fb2421ea65ccda8a0da2bd7340533488b36`; manager `qwen2.5-coder:7b`, pinned digest `dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364`.
+- **GPU / offload:** `0, GPU-9be33fd1-8eeb-497d-772a-87362d6720be, NVIDIA RTX 6000 Ada Generation, 48424`; `{"host": "ucrtasl", "probe_tokens_max": 1, "size_vram": 5560907776, "verified_before_DT1": true}`.
+
+- **DT0_ADA:** `{"acceptance": "Known environment failures plus author-approved missing-zsh exception", "completed": true, "tests": {"accepted": false, "deepthought_shutdown": "Unconfirmed: direct and portal SSH timeouts on both hosts", "duplicate_launch_prevented": false, "finished_utc": "2026-10-12T19:47:51.375022+00:00", "gpu_offload_verified": false, "harness_failures": ["FAILED tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::test_claw_worker_deterministic_constant_patch_runs_without_llm", "FAILED tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns", "FAILED tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns", "FAILED tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist", "FAILED tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist", "FAILED tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance", "FAILED tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance", "FAILED tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance", "FAILED tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links", "FAILED tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance", "ERROR tests/test_legacy_noop_skip.py"], "harness_head": "cbbd5fb2421ea65ccda8a0da2bd7340533488b36", "harness_summary": "10 failed, 347 passed, 1 warning, 1 error, 4 subtests passed in 33.58s", "harness_tests_exit": 1, "host": "ucrtasl", "inference_started": false, "label": "ENGINEERING_ONLY", "model_loaded": false, "paper_failures": [], "paper_head": "b246a4fd3d63c4b70b153995ad793abbf71d8a15", "paper_summary": "65 passed in 3.83s", "paper_tests_exit": 0, "prepared": true, "python": "Python 3.11.17", "started_utc": "2026-10-12T19:46:59.335607+00:00", "stop_reason": "Previously passing ClawWorker deterministic extraction test fails on Ada because /bin/zsh is absent", "uv_sync_exit": 0}}`
+- **AUTHOR_EXCEPTION:** `{"commit": "0f25a18", "completed": true, "model_unchanged": true}`
+- **DT1:** `{"completed": true, "latency": {"completion_tokens": {"max": 95, "mean": 90.4, "median": 90.5, "min": 85, "n": 10}, "event_files": ["/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness/experiments/r1/pilot/L4dt_20261013T011936Z/events.jsonl"], "label": "PILOT", "latency_ms": {"max": 848.0100480373949, "mean": 814.598328480497, "median": 820.8710500621237, "min": 773.399808909744, "n": 10}, "n_calls": 10, "n_parse_failures": 0, "parse_failure_rate": 0.0, "prompt_tokens": {"max": 622, "mean": 619.2, "median": 620.0, "min": 611, "n": 10}, "tokens_reported": true}, "out": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness/experiments/r1/pilot/L4dt_20261013T011936Z", "size_vram": 5560907776}`
+
+**STOP:** CalledProcessError: Command '['git', 'diff', '--cached', '--check']' returned non-zero exit status 2.
+
+DT1–DT4 are accepted only where the step entry explicitly records completion. Partial outputs are preserved; no failed model or collection run was retried.
+
+- **Author decisions remain open:** D18, D21, D23, the D4 amendment and any verify split-policy revision. Fixed split policy retained; L11 was not built.
+
 ## 12 October 2026 — Deepthought duplicate-launch prevention confirmed
 
 AI-assisted ENGINEERING_ONLY shutdown; no inference or evidence.
