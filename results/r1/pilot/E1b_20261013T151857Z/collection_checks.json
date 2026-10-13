@@ -1,0 +1,15 @@
+{
+  "label": "PILOT",
+  "leaves": 144,
+  "collection_failures": 0,
+  "manager_kind": "langgraph",
+  "llm_calls": 1440,
+  "parse_failures": 0,
+  "proposal_examples": [
+    "increase-hidden-units-64",
+    "increase-hidden-units-128",
+    "increase-hidden-units-256",
+    "increase-batch-size-128",
+    "increase-batch-size-128"
+  ]
+}

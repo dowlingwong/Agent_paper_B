@@ -1,0 +1,31 @@
+{
+  "config": {
+    "C": 0.15,
+    "class_weight": "balanced",
+    "imputer": "most_frequent",
+    "learning_rate": 0.05,
+    "max_depth": 5,
+    "max_iter": 1000,
+    "model_type": "logistic_regression",
+    "n_estimators": 200,
+    "scaler": "standard"
+  },
+  "dataset_id": 59,
+  "dataset_name": "ionosphere",
+  "model_type": "logistic_regression",
+  "n_test": 53,
+  "n_train": 245,
+  "n_val": 53,
+  "node": "openml_ionosphere",
+  "positive_label": "g",
+  "seed": 133,
+  "split": {
+    "test": 0.15,
+    "train": 0.7,
+    "val": 0.15
+  },
+  "status": "success",
+  "target": "class",
+  "val_accuracy": 0.8301886792452831,
+  "val_auc": 0.8622291021671826
+}
