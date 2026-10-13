@@ -12,6 +12,42 @@ Newest entry first. Only this file says what is done.
 
 
 
+## 13 October 2026 — launcher updated for GPU co-tenancy; DT4 rerun prepared
+
+AI-assisted ENGINEERING_ONLY code change by Claude at the author's request; no runs. The author authorized a fresh DT4 attempt on Ada (PLAN §10, R1-COMPUTE DT4 rerun).
+
+- `r1/scripts/deepthought_batch1_resume.py`:
+  - card selection (`gpu_rows`) is now by free memory: footprint 5,304 MiB (DT1 `size_vram`) + 2,048 MiB margin;
+  - `check_gpu` logs a census of every card (free memory, process owners) to `gpu_census.jsonl` and STOPs only when free memory is below the margin (footprint + margin before loading, margin alone after); other users' processes no longer cause a STOP;
+  - new `assert_full_offload`: STOP unless `size_vram = size`;
+  - a memory check before every collection session;
+  - DT4 moved unchanged into `run_dt4(meta, version)`, plus a full-offload check after collection; the report's deviation note now describes co-tenancy;
+  - executor label and commit co-author are configurable (`R1_EXECUTOR`, `R1_COAUTHOR`; defaults unchanged).
+- New `r1/scripts/ada_rerun_dt4.py` (Ada-only; preconditions: DT1–DT3 complete and the interrupted DT4 preserved in the previous batch, duplicate-launch hold confirmed, both PLAN rows present, checkout at origin/main, a permanent `dt4_rerun_claim`) and `r1/scripts/ada_dt4_rerun_launch.sh` (fresh clone in a new batch directory, reuses the DT1 harness venv and pinned model files, tmux `r1_dt4_rerun`). Ollama runs with `OLLAMA_KEEP_ALIVE=-1`, so the model is never unloaded and reloaded onto a fuller card mid-run.
+- `r1/tests/test_gpu_process_census.py` rewritten for the new rule (7 tests). The test "other user on card is rejected" is replaced by "allowed and logged".
+- Checks (device VM, Python 3.13.15): `r1/tests` without the three harness-dependent files **58 passed**; `make test` control 212, release 6, standalone 12, all OK. The three harness-dependent R1 test files were not run here (no harness checkout in this environment); they do not import the changed scripts.
+- `docs/r1/prompts/DEEPTHOUGHT_BATCH1_PROMPT.md` hard rule 1 now states the co-tenancy rule.
+- **Not run yet.** The launch needs the author's Ada login: `bash r1/scripts/ada_dt4_rerun_launch.sh` on `ucrtasl` after these commits are on origin/main.
+
+## 13 October 2026 — author decision: GPU co-tenancy allowed; latency descriptive
+
+Planning only; no code and no runs. Recorded by an AI agent (Claude) at the author's request.
+
+- **Author decision** (PLAN §10, R1-COMPUTE GPU co-tenancy): a card may be shared with other users when its free memory is enough; LLM latency is descriptive only. This replaces the idle-card / no-other-user condition of the earlier R1-COMPUTE rows. The other rules stay: pinned model, verified GPU offload with CPU fallback a STOP, no disturbance of other users, duplicate-launch prevention, no Mac LLM.
+- **Agent-proposed default, for the author to confirm or change:** "enough" = free memory ≥ measured footprint + 2 GiB (≈ 7.2 GiB for the pinned 7B), checked at selection and before each step.
+- RUNBOOK §3 (compute map, Ada bullet, new GPU-sharing bullet) and 0.4 (latency is descriptive, logged with a GPU census) updated to match.
+- **Consequences.** The DT2/DT3 note that no exclusive-use claim is made needs no further action. The DT4 STOP was triggered only by the old ownership rule, so the decision removes that cause. A DT4 rerun still needs an explicit go from the author, as the DT4 entry says.
+- The launcher and the batch prompt were updated afterwards (next entry).
+
+## 13 October 2026 — old manuscript archived (RUNBOOK 0.1, legacy item)
+
+AI-assisted housekeeping by Claude at the author's request; no runs, no evidence.
+
+- Moved `papers/paper_b/` unchanged (sources, build products, `legacy/`, `archive/B1_20260927/`) to `archive/old_b_2026-10-09/paper_b_manuscript/`. `papers/` is now empty; the R1 manuscript goes in `papers/r1/` (RUNBOOK Phase 4).
+- Repointed `make paper-b` (root `Makefile`) and the paths in `README.md`; documented the move and the remaining dangling `papers/paper_b/...` names (release scripts, `release/paper_b_manifest.json`, `PROVENANCE.md`, PLAN §8) in `archive/old_b_2026-10-09/README.md`. PLAN was not edited.
+- No kept test reads the manuscript: `tests/release/test_provenance.py` builds its own fixture repo, and `scripts/release_provenance.py` reads `main.tex` from a historical source commit. `make test` after the move (Python 3.13.15): control 212, release 6, standalone 12 — all OK.
+- The old release tooling (`make release-b`, `check-release-b`) still points at the old path and stays unmaintained, as before.
+
 ## 13 October 2026 — DT2/DT3 complete; DT4 stopped on GPU ownership conflict
 
 AI-assisted ENGINEERING_ONLY smoke checks and interrupted PILOT; not evidence.

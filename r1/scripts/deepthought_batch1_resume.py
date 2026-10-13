@@ -22,6 +22,12 @@ PY = str(HARNESS / '.venv/bin/python')
 OLLAMA = os.environ.get('R1_OLLAMA_BINARY', str(BATCH / 'ollama_runtime/bin/ollama'))
 DIGEST = 'dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364'
 MODEL = 'qwen2.5-coder:7b'
+# R1-COMPUTE GPU co-tenancy (author, 13 Oct 2026; PLAN §10): a card may be shared with
+# other users' processes when its free memory suffices; LLM latency is descriptive only.
+MODEL_FOOTPRINT_MIB = 5304  # DT1: size_vram 5560907776 B, model fully offloaded
+MARGIN_MIB = 2048
+EXECUTOR = os.environ.get('R1_EXECUTOR', 'Codex')
+COAUTHOR = os.environ.get('R1_COAUTHOR', 'Codex <noreply@openai.com>')
 os.environ.update(AR_HARNESS_ROOT=str(HARNESS), OLLAMA_BASE_URL='http://127.0.0.1:11434',
                   OMP_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1')
 os.environ['PATH'] = str(HARNESS / '.venv/bin') + ':' + os.environ['PATH']
@@ -56,7 +62,7 @@ def commit(repo, message, paths, step):
     # Preserve raw generated CSV, logs and patch artifacts byte-for-byte.
     cmd(['git', 'diff', '--cached', '--check', '--', '.',
          ':!results/r1/**', ':!experiments/r1/**'], cwd=repo)
-    cmd(['git', 'commit', '-m', message, '-m', 'Co-Authored-By: Codex <noreply@openai.com>'], cwd=repo)
+    cmd(['git', 'commit', '-m', message, '-m', 'Co-Authored-By: ' + COAUTHOR], cwd=repo)
     branch = 'r1' if repo == HARNESS else 'main'
     cmd(['git', 'push', 'origin', branch], cwd=repo)
     head = git_output(repo, 'rev-parse', 'HEAD')
@@ -68,13 +74,11 @@ def commit(repo, message, paths, step):
 
 
 def gpu_rows():
+    """All cards, and the cards with enough free memory to load the pinned model (co-tenancy rule)."""
     rows = subprocess.check_output(['nvidia-smi', '--query-gpu=index,uuid,name,memory.free',
                                     '--format=csv,noheader,nounits'], text=True).strip().splitlines()
-    xml = ElementTree.fromstring(subprocess.check_output(['nvidia-smi', '-q', '-x'], text=True))
-    apps = [g.findtext('uuid') + ', ' + p.findtext('pid')
-            for g in xml.findall('gpu') for p in g.findall('./processes/process_info')]
-    busy = {r.split(',')[0].strip() for r in apps if r.strip()}
-    return rows, [r for r in rows if r.split(',')[1].strip() not in busy]
+    need = MODEL_FOOTPRINT_MIB + MARGIN_MIB
+    return rows, [r for r in rows if int(r.split(',')[3].strip()) >= need]
 
 
 def pin():
@@ -86,35 +90,64 @@ def pin():
     return found
 
 
-def check_gpu():
-    selected_uuid = state['gpu'].split(',')[1].strip()
+def gpu_census():
+    """Descriptive census of every card: free memory and the owners of its processes."""
+    rows = subprocess.check_output(['nvidia-smi', '--query-gpu=index,uuid,name,memory.free',
+                                    '--format=csv,noheader,nounits'], text=True).strip().splitlines()
     xml = ElementTree.fromstring(subprocess.check_output(['nvidia-smi', '-q', '-x'], text=True))
-    apps = [g.findtext('uuid') + ', ' + p.findtext('pid')
-            for g in xml.findall('gpu') for p in g.findall('./processes/process_info')]
-    for row in apps:
-        if not row.strip():
-            continue
-        uuid, pid = [part.strip() for part in row.split(',')]
-        if uuid == selected_uuid:
-            try:
-                owner = subprocess.check_output(['ps', '-o', 'user=', '-p', pid], text=True).strip()
-            except subprocess.CalledProcessError:
-                refreshed = ElementTree.fromstring(subprocess.check_output(['nvidia-smi', '-q', '-x'], text=True))
-                remaining = [p.findtext('pid') for g in refreshed.findall('gpu')
-                             if g.findtext('uuid') == selected_uuid
-                             for p in g.findall('./processes/process_info')]
-                if pid in remaining:
-                    raise RuntimeError('STOP: GPU process owner is unknown and PID remains on selected card')
-                check_gpu()  # Verify every process in a fresh census after the exit race.
-                return
-            if owner != getpass.getuser():
-                raise RuntimeError('STOP: selected GPU now contains another user process; no inference launch')
+    cards = []
+    for row in rows:
+        index, uuid, name, free = [part.strip() for part in row.split(',')]
+        processes = []
+        for g in xml.findall('gpu'):
+            if g.findtext('uuid') != uuid:
+                continue
+            for p in g.findall('./processes/process_info'):
+                pid = p.findtext('pid')
+                try:
+                    owner = subprocess.check_output(['ps', '-o', 'user=', '-p', pid], text=True).strip()
+                except subprocess.CalledProcessError:
+                    owner = None  # exited between nvidia-smi and ps
+                processes.append({'pid': pid, 'owner': owner, 'used_memory': p.findtext('used_memory')})
+        cards.append({'index': index, 'uuid': uuid, 'name': name, 'free_mib': int(free), 'processes': processes})
+    return cards
+
+
+def check_gpu():
+    """Co-tenancy check (PLAN §10, 13 Oct): other users' processes are allowed and only logged.
+
+    STOP only when the selected card's free memory is below the margin: footprint + margin
+    before our model is loaded, the margin alone once it is loaded.
+    """
+    selected_uuid = state['gpu'].split(',')[1].strip()
+    cards = gpu_census()
+    card = next((c for c in cards if c['uuid'] == selected_uuid), None)
+    if card is None:
+        raise RuntimeError('STOP: selected GPU is no longer listed by nvidia-smi')
+    need = MARGIN_MIB if state.get('model_loaded') else MODEL_FOOTPRINT_MIB + MARGIN_MIB
+    me = getpass.getuser()
+    record = {'label': 'ENGINEERING_ONLY', 'utc': stamp(), 'selected_uuid': selected_uuid,
+              'need_free_mib': need, 'selected_free_mib': card['free_mib'],
+              'other_owners_on_selected': sorted({str(p['owner']) for p in card['processes'] if p['owner'] != me}),
+              'cards': cards}
+    with (BATCH / 'gpu_census.jsonl').open('a') as f:
+        f.write(json.dumps(record) + '\n')
+    if card['free_mib'] < need:
+        raise RuntimeError(f"STOP: selected GPU has {card['free_mib']} MiB free, below the {need} MiB co-tenancy margin")
+    return record
+
+
+def assert_full_offload(loaded, where):
+    """The pinned model must sit entirely on the GPU; a partial or CPU load is a STOP."""
+    if loaded is None or loaded.get('size_vram', 0) <= 0 or loaded['size_vram'] < loaded.get('size', 0):
+        raise RuntimeError(f'STOP: {where}: pinned model is not fully offloaded to the GPU')
 
 
 def collect(out, work, extra):
     cmd([PY, '-m', 'r1.headroom.e1b_collect', '--manager', 'langgraph', '--work', str(work),
          '--out', str(out), *extra], log=out.name + '.log')
     for _ in range(12):
+        check_gpu()
         cmd([PY, '-m', 'r1.headroom.e1b_collect', '--resume', str(out), '--workers',
              '2' if 'smoke' in out.name else '4'], log=out.name + '.log')
         manifest = json.loads((out / 'manifest.json').read_text())
@@ -190,7 +223,7 @@ def finish(reason):
     save()
     day = datetime.now(ZoneInfo('Europe/Berlin')).strftime('%d %B %Y')
     lines = [f'## {day} — Remote batch 1: {"stopped" if reason else "completed"}', '',
-             'AI-assisted execution by Codex. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.', '',
+             f'AI-assisted execution by {EXECUTOR}. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.', '',
              f'- **Execution host:** `{platform.node()}`. Logs and preserved runtime state: `{BATCH}/`.',
              f'- **Harness:** `{git_output(HARNESS, "rev-parse", "HEAD")}`; manager `{MODEL}`, pinned digest `{DIGEST}`.',
              f'- **GPU / offload:** `{state.get("gpu", "not selected")}`; `{json.dumps(state.get("gpu_offload", {}), sort_keys=True)}`.', '']
@@ -207,6 +240,74 @@ def finish(reason):
     state['steps']['STATUS'] = {'completed': True, 'reason': reason}
     commit(PAPER, 'Record remote batch 1 execution status', ['docs/r1/STATUS.md'], 'STATUS')
     print('FINISHED', json.dumps(state), flush=True)
+
+
+def run_dt4(meta, version):
+    """DT4: E1b with the pinned LLM manager, analysis and committed regeneration."""
+    pin()
+    check_gpu()
+    out = PAPER / 'results/r1/pilot' / ('E1b_' + stamp())
+    work = BATCH / 'r1_e1b_llm_work'
+    checks = collect(out, work, ['--nodes', 'digits_mlp', 'openml_ionosphere', '--instances', '6',
+                               '--runs', '20', '--points', '4', '8', '12', '--reps', '2',
+                               '--audit-seeds', '6', '--workers', '4'])
+    with urlopen('http://127.0.0.1:11434/api/ps', timeout=15) as response:
+        after = next((m for m in json.load(response)['models'] if m.get('name', m.get('model')) == MODEL), None)
+    assert_full_offload(after, 'after DT4 collection')
+    check_gpu()
+    report_stamp = datetime.now(timezone.utc).strftime('%Y%m%d')
+    tables = PAPER / f'docs/r1/reports/HEADROOM_PILOT_{report_stamp}_llm_tables.md'
+    report = PAPER / f'docs/r1/reports/HEADROOM_PILOT_{report_stamp}_llm.md'
+    if report.exists() or tables.exists():
+        raise RuntimeError('STOP: report destination already exists; no overwrite')
+    cmd([PY, '-m', 'r1.headroom.e1b_analyze', str(out), '--md', str(tables)], log='DT4_analysis.log')
+    current = json.loads((out / 'analysis.json').read_text())
+    scripted = json.loads((PAPER / 'results/r1/pilot/E1b_20261012T161034Z/analysis.json').read_text())
+    text = [f'# E1b LLM pilot headroom pre-check — {report_stamp}', '',
+            f'**PILOT. AI-assisted execution and report by {EXECUTOR}. Not evidence; no human review.**', '',
+            '## What ran', '',
+            f'Run `{out.relative_to(PAPER)}` on `{platform.node()}`; harness `{meta["harness_commit"]}`; manager LangGraph/Ollama `{MODEL}`, digest `{DIGEST}`; GPU `{state["gpu"]}`; Ollama `{version}`.', '',
+            'Six instances per node, digits_mlp and openml_ionosphere; W=20 worker runs; E2 points 4, 8, 12; continue and verify, r=2, two repetitions; six common fresh joint audit seeds 5001–5006. Verify split policy fixed. Every branch continues under the default rule at matched worker budget.', '',
+            f'Collection checks: `{json.dumps(checks)}`.', '',
+            '## Headroom bracket and scripted comparison', '',
+            'Naive oracle is biased upward; its upper confidence bound is a conservative ceiling. Leaf-split oracle is biased downward with two repetitions. These are pilot inputs for this proposal law, nodes and budget.', '',
+            '| Node | Proposer | Best simple | Naive headroom (95% CI) | Leaf-split headroom (95% CI) |',
+            '|---|---|---|---|---|']
+    for node in ['digits_mlp', 'openml_ionosphere', 'ALL']:
+        for name, data in [('LLM', current), ('scripted', scripted)]:
+            row = data['per_node'][node]
+            base = row['best_simple']
+            naive = row['contrast_ci']['oracle_naive - ' + base]
+            leaf = row['contrast_ci']['oracle_leafsplit - ' + base]
+            text.append(f'| {node} | {name} | {base} | {row["headroom_naive"]:+.4f} [{naive[0]:+.4f}, {naive[1]:+.4f}] | {row["headroom_leafsplit"]:+.4f} [{leaf[0]:+.4f}, {leaf[1]:+.4f}] |')
+    text += ['', '## Deviations', '',
+             f'The initial named host Deepthought2 has two L40S cards, while the author-approved fallback Deepthought has four TITAN X cards. The execution host was {platform.node()}; one card was used. Under the author’s 13 Oct co-tenancy decision (PLAN §10) the card could be shared with other users’ processes when its free memory was at least the model footprint plus 2 GiB; the per-step GPU census is in the batch log `gpu_census.jsonl`, and latency is descriptive only. Scratch paths are unique under the batch log directory to preserve pre-existing directories. No second Ollama instance was started; Ollama serializes inference, and OMP/OpenBLAS/MKL are capped at one thread per worker. Archived snapshot/noise paths were made repository-relative, with original paths recorded; proposal ledgers and snapshot bytes are included for regeneration. As in the scripted pilot, only E2 continue/verify is branched; E1 skip/revise and run-free rules are not evaluated, PACE is not scored, and this is not a stronger-manager deployment check.', '',
+             '## What this changes for the E2 STOP', '',
+             'The table adds headroom under the pinned LLM proposal law alongside the scripted proposal law. It is input to the author’s E2 STOP, not a go/no-go decision: D18, D21, D23, the D4 amendment and any split-policy revision remain open. The two-repetition oracle bracket is noisy and the pilot does not establish a learning gain. L11 remains unbuilt.', '']
+    report.write_text('\n'.join(text))
+    state['steps']['DT4'] = {'completed': False, 'out': str(out), 'checks': checks, 'report': str(report),
+                             'headroom': {n: {k: r[k] for k in ['best_simple', 'headroom_naive', 'headroom_leafsplit', 'contrast_ci']}
+                                          for n, r in current['per_node'].items()}}
+    commit(PAPER, 'Record PILOT E1b LLM headroom bracket and scripted comparison', [out, tables, report], 'DT4')
+    # Reproduce analysis from a fresh archive containing only committed inputs.
+    archive = BATCH / 'committed_analysis.tar'
+    e1_source = json.loads((out / 'manifest.json').read_text())['noise']['digits_mlp']['source']
+    with archive.open('wb') as f:
+        subprocess.run(['git', 'archive', 'HEAD', 'r1', str(out.relative_to(PAPER)), e1_source], cwd=PAPER, stdout=f, check=True)
+    regen = BATCH / 'analysis_regeneration'
+    regen.mkdir()
+    cmd(['tar', '-xf', str(archive), '-C', str(regen)])
+    expected = hashlib.sha256((out / 'analysis.json').read_bytes()).hexdigest()
+    regen_out = regen / out.relative_to(PAPER)
+    cmd([PY, '-m', 'r1.headroom.e1b_analyze', str(regen_out)], cwd=regen, log='DT4_regeneration.log')
+    observed = hashlib.sha256((regen_out / 'analysis.json').read_bytes()).hexdigest()
+    state['steps']['DT4']['committed_analysis_sha256'] = expected
+    state['steps']['DT4']['regenerated_analysis_sha256'] = observed
+    save()
+    if expected != observed:
+        raise RuntimeError('STOP: analysis differs when regenerated from committed inputs')
+    state['steps']['DT4']['completed'] = True
+    save()
 
 
 def main():
@@ -228,7 +329,7 @@ def main():
     if required_uuid:
         free = [row for row in free if row.split(',')[1].strip() == required_uuid]
     if not free:
-        raise RuntimeError('STOP: the announced free GPU became occupied before serving; no shared-card launch')
+        raise RuntimeError('STOP: no selected card has enough free memory for the pinned model (co-tenancy margin)')
     gpu = free[0].split(',')[0].strip()
     gpu_uuid = free[0].split(',')[1].strip()
     state['gpu'] = free[0]
@@ -277,6 +378,7 @@ def main():
         raise RuntimeError('STOP: GPU offload API lacks a process on the selected card')
     state['gpu_offload'] = {'size_vram': loaded['size_vram'], 'probe_tokens_max': 1,
                            'verified_before_DT1': True, 'host': platform.node()}
+    state['model_loaded'] = True
     save()
     out = HARNESS / 'experiments/r1/pilot' / ('L4dt_' + stamp())
     cmd([PY, str(BATCH / 'dt1_latency.py'), str(out)], cwd=HARNESS, log='DT1.log')
@@ -315,66 +417,7 @@ def main():
                                '--label', 'ENGINEERING_ONLY', '--split', 'engineering'])
     state['steps']['DT3'] = {'completed': True, 'out': str(out), 'checks': checks}
     commit(PAPER, 'Record ENGINEERING_ONLY E1b smoke with pinned LLM manager', [out], 'DT3')
-    pin()
-    check_gpu()
-    out = PAPER / 'results/r1/pilot' / ('E1b_' + stamp())
-    work = BATCH / 'r1_e1b_llm_work'
-    checks = collect(out, work, ['--nodes', 'digits_mlp', 'openml_ionosphere', '--instances', '6',
-                               '--runs', '20', '--points', '4', '8', '12', '--reps', '2',
-                               '--audit-seeds', '6', '--workers', '4'])
-    report_stamp = datetime.now(timezone.utc).strftime('%Y%m%d')
-    tables = PAPER / f'docs/r1/reports/HEADROOM_PILOT_{report_stamp}_llm_tables.md'
-    report = PAPER / f'docs/r1/reports/HEADROOM_PILOT_{report_stamp}_llm.md'
-    if report.exists() or tables.exists():
-        raise RuntimeError('STOP: report destination already exists; no overwrite')
-    cmd([PY, '-m', 'r1.headroom.e1b_analyze', str(out), '--md', str(tables)], log='DT4_analysis.log')
-    current = json.loads((out / 'analysis.json').read_text())
-    scripted = json.loads((PAPER / 'results/r1/pilot/E1b_20261012T161034Z/analysis.json').read_text())
-    text = [f'# E1b LLM pilot headroom pre-check — {report_stamp}', '',
-            '**PILOT. AI-assisted execution and report by Codex. Not evidence; no human review.**', '',
-            '## What ran', '',
-            f'Run `{out.relative_to(PAPER)}` on `{platform.node()}`; harness `{meta["harness_commit"]}`; manager LangGraph/Ollama `{MODEL}`, digest `{DIGEST}`; GPU `{state["gpu"]}`; Ollama `{version}`.', '',
-            'Six instances per node, digits_mlp and openml_ionosphere; W=20 worker runs; E2 points 4, 8, 12; continue and verify, r=2, two repetitions; six common fresh joint audit seeds 5001–5006. Verify split policy fixed. Every branch continues under the default rule at matched worker budget.', '',
-            f'Collection checks: `{json.dumps(checks)}`.', '',
-            '## Headroom bracket and scripted comparison', '',
-            'Naive oracle is biased upward; its upper confidence bound is a conservative ceiling. Leaf-split oracle is biased downward with two repetitions. These are pilot inputs for this proposal law, nodes and budget.', '',
-            '| Node | Proposer | Best simple | Naive headroom (95% CI) | Leaf-split headroom (95% CI) |',
-            '|---|---|---|---|---|']
-    for node in ['digits_mlp', 'openml_ionosphere', 'ALL']:
-        for name, data in [('LLM', current), ('scripted', scripted)]:
-            row = data['per_node'][node]
-            base = row['best_simple']
-            naive = row['contrast_ci']['oracle_naive - ' + base]
-            leaf = row['contrast_ci']['oracle_leafsplit - ' + base]
-            text.append(f'| {node} | {name} | {base} | {row["headroom_naive"]:+.4f} [{naive[0]:+.4f}, {naive[1]:+.4f}] | {row["headroom_leafsplit"]:+.4f} [{leaf[0]:+.4f}, {leaf[1]:+.4f}] |')
-    text += ['', '## Deviations', '',
-             f'The initial named host Deepthought2 has two L40S cards, while the author-approved fallback Deepthought has four TITAN X cards. The execution host was {platform.node()}; only one idle card was used. Scratch paths are unique under the batch log directory to preserve pre-existing directories. No second Ollama instance was started; Ollama serializes inference, and OMP/OpenBLAS/MKL are capped at one thread per worker. Archived snapshot/noise paths were made repository-relative, with original paths recorded; proposal ledgers and snapshot bytes are included for regeneration. As in the scripted pilot, only E2 continue/verify is branched; E1 skip/revise and run-free rules are not evaluated, PACE is not scored, and this is not a stronger-manager deployment check.', '',
-             '## What this changes for the E2 STOP', '',
-             'The table adds headroom under the pinned LLM proposal law alongside the scripted proposal law. It is input to the author’s E2 STOP, not a go/no-go decision: D18, D21, D23, the D4 amendment and any split-policy revision remain open. The two-repetition oracle bracket is noisy and the pilot does not establish a learning gain. L11 remains unbuilt.', '']
-    report.write_text('\n'.join(text))
-    state['steps']['DT4'] = {'completed': False, 'out': str(out), 'checks': checks, 'report': str(report),
-                             'headroom': {n: {k: r[k] for k in ['best_simple', 'headroom_naive', 'headroom_leafsplit', 'contrast_ci']}
-                                          for n, r in current['per_node'].items()}}
-    commit(PAPER, 'Record PILOT E1b LLM headroom bracket and scripted comparison', [out, tables, report], 'DT4')
-    # Reproduce analysis from a fresh archive containing only committed inputs.
-    archive = BATCH / 'committed_analysis.tar'
-    e1_source = json.loads((out / 'manifest.json').read_text())['noise']['digits_mlp']['source']
-    with archive.open('wb') as f:
-        subprocess.run(['git', 'archive', 'HEAD', 'r1', str(out.relative_to(PAPER)), e1_source], cwd=PAPER, stdout=f, check=True)
-    regen = BATCH / 'analysis_regeneration'
-    regen.mkdir()
-    cmd(['tar', '-xf', str(archive), '-C', str(regen)])
-    expected = hashlib.sha256((out / 'analysis.json').read_bytes()).hexdigest()
-    regen_out = regen / out.relative_to(PAPER)
-    cmd([PY, '-m', 'r1.headroom.e1b_analyze', str(regen_out)], cwd=regen, log='DT4_regeneration.log')
-    observed = hashlib.sha256((regen_out / 'analysis.json').read_bytes()).hexdigest()
-    state['steps']['DT4']['committed_analysis_sha256'] = expected
-    state['steps']['DT4']['regenerated_analysis_sha256'] = observed
-    save()
-    if expected != observed:
-        raise RuntimeError('STOP: analysis differs when regenerated from committed inputs')
-    state['steps']['DT4']['completed'] = True
-    save()
+    run_dt4(meta, version)
 
 
 try:

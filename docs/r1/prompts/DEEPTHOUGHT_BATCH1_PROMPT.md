@@ -33,8 +33,11 @@ AUTHOR DECISIONS (stated by the author by sending this prompt)
   build L11.
 
 HARD RULES
-1. Shared machine. Before using a GPU, run `nvidia-smi` and pick a card with
-   no other user's process. Never kill or disturb other users' jobs. Use at
+1. Shared machine. Before using a GPU, run `nvidia-smi` and pick a card whose
+   free memory is at least the model footprint plus 2 GiB; other users'
+   processes on that card are allowed and logged (author decision of 13 Oct
+   2026, PLAN §10, which replaced the earlier "no other user's process" rule;
+   latency is descriptive only). Never kill or disturb other users' jobs. Use at
    most 2 cards unless all 4 are idle. Put long runs in tmux (or the site's
    batch system if interactive use is discouraged) and log to files.
 2. Never force-push, rewrite pushed history, or delete ledgers or results.
