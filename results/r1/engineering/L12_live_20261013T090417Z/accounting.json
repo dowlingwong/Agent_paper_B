@@ -1,0 +1,86 @@
+[
+  {
+    "epoch": "E0",
+    "budget_before": {
+      "trials_remaining": 40,
+      "trials_total": 40,
+      "worker_runs_remaining": 10,
+      "worker_seconds_remaining": null,
+      "llm_calls_remaining": 12,
+      "worker_runs_used": 0,
+      "worker_seconds_used": 0.0,
+      "llm_calls_used": 0
+    },
+    "charged_calls": 0
+  },
+  {
+    "epoch": "E1",
+    "budget_before": {
+      "trials_remaining": 40,
+      "trials_total": 40,
+      "worker_runs_remaining": 10,
+      "worker_seconds_remaining": null,
+      "llm_calls_remaining": 12,
+      "worker_runs_used": 0,
+      "worker_seconds_used": 0.0,
+      "llm_calls_used": 0
+    },
+    "charged_calls": 1
+  },
+  {
+    "epoch": "E2",
+    "budget_before": {
+      "trials_remaining": 40,
+      "trials_total": 40,
+      "worker_runs_remaining": 9,
+      "worker_seconds_remaining": null,
+      "llm_calls_remaining": 11,
+      "worker_runs_used": 1,
+      "worker_seconds_used": 1.500752403982915,
+      "llm_calls_used": 1
+    },
+    "charged_calls": 1
+  },
+  {
+    "epoch": "E0",
+    "budget_before": {
+      "trials_remaining": 39,
+      "trials_total": 40,
+      "worker_runs_remaining": 5,
+      "worker_seconds_remaining": null,
+      "llm_calls_remaining": 10,
+      "worker_runs_used": 5,
+      "worker_seconds_used": 5.1099560300353914,
+      "llm_calls_used": 2
+    },
+    "charged_calls": 0
+  },
+  {
+    "epoch": "E1",
+    "budget_before": {
+      "trials_remaining": 39,
+      "trials_total": 40,
+      "worker_runs_remaining": 5,
+      "worker_seconds_remaining": null,
+      "llm_calls_remaining": 10,
+      "worker_runs_used": 5,
+      "worker_seconds_used": 5.1099560300353914,
+      "llm_calls_used": 2
+    },
+    "charged_calls": 1
+  },
+  {
+    "epoch": "E2",
+    "budget_before": {
+      "trials_remaining": 39,
+      "trials_total": 40,
+      "worker_runs_remaining": 4,
+      "worker_seconds_remaining": null,
+      "llm_calls_remaining": 9,
+      "worker_runs_used": 6,
+      "worker_seconds_used": 5.974530588020571,
+      "llm_calls_used": 3
+    },
+    "charged_calls": 1
+  }
+]

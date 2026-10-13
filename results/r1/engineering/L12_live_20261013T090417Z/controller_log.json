@@ -1,0 +1,44 @@
+[
+  {
+    "epoch": "E0",
+    "reason": "only_continue_feasible",
+    "llm_calls": 0
+  },
+  {
+    "epoch": "E1",
+    "reason": "ok",
+    "llm_calls": 1,
+    "action": "continue",
+    "prompt_chars": 1140,
+    "reply_chars": 94
+  },
+  {
+    "epoch": "E2",
+    "reason": "ok",
+    "llm_calls": 1,
+    "action": "verify",
+    "prompt_chars": 1393,
+    "reply_chars": 97
+  },
+  {
+    "epoch": "E0",
+    "reason": "only_continue_feasible",
+    "llm_calls": 0
+  },
+  {
+    "epoch": "E1",
+    "reason": "ok",
+    "llm_calls": 1,
+    "action": "continue",
+    "prompt_chars": 1365,
+    "reply_chars": 104
+  },
+  {
+    "epoch": "E2",
+    "reason": "ok",
+    "llm_calls": 1,
+    "action": "verify",
+    "prompt_chars": 1625,
+    "reply_chars": 106
+  }
+]

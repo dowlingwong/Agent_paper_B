@@ -1,0 +1,34 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "utc": "20261013T090418Z",
+  "host": "ucrtasl",
+  "harness": {
+    "commit": "9c4902d0d8776f18a081e1ff2478d651fc7096c1",
+    "branch": "r1",
+    "dirty": false
+  },
+  "model": "qwen2.5-coder:7b",
+  "digest": "dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364",
+  "side_queries": 4,
+  "queried_action_distribution": {
+    "continue": 2,
+    "verify": 2
+  },
+  "decision_action_distribution": {
+    "continue": 4,
+    "verify": 2
+  },
+  "parse_failures": 0,
+  "disallowed_actions": 0,
+  "call_errors": 0,
+  "control_events": 6,
+  "missing_llm_calls": 0,
+  "event_llm_calls_sum": 4,
+  "charged_llm_calls": 4,
+  "actual_worker_runs": 10,
+  "caps": {
+    "worker_runs": 10,
+    "llm_calls": 12
+  },
+  "accepted": true
+}
