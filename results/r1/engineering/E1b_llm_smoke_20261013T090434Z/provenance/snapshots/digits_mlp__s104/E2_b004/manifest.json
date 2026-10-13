@@ -1,0 +1,484 @@
+{
+  "branch_state_paths": [
+    "artifacts",
+    "results.tsv",
+    "experiment_memory.jsonl",
+    ".autoresearch_artifacts",
+    "run.log"
+  ],
+  "budget_consumed": 3,
+  "budget_index": 4,
+  "budget_total": 20,
+  "campaign_id": "digits_mlp__s104",
+  "compute_budget_state": {
+    "exhausted": false,
+    "llm_calls": 4,
+    "llm_calls_remaining": null,
+    "llm_calls_used": 4,
+    "max_llm_calls": null,
+    "max_worker_runs": 10,
+    "max_worker_seconds": null,
+    "worker_runs": 4,
+    "worker_runs_remaining": 6,
+    "worker_runs_used": 4,
+    "worker_seconds": 3.564992436906323,
+    "worker_seconds_remaining": null,
+    "worker_seconds_used": 3.564992436906323
+  },
+  "controller_version": "continue/v1",
+  "current_best": 0.977716,
+  "editable_paths": [
+    "train.py"
+  ],
+  "epoch": "E2",
+  "incumbent_stack": [
+    {
+      "current_best_before": null,
+      "layer_hash": "084ea7e93e3be55ef1d9670bf5b802c55c3a7c98586628e74e22d3d0ae7581f2",
+      "metric": 0.977716,
+      "verified": false
+    }
+  ],
+  "label": "ENGINEERING_ONLY",
+  "layer_hashes": {
+    "editable": "e3db05cde02d10da89d9591036254e4e1455d5fbc6eb5b68af6d9b7ffeeb935a",
+    "incumbent": "58260f97c2276a9eb619dac548d2513d890fd916fec4d48552ae43a6fb04e6fe",
+    "ledger_prefix": "33ec9590b535c86543bdb95eef94e75b824ca3249ecd851f4b1d447768b29d86",
+    "node_state": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stack[0]": "084ea7e93e3be55ef1d9670bf5b802c55c3a7c98586628e74e22d3d0ae7581f2"
+  },
+  "ledger_prefix": [
+    {
+      "budget_index": 1,
+      "campaign_id": "digits_mlp__s104",
+      "cumulative_budget_consumed": 1,
+      "current_best_before": null,
+      "decision": "kept",
+      "decision_rationale": "First valid metric becomes the current best.",
+      "delta_vs_best": null,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "24c7fd4ddeaaffd2dccf98e9a4a685949ca19ccf4f6b63a0a83c93f8da8205a7",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 95,
+            "latency_ms": 893.1072870036587,
+            "parse_ok": true,
+            "prompt_tokens": 634,
+            "response_chars": 313
+          },
+          "raw_proposal_chars": 313,
+          "raw_proposal_sha256": "a5487777bb900dea03924a3d1be10109e50cb48b09891243617cdd046f74b073",
+          "structured_edit": {
+            "new": "64",
+            "old": "32",
+            "path": "train.py",
+            "symbol": "HIDDEN_UNITS",
+            "type": "python_constant"
+          },
+          "worker_memory_context_text": "node=digits_mlp\nbudget_index=1\nmetric=val_score direction=maximize\neditable_paths=train.py",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [],
+            "repeated_bad_count": 0,
+            "repeated_bad_rate": 0.0,
+            "repeated_degraded_count": 0,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "train.py"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": null,
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-001",
+      "git_commit_before": "local-before-001",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "digits_mlp",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "train_loss": 0.033619,
+        "val_score": 0.977716
+      },
+      "patch_hash": "23b225bc320d3bac8cb00daf2ef006ae6f8e8ce1554620f00da97889725abd21",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-001/patch.diff",
+      "proposal_rationale": "increasing the number of hidden units can help the model learn more complex patterns in the data",
+      "proposal_summary": "increase-hidden-units-64",
+      "provenance": {
+        "decision_id": "decision-07cfe91927c8e0dd",
+        "metric_id": "metric-07cfe91927c8e0dd",
+        "patch_id": "patch-07cfe91927c8e0dd",
+        "proposal_id": "proposal-07cfe91927c8e0dd",
+        "run_id": "run-07cfe91927c8e0dd"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-001/run.log",
+      "repeated_bad_count": 0,
+      "targeted_files": [
+        "train.py"
+      ],
+      "timestamp_end": "2026-10-13T09:04:36Z",
+      "timestamp_start": "2026-10-13T09:04:35Z",
+      "training_seed": null,
+      "trial_id": "digits_mlp__s104-trial-001",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 2,
+      "campaign_id": "digits_mlp__s104",
+      "cumulative_budget_consumed": 2,
+      "current_best_before": 0.977716,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=-0.013928.",
+      "delta_vs_best": -0.013928000000000051,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "c1b0f33e7783d651ba13a260a12244667b4db17e1707e0ced22211b6bcf6ece3",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 98,
+            "latency_ms": 906.65543905925,
+            "parse_ok": true,
+            "prompt_tokens": 642,
+            "response_chars": 317
+          },
+          "raw_proposal_chars": 317,
+          "raw_proposal_sha256": "10e42c3dc72e3a3913d83126fbc958268ec69ab48f637935e44c34415a2d033d",
+          "structured_edit": {
+            "new": "128",
+            "old": "64",
+            "path": "train.py",
+            "symbol": "BATCH_SIZE",
+            "type": "python_constant"
+          },
+          "worker_memory_context_text": "node=digits_mlp\nbudget_index=2\nmetric=val_score direction=maximize\neditable_paths=train.py",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [],
+            "repeated_bad_count": 0,
+            "repeated_bad_rate": 0.0,
+            "repeated_degraded_count": 0,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "train.py"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-002",
+      "git_commit_before": "local-before-002",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "digits_mlp",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "train_loss": 0.077072,
+        "val_score": 0.963788
+      },
+      "patch_hash": "12885bdcace317ec6b33fdb9d9f2ba330e6d5c1a97c08de65004e60b7a1ffbbe",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-002/patch.diff",
+      "proposal_rationale": "larger batch size can lead to more stable convergence and potentially better generalization",
+      "proposal_summary": "increase-batch-size-128",
+      "provenance": {
+        "decision_id": "decision-e4c4e723d7f7212a",
+        "metric_id": "metric-e4c4e723d7f7212a",
+        "patch_id": "patch-e4c4e723d7f7212a",
+        "proposal_id": "proposal-e4c4e723d7f7212a",
+        "run_id": "run-e4c4e723d7f7212a"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-002/run.log",
+      "repeated_bad_count": 0,
+      "targeted_files": [
+        "train.py"
+      ],
+      "timestamp_end": "2026-10-13T09:04:38Z",
+      "timestamp_start": "2026-10-13T09:04:37Z",
+      "training_seed": null,
+      "trial_id": "digits_mlp__s104-trial-002",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 3,
+      "campaign_id": "digits_mlp__s104",
+      "cumulative_budget_consumed": 3,
+      "current_best_before": 0.977716,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=-0.008357.",
+      "delta_vs_best": -0.008357000000000059,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "60092e57f6321f8a29346d20d9535d97f63952ef853352dce6e1bd6ad96cf62a",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 99,
+            "latency_ms": 960.5329940095544,
+            "parse_ok": true,
+            "prompt_tokens": 642,
+            "response_chars": 315
+          },
+          "raw_proposal_chars": 315,
+          "raw_proposal_sha256": "067d61959f44f47d48492559cd4f51bdaa09e5c84a8458de8f0ffc163a2a37f0",
+          "structured_edit": {
+            "new": "128",
+            "old": "64",
+            "path": "train.py",
+            "symbol": "HIDDEN_UNITS",
+            "type": "python_constant"
+          },
+          "worker_memory_context_text": "node=digits_mlp\nbudget_index=3\nmetric=val_score direction=maximize\neditable_paths=train.py",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [],
+            "repeated_bad_count": 0,
+            "repeated_bad_rate": 0.0,
+            "repeated_degraded_count": 0,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "train.py"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-003",
+      "git_commit_before": "local-before-003",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "digits_mlp",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "train_loss": 0.015663,
+        "val_score": 0.969359
+      },
+      "patch_hash": "fa3a22ca132d4590b69ea0d371ce36f2107d2e6c9c908593f2d29a65aeac921c",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-003/patch.diff",
+      "proposal_rationale": "increasing the number of hidden units can capture more complex patterns in the data",
+      "proposal_summary": "increase-hidden-units-128",
+      "provenance": {
+        "decision_id": "decision-4c5ea7795094fb5a",
+        "metric_id": "metric-4c5ea7795094fb5a",
+        "patch_id": "patch-4c5ea7795094fb5a",
+        "proposal_id": "proposal-4c5ea7795094fb5a",
+        "run_id": "run-4c5ea7795094fb5a"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-003/run.log",
+      "repeated_bad_count": 1,
+      "targeted_files": [
+        "train.py"
+      ],
+      "timestamp_end": "2026-10-13T09:04:40Z",
+      "timestamp_start": "2026-10-13T09:04:39Z",
+      "training_seed": null,
+      "trial_id": "digits_mlp__s104-trial-003",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    }
+  ],
+  "manager": {
+    "deterministic": false,
+    "mode": "langgraph_manager",
+    "model": "ollama/qwen2.5-coder:7b",
+    "model_digest": null,
+    "temperature": 0.2
+  },
+  "manager_mode": "baseline_manager",
+  "memory_mode": "none",
+  "node_name": "digits_mlp",
+  "node_source_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/node",
+  "proposal": {
+    "extra": {
+      "context_sha256": "418bab27342ae95ce87f8a3ef8c2469b2282e932b4aee3ab608bf3f753e16994",
+      "deterministic_patch": true,
+      "llm_call": {
+        "completion_tokens": 93,
+        "latency_ms": 864.2024790169671,
+        "parse_ok": true,
+        "prompt_tokens": 642,
+        "response_chars": 290
+      },
+      "raw_proposal_chars": 290,
+      "raw_proposal_sha256": "6dd234b38ddadb6541e10755baa88b360b6cebff5631897d08b7f20b662420be",
+      "structured_edit": {
+        "new": "128",
+        "old": "64",
+        "path": "train.py",
+        "symbol": "BATCH_SIZE",
+        "type": "python_constant"
+      },
+      "worker_memory_context_text": "node=digits_mlp\nbudget_index=4\nmetric=val_score direction=maximize\neditable_paths=train.py",
+      "worker_memory_mode": "none",
+      "worker_repeated_bad_stats": {
+        "flagged_trial_ids": [
+          "digits_mlp__s104-trial-003"
+        ],
+        "repeated_bad_count": 1,
+        "repeated_bad_rate": 0.3333333333333333,
+        "repeated_degraded_count": 1,
+        "repeated_invalid_count": 0,
+        "skipped_count": 0
+      }
+    },
+    "manager_mode": "langgraph_manager",
+    "objective": "In train.py, change BATCH_SIZE from 64 to 128. Edit only train.py.",
+    "proposal_rationale": "larger batch sizes can sometimes lead to better generalization on noisy data",
+    "proposal_summary": "increase-batch-size-128",
+    "target_files": [
+      "train.py"
+    ]
+  },
+  "provisional": {
+    "budget_index": 4,
+    "campaign_id": "digits_mlp__s104",
+    "cumulative_budget_consumed": 4,
+    "current_best_before": 0.977716,
+    "decision": "discarded",
+    "decision_rationale": "Candidate did not improve current best; delta=-0.013928.",
+    "delta_vs_best": -0.013928000000000051,
+    "execution_status": "success",
+    "extra": {
+      "manager": {
+        "context_sha256": "418bab27342ae95ce87f8a3ef8c2469b2282e932b4aee3ab608bf3f753e16994",
+        "deterministic_patch": true,
+        "llm_call": {
+          "completion_tokens": 93,
+          "latency_ms": 864.2024790169671,
+          "parse_ok": true,
+          "prompt_tokens": 642,
+          "response_chars": 290
+        },
+        "raw_proposal_chars": 290,
+        "raw_proposal_sha256": "6dd234b38ddadb6541e10755baa88b360b6cebff5631897d08b7f20b662420be",
+        "structured_edit": {
+          "new": "128",
+          "old": "64",
+          "path": "train.py",
+          "symbol": "BATCH_SIZE",
+          "type": "python_constant"
+        },
+        "worker_memory_context_text": "node=digits_mlp\nbudget_index=4\nmetric=val_score direction=maximize\neditable_paths=train.py",
+        "worker_memory_mode": "none",
+        "worker_repeated_bad_stats": {
+          "flagged_trial_ids": [
+            "digits_mlp__s104-trial-003"
+          ],
+          "repeated_bad_count": 1,
+          "repeated_bad_rate": 0.3333333333333333,
+          "repeated_degraded_count": 1,
+          "repeated_invalid_count": 0,
+          "skipped_count": 0
+        }
+      },
+      "scope_validation": {
+        "changed_paths": [
+          "train.py"
+        ],
+        "valid": true,
+        "violations": []
+      },
+      "worker": {
+        "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/node"
+      },
+      "worker_failure_message": null
+    },
+    "failure_category": "degraded_metric",
+    "fast_config_hash": null,
+    "git_commit_after": "local-after-004",
+    "git_commit_before": "local-before-004",
+    "manager_mode": "langgraph_manager",
+    "memory_mode": "none",
+    "node_id": "digits_mlp",
+    "node_state_hash": null,
+    "parsed_metrics": {
+      "train_loss": 0.077072,
+      "val_score": 0.963788
+    },
+    "patch_hash": "12885bdcace317ec6b33fdb9d9f2ba330e6d5c1a97c08de65004e60b7a1ffbbe",
+    "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-004/patch.diff",
+    "proposal_rationale": "larger batch sizes can sometimes lead to better generalization on noisy data",
+    "proposal_summary": "increase-batch-size-128",
+    "provenance": {
+      "decision_id": "decision-766a69c015885074",
+      "metric_id": "metric-766a69c015885074",
+      "patch_id": "patch-766a69c015885074",
+      "proposal_id": "proposal-766a69c015885074",
+      "run_id": "run-766a69c015885074"
+    },
+    "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-004/run.log",
+    "repeated_bad_count": 2,
+    "targeted_files": [
+      "train.py"
+    ],
+    "timestamp_end": "2026-10-13T09:04:41Z",
+    "timestamp_start": "2026-10-13T09:04:40Z",
+    "training_seed": null,
+    "trial_id": "digits_mlp__s104-trial-004",
+    "validity_status": "valid",
+    "wall_clock_seconds": 1.0,
+    "worker_mode": "local_worker"
+  },
+  "schema": "r1.campaign_snapshot/1",
+  "split_seed": 104,
+  "t_min": 3,
+  "train_seed": 104,
+  "verify_runs": 2,
+  "verify_split_policy": "fixed",
+  "worker_mode": "local_worker",
+  "worker_result": {
+    "changed_files": [
+      "train.py"
+    ],
+    "extra": {
+      "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/node"
+    },
+    "failure_message": null,
+    "git_commit_after": "local-after-004",
+    "git_commit_before": "local-before-004",
+    "parsed_metrics": {
+      "train_loss": 0.077072,
+      "val_score": 0.963788
+    },
+    "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-004/patch.diff",
+    "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work/roots/digits_mlp__s104/art/trial-004/run.log",
+    "success": true,
+    "worker_mode": "local_worker"
+  }
+}

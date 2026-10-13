@@ -1,0 +1,15 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "leaves": 2,
+  "collection_failures": 0,
+  "manager_kind": "langgraph",
+  "llm_calls": 8,
+  "parse_failures": 0,
+  "proposal_examples": [
+    "increase-hidden-units-64",
+    "increase-batch-size-128",
+    "increase-hidden-units-128",
+    "increase-batch-size-128",
+    "increase-hidden-units-128"
+  ]
+}

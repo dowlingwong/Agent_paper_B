@@ -1,0 +1,66 @@
+{
+  "schema": "r1.e1b_headroom/1",
+  "label": "ENGINEERING_ONLY",
+  "split": "engineering",
+  "started_utc": "20261013T090434Z",
+  "harness": {
+    "root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness",
+    "commit": "9c4902d0d8776f18a081e1ff2478d651fc7096c1",
+    "branch": "r1",
+    "dirty": false
+  },
+  "manager_backend": "langgraph qwen2.5-coder:7b (Ollama; pinned digest dae161e2...)",
+  "manager": {
+    "kind": "langgraph",
+    "model": "ollama/qwen2.5-coder:7b",
+    "temperature": 0.2
+  },
+  "nodes": [
+    "digits_mlp"
+  ],
+  "instances": 1,
+  "runs": 10,
+  "points": [
+    4
+  ],
+  "reps": 1,
+  "audit_seeds": 2,
+  "verify_r": 2,
+  "verify_split_policy": "fixed",
+  "noise": {
+    "digits_mlp": {
+      "sigma_t": 0.004288488292584648,
+      "sigma_s": 0.006177705955731098,
+      "sigma_d": 0.007520317992685621,
+      "source": "results/r1/pilot/E1_20261012T145353Z/summary.json",
+      "definition": "median sd_joint; components rescaled (v2)",
+      "original_source": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/results/r1/pilot/E1_20261012T145353Z/summary.json"
+    }
+  },
+  "host": {
+    "platform": "Linux-5.15.0-151-generic-x86_64-with-glibc2.35",
+    "python": "3.11.17"
+  },
+  "work": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work",
+  "sessions": [
+    {
+      "start_utc": "20261013T090434Z",
+      "done": 1,
+      "jobs_before": 1,
+      "elapsed_seconds": 18.5
+    },
+    {
+      "start_utc": "20261013T090452Z",
+      "done": 3,
+      "jobs_before": 3,
+      "elapsed_seconds": 13.0
+    },
+    {
+      "start_utc": "20261013T090506Z",
+      "done": 0,
+      "jobs_before": 0,
+      "elapsed_seconds": 0.0
+    }
+  ],
+  "archival_paths": "Snapshots and noise sources are repository-relative; original paths preserved in provenance."
+}

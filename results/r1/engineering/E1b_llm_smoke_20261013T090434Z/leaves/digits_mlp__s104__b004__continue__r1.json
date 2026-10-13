@@ -1,0 +1,1 @@
+{"leaf_id": "digits_mlp__s104__b004__continue__r1", "instance": "digits_mlp__s104", "node": "digits_mlp", "budget_index": 4, "action": "continue", "repetition": 1, "executed_action": "continue", "integrity": "ok", "error": null, "cost_worker_runs": 6, "n_keeps_after": 0, "audit_metrics": [0.980501, 0.963788], "final_files_hash": "72b68491c5630148", "wall_seconds": 12.92}
