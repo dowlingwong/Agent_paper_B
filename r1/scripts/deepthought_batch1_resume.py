@@ -53,7 +53,9 @@ def git_output(repo, *args):
 
 def commit(repo, message, paths, step):
     cmd(['git', 'add', '-f', '--', *[str(p) for p in paths]], cwd=repo)
-    cmd(['git', 'diff', '--cached', '--check'], cwd=repo)
+    # Preserve raw generated CSV, logs and patch artifacts byte-for-byte.
+    cmd(['git', 'diff', '--cached', '--check', '--', '.',
+         ':!results/r1/**', ':!experiments/r1/**'], cwd=repo)
     cmd(['git', 'commit', '-m', message, '-m', 'Co-Authored-By: Codex <noreply@openai.com>'], cwd=repo)
     branch = 'r1' if repo == HARNESS else 'main'
     cmd(['git', 'push', 'origin', branch], cwd=repo)
