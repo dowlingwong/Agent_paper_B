@@ -8,6 +8,17 @@ Newest entry first. Only this file says what is done.
 
 
 
+
+## 13 October 2026 — DT1 verified and committed; unstarted DT2–DT4 checkpoint
+
+AI-assisted PILOT/ENGINEERING_ONLY execution; not evidence.
+
+- **DT1 accepted:** Ada GPU 0 became unoccupied and the guarded runner started once. Ollama 0.9.2 served the exact pinned `qwen2.5-coder:7b` digest `dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364`. GPU offload verified before latency: `size_vram = 5560907776`, an owned process on the selected card, and server log confirms **29/29 layers offloaded**.
+- **Latency:** 10 calls, 0 parse failures; median **820.871 ms**, mean **814.598 ms**, range **773.400–848.010 ms**. Independently checked event count, parse flags, CSV row count, pin and offload records. Harness commit `9c4902d` pushed and remote HEAD verified; data `experiments/r1/pilot/L4dt_20261013T011936Z/`.
+- Original runner stopped during artifact staging (`git diff --cached --check`), before DT2. Raw generated CSV/log/patch whitespace caused the failure, not a model or collection failure. Every original artifact byte was preserved and hash-checked; only source changes are subject to whitespace checks. No extra DT1 call or harness behavior change occurred.
+- The original stopped attempt, its state and permanent claim remain intact. Checkpoint scripts (`6826979`, `27184cc`, pushed) may continue **only unstarted DT2–DT4**, after rechecking GPU 0, the existing duplicate-prevention record and model pin/offload. They cannot rerun DT1 or any started DT2/DT3/DT4 step.
+- New checkpoint logs: `/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_20261013_pqaq4qvv/`; original provenance remains `/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/`. No claim is cleared. Same planned nodes, seeds, budgets and manager; one GPU and no API/larger model. The known missing-zsh exception remains; E2 decisions remain open and L11 is unbuilt.
+
 ## 13 October 2026 — Remote batch 1: stopped
 
 AI-assisted execution by Codex. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.
