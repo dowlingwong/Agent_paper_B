@@ -12,6 +12,17 @@ Newest entry first. Only this file says what is done.
 
 
 
+## 13 October 2026 — DT2/DT3 complete; DT4 stopped on GPU ownership conflict
+
+AI-assisted ENGINEERING_ONLY smoke checks and interrupted PILOT; not evidence.
+
+- Continuation selected Ada GPU 0 after its free-card census at 09:03:58 UTC. Exact pinned 7B digest verified; offload probe records size_vram 5560907776 and owned Ollama with 29 GPU layers. DT1 was not repeated. Deepthought permanent migration holds remain.
+- DT2 committed/pushed `7f81283`: four side queries (two continue, two verify), zero parse/disallowed/call errors. Independently read six control events: every event has llm_calls and sum 4 reconciles with accounting/controller log. Ten worker runs, four LLM calls within caps 10/12. Output `results/r1/engineering/L12_live_20261013T090417Z/`.
+- DT3 committed/pushed `48f8d89`: independently verified continue/verify leaves, zero collection failures, langgraph manager, eight LLM calls with zero parse failures and LLM proposal summaries. Output `results/r1/engineering/E1b_llm_smoke_20261013T090434Z/`.
+- DT4 started at 09:05:10 UTC. Independent monitoring subsequently found root-owned PID 1625292 on selected GPU 0 alongside our Ollama. Its process start time precedes our Ollama start; the saved free-card census does not establish when it allocated GPU memory. GPU ownership during DT2/DT3 therefore has a limitation; no exclusive-use claim is made.
+- Hard STOP enforced at 09:17:35 UTC: stopped only our continuation process tree and dedicated Ollama; NVIDIA census confirms our model process absent and the root-owned job untouched. Claims/results retained. Partial DT4 `results/r1/pilot/E1b_20261013T090510Z/` and interrupted work/log/state/offload/census bytes archived in `interrupted_provenance/`. No DT4 headroom bracket is accepted or analyzed. Monitoring paused; no failed/interrupted campaign retry.
+- Author input needed for any further DT4 execution; a new attempt would require an explicit decision and reliable exclusive GPU allocation. E2 decisions remain open, fixed splits retained, no L11.
+
 ## 13 October 2026 — Any-idle-Ada continuation authorized
 
 AI-assisted ENGINEERING_ONLY setup; DT1 remains the accepted PILOT.

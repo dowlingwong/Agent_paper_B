@@ -1,0 +1,60 @@
+RUN ['tmux', 'new-session', '-d', '-s', 'r1_ollama_resume_20261012', 'CUDA_VISIBLE_DEVICES=GPU-9be33fd1-8eeb-497d-772a-87362d6720be OLLAMA_VULKAN=0 OLLAMA_HOST=127.0.0.1:11434 OLLAMA_MODELS=/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/ollama_models OLLAMA_NUM_PARALLEL=1 /usr/local/bin/ollama serve > /data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/ollama_serve.log 2>&1']
+RUN ['/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness/.venv/bin/python', 'r1/scripts/l12_live_smoke.py', '--out', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/results/r1/engineering/L12_live_20261013T090417Z']
+RUN ['git', 'add', '-f', '--', 'r1/scripts/l12_live_smoke.py', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/results/r1/engineering/L12_live_20261013T090417Z']
+RUN ['git', 'diff', '--cached', '--check', '--', '.', ':!results/r1/**', ':!experiments/r1/**']
+RUN ['git', 'commit', '-m', 'Record ENGINEERING_ONLY L12 live accounting smoke', '-m', 'Co-Authored-By: Codex <noreply@openai.com>']
+[main 7f81283] Record ENGINEERING_ONLY L12 live accounting smoke
+ 21 files changed, 342 insertions(+)
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/README.md
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/accounting.json
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-001/patch.diff
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-001/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-002/patch.diff
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-002/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-900010/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-900011/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-900020/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-900021/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-950010/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-950011/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-950020/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/artifacts/trial-950021/run.log
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/controller_log.json
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/events.jsonl
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/node/__pycache__/benchmark.cpython-311.pyc
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/node/benchmark.py
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/node/train.py
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/summary.json
+ create mode 100644 results/r1/engineering/L12_live_20261013T090417Z/trials.jsonl
+RUN ['git', 'push', 'origin', 'main']
+To github.com:dowlingwong/Agent_paper_B.git
+   2913d1f..7f81283  main -> main
+RUN ['/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness/.venv/bin/python', '-m', 'r1.headroom.e1b_collect', '--manager', 'langgraph', '--work', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_smoke_work', '--out', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/results/r1/engineering/E1b_llm_smoke_20261013T090434Z', '--nodes', 'digits_mlp', '--instances', '1', '--runs', '10', '--points', '4', '--reps', '1', '--audit-seeds', '2', '--workers', '2', '--label', 'ENGINEERING_ONLY', '--split', 'engineering']
+RUN ['/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness/.venv/bin/python', '-m', 'r1.headroom.e1b_collect', '--resume', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/results/r1/engineering/E1b_llm_smoke_20261013T090434Z', '--workers', '2']
+RUN ['/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness/.venv/bin/python', '-m', 'r1.headroom.e1b_collect', '--resume', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/results/r1/engineering/E1b_llm_smoke_20261013T090434Z', '--workers', '2']
+RUN ['git', 'add', '-f', '--', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/results/r1/engineering/E1b_llm_smoke_20261013T090434Z']
+RUN ['git', 'diff', '--cached', '--check', '--', '.', ':!results/r1/**', ':!experiments/r1/**']
+RUN ['git', 'commit', '-m', 'Record ENGINEERING_ONLY E1b smoke with pinned LLM manager', '-m', 'Co-Authored-By: Codex <noreply@openai.com>']
+[main 48f8d89] Record ENGINEERING_ONLY E1b smoke with pinned LLM manager
+ 16 files changed, 801 insertions(+)
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/audits/digits_mlp__s104__c0.json
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/collection_checks.json
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/leaves/digits_mlp__s104__b004__continue__r1.json
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/leaves/digits_mlp__s104__b004__verify__r1.json
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/manifest.json
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/ledgers/branches/digits_mlp__s104__b004__continue__r1/branch_events.jsonl
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/ledgers/branches/digits_mlp__s104__b004__continue__r1/branch_trials.jsonl
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/ledgers/branches/digits_mlp__s104__b004__verify__r1/branch_events.jsonl
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/ledgers/branches/digits_mlp__s104__b004__verify__r1/branch_trials.jsonl
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/ledgers/roots/digits_mlp__s104/root_trials.jsonl
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/original_snapshot_paths.json
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/snapshots/digits_mlp__s104/E2_b004/editable/train.py
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/snapshots/digits_mlp__s104/E2_b004/incumbent/train.py
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/snapshots/digits_mlp__s104/E2_b004/manifest.json
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/provenance/snapshots/digits_mlp__s104/E2_b004/stack/0/train.py
+ create mode 100644 results/r1/engineering/E1b_llm_smoke_20261013T090434Z/roots/digits_mlp__s104.json
+RUN ['git', 'push', 'origin', 'main']
+To github.com:dowlingwong/Agent_paper_B.git
+   7f81283..48f8d89  main -> main
+RUN ['/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness/.venv/bin/python', '-m', 'r1.headroom.e1b_collect', '--manager', 'langgraph', '--work', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work', '--out', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/results/r1/pilot/E1b_20261013T090510Z', '--nodes', 'digits_mlp', 'openml_ionosphere', '--instances', '6', '--runs', '20', '--points', '4', '8', '12', '--reps', '2', '--audit-seeds', '6', '--workers', '4']
+RUN ['/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness/.venv/bin/python', '-m', 'r1.headroom.e1b_collect', '--resume', '/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/results/r1/pilot/E1b_20261013T090510Z', '--workers', '4']

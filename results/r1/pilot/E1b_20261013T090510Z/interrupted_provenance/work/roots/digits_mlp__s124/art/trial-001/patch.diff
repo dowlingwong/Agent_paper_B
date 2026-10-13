@@ -1,0 +1,11 @@
+--- a/train.py
++++ b/train.py
+@@ -10,7 +10,7 @@
+ from benchmark import run_benchmark
+ 
+ # ── editable hyperparameters ────────────────────────────────────────────────
+-HIDDEN_UNITS = 32
++HIDDEN_UNITS = 64
+ ALPHA = 1e-4
+ LEARNING_RATE_INIT = 1e-3
+ BATCH_SIZE = 64

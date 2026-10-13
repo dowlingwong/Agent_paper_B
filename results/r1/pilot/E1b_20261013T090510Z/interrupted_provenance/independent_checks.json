@@ -1,0 +1,31 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "DT2_event_calls": 4,
+  "DT2_charged_calls": 4,
+  "DT2_control_events": 6,
+  "DT3_leaves": 2,
+  "DT3_llm_calls": 8,
+  "DT3_parse_failures": 0,
+  "DT3_proposal_examples": [
+    "increase-hidden-units-64",
+    "increase-batch-size-128",
+    "increase-hidden-units-128",
+    "increase-batch-size-128",
+    "increase-hidden-units-128"
+  ],
+  "DT4_partial_census": {
+    "roots": 12,
+    "leaves": 48,
+    "audits": 5
+  },
+  "DT4_sessions": [
+    {
+      "start_utc": "20261013T090510Z",
+      "done": 12,
+      "jobs_before": 12,
+      "elapsed_seconds": 203.5
+    }
+  ],
+  "DT4_accepted": false,
+  "no_retry": true
+}

@@ -1,0 +1,1245 @@
+{
+  "branch_state_paths": [
+    "artifacts",
+    "data_cache"
+  ],
+  "budget_consumed": 11,
+  "budget_index": 12,
+  "budget_total": 40,
+  "campaign_id": "openml_ionosphere__s133",
+  "compute_budget_state": {
+    "exhausted": false,
+    "llm_calls": 12,
+    "llm_calls_remaining": null,
+    "llm_calls_used": 12,
+    "max_llm_calls": null,
+    "max_worker_runs": 20,
+    "max_worker_seconds": null,
+    "worker_runs": 12,
+    "worker_runs_remaining": 8,
+    "worker_runs_used": 12,
+    "worker_seconds": 16.043626182945445,
+    "worker_seconds_remaining": null,
+    "worker_seconds_used": 16.043626182945445
+  },
+  "controller_version": "continue/v1",
+  "current_best": 0.862229,
+  "editable_paths": [
+    "config.yaml"
+  ],
+  "epoch": "E2",
+  "incumbent_stack": [
+    {
+      "current_best_before": null,
+      "layer_hash": "8d19e157d84f14d48148dcabd6a1f2a8e8638b3d7f01b437e7cd21728786f005",
+      "metric": 0.862229,
+      "verified": false
+    }
+  ],
+  "label": "ENGINEERING_ONLY",
+  "layer_hashes": {
+    "editable": "e9550256617fafd4d3afbd50e813bf0140e2087a00feb172c28394fd4231aebd",
+    "incumbent": "6df64c549a115d21eaecce25dfa2016a535b657a9a8b156e856a17ef8e152e2f",
+    "ledger_prefix": "1e2dcc98e91e6741d745b8c3ebe038bc288805fbcb85a2966a42df53882e1b46",
+    "node_state": "6b96924d46a8c33b84de5f0fd6c43cc092b4b41c232452e5e1aae43c073f4cb8",
+    "stack[0]": "8d19e157d84f14d48148dcabd6a1f2a8e8638b3d7f01b437e7cd21728786f005"
+  },
+  "ledger_prefix": [
+    {
+      "budget_index": 1,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 1,
+      "current_best_before": null,
+      "decision": "kept",
+      "decision_rationale": "First valid metric becomes the current best.",
+      "delta_vs_best": null,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "5544361c0ca84c8bf48d0dfe5893843885f02321162c0dee591dc84fa6058f1e",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 102,
+            "latency_ms": 2535.762718063779,
+            "parse_ok": true,
+            "prompt_tokens": 636,
+            "response_chars": 352
+          },
+          "raw_proposal_chars": 352,
+          "raw_proposal_sha256": "5648c7734c1d8604e17d11b48d32763aead59453e25c1e32ccd1d238faa1bf34",
+          "structured_edit": {
+            "new": "200",
+            "old": "100",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=1\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [],
+            "repeated_bad_count": 0,
+            "repeated_bad_rate": 0.0,
+            "repeated_degraded_count": 0,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": null,
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-001",
+      "git_commit_before": "local-before-001",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "fca0f395ceaf31d79e22c1af5e1ca9f19ad5a9c74431e0ca3e6741dbe4b6a652",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-001/patch.diff",
+      "proposal_rationale": "increasing the number of estimators can improve model performance by capturing more complex patterns in the data",
+      "proposal_summary": "increase-n_estimators-200",
+      "provenance": {
+        "decision_id": "decision-1b47e012dc1d83fb",
+        "metric_id": "metric-1b47e012dc1d83fb",
+        "patch_id": "patch-1b47e012dc1d83fb",
+        "proposal_id": "proposal-1b47e012dc1d83fb",
+        "run_id": "run-1b47e012dc1d83fb"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-001/run.log",
+      "repeated_bad_count": 0,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:28Z",
+      "timestamp_start": "2026-10-13T09:07:22Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-001",
+      "validity_status": "valid",
+      "wall_clock_seconds": 6.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 2,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 2,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "f4d454d2d7a6f104545b2f5be9f1df5c24341daa5f8fbd5834cd85987a912b67",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 96,
+            "latency_ms": 1810.075702960603,
+            "parse_ok": true,
+            "prompt_tokens": 644,
+            "response_chars": 332
+          },
+          "raw_proposal_chars": 332,
+          "raw_proposal_sha256": "2adeaf2feb46279fbc8a634b54e98eb0ca757d1835bed26cb876d9c450f78595",
+          "structured_edit": {
+            "new": "300",
+            "old": "200",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=2\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [],
+            "repeated_bad_count": 0,
+            "repeated_bad_rate": 0.0,
+            "repeated_degraded_count": 0,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-002",
+      "git_commit_before": "local-before-002",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-002/patch.diff",
+      "proposal_rationale": "increasing the number of estimators can improve model performance but may also increase computation time",
+      "proposal_summary": "increase-n_estimators-300",
+      "provenance": {
+        "decision_id": "decision-fb14beb89e83f546",
+        "metric_id": "metric-fb14beb89e83f546",
+        "patch_id": "patch-fb14beb89e83f546",
+        "proposal_id": "proposal-fb14beb89e83f546",
+        "run_id": "run-fb14beb89e83f546"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-002/run.log",
+      "repeated_bad_count": 0,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:31Z",
+      "timestamp_start": "2026-10-13T09:07:30Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-002",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 3,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 3,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "98c1823793d7ee4e7ae13f2967e13c67fef859f45ea8a315ac333d1fdf3eb9a8",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 102,
+            "latency_ms": 1811.299980035983,
+            "parse_ok": true,
+            "prompt_tokens": 644,
+            "response_chars": 352
+          },
+          "raw_proposal_chars": 352,
+          "raw_proposal_sha256": "e2c7a26a15395c51556ef625f07bd13b26d2170007084d5caebb985b0127b129",
+          "structured_edit": {
+            "new": "300",
+            "old": "200",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=3\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [],
+            "repeated_bad_count": 0,
+            "repeated_bad_rate": 0.0,
+            "repeated_degraded_count": 0,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-003",
+      "git_commit_before": "local-before-003",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-003/patch.diff",
+      "proposal_rationale": "increasing the number of estimators can improve model performance by capturing more complex patterns in the data",
+      "proposal_summary": "increase-n_estimators-300",
+      "provenance": {
+        "decision_id": "decision-ddeaa2e2b98cfc59",
+        "metric_id": "metric-ddeaa2e2b98cfc59",
+        "patch_id": "patch-ddeaa2e2b98cfc59",
+        "proposal_id": "proposal-ddeaa2e2b98cfc59",
+        "run_id": "run-ddeaa2e2b98cfc59"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-003/run.log",
+      "repeated_bad_count": 1,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:34Z",
+      "timestamp_start": "2026-10-13T09:07:33Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-003",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 4,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 4,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "0b1e05fd7e724705c5a256da9196d289c81db5867c9ab7ffe51e464bb0bc8351",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 98,
+            "latency_ms": 892.3399460036308,
+            "parse_ok": true,
+            "prompt_tokens": 644,
+            "response_chars": 340
+          },
+          "raw_proposal_chars": 340,
+          "raw_proposal_sha256": "47990a07e2e7e154885cb53f4ced7f1ab6a52c9f5ebe05bd18e4ef2d42c766a1",
+          "structured_edit": {
+            "new": "300",
+            "old": "200",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=4\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [
+              "openml_ionosphere__s133-trial-003"
+            ],
+            "repeated_bad_count": 1,
+            "repeated_bad_rate": 0.3333333333333333,
+            "repeated_degraded_count": 1,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-004",
+      "git_commit_before": "local-before-004",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-004/patch.diff",
+      "proposal_rationale": "increasing the number of estimators can improve model performance by capturing more complex patterns in the data",
+      "proposal_summary": "increase-n_estimators-300",
+      "provenance": {
+        "decision_id": "decision-f6599a97319876f3",
+        "metric_id": "metric-f6599a97319876f3",
+        "patch_id": "patch-f6599a97319876f3",
+        "proposal_id": "proposal-f6599a97319876f3",
+        "run_id": "run-f6599a97319876f3"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-004/run.log",
+      "repeated_bad_count": 2,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:35Z",
+      "timestamp_start": "2026-10-13T09:07:35Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-004",
+      "validity_status": "valid",
+      "wall_clock_seconds": 0.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 5,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 5,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "34f251950a3d115683e6c2ea90ebc3f7ae974538d63991bb15f919a4fc0bdfdf",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 85,
+            "latency_ms": 746.9917469425127,
+            "parse_ok": true,
+            "prompt_tokens": 644,
+            "response_chars": 296
+          },
+          "raw_proposal_chars": 296,
+          "raw_proposal_sha256": "2dc0e76d0b5cb67594134f7450460525a95ca9a2658909921f74229eba983b7b",
+          "structured_edit": {
+            "new": "6",
+            "old": "5",
+            "path": "config.yaml",
+            "symbol": "max_depth",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=5\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [
+              "openml_ionosphere__s133-trial-003",
+              "openml_ionosphere__s133-trial-004"
+            ],
+            "repeated_bad_count": 2,
+            "repeated_bad_rate": 0.5,
+            "repeated_degraded_count": 2,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-005",
+      "git_commit_before": "local-before-005",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "272e87a1f306f09b25a833d8025bb86bbd474f6a44079c278fcdd25cb1e724eb",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-005/patch.diff",
+      "proposal_rationale": "increasing max_depth might allow the model to capture more complex patterns in the data",
+      "proposal_summary": "increase-max_depth-6",
+      "provenance": {
+        "decision_id": "decision-327033ad9e25520b",
+        "metric_id": "metric-327033ad9e25520b",
+        "patch_id": "patch-327033ad9e25520b",
+        "proposal_id": "proposal-327033ad9e25520b",
+        "run_id": "run-327033ad9e25520b"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-005/run.log",
+      "repeated_bad_count": 3,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:37Z",
+      "timestamp_start": "2026-10-13T09:07:36Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-005",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 6,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 6,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "451d60fcce55338c01d1c533d6d16bd80021918fdbb0755ace0b1d1f62c4b267",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 98,
+            "latency_ms": 1620.794354006648,
+            "parse_ok": true,
+            "prompt_tokens": 644,
+            "response_chars": 340
+          },
+          "raw_proposal_chars": 340,
+          "raw_proposal_sha256": "47990a07e2e7e154885cb53f4ced7f1ab6a52c9f5ebe05bd18e4ef2d42c766a1",
+          "structured_edit": {
+            "new": "300",
+            "old": "200",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=6\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [
+              "openml_ionosphere__s133-trial-003",
+              "openml_ionosphere__s133-trial-004",
+              "openml_ionosphere__s133-trial-005"
+            ],
+            "repeated_bad_count": 3,
+            "repeated_bad_rate": 0.6,
+            "repeated_degraded_count": 3,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-006",
+      "git_commit_before": "local-before-006",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-006/patch.diff",
+      "proposal_rationale": "increasing the number of estimators can improve model performance by capturing more complex patterns in the data",
+      "proposal_summary": "increase-n_estimators-300",
+      "provenance": {
+        "decision_id": "decision-f7109c4f8d4ed9c7",
+        "metric_id": "metric-f7109c4f8d4ed9c7",
+        "patch_id": "patch-f7109c4f8d4ed9c7",
+        "proposal_id": "proposal-f7109c4f8d4ed9c7",
+        "run_id": "run-f7109c4f8d4ed9c7"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-006/run.log",
+      "repeated_bad_count": 4,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:39Z",
+      "timestamp_start": "2026-10-13T09:07:39Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-006",
+      "validity_status": "valid",
+      "wall_clock_seconds": 0.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 7,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 7,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "2899ea4a42bc28aa619f1ea384d7c726bb0db781c2af0b1cc3c86374d0d90ada",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 96,
+            "latency_ms": 2384.346083039418,
+            "parse_ok": true,
+            "prompt_tokens": 644,
+            "response_chars": 322
+          },
+          "raw_proposal_chars": 322,
+          "raw_proposal_sha256": "1e870d49bb2ecc48369302851b787e646355684199bc8c46e0ac91467476a142",
+          "structured_edit": {
+            "new": "300",
+            "old": "200",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=7\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [
+              "openml_ionosphere__s133-trial-003",
+              "openml_ionosphere__s133-trial-004",
+              "openml_ionosphere__s133-trial-005",
+              "openml_ionosphere__s133-trial-006"
+            ],
+            "repeated_bad_count": 4,
+            "repeated_bad_rate": 0.6666666666666666,
+            "repeated_degraded_count": 4,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-007",
+      "git_commit_before": "local-before-007",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-007/patch.diff",
+      "proposal_rationale": "increasing the number of estimators in ensemble methods often improves performance",
+      "proposal_summary": "increase-n_estimators-300",
+      "provenance": {
+        "decision_id": "decision-e6420ff79a49f582",
+        "metric_id": "metric-e6420ff79a49f582",
+        "patch_id": "patch-e6420ff79a49f582",
+        "proposal_id": "proposal-e6420ff79a49f582",
+        "run_id": "run-e6420ff79a49f582"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-007/run.log",
+      "repeated_bad_count": 5,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:43Z",
+      "timestamp_start": "2026-10-13T09:07:42Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-007",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 8,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 8,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "d0c22e1d692f29209a4579a955c2543631549ff796498acd04802292b09ff33c",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 102,
+            "latency_ms": 2342.469047056511,
+            "parse_ok": true,
+            "prompt_tokens": 644,
+            "response_chars": 352
+          },
+          "raw_proposal_chars": 352,
+          "raw_proposal_sha256": "e2c7a26a15395c51556ef625f07bd13b26d2170007084d5caebb985b0127b129",
+          "structured_edit": {
+            "new": "300",
+            "old": "200",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=8\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [
+              "openml_ionosphere__s133-trial-003",
+              "openml_ionosphere__s133-trial-004",
+              "openml_ionosphere__s133-trial-005",
+              "openml_ionosphere__s133-trial-006",
+              "openml_ionosphere__s133-trial-007"
+            ],
+            "repeated_bad_count": 5,
+            "repeated_bad_rate": 0.7142857142857143,
+            "repeated_degraded_count": 5,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-008",
+      "git_commit_before": "local-before-008",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-008/patch.diff",
+      "proposal_rationale": "increasing the number of estimators can improve model performance by capturing more complex patterns in the data",
+      "proposal_summary": "increase-n_estimators-300",
+      "provenance": {
+        "decision_id": "decision-bccd08ffbd94793a",
+        "metric_id": "metric-bccd08ffbd94793a",
+        "patch_id": "patch-bccd08ffbd94793a",
+        "proposal_id": "proposal-bccd08ffbd94793a",
+        "run_id": "run-bccd08ffbd94793a"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-008/run.log",
+      "repeated_bad_count": 6,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:46Z",
+      "timestamp_start": "2026-10-13T09:07:45Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-008",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 9,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 9,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "3ef0972eed66887065922fa5a1fae6c1d9cb675ec34e755da60cba832aa97004",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 98,
+            "latency_ms": 2552.431363030337,
+            "parse_ok": true,
+            "prompt_tokens": 644,
+            "response_chars": 340
+          },
+          "raw_proposal_chars": 340,
+          "raw_proposal_sha256": "47990a07e2e7e154885cb53f4ced7f1ab6a52c9f5ebe05bd18e4ef2d42c766a1",
+          "structured_edit": {
+            "new": "300",
+            "old": "200",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=9\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [
+              "openml_ionosphere__s133-trial-003",
+              "openml_ionosphere__s133-trial-004",
+              "openml_ionosphere__s133-trial-005",
+              "openml_ionosphere__s133-trial-006",
+              "openml_ionosphere__s133-trial-007",
+              "openml_ionosphere__s133-trial-008"
+            ],
+            "repeated_bad_count": 6,
+            "repeated_bad_rate": 0.75,
+            "repeated_degraded_count": 6,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-009",
+      "git_commit_before": "local-before-009",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-009/patch.diff",
+      "proposal_rationale": "increasing the number of estimators can improve model performance by capturing more complex patterns in the data",
+      "proposal_summary": "increase-n_estimators-300",
+      "provenance": {
+        "decision_id": "decision-0b10b9e2bf70a0d5",
+        "metric_id": "metric-0b10b9e2bf70a0d5",
+        "patch_id": "patch-0b10b9e2bf70a0d5",
+        "proposal_id": "proposal-0b10b9e2bf70a0d5",
+        "run_id": "run-0b10b9e2bf70a0d5"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-009/run.log",
+      "repeated_bad_count": 7,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:49Z",
+      "timestamp_start": "2026-10-13T09:07:49Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-009",
+      "validity_status": "valid",
+      "wall_clock_seconds": 0.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 10,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 10,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "8f13f6dbb5c7d8d9fd5249c6fa7c93095b01d35afbd7c35ff8651ebcd53698d7",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 100,
+            "latency_ms": 2231.303969048895,
+            "parse_ok": true,
+            "prompt_tokens": 646,
+            "response_chars": 357
+          },
+          "raw_proposal_chars": 357,
+          "raw_proposal_sha256": "002b13f0816e55ef86a48245c4c9910fde1491fc6cd19cf1914274c9d8008402",
+          "structured_edit": {
+            "new": "300",
+            "old": "200",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=10\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [
+              "openml_ionosphere__s133-trial-003",
+              "openml_ionosphere__s133-trial-004",
+              "openml_ionosphere__s133-trial-005",
+              "openml_ionosphere__s133-trial-006",
+              "openml_ionosphere__s133-trial-007",
+              "openml_ionosphere__s133-trial-008",
+              "openml_ionosphere__s133-trial-009"
+            ],
+            "repeated_bad_count": 7,
+            "repeated_bad_rate": 0.7777777777777778,
+            "repeated_degraded_count": 7,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-010",
+      "git_commit_before": "local-before-010",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-010/patch.diff",
+      "proposal_rationale": "increasing the number of estimators in ensemble methods often improves performance by capturing more complex patterns in the data",
+      "proposal_summary": "increase-n_estimators-300",
+      "provenance": {
+        "decision_id": "decision-cceb1539f64d10cc",
+        "metric_id": "metric-cceb1539f64d10cc",
+        "patch_id": "patch-cceb1539f64d10cc",
+        "proposal_id": "proposal-cceb1539f64d10cc",
+        "run_id": "run-cceb1539f64d10cc"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-010/run.log",
+      "repeated_bad_count": 8,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:52Z",
+      "timestamp_start": "2026-10-13T09:07:52Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-010",
+      "validity_status": "valid",
+      "wall_clock_seconds": 0.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 11,
+      "campaign_id": "openml_ionosphere__s133",
+      "cumulative_budget_consumed": 11,
+      "current_best_before": 0.862229,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+      "delta_vs_best": 0.0,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "ec428ee6d6680f36315b49b6cda68c28dd2e55dfaf9995b47d0f8f2942ee932f",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 95,
+            "latency_ms": 2458.6534389527515,
+            "parse_ok": true,
+            "prompt_tokens": 646,
+            "response_chars": 334
+          },
+          "raw_proposal_chars": 334,
+          "raw_proposal_sha256": "7a7d02951821ba5d1a47bdc5453d164808c3966fc5fbf6d874430b46705ad64b",
+          "structured_edit": {
+            "new": "300",
+            "old": "200",
+            "path": "config.yaml",
+            "symbol": "n_estimators",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=11\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+          "worker_memory_mode": "none",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [
+              "openml_ionosphere__s133-trial-003",
+              "openml_ionosphere__s133-trial-004",
+              "openml_ionosphere__s133-trial-005",
+              "openml_ionosphere__s133-trial-006",
+              "openml_ionosphere__s133-trial-007",
+              "openml_ionosphere__s133-trial-008",
+              "openml_ionosphere__s133-trial-009",
+              "openml_ionosphere__s133-trial-010"
+            ],
+            "repeated_bad_count": 8,
+            "repeated_bad_rate": 0.8,
+            "repeated_degraded_count": 8,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-011",
+      "git_commit_before": "local-before-011",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "none",
+      "node_id": "openml_ionosphere",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.830189,
+        "val_auc": 0.862229
+      },
+      "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+      "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-011/patch.diff",
+      "proposal_rationale": "increasing the number of estimators can improve model performance, especially for complex datasets",
+      "proposal_summary": "increase-n_estimators",
+      "provenance": {
+        "decision_id": "decision-0d8fa3b65f11d47f",
+        "metric_id": "metric-0d8fa3b65f11d47f",
+        "patch_id": "patch-0d8fa3b65f11d47f",
+        "proposal_id": "proposal-0d8fa3b65f11d47f",
+        "run_id": "run-0d8fa3b65f11d47f"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-011/run.log",
+      "repeated_bad_count": 9,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-13T09:07:56Z",
+      "timestamp_start": "2026-10-13T09:07:55Z",
+      "training_seed": null,
+      "trial_id": "openml_ionosphere__s133-trial-011",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    }
+  ],
+  "manager": {
+    "deterministic": false,
+    "mode": "langgraph_manager",
+    "model": "ollama/qwen2.5-coder:7b",
+    "model_digest": null,
+    "temperature": 0.2
+  },
+  "manager_mode": "baseline_manager",
+  "memory_mode": "none",
+  "node_name": "openml_ionosphere",
+  "node_source_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node",
+  "proposal": {
+    "extra": {
+      "context_sha256": "7aed538dc7186b92178dff3b2c2ecfcbb6f387993cd067116d538f4385fe592d",
+      "deterministic_patch": true,
+      "llm_call": {
+        "completion_tokens": 102,
+        "latency_ms": 2646.9096390064806,
+        "parse_ok": true,
+        "prompt_tokens": 646,
+        "response_chars": 352
+      },
+      "raw_proposal_chars": 352,
+      "raw_proposal_sha256": "e2c7a26a15395c51556ef625f07bd13b26d2170007084d5caebb985b0127b129",
+      "structured_edit": {
+        "new": "300",
+        "old": "200",
+        "path": "config.yaml",
+        "symbol": "n_estimators",
+        "type": "config_value"
+      },
+      "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=12\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+      "worker_memory_mode": "none",
+      "worker_repeated_bad_stats": {
+        "flagged_trial_ids": [
+          "openml_ionosphere__s133-trial-003",
+          "openml_ionosphere__s133-trial-004",
+          "openml_ionosphere__s133-trial-005",
+          "openml_ionosphere__s133-trial-006",
+          "openml_ionosphere__s133-trial-007",
+          "openml_ionosphere__s133-trial-008",
+          "openml_ionosphere__s133-trial-009",
+          "openml_ionosphere__s133-trial-010",
+          "openml_ionosphere__s133-trial-011"
+        ],
+        "repeated_bad_count": 9,
+        "repeated_bad_rate": 0.8181818181818182,
+        "repeated_degraded_count": 9,
+        "repeated_invalid_count": 0,
+        "skipped_count": 0
+      }
+    },
+    "manager_mode": "langgraph_manager",
+    "objective": "In config.yaml, change n_estimators from 200 to 300. Edit only config.yaml.",
+    "proposal_rationale": "increasing the number of estimators can improve model performance by capturing more complex patterns in the data",
+    "proposal_summary": "increase-n_estimators-300",
+    "target_files": [
+      "config.yaml"
+    ]
+  },
+  "provisional": {
+    "budget_index": 12,
+    "campaign_id": "openml_ionosphere__s133",
+    "cumulative_budget_consumed": 12,
+    "current_best_before": 0.862229,
+    "decision": "discarded",
+    "decision_rationale": "Candidate did not improve current best; delta=0.000000.",
+    "delta_vs_best": 0.0,
+    "execution_status": "success",
+    "extra": {
+      "manager": {
+        "context_sha256": "7aed538dc7186b92178dff3b2c2ecfcbb6f387993cd067116d538f4385fe592d",
+        "deterministic_patch": true,
+        "llm_call": {
+          "completion_tokens": 102,
+          "latency_ms": 2646.9096390064806,
+          "parse_ok": true,
+          "prompt_tokens": 646,
+          "response_chars": 352
+        },
+        "raw_proposal_chars": 352,
+        "raw_proposal_sha256": "e2c7a26a15395c51556ef625f07bd13b26d2170007084d5caebb985b0127b129",
+        "structured_edit": {
+          "new": "300",
+          "old": "200",
+          "path": "config.yaml",
+          "symbol": "n_estimators",
+          "type": "config_value"
+        },
+        "worker_memory_context_text": "node=openml_ionosphere\nbudget_index=12\nmetric=val_auc direction=maximize\neditable_paths=config.yaml",
+        "worker_memory_mode": "none",
+        "worker_repeated_bad_stats": {
+          "flagged_trial_ids": [
+            "openml_ionosphere__s133-trial-003",
+            "openml_ionosphere__s133-trial-004",
+            "openml_ionosphere__s133-trial-005",
+            "openml_ionosphere__s133-trial-006",
+            "openml_ionosphere__s133-trial-007",
+            "openml_ionosphere__s133-trial-008",
+            "openml_ionosphere__s133-trial-009",
+            "openml_ionosphere__s133-trial-010",
+            "openml_ionosphere__s133-trial-011"
+          ],
+          "repeated_bad_count": 9,
+          "repeated_bad_rate": 0.8181818181818182,
+          "repeated_degraded_count": 9,
+          "repeated_invalid_count": 0,
+          "skipped_count": 0
+        }
+      },
+      "scope_validation": {
+        "changed_paths": [
+          "config.yaml"
+        ],
+        "valid": true,
+        "violations": []
+      },
+      "worker": {
+        "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+      },
+      "worker_failure_message": null
+    },
+    "failure_category": "degraded_metric",
+    "fast_config_hash": null,
+    "git_commit_after": "local-after-012",
+    "git_commit_before": "local-before-012",
+    "manager_mode": "langgraph_manager",
+    "memory_mode": "none",
+    "node_id": "openml_ionosphere",
+    "node_state_hash": null,
+    "parsed_metrics": {
+      "val_acc": 0.830189,
+      "val_auc": 0.862229
+    },
+    "patch_hash": "c59af69538e149ea305a8879f8e3588f8109b9eebe5b9c4b006fc604afe775db",
+    "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-012/patch.diff",
+    "proposal_rationale": "increasing the number of estimators can improve model performance by capturing more complex patterns in the data",
+    "proposal_summary": "increase-n_estimators-300",
+    "provenance": {
+      "decision_id": "decision-3b6f9be65341779c",
+      "metric_id": "metric-3b6f9be65341779c",
+      "patch_id": "patch-3b6f9be65341779c",
+      "proposal_id": "proposal-3b6f9be65341779c",
+      "run_id": "run-3b6f9be65341779c"
+    },
+    "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-012/run.log",
+    "repeated_bad_count": 10,
+    "targeted_files": [
+      "config.yaml"
+    ],
+    "timestamp_end": "2026-10-13T09:07:59Z",
+    "timestamp_start": "2026-10-13T09:07:58Z",
+    "training_seed": null,
+    "trial_id": "openml_ionosphere__s133-trial-012",
+    "validity_status": "valid",
+    "wall_clock_seconds": 1.0,
+    "worker_mode": "local_worker"
+  },
+  "schema": "r1.campaign_snapshot/1",
+  "split_seed": 133,
+  "t_min": 3,
+  "train_seed": 133,
+  "verify_runs": 2,
+  "verify_split_policy": "fixed",
+  "worker_mode": "local_worker",
+  "worker_result": {
+    "changed_files": [
+      "config.yaml"
+    ],
+    "extra": {
+      "node_root": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/node"
+    },
+    "failure_message": null,
+    "git_commit_after": "local-after-012",
+    "git_commit_before": "local-before-012",
+    "parsed_metrics": {
+      "val_acc": 0.830189,
+      "val_auc": 0.862229
+    },
+    "patch_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-012/patch.diff",
+    "raw_log_ref": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_idle_20261013_khbc3ro5/r1_e1b_llm_work/roots/openml_ionosphere__s133/art/trial-012/run.log",
+    "success": true,
+    "worker_mode": "local_worker"
+  }
+}
