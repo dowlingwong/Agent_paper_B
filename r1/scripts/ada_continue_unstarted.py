@@ -10,7 +10,7 @@ import time
 from urllib.request import Request, urlopen
 
 assert platform.node().split('.')[0] == 'ucrtasl', 'STOP: Ada-only continuation'
-assert os.environ['R1_GPU_UUID'] == 'GPU-9be33fd1-8eeb-497d-772a-87362d6720be', 'STOP: GPU 0 only'
+assert os.environ['R1_GPU_UUID'] == 'auto' or os.environ['R1_GPU_UUID'].startswith('GPU-'), 'STOP: invalid GPU selector'
 previous = Path(os.environ['R1_PREVIOUS_BATCH'])
 prior = json.loads((previous / 'batch_state.json').read_text())
 assert prior['steps']['DT1']['completed']
@@ -36,7 +36,8 @@ try:
     save()
     while True:
         rows, free = gpu_rows()
-        chosen = [r for r in free if r.split(',')[1].strip() == os.environ['R1_GPU_UUID']]
+        chosen = free if os.environ['R1_GPU_UUID'] == 'auto' else [
+            r for r in free if r.split(',')[1].strip() == os.environ['R1_GPU_UUID']]
         with (BATCH / 'gpu_wait.jsonl').open('a') as f:
             f.write(json.dumps({'label': 'ENGINEERING_ONLY', 'utc': stamp(), 'free_selected_gpu': bool(chosen)}) + '\n')
         if chosen:
@@ -44,7 +45,7 @@ try:
         time.sleep(60)
     (BATCH / 'continuation_claim').mkdir()  # Never clear or reuse this claim.
     state['gpu'] = chosen[0]
-    assert state['gpu'].split(',')[0].strip() == '0'
+    os.environ['R1_GPU_UUID'] = state['gpu'].split(',')[1].strip()
     with socket.socket() as probe:
         probe.bind(('127.0.0.1', 11434))
     command = (f'CUDA_VISIBLE_DEVICES={os.environ["R1_GPU_UUID"]} OLLAMA_VULKAN=0 '
