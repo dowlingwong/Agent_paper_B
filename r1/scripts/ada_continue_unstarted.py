@@ -2,12 +2,15 @@
 import ast
 import json
 import os
+import platform
 from pathlib import Path
 import socket
 import subprocess
 import time
 from urllib.request import Request, urlopen
 
+assert platform.node().split('.')[0] == 'ucrtasl', 'STOP: Ada-only continuation'
+assert os.environ['R1_GPU_UUID'] == 'GPU-9be33fd1-8eeb-497d-772a-87362d6720be', 'STOP: GPU 0 only'
 previous = Path(os.environ['R1_PREVIOUS_BATCH'])
 prior = json.loads((previous / 'batch_state.json').read_text())
 assert prior['steps']['DT1']['completed']
