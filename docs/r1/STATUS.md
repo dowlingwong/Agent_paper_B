@@ -13,6 +13,15 @@ Newest entry first. Only this file says what is done.
 
 
 
+## 14 October 2026 — ionosphere LLM diagnosis (read-only, ENGINEERING_ONLY)
+
+AI-assisted diagnosis by opencode (deepseek-v4.1-flash) at the author's request; no LLM calls, no GPU, no worker runs, no code change to harness/manager/prompts/nodes/PLAN/RUNBOOK. PILOT data only; not evidence. No decision recorded.
+
+- **Examined.** LLM run `results/r1/pilot/E1b_20261013T151857Z` (6 ionosphere roots, 72 branches, `provenance/ledgers/`, snapshots, `points.json`); scripted run `results/r1/pilot/E1b_20261012T161034Z`; harness `9c4902d` (node `benchmark.py`, `langgraph_manager.py`, `metric_parser.py`, `decision.py`, `summarizer.py`); Ada `r1_e1b_llm_work/` per-trial `patch.diff`/`run.log` (read-only).
+- **Verdict: the working hypothesis is confirmed.** On ionosphere the LLM edits only `n_estimators` and `max_depth`, which `_build_model` ignores under `logistic_regression` (`benchmark.py:225-231`), so the metric is bit-identical to the incumbent on 114/114 root and 720/720 branch trials; the strict keep rule (`delta > 0`) never fires after trial 1. 840 trials, 6 keeps (first valid metric per root), 0 invalid, Δ̂ = 0. The scripted proposer edits only active keys and keeps 18/66 root trials (ρ = +0.0189 vs LLM 0). Decoding is not deterministic (temperature 0.2, no seed): 3/72 branch pairs agree across repetitions.
+- **Ruled out:** metric-parsing default, incumbent read error, unapplied edit, cached worker result (see Q6).
+- **Report:** `docs/r1/reports/IONOSPHERE_LLM_DIAGNOSIS_20261014.md`; reproducible tables `r1/diagnostics/ionosphere_llm_diag.py`. Fix options listed for the author (expose only active keys; annotate active keys; surface "metric unchanged"; set manager temperature/seed; or leave as is). **Decisions remain open.**
+
 ## 13 October 2026 — DT4 rerun: commit-only recovery
 
 AI-assisted recovery by Codex, authorized by the author (PLAN §10, R1-COMPUTE DT4 commit-only recovery). PILOT; not evidence.
