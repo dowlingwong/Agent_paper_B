@@ -1,0 +1,83 @@
+FF.                                                                      [100%]
+=================================== FAILURES ===================================
+_____________ test_exited_pid_must_be_absent_from_fresh_gpu_census _____________
+
+    def test_exited_pid_must_be_absent_from_fresh_gpu_census():
+>       checker([BUSY, subprocess.CalledProcessError(1, ['ps']), EMPTY])()
+
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_20261013_pqaq4qvv/test_gpu_process_census.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/r1/scripts/deepthought_batch1_resume.py:99: in check_gpu
+    owner = subprocess.check_output(['ps', '-o', 'user=', '-p', pid], text=True).strip()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/toolchain/python/cpython-3.11.17-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1124: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/toolchain/python/cpython-3.11.17-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1128: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Mock name='mock.check_output' id='139715765974608'>
+args = (['ps', '-o', 'user=', '-p', '42'],), kwargs = {'text': True}
+effect = <list_iterator object at 0x7f121c9371f0>
+result = CalledProcessError(1, ['ps'])
+
+    def _execute_mock_call(self, /, *args, **kwargs):
+        # separate from _increment_mock_call so that awaited functions are
+        # executed separately from their call, also AsyncMock overrides this method
+    
+        effect = self.side_effect
+        if effect is not None:
+            if _is_exception(effect):
+                raise effect
+            elif not _callable(effect):
+                result = next(effect)
+                if _is_exception(result):
+>                   raise result
+E                   subprocess.CalledProcessError: Command '['ps']' returned non-zero exit status 1.
+
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/toolchain/python/cpython-3.11.17-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1187: CalledProcessError
+_______________ test_unidentified_pid_still_on_card_is_rejected ________________
+
+    def test_unidentified_pid_still_on_card_is_rejected():
+        with pytest.raises(RuntimeError, match='STOP'):
+>           checker([BUSY, subprocess.CalledProcessError(1, ['ps']), BUSY])()
+
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_20261013_pqaq4qvv/test_gpu_process_census.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/agent_paper_B/r1/scripts/deepthought_batch1_resume.py:99: in check_gpu
+    owner = subprocess.check_output(['ps', '-o', 'user=', '-p', pid], text=True).strip()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/toolchain/python/cpython-3.11.17-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1124: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/toolchain/python/cpython-3.11.17-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1128: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Mock name='mock.check_output' id='139715766200464'>
+args = (['ps', '-o', 'user=', '-p', '42'],), kwargs = {'text': True}
+effect = <list_iterator object at 0x7f121c809db0>
+result = CalledProcessError(1, ['ps'])
+
+    def _execute_mock_call(self, /, *args, **kwargs):
+        # separate from _increment_mock_call so that awaited functions are
+        # executed separately from their call, also AsyncMock overrides this method
+    
+        effect = self.side_effect
+        if effect is not None:
+            if _is_exception(effect):
+                raise effect
+            elif not _callable(effect):
+                result = next(effect)
+                if _is_exception(result):
+>                   raise result
+E                   subprocess.CalledProcessError: Command '['ps']' returned non-zero exit status 1.
+
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/toolchain/python/cpython-3.11.17-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1187: CalledProcessError
+=========================== short test summary info ============================
+FAILED ../../data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_20261013_pqaq4qvv/test_gpu_process_census.py::test_exited_pid_must_be_absent_from_fresh_gpu_census
+FAILED ../../data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_DT2_DT4_20261013_pqaq4qvv/test_gpu_process_census.py::test_unidentified_pid_still_on_card_is_rejected
+2 failed, 1 passed in 0.14s

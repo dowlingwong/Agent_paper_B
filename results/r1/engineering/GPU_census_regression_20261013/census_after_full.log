@@ -1,0 +1,3 @@
+/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider r1/tests
+....................................................................     [100%]
+68 passed in 4.02s
