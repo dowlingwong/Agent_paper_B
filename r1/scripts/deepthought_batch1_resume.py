@@ -252,7 +252,10 @@ def run_dt4(meta, version):
                                '--runs', '20', '--points', '4', '8', '12', '--reps', '2',
                                '--audit-seeds', '6', '--workers', '4'])
     with urlopen('http://127.0.0.1:11434/api/ps', timeout=15) as response:
-        after = next((m for m in json.load(response)['models'] if m.get('name', m.get('model')) == MODEL), None)
+        processes_after = json.load(response)
+    (BATCH / 'gpu_offload_after_collection.json').write_text(json.dumps(
+        {'label': 'ENGINEERING_ONLY', 'utc': stamp(), 'processes': processes_after}, indent=2) + '\n')
+    after = next((m for m in processes_after['models'] if m.get('name', m.get('model')) == MODEL), None)
     assert_full_offload(after, 'after DT4 collection')
     check_gpu()
     report_stamp = datetime.now(timezone.utc).strftime('%Y%m%d')

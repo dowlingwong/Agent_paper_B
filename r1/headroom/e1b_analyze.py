@@ -75,7 +75,9 @@ def markdown(result: dict) -> str:
                          if arm in r["verify_rate"] else
                          f"| `{arm}` | {_f(est)} | [{_f(ci[0])}, {_f(ci[1])}] | {_f(con) if con is not None else '–'} | [{_f(cci[0])}, {_f(cci[1])}] | – |")
         lines.append("")
-    return "\n".join(lines)
+    # Exactly one trailing newline once main() appends "\n": a blank last line fails
+    # `git diff --check` (DT4 rerun STOP, 13 Oct 2026).
+    return "\n".join(lines).rstrip("\n")
 
 
 def main() -> int:
