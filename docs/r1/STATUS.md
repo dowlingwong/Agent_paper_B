@@ -2,6 +2,16 @@
 
 Newest entry first. Only this file says what is done.
 
+
+## 14 October 2026 — author decisions after the batch-3 review
+
+Planning only; recorded by an AI agent (Claude) at the author's request. No code and no runs.
+
+- **Adopted** (PLAN §10, 14 Oct, after the batch-3 review): the D27 F3 fix via config hashes in `edit_novelty` and in E2 snapshots (no `TrialRecord` change); D28 criterion 2 revised to active-key novelty, with the memory-off contrast arm exempt from the gate; R1-E1B-RERUN2 (4 nodes, 18 instances, arms A = LLM memory on, B = LLM memory off, C = scripted on the new harness).
+- **Not decided**: the D4 amendment (run-free acceptance rules). It is not in the rerun. D18, D21, D23 and the verify split policy are also still open.
+- Consequence of the batch-3 F1 fix, recorded here: the scripted proposal sequence is unchanged, but on declared nodes an inert draw is now skipped without a worker run, so the 12 Oct scripted E1b is not byte-reproducible on the new harness. That is why arm C reruns it.
+- Next: `docs/r1/prompts/BUILD_BATCH4_PROMPT.md` (desktop: F3, D28 revision, rerun entrypoints), then `docs/r1/prompts/ADA_E1B_RERUN2_PROMPT.md`.
+
 ## 14 October 2026 — batch 3: D24–D28 desktop implementation, review and correction (ENGINEERING_ONLY)
 
 AI-assisted execution by opencode (deepseek-v4.1-flash) at the author's request per `docs/r1/prompts/BUILD_BATCH3_PROMPT.md`; no LLM calls, no GPU, no Ada batch created or launched. Commits: paper `0a3f284` → `e4d31d5` (branch `main`); harness `9c4902d` → `0f2d9e9` (branch `r1`). Independent fresh-context review: `docs/r1/reviews/BUILD_REVIEW_20261014.md` (+ Resolution).
