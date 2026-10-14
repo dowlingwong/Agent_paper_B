@@ -70,7 +70,9 @@ def run_campaigns(args) -> Path:
     manifest["elapsed_seconds"] = round(time.time() - t0, 1)
     manifest["finished_utc"] = _stamp()
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    report = evaluate_ledger_paths([out / "ledgers"], generated_utc=manifest["finished_utc"])
+    report = evaluate_ledger_paths(
+        [out / "ledgers"], generated_utc=manifest["finished_utc"], manager_kind=args.manager
+    )
     report["run_manifest"] = "manifest.json"
     write_reports(report, out)
     return out

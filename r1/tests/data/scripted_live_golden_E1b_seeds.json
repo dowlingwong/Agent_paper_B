@@ -1,0 +1,80 @@
+{
+ "harness_commit": "9c4902d0d8776f18a081e1ff2478d651fc7096c1",
+ "replay": "live run_real_campaign with ScriptedRandomManager and an always-keep worker; config.yaml edited per structured edit; budget 10",
+ "scenarios": {
+  "openml_ionosphere__s103__r0": [
+   "C 0.15 -> 0.2094",
+   "C 0.2094 -> 0.2489",
+   "class_weight balanced -> null",
+   "scaler standard -> none",
+   "scaler none -> standard",
+   "class_weight null -> balanced",
+   "max_iter 1000 -> 2249",
+   "max_iter 2249 -> 1582",
+   "max_iter 1582 -> 547",
+   "C 0.2489 -> 0.1106"
+  ],
+  "openml_ionosphere__s103__r1": [
+   "max_iter 1000 -> 546",
+   "class_weight balanced -> null",
+   "C 0.15 -> 0.3706",
+   "max_iter 546 -> 439",
+   "model_type logistic_regression -> gradient_boosting",
+   "max_depth 5 -> 11",
+   "n_estimators 100 -> 192",
+   "n_estimators 192 -> 500",
+   "max_depth 11 -> 4",
+   "model_type gradient_boosting -> logistic_regression"
+  ],
+  "openml_ionosphere__s123__r0": [
+   "model_type logistic_regression -> gradient_boosting",
+   "max_depth 5 -> 3",
+   "learning_rate 0.05 -> 0.01678",
+   "class_weight balanced -> null",
+   "n_estimators 100 -> 285",
+   "n_estimators 285 -> 466",
+   "scaler standard -> minmax",
+   "max_depth 3 -> 2",
+   "model_type gradient_boosting -> random_forest",
+   "scaler minmax -> none"
+  ],
+  "openml_ionosphere__s123__r1": [
+   "scaler standard -> none",
+   "model_type logistic_regression -> random_forest",
+   "max_depth 5 -> 8",
+   "n_estimators 100 -> 157",
+   "max_depth 8 -> 13",
+   "n_estimators 157 -> 138",
+   "n_estimators 138 -> 147",
+   "max_depth 13 -> 15",
+   "n_estimators 147 -> 135",
+   "max_depth 15 -> 9"
+  ],
+  "openml_wdbc__s100__r0": [
+   "C 0.15 -> 0.1257",
+   "max_iter 1000 -> 2126",
+   "class_weight balanced -> null",
+   "max_iter 2126 -> 3000",
+   "C 0.1257 -> 0.08498",
+   "model_type logistic_regression -> gradient_boosting",
+   "scaler standard -> none",
+   "n_estimators 100 -> 99",
+   "model_type gradient_boosting -> random_forest",
+   "class_weight null -> balanced"
+  ],
+  "openml_wdbc__s100__r1": [
+   "C 0.15 -> 0.0845",
+   "max_iter 1000 -> 1091",
+   "C 0.0845 -> 0.04211",
+   "max_iter 1091 -> 3000",
+   "max_iter 3000 -> 2306",
+   "C 0.04211 -> 0.09298",
+   "model_type logistic_regression -> gradient_boosting",
+   "model_type gradient_boosting -> random_forest",
+   "max_depth 5 -> 3",
+   "n_estimators 100 -> 190"
+  ]
+ },
+ "schema": "r1.scripted_live_golden/1",
+ "source_run": "E1b_20261012T161034Z"
+}

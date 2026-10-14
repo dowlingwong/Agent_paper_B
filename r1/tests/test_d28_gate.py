@@ -75,29 +75,53 @@ def test_script_stops_without_a_liveness_manifest(tmp_path, monkeypatch):
         script.require_liveness(["digits_mlp"])
 
 
+def _langgraph_manifest(*verdicts):
+    payload = _manifest(*verdicts)
+    payload["manager_kind"] = "langgraph"
+    return payload
+
+
 def test_script_reads_the_manifest_from_the_environment(tmp_path, monkeypatch):
     script = _load_script(tmp_path, monkeypatch)
     good = tmp_path / "good.json"
-    good.write_text(json.dumps(_manifest(("digits_mlp", {"pass": True, "failed_criteria": []}))))
+    good.write_text(json.dumps(_langgraph_manifest(("digits_mlp", {"pass": True, "failed_criteria": []}))))
     monkeypatch.setenv("R1_LIVENESS_MANIFEST", str(good))
     assert script.require_liveness(["digits_mlp"])["nodes"]["digits_mlp"]["pass"] is True
 
     bad = tmp_path / "bad.json"
-    bad.write_text(json.dumps(_manifest(("digits_mlp", {"pass": False, "failed_criteria": ["metric_diff_fraction"]}))))
+    bad.write_text(json.dumps(_langgraph_manifest(("digits_mlp", {"pass": False, "failed_criteria": ["metric_diff_fraction"]}))))
     monkeypatch.setenv("R1_LIVENESS_MANIFEST", str(bad))
     with pytest.raises(RuntimeError, match=r"^STOP: failed D28 liveness: digits_mlp"):
+        script.require_liveness(["digits_mlp"])
+
+
+def test_script_rejects_a_scripted_liveness_manifest(tmp_path, monkeypatch):
+    # Review F5: a scripted smoke pass is not the D28 LLM/memory-on check.
+    script = _load_script(tmp_path, monkeypatch)
+    scripted = tmp_path / "scripted.json"
+    payload = _manifest(("digits_mlp", {"pass": True, "failed_criteria": []}))
+    payload["manager_kind"] = "scripted"
+    scripted.write_text(json.dumps(payload))
+    monkeypatch.setenv("R1_LIVENESS_MANIFEST", str(scripted))
+    with pytest.raises(RuntimeError, match=r"^STOP: liveness manifest .* is not from an LLM-backed run"):
+        script.require_liveness(["digits_mlp"])
+
+    missing_kind = tmp_path / "missing.json"
+    missing_kind.write_text(json.dumps(_manifest(("digits_mlp", {"pass": True, "failed_criteria": []}))))
+    monkeypatch.setenv("R1_LIVENESS_MANIFEST", str(missing_kind))
+    with pytest.raises(RuntimeError, match=r"^STOP: liveness manifest"):
         script.require_liveness(["digits_mlp"])
 
 
 def test_script_finds_the_newest_engineering_liveness_report(tmp_path, monkeypatch):
     script = _load_script(tmp_path, monkeypatch)
     monkeypatch.delenv("R1_LIVENESS_MANIFEST", raising=False)
-    older = Path(script.PAPER) / "results/r1/engineering/liveness_scripted_20260101T000000Z"
-    newer = Path(script.PAPER) / "results/r1/engineering/liveness_scripted_20260102T000000Z"
+    older = Path(script.PAPER) / "results/r1/engineering/liveness_langgraph_20260101T000000Z"
+    newer = Path(script.PAPER) / "results/r1/engineering/liveness_langgraph_20260102T000000Z"
     for directory, passed in ((older, False), (newer, True)):
         directory.mkdir(parents=True)
         (directory / "liveness.json").write_text(
-            json.dumps(_manifest(("digits_mlp", {"pass": passed, "failed_criteria": []})))
+            json.dumps(_langgraph_manifest(("digits_mlp", {"pass": passed, "failed_criteria": []})))
         )
     assert script.require_liveness(["digits_mlp"])["nodes"]["digits_mlp"]["pass"] is True
 

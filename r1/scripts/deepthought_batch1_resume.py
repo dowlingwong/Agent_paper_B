@@ -147,8 +147,10 @@ def require_liveness(nodes):
     """D28 gate (P5): no LLM-backed collection without a committed liveness pass.
 
     The manifest is ``$R1_LIVENESS_MANIFEST`` when set, else the newest
-    ``results/r1/engineering/liveness_*/liveness.json``.  A missing or failed
-    node raises ``STOP:``.
+    ``results/r1/engineering/liveness_*/liveness.json``.  The manifest must
+    come from an LLM-backed liveness run (``manager_kind: langgraph``): a
+    scripted smoke pass is not the D28 check (review F5).  A missing, scripted
+    or failed node raises ``STOP:``.
     """
     from r1.liveness import load_liveness_manifest, require_live
 
@@ -160,7 +162,14 @@ def require_liveness(nodes):
         if not candidates:
             raise RuntimeError('STOP: no D28 liveness manifest; run the liveness check first')
         manifest_path = candidates[-1]
-    return require_live(list(nodes), load_liveness_manifest(manifest_path))
+    manifest = load_liveness_manifest(manifest_path)
+    if manifest.get('manager_kind') != 'langgraph':
+        raise RuntimeError(
+            f'STOP: liveness manifest {manifest_path} is not from an LLM-backed run '
+            f"(manager_kind={manifest.get('manager_kind')!r}); run `python -m r1.liveness --run "
+            "--manager langgraph` first"
+        )
+    return require_live(list(nodes), manifest)
 
 
 def collect(out, work, extra, nodes):

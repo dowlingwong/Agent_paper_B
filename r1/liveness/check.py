@@ -136,8 +136,18 @@ def _ledger_paths(target: str | Path) -> list[Path]:
     return sorted(p for p in path.rglob("*.jsonl") if p.is_file())
 
 
-def evaluate_ledger_paths(targets: Iterable[str | Path], *, generated_utc: str | None = None) -> dict:
-    """Evaluate every ledger below *targets*; one JSON-able report."""
+def evaluate_ledger_paths(
+    targets: Iterable[str | Path],
+    *,
+    generated_utc: str | None = None,
+    manager_kind: str | None = None,
+) -> dict:
+    """Evaluate every ledger below *targets*; one JSON-able report.
+
+    ``manager_kind`` records which proposer produced the ledgers
+    (``"scripted"`` or ``"langgraph"``); the D28 gate only accepts an
+    LLM-backed manifest (review F5).
+    """
     paths: list[Path] = []
     for target in targets:
         paths.extend(_ledger_paths(target))
@@ -156,6 +166,7 @@ def evaluate_ledger_paths(targets: Iterable[str | Path], *, generated_utc: str |
         "schema": "r1.liveness/1",
         "label": "ENGINEERING_ONLY",
         "generated_utc": generated_utc or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"),
+        "manager_kind": manager_kind,
         "criteria": {
             "keep_after_trial_1": "at least one keep after trial 1",
             "metric_diff_fraction": f">= {METRIC_DIFF_MIN} of comparable trials",
