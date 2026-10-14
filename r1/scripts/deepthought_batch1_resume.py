@@ -169,9 +169,18 @@ def require_liveness(nodes, memory_mode=None, arm_role=None):
     return require_live(list(nodes), manifest, memory_mode=memory_mode, arm_role=arm_role)
 
 
-def collect(out, work, extra, nodes):
-    require_liveness(nodes)
-    cmd([PY, '-m', 'r1.headroom.e1b_collect', '--manager', 'langgraph', '--work', str(work),
+def collect(out, work, extra, nodes, manager='langgraph', memory_mode=None, arm_role=None, gated=None):
+    """Collect one arm; LLM-backed arms pass the D28 gate, the scripted arm does not.
+
+    ``manager`` selects the proposer (``langgraph`` or ``scripted``).  The
+    LLM-specific checks (demonstrated proposals, parse-failure rate) apply only
+    when the collected manifest says ``manager.kind == langgraph``.
+    """
+    if gated is None:
+        gated = manager == 'langgraph'
+    if gated:
+        require_liveness(nodes, memory_mode=memory_mode, arm_role=arm_role)
+    cmd([PY, '-m', 'r1.headroom.e1b_collect', '--manager', manager, '--work', str(work),
          '--out', str(out), *extra], log=out.name + '.log')
     for _ in range(12):
         check_gpu()
@@ -189,8 +198,9 @@ def collect(out, work, extra, nodes):
                 or any(m is None for m in p['audit_metrics'])]
     if failures:
         raise RuntimeError('STOP: collection failures; no leaf retries permitted')
-    if manifest['manager']['kind'] != 'langgraph':
-        raise RuntimeError('STOP: manager kind is not langgraph')
+    llm_backed = manifest['manager']['kind'] == 'langgraph'
+    if llm_backed and manager != 'langgraph':
+        raise RuntimeError('STOP: manifest claims langgraph but the collector ran scripted')
     calls, parse_failures, summaries = [], [], []
     for p in work.rglob('*.jsonl'):
         for line in p.read_text().splitlines():
@@ -203,11 +213,12 @@ def collect(out, work, extra, nodes):
                     parse_failures.append(item)
             if 'proposal_summary' in item:
                 summaries.append(item['proposal_summary'])
-    if not calls or not summaries or not any(not re.fullmatch(r'\w+\s+\S+\s+->\s+\S+', s) for s in summaries):
-        raise RuntimeError('STOP: no demonstrated LLM proposals in branch/root ledgers')
-    if len(parse_failures) / len(calls) > 0.20:
-        (out / 'parse_failure_examples.json').write_text(json.dumps(parse_failures[:5], indent=2))
-        raise RuntimeError('STOP: manager parse failures exceed 20 percent')
+    if llm_backed:
+        if not calls or not summaries or not any(not re.fullmatch(r'\w+\s+\S+\s+->\s+\S+', s) for s in summaries):
+            raise RuntimeError('STOP: no demonstrated LLM proposals in branch/root ledgers')
+        if len(parse_failures) / len(calls) > 0.20:
+            (out / 'parse_failure_examples.json').write_text(json.dumps(parse_failures[:5], indent=2))
+            raise RuntimeError('STOP: manager parse failures exceed 20 percent')
     check = {'label': manifest['label'], 'leaves': len(leaves), 'collection_failures': len(failures),
              'manager_kind': manifest['manager']['kind'], 'llm_calls': len(calls),
              'parse_failures': len(parse_failures), 'proposal_examples': summaries[:5]}
@@ -240,8 +251,15 @@ def collect(out, work, extra, nodes):
 
 
 def finish(reason):
+    """Write the STATUS entry and push; the title, notes and session are batch parameters.
+
+    Defaults reproduce the batch-1 behaviour; later batches set
+    ``status_title``, ``status_accept_note``, ``status_commit_message`` and
+    ``ollama_session`` in ``state``.
+    """
     if state.get('ollama_started_by_batch'):
-        stopped = subprocess.run(['tmux', 'kill-session', '-t', 'r1_ollama_resume_20261012'],
+        stopped = subprocess.run(['tmux', 'kill-session', '-t',
+                                  state.get('ollama_session', 'r1_ollama_resume_20261012')],
                                  capture_output=True, text=True)
         state['ollama_cleanup'] = {'returncode': stopped.returncode, 'stderr': stopped.stderr}
         (BATCH / 'gpu_after_ollama_stop.txt').write_text(subprocess.check_output(['nvidia-smi'], text=True))
@@ -249,7 +267,8 @@ def finish(reason):
     state['stop_reason'] = reason
     save()
     day = datetime.now(ZoneInfo('Europe/Berlin')).strftime('%d %B %Y')
-    lines = [f'## {day} — Remote batch 1: {"stopped" if reason else "completed"}', '',
+    title = state.get('status_title', 'Remote batch 1')
+    lines = [f'## {day} — {title}: {"stopped" if reason else "completed"}', '',
              f'AI-assisted execution by {EXECUTOR}. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.', '',
              f'- **Execution host:** `{platform.node()}`. Logs and preserved runtime state: `{BATCH}/`.',
              f'- **Harness:** `{git_output(HARNESS, "rev-parse", "HEAD")}`; manager `{MODEL}`, pinned digest `{DIGEST}`.',
@@ -258,14 +277,16 @@ def finish(reason):
         lines.append(f'- **{step}:** `{json.dumps(data, sort_keys=True)}`')
     if reason:
         lines += ['', f'**STOP:** {reason}', '',
-                  'DT1–DT4 are accepted only where the step entry explicitly records completion. Partial outputs are preserved; no failed model or collection run was retried.']
+                  state.get('status_accept_note',
+                            'DT1–DT4 are accepted only where the step entry explicitly records completion. Partial outputs are preserved; no failed model or collection run was retried.')]
     lines += ['', '- **Author decisions remain open:** D18, D21, D23, the D4 amendment and any verify split-policy revision. Fixed split policy retained; L11 was not built.', '']
     status = PAPER / 'docs/r1/STATUS.md'
     old = status.read_text()
     pos = old.index('\n## ')
     status.write_text(old[:pos] + '\n\n' + '\n'.join(lines) + old[pos:])
     state['steps']['STATUS'] = {'completed': True, 'reason': reason}
-    commit(PAPER, 'Record remote batch 1 execution status', ['docs/r1/STATUS.md'], 'STATUS')
+    commit(PAPER, state.get('status_commit_message', 'Record remote batch 1 execution status'),
+           ['docs/r1/STATUS.md'], 'STATUS')
     print('FINISHED', json.dumps(state), flush=True)
 
 

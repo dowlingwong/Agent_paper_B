@@ -273,6 +273,10 @@ def main() -> int:
                     help="langgraph = the pinned local qwen2.5-coder:7b via Ollama (run natively on the Mac)")
     ap.add_argument("--memory-mode", choices=["none", "append_only_summary", "append_only_summary_with_rationale"],
                     default=None, help="manager memory mode (D24); a manifest without the field means none")
+    ap.add_argument("--arm", choices=["A", "B", "C"], default=None,
+                    help="rerun-2 arm label (R1-E1B-RERUN2; manifest field)")
+    ap.add_argument("--arm-role", choices=["primary", "contrast", "reference"], default=None,
+                    help="rerun-2 arm role (R1-E1B-RERUN2; manifest field)")
     ap.add_argument("--out", default=None, help="output dir for a new run (default results/r1/pilot/E1b_<UTC>)")
     ap.add_argument("--work", default=os.environ.get("R1_TMP", "/tmp/r1_e1b"))
     ap.add_argument("--workers", type=int, default=4)
@@ -293,6 +297,8 @@ def main() -> int:
                                         else "langgraph qwen2.5-coder:7b (Ollama; pinned digest dae161e2...)"),
                     "manager": {**MANAGER, "kind": args.manager},
                     "memory_mode": args.memory_mode or "none",
+                    "arm": args.arm,
+                    "arm_role": args.arm_role,
                     "seed_policy": seed_policy(args.manager),
                     "nodes": args.nodes, "instances": args.instances, "runs": args.runs, "points": args.points,
                     "reps": args.reps, "audit_seeds": args.audit_seeds, "verify_r": VERIFY_R,
