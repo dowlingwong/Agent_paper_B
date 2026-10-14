@@ -33,6 +33,7 @@ LAUNCHER = REPO / "r1/scripts/ada_e1b_rerun2_launch.sh"
 
 
 def _load_runner(tmp_path: Path, monkeypatch):
+    monkeypatch.delenv("R1_DRYRUN", raising=False)
     batch = tmp_path / "batch"
     paper = tmp_path / "paper"
     harness = tmp_path / "harness"
@@ -275,7 +276,7 @@ def _launcher_env(tmp_path: Path, *, hostname="ucrtasl", has_session=False, ls_o
         (bin_dir / name).chmod(0o755)
     log = tmp_path / "tmux.log"
     log.write_text("")
-    return dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ["PATH"],
+    return dict({k:v for k,v in os.environ.items() if k != "R1_DRYRUN"}, R1_GIT_NAME="Fixture", R1_GIT_EMAIL="fixture@example.invalid", PATH=str(bin_dir) + os.pathsep + os.environ["PATH"],
                 STUB_TMUX_LOG=str(log), STUB_TMUX_HAS_SESSION="0" if has_session else "1",
                 STUB_TMUX_LS=ls_output)
 
@@ -313,9 +314,23 @@ def _prepare_batch(tmp_path: Path, *, ok=True, unexpected=None) -> Path:
     fake_python = batch / "autoresearch_harness/.venv/bin/python"
     fake_python.write_text("#!/bin/sh\nexit 0\n")
     fake_python.chmod(0o755)
+    for name in ("agent_paper_B", "autoresearch_harness"):
+        repo = batch / name
+        repo.mkdir(exist_ok=True)
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "user.name", "Fixture"], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "user.email", "fixture@example.invalid"], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "--allow-empty", "-qm", "fixture"], check=True)
+        remote = tmp_path / (name + ".git")
+        subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+        subprocess.run(["git", "-C", str(repo), "remote", "add", "origin", str(remote)], check=True)
     (batch / "env.sh").write_text("export R1_BATCH_DIRECTORY=%s\n" % batch)
     (batch / "prepare.json").write_text(json.dumps({
         "ok": ok,
+        "git_identity": {"name":"Fixture", "email":"fixture@example.invalid"},
+        "identity_checks": {"paper": True, "harness": True},
+        "push_dry_run": {"paper": True, "harness": True},
+        "pytest_version": "pytest-stub-9",
         "harness_tests": {"unexpected": unexpected or []},
     }))
     return batch
@@ -391,11 +406,12 @@ def _prepare_env(tmp_path: Path, *, harness_rc: int, harness_output: str, make_r
         "  exit 0\n"
         "fi\n"
         'if [ "$1" = "-C" ]; then shift 2; if [ "$1" = "rev-parse" ]; then echo ' + _PIN + "; exit 0; fi; fi\n"
+        'case "$*" in *"config --local user.name") echo "$R1_GIT_NAME";; *"config --local user.email") echo "$R1_GIT_EMAIL";; *"var GIT_COMMITTER_IDENT") echo "$R1_GIT_NAME <$R1_GIT_EMAIL>";; esac\n'
         "exit 0\n"
     )
     (bin_dir / "uv").write_text(
         "#!/bin/sh\n"
-        'if [ "$1" = "sync" ]; then mkdir -p .venv/bin; printf "#!/bin/sh\\nexit 0\\n" > .venv/bin/python; chmod +x .venv/bin/python; exit 0; fi\n'
+        'if [ "$1" = "sync" ]; then mkdir -p .venv/bin; printf "#!/bin/sh\\necho pytest-stub-9\\nexit 0\\n" > .venv/bin/python; chmod +x .venv/bin/python; exit 0; fi\n'
         'cat "$STUB_HARNESS_LOG"\n'
         'exit "$STUB_HARNESS_RC"\n'
     )
@@ -403,7 +419,8 @@ def _prepare_env(tmp_path: Path, *, harness_rc: int, harness_output: str, make_r
     for name in ("hostname", "tmux", "git", "uv", "make"):
         (bin_dir / name).chmod(0o755)
     return dict(
-        os.environ,
+        {k:v for k,v in os.environ.items() if k != "R1_DRYRUN"},
+        R1_GIT_NAME="Fixture", R1_GIT_EMAIL="fixture@example.invalid",
         PATH=str(bin_dir) + os.pathsep + os.environ["PATH"],
         STUB_TMUX_LOG=str(tmp_path / "tmux.log"),
         STUB_HARNESS_LOG=str(harness_log),

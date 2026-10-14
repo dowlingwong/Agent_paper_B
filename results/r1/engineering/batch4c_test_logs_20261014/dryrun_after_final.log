@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/rerun2_dryrun.py", line 187, in <module>
+    main()
+  File "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/rerun2_dryrun.py", line 153, in main
+    assert state['stop_reason'] is None, state['stop_reason']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: RuntimeError: STOP: missing continue or verify leaves

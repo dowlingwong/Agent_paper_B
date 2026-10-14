@@ -1,0 +1,299 @@
+........................................................................ [ 18%]
+........................................................................ [ 36%]
+...................................................................FFF [ 53%]
+...........F...........FFFFF.......................................... [ 71%]
+........................................................................ [ 89%]
+.........................................                                [100%]
+==================================== ERRORS ====================================
+_______________ ERROR collecting tests/test_legacy_noop_skip.py ________________
+ImportError while importing test module '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/tests/test_legacy_noop_skip.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_legacy_noop_skip.py:14: in <module>
+    autoresearch_worker = importlib.import_module("src.autoresearch_worker")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'src.autoresearch_worker'
+=================================== FAILURES ===================================
+____ TestCompletenessCLI.test_checked_in_report_contains_all_plan_campaigns ____
+
+self = <test_artifact_completeness_and_manifest.TestCompletenessCLI testMethod=test_checked_in_report_contains_all_plan_campaigns>
+
+    def test_checked_in_report_contains_all_plan_campaigns(self):
+        report_path = ROOT / "paper" / "tables" / "artifact_completeness_report.txt"
+>       self.assertTrue(report_path.exists())
+E       AssertionError: False is not true
+
+tests/test_artifact_completeness_and_manifest.py:407: AssertionError
+____________ TestCompletenessCLI.test_cli_passes_on_real_campaigns _____________
+
+self = <test_artifact_completeness_and_manifest.TestCompletenessCLI testMethod=test_cli_passes_on_real_campaigns>
+
+    def test_cli_passes_on_real_campaigns(self):
+        import subprocess
+    
+        campaign_ids = [
+            "kdd_main_5trial",
+            "ablation_none",
+            "ablation_append_only_summary",
+            "ablation_append_only_summary_with_rationale",
+            "kdd_stress_scope",
+            "kdd_stress_noop",
+        ]
+        result = subprocess.run(
+            [
+                sys.executable,
+                "scripts/check_kdd_artifact_completeness.py",
+                "--campaigns",
+                *campaign_ids,
+            ],
+            capture_output=True,
+            text=True,
+            cwd=str(ROOT),
+            timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+>       self.assertIn("100.0%", result.stdout)
+E       AssertionError: '100.0%' not found in 'Checking kdd_main_5trial ... ERROR — Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/kdd_main_5trial_trials.jsonl\nChecking ablation_none ... ERROR — Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/ablation_none_trials.jsonl\nChecking ablation_append_only_summary ... ERROR — Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/ablation_append_only_summary_trials.jsonl\nChecking ablation_append_only_summary_with_rationale ... ERROR — Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/ablation_append_only_summary_with_rationale_trials.jsonl\nChecking kdd_stress_scope ... ERROR — Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/kdd_stress_scope_trials.jsonl\nChecking kdd_stress_noop ... ERROR — Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/kdd_stress_noop_trials.jsonl\n\nReport written to: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/tables/artifact_completeness_report.txt\n========================================================================\nKDD AAE 2026 — Artifact Completeness Report\n========================================================================\n\nOverall: 0/0 checks passed (0.0%)\n\n------------------------------------------------------------------------\nCampaign: kdd_main_5trial\n  Ledger : /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/kdd_main_5trial_trials.jsonl\n  ERROR  : Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/kdd_main_5trial_trials.jsonl\n\n------------------------------------------------------------------------\nCampaign: ablation_none\n  Ledger : /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/ablation_none_trials.jsonl\n  ERROR  : Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/ablation_none_trials.jsonl\n\n------------------------------------------------------------------------\nCampaign: ablation_append_only_summary\n  Ledger : /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/ablation_append_only_summary_trials.jsonl\n  ERROR  : Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/ablation_append_only_summary_trials.jsonl\n\n------------------------------------------------------------------------\nCampaign: ablation_append_only_summary_with_rationale\n  Ledger : /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/ablation_append_only_summary_with_rationale_trials.jsonl\n  ERROR  : Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/ablation_append_only_summary_with_rationale_trials.jsonl\n\n------------------------------------------------------------------------\nCampaign: kdd_stress_scope\n  Ledger : /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/kdd_stress_scope_trials.jsonl\n  ERROR  : Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/kdd_stress_scope_trials.jsonl\n\n------------------------------------------------------------------------\nCampaign: kdd_stress_noop\n  Ledger : /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/kdd_stress_noop_trials.jsonl\n  ERROR  : Ledger not found: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/experiments/ledgers/kdd_stress_noop_trials.jsonl\n\n========================================================================\nNotes\n------------------------------------------------------------------------\n  dry-run/synthetic: DryRunWorker produces placeholder artifact paths that\n    do not exist on disk. These are counted as PASS because they are\n    intentional — dry-run campaigns are for governance/smoke testing only.\n  Any real-run gaps should be investigated and documented in Limitations.\n========================================================================\n'
+
+tests/test_artifact_completeness_and_manifest.py:401: AssertionError
+______________ TestBuildManifest.test_all_referenced_files_exist _______________
+
+self = <test_artifact_completeness_and_manifest.TestBuildManifest testMethod=test_all_referenced_files_exist>
+
+    def test_all_referenced_files_exist(self):
+        warnings = manifest_mod._check_files(self.manifest)
+        # In a full repo checkout all files should exist; surface any that don't.
+        missing = [w for w in warnings if "MISSING" in w]
+>       self.assertEqual(
+            missing,
+            [],
+            msg="Some files referenced in manifest are missing:\n" + "\n".join(missing),
+        )
+E       AssertionError: Lists differ: ['  MISSING: experiments/ledgers/kdd_main_[981 chars]svg'] != []
+E       
+E       First list contains 15 additional elements.
+E       First extra element 0:
+E       '  MISSING: experiments/ledgers/kdd_main_5trial_trials.jsonl'
+E       
+E       Diff is 1102 characters long. Set self.maxDiff to None to see it. : Some files referenced in manifest are missing:
+E         MISSING: experiments/ledgers/kdd_main_5trial_trials.jsonl
+E         MISSING: experiments/ledgers/kdd_stress_scope_trials.jsonl
+E         MISSING: experiments/ledgers/kdd_stress_noop_trials.jsonl
+E         MISSING: experiments/ledgers/ablation_none_trials.jsonl
+E         MISSING: experiments/ledgers/ablation_append_only_summary_trials.jsonl
+E         MISSING: experiments/ledgers/ablation_append_only_summary_with_rationale_trials.jsonl
+E         MISSING: experiments/ledgers/manager_comparison_baseline_manager_trials.jsonl
+E         MISSING: experiments/ledgers/manager_comparison_prompt_manager_trials.jsonl
+E         MISSING: experiments/ledgers/p8_memory10_none_trials.jsonl
+E         MISSING: experiments/ledgers/p8_memory10_append_only_summary_trials.jsonl
+E         MISSING: experiments/ledgers/p8_memory10_append_only_summary_with_rationale_trials.jsonl
+E         MISSING: paper/figures/fig1_architecture.svg
+E         MISSING: paper/figures/fig2_repeated_bad_rate.svg
+E         MISSING: paper/figures/fig3_decision_breakdown.svg
+E         MISSING: paper/figures/fig4_trajectory.svg
+
+tests/test_artifact_completeness_and_manifest.py:520: AssertionError
+___________ TestGenerateManifestCLI.test_cli_reports_all_files_exist ___________
+
+self = <test_artifact_completeness_and_manifest.TestGenerateManifestCLI testMethod=test_cli_reports_all_files_exist>
+
+    def test_cli_reports_all_files_exist(self):
+        import subprocess, tempfile, os
+    
+        with tempfile.TemporaryDirectory() as td:
+            out = os.path.join(td, "manifest.json")
+            result = subprocess.run(
+                [sys.executable, "scripts/generate_artifact_manifest.py", "--output", out],
+                capture_output=True,
+                text=True,
+                cwd=str(ROOT),
+                timeout=30,
+            )
+>           self.assertIn("All referenced files exist", result.stdout)
+E           AssertionError: 'All referenced files exist' not found in 'Manifest written to: /var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/tmp9lgpaucc/manifest.json\n\nWarnings (15 missing files):\n  MISSING: experiments/ledgers/kdd_main_5trial_trials.jsonl\n  MISSING: experiments/ledgers/kdd_stress_scope_trials.jsonl\n  MISSING: experiments/ledgers/kdd_stress_noop_trials.jsonl\n  MISSING: experiments/ledgers/ablation_none_trials.jsonl\n  MISSING: experiments/ledgers/ablation_append_only_summary_trials.jsonl\n  MISSING: experiments/ledgers/ablation_append_only_summary_with_rationale_trials.jsonl\n  MISSING: experiments/ledgers/manager_comparison_baseline_manager_trials.jsonl\n  MISSING: experiments/ledgers/manager_comparison_prompt_manager_trials.jsonl\n  MISSING: experiments/ledgers/p8_memory10_none_trials.jsonl\n  MISSING: experiments/ledgers/p8_memory10_append_only_summary_trials.jsonl\n  MISSING: experiments/ledgers/p8_memory10_append_only_summary_with_rationale_trials.jsonl\n  MISSING: paper/figures/fig1_architecture.svg\n  MISSING: paper/figures/fig2_repeated_bad_rate.svg\n  MISSING: paper/figures/fig3_decision_breakdown.svg\n  MISSING: paper/figures/fig4_trajectory.svg\n'
+
+tests/test_artifact_completeness_and_manifest.py:559: AssertionError
+____________________ test_chunk_4_1_related_work_acceptance ____________________
+
+    def test_chunk_4_1_related_work_acceptance() -> None:
+>       text = _read("02_related_work.md")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_kdd_paper_sections.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_kdd_paper_sections.py:12: in _read
+    return (PAPER / name).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/02_related_work.md')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/02_related_work.md'
+
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1044: FileNotFoundError
+___________________ test_chunk_4_2_system_design_acceptance ____________________
+
+    def test_chunk_4_2_system_design_acceptance() -> None:
+>       text = _read("03_system_design.md")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_kdd_paper_sections.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_kdd_paper_sections.py:12: in _read
+    return (PAPER / name).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/03_system_design.md')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/03_system_design.md'
+
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1044: FileNotFoundError
+____________________ test_chunk_4_3_experiments_acceptance _____________________
+
+    def test_chunk_4_3_experiments_acceptance() -> None:
+>       text = _read("04_experiments.md")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_kdd_paper_sections.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_kdd_paper_sections.py:12: in _read
+    return (PAPER / name).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/04_experiments.md')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/04_experiments.md'
+
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_______________ test_chunk_4_4_results_order_and_artifact_links ________________
+
+    def test_chunk_4_4_results_order_and_artifact_links() -> None:
+>       text = _read("05_results.md")
+               ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_kdd_paper_sections.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_kdd_paper_sections.py:12: in _read
+    return (PAPER / name).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/05_results.md')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/05_results.md'
+
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_____________________ test_chunk_4_5_discussion_acceptance _____________________
+
+    def test_chunk_4_5_discussion_acceptance() -> None:
+>       text = _read("06_discussion_limitations.md")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_kdd_paper_sections.py:109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_kdd_paper_sections.py:12: in _read
+    return (PAPER / name).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/06_discussion_limitations.md')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/paper/kdd_aae_2026/sections/06_discussion_limitations.md'
+
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/pathlib.py:1044: FileNotFoundError
+=============================== warnings summary ===============================
+tests/stage2/test_r1_d25_active_keys.py::TestD25InactiveKeyValidation::test_an_editable_symbol_missing_from_the_status_is_still_named
+  /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/autoresearch_harness/.venv/lib/python3.11/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+    from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns
+FAILED tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns
+FAILED tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist
+FAILED tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist
+FAILED tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance
+FAILED tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance
+FAILED tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance
+FAILED tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links
+FAILED tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance
+ERROR tests/test_legacy_noop_skip.py
+9 failed, 388 passed, 1 warning, 1 error, 4 subtests passed in 125.86s (0:02:05)

@@ -1,0 +1,4 @@
+/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider r1/tests
+........................................................................ [ 50%]
+........................................................................ [100%]
+144 passed in 34.11s

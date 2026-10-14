@@ -1,0 +1,47 @@
+/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_sgr6pp65/batches/r1_e1b_rerun2_DRYRUN_20261014_nPTR5i/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider r1/tests
+........................................................................ [ 45%]
+.......................................................F..s............. [ 91%]
+..............                                                           [100%]
+=================================== FAILURES ===================================
+_________ test_dryrun_refuses_all_effective_push_urls_without_network __________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-254/test_dryrun_refuses_all_effect0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109948750>
+
+    def test_dryrun_refuses_all_effective_push_urls_without_network(tmp_path, monkeypatch):
+        (tmp_path / '.dryrun').write_text('DRYRUN\n')
+        monkeypatch.setenv('R1_DRYRUN', '1')
+        monkeypatch.setenv('R1_DRYRUN_ROOT', str(tmp_path))
+        monkeypatch.delenv('AR_HARNESS_ROOT', raising=False)
+        repo, bare = tmp_path / 'paper', tmp_path / 'paper.git'
+        subprocess.run(['git', 'init', '-q', str(repo)], check=True)
+        subprocess.run(['git', 'init', '--bare', '-q', str(bare)], check=True)
+        subprocess.run(['git', '-C', str(repo), 'remote', 'add', 'dryrun', str(bare)], check=True)
+        monkeypatch.setenv('R1_PAPER_ROOT', str(repo))
+>       assert validate_dryrun()
+               ^^^^^^^^^^^^^^^^^
+
+r1/tests/test_rerun2_batch4c.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def validate_dryrun():
+        if os.environ.get('R1_DRYRUN') != '1':
+            return False
+        if platform.node().split('.')[0] == 'ucrtasl':
+            raise RuntimeError('STOP: DRYRUN is forbidden on Ada')
+        root = Path(os.environ.get('R1_DRYRUN_ROOT', '/')).resolve()
+        temp = Path(tempfile.gettempdir()).resolve()
+        if root == temp or not root.is_relative_to(temp) or not (root / '.dryrun').is_file():
+            raise RuntimeError('STOP: DRYRUN requires a marked temporary directory')
+        for key in ('R1_BATCH_DIRECTORY', 'R1_PAPER_ROOT', 'AR_HARNESS_ROOT',
+                    'R1_RERUN2_BATCH_ROOT', 'R1_RERUN2_PINNED_BATCH', 'R1_RERUN2_OLLAMA_BINARY',
+                    'R1_RERUN2_PAPER_REMOTE', 'R1_RERUN2_HARNESS_REMOTE'):
+            if key in os.environ and not Path(os.environ[key]).resolve().is_relative_to(root):
+>               raise RuntimeError(f'STOP: DRYRUN {key} escapes the temporary directory')
+E               RuntimeError: STOP: DRYRUN R1_BATCH_DIRECTORY escapes the temporary directory
+
+r1/scripts/dryrun_guard.py:22: RuntimeError
+=========================== short test summary info ============================
+FAILED r1/tests/test_rerun2_batch4c.py::test_dryrun_refuses_all_effective_push_urls_without_network
+1 failed, 156 passed, 1 skipped in 31.57s
+make[1]: *** [r1-test] Error 1

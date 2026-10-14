@@ -1,0 +1,82 @@
+{
+  "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_nrgn2b0_/batches/r1_e1b_rerun2_DRYRUN_20261014_wZYhWC",
+  "paper_head": "a2f738fdfe2ad39cd8415a0a1cf1e693a3214888",
+  "harness_head": "411c6054c8505f93a6429e2f9eed526952793882",
+  "harness_tests": {
+    "returncode": 1,
+    "summary": "9 failed, 388 passed, 1 warning, 1 error, 4 subtests passed in 86.82s (0:01:26)",
+    "failures": [
+      "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns",
+      "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns",
+      "tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist",
+      "tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance",
+      "tests/test_legacy_noop_skip.py"
+    ],
+    "unexpected": [
+      "r1-test: r1/tests/test_d28_gate.py::test_script_stops_without_a_liveness_manifest",
+      "r1-test: r1/tests/test_d28_gate.py::test_script_reads_the_manifest_from_the_environment",
+      "r1-test: r1/tests/test_d28_gate.py::test_script_rejects_a_scripted_liveness_manifest",
+      "r1-test: r1/tests/test_d28_gate.py::test_script_rejects_a_memory_off_liveness_manifest",
+      "r1-test: r1/tests/test_d28_gate.py::test_script_finds_the_newest_engineering_liveness_report",
+      "r1-test: r1/tests/test_d28_gate.py::test_script_orders_manifests_by_date_not_by_manager_prefix",
+      "r1-test: r1/tests/test_d28_gate.py::test_collect_is_gated_before_any_collector_call",
+      "r1-test: r1/tests/test_gpu_process_census.py::test_other_user_on_card_is_allowed_and_logged",
+      "r1-test: r1/tests/test_gpu_process_census.py::test_exited_pid_is_recorded_without_stop",
+      "r1-test: r1/tests/test_gpu_process_census.py::test_too_little_memory_before_load_is_a_stop",
+      "r1-test: r1/tests/test_gpu_process_census.py::test_loaded_model_needs_only_the_margin",
+      "r1-test: r1/tests/test_rerun2_batch4c.py::test_exec_loaded_globals_are_defined_and_guard_catches_original"
+    ]
+  },
+  "r1_tests": {
+    "returncode": 2,
+    "summary": "12 failed, 137 passed, 1 skipped in 25.97s",
+    "failures": [
+      "r1/tests/test_d28_gate.py::test_script_stops_without_a_liveness_manifest",
+      "r1/tests/test_d28_gate.py::test_script_reads_the_manifest_from_the_environment",
+      "r1/tests/test_d28_gate.py::test_script_rejects_a_scripted_liveness_manifest",
+      "r1/tests/test_d28_gate.py::test_script_rejects_a_memory_off_liveness_manifest",
+      "r1/tests/test_d28_gate.py::test_script_finds_the_newest_engineering_liveness_report",
+      "r1/tests/test_d28_gate.py::test_script_orders_manifests_by_date_not_by_manager_prefix",
+      "r1/tests/test_d28_gate.py::test_collect_is_gated_before_any_collector_call",
+      "r1/tests/test_gpu_process_census.py::test_other_user_on_card_is_allowed_and_logged",
+      "r1/tests/test_gpu_process_census.py::test_exited_pid_is_recorded_without_stop",
+      "r1/tests/test_gpu_process_census.py::test_too_little_memory_before_load_is_a_stop",
+      "r1/tests/test_gpu_process_census.py::test_loaded_model_needs_only_the_margin",
+      "r1/tests/test_rerun2_batch4c.py::test_exec_loaded_globals_are_defined_and_guard_catches_original"
+    ]
+  },
+  "accepted_failures": [
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns",
+    "tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist",
+    "tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance",
+    "tests/test_legacy_noop_skip.py",
+    "tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::test_claw_worker_deterministic_constant_patch_runs_without_llm",
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns"
+  ],
+  "ok": false,
+  "label": "DRYRUN",
+  "git_identity": {
+    "name": "DRYRUN fixture",
+    "email": "fixture@example.invalid"
+  },
+  "identity_checks": {
+    "paper": true,
+    "harness": true
+  },
+  "push_dry_run": {
+    "paper": true,
+    "harness": true
+  },
+  "pytest_version": "pytest 9.0.3",
+  "models_directory": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_nrgn2b0_/pinned/ollama_models"
+}

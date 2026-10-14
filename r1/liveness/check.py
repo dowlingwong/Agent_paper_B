@@ -188,14 +188,14 @@ def evaluate_ledger_paths(
     }
 
 
-def _markdown(node: str, verdict: dict) -> str:
+def _markdown(node: str, verdict: dict, label: str = "ENGINEERING_ONLY") -> str:
     criteria = verdict["criteria"]
     novelty = criteria["active_novelty_fraction"]
     status = "PASS" if verdict["pass"] else "FAIL"
     lines = [
         f"# Liveness: {node} — {status}",
         "",
-        "ENGINEERING_ONLY (D28, revised criterion 2). Thresholds: keep after trial 1 ≥ 1; "
+        f"{label} (D28, revised criterion 2). Thresholds: keep after trial 1 ≥ 1; "
         f"active-key novelty ≥ {NOVELTY_MIN} of evaluated trials; invalid rate < {INVALID_RATE_MAX}.",
         "",
         "| criterion | required | observed |",
@@ -236,5 +236,5 @@ def write_reports(report: dict, out_dir: str | Path) -> Path:
     (out / "liveness.md").write_text("\n".join(summary) + "\n", encoding="utf-8")
     for node, verdict in report["nodes"].items():
         (out / f"{node}.json").write_text(json.dumps(verdict, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        (out / f"{node}.md").write_text(_markdown(node, verdict), encoding="utf-8")
+        (out / f"{node}.md").write_text(_markdown(node, verdict, report["label"]), encoding="utf-8")
     return out

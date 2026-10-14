@@ -1,0 +1,15 @@
+F...                                                                     [100%]
+=================================== FAILURES ===================================
+_______ test_exec_loaded_globals_are_defined_and_guard_catches_original ________
+
+    def test_exec_loaded_globals_are_defined_and_guard_catches_original():
+        helper = (REPO / 'r1/scripts/deepthought_batch1_resume.py').read_text()
+        runner = (REPO / 'r1/scripts/ada_e1b_rerun2.py').read_text()
+>       assert not undefined_globals(runner, helper)
+E       assert not {'MODELS'}
+E        +  where {'MODELS'} = undefined_globals('"""E1b rerun-2 on Ada (R1-E1B-RERUN2, PLAN §10 row of 14 Oct 2026; PILOT).\n\nPhases, each checkpointed in ``batch_st...{type(exc).__name__}: {exc}\')\n    else:\n        finish(None)\n\n\nif __name__ == \'__main__\':\n    _entrypoint()\n', '"""Execute the authorized remote batch, preserving a stopped attempt."""\nfrom datetime import datetime, timezone\nim...{type(exc).__name__}: {exc}\')\n    else:\n        finish(None)\n\n\nif __name__ == \'__main__\':\n    _entrypoint()\n')
+
+/tmp/r1_batch4c_fail_before/r1/tests/test_rerun2_batch4c.py:45: AssertionError
+=========================== short test summary info ============================
+FAILED ../../../../tmp/r1_batch4c_fail_before/r1/tests/test_rerun2_batch4c.py::test_exec_loaded_globals_are_defined_and_guard_catches_original
+1 failed, 3 passed, 2 deselected in 2.41s

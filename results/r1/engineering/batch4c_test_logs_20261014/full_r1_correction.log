@@ -1,0 +1,29 @@
+/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider r1/tests
+........................................................................ [ 45%]
+..........................................................F............. [ 91%]
+..............                                                           [100%]
+=================================== FAILURES ===================================
+_______________________ test_real_runner_desktop_dryrun ________________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-252/test_real_runner_desktop_dryru0')
+
+    @pytest.mark.skipif(os.environ.get('R1_DRYRUN_CHILD') == '1', reason='prevent recursive integration fixture in fresh-clone suite')
+    def test_real_runner_desktop_dryrun(tmp_path):
+        env = {k:v for k,v in os.environ.items() if k != 'R1_DRYRUN'}
+        completed = subprocess.run([sys.executable, str(REPO / 'r1/scripts/rerun2_dryrun.py'), '--out', str(tmp_path / 'dryrun_result')], cwd=REPO, env=env, capture_output=True, text=True, timeout=900)
+>       assert completed.returncode == 0, completed.stdout + completed.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/rerun2_dryrun.py", line 195, in <module>
+E             main()
+E           File "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/rerun2_dryrun.py", line 121, in main
+E             raise RuntimeError('STOP: DRYRUN preparation tests failed: ' + str(payload['harness_tests']['unexpected']))
+E         RuntimeError: STOP: DRYRUN preparation tests failed: ['r1-test: r1/tests/test_rerun2_batch4c.py::test_dryrun_refuses_all_effective_push_urls_without_network']
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python', '/Users/wongdowling/Docum...failed: [\'r1-test: r1/tests/test_rerun2_batch4c.py::test_dryrun_refuses_all_effective_push_urls_without_network\']\n').returncode
+
+r1/tests/test_rerun2_batch4c.py:210: AssertionError
+=========================== short test summary info ============================
+FAILED r1/tests/test_rerun2_batch4c.py::test_real_runner_desktop_dryrun - Ass...
+1 failed, 157 passed in 145.13s (0:02:25)
+make: *** [r1-test] Error 1

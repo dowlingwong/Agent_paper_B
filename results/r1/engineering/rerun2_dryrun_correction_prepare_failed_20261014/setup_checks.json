@@ -1,0 +1,17 @@
+{
+  "label": "DRYRUN",
+  "git_identity": {
+    "name": "DRYRUN fixture",
+    "email": "fixture@example.invalid"
+  },
+  "identity_checks": {
+    "paper": true,
+    "harness": true
+  },
+  "push_dry_run": {
+    "paper": true,
+    "harness": true
+  },
+  "pytest_version": "pytest 9.0.3",
+  "models_directory": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_sgr6pp65/pinned/ollama_models"
+}

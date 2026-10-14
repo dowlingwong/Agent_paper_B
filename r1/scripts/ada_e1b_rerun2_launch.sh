@@ -12,7 +12,16 @@
 # environmental set, then starts tmux r1_e1b_rerun2.  It refuses to start if
 # that session or one of our r1_ollama_* sessions already exists.
 set -euo pipefail
-[ "$(hostname -s)" = ucrtasl ] || { echo 'STOP: run this on Ada (ucrtasl)'; exit 1; }
+DRYRUN=${R1_DRYRUN:-0}
+if [ "$DRYRUN" = 1 ]; then
+  [ "$(hostname -s)" != ucrtasl ] || { echo 'STOP: DRYRUN is forbidden on Ada'; exit 1; }
+  python3 - <<'PY'
+from r1.scripts.dryrun_guard import validate_dryrun
+validate_dryrun()
+PY
+else
+  [ "$(hostname -s)" = ucrtasl ] || { echo 'STOP: run this on Ada (ucrtasl)'; exit 1; }
+fi
 
 BATCH_ROOT="${R1_RERUN2_BATCH_ROOT:-/data1/dowling/tmp}"
 OLD="${R1_RERUN2_PINNED_BATCH:-/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh}"
@@ -23,6 +32,18 @@ HARNESS_REMOTE="${R1_RERUN2_HARNESS_REMOTE:-git@github.com:dowlingwong/autoresea
 SESSION=r1_e1b_rerun2
 EXECUTOR="${R1_EXECUTOR:-the launching agent on Ada}"
 COAUTHOR="${R1_COAUTHOR:-AI-assisted <noreply@example.com>}"
+REMOTE=origin
+LABEL=ENGINEERING_ONLY
+if [ "$DRYRUN" = 1 ]; then REMOTE=dryrun; LABEL=DRYRUN; fi
+
+identity_check() {
+  local repo="$1" branch="$2"
+  [ -n "${R1_GIT_NAME:-}" ] && [ -n "${R1_GIT_EMAIL:-}" ] || { echo 'STOP: R1_GIT_NAME and R1_GIT_EMAIL are required'; exit 1; }
+  [ "$(git -C "$repo" config --local user.name)" = "$R1_GIT_NAME" ] && \
+    [ "$(git -C "$repo" config --local user.email)" = "$R1_GIT_EMAIL" ] || { echo 'STOP: repository-local git identity missing or differs'; exit 1; }
+  git -C "$repo" var GIT_COMMITTER_IDENT || { echo 'STOP: invalid Git committer identity'; return 1; }
+  git -C "$repo" push --dry-run "$REMOTE" "HEAD:refs/heads/$branch"
+}
 
 refuse_duplicates() {
   if tmux has-session -t "$SESSION" 2>/dev/null; then
@@ -96,6 +117,8 @@ payload = {
     "accepted_failures": accepted,
     "ok": not unexpected,
 }
+if (batch / "setup_checks.json").exists():
+    payload.update(json.loads((batch / "setup_checks.json").read_text()))
 (batch / "prepare.json").write_text(json.dumps(payload, indent=2) + "\n")
 print(json.dumps({"ok": payload["ok"], "unexpected": unexpected,
                   "harness_tests": payload["harness_tests"]["summary"],
@@ -106,12 +129,15 @@ PY
 case "${1:-}" in
 --prepare)
   refuse_duplicates
+  [ -n "${R1_GIT_NAME:-}" ] && [ -n "${R1_GIT_EMAIL:-}" ] || { echo 'STOP: R1_GIT_NAME and R1_GIT_EMAIL are required'; exit 1; }
   for p in "$MODELS" "$OLLAMA_BIN"; do
     [ -e "$p" ] || { echo "STOP: missing $p"; exit 1; }
   done
+  # Existing Ada toolchain may be absent from the non-interactive SSH PATH.
+  if ! command -v uv >/dev/null 2>&1 && [ -x "$OLD/toolchain/uv" ]; then export PATH="$OLD/toolchain:$PATH"; fi
   command -v uv >/dev/null 2>&1 || { echo 'STOP: uv is not installed'; exit 1; }
   command -v python3 >/dev/null 2>&1 || { echo 'STOP: python3 is not installed'; exit 1; }
-  BATCH=$(mktemp -d "$BATCH_ROOT/r1_e1b_rerun2_ENGINEERING_ONLY_$(date -u +%Y%m%d)_XXXXXX")
+  BATCH=$(mktemp -d "$BATCH_ROOT/r1_e1b_rerun2_${LABEL}_$(date -u +%Y%m%d)_XXXXXX")
   git clone -q "$PAPER_REMOTE" "$BATCH/agent_paper_B"
   PAPER_HEAD=$(git -C "$BATCH/agent_paper_B" rev-parse HEAD)
   PIN=$(tr -d '[:space:]' < "$BATCH/agent_paper_B/r1/scripts/HARNESS_PIN_RERUN2")
@@ -120,10 +146,28 @@ case "${1:-}" in
   git -C "$BATCH/autoresearch_harness" checkout -q "$PIN"
   HARNESS_HEAD=$(git -C "$BATCH/autoresearch_harness" rev-parse HEAD)
   [ "$HARNESS_HEAD" = "$PIN" ] || { echo "STOP: harness checkout is $HARNESS_HEAD, pin is $PIN"; exit 1; }
-  ( cd "$BATCH/autoresearch_harness" && uv sync ) > "$BATCH/uv_sync.log" 2>&1 || {
+  if [ "$DRYRUN" = 1 ]; then
+    for repo in "$BATCH/agent_paper_B" "$BATCH/autoresearch_harness"; do git -C "$repo" remote rename origin dryrun; done
+    export R1_BATCH_DIRECTORY="$BATCH" R1_PAPER_ROOT="$BATCH/agent_paper_B" AR_HARNESS_ROOT="$BATCH/autoresearch_harness"
+    python3 -c 'from r1.scripts.dryrun_guard import validate_dryrun; validate_dryrun()'
+  fi
+  for repo in "$BATCH/agent_paper_B" "$BATCH/autoresearch_harness"; do
+    git -C "$repo" config --local user.name "$R1_GIT_NAME"
+    git -C "$repo" config --local user.email "$R1_GIT_EMAIL"
+  done
+  identity_check "$BATCH/agent_paper_B" main > "$BATCH/paper_identity.log" 2>&1 || { cat "$BATCH/paper_identity.log"; exit 1; }
+  identity_check "$BATCH/autoresearch_harness" r1 > "$BATCH/harness_identity.log" 2>&1 || { cat "$BATCH/harness_identity.log"; exit 1; }
+  ( cd "$BATCH/autoresearch_harness" && uv sync --extra dev ) > "$BATCH/uv_sync.log" 2>&1 || {
     echo 'STOP: uv sync failed; see uv_sync.log'; exit 1; }
   PY=$BATCH/autoresearch_harness/.venv/bin/python
   [ -x "$PY" ] || { echo 'STOP: harness venv missing after uv sync'; exit 1; }
+  PYTEST_VERSION=$("$PY" -m pytest --version)
+  python3 - "$BATCH" "$R1_GIT_NAME" "$R1_GIT_EMAIL" "$PYTEST_VERSION" "$MODELS" "$LABEL" <<'PY'
+import json, sys
+from pathlib import Path
+b, name, email, version, models, label = sys.argv[1:]
+Path(b, 'setup_checks.json').write_text(json.dumps({'label': label, 'git_identity': {'name': name, 'email': email}, 'identity_checks': {'paper': True, 'harness': True}, 'push_dry_run': {'paper': True, 'harness': True}, 'pytest_version': version, 'models_directory': models}, indent=2) + '\n')
+PY
   cat > "$BATCH/env.sh" <<ENV
 export R1_BATCH_DIRECTORY=$BATCH
 export R1_PAPER_ROOT=$BATCH/agent_paper_B
@@ -134,11 +178,16 @@ export R1_GPU_UUID=auto
 export R1_EXECUTOR='$EXECUTOR'
 export R1_COAUTHOR='$COAUTHOR'
 ENV
+  if [ "$DRYRUN" = 1 ]; then
+    printf 'export R1_DRYRUN=1\nexport R1_DRYRUN_ROOT=%q\nexport R1_DRYRUN_CHILD=1\nexport R1_DRYRUN_PORT=%q\n' "$R1_DRYRUN_ROOT" "$R1_DRYRUN_PORT" >> "$BATCH/env.sh"
+  fi
+  TEST_ENV=(env)
+  if [ "$DRYRUN" = 1 ]; then TEST_ENV=(env -u R1_DRYRUN); fi
   set +e
-  ( cd "$BATCH/autoresearch_harness" && uv run python -m pytest --continue-on-collection-errors \
+  ( cd "$BATCH/autoresearch_harness" && "${TEST_ENV[@]}" uv run --extra dev python -m pytest --continue-on-collection-errors \
       -p no:cacheprovider -q ) > "$BATCH/harness_tests.log" 2>&1
   HARNESS_RC=$?
-  ( cd "$BATCH/agent_paper_B" && make r1-test AR_HARNESS_ROOT="$BATCH/autoresearch_harness" \
+  ( cd "$BATCH/agent_paper_B" && "${TEST_ENV[@]}" make r1-test AR_HARNESS_ROOT="$BATCH/autoresearch_harness" \
       R1_PY="$PY" ) > "$BATCH/paper_tests.log" 2>&1
   PAPER_RC=$?
   set -e
@@ -152,6 +201,10 @@ ENV
   [ -d "$B" ] || { echo "STOP: $B is not a directory"; exit 1; }
   [ -f "$B/prepare.json" ] || { echo "STOP: $B/prepare.json is missing; run --prepare first"; exit 1; }
   [ -f "$B/env.sh" ] || { echo "STOP: $B/env.sh is missing; run --prepare first"; exit 1; }
+  if [ "$DRYRUN" = 1 ]; then
+    export R1_BATCH_DIRECTORY="$B" R1_PAPER_ROOT="$B/agent_paper_B" AR_HARNESS_ROOT="$B/autoresearch_harness"
+    python3 -c 'from r1.scripts.dryrun_guard import validate_dryrun; validate_dryrun()'
+  fi
   PY=$B/autoresearch_harness/.venv/bin/python
   [ -x "$PY" ] || { echo 'STOP: harness venv is missing; re-run --prepare'; exit 1; }
   python3 - "$B" <<'PY'
@@ -166,7 +219,12 @@ if not payload.get("ok") or unexpected:
         print("  -", failure)
     sys.exit(1)
 print("prepare.json: no test failure outside the accepted environmental set")
+if not payload.get('git_identity') or payload.get('identity_checks') != {'paper': True, 'harness': True} or payload.get('push_dry_run') != {'paper': True, 'harness': True} or not payload.get('pytest_version'):
+    raise SystemExit('STOP: setup identity/pytest checks are missing')
+print('SELF-CHECK: heads=' + str((payload.get('paper_head'), payload.get('harness_head'))) + ' identity=' + str(payload['git_identity']) + ' accepted_failures=' + str(payload['harness_tests'].get('failures', [])) + ' pytest=' + payload['pytest_version'] + ' models=' + payload.get('models_directory', 'missing'))
 PY
+  identity_check "$B/agent_paper_B" main > "$B/paper_identity_start.log" 2>&1 || { cat "$B/paper_identity_start.log"; exit 1; }
+  identity_check "$B/autoresearch_harness" r1 > "$B/harness_identity_start.log" 2>&1 || { cat "$B/harness_identity_start.log"; exit 1; }
   tmux new-session -d -s "$SESSION" \
     "bash -c '. $B/env.sh && cd $B/agent_paper_B && $PY r1/scripts/ada_e1b_rerun2.py > $B/runner.log 2>&1'"
   echo "Launched. Batch: $B"

@@ -1,0 +1,215 @@
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+_______ test_exec_loaded_globals_are_defined_and_guard_catches_original ________
+
+    def test_exec_loaded_globals_are_defined_and_guard_catches_original():
+        helper = (REPO / 'r1/scripts/deepthought_batch1_resume.py').read_text()
+        runner = (REPO / 'r1/scripts/ada_e1b_rerun2.py').read_text()
+>       assert not undefined_globals(runner, helper)
+E       assert not {'MODELS'}
+E        +  where {'MODELS'} = undefined_globals('"""E1b rerun-2 on Ada (R1-E1B-RERUN2, PLAN §10 row of 14 Oct 2026; PILOT).\n\nPhases, each checkpointed in ``batch_st...{type(exc).__name__}: {exc}\')\n    else:\n        finish(None)\n\n\nif __name__ == \'__main__\':\n    _entrypoint()\n', '"""Execute the authorized remote batch, preserving a stopped attempt."""\nfrom datetime import datetime, timezone\nim...{type(exc).__name__}: {exc}\')\n    else:\n        finish(None)\n\n\nif __name__ == \'__main__\':\n    _entrypoint()\n')
+
+r1/tests/test_rerun2_batch4c.py:45: AssertionError
+________________ test_models_directory_is_required_before_start ________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-232/test_models_directory_is_requi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x108688c10>
+
+    def test_models_directory_is_required_before_start(tmp_path, monkeypatch):
+        runner = _load_runner(tmp_path, monkeypatch)
+        plan = Path(runner.PAPER) / 'docs/r1/PLAN.md'
+        plan.parent.mkdir(parents=True)
+        plan.write_text('\n'.join(runner.ROWS))
+        monkeypatch.delenv('R1_OLLAMA_MODELS')
+        with pytest.raises(RuntimeError, match='STOP: R1_OLLAMA_MODELS is required'):
+>           runner.preconditions()
+
+r1/tests/test_rerun2_batch4c.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+r1/scripts/ada_e1b_rerun2.py:133: in preconditions
+    paper_head = git_output(PAPER, 'rev-parse', 'HEAD')
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+r1/scripts/deepthought_batch1_resume.py:57: in git_output
+    return subprocess.check_output(['git', *args], cwd=repo, text=True).strip()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py:466: in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = False, timeout = None, check = True
+popenargs = (['git', 'rev-parse', 'HEAD'],)
+kwargs = {'cwd': PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-232/test_models_directory_is_requi0/paper'), 'stdout': -1, 'text': True}
+process = <Popen: returncode: 128 args: ['git', 'rev-parse', 'HEAD']>
+stdout = '', stderr = None, retcode = 128
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout is given, and the process takes too long, a TimeoutExpired
+        exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['git', 'rev-parse', 'HEAD']' returned non-zero exit status 128.
+
+/opt/homebrew/Cellar/python@3.11/3.11.11/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py:571: CalledProcessError
+----------------------------- Captured stderr call -----------------------------
+fatal: not a git repository (or any of the parent directories): .git
+_________ test_preconditions_constructs_model_command_from_environment _________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-232/test_preconditions_constructs_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x108783a10>
+
+    def test_preconditions_constructs_model_command_from_environment(tmp_path, monkeypatch):
+        runner = _load_runner(tmp_path, monkeypatch)
+        plan = Path(runner.PAPER) / 'docs/r1/PLAN.md'
+        plan.parent.mkdir(parents=True)
+        plan.write_text('\n'.join(runner.ROWS))
+        models = tmp_path / 'models'
+        models.mkdir()
+        monkeypatch.setattr(runner, 'git_output', lambda *a: 'pin')
+        monkeypatch.setattr(runner, 'select_card', lambda: '0, GPU-fixture, fixture, 40000')
+        monkeypatch.setattr(runner, 'check_gpu', lambda: None)
+        monkeypatch.setattr(runner.socket, 'socket', mock.MagicMock())
+        monkeypatch.setattr(runner.subprocess, 'run', lambda *a, **kw: types.SimpleNamespace(returncode=1))
+        seen = []
+        def capture(args, **kw):
+            seen.append(args)
+            raise RuntimeError('captured before any inference')
+        monkeypatch.setattr(runner, 'cmd', capture)
+        with pytest.raises(RuntimeError, match='captured before any inference'):
+>           runner.preconditions()
+
+r1/tests/test_rerun2_batch4c.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def preconditions():
+        plan = (PAPER / 'docs/r1/PLAN.md').read_text()
+        for row in ROWS:
+            if row not in plan:
+                raise RuntimeError(f'STOP: PLAN §10 lacks the author row {row}')
+        paper_head = git_output(PAPER, 'rev-parse', 'HEAD')
+        if paper_head != git_output(PAPER, 'ls-remote', 'origin', 'refs/heads/main').split()[0]:
+            raise RuntimeError('STOP: paper checkout is not at origin/main')
+        harness_head = git_output(HARNESS, 'rev-parse', 'HEAD')
+        if harness_head != git_output(HARNESS, 'ls-remote', 'origin', 'refs/heads/r1').split()[0]:
+            raise RuntimeError('STOP: harness checkout is not at origin/r1')
+        pin_file = PAPER / 'r1/scripts/HARNESS_PIN_RERUN2'
+        if pin_file.exists():
+            pinned = pin_file.read_text().strip()
+            if harness_head != pinned:
+                raise RuntimeError(f'STOP: harness head {harness_head} differs from HARNESS_PIN_RERUN2 {pinned}')
+        state['paper_head_at_launch'] = paper_head
+        state['harness_head_at_launch'] = harness_head
+        state['authorization'] = 'PLAN §10 rows: ' + ', '.join(ROWS)
+        save()
+        with socket.socket() as port_probe:
+            port_probe.bind(('127.0.0.1', 11434))  # refuses if anything already listens
+        if subprocess.run(['tmux', 'has-session', '-t', OLLAMA_SESSION], capture_output=True).returncode == 0:
+            raise RuntimeError(f'STOP: a tmux session {OLLAMA_SESSION} already exists')
+        state['gpu'] = select_card()
+        uuid = state['gpu'].split(',')[1].strip()
+        check_gpu()
+        command = (f'CUDA_VISIBLE_DEVICES={uuid} OLLAMA_VULKAN=0 OLLAMA_HOST=127.0.0.1:11434 '
+>                  f'OLLAMA_MODELS={MODELS} OLLAMA_NUM_PARALLEL=1 OLLAMA_KEEP_ALIVE=-1 '
+                                    ^^^^^^
+                   f'{OLLAMA} serve > {BATCH}/ollama_serve.log 2>&1')
+E       NameError: name 'MODELS' is not defined
+
+r1/scripts/ada_e1b_rerun2.py:156: NameError
+__________ test_launcher_requires_git_identity_and_records_dev_setup ___________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-232/test_launcher_requires_git_ide0')
+
+    def test_launcher_requires_git_identity_and_records_dev_setup(tmp_path):
+        env = _prepare_env(tmp_path, harness_rc=0, harness_output='397 passed in 1s')
+        (tmp_path / 'batches').mkdir(exist_ok=True)
+        no_identity = {k:v for k,v in env.items() if k not in ('R1_GIT_NAME', 'R1_GIT_EMAIL')}
+        result = _run_launcher(['--prepare'], no_identity)
+>       assert result.returncode and 'R1_GIT_NAME and R1_GIT_EMAIL are required' in result.stdout
+E       AssertionError: assert (0)
+E        +  where 0 = CompletedProcess(args=['bash', '/private/tmp/r1_batch4c_fail_before/r1/scripts/ada_e1b_rerun2_launch.sh', '--prepare']...owling/pytest-232/test_launcher_requires_git_ide0/batches/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_7BEmkB\n', stderr='').returncode
+
+r1/tests/test_rerun2_batch4c.py:92: AssertionError
+__________________ test_launcher_installs_declared_dev_extra ___________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-232/test_launcher_installs_declare0')
+
+    def test_launcher_installs_declared_dev_extra(tmp_path):
+        env = _prepare_env(tmp_path, harness_rc=0, harness_output='397 passed in 1s')
+        uv = tmp_path / 'stubbin/uv'
+        uv.write_text(uv.read_text().replace('if [ "$1" = "sync" ]; then', 'echo "$@" >> "$STUB_UV_LOG"\nif [ "$1" = "sync" ]; then'))
+        env['STUB_UV_LOG'] = str(tmp_path / 'uv_calls.log')
+        _run_prepare(tmp_path, env)
+>       assert 'sync --extra dev' in (tmp_path / 'uv_calls.log').read_text()
+E       AssertionError: assert 'sync --extra dev' in 'sync\nrun python -m pytest --continue-on-collection-errors -p no:cacheprovider -q\n'
+E        +  where 'sync\nrun python -m pytest --continue-on-collection-errors -p no:cacheprovider -q\n' = read_text()
+E        +    where read_text = (PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-232/test_launcher_installs_declare0') / 'uv_calls.log').read_text
+
+r1/tests/test_rerun2_batch4c.py:113: AssertionError
+=========================== short test summary info ============================
+FAILED r1/tests/test_rerun2_batch4c.py::test_exec_loaded_globals_are_defined_and_guard_catches_original
+FAILED r1/tests/test_rerun2_batch4c.py::test_models_directory_is_required_before_start
+FAILED r1/tests/test_rerun2_batch4c.py::test_preconditions_constructs_model_command_from_environment
+FAILED r1/tests/test_rerun2_batch4c.py::test_launcher_requires_git_identity_and_records_dev_setup
+FAILED r1/tests/test_rerun2_batch4c.py::test_launcher_installs_declared_dev_extra
+5 failed, 2 deselected in 1.98s

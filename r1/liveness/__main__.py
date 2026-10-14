@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 import shutil
 import time
@@ -34,23 +35,31 @@ def _stamp() -> str:
 
 def run_campaigns(args) -> Path:
     from r1.headroom import e1b_collect as collect
+    from r1.scripts.dryrun_guard import validate_dryrun
+    dryrun = validate_dryrun()
+    if args.runs != 10 and not dryrun:
+        raise RuntimeError('STOP: liveness runs are fixed at 10 outside DRYRUN')
 
     stamp = _stamp()
     out = Path(args.out) if args.out else (
         REPO / "results" / "r1" / "engineering" / f"liveness_{args.manager}_{stamp}"
     )
-    out.mkdir(parents=True, exist_ok=True)
     work = Path(args.work) / f"liveness_{stamp}"
+    if dryrun:
+        root = Path(os.environ['R1_DRYRUN_ROOT']).resolve()
+        if not out.resolve().is_relative_to(root) or not work.resolve().is_relative_to(root):
+            raise RuntimeError('STOP: DRYRUN liveness output/work escapes the temporary directory')
+    out.mkdir(parents=True, exist_ok=True)
     work.mkdir(parents=True, exist_ok=True)
     manager = collect.MANAGER if args.manager == "scripted" else {
         **collect.MANAGER, "kind": "langgraph",
     }
     manifest = {
-        "schema": "r1.liveness_run/1", "label": "ENGINEERING_ONLY", "started_utc": stamp,
+        "schema": "r1.liveness_run/1", "label": "DRYRUN" if dryrun else "ENGINEERING_ONLY", "started_utc": stamp,
         "harness": {"root": str(collect.HARNESS), **harness_commit(collect.HARNESS)},
         "manager": manager, "manager_kind": args.manager, "memory_mode": args.memory_mode or "none",
         "seed_policy": collect.seed_policy(args.manager),
-        "nodes": list(args.nodes), "instances": args.instances, "runs": 10, "branching": False,
+        "nodes": list(args.nodes), "instances": args.instances, "runs": args.runs, "branching": False,
         "host": {"platform": platform.platform(), "python": platform.python_version()},
         "work": str(work), "campaigns": [],
     }
@@ -79,6 +88,8 @@ def run_campaigns(args) -> Path:
         [out / "ledgers"], generated_utc=manifest["finished_utc"], manager_kind=args.manager,
         memory_mode=manifest["memory_mode"],
     )
+    if dryrun:
+        report["label"] = "DRYRUN"
     report["run_manifest"] = "manifest.json"
     write_reports(report, out)
     return out
@@ -90,6 +101,7 @@ def main() -> int:
     parser.add_argument("--run", action="store_true", help="run short campaigns before checking")
     parser.add_argument("--nodes", nargs="+", default=DEFAULT_RUN_NODES)
     parser.add_argument("--instances", type=int, default=2)
+    parser.add_argument("--runs", type=int, default=10, help="fixed at 10 outside guarded DRYRUN")
     parser.add_argument("--manager", choices=["scripted", "langgraph"], default="scripted")
     parser.add_argument("--memory-mode", default=None,
                         choices=["none", "append_only_summary", "append_only_summary_with_rationale"])

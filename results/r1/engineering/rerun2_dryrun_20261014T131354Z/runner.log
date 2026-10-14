@@ -1,0 +1,9 @@
+RUN ['git', 'add', '-f', '--', 'docs/r1/STATUS.md']
+RUN ['git', 'diff', '--cached', '--check', '--', '.', ':!results/r1/**', ':!experiments/r1/**']
+RUN ['git', 'commit', '-m', 'Record R1-E1B-RERUN2 execution status', '-m', 'Co-Authored-By: Codex <noreply@openai.com>']
+[main 9af4dea] Record R1-E1B-RERUN2 execution status
+ 1 file changed, 17 insertions(+)
+RUN ['git', 'push', 'origin', 'main']
+FINISHED {"label": "ENGINEERING_ONLY", "steps": {"preconditions": {"completed": false, "started_utc": "20261014T131405Z"}, "STATUS": {"completed": true, "reason": "NameError: name 'MODELS' is not defined", "commit": "9af4dea6c48f81f3e7945050c788d40cc55f7e09"}}, "batch_logs": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_n7kqmwaz/batches/before", "execution_host": "ucrtasl", "wait_limit_seconds": null, "status_title": "R1-E1B-RERUN2 (PILOT)", "status_commit_message": "Record R1-E1B-RERUN2 execution status", "status_accept_note": "E1b rerun-2 phases are accepted only where the phase entry explicitly records completion. Partial outputs are preserved; no completed phase was re-run and no interrupted phase was retried.", "ollama_session": "r1_ollama_e1b_rerun2", "paper_head_at_launch": "7d00978a9c53147353eac11705f41f8ab390059e", "harness_head_at_launch": "411c6054c8505f93a6429e2f9eed526952793882", "authorization": "PLAN \u00a710 rows: R1-E1B-RERUN2, D28 (revised criterion 2), R1-COMPUTE (GPU co-tenancy, 13 Oct)", "gpu": "0, GPU-DRYRUN, DRYRUN shared card, 40000", "finished_utc": "20261014T131406Z", "stop_reason": "NameError: name 'MODELS' is not defined"}
+To /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_n7kqmwaz/paper.git
+   7d00978..9af4dea  main -> main

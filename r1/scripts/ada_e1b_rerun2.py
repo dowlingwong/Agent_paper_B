@@ -32,11 +32,16 @@ import platform
 import shutil
 import socket
 import subprocess
+import sys
 import time
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
-if platform.node().split('.')[0] != 'ucrtasl':
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from r1.scripts.dryrun_guard import validate_dryrun
+
+DRYRUN = validate_dryrun()
+if not DRYRUN and platform.node().split('.')[0] != 'ucrtasl':
     raise SystemExit('STOP: Ada-only E1b rerun-2')
 
 # Load the shared helpers (constants, census, collect, finish) without running main().
@@ -54,6 +59,9 @@ POINTS = [4, 8, 12]
 REPS = 2
 AUDIT_SEEDS = 6
 WORKERS = 4
+if DRYRUN:
+    NODES = ['digits_mlp', 'openml_breast_w']
+    INSTANCES, RUNS, POINTS, REPS, AUDIT_SEEDS, WORKERS = 2, 6, [2], 1, 1, 1
 OLLAMA_SESSION = 'r1_ollama_e1b_rerun2'
 PHASES = ('preconditions', 'liveness', 'arm_A', 'arm_B', 'arm_C', 'comparison')
 ARMS = {
@@ -103,7 +111,7 @@ def select_card():
         if wanted != 'auto':
             eligible = [r for r in eligible if r.split(',')[1].strip() == wanted]
         with (BATCH / 'gpu_wait.jsonl').open('a') as f:
-            f.write(json.dumps({'label': 'ENGINEERING_ONLY', 'utc': stamp(), 'rows': rows,
+            f.write(json.dumps({'label': 'DRYRUN' if DRYRUN else 'ENGINEERING_ONLY', 'utc': stamp(), 'rows': rows,
                                 'eligible': eligible}) + '\n')
         if eligible:
             return max(eligible, key=lambda r: int(r.split(',')[3].strip()))
@@ -111,7 +119,7 @@ def select_card():
 
 
 def model_ps():
-    with urlopen('http://127.0.0.1:11434/api/ps', timeout=15) as response:
+    with urlopen(OLLAMA_URL + '/api/ps', timeout=15) as response:
         return json.load(response)
 
 
@@ -119,7 +127,7 @@ def check_after_collection(where):
     """The pinned model must be fully offloaded after every LLM phase."""
     processes = model_ps()
     (BATCH / f'gpu_offload_{where}.json').write_text(json.dumps(
-        {'label': 'ENGINEERING_ONLY', 'utc': stamp(), 'processes': processes}, indent=2) + '\n')
+        {'label': 'DRYRUN' if DRYRUN else 'ENGINEERING_ONLY', 'utc': stamp(), 'processes': processes}, indent=2) + '\n')
     loaded = next((m for m in processes['models'] if m.get('name', m.get('model')) == MODEL), None)
     assert_full_offload(loaded, where)
     check_gpu()
@@ -130,11 +138,18 @@ def preconditions():
     for row in ROWS:
         if row not in plan:
             raise RuntimeError(f'STOP: PLAN §10 lacks the author row {row}')
+    models_value = os.environ.get('R1_OLLAMA_MODELS')
+    if not models_value:
+        raise RuntimeError('STOP: R1_OLLAMA_MODELS is required')
+    models = Path(models_value)
+    if not models.is_dir():
+        raise RuntimeError(f'STOP: R1_OLLAMA_MODELS directory is missing: {models}')
+    remote = 'dryrun' if DRYRUN else 'origin'
     paper_head = git_output(PAPER, 'rev-parse', 'HEAD')
-    if paper_head != git_output(PAPER, 'ls-remote', 'origin', 'refs/heads/main').split()[0]:
+    if paper_head != git_output(PAPER, 'ls-remote', remote, 'refs/heads/main').split()[0]:
         raise RuntimeError('STOP: paper checkout is not at origin/main')
     harness_head = git_output(HARNESS, 'rev-parse', 'HEAD')
-    if harness_head != git_output(HARNESS, 'ls-remote', 'origin', 'refs/heads/r1').split()[0]:
+    if harness_head != git_output(HARNESS, 'ls-remote', remote, 'refs/heads/r1').split()[0]:
         raise RuntimeError('STOP: harness checkout is not at origin/r1')
     pin_file = PAPER / 'r1/scripts/HARNESS_PIN_RERUN2'
     if pin_file.exists():
@@ -146,21 +161,21 @@ def preconditions():
     state['authorization'] = 'PLAN §10 rows: ' + ', '.join(ROWS)
     save()
     with socket.socket() as port_probe:
-        port_probe.bind(('127.0.0.1', 11434))  # refuses if anything already listens
+        port_probe.bind(('127.0.0.1', OLLAMA_PORT))  # refuses if anything already listens
     if subprocess.run(['tmux', 'has-session', '-t', OLLAMA_SESSION], capture_output=True).returncode == 0:
         raise RuntimeError(f'STOP: a tmux session {OLLAMA_SESSION} already exists')
     state['gpu'] = select_card()
     uuid = state['gpu'].split(',')[1].strip()
     check_gpu()
-    command = (f'CUDA_VISIBLE_DEVICES={uuid} OLLAMA_VULKAN=0 OLLAMA_HOST=127.0.0.1:11434 '
-               f'OLLAMA_MODELS={MODELS} OLLAMA_NUM_PARALLEL=1 OLLAMA_KEEP_ALIVE=-1 '
+    command = (f'CUDA_VISIBLE_DEVICES={uuid} OLLAMA_VULKAN=0 OLLAMA_HOST=127.0.0.1:{OLLAMA_PORT} '
+               f'OLLAMA_MODELS={models} OLLAMA_NUM_PARALLEL=1 OLLAMA_KEEP_ALIVE=-1 '
                f'{OLLAMA} serve > {BATCH}/ollama_serve.log 2>&1')
     cmd(['tmux', 'new-session', '-d', '-s', OLLAMA_SESSION, command])
     state['ollama_started_by_batch'] = True
     save()
     for _ in range(60):
         try:
-            with urlopen('http://127.0.0.1:11434/api/version', timeout=2) as r:
+            with urlopen(OLLAMA_URL + '/api/version', timeout=2) as r:
                 version = json.load(r)
             break
         except OSError:
@@ -170,12 +185,12 @@ def preconditions():
     pin()
     payload = json.dumps({'model': MODEL, 'prompt': 'Reply OK', 'stream': False,
                           'keep_alive': -1, 'options': {'num_predict': 1}}).encode()
-    with urlopen(Request('http://127.0.0.1:11434/api/generate', data=payload,
+    with urlopen(Request(OLLAMA_URL + '/api/generate', data=payload,
                          headers={'Content-Type': 'application/json'}), timeout=300) as r:
         probe_result = json.load(r)
     offload = model_ps()
     (BATCH / 'gpu_offload_probe.json').write_text(json.dumps(
-        {'label': 'ENGINEERING_ONLY', 'response': probe_result, 'processes': offload}, indent=2) + '\n')
+        {'label': 'DRYRUN' if DRYRUN else 'ENGINEERING_ONLY', 'response': probe_result, 'processes': offload}, indent=2) + '\n')
     loaded = next((m for m in offload['models'] if m.get('name', m.get('model')) == MODEL), None)
     assert_full_offload(loaded, 'load probe')
     if loaded['digest'] != DIGEST:
@@ -198,8 +213,10 @@ def print_estimate():
     leaves = roots * len(POINTS) * 2 * REPS  # continue + verify, both repetitions
     avg_remaining = RUNS - sum(POINTS) / len(POINTS)
     calls = roots * RUNS + leaves * avg_remaining
-    print(f'ESTIMATE (ENGINEERING_ONLY): {len(NODES)} nodes x {INSTANCES} instances = {roots} roots; '
-          f'{leaves} leaves per arm (assumes every E2 point yields both actions and two repetitions); '
+    label = 'DRYRUN' if DRYRUN else 'ENGINEERING_ONLY'
+    repetitions_text = 'one repetition' if DRYRUN else 'two repetitions'
+    print(f'ESTIMATE ({label}): {len(NODES)} nodes x {INSTANCES} instances = {roots} roots; '
+          f'{leaves} leaves per arm (assumes every E2 point yields both actions and {repetitions_text}); '
           f'expected LLM calls per LLM arm ~ {roots * RUNS} (roots, W={RUNS}) + '
           f'{int(leaves * avg_remaining)} (branches, mean remaining budget {avg_remaining:.0f}) '
           f'= ~{int(calls)}', flush=True)
@@ -208,8 +225,9 @@ def print_estimate():
 def liveness_phase():
     out = PAPER / 'results/r1/engineering' / f'liveness_llm_{stamp()}'
     cmd([PY, '-m', 'r1.liveness', '--run', '--manager', 'langgraph',
-         '--memory-mode', 'append_only_summary', '--nodes', *NODES, '--instances', '2',
-         '--out', str(out)], log='liveness.log')
+         '--memory-mode', 'append_only_summary', '--nodes', *NODES,
+         '--instances', '1' if DRYRUN else '2', '--runs', '4' if DRYRUN else '10',
+         '--out', str(out), '--work', str(BATCH / 'liveness_work')], log='liveness.log')
     report = json.loads((out / 'liveness.json').read_text())
     eligible = [n for n in NODES if report['nodes'].get(n, {}).get('pass')]
     entry = state['steps']['liveness']
@@ -292,7 +310,7 @@ def comparison():
 
 def main():
     load_previous_state()
-    state['status_title'] = 'R1-E1B-RERUN2 (PILOT)'
+    state['status_title'] = 'R1-E1B-RERUN2 (DRYRUN)' if DRYRUN else 'R1-E1B-RERUN2 (PILOT)'
     state['status_commit_message'] = 'Record R1-E1B-RERUN2 execution status'
     state['status_accept_note'] = (
         'E1b rerun-2 phases are accepted only where the phase entry explicitly records '

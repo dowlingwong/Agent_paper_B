@@ -1,0 +1,296 @@
+PYTHONPATH=experiment_scaffold/src .venv/bin/python -m unittest discover -s tests/control -p 'test_*.py'
+EEEEEEEEEEE.....EEEEEE
+======================================================================
+ERROR: test_allocation_boundaries (unittest.loader._FailedTest.test_allocation_boundaries)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_allocation_boundaries
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_allocation_boundaries.py", line 4, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_allocator (unittest.loader._FailedTest.test_allocator)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_allocator
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_allocator.py", line 9, in <module>
+    from hypothesis import given, settings, strategies as st  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'hypothesis'
+
+
+======================================================================
+ERROR: test_b_contract (unittest.loader._FailedTest.test_b_contract)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_b_contract
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_b_contract.py", line 15, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_branch_tree (unittest.loader._FailedTest.test_branch_tree)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_branch_tree
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_branch_tree.py", line 9, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_configurator (unittest.loader._FailedTest.test_configurator)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_configurator
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_configurator.py", line 12, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_contract_v2 (unittest.loader._FailedTest.test_contract_v2)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_contract_v2
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_contract_v2.py", line 14, in <module>
+    v=importlib.util.module_from_spec(spec);spec.loader.exec_module(v)
+                                            ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/protocols/paper_b/launch_validator.py", line 14, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+
+======================================================================
+ERROR: test_controllers (unittest.loader._FailedTest.test_controllers)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_controllers
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_controllers.py", line 6, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_evaluate_tree (unittest.loader._FailedTest.test_evaluate_tree)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_evaluate_tree
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_evaluate_tree.py", line 8, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_evaluator_repairs (unittest.loader._FailedTest.test_evaluator_repairs)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_evaluator_repairs
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_evaluator_repairs.py", line 8, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_executor (unittest.loader._FailedTest.test_executor)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_executor
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_executor.py", line 12, in <module>
+    from causal_branch.control.branch_tree import TreeError, records_to_tree  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/experiment_scaffold/src/causal_branch/control/__init__.py", line 14, in <module>
+    from causal_branch.control.allocation import (  # noqa: F401
+    ...<3 lines>...
+    )
+  File "/Users/wongdowling/Documents/agent_paper_B/experiment_scaffold/src/causal_branch/control/allocation.py", line 22, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_governance (unittest.loader._FailedTest.test_governance)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_governance
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_governance.py", line 12, in <module>
+    from causal_branch.control import reliability_schema as rs  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/experiment_scaffold/src/causal_branch/control/__init__.py", line 14, in <module>
+    from causal_branch.control.allocation import (  # noqa: F401
+    ...<3 lines>...
+    )
+  File "/Users/wongdowling/Documents/agent_paper_B/experiment_scaffold/src/causal_branch/control/allocation.py", line 22, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_replay_validity (unittest.loader._FailedTest.test_replay_validity)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_replay_validity
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_replay_validity.py", line 11, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_task_cc (unittest.loader._FailedTest.test_task_cc)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_task_cc
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_task_cc.py", line 15, in <module>
+    from witnesses import run_screen  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/experiments/paper_b/task_cc/witnesses.py", line 27, in <module>
+    from causal_branch.control.branch_tree import execute_tree_v2  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/experiment_scaffold/src/causal_branch/control/__init__.py", line 14, in <module>
+    from causal_branch.control.allocation import (  # noqa: F401
+    ...<3 lines>...
+    )
+  File "/Users/wongdowling/Documents/agent_paper_B/experiment_scaffold/src/causal_branch/control/allocation.py", line 22, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_task_cc_live (unittest.loader._FailedTest.test_task_cc_live)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_task_cc_live
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_task_cc_live.py", line 7, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_timing (unittest.loader._FailedTest.test_timing)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_timing
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_timing.py", line 6, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_tree (unittest.loader._FailedTest.test_tree)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_tree
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_tree.py", line 3, in <module>
+    from causal_branch.control.tree import fixtures, summarize, validate_trees
+  File "/Users/wongdowling/Documents/agent_paper_B/experiment_scaffold/src/causal_branch/control/__init__.py", line 14, in <module>
+    from causal_branch.control.allocation import (  # noqa: F401
+    ...<3 lines>...
+    )
+  File "/Users/wongdowling/Documents/agent_paper_B/experiment_scaffold/src/causal_branch/control/allocation.py", line 22, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+======================================================================
+ERROR: test_u_semantics (unittest.loader._FailedTest.test_u_semantics)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_u_semantics
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/wongdowling/Documents/agent_paper_B/tests/control/test_u_semantics.py", line 12, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.043s
+
+FAILED (errors=17)
+make: *** [test-control] Error 1

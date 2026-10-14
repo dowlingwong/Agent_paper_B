@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "unexpected": [],
+  "harness_tests": "9 failed, 388 passed, 1 warning, 1 error, 4 subtests passed in 125.86s (0:02:05)",
+  "r1_tests": "157 passed, 1 skipped in 30.40s"
+}
+PREPARED. Batch: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q
+Review /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/prepare.json, then: --start /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q

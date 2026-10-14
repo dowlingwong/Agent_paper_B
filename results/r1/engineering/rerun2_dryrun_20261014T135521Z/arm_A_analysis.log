@@ -1,0 +1,53 @@
+### digits_mlp: 2 decision points, 2 instances
+
+- best simple baseline: `always_verify`. Headroom bracket (true oracle headroom lies between, in expectation): leaf-split oracle – [–, –] (biased down); naive oracle +0.0000 [+0.0000, +0.0000] (biased up; its upper bound is conservative)
+- mean leaf difference verify − continue: +0.0014; share of points where verify changed the leaf value: 0.50
+- mean worker runs per branch: continue 4.0, verify 4.0 (same compute budget; verify's runs replace later trials)
+
+| Arm | value (mean Y) | 95% CI | vs rho | 95% CI | verify rate |
+|---|---|---|---|---|---|
+| `rho` | -0.0070 | [-0.0084, -0.0056] | – | [–, –] | 0.00 |
+| `always_verify` | -0.0056 | [-0.0056, -0.0056] | +0.0014 | [+0.0000, +0.0028] | 1.00 |
+| `margin_threshold` | -0.0070 | [-0.0084, -0.0056] | +0.0000 | [+0.0000, +0.0000] | 0.50 |
+| `harness_heuristic` | -0.0070 | [-0.0084, -0.0056] | +0.0000 | [+0.0000, +0.0000] | 0.50 |
+| `kg_index` | -0.0070 | [-0.0084, -0.0056] | +0.0000 | [+0.0000, +0.0000] | 0.50 |
+| `ridge_advantage` | -0.0070 | [-0.0084, -0.0056] | +0.0000 | [+0.0000, +0.0000] | 0.00 |
+| `awr_mlp` | -0.0070 | [-0.0084, -0.0056] | +0.0000 | [+0.0000, +0.0000] | 0.00 |
+| `random_matched` | -0.0056 | [-0.0056, -0.0056] | +0.0014 | [+0.0000, +0.0028] | 0.50 |
+| `oracle_naive` | -0.0056 | [-0.0056, -0.0056] | +0.0014 | [+0.0000, +0.0028] | – |
+
+### openml_breast_w: 2 decision points, 2 instances
+
+- best simple baseline: `always_verify`. Headroom bracket (true oracle headroom lies between, in expectation): leaf-split oracle – [–, –] (biased down); naive oracle +0.0000 [+0.0000, +0.0000] (biased up; its upper bound is conservative)
+- mean leaf difference verify − continue: +0.0004; share of points where verify changed the leaf value: 0.50
+- mean worker runs per branch: continue 5.0, verify 4.0 (same compute budget; verify's runs replace later trials)
+
+| Arm | value (mean Y) | 95% CI | vs rho | 95% CI | verify rate |
+|---|---|---|---|---|---|
+| `rho` | +0.0012 | [+0.0008, +0.0016] | – | [–, –] | 0.00 |
+| `always_verify` | +0.0016 | [+0.0016, +0.0016] | +0.0004 | [+0.0000, +0.0008] | 1.00 |
+| `margin_threshold` | +0.0012 | [+0.0008, +0.0016] | +0.0000 | [+0.0000, +0.0000] | 0.50 |
+| `harness_heuristic` | +0.0012 | [+0.0008, +0.0016] | +0.0000 | [+0.0000, +0.0000] | 0.50 |
+| `kg_index` | +0.0012 | [+0.0008, +0.0016] | +0.0000 | [+0.0000, +0.0000] | 0.50 |
+| `ridge_advantage` | +0.0012 | [+0.0008, +0.0016] | +0.0000 | [+0.0000, +0.0000] | 0.00 |
+| `awr_mlp` | +0.0012 | [+0.0008, +0.0016] | +0.0000 | [+0.0000, +0.0000] | 0.00 |
+| `random_matched` | +0.0016 | [+0.0016, +0.0016] | +0.0004 | [+0.0000, +0.0008] | 0.50 |
+| `oracle_naive` | +0.0016 | [+0.0016, +0.0016] | +0.0004 | [+0.0000, +0.0008] | – |
+
+### ALL: 4 decision points, 4 instances
+
+- best simple baseline: `always_verify`. Headroom bracket (true oracle headroom lies between, in expectation): leaf-split oracle – [–, –] (biased down); naive oracle +0.0000 [+0.0000, +0.0000] (biased up; its upper bound is conservative)
+- mean leaf difference verify − continue: +0.0009; share of points where verify changed the leaf value: 0.50
+- mean worker runs per branch: continue 4.5, verify 4.0 (same compute budget; verify's runs replace later trials)
+
+| Arm | value (mean Y) | 95% CI | vs rho | 95% CI | verify rate |
+|---|---|---|---|---|---|
+| `rho` | -0.0029 | [-0.0070, +0.0012] | – | [–, –] | 0.00 |
+| `always_verify` | -0.0020 | [-0.0056, +0.0016] | +0.0009 | [+0.0000, +0.0021] | 1.00 |
+| `margin_threshold` | -0.0027 | [-0.0070, +0.0016] | +0.0002 | [+0.0000, +0.0006] | 0.75 |
+| `harness_heuristic` | -0.0020 | [-0.0056, +0.0016] | +0.0009 | [+0.0000, +0.0021] | 1.00 |
+| `kg_index` | -0.0027 | [-0.0070, +0.0016] | +0.0002 | [+0.0000, +0.0006] | 0.75 |
+| `ridge_advantage` | -0.0029 | [-0.0070, +0.0012] | +0.0000 | [+0.0000, +0.0000] | 0.50 |
+| `awr_mlp` | -0.0029 | [-0.0070, +0.0012] | +0.0000 | [+0.0000, +0.0000] | 0.50 |
+| `random_matched` | -0.0020 | [-0.0056, +0.0016] | +0.0009 | [+0.0000, +0.0021] | 0.75 |
+| `oracle_naive` | -0.0020 | [-0.0056, +0.0016] | +0.0009 | [+0.0000, +0.0021] | – |

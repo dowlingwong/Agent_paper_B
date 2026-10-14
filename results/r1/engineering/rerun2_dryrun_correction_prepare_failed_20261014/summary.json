@@ -1,0 +1,7 @@
+{
+  "label": "DRYRUN",
+  "completed": false,
+  "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_sgr6pp65",
+  "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_sgr6pp65/batches/r1_e1b_rerun2_DRYRUN_20261014_nPTR5i",
+  "error": "Preparation nested unit fixture inherited outer containment paths; no runner/server launched; test fixture isolation repaired in the single correction round."
+}

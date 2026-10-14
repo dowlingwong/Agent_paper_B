@@ -1,0 +1,1 @@
+{"label": "ENGINEERING_ONLY", "utc": "20261014T131406Z", "selected_uuid": "GPU-DRYRUN", "need_free_mib": 7352, "selected_free_mib": 40000, "other_owners_on_selected": ["dryrun_co_tenant"], "cards": [{"index": "0", "uuid": "GPU-DRYRUN", "name": "DRYRUN shared card", "free_mib": 40000, "processes": [{"pid": "99999999", "owner": "dryrun_co_tenant", "used_memory": "100 MiB"}]}]}

@@ -1,0 +1,273 @@
+.................FFF.F.F.............................................FFF [ 47%]
+F...............................................F..s.................... [ 95%]
+.......                                                                  [100%]
+=================================== FAILURES ===================================
+_____________ test_prepare_accepts_only_the_environmental_failures _____________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_prepare_accepts_only_the_0')
+
+    def test_prepare_accepts_only_the_environmental_failures(tmp_path):
+        known = "\n".join(f"FAILED {line}" for line in _ACCEPTED_IDS[:8])
+        known += f"\nERROR {_ACCEPTED_IDS[8]}\n"
+        output = f"{known}\n8 failed, 386 passed, 1 warning, 1 error in 42s\n"
+        env = _prepare_env(tmp_path, harness_rc=1, harness_output=output)
+        batch = _run_prepare(tmp_path, env)
+        payload = json.loads((batch / "prepare.json").read_text())
+>       assert payload["ok"] is True
+E       assert False is True
+
+r1/tests/test_ada_e1b_rerun2.py:452: AssertionError
+___________________ test_prepare_refuses_an_unknown_failure ____________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_prepare_refuses_an_unknow0')
+
+    def test_prepare_refuses_an_unknown_failure(tmp_path):
+        output = "FAILED tests/test_new_thing.py::test_x\n1 failed, 10 passed in 1s\n"
+        env = _prepare_env(tmp_path, harness_rc=1, harness_output=output)
+        batch = _run_prepare(tmp_path, env)
+        payload = json.loads((batch / "prepare.json").read_text())
+        assert payload["ok"] is False
+>       assert payload["harness_tests"]["unexpected"] == ["tests/test_new_thing.py::test_x"]
+E       AssertionError: assert ['harness sui...sed failures'] == ['tests/test_...g.py::test_x']
+E         
+E         At index 0 diff: 'harness suite exited 1 with no parsed FAILED/ERROR lines' != 'tests/test_new_thing.py::test_x'
+E         Left contains one more item: 'r1-test: exited 1 with no parsed failures'
+E         Use -v to get more diff
+
+r1/tests/test_ada_e1b_rerun2.py:463: AssertionError
+_________ test_prepare_refuses_a_nonzero_exit_without_parsed_failures __________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_prepare_refuses_a_nonzero0')
+
+    def test_prepare_refuses_a_nonzero_exit_without_parsed_failures(tmp_path):
+        # Review F8: an interrupted / crashed pytest run has no FAILED lines.
+        env = _prepare_env(tmp_path, harness_rc=2, harness_output="INTERNALERROR> crashed\n")
+        batch = _run_prepare(tmp_path, env)
+        payload = json.loads((batch / "prepare.json").read_text())
+        assert payload["ok"] is False
+>       assert any("exited 2" in item for item in payload["harness_tests"]["unexpected"])
+E       assert False
+E        +  where False = any(<generator object test_prepare_refuses_a_nonzero_exit_without_parsed_failures.<locals>.<genexpr> at 0x10993edc0>)
+
+r1/tests/test_ada_e1b_rerun2.py:472: AssertionError
+_____________ test_ada_exceptions_are_accepted_and_start_proceeds ______________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_ada_exceptions_are_accept0')
+
+    def test_ada_exceptions_are_accepted_and_start_proceeds(tmp_path):
+        # (a) PLAN §10 R1-COMPUTE (Ada environmental test exception 2): on Ada the
+        # missing-/bin/zsh test and the fresh-checkout report test are both
+        # environmental, so --prepare records no unexpected failure and --start
+        # proceeds.
+        output = (
+            f"FAILED {_ZSH_ADA_ID}\n"
+            f"FAILED {_FRESH_CHECKOUT_REPORT_ID}\n"
+            "2 failed, 394 passed in 42s\n"
+        )
+        env = _prepare_env(tmp_path, harness_rc=1, harness_output=output)
+        batch = _run_prepare(tmp_path, env)
+        payload = json.loads((batch / "prepare.json").read_text())
+>       assert payload["ok"] is True
+E       assert False is True
+
+r1/tests/test_ada_e1b_rerun2.py:508: AssertionError
+_____________ test_a_third_test_in_the_same_file_is_still_refused ______________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_a_third_test_in_the_same_0')
+
+    def test_a_third_test_in_the_same_file_is_still_refused(tmp_path):
+        # (c) The set is exact IDs, not a file or class: a sibling in the same
+        # TestCompletenessCLI class is still refused.
+        sibling = (
+            "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::"
+            "test_required_top_level_keys"
+        )
+        output = (
+            f"FAILED {_ZSH_ADA_ID}\n"
+            f"FAILED {_FRESH_CHECKOUT_REPORT_ID}\n"
+            f"FAILED {sibling}\n"
+            "3 failed, 393 passed in 42s\n"
+        )
+        env = _prepare_env(tmp_path, harness_rc=1, harness_output=output)
+        batch = _run_prepare(tmp_path, env)
+        payload = json.loads((batch / "prepare.json").read_text())
+        assert payload["ok"] is False
+>       assert payload["harness_tests"]["unexpected"] == [sibling]
+E       AssertionError: assert ['harness sui...sed failures'] == ['tests/test_...p_level_keys']
+E         
+E         At index 0 diff: 'harness suite exited 1 with no parsed FAILED/ERROR lines' != 'tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_required_top_level_keys'
+E         Left contains one more item: 'r1-test: exited 1 with no parsed failures'
+E         Use -v to get more diff
+
+r1/tests/test_ada_e1b_rerun2.py:548: AssertionError
+________________ test_other_user_on_card_is_allowed_and_logged _________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_other_user_on_card_is_all0')
+
+    def test_other_user_on_card_is_allowed_and_logged(tmp_path):
+        ns = load([csv(30000), BUSY, 'another_user\n'], tmp_path)
+>       record = ns['check_gpu']()
+                 ^^^^^^^^^^^^^^^^^
+
+r1/tests/test_gpu_process_census.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def check_gpu():
+        """Co-tenancy check (PLAN §10, 13 Oct): other users' processes are allowed and only logged.
+    
+        STOP only when the selected card's free memory is below the margin: footprint + margin
+        before our model is loaded, the margin alone once it is loaded.
+        """
+        selected_uuid = state['gpu'].split(',')[1].strip()
+        cards = gpu_census()
+        card = next((c for c in cards if c['uuid'] == selected_uuid), None)
+        if card is None:
+            raise RuntimeError('STOP: selected GPU is no longer listed by nvidia-smi')
+        need = MARGIN_MIB if state.get('model_loaded') else MODEL_FOOTPRINT_MIB + MARGIN_MIB
+        me = getpass.getuser()
+>       record = {'label': RUN_LABEL, 'utc': stamp(), 'selected_uuid': selected_uuid,
+                           ^^^^^^^^^
+                  'need_free_mib': need, 'selected_free_mib': card['free_mib'],
+                  'other_owners_on_selected': sorted({str(p['owner']) for p in card['processes'] if p['owner'] != me}),
+                  'cards': cards}
+E       NameError: name 'RUN_LABEL' is not defined
+
+r1/scripts/deepthought_batch1_resume.py:136: NameError
+___________________ test_exited_pid_is_recorded_without_stop ___________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_exited_pid_is_recorded_wi0')
+
+    def test_exited_pid_is_recorded_without_stop(tmp_path):
+        ns = load([csv(30000), BUSY, subprocess.CalledProcessError(1, ['ps'])], tmp_path)
+>       record = ns['check_gpu']()
+                 ^^^^^^^^^^^^^^^^^
+
+r1/tests/test_gpu_process_census.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def check_gpu():
+        """Co-tenancy check (PLAN §10, 13 Oct): other users' processes are allowed and only logged.
+    
+        STOP only when the selected card's free memory is below the margin: footprint + margin
+        before our model is loaded, the margin alone once it is loaded.
+        """
+        selected_uuid = state['gpu'].split(',')[1].strip()
+        cards = gpu_census()
+        card = next((c for c in cards if c['uuid'] == selected_uuid), None)
+        if card is None:
+            raise RuntimeError('STOP: selected GPU is no longer listed by nvidia-smi')
+        need = MARGIN_MIB if state.get('model_loaded') else MODEL_FOOTPRINT_MIB + MARGIN_MIB
+        me = getpass.getuser()
+>       record = {'label': RUN_LABEL, 'utc': stamp(), 'selected_uuid': selected_uuid,
+                           ^^^^^^^^^
+                  'need_free_mib': need, 'selected_free_mib': card['free_mib'],
+                  'other_owners_on_selected': sorted({str(p['owner']) for p in card['processes'] if p['owner'] != me}),
+                  'cards': cards}
+E       NameError: name 'RUN_LABEL' is not defined
+
+r1/scripts/deepthought_batch1_resume.py:136: NameError
+_________________ test_too_little_memory_before_load_is_a_stop _________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_too_little_memory_before_0')
+
+    def test_too_little_memory_before_load_is_a_stop(tmp_path):
+        ns = load([csv(7000), EMPTY], tmp_path)  # needs 5304 + 2048 = 7352 MiB
+        with pytest.raises(RuntimeError, match='STOP'):
+>           ns['check_gpu']()
+
+r1/tests/test_gpu_process_census.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def check_gpu():
+        """Co-tenancy check (PLAN §10, 13 Oct): other users' processes are allowed and only logged.
+    
+        STOP only when the selected card's free memory is below the margin: footprint + margin
+        before our model is loaded, the margin alone once it is loaded.
+        """
+        selected_uuid = state['gpu'].split(',')[1].strip()
+        cards = gpu_census()
+        card = next((c for c in cards if c['uuid'] == selected_uuid), None)
+        if card is None:
+            raise RuntimeError('STOP: selected GPU is no longer listed by nvidia-smi')
+        need = MARGIN_MIB if state.get('model_loaded') else MODEL_FOOTPRINT_MIB + MARGIN_MIB
+        me = getpass.getuser()
+>       record = {'label': RUN_LABEL, 'utc': stamp(), 'selected_uuid': selected_uuid,
+                           ^^^^^^^^^
+                  'need_free_mib': need, 'selected_free_mib': card['free_mib'],
+                  'other_owners_on_selected': sorted({str(p['owner']) for p in card['processes'] if p['owner'] != me}),
+                  'cards': cards}
+E       NameError: name 'RUN_LABEL' is not defined
+
+r1/scripts/deepthought_batch1_resume.py:136: NameError
+___________________ test_loaded_model_needs_only_the_margin ____________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_loaded_model_needs_only_t0')
+
+    def test_loaded_model_needs_only_the_margin(tmp_path):
+>       load([csv(3000), BUSY, 'another_user\n'], tmp_path, loaded=True)['check_gpu']()
+
+r1/tests/test_gpu_process_census.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def check_gpu():
+        """Co-tenancy check (PLAN §10, 13 Oct): other users' processes are allowed and only logged.
+    
+        STOP only when the selected card's free memory is below the margin: footprint + margin
+        before our model is loaded, the margin alone once it is loaded.
+        """
+        selected_uuid = state['gpu'].split(',')[1].strip()
+        cards = gpu_census()
+        card = next((c for c in cards if c['uuid'] == selected_uuid), None)
+        if card is None:
+            raise RuntimeError('STOP: selected GPU is no longer listed by nvidia-smi')
+        need = MARGIN_MIB if state.get('model_loaded') else MODEL_FOOTPRINT_MIB + MARGIN_MIB
+        me = getpass.getuser()
+>       record = {'label': RUN_LABEL, 'utc': stamp(), 'selected_uuid': selected_uuid,
+                           ^^^^^^^^^
+                  'need_free_mib': need, 'selected_free_mib': card['free_mib'],
+                  'other_owners_on_selected': sorted({str(p['owner']) for p in card['processes'] if p['owner'] != me}),
+                  'cards': cards}
+E       NameError: name 'RUN_LABEL' is not defined
+
+r1/scripts/deepthought_batch1_resume.py:136: NameError
+__________ test_launcher_requires_git_identity_and_records_dev_setup ___________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-233/test_launcher_requires_git_ide0')
+
+    def test_launcher_requires_git_identity_and_records_dev_setup(tmp_path):
+        env = _prepare_env(tmp_path, harness_rc=0, harness_output='397 passed in 1s')
+        (tmp_path / 'batches').mkdir(exist_ok=True)
+        no_identity = {k:v for k,v in env.items() if k not in ('R1_GIT_NAME', 'R1_GIT_EMAIL')}
+        result = _run_launcher(['--prepare'], no_identity)
+        assert result.returncode and 'R1_GIT_NAME and R1_GIT_EMAIL are required' in result.stdout
+        uv = tmp_path / 'stubbin/uv'
+        uv.write_text(uv.read_text().replace('if [ "$1" = "sync" ]; then', 'echo "$@" >> "$STUB_UV_LOG"\nif [ "$1" = "sync" ]; then'))
+        env['STUB_UV_LOG'] = str(tmp_path / 'uv_calls.log')
+        batch = _run_prepare(tmp_path, env)
+        setup = json.loads((batch / 'prepare.json').read_text())
+        assert setup['git_identity']['name'] == env['R1_GIT_NAME']
+        assert setup['push_dry_run'] == {'paper': True, 'harness': True}
+        assert setup['pytest_version'] == 'pytest-stub-9'
+        assert 'sync --extra dev' in (tmp_path / 'uv_calls.log').read_text()
+        started = _run_launcher(['--start', str(batch)], env)
+>       assert started.returncode == 0, started.stdout + started.stderr
+E       AssertionError: STOP: test failures outside the accepted environmental set:
+E           - harness suite exited 1 with no parsed FAILED/ERROR lines
+E           - r1-test: exited 1 with no parsed failures
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['bash', '/Users/wongdowling/Documents/agent_paper_B/r1/scripts/ada_e1b_rerun2_launch.sh', '--st... harness suite exited 1 with no parsed FAILED/ERROR lines\n  - r1-test: exited 1 with no parsed failures\n', stderr='').returncode
+
+r1/tests/test_rerun2_batch4c.py:103: AssertionError
+=========================== short test summary info ============================
+FAILED r1/tests/test_ada_e1b_rerun2.py::test_prepare_accepts_only_the_environmental_failures
+FAILED r1/tests/test_ada_e1b_rerun2.py::test_prepare_refuses_an_unknown_failure
+FAILED r1/tests/test_ada_e1b_rerun2.py::test_prepare_refuses_a_nonzero_exit_without_parsed_failures
+FAILED r1/tests/test_ada_e1b_rerun2.py::test_ada_exceptions_are_accepted_and_start_proceeds
+FAILED r1/tests/test_ada_e1b_rerun2.py::test_a_third_test_in_the_same_file_is_still_refused
+FAILED r1/tests/test_gpu_process_census.py::test_other_user_on_card_is_allowed_and_logged
+FAILED r1/tests/test_gpu_process_census.py::test_exited_pid_is_recorded_without_stop
+FAILED r1/tests/test_gpu_process_census.py::test_too_little_memory_before_load_is_a_stop
+FAILED r1/tests/test_gpu_process_census.py::test_loaded_model_needs_only_the_margin
+FAILED r1/tests/test_rerun2_batch4c.py::test_launcher_requires_git_identity_and_records_dev_setup
+10 failed, 140 passed, 1 skipped in 54.12s

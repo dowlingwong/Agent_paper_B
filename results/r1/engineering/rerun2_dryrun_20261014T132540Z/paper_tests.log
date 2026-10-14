@@ -1,0 +1,5 @@
+/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider r1/tests
+........................................................................ [ 47%]
+...................................................s.................... [ 95%]
+.......                                                                  [100%]
+150 passed, 1 skipped in 43.26s

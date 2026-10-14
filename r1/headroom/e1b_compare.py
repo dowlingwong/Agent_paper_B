@@ -232,10 +232,11 @@ def _ci(interval) -> str:
 
 
 def markdown(result: dict) -> str:
+    label_text = "DRYRUN" if result.get("label") == "DRYRUN" else "ENGINEERING_ONLY/PILOT"
     lines = [
         f"# E1b rerun-2 cross-arm comparison — {result['generated_utc']}",
         "",
-        "**PILOT.** AI-assisted (BUILD_BATCH4, P7). ENGINEERING_ONLY/PILOT; no interpretation "
+        f"**{result.get('label', 'PILOT')}.** AI-assisted (BUILD_BATCH4, P7). {label_text}; no interpretation "
         "beyond the readings template at the end.",
         "",
         "## Arms",
@@ -322,7 +323,7 @@ def compare(runs: list[tuple[str, Path]], *, n_boot: int = N_BOOT, seed: int = S
     nodes = sorted({r.node for arm in arms.values() for r in arm.records})
     result = {
         "schema": "r1.e1b_compare/1",
-        "label": "PILOT",
+        "label": "DRYRUN" if arms and all(a.manifest.get("label") == "DRYRUN" for a in arms.values()) else "PILOT",
         "generated_utc": _utc(),
         "arms": {
             label: {

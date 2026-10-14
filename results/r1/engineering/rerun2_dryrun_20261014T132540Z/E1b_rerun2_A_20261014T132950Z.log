@@ -1,0 +1,142 @@
+/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/autoresearch_harness/.venv/lib/python3.11/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+2026-10-14T15:29:50 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:29:50 [INFO] autoresearch.worker.local_worker: trial-001: applied edit MAX_ITER: 40 → 20
+2026-10-14T15:29:50 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-10-14T15:29:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.3s; success=True metrics={'val_score': 0.941504, 'train_loss': 0.194976}
+2026-10-14T15:29:52 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:29:52 [INFO] autoresearch.worker.local_worker: trial-002: applied edit MAX_ITER: 20 → 24
+2026-10-14T15:29:52 [INFO] autoresearch.worker.local_worker: trial-002: running: python3 train.py
+2026-10-14T15:29:53 [INFO] autoresearch.worker.local_worker: trial-002: run_command finished in 1.6s; success=True metrics={'val_score': 0.958217, 'train_loss': 0.151057}
+2026-10-14T15:29:53 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:29:53 [INFO] autoresearch.worker.local_worker: trial-003: applied edit MAX_ITER: 24 → 28
+2026-10-14T15:29:53 [INFO] autoresearch.worker.local_worker: trial-003: running: python3 train.py
+2026-10-14T15:29:55 [INFO] autoresearch.worker.local_worker: trial-003: run_command finished in 1.5s; success=True metrics={'val_score': 0.958217, 'train_loss': 0.121036}
+2026-10-14T15:29:55 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:29:55 [INFO] autoresearch.worker.local_worker: trial-004: applied edit MAX_ITER: 24 → 32
+2026-10-14T15:29:55 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py
+2026-10-14T15:29:56 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.3s; success=True metrics={'val_score': 0.958217, 'train_loss': 0.099254}
+2026-10-14T15:29:56 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:29:56 [INFO] autoresearch.worker.local_worker: trial-001: applied edit MAX_ITER: 40 → 20
+2026-10-14T15:29:56 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-10-14T15:29:58 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.3s; success=True metrics={'val_score': 0.927577, 'train_loss': 0.219466}
+2026-10-14T15:29:58 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:29:58 [INFO] autoresearch.worker.local_worker: trial-002: applied edit MAX_ITER: 20 → 24
+2026-10-14T15:29:58 [INFO] autoresearch.worker.local_worker: trial-002: running: python3 train.py
+2026-10-14T15:29:59 [INFO] autoresearch.worker.local_worker: trial-002: run_command finished in 1.2s; success=True metrics={'val_score': 0.94429, 'train_loss': 0.167136}
+2026-10-14T15:29:59 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:29:59 [INFO] autoresearch.worker.local_worker: trial-003: applied edit MAX_ITER: 24 → 28
+2026-10-14T15:29:59 [INFO] autoresearch.worker.local_worker: trial-003: running: python3 train.py
+2026-10-14T15:30:00 [INFO] autoresearch.worker.local_worker: trial-003: run_command finished in 1.2s; success=True metrics={'val_score': 0.947075, 'train_loss': 0.131301}
+2026-10-14T15:30:00 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:00 [INFO] autoresearch.worker.local_worker: trial-004: applied edit MAX_ITER: 28 → 32
+2026-10-14T15:30:00 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py
+2026-10-14T15:30:01 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.3s; success=True metrics={'val_score': 0.947075, 'train_loss': 0.105411}
+2026-10-14T15:30:01 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:01 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.001
+2026-10-14T15:30:01 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-10-14T15:30:03 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.6s; success=True metrics={'val_auc': 0.991546, 'val_acc': 0.971429}
+2026-10-14T15:30:03 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:03 [INFO] autoresearch.worker.local_worker: trial-002: applied edit C: 0.001 → 0.002
+2026-10-14T15:30:03 [INFO] autoresearch.worker.local_worker: trial-002: running: python3 train.py --config config.yaml
+2026-10-14T15:30:04 [INFO] autoresearch.worker.local_worker: trial-002: run_command finished in 1.4s; success=True metrics={'val_auc': 0.991546, 'val_acc': 0.971429}
+2026-10-14T15:30:04 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:04 [INFO] autoresearch.worker.local_worker: trial-003: applied edit C: 0.001 → 0.004
+2026-10-14T15:30:04 [INFO] autoresearch.worker.local_worker: trial-003: running: python3 train.py --config config.yaml
+2026-10-14T15:30:06 [INFO] autoresearch.worker.local_worker: trial-003: run_command finished in 1.4s; success=True metrics={'val_auc': 0.991948, 'val_acc': 0.971429}
+2026-10-14T15:30:06 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:06 [INFO] autoresearch.worker.local_worker: trial-004: applied edit C: 0.004 → 0.008
+2026-10-14T15:30:06 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py --config config.yaml
+2026-10-14T15:30:07 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.5s; success=True metrics={'val_auc': 0.991948, 'val_acc': 0.971429}
+2026-10-14T15:30:07 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:07 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.001
+2026-10-14T15:30:07 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-10-14T15:30:09 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.4s; success=True metrics={'val_auc': 0.993559, 'val_acc': 0.961905}
+2026-10-14T15:30:09 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:09 [INFO] autoresearch.worker.local_worker: trial-002: applied edit C: 0.001 → 0.002
+2026-10-14T15:30:09 [INFO] autoresearch.worker.local_worker: trial-002: running: python3 train.py --config config.yaml
+2026-10-14T15:30:10 [INFO] autoresearch.worker.local_worker: trial-002: run_command finished in 1.4s; success=True metrics={'val_auc': 0.993559, 'val_acc': 0.961905}
+2026-10-14T15:30:10 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:10 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:10 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:10 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:10 [INFO] autoresearch.worker.local_worker: trial-004: applied edit C: 0.001 → 0.008
+2026-10-14T15:30:10 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py --config config.yaml
+2026-10-14T15:30:12 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.4s; success=True metrics={'val_auc': 0.994364, 'val_acc': 0.971429}
+2026-10-14T15:30:12 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:12 [INFO] autoresearch.worker.local_worker: trial-005: applied edit C: 0.008 → 0.016
+2026-10-14T15:30:12 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 train.py --config config.yaml
+2026-10-14T15:30:13 [INFO] autoresearch.worker.local_worker: trial-005: run_command finished in 1.5s; success=True metrics={'val_auc': 0.995169, 'val_acc': 0.971429}
+{"out": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/agent_paper_B/results/r1/pilot/E1b_rerun2_A_20261014T132950Z", "start_utc": "20261014T132950Z", "done": 4, "jobs_before": 4, "elapsed_seconds": 23.6}
+2026-10-14T15:30:14 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-10-14T15:30:14 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-10-14T15:30:14 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-10-14T15:30:14 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/autoresearch_harness/.venv/lib/python3.11/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/autoresearch_harness/.venv/lib/python3.11/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+2026-10-14T15:30:14 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:14 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:14 [INFO] autoresearch.worker.local_worker: trial-003: applied edit MAX_ITER: 24 → 28
+2026-10-14T15:30:14 [INFO] autoresearch.worker.local_worker: trial-003: applied edit MAX_ITER: 24 → 28
+2026-10-14T15:30:14 [INFO] autoresearch.worker.local_worker: trial-003: running: python3 train.py
+2026-10-14T15:30:14 [INFO] autoresearch.worker.local_worker: trial-003: running: python3 train.py
+2026-10-14T15:30:15 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.5s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.065274}
+2026-10-14T15:30:15 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.5s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.065274}
+2026-10-14T15:30:15 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-10-14T15:30:15 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/autoresearch_harness/.venv/lib/python3.11/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+2026-10-14T15:30:16 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:16 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:16 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:16 [INFO] autoresearch.worker.local_worker: trial-003: run_command finished in 1.5s; success=True metrics={'val_score': 0.958217, 'train_loss': 0.121036}
+2026-10-14T15:30:16 [INFO] autoresearch.worker.local_worker: trial-003: run_command finished in 1.5s; success=True metrics={'val_score': 0.947075, 'train_loss': 0.131301}
+2026-10-14T15:30:16 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:16 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:16 [INFO] autoresearch.worker.local_worker: trial-004: applied edit C: 0.001 → 0.008
+2026-10-14T15:30:16 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py --config config.yaml
+2026-10-14T15:30:16 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:16 [INFO] autoresearch.worker.local_worker: trial-004: applied edit MAX_ITER: 24 → 32
+2026-10-14T15:30:16 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py
+2026-10-14T15:30:16 [INFO] autoresearch.worker.local_worker: trial-004: applied edit MAX_ITER: 28 → 32
+2026-10-14T15:30:16 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py
+2026-10-14T15:30:17 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.6s; success=True metrics={'val_auc': 0.992351, 'val_acc': 0.971429}
+2026-10-14T15:30:17 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-10-14T15:30:17 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-10-14T15:30:17 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.4s; success=True metrics={'val_score': 0.958217, 'train_loss': 0.099254}
+2026-10-14T15:30:17 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.4s; success=True metrics={'val_score': 0.947075, 'train_loss': 0.105411}
+2026-10-14T15:30:17 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-10-14T15:30:17 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-10-14T15:30:17 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-10-14T15:30:17 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-10-14T15:30:18 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.6s; success=True metrics={'val_auc': 0.991948, 'val_acc': 0.971429}
+2026-10-14T15:30:18 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:18 [INFO] autoresearch.worker.local_worker: trial-005: applied edit C: 0.008 → 0.016
+2026-10-14T15:30:18 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 train.py --config config.yaml
+2026-10-14T15:30:19 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.7s; success=True metrics={'val_auc': 0.992351, 'val_acc': 0.971429}
+2026-10-14T15:30:19 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.5s; success=True metrics={'val_score': 0.972145, 'train_loss': 0.144185}
+2026-10-14T15:30:19 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.5s; success=True metrics={'val_score': 0.969359, 'train_loss': 0.114698}
+/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/autoresearch_harness/.venv/lib/python3.11/site-packages/langgraph/cache/base/__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+2026-10-14T15:30:19 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:19 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:19 [INFO] autoresearch.worker.local_worker: trial-005: run_command finished in 1.7s; success=True metrics={'val_auc': 0.992351, 'val_acc': 0.971429}
+2026-10-14T15:30:19 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:19 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-10-14T15:30:19 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-10-14T15:30:19 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:19 [INFO] autoresearch.worker.local_worker: trial-004: applied edit C: 0.001 → 0.008
+2026-10-14T15:30:19 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py --config config.yaml
+2026-10-14T15:30:21 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.6s; success=True metrics={'val_auc': 0.993961, 'val_acc': 0.971429}
+2026-10-14T15:30:21 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 1.6s; success=True metrics={'val_auc': 0.994364, 'val_acc': 0.971429}
+2026-10-14T15:30:21 [INFO] httpx: HTTP Request: POST http://127.0.0.1:57715/api/chat "HTTP/1.0 200 OK"
+2026-10-14T15:30:21 [INFO] autoresearch.worker.local_worker: trial-005: applied edit C: 0.008 → 0.016
+2026-10-14T15:30:21 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 train.py --config config.yaml
+2026-10-14T15:30:22 [INFO] autoresearch.worker.local_worker: trial-005: run_command finished in 1.5s; success=True metrics={'val_auc': 0.995169, 'val_acc': 0.971429}
+2026-10-14T15:30:22 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-10-14T15:30:22 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-10-14T15:30:24 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 1.4s; success=True metrics={'val_auc': 0.993961, 'val_acc': 0.971429}
+{"out": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/agent_paper_B/results/r1/pilot/E1b_rerun2_A_20261014T132950Z", "start_utc": "20261014T133014Z", "done": 8, "jobs_before": 8, "elapsed_seconds": 10.3}
+{"out": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/agent_paper_B/results/r1/pilot/E1b_rerun2_A_20261014T132950Z", "start_utc": "20261014T133024Z", "done": 0, "jobs_before": 0, "elapsed_seconds": 0.0}

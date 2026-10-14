@@ -1,0 +1,8 @@
+{
+  "label": "DRYRUN",
+  "before_fixes": false,
+  "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_1v7s43yb",
+  "pin": "411c6054c8505f93a6429e2f9eed526952793882",
+  "error": "STOP: DRYRUN preparation tests failed: ['r1-test: r1/tests/test_ada_e1b_rerun2.py::test_prepare_accepts_only_the_environmental_failures', 'r1-test: r1/tests/test_ada_e1b_rerun2.py::test_prepare_refuses_an_unknown_failure', 'r1-test: r1/tests/test_ada_e1b_rerun2.py::test_prepare_refuses_a_nonzero_exit_without_parsed_failures', 'r1-test: r1/tests/test_ada_e1b_rerun2.py::test_ada_exceptions_are_accepted_and_start_proceeds', 'r1-test: r1/tests/test_ada_e1b_rerun2.py::test_a_third_test_in_the_same_file_is_still_refused', 'r1-test: r1/tests/test_gpu_process_census.py::test_other_user_on_card_is_allowed_and_logged', 'r1-test: r1/tests/test_gpu_process_census.py::test_exited_pid_is_recorded_without_stop', 'r1-test: r1/tests/test_gpu_process_census.py::test_too_little_memory_before_load_is_a_stop', 'r1-test: r1/tests/test_gpu_process_census.py::test_loaded_model_needs_only_the_margin', 'r1-test: r1/tests/test_rerun2_batch4c.py::test_launcher_requires_git_identity_and_records_dev_setup']",
+  "elapsed_seconds": 230.09
+}

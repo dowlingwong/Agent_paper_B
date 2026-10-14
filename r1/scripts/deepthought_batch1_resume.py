@@ -28,10 +28,14 @@ MODEL_FOOTPRINT_MIB = 5304  # DT1: size_vram 5560907776 B, model fully offloaded
 MARGIN_MIB = 2048
 EXECUTOR = os.environ.get('R1_EXECUTOR', 'Codex')
 COAUTHOR = os.environ.get('R1_COAUTHOR', 'Codex <noreply@openai.com>')
-os.environ.update(AR_HARNESS_ROOT=str(HARNESS), OLLAMA_BASE_URL='http://127.0.0.1:11434',
+from r1.scripts.dryrun_guard import validate_dryrun
+RUN_LABEL = 'DRYRUN' if validate_dryrun() else 'ENGINEERING_ONLY'
+OLLAMA_PORT = int(os.environ['R1_DRYRUN_PORT']) if RUN_LABEL == 'DRYRUN' else 11434
+OLLAMA_URL = f'http://127.0.0.1:{OLLAMA_PORT}'
+os.environ.update(AR_HARNESS_ROOT=str(HARNESS), OLLAMA_BASE_URL=OLLAMA_URL,
                   OMP_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1')
 os.environ['PATH'] = str(HARNESS / '.venv/bin') + ':' + os.environ['PATH']
-state = {'label': 'ENGINEERING_ONLY', 'steps': {}, 'batch_logs': str(BATCH), 'execution_host': platform.node(), 'wait_limit_seconds': None}
+state = {'label': RUN_LABEL, 'steps': {}, 'batch_logs': str(BATCH), 'execution_host': platform.node(), 'wait_limit_seconds': None}
 if (BATCH / 'repairs.json').exists():
     state['steps'].update(json.loads((BATCH / 'repairs.json').read_text()))
 
@@ -58,15 +62,18 @@ def git_output(repo, *args):
 
 
 def commit(repo, message, paths, step):
+    if RUN_LABEL == 'DRYRUN':
+        message = 'DRYRUN: ' + message
     cmd(['git', 'add', '-f', '--', *[str(p) for p in paths]], cwd=repo)
     # Preserve raw generated CSV, logs and patch artifacts byte-for-byte.
     cmd(['git', 'diff', '--cached', '--check', '--', '.',
          ':!results/r1/**', ':!experiments/r1/**'], cwd=repo)
     cmd(['git', 'commit', '-m', message, '-m', 'Co-Authored-By: ' + COAUTHOR], cwd=repo)
     branch = 'r1' if repo == HARNESS else 'main'
-    cmd(['git', 'push', 'origin', branch], cwd=repo)
+    remote_name = 'dryrun' if validate_dryrun() else 'origin'
+    cmd(['git', 'push', remote_name, branch], cwd=repo)
     head = git_output(repo, 'rev-parse', 'HEAD')
-    remote = git_output(repo, 'ls-remote', 'origin', 'refs/heads/' + branch).split()[0]
+    remote = git_output(repo, 'ls-remote', remote_name, 'refs/heads/' + branch).split()[0]
     if head != remote:
         raise RuntimeError('STOP: pushed head does not match remote head')
     state['steps'][step]['commit'] = head
@@ -82,7 +89,7 @@ def gpu_rows():
 
 
 def pin():
-    with urlopen('http://127.0.0.1:11434/api/tags', timeout=15) as r:
+    with urlopen(OLLAMA_URL + '/api/tags', timeout=15) as r:
         tags = json.load(r)
     found = next((m for m in tags['models'] if m['name'] == MODEL), None)
     if found is None or found['digest'] != DIGEST:
@@ -126,7 +133,7 @@ def check_gpu():
         raise RuntimeError('STOP: selected GPU is no longer listed by nvidia-smi')
     need = MARGIN_MIB if state.get('model_loaded') else MODEL_FOOTPRINT_MIB + MARGIN_MIB
     me = getpass.getuser()
-    record = {'label': 'ENGINEERING_ONLY', 'utc': stamp(), 'selected_uuid': selected_uuid,
+    record = {'label': state.get('label', 'ENGINEERING_ONLY'), 'utc': stamp(), 'selected_uuid': selected_uuid,
               'need_free_mib': need, 'selected_free_mib': card['free_mib'],
               'other_owners_on_selected': sorted({str(p['owner']) for p in card['processes'] if p['owner'] != me}),
               'cards': cards}
@@ -189,8 +196,9 @@ def collect(out, work, extra, nodes, manager='langgraph', memory_mode=None, arm_
         gated = manager == 'langgraph'
     if gated:
         require_liveness(nodes, memory_mode=memory_mode, arm_role=arm_role)
+    dry_args = ['--label', 'DRYRUN', '--split', 'engineering'] if validate_dryrun() else []
     cmd([PY, '-m', 'r1.headroom.e1b_collect', '--manager', manager, '--work', str(work),
-         '--out', str(out), *extra], log=out.name + '.log')
+         '--out', str(out), *extra, *dry_args], log=out.name + '.log')
     for _ in range(12):
         check_gpu()
         cmd([PY, '-m', 'r1.headroom.e1b_collect', '--resume', str(out), '--workers',
@@ -275,10 +283,11 @@ def finish(reason):
     state['finished_utc'] = stamp()
     state['stop_reason'] = reason
     save()
+    outputs_label = 'DRYRUN' if RUN_LABEL == 'DRYRUN' else 'PILOT or ENGINEERING_ONLY'
     day = datetime.now(ZoneInfo('Europe/Berlin')).strftime('%d %B %Y')
     title = state.get('status_title', 'Remote batch 1')
     lines = [f'## {day} — {title}: {"stopped" if reason else "completed"}', '',
-             f'AI-assisted execution by {EXECUTOR}. All outputs are PILOT or ENGINEERING_ONLY; none is evidence.', '',
+             f'AI-assisted execution by {EXECUTOR}. All outputs are {outputs_label}; none is evidence.', '',
              f'- **Execution host:** `{platform.node()}`. Logs and preserved runtime state: `{BATCH}/`.',
              f'- **Harness:** `{git_output(HARNESS, "rev-parse", "HEAD")}`; manager `{MODEL}`, pinned digest `{DIGEST}`.',
              f'- **GPU / offload:** `{state.get("gpu", "not selected")}`; `{json.dumps(state.get("gpu_offload", {}), sort_keys=True)}`.', '']
@@ -309,10 +318,10 @@ def run_dt4(meta, version):
                                '--runs', '20', '--points', '4', '8', '12', '--reps', '2',
                                '--audit-seeds', '6', '--workers', '4'],
                      ['digits_mlp', 'openml_ionosphere'])
-    with urlopen('http://127.0.0.1:11434/api/ps', timeout=15) as response:
+    with urlopen(OLLAMA_URL + '/api/ps', timeout=15) as response:
         processes_after = json.load(response)
     (BATCH / 'gpu_offload_after_collection.json').write_text(json.dumps(
-        {'label': 'ENGINEERING_ONLY', 'utc': stamp(), 'processes': processes_after}, indent=2) + '\n')
+        {'label': RUN_LABEL, 'utc': stamp(), 'processes': processes_after}, indent=2) + '\n')
     after = next((m for m in processes_after['models'] if m.get('name', m.get('model')) == MODEL), None)
     assert_full_offload(after, 'after DT4 collection')
     check_gpu()
@@ -405,7 +414,7 @@ def main():
     save()
     for _ in range(60):
         try:
-            with urlopen('http://127.0.0.1:11434/api/version', timeout=2) as r:
+            with urlopen(OLLAMA_URL + '/api/version', timeout=2) as r:
                 version = json.load(r)
             break
         except OSError:
@@ -421,13 +430,13 @@ def main():
     from urllib.request import Request
     payload = json.dumps({'model': MODEL, 'prompt': 'Reply OK', 'stream': False,
                           'keep_alive': '30m', 'options': {'num_predict': 1}}).encode()
-    with urlopen(Request('http://127.0.0.1:11434/api/generate', data=payload,
+    with urlopen(Request(OLLAMA_URL + '/api/generate', data=payload,
                          headers={'Content-Type': 'application/json'}), timeout=300) as response:
         probe_result = json.load(response)
-    with urlopen('http://127.0.0.1:11434/api/ps', timeout=15) as response:
+    with urlopen(OLLAMA_URL + '/api/ps', timeout=15) as response:
         offload = json.load(response)
     (BATCH / 'gpu_offload_probe.json').write_text(json.dumps(
-        {'label': 'ENGINEERING_ONLY', 'response': probe_result, 'processes': offload}, indent=2) + '\n')
+        {'label': RUN_LABEL, 'response': probe_result, 'processes': offload}, indent=2) + '\n')
     loaded = next((m for m in offload['models'] if m.get('name', m.get('model')) == MODEL), None)
     if loaded is None or loaded.get('size_vram', 0) <= 0:
         raise RuntimeError('STOP: load probe demonstrated no GPU offload; no DT1 latency or later campaigns started')
@@ -454,7 +463,7 @@ def main():
     save()
     if latency['n_calls'] != 10:
         raise RuntimeError('STOP: L4-dt did not produce ten calls')
-    with urlopen('http://127.0.0.1:11434/api/ps', timeout=15) as response:
+    with urlopen(OLLAMA_URL + '/api/ps', timeout=15) as response:
         processes = json.load(response)
     (out / 'ollama_processes.json').write_text(json.dumps(processes, indent=2) + '\n')
     loaded = next((m for m in processes['models'] if m.get('name', m.get('model')) == MODEL), None)

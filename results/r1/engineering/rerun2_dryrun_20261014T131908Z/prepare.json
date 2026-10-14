@@ -1,0 +1,78 @@
+{
+  "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_1v7s43yb/batches/r1_e1b_rerun2_DRYRUN_20261014_RM7PMd",
+  "paper_head": "e0759957f267761c0c0c8eccb1d63014e9772f63",
+  "harness_head": "411c6054c8505f93a6429e2f9eed526952793882",
+  "harness_tests": {
+    "returncode": 1,
+    "summary": "9 failed, 388 passed, 1 warning, 1 error, 4 subtests passed in 175.18s (0:02:55)",
+    "failures": [
+      "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns",
+      "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns",
+      "tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist",
+      "tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links",
+      "tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance",
+      "tests/test_legacy_noop_skip.py"
+    ],
+    "unexpected": [
+      "r1-test: r1/tests/test_ada_e1b_rerun2.py::test_prepare_accepts_only_the_environmental_failures",
+      "r1-test: r1/tests/test_ada_e1b_rerun2.py::test_prepare_refuses_an_unknown_failure",
+      "r1-test: r1/tests/test_ada_e1b_rerun2.py::test_prepare_refuses_a_nonzero_exit_without_parsed_failures",
+      "r1-test: r1/tests/test_ada_e1b_rerun2.py::test_ada_exceptions_are_accepted_and_start_proceeds",
+      "r1-test: r1/tests/test_ada_e1b_rerun2.py::test_a_third_test_in_the_same_file_is_still_refused",
+      "r1-test: r1/tests/test_gpu_process_census.py::test_other_user_on_card_is_allowed_and_logged",
+      "r1-test: r1/tests/test_gpu_process_census.py::test_exited_pid_is_recorded_without_stop",
+      "r1-test: r1/tests/test_gpu_process_census.py::test_too_little_memory_before_load_is_a_stop",
+      "r1-test: r1/tests/test_gpu_process_census.py::test_loaded_model_needs_only_the_margin",
+      "r1-test: r1/tests/test_rerun2_batch4c.py::test_launcher_requires_git_identity_and_records_dev_setup"
+    ]
+  },
+  "r1_tests": {
+    "returncode": 2,
+    "summary": "10 failed, 140 passed, 1 skipped in 42.87s",
+    "failures": [
+      "r1/tests/test_ada_e1b_rerun2.py::test_prepare_accepts_only_the_environmental_failures",
+      "r1/tests/test_ada_e1b_rerun2.py::test_prepare_refuses_an_unknown_failure",
+      "r1/tests/test_ada_e1b_rerun2.py::test_prepare_refuses_a_nonzero_exit_without_parsed_failures",
+      "r1/tests/test_ada_e1b_rerun2.py::test_ada_exceptions_are_accepted_and_start_proceeds",
+      "r1/tests/test_ada_e1b_rerun2.py::test_a_third_test_in_the_same_file_is_still_refused",
+      "r1/tests/test_gpu_process_census.py::test_other_user_on_card_is_allowed_and_logged",
+      "r1/tests/test_gpu_process_census.py::test_exited_pid_is_recorded_without_stop",
+      "r1/tests/test_gpu_process_census.py::test_too_little_memory_before_load_is_a_stop",
+      "r1/tests/test_gpu_process_census.py::test_loaded_model_needs_only_the_margin",
+      "r1/tests/test_rerun2_batch4c.py::test_launcher_requires_git_identity_and_records_dev_setup"
+    ]
+  },
+  "accepted_failures": [
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns",
+    "tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist",
+    "tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance",
+    "tests/test_legacy_noop_skip.py",
+    "tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::test_claw_worker_deterministic_constant_patch_runs_without_llm",
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns"
+  ],
+  "ok": false,
+  "label": "DRYRUN",
+  "git_identity": {
+    "name": "DRYRUN fixture",
+    "email": "fixture@example.invalid"
+  },
+  "identity_checks": {
+    "paper": true,
+    "harness": true
+  },
+  "push_dry_run": {
+    "paper": true,
+    "harness": true
+  },
+  "pytest_version": "pytest 9.0.3",
+  "models_directory": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_1v7s43yb/pinned/ollama_models"
+}

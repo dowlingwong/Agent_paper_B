@@ -1,0 +1,30 @@
+/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider r1/tests
+........................................................................ [ 47%]
+...................................................F.................... [ 95%]
+.......                                                                  [100%]
+=================================== FAILURES ===================================
+_______________________ test_real_runner_desktop_dryrun ________________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-240/test_real_runner_desktop_dryru0')
+
+    def test_dryrun_refuses_escaped_batch_root(tmp_path, monkeypatch):
+        (tmp_path / '.dryrun').write_text('DRYRUN\n')
+        monkeypatch.setenv('R1_DRYRUN', '1')
+        monkeypatch.setenv('R1_DRYRUN_ROOT', str(tmp_path))
+>       monkeypatch.delenv('AR_HARNESS_ROOT', raising=False)
+E       AssertionError: Traceback (most recent call last):
+E           File "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/rerun2_dryrun.py", line 187, in <module>
+E             main()
+E           File "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/rerun2_dryrun.py", line 153, in main
+E             assert state['stop_reason'] is None, state['stop_reason']
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError: RuntimeError: STOP: missing continue or verify leaves
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python', '/Users/wongdowling/Docum...\']\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: RuntimeError: STOP: missing continue or verify leaves\n').returncode
+
+r1/tests/test_rerun2_batch4c.py:130: AssertionError
+=========================== short test summary info ============================
+FAILED r1/tests/test_rerun2_batch4c.py::test_real_runner_desktop_dryrun - Ass...
+1 failed, 150 passed in 357.44s (0:05:57)
+make: *** [r1-test] Error 1

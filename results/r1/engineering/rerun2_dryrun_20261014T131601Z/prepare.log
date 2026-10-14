@@ -1,0 +1,21 @@
+{
+  "ok": false,
+  "unexpected": [
+    "r1-test: r1/tests/test_d28_gate.py::test_script_stops_without_a_liveness_manifest",
+    "r1-test: r1/tests/test_d28_gate.py::test_script_reads_the_manifest_from_the_environment",
+    "r1-test: r1/tests/test_d28_gate.py::test_script_rejects_a_scripted_liveness_manifest",
+    "r1-test: r1/tests/test_d28_gate.py::test_script_rejects_a_memory_off_liveness_manifest",
+    "r1-test: r1/tests/test_d28_gate.py::test_script_finds_the_newest_engineering_liveness_report",
+    "r1-test: r1/tests/test_d28_gate.py::test_script_orders_manifests_by_date_not_by_manager_prefix",
+    "r1-test: r1/tests/test_d28_gate.py::test_collect_is_gated_before_any_collector_call",
+    "r1-test: r1/tests/test_gpu_process_census.py::test_other_user_on_card_is_allowed_and_logged",
+    "r1-test: r1/tests/test_gpu_process_census.py::test_exited_pid_is_recorded_without_stop",
+    "r1-test: r1/tests/test_gpu_process_census.py::test_too_little_memory_before_load_is_a_stop",
+    "r1-test: r1/tests/test_gpu_process_census.py::test_loaded_model_needs_only_the_margin",
+    "r1-test: r1/tests/test_rerun2_batch4c.py::test_exec_loaded_globals_are_defined_and_guard_catches_original"
+  ],
+  "harness_tests": "9 failed, 388 passed, 1 warning, 1 error, 4 subtests passed in 86.82s (0:01:26)",
+  "r1_tests": "12 failed, 137 passed, 1 skipped in 25.97s"
+}
+PREPARED. Batch: /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_nrgn2b0_/batches/r1_e1b_rerun2_DRYRUN_20261014_wZYhWC
+Review /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_nrgn2b0_/batches/r1_e1b_rerun2_DRYRUN_20261014_wZYhWC/prepare.json, then: --start /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_nrgn2b0_/batches/r1_e1b_rerun2_DRYRUN_20261014_wZYhWC

@@ -1,0 +1,101 @@
+{
+  "label": "DRYRUN",
+  "steps": {
+    "preconditions": {
+      "completed": true,
+      "started_utc": "20261014T132935Z",
+      "completed_utc": "20261014T132937Z"
+    },
+    "liveness": {
+      "completed": true,
+      "started_utc": "20261014T132937Z",
+      "out": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv/agent_paper_B/results/r1/engineering/liveness_llm_20261014T132937Z",
+      "eligible_nodes": [
+        "digits_mlp",
+        "openml_breast_w"
+      ],
+      "excluded_nodes": [],
+      "verdicts": {
+        "digits_mlp": {
+          "active_novelty_fraction": {
+            "equals_incumbent_trials": 0,
+            "evaluated_trials": 4,
+            "novel_trials": 4,
+            "novelty_source": "events",
+            "observed": 1.0,
+            "required": ">= 0.5",
+            "seen_before_trials": 0
+          },
+          "invalid_rate": {
+            "observed": 0.0,
+            "required": "< 0.3"
+          },
+          "keep_after_trial_1": {
+            "observed": 1,
+            "required": "at least 1 keep with budget_index > 1"
+          }
+        },
+        "openml_breast_w": {
+          "active_novelty_fraction": {
+            "equals_incumbent_trials": 1,
+            "evaluated_trials": 5,
+            "novel_trials": 4,
+            "novelty_source": "events",
+            "observed": 0.8,
+            "required": ">= 0.5",
+            "seen_before_trials": 1
+          },
+          "invalid_rate": {
+            "observed": 0.2,
+            "required": "< 0.3"
+          },
+          "keep_after_trial_1": {
+            "observed": 2,
+            "required": "at least 1 keep with budget_index > 1"
+          }
+        }
+      },
+      "commit": "bf09bd0882c743e2012e0f1b09b5b6ced2b2815b",
+      "completed_utc": "20261014T132950Z"
+    },
+    "arm_A": {
+      "completed": false,
+      "started_utc": "20261014T132950Z"
+    },
+    "STATUS": {
+      "completed": true,
+      "reason": "RuntimeError: STOP: missing continue or verify leaves",
+      "commit": "38c6b1c00f2afadbfae6465333d97d360c407fc5"
+    }
+  },
+  "batch_logs": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_23p_tzhz/batches/r1_e1b_rerun2_DRYRUN_20261014_sXJCzv",
+  "execution_host": "Dowlings-MacBook-Pro-2.local",
+  "wait_limit_seconds": null,
+  "status_title": "R1-E1B-RERUN2 (DRYRUN)",
+  "status_commit_message": "Record R1-E1B-RERUN2 execution status",
+  "status_accept_note": "E1b rerun-2 phases are accepted only where the phase entry explicitly records completion. Partial outputs are preserved; no completed phase was re-run and no interrupted phase was retried.",
+  "ollama_session": "r1_ollama_e1b_rerun2",
+  "paper_head_at_launch": "9235db9d0397cb98fb1a53dc8ad7600700b42012",
+  "harness_head_at_launch": "411c6054c8505f93a6429e2f9eed526952793882",
+  "authorization": "PLAN \u00a710 rows: R1-E1B-RERUN2, D28 (revised criterion 2), R1-COMPUTE (GPU co-tenancy, 13 Oct)",
+  "gpu": "0, GPU-DRYRUN, DRYRUN shared card, 40000",
+  "ollama_started_by_batch": true,
+  "model_loaded": true,
+  "ollama_version": {
+    "version": "DRYRUN"
+  },
+  "gpu_offload": {
+    "size": 5560907776,
+    "size_vram": 5560907776,
+    "full_offload": true,
+    "probe_tokens_max": 1,
+    "keep_alive": -1,
+    "host": "Dowlings-MacBook-Pro-2.local"
+  },
+  "ollama_cleanup": {
+    "returncode": 0,
+    "stderr": ""
+  },
+  "finished_utc": "20261014T133024Z",
+  "stop_reason": "RuntimeError: STOP: missing continue or verify leaves"
+}

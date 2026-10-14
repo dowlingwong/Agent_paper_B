@@ -1,0 +1,206 @@
+{
+  "label": "DRYRUN",
+  "before_fixes": false,
+  "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1",
+  "pin": "411c6054c8505f93a6429e2f9eed526952793882",
+  "state": {
+    "label": "DRYRUN",
+    "steps": {
+      "preconditions": {
+        "completed": true,
+        "started_utc": "20261014T135220Z",
+        "completed_utc": "20261014T135222Z"
+      },
+      "liveness": {
+        "completed": true,
+        "started_utc": "20261014T135222Z",
+        "out": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/results/r1/engineering/liveness_llm_20261014T135222Z",
+        "eligible_nodes": [
+          "digits_mlp",
+          "openml_breast_w"
+        ],
+        "excluded_nodes": [],
+        "verdicts": {
+          "digits_mlp": {
+            "active_novelty_fraction": {
+              "equals_incumbent_trials": 0,
+              "evaluated_trials": 4,
+              "novel_trials": 4,
+              "novelty_source": "events",
+              "observed": 1.0,
+              "required": ">= 0.5",
+              "seen_before_trials": 0
+            },
+            "invalid_rate": {
+              "observed": 0.0,
+              "required": "< 0.3"
+            },
+            "keep_after_trial_1": {
+              "observed": 1,
+              "required": "at least 1 keep with budget_index > 1"
+            }
+          },
+          "openml_breast_w": {
+            "active_novelty_fraction": {
+              "equals_incumbent_trials": 1,
+              "evaluated_trials": 5,
+              "novel_trials": 4,
+              "novelty_source": "events",
+              "observed": 0.8,
+              "required": ">= 0.5",
+              "seen_before_trials": 1
+            },
+            "invalid_rate": {
+              "observed": 0.2,
+              "required": "< 0.3"
+            },
+            "keep_after_trial_1": {
+              "observed": 2,
+              "required": "at least 1 keep with budget_index > 1"
+            }
+          }
+        },
+        "commit": "26d189a53ade1b8870810fe4ef9b1fb4ec9c2cea",
+        "completed_utc": "20261014T135235Z"
+      },
+      "arm_A": {
+        "completed": true,
+        "started_utc": "20261014T135235Z",
+        "out": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/results/r1/pilot/E1b_rerun2_A_20261014T135235Z",
+        "tables": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/docs/r1/reports/HEADROOM_RERUN2_A_20261014_tables.md",
+        "checks": {
+          "label": "DRYRUN",
+          "leaves": 8,
+          "collection_failures": 0,
+          "manager_kind": "langgraph",
+          "llm_calls": 49,
+          "parse_failures": 0,
+          "proposal_examples": [
+            "DRYRUN novel fixture proposal at trial 1",
+            "DRYRUN novel fixture proposal at trial 2",
+            "DRYRUN novel fixture proposal at trial 3",
+            "DRYRUN novel fixture proposal at trial 4",
+            "DRYRUN novel fixture proposal at trial 5"
+          ]
+        },
+        "commit": "4550eb73cd21b772b3159dc6fc3aae1c16727ba9",
+        "committed_analysis_sha256": "32b1cd75fdf350c7f4aaf4aaa8f6cf608e96922d1594653a412f488f45ff0cc5",
+        "regenerated_analysis_sha256": "32b1cd75fdf350c7f4aaf4aaa8f6cf608e96922d1594653a412f488f45ff0cc5",
+        "completed_utc": "20261014T135335Z"
+      },
+      "arm_B": {
+        "completed": true,
+        "started_utc": "20261014T135335Z",
+        "out": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/results/r1/pilot/E1b_rerun2_B_20261014T135335Z",
+        "tables": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/docs/r1/reports/HEADROOM_RERUN2_B_20261014_tables.md",
+        "checks": {
+          "label": "DRYRUN",
+          "leaves": 8,
+          "collection_failures": 0,
+          "manager_kind": "langgraph",
+          "llm_calls": 40,
+          "parse_failures": 0,
+          "proposal_examples": [
+            "DRYRUN novel fixture proposal at trial 1",
+            "DRYRUN novel fixture proposal at trial 2",
+            "DRYRUN novel fixture proposal at trial 3",
+            "DRYRUN novel fixture proposal at trial 4",
+            "DRYRUN novel fixture proposal at trial 5"
+          ]
+        },
+        "commit": "ca474f9d3478169bdc5694b05b66e812af70a770",
+        "committed_analysis_sha256": "c2493f1fb487f283d121ffb5e2a6660d1f620ece93e2d1c1f97f5ad89174a83c",
+        "regenerated_analysis_sha256": "c2493f1fb487f283d121ffb5e2a6660d1f620ece93e2d1c1f97f5ad89174a83c",
+        "completed_utc": "20261014T135428Z"
+      },
+      "arm_C": {
+        "completed": true,
+        "started_utc": "20261014T135428Z",
+        "out": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/results/r1/pilot/E1b_rerun2_C_20261014T135428Z",
+        "tables": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/docs/r1/reports/HEADROOM_RERUN2_C_20261014_tables.md",
+        "checks": {
+          "label": "DRYRUN",
+          "leaves": 8,
+          "collection_failures": 0,
+          "manager_kind": "scripted",
+          "llm_calls": 0,
+          "parse_failures": 0,
+          "proposal_examples": [
+            "max_iter 1000 -> 825",
+            "max_iter 825 -> 302",
+            "C 0.15 -> 0.2036",
+            "model_type logistic_regression -> gradient_boosting",
+            "C 0.2036 -> 0.2702"
+          ]
+        },
+        "commit": "c9491b81ef677a5e754358251153cae54b39c19c",
+        "committed_analysis_sha256": "5a7c3cdad9398df224c9a3932be9a130dee83cb037543dc1f01260903987d202",
+        "regenerated_analysis_sha256": "5a7c3cdad9398df224c9a3932be9a130dee83cb037543dc1f01260903987d202",
+        "completed_utc": "20261014T135520Z"
+      },
+      "comparison": {
+        "completed": true,
+        "started_utc": "20261014T135520Z",
+        "report": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/docs/r1/reports/HEADROOM_RERUN2_20261014T135520Z_comparison.md",
+        "json": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/docs/r1/reports/HEADROOM_RERUN2_20261014T135520Z_comparison.json",
+        "commit": "661d87802d79756430b1b5e9588f6793b8e0a4bc",
+        "completed_utc": "20261014T135521Z"
+      },
+      "STATUS": {
+        "completed": true,
+        "reason": null,
+        "commit": "9867ec42086af9a677230b53f69fa96b8d5a16da"
+      }
+    },
+    "batch_logs": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q",
+    "execution_host": "Dowlings-MacBook-Pro-2.local",
+    "wait_limit_seconds": null,
+    "status_title": "R1-E1B-RERUN2 (DRYRUN)",
+    "status_commit_message": "Record R1-E1B-RERUN2 execution status",
+    "status_accept_note": "E1b rerun-2 phases are accepted only where the phase entry explicitly records completion. Partial outputs are preserved; no completed phase was re-run and no interrupted phase was retried.",
+    "ollama_session": "r1_ollama_e1b_rerun2",
+    "paper_head_at_launch": "aece7bbd1368b16511246190ca9e89d603cf7ada",
+    "harness_head_at_launch": "411c6054c8505f93a6429e2f9eed526952793882",
+    "authorization": "PLAN \u00a710 rows: R1-E1B-RERUN2, D28 (revised criterion 2), R1-COMPUTE (GPU co-tenancy, 13 Oct)",
+    "gpu": "0, GPU-DRYRUN, DRYRUN shared card, 40000",
+    "ollama_started_by_batch": true,
+    "model_loaded": true,
+    "ollama_version": {
+      "version": "DRYRUN"
+    },
+    "gpu_offload": {
+      "size": 5560907776,
+      "size_vram": 5560907776,
+      "full_offload": true,
+      "probe_tokens_max": 1,
+      "keep_alive": -1,
+      "host": "Dowlings-MacBook-Pro-2.local"
+    },
+    "ollama_cleanup": {
+      "returncode": 0,
+      "stderr": ""
+    },
+    "finished_utc": "20261014T135521Z",
+    "stop_reason": null
+  },
+  "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q",
+  "inactive_key_rejections": {
+    "digits_mlp": 0,
+    "openml_breast_w": 3
+  },
+  "seeded_fake_chat_calls": 100,
+  "restart_refused": true,
+  "completed": true,
+  "fixture": {
+    "nodes": 2,
+    "instances_per_node": 2,
+    "runs": 6,
+    "points": [
+      2
+    ],
+    "repetitions": 1,
+    "audit_seeds": 1,
+    "deviations": "2 instances required by unchanged cross-fitting; W=6 required by unchanged paired verify cost 2*r=4; isolated loopback port because 11434 is occupied"
+  },
+  "elapsed_seconds": 348.14
+}

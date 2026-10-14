@@ -1,0 +1,83 @@
+# E1b rerun-2 cross-arm comparison — 20261014T135520Z
+
+**DRYRUN.** AI-assisted (BUILD_BATCH4, P7). DRYRUN; no interpretation beyond the readings template at the end.
+
+## Arms
+
+| arm | directory | manager | memory mode | role |
+|---|---|---|---|---|
+| A | `/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/results/r1/pilot/E1b_rerun2_A_20261014T135235Z` | langgraph | append_only_summary | primary |
+| B | `/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/results/r1/pilot/E1b_rerun2_B_20261014T135335Z` | langgraph | none | contrast |
+| C | `/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_rerun2_dryrun_m8v62_x1/batches/r1_e1b_rerun2_DRYRUN_20261014_kZIR6q/agent_paper_B/results/r1/pilot/E1b_rerun2_C_20261014T135428Z` | scripted | none | reference |
+
+Nodes: digits_mlp, openml_breast_w.
+
+## digits_mlp
+
+| metric | arm A | arm B | arm C |
+|---|---|---|---|
+| rho | -0.0070 | -0.0070 | +0.0014 |
+| always_verify − ρ | +0.0014 [+0.0000, +0.0028] | +0.0014 [+0.0000, +0.0028] | -0.0084 [-0.0139, -0.0028] |
+| kg_index − ρ | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] |
+| margin_threshold − ρ | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] |
+| best simple baseline | always_verify | always_verify | rho |
+| naive headroom | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] |
+| leaf-split headroom | – [–, –] | – [–, –] | – [–, –] |
+| share verify changes leaf | 0.50 | 0.50 | 1.00 |
+| mean verify − continue | +0.0014 | +0.0014 | -0.0084 |
+| points / instances | 2 / 2 | 2 / 2 | 2 / 2 |
+
+Memory effect (B − A) on always_verify − ρ: **+0.0000** [+0.0000, +0.0000] (2 shared instances, 2000 shared draws).
+
+## openml_breast_w
+
+| metric | arm A | arm B | arm C |
+|---|---|---|---|
+| rho | +0.0012 | +0.0014 | +0.0010 |
+| always_verify − ρ | +0.0004 [+0.0000, +0.0008] | +0.0002 [+0.0000, +0.0004] | -0.0010 [-0.0012, -0.0008] |
+| kg_index − ρ | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] |
+| margin_threshold − ρ | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] |
+| best simple baseline | always_verify | always_verify | rho |
+| naive headroom | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] |
+| leaf-split headroom | – [–, –] | – [–, –] | – [–, –] |
+| share verify changes leaf | 0.50 | 0.50 | 1.00 |
+| mean verify − continue | +0.0004 | +0.0002 | -0.0010 |
+| points / instances | 2 / 2 | 2 / 2 | 2 / 2 |
+
+Memory effect (B − A) on always_verify − ρ: **-0.0002** [-0.0004, +0.0000] (2 shared instances, 2000 shared draws).
+
+## ALL
+
+| metric | arm A | arm B | arm C |
+|---|---|---|---|
+| rho | -0.0029 | -0.0028 | +0.0012 |
+| always_verify − ρ | +0.0009 [+0.0000, +0.0021] | +0.0008 [+0.0000, +0.0021] | -0.0047 [-0.0111, -0.0010] |
+| kg_index − ρ | +0.0002 [+0.0000, +0.0006] | +0.0001 [+0.0000, +0.0003] | +0.0000 [+0.0000, +0.0000] |
+| margin_threshold − ρ | +0.0002 [+0.0000, +0.0006] | +0.0001 [+0.0000, +0.0003] | +0.0000 [+0.0000, +0.0000] |
+| best simple baseline | always_verify | always_verify | rho |
+| naive headroom | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] | +0.0000 [+0.0000, +0.0000] |
+| leaf-split headroom | – [–, –] | – [–, –] | – [–, –] |
+| share verify changes leaf | 0.50 | 0.50 | 1.00 |
+| mean verify − continue | +0.0009 | +0.0008 | -0.0047 |
+| points / instances | 4 / 4 | 4 / 4 | 4 / 4 |
+
+Memory effect (B − A) on always_verify − ρ: **-0.0001** [-0.0003, +0.0000] (4 shared instances, 2000 shared draws).
+
+## Waste (C1)
+
+| arm | availability | active-novelty | inactive-key rejections | config_seen_before | LLM calls | parse failures |
+|---|---|---|---|---|---|---|
+| A | yes | 0.9600 (24/25) | 3 | 0.0400 (1/25) | 49 | 0 |
+| B | yes | 1.0000 (24/24) | 0 | 0.0000 (0/24) | 40 | 0 |
+| C | yes | 1.0000 (24/24) | 0 | 0.0000 (0/24) | 0 | 0 |
+
+## Readings (template only)
+
+Primary contrast: `memory effect (always_verify − ρ)_B − (always_verify − ρ)_A, per node`. Bonferroni over m = 2 per-node contrasts, α = 0.05, adjusted interval level 0.9750.
+
+| node | point | adjusted CI | reading |
+|---|---|---|---|
+| digits_mlp | +0.0000 | [+0.0000, +0.0000] | inconclusive |
+| openml_breast_w | -0.0002 | [-0.0004, +0.0000] | inconclusive |
+
+Readings: supported if the adjusted lower bound is > 0; inconclusive if the interval spans 0; opposite if the adjusted upper bound is < 0.
