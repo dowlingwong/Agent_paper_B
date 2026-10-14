@@ -3,6 +3,14 @@
 Newest entry first. Only this file says what is done.
 
 
+
+## 14 October 2026 — author approves a second Ada test exception before rerun-2
+
+Planning only; recorded by an AI agent (Claude) at the author's request.
+
+- Batch-4 review findings F7–F11 are already fixed (review Resolution). The one item still worth fixing before Ada is the launcher's accepted-failure set. The 12 Oct Ada DT0 run failed `tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns` on a fresh checkout (it passes on the Mac), so `--start` would refuse.
+- **Adopted** (PLAN §10): accept exactly that test ID as environmental on Ada, together with the missing-`/bin/zsh` exception. Patch prompt: `docs/r1/prompts/BUILD_BATCH4B_PROMPT.md`. Afterwards, `docs/r1/prompts/ADA_E1B_RERUN2_PROMPT.md` is handed over unchanged.
+
 ## 14 October 2026 — batch 4: D27 F3 fix, D28 revised criterion 2, R1-E1B-RERUN2 entrypoints (ENGINEERING_ONLY)
 
 AI-assisted execution by opencode (deepseek-v4.1-flash) at the author's request per `docs/r1/prompts/BUILD_BATCH4_PROMPT.md`; no LLM calls, no GPU, no Ada batch created or launched. Commits: paper `5f650be` → `a8956ca` (branch `main`; P6 `271fc16`, P7 `9dd245c`, correction round `0cb76a3`, review `a8956ca`); harness `0f2d9e9` → `411c605` (branch `r1`; H6 `ed55297`, correction `411c605`). Independent fresh-context review: `docs/r1/reviews/BUILD_REVIEW_20261014b.md` (+ Resolution). `r1/scripts/HARNESS_PIN_RERUN2` = `411c6054c8505f93a6429e2f9eed526952793882`, on `origin/r1`.
