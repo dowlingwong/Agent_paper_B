@@ -13,6 +13,15 @@ Newest entry first. Only this file says what is done.
 
 
 
+## 14 October 2026 — author adopted D24–D28 (proposer decisions)
+
+Planning only; recorded by an AI agent (Claude) at the author's request. No code and no runs.
+
+- Finding behind the decisions: memory was switched off by R1's own collector (`r1/headroom/e1b_collect.py`, `run_root`: `memory_mode="none"` as a literal), not by a harness default and not by any PLAN row. Under `none` the LangGraph prompt still prints the AVOIDANCE RULE over a history that does not exist. Details: `docs/r1/reports/PROPOSER_DECISIONS_20261014.md`.
+- **Adopted** (PLAN §10, 14 Oct): D24 memory `append_only_summary` (primary; `none` as E1b contrast), D25 node-declared active keys, D26 seeded manager sampling, D27 no-op/duplicate flags plus an E1 skip arm, D28 node liveness check as a runner STOP.
+- Next: desktop implementation per `docs/r1/prompts/BUILD_BATCH3_PROMPT.md` with an independent review; then the liveness check and the LLM E1b rerun on Ada (separate prompt).
+- Still open: D18, D21, D23, the D4 amendment, the verify split policy, and the trial-1 unconditional-keep item.
+
 ## 14 October 2026 — ionosphere LLM diagnosis (read-only, ENGINEERING_ONLY)
 
 AI-assisted diagnosis by opencode (deepseek-v4.1-flash) at the author's request; no LLM calls, no GPU, no worker runs, no code change to harness/manager/prompts/nodes/PLAN/RUNBOOK. PILOT data only; not evidence. No decision recorded.

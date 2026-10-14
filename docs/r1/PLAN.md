@@ -356,6 +356,16 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 
 *Operational default for "enough memory" (proposed by the AI agent when recording this row; the author may change it):* at selection and again before each step, the card's free memory must be at least the workload's measured footprint plus 2 GiB (for the pinned 7B model: about 5.2 GiB `size_vram` + 2 GiB ≈ 7.2 GiB free). A card that falls below that during a run, an out-of-memory error, or an Ollama fallback to CPU is a STOP for that step; it is not retried automatically.
 
+**Decided 14 Oct 2026 by the author (proposer decisions after the ionosphere diagnosis).** These rows are fixed, not proposals. The author adopted all five proposals of `docs/r1/reports/PROPOSER_DECISIONS_20261014.md` ("草案的五条建议全部采纳"); that file gives the facts and options behind each row.
+
+| ID | Decision (decided 14 Oct 2026 by the author) |
+|---|---|
+| D24 | **Manager memory mode.** Primary proposal law for every LLM-backed R1 run: `append_only_summary`. Before it is used, the summary line shows the node's own `metric_name`, handles a metric of exactly 0.0, and the best-strategy line respects `metric_direction`. `none` is kept only as a declared secondary contrast in E1b (DT4 is its first arm). The collector takes the memory mode from the manifest, never as a literal; manifests without the field mean `none` (historical runs). Branch continuations use the same memory mode as their root. |
+| D25 | **Node-declared active keys.** Each node may declare which editable keys are active for the current configuration (for the OpenML template: keyed by `model_type`, plus dataset-level exclusions such as `imputer` without categorical columns). The manager is shown only active keys; a proposal naming an inactive key is rejected before any worker run, as a validation failure the manager may revise (it costs LLM calls, not runs). The scripted stand-in reads the same declaration instead of its private `OPENML_ACTIVE`, and its proposal sequence for existing seeds must stay identical. Nodes without a declaration behave exactly as before. All other nodes are audited for inert keys before E3. |
+| D26 | **Manager sampling seed.** Temperature stays 0.2 (D15). Every manager call gets an Ollama `seed` derived deterministically from (instance, trial index, repetition), recorded in its `llm_call` event. Reproducibility measure only. |
+| D27 | **No-op and duplicate edits.** Record-only flags on every trial: effective config equal to the incumbent's, equal to an earlier evaluated config, or metric bit-identical to the incumbent's. They count as wasted runs in C1 and change no behaviour in the primary arms. Add an E1 harness-heuristic arm that skips a known no-op or duplicate (the PLAN §5 doom-loop skip). |
+| D28 | **Node liveness check before LLM-backed collection.** Per node, with the chosen memory mode: 1–2 instances, W = 10, no branching. Pass requires at least one keep after trial 1, at least 50 % of trials with a metric different from the incumbent's, and an invalid rate below 30 % (thresholds as proposed, adopted). A failing node is fixed or excluded and recorded in STATUS; the batch runner enforces the check as a STOP. |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |
