@@ -31,6 +31,10 @@ HARNESS = import_harness()
 
 from autoresearch.manager.base import ManagerProposal  # noqa: E402
 
+# Legacy numeric action space, kept only as a fallback for an OpenML node
+# without a D25 ``active_keys`` declaration.  Every openml_* node declares one;
+# the declaration is read instead (same order, so existing seed sequences are
+# unchanged; the golden test pins this).
 OPENML_ACTIVE = {
     "logistic_regression": ("C", "max_iter"),
     "random_forest": ("n_estimators", "max_depth"),
@@ -58,9 +62,33 @@ class ScriptedRandomManager:
         self.ranges = raw.get("allowed_ranges", {})
         self.values = raw.get("allowed_values", {})
         self.symbols = tuple(raw.get("editable_symbols", ()))
+        self.active_keys = raw.get("active_keys") or None
 
     def _rng(self, budget_index: int) -> np.random.Generator:
         return np.random.default_rng([self.seed, self.repetition, int(budget_index)])
+
+    def _numeric_active(self, consts: dict) -> list[str]:
+        """The node declaration's numeric keys for the current ``model_type``.
+
+        D25: the declaration replaces the private ``OPENML_ACTIVE`` mapping.
+        The list keeps the declaration order, and the numeric test is the
+        node's ``allowed_ranges`` (categorical keys live in ``allowed_values``),
+        so the pool is exactly the old one for existing seeds.  The
+        categorical draw below is part of the stand-in's fixed law: an
+        inactive categorical proposal (e.g. ``class_weight`` under
+        ``gradient_boosting``) is rejected by the control plane before any
+        worker run, which is D25's enforcement point.
+        """
+        model_type = str(consts.get("model_type", ""))
+        declaration = self.active_keys or {}
+        by_model_type = declaration.get("by_model_type") if declaration else None
+        keys = None
+        if isinstance(by_model_type, dict):
+            keys = by_model_type.get(model_type)
+        if keys is None:
+            keys = OPENML_ACTIVE.get(model_type, ())
+        excluded = set(declaration.get("dataset_excluded") or ())
+        return [s for s in keys if s not in excluded and s in self.ranges and s in consts]
 
     def propose_next_trial(self, status, memory_context, node_spec) -> ManagerProposal:
         rng = self._rng(status.budget_index)
@@ -74,7 +102,7 @@ class ScriptedRandomManager:
                 edit = (key, consts[key], options[int(rng.integers(len(options)))])
         if edit is None:
             if self.node.startswith("openml_"):
-                numeric = [s for s in OPENML_ACTIVE.get(consts.get("model_type", ""), ()) if s in consts]
+                numeric = self._numeric_active(consts)
             else:
                 numeric = [s for s in self.symbols if s in consts]
             for _ in range(20):
