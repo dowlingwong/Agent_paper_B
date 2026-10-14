@@ -4,6 +4,7 @@ import builtins
 import dis
 import json
 import os
+import platform
 from pathlib import Path
 import subprocess
 import sys
@@ -16,6 +17,12 @@ from r1.scripts.dryrun_guard import validate_dryrun
 from r1.tests.test_ada_e1b_rerun2 import _load_runner, _prepare_env, _run_prepare, _run_launcher, _prepare_batch, _launcher_env
 
 REPO = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture
+def desktop_host(monkeypatch):
+    """Pure guard fixtures emulate a desktop; never launch DRYRUN on Ada."""
+    monkeypatch.setattr(platform, 'node', lambda: 'desktop-test')
 
 
 def undefined_globals(runner_source, helper_source):
@@ -117,7 +124,7 @@ def test_launcher_installs_declared_dev_extra(tmp_path):
     assert 'sync --extra dev' in (tmp_path / 'uv_calls.log').read_text()
 
 
-def test_dryrun_refuses_ada_and_unmarked_paths(monkeypatch):
+def test_dryrun_refuses_ada_and_unmarked_paths(monkeypatch, desktop_host):
     monkeypatch.setenv('R1_DRYRUN', '1')
     with mock.patch('platform.node', return_value='ucrtasl'):
         with pytest.raises(RuntimeError, match='forbidden on Ada'):
@@ -127,7 +134,7 @@ def test_dryrun_refuses_ada_and_unmarked_paths(monkeypatch):
         validate_dryrun()
 
 
-def test_dryrun_refuses_escaped_batch_root(tmp_path, monkeypatch):
+def test_dryrun_refuses_escaped_batch_root(tmp_path, monkeypatch, desktop_host):
     (tmp_path / '.dryrun').write_text('DRYRUN\n')
     monkeypatch.setenv('R1_DRYRUN', '1')
     monkeypatch.setenv('R1_DRYRUN_ROOT', str(tmp_path))
@@ -162,12 +169,13 @@ def test_dryrun_start_refuses_external_batch_before_log_write(tmp_path):
     env.pop('AR_HARNESS_ROOT', None)
     env.update(R1_DRYRUN='1', R1_DRYRUN_ROOT=str(root))
     result = _run_launcher(['--start', str(batch)], env)
-    assert result.returncode and 'escapes the temporary directory' in result.stdout + result.stderr
+    error = result.stdout + result.stderr
+    assert result.returncode and ('escapes the temporary directory' in error or 'DRYRUN is forbidden on Ada' in error)
     assert not (batch / 'paper_identity_start.log').exists()
     assert not (batch / 'runner.log').exists()
 
 
-def test_dryrun_refuses_all_effective_push_urls_without_network(tmp_path, monkeypatch):
+def test_dryrun_refuses_all_effective_push_urls_without_network(tmp_path, monkeypatch, desktop_host):
     for key in tuple(os.environ):
         if key.startswith('R1_RERUN2_') or key in ('R1_BATCH_DIRECTORY', 'R1_PAPER_ROOT', 'AR_HARNESS_ROOT'):
             monkeypatch.delenv(key, raising=False)
@@ -206,7 +214,8 @@ def test_dryrun_liveness_paths_refuse_before_any_write_or_worker(tmp_path, monke
     assert not outside.exists() and not (root / 'out').exists() and not (root / 'work').exists()
 
 
-@pytest.mark.skipif(os.environ.get('R1_DRYRUN_CHILD') == '1', reason='prevent recursive integration fixture in fresh-clone suite')
+@pytest.mark.skipif(os.environ.get('R1_DRYRUN_CHILD') == '1' or platform.node().split('.')[0] == 'ucrtasl',
+                    reason='desktop integration forbidden on Ada; suppress recursion in fresh-clone suite')
 def test_real_runner_desktop_dryrun(tmp_path):
     env = {k:v for k,v in os.environ.items() if k != 'R1_DRYRUN'}
     completed = subprocess.run([sys.executable, str(REPO / 'r1/scripts/rerun2_dryrun.py'), '--out', str(tmp_path / 'dryrun_result')], cwd=REPO, env=env, capture_output=True, text=True, timeout=900)
