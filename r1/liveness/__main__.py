@@ -1,0 +1,106 @@
+"""CLI for the D28 liveness check (P4/P5).
+
+Offline (existing ledgers)::
+
+    python -m r1.liveness --offline <ledgers-dir-or-file> --out <dir>
+
+Run (short campaigns through the collector's code path; 1-2 instances, W=10,
+no branching)::
+
+    python -m r1.liveness --run --nodes digits_mlp openml_ionosphere \\
+        --manager scripted --memory-mode none --out results/r1/engineering/liveness_scripted_<UTC>
+
+ENGINEERING_ONLY.  AI-assisted (BUILD_BATCH3, P4).
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import platform
+import shutil
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+from r1.harness import REPO, harness_commit
+from r1.liveness.check import evaluate_ledger_paths, write_reports
+
+DEFAULT_RUN_NODES = ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc"]
+
+
+def _stamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def run_campaigns(args) -> Path:
+    from r1.headroom import e1b_collect as collect
+
+    stamp = _stamp()
+    out = Path(args.out) if args.out else (
+        REPO / "results" / "r1" / "engineering" / f"liveness_{args.manager}_{stamp}"
+    )
+    out.mkdir(parents=True, exist_ok=True)
+    work = Path(args.work) / f"liveness_{stamp}"
+    work.mkdir(parents=True, exist_ok=True)
+    manager = collect.MANAGER if args.manager == "scripted" else {
+        **collect.MANAGER, "kind": "langgraph",
+    }
+    manifest = {
+        "schema": "r1.liveness_run/1", "label": "ENGINEERING_ONLY", "started_utc": stamp,
+        "harness": {"root": str(collect.HARNESS), **harness_commit(collect.HARNESS)},
+        "manager": manager, "manager_kind": args.manager, "memory_mode": args.memory_mode or "none",
+        "seed_policy": collect.seed_policy(args.manager),
+        "nodes": list(args.nodes), "instances": args.instances, "runs": 10, "branching": False,
+        "host": {"platform": platform.platform(), "python": platform.python_version()},
+        "work": str(work), "campaigns": [],
+    }
+    t0 = time.time()
+    for node in manifest["nodes"]:
+        for k in range(manifest["instances"]):
+            summary = collect.run_root(
+                node=node, k=k, work=str(work), runs=manifest["runs"], indices=[],
+                manager=manager, memory_mode=manifest["memory_mode"],
+            )
+            source = work / "roots" / summary["instance"] / "root_trials.jsonl"
+            target_dir = out / "ledgers" / summary["instance"]
+            target_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target_dir / "root_trials.jsonl")
+            manifest["campaigns"].append({"instance": summary["instance"], "node": node,
+                                          "seed": summary["seed"]})
+    manifest["elapsed_seconds"] = round(time.time() - t0, 1)
+    manifest["finished_utc"] = _stamp()
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    report = evaluate_ledger_paths([out / "ledgers"], generated_utc=manifest["finished_utc"])
+    report["run_manifest"] = "manifest.json"
+    write_reports(report, out)
+    return out
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--offline", default=None, help="ledger file or directory to check")
+    parser.add_argument("--run", action="store_true", help="run short campaigns before checking")
+    parser.add_argument("--nodes", nargs="+", default=DEFAULT_RUN_NODES)
+    parser.add_argument("--instances", type=int, default=2)
+    parser.add_argument("--manager", choices=["scripted", "langgraph"], default="scripted")
+    parser.add_argument("--memory-mode", default=None,
+                        choices=["none", "append_only_summary", "append_only_summary_with_rationale"])
+    parser.add_argument("--out", default=None)
+    parser.add_argument("--work", default="/tmp/r1_liveness")
+    args = parser.parse_args()
+
+    if args.run:
+        out = run_campaigns(args)
+        print(json.dumps({"out": str(out)}))
+        return 0
+    if not args.offline:
+        parser.error("one of --offline or --run is required")
+    report = evaluate_ledger_paths([args.offline])
+    if args.out:
+        write_reports(report, args.out)
+    print(json.dumps({node: ("PASS" if v["pass"] else "FAIL") for node, v in report["nodes"].items()}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

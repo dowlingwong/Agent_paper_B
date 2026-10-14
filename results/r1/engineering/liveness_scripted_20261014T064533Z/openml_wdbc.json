@@ -1,0 +1,28 @@
+{
+  "criteria": {
+    "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 2,
+      "required": "at least 1 keep with budget_index > 1"
+    },
+    "metric_diff_fraction": {
+      "metric_comparable_trials": 18,
+      "metric_different_trials": 7,
+      "observed": 0.3888888888888889,
+      "required": ">= 0.5"
+    }
+  },
+  "failed_criteria": [
+    "metric_diff_fraction"
+  ],
+  "ledgers": [
+    "/Users/wongdowling/Documents/agent_paper_B/results/r1/engineering/liveness_scripted_20261014T064533Z/ledgers/openml_wdbc__s100/root_trials.jsonl",
+    "/Users/wongdowling/Documents/agent_paper_B/results/r1/engineering/liveness_scripted_20261014T064533Z/ledgers/openml_wdbc__s110/root_trials.jsonl"
+  ],
+  "n_trials": 20,
+  "node": "openml_wdbc",
+  "pass": false
+}
