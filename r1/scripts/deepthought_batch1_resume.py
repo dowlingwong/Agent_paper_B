@@ -143,7 +143,28 @@ def assert_full_offload(loaded, where):
         raise RuntimeError(f'STOP: {where}: pinned model is not fully offloaded to the GPU')
 
 
-def collect(out, work, extra):
+def require_liveness(nodes):
+    """D28 gate (P5): no LLM-backed collection without a committed liveness pass.
+
+    The manifest is ``$R1_LIVENESS_MANIFEST`` when set, else the newest
+    ``results/r1/engineering/liveness_*/liveness.json``.  A missing or failed
+    node raises ``STOP:``.
+    """
+    from r1.liveness import load_liveness_manifest, require_live
+
+    explicit = os.environ.get('R1_LIVENESS_MANIFEST')
+    if explicit:
+        manifest_path = Path(explicit)
+    else:
+        candidates = sorted((PAPER / 'results/r1/engineering').glob('liveness_*/liveness.json'))
+        if not candidates:
+            raise RuntimeError('STOP: no D28 liveness manifest; run the liveness check first')
+        manifest_path = candidates[-1]
+    return require_live(list(nodes), load_liveness_manifest(manifest_path))
+
+
+def collect(out, work, extra, nodes):
+    require_liveness(nodes)
     cmd([PY, '-m', 'r1.headroom.e1b_collect', '--manager', 'langgraph', '--work', str(work),
          '--out', str(out), *extra], log=out.name + '.log')
     for _ in range(12):
@@ -250,7 +271,8 @@ def run_dt4(meta, version):
     work = BATCH / 'r1_e1b_llm_work'
     checks = collect(out, work, ['--nodes', 'digits_mlp', 'openml_ionosphere', '--instances', '6',
                                '--runs', '20', '--points', '4', '8', '12', '--reps', '2',
-                               '--audit-seeds', '6', '--workers', '4'])
+                               '--audit-seeds', '6', '--workers', '4'],
+                     ['digits_mlp', 'openml_ionosphere'])
     with urlopen('http://127.0.0.1:11434/api/ps', timeout=15) as response:
         processes_after = json.load(response)
     (BATCH / 'gpu_offload_after_collection.json').write_text(json.dumps(
@@ -417,15 +439,21 @@ def main():
     work = BATCH / 'r1_e1b_smoke_work'
     checks = collect(out, work, ['--nodes', 'digits_mlp', '--instances', '1', '--runs', '10',
                                '--points', '4', '--reps', '1', '--audit-seeds', '2', '--workers', '2',
-                               '--label', 'ENGINEERING_ONLY', '--split', 'engineering'])
+                               '--label', 'ENGINEERING_ONLY', '--split', 'engineering'],
+                     ['digits_mlp'])
     state['steps']['DT3'] = {'completed': True, 'out': str(out), 'checks': checks}
     commit(PAPER, 'Record ENGINEERING_ONLY E1b smoke with pinned LLM manager', [out], 'DT3')
     run_dt4(meta, version)
 
 
-try:
-    main()
-except Exception as exc:
-    finish(f'{type(exc).__name__}: {exc}')
-else:
-    finish(None)
+def _entrypoint():
+    try:
+        main()
+    except Exception as exc:
+        finish(f'{type(exc).__name__}: {exc}')
+    else:
+        finish(None)
+
+
+if __name__ == '__main__':
+    _entrypoint()
