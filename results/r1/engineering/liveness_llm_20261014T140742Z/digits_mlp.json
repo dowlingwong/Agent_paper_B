@@ -1,0 +1,33 @@
+{
+  "criteria": {
+    "active_novelty_fraction": {
+      "equals_incumbent_trials": 0,
+      "evaluated_trials": 20,
+      "novel_trials": 12,
+      "novelty_source": "events",
+      "observed": 0.6,
+      "required": ">= 0.5",
+      "seen_before_trials": 8
+    },
+    "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 0,
+      "required": "at least 1 keep with budget_index > 1"
+    }
+  },
+  "failed_criteria": [
+    "keep_after_trial_1"
+  ],
+  "inactive_key_rejections": 0,
+  "ledgers": [
+    "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/agent_paper_B/results/r1/engineering/liveness_llm_20261014T140742Z/ledgers/digits_mlp__s104/root_trials.jsonl",
+    "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/agent_paper_B/results/r1/engineering/liveness_llm_20261014T140742Z/ledgers/digits_mlp__s114/root_trials.jsonl"
+  ],
+  "n_trials": 20,
+  "node": "digits_mlp",
+  "novelty_source": "events",
+  "pass": false
+}

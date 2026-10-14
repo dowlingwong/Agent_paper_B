@@ -1,0 +1,31 @@
+{
+  "criteria": {
+    "active_novelty_fraction": {
+      "equals_incumbent_trials": 1,
+      "evaluated_trials": 20,
+      "novel_trials": 13,
+      "novelty_source": "events",
+      "observed": 0.65,
+      "required": ">= 0.5",
+      "seen_before_trials": 7
+    },
+    "invalid_rate": {
+      "observed": 0.05,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 1,
+      "required": "at least 1 keep with budget_index > 1"
+    }
+  },
+  "failed_criteria": [],
+  "inactive_key_rejections": 0,
+  "ledgers": [
+    "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/agent_paper_B/results/r1/engineering/liveness_llm_20261014T140742Z/ledgers/openml_breast_w__s105/root_trials.jsonl",
+    "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/agent_paper_B/results/r1/engineering/liveness_llm_20261014T140742Z/ledgers/openml_breast_w__s115/root_trials.jsonl"
+  ],
+  "n_trials": 20,
+  "node": "openml_breast_w",
+  "novelty_source": "events",
+  "pass": true
+}

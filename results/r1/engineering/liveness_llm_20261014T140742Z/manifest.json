@@ -1,0 +1,81 @@
+{
+  "schema": "r1.liveness_run/1",
+  "label": "ENGINEERING_ONLY",
+  "started_utc": "20261014T140742Z",
+  "harness": {
+    "root": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/autoresearch_harness",
+    "commit": "411c6054c8505f93a6429e2f9eed526952793882",
+    "branch": "HEAD",
+    "dirty": false
+  },
+  "manager": {
+    "kind": "langgraph",
+    "model": "ollama/qwen2.5-coder:7b",
+    "temperature": 0.2
+  },
+  "manager_kind": "langgraph",
+  "memory_mode": "append_only_summary",
+  "seed_policy": {
+    "kind": "ollama_seed",
+    "temperature": 0.2,
+    "derivation": "manager_seed(campaign_id, budget_index, repetition, revision_attempt)"
+  },
+  "nodes": [
+    "digits_mlp",
+    "tabular_mlp",
+    "openml_ionosphere",
+    "openml_breast_w"
+  ],
+  "instances": 2,
+  "runs": 10,
+  "branching": false,
+  "host": {
+    "platform": "Linux-5.15.0-151-generic-x86_64-with-glibc2.35",
+    "python": "3.11.17"
+  },
+  "work": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/liveness_work/liveness_20261014T140742Z",
+  "campaigns": [
+    {
+      "instance": "digits_mlp__s104",
+      "node": "digits_mlp",
+      "seed": 104
+    },
+    {
+      "instance": "digits_mlp__s114",
+      "node": "digits_mlp",
+      "seed": 114
+    },
+    {
+      "instance": "tabular_mlp__s102",
+      "node": "tabular_mlp",
+      "seed": 102
+    },
+    {
+      "instance": "tabular_mlp__s112",
+      "node": "tabular_mlp",
+      "seed": 112
+    },
+    {
+      "instance": "openml_ionosphere__s103",
+      "node": "openml_ionosphere",
+      "seed": 103
+    },
+    {
+      "instance": "openml_ionosphere__s113",
+      "node": "openml_ionosphere",
+      "seed": 113
+    },
+    {
+      "instance": "openml_breast_w__s105",
+      "node": "openml_breast_w",
+      "seed": 105
+    },
+    {
+      "instance": "openml_breast_w__s115",
+      "node": "openml_breast_w",
+      "seed": 115
+    }
+  ],
+  "elapsed_seconds": 185.8,
+  "finished_utc": "20261014T141048Z"
+}
