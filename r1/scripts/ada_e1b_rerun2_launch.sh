@@ -52,6 +52,11 @@ accepted = [
     "tests/test_legacy_noop_skip.py",
     # Author-approved environmental exception (PLAN §10, 12 Oct): Ada has no /bin/zsh.
     "tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::test_claw_worker_deterministic_constant_patch_runs_without_llm",
+    # Author-approved environmental exception (PLAN §10, 14 Oct, R1-COMPUTE (Ada
+    # environmental test exception 2)): the checked-in workshop-paper report is
+    # absent from a fresh clone; this is the exact test ID only, and as for the
+    # zsh exception the accepted set applies on the Ada host.
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns",
 ]
 
 def failures(log):

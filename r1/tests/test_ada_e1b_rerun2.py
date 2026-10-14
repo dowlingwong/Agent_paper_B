@@ -360,6 +360,7 @@ _ACCEPTED_IDS = [
     "tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance",
     "tests/test_legacy_noop_skip.py",
     "tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::test_claw_worker_deterministic_constant_patch_runs_without_llm",
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns",
 ]
 _PIN = "ed55297c1ac447453d9389494554d1f710a6b4d1"
 
@@ -462,6 +463,72 @@ def test_prepare_refuses_a_failing_r1_suite(tmp_path):
     payload = json.loads((batch / "prepare.json").read_text())
     assert payload["ok"] is False
     assert payload["r1_tests"]["returncode"] == 1
+
+
+_ZSH_ADA_ID = (
+    "tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::"
+    "test_claw_worker_deterministic_constant_patch_runs_without_llm"
+)
+_FRESH_CHECKOUT_REPORT_ID = (
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::"
+    "test_checked_in_report_contains_all_plan_campaigns"
+)
+
+
+def test_ada_exceptions_are_accepted_and_start_proceeds(tmp_path):
+    # (a) PLAN §10 R1-COMPUTE (Ada environmental test exception 2): on Ada the
+    # missing-/bin/zsh test and the fresh-checkout report test are both
+    # environmental, so --prepare records no unexpected failure and --start
+    # proceeds.
+    output = (
+        f"FAILED {_ZSH_ADA_ID}\n"
+        f"FAILED {_FRESH_CHECKOUT_REPORT_ID}\n"
+        "2 failed, 394 passed in 42s\n"
+    )
+    env = _prepare_env(tmp_path, harness_rc=1, harness_output=output)
+    batch = _run_prepare(tmp_path, env)
+    payload = json.loads((batch / "prepare.json").read_text())
+    assert payload["ok"] is True
+    assert payload["harness_tests"]["unexpected"] == []
+    assert sorted(payload["harness_tests"]["failures"]) == sorted(
+        [_ZSH_ADA_ID, _FRESH_CHECKOUT_REPORT_ID]
+    )
+    result = _run_launcher(["--start", str(batch)], env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "new-session -d -s r1_e1b_rerun2" in (tmp_path / "tmux.log").read_text()
+
+
+def test_ada_exceptions_are_refused_off_ada(tmp_path):
+    # (b) Both exceptions are Ada-scoped like the existing missing-/bin/zsh
+    # one: the same prepare.json does not make the launcher runnable off Ada.
+    batch = _prepare_batch(tmp_path)
+    payload = json.loads((batch / "prepare.json").read_text())
+    payload["harness_tests"]["failures"] = [_ZSH_ADA_ID, _FRESH_CHECKOUT_REPORT_ID]
+    (batch / "prepare.json").write_text(json.dumps(payload))
+    env = _launcher_env(tmp_path, hostname="my-mac")
+    result = _run_launcher(["--start", str(batch)], env)
+    assert result.returncode == 1
+    assert "STOP: run this on Ada" in result.stdout
+
+
+def test_a_third_test_in_the_same_file_is_still_refused(tmp_path):
+    # (c) The set is exact IDs, not a file or class: a sibling in the same
+    # TestCompletenessCLI class is still refused.
+    sibling = (
+        "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::"
+        "test_required_top_level_keys"
+    )
+    output = (
+        f"FAILED {_ZSH_ADA_ID}\n"
+        f"FAILED {_FRESH_CHECKOUT_REPORT_ID}\n"
+        f"FAILED {sibling}\n"
+        "3 failed, 393 passed in 42s\n"
+    )
+    env = _prepare_env(tmp_path, harness_rc=1, harness_output=output)
+    batch = _run_prepare(tmp_path, env)
+    payload = json.loads((batch / "prepare.json").read_text())
+    assert payload["ok"] is False
+    assert payload["harness_tests"]["unexpected"] == [sibling]
 
 
 # ---------------------------------------------------------------------------
