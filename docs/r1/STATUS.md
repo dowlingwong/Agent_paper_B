@@ -4,6 +4,14 @@ Newest entry first. Only this file says what is done.
 
 
 
+## 14 October 2026 — batch 4b: second Ada accepted-failure ID in the rerun-2 launcher (ENGINEERING_ONLY)
+
+AI-assisted execution by opencode (deepseek-v4.1-flash) per `docs/r1/prompts/BUILD_BATCH4B_PROMPT.md`; no LLM calls, no GPU, no Ada. Commit: paper `75d6911` → `f7879db` (branch `main`). One change: the rerun-2 launcher's accepted-failure set gains exactly `tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns` (PLAN §10, row R1-COMPUTE (Ada environmental test exception 2)), beside the missing-`/bin/zsh` exception of 12 Oct. The launcher's Ada-only host guard scopes the set as before; every other failure still refuses `--start`, and no pattern/file/class matching was added. The harness is untouched, so `HARNESS_PIN_RERUN2` stays `411c6054c8505f93a6429e2f9eed526952793882`.
+
+- **Tests.** Paper `r1/tests`: 141 → **144 passed**; `make test` 212 / 6 / 12 OK before and after. Fail-before: `test_ada_exceptions_are_accepted_and_start_proceeds` fails at head `7272d77` (`prepare.json.ok=False`); the patch makes it pass.
+- **The four stub tests (all pass).** (a) `test_ada_exceptions_are_accepted_and_start_proceeds` — the zsh and fresh-checkout tests classified environmental on Ada, so `--prepare` records no unexpected failure and `--start` proceeds; (b) `test_ada_exceptions_are_refused_off_ada` — the same prepare.json off `ucrtasl` is refused; (c) `test_a_third_test_in_the_same_file_is_still_refused` — a sibling in the same `TestCompletenessCLI` class is refused; (d) `test_prepare_refuses_a_nonzero_exit_without_parsed_failures` — the F8 behaviour is kept.
+- **Next:** `docs/r1/prompts/ADA_E1B_RERUN2_PROMPT.md` is ready to hand over; it can be run unchanged.
+
 ## 14 October 2026 — author approves a second Ada test exception before rerun-2
 
 Planning only; recorded by an AI agent (Claude) at the author's request.
