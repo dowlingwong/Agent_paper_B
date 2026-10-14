@@ -44,6 +44,7 @@ from autoresearch.control_plane.budget import ComputeBudget  # noqa: E402
 from autoresearch.control_plane.campaign import run_real_campaign  # noqa: E402
 from autoresearch.control_plane.snapshot import capture_snapshot, read_snapshot, resume_campaign, write_snapshot  # noqa: E402
 from autoresearch.manager.base import ManagerProposal  # noqa: E402
+from autoresearch.memory.event_store import CampaignEventStore  # noqa: E402
 from autoresearch.nodes.registry import load_registered_node  # noqa: E402
 from autoresearch.worker.local_worker import LocalWorker  # noqa: E402
 
@@ -133,6 +134,10 @@ def run_root(node: str, k: int, work: str, runs: int, indices: list[int], manage
         proposal_backend=make_manager(node, seed, 0, manager),
         compute_budget=ComputeBudget(max_worker_runs=runs), verify_runs=VERIFY_R,
         verify_split_policy=split_policy, snapshot_hook=recorder,
+        # D28 revised criterion 2: persist the campaign event stream so the
+        # liveness check can score active-key novelty from edit_novelty events
+        # instead of replaying structured edits.
+        event_store=CampaignEventStore(root / "root_events.jsonl"),
     )
     return {"instance": inst, "node": node, "seed": seed, "snapshots": recorder.written,
             "start_files": {p: (HARNESS / "nodes" / node / p).read_text() for p in spec.editable_paths}}

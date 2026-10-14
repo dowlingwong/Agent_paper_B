@@ -1,17 +1,22 @@
-"""D28 liveness criteria over campaign ledgers (P4).
+"""D28 liveness criteria over campaign ledgers (P4; criterion 2 revised 14 Oct).
 
-Criteria (PLAN §10 D28), aggregated per node over every ledger given:
+Criteria (PLAN §10 rows D28 and D28 (revised criterion 2)):
 
 - ``keep_after_trial_1``: at least one kept trial with ``budget_index > 1``;
-- ``metric_diff_fraction``: at least 50 % of trials have a metric different
-  from the incumbent's.  A trial counts when it carries the node metric and an
-  incumbent exists (``current_best_before`` is not None); the comparison is
-  bit-exact (``!=`` on floats).  If no trial is comparable the criterion fails;
+- ``active_novelty_fraction``: at least 50 % of *evaluated* trials have an
+  active-key configuration that differs from the incumbent's and from every
+  configuration evaluated earlier in the campaign, including before a resume.
+  A trial is evaluated when a worker run happened; skipped trials, including
+  ``inactive_key`` skips, are not evaluated.  Ledgers without ``edit_novelty``
+  events (DT4 and older) are scored by replaying their structured edits
+  (:mod:`r1.liveness.novelty`), and the report states
+  ``novelty_source: events | replayed``;
 - ``invalid_rate``: failed-invalid trials below 30 % of all trials.
 
-A node passes only when all three hold.  Output is JSON and Markdown per node.
+The inactive-key rejections are reported as a separate count.  A node passes
+only when all three criteria hold.  Output is JSON and Markdown per node.
 
-AI-assisted (BUILD_BATCH3, P4); ENGINEERING_ONLY.
+AI-assisted (BUILD_BATCH3 P4; revised in BUILD_BATCH4, P6); ENGINEERING_ONLY.
 """
 from __future__ import annotations
 
@@ -21,30 +26,24 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
-from r1.harness import import_harness
-
-HARNESS = import_harness()
-
-from autoresearch.nodes.registry import load_registered_node  # noqa: E402
+from r1.liveness.novelty import (
+    INACTIVE_KEY_EVENT,
+    SOURCE_EVENTS,
+    SOURCE_REPLAYED,
+    NoveltyTally,
+    decision_of,
+    load_segments,
+    replay_tally,
+    tally_segments,
+)
 
 KEEP_AFTER_TRIAL_1 = "keep_after_trial_1"
-METRIC_DIFF_FRACTION = "metric_diff_fraction"
+ACTIVE_NOVELTY_FRACTION = "active_novelty_fraction"
 INVALID_RATE = "invalid_rate"
-CRITERIA = (KEEP_AFTER_TRIAL_1, METRIC_DIFF_FRACTION, INVALID_RATE)
+CRITERIA = (KEEP_AFTER_TRIAL_1, ACTIVE_NOVELTY_FRACTION, INVALID_RATE)
 
-METRIC_DIFF_MIN = 0.50
+NOVELTY_MIN = 0.50
 INVALID_RATE_MAX = 0.30
-
-
-def _decision(record: dict) -> str:
-    return str(record.get("decision") or "")
-
-
-def _metric_name(node: str) -> str:
-    try:
-        return load_registered_node(node, repo_root=HARNESS).metric_name
-    except Exception:  # noqa: BLE001 - an unregistered node is still checkable
-        return "val_score"
 
 
 @dataclass
@@ -53,24 +52,36 @@ class NodeLiveness:
     ledgers: list[str] = field(default_factory=list)
     n_trials: int = 0
     keeps_after_trial_1: int = 0
-    metric_comparable: int = 0
-    metric_different: int = 0
     invalid: int = 0
+    evaluated: int = 0
+    novel: int = 0
+    equals_incumbent: int = 0
+    seen_before: int = 0
+    inactive_key_rejections: int = 0
+    novelty_sources: set[str] = field(default_factory=set)
 
     @property
-    def metric_diff_fraction(self) -> float:
-        return (self.metric_different / self.metric_comparable) if self.metric_comparable else 0.0
+    def novelty_fraction(self) -> float:
+        return (self.novel / self.evaluated) if self.evaluated else 0.0
 
     @property
     def invalid_rate(self) -> float:
         return (self.invalid / self.n_trials) if self.n_trials else 0.0
 
+    @property
+    def novelty_source(self) -> str:
+        if self.novelty_sources == {SOURCE_EVENTS}:
+            return SOURCE_EVENTS
+        if self.novelty_sources == {SOURCE_REPLAYED}:
+            return SOURCE_REPLAYED
+        return "+".join(sorted(self.novelty_sources)) or SOURCE_REPLAYED
+
     def verdict(self) -> dict:
         failed = []
         if self.keeps_after_trial_1 < 1:
             failed.append(KEEP_AFTER_TRIAL_1)
-        if not (self.metric_comparable and self.metric_diff_fraction >= METRIC_DIFF_MIN):
-            failed.append(METRIC_DIFF_FRACTION)
+        if not (self.evaluated and self.novelty_fraction >= NOVELTY_MIN):
+            failed.append(ACTIVE_NOVELTY_FRACTION)
         if not (self.invalid_rate < INVALID_RATE_MAX):
             failed.append(INVALID_RATE)
         return {
@@ -82,58 +93,66 @@ class NodeLiveness:
                     "required": "at least 1 keep with budget_index > 1",
                     "observed": self.keeps_after_trial_1,
                 },
-                "metric_diff_fraction": {
-                    "required": f">= {METRIC_DIFF_MIN}",
-                    "observed": self.metric_diff_fraction,
-                    "metric_comparable_trials": self.metric_comparable,
-                    "metric_different_trials": self.metric_different,
+                "active_novelty_fraction": {
+                    "required": f">= {NOVELTY_MIN}",
+                    "observed": self.novelty_fraction,
+                    "novel_trials": self.novel,
+                    "evaluated_trials": self.evaluated,
+                    "equals_incumbent_trials": self.equals_incumbent,
+                    "seen_before_trials": self.seen_before,
+                    "novelty_source": self.novelty_source,
                 },
                 "invalid_rate": {
                     "required": f"< {INVALID_RATE_MAX}",
                     "observed": self.invalid_rate,
                 },
             },
+            "inactive_key_rejections": self.inactive_key_rejections,
+            "novelty_source": self.novelty_source,
             "n_trials": self.n_trials,
             "ledgers": list(self.ledgers),
         }
 
 
-def evaluate_records(records: Iterable[dict], node: str | None = None) -> dict[str, NodeLiveness]:
-    """Aggregate trial records per node into :class:`NodeLiveness`."""
-    grouped: dict[str, NodeLiveness] = {}
+def _add_segment(entry: NodeLiveness, records: list[dict], tally: NoveltyTally, labels: list[str]) -> None:
+    for label in labels:
+        if label not in entry.ledgers:
+            entry.ledgers.append(label)
     for record in records:
-        node_id = str(node or record.get("node_id") or "unknown")
-        entry = grouped.setdefault(node_id, NodeLiveness(node=node_id))
         entry.n_trials += 1
         index = record.get("budget_index")
-        decision = _decision(record)
+        decision = decision_of(record)
         if decision == "failed_invalid":
             entry.invalid += 1
         elif decision == "kept" and isinstance(index, int) and index > 1:
             entry.keeps_after_trial_1 += 1
-        metric_name = _metric_name(node_id)
-        incumbent = record.get("current_best_before")
-        value = (record.get("parsed_metrics") or {}).get(metric_name)
-        if value is not None and incumbent is not None:
-            entry.metric_comparable += 1
-            if float(value) != float(incumbent):
-                entry.metric_different += 1
+    entry.evaluated += tally.evaluated
+    entry.novel += tally.novel
+    entry.equals_incumbent += tally.equals_incumbent
+    entry.seen_before += tally.seen_before
+    entry.inactive_key_rejections += tally.inactive_key_rejections
+    entry.novelty_sources.add(tally.source)
+
+
+def evaluate_segments(segments) -> dict[str, NodeLiveness]:
+    grouped: dict[str, NodeLiveness] = {}
+    for segment in segments:
+        entry = grouped.setdefault(segment.node, NodeLiveness(node=segment.node))
+        _add_segment(entry, segment.records, segment.tally(), segment.labels)
     return grouped
 
 
-def _read_ledger(path: Path) -> list[dict]:
-    records = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            records.append(json.loads(line))
-    return records
-
-
-def _ledger_paths(target: str | Path) -> list[Path]:
-    path = Path(target)
-    if path.is_file():
-        return [path]
-    return sorted(p for p in path.rglob("*.jsonl") if p.is_file())
+def evaluate_records(records: Iterable[dict], node: str | None = None) -> dict[str, NodeLiveness]:
+    """Aggregate bare trial records per node, scoring novelty by replay."""
+    grouped: dict[str, NodeLiveness] = {}
+    by_node: dict[str, list[dict]] = {}
+    for record in records:
+        node_id = str(node or record.get("node_id") or "unknown")
+        by_node.setdefault(node_id, []).append(record)
+        grouped.setdefault(node_id, NodeLiveness(node=node_id))
+    for node_id, node_records in by_node.items():
+        _add_segment(grouped[node_id], node_records, replay_tally(node_records, node_id), [])
+    return grouped
 
 
 def evaluate_ledger_paths(
@@ -141,35 +160,28 @@ def evaluate_ledger_paths(
     *,
     generated_utc: str | None = None,
     manager_kind: str | None = None,
+    memory_mode: str | None = None,
 ) -> dict:
     """Evaluate every ledger below *targets*; one JSON-able report.
 
     ``manager_kind`` records which proposer produced the ledgers
-    (``"scripted"`` or ``"langgraph"``); the D28 gate only accepts an
-    LLM-backed manifest (review F5).
+    (``"scripted"`` or ``"langgraph"``); ``memory_mode`` records the mode they
+    ran with.  The D28 gate only accepts an LLM-backed, memory-on manifest
+    (review F5 and the revised D28 row).
     """
-    paths: list[Path] = []
-    for target in targets:
-        paths.extend(_ledger_paths(target))
-    grouped: dict[str, NodeLiveness] = {}
-    for path in paths:
-        records = _read_ledger(path)
-        for node, entry in evaluate_records(records).items():
-            existing = grouped.setdefault(node, NodeLiveness(node=node))
-            existing.ledgers.append(str(path))
-            existing.n_trials += entry.n_trials
-            existing.keeps_after_trial_1 += entry.keeps_after_trial_1
-            existing.metric_comparable += entry.metric_comparable
-            existing.metric_different += entry.metric_different
-            existing.invalid += entry.invalid
+    segments = load_segments(targets)
+    grouped: dict[str, NodeLiveness] = evaluate_segments(segments)
     return {
-        "schema": "r1.liveness/1",
+        "schema": "r1.liveness/2",
         "label": "ENGINEERING_ONLY",
         "generated_utc": generated_utc or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"),
         "manager_kind": manager_kind,
+        "memory_mode": memory_mode,
         "criteria": {
             "keep_after_trial_1": "at least one keep after trial 1",
-            "metric_diff_fraction": f">= {METRIC_DIFF_MIN} of comparable trials",
+            "active_novelty_fraction": (
+                f">= {NOVELTY_MIN} of evaluated trials; novelty_source events or replayed"
+            ),
             "invalid_rate": f"< {INVALID_RATE_MAX}",
         },
         "nodes": {node: entry.verdict() for node, entry in sorted(grouped.items())},
@@ -178,24 +190,26 @@ def evaluate_ledger_paths(
 
 def _markdown(node: str, verdict: dict) -> str:
     criteria = verdict["criteria"]
+    novelty = criteria["active_novelty_fraction"]
     status = "PASS" if verdict["pass"] else "FAIL"
     lines = [
         f"# Liveness: {node} — {status}",
         "",
-        "ENGINEERING_ONLY (D28). Thresholds: keep after trial 1 ≥ 1; "
-        f"metric-different fraction ≥ {METRIC_DIFF_MIN}; invalid rate < {INVALID_RATE_MAX}.",
+        "ENGINEERING_ONLY (D28, revised criterion 2). Thresholds: keep after trial 1 ≥ 1; "
+        f"active-key novelty ≥ {NOVELTY_MIN} of evaluated trials; invalid rate < {INVALID_RATE_MAX}.",
         "",
         "| criterion | required | observed |",
         "|---|---|---|",
         f"| keep_after_trial_1 | {criteria['keep_after_trial_1']['required']} | "
         f"{criteria['keep_after_trial_1']['observed']} |",
-        f"| metric_diff_fraction | {criteria['metric_diff_fraction']['required']} | "
-        f"{criteria['metric_diff_fraction']['observed']:.4f} "
-        f"({criteria['metric_diff_fraction']['metric_different_trials']}/"
-        f"{criteria['metric_diff_fraction']['metric_comparable_trials']}) |",
+        f"| active_novelty_fraction | {novelty['required']} | {novelty['observed']:.4f} "
+        f"({novelty['novel_trials']}/{novelty['evaluated_trials']}, {novelty['novelty_source']}) |",
         f"| invalid_rate | {criteria['invalid_rate']['required']} | "
         f"{criteria['invalid_rate']['observed']:.4f} |",
         "",
+        f"Evaluated trials: {novelty['evaluated_trials']} "
+        f"(equals incumbent {novelty['equals_incumbent_trials']}, seen before {novelty['seen_before_trials']}).",
+        f"Inactive-key rejections (separate count): {verdict['inactive_key_rejections']}.",
         f"Trials: {verdict['n_trials']}. Failed criteria: "
         f"{', '.join(verdict['failed_criteria']) or 'none'}.",
         "",
@@ -211,11 +225,13 @@ def write_reports(report: dict, out_dir: str | Path) -> Path:
     out.mkdir(parents=True, exist_ok=True)
     (out / "liveness.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     summary = [f"# Liveness report ({report['label']})", "", f"Generated: {report['generated_utc']}", "",
-               "| node | pass | failed criteria | trials |", "|---|---|---|---|"]
+               "| node | pass | failed criteria | evaluated | novel | source |", "|---|---|---|---|---|---|"]
     for node, verdict in report["nodes"].items():
+        novelty = verdict["criteria"]["active_novelty_fraction"]
         summary.append(
             f"| {node} | {'PASS' if verdict['pass'] else 'FAIL'} | "
-            f"{', '.join(verdict['failed_criteria']) or '—'} | {verdict['n_trials']} |"
+            f"{', '.join(verdict['failed_criteria']) or '—'} | {novelty['evaluated_trials']} | "
+            f"{novelty['novel_trials']} | {novelty['novelty_source']} |"
         )
     (out / "liveness.md").write_text("\n".join(summary) + "\n", encoding="utf-8")
     for node, verdict in report["nodes"].items():

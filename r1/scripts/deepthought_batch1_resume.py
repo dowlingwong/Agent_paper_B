@@ -143,14 +143,17 @@ def assert_full_offload(loaded, where):
         raise RuntimeError(f'STOP: {where}: pinned model is not fully offloaded to the GPU')
 
 
-def require_liveness(nodes):
-    """D28 gate (P5): no LLM-backed collection without a committed liveness pass.
+def require_liveness(nodes, memory_mode=None, arm_role=None):
+    """D28 gate (P5, revised 14 Oct): no LLM-backed collection without a liveness pass.
 
     The manifest is ``$R1_LIVENESS_MANIFEST`` when set, else the newest
     ``results/r1/engineering/liveness_*/liveness.json``.  The manifest must
-    come from an LLM-backed liveness run (``manager_kind: langgraph``): a
-    scripted smoke pass is not the D28 check (review F5).  A missing, scripted
-    or failed node raises ``STOP:``.
+    come from an LLM-backed, memory-on liveness run (``manager_kind:
+    langgraph``): a scripted smoke pass or a memory-off manifest is not the
+    D28 check (review F5).  A memory-off collection that declares itself the
+    D24 contrast arm (``memory_mode="none"`` and ``arm_role="contrast"``) is
+    exempt from the memory-mode match and reuses the memory-on verdict (PLAN
+    D28).  A missing, scripted, memory-off or failed node raises ``STOP:``.
     """
     from r1.liveness import load_liveness_manifest, require_live
 
@@ -163,13 +166,7 @@ def require_liveness(nodes):
             raise RuntimeError('STOP: no D28 liveness manifest; run the liveness check first')
         manifest_path = candidates[-1]
     manifest = load_liveness_manifest(manifest_path)
-    if manifest.get('manager_kind') != 'langgraph':
-        raise RuntimeError(
-            f'STOP: liveness manifest {manifest_path} is not from an LLM-backed run '
-            f"(manager_kind={manifest.get('manager_kind')!r}); run `python -m r1.liveness --run "
-            "--manager langgraph` first"
-        )
-    return require_live(list(nodes), manifest)
+    return require_live(list(nodes), manifest, memory_mode=memory_mode, arm_role=arm_role)
 
 
 def collect(out, work, extra, nodes):

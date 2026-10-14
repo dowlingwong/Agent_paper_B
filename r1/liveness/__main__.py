@@ -65,13 +65,19 @@ def run_campaigns(args) -> Path:
             target_dir = out / "ledgers" / summary["instance"]
             target_dir.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target_dir / "root_trials.jsonl")
+            events = work / "roots" / summary["instance"] / "root_events.jsonl"
+            if events.exists():
+                # D28 revised criterion 2: edit_novelty events are the primary
+                # novelty source; keep them beside the trial ledger.
+                shutil.copy2(events, target_dir / "root_events.jsonl")
             manifest["campaigns"].append({"instance": summary["instance"], "node": node,
                                           "seed": summary["seed"]})
     manifest["elapsed_seconds"] = round(time.time() - t0, 1)
     manifest["finished_utc"] = _stamp()
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     report = evaluate_ledger_paths(
-        [out / "ledgers"], generated_utc=manifest["finished_utc"], manager_kind=args.manager
+        [out / "ledgers"], generated_utc=manifest["finished_utc"], manager_kind=args.manager,
+        memory_mode=manifest["memory_mode"],
     )
     report["run_manifest"] = "manifest.json"
     write_reports(report, out)

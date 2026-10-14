@@ -1,0 +1,33 @@
+{
+  "criteria": {
+    "active_novelty_fraction": {
+      "equals_incumbent_trials": 13,
+      "evaluated_trials": 20,
+      "novel_trials": 7,
+      "novelty_source": "events",
+      "observed": 0.35,
+      "required": ">= 0.5",
+      "seen_before_trials": 11
+    },
+    "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 4,
+      "required": "at least 1 keep with budget_index > 1"
+    }
+  },
+  "failed_criteria": [
+    "active_novelty_fraction"
+  ],
+  "inactive_key_rejections": 0,
+  "ledgers": [
+    "results/r1/engineering/liveness_scripted_20261014T075806Z/ledgers/digits_mlp__s104/root_trials.jsonl",
+    "results/r1/engineering/liveness_scripted_20261014T075806Z/ledgers/digits_mlp__s114/root_trials.jsonl"
+  ],
+  "n_trials": 20,
+  "node": "digits_mlp",
+  "novelty_source": "events",
+  "pass": false
+}
