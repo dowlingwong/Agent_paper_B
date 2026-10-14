@@ -6,6 +6,25 @@ Newest entry first. Only this file says what is done.
 
 
 
+
+## 14 October 2026 — R1-E1B-RERUN2 (PILOT): stopped
+
+AI-assisted execution by Codex (AI-assisted). All outputs are PILOT or ENGINEERING_ONLY; none is evidence.
+
+- **Execution host:** `ucrtasl`. Logs and preserved runtime state: `/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/`.
+- **Harness:** `411c6054c8505f93a6429e2f9eed526952793882`; manager `qwen2.5-coder:7b`, pinned digest `dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364`.
+- **GPU / offload:** `2, GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154, NVIDIA RTX 6000 Ada Generation, 48427`; `{"full_offload": true, "host": "ucrtasl", "keep_alive": -1, "probe_tokens_max": 1, "size": 5560907776, "size_vram": 5560907776}`.
+
+- **preconditions:** `{"completed": true, "completed_utc": "20261014T140742Z", "started_utc": "20261014T140727Z"}`
+- **liveness:** `{"commit": "b2e5cc3ce5570e9a0da9cec67f5da8b9c4795ab6", "completed": true, "completed_utc": "20261014T141051Z", "eligible_nodes": ["tabular_mlp", "openml_ionosphere", "openml_breast_w"], "excluded_nodes": ["digits_mlp"], "out": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/agent_paper_B/results/r1/engineering/liveness_llm_20261014T140742Z", "started_utc": "20261014T140742Z", "verdicts": {"digits_mlp": {"active_novelty_fraction": {"equals_incumbent_trials": 0, "evaluated_trials": 20, "novel_trials": 12, "novelty_source": "events", "observed": 0.6, "required": ">= 0.5", "seen_before_trials": 8}, "invalid_rate": {"observed": 0.0, "required": "< 0.3"}, "keep_after_trial_1": {"observed": 0, "required": "at least 1 keep with budget_index > 1"}}, "openml_breast_w": {"active_novelty_fraction": {"equals_incumbent_trials": 1, "evaluated_trials": 20, "novel_trials": 13, "novelty_source": "events", "observed": 0.65, "required": ">= 0.5", "seen_before_trials": 7}, "invalid_rate": {"observed": 0.05, "required": "< 0.3"}, "keep_after_trial_1": {"observed": 1, "required": "at least 1 keep with budget_index > 1"}}, "openml_ionosphere": {"active_novelty_fraction": {"equals_incumbent_trials": 0, "evaluated_trials": 20, "novel_trials": 11, "novelty_source": "events", "observed": 0.55, "required": ">= 0.5", "seen_before_trials": 9}, "invalid_rate": {"observed": 0.0, "required": "< 0.3"}, "keep_after_trial_1": {"observed": 3, "required": "at least 1 keep with budget_index > 1"}}, "tabular_mlp": {"active_novelty_fraction": {"equals_incumbent_trials": 0, "evaluated_trials": 20, "novel_trials": 12, "novelty_source": "events", "observed": 0.6, "required": ">= 0.5", "seen_before_trials": 8}, "invalid_rate": {"observed": 0.0, "required": "< 0.3"}, "keep_after_trial_1": {"observed": 3, "required": "at least 1 keep with budget_index > 1"}}}}`
+- **arm_A:** `{"completed": false, "started_utc": "20261014T141051Z"}`
+
+**STOP:** RuntimeError: STOP: collection failures; no leaf retries permitted
+
+E1b rerun-2 phases are accepted only where the phase entry explicitly records completion. Partial outputs are preserved; no completed phase was re-run and no interrupted phase was retried.
+
+- **Author decisions remain open:** D18, D21, D23, the D4 amendment and any verify split-policy revision. Fixed split policy retained; L11 was not built.
+
 ## 14 October 2026 — batch 4c: launch repairs and real-runner desktop dry run (DRYRUN; review resolved)
 
 AI-assisted implementation by Codex at the author's explicit request, including approval to execute the complete `BUILD_BATCH4C_PROMPT.md` and then start a fresh Ada batch. Production design, PLAN rows and harness pin remain unchanged. Base: paper `42f454c` (coordination documents; prior launch base `69b2bbd`); harness `411c6054c8505f93a6429e2f9eed526952793882`. Implementation/tests/evidence commit: `bb7a12c02717566ebe8338287f9f9b55afe97beb`, pushed. Independent review and its single correction round are complete; the new Ada batch has not yet been started.
