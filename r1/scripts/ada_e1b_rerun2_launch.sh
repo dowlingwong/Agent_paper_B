@@ -14,11 +14,12 @@
 set -euo pipefail
 [ "$(hostname -s)" = ucrtasl ] || { echo 'STOP: run this on Ada (ucrtasl)'; exit 1; }
 
-OLD=/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh
+BATCH_ROOT="${R1_RERUN2_BATCH_ROOT:-/data1/dowling/tmp}"
+OLD="${R1_RERUN2_PINNED_BATCH:-/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh}"
 MODELS=$OLD/ollama_models
-OLLAMA_BIN=/usr/local/bin/ollama
-PAPER_REMOTE=git@github.com:dowlingwong/Agent_paper_B.git
-HARNESS_REMOTE=git@github.com:dowlingwong/autoresearch_harness.git
+OLLAMA_BIN="${R1_RERUN2_OLLAMA_BINARY:-/usr/local/bin/ollama}"
+PAPER_REMOTE="${R1_RERUN2_PAPER_REMOTE:-git@github.com:dowlingwong/Agent_paper_B.git}"
+HARNESS_REMOTE="${R1_RERUN2_HARNESS_REMOTE:-git@github.com:dowlingwong/autoresearch_harness.git}"
 SESSION=r1_e1b_rerun2
 EXECUTOR="${R1_EXECUTOR:-the launching agent on Ada}"
 COAUTHOR="${R1_COAUTHOR:-AI-assisted <noreply@example.com>}"
@@ -72,9 +73,13 @@ harness_log = (batch / "harness_tests.log").read_text(errors="replace")
 paper_log = (batch / "paper_tests.log").read_text(errors="replace")
 harness_failures = failures(harness_log)
 unexpected = [f for f in harness_failures if f not in accepted]
+if harness_rc != 0 and not harness_failures:
+    # A crash, interruption or usage error that writes no per-test line must
+    # never look clean (review F8).
+    unexpected.append(f"harness suite exited {harness_rc} with no parsed FAILED/ERROR lines")
 paper_failures = failures(paper_log)
 if paper_rc != 0:
-    unexpected += [f"r1-test: {f}" for f in (paper_failures or ["nonzero exit"])]
+    unexpected += [f"r1-test: {f}" for f in (paper_failures or [f"exited {paper_rc} with no parsed failures"])]
 payload = {
     "batch": str(batch),
     "paper_head": sys.argv[4] if len(sys.argv) > 4 else None,
@@ -101,7 +106,7 @@ case "${1:-}" in
   done
   command -v uv >/dev/null 2>&1 || { echo 'STOP: uv is not installed'; exit 1; }
   command -v python3 >/dev/null 2>&1 || { echo 'STOP: python3 is not installed'; exit 1; }
-  BATCH=$(mktemp -d "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_$(date -u +%Y%m%d)_XXXXXX")
+  BATCH=$(mktemp -d "$BATCH_ROOT/r1_e1b_rerun2_ENGINEERING_ONLY_$(date -u +%Y%m%d)_XXXXXX")
   git clone -q "$PAPER_REMOTE" "$BATCH/agent_paper_B"
   PAPER_HEAD=$(git -C "$BATCH/agent_paper_B" rev-parse HEAD)
   PIN=$(tr -d '[:space:]' < "$BATCH/agent_paper_B/r1/scripts/HARNESS_PIN_RERUN2")

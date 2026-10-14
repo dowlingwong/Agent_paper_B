@@ -34,11 +34,11 @@ from r1.harness import import_harness
 
 HARNESS = import_harness()
 
-from autoresearch.control_plane.campaign import _project_active_config  # noqa: E402
-from autoresearch.manager.hyperparam_edits import (  # noqa: E402
-    build_effective_config,
-    parse_train_constants,
+from autoresearch.control_plane.campaign import (  # noqa: E402
+    _novelty_config,
+    _project_active_config,
 )
+from autoresearch.manager.hyperparam_edits import parse_train_constants  # noqa: E402
 from autoresearch.nodes.registry import load_registered_node  # noqa: E402
 
 EDIT_NOVELTY_EVENT = "edit_novelty"
@@ -90,13 +90,18 @@ def active_projection(effective_config: dict[str, str], node_spec) -> tuple[tupl
 
 
 def replay_tally(records: Iterable[dict], node: str) -> NoveltyTally:
-    """Score a legacy ledger by replaying its structured edits (rows 14 Oct)."""
+    """Score a legacy ledger by replaying its structured edits (rows 14 Oct).
+
+    The configuration replayed is the same one the ``edit_novelty`` events use:
+    the effective config extended with every editable symbol (review F7), so
+    the two sources agree trial by trial.
+    """
     spec = load_registered_node(node, repo_root=HARNESS)
     constants: dict[str, str] = {}
     for rel in spec.editable_paths:
         constants.update(parse_train_constants(HARNESS / "nodes" / node / rel))
     current = dict(constants)
-    incumbent = active_projection(build_effective_config(current), spec)
+    incumbent = active_projection(_novelty_config(current, spec), spec)
     seen: set[tuple[tuple[str, str], ...]] = set()
     tally = NoveltyTally(node=node, source=SOURCE_REPLAYED)
     for record in records:
@@ -108,7 +113,7 @@ def replay_tally(records: Iterable[dict], node: str) -> NoveltyTally:
         symbol = str((edit or {}).get("symbol") or "")
         if symbol and symbol in candidate:
             candidate[symbol] = str(edit.get("new"))
-        active = active_projection(build_effective_config(candidate), spec)
+        active = active_projection(_novelty_config(candidate, spec), spec)
         equals = active == incumbent
         seen_before = active in seen
         if equals:

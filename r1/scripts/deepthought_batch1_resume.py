@@ -164,7 +164,16 @@ def require_liveness(nodes, memory_mode=None, arm_role=None):
         candidates = sorted((PAPER / 'results/r1/engineering').glob('liveness_*/liveness.json'))
         if not candidates:
             raise RuntimeError('STOP: no D28 liveness manifest; run the liveness check first')
-        manifest_path = candidates[-1]
+
+        def _stamp_key(path):
+            # Newest means the UTC stamp in the directory name, not the path's
+            # lexicographic order (the manager prefix would order langgraph <
+            # llm < scripted regardless of date; review F11).  Fall back to
+            # the directory mtime when the name has no stamp.
+            match = re.search(r'(\d{8}T\d{6}Z)$', path.parent.name)
+            return (match.group(1) if match else '', path.parent.stat().st_mtime)
+
+        manifest_path = max(candidates, key=_stamp_key)
     manifest = load_liveness_manifest(manifest_path)
     return require_live(list(nodes), manifest, memory_mode=memory_mode, arm_role=arm_role)
 

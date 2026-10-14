@@ -1,0 +1,91 @@
+{
+  "schema": "r1.liveness_run/1",
+  "label": "ENGINEERING_ONLY",
+  "started_utc": "20261014T084101Z",
+  "harness": {
+    "root": "/Users/wongdowling/Documents/autoresearch_harness",
+    "commit": "ed55297c1ac447453d9389494554d1f710a6b4d1",
+    "branch": "r1",
+    "dirty": true
+  },
+  "manager": {
+    "kind": "scripted",
+    "model": "ollama/qwen2.5-coder:7b",
+    "temperature": 0.2
+  },
+  "manager_kind": "scripted",
+  "memory_mode": "none",
+  "seed_policy": {
+    "kind": "numpy_pcg64",
+    "derivation": "default_rng([instance_seed, repetition, budget_index])"
+  },
+  "nodes": [
+    "digits_mlp",
+    "tabular_mlp",
+    "openml_breast_w",
+    "openml_ionosphere",
+    "openml_wdbc"
+  ],
+  "instances": 2,
+  "runs": 10,
+  "branching": false,
+  "host": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.11"
+  },
+  "work": "/tmp/r1_liveness/liveness_20261014T084101Z",
+  "campaigns": [
+    {
+      "instance": "digits_mlp__s104",
+      "node": "digits_mlp",
+      "seed": 104
+    },
+    {
+      "instance": "digits_mlp__s114",
+      "node": "digits_mlp",
+      "seed": 114
+    },
+    {
+      "instance": "tabular_mlp__s102",
+      "node": "tabular_mlp",
+      "seed": 102
+    },
+    {
+      "instance": "tabular_mlp__s112",
+      "node": "tabular_mlp",
+      "seed": 112
+    },
+    {
+      "instance": "openml_breast_w__s105",
+      "node": "openml_breast_w",
+      "seed": 105
+    },
+    {
+      "instance": "openml_breast_w__s115",
+      "node": "openml_breast_w",
+      "seed": 115
+    },
+    {
+      "instance": "openml_ionosphere__s103",
+      "node": "openml_ionosphere",
+      "seed": 103
+    },
+    {
+      "instance": "openml_ionosphere__s113",
+      "node": "openml_ionosphere",
+      "seed": 113
+    },
+    {
+      "instance": "openml_wdbc__s100",
+      "node": "openml_wdbc",
+      "seed": 100
+    },
+    {
+      "instance": "openml_wdbc__s110",
+      "node": "openml_wdbc",
+      "seed": 110
+    }
+  ],
+  "elapsed_seconds": 123.9,
+  "finished_utc": "20261014T084305Z"
+}

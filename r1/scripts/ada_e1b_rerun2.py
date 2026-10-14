@@ -313,7 +313,21 @@ def main():
     phase('comparison', comparison)
 
 
+def _already_finished() -> bool:
+    """True when every phase completed and the STATUS entry was written."""
+    steps = state.get('steps', {})
+    return (
+        all(steps.get(name, {}).get('completed') for name in PHASES)
+        and steps.get('STATUS', {}).get('completed') is True
+    )
+
+
 def _entrypoint():
+    load_previous_state()
+    if _already_finished():
+        # Review F10: finish is the last phase; a restart of a completed batch
+        # must not append and push a second STATUS entry.
+        raise SystemExit('STOP: this rerun-2 batch already finished; nothing to do')
     try:
         main()
     except PhaseInterrupted as exc:

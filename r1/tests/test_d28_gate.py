@@ -174,6 +174,23 @@ def test_script_finds_the_newest_engineering_liveness_report(tmp_path, monkeypat
     assert script.require_liveness(["digits_mlp"])["nodes"]["digits_mlp"]["pass"] is True
 
 
+def test_script_orders_manifests_by_date_not_by_manager_prefix(tmp_path, monkeypatch):
+    # Review F11: paths sort langgraph < llm < scripted regardless of date, so
+    # a lexicographic pick would use the older llm manifest and miss the newer
+    # failing langgraph one.
+    script = _load_script(tmp_path, monkeypatch)
+    monkeypatch.delenv("R1_LIVENESS_MANIFEST", raising=False)
+    older = Path(script.PAPER) / "results/r1/engineering/liveness_llm_20260101T000000Z"
+    newer = Path(script.PAPER) / "results/r1/engineering/liveness_langgraph_20260201T000000Z"
+    for directory, passed in ((older, True), (newer, False)):
+        directory.mkdir(parents=True)
+        (directory / "liveness.json").write_text(json.dumps(_langgraph_manifest(
+            ("digits_mlp", {"pass": passed, "failed_criteria": [] if passed else ["active_novelty_fraction"]})
+        )))
+    with pytest.raises(RuntimeError, match=r"^STOP: failed D28 liveness: digits_mlp"):
+        script.require_liveness(["digits_mlp"])
+
+
 def test_collect_is_gated_before_any_collector_call(tmp_path, monkeypatch):
     script = _load_script(tmp_path, monkeypatch)
     monkeypatch.delenv("R1_LIVENESS_MANIFEST", raising=False)

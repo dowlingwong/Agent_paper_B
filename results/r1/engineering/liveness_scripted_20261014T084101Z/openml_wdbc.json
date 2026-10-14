@@ -1,0 +1,31 @@
+{
+  "criteria": {
+    "active_novelty_fraction": {
+      "equals_incumbent_trials": 0,
+      "evaluated_trials": 20,
+      "novel_trials": 19,
+      "novelty_source": "events",
+      "observed": 0.95,
+      "required": ">= 0.5",
+      "seen_before_trials": 1
+    },
+    "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 2,
+      "required": "at least 1 keep with budget_index > 1"
+    }
+  },
+  "failed_criteria": [],
+  "inactive_key_rejections": 0,
+  "ledgers": [
+    "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/openml_wdbc__s100/root_trials.jsonl",
+    "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/openml_wdbc__s110/root_trials.jsonl"
+  ],
+  "n_trials": 20,
+  "node": "openml_wdbc",
+  "novelty_source": "events",
+  "pass": true
+}

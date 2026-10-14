@@ -1,0 +1,170 @@
+{
+  "criteria": {
+    "active_novelty_fraction": ">= 0.5 of evaluated trials; novelty_source events or replayed",
+    "invalid_rate": "< 0.3",
+    "keep_after_trial_1": "at least one keep after trial 1"
+  },
+  "generated_utc": "20261014T084305Z",
+  "label": "ENGINEERING_ONLY",
+  "manager_kind": "scripted",
+  "memory_mode": "none",
+  "nodes": {
+    "digits_mlp": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 0,
+          "evaluated_trials": 20,
+          "novel_trials": 20,
+          "novelty_source": "events",
+          "observed": 1.0,
+          "required": ">= 0.5",
+          "seen_before_trials": 0
+        },
+        "invalid_rate": {
+          "observed": 0.0,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 4,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/digits_mlp__s104/root_trials.jsonl",
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/digits_mlp__s114/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "digits_mlp",
+      "novelty_source": "events",
+      "pass": true
+    },
+    "openml_breast_w": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 0,
+          "evaluated_trials": 20,
+          "novel_trials": 19,
+          "novelty_source": "events",
+          "observed": 0.95,
+          "required": ">= 0.5",
+          "seen_before_trials": 1
+        },
+        "invalid_rate": {
+          "observed": 0.0,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 3,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/openml_breast_w__s105/root_trials.jsonl",
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/openml_breast_w__s115/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "openml_breast_w",
+      "novelty_source": "events",
+      "pass": true
+    },
+    "openml_ionosphere": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 0,
+          "evaluated_trials": 20,
+          "novel_trials": 18,
+          "novelty_source": "events",
+          "observed": 0.9,
+          "required": ">= 0.5",
+          "seen_before_trials": 2
+        },
+        "invalid_rate": {
+          "observed": 0.0,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 2,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/openml_ionosphere__s103/root_trials.jsonl",
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/openml_ionosphere__s113/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "openml_ionosphere",
+      "novelty_source": "events",
+      "pass": true
+    },
+    "openml_wdbc": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 0,
+          "evaluated_trials": 20,
+          "novel_trials": 19,
+          "novelty_source": "events",
+          "observed": 0.95,
+          "required": ">= 0.5",
+          "seen_before_trials": 1
+        },
+        "invalid_rate": {
+          "observed": 0.0,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 2,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/openml_wdbc__s100/root_trials.jsonl",
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/openml_wdbc__s110/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "openml_wdbc",
+      "novelty_source": "events",
+      "pass": true
+    },
+    "tabular_mlp": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 0,
+          "evaluated_trials": 20,
+          "novel_trials": 20,
+          "novelty_source": "events",
+          "observed": 1.0,
+          "required": ">= 0.5",
+          "seen_before_trials": 0
+        },
+        "invalid_rate": {
+          "observed": 0.0,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 6,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/tabular_mlp__s102/root_trials.jsonl",
+        "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers/tabular_mlp__s112/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "tabular_mlp",
+      "novelty_source": "events",
+      "pass": true
+    }
+  },
+  "run_manifest": "manifest.json",
+  "schema": "r1.liveness/2"
+}

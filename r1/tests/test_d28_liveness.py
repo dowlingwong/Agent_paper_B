@@ -25,7 +25,7 @@ DT4_ROOTS = (
 )
 SMOKE_LEDGERS = (
     Path(__file__).resolve().parents[2]
-    / "results/r1/engineering/liveness_scripted_20261014T075806Z/ledgers"
+    / "results/r1/engineering/liveness_scripted_20261014T084101Z/ledgers"
 )
 
 
@@ -47,11 +47,12 @@ def test_dt4_ionosphere_fails_for_the_right_reasons():
 def _independent_digits_recomputation() -> tuple[int, int, int]:
     """Second, simple recomputation of the DT4 digits numbers (no liveness code).
 
-    digits_mlp has no active-key declaration, so the active configuration is
-    the full effective configuration; this tracks it with plain tuples and a
-    hand-rolled keep/restore replay.
+    digits_mlp has no active-key declaration, so its novelty configuration is
+    its full parsed editable configuration; this tracks the raw constants with
+    plain tuples (no ``build_effective_config``, review F7) and a hand-rolled
+    keep/restore replay.
     """
-    from autoresearch.manager.hyperparam_edits import build_effective_config, parse_train_constants
+    from autoresearch.manager.hyperparam_edits import parse_train_constants
     from autoresearch.nodes.registry import load_registered_node
 
     spec = load_registered_node("digits_mlp", repo_root=HARNESS)
@@ -72,8 +73,8 @@ def _independent_digits_recomputation() -> tuple[int, int, int]:
             candidate = dict(current)
             if isinstance(edit, dict) and edit.get("symbol") in candidate:
                 candidate[edit["symbol"]] = str(edit["new"])
-            key = tuple(sorted(build_effective_config(candidate).items()))
-            incumbent_key = tuple(sorted(build_effective_config(incumbent).items()))
+            key = tuple(sorted(candidate.items()))
+            incumbent_key = tuple(sorted(incumbent.items()))
             if key != incumbent_key and key not in seen:
                 novel += 1
             seen.add(key)
@@ -87,7 +88,8 @@ def _independent_digits_recomputation() -> tuple[int, int, int]:
 
 def test_dt4_digits_is_pinned_after_an_independent_recomputation():
     # DT4 ran with memory off, so a novelty FAIL here is the honest outcome;
-    # PASS is never forced.  The numbers are pinned.
+    # PASS is never forced.  The numbers are pinned (32/120 after the F7
+    # correction; the reviewer's independent raw-constants replay agrees).
     report = evaluate_ledger_paths([DT4_ROOTS])
     digits = report["nodes"]["digits_mlp"]
     novelty = digits["criteria"]["active_novelty_fraction"]
@@ -95,7 +97,7 @@ def test_dt4_digits_is_pinned_after_an_independent_recomputation():
     assert (
         novelty["novel_trials"], novelty["evaluated_trials"],
         digits["criteria"]["keep_after_trial_1"]["observed"],
-    ) == (8, 120, 11)
+    ) == (32, 120, 11)
     assert digits["criteria"]["invalid_rate"]["observed"] == 0.0
     assert digits["pass"] is False
     assert digits["failed_criteria"] == ["active_novelty_fraction"]
@@ -205,10 +207,12 @@ def test_events_without_active_flags_fall_back_to_replay(tmp_path):
     assert (novelty["evaluated_trials"], novelty["novel_trials"]) == (1, 1)
 
 
-def test_scripted_smoke_wdbc_passes_under_the_revised_criterion():
+def test_scripted_smoke_passes_under_the_revised_criterion():
     # PLAN §10 D28 revision: the old metric-different criterion failed wdbc
     # (7/18) although the scripted proposer kept proposing novel configurations;
-    # the active-key novelty criterion passes it.
+    # the active-key novelty criterion passes it.  After the F7 correction the
+    # digits and tabular MLP nodes are also recognised as novel (their edits
+    # touch editable symbols the narrow effective map does not cover).
     report = evaluate_ledger_paths([SMOKE_LEDGERS])
     wdbc = report["nodes"]["openml_wdbc"]
     novelty = wdbc["criteria"]["active_novelty_fraction"]
@@ -216,10 +220,11 @@ def test_scripted_smoke_wdbc_passes_under_the_revised_criterion():
     assert wdbc["pass"] is True
     assert (novelty["novel_trials"], novelty["evaluated_trials"]) == (19, 20)
     digits = report["nodes"]["digits_mlp"]
-    assert digits["pass"] is False
-    assert digits["failed_criteria"] == ["active_novelty_fraction"]
-    assert (digits["criteria"]["active_novelty_fraction"]["novel_trials"],
-            digits["criteria"]["active_novelty_fraction"]["evaluated_trials"]) == (7, 20)
+    assert digits["pass"] is True
+    assert digits["criteria"]["active_novelty_fraction"]["novel_trials"] == 20
+    tabular = report["nodes"]["tabular_mlp"]
+    assert tabular["pass"] is True
+    assert tabular["criteria"]["active_novelty_fraction"]["novel_trials"] == 20
 
 
 def test_smoke_events_and_replay_agree_per_segment():

@@ -100,6 +100,20 @@ def test_entrypoint_maps_an_interrupted_phase_to_a_stop(tmp_path, monkeypatch):
     assert "no automatic retry" in reasons[0]
 
 
+def test_entrypoint_refuses_to_finish_a_completed_batch_again(tmp_path, monkeypatch):
+    # Review F10: finish is the last phase; restarting a completed batch must
+    # not append and push a second STATUS entry.
+    runner = _load_runner(tmp_path, monkeypatch)
+    steps = {name: {"completed": True} for name in runner.PHASES}
+    steps["STATUS"] = {"completed": True, "reason": None}
+    (Path(runner.BATCH) / "batch_state.json").write_text(json.dumps({"steps": steps}))
+    calls = []
+    monkeypatch.setattr(runner, "finish", lambda reason: calls.append(reason))
+    with pytest.raises(SystemExit):
+        runner._entrypoint()
+    assert calls == []
+
+
 # ---------------------------------------------------------------------------
 # Liveness phase: eligibility and the floor
 # ---------------------------------------------------------------------------
@@ -333,6 +347,121 @@ def test_launcher_start_starts_the_session_when_clean(tmp_path):
     log = (tmp_path / "tmux.log").read_text()
     assert "new-session -d -s r1_e1b_rerun2" in log
     assert "ada_e1b_rerun2.py" in log
+
+
+_ACCEPTED_IDS = [
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns",
+    "tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist",
+    "tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance",
+    "tests/test_legacy_noop_skip.py",
+    "tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::test_claw_worker_deterministic_constant_patch_runs_without_llm",
+]
+_PIN = "ed55297c1ac447453d9389494554d1f710a6b4d1"
+
+
+def _prepare_env(tmp_path: Path, *, harness_rc: int, harness_output: str, make_rc: int = 0) -> dict:
+    """Stub hostname/tmux/git/uv/make so --prepare can run off Ada."""
+    bin_dir = tmp_path / "stubbin"
+    bin_dir.mkdir(exist_ok=True)
+    pinned = tmp_path / "pinned"
+    (pinned / "ollama_models").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "ollama").write_text("stub")
+    harness_log = tmp_path / "fake_harness.log"
+    harness_log.write_text(harness_output)
+    (bin_dir / "hostname").write_text("#!/bin/sh\necho ucrtasl\n")
+    (bin_dir / "tmux").write_text(
+        "#!/bin/sh\n"
+        'echo "$@" >> "$STUB_TMUX_LOG"\n'
+        'if [ "$1" = "has-session" ]; then exit 1; fi\n'
+        'if [ "$1" = "ls" ]; then exit 0; fi\n'
+        "exit 0\n"
+    )
+    (bin_dir / "git").write_text(
+        "#!/bin/sh\n"
+        'if [ "$1" = "clone" ]; then\n'
+        "  for last; do :; done\n"
+        '  mkdir -p "$last"\n'
+        '  case "$last" in *agent_paper_B) mkdir -p "$last/r1/scripts"; echo "' + _PIN + '" > "$last/r1/scripts/HARNESS_PIN_RERUN2";; esac\n'
+        "  exit 0\n"
+        "fi\n"
+        'if [ "$1" = "-C" ]; then shift 2; if [ "$1" = "rev-parse" ]; then echo ' + _PIN + "; exit 0; fi; fi\n"
+        "exit 0\n"
+    )
+    (bin_dir / "uv").write_text(
+        "#!/bin/sh\n"
+        'if [ "$1" = "sync" ]; then mkdir -p .venv/bin; printf "#!/bin/sh\\nexit 0\\n" > .venv/bin/python; chmod +x .venv/bin/python; exit 0; fi\n'
+        'cat "$STUB_HARNESS_LOG"\n'
+        'exit "$STUB_HARNESS_RC"\n'
+    )
+    (bin_dir / "make").write_text('#!/bin/sh\necho "135 passed in 1.0s"\nexit "$STUB_MAKE_RC"\n')
+    for name in ("hostname", "tmux", "git", "uv", "make"):
+        (bin_dir / name).chmod(0o755)
+    return dict(
+        os.environ,
+        PATH=str(bin_dir) + os.pathsep + os.environ["PATH"],
+        STUB_TMUX_LOG=str(tmp_path / "tmux.log"),
+        STUB_HARNESS_LOG=str(harness_log),
+        STUB_HARNESS_RC=str(harness_rc),
+        STUB_MAKE_RC=str(make_rc),
+        R1_RERUN2_BATCH_ROOT=str(tmp_path / "batches"),
+        R1_RERUN2_PINNED_BATCH=str(pinned),
+        R1_RERUN2_OLLAMA_BINARY=str(tmp_path / "ollama"),
+    )
+
+
+def _run_prepare(tmp_path: Path, env: dict) -> Path:
+    (tmp_path / "batches").mkdir(exist_ok=True)
+    result = subprocess.run(["bash", str(LAUNCHER), "--prepare"], env=env,
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    batch = Path([line for line in result.stdout.splitlines()
+                  if line.startswith("PREPARED. Batch:")][0].split("Batch:")[1].strip())
+    return batch
+
+
+def test_prepare_accepts_only_the_environmental_failures(tmp_path):
+    known = "\n".join(f"FAILED {line}" for line in _ACCEPTED_IDS[:8])
+    known += f"\nERROR {_ACCEPTED_IDS[8]}\n"
+    output = f"{known}\n8 failed, 386 passed, 1 warning, 1 error in 42s\n"
+    env = _prepare_env(tmp_path, harness_rc=1, harness_output=output)
+    batch = _run_prepare(tmp_path, env)
+    payload = json.loads((batch / "prepare.json").read_text())
+    assert payload["ok"] is True
+    assert payload["harness_tests"]["unexpected"] == []
+    assert payload["r1_tests"]["returncode"] == 0
+
+
+def test_prepare_refuses_an_unknown_failure(tmp_path):
+    output = "FAILED tests/test_new_thing.py::test_x\n1 failed, 10 passed in 1s\n"
+    env = _prepare_env(tmp_path, harness_rc=1, harness_output=output)
+    batch = _run_prepare(tmp_path, env)
+    payload = json.loads((batch / "prepare.json").read_text())
+    assert payload["ok"] is False
+    assert payload["harness_tests"]["unexpected"] == ["tests/test_new_thing.py::test_x"]
+
+
+def test_prepare_refuses_a_nonzero_exit_without_parsed_failures(tmp_path):
+    # Review F8: an interrupted / crashed pytest run has no FAILED lines.
+    env = _prepare_env(tmp_path, harness_rc=2, harness_output="INTERNALERROR> crashed\n")
+    batch = _run_prepare(tmp_path, env)
+    payload = json.loads((batch / "prepare.json").read_text())
+    assert payload["ok"] is False
+    assert any("exited 2" in item for item in payload["harness_tests"]["unexpected"])
+
+
+def test_prepare_refuses_a_failing_r1_suite(tmp_path):
+    known = "\n".join(f"FAILED {line}" for line in _ACCEPTED_IDS[:8])
+    output = f"{known}\nERROR {_ACCEPTED_IDS[8]}\n8 failed, 386 passed in 42s\n"
+    env = _prepare_env(tmp_path, harness_rc=1, harness_output=output, make_rc=1)
+    batch = _run_prepare(tmp_path, env)
+    payload = json.loads((batch / "prepare.json").read_text())
+    assert payload["ok"] is False
+    assert payload["r1_tests"]["returncode"] == 1
 
 
 # ---------------------------------------------------------------------------
