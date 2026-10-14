@@ -58,8 +58,19 @@ def make_manager(node: str, seed: int, repetition: int, manifest_manager: dict |
     cfg = manifest_manager or MANAGER
     if cfg.get("kind") == "langgraph":
         from autoresearch.manager.langgraph_manager import LangGraphManager
-        return LangGraphManager(model=cfg["model"], temperature=float(cfg["temperature"]))
+        # D26: the branch repetition enters the deterministic per-call Ollama seed.
+        return LangGraphManager(model=cfg["model"], temperature=float(cfg["temperature"]),
+                                repetition=repetition)
     return ScriptedRandomManager(node, seed=seed, repetition=repetition)
+
+
+def seed_policy(manager_kind: str) -> dict:
+    """The manifest's record of how proposer sampling is seeded (D26)."""
+    if manager_kind == "langgraph":
+        return {"kind": "ollama_seed", "temperature": 0.2,
+                "derivation": "manager_seed(campaign_id, budget_index, repetition, revision_attempt)"}
+    return {"kind": "numpy_pcg64",
+            "derivation": "default_rng([instance_seed, repetition, budget_index])"}
 
 
 PILOT_DATA_CACHE = "experiments/r1/pilot/L8_20261009T152916Z/nodes/{node}/data_cache"
@@ -103,7 +114,9 @@ class E2Recorder:
 # ---------------------------------------------------------------------------
 
 def run_root(node: str, k: int, work: str, runs: int, indices: list[int], manager: dict | None = None,
-             split_policy: str = "fixed") -> dict:
+             split_policy: str = "fixed", memory_mode: str = "none") -> dict:
+    """Run one root campaign.  ``memory_mode`` comes from the manifest (D24); a manifest
+    without the field means ``none`` (historical runs)."""
     seed = _instance_seed(node, k)
     inst = f"{node}__s{seed}"
     root = Path(work) / "roots" / inst
@@ -114,7 +127,8 @@ def run_root(node: str, k: int, work: str, runs: int, indices: list[int], manage
     worker = LocalWorker(node_root=node_dir, artifact_dir=root / "art", train_seed=seed, split_seed=seed)
     recorder = E2Recorder(root / "snapshots", set(indices))
     run_real_campaign(
-        node_spec=spec, campaign_id=inst, budget=runs * 2, manager_mode="baseline_manager", memory_mode="none",
+        node_spec=spec, campaign_id=inst, budget=runs * 2, manager_mode="baseline_manager",
+        memory_mode=memory_mode,
         records_path=root / "root_trials.jsonl", worker=worker,
         proposal_backend=make_manager(node, seed, 0, manager),
         compute_budget=ComputeBudget(max_worker_runs=runs), verify_runs=VERIFY_R,
@@ -252,6 +266,8 @@ def main() -> int:
     ap.add_argument("--split", default="pilot")
     ap.add_argument("--manager", choices=["scripted", "langgraph"], default="scripted",
                     help="langgraph = the pinned local qwen2.5-coder:7b via Ollama (run natively on the Mac)")
+    ap.add_argument("--memory-mode", choices=["none", "append_only_summary", "append_only_summary_with_rationale"],
+                    default=None, help="manager memory mode (D24); a manifest without the field means none")
     ap.add_argument("--out", default=None, help="output dir for a new run (default results/r1/pilot/E1b_<UTC>)")
     ap.add_argument("--work", default=os.environ.get("R1_TMP", "/tmp/r1_e1b"))
     ap.add_argument("--workers", type=int, default=4)
@@ -271,6 +287,8 @@ def main() -> int:
                     "manager_backend": ("scripted_random (stand-in; VM cannot reach Ollama)" if args.manager == "scripted"
                                         else "langgraph qwen2.5-coder:7b (Ollama; pinned digest dae161e2...)"),
                     "manager": {**MANAGER, "kind": args.manager},
+                    "memory_mode": args.memory_mode or "none",
+                    "seed_policy": seed_policy(args.manager),
                     "nodes": args.nodes, "instances": args.instances, "runs": args.runs, "points": args.points,
                     "reps": args.reps, "audit_seeds": args.audit_seeds, "verify_r": VERIFY_R,
                     "verify_split_policy": args.verify_split_policy,
@@ -291,7 +309,8 @@ def main() -> int:
             root_json = out / "roots" / f"{inst}.json"
             if not root_json.exists():
                 jobs.append(("root", (node, k, str(work), manifest["runs"], manifest["points"], manifest.get("manager"),
-                                      str(manifest.get("verify_split_policy", "fixed")).split(" ")[0])))
+                                      str(manifest.get("verify_split_policy", "fixed")).split(" ")[0],
+                                      str(manifest.get("memory_mode", "none")))))
                 continue
             root = json.loads(root_json.read_text())
             if not (out / "audits" / f"{inst}__c0.json").exists():
