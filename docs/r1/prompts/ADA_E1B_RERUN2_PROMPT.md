@@ -41,7 +41,8 @@ Fixed facts:
 3. **No retries.** If the runner STOPs, preserve everything and report. A completed phase is never re-run. An interrupted phase is not resumed or relaunched without a new author decision. A failing node in the liveness phase is an expected outcome, not a STOP, unless fewer than 2 nodes pass.
 4. **When you may intervene:** only if (a) the runner process is gone but `batch_state.json` has no `finished_utc`, or (b) neither the runner log nor the collection has made progress for 60 minutes. Then stop only our tmux sessions (`r1_e1b_rerun2` and our `r1_ollama_*` session), keep every file, and report. Slowness on a shared card is not a reason to intervene.
 5. **Git.** While the runner is active, do not push to `origin/main` from the Mac; the runner commits from Ada. Never force-push or rewrite history. If a runner push is rejected as non-fast-forward, you may run `git pull --rebase && git push` in the batch clone without changing any content, and you must say so.
-6. **Honesty.** Report a STOP as a STOP. Give numbers without interpretation beyond the report's readings template. Label your work as AI-assisted.
+6. **No manual environment changes on Ada.** Do not install packages, edit git config, or patch files in a batch clone by hand. The launcher does all setup. If `--prepare` fails for an environmental reason, report it. Earlier batch directories (e.g. `…_20261014_nH08fo`) are evidence: leave them untouched and never resume them.
+7. **Honesty.** Report a STOP as a STOP. Give numbers without interpretation beyond the report's readings template. Label your work as AI-assisted.
 
 ## Step 0: preconditions (Mac, read-only)
 
@@ -52,6 +53,7 @@ cd ~/Documents/agent_paper_B && git pull --ff-only && git status --short   # mus
 Check each of the following. If any check fails, stop and report.
 
 - `docs/r1/STATUS.md` has a batch-4 entry, and `docs/r1/reviews/BUILD_REVIEW_20261014b.md` has a "Resolution" section with no open MAJOR finding.
+- STATUS has a batch-4c entry reporting a passing end-to-end desktop dry run (`results/r1/engineering/rerun2_dryrun_<UTC>/summary.json`), and `docs/r1/reviews/BUILD_REVIEW_20261014c.md` has a "Resolution" section with no open MAJOR finding.
 - These files exist: `r1/scripts/ada_e1b_rerun2.py`, `r1/scripts/ada_e1b_rerun2_launch.sh`, `r1/scripts/HARNESS_PIN_RERUN2`, `r1/headroom/e1b_compare.py`.
 - The `HARNESS_PIN_RERUN2` commit is on `origin/r1` of the harness (`git -C ~/Documents/autoresearch_harness fetch && git -C ~/Documents/autoresearch_harness branch -r --contains <pin>`).
 - PLAN §10 contains the rows `R1-E1B-RERUN2`, `D28 (revised criterion 2)` and `R1-COMPUTE (GPU co-tenancy, 13 Oct)`.
@@ -78,20 +80,23 @@ Note the CPU count and which cards currently qualify. If no card qualifies, that
 
 ## Step 2: prepare, then start
 
+Read the author's git identity from the Mac repository and pass it to the launcher. The launcher sets it repository-locally in the fresh clones. Do not set it any other way.
+
 ```sh
-ssh experiment_zhixu 'bash -s -- --prepare' < ~/Documents/agent_paper_B/r1/scripts/ada_e1b_rerun2_launch.sh
+GN=$(git -C ~/Documents/agent_paper_B config user.name); GE=$(git -C ~/Documents/agent_paper_B config user.email)
+ssh experiment_zhixu "R1_GIT_NAME='$GN' R1_GIT_EMAIL='$GE' bash -s -- --prepare" < ~/Documents/agent_paper_B/r1/scripts/ada_e1b_rerun2_launch.sh
 ```
 
-Record the printed batch directory `$B`. Read `$B/prepare.json`, which holds the heads, the test numbers and any failure. Then:
+Record the printed batch directory `$B`. Read `$B/prepare.json`, which holds the heads, the test numbers, any failure, the pytest version and the git identity and push dry-run checks. Then:
 
 - If a failure lies outside the accepted environmental set (the known harness failures plus the Ada missing-`/bin/zsh` exception), stop and report.
 - Otherwise:
 
   ```sh
-  ssh experiment_zhixu 'bash -s -- --start '"$B" < ~/Documents/agent_paper_B/r1/scripts/ada_e1b_rerun2_launch.sh
+  ssh experiment_zhixu "R1_GIT_NAME='$GN' R1_GIT_EMAIL='$GE' bash -s -- --start $B" < ~/Documents/agent_paper_B/r1/scripts/ada_e1b_rerun2_launch.sh
   ```
 
-  Within 2 minutes, confirm that the tmux session `r1_e1b_rerun2` is alive and that `$B/runner.log` exists. Copy the compute estimate the runner prints (leaves and expected LLM calls per arm).
+  Copy the launcher's one-line self-check summary. Within 2 minutes, confirm that the tmux session `r1_e1b_rerun2` is alive and that `$B/runner.log` exists. Copy the compute estimate the runner prints (leaves and expected LLM calls per arm).
 
 ## Step 3: monitor until the runner finishes
 

@@ -4,6 +4,19 @@ Newest entry first. Only this file says what is done.
 
 
 
+
+## 14 October 2026 — rerun-2 first launch stopped before any inference (engineering defects)
+
+Reported by the Ada operator agent (AI-assisted); recorded here by an AI agent (Claude, coordinating session). Not evidence; no experiment ran.
+
+- Batch `/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_nH08fo/` on Ada.
+  - `--prepare` passed its classification only after the operator installed `pytest` into the batch venv by hand: the launcher runs `uv sync` without `--extra dev`.
+  - `r1-test`: 144 passed. Every harness failure was in the accepted set.
+- **STOP** at `r1/scripts/ada_e1b_rerun2.py:156`: `NameError` on `MODELS`. The runner never reads `R1_OLLAMA_MODELS`, although `env.sh` exports it. In DT4 this name was defined inside `ada_rerun_dt4.py`, not in the shared helpers.
+- `finish()` then could not commit its STATUS entry because the fresh Ada clone has no git author identity. The entry stays staged in that clone and was not pushed. This is the same gap the DT4 recovery hit (repository-local identity), and it was never added to the launcher.
+- No Ollama server, liveness check or arm ran. Our tmux sessions are gone and the port is free. The batch directory stays as evidence; it is not resumed.
+- Systemic cause: this is the third Ada stop caused by runner paths that the desktop stub tests did not execute (DT4 tables whitespace, `MODELS`, git identity). Fix batch: `docs/r1/prompts/BUILD_BATCH4C_PROMPT.md`, which adds an end-to-end desktop dry run of the real runner against a fake Ollama and a fake `nvidia-smi`. `ADA_E1B_RERUN2_PROMPT.md` is updated (git identity passed in; no manual environment changes on Ada).
+
 ## 14 October 2026 — batch 4b: second Ada accepted-failure ID in the rerun-2 launcher (ENGINEERING_ONLY)
 
 AI-assisted execution by opencode (deepseek-v4.1-flash) per `docs/r1/prompts/BUILD_BATCH4B_PROMPT.md`; no LLM calls, no GPU, no Ada. Commit: paper `75d6911` → `f7879db` (branch `main`). One change: the rerun-2 launcher's accepted-failure set gains exactly `tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns` (PLAN §10, row R1-COMPUTE (Ada environmental test exception 2)), beside the missing-`/bin/zsh` exception of 12 Oct. The launcher's Ada-only host guard scopes the set as before; every other failure still refuses `--start`, and no pattern/file/class matching was added. The harness is untouched, so `HARNESS_PIN_RERUN2` stays `411c6054c8505f93a6429e2f9eed526952793882`.
