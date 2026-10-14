@@ -1,0 +1,5144 @@
+{
+ "harness_commit": "9c4902d0d8776f18a081e1ff2478d651fc7096c1",
+ "instances": {
+  "digits_mlp__s104": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "23",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 23",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 2,
+     "new": "35",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 35",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.002456",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.002456",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 4,
+     "new": "35",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 35",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 5,
+     "new": "26",
+     "old": "35",
+     "summary": "BATCH_SIZE 35 -> 26",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 6,
+     "new": "0.000249",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 0.000249",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 7,
+     "new": "9.57e-05",
+     "old": "0.000249",
+     "summary": "ALPHA 0.000249 -> 9.57e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 8,
+     "new": "21",
+     "old": "23",
+     "summary": "HIDDEN_UNITS 23 -> 21",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 9,
+     "new": "22",
+     "old": "35",
+     "summary": "MAX_ITER 35 -> 22",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 10,
+     "new": "42",
+     "old": "21",
+     "summary": "HIDDEN_UNITS 21 -> 42",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 11,
+     "new": "91",
+     "old": "42",
+     "summary": "HIDDEN_UNITS 42 -> 91",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.0002053",
+     "old": "9.57e-05",
+     "summary": "ALPHA 9.57e-05 -> 0.0002053",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 13,
+     "new": "12",
+     "old": "26",
+     "summary": "BATCH_SIZE 26 -> 12",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 14,
+     "new": "14",
+     "old": "12",
+     "summary": "BATCH_SIZE 12 -> 14",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 15,
+     "new": "11",
+     "old": "22",
+     "summary": "MAX_ITER 22 -> 11",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 16,
+     "new": "8",
+     "old": "14",
+     "summary": "BATCH_SIZE 14 -> 8",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 17,
+     "new": "10",
+     "old": "8",
+     "summary": "BATCH_SIZE 8 -> 10",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.0004686",
+     "old": "0.0002053",
+     "summary": "ALPHA 0.0002053 -> 0.0004686",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.0002138",
+     "old": "0.0004686",
+     "summary": "ALPHA 0.0004686 -> 0.0002138",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 20,
+     "new": "0.005597",
+     "old": "0.002456",
+     "summary": "LEARNING_RATE_INIT 0.002456 -> 0.005597",
+     "symbol": "LEARNING_RATE_INIT"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "93",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 93",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 2,
+     "new": "0.0001057",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 0.0001057",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 3,
+     "new": "184",
+     "old": "93",
+     "summary": "MAX_ITER 93 -> 184",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.0003727",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.0003727",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 5,
+     "new": "0.0002198",
+     "old": "0.0001057",
+     "summary": "ALPHA 0.0001057 -> 0.0002198",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 6,
+     "new": "0.0004846",
+     "old": "0.0002198",
+     "summary": "ALPHA 0.0002198 -> 0.0004846",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 7,
+     "new": "95",
+     "old": "184",
+     "summary": "MAX_ITER 184 -> 95",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.0003895",
+     "old": "0.0003727",
+     "summary": "LEARNING_RATE_INIT 0.0003727 -> 0.0003895",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 9,
+     "new": "24",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 24",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 10,
+     "new": "87",
+     "old": "95",
+     "summary": "MAX_ITER 95 -> 87",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.0005443",
+     "old": "0.0003895",
+     "summary": "LEARNING_RATE_INIT 0.0003895 -> 0.0005443",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 12,
+     "new": "15",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 15",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.001139",
+     "old": "0.0004846",
+     "summary": "ALPHA 0.0004846 -> 0.001139",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 14,
+     "new": "72",
+     "old": "24",
+     "summary": "BATCH_SIZE 24 -> 72",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.0007943",
+     "old": "0.0005443",
+     "summary": "LEARNING_RATE_INIT 0.0005443 -> 0.0007943",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 16,
+     "new": "35",
+     "old": "15",
+     "summary": "HIDDEN_UNITS 15 -> 35",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 17,
+     "new": "130",
+     "old": "72",
+     "summary": "BATCH_SIZE 72 -> 130",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.0005072",
+     "old": "0.001139",
+     "summary": "ALPHA 0.001139 -> 0.0005072",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 19,
+     "new": "66",
+     "old": "35",
+     "summary": "HIDDEN_UNITS 35 -> 66",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 20,
+     "new": "29",
+     "old": "87",
+     "summary": "MAX_ITER 87 -> 29",
+     "symbol": "MAX_ITER"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "12",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 12",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 2,
+     "new": "46",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 46",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 3,
+     "new": "19",
+     "old": "46",
+     "summary": "BATCH_SIZE 46 -> 19",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.0007905",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.0007905",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 5,
+     "new": "18",
+     "old": "19",
+     "summary": "BATCH_SIZE 19 -> 18",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 6,
+     "new": "26",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 26",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 7,
+     "new": "32",
+     "old": "12",
+     "summary": "HIDDEN_UNITS 12 -> 32",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 8,
+     "new": "9",
+     "old": "26",
+     "summary": "MAX_ITER 26 -> 9",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 9,
+     "new": "13",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 13",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 10,
+     "new": "0.0003",
+     "old": "0.0007905",
+     "summary": "LEARNING_RATE_INIT 0.0007905 -> 0.0003",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.0008733",
+     "old": "0.0003",
+     "summary": "LEARNING_RATE_INIT 0.0003 -> 0.0008733",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 12,
+     "new": "10",
+     "old": "13",
+     "summary": "HIDDEN_UNITS 13 -> 10",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 13,
+     "new": "8",
+     "old": "10",
+     "summary": "HIDDEN_UNITS 10 -> 8",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 14,
+     "new": "17",
+     "old": "18",
+     "summary": "BATCH_SIZE 18 -> 17",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 15,
+     "new": "15",
+     "old": "17",
+     "summary": "BATCH_SIZE 17 -> 15",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 16,
+     "new": "5",
+     "old": "9",
+     "summary": "MAX_ITER 9 -> 5",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.0005047",
+     "old": "0.0008733",
+     "summary": "LEARNING_RATE_INIT 0.0008733 -> 0.0005047",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 18,
+     "new": "19",
+     "old": "8",
+     "summary": "HIDDEN_UNITS 8 -> 19",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.0005029",
+     "old": "0.0005047",
+     "summary": "LEARNING_RATE_INIT 0.0005047 -> 0.0005029",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 20,
+     "new": "14",
+     "old": "15",
+     "summary": "BATCH_SIZE 15 -> 14",
+     "symbol": "BATCH_SIZE"
+    }
+   ]
+  },
+  "digits_mlp__s114": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "3.807e-05",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 3.807e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 2,
+     "new": "152",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 152",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 3,
+     "new": "59",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 59",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.0005071",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.0005071",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 5,
+     "new": "1.895e-05",
+     "old": "3.807e-05",
+     "summary": "ALPHA 3.807e-05 -> 1.895e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 6,
+     "new": "318",
+     "old": "152",
+     "summary": "BATCH_SIZE 152 -> 318",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 7,
+     "new": "1.183e-05",
+     "old": "1.895e-05",
+     "summary": "ALPHA 1.895e-05 -> 1.183e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 8,
+     "new": "2.192e-05",
+     "old": "1.183e-05",
+     "summary": "ALPHA 1.183e-05 -> 2.192e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 9,
+     "new": "3.937e-05",
+     "old": "2.192e-05",
+     "summary": "ALPHA 2.192e-05 -> 3.937e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 10,
+     "new": "0.001243",
+     "old": "0.0005071",
+     "summary": "LEARNING_RATE_INIT 0.0005071 -> 0.001243",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 11,
+     "new": "137",
+     "old": "59",
+     "summary": "MAX_ITER 59 -> 137",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 12,
+     "new": "25",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 25",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 13,
+     "new": "308",
+     "old": "318",
+     "summary": "BATCH_SIZE 318 -> 308",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 14,
+     "new": "92",
+     "old": "137",
+     "summary": "MAX_ITER 137 -> 92",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 15,
+     "new": "218",
+     "old": "92",
+     "summary": "MAX_ITER 92 -> 218",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 16,
+     "new": "110",
+     "old": "218",
+     "summary": "MAX_ITER 218 -> 110",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 17,
+     "new": "60",
+     "old": "110",
+     "summary": "MAX_ITER 110 -> 60",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.000497",
+     "old": "0.001243",
+     "summary": "LEARNING_RATE_INIT 0.001243 -> 0.000497",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 19,
+     "new": "9",
+     "old": "25",
+     "summary": "HIDDEN_UNITS 25 -> 9",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 20,
+     "new": "5",
+     "old": "9",
+     "summary": "HIDDEN_UNITS 9 -> 5",
+     "symbol": "HIDDEN_UNITS"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "0.00227",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.00227",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 2,
+     "new": "64",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 64",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 3,
+     "new": "33",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 33",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.001055",
+     "old": "0.00227",
+     "summary": "LEARNING_RATE_INIT 0.00227 -> 0.001055",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 5,
+     "new": "78",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 78",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 6,
+     "new": "0.002691",
+     "old": "0.001055",
+     "summary": "LEARNING_RATE_INIT 0.001055 -> 0.002691",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 7,
+     "new": "49",
+     "old": "64",
+     "summary": "HIDDEN_UNITS 64 -> 49",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.0002583",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 0.0002583",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 9,
+     "new": "0.0004966",
+     "old": "0.0002583",
+     "summary": "ALPHA 0.0002583 -> 0.0004966",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 10,
+     "new": "0.001108",
+     "old": "0.0004966",
+     "summary": "ALPHA 0.0004966 -> 0.001108",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.001741",
+     "old": "0.001108",
+     "summary": "ALPHA 0.001108 -> 0.001741",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 12,
+     "new": "181",
+     "old": "78",
+     "summary": "BATCH_SIZE 78 -> 181",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 13,
+     "new": "38",
+     "old": "33",
+     "summary": "MAX_ITER 33 -> 38",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 14,
+     "new": "56",
+     "old": "38",
+     "summary": "MAX_ITER 38 -> 56",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.002217",
+     "old": "0.002691",
+     "summary": "LEARNING_RATE_INIT 0.002691 -> 0.002217",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 16,
+     "new": "161",
+     "old": "56",
+     "summary": "MAX_ITER 56 -> 161",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.004167",
+     "old": "0.002217",
+     "summary": "LEARNING_RATE_INIT 0.002217 -> 0.004167",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.002688",
+     "old": "0.001741",
+     "summary": "ALPHA 0.001741 -> 0.002688",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.001292",
+     "old": "0.002688",
+     "summary": "ALPHA 0.002688 -> 0.001292",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 20,
+     "new": "0.01088",
+     "old": "0.004167",
+     "summary": "LEARNING_RATE_INIT 0.004167 -> 0.01088",
+     "symbol": "LEARNING_RATE_INIT"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "42",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 42",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 2,
+     "new": "112",
+     "old": "42",
+     "summary": "MAX_ITER 42 -> 112",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 3,
+     "new": "61",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 61",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 4,
+     "new": "63",
+     "old": "112",
+     "summary": "MAX_ITER 112 -> 63",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 5,
+     "new": "66",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 66",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 6,
+     "new": "166",
+     "old": "66",
+     "summary": "HIDDEN_UNITS 66 -> 166",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 7,
+     "new": "0.001491",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.001491",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.0007247",
+     "old": "0.001491",
+     "summary": "LEARNING_RATE_INIT 0.001491 -> 0.0007247",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 9,
+     "new": "27",
+     "old": "63",
+     "summary": "MAX_ITER 63 -> 27",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 10,
+     "new": "35",
+     "old": "61",
+     "summary": "BATCH_SIZE 61 -> 35",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 11,
+     "new": "3.35e-05",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 3.35e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 12,
+     "new": "188",
+     "old": "166",
+     "summary": "HIDDEN_UNITS 166 -> 188",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 13,
+     "new": "98",
+     "old": "188",
+     "summary": "HIDDEN_UNITS 188 -> 98",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 14,
+     "new": "56",
+     "old": "98",
+     "summary": "HIDDEN_UNITS 98 -> 56",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 15,
+     "new": "50",
+     "old": "35",
+     "summary": "BATCH_SIZE 35 -> 50",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 16,
+     "new": "1.576e-05",
+     "old": "3.35e-05",
+     "summary": "ALPHA 3.35e-05 -> 1.576e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 17,
+     "new": "69",
+     "old": "50",
+     "summary": "BATCH_SIZE 50 -> 69",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 18,
+     "new": "2.096e-05",
+     "old": "1.576e-05",
+     "summary": "ALPHA 1.576e-05 -> 2.096e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 19,
+     "new": "4.425e-05",
+     "old": "2.096e-05",
+     "summary": "ALPHA 2.096e-05 -> 4.425e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 20,
+     "new": "36",
+     "old": "69",
+     "summary": "BATCH_SIZE 69 -> 36",
+     "symbol": "BATCH_SIZE"
+    }
+   ]
+  },
+  "digits_mlp__s124": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "44",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 44",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 2,
+     "new": "35",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 35",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 3,
+     "new": "15",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 15",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 4,
+     "new": "8.718e-05",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 8.718e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 5,
+     "new": "31",
+     "old": "15",
+     "summary": "HIDDEN_UNITS 15 -> 31",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 6,
+     "new": "0.0005442",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.0005442",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 7,
+     "new": "63",
+     "old": "44",
+     "summary": "MAX_ITER 44 -> 63",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 8,
+     "new": "4.974e-05",
+     "old": "8.718e-05",
+     "summary": "ALPHA 8.718e-05 -> 4.974e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 9,
+     "new": "69",
+     "old": "63",
+     "summary": "MAX_ITER 63 -> 69",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 10,
+     "new": "0.001118",
+     "old": "0.0005442",
+     "summary": "LEARNING_RATE_INIT 0.0005442 -> 0.001118",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 11,
+     "new": "17",
+     "old": "35",
+     "summary": "BATCH_SIZE 35 -> 17",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.000124",
+     "old": "4.974e-05",
+     "summary": "ALPHA 4.974e-05 -> 0.000124",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.0001495",
+     "old": "0.000124",
+     "summary": "ALPHA 0.000124 -> 0.0001495",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 14,
+     "new": "8",
+     "old": "17",
+     "summary": "BATCH_SIZE 17 -> 8",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.0001907",
+     "old": "0.0001495",
+     "summary": "ALPHA 0.0001495 -> 0.0001907",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 16,
+     "new": "197",
+     "old": "69",
+     "summary": "MAX_ITER 69 -> 197",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 17,
+     "new": "32",
+     "old": "31",
+     "summary": "HIDDEN_UNITS 31 -> 32",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.0004197",
+     "old": "0.0001907",
+     "summary": "ALPHA 0.0001907 -> 0.0004197",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 19,
+     "new": "23",
+     "old": "8",
+     "summary": "BATCH_SIZE 8 -> 23",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 20,
+     "new": "50",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 50",
+     "symbol": "HIDDEN_UNITS"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "0.0004542",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.0004542",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 2,
+     "new": "45",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 45",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 3,
+     "new": "44",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 44",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 4,
+     "new": "33",
+     "old": "44",
+     "summary": "BATCH_SIZE 44 -> 33",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 5,
+     "new": "49",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 49",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 6,
+     "new": "3.46e-05",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 3.46e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 7,
+     "new": "2.334e-05",
+     "old": "3.46e-05",
+     "summary": "ALPHA 3.46e-05 -> 2.334e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.0009266",
+     "old": "0.0004542",
+     "summary": "LEARNING_RATE_INIT 0.0004542 -> 0.0009266",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 9,
+     "new": "1.458e-05",
+     "old": "2.334e-05",
+     "summary": "ALPHA 2.334e-05 -> 1.458e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 10,
+     "new": "38",
+     "old": "49",
+     "summary": "MAX_ITER 49 -> 38",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.001256",
+     "old": "0.0009266",
+     "summary": "LEARNING_RATE_INIT 0.0009266 -> 0.001256",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 12,
+     "new": "79",
+     "old": "45",
+     "summary": "HIDDEN_UNITS 45 -> 79",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 13,
+     "new": "64",
+     "old": "33",
+     "summary": "BATCH_SIZE 33 -> 64",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 14,
+     "new": "2.465e-05",
+     "old": "1.458e-05",
+     "summary": "ALPHA 1.458e-05 -> 2.465e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.001206",
+     "old": "0.001256",
+     "summary": "LEARNING_RATE_INIT 0.001256 -> 0.001206",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 16,
+     "new": "113",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 113",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 17,
+     "new": "68",
+     "old": "79",
+     "summary": "HIDDEN_UNITS 79 -> 68",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 18,
+     "new": "70",
+     "old": "113",
+     "summary": "BATCH_SIZE 113 -> 70",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 19,
+     "new": "91",
+     "old": "70",
+     "summary": "BATCH_SIZE 70 -> 91",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 20,
+     "new": "29",
+     "old": "68",
+     "summary": "HIDDEN_UNITS 68 -> 29",
+     "symbol": "HIDDEN_UNITS"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "26",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 26",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 2,
+     "new": "8.269e-05",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 8.269e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 3,
+     "new": "45",
+     "old": "26",
+     "summary": "MAX_ITER 26 -> 45",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 4,
+     "new": "16",
+     "old": "45",
+     "summary": "MAX_ITER 45 -> 16",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 5,
+     "new": "14",
+     "old": "16",
+     "summary": "MAX_ITER 16 -> 14",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 6,
+     "new": "35",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 35",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 7,
+     "new": "157",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 157",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 8,
+     "new": "84",
+     "old": "35",
+     "summary": "HIDDEN_UNITS 35 -> 84",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 9,
+     "new": "6",
+     "old": "14",
+     "summary": "MAX_ITER 14 -> 6",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 10,
+     "new": "59",
+     "old": "157",
+     "summary": "BATCH_SIZE 157 -> 59",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.0004469",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.0004469",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 12,
+     "new": "185",
+     "old": "84",
+     "summary": "HIDDEN_UNITS 84 -> 185",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 13,
+     "new": "8",
+     "old": "6",
+     "summary": "MAX_ITER 6 -> 8",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 14,
+     "new": "0.0009944",
+     "old": "0.0004469",
+     "summary": "LEARNING_RATE_INIT 0.0004469 -> 0.0009944",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 15,
+     "new": "36",
+     "old": "59",
+     "summary": "BATCH_SIZE 59 -> 36",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 16,
+     "new": "9",
+     "old": "8",
+     "summary": "MAX_ITER 8 -> 9",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 17,
+     "new": "139",
+     "old": "185",
+     "summary": "HIDDEN_UNITS 185 -> 139",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.0001284",
+     "old": "8.269e-05",
+     "summary": "ALPHA 8.269e-05 -> 0.0001284",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 19,
+     "new": "252",
+     "old": "139",
+     "summary": "HIDDEN_UNITS 139 -> 252",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 20,
+     "new": "35",
+     "old": "36",
+     "summary": "BATCH_SIZE 36 -> 35",
+     "symbol": "BATCH_SIZE"
+    }
+   ]
+  },
+  "digits_mlp__s134": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "19",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 19",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 2,
+     "new": "0.001342",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.001342",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 3,
+     "new": "33",
+     "old": "19",
+     "summary": "HIDDEN_UNITS 19 -> 33",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.0001885",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 0.0001885",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 5,
+     "new": "40",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 40",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 6,
+     "new": "64",
+     "old": "33",
+     "summary": "HIDDEN_UNITS 33 -> 64",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 7,
+     "new": "0.0009556",
+     "old": "0.001342",
+     "summary": "LEARNING_RATE_INIT 0.001342 -> 0.0009556",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.0003006",
+     "old": "0.0001885",
+     "summary": "ALPHA 0.0001885 -> 0.0003006",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 9,
+     "new": "161",
+     "old": "64",
+     "summary": "HIDDEN_UNITS 64 -> 161",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 10,
+     "new": "80",
+     "old": "40",
+     "summary": "BATCH_SIZE 40 -> 80",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.001623",
+     "old": "0.0009556",
+     "summary": "LEARNING_RATE_INIT 0.0009556 -> 0.001623",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 12,
+     "new": "41",
+     "old": "80",
+     "summary": "BATCH_SIZE 80 -> 41",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.001003",
+     "old": "0.001623",
+     "summary": "LEARNING_RATE_INIT 0.001623 -> 0.001003",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 14,
+     "new": "22",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 22",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 15,
+     "new": "48",
+     "old": "41",
+     "summary": "BATCH_SIZE 41 -> 48",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 16,
+     "new": "182",
+     "old": "161",
+     "summary": "HIDDEN_UNITS 161 -> 182",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 17,
+     "new": "129",
+     "old": "182",
+     "summary": "HIDDEN_UNITS 182 -> 129",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 18,
+     "new": "20",
+     "old": "22",
+     "summary": "MAX_ITER 22 -> 20",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 19,
+     "new": "256",
+     "old": "129",
+     "summary": "HIDDEN_UNITS 129 -> 256",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 20,
+     "new": "45",
+     "old": "48",
+     "summary": "BATCH_SIZE 48 -> 45",
+     "symbol": "BATCH_SIZE"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "43",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 43",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 2,
+     "new": "100",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 100",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 3,
+     "new": "45",
+     "old": "100",
+     "summary": "BATCH_SIZE 100 -> 45",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 4,
+     "new": "59",
+     "old": "45",
+     "summary": "BATCH_SIZE 45 -> 59",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 5,
+     "new": "0.0001179",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 0.0001179",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 6,
+     "new": "21",
+     "old": "43",
+     "summary": "HIDDEN_UNITS 43 -> 21",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 7,
+     "new": "51",
+     "old": "59",
+     "summary": "BATCH_SIZE 59 -> 51",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 8,
+     "new": "6.478e-05",
+     "old": "0.0001179",
+     "summary": "ALPHA 0.0001179 -> 6.478e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 9,
+     "new": "40",
+     "old": "21",
+     "summary": "HIDDEN_UNITS 21 -> 40",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 10,
+     "new": "71",
+     "old": "51",
+     "summary": "BATCH_SIZE 51 -> 71",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.0001595",
+     "old": "6.478e-05",
+     "summary": "ALPHA 6.478e-05 -> 0.0001595",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 12,
+     "new": "117",
+     "old": "40",
+     "summary": "HIDDEN_UNITS 40 -> 117",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 13,
+     "new": "26",
+     "old": "71",
+     "summary": "BATCH_SIZE 71 -> 26",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 14,
+     "new": "180",
+     "old": "117",
+     "summary": "HIDDEN_UNITS 117 -> 180",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 15,
+     "new": "18",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 18",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 16,
+     "new": "6.637e-05",
+     "old": "0.0001595",
+     "summary": "ALPHA 0.0001595 -> 6.637e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 17,
+     "new": "19",
+     "old": "18",
+     "summary": "MAX_ITER 18 -> 19",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 18,
+     "new": "4.71e-05",
+     "old": "6.637e-05",
+     "summary": "ALPHA 6.637e-05 -> 4.71e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 19,
+     "new": "15",
+     "old": "26",
+     "summary": "BATCH_SIZE 26 -> 15",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 20,
+     "new": "117",
+     "old": "180",
+     "summary": "HIDDEN_UNITS 180 -> 117",
+     "symbol": "HIDDEN_UNITS"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "27",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 27",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 2,
+     "new": "0.0001232",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 0.0001232",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.0001164",
+     "old": "0.0001232",
+     "summary": "ALPHA 0.0001232 -> 0.0001164",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.0001402",
+     "old": "0.0001164",
+     "summary": "ALPHA 0.0001164 -> 0.0001402",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 5,
+     "new": "51",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 51",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 6,
+     "new": "50",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 50",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 7,
+     "new": "0.001172",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.001172",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 8,
+     "new": "73",
+     "old": "51",
+     "summary": "HIDDEN_UNITS 51 -> 73",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 9,
+     "new": "81",
+     "old": "73",
+     "summary": "HIDDEN_UNITS 73 -> 81",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 10,
+     "new": "41",
+     "old": "50",
+     "summary": "MAX_ITER 50 -> 41",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.002033",
+     "old": "0.001172",
+     "summary": "LEARNING_RATE_INIT 0.001172 -> 0.002033",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.005006",
+     "old": "0.002033",
+     "summary": "LEARNING_RATE_INIT 0.002033 -> 0.005006",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 13,
+     "new": "26",
+     "old": "27",
+     "summary": "BATCH_SIZE 27 -> 26",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 14,
+     "new": "6.323e-05",
+     "old": "0.0001402",
+     "summary": "ALPHA 0.0001402 -> 6.323e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 15,
+     "new": "7.256e-05",
+     "old": "6.323e-05",
+     "summary": "ALPHA 6.323e-05 -> 7.256e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 16,
+     "new": "7.063e-05",
+     "old": "7.256e-05",
+     "summary": "ALPHA 7.256e-05 -> 7.063e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 17,
+     "new": "10",
+     "old": "26",
+     "summary": "BATCH_SIZE 26 -> 10",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.00892",
+     "old": "0.005006",
+     "summary": "LEARNING_RATE_INIT 0.005006 -> 0.00892",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.01908",
+     "old": "0.00892",
+     "summary": "LEARNING_RATE_INIT 0.00892 -> 0.01908",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 20,
+     "new": "8",
+     "old": "10",
+     "summary": "BATCH_SIZE 10 -> 8",
+     "symbol": "BATCH_SIZE"
+    }
+   ]
+  },
+  "digits_mlp__s144": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "52",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 52",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 2,
+     "new": "17",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 17",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 3,
+     "new": "18",
+     "old": "52",
+     "summary": "MAX_ITER 52 -> 18",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 4,
+     "new": "50",
+     "old": "18",
+     "summary": "MAX_ITER 18 -> 50",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 5,
+     "new": "8",
+     "old": "17",
+     "summary": "HIDDEN_UNITS 17 -> 8",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 6,
+     "new": "0.0004148",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.0004148",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 7,
+     "new": "61",
+     "old": "50",
+     "summary": "MAX_ITER 50 -> 61",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.0006252",
+     "old": "0.0004148",
+     "summary": "LEARNING_RATE_INIT 0.0004148 -> 0.0006252",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 9,
+     "new": "7.767e-05",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 7.767e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 10,
+     "new": "9.135e-05",
+     "old": "7.767e-05",
+     "summary": "ALPHA 7.767e-05 -> 9.135e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.0002228",
+     "old": "9.135e-05",
+     "summary": "ALPHA 9.135e-05 -> 0.0002228",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.0003926",
+     "old": "0.0006252",
+     "summary": "LEARNING_RATE_INIT 0.0006252 -> 0.0003926",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 13,
+     "new": "25",
+     "old": "61",
+     "summary": "MAX_ITER 61 -> 25",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 14,
+     "new": "0.000374",
+     "old": "0.0002228",
+     "summary": "ALPHA 0.0002228 -> 0.000374",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 15,
+     "new": "16",
+     "old": "8",
+     "summary": "HIDDEN_UNITS 8 -> 16",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 16,
+     "new": "27",
+     "old": "25",
+     "summary": "MAX_ITER 25 -> 27",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 17,
+     "new": "47",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 47",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 18,
+     "new": "53",
+     "old": "27",
+     "summary": "MAX_ITER 27 -> 53",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 19,
+     "new": "56",
+     "old": "53",
+     "summary": "MAX_ITER 53 -> 56",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 20,
+     "new": "0.0003174",
+     "old": "0.0003926",
+     "summary": "LEARNING_RATE_INIT 0.0003926 -> 0.0003174",
+     "symbol": "LEARNING_RATE_INIT"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "0.0002132",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 0.0002132",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 2,
+     "new": "7.41e-05",
+     "old": "0.0002132",
+     "summary": "ALPHA 0.0002132 -> 7.41e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 3,
+     "new": "20",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 20",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.002772",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.002772",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 5,
+     "new": "35",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 35",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 6,
+     "new": "70",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 70",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 7,
+     "new": "13",
+     "old": "20",
+     "summary": "MAX_ITER 20 -> 13",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 8,
+     "new": "64",
+     "old": "35",
+     "summary": "HIDDEN_UNITS 35 -> 64",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 9,
+     "new": "64",
+     "old": "70",
+     "summary": "BATCH_SIZE 70 -> 64",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 10,
+     "new": "33",
+     "old": "64",
+     "summary": "HIDDEN_UNITS 64 -> 33",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 11,
+     "new": "6.542e-05",
+     "old": "7.41e-05",
+     "summary": "ALPHA 7.41e-05 -> 6.542e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.001901",
+     "old": "0.002772",
+     "summary": "LEARNING_RATE_INIT 0.002772 -> 0.001901",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.001915",
+     "old": "0.001901",
+     "summary": "LEARNING_RATE_INIT 0.001901 -> 0.001915",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 14,
+     "new": "13",
+     "old": "33",
+     "summary": "HIDDEN_UNITS 33 -> 13",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 15,
+     "new": "17",
+     "old": "13",
+     "summary": "HIDDEN_UNITS 13 -> 17",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 16,
+     "new": "0.001938",
+     "old": "0.001915",
+     "summary": "LEARNING_RATE_INIT 0.001915 -> 0.001938",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.002939",
+     "old": "0.001938",
+     "summary": "LEARNING_RATE_INIT 0.001938 -> 0.002939",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 18,
+     "new": "28",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 28",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.001953",
+     "old": "0.002939",
+     "summary": "LEARNING_RATE_INIT 0.002939 -> 0.001953",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 20,
+     "new": "0.002856",
+     "old": "0.001953",
+     "summary": "LEARNING_RATE_INIT 0.001953 -> 0.002856",
+     "symbol": "LEARNING_RATE_INIT"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "28",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 28",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 2,
+     "new": "37",
+     "old": "28",
+     "summary": "HIDDEN_UNITS 28 -> 37",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 3,
+     "new": "135",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 135",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 4,
+     "new": "6.928e-05",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 6.928e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 5,
+     "new": "28",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 28",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 6,
+     "new": "58",
+     "old": "37",
+     "summary": "HIDDEN_UNITS 37 -> 58",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 7,
+     "new": "44",
+     "old": "28",
+     "summary": "MAX_ITER 28 -> 44",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 8,
+     "new": "15",
+     "old": "44",
+     "summary": "MAX_ITER 44 -> 15",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 9,
+     "new": "46",
+     "old": "135",
+     "summary": "BATCH_SIZE 135 -> 46",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 10,
+     "new": "112",
+     "old": "58",
+     "summary": "HIDDEN_UNITS 58 -> 112",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.0005558",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.0005558",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 12,
+     "new": "6.529e-05",
+     "old": "6.928e-05",
+     "summary": "ALPHA 6.928e-05 -> 6.529e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 13,
+     "new": "18",
+     "old": "46",
+     "summary": "BATCH_SIZE 46 -> 18",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 14,
+     "new": "8",
+     "old": "18",
+     "summary": "BATCH_SIZE 18 -> 8",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 15,
+     "new": "7.902e-05",
+     "old": "6.529e-05",
+     "summary": "ALPHA 6.529e-05 -> 7.902e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 16,
+     "new": "0.0001228",
+     "old": "7.902e-05",
+     "summary": "ALPHA 7.902e-05 -> 0.0001228",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 17,
+     "new": "54",
+     "old": "112",
+     "summary": "HIDDEN_UNITS 112 -> 54",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 18,
+     "new": "45",
+     "old": "54",
+     "summary": "HIDDEN_UNITS 54 -> 45",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 19,
+     "new": "6",
+     "old": "15",
+     "summary": "MAX_ITER 15 -> 6",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 20,
+     "new": "13",
+     "old": "6",
+     "summary": "MAX_ITER 6 -> 13",
+     "symbol": "MAX_ITER"
+    }
+   ]
+  },
+  "digits_mlp__s154": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "84",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 84",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 2,
+     "new": "53",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 53",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.001465",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.001465",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 4,
+     "new": "6.019e-05",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 6.019e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 5,
+     "new": "5.702e-05",
+     "old": "6.019e-05",
+     "summary": "ALPHA 6.019e-05 -> 5.702e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 6,
+     "new": "70",
+     "old": "53",
+     "summary": "BATCH_SIZE 53 -> 70",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 7,
+     "new": "64",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 64",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 8,
+     "new": "58",
+     "old": "64",
+     "summary": "MAX_ITER 64 -> 58",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 9,
+     "new": "46",
+     "old": "70",
+     "summary": "BATCH_SIZE 70 -> 46",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 10,
+     "new": "2.78e-05",
+     "old": "5.702e-05",
+     "summary": "ALPHA 5.702e-05 -> 2.78e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 11,
+     "new": "80",
+     "old": "84",
+     "summary": "HIDDEN_UNITS 84 -> 80",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 12,
+     "new": "158",
+     "old": "58",
+     "summary": "MAX_ITER 58 -> 158",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 13,
+     "new": "123",
+     "old": "158",
+     "summary": "MAX_ITER 158 -> 123",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 14,
+     "new": "96",
+     "old": "46",
+     "summary": "BATCH_SIZE 46 -> 96",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 15,
+     "new": "1.568e-05",
+     "old": "2.78e-05",
+     "summary": "ALPHA 2.78e-05 -> 1.568e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 16,
+     "new": "32",
+     "old": "80",
+     "summary": "HIDDEN_UNITS 80 -> 32",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 17,
+     "new": "19",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 19",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 18,
+     "new": "185",
+     "old": "96",
+     "summary": "BATCH_SIZE 96 -> 185",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.002633",
+     "old": "0.001465",
+     "summary": "LEARNING_RATE_INIT 0.001465 -> 0.002633",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 20,
+     "new": "0.00507",
+     "old": "0.002633",
+     "summary": "LEARNING_RATE_INIT 0.002633 -> 0.00507",
+     "symbol": "LEARNING_RATE_INIT"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "14",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 14",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 2,
+     "new": "110",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 110",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 3,
+     "new": "17",
+     "old": "14",
+     "summary": "HIDDEN_UNITS 14 -> 17",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.001456",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.001456",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 5,
+     "new": "59",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 59",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 6,
+     "new": "31",
+     "old": "17",
+     "summary": "HIDDEN_UNITS 17 -> 31",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 7,
+     "new": "248",
+     "old": "110",
+     "summary": "MAX_ITER 110 -> 248",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.0009441",
+     "old": "0.001456",
+     "summary": "LEARNING_RATE_INIT 0.001456 -> 0.0009441",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 9,
+     "new": "300",
+     "old": "248",
+     "summary": "MAX_ITER 248 -> 300",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 10,
+     "new": "0.0004174",
+     "old": "0.0009441",
+     "summary": "LEARNING_RATE_INIT 0.0009441 -> 0.0004174",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.0006315",
+     "old": "0.0004174",
+     "summary": "LEARNING_RATE_INIT 0.0004174 -> 0.0006315",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.0006625",
+     "old": "0.0006315",
+     "summary": "LEARNING_RATE_INIT 0.0006315 -> 0.0006625",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.001849",
+     "old": "0.0006625",
+     "summary": "LEARNING_RATE_INIT 0.0006625 -> 0.001849",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 14,
+     "new": "5.038e-05",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 5.038e-05",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 15,
+     "new": "12",
+     "old": "31",
+     "summary": "HIDDEN_UNITS 31 -> 12",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 16,
+     "new": "212",
+     "old": "300",
+     "summary": "MAX_ITER 300 -> 212",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.001418",
+     "old": "0.001849",
+     "summary": "LEARNING_RATE_INIT 0.001849 -> 0.001418",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 18,
+     "new": "4",
+     "old": "12",
+     "summary": "HIDDEN_UNITS 12 -> 4",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 19,
+     "new": "237",
+     "old": "212",
+     "summary": "MAX_ITER 212 -> 237",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 20,
+     "new": "0.0001471",
+     "old": "5.038e-05",
+     "summary": "ALPHA 5.038e-05 -> 0.0001471",
+     "symbol": "ALPHA"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "185",
+     "old": "64",
+     "summary": "BATCH_SIZE 64 -> 185",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 2,
+     "new": "68",
+     "old": "185",
+     "summary": "BATCH_SIZE 185 -> 68",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.0002166",
+     "old": "1e-4",
+     "summary": "ALPHA 1e-4 -> 0.0002166",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 4,
+     "new": "24",
+     "old": "32",
+     "summary": "HIDDEN_UNITS 32 -> 24",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 5,
+     "new": "25",
+     "old": "24",
+     "summary": "HIDDEN_UNITS 24 -> 25",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 6,
+     "new": "18",
+     "old": "40",
+     "summary": "MAX_ITER 40 -> 18",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 7,
+     "new": "0.001421",
+     "old": "1e-3",
+     "summary": "LEARNING_RATE_INIT 1e-3 -> 0.001421",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.0002057",
+     "old": "0.0002166",
+     "summary": "ALPHA 0.0002166 -> 0.0002057",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 9,
+     "new": "29",
+     "old": "18",
+     "summary": "MAX_ITER 18 -> 29",
+     "symbol": "MAX_ITER"
+    },
+    {
+     "budget_index": 10,
+     "new": "13",
+     "old": "25",
+     "summary": "HIDDEN_UNITS 25 -> 13",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.000133",
+     "old": "0.0002057",
+     "summary": "ALPHA 0.0002057 -> 0.000133",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.0001799",
+     "old": "0.000133",
+     "summary": "ALPHA 0.000133 -> 0.0001799",
+     "symbol": "ALPHA"
+    },
+    {
+     "budget_index": 13,
+     "new": "6",
+     "old": "13",
+     "summary": "HIDDEN_UNITS 13 -> 6",
+     "symbol": "HIDDEN_UNITS"
+    },
+    {
+     "budget_index": 14,
+     "new": "0.003873",
+     "old": "0.001421",
+     "summary": "LEARNING_RATE_INIT 0.001421 -> 0.003873",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.01071",
+     "old": "0.003873",
+     "summary": "LEARNING_RATE_INIT 0.003873 -> 0.01071",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 16,
+     "new": "0.02405",
+     "old": "0.01071",
+     "summary": "LEARNING_RATE_INIT 0.01071 -> 0.02405",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.01507",
+     "old": "0.02405",
+     "summary": "LEARNING_RATE_INIT 0.02405 -> 0.01507",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 18,
+     "new": "63",
+     "old": "68",
+     "summary": "BATCH_SIZE 68 -> 63",
+     "symbol": "BATCH_SIZE"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.006817",
+     "old": "0.01507",
+     "summary": "LEARNING_RATE_INIT 0.01507 -> 0.006817",
+     "symbol": "LEARNING_RATE_INIT"
+    },
+    {
+     "budget_index": 20,
+     "new": "0.01241",
+     "old": "0.006817",
+     "summary": "LEARNING_RATE_INIT 0.006817 -> 0.01241",
+     "symbol": "LEARNING_RATE_INIT"
+    }
+   ]
+  },
+  "openml_ionosphere__s103": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "0.2094",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.2094",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 2,
+     "new": "0.2489",
+     "old": "0.2094",
+     "summary": "C 0.2094 -> 0.2489",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 3,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 4,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 5,
+     "new": "standard",
+     "old": "none",
+     "summary": "scaler none -> standard",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 6,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 7,
+     "new": "2249",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 2249",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 8,
+     "new": "1582",
+     "old": "2249",
+     "summary": "max_iter 2249 -> 1582",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 9,
+     "new": "547",
+     "old": "1582",
+     "summary": "max_iter 1582 -> 547",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 10,
+     "new": "0.1106",
+     "old": "0.2489",
+     "summary": "C 0.2489 -> 0.1106",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 11,
+     "new": "1506",
+     "old": "547",
+     "summary": "max_iter 547 -> 1506",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 12,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.1629",
+     "old": "0.1106",
+     "summary": "C 0.1106 -> 0.1629",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 14,
+     "new": "652",
+     "old": "1506",
+     "summary": "max_iter 1506 -> 652",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.1459",
+     "old": "0.1629",
+     "summary": "C 0.1629 -> 0.1459",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 16,
+     "new": "0.1803",
+     "old": "0.1459",
+     "summary": "C 0.1459 -> 0.1803",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 17,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.2185",
+     "old": "0.1803",
+     "summary": "C 0.1803 -> 0.2185",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.5483",
+     "old": "0.2185",
+     "summary": "C 0.2185 -> 0.5483",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 20,
+     "new": "standard",
+     "old": "none",
+     "summary": "scaler none -> standard",
+     "symbol": "scaler"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "546",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 546",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 2,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.3706",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.3706",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 4,
+     "new": "439",
+     "old": "546",
+     "summary": "max_iter 546 -> 439",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 5,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 6,
+     "new": "11",
+     "old": "5",
+     "summary": "max_depth 5 -> 11",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 7,
+     "new": "192",
+     "old": "100",
+     "summary": "n_estimators 100 -> 192",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 8,
+     "new": "500",
+     "old": "192",
+     "summary": "n_estimators 192 -> 500",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 9,
+     "new": "4",
+     "old": "11",
+     "summary": "max_depth 11 -> 4",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 10,
+     "new": "logistic_regression",
+     "old": "gradient_boosting",
+     "summary": "model_type gradient_boosting -> logistic_regression",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 11,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 12,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 13,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 14,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.3438",
+     "old": "0.3706",
+     "summary": "C 0.3706 -> 0.3438",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 16,
+     "new": "standard",
+     "old": "none",
+     "summary": "scaler none -> standard",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 17,
+     "new": "466",
+     "old": "439",
+     "summary": "max_iter 439 -> 466",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.9732",
+     "old": "0.3438",
+     "summary": "C 0.3438 -> 0.9732",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 19,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 20,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 2,
+     "new": "344",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 344",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 3,
+     "new": "389",
+     "old": "344",
+     "summary": "max_iter 344 -> 389",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 4,
+     "new": "356",
+     "old": "389",
+     "summary": "max_iter 389 -> 356",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 5,
+     "new": "991",
+     "old": "356",
+     "summary": "max_iter 356 -> 991",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 6,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 7,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.09559",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.09559",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 9,
+     "new": "0.03344",
+     "old": "0.09559",
+     "summary": "C 0.09559 -> 0.03344",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 10,
+     "new": "998",
+     "old": "991",
+     "summary": "max_iter 991 -> 998",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 11,
+     "new": "2411",
+     "old": "998",
+     "summary": "max_iter 998 -> 2411",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.03774",
+     "old": "0.03344",
+     "summary": "C 0.03344 -> 0.03774",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 13,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 14,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 15,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 16,
+     "new": "0.02663",
+     "old": "0.05",
+     "summary": "learning_rate 0.05 -> 0.02663",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.01579",
+     "old": "0.02663",
+     "summary": "learning_rate 0.02663 -> 0.01579",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 18,
+     "new": "standard",
+     "old": "none",
+     "summary": "scaler none -> standard",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.007736",
+     "old": "0.01579",
+     "summary": "learning_rate 0.01579 -> 0.007736",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 20,
+     "new": "4",
+     "old": "5",
+     "summary": "max_depth 5 -> 4",
+     "symbol": "max_depth"
+    }
+   ]
+  },
+  "openml_ionosphere__s113": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "422",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 422",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 2,
+     "new": "0.0508",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.0508",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 3,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.04166",
+     "old": "0.0508",
+     "summary": "C 0.0508 -> 0.04166",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 5,
+     "new": "0.01727",
+     "old": "0.04166",
+     "summary": "C 0.04166 -> 0.01727",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 6,
+     "new": "0.008188",
+     "old": "0.01727",
+     "summary": "C 0.01727 -> 0.008188",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 7,
+     "new": "0.00508",
+     "old": "0.008188",
+     "summary": "C 0.008188 -> 0.00508",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.002153",
+     "old": "0.00508",
+     "summary": "C 0.00508 -> 0.002153",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 9,
+     "new": "0.001202",
+     "old": "0.002153",
+     "summary": "C 0.002153 -> 0.001202",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 10,
+     "new": "494",
+     "old": "422",
+     "summary": "max_iter 422 -> 494",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.002598",
+     "old": "0.001202",
+     "summary": "C 0.001202 -> 0.002598",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.003846",
+     "old": "0.002598",
+     "summary": "C 0.002598 -> 0.003846",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 13,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 14,
+     "new": "0.003341",
+     "old": "0.003846",
+     "summary": "C 0.003846 -> 0.003341",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.002429",
+     "old": "0.003341",
+     "summary": "C 0.003341 -> 0.002429",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 16,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 17,
+     "new": "logistic_regression",
+     "old": "gradient_boosting",
+     "summary": "model_type gradient_boosting -> logistic_regression",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.003594",
+     "old": "0.002429",
+     "summary": "C 0.002429 -> 0.003594",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.01022",
+     "old": "0.003594",
+     "summary": "C 0.003594 -> 0.01022",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 20,
+     "new": "0.004065",
+     "old": "0.01022",
+     "summary": "C 0.01022 -> 0.004065",
+     "symbol": "C"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "2938",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 2938",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 2,
+     "new": "3000",
+     "old": "2938",
+     "summary": "max_iter 2938 -> 3000",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 3,
+     "new": "1033",
+     "old": "3000",
+     "summary": "max_iter 3000 -> 1033",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.05364",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.05364",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 5,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 6,
+     "new": "1175",
+     "old": "1033",
+     "summary": "max_iter 1033 -> 1175",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 7,
+     "new": "0.02368",
+     "old": "0.05364",
+     "summary": "C 0.05364 -> 0.02368",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.01538",
+     "old": "0.02368",
+     "summary": "C 0.02368 -> 0.01538",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 9,
+     "new": "0.00691",
+     "old": "0.01538",
+     "summary": "C 0.01538 -> 0.00691",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 10,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.003883",
+     "old": "0.00691",
+     "summary": "C 0.00691 -> 0.003883",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 12,
+     "new": "927",
+     "old": "1175",
+     "summary": "max_iter 1175 -> 927",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.008019",
+     "old": "0.003883",
+     "summary": "C 0.003883 -> 0.008019",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 14,
+     "new": "0.01957",
+     "old": "0.008019",
+     "summary": "C 0.008019 -> 0.01957",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.03136",
+     "old": "0.01957",
+     "summary": "C 0.01957 -> 0.03136",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 16,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 17,
+     "new": "1411",
+     "old": "927",
+     "summary": "max_iter 927 -> 1411",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 18,
+     "new": "2021",
+     "old": "1411",
+     "summary": "max_iter 1411 -> 2021",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 19,
+     "new": "1391",
+     "old": "2021",
+     "summary": "max_iter 2021 -> 1391",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 20,
+     "new": "3000",
+     "old": "1391",
+     "summary": "max_iter 1391 -> 3000",
+     "symbol": "max_iter"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "0.4152",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.4152",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 2,
+     "new": "0.4405",
+     "old": "0.4152",
+     "summary": "C 0.4152 -> 0.4405",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.1823",
+     "old": "0.4405",
+     "summary": "C 0.4405 -> 0.1823",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 4,
+     "new": "964",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 964",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 5,
+     "new": "399",
+     "old": "964",
+     "summary": "max_iter 964 -> 399",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 6,
+     "new": "886",
+     "old": "399",
+     "summary": "max_iter 399 -> 886",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 7,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 8,
+     "new": "1630",
+     "old": "886",
+     "summary": "max_iter 886 -> 1630",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 9,
+     "new": "standard",
+     "old": "minmax",
+     "summary": "scaler minmax -> standard",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 10,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.1266",
+     "old": "0.1823",
+     "summary": "C 0.1823 -> 0.1266",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 12,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.1716",
+     "old": "0.1266",
+     "summary": "C 0.1266 -> 0.1716",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 14,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 15,
+     "new": "0.1288",
+     "old": "0.1716",
+     "summary": "C 0.1716 -> 0.1288",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 16,
+     "new": "0.2346",
+     "old": "0.1288",
+     "summary": "C 0.1288 -> 0.2346",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 17,
+     "new": "3000",
+     "old": "1630",
+     "summary": "max_iter 1630 -> 3000",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 18,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.4089",
+     "old": "0.2346",
+     "summary": "C 0.2346 -> 0.4089",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 20,
+     "new": "2491",
+     "old": "3000",
+     "summary": "max_iter 3000 -> 2491",
+     "symbol": "max_iter"
+    }
+   ]
+  },
+  "openml_ionosphere__s123": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 2,
+     "new": "3",
+     "old": "5",
+     "summary": "max_depth 5 -> 3",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.01678",
+     "old": "0.05",
+     "summary": "learning_rate 0.05 -> 0.01678",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 4,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 5,
+     "new": "285",
+     "old": "100",
+     "summary": "n_estimators 100 -> 285",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 6,
+     "new": "466",
+     "old": "285",
+     "summary": "n_estimators 285 -> 466",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 7,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 8,
+     "new": "2",
+     "old": "3",
+     "summary": "max_depth 3 -> 2",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 9,
+     "new": "random_forest",
+     "old": "gradient_boosting",
+     "summary": "model_type gradient_boosting -> random_forest",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 10,
+     "new": "none",
+     "old": "minmax",
+     "summary": "scaler minmax -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 11,
+     "new": "5",
+     "old": "2",
+     "summary": "max_depth 2 -> 5",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 12,
+     "new": "15",
+     "old": "5",
+     "summary": "max_depth 5 -> 15",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 13,
+     "new": "13",
+     "old": "15",
+     "summary": "max_depth 15 -> 13",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 14,
+     "new": "gradient_boosting",
+     "old": "random_forest",
+     "summary": "model_type random_forest -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 15,
+     "new": "30",
+     "old": "13",
+     "summary": "max_depth 13 -> 30",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 16,
+     "new": "17",
+     "old": "30",
+     "summary": "max_depth 30 -> 17",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 17,
+     "new": "logistic_regression",
+     "old": "gradient_boosting",
+     "summary": "model_type gradient_boosting -> logistic_regression",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 18,
+     "new": "523",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 523",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 19,
+     "new": "284",
+     "old": "523",
+     "summary": "max_iter 523 -> 284",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 20,
+     "new": "475",
+     "old": "284",
+     "summary": "max_iter 284 -> 475",
+     "symbol": "max_iter"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 2,
+     "new": "random_forest",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> random_forest",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 3,
+     "new": "8",
+     "old": "5",
+     "summary": "max_depth 5 -> 8",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 4,
+     "new": "157",
+     "old": "100",
+     "summary": "n_estimators 100 -> 157",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 5,
+     "new": "13",
+     "old": "8",
+     "summary": "max_depth 8 -> 13",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 6,
+     "new": "138",
+     "old": "157",
+     "summary": "n_estimators 157 -> 138",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 7,
+     "new": "147",
+     "old": "138",
+     "summary": "n_estimators 138 -> 147",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 8,
+     "new": "15",
+     "old": "13",
+     "summary": "max_depth 13 -> 15",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 9,
+     "new": "135",
+     "old": "147",
+     "summary": "n_estimators 147 -> 135",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 10,
+     "new": "9",
+     "old": "15",
+     "summary": "max_depth 15 -> 9",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 11,
+     "new": "minmax",
+     "old": "none",
+     "summary": "scaler none -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 12,
+     "new": "152",
+     "old": "135",
+     "summary": "n_estimators 135 -> 152",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 13,
+     "new": "logistic_regression",
+     "old": "random_forest",
+     "summary": "model_type random_forest -> logistic_regression",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 14,
+     "new": "none",
+     "old": "minmax",
+     "summary": "scaler minmax -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 15,
+     "new": "1295",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 1295",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 16,
+     "new": "0.3135",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.3135",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 17,
+     "new": "2061",
+     "old": "1295",
+     "summary": "max_iter 1295 -> 2061",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 18,
+     "new": "1722",
+     "old": "2061",
+     "summary": "max_iter 2061 -> 1722",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 19,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 20,
+     "new": "random_forest",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> random_forest",
+     "symbol": "model_type"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "1178",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 1178",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 2,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.1809",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.1809",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 4,
+     "new": "1928",
+     "old": "1178",
+     "summary": "max_iter 1178 -> 1928",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 5,
+     "new": "1689",
+     "old": "1928",
+     "summary": "max_iter 1928 -> 1689",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 6,
+     "new": "2163",
+     "old": "1689",
+     "summary": "max_iter 1689 -> 2163",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 7,
+     "new": "0.264",
+     "old": "0.1809",
+     "summary": "C 0.1809 -> 0.264",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.4456",
+     "old": "0.264",
+     "summary": "C 0.264 -> 0.4456",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 9,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 10,
+     "new": "minmax",
+     "old": "none",
+     "summary": "scaler none -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 11,
+     "new": "86",
+     "old": "100",
+     "summary": "n_estimators 100 -> 86",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 12,
+     "new": "9",
+     "old": "5",
+     "summary": "max_depth 5 -> 9",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 13,
+     "new": "11",
+     "old": "9",
+     "summary": "max_depth 9 -> 11",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 14,
+     "new": "6",
+     "old": "11",
+     "summary": "max_depth 11 -> 6",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 15,
+     "new": "2",
+     "old": "6",
+     "summary": "max_depth 6 -> 2",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 16,
+     "new": "57",
+     "old": "86",
+     "summary": "n_estimators 86 -> 57",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 17,
+     "new": "62",
+     "old": "57",
+     "summary": "n_estimators 57 -> 62",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.04577",
+     "old": "0.05",
+     "summary": "learning_rate 0.05 -> 0.04577",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 19,
+     "new": "none",
+     "old": "minmax",
+     "summary": "scaler minmax -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 20,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    }
+   ]
+  },
+  "openml_ionosphere__s133": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "0.1014",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.1014",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 2,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 3,
+     "new": "675",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 675",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.246",
+     "old": "0.1014",
+     "summary": "C 0.1014 -> 0.246",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 5,
+     "new": "940",
+     "old": "675",
+     "summary": "max_iter 675 -> 940",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 6,
+     "new": "1046",
+     "old": "940",
+     "summary": "max_iter 940 -> 1046",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 7,
+     "new": "2090",
+     "old": "1046",
+     "summary": "max_iter 1046 -> 2090",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 8,
+     "new": "0.1043",
+     "old": "0.246",
+     "summary": "C 0.246 -> 0.1043",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 9,
+     "new": "2785",
+     "old": "2090",
+     "summary": "max_iter 2090 -> 2785",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 10,
+     "new": "3000",
+     "old": "2785",
+     "summary": "max_iter 2785 -> 3000",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.1011",
+     "old": "0.1043",
+     "summary": "C 0.1043 -> 0.1011",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.1607",
+     "old": "0.1011",
+     "summary": "C 0.1011 -> 0.1607",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 13,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 14,
+     "new": "15",
+     "old": "5",
+     "summary": "max_depth 5 -> 15",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 15,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 16,
+     "new": "0.09018",
+     "old": "0.05",
+     "summary": "learning_rate 0.05 -> 0.09018",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.05645",
+     "old": "0.09018",
+     "summary": "learning_rate 0.09018 -> 0.05645",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 18,
+     "new": "24",
+     "old": "15",
+     "summary": "max_depth 15 -> 24",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 19,
+     "new": "30",
+     "old": "24",
+     "summary": "max_depth 24 -> 30",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 20,
+     "new": "71",
+     "old": "100",
+     "summary": "n_estimators 100 -> 71",
+     "symbol": "n_estimators"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "0.0731",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.0731",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 2,
+     "new": "981",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 981",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.04593",
+     "old": "0.0731",
+     "summary": "C 0.0731 -> 0.04593",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 4,
+     "new": "random_forest",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> random_forest",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 5,
+     "new": "8",
+     "old": "5",
+     "summary": "max_depth 5 -> 8",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 6,
+     "new": "12",
+     "old": "8",
+     "summary": "max_depth 8 -> 12",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 7,
+     "new": "6",
+     "old": "12",
+     "summary": "max_depth 12 -> 6",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 8,
+     "new": "188",
+     "old": "100",
+     "summary": "n_estimators 100 -> 188",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 9,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 10,
+     "new": "100",
+     "old": "188",
+     "summary": "n_estimators 188 -> 100",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 11,
+     "new": "2",
+     "old": "6",
+     "summary": "max_depth 6 -> 2",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 12,
+     "new": "gradient_boosting",
+     "old": "random_forest",
+     "summary": "model_type random_forest -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 13,
+     "new": "random_forest",
+     "old": "gradient_boosting",
+     "summary": "model_type gradient_boosting -> random_forest",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 14,
+     "new": "47",
+     "old": "100",
+     "summary": "n_estimators 100 -> 47",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 15,
+     "new": "4",
+     "old": "2",
+     "summary": "max_depth 2 -> 4",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 16,
+     "new": "71",
+     "old": "47",
+     "summary": "n_estimators 47 -> 71",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 17,
+     "new": "2",
+     "old": "4",
+     "summary": "max_depth 4 -> 2",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 18,
+     "new": "5",
+     "old": "2",
+     "summary": "max_depth 2 -> 5",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 19,
+     "new": "116",
+     "old": "71",
+     "summary": "n_estimators 71 -> 116",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 20,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "1031",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 1031",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 2,
+     "new": "1494",
+     "old": "1031",
+     "summary": "max_iter 1031 -> 1494",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 3,
+     "new": "1526",
+     "old": "1494",
+     "summary": "max_iter 1494 -> 1526",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 4,
+     "new": "1397",
+     "old": "1526",
+     "summary": "max_iter 1526 -> 1397",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 5,
+     "new": "0.1119",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.1119",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 6,
+     "new": "2271",
+     "old": "1397",
+     "summary": "max_iter 1397 -> 2271",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 7,
+     "new": "0.2495",
+     "old": "0.1119",
+     "summary": "C 0.1119 -> 0.2495",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 8,
+     "new": "1167",
+     "old": "2271",
+     "summary": "max_iter 2271 -> 1167",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 9,
+     "new": "0.1613",
+     "old": "0.2495",
+     "summary": "C 0.2495 -> 0.1613",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 10,
+     "new": "2662",
+     "old": "1167",
+     "summary": "max_iter 1167 -> 2662",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 11,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 12,
+     "new": "1853",
+     "old": "2662",
+     "summary": "max_iter 2662 -> 1853",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 13,
+     "new": "minmax",
+     "old": "none",
+     "summary": "scaler none -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 14,
+     "new": "3000",
+     "old": "1853",
+     "summary": "max_iter 1853 -> 3000",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 15,
+     "new": "2188",
+     "old": "3000",
+     "summary": "max_iter 3000 -> 2188",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 16,
+     "new": "none",
+     "old": "minmax",
+     "summary": "scaler minmax -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.1522",
+     "old": "0.1613",
+     "summary": "C 0.1613 -> 0.1522",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.07182",
+     "old": "0.1522",
+     "summary": "C 0.1522 -> 0.07182",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.03288",
+     "old": "0.07182",
+     "summary": "C 0.07182 -> 0.03288",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 20,
+     "new": "0.08436",
+     "old": "0.03288",
+     "summary": "C 0.03288 -> 0.08436",
+     "symbol": "C"
+    }
+   ]
+  },
+  "openml_ionosphere__s143": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "990",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 990",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 2,
+     "new": "2681",
+     "old": "990",
+     "summary": "max_iter 990 -> 2681",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 3,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 4,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 5,
+     "new": "0.05999",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.05999",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 6,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 7,
+     "new": "10",
+     "old": "5",
+     "summary": "max_depth 5 -> 10",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 8,
+     "new": "8",
+     "old": "10",
+     "summary": "max_depth 10 -> 8",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 9,
+     "new": "10",
+     "old": "8",
+     "summary": "max_depth 8 -> 10",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 10,
+     "new": "8",
+     "old": "10",
+     "summary": "max_depth 10 -> 8",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 11,
+     "new": "89",
+     "old": "100",
+     "summary": "n_estimators 100 -> 89",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 12,
+     "new": "random_forest",
+     "old": "gradient_boosting",
+     "summary": "model_type gradient_boosting -> random_forest",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 13,
+     "new": "gradient_boosting",
+     "old": "random_forest",
+     "summary": "model_type random_forest -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 14,
+     "new": "0.03553",
+     "old": "0.05",
+     "summary": "learning_rate 0.05 -> 0.03553",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 15,
+     "new": "14",
+     "old": "8",
+     "summary": "max_depth 8 -> 14",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 16,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 17,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 18,
+     "new": "43",
+     "old": "89",
+     "summary": "n_estimators 89 -> 43",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.079",
+     "old": "0.03553",
+     "summary": "learning_rate 0.03553 -> 0.079",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 20,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 2,
+     "new": "517",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 517",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 3,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.08349",
+     "old": "0.05",
+     "summary": "learning_rate 0.05 -> 0.08349",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 5,
+     "new": "logistic_regression",
+     "old": "gradient_boosting",
+     "summary": "model_type gradient_boosting -> logistic_regression",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 6,
+     "new": "0.3251",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.3251",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 7,
+     "new": "standard",
+     "old": "minmax",
+     "summary": "scaler minmax -> standard",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 8,
+     "new": "343",
+     "old": "517",
+     "summary": "max_iter 517 -> 343",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 9,
+     "new": "0.2577",
+     "old": "0.3251",
+     "summary": "C 0.3251 -> 0.2577",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 10,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 11,
+     "new": "13",
+     "old": "5",
+     "summary": "max_depth 5 -> 13",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 12,
+     "new": "193",
+     "old": "100",
+     "summary": "n_estimators 100 -> 193",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.1265",
+     "old": "0.08349",
+     "summary": "learning_rate 0.08349 -> 0.1265",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 14,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 15,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 16,
+     "new": "6",
+     "old": "13",
+     "summary": "max_depth 13 -> 6",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 17,
+     "new": "11",
+     "old": "6",
+     "summary": "max_depth 6 -> 11",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 18,
+     "new": "284",
+     "old": "193",
+     "summary": "n_estimators 193 -> 284",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 19,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 20,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "0.1844",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.1844",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 2,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 3,
+     "new": "561",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 561",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 4,
+     "new": "none",
+     "old": "standard",
+     "summary": "scaler standard -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 5,
+     "new": "0.06213",
+     "old": "0.1844",
+     "summary": "C 0.1844 -> 0.06213",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 6,
+     "new": "598",
+     "old": "561",
+     "summary": "max_iter 561 -> 598",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 7,
+     "new": "random_forest",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> random_forest",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 8,
+     "new": "76",
+     "old": "100",
+     "summary": "n_estimators 100 -> 76",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 9,
+     "new": "30",
+     "old": "76",
+     "summary": "n_estimators 76 -> 30",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 10,
+     "new": "gradient_boosting",
+     "old": "random_forest",
+     "summary": "model_type random_forest -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.06434",
+     "old": "0.05",
+     "summary": "learning_rate 0.05 -> 0.06434",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 12,
+     "new": "35",
+     "old": "30",
+     "summary": "n_estimators 30 -> 35",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 13,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 14,
+     "new": "2",
+     "old": "5",
+     "summary": "max_depth 5 -> 2",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 15,
+     "new": "logistic_regression",
+     "old": "gradient_boosting",
+     "summary": "model_type gradient_boosting -> logistic_regression",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 16,
+     "new": "999",
+     "old": "598",
+     "summary": "max_iter 598 -> 999",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.03666",
+     "old": "0.06213",
+     "summary": "C 0.06213 -> 0.03666",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.0253",
+     "old": "0.03666",
+     "summary": "C 0.03666 -> 0.0253",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 19,
+     "new": "745",
+     "old": "999",
+     "summary": "max_iter 999 -> 745",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 20,
+     "new": "1216",
+     "old": "745",
+     "summary": "max_iter 745 -> 1216",
+     "symbol": "max_iter"
+    }
+   ]
+  },
+  "openml_ionosphere__s153": {
+   "0": [
+    {
+     "budget_index": 1,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 2,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 3,
+     "new": "1968",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 1968",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 4,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 5,
+     "new": "3000",
+     "old": "1968",
+     "summary": "max_iter 1968 -> 3000",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 6,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 7,
+     "new": "0.2823",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.2823",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 8,
+     "new": "1061",
+     "old": "3000",
+     "summary": "max_iter 3000 -> 1061",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 9,
+     "new": "0.1919",
+     "old": "0.2823",
+     "summary": "C 0.2823 -> 0.1919",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 10,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 11,
+     "new": "43",
+     "old": "100",
+     "summary": "n_estimators 100 -> 43",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 12,
+     "new": "logistic_regression",
+     "old": "gradient_boosting",
+     "summary": "model_type gradient_boosting -> logistic_regression",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 13,
+     "new": "2064",
+     "old": "1061",
+     "summary": "max_iter 1061 -> 2064",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 14,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 15,
+     "new": "959",
+     "old": "2064",
+     "summary": "max_iter 2064 -> 959",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 16,
+     "new": "none",
+     "old": "minmax",
+     "summary": "scaler minmax -> none",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 17,
+     "new": "0.3415",
+     "old": "0.1919",
+     "summary": "C 0.1919 -> 0.3415",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.1335",
+     "old": "0.3415",
+     "summary": "C 0.3415 -> 0.1335",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 19,
+     "new": "2258",
+     "old": "959",
+     "summary": "max_iter 959 -> 2258",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 20,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    }
+   ],
+   "1": [
+    {
+     "budget_index": 1,
+     "new": "0.118",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.118",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 2,
+     "new": "812",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 812",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 3,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 4,
+     "new": "random_forest",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> random_forest",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 5,
+     "new": "38",
+     "old": "100",
+     "summary": "n_estimators 100 -> 38",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 6,
+     "new": "20",
+     "old": "38",
+     "summary": "n_estimators 38 -> 20",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 7,
+     "new": "logistic_regression",
+     "old": "random_forest",
+     "summary": "model_type random_forest -> logistic_regression",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 8,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 9,
+     "new": "271",
+     "old": "812",
+     "summary": "max_iter 812 -> 271",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 10,
+     "new": "241",
+     "old": "271",
+     "summary": "max_iter 271 -> 241",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 11,
+     "new": "0.1274",
+     "old": "0.118",
+     "summary": "C 0.118 -> 0.1274",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 12,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 13,
+     "new": "156",
+     "old": "241",
+     "summary": "max_iter 241 -> 156",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 14,
+     "new": "0.1516",
+     "old": "0.1274",
+     "summary": "C 0.1274 -> 0.1516",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 15,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 16,
+     "new": "0.1275",
+     "old": "0.05",
+     "summary": "learning_rate 0.05 -> 0.1275",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 17,
+     "new": "25",
+     "old": "20",
+     "summary": "n_estimators 20 -> 25",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 18,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 19,
+     "new": "0.1304",
+     "old": "0.1275",
+     "summary": "learning_rate 0.1275 -> 0.1304",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 20,
+     "new": "6",
+     "old": "5",
+     "summary": "max_depth 5 -> 6",
+     "symbol": "max_depth"
+    }
+   ],
+   "2": [
+    {
+     "budget_index": 1,
+     "new": "minmax",
+     "old": "standard",
+     "summary": "scaler standard -> minmax",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 2,
+     "new": "0.06505",
+     "old": "0.15",
+     "summary": "C 0.15 -> 0.06505",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 3,
+     "new": "0.02518",
+     "old": "0.06505",
+     "summary": "C 0.06505 -> 0.02518",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 4,
+     "new": "0.02965",
+     "old": "0.02518",
+     "summary": "C 0.02518 -> 0.02965",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 5,
+     "new": "null",
+     "old": "balanced",
+     "summary": "class_weight balanced -> null",
+     "symbol": "class_weight"
+    },
+    {
+     "budget_index": 6,
+     "new": "0.0491",
+     "old": "0.02965",
+     "summary": "C 0.02965 -> 0.0491",
+     "symbol": "C"
+    },
+    {
+     "budget_index": 7,
+     "new": "standard",
+     "old": "minmax",
+     "summary": "scaler minmax -> standard",
+     "symbol": "scaler"
+    },
+    {
+     "budget_index": 8,
+     "new": "1652",
+     "old": "1000",
+     "summary": "max_iter 1000 -> 1652",
+     "symbol": "max_iter"
+    },
+    {
+     "budget_index": 9,
+     "new": "gradient_boosting",
+     "old": "logistic_regression",
+     "summary": "model_type logistic_regression -> gradient_boosting",
+     "symbol": "model_type"
+    },
+    {
+     "budget_index": 10,
+     "new": "80",
+     "old": "100",
+     "summary": "n_estimators 100 -> 80",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 11,
+     "new": "4",
+     "old": "5",
+     "summary": "max_depth 5 -> 4",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 12,
+     "new": "0.06521",
+     "old": "0.05",
+     "summary": "learning_rate 0.05 -> 0.06521",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 13,
+     "new": "0.1284",
+     "old": "0.06521",
+     "summary": "learning_rate 0.06521 -> 0.1284",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 14,
+     "new": "0.1101",
+     "old": "0.1284",
+     "summary": "learning_rate 0.1284 -> 0.1101",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 15,
+     "new": "3",
+     "old": "4",
+     "summary": "max_depth 4 -> 3",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 16,
+     "new": "50",
+     "old": "80",
+     "summary": "n_estimators 80 -> 50",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 17,
+     "new": "2",
+     "old": "3",
+     "summary": "max_depth 3 -> 2",
+     "symbol": "max_depth"
+    },
+    {
+     "budget_index": 18,
+     "new": "0.0802",
+     "old": "0.1101",
+     "summary": "learning_rate 0.1101 -> 0.0802",
+     "symbol": "learning_rate"
+    },
+    {
+     "budget_index": 19,
+     "new": "45",
+     "old": "50",
+     "summary": "n_estimators 50 -> 45",
+     "symbol": "n_estimators"
+    },
+    {
+     "budget_index": 20,
+     "new": "balanced",
+     "old": "null",
+     "summary": "class_weight null -> balanced",
+     "symbol": "class_weight"
+    }
+   ]
+  }
+ },
+ "replay": "apply-every-proposal; indices 1..20; start config = committed node config",
+ "schema": "r1.scripted_proposal_golden/1",
+ "source_run": "E1b_20261012T161034Z"
+}
