@@ -1,0 +1,26 @@
+{
+  "criteria": {
+    "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 4,
+      "required": "at least 1 keep with budget_index > 1"
+    },
+    "metric_diff_fraction": {
+      "metric_comparable_trials": 18,
+      "metric_different_trials": 11,
+      "observed": 0.6111111111111112,
+      "required": ">= 0.5"
+    }
+  },
+  "failed_criteria": [],
+  "ledgers": [
+    "/Users/wongdowling/Documents/agent_paper_B/results/r1/engineering/liveness_scripted_20261014T072114Z/ledgers/digits_mlp__s104/root_trials.jsonl",
+    "/Users/wongdowling/Documents/agent_paper_B/results/r1/engineering/liveness_scripted_20261014T072114Z/ledgers/digits_mlp__s114/root_trials.jsonl"
+  ],
+  "n_trials": 20,
+  "node": "digits_mlp",
+  "pass": true
+}
