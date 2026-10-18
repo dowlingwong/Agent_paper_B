@@ -7,6 +7,34 @@ Newest entry first. Only this file says what is done.
 
 
 
+## 18 October 2026 — author adopts the open Phase 0 decisions, the C3 ladder and the C3 gate
+
+Recorded by an AI agent (Claude, coordinating session). The author adopted every recommendation put to them on 18 Oct (D4 amendment allowed; D21 node set plus pool extension to ≥ 8 nodes; `"vary"` split on every node; D18 δ_n; D23 constant-prior KG index policy as arm A1; R1-E1B-RERUN2 converted into the C3 label sweep), and fixed C3 as route A with the A0–A6 ladder and the C3 gate. All are PLAN §10 rows dated 18 Oct. No experiment ran.
+
+- **Next actions:**
+  1. read the rerun-2 collection-failure cause on Ada;
+  2. implement the D4 action versions (Bayes threshold; posterior-mean verify response; `verify_failed` keeps the original decision) and the `"vary"` default on the harness branch `r1`;
+  3. build the audit pipeline and the C3 label sweep;
+  4. run the DI test on the existing E1b LLM branch pairs;
+  5. extend the node pool (D21);
+  6. diagnose `digits_mlp` liveness.
+
+## 18 October 2026 — C3 route adopted; legacy code archived; T4 theory and C3 design drafted (ENGINEERING_ONLY)
+
+AI-assisted by Claude (coordinating session) at the author's request. Nothing here is evidence. Uncommitted working-tree changes on the author's Mac; no commit or push was made.
+
+- **Author decision R1-C3** recorded in PLAN §10: C3 is the learned per-proposal prior under the C2 rule. Design proposal `docs/r1/C3_DESIGN.md`.
+- **RUNBOOK 0.1 legacy code:** moved with `git mv` to `archive/old_b_2026-10-09/code/` (list in PLAN §10). `r1/` imports none of it (checked by grep). Legacy suites before the move, from the root: 212 / 6 / 12 OK; after the move, via `make legacy-test`: 212 / 6 / 12 OK. Both runs used Python 3.13.15 in a scratch uv venv with `requirements.lock`, because the Mac's `.venv` is not usable from the Linux shell. The root `Makefile`, `README.md`, `pyproject.toml` (testpaths → `r1/tests`) and `.gitignore` paths were updated; `archive/old_b_2026-10-09/code/Makefile` keeps the test targets. The old `paper-b`, `smoke-b`, `release-b` and `check-release-b` targets were not carried over. `make r1-test` was not run: the harness checkout is not reachable from this session.
+- **Theory T4** (`theory/T4_FEEDBACK_PROPOSER.md`, Propositions 6–10): per-proposal Bayes rule under a ledger-dependent proposer; exact gain of a per-proposal over a constant prior; screening under a run price; winner's curse for every adaptive proposer; decision independence ⇒ myopic optimality, with a counterexample. The closed forms of Propositions 7 and 9 were checked against Monte Carlo (agreement to MC error). The proofs are unchecked by the author.
+- **Offline premise check for C3** (ENGINEERING_ONLY; script on the Mac VM at `~/scratch/offline_a.py`, not committed):
+  - 39–77 % of LLM trials repeat an evaluated configuration; 9–14 % are bit-identical to the incumbent;
+  - informative increments differ by edit type (`digits_mlp` `BATCH_SIZE` −0.012, n = 94; `HIDDEN_UNITS` +0.004, n = 181);
+  - with memory on, 24 % of informative proposals improve.
+
+  Small samples; single-campaign Δ̂.
+- **Novelty sweep part 2** (`inputs/NOVELTY_SWEEP_PART2_20261018.md`, AI-assisted, abstract-level): no work combines an LLM proposer, noisy incumbent-relative acceptance and a learned per-proposal prior. The nearest 2026 works are SAGE (2609.36043), FOREAGENT (2601.05930) and Beneath the Diff (2609.00077). C2-i (Bayes threshold) and C2-ii/v (verify VoI) are classical and are to be presented as instantiations. C3_DESIGN §10 was revised accordingly.
+- **Still open:** D18, D21, D23, the D4 amendment, the verify split policy, the C3 gate, and whether to re-run or redesign R1-E1B-RERUN2 (stopped 14 Oct on collection failures; cause not yet read from the Ada logs).
+
 ## 14 October 2026 — R1-E1B-RERUN2 (PILOT): stopped
 
 AI-assisted execution by Codex (AI-assisted). All outputs are PILOT or ENGINEERING_ONLY; none is evidence.

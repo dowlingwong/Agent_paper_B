@@ -52,20 +52,20 @@ evidence/**/traces/
 !evidence/**/logs/
 !evidence/**/logs/*.log
 # B's governance ledgers (events.jsonl, timing.jsonl) are committed deliberately
-# under results/paper_b/; the inherited *.jsonl rule would otherwise drop them.
-!results/paper_b/**/*.jsonl
+# under results/paper_b/ (moved to archive/old_b_2026-10-09/code/results/paper_b/ on 18 Oct 2026); the inherited *.jsonl rule would otherwise drop them.
+!archive/old_b_2026-10-09/code/results/paper_b/**/*.jsonl
 
 # Dataset payloads live on shared storage (normally a path on shared storage), never
 # inside the repository. Only their pinned registry and per-run hashes belong here.
-experiment_scaffold/datasets/
+archive/old_b_2026-10-09/code/experiment_scaffold/datasets/
 
-# --- Vendored Pi (third_party/pi/) -------------------------------------------
+# --- Vendored Pi (legacy; archive/old_b_2026-10-09/code/third_party/pi/) -------------------------------------------
 # The vendored source is committed; build products and dependency trees are not.
-third_party/pi/node_modules/
-third_party/pi/**/dist/
-third_party/pi/**/*.wasm
-third_party/pi/**/.turbo/
-third_party/pi/**/.cache/
+archive/old_b_2026-10-09/code/third_party/pi/node_modules/
+archive/old_b_2026-10-09/code/third_party/pi/**/dist/
+archive/old_b_2026-10-09/code/third_party/pi/**/*.wasm
+archive/old_b_2026-10-09/code/third_party/pi/**/.turbo/
+archive/old_b_2026-10-09/code/third_party/pi/**/.cache/
 
 # Atomic-write temporaries. write_atomic() writes `<name>.partial` and renames;
 # a `.partial` left behind is an interrupted write, never a deliverable, and

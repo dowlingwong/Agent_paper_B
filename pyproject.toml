@@ -3,21 +3,21 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agent-sys-paper"
+name = "agent-paper-b"
 version = "0.0.1"
-description = "Pre-empirical causal-inference study: when to interrupt an autonomous experiment agent"
+description = "Paper B, route R1: noisy incumbent-relative acceptance in governed autoresearch loops"
 requires-python = ">=3.11"
 
 [project.optional-dependencies]
 # Planning/validation runtime used by the root Makefile and the protocol
 # validator. Versions are pinned exactly in requirements.lock; the ranges below
 # are floors for development convenience only. requirements.lock is
-# authoritative — `make doctor` (protocols/environment_doctor.py) enforces it
-# exactly, and no environment satisfying only these ranges is valid.
+# authoritative — the legacy test suite under archive/old_b_2026-10-09/code/ uses it.
+# Route R1 runs against the harness environment (see docs/r1/RUNBOOK.md).
 runtime = [
     "PyYAML>=6.0",
     "numpy>=1.24",
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests/control", "tests/release", "tests/standalone"]
+testpaths = ["r1/tests"]

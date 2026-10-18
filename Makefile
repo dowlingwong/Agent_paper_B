@@ -1,54 +1,21 @@
-# Root Makefile — Paper B repository entry points.
+# Root Makefile — Paper B, route R1 (docs/r1/PLAN.md).
 #
-# The (legacy) manuscript build lives in archive/old_b_2026-10-09/paper_b_manuscript/Makefile and is delegated with
-# `-C archive/old_b_2026-10-09/paper_b_manuscript` (moved there on 13 Oct 2026).  Repo-level concerns (control tests, the import
-# allowlist, the release package) live here.  Never invoke a bare `python3`:
-# the scaffold needs 3.11+ (StrEnum).
+# The old-route code, its tests, the vendored Pi tree and the release tooling were
+# moved to archive/old_b_2026-10-09/code/ on 18 Oct 2026 (RUNBOOK 0.1); r1/ imports
+# none of it. `make legacy-test` still runs those suites from their new location.
 
-PYTHON ?= $(shell test -x .venv/bin/python && echo .venv/bin/python || echo python3)
-SCAFFOLD_SRC := experiment_scaffold/src
-
-.PHONY: paper-b smoke-b release-b check-release-b test test-control test-release test-standalone
-
-# Build the manuscript, run the verify pass and the anonymity audit.
-paper-b:
-	$(MAKE) -C archive/old_b_2026-10-09/paper_b_manuscript pdf verify anonymity-check PYTHON=$(PYTHON)
-
-# Engineering-only smoke path: closed synthetic workload through the B schema,
-# learner and evaluator.  Never a pilot and never a real-agent result.  The
-# tracked smoke_latest directory is rewritten; restore it with
-# `git checkout -- results/paper_b/smoke_latest`.
-smoke-b:
-	rm -rf results/paper_b/smoke_latest
-	PYTHONPATH=$(SCAFFOLD_SRC) $(PYTHON) experiments/paper_b/smoke_b.py --output results/paper_b/smoke_latest
-
-# Build the B release package from the allowlist.  Requires a clean tree.
-release-b:
-	$(PYTHON) scripts/make_release.py
-
-# Verify the built package in a clean directory: manifest provenance, no Paper A
-# or measurement-core paths, PDF build, smoke and the control tests.  A host
-# without latexmk fails the check unless ALLOW_NO_PDF=1 is given.
-check-release-b:
-	$(PYTHON) scripts/check_release_independence.py $(if $(ALLOW_NO_PDF),--allow-no-pdf,)
-
-test: test-control test-release test-standalone
-
-test-control:
-	PYTHONPATH=$(SCAFFOLD_SRC) $(PYTHON) -m unittest discover -s tests/control -p 'test_*.py'
-
-test-release:
-	$(PYTHON) -m unittest discover -s tests/release -p 'test_*.py'
-
-test-standalone:
-	$(PYTHON) -m unittest discover -s tests/standalone -p 'test_*.py'
-
-# --- route R1 (docs/r1) ------------------------------------------------------
 # R1 code runs against the harness checkout in $(AR_HARNESS_ROOT) (default: ../autoresearch_harness).
 R1_PY ?= python3
+LEGACY_PY ?= $(shell test -x .venv/bin/python && echo $(CURDIR)/.venv/bin/python || echo python3)
+
+.PHONY: r1-test r1-e2e legacy-test
 
 r1-test:
 	$(R1_PY) -m pytest -q -p no:cacheprovider r1/tests
 
 r1-e2e:
 	$(R1_PY) -m r1.e2e
+
+# Legacy suites (old route): 212 control / 6 release / 12 standalone tests. Needs Python 3.11+.
+legacy-test:
+	$(MAKE) -C archive/old_b_2026-10-09/code test PYTHON=$(LEGACY_PY)

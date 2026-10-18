@@ -60,6 +60,8 @@ The 9 Oct question (LLM vs configurator vs hybrid; does the problem need RL) sur
 
 ## 3. Planned contributions (claims are falsifiable; none is established)
 
+> **18 Oct 2026 (R1-C3, §10):** C3 is now the learned per-proposal prior under the C2 rule (`docs/r1/C3_DESIGN.md`); the C3 and C4 rows below are kept as history. C2 is extended by `theory/T4_FEEDBACK_PROPOSER.md`.
+
 | ID | Contribution | Kind | Evidence that would establish it |
 |---|---|---|---|
 | C1 | **Measured control errors in governed autoresearch:** false keep, false discard and wasted-run rates per node, from noise-floor measurements (training seed and split seed separately) and fresh-seed audits of ledgered candidates. | Phenomenon | Phase 0–1 audits on nodes with real training- or split-seed noise (D21) |
@@ -244,7 +246,7 @@ Criterion: carry an item only if it is useful for R1, cheap to adapt, and has lo
 - the N1 / N2 hypotheses, the 0.02 U target, P-B1, and the cutoffs;
 - the Pi-backed executor plans, the Devstral / Ada binding plan, and the DAC configurator amendment as a framing document.
 
-**Legacy code and manuscript (left in place for now)**
+**Legacy code and manuscript** (moved to `archive/old_b_2026-10-09/code/` on 18 Oct 2026; see §10)
 - `experiments/paper_b/task_cc*`, the Pi path in `control/executor.py`, `control/world.py`, `control/tree.py`;
 - `protocols/paper_b/` (contracts v1–v3, launch validator);
 - `papers/paper_b/` (the old manuscript);
@@ -379,6 +381,26 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | ID | Decision (decided 14 Oct 2026 by the author) |
 |---|---|
 | R1-COMPUTE (Ada environmental test exception 2) | Treat the harness test `tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns` as **environmental on fresh Ada checkouts**, in addition to the missing-`/bin/zsh` exception of 12 Oct. It checks a checked-in workshop-paper report, which is absent from a fresh clone (documented as a generated-report flake in STATUS, 12 Oct), and it does not touch R1 code. The rerun-2 launcher's accepted-failure set gains exactly this one test ID, for Ada only. Every other failure still refuses `--start`. |
+
+**Decided 18 Oct 2026 by the author (C3 route; legacy code).** These rows are fixed, not proposals.
+
+| ID | Decision (decided 18 Oct 2026 by the author) |
+|---|---|
+| R1-C3 (18 Oct) | **C3 is the adjusted route A: a learned per-proposal prior under the C2 rule.** A predictor emits (π, μ, τ) for each proposal before execution; the rules of T4 Propositions 6 and 8 decide skip (E1) and keep (E2). Arms form a ladder (index policy → rules → tabular → LLM zero-shot → small LM SFT → small LM decision-focused GRPO); online RL only if the DI test calls for it. Records the author's "我其实挺欣赏你A调整后的路线，我们把它定为C3". Supersedes the 9/12 Oct C3 (configurator vs index policy on verify-based control) and C4 as written. Design: `docs/r1/C3_DESIGN.md` (proposal); theory: `docs/r1/theory/T4_FEEDBACK_PROPOSER.md` (AI-assisted, unchecked). The C3 gate, D18, D21, D23 and the D4 amendment remain open. |
+| RUNBOOK 0.1 (legacy code, 18 Oct) | At the author's request, **all old-route code moved to `archive/old_b_2026-10-09/code/`** (experiment scaffold, `experiments/paper_b`, `protocols/paper_b` and the Pi provenance files, release tooling, `scripts/`, the legacy test suites, `third_party/pi`, `results/paper_b`, `results/validation_logs`, `PROVENANCE.md`, `requirements.lock`). Allowed by RUNBOOK 0.1 because `r1/` imports none of it; the legacy tests moved with it and still pass there (212 / 6 / 12; `make legacy-test`). |
+
+**Decided 18 Oct 2026 by the author (open Phase 0 decisions; C3 ladder and gate).** These rows are fixed, not proposals. The author adopted all recommendations put to them on 18 Oct ("开放决定，我认为你的建议合理，全部采纳") and confirmed C3 as route A with the baseline ladder and the proposed C3 gate ("C3主要按路线A走，做基线阶梯。C3提议门槛加进去").
+
+| ID | Decision (decided 18 Oct 2026 by the author) |
+|---|---|
+| D4 amendment | **Allowed.** A declared, frozen, run-free acceptance rule may exist as its own action version. Primary instance: the Bayes keep threshold t* = −μσ²/τ² (T2 Proposition 1; T4 Proposition 6), with a constant prior in arm A1 and a per-proposal prior in arms A3–A6. In the same decision: (i) verify gains a **posterior-mean response** as a new declared version, and "D̄ > 0" is kept for continuity; (ii) when every verify pair fails, the **original decision stands** and `verify_failed` is recorded. |
+| D21 | Noise nodes: `digits_mlp`, `tabular_mlp`, `openml_breast_w`, `openml_ionosphere`, `openml_wdbc`. Re-measure `openml_credit_approval` and `openml_diabetes` with 30 seeds. `lr_synthetic` and `mlp_synthetic` are engineering-only. `mlagentbench_vectorization` is excluded (timing metric). Fetch and measure `openml_credit_g` on the Mac. **Extend the pool to at least 8 qualifying nodes** for leave-one-node-out (OpenML datasets and MLP nodes, L8b-style). Before `digits_mlp` is used with memory on, diagnose why it failed D28 liveness on 14 Oct (no keep after trial 1). |
+| Verify split policy | **`"vary"` on every node.** It replaces the 9 Oct "fixed everywhere" default. Under `"fixed"`, verify is a no-op on the OpenML logistic-regression nodes (σ_train = 0; T2 Proposition 3), and `"vary"` is never less informative. |
+| D18 | Practical target δ_n = max(0.002, 0.25 × median paired sd(Δ̂)) per node, in metric units (≈ 0.002 on `digits_mlp`, ≈ 0.004 on `openml_ionosphere` with E1 numbers). It is also the unit of the C3 gate, scaled to a 20-run campaign. |
+| D23 | **Primary comparator: the KG-style index policy with a constant (node-level) prior**: a constant Bayes threshold, constant-prior screening, and KG verify priced on the executed response under the campaign split policy. This is arm A1 and the floor of the C3 ladder. The PACE-style gate is a secondary comparator (appendix), as its own verify version. |
+| R1-E1B-RERUN2 (revision) | **Not re-run as designed.** First read the cause of the 14 Oct collection failure from the preserved Ada logs. Then convert the run into the C3 label sweep: root campaigns only (no branching), memory `append_only_summary` and `none`, `"vary"` split, nodes per D21, W = 20, with fresh-seed audits of evaluated proposals (C3_DESIGN §4). |
+| R1-C3 (ladder) | C3 is evaluated as the arm ladder A0–A6 of `C3_DESIGN.md` §5: ρ → constant-prior index policy → rules → tabular → LLM zero-shot → small LM (SFT) → small LM (decision-focused GRPO). Online RL (A7) only if the DI test calls for it. The reference arms of §10 are added: SAGE-style gate, FOREAGENT-style pairwise predictor, Ladder margin rule, posterior-mean incumbent. |
+| C3 gate | **Proceed to online deployment only if** the offline one-step gain of A3 or A5 over A2, scaled to a 20-run campaign, reaches δ_n (D18) on at least two nodes, with its lower 95 % bound above 0. **Otherwise** C3 is reported as a measured negative, explained by T4 Proposition 7's dispersion bound, and C1 + C2 carry the paper. This replaces RUNBOOK 1.5 for C3. |
 
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|

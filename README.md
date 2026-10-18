@@ -1,77 +1,47 @@
-# Paper B — learned control of governed autoresearch loops (route R1)
+# Paper B — noisy incumbent-relative acceptance in governed autoresearch loops (route R1)
 
-> **Start here: [docs/r1/PLAN.md](docs/r1/PLAN.md)** (canonical plan, 9 Oct 2026),
-> [docs/r1/RUNBOOK.md](docs/r1/RUNBOOK.md) and [docs/r1/STATUS.md](docs/r1/STATUS.md).
-> The earlier route (two-checkpoint verification timing, candidate-consistency
-> task) is retired. Its plans are in `archive/old_b_2026-10-09/`; the code,
-> protocols, manuscript (moved on 13 Oct 2026 to `archive/old_b_2026-10-09/paper_b_manuscript/`) and release tooling described below
-> are **legacy** and are kept only because tests import them (PLAN §8).
-> Every `docs/paper_split/...` path below now lives under
-> `archive/old_b_2026-10-09/docs_paper_split/`.
+Authoritative remote: [Agent_paper_B](https://github.com/dowlingwong/Agent_paper_B).
+Target venue: TMLR, with an ICML-main-track quality bar (docs/r1/PLAN.md §9).
 
-## Legacy description (old route)
+**Start here:** [docs/r1/PLAN.md](docs/r1/PLAN.md) (canonical plan and dated author
+decisions), [docs/r1/RUNBOOK.md](docs/r1/RUNBOOK.md) (phases, gates) and
+[docs/r1/STATUS.md](docs/r1/STATUS.md) (the only record of what is done).
 
+## The question
 
-This is the standalone repository for Paper B (ICML 2027 target).
-Authoritative remote: [Agent_paper_B](https://github.com/dowlingwong/Agent_paper_B). It was copied
-from the joint Paper A/B repository `agent-checkpoint-intervention` at snapshot
-`S = 4154f153` (7 October 2026); see [PROVENANCE.md](PROVENANCE.md) for the path
-map, the files that differ from S and the licences.
+An LLM manager proposes bounded edits to a training script, a worker trains, and a
+control plane keeps an edit only if the noisy metric strictly beats the incumbent's
+recorded value. R1 treats this loop as noisy sequential selection with an incumbent:
 
-The paper is a **research draft**. There is no real-agent experimental result in
-this repository. The analysis side runs on CPU; the live Pi-backed lane is not
-built yet (see [docs/paper_split/OPEN_ITEMS.md](docs/paper_split/OPEN_ITEMS.md)).
+- **C1** — measured control errors: false keeps and discards, and wasted runs.
+- **C2** — theory of acceptance under noise: Bayes keep threshold, value of verify,
+  the winner's curse of `current_best`, and a proposer whose law depends on the ledger
+  (`docs/r1/theory/`).
+- **C3** — a learned per-proposal prior plugged into the C2 rule (pre-execution skip
+  and a per-proposal keep threshold), compared against the C2 index policy.
+
+All numbers in this repository so far are `PILOT` or `ENGINEERING_ONLY`; none is
+evidence (RUNBOOK §1).
 
 ## Layout
 
-- `archive/old_b_2026-10-09/paper_b_manuscript/` — old manuscript (ICML 2026 development kit); was `papers/paper_b/` until 13 Oct 2026.
-- `protocols/paper_b/` — contract v1/v2/v3, launch validator, design decisions.
-- `experiments/paper_b/` — engineering smoke and CPU fixtures.
-- `experiment_scaffold/src/causal_branch/control/` — B's controller, allocator,
-  evaluator, configurator scaffold and governance ledger.
-- `tests/control/`, `tests/release/`, `tests/standalone/` — the test suites.
-- `third_party/pi/` — the vendored Pi source tree (MIT; see PROVENANCE).
+| Path | What it is |
+|---|---|
+| `r1/` | R1 analysis code: noise pilot (`noise/`), headroom pilot (`headroom/`), theory code (`theory/`), liveness, branch schema, baselines, Ada/Deepthought runners (`scripts/`), tests (`tests/`). |
+| `docs/r1/` | Plan, runbooks, status, theory notes (T1–T4), reports, reviews and agent prompts. |
+| `results/r1/` | Committed pilot and engineering outputs (`pilot/`, `engineering/`). |
+| `papers/` | Manuscript (not started; format open, PLAN R1-FORMAT). |
+| `archive/old_b_2026-10-09/` | The retired route: plans (`docs_paper_split/`), manuscript (`paper_b_manuscript/`) and, since 18 Oct 2026, all its code, tests, protocols, release tooling and the vendored Pi tree (`code/`, with `PROVENANCE.md` and licences). Read-only history. |
 
-## Environment
-
-Python 3.11+; the repository pins 3.13.4 in `.python-version`. The locked test
-dependencies are in `requirements.lock`. A virtual environment at `.venv/`
-(ignored; the Makefile uses it automatically when present):
-
-```sh
-uv venv --python 3.13 .venv
-uv pip sync --python .venv/bin/python requirements.lock
-```
-
-The CPU checks were also run on Python 3.13.15 and 3.13.16.
+Harness changes live on branch `r1` of the separate `autoresearch_harness`
+repository (PLAN D14); R1 code runs against that checkout.
 
 ## Checks
 
 ```sh
-make test              # tests/control, tests/release, tests/standalone
-make smoke-b           # 11/11 engineering checks (ENGINEERING_ONLY)
-make paper-b           # build the manuscript, verify, anonymity check
-make release-b         # build the allowlisted release package
-make check-release-b   # verify the package in a clean directory
+make r1-test AR_HARNESS_ROOT=../autoresearch_harness   # R1 test suite
+make r1-e2e                                            # R1 end-to-end smoke
+make legacy-test LEGACY_PY=/path/to/python3.13         # old-route suites (212/6/12)
 ```
 
-The launch validator refuses a draft contract:
-
-```sh
-python protocols/paper_b/launch_validator.py --contract protocols/paper_b/contract_v3.yaml \
-  --phase qualification --lane one_step --for-launch
-```
-
-## Rewriting tracked files
-
-`make check-release-b`, `make paper-b` and `make smoke-b` write into paths that
-are tracked at S: `release/check_release_b.json`, the manuscript build products
-and `results/paper_b/smoke_latest/`. Until the targets write elsewhere, restore
-the inherited bytes afterwards:
-
-```sh
-git checkout -- release/check_release_b.json results/paper_b/smoke_latest archive/old_b_2026-10-09/paper_b_manuscript/main.pdf
-```
-
-`make release-b` requires a clean tree and writes `release/paper_b/`, which is
-ignored and not tracked.
+LLM workloads never run on the Mac (PLAN R1-COMPUTE); they run on Deepthought or Ada.
