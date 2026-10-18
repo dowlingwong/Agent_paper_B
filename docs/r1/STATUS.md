@@ -2,6 +2,16 @@
 
 Newest entry first. Only this file says what is done.
 
+## 19 Oct 2026 — rerun-2 diagnosis, digits liveness, and E1b DI diagnostic
+
+AI-assisted by Codex; ENGINEERING_ONLY / PILOT; not evidence. Author-authorized file-only diagnosis in the fresh Ada clone, incorporating addendum `bf52f5c` and the later observed-record/revised-stop-rule instructions. No LLM, GPU, worker runs, retries or writes to preserved results.
+
+- **Task 1 (ENGINEERING_ONLY):** all seven collection-failure leaves coincide with Ollama runner SIGTERM during proposal requests (five runner-unavailable errors, two unexpected EOFs). Signal sender/reason is not recorded. Failures occurred in branches, but shared-service loss can also affect root-only C3. Proposed lifetime/observability fixes and a mocked desktop fixture only; no fix implemented. Report: `reports/RERUN2_STOP_DIAGNOSIS_20261019.md`.
+- **Task 2 (ENGINEERING_ONLY):** digits memory-on has no keep after trial 1; 10 later ties and 8 worse scores, with repeated edits. Keep the node as a candidate with proposer/liveness repair; retain its exclusion from memory-on collection until it passes the existing D28 gate. A lucky-incumbent or causal memory explanation is not identified. Same report, “digits_mlp liveness”.
+- **Task 3 (PILOT):** observed decision changes are 12 promotions at six digits points, zero demotions; digits has 24 unchanged point-repetitions, ionosphere 36 unchanged. The next-three mean-delta distance exceeds paired null by 0.00495217 (95% cluster interval [0.00123811, 0.00968352]) and unchanged by 0.00607417 ([0.00227162, 0.0107627]); adjusted exploratory p=0.0006. The requested empirical DI criterion flags a memory-off deviation; conditional-law identification and A7 benefit remain undetermined. Ionosphere is excluded from the eligible pool. No scripted per-trial control exists; none was regenerated. Reports: `reports/DI_TEST_E1B_20261019.md`, `reports/DI_TEST_E1B_20261019_tables.md`.
+- Deterministic committed-input CLI: `r1/diagnostics/di_test.py`; synthetic/integrity tests: `r1/tests/test_di_test.py` (5 passed). Full r1 suite not run: harness unavailable in the isolated analysis environment. Diagnostic artifacts remain ENGINEERING_ONLY / PILOT, not scientific acceptance, deployment approval or authorization for the proposed memory-on follow-up.
+
+
 
 
 
