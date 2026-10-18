@@ -116,13 +116,15 @@ This ladder is C3.
 
 **C3 gate (replaces RUNBOOK 1.5 for C3; adopted 18 Oct, PLAN §10).** Proceed to online deployment if the offline one-step gain of A3 or A5 over A2, scaled to a 20-run campaign, reaches δ_n (D18) on at least two nodes, with its lower 95 % bound above 0. Otherwise report C3 as the measured negative, with T4 Proposition 7's dispersion bound as the explanation; C1 + C2 carry the paper.
 
-## 7. Cheap add-ons
+## 7. Add-ons: B (part of C2) and D (= C4)
 
-**B — theory of the gain (done as T4; analysis only).**
-- Propositions 6–10 are written. The empirical side reuses C3's labels: bound vs realised gain (Proposition 7), screening term (Proposition 8), and the T4 §7 prediction about A6 vs A5.
+Placement fixed on 18 Oct 2026 (PLAN §10, R1-C4).
+
+**B — theory of the gain. Part of C2; its empirical checks are reported with C3.**
+- Propositions 6–10 are written in T4. The empirical side reuses C3's labels: bound vs realised gain (Proposition 7), the screening term (Proposition 8), and the T4 §7 prediction about A6 vs A5.
 - Cost: about a week of analysis code, no new runs.
 
-**D — debiased memory and the DI test.**
+**D — proposer feedback = C4 (secondary): the DI test and debiased memory.**
 - **DI test, free:** the E1b LLM branch pairs (`results/r1/pilot/E1b_20261013T151857Z`) already contain forced different decisions at matched histories (continue vs verify-demote). Compare the next proposals' keys, sizes, novelty and (after audit) μ across the pair. This measures how far T4 Proposition 10's DI condition fails for the pinned manager, and decides whether A7 is needed.
 - **Debiased display, cheap:** one memory-summary variant that shows B̃ (cumulative posterior-mean increments of kept edits, T4 §5) instead of the raw record B. Run one A/B sweep on 2–4 nodes on Ada (a few GPU-hours) and audit as in §4. Outcomes: proposal distribution shift, audited μ of proposals, and Y.
 - This is the only direct measurement of the proposer-feedback channel that classical selection theory does not model.

@@ -7,6 +7,10 @@ Newest entry first. Only this file says what is done.
 
 
 
+## 18 October 2026 — add-on placement: B joins C2, D becomes C4
+
+Recorded by an AI agent (Claude, coordinating session). The author agreed that route B (the T4 theory of the gain) is part of C2, with its empirical checks reported alongside C3, and that route D becomes **C4 (secondary): proposer feedback** — the DI test on forced-decision branch pairs plus the debiased-memory A/B. PLAN §3 (current-contributions box) and §10 (R1-C4), `C3_DESIGN.md` §7 and the README were updated. No experiment ran.
+
 ## 18 October 2026 — author adopts the open Phase 0 decisions, the C3 ladder and the C3 gate
 
 Recorded by an AI agent (Claude, coordinating session). The author adopted every recommendation put to them on 18 Oct (D4 amendment allowed; D21 node set plus pool extension to ≥ 8 nodes; `"vary"` split on every node; D18 δ_n; D23 constant-prior KG index policy as arm A1; R1-E1B-RERUN2 converted into the C3 label sweep), and fixed C3 as route A with the A0–A6 ladder and the C3 gate. All are PLAN §10 rows dated 18 Oct. No experiment ran.

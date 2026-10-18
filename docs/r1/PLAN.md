@@ -60,7 +60,11 @@ The 9 Oct question (LLM vs configurator vs hybrid; does the problem need RL) sur
 
 ## 3. Planned contributions (claims are falsifiable; none is established)
 
-> **18 Oct 2026 (R1-C3, §10):** C3 is now the learned per-proposal prior under the C2 rule (`docs/r1/C3_DESIGN.md`); the C3 and C4 rows below are kept as history. C2 is extended by `theory/T4_FEEDBACK_PROPOSER.md`.
+> **18 Oct 2026 (R1-C3, R1-C4, §10): current contributions.** The table below the box is kept as history.
+> - **C1** — measured control errors (unchanged), including wasted runs on duplicate and inert edits.
+> - **C2** — theory of acceptance under noise: T2 plus `theory/T4_FEEDBACK_PROPOSER.md`. T4 covers the ledger-dependent proposer, the per-proposal gain bound and skip rule, the winner's curse for any adaptive proposer, and decision independence. Its empirical checks (Proposition 7 bound vs realised gain, Proposition 8 screening term, the T4 §7 SFT-vs-GRPO prediction) use C3's labels and are reported with C3.
+> - **C3** — learned per-proposal prior under the C2 rule: the A0–A6 ladder and the C3 gate (`docs/r1/C3_DESIGN.md`).
+> - **C4 (secondary)** — **proposer feedback**: (i) a test of the decision-independence condition (T4 Proposition 10) on forced-decision branch pairs at matched histories; (ii) a debiased-memory intervention that shows the manager the run-free posterior estimate of the incumbent instead of the raw record (T4 §5). C4 also decides whether online RL (A7) is warranted. A small effect is reported as such; C4 then shrinks without affecting C1–C3.
 
 | ID | Contribution | Kind | Evidence that would establish it |
 |---|---|---|---|
@@ -401,6 +405,12 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-E1B-RERUN2 (revision) | **Not re-run as designed.** First read the cause of the 14 Oct collection failure from the preserved Ada logs. Then convert the run into the C3 label sweep: root campaigns only (no branching), memory `append_only_summary` and `none`, `"vary"` split, nodes per D21, W = 20, with fresh-seed audits of evaluated proposals (C3_DESIGN §4). |
 | R1-C3 (ladder) | C3 is evaluated as the arm ladder A0–A6 of `C3_DESIGN.md` §5: ρ → constant-prior index policy → rules → tabular → LLM zero-shot → small LM (SFT) → small LM (decision-focused GRPO). Online RL (A7) only if the DI test calls for it. The reference arms of §10 are added: SAGE-style gate, FOREAGENT-style pairwise predictor, Ladder margin rule, posterior-mean incumbent. |
 | C3 gate | **Proceed to online deployment only if** the offline one-step gain of A3 or A5 over A2, scaled to a 20-run campaign, reaches δ_n (D18) on at least two nodes, with its lower 95 % bound above 0. **Otherwise** C3 is reported as a measured negative, explained by T4 Proposition 7's dispersion bound, and C1 + C2 carry the paper. This replaces RUNBOOK 1.5 for C3. |
+
+**Decided 18 Oct 2026 by the author (placement of the add-ons).** Fixed, not a proposal.
+
+| ID | Decision (decided 18 Oct 2026 by the author) |
+|---|---|
+| R1-C4 (18 Oct) | **Route B joins C2; route D becomes C4 (secondary): proposer feedback.** C4 is the DI test plus the debiased-memory A/B (`C3_DESIGN.md` §7). It replaces the 9 Oct C4 ("configurator training recipe"), which R1-C3 superseded. Records the author's "同意“B 并进 C2、D 列为 C4”". |
 
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|

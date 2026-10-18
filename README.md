@@ -18,7 +18,10 @@ recorded value. R1 treats this loop as noisy sequential selection with an incumb
   the winner's curse of `current_best`, and a proposer whose law depends on the ledger
   (`docs/r1/theory/`).
 - **C3** — a learned per-proposal prior plugged into the C2 rule (pre-execution skip
-  and a per-proposal keep threshold), compared against the C2 index policy.
+  and a per-proposal keep threshold), evaluated as a ladder of arms above the C2
+  index policy (`docs/r1/C3_DESIGN.md`).
+- **C4** (secondary) — proposer feedback: a test of when trial-by-trial acceptance
+  is optimal (decision independence), and a debiased-memory intervention.
 
 All numbers in this repository so far are `PILOT` or `ENGINEERING_ONLY`; none is
 evidence (RUNBOOK §1).
