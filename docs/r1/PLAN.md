@@ -412,6 +412,12 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 |---|---|
 | R1-C4 (18 Oct) | **Route B joins C2; route D becomes C4 (secondary): proposer feedback.** C4 is the DI test plus the debiased-memory A/B (`C3_DESIGN.md` §7). It replaces the 9 Oct C4 ("configurator training recipe"), which R1-C3 superseded. Records the author's "同意“B 并进 C2、D 列为 C4”". |
 
+**Decided 19 Oct 2026 by the author.** Fixed, not a proposal.
+
+| ID | Decision (decided 19 Oct 2026 by the author) |
+|---|---|
+| Partial rerun-2 arm A (19 Oct) | **The preserved, interrupted R1-E1B-RERUN2 arm A (memory on; 648 leaves, 7 failed) may be snapshotted into the repository and analysed as a PILOT diagnostic for the C4 DI test.** It is not resumed or completed and is never evidence. This is an exception to the default "preserved, never analysed" handling of interrupted batches. Records the author's "我授权". Prompt: `docs/r1/prompts/ADA_DI_TEST_MEMORY_ON_PARTIAL_PROMPT.md`. Any DI test uses absolute metrics or audited values, never Δ̂ relative to branch-specific records (DI_TEST_E1B_20261019 addendum). |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |
