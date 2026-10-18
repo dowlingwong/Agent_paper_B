@@ -1,0 +1,90 @@
+{
+  "schema": "r1.e1b_headroom/1",
+  "label": "PILOT",
+  "split": "pilot",
+  "started_utc": "20261014T141051Z",
+  "harness": {
+    "root": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/autoresearch_harness",
+    "commit": "411c6054c8505f93a6429e2f9eed526952793882",
+    "branch": "HEAD",
+    "dirty": false
+  },
+  "manager_backend": "langgraph qwen2.5-coder:7b (Ollama; pinned digest dae161e2...)",
+  "manager": {
+    "kind": "langgraph",
+    "model": "ollama/qwen2.5-coder:7b",
+    "temperature": 0.2
+  },
+  "memory_mode": "append_only_summary",
+  "arm": "A",
+  "arm_role": "primary",
+  "seed_policy": {
+    "kind": "ollama_seed",
+    "temperature": 0.2,
+    "derivation": "manager_seed(campaign_id, budget_index, repetition, revision_attempt)"
+  },
+  "nodes": [
+    "tabular_mlp",
+    "openml_ionosphere",
+    "openml_breast_w"
+  ],
+  "instances": 18,
+  "runs": 20,
+  "points": [
+    4,
+    8,
+    12
+  ],
+  "reps": 2,
+  "audit_seeds": 6,
+  "verify_r": 2,
+  "verify_split_policy": "fixed",
+  "noise": {
+    "tabular_mlp": {
+      "sigma_t": 0.0027025312109795643,
+      "sigma_s": 0.003684685656472566,
+      "sigma_d": 0.004569527692588516,
+      "source": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/agent_paper_B/results/r1/pilot/E1_20261012T145353Z/summary.json",
+      "definition": "median sd_joint; components rescaled (v2)"
+    },
+    "openml_ionosphere": {
+      "sigma_t": 0.0017741197701699456,
+      "sigma_s": 0.038406309460765356,
+      "sigma_d": 0.03844726397749237,
+      "source": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/agent_paper_B/results/r1/pilot/E1_20261012T145353Z/summary.json",
+      "definition": "median sd_joint; components rescaled (v2)"
+    },
+    "openml_breast_w": {
+      "sigma_t": 0.0008750545908821103,
+      "sigma_s": 0.003800528069423794,
+      "sigma_d": 0.0038999659156846497,
+      "source": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/agent_paper_B/results/r1/pilot/E1_20261012T145353Z/summary.json",
+      "definition": "median sd_joint; components rescaled (v2)"
+    }
+  },
+  "host": {
+    "platform": "Linux-5.15.0-151-generic-x86_64-with-glibc2.35",
+    "python": "3.11.17"
+  },
+  "work": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work",
+  "sessions": [
+    {
+      "start_utc": "20261014T141051Z",
+      "done": 54,
+      "jobs_before": 54,
+      "elapsed_seconds": 1032.8
+    },
+    {
+      "start_utc": "20261014T142806Z",
+      "done": 702,
+      "jobs_before": 702,
+      "elapsed_seconds": 7399.5
+    },
+    {
+      "start_utc": "20261014T163129Z",
+      "done": 0,
+      "jobs_before": 0,
+      "elapsed_seconds": 0.2
+    }
+  ]
+}

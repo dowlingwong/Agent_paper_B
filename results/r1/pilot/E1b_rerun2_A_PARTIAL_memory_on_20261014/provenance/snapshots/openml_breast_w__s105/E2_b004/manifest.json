@@ -1,0 +1,496 @@
+{
+  "branch_state_paths": [
+    "artifacts",
+    "data_cache"
+  ],
+  "budget_consumed": 3,
+  "budget_index": 4,
+  "budget_total": 40,
+  "campaign_id": "openml_breast_w__s105",
+  "compute_budget_state": {
+    "exhausted": false,
+    "llm_calls": 4,
+    "llm_calls_remaining": null,
+    "llm_calls_used": 4,
+    "max_llm_calls": null,
+    "max_worker_runs": 20,
+    "max_worker_seconds": null,
+    "worker_runs": 4,
+    "worker_runs_remaining": 16,
+    "worker_runs_used": 4,
+    "worker_seconds": 8.65686792274937,
+    "worker_seconds_remaining": null,
+    "worker_seconds_used": 8.65686792274937
+  },
+  "controller_version": "continue/v1",
+  "current_best": 0.991948,
+  "editable_paths": [
+    "config.yaml"
+  ],
+  "epoch": "E2",
+  "incumbent_stack": [
+    {
+      "current_best_before": null,
+      "layer_hash": "8d19e157d84f14d48148dcabd6a1f2a8e8638b3d7f01b437e7cd21728786f005",
+      "metric": 0.991948,
+      "verified": false
+    }
+  ],
+  "label": "ENGINEERING_ONLY",
+  "layer_hashes": {
+    "editable": "546de8364d838f8585a5435408d820a7200200d9703f18f08652a7b9039c07ff",
+    "incumbent": "946de06d58fe136fdd1d6a0fdfe1a3363ade6c442dc8ceea7aca0303ab940bc2",
+    "ledger_prefix": "84b4bd44d72c85253b3d0b3c6a61f9da3f1dce0cc6133643ec55d850448c744c",
+    "node_state": "31cacb34dc6f9d9e6fcff436664a0fd67ba8b155a45179df9a691982f5edb78c",
+    "stack[0]": "8d19e157d84f14d48148dcabd6a1f2a8e8638b3d7f01b437e7cd21728786f005"
+  },
+  "ledger_prefix": [
+    {
+      "budget_index": 1,
+      "campaign_id": "openml_breast_w__s105",
+      "cumulative_budget_consumed": 1,
+      "current_best_before": null,
+      "decision": "kept",
+      "decision_rationale": "First valid metric becomes the current best.",
+      "delta_vs_best": null,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "d31c77a387b4a100b58ac5c755b2ed760cdbe4b839d5956af75d4e08df9802b8",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 94,
+            "latency_ms": 2919.8892661370337,
+            "parse_ok": true,
+            "prompt_tokens": 483,
+            "response_chars": 300,
+            "seed": 850186853
+          },
+          "raw_proposal_chars": 300,
+          "raw_proposal_sha256": "a14aa16ff013fd62faabb817a10958de5651c2fecd06df62b1908e4866bf52d7",
+          "structured_edit": {
+            "new": "0.3",
+            "old": "0.15",
+            "path": "config.yaml",
+            "symbol": "C",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "",
+          "worker_memory_mode": "append_only_summary",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [],
+            "repeated_bad_count": 0,
+            "repeated_bad_rate": 0.0,
+            "repeated_degraded_count": 0,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": null,
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-001",
+      "git_commit_before": "local-before-001",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "append_only_summary",
+      "node_id": "openml_breast_w",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.961905,
+        "val_auc": 0.991948
+      },
+      "patch_hash": "4b7cbea61e54d38721d23fd58761ff830fc6238225018e812dcfb0353c60e707",
+      "patch_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-001/patch.diff",
+      "proposal_rationale": "Increasing C can make the model more complex and potentially improve performance on the validation set.",
+      "proposal_summary": "increase-C-0.3",
+      "provenance": {
+        "decision_id": "decision-67791adbe10df76b",
+        "metric_id": "metric-67791adbe10df76b",
+        "patch_id": "patch-67791adbe10df76b",
+        "proposal_id": "proposal-67791adbe10df76b",
+        "run_id": "run-67791adbe10df76b"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-001/run.log",
+      "repeated_bad_count": 0,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-14T14:22:17Z",
+      "timestamp_start": "2026-10-14T14:22:11Z",
+      "training_seed": null,
+      "trial_id": "openml_breast_w__s105-trial-001",
+      "validity_status": "valid",
+      "wall_clock_seconds": 6.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 2,
+      "campaign_id": "openml_breast_w__s105",
+      "cumulative_budget_consumed": 2,
+      "current_best_before": 0.991948,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=-0.000805.",
+      "delta_vs_best": -0.0008050000000000557,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "f354e8fd06b26a0055902fad6617790eca6063ebba8cf8764202c82ddad71e04",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 99,
+            "latency_ms": 1447.2336671315134,
+            "parse_ok": true,
+            "prompt_tokens": 632,
+            "response_chars": 327,
+            "seed": 2560122908
+          },
+          "raw_proposal_chars": 327,
+          "raw_proposal_sha256": "3586e307ccd11f959191ac32c536b89f0d8d08d72f203a87eea5bfcc94b9af0a",
+          "structured_edit": {
+            "new": "0.6",
+            "old": "0.3",
+            "path": "config.yaml",
+            "symbol": "C",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "openml_breast_w__s105-trial-001: decision=kept; summary=increase-C-0.3; metric=0.991948; delta=None",
+          "worker_memory_mode": "append_only_summary",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [],
+            "repeated_bad_count": 0,
+            "repeated_bad_rate": 0.0,
+            "repeated_degraded_count": 0,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-002",
+      "git_commit_before": "local-before-002",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "append_only_summary",
+      "node_id": "openml_breast_w",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.961905,
+        "val_auc": 0.991143
+      },
+      "patch_hash": "6a4a82bfd895ce3730962ec93ab791ffbf483a311bcd09e3fabe03c191e6673b",
+      "patch_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-002/patch.diff",
+      "proposal_rationale": "increasing C can help improve the model's ability to fit the training data, potentially leading to better performance on validation.",
+      "proposal_summary": "increase-C-0.6",
+      "provenance": {
+        "decision_id": "decision-4293882ad6658153",
+        "metric_id": "metric-4293882ad6658153",
+        "patch_id": "patch-4293882ad6658153",
+        "proposal_id": "proposal-4293882ad6658153",
+        "run_id": "run-4293882ad6658153"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-002/run.log",
+      "repeated_bad_count": 0,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-14T14:22:19Z",
+      "timestamp_start": "2026-10-14T14:22:18Z",
+      "training_seed": null,
+      "trial_id": "openml_breast_w__s105-trial-002",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    },
+    {
+      "budget_index": 3,
+      "campaign_id": "openml_breast_w__s105",
+      "cumulative_budget_consumed": 3,
+      "current_best_before": 0.991948,
+      "decision": "discarded",
+      "decision_rationale": "Candidate did not improve current best; delta=-0.000805.",
+      "delta_vs_best": -0.0008050000000000557,
+      "execution_status": "success",
+      "extra": {
+        "manager": {
+          "context_sha256": "364453ed44e051d68d5527ae51f353e169e1267d9a000b5dee4de063b711ad15",
+          "deterministic_patch": true,
+          "llm_call": {
+            "completion_tokens": 100,
+            "latency_ms": 2174.207493895665,
+            "parse_ok": true,
+            "prompt_tokens": 699,
+            "response_chars": 305,
+            "seed": 2731451452
+          },
+          "raw_proposal_chars": 305,
+          "raw_proposal_sha256": "95500fb0a39ddaac53dbdf3b2dc04ee98479e9b1e730809ca58f7d4be7993138",
+          "structured_edit": {
+            "new": "0.6",
+            "old": "0.3",
+            "path": "config.yaml",
+            "symbol": "C",
+            "type": "config_value"
+          },
+          "worker_memory_context_text": "openml_breast_w__s105-trial-001: decision=kept; summary=increase-C-0.3; metric=0.991948; delta=None\nopenml_breast_w__s105-trial-002: decision=discarded; summary=increase-C-0.6; metric=0.991143; delta=-0.0008050000000000557",
+          "worker_memory_mode": "append_only_summary",
+          "worker_repeated_bad_stats": {
+            "flagged_trial_ids": [],
+            "repeated_bad_count": 0,
+            "repeated_bad_rate": 0.0,
+            "repeated_degraded_count": 0,
+            "repeated_invalid_count": 0,
+            "skipped_count": 0
+          }
+        },
+        "scope_validation": {
+          "changed_paths": [
+            "config.yaml"
+          ],
+          "valid": true,
+          "violations": []
+        },
+        "worker": {
+          "node_root": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/node"
+        },
+        "worker_failure_message": null
+      },
+      "failure_category": "degraded_metric",
+      "fast_config_hash": null,
+      "git_commit_after": "local-after-003",
+      "git_commit_before": "local-before-003",
+      "manager_mode": "langgraph_manager",
+      "memory_mode": "append_only_summary",
+      "node_id": "openml_breast_w",
+      "node_state_hash": null,
+      "parsed_metrics": {
+        "val_acc": 0.961905,
+        "val_auc": 0.991143
+      },
+      "patch_hash": "6a4a82bfd895ce3730962ec93ab791ffbf483a311bcd09e3fabe03c191e6673b",
+      "patch_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-003/patch.diff",
+      "proposal_rationale": "previous trial with C=0.3 achieved a high val_auc, increasing C might further improve performance.",
+      "proposal_summary": "increase-C-0.6",
+      "provenance": {
+        "decision_id": "decision-0f55c81feca3e555",
+        "metric_id": "metric-0f55c81feca3e555",
+        "patch_id": "patch-0f55c81feca3e555",
+        "proposal_id": "proposal-0f55c81feca3e555",
+        "run_id": "run-0f55c81feca3e555"
+      },
+      "raw_log_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-003/run.log",
+      "repeated_bad_count": 1,
+      "targeted_files": [
+        "config.yaml"
+      ],
+      "timestamp_end": "2026-10-14T14:22:22Z",
+      "timestamp_start": "2026-10-14T14:22:21Z",
+      "training_seed": null,
+      "trial_id": "openml_breast_w__s105-trial-003",
+      "validity_status": "valid",
+      "wall_clock_seconds": 1.0,
+      "worker_mode": "local_worker"
+    }
+  ],
+  "manager": {
+    "deterministic": false,
+    "mode": "langgraph_manager",
+    "model": "ollama/qwen2.5-coder:7b",
+    "model_digest": null,
+    "temperature": 0.2
+  },
+  "manager_mode": "baseline_manager",
+  "memory_mode": "append_only_summary",
+  "node_name": "openml_breast_w",
+  "node_source_root": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/node",
+  "proposal": {
+    "extra": {
+      "context_sha256": "9eadd6723f7a3f500bb003c1777679fde26fa78d726cacdfab1aeafd612f5066",
+      "deterministic_patch": true,
+      "llm_call": {
+        "completion_tokens": 102,
+        "latency_ms": 2862.91462299414,
+        "parse_ok": true,
+        "prompt_tokens": 766,
+        "response_chars": 334,
+        "seed": 4119066960
+      },
+      "raw_proposal_chars": 334,
+      "raw_proposal_sha256": "9e75b44fa203333ffc2ba25b1bf68b0d2f06bd0dc9918e2d5b7f917d2cab0887",
+      "structured_edit": {
+        "new": "0.7",
+        "old": "0.3",
+        "path": "config.yaml",
+        "symbol": "C",
+        "type": "config_value"
+      },
+      "worker_memory_context_text": "openml_breast_w__s105-trial-001: decision=kept; summary=increase-C-0.3; metric=0.991948; delta=None\nopenml_breast_w__s105-trial-002: decision=discarded; summary=increase-C-0.6; metric=0.991143; delta=-0.0008050000000000557\nopenml_breast_w__s105-trial-003: decision=discarded; summary=increase-C-0.6; metric=0.991143; delta=-0.0008050000000000557",
+      "worker_memory_mode": "append_only_summary",
+      "worker_repeated_bad_stats": {
+        "flagged_trial_ids": [
+          "openml_breast_w__s105-trial-003"
+        ],
+        "repeated_bad_count": 1,
+        "repeated_bad_rate": 0.3333333333333333,
+        "repeated_degraded_count": 1,
+        "repeated_invalid_count": 0,
+        "skipped_count": 0
+      }
+    },
+    "manager_mode": "langgraph_manager",
+    "objective": "In config.yaml, change C from 0.3 to 0.7. Edit only config.yaml.",
+    "proposal_rationale": "increasing C can improve the model's ability to fit the training data, potentially leading to better performance on validation.",
+    "proposal_summary": "increase-C-0.7",
+    "target_files": [
+      "config.yaml"
+    ]
+  },
+  "provisional": {
+    "budget_index": 4,
+    "campaign_id": "openml_breast_w__s105",
+    "cumulative_budget_consumed": 4,
+    "current_best_before": 0.991948,
+    "decision": "discarded",
+    "decision_rationale": "Candidate did not improve current best; delta=-0.000805.",
+    "delta_vs_best": -0.0008050000000000557,
+    "execution_status": "success",
+    "extra": {
+      "manager": {
+        "context_sha256": "9eadd6723f7a3f500bb003c1777679fde26fa78d726cacdfab1aeafd612f5066",
+        "deterministic_patch": true,
+        "llm_call": {
+          "completion_tokens": 102,
+          "latency_ms": 2862.91462299414,
+          "parse_ok": true,
+          "prompt_tokens": 766,
+          "response_chars": 334,
+          "seed": 4119066960
+        },
+        "raw_proposal_chars": 334,
+        "raw_proposal_sha256": "9e75b44fa203333ffc2ba25b1bf68b0d2f06bd0dc9918e2d5b7f917d2cab0887",
+        "structured_edit": {
+          "new": "0.7",
+          "old": "0.3",
+          "path": "config.yaml",
+          "symbol": "C",
+          "type": "config_value"
+        },
+        "worker_memory_context_text": "openml_breast_w__s105-trial-001: decision=kept; summary=increase-C-0.3; metric=0.991948; delta=None\nopenml_breast_w__s105-trial-002: decision=discarded; summary=increase-C-0.6; metric=0.991143; delta=-0.0008050000000000557\nopenml_breast_w__s105-trial-003: decision=discarded; summary=increase-C-0.6; metric=0.991143; delta=-0.0008050000000000557",
+        "worker_memory_mode": "append_only_summary",
+        "worker_repeated_bad_stats": {
+          "flagged_trial_ids": [
+            "openml_breast_w__s105-trial-003"
+          ],
+          "repeated_bad_count": 1,
+          "repeated_bad_rate": 0.3333333333333333,
+          "repeated_degraded_count": 1,
+          "repeated_invalid_count": 0,
+          "skipped_count": 0
+        }
+      },
+      "scope_validation": {
+        "changed_paths": [
+          "config.yaml"
+        ],
+        "valid": true,
+        "violations": []
+      },
+      "worker": {
+        "node_root": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/node"
+      },
+      "worker_failure_message": null
+    },
+    "failure_category": "degraded_metric",
+    "fast_config_hash": null,
+    "git_commit_after": "local-after-004",
+    "git_commit_before": "local-before-004",
+    "manager_mode": "langgraph_manager",
+    "memory_mode": "append_only_summary",
+    "node_id": "openml_breast_w",
+    "node_state_hash": null,
+    "parsed_metrics": {
+      "val_acc": 0.961905,
+      "val_auc": 0.991143
+    },
+    "patch_hash": "2f3f48bb3d23ed0f1027fc8d681faad2668574a99f2e302587d5e79191a2c533",
+    "patch_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-004/patch.diff",
+    "proposal_rationale": "increasing C can improve the model's ability to fit the training data, potentially leading to better performance on validation.",
+    "proposal_summary": "increase-C-0.7",
+    "provenance": {
+      "decision_id": "decision-deaeb7f7eb1cf46c",
+      "metric_id": "metric-deaeb7f7eb1cf46c",
+      "patch_id": "patch-deaeb7f7eb1cf46c",
+      "proposal_id": "proposal-deaeb7f7eb1cf46c",
+      "run_id": "run-deaeb7f7eb1cf46c"
+    },
+    "raw_log_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-004/run.log",
+    "repeated_bad_count": 2,
+    "targeted_files": [
+      "config.yaml"
+    ],
+    "timestamp_end": "2026-10-14T14:22:26Z",
+    "timestamp_start": "2026-10-14T14:22:25Z",
+    "training_seed": null,
+    "trial_id": "openml_breast_w__s105-trial-004",
+    "validity_status": "valid",
+    "wall_clock_seconds": 1.0,
+    "worker_mode": "local_worker"
+  },
+  "schema": "r1.campaign_snapshot/1",
+  "seen_active_hashes": [
+    "552817b933dfbb2b175fc7758f31d7d34ec9cf56d6fca4868599eaeb2e1e9f8b",
+    "720a330db38779e39a69a9af745f16b551f88085633bbf32eb163e2082cd775b",
+    "7f673be542fe498e4c59f15b4f8d50e5346b3a4b03c4055481749bfb944fb5a8"
+  ],
+  "seen_effective_hashes": [
+    "ae7b5f394ab3201ccdba0e4f00c22f4863ce34f8f698b5d4a49d6924caadd113",
+    "b203af99adcfb8cb1aead7bd58eb97a16c0dcdbad441f504ea76fd637391779b",
+    "f36565906587ac6d92f708a17a753dd746ba1ac2929383e10dc881558e8e558f"
+  ],
+  "split_seed": 105,
+  "t_min": 3,
+  "train_seed": 105,
+  "verify_runs": 2,
+  "verify_split_policy": "fixed",
+  "worker_mode": "local_worker",
+  "worker_result": {
+    "changed_files": [
+      "config.yaml"
+    ],
+    "extra": {
+      "node_root": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/node"
+    },
+    "failure_message": null,
+    "git_commit_after": "local-after-004",
+    "git_commit_before": "local-before-004",
+    "parsed_metrics": {
+      "val_acc": 0.961905,
+      "val_auc": 0.991143
+    },
+    "patch_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-004/patch.diff",
+    "raw_log_ref": "/data1/dowling/tmp/r1_e1b_rerun2_ENGINEERING_ONLY_20261014_X7Qyse/r1_e1b_rerun2_A_work/roots/openml_breast_w__s105/art/trial-004/run.log",
+    "success": true,
+    "worker_mode": "local_worker"
+  }
+}
