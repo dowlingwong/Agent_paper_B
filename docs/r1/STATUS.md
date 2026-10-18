@@ -23,6 +23,7 @@ Recorded by an AI agent (Claude, coordinating session).
 - **Review of `DI_TEST_E1B_20261019` (Codex, `7b81e1c`).** The flagged memory-off contrast in next-3 mean Δ̂ (+0.0047 at the 12 changed point-repetitions, all promotions) is mainly a record-reference shift: the verify branch's record is 0.0051 lower after a promotion. In absolute metric the signed shift is +0.0016. Addendum and `r1/diagnostics/di_record_shift.py` committed in `1840efe`. Verdict: undetermined, not "violated".
 - **Rerun-2 stop (Codex diagnosis):** the shared Ollama runner received SIGTERM (source unknown); 7 of 648 arm-A leaves failed. It can also affect root-only C3 sweeps. Proposed fixes before the C3 label sweep: a dedicated Ollama instance per batch (own port and model dir); bounded retries for transport-level LLM request failures, logged in the ledger; tracebacks and timestamps persisted by the collector.
 - **`digits_mlp`:** keep conditionally; repair the proposer and re-run D28 before use.
+- **Author rule (PLAN §10, R1-COMPUTE Paper A coordination):** no Paper B GPU launch on Ada while a Paper A live campaign there is waiting for an idle card. CPU-only and file-only work is unaffected; otherwise wait or use Deepthought.
 - **Author authorisation (PLAN §10, 19 Oct):** snapshot and analyse the preserved partial arm A (memory on) as a PILOT DI diagnostic, using absolute metrics and a value-residual check. Prompt `docs/r1/prompts/ADA_DI_TEST_MEMORY_ON_PARTIAL_PROMPT.md`.
 
 ## 18 October 2026 — add-on placement: B joins C2, D becomes C4
