@@ -108,3 +108,18 @@ Compare with the DT4 memory-off root campaigns on `digits_mlp` (`results/r1/pilo
    - the `digits_mlp` recommendation;
    - the DI verdict, with the key numbers;
    - the commit hash.
+
+---
+
+## Addendum, 19 Oct 2026 — revised scope after the operator's STOP (authorised by the author)
+
+The operator stopped correctly: `results/r1/pilot/E1b_20261012T161034Z/` (scripted run) has **no per-trial branch ledgers**. It contains only per-leaf summaries (`leaves/`, `roots/` with snapshots, `audits/`). The prompt wrongly assumed the LLM run's layout. Changes:
+
+1. **Task 3: drop the scripted calibration control.** Do not regenerate it: that would need worker runs. Calibration comes from the two within-run baselines already in the design, both computed on the LLM run only (`results/r1/pilot/E1b_20261013T151857Z/`: 144 branch ledgers, 12 root ledgers):
+   - **D_null:** repetition r1 vs r2 of the same action at the same point;
+   - **D_unchanged:** continue vs verify where the decision did not change.
+
+   The synthetic fixture in `r1/tests/test_di_test.py` (one DI-holds case, one shifted case) is the method check. State in the report that no scripted control was available and why.
+2. You **may** use the scripted run's per-leaf summaries descriptively (e.g. `n_keeps_after`, `outcome_y` by action), but not as a DI control.
+3. Tasks 1 and 2 are unchanged.
+4. Everything else in the prompt (ground rules, outputs, finish) is unchanged. Continue in the existing clone `/data1/dowling/tmp/r1_diag_ENGINEERING_ONLY_20261018T223815Z/repo` after `git pull`, so that it contains this addendum.
