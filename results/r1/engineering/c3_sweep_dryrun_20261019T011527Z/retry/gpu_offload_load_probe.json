@@ -1,0 +1,16 @@
+{
+  "label": "DRYRUN",
+  "utc": "20261019T011533Z",
+  "processes": {
+    "models": [
+      {
+        "name": "qwen2.5-coder:7b",
+        "model": "qwen2.5-coder:7b",
+        "digest": "dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364",
+        "size": 5560907776,
+        "size_vram": 5560907776,
+        "expires_at": "2099-01-01T00:00:00Z"
+      }
+    ]
+  }
+}

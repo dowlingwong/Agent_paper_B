@@ -1,0 +1,25 @@
+{
+  "nodes": [
+    "digits_mlp",
+    "openml_breast_w"
+  ],
+  "instances": 2,
+  "runs": 6,
+  "workers": 2,
+  "liveness": {
+    "instances": 1,
+    "runs": 4
+  },
+  "min_live_nodes": 2,
+  "gpu_wait_seconds": 0,
+  "max_collect_sessions": 3,
+  "paper_a_check": {
+    "command": [
+      "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/bin/paper_a_status"
+    ]
+  },
+  "ollama": {
+    "binary": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/bin/ollama",
+    "start_timeout": 30
+  }
+}

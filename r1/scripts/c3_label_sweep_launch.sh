@@ -53,9 +53,13 @@ case "${1:-}" in
   git -C "$BATCH/agent_paper_B" push --dry-run "$REMOTE" HEAD:refs/heads/main > "$BATCH/push_dry_run.log" 2>&1 || { echo 'STOP: paper push dry run failed'; exit 1; }
   if [ -n "${R1_C3_VENV_PYTHON:-}" ]; then
     # DRYRUN or a prepared host: use an existing interpreter with the harness deps.
+    # Wrappers (not symlinks) so the interpreter keeps its own environment.
     mkdir -p "$BATCH/autoresearch_harness/.venv/bin"
-    ln -s "$R1_C3_VENV_PYTHON" "$BATCH/autoresearch_harness/.venv/bin/python"
-    echo "venv: symlink to $R1_C3_VENV_PYTHON" > "$BATCH/uv_sync.log"
+    for name in python python3; do
+      printf '#!/bin/sh\nexec %q "$@"\n' "$R1_C3_VENV_PYTHON" > "$BATCH/autoresearch_harness/.venv/bin/$name"
+      chmod +x "$BATCH/autoresearch_harness/.venv/bin/$name"
+    done
+    echo "venv: wrapper for $R1_C3_VENV_PYTHON" > "$BATCH/uv_sync.log"
   else
     ( cd "$BATCH/autoresearch_harness" && uv sync --extra dev ) > "$BATCH/uv_sync.log" 2>&1 || { echo 'STOP: uv sync failed'; exit 1; }
   fi

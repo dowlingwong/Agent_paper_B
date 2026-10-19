@@ -1,0 +1,25 @@
+{
+  "label": "DRYRUN",
+  "stop_reason": "STOP: 4 root campaign failures, 0/4 roots complete; records in /sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261019T011618Z/failures and collection_failures.json (no automatic retry)",
+  "finished_utc": "20261019T011632Z",
+  "steps": {
+    "preconditions": {
+      "completed": true,
+      "commit": null,
+      "out": null,
+      "checks": null
+    },
+    "liveness": {
+      "completed": true,
+      "commit": "993b671f14903d9facc85e5e4bd9ee405d689606",
+      "out": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt/agent_paper_B/results/r1/engineering/liveness_c3_20261019T011610Z",
+      "checks": null
+    },
+    "sweep_append_only_summary": {
+      "completed": false,
+      "commit": null,
+      "out": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261019T011618Z",
+      "checks": null
+    }
+  }
+}
