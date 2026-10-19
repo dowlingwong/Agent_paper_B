@@ -2,13 +2,17 @@
 
 Realised one-step value of an arm on a held-out proposal (C3_DESIGN §6):
   r = Delta_true * keep - g * execute,
-with Delta_true = Delta_audit for audited non-inert proposals and 0 for inert
-ones (T4 §1), decisions from ``rules`` with the arm's (pi, mu, tau), the edit's
+with Delta_true = Delta_audit for audited proposals and 0 for no-ops (T4 §1,
+revised 19 Oct 2026). Duplicates of an earlier evaluated configuration are not
+zero-increment: arms with the rule layer (A2+) skip them (reward 0); A1/A0 may
+execute them, and if such a duplicate is kept its Delta_true is its audit value
+when audited, otherwise the logged Delta_hat as a proxy (counted and reported).
+Duplicates carry no training label. Decisions from ``rules`` with the arm's (pi, mu, tau), the edit's
 comparison noise sigma_cmp, and the *logged* campaign Delta_hat (independent of
 the audit seeds).
 
-Population: (source, node) strata that have audited proposals. Inert proposals
-enter with weight 1. Randomly audited non-inert proposals carry weight
+Population: (source, node) strata that have audited proposals. No-ops and
+duplicates enter with evaluation weight 1. Randomly audited non-inert proposals carry weight
 N_noninert / N_audited of their stratum (inverse sampling probability), so means
 estimate the stratum's full proposal population. Proposals audited only because
 they were DI-changed candidates (selected, not random) get weight 0 in
@@ -36,7 +40,7 @@ import numpy as np
 
 from r1.c3 import rules
 from r1.c3.audit import paired
-from r1.c3.arms import ConstantPrior, LGBMPrior, RulesPrior, prior_moments, rule_inert
+from r1.c3.arms import ConstantPrior, LGBMPrior, RulesPrior, is_duplicate, is_noop, prior_moments, rule_skip
 from r1.c3.dataset import load_table, noise_table
 from r1.c3.labels import N_BINS, log_score, prob_positive, soft_label
 
@@ -68,7 +72,7 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
     n_rand = defaultdict(int)
     for r in rows:
         k = (r["source"], r["node"])
-        if k in strata and not r["inert"]:
+        if k in strata and not rule_skip(r):
             n_non[k] += 1
             a = audits.get(r["proposal_id"])
             if a and "random" in a["reason"] and a["delta_audit"] is not None:
@@ -79,9 +83,22 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
         if k not in strata:
             continue
         r = dict(r)
-        if r["inert"]:
+        if is_noop(r):
             r.update(soft=soft_label(None, None, r["sigma_node"], inert=True), delta_true=0.0,
                      weight=1.0, eval_weight=1.0, audit_reason=None)
+        elif is_duplicate(r):
+            a = audits.get(r["proposal_id"])
+            if a and a.get("delta_audit") is not None:
+                if seed_split:
+                    h = len(a["seeds"]) // 2
+                    ev = paired(a["candidate_metrics"][h:], a["incumbent_metrics"][h:])
+                else:
+                    ev = a
+                dt, src = ev["delta_audit"], "audit"
+            else:
+                dt, src = float(r["delta_hat"]), "logged_proxy"
+            r.update(soft=None, delta_true=dt, delta_true_source=src, weight=0.0, eval_weight=1.0,
+                     audit_reason=a["reason"] if a else None)
         else:
             a = audits.get(r["proposal_id"])
             if not a or a["delta_audit"] is None:
@@ -127,12 +144,16 @@ def crossfit(rows, mode="instance", k=3, arms=None):
     return preds
 
 
-def decisions(P, rows, g_units):
+def decisions(P, rows, g_units, rule_layer=True):
+    """Plug-in decisions; with the rule layer (A2+), duplicates are never executed."""
     pi, mu, tau = prior_moments(P, rows)
     sig = np.array([r["sigma_cmp"] for r in rows])
     g = g_units * np.array([r["sigma_node"] for r in rows])
     dh = np.array([r["delta_hat"] for r in rows])
     ex, kp = rules.decide(pi, mu, tau, sig, g, dh)
+    if rule_layer:
+        dup = np.array([is_duplicate(r) for r in rows], bool)
+        ex, kp = ex & ~dup, kp & ~dup
     return ex, kp, (pi, mu, tau, sig, g)
 
 
@@ -169,16 +190,19 @@ def evaluate(rows, mode="instance", k=3, g_grid=G_GRID, noise=None):
     w = np.array([r["eval_weight"] for r in rows])
     nodes = np.array([r["node"] for r in rows])
     inst = np.array([r["instance"] for r in rows])
-    soft = np.array([r["soft"] for r in rows])
+    has_soft = np.array([r.get("soft") is not None for r in rows])
+    soft = np.array([r["soft"] if r.get("soft") is not None else np.full(N_BINS, 1.0 / N_BINS) for r in rows])
+    skip = np.array([rule_skip(r) for r in rows], bool)
+    dup = np.array([is_duplicate(r) for r in rows], bool)
     res = {"mode": mode, "k": k, "n_rows": len(rows), "per_g": {}, "scores": {}, "theory": {}}
-    eval_nodes = sorted({r["node"] for r, wi in zip(rows, w) if wi > 0 and not r["inert"]})
+    eval_nodes = sorted({r["node"] for r, wi, sk in zip(rows, w, skip) if wi > 0 and not sk})
     # --- scores (log score, calibration) on audited non-inert + inert rows with eval weight
     for a, P in preds.items():
         ls = log_score(soft, P)
         res["scores"][a] = {}
         for node in eval_nodes:
-            m = (nodes == node) & (w > 0)
-            non = m & np.array([not r["inert"] for r in rows])
+            m = (nodes == node) & (w > 0) & has_soft
+            non = m & ~skip
             pp, yp = prob_positive(P[non]), prob_positive(soft[non])
             cal = []
             for lo, hi in ((0, .35), (.35, .5), (.5, .65), (.65, 1.01)):
@@ -199,10 +223,15 @@ def evaluate(rows, mode="instance", k=3, g_grid=G_GRID, noise=None):
         ex0, kp0, g0 = rho(rows, gu)
         rr["A0"] = rewards(rows, ex0, kp0, g0)
         execs = {"A0": ex0}
+        proxy = np.array([r.get("delta_true_source") == "logged_proxy" for r in rows], bool)
+        keeps = {"A0": kp0}
         for a, P in preds.items():
-            ex, kp, (pi, mu, tau, sig, g) = decisions(P, rows, gu)
+            ex, kp, (pi, mu, tau, sig, g) = decisions(P, rows, gu, rule_layer=(a != "A1"))
             rr[a] = rewards(rows, ex, kp, g)
             execs[a] = ex
+            keeps[a] = kp
+        out["duplicates_kept"] = {a: int((k & dup).sum()) for a, k in keeps.items()}
+        out["duplicates_kept_with_logged_proxy"] = {a: int((k & dup & proxy).sum()) for a, k in keeps.items()}
         for a in rr:
             out["arms"][a] = {node: {"mean_per_proposal": float(np.average(rr[a][nodes == node], weights=w[nodes == node])),
                                      "per_campaign": CAMPAIGN_RUNS * float(np.average(rr[a][nodes == node], weights=w[nodes == node])),
@@ -225,7 +254,7 @@ def evaluate(rows, mode="instance", k=3, g_grid=G_GRID, noise=None):
         out["nodes_passing"] = passes
         res["per_g"][str(gu)] = out
     # --- theory checks (Prop 7 bound vs realised threshold gain; Prop 8 screening term)
-    non = np.array([not r["inert"] for r in rows]) & (w > 0)
+    non = ~skip & (w > 0)
     sub = [r for r, f in zip(rows, non) if f]
     if sub:
         pi3, mu3, tau3 = prior_moments(preds["A3"][non], sub)
@@ -271,8 +300,9 @@ def main(argv=None) -> int:
     result = {"label": "ENGINEERING_ONLY", "ai_assisted": "AI-assisted (Claude)",
               "note": "Pilot engineering check; tiny audited sample; not the C3 gate decision.",
               "seed_split": not args.no_seed_split, "n_rows": len(rows),
-              "rows_by_stratum": {f"{s}:{n}": {"inert": sum(1 for r in rows if (r['source'], r['node']) == (s, n) and r['inert']),
-                                               "audited_noninert": sum(1 for r in rows if (r['source'], r['node']) == (s, n) and not r['inert'])}
+              "rows_by_stratum": {f"{s}:{n}": {"noop": sum(1 for r in rows if (r['source'], r['node']) == (s, n) and is_noop(r)),
+                                               "duplicate": sum(1 for r in rows if (r['source'], r['node']) == (s, n) and is_duplicate(r)),
+                                               "audited_other": sum(1 for r in rows if (r['source'], r['node']) == (s, n) and not rule_skip(r))}
                                   for s, n in sorted({(r['source'], r['node']) for r in rows})},
               "instance": evaluate(rows, "instance", args.folds),
               "lono": evaluate(rows, "lono")}

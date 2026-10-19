@@ -11,7 +11,7 @@ NOISE = {n: {"delta_n": 0.002} for n in ("nodeA", "nodeB", "nodeC")}
 
 
 def synth(n_inst=12, per=20, seed=0):
-    """Edit key 1 is harmful (z = -2), key 2 helpful (z = +1), key 3 inert duplicates."""
+    """Edit key 1 is harmful (z = -2), key 2 helpful (z = +1), key 3 no-ops (Delta = 0)."""
     rng = np.random.default_rng(seed)
     rows = []
     for node in ("nodeA", "nodeB", "nodeC"):
@@ -24,6 +24,7 @@ def synth(n_inst=12, per=20, seed=0):
                 f["node_code"] = ("nodeA", "nodeB", "nodeC").index(node)
                 inert = key == 3
                 f["active_seen_before"] = float(inert)
+                f["active_equals_incumbent"] = float(inert)
                 delta = 0.0 if inert else (-2.0 if key == 1 else 1.0) * sig + rng.normal(0, 0.2 * sig)
                 dhat = 0.0 if inert else delta + rng.normal(0, sig)
                 rows.append({"proposal_id": f"{node}:{i}:{t}", "node": node, "instance": f"{node}__s{i}",
@@ -93,3 +94,26 @@ def test_folds_by_instance_keep_instances_together():
     for r, k in zip(rows, f):
         by_inst.setdefault(r["instance"], set()).add(int(k))
     assert all(len(v) == 1 for v in by_inst.values())
+
+
+def test_duplicates_are_skipped_by_rules_not_labelled_zero():
+    """A duplicate (known, negative result) gets no label; A2+ skip it; A1 may run it."""
+    rows = synth()
+    rng = np.random.default_rng(7)
+    extra = []
+    for r in rows[:60]:
+        d = dict(r, features=dict(r["features"]))
+        d["proposal_id"] = r["proposal_id"] + ":dup"
+        d["features"]["active_equals_incumbent"] = 0.0
+        d["features"]["active_seen_before"] = 1.0
+        d.update(noop=False, duplicate=True, inert=False, soft=None, weight=0.0,
+                 delta_hat=-abs(rng.normal(0.01, 0.003)), delta_true=-0.01)
+        extra.append(d)
+    rows2 = rows + extra
+    a2 = RulesPrior().fit(rows2)
+    assert np.allclose(a2.predict(rows)[:5].sum(1), 1.0)
+    ex, kp, _ = OE.decisions(a2.predict(rows2), rows2, 0.0, rule_layer=True)
+    dup = np.array([r.get("duplicate", False) for r in rows2])
+    assert not ex[dup].any() and not kp[dup].any()
+    p1 = ConstantPrior().fit(rows2).predict(rows2)
+    assert np.allclose(p1[:len(rows)], ConstantPrior().fit(rows).predict(rows))  # duplicates excluded from fitting

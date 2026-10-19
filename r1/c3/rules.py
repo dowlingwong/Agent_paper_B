@@ -103,8 +103,9 @@ def decide(pi, mu, tau, sigma, g, delta_hat, inert=None):
     """Plug-in decisions (execute, keep) for arrays of proposals.
 
     keep is only possible when executed. ``inert`` (optional) is informational:
-    on an inert proposal the logged Delta_hat is 0 and keep is evaluated with
-    the same rule (its true value is 0 either way).
+    on a no-op the logged Delta_hat is 0 and keep is evaluated with the same rule
+    (its true value is 0 either way). Duplicates are skipped by the rule layer
+    in ``offline_eval.decisions``, not here.
     """
     ex = execute(pi, mu, tau, sigma, g)
     kp = ex & keep(delta_hat, mu, tau, sigma)

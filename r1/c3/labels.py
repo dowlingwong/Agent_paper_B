@@ -1,7 +1,12 @@
 """C3 label bins and soft labels (C3_DESIGN §3-4). ENGINEERING_ONLY; AI-assisted (Claude).
 
-Bin 0 is the exact-inert bin. Bins 1..11 partition z = Delta / sigma_node with
+Bin 0 is the exact no-op bin (Delta = 0: the edit leaves the active
+configuration unchanged). Bins 1..11 partition z = Delta / sigma_node with
 edges -inf, -3, -2, -1, -0.5, -0.15, 0.15, 0.5, 1, 2, 3, +inf.
+
+Duplicates of an earlier evaluated configuration get NO training label: their
+result is already known from the ledger and they are handled by the rule layer
+(T4 Corollary 8a as revised 19 Oct 2026). They must not be labelled as bin 0.
 """
 from __future__ import annotations
 

@@ -36,7 +36,7 @@ This ladder is C3.
 ## 3. The predictor
 
 **Output head (all arms).** A categorical distribution over 12 bins of the standardised increment z = Δ / σ_node:
-- one **inert** bin (exactly zero: duplicate or inactive edit);
+- one **no-op** bin (exactly zero: the edit leaves the active configuration unchanged). **Duplicates** of an earlier evaluated configuration are *not* in this bin: their increment is generally non-zero, their result is already known, and the rule layer skips them (T4 Corollary 8a as revised 19 Oct). They get no training label;
 - 11 bins with edges −∞, −3, −2, −1, −0.5, −0.15, 0.15, 0.5, 1, 2, 3, +∞.
 
 π = mass of the inert bin. μ and τ are the mean and sd of the non-inert part, using bin midpoints and ±4 for the tails, rescaled by σ_node. Standardising by σ_node makes outputs comparable across nodes, which the transfer test needs. A categorical forecast scored by log loss is a strictly proper probabilistic forecast, and for an LM it is a single next-token distribution: no regression through generated text.
@@ -55,7 +55,7 @@ This ladder is C3.
 ## 4. Labels
 
 - **Source of proposals.** LLM-manager root campaigns, exactly as in R1-E1B-RERUN2 (pinned `qwen2.5-coder:7b`, memory `append_only_summary` primary, `none` contrast, W = 20). **No branching is needed for C3 training.** Labels are per proposal, which is much cheaper than branch tables.
-- **Audit.** For each non-inert evaluated proposal: run candidate and incumbent configurations on K = 6 common fresh joint seeds, giving Δ_audit and se_audit. Inert proposals are labelled by rule (inert bin = 1).
+- **Audit.** For each non-inert evaluated proposal: run candidate and incumbent configurations on K = 6 common fresh joint seeds, giving Δ_audit and se_audit. No-ops are labelled by rule (no-op bin = 1). Duplicates get no label (revised 19 Oct 2026).
 - **Separate label and evaluation seeds.** The fresh-seed audit seeds are split (proposed K = 10: 5 for labels, 5 for offline evaluation). Sharing seeds made the pilot gate "pass" spuriously (C3 offline pilot).
 - **Soft target.** The label is N(Δ_audit, se_audit²) integrated over the bins: the posterior of Δ under a flat prior given the audit. This keeps the log loss proper under label noise.
 - **Scale.**

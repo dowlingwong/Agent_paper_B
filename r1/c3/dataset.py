@@ -171,7 +171,7 @@ def plan(table_dir: Path, quota: dict, include_di: bool, seed: int = PLAN_SEED) 
     rng = np.random.default_rng(seed)
     chosen: dict[str, dict] = {}
     for (source, node), n in quota.items():
-        pool = sorted([r for r in rows if r["source"] == source and r["node"] == node and not r["inert"]],
+        pool = sorted([r for r in rows if r["source"] == source and r["node"] == node and not r.get("rule_skip", r["inert"])],
                       key=lambda r: r["proposal_id"])
         idx = rng.permutation(len(pool))[:n]
         for i in sorted(idx):
@@ -190,6 +190,7 @@ def plan(table_dir: Path, quota: dict, include_di: bool, seed: int = PLAN_SEED) 
                                             "candidate_hash": r["candidate_hash"], "incumbent_hash": r["incumbent_hash"]}
             chosen[r["proposal_id"]]["di_direction"] = r["di_direction"]
             chosen[r["proposal_id"]]["di_inert"] = r["inert"]
+            chosen[r["proposal_id"]]["di_duplicate"] = r.get("duplicate")
     return list(chosen.values())
 
 

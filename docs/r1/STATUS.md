@@ -22,6 +22,17 @@ AI-assisted by Codex; ENGINEERING_ONLY / PILOT; not evidence. Author-authorized 
 
 
 
+## 19 October 2026 — duplicate ≠ no-op split implemented
+
+Recorded by an AI agent (Claude, coordinating session), at the author's decision (PLAN §10, 19 Oct). ENGINEERING_ONLY.
+- **Theory:** T4 §1 now has separate no-op (I_n) and duplicate (D_n) events. Corollary 8a is revised, with a new part (iii): under ρ a duplicate can never be kept, because the record is monotone.
+- **Code:** `r1/c3/` gains `noop`, `duplicate`, `rule_skip` and `known_metric` (`inert` remains the alias of `noop`). Duplicates are excluded from training and skipped by the rule layer. Offline evaluation charges an A1/A0 keep of a duplicate its audited Δ or the logged proxy, and counts such keeps. C3 tests: 39 passed, including a new duplicate test.
+- **Pilot re-check** (`results/r1/engineering/c3_split_recheck_20261019/`; table rebuilt from the same ledgers, same audits).
+  - 1,323 proposals: 727 duplicates, 114 no-ops, 482 other.
+  - The maximum Δ̂ over the duplicates is exactly 0, as Corollary 8a(iii) predicts.
+  - The gate quantity is unchanged in substance (not passed). At g = 0.1σ: digits +0.0051 [0.0018, 0.0086]; tabular +0.0016 [−0.0008, 0.0037]; breast-w −0.0006.
+  - A1 (no rule layer) keeps up to 92 duplicates at g = 0, because a positive constant prior gives t* < 0. This is the failure the rule layer prevents.
+
 ## 19 October 2026 — overnight build merged (ENGINEERING_ONLY)
 
 AI-assisted: four Claude subagents worked overnight, coordinated and merged by the coordinating session (Claude). Each worked in its own git worktree; the merges are `86380c2`, `e249a0f`, `d59d77b` and `3c84170` on `main`, and harness `r1` was fast-forwarded to `4d68c54`. No LLM, GPU, SSH or Ollama was used; workers ran on CPU only. Nothing here is evidence. After merging, the new C3/T5/DI/runner tests pass on `main` (113, with Python 3.13 in the VM).

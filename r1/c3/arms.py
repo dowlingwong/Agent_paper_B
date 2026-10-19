@@ -29,9 +29,30 @@ from r1.c3.labels import INERT, N_BINS, moments
 TAU_FLOOR_Z = 0.15  # floor on tau in z units: the narrowest interior bin half-width
 
 
-def rule_inert(row: dict) -> bool:
-    f = row["features"]
-    return bool(f["active_equals_incumbent"] or f["active_seen_before"])
+def is_noop(row: dict) -> bool:
+    """Active projection equals the incumbent's: Delta = 0 exactly."""
+    if "noop" in row:
+        return bool(row["noop"])
+    return bool(row["features"]["active_equals_incumbent"])
+
+
+def is_duplicate(row: dict) -> bool:
+    """Repeat of an earlier evaluated non-incumbent configuration: result known, Delta != 0 in general."""
+    if "duplicate" in row:
+        return bool(row["duplicate"])
+    return bool(not is_noop(row) and row["features"]["active_seen_before"])
+
+
+def rule_skip(row: dict) -> bool:
+    """Rule layer (A2 and above): skip no-ops and duplicates before execution."""
+    return is_noop(row) or is_duplicate(row)
+
+
+rule_inert = rule_skip  # backward-compatible alias (pre-19 Oct name)
+
+
+def _labelled(rows):
+    return [r for r in rows if r.get("soft") is not None]
 
 
 def _wmean(P, w):
@@ -43,6 +64,7 @@ class ConstantPrior:
     name = "A1"
 
     def fit(self, rows):
+        rows = _labelled(rows)
         P = np.array([r["soft"] for r in rows])
         w = np.array([r["weight"] for r in rows])
         self.pooled = _wmean(P, w)
@@ -60,7 +82,7 @@ class RulesPrior:
     name = "A2"
 
     def fit(self, rows):
-        non = [r for r in rows if not rule_inert(r)]
+        non = [r for r in _labelled(rows) if not rule_skip(r)]
         P = np.array([r["soft"] for r in non])
         w = np.array([r["weight"] for r in non])
         self.pooled = self._noninert(_wmean(P, w))
@@ -79,10 +101,10 @@ class RulesPrior:
     def predict(self, rows):
         out = []
         for r in rows:
-            if rule_inert(r):
+            if is_noop(r):
                 p = np.zeros(N_BINS)
                 p[INERT] = 1.0
-            else:
+            else:  # duplicates: forced skip in the decision layer; prediction unused there
                 p = self.by_node.get(r["node"], self.pooled)
             out.append(p)
         return np.array(out)
@@ -107,6 +129,7 @@ class LGBMPrior:
 
     def fit(self, rows):
         import lightgbm as lgb
+        rows = _labelled(rows)
         X, self.cols = feature_matrix(rows, self.drop)
         xs, ys, ws = [], [], []
         for i, r in enumerate(rows):
@@ -129,7 +152,7 @@ class LGBMPrior:
         P = self.predict_raw(rows)
         out = []
         for r, p in zip(rows, P):
-            if rule_inert(r):
+            if is_noop(r):
                 q = np.zeros(N_BINS)
                 q[INERT] = 1.0
             else:

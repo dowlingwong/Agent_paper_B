@@ -41,7 +41,13 @@ def test_replay_inert_and_flags():
     props, checks = replay_campaign(ledger(), START, "digits_mlp", "digits_mlp__s104", "t", "none", 20, 0.0075)
     assert [p.budget_index for p in props] == [2, 3, 4, 5, 6]
     inert = {p.budget_index: p.outcome["inert"] for p in props}
-    assert inert == {2: False, 3: True, 4: False, 5: True, 6: False}
+    assert inert == {2: False, 3: False, 4: False, 5: False, 6: False}  # no no-ops in this ledger
+    dup = {p.budget_index: p.outcome["duplicate"] for p in props}
+    assert dup == {2: False, 3: True, 4: False, 5: True, 6: False}
+    assert all(p.outcome["rule_skip"] == p.outcome["duplicate"] for p in props)
+    # duplicates are not zero-increment: trial 5 repeats the trial-1 configuration (0.90) vs record 0.93
+    assert props[3].outcome["known_metric"] == 0.90 and props[3].outcome["delta_hat"] != 0
+    assert props[1].outcome["known_metric"] == 0.89
     p3 = props[1]
     assert p3.features["active_seen_before"] == 1.0 and p3.features["same_edit_count"] == 1.0
     p5 = props[3]

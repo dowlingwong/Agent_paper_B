@@ -1,0 +1,659 @@
+{
+ "label": "ENGINEERING_ONLY",
+ "ai_assisted": "AI-assisted (Claude)",
+ "commit": "cc65338cf5a3d7f1a7671cc868e40d11380f8bbd",
+ "sources": {
+  "dt4": {
+   "dir": "results/r1/pilot/E1b_20261013T151857Z",
+   "ledgers": "provenance/ledgers/roots/*/root_trials.jsonl*",
+   "runs": 20,
+   "memory_mode": "none"
+  },
+  "rerun2A": {
+   "dir": "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014",
+   "ledgers": "provenance/ledgers/roots/*/root_trials.jsonl*",
+   "runs": 20,
+   "memory_mode": "append_only_summary"
+  },
+  "liveness": {
+   "dir": "results/r1/engineering/liveness_llm_20261014T140742Z",
+   "ledgers": "ledgers/*/root_trials.jsonl",
+   "runs": 10,
+   "memory_mode": "append_only_summary"
+  }
+ },
+ "noise": {
+  "digits_mlp": {
+   "sigma_node": 0.007520317992685621,
+   "sigma_local": 0.007520317992685621,
+   "sigma_structural": 0.007520317992685621,
+   "median_sd_all": 0.007520317992685621,
+   "delta_n": 0.002
+  },
+  "tabular_mlp": {
+   "sigma_node": 0.004569527692588516,
+   "sigma_local": 0.004569527692588516,
+   "sigma_structural": 0.004569527692588516,
+   "median_sd_all": 0.0018841738537382817,
+   "delta_n": 0.002
+  },
+  "openml_breast_w": {
+   "sigma_node": 0.0038999659156846497,
+   "sigma_local": 0.0003698236967348831,
+   "sigma_structural": 0.0038999659156846497,
+   "median_sd_all": 0.000543415995756888,
+   "delta_n": 0.002
+  },
+  "openml_ionosphere": {
+   "sigma_node": 0.03844726397749237,
+   "sigma_local": 0.013543287196984345,
+   "sigma_structural": 0.03844726397749237,
+   "median_sd_all": 0.016172561071147618,
+   "delta_n": 0.004043140267786904
+  }
+ },
+ "replay_checks_total": {
+  "rows": 1400,
+  "proposals": 1323,
+  "zero_delta_violations": 0,
+  "repeat_metric_violations": 0,
+  "skipped_invalid": 3,
+  "no_edit_rows": 0
+ },
+ "replay_checks": {
+  "dt4:digits_mlp__s104": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:digits_mlp__s114": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:digits_mlp__s124": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:digits_mlp__s134": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:digits_mlp__s144": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:digits_mlp__s154": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:openml_ionosphere__s103": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:openml_ionosphere__s113": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:openml_ionosphere__s123": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:openml_ionosphere__s133": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:openml_ionosphere__s143": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "dt4:openml_ionosphere__s153": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s105": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s115": {
+   "rows": 20,
+   "proposals": 18,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 1,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s125": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s135": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s145": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s155": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s165": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s175": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s185": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s195": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s205": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s215": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s225": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s235": {
+   "rows": 20,
+   "proposals": 18,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 1,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s245": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s255": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s265": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_breast_w__s275": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s103": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s113": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s123": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s133": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s143": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s153": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s163": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s173": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s183": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s193": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s203": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s213": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s223": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s233": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s243": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s253": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s263": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:openml_ionosphere__s273": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s102": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s112": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s122": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s132": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s142": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s152": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s162": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s172": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s182": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s192": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s202": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s212": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s222": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s232": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s242": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s252": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s262": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "rerun2A:tabular_mlp__s272": {
+   "rows": 20,
+   "proposals": 19,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "liveness:digits_mlp__s104": {
+   "rows": 10,
+   "proposals": 9,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "liveness:digits_mlp__s114": {
+   "rows": 10,
+   "proposals": 9,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "liveness:openml_breast_w__s105": {
+   "rows": 10,
+   "proposals": 9,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "liveness:openml_breast_w__s115": {
+   "rows": 10,
+   "proposals": 8,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 1,
+   "no_edit_rows": 0
+  },
+  "liveness:openml_ionosphere__s103": {
+   "rows": 10,
+   "proposals": 9,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "liveness:openml_ionosphere__s113": {
+   "rows": 10,
+   "proposals": 9,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "liveness:tabular_mlp__s102": {
+   "rows": 10,
+   "proposals": 9,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  },
+  "liveness:tabular_mlp__s112": {
+   "rows": 10,
+   "proposals": 9,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 0,
+   "no_edit_rows": 0
+  }
+ },
+ "n_proposals": 1323,
+ "n_configs": 188
+}

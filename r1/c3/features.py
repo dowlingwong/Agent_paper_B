@@ -11,9 +11,15 @@ trials < n and the proposal's own edit. Its own Delta_hat, decision, metric and
 any audit value are outcomes, kept in a separate ``outcome`` dict. Nothing from
 later trials, branches or siblings enters.
 
-Inert (T4 §1, D25/D27): the candidate's active-key projection equals the
-incumbent's, or equals the projection of an earlier evaluated configuration in
-the same campaign. Both are rule-detectable before execution.
+Rule-detectable proposals (T4 §1 as revised 19 Oct 2026; D25/D27), two kinds:
+- **no-op** (``noop``; ``inert`` is kept as its alias): the candidate's
+  active-key projection equals the incumbent's. Delta = 0 exactly and, on a
+  bit-exact node, the logged Delta_hat is 0.
+- **duplicate** (``duplicate``): the projection equals that of an earlier
+  evaluated configuration other than the incumbent. Its result is already
+  known from the ledger (``known_metric``); its increment is generally NOT 0.
+  Running it again buys no information.
+``rule_skip`` = no-op or duplicate. Both are detectable before execution.
 """
 from __future__ import annotations
 
@@ -233,11 +239,13 @@ def replay_campaign(rows: list[dict], start_files: dict[str, str], node: str, in
                 "same_edit_count": float(edit_counts.get(sig, 0)),
                 "reverse_of_last_key_edit": float(last is not None and last[1] == str(new_v) and last[2] == str(old_v)),
             }
-            inert = bool(cand_act == inc_act or cand_act in seen_metric)
-            inert_kind = ("equals_incumbent" if cand_act == inc_act else
-                          "duplicate" if cand_act in seen_metric else None)
+            noop = bool(cand_act == inc_act)
+            duplicate = bool(not noop and cand_act in seen_metric)
+            inert_kind = "equals_incumbent" if noop else "duplicate" if duplicate else None
             outcome = {"delta_hat": float(delta_hat), "decision": row["decision"], "metric": metric,
-                       "inert": inert, "inert_kind": inert_kind,
+                       "inert": noop, "noop": noop, "duplicate": duplicate, "rule_skip": noop or duplicate,
+                       "known_metric": seen_metric[cand_act] if duplicate else None,
+                       "inert_kind": inert_kind,
                        "current_best_before": row["current_best_before"]}
             if check:
                 if cand_act == inc_act and delta_hat != 0:
