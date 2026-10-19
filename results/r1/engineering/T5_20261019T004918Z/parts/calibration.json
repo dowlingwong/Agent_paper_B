@@ -1,0 +1,267 @@
+{
+ "scenarios": {
+  "digits_off": {
+   "inert_share": 0.6,
+   "p_improve_informative": 0.4341472872610068,
+   "mu_bar": -0.0031,
+   "sd_type_means": 0.006260191690355815,
+   "tau_within_rms": 0.008194510357550353,
+   "tau_pooled": 0.01031212878119741,
+   "sigma_d_local": 0.0075000000000000015,
+   "sigma_d_structural": 0.011858541225631423,
+   "delta_n": 0.002,
+   "types": [
+    {
+     "name": "duplicate/inert",
+     "weight": 0.6,
+     "mu": 0.0,
+     "tau": 0.0,
+     "pi": 1.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "batch_size (harmful)",
+     "weight": 0.1,
+     "mu": -0.012,
+     "tau": 0.008,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "hidden_units (promising)",
+     "weight": 0.14,
+     "mu": 0.004,
+     "tau": 0.005,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "lr/other (neutral)",
+     "weight": 0.09,
+     "mu": -0.002,
+     "tau": 0.006,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "structural",
+     "weight": 0.07,
+     "mu": -0.006,
+     "tau": 0.014,
+     "pi": 0.0,
+     "kind": "structural",
+     "bold": true,
+     "rho": null
+    }
+   ]
+  },
+  "digits_on": {
+   "inert_share": 0.45,
+   "p_improve_informative": 0.2797250515436603,
+   "mu_bar": -0.006472727272727272,
+   "sd_type_means": 0.005338895171558678,
+   "tau_within_rms": 0.008870789654304123,
+   "tau_pooled": 0.01035348785404231,
+   "sigma_d_local": 0.0075000000000000015,
+   "sigma_d_structural": 0.011858541225631423,
+   "delta_n": 0.002,
+   "types": [
+    {
+     "name": "duplicate/inert",
+     "weight": 0.45,
+     "mu": 0.0,
+     "tau": 0.0,
+     "pi": 1.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "batch_size (harmful)",
+     "weight": 0.2,
+     "mu": -0.012,
+     "tau": 0.008,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "hidden_units (promising)",
+     "weight": 0.12,
+     "mu": 0.002,
+     "tau": 0.005,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "lr/other (neutral)",
+     "weight": 0.11,
+     "mu": -0.004,
+     "tau": 0.006,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "structural",
+     "weight": 0.12,
+     "mu": -0.008,
+     "tau": 0.014,
+     "pi": 0.0,
+     "kind": "structural",
+     "bold": true,
+     "rho": null
+    }
+   ]
+  },
+  "tabular_off": {
+   "inert_share": 0.7,
+   "p_improve_informative": 0.41572513059463345,
+   "mu_bar": -0.0018000000000000002,
+   "sd_type_means": 0.003124099870362662,
+   "tau_within_rms": 0.005282045058497703,
+   "tau_pooled": 0.006136774397026504,
+   "sigma_d_local": 0.004600869483043396,
+   "sigma_d_structural": 0.007513188404399292,
+   "delta_n": 0.002,
+   "types": [
+    {
+     "name": "duplicate/inert",
+     "weight": 0.7,
+     "mu": 0.0,
+     "tau": 0.0,
+     "pi": 1.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "harmful",
+     "weight": 0.07,
+     "mu": -0.006,
+     "tau": 0.005,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "promising",
+     "weight": 0.1,
+     "mu": 0.002,
+     "tau": 0.003,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "neutral",
+     "weight": 0.08,
+     "mu": -0.0015,
+     "tau": 0.003,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "structural",
+     "weight": 0.05,
+     "mu": -0.004,
+     "tau": 0.01,
+     "pi": 0.0,
+     "kind": "structural",
+     "bold": true,
+     "rho": null
+    }
+   ]
+  },
+  "tabular_on": {
+   "inert_share": 0.45000000000000007,
+   "p_improve_informative": 0.29782622567975986,
+   "mu_bar": -0.002963636363636364,
+   "sd_type_means": 0.0024915394026668175,
+   "tau_within_rms": 0.005468920451889103,
+   "tau_pooled": 0.006009730401950842,
+   "sigma_d_local": 0.004600869483043396,
+   "sigma_d_structural": 0.007513188404399292,
+   "delta_n": 0.002,
+   "types": [
+    {
+     "name": "duplicate/inert",
+     "weight": 0.45,
+     "mu": 0.0,
+     "tau": 0.0,
+     "pi": 1.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "harmful",
+     "weight": 0.15,
+     "mu": -0.006,
+     "tau": 0.005,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "promising",
+     "weight": 0.12,
+     "mu": 0.001,
+     "tau": 0.003,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "neutral",
+     "weight": 0.18,
+     "mu": -0.0025,
+     "tau": 0.003,
+     "pi": 0.0,
+     "kind": "local",
+     "bold": false,
+     "rho": null
+    },
+    {
+     "name": "structural",
+     "weight": 0.1,
+     "mu": -0.004,
+     "tau": 0.01,
+     "pi": 0.0,
+     "kind": "structural",
+     "bold": true,
+     "rho": null
+    }
+   ]
+  }
+ },
+ "prop10b": {
+  "alpha=0.5,beta=2": 1.109548422215397,
+  "alpha=0,beta=2": 1.609548422215397,
+  "alpha=1.61,beta=2": -0.000451577784603141,
+  "alpha=0,beta=4": 3.6010648648569994
+ },
+ "_seconds": 0.000225067138671875,
+ "_seeds": [
+  2113405886,
+  2113413805
+ ]
+}

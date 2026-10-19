@@ -1,0 +1,107 @@
+{
+ "W": 40,
+ "N": 40,
+ "rows": [
+  {
+   "case": "DI holds",
+   "scenario": "digits_on/iid/stationary",
+   "theta0": 0.0,
+   "theta1": 0.0,
+   "myopic": 0.019716405833354923,
+   "lookahead": 0.019716405833354923,
+   "diff": 0.0,
+   "diff_se": 0.0,
+   "diff_dn": 0.0,
+   "dev_gain_gap": 0.0
+  },
+  {
+   "case": "diminishing returns k=0.3",
+   "scenario": "digits_on/iid/dimret(k=0.3)",
+   "theta0": 0.2,
+   "theta1": -0.4,
+   "myopic": 0.012859744162032113,
+   "lookahead": 0.01289987130175221,
+   "diff": 4.012713972010202e-05,
+   "diff_se": 1.0835505731920003e-05,
+   "diff_dn": 0.02006356986005101,
+   "dev_gain_gap": 9.298694164047022e-06
+  },
+  {
+   "case": "diminishing returns k=0.8",
+   "scenario": "digits_on/iid/dimret(k=0.8)",
+   "theta0": 0.0,
+   "theta1": -0.4,
+   "myopic": 0.01011953428244336,
+   "lookahead": 0.010410124367122572,
+   "diff": 0.00029059008467921245,
+   "diff_se": 1.364211826580712e-05,
+   "diff_dn": 0.14529504233960622,
+   "dev_gain_gap": 0.0003697249834273865
+  },
+  {
+   "case": "memory-reading (raw B)",
+   "scenario": "digits_on/iid/memory",
+   "theta0": 0.0,
+   "theta1": 0.0,
+   "myopic": 0.022852079288576563,
+   "lookahead": 0.022852079288576563,
+   "diff": 0.0,
+   "diff_se": 0.0,
+   "diff_dn": 0.0,
+   "dev_gain_gap": 0.0
+  },
+  {
+   "case": "memory-reading (debiased B~)",
+   "scenario": "digits_on/iid/memory_debiased",
+   "theta0": 0.0,
+   "theta1": 0.0,
+   "myopic": 0.02131219992944386,
+   "lookahead": 0.02131219992944386,
+   "diff": 0.0,
+   "diff_se": 0.0,
+   "diff_dn": 0.0,
+   "dev_gain_gap": 0.0
+  },
+  {
+   "case": "record channel only",
+   "scenario": "digits_on/record/stationary",
+   "theta0": -0.4,
+   "theta1": 0.4,
+   "myopic": 0.019164418401280064,
+   "lookahead": 0.019563493263964473,
+   "diff": 0.0003990748626844122,
+   "diff_se": 1.835799934028213e-05,
+   "diff_dn": 0.1995374313422061,
+   "dev_gain_gap": 0.00035030325707345947
+  },
+  {
+   "case": "record + memory (raw B)",
+   "scenario": "digits_on/record/memory",
+   "theta0": -0.4,
+   "theta1": 0.0,
+   "myopic": 0.021248777580053876,
+   "lookahead": 0.022325670941218227,
+   "diff": 0.0010768933611643497,
+   "diff_se": 4.6566944832973e-05,
+   "diff_dn": 0.5384466805821748,
+   "dev_gain_gap": 0.0008538396312636788
+  },
+  {
+   "case": "record + memory (debiased B~)",
+   "scenario": "digits_on/record/memory_debiased",
+   "theta0": -0.4,
+   "theta1": 0.4,
+   "myopic": 0.020058229694393918,
+   "lookahead": 0.020584474836528064,
+   "diff": 0.000526245142134146,
+   "diff_se": 2.1174971276750364e-05,
+   "diff_dn": 0.263122571067073,
+   "dev_gain_gap": 0.0005838259882219934
+  }
+ ],
+ "_seconds": 10.386726140975952,
+ "_seeds": [
+  61981254,
+  61989173
+ ]
+}
