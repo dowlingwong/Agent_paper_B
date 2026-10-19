@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+
+## 19 Oct 2026 — partial memory-on absolute-metric DI diagnostic
+
+AI-assisted by Codex. **PILOT, PARTIAL, not evidence.** The authorised preserved arm snapshot is 11.99 MB, with lossless compressed ledgers and source SHA-256 manifests; two whole failed points are excluded. No experiment was resumed and no LLM, GPU or worker was run. Memory-on tabular has nine promotion points and four demotion points; its next-one absolute-metric contrast passes the combined diagnostic rule and the value residual is −0.00122155 [−0.00222152, −0.000257005]. Verdict: **violated in value terms**, limited to this exploratory partial diagnostic. Memory-off absolute-metric re-analysis: **undetermined at this sample size**, residual .000510569 [−.00258821, .00417810]. The shared ionosphere node has no changed points in either dataset. These results do not justify A7 training/deployment. See [report](reports/DI_TEST_MEMORY_ON_PARTIAL_20261019.md) and [tables](reports/DI_TEST_MEMORY_ON_PARTIAL_20261019_tables.md). The default legacy outputs remain byte-identical; focused file-only regression suite: 12 passed.
+
 Newest entry first. Only this file says what is done.
 
 ## 19 Oct 2026 — rerun-2 diagnosis, digits liveness, and E1b DI diagnostic

@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import ast
 from collections import Counter
+import gzip
 import hashlib
 import json
 import math
@@ -42,6 +43,25 @@ class CommittedInputs:
             self.hashes[path] = hashlib.sha256(data).hexdigest()
             self.cache[path] = data.decode()
         return self.cache[path]
+
+    def paths(self):
+        if not hasattr(self, '_paths'):
+            self._paths = subprocess.check_output(
+                ['git', '-C', str(self.repo), 'ls-tree', '-r', '--name-only',
+                 self.revision, '--', self.run], text=True).splitlines()
+        return self._paths
+
+    def ledger(self, relative):
+        path = f'{self.run}/{relative}'
+        if path in self.paths():
+            return self.rows(relative)
+        path += '.gz'
+        data = subprocess.check_output(['git', '-C', str(self.repo), 'show',
+                                       f'{self.revision}:{path}'])
+        self.hashes[path] = hashlib.sha256(data).hexdigest()
+        raw = gzip.decompress(data)
+        self.hashes[path + ' (decompressed)'] = hashlib.sha256(raw).hexdigest()
+        return [json.loads(line) for line in raw.splitlines() if line.strip()]
 
     def json(self, relative):
         return json.loads(self.text(relative))
@@ -82,9 +102,9 @@ def configuration(files):
 
 
 def project(config, node):
-    if node == 'digits_mlp':
+    if node in ('digits_mlp', 'tabular_mlp'):
         keys = set(config)
-    elif node == 'openml_ionosphere':
+    elif node in ('openml_ionosphere', 'openml_breast_w'):
         # Numeric-only dataset; imputer is inactive. Mirrors D25 projection.
         model = config['model_type']
         keys = {'model_type', 'scaler'} | {
@@ -97,7 +117,7 @@ def project(config, node):
     return json.dumps({k: config[k] for k in sorted(keys)}, sort_keys=True)
 
 
-def replay(rows, start, node, point, snapshot_incumbent):
+def replay(rows, start, node, point, snapshot_incumbent, absolute=False):
     """Replay prefix for seen history, then anchor the branch to its E2 snapshot."""
     current = dict(start)
     seen = set()
@@ -108,7 +128,7 @@ def replay(rows, start, node, point, snapshot_incumbent):
             if current != snapshot_incumbent:
                 raise ValueError('Replayed prefix differs from snapshot incumbent')
             current = dict(snapshot_incumbent)
-        if row['decision'] == 'skipped':
+        if row['decision'] == 'skipped' or (absolute and parsed_metric(row) is None):
             continue
         edit = row['extra']['manager'].get('structured_edit')
         if not edit or edit['symbol'] not in current:
@@ -131,6 +151,8 @@ def replay(rows, start, node, point, snapshot_incumbent):
                            'novel': float(active != incumbent and active not in seen),
                            'duplicate': float(active in seen),
                            'identical': float(delta == 0)})
+            if absolute:
+                output[-1]['abs_metric'] = parsed_metric(row)
         seen.add(active)
         if row['decision'] == 'kept':
             current = candidate
@@ -367,9 +389,252 @@ def markdown(report):
     return '\n'.join(lines)+'\n'
 
 
+def parsed_metric(row):
+    metrics = row.get('parsed_metrics') or {}
+    value = metrics.get('val_score', metrics.get('val_auc'))
+    if value is not None and not math.isfinite(value):
+        raise ValueError('Non-finite parsed metric')
+    return value
+
+
+def collect_absolute(source):
+    """Both complete DT4 and interrupted compressed layouts; whole-point exclusion."""
+    paths = source.paths()
+    prefix = source.run + '/'
+    manifest = source.json('manifest.json')
+    leaves = [source.json(p[len(prefix):]) for p in paths
+              if p.startswith(prefix + 'leaves/') and p.endswith('.json')]
+    indexed = {}
+    for leaf in leaves:
+        indexed.setdefault((leaf['instance'], leaf['budget_index']), {})[
+            leaf['action'], leaf['repetition']] = leaf
+    decisions, contrasts, branches, pairs, excluded = [], [], [], [], []
+    expected = {(a, r) for a in ('continue', 'verify') for r in (1, 2)}
+    for (inst, b), ls in sorted(indexed.items()):
+        bad = [l['leaf_id'] for l in ls.values()
+               if l['integrity'] != 'ok' or l.get('error')]
+        if bad or set(ls) != expected:
+            excluded.append(dict(instance=inst, point=b, failed_leaves=bad,
+                                 reason='failed or missing leaf; all four excluded'))
+            continue
+        node = ls['continue', 1]['node']
+        root = source.json(f'roots/{inst}.json')
+        root_rows = source.ledger(f'provenance/ledgers/roots/{inst}/root_trials.jsonl')
+        start = configuration(root['start_files'])
+        base = f'provenance/snapshots/{inst}/E2_b{b:03d}'
+        snap = source.json(f'{base}/manifest.json')
+        incumbent = configuration({p: source.text(f'{base}/incumbent/{p}')
+                                   for p in snap['editable_paths']})
+        seqs, at, posts = {}, {}, {}
+        for action, rep in sorted(expected):
+            leaf = ls[action, rep]
+            ledger = source.ledger(f'provenance/ledgers/branches/{leaf["leaf_id"]}/branch_trials.jsonl')
+            if [t for t in ledger if t['budget_index'] < b] != root_rows[:b-1]:
+                raise ValueError(f'Branches do not share root history: {leaf["leaf_id"]}')
+            at[action, rep] = next(t for t in ledger if t['budget_index'] == b)
+            posts[action, rep] = [t for t in ledger if t['budget_index'] > b
+                                  and t['decision'] != 'skipped' and parsed_metric(t) is not None]
+            seqs[action, rep] = replay(ledger, start, node, b, incumbent, absolute=True)
+            if len(seqs[action, rep]) < 3:
+                raise ValueError(f'Fewer than three evaluated post-point trials: {leaf["leaf_id"]}')
+        directions = []
+        for rep in (1, 2):
+            c, v = at['continue', rep], at['verify', rep]
+            verify = v['extra']['control']['verify']
+            if verify['original_decision'] != c['decision']:
+                raise ValueError('Verify original decision differs from continue')
+            direction = ('unchanged' if c['decision'] == v['decision'] else
+                         'promotion' if v['decision'] == 'kept' else 'demotion')
+            directions.append(direction)
+            decisions.append(dict(node=node, instance=inst, point=b, rep=rep,
+                                  direction=direction, verify_mean_delta=verify['mean_delta']))
+            cp, vp = posts['continue', rep][0], posts['verify', rep][0]
+            ys = [ls[a, rep]['audit_metrics'] for a in ('continue', 'verify')]
+            if not ys[0] or len(ys[0]) != len(ys[1]):
+                raise ValueError('Missing or unpaired audit metrics')
+            changed_edit = c['extra']['manager']['structured_edit']
+            mechanisms = {}
+            for a, post in [('continue', cp), ('verify', vp)]:
+                edit = post['extra']['manager']['structured_edit']
+                same_key = edit['symbol'] == changed_edit['symbol']
+                mechanisms[a + '_repeat'] = bool(same_key and scalar(edit['old']) == scalar(changed_edit['old'])
+                                               and scalar(edit['new']) == scalar(changed_edit['new']))
+                mechanisms[a + '_reverse'] = bool(same_key and scalar(edit['old']) == scalar(changed_edit['new'])
+                                                and scalar(edit['new']) == scalar(changed_edit['old']))
+            cm, vm = [p['extra']['manager'].get('worker_memory_context_text') for p in (cp, vp)]
+            pairs.append(dict(node=node, instance=inst, point=b, rep=rep, direction=direction,
+                              changed=direction != 'unchanged',
+                              record_shift=vp['current_best_before'] - cp['current_best_before'],
+                              audit_difference=mean(vv-cc for cc, vv in zip(*ys)),
+                              immediate=(verify['mean_delta'] if direction == 'promotion' else
+                                         -verify['mean_delta'] if direction == 'demotion' else 0.),
+                              memory_differs=None if cm is None or vm is None else cm != vm,
+                              **mechanisms))
+        # Frozen verify response should agree across repeated decoding continuations.
+        if len(set(directions)) != 1:
+            raise ValueError('Mixed decision directions within point')
+        for horizon in (1, 3):
+            summaries = {}
+            for key, seq in seqs.items():
+                summary = summarize(seq, horizon)
+                summary['abs_metric'] = mean(t['abs_metric'] for t in seq[:horizon])
+                summaries[key] = summary
+                branches.append(dict(node=node, instance=inst, point=b, action=key[0],
+                                     rep=key[1], horizon=str(horizon), **summary))
+            for metric in ('abs_metric',) + METRICS[2:]:
+                cross = [distance(summaries['continue', r], summaries['verify', r], metric) for r in (1, 2)]
+                null = [distance(summaries[a, 1], summaries[a, 2], metric) for a in ('continue', 'verify')]
+                if any(x is None for x in cross + null):
+                    continue
+                signed = None if metric == 'key_tv' else mean(
+                    summaries['verify', r][metric] - summaries['continue', r][metric] for r in (1, 2))
+                contrasts.append(dict(node=node, instance=inst, point=b, horizon=str(horizon),
+                                      metric=metric, changed=directions[0] != 'unchanged',
+                                      direction=directions[0], cross=mean(cross), null=mean(null),
+                                      signed=signed, sigma_d=manifest['noise'][node]['sigma_d']))
+    return decisions, contrasts, branches, pairs, excluded
+
+
+def value_estimate(points, weights=None):
+    """Re-estimate budget correction inside each bootstrap draw (point weights)."""
+    weights = np.ones(len(points)) if weights is None else np.asarray(weights)
+    residuals, used, costs = [], [], []
+    for i, p in enumerate(points):
+        if not p['changed'] or weights[i] == 0:
+            continue
+        controls = [j for j, q in enumerate(points) if q['node'] == p['node'] and not q['changed']
+                    and q['point'] == p['point'] and weights[j] > 0]
+        # At least two distinct control instances, otherwise use the node pool.
+        if len({points[j]['instance'] for j in controls}) < 2:
+            controls = [j for j, q in enumerate(points) if q['node'] == p['node']
+                        and not q['changed'] and weights[j] > 0]
+        if not controls:
+            return None
+        cost = float(np.average([points[j]['audit_difference'] for j in controls], weights=weights[controls]))
+        residuals.append(p['audit_difference'] - p['immediate'] - cost)
+        used.append(weights[i]); costs.append(cost)
+    if not used:
+        return None
+    return dict(residual=float(np.average(residuals, weights=used)),
+                budget_cost=float(np.average(costs, weights=used)))
+
+
+def value_inference(points, draws=DRAWS):
+    estimate = value_estimate(points)
+    result = dict(points=len(points), changed_points=sum(p['changed'] for p in points),
+                  changed_instances=len({p['instance'] for p in points if p['changed']}))
+    if estimate is None:
+        return dict(result, unavailable='No changed points or no unchanged control')
+    result.update(estimate)
+    result['audit_difference'] = mean(p['audit_difference'] for p in points if p['changed'])
+    result['immediate'] = mean(p['immediate'] for p in points if p['changed'])
+    rng = np.random.default_rng(SEED)
+    weights = np.zeros((draws, len(points)))
+    for node in sorted({p['node'] for p in points}):
+        instances = sorted({p['instance'] for p in points if p['node'] == node})
+        counts = rng.multinomial(len(instances), np.full(len(instances), 1/len(instances)), draws)
+        for i, inst in enumerate(instances):
+            weights[:, [j for j, p in enumerate(points) if p['instance'] == inst]] = counts[:, i, None]
+    samples = [value_estimate(points, w) for w in weights]
+    valid = [s['residual'] for s in samples if s is not None]
+    result['bootstrap_valid'] = len(valid)
+    result['ci'] = list(map(float, np.quantile(valid, [.025, .975]))) if valid else None
+    return result
+
+
+def analyze_absolute(source, draws=DRAWS):
+    decisions, rows, branches, pairs, excluded = collect_absolute(source)
+    nodes = sorted({r['node'] for r in rows})
+    eligible = {r['node'] for r in rows if r['changed']}
+    # Average repetitions before all value inference.
+    points = []
+    for inst, b in sorted({(p['instance'], p['point']) for p in pairs}):
+        ps = [p for p in pairs if p['instance'] == inst and p['point'] == b]
+        point = {k: ps[0][k] for k in ('node', 'instance', 'point', 'changed', 'direction')}
+        point.update({k: mean(p[k] for p in ps) for k in ('audit_difference', 'immediate', 'record_shift')})
+        points.append(point)
+    results, values, record, mechanism = [], [], [], []
+    for group in nodes + ['pooled_value_eligible']:
+        selected_nodes = eligible if group == 'pooled_value_eligible' else {group}
+        for h in (1, 3):
+            for m in ('abs_metric',) + METRICS[2:]:
+                subset = [r for r in rows if r['node'] in selected_nodes and r['horizon'] == str(h) and r['metric'] == m]
+                results.append(dict(group=group, horizon=str(h), metric=m, **inference(subset, draws=draws)))
+        values.append(dict(group=group, **value_inference([p for p in points if p['node'] in selected_nodes], draws)))
+        for changed in (True, False):
+            ps = [p for p in pairs if p['node'] in selected_nodes and p['changed'] == changed]
+            record.append(dict(group=group, changed=changed, point_repetitions=len(ps),
+                               mean=mean(p['record_shift'] for p in ps)))
+            mechanism.append(dict(group=group, changed=changed, point_repetitions=len(ps),
+                                  **{k: mean(p[k] for p in ps if p[k] is not None) for k in
+                                     ('memory_differs', 'continue_repeat', 'continue_reverse', 'verify_repeat', 'verify_reverse')}))
+    # Holm over both horizons for every evaluable node AND pool; exclude unavailable tests.
+    primary = [r for r in results if r['metric'] == 'abs_metric' and 'p_null' in r]
+    ordered = sorted(primary, key=lambda r: max(r['p_null'], r['p_unchanged']))
+    running = 0.
+    for i, r in enumerate(ordered):
+        running = max(running, min(1., (len(ordered)-i)*max(r['p_null'], r['p_unchanged'])))
+        r['holm_p'] = running
+    # Failure to reject is not equivalence. No equivalence margin was specified.
+    violated = any(r['reject'] and r['holm_p'] < .05 and any(
+        v['group'] == r['group'] and v.get('ci') and (v['ci'][0] > 0 or v['ci'][1] < 0)
+        for v in values) for r in primary)
+    return dict(label='PILOT, PARTIAL, not evidence', author='AI-assisted by Codex',
+                input_revision=source.revision, input_sha256=source.hashes, seed=SEED, draws=draws,
+                outcome='abs_metric', counts={n: dict(Counter(d['direction'] for d in decisions if d['node'] == n)) for n in nodes},
+                decisions=decisions, point_contrasts=rows, branch_summaries=branches, pairs=pairs,
+                value_points=points, excluded_points=excluded, results=results, values=values,
+                record_shift=record, mechanism=mechanism, holm_tests=len(primary),
+                verdict='violated in value terms' if violated else 'undetermined at this sample size')
+
+
+def markdown_absolute(report):
+    lines = ['# Absolute-metric DI diagnostic tables', '',
+             'AI-assisted by Codex. PILOT, PARTIAL, not evidence.', '',
+             f'Input revision: `{report["input_revision"]}`; {report["draws"]} draws; seed {SEED}.', '',
+             '## Decisions changed (point-repetitions)', '',
+             '| Node | Promotion | Demotion | Unchanged |', '|---|---:|---:|---:|']
+    for n, c in report['counts'].items():
+        lines.append(f'| {n} | {c.get("promotion",0)} | {c.get("demotion",0)} | {c.get("unchanged",0)} |')
+    lines += ['', '## Distances and inference', '',
+              '| Group | k | Metric | Changed points | D_changed | D_null paired | D_unchanged | Excess null [95% CI] | Excess unchanged [95% CI] | p null | p unchanged | Holm p |',
+              '|---|---:|---|---:|---:|---:|---:|---|---|---:|---:|---:|']
+    for r in report['results']:
+        vals = [r['group'],r['horizon'],r['metric'],r['changed_points'],r['D_changed'],r['D_null_at_changed'],r['D_unchanged'],
+                f'{fmt(r.get("excess_null"))} {fmt(r.get("ci_null"))}', f'{fmt(r.get("excess_unchanged"))} {fmt(r.get("ci_unchanged"))}',
+                r.get('p_null'),r.get('p_unchanged'),r.get('holm_p')]
+        lines.append('| '+' | '.join(map(fmt,vals))+' |')
+    lines += ['', f'Holm family: {report["holm_tests"]} evaluable primary node/pool × horizon tests. NA is unavailable, not zero.', '',
+              '## Value residual (point means; cluster bootstrap)', '',
+              '| Group | Changed points | Changed instances | Audit difference | Immediate proxy | Budget correction | Residual | 95% CI | Valid draws |',
+              '|---|---:|---:|---:|---:|---:|---:|---|---:|']
+    for v in report['values']:
+        lines.append('| '+' | '.join(fmt(v.get(k)) for k in ('group','changed_points','changed_instances','audit_difference','immediate','budget_cost','residual','ci','bootstrap_valid'))+' |')
+    for name, keys in [('record_shift',('group','changed','point_repetitions','mean')),
+                       ('mechanism',('group','changed','point_repetitions','memory_differs','continue_repeat','continue_reverse','verify_repeat','verify_reverse'))]:
+        lines += ['', f'## {name}', '', '| '+' | '.join(keys)+' |', '| '+' | '.join('---' for _ in keys)+' |']
+        for row in report[name]:
+            lines.append('| '+' | '.join(fmt(row[k]) for k in keys)+' |')
+    lines += ['', '## Metric-identical fraction (equal branch weight)', '',
+              '| Node | k | Action | Fraction |', '|---|---:|---|---:|']
+    for n in report['counts']:
+        for h in ('1','3'):
+            for a in ('continue','verify'):
+                bs=[b for b in report['branch_summaries'] if b['node']==n and b['horizon']==h and b['action']==a]
+                lines.append(f'| {n} | {h} | {a} | {fmt(mean(b["metric_identical"] for b in bs))} |')
+    lines += ['', '## Excluded whole points', '']
+    lines += [f'- `{p["instance"]} b{p["point"]:03d}`: '+', '.join(p['failed_leaves']) for p in report['excluded_points']] or ['None.']
+    lines += ['', '## Decision audit', '', '| Instance | Point | Rep | Direction | Verify mean delta |', '|---|---:|---:|---|---:|']
+    for d in report['decisions']:
+        lines.append('| '+' | '.join(fmt(d[k]) for k in ('instance','point','rep','direction','verify_mean_delta'))+' |')
+    lines += ['', f'Verdict: **{report["verdict"]}**.', '']
+    return '\n'.join(lines)
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('run_dir',type=Path)
+    parser.add_argument('--outcome', choices=('legacy', 'abs_metric'), default='legacy')
     parser.add_argument('--md',required=True,type=Path)
     parser.add_argument('--json',required=True,type=Path)
     args=parser.parse_args()
@@ -378,8 +643,8 @@ def main():
         absolute=path.resolve()
         if absolute.is_relative_to((source.repo/'results').resolve()) or absolute.is_relative_to(args.run_dir.resolve()):
             parser.error('Outputs must be outside existing result directories')
-    report=analyze(source)
-    args.md.write_text(markdown(report))
+    report = analyze(source) if args.outcome == 'legacy' else analyze_absolute(source)
+    args.md.write_text(markdown(report) if args.outcome == 'legacy' else markdown_absolute(report))
     args.json.write_text(json.dumps(report,sort_keys=True,indent=2,allow_nan=False)+'\n')
     print(json.dumps({'counts':report['counts'],'verdict':report['verdict']}))
 
