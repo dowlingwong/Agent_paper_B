@@ -1,0 +1,57 @@
+{
+  "label": "DRYRUN",
+  "scenarios": {
+    "retry": {
+      "temporary_root": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio",
+      "pin": "4d68c54875654cf9986daa1cf36d609adb48ef45",
+      "checks": {
+        "dropped_chat_call": 14,
+        "resent_with_same_seed": true,
+        "llm_calls_retried": 1,
+        "restart_refused": true,
+        "eligible_nodes": [
+          "digits_mlp",
+          "openml_breast_w"
+        ],
+        "roots": {
+          "sweep_append_only_summary": 4,
+          "sweep_none": 4
+        },
+        "commits": {
+          "liveness": "e917b1ceb77084debca554d68b2cd12f0d2f7889",
+          "sweep_append_only_summary": "e1653ebedf0dcd72ed35e044df03eb039d66e6b8",
+          "sweep_none": "4d688dd8b08c84f7665a03a6108015a2cca03ea3",
+          "index": "5346e76718449345ebcd236530102baf51ef9fa1"
+        }
+      },
+      "passed": true,
+      "stop_reason": null,
+      "batch": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr",
+      "temporary_root_removed": true
+    },
+    "permanent": {
+      "temporary_root": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr",
+      "pin": "4d68c54875654cf9986daa1cf36d609adb48ef45",
+      "checks": {
+        "stop_reason": "STOP: 4 root campaign failures, 0/4 roots complete; records in /sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261019T011618Z/failures and collection_failures.json (no automatic retry)",
+        "failed_roots": 4,
+        "failure_classes": [
+          "httpx.ConnectError"
+        ],
+        "attempt_classes": [
+          "connection_refused",
+          "server_disconnected"
+        ],
+        "server_exit_chat_call": 14
+      },
+      "passed": true,
+      "stop_reason": "STOP: 4 root campaign failures, 0/4 roots complete; records in /sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261019T011618Z/failures and collection_failures.json (no automatic retry)",
+      "batch": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt",
+      "temporary_root_removed": true
+    }
+  },
+  "started_utc": "20261019T011527Z",
+  "harness_source": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/mnt/autoresearch_harness/.claude-worktrees/r1-c3-prep",
+  "elapsed_seconds": 65.6,
+  "completed": true
+}

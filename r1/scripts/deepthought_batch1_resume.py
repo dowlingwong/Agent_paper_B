@@ -185,6 +185,34 @@ def require_liveness(nodes, memory_mode=None, arm_role=None):
     return require_live(list(nodes), manifest, memory_mode=memory_mode, arm_role=arm_role)
 
 
+FAILURE_KEYS = ('leaf_id', 'instance', 'node', 'budget_index', 'action', 'repetition', 'integrity', 'error',
+                'error_class', 'error_message', 'failure_stage', 'failed_utc', 'traceback', 'transport_attempts',
+                'llm_seed', 'partial_ledger', 'partial_events', 'partial_records', 'wall_seconds')
+
+
+def persist_collection_failures(out, failures, extra=None):
+    """Write ``collection_failures.json`` (one entry per failed leaf/campaign) and return its path.
+
+    Leaves written before the 19 Oct observability fix lack ``traceback`` and
+    ``failed_utc``; those entries say so instead of inventing a time.
+    """
+    entries = []
+    for item in failures:
+        entry = {k: item.get(k) for k in FAILURE_KEYS if k in item}
+        if 'failed_utc' not in item:
+            entry['failed_utc'] = None
+            entry['note'] = 'no failure timestamp recorded by this collector version'
+        if item.get('integrity') == 'ok':
+            entry['note'] = 'integrity ok but audit metrics missing or None'
+            entry['audit_metrics'] = item.get('audit_metrics')
+        entries.append(entry)
+    payload = {'label': state.get('label', RUN_LABEL), 'written_utc': stamp(), 'n_failures': len(entries),
+               'failures': entries, **(extra or {})}
+    path = Path(out) / 'collection_failures.json'
+    path.write_text(json.dumps(payload, indent=2) + '\n')
+    return path
+
+
 def collect(out, work, extra, nodes, manager='langgraph', memory_mode=None, arm_role=None, gated=None):
     """Collect one arm; LLM-backed arms pass the D28 gate, the scripted arm does not.
 
@@ -214,6 +242,9 @@ def collect(out, work, extra, nodes, manager='langgraph', memory_mode=None, arm_
     failures = [p for p in leaves if p['integrity'] != 'ok' or not p['audit_metrics']
                 or any(m is None for m in p['audit_metrics'])]
     if failures:
+        # Observability (rerun-2 STOP diagnosis, 19 Oct): persist every failed
+        # leaf's class, message, traceback and UTC time before the gate raises.
+        persist_collection_failures(out, failures)
         raise RuntimeError('STOP: collection failures; no leaf retries permitted')
     llm_backed = manifest['manager']['kind'] == 'langgraph'
     if llm_backed and manager != 'langgraph':

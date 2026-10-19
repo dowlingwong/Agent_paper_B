@@ -1,0 +1,214 @@
+{
+  "label": "DRYRUN",
+  "steps": {
+    "preconditions": {
+      "completed": true,
+      "started_utc": "20261019T011532Z",
+      "completed_utc": "20261019T011533Z"
+    },
+    "liveness": {
+      "completed": true,
+      "started_utc": "20261019T011533Z",
+      "out": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr/agent_paper_B/results/r1/engineering/liveness_c3_20261019T011533Z",
+      "eligible_nodes": [
+        "digits_mlp",
+        "openml_breast_w"
+      ],
+      "excluded_nodes": [],
+      "verdicts": {
+        "digits_mlp": {
+          "active_novelty_fraction": {
+            "equals_incumbent_trials": 0,
+            "evaluated_trials": 4,
+            "novel_trials": 4,
+            "novelty_source": "events",
+            "observed": 1.0,
+            "required": ">= 0.5",
+            "seen_before_trials": 0
+          },
+          "invalid_rate": {
+            "observed": 0.0,
+            "required": "< 0.3"
+          },
+          "keep_after_trial_1": {
+            "observed": 1,
+            "required": "at least 1 keep with budget_index > 1"
+          }
+        },
+        "openml_breast_w": {
+          "active_novelty_fraction": {
+            "equals_incumbent_trials": 1,
+            "evaluated_trials": 5,
+            "novel_trials": 4,
+            "novelty_source": "events",
+            "observed": 0.8,
+            "required": ">= 0.5",
+            "seen_before_trials": 1
+          },
+          "invalid_rate": {
+            "observed": 0.2,
+            "required": "< 0.3"
+          },
+          "keep_after_trial_1": {
+            "observed": 2,
+            "required": "at least 1 keep with budget_index > 1"
+          }
+        }
+      },
+      "commit": "e917b1ceb77084debca554d68b2cd12f0d2f7889",
+      "completed_utc": "20261019T011540Z"
+    },
+    "sweep_append_only_summary": {
+      "completed": true,
+      "started_utc": "20261019T011540Z",
+      "out": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261019T011540Z",
+      "work": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr/c3_append_only_summary_work",
+      "checks": {
+        "label": "DRYRUN",
+        "memory_mode": "append_only_summary",
+        "expected_roots": 4,
+        "roots": 4,
+        "root_failures": 0,
+        "llm_calls": 27,
+        "llm_calls_failed": 0,
+        "llm_calls_retried": 1,
+        "parse_failures": 0,
+        "manager_kind": "langgraph",
+        "transport_max_attempts": 3,
+        "verify_split_policy": "vary",
+        "action_versions": {
+          "keep_rule": "default/v1",
+          "verify_response": "mean_delta/v1",
+          "verify_failed": "original_stands/v1",
+          "verify_split_policy": "vary"
+        },
+        "written_utc": "20261019T011553Z"
+      },
+      "commit": "e1653ebedf0dcd72ed35e044df03eb039d66e6b8",
+      "completed_utc": "20261019T011553Z"
+    },
+    "sweep_none": {
+      "completed": true,
+      "started_utc": "20261019T011553Z",
+      "out": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr/agent_paper_B/results/r1/pilot/C3_sweep_none_20261019T011553Z",
+      "work": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr/c3_none_work",
+      "checks": {
+        "label": "DRYRUN",
+        "memory_mode": "none",
+        "expected_roots": 4,
+        "roots": 4,
+        "root_failures": 0,
+        "llm_calls": 24,
+        "llm_calls_failed": 0,
+        "llm_calls_retried": 0,
+        "parse_failures": 0,
+        "manager_kind": "langgraph",
+        "transport_max_attempts": 3,
+        "verify_split_policy": "vary",
+        "action_versions": {
+          "keep_rule": "default/v1",
+          "verify_response": "mean_delta/v1",
+          "verify_failed": "original_stands/v1",
+          "verify_split_policy": "vary"
+        },
+        "written_utc": "20261019T011604Z"
+      },
+      "commit": "4d688dd8b08c84f7665a03a6108015a2cca03ea3",
+      "completed_utc": "20261019T011604Z"
+    },
+    "index": {
+      "completed": true,
+      "started_utc": "20261019T011604Z",
+      "path": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr/agent_paper_B/results/r1/pilot/C3_sweep_index_20261019T011604Z.json",
+      "commit": "5346e76718449345ebcd236530102baf51ef9fa1",
+      "completed_utc": "20261019T011604Z"
+    }
+  },
+  "batch": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr",
+  "host": "claude",
+  "config": {
+    "nodes": [
+      "digits_mlp",
+      "openml_breast_w"
+    ],
+    "instances": 2,
+    "runs": 6,
+    "memory_modes": [
+      "append_only_summary",
+      "none"
+    ],
+    "workers": 2,
+    "transport_max_attempts": 3,
+    "liveness": {
+      "instances": 1,
+      "runs": 4,
+      "memory_mode": "append_only_summary"
+    },
+    "min_live_nodes": 2,
+    "max_parse_failure_rate": 0.2,
+    "max_collect_sessions": 3,
+    "paper_a_check": {
+      "command": [
+        "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/bin/paper_a_status"
+      ],
+      "timeout": 120
+    },
+    "gpu_uuid": "auto",
+    "gpu_wait_seconds": 0,
+    "ollama": {
+      "binary": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/bin/ollama",
+      "seed_models_from": null,
+      "port": null,
+      "start_timeout": 30
+    },
+    "allowed_hosts": [
+      "ucrtasl",
+      "deepthought",
+      "deepthought2"
+    ]
+  },
+  "paper_head_at_launch": "91d2a4020678df5e38d6fba3d34d991f61394786",
+  "harness_head_at_launch": "4d68c54875654cf9986daa1cf36d609adb48ef45",
+  "paper_a_check": {
+    "utc": "20261019T011532Z",
+    "command": [
+      "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/bin/paper_a_status"
+    ],
+    "host": "claude",
+    "returncode": 0,
+    "stdout_tail": [
+      "{\"paper_a_live_waiting_for_card\": false, \"source\": \"DRYRUN fixture\"}"
+    ],
+    "stderr_tail": [],
+    "report": {
+      "paper_a_live_waiting_for_card": false,
+      "source": "DRYRUN fixture"
+    },
+    "verdict": "clear"
+  },
+  "gpu": "0, GPU-DRYRUN, DRYRUN shared card, 40000",
+  "ollama": {
+    "label": "DRYRUN",
+    "binary": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/bin/ollama",
+    "pid": 147,
+    "pgid": 147,
+    "port": 43481,
+    "url": "http://127.0.0.1:43481",
+    "models_dir": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr/ollama_models_43481",
+    "models_seeded": null,
+    "seed_models_from": null,
+    "gpu_uuid": "GPU-DRYRUN",
+    "keep_alive": "-1",
+    "log": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_retry_pm463xio/batches_retry/r1_c3_sweep_DRYRUN_20261019_3sgENr/ollama_serve_43481.log",
+    "started_utc": "2026-10-19T01:15:32Z",
+    "healthy_utc": "2026-10-19T01:15:33Z",
+    "version": {
+      "version": "DRYRUN"
+    },
+    "stopped_utc": "2026-10-19T01:16:04Z",
+    "returncode": -15
+  },
+  "model_loaded": true,
+  "finished_utc": "20261019T011604Z",
+  "stop_reason": null
+}

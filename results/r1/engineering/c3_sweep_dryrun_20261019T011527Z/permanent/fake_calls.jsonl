@@ -1,0 +1,21 @@
+{"label": "DRYRUN", "pid": 790, "event": "serve", "port": 34629, "models": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt/ollama_models_34629"}
+{"label": "DRYRUN", "pid": 790, "path": "/api/version"}
+{"label": "DRYRUN", "pid": 792, "event": "pull", "model": ["qwen2.5-coder:7b"]}
+{"label": "DRYRUN", "pid": 790, "path": "/api/tags"}
+{"label": "DRYRUN", "pid": 790, "path": "/api/generate", "seed": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/ps"}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 1072716526, "chat_call": 1, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 1023010193, "chat_call": 2, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 2748562400, "chat_call": 3, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 1879260936, "chat_call": 4, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 850186853, "chat_call": 5, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 2560122908, "chat_call": 6, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 2731451452, "chat_call": 7, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 2320079992, "chat_call": 8, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 3211263357, "chat_call": 9, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 4119066960, "chat_call": 10, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 3065579443, "chat_call": 11, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 2285871714, "chat_call": 12, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 1072716526, "chat_call": 13, "fault": null}
+{"label": "DRYRUN", "pid": 790, "path": "/api/chat", "seed": 1023010193, "chat_call": 14, "fault": "exit"}
+{"label": "DRYRUN", "pid": 790, "event": "fake server exiting (permanent failure)", "chat_call": 14}

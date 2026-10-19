@@ -1,0 +1,31 @@
+{
+  "batch": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt",
+  "paper_head": "f193f09d945911d9e326ecd114dcd70866805c5d",
+  "harness_head": "4d68c54875654cf9986daa1cf36d609adb48ef45",
+  "suites_skipped_dryrun": true,
+  "harness_tests": {
+    "returncode": 0,
+    "summary": "(no summary line)",
+    "failures": [],
+    "unexpected": []
+  },
+  "r1_tests": {
+    "returncode": 0,
+    "summary": "(no summary line)"
+  },
+  "accepted_failures": [
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_cli_passes_on_real_campaigns",
+    "tests/test_artifact_completeness_and_manifest.py::TestBuildManifest::test_all_referenced_files_exist",
+    "tests/test_artifact_completeness_and_manifest.py::TestGenerateManifestCLI::test_cli_reports_all_files_exist",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_1_related_work_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_2_system_design_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_3_experiments_acceptance",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_4_results_order_and_artifact_links",
+    "tests/test_kdd_paper_sections.py::test_chunk_4_5_discussion_acceptance",
+    "tests/test_legacy_noop_skip.py",
+    "tests/stage2/test_stage2_control_plane.py::TestClawWorkerExtraction::test_claw_worker_deterministic_constant_patch_runs_without_llm",
+    "tests/test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns"
+  ],
+  "unexpected": [],
+  "ok": true
+}

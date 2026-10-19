@@ -54,6 +54,9 @@ def run_campaigns(args) -> Path:
     manager = collect.MANAGER if args.manager == "scripted" else {
         **collect.MANAGER, "kind": "langgraph",
     }
+    if getattr(args, "transport_max_attempts", None) is not None:
+        # Bounded LLM transport retry (19 Oct); absent means one attempt (historical).
+        manager = {**manager, "transport_max_attempts": int(args.transport_max_attempts)}
     manifest = {
         "schema": "r1.liveness_run/1", "label": "DRYRUN" if dryrun else "ENGINEERING_ONLY", "started_utc": stamp,
         "harness": {"root": str(collect.HARNESS), **harness_commit(collect.HARNESS)},
@@ -68,7 +71,7 @@ def run_campaigns(args) -> Path:
         for k in range(manifest["instances"]):
             summary = collect.run_root(
                 node=node, k=k, work=str(work), runs=manifest["runs"], indices=[],
-                manager=manager, memory_mode=manifest["memory_mode"],
+                manager=manager, memory_mode=manifest["memory_mode"], out_dir=str(out),
             )
             source = work / "roots" / summary["instance"] / "root_trials.jsonl"
             target_dir = out / "ledgers" / summary["instance"]
@@ -105,6 +108,8 @@ def main() -> int:
     parser.add_argument("--manager", choices=["scripted", "langgraph"], default="scripted")
     parser.add_argument("--memory-mode", default=None,
                         choices=["none", "append_only_summary", "append_only_summary_with_rationale"])
+    parser.add_argument("--transport-max-attempts", type=int, default=None,
+                        help="bounded LLM transport retry (manager field; absent = 1 attempt)")
     parser.add_argument("--out", default=None)
     parser.add_argument("--work", default="/tmp/r1_liveness")
     args = parser.parse_args()

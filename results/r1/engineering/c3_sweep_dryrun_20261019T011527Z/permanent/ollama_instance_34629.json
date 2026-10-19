@@ -1,0 +1,21 @@
+{
+  "label": "DRYRUN",
+  "binary": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/bin/ollama",
+  "pid": 790,
+  "pgid": 790,
+  "port": 34629,
+  "url": "http://127.0.0.1:34629",
+  "models_dir": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt/ollama_models_34629",
+  "models_seeded": null,
+  "seed_models_from": null,
+  "gpu_uuid": "GPU-DRYRUN",
+  "keep_alive": "-1",
+  "log": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/tmp/r1_c3_dryrun_permanent_c4zpfaqr/batches_permanent/r1_c3_sweep_DRYRUN_20261019_QSATvt/ollama_serve_34629.log",
+  "started_utc": "2026-10-19T01:16:09Z",
+  "healthy_utc": "2026-10-19T01:16:10Z",
+  "version": {
+    "version": "DRYRUN"
+  },
+  "stopped_utc": "2026-10-19T01:16:32Z",
+  "returncode": 17
+}
