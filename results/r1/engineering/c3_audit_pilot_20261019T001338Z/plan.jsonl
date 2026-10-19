@@ -1,0 +1,166 @@
+{"proposal_id": "rerun2A:tabular_mlp__s102:t004", "node": "tabular_mlp", "reason": "random", "candidate_hash": "c8dc5fe83589604ed141", "incumbent_hash": "0fc8dce1d4a45f16668d"}
+{"proposal_id": "rerun2A:tabular_mlp__s102:t005", "node": "tabular_mlp", "reason": "random", "candidate_hash": "200b6f8c32148a332ae8", "incumbent_hash": "c8dc5fe83589604ed141"}
+{"proposal_id": "rerun2A:tabular_mlp__s102:t015", "node": "tabular_mlp", "reason": "random", "candidate_hash": "3f810b8e64c8399f3ce2", "incumbent_hash": "c8dc5fe83589604ed141"}
+{"proposal_id": "rerun2A:tabular_mlp__s112:t004", "node": "tabular_mlp", "reason": "random", "candidate_hash": "f92ccb61617e1ab81090", "incumbent_hash": "6c86411c68ce944880b1"}
+{"proposal_id": "rerun2A:tabular_mlp__s112:t006", "node": "tabular_mlp", "reason": "random", "candidate_hash": "d9d3cb46cb1d1d95136c", "incumbent_hash": "6c86411c68ce944880b1"}
+{"proposal_id": "rerun2A:tabular_mlp__s122:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "408970dd4dbc873ca242", "incumbent_hash": "c71d2e785f1d12b02392"}
+{"proposal_id": "rerun2A:tabular_mlp__s122:t004", "node": "tabular_mlp", "reason": "random", "candidate_hash": "a0bd3da999f1055f591e", "incumbent_hash": "c71d2e785f1d12b02392"}
+{"proposal_id": "rerun2A:tabular_mlp__s122:t005", "node": "tabular_mlp", "reason": "random", "candidate_hash": "0fc8dce1d4a45f16668d", "incumbent_hash": "a0bd3da999f1055f591e"}
+{"proposal_id": "rerun2A:tabular_mlp__s122:t007", "node": "tabular_mlp", "reason": "random", "candidate_hash": "bcdd91593895b73b5750", "incumbent_hash": "a0bd3da999f1055f591e"}
+{"proposal_id": "rerun2A:tabular_mlp__s122:t013", "node": "tabular_mlp", "reason": "random", "candidate_hash": "e3de86a80277ea856069", "incumbent_hash": "3cc70ab9831518337f79"}
+{"proposal_id": "rerun2A:tabular_mlp__s132:t004", "node": "tabular_mlp", "reason": "random", "candidate_hash": "6f045581b3affa9c1cc4", "incumbent_hash": "eae4a23947a9ca718de8"}
+{"proposal_id": "rerun2A:tabular_mlp__s132:t005", "node": "tabular_mlp", "reason": "random", "candidate_hash": "3d891ff744004d94ba3d", "incumbent_hash": "eae4a23947a9ca718de8"}
+{"proposal_id": "rerun2A:tabular_mlp__s132:t007", "node": "tabular_mlp", "reason": "random", "candidate_hash": "b60f8bb6159ea4c0084b", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s132:t011", "node": "tabular_mlp", "reason": "random", "candidate_hash": "37a728a81784e8a92f60", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s132:t012", "node": "tabular_mlp", "reason": "random", "candidate_hash": "b8b40b5b03a5896b2895", "incumbent_hash": "37a728a81784e8a92f60"}
+{"proposal_id": "rerun2A:tabular_mlp__s132:t017", "node": "tabular_mlp", "reason": "random", "candidate_hash": "cbec416e41065455b9e1", "incumbent_hash": "e546b369a86d36e87f4c"}
+{"proposal_id": "rerun2A:tabular_mlp__s142:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "408970dd4dbc873ca242", "incumbent_hash": "ccfe1e567050c05a620b"}
+{"proposal_id": "rerun2A:tabular_mlp__s142:t003", "node": "tabular_mlp", "reason": "random", "candidate_hash": "eae4a23947a9ca718de8", "incumbent_hash": "ccfe1e567050c05a620b"}
+{"proposal_id": "rerun2A:tabular_mlp__s142:t005", "node": "tabular_mlp", "reason": "random", "candidate_hash": "d9d3cb46cb1d1d95136c", "incumbent_hash": "eae4a23947a9ca718de8"}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "3d891ff744004d94ba3d", "incumbent_hash": "eae4a23947a9ca718de8"}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t003", "node": "tabular_mlp", "reason": "random", "candidate_hash": "642f1f80446ac132874f", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t004", "node": "tabular_mlp", "reason": "random", "candidate_hash": "18f480f8823bc82e791c", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t005", "node": "tabular_mlp", "reason": "random", "candidate_hash": "0e4880a5e47ad10e4a63", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t007", "node": "tabular_mlp", "reason": "random", "candidate_hash": "f52a826cfa0ac458aaac", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t009", "node": "tabular_mlp", "reason": "random", "candidate_hash": "31363b76c12010f4b4d2", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t010", "node": "tabular_mlp", "reason": "random", "candidate_hash": "d74be931325b0b78e494", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t011", "node": "tabular_mlp", "reason": "random", "candidate_hash": "a23966252648ff27df6d", "incumbent_hash": "d74be931325b0b78e494"}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t014", "node": "tabular_mlp", "reason": "random", "candidate_hash": "8763af21b099bd7d50bb", "incumbent_hash": "d74be931325b0b78e494"}
+{"proposal_id": "rerun2A:tabular_mlp__s162:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "408970dd4dbc873ca242", "incumbent_hash": "c71d2e785f1d12b02392"}
+{"proposal_id": "rerun2A:tabular_mlp__s162:t007", "node": "tabular_mlp", "reason": "random", "candidate_hash": "d96ef20fc99536d413c5", "incumbent_hash": "208c5ccadc864ff68282"}
+{"proposal_id": "rerun2A:tabular_mlp__s162:t010", "node": "tabular_mlp", "reason": "random", "candidate_hash": "0e4880a5e47ad10e4a63", "incumbent_hash": "208c5ccadc864ff68282"}
+{"proposal_id": "rerun2A:tabular_mlp__s162:t011", "node": "tabular_mlp", "reason": "random", "candidate_hash": "127f30c94708ec718ff2", "incumbent_hash": "208c5ccadc864ff68282"}
+{"proposal_id": "rerun2A:tabular_mlp__s162:t017", "node": "tabular_mlp", "reason": "random", "candidate_hash": "f98b5b438209cb43ccd8", "incumbent_hash": "127f30c94708ec718ff2"}
+{"proposal_id": "rerun2A:tabular_mlp__s172:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "408970dd4dbc873ca242", "incumbent_hash": "ccfe1e567050c05a620b"}
+{"proposal_id": "rerun2A:tabular_mlp__s182:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "91b9830d69baf030ea0f", "incumbent_hash": "c71d2e785f1d12b02392"}
+{"proposal_id": "rerun2A:tabular_mlp__s182:t007", "node": "tabular_mlp", "reason": "random", "candidate_hash": "dde007f123c94de1edab", "incumbent_hash": "642f1f80446ac132874f"}
+{"proposal_id": "rerun2A:tabular_mlp__s182:t010", "node": "tabular_mlp", "reason": "random", "candidate_hash": "1cdca95e182b32814f9a", "incumbent_hash": "4ca4a0b9c5f78be88a3b"}
+{"proposal_id": "rerun2A:tabular_mlp__s182:t012", "node": "tabular_mlp", "reason": "random", "candidate_hash": "c4cdcde89461a7f3a345", "incumbent_hash": "1cdca95e182b32814f9a"}
+{"proposal_id": "rerun2A:tabular_mlp__s182:t019", "node": "tabular_mlp", "reason": "random", "candidate_hash": "0cecc09e390ad12e58df", "incumbent_hash": "1cdca95e182b32814f9a"}
+{"proposal_id": "rerun2A:tabular_mlp__s192:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "408970dd4dbc873ca242", "incumbent_hash": "ccfe1e567050c05a620b"}
+{"proposal_id": "rerun2A:tabular_mlp__s202:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "3d891ff744004d94ba3d", "incumbent_hash": "eae4a23947a9ca718de8"}
+{"proposal_id": "rerun2A:tabular_mlp__s202:t003", "node": "tabular_mlp", "reason": "random", "candidate_hash": "642f1f80446ac132874f", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s202:t005", "node": "tabular_mlp", "reason": "random", "candidate_hash": "08788d2b8fbd0ccbc39c", "incumbent_hash": "18f480f8823bc82e791c"}
+{"proposal_id": "rerun2A:tabular_mlp__s202:t006", "node": "tabular_mlp", "reason": "random", "candidate_hash": "0b00dc34dd71b7a138f3", "incumbent_hash": "08788d2b8fbd0ccbc39c"}
+{"proposal_id": "rerun2A:tabular_mlp__s202:t007", "node": "tabular_mlp", "reason": "random", "candidate_hash": "aa39b0b6adb10a52a2f4", "incumbent_hash": "08788d2b8fbd0ccbc39c"}
+{"proposal_id": "rerun2A:tabular_mlp__s202:t009", "node": "tabular_mlp", "reason": "random", "candidate_hash": "84b5d74eb04aac88f1f1", "incumbent_hash": "aa39b0b6adb10a52a2f4"}
+{"proposal_id": "rerun2A:tabular_mlp__s202:t011", "node": "tabular_mlp", "reason": "random", "candidate_hash": "2799c41c8c71005b3304", "incumbent_hash": "aa39b0b6adb10a52a2f4"}
+{"proposal_id": "rerun2A:tabular_mlp__s212:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "408970dd4dbc873ca242", "incumbent_hash": "ccfe1e567050c05a620b"}
+{"proposal_id": "rerun2A:tabular_mlp__s212:t007", "node": "tabular_mlp", "reason": "random", "candidate_hash": "0e4880a5e47ad10e4a63", "incumbent_hash": "d9d3cb46cb1d1d95136c"}
+{"proposal_id": "rerun2A:tabular_mlp__s212:t008", "node": "tabular_mlp", "reason": "random", "candidate_hash": "a3fa26c84dc02de3e25b", "incumbent_hash": "d9d3cb46cb1d1d95136c"}
+{"proposal_id": "rerun2A:tabular_mlp__s222:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "3d891ff744004d94ba3d", "incumbent_hash": "eae4a23947a9ca718de8"}
+{"proposal_id": "rerun2A:tabular_mlp__s222:t007", "node": "tabular_mlp", "reason": "random", "candidate_hash": "122a51f2c89fdbf9c88c", "incumbent_hash": "31363b76c12010f4b4d2"}
+{"proposal_id": "rerun2A:tabular_mlp__s222:t008", "node": "tabular_mlp", "reason": "random", "candidate_hash": "196e022423523c86eac8", "incumbent_hash": "122a51f2c89fdbf9c88c"}
+{"proposal_id": "rerun2A:tabular_mlp__s232:t004", "node": "tabular_mlp", "reason": "random+di", "candidate_hash": "6731d84a39b0930edd37", "incumbent_hash": "ccfe1e567050c05a620b", "di_direction": "demotion", "di_inert": false}
+{"proposal_id": "rerun2A:tabular_mlp__s232:t008", "node": "tabular_mlp", "reason": "random", "candidate_hash": "ae95f3cad69de7a9590e", "incumbent_hash": "6731d84a39b0930edd37"}
+{"proposal_id": "rerun2A:tabular_mlp__s232:t009", "node": "tabular_mlp", "reason": "random", "candidate_hash": "426dcc7f502e6e343dc9", "incumbent_hash": "ae95f3cad69de7a9590e"}
+{"proposal_id": "rerun2A:tabular_mlp__s232:t012", "node": "tabular_mlp", "reason": "random", "candidate_hash": "13b12ec636b0bb6b59c4", "incumbent_hash": "ae95f3cad69de7a9590e"}
+{"proposal_id": "rerun2A:tabular_mlp__s242:t002", "node": "tabular_mlp", "reason": "random", "candidate_hash": "eae4a23947a9ca718de8", "incumbent_hash": "ccfe1e567050c05a620b"}
+{"proposal_id": "rerun2A:tabular_mlp__s242:t011", "node": "tabular_mlp", "reason": "random", "candidate_hash": "8d7c1c018c6008320c5b", "incumbent_hash": "3d891ff744004d94ba3d"}
+{"proposal_id": "rerun2A:tabular_mlp__s252:t003", "node": "tabular_mlp", "reason": "random", "candidate_hash": "3d891ff744004d94ba3d", "incumbent_hash": "408970dd4dbc873ca242"}
+{"proposal_id": "rerun2A:tabular_mlp__s252:t006", "node": "tabular_mlp", "reason": "random", "candidate_hash": "1dbfd2294a95b507449d", "incumbent_hash": "408970dd4dbc873ca242"}
+{"proposal_id": "rerun2A:tabular_mlp__s262:t003", "node": "tabular_mlp", "reason": "random", "candidate_hash": "208c5ccadc864ff68282", "incumbent_hash": "408970dd4dbc873ca242"}
+{"proposal_id": "rerun2A:tabular_mlp__s262:t004", "node": "tabular_mlp", "reason": "random", "candidate_hash": "1dbfd2294a95b507449d", "incumbent_hash": "408970dd4dbc873ca242"}
+{"proposal_id": "rerun2A:tabular_mlp__s262:t005", "node": "tabular_mlp", "reason": "random", "candidate_hash": "f91a14ec7d3be88dd85a", "incumbent_hash": "1dbfd2294a95b507449d"}
+{"proposal_id": "rerun2A:tabular_mlp__s262:t006", "node": "tabular_mlp", "reason": "random", "candidate_hash": "cf82147837d6ef56f14a", "incumbent_hash": "f91a14ec7d3be88dd85a"}
+{"proposal_id": "rerun2A:tabular_mlp__s262:t009", "node": "tabular_mlp", "reason": "random", "candidate_hash": "37f6f8a0e8da825d5ee7", "incumbent_hash": "f91a14ec7d3be88dd85a"}
+{"proposal_id": "rerun2A:tabular_mlp__s262:t011", "node": "tabular_mlp", "reason": "random", "candidate_hash": "f98b5b438209cb43ccd8", "incumbent_hash": "f91a14ec7d3be88dd85a"}
+{"proposal_id": "rerun2A:tabular_mlp__s262:t019", "node": "tabular_mlp", "reason": "random", "candidate_hash": "d8d7e82994b8ee78ad4f", "incumbent_hash": "b1d7bf39d7243cb37d89"}
+{"proposal_id": "rerun2A:tabular_mlp__s272:t003", "node": "tabular_mlp", "reason": "random", "candidate_hash": "208c5ccadc864ff68282", "incumbent_hash": "408970dd4dbc873ca242"}
+{"proposal_id": "rerun2A:tabular_mlp__s272:t020", "node": "tabular_mlp", "reason": "random", "candidate_hash": "6b8ed65e665149eba596", "incumbent_hash": "b8b40b5b03a5896b2895"}
+{"proposal_id": "rerun2A:openml_breast_w__s105:t002", "node": "openml_breast_w", "reason": "random", "candidate_hash": "e436c2c72f5b8ca8bafd", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s105:t004", "node": "openml_breast_w", "reason": "random", "candidate_hash": "bdbb9fbd58773d96bcba", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s105:t006", "node": "openml_breast_w", "reason": "random", "candidate_hash": "8f1b6a04db788e9b4c3a", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s105:t007", "node": "openml_breast_w", "reason": "random", "candidate_hash": "db5d4240a75ae6c24352", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s105:t014", "node": "openml_breast_w", "reason": "random", "candidate_hash": "031cf04483df86d98c8f", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s115:t002", "node": "openml_breast_w", "reason": "random", "candidate_hash": "dd6c10c0987313470782", "incumbent_hash": "8027be2c6382f468f208"}
+{"proposal_id": "rerun2A:openml_breast_w__s125:t003", "node": "openml_breast_w", "reason": "random", "candidate_hash": "c8c08d46980ad8def9f3", "incumbent_hash": "8027be2c6382f468f208"}
+{"proposal_id": "rerun2A:openml_breast_w__s135:t002", "node": "openml_breast_w", "reason": "random", "candidate_hash": "e436c2c72f5b8ca8bafd", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s135:t011", "node": "openml_breast_w", "reason": "random", "candidate_hash": "6f3c75e40f4e8705c63d", "incumbent_hash": "e436c2c72f5b8ca8bafd"}
+{"proposal_id": "rerun2A:openml_breast_w__s135:t020", "node": "openml_breast_w", "reason": "random", "candidate_hash": "0b6dcd0996c53b618dd0", "incumbent_hash": "e436c2c72f5b8ca8bafd"}
+{"proposal_id": "rerun2A:openml_breast_w__s145:t019", "node": "openml_breast_w", "reason": "random", "candidate_hash": "1ce9c910aa1ad2adb40b", "incumbent_hash": "8027be2c6382f468f208"}
+{"proposal_id": "rerun2A:openml_breast_w__s155:t002", "node": "openml_breast_w", "reason": "random", "candidate_hash": "dd6c10c0987313470782", "incumbent_hash": "8027be2c6382f468f208"}
+{"proposal_id": "rerun2A:openml_breast_w__s155:t003", "node": "openml_breast_w", "reason": "random", "candidate_hash": "c8c08d46980ad8def9f3", "incumbent_hash": "8027be2c6382f468f208"}
+{"proposal_id": "rerun2A:openml_breast_w__s165:t003", "node": "openml_breast_w", "reason": "random", "candidate_hash": "f9b92a0e7c158999c407", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s165:t007", "node": "openml_breast_w", "reason": "random", "candidate_hash": "25ed08eaf53560027c6f", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s165:t017", "node": "openml_breast_w", "reason": "random", "candidate_hash": "fe39504d97ec5e69e0bc", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s175:t002", "node": "openml_breast_w", "reason": "random", "candidate_hash": "e436c2c72f5b8ca8bafd", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s175:t010", "node": "openml_breast_w", "reason": "random", "candidate_hash": "bdbb9fbd58773d96bcba", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s175:t015", "node": "openml_breast_w", "reason": "random", "candidate_hash": "9ed83151096a015ca1ea", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s175:t017", "node": "openml_breast_w", "reason": "random", "candidate_hash": "a0eccdb8c1bda87b0d2e", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s175:t020", "node": "openml_breast_w", "reason": "random", "candidate_hash": "9f0b3eebf15ab34e3641", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s185:t002", "node": "openml_breast_w", "reason": "random", "candidate_hash": "e436c2c72f5b8ca8bafd", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s185:t004", "node": "openml_breast_w", "reason": "random", "candidate_hash": "d512264ae23ae1ea8534", "incumbent_hash": "8f1b6a04db788e9b4c3a"}
+{"proposal_id": "rerun2A:openml_breast_w__s185:t007", "node": "openml_breast_w", "reason": "random", "candidate_hash": "b7b5fce26a49ecb2d771", "incumbent_hash": "031cf04483df86d98c8f"}
+{"proposal_id": "rerun2A:openml_breast_w__s185:t009", "node": "openml_breast_w", "reason": "random", "candidate_hash": "efa090ee5e9f56f7d640", "incumbent_hash": "031cf04483df86d98c8f"}
+{"proposal_id": "rerun2A:openml_breast_w__s195:t004", "node": "openml_breast_w", "reason": "random", "candidate_hash": "66b9cce9aed3cf3246a1", "incumbent_hash": "f9b92a0e7c158999c407"}
+{"proposal_id": "rerun2A:openml_breast_w__s205:t005", "node": "openml_breast_w", "reason": "random", "candidate_hash": "db5d4240a75ae6c24352", "incumbent_hash": "8f1b6a04db788e9b4c3a"}
+{"proposal_id": "rerun2A:openml_breast_w__s205:t008", "node": "openml_breast_w", "reason": "random", "candidate_hash": "6f3c75e40f4e8705c63d", "incumbent_hash": "8f1b6a04db788e9b4c3a"}
+{"proposal_id": "rerun2A:openml_breast_w__s205:t013", "node": "openml_breast_w", "reason": "random", "candidate_hash": "9ed83151096a015ca1ea", "incumbent_hash": "8f1b6a04db788e9b4c3a"}
+{"proposal_id": "rerun2A:openml_breast_w__s205:t016", "node": "openml_breast_w", "reason": "random", "candidate_hash": "a0eccdb8c1bda87b0d2e", "incumbent_hash": "8f1b6a04db788e9b4c3a"}
+{"proposal_id": "rerun2A:openml_breast_w__s215:t002", "node": "openml_breast_w", "reason": "random", "candidate_hash": "e436c2c72f5b8ca8bafd", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s215:t006", "node": "openml_breast_w", "reason": "random", "candidate_hash": "db5d4240a75ae6c24352", "incumbent_hash": "e436c2c72f5b8ca8bafd"}
+{"proposal_id": "rerun2A:openml_breast_w__s215:t008", "node": "openml_breast_w", "reason": "random", "candidate_hash": "6f3c75e40f4e8705c63d", "incumbent_hash": "e436c2c72f5b8ca8bafd"}
+{"proposal_id": "rerun2A:openml_breast_w__s225:t003", "node": "openml_breast_w", "reason": "random", "candidate_hash": "bdbb9fbd58773d96bcba", "incumbent_hash": "9a246f89da2858c82d6c"}
+{"proposal_id": "rerun2A:openml_breast_w__s225:t004", "node": "openml_breast_w", "reason": "random", "candidate_hash": "abda7af995f625d27aef", "incumbent_hash": "9a246f89da2858c82d6c"}
+{"proposal_id": "rerun2A:openml_breast_w__s225:t007", "node": "openml_breast_w", "reason": "random", "candidate_hash": "db5d4240a75ae6c24352", "incumbent_hash": "9a246f89da2858c82d6c"}
+{"proposal_id": "rerun2A:openml_breast_w__s235:t003", "node": "openml_breast_w", "reason": "random", "candidate_hash": "72d1654e0fc4591c7b1d", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s235:t005", "node": "openml_breast_w", "reason": "random", "candidate_hash": "b0ffc8a32f33eba4c584", "incumbent_hash": "72d1654e0fc4591c7b1d"}
+{"proposal_id": "rerun2A:openml_breast_w__s235:t008", "node": "openml_breast_w", "reason": "random", "candidate_hash": "241df32915c83057f76c", "incumbent_hash": "72d1654e0fc4591c7b1d"}
+{"proposal_id": "rerun2A:openml_breast_w__s245:t002", "node": "openml_breast_w", "reason": "random", "candidate_hash": "c8c08d46980ad8def9f3", "incumbent_hash": "8027be2c6382f468f208"}
+{"proposal_id": "rerun2A:openml_breast_w__s255:t009", "node": "openml_breast_w", "reason": "random", "candidate_hash": "3a65b747f703d1d25f43", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s255:t012", "node": "openml_breast_w", "reason": "random", "candidate_hash": "1ce9c910aa1ad2adb40b", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s255:t016", "node": "openml_breast_w", "reason": "random", "candidate_hash": "a1dea318a50d787c8ac2", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s255:t018", "node": "openml_breast_w", "reason": "random", "candidate_hash": "1abb6fd68eb483a7689b", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s255:t019", "node": "openml_breast_w", "reason": "random", "candidate_hash": "6518bc53a60626e42858", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s255:t020", "node": "openml_breast_w", "reason": "random", "candidate_hash": "76c0edc18093ce365024", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s265:t003", "node": "openml_breast_w", "reason": "random", "candidate_hash": "72d1654e0fc4591c7b1d", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s265:t005", "node": "openml_breast_w", "reason": "random", "candidate_hash": "3a65b747f703d1d25f43", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s265:t006", "node": "openml_breast_w", "reason": "random", "candidate_hash": "1ce9c910aa1ad2adb40b", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s265:t007", "node": "openml_breast_w", "reason": "random", "candidate_hash": "7ed3bf99e9a45c40f1a8", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s265:t012", "node": "openml_breast_w", "reason": "random", "candidate_hash": "1abb6fd68eb483a7689b", "incumbent_hash": "c8c08d46980ad8def9f3"}
+{"proposal_id": "rerun2A:openml_breast_w__s275:t010", "node": "openml_breast_w", "reason": "random", "candidate_hash": "db5d4240a75ae6c24352", "incumbent_hash": "58a9285bba14eb1111d2"}
+{"proposal_id": "rerun2A:openml_breast_w__s275:t012", "node": "openml_breast_w", "reason": "random", "candidate_hash": "448a96764ccd2cee095e", "incumbent_hash": "db5d4240a75ae6c24352"}
+{"proposal_id": "rerun2A:openml_breast_w__s275:t014", "node": "openml_breast_w", "reason": "random", "candidate_hash": "4e0514323bb970d0b45d", "incumbent_hash": "db5d4240a75ae6c24352"}
+{"proposal_id": "dt4:digits_mlp__s104:t002", "node": "digits_mlp", "reason": "random", "candidate_hash": "f89b4cee70499d5f6131", "incumbent_hash": "72b68491c563014809a1"}
+{"proposal_id": "dt4:digits_mlp__s104:t003", "node": "digits_mlp", "reason": "random", "candidate_hash": "8a71eff6f75422e4c0cc", "incumbent_hash": "72b68491c563014809a1"}
+{"proposal_id": "dt4:digits_mlp__s114:t002", "node": "digits_mlp", "reason": "random", "candidate_hash": "ded03879d86e6da81742", "incumbent_hash": "4b5c221e41c4b35de2cc"}
+{"proposal_id": "dt4:digits_mlp__s114:t004", "node": "digits_mlp", "reason": "random", "candidate_hash": "8a71eff6f75422e4c0cc", "incumbent_hash": "4b5c221e41c4b35de2cc"}
+{"proposal_id": "dt4:digits_mlp__s114:t005", "node": "digits_mlp", "reason": "random", "candidate_hash": "5a0b3b1e7f21e2c873b8", "incumbent_hash": "8a71eff6f75422e4c0cc"}
+{"proposal_id": "dt4:digits_mlp__s114:t006", "node": "digits_mlp", "reason": "random", "candidate_hash": "f5400a6271f8c17d39c2", "incumbent_hash": "5a0b3b1e7f21e2c873b8"}
+{"proposal_id": "dt4:digits_mlp__s114:t007", "node": "digits_mlp", "reason": "random", "candidate_hash": "7d4587fdaf1a7959182a", "incumbent_hash": "f5400a6271f8c17d39c2"}
+{"proposal_id": "dt4:digits_mlp__s114:t014", "node": "digits_mlp", "reason": "random", "candidate_hash": "3f80dd603efea763c0d5", "incumbent_hash": "f5400a6271f8c17d39c2"}
+{"proposal_id": "dt4:digits_mlp__s114:t015", "node": "digits_mlp", "reason": "random", "candidate_hash": "8cd7ab37ae4f1f90ed4e", "incumbent_hash": "3f80dd603efea763c0d5"}
+{"proposal_id": "dt4:digits_mlp__s114:t016", "node": "digits_mlp", "reason": "random", "candidate_hash": "9f09a6aea2508206a869", "incumbent_hash": "8cd7ab37ae4f1f90ed4e"}
+{"proposal_id": "dt4:digits_mlp__s114:t020", "node": "digits_mlp", "reason": "random", "candidate_hash": "c74df5350fecdfd47a21", "incumbent_hash": "8cd7ab37ae4f1f90ed4e"}
+{"proposal_id": "dt4:digits_mlp__s124:t002", "node": "digits_mlp", "reason": "random", "candidate_hash": "8a71eff6f75422e4c0cc", "incumbent_hash": "72b68491c563014809a1"}
+{"proposal_id": "dt4:digits_mlp__s124:t003", "node": "digits_mlp", "reason": "random", "candidate_hash": "f89b4cee70499d5f6131", "incumbent_hash": "72b68491c563014809a1"}
+{"proposal_id": "dt4:digits_mlp__s124:t004", "node": "digits_mlp", "reason": "random", "candidate_hash": "5a0b3b1e7f21e2c873b8", "incumbent_hash": "f89b4cee70499d5f6131"}
+{"proposal_id": "dt4:digits_mlp__s124:t008", "node": "digits_mlp", "reason": "random", "candidate_hash": "ab533f020d2bf208d2e4", "incumbent_hash": "f89b4cee70499d5f6131"}
+{"proposal_id": "dt4:digits_mlp__s124:t009", "node": "digits_mlp", "reason": "random", "candidate_hash": "6ac92b9c3b21fa20ed93", "incumbent_hash": "ab533f020d2bf208d2e4"}
+{"proposal_id": "dt4:digits_mlp__s124:t010", "node": "digits_mlp", "reason": "random", "candidate_hash": "3f80dd603efea763c0d5", "incumbent_hash": "6ac92b9c3b21fa20ed93"}
+{"proposal_id": "dt4:digits_mlp__s134:t002", "node": "digits_mlp", "reason": "random", "candidate_hash": "f89b4cee70499d5f6131", "incumbent_hash": "72b68491c563014809a1"}
+{"proposal_id": "dt4:digits_mlp__s134:t003", "node": "digits_mlp", "reason": "random", "candidate_hash": "5a0b3b1e7f21e2c873b8", "incumbent_hash": "f89b4cee70499d5f6131"}
+{"proposal_id": "dt4:digits_mlp__s134:t008", "node": "digits_mlp", "reason": "random+di", "candidate_hash": "ab533f020d2bf208d2e4", "incumbent_hash": "f89b4cee70499d5f6131", "di_direction": "promotion", "di_inert": false}
+{"proposal_id": "dt4:digits_mlp__s144:t002", "node": "digits_mlp", "reason": "random", "candidate_hash": "f89b4cee70499d5f6131", "incumbent_hash": "72b68491c563014809a1"}
+{"proposal_id": "dt4:digits_mlp__s144:t003", "node": "digits_mlp", "reason": "random", "candidate_hash": "ab533f020d2bf208d2e4", "incumbent_hash": "f89b4cee70499d5f6131"}
+{"proposal_id": "dt4:digits_mlp__s144:t004", "node": "digits_mlp", "reason": "random+di", "candidate_hash": "f5400a6271f8c17d39c2", "incumbent_hash": "ab533f020d2bf208d2e4", "di_direction": "promotion", "di_inert": false}
+{"proposal_id": "dt4:digits_mlp__s144:t007", "node": "digits_mlp", "reason": "random", "candidate_hash": "6ac92b9c3b21fa20ed93", "incumbent_hash": "ab533f020d2bf208d2e4"}
+{"proposal_id": "dt4:digits_mlp__s154:t002", "node": "digits_mlp", "reason": "random", "candidate_hash": "f89b4cee70499d5f6131", "incumbent_hash": "72b68491c563014809a1"}
+{"proposal_id": "dt4:digits_mlp__s154:t003", "node": "digits_mlp", "reason": "random", "candidate_hash": "8a71eff6f75422e4c0cc", "incumbent_hash": "72b68491c563014809a1"}
+{"proposal_id": "rerun2A:tabular_mlp__s102:t012", "node": "tabular_mlp", "reason": "di", "candidate_hash": "dde007f123c94de1edab", "incumbent_hash": "c8dc5fe83589604ed141", "di_direction": "promotion", "di_inert": true}
+{"proposal_id": "rerun2A:tabular_mlp__s112:t008", "node": "tabular_mlp", "reason": "di", "candidate_hash": "208c5ccadc864ff68282", "incumbent_hash": "6c86411c68ce944880b1", "di_direction": "promotion", "di_inert": true}
+{"proposal_id": "rerun2A:tabular_mlp__s112:t012", "node": "tabular_mlp", "reason": "di", "candidate_hash": "208c5ccadc864ff68282", "incumbent_hash": "6c86411c68ce944880b1", "di_direction": "promotion", "di_inert": true}
+{"proposal_id": "rerun2A:tabular_mlp__s122:t012", "node": "tabular_mlp", "reason": "di", "candidate_hash": "3cc70ab9831518337f79", "incumbent_hash": "3e0ddf0941a3ad594930", "di_direction": "demotion", "di_inert": false}
+{"proposal_id": "rerun2A:tabular_mlp__s132:t008", "node": "tabular_mlp", "reason": "di", "candidate_hash": "0e4880a5e47ad10e4a63", "incumbent_hash": "3d891ff744004d94ba3d", "di_direction": "promotion", "di_inert": true}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t008", "node": "tabular_mlp", "reason": "di", "candidate_hash": "c8e5c5ffe5ee86751bd8", "incumbent_hash": "3d891ff744004d94ba3d", "di_direction": "promotion", "di_inert": false}
+{"proposal_id": "rerun2A:tabular_mlp__s152:t012", "node": "tabular_mlp", "reason": "di", "candidate_hash": "3bc356d87c46655b88b9", "incumbent_hash": "d74be931325b0b78e494", "di_direction": "promotion", "di_inert": false}
+{"proposal_id": "rerun2A:tabular_mlp__s182:t004", "node": "tabular_mlp", "reason": "di", "candidate_hash": "0fc8dce1d4a45f16668d", "incumbent_hash": "408970dd4dbc873ca242", "di_direction": "demotion", "di_inert": false}
+{"proposal_id": "rerun2A:tabular_mlp__s182:t008", "node": "tabular_mlp", "reason": "di", "candidate_hash": "dde007f123c94de1edab", "incumbent_hash": "642f1f80446ac132874f", "di_direction": "promotion", "di_inert": true}
+{"proposal_id": "rerun2A:tabular_mlp__s202:t004", "node": "tabular_mlp", "reason": "di", "candidate_hash": "18f480f8823bc82e791c", "incumbent_hash": "3d891ff744004d94ba3d", "di_direction": "demotion", "di_inert": false}
+{"proposal_id": "rerun2A:tabular_mlp__s252:t008", "node": "tabular_mlp", "reason": "di", "candidate_hash": "208c5ccadc864ff68282", "incumbent_hash": "408970dd4dbc873ca242", "di_direction": "promotion", "di_inert": false}
+{"proposal_id": "rerun2A:tabular_mlp__s252:t012", "node": "tabular_mlp", "reason": "di", "candidate_hash": "208c5ccadc864ff68282", "incumbent_hash": "408970dd4dbc873ca242", "di_direction": "promotion", "di_inert": true}
+{"proposal_id": "dt4:digits_mlp__s104:t008", "node": "digits_mlp", "reason": "di", "candidate_hash": "f89b4cee70499d5f6131", "incumbent_hash": "72b68491c563014809a1", "di_direction": "promotion", "di_inert": true}
+{"proposal_id": "dt4:digits_mlp__s104:t012", "node": "digits_mlp", "reason": "di", "candidate_hash": "f89b4cee70499d5f6131", "incumbent_hash": "72b68491c563014809a1", "di_direction": "promotion", "di_inert": true}
+{"proposal_id": "dt4:digits_mlp__s114:t008", "node": "digits_mlp", "reason": "di", "candidate_hash": "7d4587fdaf1a7959182a", "incumbent_hash": "f5400a6271f8c17d39c2", "di_direction": "promotion", "di_inert": true}
+{"proposal_id": "dt4:digits_mlp__s144:t008", "node": "digits_mlp", "reason": "di", "candidate_hash": "f5400a6271f8c17d39c2", "incumbent_hash": "ab533f020d2bf208d2e4", "di_direction": "promotion", "di_inert": true}

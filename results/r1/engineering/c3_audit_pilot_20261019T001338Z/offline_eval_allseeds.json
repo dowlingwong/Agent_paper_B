@@ -1,0 +1,1876 @@
+{
+ "label": "ENGINEERING_ONLY",
+ "ai_assisted": "AI-assisted (Claude)",
+ "note": "Pilot engineering check; tiny audited sample; not the C3 gate decision.",
+ "seed_split": false,
+ "n_rows": 627,
+ "rows_by_stratum": {
+  "dt4:digits_mlp": {
+   "inert": 88,
+   "audited_noninert": 26
+  },
+  "rerun2A:openml_breast_w": {
+   "inert": 209,
+   "audited_noninert": 54
+  },
+  "rerun2A:tabular_mlp": {
+   "inert": 174,
+   "audited_noninert": 76
+  }
+ },
+ "instance": {
+  "mode": "instance",
+  "k": 3,
+  "n_rows": 627,
+  "per_g": {
+   "0.0": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0004968260233918124,
+       "per_campaign": 0.009936520467836248,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 4.309586056643909e-06,
+       "per_campaign": 8.619172113287819e-05,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 1.988304093567202e-05,
+       "per_campaign": 0.0003976608187134404,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0003257880116959058,
+       "per_campaign": 0.0065157602339181156,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 4.309586056643909e-06,
+       "per_campaign": 8.619172113287819e-05,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 4.365497076023412e-05,
+       "per_campaign": 0.0008730994152046824,
+       "exec_rate": 1.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0003257880116959058,
+       "per_campaign": 0.0065157602339181156,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 4.309586056643909e-06,
+       "per_campaign": 8.619172113287819e-05,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 4.365497076023412e-05,
+       "per_campaign": 0.0008730994152046824,
+       "exec_rate": 1.0
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0006963698830409349,
+       "per_campaign": 0.0139273976608187,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 5.265686274508865e-06,
+       "per_campaign": 0.00010531372549017729,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.00011152046783625737,
+       "per_campaign": 0.0022304093567251473,
+       "exec_rate": 1.0
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 0.007411637426900582,
+      "ci95": [
+       0.004235175438596484,
+       0.009855058479532164
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": 1.9122004357299112e-05,
+      "ci95": [
+       0.0,
+       4.6253527622719054e-05
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": 0.001357309941520465,
+      "ci95": [
+       -5.957903357903916e-05,
+       0.002979099508363972
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 1
+   },
+   "0.02": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00034641966353810005,
+       "per_campaign": 0.006928393270762001,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -7.368973225704908e-05,
+       "per_campaign": -0.0014737946451409817,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -7.15075129160983e-05,
+       "per_campaign": -0.001430150258321966,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00017538165184219375,
+       "per_campaign": 0.003507633036843875,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -2.373116728106517e-05,
+       "per_campaign": -0.0004746233456213034,
+       "exec_rate": 0.34106753812636165
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -4.7735583091536205e-05,
+       "per_campaign": -0.0009547116618307241,
+       "exec_rate": 1.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0002914848068169891,
+       "per_campaign": 0.005829696136339782,
+       "exec_rate": 0.22807017543859648
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -2.574309247010252e-05,
+       "per_campaign": -0.0005148618494020504,
+       "exec_rate": 0.38529411764705884
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -1.2386346406355216e-06,
+       "per_campaign": -2.4772692812710433e-05,
+       "exec_rate": 0.49122807017543857
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0006660247402634317,
+       "per_campaign": 0.013320494805268633,
+       "exec_rate": 0.20175438596491227
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -2.478699225223756e-05,
+       "per_campaign": -0.0004957398450447512,
+       "exec_rate": 0.38529411764705884
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 8.5543403975071e-05,
+       "per_campaign": 0.00171086807950142,
+       "exec_rate": 0.27368421052631575
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 0.00749079866892885,
+      "ci95": [
+       0.004314336680624753,
+       0.009960606802236524
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": 1.9122004357299112e-05,
+      "ci95": [
+       0.0,
+       4.6253527622719054e-05
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": 0.0017356407723141307,
+      "ci95": [
+       0.00036065453723129197,
+       0.00331495361968262
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 1
+   },
+   "0.05": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00012081012375753143,
+       "per_campaign": 0.0024162024751506286,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.0001906887097275886,
+       "per_campaign": -0.003813774194551772,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.0002085933436937538,
+       "per_campaign": -0.004171866873875076,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": -5.022788793837509e-05,
+       "per_campaign": -0.0010045577587675018,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.00018482141386919174,
+       "per_campaign": -0.0036964282773838345,
+       "exec_rate": 1.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00024002999949861368,
+       "per_campaign": 0.0048005999899722734,
+       "exec_rate": 0.22807017543859648
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -2.547674790524461e-05,
+       "per_campaign": -0.0005095349581048922,
+       "exec_rate": 0.13556644880174293
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -6.857904274193999e-05,
+       "per_campaign": -0.0013715808548387999,
+       "exec_rate": 0.49122807017543857
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.000627103796266199,
+       "per_campaign": 0.01254207592532398,
+       "exec_rate": 0.18421052631578946
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -4.343078356049691e-05,
+       "per_campaign": -0.0008686156712099382,
+       "exec_rate": 0.24972766884531594
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 5.9248577954561657e-05,
+       "per_campaign": 0.001184971559091233,
+       "exec_rate": 0.22456140350877188
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 0.007741475935351704,
+      "ci95": [
+       0.004433078543667157,
+       0.010250864689673511
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": -0.00035908071310504594,
+      "ci95": [
+       -0.0007396919985856672,
+       9.623529425777295e-05
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": 0.0025565524139300323,
+      "ci95": [
+       0.0012636905783382942,
+       0.0040702410195531296
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": true,
+    "nodes_passing": 2
+   },
+   "0.1": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": -0.0002552057758767497,
+       "per_campaign": -0.005104115517534994,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.00038568700551182104,
+       "per_campaign": -0.007713740110236421,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.00043706972832317965,
+       "per_campaign": -0.008741394566463593,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": -0.00044841447436617634,
+       "per_campaign": -0.008968289487323526,
+       "exec_rate": 0.6666666666666666
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00015427198730132144,
+       "per_campaign": 0.0030854397460264287,
+       "exec_rate": 0.22807017543859648
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.0001808130562441141,
+       "per_campaign": -0.003616261124882282,
+       "exec_rate": 0.49122807017543857
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0005109221585886055,
+       "per_campaign": 0.01021844317177211,
+       "exec_rate": 0.14912280701754385
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -5.565310838286374e-06,
+       "per_campaign": -0.00011130621676572747,
+       "exec_rate": 0.014270152505446623
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 1.8341969946772903e-05,
+       "per_campaign": 0.00036683939893545806,
+       "exec_rate": 0.1333333333333333
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 0.007133003425745679,
+      "ci95": [
+       0.0040849327084992865,
+       0.010107454794680022
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": -0.00011130621676572747,
+      "ci95": [
+       -0.0002816900100230494,
+       0.0
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": 0.00398310052381774,
+      "ci95": [
+       0.0027410006193625807,
+       0.005136361986740718
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": true,
+    "nodes_passing": 2
+   },
+   "0.2": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": -0.0010072375751453118,
+       "per_campaign": -0.020144751502906236,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.000775683597080286,
+       "per_campaign": -0.01551367194160572,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.0008940224975820313,
+       "per_campaign": -0.017880449951640627,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": -1.7244037093262875e-05,
+       "per_campaign": -0.0003448807418652575,
+       "exec_rate": 0.22807017543859648
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0004697935709013879,
+       "per_campaign": 0.009395871418027758,
+       "exec_rate": 0.09649122807017543
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -1.4231304727682979e-05,
+       "per_campaign": -0.00028462609455365956,
+       "exec_rate": 0.07719298245614034
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 0.009740752159893016,
+      "ci95": [
+       0.006385199295679158,
+       0.012650025398889174
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": -0.00028462609455365956,
+      "ci95": [
+       -0.0018001415832371288,
+       0.0013471127131679686
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 1
+   },
+   "0.3": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": -0.001759269374413874,
+       "per_campaign": -0.03518538748827748,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.0011656801886487508,
+       "per_campaign": -0.023313603772975016,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.0013509752668408829,
+       "per_campaign": -0.027019505336817656,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": -0.0001887600614878471,
+       "per_campaign": -0.003775201229756942,
+       "exec_rate": 0.22807017543859648
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00034257079079726106,
+       "per_campaign": 0.006851415815945221,
+       "exec_rate": 0.07017543859649122
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -2.4573671656326576e-06,
+       "per_campaign": -4.914734331265315e-05,
+       "exec_rate": 0.04912280701754385
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 0.010626617045702162,
+      "ci95": [
+       0.0074144448367157185,
+       0.01403452832286577
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": -4.914734331265315e-05,
+      "ci95": [
+       -0.0014686095886605641,
+       0.0012650324857392036
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 1
+   }
+  },
+  "scores": {
+   "A1": {
+    "digits_mlp": {
+     "log_score": 1.2048701598441705,
+     "log_score_noninert": 4.380166071765029,
+     "pi_pred_mean": 0.7719298245614035,
+     "inert_frac": 0.7719298245614035,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 26,
+       "pred": 0.11409815028493149,
+       "obs": 0.5396598213764564
+      }
+     ]
+    },
+    "openml_breast_w": {
+     "log_score": 0.7227403121981844,
+     "log_score_noninert": 1.0843454973266853,
+     "pi_pred_mean": 0.6138712635723045,
+     "inert_frac": 0.6147058823529412,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 54,
+       "pred": 0.18856090885860916,
+       "obs": 0.4964218936754487
+      }
+     ]
+    },
+    "tabular_mlp": {
+     "log_score": 1.5910452148708514,
+     "log_score_noninert": 2.4854947294582597,
+     "pi_pred_mean": 0.48724109172937496,
+     "inert_frac": 0.5087719298245614,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 70,
+       "pred": 0.21454206470700185,
+       "obs": 0.41313925593484785
+      }
+     ]
+    }
+   },
+   "A2": {
+    "digits_mlp": {
+     "log_score": 0.6556212930055803,
+     "log_score_noninert": 2.8746472077936978,
+     "pi_pred_mean": 0.7719298245614035,
+     "inert_frac": 0.7719298245614035,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0.5,
+        0.65
+       ],
+       "n": 26,
+       "pred": 0.5377930269832875,
+       "obs": 0.5396598213764564
+      }
+     ]
+    },
+    "openml_breast_w": {
+     "log_score": 0.043496672783252026,
+     "log_score_noninert": 0.11289212783439459,
+     "pi_pred_mean": 0.6147058823529412,
+     "inert_frac": 0.6147058823529412,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 54,
+       "pred": 0.4963042487880283,
+       "obs": 0.4964218936754487
+      }
+     ]
+    },
+    "tabular_mlp": {
+     "log_score": 0.8886233583921527,
+     "log_score_noninert": 1.8089832652983109,
+     "pi_pred_mean": 0.5087719298245614,
+     "inert_frac": 0.5087719298245614,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 70,
+       "pred": 0.4207191483702478,
+       "obs": 0.41313925593484785
+      }
+     ]
+    }
+   },
+   "A3": {
+    "digits_mlp": {
+     "log_score": 0.3695433354618224,
+     "log_score_noninert": 1.6203053939479903,
+     "pi_pred_mean": 0.7719298245614035,
+     "inert_frac": 0.7719298245614035,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 9,
+       "pred": 0.24494742665810618,
+       "obs": 0.08753884419815744
+      },
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 4,
+       "pred": 0.4231137538198302,
+       "obs": 0.5764027027000812
+      },
+      {
+       "bin": [
+        0.5,
+        0.65
+       ],
+       "n": 2,
+       "pred": 0.5341833004029084,
+       "obs": 0.3481419375197996
+      },
+      {
+       "bin": [
+        0.65,
+        1.01
+       ],
+       "n": 11,
+       "pred": 0.7973374380361207,
+       "obs": 0.9310373701967749
+      }
+     ]
+    },
+    "openml_breast_w": {
+     "log_score": 0.038049006320366036,
+     "log_score_noninert": 0.09875314617499582,
+     "pi_pred_mean": 0.6147058823529412,
+     "inert_frac": 0.6147058823529412,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 38,
+       "pred": 0.4978497126409041,
+       "obs": 0.49598787320908
+      },
+      {
+       "bin": [
+        0.5,
+        0.65
+       ],
+       "n": 16,
+       "pred": 0.5027971429990385,
+       "obs": 0.49745269228307426
+      }
+     ]
+    },
+    "tabular_mlp": {
+     "log_score": 0.7111931142301986,
+     "log_score_noninert": 1.4477859825400468,
+     "pi_pred_mean": 0.5087719298245614,
+     "inert_frac": 0.5087719298245614,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 23,
+       "pred": 0.19938049173659517,
+       "obs": 0.20920775877782744
+      },
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 26,
+       "pred": 0.4716450634502922,
+       "obs": 0.45387244158860246
+      },
+      {
+       "bin": [
+        0.5,
+        0.65
+       ],
+       "n": 12,
+       "pred": 0.5539980937834591,
+       "obs": 0.6022156835960965
+      },
+      {
+       "bin": [
+        0.65,
+        1.01
+       ],
+       "n": 9,
+       "pred": 0.7533346299581856,
+       "obs": 0.5645219754547225
+      }
+     ]
+    }
+   }
+  },
+  "theory": {
+   "digits_mlp": {
+    "prop7_gap_under_A3_mean": 0.00026394040401397386,
+    "prop7_lower_mean": 9.464574721045943e-05,
+    "prop7_upper_mean": 0.00048171782396465047,
+    "realised_threshold_gain_g0_per_noninert": 0.0016248589743589734,
+    "prop8_screening_term_g0.05": 4.937222161533897e-05,
+    "realised_screening_gain_g0.05": 7.231074992966943e-05,
+    "prop8_screening_term_g0.1": 0.00015107948193318448,
+    "realised_screening_gain_g0.1": -6.108514640703575e-05,
+    "prop8_screening_term_g0.2": 0.0004839207163047418,
+    "realised_screening_gain_g0.2": 0.0005106136145406491
+   },
+   "openml_breast_w": {
+    "prop7_gap_under_A3_mean": 4.490823401753357e-09,
+    "prop7_lower_mean": 4.489406031844739e-09,
+    "prop7_upper_mean": 4.497136641462448e-09,
+    "realised_threshold_gain_g0_per_noninert": 2.4814814814815644e-06,
+    "prop8_screening_term_g0.05": 8.169607763372733e-07,
+    "realised_screening_gain_g0.05": 6.861051147963737e-05,
+    "prop8_screening_term_g0.1": 0.00016977181229616884,
+    "realised_screening_gain_g0.1": 0.0003618856066955614,
+    "prop8_screening_term_g0.2": 0.0005496712979812214,
+    "realised_screening_gain_g0.2": 0.0007663265164702658
+   },
+   "tabular_mlp": {
+    "prop7_gap_under_A3_mean": 6.654252432720835e-05,
+    "prop7_lower_mean": 3.756555687691488e-05,
+    "prop7_upper_mean": 8.78786957346302e-05,
+    "realised_threshold_gain_g0_per_noninert": 0.0001381547619047616,
+    "prop8_screening_term_g0.05": 9.199757674232403e-05,
+    "realised_screening_gain_g0.05": 0.00012206575165597381,
+    "prop8_screening_term_g0.1": 0.000235011965367215,
+    "realised_screening_gain_g0.1": 0.00026726796998382965,
+    "prop8_screening_term_g0.2": 0.0005883005160596966,
+    "realised_screening_gain_g0.2": 0.000657910858655396
+   }
+  }
+ },
+ "lono": {
+  "mode": "lono",
+  "k": 3,
+  "n_rows": 627,
+  "per_g": {
+   "0.0": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0004968260233918124,
+       "per_campaign": 0.009936520467836248,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 4.309586056643909e-06,
+       "per_campaign": 8.619172113287819e-05,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 1.988304093567202e-05,
+       "per_campaign": 0.0003976608187134404,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0004968260233918124,
+       "per_campaign": 0.009936520467836248,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 4.309586056643909e-06,
+       "per_campaign": 8.619172113287819e-05,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 1.3157894736842345e-05,
+       "per_campaign": 0.00026315789473684687,
+       "exec_rate": 1.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0004968260233918124,
+       "per_campaign": 0.009936520467836248,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 4.309586056643909e-06,
+       "per_campaign": 8.619172113287819e-05,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 1.3157894736842345e-05,
+       "per_campaign": 0.00026315789473684687,
+       "exec_rate": 1.0
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00045203070175438563,
+       "per_campaign": 0.009040614035087713,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 4.787636165576387e-06,
+       "per_campaign": 9.575272331152774e-05,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 8.505847953216368e-05,
+       "per_campaign": 0.0017011695906432736,
+       "exec_rate": 1.0
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": -0.0008959064327485348,
+      "ci95": [
+       -0.0026877192982456043,
+       0.0
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": 9.561002178649556e-06,
+      "ci95": [
+       0.0,
+       2.8802234826268432e-05
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": 0.0014380116959064261,
+      "ci95": [
+       0.00024281864299300734,
+       0.002669433066031762
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 0
+   },
+   "0.02": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00034641966353810005,
+       "per_campaign": 0.006928393270762001,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -7.368973225704908e-05,
+       "per_campaign": -0.0014737946451409817,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -7.15075129160983e-05,
+       "per_campaign": -0.001430150258321966,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00034641966353810005,
+       "per_campaign": 0.006928393270762001,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -7.368973225704908e-05,
+       "per_campaign": -0.0014737946451409817,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -7.823265911492795e-05,
+       "per_campaign": -0.0015646531822985591,
+       "exec_rate": 1.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0004625228185128956,
+       "per_campaign": 0.009250456370257912,
+       "exec_rate": 0.22807017543859648
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -2.574309247010252e-05,
+       "per_campaign": -0.0005148618494020504,
+       "exec_rate": 0.38529411764705884
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -3.1735710664027294e-05,
+       "per_campaign": -0.0006347142132805459,
+       "exec_rate": 0.49122807017543857
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0004296016831797093,
+       "per_campaign": 0.008592033663594185,
+       "exec_rate": 0.14912280701754385
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -2.4151980193512768e-05,
+       "per_campaign": -0.00048303960387025534,
+       "exec_rate": 0.3710239651416122
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 5.363295575155491e-05,
+       "per_campaign": 0.0010726591150310983,
+       "exec_rate": 0.343859649122807
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": -0.0006584227066637257,
+      "ci95": [
+       -0.0023710743301325263,
+       0.00029025788743698884
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": 3.182224553179506e-05,
+      "ci95": [
+       0.0,
+       8.267340892135222e-05
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": 0.0017073733283116442,
+      "ci95": [
+       0.000542517666499225,
+       0.0029363677172567796
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 0
+   },
+   "0.05": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00012081012375753143,
+       "per_campaign": 0.0024162024751506286,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.0001906887097275886,
+       "per_campaign": -0.003813774194551772,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.0002085933436937538,
+       "per_campaign": -0.004171866873875076,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.0001906887097275886,
+       "per_campaign": -0.003813774194551772,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0004110680111945202,
+       "per_campaign": 0.008221360223890403,
+       "exec_rate": 0.22807017543859648
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -7.082211026022214e-05,
+       "per_campaign": -0.0014164422052044428,
+       "exec_rate": 0.38529411764705884
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -9.907611876533176e-05,
+       "per_campaign": -0.001981522375306635,
+       "exec_rate": 0.49122807017543857
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0004124500807402508,
+       "per_campaign": 0.008249001614805017,
+       "exec_rate": 0.10526315789473684
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -6.756140473214648e-05,
+       "per_campaign": -0.0013512280946429297,
+       "exec_rate": 0.3710239651416122
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 2.7338129731045542e-05,
+       "per_campaign": 0.0005467625946209108,
+       "exec_rate": 0.2526315789473684
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 2.764139091461157e-05,
+      "ci95": [
+       -0.0012364298610606603,
+       0.000791612420282697
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": 6.521411056151329e-05,
+      "ci95": [
+       0.0,
+       0.0001656601114872434
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": 0.002528284969927546,
+      "ci95": [
+       0.0012912245676150397,
+       0.0037926336221752784
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 1
+   },
+   "0.1": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": -0.0002552057758767497,
+       "per_campaign": -0.005104115517534994,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.00038568700551182104,
+       "per_campaign": -0.007713740110236421,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.00043706972832317965,
+       "per_campaign": -0.008741394566463593,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.00038568700551182104,
+       "per_campaign": -0.007713740110236421,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.0001459538065770882,
+       "per_campaign": -0.002919076131541764,
+       "exec_rate": 0.38529411764705884
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.00035038665736127024,
+       "per_campaign": 0.007007733147225405,
+       "exec_rate": 0.07017543859649122
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.00013991044562986936,
+       "per_campaign": -0.0027982089125973874,
+       "exec_rate": 0.3710239651416122
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 2.6421833554313054e-05,
+       "per_campaign": 0.0005284366710862611,
+       "exec_rate": 0.14035087719298245
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 0.007007733147225405,
+      "ci95": [
+       0.0024662238370272383,
+       0.011549242457423572
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": 0.00012086721894437701,
+      "ci95": [
+       0.0,
+       0.0003029659867817452
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": 0.0005284366710862611,
+      "ci95": [
+       -0.0013842483851773393,
+       0.0029624460233948573
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 1
+   },
+   "0.2": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": -0.0010072375751453118,
+       "per_campaign": -0.020144751502906236,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.000775683597080286,
+       "per_campaign": -0.01551367194160572,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.0008940224975820313,
+       "per_campaign": -0.017880449951640627,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.0002962171992108203,
+       "per_campaign": -0.005924343984216406,
+       "exec_rate": 0.38529411764705884
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.000132436018739115,
+       "per_campaign": 0.0026487203747823,
+       "exec_rate": 0.017543859649122806
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.000185391410912776,
+       "per_campaign": -0.0037078282182555202,
+       "exec_rate": 0.24259259259259258
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -2.994327306034307e-05,
+       "per_campaign": -0.0005988654612068614,
+       "exec_rate": 0.10526315789473684
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 0.0026487203747823,
+      "ci95": [
+       0.0,
+       0.007946161124346901
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": 0.0022165157659608855,
+      "ci95": [
+       0.001268434763312318,
+       0.0034047720681440697
+      ],
+      "delta_n": 0.002,
+      "pass": true,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": -0.0005988654612068614,
+      "ci95": [
+       -0.0024126999133818137,
+       0.0013751826538559557
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 1
+   },
+   "0.3": {
+    "arms": {
+     "A0": {
+      "digits_mlp": {
+       "mean_per_proposal": -0.001759269374413874,
+       "per_campaign": -0.03518538748827748,
+       "exec_rate": 1.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -0.0011656801886487508,
+       "per_campaign": -0.023313603772975016,
+       "exec_rate": 1.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -0.0013509752668408829,
+       "per_campaign": -0.027019505336817656,
+       "exec_rate": 1.0
+      }
+     },
+     "A1": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A2": {
+      "digits_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": 0.0,
+       "per_campaign": 0.0,
+       "exec_rate": 0.0
+      }
+     },
+     "A3": {
+      "digits_mlp": {
+       "mean_per_proposal": 6.572869534088575e-05,
+       "per_campaign": 0.001314573906817715,
+       "exec_rate": 0.008771929824561403
+      },
+      "openml_breast_w": {
+       "mean_per_proposal": -9.730372689743419e-05,
+       "per_campaign": -0.0019460745379486838,
+       "exec_rate": 0.08562091503267974
+      },
+      "tabular_mlp": {
+       "mean_per_proposal": -3.5995904639290476e-05,
+       "per_campaign": -0.0007199180927858096,
+       "exec_rate": 0.07017543859649122
+      }
+     }
+    },
+    "gate": {
+     "digits_mlp": {
+      "gain_A3_minus_A2_per20": 0.001314573906817715,
+      "ci95": [
+       0.0,
+       0.003943721720453145
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 6,
+      "n_eval_rows": 114
+     },
+     "openml_breast_w": {
+      "gain_A3_minus_A2_per20": -0.0019460745379486838,
+      "ci95": [
+       -0.0034929753368825238,
+       -0.0008023495010286126
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 263
+     },
+     "tabular_mlp": {
+      "gain_A3_minus_A2_per20": -0.0007199180927858096,
+      "ci95": [
+       -0.002247421227745159,
+       0.0010275099544865313
+      ],
+      "delta_n": 0.002,
+      "pass": false,
+      "n_instances": 18,
+      "n_eval_rows": 244
+     }
+    },
+    "gate_pass": false,
+    "nodes_passing": 0
+   }
+  },
+  "scores": {
+   "A1": {
+    "digits_mlp": {
+     "log_score": 1.3033726291765348,
+     "log_score_noninert": 3.691162633821033,
+     "pi_pred_mean": 0.5499712808730611,
+     "inert_frac": 0.7719298245614035,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 26,
+       "pred": 0.20360676029964433,
+       "obs": 0.5396598213764564
+      }
+     ]
+    },
+    "openml_breast_w": {
+     "log_score": 1.0736819766318895,
+     "log_score_noninert": 1.8529537668302931,
+     "pi_pred_mean": 0.5569727891156461,
+     "inert_frac": 0.6147058823529412,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 54,
+       "pred": 0.19300942847996666,
+       "obs": 0.4964218936754487
+      }
+     ]
+    },
+    "tabular_mlp": {
+     "log_score": 2.0555627047716554,
+     "log_score_noninert": 3.7450174090736974,
+     "pi_pred_mean": 0.6541850220264317,
+     "inert_frac": 0.5087719298245614,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 70,
+       "pred": 0.1741463071085278,
+       "obs": 0.41313925593484785
+      }
+     ]
+    }
+   },
+   "A2": {
+    "digits_mlp": {
+     "log_score": 0.6597428741409818,
+     "log_score_noninert": 2.8927187558489202,
+     "pi_pred_mean": 0.7719298245614035,
+     "inert_frac": 0.7719298245614035,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 26,
+       "pred": 0.4524305930844679,
+       "obs": 0.5396598213764564
+      }
+     ]
+    },
+    "openml_breast_w": {
+     "log_score": 0.4002549649893722,
+     "log_score_noninert": 1.038829680125088,
+     "pi_pred_mean": 0.6147058823529412,
+     "inert_frac": 0.6147058823529412,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 54,
+       "pred": 0.4356604374135141,
+       "obs": 0.4964218936754487
+      }
+     ]
+    },
+    "tabular_mlp": {
+     "log_score": 1.31804646418699,
+     "log_score_noninert": 2.683166016380659,
+     "pi_pred_mean": 0.5087719298245614,
+     "inert_frac": 0.5087719298245614,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0.5,
+        0.65
+       ],
+       "n": 70,
+       "pred": 0.5035823148233858,
+       "obs": 0.41313925593484785
+      }
+     ]
+    }
+   },
+   "A3": {
+    "digits_mlp": {
+     "log_score": 0.6091298131082407,
+     "log_score_noninert": 2.670799949782286,
+     "pi_pred_mean": 0.7719298245614035,
+     "inert_frac": 0.7719298245614035,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 12,
+       "pred": 0.26739755903294654,
+       "obs": 0.12379791347416606
+      },
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 6,
+       "pred": 0.4419658497075834,
+       "obs": 0.764415463971018
+      },
+      {
+       "bin": [
+        0.5,
+        0.65
+       ],
+       "n": 1,
+       "pred": 0.5143996538513892,
+       "obs": 0.9591531503611433
+      },
+      {
+       "bin": [
+        0.65,
+        1.01
+       ],
+       "n": 7,
+       "pred": 0.6723130191023572,
+       "obs": 0.9999906371300887
+      }
+     ]
+    },
+    "openml_breast_w": {
+     "log_score": 0.4690568072215954,
+     "log_score_noninert": 1.2173993469873468,
+     "pi_pred_mean": 0.6147058823529412,
+     "inert_frac": 0.6147058823529412,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 14,
+       "pred": 0.2683755235333226,
+       "obs": 0.5007839637980105
+      },
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 30,
+       "pred": 0.41452679351037114,
+       "obs": 0.49271041970671947
+      },
+      {
+       "bin": [
+        0.5,
+        0.65
+       ],
+       "n": 10,
+       "pred": 0.5954756262433837,
+       "obs": 0.5014494174100492
+      }
+     ]
+    },
+    "tabular_mlp": {
+     "log_score": 1.3030567120330647,
+     "log_score_noninert": 2.652651163781596,
+     "pi_pred_mean": 0.5087719298245614,
+     "inert_frac": 0.5087719298245614,
+     "calibration_p_pos": [
+      {
+       "bin": [
+        0,
+        0.35
+       ],
+       "n": 37,
+       "pred": 0.24925463971301226,
+       "obs": 0.35778783708431955
+      },
+      {
+       "bin": [
+        0.35,
+        0.5
+       ],
+       "n": 17,
+       "pred": 0.43616077061398,
+       "obs": 0.4608524158999606
+      },
+      {
+       "bin": [
+        0.5,
+        0.65
+       ],
+       "n": 9,
+       "pred": 0.5760559739239782,
+       "obs": 0.307258542398214
+      },
+      {
+       "bin": [
+        0.65,
+        1.01
+       ],
+       "n": 7,
+       "pred": 0.8018293295941527,
+       "obs": 0.7259685702051806
+      }
+     ]
+    }
+   }
+  },
+  "theory": {
+   "digits_mlp": {
+    "prop7_gap_under_A3_mean": 0.00015160714522769657,
+    "prop7_lower_mean": 9.090447631827746e-05,
+    "prop7_upper_mean": 0.00018316030554589368,
+    "realised_threshold_gain_g0_per_noninert": -0.0001964102564102557,
+    "prop8_screening_term_g0.05": 0.00013708184576194819,
+    "realised_screening_gain_g0.05": 0.0002024700998030744,
+    "prop8_screening_term_g0.1": 0.0003805284304579112,
+    "realised_screening_gain_g0.1": 0.0003063617584679797,
+    "prop8_screening_term_g0.2": 0.0009309718847834021,
+    "realised_screening_gain_g0.2": 0.00010276383454709187
+   },
+   "openml_breast_w": {
+    "prop7_gap_under_A3_mean": 6.334519671830019e-09,
+    "prop7_lower_mean": 6.323011975121243e-09,
+    "prop7_upper_mean": 9.285710603178936e-09,
+    "realised_threshold_gain_g0_per_noninert": 1.2407407407407822e-06,
+    "prop8_screening_term_g0.05": 6.202865069912821e-06,
+    "realised_screening_gain_g0.05": 7.222159103119722e-06,
+    "prop8_screening_term_g0.1": 1.3425024173032543e-05,
+    "realised_screening_gain_g0.1": 1.4444318206239444e-05,
+    "prop8_screening_term_g0.2": 5.5803734264856776e-05,
+    "realised_screening_gain_g0.2": 0.0002863987098038017
+   },
+   "tabular_mlp": {
+    "prop7_gap_under_A3_mean": 0.00012257669594953243,
+    "prop7_lower_mean": 5.772640725924244e-05,
+    "prop7_upper_mean": 0.00017200005557411736,
+    "realised_threshold_gain_g0_per_noninert": 0.00014636904761904695,
+    "prop8_screening_term_g0.05": 6.960825325134934e-05,
+    "realised_screening_gain_g0.05": 0.00011097424396286395,
+    "prop8_screening_term_g0.1": 0.00021368972844843637,
+    "realised_screening_gain_g0.1": 0.00033758531137537,
+    "prop8_screening_term_g0.2": 0.0005586858001362475,
+    "realised_screening_gain_g0.2": 0.0006797948278829573
+   }
+  }
+ }
+}
