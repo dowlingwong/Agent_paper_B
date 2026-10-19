@@ -1,0 +1,76 @@
+{
+ "schema": "r1.c3_audit_pilot/1",
+ "label": "ENGINEERING_ONLY",
+ "ai_assisted": "AI-assisted (Claude)",
+ "note": "Pipeline validation and cost measurement only; tiny selected sample; not evidence and not the C3 gate decision.",
+ "repo_commit_at_run": "a312f8981e47c78753d488a5c80f97341e832958",
+ "repo_branch": "overnight/c3-offline",
+ "code_uncommitted_at_run": true,
+ "code_commit": "see git log of r1/c3 (the commit that adds this directory)",
+ "harness": {
+  "root": "/sessions/rcw-013h1s1cotcc4e2tfptsf3x6/mnt/autoresearch_harness",
+  "commit": "411c6054c8505f93a6429e2f9eed526952793882",
+  "branch": "r1",
+  "dirty": false
+ },
+ "python": "3.13.15",
+ "platform": "Linux-6.8.0-138-generic-aarch64-with-glibc2.35",
+ "cpus": 4,
+ "packages": {
+  "numpy": "2.5.4",
+  "scipy": "1.18.1",
+  "lightgbm": "4.7.0",
+  "sklearn": "1.9.1"
+ },
+ "audit_seeds": [
+  7001,
+  7002,
+  7003,
+  7004,
+  7005,
+  7006
+ ],
+ "seed_condition": "joint (train_seed = split_seed = s)",
+ "K": 6,
+ "plan_seed": 20261019,
+ "quota": {
+  "rerun2A:tabular_mlp": 70,
+  "rerun2A:openml_breast_w": 54,
+  "dt4:digits_mlp": 26
+ },
+ "plan_rows": 166,
+ "di_candidates": 19,
+ "audited_proposals": 166,
+ "distinct_configs_run": 112,
+ "worker_runs": 672,
+ "failed_runs": 0,
+ "sum_run_wall_seconds": 776.7,
+ "elapsed_wall_seconds": 216,
+ "workers": 4,
+ "cost": {
+  "run_seconds_per_audited_proposal_amortised": 4.68,
+  "mean_seconds_per_worker_run": 1.156,
+  "elapsed_wall_seconds_per_proposal_4_workers": 1.3,
+  "run_seconds_per_proposal_without_incumbent_sharing": 13.9
+ },
+ "commands": [
+  "python -m r1.c3.dataset build --out DIR",
+  "python -m r1.c3.dataset plan --table DIR --di",
+  "python -m r1.c3.audit run --plan DIR/plan.jsonl --configs DIR/configs.json --out DIR --workers 4 --deadline 140  (x2)",
+  "python -m r1.c3.audit collect --plan DIR/plan.jsonl --out DIR",
+  "python -m r1.c3.offline_eval --table DIR",
+  "python -m r1.c3.offline_eval --table DIR --no-seed-split --out DIR/offline_eval_allseeds.json"
+ ],
+ "env": "PATH=<hv313>/bin:$PATH AR_HARNESS_ROOT=<harness> OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1",
+ "files": [
+  "audits.jsonl",
+  "build.json",
+  "configs.json",
+  "di_candidate_audits.json",
+  "offline_eval.json",
+  "offline_eval_allseeds.json",
+  "plan.jsonl",
+  "proposals.jsonl",
+  "runs.jsonl"
+ ]
+}
