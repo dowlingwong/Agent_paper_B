@@ -56,6 +56,7 @@ This ladder is C3.
 
 - **Source of proposals.** LLM-manager root campaigns, exactly as in R1-E1B-RERUN2 (pinned `qwen2.5-coder:7b`, memory `append_only_summary` primary, `none` contrast, W = 20). **No branching is needed for C3 training.** Labels are per proposal, which is much cheaper than branch tables.
 - **Audit.** For each non-inert evaluated proposal: run candidate and incumbent configurations on K = 6 common fresh joint seeds, giving Δ_audit and se_audit. Inert proposals are labelled by rule (inert bin = 1).
+- **Separate label and evaluation seeds.** The fresh-seed audit seeds are split (proposed K = 10: 5 for labels, 5 for offline evaluation). Sharing seeds made the pilot gate "pass" spuriously (C3 offline pilot).
 - **Soft target.** The label is N(Δ_audit, se_audit²) integrated over the bins: the posterior of Δ under a flat prior given the audit. This keeps the log loss proper under label noise.
 - **Scale.**
   - One rerun-2-sized sweep (4 nodes × 18 instances × 2 memory modes × 20) gives ≈ 2,900 proposals, of which ≈ 1,000 are non-inert.
@@ -138,6 +139,8 @@ Placement fixed on 18 Oct 2026 (PLAN §10, R1-C4).
 | Too few nodes for LONO | Weak transfer evidence | Extend the OpenML pool and MLP nodes to ≥ 8 qualifying nodes (L8b-style code) |
 | g mis-tuned | Over- or under-skipping | g tuned on dev instances; sensitivity curve reported |
 | DI violated strongly | Plug-in rule not optimal; one-step offline value biased | Measured by the D test; then A7 (online RL) becomes justified, with the T4 Proposition 10(b) explanation |
+| Predictor miscalibration | T5 (check 6): a predictor that is uncalibrated, or overconfident in τ, does **worse than the constant-prior baseline** | Calibration is the primary model-selection criterion (log score, reliability of P(Δ > 0) and π) before any deployment. Isotonic recalibration on dev instances. Ship only arms whose offline one-step value beats A2. |
+| Open small LMs judge ML edits poorly | FOREAGENT reports 52–55 % pairwise accuracy for open Qwen models | A3 (tabular) and A4 (manager zero-shot) are full arms; the LM's case rests on calibrated forecasts and transfer (H2b), not on raw accuracy |
 | Label noise | Blurred targets | Soft labels; K raised to 10 on edits near t* |
 
 ## 9. Timeline (fits PLAN §9)
@@ -157,6 +160,8 @@ Placement fixed on 18 Oct 2026 (PLAN §10, R1-C4).
 - **SAGE** (arXiv 2609.36043): a paired, statistical acceptance gate against the incumbent, citing the optimizer's curse. It has no prior, no screening and no run price.
 - **FOREAGENT** (ACL 2026, arXiv 2601.05930): pairwise pre-execution preference with predict-then-verify for ML agents. It has no increment distribution, no noise model and no decision threshold.
 - **Beneath the Diff** (arXiv 2609.00077): the same keep-if-better ML-edit loop, with repetitive edits and a validation gate. It has no statistical model.
+
+**Full-text read, 19 Oct (`inputs/NOVELTY_FULLTEXT_20261019.md`):** two claims are narrowed. (i) Pre-execution skipping exists (FOREAGENT's confidence-gated best-of-10; the DAPS similarity filter in Beneath the Diff). Ours is a value-based skip rule under a run price, driven by a trained increment-distribution predictor. (ii) Re-proposal of rejected candidates is published ("Visible but Not Avoided", arXiv 2610.15738: 28–63 % of iterations in a deterministic setting). C4's novelty is the decision-independence condition and its test under noise. Additional baselines: a SAGE-style gate charged for its runs; a FOREAGENT-style pairwise screen; the DAPS duplicate filter; a one-sentence "rejection status" memory display as the control for the debiased display.
 
 **Consequences for the design:**
 1. **Positioning.** The C2 formulas for the Bayes threshold and the verify VoI are classical (Xie & Frazier 2013; Chick & Frazier 2012; Smith & Winkler 2006; the Ladder). They are presented as instantiations. The C2 contributions to defend are:

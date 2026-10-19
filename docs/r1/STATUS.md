@@ -22,6 +22,31 @@ AI-assisted by Codex; ENGINEERING_ONLY / PILOT; not evidence. Author-authorized 
 
 
 
+## 19 October 2026 — overnight build merged (ENGINEERING_ONLY)
+
+AI-assisted: four Claude subagents worked overnight, coordinated and merged by the coordinating session (Claude). Each worked in its own git worktree; the merges are `86380c2`, `e249a0f`, `d59d77b` and `3c84170` on `main`, and harness `r1` was fast-forwarded to `4d68c54`. No LLM, GPU, SSH or Ollama was used; workers ran on CPU only. Nothing here is evidence. After merging, the new C3/T5/DI/runner tests pass on `main` (113, with Python 3.13 in the VM).
+- **C3 offline pipeline** (`r1/c3/`; handoff `docs/r1/overnight/C3_OFFLINE_HANDOFF.md`; report `docs/r1/reports/C3_OFFLINE_PILOT_20261019.md`).
+  - Built: T4 rules; 12-bin soft labels; features with ledger replay; CPU audits; arms A1–A3; offline one-step evaluation; the C3 gate.
+  - Pilot: 166 proposals audited (672 runs, 0 failures; ≈ 4.7 run-seconds per proposal).
+  - Gate quantity on this tiny sample: not passed. Digits passes but has only 6 instances; tabular +0.0021 [−0.0002, 0.0040]; breast-w ≈ 0. Sharing audit seeds between labels and evaluation makes the gate pass spuriously, so separate seeds are required.
+- **T5 simulation** (`docs/r1/theory/T5_SIMULATION.md`; `results/r1/engineering/T5_20261019T004918Z/`).
+  - Propositions 7–9 are confirmed in the model (Proposition 7 realised/predicted ratio 0.98–1.02 under DI). Under DI, myopic acceptance is never beaten; under the modelled violations it loses ≤ 0.54 δ_n.
+  - Only audited increments over each branch's own incumbent are a clean DI outcome.
+  - C3 headroom in the model: memory-on oracle 1.35–2.4 δ_n; a calibrated predictor keeps 0.76–1.06 δ_n; an uncalibrated one is worse than the constant prior.
+  - The sign of route D depends on whether the suppressed bold edits are good: it must be measured.
+- **DI verdict revised:** the memory-on "violated in value terms" is withdrawn as proxy selection bias (addendum to `DI_TEST_MEMORY_ON_PARTIAL_20261019.md`). Both memory modes are undetermined.
+- **Novelty full text** (`docs/r1/inputs/NOVELTY_FULLTEXT_20261019.md`): no threat to the core. Pre-execution skipping and re-proposal of rejected candidates are published, so those claims are narrowed (C3_DESIGN §10). Quotes were read via a summarising fetch tool and a mirror; check each against the PDF before the manuscript.
+- **Harness and runner** (`docs/r1/overnight/HARNESS_AND_RUNNER_HANDOFF.md`).
+  - Harness: D4 action versions (Bayes keep rule, posterior-mean verify, `verify_failed` keeps the original decision); `"vary"` default for new manifests; bounded transport retry. All are backward-compatible: legacy records are identical when the options are unset.
+  - Paper: collector observability; dedicated Ollama instance per batch; the C3 label-sweep runner with a Paper A coordination gate (refuses unless Paper A is not waiting for a card); a desktop dry run with fault injection (retry and permanent-loss scenarios passed).
+  - Tests: harness 421 passed, 10 pre-existing environmental failures; paper 193 passed, 1 pre-existing failure.
+- **Open:**
+  1. Author decision: duplicates of earlier non-incumbent configurations are not zero-increment (727 of 841 rule-inert proposals). The inert ⇒ Δ = 0 wording in T4 §1, the labels and the A0/A1 value levels must distinguish "duplicate (known result)" from "inactive edit (Δ = 0)".
+  2. Declare g before the gate.
+  3. Model the runs freed by skipping in the 20-run scaling.
+  4. Add an audited-outcome mode to `di_test.py`.
+  5. Before an Ada C3 sweep: write the real Paper A status command and the sweep config (pinned models dir, nodes, GPU); make sure the OpenML data caches exist in the batch harness; repair and re-check `digits_mlp` (D28). The SIGTERM source is still unknown.
+
 ## 19 October 2026 — DI review; memory-on partial-arm diagnostic authorised
 
 Recorded by an AI agent (Claude, coordinating session).

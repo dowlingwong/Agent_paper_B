@@ -122,3 +122,12 @@ PYTHONDONTWRITEBYTECODE=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q r1/tests/te
 ```
 
 The companion tables concatenate the two generated Markdown reports with heading levels shifted to sit under dataset headings. JSON stays in diagnostic scratch; reproduction records exact input revision and input hashes. A later commit changes revision metadata, not the input blobs or numerical estimates.
+
+
+## Addendum, 19 Oct 2026 — the "violated in value terms" verdict is withdrawn (coordinating-session review; AI-assisted by Claude)
+
+Two independent checks indicate that the memory-on value residual (−0.00122 [−0.00222, −0.00026]) is the selection bias of the immediate-value proxy, not a decision-dependence effect:
+1. **Fresh, selection-free audits** of the 13 changed candidates and their incumbents (C3 offline pilot, `docs/r1/reports/C3_OFFLINE_PILOT_20261019.md` §3; `results/r1/engineering/c3_audit_pilot_20261019T001338Z/di_candidate_audits.json`). The proxy mean immediate value is +0.00083; the audited value is −0.00044. Substituting the audit moves the residual to **+0.00004** (memory-off digits: +0.00051 → −0.00003). The verify direction agreed in sign with the audit at only 7 of 13 points. These are point estimates, without a bootstrap.
+2. **Simulation under DI** (`docs/r1/theory/T5_SIMULATION.md`, check 5): with r = 2 and the fixed split, the D̄ proxy alone produces an expected residual of about −0.8 to −1.9 × 10⁻³ at tabular scale.
+
+**Revised verdict:** memory on, undetermined, with no evidence of a value-relevant violation; memory off, undetermined. T5 also shows that only **audited increments over each branch's own incumbent** are free of the record-reference and proxy artefacts (flag rate 0 under DI). Neither Δ̂ nor absolute metrics are. Any future DI test (the C4 memory-on run) must use them. `r1/diagnostics/di_test.py` still needs an audited-outcome mode.
