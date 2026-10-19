@@ -1,0 +1,33 @@
+{
+ "scenario": "tabular_on/iid/dimret(k=0.3)",
+ "W": 20,
+ "N": 40,
+ "A2_tuned_shift": 0.2,
+ "moment-matched constant t~": {
+  "realised": 0.0013819532248457798,
+  "realised_se": 1.6589778103394996e-05,
+  "predicted_sum_gap": 0.0020665941701450558,
+  "predicted_se": 1.9690628104540142e-06,
+  "lower_bound": 0.0009208421236530119,
+  "upper_bound": 0.007647153779882734,
+  "realised_over_predicted": 0.6687105019505496,
+  "realised_dn": 0.6909766124228899,
+  "upper_dn": 3.823576889941367
+ },
+ "dev-tuned constant t~": {
+  "realised": 0.0013614895069247355,
+  "realised_se": 1.741592562201897e-05,
+  "predicted_sum_gap": 0.0019066918906270876,
+  "predicted_se": 2.7188958379348317e-06,
+  "lower_bound": 0.001122646615772392,
+  "upper_bound": 0.006665206612341662,
+  "realised_over_predicted": 0.7140584766828574,
+  "realised_dn": 0.6807447534623677,
+  "upper_dn": 3.3326033061708307
+ },
+ "_seconds": 1.2395060062408447,
+ "_seeds": [
+  976546699,
+  976554618
+ ]
+}

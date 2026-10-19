@@ -1,0 +1,612 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "note": "model-based numbers, not measurements; AI-assisted (Claude)",
+  "utc_written": "20261019T005652Z",
+  "base_seed": 20261019,
+  "quick": false,
+  "M_test": 20000,
+  "M_big": 40000,
+  "M_dev": 4000,
+  "n_branch": 30000,
+  "parts": {
+    "calibration": {
+      "seconds": 0.000225067138671875,
+      "seeds": [
+        2113405886,
+        2113413805
+      ]
+    },
+    "main_digits_off_iid_W20": {
+      "seconds": 1.184736967086792,
+      "seeds": [
+        790389967,
+        790397886
+      ]
+    },
+    "main_digits_off_iid_W40": {
+      "seconds": 2.2832634449005127,
+      "seeds": [
+        2096284749,
+        2096292668
+      ]
+    },
+    "main_digits_off_record_W20": {
+      "seconds": 1.1923856735229492,
+      "seeds": [
+        746902239,
+        746910158
+      ]
+    },
+    "main_digits_off_record_W40": {
+      "seconds": 2.410304546356201,
+      "seeds": [
+        2118792797,
+        2118800716
+      ]
+    },
+    "main_digits_on_iid_W20": {
+      "seconds": 1.2271616458892822,
+      "seeds": [
+        682807363,
+        682815282
+      ]
+    },
+    "main_digits_on_iid_W40": {
+      "seconds": 2.2414166927337646,
+      "seeds": [
+        1918642377,
+        1918650296
+      ]
+    },
+    "main_digits_on_record_W20": {
+      "seconds": 1.1677742004394531,
+      "seeds": [
+        1583278828,
+        1583286747
+      ]
+    },
+    "main_digits_on_record_W40": {
+      "seconds": 2.3482682704925537,
+      "seeds": [
+        212373106,
+        212381025
+      ]
+    },
+    "main_tabular_off_iid_W20": {
+      "seconds": 1.0555012226104736,
+      "seeds": [
+        1651471766,
+        1651479685
+      ]
+    },
+    "main_tabular_off_iid_W40": {
+      "seconds": 2.1061995029449463,
+      "seeds": [
+        949342744,
+        949350663
+      ]
+    },
+    "main_tabular_off_record_W20": {
+      "seconds": 1.080155372619629,
+      "seeds": [
+        1345204127,
+        1345212046
+      ]
+    },
+    "main_tabular_off_record_W40": {
+      "seconds": 2.131559371948242,
+      "seeds": [
+        433571869,
+        433579788
+      ]
+    },
+    "main_tabular_on_iid_W20": {
+      "seconds": 1.1030175685882568,
+      "seeds": [
+        2001288391,
+        2001296310
+      ]
+    },
+    "main_tabular_on_iid_W40": {
+      "seconds": 2.2223405838012695,
+      "seeds": [
+        561945157,
+        561953076
+      ]
+    },
+    "main_tabular_on_record_W20": {
+      "seconds": 1.1610894203186035,
+      "seeds": [
+        1092069431,
+        1092077350
+      ]
+    },
+    "main_tabular_on_record_W40": {
+      "seconds": 2.320439577102661,
+      "seeds": [
+        1793982645,
+        1793990564
+      ]
+    },
+    "p7_digits_on_iid_stationary_W20": {
+      "seconds": 1.2654237747192383,
+      "seeds": [
+        337091546,
+        337099465
+      ]
+    },
+    "p7_digits_on_iid_dimret_W20": {
+      "seconds": 1.342336654663086,
+      "seeds": [
+        786215557,
+        786223476
+      ]
+    },
+    "p7_digits_on_iid_memory_W20": {
+      "seconds": 1.4124925136566162,
+      "seeds": [
+        1493281363,
+        1493289282
+      ]
+    },
+    "p7_digits_on_record_stationary_W20": {
+      "seconds": 1.17759108543396,
+      "seeds": [
+        1890475161,
+        1890483080
+      ]
+    },
+    "p7_digits_on_record_dimret_W20": {
+      "seconds": 1.2579586505889893,
+      "seeds": [
+        1776021179,
+        1776029098
+      ]
+    },
+    "p7_digits_on_record_memory_W20": {
+      "seconds": 1.4267985820770264,
+      "seeds": [
+        335701261,
+        335709180
+      ]
+    },
+    "p7_digits_on_iid_stationary_W40": {
+      "seconds": 2.279968738555908,
+      "seeds": [
+        1173224788,
+        1173232707
+      ]
+    },
+    "p7_tabular_on_iid_stationary_W20": {
+      "seconds": 1.1441593170166016,
+      "seeds": [
+        305112189,
+        305120108
+      ]
+    },
+    "p7_tabular_on_iid_dimret_W20": {
+      "seconds": 1.2395060062408447,
+      "seeds": [
+        976546699,
+        976554618
+      ]
+    },
+    "p7_tabular_on_iid_memory_W20": {
+      "seconds": 1.4319989681243896,
+      "seeds": [
+        1137275197,
+        1137283116
+      ]
+    },
+    "p7_tabular_on_record_stationary_W20": {
+      "seconds": 1.1543102264404297,
+      "seeds": [
+        153060183,
+        153068102
+      ]
+    },
+    "p7_tabular_on_record_dimret_W20": {
+      "seconds": 1.1814496517181396,
+      "seeds": [
+        2041254673,
+        2041262592
+      ]
+    },
+    "p7_tabular_on_record_memory_W20": {
+      "seconds": 1.3876700401306152,
+      "seeds": [
+        55806175,
+        55814094
+      ]
+    },
+    "p7_tabular_on_iid_stationary_W40": {
+      "seconds": 2.1550588607788086,
+      "seeds": [
+        1205224191,
+        1205232110
+      ]
+    },
+    "p7_digits_off_iid_stationary_W20": {
+      "seconds": 1.1107025146484375,
+      "seeds": [
+        223377046,
+        223384965
+      ]
+    },
+    "p7_digits_off_record_stationary_W20": {
+      "seconds": 1.1298623085021973,
+      "seeds": [
+        1737071824,
+        1737079743
+      ]
+    },
+    "p7_digits_off_iid_stationary_W40": {
+      "seconds": 2.1245689392089844,
+      "seeds": [
+        1534513432,
+        1534521351
+      ]
+    },
+    "p7_tabular_off_iid_stationary_W20": {
+      "seconds": 0.9676260948181152,
+      "seeds": [
+        1398261924,
+        1398269843
+      ]
+    },
+    "p7_tabular_off_record_stationary_W20": {
+      "seconds": 1.0158605575561523,
+      "seeds": [
+        2379419,
+        2387338
+      ]
+    },
+    "p7_tabular_off_iid_stationary_W40": {
+      "seconds": 2.070709466934204,
+      "seeds": [
+        95236138,
+        95244057
+      ]
+    },
+    "p8_digits_on_iid": {
+      "seconds": 3.9215121269226074,
+      "seeds": [
+        1125851949,
+        1125859868
+      ]
+    },
+    "p8_tabular_on_iid": {
+      "seconds": 4.055978059768677,
+      "seeds": [
+        1378726206,
+        1378734125
+      ]
+    },
+    "p8_digits_off_iid": {
+      "seconds": 4.0571160316467285,
+      "seeds": [
+        1012669540,
+        1012677459
+      ]
+    },
+    "p8_tabular_off_iid": {
+      "seconds": 3.387446641921997,
+      "seeds": [
+        1388134820,
+        1388142739
+      ]
+    },
+    "p8_digits_on_record": {
+      "seconds": 4.053992033004761,
+      "seeds": [
+        1143188601,
+        1143196520
+      ]
+    },
+    "p9_digits_on": {
+      "seconds": 5.27531886100769,
+      "seeds": [
+        845611884,
+        845619803
+      ]
+    },
+    "p10_digits_on_W20": {
+      "seconds": 5.316920757293701,
+      "seeds": [
+        1432102088,
+        1432110007
+      ]
+    },
+    "p10_digits_on_W40": {
+      "seconds": 10.386726140975952,
+      "seeds": [
+        61981254,
+        61989173
+      ]
+    },
+    "p8_tabular_on_record": {
+      "seconds": 4.114419221878052,
+      "seeds": [
+        1815427606,
+        1815435525
+      ]
+    },
+    "p9_tabular_on": {
+      "seconds": 5.510063409805298,
+      "seeds": [
+        2079622378,
+        2079630297
+      ]
+    },
+    "p10_tabular_on_W20": {
+      "seconds": 5.177321434020996,
+      "seeds": [
+        106974166,
+        106982085
+      ]
+    },
+    "p10_tabular_on_W40": {
+      "seconds": 10.409162521362305,
+      "seeds": [
+        1420209496,
+        1420217415
+      ]
+    },
+    "di_tabular_hom_fixed_rho0.0": {
+      "seconds": 4.512775421142578,
+      "seeds": [
+        1442869025,
+        1442876944
+      ]
+    },
+    "di_tabular_hom_fixed_rho0.5": {
+      "seconds": 4.512122631072998,
+      "seeds": [
+        634837668,
+        634845587
+      ]
+    },
+    "di_tabular_hom_fixed_rho0.8": {
+      "seconds": 4.899463176727295,
+      "seeds": [
+        1531311951,
+        1531319870
+      ]
+    },
+    "di_tabular_hom_vary_rho0.0": {
+      "seconds": 4.4936065673828125,
+      "seeds": [
+        2002067065,
+        2002074984
+      ]
+    },
+    "di_tabular_hom_vary_rho0.5": {
+      "seconds": 4.316076993942261,
+      "seeds": [
+        128616940,
+        128624859
+      ]
+    },
+    "di_tabular_hom_vary_rho0.8": {
+      "seconds": 4.309433221817017,
+      "seeds": [
+        2046400167,
+        2046408086
+      ]
+    },
+    "di_tabular_nearnull_fixed_rho0.0": {
+      "seconds": 4.3293776512146,
+      "seeds": [
+        1659295181,
+        1659303100
+      ]
+    },
+    "di_tabular_nearnull_fixed_rho0.5": {
+      "seconds": 4.367779016494751,
+      "seeds": [
+        319849048,
+        319856967
+      ]
+    },
+    "di_tabular_nearnull_fixed_rho0.8": {
+      "seconds": 4.344652891159058,
+      "seeds": [
+        1889488283,
+        1889496202
+      ]
+    },
+    "di_tabular_nearnull_vary_rho0.0": {
+      "seconds": 4.4693334102630615,
+      "seeds": [
+        982624641,
+        982632560
+      ]
+    },
+    "di_tabular_nearnull_vary_rho0.5": {
+      "seconds": 4.420971870422363,
+      "seeds": [
+        1248566532,
+        1248574451
+      ]
+    },
+    "di_tabular_nearnull_vary_rho0.8": {
+      "seconds": 4.377271413803101,
+      "seeds": [
+        951857519,
+        951865438
+      ]
+    },
+    "di_digits_hom_fixed_rho0.0": {
+      "seconds": 6.793203353881836,
+      "seeds": [
+        774544339,
+        774552258
+      ]
+    },
+    "di_digits_hom_fixed_rho0.5": {
+      "seconds": 6.7883617877960205,
+      "seeds": [
+        1574242386,
+        1574250305
+      ]
+    },
+    "di_digits_hom_fixed_rho0.8": {
+      "seconds": 7.484180688858032,
+      "seeds": [
+        593761221,
+        593769140
+      ]
+    },
+    "di_digits_hom_vary_rho0.0": {
+      "seconds": 7.401617050170898,
+      "seeds": [
+        737171646,
+        737179565
+      ]
+    },
+    "di_digits_hom_vary_rho0.5": {
+      "seconds": 7.347108602523804,
+      "seeds": [
+        1543982407,
+        1543990326
+      ]
+    },
+    "di_digits_hom_vary_rho0.8": {
+      "seconds": 7.2267491817474365,
+      "seeds": [
+        630575308,
+        630583227
+      ]
+    },
+    "di_digits_nearnull_fixed_rho0.5": {
+      "seconds": 7.067608594894409,
+      "seeds": [
+        1159095196,
+        1159103115
+      ]
+    },
+    "di_tabular_nearnull_fixed_rho0.5_feedback": {
+      "seconds": 4.338004112243652,
+      "seeds": [
+        1880781113,
+        1880789032
+      ]
+    },
+    "di_digits_hom_fixed_rho0.5_feedback": {
+      "seconds": 6.66094970703125,
+      "seeds": [
+        108601897,
+        108609816
+      ]
+    },
+    "di_tabular_hom_fixed_rho0.5_noise0.5": {
+      "seconds": 4.360435962677002,
+      "seeds": [
+        1400320111,
+        1400328030
+      ]
+    },
+    "di_tabular_hom_fixed_rho0.5_noise2.0": {
+      "seconds": 4.588903903961182,
+      "seeds": [
+        585191376,
+        585199295
+      ]
+    },
+    "headroom_digits_on_W20": {
+      "seconds": 14.035932779312134,
+      "seeds": [
+        1896979466,
+        1896987385
+      ]
+    },
+    "headroom_digits_on_W40": {
+      "seconds": 27.00909924507141,
+      "seeds": [
+        985414532,
+        985422451
+      ]
+    },
+    "headroom_digits_on_W20_homtau": {
+      "seconds": 13.420775413513184,
+      "seeds": [
+        525120654,
+        525128573
+      ]
+    },
+    "headroom_tabular_on_W20": {
+      "seconds": 13.646137714385986,
+      "seeds": [
+        519588041,
+        519595960
+      ]
+    },
+    "headroom_tabular_on_W40": {
+      "seconds": 26.717308521270752,
+      "seeds": [
+        1288547907,
+        1288555826
+      ]
+    },
+    "headroom_tabular_on_W20_homtau": {
+      "seconds": 13.596894979476929,
+      "seeds": [
+        700417463,
+        700425382
+      ]
+    },
+    "predictor_digits_on_iid_W20": {
+      "seconds": 5.167139291763306,
+      "seeds": [
+        607898650,
+        607906569
+      ]
+    },
+    "predictor_digits_on_record_W20": {
+      "seconds": 5.792577505111694,
+      "seeds": [
+        2005513451,
+        2005521370
+      ]
+    },
+    "predictor_digits_on_iid_W40": {
+      "seconds": 10.260813236236572,
+      "seeds": [
+        1989225876,
+        1989233795
+      ]
+    },
+    "predictor_tabular_on_iid_W20": {
+      "seconds": 5.274337530136108,
+      "seeds": [
+        1876304154,
+        1876312073
+      ]
+    },
+    "predictor_tabular_on_record_W20": {
+      "seconds": 5.618245840072632,
+      "seeds": [
+        1241733855,
+        1241741774
+      ]
+    },
+    "predictor_tabular_on_iid_W40": {
+      "seconds": 10.77353310585022,
+      "seeds": [
+        976209556,
+        976217475
+      ]
+    }
+  },
+  "total_part_seconds": 395.9006516933441,
+  "git_head_at_write": "a312f8981e47c78753d488a5c80f97341e832958",
+  "source_sha256": {
+    "simulate_t4.py": "4d0759cd1195874726b6cd4d8bdfd4a0e495ecf8b32abd2b66fb41e1a2c3ee99",
+    "t5_report.py": "81a84092e79567fdd2eec9de220b4c31a1508841d545ca34f0acba1d28b92477"
+  },
+  "host": {
+    "platform": "Linux-6.8.0-138-generic-aarch64-with-glibc2.35",
+    "python": "3.13.15",
+    "numpy": "2.5.4"
+  }
+}

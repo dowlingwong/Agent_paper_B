@@ -1,0 +1,33 @@
+{
+ "scenario": "tabular_on/iid/stationary",
+ "W": 20,
+ "N": 40,
+ "A2_tuned_shift": 0.0,
+ "moment-matched constant t~": {
+  "realised": 0.002003493954010958,
+  "realised_se": 2.6589951576874595e-05,
+  "predicted_sum_gap": 0.0020311926088382635,
+  "predicted_se": 1.1575592931768448e-06,
+  "lower_bound": 0.0014123893572236792,
+  "upper_bound": 0.003112897831176965,
+  "realised_over_predicted": 0.9863633538706369,
+  "realised_dn": 1.001746977005479,
+  "upper_dn": 1.5564489155884824
+ },
+ "dev-tuned constant t~": {
+  "realised": 0.002003493954010958,
+  "realised_se": 2.6589951576874595e-05,
+  "predicted_sum_gap": 0.0020311926088382635,
+  "predicted_se": 1.1575592931768448e-06,
+  "lower_bound": 0.0014123893572236792,
+  "upper_bound": 0.003112897831176965,
+  "realised_over_predicted": 0.9863633538706369,
+  "realised_dn": 1.001746977005479,
+  "upper_dn": 1.5564489155884824
+ },
+ "_seconds": 1.1441593170166016,
+ "_seeds": [
+  305112189,
+  305120108
+ ]
+}

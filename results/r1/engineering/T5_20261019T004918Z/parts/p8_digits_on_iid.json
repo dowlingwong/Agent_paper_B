@@ -1,0 +1,96 @@
+{
+ "scenario": "digits_on/iid/stationary",
+ "lagrangian": [
+  {
+   "g_multiple_of_tuned": 0.5,
+   "g": 7.500000000000002e-05,
+   "layer": "total (vs always execute)",
+   "N": 40,
+   "realised": 0.001606950282586767,
+   "realised_se": 1.253331172597399e-05,
+   "predicted": 0.0016093177062108347,
+   "predicted_se": 1.0620590553758063e-06
+  },
+  {
+   "g_multiple_of_tuned": 0.5,
+   "g": 7.500000000000002e-05,
+   "layer": "learned layer (vs rules)",
+   "N": 40,
+   "realised": 0.00025749028258676923,
+   "realised_se": 1.2494919115120803e-05,
+   "predicted": 0.00025985770621083455,
+   "predicted_se": 4.1139675082695314e-07
+  },
+  {
+   "g_multiple_of_tuned": 1.0,
+   "g": 0.00015000000000000004,
+   "layer": "total (vs always execute)",
+   "N": 40,
+   "realised": 0.003557625282586774,
+   "realised_se": 1.2668103789369434e-05,
+   "predicted": 0.003559992706210835,
+   "predicted_se": 2.12825864986009e-06
+  },
+  {
+   "g_multiple_of_tuned": 1.0,
+   "g": 0.00015000000000000004,
+   "layer": "learned layer (vs rules)",
+   "N": 40,
+   "realised": 0.0008587052825867716,
+   "realised_se": 1.256206098206833e-05,
+   "predicted": 0.0008610727062108345,
+   "predicted_se": 1.3632172727388566e-06
+  },
+  {
+   "g_multiple_of_tuned": 2.0,
+   "g": 0.0003000000000000001,
+   "layer": "total (vs always execute)",
+   "N": 40,
+   "realised": 0.007567976754515743,
+   "realised_se": 2.4935522163304082e-05,
+   "predicted": 0.007574486377170101,
+   "predicted_se": 4.247209047092291e-06
+  },
+  {
+   "g_multiple_of_tuned": 2.0,
+   "g": 0.0003000000000000001,
+   "layer": "learned layer (vs rules)",
+   "N": 40,
+   "realised": 0.0021701367545157403,
+   "realised_se": 2.476747621282825e-05,
+   "predicted": 0.002176646377170102,
+   "predicted_se": 3.235040173884236e-06
+  }
+ ],
+ "hard_budget": [
+  {
+   "W": 20,
+   "N": 40,
+   "g_tuned": 0.00015000000000000004,
+   "realised_gain": 0.001915897646306334,
+   "realised_se": 4.4950722771174374e-05,
+   "sum_pos_part_over_screen_run": 0.0008547619827396281,
+   "skips_learned": 7.95745,
+   "calls_screen": 39.92065,
+   "calls_noscreen": 35.4856,
+   "runs_screen": 13.98195
+  },
+  {
+   "W": 40,
+   "N": 80,
+   "g_tuned": 0.00015000000000000004,
+   "realised_gain": 0.0033681839152560093,
+   "realised_se": 6.256827126610332e-05,
+   "sum_pos_part_over_screen_run": 0.0017147927482241525,
+   "skips_learned": 15.96395,
+   "calls_screen": 79.9878,
+   "calls_noscreen": 71.9422,
+   "runs_screen": 28.00285
+  }
+ ],
+ "_seconds": 3.9215121269226074,
+ "_seeds": [
+  1125851949,
+  1125859868
+ ]
+}
