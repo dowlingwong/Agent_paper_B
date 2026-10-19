@@ -17,10 +17,11 @@ def validate_dryrun():
         raise RuntimeError('STOP: DRYRUN requires a marked temporary directory')
     for key in ('R1_BATCH_DIRECTORY', 'R1_PAPER_ROOT', 'AR_HARNESS_ROOT',
                 'R1_RERUN2_BATCH_ROOT', 'R1_RERUN2_PINNED_BATCH', 'R1_RERUN2_OLLAMA_BINARY',
-                'R1_RERUN2_PAPER_REMOTE', 'R1_RERUN2_HARNESS_REMOTE'):
+                'R1_RERUN2_PAPER_REMOTE', 'R1_RERUN2_HARNESS_REMOTE',
+                'R1_C3_BATCH_ROOT', 'R1_C3_PAPER_REMOTE', 'R1_C3_HARNESS_REMOTE', 'R1_FAKE_OLLAMA_ROOT'):
         if key in os.environ and not Path(os.environ[key]).resolve().is_relative_to(root):
             raise RuntimeError(f'STOP: DRYRUN {key} escapes the temporary directory')
-    for key in ('R1_RERUN2_PAPER_REMOTE', 'R1_RERUN2_HARNESS_REMOTE'):
+    for key in ('R1_RERUN2_PAPER_REMOTE', 'R1_RERUN2_HARNESS_REMOTE', 'R1_C3_PAPER_REMOTE', 'R1_C3_HARNESS_REMOTE'):
         if key in os.environ and not Path(os.environ[key]).is_absolute():
             raise RuntimeError('STOP: DRYRUN remotes must be absolute local paths')
     for key in ('R1_PAPER_ROOT', 'AR_HARNESS_ROOT'):
