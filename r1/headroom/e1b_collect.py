@@ -30,6 +30,7 @@ import os
 import platform
 import shutil
 import time
+import traceback
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
@@ -60,9 +61,21 @@ def make_manager(node: str, seed: int, repetition: int, manifest_manager: dict |
     if cfg.get("kind") == "langgraph":
         from autoresearch.manager.langgraph_manager import LangGraphManager
         # D26: the branch repetition enters the deterministic per-call Ollama seed.
+        # Bounded transport retry (19 Oct): a manifest without
+        # ``transport_max_attempts`` means the historical single attempt.
         return LangGraphManager(model=cfg["model"], temperature=float(cfg["temperature"]),
-                                repetition=repetition)
+                                repetition=repetition, transport_retry=transport_policy(cfg))
     return ScriptedRandomManager(node, seed=seed, repetition=repetition)
+
+
+def transport_policy(cfg: dict | None):
+    """The manager's transport-retry policy from the manifest's manager block."""
+    from autoresearch.llm.transport_retry import LEGACY_POLICY, TransportRetryPolicy
+    attempts = int((cfg or {}).get("transport_max_attempts", 1))
+    if attempts <= 1:
+        return LEGACY_POLICY
+    backoff = tuple(float(b) for b in (cfg or {}).get("transport_backoff_seconds", (2.0, 4.0)))
+    return TransportRetryPolicy(max_attempts=attempts, backoff_seconds=backoff)
 
 
 def seed_policy(manager_kind: str) -> dict:
@@ -72,6 +85,20 @@ def seed_policy(manager_kind: str) -> dict:
                 "derivation": "manager_seed(campaign_id, budget_index, repetition, revision_attempt)"}
     return {"kind": "numpy_pcg64",
             "derivation": "default_rng([instance_seed, repetition, budget_index])"}
+
+
+def _versions_kwargs(action_versions: dict | None) -> dict:
+    """``run_real_campaign`` kwargs for a manifest's declared action versions (D4 amendment).
+
+    A manifest without ``action_versions`` passes nothing: historical behaviour.
+    """
+    if action_versions is None:
+        return {}
+    from autoresearch.control_plane.action_versions import ActionVersions
+    versions = ActionVersions.from_dict(action_versions)
+    if versions.needs_prior:
+        raise ValueError("the collector supplies no keep prior; declare default/v1 and mean_delta/v1")
+    return {"action_versions": versions}
 
 
 PILOT_DATA_CACHE = "experiments/r1/pilot/L8_20261009T152916Z/nodes/{node}/data_cache"
@@ -111,13 +138,74 @@ class E2Recorder:
 
 
 # ---------------------------------------------------------------------------
+# Failure observability (rerun-2 STOP diagnosis, 19 Oct 2026)
+# ---------------------------------------------------------------------------
+
+def failure_details(exc: BaseException, stage: str) -> dict:
+    """What a failed leaf/campaign persists: class, message, traceback, UTC time, stage.
+
+    The rerun-2 diagnosis found only ``repr(exc)`` and no timestamp.  When the
+    harness attached a transport-attempt log (bounded retry), it is kept too.
+    """
+    details = {
+        "error_class": f"{type(exc).__module__}.{type(exc).__qualname__}",
+        "error_message": str(exc),
+        "traceback": "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+        "failed_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+        "failure_stage": stage,
+    }
+    attempts = getattr(exc, "llm_call_attempts", None)
+    if attempts is not None:
+        details["transport_attempts"] = list(attempts)
+        details["llm_seed"] = getattr(exc, "llm_call_seed", None)
+    return details
+
+
+def write_failure(out_dir: str | Path | None, kind: str, ident: str, payload: dict) -> Path | None:
+    """Persist a failure record under ``<out>/failures/`` (never overwritten)."""
+    if out_dir is None:
+        return None
+    target = Path(out_dir) / "failures" / f"{kind}__{ident}.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        target = target.with_name(target.stem + f"__{os.getpid()}_{time.time_ns()}.json")
+    target.write_text(json.dumps(payload, indent=2) + "\n")
+    return target
+
+
+# ---------------------------------------------------------------------------
 # Phase A
 # ---------------------------------------------------------------------------
 
 def run_root(node: str, k: int, work: str, runs: int, indices: list[int], manager: dict | None = None,
-             split_policy: str = "fixed", memory_mode: str = "none") -> dict:
+             split_policy: str = "fixed", memory_mode: str = "none", out_dir: str | None = None,
+             action_versions: dict | None = None) -> dict:
     """Run one root campaign.  ``memory_mode`` comes from the manifest (D24); a manifest
-    without the field means ``none`` (historical runs)."""
+    without the field means ``none`` (historical runs).
+
+    A failure is persisted under ``<out_dir>/failures/root__<instance>.json``
+    (class, message, traceback, UTC time, ledger paths) before it propagates.
+    ``action_versions`` (D4 amendment) is passed only when the manifest declares it.
+    """
+    seed = _instance_seed(node, k)
+    inst = f"{node}__s{seed}"
+    try:
+        return _run_root(node, k, work, runs, indices, manager, split_policy, memory_mode, action_versions)
+    except Exception as exc:
+        root = Path(work) / "roots" / inst
+        ledger = root / "root_trials.jsonl"
+        n_records = len([l for l in ledger.read_text().splitlines() if l.strip()]) if ledger.exists() else 0
+        write_failure(out_dir, "root", inst, {
+            "instance": inst, "node": node, "seed": seed, "integrity": "collection_failure",
+            "error": repr(exc), **failure_details(exc, "root_campaign"),
+            "partial_ledger": str(ledger), "partial_events": str(root / "root_events.jsonl"),
+            "partial_records": n_records,
+        })
+        raise
+
+
+def _run_root(node: str, k: int, work: str, runs: int, indices: list[int], manager: dict | None,
+              split_policy: str, memory_mode: str, action_versions: dict | None = None) -> dict:
     seed = _instance_seed(node, k)
     inst = f"{node}__s{seed}"
     root = Path(work) / "roots" / inst
@@ -134,6 +222,7 @@ def run_root(node: str, k: int, work: str, runs: int, indices: list[int], manage
         proposal_backend=make_manager(node, seed, 0, manager),
         compute_budget=ComputeBudget(max_worker_runs=runs), verify_runs=VERIFY_R,
         verify_split_policy=split_policy, snapshot_hook=recorder,
+        **_versions_kwargs(action_versions),
         # D28 revised criterion 2: persist the campaign event stream so the
         # liveness check can score active-key novelty from edit_novelty events
         # instead of replaying structured edits.
@@ -169,7 +258,12 @@ def _audit(node: str, files: dict[str, str], seeds: list[int], work: Path) -> li
 def audit_start(node: str, inst: str, start_files: dict[str, str], k_audit: int, work: str, out_dir: str) -> dict:
     path = Path(out_dir) / "audits" / f"{inst}__c0.json"
     seeds = [AUDIT_SEED_BASE + i for i in range(k_audit)]
-    vals = _audit(node, start_files, seeds, Path(work))
+    try:
+        vals = _audit(node, start_files, seeds, Path(work))
+    except Exception as exc:
+        write_failure(out_dir, "audit0", inst, {"instance": inst, "node": node, "error": repr(exc),
+                                                **failure_details(exc, "start_audit")})
+        raise
     payload = {"instance": inst, "seeds": seeds, "metrics": vals}
     path.write_text(json.dumps(payload))
     return payload
@@ -184,6 +278,8 @@ def run_leaf(snapshot_dir: str, inst: str, node: str, action: str, rep: int, see
         shutil.rmtree(into)
     t0 = time.perf_counter()
     status, err = "ok", None
+    failure: dict | None = None
+    stage = "resume_campaign"
     try:
         result = resume_campaign(snap, into, first_action=action, horizon=200,
                                  manager=make_manager(node, seed, rep, manager))
@@ -199,6 +295,7 @@ def run_leaf(snapshot_dir: str, inst: str, node: str, action: str, rep: int, see
             v = ((r.get("extra") or {}).get("control") or {}).get("verify")
             if v:
                 runs += 2 * int(v.get("r", VERIFY_R))
+        stage = "leaf_audit"
         spec = load_registered_node(node, repo_root=HARNESS)
         final_files = {p: (into / p).read_text() for p in spec.editable_paths}
         seeds = [AUDIT_SEED_BASE + i for i in range(k_audit)]
@@ -206,11 +303,21 @@ def run_leaf(snapshot_dir: str, inst: str, node: str, action: str, rep: int, see
         n_keeps = sum(1 for r in new if r.get("decision") == "kept")
     except Exception as exc:  # noqa: BLE001 - a failed leaf is an integrity status, never a utility
         status, err, executed, runs, audit, n_keeps, final_files = "collection_failure", repr(exc), None, 0, [], 0, {}
+        ledger = into / "branch_trials.jsonl"
+        failure = {**failure_details(exc, stage), "partial_ledger": str(ledger),
+                   "partial_events": str(into / "branch_events.jsonl"),
+                   "partial_records": (len([l for l in ledger.read_text().splitlines() if l.strip()])
+                                       if ledger.exists() else 0)}
     payload = {"leaf_id": leaf_id, "instance": inst, "node": node, "budget_index": snap.budget_index,
                "action": action, "repetition": rep, "executed_action": executed, "integrity": status,
                "error": err, "cost_worker_runs": runs, "n_keeps_after": n_keeps, "audit_metrics": audit,
                "final_files_hash": hashlib.sha256(json.dumps(final_files, sort_keys=True).encode()).hexdigest()[:16],
                "wall_seconds": round(time.perf_counter() - t0, 2)}
+    if failure is not None:
+        # Diagnosability (19 Oct): class, traceback, UTC time and stage of the
+        # failure, written with the leaf before any collection gate can raise.
+        # ``cost_worker_runs`` stays the handler's reset value (not a run count).
+        payload.update(failure)
     (Path(out_dir) / "leaves" / f"{leaf_id}.json").write_text(json.dumps(payload))
     # Preserve branch ledgers and events for manager/proposal provenance audits.
     return payload
@@ -260,7 +367,8 @@ def main() -> int:
     ap.add_argument("--nodes", nargs="+", default=["digits_mlp", "openml_ionosphere"])
     ap.add_argument("--instances", type=int, default=6)
     ap.add_argument("--runs", type=int, default=20, help="compute budget W (worker runs) per campaign")
-    ap.add_argument("--points", type=int, nargs="+", default=[4, 8, 12], help="E2 budget indices to branch")
+    ap.add_argument("--points", type=int, nargs="*", default=[4, 8, 12],
+                    help="E2 budget indices to branch (none with --roots-only)")
     ap.add_argument("--reps", type=int, default=2)
     ap.add_argument("--audit-seeds", type=int, default=6)
     ap.add_argument("--e1-summary", default=None, help="E1 summary.json for node noise (dev constants)")
@@ -281,7 +389,21 @@ def main() -> int:
     ap.add_argument("--work", default=os.environ.get("R1_TMP", "/tmp/r1_e1b"))
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--deadline", type=float, default=1e9)
+    # C3 label sweep (R1-E1B-RERUN2 revision, PLAN §10 18 Oct): root campaigns only.
+    ap.add_argument("--roots-only", action="store_true",
+                    help="root campaigns only: no E2 snapshots, branches or leaves (C3 label sweep)")
+    ap.add_argument("--new-campaign-versions", action="store_true",
+                    help="declare the PLAN new-campaign action versions (split 'vary', verify_failed "
+                         "original_stands/v1) in the manifest; requires --verify-split-policy vary")
+    ap.add_argument("--transport-max-attempts", type=int, default=None,
+                    help="bounded LLM transport retry attempts (manifest manager field; absent = 1)")
+    ap.add_argument("--root-failures", choices=["raise", "record"], default="raise",
+                    help="raise (historical) or record the failure and continue the other roots")
+    ap.add_argument("--extra-manifest", default=None,
+                    help="JSON object merged into a new manifest (batch provenance; never overrides)")
     args = ap.parse_args()
+    if args.roots_only and (args.points or args.reps):
+        ap.error("--roots-only needs --points with no values and --reps 0")
 
     if args.resume:
         out = Path(args.resume)
@@ -295,7 +417,9 @@ def main() -> int:
                     "harness": {"root": str(HARNESS), **harness_commit(HARNESS)},
                     "manager_backend": ("scripted_random (stand-in; VM cannot reach Ollama)" if args.manager == "scripted"
                                         else "langgraph qwen2.5-coder:7b (Ollama; pinned digest dae161e2...)"),
-                    "manager": {**MANAGER, "kind": args.manager},
+                    "manager": {**MANAGER, "kind": args.manager,
+                                **({"transport_max_attempts": args.transport_max_attempts}
+                                   if args.transport_max_attempts is not None else {})},
                     "memory_mode": args.memory_mode or "none",
                     "arm": args.arm,
                     "arm_role": args.arm_role,
@@ -306,6 +430,24 @@ def main() -> int:
                     "noise": {n: node_noise(e1, n) for n in args.nodes},
                     "host": {"platform": platform.platform(), "python": platform.python_version()},
                     "work": args.work, "sessions": []}
+        if args.roots_only:
+            manifest["roots_only"] = True
+        if args.root_failures != "raise":
+            manifest["root_failures"] = args.root_failures
+        if args.new_campaign_versions:
+            from autoresearch.control_plane.action_versions import declare_new_campaign
+            if args.verify_split_policy != "vary":
+                ap.error("--new-campaign-versions declares split 'vary'; pass --verify-split-policy vary")
+            declare_new_campaign(manifest)
+        if args.extra_manifest:
+            for key, value in json.loads(args.extra_manifest).items():
+                if key in manifest:
+                    ap.error(f"--extra-manifest may not override {key!r}")
+                manifest[key] = value
+        if args.roots_only or args.root_failures != "raise" or args.new_campaign_versions or args.extra_manifest:
+            # New-style runs persist the manifest before any job, so a crashed
+            # first session still leaves its declaration on disk.
+            (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     for sub in ("leaves", "audits", "roots"):
         (out / sub).mkdir(exist_ok=True)
     work = Path(manifest["work"])
@@ -314,17 +456,21 @@ def main() -> int:
     session = {"start_utc": datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"), "done": 0}
 
     jobs = []  # (kind, args)
+    record_root_failures = manifest.get("root_failures") == "record"
     for node in manifest["nodes"]:
         for k in range(manifest["instances"]):
             inst = f"{node}__s{_instance_seed(node, k)}"
             root_json = out / "roots" / f"{inst}.json"
             if not root_json.exists():
+                if (out / "failures" / f"root__{inst}.json").exists():
+                    continue  # a failed root is an integrity status; never retried automatically
                 jobs.append(("root", (node, k, str(work), manifest["runs"], manifest["points"], manifest.get("manager"),
                                       str(manifest.get("verify_split_policy", "fixed")).split(" ")[0],
-                                      str(manifest.get("memory_mode", "none")))))
+                                      str(manifest.get("memory_mode", "none")), str(out),
+                                      manifest.get("action_versions"))))
                 continue
             root = json.loads(root_json.read_text())
-            if not (out / "audits" / f"{inst}__c0.json").exists():
+            if manifest["audit_seeds"] and not (out / "audits" / f"{inst}__c0.json").exists():
                 jobs.append(("audit0", (node, inst, root["start_files"], manifest["audit_seeds"], str(work), str(out))))
             for snap_dir in root["snapshots"]:
                 if not Path(snap_dir).exists():
@@ -353,6 +499,11 @@ def main() -> int:
                 continue
             for f in done:
                 kind = pending.pop(f)
+                if kind == "root" and record_root_failures and f.exception() is not None:
+                    # Already persisted under failures/ by run_root; the gate reads it.
+                    session.setdefault("root_failures", 0)
+                    session["root_failures"] += 1
+                    continue
                 res = f.result()
                 if kind == "root":
                     (out / "roots" / f"{res['instance']}.json").write_text(json.dumps(res))
