@@ -1,0 +1,209 @@
+{
+  "label": "PILOT",
+  "run_dir": "results/r1/pilot/E1_remeasure_20261022T100942Z",
+  "rules": {
+    "QUALIFY_P": 0.1,
+    "MIN_EFFECT": 0.002,
+    "MIN_EDITS": 2,
+    "VARY_RATIO": 0.5
+  },
+  "nodes": {
+    "openml_credit_approval": {
+      "default_metric": 0.90967,
+      "deterministic_at_fixed_seed": true,
+      "sigma_train": 3.387607712450221e-16,
+      "sigma_split": 0.0176210611256928,
+      "sigma_joint": 0.02788504569484239,
+      "mean_joint": 0.9236109,
+      "median_wall_seconds": 0.9775,
+      "failed_runs": 0,
+      "edits": [
+        {
+          "edit": "C 0.15 -> 0.075",
+          "rho_joint": 0.995872914710658,
+          "delta_hat_J": -0.001968966666666668,
+          "se": 0.0005008801689424802,
+          "sd_joint": 0.0027434336713679495,
+          "sd_train": 0.0,
+          "sd_split": 0.0025221421017875036,
+          "resolved": true,
+          "p_model": 0.23647065600167566,
+          "decision_regret": 0.00046560283931209966,
+          "material": false,
+          "flip_emp": 0.3,
+          "campaign_delta_hat": 0.0022490000000000565,
+          "campaign_wrong": true
+        },
+        {
+          "edit": "C 0.15 -> 0.3",
+          "rho_joint": 0.9947292195607125,
+          "delta_hat_J": 0.0005604333333333249,
+          "se": 0.0005416534279902934,
+          "sd_joint": 0.0029667580086028384,
+          "sd_train": 0.0,
+          "sd_split": 0.0022856812460666396,
+          "resolved": false,
+          "p_model": 0.42508391319751343,
+          "decision_regret": 0.00023823119441965617,
+          "material": false
+        },
+        {
+          "edit": "model_type logistic_regression -> random_forest",
+          "rho_joint": 0.8871368956006077,
+          "delta_hat_J": 0.012250766666666654,
+          "se": 0.002361831008818064,
+          "sd_joint": 0.012936281205448364,
+          "sd_train": 0.003651222234190661,
+          "sd_split": 0.014402563017597314,
+          "resolved": true,
+          "p_model": 0.1718172552001258,
+          "decision_regret": 0.002104893102763859,
+          "material": true,
+          "flip_emp": 0.23333333333333334,
+          "campaign_delta_hat": 0.013492999999999977,
+          "campaign_wrong": false
+        },
+        {
+          "edit": "model_type logistic_regression -> gradient_boosting",
+          "rho_joint": 0.8132487526112976,
+          "delta_hat_J": 0.008235099999999995,
+          "se": 0.0029660481616717417,
+          "sd_joint": 0.01624571484794343,
+          "sd_train": 0.0028256049111284333,
+          "sd_split": 0.02051312877408756,
+          "resolved": true,
+          "p_model": 0.306109315116774,
+          "decision_regret": 0.0025208408209181437,
+          "material": true,
+          "flip_emp": 0.36666666666666664,
+          "campaign_delta_hat": 0.006372000000000044,
+          "campaign_wrong": false
+        },
+        {
+          "edit": "class_weight balanced -> null",
+          "rho_joint": 0.99954275004657,
+          "delta_hat_J": 0.00017476666666665547,
+          "se": 0.00015405862209608712,
+          "sd_joint": 0.0008438138250019073,
+          "sd_train": 0.0,
+          "sd_split": 0.000804304811551601,
+          "resolved": false,
+          "p_model": 0.4179599469318536,
+          "decision_regret": 7.304546672545227e-05,
+          "material": false
+        }
+      ],
+      "summary": {
+        "n_edits": 5,
+        "n_resolved": 3,
+        "n_material": 2,
+        "n_unresolved_noisy": 1,
+        "median_sd_joint": 0.0029667580086028384,
+        "mean_flip_emp_resolved": 0.3,
+        "mean_p_model_material": 0.2389632851584499,
+        "regret_share_material": 0.22580123159781731,
+        "campaign_wrong": 1,
+        "median_train_to_joint_ratio": 0.22808795503820312
+      },
+      "proposal": {
+        "qualifies_D21": true,
+        "needs_more_seeds": false,
+        "split_policy": "vary"
+      }
+    },
+    "openml_diabetes": {
+      "default_metric": 0.829667,
+      "deterministic_at_fixed_seed": true,
+      "sigma_train": 1.1292025708167404e-16,
+      "sigma_split": 0.03585137619104675,
+      "sigma_joint": 0.035719442656722625,
+      "mean_joint": 0.8111445,
+      "median_wall_seconds": 0.9824999999999999,
+      "failed_runs": 0,
+      "edits": [
+        {
+          "edit": "C 0.15 -> 0.075",
+          "rho_joint": 0.9984450220269064,
+          "delta_hat_J": 0.00046666666666665967,
+          "se": 0.00040796852575616976,
+          "sd_joint": 0.0022345356430878154,
+          "sd_train": 0.0,
+          "sd_split": 0.0017718053407519742,
+          "resolved": false,
+          "p_model": 0.41728548159194256,
+          "decision_regret": 0.00019473322474290362,
+          "material": false
+        },
+        {
+          "edit": "C 0.15 -> 0.3",
+          "rho_joint": 0.9991408915638461,
+          "delta_hat_J": -3.340000000000935e-05,
+          "se": 0.00029222072668352373,
+          "sd_joint": 0.0016005588377511776,
+          "sd_train": 0.0,
+          "sd_split": 0.0013227917273792489,
+          "resolved": false,
+          "p_model": 0.49167559176772413,
+          "decision_regret": 1.6421964765046583e-05,
+          "material": false
+        },
+        {
+          "edit": "model_type logistic_regression -> random_forest",
+          "rho_joint": 0.7417332401793366,
+          "delta_hat_J": 0.0029221666666666554,
+          "se": 0.004402214210918438,
+          "sd_joint": 0.024111920262898334,
+          "sd_train": 0.0048366717564158205,
+          "sd_split": 0.022547858115164948,
+          "resolved": false,
+          "p_model": 0.4517695652207199,
+          "decision_regret": 0.0013201459645024753,
+          "material": false
+        },
+        {
+          "edit": "model_type logistic_regression -> gradient_boosting",
+          "rho_joint": 0.7303624862064593,
+          "delta_hat_J": -0.008788966666666675,
+          "se": 0.004621470570921414,
+          "sd_joint": 0.02531283680539937,
+          "sd_train": 0.0012310101641082897,
+          "sd_split": 0.02762889178819302,
+          "resolved": false,
+          "p_model": 0.3642153459646039,
+          "decision_regret": 0.003201076535171375,
+          "material": false
+        },
+        {
+          "edit": "class_weight balanced -> null",
+          "rho_joint": 0.9973986156484312,
+          "delta_hat_J": 0.0010110666666666638,
+          "se": 0.0005112877789955402,
+          "sd_joint": 0.0028004384993257346,
+          "sd_train": 0.0,
+          "sd_split": 0.0018146593740088447,
+          "resolved": false,
+          "p_model": 0.35903525965347843,
+          "decision_regret": 0.0003630085831936426,
+          "material": false
+        }
+      ],
+      "summary": {
+        "n_edits": 5,
+        "n_resolved": 0,
+        "n_material": 0,
+        "n_unresolved_noisy": 4,
+        "median_sd_joint": 0.0028004384993257346,
+        "mean_flip_emp_resolved": NaN,
+        "mean_p_model_material": NaN,
+        "regret_share_material": NaN,
+        "campaign_wrong": 0,
+        "median_train_to_joint_ratio": 3.161310722759044e-15
+      },
+      "proposal": {
+        "qualifies_D21": false,
+        "needs_more_seeds": true,
+        "split_policy": "vary"
+      }
+    }
+  }
+}

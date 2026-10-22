@@ -1,0 +1,1717 @@
+{
+  "label": "PILOT",
+  "ai_assisted": "Claude",
+  "run_dir": "results/r1/pilot/E1_remeasure_20261022T100942Z",
+  "summaries": {
+    "E1 (10 seeds, 12 Oct)": {
+      "label": "PILOT",
+      "run_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/mnt/agent_paper_B/.claude-worktrees/noise-remeasure-22oct/results/r1/pilot/E1_20261012T145353Z",
+      "rules": {
+        "QUALIFY_P": 0.1,
+        "MIN_EFFECT": 0.002,
+        "MIN_EDITS": 2,
+        "VARY_RATIO": 0.5
+      },
+      "nodes": {
+        "digits_mlp": {
+          "default_metric": 0.955432,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 0.006331513634195212,
+          "sigma_split": 0.007520219216662958,
+          "sigma_joint": 0.012543301098372978,
+          "mean_joint": 0.9540390000000001,
+          "median_wall_seconds": 1.1926999999999999,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "LEARNING_RATE_INIT 1e-3 -> 0.002",
+              "rho_joint": 0.8005139982605387,
+              "delta_hat_J": 0.008913600000000011,
+              "se": 0.0023781333585632045,
+              "sd_joint": 0.007520317992685621,
+              "sd_train": 0.0049130342073124625,
+              "sd_split": 0.0070773845263157435,
+              "resolved": true,
+              "p_model": 0.11795554750050519,
+              "decision_regret": 0.0010514085682005044,
+              "material": true,
+              "flip_emp": 0.1,
+              "campaign_delta_hat": 0.00835600000000003,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "MAX_ITER 40 -> 80",
+              "rho_joint": 0.8706811378096632,
+              "delta_hat_J": 0.008913499999999996,
+              "se": 0.002025750896444197,
+              "sd_joint": 0.006405986804891552,
+              "sd_train": 0.002691140691644023,
+              "sd_split": 0.006439488433787967,
+              "resolved": true,
+              "p_model": 0.0820471157724672,
+              "decision_regret": 0.0007313269664378861,
+              "material": true,
+              "flip_emp": 0.2,
+              "campaign_delta_hat": 0.00835600000000003,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "HIDDEN_UNITS 32 -> 16",
+              "rho_joint": 0.567296818598255,
+              "delta_hat_J": -0.013370400000000015,
+              "se": 0.004525901796450201,
+              "sd_joint": 0.014312158143030407,
+              "sd_train": 0.010768263113840083,
+              "sd_split": 0.013986113886836331,
+              "resolved": true,
+              "p_model": 0.1751006946549844,
+              "decision_regret": 0.002341166327815006,
+              "material": true,
+              "flip_emp": 0.2,
+              "campaign_delta_hat": -0.01392799999999994,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "HIDDEN_UNITS 32 -> 64",
+              "rho_joint": 0.6856509744262491,
+              "delta_hat_J": 0.0066852000000000135,
+              "se": 0.003000116582179209,
+              "sd_joint": 0.009487201645726025,
+              "sd_train": 0.00632489026782285,
+              "sd_split": 0.009982975747073991,
+              "resolved": true,
+              "p_model": 0.24051261471853635,
+              "decision_regret": 0.0016078749319163625,
+              "material": true,
+              "flip_emp": 0.2,
+              "campaign_delta_hat": 0.025069000000000008,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "BATCH_SIZE 64 -> 32",
+              "rho_joint": 0.8415839222726009,
+              "delta_hat_J": 0.006685099999999999,
+              "se": 0.002165635546695497,
+              "sd_joint": 0.006848340909381706,
+              "sd_train": 0.004162802006394784,
+              "sd_split": 0.005879840762205142,
+              "resolved": true,
+              "p_model": 0.16449173947800794,
+              "decision_regret": 0.0010996437275844308,
+              "material": true,
+              "flip_emp": 0.2,
+              "campaign_delta_hat": 0.011142000000000096,
+              "campaign_wrong": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 5,
+            "n_material": 5,
+            "n_unresolved_noisy": 0,
+            "median_sd_joint": 0.007520317992685621,
+            "mean_flip_emp_resolved": 0.18,
+            "mean_p_model_material": 0.1560215424249002,
+            "regret_share_material": 0.15328152886061652,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.6533013912564544
+          },
+          "proposal": {
+            "qualifies_D21": true,
+            "needs_more_seeds": false,
+            "split_policy": "fixed"
+          }
+        },
+        "tabular_mlp": {
+          "default_metric": 0.9141,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 0.003239132471305653,
+          "sigma_split": 0.012541083873502407,
+          "sigma_joint": 0.015251115851708096,
+          "mean_joint": 0.9179825000000001,
+          "median_wall_seconds": 1.0876000000000001,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "MAX_ITER 40 -> 20",
+              "rho_joint": 0.9672567258861079,
+              "delta_hat_J": -0.00969000000000001,
+              "se": 0.0014450115339793427,
+              "sd_joint": 0.004569527692588516,
+              "sd_train": 0.0020820412660015664,
+              "sd_split": 0.002838697128770353,
+              "resolved": true,
+              "p_model": 0.016979033258547993,
+              "decision_regret": 0.0001645268322753302,
+              "material": true,
+              "flip_emp": 0.0,
+              "campaign_delta_hat": -0.011500000000000066,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "ALPHA 1e-4 -> 5e-05",
+              "rho_joint": 0.9999942404134117,
+              "delta_hat_J": -2.50000000002748e-06,
+              "se": 1.6435902436093465e-05,
+              "sd_joint": 5.1974887098365415e-05,
+              "sd_train": 8.181958472424198e-05,
+              "sd_split": 5.827377912348202e-05,
+              "resolved": false,
+              "p_model": 0.48081821230129795,
+              "decision_regret": 1.2020455307664578e-06,
+              "material": false
+            },
+            {
+              "edit": "BATCH_SIZE 64 -> 32",
+              "rho_joint": 0.99238988065172,
+              "delta_hat_J": 0.002179999999999971,
+              "se": 0.0005958280885549932,
+              "sd_joint": 0.0018841738537382817,
+              "sd_train": 0.0010543033508225031,
+              "sd_split": 0.001623148517884634,
+              "resolved": true,
+              "p_model": 0.12363500369977087,
+              "decision_regret": 0.00026952430806549693,
+              "material": true,
+              "flip_emp": 0.1,
+              "campaign_delta_hat": 0.0027249999999999774,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "ALPHA 1e-4 -> 0.0002",
+              "rho_joint": 0.9999949083922752,
+              "delta_hat_J": -1.2500000000015276e-05,
+              "se": 1.5478479684172046e-05,
+              "sd_joint": 4.894725051862738e-05,
+              "sd_train": 5.7975090436422416e-05,
+              "sd_split": 6.671872967083235e-05,
+              "resolved": false,
+              "p_model": 0.39921598240419964,
+              "decision_regret": 4.990199780058594e-06,
+              "material": false
+            },
+            {
+              "edit": "HIDDEN_UNITS 32 -> 16",
+              "rho_joint": 0.9171995809487772,
+              "delta_hat_J": -0.005875000000000008,
+              "se": 0.0019356989837150654,
+              "sd_joint": 0.006121217653012787,
+              "sd_train": 0.004842201634243114,
+              "sd_split": 0.0039985631099739155,
+              "resolved": true,
+              "p_model": 0.16858389115706768,
+              "decision_regret": 0.000990430360547774,
+              "material": true,
+              "flip_emp": 0.2,
+              "campaign_delta_hat": -0.0014000000000000679,
+              "campaign_wrong": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 3,
+            "n_material": 3,
+            "n_unresolved_noisy": 0,
+            "median_sd_joint": 0.0018841738537382817,
+            "mean_flip_emp_resolved": 0.10000000000000002,
+            "mean_p_model_material": 0.10306597603846218,
+            "regret_share_material": 0.08027509162516776,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.5595573618276891
+          },
+          "proposal": {
+            "qualifies_D21": true,
+            "needs_more_seeds": false,
+            "split_policy": "fixed"
+          }
+        },
+        "lr_synthetic": {
+          "default_metric": 0.921332,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 6.645800679124711e-05,
+          "sigma_split": 0.015186126303307228,
+          "sigma_joint": 0.009887364956234676,
+          "mean_joint": 0.923036,
+          "median_wall_seconds": 0.6725,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "LEARNING_RATE 5e-4 -> 0.001",
+              "rho_joint": 0.9996363255420199,
+              "delta_hat_J": -9.24000000000258e-05,
+              "se": 8.567058356804192e-05,
+              "sd_joint": 0.0002709141725508072,
+              "sd_train": 6.540472290115475e-05,
+              "sd_split": 0.000389780279986872,
+              "resolved": false,
+              "p_model": 0.36652641071297565,
+              "decision_regret": 3.386704034988841e-05,
+              "material": false
+            },
+            {
+              "edit": "N_EPOCHS 80 -> 160",
+              "rho_joint": 0.9996460239472246,
+              "delta_hat_J": -9.250000000000646e-05,
+              "se": 8.483411918430947e-05,
+              "sd_joint": 0.00026826903991660357,
+              "sd_train": 6.66666666666547e-05,
+              "sd_split": 0.00039042553707459304,
+              "resolved": false,
+              "p_model": 0.36512119642187346,
+              "decision_regret": 3.377371066902565e-05,
+              "material": false
+            },
+            {
+              "edit": "REGULARIZATION 0.001 -> 0.002",
+              "rho_joint": 0.9999971967301592,
+              "delta_hat_J": 1.0000000000287557e-07,
+              "se": 7.491402479579836e-06,
+              "sd_joint": 2.368989470450532e-05,
+              "sd_train": 2.4152294576997613e-05,
+              "sd_split": 1.4191155304929499e-05,
+              "resolved": false,
+              "p_model": 0.49831598620160067,
+              "decision_regret": 4.983159862159301e-08,
+              "material": false
+            },
+            {
+              "edit": "LEARNING_RATE 5e-4 -> 0.00025",
+              "rho_joint": 0.999630538132968,
+              "delta_hat_J": 0.0001852000000000076,
+              "se": 9.119037473573524e-05,
+              "sd_joint": 0.00028836928484919855,
+              "sd_train": 0.00017918361160179362,
+              "sd_split": 0.0004368584311752368,
+              "resolved": true,
+              "p_model": 0.26036125963814877,
+              "decision_regret": 4.821890528498713e-05,
+              "material": false,
+              "flip_emp": 0.4,
+              "campaign_delta_hat": 0.0006249999999999867,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "N_EPOCHS 80 -> 40",
+              "rho_joint": 0.9996156833493557,
+              "delta_hat_J": 0.00019019999999999592,
+              "se": 9.403850275285891e-05,
+              "sd_joint": 0.0002973758564510484,
+              "sd_train": 0.0001698915994260847,
+              "sd_split": 0.00043443578991093993,
+              "resolved": true,
+              "p_model": 0.2612180882334938,
+              "decision_regret": 4.968368038200945e-05,
+              "material": false,
+              "flip_emp": 0.4,
+              "campaign_delta_hat": 0.0006249999999999867,
+              "campaign_wrong": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 2,
+            "n_material": 0,
+            "n_unresolved_noisy": 0,
+            "median_sd_joint": 0.0002709141725508072,
+            "mean_flip_emp_resolved": 0.4,
+            "mean_p_model_material": NaN,
+            "regret_share_material": NaN,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.006721508418614677
+          },
+          "proposal": {
+            "qualifies_D21": false,
+            "needs_more_seeds": false,
+            "split_policy": "vary"
+          }
+        },
+        "mlp_synthetic": {
+          "default_metric": 0.999375,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 8.979142498032566e-05,
+          "sigma_split": 0.0013388747348260528,
+          "sigma_joint": 0.0015984663622081825,
+          "mean_joint": 0.9975303999999999,
+          "median_wall_seconds": 14.936800000000002,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "LEARNING_RATE 0.01 -> 0.005",
+              "rho_joint": 0.9768676018254407,
+              "delta_hat_J": -0.0001652000000000098,
+              "se": 0.00015887421999109602,
+              "sd_joint": 0.0005024043966545195,
+              "sd_train": 7.975657409339922e-05,
+              "sd_split": 0.0001918658385434909,
+              "resolved": false,
+              "p_model": 0.3711463342424292,
+              "decision_regret": 6.131337441685294e-05,
+              "material": false
+            },
+            {
+              "edit": "N_EPOCHS 10000 -> 20000",
+              "rho_joint": 0.9842326242188428,
+              "delta_hat_J": 3.999999999998449e-05,
+              "se": 9.45163125250465e-05,
+              "sd_joint": 0.0002988868236194474,
+              "sd_train": 8.834905520464044e-05,
+              "sd_split": 9.667499964083445e-05,
+              "resolved": false,
+              "p_model": 0.446768533232097,
+              "decision_regret": 1.787074132927695e-05,
+              "material": false
+            },
+            {
+              "edit": "REGULARIZATION 0.001 -> 0.0005",
+              "rho_joint": 0.990206776009387,
+              "delta_hat_J": -0.0002452000000000121,
+              "se": 9.743211882011333e-05,
+              "sd_joint": 0.0003081074127277155,
+              "sd_train": 8.010409893800577e-05,
+              "sd_split": 0.0002940480686327316,
+              "resolved": true,
+              "p_model": 0.21306648476838613,
+              "decision_regret": 5.224390206521085e-05,
+              "material": false,
+              "flip_emp": 0.2,
+              "campaign_delta_hat": -0.00022500000000003073,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "HIDDEN_DIM 64 -> 128",
+              "rho_joint": 0.9890162843117939,
+              "delta_hat_J": -4.800000000015903e-06,
+              "se": 7.480148542790662e-05,
+              "sd_joint": 0.00023654306631607966,
+              "sd_train": 0.0001217921727096004,
+              "sd_split": 0.00017258250844803035,
+              "resolved": false,
+              "p_model": 0.4919051039471015,
+              "decision_regret": 2.36114449895391e-06,
+              "material": false
+            },
+            {
+              "edit": "BATCH_SIZE 128 -> 64",
+              "rho_joint": 0.984955994104376,
+              "delta_hat_J": 4.999999999997229e-05,
+              "se": 9.249624617006753e-05,
+              "sd_joint": 0.0002924988129130396,
+              "sd_train": 9.219544457291737e-05,
+              "sd_split": 9.522750536361334e-05,
+              "resolved": false,
+              "p_model": 0.43213513207936904,
+              "decision_regret": 2.1606756603956478e-05,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 1,
+            "n_material": 0,
+            "n_unresolved_noisy": 0,
+            "median_sd_joint": 0.0002988868236194474,
+            "mean_flip_emp_resolved": 0.2,
+            "mean_p_model_material": NaN,
+            "regret_share_material": NaN,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.05617348422414367
+          },
+          "proposal": {
+            "qualifies_D21": false,
+            "needs_more_seeds": false,
+            "split_policy": "vary"
+          }
+        },
+        "openml_breast_w": {
+          "default_metric": 0.993156,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 1.1702778228589004e-16,
+          "sigma_split": 0.004915131335421704,
+          "sigma_joint": 0.0029510196900581886,
+          "mean_joint": 0.9966988999999999,
+          "median_wall_seconds": 1.2657,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9927201291465481,
+              "delta_hat_J": -8.070000000001131e-05,
+              "se": 0.00011694852143856063,
+              "sd_joint": 0.0003698236967348831,
+              "sd_train": 0.0,
+              "sd_split": 0.0004725823149933154,
+              "resolved": false,
+              "p_model": 0.4136319346904625,
+              "decision_regret": 3.3380097129525006e-05,
+              "material": false
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9887968032204251,
+              "delta_hat_J": -0.00024149999999999449,
+              "se": 0.00017184322635601615,
+              "sd_joint": 0.000543415995756888,
+              "sd_train": 0.0,
+              "sd_split": 0.0003793629162453939,
+              "resolved": false,
+              "p_model": 0.32837276164586493,
+              "decision_regret": 7.930202193747458e-05,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.8464123662373442,
+              "delta_hat_J": -0.002536399999999983,
+              "se": 0.000770982233546559,
+              "sd_joint": 0.0024380598935310038,
+              "sd_train": 0.0011195468329244208,
+              "sd_split": 0.004913779735487643,
+              "resolved": true,
+              "p_model": 0.14909205289085697,
+              "decision_regret": 0.0003781570829523671,
+              "material": true,
+              "flip_emp": 0.3,
+              "campaign_delta_hat": -0.0020130000000000425,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.5364517015090574,
+              "delta_hat_J": -0.0050322999999999896,
+              "se": 0.0016955727845709779,
+              "sd_joint": 0.0053618719378382956,
+              "sd_train": 0.0016998767961891553,
+              "sd_split": 0.007331511876823253,
+              "resolved": true,
+              "p_model": 0.1739849840234769,
+              "decision_regret": 0.000875544635101341,
+              "material": true,
+              "flip_emp": 0.1,
+              "campaign_delta_hat": -0.002817999999999987,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9994880281860836,
+              "delta_hat_J": 8.050000000000556e-05,
+              "se": 5.366671842647978e-05,
+              "sd_joint": 0.00016970906477460374,
+              "sd_train": 0.0,
+              "sd_split": 0.00025487957940959806,
+              "resolved": false,
+              "p_model": 0.31762831108995293,
+              "decision_regret": 2.5569079042742978e-05,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 2,
+            "n_material": 2,
+            "n_unresolved_noisy": 0,
+            "median_sd_joint": 0.000543415995756888,
+            "mean_flip_emp_resolved": 0.2,
+            "mean_p_model_material": 0.16153851845716694,
+            "regret_share_material": 0.16564293974575722,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.3881131302391617
+          },
+          "proposal": {
+            "qualifies_D21": true,
+            "needs_more_seeds": false,
+            "split_policy": "vary"
+          }
+        },
+        "openml_credit_approval": {
+          "default_metric": 0.90967,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 0.0,
+          "sigma_split": 0.00801361366398178,
+          "sigma_joint": 0.0168901737692528,
+          "mean_joint": 0.9198442,
+          "median_wall_seconds": 1.4030999999999998,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9838802079847974,
+              "delta_hat_J": -0.001196200000000014,
+              "se": 0.0009650826654287704,
+              "sd_joint": 0.003051859353101155,
+              "sd_train": 0.0,
+              "sd_split": 0.0019373540489830627,
+              "resolved": false,
+              "p_model": 0.34754470677832855,
+              "decision_regret": 0.00041573297824824146,
+              "material": false
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9931104854893015,
+              "delta_hat_J": 0.00033519999999997996,
+              "se": 0.0006272086804954764,
+              "sd_joint": 0.0019834079985945317,
+              "sd_train": 0.0,
+              "sd_split": 0.0015099654742189667,
+              "resolved": false,
+              "p_model": 0.43289751798346016,
+              "decision_regret": 0.00014510724802804716,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.7039697311763186,
+              "delta_hat_J": 0.018938999999999984,
+              "se": 0.004213964657342694,
+              "sd_joint": 0.013325726296653902,
+              "sd_train": 0.0015648471739367264,
+              "sd_split": 0.012457845388883804,
+              "resolved": true,
+              "p_model": 0.07762410224649408,
+              "decision_regret": 0.0014701228724463501,
+              "material": true,
+              "flip_emp": 0.0,
+              "campaign_delta_hat": 0.01199400000000006,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.6190065187311804,
+              "delta_hat_J": 0.018334300000000005,
+              "se": 0.004640763452637217,
+              "sd_joint": 0.01467538259240055,
+              "sd_train": 0.0027713922313523363,
+              "sd_split": 0.02018020876337344,
+              "resolved": true,
+              "p_model": 0.10577339230925448,
+              "decision_regret": 0.0019392811066155648,
+              "material": true,
+              "flip_emp": 0.1,
+              "campaign_delta_hat": 0.005622000000000016,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9984679794475962,
+              "delta_hat_J": 0.0006364999999999843,
+              "se": 0.00029556199763237863,
+              "sd_joint": 0.0009346491023076104,
+              "sd_train": 0.0,
+              "sd_split": 0.0006543371879662464,
+              "resolved": true,
+              "p_model": 0.2479344043130376,
+              "decision_regret": 0.00015781024834524452,
+              "material": false,
+              "flip_emp": 0.5,
+              "campaign_delta_hat": 0.0018740000000000423,
+              "campaign_wrong": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 3,
+            "n_material": 2,
+            "n_unresolved_noisy": 1,
+            "median_sd_joint": 0.003051859353101155,
+            "mean_flip_emp_resolved": 0.19999999999999998,
+            "mean_p_model_material": 0.09169874727787428,
+            "regret_share_material": 0.09147040855148098,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.15313843569111468
+          },
+          "proposal": {
+            "qualifies_D21": false,
+            "needs_more_seeds": true,
+            "split_policy": "vary"
+          }
+        },
+        "openml_diabetes": {
+          "default_metric": 0.829667,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 0.0,
+          "sigma_split": 0.03359971083208903,
+          "sigma_joint": 0.031668579163475784,
+          "mean_joint": 0.7977666999999999,
+          "median_wall_seconds": 1.18885,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9973414219457651,
+              "delta_hat_J": 0.0009000999999999926,
+              "se": 0.0007715463181890775,
+              "sd_joint": 0.0024398436857944843,
+              "sd_train": 0.0,
+              "sd_split": 0.0012249788252138118,
+              "resolved": false,
+              "p_model": 0.35609476723822026,
+              "decision_regret": 0.0003205208999911194,
+              "material": false
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9988898840271461,
+              "delta_hat_J": -0.0003667000000000087,
+              "se": 0.00047776202932700454,
+              "sd_joint": 0.0015108161922174966,
+              "sd_train": 0.0,
+              "sd_split": 0.0010066103516257017,
+              "resolved": false,
+              "p_model": 0.40411251692780226,
+              "decision_regret": 0.00014818805995742861,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.5504119798624479,
+              "delta_hat_J": 0.0127,
+              "se": 0.008381862105496332,
+              "sd_joint": 0.02650577528682295,
+              "sd_train": 0.005252663997122473,
+              "sd_split": 0.019610739439002434,
+              "resolved": false,
+              "p_model": 0.31591921122847433,
+              "decision_regret": 0.004012173982601624,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.6419239508771678,
+              "delta_hat_J": -0.0013001000000000152,
+              "se": 0.0077396982591915915,
+              "sd_joint": 0.024475074901485667,
+              "sd_train": 0.0008636071702136536,
+              "sd_split": 0.020604625160655362,
+              "resolved": false,
+              "p_model": 0.4788184082123195,
+              "decision_regret": 0.0006225118125168439,
+              "material": false
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9990441488343923,
+              "delta_hat_J": 0.0010665999999999952,
+              "se": 0.0005978921902074898,
+              "sd_joint": 0.0018907011162822883,
+              "sd_train": 0.0,
+              "sd_split": 0.0014926404047116543,
+              "resolved": false,
+              "p_model": 0.2863330509808987,
+              "decision_regret": 0.00030540283217622515,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 0,
+            "n_material": 0,
+            "n_unresolved_noisy": 3,
+            "median_sd_joint": 0.0024398436857944843,
+            "mean_flip_emp_resolved": NaN,
+            "mean_p_model_material": NaN,
+            "regret_share_material": NaN,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.0
+          },
+          "proposal": {
+            "qualifies_D21": false,
+            "needs_more_seeds": true,
+            "split_policy": "vary"
+          }
+        },
+        "openml_ionosphere": {
+          "default_metric": 0.98452,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 1.1702778228589004e-16,
+          "sigma_split": 0.03674120669039963,
+          "sigma_joint": 0.04374753778074576,
+          "mean_joint": 0.9314240999999999,
+          "median_wall_seconds": 1.40405,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9549653225795891,
+              "delta_hat_J": -0.0013931000000000139,
+              "se": 0.004282763454826802,
+              "sd_joint": 0.013543287196984345,
+              "sd_train": 0.0,
+              "sd_split": 0.008542763539979313,
+              "resolved": false,
+              "p_model": 0.459035944129729,
+              "decision_regret": 0.0006394829737671318,
+              "material": false
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9507699464194609,
+              "delta_hat_J": -0.0024766000000000067,
+              "se": 0.00511421285829989,
+              "sd_joint": 0.016172561071147618,
+              "sd_train": 0.0,
+              "sd_split": 0.014467150407042858,
+              "resolved": false,
+              "p_model": 0.439145545383903,
+              "decision_regret": 0.001087587857697777,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.47359049185641416,
+              "delta_hat_J": 0.05015480000000001,
+              "se": 0.012226370700525423,
+              "sd_joint": 0.03866317893120876,
+              "sd_train": 0.002284429381705628,
+              "sd_split": 0.028798360041270878,
+              "resolved": true,
+              "p_model": 0.09727707873484454,
+              "decision_regret": 0.004878912428530382,
+              "material": true,
+              "flip_emp": 0.1,
+              "campaign_delta_hat": 0.00774000000000008,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.509034674581033,
+              "delta_hat_J": 0.0291022,
+              "se": 0.012089814093598692,
+              "sd_joint": 0.03823134902377597,
+              "sd_train": 0.002219399918896989,
+              "sd_split": 0.0687009547095235,
+              "resolved": true,
+              "p_model": 0.2232649264499133,
+              "decision_regret": 0.006497500542530667,
+              "material": true,
+              "flip_emp": 0.2,
+              "campaign_delta_hat": -0.013931999999999944,
+              "campaign_wrong": true
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9923841471956675,
+              "delta_hat_J": 0.00030959999999999874,
+              "se": 0.0017082639608678677,
+              "sd_joint": 0.005402004961123209,
+              "sd_train": 0.0,
+              "sd_split": 0.00602625961106888,
+              "resolved": false,
+              "p_model": 0.4771483092196809,
+              "decision_regret": 0.0001477251165344126,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 2,
+            "n_material": 2,
+            "n_unresolved_noisy": 3,
+            "median_sd_joint": 0.016172561071147618,
+            "mean_flip_emp_resolved": 0.15000000000000002,
+            "mean_p_model_material": 0.16027100259237892,
+            "regret_share_material": 0.14353827385670725,
+            "campaign_wrong": 1,
+            "median_train_to_joint_ratio": 0.0585686167538141
+          },
+          "proposal": {
+            "qualifies_D21": true,
+            "needs_more_seeds": false,
+            "split_policy": "vary"
+          }
+        },
+        "openml_wdbc": {
+          "default_metric": 0.997642,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 1.1702778228589004e-16,
+          "sigma_split": 0.00678695046557893,
+          "sigma_joint": 0.008027917358955706,
+          "mean_joint": 0.9932782999999998,
+          "median_wall_seconds": 1.47255,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9946013875049241,
+              "delta_hat_J": -0.00023569999999999424,
+              "se": 0.00028069081645904485,
+              "sd_joint": 0.0008876222983028604,
+              "sd_train": 0.0,
+              "sd_split": 0.0010473310842326912,
+              "resolved": false,
+              "p_model": 0.3952964137353723,
+              "decision_regret": 9.317136471742497e-05,
+              "material": false
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9947441973187168,
+              "delta_hat_J": 0.00017690000000000205,
+              "se": 0.0002644219460550705,
+              "sd_joint": 0.0008361756128681977,
+              "sd_train": 0.0,
+              "sd_split": 0.0011724764863787474,
+              "resolved": false,
+              "p_model": 0.4162257715566039,
+              "decision_regret": 7.363033898836408e-05,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.4911090788891127,
+              "delta_hat_J": -0.007488199999999989,
+              "se": 0.0036326207552001798,
+              "sd_joint": 0.011487355462033517,
+              "sd_train": 0.0020807641998928155,
+              "sd_split": 0.008127611347882101,
+              "resolved": true,
+              "p_model": 0.25724427216734,
+              "decision_regret": 0.0019262965588434729,
+              "material": true,
+              "flip_emp": 0.1,
+              "campaign_delta_hat": -0.002359,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.38955593883550227,
+              "delta_hat_J": -0.032517599999999994,
+              "se": 0.006713434762888177,
+              "sd_joint": 0.021229744773679084,
+              "sd_train": 0.0008877994267976502,
+              "sd_split": 0.021891549965175536,
+              "resolved": true,
+              "p_model": 0.06279824161293546,
+              "decision_regret": 0.0020420481014727897,
+              "material": true,
+              "flip_emp": 0.0,
+              "campaign_delta_hat": -0.015920000000000045,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9964482903708772,
+              "delta_hat_J": 1.1102230246251566e-17,
+              "se": 0.00021531584036273488,
+              "sd_joint": 0.0006808884718594576,
+              "sd_train": 0.0,
+              "sd_split": 0.0005696261542060436,
+              "resolved": false,
+              "p_model": 0.4999999999999935,
+              "decision_regret": 5.5511151231257106e-18,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 2,
+            "n_material": 2,
+            "n_unresolved_noisy": 0,
+            "median_sd_joint": 0.0008876222983028604,
+            "mean_flip_emp_resolved": 0.05,
+            "mean_p_model_material": 0.16002125689013774,
+            "regret_share_material": 0.09919423334407171,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.11147691880458073
+          },
+          "proposal": {
+            "qualifies_D21": true,
+            "needs_more_seeds": false,
+            "split_policy": "vary"
+          }
+        },
+        "mlagentbench_vectorization": {
+          "default_metric": 13.212592261,
+          "deterministic_at_fixed_seed": false,
+          "sigma_train": 2.4240124276987793,
+          "sigma_split": 2.233380385293168,
+          "sigma_joint": 2.289263402671981,
+          "mean_joint": 10.339660266299997,
+          "median_wall_seconds": 0.5091,
+          "failed_runs": 0,
+          "edits": [],
+          "summary": {
+            "n_edits": 0,
+            "n_resolved": 0,
+            "n_material": 0,
+            "n_unresolved_noisy": 0,
+            "median_sd_joint": NaN,
+            "mean_flip_emp_resolved": NaN,
+            "mean_p_model_material": NaN,
+            "regret_share_material": NaN,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 1.0588613022291458
+          },
+          "proposal": {
+            "qualifies_D21": false,
+            "needs_more_seeds": false,
+            "split_policy": "fixed"
+          }
+        }
+      }
+    },
+    "new, seeds 1\u201310 (= E1 seeds)": {
+      "label": "PILOT",
+      "run_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/tmpcommn975/first10",
+      "rules": {
+        "QUALIFY_P": 0.1,
+        "MIN_EFFECT": 0.002,
+        "MIN_EDITS": 2,
+        "VARY_RATIO": 0.5
+      },
+      "nodes": {
+        "openml_credit_approval": {
+          "default_metric": 0.90967,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 0.0,
+          "sigma_split": 0.00801361366398178,
+          "sigma_joint": 0.016890173769252805,
+          "mean_joint": 0.9198442,
+          "median_wall_seconds": 0.977,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9838802079847974,
+              "delta_hat_J": -0.001196200000000014,
+              "se": 0.0009650826654287704,
+              "sd_joint": 0.003051859353101155,
+              "sd_train": 0.0,
+              "sd_split": 0.0019373540489830627,
+              "resolved": false,
+              "p_model": 0.34754470677832855,
+              "decision_regret": 0.00041573297824824146,
+              "material": false
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9931104854893015,
+              "delta_hat_J": 0.00033519999999997996,
+              "se": 0.0006272086804954764,
+              "sd_joint": 0.0019834079985945317,
+              "sd_train": 0.0,
+              "sd_split": 0.0015099654742189667,
+              "resolved": false,
+              "p_model": 0.43289751798346016,
+              "decision_regret": 0.00014510724802804716,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.7377751559439889,
+              "delta_hat_J": 0.020329699999999985,
+              "se": 0.003825962870964643,
+              "sd_joint": 0.012098756915485167,
+              "sd_train": 0.0031961178187155654,
+              "sd_split": 0.01727549864242547,
+              "resolved": true,
+              "p_model": 0.046448204696065976,
+              "decision_regret": 0.0009442780670096117,
+              "material": true,
+              "flip_emp": 0.1,
+              "campaign_delta_hat": 0.013492999999999977,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.6174621433740161,
+              "delta_hat_J": 0.018203899999999985,
+              "se": 0.0045350232571987215,
+              "sd_joint": 0.014341002734583557,
+              "sd_train": 0.003062513716976081,
+              "sd_split": 0.020074034743640584,
+              "resolved": true,
+              "p_model": 0.10215628858749548,
+              "decision_regret": 0.0018596428618179075,
+              "material": true,
+              "flip_emp": 0.1,
+              "campaign_delta_hat": 0.006372000000000044,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9984679794475962,
+              "delta_hat_J": 0.0006364999999999843,
+              "se": 0.00029556199763237863,
+              "sd_joint": 0.0009346491023076104,
+              "sd_train": 0.0,
+              "sd_split": 0.0006543371879662464,
+              "resolved": true,
+              "p_model": 0.2479344043130376,
+              "decision_regret": 0.00015781024834524452,
+              "material": false,
+              "flip_emp": 0.5,
+              "campaign_delta_hat": 0.0018740000000000423,
+              "campaign_wrong": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 3,
+            "n_material": 2,
+            "n_unresolved_noisy": 1,
+            "median_sd_joint": 0.003051859353101155,
+            "mean_flip_emp_resolved": 0.2333333333333333,
+            "mean_p_model_material": 0.07430224664178073,
+            "regret_share_material": 0.07276561050167961,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.23885929525901206
+          },
+          "proposal": {
+            "qualifies_D21": false,
+            "needs_more_seeds": true,
+            "split_policy": "vary"
+          }
+        },
+        "openml_diabetes": {
+          "default_metric": 0.829667,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 0.0,
+          "sigma_split": 0.03359971083208903,
+          "sigma_joint": 0.031668579163475784,
+          "mean_joint": 0.7977666999999999,
+          "median_wall_seconds": 0.9506,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9973414219457651,
+              "delta_hat_J": 0.0009000999999999926,
+              "se": 0.0007715463181890775,
+              "sd_joint": 0.0024398436857944843,
+              "sd_train": 0.0,
+              "sd_split": 0.0012249788252138118,
+              "resolved": false,
+              "p_model": 0.35609476723822026,
+              "decision_regret": 0.0003205208999911194,
+              "material": false
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9988898840271461,
+              "delta_hat_J": -0.0003667000000000087,
+              "se": 0.00047776202932700454,
+              "sd_joint": 0.0015108161922174966,
+              "sd_train": 0.0,
+              "sd_split": 0.0010066103516257017,
+              "resolved": false,
+              "p_model": 0.40411251692780226,
+              "decision_regret": 0.00014818805995742861,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.5125477852705161,
+              "delta_hat_J": 0.013233299999999993,
+              "se": 0.008621222408877595,
+              "sd_joint": 0.02726269902693664,
+              "sd_train": 0.004610341574475082,
+              "sd_split": 0.016980713098493052,
+              "resolved": false,
+              "p_model": 0.3136964996843098,
+              "decision_regret": 0.004151239889272375,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.6223766138114636,
+              "delta_hat_J": -0.0014333999999999957,
+              "se": 0.007890609890806203,
+              "sd_joint": 0.024952299382800112,
+              "sd_train": 0.000786483064732553,
+              "sd_split": 0.02205206129946941,
+              "resolved": false,
+              "p_model": 0.4770951166598665,
+              "decision_regret": 0.0006838681402202506,
+              "material": false
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9990441488343923,
+              "delta_hat_J": 0.0010665999999999952,
+              "se": 0.0005978921902074898,
+              "sd_joint": 0.0018907011162822883,
+              "sd_train": 0.0,
+              "sd_split": 0.0014926404047116543,
+              "resolved": false,
+              "p_model": 0.2863330509808987,
+              "decision_regret": 0.00030540283217622515,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 0,
+            "n_material": 0,
+            "n_unresolved_noisy": 3,
+            "median_sd_joint": 0.0024398436857944843,
+            "mean_flip_emp_resolved": NaN,
+            "mean_p_model_material": NaN,
+            "regret_share_material": NaN,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 0.0
+          },
+          "proposal": {
+            "qualifies_D21": false,
+            "needs_more_seeds": true,
+            "split_policy": "vary"
+          }
+        }
+      }
+    },
+    "new, seeds 11\u201330 (independent)": {
+      "label": "PILOT",
+      "run_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/tmpcommn975/last20",
+      "rules": {
+        "QUALIFY_P": 0.1,
+        "MIN_EFFECT": 0.002,
+        "MIN_EDITS": 2,
+        "VARY_RATIO": 0.5
+      },
+      "nodes": {
+        "openml_credit_approval": {
+          "default_metric": 0.90967,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 1.1390647892519134e-16,
+          "sigma_split": 0.019490801768229565,
+          "sigma_joint": 0.032256680471484875,
+          "mean_joint": 0.9254942500000001,
+          "median_wall_seconds": 0.9859,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9976855922721319,
+              "delta_hat_J": -0.0023553499999999948,
+              "se": 0.0005746492901853544,
+              "sd_joint": 0.0025699097521529103,
+              "sd_train": 0.0,
+              "sd_split": 0.0028002680717538584,
+              "resolved": true,
+              "p_model": 0.1796995271381801,
+              "decision_regret": 0.00042325528124491157,
+              "material": true,
+              "flip_emp": 0.3,
+              "campaign_delta_hat": 0.0022490000000000565,
+              "campaign_wrong": true
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9950351658610336,
+              "delta_hat_J": 0.0006730499999999973,
+              "se": 0.0007592964592478418,
+              "sd_joint": 0.0033956769959061464,
+              "sd_train": 0.0,
+              "sd_split": 0.00262104375352546,
+              "resolved": false,
+              "p_model": 0.4214412041422403,
+              "decision_regret": 0.0002836510024479337,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.9331279524192865,
+              "delta_hat_J": 0.008211299999999987,
+              "se": 0.0025938272089713267,
+              "sd_joint": 0.011599947922296879,
+              "sd_train": 0.003758276557356957,
+              "sd_split": 0.01308482880154682,
+              "resolved": true,
+              "p_model": 0.2395117946241791,
+              "decision_regret": 0.001966703199197519,
+              "material": true,
+              "flip_emp": 0.3,
+              "campaign_delta_hat": 0.013492999999999977,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.8965993953346174,
+              "delta_hat_J": 0.003250700000000001,
+              "se": 0.003368640378628493,
+              "sd_joint": 0.015065017756727882,
+              "sd_train": 0.0027599345696859207,
+              "sd_split": 0.021038052312479683,
+              "resolved": false,
+              "p_model": 0.41458038342181597,
+              "decision_regret": 0.0013476764523892976,
+              "material": false
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9997608237762053,
+              "delta_hat_J": -5.610000000000892e-05,
+              "se": 0.00015884903293113614,
+              "sd_joint": 0.0007103944715882463,
+              "sd_train": 0.0,
+              "sd_split": 0.0008604229743195077,
+              "resolved": false,
+              "p_model": 0.4685281593473206,
+              "decision_regret": 2.6284429739388864e-05,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 2,
+            "n_material": 2,
+            "n_unresolved_noisy": 2,
+            "median_sd_joint": 0.0033956769959061464,
+            "mean_flip_emp_resolved": 0.3,
+            "mean_p_model_material": 0.2096056608811796,
+            "regret_share_material": 0.2261793927538467,
+            "campaign_wrong": 1,
+            "median_train_to_joint_ratio": 0.16199540646785893
+          },
+          "proposal": {
+            "qualifies_D21": true,
+            "needs_more_seeds": false,
+            "split_policy": "vary"
+          }
+        },
+        "openml_diabetes": {
+          "default_metric": 0.829667,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 0.0,
+          "sigma_split": 0.03775376158111512,
+          "sigma_joint": 0.03648352604352299,
+          "mean_joint": 0.8178333999999999,
+          "median_wall_seconds": 0.9857499999999999,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9986767989038656,
+              "delta_hat_J": 0.00024994999999999325,
+              "se": 0.0004823403334128704,
+              "sd_joint": 0.0021570915476021827,
+              "sd_train": 0.0,
+              "sd_split": 0.002013103450553785,
+              "resolved": false,
+              "p_model": 0.4538763526703965,
+              "decision_regret": 0.00011344639434996254,
+              "material": false
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9991609906887894,
+              "delta_hat_J": 0.0001332499999999903,
+              "se": 0.00037021489403204247,
+              "sd_joint": 0.0016556513386770564,
+              "sd_train": 0.0,
+              "sd_split": 0.0014789359759815861,
+              "resolved": false,
+              "p_model": 0.4679269873277281,
+              "decision_regret": 6.235127106141523e-05,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.819765500972499,
+              "delta_hat_J": -0.002233400000000013,
+              "se": 0.00475064299825214,
+              "sd_joint": 0.0212455213618504,
+              "sd_train": 0.004970027834296745,
+              "sd_split": 0.02519718516944221,
+              "resolved": false,
+              "p_model": 0.45813897272815707,
+              "decision_regret": 0.001023207581691072,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.7734842797155945,
+              "delta_hat_J": -0.012466750000000016,
+              "se": 0.005658326629088087,
+              "sd_joint": 0.025304805963076406,
+              "sd_train": 0.001420393270226681,
+              "sd_split": 0.0303597714381869,
+              "resolved": true,
+              "p_model": 0.3111252456322517,
+              "decision_regret": 0.003878720655985879,
+              "material": true,
+              "flip_emp": 0.25,
+              "campaign_delta_hat": 0.023665999999999965,
+              "campaign_wrong": true
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9966116985102708,
+              "delta_hat_J": 0.0009832999999999982,
+              "se": 0.0007167400655599976,
+              "sd_joint": 0.0032053590175796214,
+              "sd_train": 0.0,
+              "sd_split": 0.0019705581923591367,
+              "resolved": false,
+              "p_model": 0.37951017047519514,
+              "decision_regret": 0.0003731723506282587,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 1,
+            "n_material": 1,
+            "n_unresolved_noisy": 3,
+            "median_sd_joint": 0.0032053590175796214,
+            "mean_flip_emp_resolved": 0.25,
+            "mean_p_model_material": 0.3111252456322517,
+            "regret_share_material": 0.3111252456322517,
+            "campaign_wrong": 1,
+            "median_train_to_joint_ratio": 0.056131363832595774
+          },
+          "proposal": {
+            "qualifies_D21": false,
+            "needs_more_seeds": true,
+            "split_policy": "vary"
+          }
+        }
+      }
+    },
+    "new, all 30 seeds": {
+      "label": "PILOT",
+      "run_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/mnt/agent_paper_B/.claude-worktrees/noise-remeasure-22oct/results/r1/pilot/E1_remeasure_20261022T100942Z",
+      "rules": {
+        "QUALIFY_P": 0.1,
+        "MIN_EFFECT": 0.002,
+        "MIN_EDITS": 2,
+        "VARY_RATIO": 0.5
+      },
+      "nodes": {
+        "openml_credit_approval": {
+          "default_metric": 0.90967,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 3.387607712450221e-16,
+          "sigma_split": 0.0176210611256928,
+          "sigma_joint": 0.02788504569484239,
+          "mean_joint": 0.9236109,
+          "median_wall_seconds": 0.9775,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.995872914710658,
+              "delta_hat_J": -0.001968966666666668,
+              "se": 0.0005008801689424802,
+              "sd_joint": 0.0027434336713679495,
+              "sd_train": 0.0,
+              "sd_split": 0.0025221421017875036,
+              "resolved": true,
+              "p_model": 0.23647065600167566,
+              "decision_regret": 0.00046560283931209966,
+              "material": false,
+              "flip_emp": 0.3,
+              "campaign_delta_hat": 0.0022490000000000565,
+              "campaign_wrong": true
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9947292195607125,
+              "delta_hat_J": 0.0005604333333333249,
+              "se": 0.0005416534279902934,
+              "sd_joint": 0.0029667580086028384,
+              "sd_train": 0.0,
+              "sd_split": 0.0022856812460666396,
+              "resolved": false,
+              "p_model": 0.42508391319751343,
+              "decision_regret": 0.00023823119441965617,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.8871368956006077,
+              "delta_hat_J": 0.012250766666666654,
+              "se": 0.002361831008818064,
+              "sd_joint": 0.012936281205448364,
+              "sd_train": 0.003651222234190661,
+              "sd_split": 0.014402563017597314,
+              "resolved": true,
+              "p_model": 0.1718172552001258,
+              "decision_regret": 0.002104893102763859,
+              "material": true,
+              "flip_emp": 0.23333333333333334,
+              "campaign_delta_hat": 0.013492999999999977,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.8132487526112976,
+              "delta_hat_J": 0.008235099999999995,
+              "se": 0.0029660481616717417,
+              "sd_joint": 0.01624571484794343,
+              "sd_train": 0.0028256049111284333,
+              "sd_split": 0.02051312877408756,
+              "resolved": true,
+              "p_model": 0.306109315116774,
+              "decision_regret": 0.0025208408209181437,
+              "material": true,
+              "flip_emp": 0.36666666666666664,
+              "campaign_delta_hat": 0.006372000000000044,
+              "campaign_wrong": false
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.99954275004657,
+              "delta_hat_J": 0.00017476666666665547,
+              "se": 0.00015405862209608712,
+              "sd_joint": 0.0008438138250019073,
+              "sd_train": 0.0,
+              "sd_split": 0.000804304811551601,
+              "resolved": false,
+              "p_model": 0.4179599469318536,
+              "decision_regret": 7.304546672545227e-05,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 3,
+            "n_material": 2,
+            "n_unresolved_noisy": 1,
+            "median_sd_joint": 0.0029667580086028384,
+            "mean_flip_emp_resolved": 0.3,
+            "mean_p_model_material": 0.2389632851584499,
+            "regret_share_material": 0.22580123159781731,
+            "campaign_wrong": 1,
+            "median_train_to_joint_ratio": 0.22808795503820312
+          },
+          "proposal": {
+            "qualifies_D21": true,
+            "needs_more_seeds": false,
+            "split_policy": "vary"
+          }
+        },
+        "openml_diabetes": {
+          "default_metric": 0.829667,
+          "deterministic_at_fixed_seed": true,
+          "sigma_train": 1.1292025708167404e-16,
+          "sigma_split": 0.03585137619104675,
+          "sigma_joint": 0.035719442656722625,
+          "mean_joint": 0.8111445,
+          "median_wall_seconds": 0.9824999999999999,
+          "failed_runs": 0,
+          "edits": [
+            {
+              "edit": "C 0.15 -> 0.075",
+              "rho_joint": 0.9984450220269064,
+              "delta_hat_J": 0.00046666666666665967,
+              "se": 0.00040796852575616976,
+              "sd_joint": 0.0022345356430878154,
+              "sd_train": 0.0,
+              "sd_split": 0.0017718053407519742,
+              "resolved": false,
+              "p_model": 0.41728548159194256,
+              "decision_regret": 0.00019473322474290362,
+              "material": false
+            },
+            {
+              "edit": "C 0.15 -> 0.3",
+              "rho_joint": 0.9991408915638461,
+              "delta_hat_J": -3.340000000000935e-05,
+              "se": 0.00029222072668352373,
+              "sd_joint": 0.0016005588377511776,
+              "sd_train": 0.0,
+              "sd_split": 0.0013227917273792489,
+              "resolved": false,
+              "p_model": 0.49167559176772413,
+              "decision_regret": 1.6421964765046583e-05,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> random_forest",
+              "rho_joint": 0.7417332401793366,
+              "delta_hat_J": 0.0029221666666666554,
+              "se": 0.004402214210918438,
+              "sd_joint": 0.024111920262898334,
+              "sd_train": 0.0048366717564158205,
+              "sd_split": 0.022547858115164948,
+              "resolved": false,
+              "p_model": 0.4517695652207199,
+              "decision_regret": 0.0013201459645024753,
+              "material": false
+            },
+            {
+              "edit": "model_type logistic_regression -> gradient_boosting",
+              "rho_joint": 0.7303624862064593,
+              "delta_hat_J": -0.008788966666666675,
+              "se": 0.004621470570921414,
+              "sd_joint": 0.02531283680539937,
+              "sd_train": 0.0012310101641082897,
+              "sd_split": 0.02762889178819302,
+              "resolved": false,
+              "p_model": 0.3642153459646039,
+              "decision_regret": 0.003201076535171375,
+              "material": false
+            },
+            {
+              "edit": "class_weight balanced -> null",
+              "rho_joint": 0.9973986156484312,
+              "delta_hat_J": 0.0010110666666666638,
+              "se": 0.0005112877789955402,
+              "sd_joint": 0.0028004384993257346,
+              "sd_train": 0.0,
+              "sd_split": 0.0018146593740088447,
+              "resolved": false,
+              "p_model": 0.35903525965347843,
+              "decision_regret": 0.0003630085831936426,
+              "material": false
+            }
+          ],
+          "summary": {
+            "n_edits": 5,
+            "n_resolved": 0,
+            "n_material": 0,
+            "n_unresolved_noisy": 4,
+            "median_sd_joint": 0.0028004384993257346,
+            "mean_flip_emp_resolved": NaN,
+            "mean_p_model_material": NaN,
+            "regret_share_material": NaN,
+            "campaign_wrong": 0,
+            "median_train_to_joint_ratio": 3.161310722759044e-15
+          },
+          "proposal": {
+            "qualifies_D21": false,
+            "needs_more_seeds": true,
+            "split_policy": "vary"
+          }
+        }
+      }
+    }
+  },
+  "bootstrap": {
+    "E1 (10 seeds)": {
+      "openml_credit_approval": {
+        "n_seeds": 10,
+        "B": 2000,
+        "p_qualifies": 0.391,
+        "n_material_dist": {
+          "0": 0.0,
+          "1": 0.0135,
+          "2": 0.8015,
+          "3": 0.183,
+          "4": 0.002,
+          "5": 0.0
+        },
+        "mean_p_wrong_q05_q50_q95": [
+          0.013373384817389901,
+          0.08606149293638725,
+          0.17362570524363155
+        ]
+      },
+      "openml_diabetes": {
+        "n_seeds": 10,
+        "B": 2000,
+        "p_qualifies": 0.0905,
+        "n_material_dist": {
+          "0": 0.56,
+          "1": 0.3345,
+          "2": 0.1015,
+          "3": 0.004,
+          "4": 0.0,
+          "5": 0.0
+        },
+        "mean_p_wrong_q05_q50_q95": [
+          0.06069634950898166,
+          0.19277548840861003,
+          0.25686444670299896
+        ]
+      }
+    },
+    "new (30 seeds)": {
+      "openml_credit_approval": {
+        "n_seeds": 30,
+        "B": 2000,
+        "p_qualifies": 0.866,
+        "n_material_dist": {
+          "0": 0.0,
+          "1": 0.1335,
+          "2": 0.487,
+          "3": 0.377,
+          "4": 0.0025,
+          "5": 0.0
+        },
+        "mean_p_wrong_q05_q50_q95": [
+          0.15455522875626787,
+          0.21129849284711427,
+          0.26924613264236014
+        ]
+      },
+      "openml_diabetes": {
+        "n_seeds": 30,
+        "B": 2000,
+        "p_qualifies": 0.028,
+        "n_material_dist": {
+          "0": 0.426,
+          "1": 0.546,
+          "2": 0.027,
+          "3": 0.001,
+          "4": 0.0,
+          "5": 0.0
+        },
+        "mean_p_wrong_q05_q50_q95": [
+          0.22031902054773111,
+          0.3125184516870386,
+          0.3539972669645712
+        ]
+      }
+    }
+  },
+  "reproducibility_vs_E1": {
+    "openml_credit_approval:c0": {
+      "identical": 32,
+      "different": 0
+    },
+    "openml_credit_approval:c1": {
+      "identical": 32,
+      "different": 0
+    },
+    "openml_credit_approval:c2": {
+      "identical": 32,
+      "different": 0
+    },
+    "openml_credit_approval:c3": {
+      "identical": 2,
+      "different": 30
+    },
+    "openml_credit_approval:c4": {
+      "identical": 4,
+      "different": 28
+    },
+    "openml_credit_approval:c5": {
+      "identical": 32,
+      "different": 0
+    },
+    "openml_diabetes:c0": {
+      "identical": 32,
+      "different": 0
+    },
+    "openml_diabetes:c1": {
+      "identical": 32,
+      "different": 0
+    },
+    "openml_diabetes:c2": {
+      "identical": 32,
+      "different": 0
+    },
+    "openml_diabetes:c3": {
+      "identical": 0,
+      "different": 32
+    },
+    "openml_diabetes:c4": {
+      "identical": 5,
+      "different": 27
+    },
+    "openml_diabetes:c5": {
+      "identical": 32,
+      "different": 0
+    }
+  },
+  "delta_n": {
+    "digits_mlp": 0.002,
+    "tabular_mlp": 0.002,
+    "openml_breast_w": 0.002,
+    "openml_ionosphere": 0.004043140267786904,
+    "openml_wdbc": 0.002,
+    "openml_credit_approval": 0.002,
+    "openml_diabetes": 0.002
+  }
+}
