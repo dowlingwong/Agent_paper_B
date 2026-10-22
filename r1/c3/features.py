@@ -242,10 +242,14 @@ def replay_campaign(rows: list[dict], start_files: dict[str, str], node: str, in
             noop = bool(cand_act == inc_act)
             duplicate = bool(not noop and cand_act in seen_metric)
             inert_kind = "equals_incumbent" if noop else "duplicate" if duplicate else None
+            # PLAN §10 (22 Oct): a no-op is an *inactive edit* (only keys inactive for the node's
+            # model change) or an *incumbent repeat* (back to the incumbent's active configuration).
+            noop_kind = None if not noop else (
+                "inactive_edit" if edit and key not in active_keys and cand_cfg != cur_cfg else "incumbent_repeat")
             outcome = {"delta_hat": float(delta_hat), "decision": row["decision"], "metric": metric,
                        "inert": noop, "noop": noop, "duplicate": duplicate, "rule_skip": noop or duplicate,
                        "known_metric": seen_metric[cand_act] if duplicate else None,
-                       "inert_kind": inert_kind,
+                       "inert_kind": inert_kind, "noop_kind": noop_kind,
                        "current_best_before": row["current_best_before"]}
             if check:
                 if cand_act == inc_act and delta_hat != 0:
