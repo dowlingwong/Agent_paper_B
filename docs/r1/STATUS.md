@@ -1,6 +1,21 @@
 # Paper B (route R1) — status log
 
 
+## 22 October 2026 — C3 preparation batch and 30-seed noise re-measurement (accepted, merged)
+
+AI-assisted: two Claude subagents in separate worktrees; reviewed, corrected and merged by the coordinating session (Claude). No LLM, Ollama, GPU or SSH. Merges `06f5faa` (code, ENGINEERING_ONLY) and `554ba3e` (noise, PILOT) on `main`. Tests: 290 passed (baseline 248), 1 deselected (known environmental dry-run test).
+- **Gate at the declared g only.** `offline_eval` computes g ∈ {0.1 (primary), 0.05, 0.2} σ_node; `gate_verdict` is the only verdict (g = 0.1, primary run accounting, instance split). On the 19 Oct pilot it reproduces the old 0.1σ values exactly: digits +0.0051 [0.0018, 0.0086], tabular +0.0016 [−0.0008, 0.0037], breast-w −0.0006 → fail. Not a gate decision (tiny pilot).
+- **Run accounting.** Primary as decided. Freed-run sensitivity: the subagent's uncapped variant scaled with 1/exec-rate (digits +0.039); replaced at acceptance by an LLM-call cap c × W (c = 1 = primary; c = 2 reported: digits +0.0103 [0.0037, 0.0172], tabular +0.0033 [−0.0017, 0.0073], breast-w −0.0012; c = ∞ upper bound). PLAN row wording corrected (literal replay impossible: one proposal per run in root ledgers).
+- **C1 duplicate rate** (`r1/c3/duplicate_report.py`; `reports/DUPLICATE_RATE_PILOT_20261022.md`, PILOT): 841/1,323 rule-detectable; memory-on duplicates 51–66 % (9.7–12.5 wasted runs per 20); DT4 digits memory-off 77 %; all 114 no-ops are inactive-key edits on ionosphere.
+- **DI audited mode** (`di_test.py --immediate audited`): default outputs byte-identical. PILOT: memory-on tabular residual −0.00122 → +0.00004 [−0.00120, 0.00093] with audits (13/13 points); memory-off digits +0.00051 → −0.00003. Both undetermined; audit noise is not in the CI.
+- **Audits K = 10** (7001–7010, 5 label + 5 evaluation); K = 6 pilot audits still split 3 + 3.
+- **Paper A coordination** (`r1/scripts/paper_a_status.py`): refuses unless evidence shows Paper A running on its card or finished; its Ada config has null entries that must be verified read-only on Ada first (handoff lists 7 checks).
+- **Sweep config** `r1/scripts/configs/c3_sweep_ada.json`: 5 D21 nodes, 18 instances × W = 20 × both memory modes, own Ollama port 11481, K = 10; `--check-config` passes; desktop DRYRUN passed (`results/r1/engineering/c3_sweep_dryrun_20261022T103215Z/`). Ionosphere kept (passed D28 on 14 Oct; the 19 Oct exclusion concerns only the DI-test pool). A node that fails D28 is dropped from both memory modes; for digits the memory-off choice stays with the author.
+- **Acceptance fix:** the C3 pipeline did not know `openml_wdbc` or `openml_credit_approval`; added, with the D25 projection read per node (imputer active on credit-approval) and checked against the harness configs; original node codes unchanged (rebuilt pilot table byte-identical).
+- **Noise re-measurement** (`results/r1/pilot/E1_remeasure_20261022T100942Z/`, `reports/NOISE_REMEASURE_20261022.md`, PILOT): 1,104 runs, 0 failures, 300 s. Under E1's (still unadopted) D21 rule, `credit_approval` qualifies (mean P(wrong) 0.09 → 0.24; bootstrap 0.87); `diabetes` has no material edit (bootstrap 0.03). δ_n = 0.002 (floor) on both. Tree-model metrics differ from E1 under scikit-learn 1.9.1; logistic regression reproduces bit-for-bit. Acceptance fix: the comparison script wrote temporary paths; now byte-reproducible.
+- **Open for the author:** (1) add `credit_approval` to D21, drop `diabetes`; (2) pool is 6 of ≥ 8 — fetch `credit_g` on a networked machine and choose 2–3 further OpenML datasets; (3) re-measure the five D21 nodes at 30 seeds for a common footing (~15 CPU-min); (4) adopt or amend E1's D21 threshold (mean P(wrong) ≥ 0.10 over ≥ 2 material edits).
+- **Still to do before the Ada sweep:** adapter from the sweep index to `dataset.build`; read-only Ada checks (Paper A config, seeded models path, port); `digits_mlp` repair and D28.
+
 ## 22 October 2026 — author decisions before the first C3 label sweep
 
 Recorded by an AI agent (Claude, coordinating session). No experiment ran. All rows are in PLAN §10, dated 22 Oct.
