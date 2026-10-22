@@ -63,6 +63,18 @@ SEED_BASE = {"train": 1001, "split": 2001, "joint": 3001}
 PILOT_DATA_CACHE = "experiments/r1/pilot/L8_20261009T152916Z/nodes/{node}/data_cache"
 
 
+def library_versions() -> dict[str, str | None]:
+    """Versions of the libraries that determine node metrics (PLAN §10, D21 rule, 22 Oct)."""
+    from importlib import metadata
+    out = {}
+    for name in ("scikit-learn", "numpy", "scipy", "pandas"):
+        try:
+            out[name] = metadata.version(name)
+        except metadata.PackageNotFoundError:
+            out[name] = None
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Edits
 # ---------------------------------------------------------------------------
@@ -228,7 +240,8 @@ def main() -> int:
             "schema": "r1.e1_noise_floor/2", "label": "PILOT", "started_utc": stamp,
             "harness": {"root": str(HARNESS), **harness_commit(HARNESS)},
             "seeds_per_condition": n_seeds, "seed_bases": SEED_BASE, "nodes": nodes,
-            "host": {"platform": platform.platform(), "python": platform.python_version(), "cpus": os.cpu_count()},
+            "host": {"platform": platform.platform(), "python": platform.python_version(), "cpus": os.cpu_count(),
+                     "libraries": library_versions()},  # PLAN §10 "D21 rule (22 Oct)": versions in every manifest
             "note": "Pilot only; not evidence (RUNBOOK §1 rule 3). Wall times are measured under parallel load.",
             "sessions": [],
         }
