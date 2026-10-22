@@ -115,16 +115,17 @@ def configuration(files):
 def project(config, node):
     if node in ('digits_mlp', 'tabular_mlp'):
         keys = set(config)
-    elif node in ('openml_ionosphere', 'openml_breast_w', 'openml_wdbc', 'openml_credit_approval'):
+    elif node in ('openml_ionosphere', 'openml_breast_w', 'openml_wdbc', 'openml_credit_approval',
+                  'openml_credit_g', 'openml_sonar', 'openml_blood_transfusion', 'openml_qsar_biodeg'):
         # Mirrors the D25 projection (harness configs/nodes/<node>.yaml): imputer is inactive on
-        # numeric-only datasets and active on credit-approval, which has categorical columns.
+        # numeric-only datasets and active on credit-approval and credit-g, which have categorical columns.
         model = config['model_type']
         keys = {'model_type', 'scaler'} | {
             'logistic_regression': {'C', 'max_iter', 'class_weight'},
             'random_forest': {'n_estimators', 'max_depth', 'class_weight'},
             'gradient_boosting': {'n_estimators', 'max_depth', 'learning_rate'},
         }[model]
-        if node == 'openml_credit_approval':
+        if node in ('openml_credit_approval', 'openml_credit_g'):
             keys = keys | {'imputer'}
     else:
         raise ValueError(f'Undeclared active-key projection: {node}')

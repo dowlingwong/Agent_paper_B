@@ -130,3 +130,18 @@ def test_di_test_projection_matches_features():
                    | F.OPENML_BY_MODEL_TYPE["gradient_boosting"]}
             cfg["model_type"] = model
             assert set(_json.loads(project(cfg, node))) == F.openml_active_keys(node, model), (node, model)
+
+
+def test_d21_pool_22oct_nodes_registered_with_stable_codes():
+    """22 Oct pool extension: four OpenML nodes appended; earlier codes unchanged."""
+    from r1.c3 import features as F
+    assert {k: F.NODE_CODES[k] for k in ("openml_credit_approval", "openml_wdbc")} == \
+        {"openml_credit_approval": 4, "openml_wdbc": 5}
+    assert {k: F.NODE_CODES[k] for k in ("openml_credit_g", "openml_sonar", "openml_blood_transfusion",
+                                         "openml_qsar_biodeg")} == \
+        {"openml_credit_g": 6, "openml_sonar": 7, "openml_blood_transfusion": 8, "openml_qsar_biodeg": 9}
+    assert len(set(F.NODE_CODES.values())) == len(F.NODE_CODES)
+    # credit-g has categorical columns (imputer active); the other three are numeric-only
+    assert "imputer" in F.openml_active_keys("openml_credit_g", "random_forest")
+    for node in ("openml_sonar", "openml_blood_transfusion", "openml_qsar_biodeg"):
+        assert "imputer" not in F.openml_active_keys(node, "random_forest")
