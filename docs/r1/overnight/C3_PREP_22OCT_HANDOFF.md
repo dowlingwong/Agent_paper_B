@@ -34,9 +34,13 @@ Command: `python -m pytest -q r1/tests -p no:cacheprovider --deselect r1/tests/t
 
 - **Ledger investigation (confirmed):** every root ledger has exactly W rows (DT4: 12 × 20; rerun-2 arm A: 54 × 20; liveness: 8 × 10), `budget_index` contiguous 1..W, `cumulative_budget_consumed == budget_index` on every row (0 mismatches), no `skipped` rows; the liveness events show exactly one `llm_call` / `proposal_created` per trial (80/80). One logged proposal = one run; there is no logged proposal after the last run. A literal replay that hands freed runs to later logged proposals therefore cannot spend them.
 - **Primary (unchanged):** `skip_credited_at_g` — r = Δ·keep − g·execute, a skip scores 0, freed runs not re-spent, per-20 = 20 × weighted mean per logged proposal. Stated in the module docstring and in the JSON (`run_accounting`).
-- **Sensitivity implemented:** `freed_run_exchangeable` — each skip's freed run is credited with the arm's own held-out weighted mean realised reward per **executed** proposal in the same node; per-20 = 20 × that mean (algebraically identical to crediting every skip with that mean). An arm that executes nothing in a node gets 0 (it has nothing to spend freed runs on). CI by instance-cluster bootstrap of the ratio difference (`cluster_boot_ratio_diff`). Reported per g under `values[g].freed_run_sensitivity` and in `sensitivity`, next to the primary gain (`primary_gain_per20`, exec rates of A3 and A2).
-- **Deviation from PLAN wording (for the PLAN row):** PLAN §10 "Run accounting (22 Oct)" says the sensitivity "gives each freed run to the next logged proposal of the same campaign (under the same arm's rules)". Implemented instead: "each freed run is credited with the arm's own held-out mean realised reward per executed proposal in the same node (exchangeability: proposals reached with freed runs behave like the arm's executed ones; no LLM-call cap; history divergence after a skip ignored), because root ledgers hold exactly one proposal per run and no logged proposal exists beyond the end of a campaign." Suggested PLAN replacement text is exactly that sentence.
-- **Caution:** the variant scales an arm's value by 1/exec-rate. With the pilot's low exec rates it inflates differences a lot (below), and when an arm executes very few held-out proposals the ratio is very noisy.
+- **Sensitivity implemented by this agent:** `freed_run_exchangeable` — each freed run credited with the arm's held-out mean reward per executed proposal (per-20 = 20 × that mean). It scales with 1/exec-rate and inflated the pilot differences (digits +0.039).
+- **Revised in acceptance by the coordinating session (Claude), 22 Oct:** replaced by `freed_run_call_cap`. Freed runs are re-spent on further proposals exchangeable with the arm's own, under a cap of c × W LLM proposals per campaign: value = m × min(W, e·c·W), with m the mean reward per executed proposal and e the execution rate. c = 1 equals the primary accounting exactly; reported sensitivities are c = 2 (realistic) and c = ∞ (this agent's original variant, kept as an optimistic upper bound). Functions: `capped_value`, `cluster_boot_capped_diff`; output under `values[g].freed_run_sensitivity.A3_minus_A2[node].by_call_cap`. Tests updated.
+- **Deviation from PLAN wording (for the PLAN row):** PLAN §10 "Run accounting (22 Oct)" says the sensitivity "gives each freed run to the next logged proposal of the same campaign". Root ledgers hold exactly one proposal per run (W rows; budget index = cumulative budget), so no logged proposal exists beyond the end of a campaign; a literal replay cannot spend freed runs. The PLAN row is corrected to the call-cap form.
+
+PILOT numbers at 0.1σ after the revision (A3 − A2 per 20): primary digits +0.0051, tabular +0.0016, breast-w −0.0006; call cap c = 2: digits +0.0103 [0.0037, 0.0172], tabular +0.0033 [−0.0017, 0.0073], breast-w −0.0012 [−0.0021, −0.0005]; c = ∞: digits +0.039, tabular +0.002, breast-w −0.0078.
+
+Original agent text follows.
 
 PILOT numbers (19 Oct split-recheck table + audits, seed split, instance cross-fit; ENGINEERING_ONLY, not a gate decision): primary gate at 0.1σ **fail** (1 node meets: digits +0.0051 [0.0018, 0.0086]; tabular +0.0016 [−0.0008, 0.0037]; breast-w −0.0006 [−0.0010, −0.0002]). Freed-run A3 − A2 per 20 at 0.1σ: digits +0.039 [0.015, 0.072]; tabular +0.002 [−0.009, 0.017]; breast-w −0.0078 (A2 executes nothing there, A3 7.8 %).
 
@@ -91,3 +95,11 @@ PILOT numbers (19 Oct split-recheck table + audits, seed split, instance cross-f
 6. Gate verdict only on the instance split; LONO has no verdict. If the coordinator wants a LONO verdict too, that is a design decision.
 7. The audited DI mode does not propagate audit noise into the CI (audits fixed across bootstrap draws).
 8. `min_live_nodes` stays 2 (runner default); PLAN does not fix it for the sweep.
+
+
+## Acceptance notes (coordinating session, 22 Oct)
+
+- Freed-run sensitivity revised to the call-cap form (above).
+- `r1/c3/features.py`: `openml_wdbc` and `openml_credit_approval` added to `NODE_INFO`; the D25 projection now comes from `OPENML_BY_MODEL_TYPE` minus a per-node `OPENML_DATASET_EXCLUDED` (imputer stays active on credit-approval, which has categorical columns); unknown OpenML nodes raise instead of being guessed; `NODE_CODES` is explicit so the original four nodes keep their codes (the rebuilt pilot table is byte-identical). `r1/diagnostics/di_test.project` extended the same way. A test checks both against the harness `configs/nodes/*.yaml`.
+- C3_DESIGN §4 and the 19 Oct runner handoff now say K = 10 (5 + 5).
+- Still open: adapter from the sweep index to `dataset.build`; Ada read-only verification of the Paper A config, seeded models path and port.

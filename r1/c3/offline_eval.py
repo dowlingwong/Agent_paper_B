@@ -27,16 +27,20 @@ Run accounting in the 20-run scaling (PLAN §10, 22 Oct, option A):
   proposal (one logged proposal = one run in a W = 20 root campaign). This is a
   stated convention, consistent with g being declared as the value of one run,
   not a derived opportunity cost.
-- sensitivity (``freed_run_exchangeable``): each skip's freed run is credited
-  with the arm's own held-out mean realised reward per *executed* proposal in
-  the same node (an exchangeability assumption: proposals reached with freed
-  runs behave like the arm's executed ones; no LLM-call cap; the divergence of
-  the history after a skip is ignored). The per-campaign value is then 20 x
-  that mean. Deviation from the PLAN wording ("give each freed run to the next
-  logged proposal of the same campaign"): the root ledgers hold exactly one
-  proposal per run (W rows, budget index = cumulative budget consumed), so no
-  logged proposal exists beyond the end of a campaign to receive a freed run;
-  a literal replay therefore cannot spend them. See ``RUN_ACCOUNTING``.
+- sensitivity (``freed_run_call_cap``): freed runs are re-spent on further
+  proposals that are exchangeable with the arm's own held-out proposals in the
+  node, under a cap of c x W LLM proposals per campaign. With mean realised
+  reward per executed proposal m and execution rate e, the campaign executes
+  min(W, e c W) proposals and its value is m x min(W, e c W). c = 1 reproduces
+  the primary accounting exactly (W x mean reward per logged proposal); the
+  reported sensitivities are c = 2 (the realistic one) and c = inf (no call cap,
+  value W x m; an optimistic upper bound that scales with 1/e and amplifies the
+  arm with the lower execution rate). The divergence of the history after a
+  skip is ignored. Deviation from the PLAN wording ("give each freed run to the
+  next logged proposal of the same campaign"): the root ledgers hold exactly
+  one proposal per run (W rows, budget index = cumulative budget consumed), so
+  no logged proposal exists beyond the end of a campaign to receive a freed
+  run; a literal replay cannot spend them. See ``RUN_ACCOUNTING``.
 
 Population: (source, node) strata that have audited proposals. No-ops and
 duplicates enter with evaluation weight 1. Randomly audited non-inert proposals carry weight
@@ -79,6 +83,7 @@ G_EVAL = (G_PRIMARY, *G_SENSITIVITY)  # the default evaluation computes exactly 
 G_THEORY = 0.0  # used only by the T4 Proposition 7 threshold-gain theory check
 GATE_MIN_NODES = 2
 CAMPAIGN_RUNS = 20
+CALL_CAPS = (2.0, float("inf"))  # freed-run sensitivity: LLM-proposal cap per campaign in units of W (c = 1 is the primary)
 RUN_ACCOUNTING = {
     "primary": {
         "name": "skip_credited_at_g",
@@ -89,11 +94,14 @@ RUN_ACCOUNTING = {
                  "consistent with g declared as the value of one run, not a derived opportunity cost.",
     },
     "sensitivity": {
-        "name": "freed_run_exchangeable",
-        "rule": "each skip's freed run is credited with the arm's own held-out mean realised reward per executed "
-                "proposal in the same node (weighted), instead of 0; per-campaign value = 20 x that mean.",
-        "assumptions": "proposals reached with freed runs are exchangeable with the arm's executed proposals in "
-                       "the node; no LLM-call cap; history divergence after a skip is ignored.",
+        "name": "freed_run_call_cap",
+        "rule": "freed runs are re-spent on further proposals exchangeable with the arm's held-out proposals in "
+                "the node, under a cap of c x W proposals per campaign: value = m x min(W, e c W), with m the "
+                "weighted mean reward per executed proposal and e the execution rate. c = 1 equals the primary; "
+                "reported: c = 2 (realistic) and c = inf (no cap, W x m; optimistic upper bound, scales with 1/e).",
+        "call_caps_reported": ["2", "inf"],
+        "assumptions": "further proposals are exchangeable with the arm's proposals in the node; history "
+                       "divergence after a skip is ignored.",
         "deviation_from_plan_wording": "PLAN gives each freed run to the next logged proposal of the same "
                                        "campaign. Root ledgers hold exactly one proposal per run (W rows; budget "
                                        "index = cumulative budget consumed), so no logged proposal exists beyond "
@@ -237,21 +245,35 @@ def cluster_boot(diff, w, clusters, n=BOOT, seed=SEED):
     return np.array(draws)
 
 
-def cluster_boot_ratio_diff(num_a, den_a, num_b, den_b, clusters, n=BOOT, seed=SEED):
-    """Bootstrap over clusters of (sum num_a / sum den_a) - (sum num_b / sum den_b); returns draws.
+def capped_value(sum_wer, sum_we, sum_w, c, runs=CAMPAIGN_RUNS):
+    """Per-campaign value under an LLM-proposal cap of c x W (freed-run sensitivity).
 
-    Used for the freed-run sensitivity, whose per-arm value is a ratio (mean reward
-    per executed proposal); an empty denominator gives 0 (see ``freed_run_value``).
+    m = sum_wer / sum_we (mean reward per executed proposal), e = sum_we / sum_w
+    (execution rate); value = m x min(W, e c W). c = 1 gives W x sum_wer / sum_w,
+    the primary accounting; c = inf gives W x m. An arm that executes nothing has 0.
     """
+    if sum_we <= 0 or sum_w <= 0:
+        return 0.0
+    m, e = sum_wer / sum_we, sum_we / sum_w
+    return float(m * (runs if np.isinf(c) else min(runs, e * c * runs)))
+
+
+def cluster_boot_capped_diff(r_a, ex_a, r_b, ex_b, w, clusters, c, n=BOOT, seed=SEED):
+    """Cluster bootstrap of capped_value(A) - capped_value(B) at call cap c; returns draws."""
     rng = np.random.default_rng(seed)
     clusters = np.asarray(clusters)
     uc = sorted(set(clusters.tolist()))
-    sums = np.array([[x[clusters == c].sum() for x in (num_a, den_a, num_b, den_b)] for c in uc])
+    cols = (w * ex_a * r_a, w * ex_a, w, w * ex_b * r_b, w * ex_b)
+    sums = np.array([[x[clusters == k].sum() for x in cols] for k in uc])
     draws = []
     for _ in range(n):
         s = sums[rng.integers(0, len(uc), len(uc))].sum(0)
-        draws.append((s[0] / s[1] if s[1] > 0 else 0.0) - (s[2] / s[3] if s[3] > 0 else 0.0))
+        draws.append(capped_value(s[0], s[1], s[2], c) - capped_value(s[3], s[4], s[2], c))
     return np.array(draws)
+
+
+def _cap_key(c):
+    return "inf" if np.isinf(c) else f"{c:g}"
 
 
 def freed_run_value(r, ex, w):
@@ -337,8 +359,12 @@ def evaluate(rows, mode="instance", k=3, g_values=G_EVAL, noise=None):
                 out["arms"][a][node] = {"mean_per_proposal": mean_r, "per_campaign": CAMPAIGN_RUNS * mean_r,
                                         "exec_rate": float(np.average(execs[a][m], weights=w[m]))}
                 v = freed_run_value(rr[a][m], execs[a][m], w[m])
+                e_w = float((w[m] * execs[a][m]).sum())
                 out["freed_run_sensitivity"]["arms"][a][node] = {
-                    "mean_per_executed": v, "per_campaign": CAMPAIGN_RUNS * v,
+                    "mean_per_executed": v,
+                    "per_campaign_by_call_cap": {_cap_key(c): capped_value(float((w[m] * execs[a][m] * rr[a][m]).sum()),
+                                                                           e_w, float(w[m].sum()), c)
+                                                 for c in CALL_CAPS},
                     "n_executed_eval_rows": int((execs[a][m] & (w[m] > 0)).sum())}
         for node in eval_nodes:
             m = nodes == node
@@ -349,16 +375,16 @@ def evaluate(rows, mode="instance", k=3, g_values=G_EVAL, noise=None):
             out["A3_minus_A2"][node] = {"gain_per20": gain, "ci95": [float(lo), float(hi)],
                                         "delta_n": noise[node]["delta_n"], "n_instances": int(len(set(inst[m]))),
                                         "n_eval_rows": int((w[m] > 0).sum())}
-            v3 = freed_run_value(rr["A3"][m], execs["A3"][m], w[m])
-            v2 = freed_run_value(rr["A2"][m], execs["A2"][m], w[m])
             e3, e2 = execs["A3"][m].astype(float), execs["A2"][m].astype(float)
-            fd = CAMPAIGN_RUNS * cluster_boot_ratio_diff(w[m] * e3 * rr["A3"][m], w[m] * e3,
-                                                         w[m] * e2 * rr["A2"][m], w[m] * e2, inst[m])
-            fr = {"gain_per20": CAMPAIGN_RUNS * (v3 - v2),
-                  "ci95": [float(x) for x in np.percentile(fd, [2.5, 97.5])],
-                  "primary_gain_per20": gain,
+            fr = {"by_call_cap": {}, "primary_gain_per20": gain,
                   "exec_rate_A3": float(np.average(e3, weights=w[m])),
                   "exec_rate_A2": float(np.average(e2, weights=w[m]))}
+            for c in CALL_CAPS:
+                s3 = (float((w[m] * e3 * rr["A3"][m]).sum()), float((w[m] * e3).sum()), float(w[m].sum()))
+                s2 = (float((w[m] * e2 * rr["A2"][m]).sum()), float((w[m] * e2).sum()), float(w[m].sum()))
+                fd = cluster_boot_capped_diff(rr["A3"][m], e3, rr["A2"][m], e2, w[m], inst[m], c)
+                fr["by_call_cap"][_cap_key(c)] = {"gain_per20": capped_value(*s3, c) - capped_value(*s2, c),
+                                                  "ci95": [float(x) for x in np.percentile(fd, [2.5, 97.5])]}
             out["freed_run_sensitivity"]["A3_minus_A2"][node] = fr
         res["values"][str(gu)] = out
     # --- theory checks (Prop 7 bound vs realised threshold gain at g = G_THEORY; Prop 8 screening term

@@ -42,15 +42,34 @@ NODE_INFO = {
     "tabular_mlp": {"rows": 2000, "features": 20, "classes": 2, "minority": 0.50, "metric": "val_score", "family": "mlp"},
     "openml_breast_w": {"rows": 699, "features": 9, "classes": 2, "minority": 0.345, "metric": "val_auc", "family": "openml"},
     "openml_ionosphere": {"rows": 351, "features": 34, "classes": 2, "minority": 0.359, "metric": "val_auc", "family": "openml"},
+    # Added 22 Oct 2026 (D21 pool; PLAN §10 node pool). OpenML metadata: wdbc id 1510, 569 x 30 numeric,
+    # 37.3 % malignant; credit-approval id 29, 690 x 15 (9 categorical), 44.5 % positive.
+    "openml_wdbc": {"rows": 569, "features": 30, "classes": 2, "minority": 0.373, "metric": "val_auc", "family": "openml"},
+    "openml_credit_approval": {"rows": 690, "features": 15, "classes": 2, "minority": 0.445, "metric": "val_auc", "family": "openml"},
 }
 STRUCTURAL_KEYS = {"model_type", "scaler", "class_weight", "imputer"}
-# D25 active keys for the OpenML template (harness configs/nodes/openml_*.yaml
-# active_keys.by_model_type minus dataset_excluded=imputer for numeric datasets).
-OPENML_ACTIVE = {
-    "logistic_regression": {"model_type", "C", "class_weight", "max_iter", "scaler"},
-    "random_forest": {"model_type", "n_estimators", "max_depth", "class_weight", "scaler"},
-    "gradient_boosting": {"model_type", "n_estimators", "max_depth", "learning_rate", "scaler"},
+# D25 active keys for the OpenML template: harness configs/nodes/openml_*.yaml
+# active_keys.by_model_type minus that node's active_keys.dataset_excluded
+# (imputer for numeric-only datasets). Checked against the harness configs in
+# r1/tests/test_c3_features.py.
+OPENML_BY_MODEL_TYPE = {
+    "logistic_regression": {"model_type", "C", "class_weight", "max_iter", "scaler", "imputer"},
+    "random_forest": {"model_type", "n_estimators", "max_depth", "class_weight", "scaler", "imputer"},
+    "gradient_boosting": {"model_type", "n_estimators", "max_depth", "learning_rate", "scaler", "imputer"},
 }
+OPENML_DATASET_EXCLUDED = {
+    "openml_breast_w": {"imputer"}, "openml_ionosphere": {"imputer"}, "openml_wdbc": {"imputer"},
+    "openml_credit_approval": set(),  # has categorical columns: imputer is active
+}
+# Numeric-dataset projection (kept for backward compatibility).
+OPENML_ACTIVE = {m: keys - {"imputer"} for m, keys in OPENML_BY_MODEL_TYPE.items()}
+
+
+def openml_active_keys(node: str, model_type: str) -> set:
+    """D25 active keys of an OpenML node under ``model_type``; unknown nodes are an error, never a guess."""
+    if node not in OPENML_DATASET_EXCLUDED:
+        raise ValueError(f"no declared D25 active-key projection for {node}; add it to OPENML_DATASET_EXCLUDED")
+    return OPENML_BY_MODEL_TYPE[model_type] - OPENML_DATASET_EXCLUDED[node]
 CAT_FEATURES = ("node_code", "key_code", "model_type_code", "new_cat_code")
 NUM_FEATURES = (
     "rows_log", "n_features", "n_classes", "minority",
@@ -61,7 +80,11 @@ NUM_FEATURES = (
     "same_edit_count", "reverse_of_last_key_edit",
 )
 FEATURES = CAT_FEATURES + NUM_FEATURES
-NODE_CODES = {n: i for i, n in enumerate(sorted(NODE_INFO))}
+# Stable categorical codes: the four original nodes keep the codes they had (sorted order on 19 Oct);
+# nodes added later are appended, so existing tables and models keep their encoding.
+NODE_CODES = {"digits_mlp": 0, "openml_breast_w": 1, "openml_ionosphere": 2, "tabular_mlp": 3,
+              "openml_credit_approval": 4, "openml_wdbc": 5}
+assert set(NODE_CODES) == set(NODE_INFO), "every node in NODE_INFO needs a stable code"
 MODEL_CODES = {"mlp": 0, "logistic_regression": 1, "random_forest": 2, "gradient_boosting": 3}
 
 
@@ -114,7 +137,7 @@ def apply_edit(files: dict[str, str], edit: dict) -> dict[str, str]:
 
 def active_projection(config: dict, node: str) -> str:
     if NODE_INFO.get(node, {}).get("family") == "openml":
-        keys = OPENML_ACTIVE[config["model_type"]]
+        keys = openml_active_keys(node, config["model_type"])
     else:
         keys = set(config)
     return json.dumps({k: config[k] for k in sorted(keys)}, sort_keys=True, default=str)
@@ -213,7 +236,7 @@ def replay_campaign(rows: list[dict], start_files: dict[str, str], node: str, in
         sig = (key, str(old_v), str(new_v))
         last = last_edit_by_key.get(key)
         model = cur_cfg.get("model_type", "mlp") if info["family"] == "openml" else "mlp"
-        active_keys = OPENML_ACTIVE[cand_cfg["model_type"]] if info["family"] == "openml" else set(cand_cfg)
+        active_keys = openml_active_keys(node, cand_cfg["model_type"]) if info["family"] == "openml" else set(cand_cfg)
         delta_hat = row.get("delta_vs_best")
         if b >= 2 and row.get("current_best_before") is not None:
             feats = {

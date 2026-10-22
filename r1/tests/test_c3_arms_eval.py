@@ -127,11 +127,23 @@ def test_freed_run_accounting():
     assert OE.freed_run_value(r, np.zeros(4, bool), w) == 0.0
     # weighted
     assert OE.freed_run_value(np.array([1.0, 0.0]), np.array([True, True]), np.array([3.0, 1.0])) == pytest.approx(0.75)
-    # ratio-difference bootstrap is exact for identical clusters
-    r2, ex2 = np.tile(r, 2), np.tile(ex, 2)
+    # call-cap value: c = 1 is the primary (W x mean reward per logged proposal), c = inf is W x m
+    sr, se, sw = float((w * ex * r).sum()), float((w * ex).sum()), float(w.sum())
+    assert OE.capped_value(sr, se, sw, 1.0) == pytest.approx(20 * r.mean())
+    assert OE.capped_value(sr, se, sw, float("inf")) == pytest.approx(20 * 0.2)
+    # e = 0.5, c = 2: min(W, 0.5 * 2 * W) = W runs at m = 0.2
+    assert OE.capped_value(sr, se, sw, 2.0) == pytest.approx(20 * 0.2)
+    # e = 0.25, c = 2: min(W, 0.5 W) = 10 runs at m = 0.5
+    ex1 = np.array([True, False, False, False])
+    assert OE.capped_value(0.5, 1.0, 4.0, 2.0) == pytest.approx(10 * 0.5)
+    assert OE.capped_value(0.0, 0.0, 4.0, 2.0) == 0.0
+    # capped bootstrap is exact for identical clusters
+    r2, ex2 = np.tile(r, 2), np.tile(ex, 2).astype(float)
     cl = np.array([0] * 4 + [1] * 4)
-    d = OE.cluster_boot_ratio_diff(r2 * ex2, ex2.astype(float), r2, np.ones(8), cl, n=50)
-    assert np.allclose(d, 0.2 - r.mean())
+    for c in (1.0, 2.0, float("inf")):
+        d = OE.cluster_boot_capped_diff(r2, ex2, r2, np.ones(8), np.ones(8), cl, c, n=50)
+        exp = OE.capped_value(0.8, 4.0, 8.0, c) - OE.capped_value(0.8, 8.0, 8.0, c)
+        assert np.allclose(d, exp)
 
 
 def test_freed_run_sensitivity_reported_next_to_primary():
@@ -139,12 +151,20 @@ def test_freed_run_sensitivity_reported_next_to_primary():
     rows = synth(n_inst=6, per=10)
     res = OE.evaluate(rows, "instance", 3, g_values=(OE.G_PRIMARY,), noise=NOISE)
     v = res["values"]["0.1"]
+    assert set(OE.RUN_ACCOUNTING["sensitivity"]["call_caps_reported"]) == {"2", "inf"}
     for node, fr in v["freed_run_sensitivity"]["A3_minus_A2"].items():
         a3 = v["freed_run_sensitivity"]["arms"]["A3"][node]["mean_per_executed"]
         a2 = v["freed_run_sensitivity"]["arms"]["A2"][node]["mean_per_executed"]
-        assert fr["gain_per20"] == pytest.approx(20 * (a3 - a2))
+        assert fr["by_call_cap"]["inf"]["gain_per20"] == pytest.approx(20 * (a3 - a2))
         assert fr["primary_gain_per20"] == pytest.approx(v["A3_minus_A2"][node]["gain_per20"])
-        assert fr["ci95"][0] <= fr["gain_per20"] <= fr["ci95"][1] + 1e-12
+        for cap in ("2", "inf"):
+            x = fr["by_call_cap"][cap]
+            assert x["ci95"][0] - 1e-12 <= x["gain_per20"] <= x["ci95"][1] + 1e-12
+        # per-arm call-cap values are consistent with the node-level difference
+        for cap in ("2", "inf"):
+            d = (v["freed_run_sensitivity"]["arms"]["A3"][node]["per_campaign_by_call_cap"][cap]
+                 - v["freed_run_sensitivity"]["arms"]["A2"][node]["per_campaign_by_call_cap"][cap])
+            assert fr["by_call_cap"][cap]["gain_per20"] == pytest.approx(d)
     # A0 executes everything: its freed-run value equals its primary per-proposal mean
     for node, x in v["arms"]["A0"].items():
         assert v["freed_run_sensitivity"]["arms"]["A0"][node]["mean_per_executed"] == pytest.approx(x["mean_per_proposal"])

@@ -97,3 +97,36 @@ def test_stale_edit_raises():
     led[1]["extra"]["manager"]["structured_edit"]["old"] = "9"
     with pytest.raises(ReplayError):
         replay_campaign(led, START, "digits_mlp", "digits_mlp__s104", "t", "none", 20, 0.0075)
+
+
+def test_openml_active_keys_match_harness_configs():
+    """D25 projection in r1.c3.features equals the harness node configs (active_keys)."""
+    import yaml
+    from r1.c3 import features as F
+    from r1.harness import harness_root
+    cfg_dir = harness_root() / "configs" / "nodes"
+    if not cfg_dir.is_dir():
+        pytest.skip("harness checkout not available")
+    for node in F.OPENML_DATASET_EXCLUDED:
+        cfg = yaml.safe_load((cfg_dir / f"{node}.yaml").read_text())["active_keys"]
+        for model, keys in cfg["by_model_type"].items():
+            assert F.openml_active_keys(node, model) == set(keys) - set(cfg["dataset_excluded"]), (node, model)
+    # every OpenML node the C3 pipeline knows has a declared projection; unknown nodes raise
+    assert {n for n, i in F.NODE_INFO.items() if i["family"] == "openml"} == set(F.OPENML_DATASET_EXCLUDED)
+    with pytest.raises(ValueError):
+        F.openml_active_keys("openml_unknown", "logistic_regression")
+    # the original four nodes keep their 19 Oct categorical codes
+    assert {k: F.NODE_CODES[k] for k in ("digits_mlp", "openml_breast_w", "openml_ionosphere", "tabular_mlp")} == \
+        {"digits_mlp": 0, "openml_breast_w": 1, "openml_ionosphere": 2, "tabular_mlp": 3}
+
+
+def test_di_test_projection_matches_features():
+    from r1.c3 import features as F
+    from r1.diagnostics.di_test import project
+    import json as _json
+    for node in F.OPENML_DATASET_EXCLUDED:
+        for model in F.OPENML_BY_MODEL_TYPE:
+            cfg = {k: 1 for k in F.OPENML_BY_MODEL_TYPE["logistic_regression"] | F.OPENML_BY_MODEL_TYPE["random_forest"]
+                   | F.OPENML_BY_MODEL_TYPE["gradient_boosting"]}
+            cfg["model_type"] = model
+            assert set(_json.loads(project(cfg, node))) == F.openml_active_keys(node, model), (node, model)
