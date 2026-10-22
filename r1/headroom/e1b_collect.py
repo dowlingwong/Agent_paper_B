@@ -412,7 +412,7 @@ def main() -> int:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         out = Path(args.out) if args.out else REPO / "results" / "r1" / "pilot" / f"E1b_{stamp}"
         out.mkdir(parents=True)
-        e1 = Path(args.e1_summary) if args.e1_summary else max((REPO / "results/r1/pilot").glob("E1_*/summary.json"))
+        e1 = Path(args.e1_summary) if args.e1_summary else max((REPO / "results/r1/pilot").glob("E1_[0-9]*T*Z/summary.json"))  # full E1 runs only, not E1_remeasure_* subsets
         manifest = {"schema": "r1.e1b_headroom/1", "label": args.label, "split": args.split, "started_utc": stamp,
                     "harness": {"root": str(HARNESS), **harness_commit(HARNESS)},
                     "manager_backend": ("scripted_random (stand-in; VM cannot reach Ollama)" if args.manager == "scripted"
