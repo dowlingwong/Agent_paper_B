@@ -46,6 +46,9 @@ DEFAULT_NODES = (
     "digits_mlp", "tabular_mlp", "lr_synthetic", "mlp_synthetic",
     "openml_breast_w", "openml_credit_approval", "openml_diabetes", "openml_ionosphere",
     "openml_wdbc", "openml_credit_g", "mlagentbench_vectorization",
+    # D21 pool extension (22 Oct 2026); need their data caches in nodes/<node>/data_cache
+    # (see r1/noise/check_caches.py).
+    "openml_sonar", "openml_blood_transfusion", "openml_qsar_biodeg",
 )
 # Nodes whose metric is timing-based or whose edits are not bounded hyperparameters:
 # only baseline noise and determinism are measured.

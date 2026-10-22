@@ -46,6 +46,19 @@ NODE_INFO = {
     # 37.3 % malignant; credit-approval id 29, 690 x 15 (9 categorical), 44.5 % positive.
     "openml_wdbc": {"rows": 569, "features": 30, "classes": 2, "minority": 0.373, "metric": "val_auc", "family": "openml"},
     "openml_credit_approval": {"rows": 690, "features": 15, "classes": 2, "minority": 0.445, "metric": "val_auc", "family": "openml"},
+    # Added 22 Oct 2026 (PLAN §10 "D21 pool (22 Oct)"; OpenML IDs checked on openml.org on 22 Oct).
+    # Rows/features are the OpenML shapes listed for the pool extension; minority shares are the
+    # published UCI class counts, taken from the agent's memory. NONE of these four rows has been
+    # checked against the fetched data yet (no openml.org access here): r1/noise/check_caches.py prints
+    # the actual shape and class counts once the caches exist, and these values must be corrected then.
+    #   credit-g id 31: 1,000 x 20 (13 categorical), 300 bad / 700 good -> 0.300;
+    #   sonar id 40: 208 x 60 numeric, 97 Rock / 111 Mine -> 0.466;
+    #   blood-transfusion-service-center id 1464: 748 x 4 numeric, 178 donated / 570 -> 0.238;
+    #   qsar-biodeg id 1494: 1,055 x 41 numeric, 356 RB / 699 NRB -> 0.337.
+    "openml_credit_g": {"rows": 1000, "features": 20, "classes": 2, "minority": 0.300, "metric": "val_auc", "family": "openml"},
+    "openml_sonar": {"rows": 208, "features": 60, "classes": 2, "minority": 0.466, "metric": "val_auc", "family": "openml"},
+    "openml_blood_transfusion": {"rows": 748, "features": 4, "classes": 2, "minority": 0.238, "metric": "val_auc", "family": "openml"},
+    "openml_qsar_biodeg": {"rows": 1055, "features": 41, "classes": 2, "minority": 0.337, "metric": "val_auc", "family": "openml"},
 }
 STRUCTURAL_KEYS = {"model_type", "scaler", "class_weight", "imputer"}
 # D25 active keys for the OpenML template: harness configs/nodes/openml_*.yaml
@@ -60,6 +73,8 @@ OPENML_BY_MODEL_TYPE = {
 OPENML_DATASET_EXCLUDED = {
     "openml_breast_w": {"imputer"}, "openml_ionosphere": {"imputer"}, "openml_wdbc": {"imputer"},
     "openml_credit_approval": set(),  # has categorical columns: imputer is active
+    "openml_credit_g": set(),  # has categorical columns: imputer is active
+    "openml_sonar": {"imputer"}, "openml_blood_transfusion": {"imputer"}, "openml_qsar_biodeg": {"imputer"},
 }
 # Numeric-dataset projection (kept for backward compatibility).
 OPENML_ACTIVE = {m: keys - {"imputer"} for m, keys in OPENML_BY_MODEL_TYPE.items()}
@@ -83,7 +98,9 @@ FEATURES = CAT_FEATURES + NUM_FEATURES
 # Stable categorical codes: the four original nodes keep the codes they had (sorted order on 19 Oct);
 # nodes added later are appended, so existing tables and models keep their encoding.
 NODE_CODES = {"digits_mlp": 0, "openml_breast_w": 1, "openml_ionosphere": 2, "tabular_mlp": 3,
-              "openml_credit_approval": 4, "openml_wdbc": 5}
+              "openml_credit_approval": 4, "openml_wdbc": 5,
+              # appended 22 Oct 2026 (D21 pool extension)
+              "openml_credit_g": 6, "openml_sonar": 7, "openml_blood_transfusion": 8, "openml_qsar_biodeg": 9}
 assert set(NODE_CODES) == set(NODE_INFO), "every node in NODE_INFO needs a stable code"
 MODEL_CODES = {"mlp": 0, "logistic_regression": 1, "random_forest": 2, "gradient_boosting": 3}
 

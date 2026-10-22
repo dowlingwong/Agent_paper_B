@@ -68,10 +68,14 @@ def noise_table(summary_path: Path | str = REPO / E1_SUMMARY) -> dict:
     (comparison noise per edit kind, T4 (A2)); MLP nodes have only local edits and
     use sigma_node.
     delta_n (D18): max(0.002, 0.25 x median paired sd over all E1 edits).
+
+    Nodes in NODE_INFO that the summary does not cover (e.g. the 22 Oct pool
+    extension before its E1 run) get no entry, so any later use of them fails
+    loudly with a KeyError instead of being given invented constants.
     """
     s = json.loads(Path(summary_path).read_text())
     out = {}
-    for node in NODE_INFO:
+    for node in (n for n in NODE_INFO if n in s["nodes"]):
         edits = [e for e in s["nodes"][node]["edits"] if "sd_joint" in e]
         mats = [e for e in edits if e.get("material")] or edits
         sig = float(np.median([e["sd_joint"] for e in mats]))

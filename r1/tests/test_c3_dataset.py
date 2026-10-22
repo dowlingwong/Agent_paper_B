@@ -28,3 +28,13 @@ def test_build_replays_without_violations_and_di_candidates(tmp_path):
     plan = D.plan(tmp_path, {("dt4", "digits_mlp"): 5}, include_di=True)
     assert sum("di" in p["reason"] for p in plan) == 19
     assert plan == D.plan(tmp_path, {("dt4", "digits_mlp"): 5}, include_di=True)  # seeded
+
+
+def test_noise_table_omits_nodes_without_e1_data():
+    # 22 Oct pool extension: nodes known to the C3 pipeline but absent from the
+    # E1 summary get no (invented) noise constants.
+    nt = D.noise_table()
+    for node in ("openml_credit_g", "openml_sonar", "openml_blood_transfusion", "openml_qsar_biodeg"):
+        assert node not in nt
+    assert {"digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc",
+            "openml_credit_approval"} <= set(nt)
