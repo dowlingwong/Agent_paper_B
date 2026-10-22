@@ -1,0 +1,26 @@
+{
+  "label": "PILOT",
+  "ai_assisted": "Claude",
+  "note": "Written after the run by the agent; E1's manifest does not record library versions. Same interpreter ($HOME/venv313) ran every chunk.",
+  "python": "3.13.16",
+  "sklearn": "1.9.1",
+  "numpy": "2.5.4",
+  "pandas": "3.0.6",
+  "scipy": "1.18.1",
+  "platform": "Linux-6.8.0-138-generic-aarch64-with-glibc2.35",
+  "env_vars": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1"
+  },
+  "commands": [
+    "python -m r1.noise.e1_noise_floor --nodes openml_credit_approval openml_diabetes --seeds 30 --workers 4 --out results/r1/pilot/E1_remeasure_20261022T100942Z --tmp $HOME/e1tmp --deadline 140",
+    "python -m r1.noise.e1_noise_floor --resume results/r1/pilot/E1_remeasure_20261022T100942Z --workers 4 --tmp $HOME/e1tmp --deadline 140   (x2)",
+    "python -m r1.noise.e1_report results/r1/pilot/E1_remeasure_20261022T100942Z",
+    "python results/r1/pilot/E1_remeasure_20261022T100942Z/make_tables.py results/r1/pilot/E1_remeasure_20261022T100942Z"
+  ],
+  "paper_repo_base_commit": "259db53",
+  "e1_reference_env": {
+    "python": "3.11.16",
+    "sklearn": "not recorded"
+  }
+}

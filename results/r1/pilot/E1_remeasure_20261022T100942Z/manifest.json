@@ -1,0 +1,51 @@
+{
+  "schema": "r1.e1_noise_floor/2",
+  "label": "PILOT",
+  "started_utc": "20261022T100942Z",
+  "harness": {
+    "root": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/mnt/autoresearch_harness",
+    "commit": "4d68c54875654cf9986daa1cf36d609adb48ef45",
+    "branch": "r1",
+    "dirty": false
+  },
+  "seeds_per_condition": 30,
+  "seed_bases": {
+    "train": 1001,
+    "split": 2001,
+    "joint": 3001
+  },
+  "nodes": [
+    "openml_credit_approval",
+    "openml_diabetes"
+  ],
+  "host": {
+    "platform": "Linux-6.8.0-138-generic-aarch64-with-glibc2.35",
+    "python": "3.13.16",
+    "cpus": 4
+  },
+  "note": "Pilot only; not evidence (RUNBOOK \u00a71 rule 3). Wall times are measured under parallel load.",
+  "sessions": [
+    {
+      "start_utc": "20261022T100942Z",
+      "todo_before": 1104,
+      "written": 516,
+      "remaining": 588,
+      "elapsed_seconds": 140.3
+    },
+    {
+      "start_utc": "20261022T101207Z",
+      "todo_before": 588,
+      "written": 512,
+      "remaining": 76,
+      "elapsed_seconds": 140.4
+    },
+    {
+      "start_utc": "20261022T101434Z",
+      "todo_before": 76,
+      "written": 76,
+      "remaining": 0,
+      "elapsed_seconds": 18.9
+    }
+  ],
+  "finished_utc": "20261022T101452Z"
+}
