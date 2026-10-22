@@ -1,0 +1,78 @@
+RUN ['/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/autoresearch_harness/.venv/bin/python', '-m', 'r1.liveness', '--run', '--manager', 'langgraph', '--memory-mode', 'append_only_summary', '--nodes', 'digits_mlp', 'openml_breast_w', '--instances', '1', '--runs', '4', '--transport-max-attempts', '3', '--out', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/engineering/liveness_c3_20261022T103221Z', '--work', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/liveness_work']
+RUN ['git', 'add', '-f', '--', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/engineering/liveness_c3_20261022T103221Z']
+RUN ['git', 'diff', '--cached', '--check', '--', '.', ':!results/r1/**']
+RUN ['git', 'commit', '-m', 'DRYRUN: Record C3 label sweep D28 liveness (memory on)', '-m', 'Co-Authored-By: Claude (AI-assisted DRYRUN) <noreply@anthropic.com>']
+[main 2556df7] DRYRUN: Record C3 label sweep D28 liveness (memory on)
+ 11 files changed, 360 insertions(+)
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/digits_mlp.json
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/digits_mlp.md
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/ledgers/digits_mlp__s104/root_events.jsonl
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/ledgers/digits_mlp__s104/root_trials.jsonl
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/ledgers/openml_breast_w__s105/root_events.jsonl
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/ledgers/openml_breast_w__s105/root_trials.jsonl
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/liveness.json
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/liveness.md
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/manifest.json
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/openml_breast_w.json
+ create mode 100644 results/r1/engineering/liveness_c3_20261022T103221Z/openml_breast_w.md
+RUN ['git', 'push', 'dryrun', 'HEAD:refs/heads/main']
+To /sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper.git
+   44ec63a..2556df7  HEAD -> main
+RUN ['/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/autoresearch_harness/.venv/bin/python', '-m', 'r1.headroom.e1b_collect', '--manager', 'langgraph', '--roots-only', '--points', '--reps', '0', '--audit-seeds', '0', '--nodes', 'digits_mlp', 'openml_breast_w', '--instances', '2', '--runs', '6', '--verify-split-policy', 'vary', '--new-campaign-versions', '--memory-mode', 'append_only_summary', '--transport-max-attempts', '3', '--root-failures', 'record', '--extra-manifest', '{"c3_label_sweep": {"schema": "r1.c3_label_sweep/1", "memory_mode": "append_only_summary", "arm_role": "primary", "batch": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw", "liveness": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/engineering/liveness_c3_20261022T103221Z", "paper_a_check": "clear", "ollama": {"port": 52039, "pid": 152, "models_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/ollama_models_52039"}, "gpu": "0, GPU-DRYRUN, DRYRUN shared card, 40000", "audit": "pending (r1/c3/audit.py)", "audit_seeds": [7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010], "nodes_pending": ["openml_credit_approval", "openml_diabetes"]}}', '--workers', '2', '--out', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z', '--work', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/c3_append_only_summary_work', '--label', 'DRYRUN', '--split', 'engineering']
+RUN ['/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/autoresearch_harness/.venv/bin/python', '-m', 'r1.headroom.e1b_collect', '--resume', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z', '--workers', '2']
+RUN ['git', 'add', '-f', '--', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z']
+RUN ['git', 'diff', '--cached', '--check', '--', '.', ':!results/r1/**']
+RUN ['git', 'commit', '-m', 'DRYRUN: Record C3 label sweep roots (append_only_summary)', '-m', 'Co-Authored-By: Claude (AI-assisted DRYRUN) <noreply@anthropic.com>']
+[main 0ebd3e5] DRYRUN: Record C3 label sweep roots (append_only_summary)
+ 14 files changed, 529 insertions(+)
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/collection_checks.json
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/manifest.json
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/provenance/ledgers/roots/digits_mlp__s104/root_events.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/provenance/ledgers/roots/digits_mlp__s104/root_trials.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/provenance/ledgers/roots/digits_mlp__s114/root_events.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/provenance/ledgers/roots/digits_mlp__s114/root_trials.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/provenance/ledgers/roots/openml_breast_w__s105/root_events.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/provenance/ledgers/roots/openml_breast_w__s105/root_trials.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/provenance/ledgers/roots/openml_breast_w__s115/root_events.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/provenance/ledgers/roots/openml_breast_w__s115/root_trials.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/roots/digits_mlp__s104.json
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/roots/digits_mlp__s114.json
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/roots/openml_breast_w__s105.json
+ create mode 100644 results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z/roots/openml_breast_w__s115.json
+RUN ['git', 'push', 'dryrun', 'HEAD:refs/heads/main']
+To /sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper.git
+   2556df7..0ebd3e5  HEAD -> main
+RUN ['/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/autoresearch_harness/.venv/bin/python', '-m', 'r1.headroom.e1b_collect', '--manager', 'langgraph', '--roots-only', '--points', '--reps', '0', '--audit-seeds', '0', '--nodes', 'digits_mlp', 'openml_breast_w', '--instances', '2', '--runs', '6', '--verify-split-policy', 'vary', '--new-campaign-versions', '--memory-mode', 'none', '--transport-max-attempts', '3', '--root-failures', 'record', '--extra-manifest', '{"c3_label_sweep": {"schema": "r1.c3_label_sweep/1", "memory_mode": "none", "arm_role": "contrast", "batch": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw", "liveness": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/engineering/liveness_c3_20261022T103221Z", "paper_a_check": "clear", "ollama": {"port": 52039, "pid": 152, "models_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/ollama_models_52039"}, "gpu": "0, GPU-DRYRUN, DRYRUN shared card, 40000", "audit": "pending (r1/c3/audit.py)", "audit_seeds": [7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010], "nodes_pending": ["openml_credit_approval", "openml_diabetes"]}}', '--workers', '2', '--out', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261022T103245Z', '--work', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/c3_none_work', '--label', 'DRYRUN', '--split', 'engineering']
+RUN ['/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/autoresearch_harness/.venv/bin/python', '-m', 'r1.headroom.e1b_collect', '--resume', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261022T103245Z', '--workers', '2']
+RUN ['git', 'add', '-f', '--', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261022T103245Z']
+RUN ['git', 'diff', '--cached', '--check', '--', '.', ':!results/r1/**']
+RUN ['git', 'commit', '-m', 'DRYRUN: Record C3 label sweep roots (none)', '-m', 'Co-Authored-By: Claude (AI-assisted DRYRUN) <noreply@anthropic.com>']
+[main ac991c8] DRYRUN: Record C3 label sweep roots (none)
+ 14 files changed, 492 insertions(+)
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/collection_checks.json
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/manifest.json
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/provenance/ledgers/roots/digits_mlp__s104/root_events.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/provenance/ledgers/roots/digits_mlp__s104/root_trials.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/provenance/ledgers/roots/digits_mlp__s114/root_events.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/provenance/ledgers/roots/digits_mlp__s114/root_trials.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/provenance/ledgers/roots/openml_breast_w__s105/root_events.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/provenance/ledgers/roots/openml_breast_w__s105/root_trials.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/provenance/ledgers/roots/openml_breast_w__s115/root_events.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/provenance/ledgers/roots/openml_breast_w__s115/root_trials.jsonl
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/roots/digits_mlp__s104.json
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/roots/digits_mlp__s114.json
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/roots/openml_breast_w__s105.json
+ create mode 100644 results/r1/pilot/C3_sweep_none_20261022T103245Z/roots/openml_breast_w__s115.json
+RUN ['git', 'push', 'dryrun', 'HEAD:refs/heads/main']
+To /sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper.git
+   0ebd3e5..ac991c8  HEAD -> main
+RUN ['git', 'add', '-f', '--', '/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_index_20261022T103257Z.json']
+RUN ['git', 'diff', '--cached', '--check', '--', '.', ':!results/r1/**']
+RUN ['git', 'commit', '-m', 'DRYRUN: Record C3 label sweep index (audit pending)', '-m', 'Co-Authored-By: Claude (AI-assisted DRYRUN) <noreply@anthropic.com>']
+[main 6806885] DRYRUN: Record C3 label sweep index (audit pending)
+ 1 file changed, 66 insertions(+)
+ create mode 100644 results/r1/pilot/C3_sweep_index_20261022T103257Z.json
+RUN ['git', 'push', 'dryrun', 'HEAD:refs/heads/main']
+To /sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper.git
+   ac991c8..6806885  HEAD -> main
+FINISHED {"label": "DRYRUN", "stop_reason": null, "finished_utc": "20261022T103257Z", "steps": {"preconditions": {"completed": true, "commit": null, "out": null, "checks": null}, "liveness": {"completed": true, "commit": "2556df74990d696a8cc61bfffd4c7a726acbdfa0", "out": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/engineering/liveness_c3_20261022T103221Z", "checks": null}, "sweep_append_only_summary": {"completed": true, "commit": "0ebd3e57d8ea6156a418bf26b9a21a441ebf6307", "out": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z", "checks": {"label": "DRYRUN", "memory_mode": "append_only_summary", "expected_roots": 4, "roots": 4, "root_failures": 0, "llm_calls": 27, "llm_calls_failed": 0, "llm_calls_retried": 1, "parse_failures": 0, "manager_kind": "langgraph", "transport_max_attempts": 3, "verify_split_policy": "vary", "action_versions": {"keep_rule": "default/v1", "verify_response": "mean_delta/v1", "verify_failed": "original_stands/v1", "verify_split_policy": "vary"}, "written_utc": "20261022T103245Z"}}, "sweep_none": {"completed": true, "commit": "ac991c8f72efd4f64e979075950368493eb2119b", "out": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261022T103245Z", "checks": {"label": "DRYRUN", "memory_mode": "none", "expected_roots": 4, "roots": 4, "root_failures": 0, "llm_calls": 24, "llm_calls_failed": 0, "llm_calls_retried": 0, "parse_failures": 0, "manager_kind": "langgraph", "transport_max_attempts": 3, "verify_split_policy": "vary", "action_versions": {"keep_rule": "default/v1", "verify_response": "mean_delta/v1", "verify_failed": "original_stands/v1", "verify_split_policy": "vary"}, "written_utc": "20261022T103257Z"}}, "index": {"completed": true, "commit": "68068853418510a2ddb5a02e3f5f7f697570a980", "out": null, "checks": null}}}

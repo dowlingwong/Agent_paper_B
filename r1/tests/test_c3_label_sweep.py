@@ -206,3 +206,69 @@ def test_prepare_check_accepts_only_the_environmental_set(tmp_path):
     subprocess.run([sys.executable, str(script), str(tmp_path), "1", "0", "p", "h", "0"], check=True,
                    capture_output=True)
     assert json.loads((tmp_path / "prepare.json").read_text())["ok"] is False
+
+
+# --- 22 Oct: Ada sweep config, audit K = 10, pending-node slot ------------------------------------
+
+ADA_CONFIG = REPO / "r1/scripts/configs/c3_sweep_ada.json"
+
+
+def test_ada_sweep_config_validates_and_follows_plan():
+    config = sweep.load_config(ADA_CONFIG)
+    assert config["nodes"] == ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc"]
+    assert config["nodes_pending"] == ["openml_credit_approval", "openml_diabetes"]
+    assert config["instances"] == 18 and config["runs"] == 20
+    assert config["memory_modes"] == ["append_only_summary", "none"]
+    assert config["liveness"] == {"instances": 2, "runs": 10, "memory_mode": "append_only_summary"}
+    assert config["audit"] == {"seeds": list(range(7001, 7011)), "label_seeds": 5, "evaluation_seeds": 5}
+    assert config["allowed_hosts"] == ["ucrtasl"] and config["transport_max_attempts"] == 3
+    ollama = config["ollama"]
+    assert ollama["port"] and ollama["port"] != 11434 and ollama["seed_models_from"]
+    command = config["paper_a_check"]["command"]
+    assert (REPO / command[1]).exists() and (REPO / command[command.index("--config") + 1]).exists()
+    assert sweep.MODEL == "qwen2.5-coder:7b" and len(sweep.DIGEST) == 64  # digest pin stays in the runner
+
+
+def test_audit_and_pending_validation(tmp_path):
+    path = tmp_path / "c.json"
+    for bad in ({"audit": {"seeds": [7001, 7002, 7003], "label_seeds": 1, "evaluation_seeds": 2}},
+                {"audit": {"seeds": [7001, 7001], "label_seeds": 1, "evaluation_seeds": 1}},
+                {"audit": {"seeds": list(range(7001, 7011)), "label_seeds": 4, "evaluation_seeds": 6}},
+                {"nodes": ["digits_mlp"], "nodes_pending": ["digits_mlp"]},
+                {"nodes": ["digits_mlp", "digits_mlp"]}):
+        path.write_text(json.dumps(bad))
+        with pytest.raises(sweep.Stop):
+            sweep.load_config(path)
+    path.write_text(json.dumps({"audit": {"seeds": list(range(7001, 7007)), "label_seeds": 3,
+                                          "evaluation_seeds": 3}}))
+    assert sweep.load_config(path)["audit"]["seeds"] == list(range(7001, 7007))  # K = 6 still allowed
+    assert sweep.load_config(None)["audit"]["seeds"] == list(range(7001, 7011))  # default K = 10
+
+
+def test_check_config_cli(tmp_path):
+    ok = subprocess.run([sys.executable, str(REPO / "r1/scripts/c3_label_sweep.py"), "--config", str(ADA_CONFIG),
+                         "--check-config"], capture_output=True, text=True, cwd=REPO, timeout=60)
+    assert ok.returncode == 0 and json.loads(ok.stdout)["nodes_pending"]
+    bad = tmp_path / "bad.json"
+    bad.write_text(json.dumps({"runs": 10}))
+    no = subprocess.run([sys.executable, str(REPO / "r1/scripts/c3_label_sweep.py"), "--config", str(bad),
+                         "--check-config"], capture_output=True, text=True, cwd=REPO, timeout=60)
+    assert no.returncode == 2 and "STOP" in no.stdout
+
+
+def test_dryrun_overrides_only_desktop_keys(tmp_path):
+    sys.path.insert(0, str(REPO / "r1/scripts"))
+    import c3_sweep_dryrun as dry
+    base = sweep.load_config(ADA_CONFIG)
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    config, overridden = dry.dryrun_config(base, tmp_path, bin_dir)
+    assert set(overridden) == {"nodes", "instances", "runs", "workers", "liveness", "min_live_nodes",
+                               "gpu_wait_seconds", "max_collect_sessions", "paper_a_check", "ollama"}
+    for key in set(base) - set(overridden):
+        assert config[key] == base[key], key
+    assert config["nodes"] == ["digits_mlp", "openml_breast_w"]
+    command = config["paper_a_check"]["command"]
+    assert command[:2] == base["paper_a_check"]["command"][:2]
+    fake = json.loads(Path(command[command.index("--config") + 1]).read_text())
+    assert fake["expected_branch"] == "paper-a-v4-ada"

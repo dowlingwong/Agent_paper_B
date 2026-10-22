@@ -17,6 +17,18 @@ Scenarios (fault injection over /api/chat calls of the batch's own server):
   log, and the runner must stop cleanly (STOP recorded, collection files
   written, the dedicated server gone, tmux session ended).
 
+``--base-config PATH`` (e.g. ``r1/scripts/configs/c3_sweep_ada.json``) starts
+from a real launch config instead of the built-in fixture config and overrides
+only what a desktop DRYRUN must change: the nodes (its nodes among
+``digits_mlp`` / ``openml_breast_w``), scale (2 instances, W = 6, liveness 1 x
+W = 4, 2 workers), the GPU wait, the Ollama binary / port / model seeding (fake
+server) and the Paper A check, which then runs the real
+``r1/scripts/paper_a_status.py`` against a fake finished Paper A run (fake
+checkout on ``paper-a-v4-ada``, no tmux session, no GPU process).  Everything
+else (memory modes, transport retry, gates, audit seeds, pending nodes, ...)
+comes from the base config, and the retry check also verifies the audit seeds
+and pending nodes recorded in the sweep index.
+
 Only ``summary.json`` and copied logs leave the temporary directory (``--out``).
 AI-assisted (Claude).  DRYRUN; never evidence.
 """
@@ -115,15 +127,62 @@ def data_cache(rel: Path, sources) -> Path | None:
     return None
 
 
+DRYRUN_NODES = ('digits_mlp', 'openml_breast_w')
+
+
+def fake_paper_a(root: Path, bin_dir: Path) -> Path:
+    """A fake *finished* Paper A run and a paper_a_status.py config pointing at it (DRYRUN only)."""
+    checkout = root / 'paper_a_fake' / 'agent-checkpoint-intervention'
+    run_dir = checkout / 'results/paper_a/replay_panel_v4/live_DRYRUN'
+    run_dir.mkdir(parents=True)
+    subprocess.run(['git', 'init', '-q', '-b', 'paper-a-v4-ada', str(checkout)], check=True)
+    (run_dir / 'state.json').write_text(json.dumps({'status': 'finished', 'label': 'DRYRUN'}))
+    executable(bin_dir / 'paper_a_nvidia_smi', "#!/bin/sh\necho 'No running processes found'\n")
+    config = {'comment': 'DRYRUN fake Paper A (finished).', 'expected_host': platform.node().split('.')[0],
+              'paper_a_checkout': str(checkout), 'expected_branch': 'paper-a-v4-ada',
+              'run_dir': 'results/paper_a/replay_panel_v4/live_DRYRUN', 'state_file': 'state.json',
+              'state_key': 'status', 'running_values': ['running'], 'finished_values': ['finished'],
+              'waiting_values': ['waiting'], 'finished_markers': [], 'tmux_session': 'paper_a_fake_session',
+              'tmux_binary': str(bin_dir / 'tmux'), 'nvidia_smi_binary': str(bin_dir / 'paper_a_nvidia_smi'),
+              'ps_binary': str(bin_dir / 'ps'), 'process_patterns': ['live_DRYRUN']}
+    path = root / 'paper_a_status_dryrun.json'
+    path.write_text(json.dumps(config, indent=2))
+    return path
+
+
+def dryrun_config(base: dict, root: Path, bin_dir: Path) -> tuple[dict, list]:
+    """The base launch config with only the desktop-DRYRUN keys overridden (documented in the summary)."""
+    config = json.loads(json.dumps(base))
+    nodes = [n for n in base.get('nodes', []) if n in DRYRUN_NODES]
+    if len(nodes) < 2:
+        raise RuntimeError(f'STOP: base config needs both of {DRYRUN_NODES} for the desktop DRYRUN')
+    command = list(base['paper_a_check']['command'])
+    if '--config' not in command:
+        raise RuntimeError('STOP: base paper_a_check.command has no --config to redirect')
+    command[command.index('--config') + 1] = str(fake_paper_a(root, bin_dir))
+    overrides = {'nodes': nodes, 'instances': 2, 'runs': 6, 'workers': 2,
+                 'liveness': dict(base.get('liveness', {}), instances=1, runs=4), 'min_live_nodes': 2,
+                 'gpu_wait_seconds': 0, 'max_collect_sessions': 3,
+                 'paper_a_check': dict(base['paper_a_check'], command=command),
+                 'ollama': {'binary': str(bin_dir / 'ollama'), 'start_timeout': 30, 'port': None,
+                            'seed_models_from': None}}
+    config.update(overrides)
+    return config, sorted(overrides)
+
+
 def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_sources,
-                 python: str, deadline_s: float) -> dict:
+                 python: str, deadline_s: float, base_config: dict | None = None) -> dict:
     batches = root / f'batches_{scenario}'
     batches.mkdir()
-    config = {'nodes': ['digits_mlp', 'openml_breast_w'], 'instances': 2, 'runs': 6, 'workers': 2,
-              'liveness': {'instances': 1, 'runs': 4}, 'min_live_nodes': 2, 'gpu_wait_seconds': 0,
-              'max_collect_sessions': 3,
-              'paper_a_check': {'command': [str(bin_dir / 'paper_a_status')]},
-              'ollama': {'binary': str(bin_dir / 'ollama'), 'start_timeout': 30}}
+    overridden = None
+    if base_config is not None:
+        config, overridden = dryrun_config(base_config, root, bin_dir)
+    else:
+        config = {'nodes': ['digits_mlp', 'openml_breast_w'], 'instances': 2, 'runs': 6, 'workers': 2,
+                  'liveness': {'instances': 1, 'runs': 4}, 'min_live_nodes': 2, 'gpu_wait_seconds': 0,
+                  'max_collect_sessions': 3,
+                  'paper_a_check': {'command': [str(bin_dir / 'paper_a_status')]},
+                  'ollama': {'binary': str(bin_dir / 'ollama'), 'start_timeout': 30}}
     config_path = root / f'c3_config_{scenario}.json'
     config_path.write_text(json.dumps(config, indent=2))
     env = {k: v for k, v in os.environ.items()
@@ -165,7 +224,7 @@ def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_s
     calls = [json.loads(l) for l in (root / 'fake_calls.jsonl').read_text().splitlines()] \
         if (root / 'fake_calls.jsonl').exists() else []
     return {'batch': batch, 'state': state, 'calls': calls, 'env': env, 'timed_out': timed_out,
-            'deadline_s': deadline_s}
+            'deadline_s': deadline_s, 'config': config, 'overridden': overridden}
 
 
 def check_retry(result: dict) -> dict:
@@ -201,7 +260,20 @@ def check_retry(result: dict) -> dict:
     restart = subprocess.run([str(batch / 'autoresearch_harness/.venv/bin/python'), 'r1/scripts/c3_label_sweep.py'],
                              cwd=paper, capture_output=True, text=True, env=restart_env)
     assert restart.returncode == 3 and 'already finished' in restart.stdout, restart.stdout + restart.stderr
-    return {'dropped_chat_call': dropped[0]['chat_call'], 'resent_with_same_seed': True,
+    extra = {}
+    if result.get('overridden') is not None:
+        config = result['config']
+        audit = config['audit']
+        assert index['audit']['seeds'] == audit['seeds'], index['audit']
+        assert index['audit']['label_seeds'] == audit['seeds'][:audit['label_seeds']]
+        assert index['audit']['evaluation_seeds'] == audit['seeds'][audit['label_seeds']:]
+        assert index['nodes_pending'] == config['nodes_pending']
+        check = state['paper_a_check']
+        assert check['verdict'] == 'clear' and check['report']['verdict'] == 'clear_finished', check
+        assert 'paper_a_status.py' in ' '.join(check['command'])
+        extra = {'base_config_overridden_keys': result['overridden'], 'index_audit_seeds': index['audit']['seeds'],
+                 'index_nodes_pending': index['nodes_pending'], 'paper_a_status_verdict': check['report']['verdict']}
+    return {**extra, 'dropped_chat_call': dropped[0]['chat_call'], 'resent_with_same_seed': True,
             'llm_calls_retried': retried, 'restart_refused': True, 'eligible_nodes':
             state['steps']['liveness']['eligible_nodes'],
             'roots': {s: state['steps'][s]['checks']['roots'] for s in ('sweep_append_only_summary', 'sweep_none')},
@@ -243,6 +315,8 @@ def main():
     ap.add_argument('--python', default=sys.executable, help='interpreter with the harness dependencies')
     ap.add_argument('--deadline', type=float, default=150.0, help='seconds per scenario run')
     ap.add_argument('--keep', action='store_true', help='keep the temporary directories for inspection')
+    ap.add_argument('--base-config', type=Path, default=None,
+                    help='start from this launch config (e.g. r1/scripts/configs/c3_sweep_ada.json)')
     args = ap.parse_args()
     if platform.node().split('.')[0] == 'ucrtasl':
         raise SystemExit('STOP: desktop DRYRUN is forbidden on Ada')
@@ -254,7 +328,13 @@ def main():
                                       REPO.parent / 'autoresearch_harness', REPO.parents[2] / 'autoresearch_harness')
                     if p]
     scenarios = ['retry', 'permanent'] if args.scenario == 'both' else [args.scenario]
-    summary = {'label': 'DRYRUN', 'scenarios': {}, 'started_utc': stamp, 'harness_source': str(harness_source)}
+    base_config = None
+    if args.base_config:
+        sys.path.insert(0, str(REPO))
+        from r1.scripts.c3_label_sweep import load_config
+        base_config = load_config(args.base_config)  # the runner's own validation first
+    summary = {'label': 'DRYRUN', 'scenarios': {}, 'started_utc': stamp, 'harness_source': str(harness_source),
+               'base_config': str(args.base_config) if args.base_config else None}
     start = time.monotonic()
     for scenario in scenarios:
         root = Path(tempfile.mkdtemp(prefix=f'r1_c3_dryrun_{scenario}_')).resolve()
@@ -266,7 +346,8 @@ def main():
             fixture = build_fixture(root, harness_source)
             entry['pin'] = fixture['pin']
             bin_dir = fake_bin(root, socket_name)
-            result = run_scenario(scenario, root, fixture, bin_dir, data_sources, args.python, args.deadline)
+            result = run_scenario(scenario, root, fixture, bin_dir, data_sources, args.python, args.deadline,
+                                  base_config)
             entry['checks'] = (check_retry if scenario == 'retry' else check_permanent)(result)
             entry['passed'] = True
         except Exception as exc:

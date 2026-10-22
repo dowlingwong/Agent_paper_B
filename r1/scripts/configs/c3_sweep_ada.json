@@ -1,0 +1,28 @@
+{
+  "comment": "C3 label sweep on Ada (ucrtasl). ENGINEERING_ONLY config; the sweep output is PILOT label data. AI-assisted (Claude), 22 Oct 2026. Schema: r1/scripts/c3_label_sweep.py DEFAULTS (unknown top-level keys are refused). Validate with: python r1/scripts/c3_label_sweep.py --config r1/scripts/configs/c3_sweep_ada.json --check-config. NODES: the D21 noise nodes (PLAN §10 D21; R1-E1B-RERUN2 revision 'nodes per D21'). The liveness phase runs D28 on all of them first (memory on, 2 instances, W = 10); a node that fails is excluded from BOTH memory modes (runner behaviour), which keeps digits_mlp out of memory-on collection until D28 passes (PLAN §10, digits_mlp 22 Oct) and leaves the memory-off-only vs exclusion choice to the author. openml_ionosphere stays in: it passed D28 on 14 Oct (liveness_llm_20261014T140742Z); its 19 Oct exclusion concerns the DI-test eligible pool (no decision-changed points), not C3 labels. NODES_PENDING: the slot for the 22 Oct node-pool candidates; they are NOT run. Move a node from nodes_pending into nodes only after the parallel 30-seed 'vary' noise re-measurement shows it qualifies under D21 (and the C3 pipeline knows the node: r1/c3/features.py NODE_INFO). AUDIT: K = 10 fresh joint seeds 7001..7010, first 5 label, last 5 evaluation (C3_DESIGN §4); recorded in the manifests and the sweep index for r1/c3/audit.py. PAPER A: r1/scripts/paper_a_status.py with its Ada config, which refuses until its null entries are verified on Ada. OLLAMA: pinned qwen2.5-coder:7b (digest pinned in the runner), own port, own models dir under the batch directory seeded by hard links from the batch-1 pinned model files (verify the path on Ada; the runner checks the digest and refuses on a mismatch).",
+  "nodes": ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc"],
+  "nodes_pending": ["openml_credit_approval", "openml_diabetes"],
+  "instances": 18,
+  "runs": 20,
+  "memory_modes": ["append_only_summary", "none"],
+  "workers": 4,
+  "transport_max_attempts": 3,
+  "liveness": {"instances": 2, "runs": 10, "memory_mode": "append_only_summary"},
+  "min_live_nodes": 2,
+  "max_parse_failure_rate": 0.2,
+  "max_collect_sessions": 12,
+  "paper_a_check": {
+    "command": ["python3", "r1/scripts/paper_a_status.py", "--config", "r1/scripts/configs/paper_a_status_ada.json"],
+    "timeout": 120
+  },
+  "gpu_uuid": "auto",
+  "gpu_wait_seconds": 21600,
+  "ollama": {
+    "binary": "/usr/local/bin/ollama",
+    "seed_models_from": "/data1/dowling/tmp/r1_batch1_ENGINEERING_ONLY_ada_20261012_DcmRNh/ollama_models",
+    "port": 11481,
+    "start_timeout": 120
+  },
+  "allowed_hosts": ["ucrtasl"],
+  "audit": {"seeds": [7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010], "label_seeds": 5, "evaluation_seeds": 5}
+}

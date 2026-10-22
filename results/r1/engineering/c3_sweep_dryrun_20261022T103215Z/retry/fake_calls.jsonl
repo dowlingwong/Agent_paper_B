@@ -1,0 +1,73 @@
+{"label": "DRYRUN", "pid": 152, "event": "serve", "port": 52039, "models": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/ollama_models_52039"}
+{"label": "DRYRUN", "pid": 152, "path": "/api/version"}
+{"label": "DRYRUN", "pid": 154, "event": "pull", "model": ["qwen2.5-coder:7b"]}
+{"label": "DRYRUN", "pid": 152, "path": "/api/tags"}
+{"label": "DRYRUN", "pid": 152, "path": "/api/generate", "seed": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/ps"}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1072716526, "chat_call": 1, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1023010193, "chat_call": 2, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2748562400, "chat_call": 3, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1879260936, "chat_call": 4, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 850186853, "chat_call": 5, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2560122908, "chat_call": 6, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2731451452, "chat_call": 7, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2320079992, "chat_call": 8, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 3211263357, "chat_call": 9, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 4119066960, "chat_call": 10, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 3065579443, "chat_call": 11, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2285871714, "chat_call": 12, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1072716526, "chat_call": 13, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 3324922194, "chat_call": 14, "fault": "drop"}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1023010193, "chat_call": 15, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2748562400, "chat_call": 16, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 3324922194, "chat_call": 17, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1879260936, "chat_call": 18, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2739690018, "chat_call": 19, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1128977991, "chat_call": 20, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 976407390, "chat_call": 21, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 779256053, "chat_call": 22, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 4072454612, "chat_call": 23, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 850186853, "chat_call": 24, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2208124908, "chat_call": 25, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2560122908, "chat_call": 26, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1728055375, "chat_call": 27, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2731451452, "chat_call": 28, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1306656400, "chat_call": 29, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 4119066960, "chat_call": 30, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 4047334524, "chat_call": 31, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 4154082885, "chat_call": 32, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 3065579443, "chat_call": 33, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 4235365977, "chat_call": 34, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 810681372, "chat_call": 35, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1755821239, "chat_call": 36, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2660345994, "chat_call": 37, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2963538521, "chat_call": 38, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 3493368216, "chat_call": 39, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/version"}
+{"label": "DRYRUN", "pid": 152, "path": "/api/ps"}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1072716526, "chat_call": 40, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2285871714, "chat_call": 41, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 3324922194, "chat_call": 42, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1023010193, "chat_call": 43, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2748562400, "chat_call": 44, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2739690018, "chat_call": 45, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 976407390, "chat_call": 46, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1879260936, "chat_call": 47, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1128977991, "chat_call": 48, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 4072454612, "chat_call": 49, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 779256053, "chat_call": 50, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2208124908, "chat_call": 51, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 850186853, "chat_call": 52, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1728055375, "chat_call": 53, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1306656400, "chat_call": 54, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2560122908, "chat_call": 55, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2731451452, "chat_call": 56, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 4047334524, "chat_call": 57, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 4119066960, "chat_call": 58, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 810681372, "chat_call": 59, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2660345994, "chat_call": 60, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 3065579443, "chat_call": 61, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 1755821239, "chat_call": 62, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/chat", "seed": 2963538521, "chat_call": 63, "fault": null}
+{"label": "DRYRUN", "pid": 152, "path": "/api/version"}
+{"label": "DRYRUN", "pid": 152, "path": "/api/ps"}
