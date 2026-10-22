@@ -1,6 +1,16 @@
 # Paper B (route R1) — status log
 
 
+## 22 October 2026 — author decisions before the first C3 label sweep
+
+Recorded by an AI agent (Claude, coordinating session). No experiment ran. All rows are in PLAN §10, dated 22 Oct.
+- **Duplicates (option A):** confirms the 19 Oct duplicate ≠ no-op split; duplicates are excluded from learned-arm training and evaluation; new: C1 reports the duplicate rate as wasted runs.
+- **g (option A):** g = 0.1 σ_node primary, {0.05, 0.2} σ_node declared sensitivity; the gate is judged at the primary value only. C3_DESIGN §1 updated.
+- **Run accounting (option A):** skips credited at g; freed runs not re-spent in the primary analysis; replay as sensitivity.
+- **Node pool:** credit_approval and diabetes after a 30-seed `"vary"` re-measurement; credit_g after fetching its cache; 2–3 more OpenML datasets if fewer than 8 qualify.
+- **`digits_mlp`:** repair, do not exclude; out of memory-on collection until D28 passes.
+- **Next:** implementation batch (classification of kinds through labels and arms, g and run accounting in the gate, audited-outcome mode for `di_test.py`, Paper A status command, sweep config) and the noise re-measurement, run by subagents and accepted by the coordinating session.
+
 ## 19 Oct 2026 — partial memory-on absolute-metric DI diagnostic
 
 AI-assisted by Codex. **PILOT, PARTIAL, not evidence.** The authorised preserved arm snapshot is 11.99 MB, with lossless compressed ledgers and source SHA-256 manifests; two whole failed points are excluded. No experiment was resumed and no LLM, GPU or worker was run. Memory-on tabular has nine promotion points and four demotion points; its next-one absolute-metric contrast passes the combined diagnostic rule and the value residual is −0.00122155 [−0.00222152, −0.000257005]. Verdict: **violated in value terms**, limited to this exploratory partial diagnostic. Memory-off absolute-metric re-analysis: **undetermined at this sample size**, residual .000510569 [−.00258821, .00417810]. The shared ionosphere node has no changed points in either dataset. These results do not justify A7 training/deployment. See [report](reports/DI_TEST_MEMORY_ON_PARTIAL_20261019.md) and [tables](reports/DI_TEST_MEMORY_ON_PARTIAL_20261019_tables.md). The default legacy outputs remain byte-identical; focused file-only regression suite: 12 passed.

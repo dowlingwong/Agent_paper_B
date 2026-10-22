@@ -8,7 +8,7 @@ The learned component does **not** choose actions. It predicts, **before a run i
 - **E1 screening** — execute iff (1 − π)·V(t*; μ, τ, σ) ≥ g (T4 Proposition 8);
 - **E2 acceptance** — keep iff Δ̂ > t* = −μσ²/τ² (T4 Proposition 6; needs the D4 amendment).
 
-σ (comparison noise) is measured per node and edit kind (E1), not learned; g (run price) is tuned on development instances. Because every estimator emits the same (π, μ, τ), the arms differ **only** in the quality of the prior:
+σ (comparison noise) is measured per node and edit kind (E1), not learned; g (run price) is fixed at 0.1 σ_node, with 0.05 and 0.2 σ_node as declared sensitivity values (PLAN §10, 22 Oct). Because every estimator emits the same (π, μ, τ), the arms differ **only** in the quality of the prior:
 
 constant (index policy) → rules → tabular → LLM zero-shot → small LM (SFT) → small LM (decision-focused GRPO).
 
