@@ -92,5 +92,5 @@ It builds a source fixture (HEAD + working-tree `r1/`), bare remotes, real `--pr
 5. `--prepare` on Ada runs both suites; the accepted set equals rerun-2's. Then `--start`.
 6. **Not fixed: the SIGTERM sender** of 14 Oct remains unidentified. The dedicated instance (own port, models dir and process group) plus bounded retry reduce exposure and make the next loss diagnosable; they do not prove the cause is gone. A permanent loss still STOPs the batch, with records.
 7. The D4 versions are implemented and tested in the harness but not used by the sweep (root campaigns, `ContinueController`); they are for A1+ arms. The posterior-mean response under `"fixed"` needs σ_t/σ_s in the prior.
-8. Audit stage (`r1/c3/audit.py`) consumes `C3_sweep_index_*.json`; the K = 6 fresh-seed audits and soft labels are not part of this runner.
+8. Audit stage (`r1/c3/audit.py`) consumes `C3_sweep_index_*.json`; the fresh-seed audits (K = 6 at the time of writing; K = 10 = 5 + 5 since 22 Oct, `r1/scripts/configs/c3_sweep_ada.json`) and soft labels are not part of this runner.
 9. The runner does not write STATUS.md; record the batch in STATUS after it finishes.

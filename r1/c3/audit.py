@@ -3,9 +3,19 @@
 A proposal is audited by running its candidate and its incumbent configuration
 on K common fresh *joint* seeds (train seed = split seed = s, as E1's ``joint``
 condition and the E1b leaf audits do), giving per-seed paired differences,
-Delta_audit = mean and se = sd / sqrt(K). Default seeds 7001..7006 are disjoint
-from campaign seeds (100..280), E1 seeds (1001+, 2001+, 3001+) and the E1b leaf
-audit seeds (5001..5006).
+Delta_audit = mean and se = sd / sqrt(K). Default seeds 7001..7010 (K = 10,
+C3_DESIGN §4) are disjoint from campaign seeds (100..280), E1 seeds (1001+,
+2001+, 3001+) and the E1b leaf audit seeds (5001..5006).
+
+Label / evaluation seed split (C3_DESIGN §4; ``split_seeds``): the first half
+of an audit's seeds (in the recorded order) gives the training soft label, the
+second half the evaluation value Delta_true. K = 10 gives 5 + 5. The 19 Oct
+pilot audits were run with K = 6 (7001..7006, ``PILOT_SEEDS``) and split 3 + 3;
+they stay readable because every audit row records its own ``seeds`` and the
+split is taken from that list, never from the default. ``run`` records the
+seeds it used in ``DIR/audit_seeds.json``; ``collect`` without ``--seeds``
+reads that file, or, for directories written before it existed, uses the seeds
+present in the run cache (the pilot: 7001..7006).
 
 Each configuration is run through the harness ``LocalWorker.run_trial_at_seed``
 with a no-edit proposal on an isolated copy of the node whose editable files are
@@ -32,7 +42,9 @@ from pathlib import Path
 
 import numpy as np
 
-DEFAULT_SEEDS = tuple(range(7001, 7007))
+DEFAULT_SEEDS = tuple(range(7001, 7011))  # K = 10: 5 label + 5 evaluation seeds (C3_DESIGN §4)
+PILOT_SEEDS = tuple(range(7001, 7007))  # K = 6 of the 19 Oct pilot audits (3 + 3)
+SEEDS_FILE = "audit_seeds.json"
 PILOT_DATA_CACHE = "experiments/r1/pilot/L8_20261009T152916Z/nodes/{node}/data_cache"
 
 
@@ -104,6 +116,40 @@ def paired(cand: list[float | None], inc: list[float | None]) -> dict:
     return {"delta_audit": float(d.mean()), "se": se, "k": int(len(d)), "sd": float(d.std(ddof=1)) if len(d) > 1 else None}
 
 
+def split_seeds(seeds) -> tuple[tuple, tuple]:
+    """(label seeds, evaluation seeds): first half for labels, second half for evaluation.
+
+    K must be even and >= 2, so that both roles get the same number of seeds.
+    """
+    seeds = tuple(seeds)
+    if len(seeds) < 2 or len(seeds) % 2:
+        raise ValueError(f"label/evaluation split needs an even K >= 2, got K = {len(seeds)}")
+    h = len(seeds) // 2
+    return seeds[:h], seeds[h:]
+
+
+def split_audit(a: dict) -> tuple[dict, dict]:
+    """Paired results (label part, evaluation part) of one audit row, split by its recorded seeds."""
+    lab, ev = split_seeds(a["seeds"])
+    h = len(lab)
+    return (paired(a["candidate_metrics"][:h], a["incumbent_metrics"][:h]),
+            paired(a["candidate_metrics"][h:], a["incumbent_metrics"][h:]))
+
+
+def resolve_seeds(out: Path, seeds=None) -> tuple:
+    """Seeds for ``collect``: explicit, else DIR/audit_seeds.json, else the seeds present in the cache."""
+    if seeds:
+        return tuple(seeds)
+    f = Path(out) / SEEDS_FILE
+    if f.exists():
+        return tuple(json.loads(f.read_text())["seeds"])
+    cache = RunCache(Path(out) / "runs.jsonl")
+    present = tuple(sorted({k[2] for k in cache.rows}))
+    if not present:
+        raise ValueError(f"no seeds recorded and no cached runs in {out}")
+    return present
+
+
 def audit_results(plan: list[dict], cache: RunCache, seeds=DEFAULT_SEEDS) -> list[dict]:
     """Assemble per-proposal audit results for plan rows whose runs are all cached."""
     out = []
@@ -123,6 +169,12 @@ def audit_results(plan: list[dict], cache: RunCache, seeds=DEFAULT_SEEDS) -> lis
 def run_plan(plan: list[dict], configs: dict, out: Path, seeds=DEFAULT_SEEDS, workers: int = 4,
              deadline: float = 150.0, tmp: str | None = None) -> dict:
     out.mkdir(parents=True, exist_ok=True)
+    # The seeds of the latest ``run`` call (what ``collect`` assembles by default).
+    # Extending an older directory (e.g. the K = 6 pilot) to more seeds is allowed:
+    # cached runs are reused and only the missing seeds run.
+    (out / SEEDS_FILE).write_text(json.dumps({"seeds": list(seeds), "k": len(seeds),
+                                              "label_seeds": list(seeds[:len(seeds) // 2]),
+                                              "evaluation_seeds": list(seeds[len(seeds) // 2:])}) + "\n")
     cache = RunCache(out / "runs.jsonl")
     tmp = tmp or tempfile.mkdtemp(prefix="c3_audit_tmp_")
     Path(tmp).mkdir(parents=True, exist_ok=True)
@@ -169,7 +221,8 @@ def main(argv=None) -> int:
     c = sub.add_parser("collect")
     c.add_argument("--plan", required=True)
     c.add_argument("--out", required=True)
-    c.add_argument("--seeds", type=int, nargs="+", default=list(DEFAULT_SEEDS))
+    c.add_argument("--seeds", type=int, nargs="+", default=None,
+                   help="default: DIR/audit_seeds.json, else the seeds present in DIR/runs.jsonl")
     args = ap.parse_args(argv)
     plan = [json.loads(x) for x in Path(args.plan).read_text().splitlines() if x.strip()]
     if args.cmd == "run":
@@ -177,7 +230,7 @@ def main(argv=None) -> int:
         status = run_plan(plan, configs, Path(args.out), tuple(args.seeds), args.workers, args.deadline)
         print(json.dumps(status))
     else:
-        res = audit_results(plan, RunCache(Path(args.out) / "runs.jsonl"), tuple(args.seeds))
+        res = audit_results(plan, RunCache(Path(args.out) / "runs.jsonl"), resolve_seeds(Path(args.out), args.seeds))
         (Path(args.out) / "audits.jsonl").write_text("".join(json.dumps(x) + "\n" for x in res))
         print(json.dumps({"audited": len(res), "planned": len(plan)}))
     return 0

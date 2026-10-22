@@ -11,6 +11,37 @@ Duplicates carry no training label. Decisions from ``rules`` with the arm's (pi,
 comparison noise sigma_cmp, and the *logged* campaign Delta_hat (independent of
 the audit seeds).
 
+Run price g (PLAN §10, "g (22 Oct)", option A): g is declared in units of the
+node's sigma_node. The primary value is ``G_PRIMARY`` = 0.1 sigma_node; the
+declared sensitivity values are ``G_SENSITIVITY`` = (0.05, 0.2) sigma_node. The
+default evaluation computes exactly these three values. The C3 gate is judged
+at the primary g only (``gate_verdict``); the sensitivity values are reported
+under ``sensitivity`` without any pass/fail field. g = 0 appears only inside
+the theory checks (T4 Proposition 7 threshold gain), labelled as such; it is
+never a gate quantity. g is not tuned on any data.
+
+Run accounting in the 20-run scaling (PLAN §10, 22 Oct, option A):
+- primary (``skip_credited_at_g``): a skipped proposal scores r = 0, i.e. the
+  skip is credited at the price g of the run it saves; freed runs are NOT
+  re-spent. The per-campaign value is 20 x the weighted mean r per logged
+  proposal (one logged proposal = one run in a W = 20 root campaign). This is a
+  stated convention, consistent with g being declared as the value of one run,
+  not a derived opportunity cost.
+- sensitivity (``freed_run_call_cap``): freed runs are re-spent on further
+  proposals that are exchangeable with the arm's own held-out proposals in the
+  node, under a cap of c x W LLM proposals per campaign. With mean realised
+  reward per executed proposal m and execution rate e, the campaign executes
+  min(W, e c W) proposals and its value is m x min(W, e c W). c = 1 reproduces
+  the primary accounting exactly (W x mean reward per logged proposal); the
+  reported sensitivities are c = 2 (the realistic one) and c = inf (no call cap,
+  value W x m; an optimistic upper bound that scales with 1/e and amplifies the
+  arm with the lower execution rate). The divergence of the history after a
+  skip is ignored. Deviation from the PLAN wording ("give each freed run to the
+  next logged proposal of the same campaign"): the root ledgers hold exactly
+  one proposal per run (W rows, budget index = cumulative budget consumed), so
+  no logged proposal exists beyond the end of a campaign to receive a freed
+  run; a literal replay cannot spend them. See ``RUN_ACCOUNTING``.
+
 Population: (source, node) strata that have audited proposals. No-ops and
 duplicates enter with evaluation weight 1. Randomly audited non-inert proposals carry weight
 N_noninert / N_audited of their stratum (inverse sampling probability), so means
@@ -19,12 +50,14 @@ they were DI-changed candidates (selected, not random) get weight 0 in
 evaluation but are used for training.
 
 Splits: ``instance`` = K-fold cross-fitting by instance seed (all nodes
-trained together; every instance is held out once); ``lono`` = leave one node out.
+trained together; every instance is held out once); ``lono`` = leave one node
+out (reported, no gate verdict).
 
-C3 gate (PLAN §10, D18): per node, gain = 20 x mean per-proposal (r_A3 - r_A2)
-on held-out proposals (one logged proposal = one run in a W = 20 root
-campaign); pass iff gain >= delta_n on >= 2 nodes with lower 95 % cluster-
-bootstrap bound (by instance) > 0.
+C3 gate (PLAN §10, D18; C3_DESIGN §6), judged once, at g = G_PRIMARY, primary
+run accounting, ``instance`` split: per node, gain = 20 x mean per-proposal
+(r_A3 - r_A2) on held-out proposals; a node meets the criterion iff gain >=
+delta_n and the lower 95 % cluster-bootstrap bound (by instance) > 0; the gate
+passes iff >= 2 nodes meet it.
 
 Usage:
   python -m r1.c3.offline_eval --table DIR [--audits DIR/audits.jsonl] --out DIR/offline_eval.json
@@ -39,13 +72,43 @@ from pathlib import Path
 import numpy as np
 
 from r1.c3 import rules
-from r1.c3.audit import paired
+from r1.c3.audit import split_audit
 from r1.c3.arms import ConstantPrior, LGBMPrior, RulesPrior, is_duplicate, is_noop, prior_moments, rule_skip
 from r1.c3.dataset import load_table, noise_table
 from r1.c3.labels import N_BINS, log_score, prob_positive, soft_label
 
-G_GRID = (0.0, 0.02, 0.05, 0.1, 0.2, 0.3)  # g in units of sigma_node
+G_PRIMARY = 0.1  # run price g in units of sigma_node (PLAN §10, "g (22 Oct)"): the gate value
+G_SENSITIVITY = (0.05, 0.2)  # declared sensitivity values; reported, never a verdict
+G_EVAL = (G_PRIMARY, *G_SENSITIVITY)  # the default evaluation computes exactly these
+G_THEORY = 0.0  # used only by the T4 Proposition 7 threshold-gain theory check
+GATE_MIN_NODES = 2
 CAMPAIGN_RUNS = 20
+CALL_CAPS = (2.0, float("inf"))  # freed-run sensitivity: LLM-proposal cap per campaign in units of W (c = 1 is the primary)
+RUN_ACCOUNTING = {
+    "primary": {
+        "name": "skip_credited_at_g",
+        "rule": "r = Delta_true * keep - g * execute per logged proposal; a skip scores 0, i.e. it is credited "
+                "at the price g of the run it saves; freed runs are not re-spent; per-campaign value = 20 x "
+                "weighted mean r per logged proposal (one logged proposal = one run in a W = 20 root campaign).",
+        "basis": "PLAN §10 'Run accounting in the 20-run scaling (22 Oct)', option A: a stated convention, "
+                 "consistent with g declared as the value of one run, not a derived opportunity cost.",
+    },
+    "sensitivity": {
+        "name": "freed_run_call_cap",
+        "rule": "freed runs are re-spent on further proposals exchangeable with the arm's held-out proposals in "
+                "the node, under a cap of c x W proposals per campaign: value = m x min(W, e c W), with m the "
+                "weighted mean reward per executed proposal and e the execution rate. c = 1 equals the primary; "
+                "reported: c = 2 (realistic) and c = inf (no cap, W x m; optimistic upper bound, scales with 1/e).",
+        "call_caps_reported": ["2", "inf"],
+        "assumptions": "further proposals are exchangeable with the arm's proposals in the node; history "
+                       "divergence after a skip is ignored.",
+        "deviation_from_plan_wording": "PLAN gives each freed run to the next logged proposal of the same "
+                                       "campaign. Root ledgers hold exactly one proposal per run (W rows; budget "
+                                       "index = cumulative budget consumed), so no logged proposal exists beyond "
+                                       "the end of a campaign to receive a freed run; this is the closest replay "
+                                       "the logs support.",
+    },
+}
 BOOT = 2000
 SEED = 20261019
 
@@ -54,7 +117,8 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
     """Join proposals with audits.
 
     ``seed_split`` (default): the training soft label uses the first half of the
-    audit seeds and the evaluation value Delta_true the second half, so that a
+    audit seeds and the evaluation value Delta_true the second half
+    (``audit.split_audit``: 5 + 5 for K = 10, 3 + 3 for the K = 6 pilot), so that a
     held-out proposal whose (candidate, incumbent) pair also occurs in a training
     instance (same start configuration, same audit seeds) does not share its
     audit error with the training label. ``False`` uses all K seeds for both
@@ -90,8 +154,7 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
             a = audits.get(r["proposal_id"])
             if a and a.get("delta_audit") is not None:
                 if seed_split:
-                    h = len(a["seeds"]) // 2
-                    ev = paired(a["candidate_metrics"][h:], a["incumbent_metrics"][h:])
+                    ev = split_audit(a)[1]
                 else:
                     ev = a
                 dt, src = ev["delta_audit"], "audit"
@@ -105,9 +168,7 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
                 continue
             ratio = n_non[k] / max(n_rand[k], 1)
             if seed_split:
-                h = len(a["seeds"]) // 2
-                lab = paired(a["candidate_metrics"][:h], a["incumbent_metrics"][:h])
-                ev = paired(a["candidate_metrics"][h:], a["incumbent_metrics"][h:])
+                lab, ev = split_audit(a)  # first half of the seeds: label; second half: evaluation
             else:
                 lab = ev = a
             if lab["delta_audit"] is None or ev["delta_audit"] is None:
@@ -184,8 +245,61 @@ def cluster_boot(diff, w, clusters, n=BOOT, seed=SEED):
     return np.array(draws)
 
 
-def evaluate(rows, mode="instance", k=3, g_grid=G_GRID, noise=None):
+def capped_value(sum_wer, sum_we, sum_w, c, runs=CAMPAIGN_RUNS):
+    """Per-campaign value under an LLM-proposal cap of c x W (freed-run sensitivity).
+
+    m = sum_wer / sum_we (mean reward per executed proposal), e = sum_we / sum_w
+    (execution rate); value = m x min(W, e c W). c = 1 gives W x sum_wer / sum_w,
+    the primary accounting; c = inf gives W x m. An arm that executes nothing has 0.
+    """
+    if sum_we <= 0 or sum_w <= 0:
+        return 0.0
+    m, e = sum_wer / sum_we, sum_we / sum_w
+    return float(m * (runs if np.isinf(c) else min(runs, e * c * runs)))
+
+
+def cluster_boot_capped_diff(r_a, ex_a, r_b, ex_b, w, clusters, c, n=BOOT, seed=SEED):
+    """Cluster bootstrap of capped_value(A) - capped_value(B) at call cap c; returns draws."""
+    rng = np.random.default_rng(seed)
+    clusters = np.asarray(clusters)
+    uc = sorted(set(clusters.tolist()))
+    cols = (w * ex_a * r_a, w * ex_a, w, w * ex_b * r_b, w * ex_b)
+    sums = np.array([[x[clusters == k].sum() for x in cols] for k in uc])
+    draws = []
+    for _ in range(n):
+        s = sums[rng.integers(0, len(uc), len(uc))].sum(0)
+        draws.append(capped_value(s[0], s[1], s[2], c) - capped_value(s[3], s[4], s[2], c))
+    return np.array(draws)
+
+
+def _cap_key(c):
+    return "inf" if np.isinf(c) else f"{c:g}"
+
+
+def freed_run_value(r, ex, w):
+    """Mean realised reward per executed proposal (weighted).
+
+    An arm that executes nothing in the node has nothing to spend freed runs on
+    (every further exchangeable proposal is skipped too), so its value is 0, the
+    same as under the primary accounting.
+    """
+    den = float((w * ex).sum())
+    return float((w * ex * r).sum() / den) if den > 0 else 0.0
+
+
+def _g_role(gu):
+    if np.isclose(gu, G_PRIMARY):
+        return "primary"
+    if any(np.isclose(gu, s) for s in G_SENSITIVITY):
+        return "sensitivity"
+    raise ValueError(f"g = {gu} sigma_node is not a declared value {G_EVAL} (PLAN §10, g (22 Oct)); "
+                     "g = 0 is used only inside the theory checks")
+
+
+def evaluate(rows, mode="instance", k=3, g_values=G_EVAL, noise=None):
+    """Held-out one-step values per arm at the declared g values. No gate verdict here (see ``gate_verdict``)."""
     noise = noise or noise_table()
+    roles = {gu: _g_role(gu) for gu in g_values}
     preds = crossfit(rows, mode, k)
     w = np.array([r["eval_weight"] for r in rows])
     nodes = np.array([r["node"] for r in rows])
@@ -194,7 +308,10 @@ def evaluate(rows, mode="instance", k=3, g_grid=G_GRID, noise=None):
     soft = np.array([r["soft"] if r.get("soft") is not None else np.full(N_BINS, 1.0 / N_BINS) for r in rows])
     skip = np.array([rule_skip(r) for r in rows], bool)
     dup = np.array([is_duplicate(r) for r in rows], bool)
-    res = {"mode": mode, "k": k, "n_rows": len(rows), "per_g": {}, "scores": {}, "theory": {}}
+    res = {"mode": mode, "k": k, "n_rows": len(rows),
+           "g_declaration": {"units": "sigma_node", "primary": G_PRIMARY, "sensitivity": list(G_SENSITIVITY),
+                             "source": "PLAN §10, g (22 Oct), option A; fixed before any gate is computed"},
+           "run_accounting": RUN_ACCOUNTING, "values": {}, "scores": {}, "theory_checks": {}}
     eval_nodes = sorted({r["node"] for r, wi, sk in zip(rows, w, skip) if wi > 0 and not sk})
     # --- scores (log score, calibration) on audited non-inert + inert rows with eval weight
     for a, P in preds.items():
@@ -216,44 +333,65 @@ def evaluate(rows, mode="instance", k=3, g_grid=G_GRID, noise=None):
                 "pi_pred_mean": float(np.average(P[m, 0], weights=w[m])),
                 "inert_frac": float(np.average(soft[m, 0], weights=w[m])),
                 "calibration_p_pos": cal}
-    # --- realised value per g
-    for gu in g_grid:
-        out = {"arms": {}, "gate": {}}
+    # --- realised value at each declared g (no verdicts)
+    proxy = np.array([r.get("delta_true_source") == "logged_proxy" for r in rows], bool)
+    for gu in g_values:
+        out = {"g_sigma_units": gu, "role": roles[gu], "arms": {}, "A3_minus_A2": {},
+               "freed_run_sensitivity": {"arms": {}, "A3_minus_A2": {}}}
         rr = {}
         ex0, kp0, g0 = rho(rows, gu)
         rr["A0"] = rewards(rows, ex0, kp0, g0)
         execs = {"A0": ex0}
-        proxy = np.array([r.get("delta_true_source") == "logged_proxy" for r in rows], bool)
         keeps = {"A0": kp0}
         for a, P in preds.items():
             ex, kp, (pi, mu, tau, sig, g) = decisions(P, rows, gu, rule_layer=(a != "A1"))
             rr[a] = rewards(rows, ex, kp, g)
             execs[a] = ex
             keeps[a] = kp
-        out["duplicates_kept"] = {a: int((k & dup).sum()) for a, k in keeps.items()}
-        out["duplicates_kept_with_logged_proxy"] = {a: int((k & dup & proxy).sum()) for a, k in keeps.items()}
+        out["duplicates_kept"] = {a: int((kk & dup).sum()) for a, kk in keeps.items()}
+        out["duplicates_kept_with_logged_proxy"] = {a: int((kk & dup & proxy).sum()) for a, kk in keeps.items()}
         for a in rr:
-            out["arms"][a] = {node: {"mean_per_proposal": float(np.average(rr[a][nodes == node], weights=w[nodes == node])),
-                                     "per_campaign": CAMPAIGN_RUNS * float(np.average(rr[a][nodes == node], weights=w[nodes == node])),
-                                     "exec_rate": float(np.average(execs[a][nodes == node], weights=w[nodes == node]))}
-                              for node in eval_nodes}
-        passes = 0
+            out["arms"][a] = {}
+            out["freed_run_sensitivity"]["arms"][a] = {}
+            for node in eval_nodes:
+                m = nodes == node
+                mean_r = float(np.average(rr[a][m], weights=w[m]))
+                out["arms"][a][node] = {"mean_per_proposal": mean_r, "per_campaign": CAMPAIGN_RUNS * mean_r,
+                                        "exec_rate": float(np.average(execs[a][m], weights=w[m]))}
+                v = freed_run_value(rr[a][m], execs[a][m], w[m])
+                e_w = float((w[m] * execs[a][m]).sum())
+                out["freed_run_sensitivity"]["arms"][a][node] = {
+                    "mean_per_executed": v,
+                    "per_campaign_by_call_cap": {_cap_key(c): capped_value(float((w[m] * execs[a][m] * rr[a][m]).sum()),
+                                                                           e_w, float(w[m].sum()), c)
+                                                 for c in CALL_CAPS},
+                    "n_executed_eval_rows": int((execs[a][m] & (w[m] > 0)).sum())}
         for node in eval_nodes:
             m = nodes == node
             diff = rr["A3"][m] - rr["A2"][m]
             gain = CAMPAIGN_RUNS * float(np.average(diff, weights=w[m]))
             draws = CAMPAIGN_RUNS * cluster_boot(diff, w[m], inst[m])
             lo, hi = np.nanpercentile(draws, [2.5, 97.5])
-            dn = noise[node]["delta_n"]
-            ok = bool(gain >= dn and lo > 0)
-            passes += ok
-            out["gate"][node] = {"gain_A3_minus_A2_per20": gain, "ci95": [float(lo), float(hi)], "delta_n": dn,
-                                 "pass": ok, "n_instances": int(len(set(inst[m]))),
-                                 "n_eval_rows": int((w[m] > 0).sum())}
-        out["gate_pass"] = bool(passes >= 2)
-        out["nodes_passing"] = passes
-        res["per_g"][str(gu)] = out
-    # --- theory checks (Prop 7 bound vs realised threshold gain; Prop 8 screening term)
+            out["A3_minus_A2"][node] = {"gain_per20": gain, "ci95": [float(lo), float(hi)],
+                                        "delta_n": noise[node]["delta_n"], "n_instances": int(len(set(inst[m]))),
+                                        "n_eval_rows": int((w[m] > 0).sum())}
+            e3, e2 = execs["A3"][m].astype(float), execs["A2"][m].astype(float)
+            fr = {"by_call_cap": {}, "primary_gain_per20": gain,
+                  "exec_rate_A3": float(np.average(e3, weights=w[m])),
+                  "exec_rate_A2": float(np.average(e2, weights=w[m]))}
+            for c in CALL_CAPS:
+                s3 = (float((w[m] * e3 * rr["A3"][m]).sum()), float((w[m] * e3).sum()), float(w[m].sum()))
+                s2 = (float((w[m] * e2 * rr["A2"][m]).sum()), float((w[m] * e2).sum()), float(w[m].sum()))
+                fd = cluster_boot_capped_diff(rr["A3"][m], e3, rr["A2"][m], e2, w[m], inst[m], c)
+                fr["by_call_cap"][_cap_key(c)] = {"gain_per20": capped_value(*s3, c) - capped_value(*s2, c),
+                                                  "ci95": [float(x) for x in np.percentile(fd, [2.5, 97.5])]}
+            out["freed_run_sensitivity"]["A3_minus_A2"][node] = fr
+        res["values"][str(gu)] = out
+    # --- theory checks (Prop 7 bound vs realised threshold gain at g = G_THEORY; Prop 8 screening term
+    # at the declared g values). Not gate quantities.
+    res["theory_checks"]["note"] = ("Theory checks only. Proposition 7 compares the threshold gain at g = 0 "
+                                    "(no screening), the only place g = 0 is used; Proposition 8 uses the "
+                                    "declared g values. Not gate quantities.")
     non = ~skip & (w > 0)
     sub = [r for r, f in zip(rows, non) if f]
     if sub:
@@ -263,29 +401,63 @@ def evaluate(rows, mode="instance", k=3, g_grid=G_GRID, noise=None):
         t2 = rules.bayes_threshold(mu2, tau2, sig)
         gap = rules.gap_exact(t2, pi3, mu3, tau3, sig)
         lo_b, up_b = rules.gap_bounds(t2, pi3, mu3, tau3, sig)
-        r0 = res["per_g"]["0.0"]
         for node in sorted({r["node"] for r in sub}):
             m = np.array([r["node"] == node for r in sub])
             wn = w[non][m]
+            msub = [s for s, f in zip(sub, m) if f]
             th = {"prop7_gap_under_A3_mean": float(np.average(gap[m], weights=wn)),
                   "prop7_lower_mean": float(np.average(lo_b[m], weights=wn)),
                   "prop7_upper_mean": float(np.average(up_b[m], weights=wn)),
                   "realised_threshold_gain_g0_per_noninert": None}
-            # realised A3-A2 at g = 0 restricted to non-inert rows
-            ex3, kp3, _ = decisions(preds["A3"][non][m], [s for s, f in zip(sub, m) if f], 0.0)
-            ex2, kp2, _ = decisions(preds["A2"][non][m], [s for s, f in zip(sub, m) if f], 0.0)
-            d = np.array([s["delta_true"] for s, f in zip(sub, m) if f])
+            # realised A3-A2 at g = G_THEORY (= 0) restricted to non-inert rows: theory check only
+            ex3, kp3, _ = decisions(preds["A3"][non][m], msub, G_THEORY)
+            ex2, kp2, _ = decisions(preds["A2"][non][m], msub, G_THEORY)
+            d = np.array([s["delta_true"] for s in msub])
             th["realised_threshold_gain_g0_per_noninert"] = float(np.average(d * kp3 - d * kp2, weights=wn))
-            for gu in (0.05, 0.1, 0.2):
-                g = gu * np.array([s["sigma_node"] for s, f in zip(sub, m) if f])
+            for gu in G_EVAL:
+                g = gu * np.array([s["sigma_node"] for s in msub])
                 scr = rules.screening_term(pi3[m], mu3[m], tau3[m], sig[m], g)
-                ex, kp, _ = decisions(preds["A3"][non][m], [s for s, f in zip(sub, m) if f], gu)
+                ex, kp, _ = decisions(preds["A3"][non][m], msub, gu)
                 always = d * kp3 - g  # always execute, Prop 6 keep
                 real = (d * kp - g * ex) - always
                 th[f"prop8_screening_term_g{gu}"] = float(np.average(scr, weights=wn))
                 th[f"realised_screening_gain_g{gu}"] = float(np.average(real, weights=wn))
-            res["theory"][node] = th
+            res["theory_checks"][node] = th
     return res
+
+
+def gate_verdict(evaluation: dict) -> dict:
+    """The C3 gate verdict: g = G_PRIMARY, primary run accounting, the evaluation's split only.
+
+    This is the only function that produces a gate verdict. A node meets the
+    criterion iff its per-20 gain A3 - A2 >= delta_n and the lower 95 % cluster-
+    bootstrap bound > 0; the gate passes iff >= GATE_MIN_NODES nodes meet it.
+    """
+    key = str(G_PRIMARY)
+    if key not in evaluation["values"]:
+        raise ValueError(f"the primary g = {G_PRIMARY} sigma_node was not evaluated")
+    nodes = {}
+    for node, x in evaluation["values"][key]["A3_minus_A2"].items():
+        nodes[node] = {**x, "meets_node_criterion": bool(x["gain_per20"] >= x["delta_n"] and x["ci95"][0] > 0)}
+    n_meet = sum(v["meets_node_criterion"] for v in nodes.values())
+    return {"g_sigma_units": G_PRIMARY, "run_accounting": RUN_ACCOUNTING["primary"]["name"],
+            "split": evaluation["mode"], "rule": f"pass iff >= {GATE_MIN_NODES} nodes have gain_per20 (A3 - A2) "
+            ">= delta_n with lower 95 % instance-cluster bootstrap bound > 0 (PLAN §10, D18; C3_DESIGN §6)",
+            "nodes": nodes, "nodes_meeting_criterion": n_meet, "pass": bool(n_meet >= GATE_MIN_NODES),
+            "verdict": "pass" if n_meet >= GATE_MIN_NODES else "fail"}
+
+
+def sensitivity_view(evaluation: dict) -> dict:
+    """Declared-sensitivity values of A3 - A2 (no verdict) plus the freed-run accounting at every g."""
+    out = {"note": "Reported for the declared sensitivity values of g and the freed-run run accounting; "
+                   "no pass/fail is attached to any of these (PLAN §10, 22 Oct)."}
+    for key, v in evaluation["values"].items():
+        out[key] = {"role": v["role"],
+                    "A3_minus_A2": ({n: {kk: x[kk] for kk in ("gain_per20", "ci95", "delta_n")}
+                                     for n, x in v["A3_minus_A2"].items()} if v["role"] == "sensitivity" else
+                                    "primary value: see gate"),
+                    "freed_run_A3_minus_A2": v["freed_run_sensitivity"]["A3_minus_A2"]}
+    return out
 
 
 def main(argv=None) -> int:
@@ -297,20 +469,29 @@ def main(argv=None) -> int:
     ap.add_argument("--no-seed-split", action="store_true", help="use all audit seeds for labels and values")
     args = ap.parse_args(argv)
     rows = assemble(Path(args.table), Path(args.audits) if args.audits else None, not args.no_seed_split)
+    instance = evaluate(rows, "instance", args.folds)
+    lono = evaluate(rows, "lono")
     result = {"label": "ENGINEERING_ONLY", "ai_assisted": "AI-assisted (Claude)",
-              "note": "Pilot engineering check; tiny audited sample; not the C3 gate decision.",
+              "note": "Engineering check unless run on the frozen sweep data; tiny audited samples are not the C3 "
+                      "gate decision.",
               "seed_split": not args.no_seed_split, "n_rows": len(rows),
+              "g_declaration": instance["g_declaration"], "run_accounting": RUN_ACCOUNTING,
+              "gate": gate_verdict(instance),
+              "sensitivity": sensitivity_view(instance),
               "rows_by_stratum": {f"{s}:{n}": {"noop": sum(1 for r in rows if (r['source'], r['node']) == (s, n) and is_noop(r)),
                                                "duplicate": sum(1 for r in rows if (r['source'], r['node']) == (s, n) and is_duplicate(r)),
                                                "audited_other": sum(1 for r in rows if (r['source'], r['node']) == (s, n) and not rule_skip(r))}
                                   for s, n in sorted({(r['source'], r['node']) for r in rows})},
-              "instance": evaluate(rows, "instance", args.folds),
-              "lono": evaluate(rows, "lono")}
+              "instance": instance,
+              "lono": lono}
     out = Path(args.out) if args.out else Path(args.table) / "offline_eval.json"
     out.write_text(json.dumps(result, indent=1))
-    g = result["instance"]["per_g"]
-    print(json.dumps({gu: {"gate_pass": v["gate_pass"], **{n: round(x["gain_A3_minus_A2_per20"], 5) for n, x in v["gate"].items()}}
-                      for gu, v in g.items()}))
+    gate = result["gate"]
+    print(json.dumps({"gate_verdict": gate["verdict"], "g_sigma_units": gate["g_sigma_units"],
+                      "split": gate["split"], "seed_split": result["seed_split"],
+                      "nodes": {n: {"gain_per20": round(x["gain_per20"], 5), "ci95": [round(c, 5) for c in x["ci95"]],
+                                    "delta_n": x["delta_n"], "meets": x["meets_node_criterion"]}
+                                for n, x in gate["nodes"].items()}}))
     return 0
 
 

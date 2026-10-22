@@ -1,0 +1,272 @@
+{
+  "label": "DRYRUN",
+  "steps": {
+    "preconditions": {
+      "completed": true,
+      "started_utc": "20261022T103221Z",
+      "completed_utc": "20261022T103221Z"
+    },
+    "liveness": {
+      "completed": true,
+      "started_utc": "20261022T103221Z",
+      "out": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/engineering/liveness_c3_20261022T103221Z",
+      "eligible_nodes": [
+        "digits_mlp",
+        "openml_breast_w"
+      ],
+      "excluded_nodes": [],
+      "verdicts": {
+        "digits_mlp": {
+          "active_novelty_fraction": {
+            "equals_incumbent_trials": 0,
+            "evaluated_trials": 4,
+            "novel_trials": 4,
+            "novelty_source": "events",
+            "observed": 1.0,
+            "required": ">= 0.5",
+            "seen_before_trials": 0
+          },
+          "invalid_rate": {
+            "observed": 0.0,
+            "required": "< 0.3"
+          },
+          "keep_after_trial_1": {
+            "observed": 1,
+            "required": "at least 1 keep with budget_index > 1"
+          }
+        },
+        "openml_breast_w": {
+          "active_novelty_fraction": {
+            "equals_incumbent_trials": 1,
+            "evaluated_trials": 5,
+            "novel_trials": 4,
+            "novelty_source": "events",
+            "observed": 0.8,
+            "required": ">= 0.5",
+            "seen_before_trials": 1
+          },
+          "invalid_rate": {
+            "observed": 0.2,
+            "required": "< 0.3"
+          },
+          "keep_after_trial_1": {
+            "observed": 2,
+            "required": "at least 1 keep with budget_index > 1"
+          }
+        }
+      },
+      "commit": "2556df74990d696a8cc61bfffd4c7a726acbdfa0",
+      "completed_utc": "20261022T103230Z"
+    },
+    "sweep_append_only_summary": {
+      "completed": true,
+      "started_utc": "20261022T103230Z",
+      "out": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z",
+      "work": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/c3_append_only_summary_work",
+      "checks": {
+        "label": "DRYRUN",
+        "memory_mode": "append_only_summary",
+        "expected_roots": 4,
+        "roots": 4,
+        "root_failures": 0,
+        "llm_calls": 27,
+        "llm_calls_failed": 0,
+        "llm_calls_retried": 1,
+        "parse_failures": 0,
+        "manager_kind": "langgraph",
+        "transport_max_attempts": 3,
+        "verify_split_policy": "vary",
+        "action_versions": {
+          "keep_rule": "default/v1",
+          "verify_response": "mean_delta/v1",
+          "verify_failed": "original_stands/v1",
+          "verify_split_policy": "vary"
+        },
+        "written_utc": "20261022T103245Z"
+      },
+      "commit": "0ebd3e57d8ea6156a418bf26b9a21a441ebf6307",
+      "completed_utc": "20261022T103245Z"
+    },
+    "sweep_none": {
+      "completed": true,
+      "started_utc": "20261022T103245Z",
+      "out": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261022T103245Z",
+      "work": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/c3_none_work",
+      "checks": {
+        "label": "DRYRUN",
+        "memory_mode": "none",
+        "expected_roots": 4,
+        "roots": 4,
+        "root_failures": 0,
+        "llm_calls": 24,
+        "llm_calls_failed": 0,
+        "llm_calls_retried": 0,
+        "parse_failures": 0,
+        "manager_kind": "langgraph",
+        "transport_max_attempts": 3,
+        "verify_split_policy": "vary",
+        "action_versions": {
+          "keep_rule": "default/v1",
+          "verify_response": "mean_delta/v1",
+          "verify_failed": "original_stands/v1",
+          "verify_split_policy": "vary"
+        },
+        "written_utc": "20261022T103257Z"
+      },
+      "commit": "ac991c8f72efd4f64e979075950368493eb2119b",
+      "completed_utc": "20261022T103257Z"
+    },
+    "index": {
+      "completed": true,
+      "started_utc": "20261022T103257Z",
+      "path": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_index_20261022T103257Z.json",
+      "commit": "68068853418510a2ddb5a02e3f5f7f697570a980",
+      "completed_utc": "20261022T103257Z"
+    }
+  },
+  "batch": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw",
+  "host": "claude",
+  "config": {
+    "nodes": [
+      "digits_mlp",
+      "openml_breast_w"
+    ],
+    "instances": 2,
+    "runs": 6,
+    "memory_modes": [
+      "append_only_summary",
+      "none"
+    ],
+    "workers": 2,
+    "transport_max_attempts": 3,
+    "liveness": {
+      "instances": 1,
+      "runs": 4,
+      "memory_mode": "append_only_summary"
+    },
+    "min_live_nodes": 2,
+    "max_parse_failure_rate": 0.2,
+    "max_collect_sessions": 3,
+    "paper_a_check": {
+      "command": [
+        "python3",
+        "r1/scripts/paper_a_status.py",
+        "--config",
+        "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper_a_status_dryrun.json"
+      ],
+      "timeout": 120
+    },
+    "gpu_uuid": "auto",
+    "gpu_wait_seconds": 0,
+    "ollama": {
+      "binary": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/bin/ollama",
+      "seed_models_from": null,
+      "port": null,
+      "start_timeout": 30
+    },
+    "allowed_hosts": [
+      "ucrtasl"
+    ],
+    "audit": {
+      "seeds": [
+        7001,
+        7002,
+        7003,
+        7004,
+        7005,
+        7006,
+        7007,
+        7008,
+        7009,
+        7010
+      ],
+      "label_seeds": 5,
+      "evaluation_seeds": 5
+    },
+    "nodes_pending": [
+      "openml_credit_approval",
+      "openml_diabetes"
+    ],
+    "comment": "C3 label sweep on Ada (ucrtasl). ENGINEERING_ONLY config; the sweep output is PILOT label data. AI-assisted (Claude), 22 Oct 2026. Schema: r1/scripts/c3_label_sweep.py DEFAULTS (unknown top-level keys are refused). Validate with: python r1/scripts/c3_label_sweep.py --config r1/scripts/configs/c3_sweep_ada.json --check-config. NODES: the D21 noise nodes (PLAN \u00a710 D21; R1-E1B-RERUN2 revision 'nodes per D21'). The liveness phase runs D28 on all of them first (memory on, 2 instances, W = 10); a node that fails is excluded from BOTH memory modes (runner behaviour), which keeps digits_mlp out of memory-on collection until D28 passes (PLAN \u00a710, digits_mlp 22 Oct) and leaves the memory-off-only vs exclusion choice to the author. openml_ionosphere stays in: it passed D28 on 14 Oct (liveness_llm_20261014T140742Z); its 19 Oct exclusion concerns the DI-test eligible pool (no decision-changed points), not C3 labels. NODES_PENDING: the slot for the 22 Oct node-pool candidates; they are NOT run. Move a node from nodes_pending into nodes only after the parallel 30-seed 'vary' noise re-measurement shows it qualifies under D21 (and the C3 pipeline knows the node: r1/c3/features.py NODE_INFO). AUDIT: K = 10 fresh joint seeds 7001..7010, first 5 label, last 5 evaluation (C3_DESIGN \u00a74); recorded in the manifests and the sweep index for r1/c3/audit.py. PAPER A: r1/scripts/paper_a_status.py with its Ada config, which refuses until its null entries are verified on Ada. OLLAMA: pinned qwen2.5-coder:7b (digest pinned in the runner), own port, own models dir under the batch directory seeded by hard links from the batch-1 pinned model files (verify the path on Ada; the runner checks the digest and refuses on a mismatch)."
+  },
+  "paper_head_at_launch": "44ec63a0168621c71c69c849e0fb456d9bf10bae",
+  "harness_head_at_launch": "4d68c54875654cf9986daa1cf36d609adb48ef45",
+  "paper_a_check": {
+    "utc": "20261022T103221Z",
+    "command": [
+      "python3",
+      "r1/scripts/paper_a_status.py",
+      "--config",
+      "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper_a_status_dryrun.json"
+    ],
+    "host": "claude",
+    "returncode": 0,
+    "stdout_tail": [
+      "{\"label\": \"ENGINEERING_ONLY\", \"ai_assisted\": \"AI-assisted (Claude)\", \"utc\": \"2026-10-22T10:32:21Z\", \"host\": \"claude\", \"config\": \"/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper_a_status_dryrun.json\", \"verdict\": \"clear_finished\", \"reasons\": [\"finished/stopped evidence; no session and no Paper A GPU process\"], \"evidence\": {\"branch\": \"paper-a-v4-ada\", \"run_dir\": \"/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper_a_fake/agent-checkpoint-intervention/results/paper_a/replay_panel_v4/live_DRYRUN\", \"state\": {\"file\": \"/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper_a_fake/agent-checkpoint-intervention/results/paper_a/replay_panel_v4/live_DRYRUN/state.json\", \"key\": \"status\", \"value\": \"finished\", \"age_seconds\": 0.8, \"class\": \"finished\"}, \"finished_markers_present\": [], \"tmux\": {\"session\": \"paper_a_fake_session\", \"returncode\": 1, \"stderr\": \"can't find session: paper_a_fake_session\"}, \"gpu\": {\"patterns\": [\"live_DRYRUN\"], \"compute_apps\": 0, \"unidentified_apps\": 0, \"paper_a_processes\": []}}, \"paper_a_live_waiting_for_card\": false}"
+    ],
+    "stderr_tail": [],
+    "report": {
+      "label": "ENGINEERING_ONLY",
+      "ai_assisted": "AI-assisted (Claude)",
+      "utc": "2026-10-22T10:32:21Z",
+      "host": "claude",
+      "config": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper_a_status_dryrun.json",
+      "verdict": "clear_finished",
+      "reasons": [
+        "finished/stopped evidence; no session and no Paper A GPU process"
+      ],
+      "evidence": {
+        "branch": "paper-a-v4-ada",
+        "run_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper_a_fake/agent-checkpoint-intervention/results/paper_a/replay_panel_v4/live_DRYRUN",
+        "state": {
+          "file": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/paper_a_fake/agent-checkpoint-intervention/results/paper_a/replay_panel_v4/live_DRYRUN/state.json",
+          "key": "status",
+          "value": "finished",
+          "age_seconds": 0.8,
+          "class": "finished"
+        },
+        "finished_markers_present": [],
+        "tmux": {
+          "session": "paper_a_fake_session",
+          "returncode": 1,
+          "stderr": "can't find session: paper_a_fake_session"
+        },
+        "gpu": {
+          "patterns": [
+            "live_DRYRUN"
+          ],
+          "compute_apps": 0,
+          "unidentified_apps": 0,
+          "paper_a_processes": []
+        }
+      },
+      "paper_a_live_waiting_for_card": false
+    },
+    "verdict": "clear"
+  },
+  "gpu": "0, GPU-DRYRUN, DRYRUN shared card, 40000",
+  "ollama": {
+    "label": "DRYRUN",
+    "binary": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/bin/ollama",
+    "pid": 152,
+    "pgid": 152,
+    "port": 52039,
+    "url": "http://127.0.0.1:52039",
+    "models_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/ollama_models_52039",
+    "models_seeded": null,
+    "seed_models_from": null,
+    "gpu_uuid": "GPU-DRYRUN",
+    "keep_alive": "-1",
+    "log": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/ollama_serve_52039.log",
+    "started_utc": "2026-10-22T10:32:21Z",
+    "healthy_utc": "2026-10-22T10:32:21Z",
+    "version": {
+      "version": "DRYRUN"
+    },
+    "stopped_utc": "2026-10-22T10:32:57Z",
+    "returncode": -15
+  },
+  "model_loaded": true,
+  "finished_utc": "20261022T103257Z",
+  "stop_reason": null
+}

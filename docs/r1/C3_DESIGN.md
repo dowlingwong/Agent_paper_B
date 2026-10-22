@@ -55,7 +55,7 @@ This ladder is C3.
 ## 4. Labels
 
 - **Source of proposals.** LLM-manager root campaigns, exactly as in R1-E1B-RERUN2 (pinned `qwen2.5-coder:7b`, memory `append_only_summary` primary, `none` contrast, W = 20). **No branching is needed for C3 training.** Labels are per proposal, which is much cheaper than branch tables.
-- **Audit.** For each non-inert evaluated proposal: run candidate and incumbent configurations on K = 6 common fresh joint seeds, giving Δ_audit and se_audit. No-ops are labelled by rule (no-op bin = 1). Duplicates get no label (revised 19 Oct 2026).
+- **Audit.** For each non-inert evaluated proposal: run candidate and incumbent configurations on K = 10 common fresh joint seeds (7001–7010; the first 5 give the training label, the last 5 the evaluation value; revised 22 Oct 2026 — the 19 Oct pilot used K = 6, split 3 + 3), giving Δ_audit and se_audit. No-ops are labelled by rule (no-op bin = 1). Duplicates get no label (revised 19 Oct 2026).
 - **Separate label and evaluation seeds.** The fresh-seed audit seeds are split (proposed K = 10: 5 for labels, 5 for offline evaluation). Sharing seeds made the pilot gate "pass" spuriously (C3 offline pilot).
 - **Soft target.** The label is N(Δ_audit, se_audit²) integrated over the bins: the posterior of Δ under a flat prior given the audit. This keeps the log loss proper under label noise.
 - **Scale.**

@@ -1,0 +1,77 @@
+{
+  "label": "DRYRUN",
+  "stop_reason": null,
+  "finished_utc": "20261022T103257Z",
+  "steps": {
+    "preconditions": {
+      "completed": true,
+      "commit": null,
+      "out": null,
+      "checks": null
+    },
+    "liveness": {
+      "completed": true,
+      "commit": "2556df74990d696a8cc61bfffd4c7a726acbdfa0",
+      "out": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/engineering/liveness_c3_20261022T103221Z",
+      "checks": null
+    },
+    "sweep_append_only_summary": {
+      "completed": true,
+      "commit": "0ebd3e57d8ea6156a418bf26b9a21a441ebf6307",
+      "out": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261022T103230Z",
+      "checks": {
+        "label": "DRYRUN",
+        "memory_mode": "append_only_summary",
+        "expected_roots": 4,
+        "roots": 4,
+        "root_failures": 0,
+        "llm_calls": 27,
+        "llm_calls_failed": 0,
+        "llm_calls_retried": 1,
+        "parse_failures": 0,
+        "manager_kind": "langgraph",
+        "transport_max_attempts": 3,
+        "verify_split_policy": "vary",
+        "action_versions": {
+          "keep_rule": "default/v1",
+          "verify_response": "mean_delta/v1",
+          "verify_failed": "original_stands/v1",
+          "verify_split_policy": "vary"
+        },
+        "written_utc": "20261022T103245Z"
+      }
+    },
+    "sweep_none": {
+      "completed": true,
+      "commit": "ac991c8f72efd4f64e979075950368493eb2119b",
+      "out": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw/agent_paper_B/results/r1/pilot/C3_sweep_none_20261022T103245Z",
+      "checks": {
+        "label": "DRYRUN",
+        "memory_mode": "none",
+        "expected_roots": 4,
+        "roots": 4,
+        "root_failures": 0,
+        "llm_calls": 24,
+        "llm_calls_failed": 0,
+        "llm_calls_retried": 0,
+        "parse_failures": 0,
+        "manager_kind": "langgraph",
+        "transport_max_attempts": 3,
+        "verify_split_policy": "vary",
+        "action_versions": {
+          "keep_rule": "default/v1",
+          "verify_response": "mean_delta/v1",
+          "verify_failed": "original_stands/v1",
+          "verify_split_policy": "vary"
+        },
+        "written_utc": "20261022T103257Z"
+      }
+    },
+    "index": {
+      "completed": true,
+      "commit": "68068853418510a2ddb5a02e3f5f7f697570a980",
+      "out": null,
+      "checks": null
+    }
+  }
+}

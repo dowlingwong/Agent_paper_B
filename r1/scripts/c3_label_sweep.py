@@ -85,6 +85,12 @@ DEFAULTS = {
     'gpu_wait_seconds': 6 * 3600,
     'ollama': {'binary': '/usr/local/bin/ollama', 'seed_models_from': None, 'port': None, 'start_timeout': 120},
     'allowed_hosts': ['ucrtasl', 'deepthought', 'deepthought2'],
+    # Fresh-seed audit design recorded for the audit stage (r1/c3/audit.py; C3_DESIGN §4):
+    # K = 10 common joint seeds, first half for labels, second half for offline evaluation.
+    'audit': {'seeds': list(range(7001, 7011)), 'label_seeds': 5, 'evaluation_seeds': 5},
+    # Candidate nodes that are NOT run: recorded only, moved into 'nodes' by a later
+    # config once they qualify (e.g. the 22 Oct node-pool re-measurement).
+    'nodes_pending': [],
 }
 PHASES_FIXED = ('preconditions', 'liveness')
 GPU_HELPERS = {'gpu_rows', 'gpu_census', 'check_gpu', 'assert_full_offload'}
@@ -120,7 +126,22 @@ def load_config(path=None) -> dict:
         raise Stop('STOP: W = 20 worker runs outside DRYRUN (C3_DESIGN §4)')
     if not config['memory_modes'] or not set(config['memory_modes']) <= {'append_only_summary', 'none'}:
         raise Stop('STOP: memory modes are append_only_summary and/or none (D24)')
+    validate_audit(config['audit'])
+    if set(config['nodes_pending']) & set(config['nodes']):
+        raise Stop('STOP: a node is both in nodes and nodes_pending')
+    if len(set(config['nodes'])) != len(config['nodes']):
+        raise Stop('STOP: duplicate node in nodes')
     return config
+
+
+def validate_audit(audit: dict) -> None:
+    """K fresh joint seeds, distinct, split first half label / second half evaluation (C3_DESIGN §4)."""
+    seeds = audit.get('seeds') or []
+    k = len(seeds)
+    if k < 2 or k % 2 or len(set(seeds)) != k or not all(isinstance(x, int) for x in seeds):
+        raise Stop(f'STOP: audit.seeds must be an even number (>= 2) of distinct integers, got {seeds}')
+    if audit.get('label_seeds') != k // 2 or audit.get('evaluation_seeds') != k // 2:
+        raise Stop('STOP: audit label/evaluation split must be first half / second half of audit.seeds')
 
 
 def load_gpu_helpers(namespace: dict) -> dict:
@@ -377,7 +398,8 @@ class SweepRunner:
             'liveness': self.state['steps']['liveness']['out'],
             'paper_a_check': self.state.get('paper_a_check', {}).get('verdict'),
             'ollama': {k: self.state['ollama'].get(k) for k in ('port', 'pid', 'models_dir')},
-            'gpu': self.state.get('gpu'), 'audit': 'pending (r1/c3/audit.py)'}}
+            'gpu': self.state.get('gpu'), 'audit': 'pending (r1/c3/audit.py)',
+            'audit_seeds': self.config['audit']['seeds'], 'nodes_pending': self.config['nodes_pending']}}
         label_args = ['--label', 'DRYRUN', '--split', 'engineering'] if self.dryrun else \
             ['--label', 'PILOT', '--split', 'c3_labels']
         base = [self.py, '-m', 'r1.headroom.e1b_collect']
@@ -492,8 +514,13 @@ class SweepRunner:
                  'instances': self.config['instances'], 'runs': self.config['runs'],
                  'liveness': str(Path(live['out']).relative_to(self.paper)),
                  'harness_commit': self.state.get('harness_head_at_launch'), 'sweeps': sweeps,
-                 'audit': {'status': 'pending', 'stage': 'r1/c3/audit.py (separate stage; C3_DESIGN §4: '
-                           'K = 6 common fresh joint seeds per non-inert evaluated proposal)'}}
+                 'nodes_pending': self.config['nodes_pending'],
+                 'audit': {'status': 'pending', 'seeds': self.config['audit']['seeds'],
+                           'label_seeds': self.config['audit']['seeds'][:self.config['audit']['label_seeds']],
+                           'evaluation_seeds': self.config['audit']['seeds'][self.config['audit']['label_seeds']:],
+                           'stage': f'r1/c3/audit.py (separate stage; C3_DESIGN §4: K = '
+                                    f'{len(self.config["audit"]["seeds"])} common fresh joint seeds per '
+                                    'non-inert evaluated proposal; first half label, second half evaluation)'}}
         path = self.paper / 'results/r1/pilot' / f'C3_sweep_index_{stamp()}.json'
         path.write_text(json.dumps(index, indent=2) + '\n')
         self.state['steps']['index']['path'] = str(path)
@@ -551,7 +578,17 @@ def entrypoint(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--config', default=None, help='JSON config (nodes, instances, paper_a_check, ollama, ...)')
+    ap.add_argument('--check-config', action='store_true',
+                    help='validate the config (defaults overlaid), print it and exit; starts nothing')
     args = ap.parse_args(argv)
+    if args.check_config:
+        try:
+            config = load_config(args.config or os.environ.get('R1_C3_CONFIG'))
+        except Stop as exc:
+            print(exc.args[0], flush=True)
+            return 2
+        print(json.dumps(config, indent=2), flush=True)
+        return 0
     runner = build_runner(args.config)
     try:
         runner.main()

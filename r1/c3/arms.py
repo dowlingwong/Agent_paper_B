@@ -36,6 +36,27 @@ def is_noop(row: dict) -> bool:
     return bool(row["features"]["active_equals_incumbent"])
 
 
+def noop_kind(row: dict) -> str | None:
+    """No-op kind (PLAN §10, 22 Oct): ``inactive_edit`` or ``incumbent_repeat``; None if not a no-op.
+
+    Uses the table's ``noop_kind`` when present (tables built after 22 Oct);
+    otherwise derives it from existing features: an edit of a key inactive for
+    the candidate's model that changes the configuration is an inactive edit;
+    every other no-op (an active-key edit that returns to the incumbent's active
+    configuration, a literal no-change, or a row without a structured edit) is an
+    incumbent repeat.
+    """
+    if not is_noop(row):
+        return None
+    if row.get("noop_kind"):
+        return row["noop_kind"]
+    f = row["features"]
+    has_edit = bool((row.get("edit") or {}).get("symbol"))
+    if has_edit and not f["active_key"] and not f["cfg_equals_incumbent"]:
+        return "inactive_edit"
+    return "incumbent_repeat"
+
+
 def is_duplicate(row: dict) -> bool:
     """Repeat of an earlier evaluated non-incumbent configuration: result known, Delta != 0 in general."""
     if "duplicate" in row:

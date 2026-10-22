@@ -1,0 +1,67 @@
+{
+  "label": "DRYRUN",
+  "scenarios": {
+    "retry": {
+      "temporary_root": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h",
+      "pin": "4d68c54875654cf9986daa1cf36d609adb48ef45",
+      "checks": {
+        "base_config_overridden_keys": [
+          "gpu_wait_seconds",
+          "instances",
+          "liveness",
+          "max_collect_sessions",
+          "min_live_nodes",
+          "nodes",
+          "ollama",
+          "paper_a_check",
+          "runs",
+          "workers"
+        ],
+        "index_audit_seeds": [
+          7001,
+          7002,
+          7003,
+          7004,
+          7005,
+          7006,
+          7007,
+          7008,
+          7009,
+          7010
+        ],
+        "index_nodes_pending": [
+          "openml_credit_approval",
+          "openml_diabetes"
+        ],
+        "paper_a_status_verdict": "clear_finished",
+        "dropped_chat_call": 14,
+        "resent_with_same_seed": true,
+        "llm_calls_retried": 1,
+        "restart_refused": true,
+        "eligible_nodes": [
+          "digits_mlp",
+          "openml_breast_w"
+        ],
+        "roots": {
+          "sweep_append_only_summary": 4,
+          "sweep_none": 4
+        },
+        "commits": {
+          "liveness": "2556df74990d696a8cc61bfffd4c7a726acbdfa0",
+          "sweep_append_only_summary": "0ebd3e57d8ea6156a418bf26b9a21a441ebf6307",
+          "sweep_none": "ac991c8f72efd4f64e979075950368493eb2119b",
+          "index": "68068853418510a2ddb5a02e3f5f7f697570a980"
+        }
+      },
+      "passed": true,
+      "stop_reason": null,
+      "batch": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/r1_c3_dryrun_retry_hqana61h/batches_retry/r1_c3_sweep_DRYRUN_20261022_ndXbsw",
+      "temporary_root_removed": true
+    }
+  },
+  "started_utc": "20261022T103215Z",
+  "harness_source": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/mnt/autoresearch_harness",
+  "base_config": "r1/scripts/configs/c3_sweep_ada.json",
+  "elapsed_seconds": 43.6,
+  "completed": true
+}
