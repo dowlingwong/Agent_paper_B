@@ -1,6 +1,10 @@
 # Paper B (route R1) — status log
 
 
+## 22 October 2026 — author adopts the D21 rule (30 seeds) and the pool extension
+
+Recorded by an AI agent (Claude, coordinating session). No experiment ran. PLAN §10 rows "D21 rule", "D21 uniform application", "D21 pool" and "D21 common measurement" (22 Oct): 30 seeds for every node; ≥ 2 material edits with mean P(wrong) ≥ 0.10; bootstrap reported, not decisive; applied to all nodes including the original five; `credit_approval` added, `diabetes` dropped; candidates `credit_g`, `sonar`, `blood_transfusion`, `qsar_biodeg` (OpenML IDs verified). Next: build the three new harness nodes (subagent), author fetches four data caches on the Mac, then one 30-seed run over nine nodes.
+
 ## 22 October 2026 — C3 preparation batch and 30-seed noise re-measurement (accepted, merged)
 
 AI-assisted: two Claude subagents in separate worktrees; reviewed, corrected and merged by the coordinating session (Claude). No LLM, Ollama, GPU or SSH. Merges `06f5faa` (code, ENGINEERING_ONLY) and `554ba3e` (noise, PILOT) on `main`. Tests: 290 passed (baseline 248), 1 deselected (known environmental dry-run test).
