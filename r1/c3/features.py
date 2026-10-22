@@ -47,10 +47,9 @@ NODE_INFO = {
     "openml_wdbc": {"rows": 569, "features": 30, "classes": 2, "minority": 0.373, "metric": "val_auc", "family": "openml"},
     "openml_credit_approval": {"rows": 690, "features": 15, "classes": 2, "minority": 0.445, "metric": "val_auc", "family": "openml"},
     # Added 22 Oct 2026 (PLAN §10 "D21 pool (22 Oct)"; OpenML IDs checked on openml.org on 22 Oct).
-    # Rows/features are the OpenML shapes listed for the pool extension; minority shares are the
-    # published UCI class counts, taken from the agent's memory. NONE of these four rows has been
-    # checked against the fetched data yet (no openml.org access here): r1/noise/check_caches.py prints
-    # the actual shape and class counts once the caches exist, and these values must be corrected then.
+    # Rows, features and minority shares below were verified against the fetched data on 22 Oct 2026
+    # with r1/noise/check_caches.py (shape, categorical count and class counts as printed there);
+    # the values were already correct and are unchanged.
     #   credit-g id 31: 1,000 x 20 (13 categorical), 300 bad / 700 good -> 0.300;
     #   sonar id 40: 208 x 60 numeric, 97 Rock / 111 Mine -> 0.466;
     #   blood-transfusion-service-center id 1464: 748 x 4 numeric, 178 donated / 570 -> 0.238;

@@ -1,0 +1,272 @@
+{
+  "digits_mlp": [
+    {
+      "symbol": "LEARNING_RATE_INIT",
+      "old": "1e-3",
+      "new": "0.002"
+    },
+    {
+      "symbol": "MAX_ITER",
+      "old": "40",
+      "new": "80"
+    },
+    {
+      "symbol": "HIDDEN_UNITS",
+      "old": "32",
+      "new": "16"
+    },
+    {
+      "symbol": "HIDDEN_UNITS",
+      "old": "32",
+      "new": "64"
+    },
+    {
+      "symbol": "BATCH_SIZE",
+      "old": "64",
+      "new": "32"
+    }
+  ],
+  "tabular_mlp": [
+    {
+      "symbol": "MAX_ITER",
+      "old": "40",
+      "new": "20"
+    },
+    {
+      "symbol": "ALPHA",
+      "old": "1e-4",
+      "new": "5e-05"
+    },
+    {
+      "symbol": "BATCH_SIZE",
+      "old": "64",
+      "new": "32"
+    },
+    {
+      "symbol": "ALPHA",
+      "old": "1e-4",
+      "new": "0.0002"
+    },
+    {
+      "symbol": "HIDDEN_UNITS",
+      "old": "32",
+      "new": "16"
+    }
+  ],
+  "openml_breast_w": [
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.075"
+    },
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.3"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_ionosphere": [
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.075"
+    },
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.3"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_wdbc": [
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.075"
+    },
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.3"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_credit_approval": [
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.075"
+    },
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.3"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_credit_g": [
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.075"
+    },
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.3"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_sonar": [
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.075"
+    },
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.3"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_blood_transfusion": [
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.075"
+    },
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.3"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_qsar_biodeg": [
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.075"
+    },
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.3"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ]
+}

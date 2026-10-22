@@ -1,0 +1,114 @@
+{
+  "schema": "r1.e1_noise_floor/2",
+  "label": "PILOT",
+  "started_utc": "20261022T214606Z",
+  "harness": {
+    "root": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/mnt/autoresearch_harness",
+    "commit": "4012897a650b3372ad08100428ad8d97080935f5",
+    "branch": "r1",
+    "dirty": false
+  },
+  "seeds_per_condition": 30,
+  "seed_bases": {
+    "train": 1001,
+    "split": 2001,
+    "joint": 3001
+  },
+  "nodes": [
+    "digits_mlp",
+    "tabular_mlp",
+    "openml_breast_w",
+    "openml_ionosphere",
+    "openml_wdbc",
+    "openml_credit_approval",
+    "openml_credit_g",
+    "openml_sonar",
+    "openml_blood_transfusion",
+    "openml_qsar_biodeg"
+  ],
+  "host": {
+    "platform": "Linux-6.8.0-138-generic-aarch64-with-glibc2.35",
+    "python": "3.13.16",
+    "cpus": 4,
+    "libraries": {
+      "scikit-learn": "1.8.0",
+      "numpy": "2.4.4",
+      "scipy": "1.17.1",
+      "pandas": "3.0.3"
+    }
+  },
+  "note": "Pilot only; not evidence (RUNBOOK \u00a71 rule 3). Wall times are measured under parallel load.",
+  "sessions": [
+    {
+      "start_utc": "20261022T214606Z",
+      "todo_before": 5520,
+      "written": 638,
+      "remaining": 4882,
+      "elapsed_seconds": 140.5
+    },
+    {
+      "start_utc": "20261022T214831Z",
+      "todo_before": 4882,
+      "written": 634,
+      "remaining": 4248,
+      "elapsed_seconds": 140.5
+    },
+    {
+      "start_utc": "20261022T215053Z",
+      "todo_before": 4248,
+      "written": 578,
+      "remaining": 3670,
+      "elapsed_seconds": 140.6
+    },
+    {
+      "start_utc": "20261022T215315Z",
+      "todo_before": 3670,
+      "written": 615,
+      "remaining": 3055,
+      "elapsed_seconds": 140.1
+    },
+    {
+      "start_utc": "20261022T215537Z",
+      "todo_before": 3055,
+      "written": 607,
+      "remaining": 2448,
+      "elapsed_seconds": 140.8
+    },
+    {
+      "start_utc": "20261022T215759Z",
+      "todo_before": 2448,
+      "written": 603,
+      "remaining": 1845,
+      "elapsed_seconds": 140.5
+    },
+    {
+      "start_utc": "20261022T220021Z",
+      "todo_before": 1845,
+      "written": 605,
+      "remaining": 1240,
+      "elapsed_seconds": 141.0
+    },
+    {
+      "start_utc": "20261022T220243Z",
+      "todo_before": 1240,
+      "written": 565,
+      "remaining": 675,
+      "elapsed_seconds": 141.2
+    },
+    {
+      "start_utc": "20261022T220509Z",
+      "todo_before": 675,
+      "written": 552,
+      "remaining": 123,
+      "elapsed_seconds": 140.9
+    },
+    {
+      "start_utc": "20261022T220731Z",
+      "todo_before": 123,
+      "written": 123,
+      "remaining": 0,
+      "elapsed_seconds": 32.2
+    }
+  ],
+  "finished_utc": "20261022T220803Z"
+}
