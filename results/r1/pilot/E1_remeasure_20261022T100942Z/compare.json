@@ -5,7 +5,7 @@
   "summaries": {
     "E1 (10 seeds, 12 Oct)": {
       "label": "PILOT",
-      "run_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/mnt/agent_paper_B/.claude-worktrees/noise-remeasure-22oct/results/r1/pilot/E1_20261012T145353Z",
+      "run_dir": "E1_20261012T145353Z",
       "rules": {
         "QUALIFY_P": 0.1,
         "MIN_EFFECT": 0.002,
@@ -951,7 +951,7 @@
     },
     "new, seeds 1\u201310 (= E1 seeds)": {
       "label": "PILOT",
-      "run_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/tmpcommn975/first10",
+      "run_dir": "E1_remeasure_20261022T100942Z (seed indices 0\u20139)",
       "rules": {
         "QUALIFY_P": 0.1,
         "MIN_EFFECT": 0.002,
@@ -1160,7 +1160,7 @@
     },
     "new, seeds 11\u201330 (independent)": {
       "label": "PILOT",
-      "run_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/tmp/tmpcommn975/last20",
+      "run_dir": "E1_remeasure_20261022T100942Z (seed indices 10\u201329)",
       "rules": {
         "QUALIFY_P": 0.1,
         "MIN_EFFECT": 0.002,
@@ -1369,7 +1369,7 @@
     },
     "new, all 30 seeds": {
       "label": "PILOT",
-      "run_dir": "/sessions/rcw-015xf93gms2uyonnszyxw3sq/mnt/agent_paper_B/.claude-worktrees/noise-remeasure-22oct/results/r1/pilot/E1_remeasure_20261022T100942Z",
+      "run_dir": "E1_remeasure_20261022T100942Z",
       "rules": {
         "QUALIFY_P": 0.1,
         "MIN_EFFECT": 0.002,

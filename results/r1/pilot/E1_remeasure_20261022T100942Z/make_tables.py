@@ -160,6 +160,14 @@ def main() -> int:
             "new, seeds 11–30 (independent)": (summarise(subset_dir(run_dir, lambda i: i >= 10, tmp, "last20")), 20),
             "new, all 30 seeds": (summarise(run_dir), 30),
         }
+        # Record machine-independent provenance (no absolute or temporary paths), so re-runs are byte-identical.
+        prov = {"E1 (10 seeds, 12 Oct)": E1_DIR.name,
+                "new, seeds 1–10 (= E1 seeds)": f"{run_dir.name} (seed indices 0–9)",
+                "new, seeds 11–30 (independent)": f"{run_dir.name} (seed indices 10–29)",
+                "new, all 30 seeds": run_dir.name}
+        for k, (res, _) in S.items():
+            if isinstance(res, dict) and "run_dir" in res:
+                res["run_dir"] = prov[k]
     edits = json.loads((run_dir / "edits.json").read_text())
     boot = {
         "E1 (10 seeds)": {n: bootstrap(E1_DIR, n, len(edits[n]), rng) for n in NEW_NODES},
