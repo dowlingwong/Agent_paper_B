@@ -56,15 +56,16 @@ def test_lgbm_learns_key_signal():
 def test_evaluate_gate_detects_learnable_gain():
     pytest.importorskip("lightgbm")
     rows = synth()
-    res = OE.evaluate(rows, "instance", 3, g_grid=(0.0, 0.1), noise=NOISE)
-    g0 = res["per_g"]["0.1"]
-    for node, gate in g0["gate"].items():
-        assert gate["gain_A3_minus_A2_per20"] > 0 and gate["ci95"][0] > 0
-    assert g0["gate_pass"]
+    res = OE.evaluate(rows, "instance", 3, g_values=(OE.G_PRIMARY,), noise=NOISE)
+    gate = OE.gate_verdict(res)
+    assert gate["g_sigma_units"] == 0.1 and gate["split"] == "instance"
+    for node, x in gate["nodes"].items():
+        assert x["gain_per20"] > 0 and x["ci95"][0] > 0 and x["meets_node_criterion"]
+    assert gate["pass"] and gate["verdict"] == "pass"
     # A2 skips all inert proposals at g > 0
-    assert g0["arms"]["A2"]["nodeA"]["exec_rate"] < 0.8
-    lono = OE.evaluate(rows, "lono", g_grid=(0.0,), noise=NOISE)
-    assert set(lono["per_g"]["0.0"]["gate"]) == {"nodeA", "nodeB", "nodeC"}
+    assert res["values"]["0.1"]["arms"]["A2"]["nodeA"]["exec_rate"] < 0.8
+    lono = OE.evaluate(rows, "lono", g_values=(OE.G_PRIMARY,), noise=NOISE)
+    assert set(lono["values"]["0.1"]["A3_minus_A2"]) == {"nodeA", "nodeB", "nodeC"}
 
 
 def test_no_gain_when_nothing_is_learnable():
@@ -74,9 +75,79 @@ def test_no_gain_when_nothing_is_learnable():
     for r in rows:
         r["features"]["key_code"] = int(rng.integers(1, 4)) if not r["inert"] else 3
         r["features"]["key_code"] = 9 if not r["inert"] else 3
-    res = OE.evaluate(rows, "instance", 3, g_grid=(0.0,), noise=NOISE)
-    for gate in res["per_g"]["0.0"]["gate"].values():
-        assert abs(gate["gain_A3_minus_A2_per20"]) < 0.05
+    res = OE.evaluate(rows, "instance", 3, g_values=(OE.G_PRIMARY,), noise=NOISE)
+    for x in res["values"]["0.1"]["A3_minus_A2"].values():
+        assert abs(x["gain_per20"]) < 0.05
+    assert not OE.gate_verdict(res)["pass"]
+
+
+def _keys(obj):
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            yield k
+            yield from _keys(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from _keys(v)
+
+
+def test_declared_g_values_only_and_single_gate():
+    """PLAN §10, g (22 Oct): primary 0.1, sensitivity {0.05, 0.2}; one verdict, at the primary g."""
+    pytest.importorskip("lightgbm")
+    assert OE.G_PRIMARY == 0.1 and OE.G_SENSITIVITY == (0.05, 0.2) and OE.G_EVAL == (0.1, 0.05, 0.2)
+    rows = synth(n_inst=6, per=10)
+    with pytest.raises(ValueError, match="not a declared value"):
+        OE.evaluate(rows, "instance", 3, g_values=(0.0,), noise=NOISE)
+    with pytest.raises(ValueError, match="not a declared value"):
+        OE.evaluate(rows, "instance", 3, g_values=(0.3,), noise=NOISE)
+    res = OE.evaluate(rows, "instance", 3, noise=NOISE)
+    assert sorted(res["values"]) == ["0.05", "0.1", "0.2"]
+    assert {v["role"] for k, v in res["values"].items()} == {"primary", "sensitivity"}
+    assert res["values"]["0.1"]["role"] == "primary"
+    # no verdict anywhere in the evaluation itself
+    assert not {"pass", "gate_pass", "verdict", "meets_node_criterion"} & set(_keys(res))
+    sens = OE.sensitivity_view(res)
+    assert not {"pass", "gate_pass", "verdict", "meets_node_criterion"} & set(_keys(sens))
+    # theory checks may use g = 0, labelled; they carry no verdict either
+    assert "g = 0" in res["theory_checks"]["note"]
+    with pytest.raises(ValueError, match="primary"):
+        OE.gate_verdict(OE.evaluate(rows, "instance", 3, g_values=(0.05,), noise=NOISE))
+    assert res["run_accounting"]["primary"]["name"] == "skip_credited_at_g"
+
+
+def test_freed_run_accounting():
+    """Freed runs credited with the arm's mean reward per executed proposal (exchangeability)."""
+    r = np.array([0.5, -0.1, 0.0, 0.0])
+    ex = np.array([True, True, False, False])
+    w = np.ones(4)
+    assert OE.freed_run_value(r, ex, w) == pytest.approx(0.2)
+    # an arm that executes everything: freed-run value equals the primary mean
+    assert OE.freed_run_value(r, np.ones(4, bool), w) == pytest.approx(r.mean())
+    # an arm that executes nothing frees runs it cannot spend: value 0
+    assert OE.freed_run_value(r, np.zeros(4, bool), w) == 0.0
+    # weighted
+    assert OE.freed_run_value(np.array([1.0, 0.0]), np.array([True, True]), np.array([3.0, 1.0])) == pytest.approx(0.75)
+    # ratio-difference bootstrap is exact for identical clusters
+    r2, ex2 = np.tile(r, 2), np.tile(ex, 2)
+    cl = np.array([0] * 4 + [1] * 4)
+    d = OE.cluster_boot_ratio_diff(r2 * ex2, ex2.astype(float), r2, np.ones(8), cl, n=50)
+    assert np.allclose(d, 0.2 - r.mean())
+
+
+def test_freed_run_sensitivity_reported_next_to_primary():
+    pytest.importorskip("lightgbm")
+    rows = synth(n_inst=6, per=10)
+    res = OE.evaluate(rows, "instance", 3, g_values=(OE.G_PRIMARY,), noise=NOISE)
+    v = res["values"]["0.1"]
+    for node, fr in v["freed_run_sensitivity"]["A3_minus_A2"].items():
+        a3 = v["freed_run_sensitivity"]["arms"]["A3"][node]["mean_per_executed"]
+        a2 = v["freed_run_sensitivity"]["arms"]["A2"][node]["mean_per_executed"]
+        assert fr["gain_per20"] == pytest.approx(20 * (a3 - a2))
+        assert fr["primary_gain_per20"] == pytest.approx(v["A3_minus_A2"][node]["gain_per20"])
+        assert fr["ci95"][0] <= fr["gain_per20"] <= fr["ci95"][1] + 1e-12
+    # A0 executes everything: its freed-run value equals its primary per-proposal mean
+    for node, x in v["arms"]["A0"].items():
+        assert v["freed_run_sensitivity"]["arms"]["A0"][node]["mean_per_executed"] == pytest.approx(x["mean_per_proposal"])
 
 
 def test_cluster_bootstrap_constant_difference():
