@@ -1,0 +1,27 @@
+{
+  "comment": "Paper A coordination check for Paper B GPU launches on Ada (PLAN §10, R1-COMPUTE, 19 Oct). Read by r1/scripts/paper_a_status.py. Entries set to null are NOT VERIFIED: with any of them null the check prints no 'paper_a_live_waiting_for_card' key and the C3 sweep refuses to launch. Fill them only after the read-only checks listed in verify_before_first_use. ENGINEERING_ONLY; AI-assisted (Claude).",
+  "verify_before_first_use": [
+    "paper_a_checkout: absolute path of the agent-checkpoint-intervention checkout on Ada that runs the live campaign (ls; git -C <path> symbolic-ref --short HEAD must print paper-a-v4-ada; a detached HEAD refuses).",
+    "run_dir: results/paper_a/replay_panel_v4/live_20261018T234416Z exists under that checkout (or give the absolute path where the live run actually writes).",
+    "state_file / state_key: the JSON file in the run directory that Paper A's live runner updates, and the dotted key holding its phase; list every value it can take and sort them into running_values (has its card, computing), finished_values (finished or stopped for good) and waiting_values (waiting for an idle card). Leave a value out if its meaning is unclear: an unlisted value never clears.",
+    "finished_markers: files the runner writes only when the campaign has finished or stopped (e.g. a summary or STOP file), relative to the run directory; leave empty if none exist.",
+    "tmux_session (and tmux_args if Paper A uses its own socket): tmux ls on Ada while Paper A runs.",
+    "process_patterns: a substring that appears in the command line of every Paper A GPU process (nvidia-smi --query-compute-apps=pid --format=csv,noheader; ps -o args= -p <pid>), e.g. the run directory name; it must not match Paper B or other users' processes.",
+    "Run python3 r1/scripts/paper_a_status.py --config r1/scripts/configs/paper_a_status_ada.json on Ada and check that the verdict and evidence match what you see."
+  ],
+  "expected_host": "ucrtasl",
+  "paper_a_checkout": null,
+  "expected_branch": "paper-a-v4-ada",
+  "run_dir": "results/paper_a/replay_panel_v4/live_20261018T234416Z",
+  "state_file": null,
+  "state_key": null,
+  "running_values": [],
+  "finished_values": [],
+  "waiting_values": [],
+  "state_max_age_seconds": null,
+  "finished_markers": [],
+  "tmux_session": null,
+  "tmux_args": [],
+  "process_patterns": [],
+  "allow_running_without_state": false
+}
