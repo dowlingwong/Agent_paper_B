@@ -2,6 +2,17 @@
 
 No harness imports, execution, network, LLM or GPU. Inputs are Git HEAD blobs,
 not mutable working-tree results. Output paths must not overwrite inputs/results.
+
+Audited-outcome mode (opt-in; AI-assisted (Claude), 22 Oct 2026): with
+``--outcome abs_metric --immediate audited --immediate-audits FILE
+--audit-source NAME``, the value-residual check uses, at every changed point
+that has one, the fresh-seed audit of the immediate trial outcome (candidate =
+the root trial at the E2 point, incumbent = the E2 snapshot incumbent; e.g.
+``di_candidate_audits.json`` of the 19 Oct C3 audit pilot) instead of the
+selected verify response D-bar: immediate = +Delta_audit for a promotion and
+-Delta_audit for a demotion. Points without an audit keep the logged value and
+are counted. The default output (``--immediate logged``) is unchanged byte for
+byte.
 """
 from __future__ import annotations
 
@@ -542,7 +553,63 @@ def value_inference(points, draws=DRAWS):
     return result
 
 
-def analyze_absolute(source, draws=DRAWS):
+def load_immediate_audits(path, audit_source):
+    """Fresh-seed audits of the immediate trial outcome, keyed by (instance, point).
+
+    Accepts ``{"rows": [...]}`` (``di_candidate_audits.json``) or a list of rows
+    with ``source``, ``instance``, ``b`` (or ``point``), ``direction`` and
+    ``audit`` (Delta_audit, candidate minus incumbent) [, ``se``]. Only rows of
+    ``audit_source`` are used.
+    """
+    data = Path(path).read_bytes()
+    rows = json.loads(data)
+    rows = rows['rows'] if isinstance(rows, dict) else rows
+    audits = {}
+    for r in rows:
+        if r.get('source') != audit_source:
+            continue
+        key = (r['instance'], int(r.get('b', r.get('point'))))
+        if key in audits:
+            raise ValueError(f'Duplicate immediate audit for {key}')
+        if r.get('audit') is None:
+            continue
+        audits[key] = dict(delta_audit=float(r['audit']), se=r.get('se'), direction=r.get('direction'))
+    return dict(path=str(path), sha256=hashlib.sha256(data).hexdigest(), source=audit_source, audits=audits)
+
+
+def apply_immediate_audits(points, audit_file):
+    """Replace the immediate value of changed points by their signed fresh audit where one exists."""
+    audits = audit_file['audits']
+    out, used = [], set()
+    for p in points:
+        q = dict(p)
+        if not p['changed']:
+            q['immediate_source'] = 'unchanged'
+        elif (p['instance'], p['point']) in audits:
+            a = audits[p['instance'], p['point']]
+            if a['direction'] is not None and a['direction'] != p['direction']:
+                raise ValueError(f'Audit direction {a["direction"]} differs from point direction '
+                                 f'{p["direction"]} at {p["instance"]} b{p["point"]:03d}')
+            q['immediate_logged'] = p['immediate']
+            q['immediate'] = a['delta_audit'] if p['direction'] == 'promotion' else -a['delta_audit']
+            q['immediate_source'] = 'audit'
+            used.add((p['instance'], p['point']))
+        else:
+            q['immediate_source'] = 'logged'
+        out.append(q)
+    changed = [q for q in out if q['changed']]
+    summary = dict(path=audit_file['path'], sha256=audit_file['sha256'], audit_source=audit_file['source'],
+                   changed_points=len(changed),
+                   changed_points_with_audit=sum(q['immediate_source'] == 'audit' for q in changed),
+                   changed_points_logged=sum(q['immediate_source'] == 'logged' for q in changed),
+                   audits_in_file=len(audits),
+                   audits_unmatched=sorted(f'{i} b{b:03d}' for i, b in set(audits) - used),
+                   rule='immediate = +Delta_audit (promotion) / -Delta_audit (demotion) where audited; '
+                        'logged verify response otherwise')
+    return out, summary
+
+
+def analyze_absolute(source, draws=DRAWS, immediate_audits=None):
     decisions, rows, branches, pairs, excluded = collect_absolute(source)
     nodes = sorted({r['node'] for r in rows})
     eligible = {r['node'] for r in rows if r['changed']}
@@ -553,6 +620,9 @@ def analyze_absolute(source, draws=DRAWS):
         point = {k: ps[0][k] for k in ('node', 'instance', 'point', 'changed', 'direction')}
         point.update({k: mean(p[k] for p in ps) for k in ('audit_difference', 'immediate', 'record_shift')})
         points.append(point)
+    audit_summary = None
+    if immediate_audits is not None:
+        points, audit_summary = apply_immediate_audits(points, immediate_audits)
     results, values, record, mechanism = [], [], [], []
     for group in nodes + ['pooled_value_eligible']:
         selected_nodes = eligible if group == 'pooled_value_eligible' else {group}
@@ -579,13 +649,17 @@ def analyze_absolute(source, draws=DRAWS):
     violated = any(r['reject'] and r['holm_p'] < .05 and any(
         v['group'] == r['group'] and v.get('ci') and (v['ci'][0] > 0 or v['ci'][1] < 0)
         for v in values) for r in primary)
-    return dict(label='PILOT, PARTIAL, not evidence', author='AI-assisted by Codex',
-                input_revision=source.revision, input_sha256=source.hashes, seed=SEED, draws=draws,
-                outcome='abs_metric', counts={n: dict(Counter(d['direction'] for d in decisions if d['node'] == n)) for n in nodes},
-                decisions=decisions, point_contrasts=rows, branch_summaries=branches, pairs=pairs,
-                value_points=points, excluded_points=excluded, results=results, values=values,
-                record_shift=record, mechanism=mechanism, holm_tests=len(primary),
-                verdict='violated in value terms' if violated else 'undetermined at this sample size')
+    report = dict(label='PILOT, PARTIAL, not evidence', author='AI-assisted by Codex',
+                  input_revision=source.revision, input_sha256=source.hashes, seed=SEED, draws=draws,
+                  outcome='abs_metric', counts={n: dict(Counter(d['direction'] for d in decisions if d['node'] == n)) for n in nodes},
+                  decisions=decisions, point_contrasts=rows, branch_summaries=branches, pairs=pairs,
+                  value_points=points, excluded_points=excluded, results=results, values=values,
+                  record_shift=record, mechanism=mechanism, holm_tests=len(primary),
+                  verdict='violated in value terms' if violated else 'undetermined at this sample size')
+    if audit_summary is not None:
+        report.update(immediate='audited', immediate_audit=audit_summary,
+                      audited_mode_author='AI-assisted (Claude)')
+    return report
 
 
 def markdown_absolute(report):
@@ -627,6 +701,20 @@ def markdown_absolute(report):
     lines += ['', '## Decision audit', '', '| Instance | Point | Rep | Direction | Verify mean delta |', '|---|---:|---:|---|---:|']
     for d in report['decisions']:
         lines.append('| '+' | '.join(fmt(d[k]) for k in ('instance','point','rep','direction','verify_mean_delta'))+' |')
+    if 'immediate_audit' in report:
+        a = report['immediate_audit']
+        lines += ['## Immediate value source (audited-outcome mode; AI-assisted (Claude))', '',
+                  f'Audits: `{a["path"]}` (sha256 `{a["sha256"][:16]}`), source `{a["audit_source"]}`. '
+                  f'Changed points: {a["changed_points"]}; with a fresh-seed audit: {a["changed_points_with_audit"]}; '
+                  f'logged value kept: {a["changed_points_logged"]}. Unmatched audits: '
+                  f'{", ".join(a["audits_unmatched"]) or "none"}. Rule: {a["rule"]}.', '',
+                  '| Instance | Point | Direction | Immediate (logged) | Immediate (used) | Source |',
+                  '|---|---:|---|---:|---:|---|']
+        for p in report['value_points']:
+            if p['changed']:
+                lines.append('| ' + ' | '.join(fmt(v) for v in (p['instance'], p['point'], p['direction'],
+                             p.get('immediate_logged', p['immediate']), p['immediate'], p['immediate_source'])) + ' |')
+        lines.append('')
     lines += ['', f'Verdict: **{report["verdict"]}**.', '']
     return '\n'.join(lines)
 
@@ -635,6 +723,12 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('run_dir',type=Path)
     parser.add_argument('--outcome', choices=('legacy', 'abs_metric'), default='legacy')
+    parser.add_argument('--immediate', choices=('logged', 'audited'), default='logged',
+                        help='abs_metric only: immediate value from the logged verify response (default) or '
+                             'from fresh-seed audits where available')
+    parser.add_argument('--immediate-audits', type=Path, default=None,
+                        help='audits of the immediate trial outcome (e.g. di_candidate_audits.json)')
+    parser.add_argument('--audit-source', default=None, help='source name of this run in the audit file')
     parser.add_argument('--md',required=True,type=Path)
     parser.add_argument('--json',required=True,type=Path)
     args=parser.parse_args()
@@ -643,7 +737,14 @@ def main():
         absolute=path.resolve()
         if absolute.is_relative_to((source.repo/'results').resolve()) or absolute.is_relative_to(args.run_dir.resolve()):
             parser.error('Outputs must be outside existing result directories')
-    report = analyze(source) if args.outcome == 'legacy' else analyze_absolute(source)
+    audits = None
+    if args.immediate == 'audited':
+        if args.outcome != 'abs_metric' or not args.immediate_audits or not args.audit_source:
+            parser.error('--immediate audited needs --outcome abs_metric, --immediate-audits and --audit-source')
+        audits = load_immediate_audits(args.immediate_audits, args.audit_source)
+    elif args.immediate_audits or args.audit_source:
+        parser.error('--immediate-audits/--audit-source are used only with --immediate audited')
+    report = analyze(source) if args.outcome == 'legacy' else analyze_absolute(source, immediate_audits=audits)
     args.md.write_text(markdown(report) if args.outcome == 'legacy' else markdown_absolute(report))
     args.json.write_text(json.dumps(report,sort_keys=True,indent=2,allow_nan=False)+'\n')
     print(json.dumps({'counts':report['counts'],'verdict':report['verdict']}))

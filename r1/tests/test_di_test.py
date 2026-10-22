@@ -216,3 +216,68 @@ def test_breast_projection_matches_frozen_dataset_exclusion():
     config=dict(model_type='logistic_regression', C=.1, max_iter=1000,
                 class_weight='balanced', scaler='standard', imputer='constant')
     assert project(config,'openml_breast_w') == project(dict(config,imputer='most_frequent'),'openml_breast_w')
+
+
+# --- audited-outcome mode (opt-in; AI-assisted (Claude), 22 Oct 2026) ---------------------------
+
+def _audit_file(tmp_path, rows):
+    from r1.diagnostics.di_test import load_immediate_audits
+    path = tmp_path / 'audits.json'
+    path.write_text(json.dumps({'rows': rows, 'summary': {}}))
+    return load_immediate_audits(path, 'synthetic')
+
+
+def _arow(i, audit, direction='promotion', source='synthetic'):
+    return {'source': source, 'instance': f'digits_mlp__s{i}', 'b': 2, 'direction': direction,
+            'audit': audit, 'se': .01}
+
+
+def test_audited_immediate_replaces_logged_value(tmp_path):
+    from r1.diagnostics.di_test import analyze_absolute, markdown_absolute
+    source = AbsoluteFixture()
+    logged = analyze_absolute(source, draws=199)
+    assert 'immediate_audit' not in logged and 'immediate' not in logged
+    assert logged['values'][0]['residual'] == pytest.approx(0)
+    audits = _audit_file(tmp_path, [_arow(i, .05) for i in range(12)] + [_arow(0, 9., source='other')])
+    report = analyze_absolute(AbsoluteFixture(), draws=199, immediate_audits=audits)
+    a = report['immediate_audit']
+    assert (a['changed_points'], a['changed_points_with_audit'], a['changed_points_logged']) == (12, 12, 0)
+    assert report['values'][0]['immediate'] == pytest.approx(.05)
+    assert report['values'][0]['residual'] == pytest.approx(.05)  # audit difference .1 - audited immediate .05
+    assert report['immediate'] == 'audited'
+    changed = [p for p in report['value_points'] if p['changed']]
+    assert all(p['immediate_logged'] == pytest.approx(.1) and p['immediate_source'] == 'audit' for p in changed)
+    assert 'Immediate value source' in markdown_absolute(report)
+    assert 'Immediate value source' not in markdown_absolute(logged)
+
+
+def test_audited_immediate_partial_coverage_and_demotion_sign(tmp_path):
+    from r1.diagnostics.di_test import analyze_absolute, apply_immediate_audits
+    audits = _audit_file(tmp_path, [_arow(i, .05) for i in range(6)] + [_arow(99, .3)])
+    report = analyze_absolute(AbsoluteFixture(), draws=199, immediate_audits=audits)
+    a = report['immediate_audit']
+    assert (a['changed_points_with_audit'], a['changed_points_logged']) == (6, 6)
+    assert a['audits_unmatched'] == ['digits_mlp__s99 b002']
+    assert report['values'][0]['residual'] == pytest.approx(.025)
+    pts = [dict(node='n', instance='x', point=4, changed=True, direction='demotion', immediate=.2,
+                audit_difference=0.)]
+    out, _ = apply_immediate_audits(pts, {'path': 'f', 'sha256': '0', 'source': 's',
+                                          'audits': {('x', 4): dict(delta_audit=.07, se=None, direction='demotion')}})
+    assert out[0]['immediate'] == pytest.approx(-.07) and pts[0]['immediate'] == .2  # input not mutated
+
+
+def test_audited_immediate_direction_mismatch_refused(tmp_path):
+    from r1.diagnostics.di_test import analyze_absolute
+    audits = _audit_file(tmp_path, [_arow(0, .05, direction='demotion')])
+    with pytest.raises(ValueError, match='direction'):
+        analyze_absolute(AbsoluteFixture(), draws=99, immediate_audits=audits)
+
+
+def test_committed_di_candidate_audits_load():
+    from pathlib import Path
+    from r1.diagnostics.di_test import load_immediate_audits
+    path = Path(__file__).resolve().parents[2] / \
+        'results/r1/engineering/c3_audit_pilot_20261019T001338Z/di_candidate_audits.json'
+    on, off = load_immediate_audits(path, 'rerun2A'), load_immediate_audits(path, 'dt4')
+    assert len(on['audits']) == 13 and len(off['audits']) == 6
+    assert on['audits']['tabular_mlp__s122', 12]['direction'] == 'demotion'
