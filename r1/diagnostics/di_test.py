@@ -116,7 +116,8 @@ def project(config, node):
     if node in ('digits_mlp', 'tabular_mlp'):
         keys = set(config)
     elif node in ('openml_ionosphere', 'openml_breast_w', 'openml_wdbc', 'openml_credit_approval',
-                  'openml_credit_g', 'openml_sonar', 'openml_blood_transfusion', 'openml_qsar_biodeg'):
+                  'openml_credit_g', 'openml_sonar', 'openml_blood_transfusion', 'openml_qsar_biodeg',
+                  'openml_climate'):
         # Mirrors the D25 projection (harness configs/nodes/<node>.yaml): imputer is inactive on
         # numeric-only datasets and active on credit-approval and credit-g, which have categorical columns.
         model = config['model_type']

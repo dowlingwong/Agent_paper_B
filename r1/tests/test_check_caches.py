@@ -44,6 +44,6 @@ def test_check_node_reports_missing_and_skips_non_openml(tmp_path, monkeypatch):
 
 
 def test_common_node_list_and_e1_defaults():
-    assert len(CC.COMMON_NODES) == 10
-    for node in ("openml_credit_g", "openml_sonar", "openml_blood_transfusion", "openml_qsar_biodeg"):
+    assert len(CC.COMMON_NODES) == 11  # ten of the common run + the 23 Oct reserve
+    for node in ("openml_credit_g", "openml_sonar", "openml_blood_transfusion", "openml_qsar_biodeg", "openml_climate"):
         assert node in CC.COMMON_NODES and node in E1.DEFAULT_NODES

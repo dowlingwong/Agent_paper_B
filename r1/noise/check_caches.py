@@ -46,7 +46,7 @@ HARNESS = E1.HARNESS
 COMMON_NODES = (
     "digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc",
     "openml_credit_approval", "openml_credit_g", "openml_sonar", "openml_blood_transfusion",
-    "openml_qsar_biodeg",
+    "openml_qsar_biodeg", "openml_climate",  # climate: D21 reserve (23 Oct)
 )
 
 

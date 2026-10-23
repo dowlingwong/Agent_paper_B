@@ -49,6 +49,7 @@ DEFAULT_NODES = (
     # D21 pool extension (22 Oct 2026); need their data caches in nodes/<node>/data_cache
     # (see r1/noise/check_caches.py).
     "openml_sonar", "openml_blood_transfusion", "openml_qsar_biodeg",
+    "openml_climate",  # D21 reserve (23 Oct)
 )
 # Nodes whose metric is timing-based or whose edits are not bounded hyperparameters:
 # only baseline noise and determinism are measured.

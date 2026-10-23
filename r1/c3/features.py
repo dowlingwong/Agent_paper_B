@@ -58,6 +58,10 @@ NODE_INFO = {
     "openml_sonar": {"rows": 208, "features": 60, "classes": 2, "minority": 0.466, "metric": "val_auc", "family": "openml"},
     "openml_blood_transfusion": {"rows": 748, "features": 4, "classes": 2, "minority": 0.238, "metric": "val_auc", "family": "openml"},
     "openml_qsar_biodeg": {"rows": 1055, "features": 41, "classes": 2, "minority": 0.337, "metric": "val_auc", "family": "openml"},
+    # Reserve node, 23 Oct 2026 (PLAN §10 "D21 reserve"). PROVISIONAL until checked against the fetched data
+    # with r1/noise/check_caches.py: climate-model-simulation-crashes id 1467, 540 rows; feature count and
+    # minority share to be confirmed.
+    "openml_climate": {"rows": 540, "features": 20, "classes": 2, "minority": 0.085, "metric": "val_auc", "family": "openml"},
 }
 STRUCTURAL_KEYS = {"model_type", "scaler", "class_weight", "imputer"}
 # D25 active keys for the OpenML template: harness configs/nodes/openml_*.yaml
@@ -74,6 +78,7 @@ OPENML_DATASET_EXCLUDED = {
     "openml_credit_approval": set(),  # has categorical columns: imputer is active
     "openml_credit_g": set(),  # has categorical columns: imputer is active
     "openml_sonar": {"imputer"}, "openml_blood_transfusion": {"imputer"}, "openml_qsar_biodeg": {"imputer"},
+    "openml_climate": {"imputer"},
 }
 # Numeric-dataset projection (kept for backward compatibility).
 OPENML_ACTIVE = {m: keys - {"imputer"} for m, keys in OPENML_BY_MODEL_TYPE.items()}
@@ -99,7 +104,8 @@ FEATURES = CAT_FEATURES + NUM_FEATURES
 NODE_CODES = {"digits_mlp": 0, "openml_breast_w": 1, "openml_ionosphere": 2, "tabular_mlp": 3,
               "openml_credit_approval": 4, "openml_wdbc": 5,
               # appended 22 Oct 2026 (D21 pool extension)
-              "openml_credit_g": 6, "openml_sonar": 7, "openml_blood_transfusion": 8, "openml_qsar_biodeg": 9}
+              "openml_credit_g": 6, "openml_sonar": 7, "openml_blood_transfusion": 8, "openml_qsar_biodeg": 9,
+              "openml_climate": 10}
 assert set(NODE_CODES) == set(NODE_INFO), "every node in NODE_INFO needs a stable code"
 MODEL_CODES = {"mlp": 0, "logistic_regression": 1, "random_forest": 2, "gradient_boosting": 3}
 
