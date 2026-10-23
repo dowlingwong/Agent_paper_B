@@ -439,6 +439,12 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | D21 pool (22 Oct) | `openml_credit_approval` **added** (qualified at 30 seeds on 22 Oct; it is re-checked in the common run). `openml_diabetes` **dropped** (no material edit at 30 seeds; not re-measured). New candidates, measured together with the others: `openml_credit_g` (OpenML 31), `openml_sonar` (40), `openml_blood_transfusion` (1464), `openml_qsar_biodeg` (1494); IDs checked on openml.org on 22 Oct. Not chosen: `ilpd` (1480; same risk profile as diabetes); `climate-model-simulation-crashes` (1467) is the reserve. Data caches are fetched on the author's Mac (the VMs have no openml.org access). Optional, later: one further MLP-type node for diversity (six of the eight target nodes share the OpenML template's edit space). |
 | D21 common measurement (22 Oct) | One 30-seed E1 run over all ten nodes (5 original + `credit_approval` + 4 candidates; "nine" in the first version of this row was a counting error, corrected 22 Oct), CPU only, one environment, accepted by the coordinating session before merging. This run is the C1 noise-floor table. |
 
+**Decided 23 Oct 2026 by the author (reserve node).** Fixed, not a proposal.
+
+| ID | Decision (decided 23 Oct 2026 by the author) |
+|---|---|
+| D21 reserve (23 Oct) | After the common run left the pool at exactly 8 (two nodes borderline), **measure the reserve `openml_climate` (OpenML 1467, climate-model-simulation-crashes)** with the same procedure: 30 seeds, the harness-locked environment of the common run, the standard E1 edit set, the D21 rule of 22 Oct unchanged. If it qualifies it joins the pool (9 nodes); if not, the pool stays at 8. Records the author's "把后备的 climate（OpenML 1467）也按同样流程测一下". |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |
