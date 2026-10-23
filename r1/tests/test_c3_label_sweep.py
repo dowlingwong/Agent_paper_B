@@ -28,7 +28,8 @@ def _cmd(payload, rc=0):
 
 def test_config_defaults_follow_plan(tmp_path):
     config = sweep.load_config(None)
-    assert config["nodes"] == ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc"]
+    assert config["nodes"] == ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc",
+                              "openml_credit_approval", "openml_sonar", "openml_blood_transfusion"]  # D21 pool after the 22 Oct common run
     assert config["instances"] == 18 and config["runs"] == 20
     assert config["memory_modes"] == ["append_only_summary", "none"]
     path = tmp_path / "c.json"
@@ -215,8 +216,9 @@ ADA_CONFIG = REPO / "r1/scripts/configs/c3_sweep_ada.json"
 
 def test_ada_sweep_config_validates_and_follows_plan():
     config = sweep.load_config(ADA_CONFIG)
-    assert config["nodes"] == ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc"]
-    assert config["nodes_pending"] == ["openml_credit_approval", "openml_diabetes"]
+    assert config["nodes"] == ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc",
+                              "openml_credit_approval", "openml_sonar", "openml_blood_transfusion"]  # D21 pool after the 22 Oct common run
+    assert config["nodes_pending"] == []  # 22 Oct: candidates decided by the common 30-seed run
     assert config["instances"] == 18 and config["runs"] == 20
     assert config["memory_modes"] == ["append_only_summary", "none"]
     assert config["liveness"] == {"instances": 2, "runs": 10, "memory_mode": "append_only_summary"}
@@ -248,7 +250,7 @@ def test_audit_and_pending_validation(tmp_path):
 def test_check_config_cli(tmp_path):
     ok = subprocess.run([sys.executable, str(REPO / "r1/scripts/c3_label_sweep.py"), "--config", str(ADA_CONFIG),
                          "--check-config"], capture_output=True, text=True, cwd=REPO, timeout=60)
-    assert ok.returncode == 0 and json.loads(ok.stdout)["nodes_pending"]
+    assert ok.returncode == 0 and json.loads(ok.stdout)["nodes"][-1] == "openml_blood_transfusion"
     bad = tmp_path / "bad.json"
     bad.write_text(json.dumps({"runs": 10}))
     no = subprocess.run([sys.executable, str(REPO / "r1/scripts/c3_label_sweep.py"), "--config", str(bad),

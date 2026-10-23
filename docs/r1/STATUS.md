@@ -1,6 +1,15 @@
 # Paper B (route R1) — status log
 
 
+## 22–23 October 2026 — common 30-seed noise floor over ten nodes (accepted); D21 pool = 8
+
+AI-assisted: run and report by a Claude subagent; verified, merged (`8aa9a5f`) and wired in by the coordinating session (Claude). PILOT pending the author's acceptance as the C1 noise-floor table (`reports/NOISE_FLOOR_COMMON_20261022.md`; `results/r1/pilot/E1_20261022T214606Z/`). No LLM, GPU or SSH.
+- **Run:** 5,520 runs, 0 failures, 0 missing metrics; 30 seeds per condition on every node; 21.6 min on 4 workers. Environment: harness-locked venv (Python 3.13.16, scikit-learn 1.8.0, pandas 3.0.3, numpy 2.4.4), recorded in the manifest. Determinism re-check identical. The 12 Oct E1 runs reproduce bit-for-bit (1,152/1,152); the 22 Oct `credit_approval` re-measurement under scikit-learn 1.9.1 differs on tree models, verdict unchanged.
+- **D21 rule applied as adopted** (≥ 2 material edits, mean P(wrong) ≥ 0.10, σ_joint > 0, 30 seeds; bootstrap reported only). Verdicts re-derived independently from the raw runs by the coordinating session: identical. `e1_report`'s extra label "more seeds needed" is not part of the rule; such nodes are reported as "does not qualify".
+- **Qualify (8):** `digits_mlp` (mean P(wrong) 0.101; bootstrap 0.48), `tabular_mlp` (0.125), `openml_breast_w` (0.233), `openml_ionosphere` (0.195; δ_n 0.004), `openml_wdbc` (0.174), `openml_credit_approval` (0.229), `openml_sonar` (0.196; δ_n 0.0032), `openml_blood_transfusion` (0.103; bootstrap 0.48). **Do not qualify:** `openml_credit_g` (1 material edit; its C ×0.5 edit at Δ̂ = 0.00195 is just below 0.002), `openml_qsar_biodeg` (0). Pool = 8, exactly the PLAN target, no margin; two nodes are borderline.
+- **Wired in (`main`):** `r1/c3/dataset.py` `E1_SUMMARY` → the common run (newly built C3 tables use its σ_node and δ_n; the 19 Oct pilot table keeps its build-time values, so the pilot gate numbers are unchanged); sweep `D21_NODES`, liveness `DEFAULT_RUN_NODES` and `r1/scripts/configs/c3_sweep_ada.json` → the eight nodes (`nodes_pending` emptied); `e1b_collect` now defaults to this run. Tests: 296 passed (tests pinned to the 12 Oct E1 now name it explicitly; a new test checks the default source).
+- **Sweep size:** 8 nodes × 18 instances × 2 memory modes × W = 20 (was 5 nodes in the config) — about 5,800 manager proposals before liveness exclusions.
+
 ## 22 October 2026 — author adopts the D21 rule (30 seeds) and the pool extension
 
 Recorded by an AI agent (Claude, coordinating session). No experiment ran. PLAN §10 rows "D21 rule", "D21 uniform application", "D21 pool" and "D21 common measurement" (22 Oct): 30 seeds for every node; ≥ 2 material edits with mean P(wrong) ≥ 0.10; bootstrap reported, not decisive; applied to all nodes including the original five; `credit_approval` added, `diabetes` dropped; candidates `credit_g`, `sonar`, `blood_transfusion`, `qsar_biodeg` (OpenML IDs verified). Next: build the three new harness nodes (subagent), author fetches four data caches on the Mac, then one 30-seed run over ten nodes.

@@ -30,7 +30,7 @@ from r1.c3.features import (NODE_INFO, Proposal, configuration, files_hash, norm
                             replay_campaign)
 from r1.harness import REPO, harness_root
 
-E1_SUMMARY = "results/r1/pilot/E1_20261012T145353Z/summary.json"
+E1_SUMMARY = "results/r1/pilot/E1_20261022T214606Z/summary.json"  # common 30-seed run, the C1 noise-floor table (PLAN §10, 22 Oct); was E1_20261012T145353Z
 SOURCES = {
     "dt4": {"dir": "results/r1/pilot/E1b_20261013T151857Z", "ledgers": "provenance/ledgers/roots/*/root_trials.jsonl*",
             "runs": 20, "memory_mode": "none"},

@@ -26,7 +26,7 @@ from pathlib import Path
 from r1.harness import REPO, harness_commit
 from r1.liveness.check import evaluate_ledger_paths, write_reports
 
-DEFAULT_RUN_NODES = ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc"]
+DEFAULT_RUN_NODES = ["digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosphere", "openml_wdbc", "openml_credit_approval", "openml_sonar", "openml_blood_transfusion"]  # D21 pool, 22 Oct
 
 
 def _stamp() -> str:

@@ -68,7 +68,7 @@ DIGEST = 'dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364'
 ROWS = ('R1-E1B-RERUN2 (revision)', 'R1-C3 (18 Oct)', 'D21', 'Verify split policy',
         'D28 (revised criterion 2)', 'R1-COMPUTE (GPU co-tenancy, 13 Oct)',
         'R1-COMPUTE (Paper A coordination, 19 Oct)', 'D4 amendment')
-D21_NODES = ['digits_mlp', 'tabular_mlp', 'openml_breast_w', 'openml_ionosphere', 'openml_wdbc']
+D21_NODES = ['digits_mlp', 'tabular_mlp', 'openml_breast_w', 'openml_ionosphere', 'openml_wdbc', 'openml_credit_approval', 'openml_sonar', 'openml_blood_transfusion']  # noise-node pool after the 22 Oct common 30-seed run (PLAN §10, D21 rows, 22 Oct)
 DEFAULTS = {
     'nodes': D21_NODES,
     'instances': 18,
