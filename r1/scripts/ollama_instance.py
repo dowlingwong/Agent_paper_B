@@ -13,6 +13,15 @@ nothing else shares:
 * ``stop()`` signals only that process group, and only after checking the
   PID is still the process it started.  It never touches another server.
 
+Restarts (RUNBOOK A.5/A.8, 24 Oct): ``generation`` > 0 names the record and
+log ``ollama_instance_<port>_r<generation>.json`` / ``ollama_serve_<port>_r<g>.log``
+so an earlier instance's record is never overwritten, and ``reuse_models``
+lets a restarted instance use the batch's existing models directory (the
+runner re-checks the digest).  ``orphan_matches`` / ``stop_orphan`` stop a
+previous instance of the *same batch* left running by a killed runner, and only
+after its pid, process group and environment (port, models directory) match
+the batch's record.  Generation 0 without reuse is the historical behaviour.
+
 Fake-able: ``binary`` may be any executable that honours ``OLLAMA_HOST``
 (the dry run passes ``r1/scripts/c3_fake_ollama.py`` through a wrapper).
 
@@ -43,7 +52,11 @@ def free_port() -> int:
 
 
 def port_is_free(port: int) -> bool:
+    """Nothing listens on *port*.  SO_REUSEADDR (as servers bind) so that connections of a stopped
+    server still in TIME_WAIT do not count as a server (restart on the same port, RUNBOOK A.5/A.8);
+    a listening socket still makes the bind fail."""
     with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             probe.bind(("127.0.0.1", port))
         except OSError:
@@ -72,7 +85,8 @@ class OllamaInstance:
     def __init__(self, batch_dir: str | Path, binary: str, *, port: int | None = None,
                  models_dir: str | Path | None = None, seed_models_from: str | Path | None = None,
                  gpu_uuid: str | None = None, keep_alive: str = "-1", label: str = "ENGINEERING_ONLY",
-                 env_extra: dict[str, str] | None = None, start_timeout: float = 60.0) -> None:
+                 env_extra: dict[str, str] | None = None, start_timeout: float = 60.0,
+                 generation: int = 0, reuse_models: bool = False) -> None:
         self.batch = Path(batch_dir).resolve()
         self.binary = str(binary)
         self.port = int(port) if port else free_port()
@@ -84,8 +98,10 @@ class OllamaInstance:
         self.env_extra = dict(env_extra or {})
         self.start_timeout = start_timeout
         self.process: subprocess.Popen | None = None
-        self.record_path = self.batch / f"ollama_instance_{self.port}.json"
-        self.log_path = self.batch / f"ollama_serve_{self.port}.log"
+        self.generation, self.reuse_models = int(generation), bool(reuse_models)
+        suffix = f"_r{self.generation}" if self.generation else ""
+        self.record_path = self.batch / f"ollama_instance_{self.port}{suffix}.json"
+        self.log_path = self.batch / f"ollama_serve_{self.port}{suffix}.log"
         self.record: dict = {}
 
     @property
@@ -118,7 +134,9 @@ class OllamaInstance:
             raise RuntimeError(f"STOP: port {self.port} is in use; a dedicated instance never shares a server")
         self.batch.mkdir(parents=True, exist_ok=True)
         seeded = None
-        if self.seed_models_from is not None:
+        if self.reuse_models and self.models_dir.is_dir():
+            seeded = "reused"
+        elif self.seed_models_from is not None:
             seeded = seed_models(self.seed_models_from, self.models_dir)
         else:
             self.models_dir.mkdir(parents=True, exist_ok=True)
@@ -133,6 +151,8 @@ class OllamaInstance:
                        "seed_models_from": str(self.seed_models_from) if self.seed_models_from else None,
                        "gpu_uuid": self.gpu_uuid, "keep_alive": self.keep_alive,
                        "log": str(self.log_path), "started_utc": _utc()}
+        if self.generation:
+            self.record["generation"] = self.generation
         self._save()
         deadline = time.monotonic() + self.start_timeout
         while time.monotonic() < deadline:
@@ -176,9 +196,91 @@ class OllamaInstance:
         self._save()
         return self.record
 
+    def returncode_info(self) -> dict:
+        """Exit status of the server process: returncode and, for a signal, its name."""
+        rc = None if self.process is None else self.process.poll()
+        info: dict = {"returncode": rc}
+        if rc is not None and rc < 0:
+            try:
+                info["signal"] = signal.Signals(-rc).name
+            except ValueError:
+                info["signal"] = f"signal {-rc}"
+        return info
+
     def __enter__(self) -> "OllamaInstance":
         self.start()
         return self
 
     def __exit__(self, *exc) -> None:
         self.stop()
+
+
+def pid_alive(pid: int) -> bool:
+    """True for a running (non-zombie) process."""
+    try:
+        os.kill(int(pid), 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    try:
+        stat = Path(f"/proc/{int(pid)}/stat").read_text()
+        return stat.rsplit(")", 1)[1].split()[0] != "Z"
+    except (OSError, IndexError):
+        return True
+
+
+def _proc_environ(pid: int) -> dict[str, str]:
+    raw = Path(f"/proc/{pid}/environ").read_bytes()
+    return dict(item.split("=", 1) for item in raw.decode(errors="replace").split("\0") if "=" in item)
+
+
+def orphan_matches(record: dict) -> tuple[bool, str]:
+    """Is the process in an earlier instance *record* still alive, and provably that instance?
+
+    Returns (alive_and_ours, reason).  Ours means: same pid, same process group
+    (the instance was started in its own session), and its environment has the
+    record's ``OLLAMA_HOST`` port and ``OLLAMA_MODELS`` directory.  A live pid
+    that fails any check is not ours and must never be signalled.
+    """
+    pid, pgid = record.get("pid"), record.get("pgid")
+    if not pid or record.get("stopped_utc"):
+        return False, "no live process recorded"
+    try:
+        os.kill(int(pid), 0)
+    except ProcessLookupError:
+        return False, "not running"
+    except PermissionError:
+        return False, "pid belongs to another user"
+    if not pid_alive(int(pid)):
+        return False, "not running (zombie)"
+    try:
+        if os.getpgid(int(pid)) != pgid:
+            return False, "process group differs (pid reused)"
+        env = _proc_environ(int(pid))
+    except (OSError, ValueError) as exc:
+        return False, f"cannot inspect pid: {exc!r}"
+    if env.get("OLLAMA_HOST") != f"127.0.0.1:{record.get('port')}" or env.get("OLLAMA_MODELS") != record.get("models_dir"):
+        return False, "environment differs (not this batch's instance)"
+    return True, "alive; pid, process group, port and models directory match"
+
+
+def stop_orphan(record: dict, timeout: float = 20.0) -> dict:
+    """Stop an earlier instance of this batch left running by a killed runner (after ``orphan_matches``)."""
+    ours, reason = orphan_matches(record)
+    result = {"pid": record.get("pid"), "pgid": record.get("pgid"), "port": record.get("port"), "check": reason,
+              "utc": _utc()}
+    if not ours:
+        result["action"] = "none"
+        return result
+    pgid = int(record["pgid"])
+    os.killpg(pgid, signal.SIGTERM)
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if not pid_alive(int(record["pid"])):
+            result["action"] = "SIGTERM"
+            return result
+        time.sleep(0.2)
+    os.killpg(pgid, signal.SIGKILL)
+    result["action"] = "SIGKILL"
+    return result

@@ -14,22 +14,39 @@ Fault injection (``$C3_FAKE_FAULTS``, a JSON list), counted over /api/chat calls
 * ``{"chat_call": n, "mode": "exit"}`` — the server process exits mid-request
   and stays down (a permanent failure).
 
+Runner-loss faults for the watchdog (RUNBOOK A.8, 24 Oct):
+
+* ``{"chat_call": n, "mode": "sigterm"}`` — the server sends itself SIGTERM
+  mid-request (the 14 Oct incident: the model runner received SIGTERM);
+* ``{"chat_call": n, "mode": "freeze"}`` — every later request, including
+  ``/api/version``, hangs (an unresponsive server);
+* ``{"chat_call": n, "mode": "unload"}`` — the model is gone: ``/api/ps`` lists
+  no model and chat calls answer the runner error (a lost model runner).
+
+Each fault fires once per DRYRUN root (marker ``fault_<n>_<mode>.fired``), so a
+server restarted by the watchdog, whose chat counter starts again at 1, does not
+fire it again.  Each request is also printed as a ``[GIN]``-style line on stdout
+(the instance's serve log), like the real server's request log.
+
 AI-assisted (Claude).  ENGINEERING_ONLY / DRYRUN.
 """
 import json
 import os
 import platform
 import re
+import signal
 import socket
 import sys
 import threading
+import time
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 MODEL = 'qwen2.5-coder:7b'
 DIGEST = 'dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364'
 LOCK = threading.Lock()
-STATE = {'chat_calls': 0}
+STATE = {'chat_calls': 0, 'frozen': False, 'unloaded': False}
 FAULTS = {int(f['chat_call']): f['mode'] for f in json.loads(os.environ.get('C3_FAKE_FAULTS') or '[]')}
 ROOT = Path(os.environ.get('R1_FAKE_OLLAMA_ROOT', '/nonexistent'))
 INACTIVE_SENT = set()
@@ -38,6 +55,27 @@ INACTIVE_SENT = set()
 def log(entry):
     with LOCK, (ROOT / 'fake_calls.jsonl').open('a') as f:
         f.write(json.dumps({'label': 'DRYRUN', 'pid': os.getpid(), **entry}) + '\n')
+
+
+def request_line(method, path, status, extra=''):
+    stamp = datetime.now(timezone.utc).strftime('%Y/%m/%d - %H:%M:%S')
+    print(f'[GIN] {stamp} | {status} | DRYRUN | 127.0.0.1 | {method} "{path}" {extra}'.rstrip(), flush=True)
+
+
+def fire_once(n, mode):
+    """True the first time fault (n, mode) fires under this DRYRUN root."""
+    marker = ROOT / f'fault_{n}_{mode}.fired'
+    try:
+        with marker.open('x') as f:
+            f.write(json.dumps({'pid': os.getpid(), 'chat_call': n, 'mode': mode}) + '\n')
+        return True
+    except FileExistsError:
+        return False
+
+
+def hold_if_frozen():
+    while STATE['frozen']:
+        time.sleep(0.5)
 
 
 def proposal_for(prompt, seed):
@@ -75,10 +113,16 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
+        hold_if_frozen()
         model = {'name': MODEL, 'model': MODEL, 'digest': DIGEST, 'size': 5560907776,
                  'size_vram': 5560907776, 'expires_at': '2099-01-01T00:00:00Z'}
         log({'path': self.path})
-        self.reply({'version': 'DRYRUN'} if self.path == '/api/version' else {'models': [model]})
+        if self.path == '/api/version':
+            self.reply({'version': 'DRYRUN'})
+        elif self.path == '/api/ps' and STATE['unloaded']:
+            self.reply({'models': []})
+        else:
+            self.reply({'models': [model]})
 
     def do_HEAD(self):
         self.send_response(200)
@@ -92,11 +136,31 @@ class Handler(BaseHTTPRequestHandler):
             log({'path': self.path, 'seed': seed})
             self.reply({'model': MODEL, 'response': 'OK', 'done': True, 'status': 'success'})
             return
+        hold_if_frozen()
         with LOCK:
             STATE['chat_calls'] += 1
             n = STATE['chat_calls']
         fault = FAULTS.get(n)
+        if fault is not None and not fire_once(n, fault):
+            fault = None
         log({'path': self.path, 'seed': seed, 'chat_call': n, 'fault': fault})
+        request_line('POST', self.path, 'fault=' + fault if fault else 200, f'chat_call={n}')
+        if fault == 'sigterm':
+            log({'event': 'fake server sends itself SIGTERM (runner loss)', 'chat_call': n})
+            os.kill(os.getpid(), signal.SIGTERM)
+            time.sleep(5)
+            return
+        if fault == 'freeze':
+            log({'event': 'fake server freezes (unresponsive)', 'chat_call': n})
+            STATE['frozen'] = True
+            hold_if_frozen()
+            return
+        if fault == 'unload':
+            log({'event': 'fake model runner lost (model unloaded)', 'chat_call': n})
+            STATE['unloaded'] = True
+        if STATE['unloaded']:
+            self.reply({'error': 'llama runner process no longer running: -1 '}, status=500)
+            return
         if fault == 'drop':
             self.connection.shutdown(socket.SHUT_RDWR)
             self.close_connection = True

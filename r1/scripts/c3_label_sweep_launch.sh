@@ -12,6 +12,11 @@
 # only), then runs the runner in tmux session r1_c3_sweep.  The runner itself
 # does the Paper A coordination check, starts the batch's dedicated Ollama and
 # enforces D28 first.  AI-assisted (Claude); ENGINEERING_ONLY.
+#
+# Restart after an interruption (RUNBOOK A.5, 24 Oct): run --start <batch dir>
+# again on the same batch.  The runner resumes an interrupted sweep phase from
+# its last completed campaign root (interrupted roots re-run whole) and logs the
+# interruption; runner.log is appended to, never truncated.
 set -euo pipefail
 DRYRUN=${R1_DRYRUN:-0}
 if [ "$DRYRUN" = 1 ]; then
@@ -107,7 +112,7 @@ case "${1:-}" in
     python3 -c 'from r1.scripts.dryrun_guard import validate_dryrun; validate_dryrun()'
   fi
   python3 -c "import json,sys; p=json.load(open('$B/prepare.json')); sys.exit(0 if p.get('ok') else 'STOP: prepare.json is not clean: ' + str(p.get('unexpected')))"
-  tmux new-session -d -s "$SESSION" "bash -c '. $B/env.sh && cd $B/agent_paper_B && \$R1_C3_PY r1/scripts/c3_label_sweep.py > $B/runner.log 2>&1'"
+  tmux new-session -d -s "$SESSION" "bash -c '. $B/env.sh && cd $B/agent_paper_B && \$R1_C3_PY r1/scripts/c3_label_sweep.py >> $B/runner.log 2>&1'"
   echo "Launched. Batch: $B"
   ;;
 *)

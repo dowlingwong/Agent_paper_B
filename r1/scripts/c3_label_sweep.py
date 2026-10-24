@@ -10,7 +10,8 @@ writes ``C3_sweep_index_<UTC>.json`` as that stage's input contract and runs no
 audit.
 
 Phases, checkpointed in ``batch_state.json``; a completed phase is never redone
-and an interrupted phase is a STOP (never retried automatically):
+and an interrupted phase is a STOP (never retried automatically), except the
+sweep phases (below, RUNBOOK A.5):
 
 1. ``preconditions`` — PLAN rows; paper checkout at its remote head and the
    harness at ``r1/scripts/HARNESS_PIN_C3``; the **Paper A coordination check**
@@ -29,6 +30,29 @@ and an interrupted phase is a STOP (never retried automatically):
    ``collection_failures.json`` **before** raising, the after-collection
    offload check, archive of ledgers and events, commit.
 4. ``index`` — the sweep index for the audit stage, commit.
+
+Resume per campaign root (RUNBOOK A.5, 24 Oct; config ``resume``).  Restarting
+the runner on a batch whose sweep phase was interrupted (``--start <batch>``
+again) resumes that phase: completed roots are kept and never re-run; a root
+that had started but not completed is re-run whole, never patched (its partial
+work is moved to ``<work>/interrupted/<n>/`` and archived with the run); the
+interruption is logged in ``<batch>/interruptions.jsonl``, the step log, the
+runner log and ``<sweep>/interruptions.jsonl``.  Before resuming, the runner
+refuses while a process of an earlier runner of this batch is still alive,
+stops this batch's orphaned Ollama (pid, process group and environment must
+match its record), re-checks the checkout heads, re-runs the Paper A check and
+card selection and starts a new dedicated instance (``_r<n>`` records).  An
+interrupted liveness, preconditions or index phase stays a STOP.
+
+Runner watchdog (RUNBOOK A.8, 24 Oct; config ``watchdog``, opt-in).  During
+collection the runner polls its dedicated instance: process exit (exit status
+or signal), ``/api/version`` unresponsive for ``unresponsive_checks`` polls, or
+the pinned model missing from ``/api/ps`` for ``model_checks`` polls.  On a
+loss it stops the collector's process tree, records the loss (time, exit
+status / signal, the server log's last request and signal lines, the last LLM
+event), stops and restarts the dedicated instance and resumes per the A.5 rule;
+root failure records with transport-class errors written during that session
+are moved aside so those roots are re-run whole.  At most ``max_restarts``.
 
 The batch's Ollama instance is stopped in ``finish``; it never touches another
 server.  This runner writes no STATUS.md entry (the operator records STATUS);
@@ -50,6 +74,7 @@ import platform
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -60,7 +85,7 @@ from xml.etree import ElementTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from r1.scripts.dryrun_guard import validate_dryrun  # noqa: E402
-from r1.scripts.ollama_instance import OllamaInstance  # noqa: E402
+from r1.scripts.ollama_instance import OllamaInstance, pid_alive, stop_orphan  # noqa: E402
 
 SCRIPTS = Path(__file__).resolve().parent
 MODEL = 'qwen2.5-coder:7b'
@@ -91,8 +116,15 @@ DEFAULTS = {
     # Candidate nodes that are NOT run: recorded only, moved into 'nodes' by a later
     # config once they qualify (e.g. the 22 Oct node-pool re-measurement).
     'nodes_pending': [],
+    # RUNBOOK A.5 (24 Oct): a restarted runner resumes an interrupted sweep phase from its last
+    # completed campaign root (interrupted roots re-run whole); at most max_restarts per batch.
+    'resume': {'sweeps': True, 'max_restarts': 5},
+    # RUNBOOK A.8 (24 Oct): watchdog of the batch's dedicated Ollama during collection (opt-in).
+    'watchdog': {'enabled': False, 'poll_seconds': 5.0, 'health_timeout': 10.0, 'unresponsive_checks': 3,
+                 'model_checks': 3, 'max_restarts': 3},
 }
 PHASES_FIXED = ('preconditions', 'liveness')
+INTERRUPTION_SCHEMA = 'r1.c3_sweep_interruption/1'
 GPU_HELPERS = {'gpu_rows', 'gpu_census', 'check_gpu', 'assert_full_offload'}
 GPU_CONSTANTS = {'MODEL_FOOTPRINT_MIB', 'MARGIN_MIB'}
 
@@ -131,7 +163,128 @@ def load_config(path=None) -> dict:
         raise Stop('STOP: a node is both in nodes and nodes_pending')
     if len(set(config['nodes'])) != len(config['nodes']):
         raise Stop('STOP: duplicate node in nodes')
+    validate_resume(config['resume'], config['watchdog'])
     return config
+
+
+def validate_resume(resume: dict, watchdog: dict) -> None:
+    """RUNBOOK A.5 / A.8 settings: known keys and sane values only."""
+    if set(resume) != {'sweeps', 'max_restarts'} or not isinstance(resume['sweeps'], bool) \
+            or not isinstance(resume['max_restarts'], int) or resume['max_restarts'] < 0:
+        raise Stop(f'STOP: resume must be {{"sweeps": bool, "max_restarts": int >= 0}}, got {resume}')
+    keys = {'enabled', 'poll_seconds', 'health_timeout', 'unresponsive_checks', 'model_checks', 'max_restarts'}
+    if set(watchdog) != keys or not isinstance(watchdog['enabled'], bool):
+        raise Stop(f'STOP: watchdog keys must be {sorted(keys)} with a boolean "enabled", got {watchdog}')
+    for key in keys - {'enabled'}:
+        value = watchdog[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+            raise Stop(f'STOP: watchdog.{key} must be a number >= 0, got {value!r}')
+    if watchdog['poll_seconds'] <= 0 or watchdog['health_timeout'] <= 0 or watchdog['unresponsive_checks'] < 1:
+        raise Stop('STOP: watchdog poll_seconds and health_timeout > 0, unresponsive_checks >= 1')
+
+
+def utc_iso() -> str:
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+
+def proc_table() -> dict:
+    """{pid: (ppid, cmdline)} from /proc (Linux); empty where /proc is unavailable."""
+    table = {}
+    for entry in Path('/proc').glob('[0-9]*'):
+        try:
+            stat = (entry / 'stat').read_text()
+            ppid = int(stat.rsplit(')', 1)[1].split()[1])
+            cmdline = (entry / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace').strip()
+        except (OSError, ValueError, IndexError):
+            continue
+        table[int(entry.name)] = (ppid, cmdline)
+    return table
+
+
+def descendants(pid: int, table: dict | None = None) -> list:
+    table = proc_table() if table is None else table
+    children, frontier = [], [pid]
+    while frontier:
+        parent = frontier.pop()
+        for child, (ppid, _) in table.items():
+            if ppid == parent and child not in children:
+                children.append(child)
+                frontier.append(child)
+    return children
+
+
+def stop_tree(pid: int, timeout: float = 20.0) -> dict:
+    """SIGTERM a process and all its descendants (collected first), then SIGKILL what is left."""
+    pids = [pid, *descendants(pid)]
+    for target in pids:
+        try:
+            os.kill(target, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline and any(pid_alive(t) for t in pids):
+        time.sleep(0.2)
+    killed = [t for t in pids if pid_alive(t)]
+    for target in killed:
+        try:
+            os.kill(target, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    return {'pids': pids, 'sigkill': killed}
+
+
+class RunnerWatchdog:
+    """Detects a dead or unresponsive dedicated Ollama during collection (RUNBOOK A.8).
+
+    ``check()`` returns None while healthy, else a loss record: ``server_exited``
+    (the instance process ended; exit status or signal), ``unresponsive``
+    (``/api/version`` failed ``unresponsive_checks`` consecutive polls) or
+    ``model_unloaded`` (the pinned model absent from ``/api/ps`` for
+    ``model_checks`` consecutive polls: the model runner is gone; 0 disables).
+    """
+
+    def __init__(self, instance, spec: dict, model: str = MODEL) -> None:
+        self.instance, self.spec, self.model = instance, spec, model
+        self.health_misses = self.model_misses = 0
+        self.last_healthy_utc = utc_iso()
+        self.started_utc = self.last_healthy_utc
+
+    def model_loaded(self):
+        try:
+            with urlopen(self.instance.url + '/api/ps', timeout=float(self.spec['health_timeout'])) as response:
+                models = json.load(response).get('models') or []
+        except (OSError, ValueError):
+            return None  # unknown; the health check decides about responsiveness
+        return any(m.get('name', m.get('model')) == self.model for m in models)
+
+    def check(self) -> dict | None:
+        inst = self.instance
+        if not inst.alive():
+            return self.event('server_exited', **inst.returncode_info())
+        if inst.health(timeout=float(self.spec['health_timeout'])) is None:
+            self.health_misses += 1
+            if self.health_misses >= int(self.spec['unresponsive_checks']):
+                return self.event('unresponsive', consecutive_failed_health_checks=self.health_misses)
+            return None
+        self.health_misses = 0
+        if int(self.spec.get('model_checks', 0)) > 0:
+            loaded = self.model_loaded()
+            if loaded is False:
+                self.model_misses += 1
+                if self.model_misses >= int(self.spec['model_checks']):
+                    return self.event('model_unloaded', consecutive_checks_without_model=self.model_misses)
+                return None
+            if loaded:
+                self.model_misses = 0
+        self.last_healthy_utc = utc_iso()
+        return None
+
+    def event(self, kind: str, **info) -> dict:
+        record = getattr(self.instance, 'record', {}) or {}
+        return {'kind': kind, 'detected_utc': utc_iso(), 'last_healthy_utc': self.last_healthy_utc,
+                'watch_started_utc': self.started_utc,
+                'instance': {k: record.get(k) for k in ('pid', 'pgid', 'port', 'generation', 'started_utc', 'log')},
+                **info}
 
 
 def validate_audit(audit: dict) -> None:
@@ -205,6 +358,7 @@ class SweepRunner:
         self.state: dict = {'label': self.label, 'steps': {}, 'batch': str(batch), 'host': platform.node(),
                             'config': config}
         self.ollama: OllamaInstance | None = None
+        self.pending_restart: dict | None = None  # service restart record awaiting its sweep's interruption entry
         self.gpu = load_gpu_helpers({
             'subprocess': subprocess, 'ElementTree': ElementTree, 'getpass': getpass, 'json': json,
             'BATCH': batch, 'state': self.state, 'stamp': stamp,
@@ -229,8 +383,17 @@ class SweepRunner:
             print(f'PHASE {name}: completed; skipping', flush=True)
             return
         if entry:
-            raise PhaseInterrupted(f'STOP: phase {name} was interrupted at {entry.get("started_utc")}; '
-                                   'author decision required (no automatic retry)')
+            if not self.resumable(name):
+                raise PhaseInterrupted(f'STOP: phase {name} was interrupted at {entry.get("started_utc")}; '
+                                       'author decision required (no automatic retry)')
+            # RUNBOOK A.5: the sweep resumes from its last completed campaign root (see ``sweep``).
+            entry.setdefault('resumed_utc', []).append(stamp())
+            self.save()
+            print(f'PHASE {name}: interrupted at {entry.get("started_utc")}; resuming per campaign root', flush=True)
+            fn()
+            self.state['steps'][name].update(completed=True, completed_utc=stamp())
+            self.save()
+            return
         self.state['steps'][name] = {'completed': False, 'started_utc': stamp()}
         self.save()
         fn()
@@ -264,6 +427,208 @@ class SweepRunner:
             raise Stop('STOP: pushed head does not match remote head')
         self.state['steps'][step]['commit'] = head
         self.save()
+
+    # -- interruptions (RUNBOOK A.5 / A.8) -------------------------------------
+    def resumable(self, name: str) -> bool:
+        return name.startswith('sweep_') and bool(self.config['resume']['sweeps'])
+
+    def watchdog_on(self) -> bool:
+        return bool(self.config['watchdog']['enabled'])
+
+    def log_event(self, record: dict, out: Path | None, step: str | None) -> dict:
+        """One interruption record: batch run log, step log, runner log and the sweep directory (committed)."""
+        record = {'schema': INTERRUPTION_SCHEMA, 'n': len(self.state.get('interruptions', [])) + 1,
+                  'label': self.label, **record}
+        line = json.dumps(record, default=str)
+        with (self.batch / 'interruptions.jsonl').open('a') as f:
+            f.write(line + '\n')
+        if out is not None and out.is_dir():
+            with (out / 'interruptions.jsonl').open('a') as f:
+                f.write(line + '\n')
+        if step:
+            with (self.batch / f'{step}.log').open('a') as f:
+                f.write('INTERRUPTION ' + line + '\n')
+        print('INTERRUPTION', line, flush=True)
+        self.state.setdefault('interruptions', []).append(
+            {k: record.get(k) for k in ('n', 'kind', 'phase', 'detected_utc')})
+        self.save()
+        return record
+
+    def earlier_processes(self) -> list:
+        """Live processes of an earlier runner of this batch (runner, collector, liveness), never ourselves.
+
+        Called when a restarted runner starts, before it has children of its own.
+        """
+        table = proc_table()
+        mine, pid = {os.getpid()}, os.getpid()
+        while pid in table:  # our ancestors (the launcher's shell names the batch too)
+            pid = table[pid][0]
+            mine.add(pid)
+        batch = str(self.batch)
+        return [{'pid': p, 'cmdline': c[:300]} for p, (_, c) in sorted(table.items())
+                if p not in mine and batch in c and ('c3_label_sweep' in c or 'r1.headroom.e1b_collect' in c
+                                                     or 'r1.liveness' in c)]
+
+    def restart_service(self, reason: str, phase: str) -> dict:
+        """Stop the lost (or orphaned) dedicated instance and start a new one after the launch checks."""
+        restarts = self.state.setdefault('service_restarts', [])
+        key = 'resume' if reason == 'process_restart' else 'watchdog'
+        limit = int(self.config[key]['max_restarts'])
+        used = sum(1 for r in restarts if r['reason'] == reason)
+        if used >= limit:
+            raise Stop(f'STOP: {reason}: {used} service restarts already (config {key}.max_restarts = {limit}); '
+                       'the author decides')
+        record = {'reason': reason, 'phase': phase, 'utc': stamp(), 'generation': len(restarts) + 1,
+                  'previous_ollama': {k: (self.state.get('ollama') or {}).get(k)
+                                      for k in ('pid', 'pgid', 'port', 'generation', 'started_utc', 'log')}}
+        restarts.append(record)
+        self.save()
+        if reason == 'process_restart':
+            earlier = self.earlier_processes()
+            if earlier:
+                record['refused'] = earlier
+                self.save()
+                raise Stop(f'STOP: processes of an earlier runner of this batch are still alive: {earlier}; '
+                           'never resumed alongside them')
+            record['previous_instance'] = stop_orphan(self.state.get('ollama') or {})
+            self.check_heads()
+        elif self.ollama is not None:
+            record['previous_instance'] = self.ollama.stop()
+        self.ollama = None
+        self.state['model_loaded'] = False  # the new instance has not loaded the model yet (co-tenancy margin)
+        self.save()
+        self.start_service(generation=record['generation'])
+        record.update(ollama={k: self.state['ollama'].get(k) for k in
+                              ('pid', 'pgid', 'port', 'generation', 'models_seeded', 'started_utc', 'healthy_utc')},
+                      gpu=self.state.get('gpu'), paper_a_check=self.state.get('paper_a_check', {}).get('verdict'),
+                      completed_utc=stamp())
+        self.save()
+        return record
+
+    def resume_interrupted(self, out: Path, work: Path, step: str, kind: str, *, restart: dict | None = None,
+                           event: dict | None = None, session_started: float | None = None) -> dict:
+        """RUNBOOK A.5: keep completed roots; move partial attempts aside so the collector re-runs them whole."""
+        n = len(self.state.get('interruptions', [])) + 1
+        out_moved, work_moved = out / 'interrupted' / f'{n:02d}', work / 'interrupted' / f'{n:02d}'
+        complete, unparseable, failures_moved, rerun = [], [], [], []
+        for path in sorted((out / 'roots').glob('*.json')):
+            try:
+                json.loads(path.read_text())
+                complete.append(path.stem)
+            except ValueError:  # killed while the collector wrote it
+                (out_moved / 'roots').mkdir(parents=True, exist_ok=True)
+                shutil.move(str(path), str(out_moved / 'roots' / path.name))
+                unparseable.append(path.stem)
+        if kind == 'runner_lost' and session_started is not None:
+            for path in sorted((out / 'failures').glob('root__*.json')):
+                if path.stat().st_mtime < session_started:
+                    continue
+                attempts = json.loads(path.read_text()).get('transport_attempts') or []
+                if attempts and attempts[-1].get('error_class') not in (None, 'non_retryable'):
+                    (out_moved / 'failures').mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(path), str(out_moved / 'failures' / path.name))
+                    failures_moved.append(path.name[len('root__'):-len('.json')])
+        failed = {p.name[len('root__'):-len('.json')] for p in (out / 'failures').glob('root__*.json')}
+        if (work / 'roots').is_dir():
+            for root in sorted((work / 'roots').iterdir()):
+                if root.name in complete or root.name in failed:
+                    continue
+                (work_moved / 'roots').mkdir(parents=True, exist_ok=True)
+                shutil.move(str(root), str(work_moved / 'roots' / root.name))
+                rerun.append(root.name)
+        entry = self.state['steps'][step]
+        return self.log_event({
+            'kind': kind, 'phase': step, 'phase_started_utc': entry.get('started_utc'), 'detected_utc': stamp(),
+            'rule': 'RUNBOOK A.5: resume from the last completed campaign root; an interrupted root is re-run '
+                    'whole, never patched',
+            'roots_completed_kept': len(complete), 'roots_rerun_whole': rerun,
+            'root_records_unparseable_moved': unparseable, 'root_failures_moved': failures_moved,
+            'moved_to': {'out': str(out_moved.relative_to(self.paper)) if out_moved.exists() else None,
+                         'work': str(work_moved) if work_moved.exists() else None},
+            'service_restart': restart, 'runner_event': event}, out, step)
+
+    def last_request(self, work: Path) -> dict:
+        """What the lost server was doing: its log's last request and signal lines, the last LLM event."""
+        info: dict = {}
+        try:
+            log = Path((self.state.get('ollama') or {}).get('log') or '')
+            if log.is_file():
+                lines = log.read_text(errors='replace').splitlines()
+                requests = [line for line in lines if '[GIN]' in line or 'POST "/api/' in line]
+                info.update(server_log=str(log), server_log_tail=lines[-20:],
+                            last_server_request=requests[-1] if requests else None,
+                            last_server_requests=requests[-5:],  # concurrent workers: the fatal one may not be last
+                            server_log_signal_lines=[line for line in lines[-500:] if re.search(
+                                r'signal|terminated|exit status|killed|no longer running', line, re.I)][-10:])
+            events = sorted((work / 'roots').rglob('root_events.jsonl'), key=lambda q: q.stat().st_mtime)
+            for path in reversed(events):
+                calls = [json.loads(line) for line in path.read_text().splitlines()
+                         if line.strip() and '"llm_call' in line]
+                if calls:
+                    last = calls[-1]
+                    info['last_llm_event'] = {'file': str(path), 'event_type': last.get('event_type'),
+                                              'trial_id': last.get('trial_id'),
+                                              **{k: (last.get('payload') or {}).get(k)
+                                                 for k in ('seed', 'llm_seed', 'parse_ok', 'transport_attempts')}}
+                    break
+        except Exception as exc:  # noqa: BLE001 - diagnostics never mask the loss itself
+            info['error'] = repr(exc)
+        return info
+
+    def runner_lost(self, event: dict, out: Path, work: Path, step: str, session_started: float | None = None):
+        """RUNBOOK A.8: record the loss, restart the dedicated instance, re-run affected roots whole (A.5)."""
+        event['last_request'] = self.last_request(work)
+        try:
+            restart = self.restart_service('runner_lost', step)
+        except Stop as exc:
+            self.log_event({'kind': 'runner_lost', 'phase': step, 'detected_utc': stamp(), 'runner_event': event,
+                            'restart_failed': str(exc.args[0])}, out, step)
+            raise
+        event['stopped_instance'] = {k: (restart.get('previous_instance') or {}).get(k)
+                                     for k in ('returncode', 'stopped_utc', 'killed')}
+        return self.resume_interrupted(out, work, step, 'runner_lost', restart=restart, event=event,
+                                       session_started=session_started)
+
+    def collect(self, argv, step: str, out: Path, work: Path, resume) -> None:
+        """One collector session; with the watchdog on, a runner loss restarts the service and resumes."""
+        if not self.watchdog_on():
+            self.cmd(argv, log=f'{step}.log', env=self.ollama_env())
+            return
+        while True:
+            started = time.time()
+            event = self.watched_cmd(argv, log=f'{step}.log')
+            if event is None:
+                return
+            self.runner_lost(event, out, work, step, session_started=started)
+            argv = resume
+
+    def watched_cmd(self, argv, *, log: str) -> dict | None:
+        """Run the collector while polling the dedicated instance; None, or the loss record."""
+        print('RUN', argv, '(watched)', flush=True)
+        spec = self.config['watchdog']
+        watchdog = RunnerWatchdog(self.ollama, spec)
+        with (self.batch / log).open('a') as f:
+            proc = subprocess.Popen(argv, cwd=self.paper, stdout=f, stderr=subprocess.STDOUT,
+                                    env=dict(os.environ, **self.ollama_env()))
+        event = None
+        try:
+            while proc.poll() is None:
+                event = watchdog.check()
+                if event is not None:
+                    break
+                time.sleep(float(spec['poll_seconds']))
+        finally:
+            if proc.poll() is None:
+                stopped = stop_tree(proc.pid)
+                proc.wait()
+                if event is not None:
+                    event['collector'] = {'pid': proc.pid, 'stopped': stopped, 'returncode': proc.returncode}
+        if event is None and proc.returncode != 0:
+            event = watchdog.check()  # a collector that failed because the server died near the end
+            if event is None:
+                raise subprocess.CalledProcessError(proc.returncode, argv)
+            event['collector'] = {'pid': proc.pid, 'returncode': proc.returncode}
+        return event
 
     # -- model service -------------------------------------------------------
     def ollama_env(self) -> dict:
@@ -303,11 +668,7 @@ class SweepRunner:
             time.sleep(60)
 
     # -- phases --------------------------------------------------------------
-    def preconditions(self) -> None:
-        plan = (self.paper / 'docs/r1/PLAN.md').read_text()
-        missing = [row for row in ROWS if row not in plan]
-        if missing:
-            raise Stop(f'STOP: PLAN §10 lacks the author rows {missing}')
+    def check_heads(self) -> tuple[str, str]:
         paper_head = self.git(self.paper, 'rev-parse', 'HEAD')
         if paper_head != self.git(self.paper, 'ls-remote', self.remote, 'refs/heads/main').split()[0]:
             raise Stop('STOP: paper checkout is not at the remote main head')
@@ -315,8 +676,20 @@ class SweepRunner:
         pin_file = self.paper / 'r1/scripts/HARNESS_PIN_C3'
         if not pin_file.exists() or pin_file.read_text().strip() != harness_head:
             raise Stop(f'STOP: harness head {harness_head} differs from r1/scripts/HARNESS_PIN_C3')
+        return paper_head, harness_head
+
+    def preconditions(self) -> None:
+        plan = (self.paper / 'docs/r1/PLAN.md').read_text()
+        missing = [row for row in ROWS if row not in plan]
+        if missing:
+            raise Stop(f'STOP: PLAN §10 lacks the author rows {missing}')
+        paper_head, harness_head = self.check_heads()
         self.state.update(paper_head_at_launch=paper_head, harness_head_at_launch=harness_head)
         self.save()
+        self.start_service()
+
+    def start_service(self, generation: int = 0) -> None:
+        """Paper A check, card, dedicated Ollama, digest, load probe, offload (generation > 0: a restart)."""
         # PLAN §10 (19 Oct): Paper A coordination before any Paper B GPU launch.
         try:
             self.state['paper_a_check'] = paper_a_check(self.config['paper_a_check'], self.host)
@@ -330,12 +703,17 @@ class SweepRunner:
         uuid = self.state['gpu'].split(',')[1].strip()
         self.gpu['check_gpu']()
         spec = self.config['ollama']
-        self.ollama = OllamaInstance(self.batch, spec['binary'], port=spec.get('port'),
+        restart = {'generation': generation, 'reuse_models': True} if generation else {}
+        port, models_dir = spec.get('port'), None
+        if generation:  # a restart reuses the batch's port and models directory
+            previous = self.state.get('ollama') or {}
+            port, models_dir = port or previous.get('port'), previous.get('models_dir')
+        self.ollama = OllamaInstance(self.batch, spec['binary'], port=port, models_dir=models_dir,
                                      seed_models_from=spec.get('seed_models_from'), gpu_uuid=uuid,
-                                     label=self.label, start_timeout=float(spec.get('start_timeout', 120)))
+                                     label=self.label, start_timeout=float(spec.get('start_timeout', 120)), **restart)
         self.state['ollama'] = self.ollama.start()
         self.save()
-        if not spec.get('seed_models_from'):
+        if not spec.get('seed_models_from') and self.state['ollama'].get('models_seeded') != 'reused':
             self.ollama.pull(MODEL)
         with urlopen(self.ollama.url + '/api/tags', timeout=15) as response:
             tags = json.load(response)
@@ -352,7 +730,7 @@ class SweepRunner:
         if selected is None or not selected.findall('./processes/process_info'):
             raise Stop('STOP: no process on the selected GPU after loading')
         self.state['model_loaded'] = True
-        self.check_offload('load_probe')
+        self.check_offload('load_probe' if not generation else f'load_probe_r{generation}')
         self.save()
 
     def liveness(self) -> None:
@@ -384,8 +762,33 @@ class SweepRunner:
 
     def sweep(self, memory_mode: str) -> None:
         step = f'sweep_{memory_mode}'
+        entry = self.state['steps'][step]
         eligible = self.state['steps']['liveness']['eligible_nodes']
         self.require_liveness(eligible, memory_mode)  # D28 gate first
+        base = [self.py, '-m', 'r1.headroom.e1b_collect']
+        previous = Path(entry['out']) if entry.get('out') else None
+        if previous is not None and (previous / 'manifest.json').exists():
+            # RUNBOOK A.5: resume an interrupted sweep from its last completed campaign root.
+            out, work = previous, Path(entry['work'])
+            resume = [*base, '--resume', str(out), '--workers', str(self.config['workers'])]
+            self.resume_interrupted(out, work, step, 'process_restart', restart=self.pending_restart)
+            self.pending_restart = None
+            self.collect_sessions(out, work, step, resume, eligible, memory_mode)
+            return
+        if previous is not None and previous.exists():
+            if any(previous.iterdir()):
+                raise Stop(f'STOP: {previous} exists without a collector manifest and is not empty; '
+                           'author decision required')
+            previous.rmdir()  # created by this batch's collector, which died before writing anything
+            self.log_event({'kind': 'process_restart', 'phase': step, 'detected_utc': stamp(),
+                            'note': f'collector never started: empty {previous} removed; the sweep starts fresh',
+                            'service_restart': self.pending_restart}, None, step)
+            self.pending_restart = None
+        if self.pending_restart is not None:  # restarted before this sweep had started any collector
+            self.log_event({'kind': 'process_restart', 'phase': step, 'detected_utc': stamp(),
+                            'note': 'restart before the sweep started', 'service_restart': self.pending_restart},
+                           None, step)
+            self.pending_restart = None
         out = self.paper / 'results/r1/pilot' / f'C3_sweep_{memory_mode}_{stamp()}'
         work = self.batch / f'c3_{memory_mode}_work'
         if out.exists():
@@ -402,24 +805,31 @@ class SweepRunner:
             'audit_seeds': self.config['audit']['seeds'], 'nodes_pending': self.config['nodes_pending']}}
         label_args = ['--label', 'DRYRUN', '--split', 'engineering'] if self.dryrun else \
             ['--label', 'PILOT', '--split', 'c3_labels']
-        base = [self.py, '-m', 'r1.headroom.e1b_collect']
-        self.cmd([*base, '--manager', 'langgraph', '--roots-only', '--points', '--reps', '0',
-                  '--audit-seeds', '0', '--nodes', *eligible, '--instances', str(self.config['instances']),
-                  '--runs', str(self.config['runs']), '--verify-split-policy', 'vary', '--new-campaign-versions',
-                  '--memory-mode', memory_mode,
-                  '--transport-max-attempts', str(self.config['transport_max_attempts']),
-                  '--root-failures', 'record', '--extra-manifest', json.dumps(extra),
-                  '--workers', str(self.config['workers']), '--out', str(out), '--work', str(work), *label_args],
-                 log=f'{step}.log', env=self.ollama_env())
+        resume = [*base, '--resume', str(out), '--workers', str(self.config['workers'])]
+        self.collect([*base, '--manager', 'langgraph', '--roots-only', '--points', '--reps', '0',
+                      '--audit-seeds', '0', '--nodes', *eligible, '--instances', str(self.config['instances']),
+                      '--runs', str(self.config['runs']), '--verify-split-policy', 'vary', '--new-campaign-versions',
+                      '--memory-mode', memory_mode,
+                      '--transport-max-attempts', str(self.config['transport_max_attempts']),
+                      '--root-failures', 'record', '--extra-manifest', json.dumps(extra),
+                      '--workers', str(self.config['workers']), '--out', str(out), '--work', str(work), *label_args],
+                     step, out, work, resume)
+        self.collect_sessions(out, work, step, resume, eligible, memory_mode)
+
+    def collect_sessions(self, out: Path, work: Path, step: str, resume: list, eligible, memory_mode) -> None:
+        """Resume sessions until one finds no job; then gates, offload check, archive, commit."""
         for _ in range(int(self.config['max_collect_sessions'])):
             manifest = json.loads((out / 'manifest.json').read_text())
             if manifest['sessions'] and manifest['sessions'][-1]['jobs_before'] == 0:
                 break
             if not self.ollama_alive():
-                break  # a dead model service: the gates below record it and stop
+                if not self.watchdog_on():
+                    break  # a dead model service: the gates below record it and stop
+                loss = RunnerWatchdog(self.ollama, self.config['watchdog']).check() or \
+                    {'kind': 'unhealthy_between_sessions', 'detected_utc': utc_iso()}
+                self.runner_lost(loss, out, work, step)
             self.gpu['check_gpu']()
-            self.cmd([*base, '--resume', str(out), '--workers', str(self.config['workers'])],
-                     log=f'{step}.log', env=self.ollama_env())
+            self.collect(resume, step, out, work, resume)
         else:
             raise Stop('STOP: collector failed to reach a zero-job session')
         checks = self.collection_gates(out, work, eligible, memory_mode)
@@ -438,7 +848,7 @@ class SweepRunner:
         failures = [json.loads(p.read_text()) for p in sorted(failure_dir.glob('*.json'))] \
             if failure_dir.exists() else []
         calls, failed_calls, parse_failures, summaries, retried = [], [], [], [], []
-        for path in sorted(work.rglob('root_events.jsonl')):
+        for path in sorted((work / 'roots').rglob('root_events.jsonl')):  # final roots, not interrupted attempts
             for line in path.read_text().splitlines():
                 if not line.strip():
                     continue
@@ -452,7 +862,7 @@ class SweepRunner:
                                         'attempts': item['payload']['transport_attempts']})
                 elif item.get('event_type') == 'llm_call_failed':
                     failed_calls.append({'trial_id': item.get('trial_id'), **item['payload']})
-        for path in sorted(work.rglob('root_trials.jsonl')):
+        for path in sorted((work / 'roots').rglob('root_trials.jsonl')):
             for line in path.read_text().splitlines():
                 if line.strip():
                     summaries.append(json.loads(line).get('proposal_summary') or '')
@@ -464,6 +874,13 @@ class SweepRunner:
                  'transport_max_attempts': manifest['manager'].get('transport_max_attempts', 1),
                  'verify_split_policy': manifest.get('verify_split_policy'),
                  'action_versions': manifest.get('action_versions'), 'written_utc': stamp()}
+        if (work / 'interrupted').exists():  # RUNBOOK A.5: calls spent on attempts that were re-run whole
+            check['interrupted_attempts'] = {
+                'root_attempts': len([d for d in (work / 'interrupted').glob('*/roots/*') if d.is_dir()]),
+                'llm_calls': sum(1 for path in (work / 'interrupted').rglob('root_events.jsonl')
+                                 for line in path.read_text().splitlines()
+                                 if line.strip() and json.loads(line).get('event_type') == 'llm_call'),
+                'interruptions': len(self.state.get('interruptions', []))}
         (out / 'collection_checks.json').write_text(json.dumps(check, indent=2) + '\n')
         if failures or len(roots) != expected:
             payload = {'label': self.label, 'written_utc': stamp(), 'n_failures': len(failures),
@@ -484,7 +901,10 @@ class SweepRunner:
     def archive(self, out: Path, work: Path) -> None:
         """Copy root ledgers and events into the run; the audit stage then needs only committed inputs."""
         archive = out / 'provenance' / 'ledgers'
-        for path in sorted((work / 'roots').rglob('*.jsonl')):
+        paths = sorted((work / 'roots').rglob('*.jsonl'))
+        if (work / 'interrupted').exists():  # RUNBOOK A.5: partial attempts of re-run roots, kept as provenance
+            paths += sorted((work / 'interrupted').rglob('*.jsonl'))
+        for path in paths:
             target = archive / path.relative_to(work)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, target)
@@ -530,17 +950,34 @@ class SweepRunner:
     def phases(self) -> list:
         return [*PHASES_FIXED, *[f'sweep_{m}' for m in self.config['memory_modes']], 'index']
 
+    def pending_phase(self) -> str | None:
+        return next((p for p in self.phases() if not self.state['steps'].get(p, {}).get('completed')), None)
+
     def main(self) -> None:
         self.load_previous_state()
         if self.state.get('finished_utc'):
             raise Stop('STOP: this C3 sweep batch already finished; start a new batch')
         if not self.dryrun and self.host not in set(self.config['allowed_hosts']):
             raise Stop(f'STOP: unauthorized execution host {self.host}')
+        self.state.setdefault('runners', []).append({'pid': os.getpid(), 'started_utc': stamp()})
         self.save()
         self.phase('preconditions', self.preconditions)
         if self.ollama is None:
-            raise Stop('STOP: the batch Ollama instance belongs to an earlier process; a restart after '
-                       'preconditions is an author decision (start a new batch)')
+            pending = self.pending_phase()
+            started = pending in self.state['steps']
+            if pending is None or (pending == 'index' and not started):
+                pass  # nothing left that needs the model service
+            elif self.config['resume']['sweeps'] and (self.resumable(pending) or not started):
+                # RUNBOOK A.5: a restarted runner resumes; its sweep phase logs the interruption.
+                self.pending_restart = self.restart_service('process_restart', pending)
+                if not self.resumable(pending):
+                    self.log_event({'kind': 'process_restart', 'phase': pending, 'detected_utc': stamp(),
+                                    'note': 'restart before the phase started', 'service_restart': self.pending_restart},
+                                   None, None)
+                    self.pending_restart = None
+            else:
+                raise Stop('STOP: the batch Ollama instance belongs to an earlier process; a restart after '
+                           'preconditions is an author decision (start a new batch)')
         self.phase('liveness', self.liveness)
         for mode in self.config['memory_modes']:
             self.phase(f'sweep_{mode}', lambda mode=mode: self.sweep(mode))

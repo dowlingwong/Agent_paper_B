@@ -16,6 +16,20 @@ Scenarios (fault injection over /api/chat calls of the batch's own server):
   failed roots must persist traceback, error class, UTC time and the attempt
   log, and the runner must stop cleanly (STOP recorded, collection files
   written, the dedicated server gone, tmux session ended).
+* ``interrupt`` (RUNBOOK A.5) - once the first sweep has a completed root and a
+  root in progress, the runner's whole process group is SIGKILLed (runner,
+  collector, workers; the dedicated server survives as an orphan, as after a
+  preemption); ``--start`` is run again on the same batch.  The batch must
+  finish; completed roots are kept byte for byte and never re-run, the roots in
+  progress are re-run whole, the orphaned server is stopped and a new one
+  started, and the interruption is logged (batch, step and runner logs, sweep
+  directory, committed).
+* ``watchdog`` (RUNBOOK A.8) - the watchdog is enabled and the server sends
+  itself SIGTERM mid-request (the 14 Oct incident); the runner must record the
+  loss (time, SIGTERM, last request), restart its dedicated server and re-run
+  the affected roots whole, and the batch must finish.
+
+``both`` runs ``retry`` and ``permanent``; ``all`` runs the four.
 
 ``--base-config PATH`` (e.g. ``r1/scripts/configs/c3_sweep_ada.json``) starts
 from a real launch config instead of the built-in fixture config and overrides
@@ -38,6 +52,7 @@ import json
 import os
 import platform
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
@@ -51,7 +66,12 @@ FAULTS = {
     # Liveness makes about 8 chat calls (2 nodes x 1 instance x W=4); call 14 falls in the first sweep.
     'retry': [{'chat_call': 14, 'mode': 'drop'}],
     'permanent': [{'chat_call': 14, 'mode': 'exit'}],
+    'interrupt': [],
+    'watchdog': [{'chat_call': 14, 'mode': 'sigterm'}],
 }
+WATCHDOG_DRYRUN = {'enabled': True, 'poll_seconds': 0.5, 'health_timeout': 2.0, 'unresponsive_checks': 2,
+                   'model_checks': 2, 'max_restarts': 2}
+SCENARIOS = {'both': ['retry', 'permanent'], 'all': ['retry', 'permanent', 'interrupt', 'watchdog']}
 
 
 def run(args, cwd=None, env=None):
@@ -170,6 +190,48 @@ def dryrun_config(base: dict, root: Path, bin_dir: Path) -> tuple[dict, list]:
     return config, sorted(overrides)
 
 
+def _sha(path: Path) -> str | None:
+    import hashlib
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+
+
+class Interrupter:
+    """``interrupt`` scenario: SIGKILL the runner's process group mid-sweep, then ``--start`` again."""
+
+    STEP = 'sweep_append_only_summary'
+
+    def __init__(self, launcher: Path, cwd: Path, env: dict) -> None:
+        self.launcher, self.cwd, self.env, self.info = launcher, cwd, env, {}
+
+    def __call__(self, batch: Path, state: dict) -> None:
+        if self.info:
+            return
+        step = state.get('steps', {}).get(self.STEP) or {}
+        if not step.get('out') or step.get('completed') or not state.get('runners'):
+            return
+        out, work = Path(step['out']), Path(step['work'])
+        if not (out / 'roots').is_dir() or not (work / 'roots').is_dir():
+            return
+        complete = sorted(p.stem for p in (out / 'roots').glob('*.json'))
+        partial = sorted(d.name for d in (work / 'roots').iterdir() if d.name not in complete
+                         and (d / 'root_trials.jsonl').exists() and (d / 'root_trials.jsonl').read_text().strip())
+        if not complete or not partial:
+            return
+        hashes = {inst: {'root': _sha(out / 'roots' / f'{inst}.json'),
+                         'ledger': _sha(work / 'roots' / inst / 'root_trials.jsonl')} for inst in complete}
+        runner = int(state['runners'][-1]['pid'])
+        os.killpg(os.getpgid(runner), signal.SIGKILL)  # runner, collector and its workers; not the server
+        self.info = {'killed_utc': datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ'), 'runner_pid': runner,
+                     'completed_before_kill': complete, 'partial_at_kill': partial, 'hashes_before': hashes,
+                     'ollama_before': state.get('ollama', {}).get('pid')}
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline and not subprocess.run(['tmux', 'has-session', '-t', 'r1_c3_sweep'],
+                                                                 env=self.env, capture_output=True).returncode:
+            time.sleep(0.2)
+        self.info['restart_launch'] = run(['bash', str(self.launcher), '--start', str(batch)], cwd=self.cwd,
+                                          env=self.env).strip().splitlines()[-1:]
+
+
 def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_sources,
                  python: str, deadline_s: float, base_config: dict | None = None) -> dict:
     batches = root / f'batches_{scenario}'
@@ -183,6 +245,9 @@ def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_s
                   'max_collect_sessions': 3,
                   'paper_a_check': {'command': [str(bin_dir / 'paper_a_status')]},
                   'ollama': {'binary': str(bin_dir / 'ollama'), 'start_timeout': 30}}
+    if scenario == 'watchdog':
+        config['watchdog'] = dict(WATCHDOG_DRYRUN)
+        overridden = sorted(set(overridden) | {'watchdog'}) if overridden is not None else None
     config_path = root / f'c3_config_{scenario}.json'
     config_path.write_text(json.dumps(config, indent=2))
     env = {k: v for k, v in os.environ.items()
@@ -206,6 +271,7 @@ def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_s
         if found is not None:
             shutil.copytree(found, batch / 'autoresearch_harness' / rel)
     launch = run(['bash', str(launcher), '--start', str(batch)], cwd=fixture['source'], env=env)
+    interrupter = Interrupter(launcher, fixture['source'], env) if scenario == 'interrupt' else None
     deadline = time.monotonic() + deadline_s
     state = {}
     while time.monotonic() < deadline:
@@ -215,6 +281,8 @@ def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_s
                 state = json.loads(state_file.read_text())
             except json.JSONDecodeError:
                 state = {}
+            if interrupter is not None:
+                interrupter(batch, state)
             if state.get('finished_utc') and (batch / 'c3_sweep_summary.json').exists():
                 if subprocess.run(['tmux', 'has-session', '-t', 'r1_c3_sweep'], env=env,
                                   capture_output=True).returncode:
@@ -224,7 +292,115 @@ def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_s
     calls = [json.loads(l) for l in (root / 'fake_calls.jsonl').read_text().splitlines()] \
         if (root / 'fake_calls.jsonl').exists() else []
     return {'batch': batch, 'state': state, 'calls': calls, 'env': env, 'timed_out': timed_out,
-            'deadline_s': deadline_s, 'config': config, 'overridden': overridden}
+            'deadline_s': deadline_s, 'config': config, 'overridden': overridden,
+            'interrupt': interrupter.info if interrupter is not None else None}
+
+def table_from_sweep(result: dict) -> dict:
+    """RUNBOOK A.4 end to end: the finished batch directory -> the C3 table, one command."""
+    batch = result['batch']
+    paper = batch / 'agent_paper_B'
+    table = batch / 'c3_table_check'
+    env = dict(result['env'], AR_HARNESS_ROOT=str(batch / 'autoresearch_harness'),
+               PYTHONPATH=f"{batch / 'autoresearch_harness/src'}:{paper}")
+    out = run([str(batch / 'autoresearch_harness/.venv/bin/python'), '-m', 'r1.c3.dataset', 'build-sweep',
+               '--index', str(batch), '--out', str(table)], cwd=paper, env=env)
+    summary = json.loads(out.strip().splitlines()[-1])
+    build = json.loads((table / 'build.json').read_text())
+    assert summary['n_proposals'] > 0 and len(summary['sources']) == 2, summary
+    assert build['label'] == 'DRYRUN' and build['sweep_index']['audit']['status'] == 'pending'
+    return {'n_proposals': summary['n_proposals'], 'sources': summary['sources']}
+
+
+def _completed_ok(result: dict) -> tuple[dict, Path]:
+    assert not result['timed_out'], f"scenario exceeded {result['deadline_s']} s"
+    state, batch = result['state'], result['batch']
+    assert state['stop_reason'] is None, state['stop_reason']
+    for step in ('preconditions', 'liveness', 'sweep_append_only_summary', 'sweep_none', 'index'):
+        assert state['steps'][step]['completed'], step
+    return state, batch
+
+
+def _committed_paths(result: dict, commit: str) -> list:
+    paper_remote = Path(result['env']['R1_C3_PAPER_REMOTE'])
+    return run(['git', 'ls-tree', '-r', '--name-only', commit], cwd=paper_remote).splitlines()
+
+
+def _records(batch: Path) -> list:
+    return [json.loads(line) for line in (batch / 'interruptions.jsonl').read_text().splitlines()]
+
+
+def check_interrupt(result: dict) -> dict:
+    state, batch = _completed_ok(result)
+    info = result['interrupt']
+    assert info, 'the runner was never interrupted (no completed root with another in progress)'
+    step = state['steps']['sweep_append_only_summary']
+    out, work = Path(step['out']), Path(step['work'])
+    records = _records(batch)
+    assert len(records) == 1, records
+    record = records[0]
+    assert record['kind'] == 'process_restart' and record['phase'] == 'sweep_append_only_summary', record
+    assert (out / 'interruptions.jsonl').read_text().strip() == json.dumps(record, default=str)
+    assert 'INTERRUPTION' in (batch / 'sweep_append_only_summary.log').read_text()
+    runner_log = (batch / 'runner.log').read_text()
+    assert 'INTERRUPTION' in runner_log and runner_log.count("'r1.liveness'") == 1  # appended, not truncated
+    completed, rerun = info['completed_before_kill'], record['roots_rerun_whole']
+    assert rerun and not set(rerun) & set(completed), (rerun, completed)
+    for inst, before in info['hashes_before'].items():  # kept byte for byte, never re-run
+        assert _sha(out / 'roots' / f'{inst}.json') == before['root'], inst
+        assert _sha(work / 'roots' / inst / 'root_trials.jsonl') == before['ledger'], inst
+    manifest = json.loads((out / 'manifest.json').read_text())
+    expected = len(state['steps']['liveness']['eligible_nodes']) * result['config']['instances']
+    assert manifest['sessions'][0]['jobs_before'] == expected - record['roots_completed_kept'], manifest['sessions']
+    runs = result['config']['runs']
+    for inst in rerun:  # re-run whole; the partial attempt archived, never merged
+        partial = out / 'provenance/ledgers/interrupted/01/roots' / inst / 'root_trials.jsonl'
+        final = [json.loads(line) for line in (out / 'provenance/ledgers/roots' / inst / 'root_trials.jsonl')
+                 .read_text().splitlines() if line.strip()]
+        assert (work / 'interrupted/01/roots' / inst).is_dir() and partial.exists(), inst
+        budget = [r['budget_index'] for r in final]  # a fresh campaign from trial 1, contiguous
+        assert budget == list(range(1, len(budget) + 1)) and len(budget) >= runs, (inst, budget)
+    restart = state['service_restarts'][0]
+    assert restart['reason'] == 'process_restart' and restart['previous_instance']['action'] == 'SIGTERM', restart
+    assert restart['previous_instance']['pid'] == info['ollama_before'] != restart['ollama']['pid']
+    assert record['service_restart']['generation'] == 1
+    assert (batch / f"ollama_instance_{restart['ollama']['port']}_r1.json").exists()
+    assert 'results/r1/pilot/' + out.name + '/interruptions.jsonl' in _committed_paths(result, step['commit'])
+    checks = step['checks']
+    assert checks['roots'] == expected and checks['interrupted_attempts']['root_attempts'] == len(rerun)
+    return {'killed_utc': info['killed_utc'], 'completed_before_kill': completed, 'roots_rerun_whole': rerun,
+            'roots_completed_kept': record['roots_completed_kept'],
+            'resumed_jobs_before': manifest['sessions'][0]['jobs_before'],
+            'orphan_server_stopped': restart['previous_instance']['action'], 'table': table_from_sweep(result)}
+
+
+def check_watchdog(result: dict) -> dict:
+    state, batch = _completed_ok(result)
+    step = state['steps']['sweep_append_only_summary']
+    out = Path(step['out'])
+    records = _records(batch)
+    assert len(records) == 1 and records[0]['kind'] == 'runner_lost', records
+    record = records[0]
+    event = record['runner_event']
+    assert event['kind'] == 'server_exited' and event['signal'] == 'SIGTERM' and event['returncode'] == -15, event
+    assert event['detected_utc'] and event['last_healthy_utc'] <= event['detected_utc']
+    recent = event['last_request'].get('last_server_requests') or []
+    assert any('fault=sigterm' in line for line in recent), event['last_request']
+    assert record['roots_rerun_whole'] or record['root_failures_moved'], record
+    restart = state['service_restarts'][0]
+    assert restart['reason'] == 'runner_lost' and restart['generation'] == 1
+    assert restart['ollama']['pid'] != restart['previous_ollama']['pid']
+    serves = [c for c in result['calls'] if c.get('event') == 'serve']
+    assert len(serves) == 2, serves  # the original and the restarted server
+    assert len([c for c in result['calls'] if c.get('fault') == 'sigterm']) == 1
+    checks = step['checks']
+    expected = len(state['steps']['liveness']['eligible_nodes']) * result['config']['instances']
+    assert checks['roots'] == expected and checks['root_failures'] == 0
+    assert 'results/r1/pilot/' + out.name + '/interruptions.jsonl' in _committed_paths(result, step['commit'])
+    return {'runner_event': {k: event[k] for k in ('kind', 'signal', 'returncode', 'detected_utc')},
+            'last_server_request': next(line for line in recent if 'fault=sigterm' in line),
+            'roots_rerun_whole': record['roots_rerun_whole'], 'root_failures_moved': record['root_failures_moved'],
+            'restarted_generation': restart['generation'], 'table': table_from_sweep(result)}
+
 
 
 def check_retry(result: dict) -> dict:
@@ -310,7 +486,8 @@ def check_permanent(result: dict) -> dict:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--scenario', choices=['retry', 'permanent', 'both'], default='both')
+    ap.add_argument('--scenario', choices=['retry', 'permanent', 'interrupt', 'watchdog', 'both', 'all'],
+                    default='both')
     ap.add_argument('--out', type=Path, default=None)
     ap.add_argument('--python', default=sys.executable, help='interpreter with the harness dependencies')
     ap.add_argument('--deadline', type=float, default=150.0, help='seconds per scenario run')
@@ -327,7 +504,7 @@ def main():
     data_sources = [Path(p) for p in (os.environ.get('R1_DRYRUN_DATA_HARNESS'), harness_source,
                                       REPO.parent / 'autoresearch_harness', REPO.parents[2] / 'autoresearch_harness')
                     if p]
-    scenarios = ['retry', 'permanent'] if args.scenario == 'both' else [args.scenario]
+    scenarios = SCENARIOS.get(args.scenario, [args.scenario])
     base_config = None
     if args.base_config:
         sys.path.insert(0, str(REPO))
@@ -348,7 +525,8 @@ def main():
             bin_dir = fake_bin(root, socket_name)
             result = run_scenario(scenario, root, fixture, bin_dir, data_sources, args.python, args.deadline,
                                   base_config)
-            entry['checks'] = (check_retry if scenario == 'retry' else check_permanent)(result)
+            entry['checks'] = {'retry': check_retry, 'permanent': check_permanent, 'interrupt': check_interrupt,
+                               'watchdog': check_watchdog}[scenario](result)
             entry['passed'] = True
         except Exception as exc:
             entry['passed'] = False
