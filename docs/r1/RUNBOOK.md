@@ -2,7 +2,7 @@
 
 Canonical plan: [PLAN.md](PLAN.md). Progress goes only into [STATUS.md](STATUS.md). C3 detail: [C3_DESIGN.md](C3_DESIGN.md).
 
-**Revised 23 October 2026, hosts updated 24 October 2026,** by an AI agent (Claude, coordinating session); AI-assisted, not human review. This revision replaces the 12 Oct execution order (L1–L14, E1–E8, the branch-table headroom gate and the L11 configurator scaffold), which the 18 Oct decisions (R1-C3 route A, the A0–A6 ladder, the C3 gate) and the 22–23 Oct decisions (D21 pool of eight, R1-C3-BASE) superseded. What was done under the old order stays recorded in STATUS. Host assignments marked **(proposed)** need an author decision before work depends on them.
+**Revised 23 October 2026, hosts updated 24 October 2026, Tracks X, H and P added 25 October 2026,** by an AI agent (Claude, coordinating session); AI-assisted, not human review. This revision replaces the 12 Oct execution order (L1–L14, E1–E8, the branch-table headroom gate and the L11 configurator scaffold), which the 18 Oct decisions (R1-C3 route A, the A0–A6 ladder, the C3 gate) and the 22–23 Oct decisions (D21 pool of eight, R1-C3-BASE) superseded. What was done under the old order stays recorded in STATUS. Host assignments marked **(proposed)** need an author decision before work depends on them.
 
 > **Venue changed to ICML 2027 (author, 24 Oct).** The deadline is not yet announced; a projection from the previous cycle puts abstract registration around 16 Jan 2027 and full papers around 22 Jan 2027. Only the venue changed: the plan, the phase targets and the quality bar stay as they are (author, 24 Oct).
 
@@ -40,7 +40,7 @@ Host rules:
 - **Paper A coordination (19 Oct):** no Paper B GPU launch on zhixu experiment while a Paper A campaign there waits for a card.
 - **Interruption on zhixu experiment:** every job there must resume from its last completed unit without re-running completed units. An interrupted unit is re-run whole, never patched. The run log records each interruption.
 - **One manager backend per table (D6, D15):** all proposals of one labelled table come from one host type with the pinned manager digest. Mixing hosts within one table needs an author decision.
-- **Proposer quantization (24 Oct):** manager models run at Q4_K_M; the size ceiling is roughly 27B dense to 35B-A3B MoE (fits the 4090's 24 GB with a few GB left for the KV cache). Digest and quantization are pinned and reported for every run. Training stays BF16 LoRA (QLoRA only if needed).
+- **Proposer quantization (24 Oct; size rule replaced 25 Oct):** manager models run at Q4_K_M. The 24 Oct size ceiling (27B dense to 35B-A3B MoE) is replaced by the fit rule of R1-EXAM-POOL (Track X): any model the pinned llama.cpp build serves fully on one RTX 4090 at Q4_K_M with 16k context and q8_0 KV cache. Digest and quantization are pinned and reported for every run. Training stays BF16 LoRA (QLoRA only if needed).
 - **Precision:** the TITANs are an older generation; check bf16 and kernel support (Qwen3.5's linear-attention layers) before planning any training there. Training defaults to zhixu portal.
 
 ## 4. Where we stand (23 Oct, from STATUS)
@@ -70,6 +70,8 @@ Order of the Phase A steps, with what each waits for. Steps on the same line can
 6. Sweep 1 starts (B.1). deepthought.
 
 A.2 (T4 proof check) runs alongside, on the Mac; it gates the manuscript, not the sweep.
+
+Added 25 Oct: Track X (proposer exam, zhixu portal) starts with X.1–X.2 once A.10/A.11 are done and must finish before B.5 uses the same card; Track H (DAC interface, Mac) and P.0 (post-training spikes, zhixu portal) run during Phase B and must be done before C.3.
 
 ### Phase A — Close out preparation (target ~1 Nov 2026)
 
@@ -112,11 +114,96 @@ Adopted (author, 24 Oct): Karpathy's autoresearch, 1GC-7RC (2026) and MLGym (Met
 | G.4 | Author: role of the new nodes (evaluation/transfer only, or small label sets) and their audit budget | Mac (author) | PLAN §10 row |
 | G.5 | Transfer evaluation of A1–A6 on the new nodes with a reduced, pre-declared audit budget | zhixu portal (+ zhixu experiment, resumable) | Transfer table, part of D.1 |
 
+### Track X — Proposer candidacy exam (appendix; added 25 Oct)
+
+**Pool and host adopted by the author (25 Oct, R1-EXAM-POOL); the protocol below is a proposal (needs an author decision before X.4).**
+
+**What exists and why it is not reused as evidence.** The model "exam" the author remembered is the Round-7 candidacy exam of the Paper A repo (`agent-checkpoint-intervention`: `paper/appendices/C_protocol.tex`, subsection "Model candidacy: the completed Round-7 exam"; `round10/CANONICAL_EXAM_RESULTS.md`; evidence `evidence/round7-blackwell-grouped/run/`). Its code also survives here as `archive/old_b_2026-10-09/code/experiment_scaffold/src/causal_branch/round5_titan_exam.py` (protocol `round5_titan_compact_exam_v1`, Stage A compatibility + Stage B 30-root exam, hard gates, score `100·(0.5Y + 0.15C + 0.15S + 0.1T + 0.1R)`, selection by successes per GPU-hour). It completed on 4 Sep 2026: twelve candidates on two leased 48 GB Ada cards; three cleared the 12/30 gate; Devstral Small 2 24B was selected provisionally; all pairwise success differences among the three had bootstrap intervals covering zero. It cannot answer R1's question:
+- **Different task.** A Pi coding agent writes an artifact and calls `submit_candidate` on a tabular task adjudicated on 40 hidden rows. R1's manager emits one structured `ManagerProposal` per trial in a governed keep/discard loop under noise. Tool-use competence is not proposal quality.
+- **Confounded by interface conformance.** Several low rows were submission-format failures, not task failures (Qwen3.6-35B-A3B 2/30 valid submissions, Qwen3.6-27B 5/30, Muse Glimmer 7/30), under one frozen runtime with thinking disabled (`ENABLE_THINKING = False` in the protocol).
+- **Statistically an eligibility screen only.** 30 roots, one draw; the archived Paper B limitations section says the screen "licenses no ranking of models".
+- **Different hardware.** Two-card layer split, not one 4090.
+
+Reused: the machinery (artifact pinning and quantization/licence blockers, Wilson intervals, paired template bootstrap, occupancy and contamination handling, frozen selection rule before data). Not reused: its numbers or its pool verdicts.
+
+**Purpose.** (i) Choose, by a rule frozen before data, the strong proposer for the D22 deployment check and the second manager for B.6. (ii) An appendix table of how proposer choice moves the C3-relevant quantities (duplicate and no-op rates, audited proposal increments, final audited Y). Exam campaigns are never C3 labels.
+
+**Pool (author, 25 Oct).** Every candidate below enters Stage A. TeichAI/Qwen3.6-27B-Claude-Opus-Reasoning-Distill-v2 is excluded by the author.
+
+| Group | Candidates |
+|---|---|
+| Dense ≥ 20B | Qwen3.8-27B; Qwen3.6-27B; Gemma 4 31B; Muse Glimmer 30B; OLMo 3.1 32B Instruct (Think variant as a sensitivity row); Devstral Small 2 24B; Ornith-1.0-31B |
+| MoE | Qwen3.6-35B-A3B; Gemma 4 26B-A4B; Nemotron 3.5 Lightning 30B-A3B; GLM-4.7-Flash (30B-A3B); LFM2.5-24B-A2B; Laguna XS 2.1 (33B-A3B); Ornith-1.0-35B-A3B; Qwen3-Coder-30B-A3B-Instruct; gpt-oss-20b (native MXFP4, declared exception to Q4_K_M) |
+| ≤ 14B | Qwen3.5-9B; Gemma 4 12B; Ornith-1.0-9B; Ministral 3 14B |
+| Community post-trained | rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled; skiboyvv/Qwopus3.6-27B-v4 (both labelled "community fine-tune, data provenance not audited" in every table) |
+| Anchors (not candidates) | random-valid proposer; scripted stand-in; `qwen2.5-coder:7b` (D15, current manager) |
+
+**Fit rule (author, 25 Oct; replaces the size ceiling of R1-PROPOSER-QUANT).** A candidate is admissible iff the pinned llama.cpp build serves its Q4_K_M GGUF fully on the zhixu portal RTX 4090 (`-ngl 99`, no CPU layers) with context 16,384 and q8_0 KV cache, with ≥ 1 GiB VRAM free after load and after a 16k-token prefill. Admissibility is measured by X.2, never estimated from parameter counts. Q4_K_M stays the quantization; gpt-oss-20b runs at its native MXFP4.
+
+| # | Step | Host | Done when |
+|---|---|---|---|
+| X.1 | Registry: per candidate HF repo @ revision, licence, GGUF sha256, quantization source policy (one policy for all, declared before any download: quantize from BF16 with the pinned llama.cpp build and one imatrix recipe; a third-party Q4_K_M only where BF16 is impractical, recorded per row), chat-template source, thinking policy, vendor sampling. Port `quantization_blockers` / licence blockers / Wilson / paired bootstrap from the archived `round5_titan_exam.py` into `r1/exam/` (tests carried). | Mac (code) | Registry committed; ported tests pass |
+| X.2 | **Stage A (mechanical; no worker runs).** Per candidate: full-offload + 16k-prefill probe (fit rule); template check (llama-server `--jinja` render vs the HF template on 5 fixed prompts, byte-equal); 50 frozen manager prompts replayed from real memory-on ledgers across ≥ 4 nodes → `ManagerProposal` parse rate ≥ 0.95 and active-key validity rate reported; D26 seed reproducibility (two calls, identical output at temperature 0.2); latency p50/p95 and tokens per proposal. Failure classes kept apart: offload, template, parse, timeout. One template repair per model is allowed, declared before Stage B. | zhixu portal | Stage A table; excluded rows carry a class and reason |
+| X.3 | **Discrimination check with anchors** on the X.4 design: random-valid < scripted on audited mean proposal increment, and `qwen2.5-coder:7b` reproduces its pilot duplicate rate within CI. If the exam cannot order the anchors, STOP: it has no discriminating power. | zhixu portal + CPU | Anchor table |
+| X.4 | **Stage B (task exam).** Nodes: three D21 nodes (proposed: `digits_mlp` if D28 passes, else `tabular_mlp`; `openml_credit_approval`; `openml_ionosphere`). Exam-namespace instance seeds 9001–9006 (never used by any sweep), W = 20, memory `append_only_summary`, `"vary"` split, one repetition, temperature 0.2 + D26 seed. Thinking off where it can be switched off; always-thinking models get a 2,048-token think budget, recorded. Audits: each non-inert, non-duplicate proposal on K = 4 fresh seeds (9101–9104, disjoint from 7001–7010); each final incumbent on K = 10 (9201–9210). | zhixu portal (manager) + CPU workers | Manifest per candidate; completion or STOP |
+| X.5 | **Analysis (rule frozen before X.4 starts, committed with a hash).** Per candidate: valid-proposal rate, novelty (D28), no-op and duplicate rates, invalid-run rate, audited mean increment μ̂ and P(Δ > 0), final audited Y, s/proposal, GPU-h; cluster bootstrap by instance. Eligibility = Stage A pass + D28 criteria on the exam campaigns. Primary ranking: final audited Y; tie-break μ̂, then GPU-h. Importance check: do the anchors and the top candidate differ on any C3 quantity beyond CI? If not, the appendix reports the null and B.6 chooses by cost. | Mac | Report `docs/r1/reports/PROPOSER_EXAM_<date>.md` |
+| X.6 | Recheck the winner and runner-up on six fresh exam instances (9007–9012) against the winner's-curse of selecting on noisy Y. Top 3 also rerun once in vendor-recommended thinking mode (sensitivity). | zhixu portal | Recheck table |
+| X.7 | **Author:** proposer for D22 and second manager for B.6. If the B.6 manager does not fit a 12 GB TITAN, the second sweep's host changes (R1-SWEEP-HOST: one host type per table). | Mac (author) | PLAN §10 row |
+
+Cost and order: Stage A ≈ 10–15 min per model; Stage B ≈ 360 proposals per model, 0.3–3 GPU-h depending on speed; ≈ 2–4 days for the pool. The 4090 is also the B.5 training card, so Track X must finish by ~15 Nov or B.5 moves. X.1–X.2 start after A.10/A.11 (llama.cpp path).
+
+### Track H — DAC control interface for the learned prior (added 25 Oct; plan adopted by the author, R1-DAC-INTERFACE)
+
+**What exists (harness `r1`, this repo `r1/`).** E0/E1/E2 hooks with `Controller.decide(view, mask) -> ControlDecision` and leak-guarded `ControlView`; actions stop, demote, skip, revise, verify; `control_decision` events with input hash; keep rule `bayes_threshold/v1` with a `KeepPriorProvider` (constant `KeepPrior` or a callable of the view) at E2; verify response `posterior_mean/v1`; the `llamacpp` provider. Offline: `r1/c3/features.py` builds features by `replay_campaign` over ledgers; `r1/c3/rules.py` holds `execute`, `keep`, `decide(π, μ, τ, σ, g, Δ̂)`; `r1/c3/arms.py` holds ConstantPrior, RulesPrior, LGBMPrior.
+
+**Gap.** No online prior model; the E1 skip is not driven by (π, μ, τ); online features are not guaranteed equal to the offline replay; no small-model serving; no environment wrapper. C.3 (online pilot) assumes all of these.
+
+| # | Step | Host | Done when |
+|---|---|---|---|
+| H.1 | `PriorModel` protocol (`r1/c3/prior_model.py`): `forecast(features) -> Forecast(probs[12], version, digest, latency_s)`; moments via `labels.moments`. Implementations wrap the existing arms (A1 constant, A2 rules, A3 LightGBM/NGBoost) and add A4 (manager typed questions + isotonic map) and `SidecarPrior` (A5/A6). | Mac | Wrapped A1–A3 reproduce `offline_eval` numbers on the 19 Oct pilot table exactly |
+| H.2 | One featurizer for both paths: `features_from_view(view, node_ctx)`; `dataset.build` calls it through the replay. | Mac | Replaying every pilot campaign, the online-style features at each E1 hash-equal the dataset rows; leak test (no audit, sibling or future fields reachable) |
+| H.3 | `RuleController(prior, sigma_node, tau_node, g)` implementing `decide()`: at E1 apply A2 rule skips first (logged as such), then `rules.execute` → skip / continue; cache the forecast per trial and serve the same (μ, τ, σ) to E2 through `KeepPriorProvider`, so E1 and E2 use one forecast. Every decision records probs, π, μ, τ, t*, V, g, prior version and digest. All arms A1–A6 differ only in the `PriorModel` passed in. | harness `r1` + `r1/` | Unit tests; A1 through `RuleController` equals the index-policy arm on a scripted campaign |
+| H.4 | Skip semantics: a skipped trial spends no worker run, counts its LLM call, and is credited by the 22 Oct run-accounting row. **Author decision needed:** what the manager's memory shows for a skipped proposal (proposed: one line "skipped by the control plane: predicted no gain", no metric). This changes the proposal law, so it is part of the DI question (C4). | Mac (author) | PLAN §10 row |
+| H.5 | Sidecar service `r1/c3/serve.py`: loads base + LoRA adapter + head (sha256-pinned), `POST /forecast` → 12 probabilities; timeout 1 s → fall back to the A1 prior and log `prior_unavailable` (never crash the campaign); a fake sidecar for dry runs. Co-residency: ≤ 2B models beside the manager on a TITAN, 4B on zhixu portal. | Mac (code); deepthought smoke | Fake-sidecar dry run; timeout fallback test |
+| H.6 | Accounting: A4 queries count against the LLM-call cap; sidecar calls count only compute; latency descriptive (13 Oct rule). | Mac | `matching_report` shows equal W and LLM cap across arms |
+| H.7 | Direct-action arms through the same `decide()`: AWR-MLP (Harness-MDP style), LLM self-control (`r1/llm_control.py`), hybrid (prior decides whether, LLM decides how). `matching_report` extended to identical instances, W, LLM cap and information set. This is the three-way comparison of PLAN D.2. | Mac | Report on a dry run |
+| H.8 | Environments (`r1/c3/env.py`, Gymnasium API): `OfflineBanditEnv` over a labelled table (context = proposal features; action = bin; reward r = Δ_audit·keep − g·execute under the rules), used by Track P; `OnlineCampaignEnv` (DACBench-style instance set over the harness) built only if C4 finds a material DI violation (A7). | Mac | OfflineBanditEnv reproduces offline one-step values |
+| H.9 | End-to-end dry run: fake llama-server + fake sidecar, 2 nodes, arms A0–A6 (A5/A6 stubbed), interruption and resume, `matching_report` passes. | Mac → deepthought | Dry-run manifest |
+| H.10 | Fresh-session review + one correction round; author accepts. Must be done before C.3. | — | Review in `docs/r1/reviews/` |
+
+### Track P — Post-training pipeline for A5/A6 (added 25 Oct; proposal)
+
+**Facts checked 25 Oct (repo pages; to be confirmed by P.0).**
+- **Kev** (`jaredpalmer/kev`, Apache-2.0): rank-16 LoRA (attention, MLP and DeltaNet projections) plus a pointer head scoring each option's `</opt>` state against the question's `<decide>` state; on Qwen3.5 hybrid bases each question runs as its own row; trainer `python -m kev.train` on JSONL with one hard `label` per question, cross-entropy, `--init_from` a released adapter (lr 2e-5 suggested). **No soft labels and no RL code.** Kev-0.8B trains in bf16 on a 4 GB GPU.
+- **StartLux-Decision v1.1** (`StartLuxLabs/StartLux-Decision`; code Apache-2.0, weights CC BY-NC 4.0): Instant models answer in one forward pass with **bidirectional attention over the prompt** (served through a vLLM plugin); **no training code is published**; AutoThink RL is only described in its report. R1-C3-BASE's statement that StartLux "fits TRL GRPO directly" is therefore unverified.
+- **Laya** (`NandhaKishorM/laya`, Apache-2.0): ModernBERT-large encoder, 421M, 1,024-context typed-decisions checkpoint; fine-tuning via `notebooks/laya_finetune_typed_decisions_2xT4_kaggle.ipynb` and `notebooks/laya_finetune_typed_decisions_mps.py` ("RLCD": RL against strictly proper scoring rules), temperature calibration per option count. Soft-label support not documented.
+
+| # | Step | Host | Done when |
+|---|---|---|---|
+| P.0 | **Spike per base (≈ 1 day each):** load, forward one 12-option question, attach LoRA, 100-example toy SFT with soft targets, save/reload, sha256, compare probabilities before/after reload. StartLux must show a training forward with the correct bidirectional prompt mask in plain transformers; if it cannot, StartLux stays an inference-only zero-shot rung and the author decides (R1-C3-BASE amendment). | zhixu portal | Spike report per base |
+| P.1 | **Control base (proposed addition):** Qwen3.5-0.8B-Base and -4B-Base + LoRA r = 16, 12 reserved bin tokens read from the LM head at the last position. Same base as Kev, so A5(Kev) − A5(control) isolates Kev's decision pre-training; it is also the guaranteed-trainable fallback. | zhixu portal | Author adopts or declines |
+| P.2 | **One `DecisionModel` adapter, one training loop** (`r1/c3/train/`, PyTorch + PEFT; TRL optional): each family exposes `logits[12] = f(x)` (Kev pointer head; StartLux option readout; Laya head; control LM-head tokens). Shared serialisation (one text template, ≤ 1,024 tokens for Laya, fixed bin names and order; an option-order permutation test as a diagnostic for the pointer heads). | Mac (code) + portal | Same toy batch trains on every family |
+| P.3 | **A5 SFT:** soft-label cross-entropy (proper log score) on the B.2 labels; LoRA r = 16, lr 2e-5 from released adapters, early stop on dev log score; temperature / isotonic recalibration on dev; select by log score and calibration of P(Δ > 0) and π, then offline one-step value. Kev's trainer is patched (or bypassed via `kev/model.py`) to accept soft targets. | zhixu portal | A5 table (B.5) |
+| P.4 | **A6 decision-focused stage** (only after B.7 passes): with 12 actions the objective J(θ) = Σ_b q_θ(b|x) r(b,x) − β·KL(q_θ ‖ q_SFT) is computed **exactly**; GRPO (K = 8, group-mean baseline) is run as the RL estimator and checked against the exact gradient (cosine ≥ 0.95 on held-out batches); smoothed-rule loss as the comparator optimiser. Track ECE and log score every epoch; stop if calibration degrades beyond a tolerance declared in advance. Report the fraction of zero-variance groups. Deploy the greedy bin. | zhixu portal | A6 vs A5 offline, located where T4 §7 predicts |
+| P.5 | Pins: base revision, adapter + head sha256, calibration map, training seed, data-manifest hash; every A5/A6 arm served by H.5 from these pins only. | — | Pin file per arm |
+
+**Labels (how they are solved).**
+1. **Source:** sweep 1 (B.1, ≈ 5,800 proposals on 8 nodes × 2 memory modes, one pinned manager, one host type).
+2. **Audit (B.2):** each non-inert, non-duplicate proposal and its incumbent on K = 10 common fresh joint seeds; seeds 7001–7005 give the **training label**, 7006–7010 the **evaluation value**. Never mixed: the 19 Oct pilot gate "pass" came from sharing them.
+3. **SFT target:** the soft label p_b = ∫_bin N(Δ_audit, se_audit²) on z = Δ/σ_node (`r1/c3/labels.soft_label`); no-ops → one-hot no-op bin by rule; duplicates excluded (their result is known).
+4. **A6 reward:** r = Δ_audit(label seeds)·keep − g·execute, with keep and execute from the rules applied to the bin and the logged Δ̂; g = 0.1 σ_node (22 Oct). Offline evaluation uses only the evaluation seeds.
+5. **Splits:** by instance seed (train/dev/test) plus leave-one-node-out; never by trial.
+6. **Volume:** ≈ 1/3 of proposals are non-inert, so ≈ 2,000 labels from sweep 1; B.6 (second sweep, second manager) and the D20 pool extension target 8–10k.
+7. **Label noise:** carried in se_audit; K raised on proposals near t*.
+8. **Covariate shift:** one DAgger-style aggregation round (C.2) under the deployed tabular arm.
+
+**Hardware.** All A5/A6 training on zhixu portal (4090 24 GB): ≤ 4B LoRA in bf16; nothing on the Mac (R1-COMPUTE). Track X and B.5 share this card (see Track X timing).
+
 ### Phase C — Post-training and online pilot (target ~20 Dec 2026, only if B.7 passes)
 
 | # | Step | Host | Done when |
 |---|---|---|---|
-| C.1 | A6 decision-focused GRPO on the best A5 models; custom loop for Kev and Laya (pointer / encoder heads), TRL for StartLux; check the GRPO estimate against the exact 12-action gradient; smoothed-rule comparator | zhixu portal | A6 vs A5 offline, located where T4 §7 predicts |
+| C.1 | A6 decision-focused stage on the best A5 models, per Track P.4 (one training loop for all families; exact 12-action objective with GRPO checked against it; smoothed-rule comparator) | zhixu portal | A6 vs A5 offline, located where T4 §7 predicts |
 | C.2 | Aggregation round (DAgger-style): collect proposals under the deployed tabular arm, audit, retrain | deepthought | Retrained arms |
 | C.3 | Online pilot A1–A5 on qualifying nodes (manager + small LM co-resident: ≤ 2B models on TITANs, 4B on zhixu portal) | deepthought + zhixu portal | PILOT report |
 | C.4 | C4: DI test on existing branch pairs (offline) and the debiased-memory A/B on 2–4 nodes | Mac (analysis); A/B on zhixu experiment (resumable, a few GPU-hours) | C4 report |

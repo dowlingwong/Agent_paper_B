@@ -466,6 +466,13 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 |---|---|
 | R1-INFER-LLAMACPP (25 Oct) | **LLM inference uses llama.cpp (`llama-server`), not Ollama.** The manager model is pinned by the sha256 of its Q4_K_M GGUF file and the llama.cpp build commit. Sweep 1 and every later table use this backend only (D6, D15); all Ollama-era runs stay PILOT and liveness (D28) is re-run under llama.cpp. The runner, watchdog, fake server and configs are ported (RUNBOOK A.10). |
 
+**Decided 25 Oct 2026 by the author (proposer exam pool; DAC interface).** Fixed, not proposals. Recorded by an AI agent (Claude, coordinating session).
+
+| ID | Decision (decided 25 Oct 2026 by the author) |
+|---|---|
+| R1-EXAM-POOL (25 Oct) | **Proposer exam (appendix) pool and host.** All candidates of RUNBOOK Track X enter the exam except TeichAI/Qwen3.6-27B-Claude-Opus-Reasoning-Distill-v2 (excluded by the author). The exam runs on **zhixu portal (1 × RTX 4090)**. **Size rule replaced:** instead of the 24 Oct ceiling (27B dense to 35B-A3B MoE), any model that the pinned llama.cpp build serves fully on one RTX 4090 at Q4_K_M is admissible, which brings in 31–33B dense models (Gemma 4 31B, Muse Glimmer 30B, OLMo 3.1 32B). Q4_K_M stays (gpt-oss-20b at native MXFP4 as a declared exception). The operational fit test (16k context, q8_0 KV, ≥ 1 GiB free, measured not estimated) and the exam protocol X.2–X.6 are **proposed, not adopted**. The 2026-09 Round-7 candidacy exam (Paper A repo) is reused for machinery only, not as evidence. |
+| R1-DAC-INTERFACE (25 Oct) | **The DAC control-interface plan is adopted** as RUNBOOK Track H ("按你的建议来"): `PriorModel` protocol, one shared featurizer, one `RuleController` for every A1–A6 arm, a pinned small-model sidecar with fallback to the A1 prior, LLM-cap accounting, direct-action arms through the same `decide()`, Gymnasium-style offline (and, only if DI fails, online) environments. The manager-memory display of a skipped proposal (H.4) is still open. |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |

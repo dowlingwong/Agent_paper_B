@@ -1,5 +1,12 @@
 # Paper B (route R1) — status log
 
+## 25 October 2026 — exam located; Tracks X, H, P added to the RUNBOOK (AI-assisted; documents only)
+
+- **Exam located.** The model "exam" is the Round-7 candidacy exam of the Paper A repo (`agent-checkpoint-intervention`, `paper/appendices/C_protocol.tex`; `round10/CANONICAL_EXAM_RESULTS.md`; evidence `evidence/round7-blackwell-grouped/run/`), completed 4 Sep 2026; a code copy is in `archive/old_b_2026-10-09/code/.../round5_titan_exam.py`. Assessment (coordinating session): sound machinery, but it measures a tool-using coding agent on a different task and hardware, is confounded by submission-format conformance, and is an eligibility screen only. Not evidence for R1; machinery to be ported (Track X.1).
+- **Author decisions** R1-EXAM-POOL and R1-DAC-INTERFACE recorded (PLAN §10). RUNBOOK gains Track X (proposer exam on zhixu portal), Track H (DAC interface) and Track P (post-training); host rule on proposer size updated.
+- **Finding for R1-C3-BASE:** StartLux-Decision publishes no training code and its Instant models use bidirectional prompt attention via a vLLM plugin, so "fits TRL GRPO directly" is unverified (P.0 spike decides). Kev's trainer takes hard labels only and has no RL code (soft-label patch needed).
+- **Decisions needed:** adopt the Track X protocol (X.2–X.6); H.4 skip display in manager memory; P.1 Qwen3.5-Base control rung; Track P as a whole.
+- Branch `docs/dac-runbook-25oct` (worktree), not merged; the parallel `batch-b-25oct` working tree was not touched.
 ## 25 October 2026 — batch B: A.10, C3 label sweep ported to llama.cpp (AI-assisted; ENGINEERING_ONLY; reviewed and merged)
 
 Review by the coordinating session (Claude), 25 Oct. Found before merge: the runner accepted GPU offload only from the `offloaded N/N layers` log line, which llama.cpp v0.7.0 does not print on deepthought (probe report on branch `dt-sweep1-20261025`); fixed in `8122600` with the author's two-route acceptance. Re-ran the offload/instance/probe tests (57 passed) and the three llama.cpp dry runs (3 passed). Fast-forward merged into main. Harness `batch-b-25oct` fast-forwarded into `r1` and pushed (`origin/r1` 4012897 → 264011e; this also published `7305434`, the `openml_climate` node, which had not been on origin). Deepthought agent runbook added as `docs/r1/prompts/DEEPTHOUGHT_SWEEP1_RUNBOOK.md`.
