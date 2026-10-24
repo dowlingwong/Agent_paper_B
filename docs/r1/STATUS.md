@@ -1,6 +1,8 @@
 # Paper B (route R1) — status log
 
-## 24–25 October 2026 — Phase A coding batch: A.4, A.5, A.8, A.6 draft (AI-assisted; ENGINEERING_ONLY; pending review)
+## 24–25 October 2026 — Phase A coding batch: A.4, A.5, A.8, A.6 draft (AI-assisted; ENGINEERING_ONLY; reviewed and merged)
+
+Review by the coordinating session (Claude), 25 Oct: re-ran the new table, deepthought-config and resume tests (12 passed + 1 skipped; 16 passed) and the three end-to-end dry runs including kill-and-resume and the watchdog (3 passed, 134 s; they need TMPDIR on a disk with free space). Read the orphan-stop code: a process is signalled only if pid, process group, port and models directory match the batch record; another user's process is never signalled. Fast-forward merged into main. The open questions in the handoff are for the author.
 
 Implementation agent (Claude) on branch `batch-a-24oct` (paper repo, from `42c93f6`); not merged, not pushed; harness unchanged. No LLM, GPU, SSH or real Ollama. Details, fail-before evidence and the deepthought checklist: `docs/r1/overnight/BATCH_A_24OCT_HANDOFF.md`.
 - **A.4 (`62571dc`):** `python -m r1.c3.dataset build-sweep --index <index or batch dir> --out DIR` builds the C3 table from a completed sweep. On fixture indexes over the 19 Oct pilot ledgers it reproduces `build()` byte for byte, and the 19 Oct split-recheck rows apart from the 22 Oct `noop_kind` field.
