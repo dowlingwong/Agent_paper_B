@@ -1,0 +1,73 @@
+{
+ "comment": "DRAFT (RUNBOOK A.6, 24 Oct 2026): C3 label sweep on deepthought, the primary sweep host (PLAN §10 R1-SWEEP-HOST, 24 Oct; no mixing hosts within one labelled table). ENGINEERING_ONLY config; the sweep output is PILOT label data. AI-assisted (Claude), not launch-ready: every value \"TODO_VERIFY_ON_DEEPTHOUGHT\" must be read on deepthought (checklist in docs/r1/overnight/BATCH_A_24OCT_HANDOFF.md); the runner refuses to launch while any is left, and `--check-config --allow-placeholders` validates the rest. SAME AS THE ADA CONFIG (r1/scripts/configs/c3_sweep_ada.json): the eight D21 nodes, 18 instances, W = 20, both memory modes, liveness 2 x W = 10 memory on, transport retry 3, gates, audit K = 10 (7001..7010, 5 + 5); the pinned manager qwen2.5-coder:7b and its digest are runner constants (MODEL, DIGEST), so both configs use the same pin. ONE MANAGER PER TITAN: the runner drives ONE dedicated Ollama instance on ONE card per batch, so this file configures one manager on one TITAN (gpu_uuid). Using all four TITANs needs either four batches (one per card, disjoint node subsets, distinct ports and tmux sessions; the launcher's session name r1_c3_sweep is fixed today) or a multi-instance runner: an open design question for the author/coordinator, not decided here. CPU WORKERS: workers = parallel root campaigns sharing this batch's one manager (OLLAMA_NUM_PARALLEL=1); the CPU worker runs and later audits use the many cores. PROPOSED (not decided): watchdog enabled (RUNBOOK A.8); resume per campaign root on (RUNBOOK A.5, runner default). KNOWN RISK (STATUS 12 Oct): deepthought's GTX TITAN X (compute capability 5.2) with driver 525.147.05 is below the driver Ollama documents for that capability; GPU offload there was never demonstrated. The runner STOPs unless size_vram = size after loading.",
+ "nodes": [
+  "digits_mlp",
+  "tabular_mlp",
+  "openml_breast_w",
+  "openml_ionosphere",
+  "openml_wdbc",
+  "openml_credit_approval",
+  "openml_sonar",
+  "openml_blood_transfusion"
+ ],
+ "nodes_pending": [],
+ "instances": 18,
+ "runs": 20,
+ "memory_modes": [
+  "append_only_summary",
+  "none"
+ ],
+ "workers": "TODO_VERIFY_ON_DEEPTHOUGHT",
+ "transport_max_attempts": 3,
+ "liveness": {
+  "instances": 2,
+  "runs": 10,
+  "memory_mode": "append_only_summary"
+ },
+ "min_live_nodes": 2,
+ "max_parse_failure_rate": 0.2,
+ "max_collect_sessions": 12,
+ "paper_a_check": {
+  "command": "TODO_VERIFY_ON_DEEPTHOUGHT",
+  "timeout": 120
+ },
+ "gpu_uuid": "TODO_VERIFY_ON_DEEPTHOUGHT",
+ "gpu_wait_seconds": 21600,
+ "ollama": {
+  "binary": "TODO_VERIFY_ON_DEEPTHOUGHT",
+  "seed_models_from": "TODO_VERIFY_ON_DEEPTHOUGHT",
+  "port": "TODO_VERIFY_ON_DEEPTHOUGHT",
+  "start_timeout": 120
+ },
+ "allowed_hosts": [
+  "TODO_VERIFY_ON_DEEPTHOUGHT"
+ ],
+ "audit": {
+  "seeds": [
+   7001,
+   7002,
+   7003,
+   7004,
+   7005,
+   7006,
+   7007,
+   7008,
+   7009,
+   7010
+  ],
+  "label_seeds": 5,
+  "evaluation_seeds": 5
+ },
+ "resume": {
+  "sweeps": true,
+  "max_restarts": 5
+ },
+ "watchdog": {
+  "enabled": true,
+  "poll_seconds": 5.0,
+  "health_timeout": 10.0,
+  "unresponsive_checks": 3,
+  "model_checks": 3,
+  "max_restarts": 3
+ }
+}

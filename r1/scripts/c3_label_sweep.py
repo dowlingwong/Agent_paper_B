@@ -141,8 +141,25 @@ def stamp() -> str:
     return datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
 
 
-def load_config(path=None) -> dict:
-    """Defaults (PLAN D21 nodes, 18 instances, W = 20) overlaid by a JSON config file."""
+PLACEHOLDER_PREFIX = 'TODO_VERIFY'  # e.g. "TODO_VERIFY_ON_DEEPTHOUGHT": a value still to be read on the host
+
+
+def placeholders(value, path: str = '') -> list:
+    """Dotted paths of every unresolved ``TODO_VERIFY*`` value (the free-text ``comment`` is ignored)."""
+    if isinstance(value, dict):
+        return [p for k, v in value.items() if k != 'comment' for p in placeholders(v, f'{path}.{k}' if path else k)]
+    if isinstance(value, list):
+        return [p for i, v in enumerate(value) for p in placeholders(v, f'{path}[{i}]')]
+    return [path] if isinstance(value, str) and value.startswith(PLACEHOLDER_PREFIX) else []
+
+
+def load_config(path=None, allow_placeholders: bool = False) -> dict:
+    """Defaults (PLAN D21 nodes, 18 instances, W = 20) overlaid by a JSON config file.
+
+    A config with an unresolved ``TODO_VERIFY*`` value is refused (RUNBOOK A.6:
+    a drafted host config is never launched) unless ``allow_placeholders``,
+    which only ``--check-config --allow-placeholders`` uses.
+    """
     config = json.loads(json.dumps(DEFAULTS))
     if path:
         user = json.loads(Path(path).read_text())
@@ -164,6 +181,9 @@ def load_config(path=None) -> dict:
     if len(set(config['nodes'])) != len(config['nodes']):
         raise Stop('STOP: duplicate node in nodes')
     validate_resume(config['resume'], config['watchdog'])
+    unresolved = placeholders(config)
+    if unresolved and not allow_placeholders:
+        raise Stop(f'STOP: unresolved {PLACEHOLDER_PREFIX} values in the config: {unresolved}')
     return config
 
 
@@ -1017,14 +1037,21 @@ def entrypoint(argv=None) -> int:
     ap.add_argument('--config', default=None, help='JSON config (nodes, instances, paper_a_check, ollama, ...)')
     ap.add_argument('--check-config', action='store_true',
                     help='validate the config (defaults overlaid), print it and exit; starts nothing')
+    ap.add_argument('--allow-placeholders', action='store_true',
+                    help='with --check-config: validate a draft whose TODO_VERIFY* values are still open '
+                         '(listed on stderr); a launch always refuses them')
     args = ap.parse_args(argv)
     if args.check_config:
         try:
-            config = load_config(args.config or os.environ.get('R1_C3_CONFIG'))
+            config = load_config(args.config or os.environ.get('R1_C3_CONFIG'),
+                                 allow_placeholders=args.allow_placeholders)
         except Stop as exc:
             print(exc.args[0], flush=True)
             return 2
         print(json.dumps(config, indent=2), flush=True)
+        unresolved = placeholders(config)
+        if unresolved:
+            print(f'UNRESOLVED ({len(unresolved)}): ' + ', '.join(unresolved), file=sys.stderr, flush=True)
         return 0
     runner = build_runner(args.config)
     try:
