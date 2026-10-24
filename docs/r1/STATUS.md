@@ -131,6 +131,15 @@ Implementation agent (Claude) on branch `batch-b-25oct` in both repositories (pa
 - **Tests:** paper 327 passed / 1 failed → 359 passed / 1 failed → 384 passed / 1 failed after the review fix (same known `test_real_runner_desktop_dryrun`); harness 427 passed / 9 failed / 1 error → 434 / 9 / 1 (same failing set).
 - **Questions for the author:** one manager per TITAN (open; options and their needs in the handoff); `ctx_size` 8192 is a proposal (prompt lengths unmeasured); bit-repeatable same-seed retries would need `cache_prompt: false`; which GGUF is pinned; build pin = the `version:` line (or also the full commit); harness `264011e` must reach `r1` before a launch.
 
+## 25 October 2026 — Deepthought execution STOP before host census
+
+AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY, not evidence. The author requested execution of the Deepthought llama.cpp/liveness/C3 runbook. Its required `overnight/BATCH_B_25OCT_HANDOFF.md` is absent, triggering its explicit missing-file STOP. Published `origin/main` was verified at `3d3ec488be5e1cdcb12ee66b8130305fc9c7db26`; no published `batch-b-25oct` ref was returned. The active local Batch B changes remain uncommitted and untouched.
+
+- Report: `reports/DT_ORIENTATION_STOP_20261025.md`, on branch `dt-sweep1-20261025`.
+- Checks: required reading and Git publication checks only. No SSH, host census, remote changes, GPU/LLM/worker run or evidence collection. No tests for this documentation-only STOP.
+- Not done: Phases 0–9; the required handoff and merged backend are unavailable.
+- Coordinator action: finish/review/publish Batch B with its handoff and merge it into main. Author continuation is needed after this STOP; sweep evidence still requires the separate author-committed authorization note.
+
 ## 24–25 October 2026 — Phase A coding batch: A.4, A.5, A.8, A.6 draft (AI-assisted; ENGINEERING_ONLY; reviewed and merged)
 
 Review by the coordinating session (Claude), 25 Oct: re-ran the new table, deepthought-config and resume tests (12 passed + 1 skipped; 16 passed) and the three end-to-end dry runs including kill-and-resume and the watchdog (3 passed, 134 s; they need TMPDIR on a disk with free space). Read the orphan-stop code: a process is signalled only if pid, process group, port and models directory match the batch record; another user's process is never signalled. Fast-forward merged into main. The open questions in the handoff are for the author.
