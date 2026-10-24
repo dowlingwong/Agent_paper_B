@@ -1,5 +1,15 @@
 # Paper B (route R1) — status log
 
+## 24–25 October 2026 — Phase A coding batch: A.4, A.5, A.8, A.6 draft (AI-assisted; ENGINEERING_ONLY; pending review)
+
+Implementation agent (Claude) on branch `batch-a-24oct` (paper repo, from `42c93f6`); not merged, not pushed; harness unchanged. No LLM, GPU, SSH or real Ollama. Details, fail-before evidence and the deepthought checklist: `docs/r1/overnight/BATCH_A_24OCT_HANDOFF.md`.
+- **A.4 (`62571dc`):** `python -m r1.c3.dataset build-sweep --index <index or batch dir> --out DIR` builds the C3 table from a completed sweep. On fixture indexes over the 19 Oct pilot ledgers it reproduces `build()` byte for byte, and the 19 Oct split-recheck rows apart from the 22 Oct `noop_kind` field.
+- **A.5 (`c560ef9`):** an interrupted sweep phase resumes on `--start <batch>`: completed roots kept, started roots re-run whole (partial attempts archived), each interruption logged (batch, step and runner logs, sweep directory). The orphaned Ollama of the batch is stopped only after pid, process group and environment match. Dry run: SIGKILL mid-campaign, then restart → batch completes, completed roots unchanged.
+- **A.8 (`c560ef9`, opt-in):** watchdog for the dedicated Ollama (exit/signal, unresponsive, model unloaded): records the loss, restarts the instance, re-runs affected roots. Dry run: server SIGTERM mid-request → recorded and recovered. Deepthought smoke not done (needs the host).
+- **A.6 draft (`8fe3416`):** `r1/scripts/configs/c3_sweep_deepthought.json` with seven `TODO_VERIFY_ON_DEEPTHOUGHT` values; the runner refuses such values at launch; `--check-config --allow-placeholders` passes locally.
+- **Tests:** paper 296 passed / 1 failed → 327 passed / 1 failed (same known `test_real_runner_desktop_dryrun`); harness 427 passed / 9 failed / 1 error, unchanged.
+- **Questions for the author:** which host is deepthought (RUNBOOK says deepthought2 with TITANs; STATUS 12 Oct says deepthought2 has L40S, deepthought has TITAN X); TITAN X on driver 525 has no demonstrated Ollama offload; one manager per TITAN needs four batches or a multi-instance runner; the Paper A check on deepthought; watchdog default; `min_live_nodes` 2 vs the planned eight nodes.
+
 ## 24 October 2026 — author decisions recorded; runbook rewritten
 
 Recorded by an AI agent (Claude, coordinating session) at the author's request. No experiment ran.
