@@ -73,7 +73,7 @@ This ladder is C3.
 | A2 | A1 + **rules:** π = 1 on hash duplicates and inactive keys (D25, D27) | — |
 | A3 | **tabular:** LightGBM multiclass on the 12 bins (plus an NGBoost-Gaussian variant) | log loss, soft labels |
 | A4 | **LLM zero-shot:** the manager answers typed questions (P(no effect), P(Δ > 0), size bucket), mapped to bins by isotonic calibration fitted on dev | calibration map only |
-| A5 | **small LM, stage 1:** Qwen3-0.6B / 1.7B or Kev 0.8B, LoRA r = 16, next-token distribution over 12 bin tokens | SFT with soft-label cross-entropy (log score) |
+| A5 | **small LM, stage 1:** Kev-0.8B / Kev-4B and StartLux-Decision-v1.1 0.8B / 2B / 4B (main), Laya 421M as an encoder rung (R1-C3-BASE, 24 Oct; ≤ 4B), LoRA r = 16, next-token distribution over 12 bin tokens | SFT with soft-label cross-entropy (log score) |
 | A6 | **small LM, stage 2:** A5 then decision-focused post-training | see below |
 | (A7) | stage 3 online RL | only if the DI test (§7) shows a material violation |
 | ref | AWR-MLP acting on actions directly (Harness-MDP style); PACE gate | as PLAN §5 |

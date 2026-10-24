@@ -261,6 +261,8 @@ They stay where they are only because tests and release tooling import them. RUN
 ## 9. Venue, quality bar and timeline
 
 **Venue (decided 9 Oct): TMLR.**
+
+> **Superseded 24 Oct (R1-VENUE-3): ICML 2027.** Only the venue changed; the timeline and quality bar below stay as they are.
 - TMLR accepts when claims are supported and of interest to part of its audience. There is no novelty-magnitude bar, and there is no deadline pressure.
 - Paper A also targets TMLR. Cite it anonymously as a companion.
 - TMLR pauses over the holidays; check the dates before planning a submission around them.
@@ -444,6 +446,19 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | ID | Decision (decided 23 Oct 2026 by the author) |
 |---|---|
 | D21 reserve (23 Oct) | After the common run left the pool at exactly 8 (two nodes borderline), **measure the reserve `openml_climate` (OpenML 1467, climate-model-simulation-crashes)** with the same procedure: 30 seeds, the harness-locked environment of the common run, the standard E1 edit set, the D21 rule of 22 Oct unchanged. If it qualifies it joins the pool (9 nodes); if not, the pool stays at 8. Records the author's "把后备的 climate（OpenML 1467）也按同样流程测一下". |
+
+**Decided 24 Oct 2026 by the author (base models, hosts, C1 floor, venue, benchmarks).** These rows are fixed, not proposals. Recorded by an AI agent (Claude, coordinating session) at the author's request.
+
+| ID | Decision (decided 24 Oct 2026 by the author) |
+|---|---|
+| R1-C3-BASE (24 Oct) | **C3 decision-model base models (A5/A6).** Main: **Kev** and **StartLux-Decision**; additional rung: **Laya** (encoder; separates text-reading from prior knowledge). **Sizes ≤ 4B only.** Candidates: Kev-0.8B, Kev-4B; StartLux-Decision-v1.1 0.8B / 2B / 4B; Laya 421M (1,024-context checkpoint). CLM dropped (frozen 8B encoder, candidate-relative probabilities). StartLux weights are CC BY-NC 4.0: research use only. Kev and Laya need a short custom RL loop (pointer / encoder heads); StartLux's LM-head readout fits TRL GRPO directly. |
+| R1-HOSTS (24 Oct) | Hosts: **deepthought** (4 × TITAN 12 GB, exclusive); **zhixu portal** (1 × RTX 4090 24 GB, exclusive); **zhixu experiment** (`experiment_zhixu`, 8 × RTX 6000 Ada 48 GB, shared, jobs may be interrupted: resumable overflow work only); the author's Mac is an M1 Max with 64 GB. |
+| R1-COMPUTE (revised 24 Oct) | The Mac is **not used for LLM or small-model workloads while deepthought, zhixu portal or zhixu experiment can do the step**. It is a last resort only, used with the author's approval per use and labelled in STATUS. Replaces the 12 Oct "no LLM runs on the Mac" rule. Proposals within one labelled table still come from one host type (D6, D15). |
+| R1-SWEEP-HOST (24 Oct) | **deepthought is the primary host for C3 label sweeps**, one pinned manager per TITAN. **No mixing hosts within one labelled table.** `r1/scripts/configs/c3_sweep_ada.json` is ported to a deepthought config (RUNBOOK A.6). |
+| R1-C1-FLOOR (24 Oct) | The common 30-seed run (`results/r1/pilot/E1_20261022T214606Z/`; `reports/NOISE_FLOOR_COMMON_20261022.md`) is **accepted as the C1 noise-floor table**; pool = 8. The reserve `openml_climate` is measured under the same protocol as backup (D21 reserve, 23 Oct). |
+| R1-VENUE-3 (24 Oct) | **Target venue changed from TMLR to ICML 2027** (replaces R1-VENUE-2's venue; closes R1-FORMAT: ICML template). **Only the venue changes:** the plan, the timeline and the quality bar stay as they are. |
+| R1-BENCH-HARD (24 Oct) | **Karpathy's autoresearch, 1GC-7RC (2026) and MLGym (Meta) are added** to the benchmark set, to address the small-testbed weakness (RUNBOOK Track G). Their role and audit budget are still open (proposed: evaluation and transfer nodes; C3 arms trained on the CPU pool are tested on them without retraining). |
+| R1-PROPOSER-QUANT (24 Oct) | Proposer (manager) models run at **Q4_K_M**. Size ceiling roughly **27B dense to 35B-A3B MoE**. Digest and quantization are pinned and reported for every run. Training stays BF16 LoRA (QLoRA only if needed). |
 
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|

@@ -1,5 +1,14 @@
 # Paper B (route R1) — status log
 
+## 24 October 2026 — author decisions recorded; runbook rewritten
+
+Recorded by an AI agent (Claude, coordinating session) at the author's request. No experiment ran.
+
+- PLAN §10, new 24 Oct block: R1-C3-BASE (Kev and StartLux main, Laya rung, ≤ 4B), R1-HOSTS, R1-COMPUTE (revised: Mac as last resort only), R1-SWEEP-HOST (deepthought; no mixing hosts within one table), R1-C1-FLOOR (common 30-seed run accepted as the C1 table), R1-VENUE-3 (ICML 2027; only the venue changes), R1-BENCH-HARD (autoresearch, 1GC-7RC, MLGym added; role open), R1-PROPOSER-QUANT (Q4_K_M; ceiling ≈ 27B dense to 35B-A3B MoE).
+- RUNBOOK.md rewritten for the post-18 Oct plan (route A ladder, C3 gate, D21 pool of eight): Phases A–E, Track G, host table, immediate queue. The 12 Oct L/E step lists are superseded; their completed work stays recorded below.
+- C3_DESIGN §5 A5 row: base models per R1-C3-BASE. README venue line updated.
+- Next (RUNBOOK §5 queue): coding batch A.4 / A.5 / A.8 on the Mac; A.1b climate fetch (author's terminal: the agent VM cannot reach OpenML); A.6 → A.7 → A.9 → sweep 1 (deepthought; the agent VM cannot reach it).
+
 
 ## 22–23 October 2026 — common 30-seed noise floor over ten nodes (accepted); D21 pool = 8
 

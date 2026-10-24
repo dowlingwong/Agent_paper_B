@@ -1,7 +1,7 @@
 # Paper B — noisy incumbent-relative acceptance in governed autoresearch loops (route R1)
 
 Authoritative remote: [Agent_paper_B](https://github.com/dowlingwong/Agent_paper_B).
-Target venue: TMLR, with an ICML-main-track quality bar (docs/r1/PLAN.md §9).
+Target venue: ICML 2027 (changed from TMLR on 24 Oct 2026, PLAN R1-VENUE-3), with the ICML-main-track quality bar (docs/r1/PLAN.md §9).
 
 **Start here:** [docs/r1/PLAN.md](docs/r1/PLAN.md) (canonical plan and dated author
 decisions), [docs/r1/RUNBOOK.md](docs/r1/RUNBOOK.md) (phases, gates) and
