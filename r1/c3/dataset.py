@@ -7,7 +7,16 @@ Sources (roots only; no branch ledgers):
 
 Usage:
   python -m r1.c3.dataset build --out DIR
+  python -m r1.c3.dataset build-sweep --index SWEEP --out DIR [--paper-root DIR] [--e1-summary FILE]
   python -m r1.c3.dataset plan  --table DIR [--quota rerun2A:tabular_mlp:70 ...] [--di]
+
+``build-sweep`` (RUNBOOK A.4) builds the same table from a completed C3 label
+sweep: SWEEP is the sweep index ``results/r1/pilot/C3_sweep_index_<UTC>.json``
+(schema ``r1.c3_sweep_index/1``, written by ``r1/scripts/c3_label_sweep.py``) or
+the sweep's batch directory (its ``batch_state.json`` names the index; the paper
+clone is ``<batch>/agent_paper_B``). One source per memory mode, named
+``c3_<index UTC>_<memory mode>`` unless ``--source-name MODE=NAME`` is given;
+rows are produced by the same replay and ``row_of`` as ``build``.
 
 ``build`` writes DIR/proposals.jsonl (features, logged Delta_hat, decision, inert
 flag, instance, node, memory mode, config hashes), DIR/configs.json (file texts
@@ -19,8 +28,10 @@ from __future__ import annotations
 
 import argparse
 import glob
+import hashlib
 import json
 import math
+import re
 import subprocess
 from pathlib import Path
 
@@ -97,42 +108,165 @@ def git_head() -> str:
         return "unknown"
 
 
-def _start_files(src_dir: Path, inst: str, node: str) -> dict:
+def _start_files(src_dir: Path, inst: str, node: str, strict: bool = False) -> dict:
     rj = src_dir / "roots" / f"{inst}.json"
     if rj.exists():
         return json.loads(rj.read_text())["start_files"]
+    if strict:  # sweep outputs always record start files; never fall back to today's node files
+        raise ValueError(f"{rj}: root record with start files missing")
     # liveness runs store no start files; same harness commit (411c605) -> node files.
     path = "train.py" if NODE_INFO[node]["family"] == "mlp" else "config.yaml"
     return {path: (harness_root() / "nodes" / node / path).read_text()}
 
 
-def build(out: Path, sources=tuple(SOURCES)) -> dict:
-    noise = noise_table()
-    out.mkdir(parents=True, exist_ok=True)
+def _replay_sources(specs: dict, noise: dict, strict_start_files: bool = False) -> tuple[list, dict, dict]:
+    """Replay every root ledger of ``specs`` ({name: (spec, source dir)}), in order; rows, configs, checks."""
     rows, configs, checks = [], {}, {}
-    for name in sources:
-        src = SOURCES[name]
-        d = REPO / src["dir"]
+    for name, (src, d) in specs.items():
         for f in sorted(glob.glob(str(d / src["ledgers"]))):
             inst = Path(f).parent.name
             node = inst.split("__s")[0]
-            props, ch = replay_campaign(read_jsonl(Path(f)), _start_files(d, inst, node), node, inst, name,
-                                        src["memory_mode"], src["runs"], noise[node]["sigma_node"])
+            props, ch = replay_campaign(read_jsonl(Path(f)), _start_files(d, inst, node, strict_start_files), node,
+                                        inst, name, src["memory_mode"], src["runs"], noise[node]["sigma_node"])
             checks[f"{name}:{inst}"] = ch
             for p in props:
                 configs[p.candidate_hash] = {"node": node, "files": p.candidate_files}
                 configs[p.incumbent_hash] = {"node": node, "files": p.incumbent_files}
                 rows.append(row_of(p, noise))
+    return rows, configs, checks
+
+
+def _write_table(out: Path, rows: list, configs: dict, checks: dict, head: dict, noise: dict) -> dict:
     with open(out / "proposals.jsonl", "w") as fh:
         for r in rows:
             fh.write(json.dumps(r) + "\n")
     (out / "configs.json").write_text(json.dumps(configs))
     tot = {k: sum(c[k] for c in checks.values()) for k in next(iter(checks.values()))}
-    meta = {"label": "ENGINEERING_ONLY", "ai_assisted": "AI-assisted (Claude)", "commit": git_head(),
-            "sources": {k: SOURCES[k] for k in sources}, "noise": noise, "replay_checks_total": tot,
+    meta = {**head, "noise": noise, "replay_checks_total": tot,
             "replay_checks": checks, "n_proposals": len(rows), "n_configs": len(configs)}
     (out / "build.json").write_text(json.dumps(meta, indent=1))
     return meta
+
+
+def build(out: Path, sources=tuple(SOURCES), e1_summary: Path | str | None = None) -> dict:
+    """The historical pilot table.  ``e1_summary`` (default ``E1_SUMMARY``) picks the noise source,
+    e.g. the 12 Oct E1 for an exact rebuild of the 19 Oct pilot table."""
+    noise = noise_table() if e1_summary is None else noise_table(e1_summary)
+    out.mkdir(parents=True, exist_ok=True)
+    rows, configs, checks = _replay_sources({name: (SOURCES[name], REPO / SOURCES[name]["dir"]) for name in sources},
+                                            noise)
+    head = {"label": "ENGINEERING_ONLY", "ai_assisted": "AI-assisted (Claude)", "commit": git_head(),
+            "sources": {k: SOURCES[k] for k in sources}}
+    return _write_table(out, rows, configs, checks, head, noise)
+
+
+# ---------------------------------------------------------------------------
+# Sweep index -> table (RUNBOOK A.4)
+# ---------------------------------------------------------------------------
+
+SWEEP_INDEX_SCHEMA = "r1.c3_sweep_index/1"
+SWEEP_LEDGERS = "*/root_trials.jsonl*"  # under the index's per-sweep ``ledgers`` directory
+SOURCE_NAME = re.compile(r"[A-Za-z0-9_]+")  # no ':' (proposal ids and --quota use it as separator)
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def resolve_sweep(sweep: Path | str, paper_root: Path | str | None = None) -> tuple[Path, Path]:
+    """(index file, paper root) from an index file or a completed sweep batch directory."""
+    sweep = Path(sweep)
+    if sweep.is_dir():
+        state_path = sweep / "batch_state.json"
+        if not state_path.exists():
+            raise ValueError(f"{sweep}: not a sweep batch directory (no batch_state.json)")
+        step = json.loads(state_path.read_text()).get("steps", {}).get("index") or {}
+        if not step.get("completed") or not step.get("path"):
+            raise ValueError(f"{sweep}: the sweep's index phase is not completed; no table from an unfinished sweep")
+        root = Path(paper_root) if paper_root else sweep / "agent_paper_B"
+        recorded = Path(step["path"])
+        index = recorded if recorded.exists() else root / "results/r1/pilot" / recorded.name
+        return index, root
+    if paper_root:
+        return sweep, Path(paper_root)
+    parts = sweep.resolve().parts
+    if len(parts) >= 5 and parts[-4:-1] == ("results", "r1", "pilot"):
+        return sweep, sweep.resolve().parents[3]
+    raise ValueError(f"{sweep}: index outside <paper>/results/r1/pilot; pass paper_root")
+
+
+def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names: dict | None = None) -> dict:
+    """Validated per-memory-mode sources of a sweep index: {name: (spec, sweep dir)}.
+
+    Refuses (ValueError) a wrong schema, a sweep with recorded root failures, a
+    manifest that disagrees with the index (memory mode, W, instances; for real
+    sweep manifests also the node list), or a ledger count other than
+    nodes x instances.  Sources are named ``c3_<index UTC>_<memory mode>``
+    unless ``source_names`` maps a memory mode to a name.
+    """
+    if index.get("schema") != SWEEP_INDEX_SCHEMA:
+        raise ValueError(f"{index_path}: schema {index.get('schema')!r}, expected {SWEEP_INDEX_SCHEMA!r}")
+    tag = re.sub(r"[^0-9A-Za-z]", "", str(index.get("written_utc", "")))
+    names = dict(source_names or {})
+    specs = {}
+    for sweep in index["sweeps"]:
+        mode = sweep["memory_mode"]
+        name = names.pop(mode, f"c3_{tag}_{mode}")
+        if not SOURCE_NAME.fullmatch(name) or name in specs:
+            raise ValueError(f"invalid or duplicate source name {name!r}")
+        d = paper_root / sweep["out"]
+        manifest_path = paper_root / sweep["manifest"]
+        manifest = json.loads(manifest_path.read_text())
+        ledgers = paper_root / sweep["ledgers"]
+        if (d / "collection_failures.json").exists() or any((d / "failures").glob("*.json")):
+            raise ValueError(f"{d}: the sweep recorded failures; no table from an incomplete sweep")
+        if (manifest.get("memory_mode") or "none") != mode:
+            raise ValueError(f"{manifest_path}: memory mode {manifest.get('memory_mode')!r} != index {mode!r}")
+        if int(manifest["runs"]) != int(index["runs"]) or int(manifest["instances"]) != int(index["instances"]):
+            raise ValueError(f"{manifest_path}: runs/instances differ from the index")
+        if "c3_label_sweep" in manifest and list(manifest["nodes"]) != list(index["nodes"]):
+            raise ValueError(f"{manifest_path}: nodes {manifest['nodes']} != index nodes {index['nodes']}")
+        files = sorted(glob.glob(str(ledgers / SWEEP_LEDGERS)))
+        expected = len(manifest["nodes"]) * int(manifest["instances"])
+        if len(files) != expected:
+            raise ValueError(f"{ledgers}: {len(files)} root ledgers, expected {expected} (nodes x instances)")
+        unknown = {Path(f).parent.name.split("__s")[0] for f in files} - set(manifest["nodes"])
+        if unknown:
+            raise ValueError(f"{ledgers}: ledgers of nodes outside the manifest: {sorted(unknown)}")
+        rel = Path(sweep["ledgers"]).relative_to(sweep["out"]) if Path(sweep["ledgers"]).is_relative_to(sweep["out"]) \
+            else None
+        if rel is None:
+            raise ValueError(f"{sweep['ledgers']}: ledgers must lie inside the sweep directory {sweep['out']}")
+        spec = {"dir": sweep["out"], "ledgers": str(rel / SWEEP_LEDGERS), "runs": int(index["runs"]),
+                "memory_mode": mode, "manifest": sweep["manifest"], "manifest_sha256": _sha256(manifest_path),
+                "commit": sweep.get("commit"), "label": manifest.get("label"),
+                "noise_source_at_collection": {n: v.get("source") for n, v in (manifest.get("noise") or {}).items()}}
+        specs[name] = (spec, d)
+    if names:
+        raise ValueError(f"source names for memory modes not in the index: {sorted(names)}")
+    return specs
+
+
+def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | None = None,
+                     e1_summary: Path | str | None = None, source_names: dict | None = None) -> dict:
+    """A completed C3 label sweep -> the C3 proposal table (same files and row format as ``build``)."""
+    index_path, root = resolve_sweep(sweep, paper_root)
+    index = json.loads(Path(index_path).read_text())
+    specs = sweep_sources(index, Path(index_path), Path(root), source_names)
+    noise = noise_table() if e1_summary is None else noise_table(e1_summary)
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    rows, configs, checks = _replay_sources(specs, noise, strict_start_files=True)
+    if not checks:
+        raise ValueError(f"{index_path}: no root ledgers")
+    head = {"label": index.get("label"), "ai_assisted": "AI-assisted (Claude)", "commit": git_head(),
+            "sources": {k: v[0] for k, v in specs.items()},
+            "sweep_index": {"path": str(index_path), "sha256": _sha256(index_path), "label": index.get("label"),
+                            "nodes": index.get("nodes"), "excluded_nodes": index.get("excluded_nodes"),
+                            "instances": index.get("instances"), "runs": index.get("runs"),
+                            "harness_commit": index.get("harness_commit"), "audit": index.get("audit")},
+            "e1_summary": str(e1_summary) if e1_summary is not None else E1_SUMMARY}
+    return _write_table(out, rows, configs, checks, head, noise)
 
 
 def row_of(p: Proposal, noise: dict) -> dict:
@@ -204,6 +338,12 @@ def main(argv=None) -> int:
     b = sub.add_parser("build")
     b.add_argument("--out", required=True)
     b.add_argument("--sources", nargs="+", default=list(SOURCES))
+    w = sub.add_parser("build-sweep", help="table from a completed C3 label sweep (index file or batch directory)")
+    w.add_argument("--index", required=True, help="C3_sweep_index_<UTC>.json or the sweep batch directory")
+    w.add_argument("--out", required=True)
+    w.add_argument("--paper-root", default=None, help="paper checkout the index paths are relative to")
+    w.add_argument("--e1-summary", default=None, help=f"noise source (default {E1_SUMMARY})")
+    w.add_argument("--source-name", nargs="*", default=[], help="MODE=NAME source names (default c3_<UTC>_<mode>)")
     p = sub.add_parser("plan")
     p.add_argument("--table", required=True)
     p.add_argument("--out", default=None)
@@ -213,6 +353,12 @@ def main(argv=None) -> int:
     if args.cmd == "build":
         meta = build(Path(args.out), tuple(args.sources))
         print(json.dumps({"n_proposals": meta["n_proposals"], "checks": meta["replay_checks_total"]}))
+    elif args.cmd == "build-sweep":
+        names = dict(item.split("=", 1) for item in args.source_name)
+        meta = build_from_sweep(Path(args.index), Path(args.out), paper_root=args.paper_root,
+                                e1_summary=args.e1_summary, source_names=names)
+        print(json.dumps({"n_proposals": meta["n_proposals"], "sources": list(meta["sources"]),
+                          "checks": meta["replay_checks_total"]}))
     else:
         quota = DEFAULT_QUOTA if args.quota is None else {
             (q.split(":")[0], q.split(":")[1]): int(q.split(":")[2]) for q in args.quota}
