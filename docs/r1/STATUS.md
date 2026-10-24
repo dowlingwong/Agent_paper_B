@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 25 October 2026 — Deepthought Phase 0 census complete
+
+AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY. Author continuation explicitly permits Phases 0–1 before Batch B is merged, superseding the orientation missing-handoff STOP for these phases only. Census: four idle TITAN X GPUs (5.2), driver 525.147.05, installed CUDA 11.8.89, 40 CPUs, 503 GiB RAM, about 303 TiB free on Ceph; GitHub/Hugging Face/PyPI/OpenML HTTP 200. No GPU/LLM run yet. Report: `reports/DT_HOST_CENSUS_20261025.md`. Next: Phase 1 build and probe; Phase 2 remains gated on Batch B on origin/main.
+
 ## 25 October 2026 — Deepthought execution STOP before host census
 
 AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY, not evidence. The author requested execution of the Deepthought llama.cpp/liveness/C3 runbook. Its required `overnight/BATCH_B_25OCT_HANDOFF.md` is absent, triggering its explicit missing-file STOP. Published `origin/main` was verified at `3d3ec488be5e1cdcb12ee66b8130305fc9c7db26`; no published `batch-b-25oct` ref was returned. The active local Batch B changes remain uncommitted and untouched.
