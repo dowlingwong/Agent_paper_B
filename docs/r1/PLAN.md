@@ -460,6 +460,12 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-BENCH-HARD (24 Oct) | **Karpathy's autoresearch, 1GC-7RC (2026) and MLGym (Meta) are added** to the benchmark set, to address the small-testbed weakness (RUNBOOK Track G). Their role and audit budget are still open (proposed: evaluation and transfer nodes; C3 arms trained on the CPU pool are tested on them without retraining). |
 | R1-PROPOSER-QUANT (24 Oct) | Proposer (manager) models run at **Q4_K_M**. Size ceiling roughly **27B dense to 35B-A3B MoE**. Digest and quantization are pinned and reported for every run. Training stays BF16 LoRA (QLoRA only if needed). |
 
+**Decided 25 Oct 2026 by the author (inference backend).** Fixed, not a proposal. Recorded by an AI agent (Claude, coordinating session).
+
+| ID | Decision (decided 25 Oct 2026 by the author) |
+|---|---|
+| R1-INFER-LLAMACPP (25 Oct) | **LLM inference uses llama.cpp (`llama-server`), not Ollama.** The manager model is pinned by the sha256 of its Q4_K_M GGUF file and the llama.cpp build commit. Sweep 1 and every later table use this backend only (D6, D15); all Ollama-era runs stay PILOT and liveness (D28) is re-run under llama.cpp. The runner, watchdog, fake server and configs are ported (RUNBOOK A.10). |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |

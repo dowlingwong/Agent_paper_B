@@ -85,6 +85,8 @@ A.2 (T4 proof check) runs alongside, on the Mac; it gates the manuscript, not th
 | A.7 | digits_mlp proposer repair, then D28 LLM liveness on all eight nodes | deepthought | Liveness manifest; digits passes or the author decides |
 | A.8 | Ollama SIGTERM: add runner watchdog and logging so a lost runner is detected and the unit re-run | Mac, then deepthought smoke | Smoke with an injected runner kill recovers |
 | A.9 | Author: authorization note for the first C3 label sweep | Mac (author) | Note committed |
+| A.10 | Port from Ollama to llama.cpp (R1-INFER-LLAMACPP, 25 Oct): `llama-server` instance manager, GGUF sha256 + build-commit pin, health/offload checks, watchdog, fake server for dry runs, configs; check the harness `llamacpp` provider (OpenAI-compatible base URL with `/v1`, D26 seed pass-through) | Mac (code) | Dry runs and resume/watchdog tests pass on the llama.cpp path |
+| A.11 | Build llama.cpp on the sweep host and run a one-token GPU load probe of the pinned GGUF (TITAN X: compute 5.2, driver 525, so build against a CUDA toolkit the driver supports, `CMAKE_CUDA_ARCHITECTURES=52`) | deepthought (author's terminal) | Probe shows full GPU offload, or the author picks another host |
 
 ### Phase B — C3 labels and the offline gate (target ~22 Nov 2026)
 
