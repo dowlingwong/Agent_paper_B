@@ -172,3 +172,30 @@ def _full(row):
             "cumulative_budget_consumed": b,
             "provenance": {k: f"c-trial-{b:03d}" for k in ("proposal_id", "patch_id", "run_id", "metric_id",
                                                              "decision_id")}, "extra": row["extra"]}
+
+
+def _skip_row(b, control):
+    return {"budget_index": b, "decision": "skipped", "parsed_metrics": {}, "current_best_before": 0.93,
+            "delta_vs_best": None, "extra": {"control": control}}
+
+
+@pytest.mark.parametrize("control,counted", [
+    ({"epoch": "E1", "action": "skip", "skip_reason": "prior_no_gain"}, False),   # control-plane skip
+    ({"epoch": "E1", "action": "skip"}, False),                                    # controller skip, no reason
+    ({"epoch": "E1", "action": "skip", "reason": "inactive_key", "key": "x", "revisions": 2}, True),  # D25
+])
+def test_control_plane_skips_do_not_count_as_invalid(control, counted):
+    """Review F2: an online control-plane skip leaves invalid_so_far unchanged (train/deploy parity)."""
+    rows = _ledger()[:3] + [_skip_row(4, control)]
+    nxt = {"budget_index": 5, "decision": "discarded", "parsed_metrics": {"val_score": 0.91}, "current_best_before": 0.93,
+           "delta_vs_best": -0.02,
+           "extra": {"manager": {"structured_edit": {"symbol": "ALPHA", "old": "1e-4", "new": "1e-3", "path": "train.py"}}}}
+    rows.append(nxt)
+    f = features_from_view(_replay_view(rows, 4), CTX)
+    assert f["invalid_so_far"] == (1.0 if counted else 0.0)
+    # the online path (harness TrialRecords) agrees
+    spec = load_registered_node("digits_mlp", repo_root=HARNESS)
+    full = [_full(r) for r in rows[:3]] + [{**_full({**rows[3], "extra": rows[3]["extra"]}), "parsed_metrics": {}}] + \
+        [_full(rows[4])]
+    online = features_from_view(_online_view(full, 4, spec), CTX)
+    assert features_hash(online) == features_hash(f)

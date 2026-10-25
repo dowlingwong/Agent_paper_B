@@ -229,7 +229,22 @@ class FeatureLeakError(ValueError):
 # are not inputs: ``NodeContext`` has a fixed field set and the harness refuses
 # them in a ``ControlView`` (``build_control_view``).
 
-FEATURIZER_VERSION = "c3_features/v1"
+# v2 (26 Oct, review F2): a control-plane E1 skip (harness ``is_control_plane_skip``) is no
+# longer counted in ``invalid_so_far``; it is counted separately (``control_skips``, not a
+# model feature).  Ledgers without control-plane skips (every table built so far: pilot,
+# label sweeps) give byte-identical features under v1 and v2; the version is not written
+# into tables, only into online decision records.
+FEATURIZER_VERSION = "c3_features/v2"
+
+
+def _is_control_plane_skip(row: dict) -> bool:
+    """The harness definition (``memory.summarizer.is_control_plane_skip``) applied to a ledger row dict."""
+    from types import SimpleNamespace
+    from r1.harness import import_harness
+    import_harness()
+    from autoresearch.memory.summarizer import is_control_plane_skip
+    return bool(is_control_plane_skip(SimpleNamespace(decision=SimpleNamespace(value=row.get("decision")),
+                                                      extra=row.get("extra") or {})))
 
 
 @dataclass(frozen=True)
@@ -316,6 +331,7 @@ class _LedgerState:
         self.edit_counts: dict[tuple, int] = {}
         self.last_edit_by_key: dict[str, tuple] = {}
         self.keeps, self.last_keep_idx, self.invalid = 0, 0, 0
+        self.control_skips = 0  # control-plane E1 skips: not invalid trials, not a model feature
         self.first_metric = None
 
     def candidate(self, edit, b: int):
@@ -388,7 +404,10 @@ class _LedgerState:
         b = int(row["budget_index"])
         metric = parsed_metric(row)
         if row["decision"] == "skipped" or metric is None:
-            self.invalid += 1
+            if row["decision"] == "skipped" and _is_control_plane_skip(row):
+                self.control_skips += 1
+            else:
+                self.invalid += 1
             return
         edit = _row_edit(row)
         cand_files, cand_cfg = self.candidate(edit, b)
