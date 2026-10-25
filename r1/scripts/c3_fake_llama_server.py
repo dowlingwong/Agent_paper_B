@@ -122,6 +122,13 @@ class Handler(BaseHTTPRequestHandler):
             self.reply({'error': {'code': 404, 'message': 'File Not Found', 'type': 'not_found_error'}}, 404)
             return
         common.hold_if_frozen()
+        text = '\n'.join(str(m.get('content', '')) for m in body.get('messages', []))
+        side = side_answer(text)
+        if side is not None:  # Track H dry run: an A4 typed question or an LLM self-control query
+            log({'path': self.path, 'seed': seed, 'side_query': side[0]})
+            request_line('POST', self.path, 200, f'side_query={side[0]}')
+            self.reply(self.completion(body, side[1]))
+            return
         if 'Budget index' not in json.dumps(body.get('messages')):
             log({'path': self.path, 'seed': seed, 'probe': True})  # a load probe or the probe's throughput run
             request_line('POST', self.path, 200, 'probe')
@@ -173,6 +180,26 @@ class Handler(BaseHTTPRequestHandler):
                 'choices': [{'index': 0, 'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': content}}],
                 'usage': {'prompt_tokens': 10, 'completion_tokens': n, 'total_tokens': 10 + n},
                 'timings': {'predicted_n': n, 'predicted_ms': 1000.0 * n / tps, 'predicted_per_second': tps}}
+
+
+def side_answer(text):
+    """Track H dry run (25 Oct): deterministic replies to the controller's side queries, keyed by the prompt.
+
+    An A4 typed question (``"p_no_effect"`` in the prompt) gets typed answers; an
+    LLM self-control query (``r1.llm_control.build_side_prompt``) gets ``continue``,
+    or ``skip`` at E1 for about one prompt in three.  Anything else returns None
+    (handled as before).  No inference.
+    """
+    import hashlib
+    h = int(hashlib.sha256(text.encode()).hexdigest()[:8], 16)
+    if '"p_no_effect"' in text:
+        sizes = ('tiny', 'small', 'medium', 'large')
+        return 'a4', json.dumps({'p_no_effect': round((h % 5) / 20, 3), 'p_positive': round(0.2 + (h % 7) / 10, 3),
+                                 'size': sizes[h % 4]})
+    if 'You are advising the control plane' in text:
+        skip = 'Decision epoch: E1' in text and '  skip:' in text and h % 3 == 0
+        return 'self_control', json.dumps({'action': 'skip' if skip else 'continue', 'scores': {}})
+    return None
 
 
 def offload_mode():

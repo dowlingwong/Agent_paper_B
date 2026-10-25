@@ -250,6 +250,25 @@ class IsotonicMap:
         return _sha(self.maps)
 
 
+def chat_client(base_url: str, model: str, *, timeout_s: float = 60.0, max_tokens: int = 64,
+                temperature: float = 0.0, seed: int = 0) -> Callable[[str], str]:
+    """``prompt -> reply`` against an OpenAI-compatible ``/chat/completions`` endpoint (e.g. llama-server).
+
+    Used for A4 and LLM self-control queries to the manager model; every call
+    is one LLM call and the controller charges it to the cap.
+    """
+    url = base_url.rstrip("/") + "/chat/completions"
+
+    def call(prompt: str) -> str:
+        body = json.dumps({"model": model, "messages": [{"role": "user", "content": prompt}],
+                           "max_tokens": max_tokens, "temperature": temperature, "seed": seed}).encode()
+        req = urllib.request.Request(url, data=body, method="POST", headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310 - local model server
+            reply = json.loads(resp.read().decode())
+        return str(reply["choices"][0]["message"]["content"])
+    return call
+
+
 class ManagerQuestionPrior:
     """A4: the manager answers typed questions (one LLM call per forecast); isotonic map to bins.
 

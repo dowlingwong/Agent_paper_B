@@ -17,8 +17,9 @@ loader interface and answers ``POST /forecast`` with 12 bin probabilities:
   ``{"probs": [12], "version", "digest", "compute_s"}``.  A loader output that is
   not 12 finite non-negative numbers summing to 1 (after normalisation of a
   positive sum) is a 500.
-* **Fault injection** (fake only, for the timeout tests): ``delay_s`` sleeps
-  before answering; ``fail`` answers 500.
+* **Fault injection** (fake only, for the timeout tests and dry runs):
+  ``delay_s`` sleeps before answering (every call, or only the call numbers in
+  ``delay_calls``); ``fail`` answers 500.
 
 The client is ``r1.c3.prior_model.SidecarPrior`` (1 s timeout, falls back to the
 A1 prior and logs ``prior_unavailable``).  Co-residency and the deepthought
@@ -125,12 +126,14 @@ def _validate(probs) -> list:
 class Sidecar:
     """The service: verify the pin, load the model, serve forecasts."""
 
-    def __init__(self, pin: Pin, loader: Loader, *, delay_s: float = 0.0, fail: bool = False) -> None:
+    def __init__(self, pin: Pin, loader: Loader, *, delay_s: float = 0.0, fail: bool = False,
+                 delay_calls: set | None = None) -> None:
         pin.verify()  # refuse before loading anything
         self.pin, self.predict = pin, loader.load(pin)
         self.version = f"{pin.name}/{SERVE_VERSION}/{pin.base}"
         self.digest = pin.digest
         self.delay_s, self.fail = float(delay_s), bool(fail)
+        self.delay_calls = None if delay_calls is None else set(delay_calls)  # delay only these call numbers
         self.calls = 0
         self.server: ThreadingHTTPServer | None = None
         self.thread: threading.Thread | None = None
@@ -166,7 +169,7 @@ class Sidecar:
                 try:
                     n = int(self.headers.get("Content-Length") or 0)
                     row = json.loads(self.rfile.read(n).decode())["row"]
-                    if sidecar.delay_s:
+                    if sidecar.delay_s and (sidecar.delay_calls is None or sidecar.calls in sidecar.delay_calls):
                         time.sleep(sidecar.delay_s)
                     if sidecar.fail:
                         raise RuntimeError("injected failure")
