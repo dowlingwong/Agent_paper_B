@@ -28,7 +28,8 @@ Canonical environment: `/ceph/dwong/r1_prepare_20261025/venv`, built with uv 0.1
 | NumPy | 2.4.4 |
 | pandas | 3.0.3 |
 | SciPy | 1.17.1 |
-| LightGBM extra used for paper tests | 4.7.0, installed without changing locked dependencies |
+| LightGBM test extra | 4.7.0 |
+| Narwhals helper in the local test copy only | 2.27.1; no locked library upgraded |
 
 The common-run manifest records Python **3.13.16**, but this host's uv has no downloadable build for that patch. The runbook specifies Python 3.13; the nearest available patch, 3.13.15, was used and recorded. The metric-library versions match exactly. This is not an assertion of a byte-identical reference environment or cross-platform metric equivalence. The original common run was aarch64; this host is x86_64.
 
@@ -61,6 +62,9 @@ Climate has class counts `1: 46`, `2: 494`, minority share 46/540 = 0.085185…,
 | Final targeted C3 integration module, same source/packages with fully local runtime and scratch | **1 passed, 2 failed**, 316.25 s |
 | Scripted live-golden retry in local scratch | **1 passed**, 0.41 s |
 | Harness full suite on same-commit local scratch clone | **427 passed, 9 failed, 1 collection error**, 51 subtests passed, 64.62 s |
+| C3 arms after resolving optional import in local test copy | **10 passed**, 4.70 s |
+
+A final skip audit found that five initial skips were caused by LightGBM's missing `narwhals>=1.15` helper. Installed Narwhals **2.27.1** only in the isolated local test environment, without dependencies or core-library upgrades, then ran the complete arms module: **10 passed**, including the five formerly skipped checks. One original skip remains unexercised. This is additional targeted coverage, not a newly passing full suite.
 
 The paper's known `test_real_runner_desktop_dryrun` failure remains. All three C3 integration tests initially failed under the Ceph setup; the retry/permanent test hit its 170 s subprocess timeout. The live-golden failure was an explicit `OSError: [Errno 122] Disk quota exceeded` in `tempfile.mkdtemp`; it passed unchanged in local scratch.
 
