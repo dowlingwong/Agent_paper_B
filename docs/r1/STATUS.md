@@ -1,5 +1,15 @@
 # Paper B (route R1) — status log
 
+## 25 October 2026 — climate reserve measured: qualifies (PILOT); stop before Phase 4
+
+AI-assisted by GPT-6 (Codex). **PILOT, not evidence.** `openml_climate` (OpenML 1467) fresh complete attempt: **552 unique runs, 0 failures, 0 missing metrics**, 30 seeds per condition on all six configurations, all six default/repeat metrics identical. Adopted D21 rule: **qualifies**, 3 material edits, mean P(wrong) **0.2907157594**, σ_joint **0.0399363099**, δ_n **0.0050897867**. Independent raw-pair rule agrees; paired bootstrap P(qualifies)=0.9055 (reported, not decisive). Four CPU workers, no LLM/GPU, 228.4 s.
+
+The first attempt STOPped at 348 records on Ceph file quota and lacks a manifest; it is preserved unchanged, excluded and never resumed or pooled. A fresh full attempt changed only output/scratch to local /tmp. Same paper `3d3ec48`, preparation harness `7305434`, locked metric libraries; Python 3.13.15 versus the unavailable reference patch 3.13.16 is explicitly recorded. Durable, hash-verified complete records: `results/r1/pilot/E1_CLIMATE_DT_20261025_ATTEMPT02/` on the author's Mac. Report: `reports/NOISE_FLOOR_CLIMATE_20261025.md`.
+
+Final test coverage addendum: five LightGBM skips were a missing optional Narwhals helper. The isolated test copy with Narwhals 2.27.1 ran the full C3-arms module: **10 passed**; locked metric-library versions remained unchanged. This does not clear the unresolved retry/resume integration gate.
+
+No Phase 4 configuration work, node substitution, final sweep-pin adoption, real D28 run, sweep, or authorization note. Batch B and the runner test gate remain unresolved. The requested stop before Phase 4 is reached.
+
 ## 25 October 2026 — independent Phase 2 preparation performed; runner test gate blocked
 
 AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY. Fresh paper main `3d3ec48`; preparation harness `7305434` from the Batch A handoff, imported as an exact committed bundle because it was not published. The final C3 sweep pin was not changed or accepted. Python 3.13.15 (3.13.16 unavailable through uv); locked sklearn 1.8.0 / numpy 2.4.4 / pandas 3.0.3 / scipy 1.17.1 verified. Seven OpenML caches pass network-disabled checks; the two bundled/generated nodes also load offline. Climate metadata matches; no code correction.
