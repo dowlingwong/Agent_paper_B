@@ -193,8 +193,8 @@ def build_arms(runtime: dict) -> dict:
 
     rows = OE.assemble(PILOT_TABLE)
     priors = {a: TableArmPrior.fit(a, rows) for a in ("A1", "A2", "A3")}
-    lab = [dict(r, delta_true=r["delta_label"]) for r in label_rows(PILOT_TABLE) if r.get("delta_label") is not None]
-    awr = fit_awr_direct(lab)  # label seeds only (env.OfflineBanditEnv convention)
+    lab = [r for r in label_rows(PILOT_TABLE) if r.get("delta_label") is not None]  # duplicates have no label
+    awr = fit_awr_direct(lab)  # trains on delta_label, the label half of the audit seeds
     llm = chat_client(runtime["llama_url"], ALIAS)
     default_versions = {"action_versions": ActionVersions.new_campaign(), "skip_display": "one_line/v1"}
 

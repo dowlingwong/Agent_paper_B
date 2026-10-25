@@ -70,7 +70,7 @@ def _awr_rows(n=200, seed=0):
         harmful = bool(rng.random() < 0.5)
         f["key_code"] = 1.0 if harmful else 2.0
         rows.append({"features": f, "sigma_node": SIGMA, "delta_hat": rng.normal(-0.01 if harmful else 0.01, 0.003),
-                     "delta_true": -0.01 if harmful else 0.01})
+                     "delta_label": -0.01 if harmful else 0.01})
     return rows
 
 
@@ -84,10 +84,25 @@ def test_awr_direct_arm_learns_to_skip_harmful_edits():
     assert p_h[1] > 0.5 > p_g[1]
 
 
+def test_awr_training_never_reads_the_evaluation_half():
+    rows = _awr_rows()
+    base = fit_awr_direct(rows)
+    poisoned = [dict(r, delta_true=(1.0 if r["delta_label"] < 0 else -1.0)) for r in rows]  # eval half, inverted
+    fitted = fit_awr_direct(poisoned)
+    for key in base.params:
+        assert np.array_equal(base.params[key], fitted.params[key])
+    with pytest.raises(ValueError, match="evaluation half"):
+        fit_awr_direct(poisoned, value_key="delta_true")
+    with pytest.raises(ValueError, match="without a finite"):
+        fit_awr_direct([{k: v for k, v in r.items() if k != "delta_label"} for r in poisoned])
+    with pytest.raises(ValueError, match="without a finite"):
+        fit_awr_direct(rows + [dict(rows[0], delta_label=None)])
+
+
 def test_awr_direct_and_llm_self_control_run_through_decide(tmp_path):
     rows = _awr_rows()
     for r in rows:  # make every edit look harmful so the arm skips
-        r["delta_true"] = -0.01
+        r["delta_label"] = -0.01
     ctl = AWRDirectController(fit_awr_direct(rows), node_context(SIGMA))
     _, _, ledger, _ = run_campaign(tmp_path / "awr", ScriptedRandomManager("digits_mlp", seed=4, repetition=0),
                                    budget=3, controller=ctl)

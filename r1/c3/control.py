@@ -294,18 +294,28 @@ def feature_vector(features: Mapping[str, Any]) -> np.ndarray:
     return np.nan_to_num(x, nan=0.0)
 
 
-def fit_awr_direct(rows, g_units: float = G_PRIMARY, **awr_kwargs):
-    """Fit ``AWRMLP`` on labelled table rows: action 0 = execute (rho keep), action 1 = skip.
+def fit_awr_direct(rows, g_units: float = G_PRIMARY, *, value_key: str = "delta_label", **awr_kwargs):
+    """Fit ``AWRMLP`` on labelled rows: action 0 = execute (keep rule rho), action 1 = skip.
 
-    Value of execute = Delta_true * 1{Delta_hat > 0} - g (the default keep rule
-    rho; a direct-action arm has no prior), value of skip = 0.  ``rows`` are
-    assembled rows (``offline_eval.assemble``) with ``delta_true``; train them
-    on label-seed values only (``env.OfflineBanditEnv`` convention).
+    Value of execute = Delta * 1{Delta_hat > 0} - g (a direct-action arm has no
+    prior), value of skip = 0.  Delta is read from ``value_key``, by default
+    ``delta_label``: the LABEL half of the audit seeds (``env.label_rows``).
+    ``delta_true`` holds the EVALUATION half (``offline_eval.assemble``) and must
+    never be used for training; ``value_key="delta_true"`` is refused.  Rows
+    without a finite ``value_key`` (duplicates have no label) are refused: the
+    caller filters them explicitly.
     """
+    import math
     from r1.baselines.policies import AWRMLP
+    if value_key == "delta_true":
+        raise ValueError("delta_true is the evaluation half of the audit seeds; train on delta_label")
+    bad = [r.get("proposal_id", i) for i, r in enumerate(rows)
+           if r.get(value_key) is None or not math.isfinite(float(r[value_key]))]
+    if bad:
+        raise ValueError(f"{len(bad)} rows without a finite {value_key!r} (e.g. {bad[:3]}); filter them first")
     X = np.array([feature_vector(r["features"]) for r in rows])
     g = g_units * np.array([r["sigma_node"] for r in rows])
-    ex = np.array([r["delta_true"] * (r["delta_hat"] > 0) for r in rows]) - g
+    ex = np.array([float(r[value_key]) * (r["delta_hat"] > 0) for r in rows]) - g
     values = np.c_[ex, np.zeros(len(rows))]
     return AWRMLP(**awr_kwargs).fit(X, values)
 
