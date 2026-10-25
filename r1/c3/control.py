@@ -48,7 +48,9 @@ hybrid is ``RuleController(..., hybrid_revise=True, revision_budget=n)``:
 **proposal, not an adopted definition** — the prior decides whether (execute
 vs not, and the keep threshold); when the rule would skip and ``revise`` is
 feasible in the mask and within the revision budget, the controller requests
-``revise`` instead of ``skip``; otherwise it skips.
+``revise`` instead of ``skip``; otherwise it skips.  The revised proposal is
+re-screened once at E1 (harness ``rescreen_after_revise``; review F4): if it
+is still predicted no gain it is skipped; at most one revision per trial.
 """
 from __future__ import annotations
 
@@ -143,6 +145,10 @@ class RuleController:
         if hybrid_revise and (revision_budget is None or revision_budget < 0):
             raise ValueError("the hybrid needs an explicit revision_budget >= 0")
         self.hybrid_revise, self.revision_budget = bool(hybrid_revise), revision_budget
+        if self.hybrid_revise:
+            # Review F4: the harness asks again at E1 about the revised proposal, with revise infeasible
+            # (one revision per trial); still predicted no gain -> skip.
+            self.rescreen_after_revise = True
         self.revisions_requested = 0
         # Review F3: D23 KG verify at E2 (on by default for C3 arms): r = the harness verify runs, each run
         # priced at g, response posterior_mean/v1, under the campaign split policy.

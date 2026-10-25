@@ -38,28 +38,56 @@ class RevisingManager(ScriptedRandomManager):
             self.repetition = saved
 
 
-@pytest.mark.parametrize("budget_n,expect", [(1, ["kept", "revise", "skip", "skip"]), (0, ["kept", "skip", "skip", "skip"])])
-def test_hybrid_revises_instead_of_skipping_within_its_budget(tmp_path, budget_n, expect):
-    ctl = RuleController(FixedPrior(NOGAIN, "A3"), node_context(SIGMA), hybrid_revise=True, revision_budget=budget_n)
-    assert ctl.version.startswith("rule_controller_hybrid/v1")
+class SecondForecastGains(FixedPrior):
+    """No gain for the first forecast of a trial, gain for a second one (the revised proposal)."""
+
+    GAIN = np.array([0.05, 0.0, 0.02, 0.05, 0.1, 0.18, 0.2, 0.2, 0.12, 0.05, 0.02, 0.01])
+
+    def __init__(self):
+        super().__init__(NOGAIN, "A3")
+        self.seen = {}
+
+    def forecast(self, row):
+        b = row["features"]["budget_index"]
+        self.seen[b] = self.seen.get(b, 0) + 1
+        f = super().forecast(row)
+        if self.seen[b] >= 2:
+            return dataclasses.replace(f, probs=tuple(self.GAIN / self.GAIN.sum()))
+        return f
+
+
+@pytest.mark.parametrize("prior_kind,budget_n", [("nogain", 1), ("second_gains", 1), ("nogain", 0)])
+def test_hybrid_revises_then_rescreens_once(tmp_path, prior_kind, budget_n):
+    prior = FixedPrior(NOGAIN, "A3") if prior_kind == "nogain" else SecondForecastGains()
+    ctl = RuleController(prior, node_context(SIGMA), hybrid_revise=True, revision_budget=budget_n)
+    assert ctl.version.startswith("rule_controller_hybrid/v1") and ctl.rescreen_after_revise
     _, events, rows, _ = run_campaign(tmp_path, RevisingManager("digits_mlp", seed=9, repetition=0), budget=4,
                                       compute_budget=ComputeBudget(max_llm_calls=20), **ctl.campaign_kwargs())
-    got = ["kept" if r["budget_index"] == 1 else (r["extra"].get("control") or {}).get("action", "continue")
-           for r in rows]
-    assert got == expect
-    if budget_n:
-        revised = rows[1]
-        assert revised["decision"] in ("kept", "discarded")  # the revised proposal ran
-        assert revised["extra"]["keep_rule"]["prior"]["source"].endswith(":e2_forecast")  # forecast of the revision
-        e1 = [e["payload"] for e in events if e["event_type"] == "control_decision"
-              and e["payload"]["epoch"] == "E1" and e["payload"]["action"] == "revise"][0]
-        assert e1["detail"]["hybrid"] == "revise_instead_of_skip" and e1["detail"]["rule_decision"] == "prior_no_gain"
-        e2 = [e["payload"] for e in events if e["event_type"] == "control_decision"
-              and e["payload"]["epoch"] == "E2" and e["trial_id"] == revised["trial_id"]][0]
-        assert e2["detail"]["keep_prior_origin"] == "e2_forecast"
+    controls = [r["extra"].get("control") or {} for r in rows]
+    e1 = [e for e in events if e["event_type"] == "control_decision" and e["payload"]["epoch"] == "E1"]
+    t2 = [e["payload"] for e in e1 if e["trial_id"] == rows[1]["trial_id"]]
+    if budget_n == 0:
+        assert [r["decision"] for r in rows[1:]] == ["skipped"] * 3
+        assert all("revision" not in c for c in controls)
+        assert len(t2) == 1
+    elif prior_kind == "nogain":
+        # trial 2: revise, the revision is re-screened, still no gain -> skipped without a worker run
+        assert rows[1]["decision"] == "skipped" and controls[1]["action"] == "skip"
+        assert controls[1]["rescreened_after_revise"] and controls[1]["skip_reason"] == "prior_no_gain"
+        assert "revision" in controls[1] and rows[1]["proposal_summary"] != controls[1]["revision"]["original"][
+            "proposal_summary"]
+        assert [p["action"] for p in t2] == ["revise", "skip"]
+        assert t2[0]["detail"]["hybrid"] == "revise_instead_of_skip" and t2[1]["mask"]["revise"] is False
+        assert [r["decision"] for r in rows[2:]] == ["skipped", "skipped"]  # revision budget spent
+    else:
+        # the revision is predicted to gain: it runs, and its E1 forecast serves the keep rule
+        assert controls[1]["action"] == "revise" and rows[1]["decision"] in ("kept", "discarded")
+        assert [p["action"] for p in t2] == ["revise", "continue"]
+        assert rows[1]["extra"]["keep_rule"]["prior"]["source"].endswith(":e1_forecast")
     usage = campaign_usage(tmp_path / "trials.jsonl", tmp_path / "events.jsonl", arm="hybrid", instance="i",
                            information_set=INFO, worker_run_cap=None, llm_call_cap=20, manager_deterministic=False)
-    assert usage.llm_calls == 4 + budget_n and usage.worker_runs == 1 + budget_n
+    assert usage.llm_calls == 4 + budget_n
+    assert usage.worker_runs == 1 + (prior_kind == "second_gains")
 
 
 def _awr_rows(n=200, seed=0):
