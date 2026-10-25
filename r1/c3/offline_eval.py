@@ -296,11 +296,15 @@ def _g_role(gu):
                      "g = 0 is used only inside the theory checks")
 
 
-def evaluate(rows, mode="instance", k=3, g_values=G_EVAL, noise=None):
-    """Held-out one-step values per arm at the declared g values. No gate verdict here (see ``gate_verdict``)."""
+def evaluate(rows, mode="instance", k=3, g_values=G_EVAL, noise=None, arms=None):
+    """Held-out one-step values per arm at the declared g values. No gate verdict here (see ``gate_verdict``).
+
+    ``arms`` (default: the A1-A3 classes of ``r1.c3.arms``) maps A1/A2/A3 to
+    class-like factories, e.g. ``r1.c3.prior_model.offline_arm`` (Track H.1).
+    """
     noise = noise or noise_table()
     roles = {gu: _g_role(gu) for gu in g_values}
-    preds = crossfit(rows, mode, k)
+    preds = crossfit(rows, mode, k, arms)
     w = np.array([r["eval_weight"] for r in rows])
     nodes = np.array([r["node"] for r in rows])
     inst = np.array([r["instance"] for r in rows])
