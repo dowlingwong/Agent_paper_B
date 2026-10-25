@@ -209,3 +209,40 @@ def test_matching_report_without_new_fields_is_unchanged():
     assert rep["matched_fields"] == ["information_set", "spending_rule", "intervention_cap", "compute_budget",
                                      "llm_call_cap", "tuning_budget", "dev_instances"]
     assert all("instances" not in r for r in rep["arms"]) and "campaigns" not in rep
+
+
+def test_c3_budgets_keep_the_trial_budget_non_binding():
+    from r1.c3.control import c3_budgets
+    b = c3_budgets(4, 16)
+    assert b["budget"] == 16 and b["compute_budget"].max_worker_runs == 4 and b["compute_budget"].max_llm_calls == 16
+    assert c3_budgets(4, 16, 20)["budget"] == 20
+    for bad in ((4, 16, 15), (4, None), (0, 16)):
+        with pytest.raises(ValueError):
+            c3_budgets(*bad)
+    kw = RuleController(FixedPrior(NOGAIN), node_context(SIGMA)).campaign_kwargs(W=4, llm_cap=16)
+    assert kw["budget"] == 16 and kw["compute_budget"].max_worker_runs == 4
+
+
+def test_matching_report_flags_a_campaign_that_ended_on_the_trial_budget():
+    arms = [_desc("A1"), _desc("A4")]
+    ok = [_use(a, "s1", trial_budget=40, trials=25) for a in ("A1", "A4")]  # ended on W (20 runs)
+    rep = matching_report(arms, ok)
+    assert rep["campaigns"]["arms"]["A1"]["ended_on"] == ["W"]
+    on_trials = [ok[0], _use("A4", "s1", trial_budget=40, trials=40, worker_runs=12, llm_calls=39)]
+    with pytest.raises(MatchingError, match="ended on the trial budget"):
+        matching_report(arms, on_trials)
+    with pytest.raises(MatchingError, match="trial budget 30 < LLM cap 40"):
+        matching_report(arms, [ok[0], _use("A4", "s1", trial_budget=30, trials=20)])
+    capped = [ok[0], _use("A4", "s1", trial_budget=40, trials=40, worker_runs=12, llm_calls=40)]
+    assert matching_report(arms, capped)["campaigns"]["arms"]["A4"]["ended_on"] == ["llm_cap"]
+
+
+def test_campaign_usage_reports_trials_and_the_trial_budget(tmp_path):
+    ctl = RuleController(FixedPrior(NOGAIN, "A3"), node_context(SIGMA))
+    _, _, rows, _ = run_campaign(tmp_path, RevisingManager("digits_mlp", seed=9, repetition=0),
+                                 **ctl.campaign_kwargs(W=3, llm_cap=5))
+    u = campaign_usage(tmp_path / "trials.jsonl", tmp_path / "events.jsonl", arm="A3", instance="i",
+                       information_set=INFO, worker_run_cap=3, llm_call_cap=5, manager_deterministic=False,
+                       trial_budget=5)
+    assert u.trials == len(rows) and u.llm_calls == 5  # a skipping arm ends on the LLM cap, not on trials
+    matching_report([_desc("A3", compute_budget=3, llm_call_cap=5)], [u])

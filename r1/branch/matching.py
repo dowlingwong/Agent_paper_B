@@ -57,6 +57,8 @@ class CampaignUsage:
     sidecar_compute_s: float = 0.0
     prior_unavailable: int = 0
     controller_latency_s: float = 0.0
+    trial_budget: int | None = None  # the campaign's trial budget (review F6: must not bind)
+    trials: int = 0                  # trials the campaign recorded
 
 
 def _usage_section(arms: list[ArmDescriptor], usage: list[CampaignUsage]) -> dict:
@@ -87,6 +89,15 @@ def _usage_section(arms: list[ArmDescriptor], usage: list[CampaignUsage]) -> dic
             problems.append(f"{u.arm}/{u.instance}: {u.worker_runs} worker runs > W = {u.worker_run_cap}")
         if u.llm_call_cap is not None and u.llm_calls > u.llm_call_cap:
             problems.append(f"{u.arm}/{u.instance}: {u.llm_calls} LLM calls > cap {u.llm_call_cap}")
+        # Review F6 (D1): W and the LLM-call cap bind; a campaign must not end on its trial budget.
+        if u.trial_budget is not None:
+            if u.llm_call_cap is not None and u.trial_budget < u.llm_call_cap:
+                problems.append(f"{u.arm}/{u.instance}: trial budget {u.trial_budget} < LLM cap {u.llm_call_cap}")
+            w_hit = u.worker_run_cap is not None and u.worker_runs >= u.worker_run_cap
+            cap_hit = u.llm_call_cap is not None and u.llm_calls >= u.llm_call_cap
+            if u.trials >= u.trial_budget and not (w_hit or cap_hit):
+                problems.append(f"{u.arm}/{u.instance}: ended on the trial budget ({u.trials} trials) with "
+                                f"{u.worker_runs}/{u.worker_run_cap} runs and {u.llm_calls}/{u.llm_call_cap} LLM calls")
     if problems:
         raise MatchingError("campaign matching failed: " + "; ".join(problems))
     totals = {}
@@ -100,8 +111,21 @@ def _usage_section(arms: list[ArmDescriptor], usage: list[CampaignUsage]) -> dic
                        "prior_unavailable": sum(u.prior_unavailable for u in rows),
                        "descriptive": {"sidecar_compute_s": sum(u.sidecar_compute_s for u in rows),
                                        "controller_latency_s": sum(u.controller_latency_s for u in rows)}}
+    for arm, rows in sorted(by_arm.items()):
+        totals[arm]["ended_on"] = sorted({_ended_on(u) for u in rows})
     return {"matched": True, "checked": ["instances", "W", "llm_call_cap", "information_set",
-                                         "worker_runs <= W", "llm_calls <= cap"], "arms": totals}
+                                         "worker_runs <= W", "llm_calls <= cap",
+                                         "trial budget >= LLM cap and never binding"], "arms": totals}
+
+
+def _ended_on(u: CampaignUsage) -> str:
+    if u.worker_run_cap is not None and u.worker_runs >= u.worker_run_cap:
+        return "W"
+    if u.llm_call_cap is not None and u.llm_calls >= u.llm_call_cap:
+        return "llm_cap"
+    if u.trial_budget is not None and u.trials >= u.trial_budget:
+        return "trial_budget"
+    return "other"
 
 
 def matching_report(arms: list[ArmDescriptor], usage: list[CampaignUsage] | None = None) -> dict:

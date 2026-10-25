@@ -10,8 +10,10 @@ What runs (all CPU, no model, no GPU, no SSH):
   files, fixed distributions) for A5 and A6; the A6 sidecar answers its second call too late
   (1.5 s > the 1 s client timeout), so the fallback path is exercised once;
 * real ``LocalWorker`` CPU runs on two nodes (``digits_mlp``, ``openml_breast_w``), one
-  instance each, W = 3 worker runs, 2W trials, LLM-call cap 4W, memory ``append_only_summary``,
-  skip display ``one_line/v1``;
+  instance each, W = 4 worker runs, LLM-call cap 4W, trial budget = the cap (never binding,
+  review F6), verify runs r = 1, memory ``append_only_summary``, skip display ``one_line/v1``;
+  the C3 arms verify at E2 with D23's KG rule (review F3); LLM self-control acts at E1/E2 only
+  (review F5); the hybrid re-screens its revision (review F4);
 * arms A0 (rho), A1-A3 (fitted on the 19 Oct pilot table), A4 (typed questions), A5/A6
   (sidecar; A6 deployed as its mode bin with a DRYRUN tau_node = 1 sigma_node), and the H.7
   direct-action arms ``awr_direct``, ``llm_self`` and ``hybrid`` (a proposal) -- every arm through
@@ -52,9 +54,10 @@ if str(REPO) not in sys.path:
 LABEL = "DRYRUN"
 ARMS = ("A0", "A1", "A2", "A3", "A4", "A5", "A6", "awr_direct", "llm_self", "hybrid")
 NODES = ("digits_mlp", "openml_breast_w")
-W = 3
-TRIALS = 2 * W
+W = 4
 LLM_CAP = 4 * W
+TRIALS = LLM_CAP  # review F6 (D1): W and the LLM-call cap bind; the trial budget (= the cap) never does
+VERIFY_RUNS = 1   # harness verify runs r for every arm (with r = 2 KG verify never pays at g = 0.1 sigma_node)
 MEMORY_MODE = "append_only_summary"
 INFO_SET = "control_view/v1+node_context/v1"
 ALIAS = "dryrun-manager"
@@ -182,7 +185,7 @@ def build_arms(runtime: dict) -> dict:
     """arm -> factory(node_ctx, noise) -> (controller kwargs, prior description)."""
     import numpy as np
     from r1.c3 import offline_eval as OE
-    from r1.c3.control import AWRDirectController, RuleController, fit_awr_direct
+    from r1.c3.control import AWRDirectController, RuleController, c3_budgets, fit_awr_direct
     from r1.c3.env import label_rows
     from r1.c3.prior_model import ManagerQuestionPrior, SidecarPrior, TableArmPrior, chat_client
     from r1.llm_control import LLMSelfController
@@ -196,14 +199,15 @@ def build_arms(runtime: dict) -> dict:
     lab = [r for r in label_rows(PILOT_TABLE) if r.get("delta_label") is not None]  # duplicates have no label
     awr = fit_awr_direct(lab)  # trains on delta_label, the label half of the audit seeds
     llm = chat_client(runtime["llama_url"], ALIAS)
-    default_versions = {"action_versions": ActionVersions.new_campaign(), "skip_display": "one_line/v1"}
+    default_versions = {"action_versions": ActionVersions.new_campaign(), "skip_display": "one_line/v1",
+                        "verify_runs": VERIFY_RUNS, **c3_budgets(W, LLM_CAP, TRIALS)}
 
     def rule(prior, ctx, noise, **kw):
         ctl = RuleController(prior, ctx, sigma_cmp={"local": noise["sigma_local"],
                                                     "structural": noise["sigma_structural"]},
-                             fallback=priors["A1"], **kw)
-        return ctl.campaign_kwargs(), {"prior_version": prior.version, "prior_digest": prior.digest,
-                                       "controller_version": ctl.version}
+                             fallback=priors["A1"], verify_runs=VERIFY_RUNS, **kw)
+        return ctl.campaign_kwargs(W=W, llm_cap=LLM_CAP, trials=TRIALS), {
+            "prior_version": prior.version, "prior_digest": prior.digest, "controller_version": ctl.version}
 
     def sidecar(name):
         return SidecarPrior(runtime["sidecars"][name], priors["A1"], name=name,
@@ -221,8 +225,9 @@ def build_arms(runtime: dict) -> dict:
                                       tau_node=A6_TAU_Z * noise["sigma_node"]),
         "awr_direct": lambda ctx, noise: ({"controller": AWRDirectController(awr, ctx), **default_versions},
                                           {"controller_version": "awr_direct/v1"}),
-        "llm_self": lambda ctx, noise: ({"controller": LLMSelfController(llm), **default_versions},
-                                        {"controller_version": "llm_self/v1"}),
+        "llm_self": lambda ctx, noise: ({"controller": LLMSelfController(llm, epochs=("E1", "E2")),
+                                         **default_versions},
+                                        {"controller_version": "llm_self/v1", "epochs": ["E1", "E2"]}),
         "hybrid": lambda ctx, noise: rule(priors["A3"], ctx, noise, hybrid_revise=True,
                                           revision_budget=HYBRID_REVISIONS),
     }
@@ -263,16 +268,17 @@ def run_campaigns(work: Path) -> None:
             manager = make_manager(node, seed, 0, {"kind": "langgraph", "model": f"llamacpp/{ALIAS}",
                                                    "temperature": 0.2})
             t0 = time.time()
-            run_real_campaign(node_spec=spec, campaign_id=f"{name}__s{seed}", budget=TRIALS,
+            assert kwargs["budget"] == TRIALS and kwargs["compute_budget"].max_worker_runs == W \
+                and kwargs["compute_budget"].max_llm_calls == LLM_CAP
+            run_real_campaign(node_spec=spec, campaign_id=f"{name}__s{seed}",
                               manager_mode="langgraph_manager", memory_mode=MEMORY_MODE,
                               records_path=d / "trials.jsonl",
                               worker=LocalWorker(node_root=node_dir, artifact_dir=d / "art", train_seed=seed,
                                                  split_seed=seed),
                               proposal_backend=manager,
-                              compute_budget=ComputeBudget(max_worker_runs=W, max_llm_calls=LLM_CAP),
                               event_store=CampaignEventStore(d / "events.jsonl"), **kwargs)
             manifest = {"label": LABEL, "arm": arm, "node": node, "instance": f"{node}__s{seed}", "W": W,
-                        "trials": TRIALS, "llm_cap": LLM_CAP, "memory_mode": MEMORY_MODE,
+                        "trials": TRIALS, "llm_cap": LLM_CAP, "verify_runs": VERIFY_RUNS, "memory_mode": MEMORY_MODE,
                         "information_set": INFO_SET, "rerun_after_interruption": rerun,
                         "action_versions": kwargs["action_versions"].to_dict(), **desc}
             from r1.c3.control import declare_skip_display
@@ -385,7 +391,7 @@ def report(work: Path, out: Path) -> dict:
         events = [json.loads(x) for x in (d / "events.jsonl").read_text().splitlines() if x.strip()]
         u = campaign_usage(d / "trials.jsonl", d / "events.jsonl", arm=man["arm"], instance=man["instance"],
                            information_set=man["information_set"], worker_run_cap=W, llm_call_cap=LLM_CAP,
-                           manager_deterministic=False)
+                           manager_deterministic=False, trial_budget=man["trials"])
         usage.append(u)
         instances.setdefault(man["arm"], []).append(man["instance"])
         e1 = [e["payload"] for e in events if e["event_type"] == "control_decision" and e["payload"]["epoch"] == "E1"]
@@ -419,10 +425,18 @@ def report(work: Path, out: Path) -> dict:
             "skip_reasons": skip_reasons, "keep_prior_origins": origins, "e1_e2_same_forecast": all(same),
             "e1_e2_same_forecast_trials": len(same),
             "e1_actions": {a: sum(1 for p in e1 if p["action"] == a) for a in ("continue", "skip", "revise")},
+            "e2_verify_considered": sum(1 for e in events if e["event_type"] == "control_decision"
+                                        and e["payload"]["epoch"] == "E2"
+                                        and "verify" in (e["payload"].get("detail") or {})
+                                        and "voi" in e["payload"]["detail"]["verify"]),
+            "verifies": sum(1 for r in rows if (r["extra"].get("control") or {}).get("verify")),
+            "rescreened_skips": sum(1 for r in rows if (r["extra"].get("control") or {}).get("rescreened_after_revise")),
+            "trials": len(rows),
             "e1_details_complete": all({"probs", "pi", "mu", "tau", "t_star", "V", "g", "prior_version",
                                         "prior_digest"} <= set(p.get("detail") or {}) for p in e1
                                        if "probs" in (p.get("detail") or {})),
             "a4_fallbacks": sum(1 for p in e1 if str((p.get("detail") or {}).get("fallback") or "").startswith("a4_")),
+            "ended_on": None,
             "llm_cap_fallbacks": sum(1 for p in e1 if (p.get("detail") or {}).get("fallback") == "llm_cap_exhausted"),
             "prior_unavailable": u.prior_unavailable, "worker_runs": u.worker_runs, "llm_calls": u.llm_calls,
             "controller_llm_calls": u.controller_llm_calls, "skip_display": started.get("skip_display"),
@@ -441,7 +455,16 @@ def report(work: Path, out: Path) -> dict:
     except Exception as exc:  # noqa: BLE001
         matching = {"matched": False, "error": str(exc)}
         problems.append(f"matching_report failed: {exc}")
-    checks["matching_report_passes"] = bool(matching.get("matched"))
+    checks["matching_report_passes"] = bool(matching.get("matched"))  # includes: no campaign ended on trials
+    for c, v in per_campaign.items():
+        u = next(x for x in usage if x.arm == v["arm"] and x.instance == v["instance"])
+        from r1.branch.matching import _ended_on
+        v["ended_on"] = _ended_on(u)
+    checks["no_campaign_ended_on_the_trial_budget"] = all(v["ended_on"] != "trial_budget"
+                                                          for v in per_campaign.values())
+    checks["c3_arms_considered_kg_verify"] = all(v["e2_verify_considered"] > 0 for v in per_campaign.values()
+                                                 if v["arm"] in ("A1", "A2", "A3", "A4", "A5", "A6", "hybrid")
+                                                 and v["decisions"]["kept"] + v["decisions"]["discarded"] > 1)
     checks["every_arm_ran"] = sorted({v["arm"] for v in per_campaign.values()}) == sorted(ARMS)
     checks["skip_display_declared_everywhere"] = all(v["skip_display"] == v["manifest_skip_display"] == "one_line/v1"
                                                      for v in per_campaign.values())
@@ -465,7 +488,8 @@ def report(work: Path, out: Path) -> dict:
                "paper": {"commit": paper, "dirty": dirty}, "harness": {"root": str(harness_root()), **harness_commit()},
                "python": platform.python_version(), "platform": platform.platform(),
                "design": {"arms": list(ARMS), "nodes": list(NODES), "instances_per_node": 1, "W": W, "trials": TRIALS,
-                          "llm_call_cap": LLM_CAP, "memory_mode": MEMORY_MODE, "skip_display": "one_line/v1",
+                          "llm_call_cap": LLM_CAP, "verify_runs": VERIFY_RUNS,
+                          "llm_self_epochs": ["E1", "E2"], "c3_verify": "D23 KG (KGIndexPolicy), posterior_mean/v1", "memory_mode": MEMORY_MODE, "skip_display": "one_line/v1",
                           "information_set": INFO_SET, "manager": f"llamacpp/{ALIAS} (fake llama-server, no inference)",
                           "sidecars": "r1.c3.serve FakeLoader, fixed distributions, sha256-pinned fixtures; A6 "
                                       "answers its 2nd call after 1.5 s (> 1 s timeout)",

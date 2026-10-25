@@ -25,7 +25,7 @@ def _jsonl(path: Path) -> list[dict]:
 
 def campaign_usage(records_path: Path | str, events_path: Path | str, *, arm: str, instance: str,
                    information_set: str, worker_run_cap: int | None, llm_call_cap: int | None,
-                   manager_deterministic: bool) -> CampaignUsage:
+                   manager_deterministic: bool, trial_budget: int | None = None) -> CampaignUsage:
     rows, events = _jsonl(Path(records_path)), _jsonl(Path(events_path))
     runs = 0
     for r in rows:
@@ -49,4 +49,5 @@ def campaign_usage(records_path: Path | str, events_path: Path | str, *, arm: st
                          llm_calls=manager_calls + controller_calls, controller_llm_calls=controller_calls,
                          sidecar_calls=len(sidecar), sidecar_compute_s=float(sum(d["sidecar_compute_s"] for d in sidecar)),
                          prior_unavailable=sum(1 for e in events if e["event_type"] == "prior_unavailable"),
-                         controller_latency_s=float(sum(float(d.get("latency_s") or 0.0) for d in details)))
+                         controller_latency_s=float(sum(float(d.get("latency_s") or 0.0) for d in details)),
+                         trial_budget=trial_budget, trials=len(rows))
