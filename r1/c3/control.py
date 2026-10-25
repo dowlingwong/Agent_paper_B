@@ -13,6 +13,14 @@ A1-A6; the arms differ only in the ``PriorModel`` passed in (C3_DESIGN §1, §5)
   Otherwise the prior's forecast gives (pi, mu, tau); T4 Proposition 8
   (``rules.execute``: execute iff (1 - pi) V(t*; mu, tau, sigma) >= g) decides
   skip (``prior_no_gain``) or continue.
+* **E2** (verify; review F3, 26 Oct).  D23's KG verify, on by default: the
+  existing ``r1.theory.acceptance.KGIndexPolicy`` (verify iff VoI(Delta_hat) >
+  2 r g, VoI the KG value of verify(r) with a Bayes response under the
+  campaign split policy) with the trial's cached (mu, tau, sigma), r = the
+  harness verify runs, each run priced at g; the campaign's verify response is
+  ``posterior_mean/v1`` with the same prior.  With g = 0.1 sigma_node and r = 2
+  it never fires when sigma_cmp <= sigma_node (VoI < 0.4 sigma_cmp; test
+  ``test_kg_verify_with_r2_never_pays_at_the_declared_g``).
 * **E2** (keep).  The campaign runs keep rule ``bayes_threshold/v1`` with
   ``keep_prior=controller.keep_prior``: the forecast cached at E1 for this trial
   is served as the ``KeepPrior`` (mu, tau, sigma), so E1 and E2 use one
@@ -58,12 +66,15 @@ from r1.c3.features import FEATURES, FEATURIZER_VERSION, NodeContext, featurize_
 from r1.c3.labels import INERT, MIDPOINTS
 from r1.c3.offline_eval import G_PRIMARY
 from r1.c3.prior_model import Forecast, proposal_row
+from r1.theory.acceptance import KGIndexPolicy, NodeNoise, verify_voi
 from r1.harness import import_harness
 
 import_harness()
 
-from autoresearch.control_plane.action_versions import KEEP_RULE_BAYES, ActionVersions, KeepPrior  # noqa: E402
-from autoresearch.control_plane.controller import ControlDecision  # noqa: E402
+from autoresearch.control_plane.action_versions import (  # noqa: E402
+    KEEP_RULE_BAYES, NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, VERIFY_RESPONSE_POSTERIOR, ActionVersions, KeepPrior)
+from autoresearch.control_plane.budget import ComputeBudget  # noqa: E402
+from autoresearch.control_plane.controller import DEFAULT_VERIFY_RUNS, ControlDecision  # noqa: E402
 from autoresearch.memory.summarizer import SKIP_DISPLAY_ONE_LINE  # noqa: E402
 
 RULE_CONTROLLER_VERSION = "rule_controller/v1"
@@ -116,7 +127,8 @@ class RuleController:
     def __init__(self, prior, node_ctx: NodeContext, *, sigma_node: float | None = None, tau_node: float | None = None,
                  g: float | None = None, sigma_cmp: Mapping[str, float] | None = None, fallback=None,
                  rule_layer: bool | None = None, greedy_bin: bool = False, hybrid_revise: bool = False,
-                 revision_budget: int | None = None) -> None:
+                 revision_budget: int | None = None, verify: bool = True, verify_runs: int = DEFAULT_VERIFY_RUNS,
+                 split_policy: str = NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, sigma_t_fraction: float | None = None) -> None:
         self.prior, self.ctx = prior, node_ctx
         self.sigma_node = float(node_ctx.sigma_node if sigma_node is None else sigma_node)
         if not math.isclose(self.sigma_node, node_ctx.sigma_node):
@@ -132,6 +144,16 @@ class RuleController:
             raise ValueError("the hybrid needs an explicit revision_budget >= 0")
         self.hybrid_revise, self.revision_budget = bool(hybrid_revise), revision_budget
         self.revisions_requested = 0
+        # Review F3: D23 KG verify at E2 (on by default for C3 arms): r = the harness verify runs, each run
+        # priced at g, response posterior_mean/v1, under the campaign split policy.
+        if split_policy not in ("vary", "fixed"):
+            raise ValueError(f"unknown split policy {split_policy!r}")
+        if split_policy == "fixed" and verify and sigma_t_fraction is None:
+            raise ValueError("verify under the 'fixed' split policy needs sigma_t_fraction (sigma_t / sigma)")
+        if verify_runs < 1:
+            raise ValueError("verify_runs >= 1")
+        self.verify, self.verify_runs, self.split_policy = bool(verify), int(verify_runs), split_policy
+        self.sigma_t_fraction = sigma_t_fraction
         base = HYBRID_VERSION if self.hybrid_revise else RULE_CONTROLLER_VERSION
         self.version = f"{base}[{prior.version}]"
         self._plans: dict[int, _Plan] = {}
@@ -139,11 +161,20 @@ class RuleController:
         self.log: list[dict] = []
 
     # ---- campaign wiring -------------------------------------------------
-    def campaign_kwargs(self, **versions: str) -> dict:
-        """``run_real_campaign`` kwargs: this controller, keep rule ``bayes_threshold/v1``, the keep prior,
-        and the decided skip display ``one_line/v1`` (R1-SKIP-DISPLAY)."""
-        return {"controller": self, "keep_prior": self.keep_prior, "skip_display": SKIP_DISPLAY,
-                "action_versions": ActionVersions.new_campaign(keep_rule=KEEP_RULE_BAYES, **versions)}
+    def campaign_kwargs(self, *, W: int | None = None, llm_cap: int | None = None, trials: int | None = None,
+                        **versions: str) -> dict:
+        """``run_real_campaign`` kwargs: this controller, keep rule ``bayes_threshold/v1``, verify response
+        ``posterior_mean/v1`` under the controller's split policy and verify runs, the keep prior, and the
+        decided skip display ``one_line/v1`` (R1-SKIP-DISPLAY).  With ``W`` (review F6) also the budgets of
+        ``c3_budgets``: W worker runs and the LLM-call cap bind, the trial budget does not."""
+        kwargs = {"controller": self, "keep_prior": self.keep_prior, "skip_display": SKIP_DISPLAY,
+                  "verify_runs": self.verify_runs,
+                  "action_versions": ActionVersions.new_campaign(**{
+                      "keep_rule": KEEP_RULE_BAYES, "verify_response": VERIFY_RESPONSE_POSTERIOR,
+                      "verify_split_policy": self.split_policy, **versions})}
+        if W is not None:
+            kwargs.update(c3_budgets(W, llm_cap, trials))
+        return kwargs
 
     # ---- forecasting -----------------------------------------------------
     def _forecast(self, row: dict, view: Any) -> Forecast:
@@ -208,9 +239,40 @@ class RuleController:
             return self._decide_e1(view, mask)
         if view.epoch == "E2":
             pending, self._pending = self._pending, {"events": [], "llm_calls": 0, "detail": {}}
-            return ControlDecision("continue", {}, self.version, view.input_hash(), int(pending["llm_calls"]),
-                                   detail=dict(pending["detail"]), events=tuple(pending["events"]))
+            action, detail = "continue", dict(pending["detail"])
+            if self.verify:
+                action, verify_detail = self._verify_decision(view, mask)
+                if verify_detail:
+                    detail["verify"] = verify_detail
+            return ControlDecision(action, {}, self.version, view.input_hash(), int(pending["llm_calls"]),
+                                   detail=detail, events=tuple(pending["events"]))
         return ControlDecision("continue", {}, self.version, view.input_hash())
+
+    def _noise(self, sigma: float) -> NodeNoise:
+        """(sigma_t, sigma_s) of the edit's comparison noise under the split policy (T2 §1)."""
+        if self.split_policy == "vary":  # only sigma_t^2 + sigma_s^2 enters
+            return sigma, 0.0
+        f = float(self.sigma_t_fraction)
+        return sigma * f, sigma * math.sqrt(max(1.0 - f * f, 0.0))
+
+    def _verify_decision(self, view: Any, mask: dict[str, bool]) -> tuple[str, dict]:
+        """D23 KG verify with the trial's cached forecast: ``r1.theory.acceptance.KGIndexPolicy``."""
+        if not mask.get("verify", False):
+            return "continue", {}
+        plan = self._plans.get(int(view.budget_index))
+        prov = view.provisional
+        delta_hat = getattr(prov, "delta_vs_best", None)
+        if plan is None or plan.forecast is None or delta_hat is None:
+            return "continue", {"rule": "kg_index_policy", "reason": "no_forecast_or_no_comparison"}
+        st, ss = self._noise(plan.sigma)
+        nn = NodeNoise(mu0=plan.mu, tau=plan.tau, sigma_t=st, sigma_s=ss)
+        policy = KGIndexPolicy(nn=nn, r=self.verify_runs, g=self.g, policy=self.split_policy)
+        left = (getattr(view, "budget", None) or {}).get("worker_runs_remaining")
+        action = policy.decide(float(delta_hat), 10 ** 9 if left is None else int(left))
+        voi = verify_voi(float(delta_hat), nn, self.verify_runs, self.split_policy)
+        return action, {"rule": "kg_index_policy", "voi": _f(voi), "price": 2 * self.verify_runs * self.g,
+                        "r": self.verify_runs, "split_policy": self.split_policy, "delta_hat": float(delta_hat),
+                        "mu": plan.mu, "tau": plan.tau, "sigma": plan.sigma, "verify": action == "verify"}
 
     def _skip_or(self, mask: dict[str, bool], reason: str) -> tuple[str, dict]:
         """The action for a proposal the rules would not execute."""
@@ -275,8 +337,24 @@ class RuleController:
             # without using the prior (decide_trial_bayes_threshold), so any valid prior serves.
             sigma = float(self.sigma_cmp[plan.kind if plan else "local"])
             return KeepPrior(mu=0.0, tau=self.sigma_node, sigma=sigma, source=f"c3:{self.version}:no_features")
-        return KeepPrior(mu=plan.mu, tau=plan.tau, sigma=plan.sigma,
+        split = {"sigma_t": self._noise(plan.sigma)[0]} if self.split_policy == "fixed" else {}
+        return KeepPrior(mu=plan.mu, tau=plan.tau, sigma=plan.sigma, **split,
                          source=f"c3:{plan.forecast.version}:{plan.forecast.digest[:16]}:{origin}")
+
+
+def c3_budgets(W: int, llm_cap: int | None, trials: int | None = None) -> dict:
+    """Review F6 (D1): in a C3 campaign W worker runs and the LLM-call cap bind; the trial budget must not.
+
+    Returns ``{"budget": trials, "compute_budget": ComputeBudget(max_worker_runs=W, max_llm_calls=llm_cap)}``
+    with ``trials`` defaulting to the LLM cap; refuses a trial budget below the cap (every trial makes at
+    least one manager call, so ``trials >= llm_cap`` cannot end the campaign before W or the cap).
+    """
+    if not W or W < 1 or llm_cap is None or llm_cap < 1:
+        raise ValueError("a C3 campaign needs W >= 1 worker runs and an LLM-call cap >= 1")
+    trials = llm_cap if trials is None else int(trials)
+    if trials < llm_cap:
+        raise ValueError(f"trial budget {trials} < LLM-call cap {llm_cap}: the trial budget would bind (D1)")
+    return {"budget": trials, "compute_budget": ComputeBudget(max_worker_runs=int(W), max_llm_calls=int(llm_cap))}
 
 
 def _edit_of(proposal: Any):

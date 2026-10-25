@@ -173,3 +173,83 @@ def test_skip_infeasible_and_no_features_continue():
     assert d.action == "continue" and d.detail["reason"] == "no_features"
     kp = ctl.keep_prior(SimpleNamespace(**{**view.__dict__, "epoch": "E2"}))
     assert kp.source.endswith("no_features")
+
+
+# ---------------------------------------------------------------------------
+# Review F3 (26 Oct): D23 A1 includes KG verify priced on the executed response
+# ---------------------------------------------------------------------------
+
+class IndexArmReference:
+    """The existing index-policy arm: constant E1 decision (IndexPolicyReference) and, at E2, the deployed
+    KG index ``r1.controllers.IndexController`` scoring with ``r1.baselines.policies.KGIndex`` (Bayes
+    response) at cutoff 0, i.e. verify iff VoI > 2 r g."""
+
+    version = "index_arm_reference/v1"
+    deterministic = True
+
+    def __init__(self, execute, kg_controller):
+        self.e1, self.e2 = IndexPolicyReference(execute), kg_controller
+
+    def decide(self, view, mask):
+        return (self.e2 if view.epoch == "E2" else self.e1).decide(view, mask)
+
+
+def test_a1_with_verify_equals_the_index_policy_arm(tmp_path):
+    from r1.baselines.policies import KGIndex
+    from r1.controllers import IndexController
+    from r1.theory.acceptance import NodeNoise
+    from autoresearch.control_plane.action_versions import VERIFY_RESPONSE_POSTERIOR
+
+    prior = a1_prior(GAIN)
+    pi, mu, tau = prior.forecast({"node": "digits_mlp", "features": {}}).moments(SIGMA)
+    g = 0.02 * SIGMA  # a small run price so that verify is worth it on some trials (see the next test)
+    ctl = RuleController(prior, node_context(SIGMA), g=g)
+    assert ctl.verify and ctl.verify_runs == 2 and ctl.split_policy == "vary"
+    kw = ctl.campaign_kwargs()
+    assert kw["action_versions"].verify_response == VERIFY_RESPONSE_POSTERIOR and kw["verify_runs"] == 2
+    budget, seed, scale = 14, 127, 0.004
+    from autoresearch.control_plane.budget import ComputeBudget
+    a, _, a_rows, _ = run_campaign(tmp_path / "a", ScriptedRandomManager("digits_mlp", seed=seed, repetition=0),
+                                   budget=budget, scale=scale, seeded=True,
+                                   compute_budget=ComputeBudget(max_worker_runs=40), **kw)
+    kg = KGIndex(response="bayes")
+    kg.by_node["digits_mlp"] = (NodeNoise(mu0=mu, tau=tau, sigma_t=SIGMA, sigma_s=0.0), g)
+    ref = IndexArmReference(bool(rules.execute(pi, mu, tau, SIGMA, g)),
+                            IndexController(kg.score, 0.0, "digits_mlp",
+                                            {"sigma_d": SIGMA, "sigma_t": SIGMA, "sigma_s": 0.0},
+                                            total_runs=40, r=2, split_policy="vary"))
+    b, _, b_rows, _ = run_campaign(tmp_path / "b", ScriptedRandomManager("digits_mlp", seed=seed, repetition=0),
+                                   budget=budget, scale=scale, seeded=True, controller=ref,
+                                   compute_budget=ComputeBudget(max_worker_runs=40), verify_runs=2,
+                                   action_versions=ActionVersions.new_campaign(keep_rule=KEEP_RULE_BAYES,
+                                                                               verify_response=VERIFY_RESPONSE_POSTERIOR),
+                                   keep_prior=KeepPrior(mu=mu, tau=tau, sigma=SIGMA, source="constant"),
+                                   skip_display="one_line/v1")
+    assert _strip(a_rows) == _strip(b_rows)
+    def verify_of(r):
+        v = (r["extra"].get("control") or {}).get("verify")
+        if v and v.get("prior"):  # the prior's provenance string differs by construction; its numbers must not
+            v = {**v, "prior": {k: x for k, x in v["prior"].items() if k != "source"}}
+        return r["budget_index"], v
+    va, vb = [verify_of(r) for r in a_rows], [verify_of(r) for r in b_rows]
+    assert va == vb  # identical verify decisions, seeds, metrics, responses and posterior means
+    verified = [v for _, v in va if v]
+    assert len(verified) >= 2 and all(v["response"] in ("keep", "reject") for v in verified)
+    assert all("posterior_mean" in v for v in verified)
+    assert len(verified) < len(a_rows) - 1  # and not on every trial
+
+
+def test_kg_verify_with_r2_never_pays_at_the_declared_g():
+    """Theory check behind the dry run: with g = 0.1 sigma_node and r = 2, VoI <= phi(0) s~ < sigma_cmp
+    * 0.4 <= 2 r g whenever sigma_cmp <= sigma_node, so KG verify (Bayes response) never fires."""
+    from r1.theory.acceptance import NodeNoise, verify_voi
+    sig = 1.0
+    worst = 0.0
+    for mu in np.linspace(-3, 3, 13):
+        for tau in (0.1, 0.5, 1, 2, 5, 20):
+            nn = NodeNoise(mu0=mu, tau=tau, sigma_t=sig, sigma_s=0.0)
+            for dh in np.linspace(-5, 5, 41):
+                worst = max(worst, verify_voi(dh, nn, 2, "vary"))
+    assert worst < 2 * 2 * OE.G_PRIMARY * sig
+    nn = NodeNoise(mu0=0.0, tau=20.0, sigma_t=sig, sigma_s=0.0)
+    assert verify_voi(0.0, nn, 1, "vary") > 2 * 1 * OE.G_PRIMARY * sig  # with r = 1 it can pay

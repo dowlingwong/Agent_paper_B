@@ -50,6 +50,19 @@ class ConfigMetricWorker:
                             git_commit_after="a")
 
 
+class SeededConfigMetricWorker(ConfigMetricWorker):
+    """Adds seeded re-runs (verify): the configuration's metric plus a deterministic seed effect."""
+
+    def run_trial_at_seed(self, proposal, node_spec, budget_index, *, train_seed, split_seed=None):
+        self.runs += 1
+        text = (self.node_root / "train.py").read_text()
+        h = int(hashlib.sha256(f"{text}|{train_seed}|{split_seed}".encode()).hexdigest()[:8], 16)
+        metric = round(config_metric(text, self.scale) + self.scale * ((h % 9) - 4) / 8.0, 6)
+        return WorkerResult(worker_mode=self.mode, changed_files=(), success=True,
+                            parsed_metrics={"val_score": metric}, raw_log_ref="fake.log", patch_ref="",
+                            git_commit_before="b", git_commit_after="b")
+
+
 class SequenceBackend:
     """Proposes a fixed sequence of (symbol, old, new) edits."""
 
@@ -90,11 +103,12 @@ def node_context(sigma_node: float, runs: int = 20, memory_mode: str = "none") -
                        sigma_node=sigma_node, runs_total=runs, memory_mode=memory_mode)
 
 
-def run_campaign(tmp: Path, backend, *, budget: int, memory_mode: str = "none", scale: float = 0.01, **kwargs):
+def run_campaign(tmp: Path, backend, *, budget: int, memory_mode: str = "none", scale: float = 0.01,
+                 seeded: bool = False, **kwargs):
     spec = load_registered_node(NODE, repo_root=HARNESS)
     node = Path(tmp) / "node"
     shutil.copytree(HARNESS / "nodes" / NODE, node, ignore=shutil.ignore_patterns("__pycache__"))
-    worker = ConfigMetricWorker(node, scale)
+    worker = (SeededConfigMetricWorker if seeded else ConfigMetricWorker)(node, scale)
     run_real_campaign(node_spec=spec, campaign_id="h3", budget=budget, manager_mode="baseline_manager",
                       memory_mode=memory_mode, records_path=Path(tmp) / "trials.jsonl", worker=worker,
                       proposal_backend=backend, event_store=CampaignEventStore(Path(tmp) / "events.jsonl"), **kwargs)
