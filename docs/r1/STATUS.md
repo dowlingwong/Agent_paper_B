@@ -1,5 +1,13 @@
 # Paper B (route R1) — status log
 
+## 25 October 2026 — independent Phase 2 preparation performed; runner test gate blocked
+
+AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY. Fresh paper main `3d3ec48`; preparation harness `7305434` from the Batch A handoff, imported as an exact committed bundle because it was not published. The final C3 sweep pin was not changed or accepted. Python 3.13.15 (3.13.16 unavailable through uv); locked sklearn 1.8.0 / numpy 2.4.4 / pandas 3.0.3 / scipy 1.17.1 verified. Seven OpenML caches pass network-disabled checks; the two bundled/generated nodes also load offline. Climate metadata matches; no code correction.
+
+Initial paper suite: 317 passed / 5 failed / 6 skipped. Bounded unchanged-assertion integration retries: watchdog passed, retry still exceeds 75 s and interrupted-root archive assertion remains unresolved; no fourth retry of the exhausted item. Quota-induced live-golden failure passed in local scratch. Harness: 427 passed / 9 failed / 1 error, with an explicitly recorded difference in the artifact failure set. **No baseline acceptance or sweep readiness claimed.**
+
+Ceph file-count quota interrupted temporary writes despite ample byte space. New scratch moved to local /tmp; only inventoried task-created package/bytecode caches were cleared, preserving source, environments and every run record. The independent climate PILOT continued separately. Report: `reports/DT_PREPARATION_20261025.md`. Batch B/source/pin/test recheck remains required; stop before Phase 4.
+
 ## 25 October 2026 — Deepthought Phase 1 retry passed (ENGINEERING_ONLY)
 
 AI-assisted by GPT-6 (Codex). Author revised offload acceptance and explicitly authorized engineering retries. Same source/GGUF pins; added verbose logging and saved loaded GPU/PID telemetry before acceptance. GPU 0 and GPU 1 each logged **29/29 layers offloaded**, with 4,920 MiB held per server before acceptance. GPU 1 loaded while GPU 0 remained resident. Twenty synthetic manager requests averaged 7.2609 s, 91.65 output tokens, 250.73 prompt tokens/s and 24.87 generation tokens/s. Three seeded temperature-0.2 responses were identical. Two one-token probes completed. Projection: 11.70 hours for 5,800 calls, inference only; worker/audit costs excluded. Both owned servers exited cleanly; prior STOP preserved. Report updated: `reports/LLAMACPP_PROBE_DT_20261025.md`.
