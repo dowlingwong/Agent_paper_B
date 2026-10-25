@@ -131,6 +131,15 @@ Implementation agent (Claude) on branch `batch-b-25oct` in both repositories (pa
 - **Tests:** paper 327 passed / 1 failed → 359 passed / 1 failed → 384 passed / 1 failed after the review fix (same known `test_real_runner_desktop_dryrun`); harness 427 passed / 9 failed / 1 error → 434 / 9 / 1 (same failing set).
 - **Questions for the author:** one manager per TITAN (open; options and their needs in the handoff); `ctx_size` 8192 is a proposal (prompt lengths unmeasured); bit-repeatable same-seed retries would need `cache_prompt: false`; which GGUF is pinned; build pin = the `version:` line (or also the full commit); harness `264011e` must reach `r1` before a launch.
 
+## 25 October 2026 — Deepthought Phase 1 STOP: build and GGUF verified, full offload unproven
+
+AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY, not evidence. Phase 0 complete (`7a8ee19`). Built unmodified llama.cpp `v0.7.0` @ `620d2225cc436ab0b001e3200e590e3b286ef9ab` for sm_52 with CUDA 11.8 and installed GCC 13 C++ compiler (CUDA host compiler GCC 8; explicit iomanip include flag). Both binaries build. Official Qwen2.5-Coder-7B-Instruct Q4_K_M GGUF SHA-256 `509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c` verified twice. Original GCC 8 server build failure preserved.
+
+- STOP: GPU 0 server loaded and became healthy, but its log lacked the required full-offload line. The standalone probe recorded STOP before any completion request; no throughput, determinism or GPU 1 check. Loaded VRAM was not captured before the assertion (agent instrumentation error). No retry.
+- Diagnosis without model load: all four CUDA devices enumerate and CUDA dependencies resolve. Missing log does not establish offload failure; its cause remains unconfirmed. Draft verbose probe prepared and syntax-checked, not executed.
+- Cleanup: only owned PID/process group 3546902 signalled after command validation; exited cleanly. Final GPUs 0 MiB used and no compute processes; Ceph about 303 TiB free.
+- Report: `reports/LLAMACPP_PROBE_DT_20261025.md`. Hashed raw logs/scripts remain local; automatic approval review rejected publishing the full bundle, so this push includes summary documentation only. Phase 1 incomplete, Phases 2–9 unstarted. Author continuation required for the proposed verbose load attempt. Batch B on origin/main remains a prerequisite for Phase 2.
+
 ## 25 October 2026 — Deepthought Phase 0 census complete
 
 AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY. Author continuation explicitly permits Phases 0–1 before Batch B is merged, superseding the orientation missing-handoff STOP for these phases only. Census: four idle TITAN X GPUs (5.2), driver 525.147.05, installed CUDA 11.8.89, 40 CPUs, 503 GiB RAM, about 303 TiB free on Ceph; GitHub/Hugging Face/PyPI/OpenML HTTP 200. No GPU/LLM run yet. Report: `reports/DT_HOST_CENSUS_20261025.md`. Next: Phase 1 build and probe; Phase 2 remains gated on Batch B on origin/main.
