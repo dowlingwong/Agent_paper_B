@@ -207,46 +207,135 @@ class ReplayError(ValueError):
     pass
 
 
-def replay_campaign(rows: list[dict], start_files: dict[str, str], node: str, instance: str,
-                    source: str, memory_mode: str, runs_total: int, sigma_node: float,
-                    check: bool = True) -> tuple[list[Proposal], dict]:
-    """Replay one root ledger; return proposals (trial >= 2 with a parsed metric) and checks.
+class FeatureLeakError(ValueError):
+    """A view handed to the featurizer holds a record at or after the current trial (future data)."""
 
-    Checks (bit-exact CPU nodes at fixed campaign seeds): a candidate whose
-    active projection equals the incumbent's must log Delta_hat == 0, and a
-    re-evaluated active projection must log the same metric as before.
-    """
-    info = NODE_INFO[node]
-    files = normalise_files(start_files)
-    cur_cfg = configuration(files)
-    seen_metric: dict[str, float] = {}
-    seen_full: set[str] = set()
-    key_hist: dict[str, list[tuple[float, int]]] = {}
-    edit_counts: dict[tuple, int] = {}
-    last_edit_by_key: dict[str, tuple] = {}
-    keeps, last_keep_idx, invalid = 0, 0, 0
-    first_metric = None
-    proposals: list[Proposal] = []
-    checks = {"rows": len(rows), "proposals": 0, "zero_delta_violations": 0, "repeat_metric_violations": 0,
-              "skipped_invalid": 0, "no_edit_rows": 0}
-    seed = int(instance.rsplit("__s", 1)[1])
-    for i, row in enumerate(rows):
-        b = int(row["budget_index"])
-        metric = parsed_metric(row)
-        edit = ((row.get("extra") or {}).get("manager") or {}).get("structured_edit")
-        if row["decision"] == "skipped" or metric is None:
-            invalid += 1
-            checks["skipped_invalid"] += 1
-            continue
+
+# ---------------------------------------------------------------------------
+# One featurizer for the online and the offline path (RUNBOOK Track H.2, 25 Oct 2026)
+# ---------------------------------------------------------------------------
+#
+# ``features_from_view(view, node_ctx)`` is the only place proposal features are
+# computed.  Online, ``view`` is the harness ``ControlView`` at E1 (ledger prefix
+# of ``TrialRecord`` objects, the manager's proposal, the current best).  Offline,
+# ``replay_campaign`` builds a ``ReplayView`` for every ledger row from the rows
+# before it and calls the same function, so ``dataset.build`` uses it too.
+#
+# The featurizer reads only ``view.budget_index``, ``view.ledger_prefix``,
+# ``view.current_best`` and the structured edit of ``view.proposal``, plus the
+# campaign constants in ``NodeContext``.  It never reads ``view.provisional`` (the
+# current trial's outcome), and a prefix record at or after the current budget
+# index raises ``FeatureLeakError``.  Audit values, sibling and branch outcomes
+# are not inputs: ``NodeContext`` has a fixed field set and the harness refuses
+# them in a ``ControlView`` (``build_control_view``).
+
+FEATURIZER_VERSION = "c3_features/v1"
+
+
+@dataclass(frozen=True)
+class NodeContext:
+    """Campaign constants the featurizer may use (nothing measured after the campaign start)."""
+
+    node: str
+    start_files: dict          # editable file texts at the campaign start
+    sigma_node: float          # E1 noise constant of the node (standardises z)
+    runs_total: int            # W, the campaign's worker-run budget
+    memory_mode: str
+
+    def __post_init__(self) -> None:
+        if self.node not in NODE_INFO:
+            raise ValueError(f"unknown node {self.node!r}")
+        object.__setattr__(self, "start_files", dict(self.start_files))
+
+
+@dataclass(frozen=True)
+class ReplayProposal:
+    """The proposal part of a ledger row (its structured edit), as the featurizer sees it."""
+
+    extra: dict
+
+
+@dataclass(frozen=True)
+class ReplayView:
+    """A ledger row seen as the E1 view of its trial: earlier rows, the incumbent's metric, the edit."""
+
+    budget_index: int
+    ledger_prefix: tuple
+    current_best: float | None
+    proposal: ReplayProposal
+    epoch: str = "E1"
+
+
+@dataclass
+class FeatureResult:
+    features: dict
+    candidate_files: dict
+    incumbent_files: dict
+    noop: bool
+    duplicate: bool
+    noop_kind: str | None
+    known_metric: float | None
+    candidate_seen: bool        # the candidate's active projection was evaluated before
+    candidate_seen_metric: float | None  # its first recorded metric (replay consistency check only)
+    edit: dict
+
+
+def _as_row(record) -> dict:
+    """A ledger row dict from a ledger row or a harness ``TrialRecord``."""
+    if isinstance(record, dict):
+        return record
+    to_dict = getattr(record, "to_dict", None)
+    if to_dict is None:
+        raise TypeError(f"cannot read ledger record of type {type(record).__name__}")
+    return to_dict()
+
+
+def _row_edit(row: dict):
+    return ((row.get("extra") or {}).get("manager") or {}).get("structured_edit")
+
+
+def _proposal_edit(proposal):
+    if proposal is None:
+        return None
+    extra = proposal.get("extra") if isinstance(proposal, dict) else getattr(proposal, "extra", None)
+    return (extra or {}).get("structured_edit")
+
+
+class _LedgerState:
+    """Campaign history replayed from the start files with the logged structured edits."""
+
+    def __init__(self, ctx: NodeContext, instance: str = "") -> None:
+        self.ctx = ctx
+        self.instance = instance
+        self.info = NODE_INFO[ctx.node]
+        self.files = normalise_files(ctx.start_files)
+        self.cur_cfg = configuration(self.files)
+        self.seen_metric: dict[str, float] = {}
+        self.seen_full: set[str] = set()
+        self.key_hist: dict[str, list[tuple[float, int]]] = {}
+        self.edit_counts: dict[tuple, int] = {}
+        self.last_edit_by_key: dict[str, tuple] = {}
+        self.keeps, self.last_keep_idx, self.invalid = 0, 0, 0
+        self.first_metric = None
+
+    def candidate(self, edit, b: int):
         if edit:
             try:
-                cand_files = apply_edit(files, edit)
+                cand_files = apply_edit(self.files, edit)
             except ValueError as exc:
-                raise ReplayError(f"{instance} trial {b}: {exc}") from exc
+                raise ReplayError(f"{self.instance} trial {b}: {exc}") from exc
         else:
-            checks["no_edit_rows"] += 1
-            cand_files = dict(files)
-        cand_cfg = configuration(cand_files)
+            cand_files = dict(self.files)
+        return cand_files, configuration(cand_files)
+
+    def featurize(self, edit, b: int, current_best_before) -> FeatureResult | None:
+        """Features of the proposal ``edit`` at budget index ``b`` (None when the trial has none)."""
+        ctx, info = self.ctx, self.info
+        node, sigma_node = ctx.node, ctx.sigma_node
+        cur_cfg = self.cur_cfg
+        cand_files, cand_cfg = self.candidate(edit, b)
+        if not (b >= 2 and current_best_before is not None):
+            return None
         inc_act, cand_act = active_projection(cur_cfg, node), active_projection(cand_cfg, node)
         cand_full = json.dumps(cand_cfg, sort_keys=True, default=str)
         key = edit["symbol"] if edit else "__none__"
@@ -254,74 +343,159 @@ def replay_campaign(rows: list[dict], start_files: dict[str, str], node: str, in
         o, n = _num(old_v), _num(new_v)
         log_ratio = math.log(n / o) if o > 0 and n > 0 else math.nan
         direction = (1.0 if n > o else -1.0 if n < o else 0.0) if not (math.isnan(o) or math.isnan(n)) else math.nan
-        hist = key_hist.get(key, [])
+        hist = self.key_hist.get(key, [])
         sig = (key, str(old_v), str(new_v))
-        last = last_edit_by_key.get(key)
+        last = self.last_edit_by_key.get(key)
         model = cur_cfg.get("model_type", "mlp") if info["family"] == "openml" else "mlp"
         active_keys = openml_active_keys(node, cand_cfg["model_type"]) if info["family"] == "openml" else set(cand_cfg)
+        feats = {
+            "node_code": NODE_CODES[node], "key_code": stable_code(key),
+            "model_type_code": MODEL_CODES.get(model, 9),
+            "new_cat_code": stable_code(str(new_v)) if key in STRUCTURAL_KEYS else -1,
+            "rows_log": math.log(info["rows"]), "n_features": info["features"],
+            "n_classes": info["classes"], "minority": info["minority"],
+            "old_num": o, "new_num": n, "log_ratio": log_ratio, "direction": direction,
+            "structural": float(key in STRUCTURAL_KEYS), "active_key": float(key in active_keys),
+            "cfg_equals_incumbent": float(cand_cfg == cur_cfg),
+            "active_equals_incumbent": float(cand_act == inc_act),
+            "active_seen_before": float(cand_act in self.seen_metric),
+            "full_seen_before": float(cand_full in self.seen_full),
+            "key_edit_count": float(len(hist)),
+            "last_key_delta_z": hist[-1][0] / sigma_node if hist else math.nan,
+            "last_key_kept": float(hist[-1][1]) if hist else math.nan,
+            "keeps_so_far": float(self.keeps), "trials_since_keep": float(b - self.last_keep_idx),
+            "recorded_gain_z": ((current_best_before - self.first_metric) / sigma_node
+                                if self.first_metric is not None else math.nan),
+            "budget_frac_left": 1.0 - (b - 1) / ctx.runs_total, "budget_index": float(b),
+            "memory_on": float(ctx.memory_mode != "none"), "invalid_so_far": float(self.invalid),
+            "same_edit_count": float(self.edit_counts.get(sig, 0)),
+            "reverse_of_last_key_edit": float(last is not None and last[1] == str(new_v) and last[2] == str(old_v)),
+        }
+        noop = bool(cand_act == inc_act)
+        duplicate = bool(not noop and cand_act in self.seen_metric)
+        # PLAN §10 (22 Oct): a no-op is an *inactive edit* (only keys inactive for the node's
+        # model change) or an *incumbent repeat* (back to the incumbent's active configuration).
+        noop_kind = None if not noop else (
+            "inactive_edit" if edit and key not in active_keys and cand_cfg != cur_cfg else "incumbent_repeat")
+        return FeatureResult(features=feats, candidate_files=cand_files, incumbent_files=dict(self.files),
+                             noop=noop, duplicate=duplicate, noop_kind=noop_kind,
+                             known_metric=self.seen_metric[cand_act] if duplicate else None,
+                             candidate_seen=cand_act in self.seen_metric,
+                             candidate_seen_metric=self.seen_metric.get(cand_act), edit=dict(edit or {}))
+
+    def observe(self, row: dict) -> None:
+        """Update the history with one ledger row's outcome (after its features were frozen)."""
+        b = int(row["budget_index"])
+        metric = parsed_metric(row)
+        if row["decision"] == "skipped" or metric is None:
+            self.invalid += 1
+            return
+        edit = _row_edit(row)
+        cand_files, cand_cfg = self.candidate(edit, b)
+        node = self.ctx.node
+        inc_act, cand_act = active_projection(self.cur_cfg, node), active_projection(cand_cfg, node)
+        cand_full = json.dumps(cand_cfg, sort_keys=True, default=str)
+        key = edit["symbol"] if edit else "__none__"
+        old_v, new_v = (self.cur_cfg.get(key), cand_cfg.get(key)) if edit else (None, None)
+        sig = (key, str(old_v), str(new_v))
         delta_hat = row.get("delta_vs_best")
-        if b >= 2 and row.get("current_best_before") is not None:
-            feats = {
-                "node_code": NODE_CODES[node], "key_code": stable_code(key),
-                "model_type_code": MODEL_CODES.get(model, 9),
-                "new_cat_code": stable_code(str(new_v)) if key in STRUCTURAL_KEYS else -1,
-                "rows_log": math.log(info["rows"]), "n_features": info["features"],
-                "n_classes": info["classes"], "minority": info["minority"],
-                "old_num": o, "new_num": n, "log_ratio": log_ratio, "direction": direction,
-                "structural": float(key in STRUCTURAL_KEYS), "active_key": float(key in active_keys),
-                "cfg_equals_incumbent": float(cand_cfg == cur_cfg),
-                "active_equals_incumbent": float(cand_act == inc_act),
-                "active_seen_before": float(cand_act in seen_metric),
-                "full_seen_before": float(cand_full in seen_full),
-                "key_edit_count": float(len(hist)),
-                "last_key_delta_z": hist[-1][0] / sigma_node if hist else math.nan,
-                "last_key_kept": float(hist[-1][1]) if hist else math.nan,
-                "keeps_so_far": float(keeps), "trials_since_keep": float(b - last_keep_idx),
-                "recorded_gain_z": ((row["current_best_before"] - first_metric) / sigma_node
-                                    if first_metric is not None else math.nan),
-                "budget_frac_left": 1.0 - (b - 1) / runs_total, "budget_index": float(b),
-                "memory_on": float(memory_mode != "none"), "invalid_so_far": float(invalid),
-                "same_edit_count": float(edit_counts.get(sig, 0)),
-                "reverse_of_last_key_edit": float(last is not None and last[1] == str(new_v) and last[2] == str(old_v)),
-            }
-            noop = bool(cand_act == inc_act)
-            duplicate = bool(not noop and cand_act in seen_metric)
-            inert_kind = "equals_incumbent" if noop else "duplicate" if duplicate else None
-            # PLAN §10 (22 Oct): a no-op is an *inactive edit* (only keys inactive for the node's
-            # model change) or an *incumbent repeat* (back to the incumbent's active configuration).
-            noop_kind = None if not noop else (
-                "inactive_edit" if edit and key not in active_keys and cand_cfg != cur_cfg else "incumbent_repeat")
-            outcome = {"delta_hat": float(delta_hat), "decision": row["decision"], "metric": metric,
-                       "inert": noop, "noop": noop, "duplicate": duplicate, "rule_skip": noop or duplicate,
-                       "known_metric": seen_metric[cand_act] if duplicate else None,
-                       "inert_kind": inert_kind, "noop_kind": noop_kind,
-                       "current_best_before": row["current_best_before"]}
-            if check:
-                if cand_act == inc_act and delta_hat != 0:
-                    checks["zero_delta_violations"] += 1
-                if cand_act in seen_metric and seen_metric[cand_act] != metric:
-                    checks["repeat_metric_violations"] += 1
-            proposals.append(Proposal(
-                proposal_id=f"{source}:{instance}:t{b:03d}", instance=instance, instance_seed=seed,
-                node=node, source=source, memory_mode=memory_mode, budget_index=b,
-                features=feats, outcome=outcome, candidate_files=cand_files, incumbent_files=dict(files),
-                edit=dict(edit or {})))
-        # ---- update history with this trial's outcome (only after features are frozen)
-        if first_metric is None:
-            first_metric = metric
-        seen_metric.setdefault(cand_act, metric)
-        seen_full.add(cand_full)
+        if self.first_metric is None:
+            self.first_metric = metric
+        self.seen_metric.setdefault(cand_act, metric)
+        self.seen_full.add(cand_full)
         if row.get("current_best_before") is not None:  # the incumbent has a recorded metric
-            seen_metric.setdefault(inc_act, row["current_best_before"])
-            seen_full.add(json.dumps(cur_cfg, sort_keys=True, default=str))
+            self.seen_metric.setdefault(inc_act, row["current_best_before"])
+            self.seen_full.add(json.dumps(self.cur_cfg, sort_keys=True, default=str))
         kept = row["decision"] == "kept"
         if edit:
-            key_hist.setdefault(key, []).append((float(delta_hat) if delta_hat is not None else math.nan, int(kept)))
-            edit_counts[sig] = edit_counts.get(sig, 0) + 1
-            last_edit_by_key[key] = sig
+            self.key_hist.setdefault(key, []).append((float(delta_hat) if delta_hat is not None else math.nan,
+                                                      int(kept)))
+            self.edit_counts[sig] = self.edit_counts.get(sig, 0) + 1
+            self.last_edit_by_key[key] = sig
         if kept:
-            keeps += 1
-            last_keep_idx = b
-            files, cur_cfg = cand_files, cand_cfg
+            self.keeps += 1
+            self.last_keep_idx = b
+            self.files, self.cur_cfg = cand_files, cand_cfg
+
+
+def featurize_view(view, node_ctx: NodeContext, *, instance: str = "") -> FeatureResult | None:
+    """The full featurizer result of ``view`` (features plus the replayed candidate/incumbent files).
+
+    ``None`` when the trial has no features (the first trial, or no incumbent
+    metric yet), exactly as the offline table has no row for it.
+    """
+    b = int(view.budget_index)
+    state = _LedgerState(node_ctx, instance)
+    for record in view.ledger_prefix:
+        row = _as_row(record)
+        if row.get("budget_index") is None or int(row["budget_index"]) >= b:
+            raise FeatureLeakError(f"ledger prefix holds trial {row.get('budget_index')} at or after trial {b}")
+        state.observe(row)
+    return state.featurize(_proposal_edit(view.proposal), b, view.current_best)
+
+
+def features_from_view(view, node_ctx: NodeContext) -> dict | None:
+    """Proposal features (``FEATURES``) at E1 from a harness ``ControlView`` or a ``ReplayView``."""
+    result = featurize_view(view, node_ctx)
+    return None if result is None else result.features
+
+
+def features_hash(features: dict) -> str:
+    """Stable hash of a feature dict (NaN-safe), for online/offline equality checks."""
+    return hashlib.sha256(json.dumps({k: features[k] for k in sorted(features)}, sort_keys=True,
+                                     default=str).encode()).hexdigest()
+
+
+def replay_campaign(rows: list[dict], start_files: dict[str, str], node: str, instance: str,
+                    source: str, memory_mode: str, runs_total: int, sigma_node: float,
+                    check: bool = True) -> tuple[list[Proposal], dict]:
+    """Replay one root ledger; return proposals (trial >= 2 with a parsed metric) and checks.
+
+    Every proposal's features come from ``featurize_view`` on the ``ReplayView``
+    of its row (the rows before it, its incumbent metric and its edit): the
+    same function the online controller calls on the harness ``ControlView``.
+
+    Checks (bit-exact CPU nodes at fixed campaign seeds): a candidate whose
+    active projection equals the incumbent's must log Delta_hat == 0, and a
+    re-evaluated active projection must log the same metric as before.
+    """
+    ctx = NodeContext(node=node, start_files=start_files, sigma_node=sigma_node, runs_total=runs_total,
+                      memory_mode=memory_mode)
+    proposals: list[Proposal] = []
+    checks = {"rows": len(rows), "proposals": 0, "zero_delta_violations": 0, "repeat_metric_violations": 0,
+              "skipped_invalid": 0, "no_edit_rows": 0}
+    seed = int(instance.rsplit("__s", 1)[1])
+    for i, row in enumerate(rows):
+        b = int(row["budget_index"])
+        metric = parsed_metric(row)
+        edit = _row_edit(row)
+        if row["decision"] == "skipped" or metric is None:
+            checks["skipped_invalid"] += 1
+            continue
+        if not edit:
+            checks["no_edit_rows"] += 1
+        view = ReplayView(budget_index=b, ledger_prefix=tuple(rows[:i]), current_best=row.get("current_best_before"),
+                          proposal=ReplayProposal(extra={"structured_edit": edit}))
+        res = featurize_view(view, ctx, instance=instance)
+        if res is None:
+            continue
+        delta_hat = row.get("delta_vs_best")
+        inert_kind = "equals_incumbent" if res.noop else "duplicate" if res.duplicate else None
+        outcome = {"delta_hat": float(delta_hat), "decision": row["decision"], "metric": metric,
+                   "inert": res.noop, "noop": res.noop, "duplicate": res.duplicate,
+                   "rule_skip": res.noop or res.duplicate,
+                   "known_metric": res.known_metric,
+                   "inert_kind": inert_kind, "noop_kind": res.noop_kind,
+                   "current_best_before": row["current_best_before"]}
+        if check:
+            if res.noop and delta_hat != 0:
+                checks["zero_delta_violations"] += 1
+            if res.candidate_seen and res.candidate_seen_metric != metric:
+                checks["repeat_metric_violations"] += 1
+        proposals.append(Proposal(
+            proposal_id=f"{source}:{instance}:t{b:03d}", instance=instance, instance_seed=seed,
+            node=node, source=source, memory_mode=memory_mode, budget_index=b,
+            features=res.features, outcome=outcome, candidate_files=res.candidate_files,
+            incumbent_files=res.incumbent_files, edit=res.edit))
     checks["proposals"] = len(proposals)
     return proposals, checks
