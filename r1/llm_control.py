@@ -85,6 +85,10 @@ class LLMSelfController:
     version: str = "llm_self/v1"
     log: list[dict] = field(default_factory=list)
     prompt_builder: Callable[[Any, dict[str, bool]], str] = build_side_prompt
+    # Track H review F5 (26 Oct): epochs the controller acts at.  ``None`` (default) is the
+    # historical L12 behaviour (every epoch); the C3 comparison uses ("E1", "E2"), the epochs of
+    # ``r1.c3.control.RuleController``.  At any other epoch it continues without a call.
+    epochs: tuple[str, ...] | None = None
 
     def _llm_calls_left(self, view: Any) -> int | None:
         budget = getattr(view, "budget", {}) or {}
@@ -92,6 +96,9 @@ class LLMSelfController:
         return None if left is None else int(left)
 
     def decide(self, view: Any, mask: dict[str, bool]) -> ControlDecision:
+        if self.epochs is not None and view.epoch not in self.epochs:
+            self.log.append({"epoch": view.epoch, "reason": "epoch_not_controlled", "llm_calls": 0})
+            return ControlDecision("continue", {}, self.version, view.input_hash(), 0)
         allowed = [a for a, ok in mask.items() if ok]
         if allowed == ["continue"] or not allowed:
             self.log.append({"epoch": view.epoch, "reason": "only_continue_feasible", "llm_calls": 0})

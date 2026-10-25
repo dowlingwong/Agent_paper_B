@@ -154,6 +154,22 @@ def test_awr_direct_and_llm_self_control_run_through_decide(tmp_path):
     assert "skipped" in [r["decision"] for r in ledger]
 
 
+def test_llm_self_control_restricted_to_e1_e2(tmp_path):
+    seen = []
+
+    def fake_llm(prompt):
+        seen.append(prompt.split("Decision epoch: ")[1][:2])
+        return '{"action": "continue"}'
+
+    ctl = LLMSelfController(fake_llm, epochs=("E1", "E2"))
+    _, events, _, _ = run_campaign(tmp_path, ScriptedRandomManager("digits_mlp", seed=4, repetition=0), budget=4,
+                                   controller=ctl)
+    assert seen and set(seen) == {"E1", "E2"}
+    e0 = [e["payload"] for e in events if e["event_type"] == "control_decision" and e["payload"]["epoch"] == "E0"]
+    assert e0 and all(p["llm_calls"] == 0 for p in e0)
+    assert LLMSelfController(fake_llm).epochs is None  # the L12 default acts at every epoch
+
+
 def _desc(name, **kw):
     base = dict(name=name, family=name, information_set=INFO, spending_rule="c3_rules/v1", intervention_cap=None,
                 compute_budget=20, llm_call_cap=40, tuning_budget=0, dev_instances="dev", instances="eval")
