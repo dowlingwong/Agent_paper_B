@@ -131,6 +131,12 @@ Implementation agent (Claude) on branch `batch-b-25oct` in both repositories (pa
 - **Tests:** paper 327 passed / 1 failed → 359 passed / 1 failed → 384 passed / 1 failed after the review fix (same known `test_real_runner_desktop_dryrun`); harness 427 passed / 9 failed / 1 error → 434 / 9 / 1 (same failing set).
 - **Questions for the author:** one manager per TITAN (open; options and their needs in the handoff); `ctx_size` 8192 is a proposal (prompt lengths unmeasured); bit-repeatable same-seed retries would need `cache_prompt: false`; which GGUF is pinned; build pin = the `version:` line (or also the full commit); harness `264011e` must reach `r1` before a launch.
 
+## 25 October 2026 — Deepthought Phase 1 retry passed (ENGINEERING_ONLY)
+
+AI-assisted by GPT-6 (Codex). Author revised offload acceptance and explicitly authorized engineering retries. Same source/GGUF pins; added verbose logging and saved loaded GPU/PID telemetry before acceptance. GPU 0 and GPU 1 each logged **29/29 layers offloaded**, with 4,920 MiB held per server before acceptance. GPU 1 loaded while GPU 0 remained resident. Twenty synthetic manager requests averaged 7.2609 s, 91.65 output tokens, 250.73 prompt tokens/s and 24.87 generation tokens/s. Three seeded temperature-0.2 responses were identical. Two one-token probes completed. Projection: 11.70 hours for 5,800 calls, inference only; worker/audit costs excluded. Both owned servers exited cleanly; prior STOP preserved. Report updated: `reports/LLAMACPP_PROBE_DT_20261025.md`.
+
+Phase 1 complete; no D28 or sweep evidence run. Current scope continues with Batch B–independent Phase 2 and climate Phase 3, then stops before Phase 4. Raw retry records stay on the host; only report/STATUS are pushed.
+
 ## 25 October 2026 — Deepthought Phase 1 STOP: build and GGUF verified, full offload unproven
 
 AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY, not evidence. Phase 0 complete (`7a8ee19`). Built unmodified llama.cpp `v0.7.0` @ `620d2225cc436ab0b001e3200e590e3b286ef9ab` for sm_52 with CUDA 11.8 and installed GCC 13 C++ compiler (CUDA host compiler GCC 8; explicit iomanip include flag). Both binaries build. Official Qwen2.5-Coder-7B-Instruct Q4_K_M GGUF SHA-256 `509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c` verified twice. Original GCC 8 server build failure preserved.
