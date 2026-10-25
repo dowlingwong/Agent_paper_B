@@ -41,6 +41,13 @@ pins, the offload record, the ``llamacpp/<alias>`` manager model, the seed
 policy and the request path.  ``--backend ollama`` (default) is the historical
 path.
 
+``--fake-offload silent`` (review of batch B, 25 Oct) makes the fake llama-server
+log like llama.cpp v0.7.0 on deepthought at default verbosity (no ``offloaded
+N/N layers`` line), so the runner must accept full offload by route (ii): the
+server pid on the card with at least ``footprint_mib`` in the fake
+``nvidia-smi --query-compute-apps``.  ``line`` (default) exercises route (i);
+every load and post-collection check must record the expected route.
+
 ``--base-config PATH`` (e.g. ``r1/scripts/configs/c3_sweep_ada.json``) starts
 from a real launch config instead of the built-in fixture config and overrides
 only what a desktop DRYRUN must change: the nodes (its nodes among
@@ -137,11 +144,12 @@ def fake_bin(root: Path, socket_name: str) -> Path:
     executable(bin_dir / 'tmux', f'#!/bin/sh\nexec {real_tmux} -L {socket_name} "$@"\n')
     executable(bin_dir / 'nvidia-smi', '''#!/bin/sh
 case "$*" in
+  *"--query-compute-apps"*) exec @PY@ -c "import runpy; runpy.run_path('@FAKE@', run_name='fake_nvidia_smi')" "$@";;
   *"--query-gpu"*) echo '0, GPU-DRYRUN, DRYRUN shared card, 40000';;
   *"-x"*) echo '<nvidia_smi_log><gpu><uuid>GPU-DRYRUN</uuid><processes><process_info><pid>99999999</pid><used_memory>100 MiB</used_memory></process_info></processes></gpu></nvidia_smi_log>';;
   *) echo 'DRYRUN GPU census';;
 esac
-''')
+'''.replace('@PY@', sys.executable).replace('@FAKE@', str(REPO / 'r1/scripts/c3_fake_llama_server.py')))
     executable(bin_dir / 'ps', '#!/bin/sh\necho dryrun_co_tenant\n')
     executable(bin_dir / 'ollama', f'#!/bin/sh\nexec {sys.executable} {REPO / "r1/scripts/c3_fake_ollama.py"} "$@"\n')
     # Shebang (not a shell exec): the server's command line is <python> <bin>/llama-server <args>, so the
@@ -288,7 +296,8 @@ class Interrupter:
 
 
 def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_sources,
-                 python: str, deadline_s: float, base_config: dict | None = None, backend: str = 'ollama') -> dict:
+                 python: str, deadline_s: float, base_config: dict | None = None, backend: str = 'ollama',
+                 fake_offload: str = 'line') -> dict:
     batches = root / f'batches_{scenario}'
     batches.mkdir()
     overridden = None
@@ -320,7 +329,7 @@ def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_s
                R1_C3_BATCH_ROOT=str(batches), R1_C3_PAPER_REMOTE=str(fixture['paper_remote']),
                R1_C3_HARNESS_REMOTE=str(fixture['harness_remote']), R1_C3_VENV_PYTHON=python,
                R1_C3_SKIP_SUITES='1', R1_C3_CONFIG=str(config_path), C3_FAKE_FAULTS=json.dumps(FAULTS[scenario]),
-               R1_COAUTHOR='Claude (AI-assisted DRYRUN) <noreply@anthropic.com>',
+               R1_COAUTHOR='Claude (AI-assisted DRYRUN) <noreply@anthropic.com>', C3_FAKE_LLAMA_OFFLOAD=fake_offload,
                PATH=str(bin_dir) + os.pathsep + os.environ['PATH'], PYTHONPATH=str(fixture['source']),
                OMP_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1')
     launcher = fixture['source'] / 'r1/scripts/c3_label_sweep_launch.sh'
@@ -354,7 +363,7 @@ def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_s
     calls = [json.loads(l) for l in (root / 'fake_calls.jsonl').read_text().splitlines()] \
         if (root / 'fake_calls.jsonl').exists() else []
     return {'batch': batch, 'state': state, 'calls': calls, 'env': env, 'timed_out': timed_out,
-            'backend': config.get('backend', 'ollama'),
+            'backend': config.get('backend', 'ollama'), 'fake_offload': fake_offload,
             'deadline_s': deadline_s, 'config': config, 'overridden': overridden,
             'interrupt': interrupter.info if interrupter is not None else None}
 
@@ -398,6 +407,11 @@ def check_llamacpp(result: dict) -> dict:
     assert server['cmdline'][1:] == server['argv'] or server['cmdline'] == server['argv'], server['cmdline']
     offload = json.loads((batch / 'gpu_offload_load_probe.json').read_text())
     assert offload['backend'] == 'llamacpp' and offload['offload']['full'], offload
+    expected_route = 'gpu_memory' if result.get('fake_offload') == 'silent' else 'log_line'
+    routes = state.get('offload_routes') or []
+    assert routes and {r['route'] for r in routes} == {expected_route}, routes  # load and every collection
+    if expected_route == 'gpu_memory':
+        assert offload['offload']['line'] == 'absent' and offload['offload']['gpu_memory']['used_mib'] >= spec['footprint_mib']
     assert offload['models'] == [spec['model_alias']] and offload['props_model_path'] == spec['model_path']
     probes = [c for c in result['calls'] if c.get('probe')]
     assert probes, 'no one-token load probe'
@@ -410,6 +424,7 @@ def check_llamacpp(result: dict) -> dict:
     assert census and json.loads(census[-1])['need_free_mib'] in (2048, spec['footprint_mib'] + 2048)
     return {'model_sha256': server['model_sha256'], 'build': pins[-1]['build']['version_line'],
             'offloaded_layers': f"{offload['offload']['offloaded_layers']}/{offload['offload']['total_layers']}",
+            'offload_routes': sorted({r['where'] + ':' + r['route'] for r in routes}),
             'chat_path': '/v1/chat/completions', 'served_alias': offload['models']}
 
 
@@ -640,6 +655,8 @@ def main():
     ap.add_argument('--base-config', type=Path, default=None,
                     help='start from this launch config (e.g. r1/scripts/configs/c3_sweep_ada.json); a host '
                          'draft with TODO_VERIFY values is accepted, its host values are overridden')
+    ap.add_argument('--fake-offload', choices=['line', 'silent'], default='line',
+                    help='llama.cpp fake: log the offload line (route i) or not, like v0.7.0 (route ii)')
     ap.add_argument('--backend', choices=['ollama', 'llamacpp'], default=None,
                     help='fixture config backend (default ollama); with --base-config the base decides')
     args = ap.parse_args()
@@ -675,7 +692,8 @@ def main():
             entry['pin'] = fixture['pin']
             bin_dir = fake_bin(root, socket_name)
             result = run_scenario(scenario, root, fixture, bin_dir, data_sources, args.python, args.deadline,
-                                  base_config, backend=args.backend or 'ollama')
+                                  base_config, backend=args.backend or 'ollama',
+                                  fake_offload=args.fake_offload)
             entry['checks'] = {'retry': check_retry, 'permanent': check_permanent, 'interrupt': check_interrupt,
                                'watchdog': check_watchdog}[scenario](result)
             entry['passed'] = True

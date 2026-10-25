@@ -16,8 +16,20 @@ prefix fails here.
 
 Load log on stdout, in llama.cpp's wording: ``load_tensors: offloaded k/29
 layers to GPU`` with k = min(-ngl, 29) and a ``CUDA0 model buffer size`` line.
-``$C3_FAKE_LLAMA_OFFLOAD``: ``cpu`` prints llama.cpp's no-GPU warning and
-``offloaded 0/29``; an integer k prints ``offloaded k/29`` (partial offload).
+``$C3_FAKE_LLAMA_OFFLOAD``: ``line`` (default) as just described; ``silent``
+prints only what llama.cpp v0.7.0 (commit 620d222) printed on deepthought at
+default verbosity (no offload and no buffer line; review of batch B, 25 Oct);
+``cpu`` prints llama.cpp's no-GPU warning and ``offloaded 0/29``; an integer k
+prints ``offloaded k/29`` (partial offload).
+
+Simulated GPU memory (offload route (ii)): unless ``cpu``, the server writes
+``$R1_FAKE_OLLAMA_ROOT/gpu_apps/<pid>.csv`` = ``<pid>, <CUDA_VISIBLE_DEVICES or
+GPU-DRYRUN>, <MiB>`` with ``$C3_FAKE_LLAMA_GPU_MIB`` (default 5560; 0 = none;
+300 with ``-ngl 0``).  Run as ``run_name="fake_nvidia_smi"`` this file is a fake
+``nvidia-smi`` whose ``--query-compute-apps`` lists those rows for live pids.
+Completions carry llama-server's ``timings`` (``predicted_per_second`` =
+``$C3_FAKE_LLAMA_TPS_GPU`` (40) when layers are on the GPU, else
+``$C3_FAKE_LLAMA_TPS_CPU`` (8)) for the probe's CPU control run.
 Each request is printed as ``srv  log_server_r: request: POST <path> 127.0.0.1
 <status>`` (llama-server's request log line), with ``fault=<mode>`` and the
 chat-call number appended.
@@ -110,8 +122,8 @@ class Handler(BaseHTTPRequestHandler):
             self.reply({'error': {'code': 404, 'message': 'File Not Found', 'type': 'not_found_error'}}, 404)
             return
         common.hold_if_frozen()
-        if body.get('max_tokens') == 1 and 'Budget index' not in json.dumps(body.get('messages')):
-            log({'path': self.path, 'seed': seed, 'probe': True})  # the runner's one-token load probe
+        if 'Budget index' not in json.dumps(body.get('messages')):
+            log({'path': self.path, 'seed': seed, 'probe': True})  # a load probe or the probe's throughput run
             request_line('POST', self.path, 200, 'probe')
             self.reply(self.completion(body, 'OK'))
             return
@@ -153,16 +165,34 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(self.completion(body, json.dumps(common.proposal_for(prompt, seed))))
 
     def completion(self, body, content):
+        n = int(body.get('max_tokens') or 10)
+        tps = float(os.environ.get('C3_FAKE_LLAMA_TPS_GPU', '40') if on_gpu() else
+                    os.environ.get('C3_FAKE_LLAMA_TPS_CPU', '8'))
         return {'id': 'chatcmpl-DRYRUN', 'object': 'chat.completion', 'created': 0,
                 'model': body.get('model'), 'system_fingerprint': 'b0-DRYRUN',
                 'choices': [{'index': 0, 'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': content}}],
-                'usage': {'prompt_tokens': 10, 'completion_tokens': 10, 'total_tokens': 20}}
+                'usage': {'prompt_tokens': 10, 'completion_tokens': n, 'total_tokens': 10 + n},
+                'timings': {'predicted_n': n, 'predicted_ms': 1000.0 * n / tps, 'predicted_per_second': tps}}
+
+
+def offload_mode():
+    return os.environ.get('C3_FAKE_LLAMA_OFFLOAD', '') or 'line'
+
+
+def on_gpu():
+    return int(ARGS['-ngl']) > 0 and offload_mode() != 'cpu' and offload_mode() != '0' 
 
 
 def load_log():
     ngl = int(ARGS['-ngl'])
-    mode = os.environ.get('C3_FAKE_LLAMA_OFFLOAD', '')
+    mode = offload_mode()
     k = min(max(ngl, 0), N_LAYERS)
+    if mode == 'silent':  # llama.cpp v0.7.0 at default verbosity (deepthought, 25 Oct)
+        print('common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)', flush=True)
+        print(f'load_model: initializing, n_slots = {ARGS["-np"]}, n_ctx_slot = {ARGS["-c"]}, kv_unified = \'true\'',
+              flush=True)
+        print('llama_server: model loaded', flush=True)
+        return
     if mode == 'cpu':
         print('warning: no usable GPU found, --gpu-layers option will be ignored', flush=True)
         k = 0
@@ -195,11 +225,48 @@ def main():
     log({'event': 'serve', 'port': port, 'model': ARGS['-m'], 'alias': ARGS['--alias'], 'ngl': ARGS['-ngl'],
          'env_llama_arg': sorted(k for k in os.environ if k.startswith('LLAMA_ARG_'))})
     load_log()
+    simulate_gpu_memory()
     server = ThreadingHTTPServer((ARGS['--host'], port), Handler)
     STARTED = time.monotonic()
     print(f'main: server is listening on http://{ARGS["--host"]}:{port} - starting the main loop', flush=True)
     server.serve_forever()
 
 
+def simulate_gpu_memory():
+    """The fake's GPU footprint, for the fake nvidia-smi below (offload route (ii))."""
+    if offload_mode() == 'cpu':
+        return
+    mib = int(os.environ.get('C3_FAKE_LLAMA_GPU_MIB', '5560')) if int(ARGS['-ngl']) > 0 else 300
+    if mib <= 0:
+        return
+    apps = common.ROOT / 'gpu_apps'
+    apps.mkdir(exist_ok=True)
+    uuid = os.environ.get('CUDA_VISIBLE_DEVICES') or 'GPU-DRYRUN'
+    (apps / f'{os.getpid()}.csv').write_text(f'{os.getpid()}, {uuid}, {mib}\n')
+
+
+def fake_nvidia_smi(argv):
+    """``nvidia-smi --query-compute-apps=pid,gpu_uuid,used_memory`` over the live fake servers; else a card."""
+    joined = ' '.join(argv)
+    if '--query-compute-apps' in joined:
+        for path in sorted((common.ROOT / 'gpu_apps').glob('*.csv')):
+            pid = int(path.stem)
+            try:
+                os.kill(pid, 0)
+                stat = Path(f'/proc/{pid}/stat').read_text()
+                if stat.rsplit(')', 1)[1].split()[0] == 'Z':
+                    continue
+            except (OSError, IndexError):
+                continue
+            print(path.read_text().strip())
+        return
+    if '--query-gpu' in joined:
+        print('0, GPU-DRYRUN, DRYRUN shared card, 40000')
+        return
+    print('DRYRUN GPU census')
+
+
 if __name__ == '__main__':
     main()
+elif __name__ == 'fake_nvidia_smi':
+    fake_nvidia_smi(sys.argv[1:])

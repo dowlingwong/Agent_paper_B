@@ -86,15 +86,17 @@ def test_build_info_and_sha256(fake, tmp_path):
     assert lsi.VERSION_RE.search(real).group(0) == "version: 6873 (0e4a0cf2)"
 
 
-def test_offload_report_requires_every_layer_a_gpu_buffer_and_no_cpu_fallback():
-    assert lsi.offload_report(FULL_LOG)["full"]
+def test_offload_report_route_i_needs_every_layer_and_no_cpu_fallback():
+    # Review of batch B (25 Oct): route (i) is the N/N line alone (author's acceptance); buffers are recorded.
+    assert lsi.offload_report(FULL_LOG)["full"] and lsi.offload_report(FULL_LOG)["line"] == "full"
     partial = lsi.offload_report(FULL_LOG.replace("29/29", "20/29"))
     assert not partial["full"] and partial["reasons"] == ["offloaded 20/29 layers"]
     cpu = lsi.offload_report("warning: no usable GPU found, --gpu-layers option will be ignored\n"
                              "load_tensors: offloaded 0/29 layers to GPU\n")
     assert not cpu["full"] and "CPU fallback reported" in cpu["reasons"]
-    assert not lsi.offload_report("load_tensors: offloaded 29/29 layers to GPU\n")["full"]  # no CUDA buffer
-    assert not lsi.offload_report("")["full"]
+    line_only = lsi.offload_report("load_tensors: offloaded 29/29 layers to GPU\n")
+    assert line_only["full"] and line_only["gpu_model_buffers"] == []
+    assert not lsi.offload_report("")["full"] and lsi.offload_report("")["line"] == "absent"
 
 
 # -- the instance ---------------------------------------------------------------

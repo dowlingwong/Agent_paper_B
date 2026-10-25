@@ -92,12 +92,16 @@ def _llamacpp_scenario(tmp_path, scenario, *extra, deadline='120'):
 @DESKTOP_ONLY
 def test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config(tmp_path):
     """The real deepthought draft (host values overridden) on the fake llama-server: retry and permanent."""
+    # Review of batch B (25 Oct): the fake logs like llama.cpp v0.7.0 (no offload line) -> route (ii).
     scenarios = _llamacpp_scenario(tmp_path, 'both', '--base-config',
-                                   str(REPO / 'r1/scripts/configs/c3_sweep_deepthought.json'), deadline='75')
+                                   str(REPO / 'r1/scripts/configs/c3_sweep_deepthought.json'),
+                                   '--fake-offload', 'silent', deadline='75')
     retry = scenarios['retry']['checks']
     assert retry['resent_with_same_seed'] and retry['llm_calls_retried'] == 1 and retry['restart_refused']
     assert retry['paper_a_status_verdict'] == 'not_applicable'
-    assert retry['llamacpp']['offloaded_layers'] == '29/29' and retry['llamacpp']['chat_path'] == '/v1/chat/completions'
+    assert retry['llamacpp']['offloaded_layers'] == 'None/None' and retry['llamacpp']['chat_path'] == '/v1/chat/completions'
+    assert retry['llamacpp']['offload_routes'] == ['append_only_summary_collection:gpu_memory',
+                                                   'load_probe:gpu_memory', 'none_collection:gpu_memory']
     assert retry['manifests']['manager_model'] == 'llamacpp/r1-manager'
     assert 'llamacpp' in retry['base_config_overridden_keys']
     permanent = scenarios['permanent']['checks']
@@ -108,6 +112,7 @@ def test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config(tmp_path):
 @DESKTOP_ONLY
 def test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign(tmp_path):
     checks = _llamacpp_scenario(tmp_path, 'interrupt', '--backend', 'llamacpp')['interrupt']['checks']
+    assert set(checks['llamacpp']['offload_routes']) >= {'load_probe:log_line', 'load_probe_r1:log_line'}  # route (i)
     assert checks['completed_before_kill'] and checks['roots_rerun_whole']
     assert not set(checks['completed_before_kill']) & set(checks['roots_rerun_whole'])
     assert checks['orphan_server_stopped'] in ('SIGTERM', 'SIGKILL')
@@ -117,7 +122,9 @@ def test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign(tmp_path):
 
 @DESKTOP_ONLY
 def test_c3_sweep_dryrun_llamacpp_watchdog_restarts_a_killed_server(tmp_path):
-    checks = _llamacpp_scenario(tmp_path, 'watchdog', '--backend', 'llamacpp')['watchdog']['checks']
+    checks = _llamacpp_scenario(tmp_path, 'watchdog', '--backend', 'llamacpp',
+                                '--fake-offload', 'silent')['watchdog']['checks']
+    assert set(checks['llamacpp']['offload_routes']) >= {'load_probe:gpu_memory', 'load_probe_r1:gpu_memory'}
     assert checks['runner_event']['kind'] == 'server_exited' and checks['runner_event']['signal'] == 'SIGTERM'
     assert 'request: POST /v1/chat/completions' in checks['last_server_request']
     assert 'fault=sigterm' in checks['last_server_request'] and checks['restarted_generation'] == 1

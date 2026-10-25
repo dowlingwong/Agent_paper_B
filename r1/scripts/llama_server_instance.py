@@ -18,9 +18,13 @@ server that nothing else shares:
   as read back from ``/proc``, the build (``llama-server --version``) and times
   recorded in ``<batch>/llama_server_<port>[_r<g>].json``; its log (stdout and
   stderr) in ``llama_server_<port>[_r<g>].log``;
-* ``offload_report`` parses that log: full GPU offload means the
-  ``offloaded N/N layers to GPU`` line with N > 0, a ``CUDA<k> model buffer``
-  line, and no CPU-fallback line; anything else is a STOP for the runner;
+* ``offload_check`` decides full GPU offload by two routes (author's revised
+  acceptance, runbook 25 Oct; llama.cpp v0.7.0 on deepthought printed no
+  offload line at default verbosity): (i) the log line ``offloaded N/N layers``
+  (``N/M`` with M != N is a STOP even if the memory looks fine); else (ii) the
+  server pid listed by ``nvidia-smi --query-compute-apps`` on the configured
+  GPU uuid with used memory >= the pinned ``footprint_mib`` (refused if unset).
+  A CPU-fallback line stops both routes; the route that passed is recorded;
 * ``stop()`` signals only the process group it started, after checking the
   PID still leads it.
 
@@ -73,6 +77,21 @@ def sha256_file(path: str | Path, chunk: int = 16 << 20) -> str:
     return digest.hexdigest()
 
 
+def parse_version(text: str) -> dict:
+    """The ``version: <v> (<build/commit>)`` line, its version and the commit.
+
+    Seen forms: ``version: 6873 (0e4a0cf2)`` and, llama.cpp v0.7.0 on deepthought,
+    ``version: 0.7.0-dev (build 1, commit 620d222)``.
+    """
+    found = VERSION_RE.search(text)
+    if not found:
+        return {'version_line': None, 'build_number': None, 'commit': None}
+    inner = found.group(2)
+    commit = re.search(r'commit\s+([0-9a-f]{7,40})', inner) or re.fullmatch(r'\s*([0-9a-f]{7,40})\s*', inner)
+    return {'version_line': found.group(0).strip(), 'build_number': found.group(1),
+            'commit': commit.group(1) if commit else inner}
+
+
 def build_info(binary: str, timeout: float = 60.0) -> dict:
     """``<binary> --version``: the raw output, the ``version: <n> (<commit>)`` line and its parts.
 
@@ -82,31 +101,89 @@ def build_info(binary: str, timeout: float = 60.0) -> dict:
     done = subprocess.run([str(binary), '--version'], capture_output=True, text=True, timeout=timeout,
                           stdin=subprocess.DEVNULL)
     text = (done.stdout or '') + (done.stderr or '')
-    found = VERSION_RE.search(text)
-    return {'binary': str(binary), 'returncode': done.returncode, 'raw': text.strip()[-2000:],
-            'version_line': found.group(0).strip() if found else None,
-            'build_number': found.group(1) if found else None, 'commit': found.group(2) if found else None}
+    return {'binary': str(binary), 'returncode': done.returncode, 'raw': text.strip()[-2000:], **parse_version(text)}
 
 
 def offload_report(log_text: str) -> dict:
-    """Full GPU offload, from a llama-server log: all layers offloaded, a CUDA model buffer, no CPU fallback."""
+    """What the server log says about offload.  ``full`` = route (i): an ``offloaded N/N layers`` line with
+    N > 0 and no CPU-fallback line (buffer lines are recorded, not required).  ``line`` is ``full``,
+    ``partial`` or ``absent``."""
     offloaded = OFFLOAD_RE.findall(log_text)
     buffers = [{'device': d, 'mib': float(m)} for d, m in GPU_BUFFER_RE.findall(log_text)]
     kv = [{'device': d, 'mib': float(m)} for d, m in KV_BUFFER_RE.findall(log_text)]
     fallback = [line.strip() for line in log_text.splitlines() if CPU_FALLBACK_RE.search(line)][-5:]
     n, total = (int(offloaded[-1][0]), int(offloaded[-1][1])) if offloaded else (None, None)
-    full = bool(offloaded) and total > 0 and n == total and bool(buffers) and not fallback
+    line = 'absent' if not offloaded else ('full' if total and n == total else 'partial')
+    full = line == 'full' and not fallback
     reasons = []
-    if not offloaded:
+    if line == 'absent':
         reasons.append('no "offloaded N/M layers to GPU" line in the server log')
-    elif n != total or not total:
+    elif line == 'partial':
         reasons.append(f'offloaded {n}/{total} layers')
-    if offloaded and not buffers:
-        reasons.append('no CUDA model buffer line')
     if fallback:
         reasons.append('CPU fallback reported')
-    return {'full': full, 'offloaded_layers': n, 'total_layers': total, 'gpu_model_buffers': buffers,
+    return {'full': full, 'line': line, 'offloaded_layers': n, 'total_layers': total, 'gpu_model_buffers': buffers,
             'kv_buffers': kv, 'cpu_fallback_lines': fallback, 'reasons': reasons}
+
+
+def parse_compute_apps(text: str) -> list[dict]:
+    """Rows of ``nvidia-smi --query-compute-apps=pid,gpu_uuid,used_memory --format=csv,noheader,nounits``."""
+    rows = []
+    for line in text.splitlines():
+        parts = [p.strip() for p in line.split(',')]
+        if len(parts) != 3 or not parts[0].isdigit():
+            continue
+        rows.append({'pid': int(parts[0]), 'gpu_uuid': parts[1],
+                     'used_mib': int(parts[2]) if parts[2].isdigit() else None})
+    return rows
+
+
+def gpu_compute_apps(timeout: float = 60.0) -> list[dict] | None:
+    """The GPU compute processes now (pid, GPU uuid, MiB), or None when ``nvidia-smi`` cannot be read."""
+    try:
+        done = subprocess.run(['nvidia-smi', '--query-compute-apps=pid,gpu_uuid,used_memory',
+                               '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return parse_compute_apps(done.stdout) if done.returncode == 0 else None
+
+
+def offload_check(log_text: str, *, pid: int | None, gpu_uuid: str | None, footprint_mib, apps) -> dict:
+    """Full GPU offload by route (i) (log line N/N) or, when the build prints no such line, route (ii)
+    (the server pid on ``gpu_uuid`` with used memory >= ``footprint_mib``).  A partial line or a
+    CPU-fallback line is a STOP whatever the memory.  ``route`` names the route that passed (or None)."""
+    report = offload_report(log_text)
+    rows = [r for r in (apps or []) if r.get('pid') == pid]
+    mine = next((r for r in rows if r.get('gpu_uuid') == gpu_uuid), None)
+    memory = {'pid': pid, 'gpu_uuid': gpu_uuid, 'footprint_mib': footprint_mib,
+              'used_mib': mine.get('used_mib') if mine else None, 'rows_of_pid': rows,
+              'compute_apps_read': apps is not None}
+    check = {**report, 'route': None, 'gpu_memory': memory}
+    if report['cpu_fallback_lines']:
+        check['full'] = False
+        return check
+    if report['line'] == 'full':
+        check.update(full=True, route='log_line')
+        return check
+    if report['line'] == 'partial':
+        check['full'] = False
+        return check
+    reasons = list(report['reasons'])  # route (i) unavailable: the build printed no offload line
+    if not isinstance(footprint_mib, (int, float)) or isinstance(footprint_mib, bool) or footprint_mib <= 0:
+        reasons.append('route (ii) refused: footprint_mib is not set (measure it with the probe and pin it)')
+    elif apps is None:
+        reasons.append('route (ii): nvidia-smi --query-compute-apps could not be read')
+    elif mine is None:
+        reasons.append(f'route (ii): server pid {pid} is not listed on {gpu_uuid} by nvidia-smi '
+                       f'(rows of this pid: {rows})')
+    elif mine.get('used_mib') is None or mine['used_mib'] < footprint_mib:
+        reasons.append(f'route (ii): server pid {pid} uses {mine.get("used_mib")} MiB on {gpu_uuid}, '
+                       f'below the pinned footprint {footprint_mib} MiB')
+    else:
+        check.update(full=True, route='gpu_memory', reasons=[])
+        return check
+    check.update(full=False, reasons=reasons)
+    return check
 
 
 def _get_json(url: str, timeout: float) -> tuple[int | None, object]:
@@ -201,9 +278,10 @@ class LlamaServerInstance:
         ids = self.model_ids(timeout)
         return None if ids is None else self.alias in ids
 
-    def chat(self, content: str, *, max_tokens: int = 1, seed: int = 0, timeout: float = 600.0) -> dict:
+    def chat(self, content: str, *, max_tokens: int = 1, seed: int = 0, timeout: float = 600.0,
+             extra: dict | None = None) -> dict:
         payload = json.dumps({'model': self.alias, 'messages': [{'role': 'user', 'content': content}],
-                              'max_tokens': max_tokens, 'temperature': 0, 'seed': seed}).encode()
+                              'max_tokens': max_tokens, 'temperature': 0, 'seed': seed, **(extra or {})}).encode()
         with urlopen(Request(self.openai_base_url + '/chat/completions', data=payload,
                              headers={'Content-Type': 'application/json'}), timeout=timeout) as response:
             return json.load(response)
@@ -211,8 +289,12 @@ class LlamaServerInstance:
     def log_text(self) -> str:
         return self.log_path.read_text(errors='replace') if self.log_path.exists() else ''
 
-    def offload(self) -> dict:
-        return offload_report(self.log_text())
+    def offload(self, footprint_mib=None, apps=None) -> dict:
+        """``offload_check`` for this server (``apps`` read from nvidia-smi now unless given)."""
+        if apps is None:
+            apps = gpu_compute_apps()
+        pid = (self.record or {}).get('pid') or (self.process.pid if self.process else None)
+        return offload_check(self.log_text(), pid=pid, gpu_uuid=self.gpu_uuid, footprint_mib=footprint_mib, apps=apps)
 
     def start(self, *, build: dict | None = None, model_sha256: str | None = None) -> dict:
         if self.process is not None:

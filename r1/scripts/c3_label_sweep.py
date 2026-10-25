@@ -802,9 +802,11 @@ class SweepRunner:
         self.gpu['check_gpu']()
 
     def check_offload_llamacpp(self, where: str) -> None:
-        """RUNBOOK A.10: every layer on the GPU (server log), the pinned alias served, the co-tenancy census."""
+        """RUNBOOK A.10: full GPU offload by route (i) (log line N/N) or (ii) (server pid on the card with
+        >= footprint_mib; llama.cpp v0.7.0 prints no offload line at default verbosity), the route recorded;
+        the pinned alias served; the co-tenancy census."""
         spec, inst = self.config['llamacpp'], self.service
-        report = inst.offload()
+        report = inst.offload(footprint_mib=spec['footprint_mib'])
         ids = inst.model_ids()
         props = inst.props()
         (self.batch / f'gpu_offload_{where}.json').write_text(json.dumps(
@@ -815,6 +817,9 @@ class SweepRunner:
         if not report['full']:
             raise Stop(f'STOP: {where}: pinned model is not fully offloaded to the GPU '
                        f'({"; ".join(report["reasons"])}); CPU fallback is never accepted')
+        self.state.setdefault('offload_routes', []).append({'where': where, 'utc': stamp(), 'route': report['route'],
+                                                            'used_mib': report['gpu_memory']['used_mib']})
+        self.save()
         if ids is None or spec['model_alias'] not in ids:
             raise Stop(f'STOP: {where}: llama-server does not serve the pinned alias {spec["model_alias"]!r} ({ids})')
         if props and props.get('model_path') not in (None, spec['model_path']):
