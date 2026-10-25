@@ -163,7 +163,7 @@ def test_llm_self_control_restricted_to_e1_e2(tmp_path):
 
     ctl = LLMSelfController(fake_llm, epochs=("E1", "E2"))
     _, events, _, _ = run_campaign(tmp_path, ScriptedRandomManager("digits_mlp", seed=4, repetition=0), budget=4,
-                                   controller=ctl)
+                                   controller=ctl, seeded=True)  # seeded re-runs: verify is feasible at E2
     assert seen and set(seen) == {"E1", "E2"}
     e0 = [e["payload"] for e in events if e["event_type"] == "control_decision" and e["payload"]["epoch"] == "E0"]
     assert e0 and all(p["llm_calls"] == 0 for p in e0)
