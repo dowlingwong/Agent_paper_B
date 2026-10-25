@@ -27,6 +27,7 @@ import argparse
 import hashlib
 import json
 import os
+import pickle
 import platform
 import shutil
 import time
@@ -78,8 +79,30 @@ def transport_policy(cfg: dict | None):
     return TransportRetryPolicy(max_attempts=attempts, backoff_seconds=backoff)
 
 
-def seed_policy(manager_kind: str) -> dict:
+MANAGER_MODEL_PREFIXES = ("ollama/", "llamacpp/")
+
+
+def check_manager_model(model: str) -> str:
+    """``--manager-model``: a provider-prefixed id the harness resolves (RUNBOOK A.10: ``llamacpp/<alias>``)."""
+    if not model.startswith(MANAGER_MODEL_PREFIXES) or "/" not in model or not model.split("/", 1)[1]:
+        raise ValueError(f"--manager-model must be one of {MANAGER_MODEL_PREFIXES} + a model name, got {model!r}")
+    return model
+
+
+def manager_backend_text(manager_kind: str, model: str | None = None) -> str:
+    if manager_kind == "scripted":
+        return "scripted_random (stand-in; VM cannot reach Ollama)"
+    if model and model.startswith("llamacpp/"):
+        return f"langgraph {model} (llama.cpp llama-server; GGUF sha256 and build pinned by the runner)"
+    return "langgraph qwen2.5-coder:7b (Ollama; pinned digest dae161e2...)"
+
+
+def seed_policy(manager_kind: str, model: str | None = None) -> dict:
     """The manifest's record of how proposer sampling is seeded (D26)."""
+    if manager_kind == "langgraph" and model and model.startswith("llamacpp/"):
+        # RUNBOOK A.10: the same D26 seed, sent as the OpenAI-compatible request's ``seed`` to llama-server.
+        return {"kind": "llamacpp_seed", "temperature": 0.2, "transport": "POST /v1/chat/completions seed",
+                "derivation": "manager_seed(campaign_id, budget_index, repetition, revision_attempt)"}
     if manager_kind == "langgraph":
         return {"kind": "ollama_seed", "temperature": 0.2,
                 "derivation": "manager_seed(campaign_id, budget_index, repetition, revision_attempt)"}
@@ -201,7 +224,25 @@ def run_root(node: str, k: int, work: str, runs: int, indices: list[int], manage
             "partial_ledger": str(ledger), "partial_events": str(root / "root_events.jsonl"),
             "partial_records": n_records,
         })
+        if not _round_trips(exc):
+            # RUNBOOK A.10: the process pool pickles a worker's exception; one it cannot unpickle in the
+            # parent (openai.APIConnectionError, the llama.cpp provider's) breaks the whole pool.  The
+            # failure record above keeps the original class, traceback and attempt log.
+            raise RootCampaignFailed(f"root campaign {inst} failed: {type(exc).__module__}."
+                                     f"{type(exc).__qualname__}: {exc} (record: failures/root__{inst}.json)") from None
         raise
+
+
+class RootCampaignFailed(RuntimeError):
+    """A root failure re-raised in a form the process pool can return (the original is in its record)."""
+
+
+def _round_trips(exc: BaseException) -> bool:
+    try:
+        pickle.loads(pickle.dumps(exc))
+    except Exception:  # noqa: BLE001 - any pickling failure means the pool could not return it
+        return False
+    return True
 
 
 def _run_root(node: str, k: int, work: str, runs: int, indices: list[int], manager: dict | None,
@@ -379,6 +420,9 @@ def main() -> int:
     ap.add_argument("--split", default="pilot")
     ap.add_argument("--manager", choices=["scripted", "langgraph"], default="scripted",
                     help="langgraph = the pinned local qwen2.5-coder:7b via Ollama (run natively on the Mac)")
+    ap.add_argument("--manager-model", default=None,
+                    help="langgraph manager model id (default ollama/qwen2.5-coder:7b); RUNBOOK A.10: "
+                         "llamacpp/<alias> for the batch's llama-server (LLAMACPP_BASE_URL); recorded in the manifest")
     ap.add_argument("--memory-mode", choices=["none", "append_only_summary", "append_only_summary_with_rationale"],
                     default=None, help="manager memory mode (D24); a manifest without the field means none")
     ap.add_argument("--arm", choices=["A", "B", "C"], default=None,
@@ -405,9 +449,18 @@ def main() -> int:
     if args.roots_only and (args.points or args.reps):
         ap.error("--roots-only needs --points with no values and --reps 0")
 
+    if args.manager_model is not None:
+        if args.manager != "langgraph":
+            ap.error("--manager-model needs --manager langgraph")
+        try:
+            check_manager_model(args.manager_model)
+        except ValueError as exc:
+            ap.error(str(exc))
     if args.resume:
         out = Path(args.resume)
         manifest = json.loads((out / "manifest.json").read_text())
+        if args.manager_model is not None and args.manager_model != (manifest.get("manager") or {}).get("model"):
+            ap.error("--manager-model differs from the manifest being resumed")
     else:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         out = Path(args.out) if args.out else REPO / "results" / "r1" / "pilot" / f"E1b_{stamp}"
@@ -415,15 +468,15 @@ def main() -> int:
         e1 = Path(args.e1_summary) if args.e1_summary else max((REPO / "results/r1/pilot").glob("E1_[0-9]*T*Z/summary.json"))  # full E1 runs only, not E1_remeasure_* subsets
         manifest = {"schema": "r1.e1b_headroom/1", "label": args.label, "split": args.split, "started_utc": stamp,
                     "harness": {"root": str(HARNESS), **harness_commit(HARNESS)},
-                    "manager_backend": ("scripted_random (stand-in; VM cannot reach Ollama)" if args.manager == "scripted"
-                                        else "langgraph qwen2.5-coder:7b (Ollama; pinned digest dae161e2...)"),
+                    "manager_backend": manager_backend_text(args.manager, args.manager_model),
                     "manager": {**MANAGER, "kind": args.manager,
+                                **({"model": args.manager_model} if args.manager_model else {}),
                                 **({"transport_max_attempts": args.transport_max_attempts}
                                    if args.transport_max_attempts is not None else {})},
                     "memory_mode": args.memory_mode or "none",
                     "arm": args.arm,
                     "arm_role": args.arm_role,
-                    "seed_policy": seed_policy(args.manager),
+                    "seed_policy": seed_policy(args.manager, args.manager_model),
                     "nodes": args.nodes, "instances": args.instances, "runs": args.runs, "points": args.points,
                     "reps": args.reps, "audit_seeds": args.audit_seeds, "verify_r": VERIFY_R,
                     "verify_split_policy": args.verify_split_policy,

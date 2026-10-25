@@ -31,6 +31,16 @@ Scenarios (fault injection over /api/chat calls of the batch's own server):
 
 ``both`` runs ``retry`` and ``permanent``; ``all`` runs the four.
 
+``--backend llamacpp`` (RUNBOOK A.10, 25 Oct; PLAN §10 R1-INFER-LLAMACPP) runs
+the same scenarios on the llama.cpp path: the fake ``llama-server``
+(``r1/scripts/c3_fake_llama_server.py``, OpenAI-compatible ``/v1`` endpoints,
+``/health``, a full-offload log line) behind a shebang wrapper on PATH, a
+fixture GGUF file whose sha256 and the fake's build line are the pins, and the
+harness ``llamacpp`` provider in the collectors.  The checks also verify the
+pins, the offload record, the ``llamacpp/<alias>`` manager model, the seed
+policy and the request path.  ``--backend ollama`` (default) is the historical
+path.
+
 ``--base-config PATH`` (e.g. ``r1/scripts/configs/c3_sweep_ada.json``) starts
 from a real launch config instead of the built-in fixture config and overrides
 only what a desktop DRYRUN must change: the nodes (its nodes among
@@ -134,6 +144,10 @@ esac
 ''')
     executable(bin_dir / 'ps', '#!/bin/sh\necho dryrun_co_tenant\n')
     executable(bin_dir / 'ollama', f'#!/bin/sh\nexec {sys.executable} {REPO / "r1/scripts/c3_fake_ollama.py"} "$@"\n')
+    # Shebang (not a shell exec): the server's command line is <python> <bin>/llama-server <args>, so the
+    # runner's orphan check sees the recorded binary and argv (RUNBOOK A.10).
+    executable(bin_dir / 'llama-server', f'#!{sys.executable}\nimport runpy, sys\nsys.argv[0] = __file__\n'
+               f'runpy.run_path({str(REPO / "r1/scripts/c3_fake_llama_server.py")!r}, run_name="__main__")\n')
     executable(bin_dir / 'paper_a_status', '#!/bin/sh\necho \'{"paper_a_live_waiting_for_card": false, '
                '"source": "DRYRUN fixture"}\'\n')
     return bin_dir
@@ -170,23 +184,64 @@ def fake_paper_a(root: Path, bin_dir: Path) -> Path:
     return path
 
 
+FAKE_BUILD = 'version: 0 (DRYRUN)'  # what c3_fake_llama_server.py --version prints
+
+
+def fake_gguf(root: Path) -> tuple[Path, str]:
+    """A fixture "GGUF" (any bytes: the fake server loads nothing) and its sha256, the DRYRUN model pin."""
+    path = root / 'models' / 'r1-manager-DRYRUN-Q4_K_M.gguf'
+    path.parent.mkdir(exist_ok=True)
+    path.write_bytes(b'GGUF' + b'DRYRUN fixture; no tensors\n' * 1000)
+    return path, _sha(path)
+
+
+def llamacpp_fixture(root: Path, bin_dir: Path, base: dict | None = None) -> dict:
+    """The ``llamacpp`` block for the fake server; alias, -ngl and -c are kept from *base* when it sets them."""
+    model, sha = fake_gguf(root)
+    block = {'binary': str(bin_dir / 'llama-server'), 'model_path': str(model), 'model_sha256': sha,
+             'model_alias': 'r1-manager', 'build': FAKE_BUILD, 'port': None, 'n_gpu_layers': 999,
+             'ctx_size': 8192, 'footprint_mib': 5304, 'extra_args': [], 'start_timeout': 30}
+    for key in ('model_alias', 'n_gpu_layers', 'ctx_size'):
+        value = (base or {}).get(key)
+        if value is not None and not (isinstance(value, str) and value.startswith('TODO_VERIFY')):
+            block[key] = value
+    return block
+
+
 def dryrun_config(base: dict, root: Path, bin_dir: Path) -> tuple[dict, list]:
-    """The base launch config with only the desktop-DRYRUN keys overridden (documented in the summary)."""
+    """The base launch config with only the desktop-DRYRUN keys overridden (documented in the summary).
+
+    A host draft (``TODO_VERIFY*`` values, e.g. ``c3_sweep_deepthought.json``) is accepted: every
+    open value is a host value this override replaces, and none may remain afterwards.
+    """
     config = json.loads(json.dumps(base))
     nodes = [n for n in base.get('nodes', []) if n in DRYRUN_NODES]
     if len(nodes) < 2:
         raise RuntimeError(f'STOP: base config needs both of {DRYRUN_NODES} for the desktop DRYRUN')
     command = list(base['paper_a_check']['command'])
-    if '--config' not in command:
-        raise RuntimeError('STOP: base paper_a_check.command has no --config to redirect')
-    command[command.index('--config') + 1] = str(fake_paper_a(root, bin_dir))
+    if '--config' in command:  # a real Paper A status check: point it at a fake finished Paper A run
+        command[command.index('--config') + 1] = str(fake_paper_a(root, bin_dir))
+    elif '--not-applicable' not in command:
+        raise RuntimeError('STOP: base paper_a_check.command is neither a --config check nor --not-applicable')
     overrides = {'nodes': nodes, 'instances': 2, 'runs': 6, 'workers': 2,
                  'liveness': dict(base.get('liveness', {}), instances=1, runs=4), 'min_live_nodes': 2,
                  'gpu_wait_seconds': 0, 'max_collect_sessions': 3,
                  'paper_a_check': dict(base['paper_a_check'], command=command),
                  'ollama': {'binary': str(bin_dir / 'ollama'), 'start_timeout': 30, 'port': None,
                             'seed_models_from': None}}
+    if base.get('backend') == 'llamacpp':
+        overrides['llamacpp'] = llamacpp_fixture(root, bin_dir, base.get('llamacpp'))
+    # Host values still open in a draft (and only those): the fake card and this desktop.
+    if str(base.get('gpu_uuid')).startswith('TODO_VERIFY'):
+        overrides['gpu_uuid'] = 'auto'
+    if any(str(h).startswith('TODO_VERIFY') for h in base.get('allowed_hosts', [])):
+        overrides['allowed_hosts'] = [platform.node().split('.')[0]]
     config.update(overrides)
+    sys.path.insert(0, str(REPO))
+    from r1.scripts.c3_label_sweep import placeholders
+    left = placeholders(config)
+    if left:
+        raise RuntimeError(f'STOP: DRYRUN overrides leave open host values {left}')
     return config, sorted(overrides)
 
 
@@ -223,7 +278,7 @@ class Interrupter:
         os.killpg(os.getpgid(runner), signal.SIGKILL)  # runner, collector and its workers; not the server
         self.info = {'killed_utc': datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ'), 'runner_pid': runner,
                      'completed_before_kill': complete, 'partial_at_kill': partial, 'hashes_before': hashes,
-                     'ollama_before': state.get('ollama', {}).get('pid')}
+                     'ollama_before': state.get(_key(state), {}).get('pid')}
         deadline = time.monotonic() + 20
         while time.monotonic() < deadline and not subprocess.run(['tmux', 'has-session', '-t', 'r1_c3_sweep'],
                                                                  env=self.env, capture_output=True).returncode:
@@ -233,7 +288,7 @@ class Interrupter:
 
 
 def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_sources,
-                 python: str, deadline_s: float, base_config: dict | None = None) -> dict:
+                 python: str, deadline_s: float, base_config: dict | None = None, backend: str = 'ollama') -> dict:
     batches = root / f'batches_{scenario}'
     batches.mkdir()
     overridden = None
@@ -245,8 +300,15 @@ def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_s
                   'max_collect_sessions': 3,
                   'paper_a_check': {'command': [str(bin_dir / 'paper_a_status')]},
                   'ollama': {'binary': str(bin_dir / 'ollama'), 'start_timeout': 30}}
+        if backend == 'llamacpp':
+            config.update(backend='llamacpp', llamacpp=llamacpp_fixture(root, bin_dir))
     if scenario == 'watchdog':
         config['watchdog'] = dict(WATCHDOG_DRYRUN)
+        overridden = sorted(set(overridden) | {'watchdog'}) if overridden is not None else None
+    if scenario == 'permanent' and (config.get('watchdog') or {}).get('enabled'):
+        # 'permanent' checks the clean STOP when the server stays down; with the watchdog on (the host
+        # drafts, A.10) the one-shot exit would be recovered instead, which the 'watchdog' scenario checks.
+        config['watchdog'] = dict(config['watchdog'], enabled=False)
         overridden = sorted(set(overridden) | {'watchdog'}) if overridden is not None else None
     config_path = root / f'c3_config_{scenario}.json'
     config_path.write_text(json.dumps(config, indent=2))
@@ -292,6 +354,7 @@ def run_scenario(scenario: str, root: Path, fixture: dict, bin_dir: Path, data_s
     calls = [json.loads(l) for l in (root / 'fake_calls.jsonl').read_text().splitlines()] \
         if (root / 'fake_calls.jsonl').exists() else []
     return {'batch': batch, 'state': state, 'calls': calls, 'env': env, 'timed_out': timed_out,
+            'backend': config.get('backend', 'ollama'),
             'deadline_s': deadline_s, 'config': config, 'overridden': overridden,
             'interrupt': interrupter.info if interrupter is not None else None}
 
@@ -309,6 +372,66 @@ def table_from_sweep(result: dict) -> dict:
     assert summary['n_proposals'] > 0 and len(summary['sources']) == 2, summary
     assert build['label'] == 'DRYRUN' and build['sweep_index']['audit']['status'] == 'pending'
     return {'n_proposals': summary['n_proposals'], 'sources': summary['sources']}
+
+
+def _key(state: dict) -> str:
+    """The state key of the batch's model server record (RUNBOOK A.10)."""
+    return 'llama_server' if state.get('backend') == 'llamacpp' else 'ollama'
+
+
+def _record_name(state: dict, port, generation: int) -> str:
+    stem = 'llama_server' if state.get('backend') == 'llamacpp' else 'ollama_instance'
+    return f'{stem}_{port}' + (f'_r{generation}' if generation else '') + '.json'
+
+
+def check_llamacpp(result: dict) -> dict:
+    """RUNBOOK A.10 checks common to every llama.cpp scenario that got past preconditions."""
+    state, batch, config = result['state'], result['batch'], result['config']
+    spec = config['llamacpp']
+    server = state['llama_server']
+    pins = state['llamacpp_pin_checks']
+    assert pins and all(p['verdict'] == 'pinned' for p in pins), pins
+    assert {p['model_sha256'] for p in pins} == {spec['model_sha256']}
+    assert {p['build']['version_line'] for p in pins} == {spec['build']}
+    assert server['model_sha256'] == spec['model_sha256'] and server['model_path'] == spec['model_path']
+    assert server['argv'][0] == spec['binary'] and server['argv'][server['argv'].index('--port') + 1] == str(server['port'])
+    assert server['cmdline'][1:] == server['argv'] or server['cmdline'] == server['argv'], server['cmdline']
+    offload = json.loads((batch / 'gpu_offload_load_probe.json').read_text())
+    assert offload['backend'] == 'llamacpp' and offload['offload']['full'], offload
+    assert offload['models'] == [spec['model_alias']] and offload['props_model_path'] == spec['model_path']
+    probes = [c for c in result['calls'] if c.get('probe')]
+    assert probes, 'no one-token load probe'
+    chats = [c for c in result['calls'] if 'chat_call' in c and 'path' in c]  # not the fault event lines
+    assert chats and {c['path'] for c in chats} == {'/v1/chat/completions'}
+    assert {c.get('model') for c in chats} == {spec['model_alias']}
+    assert all(isinstance(c['seed'], int) for c in chats)
+    assert not any(c.get('env_llama_arg') for c in result['calls'] if c.get('event') == 'serve')
+    census = (batch / 'gpu_census.jsonl').read_text().splitlines()
+    assert census and json.loads(census[-1])['need_free_mib'] in (2048, spec['footprint_mib'] + 2048)
+    return {'model_sha256': server['model_sha256'], 'build': pins[-1]['build']['version_line'],
+            'offloaded_layers': f"{offload['offload']['offloaded_layers']}/{offload['offload']['total_layers']}",
+            'chat_path': '/v1/chat/completions', 'served_alias': offload['models']}
+
+
+def check_llamacpp_manifests(result: dict) -> dict:
+    state, config = result['state'], result['config']
+    model = 'llamacpp/' + config['llamacpp']['model_alias']
+    out = {}
+    for step in ('sweep_append_only_summary', 'sweep_none'):
+        manifest = json.loads((Path(state['steps'][step]['out']) / 'manifest.json').read_text())
+        assert manifest['manager']['model'] == model, manifest['manager']
+        assert manifest['seed_policy']['kind'] == 'llamacpp_seed', manifest['seed_policy']
+        block = manifest['c3_label_sweep']
+        assert block['backend'] == 'llamacpp' and block['llama_server']['model_sha256'] == config['llamacpp']['model_sha256']
+        assert block['llamacpp_build'] == config['llamacpp']['build'] and 'ollama' not in block
+        out[step] = manifest['manager']['model']
+    live = json.loads((Path(state['steps']['liveness']['out']) / 'manifest.json').read_text())
+    assert live['manager']['model'] == model and live['seed_policy']['kind'] == 'llamacpp_seed'
+    index = json.loads(Path(state['steps']['index']['path']).read_text())
+    assert index['manager'] == {'backend': 'llamacpp', 'model': model,
+                                'model_sha256': config['llamacpp']['model_sha256'],
+                                'llamacpp_build': config['llamacpp']['build']}, index.get('manager')
+    return {'manager_model': model, 'index_manager': index['manager']}
 
 
 def _completed_ok(result: dict) -> tuple[dict, Path]:
@@ -356,18 +479,27 @@ def check_interrupt(result: dict) -> dict:
         partial = out / 'provenance/ledgers/interrupted/01/roots' / inst / 'root_trials.jsonl'
         final = [json.loads(line) for line in (out / 'provenance/ledgers/roots' / inst / 'root_trials.jsonl')
                  .read_text().splitlines() if line.strip()]
-        assert (work / 'interrupted/01/roots' / inst).is_dir() and partial.exists(), inst
+        assert (work / 'interrupted/01/roots' / inst).is_dir(), inst
+        # A root killed before its first trial was logged has no partial ledger to archive (it may start
+        # between the Interrupter's snapshot and the kill); one with logged trials at the kill must have it.
+        assert partial.exists() or inst not in info['partial_at_kill'], (inst, info['partial_at_kill'])
         budget = [r['budget_index'] for r in final]  # a fresh campaign from trial 1, contiguous
         assert budget == list(range(1, len(budget) + 1)) and len(budget) >= runs, (inst, budget)
     restart = state['service_restarts'][0]
     assert restart['reason'] == 'process_restart' and restart['previous_instance']['action'] == 'SIGTERM', restart
-    assert restart['previous_instance']['pid'] == info['ollama_before'] != restart['ollama']['pid']
+    key = _key(state)
+    assert restart['previous_instance']['pid'] == info['ollama_before'] != restart[key]['pid']
     assert record['service_restart']['generation'] == 1
-    assert (batch / f"ollama_instance_{restart['ollama']['port']}_r1.json").exists()
+    assert (batch / _record_name(state, restart[key]['port'], 1)).exists()
     assert 'results/r1/pilot/' + out.name + '/interruptions.jsonl' in _committed_paths(result, step['commit'])
     checks = step['checks']
     assert checks['roots'] == expected and checks['interrupted_attempts']['root_attempts'] == len(rerun)
-    return {'killed_utc': info['killed_utc'], 'completed_before_kill': completed, 'roots_rerun_whole': rerun,
+    extra = {}
+    if result.get('backend') == 'llamacpp':  # both generations pinned and fully offloaded
+        assert json.loads((batch / 'gpu_offload_load_probe_r1.json').read_text())['offload']['full']
+        extra = {'llamacpp': check_llamacpp(result), 'manifests': check_llamacpp_manifests(result),
+                 'orphan_check': restart['previous_instance']['check']}
+    return {**extra, 'killed_utc': info['killed_utc'], 'completed_before_kill': completed, 'roots_rerun_whole': rerun,
             'roots_completed_kept': record['roots_completed_kept'],
             'resumed_jobs_before': manifest['sessions'][0]['jobs_before'],
             'orphan_server_stopped': restart['previous_instance']['action'], 'table': table_from_sweep(result)}
@@ -388,7 +520,8 @@ def check_watchdog(result: dict) -> dict:
     assert record['roots_rerun_whole'] or record['root_failures_moved'], record
     restart = state['service_restarts'][0]
     assert restart['reason'] == 'runner_lost' and restart['generation'] == 1
-    assert restart['ollama']['pid'] != restart['previous_ollama']['pid']
+    key = _key(state)
+    assert restart[key]['pid'] != restart['previous_' + key]['pid']
     serves = [c for c in result['calls'] if c.get('event') == 'serve']
     assert len(serves) == 2, serves  # the original and the restarted server
     assert len([c for c in result['calls'] if c.get('fault') == 'sigterm']) == 1
@@ -396,7 +529,11 @@ def check_watchdog(result: dict) -> dict:
     expected = len(state['steps']['liveness']['eligible_nodes']) * result['config']['instances']
     assert checks['roots'] == expected and checks['root_failures'] == 0
     assert 'results/r1/pilot/' + out.name + '/interruptions.jsonl' in _committed_paths(result, step['commit'])
-    return {'runner_event': {k: event[k] for k in ('kind', 'signal', 'returncode', 'detected_utc')},
+    extra = {}
+    if result.get('backend') == 'llamacpp':
+        assert json.loads((batch / 'gpu_offload_load_probe_r1.json').read_text())['offload']['full']
+        extra = {'llamacpp': check_llamacpp(result), 'manifests': check_llamacpp_manifests(result)}
+    return {**extra, 'runner_event': {k: event[k] for k in ('kind', 'signal', 'returncode', 'detected_utc')},
             'last_server_request': next(line for line in recent if 'fault=sigterm' in line),
             'roots_rerun_whole': record['roots_rerun_whole'], 'root_failures_moved': record['root_failures_moved'],
             'restarted_generation': restart['generation'], 'table': table_from_sweep(result)}
@@ -412,7 +549,7 @@ def check_retry(result: dict) -> dict:
     paper_remote = Path(result['env']['R1_C3_PAPER_REMOTE'])
     for step in ('liveness', 'sweep_append_only_summary', 'sweep_none', 'index'):
         run(['git', 'cat-file', '-e', state['steps'][step]['commit'] + '^{commit}'], cwd=paper_remote)
-    chats = [c for c in result['calls'] if c.get('path') == '/api/chat']
+    chats = [c for c in result['calls'] if c.get('path') in ('/api/chat', '/v1/chat/completions') and 'chat_call' in c]
     dropped = [c for c in chats if c.get('fault') == 'drop']
     assert len(dropped) == 1, dropped
     resent = [c for c in chats if c['chat_call'] > dropped[0]['chat_call'] and c['seed'] == dropped[0]['seed']]
@@ -420,8 +557,15 @@ def check_retry(result: dict) -> dict:
     retried = sum(state['steps'][s]['checks']['llm_calls_retried'] for s in ('sweep_append_only_summary', 'sweep_none'))
     assert retried == 1, retried
     assert all(isinstance(c['seed'], int) for c in chats)
-    ollama = state['ollama']
-    assert ollama.get('stopped_utc') and Path(ollama['models_dir']).is_relative_to(batch)
+    ollama = state[_key(state)]
+    assert ollama.get('stopped_utc')
+    if result.get('backend') == 'llamacpp':
+        extra_llama = {'llamacpp': check_llamacpp(result), 'manifests': check_llamacpp_manifests(result)}
+        collection = json.loads((batch / 'gpu_offload_append_only_summary_collection.json').read_text())
+        assert collection['offload']['full']  # checked again after collection
+    else:
+        assert Path(ollama['models_dir']).is_relative_to(batch)
+        extra_llama = {}
     index = json.loads(Path(state['steps']['index']['path']).read_text())
     assert index['audit']['status'] == 'pending' and len(index['sweeps']) == 2
     for sweep in index['sweeps']:
@@ -445,11 +589,12 @@ def check_retry(result: dict) -> dict:
         assert index['audit']['evaluation_seeds'] == audit['seeds'][audit['label_seeds']:]
         assert index['nodes_pending'] == config['nodes_pending']
         check = state['paper_a_check']
-        assert check['verdict'] == 'clear' and check['report']['verdict'] == 'clear_finished', check
+        expected = 'not_applicable' if '--not-applicable' in check['command'] else 'clear_finished'
+        assert check['verdict'] == 'clear' and check['report']['verdict'] == expected, check
         assert 'paper_a_status.py' in ' '.join(check['command'])
         extra = {'base_config_overridden_keys': result['overridden'], 'index_audit_seeds': index['audit']['seeds'],
                  'index_nodes_pending': index['nodes_pending'], 'paper_a_status_verdict': check['report']['verdict']}
-    return {**extra, 'dropped_chat_call': dropped[0]['chat_call'], 'resent_with_same_seed': True,
+    return {**extra, **extra_llama, 'dropped_chat_call': dropped[0]['chat_call'], 'resent_with_same_seed': True,
             'llm_calls_retried': retried, 'restart_refused': True, 'eligible_nodes':
             state['steps']['liveness']['eligible_nodes'],
             'roots': {s: state['steps'][s]['checks']['roots'] for s in ('sweep_append_only_summary', 'sweep_none')},
@@ -472,7 +617,7 @@ def check_permanent(result: dict) -> dict:
     with_attempts = [f for f in failures if f.get('transport_attempts')]
     assert with_attempts and all(len(f['transport_attempts']) == 3 for f in with_attempts)
     assert (out / 'collection_failures.json').exists() and (out / 'collection_checks.json').exists()
-    ollama = state['ollama']
+    ollama = state[_key(state)]
     assert ollama.get('stopped_utc') is not None
     alive = subprocess.run(['kill', '-0', str(ollama['pid'])], capture_output=True).returncode == 0
     assert not alive, 'dedicated fake server still running'
@@ -493,7 +638,10 @@ def main():
     ap.add_argument('--deadline', type=float, default=150.0, help='seconds per scenario run')
     ap.add_argument('--keep', action='store_true', help='keep the temporary directories for inspection')
     ap.add_argument('--base-config', type=Path, default=None,
-                    help='start from this launch config (e.g. r1/scripts/configs/c3_sweep_ada.json)')
+                    help='start from this launch config (e.g. r1/scripts/configs/c3_sweep_ada.json); a host '
+                         'draft with TODO_VERIFY values is accepted, its host values are overridden')
+    ap.add_argument('--backend', choices=['ollama', 'llamacpp'], default=None,
+                    help='fixture config backend (default ollama); with --base-config the base decides')
     args = ap.parse_args()
     if platform.node().split('.')[0] == 'ucrtasl':
         raise SystemExit('STOP: desktop DRYRUN is forbidden on Ada')
@@ -509,9 +657,12 @@ def main():
     if args.base_config:
         sys.path.insert(0, str(REPO))
         from r1.scripts.c3_label_sweep import load_config
-        base_config = load_config(args.base_config)  # the runner's own validation first
+        base_config = load_config(args.base_config, allow_placeholders=True)  # the runner's own validation first
+        if args.backend and args.backend != base_config['backend']:
+            raise SystemExit(f'STOP: --backend {args.backend} contradicts the base config ({base_config["backend"]})')
     summary = {'label': 'DRYRUN', 'scenarios': {}, 'started_utc': stamp, 'harness_source': str(harness_source),
-               'base_config': str(args.base_config) if args.base_config else None}
+               'base_config': str(args.base_config) if args.base_config else None,
+               'backend': base_config['backend'] if base_config else (args.backend or 'ollama')}
     start = time.monotonic()
     for scenario in scenarios:
         root = Path(tempfile.mkdtemp(prefix=f'r1_c3_dryrun_{scenario}_')).resolve()
@@ -524,7 +675,7 @@ def main():
             entry['pin'] = fixture['pin']
             bin_dir = fake_bin(root, socket_name)
             result = run_scenario(scenario, root, fixture, bin_dir, data_sources, args.python, args.deadline,
-                                  base_config)
+                                  base_config, backend=args.backend or 'ollama')
             entry['checks'] = {'retry': check_retry, 'permanent': check_permanent, 'interrupt': check_interrupt,
                                'watchdog': check_watchdog}[scenario](result)
             entry['passed'] = True

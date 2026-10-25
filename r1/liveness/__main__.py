@@ -54,6 +54,11 @@ def run_campaigns(args) -> Path:
     manager = collect.MANAGER if args.manager == "scripted" else {
         **collect.MANAGER, "kind": "langgraph",
     }
+    model = getattr(args, "manager_model", None)
+    if model is not None:  # RUNBOOK A.10: e.g. llamacpp/<alias> for the batch's llama-server
+        if args.manager != "langgraph":
+            raise RuntimeError("STOP: --manager-model needs --manager langgraph")
+        manager = {**manager, "model": collect.check_manager_model(model)}
     if getattr(args, "transport_max_attempts", None) is not None:
         # Bounded LLM transport retry (19 Oct); absent means one attempt (historical).
         manager = {**manager, "transport_max_attempts": int(args.transport_max_attempts)}
@@ -61,7 +66,7 @@ def run_campaigns(args) -> Path:
         "schema": "r1.liveness_run/1", "label": "DRYRUN" if dryrun else "ENGINEERING_ONLY", "started_utc": stamp,
         "harness": {"root": str(collect.HARNESS), **harness_commit(collect.HARNESS)},
         "manager": manager, "manager_kind": args.manager, "memory_mode": args.memory_mode or "none",
-        "seed_policy": collect.seed_policy(args.manager),
+        "seed_policy": collect.seed_policy(args.manager, manager.get("model")),
         "nodes": list(args.nodes), "instances": args.instances, "runs": args.runs, "branching": False,
         "host": {"platform": platform.platform(), "python": platform.python_version()},
         "work": str(work), "campaigns": [],
@@ -110,6 +115,9 @@ def main() -> int:
                         choices=["none", "append_only_summary", "append_only_summary_with_rationale"])
     parser.add_argument("--transport-max-attempts", type=int, default=None,
                         help="bounded LLM transport retry (manager field; absent = 1 attempt)")
+    parser.add_argument("--manager-model", default=None,
+                        help="langgraph manager model id (default ollama/qwen2.5-coder:7b); llamacpp/<alias> "
+                             "for a llama-server (RUNBOOK A.10)")
     parser.add_argument("--out", default=None)
     parser.add_argument("--work", default="/tmp/r1_liveness")
     args = parser.parse_args()

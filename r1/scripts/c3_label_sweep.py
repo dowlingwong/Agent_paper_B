@@ -58,9 +58,28 @@ The batch's Ollama instance is stopped in ``finish``; it never touches another
 server.  This runner writes no STATUS.md entry (the operator records STATUS);
 ``batch_state.json`` and ``c3_sweep_summary.json`` hold the outcome.
 
+Inference backend (RUNBOOK A.10; PLAN §10 R1-INFER-LLAMACPP, 25 Oct 2026; config
+``backend``).  ``"ollama"`` (the default, so historical configs such as
+``c3_sweep_ada.json`` keep their meaning) is the path described above.
+``"llamacpp"`` replaces the dedicated Ollama with a dedicated llama.cpp
+``llama-server`` (``r1/scripts/llama_server_instance.py``; config block
+``llamacpp``): before any start the GGUF file's sha256 and the
+``llama-server --version`` build line must equal their pins (STOP otherwise);
+after the start ``/health`` must be ready, ``/v1/models`` must list the pinned
+alias and ``/props`` must report the pinned GGUF path (where the build reports
+it); a one-token probe loads the model; the server log must show every layer
+offloaded to the GPU with a CUDA model buffer and no CPU fallback (CPU fallback
+or partial offload is a STOP, as ``size_vram < size`` was for Ollama), checked
+again after each collection; the GPU census is recorded as before.  Collectors
+and liveness get ``--manager-model llamacpp/<alias>`` and ``LLAMACPP_BASE_URL``
+(``.../v1``).  The watchdog polls ``/health`` (unresponsive) and ``/v1/models``
+(``model_missing``) instead of ``/api/version`` and ``/api/ps``; orphans are
+matched by pid, owner, process group and command line.  Resume semantics are
+unchanged.
+
 DRYRUN (``R1_DRYRUN=1``; ``r1/scripts/dryrun_guard.py``): refused on Ada; fake
-Ollama / nvidia-smi through PATH; pushes only to local bare remotes
-(``r1/scripts/c3_sweep_dryrun.py``).
+Ollama or fake llama-server and fake nvidia-smi through PATH; pushes only to
+local bare remotes (``r1/scripts/c3_sweep_dryrun.py``).
 
 ENGINEERING_ONLY; AI-assisted (Claude).
 """
@@ -86,6 +105,7 @@ from xml.etree import ElementTree
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from r1.scripts.dryrun_guard import validate_dryrun  # noqa: E402
 from r1.scripts.ollama_instance import OllamaInstance, pid_alive, stop_orphan  # noqa: E402
+from r1.scripts import llama_server_instance as lsi  # noqa: E402
 
 SCRIPTS = Path(__file__).resolve().parent
 MODEL = 'qwen2.5-coder:7b'
@@ -109,6 +129,12 @@ DEFAULTS = {
     'gpu_uuid': 'auto',
     'gpu_wait_seconds': 6 * 3600,
     'ollama': {'binary': '/usr/local/bin/ollama', 'seed_models_from': None, 'port': None, 'start_timeout': 120},
+    # RUNBOOK A.10 (25 Oct, PLAN §10 R1-INFER-LLAMACPP): inference backend.  "ollama" keeps the historical
+    # path; "llamacpp" runs a dedicated llama-server pinned by GGUF sha256 and build (block below).
+    'backend': 'ollama',
+    'llamacpp': {'binary': None, 'model_path': None, 'model_sha256': None, 'model_alias': 'r1-manager',
+                 'build': None, 'port': None, 'n_gpu_layers': 999, 'ctx_size': 8192, 'footprint_mib': None,
+                 'extra_args': [], 'start_timeout': 300},
     'allowed_hosts': ['ucrtasl', 'deepthought', 'deepthought2'],
     # Fresh-seed audit design recorded for the audit stage (r1/c3/audit.py; C3_DESIGN §4):
     # K = 10 common joint seeds, first half for labels, second half for offline evaluation.
@@ -123,6 +149,8 @@ DEFAULTS = {
     'watchdog': {'enabled': False, 'poll_seconds': 5.0, 'health_timeout': 10.0, 'unresponsive_checks': 3,
                  'model_checks': 3, 'max_restarts': 3},
 }
+BACKENDS = ('ollama', 'llamacpp')
+LLAMACPP_REQUIRED = ('binary', 'model_path', 'model_sha256', 'model_alias', 'build', 'footprint_mib')
 PHASES_FIXED = ('preconditions', 'liveness')
 INTERRUPTION_SCHEMA = 'r1.c3_sweep_interruption/1'
 GPU_HELPERS = {'gpu_rows', 'gpu_census', 'check_gpu', 'assert_full_offload'}
@@ -181,6 +209,7 @@ def load_config(path=None, allow_placeholders: bool = False) -> dict:
     if len(set(config['nodes'])) != len(config['nodes']):
         raise Stop('STOP: duplicate node in nodes')
     validate_resume(config['resume'], config['watchdog'])
+    validate_backend(config)
     unresolved = placeholders(config)
     if unresolved and not allow_placeholders:
         raise Stop(f'STOP: unresolved {PLACEHOLDER_PREFIX} values in the config: {unresolved}')
@@ -201,6 +230,56 @@ def validate_resume(resume: dict, watchdog: dict) -> None:
             raise Stop(f'STOP: watchdog.{key} must be a number >= 0, got {value!r}')
     if watchdog['poll_seconds'] <= 0 or watchdog['health_timeout'] <= 0 or watchdog['unresponsive_checks'] < 1:
         raise Stop('STOP: watchdog poll_seconds and health_timeout > 0, unresponsive_checks >= 1')
+
+
+def validate_backend(config: dict) -> None:
+    """RUNBOOK A.10: ``backend`` and, for llama.cpp, the pins and server settings (``TODO_VERIFY*`` values
+    are left to the placeholder check: a draft is validated, a launch refuses them)."""
+    backend = config['backend']
+    if backend not in BACKENDS:
+        raise Stop(f'STOP: backend must be one of {BACKENDS}, got {backend!r}')
+    spec = config['llamacpp']
+    known = set(DEFAULTS['llamacpp'])
+    if set(spec) != known:
+        raise Stop(f'STOP: llamacpp keys must be {sorted(known)}, got unknown {sorted(set(spec) - known)}')
+    if backend != 'llamacpp':
+        return
+
+    def open_value(value):
+        return isinstance(value, str) and value.startswith(PLACEHOLDER_PREFIX)
+    missing = [k for k in LLAMACPP_REQUIRED if spec[k] in (None, '')]
+    if missing:
+        raise Stop(f'STOP: backend llamacpp needs llamacpp.{missing} (pins and footprint are never defaulted)')
+    for key in ('binary', 'model_path'):
+        if not open_value(spec[key]) and not (isinstance(spec[key], str) and spec[key].startswith('/')):
+            raise Stop(f'STOP: llamacpp.{key} must be an absolute path, got {spec[key]!r}')
+    sha = spec['model_sha256']
+    if not open_value(sha) and not (isinstance(sha, str) and re.fullmatch(r'[0-9a-f]{64}', sha)):
+        raise Stop(f'STOP: llamacpp.model_sha256 must be 64 lower-case hex digits, got {sha!r}')
+    build = spec['build']
+    if not open_value(build) and not (isinstance(build, str) and lsi.VERSION_RE.fullmatch(build)):
+        raise Stop(f'STOP: llamacpp.build must be the "version: <n> (<commit>)" line of llama-server --version, '
+                   f'got {build!r}')
+    alias = spec['model_alias']
+    if not (isinstance(alias, str) and re.fullmatch(r'[A-Za-z0-9._:-]+', alias)):
+        raise Stop(f'STOP: llamacpp.model_alias must be a plain name, got {alias!r}')
+    for key, low in (('n_gpu_layers', 1), ('ctx_size', 512), ('footprint_mib', 1), ('start_timeout', 1)):
+        value = spec[key]
+        if open_value(value):
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value < low:
+            raise Stop(f'STOP: llamacpp.{key} must be a number >= {low}, got {value!r}')
+    port = spec['port']
+    if port is not None and not open_value(port) and (isinstance(port, bool) or not isinstance(port, int)
+                                                      or not 1024 <= port <= 65535):
+        raise Stop(f'STOP: llamacpp.port must be null or an integer port >= 1024, got {port!r}')
+    extra = spec['extra_args']
+    if not isinstance(extra, list) or not all(isinstance(a, str) for a in extra):
+        raise Stop('STOP: llamacpp.extra_args must be a list of strings')
+    fixed = {'-m', '--model', '--host', '--port', '-ngl', '--gpu-layers', '--n-gpu-layers', '-c', '--ctx-size',
+             '--alias', '-a', '-np', '--parallel', '--api-key'}
+    if fixed & set(extra):
+        raise Stop(f'STOP: llamacpp.extra_args may not repeat the managed flags {sorted(fixed & set(extra))}')
 
 
 def utc_iso() -> str:
@@ -261,6 +340,11 @@ class RunnerWatchdog:
     (``/api/version`` failed ``unresponsive_checks`` consecutive polls) or
     ``model_unloaded`` (the pinned model absent from ``/api/ps`` for
     ``model_checks`` consecutive polls: the model runner is gone; 0 disables).
+
+    llama.cpp (RUNBOOK A.10): an instance with its own ``model_loaded()``
+    (``LlamaServerInstance``: the alias in ``/v1/models``) is asked directly,
+    its ``health()`` is ``/health`` (non-200 counts as a miss) and the loss kind
+    is the instance's ``MODEL_LOSS_KIND`` (``model_missing``).
     """
 
     def __init__(self, instance, spec: dict, model: str = MODEL) -> None:
@@ -270,6 +354,9 @@ class RunnerWatchdog:
         self.started_utc = self.last_healthy_utc
 
     def model_loaded(self):
+        own = getattr(self.instance, 'model_loaded', None)
+        if callable(own):
+            return own(timeout=float(self.spec['health_timeout']))
         try:
             with urlopen(self.instance.url + '/api/ps', timeout=float(self.spec['health_timeout'])) as response:
                 models = json.load(response).get('models') or []
@@ -292,7 +379,8 @@ class RunnerWatchdog:
             if loaded is False:
                 self.model_misses += 1
                 if self.model_misses >= int(self.spec['model_checks']):
-                    return self.event('model_unloaded', consecutive_checks_without_model=self.model_misses)
+                    return self.event(getattr(inst, 'MODEL_LOSS_KIND', 'model_unloaded'),
+                                      consecutive_checks_without_model=self.model_misses)
                 return None
             if loaded:
                 self.model_misses = 0
@@ -377,12 +465,32 @@ class SweepRunner:
         self.host = platform.node().split('.')[0]
         self.state: dict = {'label': self.label, 'steps': {}, 'batch': str(batch), 'host': platform.node(),
                             'config': config}
-        self.ollama: OllamaInstance | None = None
+        # RUNBOOK A.10: the batch's dedicated model service (OllamaInstance or LlamaServerInstance);
+        # its record lives in state[service_key] ('ollama' or 'llama_server').
+        self.backend = config.get('backend', 'ollama')
+        self.service_key = 'llama_server' if self.backend == 'llamacpp' else 'ollama'
+        self.state['backend'] = self.backend
+        self.service = None
         self.pending_restart: dict | None = None  # service restart record awaiting its sweep's interruption entry
         self.gpu = load_gpu_helpers({
             'subprocess': subprocess, 'ElementTree': ElementTree, 'getpass': getpass, 'json': json,
             'BATCH': batch, 'state': self.state, 'stamp': stamp,
         })
+        if self.backend == 'llamacpp' and isinstance(config['llamacpp'].get('footprint_mib'), (int, float)):
+            # Co-tenancy margin (13 Oct) with the llama.cpp model's measured footprint, not Ollama's 7B constant.
+            self.gpu['MODEL_FOOTPRINT_MIB'] = int(config['llamacpp']['footprint_mib'])
+
+    @property
+    def ollama(self):
+        """The dedicated model service (historical name; Ollama or llama-server)."""
+        return self.service
+
+    @ollama.setter
+    def ollama(self, value) -> None:
+        self.service = value
+
+    def service_record(self) -> dict:
+        return self.state.get(self.service_key) or {}
 
     # -- bookkeeping ---------------------------------------------------------
     def save(self) -> None:
@@ -499,8 +607,9 @@ class SweepRunner:
             raise Stop(f'STOP: {reason}: {used} service restarts already (config {key}.max_restarts = {limit}); '
                        'the author decides')
         record = {'reason': reason, 'phase': phase, 'utc': stamp(), 'generation': len(restarts) + 1,
-                  'previous_ollama': {k: (self.state.get('ollama') or {}).get(k)
-                                      for k in ('pid', 'pgid', 'port', 'generation', 'started_utc', 'log')}}
+                  f'previous_{self.service_key}': {k: self.service_record().get(k)
+                                                    for k in ('pid', 'pgid', 'port', 'generation', 'started_utc',
+                                                              'log')}}
         restarts.append(record)
         self.save()
         if reason == 'process_restart':
@@ -510,16 +619,19 @@ class SweepRunner:
                 self.save()
                 raise Stop(f'STOP: processes of an earlier runner of this batch are still alive: {earlier}; '
                            'never resumed alongside them')
-            record['previous_instance'] = stop_orphan(self.state.get('ollama') or {})
+            orphan_stop = lsi.stop_orphan if self.backend == 'llamacpp' else stop_orphan
+            record['previous_instance'] = orphan_stop(self.service_record())
             self.check_heads()
-        elif self.ollama is not None:
-            record['previous_instance'] = self.ollama.stop()
-        self.ollama = None
+        elif self.service is not None:
+            record['previous_instance'] = self.service.stop()
+        self.service = None
         self.state['model_loaded'] = False  # the new instance has not loaded the model yet (co-tenancy margin)
         self.save()
         self.start_service(generation=record['generation'])
-        record.update(ollama={k: self.state['ollama'].get(k) for k in
-                              ('pid', 'pgid', 'port', 'generation', 'models_seeded', 'started_utc', 'healthy_utc')},
+        keys = ('pid', 'pgid', 'port', 'generation', 'models_seeded', 'started_utc', 'healthy_utc') \
+            if self.backend == 'ollama' else \
+            ('pid', 'pgid', 'port', 'generation', 'model_sha256', 'started_utc', 'healthy_utc')
+        record.update({self.service_key: {k: self.service_record().get(k) for k in keys}},
                       gpu=self.state.get('gpu'), paper_a_check=self.state.get('paper_a_check', {}).get('verdict'),
                       completed_utc=stamp())
         self.save()
@@ -571,10 +683,11 @@ class SweepRunner:
         """What the lost server was doing: its log's last request and signal lines, the last LLM event."""
         info: dict = {}
         try:
-            log = Path((self.state.get('ollama') or {}).get('log') or '')
+            log = Path(self.service_record().get('log') or '')
             if log.is_file():
                 lines = log.read_text(errors='replace').splitlines()
-                requests = [line for line in lines if '[GIN]' in line or 'POST "/api/' in line]
+                requests = [line for line in lines if '[GIN]' in line or 'POST "/api/' in line
+                            or 'request: POST' in line]  # llama-server: "srv  log_server_r: request: POST ..."
                 info.update(server_log=str(log), server_log_tail=lines[-20:],
                             last_server_request=requests[-1] if requests else None,
                             last_server_requests=requests[-5:],  # concurrent workers: the fatal one may not be last
@@ -612,7 +725,7 @@ class SweepRunner:
     def collect(self, argv, step: str, out: Path, work: Path, resume) -> None:
         """One collector session; with the watchdog on, a runner loss restarts the service and resumes."""
         if not self.watchdog_on():
-            self.cmd(argv, log=f'{step}.log', env=self.ollama_env())
+            self.cmd(argv, log=f'{step}.log', env=self.service_env())
             return
         while True:
             started = time.time()
@@ -626,10 +739,10 @@ class SweepRunner:
         """Run the collector while polling the dedicated instance; None, or the loss record."""
         print('RUN', argv, '(watched)', flush=True)
         spec = self.config['watchdog']
-        watchdog = RunnerWatchdog(self.ollama, spec)
+        watchdog = RunnerWatchdog(self.service, spec)
         with (self.batch / log).open('a') as f:
             proc = subprocess.Popen(argv, cwd=self.paper, stdout=f, stderr=subprocess.STDOUT,
-                                    env=dict(os.environ, **self.ollama_env()))
+                                    env=dict(os.environ, **self.service_env()))
         event = None
         try:
             while proc.poll() is None:
@@ -651,18 +764,34 @@ class SweepRunner:
         return event
 
     # -- model service -------------------------------------------------------
-    def ollama_env(self) -> dict:
-        return {'OLLAMA_BASE_URL': self.state['ollama']['url'], 'OMP_NUM_THREADS': '1',
-                'OPENBLAS_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1', 'AR_HARNESS_ROOT': str(self.harness)}
+    def service_env(self) -> dict:
+        if self.backend == 'llamacpp':  # the harness llamacpp provider (ChatOpenAI) reads this; /v1 included
+            url = {'LLAMACPP_BASE_URL': self.service_record()['openai_base_url']}
+        else:
+            url = {'OLLAMA_BASE_URL': self.service_record()['url']}
+        return {**url, 'OMP_NUM_THREADS': '1', 'OPENBLAS_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1',
+                'AR_HARNESS_ROOT': str(self.harness)}
 
-    def ollama_alive(self) -> bool:
-        return self.ollama is not None and self.ollama.alive() and self.ollama.health() is not None
+    ollama_env = service_env  # historical name
+
+    def manager_model_args(self) -> list:
+        """Collector / liveness ``--manager-model`` (llama.cpp only; Ollama keeps the collector default)."""
+        if self.backend != 'llamacpp':
+            return []
+        return ['--manager-model', 'llamacpp/' + self.config['llamacpp']['model_alias']]
+
+    def service_alive(self) -> bool:
+        return self.service is not None and self.service.alive() and self.service.health() is not None
+
+    ollama_alive = service_alive  # historical name
 
     def model_ps(self) -> dict:
         with urlopen(self.state['ollama']['url'] + '/api/ps', timeout=15) as response:
             return json.load(response)
 
     def check_offload(self, where: str) -> None:
+        if self.backend == 'llamacpp':
+            return self.check_offload_llamacpp(where)
         processes = self.model_ps()
         (self.batch / f'gpu_offload_{where}.json').write_text(json.dumps(
             {'label': self.label, 'utc': stamp(), 'processes': processes}, indent=2) + '\n')
@@ -670,6 +799,26 @@ class SweepRunner:
         self.gpu['assert_full_offload'](loaded, where)
         if loaded.get('digest') != DIGEST:
             raise Stop(f'STOP: {where}: loaded model digest differs from the author pin')
+        self.gpu['check_gpu']()
+
+    def check_offload_llamacpp(self, where: str) -> None:
+        """RUNBOOK A.10: every layer on the GPU (server log), the pinned alias served, the co-tenancy census."""
+        spec, inst = self.config['llamacpp'], self.service
+        report = inst.offload()
+        ids = inst.model_ids()
+        props = inst.props()
+        (self.batch / f'gpu_offload_{where}.json').write_text(json.dumps(
+            {'label': self.label, 'utc': stamp(), 'backend': 'llamacpp', 'log': str(inst.log_path),
+             'offload': report, 'models': ids, 'props_model_path': (props or {}).get('model_path')}, indent=2) + '\n')
+        if not inst.alive():
+            raise Stop(f'STOP: {where}: the dedicated llama-server is not running')
+        if not report['full']:
+            raise Stop(f'STOP: {where}: pinned model is not fully offloaded to the GPU '
+                       f'({"; ".join(report["reasons"])}); CPU fallback is never accepted')
+        if ids is None or spec['model_alias'] not in ids:
+            raise Stop(f'STOP: {where}: llama-server does not serve the pinned alias {spec["model_alias"]!r} ({ids})')
+        if props and props.get('model_path') not in (None, spec['model_path']):
+            raise Stop(f'STOP: {where}: llama-server reports model {props.get("model_path")!r}, not the pinned GGUF')
         self.gpu['check_gpu']()
 
     def select_card(self) -> str:
@@ -722,6 +871,9 @@ class SweepRunner:
         self.state['gpu'] = self.select_card()
         uuid = self.state['gpu'].split(',')[1].strip()
         self.gpu['check_gpu']()
+        if self.backend == 'llamacpp':
+            self.start_llamacpp(uuid, generation)
+            return
         spec = self.config['ollama']
         restart = {'generation': generation, 'reuse_models': True} if generation else {}
         port, models_dir = spec.get('port'), None
@@ -753,6 +905,74 @@ class SweepRunner:
         self.check_offload('load_probe' if not generation else f'load_probe_r{generation}')
         self.save()
 
+    def llamacpp_pins(self) -> dict:
+        """GGUF sha256 and llama.cpp build against their pins, before any start (RUNBOOK A.10)."""
+        spec = self.config['llamacpp']
+        build = lsi.build_info(spec['binary'])
+        record = {'utc': stamp(), 'binary': spec['binary'], 'build': build, 'build_pin': spec['build'],
+                  'model_path': spec['model_path'], 'model_sha256_pin': spec['model_sha256']}
+        self.state.setdefault('llamacpp_pin_checks', []).append(record)
+        self.save()
+        if build['version_line'] != spec['build']:
+            record['verdict'] = 'refused: build'
+            self.save()
+            raise Stop(f'STOP: llama.cpp build {build["version_line"]!r} differs from the pin {spec["build"]!r}')
+        started = time.monotonic()
+        try:
+            sha = lsi.sha256_file(spec['model_path'])
+        except OSError as exc:
+            record['verdict'] = f'refused: {exc!r}'
+            self.save()
+            raise Stop(f'STOP: cannot read the pinned GGUF {spec["model_path"]}: {exc!r}') from exc
+        record.update(model_sha256=sha, sha256_seconds=round(time.monotonic() - started, 1))
+        if sha != spec['model_sha256']:
+            record['verdict'] = 'refused: model sha256'
+            self.save()
+            raise Stop(f'STOP: GGUF sha256 {sha} differs from the pin {spec["model_sha256"]}')
+        record['verdict'] = 'pinned'
+        self.save()
+        return record
+
+    def start_llamacpp(self, uuid: str, generation: int) -> None:
+        """Pins, dedicated llama-server, identity, one-token probe, a process on the card, full offload."""
+        spec = self.config['llamacpp']
+        pins = self.llamacpp_pins()
+        port = spec.get('port')
+        if generation:  # a restart reuses the batch's port
+            port = port or self.service_record().get('port')
+        self.service = lsi.LlamaServerInstance(
+            self.batch, spec['binary'], model_path=spec['model_path'], alias=spec['model_alias'], port=port,
+            n_gpu_layers=int(spec['n_gpu_layers']), ctx_size=int(spec['ctx_size']), gpu_uuid=uuid, label=self.label,
+            extra_args=spec['extra_args'], start_timeout=float(spec['start_timeout']), generation=generation)
+        try:
+            self.state[self.service_key] = self.service.start(build=pins['build'], model_sha256=pins['model_sha256'])
+        except RuntimeError as exc:
+            self.state[self.service_key] = self.service.record
+            self.save()
+            raise Stop(str(exc)) from exc
+        self.save()
+        ids = self.service.model_ids()
+        props = self.service.props()
+        self.state[self.service_key].update(served_models=ids, props_model_path=(props or {}).get('model_path'),
+                                            props_build_info=(props or {}).get('build_info'))
+        self.save()
+        if ids is None or spec['model_alias'] not in ids:
+            raise Stop(f'STOP: llama-server does not serve the pinned alias {spec["model_alias"]!r} ({ids})')
+        if props and props.get('model_path') not in (None, spec['model_path']):
+            raise Stop(f'STOP: llama-server reports model {props.get("model_path")!r}, not the pinned GGUF')
+        probe = self.service.chat('Reply OK', max_tokens=1, seed=0, timeout=600)
+        self.state[self.service_key]['load_probe'] = {'utc': stamp(), 'model': probe.get('model'),
+                                                      'system_fingerprint': probe.get('system_fingerprint'),
+                                                      'usage': probe.get('usage')}
+        self.save()
+        xml = ElementTree.fromstring(subprocess.check_output(['nvidia-smi', '-q', '-x'], text=True))
+        selected = next((g for g in xml.findall('gpu') if g.findtext('uuid') == uuid), None)
+        if selected is None or not selected.findall('./processes/process_info'):
+            raise Stop('STOP: no process on the selected GPU after loading (CPU fallback?)')
+        self.state['model_loaded'] = True
+        self.check_offload('load_probe' if not generation else f'load_probe_r{generation}')
+        self.save()
+
     def liveness(self) -> None:
         live = self.config['liveness']
         out = self.paper / 'results/r1/engineering' / f'liveness_c3_{stamp()}'
@@ -760,8 +980,9 @@ class SweepRunner:
                   '--memory-mode', live['memory_mode'], '--nodes', *self.config['nodes'],
                   '--instances', str(live['instances']), '--runs', str(live['runs']),
                   '--transport-max-attempts', str(self.config['transport_max_attempts']),
+                  *self.manager_model_args(),
                   '--out', str(out), '--work', str(self.batch / 'liveness_work')],
-                 log='liveness.log', env=self.ollama_env())
+                 log='liveness.log', env=self.service_env())
         report = json.loads((out / 'liveness.json').read_text())
         nodes = self.config['nodes']
         eligible = [n for n in nodes if report['nodes'].get(n, {}).get('pass')]
@@ -820,7 +1041,11 @@ class SweepRunner:
             'arm_role': 'contrast' if memory_mode == 'none' else 'primary', 'batch': str(self.batch),
             'liveness': self.state['steps']['liveness']['out'],
             'paper_a_check': self.state.get('paper_a_check', {}).get('verdict'),
-            'ollama': {k: self.state['ollama'].get(k) for k in ('port', 'pid', 'models_dir')},
+            **({'ollama': {k: self.state['ollama'].get(k) for k in ('port', 'pid', 'models_dir')}}
+               if self.backend == 'ollama' else
+               {'backend': 'llamacpp', 'llama_server': {k: self.service_record().get(k) for k in (
+                   'port', 'pid', 'model_path', 'model_sha256', 'alias', 'n_gpu_layers', 'ctx_size', 'argv')},
+                'llamacpp_build': (self.service_record().get('build') or {}).get('version_line')}),
             'gpu': self.state.get('gpu'), 'audit': 'pending (r1/c3/audit.py)',
             'audit_seeds': self.config['audit']['seeds'], 'nodes_pending': self.config['nodes_pending']}}
         label_args = ['--label', 'DRYRUN', '--split', 'engineering'] if self.dryrun else \
@@ -831,7 +1056,7 @@ class SweepRunner:
                       '--runs', str(self.config['runs']), '--verify-split-policy', 'vary', '--new-campaign-versions',
                       '--memory-mode', memory_mode,
                       '--transport-max-attempts', str(self.config['transport_max_attempts']),
-                      '--root-failures', 'record', '--extra-manifest', json.dumps(extra),
+                      *self.manager_model_args(), '--root-failures', 'record', '--extra-manifest', json.dumps(extra),
                       '--workers', str(self.config['workers']), '--out', str(out), '--work', str(work), *label_args],
                      step, out, work, resume)
         self.collect_sessions(out, work, step, resume, eligible, memory_mode)
@@ -842,10 +1067,10 @@ class SweepRunner:
             manifest = json.loads((out / 'manifest.json').read_text())
             if manifest['sessions'] and manifest['sessions'][-1]['jobs_before'] == 0:
                 break
-            if not self.ollama_alive():
+            if not self.service_alive():
                 if not self.watchdog_on():
                     break  # a dead model service: the gates below record it and stop
-                loss = RunnerWatchdog(self.ollama, self.config['watchdog']).check() or \
+                loss = RunnerWatchdog(self.service, self.config['watchdog']).check() or \
                     {'kind': 'unhealthy_between_sessions', 'detected_utc': utc_iso()}
                 self.runner_lost(loss, out, work, step)
             self.gpu['check_gpu']()
@@ -955,6 +1180,10 @@ class SweepRunner:
                  'liveness': str(Path(live['out']).relative_to(self.paper)),
                  'harness_commit': self.state.get('harness_head_at_launch'), 'sweeps': sweeps,
                  'nodes_pending': self.config['nodes_pending'],
+                 **({'manager': {'backend': 'llamacpp', 'model': 'llamacpp/' + self.config['llamacpp']['model_alias'],
+                                 'model_sha256': self.config['llamacpp']['model_sha256'],
+                                 'llamacpp_build': self.config['llamacpp']['build']}}
+                    if self.backend == 'llamacpp' else {}),
                  'audit': {'status': 'pending', 'seeds': self.config['audit']['seeds'],
                            'label_seeds': self.config['audit']['seeds'][:self.config['audit']['label_seeds']],
                            'evaluation_seeds': self.config['audit']['seeds'][self.config['audit']['label_seeds']:],
@@ -982,7 +1211,7 @@ class SweepRunner:
         self.state.setdefault('runners', []).append({'pid': os.getpid(), 'started_utc': stamp()})
         self.save()
         self.phase('preconditions', self.preconditions)
-        if self.ollama is None:
+        if self.service is None:
             pending = self.pending_phase()
             started = pending in self.state['steps']
             if pending is None or (pending == 'index' and not started):
@@ -996,7 +1225,7 @@ class SweepRunner:
                                    None, None)
                     self.pending_restart = None
             else:
-                raise Stop('STOP: the batch Ollama instance belongs to an earlier process; a restart after '
+                raise Stop('STOP: the batch model server belongs to an earlier process; a restart after '
                            'preconditions is an author decision (start a new batch)')
         self.phase('liveness', self.liveness)
         for mode in self.config['memory_modes']:
@@ -1004,9 +1233,9 @@ class SweepRunner:
         self.phase('index', self.index)
 
     def finish(self, reason) -> dict:
-        if self.ollama is not None:
+        if self.service is not None:
             try:
-                self.state['ollama'] = self.ollama.stop()
+                self.state[self.service_key] = self.service.stop()
             except Exception as exc:  # noqa: BLE001 - recorded; never masks the stop reason
                 self.state['ollama_stop_error'] = repr(exc)
         if not self.state.get('finished_utc'):
@@ -1034,7 +1263,8 @@ def build_runner(config_path=None) -> SweepRunner:
 def entrypoint(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--config', default=None, help='JSON config (nodes, instances, paper_a_check, ollama, ...)')
+    ap.add_argument('--config', default=None,
+                    help='JSON config (nodes, instances, paper_a_check, backend, ollama / llamacpp, ...)')
     ap.add_argument('--check-config', action='store_true',
                     help='validate the config (defaults overlaid), print it and exit; starts nothing')
     ap.add_argument('--allow-placeholders', action='store_true',
