@@ -2,15 +2,15 @@
 
 **Status: pending review.** Implementation agent (Claude), branch `track-h-25oct` in both repositories; not merged, not pushed. AI-assisted; ENGINEERING_ONLY / DRYRUN; nothing here is evidence. No LLM call, GPU, SSH, real llama.cpp/Ollama or model download was used; the manager model was the fake `llama-server`, the A5/A6 models were fake sidecars with fixed distributions.
 
-- Paper repo: `bf45424` → `2647fab` (10 commits). Harness repo: `264011e` → `2604a97` (1 commit). `r1/scripts/HARNESS_PIN_C3` now names `2604a97` (see "Before merging").
+- Paper repo: `bf45424` → `2647fab` (10 commits), then the review round (26 Oct) `bd45aea` … `a19b447` and this handoff update. Harness repo: `264011e` → `2604a97`, then review `6afdb0e`. `r1/scripts/HARNESS_PIN_C3` now names `6afdb0e` (see "Before merging").
 - Environment: the scratch uv venv `/tmp/r1scratch/venv313` (Python 3.13.16, read-only), `TMPDIR=/tmp/trackh/tmp`, `AR_HARNESS_ROOT=<harness worktree>`. Full paper suite run in per-file chunks (the VM kills background jobs and limits a call to 180 s); harness suite in one call.
 
 ## Tests
 
 | | baseline (this env, before any change) | after |
 |---|---|---|
-| paper `r1/tests` | 383 passed, 1 skipped, 1 failed (385) | 435 passed, 1 skipped, 1 failed (437) |
-| harness `tests` | 433 passed, 10 failed, 1 error | 443 passed, 10 failed, 1 error |
+| paper `r1/tests` | 383 passed, 1 skipped, 1 failed (385) | 435 / 1 / 1 (437) after the first round; **446 / 1 / 1 (448) after the review round** |
+| harness `tests` | 433 passed, 10 failed, 1 error | 443 / 10 / 1 after the first round; **446 / 10 / 1 after the review round** (same failing set) |
 
 - Paper: the failure is the known environmental `test_rerun2_batch4c.py::test_real_runner_desktop_dryrun`; the skip is `test_c3_sweep_table.py::test_sweep_adapter_matches_the_19oct_pilot_table` (the 19 Oct split-recheck `proposals.jsonl` is local-only and absent from the worktree). 52 new tests.
 - Harness: the failing set is identical before and after (the known environmental set plus `test_artifact_completeness_and_manifest.py::TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns`, which fails on a clean worktree and passes once an earlier run has written the untracked `paper/tables/artifact_completeness_report.txt`; I deleted that artifact after each of my runs). 10 new tests.
@@ -39,10 +39,27 @@
 
 **H.9 — desktop dry run (`7ada947`, manifest `2647fab`). Done.** `r1/scripts/c3_control_dryrun.py` (stages start/resume/report; ~25 s + 35 s). Manifest: `results/r1/engineering/c3_control_dryrun_20261025T224515Z/summary.json` (paper `8ef8f8f` clean, harness `2604a97` clean). 2 nodes × 10 arms (A0–A6, awr_direct, llm_self, hybrid), W = 3, 2W trials, LLM cap 12; SIGKILL of the runner mid-campaign (`awr_direct__digits_mlp`, 2 records) after 7 completed campaigns, services stopped and restarted; the 7 completed ledgers byte-identical; the interrupted campaign re-run whole; `matching_report` passes; all 12 checks pass (incl. one forecast for E1/E2, complete decision records, sidecar pins, A4 answers parsed, hybrid revised, `prior_unavailable` survived). Test `test_c3_control_dryrun.py` runs it end to end (~50 s). The fake `llama-server` now answers the two side-query kinds deterministically; before, such prompts got the probe reply "OK"; no existing prompt changes behaviour (its six sweep dry-run tests pass).
 
+## Review round (26 Oct): fixes F1–F6
+
+The coordinating session's review (25/26 Oct) accepted the H.4 wording with the trial-id/summary prefix, the D25 inactive-key exception and "identical information set" = identical declared access, and asked for six fixes. All six are done; new commits on top, no history rewritten.
+
+| Fix | Commit(s) | What | Tests (fail-before → after) |
+|---|---|---|---|
+| F1 AWR trains on the label half | `bd45aea` | `fit_awr_direct(value_key="delta_label")`; `delta_true` (evaluation half) refused; rows without a finite value refused; dry run no longer remaps | `test_awr_training_never_reads_the_evaluation_half`: inverting `delta_true` on every row leaves the fitted parameters bit-identical. Old code: 3 of 7 tests in the file fail |
+| F2 control-plane skips not invalid | `fab1a9c` | `observe()` counts a harness `is_control_plane_skip` row in `control_skips` (not a feature), not in `invalid_so_far`; D25 skips still count; `FEATURIZER_VERSION` → `c3_features/v2` (recorded in online decision events only, never in tables) | pilot table and 12 Oct rebuild byte-identical to the pre-Track-H reference (`proposals.jsonl`, `configs.json`, `build.json` minus commit); `test_control_plane_skips_do_not_count_as_invalid` (3 cases, replay and online path). Old code: the 2 control-plane cases fail |
+| F3 D23 verify in `RuleController` | `7053f42` | E2 verify on by default: the existing `r1.theory.acceptance.KGIndexPolicy` (verify iff VoI > 2 r g, Bayes response, campaign split policy) with the cached (μ, τ, σ_cmp); r = the harness verify runs; response `posterior_mean/v1` with the same `KeepPrior` (σ_t passed under `"fixed"`); decision detail records VoI, price, r | `test_a1_with_verify_equals_the_index_policy_arm`: A1 through `RuleController` equals the deployed index-policy arm (constant E1 decision + `r1.controllers.IndexController` with `r1.baselines.policies.KGIndex(response="bayes")`, cutoff 0, constant `KeepPrior`) trial by trial including identical verify trials, seeds, metrics, responses and posterior means (≥ 2 verifies), at g = 0.02 σ. Old code: fails. Reused without changing either rule's definition |
+| F4 hybrid re-screen | harness `6afdb0e`, paper `9aafb55` | Opt-in harness hook `rescreen_after_revise`: after a revise the controller is asked once more at E1 with revise infeasible; a skip there skips the trial (record keeps the revision, `rescreened_after_revise`, `skip_reason`). Controllers without the attribute: historical path unchanged. The hybrid sets it | harness: 3 tests (re-screen skip / continue / historical), old harness: the skip case fails; paper: 3 hybrid cases, old code: all 3 fail |
+| F5 LLM self-control at E1/E2 | `bdf1ce3`, `6c7b19c` | `LLMSelfController(epochs=("E1","E2"))`; `epochs=None` default = L12 behaviour (test_l12 unchanged); used by the dry run | `test_llm_self_control_restricted_to_e1_e2`. **`bdf1ce3` was committed with this new test failing** (my check piped pytest through `tail`); fixed in `6c7b19c` (test only: verify must be feasible at E2 for the controller to call) |
+| F6 budgets per D1 | `7053f42` (`c3_budgets`), `4ae8a1b` | `c3_budgets(W, llm_cap, trials=None)`: trials default = cap, trials < cap refused; `campaign_kwargs(W=, llm_cap=)`; `CampaignUsage.trial_budget/trials`; `matching_report` fails a campaign with trial budget < cap or that ended on the trial budget with W and the cap unspent, and reports `ended_on` per arm | 3 tests (refusals, matching flags, a skipping campaign ends on the LLM cap) |
+
+**Finding (F3).** With the declared g = 0.1 σ_node and the harness default r = 2, D23's KG verify can never fire when σ_cmp ≤ σ_node: VoI = s̃ ψ(|m|/s̃) ≤ φ(0) s̃ < 0.4 σ_cmp ≤ 2 r g (s̃ < sd(Δ | Δ̂) < σ_cmp). Test `test_kg_verify_with_r2_never_pays_at_the_declared_g`. With r = 1 the price is 0.2 σ_node and verify can pay near m ≈ 0 when τ ≫ σ. The dry run therefore uses r = 1 for every arm; even so no verify fired there (12 E2 verify decisions considered, VoI below the price each time). This bears on D23 and on whether A1 differs from "no verify" at all at g = 0.1 σ_node — an author question.
+
+**New dry-run manifest:** `results/r1/engineering/c3_control_dryrun_20261025T231516Z/summary.json` (`a19b447`; paper `2523e0c` clean, harness `6afdb0e` clean; the first manifest is kept as history). W = 4, LLM cap 16, trial budget 16 (via `c3_budgets` for every arm), r = 1; SIGKILL in `awr_direct__digits_mlp` after 7 completed campaigns; all 14 checks pass, including `matching_report` with the trial-budget check: every campaign ended on W or the LLM cap. The C3 arms considered KG verify 12 times and never verified; the hybrid revised twice and both revisions were re-screened and skipped. The commit message of `a19b447` says "17 decisions"; the manifest says 12 (my error in the message; the manifest is right).
+
 ## Deviations from the brief
 
 1. `RuleController` takes `node_ctx` (the featurizer needs the start files, W and memory mode), plus optional `sigma_cmp` (per edit kind, as offline), `fallback` and `greedy_bin`. `tau_node` is used only for the A6 greedy-bin deployment, in metric units.
-2. `RuleController` never verifies (E2 is always `continue`); A1's KG verify (D23) is not part of this controller.
+2. ~~`RuleController` never verifies~~ — fixed in the review round (F3): D23 KG verify at E2, on by default.
 3. For trials without features (trial 1, or no incumbent metric yet) the controller continues; its E2 keep prior is a placeholder that the rule does not use (the first valid metric is kept).
 4. One harness commit holds all three hooks rather than one per step.
 5. H.4 line includes the trial id and the proposal summary (interpretation, see Q1).
@@ -51,9 +68,11 @@
 
 ## Before merging
 
-- `HARNESS_PIN_C3` = `2604a97`, which is on harness `track-h-25oct`, not on `r1` or `origin/r1`. The label-sweep launcher checks out the pin from its harness remote, so **merge `track-h-25oct` into harness `r1` (and push) before merging this paper branch into `main`**, or the deepthought sweep-1 launch STOPs. All harness defaults are unchanged.
+- `HARNESS_PIN_C3` = `6afdb0e` (review round; was `2604a97`), which is on harness `track-h-25oct`, not on `r1` or `origin/r1`. The label-sweep launcher checks out the pin from its harness remote, so **merge `track-h-25oct` into harness `r1` (and push) before merging this paper branch into `main`**, or the deepthought sweep-1 launch STOPs. All harness defaults are unchanged.
 
 ## Open questions for the author
+
+Answered by the review (26 Oct): Q1 (wording with prefix: accepted), Q2 (D25 skips keep their line: accepted), Q3 (identical declared access: accepted). Q6 resolved by F2, Q9 by F5, Q4 partly by F4 (the hybrid is still a proposal), Q5 by F6 (trial budget = LLM cap, never binding). New: **Q10** — with g = 0.1 σ_node and r = 2 the D23 KG verify never fires (finding above): keep r = 2 (A1 = no verify in effect), use r = 1, or revisit the verify price?
 
 1. **H.4 wording.** The decided text is used verbatim, preceded by `<trial_id>: summary=<proposal summary>;` so the manager can tell which proposal was skipped. Keep, or show only the fixed text (a `one_line/v2`)?
 2. **Which skips get the line.** All controller E1 skips (rule skips, prior skips, AWR and LLM-self skips); D25 inactive-key skips keep their historical line. Agree?
