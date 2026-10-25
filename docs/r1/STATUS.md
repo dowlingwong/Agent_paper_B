@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — exam execution decisions; portal agent runbook (AI-assisted; documents only)
+
+- Author decisions recorded (PLAN §10): R1-EXAM-CTX (32k), R1-SCHEMA (structure-only `json_schema` in exam and sweeps, before sweep 1), R1-QUANT-SOURCE (vendor Q4_K_M, else bartowski; GSQ-RCO out), R1-EXAM-RUNBOOK.
+- New agent runbook `docs/r1/prompts/PORTAL_EXAM_RUNBOOK.md`: Phase 0 host facts, Phase 1 code gaps (schema, thinking control, random-valid anchor, A4 observer, exam namespace guard, registry and fit estimator, ported Round-7 machinery, exam runner, analysis with a pre-committed rule, config), Phase 2 downloads and pins, Phase 3 Stage A, Phase 4 author gate, Phase 5 B1, Phase 6 B2.
+- Open for the author: adoption of the X.2–X.6 protocol (Phase 4 gate); Q10 from Track H (KG verify never pays at g = 0.1 σ_node, r = 2).
+
 ## 25 October 2026 — Track H: DAC control interface, Mac steps H.1–H.9 (AI-assisted; ENGINEERING_ONLY / DRYRUN; reviewed and accepted 26 Oct)
 
 Acceptance by the coordinating session (Claude), 26 Oct. Re-ran in the Linux VM: harness 446 passed / 10 failed / 1 error (the known environmental set, unchanged from the baseline); paper 439 passed / 1 skipped / 1 failed (known `test_real_runner_desktop_dryrun`) plus `test_c3_control_dryrun` (1 passed). Read the harness diff (defaults byte-identical: `detail`/`events` only when set, `skip_display` only when declared, re-screen only for controllers that opt in) and the RuleController, featurizer v2, KG-verify and AWR changes. Accepted. Author answers recorded: H.4 line keeps the trial id and summary prefix; D25 inactive-key skips keep their old line; "identical information set" means identical declared access. **Open for the author (Q10):** at the declared g = 0.1 σ_node and r = 2, KG verify can never pay (VoI < 0.4 σ_cmp ≤ 2rg), so A1's verify is vacuous on these nodes; the control dry run used r = 1, campaigns use the declared r. Merge order: harness `track-h-25oct` → `r1` first (pin `6afdb0e`), then this branch → `main`.

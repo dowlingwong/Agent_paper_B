@@ -475,6 +475,15 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-SKIP-DISPLAY (25 Oct, evening) | **H.4 decided as proposed:** a proposal skipped by the control plane appears in the manager's memory as one line, "skipped by the control plane: predicted no gain", with no metric (author: "按你的建议来"). Recorded as a versioned display in every manifest; campaigns without the field had no skips. |
 | R1-EXAM-FIT (25 Oct, evening) | **The fit estimate for exam admissibility is based on the Q4_K_M GGUF** (file size + KV at the declared context + compute buffers ≤ 23.5 GiB on the RTX 4090), confirmed by the X.2 probe. The declared context (proposed 32,768) and the revised Stage B design (B1 screen ranked on audited proposal increments, B2 power-planned finalists, roles separated) are proposals. |
 
+**Decided 26 Oct 2026 by the author (exam execution).** Fixed, not proposals. Recorded by an AI agent (Claude, coordinating session).
+
+| ID | Decision (decided 26 Oct 2026 by the author) |
+|---|---|
+| R1-EXAM-CTX (26 Oct) | Declared exam context **32,768 tokens** (q8_0 KV); a model that fits only at 16,384 is admitted for CPU-pool rows only and flagged. Measured manager prompts are ≤ 1,345 tokens; 32k is for thinking budgets and Track G code prompts. |
+| R1-SCHEMA (26 Oct) | **Structured output, structure only, in both the exam and the C3 sweeps:** llama-server `json_schema` decoding of `manager_proposal/v1` (six string fields, `rationale` first; no enum of keys or values, so D25 validation and value errors stay the model's). Recorded in every manifest; under the schema a parse failure is recorded and counted, never replaced by the heuristic default. Stage A also reports free-generation parse rates (descriptive). A B2 sensitivity compares schema vs free on one node for the 7B anchor and the D22 pick. Track G free-form code nodes are not affected. Must be in place before sweep 1. |
+| R1-QUANT-SOURCE (26 Oct) | GGUF source: the vendor's own Q4_K_M where the vendor publishes one; otherwise **bartowski**'s imatrix Q4_K_M; gpt-oss-20b at native MXFP4. Every file recorded with repo @ revision, file name and sha256. Non-uniform research quants (e.g. ISTA-DASLab GSQ-RCO, IQ2–IQ3 types) are not Q4_K_M and are not in the pool. Replaces the "quantize from BF16" policy of X.1. |
+| R1-EXAM-RUNBOOK (26 Oct) | Host facts, code gaps and the exam steps go into one agent runbook, `docs/r1/prompts/PORTAL_EXAM_RUNBOOK.md`, executed step by step by one agent with SSH access to zhixu portal, with a STOP after every phase. The X.2–X.6 protocol itself still awaits adoption (Phase 4 gate). |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |
