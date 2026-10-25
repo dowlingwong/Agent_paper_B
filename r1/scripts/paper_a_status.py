@@ -51,6 +51,14 @@ Decision (every live signal must be configured and readable for any clear verdic
    ``allow_running_without_state``, else unknown; no session and no process
    -> unknown (stopped, or not started yet: cannot tell).
 
+Not-applicable mode (``--not-applicable REASON``; author, 25 Oct 2026): on hosts
+where Paper A never runs (deepthought, zhixu portal; Paper A runs on zhixu
+experiment) the sweep configs use this mode, which reports
+``verdict: not_applicable`` with ``"paper_a_live_waiting_for_card": false`` and
+the reason, without reading anything.  It refuses (``verdict: unknown``) on a
+Paper A host (``PAPER_A_HOSTS``), so a host config copied to zhixu experiment
+can never clear a launch there.
+
 ENGINEERING_ONLY. AI-assisted (Claude).
 """
 from __future__ import annotations
@@ -64,6 +72,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+PAPER_A_HOSTS = frozenset({"ucrtasl"})  # zhixu experiment (Ada): where Paper A runs
 KEY = "paper_a_live_waiting_for_card"
 CONFIG_KEYS = {
     "expected_host", "paper_a_checkout", "expected_branch", "run_dir", "state_file", "state_key",
@@ -248,11 +257,23 @@ def main(argv=None) -> int:
     ap.add_argument("--paper-a-checkout", default=None)
     ap.add_argument("--run-dir", default=None)
     ap.add_argument("--host", default=None, help="override the detected short host name (tests)")
+    ap.add_argument("--not-applicable", default=None, metavar="REASON",
+                    help="hosts where Paper A never runs: report not_applicable (refused on a Paper A host)")
     args = ap.parse_args(argv)
     host = args.host or platform.node().split(".")[0]
     report = {"label": "ENGINEERING_ONLY", "ai_assisted": "AI-assisted (Claude)",
               "utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "host": host,
               "config": os.path.abspath(args.config) if args.config else None}
+    if args.not_applicable is not None:
+        if args.config or host in PAPER_A_HOSTS or not args.not_applicable.strip():
+            report.update(verdict="unknown", mode="not_applicable",
+                          reasons=["not-applicable mode refused: it takes no --config, needs a reason, and is never "
+                                   f"valid on a Paper A host {sorted(PAPER_A_HOSTS)}"])
+        else:
+            report.update(verdict="not_applicable", mode="not_applicable", reasons=[args.not_applicable.strip()])
+            report[KEY] = False
+        print(json.dumps(report, default=str))
+        return 0
     try:
         cfg = load_config(args.config, {"paper_a_checkout": args.paper_a_checkout, "run_dir": args.run_dir})
         verdict, reasons, evidence = decide(cfg, host)

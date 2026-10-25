@@ -158,3 +158,18 @@ def test_ada_config_refuses_until_verified():
     assert raw["verify_before_first_use"]
     rep = run_cli(path)
     assert KEY not in rep and rep["verdict"] == "unknown"
+
+
+def test_not_applicable_mode_clears_only_off_the_paper_a_host(capsys):
+    """Author, 25 Oct 2026: on deepthought and zhixu portal the check reports "not applicable"."""
+    def run(*argv):
+        assert PA.main(list(argv)) == 0
+        return json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    report = run("--not-applicable", "Paper A runs on zhixu experiment", "--host", "deepthought")
+    assert report["verdict"] == "not_applicable" and report[KEY] is False
+    assert report["reasons"] == ["Paper A runs on zhixu experiment"]
+    for argv in (("--not-applicable", "x", "--host", "ucrtasl"),  # never on the Paper A host
+                 ("--not-applicable", "  ", "--host", "deepthought"),  # a reason is required
+                 ("--not-applicable", "x", "--config", "c.json", "--host", "deepthought")):
+        refused = run(*argv)
+        assert refused["verdict"] == "unknown" and KEY not in refused, argv
