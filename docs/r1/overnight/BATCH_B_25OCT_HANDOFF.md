@@ -8,7 +8,7 @@ Decision implemented: PLAN §10 R1-INFER-LLAMACPP (25 Oct) and RUNBOOK A.10. The
 
 | Repository | Branch | Base | Commits (oldest first) |
 |---|---|---|---|
-| paper (`agent_paper_B`) | `batch-b-25oct` | `main` @ `3d3ec48` | `d560490` runner/instance/fake/dry run/collector (items 1–5 paper side) · `607f78e` configs, Paper A n/a, config and llama.cpp dry-run tests (items 6–7) · `adab041` load probe for A.11 (item 8 helper) · (this handoff + STATUS entry) |
+| paper (`agent_paper_B`) | `batch-b-25oct` | `main` @ `3d3ec48` | `d560490` runner/instance/fake/dry run/collector (items 1–5 paper side) · `607f78e` configs, Paper A n/a, config and llama.cpp dry-run tests (items 6–7) · `adab041` load probe for A.11 (item 8 helper) · `68685af` this handoff + STATUS entry · **review fix:** `8122600` two-route full-offload acceptance (llama.cpp v0.7.0) · (handoff update) |
 | harness (`autoresearch_harness`) | `batch-b-25oct` | `r1` @ `7305434` | `264011e` llamacpp provider: `/v1` base URL, no-key placeholder, no hidden client retries (item 5) |
 
 **The harness changed, so `r1/scripts/HARNESS_PIN_C3` now pins `264011ea2d17fa9070b8c711625db92f8409dd4b`** (was `4d68c54`, which predates the 22–23 Oct D21 node commits as well). A launch from the merged paper `main` needs the harness branch merged into `r1` and pushed first (the launcher checks out the pin from the harness remote). All paper changes are under `r1/`, plus this file and `docs/r1/STATUS.md`. The checkouts are back on `main` (paper) and `r1` (harness).
@@ -23,7 +23,7 @@ Decision implemented: PLAN §10 R1-INFER-LLAMACPP (25 Oct) and RUNBOOK A.10. The
 
 | Suite | Before (`3d3ec48` / `7305434`) | After (`adab041` / `264011e`) |
 |---|---|---|
-| paper `r1/tests` | **327 passed, 1 failed** (269 + 55 + 3; re-run here) | **359 passed, 1 failed** (280 + 73 + 1 + 2 + 1 + 2 over six calls) |
+| paper `r1/tests` | **327 passed, 1 failed** (269 + 55 + 3; re-run here) | **359 passed, 1 failed** at `adab041` (280 + 73 + 1 + 2 + 1 + 2 over six calls); **384 passed, 1 failed** after the review fix `8122600` (280 + 98 + 1 + 2 + 1 + 2) |
 | harness `tests` | **427 passed, 9 failed, 1 error** | **434 passed, 9 failed, 1 error** (identical failing set, diffed) |
 
 - New paper tests: +32 (`test_llama_server_instance.py` 18, `test_e1b_collect_llamacpp.py` 4, `test_llamacpp_probe.py` 4, `test_c3_sweep_deepthought_config.py` +2 net, `test_paper_a_status.py` +1, `test_c3_sweep_dryrun.py` +3). New harness tests: +7 (`tests/stage2/test_r1_llamacpp_provider.py`). Nothing that passed before fails.
@@ -37,6 +37,14 @@ Decision implemented: PLAN §10 R1-INFER-LLAMACPP (25 Oct) and RUNBOOK A.10. The
 - **Paper** (code commits removed, new tests kept): `test_llama_server_instance.py` collection error (`cannot import name 'llama_server_instance'`, 18 tests); `test_e1b_collect_llamacpp.py` 3 of 4 fail (no `check_manager_model`; `pickle.loads` of the recorded `openai.APIConnectionError` raises `TypeError: APIConnectionError.__init__() takes 1 positional argument but 2 were given`; `--manager-model` unknown); the fourth (picklable exceptions re-raised unchanged) is a characterization test and passes before and after; deepthought/portal config tests 4 fail (no portal file, Ollama backend, 7 not 9 open values, no n/a command); `test_paper_a_status.py` n/a test fails (unknown flag); the three llama.cpp dry-run tests fail (no `--backend`, no fake server); `test_llamacpp_probe.py` collection error (module missing).
 - **Found by the llama.cpp `permanent` dry run** before the collector fix: the collector died with `concurrent.futures.process.BrokenProcessPool: A child process terminated abruptly` — one root failing with the OpenAI client's exception broke the whole process pool, so no failure records for the other roots and no clean STOP. After the fix: 4 recorded root failures (`openai.APIConnectionError`, attempts `server_disconnected` / `connection_refused`), clean STOP as on the Ollama path.
 
+### Fail-before evidence for the review fix (`8122600`; new and changed tests run in a worktree at `68685af`)
+
+33 of 33 selected tests fail on the previous code; the three Ollama dry runs (deselected) are unaffected and pass after.
+- `test_llamacpp_offload_routes.py` (25 new): route (i) pass, partial line STOP, route (ii) pass, five route-(ii) failures (footprint too low, pid not on the card, pid on another card, no telemetry, footprint unset), CPU fallback, compute-apps parsing, the v0.7.0 build line — `AttributeError: ... has no attribute 'offload_check'` / `'parse_compute_apps'` / `'parse_version'`; the fake had no v0.7.0-like log (`assert 'offloaded' not in ...` failed); the runner checks by route (`KeyError: 'route'`); the probe's route (i)/(ii)/control/partial tests (`unrecognized arguments: --gen-tokens`).
+- Behavioural core, shown directly on the old module: `offload_report` of the deepthought v0.7.0 log → `full: False`, reason "no offloaded N/M layers line" (every real start a STOP).
+- Changed tests: `test_llamacpp_probe.py` (4; new verdict/route/footprint fields), `test_llama_server_instance.py::test_offload_report_route_i_needs_every_layer_and_no_cpu_fallback` (buffer line no longer required: `KeyError: 'line'`), and the three llama.cpp dry runs (`--fake-offload` unknown; `KeyError: 'offload_routes'`).
+- After: 25 + 4 + 1 pass; dry runs: the deepthought config (`retry` + `permanent`) and the watchdog scenario pass **by route (ii)** at every load, restart and post-collection check; kill-and-resume passes by route (i) including the restarted generation.
+
 ## Items
 
 ### 1. Server instance manager — done (`d560490`)
@@ -47,7 +55,13 @@ Decision implemented: PLAN §10 R1-INFER-LLAMACPP (25 Oct) and RUNBOOK A.10. The
 - Record `<batch>/llama_server_<port>[_r<g>].json`: label, backend, binary, argv, pid, pgid, port, URL and OpenAI base URL, model path, model sha256, alias, `-ngl`, `-c`, slots, GPU, removed env names, the build (`--version` output and parsed line), the server's own command line read back from `/proc` after it is healthy, start/healthy/stop times, return code. Restart generations name `_r<g>` files and never overwrite earlier ones.
 - `stop()` signals only its own process group after checking the PID still leads it. **Orphans** (`orphan_matches` / `stop_orphan`): signalled only if the pid is alive, owned by this user (real uid from `/proc/<pid>/status`), still in the recorded process group, and its command line equals the recorded argv — binary (directly, or as the script of an interpreter's shebang), `--port`, `-m` path and every other argument. Anything else returns `action: none`. Tests: wrong port, wrong model, a changed argument, a wrong group, an unrelated live process of ours, and a fully matching process whose owner is another uid are all left alone; the matching one is stopped.
 
-### 2. Pinning and checks — done (`d560490`)
+### 2. Pinning and checks — done (`d560490`; offload acceptance revised in `8122600` after review)
+
+> **Review finding (25 Oct), real host.** On deepthought, llama.cpp **v0.7.0, commit `620d2225cc436ab0b001e3200e590e3b286ef9ab`** (built with CUDA 11.8 for sm_52 and GCC toolset 13; `docs/r1/reports/LLAMACPP_PROBE_DT_20261025.md` on `origin/dt-sweep1-20261025`), started with `-ngl 999 -c 8192` on a TITAN X, logged at default verbosity only lines like `common_params_print_info: verbosity = 3`, `load_model: initializing, n_slots = 4, ...`, `llama_server: model loaded`, `llama_server: listening on ...` — **no `offloaded N/N layers` line and no `CUDA<k> model buffer` line**. The log-only check below would have declared every real start a CPU-fallback STOP (shown on the previous code: `offload_report(<that log>)` → `full: False`, "no offloaded line"). Its build line is `version: 0.7.0-dev (build 1, commit 620d222)`: this is the pin format for `llamacpp.build` (the runner's `--version` parser reads version `0.7.0-dev` and commit `620d222` from it, and config validation accepts it).
+>
+> **Revised acceptance (author, runbook 25 Oct), implemented in `8122600`** (`llama_server_instance.offload_check`, used at load and after every collection, and by the probe): **(i)** the log line `offloaded N/N layers` (N > 0); a partial `N/M` line is a STOP even if the memory looks fine; **otherwise (ii)** the recorded server pid appears in `nvidia-smi --query-compute-apps=pid,gpu_uuid,used_memory` on the configured GPU uuid with used memory ≥ the pinned `llamacpp.footprint_mib` (refused when unset; no telemetry → STOP); a CPU-fallback line stops both routes. The route that passed is recorded (`gpu_offload_<where>.json` → `offload.route` = `log_line` or `gpu_memory`, plus the memory row; `batch_state.json` → `offload_routes`). CUDA buffer lines are now recorded, not required. **No verbosity flag was added** (`-lv 4` / `--verbose`): whether it makes v0.7.0 print the offload line, and how much per-token or per-request output it adds, cannot be verified offline; `llamacpp.extra_args` can carry it once checked on the host, and route (i) then applies automatically.
+
+The original (pre-review) description follows; its offload paragraph is superseded by the box above.
 
 - Before **every** start (first and restarts): `llama-server --version` must print exactly the pinned `version: <n> (<commit>)` line (`llamacpp.build`), and the GGUF's sha256 must equal `llamacpp.model_sha256`; otherwise STOP (each check recorded in `batch_state.json` → `llamacpp_pin_checks`, with the hashing time).
 - After the start: `/health` 200 (llama-server answers 503 while loading); `/v1/models` must list the alias; `/props` must report the pinned GGUF path where the build reports `model_path`; a one-token completion (`max_tokens` 1, `seed` 0); a process on the selected card (`nvidia-smi -q -x`, as for Ollama).
@@ -92,7 +106,7 @@ Decision implemented: PLAN §10 R1-INFER-LLAMACPP (25 Oct) and RUNBOOK A.10. The
 
 ### 8. Host checklists and build recipes — done (below; probe helper `adab041`)
 
-`r1/scripts/llamacpp_probe.py` runs the runner's own server code on the host (build line, GGUF sha256, dedicated server on one card, `/health`, `/v1/models`, `/props`, a one-token completion, offload from the server log, the server's GPU MiB from `nvidia-smi`, stop) and writes `probe_<UTC>.json` plus the server log under `--out`; exit 0 only for full GPU offload (and matching pins when `--expect-*` are given). It gives the values for `llamacpp.build`, `model_sha256` and `footprint_mib`. Tested against the fake (full; CPU fallback, partial offload and a wrong pin are not accepted).
+`r1/scripts/llamacpp_probe.py` runs the runner's own server code on the host and writes `probe_<UTC>.json` plus the server logs under `--out`. After review (`8122600`): build line, GGUF sha256, a dedicated server on one card, `/health`, `/v1/models`, `/props`, a one-token completion and a `--gen-tokens` generation run (tokens/s from llama-server's `timings`); **loaded-state telemetry (compute apps, cards, the server's MiB) is saved before any assertion**; acceptance by route (i) or route (ii) as in the runner, where route (ii) needs the server pid on the target uuid with ≥ `--expect-footprint-mib` (a pin being checked) or `--min-gpu-mib` (default 90 % of the GGUF size) **and a `-ngl 0` CPU control run (same request) at least 2× slower in generation tokens/s** (`--min-speedup`). Verdict `FULL_GPU_OFFLOAD` (exit 0) or `STOP` (exit 1, also on any error; reasons in `stop_reasons`); `footprint_mib_to_pin` = the server's measured MiB on the card. Tested against the fake: route (i); route (ii) with the control; route (ii) failures (control too fast, pid not on the card, memory below a floor or below a pinned footprint); a partial line; CPU fallback; a wrong pin.
 
 ## Deviations
 
@@ -102,6 +116,7 @@ Decision implemented: PLAN §10 R1-INFER-LLAMACPP (25 Oct) and RUNBOOK A.10. The
 4. In the dry-run driver, the `permanent` scenario disables the watchdog when the base config enables it (the deepthought draft does): with the watchdog on, the one-shot server exit is recovered rather than ending in the STOP that scenario checks (a first run on the deepthought draft did complete with `stop_reason: null`; not examined further). The watchdog scenario covers recovery.
 5. The `interrupt` dry-run check (shared with the Ollama path) no longer requires an archived partial ledger for a re-run root that had not logged a trial when the runner was killed (a root started by a freed worker between the snapshot and the kill). One llama.cpp interrupt run failed with an assertion message of only `openml_breast_w__s105`; three assertions in that loop print just the root id, and this race is the explanation that fits the timing (two workers; a root freed by a completion starts the next one), but it was **not reproduced** in three further runs, so the cause is inferred, not shown. The runner's behaviour for such a root (move the directory, re-run whole) is unchanged; the completed-root byte-identity checks are unchanged. A root with logged trials at the kill must still have its partial ledger archived.
 6. `batch_state.json` gains a `backend` key on both paths (record only); the Ollama path is otherwise unchanged (its record keys stay `ollama` / `previous_ollama`).
+8. Review fix: route (i) no longer requires a `CUDA<k> model buffer` line (the author's acceptance names only the `offloaded N/N` line; buffers are recorded). The probe's route (ii) uses a memory floor before any footprint is pinned (`--min-gpu-mib`, default 90 % of the GGUF size) together with the CPU control; the runner's route (ii) uses the pinned footprint only. The probe's verdicts are now `FULL_GPU_OFFLOAD` / `STOP` (was `NOT_ACCEPTED`).
 7. The harness fix (placeholder key, no client retries) is limited to `llamacpp`; `vllm` and `lm_studio` have the same missing-key behaviour and were not changed.
 
 ## Open questions for the author
@@ -112,6 +127,9 @@ Decision implemented: PLAN §10 R1-INFER-LLAMACPP (25 Oct) and RUNBOOK A.10. The
 4. **Which GGUF.** The pinned file (model, Q4_K_M, source) and its alias are the author's choice; the configs carry `r1-manager` as a neutral alias. PLAN says D28 liveness is re-run under llama.cpp; that needs the chosen GGUF.
 5. **Build pin format.** The pin is the exact `version: <n> (<commit>)` line of `llama-server --version` (build number and short commit). PLAN says "build commit"; if the full 40-character commit is wanted, record `git rev-parse HEAD` of the source tree with it (the build recipe logs both).
 6. **TITAN X support.** Whether the llama.cpp revision you pick still builds for sm_52 with CUDA 12.0 and runs its kernels on the TITAN X is unknown until A.11; the probe decides (full offload and a one-token answer). If not, zhixu portal is the alternative (`c3_sweep_portal.json`), as a whole-table choice.
+7a. **Runtime library path on deepthought.** The successful v0.7.0 build ran with `LD_LIBRARY_PATH` containing `/usr/local/cuda-11.8/lib64` and `/opt/rh/gcc-toolset-13/root/usr/lib64`. The runner starts `llama-server` with its own environment and sets no `LD_LIBRARY_PATH`; the launcher's `env.sh` does not either. If the binary does not start without it, either build with an RPATH (`-DCMAKE_BUILD_RPATH=...`, not tried on the host) or add a config key for the server's environment (not built; a start failure would be a clean STOP "exited during start").
+7b. **Footprint pin.** Route (ii) compares the live MiB with the pinned `footprint_mib` (≥). Pin the probe's `footprint_mib_to_pin` from a probe run with the same `-c` and `-np 1` as the config; if a later start differs by a few MiB, it STOPs, and the author decides whether to pin a slightly lower value. Note the v0.7.0 default `n_slots = 4` in the host log: the runner passes `-np 1`, so its footprint can differ from that run.
+7c. **Values already observed on deepthought** (report on `dt-sweep1-20261025`; not written into the config, which still has `TODO_VERIFY_ON_HOST`): binary `/ceph/dwong/opt/llama.cpp/build-gcc13/bin/llama-server`; build `version: 0.7.0-dev (build 1, commit 620d222)`; model `/ceph/dwong/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf` (Qwen/Qwen2.5-Coder-7B-Instruct-GGUF, revision `13fb94bf`), sha256 `509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c`. `footprint_mib` is still unmeasured (no loaded-state snapshot was recorded there).
 7. **Harness merge.** `264011e` must be merged into harness `r1` and pushed before a launch from the merged paper `main` (pin file). Should `vllm` / `lm_studio` get the same key/retry treatment?
 
 ## What a per-card split would need (question 3; not built)
@@ -167,6 +185,38 @@ echo "log: $LOG"
 
 Fill-in map: `allowed_hosts[0]` ← 1; `workers` ← 2 (roots share one manager, so more workers mostly queue on it; batch A's Ada config used 4); `gpu_uuid` ← 3 (an idle TITAN); `llamacpp.binary` ← recipe step 2; `model_path`, `model_sha256`, `build`, `footprint_mib` ← the probe JSON (recipe step 3); `port` ← 8. Then, at the merged main: `python3 r1/scripts/c3_label_sweep.py --config r1/scripts/configs/c3_sweep_deepthought.json --check-config` must exit 0 with no `UNRESOLVED` line (with the harness venv's python if `python3` is older than 3.9).
 
+## Build recipe that worked on deepthought (25 Oct, llama.cpp v0.7.0; from the host report)
+
+Recorded from `docs/r1/reports/LLAMACPP_PROBE_DT_20261025.md` (origin branch `dt-sweep1-20261025`); not re-run by this agent. RHEL 8.10, driver 525.147.05, the installed CUDA 11.8 (`/usr/local/cuda-11.8`, nvcc 11.8.89; no toolkit install needed), tag `v0.7.0` = commit `620d2225cc436ab0b001e3200e590e3b286ef9ab`, clean tree (no source patch). The first attempt with system GCC 8.5 for C++ failed (class template deduction errors in `server-schema.cpp`, missing `std::setw` in `server-context.cpp`); the working configuration uses GCC toolset 13 for C/C++, keeps `/usr/bin/g++` (GCC 8.5) as CUDA's host compiler, and adds `-include iomanip`:
+
+```bash
+S=/ceph/dwong/opt; T=$(date -u +%Y%m%dT%H%M%SZ); mkdir -p "$S/logs"
+{
+cd "$S/llama.cpp" && git checkout v0.7.0 && git rev-parse HEAD   # 620d2225cc436ab0b001e3200e590e3b286ef9ab
+cmake -B build-gcc13 \
+  -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=52 -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.8/bin/nvcc \
+  -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++ \
+  -DCMAKE_C_COMPILER=/opt/rh/gcc-toolset-13/root/usr/bin/gcc \
+  -DCMAKE_CXX_COMPILER=/opt/rh/gcc-toolset-13/root/usr/bin/g++ \
+  '-DCMAKE_CXX_FLAGS=-include iomanip'
+cmake --build build-gcc13 -j 32 --target llama-server llama-cli
+build-gcc13/bin/llama-server --version        # version: 0.7.0-dev (build 1, commit 620d222)
+} 2>&1 | tee -a "$S/logs/llamacpp_build_gcc13_$T.log"
+# Runtime (as on the host): LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/opt/rh/gcc-toolset-13/root/usr/lib64:$LD_LIBRARY_PATH
+
+# Probe (after review: telemetry first, route (i) or (ii) + CPU control, footprint to pin; exit 1 on STOP):
+cd /ceph/dwong/agent_paper_B && \
+LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:/opt/rh/gcc-toolset-13/root/usr/lib64:$LD_LIBRARY_PATH \
+python3 -m r1.scripts.llamacpp_probe --binary "$S/llama.cpp/build-gcc13/bin/llama-server" \
+  --model /ceph/dwong/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf --gpu <GPU-UUID of an idle TITAN> \
+  --port 18481 --ctx 8192 --ngl 999 --expect-build 'version: 0.7.0-dev (build 1, commit 620d222)' \
+  --expect-sha256 509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c \
+  --out "$S/logs/probe" 2>&1 | tee -a "$S/logs/probe_console_$T.log"; echo "probe exit: ${PIPESTATUS[0]}"
+```
+
+The generic recipe below (written before the host report; CUDA 12.0 toolkit-only install) is kept for other hosts; on deepthought use the one above.
+
 ## Build recipe — llama.cpp with CUDA for the TITAN X (sm_52), then the one-token probe
 
 Every step appends to a log under `$S/logs`. Steps 1–2 write only under `$S`.
@@ -212,9 +262,10 @@ python3 -m r1.scripts.llamacpp_probe \
   --binary "$S/llama.cpp/build-cuda120-sm52/bin/llama-server" \
   --model <ABSOLUTE_PATH_TO_THE_Q4_K_M.gguf> --gpu <GPU-UUID of an idle TITAN> --port 18481 \
   --ctx 8192 --ngl 999 --out "$S/logs/probe" 2>&1 | tee -a "$S/logs/probe_console_$T.log"
-#    Accept only "VERDICT FULL_GPU_OFFLOAD" (exit 0): offloaded N/N layers, a CUDA0 model buffer, no CPU fallback.
+#    Accept only "VERDICT FULL_GPU_OFFLOAD" (exit 0): route (i) offloaded N/N layers, or route (ii) the server
+#    on the card plus the -ngl 0 control >= 2x slower; never a CPU-fallback line.
 #    From probe_<UTC>.json: build.version_line -> llamacpp.build; model_sha256 -> llamacpp.model_sha256;
-#    server_gpu_mib -> llamacpp.footprint_mib. Anything else: RUNBOOK A.11 says the author picks another host.
+#    footprint_mib_to_pin -> llamacpp.footprint_mib. Anything else: RUNBOOK A.11 says the author picks another host.
 ```
 
 ## Host checklist and build recipe — zhixu portal (alternative sweep host)
