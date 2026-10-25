@@ -1,0 +1,1330 @@
+{
+ "ai_assisted": "AI-assisted (Claude)",
+ "banner": "DRYRUN \u2014 Track H.9 plumbing check; ENGINEERING_ONLY, never evidence.",
+ "campaigns": {
+  "A0__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "A0",
+   "controller_llm_calls": 0,
+   "controller_version": "continue/v1",
+   "decisions": {
+    "discarded": 2,
+    "failed_invalid": 0,
+    "kept": 2,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 0,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 0,
+   "e2_verify_considered": 0,
+   "ended_on": "W",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {},
+   "llm_calls": 4,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": null,
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 4,
+   "trials_sha256": "4841933225209ec1ed7ed47bb71367d13602fad0bbc473bafe1a991ae275a8f0",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "A0__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "A0",
+   "controller_llm_calls": 0,
+   "controller_version": "continue/v1",
+   "decisions": {
+    "discarded": 1,
+    "failed_invalid": 1,
+    "kept": 3,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 0,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 0,
+   "e2_verify_considered": 0,
+   "ended_on": "W",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {},
+   "llm_calls": 7,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": null,
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 5,
+   "trials_sha256": "e4fa891a3b4dfb51791b842135209305c8bc1734d3a6a2d477eeb069c28508e5",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "A1__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "A1",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A1/ConstantPrior/v1]",
+   "decisions": {
+    "discarded": 2,
+    "failed_invalid": 0,
+    "kept": 2,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 3,
+   "e2_verify_considered": 1,
+   "ended_on": "W",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {
+    "e1_forecast": 3,
+    "no_features": 1
+   },
+   "llm_calls": 4,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": "88aa7bea6f0d567471187ed9ed6e43d411770319604307c1a78d9981ba05094f",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 4,
+   "trials_sha256": "4651bb0eaaa9bab6b12dbaa1b966108422b9eab8a84d2de82d549ae423ce252e",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "A1__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "A1",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A1/ConstantPrior/v1]",
+   "decisions": {
+    "discarded": 0,
+    "failed_invalid": 1,
+    "kept": 1,
+    "skipped": 12
+   },
+   "e1_actions": {
+    "continue": 1,
+    "revise": 0,
+    "skip": 12
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 0,
+   "e2_verify_considered": 0,
+   "ended_on": "llm_cap",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {
+    "no_features": 1
+   },
+   "llm_calls": 16,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": "88aa7bea6f0d567471187ed9ed6e43d411770319604307c1a78d9981ba05094f",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "prior_no_gain": 12
+   },
+   "trials": 14,
+   "trials_sha256": "684c9fdf9fb92f5a40f692a9307303cd7c65f16606235c2e7203306fe91b82bb",
+   "verifies": 0,
+   "worker_runs": 1
+  },
+  "A2__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "A2",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A2/RulesPrior/v1]",
+   "decisions": {
+    "discarded": 0,
+    "failed_invalid": 0,
+    "kept": 4,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 3,
+   "e2_verify_considered": 1,
+   "ended_on": "W",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {
+    "e1_forecast": 3,
+    "no_features": 1
+   },
+   "llm_calls": 4,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": "eab2c3eaf0c668e22be0e7fe017c9f9340a2c71ca81af1560ee85d20ff1fa6e7",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 4,
+   "trials_sha256": "6ee29eab9d99f5261bd6f4dab719f5a5a379fbd35f7c2ec99f8c9d2a416ab29c",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "A2__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "A2",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A2/RulesPrior/v1]",
+   "decisions": {
+    "discarded": 0,
+    "failed_invalid": 1,
+    "kept": 1,
+    "skipped": 12
+   },
+   "e1_actions": {
+    "continue": 1,
+    "revise": 0,
+    "skip": 12
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 0,
+   "e2_verify_considered": 0,
+   "ended_on": "llm_cap",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {
+    "no_features": 1
+   },
+   "llm_calls": 16,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": "eab2c3eaf0c668e22be0e7fe017c9f9340a2c71ca81af1560ee85d20ff1fa6e7",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "prior_no_gain": 12
+   },
+   "trials": 14,
+   "trials_sha256": "c9091e58bdd16efdd4bfcf3e411fba76f5ba6ff1df0d5af3ffe099fca57e730d",
+   "verifies": 0,
+   "worker_runs": 1
+  },
+  "A3__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "A3",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A3/LGBMPrior/v1]",
+   "decisions": {
+    "discarded": 2,
+    "failed_invalid": 0,
+    "kept": 2,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 3,
+   "e2_verify_considered": 1,
+   "ended_on": "W",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {
+    "e1_forecast": 3,
+    "no_features": 1
+   },
+   "llm_calls": 4,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": "7d009603a004c3009fb55bfb412235aae940adf97e7333a2c99b1c6f5069dbc0",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 4,
+   "trials_sha256": "2f1f0b357bc55f36b61459dd15702167c92456ce403ee2d047600477291086a1",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "A3__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "A3",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A3/LGBMPrior/v1]",
+   "decisions": {
+    "discarded": 1,
+    "failed_invalid": 1,
+    "kept": 2,
+    "skipped": 10
+   },
+   "e1_actions": {
+    "continue": 3,
+    "revise": 0,
+    "skip": 10
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 2,
+   "e2_verify_considered": 1,
+   "ended_on": "llm_cap",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {
+    "e1_forecast": 2,
+    "no_features": 1
+   },
+   "llm_calls": 16,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": "7d009603a004c3009fb55bfb412235aae940adf97e7333a2c99b1c6f5069dbc0",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "prior_no_gain": 10
+   },
+   "trials": 14,
+   "trials_sha256": "d19787d2abf1b5ea4dc504346847f8385e815cc5e5b664da79e07d760c6ca6ff",
+   "verifies": 0,
+   "worker_runs": 3
+  },
+  "A4__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "A4",
+   "controller_llm_calls": 7,
+   "controller_version": "rule_controller/v1[A4/typed_questions/v1/llamacpp/dryrun-manager]",
+   "decisions": {
+    "discarded": 0,
+    "failed_invalid": 0,
+    "kept": 4,
+    "skipped": 4
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 4
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 3,
+   "e2_verify_considered": 1,
+   "ended_on": "W",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {
+    "e1_forecast": 3,
+    "no_features": 1
+   },
+   "llm_calls": 15,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": "676a28ad62e1aa5b933a044a5b728deaaf5d88cffe995c5728629a4f5179ad16",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "prior_no_gain": 4
+   },
+   "trials": 8,
+   "trials_sha256": "af99a4f53a7045ede805c3c1052da1f4836fd8dd3150baa3e62765821a3c9f59",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "A4__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "A4",
+   "controller_llm_calls": 6,
+   "controller_version": "rule_controller/v1[A4/typed_questions/v1/llamacpp/dryrun-manager]",
+   "decisions": {
+    "discarded": 1,
+    "failed_invalid": 1,
+    "kept": 1,
+    "skipped": 5
+   },
+   "e1_actions": {
+    "continue": 2,
+    "revise": 0,
+    "skip": 5
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 1,
+   "e2_verify_considered": 1,
+   "ended_on": "llm_cap",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {
+    "e1_forecast": 1,
+    "no_features": 1
+   },
+   "llm_calls": 16,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": "676a28ad62e1aa5b933a044a5b728deaaf5d88cffe995c5728629a4f5179ad16",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "prior_no_gain": 5
+   },
+   "trials": 8,
+   "trials_sha256": "045838eed483b35e85b46c34f51e96585ceba66a2efc9aabcec6598b229324a8",
+   "verifies": 0,
+   "worker_runs": 2
+  },
+  "A5__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "A5",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A5/sidecar/v1]",
+   "decisions": {
+    "discarded": 2,
+    "failed_invalid": 0,
+    "kept": 2,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 3,
+   "e2_verify_considered": 1,
+   "ended_on": "W",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {
+    "e1_forecast": 3,
+    "no_features": 1
+   },
+   "llm_calls": 4,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": "2c8a7f9ae10e201e2e606d1ebbae52d7e7d73d5166382bb479ec3c0a3ada6519",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 4,
+   "trials_sha256": "d13771abb08625211fe02aeb3e7968a1cb23fbf0c97fc3726bd95adb0653d2bf",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "A5__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "A5",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A5/sidecar/v1]",
+   "decisions": {
+    "discarded": 0,
+    "failed_invalid": 1,
+    "kept": 4,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 3,
+   "e2_verify_considered": 1,
+   "ended_on": "W",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {
+    "e1_forecast": 3,
+    "no_features": 1
+   },
+   "llm_calls": 7,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": "2c8a7f9ae10e201e2e606d1ebbae52d7e7d73d5166382bb479ec3c0a3ada6519",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 5,
+   "trials_sha256": "f7fba6aefc388cfecd9aae137a2c78c25c107bab910a4e809fdf8d62d84b0ee1",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "A6__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "A6",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A6/sidecar/v1]",
+   "decisions": {
+    "discarded": 1,
+    "failed_invalid": 0,
+    "kept": 3,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 3,
+   "e2_verify_considered": 1,
+   "ended_on": "W",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {
+    "e1_forecast": 3,
+    "no_features": 1
+   },
+   "llm_calls": 4,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": "6adf876b45511e17fa378a8e97a24012533c8ffc422fea12bb82bc78696f693f",
+   "prior_unavailable": 1,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 4,
+   "trials_sha256": "c6c095407de14ca843e037029e4685e5401522715b974b4daae83e8a3ea6d7e1",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "A6__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "A6",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller/v1[A6/sidecar/v1]",
+   "decisions": {
+    "discarded": 0,
+    "failed_invalid": 1,
+    "kept": 2,
+    "skipped": 11
+   },
+   "e1_actions": {
+    "continue": 2,
+    "revise": 0,
+    "skip": 11
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 1,
+   "e2_verify_considered": 1,
+   "ended_on": "llm_cap",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {
+    "e1_forecast": 1,
+    "no_features": 1
+   },
+   "llm_calls": 16,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": "6adf876b45511e17fa378a8e97a24012533c8ffc422fea12bb82bc78696f693f",
+   "prior_unavailable": 1,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "prior_no_gain": 11
+   },
+   "trials": 14,
+   "trials_sha256": "40dadd22748d7bee7136aff7b3e227319a9070a7c63fb05a3325d494d0476664",
+   "verifies": 0,
+   "worker_runs": 2
+  },
+  "awr_direct__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "awr_direct",
+   "controller_llm_calls": 0,
+   "controller_version": "awr_direct/v1",
+   "decisions": {
+    "discarded": 0,
+    "failed_invalid": 0,
+    "kept": 1,
+    "skipped": 15
+   },
+   "e1_actions": {
+    "continue": 1,
+    "revise": 0,
+    "skip": 15
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 0,
+   "e2_verify_considered": 0,
+   "ended_on": "llm_cap",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {},
+   "llm_calls": 16,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": null,
+   "prior_unavailable": 0,
+   "rerun_after_interruption": true,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "awr_direct": 15
+   },
+   "trials": 16,
+   "trials_sha256": "153feb6d6dd630a3a172d53a219c9b5eac0d04780ae858aa869ce32f112109f1",
+   "verifies": 0,
+   "worker_runs": 1
+  },
+  "awr_direct__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "awr_direct",
+   "controller_llm_calls": 0,
+   "controller_version": "awr_direct/v1",
+   "decisions": {
+    "discarded": 0,
+    "failed_invalid": 1,
+    "kept": 1,
+    "skipped": 12
+   },
+   "e1_actions": {
+    "continue": 1,
+    "revise": 0,
+    "skip": 12
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 0,
+   "e2_verify_considered": 0,
+   "ended_on": "llm_cap",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {},
+   "llm_calls": 16,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": null,
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "awr_direct": 12
+   },
+   "trials": 14,
+   "trials_sha256": "8efd1cfcc68775d9ad64e218a9acde8f876508d3e54af7b12b14af1b351a84ed",
+   "verifies": 0,
+   "worker_runs": 1
+  },
+  "hybrid__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "hybrid",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller_hybrid/v1[A3/LGBMPrior/v1]",
+   "decisions": {
+    "discarded": 2,
+    "failed_invalid": 0,
+    "kept": 2,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 3,
+   "e2_verify_considered": 1,
+   "ended_on": "W",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {
+    "e1_forecast": 3,
+    "no_features": 1
+   },
+   "llm_calls": 4,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": "7d009603a004c3009fb55bfb412235aae940adf97e7333a2c99b1c6f5069dbc0",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 4,
+   "trials_sha256": "9d98aa594be4bf719b924090c55a68306971bf1d6c4050870deb2172a59884ea",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "hybrid__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "hybrid",
+   "controller_llm_calls": 0,
+   "controller_version": "rule_controller_hybrid/v1[A3/LGBMPrior/v1]",
+   "decisions": {
+    "discarded": 1,
+    "failed_invalid": 1,
+    "kept": 2,
+    "skipped": 8
+   },
+   "e1_actions": {
+    "continue": 3,
+    "revise": 2,
+    "skip": 8
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 2,
+   "e2_verify_considered": 1,
+   "ended_on": "llm_cap",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {
+    "e1_forecast": 2,
+    "no_features": 1
+   },
+   "llm_calls": 16,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": "7d009603a004c3009fb55bfb412235aae940adf97e7333a2c99b1c6f5069dbc0",
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 2,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "prior_no_gain": 8
+   },
+   "trials": 12,
+   "trials_sha256": "8e0772ed8e8e0d93be13a3fe939549025489b29409591f9aa3b44efeb6018605",
+   "verifies": 0,
+   "worker_runs": 3
+  },
+  "llm_self__digits_mlp": {
+   "a4_fallbacks": 0,
+   "arm": "llm_self",
+   "controller_llm_calls": 8,
+   "controller_version": "llm_self/v1",
+   "decisions": {
+    "discarded": 2,
+    "failed_invalid": 0,
+    "kept": 2,
+    "skipped": 2
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 2
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 0,
+   "e2_verify_considered": 0,
+   "ended_on": "W",
+   "instance": "digits_mlp__s104",
+   "keep_prior_origins": {},
+   "llm_calls": 14,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "digits_mlp",
+   "prior_digest": null,
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {
+    "controller_skip_without_reason": 2
+   },
+   "trials": 6,
+   "trials_sha256": "525f47520ffaa062631293ba27fd372a6451472e5df7b1424edf2d3b3af18f75",
+   "verifies": 0,
+   "worker_runs": 4
+  },
+  "llm_self__openml_breast_w": {
+   "a4_fallbacks": 0,
+   "arm": "llm_self",
+   "controller_llm_calls": 6,
+   "controller_version": "llm_self/v1",
+   "decisions": {
+    "discarded": 2,
+    "failed_invalid": 1,
+    "kept": 2,
+    "skipped": 0
+   },
+   "e1_actions": {
+    "continue": 4,
+    "revise": 0,
+    "skip": 0
+   },
+   "e1_details_complete": true,
+   "e1_e2_same_forecast": true,
+   "e1_e2_same_forecast_trials": 0,
+   "e2_verify_considered": 0,
+   "ended_on": "W",
+   "instance": "openml_breast_w__s105",
+   "keep_prior_origins": {},
+   "llm_calls": 13,
+   "llm_cap_fallbacks": 0,
+   "manifest_skip_display": "one_line/v1",
+   "node": "openml_breast_w",
+   "prior_digest": null,
+   "prior_unavailable": 0,
+   "rerun_after_interruption": false,
+   "rescreened_skips": 0,
+   "skip_display": "one_line/v1",
+   "skip_reasons": {},
+   "trials": 5,
+   "trials_sha256": "65e7d17251f9ba23b4cbfd5119ef1011abc86be40af085b43e88f537da0c3a4f",
+   "verifies": 0,
+   "worker_runs": 4
+  }
+ },
+ "checks": {
+  "a4_typed_answers_parsed": true,
+  "c3_arms_considered_kg_verify": true,
+  "completed_campaigns_unchanged_after_resume": true,
+  "e1_details_complete": true,
+  "e1_e2_one_forecast": true,
+  "every_arm_ran": true,
+  "hybrid_revised_at_least_once": true,
+  "interrupted_campaign_rerun_whole": true,
+  "interruption_recorded": true,
+  "matching_report_passes": true,
+  "no_campaign_ended_on_the_trial_budget": true,
+  "prior_unavailable_logged_and_survived": true,
+  "sidecar_digests_pinned": true,
+  "skip_display_declared_everywhere": true
+ },
+ "design": {
+  "A1_A3_fitted_on": "results/r1/engineering/c3_audit_pilot_20261019T001338Z",
+  "A6_tau_z": 1.0,
+  "W": 4,
+  "arms": [
+   "A0",
+   "A1",
+   "A2",
+   "A3",
+   "A4",
+   "A5",
+   "A6",
+   "awr_direct",
+   "llm_self",
+   "hybrid"
+  ],
+  "c3_verify": "D23 KG (KGIndexPolicy), posterior_mean/v1",
+  "hybrid": "PROPOSAL: prior decides whether; revise instead of skip within 2 revisions",
+  "information_set": "control_view/v1+node_context/v1",
+  "instances_per_node": 1,
+  "llm_call_cap": 16,
+  "llm_self_epochs": [
+   "E1",
+   "E2"
+  ],
+  "manager": "llamacpp/dryrun-manager (fake llama-server, no inference)",
+  "memory_mode": "append_only_summary",
+  "nodes": [
+   "digits_mlp",
+   "openml_breast_w"
+  ],
+  "sidecars": "r1.c3.serve FakeLoader, fixed distributions, sha256-pinned fixtures; A6 answers its 2nd call after 1.5 s (> 1 s timeout)",
+  "skip_display": "one_line/v1",
+  "trials": 16,
+  "verify_runs": 1
+ },
+ "harness": {
+  "branch": "track-h-25oct",
+  "commit": "6afdb0e9b800933dfbb682618b8909441f0f6495",
+  "dirty": false,
+  "root": "/sessions/rcw-019hykpdyuozramjvoz1vgkk/mnt/autoresearch_harness/.claude-worktrees/track-h-25oct"
+ },
+ "label": "DRYRUN",
+ "matching_report": {
+  "arms": [
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "A0",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "A0",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   },
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "A1",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "A1",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   },
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "A2",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "A2",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   },
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "A3",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "A3",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   },
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "A4",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "A4",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   },
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "A5",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "A5",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   },
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "A6",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "A6",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   },
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "awr_direct",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "awr_direct",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   },
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "llm_self",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "llm_self",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   },
+   {
+    "compute_budget": 4,
+    "dev_instances": "c3_audit_pilot_20261019T001338Z",
+    "family": "hybrid",
+    "information_set": "control_view/v1+node_context/v1",
+    "instances": "16c850a767617120",
+    "intervention_cap": null,
+    "llm_call_cap": 16,
+    "name": "hybrid",
+    "spending_rule": "harness_campaign/v1",
+    "tuning_budget": 0
+   }
+  ],
+  "campaigns": {
+   "arms": {
+    "A0": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 0,
+     "descriptive": {
+      "controller_latency_s": 0.0,
+      "sidecar_compute_s": 0.0
+     },
+     "ended_on": [
+      "W"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 11,
+     "prior_unavailable": 0,
+     "sidecar_calls": 0,
+     "worker_runs": 8
+    },
+    "A1": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 0,
+     "descriptive": {
+      "controller_latency_s": 0.0007162090332712978,
+      "sidecar_compute_s": 0.0
+     },
+     "ended_on": [
+      "W",
+      "llm_cap"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 20,
+     "prior_unavailable": 0,
+     "sidecar_calls": 0,
+     "worker_runs": 5
+    },
+    "A2": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 0,
+     "descriptive": {
+      "controller_latency_s": 0.0005191249365452677,
+      "sidecar_compute_s": 0.0
+     },
+     "ended_on": [
+      "W",
+      "llm_cap"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 20,
+     "prior_unavailable": 0,
+     "sidecar_calls": 0,
+     "worker_runs": 5
+    },
+    "A3": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 0,
+     "descriptive": {
+      "controller_latency_s": 0.004981378006050363,
+      "sidecar_compute_s": 0.0
+     },
+     "ended_on": [
+      "W",
+      "llm_cap"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 20,
+     "prior_unavailable": 0,
+     "sidecar_calls": 0,
+     "worker_runs": 7
+    },
+    "A4": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 13,
+     "descriptive": {
+      "controller_latency_s": 0.02256795798894018,
+      "sidecar_compute_s": 0.0
+     },
+     "ended_on": [
+      "W",
+      "llm_cap"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 31,
+     "prior_unavailable": 0,
+     "sidecar_calls": 0,
+     "worker_runs": 6
+    },
+    "A5": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 0,
+     "descriptive": {
+      "controller_latency_s": 0.00950054102577269,
+      "sidecar_compute_s": 0.000534959021024406
+     },
+     "ended_on": [
+      "W"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 11,
+     "prior_unavailable": 0,
+     "sidecar_calls": 6,
+     "worker_runs": 8
+    },
+    "A6": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 0,
+     "descriptive": {
+      "controller_latency_s": 2.0246154600172304,
+      "sidecar_compute_s": 0.00048070805496536195
+     },
+     "ended_on": [
+      "W",
+      "llm_cap"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 20,
+     "prior_unavailable": 2,
+     "sidecar_calls": 13,
+     "worker_runs": 6
+    },
+    "awr_direct": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 0,
+     "descriptive": {
+      "controller_latency_s": 0.0,
+      "sidecar_compute_s": 0.0
+     },
+     "ended_on": [
+      "llm_cap"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 32,
+     "prior_unavailable": 0,
+     "sidecar_calls": 0,
+     "worker_runs": 2
+    },
+    "hybrid": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 0,
+     "descriptive": {
+      "controller_latency_s": 0.004777418012963608,
+      "sidecar_compute_s": 0.0
+     },
+     "ended_on": [
+      "W",
+      "llm_cap"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 20,
+     "prior_unavailable": 0,
+     "sidecar_calls": 0,
+     "worker_runs": 7
+    },
+    "llm_self": {
+     "W": 4,
+     "campaigns": 2,
+     "controller_llm_calls": 14,
+     "descriptive": {
+      "controller_latency_s": 0.0,
+      "sidecar_compute_s": 0.0
+     },
+     "ended_on": [
+      "W"
+     ],
+     "information_set": "control_view/v1+node_context/v1",
+     "instances": [
+      "digits_mlp__s104",
+      "openml_breast_w__s105"
+     ],
+     "llm_call_cap": 16,
+     "llm_calls": 27,
+     "prior_unavailable": 0,
+     "sidecar_calls": 0,
+     "worker_runs": 8
+    }
+   },
+   "checked": [
+    "instances",
+    "W",
+    "llm_call_cap",
+    "information_set",
+    "worker_runs <= W",
+    "llm_calls <= cap",
+    "trial budget >= LLM cap and never binding"
+   ],
+   "matched": true
+  },
+  "matched": true,
+  "matched_fields": [
+   "information_set",
+   "spending_rule",
+   "intervention_cap",
+   "compute_budget",
+   "llm_call_cap",
+   "tuning_budget",
+   "dev_instances",
+   "instances"
+  ]
+ },
+ "paper": {
+  "commit": "2523e0ccc5ddb99af0fef554f9f75f23c8f95253",
+  "dirty": false
+ },
+ "pass": true,
+ "platform": "Linux-6.8.0-138-generic-aarch64-with-glibc2.35",
+ "problems": [],
+ "python": "3.13.16",
+ "state": {
+  "W": 4,
+  "arms": [
+   "A0",
+   "A1",
+   "A2",
+   "A3",
+   "A4",
+   "A5",
+   "A6",
+   "awr_direct",
+   "llm_self",
+   "hybrid"
+  ],
+  "created_utc": "2026-10-25T23:14:08Z",
+  "interruption": {
+   "completed": [
+    "A0__digits_mlp",
+    "A1__digits_mlp",
+    "A2__digits_mlp",
+    "A3__digits_mlp",
+    "A4__digits_mlp",
+    "A5__digits_mlp",
+    "A6__digits_mlp"
+   ],
+   "completed_sha256": {
+    "A0__digits_mlp": "4841933225209ec1ed7ed47bb71367d13602fad0bbc473bafe1a991ae275a8f0",
+    "A1__digits_mlp": "4651bb0eaaa9bab6b12dbaa1b966108422b9eab8a84d2de82d549ae423ce252e",
+    "A2__digits_mlp": "6ee29eab9d99f5261bd6f4dab719f5a5a379fbd35f7c2ec99f8c9d2a416ab29c",
+    "A3__digits_mlp": "2f1f0b357bc55f36b61459dd15702167c92456ce403ee2d047600477291086a1",
+    "A4__digits_mlp": "af99a4f53a7045ede805c3c1052da1f4836fd8dd3150baa3e62765821a3c9f59",
+    "A5__digits_mlp": "d13771abb08625211fe02aeb3e7968a1cb23fbf0c97fc3726bd95adb0653d2bf",
+    "A6__digits_mlp": "c6c095407de14ca843e037029e4685e5401522715b974b4daae83e8a3ea6d7e1"
+   },
+   "in_progress": "awr_direct__digits_mlp",
+   "partial_records": 2,
+   "signal": "SIGKILL (runner process group)",
+   "utc": "2026-10-25T23:14:36Z"
+  },
+  "label": "DRYRUN",
+  "llm_cap": 16,
+  "nodes": [
+   "digits_mlp",
+   "openml_breast_w"
+  ],
+  "sessions": [
+   {
+    "ended": "2026-10-25T23:14:36Z",
+    "llama_pid": 10,
+    "stage": "start",
+    "started": "2026-10-25T23:14:08Z"
+   },
+   {
+    "ended": "2026-10-25T23:15:16Z",
+    "llama_pid": 9,
+    "stage": "resume",
+    "started": "2026-10-25T23:14:38Z"
+   }
+  ],
+  "trials": 16
+ },
+ "written_utc": "2026-10-25T23:15:17Z"
+}
