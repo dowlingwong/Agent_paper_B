@@ -4,7 +4,7 @@
 
 - Author decisions recorded (PLAN §10): R1-EXAM-CTX (32k), R1-SCHEMA (structure-only `json_schema` in exam and sweeps, before sweep 1), R1-QUANT-SOURCE (vendor Q4_K_M, else bartowski; GSQ-RCO out), R1-EXAM-RUNBOOK.
 - New agent runbook `docs/r1/prompts/PORTAL_EXAM_RUNBOOK.md`: Phase 0 host facts, Phase 1 code gaps (schema, thinking control, random-valid anchor, A4 observer, exam namespace guard, registry and fit estimator, ported Round-7 machinery, exam runner, analysis with a pre-committed rule, config), Phase 2 downloads and pins, Phase 3 Stage A, Phase 4 author gate, Phase 5 B1, Phase 6 B2.
-- Open for the author: adoption of the X.2–X.6 protocol (Phase 4 gate); Q10 from Track H (KG verify never pays at g = 0.1 σ_node, r = 2).
+- Later the same night: author adopted X.2–X.6 with the two amendments (R1-EXAM-PROTOCOL), required an independent review loop at every exam phase (R1-EXAM-REVIEW), and decided Q10 (R1-A1-VERIFY: A1 unchanged; non-firing verify reported as a confirmed prediction). Runbook updated accordingly.
 
 ## 25 October 2026 — Track H: DAC control interface, Mac steps H.1–H.9 (AI-assisted; ENGINEERING_ONLY / DRYRUN; reviewed and accepted 26 Oct)
 
