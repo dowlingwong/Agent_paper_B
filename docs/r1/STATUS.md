@@ -1,5 +1,21 @@
 # Paper B (route R1) — status log
 
+## 25 October 2026 — Track H: DAC control interface, Mac steps H.1–H.9 (AI-assisted; ENGINEERING_ONLY / DRYRUN; pending review)
+
+Implementation agent (Claude) on branch `track-h-25oct` in both repositories (paper from `bf45424`, harness from `r1` `264011e`); not merged, not pushed. No LLM, GPU, SSH, real llama.cpp/Ollama or model weights; fake servers and fake sidecars only. Details, deviations and questions: `docs/r1/overnight/TRACK_H_25OCT_HANDOFF.md`.
+- **Harness `2604a97`:** `ControlDecision.detail` and whitelisted controller events (`prior_unavailable`); R1-SKIP-DISPLAY `one_line/v1` in the memory summary, `campaign_started` and snapshots. Defaults unchanged.
+- **H.2 (`ffac687`):** one featurizer `features_from_view` for the online controller and `dataset.build`; pilot table byte-identical; online features from real `ControlView`s hash-equal all 1,323 pilot rows; leak tests.
+- **H.1 (`211552a`):** `PriorModel`/`Forecast`; wrapped A1–A3 reproduce `offline_eval` on the 19 Oct pilot table bit for bit; A4 typed questions. NGBoost variant not in the code base, not added.
+- **H.3/H.6 (`5de18eb`):** `RuleController` for every arm (rule skips first, Prop. 8 skip, one cached forecast serves E2's Bayes keep, full decision records, A4 charged to the LLM cap); A1 equals the constant-prior index policy on a scripted campaign.
+- **H.4 (`afda1ce`):** skipped proposals shown as one line without a metric; manifests record `skip_display`.
+- **H.5 (`2046f97`):** stdlib sidecar with sha256 pin and `FakeLoader` (real loader = Track P.2); 1 s timeout → A1 fallback + `prior_unavailable`.
+- **H.7 (`801f6e1`):** AWR direct arm, LLM self-control, hybrid (a proposal); `matching_report` checks instances, W, LLM cap, information set.
+- **H.8 (`bc6fc10`):** `OfflineBanditEnv` (Gymnasium API, optional); reproduces `offline_eval` one-step values (rel. 1e-12).
+- **H.9 (`7ada947`, `2647fab`):** desktop DRYRUN, 2 nodes × 10 arms, SIGKILL mid-campaign and resume, all checks pass: `results/r1/engineering/c3_control_dryrun_20261025T224515Z/summary.json`.
+- **Pin (`8ef8f8f`):** `HARNESS_PIN_C3` → `2604a97`, which is not on harness `r1` yet: merge harness `track-h-25oct` into `r1` before this branch reaches `main`, or a sweep launch STOPs.
+- **Tests:** paper 383 passed / 1 skipped / 1 failed → 435 / 1 / 1 (same known failure); harness 433 / 10 / 1 → 443 / 10 / 1 (same failing set).
+- **Questions for the author:** H.4 line wording (trial id + summary prefix); which skips get the line; meaning of "identical information set"; hybrid definition; online trial budget vs W; `invalid_so_far` semantics; A4 calibration data; A6 τ_node; LLM self-control epochs.
+
 ## 25 October 2026 — exam located; Tracks X, H, P added to the RUNBOOK (AI-assisted; documents only)
 
 - **Exam located.** The model "exam" is the Round-7 candidacy exam of the Paper A repo (`agent-checkpoint-intervention`, `paper/appendices/C_protocol.tex`; `round10/CANONICAL_EXAM_RESULTS.md`; evidence `evidence/round7-blackwell-grouped/run/`), completed 4 Sep 2026; a code copy is in `archive/old_b_2026-10-09/code/.../round5_titan_exam.py`. Assessment (coordinating session): sound machinery, but it measures a tool-using coding agent on a different task and hardware, is confounded by submission-format conformance, and is an eligibility screen only. Not evidence for R1; machinery to be ported (Track X.1).
