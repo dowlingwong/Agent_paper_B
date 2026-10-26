@@ -105,6 +105,7 @@ def main(argv=None):
         if actual.resolve()!=target.resolve(): raise RuntimeError('unexpected HF local artifact path')
         return
     if not a.registry or not a.out: p.error('--registry and --out required')
+    if (Path(a.out)/'transport_stop.json').exists(): raise RuntimeError('STOP: prior transport STOP record must be preserved and explicitly resolved before continuation')
     reg=json.loads(Path(a.registry).read_text());rows=reg['candidates']+reg.get('sensitivities',[])
     # HF's Xet transport uses concurrent byte ranges and bounded artifact concurrency.
     run_downloads(rows,a.out,workers=a.workers)

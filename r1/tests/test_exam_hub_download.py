@@ -71,3 +71,11 @@ def test_shared_cancellation_terminates_active_owned_child(tmp_path,monkeypatch)
 @pytest.mark.parametrize('workers',[0,9,True])
 def test_transport_concurrency_is_bounded(tmp_path,workers):
     with pytest.raises(ValueError,match='1..8'):hub.run_downloads([],tmp_path,workers=workers)
+
+
+def test_prior_transport_stop_cannot_be_silently_replayed(tmp_path,monkeypatch):
+    monkeypatch.setattr(hub.platform,'node',lambda:'TASL-2')
+    (tmp_path/'transport_stop.json').write_text('{"status":"STOPPED"}')
+    registry=tmp_path/'registry.json';registry.write_text('{}')
+    with pytest.raises(RuntimeError,match='prior transport STOP'):
+        hub.main(['--registry',str(registry),'--out',str(tmp_path)])
