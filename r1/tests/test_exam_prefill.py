@@ -29,3 +29,11 @@ def test_bad_native_counts_retained_and_fail(monkeypatch,evaluated,generated):
         gpu_sample=lambda:{'free_mib':22000,'used_mib':1000},schema_format={})
     assert result['passed'] is False and result['failure_classes']==['offload']
     assert result['prefill_tokens']==evaluated and result['prefill_generated_tokens']==generated
+
+@pytest.mark.parametrize('context',[32768,16384])
+def test_unattempted_prefill_metadata(context):
+    evidence=stage_a.prefill_metadata(context)
+    assert evidence['declared_context_tokens']==context
+    assert evidence['prefill_requested_tokens']==context-1
+    assert evidence['prefill_tokens'] is None and evidence['prefill_generated_tokens'] is None
+    assert evidence['native_api_reserve_tokens']==1

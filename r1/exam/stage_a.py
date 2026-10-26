@@ -65,6 +65,12 @@ def parse_proposal(content, row, structured):
     return result.extra['llm_call']['parse_ok'],valid_key
 
 
+def prefill_metadata(context):
+    return {'declared_context_tokens':context,'prefill_requested_tokens':context-1,
+            'prefill_tokens':None,'prefill_requested_generated_tokens':1,'prefill_generated_tokens':None,
+            'native_api_reserve_tokens':1,'prefill_author_ref':'R1-EXAM-PREFILL-RESERVE'}
+
+
 def fit_prefill(instance):
     """Author-approved native API reserve; cache allocation remains the declared ctx."""
     context=instance.ctx_size
@@ -85,9 +91,7 @@ def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=Fa
             'phase':'stage-a','prompts':len(prompts),'failure_classes':[], 'cpu_pool_only':instance.ctx_size==16384,
             'free_parse_successes':0,'schema_parse_successes':0,'active_key_successes':0,'free_active_key_successes':0,'free_seed_reproducible':True,
             'seed_reproducible':True,'template_checks':[],'grammar_after_thinking':None,
-            'declared_context_tokens':instance.ctx_size,'prefill_requested_tokens':instance.ctx_size-1,
-            'prefill_tokens':None,'prefill_requested_generated_tokens':1,'prefill_generated_tokens':None,
-            'native_api_reserve_tokens':1,'prefill_author_ref':'R1-EXAM-PREFILL-RESERVE'}
+            **prefill_metadata(instance.ctx_size)}
     telemetry=[];stop=threading.Event()
     def sample():
         while not stop.is_set():

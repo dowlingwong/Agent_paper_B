@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from r1.exam.campaign import write_json
+from r1.exam.stage_a import prefill_metadata
 from r1.exam.guards import artifact_label, digest_file, paired_instance_bootstrap
 from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders
 from r1.scripts import llama_server_instance as lsi
@@ -57,7 +58,8 @@ def stage_a(runner, selected):
                     write_json(path,result)
                 except MechanicalFailure as exc:
                     result={'candidate':spec['id'],'label':'EXAM','phase':'stage-a','passed':False,'failure_classes':['offload'],
-                            'error':repr(exc),'prompts':0,'cpu_pool_only':ctx==16384}
+                            'error':repr(exc),'prompts':0,'cpu_pool_only':ctx==16384,
+                            **prefill_metadata(ctx),'prefill_not_attempted_reason':'qualification/load failure'}
                     write_json(path,result)
                 finally:
                     if runner.service: runner.stop_service()
