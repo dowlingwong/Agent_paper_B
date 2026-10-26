@@ -57,6 +57,17 @@ These are in `tasl7_equivalence_20261026/`:
 
 The checkpoints and predictions stay under `/home/dowling/r1_trackp/runs/tasl7_equiv_20261026/`.
 
+## Timeline (UTC, 26 Oct) and what was verified before the run
+
+Added after review finding 1.
+- **22:47:40–42** `PREDECLARATION.md` and `compare.py` were committed (`f3567e9`) and pushed. The pre-declaration's environment row says that the models are "re-verified against `r1/c3/train/registry.yaml`". At that moment this was not yet true: the Qwen-0.8B weights were still downloading.
+- **22:49:21** The Qwen-0.8B weight file was complete. The downloader had checked each file of kev-0.8b and Qwen-0.8B against the Hub's own record at the pinned revision (LFS sha256 / git blob sha1).
+- **≈ 22:52** Before the run, I re-hashed kev-0.8b and Qwen-0.8B (the only repos the run reads) against the **committed `registry.yaml`**: 12/12 and 12/12 files matched. That check was run interactively and its output was not saved; the only saved record is the full check below.
+- **22:52:16–23:17:42** The equivalence run, under the lease.
+- **≈ 23:3x** The saved check of all 8 repos (112 files) against the committed registry (`tasl7_phase2_20261026/verify_against_registry_output.txt`), after StartLux-4B finished. The reviewer re-hashed all files independently, with the same result.
+
+The run's manifest has **no `host` field**, because code `8e13e77` predates `host_record()` (`d3bed8b`). The host is TASL-7: see the lease log entry (pid 4065542) and this report. `PREDECLARATION.md` is left unchanged.
+
 ## GPU use
 
 One job, 25.4 leased minutes. Before the job: no Track X marker, no foreign compute process, the lock was free and `origin/main` STATUS showed no Track X B1/B2 running. The phase GPU total also includes the Phase 2 smoke test (22:50:48–22:51:39 UTC).

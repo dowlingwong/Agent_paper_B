@@ -269,15 +269,25 @@ def host_record() -> dict:
     """Host and GPU of the run (R1-ADA-OVERFLOW: every manifest records them; one GPU type per comparison table)."""
     gpus = None
     try:
-        res = subprocess.run(["nvidia-smi", "--query-gpu=name,compute_cap,driver_version", "--format=csv,noheader"],
-                             capture_output=True, text=True, timeout=60)
+        res = subprocess.run(["nvidia-smi", "--query-gpu=name,compute_cap,driver_version,uuid",
+                              "--format=csv,noheader"], capture_output=True, text=True, timeout=60)
         if res.returncode == 0:
-            gpus = [dict(zip(("name", "compute_capability", "driver"), (x.strip() for x in ln.split(","))))
+            gpus = [dict(zip(("name", "compute_capability", "driver", "uuid"), (x.strip() for x in ln.split(","))))
                     for ln in res.stdout.splitlines() if ln.strip()]
     except (OSError, subprocess.SubprocessError):
         pass
-    return {"hostname": socket.gethostname(), "gpus": gpus,
-            "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES")}
+    device = None   # the card this process uses, by UUID (nvidia-smi and CUDA may order cards differently)
+    try:
+        import torch
+        if torch.cuda.is_available():
+            props = torch.cuda.get_device_properties(torch.cuda.current_device())
+            device = {"name": props.name, "uuid": f"GPU-{props.uuid}",
+                      "compute_capability": f"{props.major}.{props.minor}"}
+    except (ImportError, RuntimeError, AttributeError):
+        pass
+    return {"hostname": socket.gethostname(), "gpus": gpus, "device": device,
+            "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+            "cuda_device_order": os.environ.get("CUDA_DEVICE_ORDER")}
 
 
 def run_manifest(*, subcommand: str, evidence: str, cfg: dict, seed: int, base: dict, model_files: dict,
