@@ -6,8 +6,10 @@ ENGINEERING_ONLY; AI-assisted (Claude).
 * **Seeds.** Training labels come only from audit seeds 7001–7005 (``*_train`` columns). ``guard_rows`` refuses
   evaluation columns (``*_eval``, seeds 7006–7010) unless the caller is the P.4 final evaluation *and* its
   authorization note exists (``docs/r1/authorizations/trackp_p4_<date>.md``).
-* **GPU lease (R1-PORTAL-SCHEDULE).** ``gpu_lease`` checks STATUS on ``origin/main`` for a running Track X evidence
-  phase, that ``nvidia-smi`` lists no compute process, then holds ``~/r1_locks/gpu0.lock`` with ``flock``
+* **GPU lease (R1-PORTAL-SCHEDULE).** ``gpu_lease`` checks the Track X evidence marker
+  ``~/r1_locks/trackx_evidence.active`` (present while B1 or B2 runs; R1-TRACKX-MARKER, 26 Oct), STATUS on
+  ``origin/main`` for a running Track X evidence phase (kept as a second check), that ``nvidia-smi`` lists no
+  compute process, then holds ``~/r1_locks/gpu0.lock`` with ``flock``
   semantics (``fcntl.flock``, non-blocking — the same lock ``flock -n`` takes) and logs start/end.
 * **Manifest.** ``run_manifest`` records base revision, adapter/heads sha256, data-manifest hash, seed, git commits
   of both repos, the GPU-lease log, the evidence label and the config digest.
@@ -33,6 +35,7 @@ TRAIN_SEEDS = (7001, 7002, 7003, 7004, 7005)
 EVAL_SEEDS = (7006, 7007, 7008, 7009, 7010)
 EVAL_COLUMNS = re.compile(r"(^|_)eval($|_)|^y_eval|^z_eval|^u_eval|^mu_eval|(^|\D)70(0[6-9]|10)(\D|$)")
 LOCK_PATH = Path.home() / "r1_locks" / "gpu0.lock"
+TRACKX_MARKER = Path.home() / "r1_locks" / "trackx_evidence.active"   # exists while Track X B1 or B2 runs
 LEASE_LOG = Path.home() / "r1_trackp" / "runs" / "gpu_lease_log.jsonl"
 AUTH_DIR = REPO / "docs" / "r1" / "authorizations"
 # Track X evidence phases (PORTAL_EXAM_RUNBOOK B1/B2) in STATUS.md (newest entry first). The newest heading that
@@ -151,8 +154,11 @@ def _log_lease(event: dict, log_path: Path) -> None:
 
 @contextlib.contextmanager
 def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_LOG, run_log: list | None = None,
-              status_text: str | None = None, check_processes: bool = True) -> Iterator[dict]:
+              status_text: str | None = None, check_processes: bool = True,
+              marker_path: Path = TRACKX_MARKER) -> Iterator[dict]:
     """Hold the GPU lease for one job (R1-PORTAL-SCHEDULE). Raises TrackPStop if it may not start."""
+    if marker_path.exists():
+        raise TrackPStop(f"Track X evidence marker {marker_path} exists (B1/B2 running): do not start")
     if track_x_running(status_text):
         raise TrackPStop("a Track X evidence phase (B1/B2) is running on the card: do not start")
     if check_processes:
@@ -166,7 +172,10 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
             fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise TrackPStop(f"GPU lock {lock_path} is held by another job") from None
-        start = {"event": "start", "job": job, "pid": os.getpid(), "utc": utcnow()}
+        if marker_path.exists():   # re-read under the lock: a B1/B2 start between the check and the lock wins
+            raise TrackPStop(f"Track X evidence marker {marker_path} exists (B1/B2 running): do not start")
+        start = {"event": "start", "job": job, "pid": os.getpid(), "utc": utcnow(),
+                 "trackx_marker": f"absent: {marker_path}"}
         _log_lease(start, log_path)
         if run_log is not None:
             run_log.append(start)

@@ -86,25 +86,191 @@ def e0(model, run_dir: Path | str, *, target: str = "y_soft", head_steps: int = 
             "pass": E.e0_pass(m_lora) if target == "y_soft" else None}
 
 
-def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0) -> dict:
-    """E6 on a (trained) model. Sizes reduced by ``n`` for dry runs; the evidence run uses the spec defaults."""
+# ---------------------------------------------------------------- E0 protocol v2 (author, 26 Oct; R1-E0-PROTOCOL)
+
+E0_V2 = "trackp_e0/v2"
+
+
+def rows_of_items(items: list[dict], target: str) -> list[dict]:
+    return [{"prompt": E.prompt_from_dict(it["prompt"]), "y": torch.tensor(it[target], dtype=torch.float32),
+             "item": it} for it in items]
+
+
+@torch.no_grad()
+def states(model, prompts, batch_size: int = 16) -> torch.Tensor:
+    """Readout states [N, d] (float32, on the model's device) in eval mode: the frozen-backbone features."""
+    model.eval()
+    return torch.cat([model(prompts[i:i + batch_size], return_state=True)["state"]
+                      for i in range(0, len(prompts), batch_size)])
+
+
+def mean_rps(p: np.ndarray, rows: list[dict]) -> float:
+    y = torch.stack([r["y"] for r in rows])
+    return float(L.rps(torch.tensor(p, dtype=torch.float32), y).mean())
+
+
+def fit_head_on_states(head: torch.nn.Module, tr: torch.Tensor, ytr: torch.Tensor, va: torch.Tensor,
+                       yva: torch.Tensor, *, lr: float, max_steps: int, eval_every: int, patience: int,
+                       batch_size: int, seed: int, warmup_frac: float = 0.05, log: Path | None = None) -> dict:
+    """Frozen-backbone head fit on cached states: AdamW at ``lr``, warm-up + cosine over ``max_steps``, val RPS
+    every ``eval_every`` steps, early stopping after ``patience`` evaluations without improvement, best restored.
+    The batch order follows the trainer's (seed, epoch) permutation."""
+    import copy
+    import json
+    import math
+    from r1.c3.train.trainer import cosine_lambda, epoch_order
+    head.train()
+    opt = torch.optim.AdamW(head.parameters(), lr=lr, weight_decay=0.0)
+    sched = torch.optim.lr_scheduler.LambdaLR(opt, cosine_lambda(max_steps, int(warmup_frac * max_steps)))
+    per_epoch = math.ceil(len(tr) / batch_size)
+    best, bad, curve = None, 0, []
+
+    def val_rps() -> float:
+        head.eval()
+        with torch.no_grad():
+            v = float(L.rps(torch.softmax(head(va).float(), -1), yva).mean())
+        head.train()
+        return v
+    step = 0
+    while step < max_steps:
+        epoch, i = divmod(step, per_epoch)
+        idx = torch.as_tensor(epoch_order(len(tr), seed, epoch)[i * batch_size:(i + 1) * batch_size],
+                              device=tr.device)
+        loss = L.rps(torch.softmax(head(tr[idx]).float(), -1), ytr[idx]).mean()
+        opt.zero_grad(set_to_none=True)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(head.parameters(), 1.0)
+        opt.step()
+        sched.step()
+        step += 1
+        if step % eval_every == 0 or step == max_steps:
+            v = val_rps()
+            curve.append({"step": step, "val_rps": v, "train_loss": float(loss.detach())})
+            if best is None or v < best["val_rps"]:
+                best, bad = {"step": step, "val_rps": v, "state": copy.deepcopy(head.state_dict())}, 0
+            else:
+                bad += 1
+                if bad >= patience:
+                    break
+    head.load_state_dict(best["state"])
+    head.eval()
+    if log is not None:
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.write_text("".join(json.dumps(c) + "\n" for c in curve))
+    return {"best_step": best["step"], "best_val_rps": best["val_rps"], "stopped_at": step,
+            "early_stopped": step < max_steps, "curve": curve}
+
+
+def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "y_soft", lr: float,
+          head_lr: float = 1e-3, token_lr: float | None = None, max_steps: int = 2000, eval_every: int = 100,
+          patience: int = 5, batch_size: int = 8, seed: int = 0, n_train: int | None = None,
+          n_val: int | None = None, n_test: int | None = None) -> dict:
+    """E0 v2 for one (variant, target, lr). ``variant="fresh"``: the model was built with ``head_form="linear12"``;
+    (1) the fresh LayerNorm + linear belief head is fitted on frozen-backbone states at ``head_lr``, (2) then LoRA +
+    that head train together. ``variant="native"``: the family's own readout (released head / letter readout / bin
+    tokens), zero-shot metrics first, then the LoRA stage. Both stages: early stopping on the validation cells
+    (val RPS against the run's own target), at most ``max_steps``, the best checkpoint restored. Metrics on the
+    held-out test cells (``e0_metrics_v2``)."""
+    from r1.c3.train.model import new_head_parameters, token_row_parameters
+    run_dir = Path(run_dir)
+    if variant not in ("fresh", "native"):
+        raise ValueError("variant is 'fresh' or 'native'")
+    if (variant == "fresh") != (model.head_form == "linear12"):
+        raise ValueError(f"variant {variant!r} with head_form {model.head_form!r}")
+    seed_everything(seed)
+    items = E.load()
+    tr_items, va_items = E.e0_split(items)
+    train = rows_of_items(tr_items, target)[:n_train]
+    val = rows_of_items(va_items, target)[:n_val]
+    test = rows_of_items([it for it in items if it["split"] == "test"], target)[:n_test]
+    test_items = [r["item"] for r in test]
+    out: dict = {"protocol": E0_V2, "variant": variant, "target": target, "lr": lr, "head_lr": head_lr,
+                 "token_lr": token_lr, "max_steps": max_steps, "eval_every": eval_every, "patience": patience,
+                 "batch_size": batch_size, "n_train": len(train), "n_val": len(val), "n_test": len(test),
+                 "val_cells": [list(c) for c in E.VAL_CELLS]}
+    if variant == "fresh":
+        dev = model.device
+        s_tr, s_va, s_te = (states(model, [r["prompt"] for r in rows]) for rows in (train, val, test))
+        y = lambda rows: torch.stack([r["y"] for r in rows]).to(dev)  # noqa: E731
+        fit = fit_head_on_states(model.heads["belief"], s_tr, y(train), s_va, y(val), lr=head_lr,
+                                 max_steps=max_steps, eval_every=eval_every, patience=patience,
+                                 batch_size=batch_size, seed=seed, log=run_dir / "head_fit" / "curve.jsonl")
+        with torch.no_grad():
+            p_head = torch.softmax(model.heads["belief"](s_te).float(), -1).cpu().numpy()
+        out["head_fit"] = {**{k: v for k, v in fit.items() if k != "curve"},
+                           "test": E.e0_metrics_v2(p_head, test_items, target)}
+        np.save(run_dir / "pred_test_head_fit.npy", p_head)
+    else:
+        p0 = predict(model, [r["prompt"] for r in test])
+        out["zero_shot"] = {"val_rps": mean_rps(predict(model, [r["prompt"] for r in val]), val),
+                            "test": E.e0_metrics_v2(p0, test_items, target)}
+    for p in model.trainable_parameters():
+        p.requires_grad_(True)
+
+    def evaluate(m) -> dict:
+        return {"val_rps": mean_rps(predict(m, [r["prompt"] for r in val]), val)}
+    cfg = TrainConfig(seed=seed + 1, epochs=1e9, max_steps=max_steps, batch_size=batch_size, grad_accum=1, lr=lr,
+                      head_lr=head_lr, token_lr=token_lr, eval_every_steps=eval_every, early_stop_patience=patience,
+                      keep_checkpoints=1)
+    res = Trainer(model, train, belief_loss, cfg, run_dir / "lora", head_params=new_head_parameters(model),
+                  token_params=token_row_parameters(model), evaluate=evaluate).train()
+    p_lora = predict(model, [r["prompt"] for r in test])
+    np.save(run_dir / "pred_test_lora.npy", p_lora)
+    out["lora"] = {**res, "test": E.e0_metrics_v2(p_lora, test_items, target)}
+    out["pass"] = E.e0_pass_v2(out["lora"]["test"]) if target == "y_soft" else None
+    return out
+
+
+def _a3_rps(model, prompts, targets, errors: dict, key) -> np.ndarray | None:
+    try:
+        p = predict(model, prompts)
+        return L.rps(torch.tensor(p), torch.tensor(np.array(targets), dtype=torch.float32)).numpy()
+    except Exception as exc:  # e.g. Kev's strict state limit: recorded, not hidden
+        errors[str(key)] = f"{type(exc).__name__}: {exc}"[:300]
+        return None
+
+
+def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0, counters: dict | None = None) -> dict:
+    """E6 on a (trained) model. Sizes reduced by ``n`` for dry runs; the evidence run uses the spec defaults.
+    ``counters`` (the pool's input-token counters, ``budget.pool_counters``) selects the v2 A3 (budget fractions of
+    the pool's smallest limit; 2k / 8k descriptive); A4 always reports the v2 label reference as well."""
     run_dir = Path(run_dir)
     tok = model.tok
     out: dict = {}
-    # A3 history-length robustness (prompts over the model's context: recorded as the wrapper handled them)
-    a3 = E.a3_probe(tok, n=n, seed=E.SEED)
-    rps = {}
-    for length, prompts in a3["prompts"].items():
-        try:
-            p = predict(model, prompts)
-            rps[length] = L.rps(torch.tensor(p), torch.tensor(np.array(a3["targets"]), dtype=torch.float32)).numpy()
-        except Exception as exc:  # e.g. Kev's strict state limit: recorded, not hidden
-            out.setdefault("A3_errors", {})[str(length)] = f"{type(exc).__name__}: {exc}"[:300]
-    out["A3"] = E.a3_pass(rps) if 0 in rps and len(rps) > 1 else {"pass": None, "reason": "not all lengths ran"}
-    # A4 width monotonicity
+    errors: dict = {}
+    if counters is None:
+        # A3 v1: 0 / 2k / 8k tokens (prompts over the model's context: recorded as the wrapper handled them)
+        a3 = E.a3_probe(tok, n=n, seed=E.SEED)
+        rps = {L_: r for L_, pr in a3["prompts"].items()
+               if (r := _a3_rps(model, pr, a3["targets"], errors, L_)) is not None}
+        out["A3"] = E.a3_pass(rps) if 0 in rps and len(rps) > 1 else {"pass": None, "reason": "not all lengths ran"}
+    else:
+        a3 = E.a3_probe_budget(counters, n=n, seed=E.SEED)
+        rps = {f: r for f, pr in a3["prompts"].items()
+               if (r := _a3_rps(model, pr, a3["targets"], errors, f"frac_{f}")) is not None}
+        res = E.a3_pass(rps) if 0.0 in rps and len(rps) == len(a3["prompts"]) else \
+            {"pass": None, "reason": "not all levels ran"}
+        tokens = {str(f): {fam: int(max(t[fam] for t in a3["tokens"][f])) for fam in a3["families"]}
+                  for f in a3["prompts"]}
+        out["A3"] = {**res, "protocol": "v2_budget", "limit": a3["limit"], "families": a3["families"],
+                     "budget_min_mean_max": [int(min(a3["budget"])), float(np.mean(a3["budget"])),
+                                             int(max(a3["budget"]))], "max_tokens_by_level": tokens}
+        if getattr(model, "family", "") == "laya":   # Laya cuts what does not fit: must not happen within budget
+            out["A3"]["laya_truncated"] = any(model.encode(p)["truncated"] for pr in a3["prompts"].values()
+                                              for p in pr)
+        # longer levels, descriptive only (R1-A3-BUDGET)
+        long = E.a3_probe(tok, n=n, lengths=(0,) + E.A3_DESCRIPTIVE, seed=E.SEED)
+        rl = {L_: r for L_, pr in long["prompts"].items()
+              if (r := _a3_rps(model, pr, long["targets"], errors, f"descriptive_{L_}")) is not None}
+        out["A3_descriptive"] = E.a3_pass(rl) if 0 in rl and len(rl) > 1 else {"ran": sorted(rl)}
+        out["A3_descriptive"]["pass"] = None
+    if errors:
+        out["A3_errors"] = errors
+    # A4 width monotonicity (v1 raw criterion and v2 label reference)
     a4 = E.a4_probe(n=n)
-    std = [E.belief_moments(predict(model, row))[1] for row in a4]
-    out["A4"] = E.a4_pass(np.array(std))
+    std = np.array([E.belief_moments(predict(model, row))[1] for row in a4])
+    out["A4"] = E.a4_pass(std)
+    out["A4_v2"] = E.a4_pass_v2(std, E.a4_label_std(n=n))
     # A5 slot bias: bin-token family only; listing order via the wrapper's bin_order, canonical options
     if getattr(model, "family", "") in ("qwen_control", "qwen_reason"):
         from dataclasses import replace

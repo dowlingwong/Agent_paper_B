@@ -1,0 +1,268 @@
+"""Track P decisions of 26 Oct (PLAN §10): E0 protocol v2, A3 budget, A4 label reference, linear12 head, token-row
+init / fp32 / lr, early stopping, temperature scaling, Track X marker. Tiny random-weight models, CPU only.
+ENGINEERING_ONLY; AI-assisted (Claude).
+"""
+from __future__ import annotations
+
+import json
+import os
+
+import numpy as np
+import pytest
+import torch
+
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+pytest.importorskip("transformers")
+pytest.importorskip("peft")
+
+from r1.c3.labels import N_BINS  # noqa: E402
+from r1.c3.train import exam_run as X  # noqa: E402
+from r1.c3.train import exam_synthetic as E  # noqa: E402
+from r1.c3.train import metrics as MT  # noqa: E402
+from r1.c3.train import model as M  # noqa: E402
+from r1.c3.train import run as R  # noqa: E402
+from r1.c3.train import tiny  # noqa: E402
+from r1.c3.train.trainer import Trainer, TrainConfig  # noqa: E402
+
+
+def _tiny(family, tmp_path, **kw):
+    try:
+        return tiny.build_tiny(family, tmp_path, **kw)
+    except OSError:
+        pytest.skip("pool tokenizers not in the local HF cache")
+
+
+@pytest.fixture(scope="module")
+def items():
+    return E.load()
+
+
+# ---------------------------------------------------------------- linear12 head (R1-E0-PROTOCOL c)
+
+@pytest.mark.parametrize("family", ["kev", "laya", "startlux", "qwen_control"])
+def test_linear12_head_reads_the_returned_state_and_reloads(family, tmp_path, items):
+    w = _tiny(family, tmp_path, head_form="linear12")
+    assert "belief" in w.heads and isinstance(w.heads["belief"][0], torch.nn.LayerNorm)
+    prompts = [E.prompt_from_dict(it["prompt"]) for it in items[:3]]
+    w.eval()
+    with torch.no_grad():
+        out = w(prompts, return_state=True)
+        assert out["belief_logits"].shape == (3, N_BINS) and out["state"].dtype == torch.float32
+        assert torch.allclose(out["belief_logits"], w.heads["belief"](out["state"]), atol=1e-5)
+        assert "state" not in w(prompts)
+    ids = {id(p) for p in M.new_head_parameters(w)}
+    assert all(id(p) in ids for p in w.heads["belief"].parameters())
+    w.save(tmp_path / "saved")
+    w2 = _tiny(family, tmp_path, head_form="linear12")       # same random backbone (it is not saved)
+    with torch.no_grad():
+        for p in w2.heads["belief"].parameters():
+            p.zero_()
+    w2.load(tmp_path / "saved")
+    w2.eval()
+    with torch.no_grad():
+        assert torch.equal(w2(prompts)["belief_logits"], out["belief_logits"])
+
+
+# ---------------------------------------------------------------- token rows (R1-TOKEN-INIT)
+
+def test_new_token_rows_start_at_the_mean_embedding_in_fp32_with_their_own_lr(tmp_path):
+    from r1.c3.train.tiny import causal_lm, tokenizer, QWEN
+    try:
+        tok = tokenizer(*QWEN)
+    except OSError:
+        pytest.skip("Qwen tokenizer not in the local HF cache")
+    lm = causal_lm(True, 0)
+    n_vocab = len(tok)
+    w0 = lm.get_input_embeddings().weight.detach().clone()
+    w = M.build_model("qwen_control", lm, tok)
+    new = sorted(w.token_ids.values())
+    mean = w0[:n_vocab][[i for i in range(n_vocab) if i not in set(new)]].float().mean(0)
+    rows = w._token_rows(torch.tensor(new))
+    assert rows.dtype == torch.float32 and torch.allclose(rows, mean.expand_as(rows), atol=1e-6)
+    tp = M.token_row_parameters(w)
+    assert tp and all(p.dtype == torch.float32 for p in tp)
+    assert not {id(p) for p in tp} & {id(p) for p in M.new_head_parameters(w)}
+    # a uniform belief at init (identical rows)
+    with torch.no_grad():
+        p = torch.softmax(w([E.prompt_from_dict(E.load()[0]["prompt"])])["belief_logits"], -1)
+    assert torch.allclose(p, torch.full_like(p, 1 / N_BINS), atol=1e-5)
+    rows_ = [{"prompt": E.prompt_from_dict(E.load()[0]["prompt"]), "y": torch.full((N_BINS,), 1 / N_BINS)}]
+    tr = Trainer(w, rows_, X.belief_loss, TrainConfig(max_steps=1, grad_accum=1, lr=3e-5, head_lr=1e-3, token_lr=1e-4),
+                 tmp_path / "t", head_params=M.new_head_parameters(w), token_params=tp)
+    lrs = {g["lr"] for g in tr.opt.param_groups}
+    assert lrs == {3e-5, 1e-4}                         # no new heads on the control's native readout
+
+
+# ---------------------------------------------------------------- early stopping
+
+class _Lin(torch.nn.Module):
+    """A tiny DecisionModel stand-in: belief = Linear(one-hot of the prompt group)."""
+    family = ""
+
+    def __init__(self):
+        super().__init__()
+        self.heads = torch.nn.ModuleDict({"belief": torch.nn.Linear(4, N_BINS)})
+
+    def trainable_parameters(self):
+        return (p for p in self.parameters() if p.requires_grad)
+
+    def forward(self, batch, return_state=False):
+        x = torch.stack([torch.nn.functional.one_hot(torch.tensor(int(p) % 4), 4).float() for p in batch])
+        return {"belief_logits": self.heads["belief"](x), "action_logit": None}
+
+    def save(self, path):
+        path.mkdir(parents=True, exist_ok=True)
+        torch.save(self.state_dict(), path / "w.pt")
+        return {"files": {}}
+
+    def load(self, path):
+        self.load_state_dict(torch.load(path / "w.pt"))
+        return {}
+
+
+def test_early_stopping_restores_the_best_and_does_not_resume_past_it(tmp_path):
+    torch.manual_seed(0)
+    m = _Lin()
+    rows = [{"prompt": str(i), "y": torch.full((N_BINS,), 1 / N_BINS)} for i in range(8)]
+    vals = iter([0.5, 0.4, 0.45, 0.46, 0.47, 0.1])
+    snap = {}
+
+    def evaluate(model):
+        v = next(vals)
+        snap[v] = {k: t.clone() for k, t in model.state_dict().items()}
+        return {"val_rps": v}
+    cfg = TrainConfig(max_steps=100, epochs=1e9, batch_size=8, grad_accum=1, lr=1e-2, eval_every_steps=2,
+                      early_stop_patience=3, keep_checkpoints=1)
+    res = Trainer(m, rows, X.belief_loss, cfg, tmp_path / "r", evaluate=evaluate).train()
+    assert res["early_stopped"] and res["best_step"] == 4 and res["stopped_at"] == 10
+    assert all(torch.equal(t, snap[0.4][k]) for k, t in m.state_dict().items())
+    assert len(list((tmp_path / "r" / "ckpt").glob("step_*"))) == 1
+    assert json.loads((tmp_path / "r" / "best.json").read_text())["step"] == 4
+    res2 = Trainer(m, rows, X.belief_loss, cfg, tmp_path / "r", evaluate=evaluate).train()   # resume: exhausted
+    assert res2["stopped_at"] == 10 and res2["best_step"] == 4
+
+
+# ---------------------------------------------------------------- E0 v2 data and metrics (R1-E0-PROTOCOL a, b)
+
+def test_validation_cells_are_held_out_of_training_and_disjoint_from_test(items):
+    tr, va = E.e0_split(items)
+    assert va and tr and len(tr) + len(va) == sum(it["split"] == "train" for it in items)
+    assert {tuple(it["cell"]) for it in va} == set(E.VAL_CELLS)
+    assert not {tuple(it["cell"]) for it in tr} & set(E.VAL_CELLS)
+    assert not set(E.VAL_CELLS) & set(E.HELDOUT)
+
+
+def test_width_slope_against_the_labels_own_std_is_one_for_the_labels(items):
+    test = [it for it in items if it["split"] == "test"]
+    m = E.e0_metrics_v2(np.array([it["y_soft"] for it in test]), test)
+    assert abs(m["width_slope_vs_label"] - 1) < 1e-9 and abs(m["mean_slope_vs_label"] - 1) < 1e-9
+    assert m["primary_width"] == "width_slope_vs_label"
+    assert m["label_width_slope_vs_s"] == pytest.approx(m["width_slope"])   # the ceiling = the labels' own slope
+    assert E.e0_pass_v2(m) is None                                          # thresholds pending the author
+    assert E.e0_pass_v2(m, {"width_slope_vs_label_min": 0.7, "mean_slope_min": 0.8}) is True
+
+
+def test_a4_label_reference(items):
+    lab = E.a4_label_std(n=20)
+    assert lab.shape == (20, E.A4_STEPS)
+    r = E.a4_pass_v2(lab, lab)
+    assert r["frac_monotone_vs_label"] == 1.0 and r["median_slope_vs_label"] == pytest.approx(1.0) and r["pass"] is None
+    flat = np.repeat(lab[:, :1], E.A4_STEPS, axis=1)
+    assert E.a4_pass_v2(flat, lab)["median_slope_vs_label"] == pytest.approx(0.0)
+    dec = lab[:, ::-1]
+    assert E.a4_pass_v2(dec, lab)["frac_monotone_vs_label"] < 0.5
+
+
+# ---------------------------------------------------------------- A3 budget (R1-A3-BUDGET)
+
+def _word_counter(k):
+    return lambda p: k * len(f"{p.state}\n{p.proposal}\n{p.question}\n{' '.join(p.options)}".split())
+
+
+def test_a3_levels_fill_the_pool_budget_and_fit_every_family():
+    counters = {"a": _word_counter(1), "b": _word_counter(2)}    # "b" is the token-hungriest family
+    lim = 1024
+    a3 = E.a3_probe_budget(counters, n=6, limit=lim)
+    assert list(a3["prompts"]) == list(E.A3_FRACS)
+    for i, budget in enumerate(a3["budget"]):
+        base = a3["tokens"][0.0][i]["b"]
+        assert budget == lim - base and a3["prompts"][0.0][i].meta["extra_history_lines"] == 0
+        prev = -1
+        for f in E.A3_FRACS:
+            t = a3["tokens"][f][i]
+            assert max(t.values()) <= base + f * budget <= lim
+            n = a3["prompts"][f][i].meta["extra_history_lines"]
+            assert n >= prev
+            prev = n
+        assert a3["tokens"][1.0][i]["b"] > lim - 40          # the maximum level nearly fills the budget
+
+
+@pytest.mark.parametrize("family", ["kev", "qwen_control", "startlux", "laya"])
+def test_budget_counters_match_what_each_wrapper_feeds_the_model(family, tmp_path, items):
+    from r1.c3.train import budget as B
+    w = _tiny(family, tmp_path)
+    if family == "kev":
+        c = B.kev_counter(w.tok)
+    elif family == "qwen_control":
+        c = B.qwen_control_counter(tiny.tokenizer(*tiny.QWEN))
+    elif family == "startlux":
+        c = B.startlux_counter(w.tok)
+    else:
+        from laya import common as lc
+        shell = M.LayaWrapper.__new__(M.LayaWrapper)
+        shell.lc, shell.cfg, shell.tok, shell.max_len, shell.head_max_len = lc, w.cfg, w.tok, 10 ** 9, w.head_max_len
+        c = lambda p: len(shell.encode(p)["ids"])  # noqa: E731  (laya_counter reads a checkpoint directory)
+    for it in items[:3]:
+        p = E.prompt_from_dict(it["prompt"])
+        if family == "kev":
+            from kev import model as km
+            recs, _ = w.records([p])
+            want = len(km.encode(w.tok, recs[0], max_state=w.ctx["max_state"], max_branch=w.ctx["max_branch"],
+                                 strict=True)["ids"])
+        elif family == "qwen_control":
+            want = len(w.segments(p)[0])
+        elif family == "startlux":
+            want = len(w.tok.encode(w.prompt_text(p), add_special_tokens=False))
+        else:
+            want = len(w.encode(p)["ids"])
+        assert c(p) == want
+
+
+# ---------------------------------------------------------------- E0 v2 end to end (tiny)
+
+@pytest.mark.parametrize("variant", ["fresh", "native"])
+def test_e0_v2_runs_both_stages_with_early_stopping(variant, tmp_path):
+    w = _tiny("qwen_control", tmp_path, head_form="linear12" if variant == "fresh" else "softmax12")
+    rep = X.e0_v2(w, tmp_path / "run", variant=variant, lr=1e-4, token_lr=1e-4, max_steps=4, eval_every=2,
+                  patience=1, batch_size=4, n_train=8, n_val=4, n_test=6)
+    assert rep["protocol"] == "trackp_e0/v2" and rep["n_val"] == 4
+    assert ("head_fit" in rep) == (variant == "fresh") and ("zero_shot" in rep) == (variant == "native")
+    assert rep["lora"]["best_step"] in (2, 4) and "width_slope_vs_label" in rep["lora"]["test"]
+    assert rep["pass"] is None
+    with pytest.raises(ValueError):
+        X.e0_v2(w, tmp_path / "bad", variant="fresh" if variant == "native" else "native", lr=1e-4)
+
+
+# ---------------------------------------------------------------- temperature scaling (R1-TEMPERATURE)
+
+def test_temperature_scaling_recovers_the_generating_temperature():
+    rng = np.random.default_rng(0)
+    z = rng.normal(0, 3, (4000, N_BINS))
+    y = MT.apply_temperature(z, 2.5)
+    assert MT.fit_temperature(z, y) == pytest.approx(2.5, rel=1e-3)
+    assert np.allclose(MT.apply_temperature(z, 1.0).sum(-1), 1)
+
+
+# ---------------------------------------------------------------- Track X marker (R1-TRACKX-MARKER)
+
+def test_gpu_lease_refuses_while_the_track_x_marker_exists(tmp_path):
+    marker = tmp_path / "trackx_evidence.active"
+    kw = dict(lock_path=tmp_path / "gpu0.lock", log_path=tmp_path / "lease.jsonl", status_text="## Track P",
+              check_processes=False, marker_path=marker)
+    with R.gpu_lease("ok", **kw) as lease:
+        assert lease["job"] == "ok"
+    marker.write_text("B1")
+    with pytest.raises(R.TrackPStop, match="marker"):
+        with R.gpu_lease("refused", **kw):
+            pass
+    assert "trackx_marker" in json.loads((tmp_path / "lease.jsonl").read_text().splitlines()[0])

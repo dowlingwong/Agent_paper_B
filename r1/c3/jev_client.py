@@ -14,11 +14,10 @@ per state (responses vary by about +-0.02); every request and response logged in
 from ``TYPESAFE_API_KEY`` and only placed in the request header, which is not logged). The config pins a versioned
 model ID; an alias is refused, and a response naming another model raises ``JevVersionMismatch`` (a STOP).
 
-Questions and bins. ``labels.EDGES`` has 10 finite edges between the 11 non-inert bins, so "one Noul per bin edge"
-gives 10 questions ``z > e_k``; the 11th question is the inert bin ("does the edit leave the active configuration
-unchanged?"), which makes the 11 questions of the runbook and fills bin 0 (``include_inert=False`` sends only the 10
-edge questions and puts no mass on bin 0). Bins: p0 = P(inert); the edge answers S_k = P(z > e_k) give a CDF
-F_k = 1 - S_k made monotone by a cumulative max over the sorted edges; bins 1..11 = (1 - p0) * diff([0, F, 1]).
+Questions and bins (author, 26 Oct; R1-EDGES-10). ``labels.EDGES`` has 10 finite edges between the 11 non-inert
+bins, so "one Noul per bin edge" gives exactly 10 yes/no questions ``z > e_k``; no inert question is asked and bin 0
+gets no mass (inert proposals are removed before audit, spec §3.1). The edge answers S_k = P(z > e_k) give a CDF
+F_k = 1 - S_k made monotone by a cumulative max over the sorted edges; bins 1..11 = diff([0, F, 1]).
 No Jev output is ever a training label.
 """
 from __future__ import annotations
@@ -45,7 +44,6 @@ CLIENT_VERSION = "jev_client/v1"
 VERSIONED = re.compile(r"^jev-\d+\.\d+\.\d+$")
 REPEATS = 3
 FINITE_EDGES = tuple(float(e) for e in EDGES[1:-1])  # 10 interior edges, increasing
-INERT_Q = "inert"
 
 
 class JevError(RuntimeError):
@@ -66,7 +64,6 @@ class JevConfig:
     model: str                      # a versioned model ID, e.g. "jev-1.14.0"
     base_url: str = BASE_URL
     repeats: int = REPEATS
-    include_inert: bool = True
     timeout_s: float = 60.0
     log_root: Path = field(default=REPO / "results" / "track_p" / "jev")
 
@@ -77,15 +74,9 @@ class JevConfig:
             raise JevError("repeats must be >= 1")
 
 
-def questions(include_inert: bool = True) -> dict:
-    """The Noul questions of one state: one per finite bin edge (+ the inert bin)."""
+def questions() -> dict:
+    """The 10 Noul questions of one state: one per finite bin edge."""
     qs = {}
-    if include_inert:
-        qs[INERT_Q] = {"type": "noul",
-                       "instructions": "Does the proposed edit leave the active configuration unchanged (a no-op)?",
-                       "criteria": {"true": "Only inactive keys change, or the edit returns to the incumbent's active "
-                                            "configuration, so the metric cannot change.",
-                                    "false": "The edit changes the active configuration."}}
     for k, e in enumerate(FINITE_EDGES, start=1):
         qs[edge_name(k)] = {"type": "noul",
                             "instructions": (f"Will this proposed edit change the validation metric by more than "
@@ -103,22 +94,20 @@ def state_text(prompt: DecisionPrompt) -> str:
 
 
 def request_body(prompt: DecisionPrompt, cfg: JevConfig) -> dict:
-    return {"model": cfg.model, "state": state_text(prompt), "questions": questions(cfg.include_inert)}
+    return {"model": cfg.model, "state": state_text(prompt), "questions": questions()}
 
 
-def bins_from_answers(answers: dict, include_inert: bool = True) -> np.ndarray:
+def bins_from_answers(answers: dict) -> np.ndarray:
     """12-bin distribution from Noul answers (monotone CDF by cumulative max over the sorted edges)."""
     try:
         s = np.array([float(answers[edge_name(k)]["noul"]) for k in range(1, len(FINITE_EDGES) + 1)])
-        p0 = float(answers[INERT_Q]["noul"]) if include_inert else 0.0
     except (KeyError, TypeError, ValueError) as exc:
         raise JevError(f"incomplete or malformed answers: {exc}") from exc
-    if not (np.all((s >= 0) & (s <= 1)) and 0 <= p0 <= 1):
+    if not np.all((s >= 0) & (s <= 1)):
         raise JevError("noul probabilities outside [0, 1]")
     cdf = np.maximum.accumulate(1.0 - s)
     p = np.zeros(N_BINS)
-    p[0] = p0
-    p[1:] = (1.0 - p0) * np.diff(np.concatenate([[0.0], cdf, [1.0]]))
+    p[1:] = np.diff(np.concatenate([[0.0], cdf, [1.0]]))
     return p
 
 
@@ -177,7 +166,7 @@ class JevClient:
         return resp
 
     def forecast(self, prompt: DecisionPrompt) -> dict:
-        reps = [bins_from_answers(self.call(prompt, r)["answers"], self.cfg.include_inert)
+        reps = [bins_from_answers(self.call(prompt, r)["answers"])
                 for r in range(self.cfg.repeats)]
         arr = np.stack(reps)
         return {"probs": arr.mean(axis=0).tolist(), "repeats": arr.tolist(),

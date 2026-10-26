@@ -11,6 +11,11 @@ Checkpoints are written every ¼ epoch (spec §6.1 "evaluation every ¼ epoch") 
 latest complete checkpoint and continues at the next step; the data order is a pure function of (seed, epoch), so
 no completed step is repeated and an interrupted run ends with the same parameters as an uninterrupted one (CPU,
 deterministic kernels).
+
+Early stopping (``early_stop_patience``; E0 protocol of 26 Oct, spec §6.1): every evaluation reports
+``early_stop_metric`` (lower is better); an improvement saves the model to ``best/`` (with ``best.json``), and
+``patience`` evaluations without one end the run. At the end the best model is loaded back, so the trainer
+returns the selected checkpoint, not the last. ``keep_checkpoints`` prunes older step checkpoints.
 """
 from __future__ import annotations
 
@@ -39,11 +44,16 @@ class TrainConfig:
     grad_accum: int = 2                # effective batch = batch_size * grad_accum (spec §6.1: 16)
     lr: float = 1e-4                   # adapter lr (spec §4: 2e-5 from a released adapter, 1e-4 fresh LoRA)
     head_lr: float = 1e-3              # new heads
+    token_lr: float | None = None      # new token rows of the bin-token family (R1-TOKEN-INIT); None: ``lr``
     warmup_frac: float = 0.05
     weight_decay: float = 0.0
     max_grad_norm: float = 1.0
     eval_every_frac: float = 0.25
     checkpoint_every_frac: float = CHECKPOINT_FRACTION
+    eval_every_steps: int | None = None   # overrides eval_every_frac
+    early_stop_patience: int | None = None
+    early_stop_metric: str = "val_rps"
+    keep_checkpoints: int | None = None
     extra: dict = field(default_factory=dict)
 
     def digest(self) -> str:
@@ -93,12 +103,14 @@ class Trainer:
     examples, each a dict with at least ``"prompt"`` (a DecisionPrompt) — targets stay in the row for ``loss_fn``;
     ``evaluate(model) -> dict`` (optional) runs every ``eval_every_frac`` epoch and at the end.
 
-    ``head_params``: parameters trained at ``head_lr`` (new heads); every other trainable parameter takes ``lr``.
+    ``head_params``: parameters trained at ``head_lr`` (new heads); ``token_params`` at ``token_lr``; every other
+    trainable parameter takes ``lr``.
     ``stop_after``: test hook — stop (without a final checkpoint) after this many optimizer steps, as a kill would.
     """
 
     def __init__(self, model, rows: Sequence[dict], loss_fn, cfg: TrainConfig, run_dir: Path | str, *,
-                 head_params: Sequence[torch.nn.Parameter] = (), evaluate: Callable | None = None,
+                 head_params: Sequence[torch.nn.Parameter] = (), token_params: Sequence[torch.nn.Parameter] = (),
+                 evaluate: Callable | None = None,
                  log: Callable[[str], None] = print, purpose: str = "train") -> None:
         from r1.c3.train.run import guard_rows
         # evaluation-seed columns (7006-7010) never reach training (RUNBOOK Track P §0)
@@ -106,9 +118,12 @@ class Trainer:
         self.run_dir = Path(run_dir)
         self.evaluate, self.log = evaluate, log
         head_ids = {id(p) for p in head_params}
+        token_ids = {id(p) for p in token_params} - head_ids
         params = [p for p in model.trainable_parameters() if p.requires_grad]
-        groups = [{"params": [p for p in params if id(p) not in head_ids], "lr": cfg.lr},
-                  {"params": [p for p in params if id(p) in head_ids], "lr": cfg.head_lr}]
+        groups = [{"params": [p for p in params if id(p) not in head_ids | token_ids], "lr": cfg.lr},
+                  {"params": [p for p in params if id(p) in head_ids], "lr": cfg.head_lr},
+                  {"params": [p for p in params if id(p) in token_ids],
+                   "lr": cfg.lr if cfg.token_lr is None else cfg.token_lr}]
         groups = [g for g in groups if g["params"]]
         if not groups:
             raise ValueError("model has no trainable parameters")
@@ -120,8 +135,9 @@ class Trainer:
         self.sched = torch.optim.lr_scheduler.LambdaLR(
             self.opt, cosine_lambda(self.total_steps, int(cfg.warmup_frac * self.total_steps)))
         self.ckpt_every = max(1, round(self.steps_per_epoch * cfg.checkpoint_every_frac))
-        self.eval_every = max(1, round(self.steps_per_epoch * cfg.eval_every_frac))
+        self.eval_every = cfg.eval_every_steps or max(1, round(self.steps_per_epoch * cfg.eval_every_frac))
         self.step = 0
+        self.best = None                  # {"step", "value", "bad"}: early-stopping state (persisted in best.json)
 
     # ------------------------------------------------------------------ checkpoints
     def _ckpt_dir(self, step: int) -> Path:
@@ -139,12 +155,33 @@ class Trainer:
         tmp.mkdir(parents=True)
         record = self.model.save(tmp / "model")
         torch.save({"step": self.step, "opt": self.opt.state_dict(), "sched": self.sched.state_dict(),
-                    "rng": _rng_state(), "cfg_digest": self.cfg.digest()}, tmp / "trainer_state.pt")
+                    "rng": _rng_state(), "cfg_digest": self.cfg.digest(), "best": self.best},
+                   tmp / "trainer_state.pt")
         files = {"trainer_state.pt": sha256_file(tmp / "trainer_state.pt"), **record.get("files", {})}
         (tmp / "COMPLETE").write_text(json.dumps({"step": self.step, "sha256": files}, sort_keys=True))
         shutil.rmtree(d, ignore_errors=True)
         tmp.rename(d)
+        if self.cfg.keep_checkpoints:
+            done = sorted(p for p in d.parent.glob("step_*") if (p / "COMPLETE").is_file())
+            for old in done[:-self.cfg.keep_checkpoints]:
+                shutil.rmtree(old, ignore_errors=True)
         return d
+
+    def _early_stop_update(self, record: dict) -> bool:
+        """Track the best evaluation; save it to ``best/``. True when patience is exhausted."""
+        value = float(record[self.cfg.early_stop_metric])
+        if self.best is None or value < self.best["value"]:
+            best_dir = self.run_dir / "best"
+            tmp = best_dir.with_name("best.tmp")
+            shutil.rmtree(tmp, ignore_errors=True)
+            self.model.save(tmp)
+            shutil.rmtree(best_dir, ignore_errors=True)
+            tmp.rename(best_dir)
+            self.best = {"step": self.step, "value": value, "bad": 0}
+            (self.run_dir / "best.json").write_text(json.dumps(self.best, sort_keys=True))
+        else:
+            self.best["bad"] += 1
+        return self.best["bad"] >= self.cfg.early_stop_patience
 
     def resume(self) -> int:
         """Load the latest complete checkpoint (if any); returns the step it ends at."""
@@ -163,6 +200,7 @@ class Trainer:
         _set_rng_state(state["rng"])
         self.step = int(state["step"])
         self._truncate_metrics(self.step)
+        self.best = state.get("best")
         self.log(f"resumed from {d} at step {self.step}")
         return self.step
 
@@ -196,7 +234,9 @@ class Trainer:
         self.resume()
         self.model.train() if hasattr(self.model, "train") else None
         start = self.step
-        while self.step < self.total_steps:
+        exhausted = lambda: bool(self.cfg.early_stop_patience and self.best  # noqa: E731
+                                 and self.best["bad"] >= self.cfg.early_stop_patience)
+        while self.step < self.total_steps and not exhausted():
             if stop_after is not None and self.step - start >= stop_after:
                 return {"stopped_at": self.step, "completed": False}
             t0 = time.perf_counter()
@@ -219,9 +259,23 @@ class Trainer:
             self._write({"kind": "step", "step": self.step, "loss": total_loss, "grad_norm": gnorm,
                          "lr": lr_used, "step_s": time.perf_counter() - t0})
             last = self.step == self.total_steps
+            stop = False
             if self.evaluate is not None and (self.step % self.eval_every == 0 or last):
-                self._write({"kind": "eval", "step": self.step, **self.evaluate(self.model)})
+                record = {"kind": "eval", "step": self.step, **self.evaluate(self.model)}
+                self._write(record)
+                if self.cfg.early_stop_patience:
+                    stop = self._early_stop_update(record)
                 self.model.train() if hasattr(self.model, "train") else None
-            if self.step % self.ckpt_every == 0 or last:
+            if self.step % self.ckpt_every == 0 or last or stop:
                 self.save_checkpoint()
-        return {"stopped_at": self.step, "completed": True, "checkpoint": str(self.latest_checkpoint())}
+            if stop:
+                self._write({"kind": "early_stop", "step": self.step, "best": self.best})
+                break
+        out = {"stopped_at": self.step, "completed": True, "checkpoint": str(self.latest_checkpoint())}
+        if self.cfg.early_stop_patience:
+            if self.best is None:
+                raise RuntimeError("early stopping configured but no evaluation ran")
+            self.model.load(self.run_dir / "best")
+            out.update({"best_step": self.best["step"], "best_value": self.best["value"],
+                        "early_stopped": self.step < self.total_steps})
+        return out

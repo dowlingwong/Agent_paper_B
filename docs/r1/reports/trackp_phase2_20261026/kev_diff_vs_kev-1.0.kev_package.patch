@@ -1,0 +1,385 @@
+diff --git a/kev/benchmark.py b/kev/benchmark.py
+index ada8cc1..c236c2c 100644
+--- a/kev/benchmark.py
++++ b/kev/benchmark.py
+@@ -20,7 +20,7 @@ from kev.api import question_keys, with_date_facts
+ from kev.checkpoint import LoadOptions
+ from kev.contrastive import paired_flip
+ from kev.data import api_request, load_records
+-from kev.device import default_device
++from kev.device import DEVICE_HELP, DEVICES, select
+ from kev.metrics import EPSILON, grouped_metrics, metrics, unknowable_report
+ from kev.model import ROW_PASS_TOKENS, ContextOverflow
+ from kev.predictors import LocalPredictor, RemotePredictor, RotationAveraged
+@@ -177,7 +177,8 @@ def main():
+     ap.add_argument("--suite", help="frozen suite directory (scores its development partition)")
+     ap.add_argument("--data", help="your own labelled requests, one JSON object per line (kev.data.load_records); an alternative to --suite")
+     ap.add_argument("--out", required=True)
+-    ap.add_argument("--device", choices=["cpu", "mps", "cuda"], default=default_device())
++    ap.add_argument("--device", choices=("auto", *DEVICES), default="auto",
++                    help="device for a local checkpoint; " + DEVICE_HELP + " (ignored with --remote)")
+     ap.add_argument("--allow-test", action="store_true")
+     ap.add_argument("--split", choices=["development", "calibration", "train"], default="development",
+                     help="suite partition to score (train: teacher predictions for distillation; --allow-test reads the locked test instead)")
+@@ -188,6 +189,10 @@ def main():
+     if a.rotations < 1: ap.error("--rotations must be >= 1")
+     if a.remote_concurrency < 1: ap.error("--remote-concurrency must be >= 1")
+     if bool(a.suite) == bool(a.data): ap.error("give exactly one of --suite or --data")
++    if not a.remote:
++        opts = LoadOptions.from_env()
++        # None is the fp32 scoring path (LoadOptions.dtype). Probe the precision the checkpoint will actually run in.
++        a.device = select(a.device) if opts.dtype is None else select(a.device, dtype=opts.dtype)
+     if a.data:
+         records, heldout, split, source_hash = load_records(a.data), [], "custom", digest(Path(a.data))
+         context, skip_overlong = CONTEXT, True
+@@ -199,7 +204,7 @@ def main():
+         context, skip_overlong = manifest.get("context", CONTEXT), bool(manifest.get("eval_only"))
+     if a.date_facts:
+         records = [{**r, "state": with_date_facts(r["state"])} for r in records]
+-    predictor = RemotePredictor(a.remote, a.remote_model, os.environ.get("KEV_REMOTE_API_KEY", "local"), concurrency=a.remote_concurrency) if a.remote else LocalPredictor(a.run, a.device, LoadOptions.from_env(), context=context)
++    predictor = RemotePredictor(a.remote, a.remote_model, os.environ.get("KEV_REMOTE_API_KEY", "local"), concurrency=a.remote_concurrency) if a.remote else LocalPredictor(a.run, a.device, opts, context=context)
+     scorer = RotationAveraged(predictor, a.rotations) if a.rotations > 1 else predictor
+     report, _ = evaluate_records(records, scorer, a.out, heldout_sources=tuple(heldout), skip_overlong=skip_overlong)
+     report.update(suite_sha256=source_hash, data=a.data, date_facts=a.date_facts, rotations=a.rotations, run=a.run or a.remote, split=split,
+diff --git a/kev/checkpoint.py b/kev/checkpoint.py
+index c066955..2724624 100644
+--- a/kev/checkpoint.py
++++ b/kev/checkpoint.py
+@@ -28,6 +28,7 @@ import torch
+ from .model import DecisionModel, is_hybrid, load_tokenizer, pad_id
+ 
+ HUB_ID = re.compile(r"[\w.-]+/[\w.-]+(@[\w.-]+)?")
++MTIME_FLOOR = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc).timestamp()   # older file times are zeroed, not dates (Checkpoint.release_date)
+ 
+ 
+ def is_hub_id(run):
+@@ -199,8 +200,11 @@ class Checkpoint:
+         return hashlib.sha256("".join(f"{p.name}:{digest(p)}\n" for p in self.shards()).encode()).hexdigest()
+ 
+     def release_date(self):
+-        """ISO date for the TypeSafe model card: the Hub commit date for a Hub checkpoint (falls back to the cached file's
+-        date offline), the time head.pt was written for a local run."""
++        """ISO date for the TypeSafe model card: the Hub commit date for a Hub checkpoint. For a local run, or a Hub
++        checkpoint offline (its cached files), the UTC date head.pt was written, else the newest of the checkpoint's
++        files, else "unknown". An mtime before 2000 is not a date: archives zero it for reproducibility (Kev 1.0's first
++        release tarballs did), and it reads as 1970-01-01 (1969-12-31 west of UTC). scripts/build_release_assets.py stamps
++        the release date instead."""
+         if is_hub_id(self.requested):
+             from huggingface_hub import HfApi
+             repo, _, revision = self.requested.partition("@")
+@@ -208,7 +212,9 @@ class Checkpoint:
+                 return HfApi().model_info(repo, revision=revision or None).last_modified.date().isoformat()
+             except Exception:
+                 pass
+-        return datetime.date.fromtimestamp(self.file("head.pt").stat().st_mtime).isoformat()
++        files = sorted((p.stat().st_mtime for p in Path(self.path).iterdir() if p.is_file()), reverse=True)
++        stamp = next((t for t in [self.file("head.pt").stat().st_mtime, *files] if t >= MTIME_FLOOR), None)
++        return "unknown" if stamp is None else datetime.datetime.fromtimestamp(stamp, datetime.timezone.utc).date().isoformat()
+ 
+     def hybrid_base(self):
+         """Whether the backbone has Gated DeltaNet layers (Qwen3.5), read from a config without loading weights: the base's
+diff --git a/kev/compare.py b/kev/compare.py
+index dbeea3f..4750534 100644
+--- a/kev/compare.py
++++ b/kev/compare.py
+@@ -23,8 +23,9 @@ def none_diagnostics(rows):
+     for variant in ("none_present", "none_absent"):
+         subset = [r for r in rows if r["variant"] == variant]
+         values = [r["p"][r["keys"].index("none_of_these")] for r in subset]
+-        out[variant] = {"n": len(values), "mean_p_none": float(np.mean(values)),
+-                        "p_none_above_half": float(np.mean(np.array(values) > .5))}
++        # No observations means an undefined diagnostic, not a measured zero.
++        out[variant] = {"n": len(values), "mean_p_none": float(np.mean(values)) if values else None,
++                        "p_none_above_half": float(np.mean(np.array(values) > .5)) if values else None}
+     return out
+ 
+ 
+diff --git a/kev/device.py b/kev/device.py
+index f01f702..df0c2b2 100644
+--- a/kev/device.py
++++ b/kev/device.py
+@@ -1,9 +1,98 @@
+ """The accelerator this process uses: cuda, then mps, then cpu."""
++import math
++import os
++import subprocess
++import sys
++import warnings
++from pathlib import Path
++
++# This file is the probe child (`python kev/device.py`). A native crash inside torch's import must not dump a core
++# into the caller's directory (issue #170). The limit is set before the import; importing this module as kev.device is not the child.
++if __name__ == "__main__" and os.name == "posix":
++    import resource
++    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
++
+ import torch
+ 
++DEVICES = ("cpu", "cuda", "mps")
++# The child prints one line with this prefix. ROCm and other wheels write startup text to stdout around it;
++# a bare "cuda" line in that text is not a result.
++PROBE_PREFIX = "kev-device "
++DEVICE_HELP = ("auto probes in a child process and falls back to cpu (CUDA/ROCm first, then MPS; "
++               "each probe waits KEV_DEVICE_PROBE_TIMEOUT seconds, default 30); "
++               "an explicit accelerator fails closed; cpu skips discovery")
++
+ 
+ def default_device():
+-    return "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
++    return select()
++
++
++def probe_timeout():
++    """Seconds one probe may run. KEV_DEVICE_PROBE_TIMEOUT overrides the default; auto may run two (CUDA, then MPS)."""
++    raw = os.environ.get("KEV_DEVICE_PROBE_TIMEOUT", "30")
++    try:
++        timeout = float(raw)
++    except ValueError:
++        raise ValueError(f"KEV_DEVICE_PROBE_TIMEOUT must be a positive number of seconds; got {raw!r}") from None
++    if not math.isfinite(timeout) or timeout <= 0:
++        raise ValueError(f"KEV_DEVICE_PROBE_TIMEOUT must be a positive number of seconds; got {raw!r}")
++    return timeout
++
++
++def select(device="auto", *, dtype=torch.float32, timeout=None):
++    """Resolve a device before loading weights. A fresh interpreter contains native driver crashes.
++
++    Explicit CPU never inspects accelerators. Auto tries CUDA/ROCm and, if that probe fails, MPS, then falls back to CPU.
++    An explicit accelerator fails closed. This tests one allocation/matmul/sync, not every model kernel or whether the checkpoint fits.
++    """
++    if device != "auto" and device not in DEVICES:
++        raise ValueError(f"unsupported device {device!r}; choose auto or one of {DEVICES}")
++    if device == "cpu":
++        return device
++    if timeout is None:
++        timeout = probe_timeout()
++    failures = []
++    for attempt in (("auto", "mps") if device == "auto" else (device,)):
++        try:
++            return _run_probe(attempt, dtype, timeout)
++        except (OSError, subprocess.SubprocessError, ValueError) as error:
++            failures.append((attempt, error))
++    message = "Device probe failed (" + "; ".join(f"{attempt}: {_probe_detail(error)}" for attempt, error in failures) + ")."
++    if device != "auto":
++        raise RuntimeError(f"{message} Fix the accelerator runtime or pass --device cpu.") from failures[-1][1]
++    warnings.warn(f"{message} Falling back to CPU; pass --device cpu to skip probing. "
++                  "CPU defaults to fp32; KEV_DTYPE=bf16 reduces serving weight memory.", RuntimeWarning, stacklevel=2)
++    return "cpu"
++
++
++def _probe_detail(error):
++    detail = str(error)
++    if isinstance(error, subprocess.CalledProcessError) and (stderr := (error.stderr or "").strip()):
++        detail += f": {stderr.splitlines()[-1]}"
++    return detail
++
++
++def _run_probe(device, dtype, timeout):
++    result = subprocess.run([sys.executable, str(Path(__file__).resolve()), device, str(dtype).removeprefix("torch.")],
++                            capture_output=True, text=True, errors="replace", timeout=timeout, check=True)
++    reported = [line[len(PROBE_PREFIX):].strip() for line in result.stdout.splitlines() if line.startswith(PROBE_PREFIX)]
++    resolved = reported[-1] if reported else ""
++    if resolved not in DEVICES or (device != "auto" and resolved != device):
++        tail = next((line.strip() for line in reversed(result.stdout.splitlines()) if line.strip()), "")
++        raise ValueError(f"unexpected probe result {(resolved or tail)!r}")
++    return resolved
++
++
++def _probe(device, dtype):
++    """Child-process entry point: no accelerator operations from here may run in the selecting process."""
++    if device == "auto":
++        device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
++    if device != "cpu":
++        with torch.no_grad():
++            matrix = torch.ones(8, 8, device=device, dtype=dtype)
++            matrix @ matrix
++            sync(device)
++    return device
+ 
+ 
+ def sync(device):
+@@ -28,3 +117,7 @@ def allocated_bytes(device):
+     if device == "mps": return torch.mps.current_allocated_memory()
+     if device == "cuda": return torch.cuda.max_memory_allocated()
+     return 0
++
++
++if __name__ == "__main__":
++    print(PROBE_PREFIX + _probe(sys.argv[1], getattr(torch, sys.argv[2])), flush=True)
+diff --git a/kev/evaluate.py b/kev/evaluate.py
+index 703f5f5..fe1c1a1 100644
+--- a/kev/evaluate.py
++++ b/kev/evaluate.py
+@@ -14,7 +14,7 @@ import torch
+ import torch.nn.functional as F
+ from .checkpoint import Checkpoint, LoadOptions
+ from .data import NONE_OPTIONS, build, augment, materialize, DISTRACTORS
+-from .device import default_device, empty_cache, sync
++from .device import DEVICE_HELP, DEVICES, empty_cache, select, sync
+ from .metrics import ece
+ from .suite import write_json
+ 
+@@ -187,9 +187,11 @@ def main():
+     ap.add_argument("--n_per_source", type=int, default=150)
+     ap.add_argument("--baseline", action="store_true", help="zero-shot letter-logit baseline from the base model")
+     ap.add_argument("--baseline_instruct", default="", help="e.g. Qwen/Qwen2.5-0.5B-Instruct: chat-template letter-logit baseline")
++    ap.add_argument("--device", choices=("auto", *DEVICES), default="auto", help=DEVICE_HELP)
+     ap.add_argument("--seed", type=int, default=1)
+     a = ap.parse_args()
+-    dev = default_device()
++    opts = LoadOptions.from_env()
++    dev = select(a.device) if opts.dtype is None else select(a.device, dtype=opts.dtype)
+     rng = random.Random(a.seed)
+     reqs = build(a.n_per_source, "test", a.seed)
+     ck = Checkpoint(a.run)
+@@ -199,7 +201,7 @@ def main():
+     if a.baseline_instruct:
+         out["baseline_zero_shot_instruct"] = baseline_letter_logits(a.baseline_instruct, reqs, dev, random.Random(a.seed), chat=True); print(json.dumps(out["baseline_zero_shot_instruct"], indent=1), flush=True)
+     empty_cache(dev)
+-    tok, model = ck.load(dev, LoadOptions.from_env())
++    tok, model = ck.load(dev, opts)
+     for name, fn in [("accuracy_calibration", lambda: test_accuracy(tok, model, reqs, random.Random(a.seed))),
+                      ("temperature_scaling", lambda: test_temperature(tok, model, reqs, random.Random(a.seed))),
+                      ("permutation", lambda: test_permutation(tok, model, reqs[:150], rng)),
+diff --git a/kev/experiment.py b/kev/experiment.py
+index 1a9eee5..7881c02 100644
+--- a/kev/experiment.py
++++ b/kev/experiment.py
+@@ -28,7 +28,7 @@ import torch
+ 
+ from kev.benchmark import evaluate_records
+ from kev.checkpoint import LoadOptions
+-from kev.device import default_device, empty_cache
++from kev.device import DEVICE_HELP, DEVICES, empty_cache, select
+ from kev.full_ft import snapshot_fractions, too_many_snapshots
+ from kev.metrics import fit_temperature, paired_bootstrap
+ from kev.model import MAX_STATE, MAX_TRAIN_STATE
+@@ -433,7 +433,8 @@ def main():
+     ap.add_argument("--out", required=True)
+     ap.add_argument("--existing", nargs="*", default=[])
+     ap.add_argument("--wait-pid", type=int)
+-    ap.add_argument("--device", choices=["cpu", "mps", "cuda"], default=default_device())
++    ap.add_argument("--device", choices=("auto", *DEVICES), default="auto",
++                    help="device for local trials; " + DEVICE_HELP + " (not used by --aggregate or --dry-run)")
+     ap.add_argument("--dry-run", action="store_true")
+     ap.add_argument("--aggregate", action="store_true", help="rank an existing study directory (e.g. after Modal trials)")
+     ap.add_argument("--transfer", help="eval-only suite whose development partition is scored for every trial (out-of-domain check)")
+@@ -444,6 +445,7 @@ def main():
+         aggregate(a.out); return
+     if a.resume:
+         if not a.suite: ap.error("--suite is required with --resume")
++        a.device = select(a.device)
+         suite = Path(a.suite).resolve()
+         for directory in sorted(Path(a.out).iterdir()):
+             if (directory / "result.json").exists() or not (directory / "provenance.json").exists(): continue
+@@ -463,6 +465,7 @@ def main():
+     if a.dry_run:
+         print(json.dumps({"trials": trials, "existing": a.existing, "suite_sha256": digest(suite / "manifest.json"), "locked_test": "not read"}, indent=2))
+         return
++    a.device = select(a.device)
+     expected_sources = source_hashes()
+     with study_lock():
+         if a.wait_pid:
+diff --git a/kev/serve.py b/kev/serve.py
+index c2789e3..647a1ee 100644
+--- a/kev/serve.py
++++ b/kev/serve.py
+@@ -8,8 +8,8 @@ under several option orders) and POST /v1/systemone/separate (each question in i
+ comparison). KEV_PREFIX_CACHE / KEV_PREFIX_MIN_TOKENS / KEV_PREFIX_MAX_TOKENS size the state-prefix cache; KEV_DATE_FACTS=1 opts into the
+ date preprocessing (api.with_date_facts). A state over kev.model.SERVE_MAX_STATE tokens is refused with a 422 (kev.model.admit);
+ KEV_TRUNCATE_STATES=1 reads its first SERVE_MAX_STATE tokens instead, and then every response says whether it did. Backend
+-and precision follow LoadOptions (KEV_BACKEND, KEV_DTYPE, ...): on Apple Silicon the hybrid Qwen3.5 checkpoints run on MLX
+-by default, elsewhere on torch in bf16.
++and precision follow LoadOptions (KEV_BACKEND, KEV_DTYPE, ...): on Apple Silicon a hybrid checkpoint runs on MLX
++by default, without a torch MPS probe, elsewhere on torch in bf16.
+ """
+ import argparse, asyncio, atexit, hmac, os, queue, random, sys, threading, time, traceback, uuid
+ from concurrent.futures import Future
+@@ -20,8 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
+ from fastapi.responses import JSONResponse
+ from pydantic import BaseModel, Field
+ from .api import SystemOneRequest, to_record, to_answers, output_tokens, with_date_facts
+-from .checkpoint import Checkpoint, LoadOptions, fused_available, is_hub_id
+-from .device import default_device, empty_cache, out_of_memory, sync
++from .checkpoint import Checkpoint, LoadOptions, fused_available, is_hub_id, mlx_available
++from .device import DEVICE_HELP, DEVICES, empty_cache, out_of_memory, select, sync
+ from .model import SERVE_MAX_STATE, ContextOverflow, admit
+ 
+ PREFIX_CACHE_SIZE = int(os.environ.get("KEV_PREFIX_CACHE", "4"))          # states kept (KV + DeltaNet states; attention-only backbones also the state's hidden states); 0 disables
+@@ -312,24 +312,39 @@ def models():
+     return {"models": [{"name": name, **card} for name in MODEL_NAMES]}
+ 
+ 
++def _serving_device(requested, opts, run):
++    """Device and checkpoint for this process. A hybrid checkpoint on Apple Silicon with the MLX backend does not consult
++    the torch MPS probe. Everywhere else the probe runs before the checkpoint is opened, so a driver crash stays in the child."""
++    probe_dtype = opts.dtype or torch.bfloat16
++    mlx_candidate = (sys.platform == "darwin" and requested in ("auto", "mps") and opts.backend in ("auto", "mlx")
++                     and opts.dtype is not torch.float32)
++    if mlx_candidate:
++        ck = Checkpoint(run)
++        if mlx_available() and ck.hybrid_base():
++            return "mps", ck
++        return select(requested, dtype=probe_dtype), ck
++    return select(requested, dtype=probe_dtype), Checkpoint(run)
++
++
+ def main():
+     ap = argparse.ArgumentParser()
+     ap.add_argument("--run", default="runs/kev")
+     ap.add_argument("--fallback", default="runs/smoke")
+     ap.add_argument("--host", default="127.0.0.1", help="interface to bind; 0.0.0.0 to serve beyond this machine (a container, a VM behind a proxy)")
+     ap.add_argument("--port", type=int, default=8008)
++    ap.add_argument("--device", choices=("auto", *DEVICES), default="auto", help=DEVICE_HELP)
+     a = ap.parse_args()
+     run = a.run if is_hub_id(a.run) or os.path.exists(f"{a.run}/head.pt") else a.fallback
+     if run != a.run: print(f"{a.run} not found, falling back to {run}")
+-    dev = default_device()
+     opts = LoadOptions.from_env()
++    if opts.backend is None: opts = replace(opts, backend="auto")   # serving default: MLX for the hybrid Qwen3.5 checkpoints on Apple Silicon (LoadOptions.backend); KEV_BACKEND=torch to decline
++    dev, ck = _serving_device(a.device, opts, run)
+     if dev == "mps" and opts.attn is None: opts = replace(opts, attn="sdpa")   # serving default on Apple GPUs (parity measured)
+     if dev != "cpu" and opts.dtype is None: opts = replace(opts, dtype=torch.bfloat16)   # serving default: 2-4.5x faster than fp32 on an L4, same answers (LoadOptions.dtype); KEV_DTYPE=fp32 for the exact path
+-    if dev == "cuda" and opts.cuda_graphs is None: opts = replace(opts, cuda_graphs=True)   # serving default: a pass is ~2,000 kernel launches, so replaying graphs cuts warm latency several-fold (kev.cuda_graphs); KEV_CUDA_GRAPHS=0 to decline
+-    fused_default = dev == "cuda" and opts.fused is None
++    cuda_optimizations = dev == "cuda" and torch.version.hip is None   # these serving paths are measured on NVIDIA
++    if cuda_optimizations and opts.cuda_graphs is None: opts = replace(opts, cuda_graphs=True)   # serving default: a pass is ~2,000 kernel launches, so replaying graphs cuts warm latency several-fold (kev.cuda_graphs); KEV_CUDA_GRAPHS=0 to decline
++    fused_default = cuda_optimizations and opts.fused is None
+     if fused_default: opts = replace(opts, fused=fused_available())   # serving default: fused Qwen3.5 kernels, ~1/3 less GPU time per batch (kev.fused_qwen35), when fla is installed; KEV_FUSED=0 to decline, KEV_FUSED=1 to insist
+-    if opts.backend is None: opts = replace(opts, backend="auto")   # serving default: MLX for the hybrid Qwen3.5 checkpoints on Apple Silicon (LoadOptions.backend); KEV_BACKEND=torch to decline
+-    ck = Checkpoint(run)
+     tok, model = ck.load(dev, opts)
+     if fused_default and not opts.fused and model.hybrid: print("fused Qwen3.5 kernels off: install the flash-linear-attention version kev/fused_qwen35.py pins (FLA_VERSION) to turn them on")
+     app.state.server = Server(ck, tok, model, dev)
+diff --git a/kev/train.py b/kev/train.py
+index f72dcc4..15c8cde 100644
+--- a/kev/train.py
++++ b/kev/train.py
+@@ -18,7 +18,7 @@ import torch
+ import torch.nn.functional as F
+ from . import full_ft
+ from .checkpoint import Checkpoint, Meta, write_meta
+-from .device import allocated_bytes, default_device, empty_cache, sync
++from .device import DEVICE_HELP, DEVICES, allocated_bytes, empty_cache, select, sync
+ from .data import EVAL_ONLY, build, augment, load_records, materialize, none_pair, source_seed
+ from .suite import SYNTHETIC_SOURCES, digest, load_split, read_json, read_manifest, validate_training, write_json
+ from .model import MAX_STATE, MAX_TRAIN_STATE, DecisionModel, fits, load_tokenizer, rows_of, training_context, user_tokens
+@@ -386,7 +386,7 @@ def parse_args():
+     ap.add_argument("--focal_gamma", type=float, default=0.0, help="hard-label CE multiplier (1-p_y)^gamma; 0 is ordinary CE")
+     ap.add_argument("--suite", help="frozen suite directory; train only on its training partition")
+     ap.add_argument("--train_sources", default="", help="comma-separated subset of the suite's trainable sources (ablations); default all")
+-    ap.add_argument("--device", choices=["cpu", "mps", "cuda"], default=None)
++    ap.add_argument("--device", choices=("auto", *DEVICES), default="auto", help=DEVICE_HELP)
+     ap.add_argument("--batch", type=int, default=1, help="records per forward pass (padded batch); optimizer step every --accum micro-batches")
+     ap.add_argument("--dtype", choices=["fp32", "bf16"], default="fp32", help="bf16 = autocast forward with fp32 master weights (CUDA only)")
+     ap.add_argument("--weights_dtype", choices=["fp32", "bf16"], default="fp32", help="dtype of the frozen backbone weights. bf16 halves memory and is required by the fused MoE experts "
+@@ -522,7 +522,8 @@ def pinned_revision(a, manifest):
+ 
+ def main():
+     a = parse_args()
+-    dev = a.device or default_device()
++    # bf16 weights or autocast hit the accelerator in that dtype (the ROCm crash was the first bf16 kernel).
++    dev = select(a.device, dtype=torch.bfloat16 if a.weights_dtype == "bf16" or a.dtype == "bf16" else torch.float32)
+     rank, world = full_ft.init_distributed(dev) if a.full_ft else (0, 1)   # torchrun: each rank's "cuda" is its own GPU
+     out_dir = Path(a.out)
+     if rank: sys.stdout = open(os.devnull, "w", encoding="utf-8")   # one log: rank 0's (errors still reach stderr)

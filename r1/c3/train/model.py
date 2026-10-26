@@ -26,15 +26,19 @@ Families (spec §2.2):
   logits restricted to the bin tokens at the belief position; action = logit(<exec>) - logit(<skip>) at the action
   position, both read in one causal pass (the action position comes after the belief position, so it never changes
   the belief). The new token rows train through peft ``trainable_token_indices`` (tied embeddings: the LM head reads
-  the same rows).
+  the same rows); they start at the mean of the existing token embeddings and are kept in fp32 (cast to the model
+  dtype in the forward pass) and trained at their own lr (``token_row_parameters``; R1-TOKEN-INIT, 26 Oct).
 * ``ReasonThenBinWrapper`` (P.6): ``BinTokenWrapper`` with an ``<analysis>…</analysis>`` span (≤ 256 tokens) before the
   belief position: ``generate`` samples analyses, ``forward(batch, analyses=...)`` scores given ones teacher-forced
   and also returns their token log-probabilities. The Kev (pointer) variant needs Kev's base LM head, which
   ``kev.model`` drops; not built (raises).
 
-Belief head forms (spec §2.3): ``softmax12`` (the family's native 12 logits) and ``cumulative11`` (LayerNorm +
+Belief head forms (spec §2.3): ``softmax12`` (the family's native 12 logits), ``cumulative11`` (LayerNorm +
 Linear(hidden -> 11) on the readout state: one no-op Bernoulli plus one threshold sigmoid P(z > e_k) per finite bin edge — 10 with
-``labels.EDGES`` — made monotone by a cumulative max from the right and differenced into bins 1..11).
+``labels.EDGES`` — made monotone by a cumulative max from the right and differenced into bins 1..11) and ``linear12``
+(a fresh LayerNorm + Linear(hidden -> 12) on the readout state, the same for every family: the E0 head of the
+author's 26 Oct protocol, R1-E0-PROTOCOL). The readout state is the one the action head reads; ``forward(...,
+return_state=True)`` also returns it (``"state"``, float32) so a frozen-backbone head fit can cache it.
 """
 from __future__ import annotations
 
@@ -52,7 +56,7 @@ from r1.c3.train.types import DecisionPrompt
 
 MODEL_VERSION = "trackp_model/v1"
 FAMILIES = ("kev", "laya", "startlux", "qwen_control", "qwen_reason")
-HEAD_FORMS = ("softmax12", "cumulative11")
+HEAD_FORMS = ("softmax12", "cumulative11", "linear12")
 N_EDGES = int(np.isfinite(EDGES).sum())  # 10 finite edges between bins 1..11
 N_CUM = 1 + N_EDGES                        # cumulative-11: no-op Bernoulli + one sigmoid per finite edge
 assert N_CUM == 11
@@ -126,6 +130,8 @@ def belief_logits_from(form: str, native: torch.Tensor | None, cum: nn.Module | 
         if native is None or native.shape[-1] != N_BINS:
             raise ValueError("softmax12 needs the family's 12 native option logits")
         return native.float()
+    if form == "linear12":
+        return cum(h.float())
     p = cumulative_probs(cum(h.float()))
     return torch.log(p + LOG_EPS)   # softmax(log(p + eps)) = (p + eps) / sum: no clamp, the gradient never vanishes
 
@@ -149,6 +155,8 @@ class _Wrapper(nn.Module):
         # the logit scales with the input size (P.0 finding; spec "Linear (hidden -> 1)" plus this normalisation).
         if self.head_form == "cumulative11":
             self.heads["cumulative"] = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, N_CUM))
+        if self.head_form == "linear12":
+            self.heads["belief"] = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, N_BINS))
         if self.with_action and linear_action:
             self.heads["action"] = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, 1))
 
@@ -216,8 +224,17 @@ class _Wrapper(nn.Module):
         self.heads.load_state_dict(load_file(str(path / HEADS_FILE)), strict=True)
         return record
 
-    def _out(self, belief: torch.Tensor, action: torch.Tensor | None, **extra) -> dict:
-        return {"belief_logits": belief, "action_logit": action if self.with_action else None, **extra}
+    def _belief_head(self):
+        """The new belief head of ``cumulative11`` / ``linear12`` (None for the native ``softmax12``)."""
+        return self.heads["cumulative"] if "cumulative" in self.heads else self.heads["belief"] if "belief" in \
+            self.heads else None
+
+    def _out(self, belief: torch.Tensor, action: torch.Tensor | None, state: torch.Tensor | None = None,
+             **extra) -> dict:
+        out = {"belief_logits": belief, "action_logit": action if self.with_action else None, **extra}
+        if state is not None:
+            out["state"] = state.float()
+        return out
 
 
 # ---------------------------------------------------------------- Kev
@@ -291,7 +308,7 @@ class PointerWrapper(_Wrapper):
             where.append((r, len(recs[r]["questions"]) - 1))
         return recs, where
 
-    def forward(self, batch: Sequence[DecisionPrompt]) -> dict:
+    def forward(self, batch: Sequence[DecisionPrompt], return_state: bool = False) -> dict:
         km = self.km_mod
         recs, where = self.records(batch)
         encs = [km.encode(self.tok, r, max_state=self.ctx["max_state"], max_branch=self.ctx["max_branch"],
@@ -314,10 +331,9 @@ class PointerWrapper(_Wrapper):
                     per[b][k] = (self.kev.head(h[d], h[torch.tensor(oi, device=h.device)]), h[d])
         native = torch.stack([per[r][k][0] for r, k in where])
         hd = torch.stack([per[r][k][1] for r, k in where])
-        belief = belief_logits_from(self.head_form, native, self.heads["cumulative"] if "cumulative" in self.heads
-                                    else None, hd)
+        belief = belief_logits_from(self.head_form, native, self._belief_head(), hd)
         action = self.heads["action"](hd).squeeze(-1) if self.with_action else None
-        return self._out(belief, action)
+        return self._out(belief, action, hd if return_state else None)
 
 
 # ---------------------------------------------------------------- Laya
@@ -387,7 +403,7 @@ class LayaWrapper(HeadWrapper):
             raise ValueError(f"Laya head lost options: {len(markers)} markers, {stats['options_distinct']} distinct")
         return {"ids": ids, "markers": markers, "truncated": trunc["truncated"]}
 
-    def forward(self, batch: Sequence[DecisionPrompt]) -> dict:
+    def forward(self, batch: Sequence[DecisionPrompt], return_state: bool = False) -> dict:
         encs = [self.encode(p) for p in batch]
         L = max(len(e["ids"]) for e in encs)
         dev = self.device
@@ -401,10 +417,9 @@ class LayaWrapper(HeadWrapper):
         marker_mask = torch.ones_like(marker_pos, dtype=torch.bool)
         qtype = torch.full((len(encs),), self.lc.QTYPES["choice"], device=dev)
         native, h_new = self._core_forward(ids, att, marker_pos, marker_mask, qtype)
-        belief = belief_logits_from(self.head_form, native, self.heads["cumulative"] if "cumulative" in self.heads
-                                    else None, h_new)
+        belief = belief_logits_from(self.head_form, native, self._belief_head(), h_new)
         action = self.heads["action"](h_new.float()).squeeze(-1) if self.with_action else None
-        return self._out(belief, action, truncated=[e["truncated"] for e in encs])
+        return self._out(belief, action, h_new if return_state else None, truncated=[e["truncated"] for e in encs])
 
     def _core_forward(self, ids, att, marker_pos, marker_mask, qtype):
         """Laya's ``DecisionModel.forward`` up to the scorer, also returning the state the new heads read: the
@@ -540,7 +555,7 @@ class StartLuxWrapper(HeadWrapper):
                                       "criteria": {o: None for o in p.options}})
         return self.sp.plain_prompt(self.tok, self.sp.messages(row))
 
-    def forward(self, batch: Sequence[DecisionPrompt]) -> dict:
+    def forward(self, batch: Sequence[DecisionPrompt], return_state: bool = False) -> dict:
         rows = [self.tok.encode(self.prompt_text(p), add_special_tokens=False) for p in batch]
         L = max(len(r) for r in rows)
         dev = self.device
@@ -553,10 +568,9 @@ class StartLuxWrapper(HeadWrapper):
         last = h[torch.arange(len(rows), device=dev), valid.sum(-1) - 1].float()
         letters = self.body.get_input_embeddings()(torch.tensor(self.letter_ids, device=dev)).float()
         native = last @ letters.T
-        belief = belief_logits_from(self.head_form, native, self.heads["cumulative"] if "cumulative" in self.heads
-                                    else None, last)
+        belief = belief_logits_from(self.head_form, native, self._belief_head(), last)
         action = self.heads["action"](last).squeeze(-1) if self.with_action else None
-        return self._out(belief, action)
+        return self._out(belief, action, last if return_state else None)
 
 
 # ---------------------------------------------------------------- Qwen control
@@ -582,6 +596,7 @@ class BinTokenWrapper(_Wrapper):
         super().__init__(head_form, action_head)
         from peft import get_peft_model
         self.tok = tokenizer
+        n_vocab = len(tokenizer)
         self.token_ids = add_reserved_tokens(tokenizer)
         emb = model.get_input_embeddings()
         if max(self.token_ids.values()) >= emb.weight.shape[0]:
@@ -589,7 +604,7 @@ class BinTokenWrapper(_Wrapper):
             emb = model.get_input_embeddings()
         if not model.config.get_text_config().tie_word_embeddings:
             raise ValueError("BinTokenWrapper assumes tied embeddings (the Qwen3.5 bases tie them)")
-        self._init_token_rows(model, tokenizer)
+        self._init_token_rows(model, n_vocab)
         self.list_bins = list_bins
         self.bin_order = list(bin_order) if bin_order is not None else list(range(N_BINS))
         if sorted(self.bin_order) != list(range(N_BINS)):
@@ -598,20 +613,25 @@ class BinTokenWrapper(_Wrapper):
                           trainable_token_indices={"embed_tokens": sorted(self.token_ids.values())})
         model.requires_grad_(False)
         self.lm = get_peft_model(model, cfg)
+        for name, p in self.lm.named_parameters():   # fp32 master rows; peft casts them to the weight dtype in use
+            if "trainable_tokens_delta" in name:
+                p.data = p.data.float()
         self.bin_ids = torch.tensor([self.token_ids[t] for t in BIN_TOKENS])
         self.act_ids = torch.tensor([self.token_ids[EXEC_TOKEN], self.token_ids[SKIP_TOKEN]])
         self._add_heads(model.config.get_text_config().hidden_size, linear_action=False)
         self.to(device)
 
     @torch.no_grad()
-    def _init_token_rows(self, model, tok) -> None:
-        """Deterministic init: each new row = mean embedding of its description's tokens."""
-        from r1.c3.train.types import BIN_OPTIONS
+    def _init_token_rows(self, model, n_vocab: int) -> None:
+        """Every new row = the mean of the existing token embeddings (ids below ``n_vocab`` that are not new rows;
+        padding rows of the embedding matrix beyond the tokenizer are excluded), computed in fp32."""
         w = model.get_input_embeddings().weight
-        texts = list(BIN_OPTIONS) + ["execute the proposal", "skip the proposal"]
-        for name, text in zip(list(BIN_TOKENS) + [EXEC_TOKEN, SKIP_TOKEN], texts):
-            ids = tok.encode(text, add_special_tokens=False)
-            w[self.token_ids[name]] = w[ids].mean(0)
+        new = sorted(self.token_ids.values())
+        keep = torch.ones(min(n_vocab, w.shape[0]), dtype=torch.bool, device=w.device)
+        keep[[i for i in new if i < len(keep)]] = False
+        mean = w[:len(keep)][keep].float().mean(0)
+        for i in new:
+            w[i] = mean.to(w.dtype)
 
     def _peft(self):
         return self.lm
@@ -653,17 +673,26 @@ class BinTokenWrapper(_Wrapper):
         return out.hidden_states[-1].float(), ids
 
     def _token_rows(self, ids: torch.Tensor) -> torch.Tensor:
-        return self.lm.get_input_embeddings()(ids.to(self.device)).float()  # tied: = LM-head rows (trained values)
+        """The fp32 master rows of new tokens (tied: the LM head reads the same rows)."""
+        emb = self.lm.get_input_embeddings()
+        layer = getattr(emb, "token_adapter", emb)          # peft's TrainableTokensWrapper holds the layer
+        delta = getattr(layer, "trainable_tokens_delta", None)
+        if delta is not None and "default" in delta:
+            index = {t: k for k, t in enumerate(layer.token_indices["default"])}
+            if all(int(i) in index for i in ids):
+                rows = torch.tensor([index[int(i)] for i in ids], device=delta["default"].device)
+                return delta["default"][rows].float()
+        return emb(ids.to(self.device)).float()
 
-    def forward(self, batch: Sequence[DecisionPrompt], analyses: Sequence[str] | None = None) -> dict:
+    def forward(self, batch: Sequence[DecisionPrompt], analyses: Sequence[str] | None = None,
+                return_state: bool = False) -> dict:
         segs = [self.segments(p, None if analyses is None else analyses[i]) for i, p in enumerate(batch)]
         h, ids = self._forward_ids([s[0] for s in segs])
         n = torch.arange(len(segs), device=h.device)
         hb = h[n, torch.tensor([s[1] for s in segs], device=h.device)]
         ha = h[n, torch.tensor([s[2] for s in segs], device=h.device)]
         native = hb @ self._token_rows(self.bin_ids).T
-        belief = belief_logits_from(self.head_form, native, self.heads["cumulative"] if "cumulative" in self.heads
-                                    else None, hb)
+        belief = belief_logits_from(self.head_form, native, self._belief_head(), hb)
         action = None
         if self.with_action:
             a = ha @ self._token_rows(self.act_ids).T
@@ -671,7 +700,7 @@ class BinTokenWrapper(_Wrapper):
         extra = {}
         if analyses is not None:
             extra["analysis_logprob"] = self._span_logprob(h, ids, [s[3] for s in segs])
-        return self._out(belief, action, **extra)
+        return self._out(belief, action, hb if return_state else None, **extra)
 
     def _span_logprob(self, h, ids, spans) -> torch.Tensor:
         """Sum of log p(token) over each analysis span (closing tag included), teacher-forced."""
@@ -709,20 +738,26 @@ class ReasonThenBinWrapper(BinTokenWrapper):
             out.append(self.tok.decode(new, skip_special_tokens=False))
         return out
 
-    def forward(self, batch: Sequence[DecisionPrompt], analyses: Sequence[str] | None = None) -> dict:
+    def forward(self, batch: Sequence[DecisionPrompt], analyses: Sequence[str] | None = None,
+                return_state: bool = False) -> dict:
         if analyses is None:
             raise ValueError("ReasonThenBinWrapper.forward scores given analyses; sample them with generate()")
-        return super().forward(batch, analyses)
+        return super().forward(batch, analyses, return_state)
 
 
 def new_head_parameters(model) -> list:
-    """Parameters that start untrained (spec §4: lr 1e-3): the action and cumulative heads, and the bin-token
-    family's new token rows. Released heads (Kev's pointer head, Laya's decision head) and adapters are not here:
-    they take the base's lr (2e-5 from a released checkpoint, 1e-4 for a fresh LoRA)."""
-    params = [p for name in ("action", "cumulative") if name in model.heads for p in model.heads[name].parameters()]
-    if getattr(model, "family", "") in ("qwen_control", "qwen_reason"):
-        params += [p for n, p in model.named_parameters() if "trainable_tokens" in n and p.requires_grad]
-    return params
+    """New heads that start untrained (spec §4: lr 1e-3): action, cumulative and linear12 belief heads. Released
+    heads (Kev's pointer head, Laya's decision head) and adapters take the adapter lr (one grid for every family,
+    R1-LR-GRID); the bin-token family's new token rows take their own lr (``token_row_parameters``)."""
+    return [p for name in ("action", "cumulative", "belief") if name in model.heads
+            for p in model.heads[name].parameters()]
+
+
+def token_row_parameters(model) -> list:
+    """The bin-token family's new token rows (fp32; trained at ``token_lr``, R1-TOKEN-INIT)."""
+    if getattr(model, "family", "") not in ("qwen_control", "qwen_reason"):
+        return []
+    return [p for n, p in model.named_parameters() if "trainable_tokens" in n and p.requires_grad]
 
 
 # ---------------------------------------------------------------- factory
@@ -762,4 +797,4 @@ def build_model(family: str, base, tokenizer=None, **kw):
 
 __all__ = ["BinTokenWrapper", "FAMILIES", "HEAD_FORMS", "HeadWrapper", "IntegrityError", "LayaWrapper", "PointerWrapper",
            "ReasonThenBinWrapper", "StartLuxBidirectional", "StartLuxWrapper", "build_model", "cumulative_probs",
-           "sha256_file"]
+           "new_head_parameters", "sha256_file", "token_row_parameters"]

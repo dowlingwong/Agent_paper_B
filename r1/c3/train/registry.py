@@ -36,6 +36,11 @@ PINS = {
     "startlux-4b": ("startlux-models/StartLux-Decision-v1.1-4B-Instant", "416088f77cfce09633906a3675c7cd2e5dabcf10"),
 }
 
+# Licence notes recorded with the entry (R1-STARTLUX-TRAINABLE, 26 Oct: StartLux is a trainable candidate under
+# CC BY-NC 4.0 — research use, non-commercial; noted here and in the appendix). From each repo's LICENSE / README.
+LICENCES = {k: "CC-BY-NC-4.0 (LICENSE 'Attribution-NonCommercial 4.0 International'; non-commercial research use)"
+            for k in ("startlux-0.8b", "startlux-2b", "startlux-4b")}
+
 
 class RegistryError(RuntimeError):
     pass
@@ -108,8 +113,11 @@ def verify_dir(key: str, target: Path) -> dict:
                    if p.is_file() and ".cache" not in p.parts and str(p.relative_to(target)) not in tree)
     if problems:
         raise RegistryError(f"STOP: {repo}@{rev} failed verification: {problems[:5]}")
-    return {"repo": repo, "revision": rev, "local_path": str(target), "files": files,
-            "total_bytes": sum(f["size"] for f in files.values()), "untracked_local_files": extra}
+    out = {"repo": repo, "revision": rev, "local_path": str(target), "files": files,
+           "total_bytes": sum(f["size"] for f in files.values()), "untracked_local_files": extra}
+    if key in LICENCES:
+        out["licence"] = LICENCES[key]
+    return out
 
 
 def reverify(registry_path: Path) -> list[str]:
