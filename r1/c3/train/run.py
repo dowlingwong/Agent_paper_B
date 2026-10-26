@@ -23,6 +23,7 @@ import hashlib
 import json
 import os
 import re
+import socket
 import subprocess
 from pathlib import Path
 from typing import Iterable, Iterator
@@ -264,6 +265,21 @@ def check_environment(cfg: dict, env: dict | None = None) -> dict:
     return env
 
 
+def host_record() -> dict:
+    """Host and GPU of the run (R1-ADA-OVERFLOW: every manifest records them; one GPU type per comparison table)."""
+    gpus = None
+    try:
+        res = subprocess.run(["nvidia-smi", "--query-gpu=name,compute_cap,driver_version", "--format=csv,noheader"],
+                             capture_output=True, text=True, timeout=60)
+        if res.returncode == 0:
+            gpus = [dict(zip(("name", "compute_capability", "driver"), (x.strip() for x in ln.split(","))))
+                    for ln in res.stdout.splitlines() if ln.strip()]
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return {"hostname": socket.gethostname(), "gpus": gpus,
+            "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES")}
+
+
 def run_manifest(*, subcommand: str, evidence: str, cfg: dict, seed: int, base: dict, model_files: dict,
                  data_hash: str, lease_log: list, extra: dict | None = None) -> dict:
     if evidence not in EVIDENCE_LABELS:
@@ -272,5 +288,5 @@ def run_manifest(*, subcommand: str, evidence: str, cfg: dict, seed: int, base: 
             "evidence_label": evidence, "seed": seed, "base": base, "model_files_sha256": model_files,
             "data_manifest_sha256": data_hash, "config_sha256": config_digest(cfg),
             "git": {"paper": git_commit(REPO), "harness": git_commit(harness_root())},
-            "environment": environment_record(),
+            "environment": environment_record(), "host": host_record(),
             "gpu_lease": lease_log, **(extra or {})}

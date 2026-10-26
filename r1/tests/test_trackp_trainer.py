@@ -186,6 +186,7 @@ def test_manifest_records_commits_and_hashes():
                        base={"repo": "x", "revision": "y"}, model_files={"heads.pt": "0" * 64},
                        data_hash=R.data_manifest_hash(rows(3)), lease_log=[])
     assert len(m["git"]["paper"]["commit"]) == 40 and m["evidence_label"] == "ENGINEERING_ONLY"
+    assert m["host"]["hostname"] and "gpus" in m["host"]
     with pytest.raises(ValueError):
         R.run_manifest(subcommand="spike", evidence="PILOT", cfg={}, seed=0, base={}, model_files={}, data_hash="",
                        lease_log=[])
