@@ -1,0 +1,61 @@
+{
+ "capability": [
+  8,
+  9
+ ],
+ "causal_conv1d": "1.7.0",
+ "checks": {
+  "bf16_matmul": {
+   "ms": 109.23777287825942,
+   "pass": true,
+   "rel_err_vs_fp32": 0.002874685451388359
+  },
+  "deltanet_forward_bfloat16": {
+   "argmax_agreement": 0.9975550770759583,
+   "fast_s": 17.558452819939703,
+   "finite": true,
+   "max_abs_diff_vs_torch_path": 0.3798828125,
+   "pass": false,
+   "peak_mib": 3066.22607421875,
+   "tol": 0.15,
+   "torch_path_s": 0.025542618706822395
+  },
+  "deltanet_forward_float32": {
+   "argmax_agreement": 1.0,
+   "fast_s": 28.334707414731383,
+   "finite": true,
+   "max_abs_diff_vs_torch_path": 0.029352188110351562,
+   "pass": false,
+   "peak_mib": 4478.29638671875,
+   "tol": 0.002,
+   "torch_path_s": 0.05122561799362302
+  }
+ },
+ "cuda_runtime": "12.4",
+ "device": "NVIDIA GeForce RTX 4090",
+ "fla": "0.5.2",
+ "kernels_bound": {
+  "causal_conv1d_fn": "transformers.models.qwen3_5.modeling_qwen3_5.causal_conv1d_fn",
+  "causal_conv1d_update": "transformers.models.qwen3_5.modeling_qwen3_5.causal_conv1d_update",
+  "torch_chunk_gated_delta_rule": "transformers.models.qwen3_5.modeling_qwen3_5.torch_chunk_gated_delta_rule",
+  "torch_recurrent_gated_delta_rule": "transformers.models.qwen3_5.modeling_qwen3_5.torch_recurrent_gated_delta_rule"
+ },
+ "lease": [
+  {
+   "event": "start",
+   "job": "trackp phase2 gpu smoke",
+   "pid": 1788197,
+   "utc": "2026-10-26T04:35:24Z"
+  },
+  {
+   "event": "end",
+   "job": "trackp phase2 gpu smoke",
+   "pid": 1788197,
+   "utc": "2026-10-26T04:36:11Z"
+  }
+ ],
+ "pass": false,
+ "seq_len": 409,
+ "torch": "2.6.0+cu124",
+ "transformers": "5.19.0"
+}

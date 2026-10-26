@@ -1,0 +1,68 @@
+# P.3 decision-model exam: pre-registered selection rule v1 (spec docs/r1/TRACK_P_POST_TRAINING.md §5.7).
+# Frozen: r1/c3/rules/p3_rule_v1.yaml.sha256 holds the sha256 of this file; r1/c3/train/exam_analyze.py refuses
+# any other content. Committed before any P.3b data exists. ENGINEERING_ONLY; AI-assisted (Claude).
+version: p3_rule/v1
+spec: "TRACK_P_POST_TRAINING.md §5.4-§5.7 (adopted 2026-10-26, R1-C3-POST)"
+
+# Step 1a: E0 aleatoric pass-through (spec §5.5), held-out cells, soft-label run.
+e0_pass:
+  width_slope_min: 0.7
+  mean_slope_min: 0.8
+
+# Step 1b: E4 hard limits (spec §5.7.1): OOM at 1,024 tokens, batch 8, gradient checkpointing; non-deterministic reload.
+e4_hard_limits:
+  seq_len: 1024
+  batch: 8
+  gradient_checkpointing: true
+  disqualify_on: [oom, reload_nondeterministic]
+
+# Step 1c: E6 failures are recorded; an A1 or A2 failure disables packing for that model, never disqualifies.
+e6:
+  probes: [A1, A2, A3, A4, A5]
+  disable_packing_on: [A1, A2]
+  disqualify: false
+
+# Steps 2-3: rank by E3 mean val RPS skill; paired bootstrap over instances against the top model.
+# RPS skill of a seed = 1 - mean_items(RPS_model) / mean_items(RPS_base_rate); E3 skill = mean over seeds.
+# Bootstrap: resample instances (clusters of exam-val items) with replacement, the same draw for both models;
+# difference = skill(top) - skill(other); tied iff the two-sided (1 - alpha) percentile interval includes 0.
+bootstrap:
+  resamples: 2000
+  alpha: 0.05
+  seed: 20261026
+  unit: instance
+
+# Step 4: order within the tied set, lexicographic: higher E2 probe skill, then |width ratio - 1| smaller,
+# then base before instruct, then lower E4 cost (seconds per training step at 1,024 tokens, batch 8).
+tie_breaks: [e2_probe_skill_desc, width_ratio_distance_asc, base_before_instruct, e4_cost_asc]
+
+# Step 5: finalists = the first model of the tied-set order; plus the next model in that order of a different
+# architecture class, if any. At most 2. The Qwen control is always carried (size = higher E3 skill) and never counts.
+finalists:
+  max: 2
+  second_requires_different_class: true
+
+# Architecture classes of the candidate pool (spec §5.1). Keyed by family.
+architecture_classes:
+  kev: decision_pretrained_hybrid_pointer
+  startlux: bidirectional_prompt_decoder
+  laya: encoder_proper_scoring_head
+  extra: other_le_4b
+  qwen_control: plain_causal_control
+  floor: non_llm_floor
+roles:
+  control_families: [qwen_control]
+  floor_families: [floor]
+# StartLux rung (spec §5.1, §9): pending the author's decision after P.0. Its records are excluded from the
+# finalist pool unless the input declares author_rung: trainable with the PLAN row that decided it.
+pending_author_families: [startlux]
+
+# Step 6: E7 (softmax-12 vs cumulative-11) on the finalists; higher E3 val RPS skill wins, ties -> softmax_12.
+e7:
+  forms: [softmax_12, cumulative_11]
+  default: softmax_12
+
+# Step 7: if no LLM (candidates and control, after step 1) beats the best non-LLM floor significantly on E3
+# (lower bound of the paired-bootstrap interval of skill(LLM) - skill(floor) > 0), stop and escalate.
+floor_check:
+  require_significant: true

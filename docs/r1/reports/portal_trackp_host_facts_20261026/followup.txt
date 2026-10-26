@@ -1,0 +1,131 @@
+# collected 2026-10-26T01:34:05Z
+## code repos: GitHub vs Hub
+
+$ curl -sI --max-time 10 -o /dev/null -w 'github %{http_code}\n' https://github.com/jaredpalmer/kev; curl -s -o /dev/null -w 'hub-api %{http_code}\n' https://huggingface.co/api/models/jaredpalmer/kev
+github 200
+hub-api 401
+[exit 0]
+
+$ curl -sI --max-time 10 -o /dev/null -w 'github %{http_code}\n' https://github.com/NandhaKishorM/laya; curl -s -o /dev/null -w 'hub-api %{http_code}\n' https://huggingface.co/api/models/NandhaKishorM/laya
+github 200
+hub-api 401
+[exit 0]
+
+$ curl -sI --max-time 10 -o /dev/null -w 'github %{http_code}\n' https://github.com/StartLuxLabs/StartLux-Decision; curl -s -o /dev/null -w 'hub-api %{http_code}\n' https://huggingface.co/api/models/StartLuxLabs/StartLux-Decision
+github 200
+hub-api 401
+[exit 0]
+## Kev: v1.0 vs main bytes, base revision
+
+$ curl -s https://huggingface.co/api/models/jaredpalmer/kev-0.8b/tree/main | python3 -c "import sys,json; print('jaredpalmer/kev-0.8b@main', {f['path']:(f.get('lfs') or {}).get('oid') for f in json.load(sys.stdin) if f['path'] in ('adapter_model.safetensors','head.pt')})"
+jaredpalmer/kev-0.8b@main {'adapter_model.safetensors': '9b908623acb162118575f4e7a94524f9c139c335be4bfb74d6cfceca01e1885a', 'head.pt': 'f400bd12802b2b105ae45d6b03774a158a3db4fccff42413734ddca2e5c920b6'}
+[exit 0]
+
+$ curl -s https://huggingface.co/api/models/jaredpalmer/kev-0.8b/tree/v1.0 | python3 -c "import sys,json; print('jaredpalmer/kev-0.8b@v1.0', {f['path']:(f.get('lfs') or {}).get('oid') for f in json.load(sys.stdin) if f['path'] in ('adapter_model.safetensors','head.pt')})"
+jaredpalmer/kev-0.8b@v1.0 {'adapter_model.safetensors': '9b908623acb162118575f4e7a94524f9c139c335be4bfb74d6cfceca01e1885a', 'head.pt': 'f400bd12802b2b105ae45d6b03774a158a3db4fccff42413734ddca2e5c920b6'}
+[exit 0]
+
+$ curl -sL https://huggingface.co/jaredpalmer/kev-0.8b/resolve/v1.0/training_config.json | python3 -c "import sys,json; print('base_revision', json.load(sys.stdin).get('base_revision'))"
+base_revision dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68
+[exit 0]
+
+$ curl -s https://huggingface.co/api/models/jaredpalmer/kev-4b/tree/main | python3 -c "import sys,json; print('jaredpalmer/kev-4b@main', {f['path']:(f.get('lfs') or {}).get('oid') for f in json.load(sys.stdin) if f['path'] in ('adapter_model.safetensors','head.pt')})"
+jaredpalmer/kev-4b@main {'adapter_model.safetensors': '90e817356246e7f18bfa7ca3d31794cd4fbeb3332a66a84cb51d9ceae925f2b2', 'head.pt': 'dd633435998ecc751ac538717a3742e32149500fabf7d7276287dbf0693f347c'}
+[exit 0]
+
+$ curl -s https://huggingface.co/api/models/jaredpalmer/kev-4b/tree/v1.0 | python3 -c "import sys,json; print('jaredpalmer/kev-4b@v1.0', {f['path']:(f.get('lfs') or {}).get('oid') for f in json.load(sys.stdin) if f['path'] in ('adapter_model.safetensors','head.pt')})"
+jaredpalmer/kev-4b@v1.0 {'adapter_model.safetensors': '90e817356246e7f18bfa7ca3d31794cd4fbeb3332a66a84cb51d9ceae925f2b2', 'head.pt': 'dd633435998ecc751ac538717a3742e32149500fabf7d7276287dbf0693f347c'}
+[exit 0]
+
+$ curl -sL https://huggingface.co/jaredpalmer/kev-4b/resolve/v1.0/training_config.json | python3 -c "import sys,json; print('base_revision', json.load(sys.stdin).get('base_revision'))"
+base_revision 1001bb4d826a52d1f399e183466143f4da7b741b
+[exit 0]
+
+$ curl -sI --max-time 10 -o /dev/null -w '%{http_code}\n' https://github.com/jaredpalmer/kev/releases/tag/kev-1.0
+200
+[exit 0]
+## weight download redirect (HEAD only)
+
+$ curl -sIL --max-time 20 -o /dev/null -w '%{http_code} %{url_effective}\n' https://huggingface.co/jaredpalmer/kev-0.8b/resolve/bf75a6a8848ea6960ff2ed108d9ed44c2941174f/adapter_model.safetensors | sed 's/?.*//'
+200 https://us.aws.cdn.hf.co/xet-bridge-us/6ab06f6e72cc7f47ea61c9a4/d754b58a1297f215d4d044dd31d0e763b9602d5fc41c32a94b15874312d8ae29
+[exit 0]
+## Laya: duplicate typed-decisions checkpoint
+
+$ curl -s https://huggingface.co/api/models/convaiinnovations/laya/tree/main/typed-decisions | python3 -c "import sys,json; [print('convaiinnovations/laya/tree/main/typed-decisions', f['path'], (f.get('lfs') or {}).get('oid')) for f in json.load(sys.stdin) if f['path'].endswith('safetensors')]"
+convaiinnovations/laya/tree/main/typed-decisions typed-decisions/model.safetensors 4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e
+[exit 0]
+
+$ curl -s https://huggingface.co/api/models/convaiinnovations/laya-typed-decisions/tree/main | python3 -c "import sys,json; [print('convaiinnovations/laya-typed-decisions/tree/main', f['path'], (f.get('lfs') or {}).get('oid')) for f in json.load(sys.stdin) if f['path'].endswith('safetensors')]"
+convaiinnovations/laya-typed-decisions/tree/main model.safetensors 4fa56de72383a9d3efa9cfa78955733c81b9fc8067a587ca4beb82c78107a24e
+[exit 0]
+## StartLux Instant architecture
+
+$ curl -sL https://huggingface.co/startlux-models/StartLux-Decision-v1.1-0.8B-Instant/resolve/6496ae641cc71b149ce9dad69bd97f2a44e7bf11/config.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('architectures'), d.get('model_type'))"
+['Qwen3_5ForConditionalGeneration'] qwen3_5
+[exit 0]
+
+$ curl -s https://raw.githubusercontent.com/StartLuxLabs/StartLux-Decision/main/README.md | grep -n -i -E 'vllm 0\.|cuda 1[23]'
+99:`/v1/systemone` API; v1.1 Instant models are not supported yet. Install it on Linux with Python 3.12 and a CUDA 13
+106:pip install -r requirements.txt     # PyTorch 2.14.1 for CUDA 13, Triton, nvcc 13.0
+123:[StartLux-Prism's README](https://github.com/StartLuxLabs/StartLux-Prism#readme) covers CUDA 12 drivers, several GPUs
+132:pip install -e '.[vllm]'          # vLLM 0.31.0; the published numbers were measured on 0.19.1, which is also supported
+205:| vLLM (default) | yes, with the plugin in this package | yes | vLLM 0.31 | serving, and the published numbers |
+[exit 0]
+## PyTorch wheel index (latest torch per CUDA tag)
+
+$ curl -s https://download.pytorch.org/whl/cu121/torch/ | grep -o 'torch-[0-9.]*+cu121' | sort -uV | tail -1
+torch-2.5.1+cu121
+[exit 0]
+
+$ curl -s https://download.pytorch.org/whl/cu124/torch/ | grep -o 'torch-[0-9.]*+cu124' | sort -uV | tail -1
+torch-2.6.0+cu124
+[exit 0]
+
+$ curl -s https://download.pytorch.org/whl/cu126/torch/ | grep -o 'torch-[0-9.]*+cu126' | sort -uV | tail -1
+torch-2.14.1+cu126
+[exit 0]
+
+$ curl -s https://download.pytorch.org/whl/cu128/torch/ | grep -o 'torch-[0-9.]*+cu128' | sort -uV | tail -1
+torch-2.11.0+cu128
+[exit 0]
+
+$ curl -s https://download.pytorch.org/whl/cu130/torch/ | grep -o 'torch-[0-9.]*+cu130' | sort -uV | tail -1
+torch-2.14.1+cu130
+[exit 0]
+## harness pin
+
+$ cat /home/dowling/r1_trackp/Agent_paper_B/r1/scripts/HARNESS_PIN_C3
+6afdb0e9b800933dfbb682618b8909441f0f6495
+[exit 0]
+
+$ cd /home/dowling/r1_trackp/autoresearch_harness && git fetch -q --all && git branch -r && git cat-file -t $(tr -d '[:space:]' < ../Agent_paper_B/r1/scripts/HARNESS_PIN_C3)
+  origin/HEAD -> origin/main
+  origin/main
+  origin/r1
+fatal: git cat-file: could not get object info
+[exit 128]
+
+$ gh api repos/dowlingwong/autoresearch_harness/commits/6afdb0e9b800933dfbb682618b8909441f0f6495 --jq .sha
+{"message":"No commit found for SHA: 6afdb0e9b800933dfbb682618b8909441f0f6495","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"422"}gh: No commit found for SHA: 6afdb0e9b800933dfbb682618b8909441f0f6495 (HTTP 422)
+[exit 1]
+## Track X STATUS on origin/main (first heading lines)
+
+$ cd /home/dowling/r1_trackp/Agent_paper_B && git fetch -q origin && git show origin/main:docs/r1/STATUS.md | grep '^## ' | head -5
+## 26 October 2026 — Track P agent moved onto zhixu portal (AI-assisted; documents only)
+## 26 October 2026 — Track P revised and adopted; portal agent runbook for Track P (AI-assisted; documents only)
+## 26 October 2026 — exam execution decisions; portal agent runbook (AI-assisted; documents only)
+## 25 October 2026 — Track H: DAC control interface, Mac steps H.1–H.9 (AI-assisted; ENGINEERING_ONLY / DRYRUN; reviewed and accepted 26 Oct)
+## 25 October 2026 — exam located; Tracks X, H, P added to the RUNBOOK (AI-assisted; documents only)
+[exit 0]
+## gh login, pre-session config changes (metadata only)
+
+$ gh auth status 2>&1 | grep -E 'Logged in|protocol'
+  ✓ Logged in to github.com account dowlingwong (/home/dowling/.config/gh/hosts.yml)
+  - Git operations protocol: https
+[exit 0]
+
+$ stat -c '%y %n' ~/.gitconfig ~/.config/gh/hosts.yml ~/.bashrc
+2026-10-25 18:16:08.958681848 -0700 /home/dowling/.gitconfig
+2026-10-25 18:18:56.813690044 -0700 /home/dowling/.config/gh/hosts.yml
+2026-10-25 18:23:27.833703278 -0700 /home/dowling/.bashrc
+[exit 0]

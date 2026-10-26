@@ -1,0 +1,23 @@
+{
+  "action_loss_decreased": true,
+  "batch_loss_after": {
+    "action": 0.0031048390810610726,
+    "belief": 1.6614247560501099,
+    "total": 1.664529595131171
+  },
+  "batch_loss_before": {
+    "action": 0.7784996852278709,
+    "belief": 2.7543714940547943,
+    "total": 3.5328711792826653
+  },
+  "belief_loss_decreased": true,
+  "checkpoint": "/home/dowling/r1_trackp/runs/p4/qwen3.5-4b-base/toy/ckpt/step_0000050",
+  "completed": true,
+  "head_lr": 0.001,
+  "loss_decreased": true,
+  "loss_first_step": 3.650811195373535,
+  "loss_last_step": 1.887465000152588,
+  "lr": 0.0001,
+  "reload_identical": true,
+  "stopped_at": 50
+}

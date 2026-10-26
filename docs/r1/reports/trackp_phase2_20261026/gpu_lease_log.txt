@@ -1,0 +1,18 @@
+{"event": "start", "job": "trackp phase2 gpu smoke", "pid": 1788197, "utc": "2026-10-26T04:35:24Z"}
+{"event": "end", "job": "trackp phase2 gpu smoke", "pid": 1788197, "utc": "2026-10-26T04:36:11Z"}
+{"event": "start", "job": "trackp phase2 parity probe", "pid": 1799786, "utc": "2026-10-26T04:36:36Z"}
+{"event": "end", "job": "trackp phase2 parity probe", "pid": 1799786, "utc": "2026-10-26T04:36:43Z"}
+{"event": "start", "job": "trackp phase2 gpu smoke", "pid": 1806929, "utc": "2026-10-26T04:37:18Z"}
+{"event": "end", "job": "trackp phase2 gpu smoke", "pid": 1806929, "utc": "2026-10-26T04:37:33Z"}
+{"event": "start", "job": "trackp phase2 test suite on gpu venv (flock)", "utc": "2026-10-26T04:39:39Z"}
+{"event": "end", "job": "trackp phase2 test suite on gpu venv (flock)", "utc": "2026-10-26T04:40:38Z"}
+{"event": "start", "job": "trackp phase2 gpu smoke", "pid": 1948195, "utc": "2026-10-26T04:47:20Z"}
+{"event": "end", "job": "trackp phase2 gpu smoke", "pid": 1948195, "utc": "2026-10-26T04:47:35Z"}
+{"event": "start", "job": "trackp phase2 gpu smoke", "pid": 2072851, "utc": "2026-10-26T04:52:52Z"}
+{"event": "end", "job": "trackp phase2 gpu smoke", "pid": 2072851, "utc": "2026-10-26T04:53:07Z"}
+{"event": "start", "job": "trackp phase2 parity probe", "pid": 2077669, "utc": "2026-10-26T04:53:13Z"}
+{"event": "end", "job": "trackp phase2 parity probe", "pid": 2077669, "utc": "2026-10-26T04:53:20Z"}
+{"event": "start", "job": "trackp phase2 laya learnability test in gpu venv (flock)", "utc": "2026-10-26T04:53:21Z"}
+{"event": "end", "job": "trackp phase2 laya learnability test in gpu venv (flock)", "utc": "2026-10-26T04:53:23Z"}
+{"event": "start", "job": "trackp phase2 laya learnability in gpu venv (flock)", "utc": "2026-10-26T04:53:44Z"}
+{"event": "end", "job": "trackp phase2 laya learnability in gpu venv (flock)", "utc": "2026-10-26T04:53:53Z"}

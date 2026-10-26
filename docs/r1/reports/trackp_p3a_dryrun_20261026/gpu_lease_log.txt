@@ -1,0 +1,142 @@
+{"event": "start", "job": "trackp phase2 gpu smoke", "pid": 1788197, "utc": "2026-10-26T04:35:24Z"}
+{"event": "end", "job": "trackp phase2 gpu smoke", "pid": 1788197, "utc": "2026-10-26T04:36:11Z"}
+{"event": "start", "job": "trackp phase2 parity probe", "pid": 1799786, "utc": "2026-10-26T04:36:36Z"}
+{"event": "end", "job": "trackp phase2 parity probe", "pid": 1799786, "utc": "2026-10-26T04:36:43Z"}
+{"event": "start", "job": "trackp phase2 gpu smoke", "pid": 1806929, "utc": "2026-10-26T04:37:18Z"}
+{"event": "end", "job": "trackp phase2 gpu smoke", "pid": 1806929, "utc": "2026-10-26T04:37:33Z"}
+{"event": "start", "job": "trackp phase2 test suite on gpu venv (flock)", "utc": "2026-10-26T04:39:39Z"}
+{"event": "end", "job": "trackp phase2 test suite on gpu venv (flock)", "utc": "2026-10-26T04:40:38Z"}
+{"event": "start", "job": "trackp phase2 gpu smoke", "pid": 1948195, "utc": "2026-10-26T04:47:20Z"}
+{"event": "end", "job": "trackp phase2 gpu smoke", "pid": 1948195, "utc": "2026-10-26T04:47:35Z"}
+{"event": "start", "job": "trackp phase2 gpu smoke", "pid": 2072851, "utc": "2026-10-26T04:52:52Z"}
+{"event": "end", "job": "trackp phase2 gpu smoke", "pid": 2072851, "utc": "2026-10-26T04:53:07Z"}
+{"event": "start", "job": "trackp phase2 parity probe", "pid": 2077669, "utc": "2026-10-26T04:53:13Z"}
+{"event": "end", "job": "trackp phase2 parity probe", "pid": 2077669, "utc": "2026-10-26T04:53:20Z"}
+{"event": "start", "job": "trackp phase2 laya learnability test in gpu venv (flock)", "utc": "2026-10-26T04:53:21Z"}
+{"event": "end", "job": "trackp phase2 laya learnability test in gpu venv (flock)", "utc": "2026-10-26T04:53:23Z"}
+{"event": "start", "job": "trackp phase2 laya learnability in gpu venv (flock)", "utc": "2026-10-26T04:53:44Z"}
+{"event": "end", "job": "trackp phase2 laya learnability in gpu venv (flock)", "utc": "2026-10-26T04:53:53Z"}
+{"event": "start", "job": "trackp spike kev-0.8b", "pid": 2324929, "utc": "2026-10-26T05:02:12Z"}
+{"event": "end", "job": "trackp spike kev-0.8b", "pid": 2324929, "utc": "2026-10-26T05:02:57Z"}
+{"event": "start", "job": "trackp spike kev-0.8b", "pid": 2343512, "utc": "2026-10-26T05:04:08Z"}
+{"event": "end", "job": "trackp spike kev-0.8b", "pid": 2343512, "utc": "2026-10-26T05:04:42Z"}
+{"event": "start", "job": "trackp spike kev-0.8b", "pid": 2368826, "utc": "2026-10-26T05:06:56Z"}
+{"event": "end", "job": "trackp spike kev-0.8b", "pid": 2368826, "utc": "2026-10-26T05:07:26Z"}
+{"event": "start", "job": "trackp spike qwen3.5-0.8b-base", "pid": 2374441, "utc": "2026-10-26T05:07:28Z"}
+{"event": "end", "job": "trackp spike qwen3.5-0.8b-base", "pid": 2374441, "utc": "2026-10-26T05:07:55Z"}
+{"event": "start", "job": "trackp spike startlux-0.8b", "pid": 2378520, "utc": "2026-10-26T05:07:57Z"}
+{"event": "end", "job": "trackp spike startlux-0.8b", "pid": 2378520, "utc": "2026-10-26T05:08:00Z"}
+{"event": "start", "job": "trackp spike laya", "pid": 2379414, "utc": "2026-10-26T05:08:02Z"}
+{"event": "end", "job": "trackp spike laya", "pid": 2379414, "utc": "2026-10-26T05:08:17Z"}
+{"event": "start", "job": "trackp spike startlux-2b", "pid": 2382284, "utc": "2026-10-26T05:08:19Z"}
+{"event": "end", "job": "trackp spike startlux-2b", "pid": 2382284, "utc": "2026-10-26T05:08:21Z"}
+{"event": "start", "job": "trackp spike kev-4b", "pid": 2383227, "utc": "2026-10-26T05:08:23Z"}
+{"event": "end", "job": "trackp spike kev-4b", "pid": 2383227, "utc": "2026-10-26T05:10:12Z"}
+{"event": "start", "job": "trackp spike qwen3.5-4b-base", "pid": 2400751, "utc": "2026-10-26T05:10:14Z"}
+{"event": "end", "job": "trackp spike qwen3.5-4b-base", "pid": 2400751, "utc": "2026-10-26T05:11:09Z"}
+{"event": "start", "job": "trackp spike startlux-4b", "pid": 2409301, "utc": "2026-10-26T05:11:11Z"}
+{"event": "end", "job": "trackp spike startlux-4b", "pid": 2409301, "utc": "2026-10-26T05:11:14Z"}
+{"event": "start", "job": "trackp spike kev-0.8b", "pid": 2641333, "utc": "2026-10-26T05:16:54Z"}
+{"event": "end", "job": "trackp spike kev-0.8b", "pid": 2641333, "utc": "2026-10-26T05:17:25Z"}
+{"event": "start", "job": "trackp spike qwen3.5-0.8b-base", "pid": 2646773, "utc": "2026-10-26T05:17:27Z"}
+{"event": "end", "job": "trackp spike qwen3.5-0.8b-base", "pid": 2646773, "utc": "2026-10-26T05:17:58Z"}
+{"event": "start", "job": "trackp spike startlux-0.8b", "pid": 2651681, "utc": "2026-10-26T05:18:00Z"}
+{"event": "end", "job": "trackp spike startlux-0.8b", "pid": 2651681, "utc": "2026-10-26T05:18:37Z"}
+{"event": "start", "job": "trackp spike laya", "pid": 2658274, "utc": "2026-10-26T05:18:39Z"}
+{"event": "end", "job": "trackp spike laya", "pid": 2658274, "utc": "2026-10-26T05:18:54Z"}
+{"event": "start", "job": "trackp spike startlux-2b", "pid": 2660944, "utc": "2026-10-26T05:18:56Z"}
+{"event": "end", "job": "trackp spike startlux-2b", "pid": 2660944, "utc": "2026-10-26T05:19:42Z"}
+{"event": "start", "job": "trackp spike kev-4b", "pid": 2668336, "utc": "2026-10-26T05:19:44Z"}
+{"event": "end", "job": "trackp spike kev-4b", "pid": 2668336, "utc": "2026-10-26T05:20:54Z"}
+{"event": "start", "job": "trackp spike qwen3.5-4b-base", "pid": 2679219, "utc": "2026-10-26T05:20:56Z"}
+{"event": "end", "job": "trackp spike qwen3.5-4b-base", "pid": 2679219, "utc": "2026-10-26T05:22:07Z"}
+{"event": "start", "job": "trackp spike startlux-4b", "pid": 2689878, "utc": "2026-10-26T05:22:09Z"}
+{"event": "end", "job": "trackp spike startlux-4b", "pid": 2689878, "utc": "2026-10-26T05:23:37Z"}
+{"event": "start", "job": "trackp p0 startlux ref 0.8b (flock)", "utc": "2026-10-26T05:24:23Z"}
+{"event": "end", "job": "trackp p0 startlux ref 0.8b (flock)", "utc": "2026-10-26T05:24:52Z"}
+{"event": "start", "job": "trackp p0 startlux ref 2b (flock)", "utc": "2026-10-26T05:24:52Z"}
+{"event": "end", "job": "trackp p0 startlux ref 2b (flock)", "utc": "2026-10-26T05:25:16Z"}
+{"event": "start", "job": "trackp p0 startlux ref 4b (flock)", "utc": "2026-10-26T05:25:16Z"}
+{"event": "end", "job": "trackp p0 startlux ref 4b (flock)", "utc": "2026-10-26T05:26:01Z"}
+{"event": "start", "job": "trackp p0 startlux ref bf16 0.8b (flock)", "utc": "2026-10-26T05:26:17Z"}
+{"event": "end", "job": "trackp p0 startlux ref bf16 0.8b (flock)", "utc": "2026-10-26T05:26:41Z"}
+{"event": "start", "job": "trackp p0 startlux ref bf16 2b (flock)", "utc": "2026-10-26T05:26:41Z"}
+{"event": "end", "job": "trackp p0 startlux ref bf16 2b (flock)", "utc": "2026-10-26T05:27:05Z"}
+{"event": "start", "job": "trackp p0 startlux ref bf16 4b (flock)", "utc": "2026-10-26T05:27:05Z"}
+{"event": "end", "job": "trackp p0 startlux ref bf16 4b (flock)", "utc": "2026-10-26T05:27:32Z"}
+{"event": "start", "job": "trackp p0 startlux controls 0.8b (flock)", "utc": "2026-10-26T05:27:50Z"}
+{"event": "end", "job": "trackp p0 startlux controls 0.8b (flock)", "utc": "2026-10-26T05:28:14Z"}
+{"event": "start", "job": "trackp spike kev-0.8b", "pid": 2974619, "utc": "2026-10-26T05:33:23Z"}
+{"event": "end", "job": "trackp spike kev-0.8b", "pid": 2974619, "utc": "2026-10-26T05:33:54Z"}
+{"event": "start", "job": "trackp spike qwen3.5-0.8b-base", "pid": 2980242, "utc": "2026-10-26T05:34:02Z"}
+{"event": "end", "job": "trackp spike qwen3.5-0.8b-base", "pid": 2980242, "utc": "2026-10-26T05:34:33Z"}
+{"event": "start", "job": "trackp spike startlux-0.8b", "pid": 2986263, "utc": "2026-10-26T05:34:35Z"}
+{"event": "end", "job": "trackp spike startlux-0.8b", "pid": 2986263, "utc": "2026-10-26T05:35:12Z"}
+{"event": "start", "job": "trackp spike laya", "pid": 2992105, "utc": "2026-10-26T05:35:14Z"}
+{"event": "end", "job": "trackp spike laya", "pid": 2992105, "utc": "2026-10-26T05:35:29Z"}
+{"event": "start", "job": "trackp spike startlux-2b", "pid": 2994911, "utc": "2026-10-26T05:35:31Z"}
+{"event": "end", "job": "trackp spike startlux-2b", "pid": 2994911, "utc": "2026-10-26T05:36:17Z"}
+{"event": "start", "job": "trackp spike kev-4b", "pid": 3002262, "utc": "2026-10-26T05:36:19Z"}
+{"event": "end", "job": "trackp spike kev-4b", "pid": 3002262, "utc": "2026-10-26T05:37:29Z"}
+{"event": "start", "job": "trackp spike qwen3.5-4b-base", "pid": 3013334, "utc": "2026-10-26T05:37:32Z"}
+{"event": "end", "job": "trackp spike qwen3.5-4b-base", "pid": 3013334, "utc": "2026-10-26T05:38:42Z"}
+{"event": "start", "job": "trackp spike startlux-4b", "pid": 3024512, "utc": "2026-10-26T05:38:44Z"}
+{"event": "end", "job": "trackp spike startlux-4b", "pid": 3024512, "utc": "2026-10-26T05:40:02Z"}
+{"event": "start", "job": "trackp spike startlux-0.8b", "pid": 3592442, "utc": "2026-10-26T05:55:54Z"}
+{"event": "end", "job": "trackp spike startlux-0.8b", "pid": 3592442, "utc": "2026-10-26T05:56:31Z"}
+{"event": "start", "job": "trackp spike kev-0.8b", "pid": 3902780, "utc": "2026-10-26T06:08:10Z"}
+{"event": "end", "job": "trackp spike kev-0.8b", "pid": 3902780, "utc": "2026-10-26T06:08:51Z"}
+{"event": "start", "job": "trackp spike qwen3.5-0.8b-base", "pid": 3909910, "utc": "2026-10-26T06:08:53Z"}
+{"event": "end", "job": "trackp spike qwen3.5-0.8b-base", "pid": 3909910, "utc": "2026-10-26T06:09:29Z"}
+{"event": "start", "job": "trackp spike startlux-0.8b", "pid": 3916762, "utc": "2026-10-26T06:09:31Z"}
+{"event": "end", "job": "trackp spike startlux-0.8b", "pid": 3916762, "utc": "2026-10-26T06:10:13Z"}
+{"event": "start", "job": "trackp spike laya", "pid": 3924035, "utc": "2026-10-26T06:10:15Z"}
+{"event": "end", "job": "trackp spike laya", "pid": 3924035, "utc": "2026-10-26T06:10:32Z"}
+{"event": "start", "job": "trackp spike startlux-2b", "pid": 3926829, "utc": "2026-10-26T06:10:34Z"}
+{"event": "end", "job": "trackp spike startlux-2b", "pid": 3926829, "utc": "2026-10-26T06:11:27Z"}
+{"event": "start", "job": "trackp spike kev-4b", "pid": 3935202, "utc": "2026-10-26T06:11:29Z"}
+{"event": "end", "job": "trackp spike kev-4b", "pid": 3935202, "utc": "2026-10-26T06:12:51Z"}
+{"event": "start", "job": "trackp spike qwen3.5-4b-base", "pid": 3948224, "utc": "2026-10-26T06:12:54Z"}
+{"event": "end", "job": "trackp spike qwen3.5-4b-base", "pid": 3948224, "utc": "2026-10-26T06:14:16Z"}
+{"event": "start", "job": "trackp spike startlux-4b", "pid": 3961210, "utc": "2026-10-26T06:14:19Z"}
+{"event": "end", "job": "trackp spike startlux-4b", "pid": 3961210, "utc": "2026-10-26T06:15:50Z"}
+{"event": "start", "job": "trackp p0 startlux comparison ours io_0.8b.json", "pid": 3975135, "utc": "2026-10-26T06:15:51Z"}
+{"event": "end", "job": "trackp p0 startlux comparison ours io_0.8b.json", "pid": 3975135, "utc": "2026-10-26T06:16:03Z"}
+{"event": "start", "job": "trackp p0 startlux comparison reference io_0.8b.json", "pid": 3977300, "utc": "2026-10-26T06:16:04Z"}
+{"event": "end", "job": "trackp p0 startlux comparison reference io_0.8b.json", "pid": 3977300, "utc": "2026-10-26T06:16:15Z"}
+{"event": "start", "job": "trackp p0 startlux comparison ours io_2b.json", "pid": 3979481, "utc": "2026-10-26T06:16:16Z"}
+{"event": "end", "job": "trackp p0 startlux comparison ours io_2b.json", "pid": 3979481, "utc": "2026-10-26T06:16:28Z"}
+{"event": "start", "job": "trackp p0 startlux comparison reference io_2b.json", "pid": 3981162, "utc": "2026-10-26T06:16:29Z"}
+{"event": "end", "job": "trackp p0 startlux comparison reference io_2b.json", "pid": 3981162, "utc": "2026-10-26T06:16:41Z"}
+{"event": "start", "job": "trackp p0 startlux comparison ours io_4b.json", "pid": 3983296, "utc": "2026-10-26T06:16:42Z"}
+{"event": "end", "job": "trackp p0 startlux comparison ours io_4b.json", "pid": 3983296, "utc": "2026-10-26T06:16:55Z"}
+{"event": "start", "job": "trackp p0 startlux comparison reference io_4b.json", "pid": 3985743, "utc": "2026-10-26T06:16:56Z"}
+{"event": "end", "job": "trackp p0 startlux comparison reference io_4b.json", "pid": 3985743, "utc": "2026-10-26T06:17:09Z"}
+{"event": "start", "job": "trackp p0 startlux comparison ours io_0.8b_fp32.json", "pid": 3988162, "utc": "2026-10-26T06:17:10Z"}
+{"event": "end", "job": "trackp p0 startlux comparison ours io_0.8b_fp32.json", "pid": 3988162, "utc": "2026-10-26T06:17:21Z"}
+{"event": "start", "job": "trackp spike startlux-0.8b", "pid": 48399, "utc": "2026-10-26T06:24:04Z"}
+{"event": "end", "job": "trackp spike startlux-0.8b", "pid": 48399, "utc": "2026-10-26T06:24:46Z"}
+{"event": "start", "job": "trackp toy kev-0.8b", "pid": 69571, "utc": "2026-10-26T06:26:21Z"}
+{"event": "end", "job": "trackp toy kev-0.8b", "pid": 69571, "utc": "2026-10-26T06:27:16Z"}
+{"event": "start", "job": "trackp toy qwen3.5-0.8b-base", "pid": 78356, "utc": "2026-10-26T06:27:19Z"}
+{"event": "end", "job": "trackp toy qwen3.5-0.8b-base", "pid": 78356, "utc": "2026-10-26T06:28:15Z"}
+{"event": "start", "job": "trackp toy startlux-0.8b", "pid": 87341, "utc": "2026-10-26T06:28:17Z"}
+{"event": "end", "job": "trackp toy startlux-0.8b", "pid": 87341, "utc": "2026-10-26T06:29:17Z"}
+{"event": "start", "job": "trackp toy laya", "pid": 96674, "utc": "2026-10-26T06:29:19Z"}
+{"event": "end", "job": "trackp toy laya", "pid": 96674, "utc": "2026-10-26T06:30:06Z"}
+{"event": "start", "job": "trackp toy startlux-2b", "pid": 103827, "utc": "2026-10-26T06:30:08Z"}
+{"event": "end", "job": "trackp toy startlux-2b", "pid": 103827, "utc": "2026-10-26T06:31:38Z"}
+{"event": "start", "job": "trackp toy kev-4b", "pid": 117544, "utc": "2026-10-26T06:31:40Z"}
+{"event": "end", "job": "trackp toy kev-4b", "pid": 117544, "utc": "2026-10-26T06:34:32Z"}
+{"event": "start", "job": "trackp toy qwen3.5-4b-base", "pid": 143478, "utc": "2026-10-26T06:34:35Z"}
+{"event": "end", "job": "trackp toy qwen3.5-4b-base", "pid": 143478, "utc": "2026-10-26T06:37:30Z"}
+{"event": "start", "job": "trackp toy startlux-4b", "pid": 170014, "utc": "2026-10-26T06:37:32Z"}
+{"event": "end", "job": "trackp toy startlux-4b", "pid": 170014, "utc": "2026-10-26T06:40:37Z"}
+{"event": "start", "job": "trackp toy laya", "pid": 216772, "utc": "2026-10-26T06:43:11Z"}
+{"event": "end", "job": "trackp toy laya", "pid": 216772, "utc": "2026-10-26T06:43:58Z"}
+{"event": "start", "job": "trackp toy laya", "pid": 324747, "utc": "2026-10-26T06:50:05Z"}
+{"event": "end", "job": "trackp toy laya", "pid": 324747, "utc": "2026-10-26T06:51:07Z"}
+{"event": "start", "job": "trackp e0 kev-0.8b", "pid": 793423, "utc": "2026-10-26T07:08:18Z"}
+{"event": "end", "job": "trackp e0 kev-0.8b", "pid": 793423, "utc": "2026-10-26T07:11:40Z"}
+{"event": "start", "job": "trackp e0 kev-0.8b", "pid": 825730, "utc": "2026-10-26T07:11:43Z"}
+{"event": "end", "job": "trackp e0 kev-0.8b", "pid": 825730, "utc": "2026-10-26T07:14:58Z"}

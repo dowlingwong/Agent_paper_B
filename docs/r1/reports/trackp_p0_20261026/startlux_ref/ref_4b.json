@@ -1,0 +1,71 @@
+{
+ "transformers": "5.8.1",
+ "torch": "2.6.0+cu124",
+ "dtype": "bfloat16",
+ "reference_check": {
+  "full_attention_layers": [
+   3,
+   7,
+   11,
+   15,
+   19,
+   23,
+   27,
+   31
+  ],
+  "layers": 32,
+  "impl": "startlux_prompt_bidirectional",
+  "causal_loop_max_diff": 0.0,
+  "padding_invariance_max_diff": 0.0,
+  "late_token_reach": 1.9375
+ },
+ "ours_check": {
+  "impl": "trackp_startlux_bidirectional/v1",
+  "causal_max_diff": 0.0,
+  "late_token_reach": 2.625
+ },
+ "n": 20,
+ "max_abs_logit_diff": 0.11910629272460938,
+ "mean_abs_logit_diff_max": 0.07473020553588867,
+ "max_tv_distance": 0.0218537375330925,
+ "vllm_path": "not run: vLLM is not installed on this host",
+ "control_causal_vs_bidirectional_max": 2.6875,
+ "control_causal_vs_bidirectional_mean": 1.49375,
+ "ours_provenance": {
+  "git": {
+   "path": "/home/dowling/r1_trackp/Agent_paper_B",
+   "commit": "fcc7d7dd95644e831fc1fcba325426429dfce0e9",
+   "branch": "trackp-20261026",
+   "dirty": false
+  },
+  "argv": [
+   "r1/scripts/trackp_startlux_ref.py",
+   "--ours",
+   "/home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-4B-Instant@416088f77cfc",
+   "--io",
+   "/home/dowling/r1_trackp/runs/p0/startlux_ref/io_4b.json",
+   "--dtype",
+   "bfloat16"
+  ],
+  "python": "/home/dowling/r1_trackp/venvs/trackp-gpu/bin/python",
+  "utc": "2026-10-26T06:16:55Z"
+ },
+ "reference_provenance": {
+  "git": {
+   "path": "/home/dowling/r1_trackp/Agent_paper_B",
+   "commit": "fcc7d7dd95644e831fc1fcba325426429dfce0e9",
+   "branch": "trackp-20261026",
+   "dirty": false
+  },
+  "argv": [
+   "r1/scripts/trackp_startlux_ref.py",
+   "--reference",
+   "--io",
+   "/home/dowling/r1_trackp/runs/p0/startlux_ref/io_4b.json",
+   "--out",
+   "/home/dowling/r1_trackp/runs/p0/startlux_ref/ref_4b.json"
+  ],
+  "python": "/home/dowling/r1_trackp/venvs/trackp-sl58/bin/python",
+  "utc": "2026-10-26T06:17:09Z"
+ }
+}

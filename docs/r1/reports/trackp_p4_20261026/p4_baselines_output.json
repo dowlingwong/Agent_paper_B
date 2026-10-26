@@ -1,0 +1,7 @@
+{
+ "belief_base_rate": 2.243171453475952,
+ "action_best_constant": 0.7367100119590759,
+ "action_weighted_positive_fraction": 0.6403435468673706,
+ "laya_action_weighted_auc": 0.7853573743373459,
+ "laya_action_corr_with_u": 0.4382782280445099
+}

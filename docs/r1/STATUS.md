@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P branch merged into `main` by the coordinating session (AI-assisted)
+
+- `trackp-20261026` (`6f67717`, Phases 0–4 independently accepted on the portal, P.3a DRYRUN) merged into `main` after a merge review: `docs/r1/reviews/TRACKP_MERGE_REVIEW_20261026.md` (accepted; one STATUS conflict resolved by keeping both sides; v1 soft labels reproduce `main` exactly; two environment-pinned Track P tests fail off the portal, not code defects).
+- R1-PORTAL-SCHEDULE amended (author): Track X evidence marker `~/r1_locks/trackx_evidence.active` during B1/B2, plus STATUS headings; both runbooks updated (separate commit).
+- Open for the author (from the overnight summary): Phase 5 design (E0 training budget, head fit, learning-rate grid, A3 policy), spec readings, model-wrapper choices, environment pins, harness `6afdb0e` push, secrets before Phase 7.
+
 ## 26 October 2026 — exam Phase 1 merged into `main` / `r1` by the coordinating session
 
 Harness `r1` fast-forwarded to `897d83c` (exam Phase 1; re-run in the coordinator's Linux VM env: 453 passed / 9 failed / 1 error, no failure outside the known environmental set). Paper `exam-x-20261026` (`ea6dd8c`, independently accepted at STOP 1) merged into `main`, which had meanwhile gained the Track P documents (`e09b399`, `b5a7aec`); PLAN §10 and STATUS conflicts resolved by keeping both sets of rows/entries. **Note for the author:** R1-EXAM-TRANSFER (no GitHub credentials on the portal; code via SSH bare repos) and R1-TRACKP-RUNBOOK (Track P agent clones from GitHub on the portal) differ on GitHub credentials on the portal; both agents must take the R1-PORTAL-SCHEDULE GPU lease. Not pushed (needs the author's credentials).
@@ -29,6 +35,41 @@ The author restored Tailscale and authorised resuming Phase 0 only, with indepen
 ## 26 October 2026 — portal exam Phase 0 blocked by local network access (AI-assisted; ENGINEERING_ONLY)
 
 Updated `main` was verified at `fad6dfe` (R1-EXAM-HOST conflicts resolved). Created `exam-x-20261026` from paper `main` and harness `r1` (`6afdb0e`), preserving existing untracked files. Paper commit `39731ce` records the attempted host inventory in `reports/PORTAL_HOST_FACTS_20261026.md`. SSH to `portal_zhixu` (`dowling@100.120.160.70`) returned `Network is unreachable` outside the sandbox; local `tailscale status --json` reports `BackendState: Stopped`. No remote command ran; all host facts 0.1–0.9 remain uncollected. Phase 0 is incomplete, not accepted. Independent review (`reviews/EXAM_0_REVIEW_20261026.md`) reproduced the access blocker: ACCEPTED AS A BLOCKED EXECUTION RECORD ONLY; PHASE 0 NOT ACCEPTED / INCOMPLETE. One MAJOR completion blocker (missing host facts), no MINOR corrections; `git diff --check` passed. Restore the Mac's Tailscale connection before resuming the read-only inventory; the author storage/licence gate remains pending. No installation, inference, worker run, model download, Phase 1 implementation, merge, or push occurred.
+
+## 26 October 2026 — Track P overnight summary (AI-assisted; ENGINEERING_ONLY / DRYRUN)
+
+- Track P agent on zhixu portal, branch `trackp-20261026` (not merged). Phases 0–4 done and independently reviewed and accepted; Phase 5 (P.3a) not started (no authorization note); its one-model DRYRUN (kev-0.8b) ran: soft E0 mean slope 1.00 but width slope 0.11 (would fail E0), hard labels collapse width; A4 fails, A3 blocked by Kev's state limit — not evidence, nothing tuned.
+- No stop condition hit; ≈ 57 leased GPU-minutes. Summary and the author's questions: `docs/r1/reports/TRACKP_OVERNIGHT_20261026.md` (StartLux rung; Phase 5 design; spec interpretations; harness pin `6afdb0e` to GitHub; merge).
+
+## 26 October 2026 — Track P Phase 4: P.1/P.2 toy batch (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
+
+- Same 64-example batch, 50 steps, both outputs, shared loop, all 8 families (StartLux included, rung pending the author): total, belief and action loss decrease on the whole batch in eval mode for every family; reload bit-identical. Laya needed one fix (its new heads now read the mean-pooled encoder output; the post-head [CLS] state is ~constant). Laya's belief still ends above the constant base rate (slow at lr 2e-5); the Qwen-0.8B control is unstable. Report `docs/r1/reports/TRACKP_P4_TOY_BATCH_20261026.md`, review `docs/r1/reviews/TRACKP_4_REVIEW_20261026.md` (accepted).
+- Open for the author: Laya readout state; control learning rates before P.4. Phase 5 (P.3a) needs `trackp_p3a_<date>.md`; only its one-model DRYRUN runs tonight.
+
+## 26 October 2026 — Track P Phase 3: P.0 spikes (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
+
+- 8 bases (Kev 0.8B/4B, Qwen3.5-0.8B/4B-Base, Laya, StartLux Instant 0.8B/2B/4B) at commit `fcc7d7d`: load, 12-option forward, LoRA r = 16 (incl. DeltaNet), toy SFT on soft targets for both outputs, bit-identical save→reload, sha256, peak ≤ 13.7 GB at ~1,024 tokens × 8 with gradient checkpointing; packing off on all Qwen3.5-family bases (expected). StartLux trains with the prompt-bidirectional mask; our transformers-5.19 port matches StartLux's own 5.8 code at bf16 noise level (12–19 × below a mask error); vLLM path not run. Report `docs/r1/reports/TRACKP_P0_SPIKES_20261026.md`, review `docs/r1/reviews/TRACKP_3_REVIEW_20261026.md` (accepted).
+- Six attempts recorded (OOM without gradient checkpointing; CPU-loading/composite-config/lr bugs; Laya head scale → LayerNorm before new heads; seeding). GPU: 33.8 leased minutes for Phases 2–3.
+- **Author decides: StartLux rung (trainable candidate or inference-only zero-shot rung).** Also open: LayerNorm before new heads; Kev pointer-temperature policy; E0 head-fit design before Phase 5.
+
+## 26 October 2026 — Track P Phase 2: environment, downloads, pins (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
+
+- Branch `trackp-20261026` (Phases 2–4 on the reviewed branch per the author's overnight instruction). Report `docs/r1/reports/TRACKP_PHASE2_ENV_PINS_20261026.md`; review `docs/r1/reviews/TRACKP_2_REVIEW_20261026.md` (accepted).
+- Run venv `~/r1_trackp/venvs/trackp-gpu`: torch 2.6.0+cu124 (2.5.1+cu121 fails under transformers 5.19), transformers 5.19.0, peft 0.21.2, flash-linear-attention 0.5.2, causal-conv1d 1.7.0 (built). GPU smoke test passes (bf16 matmul; Qwen3.5-0.8B DeltaNet forward on fla/causal-conv1d within TF32-level precision of the fp32 reference).
+- 8 repos (26 GB) at pinned revisions, all 112 files verified against the Hub records (LFS sha256 / git blob sha1) and re-hashed by the reviewer; Kev adapters also match the GitHub `kev-1.0` release; `r1/c3/train/registry.yaml`; portal config filled (`--check-config` clean).
+- GPU: < 10 minutes under the lease. Open for the author: torch 2.6/cu124 on driver 535; `jev.model = jev-1.14.0`; code pins (Kev code 23 commits after `kev-1.0`).
+
+## 26 October 2026 — Track P Phase 1: code (AI-assisted; ENGINEERING_ONLY / DRYRUN; independently reviewed and accepted)
+
+- Track P agent on zhixu portal, branch `trackp-20261026` (not merged). Items 1.1–1.11 on tiny models, CPU only; report `docs/r1/reports/TRACKP_PHASE1_CODE_20261026.md`, handoff `docs/r1/overnight/TRACKP_CODE_HANDOFF.md`, review `docs/r1/reviews/TRACKP_1_REVIEW_20261026.md` (3 blocking, 8 minor findings fixed; accepted).
+- Tests: paper 407/1/11/4 → 559/1/11/4 (failing set unchanged, environmental: harness pin `6afdb0e` not on GitHub); harness unchanged.
+- Open for the author: handoff questions 1–7.
+
+## 26 October 2026 — Track P Phase 0: portal host facts (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
+
+- Track P agent (Claude Code) on zhixu portal (`TASL-2`), work dir `/home/dowling/r1_trackp/`, branch `trackp-20261026` in both repos (paper from `main` `b5a7aec`; harness from `r1` `264011e`). Report `docs/r1/reports/PORTAL_TRACKP_HOST_FACTS_20261026.md` (commits `870e6de`, `f08e5e4`); review `docs/r1/reviews/TRACKP_0_REVIEW_20261026.md` (6 minor findings fixed; verdict accepted). Read-only apart from the clones; no installs, weights, GPU jobs or secrets.
+- Findings: RTX 4090 sm_89, driver 535 / CUDA 12.2 (current torch wheels are cu126/cu130 → Phase 2 risk); Python 3.10 only, `uv` absent; all Track P Hub repos public and un-gated (StartLux CC BY-NC 4.0); Laya weights are `convaiinnovations/laya-typed-decisions`, Kev weights `jaredpalmer/kev-{0.8b,4b}` (RUNBOOK names are the GitHub code repos); `~/.config/r1/secrets.env` absent; **harness pin `6afdb0e` (`HARNESS_PIN_C3` on `main`) is not on GitHub**.
+- Open for the author: the six questions at the end of the report.
 ## 26 October 2026 — Track P agent moved onto zhixu portal (AI-assisted; documents only)
 
 - Author decision (R1-TRACKP-RUNBOOK revised): the Track P agent runs on zhixu portal itself, not on the Mac over SSH. `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` updated: placement table, host and clone rules (own clone on the portal, `trackp-<date>` branches pushed with the portal's GitHub credentials), secrets on the same host (never read or passed on a command line), Phase 0 checks GitHub push and the agent's own endpoints, Phase 1 code and CPU-only tests on the portal, reviewers on the same host. RUNBOOK Track P execution line and hardware note aligned.

@@ -1,0 +1,23 @@
+{
+  "action_loss_decreased": true,
+  "batch_loss_after": {
+    "action": 0.24511602707207203,
+    "belief": 1.665562480688095,
+    "total": 1.9106785077601671
+  },
+  "batch_loss_before": {
+    "action": 0.7381114363670349,
+    "belief": 2.9042271077632904,
+    "total": 3.6423385441303253
+  },
+  "belief_loss_decreased": true,
+  "checkpoint": "/home/dowling/r1_trackp/runs/p4/kev-0.8b/toy/ckpt/step_0000050",
+  "completed": true,
+  "head_lr": 0.001,
+  "loss_decreased": true,
+  "loss_first_step": 3.356518030166626,
+  "loss_last_step": 2.0543477535247803,
+  "lr": 2e-05,
+  "reload_identical": true,
+  "stopped_at": 50
+}

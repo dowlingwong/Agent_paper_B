@@ -1,0 +1,62 @@
+{
+  "describe": {
+    "action_head": true,
+    "family": "kev",
+    "head_form": "softmax12",
+    "kev_hybrid": true,
+    "model_version": "trackp_model/v1",
+    "pointer_temperature": 1.0,
+    "released_temperature": 2.406050072164233
+  },
+  "engineering": {
+    "batch_size": 8,
+    "gradient_checkpointing": true,
+    "input_tokens": 988,
+    "oom": false,
+    "peak_vram_mib": 12871.91357421875,
+    "probe_tokens": 1024,
+    "step_time_s": 3.2918655080720782
+  },
+  "family": "kev",
+  "forward_one": {
+    "action": 0.6087812781333923,
+    "belief_shape": [
+      1,
+      12
+    ],
+    "belief_sum": 1.0
+  },
+  "gradient_checkpointing": true,
+  "head_lr": 0.001,
+  "lr": 2e-05,
+  "packing": {
+    "max_diff": null,
+    "ok": false,
+    "reason": "linear-attention (Gated DeltaNet) layers cannot take a tree mask"
+  },
+  "provenance": {
+    "head_sha256": "dd633435998ecc751ac538717a3742e32149500fabf7d7276287dbf0693f347c",
+    "init_from": "/home/dowling/r1_trackp/models/jaredpalmer__kev-4b@591dcb5bd6d0",
+    "resolved": "/home/dowling/r1_trackp/models/jaredpalmer__kev-4b@591dcb5bd6d0",
+    "tensors": 496,
+    "weights_sha256": "90e817356246e7f18bfa7ca3d31794cd4fbeb3332a66a84cb51d9ceae925f2b2"
+  },
+  "reload_action_max_diff": 0.0,
+  "reload_identical": true,
+  "reload_max_diff": 0.0,
+  "saved_sha256": {
+    "adapter/README.md": "d1502e5cd5c5e0ac18f6f6f3180abad275ec3793470213c4c1f0760b0c6dbe17",
+    "adapter/adapter_config.json": "0d3d2adf561f825f0bfa44fecd7231d203f1be4bdff377b44076e99ce725b81a",
+    "adapter/adapter_model.safetensors": "1632c4fd5c5f67cde928157e75631714916e785211758dc690b028935091ede6",
+    "heads.safetensors": "94172a1bde6cb04b7d6ce4d42e2acf2c5534fe9927b0f33967dc605705fb71e5"
+  },
+  "toy_sft": {
+    "checkpoint": "/home/dowling/r1_trackp/runs/p0/kev-4b/toy_sft/ckpt/step_0000013",
+    "completed": true,
+    "loss_first": 2.9689316749572754,
+    "loss_last": 2.3719711303710938,
+    "steps": 13,
+    "stopped_at": 13
+  },
+  "trainable_parameters": 33783809
+}

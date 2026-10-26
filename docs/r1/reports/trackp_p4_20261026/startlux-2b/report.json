@@ -1,0 +1,23 @@
+{
+  "action_loss_decreased": true,
+  "batch_loss_after": {
+    "action": 0.0016029797407099977,
+    "belief": 1.5252796858549118,
+    "total": 1.5268826655956218
+  },
+  "batch_loss_before": {
+    "action": 0.8065943047404289,
+    "belief": 2.505264163017273,
+    "total": 3.311858467757702
+  },
+  "belief_loss_decreased": true,
+  "checkpoint": "/home/dowling/r1_trackp/runs/p4/startlux-2b/toy/ckpt/step_0000050",
+  "completed": true,
+  "head_lr": 0.001,
+  "loss_decreased": true,
+  "loss_first_step": 3.521022319793701,
+  "loss_last_step": 1.7362850904464722,
+  "lr": 0.0001,
+  "reload_identical": true,
+  "stopped_at": 50
+}

@@ -1,0 +1,58 @@
+{
+  "argv": [
+    "spike",
+    "--base",
+    "startlux-2b",
+    "--run-dir",
+    "/home/dowling/r1_trackp/runs/p0/startlux-2b"
+  ],
+  "base": {
+    "adapter_repo": null,
+    "adapter_revision": null,
+    "base_repo": "startlux-models/StartLux-Decision-v1.1-2B-Instant",
+    "base_revision": "f1e6cd147dda82c9ffa3e8e725d5c1f175566fb1",
+    "family": "startlux"
+  },
+  "config_sha256": "39931e2ad8ede8772f4371264d543b13886e86ddfa660175750151a4f6f8af88",
+  "created_utc": "2026-10-26T06:11:27Z",
+  "data_manifest_sha256": "87642343eedb639c353bfc750a91d3313e17720da14762606dbf99278c610bac",
+  "evidence_label": "ENGINEERING_ONLY",
+  "git": {
+    "harness": {
+      "branch": "trackp-20261026",
+      "commit": "264011ea2d17fa9070b8c711625db92f8409dd4b",
+      "dirty": false,
+      "path": "/home/dowling/r1_trackp/autoresearch_harness"
+    },
+    "paper": {
+      "branch": "trackp-20261026",
+      "commit": "fcc7d7dd95644e831fc1fcba325426429dfce0e9",
+      "dirty": false,
+      "path": "/home/dowling/r1_trackp/Agent_paper_B"
+    }
+  },
+  "gpu_lease": [
+    {
+      "event": "start",
+      "job": "trackp spike startlux-2b",
+      "pid": 3926829,
+      "utc": "2026-10-26T06:10:34Z"
+    },
+    {
+      "event": "end",
+      "job": "trackp spike startlux-2b",
+      "pid": 3926829,
+      "utc": "2026-10-26T06:11:27Z"
+    }
+  ],
+  "head_form": "softmax12",
+  "model_files_sha256": {
+    "adapter/README.md": "0c5139dc0868401846e9c06acc60cf47d9b1cf0f04542e02a8dddf56d7d6b098",
+    "adapter/adapter_config.json": "97dd988882f6eaf6bee4b20e5f6da544a2eea7650fe0fbd443f97f0da97d7bee",
+    "adapter/adapter_model.safetensors": "88889c5854ea5871408d3c80778112fa26a12a48d17ad7bdfd4670821d2d1d40",
+    "heads.safetensors": "a0e15aef21eec2175f720cb42b55130766ecad4fc8cd807384886a70230c3b3a"
+  },
+  "schema": "trackp_run_manifest/v1",
+  "seed": 0,
+  "subcommand": "spike"
+}

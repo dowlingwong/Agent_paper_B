@@ -1,0 +1,31 @@
+# 3 Track H modules with trackh_standin.py (review only); regenerated after the test update
+== ef3e2f3
+FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-1]
+FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[second_gains-1]
+FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-0]
+FAILED r1/tests/test_c3_direct_arms.py::test_awr_direct_and_llm_self_control_run_through_decide
+FAILED r1/tests/test_c3_direct_arms.py::test_campaign_usage_reports_trials_and_the_trial_budget
+FAILED r1/tests/test_c3_rule_controller.py::test_a1_through_rule_controller_equals_the_index_policy[probs0-True]
+FAILED r1/tests/test_c3_rule_controller.py::test_a1_through_rule_controller_equals_the_index_policy[probs1-False]
+FAILED r1/tests/test_c3_rule_controller.py::test_one_forecast_serves_e1_and_e2_and_is_recorded
+FAILED r1/tests/test_c3_rule_controller.py::test_rule_skips_come_first_and_are_logged
+FAILED r1/tests/test_c3_rule_controller.py::test_a4_queries_are_charged_to_the_llm_cap
+FAILED r1/tests/test_c3_rule_controller.py::test_skip_infeasible_and_no_features_continue
+FAILED r1/tests/test_c3_rule_controller.py::test_a1_with_verify_equals_the_index_policy_arm
+FAILED r1/tests/test_c3_sidecar.py::test_campaign_survives_a_dead_sidecar_and_logs_prior_unavailable
+13 failed, 13 passed in 3.90s
+== a42d9fe
+FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-1]
+FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[second_gains-1]
+FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-0]
+FAILED r1/tests/test_c3_direct_arms.py::test_awr_direct_and_llm_self_control_run_through_decide
+FAILED r1/tests/test_c3_direct_arms.py::test_campaign_usage_reports_trials_and_the_trial_budget
+FAILED r1/tests/test_c3_rule_controller.py::test_a1_through_rule_controller_equals_the_index_policy[probs0-True]
+FAILED r1/tests/test_c3_rule_controller.py::test_a1_through_rule_controller_equals_the_index_policy[probs1-False]
+FAILED r1/tests/test_c3_rule_controller.py::test_one_forecast_serves_e1_and_e2_and_is_recorded
+FAILED r1/tests/test_c3_rule_controller.py::test_rule_skips_come_first_and_are_logged
+FAILED r1/tests/test_c3_rule_controller.py::test_a4_queries_are_charged_to_the_llm_cap
+FAILED r1/tests/test_c3_rule_controller.py::test_skip_infeasible_and_no_features_continue
+FAILED r1/tests/test_c3_rule_controller.py::test_a1_with_verify_equals_the_index_policy_arm
+FAILED r1/tests/test_c3_sidecar.py::test_campaign_survives_a_dead_sidecar_and_logs_prior_unavailable
+13 failed, 13 passed in 3.84s

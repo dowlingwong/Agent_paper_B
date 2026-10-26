@@ -1,0 +1,5 @@
+enc_cls (after per-sample LayerNorm) norm 32.0 between-prompt std / mean norm 0.0864
+enc_mean (after per-sample LayerNorm) norm 32.0 between-prompt std / mean norm 0.0868
+marker_mean (after per-sample LayerNorm) norm 32.0 between-prompt std / mean norm 0.0193
+cls (after per-sample LayerNorm) norm 32.0 between-prompt std / mean norm 0.0117
+mean (after per-sample LayerNorm) norm 32.0 between-prompt std / mean norm 0.0162

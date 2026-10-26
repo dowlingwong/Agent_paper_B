@@ -75,7 +75,7 @@ from r1.c3 import rules
 from r1.c3.audit import split_audit
 from r1.c3.arms import ConstantPrior, LGBMPrior, RulesPrior, is_duplicate, is_noop, prior_moments, rule_skip
 from r1.c3.dataset import load_table, noise_table
-from r1.c3.labels import N_BINS, log_score, prob_positive, soft_label
+from r1.c3.labels import N_BINS, log_score, prob_positive, soft_label, soft_label_version
 
 G_PRIMARY = 0.1  # run price g in units of sigma_node (PLAN §10, "g (22 Oct)"): the gate value
 G_SENSITIVITY = (0.05, 0.2)  # declared sensitivity values; reported, never a verdict
@@ -113,7 +113,8 @@ BOOT = 2000
 SEED = 20261019
 
 
-def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool = True) -> list[dict]:
+def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool = True,
+             sigma_mode: str = "se_audit") -> list[dict]:
     """Join proposals with audits.
 
     ``seed_split`` (default): the training soft label uses the first half of the
@@ -123,6 +124,10 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
     instance (same start configuration, same audit seeds) does not share its
     audit error with the training label. ``False`` uses all K seeds for both
     (optimistic when pairs recur across instances).
+
+    ``sigma_mode`` (R1-SOFT-SIGMA): ``"se_audit"`` (v1, default here) reproduces the
+    existing tables; ``"pooled_node"`` (v2) uses s = sigma_node / sqrt(K_label) and
+    records ``soft_version`` on every labelled row.
     """
     rows = load_table(table_dir)
     audits_path = audits_path or Path(table_dir) / "audits.jsonl"
@@ -173,7 +178,12 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
                 lab = ev = a
             if lab["delta_audit"] is None or ev["delta_audit"] is None:
                 continue
-            r.update(soft=soft_label(lab["delta_audit"], lab["se"], r["sigma_node"]), delta_true=ev["delta_audit"],
+            if sigma_mode == "se_audit":
+                soft = soft_label(lab["delta_audit"], lab["se"], r["sigma_node"], sigma_mode="se_audit")
+            else:
+                soft = soft_label(lab["delta_audit"], None, r["sigma_node"], sigma_mode=sigma_mode, k_label=lab["k"])
+                r["soft_version"] = soft_label_version(sigma_mode)
+            r.update(soft=soft, delta_true=ev["delta_audit"],
                      delta_audit_all=a["delta_audit"], se_audit=a["se"], weight=ratio, eval_weight=ratio if "random" in a["reason"] else 0.0,
                      audit_reason=a["reason"])
         out.append(r)
