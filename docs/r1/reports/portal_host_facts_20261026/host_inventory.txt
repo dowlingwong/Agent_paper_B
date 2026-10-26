@@ -1,0 +1,876 @@
+
+COMMAND: date -u +%Y-%m-%dT%H:%M:%SZ
+2026-10-26T01:08:59Z
+EXIT: 0
+
+COMMAND: hostname
+TASL-2
+EXIT: 0
+
+COMMAND: id
+uid=1008(dowling) gid=1008(dowling) groups=1008(dowling)
+EXIT: 0
+
+COMMAND: printenv HOME
+/home/dowling
+EXIT: 0
+
+COMMAND: printenv PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+EXIT: 0
+
+COMMAND: cat /etc/os-release
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
+EXIT: 0
+
+COMMAND: df -h
+Filesystem      Size  Used Avail Use% Mounted on
+tmpfs           6.3G   36M  6.3G   1% /run
+/dev/nvme0n1p2  1.9T  944G  837G  54% /
+tmpfs            32G  4.0K   32G   1% /dev/shm
+tmpfs           5.0M  4.0K  5.0M   1% /run/lock
+efivarfs        192K  140K   48K  75% /sys/firmware/efi/efivars
+/dev/nvme0n1p1  511M  6.2M  505M   2% /boot/efi
+tmpfs           6.3G  140K  6.3G   1% /run/user/1006
+tmpfs           6.3G   76K  6.3G   1% /run/user/1008
+EXIT: 0
+
+COMMAND: df -B1 /home/dowling
+Filesystem         1B-blocks          Used    Available Use% Mounted on
+/dev/nvme0n1p2 2014574526464 1013492989952 898671263744  54% /
+EXIT: 0
+
+COMMAND: df -i /home/dowling
+Filesystem        Inodes   IUsed     IFree IUse% Mounted on
+/dev/nvme0n1p2 124993536 5195056 119798480    5% /
+EXIT: 0
+
+COMMAND: stat -c %A %U %G %n /home/dowling /tmp /data /mnt /scratch
+drwxr-x--- dowling dowling /home/dowling
+drwxrwxrwt root root /tmp
+drwxr-xr-x root root /mnt
+EXIT: 1
+stat: cannot statx '/data': No such file or directory
+stat: cannot statx '/scratch': No such file or directory
+
+COMMAND: ls -ld /home/dowling /home/dowling/models /home/dowling/work /home/dowling/agent_paper_B /home/dowling/autoresearch_harness /home/dowling/.cache/huggingface
+drwxr-x--- 9 dowling dowling 4096 Oct 17 04:20 /home/dowling
+EXIT: 2
+
+COMMAND: nvidia-smi
+Sun Oct 25 18:08:59 2026
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.309.01             Driver Version: 535.309.01   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA GeForce RTX 4090        On  | 00000000:01:00.0 Off |                  Off |
+|  0%   37C    P8              11W / 450W |    436MiB / 24564MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|    0   N/A  N/A      5763      G   /usr/lib/xorg/Xorg                          401MiB |
+|    0   N/A  N/A      5925      G   /usr/bin/gnome-shell                         18MiB |
++---------------------------------------------------------------------------------------+
+EXIT: 0
+
+COMMAND: nvidia-smi --query-gpu=name,memory.total,memory.used,memory.free,driver_version,compute_cap --format=csv
+name, memory.total [MiB], memory.used [MiB], memory.free [MiB], driver_version, compute_cap
+NVIDIA GeForce RTX 4090, 24564 MiB, 436 MiB, 23747 MiB, 535.309.01, 8.9
+EXIT: 0
+
+COMMAND: nvidia-smi --query-compute-apps=pid,process_name,used_gpu_memory --format=csv
+pid, process_name, used_gpu_memory [MiB]
+EXIT: 0
+
+COMMAND: nproc
+32
+ls: cannot access '/home/dowling/models': No such file or directory
+ls: cannot access '/home/dowling/work': No such file or directory
+ls: cannot access '/home/dowling/agent_paper_B': No such file or directory
+ls: cannot access '/home/dowling/autoresearch_harness': No such file or directory
+ls: cannot access '/home/dowling/.cache/huggingface': No such file or directory
+EXIT: 0
+
+COMMAND: free -g
+               total        used        free      shared  buff/cache   available
+Mem:              62           4          37           0          21          57
+Swap:              1           1           0
+EXIT: 0
+
+COMMAND: free -b
+               total        used        free      shared  buff/cache   available
+Mem:     67116290048  4314501120 40236273664    41562112 22565515264 61419044864
+Swap:     2147479552  2132398080    15081472
+EXIT: 0
+
+COMMAND: uptime
+ 18:08:59 up 46 days,  3:24,  3 users,  load average: 1.18, 1.22, 1.18
+EXIT: 0
+
+COMMAND: who
+zhixu    :1           Sep  9 14:48 (:1)
+dowling  pts/0        Oct 25 18:08 (100.70.173.68)
+zhixu    pts/3        Sep 10 00:19 (tmux(634506).%0)
+EXIT: 0
+
+COMMAND: ps -eo user,pid,pcpu,pmem,comm --sort=-pcpu
+USER         PID %CPU %MEM COMMAND
+root     3813147 35.0  0.5 ninjarmm-linage
+root        5763  1.8  0.0 Xorg
+root        2541  1.6  0.9 xagt
+root        2630  1.5  0.0 perf-sensor
+message+    1025  1.1  0.0 dbus-daemon
+root           1  1.0  0.0 systemd
+999       681386  0.7  0.1 mongod
+zhixu    1444386  0.7  0.6 jetbrains-toolb
+root     1643065  0.6  0.0 polkitd
+root     1460733  0.5  0.0 cups-browsed
+root        1695  0.3  0.1 tailscaled
+www-data  682277  0.2  0.0 node
+root          17  0.1  0.0 rcu_preempt
+avahi       1020  0.1  0.0 avahi-daemon
+root        1069  0.1  0.0 systemd-logind
+root      680960  0.1  0.1 dockerd
+999       681378  0.1  0.0 redis-server
+www-data  682268  0.1  0.0 node
+www-data  682270  0.1  0.1 node
+www-data  682272  0.1  0.0 node
+www-data  682273  0.1  0.0 node
+www-data  682274  0.1  0.1 node
+www-data  682275  0.1  0.0 node
+www-data  682276  0.1  0.0 node
+www-data  682278  0.1  0.0 node
+www-data  682279  0.1  0.0 node
+www-data  682280  0.1  0.0 node
+www-data  682281  0.1  0.1 node
+dowling  2495432  0.1  0.0 bash
+root           2  0.0  0.0 kthreadd
+root           3  0.0  0.0 pool_workqueue_release
+root           4  0.0  0.0 kworker/R-rcu_g
+root           5  0.0  0.0 kworker/R-rcu_p
+root           6  0.0  0.0 kworker/R-slub_
+root           7  0.0  0.0 kworker/R-netns
+root           9  0.0  0.0 kworker/0:0H-events_highpri
+root          12  0.0  0.0 kworker/R-mm_pe
+root          13  0.0  0.0 rcu_tasks_kthread
+root          14  0.0  0.0 rcu_tasks_rude_kthread
+root          15  0.0  0.0 rcu_tasks_trace_kthread
+root          16  0.0  0.0 ksoftirqd/0
+root          18  0.0  0.0 migration/0
+root          19  0.0  0.0 idle_inject/0
+root          20  0.0  0.0 cpuhp/0
+root          21  0.0  0.0 cpuhp/2
+root          22  0.0  0.0 idle_inject/2
+root          23  0.0  0.0 migration/2
+root          24  0.0  0.0 ksoftirqd/2
+root          26  0.0  0.0 kworker/2:0H-events_highpri
+root          27  0.0  0.0 cpuhp/4
+root          28  0.0  0.0 idle_inject/4
+root          29  0.0  0.0 migration/4
+root          30  0.0  0.0 ksoftirqd/4
+root          32  0.0  0.0 kworker/4:0H-events_highpri
+root          33  0.0  0.0 cpuhp/6
+root          34  0.0  0.0 idle_inject/6
+root          35  0.0  0.0 migration/6
+root          36  0.0  0.0 ksoftirqd/6
+root          38  0.0  0.0 kworker/6:0H-events_highpri
+root          39  0.0  0.0 cpuhp/8
+root          40  0.0  0.0 idle_inject/8
+root          41  0.0  0.0 migration/8
+root          42  0.0  0.0 ksoftirqd/8
+root          44  0.0  0.0 kworker/8:0H-events_highpri
+root          45  0.0  0.0 cpuhp/10
+root          46  0.0  0.0 idle_inject/10
+root          47  0.0  0.0 migration/10
+root          48  0.0  0.0 ksoftirqd/10
+root          50  0.0  0.0 kworker/10:0H-events_highpri
+root          51  0.0  0.0 cpuhp/12
+root          52  0.0  0.0 idle_inject/12
+root          53  0.0  0.0 migration/12
+root          54  0.0  0.0 ksoftirqd/12
+root          56  0.0  0.0 kworker/12:0H-events_highpri
+root          57  0.0  0.0 cpuhp/14
+root          58  0.0  0.0 idle_inject/14
+root          59  0.0  0.0 migration/14
+root          60  0.0  0.0 ksoftirqd/14
+root          62  0.0  0.0 kworker/14:0H-events_highpri
+root          63  0.0  0.0 cpuhp/16
+root          64  0.0  0.0 idle_inject/16
+root          65  0.0  0.0 migration/16
+root          66  0.0  0.0 ksoftirqd/16
+root          68  0.0  0.0 kworker/16:0H-events_highpri
+root          69  0.0  0.0 cpuhp/17
+root          70  0.0  0.0 idle_inject/17
+root          71  0.0  0.0 migration/17
+root          72  0.0  0.0 ksoftirqd/17
+root          74  0.0  0.0 kworker/17:0H-events_highpri
+root          75  0.0  0.0 cpuhp/18
+root          76  0.0  0.0 idle_inject/18
+root          77  0.0  0.0 migration/18
+root          78  0.0  0.0 ksoftirqd/18
+root          80  0.0  0.0 kworker/18:0H-events_highpri
+root          81  0.0  0.0 cpuhp/19
+root          82  0.0  0.0 idle_inject/19
+root          83  0.0  0.0 migration/19
+root          84  0.0  0.0 ksoftirqd/19
+root          86  0.0  0.0 kworker/19:0H-events_highpri
+root          87  0.0  0.0 cpuhp/20
+root          88  0.0  0.0 idle_inject/20
+root          89  0.0  0.0 migration/20
+root          90  0.0  0.0 ksoftirqd/20
+root          92  0.0  0.0 kworker/20:0H-events_highpri
+root          93  0.0  0.0 cpuhp/21
+root          94  0.0  0.0 idle_inject/21
+root          95  0.0  0.0 migration/21
+root          96  0.0  0.0 ksoftirqd/21
+root          98  0.0  0.0 kworker/21:0H-events_highpri
+root          99  0.0  0.0 cpuhp/22
+root         100  0.0  0.0 idle_inject/22
+root         101  0.0  0.0 migration/22
+root         102  0.0  0.0 ksoftirqd/22
+root         104  0.0  0.0 kworker/22:0H-events_highpri
+root         105  0.0  0.0 cpuhp/23
+root         106  0.0  0.0 idle_inject/23
+root         107  0.0  0.0 migration/23
+root         108  0.0  0.0 ksoftirqd/23
+root         110  0.0  0.0 kworker/23:0H-events_highpri
+root         111  0.0  0.0 cpuhp/24
+root         112  0.0  0.0 idle_inject/24
+root         113  0.0  0.0 migration/24
+root         114  0.0  0.0 ksoftirqd/24
+root         116  0.0  0.0 kworker/24:0H-events_highpri
+root         117  0.0  0.0 cpuhp/25
+root         118  0.0  0.0 idle_inject/25
+root         119  0.0  0.0 migration/25
+root         120  0.0  0.0 ksoftirqd/25
+root         122  0.0  0.0 kworker/25:0H-events_highpri
+root         123  0.0  0.0 cpuhp/26
+root         124  0.0  0.0 idle_inject/26
+root         125  0.0  0.0 migration/26
+root         126  0.0  0.0 ksoftirqd/26
+root         128  0.0  0.0 kworker/26:0H-events_highpri
+root         129  0.0  0.0 cpuhp/27
+root         130  0.0  0.0 idle_inject/27
+root         131  0.0  0.0 migration/27
+root         132  0.0  0.0 ksoftirqd/27
+root         134  0.0  0.0 kworker/27:0H-events_highpri
+root         135  0.0  0.0 cpuhp/28
+root         136  0.0  0.0 idle_inject/28
+root         137  0.0  0.0 migration/28
+root         138  0.0  0.0 ksoftirqd/28
+root         140  0.0  0.0 kworker/28:0H-events_highpri
+root         141  0.0  0.0 cpuhp/29
+root         142  0.0  0.0 idle_inject/29
+root         143  0.0  0.0 migration/29
+root         144  0.0  0.0 ksoftirqd/29
+root         146  0.0  0.0 kworker/29:0H-events_highpri
+root         147  0.0  0.0 cpuhp/30
+root         148  0.0  0.0 idle_inject/30
+root         149  0.0  0.0 migration/30
+root         150  0.0  0.0 ksoftirqd/30
+root         152  0.0  0.0 kworker/30:0H-events_highpri
+root         153  0.0  0.0 cpuhp/31
+root         154  0.0  0.0 idle_inject/31
+root         155  0.0  0.0 migration/31
+root         156  0.0  0.0 ksoftirqd/31
+root         158  0.0  0.0 kworker/31:0H-events_highpri
+root         159  0.0  0.0 cpuhp/1
+root         160  0.0  0.0 idle_inject/1
+root         161  0.0  0.0 migration/1
+root         162  0.0  0.0 ksoftirqd/1
+root         164  0.0  0.0 kworker/1:0H-events_highpri
+root         165  0.0  0.0 cpuhp/3
+root         166  0.0  0.0 idle_inject/3
+root         167  0.0  0.0 migration/3
+root         168  0.0  0.0 ksoftirqd/3
+root         170  0.0  0.0 kworker/3:0H-events_highpri
+root         171  0.0  0.0 cpuhp/5
+root         172  0.0  0.0 idle_inject/5
+root         173  0.0  0.0 migration/5
+root         174  0.0  0.0 ksoftirqd/5
+root         176  0.0  0.0 kworker/5:0H-kblockd
+root         177  0.0  0.0 cpuhp/7
+root         178  0.0  0.0 idle_inject/7
+root         179  0.0  0.0 migration/7
+root         180  0.0  0.0 ksoftirqd/7
+root         182  0.0  0.0 kworker/7:0H-events_highpri
+root         183  0.0  0.0 cpuhp/9
+root         184  0.0  0.0 idle_inject/9
+root         185  0.0  0.0 migration/9
+root         186  0.0  0.0 ksoftirqd/9
+root         188  0.0  0.0 kworker/9:0H-events_highpri
+root         189  0.0  0.0 cpuhp/11
+root         190  0.0  0.0 idle_inject/11
+root         191  0.0  0.0 migration/11
+root         192  0.0  0.0 ksoftirqd/11
+root         194  0.0  0.0 kworker/11:0H-events_highpri
+root         195  0.0  0.0 cpuhp/13
+root         196  0.0  0.0 idle_inject/13
+root         197  0.0  0.0 migration/13
+root         198  0.0  0.0 ksoftirqd/13
+root         200  0.0  0.0 kworker/13:0H-events_highpri
+root         201  0.0  0.0 cpuhp/15
+root         202  0.0  0.0 idle_inject/15
+root         203  0.0  0.0 migration/15
+root         204  0.0  0.0 ksoftirqd/15
+root         206  0.0  0.0 kworker/15:0H-events_highpri
+root         207  0.0  0.0 kdevtmpfs
+root         208  0.0  0.0 kworker/R-inet_
+root         209  0.0  0.0 kauditd
+root         213  0.0  0.0 khungtaskd
+root         215  0.0  0.0 oom_reaper
+root         217  0.0  0.0 kworker/R-write
+root         218  0.0  0.0 kcompactd0
+root         219  0.0  0.0 ksmd
+root         220  0.0  0.0 khugepaged
+root         221  0.0  0.0 kworker/R-kinte
+root         222  0.0  0.0 kworker/R-kbloc
+root         223  0.0  0.0 kworker/R-blkcg
+root         224  0.0  0.0 irq/9-acpi
+root         226  0.0  0.0 kworker/R-tpm_d
+root         227  0.0  0.0 kworker/R-ata_s
+root         228  0.0  0.0 kworker/R-md
+root         229  0.0  0.0 kworker/R-md_bi
+root         230  0.0  0.0 kworker/R-edac-
+root         231  0.0  0.0 kworker/R-devfr
+root         233  0.0  0.0 watchdogd
+root         235  0.0  0.0 kworker/R-quota
+root         236  0.0  0.0 kworker/29:1H-kblockd
+root         237  0.0  0.0 kswapd0
+root         238  0.0  0.0 ecryptfs-kthread
+root         239  0.0  0.0 kworker/R-kthro
+root         240  0.0  0.0 irq/121-aerdrv
+root         241  0.0  0.0 irq/122-aerdrv
+root         242  0.0  0.0 irq/123-aerdrv
+root         243  0.0  0.0 kworker/R-acpi_
+root         244  0.0  0.0 hwrng
+root         245  0.0  0.0 kworker/R-hfi-u
+root         249  0.0  0.0 kworker/R-mld
+root         250  0.0  0.0 kworker/28:1H-kblockd
+root         251  0.0  0.0 kworker/R-ipv6_
+root         260  0.0  0.0 kworker/R-kstrp
+root         293  0.0  0.0 kworker/R-charg
+root         314  0.0  0.0 kworker/24:1H-kblockd
+root         317  0.0  0.0 kworker/4:1H-kblockd
+root         318  0.0  0.0 kworker/10:1H-kblockd
+root         335  0.0  0.0 kworker/2:1H-kblockd
+root         336  0.0  0.0 kworker/17:1H-kblockd
+root         337  0.0  0.0 kworker/16:1H-kblockd
+root         338  0.0  0.0 kworker/12:1H-kblockd
+root         340  0.0  0.0 kworker/13:1H-kblockd
+root         341  0.0  0.0 kworker/1:1H-kblockd
+root         342  0.0  0.0 kworker/8:1H-kblockd
+root         345  0.0  0.0 kworker/6:1H-kblockd
+root         347  0.0  0.0 kworker/18:1H-kblockd
+root         349  0.0  0.0 kworker/19:1H-kblockd
+root         350  0.0  0.0 kworker/23:1H-kblockd
+root         351  0.0  0.0 kworker/21:1H-kblockd
+root         352  0.0  0.0 kworker/22:1H-kblockd
+root         355  0.0  0.0 kworker/25:1H-kblockd
+root         356  0.0  0.0 kworker/31:1H-kblockd
+root         360  0.0  0.0 kworker/0:1H-kblockd
+root         365  0.0  0.0 kworker/27:1H-kblockd
+root         366  0.0  0.0 kworker/26:1H-kblockd
+root         367  0.0  0.0 kworker/20:1H-kblockd
+root         368  0.0  0.0 kworker/15:1H-kblockd
+root         369  0.0  0.0 kworker/14:1H-kblockd
+root         370  0.0  0.0 kworker/30:1H-kblockd
+root         448  0.0  0.0 kworker/11:1H-kblockd
+root         449  0.0  0.0 kworker/9:1H-kblockd
+root         450  0.0  0.0 kworker/3:1H-kblockd
+root         455  0.0  0.0 irq/152-aerdrv
+root         457  0.0  0.0 scsi_eh_0
+root         458  0.0  0.0 kworker/R-scsi_
+root         459  0.0  0.0 scsi_eh_1
+root         460  0.0  0.0 kworker/R-scsi_
+root         461  0.0  0.0 scsi_eh_2
+root         462  0.0  0.0 kworker/R-scsi_
+root         463  0.0  0.0 scsi_eh_3
+root         464  0.0  0.0 kworker/R-scsi_
+root         465  0.0  0.0 scsi_eh_4
+root         466  0.0  0.0 kworker/R-scsi_
+root         467  0.0  0.0 scsi_eh_5
+root         468  0.0  0.0 kworker/R-scsi_
+root         469  0.0  0.0 scsi_eh_6
+root         470  0.0  0.0 kworker/R-scsi_
+root         471  0.0  0.0 scsi_eh_7
+root         472  0.0  0.0 kworker/R-scsi_
+root         480  0.0  0.0 kworker/R-nvme-
+root         481  0.0  0.0 kworker/R-nvme-
+root         482  0.0  0.0 kworker/R-nvme-
+root         483  0.0  0.0 kworker/R-nvme-
+root         484  0.0  0.0 kworker/5:1H
+root         485  0.0  0.0 kworker/7:1H-kblockd
+root         540  0.0  0.0 jbd2/nvme0n1p2-8
+root         541  0.0  0.0 kworker/R-ext4-
+root         769  0.0  0.0 irq/173-mei_me
+root         807  0.0  0.0 kworker/R-cfg80
+root         813  0.0  0.0 kworker/R-crypt
+root         820  0.0  0.0 irq/174-iwlwifi:default_queue
+root         821  0.0  0.0 irq/175-iwlwifi:queue_1
+root         822  0.0  0.0 irq/176-iwlwifi:queue_2
+root         823  0.0  0.0 irq/177-iwlwifi:queue_3
+root         824  0.0  0.0 irq/178-iwlwifi:queue_4
+root         825  0.0  0.0 irq/179-iwlwifi:queue_5
+root         826  0.0  0.0 irq/180-iwlwifi:queue_6
+root         827  0.0  0.0 irq/181-iwlwifi:queue_7
+root         828  0.0  0.0 irq/182-iwlwifi:queue_8
+root         829  0.0  0.0 irq/183-iwlwifi:queue_9
+root         830  0.0  0.0 irq/184-iwlwifi:queue_10
+root         831  0.0  0.0 irq/185-iwlwifi:queue_11
+root         832  0.0  0.0 irq/186-iwlwifi:queue_12
+root         833  0.0  0.0 irq/187-iwlwifi:queue_13
+root         834  0.0  0.0 irq/188-iwlwifi:queue_14
+root         835  0.0  0.0 irq/189-iwlwifi:exception
+root         879  0.0  0.0 irq/16-processor_thermal_device_pci
+root         992  0.0  0.0 nv_queue
+root         993  0.0  0.0 nv_queue
+root        1014  0.0  0.0 accounts-daemon
+root        1015  0.0  0.0 acpid
+root        1023  0.0  0.0 cron
+root        1026  0.0  0.0 NetworkManager
+root        1034  0.0  0.0 python3
+root        1036  0.0  0.0 irqbalance
+root        1041  0.0  0.0 networkd-dispat
+root        1048  0.0  0.0 power-profiles-
+root        1051  0.0  0.0 qualys-cloud-ag
+root        1059  0.0  0.0 smartd
+root        1061  0.0  0.0 nvidia-persiste
+root        1065  0.0  0.0 switcheroo-cont
+root        1066  0.0  0.0 irq/191-nvidia
+root        1067  0.0  0.0 nvidia
+root        1068  0.0  0.0 nv_queue
+root        1070  0.0  0.0 thermald
+root        1071  0.0  0.0 udisksd
+root        1074  0.0  0.0 wpa_supplicant
+root        1076  0.0  0.0 xagt
+avahi       1083  0.0  0.0 avahi-daemon
+root        1128  0.0  0.0 nvidia-modeset/kthread_q
+root        1129  0.0  0.0 nvidia-modeset/deferred_close_kthread_q
+root        1196  0.0  0.0 python3
+root        1703  0.0  0.0 unattended-upgr
+root        1768  0.0  0.0 containerd
+root        2021  0.0  0.0 gdm3
+root        2126  0.0  0.0 UVM global queue
+root        2127  0.0  0.0 UVM deferred release queue
+root        2128  0.0  0.0 UVM Tools Event Queue
+rtkit       2332  0.0  0.0 rtkit-daemon
+root        2539  0.0  0.0 krfcommd
+root        2560  0.0  0.0 xagt
+root        2608  0.0  0.0 rte-sensor
+root        2643  0.0  0.0 upowerd
+root        2646  0.0  0.0 packagekitd
+colord      2755  0.0  0.0 colord
+kernoops    2937  0.0  0.0 kerneloops
+kernoops    2939  0.0  0.0 kerneloops
+root        5337  0.0  0.0 gdm-session-wor
+zhixu       5650  0.0  0.0 systemd
+zhixu       5651  0.0  0.0 (sd-pam)
+zhixu       5658  0.0  0.0 pipewire
+zhixu       5659  0.0  0.0 pipewire-pulse
+zhixu       5661  0.0  0.0 wireplumber
+zhixu       5673  0.0  0.0 gnome-keyring-d
+zhixu       5685  0.0  0.0 dbus-daemon
+zhixu       5703  0.0  0.0 xdg-document-po
+zhixu       5709  0.0  0.0 xdg-permission-
+root        5715  0.0  0.0 fusermount3
+zhixu       5761  0.0  0.0 gdm-x-session
+zhixu       5772  0.0  0.0 gnome-session-b
+zhixu       5863  0.0  0.0 at-spi-bus-laun
+zhixu       5871  0.0  0.0 dbus-daemon
+zhixu       5878  0.0  0.0 gnome-session-c
+zhixu       5888  0.0  0.0 gvfsd
+zhixu       5895  0.0  0.0 gvfsd-fuse
+zhixu       5897  0.0  0.0 gnome-session-b
+zhixu       5925  0.0  0.3 gnome-shell
+zhixu       5972  0.0  0.0 at-spi2-registr
+zhixu       5990  0.0  0.0 gnome-shell-cal
+zhixu       5998  0.0  0.0 evolution-sourc
+zhixu       6004  0.0  0.0 gvfs-udisks2-vo
+zhixu       6009  0.0  0.0 goa-daemon
+zhixu       6012  0.0  0.0 gvfs-gphoto2-vo
+zhixu       6018  0.0  0.0 evolution-calen
+zhixu       6024  0.0  0.0 gvfs-afc-volume
+zhixu       6029  0.0  0.0 gvfs-goa-volume
+zhixu       6038  0.0  0.0 goa-identity-se
+zhixu       6042  0.0  0.0 gvfs-mtp-volume
+zhixu       6053  0.0  0.0 dconf-service
+zhixu       6059  0.0  0.0 evolution-addre
+zhixu       6069  0.0  0.0 gvfsd-trash
+zhixu       6080  0.0  0.0 gjs
+zhixu       6098  0.0  0.0 xdg-desktop-por
+zhixu       6102  0.0  0.0 xdg-desktop-por
+zhixu       6109  0.0  0.0 sh
+zhixu       6110  0.0  0.0 gsd-a11y-settin
+zhixu       6112  0.0  0.0 gsd-color
+zhixu       6114  0.0  0.0 gsd-datetime
+zhixu       6115  0.0  0.0 ibus-daemon
+zhixu       6116  0.0  0.0 gsd-housekeepin
+zhixu       6119  0.0  0.0 gsd-keyboard
+zhixu       6120  0.0  0.0 gsd-media-keys
+zhixu       6122  0.0  0.0 gsd-power
+zhixu       6125  0.0  0.0 gsd-print-notif
+zhixu       6127  0.0  0.0 gsd-rfkill
+zhixu       6128  0.0  0.0 gsd-screensaver
+zhixu       6129  0.0  0.0 gsd-sharing
+zhixu       6133  0.0  0.0 gsd-smartcard
+zhixu       6134  0.0  0.0 gsd-sound
+zhixu       6141  0.0  0.0 gsd-wacom
+zhixu       6144  0.0  0.0 gsd-xsettings
+zhixu       6170  0.0  0.0 gsd-disk-utilit
+zhixu       6174  0.0  0.0 ibus-dconf
+zhixu       6176  0.0  0.0 ibus-extension-
+zhixu       6179  0.0  0.0 ibus-x11
+zhixu       6183  0.0  0.0 ibus-portal
+zhixu       6187  0.0  0.0 solaar
+zhixu       6198  0.0  0.0 evolution-alarm
+zhixu       6200  0.0  0.0 imwheel
+zhixu       6293  0.0  0.0 gjs
+zhixu       6343  0.0  0.0 ibus-engine-sim
+zhixu       6390  0.0  0.0 xdg-desktop-por
+zhixu       6537  0.0  0.0 gsd-printer
+zhixu       6545  0.0  0.0 tracker-miner-f
+root        6824  0.0  0.0 python3
+zhixu       7097  0.0  0.0 gvfsd-metadata
+zhixu       8575  0.0  0.0 user-session-he
+zhixu       8753  0.0  0.0 snapd-desktop-i
+zhixu      10038  0.0  0.0 update-notifier
+zhixu      10179  0.0  0.1 update-manager
+root       10491  0.0  0.0 kworker/R-tls-s
+root      101897  0.0  0.0 kworker/15:2-events
+zhixu     274282  0.0  0.0 python3
+root      278760  0.0  0.0 kworker/18:0-mm_percpu_wq
+root      285953  0.0  0.0 kworker/3:2-rcu_par_gp
+root      330079  0.0  0.0 kworker/14:2-events
+root      532837  0.0  0.0 kworker/8:0-events
+root      562133  0.0  0.0 kworker/0:2-events
+zhixu     634506  0.0  0.0 tmux: server
+zhixu     634507  0.0  0.0 zsh
+root      681291  0.0  0.0 containerd-shim
+root      681302  0.0  0.0 containerd-shim
+root      681354  0.0  0.0 containerd-shim
+root      681389  0.0  0.0 my_init
+root      681534  0.0  0.0 docker-proxy
+root      681617  0.0  0.0 syslog-ng
+root      682252  0.0  0.0 runsvdir
+root      682253  0.0  0.0 runsv
+root      682254  0.0  0.0 runsv
+root      682255  0.0  0.0 runsv
+root      682256  0.0  0.0 runsv
+root      682257  0.0  0.0 runsv
+root      682258  0.0  0.0 runsv
+root      682259  0.0  0.0 runsv
+root      682260  0.0  0.0 runsv
+root      682261  0.0  0.0 runsv
+root      682262  0.0  0.0 runsv
+root      682263  0.0  0.0 runsv
+root      682264  0.0  0.0 runsv
+root      682265  0.0  0.0 runsv
+root      682266  0.0  0.0 runsv
+root      682267  0.0  0.0 runsv
+root      682269  0.0  0.0 cron
+root      682271  0.0  0.0 nginx
+www-data  682285  0.0  0.0 nginx
+www-data  682286  0.0  0.0 nginx
+www-data  682287  0.0  0.0 nginx
+www-data  682288  0.0  0.0 nginx
+root      776735  0.0  0.0 kworker/24:2-mm_percpu_wq
+root      842661  0.0  0.0 kworker/13:0
+root      956049  0.0  0.0 kworker/21:1-mm_percpu_wq
+root     1019270  0.0  0.0 kworker/15:1
+dowling  1058558  0.0  0.0 systemd
+dowling  1058559  0.0  0.0 (sd-pam)
+dowling  1058570  0.0  0.0 pipewire
+dowling  1058571  0.0  0.0 pipewire-pulse
+dowling  1058572  0.0  0.0 user-session-he
+dowling  1058574  0.0  0.0 wireplumber
+dowling  1058629  0.0  0.0 dbus-daemon
+dowling  1058673  0.0  0.0 xdg-document-po
+dowling  1058676  0.0  0.0 xdg-permission-
+root     1058682  0.0  0.0 fusermount3
+root     1061259  0.0  0.0 fwupd
+root     1061293  0.0  0.0 snapd
+zhixu    1061567  0.0  0.0 fcitx
+zhixu    1061791  0.0  0.0 dbus-daemon
+zhixu    1061795  0.0  0.0 fcitx-dbus-watc
+zhixu    1061818  0.0  0.0 sogoupinyin-wat
+zhixu    1061843  0.0  0.0 sogoupinyin-ser
+zhixu    1105717  0.0  0.0 codex-code-mode
+root     1165370  0.0  0.0 kworker/19:0-events
+syslog   1234345  0.0  0.0 rsyslogd
+root     1235925  0.0  0.0 kworker/4:1-events
+zhixu    1445121  0.0  0.0 jetbrainsd
+root     1460723  0.0  0.0 cupsd
+www-data 1460726  0.0  0.0 apache2
+www-data 1460727  0.0  0.0 apache2
+www-data 1460728  0.0  0.0 apache2
+www-data 1460729  0.0  0.0 apache2
+www-data 1460730  0.0  0.0 apache2
+root     1468702  0.0  0.0 kworker/20:1-events
+root     1491026  0.0  0.0 kworker/13:2-events
+root     1520919  0.0  0.0 sshd
+zhixu    1521006  0.0  0.0 sshd
+zhixu    1521015  0.0  0.0 MainThread
+zhixu    1521711  0.0  0.0 codex
+root     1525214  0.0  0.0 kworker/6:2-events
+root     1551910  0.0  0.0 kworker/27:2-events
+root     1612681  0.0  0.0 kworker/1:1
+root     1641393  0.0  0.0 kworker/7:1-mm_percpu_wq
+root     1643069  0.0  0.0 ModemManager
+zhixu    1653275  0.0  0.0 python3
+root     1735853  0.0  0.0 kworker/12:1-mm_percpu_wq
+root     1770360  0.0  0.0 kworker/5:0-mm_percpu_wq
+root     1824144  0.0  0.0 kworker/16:0-rcu_par_gp
+root     1898082  0.0  0.0 kworker/22:2-events
+root     1914529  0.0  0.0 kworker/9:0
+root     1945556  0.0  0.0 kworker/5:2
+root     1947155  0.0  0.0 kworker/26:1-events
+root     2013305  0.0  0.0 kworker/u64:0-efi_rts_wq
+root     2032651  0.0  0.0 kworker/30:0-events
+root     2066498  0.0  0.0 kworker/7:0-rcu_par_gp
+root     2075410  0.0  0.0 kworker/23:0-events
+root     2160219  0.0  0.0 kworker/u65:1-hci0
+root     2187502  0.0  0.0 kworker/28:2-events
+root     2190638  0.0  0.0 kworker/u64:2-flush-259:0
+root     2200972  0.0  0.0 sshd
+zhixu    2201079  0.0  0.0 sshd
+zhixu    2201088  0.0  0.0 MainThread
+zhixu    2201781  0.0  0.0 codex
+root     2261576  0.0  0.0 kworker/u64:4-flush-259:0
+root     2307164  0.0  0.0 kworker/31:1-events
+zhixu    2324743  0.0  0.0 MainThread
+zhixu    2324756  0.0  0.1 codex
+root     2364669  0.0  0.0 kworker/17:1-rcu_par_gp
+root     2370379  0.0  0.0 kworker/24:1-rcu_par_gp
+root     2378399  0.0  0.0 kworker/14:1-rcu_par_gp
+root     2379300  0.0  0.0 kworker/26:0-rcu_par_gp
+root     2379318  0.0  0.0 kworker/12:2-rcu_par_gp
+root     2391371  0.0  0.0 kworker/25:1-rcu_par_gp
+root     2393182  0.0  0.0 kworker/28:0-rcu_par_gp
+root     2401779  0.0  0.0 kworker/31:2-events
+root     2401797  0.0  0.0 kworker/22:1-rcu_par_gp
+root     2403555  0.0  0.0 kworker/23:1-rcu_par_gp
+root     2404528  0.0  0.0 kworker/18:2-rcu_par_gp
+root     2409324  0.0  0.0 kworker/20:2-rcu_par_gp
+root     2409341  0.0  0.0 kworker/21:0-rcu_par_gp
+root     2410995  0.0  0.0 kworker/30:2-rcu_par_gp
+root     2412251  0.0  0.0 kworker/u64:1-events_unbound
+root     2416566  0.0  0.0 kworker/27:1-rcu_par_gp
+root     2416581  0.0  0.0 kworker/16:1-rcu_par_gp
+root     2425515  0.0  0.0 kworker/0:1-rcu_par_gp
+root     2427079  0.0  0.0 kworker/2:1-rcu_par_gp
+root     2427096  0.0  0.0 kworker/4:2-rcu_par_gp
+root     2427097  0.0  0.0 kworker/17:0-events
+root     2431246  0.0  0.0 kworker/29:2-rcu_par_gp
+root     2432829  0.0  0.0 kworker/19:1-rcu_par_gp
+root     2436847  0.0  0.0 kworker/11:1
+root     2437737  0.0  0.0 kworker/6:1-rcu_par_gp
+root     2439260  0.0  0.0 sudo
+zhixu    2439261  0.0  0.0 njbar
+root     2440201  0.0  0.0 kworker/8:2-rcu_par_gp
+root     2440218  0.0  0.0 kworker/10:2-rcu_par_gp
+root     2453949  0.0  0.0 kworker/22:0-rcu_par_gp
+root     2453968  0.0  0.0 kworker/18:1-rcu_par_gp
+root     2455706  0.0  0.0 kworker/28:1-rcu_par_gp
+root     2458184  0.0  0.0 kworker/20:0-rcu_par_gp
+root     2459591  0.0  0.0 kworker/30:1
+root     2459823  0.0  0.0 kworker/21:2-rcu_par_gp
+root     2464768  0.0  0.0 kworker/24:0-rcu_par_gp
+root     2464788  0.0  0.0 kworker/16:2-events
+root     2470462  0.0  0.0 kworker/12:0-rcu_par_gp
+root     2473777  0.0  0.0 kworker/0:0
+root     2474740  0.0  0.0 kworker/25:2
+root     2476424  0.0  0.0 kworker/2:0-rcu_par_gp
+root     2479572  0.0  0.0 kworker/14:0-events
+root     2479591  0.0  0.0 kworker/17:2-cgroup_free
+root     2481254  0.0  0.0 kworker/29:0-rcu_par_gp
+root     2481274  0.0  0.0 kworker/26:2-rcu_par_gp
+root     2483887  0.0  0.0 kworker/10:1-events
+root     2485422  0.0  0.0 kworker/27:0-rcu_par_gp
+root     2486537  0.0  0.0 sshd
+zhixu    2486662  0.0  0.0 sshd
+root     2487528  0.0  0.0 kworker/31:0
+root     2490448  0.0  0.0 kworker/10:0-rcu_par_gp
+root     2492978  0.0  0.0 kworker/19:2
+root     2493991  0.0  0.0 kworker/u64:3-events_power_efficient
+root     2495105  0.0  0.0 sshd
+dowling  2495356  0.0  0.0 sshd
+root     2496488  0.0  0.0 sshd
+dowling  2496742  0.0  0.0 sshd
+dowling  2496817  0.0  0.0 bash
+dowling  2496876  0.0  0.0 ps
+root     2512829  0.0  0.0 kworker/1:2-mm_percpu_wq
+root     2554847  0.0  0.0 kworker/3:1-mm_percpu_wq
+root     2587726  0.0  0.0 kworker/u65:2-hci0
+root     2959999  0.0  0.0 apache2
+systemd+ 2960886  0.0  0.0 systemd-resolve
+root     2960890  0.0  0.0 systemd-journal
+systemd+ 2961002  0.0  0.0 systemd-timesyn
+root     2961048  0.0  0.0 systemd-udevd
+systemd+ 2961122  0.0  0.0 systemd-oomd
+root     2968095  0.0  0.0 bluetoothd
+root     2968909  0.0  0.0 sshd
+root     3115922  0.0  0.0 kworker/9:1-mm_percpu_wq
+root     3163405  0.0  0.0 kworker/29:1-events
+root     3615745  0.0  0.0 kworker/11:2-mm_percpu_wq
+root     3833087  0.0  0.0 kworker/2:2-events
+root     4146743  0.0  0.0 kworker/25:0-events
+EXIT: 0
+
+COMMAND: command -v python3
+/usr/bin/python3
+EXIT: 0
+
+COMMAND: timeout 15 python3 --version
+Python 3.10.12
+EXIT: 0
+
+COMMAND: command -v python3.11
+EXIT: 1
+
+COMMAND: command -v python3.12
+EXIT: 1
+
+COMMAND: command -v uv
+EXIT: 1
+
+COMMAND: command -v git
+/usr/bin/git
+EXIT: 0
+
+COMMAND: timeout 15 git --version
+git version 2.34.1
+EXIT: 0
+
+COMMAND: command -v cmake
+/usr/bin/cmake
+EXIT: 0
+
+COMMAND: timeout 15 cmake --version
+cmake version 3.22.1
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+EXIT: 0
+
+COMMAND: command -v gcc
+/usr/bin/gcc
+EXIT: 0
+
+COMMAND: timeout 15 gcc --version
+gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+Copyright (C) 2021 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+EXIT: 0
+
+COMMAND: command -v g++
+/usr/bin/g++
+EXIT: 0
+
+COMMAND: timeout 15 g++ --version
+g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+Copyright (C) 2021 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+EXIT: 0
+
+COMMAND: command -v nvcc
+EXIT: 1
+
+COMMAND: command -v llama-server
+EXIT: 1
+
+COMMAND: command -v huggingface-cli
+EXIT: 1
+
+COMMAND: command -v hf
+EXIT: 1
+
+COMMAND: ls -ld /usr/local/cuda /usr/local/cuda-12 /usr/local/cuda-12.2 /opt/cuda /home/dowling/.local/bin/uv /home/dowling/.local/bin/hf /home/dowling/.local/bin/huggingface-cli
+lrwxrwxrwx  1 root root   22 Dec 18  2024 /usr/local/cuda -> /etc/alternatives/cuda
+lrwxrwxrwx  1 root root   25 Dec 18  2024 /usr/local/cuda-12 -> /etc/alternatives/cuda-12
+drwxr-xr-x 15 root root 4096 Mar 18  2025 /usr/local/cuda-12.2
+EXIT: 2
+
+COMMAND: find /home/dowling -maxdepth 5 ( -name .cache -o -name .git -o -name node_modules ) -prune -o ( -name llama-server -o -name llama.cpp -o -name huggingface-cli -o -name hf -o -name nvcc -o -name uv ) -print
+EXIT: 0
+
+COMMAND: timeout 25 env GIT_TERMINAL_PROMPT=0 git ls-remote https://github.com/ggml-org/llama.cpp.git HEAD
+ls: cannot access '/opt/cuda': No such file or directory
+ls: cannot access '/home/dowling/.local/bin/uv': No such file or directory
+ls: cannot access '/home/dowling/.local/bin/hf': No such file or directory
+ls: cannot access '/home/dowling/.local/bin/huggingface-cli': No such file or directory
+d854d98bae598388ecea1ed84396587e5edc326d	HEAD
+EXIT: 0
+
+COMMAND: timeout 25 env GIT_TERMINAL_PROMPT=0 git ls-remote https://github.com/dowlingwong/Agent_paper_B.git HEAD
+fatal: could not read Username for 'https://github.com': terminal prompts disabled
+EXIT: 128
+
+COMMAND: curl --connect-timeout 8 --max-time 20 -sSI https://huggingface.co
+HTTP/2 200
+content-type: text/html; charset=utf-8
+content-length: 176243
+date: Mon, 26 Oct 2026 01:08:23 GMT
+etag: W/"2b073-OtT6hRru/JAcVY7TEasJ0eU2DGY"
+x-powered-by: huggingface-moon
+x-request-id: Root=1-6adea807-333a75550be48cf61ae65617
+ratelimit: "pages";r=96;t=77
+ratelimit-policy: "fixed window";"pages";q=100;w=300
+cross-origin-opener-policy: same-origin
+referrer-policy: strict-origin-when-cross-origin
+link: </.well-known/ai-catalog.json>; rel="ai-catalog"; type="application/ai-catalog+json"
+link: </.well-known/api-catalog>; rel="api-catalog"
+x-frame-options: DENY
+x-cache: Hit from cloudfront
+via: 1.1 510cbc3ed47e5ac404ea7e8b15d44868.cloudfront.net (CloudFront)
+x-amz-cf-pop: LAX53-P4
+alt-svc: h3=":443"; ma=86400
+x-amz-cf-id: nQT6FFenWqrsiEO7GhKPHgORo3nMbWQATdxwfYD_gbkd_Wu7XinjVA==
+age: 4
+strict-transport-security: max-age=31536000
+
+EXIT: 0
+
+COMMAND: curl --connect-timeout 8 --max-time 20 -sSI https://www.openml.org
+HTTP/1.1 200 OK
+Date: Mon, 26 Oct 2026 01:08:29 GMT
+Server: Apache/2.4.41 (Ubuntu)
+Content-Type: text/html; charset=utf-8
+Content-Length: 682
+Content-Disposition: inline; filename=index.html
+Last-Modified: Thu, 22 Oct 2026 09:22:45 GMT
+Cache-Control: no-cache
+ETag: "1792660965.0-682-1619922997"
+Access-Control-Allow-Origin: http://127.0.0.1:3000
+Access-Control-Allow-Credentials: true
+Vary: Origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+[HTTP Set-Cookie header redacted]
+
+EXIT: 0
+
+COMMAND: date -u +%Y-%m-%dT%H:%M:%SZ
+2026-10-26T01:09:01Z
+EXIT: 0

@@ -107,15 +107,27 @@ def main(argv=None) -> int:
     ap.add_argument('--expect-footprint-mib', type=int, default=None, help='route (ii) against a pinned footprint')
     ap.add_argument('--expect-sha256', default=None)
     ap.add_argument('--expect-build', default=None, help='the exact "version: ..." line')
+    ap.add_argument('--server-extra-args', default=None, help='JSON list of flags for exact exam-path qualification')
+    ap.add_argument('--thinking-policy', default=None, help='JSON exam thinking policy')
     ap.add_argument('--out', required=True, help='log directory (created)')
     args = ap.parse_args(argv)
+    server_options = {}
+    if args.server_extra_args is not None:
+        flags = json.loads(args.server_extra_args)
+        if not isinstance(flags, list) or not all(isinstance(x, str) for x in flags):
+            ap.error('--server-extra-args must encode a list of strings')
+        server_options['extra_args'] = flags
+    if args.thinking_policy is not None:
+        server_options['thinking_policy'] = json.loads(args.thinking_policy)
     if not Path(args.model).is_absolute() or not Path(args.binary).is_absolute():
         ap.error('--binary and --model must be absolute paths (they are pinned as given)')
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     result: dict = {'schema': 'r1.llamacpp_probe/2', 'label': 'ENGINEERING_ONLY', 'ai_assisted': 'AI-assisted (Claude)',
-                    'utc': stamp, 'host': platform.node(), 'args': vars(args), 'route': None, 'cpu_control': None,
+                    'utc': stamp, 'host': platform.node(),
+                    'args': {k: v for k, v in vars(args).items() if k not in ('server_extra_args', 'thinking_policy') or v is not None},
+                    'route': None, 'cpu_control': None,
                     'footprint_mib_to_pin': None, 'stop_reasons': [], 'verdict': 'RUNNING'}
     path = out / f'probe_{stamp}.json'
 
@@ -153,6 +165,10 @@ def main(argv=None) -> int:
     inst = lsi.LlamaServerInstance(probe_dir, args.binary, model_path=args.model, alias=args.alias,
                                    port=args.port, n_gpu_layers=args.ngl, ctx_size=args.ctx, gpu_uuid=args.gpu,
                                    label='ENGINEERING_ONLY probe', start_timeout=args.start_timeout)
+    if server_options:
+        inst = lsi.LlamaServerInstance(probe_dir, args.binary, model_path=args.model, alias=args.alias,
+                                      port=args.port, n_gpu_layers=args.ngl, ctx_size=args.ctx, gpu_uuid=args.gpu,
+                                      label='ENGINEERING_ONLY probe', start_timeout=args.start_timeout, **server_options)
     offload = None
     try:
         result['server'] = inst.start(build=result['build'], model_sha256=result['model_sha256'])
@@ -194,6 +210,11 @@ def main(argv=None) -> int:
                                           port=args.port, n_gpu_layers=0, ctx_size=args.ctx, gpu_uuid=args.gpu,
                                           label='ENGINEERING_ONLY probe CPU control', start_timeout=args.start_timeout,
                                           generation=1)
+        if server_options:
+            control = lsi.LlamaServerInstance(probe_dir, args.binary, model_path=args.model, alias=args.alias,
+                                             port=args.port, n_gpu_layers=0, ctx_size=args.ctx, gpu_uuid=args.gpu,
+                                             label='ENGINEERING_ONLY probe CPU control', start_timeout=args.start_timeout,
+                                             generation=1, **server_options)
         info = {'argv_ngl': '0', 'log': str(control.log_path)}
         result['cpu_control'] = info
         try:

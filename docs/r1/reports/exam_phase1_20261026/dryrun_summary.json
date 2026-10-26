@@ -1,0 +1,16 @@
+{
+  "label": "DRYRUN",
+  "synthetic_metrics": true,
+  "checks": {
+    "stage_a_five_rows": true,
+    "stage_a_all_fake_checks_pass": true,
+    "one_kill_logged": true,
+    "resume_complete": true,
+    "eleven_campaign_roots_with_thinking_sensitivity": true,
+    "completed_roots_unchanged": true,
+    "partial_attempt_preserved": true,
+    "all_exam_labels": true
+  },
+  "pass": true,
+  "root": "/private/tmp/exam-x-20261026/runner_dryrun_final"
+}

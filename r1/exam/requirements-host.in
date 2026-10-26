@@ -1,0 +1,5 @@
+# Additional host-only template reference dependencies; resolve and pin in Phase 2.
+# No model is loaded by these packages during Phase 1.
+transformers>=4.57
+jinja2>=3.1
+sentencepiece>=0.2

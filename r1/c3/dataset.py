@@ -40,6 +40,7 @@ import numpy as np
 from r1.c3.features import (NODE_INFO, Proposal, configuration, files_hash, normalise_files, read_jsonl,
                             replay_campaign)
 from r1.harness import REPO, harness_root
+from r1.exam.namespace import refuse_exam
 
 E1_SUMMARY = "results/r1/pilot/E1_20261022T214606Z/summary.json"  # common 30-seed run, the C1 noise-floor table (PLAN §10, 22 Oct); was E1_20261012T145353Z
 SOURCES = {
@@ -123,10 +124,16 @@ def _replay_sources(specs: dict, noise: dict, strict_start_files: bool = False) 
     """Replay every root ledger of ``specs`` ({name: (spec, source dir)}), in order; rows, configs, checks."""
     rows, configs, checks = [], {}, {}
     for name, (src, d) in specs.items():
+        refuse_exam(src, context=f'C3 source {name}')
+        if (d / 'manifest.json').exists():
+            refuse_exam(json.loads((d / 'manifest.json').read_text()), context=f'C3 manifest {d}')
         for f in sorted(glob.glob(str(d / src["ledgers"]))):
             inst = Path(f).parent.name
             node = inst.split("__s")[0]
-            props, ch = replay_campaign(read_jsonl(Path(f)), _start_files(d, inst, node, strict_start_files), node,
+            records = read_jsonl(Path(f))
+            refuse_exam(records, context=f'C3 ledger {f}')
+            refuse_exam(inst, context=f'C3 ledger {f}')
+            props, ch = replay_campaign(records, _start_files(d, inst, node, strict_start_files), node,
                                         inst, name, src["memory_mode"], src["runs"], noise[node]["sigma_node"])
             checks[f"{name}:{inst}"] = ch
             for p in props:
@@ -204,6 +211,7 @@ def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names:
     nodes x instances.  Sources are named ``c3_<index UTC>_<memory mode>``
     unless ``source_names`` maps a memory mode to a name.
     """
+    refuse_exam(index, context='C3 sweep index')
     if index.get("schema") != SWEEP_INDEX_SCHEMA:
         raise ValueError(f"{index_path}: schema {index.get('schema')!r}, expected {SWEEP_INDEX_SCHEMA!r}")
     tag = re.sub(r"[^0-9A-Za-z]", "", str(index.get("written_utc", "")))
@@ -217,6 +225,7 @@ def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names:
         d = paper_root / sweep["out"]
         manifest_path = paper_root / sweep["manifest"]
         manifest = json.loads(manifest_path.read_text())
+        refuse_exam(manifest, context=f'C3 manifest {manifest_path}')
         ledgers = paper_root / sweep["ledgers"]
         if (d / "collection_failures.json").exists() or any((d / "failures").glob("*.json")):
             raise ValueError(f"{d}: the sweep recorded failures; no table from an incomplete sweep")
