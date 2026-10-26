@@ -15,3 +15,14 @@
 ## Checks and boundaries
 
 `docs/r1/TECH_ROUTE.md:3,9,20,32–34,46,50,89–93` and `papers/r1/sections/introduction.tex:4`, `method.tex:2–6`, `setup.tex:2–4` reflect the respective controlling decisions on framing, C4, R-A0/R-A2, bin edges, Track P and Track G at the level reviewed. `papers/r1/sections/theory.tex:4` keeps disputed propositions as TBDs pending the author; `docs/r1/PLAN.md:530` makes repairs proposals. Prior proposals remain proposals and do not supersede dated decisions (`docs/r1/proposals/ROUTE_PROPOSALS_20261027.md:3`; `TECH_ROUTE.md:3`). This review does not reopen or certify the separate L6 review (`docs/r1/reviews/LOCAL_L6_REVIEW_20261027.md:20–25`). No tests, inference, GPU work, SSH, or remote operations were performed.
+
+## Independent re-review at `fc439ad` — 27 October 2026
+
+**Verdict: ACCEPTED for L7's consistency pass and handoff.** The prior verdict remains the historical review of `4f30ed2`. The four identified issues are resolved at `fc439ada2db98d22709bdacb99dae69639324194`:
+
+1. The revised handoff records the 27 Oct decisions and test-scope clarification while preserving the incident's unknown outcomes (`docs/r1/overnight/LOCAL_HANDOFF_20261027.md:3,7–10,14–16,28`; `docs/r1/PLAN.md:517–529,531`). It distinguishes authorized H.8 edits from acceptance and integration (`LOCAL_HANDOFF_20261027.md:16,22`), retains outstanding author and coordinator questions, and explicitly leaves L6 unaccepted (`:25`). The L7 line at `:26` describes the state before this independent re-review; this verdict records its subsequent disposition.
+2. The graph labels A3 and A5 as alternatives (`docs/r1/TECH_ROUTE.md:69–71`), consistent with the gate (`docs/r1/RUNBOOK.md:107`); A5 prerequisites and the separate RL gate remain visible (`TECH_ROUTE.md:67–68,75–76,89`).
+3. The Track P specification explicitly identifies R-A3 as a decision-term ablation (`docs/r1/TRACK_P_POST_TRAINING.md:32–35,318–323,333`). Its R-A2 explanation now distinguishes properness of the scoring loss from any guarantee about the jointly trained prediction and retains monitoring and rollback (`:327–332`; `docs/r1/PLAN.md:523,528`).
+4. `docs/r1/reports/LOCAL_POST_DECISION_SCAN_20261027.md:3–16` records a new post-decision scan and retains the earlier scan as historical. Its dispositions are consistent with the reviewed route, manuscript outline, specification and handoff; the scan is documentation of consistency, not a proof or evidence review.
+
+The author proof check, L6 acceptance and H.8 implementation acceptance remain separate and outstanding (`docs/r1/PLAN.md:525,530`; `docs/r1/overnight/LOCAL_HANDOFF_20261027.md:14,16,22,25`; `docs/r1/reviews/LOCAL_L6_REVIEW_20261027.md:20–25`). This acceptance does not approve a scientific claim, run, merge, deployment or submission. No tests, inference, GPU work, SSH or remote operations were performed in this re-review.

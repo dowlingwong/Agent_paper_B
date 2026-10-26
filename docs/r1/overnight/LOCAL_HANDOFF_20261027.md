@@ -23,6 +23,6 @@ AI-assisted. Paper branch `local-20261026` and the separate `r1-local-*` harness
 - L4.3: partial source-traced pilot renderer and focused tests exist; full pipeline and acceptance are pending. The historical offline evaluator trains LightGBM and is not to be run as an evidence or label job on the Mac. Pilot outputs are not the current gate.
 - L4.4 and L4.5: corrected harness baseline/repeat are identical by outcome IDs; paper comparisons and independent acceptance remain pending. The paper baseline has explicit excluded integration tests and a separate tiny-model selection, so do not claim a full-suite pass.
 - L6: anonymous draft builds with the 2026 placeholder style; author-checked theory statements/proofs, companion metadata and documented bibliography uncertainties remain open. L6 is not accepted.
-- L7: the route and manuscript were updated to the adopted rulings; the independent reviewer rejected the first post-decision pass, and corrections plus a new scan are in progress. Review again before acceptance.
+- L7: the route, specification, manuscript outline and post-decision scan were independently accepted after corrections; see `LOCAL_L7_REVIEW_20261027.md`. This does not accept L4.2 or L6.
 
 Internal targets are labels 3 Nov, B.7 26 Nov, D.3 complete 20 Dec and manuscript 10 Jan (R1-INTERNAL-FREEZES), not official conference deadlines. The author has decided DAC framing, focused C1–C3 scope, Track P essential/ablation stages and H.8; no further permission is required for those already authorized choices.

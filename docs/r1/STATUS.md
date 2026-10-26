@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — L7 decision consistency pass independently accepted (AI-assisted)
+
+- The [post-decision scan](reports/LOCAL_POST_DECISION_SCAN_20261027.md), updated [technical route](TECH_ROUTE.md), Track P specification, manuscript outline and handoff were independently reviewed after corrections: [review](reviews/LOCAL_L7_REVIEW_20261027.md), initial alignment `4f30ed2`, review corrections `fc439ad`. DAC framing, bin/RPS decisions, scope, H.8, C4 and Track G rulings are recorded in PLAN §10 and reconciled in the reviewed files.
+- This is acceptance of the consistency pass, not acceptance of the separately unfinished L4.2 or L6 work, author proof checking, an evidence run or a merge.
+
 ## 27 October 2026 — theory proposal and pinned resume trace reviewed (AI-assisted)
 
 - The [resume trace](reports/LOCAL_RESUME_STAMP_TRACE_20261027.md) is independently confirmed ([review](reviews/LOCAL_RESUME_STAMP_REVIEW_20261027.md), `a4bed47`): at `897d83c`, resumed E1/skip records omit cumulative `repeated_bad_count` stamping when the true count is positive. Historical impact and E2 verify semantics are not established; the sweep pin is unchanged.
