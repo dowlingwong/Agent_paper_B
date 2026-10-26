@@ -82,3 +82,20 @@ Verdict: pending fixes
 4. Laya row — fixed: `convaiinnovations/laya` `typed-decisions/model.safetensors` has the same sha256 (`4fa56de7…`) as the proposed repo; stated in the row.
 5. Evidence — fixed: `followup.sh` / `followup.txt` added covering the listed claims (plus wheel index, Laya duplicate, StartLux architecture); collection window corrected (01:25–01:29 UTC first run; follow-up after review).
 6. Pre-session writes — fixed: a sentence in the header names the three files and times and attributes them to the author's setup before the session; not done by this agent.
+
+## Re-check (26 Oct 2026, ≈ 02:05 UTC)
+
+Reviewer: the same independent subagent. Range re-checked: `b5a7aec..f08e5e4` (new commit `f08e5e4`, authored and committed by `Dowling Wong <wangdowling@gmail.com>` with the attribution line; GitHub `trackp-20261026` = `f08e5e4`; harness `trackp-20261026` still `264011e`, not pushed).
+
+What I re-ran: `bash followup.sh > /tmp/trackp0_review/followup.txt`. Apart from the timestamp it is identical to the committed `followup.txt`. The two non-zero exits are the expected failures for the missing harness pin: `git cat-file` 128, and `gh api` 422 → exit 1. I also read the report diff `870e6de..f08e5e4` and checked `docs/vllm_bidirectional.md` in `StartLuxLabs/StartLux-Decision` (it exists).
+
+1. Kev name: **fixed.** D4 matches what I see: `jaredpalmer/kev` is GitHub 200 / Hub 401, the weights are in `kev-0.8b` / `kev-4b`, and the `kev-1.0` release page returns 200. Author question 2 is updated.
+2. PyTorch wheels: **fixed.** Risk R1 matches the index: cu121 → 2.5.1, cu124 → 2.6.0, cu126 → 2.14.1, cu128 → 2.11.0, cu130 → 2.14.1. The driver thresholds (≥ 560 for 12.6, ≥ 580 for 13.x) are right. Author question 4 is updated, and nothing is decided.
+3. D2: **fixed.** The CUDA 13 overstatement is removed. The vLLM plugin (0.31.0 / 0.19.1) is named as the relevant path. The `Qwen3_5ForConditionalGeneration` / `qwen3_5` architecture is reproduced, and its consequence for the mask is stated correctly.
+4. Laya row: **fixed.** Both files have sha256 `4fa56de72383…a24e`.
+5. Evidence: **fixed.** Every claim listed in finding 5 is now reproduced by `followup.sh`: code-repo statuses, Kev `v1.0` = `main` bytes, `base_revision` from `training_config.json`, the weight redirect to `us.aws.cdn.hf.co` (200), the harness pin missing, the Track X STATUS headings, the `gh` login, the wheel index and the StartLux README lines. The collection window is corrected to 01:25–01:29 UTC plus a follow-up. Note: `followup.sh` runs `git fetch` in the clones. That only writes refs inside the clones, which the ground rules allow.
+6. Pre-session writes: **fixed.** The header names the three files and their mtimes (I reproduced them) and attributes them to the author's setup. I cannot verify who made the changes, but the timing (before the clones and before this session's own files) supports the statement.
+
+No new findings. The author decisions for STOP 0 stay open, correctly: work dir, Laya/Kev pins, StartLux CC BY-NC, R1/uv, the secrets file, and harness pin H1.
+
+Verdict: accepted — Phase 0 read-only host-facts inventory (0.1–0.8) is complete and reproducible, and every review finding is resolved; acceptance does not cover the author's STOP 0 decisions listed above.

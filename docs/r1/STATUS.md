@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P Phase 0: portal host facts (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
+
+- Track P agent (Claude Code) on zhixu portal (`TASL-2`), work dir `/home/dowling/r1_trackp/`, branch `trackp-20261026` in both repos (paper from `main` `b5a7aec`; harness from `r1` `264011e`). Report `docs/r1/reports/PORTAL_TRACKP_HOST_FACTS_20261026.md` (commits `870e6de`, `f08e5e4`); review `docs/r1/reviews/TRACKP_0_REVIEW_20261026.md` (6 minor findings fixed; verdict accepted). Read-only apart from the clones; no installs, weights, GPU jobs or secrets.
+- Findings: RTX 4090 sm_89, driver 535 / CUDA 12.2 (current torch wheels are cu126/cu130 → Phase 2 risk); Python 3.10 only, `uv` absent; all Track P Hub repos public and un-gated (StartLux CC BY-NC 4.0); Laya weights are `convaiinnovations/laya-typed-decisions`, Kev weights `jaredpalmer/kev-{0.8b,4b}` (RUNBOOK names are the GitHub code repos); `~/.config/r1/secrets.env` absent; **harness pin `6afdb0e` (`HARNESS_PIN_C3` on `main`) is not on GitHub**.
+- Open for the author: the six questions at the end of the report.
+
 ## 26 October 2026 — Track P agent moved onto zhixu portal (AI-assisted; documents only)
 
 - Author decision (R1-TRACKP-RUNBOOK revised): the Track P agent runs on zhixu portal itself, not on the Mac over SSH. `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` updated: placement table, host and clone rules (own clone on the portal, `trackp-<date>` branches pushed with the portal's GitHub credentials), secrets on the same host (never read or passed on a command line), Phase 0 checks GitHub push and the agent's own endpoints, Phase 1 code and CPU-only tests on the portal, reviewers on the same host. RUNBOOK Track P execution line and hardware note aligned.
