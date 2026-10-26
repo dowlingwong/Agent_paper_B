@@ -166,8 +166,9 @@ def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "
     head is fitted on cached frozen-backbone states by full-batch L-BFGS on CPU (descriptive only, R1-E0-HEADFIT;
     skipped when ``head_fit`` is False), then the head is put back to its fresh initialisation; (2) LoRA + the fresh
     head train together. (Attempt 1 of the two-stage DRYRUN started LoRA from the L-BFGS head: its sharp optimum
-    made LoRA diverge over ~11 steps and then saturate (gradients ~1e-14), so the head fit decided the E0 result.) ``variant="native"``: the family's own readout (released head / letter readout / bin
-    tokens), zero-shot metrics first, then the LoRA stage. Both stages: early stopping on the validation cells
+    made LoRA diverge over ~11 steps and then saturate (gradients ~1e-14), so the head fit decided the E0 result.)
+    ``variant="native"``: the family's own readout (released head / letter readout / bin tokens), zero-shot metrics
+    first, then the LoRA stage. Both stages: early stopping on the validation cells
     (val RPS against the run's own target), at most ``max_steps``, the best checkpoint restored. Metrics on the
     held-out test cells (``e0_metrics_v2``)."""
     from r1.c3.train.model import new_head_parameters, token_row_parameters

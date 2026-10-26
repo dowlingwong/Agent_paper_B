@@ -8,7 +8,7 @@
   - The mechanics work. The shortened budget measures no E0.
   - Attempt 1 showed that starting LoRA from the L-BFGS head makes it diverge, then saturate. The head fit therefore stays descriptive, and LoRA starts from the fresh head.
   - ≈ 1.6 GPU-h.
-- Independent review: `docs/r1/reviews/TRACKP_RULEV2_REVIEW_20261026.md`. The decisions review was accepted earlier.
+- Independent review: `docs/r1/reviews/TRACKP_RULEV2_REVIEW_20261026.md` (4 minor + 1 on the DRYRUN record, fixed; **verdict: accepted**). The decisions review was accepted earlier.
 - **Host change (R1-TASL7-TRACKP):** this is the last Track P GPU work on zhixu portal. The portal work dir, venvs and models are left untouched.
   - Host-equivalence check on TASL-7: reproduce the selected Kev-0.8B run of the portal E0 v2 DRYRUN (code `8e13e77`, `--variant fresh --lr 0.0001`, seed 0, 2,000-step caps). On the portal it gave width slope vs label std 0.923, mean slope 1.012 and RPS 1.99e-4, as pre-declared by the TASL-7 agent in `f3567e9`.
   - Optional: the short two-stage run at `5538b79`.
