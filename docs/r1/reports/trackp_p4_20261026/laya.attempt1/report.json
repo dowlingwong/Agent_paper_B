@@ -1,0 +1,23 @@
+{
+  "action_loss_decreased": false,
+  "batch_loss_after": {
+    "action": 0.748268436640501,
+    "belief": 2.37090528011322,
+    "total": 3.1191737167537212
+  },
+  "batch_loss_before": {
+    "action": 0.742873840034008,
+    "belief": 2.550750195980072,
+    "total": 3.29362403601408
+  },
+  "belief_loss_decreased": true,
+  "checkpoint": "/home/dowling/r1_trackp/runs/p4/laya/toy/ckpt/step_0000050",
+  "completed": true,
+  "head_lr": 0.001,
+  "loss_decreased": true,
+  "loss_first_step": 3.1496427059173584,
+  "loss_last_step": 2.7872519493103027,
+  "lr": 2e-05,
+  "reload_identical": true,
+  "stopped_at": 50
+}

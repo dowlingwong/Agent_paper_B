@@ -1,0 +1,58 @@
+{
+  "argv": [
+    "toy",
+    "--base",
+    "laya",
+    "--run-dir",
+    "/home/dowling/r1_trackp/runs/p4/laya"
+  ],
+  "base": {
+    "adapter_repo": null,
+    "adapter_revision": null,
+    "base_repo": "convaiinnovations/laya-typed-decisions",
+    "base_revision": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+    "family": "laya"
+  },
+  "config_sha256": "39931e2ad8ede8772f4371264d543b13886e86ddfa660175750151a4f6f8af88",
+  "created_utc": "2026-10-26T06:43:58Z",
+  "data_manifest_sha256": "8a8b56141ec981365eaa84f54c18e58c9c3774c849df06e495bfb5ddec3c3372",
+  "evidence_label": "ENGINEERING_ONLY",
+  "git": {
+    "harness": {
+      "branch": "trackp-20261026",
+      "commit": "264011ea2d17fa9070b8c711625db92f8409dd4b",
+      "dirty": false,
+      "path": "/home/dowling/r1_trackp/autoresearch_harness"
+    },
+    "paper": {
+      "branch": "trackp-20261026",
+      "commit": "914ee12868499727cb5421de5217d4fc156651fe",
+      "dirty": false,
+      "path": "/home/dowling/r1_trackp/Agent_paper_B"
+    }
+  },
+  "gpu_lease": [
+    {
+      "event": "start",
+      "job": "trackp toy laya",
+      "pid": 216772,
+      "utc": "2026-10-26T06:43:11Z"
+    },
+    {
+      "event": "end",
+      "job": "trackp toy laya",
+      "pid": 216772,
+      "utc": "2026-10-26T06:43:58Z"
+    }
+  ],
+  "head_form": "softmax12",
+  "model_files_sha256": {
+    "adapter/README.md": "6f5e8816ed8aa637ace889f52c1df7ec1b950969e3e84712874f3c0369b22cd6",
+    "adapter/adapter_config.json": "2bc94d6915f6a0715f215a7d73a7ef255674aec9497677f9880623148f34f6e5",
+    "adapter/adapter_model.safetensors": "3a66d10fc5b5e427443500e582684b0266f0a4114fba5017106f197f5d137601",
+    "heads.safetensors": "3652f6422c52a10a00071de01f287880cafb4e3ac3e8e6472ab45014f7c8f20a"
+  },
+  "schema": "trackp_run_manifest/v1",
+  "seed": 0,
+  "subcommand": "toy"
+}
