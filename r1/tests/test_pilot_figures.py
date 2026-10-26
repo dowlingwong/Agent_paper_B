@@ -79,3 +79,16 @@ def test_all_historical_gate_rows_match_each_mode_and_price():
         assert float(row["gain_A3_minus_A2_per20"]) == value["gain_A3_minus_A2_per20"]
         assert [float(row["ci_lower"]), float(row["ci_upper"])] == value["ci95"]
         assert (row["historical_pass"] == "True") is value["pass"]
+        assert float(row["delta_n"]) == value["delta_n"]
+        assert int(row["instances"]) == value["n_instances"]
+        assert int(row["eval_rows"]) == value["n_eval_rows"]
+    with (OUT / "offline_all_arms.csv").open() as handle:
+        arms = list(csv.DictReader(handle))
+    expected_arms = sum(len(node_values) for mode in ("instance", "lono") for entry in result[mode]["per_g"].values() for node_values in entry["arms"].values())
+    assert len(arms) == expected_arms
+    assert len({(r["mode"], r["g_over_sigma"], r["arm"], r["node"]) for r in arms}) == expected_arms
+    for row in arms:
+        value = result[row["mode"]]["per_g"][row["g_over_sigma"]]["arms"][row["arm"]][row["node"]]
+        assert row["provisional_status"] == "ENGINEERING_ONLY; historical pilot; not current C3 gate"
+        for key in ("mean_per_proposal", "per_campaign", "exec_rate"):
+            assert float(row[key]) == value[key]
