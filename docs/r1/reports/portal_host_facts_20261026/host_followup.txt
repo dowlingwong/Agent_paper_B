@@ -1,0 +1,47 @@
+2026-10-26T01:09:15Z
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2023 NVIDIA Corporation
+Built on Tue_Aug_15_22:02:13_PDT_2023
+Cuda compilation tools, release 12.2, V12.2.140
+Build cuda_12.2.r12.2/compiler.33191640_0
+/usr/local/cuda-12.2
+total 60
+drwxr-x--- 9 dowling dowling 4096 Oct 17 04:20 .
+drwxr-xr-x 9 root    root    4096 Sep  2 01:40 ..
+-rw------- 1 dowling dowling  670 Oct 22 16:00 .bash_history
+-rw-r--r-- 1 dowling dowling  220 Jan  6  2022 .bash_logout
+-rw-r--r-- 1 dowling dowling 3771 Jan  6  2022 .bashrc
+drwx------ 4 dowling dowling 4096 Sep 15 08:49 .cache
+drwx------ 4 dowling dowling 4096 Oct 22 16:00 .config
+drwx------ 4 dowling dowling 4096 Sep 15 08:49 .copilot
+drwx------ 3 dowling dowling 4096 Sep  2 01:57 .local
+-rw-r--r-- 1 dowling dowling  807 Jan  6  2022 .profile
+drwx------ 2 dowling dowling 4096 Oct 23 15:22 .ssh
+-rw------- 1 dowling dowling  806 Sep  2 02:13 .viminfo
+drwxrwxr-x 6 dowling dowling 4096 Sep 15 08:49 .vscode-server
+-rw-rw-r-- 1 dowling dowling  183 Sep 15 08:49 .wget-hsts
+drwx------ 3 dowling dowling 4096 Sep  2 01:57 snap
+drwx------  4 dowling dowling 4096 Sep 15 08:49 /home/dowling/.cache
+drwxr-xr-x  3 root    root    4096 Aug 13  2024 /mnt
+drwx--x--x 18 root    root    4096 Apr 20  2026 /opt
+ls: cannot access '/home/dowling/.cache/huggingface': No such file or directory
+ls: cannot access '/data': No such file or directory
+USER         PID COMMAND
+root        5763 Xorg
+zhixu       5925 gnome-shell
+USER         PID %CPU %MEM COMMAND
+root     3813147 35.0  0.5 ninjarmm-linage
+root        5763  1.8  0.0 Xorg
+root        2541  1.6  0.9 xagt
+root        2630  1.5  0.0 perf-sensor
+message+    1025  1.1  0.0 dbus-daemon
+root           1  1.0  0.0 systemd
+999       681386  0.7  0.1 mongod
+zhixu    1444386  0.7  0.6 jetbrains-toolb
+root     1643065  0.6  0.0 polkitd
+root     1460733  0.5  0.0 cups-browsed
+root        1695  0.3  0.1 tailscaled
+www-data  682277  0.2  0.0 node
+root          17  0.1  0.0 rcu_preempt
+avahi       1020  0.1  0.0 avahi-daemon
+root        1069  0.1  0.0 systemd-logind
