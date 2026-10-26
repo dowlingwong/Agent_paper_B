@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — pre-scaffold restricted comparison independently reviewed (AI-assisted)
+
+- The [pre-scaffold comparison](reports/LOCAL_BASELINE_CLARIFIED_20261027.md) was independently checked ([baseline review](reviews/LOCAL_BASELINE_CLARIFIED_REVIEW_20261027.md), [L4.4 review](reviews/LOCAL_L4_4_REVIEW_20261027.md); evidence `1c09b77`). Of the selected paper tests, 581 IDs common to `8ba81b6` and `d4c76d2` have matching outcomes; the 13 newly added predeclaration cases pass. The separate tiny-model selection matches across 48 IDs. Matching IDs do not imply identical test code.
+- Both reviews retain the exclusions, skips and failures; this is restricted engineering documentation, not a full-suite pass or L4.4 acceptance.
+
 ## 27 October 2026 — H.8 implementation review remains open (AI-assisted; fixture tests)
 
 - Author-authorized H.8 and sidecar edits were implemented and reviewed in three attempts (`089ed87`, `395aeff`, `d4c76d2`). The [independent review](reviews/LOCAL_L4_2_IMPLEMENTATION_REVIEW_20261027.md) remains **NOT ACCEPTED**: utility reference, price and split are caller assertions rather than a verified producer. The final scoped fixture check reports 27 passed; the reviewer confirms the `delta_hat` leak was removed.
