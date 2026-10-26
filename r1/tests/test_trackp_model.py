@@ -520,17 +520,17 @@ def test_every_family_and_head_form_learns_a_fixed_batch(family, form, tmp_path)
         pytest.skip("pool tokenizer not in the local HF cache")
     rows = S.toy_rows(4)
     y = torch.stack([r["y"] for r in rows])
-    opt = torch.optim.Adam(list(m.trainable_parameters()), lr=1e-2)
+    opt = torch.optim.Adam(list(m.trainable_parameters()), lr=3e-3)  # 1e-2 is unstable for Laya's head layers
     m.train()
     losses = []
-    for _ in range(40):
+    for _ in range(80):
         p = L.softmax_probs(m([r["prompt"] for r in rows])["belief_logits"])
         loss = L.soft_ce(p, y).mean()
         opt.zero_grad()
         loss.backward()
         opt.step()
         losses.append(float(loss.detach()))
-    assert losses[-1] < losses[0] - 0.05 and losses[-1] < 3.0, losses[::10]
+    assert losses[-1] < losses[0] - 0.2 and losses[-1] < 3.0, losses[::10]
     assert (p.detach() > 0).all()
 
 

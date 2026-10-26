@@ -31,6 +31,18 @@ KERNEL_NAMES = ("torch_chunk_gated_delta_rule", "torch_recurrent_gated_delta_rul
 CAL_FACTOR, FLOOR, MIN_ARGMAX = 2.0, 1e-3, 0.99
 
 
+def bound_implementation(wrapper) -> str:
+    """The function a transformers ``use_kernel_func_from_hub_with_fallback`` wrapper actually calls (its closure's
+    ``implementation``), as ``module.name``; the torch fallback shows as the transformers module itself."""
+    for cell in getattr(wrapper, "__closure__", None) or ():
+        f = cell.cell_contents
+        if callable(f) and getattr(f, "__name__", "") and f is not getattr(wrapper, "__wrapped__", None) \
+                and not getattr(f, "__module__", "").startswith("transformers"):
+            return f"{f.__module__}.{f.__name__}"
+    inner = getattr(wrapper, "__wrapped__", wrapper)
+    return f"{inner.__module__}.{inner.__name__} (torch path)"
+
+
 @contextlib.contextmanager
 def torch_path(mod):
     saved = {n: getattr(mod, n) for n in KERNEL_NAMES}
@@ -55,7 +67,7 @@ def main(argv=None) -> int:
     from transformers import AutoModelForCausalLM, AutoTokenizer
     import transformers.models.qwen3_5.modeling_qwen3_5 as qm
     rep = {"torch": torch.__version__, "cuda_runtime": torch.version.cuda, "transformers": transformers.__version__,
-           "kernels_bound": {n: f"{getattr(qm, n).__module__}.{getattr(qm, n).__name__}" for n in KERNEL_NAMES},
+           "kernels_bound": {n: bound_implementation(getattr(qm, n)) for n in KERNEL_NAMES},
            "checks": {}, "lease": []}
     try:
         import fla

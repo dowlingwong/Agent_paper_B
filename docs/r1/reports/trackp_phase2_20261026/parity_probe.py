@@ -24,4 +24,4 @@ with R.gpu_lease("trackp phase2 parity probe", lock_path=Path.home()/"r1_locks/g
                 ref = m(g).logits.float().cpu()
         out[f"tf32={tf32}"] = {"fast_vs_cpu": float((fast-cpu).abs().max()), "torchgpu_vs_cpu": float((ref-cpu).abs().max()),
                               "fast_vs_torchgpu": float((fast-ref).abs().max())}
-print(json.dumps(out, indent=1))
+print(json.dumps(out, indent=1)); open(sys.argv[1], "w").write(json.dumps(out, indent=1))
