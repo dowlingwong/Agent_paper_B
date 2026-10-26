@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P Phase 3: P.0 spikes (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
+
+- 8 bases (Kev 0.8B/4B, Qwen3.5-0.8B/4B-Base, Laya, StartLux Instant 0.8B/2B/4B) at commit `fcc7d7d`: load, 12-option forward, LoRA r = 16 (incl. DeltaNet), toy SFT on soft targets for both outputs, bit-identical save→reload, sha256, peak ≤ 13.7 GB at ~1,024 tokens × 8 with gradient checkpointing; packing off on all Qwen3.5-family bases (expected). StartLux trains with the prompt-bidirectional mask; our transformers-5.19 port matches StartLux's own 5.8 code at bf16 noise level (12–19 × below a mask error); vLLM path not run. Report `docs/r1/reports/TRACKP_P0_SPIKES_20261026.md`, review `docs/r1/reviews/TRACKP_3_REVIEW_20261026.md` (accepted).
+- Six attempts recorded (OOM without gradient checkpointing; CPU-loading/composite-config/lr bugs; Laya head scale → LayerNorm before new heads; seeding). GPU: 33.8 leased minutes for Phases 2–3.
+- **Author decides: StartLux rung (trainable candidate or inference-only zero-shot rung).** Also open: LayerNorm before new heads; Kev pointer-temperature policy; E0 head-fit design before Phase 5.
+
 ## 26 October 2026 — Track P Phase 2: environment, downloads, pins (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
 
 - Branch `trackp-20261026` (Phases 2–4 on the reviewed branch per the author's overnight instruction). Report `docs/r1/reports/TRACKP_PHASE2_ENV_PINS_20261026.md`; review `docs/r1/reviews/TRACKP_2_REVIEW_20261026.md` (accepted).

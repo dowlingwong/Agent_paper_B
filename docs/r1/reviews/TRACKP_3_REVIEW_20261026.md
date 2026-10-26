@@ -148,3 +148,46 @@ Code fixes in `fcc7d7d`; P.0 re-run at that commit (attempt 6, all 8 pass) and t
 8. Recorded as a decision before Phase 5 (report deviation 5, Q4): no code change now.
 9. Fixed: tests for `new_head_parameters`, LayerNorm heads, composite-config packing check, temperature policy, seed reproducibility (5 + 1 new tests; CPU suite 159 passed).
 10. Recorded in the report (warm-up rounds to 0 steps in a 13-step run; Adam's first step on the new token rows).
+
+## Re-check (26 Oct 2026, same reviewer)
+
+Checked: `fcc7d7d` (code) and `1a38e28` (report, evidence, the response above). Working tree clean at `1a38e28`. Attempt-6 runs are in `~/r1_trackp/runs/p0/`, attempt 5 in `attempt5/`, the StartLux comparisons in `startlux_ref/`.
+
+### What I re-ran
+
+| # | Check | Result |
+|---|---|---|
+| C1 | CPU tests at `1a38e28` (clean local clone, `trackp-cpu`, `CUDA_VISIBLE_DEVICES=""`) | **159 passed** (153 before plus 6 new). |
+| C2 | All 8 attempt-6 runs | Report and manifest copies in `docs/` are byte-identical to the run dirs. Every saved file re-hashes to `report.json`. Manifests at `fcc7d7d`, `dirty: false`. Each run has its lease start/end pair, pid matched. 13 toy steps each. Reload identical for belief and action (max diff 0.0). `engineering.input_tokens`: Kev 988, Qwen 1,003, StartLux 1,047, Laya 1,002, matching my own measurement (R8). Peak VRAM unchanged from attempt 5. Kev saved manifests record `pointer_temperature: 1.0` and `released_temperature` 2.351 / 2.406. |
+| C3 | **One GPU job:** `trackp.py spike --base startlux-0.8b` from my clean clone at `1a38e28` (same code as `fcc7d7d`). Before starting: GitHub `main` = `b5a7aec`, STATUS showed no Track X B1/B2 running, `nvidia-smi` listed no compute app. The CLI took the lease (pid 48399, 06:24:04Z–06:24:46Z). | rc 0. Now **identical** to attempt 6: forward-one belief and action, toy loss at step 1 (3.39338), trainable params, peak VRAM (3629.29 MiB), input tokens, packing, reload identity, `adapter_config.json` sha256. Step time 0.932 vs 0.934 s. Still different: the final loss (2.20324 vs 2.20330) and the adapter and heads sha256 after 13 steps. That is consistent with non-deterministic CUDA backward kernels (fla / SDPA atomics), not with seeding. See residual note (a). |
+| C4 | StartLux comparison outputs `ref_{0.8b,2b,4b}.json` | Both steps record git `fcc7d7d` (clean), argv and python. Port vs reference max 0.109 / 0.141 / 0.119. The causal-mask control is now computed for every size: max 1.66 / 2.44 / 2.69, mean 1.10 / 0.88 / 1.49. Reference padding invariance 0.0. The lease log has 7 new "startlux comparison" jobs, each with a pid, taken through `R.gpu_lease`, so the Track X and process checks ran. |
+| C5 | Kev `warm_start` (installed `kev/checkpoint.py`) | `warm_start` loads the head's state dict and never sets `temperature`; only `Checkpoint.load` does. So in attempts 1–5, T was 1.0 in both training and evaluation, as the response says. |
+
+### Findings, one by one
+
+1. **Resolved.** The second half of my finding rested on the report's own deviation 2, which was wrong. I confirmed in C5 that T was 1 throughout, so no train/eval mismatch occurred. The real gap, an implicit and unsaved policy, is fixed:
+   - default T = 1;
+   - `native_temperature=True` only for E1 zero-shot;
+   - active and released T are recorded in the saved manifest, and `load()` restores them;
+   - a test covers this.
+
+   Report deviation 2 is corrected and raised to the author as Q3.
+2. **Resolved.** `seed_everything` now runs before `_build` in spike, toy, e0 and probes, and `target_modules` is sorted. C3 confirms that initialisation and the first training step now reproduce exactly on the GPU. Two tests cover in-process and two-process reproducibility on tiny CPU models. Residual (a) below is not a seeding defect.
+3. **Resolved.** `input_tokens` is recorded per base and appears in the report table.
+4. **Resolved.** The wording now says the peak includes the resident AdamW state.
+5. **Resolved.** The wording is corrected, and the spike now runs 13 steps, one full pass over the 100 examples (config `spike.steps`).
+6. **Resolved.** The report says "1.2–1.4× the bf16 noise floor, 12–19× below a mask error". The comparison script takes the lease and records provenance. The causal control covers all three sizes. Remaining gap: `bf16_noise_0.8b.json` is still the earlier file without provenance. I re-derived its numbers from the io files (R9), so this is not blocking.
+7. **Resolved.** The vLLM wording is corrected, and the author is told that the serving path is unverified.
+8. **Resolved.** Recorded as a decision to take before Phase 5 (report deviation 5 / Q4). Acceptable for P.0.
+9. **Resolved.** Six new tests cover `new_head_parameters`, the LayerNorm heads, the packing check on a composite config, the temperature policy and seed reproducibility.
+10. **Resolved.** Recorded in the report.
+
+### Residual notes (not blocking)
+
+- **(a)** On the GPU, the same seed and commit reproduce initialisation and the first step but not bitwise weights after several steps: the CUDA backward kernels are non-deterministic (C3). The report does not claim bitwise reproducibility. Before the multi-seed evidence phases (P.3a/P.4), state this in the manifests or report, or enable deterministic algorithms where the kernels allow it.
+- **(b)** `bf16_noise_0.8b.json` has no provenance (finding 6).
+- **(c)** Commits after `1a38e28` (Phase 4) are not covered by this review.
+
+The ground rules were still met in `fcc7d7d` and `1a38e28`: author `Dowling Wong <wangdowling@gmail.com>` with the co-author line, only `trackp-20261026` pushed, no secrets, Track X priority respected (every GPU job went through the lease).
+
+**Verdict: accepted.**
