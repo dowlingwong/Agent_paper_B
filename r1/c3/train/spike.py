@@ -121,7 +121,8 @@ def backbone_of(model):
 
 
 def spike(model, run_dir: Path | str, *, tok=None, toy_examples: int = 100, steps: int = 10, batch_size: int = 8,
-          seed: int = 0, measure: bool = True, rebuild=None, grad_ckpt: bool = False) -> dict:
+          seed: int = 0, measure: bool = True, rebuild=None, grad_ckpt: bool = False, lr: float = 1e-4,
+          head_lr: float = 1e-3) -> dict:
     """Run the P.0 spike on ``model``; ``rebuild()`` returns an identically built fresh wrapper for the reload check."""
     from r1.c3.train import packing as P
     run_dir = Path(run_dir)
@@ -137,8 +138,11 @@ def spike(model, run_dir: Path | str, *, tok=None, toy_examples: int = 100, step
         model.enable_gradient_checkpointing()
         rep["gradient_checkpointing"] = True
     rows = toy_rows(toy_examples)
-    cfg = TrainConfig(seed=seed, epochs=1e9, max_steps=steps, batch_size=batch_size, grad_accum=1, lr=1e-4)
-    tr = Trainer(model, rows, sft_loss, cfg, run_dir / "toy_sft")
+    from r1.c3.train.model import new_head_parameters
+    cfg = TrainConfig(seed=seed, epochs=1e9, max_steps=steps, batch_size=batch_size, grad_accum=1, lr=lr,
+                      head_lr=head_lr)
+    tr = Trainer(model, rows, sft_loss, cfg, run_dir / "toy_sft", head_params=new_head_parameters(model))
+    rep["lr"], rep["head_lr"] = lr, head_lr
     res = tr.train()
     losses = [r["loss"] for r in _read_metrics(run_dir / "toy_sft")]
     rep["toy_sft"] = {**res, "steps": tr.step, "loss_first": losses[0], "loss_last": losses[-1]}

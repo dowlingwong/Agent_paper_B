@@ -62,20 +62,22 @@ def e0(model, run_dir: Path | str, *, target: str = "y_soft", head_steps: int = 
     seed_everything(seed)
     train = e0_rows("train", target)[:n_train]
     test = e0_rows("test", target)[:n_test]
+    from r1.c3.train.model import new_head_parameters
     trainable = list(model.trainable_parameters())
-    heads = head_parameters(model)
+    heads = head_parameters(model)          # trained in step (1); new ones at head_lr, released ones at lr
+    new = new_head_parameters(model)
     # (1) frozen backbone: heads only
     _freeze_all_but(model, heads)
-    cfg1 = TrainConfig(seed=seed, epochs=1e9, max_steps=head_steps, batch_size=batch_size, grad_accum=1, lr=head_lr,
+    cfg1 = TrainConfig(seed=seed, epochs=1e9, max_steps=head_steps, batch_size=batch_size, grad_accum=1, lr=lr,
                        head_lr=head_lr)
-    Trainer(model, train, belief_loss, cfg1, run_dir / "head_fit", head_params=heads).train()
+    Trainer(model, train, belief_loss, cfg1, run_dir / "head_fit", head_params=new).train()
     p_head = predict(model, [r["prompt"] for r in test])
     # (2) LoRA steps: everything trainable again
     for p in trainable:
         p.requires_grad_(True)
     cfg2 = TrainConfig(seed=seed + 1, epochs=1e9, max_steps=lora_steps, batch_size=batch_size, grad_accum=1, lr=lr,
                        head_lr=head_lr)
-    Trainer(model, train, belief_loss, cfg2, run_dir / "lora", head_params=heads).train()
+    Trainer(model, train, belief_loss, cfg2, run_dir / "lora", head_params=new).train()
     p_lora = predict(model, [r["prompt"] for r in test])
     items = [r["item"] for r in test]
     m_head, m_lora = E.e0_metrics(p_head, items), E.e0_metrics(p_lora, items)

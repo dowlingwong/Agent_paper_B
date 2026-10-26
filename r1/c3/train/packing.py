@@ -59,8 +59,14 @@ def tree_mask(segs: list[list[int]], dtype=torch.float32, device="cpu") -> torch
     return torch.zeros(len(segs), L, L, dtype=dtype, device=device).masked_fill(~allow, torch.finfo(dtype).min)[:, None]
 
 
+def text_config(config):
+    """The language-model config (composite multimodal configs keep layer_types / vocab_size in ``text_config``)."""
+    get = getattr(config, "get_text_config", None)
+    return get() if callable(get) else config
+
+
 def has_linear_attention(config) -> bool:
-    return "linear_attention" in set(getattr(config, "layer_types", None) or [])
+    return "linear_attention" in set(getattr(text_config(config), "layer_types", None) or [])
 
 
 def packed_hidden(backbone, layouts: list[TreeLayout], pad_id: int = 0) -> list[torch.Tensor]:
@@ -96,7 +102,7 @@ def self_check(backbone, vocab: int | None = None, seed: int = 0) -> dict:
     if has_linear_attention(cfg):
         return {"ok": False, "reason": "linear-attention (Gated DeltaNet) layers cannot take a tree mask",
                 "max_diff": None}
-    vocab = vocab or min(1000, cfg.vocab_size)
+    vocab = vocab or min(1000, text_config(cfg).vocab_size)
     g = torch.Generator().manual_seed(seed)
     rnd = lambda n: torch.randint(0, vocab, (n,), generator=g).tolist()  # noqa: E731
     state, branches = rnd(9), [rnd(5), rnd(3), rnd(7)]

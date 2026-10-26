@@ -682,6 +682,16 @@ class ReasonThenBinWrapper(BinTokenWrapper):
         return super().forward(batch, analyses)
 
 
+def new_head_parameters(model) -> list:
+    """Parameters that start untrained (spec §4: lr 1e-3): the action and cumulative heads, and the bin-token
+    family's new token rows. Released heads (Kev's pointer head, Laya's decision head) and adapters are not here:
+    they take the base's lr (2e-5 from a released checkpoint, 1e-4 for a fresh LoRA)."""
+    params = [p for name in ("action", "cumulative") if name in model.heads for p in model.heads[name].parameters()]
+    if getattr(model, "family", "") in ("qwen_control", "qwen_reason"):
+        params += [p for n, p in model.named_parameters() if "trainable_tokens" in n and p.requires_grad]
+    return params
+
+
 # ---------------------------------------------------------------- factory
 
 def build_model(family: str, base, tokenizer=None, **kw):
@@ -707,7 +717,10 @@ def build_model(family: str, base, tokenizer=None, **kw):
             from transformers import AutoConfig, AutoTokenizer
             dtype = kw.pop("dtype", torch.float32)
             arch = AutoConfig.from_pretrained(str(base)).architectures[0]
-            base = getattr(transformers, arch).from_pretrained(str(base), dtype=dtype, attn_implementation="sdpa")
+            # loaded straight onto the target device: the wrappers' self-checks run there (the CUDA-only
+            # causal-conv1d kernel transformers binds cannot run on CPU tensors)
+            base = getattr(transformers, arch).from_pretrained(str(base), dtype=dtype, attn_implementation="sdpa",
+                                                               device_map={"": str(kw.get("device", "cpu"))})
             tokenizer = tokenizer or AutoTokenizer.from_pretrained(str(kw.pop("tokenizer_path", base.name_or_path)))
         cls = {"startlux": StartLuxWrapper, "qwen_control": BinTokenWrapper, "qwen_reason": ReasonThenBinWrapper}[family]
         return cls(base, tokenizer, **kw)

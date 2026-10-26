@@ -106,7 +106,8 @@ def cmd_spike(args, cfg) -> dict:
         rep = S.spike(model, args.run_dir, tok=tok, toy_examples=args.examples or sp["toy_examples"],
                       steps=args.steps or sp["steps"], batch_size=sp["batch_size"], seed=args.seed,
                       measure=not args.no_measure, rebuild=make,
-                      grad_ckpt=bool(cfg["gpu"].get("gradient_checkpointing")) and not args.tiny)
+                      grad_ckpt=bool(cfg["gpu"].get("gradient_checkpointing")) and not args.tiny,
+                      lr=1e-4 if args.tiny else cfg["bases"][args.base]["lr"], head_lr=cfg["head_lr"])
     return {"report": rep, "base": base, "model_files": rep["saved_sha256"], "lease": lease_log,
             "data": S.toy_rows(args.examples or sp["toy_examples"])}
 
@@ -121,13 +122,21 @@ def cmd_toy(args, cfg) -> dict:
         seed_everything(args.seed)
         rows = S.toy_rows(args.examples or tb["examples"], offset=100)
         steps = args.steps or tb["steps"]
+        from r1.c3.train.model import new_head_parameters
+        if cfg["gpu"].get("gradient_checkpointing") and not args.tiny:
+            model.enable_gradient_checkpointing()   # spec §4
+        lr = 1e-4 if args.tiny else cfg["bases"][args.base]["lr"]
         tr = Trainer(model, rows, S.sft_loss, TrainConfig(seed=args.seed, epochs=1e9, max_steps=steps, batch_size=8,
-                                                          grad_accum=1), Path(args.run_dir) / "toy")
+                                                          grad_accum=1, lr=lr, head_lr=cfg["head_lr"]),
+                     Path(args.run_dir) / "toy", head_params=new_head_parameters(model))
         res = tr.train()
         losses = [r["loss"] for r in S._read_metrics(Path(args.run_dir) / "toy")]
         batch = [r["prompt"] for r in rows[:8]]
         b0, a0 = S.probs(model, batch)
         rec = model.save(Path(args.run_dir) / "saved")
+        model.to("cpu")                      # never two copies on the card
+        import torch
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
         fresh = make()
         fresh.load(Path(args.run_dir) / "saved")
         b1, a1 = S.probs(fresh, batch)
@@ -144,6 +153,7 @@ def cmd_e0(args, cfg) -> dict:
     with _lease(args, lease_log):
         model, tok, make, base = _build(args, cfg)
         rep = X.e0(model, args.run_dir, target="y_hard" if args.hard else "y_soft",
+                   lr=1e-4 if args.tiny else cfg["bases"][args.base]["lr"], head_lr=cfg["head_lr"],
                    head_steps=args.steps or e0c["head_fit_steps"], lora_steps=args.steps or e0c["lora_steps"],
                    seed=args.seed, n_train=args.examples, n_test=args.n_test)
         files = model.save(Path(args.run_dir) / "saved")["files"]
