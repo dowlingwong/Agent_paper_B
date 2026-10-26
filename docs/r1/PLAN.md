@@ -516,6 +516,7 @@ The earlier R1-EXAM-RUNBOOK wording that protocol adoption is pending is superse
 
 | R1-LOCAL-TEST-SCOPE (27 Oct) | Author supersedes the narrower Mac test-scope ruling: existing repository tests may run on Mac CPU, including sklearn fits on synthetic or cached data and node subprocesses. Excluded: LLM inference, downloading real model weights, GPU/MPS, runs producing evidence or labels, and remote hosts. Test outputs are test outcomes only. Close the recorded incident as within scope after clarification, preserving observations and uncertainty. Fix subprocess NumPy environment and complete L0, L4.4 and L4.5 comparisons. |
 | R1-ROUTE-DAC (27 Oct; R1) | Paper B headline is **noise-aware DAC**, superseding R1-ROUTE's related-work-only wording. Feedback, decision independence and DAgger are hypotheses until measured (R9). |
+| R1-FEEDBACK-HYPOTHESES (27 Oct; R9) | Feedback, decision independence and DAgger remain hypotheses until measured; no causal or sequential-feedback conclusion follows from the descriptive partial diagnostic. |
 | R1-BIN-EDGES (27 Oct; R2) | Canonical bin edges are those in C3_DESIGN and labels.py: −∞, −3, −2, −1, −0.5, −0.15, 0.15, 0.5, 1, 2, 3, +∞. Correct the Track P specification default list accordingly. |
 | R1-HARD-LABEL-ABLATION (27 Oct; R3) | Synthetic E0 hard-label contrast is allowed. One real-label hard ablation is allowed in the appendix only; it is never a candidate. This is a narrow exception to R1-C3-POST. |
 | R1-RA0-RULE (27 Oct; R4) | R-A0 uses moments-based `rules.decide`; V(p) is used only in R-A3. |
