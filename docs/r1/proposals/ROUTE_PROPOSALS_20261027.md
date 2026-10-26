@@ -1,6 +1,6 @@
 # Route proposals for the author — 27 October 2026
 
-AI-assisted. These are questions and recommendations, not decisions, authorizations or evidence. The relevant statements and historical conflicts are inventoried in `docs/r1/reports/LOCAL_CONSISTENCY_SCAN_20261027.md`. PLAN §10 remains authoritative until the author decides and the coordinator records any decision.
+AI-assisted. These are questions and recommendations, not decisions, authorizations or evidence. Line references below identify the scanned revision `ad90149`, before later historical annotations shifted lines; stable row names identify the controlling decisions. The relevant statements and historical conflicts are inventoried in `docs/r1/reports/LOCAL_CONSISTENCY_SCAN_20261027.md`. PLAN §10 remains authoritative until the author decides and the coordinator records any decision.
 
 ## R1 — Headline framing: DAC or noise-aware agent control?
 

@@ -35,9 +35,9 @@ The planned comparison includes LLM self-control, trained configurator and hybri
 
 ## Labels, splits and gate
 
-Sweep proposals are audited using the disjoint label and evaluation seed blocks specified in RUNBOOK B.2 and the Track P specification. New soft-label width uses pooled node noise (R1-SOFT-SIGMA). No-ops receive their declared label; previously evaluated duplicates are rule-detectable, skipped and excluded from learned training/evaluation sets (22 Oct duplicates row). Splits are by instance, with edit-hash grouping and leave-one-node-out evaluation; the decision-model exam uses the training partition (RUNBOOK Track P).
+Sweep proposals are audited using the disjoint label and evaluation seed blocks specified in RUNBOOK B.2 and the Track P specification. New soft-label width uses pooled node noise (R1-SOFT-SIGMA). No-ops receive their declared label. Previously evaluated duplicates are excluded from learned labels and learned-arm evaluation sets and counted separately; rule-equipped arms receive credit for skips, while comparator accounting must not erase the costs of duplicate executions (22 Oct duplicates and run-accounting rows). Splits are by instance, with edit-hash grouping and leave-one-node-out evaluation; the decision-model exam uses the training partition (RUNBOOK Track P).
 
-At the C3 gate the author evaluates the adopted A3-or-A5 vs A2 criterion and uncertainty condition. Passing permits the specified online next phase; failure yields the declared negative/fallback. The 19 Oct pilot cannot be substituted for this gate (C3 gate; [offline pilot report](reports/C3_OFFLINE_PILOT_20261019.md); STATUS). **Open decisions:** canonical versioned bin edges and any additional label allocation or later sweep authorization.
+At the C3 gate the author evaluates whether the offline one-step gain of A3 or A5 over A2, scaled to a 20-run campaign, reaches δ_n on at least two nodes, with its lower 95% bound above zero (C3 gate; D18). The primary gate fixes g = 0.1 σ_node, credits skips at that price and does not re-spend freed runs; the declared alternatives are sensitivities without a gate verdict (22 Oct g and run-accounting rows). Passing permits the specified online next phase subject to the other gates; failure yields the declared negative/fallback. The 19 Oct pilot cannot be substituted for this gate ([offline pilot report](reports/C3_OFFLINE_PILOT_20261019.md); STATUS). **Open decisions:** canonical versioned bin edges and any additional label allocation or later sweep authorization.
 
 ## Decision-model exam and evaluation
 
@@ -55,19 +55,37 @@ R1-BENCH-HARD adds harder benchmarks; their role and audit budget remain open. A
 
 ```mermaid
 flowchart TD
-    A[Author proof check and independent audit] --> M[Manuscript claims]
-    B[Host preparation and liveness] --> C[Author sweep authorization]
-    C --> D[Sweep and fresh-seed audits]
-    D --> E[Offline arms and decision-model exam]
-    E --> F[Author C3 gate]
-    F -->|Pass and required authorizations| G[Post-training and online pilot]
-    F -->|Fail| H[C1 and C2 fallback]
-    G --> I[Transfer and author pre-declaration]
-    J[Track G adapters and author role decision] --> I
-    I --> K[Authorized deployment and analysis]
-    H --> M
-    K --> M
-    L[Author route and timeline decisions] --> M
+    accTitle: Paper B Route Dependencies
+    accDescr: Parallel preparation and author gates lead to offline evaluation, a C3 decision, and conditional online deployment; arrows do not themselves grant authorization.
+    prep[Host preparation and liveness] --> sweep_auth[Author sweep authorization]
+    sweep_auth --> labels[Sweep and fresh-seed audits]
+    host_equiv[Track P host equivalence] --> p3a[Authorized label-free P.3a]
+    p3a --> p3b[Authorized labelled P.3b and finalist decision]
+    labels --> p3b
+    p3b --> a5[Authorized A5 and offline evaluation]
+    labels --> offline[A0 to A3 offline evaluation]
+    a5 --> gate[Author C3 gate]
+    offline --> gate
+    gate -->|Pass and separate authorization| a6[Conditional A6 and online pilot]
+    gate -->|Fail| fallback[C1 and C2 fallback]
+    h_interface[Track H interface and review] --> a6
+    a5 --> rl_gate[P.4 RL gate]
+    rl_gate --> a6
+    a6 --> deployment[Authorized deployment and analysis]
+    declaration[Author pre-declaration] --> deployment
+    proof[Independent audit and author proof check] --> manuscript[Manuscript claims]
+    fallback --> manuscript
+    deployment --> manuscript
 ```
 
-Arrows are dependencies, not permission to start a downstream step. Track P's host-equivalence check, exam-selection rules, its authorizations, and the coordinator's H.8 decision are additional prerequisites for the steps that use them. **Open decisions:** scope and timeline are pending the author's L1, L3 and L5 decisions; L7 follows those decisions, not merely the existence of proposals.
+The graph is a compact view, not an exhaustive schedule. The remaining tracks and conditional dependencies are:
+
+| Track | Dependency and authority |
+|---|---|
+| Proposer exam X | Stage A, author exclusions and frozen rule precede separately authorized B1; B1 results and an author-fixed sample size/authorization precede B2; the author selects by role afterward (R1-EXAM-PROTOCOL; RUNBOOK X.2–X.7). The exam is not a substitute for sweep labels. |
+| Track P | Host-equivalence precedes P.3a and later evidence; label-free P.3a can proceed alongside sweep collection. Labelled P.3b needs training-partition labels, frozen membership/rule and its authorization; author confirms finalists. P.4 A5 precedes B.7 when A5 is used, and its separate RL gate and authorization govern P.5/P.6 (R1-TASL7-TRACKP; R1-C3-POST; RUNBOOK B.5–B.7 and P.3–P.6). |
+| Track H and C4 | H.1–H.10 are reviewed before C.3; the H.8 amendment needs coordination before P.5. C4 measures decision independence and the debiased-memory intervention; A7 is conditional on the declared DI result, not presumed (RUNBOOK H.8–H.10, C.4; R1-C4). |
+| Track G and transfer | G.1 adapter smoke and G.3 noise measurement support G.5 transfer; author decides G.4 role and audit budget. D.1 transfer and D.2 author pre-declaration are separate listed steps; neither a Track G role choice nor D.1 is asserted as a prerequisite for writing D.2 (R1-BENCH-HARD; RUNBOOK G.1–G.5, D.1–D.2). |
+| Deployment | D.2 pre-declaration and its hash precede author authorization and D.3; D.4 follows deployment. Manuscript claims also require the author proof check and the declared quality bar (RUNBOOK D.2–D.4; PLAN §9). |
+
+Arrows and table entries are dependencies, not permission to start a downstream step. **Open decisions:** scope and timeline are pending the author's L1, L3 and L5 decisions; L7 follows those decisions, not merely the existence of proposals.

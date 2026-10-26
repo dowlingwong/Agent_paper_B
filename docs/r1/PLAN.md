@@ -260,7 +260,7 @@ Criterion: carry an item only if it is useful for R1, cheap to adapt, and has lo
 - `papers/paper_b/` (the old manuscript);
 - release scripts.
 
-They stay where they are only because tests and release tooling import them. RUNBOOK task 0.1 decides whether to move them into the archive once R1's reuse is settled. Treat them as read-only history.
+Historical wording: they were retained for tests and release tooling and RUNBOOK task 0.1 was to decide the move. The move was subsequently completed under the 18 Oct RUNBOOK 0.1 row in §10; the archive remains read-only history.
 
 ## 9. Venue, quality bar and timeline
 
@@ -474,6 +474,8 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 
 **Decided 25 Oct 2026 by the author (proposer exam pool; DAC interface).** Fixed, not proposals. Recorded by an AI agent (Claude, coordinating session).
 
+The earlier R1-EXAM-POOL and R1-EXAM-FIT references to a proposed protocol and context are historical: R1-EXAM-CTX and R1-EXAM-PROTOCOL adopt those matters later, with separate evidence-authorization gates.
+
 | ID | Decision (decided 25 Oct 2026 by the author) |
 |---|---|
 | R1-EXAM-POOL (25 Oct) | **Proposer exam (appendix) pool and host.** All candidates of RUNBOOK Track X enter the exam except TeichAI/Qwen3.6-27B-Claude-Opus-Reasoning-Distill-v2 (excluded by the author). The exam runs on **zhixu portal (1 × RTX 4090)**. **Size rule replaced:** instead of the 24 Oct ceiling (27B dense to 35B-A3B MoE), any model that the pinned llama.cpp build serves fully on one RTX 4090 at Q4_K_M is admissible, which brings in 31–33B dense models (Gemma 4 31B, Muse Glimmer 30B, OLMo 3.1 32B). Q4_K_M stays (gpt-oss-20b at native MXFP4 as a declared exception). The operational fit test (16k context, q8_0 KV, ≥ 1 GiB free, measured not estimated) and the exam protocol X.2–X.6 are **proposed, not adopted**. The 2026-09 Round-7 candidacy exam (Paper A repo) is reused for machinery only, not as evidence. |
@@ -482,6 +484,8 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-EXAM-FIT (25 Oct, evening) | **The fit estimate for exam admissibility is based on the Q4_K_M GGUF** (file size + KV at the declared context + compute buffers ≤ 23.5 GiB on the RTX 4090), confirmed by the X.2 probe. The declared context (proposed 32,768) and the revised Stage B design (B1 screen ranked on audited proposal increments, B2 power-planned finalists, roles separated) are proposals. |
 
 **Decided 26 Oct 2026 by the author (exam execution).** Fixed, not proposals. Recorded by an AI agent (Claude, coordinating session).
+
+The earlier R1-EXAM-RUNBOOK wording that protocol adoption is pending is superseded by R1-EXAM-PROTOCOL below. The original portal-sharing instructions in R1-PORTAL-SCHEDULE and R1-TRACKP-RUNBOOK are historical for Track P placement after R1-TASL7-TRACKP; the per-host lease and specified host-equivalence check remain applicable.
 
 | ID | Decision (decided 26 Oct 2026 by the author) |
 |---|---|
