@@ -3,7 +3,7 @@
 Status: **adopted 2026-10-26 (PLAN §10 R1-C3-POST, with R1-C3-CONTROL, R1-SOFT-SIGMA, R1-PORTAL-SCHEDULE, R1-JEV-RUNG, R1-RB-TEACHER)**; proposed 2026-10-25, revised 2026-10-26 after the reference review. Execution: `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`.
 Supersedes the post-training part of R1-C3-BASE (24 Oct).
 
-> **Later host and scope decisions.** PLAN §10 R1-TASL7-TRACKP moves Track P to TASL-7 after its host-equivalence check; R1-ADA-OVERFLOW permits scoped resumable overflow. R1-JEV-RUNG adopts the Jev rung. R1-TRACKP-RUNBOOK-SCOPE permits the stated Mac read-only analysis and tiny CPU unit tests. Older portal and optional-Jev wording below is historical. The author resolved bin edges, hard-label diagnostic exceptions, R-A0 and score scaling in PLAN §10 R1-BIN-EDGES, R1-HARD-LABEL-ABLATION, R1-RA0-RULE and R1-RPS-CANONICAL (27 Oct); later scope and H.8 decisions are also recorded there.
+> **Later host and scope decisions.** PLAN §10 R1-TASL7-TRACKP moves Track P to TASL-7 after its host-equivalence check; R1-ADA-OVERFLOW permits scoped resumable overflow. R1-JEV-RUNG adopts the Jev rung. R1-LOCAL-TEST-SCOPE permits existing Mac CPU tests under the author's exclusions; Track P read-only analysis and proposals remain allowed. Older portal and optional-Jev wording below is historical. The author resolved bin edges, hard-label diagnostic exceptions, R-A0 and score scaling in PLAN §10 R1-BIN-EDGES, R1-HARD-LABEL-ABLATION, R1-RA0-RULE and R1-RPS-CANONICAL (27 Oct); later scope and H.8 decisions are also recorded there.
 Scope: C3 decision models (A5 / A6), label generation, the decision-model exam, SFT, RL, DAgger, evaluation.
 Runbook counterpart: `docs/r1/RUNBOOK.md` → Track P. Reading list: `docs/r1/references/README.md`. Base-model facts (Kev, StartLux, Laya) are those checked on 25 Oct and recorded in RUNBOOK Track P; P.0 confirms them.
 
@@ -142,7 +142,7 @@ s_j = σ̂ / √5, where σ̂ is the **pooled** node noise σ (in *z* units σ̂
 
 y_{j,k} = Φ((e_{k+1} − μ_j)/s_j) − Φ((e_k − μ_j)/s_j),  k = 1…11; y_{j,0} = 0.
 
-The same construction with seeds 7006–7010 gives `y_eval`. **Hard (argmax) labels are never used for training.**
+The same construction with seeds 7006–7010 gives `y_eval`. **Candidate training uses soft labels; the author permits the synthetic E0 contrast and one real-label appendix-only hard ablation, never a candidate (R1-HARD-LABEL-ABLATION).**
 
 ### 3.5 Action target
 
@@ -390,7 +390,7 @@ This is the "LLM self-control" arm of the self-control vs trained-configurator v
 
 ### 7.3 Learning curve
 
-Train on 250 / 500 / 1k / 2k (and 8k after B.6) labels; plot test RPS skill and gap closed. This decides B.6.
+Learning-curve comparisons at 250 / 500 / 1k / 2k labels remain planned; B.6 and its 8k expansion are deferred (R1-FOCUSED-SCOPE).
 
 ### 7.4 Closed loop (main table)
 
@@ -402,14 +402,14 @@ Fixed budget, fresh instances, ≥ 3 harder benchmarks where available. Compare:
 
 - Training is cheap: ≤ 4B LoRA on ≈ 2k examples is minutes to an hour per run on the 4090; tree packing cuts forward passes further.
 - E0 and E6 are label-free and can run while the label sweep is still going.
-- The cost driver is **auditing**: ≈ 2,000 × 10 training runs on deepthought. Estimate total time from per-node run length before committing to B.6's 8–10k.
+- The cost driver is **auditing**: ≈ 2,000 × 10 training runs on deepthought. Estimate total time from per-node run length; B.6 expansion is deferred (R1-FOCUSED-SCOPE).
 - Jev zero-shot rows cost API calls; one request per state (11 Noul branches × proposals).
 
 ---
 
 ## 9. Open items
 
-- Confirm bin edges and the no-op definition against R1-C3-BASE.
+- Bin edges are fixed by R1-BIN-EDGES; maintain the declared no-op definition and versioned labels.
 - Confirm v_k (keep probability per bin) from the C2 theory.
 - Confirm ECE gate value after the first SFT run.
 - StartLux tier decision after P.0 (owner: Dow).
