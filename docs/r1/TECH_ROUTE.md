@@ -67,8 +67,8 @@ flowchart TD
     p3b --> a5[Authorized A5 and offline evaluation]
     full_labels --> a5
     full_labels --> offline[A0 to A3 offline evaluation]
-    a5 --> gate[Author C3 gate]
-    offline --> gate
+    a5 -->|A5 alternative, if evaluated| gate[Author C3 gate: A3 or A5]
+    offline -->|A3 alternative| gate
     gate -->|Pass and separate authorization| a6[Conditional A6 and online pilot]
     gate -->|Fail| fallback[C1 and C2 fallback]
     h_interface[Track H interface and review] --> a6

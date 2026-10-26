@@ -1,32 +1,28 @@
 # Local R1 handoff — 27 October 2026
 
-AI-assisted working handoff. The coordinating session reviews and merges; no branch below has been merged by this agent. The Mac stays CPU-only, without model inference, actual model training or remote execution. The author-approved tiny random-weight unit-test exception and read-only Track P analysis scope are in PLAN R1-TRACKP-RUNBOOK-SCOPE.
+AI-assisted. Paper branch `local-20261026` and the separate `r1-local-*` harness branches are for coordinator review and merge; the pinned harness `897d83c` remains unchanged. PLAN §10 records the 27 Oct author rulings. Existing repo tests may run on CPU within R1-LOCAL-TEST-SCOPE; LLM inference, real-weight downloads, GPU/MPS, evidence or label runs and remote hosts remain excluded.
 
-## Independently accepted for their stated purpose
+## Accepted for their stated purposes
 
-- L0 baseline **documentation fidelity**, with material limitations: `docs/r1/reports/LOCAL_BASELINE_20261027.md` and `docs/r1/reviews/LOCAL_L0_REVIEW_20261027.md`. **Test-scope adherence was rejected:** the retained harness outcomes include confirmed synthetic node-model fitting and other attempted subprocesses with unknown stopping points. `docs/r1/reports/LOCAL_TEST_SCOPE_INCIDENT_20261027.md` is the authoritative incident record. L0 test counts are engineering outcomes, not scientific evidence.
-- L1 route and proposals: `docs/r1/TECH_ROUTE.md`, `docs/r1/proposals/ROUTE_PROPOSALS_20261027.md`, and `docs/r1/reviews/LOCAL_L1_REVIEW_20261027.md`.
-- L2 proof-audit support and simulation reproduction: `docs/r1/theory/T_AUDIT_20261027.md`, ten author packets, `docs/r1/reports/LOCAL_T_SIMULATION_REPRO_20261027.md`, and `docs/r1/reviews/LOCAL_L2_REVIEW_20261027.md`. Audit is not an author proof check.
-- L3 conditional timeline proposal: `docs/r1/proposals/ICML_REPLAN_20261027.md` and `docs/r1/reviews/LOCAL_L3_REVIEW_20261027.md`. Durations and deadlines carry their recorded uncertainty; proposal acceptance is not plan adoption.
-- L5 Track P feasibility proposal: `docs/r1/proposals/TRACKP_FEASIBILITY_20261027.md` and `docs/r1/reviews/LOCAL_L5_REVIEW_20261027.md`. Pilot bootstrap is a stand-in, not measured power for finalists or training authorization.
+- L0 original baseline is an accurate historical test record. The incident is **closed within scope after clarification**; the original observations and unknown subprocess outcomes remain in `docs/r1/reports/LOCAL_TEST_SCOPE_INCIDENT_20261027.md`. A corrected-environment baseline and comparisons are recorded separately in `docs/r1/reports/LOCAL_BASELINE_CLARIFIED_20261027.md`.
+- L1 route/proposals, L2 proof audit and simulation reproduction, L3 conditional timeline proposal and L5 Track P feasibility proposal were independently accepted for their limited purposes. Author decisions now supersede corresponding proposals in PLAN §10; none is an evidence authorization or author proof check.
+- `docs/r1/reports/LOCAL_RESUME_STAMP_TRACE_20261027.md` and its independent review confirm a conditional resumed E1/skip `repeated_bad_count` defect at the pin; historical impact and E2 verify behavior are unestablished. Integrate harness fixes only after sweep 1 and B.2 as a new pin (R1-HARNESS-NEXT-PIN).
+- `docs/r1/proposals/THEORY_CORRECTIONS_20261027.md` is independently accepted for **author proof check only**; the T2/T4 claim files remain unedited. The author must choose and check the one-step or strong interventional formulation.
 
-## Author/coordinator questions
+## Outstanding author/coordinator questions
 
-1. Should DAC be the paper's headline framing, or should DAC remain interface/related-work vocabulary? Decide the other L1 route questions in the linked proposal as well.
-2. Which timeline and scope cuts should be adopted for ICML, given the conditional schedule and unconfirmed official 2027 deadlines?
-3. Which Track P stages should be in scope, and how should the identified specification ambiguities be resolved?
-4. Can the author resolve the recorded H.8 amendment, and may the local agent edit the shared C3 modules for the Track H execute/skip and sidecar-prompt follow-ups, and who owns integration? See `docs/r1/proposals/TRACK_H_COORDINATION_20261027.md`.
-5. Can the coordinator supply revision-pinned authoritative 1GC evaluator sources and resolve repeated selection versus held-out scoring? Which Track G hosts, container access, role and audit budget should be approved? See `docs/r1/prompts/TRACK_G_RUNBOOK.md`.
-6. Which harness governance fixes should be integrated, and when, without changing the sweep pin? See `docs/r1/proposals/HARNESS_GOVERNANCE_20261027.md`.
+1. Which of the proposed corrected theory statements and DI formulations survive the author's proof check?
+2. Can the coordinator obtain revision-pinned authoritative 1GC task/evaluator sources, and what Track G audit budget and container availability should be used? Track G role is already decided: evaluation/transfer only, validation-only selection for test-scored tasks; G.3 on Ada. MLGym is deferred unless a container is available by 10 Nov.
+3. How should the Track P utility producer prove fixed-A1 reference, label/evaluation split and price provenance? H.8 is approved and edits are made, but the third independent review rejects acceptance until this is established. Track P takes accepted integration through main after coordinator merge.
+4. What response is appropriate for the retained byte-identity failures, restricted paper comparison exclusions and other recorded environment failures? Do not relax an acceptance criterion.
 
-## Unaccepted work and next steps
+## Incomplete work
 
-- L4.1: review `LOCAL_L4_1_REVIEW_20261027.md`; 1GC absent, real MLGym integration and integrated baseline comparison remain open. Harness branches `r1-local-20261027-autoresearch` (`6dd87ce`), `r1-local-20261027-1gc` (`16661ad`), and `r1-local-20261027-mlgym` (`27f8910`) are pushed separately. No merge; see `LOCAL_L4_1_HANDOFF.md`.
-- L4.2: shared-module edits await coordinator permission; no prohibited C3 files were edited for the item.
-- L4.3: partial pilot renderer and scoped tests exist; review `LOCAL_L4_3_REVIEW_20261027.md`, handoff `LOCAL_L4_3_HANDOFF.md`. Complete the source-to-output pipeline without invoking the historical cross-fit code, which trains LightGBM. Pilot outputs are not the current gate or accepted evidence.
-- L4.4: scaffold and focused checks exist, but review `LOCAL_L4_4_REVIEW_20261027.md` rejects acceptance because the paper regression suite was interrupted and an unchanged complete failure-ID comparison is missing.
-- L4.5: governance inventory corrections were independently checked, but `LOCAL_L4_5_REVIEW_20261027.md` rejects completion while required tests and comparable suite baselines remain unverified.
-- L6: draft anonymous manuscript and bibliography build using the 2026 style, with final-mode TBD guard; `LOCAL_L6_REVIEW_20261027.md` rejects acceptance. The T4 author proof check, anonymous companion citation details and recorded bibliography uncertainties remain open; see `LOCAL_L6_HANDOFF.md`.
-- L7 cannot be finalized until the author's L1/L3/L5 decisions have landed in PLAN §10. Then rescan changed files, update route/manuscript, and obtain independent review.
+- L4.1: 1GC source and adapters remain unavailable; real MLGym integration is conditional. Three isolated harness branches are pushed (`r1-local-20261027-autoresearch`, `-1gc`, `-mlgym`), not merged; see `LOCAL_L4_1_HANDOFF.md` and review.
+- L4.2: H.8 code and fixture tests exist; independent review remains **NOT ACCEPTED** for unverified utility provenance after three engineering attempts. See `LOCAL_L4_2_HANDOFF.md` and implementation review. A reviewer also ran one pilot-table test file outside the H.8 fixture-only instruction; the review preserves the incident and results.
+- L4.3: partial source-traced pilot renderer and focused tests exist; full pipeline and acceptance are pending. The historical offline evaluator trains LightGBM and is not to be run as an evidence or label job on the Mac. Pilot outputs are not the current gate.
+- L4.4 and L4.5: corrected harness baseline/repeat are identical by outcome IDs; paper comparisons and independent acceptance remain pending. The paper baseline has explicit excluded integration tests and a separate tiny-model selection, so do not claim a full-suite pass.
+- L6: anonymous draft builds with the 2026 placeholder style; author-checked theory statements/proofs, companion metadata and documented bibliography uncertainties remain open. L6 is not accepted.
+- L7: the route and manuscript were updated to the adopted rulings; the independent reviewer rejected the first post-decision pass, and corrections plus a new scan are in progress. Review again before acceptance.
 
-Before any broad regression test, use the independently reviewed but non-exhaustive `docs/r1/reports/LOCAL_TEST_SELECTION_AUDIT_20261027.md` to build and review an explicit safe allowlist; none is certified yet. Do not repeat prohibited real node training, infer that failed subprocesses stopped before fitting, or call an incomplete/subset comparison equivalent to the required criterion without independent review. No acceptance criterion was relaxed.
+Internal targets are labels 3 Nov, B.7 26 Nov, D.3 complete 20 Dec and manuscript 10 Jan (R1-INTERNAL-FREEZES), not official conference deadlines. The author has decided DAC framing, focused C1–C3 scope, Track P essential/ablation stages and H.8; no further permission is required for those already authorized choices.

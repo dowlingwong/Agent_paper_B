@@ -31,8 +31,8 @@ RL on the same base also mainly **sharpens** the base distribution rather than a
 
 ### 0.2 Reward rules (all stages)
 
-- Rewards and losses that touch the **belief** are bounded proper scores only: RPS (primary) or Brier. CE (log score) is allowed in supervised Stage S but **never inside an RL reward** — an unbounded score can dominate and collapse the policy (RLCR's log-score variant collapsed to 0 % accuracy).
-- The decision reward acts **only on the action output**, never on the belief.
+- In the main decoupled arms, the belief loss uses bounded proper scores: RPS (primary) or Brier. CE is allowed in supervised Stage S but not in an RL reward. The retained R-A3 smoothed-rule ablation explicitly adds a decision term to the belief objective and is monitored for distortion (R1-C3-POST; R1-TRACKP-FOCUS).
+- In the main decoupled arms the decision reward trains the action output; R-A3 is the explicit ablation exception.
 
 ---
 
@@ -329,7 +329,7 @@ Head models (Kev, Qwen control, StartLux if trainable). Exact objectives; no sam
 
   L_action = −E[π · u] = −π · u, implemented as cost-sensitive BCE: target 1[u > 0], weight |u|.
 
-  The belief stays proper because the decision reward never reaches the belief output (RLCR's decoupling argument, §10, R4). In R-A2 the shared LoRA can still shift the belief indirectly; the belief's own loss remains proper, and the width ratio and ECE are monitored for drift.
+  The belief’s own scoring loss is proper, but in R-A2 the action loss updates shared LoRA and can shift the belief indirectly; joint training does not establish calibration or propriety of the resulting prediction. Monitor width ratio and ECE and apply the existing rollback limits (R1-RA2-MONITOR).
 - R-A3 (ablation only): L = RPS(p, y) − λ · a_τ(p) · u, a_τ(p) = sigmoid((V(p) − g)/τ), τ annealed 0.5 → 0.05, λ ∈ {0.1, 0.3, 1, 3}.
 
 **Deployment**: an A6 arm is served as rule(belief) (R-A0) or as the action head (R-A1/2), never as the greedy bin (this replaces "deploy the greedy bin" in the 25 Oct P.4).
