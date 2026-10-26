@@ -1,0 +1,34 @@
+{
+  "criteria": {
+    "active_novelty_fraction": {
+      "equals_incumbent_trials": 6,
+      "evaluated_trials": 20,
+      "novel_trials": 10,
+      "novelty_source": "events",
+      "observed": 0.5,
+      "required": ">= 0.5",
+      "seen_before_trials": 10
+    },
+    "invalid_rate": {
+      "observed": 0.3,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 0,
+      "required": "at least 1 keep with budget_index > 1"
+    }
+  },
+  "failed_criteria": [
+    "keep_after_trial_1",
+    "invalid_rate"
+  ],
+  "inactive_key_rejections": 0,
+  "ledgers": [
+    "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_wdbc__s100/root_trials.jsonl",
+    "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_wdbc__s110/root_trials.jsonl"
+  ],
+  "n_trials": 20,
+  "node": "openml_wdbc",
+  "novelty_source": "events",
+  "pass": false
+}

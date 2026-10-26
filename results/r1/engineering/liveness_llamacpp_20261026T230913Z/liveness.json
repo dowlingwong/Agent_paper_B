@@ -1,0 +1,272 @@
+{
+  "criteria": {
+    "active_novelty_fraction": ">= 0.5 of evaluated trials; novelty_source events or replayed",
+    "invalid_rate": "< 0.3",
+    "keep_after_trial_1": "at least one keep after trial 1"
+  },
+  "generated_utc": "20261026T233608Z",
+  "label": "ENGINEERING_ONLY",
+  "manager_kind": "langgraph",
+  "memory_mode": "append_only_summary",
+  "nodes": {
+    "digits_mlp": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 0,
+          "evaluated_trials": 20,
+          "novel_trials": 18,
+          "novelty_source": "events",
+          "observed": 0.9,
+          "required": ">= 0.5",
+          "seen_before_trials": 2
+        },
+        "invalid_rate": {
+          "observed": 0.0,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 10,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/digits_mlp__s104/root_trials.jsonl",
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/digits_mlp__s114/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "digits_mlp",
+      "novelty_source": "events",
+      "pass": true
+    },
+    "openml_blood_transfusion": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 4,
+          "evaluated_trials": 20,
+          "novel_trials": 13,
+          "novelty_source": "events",
+          "observed": 0.65,
+          "required": ">= 0.5",
+          "seen_before_trials": 7
+        },
+        "invalid_rate": {
+          "observed": 0.2,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 0,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [
+        "keep_after_trial_1"
+      ],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_blood_transfusion__s105/root_trials.jsonl",
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_blood_transfusion__s115/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "openml_blood_transfusion",
+      "novelty_source": "events",
+      "pass": false
+    },
+    "openml_breast_w": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 2,
+          "evaluated_trials": 20,
+          "novel_trials": 12,
+          "novelty_source": "events",
+          "observed": 0.6,
+          "required": ">= 0.5",
+          "seen_before_trials": 8
+        },
+        "invalid_rate": {
+          "observed": 0.1,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 0,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [
+        "keep_after_trial_1"
+      ],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_breast_w__s105/root_trials.jsonl",
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_breast_w__s115/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "openml_breast_w",
+      "novelty_source": "events",
+      "pass": false
+    },
+    "openml_credit_approval": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 0,
+          "evaluated_trials": 20,
+          "novel_trials": 12,
+          "novelty_source": "events",
+          "observed": 0.6,
+          "required": ">= 0.5",
+          "seen_before_trials": 8
+        },
+        "invalid_rate": {
+          "observed": 0.0,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 1,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_credit_approval__s100/root_trials.jsonl",
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_credit_approval__s110/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "openml_credit_approval",
+      "novelty_source": "events",
+      "pass": true
+    },
+    "openml_ionosphere": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 4,
+          "evaluated_trials": 20,
+          "novel_trials": 14,
+          "novelty_source": "events",
+          "observed": 0.7,
+          "required": ">= 0.5",
+          "seen_before_trials": 6
+        },
+        "invalid_rate": {
+          "observed": 0.2,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 1,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_ionosphere__s103/root_trials.jsonl",
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_ionosphere__s113/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "openml_ionosphere",
+      "novelty_source": "events",
+      "pass": true
+    },
+    "openml_sonar": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 1,
+          "evaluated_trials": 20,
+          "novel_trials": 15,
+          "novelty_source": "events",
+          "observed": 0.75,
+          "required": ">= 0.5",
+          "seen_before_trials": 5
+        },
+        "invalid_rate": {
+          "observed": 0.05,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 0,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [
+        "keep_after_trial_1"
+      ],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_sonar__s105/root_trials.jsonl",
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_sonar__s115/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "openml_sonar",
+      "novelty_source": "events",
+      "pass": false
+    },
+    "openml_wdbc": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 6,
+          "evaluated_trials": 20,
+          "novel_trials": 10,
+          "novelty_source": "events",
+          "observed": 0.5,
+          "required": ">= 0.5",
+          "seen_before_trials": 10
+        },
+        "invalid_rate": {
+          "observed": 0.3,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 0,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [
+        "keep_after_trial_1",
+        "invalid_rate"
+      ],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_wdbc__s100/root_trials.jsonl",
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/openml_wdbc__s110/root_trials.jsonl"
+      ],
+      "n_trials": 20,
+      "node": "openml_wdbc",
+      "novelty_source": "events",
+      "pass": false
+    },
+    "tabular_mlp": {
+      "criteria": {
+        "active_novelty_fraction": {
+          "equals_incumbent_trials": 1,
+          "evaluated_trials": 21,
+          "novel_trials": 16,
+          "novelty_source": "events",
+          "observed": 0.7619047619047619,
+          "required": ">= 0.5",
+          "seen_before_trials": 5
+        },
+        "invalid_rate": {
+          "observed": 0.047619047619047616,
+          "required": "< 0.3"
+        },
+        "keep_after_trial_1": {
+          "observed": 9,
+          "required": "at least 1 keep with budget_index > 1"
+        }
+      },
+      "failed_criteria": [],
+      "inactive_key_rejections": 0,
+      "ledgers": [
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/tabular_mlp__s102/root_trials.jsonl",
+        "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/tabular_mlp__s112/root_trials.jsonl"
+      ],
+      "n_trials": 21,
+      "node": "tabular_mlp",
+      "novelty_source": "events",
+      "pass": true
+    }
+  },
+  "run_manifest": "manifest.json",
+  "schema": "r1.liveness/2"
+}
