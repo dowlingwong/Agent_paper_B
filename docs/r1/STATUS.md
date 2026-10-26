@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — author STOP 0 decisions recorded; Phase 1 authorised (AI-assisted)
+
+Recorded the author's direct STOP 0 decisions in PLAN §10 R1-EXAM-STORAGE / LICENCES / ORNITH / TRANSFER / USER-RUNTIME. Approved storage is `/ceph/dowling/exam-x/{models,work}`; downloads/runs must stop below 100 GB available on that filesystem. Licences approved for research evaluation and publication, including Nemotron/Laguna OpenMDW-1.1 and LFM2.5 LFM 1.0. Ornith-31B is removed as not publicly released, no substitute; effective pool 21 candidates plus 3 anchors (OLMo Think remains a sensitivity). Ornith-35B maps to `ornith-ai/Ornith-1.0-35B`, with vendor GGUF Q4_K_M checked first in Phase 2. Code transfer uses Mac-to-portal SSH pushes to bare repositories under `/home/dowling/exam-x/work/`; no portal GitHub credentials. User-level uv/Python >=3.11 installation under `/home/dowling` is permitted, no sudo/system Python changes; installation not yet performed. Phase 1 is now authorised, with independent review at STOP 1; no later phase or evidence authorisation is inferred.
+
 ## 26 October 2026 — portal exam Phase 0 resumed, independently reviewed and accepted; STOP 0 (AI-assisted; ENGINEERING_ONLY)
 
 The author restored Tailscale and authorised resuming Phase 0 only, with independent review and STOP 0 for disk/licence decisions. SSH to `portal_zhixu` succeeded. Inventory commits `57d8fc4` / `0791688`, formatting cleanup `d8d1035`; report: `reports/PORTAL_HOST_FACTS_20261026.md`, command transcripts and metadata under `reports/portal_host_facts_20261026/`. Same independent reviewer re-ran SSH checks and accepted the **read-only inventory and decision package**, with no remaining report corrections: `reviews/EXAM_0_REVIEW_20261026.md`, resumption acceptance. The initial failed attempt and blocked-record review remain preserved below/in Git history.
