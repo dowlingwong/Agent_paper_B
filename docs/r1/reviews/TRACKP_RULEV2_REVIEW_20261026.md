@@ -158,3 +158,18 @@ diverged over about 11 high-gradient steps and then saturated with vanishing gra
 happened "after one step". Fix: correct the wording in the three places.
 
 Verdict: changes required — every round-2 finding is closed. One minor factual correction remains (R3-1).
+
+## Closing (`f7bc836..84fe7c1`)
+
+**R3-1: resolved.** The report's attempts table, spec §5.5 and the `e0_v2` docstring now describe attempt 1 as the
+log shows it: LoRA diverged over about 11 steps (gradient norms 11–120, loss 0.017 → ≈ 0.12), then saturated with the
+gradient going to 1e-14, while val RPS went from 0.014 to 0.119 and early stopping returned the head fit. The only
+code change is that docstring.
+
+The new STATUS entry agrees with the reviewed documents: rule v2 sha256 `8c0ef908…`, the two-stage driver tested for
+mechanics only at a clean `5538b79`, ≈ 1.6 GPU-h, the configuration for the TASL-7 equivalence check, and the readings
+still open for the author.
+
+Every finding of this review is resolved; nothing blocking or minor remains.
+
+Verdict: accepted
