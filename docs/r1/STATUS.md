@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — local (Mac) work runbook (AI-assisted; documents only)
+
+- New agent runbook `docs/r1/prompts/MAC_LOCAL_RUNBOOK.md` for one Claude Code agent on the Mac: L0 baseline; L1 technical-route review and consolidation (`TECH_ROUTE.md`, consistency scan, route proposals — incl. the DAC-framing conflict with R1-ROUTE); L2 theory-check support for A.2; L3 feasibility and ICML 2027 re-plan (proposal); L4 framework code (Track G adapters G.1, Track H follow-ups, regenerate-all analysis pipeline, D.2 scaffold, harness audit — harness pin 897d83c untouched); L5 Track P feasibility review (proposal); L6 ICML LaTeX skeleton in `papers/r1/`; L7 final pass. Subagent use and acceptance criteria per task; independent review at every STOP.
+
 ## 26 October 2026 — hosts: TASL-7 dedicated to Track P; Ada as overflow (AI-assisted; documents only)
 
 - Author decisions recorded (PLAN §10): R1-ADA-OVERFLOW (zhixu experiment takes resumable overflow runs; one comparison table on one GPU type and one pinned environment unless declared) and R1-TASL7-TRACKP (second RTX 4090 node TASL-7, exclusive, dedicated to Track P; zhixu portal left to Track X).
