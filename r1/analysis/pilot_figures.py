@@ -8,6 +8,7 @@ import collections
 import csv
 import hashlib
 import json
+import platform
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -60,7 +61,26 @@ def main():
     fig.tight_layout()
     fig.savefig(OUT / "noise_floor.pdf", metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
-    manifest = {"label": "PILOT / ENGINEERING_ONLY — not accepted evidence or gate", "inputs": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}, "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate."}
+    fig, ax = plt.subplots(figsize=(7, 4))
+    labels = [row[0] for row in gate_rows]
+    gains = [row[1] for row in gate_rows]
+    lower = [row[1] - row[2] for row in gate_rows]
+    upper = [row[3] - row[1] for row in gate_rows]
+    ax.errorbar(gains, labels, xerr=[lower, upper], fmt="o", capsize=3)
+    ax.axvline(0, color="black", linewidth=0.8)
+    ax.set_xlabel("Historical A3 minus A2 per-campaign estimate")
+    ax.set_title("ENGINEERING PILOT — not the C3 gate")
+    fig.tight_layout()
+    fig.savefig(OUT / "offline_pilot.pdf", metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
+    total = sum(row[4] for row in counts)
+    duplicate = sum(row[4] for row in counts if row[3] == "duplicate")
+    (OUT / "pilot_numbers.tex").write_text(
+        "% PILOT only; do not include as accepted manuscript evidence.\n"
+        + "\\newcommand{\\PilotProposalRows}{" + str(total) + "}\n"
+        + "\\newcommand{\\PilotDuplicateRows}{" + str(duplicate) + "}\n"
+    )
+    manifest = {"label": "PILOT / ENGINEERING_ONLY — not accepted evidence or gate", "renderer": {"python": platform.python_version(), "matplotlib": matplotlib.__version__}, "inputs": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}, "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate."}
     (OUT / "provenance.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
 
 

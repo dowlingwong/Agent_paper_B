@@ -5,5 +5,9 @@
     "results/r1/pilot/E1_20261022T214606Z/compare.json": "e096cedf653aae8214acffbe5f0f46aeb522e1fddba2d0de9db955ac0c923e80"
   },
   "label": "PILOT / ENGINEERING_ONLY \u2014 not accepted evidence or gate",
-  "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate."
+  "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate.",
+  "renderer": {
+    "matplotlib": "3.11.2",
+    "python": "3.13.4"
+  }
 }
