@@ -100,3 +100,31 @@ No "falling back to its reference PyTorch implementation" warning in stderr (the
 4. Fixed: `bound_implementation()` reads the wrapper's closure; attempt 3 (`gpu_smoke_attempt3.json`) records the fla and causal-conv1d functions; same numbers, pass.
 5. Recorded in the report: factor 2 chosen after the 1.46 ratio was known; bf16's discriminating check is the next-token agreement; probe output committed (`parity_probe_output.json`, re-run under the lease).
 6. Fixed: `trackp_tests_in_gpu_venv.txt` now gives each failure's error line. 26 × `Expected x.is_cuda()` (the 3 sidecar errors are the tiny Kev fixture), 3 × import quirk in CLI subprocesses, and `laya-softmax12` — a real weakness of the learnability test (lr 1e-2 unstable for Laya's head; passed on torch 2.14 only by 0.078). Test changed to lr 3e-3, 80 steps, margin 0.2 (stricter): 8/8 pass in `trackp-cpu`; Laya in `trackp-gpu` by script: softmax-12 2.49 → 2.08, cumulative-11 4.19 → 1.47 (`laya_learnability_gpu_venv.txt`).
+
+## Re-check (26 Oct 2026)
+
+Same independent reviewer. Range re-checked: `7285791..c6d0887` (`origin/trackp-20261026` = `c6d0887`; full Phase 2 range `51d0d57..c6d0887`). No GPU job run for the re-check. Commit `c6d0887`: author/committer `Dowling Wong <wangdowling@gmail.com>`, Claude co-author line present; remote `main` still `b5a7aec`, only `trackp-20261026` pushed. The registry, the model files and the config are unchanged since `7285791`, so the revision and sha256 results above still hold.
+
+1. **Resolved.** `trackp_phase2_20261026/gpu_lease_log.txt` is committed. It is identical to `~/r1_trackp/runs/gpu_lease_log.jsonl`, now including my re-run (04:47:20–04:47:35Z), attempt 3 (04:52:52–04:53:07Z), the probe re-run and the Laya runs. Every GPU job has a start and an end entry. The report points to the `.txt` file.
+2. **Resolved.** `kev_release_members_vs_registry.txt`: 26 MATCH and 2 × `locked_test.json` NOT_ON_HUB. Every hash equals my own in-memory hashes and the registry. The report text is updated.
+3. **Resolved.** The report now lists the three code pins as choices: each is HEAD at clone time, and Kev's is 23 commits after `kev-1.0` (`6b719c3`). The author is asked about them as Q3. Not re-pinning because Phase 1 was reviewed at `2074cc4` is a fair reason.
+4. **Resolved.** `bound_implementation()` reads the wrapper's closure. Attempt 3 (`gpu_smoke_attempt3.json`) records `fla.ops.gated_delta_rule.chunk.chunk_gated_delta_rule`, `fla.ops.gated_delta_rule.fused_recurrent.fused_recurrent_gated_delta_rule` and `causal_conv1d.causal_conv1d_interface.causal_conv1d_fn` / `causal_conv1d_update`. These are the functions I found in the installed packages. The numbers are the same as attempts 2 and my re-run (pass). The closure scan skips the `__wrapped__` torch function and anything in `transformers.*`, so on a torch fallback it reports "(torch path)". Correct for this transformers version.
+5. **Resolved.** `parity_probe_output.json` is committed. With TF32 off, torch-GPU vs CPU is 5.1e-5 and fast vs CPU is 0.0294; with TF32 on, torch-GPU vs CPU is 0.0201. This supports the explanation that the 0.029 gap is TF32-level precision in fla's kernels, not a kernel error. The report now says that the factor 2 was chosen after the 1.46 ratio was known, and that in bf16 the check that discriminates is the ≥ 99 % next-token agreement. Decode-path kernels are recorded as bound but not exercised (N2).
+6. **Resolved in substance, but the counts are wrong (residual R1 below).** `trackp_tests_in_gpu_venv.txt` now gives the error lines.
+   - The sidecar errors are `Expected x.is_cuda()` (the tiny Kev fixture), and the CLI failures are `ModuleNotFoundError` from the subprocess import quirk.
+   - `laya-softmax12` was a real assertion failure: the loss oscillated (2.48 → 2.46). The explanation that lr 1e-2 is unstable for Laya's head is correct.
+   - The test change (lr 1e-2 → 3e-3, 40 → 80 steps, required drop 0.05 → 0.2) is a reasonable robustness fix, not a weakening: the required drop is 4× larger and the final-loss bound < 3.0 is unchanged.
+   - Re-run in `trackp-cpu`: with `HF_HOME=~/r1_trackp/hf_cache HF_HUB_OFFLINE=1`, **8 passed**. Without `HF_HOME` the two Laya cases skip because the tokenizer is not in the default cache; that skip is the test's intended behaviour. The cache holds 91 MB of tokenizer files and no weights.
+   - Laya in `trackp-gpu` by script: 2.49 → 2.08 and 4.19 → 1.47 (`laya_learnability_gpu_venv.txt`). The script itself is not committed; only its output is.
+
+**Residual R1 (minor, documentation; does not block acceptance).** The new `trackp_tests_in_gpu_venv.txt` has 27 test lines, not 30. Compared with the original list, three failures have no error line: `learns_a_fixed_batch[qwen_control-softmax12]`, `[qwen_control-cumulative11]` and `[startlux-cumulative11]`. The report's breakdown "26 `is_cuda`, 3 import quirk, 1 Laya" also does not match the file: the file shows 22 `is_cuda`, **4** `ModuleNotFoundError` and 1 Laya. With the three missing lines (Qwen3.5-family on CPU tensors, so almost certainly `is_cuda`), the correct breakdown is 25 / 4 / 1. Required: when the Phase 2 report is finalised, add the three missing lines and correct the breakdown to 25 / 4 / 1. This is a record correction about a non-criterion test run in a venv that is documented as GPU-only. It does not affect any Phase 2 "Done when", and all of these tests pass in `trackp-cpu`.
+
+Unrelated observation: the working tree has an untracked `r1/scripts/trackp_startlux_ref.py`. It is not part of the reviewed range and was not reviewed.
+
+**Verdict: accepted.** Phase 2 (2.1–2.3) meets the runbook:
+- Revisions are verified on the Hub, with Kev at the `v1.0` tag commits.
+- All 112 sha256 values were re-hashed independently and match the registry and the Hub's LFS/blob records; the Kev release cross-check holds.
+- The bf16 matmul and the DeltaNet forward run on the GPU with fla and causal-conv1d bound, which is now recorded.
+- `--check-config` passes, and the config values match the registry and the host.
+
+Findings 1–6 are resolved. Residual R1 is to be corrected in the report as described; author questions Q1–Q3 remain open.

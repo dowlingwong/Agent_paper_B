@@ -1,5 +1,12 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P Phase 2: environment, downloads, pins (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
+
+- Branch `trackp-20261026` (Phases 2–4 on the reviewed branch per the author's overnight instruction). Report `docs/r1/reports/TRACKP_PHASE2_ENV_PINS_20261026.md`; review `docs/r1/reviews/TRACKP_2_REVIEW_20261026.md` (accepted).
+- Run venv `~/r1_trackp/venvs/trackp-gpu`: torch 2.6.0+cu124 (2.5.1+cu121 fails under transformers 5.19), transformers 5.19.0, peft 0.21.2, flash-linear-attention 0.5.2, causal-conv1d 1.7.0 (built). GPU smoke test passes (bf16 matmul; Qwen3.5-0.8B DeltaNet forward on fla/causal-conv1d within TF32-level precision of the fp32 reference).
+- 8 repos (26 GB) at pinned revisions, all 112 files verified against the Hub records (LFS sha256 / git blob sha1) and re-hashed by the reviewer; Kev adapters also match the GitHub `kev-1.0` release; `r1/c3/train/registry.yaml`; portal config filled (`--check-config` clean).
+- GPU: < 10 minutes under the lease. Open for the author: torch 2.6/cu124 on driver 535; `jev.model = jev-1.14.0`; code pins (Kev code 23 commits after `kev-1.0`).
+
 ## 26 October 2026 — Track P Phase 1: code (AI-assisted; ENGINEERING_ONLY / DRYRUN; independently reviewed and accepted)
 
 - Track P agent on zhixu portal, branch `trackp-20261026` (not merged). Items 1.1–1.11 on tiny models, CPU only; report `docs/r1/reports/TRACKP_PHASE1_CODE_20261026.md`, handoff `docs/r1/overnight/TRACKP_CODE_HANDOFF.md`, review `docs/r1/reviews/TRACKP_1_REVIEW_20261026.md` (3 blocking, 8 minor findings fixed; accepted).
