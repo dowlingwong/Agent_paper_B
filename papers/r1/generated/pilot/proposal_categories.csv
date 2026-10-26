@@ -1,18 +1,18 @@
-source,node,memory_mode,inert_kind,rows,stratum_rows,share
-dt4,digits_mlp,none,duplicate,88,114,0.7719298245614035
-dt4,digits_mlp,none,non-inert,26,114,0.22807017543859648
-dt4,openml_ionosphere,none,equals_incumbent,114,114,1.0
-liveness,digits_mlp,append_only_summary,duplicate,8,18,0.4444444444444444
-liveness,digits_mlp,append_only_summary,non-inert,10,18,0.5555555555555556
-liveness,openml_breast_w,append_only_summary,duplicate,6,17,0.35294117647058826
-liveness,openml_breast_w,append_only_summary,non-inert,11,17,0.6470588235294118
-liveness,openml_ionosphere,append_only_summary,duplicate,9,18,0.5
-liveness,openml_ionosphere,append_only_summary,non-inert,9,18,0.5
-liveness,tabular_mlp,append_only_summary,duplicate,8,18,0.4444444444444444
-liveness,tabular_mlp,append_only_summary,non-inert,10,18,0.5555555555555556
-rerun2A,openml_breast_w,append_only_summary,duplicate,209,340,0.6147058823529412
-rerun2A,openml_breast_w,append_only_summary,non-inert,131,340,0.38529411764705884
-rerun2A,openml_ionosphere,append_only_summary,duplicate,225,342,0.6578947368421053
-rerun2A,openml_ionosphere,append_only_summary,non-inert,117,342,0.34210526315789475
-rerun2A,tabular_mlp,append_only_summary,duplicate,174,342,0.5087719298245614
-rerun2A,tabular_mlp,append_only_summary,non-inert,168,342,0.49122807017543857
+provisional_status,source,node,memory_mode,inert_kind,rows,stratum_rows,share
+ENGINEERING_ONLY; partial campaigns; source-row shares,dt4,digits_mlp,none,duplicate,88,114,0.7719298245614035
+ENGINEERING_ONLY; partial campaigns; source-row shares,dt4,digits_mlp,none,non-inert,26,114,0.22807017543859648
+ENGINEERING_ONLY; partial campaigns; source-row shares,dt4,openml_ionosphere,none,equals_incumbent,114,114,1.0
+ENGINEERING_ONLY; partial campaigns; source-row shares,liveness,digits_mlp,append_only_summary,duplicate,8,18,0.4444444444444444
+ENGINEERING_ONLY; partial campaigns; source-row shares,liveness,digits_mlp,append_only_summary,non-inert,10,18,0.5555555555555556
+ENGINEERING_ONLY; partial campaigns; source-row shares,liveness,openml_breast_w,append_only_summary,duplicate,6,17,0.35294117647058826
+ENGINEERING_ONLY; partial campaigns; source-row shares,liveness,openml_breast_w,append_only_summary,non-inert,11,17,0.6470588235294118
+ENGINEERING_ONLY; partial campaigns; source-row shares,liveness,openml_ionosphere,append_only_summary,duplicate,9,18,0.5
+ENGINEERING_ONLY; partial campaigns; source-row shares,liveness,openml_ionosphere,append_only_summary,non-inert,9,18,0.5
+ENGINEERING_ONLY; partial campaigns; source-row shares,liveness,tabular_mlp,append_only_summary,duplicate,8,18,0.4444444444444444
+ENGINEERING_ONLY; partial campaigns; source-row shares,liveness,tabular_mlp,append_only_summary,non-inert,10,18,0.5555555555555556
+ENGINEERING_ONLY; partial campaigns; source-row shares,rerun2A,openml_breast_w,append_only_summary,duplicate,209,340,0.6147058823529412
+ENGINEERING_ONLY; partial campaigns; source-row shares,rerun2A,openml_breast_w,append_only_summary,non-inert,131,340,0.38529411764705884
+ENGINEERING_ONLY; partial campaigns; source-row shares,rerun2A,openml_ionosphere,append_only_summary,duplicate,225,342,0.6578947368421053
+ENGINEERING_ONLY; partial campaigns; source-row shares,rerun2A,openml_ionosphere,append_only_summary,non-inert,117,342,0.34210526315789475
+ENGINEERING_ONLY; partial campaigns; source-row shares,rerun2A,tabular_mlp,append_only_summary,duplicate,174,342,0.5087719298245614
+ENGINEERING_ONLY; partial campaigns; source-row shares,rerun2A,tabular_mlp,append_only_summary,non-inert,168,342,0.49122807017543857
