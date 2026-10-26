@@ -521,6 +521,18 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 
 *Implementation choices by the Track P agent under these rows (not decided by the author; listed for confirmation, `docs/r1/reports/TRACKP_E0V2_DRYRUN_20261026.md`):* (1) token rows at lr 1e-4 — 10× below the new heads, but not below the top of the adapter grid; (2) the lr grid also applies to released heads (Kev's pointer head, Laya's decision head), which train at the adapter lr; (3) E0 v2: validation cells (1,3), (3,2), (5,4), (8,2), (0,3), (9,3); evaluation every 100 steps, patience 5 evaluations, the starting model counted as a candidate; the 2,000-step cap applies to each stage (head fit and LoRA, so ≤ 4,000 steps in all); the lr is chosen on the fresh-head soft run and reused for the hard-label contrast and the native-readout run; the Qwen control's new token rows stay frozen in the fresh-head run; (4) A4 v2 criterion form: predicted std non-decreasing wherever the label's std increases (plus the median per-prompt slope on the label std); (5) A3 budget = 1,024 − the longest rendering of the prompt over the pool families, levels filled to the word.
 
+**Decided 26 Oct 2026 (evening) by the author (Track P, after the E0 v2 DRYRUN).** Fixed, not proposals. Recorded by an AI agent (Claude, Track P agent on zhixu portal) on branch `trackp-20261026` from the author's decisions in chat, answering `docs/r1/reports/TRACKP_E0V2_DRYRUN_20261026.md`.
+
+| ID | Decision (decided 26 Oct 2026, evening, by the author) |
+|---|---|
+| R1-E0-THRESHOLDS (26 Oct) | **E0 pass (a floor, not a ranking):** width slope vs the label's own std **≥ 0.6, with its bootstrap 95 % lower bound > 0**; mean slope **≥ 0.8**. **A4:** predicted std monotone vs the label's std on **≥ 95 % of prompts**. |
+| R1-E0-BUDGET (26 Oct) | **Two stages, the same for every model:** (1) **lr screen** on the grid, ≤ 2,000 steps, the lr chosen by val RPS; (2) **one run at the selected lr**: cap **6,000 steps, evaluation every 100, patience 10**. The E0 metrics come from that run. |
+| R1-E0-HEADFIT (26 Oct) | The frozen-backbone head fit is **descriptive only**: cached frozen features, **full-batch L-BFGS to convergence on CPU**. |
+| R1-CONTROL-READOUT (26 Oct; amends R1-C3-CONTROL) | **Qwen control: primary readout = a fresh LayerNorm + linear head**; the bin-token readout is reported as a secondary row. **A5 is read on the readout used for selection, descriptive only.** The bin list stays in the prompt in canonical order. |
+| R1-TRACKP-CHOICES (26 Oct) | The Track P agent's implementation choices are **confirmed**: token-row lr 1e-4; the E0 validation cells (disjoint from the held-out test cells, stated in the report); evaluation every 100 steps; the selected lr reused for the hard-label and native runs; the Qwen token rows frozen in the fresh-head run. |
+| R1-EXAM-RULE-V2 (26 Oct) | **Exam rule v2:** finalist 1 = the **E3 point-estimate top**; the tie-break order (E2 skill, \|width ratio − 1\|, base over instruct, cost) **only picks the optional second finalist**, among tied models of a different class; "tied" on E2 = an RPS-skill difference ≤ 0.01; the rule includes the E0 v2 thresholds. Committed with its sha256; `exam_analyze` accepts v2 only. Supersedes R1-TIEBREAK where they differ. |
+| R1-P3A-READY (26 Oct) | Validate the two-stage driver with a short DRYRUN on kev-0.8b, then **STOP** with rule v2 committed and the branch pushed; the author then writes `trackp_p3a_<date>.md`. **zhixu experiment is not used by Track P until a PLAN row allows it.** |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |
