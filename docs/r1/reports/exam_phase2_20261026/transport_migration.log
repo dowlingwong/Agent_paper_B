@@ -1,0 +1,75 @@
+来自 /home/dowling/exam-x/work/remotes/agent_paper_B
+   2ca2e39..f86cff6  exam-x-20261026 -> origin/exam-x-20261026
+更新 2ca2e39..f86cff6
+Fast-forward
+ .../exam_phase2_20261026/transport_migration.py    |  49 +++++++++
+ r1/exam/hub_download.py                            | 111 +++++++++++++++++++++
+ r1/scripts/configs/exam_portal.json                |   2 +-
+ r1/tests/test_exam_hub_download.py                 |  68 +++++++++++++
+ 4 files changed, 229 insertions(+), 1 deletion(-)
+ create mode 100644 docs/r1/reports/exam_phase2_20261026/transport_migration.py
+ create mode 100644 r1/exam/hub_download.py
+ create mode 100644 r1/tests/test_exam_hub_download.py
+{
+  "purpose": "planned transport migration; source pins unchanged; no inference/campaign retry",
+  "time": 1793009505.3552947,
+  "workers": [
+    {
+      "pid": 1912901,
+      "uid": 1008,
+      "argv": [
+        "/home/dowling/exam-x/work/venv/bin/python",
+        "-u",
+        "-m",
+        "r1.exam.download_models",
+        "--registry",
+        "r1/exam/registry.yaml",
+        "--out",
+        "/home/dowling/exam-x/work/phase2/downloads"
+      ],
+      "start_ticks": "401577962"
+    },
+    {
+      "pid": 3531521,
+      "uid": 1008,
+      "argv": [
+        "/home/dowling/exam-x/work/venv/bin/python",
+        "-u",
+        "-m",
+        "r1.exam.download_models",
+        "--registry",
+        "r1/exam/registry.yaml",
+        "--out",
+        "/home/dowling/exam-x/work/phase2/downloads",
+        "--candidate",
+        "qwen3_coder_30b_a3b"
+      ],
+      "start_ticks": "401860062"
+    }
+  ],
+  "partials": [
+    {
+      "candidate": "gemma4_31b",
+      "original": "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf.partial",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/1793009505560233102/gemma4_31b__google_gemma-4-31B-it-Q4_K_M.gguf.partial",
+      "size": 1258291200,
+      "sha256": "2586705254e067c7bf7d37a2cdf1519d548f803ed826907f67bd1510de270c38"
+    },
+    {
+      "candidate": "muse_glimmer_30b",
+      "original": "/home/dowling/exam-x/models/muse_glimmer_30b/Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf.partial",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/1793009505560233102/muse_glimmer_30b__Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf.partial",
+      "size": 117440512,
+      "sha256": "05fc15d7bb9b96cee9f47ac6a398de5362eadb017499780c87526f45ed0faa86"
+    },
+    {
+      "candidate": "qwen3_coder_30b_a3b",
+      "original": "/home/dowling/exam-x/models/qwen3_coder_30b_a3b/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf.partial",
+      "preserved": "/home/dowling/exam-x/work/phase2/transport_archives/1793009505560233102/qwen3_coder_30b_a3b__Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf.partial",
+      "size": 2399141888,
+      "sha256": "8e3920c9a13c96d72edc452ed1b27ee692790f2ba64acfc365f6856fd1158f83"
+    }
+  ],
+  "status": "TRANSPORT_CHANGE_COMPLETE_OLD_BYTES_PRESERVED",
+  "finished": 1793009509.5394862
+}

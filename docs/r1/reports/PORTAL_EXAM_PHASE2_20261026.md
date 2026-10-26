@@ -1,0 +1,31 @@
+# Portal exam Phase 2 — preparation and receiving
+
+26 October 2026. AI-assisted; ENGINEERING_ONLY. **IN PROGRESS.** Independent review is pending; no Stage A, B1 or B2 has started.
+
+## Authority and code transfer
+
+The author closed STOP 1 and authorized Phase 2 then Phase 3, each with independent review and STOP. Both Mac branches fast-forwarded to pushed paper `8311df6` and harness `897d83c`. Code travelled only by Mac SSH pushes to bare repositories under `/home/dowling/exam-x/work/remotes/`, followed by local clones/checkouts on portal. No portal GitHub credentials were installed or transferred. The source-only llama.cpp bare repository is an explicitly shallow single release snapshot; enabling `receive.shallowUpdate` affected only that empty exam-owned repo, without rewriting an existing ref. The initial rejected shallow push and early clone attempt were resolved before compilation; original logs are preserved.
+
+Approved directories are `/home/dowling/exam-x/{models,work}` on `/dev/nvme0n1p2`; the initial recheck reported 730,005,823,488 available bytes. Downloads and model runs enforce the unchanged decimal 100,000,000,000-byte reserve. Every future GPU job must hold `/home/dowling/r1_locks/gpu0.lock` using `flock`, and must pass the existing no-foreign-compute census. No GPU inference job has yet been launched; CUDA compilation and receiving are CPU/network operations. Track P workloads are not interrupted or messaged.
+
+## Completed preparation
+
+- User-level uv **0.13.5**, installer SHA `1c6e7f025499664633ac2dce43a210800510e9ef0625c52e034a8afdf8bf177a`, in `/home/dowling/.local/bin`; user CPython **3.13.4** under `/home/dowling/.local/share/uv/python/`. System Python remains **3.10.12**. Isolated environment `/home/dowling/exam-x/work/venv`; CMake **3.31.6** and dependency versions recorded in evidence logs.
+- llama.cpp official v0.7.0 source **`620d2225cc436ab0b001e3200e590e3b286ef9ab`**, CUDA 12.2, `GGML_CUDA=ON`, `CMAKE_CUDA_ARCHITECTURES=89`, Release, curl disabled. Server `/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server`; binary SHA **`b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b`**; exact line `version: 0.7.0-dev (build 1, commit 620d222)`. Version/help and build logs preserved. Build flags and hash independently checked.
+- Source registry pins every available artifact by repo/revision/file/size/SHA, with pinned base configs, template metadata and source README evidence. Author STOP 2 amendment is in PLAN R1-EXAM-SOURCE-STOP2 and STATUS: exact standard Unsloth Qwen3-Coder Q4_K_M only, labelled **source exception (unsloth)** in all active tables; no UD/dynamic variant. Qwopus v4 removed as unavailable, no substitute. Effective pool **20 candidates + 3 anchors**, plus OLMo Think sensitivity: **22 GGUF artifacts, 343,918,079,904 bytes**. Original vendor/bartowski failed searches are preserved as dated pre-amendment inventory, not as current source verdicts.
+- All 22 32k and 16k estimates are in `exam_phase2_20261026/fit_table.json`. `FIT_PROVENANCE.md` traces actual attention/global/sliding/MLA/Mamba/short-convolution shapes. These are estimates, not host/model qualification. Nemotron's approved Q4_K_M estimate exceeds 23.5 GiB at both contexts; Stage A and author exclusions remain separate gates.
+- Eight exact cache files copied for credit approval and ionosphere, with size/SHA manifest. Existing offline `r1.noise.check_caches` passes **2/2**, network disabled; independent reviewer reproduced both and verified all eight files on Mac and portal. Initial rsync path/destination errors did not transfer alternative data; corrected exact directories match the source inventory.
+
+## Weight transfers and receiving — pending completion
+
+The first plain-HTTPS transport was deliberately replaced for throughput. Only the two verified exam-owned Python worker PIDs were terminated after UID/argv/start-tick checks; all three original partial files were moved without changing bytes into approved work storage, with size and SHA checked before/after. `transport_migration.json` records every worker and preserved file. No partial was deleted and no experiment/campaign was retried.
+
+Reviewed replacement: `r1.exam.hub_download`, pinned code checkpoint `ecaf408`; huggingface-hub **2.3.0**, hf-xet **1.7.0**. Each isolated child uses the exact pinned artifact with `token=False`, HF caches under approved work, concurrent range transport and a shared cohort cancellation event. A source/hash/transport/disk STOP cancels queued work and terminates/waits only the helper's own active child process groups; SIGTERM and KeyboardInterrupt cleanup were independently demonstrated with sleep-only child processes. Every complete/reused file receives a full size/SHA check before its certificate is written. Four fake-byte transport tests pass.
+
+Current controller is recorded in `/home/dowling/exam-x/work/phase2/hub_downloads.pid`, with live output in `hub_downloads.log` and per-artifact certificates/logs under `phase2/downloads/`. Partial archival bytes are deliberately retained and counted in filesystem monitoring. Completion requires all 22 artifact certificates and independent rehashes; metadata hashes alone are not download acceptance.
+
+## Validation and next boundary
+
+Source/build/cache checkpoints: source API pins and configs independently checked; fit core tests **28 passed** after author amendment, full focused exam suite **34 passed** including fake Stage A/B1 kill/resume; new transport tests **4 passed**, plus independent real process-group cleanup probes. No claim is made that full broad suites were rerun for these scoped corrections. The Phase 1 baselines remain documented separately.
+
+Independent record: `docs/r1/reviews/EXAM_2_REVIEW_20261026.md` (**REVIEW PENDING**). Final receiving, pinned-config reconciliation and reviewer acceptance must finish before Phase 3. Stage A prompt-source prerequisite was separately audited read-only (`STAGE_A_SOURCE_PREREQUISITE.md`); its source amendment has been asked of the author and no final prompt set has been frozen or used.
