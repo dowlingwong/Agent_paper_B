@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — local L2 theory support independently reviewed (AI-assisted; ENGINEERING_ONLY)
+
+- Independent reviewer accepted [the proof audit](theory/T_AUDIT_20261027.md), ten author-check packets and [T3/T5 CPU reproduction](reports/LOCAL_T_SIMULATION_REPRO_20261027.md) after one numerical correction: [review](reviews/LOCAL_L2_REVIEW_20261027.md); commits `7429cb8`, `59527dd`, `99039a3`. The audit flags a zero-noise edge error, a diminishing-returns counterexample and decision-independence conditioning gaps, among other qualified findings. These are AI-assisted audit results, not author-checked propositions.
+- Generated T3/T5 tables matched their committed tables byte for byte; the underlying numeric fields had the recorded floating-point differences. The simulations are model-only engineering outputs, not measurements. The author's T4 proof check remains outstanding; no claim or protocol was silently changed.
+
 ## 27 October 2026 — local L3 timeline proposal accepted for author review (AI-assisted)
 
 - Independent reviewer accepted the [conditional planning proposal](proposals/ICML_REPLAN_20261027.md) after re-deriving the illustrative schedule and checking assumptions: [review](reviews/LOCAL_L3_REVIEW_20261027.md), proposal commits `d537578` / `be233a9`. The full-route scenario uses guessed windows; Track X completion, resource contention and actual host capacity remain unknown. Official ICML 2027 deadlines were not found on the checked official future-meetings page.
