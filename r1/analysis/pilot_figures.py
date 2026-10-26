@@ -95,12 +95,12 @@ def main():
     # Source-row categories are descriptive, include partial campaigns and are
     # not a fresh-seed audit or an estimate for a population of campaigns.
     denominators = {tuple(row[:3]): row[5] for row in counts}
-    waste = [(f"{":".join(key)} (n={denominators[key]})", share)
+    waste = [("{} (n={})".format(":".join(key), denominators[key]), share)
              for key, share in duplicate_shares(counts)]
     fig, ax = plt.subplots(figsize=(8, 4.5))
     ax.barh([label for label, _ in waste], [fraction for _, fraction in waste])
     ax.set_xlabel("Duplicate share of source rows in each stratum")
-    ax.set_title("ENGINEERING PILOT — includes partial campaigns")
+    ax.set_title("ENGINEERING PILOT — partial campaigns", fontsize=9)
     fig.tight_layout()
     fig.savefig(OUT / "proposal_categories.pdf", metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
