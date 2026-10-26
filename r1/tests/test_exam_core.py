@@ -258,7 +258,7 @@ def test_no_audited_increments_retains_candidate_diagnostics(tmp_path):
     _,sha=load_rule()
     m={'label':'EXAM','phase':'b1','status':'COMPLETE','candidate':'x','family':'family','role':'candidate','registry_order':0,
        'rule_sha256':sha,'registry_path':str(registry),'registry_sha256':digest_file(registry),'primary_mode':'off',
-       'stage_a_pass':True,'d28_pass':False,'audited_proposals':[],'diagnostics':{'invalid':20}}
+       'stage_a_pass':True,'d28_pass':True,'audited_proposals':[],'diagnostics':{'invalid':20}}
     r=b1_summary([m]);assert r['finalists']==[]
     assert r['rows'][0]['mu_hat'] is None and r['rows'][0]['diagnostics']['invalid']==20
 

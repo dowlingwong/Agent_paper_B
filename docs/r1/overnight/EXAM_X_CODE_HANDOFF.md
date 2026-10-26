@@ -6,7 +6,7 @@ The author corrected storage to `/home/dowling/exam-x/models` and `/home/dowling
 
 ## Review scope and commits
 
-Both repositories use `exam-x-20261026`. Paper baseline `8304156`; author decisions `acf0426` and `ef2377a`; frozen rule commit `4b9c656`; implementation `e6f42c0`. Harness baseline `6afdb0e`; implementation `897d83c8efa364ec2fdd37288241cc42e01d7274`. `HARNESS_PIN_EXAM` and the prospective `HARNESS_PIN_C3` bind that harness commit. Merge the accepted harness branch before the paper branch; only the author/coordinator merges protected branches.
+Both repositories use `exam-x-20261026`. Paper baseline `8304156`; author decisions `acf0426` and `ef2377a`; frozen rule commit `4b9c656`; implementation `e6f42c0`; review corrections `930687c`, `57f56e5`, `df1a6eb`. Harness baseline `6afdb0e`; implementation `897d83c8efa364ec2fdd37288241cc42e01d7274`. `HARNESS_PIN_EXAM` and the prospective `HARNESS_PIN_C3` bind that harness commit. Merge the accepted harness branch before the paper branch; only the author/coordinator merges protected branches.
 
 The rule bytes and digest were committed before any B1 dry run. All existing B1 outputs are explicitly synthetic DRYRUN fixtures. The author has not yet accepted the rule hash into the scientific authorization row.
 
@@ -39,7 +39,7 @@ Set `PYTHONDONTWRITEBYTECODE=1`, `OMP_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, 
 
 ## Validation status
 
-Authoritative before baselines: paper **417 passed, 22 failed, 9 skipped**; harness **448 passed, 8 failed, 1 collection error**. Exact failures and environment are preserved in `BASELINE.md` and the two baseline logs. Post-change full-suite results and reviewer verdict are pending. Counts must be compared by exact failure ID, not described as an all-green suite.
+Authoritative before baselines: paper **417 passed, 22 failed, 9 skipped**; harness **448 passed, 8 failed, 1 collection error**. Exact failures and environment are preserved in `BASELINE.md` and the two baseline logs. Post-change harness: **454 passed, 8 failed, 1 collection error** (implementation 97.37 s; reviewer 95.39 s), with identical failing/error IDs to baseline. Final independent focused exam suite: **31 passed**, including fake-server kill/resume (48.86 s). `--check-config --allow-placeholders` passes. The final standalone dry-run summary is saved under `exam_phase1_20261026/dryrun_summary.json`; all eight checks pass. Paper full-suite result and final reviewer verdict are pending. Counts must be compared by exact failure ID, not described as an all-green suite.
 
 ## Remaining phase gates
 
