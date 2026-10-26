@@ -1,0 +1,383 @@
+{
+  "id": "muse_glimmer_30b",
+  "base_repo": "meta-models/Muse-Glimmer-30B",
+  "queries": [
+    [
+      {
+        "_id": "6a78be27e8cfa31c8b543588",
+        "id": "meta-models/Muse-Glimmer-30B",
+        "likes": 2091,
+        "trendingScore": 40,
+        "private": false,
+        "downloads": 205081,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "muse_glimmer",
+          "image-text-to-text",
+          "conversational",
+          "arxiv:2504.13181",
+          "arxiv:2602.06036",
+          "arxiv:2610.24628",
+          "license:apache-2.0",
+          "eval-results",
+          "endpoints_compatible",
+          "deploy:sagemaker",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-08-09T17:51:35.000Z",
+        "modelId": "meta-models/Muse-Glimmer-30B"
+      },
+      {
+        "_id": "6a78bece7d5de1ff5e27e875",
+        "id": "meta-models/Muse-Glimmer-30B-GGUF",
+        "likes": 383,
+        "trendingScore": 7,
+        "private": false,
+        "downloads": 175181,
+        "tags": [
+          "gguf",
+          "image-text-to-text",
+          "arxiv:2504.13181",
+          "arxiv:2602.06036",
+          "arxiv:2610.24628",
+          "base_model:meta-models/Muse-Glimmer-30B",
+          "base_model:quantized:meta-models/Muse-Glimmer-30B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-08-09T17:54:22.000Z",
+        "modelId": "meta-models/Muse-Glimmer-30B-GGUF"
+      },
+      {
+        "_id": "6a78bf0be2f8ec48083ff327",
+        "id": "meta-models/Muse-Glimmer-30B-assistant",
+        "likes": 78,
+        "trendingScore": 3,
+        "private": false,
+        "downloads": 167993,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "muse_glimmer_assistant",
+          "feature-extraction",
+          "image-text-to-text",
+          "arxiv:2504.13181",
+          "arxiv:2602.06036",
+          "arxiv:2610.24628",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-08-09T17:55:23.000Z",
+        "modelId": "meta-models/Muse-Glimmer-30B-assistant"
+      },
+      {
+        "_id": "6a795710233a1579b4eb5330",
+        "id": "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE",
+        "likes": 42,
+        "trendingScore": 2,
+        "private": false,
+        "downloads": 2239,
+        "tags": [
+          "executorch",
+          "image-text-to-text",
+          "conversational",
+          "arxiv:2504.13181",
+          "arxiv:2602.06036",
+          "base_model:meta-models/Muse-Glimmer-30B",
+          "base_model:quantized:meta-models/Muse-Glimmer-30B",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-08-10T04:44:00.000Z",
+        "modelId": "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE"
+      }
+    ],
+    [
+      {
+        "_id": "6a7b67bccd87832d15ee5ada",
+        "id": "bartowski/darkc0de_Muse-Glimmer-30B-heretic-GGUF",
+        "likes": 18,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 5904,
+        "tags": [
+          "gguf",
+          "heretic",
+          "uncensored",
+          "decensored",
+          "abliterated",
+          "reproducible",
+          "image-text-to-text",
+          "base_model:darkc0de/Muse-Glimmer-30B-heretic",
+          "base_model:quantized:darkc0de/Muse-Glimmer-30B-heretic",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-08-11T18:19:40.000Z",
+        "modelId": "bartowski/darkc0de_Muse-Glimmer-30B-heretic-GGUF"
+      },
+      {
+        "_id": "6a7e76531a41110f31908bdb",
+        "id": "bartowski/ValiantLabs_Muse-Glimmer-30B-Esper4-GGUF",
+        "likes": 4,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 4407,
+        "tags": [
+          "gguf",
+          "esper",
+          "esper-4",
+          "valiant",
+          "valiant-labs",
+          "meta",
+          "facebook",
+          "muse-glimmer",
+          "muse",
+          "glimmer",
+          "muse-glimmer-30b",
+          "30b",
+          "reasoning",
+          "code",
+          "code-instruct",
+          "python",
+          "typescript",
+          "javascript",
+          "java",
+          "c++",
+          "c",
+          "c#",
+          "rust",
+          "go",
+          "haskell",
+          "dev-ops",
+          "jenkins",
+          "terraform",
+          "ansible",
+          "docker",
+          "kubernetes",
+          "helm",
+          "grafana",
+          "prometheus",
+          "shell",
+          "bash",
+          "azure",
+          "aws",
+          "gcp",
+          "cloud",
+          "scripting",
+          "powershell",
+          "problem-solving",
+          "architect",
+          "engineer",
+          "developer",
+          "creative",
+          "analytical",
+          "expert",
+          "rationality",
+          "conversational",
+          "chat",
+          "instruct",
+          "image-text-to-text",
+          "en",
+          "dataset:sequelbox/Mitakihara2-DeepSeek-V4-Pro",
+          "dataset:sequelbox/Tachibana4-DeepSeek-V4-Pro",
+          "dataset:sequelbox/Titanium4-DeepSeek-V4-Pro",
+          "base_model:ValiantLabs/Muse-Glimmer-30B-Esper4",
+          "base_model:quantized:ValiantLabs/Muse-Glimmer-30B-Esper4",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-08-14T01:58:43.000Z",
+        "modelId": "bartowski/ValiantLabs_Muse-Glimmer-30B-Esper4-GGUF"
+      },
+      {
+        "_id": "6a79f81a915295f4898b2840",
+        "id": "bartowski/Muse-Glimmer-30B-GGUF",
+        "likes": 21,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 20308,
+        "tags": [
+          "gguf",
+          "image-text-to-text",
+          "base_model:meta-models/Muse-Glimmer-30B",
+          "base_model:quantized:meta-models/Muse-Glimmer-30B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-08-10T16:11:06.000Z",
+        "modelId": "bartowski/Muse-Glimmer-30B-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "bartowski/Muse-Glimmer-30B-GGUF",
+      "revision": "01e1b7c30e19e1823ee9a73dec51d12f59ec4857",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "Muse-Glimmer-30B-Q4_K_M.gguf",
+          "blobId": "e1a6606b0213fddd4469cf461e9e404ae4b8c608",
+          "size": 17306324000,
+          "lfs": {
+            "sha256": "0d3fc85f61d10fdc84072f0bba6005d61c1ac5605a2627b0fd5ea4ff8194c384",
+            "size": 17306324000,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "Muse-Glimmer-30B-imatrix.gguf",
+          "blobId": "14467ee380f945134da3192e098f9aae2bc8e356",
+          "size": 13376128,
+          "lfs": {
+            "sha256": "31c5d105b701a3c4db9ac1f597a9aa93d58107184df6d3a2f9d369e054ff7dfd",
+            "size": 13376128,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/ValiantLabs_Muse-Glimmer-30B-Esper4-GGUF",
+      "revision": "5e3faf47c4ca462d35d351c53d0f7e8731e1b829",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "ValiantLabs_Muse-Glimmer-30B-Esper4-Q4_K_M.gguf",
+          "blobId": "dd2d0487aabc2bbcf130878a23604da4c4156dc9",
+          "size": 17306328864,
+          "lfs": {
+            "sha256": "6a9e5b7ccd7eb0a624808f1457f0e9d94500c688cd488f538ad8a1439f50c46f",
+            "size": 17306328864,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "ValiantLabs_Muse-Glimmer-30B-Esper4-imatrix.gguf",
+          "blobId": "088a2b9bd35a3c857e809a31dbfb8deced372747",
+          "size": 13376128,
+          "lfs": {
+            "sha256": "11e27f33d3f97254162d4415bbec1b452da2f02f6e92691e14b69d147e1646c3",
+            "size": 13376128,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/darkc0de_Muse-Glimmer-30B-heretic-GGUF",
+      "revision": "49f757ea312905be72d0e7dc331caec1f656f764",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "darkc0de_Muse-Glimmer-30B-heretic-Q4_K_M.gguf",
+          "blobId": "7c62c8ab1faf5d9732bba021bac2071acc0e8ae7",
+          "size": 17306324160,
+          "lfs": {
+            "sha256": "728cdea6a1c4add69ac878574db05505b2475ca5366480ef7f720b2c2b263ed9",
+            "size": 17306324160,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "darkc0de_Muse-Glimmer-30B-heretic-imatrix.gguf",
+          "blobId": "7d00c166f85bf034710bbfdab959b98e5cf3f2b5",
+          "size": 13376128,
+          "lfs": {
+            "sha256": "92b7dd5a2edc16fa5db1fb7561ef6238213e25102ef4afe953d63b23fd6904c3",
+            "size": 13376128,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "meta-models/Muse-Glimmer-30B",
+      "revision": "cec94fcfd6512f2cfe708138c32533b346ea4f69",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE",
+      "revision": "fc6fa93cdefeddc93abd7abf883e99279af7ea51",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "meta-models/Muse-Glimmer-30B-GGUF",
+      "revision": "b44f1072cf75e918a1b82a3a17b45c4389b076e7",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf",
+          "blobId": "aa274570f6606b9f5b560a0dd85792b7fe274ce7",
+          "size": 16756683904,
+          "lfs": {
+            "sha256": "4cc57c0f51040a226e5a72cc47b7613f7772950e460a665f7083de89f183f60e",
+            "size": 16756683904,
+            "pointerSize": 136
+          }
+        },
+        {
+          "rfilename": "dflash-Muse-Glimmer-30B-Q4_K_M.gguf",
+          "blobId": "30e7e5502a8b84b3bd5f0aafae2bff1d34125ff2",
+          "size": 1631208128,
+          "lfs": {
+            "sha256": "b2e808bf656086fe86bd0d0bd990f01d33e377537a07c02d45371517c8b264ef",
+            "size": 1631208128,
+            "pointerSize": 135
+          }
+        },
+        {
+          "rfilename": "mmproj-Muse-Glimmer-30B-Q4_K_M.gguf",
+          "blobId": "2280b3a26dfc331226638d1acea270d01a1c1d27",
+          "size": 1400328928,
+          "lfs": {
+            "sha256": "f48b452316f9b213758e8659444029b961a24a07f99a1abb2a9f88b06f7c00c6",
+            "size": 1400328928,
+            "pointerSize": 135
+          }
+        }
+      ],
+      "imatrix_files": []
+    },
+    {
+      "repo": "meta-models/Muse-Glimmer-30B-assistant",
+      "revision": "c676cce91658f9568aaf264a416211e2782735b7",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    }
+  ]
+}

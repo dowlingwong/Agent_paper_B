@@ -1,0 +1,312 @@
+{
+  "id": "gpt_oss_20b",
+  "base_repo": "openai/gpt-oss-20b",
+  "queries": [
+    [
+      {
+        "_id": "68913539bd3d0a833438591d",
+        "id": "openai/gpt-oss-20b",
+        "likes": 5221,
+        "trendingScore": 21,
+        "private": false,
+        "downloads": 5783154,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt_oss",
+          "text-generation",
+          "vllm",
+          "conversational",
+          "arxiv:2508.10925",
+          "license:apache-2.0",
+          "eval-results",
+          "endpoints_compatible",
+          "8-bit",
+          "mxfp4",
+          "deploy:sagemaker",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2025-08-04T22:33:29.000Z",
+        "modelId": "openai/gpt-oss-20b"
+      },
+      {
+        "_id": "68cc549cade527b0974c2505",
+        "id": "openai/gpt-oss-safeguard-20b",
+        "likes": 284,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 18368,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "gpt_oss",
+          "text-generation",
+          "vllm",
+          "conversational",
+          "arxiv:2508.10925",
+          "base_model:openai/gpt-oss-20b",
+          "base_model:finetune:openai/gpt-oss-20b",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "8-bit",
+          "mxfp4",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2025-09-18T18:51:08.000Z",
+        "modelId": "openai/gpt-oss-safeguard-20b"
+      }
+    ],
+    [
+      {
+        "_id": "689242af5c53fd2630f9de2d",
+        "id": "bartowski/openai_gpt-oss-20b-GGUF-MXFP4-Experimental",
+        "likes": 9,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 15662,
+        "tags": [
+          "gguf",
+          "text-generation",
+          "base_model:openai/gpt-oss-20b",
+          "base_model:quantized:openai/gpt-oss-20b",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2025-08-05T17:43:11.000Z",
+        "modelId": "bartowski/openai_gpt-oss-20b-GGUF-MXFP4-Experimental"
+      },
+      {
+        "_id": "689277cb60b4c9edeb2c2696",
+        "id": "bartowski/openai_gpt-oss-20b-GGUF",
+        "likes": 39,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 11361,
+        "tags": [
+          "gguf",
+          "text-generation",
+          "base_model:openai/gpt-oss-20b",
+          "base_model:quantized:openai/gpt-oss-20b",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2025-08-05T21:29:47.000Z",
+        "modelId": "bartowski/openai_gpt-oss-20b-GGUF"
+      },
+      {
+        "_id": "68941f26503ed37b00fe4670",
+        "id": "bartowski/huihui-ai_Huihui-gpt-oss-20b-BF16-abliterated-GGUF",
+        "likes": 43,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 13626,
+        "tags": [
+          "gguf",
+          "text-generation",
+          "base_model:huihui-ai/Huihui-gpt-oss-20b-BF16-abliterated",
+          "base_model:quantized:huihui-ai/Huihui-gpt-oss-20b-BF16-abliterated",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2025-08-07T03:36:06.000Z",
+        "modelId": "bartowski/huihui-ai_Huihui-gpt-oss-20b-BF16-abliterated-GGUF"
+      },
+      {
+        "_id": "691a88b304e393a9d93bbefb",
+        "id": "bartowski/p-e-w_gpt-oss-20b-heretic-GGUF",
+        "likes": 14,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 6307,
+        "tags": [
+          "gguf",
+          "vllm",
+          "heretic",
+          "uncensored",
+          "decensored",
+          "abliterated",
+          "text-generation",
+          "base_model:p-e-w/gpt-oss-20b-heretic",
+          "base_model:quantized:p-e-w/gpt-oss-20b-heretic",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2025-11-17T02:30:11.000Z",
+        "modelId": "bartowski/p-e-w_gpt-oss-20b-heretic-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "bartowski/huihui-ai_Huihui-gpt-oss-20b-BF16-abliterated-GGUF",
+      "revision": "119a7449dd895220548fb3b67f55ef60e01b059c",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "huihui-ai_Huihui-gpt-oss-20b-BF16-abliterated-MXFP4_MOE.gguf",
+          "blobId": "429d3e79ee4e42375d643f15938c4f7537e7b4f0",
+          "size": 12109565600,
+          "lfs": {
+            "sha256": "abca50d1bd95c49d71db36aad0f38090ea5465ce148634c496a48bc87030bdd9",
+            "size": 12109565600,
+            "pointerSize": 136
+          }
+        },
+        {
+          "rfilename": "huihui-ai_Huihui-gpt-oss-20b-BF16-abliterated-Q4_K_M.gguf",
+          "blobId": "d66c8c83cf11cec67ce234d9323eedea8f65979e",
+          "size": 11673418400,
+          "lfs": {
+            "sha256": "e3dfaacc1b7131c9790f5240ecbfca70a449ef8da6f68cf04577de89c55eea7b",
+            "size": 11673418400,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "huihui-ai_Huihui-gpt-oss-20b-BF16-abliterated-imatrix.gguf",
+          "blobId": "d8ed174771b2eea50a17638c0aec3a90cf36270d",
+          "size": 28079776,
+          "lfs": {
+            "sha256": "277129922edfabadefb2428a13829198d867f83578657a5cd45b238d16da75f7",
+            "size": 28079776,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/openai_gpt-oss-20b-GGUF",
+      "revision": "e39ba3aa000c47c83dacdc9e1ca2c9dd0808c205",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "openai_gpt-oss-20b-MXFP4.gguf",
+          "blobId": "39aafa16aba9f9dc2051395a2c60f4afdcba58fc",
+          "size": 12109565760,
+          "lfs": {
+            "sha256": "75acd89545d50126692df2116bc3fdf700408b4be1d74d58e8eed13bca028f17",
+            "size": 12109565760,
+            "pointerSize": 136
+          }
+        },
+        {
+          "rfilename": "openai_gpt-oss-20b-Q4_K_M.gguf",
+          "blobId": "e5977ff225d51e7582d5d9371f35b84e10ebeb21",
+          "size": 11673418816,
+          "lfs": {
+            "sha256": "86a21df11afa5a40031ec1974e368ae0ab561ee3995f4d08ff432e8b2b7af9fc",
+            "size": 11673418816,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "openai_gpt-oss-20b-imatrix.gguf",
+          "blobId": "7423e44f650288af346cf80f16425c21a4dfcbb3",
+          "size": 28079776,
+          "lfs": {
+            "sha256": "7128c5e1ee4854781103b47b5d41303741ed734bb410bdfdeaa93d52b40fc890",
+            "size": 28079776,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/openai_gpt-oss-20b-GGUF-MXFP4-Experimental",
+      "revision": "63ccc96dc76e4873226fcc7cbef9b9a820245166",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "openai_gpt-oss-20b-MXFP4.gguf",
+          "blobId": "39aafa16aba9f9dc2051395a2c60f4afdcba58fc",
+          "size": 12109565760,
+          "lfs": {
+            "sha256": "75acd89545d50126692df2116bc3fdf700408b4be1d74d58e8eed13bca028f17",
+            "size": 12109565760,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": []
+    },
+    {
+      "repo": "bartowski/p-e-w_gpt-oss-20b-heretic-GGUF",
+      "revision": "7d1cdd0b512682dae86ea5e6064dad760ca76815",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "p-e-w_gpt-oss-20b-heretic-MXFP4_MOE.gguf",
+          "blobId": "7e59af72b34df2d60c9ec1e90d7b67c755ed29df",
+          "size": 12109566944,
+          "lfs": {
+            "sha256": "33ebc3cd35d2ef4ac04702934df48007c16a6d24ce9f1a9f07182df131684f89",
+            "size": 12109566944,
+            "pointerSize": 136
+          }
+        },
+        {
+          "rfilename": "p-e-w_gpt-oss-20b-heretic-Q4_K_M.gguf",
+          "blobId": "5e72183673eccd3ba94929c839f2567e103969f0",
+          "size": 15853797344,
+          "lfs": {
+            "sha256": "00b172572804e1b2b1ab87ebd48f067522136e9df56368a999152c02e925e47b",
+            "size": 15853797344,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "p-e-w_gpt-oss-20b-heretic-imatrix.gguf",
+          "blobId": "722ba4ad02afd2bf46886d37fe438844c47efe8a",
+          "size": 28079776,
+          "lfs": {
+            "sha256": "481470344c27e11e17438960ec5f40a374e046bb1d44c2409db8fa53a867c510",
+            "size": 28079776,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "openai/gpt-oss-20b",
+      "revision": "6cee5e81ee83917806bbde320786a8fb61efebee",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "openai/gpt-oss-20b-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "openai/gpt-oss-safeguard-20b",
+      "revision": "8a11e17b25c973a24099d4016bf2e17dd7ec1574",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    }
+  ]
+}

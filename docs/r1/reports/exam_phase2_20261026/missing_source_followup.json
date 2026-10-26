@@ -1,0 +1,35 @@
+[
+  {
+    "query": {
+      "author": "bartowski",
+      "search": "Qwen3-Coder-30B"
+    },
+    "repos": []
+  },
+  {
+    "query": {
+      "author": "bartowski",
+      "search": "Qwopus"
+    },
+    "repos": []
+  },
+  {
+    "query": {
+      "author": "skiboyvv",
+      "search": "Qwopus3.6-27B"
+    },
+    "repos": [
+      "skiboyvv/Qwopus3.6-27B-v4"
+    ]
+  },
+  {
+    "query": {
+      "author": "Qwen",
+      "search": "Qwen3-Coder-30B"
+    },
+    "repos": [
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8"
+    ]
+  }
+]

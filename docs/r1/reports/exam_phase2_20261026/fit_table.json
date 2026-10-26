@@ -1,0 +1,6661 @@
+[
+  {
+    "id": "qwen38_27b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 17442399968,
+    "kv_and_state_bytes": 1230635008,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 20283647712,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 64
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention"
+        ]
+      },
+      "linear_num_key_heads": {
+        "field": "text_config.linear_num_key_heads",
+        "value": 16
+      },
+      "linear_key_head_dim": {
+        "field": "text_config.linear_key_head_dim",
+        "value": 128
+      },
+      "linear_num_value_heads": {
+        "field": "text_config.linear_num_value_heads",
+        "value": 48
+      },
+      "linear_value_head_dim": {
+        "field": "text_config.linear_value_head_dim",
+        "value": 128
+      },
+      "linear_conv_kernel_dim": {
+        "field": "text_config.linear_conv_kernel_dim",
+        "value": 4
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 4
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 1,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 2,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 4,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 5,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 6,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 8,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 9,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 10,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 12,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 13,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 14,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 16,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 17,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 18,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 20,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 21,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 22,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 24,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 25,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 26,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 28,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 29,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 30,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 32,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 33,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 34,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 36,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 37,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 38,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 40,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 41,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 42,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 43,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 44,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 45,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 46,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 47,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 48,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 49,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 50,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 51,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 52,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 53,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 54,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 55,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 56,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 57,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 58,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 59,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 60,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 61,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 62,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 63,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      }
+    ]
+  },
+  {
+    "id": "qwen36_27b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 17984872960,
+    "kv_and_state_bytes": 1230635008,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 20826120704,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 64
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention"
+        ]
+      },
+      "linear_num_key_heads": {
+        "field": "text_config.linear_num_key_heads",
+        "value": 16
+      },
+      "linear_key_head_dim": {
+        "field": "text_config.linear_key_head_dim",
+        "value": 128
+      },
+      "linear_num_value_heads": {
+        "field": "text_config.linear_num_value_heads",
+        "value": 48
+      },
+      "linear_value_head_dim": {
+        "field": "text_config.linear_value_head_dim",
+        "value": 128
+      },
+      "linear_conv_kernel_dim": {
+        "field": "text_config.linear_conv_kernel_dim",
+        "value": 4
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 4
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 1,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 2,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 4,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 5,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 6,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 8,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 9,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 10,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 12,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 13,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 14,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 16,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 17,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 18,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 20,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 21,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 22,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 24,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 25,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 26,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 28,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 29,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 30,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 32,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 33,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 34,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 36,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 37,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 38,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 40,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 41,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 42,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 43,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 44,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 45,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 46,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 47,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 48,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 49,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 50,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 51,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 52,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 53,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 54,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 55,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 56,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 57,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 58,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 59,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 60,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 61,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 62,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 63,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      }
+    ]
+  },
+  {
+    "id": "gemma4_31b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 19598489952,
+    "kv_and_state_bytes": 3103784960,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 24312887648,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 60
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention"
+        ]
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 16
+      },
+      "sliding_window": {
+        "field": "text_config.sliding_window",
+        "value": 1024
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 1,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 2,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 3,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 4,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 5,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      },
+      {
+        "layer": 6,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 7,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 8,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 9,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 10,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      },
+      {
+        "layer": 12,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 13,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 14,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 15,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 16,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 17,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      },
+      {
+        "layer": 18,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 19,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 20,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 21,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 22,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      },
+      {
+        "layer": 24,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 25,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 26,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 27,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 28,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 29,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      },
+      {
+        "layer": 30,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 31,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 32,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 33,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 34,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      },
+      {
+        "layer": 36,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 37,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 38,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 39,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 40,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 41,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      },
+      {
+        "layer": 42,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 43,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 44,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 45,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 46,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 47,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      },
+      {
+        "layer": 48,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 49,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 50,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 51,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 52,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 53,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      },
+      {
+        "layer": 54,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 55,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 56,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 57,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 58,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 8388608
+      },
+      {
+        "layer": 59,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 268435456
+      }
+    ]
+  },
+  {
+    "id": "muse_glimmer_30b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 16756683904,
+    "kv_and_state_bytes": 258998272,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 18626294912,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 52
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention"
+        ]
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 128
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 2
+      },
+      "sliding_window": {
+        "field": "text_config.sliding_window",
+        "value": 2048
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 1,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 2,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 4,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 5,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 6,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 8,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 9,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 10,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 12,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 13,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 14,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 16,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 17,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 18,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 20,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 21,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 22,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 24,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 25,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 26,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 28,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 29,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 30,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 32,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 33,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 34,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 36,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 37,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 38,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 40,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 41,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 42,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 43,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 44,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 45,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 46,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 47,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      },
+      {
+        "layer": 48,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 49,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 50,
+        "kind": "sliding_attention",
+        "tokens": 2048,
+        "bytes": 1048576
+      },
+      {
+        "layer": 51,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 16777216
+      }
+    ]
+  },
+  {
+    "id": "olmo31_32b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 19482035872,
+    "kv_and_state_bytes": 1476395008,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 22569043616,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "num_hidden_layers",
+        "value": 64
+      },
+      "layer_types": {
+        "field": "layer_types",
+        "value": [
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention"
+        ]
+      },
+      "hidden_size": {
+        "field": "hidden_size",
+        "value": 5120
+      },
+      "num_attention_heads": {
+        "field": "num_attention_heads",
+        "value": 40
+      },
+      "head_dim": {
+        "derived_from": [
+          "hidden_size",
+          "num_attention_heads"
+        ],
+        "value": 128
+      },
+      "num_key_value_heads": {
+        "field": "num_key_value_heads",
+        "value": 8
+      },
+      "sliding_window": {
+        "field": "sliding_window",
+        "value": 4096
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 1,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 2,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 4,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 5,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 6,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 8,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 9,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 10,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 12,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 13,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 14,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 16,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 17,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 18,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 20,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 21,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 22,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 24,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 25,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 26,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 28,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 29,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 30,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 32,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 33,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 34,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 36,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 37,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 38,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 40,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 41,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 42,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 43,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 44,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 45,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 46,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 47,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 48,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 49,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 50,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 51,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 52,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 53,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 54,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 55,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 56,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 57,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 58,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 59,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 60,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 61,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 62,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 63,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      }
+    ]
+  },
+  {
+    "id": "devstral_small2_24b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 14334438272,
+    "kv_and_state_bytes": 2684354560,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 18629405568,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 40
+      },
+      "layer_types": {
+        "derived_from": "homogeneous attention",
+        "value": [
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention"
+        ]
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 128
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 8
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 1,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 2,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 4,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 5,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 6,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 8,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 9,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 10,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 12,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 13,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 14,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 16,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 17,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 18,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 20,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 21,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 22,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 24,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 25,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 26,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 28,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 29,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 30,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 32,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 33,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 34,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 36,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 37,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 38,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      }
+    ]
+  },
+  {
+    "id": "qwen36_35b_a3b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 22285080192,
+    "kv_and_state_bytes": 401408000,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 24297100928,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 40
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention"
+        ]
+      },
+      "linear_num_key_heads": {
+        "field": "text_config.linear_num_key_heads",
+        "value": 16
+      },
+      "linear_key_head_dim": {
+        "field": "text_config.linear_key_head_dim",
+        "value": 128
+      },
+      "linear_num_value_heads": {
+        "field": "text_config.linear_num_value_heads",
+        "value": 32
+      },
+      "linear_value_head_dim": {
+        "field": "text_config.linear_value_head_dim",
+        "value": 128
+      },
+      "linear_conv_kernel_dim": {
+        "field": "text_config.linear_conv_kernel_dim",
+        "value": 4
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 2
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 1,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 2,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 4,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 5,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 6,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 8,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 9,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 10,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 12,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 13,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 14,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 16,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 17,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 18,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 20,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 21,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 22,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 24,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 25,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 26,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 28,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 29,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 30,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 32,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 33,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 34,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 36,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 37,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 38,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      }
+    ]
+  },
+  {
+    "id": "gemma4_26b_a4b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 17035039872,
+    "kv_and_state_bytes": 775946240,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 19421598848,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 30
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention"
+        ]
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 8
+      },
+      "sliding_window": {
+        "field": "text_config.sliding_window",
+        "value": 1024
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 1,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 2,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 3,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 4,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 5,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 6,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 7,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 8,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 9,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 10,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 12,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 13,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 14,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 15,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 16,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 17,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 18,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 19,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 20,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 21,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 22,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 24,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 25,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 26,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 27,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 28,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 29,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      }
+    ]
+  },
+  {
+    "id": "nemotron35_30b_a3b",
+    "error": "hybrid state model needs explicit layer_types; do not estimate it as attention"
+  },
+  {
+    "id": "glm47_flash",
+    "error": "head dimension cannot be inferred exactly"
+  },
+  {
+    "id": "lfm25_24b_a2b",
+    "error": "unknown layer type 'conv'; fixed-state provenance required"
+  },
+  {
+    "id": "laguna_xs21",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 20274300032,
+    "kv_and_state_bytes": 702545920,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 22587458688,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "num_hidden_layers",
+        "value": 40
+      },
+      "layer_types": {
+        "field": "layer_types",
+        "value": [
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention"
+        ]
+      },
+      "head_dim": {
+        "field": "head_dim",
+        "value": 128
+      },
+      "num_key_value_heads": {
+        "field": "num_key_value_heads",
+        "value": 8
+      },
+      "sliding_window": {
+        "field": "sliding_window",
+        "value": 512
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 1,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 2,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 3,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 4,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 5,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 6,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 7,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 8,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 9,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 10,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 11,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 12,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 13,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 14,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 15,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 16,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 17,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 18,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 19,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 20,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 21,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 22,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 23,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 24,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 25,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 26,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 27,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 28,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 29,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 30,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 31,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 32,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 33,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 34,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 35,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 36,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 37,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 38,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      },
+      {
+        "layer": 39,
+        "kind": "sliding_attention",
+        "tokens": 512,
+        "bytes": 1048576
+      }
+    ]
+  },
+  {
+    "id": "ornith10_35b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 21166757760,
+    "kv_and_state_bytes": 401408000,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 23178778496,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 40
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention"
+        ]
+      },
+      "linear_num_key_heads": {
+        "field": "text_config.linear_num_key_heads",
+        "value": 16
+      },
+      "linear_key_head_dim": {
+        "field": "text_config.linear_key_head_dim",
+        "value": 128
+      },
+      "linear_num_value_heads": {
+        "field": "text_config.linear_num_value_heads",
+        "value": 32
+      },
+      "linear_value_head_dim": {
+        "field": "text_config.linear_value_head_dim",
+        "value": 128
+      },
+      "linear_conv_kernel_dim": {
+        "field": "text_config.linear_conv_kernel_dim",
+        "value": 4
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 2
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 1,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 2,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 4,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 5,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 6,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 8,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 9,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 10,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 12,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 13,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 14,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 16,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 17,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 18,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 20,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 21,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 22,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 24,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 25,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 26,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 28,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 29,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 30,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 32,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 33,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 34,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 36,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 37,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 38,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      }
+    ]
+  },
+  {
+    "id": "qwen3_coder_30b_a3b",
+    "status": "NO_APPROVED_SOURCE_FOUND"
+  },
+  {
+    "id": "gpt_oss_20b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 12109565760,
+    "kv_and_state_bytes": 404226048,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 14124404544,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "num_hidden_layers",
+        "value": 24
+      },
+      "layer_types": {
+        "field": "layer_types",
+        "value": [
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "full_attention"
+        ]
+      },
+      "head_dim": {
+        "field": "head_dim",
+        "value": 64
+      },
+      "num_key_value_heads": {
+        "field": "num_key_value_heads",
+        "value": 8
+      },
+      "sliding_window": {
+        "field": "sliding_window",
+        "value": 128
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 1,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 2,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 4,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 5,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 6,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 8,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 9,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 10,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 12,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 13,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 14,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 16,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 17,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 18,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 20,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 21,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 22,
+        "kind": "sliding_attention",
+        "tokens": 128,
+        "bytes": 131072
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      }
+    ]
+  },
+  {
+    "id": "qwen35_9b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 6169341984,
+    "kv_and_state_bytes": 589561856,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 8369516576,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 32
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention"
+        ]
+      },
+      "linear_num_key_heads": {
+        "field": "text_config.linear_num_key_heads",
+        "value": 16
+      },
+      "linear_key_head_dim": {
+        "field": "text_config.linear_key_head_dim",
+        "value": 128
+      },
+      "linear_num_value_heads": {
+        "field": "text_config.linear_num_value_heads",
+        "value": 32
+      },
+      "linear_value_head_dim": {
+        "field": "text_config.linear_value_head_dim",
+        "value": 128
+      },
+      "linear_conv_kernel_dim": {
+        "field": "text_config.linear_conv_kernel_dim",
+        "value": 4
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 4
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 1,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 2,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 4,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 5,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 6,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 8,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 9,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 10,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 12,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 13,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 14,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 16,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 17,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 18,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 20,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 21,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 22,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 24,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 25,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 26,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 28,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 29,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 30,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      }
+    ]
+  },
+  {
+    "id": "gemma4_12b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 7662533088,
+    "kv_and_state_bytes": 1241513984,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 10514659808,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 48
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention"
+        ]
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 8
+      },
+      "sliding_window": {
+        "field": "text_config.sliding_window",
+        "value": 1024
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 1,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 2,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 3,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 4,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 5,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 6,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 7,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 8,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 9,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 10,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 12,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 13,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 14,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 15,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 16,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 17,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 18,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 19,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 20,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 21,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 22,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 24,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 25,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 26,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 27,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 28,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 29,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 30,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 31,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 32,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 33,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 34,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 36,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 37,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 38,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 39,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 40,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 41,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      },
+      {
+        "layer": 42,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 43,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 44,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 45,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 46,
+        "kind": "sliding_attention",
+        "tokens": 1024,
+        "bytes": 4194304
+      },
+      {
+        "layer": 47,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 134217728
+      }
+    ]
+  },
+  {
+    "id": "ornith10_9b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 5629108704,
+    "kv_and_state_bytes": 589561856,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 7829283296,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 32
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention"
+        ]
+      },
+      "linear_num_key_heads": {
+        "field": "text_config.linear_num_key_heads",
+        "value": 16
+      },
+      "linear_key_head_dim": {
+        "field": "text_config.linear_key_head_dim",
+        "value": 128
+      },
+      "linear_num_value_heads": {
+        "field": "text_config.linear_num_value_heads",
+        "value": 32
+      },
+      "linear_value_head_dim": {
+        "field": "text_config.linear_value_head_dim",
+        "value": 128
+      },
+      "linear_conv_kernel_dim": {
+        "field": "text_config.linear_conv_kernel_dim",
+        "value": 4
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 4
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 1,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 2,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 4,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 5,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 6,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 8,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 9,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 10,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 12,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 13,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 14,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 16,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 17,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 18,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 20,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 21,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 22,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 24,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 25,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 26,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 28,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 29,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 30,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 2195456
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      }
+    ]
+  },
+  {
+    "id": "ministral3_14b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 8239593024,
+    "kv_and_state_bytes": 2684354560,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 12534560320,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 40
+      },
+      "layer_types": {
+        "derived_from": "homogeneous attention",
+        "value": [
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention"
+        ]
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 128
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 8
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 1,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 2,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 4,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 5,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 6,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 8,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 9,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 10,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 12,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 13,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 14,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 16,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 17,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 18,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 20,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 21,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 22,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 24,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 25,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 26,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 28,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 29,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 30,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 32,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 33,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 34,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 36,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 37,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 38,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      }
+    ]
+  },
+  {
+    "id": "rico03_qwen36_27b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 16547395424,
+    "kv_and_state_bytes": 1230635008,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 19388643168,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "text_config.num_hidden_layers",
+        "value": 64
+      },
+      "layer_types": {
+        "field": "text_config.layer_types",
+        "value": [
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention",
+          "linear_attention",
+          "linear_attention",
+          "linear_attention",
+          "full_attention"
+        ]
+      },
+      "linear_num_key_heads": {
+        "field": "text_config.linear_num_key_heads",
+        "value": 16
+      },
+      "linear_key_head_dim": {
+        "field": "text_config.linear_key_head_dim",
+        "value": 128
+      },
+      "linear_num_value_heads": {
+        "field": "text_config.linear_num_value_heads",
+        "value": 48
+      },
+      "linear_value_head_dim": {
+        "field": "text_config.linear_value_head_dim",
+        "value": 128
+      },
+      "linear_conv_kernel_dim": {
+        "field": "text_config.linear_conv_kernel_dim",
+        "value": 4
+      },
+      "head_dim": {
+        "field": "text_config.head_dim",
+        "value": 256
+      },
+      "num_key_value_heads": {
+        "field": "text_config.num_key_value_heads",
+        "value": 4
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 1,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 2,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 4,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 5,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 6,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 8,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 9,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 10,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 12,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 13,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 14,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 16,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 17,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 18,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 20,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 21,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 22,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 24,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 25,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 26,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 28,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 29,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 30,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 32,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 33,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 34,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 36,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 37,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 38,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 40,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 41,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 42,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 43,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 44,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 45,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 46,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 47,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 48,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 49,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 50,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 51,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 52,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 53,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 54,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 55,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 56,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 57,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 58,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 59,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 60,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 61,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 62,
+        "kind": "linear_attention",
+        "tokens": null,
+        "bytes": 3268608
+      },
+      {
+        "layer": 63,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      }
+    ]
+  },
+  {
+    "id": "qwopus36_27b_v4",
+    "status": "NO_APPROVED_SOURCE_FOUND"
+  },
+  {
+    "id": "qwen25_coder_7b",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 4683073536,
+    "kv_and_state_bytes": 939524096,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 7233210368,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "num_hidden_layers",
+        "value": 28
+      },
+      "layer_types": {
+        "derived_from": "sliding_window",
+        "value": [
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention"
+        ]
+      },
+      "hidden_size": {
+        "field": "hidden_size",
+        "value": 3584
+      },
+      "num_attention_heads": {
+        "field": "num_attention_heads",
+        "value": 28
+      },
+      "head_dim": {
+        "derived_from": [
+          "hidden_size",
+          "num_attention_heads"
+        ],
+        "value": 128
+      },
+      "num_key_value_heads": {
+        "field": "num_key_value_heads",
+        "value": 4
+      },
+      "sliding_window": {
+        "field": "sliding_window",
+        "value": 131072
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 1,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 2,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 3,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 4,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 5,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 6,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 7,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 8,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 9,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 10,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 11,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 12,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 13,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 14,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 15,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 16,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 17,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 18,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 19,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 20,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 21,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 22,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 23,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 24,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 25,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 26,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 27,
+        "kind": "sliding_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      }
+    ]
+  },
+  {
+    "id": "olmo31_32b_think",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 19482034656,
+    "kv_and_state_bytes": 1476395008,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 22569042400,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "num_hidden_layers",
+        "value": 64
+      },
+      "layer_types": {
+        "field": "layer_types",
+        "value": [
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "sliding_attention",
+          "full_attention"
+        ]
+      },
+      "hidden_size": {
+        "field": "hidden_size",
+        "value": 5120
+      },
+      "num_attention_heads": {
+        "field": "num_attention_heads",
+        "value": 40
+      },
+      "head_dim": {
+        "derived_from": [
+          "hidden_size",
+          "num_attention_heads"
+        ],
+        "value": 128
+      },
+      "num_key_value_heads": {
+        "field": "num_key_value_heads",
+        "value": 8
+      },
+      "sliding_window": {
+        "field": "sliding_window",
+        "value": 4096
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 1,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 2,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 4,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 5,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 6,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 8,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 9,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 10,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 12,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 13,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 14,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 16,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 17,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 18,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 20,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 21,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 22,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 24,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 25,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 26,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 28,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 29,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 30,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 32,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 33,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 34,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 36,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 37,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 38,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 40,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 41,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 42,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 43,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 44,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 45,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 46,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 47,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 48,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 49,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 50,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 51,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 52,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 53,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 54,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 55,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 56,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 57,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 58,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 59,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      },
+      {
+        "layer": 60,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 61,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 62,
+        "kind": "sliding_attention",
+        "tokens": 4096,
+        "bytes": 8388608
+      },
+      {
+        "layer": 63,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 67108864
+      }
+    ]
+  }
+]

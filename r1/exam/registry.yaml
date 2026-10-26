@@ -42,24 +42,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/Qwen3.8-27B-GGUF",
+        "revision": "87410e7b9a5c21e6ca70c0c9cc5237de909fe621",
+        "file": "Qwen3.8-27B-Q4_K_M.gguf",
+        "size_bytes": 17442399968,
+        "sha256": "880a52af8317974f7b4b064a6bc29ff49e188b91aa218e08eea3078b6b1cc673",
         "quantization": "Q4_K_M",
-        "base_model": "Qwen/Qwen3.8-27B"
+        "base_model": "Qwen/Qwen3.8-27B",
+        "imatrix_file": "Qwen3.8-27B-imatrix.gguf",
+        "imatrix_sha256": "aaa933d4b9ce23e1f65c548ad34f16956d8af44a51b5c15bf4f393ba59508cd8",
+        "readme_sha256": "ac489c4ba017d75f9210ec90a5ce5d28b92f7a719dd953571758b3b5b2a45db7"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/qwen38_27b/Qwen3.8-27B-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/qwen38_27b_config.json",
+        "model_config_sha256": "191e0af232104ed8b65258cf3fb2b842e288008baca7633c11b82a1ac7203aab"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "qwen36_27b",
@@ -100,24 +104,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/Qwen_Qwen3.6-27B-GGUF",
+        "revision": "4612927928b49982f8319dc3e2e6f62b9b73b192",
+        "file": "Qwen_Qwen3.6-27B-Q4_K_M.gguf",
+        "size_bytes": 17984872960,
+        "sha256": "8739a0cbb80036e5dbdced2085f142b8ba86e3235db8b8039b3769fe5fc70843",
         "quantization": "Q4_K_M",
-        "base_model": "Qwen/Qwen3.6-27B"
+        "base_model": "Qwen/Qwen3.6-27B",
+        "imatrix_file": "Qwen_Qwen3.6-27B-imatrix.gguf",
+        "imatrix_sha256": "374da87767d7ae129011619306b6feb94c50f67a0ad56f52c84498a603a96bd9",
+        "readme_sha256": "73162ce32c22d7bf09b4cb3c950f561587946598e691555b991dc88c4eab6d39"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/qwen36_27b/Qwen_Qwen3.6-27B-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/qwen36_27b_config.json",
+        "model_config_sha256": "69db4eb7196bc8190813231b3018ca05d8c2e3abc7b1af19d55c157af44a9d9c"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "gemma4_31b",
@@ -158,24 +166,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/google_gemma-4-31B-it-GGUF",
+        "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
+        "file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+        "size_bytes": 19598489952,
+        "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
         "quantization": "Q4_K_M",
-        "base_model": "google/gemma-4-31B-it"
+        "base_model": "google/gemma-4-31B-it",
+        "imatrix_file": "google_gemma-4-31B-it-imatrix.gguf",
+        "imatrix_sha256": "f749aac429f5a1fd6fda4bc10823682669b8f45a10805230442a7a648ac70620",
+        "readme_sha256": "de9e3b03bf2c26af54cfd09ef59681820fe80e48d95d51ea6ac04d09f06a432a"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/gemma4_31b_config.json",
+        "model_config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "muse_glimmer_30b",
@@ -217,24 +229,26 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": true,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "vendor",
+        "repo": "meta-models/Muse-Glimmer-30B-GGUF",
+        "revision": "b44f1072cf75e918a1b82a3a17b45c4389b076e7",
+        "file": "Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf",
+        "size_bytes": 16756683904,
+        "sha256": "4cc57c0f51040a226e5a72cc47b7613f7772950e460a665f7083de89f183f60e",
         "quantization": "Q4_K_M",
-        "base_model": "meta-models/Muse-Glimmer-30B"
+        "base_model": "meta-models/Muse-Glimmer-30B",
+        "readme_sha256": "edb6a6fdca3fbeb464f0652dae4099253a5bdb7a778fe6c7458197c0608cfd4c"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/muse_glimmer_30b/Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/muse_glimmer_30b_config.json",
+        "model_config_sha256": "5a9df2d8a385b3d361ab6ae68d73586f4e775033933bd0cd863fb7f3820e6a14"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "olmo31_32b",
@@ -275,24 +289,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/allenai_Olmo-3.1-32B-Instruct-GGUF",
+        "revision": "9333dd15d3493f228eccc9723f67cb6cdb77fb6d",
+        "file": "allenai_Olmo-3.1-32B-Instruct-Q4_K_M.gguf",
+        "size_bytes": 19482035872,
+        "sha256": "437635de32ed770b1ac5d175f5245bbddcba6860ca70b16dea5fd8ca11c6bb3c",
         "quantization": "Q4_K_M",
-        "base_model": "allenai/Olmo-3.1-32B-Instruct"
+        "base_model": "allenai/Olmo-3.1-32B-Instruct",
+        "imatrix_file": "allenai_Olmo-3.1-32B-Instruct-imatrix.gguf",
+        "imatrix_sha256": "510201e52d48134b36179edf5f01f442f89e1b104ef1b82de2c51d22ab2d21c9",
+        "readme_sha256": "c6b2a8a016d8eaeeec32f941f8c12ec9339c86fa15b90633bc8108cbcd99e464"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/olmo31_32b/allenai_Olmo-3.1-32B-Instruct-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/olmo31_32b_config.json",
+        "model_config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "devstral_small2_24b",
@@ -332,24 +350,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF",
+        "revision": "027695770ae1de77c2f6fb19f8e1ba9d65fcd15d",
+        "file": "mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf",
+        "size_bytes": 14334438272,
+        "sha256": "bfd11c8679c6b81eb43763505465d7dcfa72e460ab1c220ecc235a3efadd7f7f",
         "quantization": "Q4_K_M",
-        "base_model": "mistralai/Devstral-Small-2-24B-Instruct-2512"
+        "base_model": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+        "imatrix_file": "mistralai_Devstral-Small-2-24B-Instruct-2512-imatrix.gguf",
+        "imatrix_sha256": "bf8c921c74e2b2d5f88cc63ea9300dbaf1734f797e7530169bacc0aad3c73427",
+        "readme_sha256": "5e0c546e73e5b5747fbb6fa77a0997ab36f3d491873d66b61b05cf4c267f998b"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/devstral_small2_24b/mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/devstral_small2_24b_config.json",
+        "model_config_sha256": "8d570ae877badd9ff5442afdc726385aba07f5757ba875a7491bde9549457e72"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "qwen36_35b_a3b",
@@ -390,24 +412,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/Qwen_Qwen3.6-35B-A3B-GGUF",
+        "revision": "5c2410d71524f4f72b023ce8daf7a80528226d5f",
+        "file": "Qwen_Qwen3.6-35B-A3B-Q4_K_M.gguf",
+        "size_bytes": 22285080192,
+        "sha256": "b46fedd33e0bfb0cae308aa3c158d0a4b2c4a1d2185a1ed6f093cdaf39064772",
         "quantization": "Q4_K_M",
-        "base_model": "Qwen/Qwen3.6-35B-A3B"
+        "base_model": "Qwen/Qwen3.6-35B-A3B",
+        "imatrix_file": "Qwen_Qwen3.6-35B-A3B-imatrix.gguf",
+        "imatrix_sha256": "e860d71bd40c83378a06da0407cd5cbfe61b9330784781a047f07a5348d8fd8c",
+        "readme_sha256": "baa7f6cba41bee47f0e8b5af92f7927df48d8c0d743c3ce3e8a4b3a5db41636b"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/qwen36_35b_a3b/Qwen_Qwen3.6-35B-A3B-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/qwen36_35b_a3b_config.json",
+        "model_config_sha256": "93a4693fa9d8392fbfccd4b3c9873f4bfdcb14fdede978b123d07d19675efe99"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "gemma4_26b_a4b",
@@ -448,24 +474,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/google_gemma-4-26B-A4B-it-GGUF",
+        "revision": "10f3b41bcf8d3047f4e136e7197ffc2dd1654c9d",
+        "file": "google_gemma-4-26B-A4B-it-Q4_K_M.gguf",
+        "size_bytes": 17035039872,
+        "sha256": "a07f72221e8e3f77455ab0d7f7652d01a9f63c262b954aa6932a53275a0e895a",
         "quantization": "Q4_K_M",
-        "base_model": "google/gemma-4-26B-A4B-it"
+        "base_model": "google/gemma-4-26B-A4B-it",
+        "imatrix_file": "google_gemma-4-26B-A4B-it-imatrix.gguf",
+        "imatrix_sha256": "f097e6358d8737cdfffc0e233cc3edd7e0cf43324edb593854809458a8078c58",
+        "readme_sha256": "3d9be46bbe0456f62d0c06f1e7aedd135dc569bb642173b564e91286c48c96ef"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/gemma4_26b_a4b/google_gemma-4-26B-A4B-it-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/gemma4_26b_a4b_config.json",
+        "model_config_sha256": "ed0c1eb3633de771906e9ba004a44cc5635bcc06ee2062077c3d2e88a50707d3"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "nemotron35_30b_a3b",
@@ -505,24 +535,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
+        "revision": "f0eec2267ae843d9eb21ea3926ab0046da0a8628",
+        "file": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_K_M.gguf",
+        "size_bytes": 25477403616,
+        "sha256": "b520a8992e94c4d61e6a0833edffc499a46f42522df446c290d75dc5787a9158",
         "quantization": "Q4_K_M",
-        "base_model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16"
+        "base_model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+        "imatrix_file": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-imatrix.gguf",
+        "imatrix_sha256": "fbd36e4fa9be8324062a041ba5cb6247e9f68594168596257a85deb86438aac5",
+        "readme_sha256": "5546e056dce76c5be8aefb2de77535f1e58e09d2913ee394231b4e6f9498abaa"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/nemotron35_30b_a3b/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/nemotron35_30b_a3b_config.json",
+        "model_config_sha256": "a3827a0f5e311547b40943dc081e3ff2f8a277466e8c1a3df2291e8db8a7617c"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "glm47_flash",
@@ -560,24 +594,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/zai-org_GLM-4.7-Flash-GGUF",
+        "revision": "464d07505b441959737cd04d900f047469614c8d",
+        "file": "zai-org_GLM-4.7-Flash-Q4_K_M.gguf",
+        "size_bytes": 18474983296,
+        "sha256": "42c0c1a30fe2f30097ffedd554a94c2d6abc5f95b8a35ce99cd523f78ef6711b",
         "quantization": "Q4_K_M",
-        "base_model": "zai-org/GLM-4.7-Flash"
+        "base_model": "zai-org/GLM-4.7-Flash",
+        "imatrix_file": "zai-org_GLM-4.7-Flash-imatrix.gguf",
+        "imatrix_sha256": "3972a387e06b0d1f6bc75c79700a6d1dc2fa950665be9b80ef1dc28a0c03659d",
+        "readme_sha256": "2be632ae932385e117f5d2b5f9d83a38e462b53748b692158987a1eb570d0a06"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/glm47_flash/zai-org_GLM-4.7-Flash-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/glm47_flash_config.json",
+        "model_config_sha256": "dc9b97c7c9bed726a2e6939da4234d5c43abb3edec8812068c9a1af1dbc13acb"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "lfm25_24b_a2b",
@@ -618,24 +656,26 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": true,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "vendor",
+        "repo": "LiquidAI/LFM2.5-24B-A2B-GGUF",
+        "revision": "0912d33141f77e10705345a6732bfd83f0252fdc",
+        "file": "LFM2.5-24B-A2B-Q4_K_M.gguf",
+        "size_bytes": 14526258464,
+        "sha256": "d3334405b96228eb9908cdebb5c6194908f2da64282bda852afc3a3910c64e7d",
         "quantization": "Q4_K_M",
-        "base_model": "LiquidAI/LFM2.5-24B-A2B"
+        "base_model": "LiquidAI/LFM2.5-24B-A2B",
+        "readme_sha256": "62a7467bb0f5d69fa8222d9c70d4cc0cb328a5d45d245fa278ade9af6fa0665f"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/lfm25_24b_a2b/LFM2.5-24B-A2B-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/lfm25_24b_a2b_config.json",
+        "model_config_sha256": "b0c46662afe3881e49cf542e683bf5ea8a5e0b780a429b6141a48defc33531bf"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "laguna_xs21",
@@ -678,24 +718,26 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": true,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "vendor",
+        "repo": "poolside/Laguna-XS-2.1-GGUF",
+        "revision": "1a37c0a5fb8c7a18e6106decb6be6327d1b63fa6",
+        "file": "Laguna-XS-2.1-Q4_K_M.gguf",
+        "size_bytes": 20274300032,
+        "sha256": "1ac7079101fca5a6df8c5a7523a3c30ea7d1c0e4b1258090e7d6d4039287f6cb",
         "quantization": "Q4_K_M",
-        "base_model": "poolside/Laguna-XS-2.1"
+        "base_model": "poolside/Laguna-XS-2.1",
+        "readme_sha256": "acdafabc0e1d0907ef18db50ace69208b8b187aab5ffc3539786539739203512"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/laguna_xs21/Laguna-XS-2.1-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/laguna_xs21_config.json",
+        "model_config_sha256": "de84031daa00903361001b0ed684aba7e574952f51de84fdc3da6d6239b451ea"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "ornith10_35b",
@@ -736,24 +778,26 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": true,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "vendor",
+        "repo": "ornith-ai/Ornith-1.0-35B-GGUF",
+        "revision": "383064f72a1ef3087b779f268d3ca117eb989aac",
+        "file": "ornith-1.0-35b-Q4_K_M.gguf",
+        "size_bytes": 21166757760,
+        "sha256": "ff25291b2599fb927a835e624d2b3540106af61761c3fa57ac4264046dbec002",
         "quantization": "Q4_K_M",
-        "base_model": "ornith-ai/Ornith-1.0-35B"
+        "base_model": "ornith-ai/Ornith-1.0-35B",
+        "readme_sha256": "79c0ccf133c142ae951c5463c957e88402d3f3fbae1335bfed3c7bc98593e4cc"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/ornith10_35b/ornith-1.0-35b-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/ornith10_35b_config.json",
+        "model_config_sha256": "239494d64746abc0d5fc5881f784843733e1d432df106cda0a8b7543e882ed55"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "qwen3_coder_30b_a3b",
@@ -795,7 +839,7 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
         "kind": "TODO_VERIFY_ON_HOST",
         "repo": "TODO_VERIFY_ON_HOST",
@@ -812,7 +856,9 @@
         "model_config_path": "TODO_VERIFY_ON_HOST",
         "model_config_sha256": "TODO_VERIFY_ON_HOST"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "NO_APPROVED_SOURCE_FOUND",
+      "phase2_reason": "No vendor or bartowski Q4_K_M in exact model searches; no substitute authorized."
     },
     {
       "id": "gpt_oss_20b",
@@ -850,24 +896,26 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "native_mxfp4",
+        "repo": "bartowski/openai_gpt-oss-20b-GGUF",
+        "revision": "e39ba3aa000c47c83dacdc9e1ca2c9dd0808c205",
+        "file": "openai_gpt-oss-20b-MXFP4.gguf",
+        "size_bytes": 12109565760,
+        "sha256": "75acd89545d50126692df2116bc3fdf700408b4be1d74d58e8eed13bca028f17",
         "quantization": "MXFP4",
-        "base_model": "openai/gpt-oss-20b"
+        "base_model": "openai/gpt-oss-20b",
+        "readme_sha256": "8c2ed3295ab13dca1efc10dea7ddbe91f470551277bcdb22dbcbb903a63a2fdc"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/gpt_oss_20b/openai_gpt-oss-20b-MXFP4.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/gpt_oss_20b_config.json",
+        "model_config_sha256": "3a2a26ded679375b7928ddeca59764df7cea83220c1961035f6d6e232659e9ce"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "qwen35_9b",
@@ -903,24 +951,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/Qwen_Qwen3.5-9B-GGUF",
+        "revision": "182be2fd6c7bc44887d88a91cb03ff009cc9f549",
+        "file": "Qwen_Qwen3.5-9B-Q4_K_M.gguf",
+        "size_bytes": 6169341984,
+        "sha256": "d784ce9eda1a5a7b51e8f705a9e6310844bf4f173654d115823c775fdea56d43",
         "quantization": "Q4_K_M",
-        "base_model": "Qwen/Qwen3.5-9B"
+        "base_model": "Qwen/Qwen3.5-9B",
+        "imatrix_file": "Qwen_Qwen3.5-9B-imatrix.gguf",
+        "imatrix_sha256": "2bcdd8d949b096c988d7c05cfb6d4e7af16c34e9f327349a43cf1a3b56066091",
+        "readme_sha256": "1f8d5a900fdce1307dc5a1e3f494b483e1467dddd449b3bf22901c8c0cdcf4b8"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/qwen35_9b/Qwen_Qwen3.5-9B-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/qwen35_9b_config.json",
+        "model_config_sha256": "d0883072e01861ed0b2d47be3c16c36a8e81c224c7ffaa310c6558fb3f932b05"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "gemma4_12b",
@@ -961,24 +1013,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/gemma-4-12B-it-GGUF",
+        "revision": "2ae7d41be21ca62de00a2d320ee9cec50daa3aa6",
+        "file": "gemma-4-12B-it-Q4_K_M.gguf",
+        "size_bytes": 7662533088,
+        "sha256": "3962624dcd25b947d889dc9ae1bf275b61db6cd4dbe694057f34fffef1671509",
         "quantization": "Q4_K_M",
-        "base_model": "google/gemma-4-12B-it"
+        "base_model": "google/gemma-4-12B-it",
+        "imatrix_file": "gemma-4-12B-it-imatrix.gguf",
+        "imatrix_sha256": "dea4496876d246cd0b5037f2a72bd0ba52ac62da478ee03684cd0e338ca18e4c",
+        "readme_sha256": "52deaed047c46d9fc01a956f4531aee70092303fa052f2e6b0ab85fc77d18d86"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/gemma4_12b/gemma-4-12B-it-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/gemma4_12b_config.json",
+        "model_config_sha256": "478c46e8d2c52d5c2d85bf67e3b3e8c90e7c9d91086cee27e3c267907e936bd9"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "ornith10_9b",
@@ -1014,24 +1070,26 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": true,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "vendor",
+        "repo": "ornith-ai/Ornith-1.0-9B-GGUF",
+        "revision": "3296bc7a404871a72ac3f1903f561459c09b5c17",
+        "file": "ornith-1.0-9b-Q4_K_M.gguf",
+        "size_bytes": 5629108704,
+        "sha256": "5720d1f671b4996481274fffe01868c3c36e87c135cc8538471cc7bd6087b106",
         "quantization": "Q4_K_M",
-        "base_model": "ornith-ai/Ornith-1.0-9B"
+        "base_model": "ornith-ai/Ornith-1.0-9B",
+        "readme_sha256": "72c50b4ff9dfc3cc4b5ea27f7cf1ba6b0700a1213d9fd7b52eb7e31a3005bbd8"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/ornith10_9b/ornith-1.0-9b-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/ornith10_9b_config.json",
+        "model_config_sha256": "350e12e79ef582bdf6a2ff093930433b182e8736412ff227a4318826921565a5"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "ministral3_14b",
@@ -1069,24 +1127,26 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": true,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "vendor",
+        "repo": "mistralai/Ministral-3-14B-Instruct-2512-GGUF",
+        "revision": "74fac473c43357d7fb2671713608183cc72496d0",
+        "file": "Ministral-3-14B-Instruct-2512-Q4_K_M.gguf",
+        "size_bytes": 8239593024,
+        "sha256": "824e0f3373e69b84f2cae46fdcb9bd1ebc6ab3bfc7acc125d818b7b8178cc613",
         "quantization": "Q4_K_M",
-        "base_model": "mistralai/Ministral-3-14B-Instruct-2512"
+        "base_model": "mistralai/Ministral-3-14B-Instruct-2512",
+        "readme_sha256": "94e3eb13362e606620a37b31c02c4c191fbd2780ada510ce75e73dabd3c3877d"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/ministral3_14b/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/ministral3_14b_config.json",
+        "model_config_sha256": "fc51295bdc0b39c015c9c3ca5d649de183eae73a23b8cbab1a0e055be8d5fa04"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "rico03_qwen36_27b",
@@ -1122,24 +1182,26 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": true,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "vendor",
+        "repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled-GGUF",
+        "revision": "30f1abcaf73276fb15d10c8130844c9ff8abdc71",
+        "file": "Qwen3.6-27B-Claude-Opus-Reasoning-Distilled-Q4_K_M.gguf",
+        "size_bytes": 16547395424,
+        "sha256": "7af6ce7e82d4d80463f07d53cd5e8570f65689d41af3b5e0b83662033350371f",
         "quantization": "Q4_K_M",
-        "base_model": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled"
+        "base_model": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
+        "readme_sha256": "f03516d2da6b5be7d738c9f22108da2c58bd41d91788a61e34d8ed839cfeef51"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/rico03_qwen36_27b/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/rico03_qwen36_27b_config.json",
+        "model_config_sha256": "079002d144f8ec259de38a97faf90d8c27c1882b3b7ddcf7972a25aa0bf7d48f"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     },
     {
       "id": "qwopus36_27b_v4",
@@ -1180,7 +1242,7 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
         "kind": "TODO_VERIFY_ON_HOST",
         "repo": "TODO_VERIFY_ON_HOST",
@@ -1197,7 +1259,9 @@
         "model_config_path": "TODO_VERIFY_ON_HOST",
         "model_config_sha256": "TODO_VERIFY_ON_HOST"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "NO_APPROVED_SOURCE_FOUND",
+      "phase2_reason": "No vendor or bartowski Q4_K_M in exact model searches; no substitute authorized."
     },
     {
       "id": "qwen25_coder_7b",
@@ -1239,24 +1303,26 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": true,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "vendor",
+        "repo": "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
+        "revision": "13fb94bfda8c8cf22497dc57b78f391a9acb426a",
+        "file": "qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+        "size_bytes": 4683073536,
+        "sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
         "quantization": "Q4_K_M",
-        "base_model": "Qwen/Qwen2.5-Coder-7B-Instruct"
+        "base_model": "Qwen/Qwen2.5-Coder-7B-Instruct",
+        "readme_sha256": "a27f564dbb2763abe187c5596d7feb3fb1b2cb413a4f7ac61fc24d30ad0f8fc8"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/qwen25_coder_7b/qwen2.5-coder-7b-instruct-q4_k_m.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/qwen25_coder_7b_config.json",
+        "model_config_sha256": "c0242402ad6a13b331ea320feea8c7e3776ffb7a4eff0757b9cd667e116d9a28"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     }
   ],
   "software_anchors": [
@@ -1313,24 +1379,28 @@
         "exam_temperature": 0.2,
         "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
       },
-      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "vendor_q4_available": false,
       "quant_source": {
-        "kind": "TODO_VERIFY_ON_HOST",
-        "repo": "TODO_VERIFY_ON_HOST",
-        "revision": "TODO_VERIFY_ON_HOST",
-        "file": "TODO_VERIFY_ON_HOST",
-        "size_bytes": "TODO_VERIFY_ON_HOST",
-        "sha256": "TODO_VERIFY_ON_HOST",
+        "kind": "bartowski_imatrix",
+        "repo": "bartowski/allenai_Olmo-3.1-32B-Think-GGUF",
+        "revision": "7258621a8adfe86d6ce31bc19c22be2398dbe96a",
+        "file": "allenai_Olmo-3.1-32B-Think-Q4_K_M.gguf",
+        "size_bytes": 19482034656,
+        "sha256": "09ca87494efb75f6658a0c047414cccc5fb29d26a49c650a90af7c8f0412fdac",
         "quantization": "Q4_K_M",
-        "base_model": "allenai/Olmo-3.1-32B-Think"
+        "base_model": "allenai/Olmo-3.1-32B-Think",
+        "imatrix_file": "allenai_Olmo-3.1-32B-Think-imatrix.gguf",
+        "imatrix_sha256": "70bfc6d5d8dd278104dc42d565add1d68dc2e34deb91b02e7984e1b354c00f81",
+        "readme_sha256": "8ed21c716340bcb1a9f8f2d808749ba75e8a784d58149229c4d19d3e419f9dfa"
       },
       "runtime": {
-        "model_path": "TODO_VERIFY_ON_HOST",
+        "model_path": "/home/dowling/exam-x/models/olmo31_32b_think/allenai_Olmo-3.1-32B-Think-Q4_K_M.gguf",
         "footprint_mib": "TODO_VERIFY_ON_HOST",
-        "model_config_path": "TODO_VERIFY_ON_HOST",
-        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+        "model_config_path": "/home/dowling/exam-x/work/agent_paper_B/docs/r1/reports/exam_phase2_20261026/olmo31_32b_think_config.json",
+        "model_config_sha256": "7a95369794fa4126b2c9792d2a6433ccac1e83d069c2f71b39347a1ada9fe56a"
       },
-      "template_repair": null
+      "template_repair": null,
+      "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED"
     }
   ],
   "excluded": [

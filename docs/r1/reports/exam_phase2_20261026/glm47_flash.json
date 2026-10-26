@@ -1,0 +1,163 @@
+{
+  "id": "glm47_flash",
+  "base_repo": "zai-org/GLM-4.7-Flash",
+  "queries": [
+    [
+      {
+        "_id": "696dcefa357a4070754b027e",
+        "id": "zai-org/GLM-4.7-Flash",
+        "likes": 1888,
+        "trendingScore": 7,
+        "private": false,
+        "downloads": 931589,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "glm4_moe_lite",
+          "text-generation",
+          "conversational",
+          "en",
+          "zh",
+          "arxiv:2508.06471",
+          "license:mit",
+          "eval-results",
+          "endpoints_compatible",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2026-01-19T06:28:10.000Z",
+        "modelId": "zai-org/GLM-4.7-Flash"
+      }
+    ],
+    [
+      {
+        "_id": "696ec5c0982be58c02de6432",
+        "id": "bartowski/zai-org_GLM-4.7-Flash-GGUF",
+        "likes": 57,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 26722,
+        "tags": [
+          "gguf",
+          "text-generation",
+          "en",
+          "zh",
+          "base_model:zai-org/GLM-4.7-Flash",
+          "base_model:quantized:zai-org/GLM-4.7-Flash",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2026-01-20T00:01:04.000Z",
+        "modelId": "bartowski/zai-org_GLM-4.7-Flash-GGUF"
+      },
+      {
+        "_id": "69a85711e0b665f83f6c14af",
+        "id": "bartowski/jtl11_GLM-4.7-Flash-heretic-GGUF",
+        "likes": 1,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 1685,
+        "tags": [
+          "gguf",
+          "heretic",
+          "uncensored",
+          "decensored",
+          "abliterated",
+          "text-generation",
+          "en",
+          "zh",
+          "base_model:jtl11/GLM-4.7-Flash-heretic",
+          "base_model:quantized:jtl11/GLM-4.7-Flash-heretic",
+          "license:mit",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2026-03-04T16:00:17.000Z",
+        "modelId": "bartowski/jtl11_GLM-4.7-Flash-heretic-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "bartowski/jtl11_GLM-4.7-Flash-heretic-GGUF",
+      "revision": "57ff23f6018db26c0056ebba18cfb16dafb79cf5",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "jtl11_GLM-4.7-Flash-heretic-Q4_K_M.gguf",
+          "blobId": "79f7786d3740c07d43fe68aa9acddff8bf3d6723",
+          "size": 18540437472,
+          "lfs": {
+            "sha256": "732c871ab53b74e94a10e55f2bd6e039884354f03ab40c2ed1141a16c5b9b9a5",
+            "size": 18540437472,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "jtl11_GLM-4.7-Flash-heretic-imatrix.gguf",
+          "blobId": "a8a64c94fd2e5921349887ca4c9610ba1577497b",
+          "size": 72447904,
+          "lfs": {
+            "sha256": "70b839a1bb4b128d0fbfcf0f25e5964ec99f0ffeb8b6d772f77449bae233f96a",
+            "size": 72447904,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/zai-org_GLM-4.7-Flash-GGUF",
+      "revision": "464d07505b441959737cd04d900f047469614c8d",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "zai-org_GLM-4.7-Flash-Q4_K_M.gguf",
+          "blobId": "d0f3bd6f57722ee1d952d604fb3d74319c14c58a",
+          "size": 18474983296,
+          "lfs": {
+            "sha256": "42c0c1a30fe2f30097ffedd554a94c2d6abc5f95b8a35ce99cd523f78ef6711b",
+            "size": 18474983296,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "zai-org_GLM-4.7-Flash-imatrix.gguf",
+          "blobId": "b4abfda05ec41bc39e9116841bc67edbbaed51c0",
+          "size": 72447904,
+          "lfs": {
+            "sha256": "3972a387e06b0d1f6bc75c79700a6d1dc2fa950665be9b80ef1dc28a0c03659d",
+            "size": 72447904,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "zai-org/GLM-4.7-Flash",
+      "revision": "7dd20894a642a0aa287e9827cb1a1f7f91386b67",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "zai-org/GLM-4.7-Flash-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    }
+  ]
+}

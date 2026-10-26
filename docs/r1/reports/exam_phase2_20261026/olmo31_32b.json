@@ -1,0 +1,168 @@
+{
+  "id": "olmo31_32b",
+  "base_repo": "allenai/Olmo-3.1-32B-Instruct",
+  "queries": [
+    [
+      {
+        "_id": "6939ed69a739dde29cc4a7cb",
+        "id": "allenai/Olmo-3.1-32B-Instruct",
+        "likes": 88,
+        "trendingScore": 2,
+        "private": false,
+        "downloads": 17311,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "olmo3",
+          "text-generation",
+          "conversational",
+          "en",
+          "dataset:allenai/Dolci-Instruct-RL",
+          "arxiv:2512.13961",
+          "base_model:allenai/Olmo-3.1-32B-Instruct-DPO",
+          "base_model:finetune:allenai/Olmo-3.1-32B-Instruct-DPO",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2025-12-10T22:00:09.000Z",
+        "modelId": "allenai/Olmo-3.1-32B-Instruct"
+      },
+      {
+        "_id": "691cf272edfd04689d330414",
+        "id": "allenai/Olmo-3.1-32B-Instruct-SFT",
+        "likes": 8,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 3797,
+        "tags": [
+          "safetensors",
+          "olmo3",
+          "en",
+          "dataset:allenai/Dolci-Instruct-SFT",
+          "arxiv:2512.13961",
+          "base_model:allenai/Olmo-3-1125-32B",
+          "base_model:finetune:allenai/Olmo-3-1125-32B",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "createdAt": "2025-11-18T22:25:54.000Z",
+        "modelId": "allenai/Olmo-3.1-32B-Instruct-SFT"
+      },
+      {
+        "_id": "691d0213036d4c3a76e43fcc",
+        "id": "allenai/Olmo-3.1-32B-Instruct-DPO",
+        "likes": 6,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 8139,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "olmo3",
+          "text-generation",
+          "conversational",
+          "en",
+          "dataset:allenai/Dolci-Instruct-DPO",
+          "arxiv:2512.13961",
+          "base_model:allenai/Olmo-3.1-32B-Instruct-SFT",
+          "base_model:finetune:allenai/Olmo-3.1-32B-Instruct-SFT",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2025-11-18T23:32:35.000Z",
+        "modelId": "allenai/Olmo-3.1-32B-Instruct-DPO"
+      }
+    ],
+    [
+      {
+        "_id": "693c5a95932ed03ff6bbceb5",
+        "id": "bartowski/allenai_Olmo-3.1-32B-Instruct-GGUF",
+        "likes": 5,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 4500,
+        "tags": [
+          "gguf",
+          "text-generation",
+          "en",
+          "dataset:allenai/Dolci-Instruct-RL",
+          "base_model:allenai/Olmo-3.1-32B-Instruct",
+          "base_model:quantized:allenai/Olmo-3.1-32B-Instruct",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2025-12-12T18:10:29.000Z",
+        "modelId": "bartowski/allenai_Olmo-3.1-32B-Instruct-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "allenai/Olmo-3.1-32B-Instruct",
+      "revision": "ac0587e4a7744a551c059d8cd17ba220bc940dae",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "allenai/Olmo-3.1-32B-Instruct-DPO",
+      "revision": "fc84a4f699916fcf585aa54371f47897fa934d5c",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "allenai/Olmo-3.1-32B-Instruct-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "allenai/Olmo-3.1-32B-Instruct-SFT",
+      "revision": "152782ecc41a86c5cbe3fb6afa68bd90934de48a",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "bartowski/allenai_Olmo-3.1-32B-Instruct-GGUF",
+      "revision": "9333dd15d3493f228eccc9723f67cb6cdb77fb6d",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "allenai_Olmo-3.1-32B-Instruct-Q4_K_M.gguf",
+          "blobId": "23960a20950bcbfaadb1cde5efec558664cbb836",
+          "size": 19482035872,
+          "lfs": {
+            "sha256": "437635de32ed770b1ac5d175f5245bbddcba6860ca70b16dea5fd8ca11c6bb3c",
+            "size": 19482035872,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "allenai_Olmo-3.1-32B-Instruct-imatrix.gguf",
+          "blobId": "ce114a26d3f2f12d01a9a3c3b580df097122fac9",
+          "size": 15011104,
+          "lfs": {
+            "sha256": "510201e52d48134b36179edf5f01f442f89e1b104ef1b82de2c51d22ab2d21c9",
+            "size": 15011104,
+            "pointerSize": 133
+          }
+        }
+      ]
+    }
+  ]
+}

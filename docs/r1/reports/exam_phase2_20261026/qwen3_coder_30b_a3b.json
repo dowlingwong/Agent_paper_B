@@ -1,0 +1,82 @@
+{
+  "id": "qwen3_coder_30b_a3b",
+  "base_repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "queries": [
+    [
+      {
+        "_id": "688b1597e5e83e19d1b3238a",
+        "id": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "likes": 1307,
+        "trendingScore": 8,
+        "private": false,
+        "downloads": 764481,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_moe",
+          "text-generation",
+          "conversational",
+          "arxiv:2505.09388",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "deploy:sagemaker",
+          "deploy:azure",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2025-07-31T07:04:55.000Z",
+        "modelId": "Qwen/Qwen3-Coder-30B-A3B-Instruct"
+      },
+      {
+        "_id": "688b25d301116efa6ae21836",
+        "id": "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8",
+        "likes": 234,
+        "trendingScore": 4,
+        "private": false,
+        "downloads": 1134383,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_moe",
+          "text-generation",
+          "conversational",
+          "arxiv:2505.09388",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "fp8",
+          "region:us",
+          "deploy:azure"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2025-07-31T08:14:11.000Z",
+        "modelId": "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8"
+      }
+    ],
+    []
+  ],
+  "entries": [
+    {
+      "repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8",
+      "revision": "dcaee4d4dfc5ee71ad501f01f530e5652438fde0",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    }
+  ]
+}

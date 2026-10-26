@@ -1,0 +1,443 @@
+{
+  "id": "qwen38_27b",
+  "base_repo": "Qwen/Qwen3.8-27B",
+  "queries": [
+    [
+      {
+        "_id": "6a72f2e302294c7d32dd278e",
+        "id": "Qwen/Qwen3.8-27B",
+        "likes": 18420,
+        "trendingScore": 310,
+        "private": false,
+        "downloads": 7762014,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_5",
+          "image-text-to-text",
+          "conversational",
+          "license:apache-2.0",
+          "eval-results",
+          "endpoints_compatible",
+          "deploy:azure",
+          "deploy:sagemaker",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-08-05T08:22:59.000Z",
+        "modelId": "Qwen/Qwen3.8-27B"
+      },
+      {
+        "_id": "6a7d79f66c7b74d953ca055e",
+        "id": "Qwen/Qwen3.8-27B-FP8",
+        "likes": 946,
+        "trendingScore": 15,
+        "private": false,
+        "downloads": 4390238,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_5",
+          "image-text-to-text",
+          "conversational",
+          "base_model:Qwen/Qwen3.8-27B",
+          "base_model:quantized:Qwen/Qwen3.8-27B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "fp8",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-08-13T08:01:58.000Z",
+        "modelId": "Qwen/Qwen3.8-27B-FP8"
+      }
+    ],
+    [
+      {
+        "_id": "6a7f38b6483eb93f2a5f6001",
+        "id": "bartowski/Qwen3.8-27B-GGUF",
+        "likes": 214,
+        "trendingScore": 3,
+        "private": false,
+        "downloads": 293246,
+        "tags": [
+          "gguf",
+          "image-text-to-text",
+          "base_model:Qwen/Qwen3.8-27B",
+          "base_model:quantized:Qwen/Qwen3.8-27B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-08-14T15:48:06.000Z",
+        "modelId": "bartowski/Qwen3.8-27B-GGUF"
+      },
+      {
+        "_id": "6a8f8ec7f0e47dd74dee8695",
+        "id": "bartowski/orcarouter_Qwen3.8-27B-Uncensored-GGUF",
+        "likes": 52,
+        "trendingScore": 3,
+        "private": false,
+        "downloads": 123561,
+        "tags": [
+          "gguf",
+          "abliterated",
+          "qwen",
+          "qwen3",
+          "qwen3.8",
+          "uncensored",
+          "ai-red-team",
+          "red-teaming",
+          "bf16",
+          "post-training",
+          "fine-tuning",
+          "vision-language",
+          "function-calling",
+          "reasoning",
+          "mtp",
+          "image-text-to-text",
+          "en",
+          "zh",
+          "base_model:orcarouter/Qwen3.8-27B-Uncensored",
+          "base_model:quantized:orcarouter/Qwen3.8-27B-Uncensored",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-08-27T01:11:35.000Z",
+        "modelId": "bartowski/orcarouter_Qwen3.8-27B-Uncensored-GGUF"
+      },
+      {
+        "_id": "6ab60ebff39d63fff6d82245",
+        "id": "bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF",
+        "likes": 20,
+        "trendingScore": 2,
+        "private": false,
+        "downloads": 24181,
+        "tags": [
+          "gguf",
+          "qwen3_8",
+          "reasoning",
+          "efficient-thinking",
+          "token-efficient",
+          "post-training",
+          "terminal-bench",
+          "image-text-to-text",
+          "base_model:ukisai/Swift-1.5-Qwen3.8-27b",
+          "base_model:quantized:ukisai/Swift-1.5-Qwen3.8-27b",
+          "license:other",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-09-25T06:03:43.000Z",
+        "modelId": "bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF"
+      },
+      {
+        "_id": "6aa4b0cfe1398545573a9902",
+        "id": "bartowski/ukisai_Swift-Qwen3.8-27b-GGUF",
+        "likes": 64,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 11524,
+        "tags": [
+          "gguf",
+          "qwen3_8",
+          "efficient-thinking",
+          "reasoning",
+          "token-efficient",
+          "lora",
+          "image-text-to-text",
+          "base_model:ukisai/Swift-Qwen3.8-27b",
+          "base_model:quantized:ukisai/Swift-Qwen3.8-27b",
+          "license:other",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-09-12T01:54:23.000Z",
+        "modelId": "bartowski/ukisai_Swift-Qwen3.8-27b-GGUF"
+      },
+      {
+        "_id": "6ab3ee31fdec85ba0ec22674",
+        "id": "bartowski/JetBrains-Qwen3.8-3.6-27B-blend-GGUF",
+        "likes": 9,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 8558,
+        "tags": [
+          "gguf",
+          "merge",
+          "linear-merge",
+          "qwen3_5",
+          "image-text-to-text",
+          "base_model:JetBrains/Qwen3.8-3.6-27B-blend",
+          "base_model:quantized:JetBrains/Qwen3.8-3.6-27B-blend",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-09-23T15:20:17.000Z",
+        "modelId": "bartowski/JetBrains-Qwen3.8-3.6-27B-blend-GGUF"
+      },
+      {
+        "_id": "6abe160b3b342d55f89751da",
+        "id": "bartowski/bytkim_Qwen3.8-27B-pi-GGUF",
+        "likes": 12,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 20256,
+        "tags": [
+          "gguf",
+          "mtp",
+          "multi-token-prediction",
+          "speculative-decoding",
+          "vision",
+          "image",
+          "multimodal",
+          "image-text-to-text",
+          "text-generation-inference",
+          "qwen",
+          "qwen3.8",
+          "qwen38",
+          "27b",
+          "pi",
+          "coding",
+          "coder",
+          "code-generation",
+          "agent",
+          "tool-use",
+          "tool-calling",
+          "function-calling",
+          "reasoning",
+          "conversational",
+          "sft",
+          "grpo",
+          "reinforcement-learning",
+          "bf16",
+          "base_model:bytkim/Qwen3.8-27B-pi",
+          "base_model:quantized:bytkim/Qwen3.8-27B-pi",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "createdAt": "2026-10-01T08:12:59.000Z",
+        "modelId": "bartowski/bytkim_Qwen3.8-27B-pi-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "Qwen/Qwen3.8-27B",
+      "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/Qwen3.8-27B-FP8",
+      "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "Qwen/Qwen3.8-27B-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "bartowski/JetBrains-Qwen3.8-3.6-27B-blend-GGUF",
+      "revision": "b760c3f71340febcdb6fba9f35fedf4c9df3fead",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "JetBrains-Qwen3.8-3.6-27B-blend-Q4_K_M.gguf",
+          "blobId": "b1098cde3a038888bca2c2fae460005cdbcc01dd",
+          "size": 17442400608,
+          "lfs": {
+            "sha256": "2e47b604d5fc07cb1399c9ec11e36ac49e3c3688241386f07b70f028a6c89128",
+            "size": 17442400608,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "JetBrains-Qwen3.8-3.6-27B-blend-imatrix.gguf",
+          "blobId": "51523c02e75ffde73ae8a2ecec96cc0eea2e7bab",
+          "size": 13642720,
+          "lfs": {
+            "sha256": "07f6eb0707226d539ae8dadb641c5c7daa8ccb917583d549b05f804d9ea794e7",
+            "size": 13642720,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/Qwen3.8-27B-GGUF",
+      "revision": "87410e7b9a5c21e6ca70c0c9cc5237de909fe621",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "Qwen3.8-27B-Q4_K_M.gguf",
+          "blobId": "46ec8ecac2673841b2b0ae9fe2e297ce212fcf15",
+          "size": 17442399968,
+          "lfs": {
+            "sha256": "880a52af8317974f7b4b064a6bc29ff49e188b91aa218e08eea3078b6b1cc673",
+            "size": 17442399968,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "Qwen3.8-27B-imatrix.gguf",
+          "blobId": "7413d5b1d15a3afb4b7c752ebb8387d72ccf0829",
+          "size": 13642688,
+          "lfs": {
+            "sha256": "aaa933d4b9ce23e1f65c548ad34f16956d8af44a51b5c15bf4f393ba59508cd8",
+            "size": 13642688,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/bytkim_Qwen3.8-27B-pi-GGUF",
+      "revision": "9270f5e593ae55d64845aca4e36193b997400ea5",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "bytkim_Qwen3.8-27B-pi-Q4_K_M.gguf",
+          "blobId": "bdb36133776212d300607dea68f3b24e5b08ca0d",
+          "size": 17442400768,
+          "lfs": {
+            "sha256": "04dc6d6bdfa0cc4a43cfcf4c6af7cc3e189eb7347e9af8197e7400b33fb94b12",
+            "size": 17442400768,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "bytkim_Qwen3.8-27B-pi-imatrix.gguf",
+          "blobId": "5110fa2fe4aa18851cb4932128ec16753522ea0d",
+          "size": 13642688,
+          "lfs": {
+            "sha256": "3382ddc423d6710c177ef901e22362a23e832d4605a25b8fd8d5e5cc67a94e44",
+            "size": 13642688,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/orcarouter_Qwen3.8-27B-Uncensored-GGUF",
+      "revision": "87d37daf5e5eb72a926d8b413e08809a57f1a120",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "orcarouter_Qwen3.8-27B-Uncensored-Q4_K_M.gguf",
+          "blobId": "031bd168776c1d4cf6979ae74d6c4c8d4185a75e",
+          "size": 17772538112,
+          "lfs": {
+            "sha256": "6c8c7658fe13eef22666aa89862f7fb70aa72109838cf19989e59b15875e5e08",
+            "size": 17772538112,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "orcarouter_Qwen3.8-27B-Uncensored-imatrix.gguf",
+          "blobId": "25ccfaf27379d531a99b08ab08b3c5a778cab320",
+          "size": 13642720,
+          "lfs": {
+            "sha256": "206799d05f79b21f8360d91757463f169fd61c96d53e2393f1658e6e5c195abd",
+            "size": 13642720,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF",
+      "revision": "ce202c7d9a5d71969c60bf62a4f1c3e41747520c",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "ukisai_Swift-1.5-Qwen3.8-27b-Q4_K_M.gguf",
+          "blobId": "17e97d9253c8b6751592fea0810c513574d8df2e",
+          "size": 17442400576,
+          "lfs": {
+            "sha256": "d883a07ecd32244af6f1655545186c408558f9400ccec2f386c6830f634623d4",
+            "size": 17442400576,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "ukisai_Swift-1.5-Qwen3.8-27b-imatrix.gguf",
+          "blobId": "0594efcbda005afcf4af21f8f476ed24c7dab9a2",
+          "size": 13642688,
+          "lfs": {
+            "sha256": "125d4e6838a1a62cabf9c48aebdfa47e497e95db590a993ee94e12aaf28a268b",
+            "size": 13642688,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "bartowski/ukisai_Swift-Qwen3.8-27b-GGUF",
+      "revision": "d8175c5357a565bfd1514ecf6f37201cc8b99acd",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "ukisai_Swift-Qwen3.8-27b-Q4_K_M.gguf",
+          "blobId": "4f9b5fa03448abf1b4541254b67c5b3192d3dc49",
+          "size": 17442400480,
+          "lfs": {
+            "sha256": "e80fe2172ecd6457d08b7305074fb236d5121b0f1bb63c25dde286746d5e5af6",
+            "size": 17442400480,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "ukisai_Swift-Qwen3.8-27b-imatrix.gguf",
+          "blobId": "2da77b84ef6787f5d13e4539079be79e8de909bc",
+          "size": 13642688,
+          "lfs": {
+            "sha256": "8697f69fbfe5d0e36f2d4f35f7b802734d6105f43fc164d9391991c76f1a506d",
+            "size": 13642688,
+            "pointerSize": 133
+          }
+        }
+      ]
+    }
+  ]
+}

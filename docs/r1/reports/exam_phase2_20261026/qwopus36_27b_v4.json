@@ -1,0 +1,57 @@
+{
+  "id": "qwopus36_27b_v4",
+  "base_repo": "skiboyvv/Qwopus3.6-27B-v4",
+  "queries": [
+    [
+      {
+        "_id": "6a44cb8d3174db196e4ccbaf",
+        "id": "skiboyvv/Qwopus3.6-27B-v4",
+        "likes": 0,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 8,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "qwen3_5",
+          "image-text-to-text",
+          "qwen3",
+          "reasoning",
+          "chain-of-thought",
+          "cot-distillation",
+          "math",
+          "sft",
+          "lora",
+          "conversational",
+          "en",
+          "base_model:Qwen/Qwen3.6-27B",
+          "base_model:adapter:Qwen/Qwen3.6-27B",
+          "license:apache-2.0",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipeline_tag": "image-text-to-text",
+        "library_name": "transformers",
+        "createdAt": "2026-07-01T08:10:53.000Z",
+        "modelId": "skiboyvv/Qwopus3.6-27B-v4"
+      }
+    ],
+    []
+  ],
+  "entries": [
+    {
+      "repo": "skiboyvv/Qwopus3.6-27B-v4",
+      "revision": "20e38d7ad08daf0bfa2978f85578288fc7c298aa",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "skiboyvv/Qwopus3.6-27B-v4-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    }
+  ]
+}

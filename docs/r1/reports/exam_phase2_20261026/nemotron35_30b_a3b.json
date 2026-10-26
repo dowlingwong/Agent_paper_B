@@ -1,0 +1,279 @@
+{
+  "id": "nemotron35_30b_a3b",
+  "base_repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+  "queries": [
+    [
+      {
+        "_id": "6a6d98598cf49b059474f8ea",
+        "id": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+        "likes": 251,
+        "trendingScore": 11,
+        "private": false,
+        "downloads": 861461,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "nemotron_h",
+          "text-generation",
+          "nvidia",
+          "pytorch",
+          "nemotron-3.5",
+          "conversational",
+          "en",
+          "es",
+          "fr",
+          "de",
+          "it",
+          "ja",
+          "dataset:nvidia/nemotron-post-training-v3",
+          "dataset:nvidia/nemotron-pre-training-datasets",
+          "license:other",
+          "eval-results",
+          "endpoints_compatible",
+          "deploy:azure",
+          "deploy:sagemaker",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2026-08-01T06:55:21.000Z",
+        "modelId": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16"
+      },
+      {
+        "_id": "6a723935ed9c6d16164b1076",
+        "id": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+        "likes": 475,
+        "trendingScore": 9,
+        "private": false,
+        "downloads": 985757,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "nemotron_h",
+          "text-generation",
+          "nvidia",
+          "pytorch",
+          "nemotron-3.5",
+          "conversational",
+          "en",
+          "es",
+          "fr",
+          "de",
+          "it",
+          "ja",
+          "license:other",
+          "eval-results",
+          "endpoints_compatible",
+          "8-bit",
+          "modelopt",
+          "deploy:azure",
+          "deploy:sagemaker",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2026-08-04T19:10:45.000Z",
+        "modelId": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4"
+      },
+      {
+        "_id": "6a738c2270f610c661bac097",
+        "id": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark",
+        "likes": 42,
+        "trendingScore": 3,
+        "private": false,
+        "downloads": 134557,
+        "tags": [
+          "Model Optimizer",
+          "safetensors",
+          "qwen3",
+          "nvidia",
+          "ModelOpt",
+          "Nemotron-3.5-Lightning",
+          "latent-moe",
+          "mtp",
+          "DSpark",
+          "text-generation",
+          "arxiv:2607.05147",
+          "base_model:nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+          "base_model:quantized:nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+          "license:other",
+          "modelopt",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "Model Optimizer",
+        "createdAt": "2026-08-05T19:16:50.000Z",
+        "modelId": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark"
+      },
+      {
+        "_id": "6a73be3df7daa43518f5612f",
+        "id": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Base-BF16",
+        "likes": 28,
+        "trendingScore": 3,
+        "private": false,
+        "downloads": 26304,
+        "tags": [
+          "transformers",
+          "safetensors",
+          "nemotron_h",
+          "text-generation",
+          "nvidia",
+          "pytorch",
+          "nemotron-3.5",
+          "mtp",
+          "en",
+          "es",
+          "fr",
+          "de",
+          "it",
+          "ja",
+          "dataset:nvidia/nemotron-pre-training-datasets",
+          "license:other",
+          "endpoints_compatible",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "transformers",
+        "createdAt": "2026-08-05T22:50:37.000Z",
+        "modelId": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Base-BF16"
+      },
+      {
+        "_id": "6a738b1b58e14476af06723c",
+        "id": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DFlash",
+        "likes": 23,
+        "trendingScore": 1,
+        "private": false,
+        "downloads": 1428,
+        "tags": [
+          "Model Optimizer",
+          "safetensors",
+          "qwen3",
+          "nvidia",
+          "ModelOpt",
+          "Nemotron-3.5-Lightning",
+          "latent-moe",
+          "mtp",
+          "DFlash",
+          "text-generation",
+          "arxiv:2602.06036",
+          "base_model:nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+          "base_model:quantized:nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+          "license:other",
+          "modelopt",
+          "region:us"
+        ],
+        "pipeline_tag": "text-generation",
+        "library_name": "Model Optimizer",
+        "createdAt": "2026-08-05T19:12:27.000Z",
+        "modelId": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DFlash"
+      }
+    ],
+    [
+      {
+        "_id": "6a7b3a3c03ad247dc1485d43",
+        "id": "bartowski/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
+        "likes": 28,
+        "trendingScore": 0,
+        "private": false,
+        "downloads": 40924,
+        "tags": [
+          "gguf",
+          "nvidia",
+          "nemotron-3.5",
+          "text-generation",
+          "en",
+          "es",
+          "fr",
+          "de",
+          "it",
+          "ja",
+          "dataset:nvidia/nemotron-post-training-v3",
+          "dataset:nvidia/nemotron-pre-training-datasets",
+          "base_model:nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+          "base_model:quantized:nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+          "license:other",
+          "endpoints_compatible",
+          "region:us",
+          "imatrix",
+          "conversational"
+        ],
+        "pipeline_tag": "text-generation",
+        "createdAt": "2026-08-11T15:05:32.000Z",
+        "modelId": "bartowski/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF"
+      }
+    ]
+  ],
+  "entries": [
+    {
+      "repo": "bartowski/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
+      "revision": "f0eec2267ae843d9eb21ea3926ab0046da0a8628",
+      "error": null,
+      "files": [
+        {
+          "rfilename": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_K_M.gguf",
+          "blobId": "1fd114f0c32572e21b77a04bcf0ab42c6960d380",
+          "size": 25477403616,
+          "lfs": {
+            "sha256": "b520a8992e94c4d61e6a0833edffc499a46f42522df446c290d75dc5787a9158",
+            "size": 25477403616,
+            "pointerSize": 136
+          }
+        }
+      ],
+      "imatrix_files": [
+        {
+          "rfilename": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-imatrix.gguf",
+          "blobId": "3426d3e62daa43d018c0763c495e50be11d2c99c",
+          "size": 55314688,
+          "lfs": {
+            "sha256": "fbd36e4fa9be8324062a041ba5cb6247e9f68594168596257a85deb86438aac5",
+            "size": 55314688,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "revision": "a9904d24bcc1d289a1950fa9d2b978c47cf903b9",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16-GGUF",
+      "revision": null,
+      "error": "HTTP Error 401: Unauthorized",
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Base-BF16",
+      "revision": "434456c9a6753f29d24e23c95d622aaf17111b3b",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+      "revision": "bee7596271d1495f6992ae224aefde4410e816b8",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DFlash",
+      "revision": "8abcc4db8f34a5080c31eef05d4467afc06c6b9e",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    },
+    {
+      "repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4-DSpark",
+      "revision": "6d127b50ecd98562cea85d0087680b7d86091fb0",
+      "error": null,
+      "files": [],
+      "imatrix_files": []
+    }
+  ]
+}
