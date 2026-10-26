@@ -1,6 +1,6 @@
 # Track P — Decision-Model Post-Training and Labels (technical specification)
 
-Status: **adopted 2026-10-26 (PLAN §10 R1-C3-POST, with R1-C3-CONTROL, R1-SOFT-SIGMA, R1-PORTAL-SCHEDULE, R1-JEV-RUNG, R1-RB-TEACHER)**; proposed 2026-10-25, revised 2026-10-26 after the reference review. Execution: `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`.
+Status: **adopted 2026-10-26 (PLAN §10 R1-C3-POST, with R1-C3-CONTROL, R1-SOFT-SIGMA, R1-PORTAL-SCHEDULE, R1-JEV-RUNG, R1-RB-TEACHER)**; proposed 2026-10-25, revised 2026-10-26 after the reference review. **Corrected 2026-10-26 (evening) by the author's Track P decisions** (PLAN §10 R1-STARTLUX-TRAINABLE, R1-E0-PROTOCOL, R1-A3-BUDGET, R1-RPS-NORM, R1-EDGES-10, R1-TIEBREAK, R1-HEADS-LN, R1-LAYA-POOL, R1-TEMPERATURE, R1-TOKEN-INIT, R1-LR-GRID, R1-ENV-PIN); edits marked "(26 Oct, R1-…)". Execution: `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`.
 Supersedes the post-training part of R1-C3-BASE (24 Oct).
 Scope: C3 decision models (A5 / A6), label generation, the decision-model exam, SFT, RL, DAgger, evaluation.
 Runbook counterpart: `docs/r1/RUNBOOK.md` → Track P. Reading list: `docs/r1/references/README.md`. Base-model facts (Kev, StartLux, Laya) are those checked on 25 Oct and recorded in RUNBOOK Track P; P.0 confirms them.
@@ -67,17 +67,19 @@ The action head is optional (absent in Stage S and in the "rule-on-belief" arm).
 
 | Wrapper | Used by | Belief readout | Action readout |
 |---|---|---|---|
-| `PointerWrapper` | Kev | Kev's pointer head over 12 bin options (`</opt>` states vs the `<decide>` state); fixed bin names and order | Linear (hidden → 1) on the `<decide>` state |
-| `HeadWrapper` | Laya (typed-decision head), StartLux (option readout, if trainable), optional others | The family's own 12-option readout | Linear (hidden → 1) on the question/decision state |
+| `PointerWrapper` | Kev | Kev's pointer head over 12 bin options (`</opt>` states vs the `<decide>` state); fixed bin names and order; built-in pointer temperature fixed at 1 in training (26 Oct, R1-TEMPERATURE) | LayerNorm + Linear (hidden → 1) on the `<decide>` state |
+| `HeadWrapper` | Laya (typed-decision head), StartLux (option readout; trainable, 26 Oct, R1-STARTLUX-TRAINABLE), optional others | The family's own 12-option readout | LayerNorm + Linear (hidden → 1) on the question/decision state; for Laya the encoder output mean-pooled over valid tokens (26 Oct, R1-LAYA-POOL) |
 | `BinTokenWrapper` | Qwen3.5-0.8B/4B-Base control | LM-head logits restricted to 12 reserved tokens `<b0>…<b11>` at the belief position | LM-head logits on `<exec>` vs `<skip>` at the action position |
 | `ReasonThenBinWrapper` | Stage R-B only (generative bases: Qwen control, Kev's base LM) | As BinTokenWrapper / PointerWrapper, after a sampled `<analysis>` span | As above, after the belief |
 
 Shared serialisation: one text template, ≤ 1,024 tokens (Laya's limit), fixed bin names and order.
 
+Every new head (action, cumulative, the E0 linear belief head) reads a LayerNorm-ed state (26 Oct, R1-HEADS-LN). The reserved tokens `<b0>…<b11>`, `<exec>`, `<skip>` are initialised from the mean of the existing token embeddings; those rows are kept and trained in fp32 at a lower lr than the new heads (26 Oct, R1-TOKEN-INIT).
+
 ### 2.3 Belief head form (exam factor)
 
 - **Softmax-12**: one softmax over bins 0–11 (default).
-- **Cumulative-11**: bin 0 as a Bernoulli (no-op); 11 threshold sigmoids *P(z > e_k)* over the remaining edges, made monotone (cumulative max over sorted edges) and differenced into bins. This is "one Noul per bin edge" and maps directly onto threshold decisions.
+- **Cumulative-11**: bin 0 as a Bernoulli (no-op); **10** threshold sigmoids *P(z > e_k)*, one per finite edge between bins 1–11, made monotone (cumulative max over sorted edges) and differenced into bins — 1 + 10 = 11 outputs (26 Oct, R1-EDGES-10; the earlier "11 threshold sigmoids" was wrong: 11 bins have 10 finite edges). This is "one Noul per bin edge" and maps directly onto threshold decisions.
 - The cumulative form is a hypothesis to test, not a conclusion: Jev's Noul behaviour (§10, R1) may come from its training, not its head form.
 
 ### 2.4 Tree packing
@@ -185,7 +187,8 @@ where keep_j comes from `r1/c3/rules.py` (`keep`) applied to the logged Δ̂_j u
 - PyTorch + PEFT (LoRA), no TRL. One loop, losses plugged in per stage.
 - Host: zhixu portal (1× RTX 4090 24 GB). Models ≤ 4B, bf16, gradient checkpointing.
 - Default LoRA: r = 16, α = 32, dropout 0.05, targets = attention q/k/v/o + MLP up/down/gate (+ DeltaNet projections on Qwen3.5 hybrid bases, as Kev does).
-- Learning rate: 2e-5 when starting from a released adapter (Kev, Laya), 1e-4 for a fresh LoRA (control); new heads 1e-3.
+- Learning rate: **one grid {1e-5, 3e-5, 1e-4} for the adapter (and released heads) of every family, chosen by val RPS** (26 Oct, R1-LR-GRID; replaces 2e-5 from a released adapter / 1e-4 for a fresh LoRA); new heads 1e-3; new token rows (bin-token family) in fp32 at a lower lr (R1-TOKEN-INIT).
+- Environment pinned (26 Oct, R1-ENV-PIN): torch 2.6.0+cu124 on driver 535; Kev code at the P.0 commit `2074cc4`, its diff to `kev-1.0` recorded.
 - Batches are tree-packed (§2.4) where the model supports it: one forward pass per state with all its proposals.
 - Three training seeds per configuration; report mean ± s.e.
 - Every run logs: train loss, val RPS, val NLL, val ECE (all-bins and top-1), val PIT, mean predictive std vs mean label std, val decision utility, action/rule disagreement rate (when an action head exists), mass on bin tokens (BinTokenWrapper), gradient norm.
@@ -203,7 +206,7 @@ Selected to span architectures, not sizes (all ≤ 4B). Record for each whether 
 | Class | Candidate | What it tests |
 |---|---|---|
 | Decision-pretrained hybrid decoder + pointer head | Kev (Qwen3.5 hybrid base) | Value of decision pretraining |
-| Bidirectional-in-prompt decoder | StartLux Instant (only if P.0 passes training; else zero-shot row only) | Prompt-bidirectional attention for reading a diff + state |
+| Bidirectional-in-prompt decoder | StartLux Instant — **trainable candidate** (P.0 passed; 26 Oct, R1-STARTLUX-TRAINABLE). Licence CC BY-NC 4.0 (non-commercial research use), noted in the registry and in the appendix | Prompt-bidirectional attention for reading a diff + state |
 | Encoder, proper-scoring-trained decision head | Laya (ModernBERT-large, 421M, 1,024 ctx) | Small encoder vs decoders; value of prior proper-scoring training |
 | Plain causal LM base (control) | Qwen3.5-0.8B-Base, Qwen3.5-4B-Base | Same base as Kev; size effect |
 | Non-LLM floor (not a finalist) | Frozen embedding model + ordinal logistic regression; GBDT on hand features | Whether an LLM is needed at all |
@@ -216,11 +219,11 @@ Optional extra slot: one further ≤ 4B architecture (e.g. a hybrid attention/SS
 |---|---|---|
 | Candidates' native decision interface (E1) | Kev, Laya, StartLux answer a 12-option typed question out of the box; control: bin-token logits after an instruction prompt | What each base knows before any training |
 | Instruct LLM, verbalized top-k | Prompt lists all 12 bins and asks for a probability on each (top-k style; §10, R3); token logprobs are not used | Zero-shot "LLM self-control"; runs locally via llama.cpp |
-| Jev (API, optional) | 11 Noul questions, one per bin edge ("Will z exceed e_k?"), as branches on one shared state in one request; monotone CDF (cumulative max) → 12 bins | Ceiling reference: how close does a small post-trained local model get to a large calibration-trained commercial decision model? |
+| Jev (API, optional) | **10** Noul questions, one per finite bin edge ("Will z exceed e_k?"; 26 Oct, R1-EDGES-10), as branches on one shared state in one request; monotone CDF (cumulative max) → bins 1–11 (bin 0 gets no mass) | Ceiling reference: how close does a small post-trained local model get to a large calibration-trained commercial decision model? |
 
 Jev protocol (R1-JEV-RUNG, 26 Oct; TypeSafe's official API with the author's key; proposal diffs and loop state are sent to TypeSafe):
 
-- Base URL `https://api.typesafe.ai` (path and schema per `https://docs.typesafe.ai/api`); pin a **versioned** model name in the config (e.g. `jev-1.14.0`; never `jev-latest` or `jev-preview`) and log the version the API returns, the endpoint, the request date, and the full request/response JSON per call (`results/track_p/jev/{date}/calls.jsonl`).
+- Base URL `https://api.typesafe.ai` (path and schema per `https://docs.typesafe.ai/api`); pin a **versioned** model name in the config (`jev-1.14.0`, R1-ENV-PIN — verify with the key that it exists before Phase 7; never `jev-latest` or `jev-preview`) and log the version the API returns, the endpoint, the request date, and the full request/response JSON per call (`results/track_p/jev/{date}/calls.jsonl`).
 - Responses vary by about ±0.02 between identical requests: three repeats per state, report the mean and spread.
 - Run once on the exam set and once on the final test instances; no Jev output is ever used as a training label.
 - If the model string changes between runs, the rows are reported separately.
@@ -240,12 +243,12 @@ Jev protocol (R1-JEV-RUNG, 26 Oct; TypeSafe's official API with the author's key
 
 | ID | Test | Labels needed | Metric | Cost per model |
 |---|---|---|---|---|
-| **E0** | Aleatoric pass-through (synthetic, §5.5) | none (synthetic) | held-out RPS; width slope; hard-label collapse contrast | < 30 min |
+| **E0** | Aleatoric pass-through (synthetic, §5.5) | none (synthetic) | held-out RPS; width slope vs the label's own std; hard-label collapse contrast | ≈ 1–2 h (v2: to convergence, lr grid) |
 | E1 | Zero-shot (generative models and zero-shot tier): format compliance and RPS | exam set | compliance %, RPS skill | minutes |
 | E2 | Frozen linear probe: belief head on frozen last-token features, trained to convergence | exam set | val RPS skill | < 15 min |
 | E3 | Short LoRA SFT: fixed budget (300 steps, same lr schedule and LoRA config for all), 3 seeds; softmax-12 head | exam set | val RPS skill, all-bins ECE, top-1 ECE, PIT, width ratio, seed spread | ≈ 1 h |
 | E4 | Engineering: peak VRAM, step time at 1,024 tokens and batch 8, save/reload determinism; tree-packing support (custom 4D mask + position_ids) recorded, not scored | none | numbers, pass/fail | measured during E3 |
-| E5 | Calibration after temperature scaling | exam set | all-bins ECE | seconds |
+| E5 | Calibration after temperature scaling (one scalar T fitted on dev, the same procedure for every model, Kev included; R1-TEMPERATURE) | exam set | all-bins ECE | seconds |
 | **E6** | Architecture probes (§5.6) | none (synthetic + exam prompts, outputs only) | pass/fail per probe | < 30 min |
 | E7 | Head form: softmax-12 vs cumulative-11, run on the top 2 after E3 only | exam set | E3 metrics | ≈ 1 h each |
 
@@ -258,9 +261,13 @@ The task-specific analogue of the biased-coin probe (§10, R1/R2): can the archi
 - Synthetic prompts in the same serialisation as real states, with a line such as "expected standardised increment m = 0.3, noise s = 0.6" embedded among realistic distractor fields.
 - Grid: m ∈ [−2.5, 2.5], s ∈ [0.1, 1.5]; ≈ 3,000 train / 1,000 test prompts; test (m, s) cells held out from training (interpolation and mild extrapolation cells).
 - Target: soft label = N(m, s²) integrated over the 12 bins (bin 0 never active).
-- Train the belief head (frozen backbone, then 200 LoRA steps) on soft labels. Contrast run: identical, but with **hard argmax labels**.
-- Metrics on held-out cells: RPS; regression slope of predicted std on s (target 1); slope of predicted mean on m (target 1); for the hard-label run, width ratio (expected to collapse).
-- Pass: soft-label width slope ≥ 0.7 and mean slope ≥ 0.8 on held-out cells. The soft-vs-hard contrast is an appendix figure.
+- **Protocol v2 (26 Oct, R1-E0-PROTOCOL; replaces "frozen backbone, then 200 LoRA steps" and the released-head fit):**
+  - A **fresh LayerNorm + linear belief head** (hidden → 12) at lr 1e-3 for every model, on the readout state its action head reads. (1) Fitted on the frozen backbone; (2) then LoRA + that head together, adapter lr from the grid {1e-5, 3e-5, 1e-4} chosen by val RPS (R1-LR-GRID).
+  - **To convergence:** validation cells are held out of the training grid; each stage stops early on val RPS (best checkpoint restored), at most 2,000 steps; the same budget (steps, evaluation interval, patience, batch) for every model.
+  - **Released heads are reported separately** (the family's native readout: zero-shot, then the same LoRA stage).
+  - Contrast run: identical, but with **hard argmax labels**.
+- Metrics on held-out cells: RPS; **width slope = regression slope of the predicted std on the label's own std** (the binned soft label's std with the same bin representatives; target 1), with the **label's own slope vs s reported as the ceiling**; slope of predicted mean on m (target 1); the v1 slope of predicted std on s is still reported; for the hard-label run, width ratio (expected to collapse).
+- Pass: thresholds set by the author in a PLAN row after the v2 DRYRUN on Kev-0.8B and Qwen-0.8B (the v1 thresholds — width slope ≥ 0.7 and mean slope ≥ 0.8 — no longer apply). The soft-vs-hard contrast is an appendix figure.
 
 ### 5.6 E6 — architecture probes
 
@@ -270,8 +277,8 @@ Adapted from the Jev probe set (§10, R1). All on the soft-label E0 model unless
 |---|---|---|
 | A1 Branch isolation | Same branch scored alone vs packed with 7 siblings | max |Δ logit| ≤ 1e-3 (bf16 tolerance); packed models only |
 | A2 Sibling-order invariance | Permute sibling order (5 permutations) | max |Δ logit| ≤ 1e-3 |
-| A3 History-length robustness | Prepend 0 / 2k / 8k tokens of irrelevant acceptance history to the state | mean |Δ RPS| ≤ 0.01 |
-| A4 Width monotonicity | Same prompt, s increased in 5 steps | predicted std monotone non-decreasing in ≥ 95 % of prompts |
+| A3 History-length robustness | Prepend irrelevant acceptance history at **0 / 25 % / 50 % / 100 % of the remaining token budget**, under the smallest context limit in the pool (1,024 tokens) for every model, so the same text fits every model (26 Oct, R1-A3-BUDGET); 2k / 8k descriptive only | mean |Δ RPS| ≤ 0.01 |
+| A4 Width monotonicity | Same prompt, s increased in 5 steps; reference = the label's own std at each step (26 Oct, R1-E0-PROTOCOL) | predicted std non-decreasing wherever the label's std increases; threshold set by the author after the v2 DRYRUN (was ≥ 95 % of prompts) |
 | A5 Slot bias | BinTokenWrapper: permute the order bin tokens are listed in the prompt (if listed) | belief invariant within 0.02 TV distance |
 
 ### 5.7 Pre-registered selection rule
@@ -279,7 +286,7 @@ Adapted from the Jev probe set (§10, R1). All on the soft-label E0 model unless
 1. Discard models that fail E0, or fail E4 hard limits (OOM at 1,024 tokens, batch 8 with grad checkpointing; non-deterministic reload). E6 failures are recorded; A1/A2 failures disable packing for that model but do not disqualify it.
 2. Rank by E3 mean val RPS skill. Paired bootstrap over instances (2,000 resamples) against the top model.
 3. Models not significantly worse than the top (95 % paired bootstrap interval of the difference includes 0) form the tied set.
-4. Within the tied set: prefer higher E2 probe skill, then width ratio closer to 1, then base over instruct, then lower cost (E4).
+4. Within the tied set only: a **lexicographic tie-break on point estimates** — higher E2 probe skill, then smaller |width ratio − 1|, then base over instruct, then lower cost (E4) (26 Oct, R1-TIEBREAK). The "top model" of step 5 is the first model of this order.
 5. **Finalists**: the top model; plus a second model only if it is in the tied set **and** of a different architecture class. The Qwen control (size chosen by E3) is always carried as the ablation arm and does not count towards the 1–2.
 6. E7 decides the head form for the finalists.
 7. If no LLM beats the non-LLM floor by a significant margin on E3, stop and escalate (this changes the paper's story).
@@ -293,12 +300,12 @@ Caveat recorded in the appendix: the exam set is small, so ranking is coarse; it
 ### 6.1 Stage S — SFT (A5), belief only
 
 - Loss: L_S = RPS(p_θ, y_train) + CE(p_θ, y_train). Both are proper; RPS respects bin order, CE keeps sharp gradients early. Ablation: CE only.
-- RPS(p, y) = Σ_k (P_k − Y_k)² over cumulative distributions of bins 1–11 (bin 0 handled as a separate Bernoulli term, Brier).
-- lr as in §4 (2e-5 from released adapters, 1e-4 fresh LoRA, 1e-3 new heads), cosine, warm-up 5 %, effective batch 16, ≤ 5 epochs, evaluation every ¼ epoch.
+- RPS(p, y) = 1/(K−1) · Σ_{k=1}^{K−1} (P_k − Y_k)² over the cumulative distributions of the K = 11 ordered bins 1–11 (10 terms; 26 Oct, R1-RPS-NORM), on the non-inert parts; bin 0 is a separate Bernoulli term (Brier), and RPS = ½ · (Brier₀ + (1 − y₀) · ordinal part), in [0, 1] (`r1/c3/train/metrics.rps`).
+- lr as in §4 (adapter grid {1e-5, 3e-5, 1e-4} chosen by val RPS, 1e-3 new heads), cosine, warm-up 5 %, effective batch 16, ≤ 5 epochs, evaluation every ¼ epoch.
 - Kev's trainer is patched (or bypassed via `kev/model.py`) to accept soft targets.
 - Output: the A5 table (B.5).
 - Early stopping on val RPS, patience 2 evaluations. **Select the best checkpoint, not the last.**
-- Post-hoc temperature scaling on val → calibration baseline.
+- Post-hoc temperature scaling on val → calibration baseline (the same procedure for every model; R1-TEMPERATURE).
 
 ### 6.2 RL gate (all must hold)
 
@@ -401,7 +408,7 @@ Fixed budget, fresh instances, ≥ 3 harder benchmarks where available. Compare:
 - Training is cheap: ≤ 4B LoRA on ≈ 2k examples is minutes to an hour per run on the 4090; tree packing cuts forward passes further.
 - E0 and E6 are label-free and can run while the label sweep is still going.
 - The cost driver is **auditing**: ≈ 2,000 × 10 training runs on deepthought. Estimate total time from per-node run length before committing to B.6's 8–10k.
-- Jev zero-shot rows cost API calls; one request per state (11 Noul branches × proposals).
+- Jev zero-shot rows cost API calls; one request per state (10 Noul branches × proposals; R1-EDGES-10).
 
 ---
 
@@ -410,7 +417,8 @@ Fixed budget, fresh instances, ≥ 3 harder benchmarks where available. Compare:
 - Confirm bin edges and the no-op definition against R1-C3-BASE.
 - Confirm v_k (keep probability per bin) from the C2 theory.
 - Confirm ECE gate value after the first SFT run.
-- StartLux tier decision after P.0 (owner: Dow).
+- StartLux tier decided 26 Oct: trainable candidate (R1-STARTLUX-TRAINABLE).
+- E0 and A4 thresholds of protocol v2: set by the author after the v2 DRYRUN (R1-E0-PROTOCOL; owner: Dow).
 - Decided 26 Oct: Jev rung via the official API (R1-JEV-RUNG); R-B demonstrations by DeepSeek-V4.1-Flash-1017 (R1-RB-TEACHER); pooled σ̂ (R1-SOFT-SIGMA); Qwen control adopted (R1-C3-CONTROL); card schedule (R1-PORTAL-SCHEDULE).
 - Track H.8 `OfflineBanditEnv` defines action = bin; under belief/action decoupling the environment action should be execute/skip (keep from the rules), with the 12-bin belief as the model's forecast. Track H was accepted on 26 Oct with action = bin, so an H.8 amendment is needed before P.5 uses the environment (owner: Dow).
 

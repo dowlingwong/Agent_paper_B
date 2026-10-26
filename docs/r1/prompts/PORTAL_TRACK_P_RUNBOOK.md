@@ -86,7 +86,7 @@ The same 64-example toy batch trains for 50 steps on every family that passed P.
 ## Phase 5 — P.3a label-free exam (evidence; ~1 day; GPU lease)
 
 Requires the authorization note `trackp_p3a_<date>.md`. Run first as a DRYRUN on one model, then for every candidate that passed P.0:
-- **E0** (spec §5.5): frozen backbone head fit, then 200 LoRA steps, soft labels; the hard-label contrast run; held-out-cell RPS, width slope, mean slope.
+- **E0** (spec §5.5): frozen backbone head fit, then 200 LoRA steps, soft labels; the hard-label contrast run; held-out-cell RPS, width slope, mean slope. **Superseded 26 Oct by E0 protocol v2 (R1-E0-PROTOCOL, spec §5.5):** a fresh LayerNorm + linear belief head for every model, both stages to convergence on held-out validation cells (≤ 2,000 steps), lr grid, width slope vs the label's own std; A3 per R1-A3-BUDGET; thresholds set by the author after the v2 DRYRUN.
 - **E6** (spec §5.6): A1–A5 with their criteria; A1/A2 only for models with packing.
 
 Output: `docs/r1/reports/TRACKP_P3A_<date>.md` and the appendix figure data (soft vs hard). **STOP 5:** review loop (the reviewer recomputes slopes and pass/fail from the run outputs); models that fail E0 are disqualified per spec §5.7.
