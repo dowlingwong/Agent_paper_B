@@ -69,6 +69,24 @@ STRIPPED_ENV = ('LLAMA_API_KEY',)
 INTERPRETERS = re.compile(r'(python[\d.]*|sh|bash|dash)$')
 
 
+def thinking_args(policy: dict | None) -> list[str]:
+    """Opt-in exam thinking policy; callers verify flags against the pinned build's help."""
+    if policy is None:
+        return []
+    mode = policy.get('mode')
+    budget = policy.get('budget', 0)
+    if mode not in ('off', 'on', 'always_on'):
+        raise ValueError('thinking policy mode must be off, on or always_on')
+    if isinstance(budget, bool) or not isinstance(budget, int) or (mode == 'off' and budget != 0) or (mode != 'off' and budget < 1):
+        raise ValueError('off has budget 0; thinking-on requires a positive token budget')
+    args = []
+    if policy.get('off_switch') and mode != 'always_on':
+        args += ['--chat-template-kwargs', json.dumps({'enable_thinking': mode == 'on'}, separators=(',', ':'))]
+    if mode != 'off':
+        args += ['--reasoning-budget', str(budget)]
+    return args
+
+
 def sha256_file(path: str | Path, chunk: int = 16 << 20) -> str:
     digest = hashlib.sha256()
     with Path(path).open('rb') as f:
@@ -207,7 +225,7 @@ class LlamaServerInstance:
                  port: int | None = None, n_gpu_layers: int = 999, ctx_size: int = 8192,
                  gpu_uuid: str | None = None, label: str = 'ENGINEERING_ONLY', extra_args=(),
                  env_extra: dict[str, str] | None = None, start_timeout: float = 120.0,
-                 generation: int = 0) -> None:
+                 generation: int = 0, thinking_policy: dict | None = None) -> None:
         self.batch = Path(batch_dir).resolve()
         self.binary = str(binary)
         self.model_path = str(model_path)
@@ -216,6 +234,8 @@ class LlamaServerInstance:
         self.n_gpu_layers, self.ctx_size = int(n_gpu_layers), int(ctx_size)
         self.gpu_uuid, self.label = gpu_uuid, label
         self.extra_args = [str(a) for a in extra_args]
+        self.thinking_policy = dict(thinking_policy) if thinking_policy is not None else None
+        self.thinking_argv = thinking_args(self.thinking_policy)
         self.env_extra = dict(env_extra or {})
         self.start_timeout = start_timeout
         self.generation = int(generation)
@@ -237,7 +257,7 @@ class LlamaServerInstance:
     def argv(self) -> list[str]:
         return [self.binary, '-m', self.model_path, '--host', '127.0.0.1', '--port', str(self.port),
                 '-ngl', str(self.n_gpu_layers), '-c', str(self.ctx_size), '--alias', self.alias, '-np', '1',
-                *self.extra_args]
+                *self.extra_args, *self.thinking_argv]
 
     def env(self) -> tuple[dict[str, str], list[str]]:
         env, removed = {}, []
@@ -316,6 +336,8 @@ class LlamaServerInstance:
                        'model_sha256': model_sha256, 'alias': self.alias, 'n_gpu_layers': self.n_gpu_layers,
                        'ctx_size': self.ctx_size, 'parallel_slots': 1, 'gpu_uuid': self.gpu_uuid,
                        'env_removed': removed, 'build': build, 'log': str(self.log_path), 'started_utc': _utc()}
+        if self.thinking_policy is not None:
+            self.record['thinking_policy'] = self.thinking_policy
         if self.generation:
             self.record['generation'] = self.generation
         try:

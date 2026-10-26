@@ -65,7 +65,8 @@ def make_manager(node: str, seed: int, repetition: int, manifest_manager: dict |
         # Bounded transport retry (19 Oct): a manifest without
         # ``transport_max_attempts`` means the historical single attempt.
         return LangGraphManager(model=cfg["model"], temperature=float(cfg["temperature"]),
-                                repetition=repetition, transport_retry=transport_policy(cfg))
+                                repetition=repetition, transport_retry=transport_policy(cfg),
+                                **({'proposal_schema': cfg['proposal_schema']} if cfg.get('proposal_schema') else {}))
     return ScriptedRandomManager(node, seed=seed, repetition=repetition)
 
 
@@ -445,7 +446,11 @@ def main() -> int:
                     help="raise (historical) or record the failure and continue the other roots")
     ap.add_argument("--extra-manifest", default=None,
                     help="JSON object merged into a new manifest (batch provenance; never overrides)")
+    ap.add_argument('--proposal-schema', choices=['manager_proposal/v1'], default=None,
+                    help='opt-in structure-only llama.cpp JSON schema (R1-SCHEMA)')
     args = ap.parse_args()
+    if args.proposal_schema and (args.manager != 'langgraph' or not str(args.manager_model).startswith('llamacpp/')):
+        ap.error('--proposal-schema requires the llama.cpp LangGraph manager')
     if args.roots_only and (args.points or args.reps):
         ap.error("--roots-only needs --points with no values and --reps 0")
 
@@ -459,6 +464,8 @@ def main() -> int:
     if args.resume:
         out = Path(args.resume)
         manifest = json.loads((out / "manifest.json").read_text())
+        if args.proposal_schema is not None and args.proposal_schema != (manifest.get('manager') or {}).get('proposal_schema'):
+            ap.error('--proposal-schema differs from the manifest being resumed')
         if args.manager_model is not None and args.manager_model != (manifest.get("manager") or {}).get("model"):
             ap.error("--manager-model differs from the manifest being resumed")
     else:
@@ -470,6 +477,7 @@ def main() -> int:
                     "harness": {"root": str(HARNESS), **harness_commit(HARNESS)},
                     "manager_backend": manager_backend_text(args.manager, args.manager_model),
                     "manager": {**MANAGER, "kind": args.manager,
+                                **({'proposal_schema': args.proposal_schema} if args.proposal_schema else {}),
                                 **({"model": args.manager_model} if args.manager_model else {}),
                                 **({"transport_max_attempts": args.transport_max_attempts}
                                    if args.transport_max_attempts is not None else {})},

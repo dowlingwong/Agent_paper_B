@@ -1,0 +1,150 @@
+{
+  "version": "exam_value_grid/v1",
+  "rule": "categorical values as declared; numeric lower/geometric-midpoint/upper; integer midpoint rounded",
+  "nodes": {
+    "digits_mlp": {
+      "HIDDEN_UNITS": [
+        "4",
+        "32",
+        "256"
+      ],
+      "ALPHA": [
+        "1e-06",
+        "0.001",
+        "1.0"
+      ],
+      "LEARNING_RATE_INIT": [
+        "0.0001",
+        "0.00316228",
+        "0.1"
+      ],
+      "BATCH_SIZE": [
+        "8",
+        "64",
+        "512"
+      ],
+      "MAX_ITER": [
+        "5",
+        "39",
+        "300"
+      ]
+    },
+    "tabular_mlp": {
+      "HIDDEN_UNITS": [
+        "4",
+        "32",
+        "256"
+      ],
+      "ALPHA": [
+        "1e-06",
+        "0.001",
+        "1.0"
+      ],
+      "LEARNING_RATE_INIT": [
+        "0.0001",
+        "0.00316228",
+        "0.1"
+      ],
+      "BATCH_SIZE": [
+        "8",
+        "64",
+        "512"
+      ],
+      "MAX_ITER": [
+        "5",
+        "39",
+        "300"
+      ]
+    },
+    "openml_credit_approval": {
+      "model_type": [
+        "logistic_regression",
+        "random_forest",
+        "gradient_boosting"
+      ],
+      "class_weight": [
+        "null",
+        "balanced"
+      ],
+      "scaler": [
+        "none",
+        "standard",
+        "minmax"
+      ],
+      "imputer": [
+        "most_frequent",
+        "constant"
+      ],
+      "C": [
+        "0.001",
+        "0.316228",
+        "100.0"
+      ],
+      "max_depth": [
+        "2",
+        "8",
+        "30"
+      ],
+      "n_estimators": [
+        "20",
+        "100",
+        "500"
+      ],
+      "learning_rate": [
+        "0.001",
+        "0.0223607",
+        "0.5"
+      ],
+      "max_iter": [
+        "100",
+        "548",
+        "3000"
+      ]
+    },
+    "openml_ionosphere": {
+      "model_type": [
+        "logistic_regression",
+        "random_forest",
+        "gradient_boosting"
+      ],
+      "class_weight": [
+        "null",
+        "balanced"
+      ],
+      "scaler": [
+        "none",
+        "standard",
+        "minmax"
+      ],
+      "imputer": [
+        "most_frequent",
+        "constant"
+      ],
+      "C": [
+        "0.001",
+        "0.316228",
+        "100.0"
+      ],
+      "max_depth": [
+        "2",
+        "8",
+        "30"
+      ],
+      "n_estimators": [
+        "20",
+        "100",
+        "500"
+      ],
+      "learning_rate": [
+        "0.001",
+        "0.0223607",
+        "0.5"
+      ],
+      "max_iter": [
+        "100",
+        "548",
+        "3000"
+      ]
+    }
+  }
+}

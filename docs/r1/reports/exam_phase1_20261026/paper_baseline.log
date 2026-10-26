@@ -1,0 +1,727 @@
+..........................ssss.s..........F............................. [ 16%]
+......s.......................................sss....................... [ 32%]
+....................FFFFFF...........F.F................................ [ 48%]
+........................................................................ [ 64%]
+................................F...F..........F...........F.FF...FFF.FF [ 80%]
+.F............................................F......................... [ 96%]
+................                                                         [100%]
+=================================== FAILURES ===================================
+________________________ test_control_dryrun_end_to_end ________________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_control_dryrun_end_to_end0')
+
+    @DESKTOP_ONLY
+    def test_control_dryrun_end_to_end(tmp_path):
+        work, out = tmp_path / "work", tmp_path / "out"
+        work.mkdir()
+        env = {**os.environ, "PYTHONPATH": str(REPO), "PATH": os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"]}
+        done = subprocess.run([sys.executable, "r1/scripts/c3_control_dryrun.py", "--stage", "all", "--work", str(work),
+                               "--out", str(out), "--interrupt-after", "3"], cwd=REPO, env=env, capture_output=True,
+                              text=True, timeout=170)
+>       assert done.returncode == 0, done.stdout[-3000:] + done.stderr[-3000:]
+E       AssertionError: STOP: runner exited (rc 1) before the interruption
+E
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/private/tmp/exam-x-20261026/venv/bin/python', 'r1/scripts/c3_control_dryrun.py', '--stage', '...ut', '--interrupt-after', '3'], returncode=1, stdout='', stderr='STOP: runner exited (rc 1) before the interruption\n').returncode
+
+r1/tests/test_c3_control_dryrun.py:28: AssertionError
+_______________ test_c3_sweep_dryrun_retry_and_permanent_failure _______________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_retry_and0')
+
+    @pytest.mark.skipif(os.environ.get('R1_DRYRUN_CHILD') == '1' or platform.node().split('.')[0] == 'ucrtasl'
+                        or shutil.which('tmux') is None,
+                        reason='desktop integration only (not on Ada, not inside a DRYRUN batch, needs tmux)')
+    def test_c3_sweep_dryrun_retry_and_permanent_failure(tmp_path):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', 'both',
+                               '--out', str(out), '--deadline', '75'],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "retry": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_retry_25sddjp3",
+E               "pin": "6afdb0e9b800933dfbb682618b8909441f0f6495",
+E               "passed": false,
+E               "error": "AssertionError: scenario exceeded 75.0 s",
+E               "stop_reason": null,
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_retry_25sddjp3/batches_retry/r1_c3_sweep_DRYRUN_20261026_ex0wdK",
+E               "temporary_root_removed": true
+E             },
+E             "permanent": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_permanent_dgs1gc0m",
+E               "pin": "6afdb0e9b800933dfbb682618b8909441f0f6495",
+E               "checks": {
+E                 "stop_reason": "STOP: 4 root campaign failures, 0/4 roots complete; records in /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_permanent_dgs1gc0m/batches_permanent/r1_c3_sweep_DRYRUN_20261026_apiqBj/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261026T013426Z/failures and collection_failures.json (no automatic retry)",
+E                 "failed_roots": 4,
+E                 "failure_classes": [
+E                   "httpx.ConnectError"
+E                 ],
+E                 "attempt_classes": [
+E                   "connection_refused",
+E                   "server_disconnected"
+E                 ],
+E                 "server_exit_chat_call": 14
+E               },
+E               "passed": true,
+E               "stop_reason": "STOP: 4 root campaign failures, 0/4 roots complete; records in /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_permanent_dgs1gc0m/batches_permanent/r1_c3_sweep_DRYRUN_20261026_apiqBj/agent_paper_B/results/r1/pilot/C3_sweep_append_only_summary_20261026T013426Z/failures and collection_failures.json (no automatic retry)",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_permanent_dgs1gc0m/batches_permanent/r1_c3_sweep_DRYRUN_20261026_apiqBj",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261026T013218Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": null,
+E           "backend": "ollama",
+E           "elapsed_seconds": 151.4,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/private/tmp/exam-x-20261026/venv/bin/python', '/Users/wongdowling/Documents/agent_paper_B/r1/...",\n  "base_config": null,\n  "backend": "ollama",\n  "elapsed_seconds": 151.4,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:35: AssertionError
+_____________ test_c3_sweep_dryrun_resumes_after_kill_mid_campaign _____________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_resumes_a0')
+
+    @DESKTOP_ONLY
+    def test_c3_sweep_dryrun_resumes_after_kill_mid_campaign(tmp_path):
+        """RUNBOOK A.5: SIGKILL of the runner's process group mid-sweep, then ``--start`` again on the batch."""
+>       checks = _scenario(tmp_path, 'interrupt')
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+r1/tests/test_c3_sweep_dryrun.py:62:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_resumes_a0')
+name = 'interrupt'
+
+    def _scenario(tmp_path, name):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', name,
+                               '--out', str(out), '--deadline', '120'],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "interrupt": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_interrupt_j5df1n4m",
+E               "pin": "6afdb0e9b800933dfbb682618b8909441f0f6495",
+E               "passed": false,
+E               "error": "AssertionError: RuntimeError: STOP: port 51222 is in use; a dedicated instance never shares a server",
+E               "stop_reason": "RuntimeError: STOP: port 51222 is in use; a dedicated instance never shares a server",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_interrupt_j5df1n4m/batches_interrupt/r1_c3_sweep_DRYRUN_20261026_cu71u3",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261026T013449Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": null,
+E           "backend": "ollama",
+E           "elapsed_seconds": 63.3,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/private/tmp/exam-x-20261026/venv/bin/python', '/Users/wongdowling/Documents/agent_paper_B/r1/...s",\n  "base_config": null,\n  "backend": "ollama",\n  "elapsed_seconds": 63.3,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:55: AssertionError
+____________ test_c3_sweep_dryrun_watchdog_restarts_a_killed_runner ____________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_watchdog_0')
+
+    @DESKTOP_ONLY
+    def test_c3_sweep_dryrun_watchdog_restarts_a_killed_runner(tmp_path):
+        """RUNBOOK A.8: the dedicated server gets SIGTERM mid-request; the watchdog records it and recovers."""
+>       checks = _scenario(tmp_path, 'watchdog')
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+r1/tests/test_c3_sweep_dryrun.py:72:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_watchdog_0')
+name = 'watchdog'
+
+    def _scenario(tmp_path, name):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', name,
+                               '--out', str(out), '--deadline', '120'],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "watchdog": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_watchdog_9_b9wdgk",
+E               "pin": "6afdb0e9b800933dfbb682618b8909441f0f6495",
+E               "passed": false,
+E               "error": "AssertionError: scenario exceeded 120.0 s",
+E               "stop_reason": null,
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_watchdog_9_b9wdgk/batches_watchdog/r1_c3_sweep_DRYRUN_20261026_ipzmTW",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261026T013553Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": null,
+E           "backend": "ollama",
+E           "elapsed_seconds": 133.7,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/private/tmp/exam-x-20261026/venv/bin/python', '/Users/wongdowling/Documents/agent_paper_B/r1/...",\n  "base_config": null,\n  "backend": "ollama",\n  "elapsed_seconds": 133.7,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:55: AssertionError
+__________ test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config ___________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_llamacpp_0')
+
+    @DESKTOP_ONLY
+    def test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config(tmp_path):
+        """The real deepthought draft (host values overridden) on the fake llama-server: retry and permanent."""
+        # Review of batch B (25 Oct): the fake logs like llama.cpp v0.7.0 (no offload line) -> route (ii).
+>       scenarios = _llamacpp_scenario(tmp_path, 'both', '--base-config',
+                                       str(REPO / 'r1/scripts/configs/c3_sweep_deepthought.json'),
+                                       '--fake-offload', 'silent', deadline='75')
+
+r1/tests/test_c3_sweep_dryrun.py:96:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_llamacpp_0')
+scenario = 'both', deadline = '75'
+extra = ('--base-config', '/Users/wongdowling/Documents/agent_paper_B/r1/scripts/configs/c3_sweep_deepthought.json', '--fake-offload', 'silent')
+
+    def _llamacpp_scenario(tmp_path, scenario, *extra, deadline='120'):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', scenario,
+                               *extra, '--out', str(out), '--deadline', deadline],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "retry": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_retry_4pht8_if",
+E               "pin": "6afdb0e9b800933dfbb682618b8909441f0f6495",
+E               "passed": false,
+E               "error": "AssertionError: STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 101 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "stop_reason": "STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 101 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_retry_4pht8_if/batches_retry/r1_c3_sweep_DRYRUN_20261026_bLAwga",
+E               "temporary_root_removed": true
+E             },
+E             "permanent": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_permanent_mrtm0w0_",
+E               "pin": "6afdb0e9b800933dfbb682618b8909441f0f6495",
+E               "passed": false,
+E               "error": "AssertionError: STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 361 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "stop_reason": "STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 361 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_permanent_mrtm0w0_/batches_permanent/r1_c3_sweep_DRYRUN_20261026_8Xf7JT",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261026T013807Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/configs/c3_sweep_deepthought.json",
+E           "backend": "llamacpp",
+E           "elapsed_seconds": 34.9,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/private/tmp/exam-x-20261026/venv/bin/python', '/Users/wongdowling/Documents/agent_paper_B/r1/..._sweep_deepthought.json",\n  "backend": "llamacpp",\n  "elapsed_seconds": 34.9,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:87: AssertionError
+________ test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign _________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_llamacpp_1')
+
+    @DESKTOP_ONLY
+    def test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign(tmp_path):
+>       checks = _llamacpp_scenario(tmp_path, 'interrupt', '--backend', 'llamacpp')['interrupt']['checks']
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+r1/tests/test_c3_sweep_dryrun.py:114:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_llamacpp_1')
+scenario = 'interrupt', deadline = '120', extra = ('--backend', 'llamacpp')
+
+    def _llamacpp_scenario(tmp_path, scenario, *extra, deadline='120'):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', scenario,
+                               *extra, '--out', str(out), '--deadline', deadline],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "interrupt": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_interrupt_l24wge0r",
+E               "pin": "6afdb0e9b800933dfbb682618b8909441f0f6495",
+E               "passed": false,
+E               "error": "AssertionError: STOP: port 51785 is in use; a dedicated instance never shares a server",
+E               "stop_reason": "STOP: port 51785 is in use; a dedicated instance never shares a server",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_interrupt_l24wge0r/batches_interrupt/r1_c3_sweep_DRYRUN_20261026_Z3WyiG",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261026T013842Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": null,
+E           "backend": "llamacpp",
+E           "elapsed_seconds": 65.4,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/private/tmp/exam-x-20261026/venv/bin/python', '/Users/wongdowling/Documents/agent_paper_B/r1/...,\n  "base_config": null,\n  "backend": "llamacpp",\n  "elapsed_seconds": 65.4,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:87: AssertionError
+_______ test_c3_sweep_dryrun_llamacpp_watchdog_restarts_a_killed_server ________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_llamacpp_2')
+
+    @DESKTOP_ONLY
+    def test_c3_sweep_dryrun_llamacpp_watchdog_restarts_a_killed_server(tmp_path):
+>       checks = _llamacpp_scenario(tmp_path, 'watchdog', '--backend', 'llamacpp',
+                                    '--fake-offload', 'silent')['watchdog']['checks']
+
+r1/tests/test_c3_sweep_dryrun.py:125:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_c3_sweep_dryrun_llamacpp_2')
+scenario = 'watchdog', deadline = '120'
+extra = ('--backend', 'llamacpp', '--fake-offload', 'silent')
+
+    def _llamacpp_scenario(tmp_path, scenario, *extra, deadline='120'):
+        env = {k: v for k, v in os.environ.items() if k not in ('R1_DRYRUN', 'PYTHONPATH')}
+        out = tmp_path / 'dryrun'
+        done = subprocess.run([sys.executable, str(REPO / 'r1/scripts/c3_sweep_dryrun.py'), '--scenario', scenario,
+                               *extra, '--out', str(out), '--deadline', deadline],
+                              cwd=REPO, env=env, capture_output=True, text=True, timeout=170)
+        summary = json.loads((out / 'summary.json').read_text())
+>       assert done.returncode == 0, json.dumps(summary, indent=2) + done.stderr[-2000:]
+E       AssertionError: {
+E           "label": "DRYRUN",
+E           "scenarios": {
+E             "watchdog": {
+E               "temporary_root": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_watchdog_gvo3f8dx",
+E               "pin": "6afdb0e9b800933dfbb682618b8909441f0f6495",
+E               "passed": false,
+E               "error": "AssertionError: STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 1605 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "stop_reason": "STOP: load_probe: pinned model is not fully offloaded to the GPU (no \"offloaded N/M layers to GPU\" line in the server log; route (ii): server pid 1605 is not listed on GPU-DRYRUN by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted",
+E               "batch": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/r1_c3_dryrun_watchdog_gvo3f8dx/batches_watchdog/r1_c3_sweep_DRYRUN_20261026_H7axqE",
+E               "temporary_root_removed": true
+E             }
+E           },
+E           "started_utc": "20261026T013947Z",
+E           "harness_source": "/Users/wongdowling/Documents/autoresearch_harness",
+E           "base_config": null,
+E           "backend": "llamacpp",
+E           "elapsed_seconds": 15.9,
+E           "completed": false
+E         }
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/private/tmp/exam-x-20261026/venv/bin/python', '/Users/wongdowling/Documents/agent_paper_B/r1/...,\n  "base_config": null,\n  "backend": "llamacpp",\n  "elapsed_seconds": 15.9,\n  "completed": false\n}\n', stderr='').returncode
+
+r1/tests/test_c3_sweep_dryrun.py:87: AssertionError
+_______ test_orphaned_instance_is_stopped_only_when_it_is_provably_ours ________
+
+fake_server = (<function fake_server.<locals>.start at 0x10e745b20>, PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_orphaned_instance_is_stop0/dry'))
+
+>   ???
+E   assert False
+
+/sessions/rcw-01tz6nz5t4ly5svvjbhk9dhc/mnt/agent_paper_B/r1/tests/test_c3_sweep_resume.py:284: AssertionError
+__________ test_resume_refuses_while_an_earlier_runner_process_lives ___________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_resume_refuses_while_an_e0')
+
+>   ???
+E   assert [] == [1727]
+E
+E     Right contains one more item: 1727
+E     Use -v to get more diff
+
+/sessions/rcw-01tz6nz5t4ly5svvjbhk9dhc/mnt/agent_paper_B/r1/tests/test_c3_sweep_resume.py:315: AssertionError
+______________ test_start_records_argv_cmdline_pins_and_identity _______________
+
+fake = {'binary': PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_s...gdowling/pytest-751/test_start_records_argv_cmdlin0/dry'), 'start': <function fake.<locals>.start at 0x116c7a200>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e39d320>
+
+    def test_start_records_argv_cmdline_pins_and_identity(fake, monkeypatch):
+        inst = fake["start"](env={"LLAMA_ARG_N_GPU_LAYERS": "0", "LLAMA_API_KEY": "x", "C3_FAKE_LLAMA_LOAD_SECONDS": "0.8"})
+        rec = json.loads(inst.record_path.read_text())
+        assert rec["argv"] == [str(fake["binary"]), "-m", str(fake["model"]), "--host", "127.0.0.1", "--port",
+                               str(inst.port), "-ngl", "999", "-c", "8192", "--alias", "r1-manager", "-np", "1"]
+>       assert rec["cmdline"][1:] == rec["argv"]  # shebang: <python> <binary> <args>
+               ^^^^^^^^^^^^^^^^^^
+E       TypeError: 'NoneType' object is not subscriptable
+
+r1/tests/test_llama_server_instance.py:109: TypeError
+________________ test_orphan_is_stopped_only_when_provably_ours ________________
+
+fake = {'binary': PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_o...gdowling/pytest-751/test_orphan_is_stopped_only_wh0/dry'), 'start': <function fake.<locals>.start at 0x116c7b7e0>, ...}
+
+    def test_orphan_is_stopped_only_when_provably_ours(fake):
+        inst = fake["start"]()
+        record = dict(inst.record)
+        wrong_argv = list(record["argv"])
+        wrong_argv[wrong_argv.index("-c") + 1] = "4096"
+        for wrong in ({"port": record["port"] + 1, "argv": [a if a != str(record["port"]) else str(record["port"] + 1)
+                                                              for a in record["argv"]]},
+                      {"argv": [record["argv"][0], "-m", "/elsewhere.gguf", *record["argv"][3:]]},
+                      {"argv": wrong_argv}, {"pgid": record["pgid"] + 1}, {"argv": ["/usr/bin/llama-server"]}):
+            ours, reason = lsi.orphan_matches({**record, **wrong})
+            assert not ours, (wrong, reason)
+            assert lsi.stop_orphan({**record, **wrong})["action"] == "none" and inst.alive()
+>       assert lsi.orphan_matches(record)[0]
+E       assert False
+
+r1/tests/test_llama_server_instance.py:168: AssertionError
+__________ test_a_matching_process_of_another_user_is_never_signalled __________
+
+fake = {'binary': PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_a...gdowling/pytest-751/test_a_matching_process_of_ano0/dry'), 'start': <function fake.<locals>.start at 0x116cfc900>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e39d320>
+
+    def test_a_matching_process_of_another_user_is_never_signalled(fake, monkeypatch):
+        inst = fake["start"]()
+>       assert lsi.orphan_matches(inst.record)[0]
+E       assert False
+
+r1/tests/test_llama_server_instance.py:321: AssertionError
+_ test_fake_v070_log_has_no_offload_line_and_fake_nvidia_smi_lists_the_server __
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_fake_v070_l...gdowling/pytest-751/test_fake_v070_log_has_no_offl0/dry'), 'start': <function host.<locals>.start at 0x116cfed40>, ...}
+
+    def test_fake_v070_log_has_no_offload_line_and_fake_nvidia_smi_lists_the_server(host):
+        inst = host["start"]("silent", gpu_mib=5560)
+        text = inst.log_text()
+        assert "offloaded" not in text and "model buffer" not in text and "llama_server: model loaded" in text
+>       assert {"pid": inst.record["pid"], "gpu_uuid": UUID, "used_mib": 5560} in lsi.gpu_compute_apps()
+E       AssertionError: assert {'gpu_uuid': 'GPU-11111111-2222-3333-4444-555555555555', 'pid': 2275, 'used_mib': 5560} in []
+E        +  where [] = <function gpu_compute_apps at 0x10d831da0>()
+E        +    where <function gpu_compute_apps at 0x10d831da0> = lsi.gpu_compute_apps
+
+r1/tests/test_llamacpp_offload_routes.py:153: AssertionError
+_ test_runner_check_passes_by_either_route_and_records_it[silent-5560-gpu_memory] _
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_runner_chec...gdowling/pytest-751/test_runner_check_passes_by_ei1/dry'), 'start': <function host.<locals>.start at 0x116cfcb80>, ...}
+offload = 'silent', gpu_mib = 5560, route = 'gpu_memory'
+
+    @pytest.mark.parametrize("offload,gpu_mib,route", [("line", 5560, "log_line"), ("silent", 5560, "gpu_memory")])
+    def test_runner_check_passes_by_either_route_and_records_it(host, offload, gpu_mib, route):
+        runner = _runner(host["tmp"], 5304)
+        runner.service = host["start"](offload, gpu_mib=gpu_mib)
+>       runner.check_offload("load_probe")
+
+r1/tests/test_llamacpp_offload_routes.py:173:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+r1/scripts/c3_label_sweep.py:794: in check_offload
+    return self.check_offload_llamacpp(where)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <r1.scripts.c3_label_sweep.SweepRunner object at 0x116c9fe10>
+where = 'load_probe'
+
+    def check_offload_llamacpp(self, where: str) -> None:
+        """RUNBOOK A.10: full GPU offload by route (i) (log line N/N) or (ii) (server pid on the card with
+        >= footprint_mib; llama.cpp v0.7.0 prints no offload line at default verbosity), the route recorded;
+        the pinned alias served; the co-tenancy census."""
+        spec, inst = self.config['llamacpp'], self.service
+        report = inst.offload(footprint_mib=spec['footprint_mib'])
+        ids = inst.model_ids()
+        props = inst.props()
+        (self.batch / f'gpu_offload_{where}.json').write_text(json.dumps(
+            {'label': self.label, 'utc': stamp(), 'backend': 'llamacpp', 'log': str(inst.log_path),
+             'offload': report, 'models': ids, 'props_model_path': (props or {}).get('model_path')}, indent=2) + '\n')
+        if not inst.alive():
+            raise Stop(f'STOP: {where}: the dedicated llama-server is not running')
+        if not report['full']:
+>           raise Stop(f'STOP: {where}: pinned model is not fully offloaded to the GPU '
+                       f'({"; ".join(report["reasons"])}); CPU fallback is never accepted')
+E           r1.scripts.c3_label_sweep.Stop: STOP: load_probe: pinned model is not fully offloaded to the GPU (no "offloaded N/M layers to GPU" line in the server log; route (ii): server pid 2318 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted
+
+r1/scripts/c3_label_sweep.py:818: Stop
+_ test_runner_check_stops_on_low_memory_partial_line_or_fallback[silent-4000-below the pinned footprint] _
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_runner_chec...gdowling/pytest-751/test_runner_check_stops_on_low0/dry'), 'start': <function host.<locals>.start at 0x116e8d6c0>, ...}
+offload = 'silent', gpu_mib = 4000, reason = 'below the pinned footprint'
+
+    @pytest.mark.parametrize("offload,gpu_mib,reason", [("silent", 4000, "below the pinned footprint"),
+                                                        ("20", 9000, "offloaded 20/29 layers"),
+                                                        ("cpu", 9000, "CPU fallback")])
+    def test_runner_check_stops_on_low_memory_partial_line_or_fallback(host, offload, gpu_mib, reason):
+        runner = _runner(host["tmp"], 5304)
+        runner.service = host["start"](offload, gpu_mib=gpu_mib)
+        with pytest.raises(sweep.Stop, match=reason):
+>           runner.check_offload("load_probe")
+
+r1/tests/test_llamacpp_offload_routes.py:185:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+r1/scripts/c3_label_sweep.py:794: in check_offload
+    return self.check_offload_llamacpp(where)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <r1.scripts.c3_label_sweep.SweepRunner object at 0x116c9e8f0>
+where = 'load_probe'
+
+    def check_offload_llamacpp(self, where: str) -> None:
+        """RUNBOOK A.10: full GPU offload by route (i) (log line N/N) or (ii) (server pid on the card with
+        >= footprint_mib; llama.cpp v0.7.0 prints no offload line at default verbosity), the route recorded;
+        the pinned alias served; the co-tenancy census."""
+        spec, inst = self.config['llamacpp'], self.service
+        report = inst.offload(footprint_mib=spec['footprint_mib'])
+        ids = inst.model_ids()
+        props = inst.props()
+        (self.batch / f'gpu_offload_{where}.json').write_text(json.dumps(
+            {'label': self.label, 'utc': stamp(), 'backend': 'llamacpp', 'log': str(inst.log_path),
+             'offload': report, 'models': ids, 'props_model_path': (props or {}).get('model_path')}, indent=2) + '\n')
+        if not inst.alive():
+            raise Stop(f'STOP: {where}: the dedicated llama-server is not running')
+        if not report['full']:
+>           raise Stop(f'STOP: {where}: pinned model is not fully offloaded to the GPU '
+                       f'({"; ".join(report["reasons"])}); CPU fallback is never accepted')
+E           r1.scripts.c3_label_sweep.Stop: STOP: load_probe: pinned model is not fully offloaded to the GPU (no "offloaded N/M layers to GPU" line in the server log; route (ii): server pid 2320 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted
+
+r1/scripts/c3_label_sweep.py:818: Stop
+
+During handling of the above exception, another exception occurred:
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_runner_chec...gdowling/pytest-751/test_runner_check_stops_on_low0/dry'), 'start': <function host.<locals>.start at 0x116e8d6c0>, ...}
+offload = 'silent', gpu_mib = 4000, reason = 'below the pinned footprint'
+
+    @pytest.mark.parametrize("offload,gpu_mib,reason", [("silent", 4000, "below the pinned footprint"),
+                                                        ("20", 9000, "offloaded 20/29 layers"),
+                                                        ("cpu", 9000, "CPU fallback")])
+    def test_runner_check_stops_on_low_memory_partial_line_or_fallback(host, offload, gpu_mib, reason):
+        runner = _runner(host["tmp"], 5304)
+        runner.service = host["start"](offload, gpu_mib=gpu_mib)
+>       with pytest.raises(sweep.Stop, match=reason):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'below the pinned footprint'
+E         Actual message: 'STOP: load_probe: pinned model is not fully offloaded to the GPU (no "offloaded N/M layers to GPU" line in the server log; route (ii): server pid 2320 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])); CPU fallback is never accepted'
+
+r1/tests/test_llamacpp_offload_routes.py:184: AssertionError
+______________________________ test_probe_route_i ______________________________
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route...ytest-of-wongdowling/pytest-751/test_probe_route_i0/dry'), 'start': <function host.<locals>.start at 0x116cffa60>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x116bdf770>
+
+    def test_probe_route_i(host, monkeypatch):
+        rc, record = _probe(host, env={"C3_FAKE_LLAMA_OFFLOAD": "line", "C3_FAKE_LLAMA_GPU_MIB": "5560"},
+                            monkeypatch=monkeypatch)
+        assert rc == 0 and record["verdict"] == "FULL_GPU_OFFLOAD" and record["route"] == "log_line"
+>       assert record["footprint_mib_to_pin"] == 5560 and record["cpu_control"] is None
+E       assert (None == 5560)
+
+r1/tests/test_llamacpp_offload_routes.py:213: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 2387, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_i0/logs/probe_20261026T014107Z/llama_server_52105.log
+route log_line; offload line full; server MiB on card None; CPU control None; VERDICT FULL_GPU_OFFLOAD; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_i0/logs/probe_20261026T014107Z.json
+_____________________ test_probe_route_ii_with_cpu_control _____________________
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route...gdowling/pytest-751/test_probe_route_ii_with_cpu_c0/dry'), 'start': <function host.<locals>.start at 0x116e8e3e0>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x116bdda20>
+
+    def test_probe_route_ii_with_cpu_control(host, monkeypatch):
+        rc, record = _probe(host, env={"C3_FAKE_LLAMA_OFFLOAD": "silent", "C3_FAKE_LLAMA_GPU_MIB": "5560",
+                                       "C3_FAKE_LLAMA_TPS_GPU": "40", "C3_FAKE_LLAMA_TPS_CPU": "8"},
+                            monkeypatch=monkeypatch)
+>       assert rc == 0 and record["verdict"] == "FULL_GPU_OFFLOAD" and record["route"] == "gpu_memory", record
+E       AssertionError: {'ai_assisted': 'AI-assisted (Claude)', 'args': {'alias': 'r1-manager', 'binary': '/private/var/folders/mf/cqjfz_8x7tg...RYRUN', 'raw': 'version: 0 (DRYRUN)
+E         built with DRYRUN fixture (no inference) for any', ...}, 'cpu_control': None, ...}
+E       assert (1 == 0)
+
+r1/tests/test_llamacpp_offload_routes.py:220: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 2410, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_ii_with_cpu_c0/logs/probe_20261026T014109Z/llama_server_52115.log
+STOP: no "offloaded N/M layers to GPU" line in the server log
+STOP: route (ii): server pid 2410 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])
+route None; offload line absent; server MiB on card None; CPU control None; VERDICT STOP; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_ii_with_cpu_c0/logs/probe_20261026T014109Z.json
+_ test_probe_route_ii_failures_exit_nonzero_with_telemetry[env0-extra0-speedup] _
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route...gdowling/pytest-751/test_probe_route_ii_failures_e0/dry'), 'start': <function host.<locals>.start at 0x116e8d760>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x116bdd5c0>
+env = {'C3_FAKE_LLAMA_TPS_CPU': '30', 'C3_FAKE_LLAMA_TPS_GPU': '40'}, extra = ()
+reason = 'speedup'
+
+    @pytest.mark.parametrize("env,extra,reason", [
+        ({"C3_FAKE_LLAMA_TPS_GPU": "40", "C3_FAKE_LLAMA_TPS_CPU": "30"}, (), "speedup"),   # CPU control too fast
+        ({"C3_FAKE_LLAMA_GPU_MIB": "0"}, (), "not listed on"),                              # server not on the card
+        ({"C3_FAKE_LLAMA_GPU_MIB": "100"}, ("--min-gpu-mib", "4000"), "below"),             # far too little memory
+        ({}, ("--expect-footprint-mib", "6000"), "below"),                                  # below a pinned footprint
+    ])
+    def test_probe_route_ii_failures_exit_nonzero_with_telemetry(host, monkeypatch, env, extra, reason):
+        rc, record = _probe(host, *extra, env={"C3_FAKE_LLAMA_OFFLOAD": "silent", "C3_FAKE_LLAMA_GPU_MIB": "5560", **env},
+                            monkeypatch=monkeypatch)
+        assert rc == 1 and record["verdict"] == "STOP", record
+>       assert any(reason in r for r in record["stop_reasons"]), record["stop_reasons"]
+E       AssertionError: ['no "offloaded N/M layers to GPU" line in the server log', 'route (ii): server pid 2434 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])']
+E       assert False
+E        +  where False = any(<generator object test_probe_route_ii_failures_exit_nonzero_with_telemetry.<locals>.<genexpr> at 0x116ea7ac0>)
+
+r1/tests/test_llamacpp_offload_routes.py:237: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 2434, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_ii_failures_e0/logs/probe_20261026T014111Z/llama_server_52126.log
+STOP: no "offloaded N/M layers to GPU" line in the server log
+STOP: route (ii): server pid 2434 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])
+route None; offload line absent; server MiB on card None; CPU control None; VERDICT STOP; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_ii_failures_e0/logs/probe_20261026T014111Z.json
+_ test_probe_route_ii_failures_exit_nonzero_with_telemetry[env2-extra2-below] __
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route...gdowling/pytest-751/test_probe_route_ii_failures_e2/dry'), 'start': <function host.<locals>.start at 0x116e8f600>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x116e03d90>
+env = {'C3_FAKE_LLAMA_GPU_MIB': '100'}, extra = ('--min-gpu-mib', '4000')
+reason = 'below'
+
+    @pytest.mark.parametrize("env,extra,reason", [
+        ({"C3_FAKE_LLAMA_TPS_GPU": "40", "C3_FAKE_LLAMA_TPS_CPU": "30"}, (), "speedup"),   # CPU control too fast
+        ({"C3_FAKE_LLAMA_GPU_MIB": "0"}, (), "not listed on"),                              # server not on the card
+        ({"C3_FAKE_LLAMA_GPU_MIB": "100"}, ("--min-gpu-mib", "4000"), "below"),             # far too little memory
+        ({}, ("--expect-footprint-mib", "6000"), "below"),                                  # below a pinned footprint
+    ])
+    def test_probe_route_ii_failures_exit_nonzero_with_telemetry(host, monkeypatch, env, extra, reason):
+        rc, record = _probe(host, *extra, env={"C3_FAKE_LLAMA_OFFLOAD": "silent", "C3_FAKE_LLAMA_GPU_MIB": "5560", **env},
+                            monkeypatch=monkeypatch)
+        assert rc == 1 and record["verdict"] == "STOP", record
+>       assert any(reason in r for r in record["stop_reasons"]), record["stop_reasons"]
+E       AssertionError: ['no "offloaded N/M layers to GPU" line in the server log', 'route (ii): server pid 2463 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])']
+E       assert False
+E        +  where False = any(<generator object test_probe_route_ii_failures_exit_nonzero_with_telemetry.<locals>.<genexpr> at 0x116c7dd80>)
+
+r1/tests/test_llamacpp_offload_routes.py:237: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 2463, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_ii_failures_e2/logs/probe_20261026T014114Z/llama_server_52151.log
+STOP: no "offloaded N/M layers to GPU" line in the server log
+STOP: route (ii): server pid 2463 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])
+route None; offload line absent; server MiB on card None; CPU control None; VERDICT STOP; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_ii_failures_e2/logs/probe_20261026T014114Z.json
+_ test_probe_route_ii_failures_exit_nonzero_with_telemetry[env3-extra3-below] __
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route...gdowling/pytest-751/test_probe_route_ii_failures_e3/dry'), 'start': <function host.<locals>.start at 0x116e8f7e0>, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x116bdf230>, env = {}
+extra = ('--expect-footprint-mib', '6000'), reason = 'below'
+
+    @pytest.mark.parametrize("env,extra,reason", [
+        ({"C3_FAKE_LLAMA_TPS_GPU": "40", "C3_FAKE_LLAMA_TPS_CPU": "30"}, (), "speedup"),   # CPU control too fast
+        ({"C3_FAKE_LLAMA_GPU_MIB": "0"}, (), "not listed on"),                              # server not on the card
+        ({"C3_FAKE_LLAMA_GPU_MIB": "100"}, ("--min-gpu-mib", "4000"), "below"),             # far too little memory
+        ({}, ("--expect-footprint-mib", "6000"), "below"),                                  # below a pinned footprint
+    ])
+    def test_probe_route_ii_failures_exit_nonzero_with_telemetry(host, monkeypatch, env, extra, reason):
+        rc, record = _probe(host, *extra, env={"C3_FAKE_LLAMA_OFFLOAD": "silent", "C3_FAKE_LLAMA_GPU_MIB": "5560", **env},
+                            monkeypatch=monkeypatch)
+        assert rc == 1 and record["verdict"] == "STOP", record
+>       assert any(reason in r for r in record["stop_reasons"]), record["stop_reasons"]
+E       AssertionError: ['no "offloaded N/M layers to GPU" line in the server log', 'route (ii): server pid 2486 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])']
+E       assert False
+E        +  where False = any(<generator object test_probe_route_ii_failures_exit_nonzero_with_telemetry.<locals>.<genexpr> at 0x116c7ecf0>)
+
+r1/tests/test_llamacpp_offload_routes.py:237: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 2486, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_ii_failures_e3/logs/probe_20261026T014115Z/llama_server_52161.log
+STOP: no "offloaded N/M layers to GPU" line in the server log
+STOP: route (ii): server pid 2486 is not listed on GPU-11111111-2222-3333-4444-555555555555 by nvidia-smi (rows of this pid: [])
+route None; offload line absent; server MiB on card None; CPU control None; VERDICT STOP; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_probe_route_ii_failures_e3/logs/probe_20261026T014115Z.json
+_____ test_full_offload_probe_records_pins_footprint_and_stops_the_server ______
+
+host = {'binary': '/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_full_offloa...ar/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_full_offload_probe_record0/logs')}
+
+    def test_full_offload_probe_records_pins_footprint_and_stops_the_server(host):
+        rc, record = _run(host, "--expect-build", "version: 0 (DRYRUN)")
+        assert rc == 0 and record["verdict"] == "FULL_GPU_OFFLOAD" and record["route"] == "log_line", record
+        assert record["build"]["version_line"] == "version: 0 (DRYRUN)" and len(record["model_sha256"]) == 64
+        assert record["offload"]["offloaded_layers"] == record["offload"]["total_layers"] == 29
+        assert record["served_models"] == ["r1-manager"] and record["props"]["model_path"] == host["model"]
+>       assert record["footprint_mib_to_pin"] == 5560 and record["gpu_generation"]["tokens_per_second"] == 40.0
+E       assert (None == 5560)
+
+r1/tests/test_llamacpp_probe.py:58: AssertionError
+----------------------------- Captured stdout call -----------------------------
+build: version: 0 (DRYRUN)
+sha256: 2b5fed7ec677b3a0327a3ab54848f2c00bcf85d146050ae8349d86ca116a36a6 (0.0 s)
+server healthy: pid 2519, log /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_full_offload_probe_record0/logs/probe_20261026T014119Z/llama_server_52183.log
+route log_line; offload line full; server MiB on card None; CPU control None; VERDICT FULL_GPU_OFFLOAD; footprint_mib to pin: None; record /private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_full_offload_probe_record0/logs/probe_20261026T014119Z.json
+_______________________ test_real_runner_desktop_dryrun ________________________
+
+tmp_path = PosixPath('/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-751/test_real_runner_desktop_dryru0')
+
+>   ???
+E   AssertionError: Traceback (most recent call last):
+E       File "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/rerun2_dryrun.py", line 195, in <module>
+E         main()
+E         ~~~~^^
+E       File "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/rerun2_dryrun.py", line 61, in main
+E         run(['git', 'commit', '-qm', 'DRYRUN source fixture'], cwd=source)
+E         ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/Users/wongdowling/Documents/agent_paper_B/r1/scripts/rerun2_dryrun.py", line 25, in run
+E         return subprocess.check_output(args, cwd=cwd, env=env, text=True, stderr=subprocess.STDOUT)
+E                ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 472, in check_output
+E         return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+E                ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                    **kwargs).stdout
+E                    ^^^^^^^^^
+E       File "/opt/homebrew/Cellar/python@3.13/3.13.4/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 577, in run
+E         raise CalledProcessError(retcode, process.args,
+E                                  output=stdout, stderr=stderr)
+E     subprocess.CalledProcessError: Command '['git', 'commit', '-qm', 'DRYRUN source fixture']' returned non-zero exit status 1.
+E
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/private/tmp/exam-x-20261026/venv/bin/python', '/Users/wongdowling/Documents/agent_paper_B/r1/...rocessError: Command \'[\'git\', \'commit\', \'-qm\', \'DRYRUN source fixture\']\' returned non-zero exit status 1.\n').returncode
+
+/sessions/rcw-01tz6nz5t4ly5svvjbhk9dhc/mnt/agent_paper_B/r1/tests/test_rerun2_batch4c.py:222: AssertionError
+=========================== short test summary info ============================
+SKIPPED [1] ../../../../sessions/rcw-01tz6nz5t4ly5svvjbhk9dhc/mnt/agent_paper_B/r1/tests/test_c3_arms_eval.py:48: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] ../../../../sessions/rcw-01tz6nz5t4ly5svvjbhk9dhc/mnt/agent_paper_B/r1/tests/test_c3_arms_eval.py:57: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] ../../../../sessions/rcw-01tz6nz5t4ly5svvjbhk9dhc/mnt/agent_paper_B/r1/tests/test_c3_arms_eval.py:72: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] ../../../../sessions/rcw-01tz6nz5t4ly5svvjbhk9dhc/mnt/agent_paper_B/r1/tests/test_c3_arms_eval.py:96: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] ../../../../sessions/rcw-01tz6nz5t4ly5svvjbhk9dhc/mnt/agent_paper_B/r1/tests/test_c3_arms_eval.py:150: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] r1/tests/test_c3_env.py:64: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [2] r1/tests/test_c3_prior_model.py:37: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] r1/tests/test_c3_prior_model.py:54: could not import 'lightgbm': No module named 'lightgbm'
+FAILED r1/tests/test_c3_control_dryrun.py::test_control_dryrun_end_to_end - A...
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_retry_and_permanent_failure
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_resumes_after_kill_mid_campaign
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_watchdog_restarts_a_killed_runner
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_watchdog_restarts_a_killed_server
+FAILED r1/tests/test_c3_sweep_resume.py::test_orphaned_instance_is_stopped_only_when_it_is_provably_ours
+FAILED r1/tests/test_c3_sweep_resume.py::test_resume_refuses_while_an_earlier_runner_process_lives
+FAILED r1/tests/test_llama_server_instance.py::test_start_records_argv_cmdline_pins_and_identity
+FAILED r1/tests/test_llama_server_instance.py::test_orphan_is_stopped_only_when_provably_ours
+FAILED r1/tests/test_llama_server_instance.py::test_a_matching_process_of_another_user_is_never_signalled
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_fake_v070_log_has_no_offload_line_and_fake_nvidia_smi_lists_the_server
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_runner_check_passes_by_either_route_and_records_it[silent-5560-gpu_memory]
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_runner_check_stops_on_low_memory_partial_line_or_fallback[silent-4000-below the pinned footprint]
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_i - assert ...
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_ii_with_cpu_control
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_ii_failures_exit_nonzero_with_telemetry[env0-extra0-speedup]
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_ii_failures_exit_nonzero_with_telemetry[env2-extra2-below]
+FAILED r1/tests/test_llamacpp_offload_routes.py::test_probe_route_ii_failures_exit_nonzero_with_telemetry[env3-extra3-below]
+FAILED r1/tests/test_llamacpp_probe.py::test_full_offload_probe_records_pins_footprint_and_stops_the_server
+FAILED r1/tests/test_rerun2_batch4c.py::test_real_runner_desktop_dryrun - Ass...
+22 failed, 417 passed, 9 skipped in 645.08s (0:10:45)

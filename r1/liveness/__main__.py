@@ -59,6 +59,11 @@ def run_campaigns(args) -> Path:
         if args.manager != "langgraph":
             raise RuntimeError("STOP: --manager-model needs --manager langgraph")
         manager = {**manager, "model": collect.check_manager_model(model)}
+    schema = getattr(args, 'proposal_schema', None)
+    if schema is not None:
+        if args.manager != 'langgraph' or not str(manager.get('model', '')).startswith('llamacpp/'):
+            raise RuntimeError('STOP: proposal schema requires the llama.cpp LangGraph manager')
+        manager = {**manager, 'proposal_schema': schema}
     if getattr(args, "transport_max_attempts", None) is not None:
         # Bounded LLM transport retry (19 Oct); absent means one attempt (historical).
         manager = {**manager, "transport_max_attempts": int(args.transport_max_attempts)}
@@ -118,6 +123,7 @@ def main() -> int:
     parser.add_argument("--manager-model", default=None,
                         help="langgraph manager model id (default ollama/qwen2.5-coder:7b); llamacpp/<alias> "
                              "for a llama-server (RUNBOOK A.10)")
+    parser.add_argument('--proposal-schema', choices=['manager_proposal/v1'], default=None)
     parser.add_argument("--out", default=None)
     parser.add_argument("--work", default="/tmp/r1_liveness")
     args = parser.parse_args()

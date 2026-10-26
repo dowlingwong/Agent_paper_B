@@ -1,0 +1,1346 @@
+{
+  "schema": "exam_registry/v1",
+  "label": "EXAM",
+  "author_decisions": "docs/r1/PLAN.md#R1-EXAM-ORNITH",
+  "candidates": [
+    {
+      "id": "qwen38_27b",
+      "role": "candidate",
+      "family": "qwen",
+      "base_repo": "Qwen/Qwen3.8-27B",
+      "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "Qwen/Qwen3.8-27B",
+        "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "file": "tokenizer_config.json",
+        "sha256": "b11349aafa7cdc6a320767cf7ceb29ed82f7eda5d65e8e0819e76f0ce947bf27",
+        "template_sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/Qwen/Qwen3.8-27B/resolve/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0/generation_config.json",
+        "http_status": 200,
+        "sha256": "e70c136c1b78ddc1fb0905bac8e733a4dc448d4f852a5dd75143fffc70be550e",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 1.0,
+          "top_k": 20,
+          "top_p": 0.95
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "Qwen/Qwen3.8-27B"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "qwen36_27b",
+      "role": "candidate",
+      "family": "qwen",
+      "base_repo": "Qwen/Qwen3.6-27B",
+      "base_revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "Qwen/Qwen3.6-27B",
+        "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+        "file": "tokenizer_config.json",
+        "sha256": "5186f0defcd7f232382c7f0aebcd2252d073bb921ab240e407b7ae8745d2b29b",
+        "template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/Qwen/Qwen3.6-27B/resolve/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9/generation_config.json",
+        "http_status": 200,
+        "sha256": "e70c136c1b78ddc1fb0905bac8e733a4dc448d4f852a5dd75143fffc70be550e",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 1.0,
+          "top_k": 20,
+          "top_p": 0.95
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "Qwen/Qwen3.6-27B"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "gemma4_31b",
+      "role": "candidate",
+      "family": "gemma",
+      "base_repo": "google/gemma-4-31B-it",
+      "base_revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "google/gemma-4-31B-it",
+        "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+        "file": "chat_template.jinja",
+        "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+        "template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/google/gemma-4-31B-it/resolve/842da3794eaa0b77d5f08bae87a17459d91ff475/generation_config.json",
+        "http_status": 200,
+        "sha256": "d4226bbe3117d2d253ba4609720ba82c6c4ce4627a9a6ae05387c78983ac03de",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 1.0,
+          "top_k": 64,
+          "top_p": 0.95
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "google/gemma-4-31B-it"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "muse_glimmer_30b",
+      "role": "candidate",
+      "family": "muse",
+      "base_repo": "meta-models/Muse-Glimmer-30B",
+      "base_revision": "cec94fcfd6512f2cfe708138c32533b346ea4f69",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "meta-models/Muse-Glimmer-30B",
+        "revision": "cec94fcfd6512f2cfe708138c32533b346ea4f69",
+        "file": "chat_template.jinja",
+        "sha256": "cfc67e5f349f37690dfd31ed1f18bc4442a9dd32fe39a648f993cb4eb3cae678",
+        "template_sha256": "cfc67e5f349f37690dfd31ed1f18bc4442a9dd32fe39a648f993cb4eb3cae678"
+      },
+      "thinking_policy": {
+        "mode": "always_on",
+        "budget": 2048,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "Native reasoning template without an enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/meta-models/Muse-Glimmer-30B/resolve/cec94fcfd6512f2cfe708138c32533b346ea4f69/generation_config.json",
+        "http_status": 200,
+        "sha256": "1fa51889b1f8d3659802dedaa27e005b81e5c58483f13ecf13f2d97306bc6e35",
+        "declared_generation_defaults": {
+          "max_length": 131072,
+          "do_sample": true,
+          "temperature": 1.0,
+          "top_p": 0.95,
+          "top_k": 64
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "meta-models/Muse-Glimmer-30B"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "olmo31_32b",
+      "role": "candidate",
+      "family": "olmo",
+      "base_repo": "allenai/Olmo-3.1-32B-Instruct",
+      "base_revision": "ac0587e4a7744a551c059d8cd17ba220bc940dae",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "allenai/Olmo-3.1-32B-Instruct",
+        "revision": "ac0587e4a7744a551c059d8cd17ba220bc940dae",
+        "file": "tokenizer_config.json",
+        "sha256": "80fbc2a161419760bb8a84ed1d3b9550a2d68b7abd07a72706b8f5977e044b8d",
+        "template_sha256": "49a944c9814e130bd3cc80a2420c55ff22e24a4e4ba97009aa60000909b5eac3"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "No thinking switch or unconditional reasoning prefix in pinned template",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/allenai/Olmo-3.1-32B-Instruct/resolve/ac0587e4a7744a551c059d8cd17ba220bc940dae/generation_config.json",
+        "http_status": 200,
+        "sha256": "9ca20766a58daf4a6e1bf5f6552d27dbe57733dba2c3af507dd9f4b12aacc0b0",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 0.6,
+          "top_p": 0.95,
+          "max_new_tokens": 32768
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "allenai/Olmo-3.1-32B-Instruct"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "devstral_small2_24b",
+      "role": "candidate",
+      "family": "mistral",
+      "base_repo": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+      "base_revision": "55c5b41e98c2dbd21b0c8afffc540dcfc9eb5128",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+        "revision": "55c5b41e98c2dbd21b0c8afffc540dcfc9eb5128",
+        "file": "chat_template.jinja",
+        "sha256": "a0c0ed8a45c2c75c85fd756316a10419b90eb4f3dbe64d00f5c0b8ad4de5209a",
+        "template_sha256": "a0c0ed8a45c2c75c85fd756316a10419b90eb4f3dbe64d00f5c0b8ad4de5209a"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "No thinking switch or unconditional reasoning prefix in pinned template",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/mistralai/Devstral-Small-2-24B-Instruct-2512/resolve/55c5b41e98c2dbd21b0c8afffc540dcfc9eb5128/generation_config.json",
+        "http_status": 200,
+        "sha256": "c5ee59a086c5504838db2a66cafdf04d10aac11cb021dd4e92a15946645c2dda",
+        "declared_generation_defaults": {
+          "max_length": 262144,
+          "do_sample": true,
+          "temperature": 0.15
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "mistralai/Devstral-Small-2-24B-Instruct-2512"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "qwen36_35b_a3b",
+      "role": "candidate",
+      "family": "qwen",
+      "base_repo": "Qwen/Qwen3.6-35B-A3B",
+      "base_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "Qwen/Qwen3.6-35B-A3B",
+        "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+        "file": "tokenizer_config.json",
+        "sha256": "5186f0defcd7f232382c7f0aebcd2252d073bb921ab240e407b7ae8745d2b29b",
+        "template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/resolve/995ad96eacd98c81ed38be0c5b274b04031597b0/generation_config.json",
+        "http_status": 200,
+        "sha256": "e70c136c1b78ddc1fb0905bac8e733a4dc448d4f852a5dd75143fffc70be550e",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 1.0,
+          "top_k": 20,
+          "top_p": 0.95
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "Qwen/Qwen3.6-35B-A3B"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "gemma4_26b_a4b",
+      "role": "candidate",
+      "family": "gemma",
+      "base_repo": "google/gemma-4-26B-A4B-it",
+      "base_revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "google/gemma-4-26B-A4B-it",
+        "revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+        "file": "chat_template.jinja",
+        "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+        "template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/google/gemma-4-26B-A4B-it/resolve/4d7ae4984b7db7de8f8457170b3f1a419ee76d52/generation_config.json",
+        "http_status": 200,
+        "sha256": "d4226bbe3117d2d253ba4609720ba82c6c4ce4627a9a6ae05387c78983ac03de",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 1.0,
+          "top_k": 64,
+          "top_p": 0.95
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "google/gemma-4-26B-A4B-it"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "nemotron35_30b_a3b",
+      "role": "candidate",
+      "family": "nemotron",
+      "base_repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "base_revision": "a9904d24bcc1d289a1950fa9d2b978c47cf903b9",
+      "licence": "openmdw-1.1",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+        "revision": "a9904d24bcc1d289a1950fa9d2b978c47cf903b9",
+        "file": "chat_template.jinja",
+        "sha256": "58933db77d3099b4f78c55a38347a72e1ea05b97d6bd8f38775303dc0194e0a9",
+        "template_sha256": "58933db77d3099b4f78c55a38347a72e1ea05b97d6bd8f38775303dc0194e0a9"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16/resolve/a9904d24bcc1d289a1950fa9d2b978c47cf903b9/generation_config.json",
+        "http_status": 200,
+        "sha256": "0ed94823ae737b507aef6af01e837041b7aa2fb0306793a310cd201d89a31ff4",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "top_p": 0.95,
+          "temperature": 1.0
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "glm47_flash",
+      "role": "candidate",
+      "family": "glm",
+      "base_repo": "zai-org/GLM-4.7-Flash",
+      "base_revision": "7dd20894a642a0aa287e9827cb1a1f7f91386b67",
+      "licence": "mit",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "zai-org/GLM-4.7-Flash",
+        "revision": "7dd20894a642a0aa287e9827cb1a1f7f91386b67",
+        "file": "chat_template.jinja",
+        "sha256": "d63ad536c3c81880043e22ec7fd08db42b4d8fb7c89c7138bc562bfa25281375",
+        "template_sha256": "d63ad536c3c81880043e22ec7fd08db42b4d8fb7c89c7138bc562bfa25281375"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/zai-org/GLM-4.7-Flash/resolve/7dd20894a642a0aa287e9827cb1a1f7f91386b67/generation_config.json",
+        "http_status": 200,
+        "sha256": "e19f4eb8be12cdb62a3737b52a332c7c142cbf5ee24a5de7d806f6132b782425",
+        "declared_generation_defaults": {
+          "temperature": 1.0
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "zai-org/GLM-4.7-Flash"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "lfm25_24b_a2b",
+      "role": "candidate",
+      "family": "lfm",
+      "base_repo": "LiquidAI/LFM2.5-24B-A2B",
+      "base_revision": "3fcfdbfa1a1b6d8166846a6323e69f1e1254440d",
+      "licence": "lfm1.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "LiquidAI/LFM2.5-24B-A2B",
+        "revision": "3fcfdbfa1a1b6d8166846a6323e69f1e1254440d",
+        "file": "chat_template.jinja",
+        "sha256": "ea663864491de7ade391839479860ca95541f892f72665c73251fbd4643b1bef",
+        "template_sha256": "ea663864491de7ade391839479860ca95541f892f72665c73251fbd4643b1bef"
+      },
+      "thinking_policy": {
+        "mode": "always_on",
+        "budget": 2048,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "Native reasoning template without an enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/resolve/3fcfdbfa1a1b6d8166846a6323e69f1e1254440d/generation_config.json",
+        "http_status": 200,
+        "sha256": "d1ecad152cd278e57220364423f5a5b19350f1e6e230ff82281a5c23a3173f16",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 0.1,
+          "top_k": 50,
+          "repetition_penalty": 1.05
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "LiquidAI/LFM2.5-24B-A2B"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "laguna_xs21",
+      "role": "candidate",
+      "family": "laguna",
+      "base_repo": "poolside/Laguna-XS-2.1",
+      "base_revision": "c5f36269bbdbd3f27fddc9a9f9dbae0cf2cf57db",
+      "licence": "openmdw-1.1",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "poolside/Laguna-XS-2.1",
+        "revision": "c5f36269bbdbd3f27fddc9a9f9dbae0cf2cf57db",
+        "file": "tokenizer_config.json",
+        "sha256": "faf352639727d5f21d017ed014b28f2951557da280819b681c404fdc131101ee",
+        "template_sha256": "2d3c724b3c2e9eb71fe9ccc5423ff268a370a8bfa89e9238b6de14fe000825c8"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/poolside/Laguna-XS-2.1/resolve/c5f36269bbdbd3f27fddc9a9f9dbae0cf2cf57db/generation_config.json",
+        "http_status": 200,
+        "sha256": "e1c5c1322a73e17b5d0a04132bd7828840d6354df40a02961619fa3b0eb0749d",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "max_new_tokens": 32768,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "min_p": 0.0,
+          "top_k": 20
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "poolside/Laguna-XS-2.1"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "ornith10_35b",
+      "role": "candidate",
+      "family": "ornith",
+      "base_repo": "ornith-ai/Ornith-1.0-35B",
+      "base_revision": "5df2ed3f675c7beaa490328cc70bb573b65fb660",
+      "licence": "mit",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "ornith-ai/Ornith-1.0-35B",
+        "revision": "5df2ed3f675c7beaa490328cc70bb573b65fb660",
+        "file": "chat_template.jinja",
+        "sha256": "182e77dd83bd8e9ca818b240b82e28f243762cd5dda32e6eef327df7b1cd107e",
+        "template_sha256": "182e77dd83bd8e9ca818b240b82e28f243762cd5dda32e6eef327df7b1cd107e"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/ornith-ai/Ornith-1.0-35B/resolve/5df2ed3f675c7beaa490328cc70bb573b65fb660/generation_config.json",
+        "http_status": 200,
+        "sha256": "896eeba60a1195e034dc6b9a7bbddd64b6174992348f5dc7d75daaa93d0bdd45",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 1.0,
+          "top_k": 20,
+          "top_p": 0.95
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "ornith-ai/Ornith-1.0-35B"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "qwen3_coder_30b_a3b",
+      "role": "candidate",
+      "family": "qwen",
+      "base_repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "base_revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+        "file": "tokenizer_config.json",
+        "sha256": "60f6e8cb15c98dd07300a3cc465ea662de245d2095e4245616af21b2324db3fc",
+        "template_sha256": "5a38bfa05833266240066aedc497decc9b00cc0d3e3b8cceea98cf530196ab06"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "No thinking switch or unconditional reasoning prefix in pinned template",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct/resolve/b2cff646eb4bb1d68355c01b18ae02e7cf42d120/generation_config.json",
+        "http_status": 200,
+        "sha256": "c99723ab3ba28630d26ae23def77603b540a46924895af5cf234740d3b27b51d",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "repetition_penalty": 1.05,
+          "temperature": 0.7,
+          "top_p": 0.8,
+          "top_k": 20
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "Qwen/Qwen3-Coder-30B-A3B-Instruct"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "gpt_oss_20b",
+      "role": "candidate",
+      "family": "gpt_oss",
+      "base_repo": "openai/gpt-oss-20b",
+      "base_revision": "6cee5e81ee83917806bbde320786a8fb61efebee",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "openai/gpt-oss-20b",
+        "revision": "6cee5e81ee83917806bbde320786a8fb61efebee",
+        "file": "chat_template.jinja",
+        "sha256": "a4c9919cbbd4acdd51ccffe22da049264b1b73e59055fa58811a99efbd7c8146",
+        "template_sha256": "a4c9919cbbd4acdd51ccffe22da049264b1b73e59055fa58811a99efbd7c8146"
+      },
+      "thinking_policy": {
+        "mode": "always_on",
+        "budget": 2048,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "Native reasoning template without an enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/openai/gpt-oss-20b/resolve/6cee5e81ee83917806bbde320786a8fb61efebee/generation_config.json",
+        "http_status": 200,
+        "sha256": "f9970ada892d2d1f72e3ed0a6535ccebadd11897318794ca671d8c7014c957da",
+        "declared_generation_defaults": {
+          "do_sample": true
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "MXFP4",
+        "base_model": "openai/gpt-oss-20b"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "qwen35_9b",
+      "role": "candidate",
+      "family": "qwen",
+      "base_repo": "Qwen/Qwen3.5-9B",
+      "base_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "Qwen/Qwen3.5-9B",
+        "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+        "file": "tokenizer_config.json",
+        "sha256": "316230d6a809701f4db5ea8f8fc862bc3a6f3229c937c174e674ff3ca0a64ac8",
+        "template_sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/Qwen/Qwen3.5-9B/resolve/c202236235762e1c871ad0ccb60c8ee5ba337b9a/generation_config.json",
+        "http_status": 404,
+        "sha256": null,
+        "declared_generation_defaults": {},
+        "status": "not_declared_in_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "Qwen/Qwen3.5-9B"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "gemma4_12b",
+      "role": "candidate",
+      "family": "gemma",
+      "base_repo": "google/gemma-4-12B-it",
+      "base_revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "google/gemma-4-12B-it",
+        "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+        "file": "chat_template.jinja",
+        "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+        "template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/google/gemma-4-12B-it/resolve/707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7/generation_config.json",
+        "http_status": 200,
+        "sha256": "a8349d9bd64cc5841297fcb5002f0fdc4749c473c8f1b10ea337f9ce4ee7014e",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 1.0,
+          "top_k": 64,
+          "top_p": 0.95
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "google/gemma-4-12B-it"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "ornith10_9b",
+      "role": "candidate",
+      "family": "ornith",
+      "base_repo": "ornith-ai/Ornith-1.0-9B",
+      "base_revision": "83dc1f5e24ef8527af019a6b3bf66ac0f1c2c999",
+      "licence": "mit",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "ornith-ai/Ornith-1.0-9B",
+        "revision": "83dc1f5e24ef8527af019a6b3bf66ac0f1c2c999",
+        "file": "chat_template.jinja",
+        "sha256": "8b4d21a1e70ccbc8849e5e5e6dd32f3acfb2e2060739475909edc6e9b27c7165",
+        "template_sha256": "8b4d21a1e70ccbc8849e5e5e6dd32f3acfb2e2060739475909edc6e9b27c7165"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/ornith-ai/Ornith-1.0-9B/resolve/83dc1f5e24ef8527af019a6b3bf66ac0f1c2c999/generation_config.json",
+        "http_status": 200,
+        "sha256": "be19d3c48cd249efd6e0327b69916caae8279007dd14c0aad86f7b6b28c5d148",
+        "declared_generation_defaults": {},
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "ornith-ai/Ornith-1.0-9B"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "ministral3_14b",
+      "role": "candidate",
+      "family": "mistral",
+      "base_repo": "mistralai/Ministral-3-14B-Instruct-2512",
+      "base_revision": "29439f81c2be264d8d393273f99e7db9c0961120",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "mistralai/Ministral-3-14B-Instruct-2512",
+        "revision": "29439f81c2be264d8d393273f99e7db9c0961120",
+        "file": "chat_template.jinja",
+        "sha256": "2f545122222db8bb43ca0ea0c49e9185320a8670f7d35575b0da0eb48b1e8970",
+        "template_sha256": "2f545122222db8bb43ca0ea0c49e9185320a8670f7d35575b0da0eb48b1e8970"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "No thinking switch or unconditional reasoning prefix in pinned template",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/mistralai/Ministral-3-14B-Instruct-2512/resolve/29439f81c2be264d8d393273f99e7db9c0961120/generation_config.json",
+        "http_status": 200,
+        "sha256": "e0923390059f84a9180b00e5501778acc45ea9856cd7f2fd68208b360927c677",
+        "declared_generation_defaults": {
+          "max_length": 262144
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "mistralai/Ministral-3-14B-Instruct-2512"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "rico03_qwen36_27b",
+      "role": "candidate",
+      "family": "qwen",
+      "base_repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
+      "base_revision": "448ea0a074e64c940baceabe2590afe8b41a593d",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "community fine-tune, data provenance not audited",
+      "chat_template_source": {
+        "repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
+        "revision": "448ea0a074e64c940baceabe2590afe8b41a593d",
+        "file": "tokenizer_config.json",
+        "sha256": "600fd19e3451b52986c56aad162c8048010ca9c79132d6f55550df3044734125",
+        "template_sha256": "c411c6e89e63ed2f917ae92439fda8545a96e8bc574b9155a722e65979a2f2e8"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled/resolve/448ea0a074e64c940baceabe2590afe8b41a593d/generation_config.json",
+        "http_status": 404,
+        "sha256": null,
+        "declared_generation_defaults": {},
+        "status": "not_declared_in_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "qwopus36_27b_v4",
+      "role": "candidate",
+      "family": "qwen",
+      "base_repo": "skiboyvv/Qwopus3.6-27B-v4",
+      "base_revision": "20e38d7ad08daf0bfa2978f85578288fc7c298aa",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "community fine-tune, data provenance not audited",
+      "chat_template_source": {
+        "repo": "skiboyvv/Qwopus3.6-27B-v4",
+        "revision": "20e38d7ad08daf0bfa2978f85578288fc7c298aa",
+        "file": "chat_template.jinja",
+        "sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+        "template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": true,
+        "off_switch": true,
+        "basis": "Pinned vendor template has enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/skiboyvv/Qwopus3.6-27B-v4/resolve/20e38d7ad08daf0bfa2978f85578288fc7c298aa/generation_config.json",
+        "http_status": 200,
+        "sha256": "a219dff6ed1d52d8a88fe50026de36ebcbcb913cbac0e70fdfaecf380949d7f1",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 1.0,
+          "top_k": 20,
+          "top_p": 0.95
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "skiboyvv/Qwopus3.6-27B-v4"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    },
+    {
+      "id": "qwen25_coder_7b",
+      "role": "anchor",
+      "family": "qwen",
+      "base_repo": "Qwen/Qwen2.5-Coder-7B-Instruct",
+      "base_revision": "c03e6d358207e414f1eca0bb1891e29f1db0e242",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "Qwen/Qwen2.5-Coder-7B-Instruct",
+        "revision": "c03e6d358207e414f1eca0bb1891e29f1db0e242",
+        "file": "tokenizer_config.json",
+        "sha256": "959e7f1d9a1b7641a6d6ce05ca97b75c7894fcb66cbe5a040406458fb1128ee4",
+        "template_sha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f"
+      },
+      "thinking_policy": {
+        "mode": "off",
+        "budget": 0,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "No thinking switch or unconditional reasoning prefix in pinned template",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct/resolve/c03e6d358207e414f1eca0bb1891e29f1db0e242/generation_config.json",
+        "http_status": 200,
+        "sha256": "1a628a5775bc69cde01c6749a531150ca4d3189652c618a174f7077923acf3b1",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "repetition_penalty": 1.1,
+          "temperature": 0.7,
+          "top_p": 0.8,
+          "top_k": 20
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "Qwen/Qwen2.5-Coder-7B-Instruct"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    }
+  ],
+  "software_anchors": [
+    {
+      "id": "random_valid",
+      "role": "anchor",
+      "family": "software",
+      "kind": "random_valid"
+    },
+    {
+      "id": "scripted",
+      "role": "anchor",
+      "family": "software",
+      "kind": "scripted"
+    }
+  ],
+  "sensitivities": [
+    {
+      "id": "olmo31_32b_think",
+      "role": "sensitivity",
+      "family": "olmo",
+      "base_repo": "allenai/Olmo-3.1-32B-Think",
+      "base_revision": "97ade57a9cc55ed48bcd76be4b7a3b6fee61b80d",
+      "licence": "apache-2.0",
+      "gated": false,
+      "licence_approval": "PLAN.md#R1-EXAM-LICENCES",
+      "provenance_label": "vendor model",
+      "chat_template_source": {
+        "repo": "allenai/Olmo-3.1-32B-Think",
+        "revision": "97ade57a9cc55ed48bcd76be4b7a3b6fee61b80d",
+        "file": "tokenizer_config.json",
+        "sha256": "167d2a8dab9cd99f391c19ef13d5e19679aa6eccab6be68f55f2d3407dec6d52",
+        "template_sha256": "fb2b8736121ab4001112a9ccfb33c0081230536c861c706bf24b1b390964c1cd"
+      },
+      "thinking_policy": {
+        "mode": "always_on",
+        "budget": 2048,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "Native reasoning template without an enable_thinking switch",
+        "host_grammar_status": "pending_stage_a"
+      },
+      "vendor_sampling": {
+        "source": "https://huggingface.co/allenai/Olmo-3.1-32B-Think/resolve/97ade57a9cc55ed48bcd76be4b7a3b6fee61b80d/generation_config.json",
+        "http_status": 200,
+        "sha256": "9ca20766a58daf4a6e1bf5f6552d27dbe57733dba2c3af507dd9f4b12aacc0b0",
+        "declared_generation_defaults": {
+          "do_sample": true,
+          "temperature": 0.6,
+          "top_p": 0.95,
+          "max_new_tokens": 32768
+        },
+        "status": "reported_generation_config",
+        "exam_temperature": 0.2,
+        "other_exam_sampling": "pinned llama.cpp build defaults; vendor defaults recorded descriptively"
+      },
+      "vendor_q4_available": "TODO_VERIFY_ON_HOST",
+      "quant_source": {
+        "kind": "TODO_VERIFY_ON_HOST",
+        "repo": "TODO_VERIFY_ON_HOST",
+        "revision": "TODO_VERIFY_ON_HOST",
+        "file": "TODO_VERIFY_ON_HOST",
+        "size_bytes": "TODO_VERIFY_ON_HOST",
+        "sha256": "TODO_VERIFY_ON_HOST",
+        "quantization": "Q4_K_M",
+        "base_model": "allenai/Olmo-3.1-32B-Think"
+      },
+      "runtime": {
+        "model_path": "TODO_VERIFY_ON_HOST",
+        "footprint_mib": "TODO_VERIFY_ON_HOST",
+        "model_config_path": "TODO_VERIFY_ON_HOST",
+        "model_config_sha256": "TODO_VERIFY_ON_HOST"
+      },
+      "template_repair": null
+    }
+  ],
+  "excluded": [
+    {
+      "id": "ornith10_31b",
+      "reason": "Not publicly released, author checked 26 Oct 2026; no substitute",
+      "author_decision": "R1-EXAM-ORNITH"
+    }
+  ],
+  "phase2_vendor_first": {
+    "ornith10_35b": "ornith-ai/Ornith-1.0-35B-GGUF"
+  }
+}

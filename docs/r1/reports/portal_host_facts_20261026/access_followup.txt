@@ -1,0 +1,26 @@
+2026-10-26T01:10:05Z
+No ED25519 host key is known for github.com and you have requested strict checking.
+Host key verification failed.
+git_ssh_exit=128
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+home_writable_exit=0
+filesystem=ext2/ext3 block_size=4096 blocks_available=219402315
+quota command not installed
+huggingface_hub_installed=False
+HTTP/1.1 412 Precondition Failed
+Date: Mon, 26 Oct 2026 01:09:34 GMT
+Server: Apache/2.4.41 (Ubuntu)
+Content-Type: text/xml; charset=utf-8
+Content-Length: 197
+X-Powered-By: PHP/8.5.12
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+[HTTP Set-Cookie header redacted]
+[HTTP Set-Cookie header redacted]

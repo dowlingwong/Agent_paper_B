@@ -1,0 +1,75 @@
+{
+  "schema": "exam_config/v1",
+  "host": "TODO_VERIFY_ON_HOST",
+  "models_dir": "TODO_VERIFY_ON_HOST",
+  "work_dir": "TODO_VERIFY_ON_HOST",
+  "gpu_uuid": "TODO_VERIFY_ON_HOST",
+  "comment": "Author approved /home/dowling/exam-x/{models,work}. Host values remain placeholders until Phase 2. No GitHub credentials on portal; SSH bare transfer repositories go under work/remotes.",
+  "minimum_free_bytes": 100000000000,
+  "ctx_size": 32768,
+  "cache_type_k": "q8_0",
+  "cache_type_v": "q8_0",
+  "n_gpu_layers": 999,
+  "temperature": 0.2,
+  "proposal_schema": "manager_proposal/v1",
+  "registry": "r1/exam/registry.yaml",
+  "rule": "r1/exam/rules/x5_rule_v1.yaml",
+  "rule_sha256": "0665903b276f34eca4cd4d03ac483192cd3ef3b41c24d188e2dd103d65423b6e",
+  "value_grids": "r1/exam/value_grids.yaml",
+  "paper_commit": "TODO_VERIFY_ON_HOST",
+  "harness_commit": "TODO_VERIFY_ON_HOST",
+  "prompts": "TODO_VERIFY_ON_HOST",
+  "prompts_sha256": "TODO_VERIFY_ON_HOST",
+  "server": {
+    "binary": "TODO_VERIFY_ON_HOST",
+    "binary_sha256": "TODO_VERIFY_ON_HOST",
+    "build": "TODO_VERIFY_ON_HOST",
+    "start_timeout": 300
+  },
+  "instance_seeds": [
+    9001,
+    9002,
+    9003,
+    9004
+  ],
+  "audit_seeds": [
+    9101,
+    9102,
+    9103,
+    9104
+  ],
+  "W": 20,
+  "llm_call_cap": "TODO_AUTHOR_LLM_CALL_CAP",
+  "nodes": [
+    "TODO_VERIFY_D28_DIGITS_OR_TABULAR",
+    "openml_credit_approval",
+    "openml_ionosphere"
+  ],
+  "stage_a_table": "TODO_VERIFY_ON_HOST",
+  "anchor_duplicate_reference": {
+    "source": "TODO_VERIFY_ON_HOST",
+    "sha256": "TODO_VERIFY_ON_HOST",
+    "lower": "TODO_VERIFY_ON_HOST",
+    "upper": "TODO_VERIFY_ON_HOST"
+  },
+  "authorizations": {
+    "b1": "docs/r1/authorizations/exam_b1_20261026.md",
+    "b2": "docs/r1/authorizations/exam_b2_20261026.md"
+  },
+  "b1_analysis": "TODO_VERIFY_ON_HOST",
+  "b2_instances_per_node": "TODO_AUTHOR_B2_POWER_PLAN",
+  "watchdog": {
+    "enabled": true,
+    "poll_seconds": 0.5,
+    "health_timeout": 2,
+    "unresponsive_checks": 3,
+    "model_checks": 3,
+    "max_restarts": 3
+  },
+  "root_timeout_seconds": 3600,
+  "schema_sensitivity_node": "openml_credit_approval",
+  "d22_pick": "TODO_AUTHOR_D22_PICK",
+  "workers": 4,
+  "stage_a_table_sha256": "TODO_VERIFY_ON_HOST",
+  "b1_analysis_sha256": "TODO_VERIFY_ON_HOST"
+}
