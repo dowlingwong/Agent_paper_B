@@ -122,7 +122,10 @@ class Handler(BaseHTTPRequestHandler):
             self.reply({'tokens': [1, 2]})
             return
         if self.path == '/completion':
-            self.reply({'content': 'x', 'tokens_evaluated': len(body['prompt']), 'tokens_predicted': body.get('n_predict', 1)})
+            if len(body['prompt']) >= int(ARGS['-c']):
+                self.reply({'error': 'prompt must leave a context slot'}, 400)
+                return
+            self.reply({'content': 'x', 'tokens_evaluated': len(body['prompt']), 'tokens_predicted': max(1, body.get('n_predict', 1))})
             return
         if self.path == '/apply-template':
             self.reply({'prompt': ''.join(f"{m['role']}: {m['content']}\n" for m in body['messages']) + 'assistant: '})

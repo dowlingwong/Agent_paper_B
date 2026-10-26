@@ -1,6 +1,6 @@
 # Portal exam Phase 2 — preparation and receiving
 
-26 October 2026. AI-assisted; ENGINEERING_ONLY. **IN PROGRESS.** Independent review is pending; no Stage A, B1 or B2 has started.
+26 October 2026. AI-assisted; ENGINEERING_ONLY. **STOPPED TRANSFER; REVIEW PENDING.** Independent review is pending; no Stage A, B1 or B2 has started.
 
 ## Authority and code transfer
 
@@ -40,8 +40,14 @@ A second explicit transport-only concurrency adjustment from two to six workers 
 
 Pinned-build preflight correction before real Stage A: server-common.cpp at `620d2225` accepts `reasoning_budget_tokens` (alias `thinking_budget_tokens`), not `reasoning_budget`. The probe and fake now use this actual API and record request controls. Final focused suite: **43 passed** (implementation 47.24 s; independent reviewer 47.01 s), including synthetic kill/resume. Future migration census now unions children across every process task; the earlier main-thread-only journal limitation remains explicitly recorded, with independent live-worker ancestry checks confirming no old/orphan workers.
 
-Before real Stage A, source inspection and independent review identified the pinned server's full-context admission boundary and first-sample behavior. `PREFILL_API_CONFLICT.md` records the exact paths and proposed one-slot reserve. An author decision has been requested; no lower prefill count has been adopted and no real request has been sent. Phase 2 receiving continues independently.
+Before real Stage A, source inspection and independent review identified the pinned server's full-context admission boundary and first-sample behavior. `PREFILL_API_CONFLICT.md` records the exact paths and proposed one-slot reserve. The author approved the proposal in PLAN R1-EXAM-PREFILL-RESERVE. Requested and observed counts are recorded; no real request has been sent.
 
 A separately reviewed qualification correction classifies a source-backed CUDA allocation OOM with matched pins, stopped server and healthy idle post-stop census as mechanical failure, allowing the already-prescribed fallback. Missing or unknown telemetry remains a preparation STOP; missing footprint can never pass qualification.
 
 Final focused regression checkpoint: **50 passed in 45.66 s**, covering exam core, fake-server dry run, transport cancellation/retained partials, observer and qualification taxonomy. This validates engineering fixtures; Phase 2 receiving and independent acceptance are still pending.
+
+## Subsequent direct HTTPS receiving STOP
+
+A later read-only check found the controller absent and a preserved transport STOP. Verified certificates now cover Qwen38, Qwen36, Muse Glimmer, Gemma 26B and Gemma 31B (**5/22**). First cause: Nemotron HTTPS child exited with the guarded size/digest mismatch error. Its retained file is **15,695,959,265 bytes**, smaller than the pinned **25,477,403,616** by **9,781,444,351 bytes**. This establishes an incomplete transfer, not acceptance or proof that a complete source artifact has the wrong hash. Shared cancellation stopped the remaining cohort; all six partials and the original STOP/logs remain untouched. No matching transport processes remain. Available space was **531,517,050,880 bytes**, above the floor. Independent partial/full-file receiving checks are in progress; no restart has been performed.
+
+Approved prefill implementation checkpoint: focused exam suite **55 passed in 49.85 s**; final metadata-only adjustment rechecked with **5 prefill tests passed**. The fake endpoint now enforces the pinned prompt admission boundary. Actual declared context, prefill request/measurement, requested/measured generation and reserve fields survive failed-count probes. No real model request was sent. Independent receiving confirms all five completed artifacts, with prior two stable-file identities unchanged; remaining transfers are stopped pending the separate archival/retry decision.

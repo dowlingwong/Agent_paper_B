@@ -67,7 +67,7 @@ Read first: PLAN §10 rows named above, RUNBOOK Track X and Track H, `r1/scripts
 ## Phase 3 — Stage A (RUNBOOK X.2; ENGINEERING_ONLY; ~1 day)
 
 For every candidate and anchor model:
-1. **Fit probe:** start `llama-server` (ctx 32,768, q8_0 KV, all layers on GPU); prefill a 32k-token prompt; record peak VRAM, full offload by the runner's two routes, free memory ≥ 1 GiB. A model that fits only at 16k: re-probe at 16,384 and flag "CPU-pool rows only".
+1. **Fit probe:** start `llama-server` (ctx 32,768, q8_0 KV, all layers on GPU); prefill 32,767 tokens with explicit `n_predict: 1` (author R1-EXAM-PREFILL-RESERVE); record declared context, actual prefill/generated counts, one-slot reserve, peak VRAM, full offload by the runner's two routes, free memory ≥ 1 GiB. A model that fits only at 16k: re-probe at context 16,384 with 16,383 prefill tokens plus one generated token, retaining fit estimates at 16,384, and flag "CPU-pool rows only".
 2. **Template check:** `--jinja` render vs the HF chat template on 5 fixed prompts, byte-equal.
 3. **Grammar after thinking:** with thinking on and the schema on, the grammar must constrain only the final answer, not the reasoning. If it does not, the model runs thinking-off and is flagged.
 4. **50 frozen manager prompts** replayed from real memory-on ledgers (the three rerun-2 memory-on nodes plus existing memory-on digits liveness ledgers from 14 Oct; author correction R1-EXAM-PROMPT-SOURCE, DT4 is memory-off; ≥ 4 nodes; the prompt set and its sha256 are committed first): parse rate free and with schema, active-key validity rate, D26 seed reproducibility (two calls identical at temperature 0.2), latency p50/p95, prompt/completion/reasoning tokens.

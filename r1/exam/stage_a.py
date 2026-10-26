@@ -65,11 +65,29 @@ def parse_proposal(content, row, structured):
     return result.extra['llm_call']['parse_ok'],valid_key
 
 
+def fit_prefill(instance):
+    """Author-approved native API reserve; cache allocation remains the declared ctx."""
+    context=instance.ctx_size
+    target=context-1
+    tokenized=post(instance,'/tokenize',{'content':'a ','add_special':True})['tokens']
+    if not tokenized: raise ValueError('empty tokenisation result')
+    tokens=(tokenized*((target+len(tokenized)-1)//len(tokenized)))[:target]
+    reply=post(instance,'/completion',{'prompt':tokens,'n_predict':1,'seed':0,'temperature':0.2,'cache_prompt':False})
+    evidence={'declared_context_tokens':context,'prefill_requested_tokens':target,
+              'prefill_tokens':reply.get('tokens_evaluated'),'prefill_requested_generated_tokens':1,
+              'prefill_generated_tokens':reply.get('tokens_predicted'),'native_api_reserve_tokens':1,
+              'prefill_author_ref':'R1-EXAM-PREFILL-RESERVE'}
+    return evidence
+
+
 def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=False, template_renderer=None):
     result={'candidate':spec['id'],'label':'EXAM','execution_label':'DRYRUN' if dryrun else 'ENGINEERING_ONLY',
             'phase':'stage-a','prompts':len(prompts),'failure_classes':[], 'cpu_pool_only':instance.ctx_size==16384,
             'free_parse_successes':0,'schema_parse_successes':0,'active_key_successes':0,'free_active_key_successes':0,'free_seed_reproducible':True,
-            'seed_reproducible':True,'template_checks':[],'grammar_after_thinking':None}
+            'seed_reproducible':True,'template_checks':[],'grammar_after_thinking':None,
+            'declared_context_tokens':instance.ctx_size,'prefill_requested_tokens':instance.ctx_size-1,
+            'prefill_tokens':None,'prefill_requested_generated_tokens':1,'prefill_generated_tokens':None,
+            'native_api_reserve_tokens':1,'prefill_author_ref':'R1-EXAM-PREFILL-RESERVE'}
     telemetry=[];stop=threading.Event()
     def sample():
         while not stop.is_set():
@@ -79,14 +97,11 @@ def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=Fa
     thread=threading.Thread(target=sample,daemon=True);thread.start()
     component='offload'
     try:
-        # Prefill the full declared context with no generated token.
-        tokenized=post(instance,'/tokenize',{'content':'a ','add_special':True})['tokens']
-        if not tokenized: raise ValueError('empty tokenisation result')
-        target=instance.ctx_size
-        tokens=(tokenized*((target+len(tokenized)-1)//len(tokenized)))[:target]
-        reply=post(instance,'/completion',{'prompt':tokens,'n_predict':0,'seed':0,'temperature':0.2,'cache_prompt':False})
-        if reply.get('tokens_evaluated')!=target: raise ValueError('prefill count does not equal declared context')
-        result['prefill_tokens']=target
+        result.update(fit_prefill(instance))
+        if result['prefill_tokens']!=instance.ctx_size-1:
+            raise ValueError('prefill count does not equal approved context minus one')
+        if result['prefill_generated_tokens']!=1:
+            raise ValueError('native probe did not report exactly one generated token')
         samples=[s for s in telemetry if 'error' not in s]
         if not samples: raise ValueError('no VRAM telemetry')
         result['min_free_mib']=min(s['free_mib'] for s in samples)

@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — author approves native prefill reserve; new transport STOP (AI-assisted)
+
+PLAN §10 R1-EXAM-PREFILL-RESERVE records the author's approval: keep declared context and fit math at 32,768, prefill 32,767 with n_predict 1; fallback context 16,384 with 16,383 prefill plus one generated token. Results retain requested and actual counts and the one-slot reserve. This closes the API clarification only; no real Stage A request has started.
+
+A subsequent read-only receiving check found the direct HTTPS cohort stopped. Five artifacts have certificates; Nemotron's retained partial is 15,695,959,265 bytes against the pinned 25,477,403,616 bytes (9,781,444,351 short). The worker reported size/digest mismatch, shared cancellation stopped the cohort, and no matching transport processes remain. Six partials and the STOP marker are preserved. Free space: 531,517,050,880 bytes. Independent inspection/receiving is ongoing; no recovery or restart has been performed. STOP 2 remains open.
+
 ## 26 October 2026 — Phase 2 receiving ongoing; Stage A API clarification pending (AI-assisted)
 
 Direct HTTPS receiving remains active with six bounded workers, full size/SHA checks and the approved 100 GB available-space floor. Latest checkpoint: 2/22 artifact certificates, 651,513,733,120 available bytes. The independent review remains pending; STOP 2 is not closed. CPU tokenizer reports reconcile 22/22 current template pins. The earlier HF/Xet CAS failure, library-deleted failed OLMo temporary, retained archives and reviewed transport recovery are documented in [Phase 2 report](reports/PORTAL_EXAM_PHASE2_20261026.md).
