@@ -58,12 +58,15 @@ flowchart TD
     accTitle: Paper B Route Dependencies
     accDescr: Parallel preparation and author gates lead to offline evaluation, a C3 decision, and conditional online deployment; arrows do not themselves grant authorization.
     prep[Host preparation and liveness] --> sweep_auth[Author sweep authorization]
-    sweep_auth --> labels[Sweep and fresh-seed audits]
+    sweep_auth --> sweep[Sweep collection and fresh-seed audits]
+    sweep --> early_labels[Early training-partition labels]
+    sweep --> full_labels[Full B.2 label table]
     host_equiv[Track P host equivalence] --> p3a[Authorized label-free P.3a]
     p3a --> p3b[Authorized labelled P.3b and finalist decision]
-    labels --> p3b
+    early_labels --> p3b
     p3b --> a5[Authorized A5 and offline evaluation]
-    labels --> offline[A0 to A3 offline evaluation]
+    full_labels --> a5
+    full_labels --> offline[A0 to A3 offline evaluation]
     a5 --> gate[Author C3 gate]
     offline --> gate
     gate -->|Pass and separate authorization| a6[Conditional A6 and online pilot]
@@ -82,9 +85,10 @@ The graph is a compact view, not an exhaustive schedule. The remaining tracks an
 
 | Track | Dependency and authority |
 |---|---|
-| Proposer exam X | Stage A, author exclusions and frozen rule precede separately authorized B1; B1 results and an author-fixed sample size/authorization precede B2; the author selects by role afterward (R1-EXAM-PROTOCOL; RUNBOOK X.2–X.7). The exam is not a substitute for sweep labels. |
-| Track P | Host-equivalence precedes P.3a and later evidence; label-free P.3a can proceed alongside sweep collection. Labelled P.3b needs training-partition labels, frozen membership/rule and its authorization; author confirms finalists. P.4 A5 precedes B.7 when A5 is used, and its separate RL gate and authorization govern P.5/P.6 (R1-TASL7-TRACKP; R1-C3-POST; RUNBOOK B.5–B.7 and P.3–P.6). |
-| Track H and C4 | H.1–H.10 are reviewed before C.3; the H.8 amendment needs coordination before P.5. C4 measures decision independence and the debiased-memory intervention; A7 is conditional on the declared DI result, not presumed (RUNBOOK H.8–H.10, C.4; R1-C4). |
+| Proposer exam X | Stage A, author exclusions and frozen rule precede separately authorized B1; B1 results and an author-fixed sample size/authorization precede B2; the author selects by role afterward. Every exam phase has its own independent review (R1-EXAM-PROTOCOL; R1-EXAM-REVIEW; RUNBOOK X.2–X.7). The exam is not a substitute for sweep labels. |
+| Track P | Host-equivalence precedes P.3a and later evidence; label-free P.3a can proceed alongside sweep collection. Labelled P.3b needs the specified early training-partition labels, frozen membership/rule and its authorization; it need not wait for the entire B.2 table. The author confirms finalists. P.4 A5 needs the full B.2 table and precedes B.7 when A5 is used; its separate RL gate and authorization govern P.5/P.6 (R1-TASL7-TRACKP; R1-C3-POST; RUNBOOK B.5–B.7 and P.3–P.6; Track P runbook phases 6–8). |
+| Other offline work | B.4 calibrates the manager zero-shot A4 arm. B.6 is a later second sweep and manager for expansion; its scope and timing depend on the learning-curve and author decisions, and it is not silently required for the first gate (RUNBOOK B.4–B.6; Track P specification §3.7). |
+| Track H, C.2 and C4 | H.1–H.10 are reviewed before C.3; the H.8 amendment needs coordination before P.5. C.2 collects proposals under the deployed tabular arm, audits and retrains in an aggregation round. C4 measures decision independence and the debiased-memory intervention; A7 is conditional on the declared DI result, not presumed (RUNBOOK H.8–H.10, C.2–C.4; R1-C4). |
 | Track G and transfer | G.1 adapter smoke and G.3 noise measurement support G.5 transfer; author decides G.4 role and audit budget. D.1 transfer and D.2 author pre-declaration are separate listed steps; neither a Track G role choice nor D.1 is asserted as a prerequisite for writing D.2 (R1-BENCH-HARD; RUNBOOK G.1–G.5, D.1–D.2). |
 | Deployment | D.2 pre-declaration and its hash precede author authorization and D.3; D.4 follows deployment. Manuscript claims also require the author proof check and the declared quality bar (RUNBOOK D.2–D.4; PLAN §9). |
 
