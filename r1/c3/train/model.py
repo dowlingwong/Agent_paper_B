@@ -16,7 +16,8 @@ Families (spec §2.2):
   base, revision, LoRA rank and head size before loading. Action head: Linear(hidden -> 1) on the ``<decide>`` state.
 * ``HeadWrapper`` (Laya, StartLux): the family's own 12-option readout. Laya: ``laya.common.build_sequence`` (choice
   question, our 12 options) and its typed-decision head (head layers + scorer at the ``[MASK]`` markers); LoRA on the
-  ModernBERT encoder, the decision head trains in full; action head on the ``[CLS]`` state after the head layers.
+  ModernBERT encoder, the decision head trains in full; new heads (action, cumulative) on the encoder output
+  mean-pooled over valid tokens.
   StartLux Instant: the trained prompt (``startlux_decide.prompt``: system line, Evidence / Question / lettered
   Options, thinking-off suffix), option-letter logits at the last token from the tied output embeddings, with
   prompt-bidirectional attention in the full-attention layers (see ``StartLuxBidirectional``); action head on the
@@ -399,16 +400,21 @@ class LayaWrapper(HeadWrapper):
         marker_pos = torch.tensor([e["markers"] for e in encs], device=dev)
         marker_mask = torch.ones_like(marker_pos, dtype=torch.bool)
         qtype = torch.full((len(encs),), self.lc.QTYPES["choice"], device=dev)
-        native, h_cls = self._core_forward(ids, att, marker_pos, marker_mask, qtype)
+        native, h_new = self._core_forward(ids, att, marker_pos, marker_mask, qtype)
         belief = belief_logits_from(self.head_form, native, self.heads["cumulative"] if "cumulative" in self.heads
-                                    else None, h_cls)
-        action = self.heads["action"](h_cls.float()).squeeze(-1) if self.with_action else None
+                                    else None, h_new)
+        action = self.heads["action"](h_new.float()).squeeze(-1) if self.with_action else None
         return self._out(belief, action, truncated=[e["truncated"] for e in encs])
 
     def _core_forward(self, ids, att, marker_pos, marker_mask, qtype):
-        """Laya's ``DecisionModel.forward`` up to the scorer, also returning the [CLS] state after the head layers."""
+        """Laya's ``DecisionModel.forward`` up to the scorer, also returning the state the new heads read: the
+        encoder's last hidden state mean-pooled over valid tokens. (Phase 4 finding: after Laya's head layers the
+        [CLS] state has norm ~1e4 and varies only ~1 % between prompts — a head reading it did not learn; the encoder
+        output varies ~9 %, and its LoRA trains.)"""
         core = self.core
         h = core.encoder(input_ids=ids, attention_mask=att).last_hidden_state
+        m = att[..., None].to(h.dtype)
+        pooled = ((h * m).sum(1) / m.sum(1)).float()
         h = h + core.type_emb(qtype)[:, None, :]
         if core.head is not None:
             padm = ~att.bool()
@@ -416,7 +422,7 @@ class LayaWrapper(HeadWrapper):
                 h = layer(h, src_key_padding_mask=padm)
         idx = marker_pos[:, :, None].expand(-1, -1, h.size(-1))
         logits = core.scorer(torch.gather(h, 1, idx)).squeeze(-1).float()
-        return logits.masked_fill(~marker_mask, -1e4), h[:, 0].float()
+        return logits.masked_fill(~marker_mask, -1e4), pooled
 
 
 # ---------------------------------------------------------------- StartLux
