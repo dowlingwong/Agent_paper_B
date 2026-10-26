@@ -82,7 +82,10 @@ def anchor_gate(manifests, cfg):
 
 
 def evidence(runner, phase, selected, interrupt):
-    cfg=runner.cfg;rows=[];stages=json.loads(Path(cfg['stage_a_table']).read_text())['rows'];eligible={r['candidate']:r for r in stages if r['passed']}
+    cfg=runner.cfg;rows=[]
+    if digest_file(cfg['stage_a_table'])!=cfg['stage_a_table_sha256']: raise PreparationStop('STOP: Stage A table digest mismatch')
+    if phase=='b2' and digest_file(cfg['b1_analysis'])!=cfg['b1_analysis_sha256']: raise PreparationStop('STOP: B1 analysis digest mismatch')
+    stages=json.loads(Path(cfg['stage_a_table']).read_text())['rows'];eligible={r['candidate']:r for r in stages if r['passed']}
     specs=runner.spec_order(selected)
     if phase=='b2':
         screen=json.loads(Path(cfg['b1_analysis']).read_text())
@@ -109,8 +112,9 @@ def evidence(runner, phase, selected, interrupt):
             modes.append('on')
         if phase=='b2':
             row=next(r for r in screen['rows'] if r['candidate']==spec['id']);mode=row['b2_thinking_mode'];modes=[mode]
+            if mode=='on' and eligible[spec['id']].get('thinking_disabled_due_grammar'): raise PreparationStop('STOP: B1 chose thinking-on disabled by Stage A')
             rank=screen['finalists'].index(spec['id']) if spec['id'] in screen['finalists'] else 99
-            if not cfg.get('free_sensitivity') and rank<3 and spec.get('thinking_policy',{}).get('switchable') is True: modes.append('on' if mode=='off' else 'off')
+            if not cfg.get('free_sensitivity') and rank<3 and spec.get('thinking_policy',{}).get('switchable') is True and not eligible[spec['id']].get('thinking_disabled_due_grammar'): modes.append('on' if mode=='off' else 'off')
         root_results=[];began=time.monotonic()
         try:
             for mode_index,current_mode in enumerate(modes):
@@ -163,8 +167,8 @@ def main(argv=None):
     if a.check_config: print(json.dumps({'valid':True,'unresolved':placeholders(cfg)}));return 0
     if not a.phase or not a.out: p.error('phase and --out required')
     if a.interrupt_root and not cfg.get('dryrun'): p.error('--interrupt-root is DRYRUN only')
-    required=['prompts','prompts_sha256'] if a.phase=='stage-a' else ['stage_a_table','nodes','llm_call_cap','anchor_duplicate_reference']
-    if a.phase=='b2': required += ['b1_analysis','b2_instances_per_node']
+    required=['prompts','prompts_sha256'] if a.phase=='stage-a' else ['stage_a_table','stage_a_table_sha256','nodes','llm_call_cap','anchor_duplicate_reference']
+    if a.phase=='b2': required += ['b1_analysis','b1_analysis_sha256','b2_instances_per_node']
     unresolved=placeholders({k:cfg[k] for k in required})
     if unresolved: raise RuntimeError(f'STOP: unresolved phase settings: {unresolved}')
     runner=ExamRunner(cfg,a.out)

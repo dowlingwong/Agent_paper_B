@@ -26,7 +26,7 @@ def finite_mean(values):
 
 
 def choose_finalists(rows, rule):
-    eligible=[r for r in rows if r['role']=='candidate' and r.get('stage_a_pass') and r.get('d28_pass')]
+    eligible=[r for r in rows if r['role']=='candidate' and r.get('stage_a_pass') and r.get('d28_pass') and r.get('mu_hat') is not None]
     ids=[r['candidate'] for r in rows]
     if len(set(ids))!=len(ids): raise ValueError('duplicate candidate analysis rows')
     order={r['candidate']:r['registry_order'] for r in rows}
@@ -73,7 +73,12 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None):
             delta=finite_mean(a)-finite_mean(b)
             if not math.isclose(delta,float(r['delta_audit']),abs_tol=1e-12): raise ValueError('B1 delta differs from raw audits')
         primary=[r for r in observations if r['mode']==m['primary_mode']]
-        if not primary: raise ValueError('no primary audited increments')
+        if not primary:
+            rows.append({'candidate':m['candidate'],'role':m['role'],'family':m['family'],
+                         'stage_a_pass':m['stage_a_pass'],'d28_pass':m['d28_pass'],'registry_order':m['registry_order'],
+                         'mu_hat':None,'cluster_interval':None,'b2_thinking_mode':m['primary_mode'],
+                         'unrankable_reason':'no_noninert_nonduplicate_primary_audits','diagnostics':m.get('diagnostics',{})})
+            continue
         mean=bootstrap_mean(primary,field='delta_audit',rule=rule)
         modes={}
         for mode in ('off','on','always_on'):

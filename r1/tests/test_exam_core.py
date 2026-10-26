@@ -142,6 +142,8 @@ def test_b1_recomputes_means_modes_and_refuses_forged_registry(tmp_path):
        'rule_sha256':sha,'registry_path':str(registry),'registry_sha256':digest_file(registry),'primary_mode':'off',
        'stage_a_pass':True,'d28_pass':True,'audited_proposals':values}
     result=b1_summary([m]);assert result['finalists']==['x']
+    forged=copy.deepcopy(m);forged['audited_proposals'][0]['delta_audit']=99
+    with pytest.raises(ValueError,match='raw audits'): b1_summary([forged])
     assert result['rows'][0]['mu_hat']==pytest.approx(.01) and result['rows'][0]['b2_thinking_mode']=='on'
     with pytest.raises(ValueError,match='registry'): b1_summary([{**m,'family':'forged'}])
     with pytest.raises(ValueError,match='rule hash'): b1_summary([{**m,'rule_sha256':'0'*64}])
@@ -229,3 +231,31 @@ def test_pool_cannot_replace_a_removed_model_while_preserving_count(tmp_path):
     data['candidates'][0]['id']='unapproved_substitute'
     p=tmp_path/'registry.yaml';p.write_text(json.dumps(data))
     with pytest.raises(ValueError,match='author pool'): read_registry(p)
+
+
+def test_resume_certificate_and_evidence_tamper_refusal(tmp_path):
+    from r1.exam.runtime import verify_campaign, PreparationStop
+    from r1.exam.guards import digest_file
+    from r1.exam.campaign import write_json
+    write_json(tmp_path/'job.json',{'binding':'frozen'})
+    (tmp_path/'ledger.jsonl').write_text('original')
+    m={'status':'COMPLETE','label':'EXAM','job_binding':'frozen','job_sha256':digest_file(tmp_path/'job.json'),
+       'evidence_hashes':{'ledger.jsonl':digest_file(tmp_path/'ledger.jsonl')}}
+    manifest=tmp_path/'campaign_manifest.json';write_json(manifest,m)
+    with pytest.raises(PreparationStop,match='receiving check'): verify_campaign(manifest,'frozen')
+    write_json(tmp_path/'post_check.json',{'binding':'frozen','manifest_sha256':digest_file(manifest),'passed':True})
+    assert verify_campaign(manifest,'frozen')==m
+    (tmp_path/'ledger.jsonl').write_text('changed')
+    with pytest.raises(PreparationStop,match='evidence changed'): verify_campaign(manifest,'frozen')
+
+
+def test_no_audited_increments_retains_candidate_diagnostics(tmp_path):
+    from r1.exam.guards import digest_file
+    registry=tmp_path/'registry.yaml'
+    registry.write_text(json.dumps({'software_anchors':[],'candidates':[{'id':'x','role':'candidate','family':'family'}]}))
+    _,sha=load_rule()
+    m={'label':'EXAM','phase':'b1','status':'COMPLETE','candidate':'x','family':'family','role':'candidate','registry_order':0,
+       'rule_sha256':sha,'registry_path':str(registry),'registry_sha256':digest_file(registry),'primary_mode':'off',
+       'stage_a_pass':True,'d28_pass':False,'audited_proposals':[],'diagnostics':{'invalid':20}}
+    r=b1_summary([m]);assert r['finalists']==[]
+    assert r['rows'][0]['mu_hat'] is None and r['rows'][0]['diagnostics']['invalid']==20

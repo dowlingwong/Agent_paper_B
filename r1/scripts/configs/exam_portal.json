@@ -69,5 +69,7 @@
   "root_timeout_seconds": 3600,
   "schema_sensitivity_node": "openml_credit_approval",
   "d22_pick": "TODO_AUTHOR_D22_PICK",
-  "workers": 4
+  "workers": 4,
+  "stage_a_table_sha256": "TODO_VERIFY_ON_HOST",
+  "b1_analysis_sha256": "TODO_VERIFY_ON_HOST"
 }

@@ -48,7 +48,7 @@ def load_config(path, *, allow_placeholders=False):
     if cfg['temperature']!=.2 or cfg['proposal_schema']!='manager_proposal/v1': raise ValueError('exam sampling/schema mismatch')
     check_exam_seeds(cfg['instance_seeds'],cfg['audit_seeds'])
     if cfg['minimum_free_bytes']!=100_000_000_000: raise ValueError('author disk floor is 100 GB')
-    later={'b2_instances_per_node','b1_analysis','stage_a_table','anchor_duplicate_reference','llm_call_cap','nodes','prompts','prompts_sha256','d22_pick'}
+    later={'b2_instances_per_node','b1_analysis','b1_analysis_sha256','stage_a_table','stage_a_table_sha256','anchor_duplicate_reference','llm_call_cap','nodes','prompts','prompts_sha256','d22_pick'}
     common={k:v for k,v in cfg.items() if k not in later}
     if placeholders(common) and not allow_placeholders: raise ValueError(f'unresolved common placeholders: {placeholders(common)}')
     return cfg
@@ -108,6 +108,10 @@ def author_gate(cfg, phase, rule_sha):
     plan=(REPO/'docs/r1/PLAN.md').read_text()
     if not any(rule_sha in line and 'R1-EXAM-RULE' in line for line in plan.splitlines()):
         raise RuntimeError('STOP: accepted frozen rule sha256 absent from author PLAN row')
+    if data.get('nodes')!=cfg['nodes'] or data.get('stage_a_table_sha256')!=cfg['stage_a_table_sha256']: raise RuntimeError('STOP: authorization does not bind nodes and accepted Stage A table')
+    if phase=='b2' and data.get('b1_analysis_sha256')!=cfg['b1_analysis_sha256']: raise RuntimeError('STOP: authorization does not bind B1 analysis')
+    if not isinstance(cfg['llm_call_cap'],int) or isinstance(cfg['llm_call_cap'],bool) or cfg['llm_call_cap']<2: raise RuntimeError('STOP: positive paired LLM-call cap required')
+    if phase=='b1' and (len(cfg['nodes'])!=3 or set(cfg['nodes']) not in ({'digits_mlp','openml_credit_approval','openml_ionosphere'},{'tabular_mlp','openml_credit_approval','openml_ionosphere'})): raise RuntimeError('STOP: B1 requires three protocol nodes')
     if data.get('llm_call_cap')!=cfg['llm_call_cap']: raise RuntimeError('STOP: LLM-call cap is not author-bound')
     if phase=='b1' and (cfg['instance_seeds']!=[9001,9002,9003,9004] or cfg['audit_seeds']!=[9101,9102,9103,9104]): raise RuntimeError('STOP: B1 seeds differ from protocol')
     if phase=='b2' and (not isinstance(cfg['b2_instances_per_node'],int) or isinstance(cfg['b2_instances_per_node'],bool) or not 1<=cfg['b2_instances_per_node']<=89): raise RuntimeError('STOP: B2 instances must fit the fresh 9011–9099 namespace')

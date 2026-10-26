@@ -71,6 +71,7 @@ def run(root):
             return subprocess.run([*args,phase,'--config',str(config),'--out',str(out),*selected,*extra],cwd=REPO,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=180).returncode
     stage_code=command('stage-a',root/'stage-a')
     if stage_code: raise RuntimeError(f'Stage A DRYRUN failed; see {root}/stage-a_0.log')
+    cfg=json.loads(config.read_text());cfg['stage_a_table_sha256']=digest_file(root/'stage-a/stage_a_table.json');write_json(config,cfg)
     interrupted=command('b1',root/'b1','--interrupt-root')
     before=json.loads((root/'b1/batch_state.json').read_text())
     preserved={key:digest_file(entry['path']) for key,entry in before['completed'].items()}
