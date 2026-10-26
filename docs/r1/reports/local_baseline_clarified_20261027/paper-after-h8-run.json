@@ -1,0 +1,35 @@
+{
+  "command": [
+    "/private/tmp/paper-b-local-20261026-venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "r1/tests/test_c3_h8_amendment.py",
+    "r1/tests/test_c3_sidecar_prompt_fixture.py",
+    "--junitxml=/private/tmp/paper-b-corrected-paper-20261027/h8-junit.xml",
+    "--durations=30"
+  ],
+  "cwd": "/private/tmp/paper-b-corrected-paper-20261027/clone",
+  "environment": {
+    "PATH": "/private/tmp/paper-b-local-20261026-venv/bin:/opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/wongdowling/.codex/tmp/arg0-macos/codex-arg0dcRUbZ:/Users/wongdowling/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/wongdowling/.local/bin:/Users/wongdowling/.antigravity/antigravity/bin:/opt/homebrew/opt/postgresql@17/bin:/Users/wongdowling/opt/anaconda3/condabin:/opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/wongdowling/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS",
+    "AR_HARNESS_ROOT": "/private/tmp/paper-b-harness-local-20261027",
+    "CUDA_VISIBLE_DEVICES": "",
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "HF_HOME": "/private/tmp/paper-b-corrected-paper-20261027/hf-empty",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTORCH_ENABLE_MPS_FALLBACK": "0",
+    "PYTEST_ADDOPTS": ""
+  },
+  "timeout_seconds": 590,
+  "start_utc": "2026-10-26T23:49:37Z",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 1.409,
+  "end_utc": "2026-10-26T23:49:38Z"
+}
