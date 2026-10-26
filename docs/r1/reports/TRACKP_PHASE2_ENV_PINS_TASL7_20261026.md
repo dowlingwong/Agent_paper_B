@@ -29,9 +29,9 @@ The TASL-7 timings are about 25 % slower in this micro-benchmark. The 25-minute 
 
 - **Download.** `python -m r1.c3.train.registry --models-dir /home/dowling/r1_trackp/models --out <scratch registry>`. The PINS in the code are unchanged, so these are the portal's revisions, and the layout `<org>__<name>@<rev12>` is the same as the portal's. The downloader checks each file against the Hub's own record at that revision: the LFS sha256, or the git blob sha1 for non-LFS files.
 - **Attempts.**
-  1. The `hf_xet` transfer client stalled at 0 bytes on the first large file (`download_attempt1_xet_stall.log`).
-  2. A rerun with `HF_HUB_DISABLE_XET=1` (plain HTTPS from the Hub CDN; a runtime setting, no package change) downloaded and verified 7 repos. It then hit a transient DNS failure on StartLux-4B (`download_attempt2.log`).
-  3. StartLux-4B alone was retried with `--only startlux-4b` and verified: 18 files, 9.34 GB (`download_attempt3_startlux4b.log`).
+  1. The `hf_xet` transfer client stalled at 0 bytes on the first large file (`download_attempt1_xet_stall.log.txt`).
+  2. A rerun with `HF_HUB_DISABLE_XET=1` (plain HTTPS from the Hub CDN; a runtime setting, no package change) downloaded and verified 7 repos. It then hit a transient DNS failure on StartLux-4B (`download_attempt2.log.txt`).
+  3. StartLux-4B alone was retried with `--only startlux-4b` and verified: 18 files, 9.34 GB (`download_attempt3_startlux4b.log.txt`).
 - **Check against the committed registry.** Every file of every repo was re-hashed against the **committed `r1/c3/train/registry.yaml`**, which records sha256 and size per file, and no extra files were allowed (`verify_against_registry.py`, output below). Separately, the per-file sha256 and size in the registry written on TASL-7 are identical to the committed registry for every repo.
 - The committed `registry.yaml` is **unchanged**, because the TASL-7 files are the same bytes.
 
