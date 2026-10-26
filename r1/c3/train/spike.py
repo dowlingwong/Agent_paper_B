@@ -81,6 +81,22 @@ def peak_and_step_time(model, tok, *, batch_size: int = 8, steps: int = 3, grad_
         torch.cuda.synchronize(dev)
     model.train()
     times = []
+    try:
+        _measure(model, batch, rows, params, dev, steps, times)
+    except torch.cuda.OutOfMemoryError as exc:   # an E4 data point (spec §5.7 hard limit), recorded, not hidden
+        for q in params:
+            q.grad = None
+        torch.cuda.empty_cache()
+        rec.update(oom=True, error=str(exc)[:300], step_time_s=None,
+                   peak_vram_mib=torch.cuda.max_memory_allocated(dev) / 2**20)
+        return rec
+    rec["oom"] = False
+    rec["step_time_s"] = float(np.mean(times[1:] if len(times) > 1 else times))
+    rec["peak_vram_mib"] = (torch.cuda.max_memory_allocated(dev) / 2**20) if dev.type == "cuda" else None
+    return rec
+
+
+def _measure(model, batch, rows, params, dev, steps, times) -> None:
     for _ in range(steps):
         t0 = time.perf_counter()
         loss = sft_loss(model(batch), rows)
@@ -90,9 +106,6 @@ def peak_and_step_time(model, tok, *, batch_size: int = 8, steps: int = 3, grad_
         if dev.type == "cuda":
             torch.cuda.synchronize(dev)
         times.append(time.perf_counter() - t0)
-    rec["step_time_s"] = float(np.mean(times[1:] if len(times) > 1 else times))
-    rec["peak_vram_mib"] = (torch.cuda.max_memory_allocated(dev) / 2**20) if dev.type == "cuda" else None
-    return rec
 
 
 def backbone_of(model):
@@ -129,19 +142,27 @@ def spike(model, run_dir: Path | str, *, tok=None, toy_examples: int = 100, step
     b0, a0 = probs(model, batch)
     rec = model.save(run_dir / "saved")
     rep["saved_sha256"] = rec["files"]
-    if rebuild is not None:
-        fresh = rebuild()
-        fresh.load(run_dir / "saved")
-        b1, a1 = probs(fresh, batch)
-        rep["reload_identical"] = bool(torch.equal(b0, b1) and (a0 is None or torch.equal(a0, a1)))
-        rep["reload_max_diff"] = float((b0 - b1).abs().max())
-        del fresh
     bb = backbone_of(model)
     rep["packing"] = P.self_check(bb) if bb is not None else {
         "ok": False, "reason": "encoder packing not implemented (spec §2.4: little room within 1,024 tokens)",
         "max_diff": None}
     if measure and tok is not None:
         rep["engineering"] = peak_and_step_time(model, tok, batch_size=batch_size)
+    if rebuild is not None:
+        dev = next(model.parameters()).device
+        model.to("cpu")                      # never two copies on the card (4B bases)
+        if dev.type == "cuda":
+            torch.cuda.empty_cache()
+        fresh = rebuild()
+        fresh.load(run_dir / "saved")
+        b1, a1 = probs(fresh, batch)
+        rep["reload_identical"] = bool(torch.equal(b0, b1) and (a0 is None or torch.equal(a0, a1)))
+        rep["reload_max_diff"] = float((b0 - b1).abs().max())
+        if a0 is not None:
+            rep["reload_action_max_diff"] = float((a0 - a1).abs().max())
+        del fresh
+        if dev.type == "cuda":
+            torch.cuda.empty_cache()
     return rep
 
 
