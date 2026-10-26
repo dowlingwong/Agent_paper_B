@@ -5,7 +5,8 @@ import hashlib
 import json
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")  # not in the harness lock; present on the Track P hosts
 
 from r1.c3.train import run as R
 from r1.c3.train.trainer import Trainer, TrainConfig, epoch_order, sha256_file, seed_everything

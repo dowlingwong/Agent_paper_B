@@ -60,13 +60,18 @@ Python 3.13.16 (the common-run manifest's patch) has no downloadable managed bui
 
 ### Two environment findings that change how the sweep must be launched
 
-1. **`PATH` must put the venv's `bin` first.** The harness `LocalWorker` runs the node's training
-   command as bare `python3`. On this host `python3` on the default `PATH` is
-   `/home/dwong/anaconda3/bin/python3` with **scikit-learn 1.5.1**, not the locked 1.8.0. Three harness
-   tests failed for exactly this reason (§4) and passed once
-   `/ceph/dwong/r1_prepare_20261025/venv/bin` was first on `PATH`. A sweep launched without that
-   `PATH` would run its worker runs under the wrong scikit-learn, which STATUS 22 Oct records as
-   changing tree-model metrics. The launch environment file sets it.
+1. **`PATH` must put the venv's `bin` first for anything run by hand.** The harness `LocalWorker`
+   runs the node's training command as bare `python3`. On this host `python3` on the default `PATH`
+   is `/home/dwong/anaconda3/bin/python3` with **scikit-learn 1.5.1**, not the locked 1.8.0, and the
+   node's `train.py` fails under it. Three harness tests failed for exactly this reason (§4) and
+   passed once `/ceph/dwong/r1_prepare_20261025/venv/bin` was first on `PATH`; the shared launch
+   environment file now sets it.
+   **The sweep launch itself is already protected**, verified in the Phase 5 batches: the launcher
+   writes `env.sh` with `export PATH=<batch>/autoresearch_harness/.venv/bin:$PATH`, which `--start`
+   sources before the runner, so the worker's `python3` resolves to the batch venv (the
+   `R1_C3_VENV_PYTHON` wrapper in a guarded run, the `uv sync --extra dev` venv in a real launch) and
+   therefore to the locked scikit-learn. Phase 6's worker runs produced metrics normally. The risk is
+   confined to commands run outside the launcher — which is how the three test failures arose.
 2. **`narwhals` was missing.** `lightgbm==4.7.0` was installed with `--no-deps` on 25 Oct, so
    `import lightgbm` raised `ModuleNotFoundError: No module named 'narwhals'`. `narwhals==2.27.1` was
    installed with `--no-deps` (it has no dependencies of its own); the four metric library versions

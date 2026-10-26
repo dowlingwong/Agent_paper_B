@@ -139,11 +139,13 @@ class TorchLoraLoader:
         return build_model(spec["family"], spec["base_path"], **kw)
 
     def load(self, pin: Pin):
-        import torch
-        from r1.c3.train.types import DecisionPrompt
+        # Validate the pin before importing torch: an invalid pin is refused without the
+        # optional dependency, and a bad pin fails fast rather than after a model build.
         missing = [k for k in self.PIN_KEYS if k not in pin.files]
         if missing or not pin.model:
             raise PinError(f"a model pin needs files {self.PIN_KEYS} and a 'model' spec (missing: {missing or 'model'})")
+        import torch
+        from r1.c3.train.types import DecisionPrompt
         saved = Path(pin.files["manifest"]["path"]).parent
         model = self._build(dict(pin.model))
         model.load(saved)

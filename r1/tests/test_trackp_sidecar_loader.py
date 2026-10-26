@@ -9,7 +9,8 @@ import os
 import time
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")  # not in the harness lock; present on the Track P hosts
 
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 
