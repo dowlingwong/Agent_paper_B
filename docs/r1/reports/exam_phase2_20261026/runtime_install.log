@@ -1,0 +1,14 @@
+uv-0.13.5-install.sh: 成功
+downloading uv 0.13.5 x86_64-unknown-linux-gnu
+installing to /home/dowling/.local/bin
+  uv
+  uvx
+everything's installed!
+uv 0.13.5 (x86_64-unknown-linux-gnu)
+Downloading cpython-3.13.4-linux-x86_64-gnu (download) (33.8MiB)
+ Downloaded cpython-3.13.4-linux-x86_64-gnu (download)
+Installed Python 3.13.4 in 3.15s
+ + cpython-3.13.4-linux-x86_64-gnu (python3.13)
+warning: `/home/dowling/.local/bin` is not on your PATH. To use installed Python executables, run `export PATH="/home/dowling/.local/bin:$PATH"` or `uv python update-shell`.
+/home/dowling/.local/share/uv/python/cpython-3.13.4-linux-x86_64-gnu/bin/python3.13
+Python 3.10.12

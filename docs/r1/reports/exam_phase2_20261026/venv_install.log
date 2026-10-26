@@ -1,0 +1,11 @@
+Using CPython 3.13.4
+Creating virtual environment at: exam-x/work/venv
+Activate with: source exam-x/work/venv/bin/activate
+Using Python 3.13.4 environment at: exam-x/work/venv
+Resolved 1 package in 97ms
+Downloading cmake (26.5MiB)
+ Downloaded cmake
+Prepared 1 package in 2.39s
+Installed 1 package in 21ms
+ + cmake==3.31.6
+37M	/home/dowling/exam-x/work/remotes/llama.cpp.git

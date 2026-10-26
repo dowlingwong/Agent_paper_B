@@ -1,0 +1,50 @@
+[
+  {
+    "node": "openml_credit_approval",
+    "relative": "openml/openml.org/api/v1/json/data/29.gz",
+    "size": 861,
+    "sha256": "5229a8b115c8bc536576a6d48086b3ef9bc57b673cb31fa26894cb6682c562dd"
+  },
+  {
+    "node": "openml_credit_approval",
+    "relative": "openml/openml.org/api/v1/json/data/features/29.gz",
+    "size": 378,
+    "sha256": "ffc560253f365d1d301d2eeaf86cd9fe1040f52d9e923ab73534adbadd21019c"
+  },
+  {
+    "node": "openml_credit_approval",
+    "relative": "openml/openml.org/api/v1/json/data/qualities/29.gz",
+    "size": 1449,
+    "sha256": "5e3213b47856a86b5087dc7a663624d9641a3bc6145d2dd79308f837890cc827"
+  },
+  {
+    "node": "openml_credit_approval",
+    "relative": "openml/openml.org/data/v1/download/29/credit-approval.arff.gz",
+    "size": 16475,
+    "sha256": "b21f01872e3db3d90f775be77e431ccd3bfd96555ad09bcea49fcd558bb4fc4a"
+  },
+  {
+    "node": "openml_ionosphere",
+    "relative": "openml/openml.org/api/v1/json/data/59.gz",
+    "size": 1262,
+    "sha256": "2d18f98c5d0fe9b0f014d8cb6684c49b22d61ee11d398dd48eebefbc035260da"
+  },
+  {
+    "node": "openml_ionosphere",
+    "relative": "openml/openml.org/api/v1/json/data/features/59.gz",
+    "size": 370,
+    "sha256": "04154009932e0fd7ac67716c604b3d46ef551be85cfe5e47387596b33267ced1"
+  },
+  {
+    "node": "openml_ionosphere",
+    "relative": "openml/openml.org/api/v1/json/data/qualities/59.gz",
+    "size": 1234,
+    "sha256": "2e40aafecce975d3d09ead5eabec40956163cd9f81a39e70b78977ac101c9aa7"
+  },
+  {
+    "node": "openml_ionosphere",
+    "relative": "openml/openml.org/data/v1/download/59/ionosphere.arff.gz",
+    "size": 47008,
+    "sha256": "40b4580d51a1815c9d1bea32cc579d523ea98af8c80a06a345e192729359644e"
+  }
+]

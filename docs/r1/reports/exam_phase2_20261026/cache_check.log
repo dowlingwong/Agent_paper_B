@@ -1,0 +1,8 @@
+harness: /home/dowling/exam-x/work/autoresearch_harness  versions: {'python': '3.13.4', 'sklearn': '1.8.0', 'numpy': '2.4.4', 'pandas': '3.0.3'}  (network disabled in this process)
+openml_credit_approval     ok  [id 29; L8 pilot fallback] shape 690 x 15, categorical 9, missing 67, classes {'+': 307, '-': 383}, positive '-', minority 0.445
+openml_ionosphere          ok  [id 59; L8 pilot fallback] shape 351 x 34, categorical 0, missing 0, classes {'b': 126, 'g': 225}, positive 'g', minority 0.359
+ready: 2/2 OpenML nodes
+2.4G	/home/dowling/exam-x/models/qwen36_27b/Qwen_Qwen3.6-27B-Q4_K_M.gguf.partial
+2.4G	/home/dowling/exam-x/models/qwen38_27b/Qwen3.8-27B-Q4_K_M.gguf.partial
+文件系统              1B的块          已用         可用 已用% 挂载点
+/dev/nvme0n1p2 2014574526464 1189016543232 723147710464   63% /

@@ -306,3 +306,31 @@ def test_b2_respects_stage_a_thinking_disable(tmp_path):
     runner=Fake()
     with pytest.raises(PreparationStop,match='disabled by Stage A'): evidence(runner,'b2',None,False)
     assert runner.calls==[]
+
+
+def test_phase2_real_architecture_cache_shapes():
+    root=Path(__file__).parents[2]/'docs/r1/reports/exam_phase2_20261026'
+    c=json.loads((root/'nemotron35_30b_a3b_config.json').read_text())
+    result=estimate(c,100)
+    mamba=4*(64*64*128+3*(64*64+2*8*128))
+    assert result['kv_and_state_bytes']==c['layers_block_type'].count('mamba')*mamba+c['layers_block_type'].count('attention')*2*2*128*32768
+    assert all(r['bytes']==0 for r in result['layers'] if r['kind']=='moe')
+    c=json.loads((root/'lfm25_24b_a2b_config.json').read_text());result=estimate(c,100)
+    assert result['kv_and_state_bytes']==c['layer_types'].count('conv')*4*2048*2+c['layer_types'].count('full_attention')*2*8*64*32768
+    c=json.loads((root/'glm47_flash_config.json').read_text());result=estimate(c,100)
+    assert result['kv_and_state_bytes']==47*(512+64)*32768
+    assert all(r['kind']=='compressed_mla' for r in result['layers'])
+
+
+def test_gemma_global_and_local_cache_dimensions():
+    root=Path(__file__).parents[2]/'docs/r1/reports/exam_phase2_20261026'
+    expected={'gemma4_31b':50*2*16*256*1024+10*2*4*512*32768,
+              'gemma4_26b_a4b':25*2*8*256*1024+5*2*2*512*32768,
+              'gemma4_12b':40*2*8*256*1024+8*2*1*512*32768}
+    for name,value in expected.items():
+        c=json.loads((root/(name+'_config.json')).read_text());r=estimate(c,100)
+        assert r['kv_and_state_bytes']==value
+        assert r['config_fields']['global_head_dim']['value']==512
+        assert 'num_global_key_value_heads' in r['config_fields']
+    # Equal K/V projection weights do not eliminate the two runtime caches.
+    assert expected['gemma4_31b']==1761607680
