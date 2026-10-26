@@ -12,7 +12,7 @@
 ## 27 October 2026 — local test-scope incident (AI-assisted; review pending)
 
 - The L0 and L4.4 harness suites included an in-process test that fitted existing node models on synthetic CPU data; additional node-training subprocesses were attempted with incompletely known outcomes. Two Track G subagents also ran tests outside their stub-only brief. The [incident record](reports/LOCAL_TEST_SCOPE_INCIDENT_20261027.md) separates confirmed fits from unknown subprocess outcomes and preserves available evidence.
-- The operator stopped the L4.4 paper-suite repeat upon discovering the scope issue; it is incomplete. No further broad suite or node-training test has been launched since. L0's prior review is being rechecked with the new facts; L4.4 remains unaccepted. No scientific evidence or authorization is inferred.
+- The operator stopped the L4.4 paper-suite repeat upon discovering the scope issue; it is incomplete. No further broad suite or node-training test has been launched since. L0 was independently rechecked with the new facts; L4.4 remains unaccepted. No scientific evidence or authorization is inferred.
 
 ## 27 October 2026 — local L2 theory support independently reviewed (AI-assisted; ENGINEERING_ONLY)
 
