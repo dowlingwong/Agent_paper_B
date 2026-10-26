@@ -12,12 +12,17 @@ Input (JSON, schema ``trackp_exam_results/v1``)::
         "model": "kev-0.8b", "family": "kev",          # family keys rule.architecture_classes
         "checkpoint": "base" | "instruct",
         "author_rung": null | "trainable", "author_row": null | "PLAN row id",   # pending-author families only
-        "e0": {"width_slope": float, "mean_slope": float} | null,             # null for the floor
+        "e0": {"protocol": "trackp_e0/v1", "width_slope": float, "mean_slope": float} | null,  # null: floor
         "e2": {"val_rps_skill": float} | null,
         "e3": {"rps": {seed: {item_id: rps}}, "width_ratio": float},
         "e4": {"oom": bool, "reload_deterministic": bool, "cost_s": float} | null,
         "e6": {"A1": bool | null, ..., "A5": bool | null} | null,
         "e7": {"softmax_12": skill, "cumulative_11": skill} | null}, ...]}
+
+Rule v1 holds the E0 thresholds of protocol v1 (width slope vs s >= 0.7, mean slope >= 0.8), withdrawn on 26 Oct
+(R1-E0-PROTOCOL): ``analyze`` refuses any E0 record that does not declare ``"protocol": "trackp_e0/v1"``. P.3b on
+E0 v2 results needs a rule v2 with the author's v2 thresholds (and StartLux no longer pending,
+R1-STARTLUX-TRAINABLE), frozen with its sha256 before any P.3b data.
 
 Output: ranking (E3 skill), discards with reasons, tied set and its order, finalists, control size, head forms,
 floor verdict (``stop_escalate``), packing flags, the rule's sha256.
@@ -40,6 +45,10 @@ OUTPUT_SCHEMA = "trackp_exam_selection/v1"
 
 class RuleHashError(RuntimeError):
     pass
+
+
+class RuleSuperseded(RuntimeError):
+    """The input's E0 protocol is not the one the rule's thresholds were written for."""
 
 
 def load_rule(path: Path | str = RULE_PATH) -> tuple[dict, str]:
@@ -150,6 +159,11 @@ def analyze(data: dict, rule_path: Path | str = RULE_PATH) -> dict:
     names = [m["model"] for m in models]
     if len(set(names)) != len(names):
         raise ValueError("duplicate model names")
+    want = rule.get("e0_protocol", "trackp_e0/v1")
+    stale = [m["model"] for m in models if m.get("e0") is not None and m["e0"].get("protocol") != want]
+    if stale:
+        raise RuleSuperseded(f"{rule['version']} has E0 thresholds for {want}; E0 records of {stale} do not declare "
+                             f"it. E0 v2 needs a rule v2 with the author's thresholds (R1-E0-PROTOCOL)")
     roles = rule["roles"]
     W = ex.boot_weights(rule)
     alpha = rule["bootstrap"]["alpha"]

@@ -14,8 +14,11 @@ deterministic kernels).
 
 Early stopping (``early_stop_patience``; E0 protocol of 26 Oct, spec §6.1): every evaluation reports
 ``early_stop_metric`` (lower is better); an improvement saves the model to ``best/`` (with ``best.json``), and
-``patience`` evaluations without one end the run. At the end the best model is loaded back, so the trainer
-returns the selected checkpoint, not the last. ``keep_checkpoints`` prunes older step checkpoints.
+``patience`` evaluations without one end the run. The starting model is evaluated too (step 0), so a run that
+never improves on its start returns the start. Every evaluation also writes a step checkpoint (the early-stopping
+state lives in ``trainer_state.pt``, so resume never disagrees with ``best/``). At the end the best model is loaded
+back, so the trainer returns the selected checkpoint, not the last. ``keep_checkpoints`` prunes older step
+checkpoints.
 """
 from __future__ import annotations
 
@@ -201,6 +204,11 @@ class Trainer:
         self.step = int(state["step"])
         self._truncate_metrics(self.step)
         self.best = state.get("best")
+        bj = self.run_dir / "best.json"     # a crash between writing best/ and the next checkpoint: best/ wins
+        if self.best is not None and bj.is_file():
+            on_disk = json.loads(bj.read_text())
+            if on_disk["step"] <= self.step and on_disk["step"] != self.best["step"]:
+                self.best = {**on_disk, "bad": 0}
         self.log(f"resumed from {d} at step {self.step}")
         return self.step
 
@@ -233,6 +241,12 @@ class Trainer:
     def train(self, stop_after: int | None = None) -> dict:
         self.resume()
         self.model.train() if hasattr(self.model, "train") else None
+        if self.cfg.early_stop_patience and self.evaluate is not None and self.step == 0 and self.best is None:
+            record = {"kind": "eval", "step": 0, **self.evaluate(self.model)}   # the starting model is a candidate
+            self._write(record)
+            self._early_stop_update(record)
+            self.save_checkpoint()
+            self.model.train() if hasattr(self.model, "train") else None
         start = self.step
         exhausted = lambda: bool(self.cfg.early_stop_patience and self.best  # noqa: E731
                                  and self.best["bad"] >= self.cfg.early_stop_patience)
@@ -259,14 +273,15 @@ class Trainer:
             self._write({"kind": "step", "step": self.step, "loss": total_loss, "grad_norm": gnorm,
                          "lr": lr_used, "step_s": time.perf_counter() - t0})
             last = self.step == self.total_steps
-            stop = False
+            stop = evaluated = False
             if self.evaluate is not None and (self.step % self.eval_every == 0 or last):
+                evaluated = True
                 record = {"kind": "eval", "step": self.step, **self.evaluate(self.model)}
                 self._write(record)
                 if self.cfg.early_stop_patience:
                     stop = self._early_stop_update(record)
                 self.model.train() if hasattr(self.model, "train") else None
-            if self.step % self.ckpt_every == 0 or last or stop:
+            if self.step % self.ckpt_every == 0 or last or stop or (evaluated and self.cfg.early_stop_patience):
                 self.save_checkpoint()
             if stop:
                 self._write({"kind": "early_stop", "step": self.step, "best": self.best})

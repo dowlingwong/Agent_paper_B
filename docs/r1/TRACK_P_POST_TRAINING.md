@@ -187,7 +187,7 @@ where keep_j comes from `r1/c3/rules.py` (`keep`) applied to the logged Δ̂_j u
 - PyTorch + PEFT (LoRA), no TRL. One loop, losses plugged in per stage.
 - Host: zhixu portal (1× RTX 4090 24 GB). Models ≤ 4B, bf16, gradient checkpointing.
 - Default LoRA: r = 16, α = 32, dropout 0.05, targets = attention q/k/v/o + MLP up/down/gate (+ DeltaNet projections on Qwen3.5 hybrid bases, as Kev does).
-- Learning rate: **one grid {1e-5, 3e-5, 1e-4} for the adapter (and released heads) of every family, chosen by val RPS** (26 Oct, R1-LR-GRID; replaces 2e-5 from a released adapter / 1e-4 for a fresh LoRA); new heads 1e-3; new token rows (bin-token family) in fp32 at a lower lr (R1-TOKEN-INIT).
+- Learning rate: **one grid {1e-5, 3e-5, 1e-4} for the adapter of every family, chosen by val RPS** (26 Oct, R1-LR-GRID; replaces 2e-5 from a released adapter / 1e-4 for a fresh LoRA); released heads train at the adapter lr (Track P agent's reading, author to confirm); new heads 1e-3; new token rows (bin-token family) in fp32 at a lower lr (R1-TOKEN-INIT; 1e-4 chosen by the Track P agent, author to confirm).
 - Environment pinned (26 Oct, R1-ENV-PIN): torch 2.6.0+cu124 on driver 535; Kev code at the P.0 commit `2074cc4`, its diff to `kev-1.0` recorded.
 - Batches are tree-packed (§2.4) where the model supports it: one forward pass per state with all its proposals.
 - Three training seeds per configuration; report mean ± s.e.
@@ -263,7 +263,7 @@ The task-specific analogue of the biased-coin probe (§10, R1/R2): can the archi
 - Target: soft label = N(m, s²) integrated over the 12 bins (bin 0 never active).
 - **Protocol v2 (26 Oct, R1-E0-PROTOCOL; replaces "frozen backbone, then 200 LoRA steps" and the released-head fit):**
   - A **fresh LayerNorm + linear belief head** (hidden → 12) at lr 1e-3 for every model, on the readout state its action head reads. (1) Fitted on the frozen backbone; (2) then LoRA + that head together, adapter lr from the grid {1e-5, 3e-5, 1e-4} chosen by val RPS (R1-LR-GRID).
-  - **To convergence:** validation cells are held out of the training grid; each stage stops early on val RPS (best checkpoint restored), at most 2,000 steps; the same budget (steps, evaluation interval, patience, batch) for every model.
+  - **To convergence:** validation cells are held out of the training grid; each stage stops early on val RPS (best checkpoint restored), at most 2,000 steps; the same budget (steps, evaluation interval, patience, batch) for every model. *(Track P agent's choices, for the author to confirm: the cap applies per stage; val cells (1,3), (3,2), (5,4), (8,2), (0,3), (9,3); evaluation every 100 steps, patience 5, the starting model counted; lr chosen on the soft fresh-head run and reused for the hard and native runs; the Qwen control's token rows frozen in the fresh-head run.)*
   - **Released heads are reported separately** (the family's native readout: zero-shot, then the same LoRA stage).
   - Contrast run: identical, but with **hard argmax labels**.
 - Metrics on held-out cells: RPS; **width slope = regression slope of the predicted std on the label's own std** (the binned soft label's std with the same bin representatives; target 1), with the **label's own slope vs s reported as the ceiling**; slope of predicted mean on m (target 1); the v1 slope of predicted std on s is still reported; for the hard-label run, width ratio (expected to collapse).
@@ -278,7 +278,7 @@ Adapted from the Jev probe set (§10, R1). All on the soft-label E0 model unless
 | A1 Branch isolation | Same branch scored alone vs packed with 7 siblings | max |Δ logit| ≤ 1e-3 (bf16 tolerance); packed models only |
 | A2 Sibling-order invariance | Permute sibling order (5 permutations) | max |Δ logit| ≤ 1e-3 |
 | A3 History-length robustness | Prepend irrelevant acceptance history at **0 / 25 % / 50 % / 100 % of the remaining token budget**, under the smallest context limit in the pool (1,024 tokens) for every model, so the same text fits every model (26 Oct, R1-A3-BUDGET); 2k / 8k descriptive only | mean |Δ RPS| ≤ 0.01 |
-| A4 Width monotonicity | Same prompt, s increased in 5 steps; reference = the label's own std at each step (26 Oct, R1-E0-PROTOCOL) | predicted std non-decreasing wherever the label's std increases; threshold set by the author after the v2 DRYRUN (was ≥ 95 % of prompts) |
+| A4 Width monotonicity | Same prompt, s increased in 5 steps; reference = the label's own std at each step (26 Oct, R1-E0-PROTOCOL) | predicted std non-decreasing wherever the label's std increases (criterion form chosen by the Track P agent, author to confirm); threshold set by the author after the v2 DRYRUN (was ≥ 95 % of prompts) |
 | A5 Slot bias | BinTokenWrapper: permute the order bin tokens are listed in the prompt (if listed) | belief invariant within 0.02 TV distance |
 
 ### 5.7 Pre-registered selection rule
@@ -418,7 +418,7 @@ Fixed budget, fresh instances, ≥ 3 harder benchmarks where available. Compare:
 - Confirm v_k (keep probability per bin) from the C2 theory.
 - Confirm ECE gate value after the first SFT run.
 - StartLux tier decided 26 Oct: trainable candidate (R1-STARTLUX-TRAINABLE).
-- E0 and A4 thresholds of protocol v2: set by the author after the v2 DRYRUN (R1-E0-PROTOCOL; owner: Dow).
+- E0 and A4 thresholds of protocol v2: set by the author after the v2 DRYRUN (R1-E0-PROTOCOL; owner: Dow). They go into a **rule v2** (`r1/c3/rules/p3_rule_v2.yaml`, frozen with its sha256 before any P.3b data; also drops StartLux from the pending-author families). Until then `exam_analyze` refuses E0 records that are not protocol v1, so the withdrawn v1 thresholds of `p3_rule_v1.yaml` cannot be applied to v2 results.
 - Decided 26 Oct: Jev rung via the official API (R1-JEV-RUNG); R-B demonstrations by DeepSeek-V4.1-Flash-1017 (R1-RB-TEACHER); pooled σ̂ (R1-SOFT-SIGMA); Qwen control adopted (R1-C3-CONTROL); card schedule (R1-PORTAL-SCHEDULE).
 - Track H.8 `OfflineBanditEnv` defines action = bin; under belief/action decoupling the environment action should be execute/skip (keep from the rules), with the 12-bin belief as the model's forecast. Track H was accepted on 26 Oct with action = bin, so an H.8 amendment is needed before P.5 uses the environment (owner: Dow).
 

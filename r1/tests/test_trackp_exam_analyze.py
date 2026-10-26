@@ -28,7 +28,7 @@ def _model(name, family, skill, items, base, *, noise=0.002, seed=1, e2=0.1, wid
     rng = np.random.default_rng(seed)
     rps = {str(s): {i: base[i] * (1 - skill) + noise * rng.standard_normal() for i in items} for s in range(3)}
     m = {"model": name, "family": family, "checkpoint": ckpt,
-         "e0": None if e0 is None else {"width_slope": e0[0], "mean_slope": e0[1]},
+         "e0": None if e0 is None else {"protocol": "trackp_e0/v1", "width_slope": e0[0], "mean_slope": e0[1]},
          "e2": {"val_rps_skill": e2}, "e3": {"rps": rps, "width_ratio": width},
          "e4": {"oom": oom, "reload_deterministic": det, "cost_s": cost}, "e6": e6, "e7": e7}
     m.update(kw)
@@ -188,3 +188,15 @@ def test_schema_and_missing_items_refused(env):
     del d["models"][0]["e3"]["rps"]["0"][next(iter(items))]
     with pytest.raises(ValueError):
         X.analyze(d)
+
+
+def test_rule_v1_refuses_e0_records_of_another_protocol(env):
+    """R1-E0-PROTOCOL: the v1 thresholds were withdrawn; E0 v2 results need a rule v2 (author's thresholds)."""
+    items, base = env
+    m = _model("kev", "kev", 0.2, items, base)
+    m["e0"]["protocol"] = "trackp_e0/v2"
+    with pytest.raises(X.RuleSuperseded, match="rule v2"):
+        X.analyze(_data(m))
+    del m["e0"]["protocol"]
+    with pytest.raises(X.RuleSuperseded):
+        X.analyze(_data(m))

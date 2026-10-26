@@ -1,11 +1,33 @@
 # Kev code pin vs release tag (R1-ENV-PIN, 26 Oct 2026). AI-assisted (Claude).
 # pinned: 2074cc44256200bb37540103fa4572901faa10f3  tag kev-1.0: 6b719c3c3f367295f6ef336f4f751cf5ff970abc
-# commits between: 1
-# installed in venvs: {"url":"https://github.com/jaredpalmer/kev","vcs_info":{"vcs":"git","commit_id":"2074cc44256200bb37540103fa4572901faa10f3","requested_revision":"2074cc44256200bb37540103fa4572901faa10f3"}}
-# kev.__file__ resolves to /home/dowling/r1_trackp/ext/kev/kev (working tree clean: '0' changes)
+# full history (clone unshallowed on 26 Oct; an earlier version of this file counted on a shallow clone): kev-1.0 is an ancestor of the pin: yes; commits after the tag: 23; commits of the tag not in the pin: 0
+# pip records the pin for the installed package in both venvs: {"url":"https://github.com/jaredpalmer/kev","vcs_info":{"vcs":"git","commit_id":"2074cc44256200bb37540103fa4572901faa10f3","requested_revision":"2074cc44256200bb37540103fa4572901faa10f3"}}
+# kev/model.py is unchanged between the tag and the pin; kev/checkpoint.py differs (see the .kev_package.patch)
 
 ## git log kev-1.0..2074cc4
 2074cc4 [ImgBot] Optimize images (#187)
+e7ae8fd kev-finetune: skip a JSON score that float would round to an integer (#250)
+9d01aab fix(test): use as_posix() for cross-platform path comparison (#226)
+ac8e245 kev-finetune: two rubrics on one state are not a label conflict (#242)
+611b39b Pin mlx_available off in the generic serve startup fixture (#254)
+1f04cfa kev-finetune: reject a fractional score index instead of truncating it (#241)
+dd375f2 score presentation checks: first-slot rate and identical-option control for Score (#161) (#236)
+0a6d3fa README: distinguish Modal HTTP performance from model time (#237)
+85ccf56 Modal: serve directly at 64-request target concurrency (#234)
+2ecafc4 kev-deploy and kev-finetune: pin KEV_REF to fc4a17e (#233)
+fc4a17e device probe: fail closed, try MPS after CUDA, and keep MLX off the torch probe (#231)
+53cb0b5 serve: isolate accelerator startup probes and allow explicit CPU selection (#218)
+152d80b docs: fix #159 install note without duplicating Quick Start (#171)
+8ed2a2d compare: write null diagnostics when none-of-the-above rows are absent (#217)
+5e42a7a kev-knowledge skill: cloud-native — the graph is the private repo jaredpalmer/kev-knowledge, cloned and searched from any session (#220)
+0bcaa72 kev-knowledge skill: the graph also covers Devin Cloud sessions (v1 API extractor, cloud-id session notes) (#219)
+fe64b12 kev-deploy and kev-finetune: pin KEV_REF to 84847f0 (Checkpoint.release_date reads UTC and skips zeroed mtimes, #209) (#214)
+84847f0 kev-knowledge skill: search the knowledge graph of every earlier Devin session before re-deriving history (#213)
+6605a5a Space: lightning emoji (#212)
+3fe301d Rounds 28 and 29 results: no candidate at either; validated context 8,192 / 8,192 / 8,192 / 65,536 (0.8B / 4B / 9B v2 / 27B v2); Kev-9B v2 stands (#211)
+952ce9d Kev 1.0 assets replaced with release-dated tarballs (metadata only, weights identical): new hashes in the release notes and runs/release records (#210)
+1b89bff Release tarballs carry the release date (SOURCE_DATE_EPOCH), and Checkpoint.release_date ignores zeroed mtimes and reads UTC (#209)
+61b041b Kev 1.0 released: v1.0 on all four Hub repos (card-only commits, weights unchanged), GitHub release kev-1.0 with three deterministic adapter tarballs, kev-family retired to a pointer (#208)
 
 ## git diff --stat kev-1.0 2074cc4 (whole repo)
  .agents/skills/kev-knowledge/SKILL.md              |     97 +

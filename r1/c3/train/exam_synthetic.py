@@ -396,9 +396,10 @@ def a3_pass(rps_by_length: dict) -> dict:
 def a3_probe_budget(counters: dict, n: int = 100, fracs: Sequence[float] = A3_FRACS, limit: int | None = None,
                     seed: int = SEED) -> dict:
     """A3 v2: per prompt, irrelevant history at ``fracs`` of the remaining budget ``limit - max_f len_f(prompt)``
-    (``counters``: the pool families' input-token counters, ``budget.pool_counters``). A level takes the most history
-    lines (from one fixed stream) whose longest rendering is within ``base + frac * budget``. Returns
-    {frac: [prompts]}, the soft targets, and per prompt the budget and the tokens per level and family."""
+    (``counters``: the pool families' input-token counters, ``budget.pool_counters``). A level takes the longest
+    prefix, counted in words, of one fixed history stream (whole lines, then the next line cut at a word) whose
+    longest rendering is within ``base + frac * budget``. Returns {frac: [prompts]}, the soft targets, per prompt
+    the budget, the tokens per level and family, and the fraction of the budget each level actually reached."""
     from r1.c3.train.budget import POOL_LIMIT, max_tokens
     limit = POOL_LIMIT if limit is None else limit
     rng = _probe_rng("A3", seed)
@@ -406,29 +407,45 @@ def a3_probe_budget(counters: dict, n: int = 100, fracs: Sequence[float] = A3_FR
     for _ in range(n):
         cell = (int(rng.integers(M_CELLS)), int(rng.integers(S_CELLS)))
         rows.append((_context(rng), *_sample_in(cell, rng)))
-    stream = irrelevant_history(_Words(), 4 * limit, seed)   # far more lines than any budget takes
+    stream = irrelevant_history(_Words(), 4 * limit, seed)   # far more words than any budget takes
+    words = [ln.split(" ") for ln in stream]
+    total = sum(len(w) for w in words)
+
+    def history(t: int) -> list[str]:
+        out, left = [], t
+        for w in words:
+            if left <= 0:
+                break
+            out.append(" ".join(w[:left]))
+            left -= len(w)
+        return out
     out = {"targets": [soft_target(m, s) for _, m, s in rows], "prompts": {f: [] for f in fracs}, "budget": [],
-           "tokens": {f: [] for f in fracs}, "limit": limit, "families": sorted(counters)}
+           "tokens": {f: [] for f in fracs}, "reached": {f: [] for f in fracs}, "limit": limit,
+           "families": sorted(counters)}
     for i, (ctx, m, s) in enumerate(rows):
-        make = lambda k: build_prompt(ctx, m, s, extra_history=stream[:k], group=f"a3-{i:03d}")  # noqa: E731
+        make = lambda t: build_prompt(ctx, m, s, extra_history=history(t), group=f"a3-{i:03d}")  # noqa: E731
         base = max_tokens(counters, make(0))
         budget = limit - base
-        if budget < 0:
-            raise ValueError(f"A3 prompt {i} is over the pool limit before any history ({base} > {limit})")
+        if budget <= 0:
+            raise ValueError(f"A3 prompt {i} has no budget before any history ({base} >= {limit})")
         out["budget"].append(budget)
         for f in fracs:
             cap = base + f * budget
-            lo, hi = 0, len(stream)          # largest k with max_tokens(make(k)) <= cap (monotone in k)
+            lo, hi = 0, total               # longest word prefix within the cap (token counts grow with words)
             while lo < hi:
                 mid = (lo + hi + 1) // 2
                 if max_tokens(counters, make(mid)) <= cap:
                     lo = mid
                 else:
                     hi = mid - 1
-            p = build_prompt(ctx, m, s, extra_history=stream[:lo], group=f"a3-{i:03d}",
-                             meta={"a3_frac": f, "extra_history_lines": lo})
+            p = build_prompt(ctx, m, s, extra_history=history(lo), group=f"a3-{i:03d}",
+                             meta={"a3_frac": f, "extra_history_words": lo})
+            tok = {fam: c(p) for fam, c in counters.items()}
+            if max(tok.values()) > cap:
+                raise RuntimeError(f"A3 prompt {i} level {f}: {max(tok.values())} tokens over the cap {cap}")
             out["prompts"][f].append(p)
-            out["tokens"][f].append({fam: c(p) for fam, c in counters.items()})
+            out["tokens"][f].append(tok)
+            out["reached"][f].append((max(tok.values()) - base) / budget)
     return out
 
 

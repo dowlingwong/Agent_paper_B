@@ -166,5 +166,5 @@
   "training": 1.0,
   "post_hoc": "temperature scaling on dev, the same procedure for every model (R1-TEMPERATURE)"
  },
- "code_pins_comment": "R1-ENV-PIN: Kev code pinned at the exact commit used in P.0 (2074cc4), 23 commits after the kev-1.0 tag; its diff to the tag is recorded in docs/r1/reports/trackp_env_pins_20261026/kev_diff_vs_kev-1.0.*"
+ "code_pins_comment": "R1-ENV-PIN: Kev code pinned at the exact commit used in P.0 (2074cc4), 23 commits after the kev-1.0 tag; its diff to the tag is recorded in docs/r1/reports/trackp_phase2_20261026/kev_diff_vs_kev-1.0.*"
 }

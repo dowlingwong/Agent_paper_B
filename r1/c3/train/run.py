@@ -210,6 +210,57 @@ def data_manifest_hash(rows: Iterable[dict]) -> str:
     return h.hexdigest()
 
 
+CODE_PACKAGES = {"kev": "kev", "laya": "laya", "startlux_decide": "startlux_decide"}
+
+
+def environment_record() -> dict:
+    """Library versions and, per code-pinned package, the commit pip recorded and the git state of the directory the
+    import actually resolves to (R1-ENV-PIN)."""
+    import importlib
+    import importlib.metadata as md
+    out: dict = {"packages": {}}
+    for lib in ("torch", "transformers", "peft"):
+        try:
+            out[lib] = importlib.import_module(lib).__version__
+        except ImportError:
+            out[lib] = None
+    for dist, mod in CODE_PACKAGES.items():
+        rec: dict = {}
+        try:
+            direct = md.distribution(dist).read_text("direct_url.json")
+            rec["pip_commit"] = (json.loads(direct).get("vcs_info") or {}).get("commit_id") if direct else None
+        except md.PackageNotFoundError:
+            rec["pip_commit"] = None
+        try:
+            src = Path(importlib.import_module(mod).__file__).resolve().parent
+            rec["path"] = str(src)
+            if (src.parent / ".git").exists():
+                rec["git"] = git_commit(src.parent)
+        except ImportError:
+            rec["path"] = None
+        out["packages"][dist] = rec
+    return out
+
+
+def check_environment(cfg: dict, env: dict | None = None) -> dict:
+    """STOP unless torch and the code pins are the configured ones (R1-ENV-PIN): pip's recorded commit, and the
+    imported checkout (if it is one) at that commit with a clean tree."""
+    env = environment_record() if env is None else env
+    want_torch = cfg["venv"]["torch"]
+    if env["torch"] != want_torch:
+        raise TrackPStop(f"torch {env['torch']} is not the pinned {want_torch}")
+    for dist, pin in cfg["code_pins"].items():
+        commit = pin.split("@")[-1]
+        rec = env["packages"].get(dist) or {}
+        if rec.get("pip_commit") != commit:
+            raise TrackPStop(f"{dist}: installed commit {rec.get('pip_commit')} is not the pinned {commit}")
+        g = rec.get("git")
+        if g and (g["commit"] != commit or g["dirty"]):
+            raise TrackPStop(f"{dist}: imported from {rec['path']} at {g['commit']} (dirty={g['dirty']}), "
+                             f"not the pinned {commit}")
+    return env
+
+
 def run_manifest(*, subcommand: str, evidence: str, cfg: dict, seed: int, base: dict, model_files: dict,
                  data_hash: str, lease_log: list, extra: dict | None = None) -> dict:
     if evidence not in EVIDENCE_LABELS:
@@ -218,4 +269,5 @@ def run_manifest(*, subcommand: str, evidence: str, cfg: dict, seed: int, base: 
             "evidence_label": evidence, "seed": seed, "base": base, "model_files_sha256": model_files,
             "data_manifest_sha256": data_hash, "config_sha256": config_digest(cfg),
             "git": {"paper": git_commit(REPO), "harness": git_commit(harness_root())},
+            "environment": environment_record(),
             "gpu_lease": lease_log, **(extra or {})}

@@ -204,8 +204,12 @@ def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "
         p0 = predict(model, [r["prompt"] for r in test])
         out["zero_shot"] = {"val_rps": mean_rps(predict(model, [r["prompt"] for r in val]), val),
                             "test": E.e0_metrics_v2(p0, test_items, target)}
+    # The fresh variant trains the same things on every family (LoRA + the fresh head): the bin-token family's new
+    # token rows (its native readout, also present in its prompt) stay frozen at their mean-embedding init.
+    frozen = {id(p) for p in token_row_parameters(model)} if variant == "fresh" else set()
     for p in model.trainable_parameters():
-        p.requires_grad_(True)
+        p.requires_grad_(id(p) not in frozen)
+    out["frozen_token_rows"] = bool(frozen)
 
     def evaluate(m) -> dict:
         return {"val_rps": mean_rps(predict(m, [r["prompt"] for r in val]), val)}
@@ -213,7 +217,8 @@ def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "
                       head_lr=head_lr, token_lr=token_lr, eval_every_steps=eval_every, early_stop_patience=patience,
                       keep_checkpoints=1)
     res = Trainer(model, train, belief_loss, cfg, run_dir / "lora", head_params=new_head_parameters(model),
-                  token_params=token_row_parameters(model), evaluate=evaluate).train()
+                  token_params=[p for p in token_row_parameters(model) if id(p) not in frozen],
+                  evaluate=evaluate).train()
     p_lora = predict(model, [r["prompt"] for r in test])
     np.save(run_dir / "pred_test_lora.npy", p_lora)
     out["lora"] = {**res, "test": E.e0_metrics_v2(p_lora, test_items, target)}
@@ -252,7 +257,9 @@ def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0, counters: 
             {"pass": None, "reason": "not all levels ran"}
         tokens = {str(f): {fam: int(max(t[fam] for t in a3["tokens"][f])) for fam in a3["families"]}
                   for f in a3["prompts"]}
+        reached = {str(f): [float(np.min(v)), float(np.mean(v))] for f, v in a3["reached"].items()}
         out["A3"] = {**res, "protocol": "v2_budget", "limit": a3["limit"], "families": a3["families"],
+                     "budget_fraction_reached_min_mean": reached,
                      "budget_min_mean_max": [int(min(a3["budget"])), float(np.mean(a3["budget"])),
                                              int(max(a3["budget"]))], "max_tokens_by_level": tokens}
         if getattr(model, "family", "") == "laya":   # Laya cuts what does not fit: must not happen within budget

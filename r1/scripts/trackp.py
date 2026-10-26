@@ -300,6 +300,8 @@ def main(argv=None) -> int:
         cfg = R.load_config(args.config, allow_placeholders=allow)
         args.cfg = cfg
         _require_authorization(args)
+        if not args.tiny and args.cmd in ("spike", "toy", "e0", "probes"):
+            R.check_environment(cfg)          # R1-ENV-PIN: torch and code pins before any GPU job
         res = COMMANDS[args.cmd](args, cfg)
         run_dir = Path(args.run_dir)
         manifest = R.run_manifest(subcommand=args.cmd, evidence=_evidence(args), cfg=cfg, seed=args.seed,

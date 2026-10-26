@@ -124,7 +124,7 @@ def test_early_stopping_restores_the_best_and_does_not_resume_past_it(tmp_path):
     torch.manual_seed(0)
     m = _Lin()
     rows = [{"prompt": str(i), "y": torch.full((N_BINS,), 1 / N_BINS)} for i in range(8)]
-    vals = iter([0.5, 0.4, 0.45, 0.46, 0.47, 0.1])
+    vals = iter([0.6, 0.5, 0.4, 0.45, 0.46, 0.47, 0.1])     # step 0 (the start), then every 2 steps
     snap = {}
 
     def evaluate(model):
@@ -137,6 +137,8 @@ def test_early_stopping_restores_the_best_and_does_not_resume_past_it(tmp_path):
     assert res["early_stopped"] and res["best_step"] == 4 and res["stopped_at"] == 10
     assert all(torch.equal(t, snap[0.4][k]) for k, t in m.state_dict().items())
     assert len(list((tmp_path / "r" / "ckpt").glob("step_*"))) == 1
+    evals = [json.loads(ln) for ln in (tmp_path / "r" / "metrics.jsonl").read_text().splitlines()]
+    assert [e["step"] for e in evals if e["kind"] == "eval"] == [0, 2, 4, 6, 8, 10]
     assert json.loads((tmp_path / "r" / "best.json").read_text())["step"] == 4
     res2 = Trainer(m, rows, X.belief_loss, cfg, tmp_path / "r", evaluate=evaluate).train()   # resume: exhausted
     assert res2["stopped_at"] == 10 and res2["best_step"] == 4
@@ -186,15 +188,16 @@ def test_a3_levels_fill_the_pool_budget_and_fit_every_family():
     assert list(a3["prompts"]) == list(E.A3_FRACS)
     for i, budget in enumerate(a3["budget"]):
         base = a3["tokens"][0.0][i]["b"]
-        assert budget == lim - base and a3["prompts"][0.0][i].meta["extra_history_lines"] == 0
+        assert budget == lim - base and a3["prompts"][0.0][i].meta["extra_history_words"] == 0
         prev = -1
         for f in E.A3_FRACS:
             t = a3["tokens"][f][i]
             assert max(t.values()) <= base + f * budget <= lim
-            n = a3["prompts"][f][i].meta["extra_history_lines"]
+            n = a3["prompts"][f][i].meta["extra_history_words"]
+            assert f - a3["reached"][f][i] < 0.02          # word-level fill: within ~a word of the target
             assert n >= prev
             prev = n
-        assert a3["tokens"][1.0][i]["b"] > lim - 40          # the maximum level nearly fills the budget
+        assert a3["tokens"][1.0][i]["b"] >= lim - 2           # the maximum level fills the budget
 
 
 @pytest.mark.parametrize("family", ["kev", "qwen_control", "startlux", "laya"])
@@ -237,7 +240,7 @@ def test_e0_v2_runs_both_stages_with_early_stopping(variant, tmp_path):
                   patience=1, batch_size=4, n_train=8, n_val=4, n_test=6)
     assert rep["protocol"] == "trackp_e0/v2" and rep["n_val"] == 4
     assert ("head_fit" in rep) == (variant == "fresh") and ("zero_shot" in rep) == (variant == "native")
-    assert rep["lora"]["best_step"] in (2, 4) and "width_slope_vs_label" in rep["lora"]["test"]
+    assert rep["lora"]["best_step"] in (0, 2, 4) and "width_slope_vs_label" in rep["lora"]["test"]
     assert rep["pass"] is None
     with pytest.raises(ValueError):
         X.e0_v2(w, tmp_path / "bad", variant="fresh" if variant == "native" else "native", lr=1e-4)
@@ -266,3 +269,32 @@ def test_gpu_lease_refuses_while_the_track_x_marker_exists(tmp_path):
         with R.gpu_lease("refused", **kw):
             pass
     assert "trackx_marker" in json.loads((tmp_path / "lease.jsonl").read_text().splitlines()[0])
+
+
+def test_a_run_that_never_improves_on_its_start_returns_the_start(tmp_path):
+    torch.manual_seed(0)
+    m = _Lin()
+    start = {k: t.clone() for k, t in m.state_dict().items()}
+    rows = [{"prompt": str(i), "y": torch.full((N_BINS,), 1 / N_BINS)} for i in range(8)]
+    vals = iter([0.1, 0.2, 0.3, 0.4])
+    cfg = TrainConfig(max_steps=100, epochs=1e9, batch_size=8, grad_accum=1, lr=1e-1, eval_every_steps=2,
+                      early_stop_patience=3)
+    res = Trainer(m, rows, X.belief_loss, cfg, tmp_path / "r", evaluate=lambda _: {"val_rps": next(vals)}).train()
+    assert res["best_step"] == 0 and res["stopped_at"] == 6
+    assert all(torch.equal(t, start[k]) for k, t in m.state_dict().items())
+
+
+# ---------------------------------------------------------------- environment pins (R1-ENV-PIN)
+
+def test_environment_check_refuses_other_torch_or_code_commits():
+    cfg = {"venv": {"torch": "2.6.0+cu124"}, "code_pins": {"kev": "jaredpalmer/kev@abc"}}
+    good = {"torch": "2.6.0+cu124", "packages": {"kev": {"pip_commit": "abc", "path": "/x"}}}
+    assert R.check_environment(cfg, good) is good
+    with pytest.raises(R.TrackPStop, match="torch"):
+        R.check_environment(cfg, {**good, "torch": "2.5.1+cu121"})
+    with pytest.raises(R.TrackPStop, match="pinned abc"):
+        R.check_environment(cfg, {**good, "packages": {"kev": {"pip_commit": "def", "path": "/x"}}})
+    dirty = {"pip_commit": "abc", "path": "/x", "git": {"commit": "abc", "dirty": True}}
+    with pytest.raises(R.TrackPStop, match="dirty=True"):
+        R.check_environment(cfg, {**good, "packages": {"kev": dirty}})
+    assert set(R.environment_record()) >= {"torch", "transformers", "peft", "packages"}
