@@ -104,3 +104,24 @@ Once finding 5 is fixed, this reviewer expects to accept after a quick re-run of
 ## Response to finding 5 (Track P agent)
 
 **Fixed.** The `pytest.raises(ValueError)` "PILOT" block is back at the end of `test_manifest_records_commits_and_hashes`, and `test_host_record_names_the_device_in_use` is a separate test that follows it. `test_trackp_trainer.py` gives 18 passed with the GPU visible and 18 passed with `CUDA_VISIBLE_DEVICES=` empty, both under `flock -n ~/r1_locks/gpu0.lock`.
+
+## Final re-check (same reviewer, against `8d2c434`)
+
+- **Finding 5: resolved.** `git diff 8190bd4 8d2c434 -- r1/tests/test_trackp_trainer.py` now contains only the new `test_host_record_names_the_device_in_use`. The `pytest.raises(ValueError)` PILOT-label block is back at the end of `test_manifest_records_commits_and_hashes`, byte-identical to its original position, and it runs unconditionally.
+- **Re-run.** Preconditions: the compute-apps query was empty, there was no Track X marker, and I used `flock -n ~/r1_locks/gpu0.lock`. Results in `trackp-gpu`:
+  - with the GPU visible: **18 passed**;
+  - with `CUDA_VISIBLE_DEVICES=` empty: **18 passed**;
+  - verbose CPU-only run: `test_manifest_records_commits_and_hashes` PASSED and `test_host_record_names_the_device_in_use` PASSED.
+- `23f08a7..8d2c434` changes only this test file and the review file. The reports and code accepted in the previous re-check are unchanged.
+
+### Final verdict
+
+**Accepted.** Findings 1–5 are resolved and checked against the files and the host. The migration meets the header's "Done when":
+1. TASL-7 Phase 0 facts are recorded and consistent with my re-run.
+2. The same pins are in place: the venv freeze is identical to the portal's, and an independent re-hash matches all 112 files against the committed `registry.yaml`.
+3. The host-equivalence tolerance was pushed before the lease, and the run was at clean `8e13e77` with a matching manifest. My recomputation gives Δ width slope −0.0095, Δ mean slope +0.0077 and RPS −2.5 %, so the hosts are **equivalent**.
+4. The merge kept both STATUS entries unchanged, no P.3a run took place, and the lease rules were followed. That the portal was left untouched could not be checked from TASL-7, but there is no sign it was accessed.
+
+Still open for the author, and not a condition of this verdict:
+- migration question 1, the Track X STATUS fallback in `track_x_running` on TASL-7;
+- the pre-existing environment-pinned `test_trackp_soft_label_v2` failure.

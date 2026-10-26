@@ -1,5 +1,15 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 (night) — Track P migrated to TASL-7; host equivalence passed; STOP (AI-assisted; ENGINEERING_ONLY / DRYRUN; independently reviewed and accepted)
+
+- Track P agent on TASL-7, branch `trackp-20261026`. Merged `origin/main` (STATUS conflict: both entries kept, unchanged), then the portal session's last commits.
+- **Phase 0:** `docs/r1/reports/PORTAL_TRACKP_HOST_FACTS_TASL7_20261026.md`. RTX 4090, cc 8.9, driver 580 / CUDA 13.0, 965 G free. Work dir `/home/dowling/r1_trackp` (same paths as the portal). Reboot pending since 6 Oct; secrets file absent.
+- **Phase 2, same pins:** `docs/r1/reports/TRACKP_PHASE2_ENV_PINS_TASL7_20261026.md`. The venv freeze is identical to the portal's (torch 2.6.0+cu124). The GPU smoke test matches the portal to ~1e-6. All 8 repos (112 files) were re-hashed against the committed `registry.yaml`, which is unchanged. The config is unchanged and `--check-config` is clean.
+- **Host equivalence:** `docs/r1/reports/TRACKP_TASL7_EQUIVALENCE_20261026.md`. Kev-0.8B, fresh, soft, lr 1e-4, seed 0, 2,000-step caps, at `8e13e77`. Tolerance pre-declared and pushed first (`f3567e9`). **Equivalent:** Δ width slope −0.0095, Δ mean slope +0.0077, RPS −2.5 % (limits 0.05 / 0.05 / 10 %).
+- Code: run manifests record the host and the GPU in use, by UUID (R1-ADA-OVERFLOW).
+- Independent review: `docs/r1/reviews/TRACKP_TASL7_MIGRATION_REVIEW_20261026.md`. 5 minor findings fixed; **accepted**. 26.3 leased GPU-minutes on TASL-7.
+- **STOP. Waiting for the author:** `trackp_p3a_<date>.md`, and the questions in `docs/r1/reports/TRACKP_TASL7_MIGRATION_20261026.md` (Track X STATUS guard on TASL-7, config label, reboot, other users). No P.3a run. Not merged; the coordinating session merges.
+
 ## 26 October 2026 (evening) — Track P: rule v2, two-stage E0 driver validated; portal work ends (AI-assisted)
 
 - The author's evening decisions are recorded as PLAN §10 rows on `trackp-20261026`: R1-E0-THRESHOLDS, R1-E0-BUDGET, R1-E0-HEADFIT, R1-CONTROL-READOUT, R1-TRACKP-CHOICES, R1-EXAM-RULE-V2, R1-P3A-READY. Spec and runbooks are updated, and the agent's own readings are marked for confirmation.
