@@ -12,7 +12,7 @@ def row():
     return {"proposal_id": "fixture", "node": "n", "features": {c: 0.0 for c in FEATURES},
             "sigma_node": 0.01, "sigma_cmp": 0.01, "delta_hat": 0.0,
             "delta_true": 0.02, "delta_label": 0.03, "weight": 2.0, "eval_weight": 3.0,
-            "noop": False, "duplicate": False, "belief": onehot(11), "u_train": 0.029, "u_eval": 0.019}
+            "noop": False, "duplicate": False, "belief": onehot(11), "u_train": 0.029, "u_eval": 0.019, "u_reference": "A1", "u_g_units": 0.1}
 
 
 def test_binary_action_uses_fixed_reference_utility(row):
@@ -126,3 +126,29 @@ def test_missing_utility_is_not_silently_recomputed(row):
         env.step(0)
     env.reset()
     assert env.step(1)[1] == 0
+
+
+def test_no_logged_outcome_in_policy_info(row):
+    env = OfflineBanditEnv([row], belief_provider=lambda _: onehot(11))
+    _, info = env.reset()
+    assert not {'delta_hat', 'delta_true', 'delta_label', 'u_train', 'u_eval'} & info.keys()
+
+
+def test_utility_provenance_and_price_checked(row):
+    env = OfflineBanditEnv([row], belief_provider=lambda _: onehot(11), g_units=0.05)
+    env.reset()
+    with pytest.raises(ValueError, match='provenance'):
+        env.step(0)
+    row['u_g_units'] = 0.05
+    row['u_reference'] = 'other'
+    env.reset()
+    with pytest.raises(ValueError, match='provenance'):
+        env.step(0)
+
+
+def test_fixed_a1_utility_uses_only_fixed_reference():
+    from r1.c3.env import fixed_a1_utility
+    assert fixed_a1_utility(0.02, 0.02, mu=0.0, tau=0.01, sigma_cmp=0.01,
+                            sigma_node=0.01, g_units=0.1) == pytest.approx(0.019)
+    assert fixed_a1_utility(0.02, -0.02, mu=0.0, tau=0.01, sigma_cmp=0.01,
+                            sigma_node=0.01, g_units=0.1) == pytest.approx(-0.001)

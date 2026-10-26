@@ -82,6 +82,20 @@ def onehot(b: int) -> np.ndarray:
     return p
 
 
+def fixed_a1_utility(delta: float, delta_hat: float, *, mu: float, tau: float,
+                     sigma_cmp: float, sigma_node: float, g_units: float) -> float:
+    """Compute Track P's split-specific fixed-reference u from already available inputs.
+
+    This pure function does not fit a model or establish input provenance.
+    """
+    from r1.c3 import rules
+    OE._g_role(g_units)
+    values = (delta, delta_hat, mu, tau, sigma_cmp, sigma_node)
+    if not all(np.isfinite(v) for v in values) or tau <= 0 or sigma_cmp < 0 or sigma_node <= 0:
+        raise ValueError("invalid fixed-reference utility input")
+    return float(delta * bool(rules.keep(delta_hat, mu, tau, sigma_cmp)) - g_units * sigma_node)
+
+
 class OfflineBanditEnv(_Base):
     metadata = {"render_modes": []}
 
@@ -142,6 +156,7 @@ class OfflineBanditEnv(_Base):
                 "noop": is_noop(r), "duplicate": is_duplicate(r), "split": self.split}
         if self.version == "bin/v0":
             return self.observe(r), info
+        info.pop("delta_hat")  # unavailable before execute
         self._belief = None
         try:
             public = {"proposal_id": r["proposal_id"], "node": r["node"],
@@ -198,6 +213,8 @@ class OfflineBanditEnv(_Base):
             obs = {"features": self.observe(row), "belief": self._belief.copy()}
             utility_key = "u_train" if self.split == "label" else "u_eval"
             if ex:
+                if row.get("u_reference") != "A1" or row.get("u_g_units") != self.g_units:
+                    raise ValueError("utility requires fixed A1 provenance and matching u_g_units")
                 if utility_key not in row or not np.isfinite(row[utility_key]):
                     raise ValueError(f"missing or non-finite {utility_key}; fixed-reference utility is required")
                 reward = float(row[utility_key])
