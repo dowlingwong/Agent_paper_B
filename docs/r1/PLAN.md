@@ -513,7 +513,7 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-HEADS-LN (26 Oct) | A **LayerNorm before every new head** (action, cumulative, linear belief): accepted. |
 | R1-LAYA-POOL (26 Oct) | **Laya's new heads read the mean-pooled encoder output** (over valid tokens): accepted. |
 | R1-TEMPERATURE (26 Oct) | **Kev's built-in pointer temperature is fixed at 1 during training**; **post-hoc temperature scaling on dev is applied uniformly to all models**. |
-| R1-TOKEN-INIT (26 Oct) | The bin tokens `<b0>…<b11>` and `<exec>`/`<skip>` are **initialised from the mean of the existing token embeddings**; those rows train **in fp32 at a lower lr** than the new heads. |
+| R1-TOKEN-INIT (26 Oct) | The bin tokens `<b0>…<b11>` and `<exec>`/`<skip>` are **initialised from the mean of the existing token embeddings**; those rows train **in fp32 at a lower lr** (lower than what is not stated; the Track P agent reads it as lower than the new heads' 1e-3 and uses 1e-4 — author to confirm). |
 | R1-LR-GRID (26 Oct) | **One learning-rate grid {1e-5, 3e-5, 1e-4} for every family, chosen by val RPS** (replaces the per-family lr of spec §4; new heads stay at 1e-3). |
 | R1-ENV-PIN (26 Oct) | Keep **torch 2.6.0+cu124 on driver 535** and pin it. **Kev's code is pinned at the exact commit used in P.0** (`2074cc4`), with its diff to the release tag `kev-1.0` recorded. Jev model **`jev-1.14.0`**; verify with the key that the name exists before Phase 7. |
 | R1-TRACKX-MARKER (26 Oct) | **Track X evidence marker:** `~/r1_locks/trackx_evidence.active` exists while B1 or B2 runs. Track P reads it before every GPU job and does not start while it exists. The author tells the Track X agent. |

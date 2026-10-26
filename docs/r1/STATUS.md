@@ -1,5 +1,18 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P: author's decisions implemented; E0 v2 DRYRUN on Kev-0.8B and Qwen-0.8B (AI-assisted)
+
+- The author's 26 Oct decisions are recorded as PLAN §10 rows (R1-STARTLUX-TRAINABLE … R1-TRACKP-MERGE) on `trackp-20261026`, with the spec corrected to match. The agent's own implementation choices are listed under the rows for confirmation.
+- Code: E0 protocol v2, the A3 pool budget, token rows (mean-embedding init, fp32, own lr), the lr grid, early stopping, temperature scaling, the Track X marker in the GPU lease, 10 Jev questions, environment pins checked and recorded in every manifest.
+- Independent review: `docs/r1/reviews/TRACKP_DECISIONS_REVIEW_20261026.md` (1 blocking + 9 minor, fixed). The four Track H modules pass at harness `897d83c`: 29/29.
+- **E0 v2 DRYRUN** (DRYRUN, `8e13e77`): `docs/r1/reports/TRACKP_E0V2_DRYRUN_20261026.md`.
+  - Selected lr 1e-4 for both bases. Width slope vs the label's own std: 0.92 (Kev) and 0.97 (Qwen); mean slope 1.01. Label ceiling vs s: 0.925.
+  - The frozen-backbone head fit learns no width. Hard labels collapse the width (ratio 0.27 / 0.20).
+  - A3 v2 is ≤ 3e-5 on both; A4 v2 is 1.00 on both; A5 fails on Qwen (TV 0.20).
+  - The soft runs peak near the 2,000-step cap.
+  - 3.7 GPU-h, plus ≈ 0.5 h for an aborted first attempt.
+- **Waiting for the author:** the E0/A4 threshold row, the training budget, the head-fit and A5 readings, and the Phase 5 authorization. Not merged; the coordinating session merges.
+
 ## 26 October 2026 — Track P branch merged into `main` by the coordinating session (AI-assisted)
 
 - `trackp-20261026` (`6f67717`, Phases 0–4 independently accepted on the portal, P.3a DRYRUN) merged into `main` after a merge review: `docs/r1/reviews/TRACKP_MERGE_REVIEW_20261026.md` (accepted; one STATUS conflict resolved by keeping both sides; v1 soft labels reproduce `main` exactly; two environment-pinned Track P tests fail off the portal, not code defects).

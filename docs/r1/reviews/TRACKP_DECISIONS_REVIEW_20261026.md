@@ -142,3 +142,48 @@ budget on the real pool tokenizers).
   so.
 
 Verdict: changes required
+
+## Re-check of the fixes (`70b7580..8e13e77`)
+
+Same reviewer, same rules: CPU only, no GPU, no edits except this file. Tests at `8e13e77`: `r1/tests/test_trackp_*.py`
+**190 passed**. The four Track H modules: **29 passed**, harness clone at `897d83c` (= `HARNESS_PIN_C3`).
+
+1. **Resolved.** `analyze` raises `RuleSuperseded` for any E0 record that does not declare `trackp_e0/v1`, including
+   records with no protocol field, so v2 results cannot be judged by the withdrawn thresholds (test added). Spec §9
+   records that `p3_rule_v2.yaml` must be committed, sha256-frozen, before any P.3b data, with the author's thresholds
+   and StartLux no longer pending. The v1 rule file and its sha256 are untouched.
+2. **Partly resolved — minor, still open.** The agent's choices are now listed in a note under the PLAN rows and marked
+   in spec §4, §5.5 and §5.6. "(E5 and later)" is removed, and the StartLux sentence is marked as an implementation note.
+   One reading is still in the author's wording: R1-TOKEN-INIT (`PLAN.md:516`) and spec §2.2 (`TRACK_P_POST_TRAINING.md:77`)
+   say "at a lower lr **than the new heads**", but the author said only "at a lower lr". Note item (1) covers the
+   value, 1e-4, but not that "lower" is measured against the heads rather than the adapter. Fix: drop "than the new heads"
+   from the row and from §2.2, or mark it "(Track P agent's reading)".
+3. **Resolved.** When early stopping is on, a step checkpoint is now written at every evaluation, so the early-stopping
+   state and `best/` can disagree only if the process dies between renaming `best/` and finishing that same step's
+   checkpoint. On resume that step is replayed and re-evaluated. Note, not a finding: the `best.json` re-sync in
+   `resume()` (`trainer.py:207-211`) needs `best.json`'s step ≤ the checkpoint step and different from the checkpointed
+   best. Checkpoints now follow every evaluation, so that case cannot arise and the branch is effectively dead code.
+   If it ever ran, it would reset `bad` to 0. It is harmless, but could be removed.
+4. **Resolved.** The starting model is evaluated at step 0 and is an early-stopping candidate; a run that never improves
+   returns it (test). In E0 the LoRA stage's step 0 is the head-fit model.
+5. **Resolved.**
+   - `check_environment` stops real `spike` / `toy` / `e0` / `probes` runs when torch or a pip-recorded code commit
+     differs from the config, or when the imported checkout is at another commit or has a dirty tree.
+   - Every manifest now carries `environment_record()`.
+   - In the GPU venv (imports only, with CUDA hidden), torch `2.6.0+cu124` and the commits of kev, laya and
+     startlux_decide all match their pins, and the check passes. `peft` came back null only because that venv cannot
+     import peft with CUDA hidden, a known limit of this probe.
+6. **Resolved.** `ext/kev` is no longer shallow. I confirmed `rev-list kev-1.0..2074cc4` = 23 and
+   `2074cc4..kev-1.0` = 0, so the tag is an ancestor of the pin; the checkout sits at `2074cc4` with a clean tree. The
+   diff file is regenerated and the config path is corrected.
+7. **Resolved.** Runbook 1.9 now says 10 questions.
+8. **Resolved.** Levels are now filled to the word, and every level is checked against its cap. On the real pool
+   tokenizers (my probe, n = 8) the fraction of the budget reached is 0.233–0.247, 0.48–0.50 and 0.985–1.00 for the
+   0.25 / 0.5 / 1.0 levels. Every level stays ≤ 1,024 tokens for every family, and Laya does not truncate. `probes`
+   reports `budget_fraction_reached_min_mean`.
+9. **Resolved.** `trackh_modules.txt` ran at harness `897d83c` (= the pin) and gives 29/29. Its header reads "paper
+   9365ab4 … clean: 1 changes", which contradicts itself; `8e13e77` adds only report files, and my own re-run at `8e13e77`
+   also passed. The five full-suite failures are recorded as also failing on `origin/main`; I did not re-check them.
+10. **Resolved.** The fresh variant freezes the Qwen token rows and reports `frozen_token_rows`.
+
+Verdict: changes required

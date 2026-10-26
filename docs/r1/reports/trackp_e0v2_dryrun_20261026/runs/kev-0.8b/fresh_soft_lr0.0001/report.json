@@ -1,0 +1,85 @@
+{
+  "batch_size": 8,
+  "eval_every": 100,
+  "frozen_token_rows": false,
+  "head_fit": {
+    "best_step": 1600,
+    "best_val_rps": 0.04844296723604202,
+    "early_stopped": false,
+    "stopped_at": 2000,
+    "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.12193939789425977,
+      "mean_slope_vs_label": 0.11866521583251004,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.043009622507761545,
+      "rps_extrap": 0.06920094317248102,
+      "rps_interp": 0.0264744820554835,
+      "width_ratio": 2.094890893068842,
+      "width_slope": -0.0015635863247057792,
+      "width_slope_vs_label": -0.001264170124988275
+    }
+  },
+  "head_lr": 0.001,
+  "lora": {
+    "best_step": 1700,
+    "best_value": 4.498000998864882e-05,
+    "checkpoint": "/home/dowling/r1_trackp/runs/p5_e0v2_dryrun/kev-0.8b/fresh_soft_lr0.0001/lora/ckpt/step_0002000",
+    "completed": true,
+    "early_stopped": false,
+    "stopped_at": 2000,
+    "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 1.0115558700330238,
+      "mean_slope_vs_label": 0.9825983517944652,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.00019891323497951143,
+      "rps_extrap": 0.00042836258039117474,
+      "rps_interp": 5.4056959817498896e-05,
+      "width_ratio": 1.0831230071884999,
+      "width_slope": 0.8622923633969427,
+      "width_slope_vs_label": 0.9229977302910213
+    }
+  },
+  "lr": 0.0001,
+  "max_steps": 2000,
+  "n_test": 1000,
+  "n_train": 2714,
+  "n_val": 286,
+  "pass": null,
+  "patience": 5,
+  "protocol": "trackp_e0/v2",
+  "target": "y_soft",
+  "token_lr": 0.0001,
+  "val_cells": [
+    [
+      1,
+      3
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      9,
+      3
+    ]
+  ],
+  "variant": "fresh"
+}

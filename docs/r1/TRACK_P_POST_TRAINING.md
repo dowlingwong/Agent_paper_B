@@ -74,7 +74,7 @@ The action head is optional (absent in Stage S and in the "rule-on-belief" arm).
 
 Shared serialisation: one text template, ≤ 1,024 tokens (Laya's limit), fixed bin names and order.
 
-Every new head (action, cumulative, the E0 linear belief head) reads a LayerNorm-ed state (26 Oct, R1-HEADS-LN). The reserved tokens `<b0>…<b11>`, `<exec>`, `<skip>` are initialised from the mean of the existing token embeddings; those rows are kept and trained in fp32 at a lower lr than the new heads (26 Oct, R1-TOKEN-INIT).
+Every new head (action, cumulative, the E0 linear belief head) reads a LayerNorm-ed state (26 Oct, R1-HEADS-LN). The reserved tokens `<b0>…<b11>`, `<exec>`, `<skip>` are initialised from the mean of the existing token embeddings; those rows are kept and trained in fp32 at a lower lr (lower than what is not stated; the Track P agent reads it as lower than the new heads' 1e-3 and uses 1e-4 — author to confirm) (26 Oct, R1-TOKEN-INIT).
 
 ### 2.3 Belief head form (exam factor)
 
