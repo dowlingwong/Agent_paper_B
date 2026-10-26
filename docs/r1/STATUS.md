@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P Mac scope clarified (AI-assisted)
+
+- Author clarified R1-TRACKP-RUNBOOK: the Mac restriction covers execution, including Track P training, GPU jobs, API calls and edits to `r1/c3/train/`, while reading documents and writing analyses and proposals, including L5 without runs, are allowed. Recorded as R1-TRACKP-RUNBOOK-SCOPE in PLAN §10.
+
 ## 26 October 2026 — local (Mac) work runbook (AI-assisted; documents only)
 
 - New agent runbook `docs/r1/prompts/MAC_LOCAL_RUNBOOK.md` for one Claude Code agent on the Mac: L0 baseline; L1 technical-route review and consolidation (`TECH_ROUTE.md`, consistency scan, route proposals — incl. the DAC-framing conflict with R1-ROUTE); L2 theory-check support for A.2; L3 feasibility and ICML 2027 re-plan (proposal); L4 framework code (Track G adapters G.1, Track H follow-ups, regenerate-all analysis pipeline, D.2 scaffold, harness audit — harness pin 897d83c untouched); L5 Track P feasibility review (proposal); L6 ICML LaTeX skeleton in `papers/r1/`; L7 final pass. Subagent use and acceptance criteria per task; independent review at every STOP.
