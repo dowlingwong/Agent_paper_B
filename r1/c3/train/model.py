@@ -31,8 +31,8 @@ Families (spec §2.2):
   and also returns their token log-probabilities. The Kev (pointer) variant needs Kev's base LM head, which
   ``kev.model`` drops; not built (raises).
 
-Belief head forms (spec §2.3): ``softmax12`` (the family's native 12 logits) and ``cumulative11`` (a Linear(hidden ->
-11) on the readout state: one no-op Bernoulli plus one threshold sigmoid P(z > e_k) per finite bin edge — 10 with
+Belief head forms (spec §2.3): ``softmax12`` (the family's native 12 logits) and ``cumulative11`` (LayerNorm +
+Linear(hidden -> 11) on the readout state: one no-op Bernoulli plus one threshold sigmoid P(z > e_k) per finite bin edge — 10 with
 ``labels.EDGES`` — made monotone by a cumulative max from the right and differenced into bins 1..11).
 """
 from __future__ import annotations
@@ -143,10 +143,13 @@ class _Wrapper(nn.Module):
         self.heads = nn.ModuleDict()  # everything here is saved with the adapter
 
     def _add_heads(self, d: int, linear_action: bool = True) -> None:
+        # New heads read a LayerNorm-ed state: readout states differ in scale by orders of magnitude across families
+        # (Laya's [CLS] after its head layers gives a fresh Linear's logit ~ -300), and with Adam a step's effect on
+        # the logit scales with the input size (P.0 finding; spec "Linear (hidden -> 1)" plus this normalisation).
         if self.head_form == "cumulative11":
-            self.heads["cumulative"] = nn.Linear(d, N_CUM)
+            self.heads["cumulative"] = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, N_CUM))
         if self.with_action and linear_action:
-            self.heads["action"] = nn.Linear(d, 1)
+            self.heads["action"] = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, 1))
 
     @property
     def device(self):
