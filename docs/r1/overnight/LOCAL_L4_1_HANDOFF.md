@@ -1,0 +1,5 @@
+# L4.1 Track G handoff — 27 October 2026
+
+Independent review: `docs/r1/reviews/LOCAL_L4_1_REVIEW_20261027.md`, NOT ACCEPTED. The pinned harness `r1` remains unchanged at `897d83c`. Isolated pushed work branches: `r1-local-20261027-autoresearch` at `6dd87ce` (adapter, recorded test-scope incident and CLI-documentation correction); `r1-local-20261027-1gc` at `16661ad` (blocked-source note, no adapters); `r1-local-20261027-mlgym` at `e0cd581` (fail-closed scaffold, no genuine end-to-end stub smoke). See each branch's handoff and the paper test-scope incident for exact evidence; no result is scientific evidence. A non-force push of autoresearch initially returned an unspecified remote failure and succeeded on retry.
+
+The review lists remaining integration, smoke, CLI-example and two-suite baseline gaps. `docs/r1/prompts/TRACK_G_RUNBOOK.md` is an author-decision proposal only. The 1GC authoritative source, held-out scoring interpretation, container access, Track G role, host and budget remain open. No branches have been merged.

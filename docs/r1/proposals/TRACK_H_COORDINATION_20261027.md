@@ -1,0 +1,7 @@
+# Track H follow-up coordination — 27 October 2026
+
+**Coordinator decision requested before code edits.** L4.2 asks to amend `r1/c3/env.py` so `OfflineBanditEnv` uses execute/skip actions while carrying the 12-bin belief as a forecast, and to attach the serialized prompt to online-controller rows for the real sidecar. The existing RUNBOOK H.8 describes a bin action, while its later R1-C3-POST note records the necessary amendment; the former is historical scope wording, not authority to change the later decision. `r1/c3/serve.py` documents the `row["prompt"]` requirement, and `r1/c3/prior_model.py` passes it when present.
+
+Proposed bounded work after coordinator approval: inspect the owning agent's current branch and interface, amend the shared environment and whichever shared controller module owns row assembly, add fixture-only CPU tests for execute/skip, forecast preservation and unaffected behavior, and independently review. Preserve old outputs outside the explicitly amended interface; no Track P training directory edits or runs. Exact method signatures and migration/compatibility behavior require coordination and are not decided here.
+
+**Question:** may the local agent edit the necessary files in `r1/c3/{env,control,serve,prior_model}.py` for these two follow-ups, and who owns integration with Track P? This is a request for the explicit coordination required by the user's rule and L4.2, not an authorization to start training or merge.
