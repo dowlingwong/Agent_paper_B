@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — author approves short-transfer archival and retry (AI-assisted)
+
+PLAN §10 R1-EXAM-TRANSFER-RETRY records direct author approval to archive all six retained partials with size/SHA records and retry the remaining files from the same immutable sources. All five verified artifacts and the original STOP/log history will be retained. Recovery utility is under independent review before portal mutation; no retry has started at this checkpoint. The 100 GB floor and STOP 2 independent receiving gate remain unchanged.
+
 ## 26 October 2026 — author approves native prefill reserve; new transport STOP (AI-assisted)
 
 PLAN §10 R1-EXAM-PREFILL-RESERVE records the author's approval: keep declared context and fit math at 32,768, prefill 32,767 with n_predict 1; fallback context 16,384 with 16,383 prefill plus one generated token. Results retain requested and actual counts and the one-slot reserve. Independent engineering review accepted the implementation at `6ef8d30` (config `7ba7e2b`), including both-context early-load failures and fake-server end-to-end validation; code was transferred by SSH only. This closes the API clarification only; no real Stage A request has started.
