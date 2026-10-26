@@ -500,6 +500,15 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-EXAM-TRANSFER (26 Oct, STOP 0) | **No GitHub credentials on portal.** Push code from the Mac over SSH to bare repositories under `/home/dowling/exam-x/work/`, then check out from those repositories into the approved work location. Keep bare repositories (e.g. `work/remotes/*.git`) separate from working checkouts under that same approved work directory. Never push protected branches to GitHub or transfer credentials. |
 | R1-EXAM-USER-RUNTIME (26 Oct, STOP 0) | **Author permits installation of uv and user-level Python >=3.11 under `/home/dowling`**, no sudo and no changes to system Python. Record installed paths/versions. STOP 0 disk/licence/identity decisions are resolved by these rows; proceed with Phase 1 and its independent STOP 1 review. Later phase and evidence authorisation gates remain in force. |
 
+**Decided 26 October 2026 by the author (deepthought sweep-1 restart).** Fixed, not proposals. Recorded by an AI agent (Claude, implementation agent on deepthought) at the author's request, in the author's terms.
+
+| ID | Decision (decided 26 Oct 2026 by the author) |
+|---|---|
+| R1-DT-RESTART (26 Oct) | **Sweep work restarts from `origin/main`** on branch `dt-sweep1-<date>` (`dt-sweep1-20261026`) with harness `r1` = **`897d83c`**. The old branch `dt-sweep1-20261025` is history: it is not worked on and not merged; its six documentation commits are cherry-picked onto the new branch. |
+| R1-DT-TESTGATE (26 Oct) | **(a)** The retry/permanent-failure integration test that exceeds **75 s** is **accepted as environmental on deepthought** (Ceph latency), provided the watchdog test passes and the retry/permanent-failure test passes with a longer timeout. The measured timings are recorded. **(b)** The interrupted-root archive assertion is **not accepted as is**: it must be fixed, or explained with evidence, within **≤ 3 attempts**. If it cannot be, STOP. |
+| R1-DT-SCRATCH (26 Oct) | **Temporary and scratch files go to local disk** (`/tmp` or another measured local path), **not Ceph**, because of the Ceph file-count quota. Durable outputs (batch directories, ledgers, manifests) stay where the runner config puts them. File-count headroom is checked at the start and while monitoring. |
+| R1-DT-PIN (26 Oct) | **The final sweep-1 pin is:** paper `main` HEAD at the moment Phase 4 is completed (recorded); harness **`897d83c`**; the llama.cpp build and the Qwen2.5-Coder-7B-Instruct **Q4_K_M** GGUF (sha256) verified in Phase 1; **`json_schema` structured output on** (R1-SCHEMA); memory modes **`append_only_summary`** and **`none`**; **`"vary"`** split; nodes = the **D21 pool of 8** (`digits_mlp`, `tabular_mlp`, `openml_breast_w`, `openml_ionosphere`, `openml_wdbc`, `openml_credit_approval`, `openml_sonar`, `openml_blood_transfusion`); **`openml_climate` stays the reserve**, used only if a node fails D28 and the author substitutes it. |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |
