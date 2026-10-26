@@ -1,7 +1,8 @@
-# Track H test modules at harness pin 6afdb0e (R1-TRACKP-MERGE, 26 Oct 2026). AI-assisted (Claude).
-# harness: 6afdb0e9b800933dfbb682618b8909441f0f6495 (trackp-20261026); origin/r1 = 897d83c8efa364ec2fdd37288241cc42e01d7274
-# paper: 6f6771705ad9317308f4c066f6a394e8a003707b + working tree (Track P decision changes, uncommitted at this run)
-# venv trackp-cpu; HF_HOME=/home/dowling/r1_trackp/hf_cache; 2026-10-26T09:27:05Z
+# Track H test modules (R1-TRACKP-MERGE, 26 Oct 2026). AI-assisted (Claude).
+# paper: 9365ab4465eeaa83206234b023e6d8a6a0023eda (trackp-20261026, clean: 1 changes)
+# harness: 897d83c8efa364ec2fdd37288241cc42e01d7274 = HARNESS_PIN_C3 897d83c8efa364ec2fdd37288241cc42e01d7274 (descendant of 6afdb0e, which is on origin/r1)
+# venv trackp-cpu; HF_HOME=/home/dowling/r1_trackp/hf_cache; 2026-10-26T10:08:02Z
+# (an earlier version of this file ran at harness 6afdb0e with uncommitted changes: 29 passed)
 r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-1] PASSED [  3%]
 r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[second_gains-1] PASSED [  6%]
 r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-0] PASSED [ 10%]
@@ -31,4 +32,4 @@ r1/tests/test_c3_sidecar.py::test_campaign_survives_a_dead_sidecar_and_logs_prio
 r1/tests/test_c3_skip_display.py::test_skipped_proposals_show_one_line_without_metric[append_only_summary] PASSED [ 93%]
 r1/tests/test_c3_skip_display.py::test_skipped_proposals_show_one_line_without_metric[append_only_summary_with_rationale] PASSED [ 96%]
 r1/tests/test_c3_skip_display.py::test_manifest_records_the_display_version PASSED [100%]
-============================== 29 passed in 7.13s ==============================
+============================== 29 passed in 7.55s ==============================
