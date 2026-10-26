@@ -24,5 +24,6 @@
   ],
   "added": [],
   "removed": [],
-  "after_summary": "8 failed, 454 passed, 1 warning, 1 error, 55 subtests passed in 97.37s (0:01:37)"
+  "after_summary": "8 failed, 454 passed, 1 warning, 1 error, 55 subtests passed in 97.37s (0:01:37)",
+  "full_suite_launched_at": "897d83c"
 }

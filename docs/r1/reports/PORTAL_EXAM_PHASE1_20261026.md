@@ -1,6 +1,6 @@
 # Portal exam Phase 1 — implementation and review record
 
-26 October 2026. AI-assisted. ENGINEERING_ONLY / DRYRUN. STOP 1; independent verdict pending.
+26 October 2026. AI-assisted. ENGINEERING_ONLY / DRYRUN. STOP 1; independently reviewed and accepted.
 
 Author decisions are recorded in PLAN §10 and STATUS: corrected `/home/dowling/exam-x/{models,work}` storage, stop below 100 GB available, research/publication licence approval, unreleased Ornith-31B removal without substitution, vendor Ornith-35B mapping, SSH bare-repository transfer from the Mac, and optional user-level uv/Python installation. The effective registry is 21 candidates and three anchors plus the declared OLMo Think sensitivity.
 
@@ -10,4 +10,14 @@ A fresh reviewer independently inspected both repositories and reran tests and t
 
 No model weights were downloaded, no LLM inference ran, and no portal runtime was installed or transferred. All campaign results generated in Phase 1 are synthetic DRYRUN fixtures; CPU regression suites and loopback fake servers are engineering checks. No protected branch was merged or pushed. Phase 2 remains unstarted.
 
-Full-suite results, exact failure comparison and independent acceptance will be appended after completion.
+## Validation
+
+| Checkpoint | Before | After implementation | Independent rerun |
+|---|---|---|---|
+| Paper full suite | 417 passed / 22 failed / 9 skipped | 445 passed / 21 failed / 9 skipped; 698.12 s | 445 passed / 21 failed / 9 skipped; 696.16 s |
+| Harness full suite | 448 passed / 8 failed / 1 collection error | 454 passed / 8 failed / 1 collection error; 97.37 s | 454 passed / 8 failed / 1 collection error; 95.39 s |
+| Final focused exam suite | New tests | core/observer 30 passed, final standalone dryrun PASS | 31 passed including fake-server integration; 48.86 s |
+
+Full-paper suites launched at `e6f42c0`; subsequent review fixes were verified separately by final focused tests and independent counterexamples. Exact issue-ID comparison found **zero added failures/errors** in either repository. Harness issue IDs are unchanged; the paper baseline `test_c3_sweep_dryrun_watchdog_restarts_a_killed_runner` failure passed in both after runs. This does not establish a causal repair of a timing-dependent test. Existing Mac/legacy-fixture failures remain visible rather than reported as an all-green suite. Logs, comparison JSON and final dryrun summary are saved under `exam_phase1_20261026/`. The frozen rule digest still matches. `--check-config --allow-placeholders` passes.
+
+**Independent verdict: ACCEPTED**, all three MAJOR findings and one MINOR finding resolved. Review: `docs/r1/reviews/EXAM_1_REVIEW_20261026.md`. This is Phase 1 engineering acceptance. Stopped at STOP 1 for coordinator/author merge and subsequent phase direction; Phase 2 and evidence gates remain in force.

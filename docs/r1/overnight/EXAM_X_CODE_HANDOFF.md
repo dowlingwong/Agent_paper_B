@@ -1,6 +1,6 @@
 # Portal proposer exam — Phase 1 code handoff
 
-26 October 2026. AI-assisted. ENGINEERING_ONLY / DRYRUN. Independent review pending; STOP 1 remains closed.
+26 October 2026. AI-assisted. ENGINEERING_ONLY / DRYRUN. Independently reviewed and accepted for Phase 1 code completion; stopped at STOP 1. Review: `docs/r1/reviews/EXAM_1_REVIEW_20261026.md`.
 
 The author corrected storage to `/home/dowling/exam-x/models` and `/home/dowling/exam-x/work`. PLAN §10 and STATUS record this correction, the 100 GB decimal free-space floor, licence approvals, removal of unreleased Ornith-31B without a replacement, Mac-to-portal SSH bare-repository transfer, and permitted user-level uv/Python installation. No portal installation, code transfer, model-weight download, LLM inference, or evidence campaign was performed in Phase 1.
 
@@ -39,7 +39,7 @@ Set `PYTHONDONTWRITEBYTECODE=1`, `OMP_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, 
 
 ## Validation status
 
-Authoritative before baselines: paper **417 passed, 22 failed, 9 skipped**; harness **448 passed, 8 failed, 1 collection error**. Exact failures and environment are preserved in `BASELINE.md` and the two baseline logs. Post-change harness: **454 passed, 8 failed, 1 collection error** (implementation 97.37 s; reviewer 95.39 s), with identical failing/error IDs to baseline. Final independent focused exam suite: **31 passed**, including fake-server kill/resume (48.86 s). `--check-config --allow-placeholders` passes. The final standalone dry-run summary is saved under `exam_phase1_20261026/dryrun_summary.json`; all eight checks pass. Paper full-suite result and final reviewer verdict are pending. Counts must be compared by exact failure ID, not described as an all-green suite.
+Authoritative before baselines: paper **417 passed, 22 failed, 9 skipped**; harness **448 passed, 8 failed, 1 collection error**. Exact failures and environment are preserved in `BASELINE.md` and the two baseline logs. Post-change harness: **454 passed, 8 failed, 1 collection error** (implementation 97.37 s; reviewer 95.39 s), with identical failing/error IDs to baseline. Final independent focused exam suite: **31 passed**, including fake-server kill/resume (48.86 s). `--check-config --allow-placeholders` passes. The final standalone dry-run summary is saved under `exam_phase1_20261026/dryrun_summary.json`; all eight checks pass. Paper full regression checkpoint: **445 passed, 21 failed, 9 skipped** (implementation 698.12 s; reviewer 696.16 s). No new failure IDs; one baseline watchdog-restart failure passed in both reruns, without a claim of a proven causal fix. Full paper suites launched at `e6f42c0`; review fixes through `df1a6eb` were checked by independent counterexamples and the final focused 31-test suite. Exact comparisons and saved after/reviewer transcripts are in the report evidence directory. Final independent verdict: **ACCEPTED**, all three MAJOR and one MINOR findings resolved (`docs/r1/reviews/EXAM_1_REVIEW_20261026.md`). Counts must be compared by exact failure ID, not described as an all-green suite.
 
 ## Remaining phase gates
 
@@ -49,6 +49,6 @@ Stage A requires a committed 50-prompt set reconstructed from real memory-on led
 
 B1 requires the author-recorded rule hash and committed authorization note, three protocol nodes, seeds9001–9004, W20, audits9101–9104 and an author-bound LLM-call cap. Later config placeholders deliberately remain unresolved. B2 additionally needs the author count from B1 variance and a fresh authorization. Machine-readable authorization can be a plain JSON document or a single fenced JSON block in the Markdown note, with `author`, `phase`, `approved`, `rule_sha256`, `llm_call_cap`, `nodes`, `stage_a_table_sha256`, and for B2 `instances_per_node` plus `b1_analysis_sha256`. A Track G node requires the author addition and portal fit. D22/free-generation sensitivity is separate and follows the author-recorded D22 choice. No default author decision is inferred from code or test success.
 
-At STOP 1 the independent reviewer must rerun both suites and the fake dry run, write `docs/r1/reviews/EXAM_1_REVIEW_20261026.md`, and accept fixes. The implementation agent cannot accept its own phase. Phase 2 and protected merges have not been started.
+At STOP 1 the fresh independent reviewer reran both suites and the fake dry run, checked the fixes, and recorded **ACCEPTED** in `docs/r1/reviews/EXAM_1_REVIEW_20261026.md`. Phase 2 and protected merges have not been started.
 
 Review fixes preserve zero-audit diagnostics; enforce Stage A thinking exclusions in B2; bind upstream source hashes to resume/config/authorization; expose primary A4 forecast coverage, all-mode query failures and five fixed descriptive calibration bins. Evaluation of `p_no_effect` is explicitly pending an author outcome definition; no scientific no-effect threshold was invented.
