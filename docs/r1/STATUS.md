@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P agent moved onto zhixu portal (AI-assisted; documents only)
+
+- Author decision (R1-TRACKP-RUNBOOK revised): the Track P agent runs on zhixu portal itself, not on the Mac over SSH. `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` updated: placement table, host and clone rules (own clone on the portal, `trackp-<date>` branches pushed with the portal's GitHub credentials), secrets on the same host (never read or passed on a command line), Phase 0 checks GitHub push and the agent's own endpoints, Phase 1 code and CPU-only tests on the portal, reviewers on the same host. RUNBOOK Track P execution line and hardware note aligned.
+- Needed from the author before Phase 0: start Claude Code on the portal; GitHub authentication on the portal (clone of the private repo, push of `trackp-*`); `~/.config/r1/secrets.env`.
+
 ## 26 October 2026 — Track P revised and adopted; portal agent runbook for Track P (AI-assisted; documents only)
 
 - Author decisions recorded (PLAN §10): R1-C3-POST (Track P revised: belief/action decoupling, decision-model exam P.3a/P.3b, reasoning arm P.6, bounded-score RL rewards), R1-C3-CONTROL (Qwen3.5-0.8B/4B-Base control), R1-SOFT-SIGMA (pooled σ̂ in the soft label), R1-PORTAL-SCHEDULE (Track X evidence first on the 4090; GPU lease), R1-JEV-RUNG (official TypeSafe API, version pinned and logged), R1-RB-TEACHER (DeepSeek-V4.1-Flash-1017 demonstrations), R1-TRACKP-RUNBOOK.

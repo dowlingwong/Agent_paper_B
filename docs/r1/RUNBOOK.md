@@ -176,7 +176,7 @@ Cost and order: Stage A ≈ 10–15 min per model; B1 ≈ 240 proposals per mode
 
 ### Track P — Post-training pipeline for A5/A6 (added 25 Oct; revised and adopted 26 Oct, R1-C3-POST)
 
-Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs/r1/references/README.md`. **Execution:** one agent on the author's Mac, driving zhixu portal over SSH, follows `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` with a STOP and an independent review after every phase (R1-TRACKP-RUNBOOK).
+Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs/r1/references/README.md`. **Execution:** one agent running on zhixu portal itself follows `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` with a STOP and an independent review after every phase (R1-TRACKP-RUNBOOK).
 
 **Facts checked 25 Oct (repo pages; to be confirmed by P.0).**
 - **Kev** (`jaredpalmer/kev`, Apache-2.0): rank-16 LoRA (attention, MLP and DeltaNet projections) plus a pointer head scoring each option's `</opt>` state against the question's `<decide>` state; on Qwen3.5 hybrid bases each question runs as its own row; trainer `python -m kev.train` on JSONL with one hard `label` per question, cross-entropy, `--init_from` a released adapter (lr 2e-5 suggested). **No soft labels and no RL code.** Kev-0.8B trains in bf16 on a 4 GB GPU.
@@ -211,7 +211,7 @@ Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs
 7. **Label noise:** carried in s; K raised on proposals near t* (then s = σ̂/√K).
 8. **Covariate shift:** one DAgger-style aggregation round (C.2) under the deployed tabular arm.
 
-**Hardware and card schedule (R1-PORTAL-SCHEDULE, 26 Oct).** All A5/A6 training and the exam on zhixu portal (4090 24 GB): ≤ 4B LoRA in bf16; Mac only for code and tiny-model unit tests. Track X evidence phases (B1, B2) have priority on the card; Track P uses it only in the gaps (P.0 and P.3a during Track X's code phase, ≈ 27 Oct–1 Nov, and after B2). One GPU job at a time, enforced by `flock` on `~/r1_locks/gpu0.lock` on the portal plus a check that no other compute process is on the card. API calls (Jev, DeepSeek) run on the portal (fallback deepthought; never the Mac without the author's approval); keys live only in `~/.config/r1/secrets.env` (mode 600) on that host.
+**Hardware and card schedule (R1-PORTAL-SCHEDULE, 26 Oct).** All A5/A6 training and the exam on zhixu portal (4090 24 GB): ≤ 4B LoRA in bf16; the Track P agent, its code and its CPU-only unit tests also live on the portal; the Mac runs no Track P work. Track X evidence phases (B1, B2) have priority on the card; Track P uses it only in the gaps (P.0 and P.3a during Track X's code phase, ≈ 27 Oct–1 Nov, and after B2). One GPU job at a time, enforced by `flock` on `~/r1_locks/gpu0.lock` on the portal plus a check that no other compute process is on the card. API calls (Jev, DeepSeek) run on the portal (fallback deepthought; never the Mac without the author's approval); keys live only in `~/.config/r1/secrets.env` (mode 600) on that host.
 
 **Open items.** StartLux rung after P.0 (author). Track H.8 `OfflineBanditEnv` defines action = bin; under R1-C3-POST the environment action is execute/skip with the 12-bin belief as the model's forecast — an H.8 amendment is needed before P.5 uses it (author).
 
