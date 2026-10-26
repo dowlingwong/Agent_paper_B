@@ -2,7 +2,7 @@
 
 AI-assisted. These are engineering test outcomes, not experimental evidence or scientific results. L0 is accepted as a documented baseline with the limitations in the [independent review](../reviews/LOCAL_L0_REVIEW_20261027.md).
 
-**Subsequent scope discovery:** the harness suite included an in-process test fitting node models on synthetic CPU data, and other tests attempted node-training subprocesses. See the [test-scope incident](LOCAL_TEST_SCOPE_INCIDENT_20261027.md) for confirmed facts and unknowns. The original L0 acceptance preceded this discovery and is being rechecked with the additional record.
+**Subsequent scope discovery:** the harness suite included an in-process test fitting node models on synthetic CPU data, and other tests attempted node-training subprocesses. See the [test-scope incident](LOCAL_TEST_SCOPE_INCIDENT_20261027.md) for confirmed facts and unknowns. The original L0 acceptance preceded this discovery; the independent re-check accepts documentation fidelity but rejects test-scope adherence.
 
 ## Provenance and conditions
 
