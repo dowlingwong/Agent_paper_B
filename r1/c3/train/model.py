@@ -283,6 +283,8 @@ def _laya_core(config: dict, encoder_config, weights: str | None):
     from transformers import AutoModel
     if weights:
         from safetensors.torch import load_file
+        if not (isinstance(encoder_config, (str, Path)) and Path(encoder_config).is_dir()):
+            raise ValueError("loading Laya weights needs the checkpoint's encoder/ directory as encoder_config")
         core = lc.build_model(config, encoder_dir=str(encoder_config), pretrained=False)
         core.load_state_dict(load_file(weights), strict=True)
         return core
@@ -676,8 +678,9 @@ def build_model(family: str, base, tokenizer=None, **kw):
             from transformers import AutoConfig, AutoTokenizer
             cfg = json.loads((base / "rl_agent_config.json").read_text())
             tok = tokenizer or AutoTokenizer.from_pretrained(str(base / "tokenizer"))
-            return LayaWrapper(cfg, tok, encoder_config=AutoConfig.from_pretrained(str(base / "encoder")),
-                               weights=str(base / "model.safetensors"), **kw)
+            # the shipped loader rule: encoder config read from the checkpoint's encoder/ directory, strict load
+            return LayaWrapper(cfg, tok, encoder_config=str(base / "encoder"), weights=str(base / "model.safetensors"),
+                               **kw)
         cfg, enc_cfg = base
         return LayaWrapper(cfg, tokenizer, encoder_config=enc_cfg, **kw)
     if family in ("startlux", "qwen_control", "qwen_reason"):

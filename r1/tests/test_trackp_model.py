@@ -342,6 +342,34 @@ def test_laya_wrapper_shapes_and_roundtrip(laya_parts, tmp_path, form):
     roundtrip(w, make, batch, tmp_path)
 
 
+def test_laya_loads_a_checkpoint_directory_with_the_shipped_loader_rule(laya_parts, tmp_path):
+    """build_model("laya", <dir>) reads rl_agent_config.json, encoder/, tokenizer/ and model.safetensors (strict)."""
+    from safetensors.torch import save_file
+    cfg, enc, tok = laya_parts
+    torch.manual_seed(3)
+    core = M._laya_core(cfg, enc, None)
+    d = tmp_path / "laya_ckpt"
+    (d / "encoder").mkdir(parents=True)
+    enc.save_pretrained(str(d / "encoder"))
+    tok.save_pretrained(str(d / "tokenizer"))
+    (d / "rl_agent_config.json").write_text(json.dumps(cfg))
+    save_file({k: v.contiguous() for k, v in core.state_dict().items()}, str(d / "model.safetensors"))
+    w = M.build_model("laya", str(d))
+    base = w.core.encoder.get_base_model().state_dict()
+    for k, v in core.encoder.state_dict().items():  # peft keeps LoRA-wrapped weights under .base_layer
+        got = base.get(k)
+        if got is None:
+            head, _, leaf = k.rpartition(".")
+            got = base[f"{head}.base_layer.{leaf}"]
+        assert torch.equal(got, v), k
+    for name in ("head", "scorer"):
+        for k, v in getattr(core, name).state_dict().items():
+            assert torch.equal(getattr(w.core, name).state_dict()[k], v)
+    check_out(w(prompts(2)), 2)
+    with pytest.raises(ValueError, match="encoder/ directory"):
+        M._laya_core(cfg, enc, str(d / "model.safetensors"))
+
+
 def test_laya_long_state_is_cut_but_never_the_edit(laya_parts):
     cfg, enc, tok = laya_parts
     torch.manual_seed(0)

@@ -1,0 +1,39 @@
+{
+ "comment": "Track P on zhixu portal (RUNBOOK Track P; docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md 1.6 / 2.3). Every host value is TODO_VERIFY_ON_HOST until Phase 2 fills it from r1/c3/train/registry.yaml; r1/scripts/trackp.py refuses to run while any is left (--check-config --allow-placeholders validates the rest). Revisions are the Phase 0 observations (PORTAL_TRACKP_HOST_FACTS_20261026.md) and are re-verified against the downloaded files in Phase 2. AI-assisted (Claude); ENGINEERING_ONLY config.",
+ "host": "TODO_VERIFY_ON_HOST",
+ "work_dir": "TODO_VERIFY_ON_HOST",
+ "models_dir": "TODO_VERIFY_ON_HOST",
+ "runs_dir": "TODO_VERIFY_ON_HOST",
+ "hf_home": "TODO_VERIFY_ON_HOST",
+ "gpu": {
+  "name": "TODO_VERIFY_ON_HOST",
+  "compute_capability": "TODO_VERIFY_ON_HOST",
+  "lock_path": "TODO_VERIFY_ON_HOST",
+  "dtype": "bfloat16",
+  "gradient_checkpointing": true
+ },
+ "bases": {
+  "kev-0.8b": {"family": "kev", "adapter_repo": "jaredpalmer/kev-0.8b", "adapter_revision": "TODO_VERIFY_ON_HOST", "base_repo": "Qwen/Qwen3.5-0.8B-Base", "base_revision": "TODO_VERIFY_ON_HOST", "local_path": "TODO_VERIFY_ON_HOST", "lr": 2e-5},
+  "kev-4b": {"family": "kev", "adapter_repo": "jaredpalmer/kev-4b", "adapter_revision": "TODO_VERIFY_ON_HOST", "base_repo": "Qwen/Qwen3.5-4B-Base", "base_revision": "TODO_VERIFY_ON_HOST", "local_path": "TODO_VERIFY_ON_HOST", "lr": 2e-5},
+  "qwen3.5-0.8b-base": {"family": "qwen_control", "base_repo": "Qwen/Qwen3.5-0.8B-Base", "base_revision": "TODO_VERIFY_ON_HOST", "local_path": "TODO_VERIFY_ON_HOST", "lr": 1e-4},
+  "qwen3.5-4b-base": {"family": "qwen_control", "base_repo": "Qwen/Qwen3.5-4B-Base", "base_revision": "TODO_VERIFY_ON_HOST", "local_path": "TODO_VERIFY_ON_HOST", "lr": 1e-4},
+  "laya": {"family": "laya", "base_repo": "convaiinnovations/laya-typed-decisions", "base_revision": "TODO_VERIFY_ON_HOST", "local_path": "TODO_VERIFY_ON_HOST", "lr": 2e-5},
+  "startlux-0.8b": {"family": "startlux", "base_repo": "startlux-models/StartLux-Decision-v1.1-0.8B-Instant", "base_revision": "TODO_VERIFY_ON_HOST", "local_path": "TODO_VERIFY_ON_HOST", "lr": 1e-4, "licence": "CC-BY-NC-4.0 (research use only)"},
+  "startlux-2b": {"family": "startlux", "base_repo": "startlux-models/StartLux-Decision-v1.1-2B-Instant", "base_revision": "TODO_VERIFY_ON_HOST", "local_path": "TODO_VERIFY_ON_HOST", "lr": 1e-4, "licence": "CC-BY-NC-4.0 (research use only)"},
+  "startlux-4b": {"family": "startlux", "base_repo": "startlux-models/StartLux-Decision-v1.1-4B-Instant", "base_revision": "TODO_VERIFY_ON_HOST", "local_path": "TODO_VERIFY_ON_HOST", "lr": 1e-4, "licence": "CC-BY-NC-4.0 (research use only)"}
+ },
+ "code_pins": {
+  "kev": "TODO_VERIFY_ON_HOST",
+  "laya": "TODO_VERIFY_ON_HOST",
+  "startlux_decide": "TODO_VERIFY_ON_HOST"
+ },
+ "lora": {"r": 16, "alpha": 32, "dropout": 0.05},
+ "head_lr": 1e-3,
+ "spike": {"toy_examples": 100, "seq_len": 1024, "batch_size": 8, "steps": 10, "seed": 0},
+ "toy_batch": {"examples": 64, "steps": 50, "seed": 0},
+ "e0": {"head_fit_steps": 200, "lora_steps": 200, "seed": 0},
+ "e3": {"steps": 300, "seeds": [0, 1, 2]},
+ "sft": {"effective_batch": 16, "max_epochs": 5, "warmup_frac": 0.05, "eval_every_frac": 0.25, "patience": 2, "seeds": [0, 1, 2]},
+ "jev": {"base_url": "https://api.typesafe.ai", "model": "TODO_VERIFY_ON_HOST", "repeats": 3},
+ "rb_demos": {"base_url": "https://api.deepseek.com", "model": "deepseek-flash", "max_analysis_tokens": 256, "n_examples": 500}
+}
