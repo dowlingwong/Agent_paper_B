@@ -1,0 +1,91 @@
+{
+  "batch_size": 8,
+  "budget_override": {
+    "eval_every": null,
+    "steps": 400
+  },
+  "eval_every": 100,
+  "frozen_token_rows": false,
+  "head_lr": 0.001,
+  "lora": {
+    "best_step": 400,
+    "best_value": 0.00012911924568470567,
+    "checkpoint": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/native/lora/ckpt/step_0000400",
+    "completed": true,
+    "early_stopped": false,
+    "stopped_at": 400,
+    "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 1.0188578337466443,
+      "mean_slope_vs_label": 0.990274162451451,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.0002398286425418751,
+      "rps_extrap": 0.0003372965332779964,
+      "rps_interp": 0.00017829508020112645,
+      "width_ratio": 1.1170151238852066,
+      "width_slope": 0.8037303260775331,
+      "width_slope_vs_label": 0.8618831997998998,
+      "width_slope_vs_label_lb95": 0.8476855625691492,
+      "width_slope_vs_label_ub95": 0.8762547392390252
+    }
+  },
+  "lr": 0.0001,
+  "max_steps": 400,
+  "n_test": 1000,
+  "n_train": 2714,
+  "n_val": 286,
+  "pass": null,
+  "patience": 10,
+  "protocol": "trackp_e0/v2",
+  "stage": "final",
+  "target": "y_soft",
+  "token_lr": 0.0001,
+  "val_cells": [
+    [
+      1,
+      3
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      9,
+      3
+    ]
+  ],
+  "variant": "native",
+  "zero_shot": {
+    "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.034774351719015696,
+      "mean_slope_vs_label": 0.03374420932468776,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.07776897846179819,
+      "rps_extrap": 0.11281460853517415,
+      "rps_interp": 0.05564392326049884,
+      "width_ratio": 2.0847151213900594,
+      "width_slope": -0.026067035344890625,
+      "width_slope_vs_label": -0.029485616882354827,
+      "width_slope_vs_label_lb95": -0.04551901527994575,
+      "width_slope_vs_label_ub95": -0.012503212583306904
+    },
+    "val_rps": 0.08146195858716965
+  }
+}

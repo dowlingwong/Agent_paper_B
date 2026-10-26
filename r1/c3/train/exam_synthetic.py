@@ -76,9 +76,10 @@ HELDOUT = HELDOUT_INTERP + HELDOUT_EXTRAP
 VAL_CELLS = ((1, 3), (3, 2), (5, 4), (8, 2), (0, 3), (9, 3))
 assert not set(VAL_CELLS) & set(HELDOUT)
 # R1-E0-THRESHOLDS (author, 26 Oct evening); the same values are frozen in r1/c3/rules/p3_rule_v2.yaml
-E0_V2_THRESHOLDS: dict | None = {"width_slope_vs_label_min": 0.6, "width_slope_vs_label_lb_gt": 0.0,
+# (key names as in the rule file; a test checks the two agree)
+E0_V2_THRESHOLDS: dict | None = {"width_slope_vs_label_min": 0.6, "width_slope_vs_label_lb95_gt": 0.0,
                                  "mean_slope_min": 0.8}
-E0_BOOT = {"resamples": 2000, "alpha": 0.05, "seed": SEED, "unit": "test prompt"}
+E0_BOOT = {"resamples": 2000, "alpha": 0.05, "seed": SEED, "unit": "test_prompt", "interval": "two_sided_percentile"}
 A4_V2_MIN_FRAC = 0.95
 N_TRAIN, N_TEST = 3000, 1000
 DATA = Path(__file__).resolve().parent / "data"
@@ -322,7 +323,7 @@ def e0_pass_v2(metrics: dict, thresholds: dict | None = None) -> bool | None:
     if t is None:
         return None
     return bool(metrics["width_slope_vs_label"] >= t["width_slope_vs_label_min"]
-                and metrics["width_slope_vs_label_lb95"] > t["width_slope_vs_label_lb_gt"]
+                and metrics["width_slope_vs_label_lb95"] > t["width_slope_vs_label_lb95_gt"]
                 and metrics["mean_slope"] >= t["mean_slope_min"])
 
 

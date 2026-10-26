@@ -43,8 +43,9 @@ def main(runs: Path, out: Path) -> None:
             name = f"{base.name} {run.name}"
             if "head_fit" in rep:
                 h = rep["head_fit"]
-                lines.append(row(name, "head fit (frozen)", h["test"],
-                                 f"best {h['best_step']} / stop {h['stopped_at']}"))
+                steps = (f"best {h['best_step']} / stop {h['stopped_at']}" if "best_step" in h
+                         else f"L-BFGS {h['outer_iterations']} outer, converged {h['converged']}")
+                lines.append(row(name, "head fit (frozen)", h["test"], steps))
             if "zero_shot" in rep:
                 lines.append(row(name, "zero-shot (native)", rep["zero_shot"]["test"], "0"))
             lo = rep["lora"]

@@ -14,6 +14,12 @@ e0_pass:
   width_slope_vs_label_min: 0.6
   width_slope_vs_label_lb95_gt: 0.0
   mean_slope_min: 0.8
+e0_bootstrap:            # the lower bound above: 2.5th percentile (two-sided 95 % percentile interval)
+  resamples: 2000
+  alpha: 0.05
+  seed: 20261026
+  unit: test_prompt
+  interval: two_sided_percentile
 
 # Step 1b: E4 hard limits (spec §5.7.1): OOM at 1,024 tokens, batch 8, gradient checkpointing; non-deterministic reload.
 e4_hard_limits:
