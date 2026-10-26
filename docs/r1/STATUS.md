@@ -1,5 +1,19 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 (evening) — Track P: rule v2, two-stage E0 driver validated; portal work ends (AI-assisted)
+
+- The author's evening decisions are recorded as PLAN §10 rows on `trackp-20261026`: R1-E0-THRESHOLDS, R1-E0-BUDGET, R1-E0-HEADFIT, R1-CONTROL-READOUT, R1-TRACKP-CHOICES, R1-EXAM-RULE-V2, R1-P3A-READY. Spec and runbooks are updated, and the agent's own readings are marked for confirmation.
+- **Rule v2** is committed: `r1/c3/rules/p3_rule_v2.yaml`, sha256 `8c0ef908…`. `exam_analyze` accepts v2 only. Finalist 1 is the E3 point top; the tie-breaks pick only the second finalist. The rule holds the E0 thresholds (width slope vs label std ≥ 0.6 with bootstrap lower bound > 0, mean slope ≥ 0.8) and A4 ≥ 95 %.
+- **Two-stage driver validated** with a short DRYRUN on kev-0.8b (`docs/r1/reports/TRACKP_E0V2_TWOSTAGE_DRYRUN_20261026.md`; clean `5538b79`).
+  - The mechanics work. The shortened budget measures no E0.
+  - Attempt 1 showed that starting LoRA from the L-BFGS head makes it diverge, then saturate. The head fit therefore stays descriptive, and LoRA starts from the fresh head.
+  - ≈ 1.6 GPU-h.
+- Independent review: `docs/r1/reviews/TRACKP_RULEV2_REVIEW_20261026.md`. The decisions review was accepted earlier.
+- **Host change (R1-TASL7-TRACKP):** this is the last Track P GPU work on zhixu portal. The portal work dir, venvs and models are left untouched.
+  - Host-equivalence check on TASL-7: reproduce the selected Kev-0.8B run of the portal E0 v2 DRYRUN (code `8e13e77`, `--variant fresh --lr 0.0001`, seed 0, 2,000-step caps). On the portal it gave width slope vs label std 0.923, mean slope 1.012 and RPS 1.99e-4, as pre-declared by the TASL-7 agent in `f3567e9`.
+  - Optional: the short two-stage run at `5538b79`.
+- **Waiting for the author:** `trackp_p3a_<date>.md`, and the marked readings (descriptive head fit means LoRA starts fresh; bootstrap bound; A4 not disqualifying; final budget for the hard/native runs). Not merged; the coordinating session merges.
+
 ## 26 October 2026 — hosts: TASL-7 dedicated to Track P; Ada as overflow (AI-assisted; documents only)
 
 - Author decisions recorded (PLAN §10): R1-ADA-OVERFLOW (zhixu experiment takes resumable overflow runs; one comparison table on one GPU type and one pinned environment unless declared) and R1-TASL7-TRACKP (second RTX 4090 node TASL-7, exclusive, dedicated to Track P; zhixu portal left to Track X).

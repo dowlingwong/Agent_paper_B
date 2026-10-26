@@ -97,3 +97,64 @@ Tests (venv `trackp-cpu`, at `471f93f`): the changed modules `test_trackp_e0_v2.
   refused.
 
 Verdict: changes required
+
+## Re-check of the fixes and the short two-stage DRYRUN (`471f93f..f7bc836`)
+
+Same reviewer and rules: CPU only, no GPU job, only this file edited (after the GPU went idle). Full
+`r1/tests/test_trackp_*.py` at `f7bc836`: **196 passed**. The TASL-7 commits (`fc3e0da`, `af158f1`, `f3567e9`) are
+context only and were not reviewed.
+
+**Fixes.**
+1. **Resolved.**
+   - The spec now tags these as the agent's readings: the two-sided 2.5th-percentile bound with prompt resampling
+     (including the ≈ ±0.03 note), A4 as non-disqualifying, and the stage-2 budget for the hard and native runs.
+   - The L-BFGS question is resolved by restoring the fresh head after the descriptive fit, also tagged as the agent's
+     reading. This is the most literal reading of "descriptive only". Screen and final runs now start LoRA from the same
+     fresh head.
+   - The fit runs once per base, in the soft final run (`head_fit=args.stage == "final" and not args.hard`). The test
+     checks that the head the LoRA stage receives equals the initial head.
+2. **Resolved.** RUNBOOK P.1 and P.2 and the spec §2.2 table now give the fresh head as the control's primary readout,
+   with the bin tokens as a secondary row.
+3. **Resolved.** `pass` is set only for soft, final, fresh-head runs (test). In the probes, `A4` is now the v2 result
+   and `A4_v1_raw` is marked descriptive.
+4. **Resolved.**
+   - The rule freezes `e0_bootstrap`, and its key names match the code. The test asserts that the rule's `e0_pass`,
+     `e0_bootstrap` and A4 fraction equal the code constants.
+   - The new sha256 `8c0ef908…0242` matches the file, and the E2 comparison has a `+1e-12` margin.
+   - `load_rule` still refuses v1.
+
+**Short DRYRUN report (`TRACKP_E0V2_TWOSTAGE_DRYRUN_20261026.md`) against the raw data in `runs/p5_e0v2_twostage_short/`:**
+- **Manifests:** all 8 are at paper `5538b79` with `dirty: false` and `dirty_files: []`, harness `897d83c`, torch
+  2.6.0+cu124, the pinned kev / laya / startlux_decide commits, and the DRYRUN label. `driver.log` ends `EXIT=0`.
+- **Numbers:** I recomputed every row of the results table from `pred_test_*.npy` (maximum difference 0). The screen
+  val RPS values (3.20e-3, 1.45e-3, 1.13e-3) lead `e0-select` to 1e-4.
+- **Final run:** the head fit took 390 outer L-BFGS steps and converged. Then LoRA ran to 400 / 400 with width slope
+  −0.021 (lower bound −0.029), giving `pass: false`.
+- **Other runs:** the hard run is best at step 100; native ends at 0.862. Screen, hard and native runs have
+  `pass: null`, and the `budget_override`s are recorded.
+- **E6:** A3 ≤ 1.4e-4, with budget fractions reached of 0.24 / 0.49 / 1.00. The 2k / 8k levels end in Kev's
+  `ContextOverflow`. A4 v2 is 0.25 (`pass: false`); A5 is n/a for Kev.
+- **GPU use:**
+  - Attempt 2 is 8 jobs: summed leases ≈ 0.56 h, window 22:56–23:30, 0.57 h. The report's 0.58 is an immaterial
+    rounding difference.
+  - Attempt 1 is one closed 37.3-minute job plus one job opened at 22:24:10 with no end record, which ran at most 32
+    minutes.
+  - "≈ 1.6 GPU-h" in total is consistent.
+- **Reserved items:** the report sets no threshold and gives no verdict reserved to the author. It correctly calls the
+  run a test of the mechanics, not an E0 measurement, and it lists its open readings for the author.
+
+**New finding**
+
+R3-1. **minor — Attempt 1 is described inaccurately.** The report's attempts table, spec §5.5 and the `e0_v2`
+docstring say that after one LoRA step the gradient norm fell to ~1e-16, or that the softmax "saturated after one LoRA
+step". `runs/p5_e0v2_twostage_short_attempt1/.../lora/metrics.jsonl` shows otherwise:
+- for the first 11 steps the gradient norms were **large, 11–120**, and the training loss rose from 0.017 to ≈ 0.12
+  during warm-up;
+- the gradient fell to 0.13 at step 12 and ended at 1.0e-14 at step 200;
+- val RPS went from 0.014 (step 0) to 0.119 at steps 100 and 200, and early stopping returned step 0.
+
+The run did collapse and the remedy stands. But the record should say that LoRA, starting from the sharp L-BFGS head,
+diverged over about 11 high-gradient steps and then saturated with vanishing gradients (~1e-14), not that this
+happened "after one step". Fix: correct the wording in the three places.
+
+Verdict: changes required — every round-2 finding is closed. One minor factual correction remains (R3-1).
