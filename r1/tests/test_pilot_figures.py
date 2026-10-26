@@ -22,6 +22,8 @@ def test_rejects_missing_and_contradictory_inert_labels():
         waste_counts([{**base, "inert": True, "inert_kind": None}])
     with pytest.raises(ValueError):
         waste_counts([{**base, "inert": False, "inert_kind": "duplicate"}])
+    with pytest.raises(ValueError):
+        waste_counts([{**base, "inert": True, "inert_kind": "non-inert"}])
 
 
 def test_committed_pilot_categories_preserve_source_rows():

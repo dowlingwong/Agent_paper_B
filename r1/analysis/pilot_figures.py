@@ -24,7 +24,7 @@ def waste_counts(rows):
         if "inert" not in row or not isinstance(row["inert"], bool) or "inert_kind" not in row:
             raise ValueError("missing or invalid inert fields")
         kind = row["inert_kind"]
-        if (row["inert"] and (not isinstance(kind, str) or not kind.strip())) or (not row["inert"] and kind is not None):
+        if (row["inert"] and (not isinstance(kind, str) or not kind.strip() or kind == "non-inert")) or (not row["inert"] and kind is not None):
             raise ValueError("inconsistent inert label and kind")
         key = (row["source"], row["node"], row["memory_mode"], kind if kind is not None else "non-inert")
         counts[key] += 1
