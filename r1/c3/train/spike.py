@@ -40,6 +40,25 @@ def sft_loss(out: dict, batch: list[dict]) -> torch.Tensor:
 
 
 @torch.no_grad()
+def batch_losses(model, rows: list[dict], chunk: int = 8) -> dict:
+    """Eval-mode loss over all ``rows`` (deterministic): total (as ``sft_loss``), belief part, action part."""
+    model.eval()
+    tot = bel = act = 0.0
+    for i in range(0, len(rows), chunk):
+        part = rows[i:i + chunk]
+        out = model([r["prompt"] for r in part])
+        dev = out["belief_logits"].device
+        y = torch.stack([r["y"] for r in part]).to(dev)
+        b = float(L.stage_s_loss(L.softmax_probs(out["belief_logits"]), y)) * len(part)
+        a = 0.0
+        if out.get("action_logit") is not None:
+            a = float(L.action_loss(out["action_logit"], torch.stack([r["u"] for r in part]).to(dev))) * len(part)
+        bel, act, tot = bel + b, act + a, tot + b + a
+    n = len(rows)
+    return {"total": tot / n, "belief": bel / n, "action": act / n}
+
+
+@torch.no_grad()
 def probs(model, batch) -> tuple[torch.Tensor, torch.Tensor | None]:
     model.eval()
     out = model(batch)

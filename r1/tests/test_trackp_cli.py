@@ -83,6 +83,7 @@ def test_toy_batch_e0_and_probes_dry_run(tmp_path, family):
     rep = json.loads((tmp_path / "toy" / "report.json").read_text())
     man = json.loads((tmp_path / "toy" / "manifest.json").read_text())
     assert rep["reload_identical"] and rep["completed"]
+    assert {"total", "belief", "action"} <= set(rep["batch_loss_before"]) and "loss_decreased" in rep
     assert man["evidence_label"] == "DRYRUN" and len(man["git"]["paper"]["commit"]) == 40
     assert man["model_files_sha256"]["heads.safetensors"]
     run("e0", "--tiny", "--family", family, "--allow-placeholders", "--run-dir", str(tmp_path / "e0"),

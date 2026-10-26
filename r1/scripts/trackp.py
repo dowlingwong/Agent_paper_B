@@ -126,10 +126,12 @@ def cmd_toy(args, cfg) -> dict:
         if cfg["gpu"].get("gradient_checkpointing") and not args.tiny:
             model.enable_gradient_checkpointing()   # spec §4
         lr = 1e-4 if args.tiny else cfg["bases"][args.base]["lr"]
+        before = S.batch_losses(model, rows)   # the whole fixed batch, eval mode (deterministic)
         tr = Trainer(model, rows, S.sft_loss, TrainConfig(seed=args.seed, epochs=1e9, max_steps=steps, batch_size=8,
                                                           grad_accum=1, lr=lr, head_lr=cfg["head_lr"]),
                      Path(args.run_dir) / "toy", head_params=new_head_parameters(model))
         res = tr.train()
+        after = S.batch_losses(model, rows)
         losses = [r["loss"] for r in S._read_metrics(Path(args.run_dir) / "toy")]
         batch = [r["prompt"] for r in rows[:8]]
         b0, a0 = S.probs(model, batch)
@@ -141,7 +143,12 @@ def cmd_toy(args, cfg) -> dict:
         fresh.load(Path(args.run_dir) / "saved")
         b1, a1 = S.probs(fresh, batch)
     import torch
-    rep = {**res, "loss_first": losses[0], "loss_last": losses[-1], "loss_decreased": losses[-1] < losses[0],
+    rep = {**res, "loss_first_step": losses[0], "loss_last_step": losses[-1], "batch_loss_before": before,
+           "batch_loss_after": after, "lr": lr, "head_lr": cfg["head_lr"],
+           # P.1/P.2 "loss decreases": the full fixed batch in eval mode, total and each output
+           "loss_decreased": after["total"] < before["total"],
+           "belief_loss_decreased": after["belief"] < before["belief"],
+           "action_loss_decreased": after["action"] < before["action"] if before["action"] else None,
            "reload_identical": bool(torch.equal(b0, b1) and (a0 is None or torch.equal(a0, a1)))}
     return {"report": rep, "base": base, "model_files": rec["files"], "lease": lease_log, "data": rows}
 
