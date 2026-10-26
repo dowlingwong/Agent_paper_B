@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — portal exam Phase 0 blocked by local network access (AI-assisted; ENGINEERING_ONLY)
+
+Updated `main` was verified at `fad6dfe` (R1-EXAM-HOST conflicts resolved). Created `exam-x-20261026` from paper `main` and harness `r1` (`6afdb0e`), preserving existing untracked files. Paper commit `39731ce` records the attempted host inventory in `reports/PORTAL_HOST_FACTS_20261026.md`. SSH to `portal_zhixu` (`dowling@100.120.160.70`) returned `Network is unreachable` outside the sandbox; local `tailscale status --json` reports `BackendState: Stopped`. No remote command ran; all host facts 0.1–0.9 remain uncollected. Phase 0 is incomplete, not accepted. Independent review (`reviews/EXAM_0_REVIEW_20261026.md`) reproduced the access blocker: ACCEPTED AS A BLOCKED EXECUTION RECORD ONLY; PHASE 0 NOT ACCEPTED / INCOMPLETE. One MAJOR completion blocker (missing host facts), no MINOR corrections; `git diff --check` passed. Restore the Mac's Tailscale connection before resuming the read-only inventory; the author storage/licence gate remains pending. No installation, inference, worker run, model download, Phase 1 implementation, merge, or push occurred.
+
 ## 26 October 2026 — exam execution decisions; portal agent runbook (AI-assisted; documents only)
 
 - Author decisions recorded (PLAN §10): R1-EXAM-CTX (32k), R1-SCHEMA (structure-only `json_schema` in exam and sweeps, before sweep 1), R1-QUANT-SOURCE (vendor Q4_K_M, else bartowski; GSQ-RCO out), R1-EXAM-RUNBOOK.
