@@ -11,3 +11,5 @@
 A local read-only reconstruction audit used original root start files/kept-edit replay, the logged memory text, status, current editable constants and production prompt builder. All tested rerun-2 prefixes and all nine memory-bearing digits prompts (trials 2–10 of the first sorted liveness root) exactly match their original recorded context SHA256. No prompt content was invented to match a hash.
 
 Concrete proposed resolution for author approval: retain memory-on as the filter; use rerun-2 on the three nodes plus the existing digits memory-on liveness source for the fourth. Select fifty prompts by fixed node/root/trial order, before Stage A, with recorded source hashes. Do not use DT4 memory-off rows as memory-on. The exact source exception requires an author response before this final prompt set is frozen or used. The Phase 2 download/build/cache work is independent of this prerequisite.
+
+**Author decision received 26 October:** "Use existing memory-on liveness digits." Recorded in PLAN R1-EXAM-PROMPT-SOURCE and STATUS. Source clarification resolved; no final set has yet been frozen or used.

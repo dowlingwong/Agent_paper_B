@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — author approves Stage A fourth memory-on prompt source (AI-assisted)
+
+PLAN §10 R1-EXAM-PROMPT-SOURCE records the direct author approval to use the existing 14 Oct memory-on digits liveness ledgers as the fourth source. Rerun-2 memory-on covers three nodes; DT4 is entirely memory-off and will not be relabelled. Fifty source/hash-verified real memory-on prompts will be frozen before Stage A, after Phase 2 review. This closes the prompt-source clarification only; Phase 2 receiving/review remains in progress, with no Stage A or evidence run started.
+
 ## 26 October 2026 — author STOP 2 source amendment recorded; Phase 2 in progress (AI-assisted)
 
 PLAN §10 R1-QUANT-SOURCE / R1-EXAM-SOURCE-STOP2 records the direct author decision: Qwen3-Coder-30B-A3B-Instruct uses the exact standard Unsloth Q4_K_M as a single source exception, labelled "source exception (unsloth)" in every table, fully pinned. Qwopus3.6-27B-v4 is removed as unavailable, no substitute; other-version GGUFs are not this candidate. Effective pool is 20 candidates plus three anchors, with OLMo Think separate. Finish all downloads and SHA checks before STOP 2 independent acceptance; no Phase 3 or evidence run has started.

@@ -9,7 +9,8 @@ pid=int((base/'hub_downloads.pid').read_text().strip());proc=Path('/proc')/str(p
 args=proc.joinpath('cmdline').read_bytes().rstrip(b'\0').decode().split('\0')
 if proc.stat().st_uid!=os.getuid() or args[:4]!=[str(work/'venv/bin/python'),'-u','-m','r1.exam.hub_download'] or '--worker' in args:raise RuntimeError('controller identity mismatch')
 stat=proc.joinpath('stat').read_text().rsplit(')',1)[1].split();ticks=stat[19]
-children=[int(p) for p in proc.joinpath('task',str(pid),'children').read_text().split()]
+children=sorted({int(child) for task in proc.joinpath('task').iterdir()
+                 for child in task.joinpath('children').read_text().split()})
 plan={'purpose':'explicit transport concurrency change 2 to 6; immutable source pins unchanged','time':time.time(),
       'pid':pid,'uid':os.getuid(),'argv':args,'start_ticks':ticks,'owned_children':children,'preserved':[]}
 for child in children:

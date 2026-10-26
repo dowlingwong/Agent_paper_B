@@ -126,7 +126,9 @@ def test_frozen_finalists_absent_family_anchors_and_order():
 
 def test_config_placeholder_check_and_no_mac_inference(tmp_path):
     cfg=load_config(DEFAULT_CONFIG,allow_placeholders=True)
-    with pytest.raises(ValueError,match='placeholders'): load_config(DEFAULT_CONFIG)
+    draft={**cfg,'host':'TODO_VERIFY_ON_HOST'}
+    path=tmp_path/'unverified.json';path.write_text(json.dumps(draft))
+    with pytest.raises(ValueError,match='placeholders'): load_config(path)
     with pytest.raises(RuntimeError,match='portal'): host_check({**cfg,'host':'wrong'},tmp_path)
 
 
@@ -346,3 +348,15 @@ def test_author_unsloth_exception_is_exact_and_labelled():
     for name in ('UD-Q4_K_M.gguf','Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_M.gguf'):
         bad=copy.deepcopy(s);bad['quant_source']['file']=name;assert quantization_blockers(bad)
     assert any(x['id']=='qwopus36_27b_v4' for x in r['excluded'])
+
+
+def test_fake_matches_pinned_reasoning_budget_request_fields(monkeypatch):
+    from r1.scripts import c3_fake_llama_server as fake
+    monkeypatch.setattr(fake,'ARGS',{'-ngl':'999','--reasoning-budget':'0','--chat-template-kwargs':'{"enable_thinking":false}'})
+    request={'chat_template_kwargs':{'enable_thinking':True},'reasoning_budget':2048}
+    assert 'reasoning_content' not in fake.Handler.completion(None,request,'{}')['choices'][0]['message']
+    request.pop('reasoning_budget');request['reasoning_budget_tokens']=2048
+    reply=fake.Handler.completion(None,request,'{}')
+    assert reply['usage']['completion_tokens_details']['reasoning_tokens']==1
+    request['chat_template_kwargs']['enable_thinking']=False
+    assert 'reasoning_content' not in fake.Handler.completion(None,request,'{}')['choices'][0]['message']

@@ -173,19 +173,19 @@ def main(argv=None):
     result=run_stage_a(inst,spec,prompts,gpu_sample=lambda:gpu_sample(cfg),schema_format=manager_response_format(),
                        dryrun=bool(cfg.get('dryrun')),template_renderer=render)
     if spec['thinking_policy'].get('switchable') is True or spec['thinking_policy']['mode']=='always_on':
+        controls={'temperature':.2,'response_format':manager_response_format(),
+                  'chat_template_kwargs':{'enable_thinking':True},'reasoning_budget_tokens':2048}
         try:
-            reply=inst.chat(prompts[0]['prompt'],max_tokens=4096,seed=prompts[0]['seed'],extra={
-                'temperature':.2,'response_format':manager_response_format(),
-                'chat_template_kwargs':{'enable_thinking':True},'reasoning_budget':2048})
+            reply=inst.chat(prompts[0]['prompt'],max_tokens=4096,seed=prompts[0]['seed'],extra=controls)
             message=reply['choices'][0]['message'];final=re.sub(r'<think>.*?</think>\s*','',message['content'],flags=re.S)
             parsed=json.loads(final);reasoning=(reply.get('usage',{}).get('completion_tokens_details') or {}).get('reasoning_tokens')
             grammar=bool(reasoning or message.get('reasoning_content')) and isinstance(parsed,dict) and set(parsed)==set(manager_response_format()['json_schema']['schema']['required'])
-            result['thinking_grammar_probe']={'passed':grammar,'message':message,'usage':reply.get('usage')}
+            result['thinking_grammar_probe']={'passed':grammar,'message':message,'usage':reply.get('usage'),'request_controls':controls}
             result['thinking_disabled_due_grammar']=not grammar and spec['thinking_policy']['mode']!='always_on'
             if not grammar and spec['thinking_policy']['mode']=='always_on':
                 result['failure_classes']=sorted(set(result['failure_classes']+['grammar']));result['passed']=False
         except Exception as exc:
-            result['thinking_grammar_probe']={'passed':False,'error':repr(exc)}
+            result['thinking_grammar_probe']={'passed':False,'error':repr(exc),'request_controls':controls}
             result['thinking_disabled_due_grammar']=spec['thinking_policy']['mode']!='always_on'
             if not result['thinking_disabled_due_grammar']: result['passed']=False;result['failure_classes'].append('grammar')
     if not cfg.get('dryrun'):

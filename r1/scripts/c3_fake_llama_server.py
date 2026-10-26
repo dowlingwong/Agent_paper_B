@@ -188,7 +188,9 @@ class Handler(BaseHTTPRequestHandler):
         n = int(body.get('max_tokens') or 10)
         tps = float(os.environ.get('C3_FAKE_LLAMA_TPS_GPU', '40') if on_gpu() else
                     os.environ.get('C3_FAKE_LLAMA_TPS_CPU', '8'))
-        thinking = int(body.get('reasoning_budget') or ARGS.get('--reasoning-budget') or 0) > 0
+        budget=int(body.get('reasoning_budget_tokens',body.get('thinking_budget_tokens',ARGS.get('--reasoning-budget') or 0)))
+        kwargs=json.loads(ARGS.get('--chat-template-kwargs') or '{}');kwargs.update(body.get('chat_template_kwargs') or {})
+        thinking=bool(kwargs.get('enable_thinking',budget>0)) and budget>0
         return {'id': 'chatcmpl-DRYRUN', 'object': 'chat.completion', 'created': 0,
                 'model': body.get('model'), 'system_fingerprint': 'b0-DRYRUN',
                 'choices': [{'index': 0, 'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': content,

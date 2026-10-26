@@ -70,7 +70,7 @@ For every candidate and anchor model:
 1. **Fit probe:** start `llama-server` (ctx 32,768, q8_0 KV, all layers on GPU); prefill a 32k-token prompt; record peak VRAM, full offload by the runner's two routes, free memory ≥ 1 GiB. A model that fits only at 16k: re-probe at 16,384 and flag "CPU-pool rows only".
 2. **Template check:** `--jinja` render vs the HF chat template on 5 fixed prompts, byte-equal.
 3. **Grammar after thinking:** with thinking on and the schema on, the grammar must constrain only the final answer, not the reasoning. If it does not, the model runs thinking-off and is flagged.
-4. **50 frozen manager prompts** replayed from real memory-on ledgers (the rerun-2 memory-on campaigns and the DT4 campaigns, ≥ 4 nodes; the prompt set and its sha256 are committed first): parse rate free and with schema, active-key validity rate, D26 seed reproducibility (two calls identical at temperature 0.2), latency p50/p95, prompt/completion/reasoning tokens.
+4. **50 frozen manager prompts** replayed from real memory-on ledgers (the three rerun-2 memory-on nodes plus existing memory-on digits liveness ledgers from 14 Oct; author correction R1-EXAM-PROMPT-SOURCE, DT4 is memory-off; ≥ 4 nodes; the prompt set and its sha256 are committed first): parse rate free and with schema, active-key validity rate, D26 seed reproducibility (two calls identical at temperature 0.2), latency p50/p95, prompt/completion/reasoning tokens.
 5. Failure classes kept apart: offload, template, parse, grammar, timeout. One template repair per model is allowed, declared in the report before Phase 5.
 
 **STOP 3:** review loop on the Stage A table; then the author confirms exclusions.
