@@ -1,0 +1,28 @@
+version: x5_rule/v1
+ranking_quantity: pooled_audited_mean_proposal_increment
+eligibility:
+  stage_a_pass: true
+  d28_pass: true
+finalists:
+  top_by_mean: 4
+  absent_family_extra: 1
+  maximum: 5
+  extra_selection: highest_mean_among_families_absent_from_top_four
+  ties: registry_order
+thinking_mode:
+  primary: off_where_switchable
+  always_on_budget: 2048
+  sensitivity_budget: 2048
+  sensitivity_node: openml_credit_approval
+  b2_mode: higher_audited_mean_on_sensitivity_node
+  mode_tie: off
+bootstrap:
+  unit: node_instance_cluster
+  paired: true
+  resamples: 2000
+  seed: 20261026
+  alpha: 0.05
+b2_instances:
+  selection: author_decision_from_b1_variance
+  gate: author_plan_row_and_authorization_note_required
+scope: EXAM_ONLY_NOT_C3
