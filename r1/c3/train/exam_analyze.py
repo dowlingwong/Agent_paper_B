@@ -158,7 +158,7 @@ def _pick_second(rule, pool: list) -> tuple[dict | None, list]:
     trace, left = [], list(pool)
     for name, key, t in keys:
         best = min(key(m) for m in left)
-        left = [m for m in left if key(m) <= best + t]
+        left = [m for m in left if key(m) <= best + t + 1e-12]     # a difference of exactly ``t`` is a tie
         trace.append({"key": name, "kept": [m["model"] for m in left]})
         if len(left) == 1:
             break

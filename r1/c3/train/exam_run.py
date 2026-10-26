@@ -158,12 +158,15 @@ def fit_head_lbfgs(head: torch.nn.Module, tr: torch.Tensor, ytr: torch.Tensor, v
 def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "y_soft", lr: float,
           head_lr: float = 1e-3, token_lr: float | None = None, max_steps: int = 2000, eval_every: int = 100,
           patience: int = 5, batch_size: int = 8, seed: int = 0, n_train: int | None = None,
-          n_val: int | None = None, n_test: int | None = None, stage: str = "final") -> dict:
+          n_val: int | None = None, n_test: int | None = None, stage: str = "final",
+          head_fit: bool = True) -> dict:
     """E0 v2 for one (variant, target, lr) and ``stage`` ("screen": the lr screen, <= 2,000 steps; "final": the one
     run at the selected lr, cap 6,000, patience 10 — R1-E0-BUDGET; the budget itself comes from the caller).
     ``variant="fresh"``: the model was built with ``head_form="linear12"``; (1) the fresh LayerNorm + linear belief
-    head is fitted on cached frozen-backbone states by full-batch L-BFGS on CPU (descriptive only,
-    R1-E0-HEADFIT), (2) then LoRA + that head train together. ``variant="native"``: the family's own readout (released head / letter readout / bin
+    head is fitted on cached frozen-backbone states by full-batch L-BFGS on CPU (descriptive only, R1-E0-HEADFIT;
+    skipped when ``head_fit`` is False), then the head is put back to its fresh initialisation; (2) LoRA + the fresh
+    head train together. (Attempt 1 of the two-stage DRYRUN started LoRA from the L-BFGS head: its sharp optimum
+    saturated the softmax after one LoRA step and the gradients vanished, so the head fit decided the E0 result.) ``variant="native"``: the family's own readout (released head / letter readout / bin
     tokens), zero-shot metrics first, then the LoRA stage. Both stages: early stopping on the validation cells
     (val RPS against the run's own target), at most ``max_steps``, the best checkpoint restored. Metrics on the
     held-out test cells (``e0_metrics_v2``)."""
@@ -186,17 +189,21 @@ def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "
                  "token_lr": token_lr, "max_steps": max_steps, "eval_every": eval_every, "patience": patience,
                  "batch_size": batch_size, "n_train": len(train), "n_val": len(val), "n_test": len(test),
                  "val_cells": [list(c) for c in E.VAL_CELLS]}
-    if variant == "fresh":
+    if variant == "fresh" and head_fit:
+        import copy
+        fresh_head = copy.deepcopy(model.heads["belief"].state_dict())
         dev = model.device
         s_tr, s_va, s_te = (states(model, [r["prompt"] for r in rows]) for rows in (train, val, test))
         y = lambda rows: torch.stack([r["y"] for r in rows]).to(dev)  # noqa: E731
         fit = fit_head_lbfgs(model.heads["belief"], s_tr, y(train), s_va, y(val))
         with torch.no_grad():
             p_head = torch.softmax(model.heads["belief"](s_te).float(), -1).cpu().numpy()
-        out["head_fit"] = {**fit, "descriptive": True, "test": E.e0_metrics_v2(p_head, test_items, target)}
+        out["head_fit"] = {**fit, "descriptive": True, "test": E.e0_metrics_v2(p_head, test_items, target),
+                           "lora_starts_from": "the fresh head (restored after this fit)"}
+        model.heads["belief"].load_state_dict(fresh_head)
         run_dir.mkdir(parents=True, exist_ok=True)
         np.save(run_dir / "pred_test_head_fit.npy", p_head)
-    else:
+    elif variant == "native":
         p0 = predict(model, [r["prompt"] for r in test])
         out["zero_shot"] = {"val_rps": mean_rps(predict(model, [r["prompt"] for r in val]), val),
                             "test": E.e0_metrics_v2(p0, test_items, target)}
@@ -218,7 +225,9 @@ def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "
     p_lora = predict(model, [r["prompt"] for r in test])
     np.save(run_dir / "pred_test_lora.npy", p_lora)
     out["lora"] = {**res, "test": E.e0_metrics_v2(p_lora, test_items, target)}
-    out["pass"] = E.e0_pass_v2(out["lora"]["test"]) if target == "y_soft" else None
+    # the E0 result is the soft-label final-stage run (R1-E0-BUDGET); screen, hard and native runs carry no pass
+    out["pass"] = E.e0_pass_v2(out["lora"]["test"]) if (target == "y_soft" and stage == "final"
+                                                       and variant == "fresh") else None
     return out
 
 
@@ -272,8 +281,9 @@ def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0, counters: 
     # A4 width monotonicity (v1 raw criterion and v2 label reference)
     a4 = E.a4_probe(n=n)
     std = np.array([E.belief_moments(predict(model, row))[1] for row in a4])
-    out["A4"] = E.a4_pass(std)
-    out["A4_v2"] = E.a4_pass_v2(std, E.a4_label_std(n=n))
+    out["A4_v1_raw"] = {**E.a4_pass(std), "descriptive": True}     # the v1 criterion, for comparison only
+    out["A4_v1_raw"]["criterion_met"] = out["A4_v1_raw"].pop("pass")
+    out["A4"] = E.a4_pass_v2(std, E.a4_label_std(n=n))       # v2: the label reference (R1-E0-THRESHOLDS)
     # A5 slot bias: bin-token family only; listing order via the wrapper's bin_order, canonical options
     if getattr(model, "family", "") in ("qwen_control", "qwen_reason"):
         from dataclasses import replace

@@ -163,7 +163,11 @@ def test_width_slope_against_the_labels_own_std_is_one_for_the_labels(items):
     assert m["width_slope_vs_label_lb95"] == pytest.approx(1.0) and E.e0_pass_v2(m) is True
     # R1-E0-THRESHOLDS: >= 0.6 (inclusive), lower bound > 0 (strict), mean >= 0.8
     t = E.E0_V2_THRESHOLDS
-    assert t == {"width_slope_vs_label_min": 0.6, "width_slope_vs_label_lb_gt": 0.0, "mean_slope_min": 0.8}
+    assert t == {"width_slope_vs_label_min": 0.6, "width_slope_vs_label_lb95_gt": 0.0, "mean_slope_min": 0.8}
+    from r1.c3.train import exam_analyze as A
+    rule = A.load_rule()[0]                          # one source of truth: the frozen rule agrees with the code
+    assert rule["e0_pass"] == t and rule["e0_bootstrap"] == E.E0_BOOT
+    assert rule["e6"]["a4_min_frac_monotone_vs_label"] == E.A4_V2_MIN_FRAC
     ok = {"width_slope_vs_label": 0.6, "width_slope_vs_label_lb95": 1e-6, "mean_slope": 0.8}
     assert E.e0_pass_v2(ok) is True
     assert E.e0_pass_v2({**ok, "width_slope_vs_label": 0.599}) is False
@@ -259,14 +263,15 @@ def test_budget_counters_match_what_each_wrapper_feeds_the_model(family, tmp_pat
 def test_e0_v2_runs_both_stages_with_early_stopping(variant, tmp_path):
     w = _tiny("qwen_control", tmp_path, head_form="linear12" if variant == "fresh" else "softmax12")
     rep = X.e0_v2(w, tmp_path / "run", variant=variant, lr=1e-4, token_lr=1e-4, max_steps=4, eval_every=2,
-                  patience=1, batch_size=4, n_train=8, n_val=4, n_test=6, stage="screen")
-    assert rep["protocol"] == "trackp_e0/v2" and rep["n_val"] == 4 and rep["stage"] == "screen"
+                  patience=1, batch_size=4, n_train=8, n_val=4, n_test=6, stage="final")
+    assert rep["protocol"] == "trackp_e0/v2" and rep["n_val"] == 4 and rep["stage"] == "final"
     if variant == "fresh":
         hf = rep["head_fit"]
         assert hf["descriptive"] and hf["method"].startswith("full-batch L-BFGS") and hf["converged"]
+        assert hf["lora_starts_from"].startswith("the fresh head")
     assert ("head_fit" in rep) == (variant == "fresh") and ("zero_shot" in rep) == (variant == "native")
     assert rep["lora"]["best_step"] in (0, 2, 4) and "width_slope_vs_label" in rep["lora"]["test"]
-    assert rep["pass"] in (True, False)
+    assert (rep["pass"] in (True, False)) == (variant == "fresh")     # the E0 result: soft, final, fresh head
     with pytest.raises(ValueError):
         X.e0_v2(w, tmp_path / "bad2", variant=variant, lr=1e-4, stage="other")
     with pytest.raises(ValueError):
@@ -365,3 +370,28 @@ def test_lbfgs_head_fit_converges_to_a_stationary_point():
         loss.backward()
         opt.step()
     assert float(loss) > fit["train_rps"] * (1 - 1e-3)
+
+
+
+def test_head_fit_is_descriptive_and_lora_starts_from_the_fresh_head(tmp_path):
+    w = _tiny("qwen_control", tmp_path, head_form="linear12")
+    init = {k: t.clone() for k, t in w.heads["belief"].state_dict().items()}
+    seen = {}
+    orig = X.fit_head_lbfgs
+
+    def spy(head, *a, **k):
+        r = orig(head, *a, **k)
+        seen["fitted"] = {k_: t.clone() for k_, t in head.state_dict().items()}
+        return r
+    X.fit_head_lbfgs = spy
+    try:
+        X.e0_v2(w, tmp_path / "r", variant="fresh", lr=1e-4, max_steps=0, eval_every=1, patience=1, batch_size=4,
+                n_train=8, n_val=4, n_test=4, stage="final")
+    finally:
+        X.fit_head_lbfgs = orig
+    assert any(not torch.equal(seen["fitted"][k], init[k]) for k in init)          # the fit moved the head ...
+    assert all(torch.equal(w.heads["belief"].state_dict()[k].cpu(), init[k].cpu()) for k in init)  # ... LoRA got the fresh one
+    rep = X.e0_v2(_tiny("qwen_control", tmp_path / "b", head_form="linear12"), tmp_path / "s", variant="fresh",
+                  lr=1e-4, max_steps=2, eval_every=1, patience=1, batch_size=4, n_train=8, n_val=4, n_test=4,
+                  stage="screen", head_fit=False)
+    assert "head_fit" not in rep and rep["pass"] is None                          # screen: no head fit, no pass

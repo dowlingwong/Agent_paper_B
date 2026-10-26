@@ -181,7 +181,9 @@ def cmd_e0(args, cfg) -> dict:
                       head_lr=cfg["head_lr"], token_lr=cfg.get("token_lr"),
                       max_steps=args.steps or bud["max_steps"], eval_every=args.eval_every or bud["eval_every"],
                       patience=bud["patience"], batch_size=e0c["batch_size"], seed=args.seed,
-                      n_train=args.examples, n_val=args.n_val, n_test=args.n_test, stage=args.stage)
+                      n_train=args.examples, n_val=args.n_val, n_test=args.n_test, stage=args.stage,
+                      # the descriptive L-BFGS head fit (~30 min CPU on 0.8B features) once per base: final soft run
+                      head_fit=args.stage == "final" and not args.hard)
         rep["budget_override"] = {"steps": args.steps, "eval_every": args.eval_every} \
             if (args.steps or args.eval_every) else None
         files = model.save(Path(args.run_dir) / "saved")["files"]
