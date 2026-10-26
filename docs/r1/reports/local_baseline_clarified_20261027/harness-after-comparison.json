@@ -1,0 +1,79 @@
+{
+  "baseline_suite": {
+    "name": "pytest",
+    "errors": "1",
+    "failures": "19",
+    "skipped": "0",
+    "tests": "518",
+    "time": "53.523",
+    "timestamp": "2026-10-27T00:40:11.080858+01:00",
+    "hostname": "Dowlings-MacBook-Pro-2.local"
+  },
+  "after_suite": {
+    "name": "pytest",
+    "errors": "1",
+    "failures": "19",
+    "skipped": "0",
+    "tests": "518",
+    "time": "54.337",
+    "timestamp": "2026-10-27T00:43:13.329663+01:00",
+    "hostname": "Dowlings-MacBook-Pro-2.local"
+  },
+  "baseline_counts": {
+    "passed": 443,
+    "failure": 19,
+    "error": 1,
+    "skipped": 0
+  },
+  "after_counts": {
+    "passed": 443,
+    "failure": 19,
+    "error": 1,
+    "skipped": 0
+  },
+  "differences": {
+    "passed": {
+      "baseline_only": [],
+      "after_only": []
+    },
+    "failure": {
+      "baseline_only": [],
+      "after_only": []
+    },
+    "error": {
+      "baseline_only": [],
+      "after_only": []
+    },
+    "skipped": {
+      "baseline_only": [],
+      "after_only": []
+    }
+  },
+  "after_failure_error_skip_ids": {
+    "failure": [
+      "tests.stage2.test_exam_proposal_schema::test_schema_request_is_structure_only_rationale_first_and_records_usage",
+      "tests.stage2.test_exam_proposal_schema::test_malformed_schema_reply_is_recorded_never_heuristic_replaced",
+      "tests.stage2.test_exam_proposal_schema::test_free_generation_keeps_request_and_historical_fallback",
+      "tests.stage2.test_exam_proposal_schema::test_schema_does_not_validate_or_enumerate_parameter_values",
+      "tests.stage2.test_exam_proposal_schema::test_empty_but_structural_strings_are_not_replaced_by_heuristics",
+      "tests.stage2.test_r1_llamacpp_provider.TestLlamaCppManagerRequests::test_connection_refused_is_a_transport_error",
+      "tests.stage2.test_r1_llamacpp_provider.TestLlamaCppManagerRequests::test_dropped_request_is_retried_once_with_the_same_seed",
+      "tests.stage2.test_r1_llamacpp_provider.TestLlamaCppManagerRequests::test_seed_reaches_the_request_and_the_llm_call_record",
+      "tests.stage2.test_r1_llamacpp_provider.TestLlamaCppManagerRequests::test_server_5xx_is_a_transport_error",
+      "tests.stage2.test_r1_transport_retry.TestRealChatOllamaAgainstDroppingServer::test_server_drop_is_retried_with_the_same_seed",
+      "tests.test_artifact_completeness_and_manifest.TestCompletenessCLI::test_checked_in_report_contains_all_plan_campaigns",
+      "tests.test_artifact_completeness_and_manifest.TestCompletenessCLI::test_cli_passes_on_real_campaigns",
+      "tests.test_artifact_completeness_and_manifest.TestBuildManifest::test_all_referenced_files_exist",
+      "tests.test_artifact_completeness_and_manifest.TestGenerateManifestCLI::test_cli_reports_all_files_exist",
+      "tests.test_kdd_paper_sections::test_chunk_4_1_related_work_acceptance",
+      "tests.test_kdd_paper_sections::test_chunk_4_2_system_design_acceptance",
+      "tests.test_kdd_paper_sections::test_chunk_4_3_experiments_acceptance",
+      "tests.test_kdd_paper_sections::test_chunk_4_4_results_order_and_artifact_links",
+      "tests.test_kdd_paper_sections::test_chunk_4_5_discussion_acceptance"
+    ],
+    "error": [
+      "::tests.test_legacy_noop_skip"
+    ],
+    "skipped": []
+  }
+}
