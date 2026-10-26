@@ -1,0 +1,12 @@
+# docs/r1/references/ — decision-model reading list (Track P)
+
+Added 2026-10-25. One line per source: what it is, and why it matters for Paper B. Detailed notes and what Track P takes from each: `docs/r1/TRACK_P_POST_TRAINING.md` §10.
+
+| File | Source | Status | Relevance |
+|---|---|---|---|
+| `jev_architecture-v2.pdf` | Internal 4-page reconstruction of Jev's architecture (packing, tree mask, tree-depth position ids, readout heads, confidence formula, 13 probes on jev-1.13) | saved | Blueprint for our decision-model wrapper: shared state + isolated question branches, readout instead of decoding, Noul vs Choice calibration behaviour |
+| `jev_calibration_notes.md` | `wdkns/modern_genai_bilibili` → `llms/架构/jev/calibration.ipynb` (notebook has no outputs saved besides two images) | notes saved; original at https://github.com/wdkns/modern_genai_bilibili/blob/main/llms/%E6%9E%B6%E6%9E%84/jev/calibration.ipynb | Calibration metrics (Brier, ECE, all-options vs top-1 binning), Jev MMLU ECE, biased-coin Noul/Choice/Qwen probe, prior-shift correction (Platt / analytic) |
+| `tian2023_just_ask_for_calibration.pdf` | Tian et al., *Just Ask for Calibration*, EMNLP 2023 — https://aclanthology.org/2023.emnlp-main.330.pdf | **to download** (arXiv/ACL blocked from Claude's workspaces; save here manually) | RLHF'd models' token probabilities are overconfident; verbalized top-k probabilities are better calibrated → zero-shot "LLM self-control" baseline design |
+| `damani2025_rlcr.pdf` | Damani et al., *Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty* (RLCR), arXiv 2507.16806 — https://arxiv.org/pdf/2507.16806 | **to download** | Correctness + Brier reward; bounded proper scoring rule required (log score collapses); answer and confidence as separate outputs → belief/action decoupling for R-A/R-B |
+| `yue2025_rlvr_reasoning_boundary.pdf` | Yue et al., *Does RL Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model?*, NeurIPS 2025, arXiv 2504.13837 — https://arxiv.org/pdf/2504.13837 | **to download** | RLVR sharpens the base distribution rather than expanding it → choose decision-model bases by base potential; monitor entropy/sharpness during RL |
+| — | Archer Hume, *Jev's Architecture, Unmasked* (17 Sep 2026) — https://archerhume.com/posts/jevs-architecture-unmasked/ | link only (web post) | Black-box evidence for Jev's design; option interaction (IIA violated), option-order effects, latency/context limits |

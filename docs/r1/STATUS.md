@@ -1,5 +1,13 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P revised and adopted; portal agent runbook for Track P (AI-assisted; documents only)
+
+- Author decisions recorded (PLAN §10): R1-C3-POST (Track P revised: belief/action decoupling, decision-model exam P.3a/P.3b, reasoning arm P.6, bounded-score RL rewards), R1-C3-CONTROL (Qwen3.5-0.8B/4B-Base control), R1-SOFT-SIGMA (pooled σ̂ in the soft label), R1-PORTAL-SCHEDULE (Track X evidence first on the 4090; GPU lease), R1-JEV-RUNG (official TypeSafe API, version pinned and logged), R1-RB-TEACHER (DeepSeek-V4.1-Flash-1017 demonstrations), R1-TRACKP-RUNBOOK.
+- RUNBOOK: Track P replaced; C.1 and B.5 rows aligned; host rule for the GPU lease added.
+- New: technical specification `docs/r1/TRACK_P_POST_TRAINING.md`; reading list `docs/r1/references/` (Jev architecture reconstruction, calibration notebook notes; three paper PDFs still to be added by hand — arXiv/ACL are not reachable from the agents' sandboxes); agent runbook `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` (Phase 0 host facts, Phase 1 code, Phase 2 pins, Phase 3 P.0 spikes, Phase 4 toy batch, Phase 5 P.3a, Phase 6 label gate, Phase 7 P.3b, Phase 8 A5, Phase 9 A6 and R-B).
+- `PORTAL_EXAM_RUNBOOK.md` §0: one added line asking the Track X agent to take the same GPU lease.
+- **Open for the author:** StartLux rung after P.0; Track H.8 `OfflineBanditEnv` action = bin must become execute/skip before P.5 uses it; place `~/.config/r1/secrets.env` (TYPESAFE_API_KEY, DEEPSEEK_API_KEY) on the portal; start Tailscale on the Mac (the Track X agent found it stopped).
+
 ## 26 October 2026 — exam execution decisions; portal agent runbook (AI-assisted; documents only)
 
 - Author decisions recorded (PLAN §10): R1-EXAM-CTX (32k), R1-SCHEMA (structure-only `json_schema` in exam and sweeps, before sweep 1), R1-QUANT-SOURCE (vendor Q4_K_M, else bartowski; GSQ-RCO out), R1-EXAM-RUNBOOK.
