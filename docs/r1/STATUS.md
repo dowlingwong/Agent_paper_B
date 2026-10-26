@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — local L3 timeline proposal accepted for author review (AI-assisted)
+
+- Independent reviewer accepted the [conditional planning proposal](proposals/ICML_REPLAN_20261027.md) after re-deriving the illustrative schedule and checking assumptions: [review](reviews/LOCAL_L3_REVIEW_20261027.md), proposal commits `d537578` / `be233a9`. The full-route scenario uses guessed windows; Track X completion, resource contention and actual host capacity remain unknown. Official ICML 2027 deadlines were not found on the checked official future-meetings page.
+- **STOP L3:** author decides scope and dates, including quality-bar consequences and response windows; only then may the coordinator re-date RUNBOOK. Acceptance is neither adoption nor authorization. Independent L2/L4/L5 work continues.
+
 ## 27 October 2026 — local L1 route review accepted; author proposals pending (AI-assisted)
 
 - Independent reviewer accepted the consistency scan, historical annotations and [technical route](TECH_ROUTE.md) after corrections to the dependency graph, references, gate and accounting: [review](reviews/LOCAL_L1_REVIEW_20261027.md). Scan and route commits `221d6d3` / `9a9f7e4`; review corrections `1954484` / `dc63abc` / `66b8079`.
