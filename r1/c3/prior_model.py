@@ -334,7 +334,8 @@ class SidecarPrior:
 
     def _post(self, row: Mapping[str, Any]) -> dict:
         body = json.dumps({"row": {"node": row["node"], "features": row["features"],
-                                   **({"edit": row["edit"]} if row.get("edit") is not None else {})}},
+                                   **({"edit": row["edit"]} if row.get("edit") is not None else {}),
+                                   **({"prompt": row["prompt"]} if row.get("prompt") is not None else {})}},
                           sort_keys=True, default=str).encode()
         req = urllib.request.Request(f"{self.url}/forecast", data=body, method="POST",
                                      headers={"Content-Type": "application/json"})

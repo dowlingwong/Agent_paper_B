@@ -9,11 +9,16 @@ loader interface and answers ``POST /forecast`` with 12 bin probabilities:
   The service ``digest`` is the sha256 of the pin's sorted (name, sha256) pairs;
   ``SidecarPrior(expected_digest=...)`` refuses any other digest.
 * **Loader.** ``Loader.load(pin) -> predict(row) -> 12 probabilities``.
-  ``FakeLoader`` serves fixed distributions (dry runs and tests; no model).  The
-  real PyTorch/PEFT loader belongs to Track P.2 and is **not implemented here**
-  (``TorchLoraLoader`` raises); nothing in this repository loads model weights.
+  ``FakeLoader`` serves fixed distributions (dry runs and tests; no model).
+  ``TorchLoraLoader`` (Track P 1.11) builds the pinned decision model
+  (``r1.c3.train.model.build_model`` from the pin's ``model`` spec: family,
+  base path, head form) and loads the saved adapter + heads (the directory of
+  the pinned ``manifest``; ``model.load`` re-checks every sha256). It answers
+  only rows that carry the serialised view, ``row["prompt"] = {"state",
+  "proposal"}`` (``r1.c3.train.serialize``); a row without it is a 500, so the
+  client falls back to A1 exactly as on a timeout.
 * **Endpoints.** ``GET /health`` -> ``{"status": "ok", "version", "digest"}``;
-  ``POST /forecast`` with ``{"row": {"node", "features", "edit"?}}`` ->
+  ``POST /forecast`` with ``{"row": {"node", "features", "edit"?, "prompt"?}}`` ->
   ``{"probs": [12], "version", "digest", "compute_s"}``.  A loader output that is
   not 12 finite non-negative numbers summing to 1 (after normalisation of a
   positive sum) is a 500.
@@ -61,8 +66,9 @@ def sha256_file(path: Path | str) -> str:
 @dataclass(frozen=True)
 class Pin:
     name: str                 # arm name, e.g. "A5" or "A6"
-    base: str                 # base model id and revision (recorded, not loaded here)
+    base: str                 # base model id and revision (recorded; TorchLoraLoader builds from ``model``)
     files: dict               # {"adapter": {"path", "sha256"}, "head": {"path", "sha256"}, ...}
+    model: dict = None        # TorchLoraLoader only: {"family", "base_path", "head_form", "dtype"?}
 
     @classmethod
     def load(cls, path: Path | str) -> "Pin":
@@ -74,7 +80,7 @@ class Pin:
             files[key] = {"path": str(p if p.is_absolute() else root / p), "sha256": str(spec["sha256"])}
         if "adapter" not in files:
             raise PinError("a pin must name the adapter")
-        return cls(name=str(data["name"]), base=str(data["base"]), files=files)
+        return cls(name=str(data["name"]), base=str(data["base"]), files=files, model=data.get("model"))
 
     def verify(self) -> None:
         for key, spec in self.files.items():
@@ -109,10 +115,61 @@ class FakeLoader:
 
 
 class TorchLoraLoader:
-    """Placeholder for the Track P.2 loader (base + LoRA adapter + head); not implemented in Track H."""
+    """Track P 1.11: the pinned decision model (base + LoRA adapter + heads) answering rows with a serialised view.
+
+    ``builder(model_spec) -> wrapper`` builds the un-trained wrapper (default: ``build_model`` from the spec's
+    ``family`` / ``base_path`` / ``head_form`` on CUDA when available); the saved adapter + heads are then loaded from
+    the directory of the pinned ``manifest`` file. Forecast = softmax of the belief logits in ``BIN_OPTIONS`` order.
+    """
+
+    PIN_KEYS = ("adapter", "head", "manifest")
+
+    def __init__(self, builder: Callable[[dict], Any] | None = None) -> None:
+        self.builder = builder
+
+    def _build(self, spec: dict):
+        if self.builder is not None:
+            return self.builder(spec)
+        import torch
+        from r1.c3.train.model import build_model
+        dev = "cuda" if torch.cuda.is_available() else "cpu"
+        kw = {"head_form": spec.get("head_form", "softmax12"), "device": dev}
+        if spec["family"] != "laya":
+            kw["dtype"] = getattr(torch, spec.get("dtype", "bfloat16" if dev == "cuda" else "float32"))
+        return build_model(spec["family"], spec["base_path"], **kw)
 
     def load(self, pin: Pin):
-        raise NotImplementedError("the real model loader is Track P.2 work; Track H ships only FakeLoader")
+        import torch
+        from r1.c3.train.types import DecisionPrompt
+        missing = [k for k in self.PIN_KEYS if k not in pin.files]
+        if missing or not pin.model:
+            raise PinError(f"a model pin needs files {self.PIN_KEYS} and a 'model' spec (missing: {missing or 'model'})")
+        saved = Path(pin.files["manifest"]["path"]).parent
+        model = self._build(dict(pin.model))
+        model.load(saved)
+        model.eval()
+        lock = threading.Lock()   # one forward at a time (ThreadingHTTPServer)
+
+        def predict(row):
+            prompt = row.get("prompt")
+            if not isinstance(prompt, Mapping) or not prompt.get("state") or not prompt.get("proposal"):
+                raise ValueError("TorchLoraLoader needs row['prompt'] = {'state', 'proposal'} (the serialised view)")
+            p = DecisionPrompt(state=str(prompt["state"]), proposal=str(prompt["proposal"]))
+            with lock, torch.no_grad():
+                logits = model([p])["belief_logits"][0].float()
+            return torch.softmax(logits, -1).cpu().tolist()
+        return predict
+
+
+def write_model_pin(saved_dir: Path | str, pin_path: Path | str, *, name: str, base: str, model: dict) -> Path:
+    """P.7 pin over a saved Track P model directory (``model.save``): adapter, heads and manifest with sha256."""
+    saved = Path(saved_dir).resolve()
+    files = {"adapter": saved / "adapter" / "adapter_model.safetensors", "head": saved / "heads.safetensors",
+             "manifest": saved / "manifest.json"}
+    pin = {"name": name, "base": base, "model": dict(model),
+           "files": {k: {"path": str(v), "sha256": sha256_file(v)} for k, v in files.items()}}
+    Path(pin_path).write_text(json.dumps(pin, indent=1, sort_keys=True))
+    return Path(pin_path)
 
 
 def _validate(probs) -> list:
@@ -213,14 +270,15 @@ def main(argv=None) -> int:
     ap.add_argument("--pin", required=True)
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8765)
-    ap.add_argument("--fake", required=True, help="JSON table of fixed distributions (FakeLoader); the real "
-                                                  "loader is Track P.2 work")
+    src = ap.add_mutually_exclusive_group(required=True)
+    src.add_argument("--fake", help="JSON table of fixed distributions (FakeLoader)")
+    src.add_argument("--torch", action="store_true", help="TorchLoraLoader: the pin's model spec and saved files")
     ap.add_argument("--delay-s", type=float, default=0.0)
     ap.add_argument("--ready-file", default=None, help="write the URL here once serving")
     args = ap.parse_args(argv)
     try:
-        sidecar = Sidecar(Pin.load(args.pin), FakeLoader(json.loads(Path(args.fake).read_text())),
-                          delay_s=args.delay_s)
+        loader = TorchLoraLoader() if args.torch else FakeLoader(json.loads(Path(args.fake).read_text()))
+        sidecar = Sidecar(Pin.load(args.pin), loader, delay_s=args.delay_s)
     except PinError as exc:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return 2
