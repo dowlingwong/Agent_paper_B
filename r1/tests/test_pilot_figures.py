@@ -32,3 +32,32 @@ def test_committed_pilot_categories_preserve_source_rows():
     assert sum(row[4] for row in counts) == 1323
     assert sum(row[4] for row in counts if row[3] == "duplicate") == 727
     assert all(row[5] > 0 and 0 <= row[6] <= 1 for row in counts)
+
+
+def test_committed_noise_and_pilot_tables_match_sources_and_labels():
+    import csv
+    import hashlib
+
+    from r1.analysis.pilot_figures import NOISE, OUT, ROOT
+
+    noise = json.loads(NOISE.read_text())["summaries"]["common_30"]["nodes"]
+    with (OUT / "noise_floor.csv").open() as handle:
+        rows = list(csv.DictReader(handle))
+    assert {row["node"] for row in rows} == set(noise)
+    for row in rows:
+        assert row["provisional_status"] == "PILOT; pending author acceptance"
+        for column in ("sigma_train", "sigma_split", "sigma_joint"):
+            assert float(row[column]) == noise[row["node"]][column]
+    gate = json.loads((PILOT / "offline_eval.json").read_text())["instance"]["per_g"]["0.1"]["gate"]
+    with (OUT / "offline_pilot.csv").open() as handle:
+        rows = list(csv.DictReader(handle))
+    assert {row["node"] for row in rows} == set(gate)
+    for row in rows:
+        assert row["provisional_status"] == "ENGINEERING_ONLY; historical pilot; not current C3 gate"
+        source = gate[row["node"]]
+        assert float(row["gain_A3_minus_A2_per20"]) == source["gain_A3_minus_A2_per20"]
+        assert [float(row["ci_lower"]), float(row["ci_upper"])] == source["ci95"]
+        assert float(row["delta_n"]) == source["delta_n"]
+    manifest = json.loads((OUT / "provenance.json").read_text())
+    for name, digest in manifest["inputs"].items():
+        assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest
