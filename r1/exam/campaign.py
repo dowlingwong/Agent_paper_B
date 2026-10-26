@@ -126,6 +126,7 @@ def collect(job):
                  'duplicates':sum(bool(p.get('active_config_seen_before')) for p in novelty),
                  'noops':sum(bool(p.get('active_config_equals_incumbent')) for p in novelty),
                  'parse_failed':sum(bool(((r.get('extra') or {}).get('manager') or {}).get('parse_failed')) or ((((r.get('extra') or {}).get('manager') or {}).get('llm_call')) or {}).get('parse_ok') is False for r in records)}
+    diagnostics.update(forecast_queries=len(forecasts),forecast_query_failed=sum(r.get('status')=='query_failed' for r in forecasts.values()))
     final=[]
     if job['phase']=='b2':
         files={p:(node_root/p).read_text() for p in spec.editable_paths}

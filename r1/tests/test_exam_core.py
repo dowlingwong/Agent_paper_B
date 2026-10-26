@@ -144,6 +144,8 @@ def test_b1_recomputes_means_modes_and_refuses_forged_registry(tmp_path):
     result=b1_summary([m]);assert result['finalists']==['x']
     forged=copy.deepcopy(m);forged['audited_proposals'][0]['delta_audit']=99
     with pytest.raises(ValueError,match='raw audits'): b1_summary([forged])
+    a4=result['rows'][0]['a4_forecast_summary'];assert a4['primary_forecast_coverage']==1 and sum(b['count'] for b in a4['calibration']['bins'])==4
+    assert 'pending_author' in a4['p_no_effect_evaluation']
     assert result['rows'][0]['mu_hat']==pytest.approx(.01) and result['rows'][0]['b2_thinking_mode']=='on'
     with pytest.raises(ValueError,match='registry'): b1_summary([{**m,'family':'forged'}])
     with pytest.raises(ValueError,match='rule hash'): b1_summary([{**m,'rule_sha256':'0'*64}])

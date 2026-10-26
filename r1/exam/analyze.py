@@ -52,6 +52,24 @@ def bootstrap_mean(rows, *, field, rule):
             'unit':'node_instance_cluster','clusters':len(groups)}
 
 
+def forecast_summary(rows, diagnostics):
+    scored=[r for r in rows if r.get('p_delta_positive') is not None]
+    for r in scored:
+        if not 0<=float(r['p_delta_positive'])<=1: raise ValueError('forecast probability outside [0,1]')
+    bins=[]
+    for i in range(5):
+        members=[r for r in scored if min(4,int(float(r['p_delta_positive'])*5))==i]
+        bins.append({'lower':i/5,'upper':(i+1)/5,'count':len(members),
+                     'mean_probability':finite_mean([r['p_delta_positive'] for r in members]) if members else None,
+                     'observed_positive_rate':finite_mean([r['delta_audit']>0 for r in members]) if members else None})
+    return {'audited_primary_proposals':len(rows),'scored_primary_forecasts':len(scored),
+            'primary_forecast_coverage':len(scored)/len(rows) if rows else None,
+            'query_failures_all_modes':diagnostics.get('forecast_query_failed'),
+            'observer_queries_all_modes':diagnostics.get('forecast_queries'),
+            'calibration':{'method':'five_fixed_probability_bins_descriptive','bins':bins},
+            'p_no_effect_evaluation':'pending_author_outcome_definition; probabilities retained, no threshold invented'}
+
+
 def b1_summary(manifests, *, rule_path=RULE, expected=None):
     rule,sha=load_rule(rule_path,expected);rows=[]
     for m in manifests:
@@ -77,6 +95,7 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None):
             rows.append({'candidate':m['candidate'],'role':m['role'],'family':m['family'],
                          'stage_a_pass':m['stage_a_pass'],'d28_pass':m['d28_pass'],'registry_order':m['registry_order'],
                          'mu_hat':None,'cluster_interval':None,'b2_thinking_mode':m['primary_mode'],
+                         'a4_forecast_summary':forecast_summary(primary,m.get('diagnostics',{})),
                          'unrankable_reason':'no_noninert_nonduplicate_primary_audits','diagnostics':m.get('diagnostics',{})})
             continue
         mean=bootstrap_mean(primary,field='delta_audit',rule=rule)
@@ -90,6 +109,7 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None):
                 else math.log(max(1e-12,1-min(1-1e-12,float(r['p_delta_positive'])))) for r in forecasts]
         rows.append({'candidate':m['candidate'],'role':m['role'],'family':m['family'],
                      'stage_a_pass':m['stage_a_pass'],'d28_pass':m['d28_pass'],'registry_order':m['registry_order'],
+                     'a4_forecast_summary':forecast_summary(primary,m.get('diagnostics',{})),
                      'mu_hat':mean['mean'],'cluster_interval':mean,'b2_thinking_mode':choice,
                      'p_positive':sum(r['delta_audit']>0 for r in primary)/len(primary),
                      'increment_sd':float(np.std([r['delta_audit'] for r in primary],ddof=1)) if len(primary)>1 else None,

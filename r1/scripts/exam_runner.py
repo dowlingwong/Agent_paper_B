@@ -129,12 +129,14 @@ def evidence(runner, phase, selected, interrupt):
         finally:
             if runner.service: runner.stop_service()
         audits=[r for root in root_results for r in root['audited_proposals']]
-        diag={k:sum(r['diagnostics'][k] for r in root_results) for k in ('trials','evaluated','invalid','duplicates','noops','parse_failed')}
+        diag={k:sum(r['diagnostics'].get(k,0) for r in root_results) for k in ('trials','evaluated','invalid','duplicates','noops','parse_failed','forecast_queries','forecast_query_failed')}
         d28=all(all(n['pass'] for n in r['d28']['nodes'].values()) for r in root_results)
         manifest={'label':'EXAM','phase':phase,'status':'COMPLETE','candidate':spec['id'],'family':spec['family'],'role':spec['role'],
                   'rule_sha256':runner.rule_sha,'registry_sha256':digest_file(runner.registry_path),'registry_path':str(runner.out/'registry_snapshot.yaml'),'registry_order':[s['id'] for s in runner.spec_order()].index(spec['id']),
                   'model_sha256':(spec.get('quant_source') or {}).get('sha256'),'llamacpp_build':cfg['server']['build'] if not spec.get('kind') else None,
                   'purpose':'schema_free_sensitivity' if cfg.get('free_sensitivity') else 'primary','schema_mode':'free' if cfg.get('free_sensitivity') else 'manager_proposal/v1',
+                  'thinking_sensitivity_omitted_reason':'Stage A grammar disabled thinking-on' if eligible[spec['id']].get('thinking_disabled_due_grammar') else None,
+                  'stage_a_table_sha256':cfg['stage_a_table_sha256'],'b1_analysis_sha256':cfg.get('b1_analysis_sha256') if phase=='b2' else None,
                   'primary_mode':modes[0],'mode':modes[0],'stage_a_pass':True,'d28_pass':d28,'audited_proposals':audits,
                   'diagnostics':diag,'thinking_policy':spec.get('thinking_policy'),'proposal_schema':None if spec.get('kind') or cfg.get('free_sensitivity') else 'manager_proposal/v1',
                   'final_audits':[r for root in root_results if root['mode']==modes[0] for r in root['final_audits']],
