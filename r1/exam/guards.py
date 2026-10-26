@@ -105,3 +105,47 @@ def paired_instance_bootstrap(first, second, *, field='value', resamples=2000, s
             'instances':len(keys),'resampling_unit':'instance_pair','bootstrap_resamples':resamples,
             'bootstrap_seed':seed,'point_within_interval':lo<=point<=hi,'bootstrap_unstable':not lo<=point<=hi,
             'descriptive_only':True}
+
+
+def guarded_download(url, target, *, sha256, size_bytes, storage_root, opener=None, check_space=space_check, chunk_bytes=16<<20):
+    """Phase 2 helper: stop on disk-floor loss, retain partial bytes, never silently restart.
+
+    Source policy/author phase gates must run before calling. Tests inject an
+    in-memory response; Phase 1 never invokes this against a weight URL.
+    """
+    from urllib.request import urlopen
+    import os
+    import threading
+    target=Path(target);root=Path(storage_root).resolve()
+    if not target.parent.resolve().is_relative_to(root): raise RuntimeError('STOP: download target escapes approved storage')
+    if target.exists():
+        if digest_file(target)==sha256 and target.stat().st_size==size_bytes: return {'reused':True,'sha256':sha256}
+        raise RuntimeError('STOP: existing target differs from pinned artifact')
+    partial=target.with_name(target.name+'.partial')
+    if partial.exists(): raise RuntimeError('STOP: preserve earlier partial download; operator must resolve it explicitly')
+    if not re.fullmatch('[0-9a-f]{64}',str(sha256)) or size_bytes<1 or not str(url).startswith('https://'):
+        raise ValueError('HTTPS source, positive size and sha256 pin required')
+    check_space(root);response=(opener or urlopen)(url,timeout=30)
+    stopped=threading.Event();errors=[]
+    def watch():
+        while not stopped.wait(.2):
+            try: check_space(root)
+            except Exception as exc:
+                errors.append(str(exc));response.close();break
+    monitor=threading.Thread(target=watch,daemon=True);monitor.start();h=hashlib.sha256();n=0
+    try:
+        with partial.open('xb') as f:
+            while True:
+                check_space(root)
+                block=response.read(chunk_bytes)
+                if not block: break
+                f.write(block);h.update(block);n+=len(block)
+                if n>size_bytes: raise RuntimeError('STOP: source exceeds pinned size')
+                check_space(root)
+            f.flush();os.fsync(f.fileno())
+        if errors: raise RuntimeError(errors[0])
+        if n!=size_bytes or h.hexdigest()!=sha256: raise RuntimeError('STOP: downloaded artifact size/digest mismatch; partial retained')
+        check_space(root);partial.rename(target)
+        return {'reused':False,'sha256':h.hexdigest(),'size_bytes':n}
+    finally:
+        stopped.set();monitor.join(timeout=5);response.close()

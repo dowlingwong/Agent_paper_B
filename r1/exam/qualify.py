@@ -1,0 +1,42 @@
+"""Stage A offload qualification on the exact exam flags; raw telemetry precedes footprint pinning."""
+import argparse
+import json
+import math
+from pathlib import Path
+from r1.scripts import llamacpp_probe
+from r1.scripts.ollama_instance import free_port
+from r1.exam.campaign import write_json
+from r1.exam.guards import digest_file
+
+
+def qualify(job):
+    cfg=job['config'];spec=job['candidate'];out=Path(job['out'])
+    out.mkdir(parents=True,exist_ok=True)
+    if cfg.get('dryrun'):
+        result={'status':'PASS','footprint_mib':5560,'label':'DRYRUN','synthetic_telemetry':True,'model_sha256':spec['quant_source']['sha256'],'context':job['ctx']}
+    else:
+        thinking={**spec['thinking_policy'],'budget':2048 if spec['thinking_policy']['mode']!='off' else 0}
+        args=['--binary',cfg['server']['binary'],'--model',spec['runtime']['model_path'],'--gpu',cfg['gpu_uuid'],
+              '--port',str(free_port()),'--ctx',str(job['ctx']),'--alias',spec['id'],'--out',str(out),
+              '--expect-sha256',spec['quant_source']['sha256'],'--expect-build',cfg['server']['build'],
+              '--min-gpu-mib',str(math.ceil(.9*spec['quant_source']['size_bytes']/2**20)),
+              '--server-extra-args',json.dumps(['--jinja','--cache-type-k','q8_0','--cache-type-v','q8_0']),
+              '--thinking-policy',json.dumps(thinking)]
+        code=llamacpp_probe.main(args)
+        raw_path=max(out.glob('probe_*.json'));raw=json.loads(raw_path.read_text())
+        # No footprint can be adopted without loaded-state PID/GPU telemetry.
+        footprint=raw.get('footprint_mib_to_pin')
+        success=code==0 and isinstance(footprint,(int,float)) and footprint>0
+        result={'status':'PASS' if success else ('PREPARATION_STOP' if footprint is None else 'MECHANICAL_FAILURE'),'footprint_mib':footprint,
+                'label':'ENGINEERING_ONLY','raw_probe':str(raw_path),'raw_probe_sha256':digest_file(raw_path),
+                'model_sha256':spec['quant_source']['sha256'],'context':job['ctx'],'offload_route':raw.get('route'),
+                'stop_reasons':raw.get('stop_reasons',[])}
+    write_json(out/'qualification.json',result)
+    return result
+
+
+def main(argv=None):
+    p=argparse.ArgumentParser();p.add_argument('--job',required=True);a=p.parse_args(argv)
+    result=qualify(json.loads(Path(a.job).read_text()));return 0 if result['status']=='PASS' else 1
+
+if __name__=='__main__': raise SystemExit(main())

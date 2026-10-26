@@ -106,6 +106,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from r1.scripts.dryrun_guard import validate_dryrun  # noqa: E402
 from r1.scripts.ollama_instance import OllamaInstance, pid_alive, stop_orphan  # noqa: E402
 from r1.scripts import llama_server_instance as lsi  # noqa: E402
+from r1.exam.namespace import refuse_exam  # noqa: E402
 
 SCRIPTS = Path(__file__).resolve().parent
 MODEL = 'qwen2.5-coder:7b'
@@ -191,7 +192,8 @@ def load_config(path=None, allow_placeholders: bool = False) -> dict:
     config = json.loads(json.dumps(DEFAULTS))
     if path:
         user = json.loads(Path(path).read_text())
-        unknown = set(user) - set(DEFAULTS) - {'comment'}
+        refuse_exam(user, context='C3 sweep config')
+        unknown = set(user) - set(DEFAULTS) - {'comment', 'proposal_schema'}
         if unknown:
             raise Stop(f'STOP: unknown config keys {sorted(unknown)}')
         for key, value in user.items():
@@ -210,6 +212,9 @@ def load_config(path=None, allow_placeholders: bool = False) -> dict:
         raise Stop('STOP: duplicate node in nodes')
     validate_resume(config['resume'], config['watchdog'])
     validate_backend(config)
+    if config.get('proposal_schema') is not None:
+        if config['backend'] != 'llamacpp' or config['proposal_schema'] != 'manager_proposal/v1':
+            raise Stop('STOP: proposal_schema requires llamacpp and manager_proposal/v1')
     unresolved = placeholders(config)
     if unresolved and not allow_placeholders:
         raise Stop(f'STOP: unresolved {PLACEHOLDER_PREFIX} values in the config: {unresolved}')
@@ -457,6 +462,7 @@ def paper_a_check(spec: dict, host: str) -> dict:
 
 class SweepRunner:
     def __init__(self, config: dict, *, batch: Path, paper: Path, harness: Path, python: str) -> None:
+        refuse_exam(config, context='C3 sweep runner admission')
         self.config = config
         self.dryrun = validate_dryrun()
         self.label = 'DRYRUN' if self.dryrun else 'ENGINEERING_ONLY'
@@ -778,7 +784,8 @@ class SweepRunner:
         """Collector / liveness ``--manager-model`` (llama.cpp only; Ollama keeps the collector default)."""
         if self.backend != 'llamacpp':
             return []
-        return ['--manager-model', 'llamacpp/' + self.config['llamacpp']['model_alias']]
+        return ['--manager-model', 'llamacpp/' + self.config['llamacpp']['model_alias'],
+                *(['--proposal-schema', self.config['proposal_schema']] if self.config.get('proposal_schema') else [])]
 
     def service_alive(self) -> bool:
         return self.service is not None and self.service.alive() and self.service.health() is not None
@@ -1187,7 +1194,8 @@ class SweepRunner:
                  'nodes_pending': self.config['nodes_pending'],
                  **({'manager': {'backend': 'llamacpp', 'model': 'llamacpp/' + self.config['llamacpp']['model_alias'],
                                  'model_sha256': self.config['llamacpp']['model_sha256'],
-                                 'llamacpp_build': self.config['llamacpp']['build']}}
+                                 'llamacpp_build': self.config['llamacpp']['build'],
+                                 **({'proposal_schema': self.config['proposal_schema']} if self.config.get('proposal_schema') else {})}}
                     if self.backend == 'llamacpp' else {}),
                  'audit': {'status': 'pending', 'seeds': self.config['audit']['seeds'],
                            'label_seeds': self.config['audit']['seeds'][:self.config['audit']['label_seeds']],

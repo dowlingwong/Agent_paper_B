@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 import numpy as np
 import yaml
-from r1.exam.guards import frozen_digest, paired_instance_bootstrap, wilson_interval
+from r1.exam.guards import digest_file, frozen_digest, paired_instance_bootstrap, wilson_interval
 
 RULE=Path(__file__).parent/'rules/x5_rule_v1.yaml'
 
@@ -58,7 +58,20 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None):
         if m.get('label')!='EXAM' or m.get('phase')!='b1' or m.get('status')!='COMPLETE':
             raise ValueError('analysis requires complete EXAM B1 manifests')
         if m.get('rule_sha256')!=sha: raise ValueError('manifest rule hash differs from frozen bytes')
+        registry_path=Path(m['registry_path'])
+        if digest_file(registry_path)!=m['registry_sha256']: raise ValueError('registry snapshot digest mismatch')
+        registry=yaml.safe_load(registry_path.read_text())
+        all_rows=registry['software_anchors']+[r for r in registry['candidates'] if r['role']=='anchor']+[r for r in registry['candidates'] if r['role']=='candidate']+registry.get('sensitivities',[])
+        index=next(i for i,r in enumerate(all_rows) if r['id']==m['candidate'])
+        source=all_rows[index]
+        if (m['family'],m['role'],m['registry_order'])!=(source['family'],source['role'],index): raise ValueError('family/role/order differs from frozen registry')
         observations=m['audited_proposals']
+        for r in observations:
+            if r['audit_seeds']!=list(range(9101,9105)): raise ValueError('B1 audit seed mismatch')
+            a,b=r['candidate_metrics'],r['incumbent_metrics']
+            if len(a)!=4 or len(b)!=4: raise ValueError('four paired B1 audits required')
+            delta=finite_mean(a)-finite_mean(b)
+            if not math.isclose(delta,float(r['delta_audit']),abs_tol=1e-12): raise ValueError('B1 delta differs from raw audits')
         primary=[r for r in observations if r['mode']==m['primary_mode']]
         if not primary: raise ValueError('no primary audited increments')
         mean=bootstrap_mean(primary,field='delta_audit',rule=rule)
@@ -94,10 +107,16 @@ def b2_summary(manifests):
     for m in manifests:
         if m.get('label')!='EXAM' or m.get('phase')!='b2' or m.get('status')!='COMPLETE':
             raise ValueError('complete EXAM B2 manifests required')
-        values=[r['final_y'] for r in m['final_audits']]
+        values=[]
+        for r in m['final_audits']:
+            if r['seeds']!=list(range(9201,9211)) or len(r['metrics'])!=10: raise ValueError('ten fresh B2 audits required')
+            value=finite_mean(r['metrics'])
+            if not math.isclose(value,float(r['final_y']),abs_tol=1e-12): raise ValueError('B2 final Y differs from raw audits')
+            values.append(value)
         rows.append({'candidate':m['candidate'],'final_y':finite_mean(values),'instances':len(values),
-                     'gpu_hours':m['gpu_hours'],'mode':m['mode']})
-    return {'phase':'b2','label':'EXAM','rows':sorted(rows,key=lambda r:(-r['final_y'],r['gpu_hours'])),
+                     'purpose':m.get('purpose','primary'),'schema_mode':m.get('schema_mode','manager_proposal/v1'),'gpu_hours':m['gpu_hours'],'mode':m['mode'],'other_mode_audits':m.get('sensitivity_final_audits',[])})
+    return {'phase':'b2','label':'EXAM','rows':sorted([r for r in rows if r['purpose']=='primary'],key=lambda r:(-r['final_y'],r['gpu_hours'] if r['gpu_hours'] is not None else math.inf)),
+            'schema_sensitivity_rows':[r for r in rows if r['purpose']=='schema_free_sensitivity'],
             'author_decision_pending':True}
 
 

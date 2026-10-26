@@ -17,6 +17,6 @@ Paper additionally uses `PYTHONPATH` containing paper root and harness src. Both
 | Paper | 417 | 22 | 9 | 0 | 645.08 s |
 | Harness | 448 | 8 | 0 | 1 | 95.12 s |
 
-Exact failing IDs and tracebacks are in `paper_baseline.log` and `harness_baseline.log`. The paper failure set includes Mac `/proc` limitations and desktop integration failures; these are measured pre-existing failures, not a claim that a Linux suite was run. Harness includes missing legacy-submodule/manuscript/artifact fixtures.
+Trailing whitespace is normalised in the saved transcripts. Exact failing IDs and tracebacks are in `paper_baseline.log` and `harness_baseline.log`. The paper failure set includes Mac `/proc` limitations and desktop integration failures; these are measured pre-existing failures, not a claim that a Linux suite was run. Harness includes missing legacy-submodule/manuscript/artifact fixtures.
 
 Earlier environment attempts are preserved under `/private/tmp/exam-x-20261026/*environment_attempt.log`: the first harness attempt did not put the scratch interpreter on worker PATH (438 passed, 16 failed, 3 errors); the first paper attempt was sandboxed and interrupted after identifying that socket permissions and worker PATH would invalidate its comparison. Those are not the authoritative baseline. Only the agent's own paper baseline process was interrupted; no experiment or remote workload was touched.

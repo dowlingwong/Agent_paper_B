@@ -72,7 +72,9 @@ def parse(argv):
     args = {'-m': None, '--host': '127.0.0.1', '--port': '8080', '-ngl': '0', '-c': '4096', '--alias': None, '-np': '1'}
     it = iter(argv)
     for item in it:
-        if item in args:
+        if item == '--jinja':
+            args[item] = True
+        elif item in args or item in ('--cache-type-k', '--cache-type-v', '--chat-template-kwargs', '--reasoning-budget'):
             args[item] = next(it)
         else:
             raise SystemExit(f'fake llama-server: unsupported argument {item!r}')
@@ -116,6 +118,15 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers['Content-Length'])) or b'{}')
         seed = body.get('seed')
+        if self.path == '/tokenize':
+            self.reply({'tokens': [1, 2]})
+            return
+        if self.path == '/completion':
+            self.reply({'content': 'x', 'tokens_evaluated': len(body['prompt']), 'tokens_predicted': body.get('n_predict', 1)})
+            return
+        if self.path == '/apply-template':
+            self.reply({'prompt': ''.join(f"{m['role']}: {m['content']}\n" for m in body['messages']) + 'assistant: '})
+            return
         if self.path != '/v1/chat/completions':
             log({'path': self.path, 'seed': seed})
             request_line('POST', self.path, 404)
@@ -140,7 +151,8 @@ class Handler(BaseHTTPRequestHandler):
         fault = common.FAULTS.get(n)
         if fault is not None and not common.fire_once(n, fault):
             fault = None
-        log({'path': self.path, 'seed': seed, 'chat_call': n, 'fault': fault, 'model': body.get('model')})
+        log({'path': self.path, 'seed': seed, 'chat_call': n, 'fault': fault, 'model': body.get('model'),
+             **({'response_format': body['response_format']} if 'response_format' in body else {})})
         request_line('POST', self.path, 'fault=' + fault if fault else 200, f'chat_call={n}')
         if fault == 'sigterm':
             log({'event': 'fake llama-server sends itself SIGTERM (runner loss)', 'chat_call': n})
@@ -169,16 +181,20 @@ class Handler(BaseHTTPRequestHandler):
             finally:
                 os._exit(17)
         prompt = '\n'.join(str(m.get('content', '')) for m in body.get('messages', []))
-        self.reply(self.completion(body, json.dumps(common.proposal_for(prompt, seed))))
+        content = 'malformed DRYRUN reply' if os.environ.get('EXAM_FAKE_MALFORMED') == '1' else json.dumps(common.proposal_for(prompt, seed))
+        self.reply(self.completion(body, content))
 
     def completion(self, body, content):
         n = int(body.get('max_tokens') or 10)
         tps = float(os.environ.get('C3_FAKE_LLAMA_TPS_GPU', '40') if on_gpu() else
                     os.environ.get('C3_FAKE_LLAMA_TPS_CPU', '8'))
+        thinking = int(body.get('reasoning_budget') or ARGS.get('--reasoning-budget') or 0) > 0
         return {'id': 'chatcmpl-DRYRUN', 'object': 'chat.completion', 'created': 0,
                 'model': body.get('model'), 'system_fingerprint': 'b0-DRYRUN',
-                'choices': [{'index': 0, 'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': content}}],
-                'usage': {'prompt_tokens': 10, 'completion_tokens': n, 'total_tokens': 10 + n},
+                'choices': [{'index': 0, 'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': content,
+                    **({'reasoning_content': 'DRYRUN reasoning fixture'} if thinking else {})}}],
+                'usage': {'prompt_tokens': 10, 'completion_tokens': n, 'total_tokens': 10 + n,
+                    **({'completion_tokens_details': {'reasoning_tokens': 1}} if thinking else {})},
                 'timings': {'predicted_n': n, 'predicted_ms': 1000.0 * n / tps, 'predicted_per_second': tps}}
 
 

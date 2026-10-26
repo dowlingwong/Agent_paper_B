@@ -1,0 +1,152 @@
+"""One isolated exam campaign or Stage A worker. Parent monitors server and disk; no C3 export."""
+from __future__ import annotations
+import argparse
+import hashlib
+import json
+import os
+import shutil
+import time
+from pathlib import Path
+import yaml
+from r1.harness import import_harness
+HARNESS=import_harness()
+from autoresearch.control_plane.action_versions import ActionVersions
+from autoresearch.control_plane.budget import ComputeBudget
+from autoresearch.control_plane.campaign import run_real_campaign
+from autoresearch.manager.langgraph_manager import LangGraphManager
+from autoresearch.manager.random_valid import RandomValidManager
+from autoresearch.memory.event_store import CampaignEventStore
+from autoresearch.nodes.registry import load_registered_node
+from autoresearch.worker.local_worker import LocalWorker
+from autoresearch.worker.base import WorkerResult
+from r1.c3.audit import run_config, paired
+from r1.c3.features import apply_edit, files_hash, replay_campaign
+from r1.exam.observer import SelfForecastObserver
+from r1.exam.guards import digest_file
+from r1.headroom.scripted_manager import ScriptedRandomManager
+from r1.liveness.check import evaluate_ledger_paths
+
+
+def write_json(path, data):
+    path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
+    tmp=path.with_name(path.name+'.tmp')
+    with tmp.open('w') as f:
+        f.write(json.dumps(data,indent=2,allow_nan=False)+'\n');f.flush();os.fsync(f.fileno())
+    tmp.replace(path)
+
+
+def read_rows(path):
+    return [json.loads(s) for s in Path(path).read_text().splitlines() if s.strip()]
+
+
+def fixture_metric(files, seed):
+    h=int(hashlib.sha256((json.dumps(files,sort_keys=True)+str(seed)).encode()).hexdigest()[:8],16)
+    return .5+(h%10000)/100000
+
+
+class FixtureWorker:
+    """Deterministic synthetic CPU fixture only; never a scientific measurement."""
+    mode='EXAM_DRYRUN_fixture'
+    def __init__(self, root, seed): self.node_root=Path(root);self.seed=seed
+    def run_trial(self, proposal, node_spec, budget_index):
+        time.sleep(.2)  # give the DRYRUN parent an observable kill point
+        files={p:(self.node_root/p).read_text() for p in node_spec.editable_paths}
+        edit=proposal.extra.get('structured_edit')
+        if edit:
+            files=apply_edit(files,edit)
+            for p,text in files.items(): (self.node_root/p).write_text(text)
+        return WorkerResult(self.mode,node_spec.editable_paths,True,{node_spec.metric_name:fixture_metric(files,self.seed)},
+                            'DRYRUN.log','DRYRUN.diff','DRYRUN-before','DRYRUN-after')
+
+
+def collect(job):
+    out=Path(job['out'])
+    import platform
+    if not job['dryrun'] and platform.node().split('.')[0]!='TASL-2': raise RuntimeError('STOP: EXAM workers run only on portal')
+    if job['dryrun'] and not any((p/'.dryrun').is_file() for p in out.resolve().parents): raise RuntimeError('STOP: unmarked DRYRUN child')
+    out.mkdir(parents=True,exist_ok=True)
+    node=job['node'];seed=job['seed'];spec=load_registered_node(node,repo_root=HARNESS)
+    node_root=out/'node'
+    shutil.copytree(HARNESS/'nodes'/node,node_root,ignore=shutil.ignore_patterns('__pycache__','.autoresearch_artifacts'))
+    if node.startswith('openml_') and not (node_root/'data_cache').exists() and not job['dryrun']:
+        cache=HARNESS/f'experiments/r1/pilot/L8_20261009T152916Z/nodes/{node}/data_cache'
+        if not cache.exists(): raise RuntimeError(f'STOP: missing verified OpenML cache for {node}')
+        shutil.copytree(cache,node_root/'data_cache')
+    start={p:(node_root/p).read_text() for p in spec.editable_paths}
+    candidate=job['candidate'];kind=candidate.get('kind','llm')
+    if kind=='random_valid':
+        manager=RandomValidManager(yaml.safe_load(Path(job['value_grids']).read_text())['nodes'][node])
+    elif kind=='scripted': manager=ScriptedRandomManager(node,seed=seed,repetition=0)
+    else: manager=LangGraphManager(model='llamacpp/'+candidate['id'],proposal_schema=job['proposal_schema'],transport_retry=None)
+    worker=FixtureWorker(node_root,seed) if job['dryrun'] else LocalWorker(node_root=node_root,artifact_dir=out/'art',train_seed=seed,split_seed=seed)
+    observer=SelfForecastObserver(job['base_url'],candidate['id']) if kind=='llm' else None
+    run_real_campaign(node_spec=spec,campaign_id=f'{node}__s{seed}',budget=job['llm_call_cap'] if kind=='llm' else 1_000_000,
+                      manager_mode='baseline_manager',memory_mode='append_only_summary',records_path=out/'root_trials.jsonl',worker=worker,
+                      proposal_backend=manager,compute_budget=ComputeBudget(max_worker_runs=job['W'],max_llm_calls=job['llm_call_cap']),
+                      action_versions=ActionVersions.new_campaign(),verify_split_policy='vary',
+                      event_store=CampaignEventStore(out/'root_events.jsonl'),proposal_observer=observer)
+    records=read_rows(out/'root_trials.jsonl');events=read_rows(out/'root_events.jsonl')
+    props,checks=replay_campaign(records,start,node,f'{node}__s{seed}','EXAM','append_only_summary',job['W'],1.)
+    forecasts={e['trial_id']:e['payload'] for e in events if e['event_type']=='exam_self_forecast'}
+    cache={};audits=[];configs={}
+    audited=[p for p in props if not p.features.get('active_equals_incumbent') and not p.features.get('active_seen_before')]
+    for p in audited:
+        for files in (p.candidate_files,p.incumbent_files): configs[files_hash(files)]={'node':node,'files':files}
+    write_json(out/'audit_configs.json',configs)
+    if not job['dryrun']:
+        from concurrent.futures import ProcessPoolExecutor, as_completed
+        with ProcessPoolExecutor(max_workers=job['workers']) as pool:
+            futures={pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out)):h for h,value in configs.items()}
+            for future in as_completed(futures):
+                h=futures[future];runs=future.result();cache[h]=[r['metric'] if r['success'] else None for r in runs]
+                write_json(out/'audit_cache.json',cache)
+    for p in props:
+        if p.features.get('active_equals_incumbent') or p.features.get('active_seen_before'): continue
+        arrays=[]
+        for files in (p.candidate_files,p.incumbent_files):
+            h=files_hash(files)
+            if h not in cache:
+                if job['dryrun']: cache[h]=[fixture_metric(files,s) for s in job['audit_seeds']]
+                else:
+                    runs=run_config(node,files,job['audit_seeds'],str(out))
+                    cache[h]=[r['metric'] if r['success'] else None for r in runs]
+                write_json(out/'audit_cache.json',cache)
+            arrays.append(cache[h])
+        result=paired(*arrays)
+        if result['k']!=len(job['audit_seeds']): raise RuntimeError('STOP: missing/failed paired audit seeds')
+        trial=f'{node}__s{seed}-trial-{p.budget_index:03d}'
+        audits.append({'proposal_id':p.proposal_id,'instance_id':f'{node}__s{seed}','node':node,'mode':job['mode'],
+                       'audit_seeds':job['audit_seeds'],'candidate_hash':p.candidate_hash,'incumbent_hash':p.incumbent_hash,'candidate_metrics':arrays[0],'incumbent_metrics':arrays[1],
+                       **result,**{k:v for k,v in forecasts.get(trial,{}).items() if k in ('p_delta_positive','p_no_effect')}})
+    live=evaluate_ledger_paths([out/'root_trials.jsonl'],manager_kind='scripted' if kind!='llm' else 'langgraph',memory_mode='append_only_summary')
+    novelty=[e['payload'] for e in events if e['event_type']=='edit_novelty']
+    evaluated=len(novelty)
+    diagnostics={'trials':len(records),'evaluated':evaluated,
+                 'invalid':sum(r['decision']=='failed_invalid' for r in records),
+                 'duplicates':sum(bool(p.get('active_config_seen_before')) for p in novelty),
+                 'noops':sum(bool(p.get('active_config_equals_incumbent')) for p in novelty),
+                 'parse_failed':sum(bool(((r.get('extra') or {}).get('manager') or {}).get('parse_failed')) or ((((r.get('extra') or {}).get('manager') or {}).get('llm_call')) or {}).get('parse_ok') is False for r in records)}
+    final=[]
+    if job['phase']=='b2':
+        files={p:(node_root/p).read_text() for p in spec.editable_paths}
+        vals=[fixture_metric(files,s) for s in job['audit_seeds']] if job['dryrun'] else [r['metric'] for r in run_config(node,files,job['audit_seeds'],str(out))]
+        if any(v is None for v in vals): raise RuntimeError('STOP: incomplete final Y audit')
+        final=[{'instance_id':f'{node}__s{seed}','node':node,'seeds':job['audit_seeds'],'metrics':vals,'final_y':sum(vals)/len(vals)}]
+    completed=next(e['payload'] for e in reversed(events) if e['event_type']=='campaign_completed')
+    budget=completed.get('compute_budget') or {'worker_runs':sum(not ((r.get('extra') or {}).get('worker') or {}).get('worker_skipped',False) and r['decision']!='skipped' for r in records),'llm_calls':0}
+    result={'label':'EXAM','execution_label':'DRYRUN' if job['dryrun'] else 'EVIDENCE','status':'COMPLETE',
+            'phase':job['phase'],'candidate':candidate['id'],'mode':job['mode'],'instance_seed':seed,'node':node,
+            'proposal_schema':job['proposal_schema'] if kind=='llm' else None,'observer':'exam_self_forecast/v1' if observer else None,
+            'compute_budget':budget,'termination':'worker_cap' if budget['worker_runs']>=job['W'] else 'llm_cap_or_reserved_observer_pair',
+            'job_binding':job['binding'],'job_sha256':digest_file(out/'job.json'),
+            'evidence_hashes':{name:digest_file(out/name) if (out/name).exists() else None for name in ('root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json')},
+            'diagnostics':diagnostics,'audited_proposals':audits,'replay_checks':checks,'d28':live,'final_audits':final}
+    write_json(out/'campaign_manifest.json',result)
+    return result
+
+
+def main(argv=None):
+    p=argparse.ArgumentParser();p.add_argument('--job',required=True);a=p.parse_args(argv)
+    job=json.loads(Path(a.job).read_text());collect(job)
+
+if __name__=='__main__': main()
