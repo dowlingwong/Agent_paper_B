@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — theory proposal and pinned resume trace reviewed (AI-assisted)
+
+- The [resume trace](reports/LOCAL_RESUME_STAMP_TRACE_20261027.md) is independently confirmed ([review](reviews/LOCAL_RESUME_STAMP_REVIEW_20261027.md), `a4bed47`): at `897d83c`, resumed E1/skip records omit cumulative `repeated_bad_count` stamping when the true count is positive. Historical impact and E2 verify semantics are not established; the sweep pin is unchanged.
+- The [theory-correction proposal](proposals/THEORY_CORRECTIONS_20261027.md) was revised after review and accepted only as an aid for author proof check ([review](reviews/LOCAL_THEORY_CORRECTIONS_REVIEW_20261027.md), `183ebe9` / `395aeff`). No theory-file claim was changed, and no proof is marked author checked.
+
 ## 27 October 2026 — author rulings and Mac test-scope clarification (AI-assisted)
 
 - Author rulings recorded in PLAN §10: noise-aware DAC headline; canonical bins and RPS; limited hard-label ablations; R-A0/R-A2 and C4 endpoint decisions; H.8 execute/skip amendment with legacy version; focused scope, internal freezes, Track P and Track G roles, theory correction proposals, and a post-sweep/B.2 harness pin.
