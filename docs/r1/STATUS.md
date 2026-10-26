@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — author STOP 2 source amendment recorded; Phase 2 in progress (AI-assisted)
+
+PLAN §10 R1-QUANT-SOURCE / R1-EXAM-SOURCE-STOP2 records the direct author decision: Qwen3-Coder-30B-A3B-Instruct uses the exact standard Unsloth Q4_K_M as a single source exception, labelled "source exception (unsloth)" in every table, fully pinned. Qwopus3.6-27B-v4 is removed as unavailable, no substitute; other-version GGUFs are not this candidate. Effective pool is 20 candidates plus three anchors, with OLMo Think separate. Finish all downloads and SHA checks before STOP 2 independent acceptance; no Phase 3 or evidence run has started.
+
 ## 26 October 2026 — exam Phase 1 merged into `main` / `r1` by the coordinating session
 
 Harness `r1` fast-forwarded to `897d83c` (exam Phase 1; re-run in the coordinator's Linux VM env: 453 passed / 9 failed / 1 error, no failure outside the known environmental set). Paper `exam-x-20261026` (`ea6dd8c`, independently accepted at STOP 1) merged into `main`, which had meanwhile gained the Track P documents (`e09b399`, `b5a7aec`); PLAN §10 and STATUS conflicts resolved by keeping both sets of rows/entries. **Note for the author:** R1-EXAM-TRANSFER (no GitHub credentials on the portal; code via SSH bare repos) and R1-TRACKP-RUNBOOK (Track P agent clones from GitHub on the portal) differ on GitHub credentials on the portal; both agents must take the R1-PORTAL-SCHEDULE GPU lease. Not pushed (needs the author's credentials).

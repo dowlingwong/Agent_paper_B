@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 import numpy as np
 import yaml
-from r1.exam.guards import digest_file, frozen_digest, paired_instance_bootstrap, wilson_interval
+from r1.exam.guards import artifact_label, digest_file, frozen_digest, paired_instance_bootstrap, wilson_interval
 
 RULE=Path(__file__).parent/'rules/x5_rule_v1.yaml'
 
@@ -92,7 +92,7 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None):
             if not math.isclose(delta,float(r['delta_audit']),abs_tol=1e-12): raise ValueError('B1 delta differs from raw audits')
         primary=[r for r in observations if r['mode']==m['primary_mode']]
         if not primary:
-            rows.append({'candidate':m['candidate'],'role':m['role'],'family':m['family'],
+            rows.append({'candidate':m['candidate'],'source_label':artifact_label(source),'role':m['role'],'family':m['family'],
                          'stage_a_pass':m['stage_a_pass'],'d28_pass':m['d28_pass'],'registry_order':m['registry_order'],
                          'mu_hat':None,'cluster_interval':None,'b2_thinking_mode':m['primary_mode'],
                          'a4_forecast_summary':forecast_summary(primary,m.get('diagnostics',{})),
@@ -107,7 +107,7 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None):
         forecasts=[r for r in primary if r.get('p_delta_positive') is not None]
         scores=[math.log(max(1e-12,min(1-1e-12,float(r['p_delta_positive'])))) if r['delta_audit']>0
                 else math.log(max(1e-12,1-min(1-1e-12,float(r['p_delta_positive'])))) for r in forecasts]
-        rows.append({'candidate':m['candidate'],'role':m['role'],'family':m['family'],
+        rows.append({'candidate':m['candidate'],'source_label':artifact_label(source),'role':m['role'],'family':m['family'],
                      'stage_a_pass':m['stage_a_pass'],'d28_pass':m['d28_pass'],'registry_order':m['registry_order'],
                      'a4_forecast_summary':forecast_summary(primary,m.get('diagnostics',{})),
                      'mu_hat':mean['mean'],'cluster_interval':mean,'b2_thinking_mode':choice,
@@ -121,7 +121,7 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None):
 
 def stage_a_summary(manifests):
     return {'phase':'stage-a','label':'ENGINEERING_ONLY','rows':[
-        {'candidate':m['candidate'],'passed':m['passed'],'failure_classes':m.get('failure_classes',[]),
+        {'candidate':m['candidate'],'source_label':m.get('source_label','source unresolved'),'passed':m['passed'],'failure_classes':m.get('failure_classes',[]),
          'free_parse':wilson_interval(m['free_parse_successes'],m['prompts']) if m.get('prompts') else None,
          'schema_parse':wilson_interval(m['schema_parse_successes'],m['prompts']) if m.get('prompts') else None,
          'cpu_pool_only':m.get('cpu_pool_only',False)} for m in manifests]}
@@ -138,7 +138,7 @@ def b2_summary(manifests):
             value=finite_mean(r['metrics'])
             if not math.isclose(value,float(r['final_y']),abs_tol=1e-12): raise ValueError('B2 final Y differs from raw audits')
             values.append(value)
-        rows.append({'candidate':m['candidate'],'final_y':finite_mean(values),'instances':len(values),
+        rows.append({'candidate':m['candidate'],'source_label':m['source_label'],'final_y':finite_mean(values),'instances':len(values),
                      'purpose':m.get('purpose','primary'),'schema_mode':m.get('schema_mode','manager_proposal/v1'),'gpu_hours':m['gpu_hours'],'mode':m['mode'],'other_mode_audits':m.get('sensitivity_final_audits',[])})
     return {'phase':'b2','label':'EXAM','rows':sorted([r for r in rows if r['purpose']=='primary'],key=lambda r:(-r['final_y'],r['gpu_hours'] if r['gpu_hours'] is not None else math.inf)),
             'schema_sensitivity_rows':[r for r in rows if r['purpose']=='schema_free_sensitivity'],

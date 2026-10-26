@@ -1,9 +1,9 @@
 {
   "schema": "exam_config/v1",
-  "host": "TODO_VERIFY_ON_HOST",
-  "models_dir": "TODO_VERIFY_ON_HOST",
-  "work_dir": "TODO_VERIFY_ON_HOST",
-  "gpu_uuid": "TODO_VERIFY_ON_HOST",
+  "host": "TASL-2",
+  "models_dir": "/home/dowling/exam-x/models",
+  "work_dir": "/home/dowling/exam-x/work",
+  "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
   "comment": "Author approved /home/dowling/exam-x/{models,work}. Host values remain placeholders until Phase 2. No GitHub credentials on portal; SSH bare transfer repositories go under work/remotes.",
   "minimum_free_bytes": 100000000000,
   "ctx_size": 32768,
@@ -17,13 +17,13 @@
   "rule_sha256": "0665903b276f34eca4cd4d03ac483192cd3ef3b41c24d188e2dd103d65423b6e",
   "value_grids": "r1/exam/value_grids.yaml",
   "paper_commit": "TODO_VERIFY_ON_HOST",
-  "harness_commit": "TODO_VERIFY_ON_HOST",
+  "harness_commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
   "prompts": "TODO_VERIFY_ON_HOST",
   "prompts_sha256": "TODO_VERIFY_ON_HOST",
   "server": {
-    "binary": "TODO_VERIFY_ON_HOST",
-    "binary_sha256": "TODO_VERIFY_ON_HOST",
-    "build": "TODO_VERIFY_ON_HOST",
+    "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+    "build": "version: 0.7.0-dev (build 1, commit 620d222)",
     "start_timeout": 300
   },
   "instance_seeds": [

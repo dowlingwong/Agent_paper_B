@@ -39,7 +39,7 @@ def estimate(config: dict, file_bytes: int, context: int = 32768) -> dict:
         types = ['sliding_attention' if c.get('sliding_window') else 'full_attention'] * layers
         provenance['layer_types'] = {'derived_from': root+'sliding_window' if c.get('sliding_window') else 'homogeneous attention', 'value': types}
     else:
-        provenance['layer_types'] = {'field': root+'layer_types', 'value': types}
+        provenance['layer_types'] = {'field': root+('layer_types' if c.get('layer_types') is not None else 'layers_block_type'), 'value': types}
     if len(types) != layers or layers < 1:
         raise ValueError('layer_types must match num_hidden_layers')
     shared=int(field('num_kv_shared_layers')) if c.get('num_kv_shared_layers') is not None else 0

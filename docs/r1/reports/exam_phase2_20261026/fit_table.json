@@ -1,6 +1,7 @@
 [
   {
     "id": "qwen38_27b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/qwen38_27b_config.json",
     "source_config_sha256": "191e0af232104ed8b65258cf3fb2b842e288008baca7633c11b82a1ac7203aab",
     "schema": "exam_fit/v1",
@@ -1010,6 +1011,7 @@
   },
   {
     "id": "qwen36_27b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/qwen36_27b_config.json",
     "source_config_sha256": "69db4eb7196bc8190813231b3018ca05d8c2e3abc7b1af19d55c157af44a9d9c",
     "schema": "exam_fit/v1",
@@ -2019,6 +2021,7 @@
   },
   {
     "id": "gemma4_31b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/gemma4_31b_config.json",
     "source_config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
     "schema": "exam_fit/v1",
@@ -2964,6 +2967,7 @@
   },
   {
     "id": "muse_glimmer_30b",
+    "source_label": "vendor Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/muse_glimmer_30b_config.json",
     "source_config_sha256": "5a9df2d8a385b3d361ab6ae68d73586f4e775033933bd0cd863fb7f3820e6a14",
     "schema": "exam_fit/v1",
@@ -3773,6 +3777,7 @@
   },
   {
     "id": "olmo31_32b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/olmo31_32b_config.json",
     "source_config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95",
     "schema": "exam_fit/v1",
@@ -4772,6 +4777,7 @@
   },
   {
     "id": "devstral_small2_24b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/devstral_small2_24b_config.json",
     "source_config_sha256": "8d570ae877badd9ff5442afdc726385aba07f5757ba875a7491bde9549457e72",
     "schema": "exam_fit/v1",
@@ -5405,6 +5411,7 @@
   },
   {
     "id": "qwen36_35b_a3b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/qwen36_35b_a3b_config.json",
     "source_config_sha256": "93a4693fa9d8392fbfccd4b3c9873f4bfdcb14fdede978b123d07d19675efe99",
     "schema": "exam_fit/v1",
@@ -6078,6 +6085,7 @@
   },
   {
     "id": "gemma4_26b_a4b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/gemma4_26b_a4b_config.json",
     "source_config_sha256": "ed0c1eb3633de771906e9ba004a44cc5635bcc06ee2062077c3d2e88a50707d3",
     "schema": "exam_fit/v1",
@@ -6603,6 +6611,7 @@
   },
   {
     "id": "nemotron35_30b_a3b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/nemotron35_30b_a3b_config.json",
     "source_config_sha256": "a3827a0f5e311547b40943dc081e3ff2f8a277466e8c1a3df2291e8db8a7617c",
     "schema": "exam_fit/v1",
@@ -6680,7 +6689,7 @@
         ]
       },
       "layer_types": {
-        "field": "layer_types",
+        "field": "layers_block_type",
         "value": [
           "mamba",
           "moe",
@@ -7162,7 +7171,7 @@
           ]
         },
         "layer_types": {
-          "field": "layer_types",
+          "field": "layers_block_type",
           "value": [
             "mamba",
             "moe",
@@ -7572,6 +7581,7 @@
   },
   {
     "id": "glm47_flash",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/glm47_flash_config.json",
     "source_config_sha256": "dc9b97c7c9bed726a2e6939da4234d5c43abb3edec8812068c9a1af1dbc13acb",
     "schema": "exam_fit/v1",
@@ -8303,6 +8313,7 @@
   },
   {
     "id": "lfm25_24b_a2b",
+    "source_label": "vendor Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/lfm25_24b_a2b_config.json",
     "source_config_sha256": "b0c46662afe3881e49cf542e683bf5ea8a5e0b780a429b6141a48defc33531bf",
     "schema": "exam_fit/v1",
@@ -8966,6 +8977,7 @@
   },
   {
     "id": "laguna_xs21",
+    "source_label": "vendor Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/laguna_xs21_config.json",
     "source_config_sha256": "de84031daa00903361001b0ed684aba7e574952f51de84fdc3da6d6239b451ea",
     "schema": "exam_fit/v1",
@@ -9607,6 +9619,7 @@
   },
   {
     "id": "ornith10_35b",
+    "source_label": "vendor Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/ornith10_35b_config.json",
     "source_config_sha256": "239494d64746abc0d5fc5881f784843733e1d432df106cda0a8b7543e882ed55",
     "schema": "exam_fit/v1",
@@ -10280,10 +10293,753 @@
   },
   {
     "id": "qwen3_coder_30b_a3b",
-    "status": "NO_APPROVED_SOURCE_FOUND"
+    "source_label": "source exception (unsloth)",
+    "source_config": "docs/r1/reports/exam_phase2_20261026/qwen3_coder_30b_a3b_config.json",
+    "source_config_sha256": "e2c8d8eea39471785cd93379d8b48241ad7dcda299013155dd02526e34a0de62",
+    "schema": "exam_fit/v1",
+    "context": 32768,
+    "gguf_bytes": 18556689568,
+    "kv_and_state_bytes": 1610612736,
+    "compute_buffer_bytes": 1610612736,
+    "total_bytes": 21777915040,
+    "limit_bytes": 25232932864,
+    "estimated_admissible": true,
+    "measured_fit": false,
+    "kv_precision": "q8_0",
+    "declared_attention_bytes_per_element": 1,
+    "fixed_state_precision": "float32",
+    "config_fields": {
+      "num_hidden_layers": {
+        "field": "num_hidden_layers",
+        "value": 48
+      },
+      "layer_types": {
+        "derived_from": "homogeneous attention",
+        "value": [
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention",
+          "full_attention"
+        ]
+      },
+      "head_dim": {
+        "field": "head_dim",
+        "value": 128
+      },
+      "num_key_value_heads": {
+        "field": "num_key_value_heads",
+        "value": 4
+      }
+    },
+    "layers": [
+      {
+        "layer": 0,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 1,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 2,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 3,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 4,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 5,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 6,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 7,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 8,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 9,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 10,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 11,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 12,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 13,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 14,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 15,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 16,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 17,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 18,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 19,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 20,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 21,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 22,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 23,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 24,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 25,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 26,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 27,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 28,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 29,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 30,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 31,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 32,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 33,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 34,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 35,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 36,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 37,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 38,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 39,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 40,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 41,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 42,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 43,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 44,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 45,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 46,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      },
+      {
+        "layer": 47,
+        "kind": "full_attention",
+        "tokens": 32768,
+        "bytes": 33554432
+      }
+    ],
+    "fallback_16384": {
+      "schema": "exam_fit/v1",
+      "context": 16384,
+      "gguf_bytes": 18556689568,
+      "kv_and_state_bytes": 805306368,
+      "compute_buffer_bytes": 1610612736,
+      "total_bytes": 20972608672,
+      "limit_bytes": 25232932864,
+      "estimated_admissible": true,
+      "measured_fit": false,
+      "kv_precision": "q8_0",
+      "declared_attention_bytes_per_element": 1,
+      "fixed_state_precision": "float32",
+      "config_fields": {
+        "num_hidden_layers": {
+          "field": "num_hidden_layers",
+          "value": 48
+        },
+        "layer_types": {
+          "derived_from": "homogeneous attention",
+          "value": [
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention",
+            "full_attention"
+          ]
+        },
+        "head_dim": {
+          "field": "head_dim",
+          "value": 128
+        },
+        "num_key_value_heads": {
+          "field": "num_key_value_heads",
+          "value": 4
+        }
+      },
+      "layers": [
+        {
+          "layer": 0,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 1,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 2,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 3,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 4,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 5,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 6,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 7,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 8,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 9,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 10,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 11,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 12,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 13,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 14,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 15,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 16,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 17,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 18,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 19,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 20,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 21,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 22,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 23,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 24,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 25,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 26,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 27,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 28,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 29,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 30,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 31,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 32,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 33,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 34,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 35,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 36,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 37,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 38,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 39,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 40,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 41,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 42,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 43,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 44,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 45,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 46,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        },
+        {
+          "layer": 47,
+          "kind": "full_attention",
+          "tokens": 16384,
+          "bytes": 16777216
+        }
+      ]
+    }
   },
   {
     "id": "gpt_oss_20b",
+    "source_label": "native MXFP4 (bartowski GGUF)",
     "source_config": "docs/r1/reports/exam_phase2_20261026/gpt_oss_20b_config.json",
     "source_config_sha256": "3a2a26ded679375b7928ddeca59764df7cea83220c1961035f6d6e232659e9ce",
     "schema": "exam_fit/v1",
@@ -10701,6 +11457,7 @@
   },
   {
     "id": "qwen35_9b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/qwen35_9b_config.json",
     "source_config_sha256": "d0883072e01861ed0b2d47be3c16c36a8e81c224c7ffaa310c6558fb3f932b05",
     "schema": "exam_fit/v1",
@@ -11262,6 +12019,7 @@
   },
   {
     "id": "gemma4_12b",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/gemma4_12b_config.json",
     "source_config_sha256": "478c46e8d2c52d5c2d85bf67e3b3e8c90e7c9d91086cee27e3c267907e936bd9",
     "schema": "exam_fit/v1",
@@ -12039,6 +12797,7 @@
   },
   {
     "id": "ornith10_9b",
+    "source_label": "vendor Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/ornith10_9b_config.json",
     "source_config_sha256": "350e12e79ef582bdf6a2ff093930433b182e8736412ff227a4318826921565a5",
     "schema": "exam_fit/v1",
@@ -12600,6 +13359,7 @@
   },
   {
     "id": "ministral3_14b",
+    "source_label": "vendor Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/ministral3_14b_config.json",
     "source_config_sha256": "fc51295bdc0b39c015c9c3ca5d649de183eae73a23b8cbab1a0e055be8d5fa04",
     "schema": "exam_fit/v1",
@@ -13233,6 +13993,7 @@
   },
   {
     "id": "rico03_qwen36_27b",
+    "source_label": "vendor Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/rico03_qwen36_27b_config.json",
     "source_config_sha256": "079002d144f8ec259de38a97faf90d8c27c1882b3b7ddcf7972a25aa0bf7d48f",
     "schema": "exam_fit/v1",
@@ -14241,11 +15002,8 @@
     }
   },
   {
-    "id": "qwopus36_27b_v4",
-    "status": "NO_APPROVED_SOURCE_FOUND"
-  },
-  {
     "id": "qwen25_coder_7b",
+    "source_label": "vendor Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/qwen25_coder_7b_config.json",
     "source_config_sha256": "c0242402ad6a13b331ea320feea8c7e3776ffb7a4eff0757b9cd667e116d9a28",
     "schema": "exam_fit/v1",
@@ -14741,6 +15499,7 @@
   },
   {
     "id": "olmo31_32b_think",
+    "source_label": "bartowski imatrix Q4_K_M",
     "source_config": "docs/r1/reports/exam_phase2_20261026/olmo31_32b_think_config.json",
     "source_config_sha256": "7a95369794fa4126b2c9792d2a6433ccac1e83d069c2f71b39347a1ada9fe56a",
     "schema": "exam_fit/v1",

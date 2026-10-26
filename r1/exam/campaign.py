@@ -22,7 +22,7 @@ from autoresearch.worker.base import WorkerResult
 from r1.c3.audit import run_config, paired
 from r1.c3.features import apply_edit, files_hash, replay_campaign
 from r1.exam.observer import SelfForecastObserver
-from r1.exam.guards import digest_file
+from r1.exam.guards import artifact_label, digest_file
 from r1.headroom.scripted_manager import ScriptedRandomManager
 from r1.liveness.check import evaluate_ledger_paths
 
@@ -136,7 +136,7 @@ def collect(job):
     completed=next(e['payload'] for e in reversed(events) if e['event_type']=='campaign_completed')
     budget=completed.get('compute_budget') or {'worker_runs':sum(not ((r.get('extra') or {}).get('worker') or {}).get('worker_skipped',False) and r['decision']!='skipped' for r in records),'llm_calls':0}
     result={'label':'EXAM','execution_label':'DRYRUN' if job['dryrun'] else 'EVIDENCE','status':'COMPLETE',
-            'phase':job['phase'],'candidate':candidate['id'],'mode':job['mode'],'instance_seed':seed,'node':node,
+            'phase':job['phase'],'candidate':candidate['id'],'source_label':artifact_label(candidate),'mode':job['mode'],'instance_seed':seed,'node':node,
             'proposal_schema':job['proposal_schema'] if kind=='llm' else None,'observer':'exam_self_forecast/v1' if observer else None,
             'compute_budget':budget,'termination':'worker_cap' if budget['worker_runs']>=job['W'] else 'llm_cap_or_reserved_observer_pair',
             'job_binding':job['binding'],'job_sha256':digest_file(out/'job.json'),

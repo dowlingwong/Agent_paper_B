@@ -11,12 +11,15 @@ from r1.exam.guards import guarded_download, quantization_blockers, space_check
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--registry',required=True);p.add_argument('--out',required=True)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--registry',required=True);p.add_argument('--out',required=True);p.add_argument('--candidate',action='append')
     a=p.parse_args(argv)
     if platform.node().split('.')[0]!='TASL-2': raise RuntimeError('portal only')
     root=Path('/home/dowling/exam-x/models');space_check(root)
     registry=json.loads(Path(a.registry).read_text());rows=registry['candidates']+registry.get('sensitivities',[])
     selected=[s for s in rows if s.get('phase2_status')=='SOURCE_PINNED_NOT_DOWNLOADED']
+    if a.candidate:
+        selected=[s for s in selected if s['id'] in a.candidate]
+        if {s['id'] for s in selected}!=set(a.candidate): raise ValueError('unknown or unresolved candidate requested')
     report=Path(a.out);report.mkdir(parents=True,exist_ok=True)
     if sum(s['quant_source']['size_bytes'] for s in selected)+100_000_000_000>__import__('shutil').disk_usage(root).free:
         raise RuntimeError('STOP: planned downloads would violate 100 GB reserve; inventory existing artifacts before retry')

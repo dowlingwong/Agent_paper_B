@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from r1.exam.campaign import write_json
-from r1.exam.guards import digest_file, paired_instance_bootstrap
+from r1.exam.guards import artifact_label, digest_file, paired_instance_bootstrap
 from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders
 from r1.scripts import llama_server_instance as lsi
 
@@ -62,6 +62,7 @@ def stage_a(runner, selected):
                 finally:
                     if runner.service: runner.stop_service()
                 if result['passed'] or not set(result['failure_classes']).intersection({'offload','fit_estimate'}): break
+        result['source_label']=artifact_label(spec);write_json(path,result)
         runner.state['completed'][key]={'path':str(path),'sha256':digest_file(path)};runner.save();out.append(result)
     write_json(runner.out/'stage_a_table.json',{'label':'ENGINEERING_ONLY','rows':out})
 
@@ -132,7 +133,7 @@ def evidence(runner, phase, selected, interrupt):
         diag={k:sum(r['diagnostics'].get(k,0) for r in root_results) for k in ('trials','evaluated','invalid','duplicates','noops','parse_failed','forecast_queries','forecast_query_failed')}
         d28=all(all(n['pass'] for n in r['d28']['nodes'].values()) for r in root_results)
         manifest={'label':'EXAM','phase':phase,'status':'COMPLETE','candidate':spec['id'],'family':spec['family'],'role':spec['role'],
-                  'rule_sha256':runner.rule_sha,'registry_sha256':digest_file(runner.registry_path),'registry_path':str(runner.out/'registry_snapshot.yaml'),'registry_order':[s['id'] for s in runner.spec_order()].index(spec['id']),
+                  'source_label':artifact_label(spec),'rule_sha256':runner.rule_sha,'registry_sha256':digest_file(runner.registry_path),'registry_path':str(runner.out/'registry_snapshot.yaml'),'registry_order':[s['id'] for s in runner.spec_order()].index(spec['id']),
                   'model_sha256':(spec.get('quant_source') or {}).get('sha256'),'llamacpp_build':cfg['server']['build'] if not spec.get('kind') else None,
                   'purpose':'schema_free_sensitivity' if cfg.get('free_sensitivity') else 'primary','schema_mode':'free' if cfg.get('free_sensitivity') else 'manager_proposal/v1',
                   'thinking_sensitivity_omitted_reason':'Stage A grammar disabled thinking-on' if eligible[spec['id']].get('thinking_disabled_due_grammar') else None,

@@ -23,7 +23,7 @@ from r1.scripts.c3_label_sweep import RunnerWatchdog, stop_tree
 
 REPO=Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG=REPO/'r1/scripts/configs/exam_portal.json'
-EXPECTED_CANDIDATES=frozenset('qwen38_27b qwen36_27b gemma4_31b muse_glimmer_30b olmo31_32b devstral_small2_24b qwen36_35b_a3b gemma4_26b_a4b nemotron35_30b_a3b glm47_flash lfm25_24b_a2b laguna_xs21 ornith10_35b qwen3_coder_30b_a3b gpt_oss_20b qwen35_9b gemma4_12b ornith10_9b ministral3_14b rico03_qwen36_27b qwopus36_27b_v4'.split())
+EXPECTED_CANDIDATES=frozenset('qwen38_27b qwen36_27b gemma4_31b muse_glimmer_30b olmo31_32b devstral_small2_24b qwen36_35b_a3b gemma4_26b_a4b nemotron35_30b_a3b glm47_flash lfm25_24b_a2b laguna_xs21 ornith10_35b qwen3_coder_30b_a3b gpt_oss_20b qwen35_9b gemma4_12b ornith10_9b ministral3_14b rico03_qwen36_27b'.split())
 
 
 class PreparationStop(RuntimeError):
@@ -59,7 +59,7 @@ def read_registry(path):
     all_rows=data['candidates']+data['software_anchors']
     ids=[x['id'] for x in all_rows]
     if len(set(ids))!=len(ids): raise ValueError('duplicate registry id')
-    if {x['id'] for x in all_rows if x['role']=='candidate'}!=EXPECTED_CANDIDATES: raise ValueError('author pool is 21 candidates, no Ornith-31B substitute')
+    if {x['id'] for x in all_rows if x['role']=='candidate'}!=EXPECTED_CANDIDATES: raise ValueError('author pool is 20 candidates, no Ornith-31B or Qwopus-v4 substitute')
     if {x['id'] for x in all_rows if x['role']=='anchor'}!={'random_valid','scripted','qwen25_coder_7b'}: raise ValueError('three anchors required')
     return data
 

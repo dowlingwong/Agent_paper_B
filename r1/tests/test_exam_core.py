@@ -76,7 +76,7 @@ def test_disk_floor_exact_boundary(tmp_path):
 
 def test_registry_pool_exclusion_and_source_policy():
     r=read_registry(Path(__file__).parents[1]/'exam/registry.yaml')
-    assert sum(x['role']=='candidate' for x in r['candidates'])==21
+    assert sum(x['role']=='candidate' for x in r['candidates'])==20
     assert len(r['software_anchors'])==2
     assert not any(x['id']=='ornith10_31b' for x in r['candidates'])
     assert r['phase2_vendor_first']['ornith10_35b']=='ornith-ai/Ornith-1.0-35B-GGUF'
@@ -151,7 +151,7 @@ def test_b1_recomputes_means_modes_and_refuses_forged_registry(tmp_path):
     with pytest.raises(ValueError,match='rule hash'): b1_summary([{**m,'rule_sha256':'0'*64}])
     s=stage_a_summary([{'candidate':'x','passed':True,'prompts':50,'free_parse_successes':40,'schema_parse_successes':49}])
     assert s['rows'][0]['free_parse']['point']==.8
-    b=b2_summary([{'label':'EXAM','phase':'b2','status':'COMPLETE','candidate':'x','final_audits':[{'final_y':v,'metrics':[v]*10,'seeds':list(range(9201,9211))} for v in (.6,.8)],'gpu_hours':1,'mode':'on'}])
+    b=b2_summary([{'label':'EXAM','phase':'b2','status':'COMPLETE','candidate':'x','source_label':'fixture','final_audits':[{'final_y':v,'metrics':[v]*10,'seeds':list(range(9201,9211))} for v in (.6,.8)],'gpu_hours':1,'mode':'on'}])
     assert b['rows'][0]['final_y']==pytest.approx(.7) and b['author_decision_pending']
 
 
@@ -334,3 +334,15 @@ def test_gemma_global_and_local_cache_dimensions():
         assert 'num_global_key_value_heads' in r['config_fields']
     # Equal K/V projection weights do not eliminate the two runtime caches.
     assert expected['gemma4_31b']==1761607680
+
+
+def test_author_unsloth_exception_is_exact_and_labelled():
+    r=read_registry(Path(__file__).parents[1]/'exam/registry.yaml')
+    s=next(s for s in r['candidates'] if s['id']=='qwen3_coder_30b_a3b')
+    assert not quantization_blockers(s)
+    assert s['source_label']=='source exception (unsloth)'
+    for change in ({'id':'another_candidate'}, {'source_label':'ordinary quant'}):
+        bad=copy.deepcopy(s);bad.update(change);assert quantization_blockers(bad)
+    for name in ('UD-Q4_K_M.gguf','Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_M.gguf'):
+        bad=copy.deepcopy(s);bad['quant_source']['file']=name;assert quantization_blockers(bad)
+    assert any(x['id']=='qwopus36_27b_v4' for x in r['excluded'])
