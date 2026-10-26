@@ -616,3 +616,27 @@ def test_seed_controls_initialisation_and_saved_files_are_reproducible(tiny_dirs
     assert ra["files"] == rb["files"]                                       # every sha256 equal, adapter_config too
     cfg = json.loads((tmp_path / "a" / "adapter" / "adapter_config.json").read_text())
     assert cfg["target_modules"] == sorted(cfg["target_modules"])
+
+
+def test_laya_new_heads_read_the_padding_invariant_masked_mean_of_the_encoder(laya_parts):
+    """STOP 4 review #4: the state Laya's action/cumulative heads read is the encoder output mean-pooled over valid
+    tokens, so a prompt's action logit does not change when it is batched with a longer (padding-inducing) one."""
+    cfg, enc, tok = laya_parts
+    torch.manual_seed(0)
+    w = M.build_model("laya", (cfg, enc), tok, head_form="cumulative11")
+    _perturb(w)
+    w.eval()
+    short = prompts(1)[0]
+    long_ = DecisionPrompt(state=short.state + " history: " + "t3 alpha 0.1->0.01 discarded; " * 40,
+                           proposal=short.proposal)
+    with torch.no_grad():
+        alone = w([short])
+        padded = w([short, long_])
+        e = w.encode(short)
+        ids = torch.tensor([e["ids"]])
+        att = torch.ones_like(ids)
+        h = w.core.encoder(input_ids=ids, attention_mask=att).last_hidden_state
+        expect = w.heads["action"](h.mean(1).float()).squeeze(-1)
+    assert torch.allclose(alone["action_logit"], padded["action_logit"][:1], atol=1e-4)
+    assert torch.allclose(alone["belief_logits"], padded["belief_logits"][:1], atol=1e-4)
+    assert torch.allclose(alone["action_logit"], expect, atol=1e-5)

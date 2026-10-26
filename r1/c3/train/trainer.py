@@ -212,11 +212,12 @@ class Trainer:
                 total_loss += float(loss.detach())
             params = [p for g in self.opt.param_groups for p in g["params"]]
             gnorm = float(torch.nn.utils.clip_grad_norm_(params, self.cfg.max_grad_norm))
+            lr_used = self.sched.get_last_lr()[0]       # the lr this step ran at (before the scheduler advances)
             self.opt.step()
             self.sched.step()
             self.step += 1
             self._write({"kind": "step", "step": self.step, "loss": total_loss, "grad_norm": gnorm,
-                         "lr": self.sched.get_last_lr()[0], "step_s": time.perf_counter() - t0})
+                         "lr": lr_used, "step_s": time.perf_counter() - t0})
             last = self.step == self.total_steps
             if self.evaluate is not None and (self.step % self.eval_every == 0 or last):
                 self._write({"kind": "eval", "step": self.step, **self.evaluate(self.model)})

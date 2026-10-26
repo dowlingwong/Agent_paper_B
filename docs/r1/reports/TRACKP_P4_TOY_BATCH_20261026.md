@@ -1,6 +1,6 @@
 # Track P Phase 4 — P.1/P.2 toy batch on every family (26 Oct 2026)
 
-AI-assisted (Claude Code, Track P agent on zhixu portal). **ENGINEERING_ONLY.** **Status: pending independent review (STOP 4).** Authority: `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` Phase 4 ("the same 64-example toy batch trains for 50 steps on every family that passed P.0, both outputs, through the shared loop; loss decreases; save/reload identical"). Branch `trackp-20261026`. Evidence: `trackp_p4_20261026/<base>/{report,manifest}.json`, `toy_metrics.txt`.
+AI-assisted (Claude Code, Track P agent on zhixu portal). **ENGINEERING_ONLY.** **Status: pending independent re-check (STOP 4).** Authority: `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` Phase 4 ("the same 64-example toy batch trains for 50 steps on every family that passed P.0, both outputs, through the shared loop; loss decreases; save/reload identical"). Branch `trackp-20261026`. Evidence: `trackp_p4_20261026/<base>/{report,manifest}.json`, `toy_metrics.txt`.
 
 Procedure (`python r1/scripts/trackp.py toy --base <b>`, under the GPU lease): the same fixed 64 synthetic E0 training examples (offset 100, disjoint from the P.0 toy set) for every family; 50 optimizer steps, batch 8 (≈ 6 passes), the shared `Trainer`, both outputs (belief: RPS + soft CE; action: cost-weighted BCE on u = m), bf16 + gradient checkpointing, lr per spec §4 (2e-5 Kev/Laya, 1e-4 fresh LoRA, 1e-3 new heads; 2 warm-up steps, cosine). **"Loss decreases" is judged on the whole 64-example batch in eval mode before vs after training** (deterministic; total and each output separately), not on single minibatches. Save → reload into a freshly built wrapper (the trained model moved off the card first) → belief and action probabilities compared. StartLux is included: it passed P.0; its rung is pending the author.
 
@@ -17,7 +17,9 @@ Procedure (`python r1/scripts/trackp.py toy --base <b>`, under the GPU lease): t
 | qwen3.5-4b-base | 3.533 → 1.665 | 2.754 → 1.661 | 0.778 → 0.003 | identical | da42298 |
 | startlux-4b | 3.089 → 1.510 | 2.308 → 1.509 | 0.782 → 0.001 | identical | da42298 |
 
-All 8 families: the total loss, the belief loss and the action loss decrease on the fixed batch, and reload is bit-identical for belief and action. Clean trees in every manifest. Losses near 0.001 for the action on 64 examples are memorisation of a toy batch, expected here and meaningless beyond "the output trains". Laya learns slowest (lr 2e-5 on its released head; spec §4). The Qwen control 0.8B action output barely moves in 50 steps (0.746 → 0.710; it reads `<exec>`/`<skip>` token logits, i.e. trains through its new token rows and LoRA, not a fresh head).
+Baselines on the same 64 examples (`p4_baselines_output.json`, script `p4_baselines.py`): constant base-rate belief (the mean label) 2.243; best constant action (logit of the |u|-weighted positive fraction 0.640) 0.737.
+
+All 8 families: the total loss, the belief loss and the action loss decrease on the fixed batch, and reload is bit-identical for belief and action. Against the constant baselines: 6 families end far below both. **Laya's belief (2.406) ends above the constant base-rate belief (2.243)** — it starts at 2.551 and learns slowly at lr 2e-5; its action (0.697) ends only just below the best constant (0.737), but its saved action head does rank examples (|u|-weighted AUC 0.785, correlation with u 0.44, CPU). The Qwen control 0.8B's action (0.710) also ends only just below 0.737. Clean trees in every manifest. Losses near 0.001 for the action on 64 examples are memorisation of a toy batch, expected here and meaningless beyond "the output trains". Laya learns slowest (lr 2e-5 on its released head; spec §4). The Qwen control 0.8B run is unstable rather than slow: grad norms 50–170 in the first half, minibatch loss spiking to 6.3 (the 4B control with the same `<exec>`/`<skip>` token readout reaches 0.003); the lr for the control's new token rows (1e-3) and its fresh LoRA (1e-4) should be settled before P.4 (author / first SFT run).
 
 ## Attempts
 
@@ -28,8 +30,18 @@ All 8 families: the total loss, the belief loss and the action loss decrease on 
 
 ## Deviations / items
 
-1. Laya's new heads read the mean-pooled encoder output, not the [CLS] state after its head layers (spec: "Linear (hidden → 1) on the question/decision state"). Laya's native 12-option readout (its own scorer on the marker states) is unchanged (parity test with Laya's forward passes).
+1. Laya's new heads (action and, for the cumulative-11 head form, the cumulative head — relevant to E0's head fit and E7) read the mean-pooled encoder output, not the [CLS] state after its head layers (spec §2.2: "Linear (hidden → 1) on the question/decision state"). Measurement (`laya_readout_states_output.txt`, script `laya_readout_states.py`, 16 prompts, CPU): between-prompt variation after LayerNorm — post-head [CLS] 1.2 %, post-head mean 1.6 %, post-head marker mean 1.9 %, encoder [CLS] 8.6 %, encoder mean 8.7 %. Laya's native 12-option readout is unchanged (parity test with Laya's forward passes); the pooled state is the padding-invariant masked mean (test `test_laya_new_heads_read_the_padding_invariant_masked_mean_of_the_encoder`). Author to confirm (Q1).
 2. As in P.0, multi-step training on the GPU is not bit-reproducible across runs (non-deterministic CUDA backward kernels); initialisation and pre-training files are.
+
+## Questions for the author
+
+1. Laya's new heads on the mean-pooled encoder output (deviation 1).
+2. Learning rates for the Qwen control's new token rows / fresh LoRA before P.4 (instability of the 0.8B run).
+
+## Notes
+
+- The trainer logged the scheduler's lr *after* each step (the next step's lr); fixed — it now logs the lr the step ran at. Step 1 ran at half lr (2 warm-up steps).
+- `laya.attempt1/report.json` names the checkpoint under the old directory name (renamed to `laya.attempt1/` after the run).
 
 ## GPU use
 
