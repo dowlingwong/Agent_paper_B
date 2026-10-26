@@ -298,3 +298,20 @@ def test_environment_check_refuses_other_torch_or_code_commits():
     with pytest.raises(R.TrackPStop, match="dirty=True"):
         R.check_environment(cfg, {**good, "packages": {"kev": dirty}})
     assert set(R.environment_record()) >= {"torch", "transformers", "peft", "packages"}
+
+
+def test_git_commit_lists_dirty_files_with_full_names(tmp_path):
+    import subprocess
+    run = lambda *a: subprocess.run(["git", "-C", str(tmp_path), *a], check=True, capture_output=True)  # noqa: E731
+    run("init", "-q")
+    run("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "0")
+    for f in ("abc.txt", "def.txt"):
+        (tmp_path / f).write_text("1")
+    run("add", "abc.txt", "def.txt")
+    run("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "1")
+    for f in ("abc.txt", "def.txt"):
+        (tmp_path / f).write_text("2")          # unstaged changes: porcelain lines start with a space
+    rec = R.git_commit(tmp_path)
+    assert rec["dirty"] and rec["dirty_files"] == ["abc.txt", "def.txt"]
+    run("checkout", "-q", "--", ".")
+    assert R.git_commit(tmp_path)["dirty_files"] == [] and not R.git_commit(tmp_path)["dirty"]

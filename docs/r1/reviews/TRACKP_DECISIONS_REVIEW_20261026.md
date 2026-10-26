@@ -257,3 +257,21 @@ R2-3. **minor (nits).**
 
 Verdict: changes required — every finding of the decisions review is now closed, including finding 2. Three minor
 findings on the DRYRUN report (R2-1 to R2-3) remain.
+
+## Final re-check (`a2859b3..b4f7107`)
+
+- **R2-1: the report is resolved, but the new code has a bug (minor).** The report and STATUS now state that the
+  manifests are dirty, give the cause, and show that `git diff 8e13e77 a2859b3 -- r1` is empty; I confirmed that diff is
+  empty. But the new `dirty_files` in `run.git_commit` (`r1/c3/train/run.py:199-200`) is computed from `g(...)`, which
+  `.strip()`s the whole `git status --porcelain` output. That removes the leading space of the first line's status
+  field, so `ln[3:]` cuts the first character off the first file name. On a throwaway repo with two modified files,
+  `abc.txt` and `def.txt`, it returns `['bc.txt', 'def.txt']`. Fix: parse the raw output without stripping (e.g.
+  `subprocess.run([... "status", "--porcelain", "-z", "--untracked-files=no"])`, split on NUL), and add a test with an
+  unstaged change.
+- **R2-2: resolved.** Item 1 now says the head fit learned no width within 2,000 steps, had not converged, and that this
+  does not show the frozen features carry no width information. Item 3 covers the head fit, question 3 asks about its
+  budget, and STATUS is reworded to match.
+- **R2-3: resolved.** The report now says 2,714 / 286 and 4.5e-5.
+
+Verdict: changes required — one minor bug remains (`dirty_files` drops the first character of the first file name).
+Everything else in the decisions review, the re-checks and the DRYRUN report is closed.

@@ -197,7 +197,9 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
 def git_commit(repo: Path) -> dict:
     def g(*a):
         return subprocess.run(["git", "-C", str(repo), *a], capture_output=True, text=True).stdout.strip()
-    dirty = [ln[3:] for ln in g("status", "--porcelain", "--untracked-files=no").splitlines() if ln.strip()]
+    raw = subprocess.run(["git", "-C", str(repo), "status", "--porcelain", "-z", "--untracked-files=no"],
+                         capture_output=True, text=True).stdout   # unstripped: "XY path" entries, NUL-separated
+    dirty = [e[3:] for e in raw.split("\0") if len(e) > 3]
     return {"path": str(repo), "commit": g("rev-parse", "HEAD"), "branch": g("rev-parse", "--abbrev-ref", "HEAD"),
             "dirty": bool(dirty), "dirty_files": dirty}
 
