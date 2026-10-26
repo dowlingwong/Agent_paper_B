@@ -259,3 +259,48 @@ def test_no_audited_increments_retains_candidate_diagnostics(tmp_path):
        'stage_a_pass':True,'d28_pass':False,'audited_proposals':[],'diagnostics':{'invalid':20}}
     r=b1_summary([m]);assert r['finalists']==[]
     assert r['rows'][0]['mu_hat'] is None and r['rows'][0]['diagnostics']['invalid']==20
+
+
+def test_evidence_refuses_changed_stage_a_and_b1_inputs(tmp_path):
+    from types import SimpleNamespace
+    from r1.scripts.exam_runner import evidence
+    from r1.exam.runtime import PreparationStop
+    from r1.exam.guards import digest_file
+    source=tmp_path/'stage.json';source.write_text('{}')
+    cfg={'stage_a_table':str(source),'stage_a_table_sha256':digest_file(source)}
+    runner=SimpleNamespace(cfg=cfg)
+    source.write_text('{"changed": true}')
+    with pytest.raises(PreparationStop,match='Stage A table digest'): evidence(runner,'b1',None,False)
+    cfg['stage_a_table_sha256']=digest_file(source)
+    cfg.update(b1_analysis=str(source),b1_analysis_sha256='0'*64)
+    with pytest.raises(PreparationStop,match='B1 analysis digest'): evidence(runner,'b2',None,False)
+
+
+def test_b2_respects_stage_a_thinking_disable(tmp_path):
+    from r1.scripts.exam_runner import evidence
+    from r1.exam.guards import digest_file
+    from r1.exam.campaign import write_json
+    from r1.exam.runtime import PreparationStop
+    _,sha=load_rule();stages=tmp_path/'stage.json';screen=tmp_path/'b1.json';registry=tmp_path/'registry.json'
+    registry.write_text('{}')
+    write_json(stages,{'rows':[{'candidate':'x','passed':True,'thinking_disabled_due_grammar':True}]})
+    write_json(screen,{'rule_sha256':sha,'finalists':['x'],'rows':[{'candidate':'x','b2_thinking_mode':'off'}]})
+    spec={'id':'x','role':'candidate','family':'f','thinking_policy':{'mode':'off','switchable':True}}
+    class Fake:
+        def __init__(self):
+            self.cfg={'stage_a_table':str(stages),'stage_a_table_sha256':digest_file(stages),'b1_analysis':str(screen),
+                      'b1_analysis_sha256':digest_file(screen),'nodes':['digits_mlp'],'b2_instances_per_node':1,'instance_seeds':[9001],
+                      'server':{'build':'fake'},'dryrun':True}
+            self.state={'completed':{}};self.rule_sha=sha;self.calls=[];self.service=None;self.out=tmp_path;self.registry_path=registry
+        def spec_order(self,*args): return [copy.deepcopy(spec)]
+        def server(self,spec,mode,ctx): self.calls.append(mode)
+        def root(self,spec,phase,node,seed,mode,**kwargs):
+            return {'mode':mode,'node':node,'instance_seed':seed,'audited_proposals':[],
+                    'diagnostics':dict.fromkeys(('trials','evaluated','invalid','duplicates','noops','parse_failed'),0),
+                    'd28':{'nodes':{'digits_mlp':{'pass':True}}},'final_audits':[]}
+    runner=Fake();evidence(runner,'b2',None,False)
+    assert runner.calls==['off']
+    data=json.loads(screen.read_text());data['rows'][0]['b2_thinking_mode']='on';write_json(screen,data)
+    runner=Fake()
+    with pytest.raises(PreparationStop,match='disabled by Stage A'): evidence(runner,'b2',None,False)
+    assert runner.calls==[]
