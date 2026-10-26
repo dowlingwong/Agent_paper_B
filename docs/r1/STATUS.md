@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — local test-scope inventory independently reviewed (AI-assisted; static only)
+
+- The corrected [non-exhaustive static audit](reports/LOCAL_TEST_SELECTION_AUDIT_20261027.md) is accepted for its limited inventory purpose: [review](reviews/LOCAL_TEST_SELECTION_REVIEW_20261027.md), initial inventory `c0ffd1f`, correction `dfbfa96`. It identifies further node-training and LightGBM paths to exclude or inspect and a conservative matched-allowlist procedure.
+- No actual allowlist, compliant broad run or full-suite baseline comparison has been certified. The L0 incident remains documented and L4 acceptance criteria remain unchanged.
+
 ## 27 October 2026 — local L5 feasibility proposal independently reviewed (AI-assisted; proposal only)
 
 - Independent reviewer accepted the corrected [Track P feasibility proposal](proposals/TRACKP_FEASIBILITY_20261027.md): [review](reviews/LOCAL_L5_REVIEW_20261027.md); proposal `b070022`, corrections `96b0169`. Its pilot-based bootstrap is an illustrative proxy, not a determination of detectable finalist differences; stage costs are sourced projections or explicitly unknown.

@@ -1,8 +1,8 @@
 # Independent local test selection review — 27 October 2026
 
-AI-assisted, static inspection only. **Verdict: reject the selection audit for revision; its matched-comparison framework is sound as a proposal, but the identified exclusion list misses two directly relevant harness tests.** This is not a safe-suite certification, execution authorization, or a review of scientific readiness. No test, collection, inference, training, model script, SSH, or network operation was performed for this review.
+AI-assisted, static inspection only. **Verdict after re-check of `dfbfa96`: accepted for its limited purpose as a non-exhaustive selection audit and comparison proposal.** The original finding below is resolved. This is not a safe-suite certification, execution authorization, full-suite acceptance, or a review of scientific readiness. No test, collection, inference, training, model script, SSH, or network operation was performed for this review or re-check.
 
-## Finding
+## Original finding
 
 The audit lists real `lr_synthetic` campaign attempts and proposes excluding them (`docs/r1/reports/LOCAL_TEST_SELECTION_AUDIT_20261027.md:18-19,24`), but omits these two harness selectors at pinned `897d83c8efa364ec2fdd37288241cc42e01d7274`:
 
@@ -18,3 +18,7 @@ The audit correctly distinguishes the confirmed eight in-process OpenML fits fro
 The comparison proposal requires an individually inspected complete-node-ID allowlist, both-revision transitive and fixture inspection, matched identities and outcome categories, and an empty fallback when inspection is incomplete (audit `:32-36`). It expressly says restricted matched results cannot establish original full-suite acceptance or historical scope compliance (`:37`). That is the correct limitation; a passing intersection must not be represented as the original acceptance criterion. No actual allowlist, selection safety, runtime bound, offline enforcement, or result has been verified here. Further indirect paths may exist, so adding the two omissions alone does not make the exclusion table exhaustive or authorize a run.
 
 The audit identifies paper source at `94b7396a05265dde7c45a683481f4b437ddc783d` (`:3`); the shared worktree HEAD had advanced during this review. The harness checkout resolved to the stated pin and was clean when inspected. Any future selection must recheck the exact paper revisions and working-tree contents as the audit itself requires; this review does not attest to an unchanged paper tree or certify transitive behavior.
+
+## Re-check of `dfbfa96`
+
+**Accepted within the limits above.** The correction adds both exact `TestControllerLlmCharging` selectors to the exclusion table and describes their shared real-worker path and gradient-descent entry point (`docs/r1/reports/LOCAL_TEST_SELECTION_AUDIT_20261027.md:19`). It also states that the third class method is not excluded by this finding alone. The corrected disposition matches the static source evidence cited in the original finding and does not claim historical execution reached training. The audit continues to identify its table as non-exhaustive and requires an inspected allowlist with an empty fallback; it expressly disclaims full-suite acceptance (`:31,35-38`). No allowlist or run has been reviewed or approved by this acceptance.
