@@ -66,6 +66,7 @@ BIN_TOKENS = tuple(f"<b{k}>" for k in range(N_BINS))
 EXEC_TOKEN, SKIP_TOKEN = "<exec>", "<skip>"
 MANIFEST = "manifest.json"
 EPS = 1e-6
+LOG_EPS = 1e-12
 
 
 class IntegrityError(RuntimeError):
@@ -100,12 +101,17 @@ def lora_config(targets, **extra):
 # ---------------------------------------------------------------- belief head forms (spec §2.3)
 
 def cumulative_probs(raw: torch.Tensor) -> torch.Tensor:
-    """[N, 11] raw outputs -> [N, 12] probabilities. raw[:, 0]: logit of the no-op bin (Bernoulli); raw[:, 1:]: logits
-    of P(z > e_k) over the finite edges in ascending order, made monotone (non-increasing in k) by a cumulative max
-    from the right, then differenced: bin 1 = 1 - S_1, bin k+1 = S_k - S_{k+1}, bin 11 = S_last."""
+    """[N, 11] raw outputs -> [N, 12] probabilities. raw[:, 0]: logit of the no-op bin (Bernoulli). The 10 threshold
+    sigmoids S_k = P(z > e_k) over the finite edges (ascending) are monotone *by construction*: logit S_1 = raw[:, 1],
+    logit S_{k+1} = logit S_k - softplus(raw[:, k+1]), so every bin keeps positive mass and a gradient (a hard
+    cumulative max over free sigmoids leaves bins at exactly zero with no gradient to reopen them — STOP 1 review).
+    The spec's cumulative max (non-increasing from the left) is kept as a guard; it is the identity here.
+    Bins: 1 = 1 - S_1, k+1 = S_k - S_{k+1}, 11 = S_last."""
     pi = torch.sigmoid(raw[:, 0])
-    s = torch.sigmoid(raw[:, 1:])
-    s = torch.flip(torch.cummax(torch.flip(s, [1]), dim=1).values, [1])
+    steps = torch.nn.functional.softplus(raw[:, 2:])
+    logit_s = torch.cat([raw[:, 1:2], raw[:, 1:2] - torch.cumsum(steps, dim=1)], dim=1)
+    s = torch.sigmoid(logit_s)
+    s = torch.flip(torch.cummax(torch.flip(s, [1]), dim=1).values, [1])   # guard; identity for this parametrisation
     ones, zeros = torch.ones_like(s[:, :1]), torch.zeros_like(s[:, :1])
     cdf_gt = torch.cat([ones, s, zeros], dim=1)        # P(z > e) at e = -inf, e_1..e_10, +inf
     q = cdf_gt[:, :-1] - cdf_gt[:, 1:]                  # bins 1..11
@@ -118,7 +124,7 @@ def belief_logits_from(form: str, native: torch.Tensor | None, cum: nn.Module | 
             raise ValueError("softmax12 needs the family's 12 native option logits")
         return native.float()
     p = cumulative_probs(cum(h.float()))
-    return torch.log(p.clamp_min(EPS))
+    return torch.log(p + LOG_EPS)   # softmax(log(p + eps)) = (p + eps) / sum: no clamp, the gradient never vanishes
 
 
 # ---------------------------------------------------------------- shared base

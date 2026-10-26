@@ -126,15 +126,41 @@ def test_cumulative_head_is_a_monotone_distribution():
     torch.manual_seed(0)
     raw = torch.randn(64, M.N_CUM) * 3
     p = M.cumulative_probs(raw)
-    assert p.shape == (64, N_BINS) and (p >= 0).all()
+    assert p.shape == (64, N_BINS) and (p > 0).all()          # every bin keeps mass (monotone by construction)
     assert torch.allclose(p.sum(-1), torch.ones(64), atol=1e-6)
     assert torch.allclose(p[:, 0], torch.sigmoid(raw[:, 0]))
-    # monotone thresholds are passed through unchanged: P(z > e_k) differenced
+    # the parametrisation reproduces any strictly decreasing threshold sequence P(z > e_k), differenced into bins
     s = torch.sigmoid(torch.linspace(3, -3, M.N_EDGES))[None]
-    raw2 = torch.cat([torch.full((1, 1), -50.0), torch.logit(s)], 1)
+    l = torch.logit(s)
+    inv_softplus = lambda y: y + torch.log(-torch.expm1(-y))  # noqa: E731
+    raw2 = torch.cat([torch.full((1, 1), -50.0), l[:, :1], inv_softplus(l[:, :-1] - l[:, 1:])], 1)
     q = M.cumulative_probs(raw2)[0, 1:]
     expect = torch.cat([1 - s[0, :1], s[0, :-1] - s[0, 1:], s[0, -1:]])
     assert torch.allclose(q, expect, atol=1e-6)
+
+
+@pytest.mark.parametrize("form", M.HEAD_FORMS)
+def test_head_forms_can_learn_from_free_logits(form):
+    """Learnability (STOP 1 review): free per-row raw outputs fitted to one-bin-heavy soft targets reach the target;
+    no bin carrying label mass stays at zero."""
+    torch.manual_seed(0)
+    n = 64
+    y = torch.full((n, N_BINS), 0.01)
+    y[torch.arange(n), 1 + torch.arange(n) % 11] += 1 - 0.01 * N_BINS
+    raw = torch.zeros(n, N_BINS if form == "softmax12" else M.N_CUM).normal_(0, 2).requires_grad_(True)
+    opt = torch.optim.Adam([raw], lr=0.05)
+    lin = torch.nn.Identity()
+    for _ in range(400):
+        lg = raw if form == "softmax12" else M.belief_logits_from(form, None, lin, raw)
+        loss = -(y * torch.log_softmax(lg, -1)).sum(-1).mean()
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+    lg = raw if form == "softmax12" else M.belief_logits_from(form, None, lin, raw)
+    p = torch.softmax(lg, -1).detach()
+    entropy = -(y * torch.log(y)).sum(-1).mean()
+    assert float(loss) < float(entropy) + 0.05
+    assert (p[y > 0.05] > 0.5).all()
 
 
 # ---------------------------------------------------------------- Kev
@@ -444,3 +470,30 @@ def test_gradient_checkpointing_trains(family, tiny_dirs, qwen_tok):
     out = w(prompts(2))
     (out["belief_logits"].logsumexp(-1).sum() + out["action_logit"].sum()).backward()
     assert any(p.grad is not None and float(p.grad.abs().sum()) > 0 for n, p in w.named_parameters() if "lora_B" in n)
+
+
+@pytest.mark.parametrize("form", M.HEAD_FORMS)
+@pytest.mark.parametrize("family", ["kev", "laya", "startlux", "qwen_control"])
+def test_every_family_and_head_form_learns_a_fixed_batch(family, form, tmp_path):
+    """STOP 1 review: a fixed-batch overfit from random init reduces the soft CE, and every bin keeps mass."""
+    from r1.c3.train import losses as L
+    from r1.c3.train import spike as S
+    from r1.c3.train import tiny
+    try:
+        m = tiny.build_tiny(family, tmp_path, head_form=form)
+    except OSError:
+        pytest.skip("pool tokenizer not in the local HF cache")
+    rows = S.toy_rows(4)
+    y = torch.stack([r["y"] for r in rows])
+    opt = torch.optim.Adam(list(m.trainable_parameters()), lr=1e-2)
+    m.train()
+    losses = []
+    for _ in range(40):
+        p = L.softmax_probs(m([r["prompt"] for r in rows])["belief_logits"])
+        loss = L.soft_ce(p, y).mean()
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+        losses.append(float(loss.detach()))
+    assert losses[-1] < losses[0] - 0.05 and losses[-1] < 3.0, losses[::10]
+    assert (p.detach() > 0).all()
