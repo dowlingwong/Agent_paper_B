@@ -66,3 +66,8 @@ def test_shared_cancellation_terminates_active_owned_child(tmp_path,monkeypatch)
     with pytest.raises(InterruptedError,match='cancelled'):
         hub.receive_one(s,tmp_path/'reports',check_space=lambda p:{},cancel=cancel)
     assert signals==[(123456,hub.signal.SIGTERM)]
+
+
+@pytest.mark.parametrize('workers',[0,9,True])
+def test_transport_concurrency_is_bounded(tmp_path,workers):
+    with pytest.raises(ValueError,match='1..8'):hub.run_downloads([],tmp_path,workers=workers)

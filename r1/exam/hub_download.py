@@ -66,7 +66,8 @@ def receive_one(spec, out, *, check_space=space_check, cancel=None):
     return result
 
 
-def run_downloads(rows, out, *, check_space=space_check):
+def run_downloads(rows, out, *, check_space=space_check, workers=2):
+    if not isinstance(workers,int) or isinstance(workers,bool) or not 1<=workers<=8: raise ValueError('download workers must be 1..8')
     stop=threading.Event();errors=[]
     def run(spec):
         if stop.is_set(): raise InterruptedError('STOP: queued artifact cancelled')
@@ -78,7 +79,7 @@ def run_downloads(rows, out, *, check_space=space_check):
     prior=None
     if threading.current_thread() is threading.main_thread():
         prior=signal.signal(signal.SIGTERM,interrupt)
-    pool=ThreadPoolExecutor(max_workers=2)
+    pool=ThreadPoolExecutor(max_workers=workers)
     try: return list(pool.map(run,rows))
     except BaseException:
         stop.set()
@@ -92,7 +93,7 @@ def run_downloads(rows, out, *, check_space=space_check):
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--registry');p.add_argument('--out');p.add_argument('--worker')
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--registry');p.add_argument('--out');p.add_argument('--worker');p.add_argument('--workers',type=int,default=2)
     a=p.parse_args(argv)
     if platform.node().split('.')[0]!='TASL-2': raise RuntimeError('portal only')
     if a.worker:
@@ -105,7 +106,7 @@ def main(argv=None):
         return
     if not a.registry or not a.out: p.error('--registry and --out required')
     reg=json.loads(Path(a.registry).read_text());rows=reg['candidates']+reg.get('sensitivities',[])
-    # HF's Xet transport uses concurrent byte ranges; two artifacts at a time.
-    run_downloads(rows,a.out)
+    # HF's Xet transport uses concurrent byte ranges and bounded artifact concurrency.
+    run_downloads(rows,a.out,workers=a.workers)
 
 if __name__=='__main__': main()
