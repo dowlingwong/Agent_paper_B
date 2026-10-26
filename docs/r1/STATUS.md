@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — author rulings and Mac test-scope clarification (AI-assisted)
+
+- Author rulings recorded in PLAN §10: noise-aware DAC headline; canonical bins and RPS; limited hard-label ablations; R-A0/R-A2 and C4 endpoint decisions; H.8 execute/skip amendment with legacy version; focused scope, internal freezes, Track P and Track G roles, theory correction proposals, and a post-sweep/B.2 harness pin.
+- The author superseded the narrower test ruling: existing CPU tests, including sklearn fits and node subprocesses, are permitted subject to the stated exclusions. The [incident record](reports/LOCAL_TEST_SCOPE_INCIDENT_20261027.md) is closed **within scope after clarification**; previous observations and unknown subprocess outcomes remain intact. Re-run baselines and comparisons in a corrected subprocess environment; test outputs are not evidence.
+- The pinned-harness read-only trace has identified a confirmed resumed E1/skip `repeated_bad_count` stamping defect; the trace and independent review are in progress. No pinned harness change is authorized before sweep 1 and B.2.
+
 ## 27 October 2026 — local test-scope inventory independently reviewed (AI-assisted; static only)
 
 - The corrected [non-exhaustive static audit](reports/LOCAL_TEST_SELECTION_AUDIT_20261027.md) is accepted for its limited inventory purpose: [review](reviews/LOCAL_TEST_SELECTION_REVIEW_20261027.md), initial inventory `c0ffd1f`, correction `dfbfa96`. It identifies further node-training and LightGBM paths to exclude or inspect and a conservative matched-allowlist procedure.

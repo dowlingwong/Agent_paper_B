@@ -1,5 +1,7 @@
 # Local test-scope incident — 26–27 October 2026
 
+
+**Author disposition, 27 October:** within scope after clarification. The author subsequently permitted existing CPU repository tests including synthetic/cached sklearn fits and node subprocesses. This disposition does not establish unknown subprocess outcomes or override the remaining exclusions (LLM inference, real-weight downloads, GPU/MPS, evidence or label runs, remote hosts). The historical review and observations below are retained.
 AI-assisted operational record. The author allowed CPU unit tests on tiny random-weight or `hf-internal-testing` models, prohibited real Track P base weights, and asked for both repository suites. The earlier general instruction prohibited model training except the stated test exception. The operator and two Track G subagents did not fully identify all existing suite tests that fit node models before running them. No scientific outcome or evidence run is claimed from these tests.
 
 ## Confirmed synthetic-data fits

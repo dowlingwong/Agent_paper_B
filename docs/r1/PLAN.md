@@ -17,7 +17,7 @@
 
 ## 1. Decisions adopted on 9 October 2026 (author)
 
-> **Historical section.** Later dated rows in §10 control: R1-VENUE-3 changes the venue to ICML 2027; R1-C3 and R1-C3-POST update the C3 route; the C3 gate governs online deployment. R1-ROUTE's headline framing remains in force pending an author decision; adopting R1-DAC-INTERFACE does not itself decide the headline.
+> **Historical section.** Later dated rows in §10 control: R1-VENUE-3 changes the venue to ICML 2027; R1-C3 and R1-C3-POST update the C3 route; the C3 gate governs online deployment. R1-ROUTE's earlier headline framing is superseded by R1-ROUTE-DAC (27 Oct); R1-DAC-INTERFACE remains the interface decision.
 
 | ID | Decision |
 |---|---|
@@ -512,6 +512,23 @@ The earlier R1-EXAM-RUNBOOK wording that protocol adoption is pending is superse
 | R1-EXAM-ORNITH (26 Oct, STOP 0) | **Remove Ornith-1.0-31B from the pool, with no substitute:** not publicly released (author checked 26 Oct: `ornith-ai`, `deepreinforce-ai` and the official collection list only 9B, 35B, 397B). Effective pool: **21 candidates and 3 anchors**, plus the declared OLMo Think sensitivity. The 35B candidate maps to `ornith-ai/Ornith-1.0-35B` (35B-A3B, MIT). In Phase 2 check vendor `ornith-ai/Ornith-1.0-35B-GGUF` for Q4_K_M first, as required by R1-QUANT-SOURCE. |
 | R1-EXAM-TRANSFER (26 Oct, STOP 0) | **No GitHub credentials on portal.** Push code from the Mac over SSH to bare repositories under `/home/dowling/exam-x/work/`, then check out from those repositories into the approved work location. Keep bare repositories (e.g. `work/remotes/*.git`) separate from working checkouts under that same approved work directory. Never push protected branches to GitHub or transfer credentials. |
 | R1-EXAM-USER-RUNTIME (26 Oct, STOP 0) | **Author permits installation of uv and user-level Python >=3.11 under `/home/dowling`**, no sudo and no changes to system Python. Record installed paths/versions. STOP 0 disk/licence/identity decisions are resolved by these rows; proceed with Phase 1 and its independent STOP 1 review. Later phase and evidence authorisation gates remain in force. |
+
+
+| R1-LOCAL-TEST-SCOPE (27 Oct) | Author supersedes the narrower Mac test-scope ruling: existing repository tests may run on Mac CPU, including sklearn fits on synthetic or cached data and node subprocesses. Excluded: LLM inference, downloading real model weights, GPU/MPS, runs producing evidence or labels, and remote hosts. Test outputs are test outcomes only. Close the recorded incident as within scope after clarification, preserving observations and uncertainty. Fix subprocess NumPy environment and complete L0, L4.4 and L4.5 comparisons. |
+| R1-ROUTE-DAC (27 Oct; R1) | Paper B headline is **noise-aware DAC**, superseding R1-ROUTE's related-work-only wording. Feedback, decision independence and DAgger are hypotheses until measured (R9). |
+| R1-BIN-EDGES (27 Oct; R2) | Canonical bin edges are those in C3_DESIGN and labels.py: −∞, −3, −2, −1, −0.5, −0.15, 0.15, 0.5, 1, 2, 3, +∞. Correct the Track P specification default list accordingly. |
+| R1-HARD-LABEL-ABLATION (27 Oct; R3) | Synthetic E0 hard-label contrast is allowed. One real-label hard ablation is allowed in the appendix only; it is never a candidate. This is a narrow exception to R1-C3-POST. |
+| R1-RA0-RULE (27 Oct; R4) | R-A0 uses moments-based `rules.decide`; V(p) is used only in R-A3. |
+| R1-RPS-CANONICAL (27 Oct; R5) | The implemented RPS, ½[Brier₀ + (1−y₀)·mean], in [0,1], is canonical; align the Track P specification. |
+| R1-RA2-MONITOR (27 Oct; R6) | Keep R-A2 as a monitored ablation with existing rollback limits. |
+| R1-C4-ENDPOINT (27 Oct; R7) | The partial diagnostic remains descriptive. The prospective C4 endpoint is the audited increment over each branch's incumbent. |
+| R1-H8-AMENDMENT (27 Oct; R8) | Approved: `OfflineBanditEnv` action is execute/skip; observation carries the 12-bin belief; reward is u. Preserve the old bin-action environment under a version flag. Local agent may edit `r1/c3/env.py` and `control.py` for `row["prompt"]`; `serve.py` or `prior_model.py` only if needed; never `r1/c3/train/`. Use fixture-only CPU tests, preserve old behavior elsewhere, obtain independent review; coordinator merges and Track P picks up via main. |
+| R1-FOCUSED-SCOPE (27 Oct) | Focus on C1–C3. Defer MLGym unless a container is available by 10 Nov; defer B.6 and make second-manager generalisation a deployment check with the Track X pick. Move C4 A/B to appendix or later. R-B is conditional on B.7 passing and time allowing. |
+| R1-INTERNAL-FREEZES (27 Oct) | Internal freezes: labels 3 Nov, B.7 26 Nov, D.3 complete 20 Dec, manuscript 10 Jan. These are author-set internal targets, not official conference deadlines. |
+| R1-TRACKP-FOCUS (27 Oct) | Essential Track P: P.3, A5, R-A0, R-A1. Keep E7, R-A2 and R-A3. R-B remains conditional. |
+| R1-TRACKG-ROLE (27 Oct) | G.3 on Ada; G.4 role is evaluation/transfer only. For test-scored tasks, select on validation only. |
+| R1-THEORY-REPAIR-PROPOSAL (27 Oct) | Draft corrected T2 Propositions 1, 2, 5 and T4 Propositions 8, 10(a) as proposals: interventional DI includes information revealed by execution, or claims are restricted to the one-step/Lagrangian index. Do not edit claims in theory files; author decides. |
+| R1-HARNESS-NEXT-PIN (27 Oct) | Harness fixes integrate after sweep 1 and B.2 as a new pin. Now perform a read-only trace of `repeated_bad_count` stamping on resumed E1/skip paths at 897d83c; report a confirmed defect immediately. |
 
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
