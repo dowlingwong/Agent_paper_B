@@ -13,8 +13,8 @@
     "base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
     "family": "qwen_control"
   },
-  "config_sha256": "f9b7354f38b4cdee914e8695f6546ae7384d4472505461d21dbfa5b784dccbfa",
-  "created_utc": "2026-10-26T05:38:42Z",
+  "config_sha256": "39931e2ad8ede8772f4371264d543b13886e86ddfa660175750151a4f6f8af88",
+  "created_utc": "2026-10-26T06:14:16Z",
   "data_manifest_sha256": "87642343eedb639c353bfc750a91d3313e17720da14762606dbf99278c610bac",
   "evidence_label": "ENGINEERING_ONLY",
   "git": {
@@ -26,7 +26,7 @@
     },
     "paper": {
       "branch": "trackp-20261026",
-      "commit": "c04a2373bdf5c3f5d9c76144632a2d94285f9728",
+      "commit": "fcc7d7dd95644e831fc1fcba325426429dfce0e9",
       "dirty": false,
       "path": "/home/dowling/r1_trackp/Agent_paper_B"
     }
@@ -35,21 +35,21 @@
     {
       "event": "start",
       "job": "trackp spike qwen3.5-4b-base",
-      "pid": 3013334,
-      "utc": "2026-10-26T05:37:32Z"
+      "pid": 3948224,
+      "utc": "2026-10-26T06:12:54Z"
     },
     {
       "event": "end",
       "job": "trackp spike qwen3.5-4b-base",
-      "pid": 3013334,
-      "utc": "2026-10-26T05:38:42Z"
+      "pid": 3948224,
+      "utc": "2026-10-26T06:14:16Z"
     }
   ],
   "head_form": "softmax12",
   "model_files_sha256": {
     "adapter/README.md": "d1502e5cd5c5e0ac18f6f6f3180abad275ec3793470213c4c1f0760b0c6dbe17",
-    "adapter/adapter_config.json": "cd48e20a30b4a52cd668d59ab238ddabe4c3f5751a5c785aaf3a20b776f50eab",
-    "adapter/adapter_model.safetensors": "4ab5e77b45a466a53c75ce1b3cbc898f7bf9b83059b63381eb0617bdbd9ef409",
+    "adapter/adapter_config.json": "3b31604a0526a424cf37771cc390a40150b2fd62f6a2c8b3aa2b83acceb37338",
+    "adapter/adapter_model.safetensors": "d68886c5aa8ee53ee20e64504c7ecccb98ac569c7dd79b947d3bba08cf76b2cb",
     "heads.safetensors": "9bbcbf73561f6bc5d0a17ea6a2081feed2d1304e87602d8c502d9a5c4bd85576"
   },
   "schema": "trackp_run_manifest/v1",

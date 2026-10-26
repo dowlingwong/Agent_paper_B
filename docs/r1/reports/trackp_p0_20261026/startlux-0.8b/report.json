@@ -9,14 +9,15 @@
   "engineering": {
     "batch_size": 8,
     "gradient_checkpointing": true,
+    "input_tokens": 1047,
     "oom": false,
     "peak_vram_mib": 3629.28857421875,
     "probe_tokens": 1024,
-    "step_time_s": 0.9325658848974854
+    "step_time_s": 0.9338349860627204
   },
   "family": "startlux",
   "forward_one": {
-    "action": 0.6471099853515625,
+    "action": 0.6075118184089661,
     "belief_shape": [
       1,
       12
@@ -37,17 +38,17 @@
   "reload_max_diff": 0.0,
   "saved_sha256": {
     "adapter/README.md": "0c5139dc0868401846e9c06acc60cf47d9b1cf0f04542e02a8dddf56d7d6b098",
-    "adapter/adapter_config.json": "d7e24098cdc57e3254bdb891aed815a00c5b9f77e4a3993bbe525a085c6cd86d",
-    "adapter/adapter_model.safetensors": "3543c569edb8774120eae9337e70fc00b4b8d2c6eb16793cb8163fc00b8895e1",
-    "heads.safetensors": "4b2f2099cab2c5b65d4ce60b35bb86bd4b5441dbfa7f807f8f7c9d6e0c815272"
+    "adapter/adapter_config.json": "97dd988882f6eaf6bee4b20e5f6da544a2eea7650fe0fbd443f97f0da97d7bee",
+    "adapter/adapter_model.safetensors": "7506dd715e253a06110d37c5388739d370e3155c90caad4456a87c38da42b41d",
+    "heads.safetensors": "c2e027f7598cf13f64a846f41f8b2c6c1a28d4abd562123a9965c8b6629be0f6"
   },
   "toy_sft": {
-    "checkpoint": "/home/dowling/r1_trackp/runs/p0/startlux-0.8b/toy_sft/ckpt/step_0000010",
+    "checkpoint": "/home/dowling/r1_trackp/runs/p0/startlux-0.8b/toy_sft/ckpt/step_0000013",
     "completed": true,
-    "loss_first": 3.4571990966796875,
-    "loss_last": 2.2089269161224365,
-    "steps": 10,
-    "stopped_at": 10
+    "loss_first": 3.3933839797973633,
+    "loss_last": 2.2032997608184814,
+    "steps": 13,
+    "stopped_at": 13
   },
   "trainable_parameters": 10825729
 }

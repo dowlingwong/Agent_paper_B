@@ -13,8 +13,8 @@
     "base_revision": "6496ae641cc71b149ce9dad69bd97f2a44e7bf11",
     "family": "startlux"
   },
-  "config_sha256": "f9b7354f38b4cdee914e8695f6546ae7384d4472505461d21dbfa5b784dccbfa",
-  "created_utc": "2026-10-26T05:35:12Z",
+  "config_sha256": "39931e2ad8ede8772f4371264d543b13886e86ddfa660175750151a4f6f8af88",
+  "created_utc": "2026-10-26T06:10:13Z",
   "data_manifest_sha256": "87642343eedb639c353bfc750a91d3313e17720da14762606dbf99278c610bac",
   "evidence_label": "ENGINEERING_ONLY",
   "git": {
@@ -26,7 +26,7 @@
     },
     "paper": {
       "branch": "trackp-20261026",
-      "commit": "c04a2373bdf5c3f5d9c76144632a2d94285f9728",
+      "commit": "fcc7d7dd95644e831fc1fcba325426429dfce0e9",
       "dirty": false,
       "path": "/home/dowling/r1_trackp/Agent_paper_B"
     }
@@ -35,22 +35,22 @@
     {
       "event": "start",
       "job": "trackp spike startlux-0.8b",
-      "pid": 2986263,
-      "utc": "2026-10-26T05:34:35Z"
+      "pid": 3916762,
+      "utc": "2026-10-26T06:09:31Z"
     },
     {
       "event": "end",
       "job": "trackp spike startlux-0.8b",
-      "pid": 2986263,
-      "utc": "2026-10-26T05:35:12Z"
+      "pid": 3916762,
+      "utc": "2026-10-26T06:10:13Z"
     }
   ],
   "head_form": "softmax12",
   "model_files_sha256": {
     "adapter/README.md": "0c5139dc0868401846e9c06acc60cf47d9b1cf0f04542e02a8dddf56d7d6b098",
-    "adapter/adapter_config.json": "d7e24098cdc57e3254bdb891aed815a00c5b9f77e4a3993bbe525a085c6cd86d",
-    "adapter/adapter_model.safetensors": "3543c569edb8774120eae9337e70fc00b4b8d2c6eb16793cb8163fc00b8895e1",
-    "heads.safetensors": "4b2f2099cab2c5b65d4ce60b35bb86bd4b5441dbfa7f807f8f7c9d6e0c815272"
+    "adapter/adapter_config.json": "97dd988882f6eaf6bee4b20e5f6da544a2eea7650fe0fbd443f97f0da97d7bee",
+    "adapter/adapter_model.safetensors": "7506dd715e253a06110d37c5388739d370e3155c90caad4456a87c38da42b41d",
+    "heads.safetensors": "c2e027f7598cf13f64a846f41f8b2c6c1a28d4abd562123a9965c8b6629be0f6"
   },
   "schema": "trackp_run_manifest/v1",
   "seed": 0,

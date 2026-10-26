@@ -13,8 +13,8 @@
     "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
     "family": "kev"
   },
-  "config_sha256": "f9b7354f38b4cdee914e8695f6546ae7384d4472505461d21dbfa5b784dccbfa",
-  "created_utc": "2026-10-26T05:33:55Z",
+  "config_sha256": "39931e2ad8ede8772f4371264d543b13886e86ddfa660175750151a4f6f8af88",
+  "created_utc": "2026-10-26T06:08:51Z",
   "data_manifest_sha256": "87642343eedb639c353bfc750a91d3313e17720da14762606dbf99278c610bac",
   "evidence_label": "ENGINEERING_ONLY",
   "git": {
@@ -26,7 +26,7 @@
     },
     "paper": {
       "branch": "trackp-20261026",
-      "commit": "c04a2373bdf5c3f5d9c76144632a2d94285f9728",
+      "commit": "fcc7d7dd95644e831fc1fcba325426429dfce0e9",
       "dirty": false,
       "path": "/home/dowling/r1_trackp/Agent_paper_B"
     }
@@ -35,22 +35,22 @@
     {
       "event": "start",
       "job": "trackp spike kev-0.8b",
-      "pid": 2974619,
-      "utc": "2026-10-26T05:33:23Z"
+      "pid": 3902780,
+      "utc": "2026-10-26T06:08:10Z"
     },
     {
       "event": "end",
       "job": "trackp spike kev-0.8b",
-      "pid": 2974619,
-      "utc": "2026-10-26T05:33:54Z"
+      "pid": 3902780,
+      "utc": "2026-10-26T06:08:51Z"
     }
   ],
   "head_form": "softmax12",
   "model_files_sha256": {
     "adapter/README.md": "56a276a30ac9e74bb5d0409be1e00857c5f5e535bbe3c334f6e1a9061ecbce6f",
-    "adapter/adapter_config.json": "1f1ef02d90465a83f12a2700256fd0c4c064283b1a04a85627d9d98c69ae45d0",
-    "adapter/adapter_model.safetensors": "f092dbe84a5bd0957a40e251cee61a8fe9aedc93075092545e0f769873da4495",
-    "heads.safetensors": "54d6b5e22eb169fff5652e7df7e4367da90ea400c86fc8b2ea72267505baa47e"
+    "adapter/adapter_config.json": "c52f427a089baaa47ca7b582016d2b15baf9bd1afa61bd2ea9012d4c076bdbcc",
+    "adapter/adapter_model.safetensors": "7aff0268810d41aa76b8ec8b10c358b736ba35a28b5c8634d9d91506cdc3f678",
+    "heads.safetensors": "3e1444bcb62a49d1a5de316ea448a63e861d3a2c5ae14a1fabb658ca1d39e3e7"
   },
   "schema": "trackp_run_manifest/v1",
   "seed": 0,

@@ -23,10 +23,11 @@
   "engineering": {
     "batch_size": 8,
     "gradient_checkpointing": true,
+    "input_tokens": 1003,
     "oom": false,
     "peak_vram_mib": 3553.08203125,
     "probe_tokens": 1024,
-    "step_time_s": 0.8478272124193609
+    "step_time_s": 0.8484568705316633
   },
   "family": "qwen_control",
   "forward_one": {
@@ -51,17 +52,17 @@
   "reload_max_diff": 0.0,
   "saved_sha256": {
     "adapter/README.md": "56a276a30ac9e74bb5d0409be1e00857c5f5e535bbe3c334f6e1a9061ecbce6f",
-    "adapter/adapter_config.json": "21e098620c7f0f3fa72e30f57b7a7d0a85fd7a14780cfe0fc852da80c85bddf3",
-    "adapter/adapter_model.safetensors": "0090b2253f09aaba95659f4af9ad4e4adbaae51387430acf4523a5d6c049e3a3",
+    "adapter/adapter_config.json": "0939d5f6b6fd0e43a4d4f1f4e3e1bdc46a9c50bc5136507c58993f29ed9d2e49",
+    "adapter/adapter_model.safetensors": "63f321a0f9e67d26723ca747f7e9e0e863a977fd6b86f2573dda9f1dad03edf5",
     "heads.safetensors": "9bbcbf73561f6bc5d0a17ea6a2081feed2d1304e87602d8c502d9a5c4bd85576"
   },
   "toy_sft": {
-    "checkpoint": "/home/dowling/r1_trackp/runs/p0/qwen3.5-0.8b-base/toy_sft/ckpt/step_0000010",
+    "checkpoint": "/home/dowling/r1_trackp/runs/p0/qwen3.5-0.8b-base/toy_sft/ckpt/step_0000013",
     "completed": true,
     "loss_first": 4.469518184661865,
-    "loss_last": 4.259701251983643,
-    "steps": 10,
-    "stopped_at": 10
+    "loss_last": 3.6626439094543457,
+    "steps": 13,
+    "stopped_at": 13
   },
   "trainable_parameters": 10836992
 }
