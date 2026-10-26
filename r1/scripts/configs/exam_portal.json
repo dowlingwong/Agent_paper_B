@@ -16,7 +16,7 @@
   "rule": "r1/exam/rules/x5_rule_v1.yaml",
   "rule_sha256": "0665903b276f34eca4cd4d03ac483192cd3ef3b41c24d188e2dd103d65423b6e",
   "value_grids": "r1/exam/value_grids.yaml",
-  "paper_commit": "d3a67f179d66a0f7d2659de1265a27aeae81376b",
+  "paper_commit": "5722f67b792a53d488b1c8fdb0bc41e5f938a27b",
   "harness_commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
   "prompts": "TODO_VERIFY_ON_HOST",
   "prompts_sha256": "TODO_VERIFY_ON_HOST",
