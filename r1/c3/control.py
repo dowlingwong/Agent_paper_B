@@ -67,7 +67,7 @@ from r1.c3.arms import TAU_FLOOR_Z
 from r1.c3.features import FEATURES, FEATURIZER_VERSION, NodeContext, featurize_view, features_hash
 from r1.c3.labels import INERT, MIDPOINTS
 from r1.c3.offline_eval import G_PRIMARY
-from r1.c3.prior_model import Forecast, proposal_row
+from r1.c3.prior_model import Forecast, SidecarPrior, proposal_row
 from r1.theory.acceptance import KGIndexPolicy, NodeNoise, verify_voi
 from r1.harness import import_harness
 
@@ -130,8 +130,10 @@ class RuleController:
                  g: float | None = None, sigma_cmp: Mapping[str, float] | None = None, fallback=None,
                  rule_layer: bool | None = None, greedy_bin: bool = False, hybrid_revise: bool = False,
                  revision_budget: int | None = None, verify: bool = True, verify_runs: int = DEFAULT_VERIFY_RUNS,
-                 split_policy: str = NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, sigma_t_fraction: float | None = None) -> None:
+                 split_policy: str = NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, sigma_t_fraction: float | None = None,
+                 prompt_builder=None) -> None:
         self.prior, self.ctx = prior, node_ctx
+        self.prompt_builder = prompt_builder
         self.sigma_node = float(node_ctx.sigma_node if sigma_node is None else sigma_node)
         if not math.isclose(self.sigma_node, node_ctx.sigma_node):
             raise ValueError("sigma_node must equal node_ctx.sigma_node (the featurizer standardises with it)")
@@ -217,7 +219,27 @@ class RuleController:
 
     def _fill(self, plan: _Plan, res, view: Any) -> dict:
         row = proposal_row(self.ctx.node, res.features, res.edit)
-        f = self._forecast(row, view)
+        prompt_error = None
+        if isinstance(self.prior, SidecarPrior):
+            try:
+                builder = self.prompt_builder
+                if builder is None:
+                    from r1.c3.train.serialize import serialize_view
+                    builder = serialize_view
+                prompt = builder(view, self.ctx)
+                if prompt is None or not prompt.state or not prompt.proposal:
+                    raise ValueError("missing serialized prompt")
+                row["prompt"] = {"state": prompt.state, "proposal": prompt.proposal}
+            except Exception as exc:  # noqa: BLE001 - preserve sidecar fallback behavior
+                prompt_error = exc
+        if prompt_error is None:
+            f = self._forecast(row, view)
+        else:
+            fb = self.prior.fallback.forecast(row)
+            f = Forecast(probs=fb.probs, version=self.prior.version, digest=self.prior.digest,
+                         latency_s=fb.latency_s, fallback="prior_unavailable: prompt_serialization",
+                         info={"error": repr(prompt_error)[:300], "fallback_version": fb.version,
+                               "fallback_digest": fb.digest})
         sigma = float(self.sigma_cmp[plan.kind])
         pi, mu, tau = self._moments(f, sigma)
         plan.forecast, plan.pi, plan.mu, plan.tau, plan.sigma = f, pi, mu, tau, sigma

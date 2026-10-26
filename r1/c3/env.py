@@ -8,16 +8,16 @@ depending on Gymnasium: it subclasses ``gymnasium.Env`` and is registered as
 * **Episode** = one proposal (one step; ``terminated`` is always True).
 * **Context** = the proposal's features (``FEATURES`` order; NaN -> 0); the
   full row stays available in ``info`` for bookkeeping.
-* **Action** = one of the 12 bins.
-* **Plug-in** (C3_DESIGN §5, stage 2): ``"greedy"`` uses pi = 1{b = no-op},
+* **Action** = execute (0) or skip (1); observation carries features and the 12-bin belief.
+  Historical bin actions are available only with ``version="bin/v0"``.
+* **Legacy plug-in** (``bin/v0``, historical C3_DESIGN §5 stage 2): ``"greedy"`` uses pi = 1{b = no-op},
   mu = sigma_node mid(b), tau = sigma_node tau_node[node] (dev-estimated, in z
   units); ``"onehot_moments"`` uses ``labels.moments`` of the one-hot bin with the
   arms' tau floor, i.e. exactly the decision ``offline_eval`` takes for an arm
   whose forecast is that one-hot distribution (the acceptance check).
-* **Reward** r = Delta * keep - g * execute with (execute, keep) from
-  ``offline_eval.decisions`` (rules of T4 Propositions 6 and 8, the logged
-  Delta_hat, the edit's sigma_cmp, g = g_units sigma_node; with the rule layer
-  duplicates are never executed).
+* **Reward** r = Delta * keep - g * execute. In the amended version, the action
+  chooses execute/skip and the belief supplies the keep threshold; in bin/v0
+  the legacy plug-in chooses both. The rule layer prevents duplicate execution.
 * **Seeds.** ``split="label"`` (training) uses the label half of the audit
   seeds (``audit.split_audit``; 7001-7005 for K = 10) and the training weights;
   duplicates have no label and are excluded.  ``split="eval"`` uses the
@@ -36,7 +36,7 @@ from typing import Any, Callable, Mapping
 import numpy as np
 
 from r1.c3 import offline_eval as OE
-from r1.c3.arms import is_duplicate, is_noop
+from r1.c3.arms import is_duplicate, is_noop, prior_moments
 from r1.c3.audit import split_audit
 from r1.c3.features import FEATURES
 from r1.c3.labels import INERT, MIDPOINTS, N_BINS
@@ -83,14 +83,19 @@ class OfflineBanditEnv(_Base):
 
     def __init__(self, rows: list[dict], *, split: str = "label", g_units: float = OE.G_PRIMARY,
                  rule_layer: bool = True, plugin: str = "greedy", tau_node: Mapping[str, float] | None = None,
-                 order: str = "sequential", seed: int | None = None) -> None:
+                 order: str = "sequential", seed: int | None = None, version: str = "execute-skip/v1",
+                 belief_provider: Callable[[Mapping[str, Any]], Any] | None = None) -> None:
+        if version not in ("execute-skip/v1", "bin/v0"):
+            raise ValueError("unknown environment version")
         if split not in SPLITS or plugin not in PLUGINS or order not in ("sequential", "random"):
             raise ValueError(f"split in {SPLITS}, plugin in {PLUGINS}, order sequential|random")
-        if plugin == "greedy" and not tau_node:
+        if version == "bin/v0" and plugin == "greedy" and not tau_node:
             raise ValueError("the greedy plug-in needs tau_node (z units, dev-estimated) per node")
         OE._g_role(g_units)  # only the declared g values (PLAN §10, g (22 Oct))
         self.split, self.g_units, self.rule_layer, self.plugin = split, float(g_units), bool(rule_layer), plugin
+        self.version, self.belief_provider = version, belief_provider
         self.tau_node = dict(tau_node or {})
+        self._belief = None
         if split == "label":
             pop = [r for r in rows if r.get("delta_label") is not None and r.get("weight", 0) > 0]
             self._value, self._weight = "delta_label", "weight"
@@ -105,8 +110,10 @@ class OfflineBanditEnv(_Base):
         self._i = -1
         self._current: dict | None = None
         if _spaces is not None:
-            self.action_space = _spaces.Discrete(N_BINS)
-            self.observation_space = _spaces.Box(-np.inf, np.inf, shape=(len(FEATURES),), dtype=np.float64)
+            self.action_space = _spaces.Discrete(N_BINS if version == "bin/v0" else 2)
+            features_space = _spaces.Box(-np.inf, np.inf, shape=(len(FEATURES),), dtype=np.float64)
+            self.observation_space = features_space if version == "bin/v0" else _spaces.Dict({
+                "features": features_space, "belief": _spaces.Box(0.0, 1.0, shape=(N_BINS,), dtype=np.float64)})
 
     def __len__(self) -> int:
         return len(self.rows)
@@ -129,7 +136,15 @@ class OfflineBanditEnv(_Base):
         info = {"index": self._i, "proposal_id": r["proposal_id"], "node": r["node"], "weight": r[self._weight],
                 "sigma_node": r["sigma_node"], "sigma_cmp": r["sigma_cmp"], "delta_hat": r["delta_hat"],
                 "noop": is_noop(r), "duplicate": is_duplicate(r), "split": self.split}
-        return self.observe(r), info
+        if self.version == "bin/v0":
+            return self.observe(r), info
+        p = self.belief_provider(r) if self.belief_provider is not None else r.get("belief")
+        p = np.asarray(p, dtype=float)
+        if p.shape != (N_BINS,) or not np.all(np.isfinite(p)) or np.any(p < 0) or not np.isclose(p.sum(), 1.0, rtol=0, atol=1e-7):
+            self._current = None
+            raise ValueError("belief must be a finite normalized 12-bin probability vector")
+        self._belief = p.copy()
+        return {"features": self.observe(r), "belief": p.copy()}, info
 
     def decide(self, b: int, row: Mapping[str, Any]) -> tuple[bool, bool, float]:
         """(execute, keep, g) of bin ``b`` on ``row`` under the rules."""
@@ -152,16 +167,30 @@ class OfflineBanditEnv(_Base):
     def step(self, action):
         if self._current is None:
             raise RuntimeError("call reset() first")
-        b = int(action)
-        if not 0 <= b < N_BINS:
-            raise ValueError(f"action must be a bin in 0..{N_BINS - 1}")
         row = self._current
-        ex, kp, g = self.decide(b, row)
+        if self.version == "bin/v0":
+            b = int(action)
+            if not 0 <= b < N_BINS:
+                raise ValueError(f"action must be a bin in 0..{N_BINS - 1}")
+            ex, kp, g = self.decide(b, row)
+            obs = self.observe(row)
+        else:
+            if isinstance(action, (bool, np.bool_)) or not isinstance(action, (int, np.integer)):
+                raise ValueError("action must be an integer")
+            b = int(action)
+            if b not in (0, 1):
+                raise ValueError("action must be 0 (execute) or 1 (skip)")
+            from r1.c3 import rules
+            _, mu, tau = prior_moments(self._belief[None, :], [row])
+            ex = b == 0 and not (self.rule_layer and is_duplicate(row))
+            kp = bool(ex and rules.keep(row["delta_hat"], mu[0], tau[0], row["sigma_cmp"]))
+            g = self.g_units * row["sigma_node"]
+            obs = {"features": self.observe(row), "belief": self._belief.copy()}
         reward = float(row[self._value] * kp - g * ex)
         info = {"execute": ex, "keep": kp, "g": g, "weight": row[self._weight], "node": row["node"],
                 "proposal_id": row["proposal_id"]}
         self._current = None
-        return self.observe(row), reward, True, False, info
+        return obs, reward, True, False, info
 
 
 def evaluate_policy(env: OfflineBanditEnv, policy: Callable[[np.ndarray, dict], int]) -> dict:

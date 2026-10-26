@@ -1,3 +1,7 @@
-# L4.2 handoff
+# L4.2 Track H handoff — 27 October 2026
 
-Waiting for coordinator permission before shared-module edits. Concrete request and proposed scope: `docs/r1/proposals/TRACK_H_COORDINATION_20261027.md`. No shared C3 module or Track P training file was edited; independent tasks continue.
+Author approved R1-H8-AMENDMENT and shared `env.py` / `control.py` edits. Track P integration was checked read-only against the accepted Track P merge and its serialization contract: coordinator merges this branch to main; Track P then consumes main. Nothing here authorizes P.5, evidence, or a merge, and `r1/c3/train/` was not edited.
+
+`OfflineBanditEnv` defaults to execute/skip (`0`/`1`) with a validated 12-bin belief in the observation; the direct action chooses execution while the moments-based belief supplies the keep threshold. Duplicate rule skips remain enforced. Historical bin actions and plugins are available as `version="bin/v0"`; existing legacy tests select it explicitly. The controller attaches a serialized state/proposal only for `SidecarPrior` and falls back if serialization fails; an injected serializer supports fixture tests without tokenizer downloads. Non-sidecar paths retain their earlier row behavior.
+
+Fixture-only CPU checks: the implementer ran the new H.8 and prompt fixture tests plus the existing legacy API shape test: 21 passed. They use synthetic rows and fake/mocked sidecar paths, no models or inference. Independent review and both-suite baseline comparison remain required. The serializer's real default is lazy and uses Track P's existing tokenization policy, so operational provisioning and its pinned tokenizer availability remain integration prerequisites; it is not exercised by these fixtures.
