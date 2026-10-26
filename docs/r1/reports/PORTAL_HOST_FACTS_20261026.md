@@ -10,7 +10,7 @@ The initial SSH failure (`Network is unreachable`, Tailscale `Stopped`) is prese
 
 Collected on the portal at **2026-10-26 01:08:59–01:10:49 UTC** (02:08:59–02:10:49 Europe/Berlin). Portal's local display was 25 October around 18:09; UTC timestamps are used for provenance. SSH: `ssh -o BatchMode=yes -o ConnectTimeout=15 portal_zhixu`; configured target `dowling@100.120.160.70:22`.
 
-Evidence is in [portal_host_facts_20261026/](portal_host_facts_20261026/). The shell transcript includes exact commands and exit codes; HTTP Set-Cookie headers are redacted. No credential values are recorded. Small public API metadata and one small model config were read; no weights were fetched.
+Evidence is in [portal_host_facts_20261026/](portal_host_facts_20261026/). The shell transcript includes exact commands and exit codes; HTTP Set-Cookie headers are redacted, trailing whitespace and blank EOF lines normalised. No credential values are recorded. Small public API metadata and one small model config were read; no weights were fetched.
 
 ## 0.1–0.4 — host, GPU, CPU and storage
 

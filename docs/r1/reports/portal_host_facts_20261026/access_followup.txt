@@ -24,4 +24,3 @@ Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept
 Strict-Transport-Security: max-age=31536000; includeSubDomains
 [HTTP Set-Cookie header redacted]
 [HTTP Set-Cookie header redacted]
-

@@ -69,7 +69,7 @@ drwxr-x--- 9 dowling dowling 4096 Oct 17 04:20 /home/dowling
 EXIT: 2
 
 COMMAND: nvidia-smi
-Sun Oct 25 18:08:59 2026       
+Sun Oct 25 18:08:59 2026
 +---------------------------------------------------------------------------------------+
 | NVIDIA-SMI 535.309.01             Driver Version: 535.309.01   CUDA Version: 12.2     |
 |-----------------------------------------+----------------------+----------------------+
@@ -81,7 +81,7 @@ Sun Oct 25 18:08:59 2026
 |  0%   37C    P8              11W / 450W |    436MiB / 24564MiB |      0%      Default |
 |                                         |                      |                  N/A |
 +-----------------------------------------+----------------------+----------------------+
-                                                                                         
+
 +---------------------------------------------------------------------------------------+
 | Processes:                                                                            |
 |  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
@@ -829,7 +829,7 @@ fatal: could not read Username for 'https://github.com': terminal prompts disabl
 EXIT: 128
 
 COMMAND: curl --connect-timeout 8 --max-time 20 -sSI https://huggingface.co
-HTTP/2 200 
+HTTP/2 200
 content-type: text/html; charset=utf-8
 content-length: 176243
 date: Mon, 26 Oct 2026 01:08:23 GMT
