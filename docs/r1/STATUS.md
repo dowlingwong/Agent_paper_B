@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Phase 2 receiving ongoing; Stage A API clarification pending (AI-assisted)
+
+Direct HTTPS receiving remains active with six bounded workers, full size/SHA checks and the approved 100 GB available-space floor. Latest checkpoint: 2/22 artifact certificates, 651,513,733,120 available bytes. The independent review remains pending; STOP 2 is not closed. CPU tokenizer reports reconcile 22/22 current template pins. The earlier HF/Xet CAS failure, library-deleted failed OLMo temporary, retained archives and reviewed transport recovery are documented in [Phase 2 report](reports/PORTAL_EXAM_PHASE2_20261026.md).
+
+Pinned-server source inspection independently confirms rejection of prompt length equal to context, and first sampling even with n_predict 0. The author has been asked whether to adopt a one-slot reserve (32,767 prompt + one generated token at context 32,768; corresponding 16k fallback). This amendment has not been adopted. See [API conflict](reports/exam_phase2_20261026/PREFILL_API_CONFLICT.md). No real Stage A request, B1 or B2 has started.
+
 ## 26 October 2026 — author approves Stage A fourth memory-on prompt source (AI-assisted)
 
 PLAN §10 R1-EXAM-PROMPT-SOURCE records the direct author approval to use the existing 14 Oct memory-on digits liveness ledgers as the fourth source. Rerun-2 memory-on covers three nodes; DT4 is entirely memory-off and will not be relabelled. Fifty source/hash-verified real memory-on prompts will be frozen before Stage A, after Phase 2 review. This closes the prompt-source clarification only; Phase 2 receiving/review remains in progress, with no Stage A or evidence run started.

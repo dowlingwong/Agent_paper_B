@@ -2,11 +2,31 @@
 import argparse
 import json
 import math
+import re
 from pathlib import Path
-from r1.scripts import llamacpp_probe
+from r1.scripts import llamacpp_probe, llama_server_instance as lsi
 from r1.scripts.ollama_instance import free_port
 from r1.exam.campaign import write_json
 from r1.exam.guards import digest_file
+
+
+def known_load_oom(raw, cfg, out):
+    """Distinguish an evidenced allocation failure from missing/unknown telemetry."""
+    log=Path(raw.get('server_log',''))
+    pins=raw.get('pins_match') or {}
+    if (not log.is_file() or not log.resolve().is_relative_to(Path(out).resolve()) or
+        raw.get('gpu_uuid')!=cfg['gpu_uuid'] or any(pins.get(k) is not True for k in ('build','model_sha256')) or
+        not raw.get('server_stop') or raw['server_stop'].get('returncode') is None): return None
+    text=log.read_text(errors='replace')
+    if not re.search(r'^ggml_backend_cuda_buffer_type_alloc_buffer:.*cudaMalloc failed: out of memory\s*$',text,re.M): return None
+    evidence={'kind':'cuda_allocation_out_of_memory','server_log_sha256':digest_file(log),'healthy_idle_after_stop':False}
+    try:
+        from r1.exam.runtime import gpu_sample
+        apps=lsi.gpu_compute_apps();sample=gpu_sample(cfg)
+        evidence.update(compute_apps_after_stop=apps,gpu_after_stop=sample)
+        evidence['healthy_idle_after_stop']=apps==[] and sample['free_mib']>=1024
+    except Exception as error:evidence['census_error']=repr(error)
+    return evidence
 
 
 def qualify(job):
@@ -26,11 +46,14 @@ def qualify(job):
         raw_path=max(out.glob('probe_*.json'));raw=json.loads(raw_path.read_text())
         # No footprint can be adopted without loaded-state PID/GPU telemetry.
         footprint=raw.get('footprint_mib_to_pin')
-        success=code==0 and isinstance(footprint,(int,float)) and footprint>0
-        result={'status':'PASS' if success else ('PREPARATION_STOP' if footprint is None else 'MECHANICAL_FAILURE'),'footprint_mib':footprint,
+        success=code==0 and isinstance(footprint,(int,float)) and math.isfinite(footprint) and footprint>0
+        status='PASS' if success else ('PREPARATION_STOP' if footprint is None else 'MECHANICAL_FAILURE')
+        allocation=known_load_oom(raw,cfg,out) if footprint is None else None
+        if allocation and allocation['healthy_idle_after_stop']:status='MECHANICAL_FAILURE'
+        result={'status':status,'footprint_mib':footprint,
                 'label':'ENGINEERING_ONLY','raw_probe':str(raw_path),'raw_probe_sha256':digest_file(raw_path),
                 'model_sha256':spec['quant_source']['sha256'],'context':job['ctx'],'offload_route':raw.get('route'),
-                'stop_reasons':raw.get('stop_reasons',[])}
+                'stop_reasons':raw.get('stop_reasons',[]),'allocation_failure_evidence':allocation}
     write_json(out/'qualification.json',result)
     return result
 

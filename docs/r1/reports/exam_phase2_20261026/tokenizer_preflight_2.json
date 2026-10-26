@@ -1,0 +1,24 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "scope": "CPU tokenizer/template access only; no inference",
+  "versions": {
+    "transformers": "5.20.2",
+    "tokenizers": "0.23.3",
+    "huggingface-hub": "2.3.0"
+  },
+  "complete": true,
+  "rows": [
+    {
+      "candidate": "rico03_qwen36_27b",
+      "source_label": "vendor Q4_K_M; community fine-tune, data provenance not audited",
+      "repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
+      "revision": "448ea0a074e64c940baceabe2590afe8b41a593d",
+      "status": "PASS",
+      "template_sha256": "0800c03b537cb0d60244f37ac6d717b06c42c4828a40853b1f9853791f9afdae",
+      "expected_sha256": "0800c03b537cb0d60244f37ac6d717b06c42c4828a40853b1f9853791f9afdae",
+      "tokenizer_class": "Qwen3_5Tokenizer",
+      "seconds": 0.6606049537658691
+    }
+  ],
+  "all_pass": true
+}
