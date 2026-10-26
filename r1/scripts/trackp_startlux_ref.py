@@ -20,7 +20,13 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
 N_PROMPTS = 20
+
+
+def provenance(argv) -> dict:
+    from r1.c3.train import run as R
+    return {"git": R.git_commit(REPO), "argv": list(argv), "python": sys.executable, "utc": R.utcnow()}
 
 
 def ours(model_dir: str, io: Path, dtype: str) -> None:
@@ -39,7 +45,7 @@ def ours(model_dir: str, io: Path, dtype: str) -> None:
             logits = w([p])["belief_logits"][0].float().cpu().tolist()
             rows.append({"ids": ids, "ours": logits})
     io.write_text(json.dumps({"model_dir": model_dir, "dtype": dtype, "letter_ids": list(w.letter_ids),
-                              "check_report": w.check_report, "rows": rows}))
+                              "check_report": w.check_report, "rows": rows, "provenance": provenance(sys.argv)}))
     print(json.dumps({"written": str(io), "n": len(rows), "check_report": w.check_report}))
 
 
@@ -56,12 +62,15 @@ def reference(io: Path, out: Path) -> int:
     check = bidirectional.enable(body)
     head = model.get_output_embeddings().weight
     letters = torch.tensor(data["letter_ids"], device="cuda")
-    diffs, agree = [], []
+    diffs, agree, causal = [], [], []
     with torch.no_grad():
         for r in data["rows"]:
             ids = torch.tensor([r["ids"]], device="cuda")
             h = bidirectional.text_forward(body, ids)[0, -1]
             ref = (head[letters] @ h).float().cpu()
+            # control: the same read-out with the stock causal mask (what a mask error looks like)
+            hc = bidirectional.text_forward(body, ids, causal=True)[0, -1]
+            causal.append(float(((head[letters] @ hc).float().cpu() - ref).abs().max()))
             o = torch.tensor(r["ours"])
             diffs.append(float((ref - o).abs().max()))
             p_ref, p_o = torch.softmax(ref, -1), torch.softmax(o, -1)
@@ -69,7 +78,10 @@ def reference(io: Path, out: Path) -> int:
     rep = {"transformers": transformers.__version__, "torch": torch.__version__, "dtype": data["dtype"],
            "reference_check": check, "ours_check": data["check_report"], "n": len(diffs),
            "max_abs_logit_diff": max(diffs), "mean_abs_logit_diff_max": sum(diffs) / len(diffs),
-           "max_tv_distance": max(agree), "vllm_path": "not run: vLLM is not installed on this host"}
+           "max_tv_distance": max(agree), "vllm_path": "not run: vLLM is not installed on this host",
+           "control_causal_vs_bidirectional_max": max(causal),
+           "control_causal_vs_bidirectional_mean": sum(causal) / len(causal),
+           "ours_provenance": data.get("provenance"), "reference_provenance": provenance(sys.argv)}
     out.write_text(json.dumps(rep, indent=1))
     print(json.dumps(rep, indent=1))
     return 0
@@ -83,10 +95,13 @@ def main(argv=None) -> int:
     ap.add_argument("--out", type=Path)
     ap.add_argument("--dtype", default="float32")
     args = ap.parse_args(argv)
-    if args.ours:
-        ours(args.ours, args.io, args.dtype)
-        return 0
-    return reference(args.io, args.out)
+    from r1.c3.train import run as R   # the GPU lease: Track X check, no foreign compute process, flock, logged
+    step = "ours" if args.ours else "reference"
+    with R.gpu_lease(f"trackp p0 startlux comparison {step} {args.io.name}"):
+        if args.ours:
+            ours(args.ours, args.io, args.dtype)
+            return 0
+        return reference(args.io, args.out)
 
 
 if __name__ == "__main__":

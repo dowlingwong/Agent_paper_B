@@ -94,8 +94,9 @@
   "toy_examples": 100,
   "seq_len": 1024,
   "batch_size": 8,
-  "steps": 10,
-  "seed": 0
+  "steps": 13,
+  "seed": 0,
+  "comment": "13 steps x batch 8 = one pass over the 100 toy examples (P.0 '100-example toy SFT'; was 10 = 80 examples, STOP 3 review)"
  },
  "toy_batch": {
   "examples": 64,

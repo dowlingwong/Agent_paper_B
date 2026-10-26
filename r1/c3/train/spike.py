@@ -82,6 +82,22 @@ def long_prompt(tok, target: int = PROBE_TOKENS) -> DecisionPrompt:
                           meta={"probe_tokens": target})
 
 
+def input_tokens(model, p: DecisionPrompt) -> int:
+    """Tokens the family's model actually receives for ``p`` (its own framing; Laya after its truncation)."""
+    fam = getattr(model, "family", "")
+    if fam == "kev":
+        recs, _ = model.records([p])
+        return len(model.km_mod.encode(model.tok, recs[0], max_state=model.ctx["max_state"],
+                                       max_branch=model.ctx["max_branch"], strict=True)["ids"])
+    if fam == "laya":
+        return len(model.encode(p)["ids"])
+    if fam == "startlux":
+        return len(model.tok.encode(model.prompt_text(p), add_special_tokens=False))
+    if fam in ("qwen_control", "qwen_reason"):
+        return len(model.segments(p)[0])
+    return -1
+
+
 def peak_and_step_time(model, tok, *, batch_size: int = 8, steps: int = 3, grad_ckpt: bool = True) -> dict:
     """Peak VRAM (CUDA only) and mean step time of forward+backward at ~1,024 tokens, batch 8."""
     dev = next(model.parameters()).device
@@ -92,6 +108,7 @@ def peak_and_step_time(model, tok, *, batch_size: int = 8, steps: int = 3, grad_
         except Exception as exc:  # recorded, the measurement runs without it
             rec["gradient_checkpointing"] = f"unavailable: {type(exc).__name__}: {exc}"
     p = long_prompt(tok)
+    rec["input_tokens"] = input_tokens(model, p)   # what the family really sees (review: not just the target)
     batch = [p] * batch_size
     rows = [{"prompt": p, "y": torch.full((12,), 1 / 12), "u": torch.tensor(0.0)} for _ in batch]
     params = [q for q in model.trainable_parameters()]

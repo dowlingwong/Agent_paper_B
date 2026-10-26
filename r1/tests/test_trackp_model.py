@@ -556,3 +556,63 @@ def test_laya_native_readout_equals_layas_own_forward(laya_parts):
         theirs = w.core(ids, att, marker_pos, marker_mask, qtype)[0]
         ours = w(batch)["belief_logits"]
     assert torch.allclose(ours, theirs.float(), atol=1e-5)
+
+
+# ---------------------------------------------------------------- Phase 3 changes (STOP 3 review #9)
+
+def test_new_head_parameters_are_only_the_untrained_heads(tiny_dirs, qwen_tok):
+    w = M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, head_form="cumulative11")
+    new = {id(p) for p in M.new_head_parameters(w)}
+    assert new == {id(p) for name in ("action", "cumulative") for p in w.heads[name].parameters()}
+    assert not new & {id(p) for p in w.heads["pointer"].parameters()}      # Kev's released head: base lr
+    q = M.build_model("qwen_control", _causal_lm(), qwen_tok)
+    names = {n for n, p in q.named_parameters() if id(p) in {id(x) for x in M.new_head_parameters(q)}}
+    assert names and all("trainable_tokens" in n for n in names)            # its new token rows
+
+
+def test_new_heads_read_a_layernormed_state(tiny_dirs, qwen_tok):
+    w = M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, head_form="cumulative11")
+    for name in ("action", "cumulative"):
+        assert isinstance(w.heads[name][0], torch.nn.LayerNorm) and isinstance(w.heads[name][1], torch.nn.Linear)
+
+
+def test_packing_check_reads_the_text_config_of_a_composite_config():
+    from types import SimpleNamespace
+    text = _qwen35_config(hybrid=True)
+    composite = SimpleNamespace(get_text_config=lambda: text)               # no layer_types / vocab_size at the top
+    assert P.has_linear_attention(composite)
+    backbone = SimpleNamespace(config=composite)
+    assert P.self_check(backbone)["ok"] is False
+
+
+def test_kev_pointer_temperature_policy_is_explicit_and_saved(tiny_dirs, qwen_tok, tmp_path):
+    from kev.checkpoint import Meta, write_meta
+    src = M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, action_head=False)
+    run = tmp_path / "kevrun"
+    src.kev.lm.save_pretrained(str(run))
+    write_meta(str(run), Meta(base="tiny/qwen35", head=src.kev.head.state_dict(), lora=M.LORA_R, head_dim=256,
+                              temperature=2.0))
+    kw = dict(action_head=False, base_name="tiny/qwen35", init_from=str(run))
+    plain = M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, **kw)
+    assert plain.kev.head.temperature == 1.0 and plain.describe()["released_temperature"] == 2.0
+    native = M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, native_temperature=True, **kw)
+    assert native.describe()["pointer_temperature"] == 2.0
+    native.save(tmp_path / "saved")
+    back = M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, **kw)       # rebuilt with the default policy
+    back.load(tmp_path / "saved")
+    assert back.kev.head.temperature == 2.0                                 # the saved policy wins
+
+
+def test_seed_controls_initialisation_and_saved_files_are_reproducible(tiny_dirs, qwen_tok, tmp_path):
+    from r1.c3.train.trainer import seed_everything
+
+    def build(seed):
+        seed_everything(seed)
+        return M.build_model("kev", tiny_dirs["hybrid"], qwen_tok)
+    a, b, c = build(5), build(5), build(6)
+    pa, pb, pc = (torch.cat([p.detach().flatten() for p in m.trainable_parameters()]) for m in (a, b, c))
+    assert torch.equal(pa, pb) and not torch.equal(pa, pc)
+    ra, rb = a.save(tmp_path / "a"), b.save(tmp_path / "b")
+    assert ra["files"] == rb["files"]                                       # every sha256 equal, adapter_config too
+    cfg = json.loads((tmp_path / "a" / "adapter" / "adapter_config.json").read_text())
+    assert cfg["target_modules"] == sorted(cfg["target_modules"])

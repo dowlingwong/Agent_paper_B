@@ -148,3 +148,18 @@ def test_toy_kill_and_resume_matches_an_uninterrupted_run(tmp_path):
     import torch
     assert all(torch.equal(a_full[k], a_part[k]) for k in a_full)
     assert all(torch.equal(h_full[k], h_part[k]) for k in h_full)
+
+
+def test_same_seed_in_two_processes_saves_identical_files(tmp_path):
+    """STOP 3 review #2: the seed is set before the model is built; saved files reproduce across processes."""
+    args = ["toy", "--tiny", "--family", "kev", "--allow-placeholders", "--steps", "2", "--examples", "16", "--seed", "3"]
+    run(*args, "--run-dir", str(tmp_path / "a"))
+    run(*args, "--run-dir", str(tmp_path / "b"))
+    ma = json.loads((tmp_path / "a" / "manifest.json").read_text())["model_files_sha256"]
+    mb = json.loads((tmp_path / "b" / "manifest.json").read_text())["model_files_sha256"]
+    for f in ("adapter/adapter_model.safetensors", "heads.safetensors"):
+        assert ma[f] == mb[f]
+    # the tiny stand-in base lives in each run dir, so only its path differs (real runs share one base path)
+    ca, cb = (json.loads((tmp_path / x / "saved/adapter/adapter_config.json").read_text()) for x in "ab")
+    ca.pop("base_model_name_or_path"), cb.pop("base_model_name_or_path")
+    assert ca == cb and ca["target_modules"] == sorted(ca["target_modules"])

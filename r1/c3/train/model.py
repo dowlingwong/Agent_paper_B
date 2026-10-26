@@ -178,6 +178,11 @@ class _Wrapper(nn.Module):
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)
         self._peft().save_pretrained(str(path / "adapter"))
+        cfg_path = path / "adapter" / "adapter_config.json"   # peft writes target_modules from a set: order follows
+        cfg = json.loads(cfg_path.read_text())                 # the process hash seed; sorted, the file is reproducible
+        if isinstance(cfg.get("target_modules"), list):
+            cfg["target_modules"] = sorted(cfg["target_modules"])
+        cfg_path.write_text(json.dumps(cfg, indent=2, sort_keys=True) + "\n")
         save_file(self._heads_state(), str(path / "heads.safetensors"))
         files = sorted(str(p.relative_to(path)) for p in path.rglob("*") if p.is_file() and p.name != MANIFEST)
         record = {**self.describe(), "files": {f: sha256_file(path / f) for f in files}}
@@ -224,9 +229,15 @@ class PointerWrapper(_Wrapper):
     def __init__(self, base: str, tokenizer=None, *, base_name: str | None = None, revision: str | None = None,
                  base_revision: str | None = None, init_from: str | None = None, head_form: str = "softmax12",
                  action_head: bool = True, dtype=torch.float32, device="cpu", max_state: int = 1024,
-                 attn: str | None = None):
+                 attn: str | None = None, native_temperature: bool = False):
         """``revision``: Hub revision to download ``base`` at (moot for a local directory); ``base_revision``: the
-        pinned base revision checked against a warm-start checkpoint's ``head.pt`` (defaults to ``revision``)."""
+        pinned base revision checked against a warm-start checkpoint's ``head.pt`` (defaults to ``revision``).
+
+        Pointer temperature policy (STOP 3 review): Kev's ``head.pt`` carries a calibration temperature fitted on Kev's
+        own data (2.35 / 2.41); ``warm_start`` does not apply it. Default: T = 1 in training and evaluation alike
+        (calibration is ours — E5 temperature scaling); ``native_temperature=True`` applies the released T in eval
+        mode, for the E1 zero-shot rung only. The released and the active T are recorded in the manifest and
+        restored by ``load``."""
         super().__init__(head_form, action_head)
         from kev import model as km
         self.km_mod = km
@@ -236,7 +247,12 @@ class PointerWrapper(_Wrapper):
         if init_from:
             from kev.checkpoint import Checkpoint, Meta
             ours = Meta(base=base_name or base, base_revision=base_revision or revision, lora=LORA_R, head_dim=256)
-            self.provenance = Checkpoint(init_from).warm_start(self.kev, ours)
+            ck = Checkpoint(init_from)
+            self.provenance = ck.warm_start(self.kev, ours)
+            self.released_temperature = float(ck.meta.temperature)
+        else:
+            self.released_temperature = None
+        self.kev.head.temperature = (self.released_temperature or 1.0) if native_temperature else 1.0
         self.ctx = km.training_context(max_state)
         self.packing = not self.kev.hybrid  # attention-only backbones run Kev's packed tree form (= spec §2.4 mask)
         self.heads["pointer"] = self.kev.head
@@ -247,7 +263,15 @@ class PointerWrapper(_Wrapper):
         return self.kev.lm
 
     def describe(self) -> dict:
-        return {**super().describe(), "kev_hybrid": self.kev.hybrid}
+        return {**super().describe(), "kev_hybrid": self.kev.hybrid,
+                "pointer_temperature": float(self.kev.head.temperature),
+                "released_temperature": self.released_temperature}
+
+    def load(self, path) -> dict:
+        record = super().load(path)
+        if "pointer_temperature" in record:     # the saved policy wins over the rebuilt default
+            self.kev.head.temperature = float(record["pointer_temperature"])
+        return record
 
     def records(self, batch: Sequence[DecisionPrompt]) -> tuple[list[dict], list[tuple[int, int]]]:
         """Kev records and, per prompt, (record index, question index)."""

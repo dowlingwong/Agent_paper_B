@@ -33,6 +33,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
 from r1.c3.train import run as R  # noqa: E402
+from r1.c3.train.trainer import seed_everything  # noqa: E402
 
 DEFAULT_CONFIG = REPO / "r1" / "scripts" / "configs" / "trackp_portal.json"
 PHASE_OF = {"e0": "p3a", "probes": "p3a", "exam": "p3b", "sft": "p4", "a6": "p5", "rb": "p6"}
@@ -101,6 +102,7 @@ def cmd_spike(args, cfg) -> dict:
     from r1.c3.train import spike as S
     lease_log: list = []
     with _lease(args, lease_log):
+        seed_everything(args.seed)          # before the model exists: LoRA and new-head init follow the seed
         model, tok, make, base = _build(args, cfg)
         sp = cfg["spike"]
         rep = S.spike(model, args.run_dir, tok=tok, toy_examples=args.examples or sp["toy_examples"],
@@ -114,10 +116,11 @@ def cmd_spike(args, cfg) -> dict:
 
 def cmd_toy(args, cfg) -> dict:
     from r1.c3.train import spike as S
-    from r1.c3.train.trainer import Trainer, TrainConfig, seed_everything
+    from r1.c3.train.trainer import Trainer, TrainConfig
     lease_log: list = []
     tb = cfg["toy_batch"]
     with _lease(args, lease_log):
+        seed_everything(args.seed)          # before the model exists: LoRA and new-head init follow the seed
         model, tok, make, base = _build(args, cfg)
         seed_everything(args.seed)
         rows = S.toy_rows(args.examples or tb["examples"], offset=100)
@@ -158,6 +161,7 @@ def cmd_e0(args, cfg) -> dict:
     lease_log: list = []
     e0c = cfg["e0"]
     with _lease(args, lease_log):
+        seed_everything(args.seed)          # before the model exists: LoRA and new-head init follow the seed
         model, tok, make, base = _build(args, cfg)
         rep = X.e0(model, args.run_dir, target="y_hard" if args.hard else "y_soft",
                    lr=1e-4 if args.tiny else cfg["bases"][args.base]["lr"], head_lr=cfg["head_lr"],
@@ -175,6 +179,7 @@ def cmd_probes(args, cfg) -> dict:
     from r1.c3.train import exam_run as X
     lease_log: list = []
     with _lease(args, lease_log):
+        seed_everything(args.seed)          # before the model exists: LoRA and new-head init follow the seed
         model, tok, make, base = _build(args, cfg)
         if args.load:
             model.load(Path(args.load))
