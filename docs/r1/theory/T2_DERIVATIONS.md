@@ -1,5 +1,7 @@
 # T2 — When verification and thresholds are worth their cost
 
+> **Historical protocol context.** PLAN §10 later adopts the D4 amendment, the `vary` split policy and D23. Questions below about permitting thresholds and posterior-mean verify, and the unadopted D23 proposal, describe the earlier state. The derivations and their assumptions are unchanged and remain subject to independent audit and author checking.
+
 *Theory track T2 (RUNBOOK §3). Drafted 12 Oct 2026 by an AI agent (Claude) at the author's request. AI-assisted; the author has not checked these proofs yet, and no human has reviewed them (PLAN §9 item 6 requires both before any of this enters a manuscript). Every closed form below is implemented in `r1/theory/acceptance.py` and checked against Monte Carlo in `r1/tests/test_t2_acceptance.py` (20 tests). Numbers quoted from E1 are `PILOT` values (docs/r1/reports/NOISE_FLOOR_20261012.md).*
 
 Notation follows T1 (`docs/r1/theory/T1_MODEL.md`). Φ and φ are the standard normal cdf and pdf; ψ(z) = φ(z) − z Φ(−z) for z ≥ 0 is the knowledge-gradient kernel.

@@ -2,6 +2,8 @@
 
 **Status:** drafted 18 Oct 2026 by an AI agent (Claude, coordinating session). **Fixed by the author on 18 Oct 2026 (PLAN §10):** route A as C3 (R1-C3), the arm ladder of §5 plus the §10 reference arms (R1-C3 ladder), the C3 gate of §6, and the D4 amendment, D18, D21, D23 and `"vary"` split rows it depends on. Everything else below is a proposal. Theory: `docs/r1/theory/T4_FEEDBACK_PROPOSER.md` (Propositions 6–10). Nothing here is evidence.
 
+> **Later decisions.** The old §5 bin-as-action and greedy-bin deployment, and related prior-only training description, are superseded by separated belief and execute/skip outputs (PLAN §10 R1-C3-POST). R1-SOFT-SIGMA replaces the per-proposal audit-SE label for new tables; duplicates are rule-skipped and excluded from labels rather than assigned the no-op bin (22 Oct duplicates row). The 22 Oct row fixes g; K=10 is the total audit seed count. R1-INFER-LLAMACPP, R1-VENUE-3 and the current RUNBOOK supersede the old backend and venue references. Historical simulation assumptions, costs and dates below are retained; the venue decision did not itself adopt a new timeline.
+
 ## 1. One-paragraph summary
 
 The learned component does **not** choose actions. It predicts, **before a run is spent**, the distribution of the true increment of the proposed edit: the inert probability π, the mean μ and the spread τ, conditional on the edit and the ledger. These three numbers go into rules derived in C2:

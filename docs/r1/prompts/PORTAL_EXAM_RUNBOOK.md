@@ -1,5 +1,7 @@
 # Proposer exam (RUNBOOK Track X) — agent runbook for zhixu portal
 
+> **Transfer clarification.** PLAN §10 R1-EXAM-TRANSFER governs transfer through portal bare repositories without portal GitHub credentials. Older references below to pulling from GitHub or publishing STATUS from the portal must be read subject to that row and coordinator-mediated publication.
+
 **Written 26 Oct 2026 by the coordinating session (Claude) at the author's request; AI-assisted.** One implementation agent that can SSH into zhixu portal executes this runbook step by step. It fills the host facts, closes the code gaps, downloads and pins the models, and runs the exam. Every phase ends with a STOP that runs the **independent review loop** of §0 (author, 26 Oct): an independent reviewer agent reviews, this agent fixes, the independent agent accepts; then the agent reports and the author decides where marked. Do not skip a STOP.
 
 Authority: `docs/r1/PLAN.md` §10 (R1-EXAM-POOL, R1-EXAM-FIT, R1-EXAM-CTX, R1-SCHEMA, R1-QUANT-SOURCE, R1-EXAM-PROTOCOL, R1-EXAM-REVIEW, R1-SKIP-DISPLAY) and `docs/r1/RUNBOOK.md` Track X. If this file and those disagree, they win; stop and report.

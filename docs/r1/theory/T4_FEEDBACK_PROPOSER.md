@@ -1,5 +1,7 @@
 # T4 — Acceptance under noise with a ledger-dependent proposer
 
+> **Historical protocol context.** This theory uses a generic run price g; the later 22 Oct PLAN §10 row fixes g for the C3 gate and states the accounting convention. The forecast-GRPO and prior-only training discussion is historical relative to R1-C3-POST's separated belief/action design. The propositions and assumptions below are unchanged and remain subject to audit and author checking.
+
 *Theory track, extension of T2. Drafted 18 Oct 2026 by an AI agent (Claude, coordinating session) at the author's request. AI-assisted; the author has not checked these proofs yet and no human has reviewed them (PLAN §9 item 6). The two closed forms that carry the C3 design (the gain identity of Proposition 7 and the truncated-mean formula of Proposition 9) were checked against Monte Carlo on 18 Oct 2026 (2–4 × 10⁶ draws; agreement to MC error); the check script is not yet committed as a test.*
 
 Notation follows T1 and T2: Φ, φ are the standard normal cdf and pdf; ψ(z) = φ(z) − zΦ(−z); λ(a) = φ(a)/Φ(−a) is the inverse Mills ratio. V(t; μ, τ, σ) = μΦ(−z) + (τ²/s)φ(z) with s² = τ² + σ², z = (t − μ)/s, is the T2 Proposition 1 value of a threshold t.

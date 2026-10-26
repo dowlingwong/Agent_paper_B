@@ -17,6 +17,8 @@
 
 ## 1. Decisions adopted on 9 October 2026 (author)
 
+> **Historical section.** Later dated rows in §10 control: R1-VENUE-3 changes the venue to ICML 2027; R1-C3 and R1-C3-POST update the C3 route; the C3 gate governs online deployment. R1-ROUTE's headline framing remains in force pending an author decision; adopting R1-DAC-INTERFACE does not itself decide the headline.
+
 | ID | Decision |
 |---|---|
 | R1-ROUTE | Paper B takes route R1: **noise-aware learned control of governed autoresearch loops**. DAC is related-work vocabulary only, not the headline framing. |
@@ -183,6 +185,8 @@ The decision is made (R1-BENCH): no ResNet; agent benchmarks throughout. Which b
 
 ## 7. Configurator architecture (proposal for discussion; D16 open)
 
+> **Historical proposal; superseded in part.** See §10 R1-C3, R1-C3-BASE, R1-C3-CONTROL and R1-C3-POST for the adopted ladder, base pool and separated belief/action outputs. The later rows drop CLM and the greedy-bin action design; this section is retained for provenance.
+
 > **Deferred (R1-GATE-FIRST, 12 Oct).** No architecture is selected and no configurator scaffold is built until the headroom gate passes (RUNBOOK 0.4b pre-check, then 1.5). This section is context for that later decision, not a work item. If the gate fails, it is not needed.
 
 **Verified open candidates** (repository pages read 9 Oct 2026):
@@ -313,6 +317,8 @@ They stay where they are only because tests and release tooling import them. RUN
 | TMLR submission | ~31 Mar 2027 |
 
 ## 10. Open decisions
+
+> **Historical index.** Dated author rows below take precedence over this index. In particular the D4 amendment, D18, D23, the `vary` split policy, R1-INFER-LLAMACPP and R1-EXAM-PROTOCOL supersede older defaults. R1-TASL7-TRACKP changes the earlier portal placement; its host-equivalence gate remains required.
 
 D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with options and a recommendation. They are decided at the Phase 0 STOP using Phase 0 numbers, except where a phase needs one earlier.
 

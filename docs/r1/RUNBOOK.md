@@ -4,6 +4,8 @@ Canonical plan: [PLAN.md](PLAN.md). Progress goes only into [STATUS.md](STATUS.m
 
 **Revised 23 October 2026, hosts updated 24 October 2026, Tracks X, H and P added 25 October 2026,** by an AI agent (Claude, coordinating session); AI-assisted, not human review. This revision replaces the 12 Oct execution order (L1–L14, E1–E8, the branch-table headroom gate and the L11 configurator scaffold), which the 18 Oct decisions (R1-C3 route A, the A0–A6 ladder, the C3 gate) and the 22–23 Oct decisions (D21 pool of eight, R1-C3-BASE) superseded. What was done under the old order stays recorded in STATUS. Host assignments marked **(proposed)** need an author decision before work depends on them.
 
+> **Current routing and historical rows.** The sweep host is `deepthought.etp.kit.edu` (see `prompts/DEEPTHOUGHT_SWEEP1_RUNBOOK.md` §1), not the deepthought2 hostname in the older host table. R1-TASL7-TRACKP moves Track P and its listed 4B/LONO work from portal to TASL-7 after the host-equivalence gate; R1-ADA-OVERFLOW permits scoped resumable overflow. R1-INFER-LLAMACPP replaces Ollama for sweep 1. R1-EXAM-CTX sets 32,768 context with the specified 16,384 fallback; R1-EXAM-TRANSFER governs transfer without portal GitHub credentials. Track X and Track P have their own independent review loops. Older rows below are retained as history where they conflict with these later decisions.
+
 > **Venue changed to ICML 2027 (author, 24 Oct).** The deadline is not yet announced; a projection from the previous cycle puts abstract registration around 16 Jan 2027 and full papers around 22 Jan 2027. Only the venue changed: the plan, the phase targets and the quality bar stay as they are (author, 24 Oct).
 
 ## 1. Ground rules (unchanged)

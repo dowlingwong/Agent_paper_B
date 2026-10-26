@@ -1,5 +1,7 @@
 # Deepthought runbook — llama.cpp bring-up, liveness and C3 label sweep 1
 
+> **Later Track P host decision.** PLAN §10 R1-TASL7-TRACKP supersedes the older portal reference for A5 training in the handoff below; the host-equivalence and evidence-authorization gates remain separate.
+
 **For:** an implementation agent running on the deepthought host, with a shell, git push to `origin`, and `tmux`.
 **Written:** 25 Oct 2026 by the coordinating session (Claude), at the author's request. AI-assisted, not human review.
 **Covers RUNBOOK steps:** A.11 → A.1b → A.6 → A.8 host smoke → A.7 → (A.9, author) → B.1 → B.2, plus the A.4 table build.

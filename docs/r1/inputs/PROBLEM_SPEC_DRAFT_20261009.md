@@ -2,6 +2,8 @@
 
 *Design memo for the Paper B pivot. Draft of 9 Oct 2026. Not a paper section; nothing here is evidence. Nothing in it is adopted until the author decides §9.*
 
+> **Historical draft.** Later PLAN §10 rows supersede its proposed verify-only override, branch-table headroom gate, old model ladder, backend and benchmark pool. The original per-trial ledgers are lost (R1-LEDGERS); see R1-C3, the D4 amendment, D21, R1-INFER-LLAMACPP and R1-C3-POST for current decisions. This draft's framing is not a new author decision.
+
 **Tags.** **[E file:line]** means established in a source file. **[P]** means my proposal. **[NEW]** means the harness needs code it does not have. Harness paths are relative to `autoresearch_harness/`. `A/…` means `agent_sys_paper/papers/paper_a/`. `MDP` means `agent_sys_paper/notes/mdp_framing/MDP_FRAMING.md`. `B/…` means `agent_paper_B/`.
 
 ---

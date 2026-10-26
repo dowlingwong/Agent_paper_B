@@ -1,5 +1,7 @@
 # T3 — Campaign-level simulation of the T2 model
 
+> **Historical simulation.** The frozen verify response and D4 questions below describe the 12 Oct model and decision state. The later D4 amendment and `vary` policy are recorded in PLAN §10. These model outputs are unchanged.
+
 *Theory track T3 (RUNBOOK §3). Run on 12 Oct 2026 by an AI agent (Claude); AI-assisted. Label: `ENGINEERING_ONLY`. These are model-based numbers, not measurements of the harness.*
 
 - **Code:** `r1/theory/simulate.py` (model) and `r1/theory/t3_report.py` (runner). Sanity tests are in `r1/tests/test_t3_simulate.py`.
