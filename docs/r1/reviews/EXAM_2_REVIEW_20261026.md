@@ -88,3 +88,36 @@ The planned manual transition must first establish exact PID ownership/start tim
 Independently reran all **four transport tests: passed**. In addition, exercised real local process groups using sleep-only Python children substituted for the download child, with **no HTTP, model loading or inference**. Three independent probes verified cleanup after (1) another worker's simulated source/receiving STOP, (2) controller SIGTERM, and (3) controller KeyboardInterrupt. In all three cases the owned child group terminated and was reaped; no child survived. The queued-artifact regression also passes. The first local probe attempted a symlinked temporary-root fixture and failed its approved-root validation before launching a child; rerunning with the resolved temporary path exercised the intended cleanup paths successfully.
 
 No remaining transport blocker was identified for the coordinator's scoped migration: capture exact existing helper ownership/start times, terminate only those owned workers, preserve every old partial byte with size/SHA records, record transport package versions, then launch the source-pinned transport under the same storage floor. This is independent review of the transport correction, not final Phase 2 acceptance or permission to restart after a future STOP. All downloaded artifact receiving checks and the final code/config pin remain pending.
+
+## Incremental artifact receiving after transport migration
+
+Migration journal/script inspected at `f013d1d` (migration implementation includes `f86cff6` replay guard). It records exact old workers 1912901 and 3531521, uid 1008, executable/module/output argv, and start ticks 401577962 / 401860062. The script rechecks start ticks before signalling, waits for exit before moving files, rejects replay if either planned/completed journal exists, refuses symlink/unowned/out-of-root partials, and verifies size/SHA before and after same-filesystem renames. The runtime and source pins are unchanged by that migration. Recorded package versions are huggingface-hub 2.3.0 and hf-xet 1.7.0.
+
+The following are **independent full file reads**, checked against the active registry and receiving certificate. Device/inode/size/mtime were unchanged before versus after each hash. Preserve these checks for final reconciliation; if source pin or file identity/size/mtime changes, rehash that artifact. These observations accept only each named byte artifact, not the whole phase.
+
+| Candidate | Size | SHA256 | Stable file identity | Review Unix time |
+|---|---:|---|---|---:|
+| qwen38_27b | 17,442,399,968 | `880a52af8317974f7b4b064a6bc29ff49e188b91aa218e08eea3078b6b1cc673` | device 66306; inode 120751182; mtime_ns 1793009190361235628 | 1793010081.8414297 |
+| qwen36_27b | 17,984,872,960 | `8739a0cbb80036e5dbdced2085f142b8ba86e3235db8b8039b3769fe5fc70843` | device 66306; inode 120751183; mtime_ns 1793009470629249313 | 1793010095.154549 |
+
+Both receiving certificates are under `/home/dowling/exam-x/work/phase2/downloads/`; each certificate source exactly equals its active registry quant source.
+
+Independently rehashed all three archived originals against the migration journal, and confirmed the original `.partial` paths are absent. Archive directory: `/home/dowling/exam-x/work/phase2/transport_archives/1793009505560233102/`. Each stat identity was stable during hashing; device 66306 for all.
+
+| Preserved partial | Size | SHA256 | Inode / mtime_ns | Review Unix time |
+|---|---:|---|---|---:|
+| gemma4_31b | 1,258,291,200 | `2586705254e067c7bf7d37a2cdf1519d548f803ed826907f67bd1510de270c38` | 120870692 / 1793009501968250843 | 1793010096.0292237 |
+| muse_glimmer_30b | 117,440,512 | `05fc15d7bb9b96cee9f47ac6a398de5362eadb017499780c87526f45ed0faa86` | 120858529 / 1793009504305250957 | 1793010096.1210945 |
+| qwen3_coder_30b_a3b | 2,399,141,888 | `8e3920c9a13c96d72edc452ed1b27ee692790f2ba64acfc365f6856fd1158f83` | 120859466 / 1793009502057250847 | 1793010097.8215792 |
+
+**3,774,873,600 original partial bytes preserved**, all journal sizes and hashes matched independently. Both old worker `/proc` entries were absent at the recheck. Migration preservation is verified; **overall REVIEW PENDING**, with 2/22 complete GGUFs independently received so far.
+
+## Proposed transport concurrency adjustment — independent pre-use review
+
+Reviewed the narrow `workers` parameter change: integer 1–8 only (bool rejected), CLI default remains 2, and it changes only `ThreadPoolExecutor(max_workers=workers)`. Source policy, immutable pins, cache locations, storage-floor checks, cancellation and whole-file receiving are unchanged. Independently reran **7 transport tests: passed**.
+
+Also ran no-network real process-group probes at **six workers**. With five active sleep-only child groups and a sixth worker raising a simulated source STOP, all five owned groups were terminated/reaped and no queued artifact started. With six active child groups and controller SIGTERM, all six terminated/were reaped and no queued artifact started. This exercises the increased concurrency rather than only the default-two case. No GPU/model inference or HTTP was performed.
+
+No new blocker identified for the planned HTTP-only concurrency adjustment. Its migration must identify the exact live controller and owned child groups by UID/argv/start identity, signal the reviewed controller, confirm complete cleanup before relaunch, record stable pre-resume HF incomplete-cache sizes/SHA, retain their metadata/cache paths, and archive prior certificate/STOP/log history. Continuing the same immutable repo/revision/file from its existing HF cache is within this planned transport continuation; it does not change scientific sources or resume an experiment arm. Any unplanned STOP remains a preserve-and-report boundary. Final full artifact size/SHA checks remain mandatory. Minor documentation nit: the nearby comment still says two artifacts at a time despite the new parameter.
+
+Overall phase review remains pending; the earlier independent 2/22 completed artifact checks remain recorded above.

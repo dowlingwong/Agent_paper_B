@@ -1,0 +1,26 @@
+来自 /home/dowling/exam-x/work/remotes/agent_paper_B
+   f86cff6..21474ee  exam-x-20261026 -> origin/exam-x-20261026
+更新 f86cff6..21474ee
+Fast-forward
+ docs/r1/reports/PORTAL_EXAM_PHASE2_20261026.md     | 31 ++++++++
+ .../STAGE_A_SOURCE_PREREQUISITE.md                 | 13 ++++
+ .../reports/exam_phase2_20261026/cache_check.json  | 49 ++++++++++++
+ .../r1/reports/exam_phase2_20261026/hub_launch.log |  2 +
+ .../exam_phase2_20261026/inspect_gguf_headers.py   | 23 ++++++
+ .../exam_phase2_20261026/transport_migration.json  | 63 +++++++++++++++
+ .../exam_phase2_20261026/transport_migration.log   | 75 ++++++++++++++++++
+ docs/r1/reviews/EXAM_2_REVIEW_20261026.md          | 90 ++++++++++++++++++++++
+ 8 files changed, 346 insertions(+)
+ create mode 100644 docs/r1/reports/PORTAL_EXAM_PHASE2_20261026.md
+ create mode 100644 docs/r1/reports/exam_phase2_20261026/STAGE_A_SOURCE_PREREQUISITE.md
+ create mode 100644 docs/r1/reports/exam_phase2_20261026/cache_check.json
+ create mode 100644 docs/r1/reports/exam_phase2_20261026/hub_launch.log
+ create mode 100644 docs/r1/reports/exam_phase2_20261026/inspect_gguf_headers.py
+ create mode 100644 docs/r1/reports/exam_phase2_20261026/transport_migration.json
+ create mode 100644 docs/r1/reports/exam_phase2_20261026/transport_migration.log
+ create mode 100644 docs/r1/reviews/EXAM_2_REVIEW_20261026.md
+qwen38_27b qwen35 866
+qwen36_27b qwen35 866
+qwen38_27b VERIFIED
+qwen36_27b VERIFIED
+684201394176

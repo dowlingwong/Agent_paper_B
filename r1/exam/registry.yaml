@@ -1222,7 +1222,7 @@
       },
       "template_repair": null,
       "phase2_status": "SOURCE_PINNED_NOT_DOWNLOADED",
-      "source_label": "vendor Q4_K_M"
+      "source_label": "vendor Q4_K_M; community fine-tune, data provenance not audited"
     },
     {
       "id": "qwen25_coder_7b",
