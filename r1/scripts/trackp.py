@@ -8,8 +8,9 @@ Rules enforced here:
 * the config may hold no ``TODO_VERIFY_ON_HOST`` value (``--check-config`` lists them; ``--tiny`` dry runs on tiny
   random-weight models on CPU may pass ``--allow-placeholders``, real runs never);
 * GPU work runs under the GPU lease (``r1.c3.train.run.gpu_lease``; R1-PORTAL-SCHEDULE); ``--tiny`` runs on CPU;
-* evaluation runs (P.3a ``e0``/``probes``, P.3b, P.4–P.6) need their authorization note
-  ``docs/r1/authorizations/trackp_<phase>_<date>.md`` unless labelled DRYRUN;
+* evaluation subcommands (P.3a ``e0``/``probes``, P.3b ``exam``, P.4–P.6) need their authorization note
+  ``docs/r1/authorizations/trackp_<phase>_<date>.md`` for every run not labelled DRYRUN (``--tiny`` is always
+  DRYRUN; ``--evidence DRYRUN`` on a real base is the one-model dry run);
 * evaluation-seed columns are refused before the P.4 final evaluation (``run.guard_rows``).
 
 Examples::
@@ -50,8 +51,9 @@ def _evidence(args) -> str:
 
 def _require_authorization(args) -> None:
     phase = PHASE_OF.get(args.cmd)
-    if phase and _evidence(args) == "EVIDENCE" and R.authorization_note(phase) is None:
-        raise R.TrackPStop(f"{args.cmd} as evidence needs docs/r1/authorizations/trackp_{phase}_<date>.md")
+    if phase and _evidence(args) != "DRYRUN" and R.authorization_note(phase) is None:
+        raise R.TrackPStop(f"{args.cmd} ({_evidence(args)}) needs docs/r1/authorizations/trackp_{phase}_<date>.md; "
+                           "only DRYRUN runs go without it")
 
 
 def _build(args, cfg: dict):
@@ -74,8 +76,8 @@ def _build(args, cfg: dict):
     def make():
         if fam == "kev":
             return M.build_model("kev", spec["local_path"], base_name=spec["base_repo"],
-                                 revision=None, init_from=spec.get("adapter_local_path"), head_form=args.head_form,
-                                 dtype=dtype, device=dev, attn="sdpa")
+                                 base_revision=spec["base_revision"], init_from=spec.get("adapter_local_path"),
+                                 head_form=args.head_form, dtype=dtype, device=dev, attn="sdpa")
         if fam == "laya":
             return M.build_model("laya", spec["local_path"], head_form=args.head_form, device=dev)
         return M.build_model(fam, spec["local_path"], head_form=args.head_form, dtype=dtype, device=dev)
@@ -89,7 +91,8 @@ def _lease(args, lease_log: list):
     if args.tiny:
         yield None
         return
-    with R.gpu_lease(f"trackp {args.cmd} {args.base}", run_log=lease_log) as lease:
+    with R.gpu_lease(f"trackp {args.cmd} {args.base}", run_log=lease_log,
+                     lock_path=Path(os.path.expanduser(args.cfg["gpu"]["lock_path"]))) as lease:
         yield lease
 
 
@@ -225,6 +228,7 @@ def main(argv=None) -> int:
         if args.tiny:
             os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
         cfg = R.load_config(args.config, allow_placeholders=allow)
+        args.cfg = cfg
         _require_authorization(args)
         res = COMMANDS[args.cmd](args, cfg)
         run_dir = Path(args.run_dir)

@@ -228,3 +228,30 @@ def test_refuses_in_peak_hours_without_calling(fake, tmp_path):
 def test_demo_missing_key_refuses():
     with pytest.raises(R.DemoError):
         R.DemoWriter(env={})
+
+
+def _dead_url():
+    import socket
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    port = s.getsockname()[1]
+    s.close()                       # nothing listens there: connection refused
+    return f"http://127.0.0.1:{port}"
+
+
+def test_version_mismatch_is_not_a_jev_error():
+    """STOP 1 review #10: a retry/skip on JevError must not swallow the version STOP."""
+    assert not issubclass(J.JevVersionMismatch, J.JevError)
+
+
+def test_transport_failures_are_logged_by_both_clients(tmp_path):
+    c = J.JevClient(jcfg(_dead_url(), tmp_path), clock=CLOCK, env={J.KEY_ENV: FAKE_KEY})
+    with pytest.raises(J.JevError, match="transport"):
+        c.call(PROMPT)
+    rec = json.loads((tmp_path / "jev" / "20261024" / "calls.jsonl").read_text())
+    assert rec["status"] is None and "transport_error" in rec and FAKE_KEY not in json.dumps(rec)
+    w = R.DemoWriter(base_url=_dead_url(), log_root=tmp_path / "rb", clock=CLOCK, env={R.KEY_ENV: FAKE_KEY})
+    with pytest.raises(R.DemoError):
+        w.write(PROMPT)
+    rec = json.loads((tmp_path / "rb" / "20261024" / "calls.jsonl").read_text())
+    assert rec["status"] is None and "transport_error" in rec

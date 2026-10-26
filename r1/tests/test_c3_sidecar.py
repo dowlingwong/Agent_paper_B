@@ -56,7 +56,8 @@ def test_refuses_an_adapter_whose_sha256_differs_from_the_pin(tmp_path):
     done = subprocess.run([sys.executable, "-m", "r1.c3.serve", "--pin", str(pin_path), "--port", "0",
                            "--fake", str(_table(tmp_path))], cwd=REPO, capture_output=True, text=True, timeout=60)
     assert done.returncode == 2 and "REFUSED" in done.stderr
-    with pytest.raises(NotImplementedError):
+    # Track P 1.11: the real loader exists; a fixture pin (no model spec, no manifest) is refused before loading
+    with pytest.raises(PinError, match="model pin needs"):
         TorchLoraLoader().load(Pin.load(write_fake_pin(tmp_path / "ok")))
 
 

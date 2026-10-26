@@ -31,12 +31,17 @@ PLACEHOLDER = "TODO_VERIFY"
 EVIDENCE_LABELS = ("ENGINEERING_ONLY", "DRYRUN", "EVIDENCE")
 TRAIN_SEEDS = (7001, 7002, 7003, 7004, 7005)
 EVAL_SEEDS = (7006, 7007, 7008, 7009, 7010)
-EVAL_COLUMNS = re.compile(r"(^|_)eval($|_)|^y_eval|^z_eval|^u_eval|^mu_eval")
+EVAL_COLUMNS = re.compile(r"(^|_)eval($|_)|^y_eval|^z_eval|^u_eval|^mu_eval|(^|\D)70(0[6-9]|10)(\D|$)")
 LOCK_PATH = Path.home() / "r1_locks" / "gpu0.lock"
 LEASE_LOG = Path.home() / "r1_trackp" / "runs" / "gpu_lease_log.jsonl"
 AUTH_DIR = REPO / "docs" / "r1" / "authorizations"
-# STATUS headings that mark a running Track X evidence phase (PORTAL_EXAM_RUNBOOK B1/B2)
-TRACK_X_RUNNING = re.compile(r"^##.*\b(B1|B2)\b.*\b(running|started|in progress)\b", re.I | re.M)
+# Track X evidence phases (PORTAL_EXAM_RUNBOOK B1/B2) in STATUS.md (newest entry first). The newest heading that
+# names Track X/exam B1 or B2 decides: running/started/launched/in progress -> running, unless it also says
+# accepted/stopped/done/complete/finished. Proposed marker for the Track X agent: "## <date> — Track X B1 running" /
+# "... B1 done". The flock and nvidia-smi checks protect a running job regardless of STATUS.
+TRACK_X_HEADING = re.compile(r"^##.*\b(Track X|exam)\b.*\b(B1|B2)\b.*$", re.I | re.M)
+RUNNING_WORDS = re.compile(r"\b(running|started|launched|in progress)\b", re.I)
+ENDED_WORDS = re.compile(r"\b(accepted|stopped|done|complete|completed|finished)\b", re.I)
 
 
 class TrackPStop(RuntimeError):
@@ -84,10 +89,22 @@ def authorization_note(phase: str) -> Path | None:
     return notes[-1] if notes else None
 
 
+def _keys(obj, depth: int = 0) -> Iterator[str]:
+    """Every key of a row, nested dicts and a DecisionPrompt's ``meta`` included."""
+    if depth > 6:
+        return
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            yield str(k)
+            yield from _keys(v, depth + 1)
+    elif hasattr(obj, "meta") and isinstance(getattr(obj, "meta"), dict):
+        yield from _keys(obj.meta, depth + 1)
+
+
 def guard_rows(rows: Iterable[dict], *, purpose: str) -> list[dict]:
     """Refuse evaluation-seed columns unless ``purpose == "p4_final_eval"`` with its authorization note present."""
     rows = list(rows)
-    eval_cols = sorted({k for r in rows for k in r if EVAL_COLUMNS.search(k)})
+    eval_cols = sorted({k for r in rows for k in _keys(r) if EVAL_COLUMNS.search(k)})
     if not eval_cols:
         return rows
     if purpose != "p4_final_eval":
@@ -113,7 +130,8 @@ def track_x_running(status_text: str | None = None) -> bool:
         if res.returncode != 0:
             raise TrackPStop("cannot read STATUS.md on origin/main to check for a Track X evidence phase")
         status_text = res.stdout
-    return bool(TRACK_X_RUNNING.search(status_text))
+    m = TRACK_X_HEADING.search(status_text)
+    return bool(m and RUNNING_WORDS.search(m.group(0)) and not ENDED_WORDS.search(m.group(0)))
 
 
 def foreign_compute_processes() -> list[str]:

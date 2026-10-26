@@ -52,8 +52,9 @@ class JevError(RuntimeError):
     pass
 
 
-class JevVersionMismatch(JevError):
-    """The API answered with a model other than the pinned one: STOP (R1-JEV-RUNG)."""
+class JevVersionMismatch(RuntimeError):
+    """The API answered with a model other than the pinned one: STOP (R1-JEV-RUNG). Deliberately *not* a
+    ``JevError``, so a caller that retries or skips on ``JevError`` cannot swallow it."""
 
 
 def edge_name(k: int) -> str:
@@ -157,6 +158,10 @@ class JevClient:
                 status, raw = r.status, r.read().decode()
         except urllib.error.HTTPError as exc:
             status, raw = exc.code, exc.read().decode(errors="replace")
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:   # transport failure: logged, then raised
+            record.update(status=None, transport_error=repr(exc)[:300], response=None, model_returned=None)
+            self._log(record)
+            raise JevError(f"transport failure calling {url}: {exc!r}") from exc
         record.update(status=status, response_raw=raw)
         try:
             resp = json.loads(raw)

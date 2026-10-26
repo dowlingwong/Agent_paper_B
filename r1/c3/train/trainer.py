@@ -99,8 +99,10 @@ class Trainer:
 
     def __init__(self, model, rows: Sequence[dict], loss_fn, cfg: TrainConfig, run_dir: Path | str, *,
                  head_params: Sequence[torch.nn.Parameter] = (), evaluate: Callable | None = None,
-                 log: Callable[[str], None] = print) -> None:
-        self.model, self.rows, self.loss_fn, self.cfg = model, list(rows), loss_fn, cfg
+                 log: Callable[[str], None] = print, purpose: str = "train") -> None:
+        from r1.c3.train.run import guard_rows
+        # evaluation-seed columns (7006-7010) never reach training (RUNBOOK Track P §0)
+        self.model, self.rows, self.loss_fn, self.cfg = model, guard_rows(rows, purpose=purpose), loss_fn, cfg
         self.run_dir = Path(run_dir)
         self.evaluate, self.log = evaluate, log
         head_ids = {id(p) for p in head_params}
@@ -160,6 +162,7 @@ class Trainer:
         self.sched.load_state_dict(state["sched"])
         _set_rng_state(state["rng"])
         self.step = int(state["step"])
+        self._truncate_metrics(self.step)
         self.log(f"resumed from {d} at step {self.step}")
         return self.step
 
@@ -175,6 +178,14 @@ class Trainer:
             if len(idx):
                 out.append([self.rows[j] for j in idx])
         return out
+
+    def _truncate_metrics(self, step: int) -> None:
+        """Drop records of steps after the resumed checkpoint (they are recomputed), so each step is logged once."""
+        path = self.run_dir / "metrics.jsonl"
+        if not path.is_file():
+            return
+        keep = [ln for ln in path.read_text().splitlines() if ln.strip() and json.loads(ln).get("step", 0) <= step]
+        path.write_text("".join(ln + "\n" for ln in keep))
 
     def _write(self, record: dict) -> None:
         self.run_dir.mkdir(parents=True, exist_ok=True)

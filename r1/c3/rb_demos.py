@@ -95,11 +95,14 @@ class DemoWriter:
         req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
                                      headers={"Content-Type": "application/json",
                                               "Authorization": f"Bearer {self._key}"})
+        transport = None
         try:
             with urllib.request.urlopen(req, timeout=self.timeout_s) as r:
                 status, raw = r.status, r.read().decode()
         except urllib.error.HTTPError as exc:
             status, raw = exc.code, exc.read().decode(errors="replace")
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:   # transport failure: logged, then raised
+            status, raw, transport = None, "", repr(exc)[:300]
         try:
             resp = json.loads(raw)
         except json.JSONDecodeError:
@@ -110,7 +113,8 @@ class DemoWriter:
                   "model_returned": resp.get("model") if isinstance(resp, dict) else None,
                   "prompt_id": prompt.meta.get("proposal_id"), "request": body, "status": status,
                   "response": resp if resp is not None else raw, "analysis": analysis,
-                  "usage": resp.get("usage") if isinstance(resp, dict) else None}
+                  "usage": resp.get("usage") if isinstance(resp, dict) else None,
+                  **({"transport_error": transport} if transport else {})}
         path = self.log_path
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as f:

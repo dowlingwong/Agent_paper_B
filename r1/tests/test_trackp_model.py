@@ -104,6 +104,25 @@ def roundtrip(wrapper, make, batch, tmp_path, **fw):
     assert torch.equal(ref["belief_logits"], got["belief_logits"])
     if ref["action_logit"] is not None:
         assert torch.equal(ref["action_logit"], got["action_logit"])
+    # a manifest that drops a loaded file, or an adapter missing keys, is refused (STOP 1 review #8)
+    man_path = tmp_path / "ckpt" / M.MANIFEST
+    man = json.loads(man_path.read_text())
+    dropped = dict(man, files={k: v for k, v in man["files"].items() if k != M.HEADS_FILE})
+    man_path.write_text(json.dumps(dropped))
+    with pytest.raises(M.IntegrityError, match="not recorded"):
+        make().load(tmp_path / "ckpt")
+    man_path.write_text(json.dumps(man))
+    from safetensors.torch import load_file, save_file
+    ad_path = tmp_path / "ckpt" / M.ADAPTER_FILE
+    full = ad_path.read_bytes()
+    ad = load_file(str(ad_path))
+    save_file(dict(list(ad.items())[1:]), str(ad_path))
+    partial = dict(man, files={**man["files"], M.ADAPTER_FILE: M.sha256_file(ad_path)})
+    man_path.write_text(json.dumps(partial))
+    with pytest.raises(M.IntegrityError, match="lacks"):
+        make().load(tmp_path / "ckpt")
+    ad_path.write_bytes(full)
+    man_path.write_text(json.dumps(man))
     # tampering with any recorded file is refused
     heads = tmp_path / "ckpt" / "heads.safetensors"
     heads.write_bytes(heads.read_bytes()[:-1] + bytes([heads.read_bytes()[-1] ^ 1]))
@@ -221,6 +240,22 @@ def test_pointer_wrapper_warm_start_from_a_kev_checkpoint(tiny_dirs, qwen_tok, t
         assert torch.allclose(src(prompts(2))["belief_logits"], dst(prompts(2))["belief_logits"], atol=1e-6)
     with pytest.raises(ValueError):  # base mismatch is refused before anything loads
         M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, base_name="other/base", init_from=str(run))
+
+
+def test_pointer_wrapper_refuses_a_checkpoint_of_another_base_revision(tiny_dirs, qwen_tok, tmp_path):
+    """The pinned base revision (config ``base_revision``) is compared with the checkpoint's (STOP 1 review #7)."""
+    from kev.checkpoint import Meta, write_meta
+    src = M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, action_head=False)
+    run = tmp_path / "kevrun"
+    src.kev.lm.save_pretrained(str(run))
+    write_meta(str(run), Meta(base="tiny/qwen35", base_revision="a" * 40, head=src.kev.head.state_dict(),
+                              lora=M.LORA_R, head_dim=256))
+    ok = M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, action_head=False, base_name="tiny/qwen35",
+                       base_revision="a" * 40, init_from=str(run))
+    assert ok.provenance["init_from"] == str(run)
+    with pytest.raises(ValueError):
+        M.build_model("kev", tiny_dirs["hybrid"], qwen_tok, action_head=False, base_name="tiny/qwen35",
+                      base_revision="b" * 40, init_from=str(run))
 
 
 def test_pointer_wrapper_packs_on_attention_only_bases(tiny_dirs, qwen_tok):
@@ -497,3 +532,27 @@ def test_every_family_and_head_form_learns_a_fixed_batch(family, form, tmp_path)
         losses.append(float(loss.detach()))
     assert losses[-1] < losses[0] - 0.05 and losses[-1] < 3.0, losses[::10]
     assert (p.detach() > 0).all()
+
+
+def test_laya_native_readout_equals_layas_own_forward(laya_parts):
+    """STOP 1 review #9: ``LayaWrapper._core_forward`` reproduces ``laya.common.DecisionModel.forward``'s logits."""
+    cfg, enc, tok = laya_parts
+    torch.manual_seed(0)
+    w = M.build_model("laya", (cfg, enc), tok)
+    _perturb(w)
+    w.eval()
+    batch = prompts(3)
+    encs = [w.encode(p) for p in batch]
+    L = max(len(e["ids"]) for e in encs)
+    ids = torch.full((3, L), tok.pad_token_id, dtype=torch.long)
+    att = torch.zeros((3, L), dtype=torch.long)
+    for i, e in enumerate(encs):
+        ids[i, :len(e["ids"])] = torch.tensor(e["ids"])
+        att[i, :len(e["ids"])] = 1
+    marker_pos = torch.tensor([e["markers"] for e in encs])
+    marker_mask = torch.ones_like(marker_pos, dtype=torch.bool)
+    qtype = torch.full((3,), w.lc.QTYPES["choice"])
+    with torch.no_grad():
+        theirs = w.core(ids, att, marker_pos, marker_mask, qtype)[0]
+        ours = w(batch)["belief_logits"]
+    assert torch.allclose(ours, theirs.float(), atol=1e-5)

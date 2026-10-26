@@ -94,6 +94,31 @@ def test_kill_and_resume_matches_an_uninterrupted_run(tmp_path):
     assert steps == list(range(1, 11))             # no completed step repeated
 
 
+def test_steps_after_the_checkpoint_are_logged_once_after_resume(tmp_path):
+    cfg = TrainConfig(seed=3, epochs=2, batch_size=4, grad_accum=2, checkpoint_every_frac=0.5)  # ckpt every 2 steps
+    t = make(tmp_path, cfg)
+    t.train(stop_after=3)                          # steps 1-3 logged, last checkpoint at step 2
+    make(tmp_path, cfg).train()
+    steps = [json.loads(l)["step"] for l in (tmp_path / "metrics.jsonl").read_text().splitlines()
+             if json.loads(l)["kind"] == "step"]
+    assert steps == list(range(1, 11))
+
+
+def test_trainer_refuses_evaluation_seed_fields():
+    bad = rows(4)
+    bad[1]["y_eval"] = bad[1]["y"]
+    with pytest.raises(R.TrackPStop, match="7006-7010"):
+        make_rows(bad)
+    meta = rows(4)
+    meta[2]["prompt"] = DecisionPrompt(state="s", proposal="p", meta={"audit": {"delta_7008": 0.1}})
+    with pytest.raises(R.TrackPStop):
+        make_rows(meta)
+
+
+def make_rows(rs):
+    return Trainer(TinyModel(), rs, loss_fn, TrainConfig(), "/nonexistent")
+
+
 def test_incomplete_checkpoint_is_ignored_and_tampered_state_refused(tmp_path):
     cfg = TrainConfig(seed=1, epochs=1, batch_size=8, grad_accum=1)
     t = make(tmp_path, cfg)
@@ -148,6 +173,14 @@ def test_gpu_lease_logs_and_refuses_when_held_or_track_x_runs(tmp_path):
             pass
 
 
+def test_track_x_status_reading_uses_the_newest_b1_b2_heading():
+    run = "## 4 Nov — Track X B2 started\n\n## 3 Nov — Track X B1 done\n"
+    done = "## 5 Nov — Track X B2 done (accepted)\n\n" + run
+    assert R.track_x_running(run) and not R.track_x_running(done)
+    assert not R.track_x_running("## 26 Oct — Track P Phase 0\n## 25 Oct — exam runbook adopted\n")
+    assert R.track_x_running("## 6 Nov — exam B1 in progress on the portal\n")
+
+
 def test_manifest_records_commits_and_hashes():
     m = R.run_manifest(subcommand="spike", evidence="ENGINEERING_ONLY", cfg={"a": 1}, seed=0,
                        base={"repo": "x", "revision": "y"}, model_files={"heads.pt": "0" * 64},
@@ -156,3 +189,30 @@ def test_manifest_records_commits_and_hashes():
     with pytest.raises(ValueError):
         R.run_manifest(subcommand="spike", evidence="PILOT", cfg={}, seed=0, base={}, model_files={}, data_hash="",
                        lease_log=[])
+
+
+def _trackp_cli():
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location("trackp_cli", Path(R.REPO) / "r1/scripts/trackp.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@pytest.mark.parametrize("cmd,phase", [("e0", "p3a"), ("probes", "p3a"), ("exam", "p3b"), ("sft", "p4"),
+                                       ("a6", "p5"), ("rb", "p6")])
+def test_authorization_gate_for_every_non_dryrun_label(cmd, phase, tmp_path, monkeypatch):
+    import types
+    cli = _trackp_cli()
+    monkeypatch.setattr(R, "AUTH_DIR", tmp_path)
+    for label in ("ENGINEERING_ONLY", "EVIDENCE"):
+        args = types.SimpleNamespace(cmd=cmd, tiny=False, evidence=label)
+        with pytest.raises(R.TrackPStop, match=f"trackp_{phase}_"):
+            cli._require_authorization(args)
+    cli._require_authorization(types.SimpleNamespace(cmd=cmd, tiny=False, evidence="DRYRUN"))
+    cli._require_authorization(types.SimpleNamespace(cmd=cmd, tiny=True, evidence="ENGINEERING_ONLY"))
+    (tmp_path / f"trackp_{phase}_20261201.md").write_text("note")
+    for label in ("ENGINEERING_ONLY", "EVIDENCE"):
+        cli._require_authorization(types.SimpleNamespace(cmd=cmd, tiny=False, evidence=label))
+    cli._require_authorization(types.SimpleNamespace(cmd="spike", tiny=False, evidence="ENGINEERING_ONLY"))

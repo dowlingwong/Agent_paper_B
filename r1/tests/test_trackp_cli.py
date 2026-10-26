@@ -54,13 +54,12 @@ def test_later_phases_refuse(tmp_path):
         assert res.returncode == 2 and "STOP" in res.stderr
 
 
-def test_evidence_runs_need_their_authorization_note(tmp_path):
-    res = run("e0", "--tiny", "--family", "kev", "--allow-placeholders", "--run-dir", str(tmp_path), check=False)
-    assert res.returncode == 0 or "STOP" not in res.stderr  # --tiny is DRYRUN: no note needed
-    from r1.c3.train import run as R
-    if R.authorization_note("p3a") is None:
-        res = run("e0", "--base", "kev-0.8b", "--evidence", "EVIDENCE", "--run-dir", str(tmp_path / "y"), check=False)
-        assert res.returncode == 2
+def test_tiny_runs_are_dryrun_and_need_no_note(tmp_path):
+    res = run("e0", "--tiny", "--family", "kev", "--allow-placeholders", "--run-dir", str(tmp_path), "--steps", "1",
+              "--examples", "8", "--n-test", "8", check=False)
+    assert res.returncode == 0, res.stderr[-2000:]
+    assert json.loads((tmp_path / "manifest.json").read_text())["evidence_label"] == "DRYRUN"
+    # the gate itself (every non-DRYRUN label, with and without a note) is tested in test_trackp_trainer.py
 
 
 @pytest.mark.parametrize("family", ["kev", "qwen_control"])
@@ -107,7 +106,7 @@ def _params(run_dir: Path):
 
 
 def test_toy_kill_and_resume_matches_an_uninterrupted_run(tmp_path):
-    args = ["toy", "--tiny", "--family", "kev", "--allow-placeholders", "--steps", "16", "--examples", "32"]
+    args = ["toy", "--tiny", "--family", "kev", "--allow-placeholders", "--steps", "40", "--examples", "32"]
     run(*args, "--run-dir", str(tmp_path / "full"))
     part = tmp_path / "part"
     proc = subprocess.Popen([*CLI, *args, "--run-dir", str(part)], env=ENV, cwd=REPO,
@@ -124,12 +123,11 @@ def test_toy_kill_and_resume_matches_an_uninterrupted_run(tmp_path):
     os.kill(proc.pid, signal.SIGKILL)
     proc.wait()
     killed_at = max(int(p.name.split("_")[1]) for p in ckpt.glob("step_*") if (p / "COMPLETE").is_file())
-    assert killed_at < 16
+    assert killed_at < 40
     run(*args, "--run-dir", str(part))
     steps = [json.loads(l)["step"] for l in (part / "toy" / "metrics.jsonl").read_text().splitlines()
              if json.loads(l)["kind"] == "step"]
-    resumed = steps[steps.index(killed_at) + 1:] if killed_at in steps else steps
-    assert resumed[resumed.index(killed_at + 1):] == list(range(killed_at + 1, 17))  # resumed after the checkpoint
+    assert steps == list(range(1, 41))   # each step logged once: steps after the checkpoint were recomputed
     a_full, h_full = _params(tmp_path / "full")
     a_part, h_part = _params(part)
     import torch

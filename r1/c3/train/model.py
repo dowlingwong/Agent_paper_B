@@ -65,6 +65,8 @@ ANALYSIS_MAX_TOKENS = 256
 BIN_TOKENS = tuple(f"<b{k}>" for k in range(N_BINS))
 EXEC_TOKEN, SKIP_TOKEN = "<exec>", "<skip>"
 MANIFEST = "manifest.json"
+ADAPTER_FILE = "adapter/adapter_model.safetensors"
+HEADS_FILE = "heads.safetensors"
 EPS = 1e-6
 LOG_EPS = 1e-12
 
@@ -181,21 +183,28 @@ class _Wrapper(nn.Module):
 
     def load(self, path) -> dict:
         """Verify every recorded sha256, then load adapter and heads into this (identically built) wrapper."""
-        from peft import set_peft_model_state_dict
+        from peft import get_peft_model_state_dict, set_peft_model_state_dict
         from safetensors.torch import load_file
         path = Path(path)
         record = json.loads((path / MANIFEST).read_text())
         for key in ("family", "head_form", "action_head"):
             if record.get(key) != self.describe()[key]:
                 raise ValueError(f"{path}: {key} is {record.get(key)!r} there and {self.describe()[key]!r} here")
+        for required in (ADAPTER_FILE, HEADS_FILE):   # what is loaded must be what is pinned
+            if required not in record["files"]:
+                raise IntegrityError(f"{path}: {required} is not recorded in the manifest")
         for f, digest in record["files"].items():
             if sha256_file(path / f) != digest:
                 raise IntegrityError(f"{path / f}: sha256 does not match the manifest")
-        adapter = load_file(str(path / "adapter" / "adapter_model.safetensors"))
+        adapter = load_file(str(path / ADAPTER_FILE))
+        expected = {k for k in get_peft_model_state_dict(self._peft())}
+        missing = sorted(expected - set(adapter))
+        if missing:  # a partial adapter would otherwise load silently with LoRA at its initial values
+            raise IntegrityError(f"{path}: adapter lacks {len(missing)} keys, e.g. {missing[:3]}")
         res = set_peft_model_state_dict(self._peft(), adapter)
         if getattr(res, "unexpected_keys", None):
             raise ValueError(f"unexpected adapter keys: {res.unexpected_keys[:5]}")
-        self.heads.load_state_dict(load_file(str(path / "heads.safetensors")), strict=True)
+        self.heads.load_state_dict(load_file(str(path / HEADS_FILE)), strict=True)
         return record
 
     def _out(self, belief: torch.Tensor, action: torch.Tensor | None, **extra) -> dict:
@@ -210,8 +219,11 @@ class PointerWrapper(_Wrapper):
     family = "kev"
 
     def __init__(self, base: str, tokenizer=None, *, base_name: str | None = None, revision: str | None = None,
-                 init_from: str | None = None, head_form: str = "softmax12", action_head: bool = True,
-                 dtype=torch.float32, device="cpu", max_state: int = 1024, attn: str | None = None):
+                 base_revision: str | None = None, init_from: str | None = None, head_form: str = "softmax12",
+                 action_head: bool = True, dtype=torch.float32, device="cpu", max_state: int = 1024,
+                 attn: str | None = None):
+        """``revision``: Hub revision to download ``base`` at (moot for a local directory); ``base_revision``: the
+        pinned base revision checked against a warm-start checkpoint's ``head.pt`` (defaults to ``revision``)."""
         super().__init__(head_form, action_head)
         from kev import model as km
         self.km_mod = km
@@ -220,7 +232,7 @@ class PointerWrapper(_Wrapper):
         self.provenance = None
         if init_from:
             from kev.checkpoint import Checkpoint, Meta
-            ours = Meta(base=base_name or base, base_revision=revision, lora=LORA_R, head_dim=256)
+            ours = Meta(base=base_name or base, base_revision=base_revision or revision, lora=LORA_R, head_dim=256)
             self.provenance = Checkpoint(init_from).warm_start(self.kev, ours)
         self.ctx = km.training_context(max_state)
         self.packing = not self.kev.hybrid  # attention-only backbones run Kev's packed tree form (= spec §2.4 mask)
