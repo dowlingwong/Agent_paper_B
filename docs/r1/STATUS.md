@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — clarified CPU baseline independently reviewed (AI-assisted; restricted)
+
+- The corrected-environment [baseline](reports/LOCAL_BASELINE_CLARIFIED_20261027.md) and exact-ID harness comparison were accepted as restricted engineering documentation by [review](reviews/LOCAL_BASELINE_CLARIFIED_REVIEW_20261027.md): harness before/after 443 passed, 19 failed, one collection error, 55 subtests passed, same outcomes; paper baseline and separate tiny-model checks retain their recorded failures and skips.
+- Eight dry-run test IDs and two individual cases were excluded from the paper selections; the original unrestricted full-suite criterion and L4.4/L4.5 acceptance remain unestablished. No failure was converted to an accepted exception and no scientific evidence is inferred.
+
 ## 27 October 2026 — L7 decision consistency pass independently accepted (AI-assisted)
 
 - The [post-decision scan](reports/LOCAL_POST_DECISION_SCAN_20261027.md), updated [technical route](TECH_ROUTE.md), Track P specification, manuscript outline and handoff were independently reviewed after corrections: [review](reviews/LOCAL_L7_REVIEW_20261027.md), initial alignment `4f30ed2`, review corrections `fc439ad`. DAC framing, bin/RPS decisions, scope, H.8, C4 and Track G rulings are recorded in PLAN §10 and reconciled in the reviewed files.
