@@ -64,3 +64,43 @@ AI-assisted (Claude Code, an independent reviewer subagent running on TASL-7 tha
 4. **Fixed.** `host_record()` now records `device`: the name, `GPU-<uuid>` and compute capability of `torch.cuda.current_device()`. It also adds the nvidia-smi UUID per card and `CUDA_DEVICE_ORDER`. A new test, `test_host_record_names_the_device_in_use`, checks that the device name equals torch's and that its UUID is among nvidia-smi's cards. `test_trackp_trainer.py`: 18 passed in `trackp-gpu` on TASL-7. Live output: device RTX 4090, `GPU-ab72fb4a-…`, which matches nvidia-smi.
 
 Notes: the merge commits without trailers stay as pushed. Question 1 of the migration report (the Track X STATUS fallback on TASL-7) is left to the author.
+
+## Re-check (same reviewer, against `23f08a7`)
+
+What I re-checked: `git show 23f08a7` for every changed report and code file. I re-ran `r1/tests/test_trackp_trainer.py` in `trackp-gpu` twice under `flock -n ~/r1_locks/gpu0.lock`, after checking that the compute-apps query was empty and no marker existed: with the GPU visible, **18 passed**; with `CUDA_VISIBLE_DEVICES=` empty, **18 passed**. I also called `R.host_record()` directly under the same lease.
+
+1. **Finding 1: resolved.** The new "Timeline (UTC, 26 Oct)" section in `TRACKP_TASL7_EQUIVALENCE_20261026.md` does what was asked:
+   - It states plainly that the pre-declaration's "re-verified" was not yet true at 22:47.
+   - It gives 22:49:21 for the Qwen-0.8B weights, which matches the file mtimes.
+   - It places the saved 8-repo check after the run.
+   - It notes the missing manifest `host` field at `8e13e77`.
+   - `PREDECLARATION.md` is unchanged.
+
+   The new claim of an unsaved, interactive re-hash just before launch (kev-0.8b and Qwen-0.8B, 12/12 each, against the committed registry) is supported by the session transcript on this host. The check ran at 22:52:01Z, before the lease at 22:52:16Z, and printed `kev-0.8b: 12/12 … qwen3.5-0.8b-base: 12/12 … ALL OK`.
+2. **Finding 2: resolved.** Host-facts row 0.5 and Phase 2 §2.2, attempt 1, now say that Xet downloaded and verified kev-0.8b, kev-4b and Qwen-0.8B, and that the job was stopped at the start of Qwen-4B. This is consistent with the attempt-1 log and the file times: Qwen-0.8B was complete at 22:49:21Z and attempt 1 was killed at about 22:49:30Z. They also say that the equivalence run's repos came through Xet.
+3. **Finding 3: resolved.** Migration report row (3) now says that the TASL-7 agent chose and pre-declared the configuration in `f3567e9`, and that the portal hand-over `84fe7c1` (23:41 UTC) repeats it.
+4. **Finding 4: the code is resolved, but the test edit introduced a regression (new finding 5).**
+   - `host_record()` now records the device in use as `torch.cuda.get_device_properties(current_device())`: its name, `GPU-<uuid>` and compute capability. It also records the per-card nvidia-smi UUIDs and `CUDA_DEVICE_ORDER`.
+   - Live output on TASL-7: `device` = RTX 4090, `GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1`, the same as nvidia-smi's UUID. This identifies the card unambiguously under any `CUDA_VISIBLE_DEVICES` order.
+   - Side effect checked: the call initialises torch's CUDA state even in commands that take no lease (`e0-select` writes a manifest too). Under the lease I observed `torch.cuda.is_initialized()` turning from False to True, but **no** entry in `nvidia-smi --query-compute-apps`. So it does not create a visible compute process that could trip another job's foreign-process check, and no fix is needed.
+
+5. **New, MINOR: the PILOT-label check now runs only on GPU hosts.** In `r1/tests/test_trackp_trainer.py` at `23f08a7`, the new `test_host_record_names_the_device_in_use` was inserted in the middle of `test_manifest_records_commits_and_hashes`. That test's final block, `with pytest.raises(ValueError): R.run_manifest(... evidence="PILOT" ...)`, now sits at the end of the new test, after its `if not torch.cuda.is_available(): … return`. Two consequences:
+   - The manifest test no longer checks that a non-allowed evidence label is rejected.
+   - On every CPU-only host (the Phase 1 `trackp-cpu` venv, the coordinating session's checkout) that check is skipped silently. The CPU run above still reports 18 passed.
+
+   This is a lost guard on evidence labelling, not just a cosmetic issue. **Fix:** move the three-line `pytest.raises(ValueError)` block back to the end of `test_manifest_records_commits_and_hashes` (or into its own test), so that it runs unconditionally. Then re-run the file with and without a visible GPU.
+
+### Final verdict
+
+**Not accepted**, for one reason only: finding 5, a misplaced test block that silently drops the evidence-label rejection test on CPU hosts. It is a three-line move.
+
+Everything else is accepted:
+- Findings 1–3 are corrected accurately, and the new pre-run claim was verified.
+- The `host_record()` code change is correct.
+- The migration's substance stands as established in the first pass: the same freeze; 112/112 files matching the committed registry; the pre-declaration pushed before the lease; and the host-equivalence result recomputed as equivalent.
+
+Once finding 5 is fixed, this reviewer expects to accept after a quick re-run of the test file in both modes.
+
+## Response to finding 5 (Track P agent)
+
+**Fixed.** The `pytest.raises(ValueError)` "PILOT" block is back at the end of `test_manifest_records_commits_and_hashes`, and `test_host_record_names_the_device_in_use` is a separate test that follows it. `test_trackp_trainer.py` gives 18 passed with the GPU visible and 18 passed with `CUDA_VISIBLE_DEVICES=` empty, both under `flock -n ~/r1_locks/gpu0.lock`.
