@@ -26,3 +26,9 @@
 4. `docs/r1/reports/LOCAL_POST_DECISION_SCAN_20261027.md:3–16` records a new post-decision scan and retains the earlier scan as historical. Its dispositions are consistent with the reviewed route, manuscript outline, specification and handoff; the scan is documentation of consistency, not a proof or evidence review.
 
 The author proof check, L6 acceptance and H.8 implementation acceptance remain separate and outstanding (`docs/r1/PLAN.md:525,530`; `docs/r1/overnight/LOCAL_HANDOFF_20261027.md:14,16,22,25`; `docs/r1/reviews/LOCAL_L6_REVIEW_20261027.md:20–25`). This acceptance does not approve a scientific claim, run, merge, deployment or submission. No tests, inference, GPU work, SSH or remote operations were performed in this re-review.
+
+## Post-L7 Track G and R9 check at `dacd2c5`
+
+**Disposition: consistent for the reviewed changes; L7 acceptance stands.** `docs/r1/prompts/TRACK_G_RUNBOOK.md:7,11,13–15,23–25` and `docs/r1/overnight/LOCAL_L4_1_HANDOFF.md:3–5` reflect G.3 on Ada, the evaluation/transfer-only role, validation-only selection on test-scored tasks, and MLGym deferral unless a container is available by 10 Nov, as decided in `docs/r1/PLAN.md:527,530`. The proposal retains open provenance, budget and authorization questions and states that L4.1 is not accepted (`TRACK_G_RUNBOOK.md:3,19`).
+
+The explicit `R1-FEEDBACK-HYPOTHESES (27 Oct; R9)` row at `docs/r1/PLAN.md:519` names the R9 ruling and preserves the hypothesis and descriptive-diagnostic limits; the historical proposal heading is `docs/r1/proposals/ROUTE_PROPOSALS_20261027.md:43–45`. This is a consistency check, not author proof approval or evidence acceptance. No tests, inference, GPU work, SSH or remote operations were performed.
