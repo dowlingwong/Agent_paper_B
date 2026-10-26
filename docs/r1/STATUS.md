@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — hosts: TASL-7 dedicated to Track P; Ada as overflow (AI-assisted; documents only)
+
+- Author decisions recorded (PLAN §10): R1-ADA-OVERFLOW (zhixu experiment takes resumable overflow runs; one comparison table on one GPU type and one pinned environment unless declared) and R1-TASL7-TRACKP (second RTX 4090 node TASL-7, exclusive, dedicated to Track P; zhixu portal left to Track X).
+- RUNBOOK §3 host table and Track P hardware note updated; `PORTAL_TRACK_P_RUNBOOK.md` gains a host-change header with the migration steps (TASL-7 host facts, same pinned environment and model revisions, host-equivalence E0 DRYRUN with a pre-declared tolerance, independent review, STOP).
+- Needed from the author: SSH key and alias for TASL-7, GitHub authentication there, a reboot (the host reports "System restart required") before long runs, Claude Code on TASL-7, later `~/.config/r1/secrets.env`.
+
 ## 26 October 2026 — Track P: author's decisions implemented; E0 v2 DRYRUN on Kev-0.8B and Qwen-0.8B (AI-assisted)
 
 - The author's 26 Oct decisions are recorded as PLAN §10 rows (R1-STARTLUX-TRAINABLE … R1-TRACKP-MERGE) on `trackp-20261026`, with the spec corrected to match. The agent's own implementation choices are listed under the rows for confirmation.
