@@ -63,8 +63,9 @@ def test_targets_are_the_binned_normal_and_its_argmax(items):
 def test_rps_hand_computed():
     p = np.zeros(12); p[0] = 0.2; p[3] = 0.8
     y = np.zeros(12); y[5] = 1.0
-    # cumulative over bins 1..11: P = 0,0,.8,.8,.8,... ; Y = 0,0,0,0,1,...  -> 2 * .64 + 7 * .04 ; Brier .04
-    assert E.rps(p, y) == pytest.approx(2 * 0.64 + 7 * 0.04 + 0.04)
+    # metrics.rps: 0.5 * (Brier_0 + (1 - y_0) * mean_k (Q_k - R_k)^2) on the renormalised non-inert parts;
+    # Q = 0,0,1,1,1,... and R = 0,0,0,0,1,... over the first 10 cumulative bins -> mean 0.2; Brier_0 = .04
+    assert E.rps(p, y) == pytest.approx(0.5 * (0.04 + 0.2))
     assert E.rps(y, y) == 0
 
 

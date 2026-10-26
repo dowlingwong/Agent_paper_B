@@ -43,6 +43,7 @@ from scipy.stats import norm
 
 from r1.c3.features import NODE_INFO
 from r1.c3.labels import EDGES, N_BINS, moments
+from r1.c3.train.metrics import rps  # the one RPS definition of Track P (metrics.py)
 from r1.c3.train.serialize import (budget_line, count_tokens, edit_text, history_line, incumbent_lines, node_lines,
                                    state_text)
 from r1.c3.train.types import BIN_OPTIONS, QUESTION, DecisionPrompt
@@ -217,14 +218,6 @@ def load(path: Path = E0_FILE, sha_path: Path = E0_SHA, verify: bool = True) -> 
 
 
 # ---------------------------------------------------------------- metrics
-
-def rps(p, y) -> np.ndarray:
-    """Spec §6.1: sum over k of (P_k - Y_k)^2 on the cumulative distributions of bins 1-11, plus the bin-0 Brier
-    term (p_0 - y_0)^2. Per row."""
-    p, y = np.asarray(p, float), np.asarray(y, float)
-    cp, cy = np.cumsum(p[..., 1:], -1), np.cumsum(y[..., 1:], -1)
-    return ((cp - cy) ** 2).sum(-1) + (p[..., 0] - y[..., 0]) ** 2
-
 
 def belief_moments(p) -> tuple[np.ndarray, np.ndarray]:
     """Mean and std (z units) of the non-inert part of bin distributions (bin midpoints, tails at +-4)."""
