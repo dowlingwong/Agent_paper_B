@@ -75,3 +75,40 @@ def test_non_sidecar_never_serializes(setup):
     decision = ctl.decide(view(), {'skip': True})
     assert decision.detail['fallback'] is None
     np.testing.assert_allclose(decision.detail['probs'], onehot(11))
+
+
+def test_real_serializer_e1_and_fresh_resume_without_download(monkeypatch):
+    from r1.c3 import features
+    from r1.c3.train import serialize
+    from r1.tests.test_trackp_serialize import CTX, _ledger, _view
+
+    class Tokenizer:
+        def __call__(self, text, **kwargs):
+            return {'input_ids': list(range(len(text.split())))}
+
+    monkeypatch.setattr(serialize, 'pool_tokenizers', lambda: {'fixture': Tokenizer()})
+    monkeypatch.setattr(features, '_is_control_plane_skip', lambda row: False)
+    fallback = FixedPrior(onehot(11), 'fixture')
+    prior = SidecarPrior('http://unused.invalid', fallback)
+    received = []
+    monkeypatch.setattr(prior, '_post', lambda row: received.append(row.copy()) or
+                        {'probs': list(onehot(11)), 'digest': 'fixture', 'version': 'fixture'})
+    rows = _ledger()
+    rows[0]['extra']['audit'] = {'secret': 'AUDITSECRET'}
+    replay = _view(rows, 3)
+    v = SimpleNamespace(epoch='E1', budget_index=replay.budget_index, ledger_prefix=replay.ledger_prefix,
+                        current_best=replay.current_best, proposal=replay.proposal,
+                        budget={}, input_hash=lambda: 'fixture')
+    ctl = control.RuleController(prior, CTX, verify=False, rule_layer=False)
+    ctl.decide(v, {'skip': True})
+    assert received[-1]['prompt']['state'] and received[-1]['prompt']['proposal']
+    assert 'AUDITSECRET' not in str(received[-1]['prompt'])
+    resumed = control.RuleController(prior, CTX, verify=False, rule_layer=False)
+    v.epoch = 'E2'
+    resumed.keep_prior(v)
+    assert len(received) == 2 and received[-1]['prompt'] == received[-2]['prompt']
+    from r1.c3.features import ReplayProposal
+    v.proposal = ReplayProposal(extra={'structured_edit': {'symbol': 'ALPHA', 'old': '1e-4',
+                                                             'new': '1e-2', 'path': 'train.py'}})
+    ctl.keep_prior(v)
+    assert len(received) == 3 and received[-1]['prompt']['proposal'] != received[0]['prompt']['proposal']

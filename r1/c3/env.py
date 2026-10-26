@@ -8,16 +8,20 @@ depending on Gymnasium: it subclasses ``gymnasium.Env`` and is registered as
 * **Episode** = one proposal (one step; ``terminated`` is always True).
 * **Context** = the proposal's features (``FEATURES`` order; NaN -> 0); the
   full row stays available in ``info`` for bookkeeping.
-* **Action** = execute (0) or skip (1); observation carries features and the 12-bin belief.
+* **Action** = execute (0) or skip (1); observation carries features and a 12-bin
+  belief supplied by an explicit provider receiving only pre-decision fields.
+  The caller must establish that provider's model and precomputed utilities have
+  no label/evaluation leakage; the API cannot certify a closure's provenance.
   Historical bin actions are available only with ``version="bin/v0"``.
 * **Legacy plug-in** (``bin/v0``, historical C3_DESIGN §5 stage 2): ``"greedy"`` uses pi = 1{b = no-op},
   mu = sigma_node mid(b), tau = sigma_node tau_node[node] (dev-estimated, in z
   units); ``"onehot_moments"`` uses ``labels.moments`` of the one-hot bin with the
   arms' tau floor, i.e. exactly the decision ``offline_eval`` takes for an arm
   whose forecast is that one-hot distribution (the acceptance check).
-* **Reward** r = Delta * keep - g * execute. In the amended version, the action
-  chooses execute/skip and the belief supplies the keep threshold; in bin/v0
-  the legacy plug-in chooses both. The rule layer prevents duplicate execution.
+* **Reward** in the amended version is the precomputed split-specific Track P
+  utility u for execute and zero for skip; u uses the fixed A1 reference keep.
+  In bin/v0 the legacy plug-in determines r = Delta * keep - g * execute.
+  The rule layer prevents duplicate execution.
 * **Seeds.** ``split="label"`` (training) uses the label half of the audit
   seeds (``audit.split_audit``; 7001-7005 for K = 10) and the training weights;
   duplicates have no label and are excluded.  ``split="eval"`` uses the
@@ -36,7 +40,7 @@ from typing import Any, Callable, Mapping
 import numpy as np
 
 from r1.c3 import offline_eval as OE
-from r1.c3.arms import is_duplicate, is_noop, prior_moments
+from r1.c3.arms import is_duplicate, is_noop
 from r1.c3.audit import split_audit
 from r1.c3.features import FEATURES
 from r1.c3.labels import INERT, MIDPOINTS, N_BINS
@@ -138,11 +142,20 @@ class OfflineBanditEnv(_Base):
                 "noop": is_noop(r), "duplicate": is_duplicate(r), "split": self.split}
         if self.version == "bin/v0":
             return self.observe(r), info
-        p = self.belief_provider(r) if self.belief_provider is not None else r.get("belief")
-        p = np.asarray(p, dtype=float)
-        if p.shape != (N_BINS,) or not np.all(np.isfinite(p)) or np.any(p < 0) or not np.isclose(p.sum(), 1.0, rtol=0, atol=1e-7):
+        self._belief = None
+        try:
+            public = {"proposal_id": r["proposal_id"], "node": r["node"],
+                      "features": {name: r["features"][name] for name in FEATURES},
+                      "sigma_node": r["sigma_node"], "sigma_cmp": r["sigma_cmp"]}
+            if self.belief_provider is None:
+                raise ValueError("belief_provider is required; precomputed beliefs need an explicitly controlled provider")
+            p = self.belief_provider(public)
+            p = np.asarray(p, dtype=float)
+            if p.shape != (N_BINS,) or not np.all(np.isfinite(p)) or np.any(p < 0) or not np.isclose(p.sum(), 1.0, rtol=0, atol=1e-7):
+                raise ValueError("belief must be a finite normalized 12-bin probability vector")
+        except Exception:
             self._current = None
-            raise ValueError("belief must be a finite normalized 12-bin probability vector")
+            raise
         self._belief = p.copy()
         return {"features": self.observe(r), "belief": p.copy()}, info
 
@@ -180,13 +193,19 @@ class OfflineBanditEnv(_Base):
             b = int(action)
             if b not in (0, 1):
                 raise ValueError("action must be 0 (execute) or 1 (skip)")
-            from r1.c3 import rules
-            _, mu, tau = prior_moments(self._belief[None, :], [row])
             ex = b == 0 and not (self.rule_layer and is_duplicate(row))
-            kp = bool(ex and rules.keep(row["delta_hat"], mu[0], tau[0], row["sigma_cmp"]))
             g = self.g_units * row["sigma_node"]
             obs = {"features": self.observe(row), "belief": self._belief.copy()}
-        reward = float(row[self._value] * kp - g * ex)
+            utility_key = "u_train" if self.split == "label" else "u_eval"
+            if ex:
+                if utility_key not in row or not np.isfinite(row[utility_key]):
+                    raise ValueError(f"missing or non-finite {utility_key}; fixed-reference utility is required")
+                reward = float(row[utility_key])
+            else:
+                reward = 0.0
+            kp = None  # keep is already incorporated in fixed-reference utility
+        if self.version == "bin/v0":
+            reward = float(row[self._value] * kp - g * ex)
         info = {"execute": ex, "keep": kp, "g": g, "weight": row[self._weight], "node": row["node"],
                 "proposal_id": row["proposal_id"]}
         self._current = None
