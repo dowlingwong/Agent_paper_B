@@ -30,7 +30,7 @@ def synth(n_inst=12, per=20, seed=0):
                 rows.append({"proposal_id": f"{node}:{i}:{t}", "node": node, "instance": f"{node}__s{i}",
                              "instance_seed": i, "features": f, "inert": inert, "sigma_node": sig, "sigma_cmp": sig,
                              "delta_hat": dhat, "delta_true": delta, "weight": 1.0, "eval_weight": 1.0,
-                             "soft": soft_label(None if inert else delta, 0.1 * sig, sig, inert=inert)})
+                             "soft": soft_label(None if inert else delta, 0.1 * sig, sig, inert=inert, sigma_mode="se_audit")})
     return rows
 
 
