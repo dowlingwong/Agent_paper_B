@@ -5,7 +5,7 @@ from pathlib import Path
 assert platform.node().split('.')[0]=='TASL-2'
 work=Path('/home/dowling/exam-x/work');models=Path('/home/dowling/exam-x/models')
 record=work/'phase2/transport_migration.json'
-if record.exists():raise RuntimeError('preserve earlier migration; do not replay')
+if record.exists() or record.with_suffix('.planned.json').exists():raise RuntimeError('preserve earlier migration; do not replay')
 registry=json.loads((work/'agent_paper_B/r1/exam/registry.yaml').read_text())
 rows=registry['candidates']+registry.get('sensitivities',[])
 plan={'purpose':'planned transport migration; source pins unchanged; no inference/campaign retry',
