@@ -1,106 +1,320 @@
-% L6 working bibliography, metadata checked against the cited primary records.
-% Preprints are cited as arXiv records; this does not assert absence of later publication.
-% DACBench: the IJCAI PDF spells Adriaensen; its web-export spells Adriansen.
+% Coverage audit (2026-10-27): this is a bibliography draft, not a complete
+% extraction of every work named in the reading lists. Per-entry records below
+% establish metadata only, not claims about paper contents. A preprint citation
+% is deliberately to its arXiv record, not a claim about publication history.
+% PLAN section 3: HarnessMDP yi2026harnessmdp; Centaur ferreira2026centaur;
+% PACE shawn2026pace; COTA jiang2026cota; PrimeScientist yu2026primescientist;
+% Rehearse ji2026rehearse. Fulltext neighbours: wang2026sage,
+% zheng2026foreagent, he2026beneath, chen2026visible.
+% DAC: biedenkapp2020dac, adriaensen2022dac, eimer2021dacbench,
+% shala2020stepsize, biedenkapp2022parameter. Biedenkapp 2022 was ambiguous
+% in the runbook; selected the theory-inspired GECCO paper, not the thesis.
+% Ranking/selection: chick2012sequential, xie2013sequential; KG:
+% frazier2008knowledge, frazier2009correlated; racing: lopezibanez2016irace;
+% best-arm: kaufmann2016bestarm; adaptive records: blum2015ladder,
+% smith2006optimizer. F-Race has no separate entry: coverage gap.
+% references/README.md: tian2023calibration, damani2025uncertainty,
+% yue2025reasoning; Hume essay and the calibration notebook are not yet
+% represented as entries; Jev reconstruction is an internal document.
+% NOVELTY_SWEEP_20261009 and NOVELTY_SWEEP_PART2_20261018 contain many
+% further works not entered here. The inventory below maps their table rows and
+% deep-entry headings to PRESENT or GAP using source text and identifiers;
+% GAP is not a claim that the work is irrelevant or unverifiable.
+% NOVELTY_FULLTEXT_20261019: SAGE, FOREAGENT, Beneath the Diff, VbNA,
+% Smith/Winkler, Chick/Frazier, Xie/Frazier, and Ladder are represented.
+% CI[R] and Calibration Is Not Control are gaps, as are other sweep works
+% listed below. Further prose-only citations in those files also remain gaps.
+% Inventory: docs/r1/inputs/NOVELTY_SWEEP_20261009.md
+% 98: PRESENT biedenkapp2020dac -- Biedenkapp et al., "Dynamic Algorithm Configuration: Foundation of a New Meta-Algorithmic Framework", ECAI 2020
+% 99: PRESENT adriaensen2022dac -- Adriaensen, Biedenkapp, Shala, Awad, Eimer, Lindauer, Hutter, "Automated Dynamic Algorithm Configuration", arXiv 2205.13881
+% 100: PRESENT eimer2021dacbench -- Eimer et al., "DACBench", IJCAI 2021
+% 101: GAP -- Nguyen, Le, Biedenkapp, Doerr, Dang, "Deep RL for DAC: OneMax (1+(λ,λ))-GA", arXiv 2512.03805
+% 102: GAP -- Lu et al., "Sequential Multi-Agent DAC", arXiv 2510.23535
+% 103: GAP -- Taparia, Sagar, Senanayake, "Learning to Configure Agentic AI Systems" (ARC), arXiv 2602.11574
+% 104: GAP -- Xu et al., "AutoEP: LLMs-Driven Automation of Hyperparameter Evolution for Metaheuristic Algorithms", ICLR 2026
+% 105: GAP -- Fang et al., "LLMZero: adaptive training strategies for RL post-training via LLM agents", arXiv 2606.18388
+% 106: GAP -- Rao & Advani, "AI Training Manager: Bounded Closed-Loop Control of Adaptive Training Recipes", arXiv 2606.29871
+% 107: GAP -- Chacón Sartori & Blum, "irace-evo", arXiv 2511.14794
+% 112: GAP -- Hyperband, Li et al., arXiv 1603.06560
+% 113: GAP -- ASHA, Li et al., arXiv 1810.05934
+% 114: GAP -- BOHB, Falkner, Klein, Hutter, arXiv 1807.01774
+% 115: GAP -- Freeze-Thaw BO, Swersky, Snoek, Adams, arXiv 1406.3896
+% 116: GAP -- ifBO (FT-PFN), Rakotoarison et al., arXiv 2404.16795
+% 117: GAP -- PBT, Jaderberg et al., arXiv 1711.09846
+% 118: GAP -- Hyp-RL, Jomaa et al., arXiv 1906.11527
+% 119: GAP -- AgentHPO, Liu, Gao, Li, CPAL 2025 (PMLR v280)
+% 120: GAP -- LLAMBO, Liu, Astorga, Seedat, van der Schaar, arXiv 2402.03921
+% 121: GAP -- Zhang et al., "Using LLMs for HPO", arXiv 2312.04528
+% 122: GAP -- Li, "Greedy Is a Strong Default: Agents as Iterative Optimizers", arXiv 2603.27415
+% 123: GAP -- Guo et al., "ASAP", arXiv 2606.25207
+% 124: GAP -- Chen et al., "Efficient HPO for LLM RL" (JF-HPO), ACL 2026
+% 125: GAP -- Bouthillier et al., "Accounting for Variance in ML Benchmarks", arXiv 2103.03098
+% 143: GAP -- Karpathy, autoresearch repo
+% 144: GAP -- AIDE, Jiang et al., arXiv 2502.13138
+% 145: GAP -- Toledo et al., "AI Research Agents for ML: Search, Exploration, and Generalization in MLE-bench" (AIRA-dojo), arXiv 2507.02554
+% 146: GAP -- Foster et al. (… Foerster), "AI Research Preference Models", arXiv 2608.13940
+% 147: GAP -- Yamada et al., "AI Scientist-v2", arXiv 2504.08066
+% 148: GAP -- ML-Master, arXiv 2506.16499
+% 149: GAP -- Liang et al., "I-MCTS", arXiv 2502.14693
+% 150: GAP -- Zhang et al., "Reasoning as Gradient" (Gome), arXiv 2603.01692
+% 151: GAP -- Liu et al., "ML-Agent", arXiv 2505.23723 (ICML 2026 poster, listing: https://icml.cc/virtual/2026/poster/62020)
+% 152: GAP -- Zhang et al., "Learning to Ideate for MLE Agents", arXiv 2601.17596
+% 153: GAP -- Yang et al., "Scaling Automatic Research Agents via World Models", arXiv 2608.12564
+% 154: GAP -- Jain et al., "AutoResearch-RL", arXiv 2603.07300
+% 155: GAP -- Qu & Lu, "Bilevel Autoresearch", arXiv 2603.23420
+% 156: GAP -- Gao, Fang, Zitnik, "AutoScientists", arXiv 2605.28655
+% 157: GAP -- AlphaEvolve, arXiv 2506.13131
+% 162: GAP -- Wen et al., "MetaCtrl", arXiv 2609.37304
+% 163: GAP -- Min et al., "Self-Regulation and Requesting Interventions", arXiv 2502.04576
+% 164: GAP -- Su et al., "ToolOrchestra", arXiv 2511.21689 (ICML 2026 poster, listing: https://icml.cc/virtual/2026/poster/62794)
+% 165: GAP -- Router-R1, arXiv 2506.09033 (NeurIPS 2025 poster, listing: https://neurips.cc/virtual/2025/poster/119214)
+% 166: GAP -- Ghasemabadi et al., "Multi-Head Latent Control", arXiv 2607.14277
+% 167: GAP -- Wang et al., "HarnessBridge", arXiv 2606.12882
+% 168: GAP -- Lin et al., "BAGEN: Are LLM Agents Budget-Aware?", arXiv 2606.00198
+% 169: GAP -- Yu et al., "Rollback-Induced Reflection" (RIR), arXiv 2609.18304
+% 170: GAP -- Fu et al., "CHILL-Harness", arXiv 2607.25825
+% 171: GAP -- Calibrate-Then-Act, arXiv 2602.16699
+% 176: GAP -- He et al., "Branching Policy Optimization", arXiv 2607.14171
+% 177: GAP -- Yu et al. (Manning, Shi), "Shepherd", arXiv 2605.10913
+% 178: GAP -- Causal Agent Replay 2606.08275; The Replay Gap 2608.08239; Stage-Replay 2607.28495
+% 179: GAP -- Zhang et al., "RAIL", arXiv 2608.05080
+% 184: GAP -- Xu et al., "Phantom Gains: Auditing Self-Improvement Against a Measured Null", arXiv 2608.20290
+% 185: GAP -- Nakajima, "Regimes: held-out-gated improvement loop", arXiv 2606.10241
+% 186: GAP -- Fu et al., "Verify, Don't Trust", arXiv 2609.21257
+% 187: GAP -- PACE (§1.4), PrimeScientist max-of-two (§1.3), Centaur seed handling (§1.1)
+% 193: GAP -- Contribution
+% 195: GAP -- C1 loop-level DAC/RL formulation of autoresearch control
+% 196: GAP -- C2 "how to intervene" action space
+% 197: GAP -- C3 small configurator vs LLM self-control vs hybrid
+% 198: GAP -- C4 counterfactual-branch training/eval with replay-identification guarantees
+% 264: GAP -- Venue
+% 266: GAP -- ICML 2027
+% 267: GAP -- NeurIPS 2027
+% 268: GAP -- ICLR 2027
+% 269: GAP -- AAAI-27
+% 270: GAP -- AutoML Conf 2027
+% 271: GAP -- TMLR
+% 272: GAP -- JMLR
+% 273: GAP -- 2027 workshops
+% Inventory: docs/r1/inputs/NOVELTY_SWEEP_PART2_20261018.md
+% 10: GAP -- Kim & Nelson 2001, TOMACS 11(3)
+% 11: GAP -- Chen, Lin, Yücesan et al. 2000, DEDS 10 (OCBA)
+% 12: GAP -- Chick & Inoue 2001, Oper. Res. 49(5)
+% 13: GAP -- Nelson & Goldsman 2001, Mgmt Sci 47(3)
+% 14: GAP -- Kim 2005, TOMACS 15(2)
+% 15: PRESENT xie2013sequential -- Xie & Frazier 2013, Oper. Res. 61(5)
+% 16: PRESENT chick2012sequential -- Chick & Frazier 2012, Mgmt Sci 58(3)
+% 17: GAP -- Branke, Chick & Schmidt 2007, Mgmt Sci 53(12)
+% 18: GAP -- Hong & Nelson 2007, IIE Trans. 39(7)
+% 19: GAP -- Bechhofer 1954
+% 24: PRESENT frazier2009correlated -- Frazier, Powell & Dayanik 2009, INFORMS JoC 21(4)
+% 25: GAP -- Ryzhov, Powell & Frazier 2012, Oper. Res. 60(1)
+% 26: GAP -- Letham et al. 2019, Bayesian Analysis (arXiv 1706.07094)
+% 27: GAP -- Picheny, Wagner & Ginsbourger 2013, SMO 48(3)
+% 28: GAP -- Zhou, Ma & Blaschko 2024, ACML (PMLR 222)
+% 29: GAP -- Wang, Wang, Ng & Petra 2025, arXiv 2508.15674
+% 34: GAP -- Maron & Moore 1993, NIPS 6
+% 35: GAP -- Birattari et al. c. 2002 (F-Race)
+% 36: PRESENT lopezibanez2016irace -- López-Ibáñez et al. 2016, ORP 3 (irace)
+% 37: GAP -- Hutter et al. 2009, JAIR 36 (ParamILS)
+% 38: GAP -- Hutter, Hoos & Leyton-Brown 2011 (SMAC, TR-2010-10)
+% 39: GAP -- Lindauer et al. 2022, JMLR 23(54) (SMAC3)
+% 44: GAP -- Audibert, Bubeck & Munos 2010, COLT
+% 45: PRESENT kaufmann2016bestarm -- Kaufmann, Cappé & Garivier 2016 (arXiv 1407.4443)
+% 46: GAP -- Garivier & Kaufmann 2016, COLT (PMLR 49)
+% 47: GAP -- Carpentier & Valko 2015, ICML (PMLR 37)
+% 48: GAP -- Aziz et al. 2018, ALT (PMLR 83)
+% 49: GAP -- Locatelli, Gutzeit & Carpentier 2016, ICML (PMLR 48)
+% 50: GAP -- Kano et al., arXiv 1710.06360
+% 55: GAP -- Droste 2004, GECCO (LNCS 3102)
+% 56: GAP -- Jin & Branke 2005, IEEE TEC 9(3)
+% 57: GAP -- Qian et al. 2016, Evol. Comput.
+% 58: GAP -- Qian et al., arXiv 1810.05045
+% 59: GAP -- Antipov & Doerr 2025, IJCAI
+% 60: PRESENT smith2006optimizer -- Smith & Winkler 2006, Mgmt Sci 52(3)
+% 65: GAP -- Cawley & Talbot 2010, JMLR 11
+% 66: GAP -- Dwork et al. 2015, Science 349 (reusable holdout)
+% 67: PRESENT blum2015ladder -- Blum & Hardt 2015, ICML (arXiv 1502.04585)
+% 68: GAP -- Andrews, Kitagawa & McCloskey 2024, QJE 139(1)
+% 73: GAP -- Elmachtoub & Grigas, arXiv 1710.08005 (SPO+)
+% 74: GAP -- Wilder, Dilkina & Tambe 2019, AAAI 33
+% 75: GAP -- Mandi et al. 2024, JAIR 81 (arXiv 2307.13565)
+% 76: GAP -- Park et al. 2025, arXiv 2511.04393
+% 77: GAP -- Turtel et al. 2025, arXiv 2505.17989
+% 78: GAP -- Turtel et al. 2026, arXiv 2608.28482
+% 79: GAP -- Yaldiz et al. 2026, arXiv 2601.13284
+% 84: GAP -- LLAMBO, arXiv 2402.03921
+% 85: GAP -- Zhang et al. 2023 (LLMs for HPO)
+% 86: GAP -- Jawahar et al. 2023, arXiv 2310.16712
+% 87: GAP -- Hao, Zhang & Zhou 2024, arXiv 2406.10675
+% 88: GAP -- Wen et al. 2025, arXiv 2506.00794
+% 89: PRESENT zheng2026foreagent -- Zheng et al. 2026, FOREAGENT, ACL 2026 (arXiv 2601.05930)
+% 90: PRESENT wang2026sage -- Wang et al. 2026, SAGE, arXiv 2609.36043
+% 91: PRESENT he2026beneath -- He et al. 2026, Beneath the Diff, arXiv 2609.00077
+% 92: GAP -- Oved et al. 2026, arXiv 2609.19799
+% 93: GAP -- Papamarkou et al. 2026, arXiv 2606.24453
+% 94: GAP -- Chen & Yi 2026, arXiv 2606.01730
+% 95: GAP -- Shi et al. 2026, EarlyEval, arXiv 2609.02783
+% 96: GAP -- Toledo et al. 2025, arXiv 2507.02554
+% 97: GAP -- Jain et al. 2026, AutoResearch-RL, arXiv 2603.07300
+% 98: GAP -- Qu & Lu 2026, Bilevel autoresearch, arXiv 2603.23420
+% 99: GAP -- Jeddi et al. 2026, GEAR, arXiv 2605.13874
+% 100: GAP -- Li 2026, arXiv 2603.15916
+% 101: GAP -- Karpathy, autoresearch
 
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2607.05458
 @article{yi2026harnessmdp,
   title = {{HarnessMDP}: Learning to Control {LLM} Agent Harnesses with Offline Reinforcement Learning},
   author = {Yi, Haiwen and Song, Xinyuan},
   journal = {arXiv preprint arXiv:2607.05458}, year = {2026}, url = {https://arxiv.org/abs/2607.05458}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2603.24647
 @article{ferreira2026centaur,
   title = {Can {LLM}s Beat Classical Hyperparameter Optimization Algorithms? A Study on autoresearch},
   author = {Ferreira, Fabio and Wobbe, Lucca and Krishnakumar, Arjun and Hutter, Frank and Zela, Arber},
   journal = {arXiv preprint arXiv:2603.24647}, year = {2026}, url = {https://arxiv.org/abs/2603.24647}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2606.08106
 @article{shawn2026pace,
   title = {{PACE}: Anytime-Valid Acceptance Tests for Self-Evolving Agents},
   author = {Shawn, Zayx}, journal = {arXiv preprint arXiv:2606.08106}, year = {2026}, url = {https://arxiv.org/abs/2606.08106}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2608.21027
 @article{jiang2026cota,
   title = {Don't Solve, Just Compare: Tiny Advisors for Runtime Intervention in {LLM} Agents},
   author = {Jiang, Yanze and Li, Mingxuan and Wang, Yuhao and Zhai, Shengfang and Zhang, Jiaheng},
   journal = {arXiv preprint arXiv:2608.21027}, year = {2026}, url = {https://arxiv.org/abs/2608.21027}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2609.17846
 @article{yu2026primescientist,
   title = {{PrimeScientist}: Strategic Allocation of Research Effort in Autonomous Research},
   author = {Yu, Xinle and Bai, Fan and Sun, Kaiser and Miao, Hengshuo and Anand, Abhay and Luo, Zhongyan and Zhou, Kun and Wang, Zhen},
   journal = {arXiv preprint arXiv:2609.17846}, year = {2026}, url = {https://arxiv.org/abs/2609.17846}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2607.27687
 @article{ji2026rehearse,
   title = {Rehearse: Stepping Back from the Confidence Cliff in Self-Improving Autoresearch},
   author = {Ji, Jiazhen and Ding, Shouhong}, journal = {arXiv preprint arXiv:2607.27687}, year = {2026}, url = {https://arxiv.org/abs/2607.27687}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2609.36043
 @article{wang2026sage,
   title = {{SAGE}: A Statistical Acceptance Gate for Self-Evolving Agents},
   author = {Wang, Yihao and Xia, Linhan and Liu, Rui and Zhang, Zhaofeng and Wu, Hongyu and Yang, Yang and He, Jinglu and Guo, Yu and Lei, Kai},
   journal = {arXiv preprint arXiv:2609.36043}, year = {2026}, url = {https://arxiv.org/abs/2609.36043}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://aclanthology.org/2026.acl-long.182/
 @inproceedings{zheng2026foreagent,
   title = {Can We Predict Before Executing Machine Learning Agents?},
   author = {Zheng, Jingsheng and Zhang, Jintian and Luo, Yujie and Mao, Yuren and Gao, Yunjun and Du, Lun and Chen, Huajun and Zhang, Ningyu},
   booktitle = {Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)},
   year = {2026}, pages = {3941--3974}, doi = {10.18653/v1/2026.acl-long.182}, url = {https://aclanthology.org/2026.acl-long.182/}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2609.00077
 @article{he2026beneath,
   title = {Beneath the Diff: Diagnosing and Mitigating Algorithmic Mode Collapse in Code-Level Autonomous Research Loops},
   author = {He, Bowei and Zhang, Weixu and Jin, Yili and Liu, Xue}, journal = {arXiv preprint arXiv:2609.00077}, year = {2026}, url = {https://arxiv.org/abs/2609.00077}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2610.15738
 @article{chen2026visible,
   title = {Visible but Not Avoided: State-Dependent Re-Proposal of Rejected Candidates in Catalog-Based {LLM} Optimization Loops},
   author = {Chen, Jianlin and Chen, Wenhui and Vong, Chi Man}, journal = {arXiv preprint arXiv:2610.15738}, year = {2026}, url = {https://arxiv.org/abs/2610.15738}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://ebooks.iospress.nl/doi/10.3233/FAIA200122
 @inproceedings{biedenkapp2020dac,
   title = {Dynamic Algorithm Configuration: Foundation of a New Meta-Algorithmic Framework},
   author = {Biedenkapp, Andr{\'e} and Bozkurt, H. Furkan and Eimer, Theresa and Hutter, Frank and Lindauer, Marius},
   booktitle = {ECAI 2020}, year = {2020}, pages = {427--434}, doi = {10.3233/FAIA200122}, url = {https://www.ai.uni-hannover.de/fileadmin/ai/paper/Eimer/DAC2020.pdf}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://ml.informatik.uni-freiburg.de/profile/biedenkapp/
 @article{adriaensen2022dac,
   title = {Automated Dynamic Algorithm Configuration}, author = {Adriaensen, Steven and Biedenkapp, Andr{\'e} and Shala, Gresa and Awad, Noor and Eimer, Theresa and Lindauer, Marius and Hutter, Frank},
   journal = {Journal of Artificial Intelligence Research}, volume = {75}, pages = {1633--1699}, year = {2022}, doi = {10.1613/jair.1.13922}, url = {https://arxiv.org/abs/2205.13881}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://www.ijcai.org/proceedings/2021/0230.pdf ; https://www.ijcai.org/proceedings/2021/230
+% UNVERIFIED: author spelling unresolved: paper PDF Adriaensen; proceedings webpage Adriansen.
 @inproceedings{eimer2021dacbench,
   title = {{DACBench}: A Benchmark Library for Dynamic Algorithm Configuration}, author = {Eimer, Theresa and Biedenkapp, Andr{\'e} and Reimer, Maximilian and Adriaensen, Steven and Hutter, Frank and Lindauer, Marius},
   booktitle = {Proceedings of the Thirtieth International Joint Conference on Artificial Intelligence}, year = {2021}, pages = {1668--1674}, doi = {10.24963/ijcai.2021/230}, url = {https://www.ijcai.org/proceedings/2021/0230.pdf}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://andrebiedenkapp.github.io/publications/
 @inproceedings{shala2020stepsize,
   title = {Learning Step-Size Adaptation in {CMA-ES}}, author = {Shala, Gresa and Biedenkapp, Andr{\'e} and Awad, Noor and Adriaensen, Steven and Lindauer, Marius and Hutter, Frank},
   booktitle = {Parallel Problem Solving from Nature -- PPSN XVI}, year = {2020}, pages = {691--706}, publisher = {Springer}, url = {https://andrebiedenkapp.github.io/publications/}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2202.03259 ; https://research-repository.st-andrews.ac.uk/handle/10023/26886
 @inproceedings{biedenkapp2022parameter,
   title = {Theory-Inspired Parameter Control Benchmarks for Dynamic Algorithm Configuration}, author = {Biedenkapp, Andr{\'e} and Dang, Nguyen and Krejca, Martin S. and Hutter, Frank and Doerr, Carola},
   booktitle = {Proceedings of the Genetic and Evolutionary Computation Conference}, year = {2022}, pages = {766--775}, doi = {10.1145/3512290.3528846}, url = {https://arxiv.org/abs/2202.03259}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://optimallearning.princeton.edu/Papers/FrazierPowellDayanik_KnowledgeGradientSICON.pdf
 @article{frazier2008knowledge,
   title = {A Knowledge-Gradient Policy for Sequential Information Collection}, author = {Frazier, Peter I. and Powell, Warren B. and Dayanik, Savas}, journal = {SIAM Journal on Control and Optimization}, year = {2008}, volume = {47}, number = {5}, pages = {2410--2439}, doi = {10.1137/070693424}, url = {https://optimallearning.princeton.edu/Papers/FrazierPowellDayanik_KnowledgeGradientSICON.pdf}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://pubsonline.informs.org/doi/10.1287/ijoc.1080.0314
 @article{frazier2009correlated,
   title = {The Knowledge-Gradient Policy for Correlated Normal Beliefs}, author = {Frazier, Peter and Powell, Warren and Dayanik, Savas}, journal = {INFORMS Journal on Computing}, year = {2009}, volume = {21}, number = {4}, pages = {599--613}, doi = {10.1287/ijoc.1080.0314}, url = {https://pubsonline.informs.org/doi/10.1287/ijoc.1080.0314}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://pubsonline.informs.org/doi/10.1287/mnsc.1110.1425
 @article{chick2012sequential,
   title = {Sequential Sampling with Economics of Selection Procedures}, author = {Chick, Stephen E. and Frazier, Peter}, journal = {Management Science}, year = {2012}, volume = {58}, number = {3}, pages = {550--569}, doi = {10.1287/mnsc.1110.1425}, url = {https://pubsonline.informs.org/doi/10.1287/mnsc.1110.1425}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://pubsonline.informs.org/doi/10.1287/opre.2013.1207
 @article{xie2013sequential,
   title = {Sequential Bayes-Optimal Policies for Multiple Comparisons with a Known Standard}, author = {Xie, Jing and Frazier, Peter I.}, journal = {Operations Research}, year = {2013}, volume = {61}, number = {5}, pages = {1174--1189}, doi = {10.1287/opre.2013.1207}, url = {https://pubsonline.informs.org/doi/10.1287/opre.2013.1207}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://pubsonline.informs.org/doi/10.1287/mnsc.1050.0451
 @article{smith2006optimizer,
   title = {The Optimizer's Curse: Skepticism and Postdecision Surprise in Decision Analysis}, author = {Smith, James E. and Winkler, Robert L.}, journal = {Management Science}, year = {2006}, volume = {52}, number = {3}, pages = {311--322}, doi = {10.1287/mnsc.1050.0451}, url = {https://pubsonline.informs.org/doi/10.1287/mnsc.1050.0451}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://iridia.ulb.ac.be/mbiro/paperi/LopDubPer-etal2016orp.pdf
 @article{lopezibanez2016irace,
   title = {The irace Package: Iterated Racing for Automatic Algorithm Configuration}, author = {L{\'o}pez-Ib{\'a}{\~n}ez, Manuel and Dubois-Lacoste, J{\'e}r{\'e}mie and P{\'e}rez C{\'a}ceres, Leslie and Birattari, Mauro and St{\"u}tzle, Thomas}, journal = {Operations Research Perspectives}, year = {2016}, volume = {3}, pages = {43--58}, doi = {10.1016/j.orp.2016.09.002}, url = {https://iridia.ulb.ac.be/mbiro/paperi/LopDubPer-etal2016orp.pdf}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://www.jmlr.org/papers/v17/kaufman16a.html
 @article{kaufmann2016bestarm,
-  title = {On the Complexity of Best Arm Identification in Multi-Armed Bandit Models}, author = {Kaufmann, Emilie and Capp{\'e}, Olivier and Garivier, Aur{\'e}lien}, journal = {Journal of Machine Learning Research}, year = {2016}, volume = {17}, pages = {1--42}, url = {https://arxiv.org/abs/1407.4443}
+  title = {On the Complexity of Best-Arm Identification in Multi-Armed Bandit Models}, author = {Kaufmann, Emilie and Capp{\'e}, Olivier and Garivier, Aur{\'e}lien}, journal = {Journal of Machine Learning Research}, year = {2016}, volume = {17}, pages = {1--42}, url = {https://www.jmlr.org/papers/v17/kaufman16a.html}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://proceedings.mlr.press/v37/blum15.html
 @inproceedings{blum2015ladder,
   title = {The Ladder: A Reliable Leaderboard for Machine Learning Competitions}, author = {Blum, Avrim and Hardt, Moritz}, booktitle = {Proceedings of the 32nd International Conference on Machine Learning}, year = {2015}, volume = {37}, pages = {1006--1014}, publisher = {PMLR}, url = {https://proceedings.mlr.press/v37/blum15.html}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://aclanthology.org/2023.emnlp-main.330/
 @inproceedings{tian2023calibration,
   title = {Just Ask for Calibration: Strategies for Eliciting Calibrated Confidence Scores from Language Models Fine-Tuned with Human Feedback}, author = {Tian, Katherine and Mitchell, Eric and Zhou, Allan and Sharma, Archit and Rafailov, Rafael and Yao, Huaxiu and Finn, Chelsea and Manning, Christopher}, booktitle = {Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing}, year = {2023}, pages = {5433--5442}, doi = {10.18653/v1/2023.emnlp-main.330}, url = {https://aclanthology.org/2023.emnlp-main.330/}
 }
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://arxiv.org/abs/2507.16806
 @article{damani2025uncertainty,
   title = {Beyond Binary Rewards: Training {LM}s to Reason About Their Uncertainty}, author = {Damani, Mehul and Puri, Isha and Slocum, Stewart and Shenfeld, Idan and Choshen, Leshem and Kim, Yoon and Andreas, Jacob}, journal = {arXiv preprint arXiv:2507.16806}, year = {2025}, url = {https://arxiv.org/abs/2507.16806}
 }
 % The NeurIPS and arXiv primary records both list Yang Yue twice; preserve their author list pending correction.
+% Primary record checked (title, authors, venue or preprint status, year):
+% https://proceedings.neurips.cc/paper_files/paper/2025/hash/537d5aa768c2d534016a4d06f87bc8fb-Abstract-Conference.html ; https://arxiv.org/abs/2504.13837
+% UNVERIFIED: authorship ambiguity unresolved: proceedings and arXiv list Yang Yue twice.
 @inproceedings{yue2025reasoning,
   title = {Does Reinforcement Learning Really Incentivize Reasoning Capacity in {LLM}s Beyond the Base Model?}, author = {Yue, Yang and Chen, Zhiqi and Lu, Rui and Zhao, Andrew and Wang, Zhaokai and Yue, Yang and Song, Shiji and Huang, Gao}, booktitle = {Advances in Neural Information Processing Systems}, volume = {38}, year = {2025}, doi = {10.52202/085713-1933}, url = {https://proceedings.neurips.cc/paper_files/paper/2025/hash/537d5aa768c2d534016a4d06f87bc8fb-Abstract-Conference.html}
 }
