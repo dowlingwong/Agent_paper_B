@@ -360,3 +360,14 @@ def test_fake_matches_pinned_reasoning_budget_request_fields(monkeypatch):
     assert reply['usage']['completion_tokens_details']['reasoning_tokens']==1
     request['chat_template_kwargs']['enable_thinking']=False
     assert 'reasoning_content' not in fake.Handler.completion(None,request,'{}')['choices'][0]['message']
+
+
+def test_rico_uses_standalone_vendor_template_and_native_thinking_policy():
+    r=read_registry(Path(__file__).parents[1]/'exam/registry.yaml')
+    s=next(s for s in r['candidates'] if s['id']=='rico03_qwen36_27b')
+    template=(Path(__file__).parents[2]/'docs/r1/reports/exam_phase2_20261026/rico_vendor_chat_template.jinja').read_bytes()
+    assert hashlib.sha256(template).hexdigest()==s['chat_template_source']['template_sha256']
+    assert s['chat_template_source']['file']=='chat_template.jinja'
+    assert b'enable_thinking' not in template and b'<think>' in template
+    assert s['thinking_policy']['mode']=='always_on' and s['thinking_policy']['budget']==2048
+    assert not s['thinking_policy']['switchable'] and not s['thinking_policy']['off_switch']

@@ -1,4 +1,4 @@
-"""Pinned parallel HF transport for Phase 2; isolated children, disk-floor STOP, full SHA receiving."""
+"""Pinned HTTPS transport for Phase 2; isolated children, retained partials, full SHA receiving."""
 from __future__ import annotations
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -11,7 +11,8 @@ import subprocess
 import sys
 import time
 import threading
-from r1.exam.guards import artifact_label, digest_file, quantization_blockers, space_check
+from r1.exam.guards import artifact_label, guarded_download, quantization_blockers, space_check
+from urllib.parse import quote
 
 ROOT=Path('/home/dowling/exam-x/models')
 WORK=Path('/home/dowling/exam-x/work')
@@ -34,17 +35,16 @@ def receive_one(spec, out, *, check_space=space_check, cancel=None):
     reused=target.exists()
     start=time.time()
     if not reused:
-        env={**os.environ,'HF_HOME':str(WORK/'hf'),'HF_XET_CACHE':str(WORK/'hf-xet-cache'),
-             'HF_XET_HIGH_PERFORMANCE':'1','HF_XET_NUM_CONCURRENT_RANGE_GETS':'16',
+        env={**os.environ,'HF_HOME':str(WORK/'hf'),'HF_HUB_DISABLE_XET':'1',
              'HF_HUB_DISABLE_TELEMETRY':'1','HF_HUB_DISABLE_IMPLICIT_TOKEN':'1'}
-        # Never pass a credential; token=False is also explicit in the worker.
+        # Standard HTTPS worker sends no HF authorization token.
         with (out/(spec['id']+'.transport.log')).open('ab') as log:
             child=subprocess.Popen([sys.executable,'-m','r1.exam.hub_download','--worker',json.dumps(spec)],
                                    env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
         try:
             while child.poll() is None:
                 guard(ROOT);time.sleep(.2)
-            if child.returncode: raise RuntimeError(f'STOP: HF transport exited {child.returncode}; preserve its partial cache')
+            if child.returncode: raise RuntimeError(f'STOP: HTTPS transport exited {child.returncode}; inspect retained partial and worker log')
         except BaseException:
             if child.poll() is None:
                 os.killpg(child.pid,signal.SIGTERM)
@@ -60,7 +60,7 @@ def receive_one(spec, out, *, check_space=space_check, cancel=None):
             guard(ROOT);sha.update(chunk)
     if sha.hexdigest()!=source['sha256']: raise RuntimeError('STOP: received artifact SHA mismatch; preserved')
     result={'candidate':spec['id'],'source_label':artifact_label(spec),'source':source,'target':str(target),
-            'result':{'reused':reused,'sha256':sha.hexdigest()},'started':start,'finished':time.time(),'space_after':guard(ROOT)}
+            'transport':'stdlib_https_retained_partial','result':{'reused':reused,'sha256':sha.hexdigest()},'started':start,'finished':time.time(),'space_after':guard(ROOT)}
     tmp=certificate.with_suffix('.json.tmp');tmp.write_text(json.dumps(result,indent=2)+'\n');tmp.replace(certificate)
     print(spec['id'],'VERIFIED',flush=True)
     return result
@@ -98,16 +98,14 @@ def main(argv=None):
     if platform.node().split('.')[0]!='TASL-2': raise RuntimeError('portal only')
     if a.worker:
         spec=json.loads(a.worker);source=spec['quant_source']
-        from huggingface_hub import hf_hub_download
         target=Path(spec['runtime']['model_path'])
-        actual=Path(hf_hub_download(repo_id=source['repo'],revision=source['revision'],filename=source['file'],
-                                   local_dir=str(target.parent),token=False))
-        if actual.resolve()!=target.resolve(): raise RuntimeError('unexpected HF local artifact path')
+        url=f"https://huggingface.co/{source['repo']}/resolve/{source['revision']}/{quote(source['file'])}"
+        guarded_download(url,target,sha256=source['sha256'],size_bytes=source['size_bytes'],storage_root=ROOT)
         return
     if not a.registry or not a.out: p.error('--registry and --out required')
     if (Path(a.out)/'transport_stop.json').exists(): raise RuntimeError('STOP: prior transport STOP record must be preserved and explicitly resolved before continuation')
     reg=json.loads(Path(a.registry).read_text());rows=reg['candidates']+reg.get('sensitivities',[])
-    # HF's Xet transport uses concurrent byte ranges and bounded artifact concurrency.
+    # Bounded direct HTTPS artifacts; no library-owned partial-file cleanup.
     run_downloads(rows,a.out,workers=a.workers)
 
 if __name__=='__main__': main()

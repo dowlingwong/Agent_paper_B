@@ -1181,16 +1181,16 @@
       "chat_template_source": {
         "repo": "rico03/Qwen3.6-27B-Claude-Opus-Reasoning-Distilled",
         "revision": "448ea0a074e64c940baceabe2590afe8b41a593d",
-        "file": "tokenizer_config.json",
-        "sha256": "600fd19e3451b52986c56aad162c8048010ca9c79132d6f55550df3044734125",
-        "template_sha256": "c411c6e89e63ed2f917ae92439fda8545a96e8bc574b9155a722e65979a2f2e8"
+        "file": "chat_template.jinja",
+        "sha256": "0800c03b537cb0d60244f37ac6d717b06c42c4828a40853b1f9853791f9afdae",
+        "template_sha256": "0800c03b537cb0d60244f37ac6d717b06c42c4828a40853b1f9853791f9afdae"
       },
       "thinking_policy": {
-        "mode": "off",
-        "budget": 0,
-        "switchable": true,
-        "off_switch": true,
-        "basis": "Pinned vendor template has enable_thinking switch",
+        "mode": "always_on",
+        "budget": 2048,
+        "switchable": false,
+        "off_switch": false,
+        "basis": "Pinned vendor standalone chat_template.jinja unconditionally opens <think>; no enable_thinking switch. Embedded tokenizer_config template is not the standard AutoTokenizer default.",
         "host_grammar_status": "pending_stage_a"
       },
       "vendor_sampling": {

@@ -1,8 +1,10 @@
 """Pinned tokenizer/template access preflight only; no model load or inference."""
-import hashlib,json,os,platform,time,importlib.metadata,threading,signal
+import hashlib,json,os,platform,time,importlib.metadata,threading,signal,argparse
 from pathlib import Path
 assert platform.node().split('.')[0]=='TASL-2'
-work=Path('/home/dowling/exam-x/work');out=work/'phase2/tokenizer_preflight_1.json'
+parser=argparse.ArgumentParser();parser.add_argument('--candidate',action='append');parser.add_argument('--out-name',default='tokenizer_preflight_1.json');args=parser.parse_args()
+if Path(args.out_name).name!=args.out_name:raise ValueError('report basename required')
+work=Path('/home/dowling/exam-x/work');out=work/'phase2'/args.out_name
 if out.exists():raise RuntimeError('preserve previous preflight attempt')
 os.environ.update(HF_HOME=str(work/'hf'),HF_HUB_DISABLE_IMPLICIT_TOKEN='1',HF_HUB_DISABLE_XET='1',CUDA_VISIBLE_DEVICES='')
 from transformers import AutoTokenizer
@@ -14,8 +16,11 @@ def watch_space():
         except Exception as error:
             os.write(2,(str(error)+'\n').encode());os.kill(os.getpid(),signal.SIGTERM);return
 threading.Thread(target=watch_space,daemon=True).start()
-registry=json.loads((work/'agent_paper_B/r1/exam/registry.yaml').read_text());rows=[]
-for spec in registry['candidates']+registry.get('sensitivities',[]):
+registry=json.loads((work/'agent_paper_B/r1/exam/registry.yaml').read_text());rows=[];selected=registry['candidates']+registry.get('sensitivities',[])
+if args.candidate:
+    selected=[s for s in selected if s['id'] in args.candidate]
+    if {s['id'] for s in selected}!=set(args.candidate):raise ValueError('unknown candidate')
+for spec in selected:
     space_check(work);source=spec['chat_template_source'];started=time.time()
     row={'candidate':spec['id'],'source_label':spec['source_label'],'repo':source['repo'],'revision':source['revision']}
     try:

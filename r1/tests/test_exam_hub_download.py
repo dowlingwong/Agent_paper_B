@@ -79,3 +79,22 @@ def test_prior_transport_stop_cannot_be_silently_replayed(tmp_path,monkeypatch):
     registry=tmp_path/'registry.json';registry.write_text('{}')
     with pytest.raises(RuntimeError,match='prior transport STOP'):
         hub.main(['--registry',str(registry),'--out',str(tmp_path)])
+
+
+def test_https_worker_retains_partial_on_network_failure(tmp_path,monkeypatch):
+    monkeypatch.setattr(hub,'ROOT',tmp_path);monkeypatch.setattr(hub.platform,'node',lambda:'TASL-2')
+    s=spec(tmp_path);target=Path(s['runtime']['model_path']);target.unlink()
+    from r1.exam.guards import guarded_download
+    class Response:
+        reads=0
+        def read(self,n):
+            self.reads+=1
+            if self.reads==1:return b'abcd'
+            raise ConnectionResetError('fixture network failure')
+        def close(self):pass
+    def download(url,path,**kwargs):
+        return guarded_download(url,path,**kwargs,opener=lambda *a,**k:Response(),check_space=lambda p:{},chunk_bytes=4)
+    monkeypatch.setattr(hub,'guarded_download',download)
+    with pytest.raises(ConnectionResetError,match='network failure'):hub.main(['--worker',json.dumps(s)])
+    assert target.with_name(target.name+'.partial').read_bytes()==b'abcd'
+    assert not target.exists()
