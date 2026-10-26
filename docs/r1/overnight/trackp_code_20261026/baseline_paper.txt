@@ -1,0 +1,24 @@
+E               "passed": false,
+E               "passed": false,
+E               "passed": false,
+E               "passed": false,
+E               "passed": false,
+E               "passed": false,
+E               "passed": false,
+E               "passed": false,
+FAILED r1/tests/test_c3_control_dryrun.py::test_control_dryrun_end_to_end - A...
+FAILED r1/tests/test_c3_featurizer_online.py::test_control_plane_skips_do_not_count_as_invalid[control0-False]
+FAILED r1/tests/test_c3_featurizer_online.py::test_control_plane_skips_do_not_count_as_invalid[control1-False]
+FAILED r1/tests/test_c3_featurizer_online.py::test_control_plane_skips_do_not_count_as_invalid[control2-True]
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_retry_and_permanent_failure
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_resumes_after_kill_mid_campaign
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_watchdog_restarts_a_killed_runner
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_resumes_after_kill_mid_campaign
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_watchdog_restarts_a_killed_server
+FAILED r1/tests/test_rerun2_batch4c.py::test_real_runner_desktop_dryrun - Ass...
+ERROR r1/tests/test_c3_direct_arms.py
+ERROR r1/tests/test_c3_rule_controller.py
+ERROR r1/tests/test_c3_sidecar.py
+ERROR r1/tests/test_c3_skip_display.py
+11 failed, 407 passed, 1 skipped, 4 errors in 97.20s (0:01:37)
