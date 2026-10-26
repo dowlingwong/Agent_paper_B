@@ -4,7 +4,7 @@
 
 - The author's 26 Oct decisions are recorded as PLAN §10 rows (R1-STARTLUX-TRAINABLE … R1-TRACKP-MERGE) on `trackp-20261026`, with the spec corrected to match. The agent's own implementation choices are listed under the rows for confirmation.
 - Code: E0 protocol v2, the A3 pool budget, token rows (mean-embedding init, fp32, own lr), the lr grid, early stopping, temperature scaling, the Track X marker in the GPU lease, 10 Jev questions, environment pins checked and recorded in every manifest.
-- Independent review: `docs/r1/reviews/TRACKP_DECISIONS_REVIEW_20261026.md` (1 blocking + 9 minor, fixed). The four Track H modules pass at harness `897d83c`: 29/29.
+- Independent review: `docs/r1/reviews/TRACKP_DECISIONS_REVIEW_20261026.md` (1 blocking + 9 minor, then 3 minor on the DRYRUN report and 1 on the manifest dirty-file list; all fixed; **verdict: accepted**). The four Track H modules pass at harness `897d83c`: 29/29.
 - **E0 v2 DRYRUN** (DRYRUN, code at `8e13e77`; the manifests' dirty flag comes from an uncommitted review-file edit, not code): `docs/r1/reports/TRACKP_E0V2_DRYRUN_20261026.md`.
   - Selected lr 1e-4 for both bases. Width slope vs the label's own std: 0.92 (Kev) and 0.97 (Qwen); mean slope 1.01. Label ceiling vs s: 0.925.
   - Within 2,000 steps the frozen-backbone head fit learns no width (it had not converged). Hard labels collapse the width (ratio 0.27 / 0.20).

@@ -275,3 +275,16 @@ findings on the DRYRUN report (R2-1 to R2-3) remain.
 
 Verdict: changes required — one minor bug remains (`dirty_files` drops the first character of the first file name).
 Everything else in the decisions review, the re-checks and the DRYRUN report is closed.
+
+## Closing (`b4f7107..fbed3ad`)
+
+`git_commit` now reads the unstripped `git status --porcelain -z --untracked-files=no` output and splits it on NUL.
+The throwaway repo that showed the bug now returns `['abc.txt', 'def.txt']`, and the clean branch gives
+`dirty: false`. The new test `test_git_commit_lists_dirty_files_with_full_names` is in `r1/tests/test_trackp_e0_v2.py`,
+which passes (21 passed). Note, not a finding: with `-z`, a staged rename adds the original path as a separate entry,
+which this parser would list with its first three characters cut off. This can only happen if a rename is staged in the
+paper repo during a run, and it affects only the diagnostic list, never the `dirty` flag. The decisions review
+(1 blocking, 9 minor), the re-checks and the three DRYRUN-report findings are all resolved. Nothing blocking or minor
+remains.
+
+Verdict: accepted
