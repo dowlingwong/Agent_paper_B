@@ -1,6 +1,6 @@
 # Portal host facts — 26 October 2026
 
-AI-assisted execution record. ENGINEERING_ONLY. **Phase 0 inventory collected; independent resumption review pending. STOP 0 remains in force for author disk-location and licence decisions.** No exam, inference, worker run, installation or model-weight download has run.
+AI-assisted execution record. ENGINEERING_ONLY. **Phase 0 inventory independently reviewed and accepted. STOP 0 remains in force for author disk-location, licence and unresolved Ornith-identity decisions.** No exam, inference, worker run, installation or model-weight download has run.
 
 ## Scope, provenance and earlier interruption
 
@@ -110,7 +110,9 @@ PLAN's exclusive compute assignment is the governing allocation. The live observ
 
 ## STOP 0 — decisions and remaining boundaries
 
-After independent review, stop for the author to:
+Independent reviewer verdict: **ACCEPTED — Phase 0 read-only inventory and its decision package, with the disclosed unresolved identities and negative readiness checks.** See the resumption section of [EXAM_0_REVIEW_20261026.md](../reviews/EXAM_0_REVIEW_20261026.md), reviewing implementation through `d8d1035`. No remaining MAJOR report correction or MINOR correction is required.
+
+Stop for the author to:
 
 1. Confirm model/code storage, proposed `/home/dowling/exam-x/{models,work}` on the observed filesystem, or specify another location.
 2. Review and approve the licence package, supply any needed gated-repository access, and resolve the Ornith-31B identity / confirm the proposed Ornith-35B name mapping. No candidate is silently dropped, replaced or marked eligible.
