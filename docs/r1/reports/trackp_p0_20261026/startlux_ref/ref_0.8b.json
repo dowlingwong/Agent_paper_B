@@ -1,0 +1,30 @@
+{
+ "transformers": "5.8.1",
+ "torch": "2.6.0+cu124",
+ "dtype": "bfloat16",
+ "reference_check": {
+  "full_attention_layers": [
+   3,
+   7,
+   11,
+   15,
+   19,
+   23
+  ],
+  "layers": 24,
+  "impl": "startlux_prompt_bidirectional",
+  "causal_loop_max_diff": 0.0,
+  "padding_invariance_max_diff": 0.0,
+  "late_token_reach": 1.1875
+ },
+ "ours_check": {
+  "impl": "trackp_startlux_bidirectional/v1",
+  "causal_max_diff": 0.0,
+  "late_token_reach": 1.53125
+ },
+ "n": 20,
+ "max_abs_logit_diff": 0.10907554626464844,
+ "mean_abs_logit_diff_max": 0.06524717807769775,
+ "max_tv_distance": 0.020969156175851822,
+ "vllm_path": "not run: vLLM is not installed on this host"
+}

@@ -1,0 +1,67 @@
+{
+  "describe": {
+    "action_head": true,
+    "bin_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "family": "qwen_control",
+    "head_form": "softmax12",
+    "list_bins": true,
+    "model_version": "trackp_model/v1"
+  },
+  "engineering": {
+    "batch_size": 8,
+    "gradient_checkpointing": true,
+    "oom": false,
+    "peak_vram_mib": 13554.37353515625,
+    "probe_tokens": 1024,
+    "step_time_s": 3.3517439004499465
+  },
+  "family": "qwen_control",
+  "forward_one": {
+    "action": 0.5721859335899353,
+    "belief_shape": [
+      1,
+      12
+    ],
+    "belief_sum": 0.9999999403953552
+  },
+  "gradient_checkpointing": true,
+  "head_lr": 0.001,
+  "lr": 0.0001,
+  "packing": {
+    "max_diff": null,
+    "ok": false,
+    "reason": "linear-attention (Gated DeltaNet) layers cannot take a tree mask"
+  },
+  "provenance": null,
+  "reload_action_max_diff": 0.0,
+  "reload_identical": true,
+  "reload_max_diff": 0.0,
+  "saved_sha256": {
+    "adapter/README.md": "d1502e5cd5c5e0ac18f6f6f3180abad275ec3793470213c4c1f0760b0c6dbe17",
+    "adapter/adapter_config.json": "cd48e20a30b4a52cd668d59ab238ddabe4c3f5751a5c785aaf3a20b776f50eab",
+    "adapter/adapter_model.safetensors": "4ab5e77b45a466a53c75ce1b3cbc898f7bf9b83059b63381eb0617bdbd9ef409",
+    "heads.safetensors": "9bbcbf73561f6bc5d0a17ea6a2081feed2d1304e87602d8c502d9a5c4bd85576"
+  },
+  "toy_sft": {
+    "checkpoint": "/home/dowling/r1_trackp/runs/p0/qwen3.5-4b-base/toy_sft/ckpt/step_0000010",
+    "completed": true,
+    "loss_first": 3.609746217727661,
+    "loss_last": 4.580386161804199,
+    "steps": 10,
+    "stopped_at": 10
+  },
+  "trainable_parameters": 32500736
+}

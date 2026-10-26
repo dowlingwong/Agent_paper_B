@@ -1,0 +1,52 @@
+{
+  "describe": {
+    "action_head": true,
+    "family": "laya",
+    "head_form": "softmax12",
+    "model_version": "trackp_model/v1"
+  },
+  "engineering": {
+    "batch_size": 8,
+    "gradient_checkpointing": true,
+    "oom": false,
+    "peak_vram_mib": 4463.2958984375,
+    "probe_tokens": 1024,
+    "step_time_s": 0.9951654225587845
+  },
+  "family": "laya",
+  "forward_one": {
+    "action": 0.6126192808151245,
+    "belief_shape": [
+      1,
+      12
+    ],
+    "belief_sum": 0.9999998807907104
+  },
+  "gradient_checkpointing": true,
+  "head_lr": 0.001,
+  "lr": 2e-05,
+  "packing": {
+    "max_diff": null,
+    "ok": false,
+    "reason": "encoder packing not implemented (spec \u00a72.4: little room within 1,024 tokens)"
+  },
+  "provenance": null,
+  "reload_action_max_diff": 0.0,
+  "reload_identical": true,
+  "reload_max_diff": 0.0,
+  "saved_sha256": {
+    "adapter/README.md": "6f5e8816ed8aa637ace889f52c1df7ec1b950969e3e84712874f3c0369b22cd6",
+    "adapter/adapter_config.json": "2b5ea68d814cec81632ae79d35285a471aca9ca70a276e25af92087332da641f",
+    "adapter/adapter_model.safetensors": "ba60d97c2194f990a5f63b2902ad50bacfbbac31682e45b7846a69f1506e0e30",
+    "heads.safetensors": "4afcc2338df078abf86983b1658003855b3b3d905020054aca8220be4bec7ee6"
+  },
+  "toy_sft": {
+    "checkpoint": "/home/dowling/r1_trackp/runs/p0/laya/toy_sft/ckpt/step_0000010",
+    "completed": true,
+    "loss_first": 3.2110533714294434,
+    "loss_last": 3.635561943054199,
+    "steps": 10,
+    "stopped_at": 10
+  },
+  "trainable_parameters": 33447938
+}

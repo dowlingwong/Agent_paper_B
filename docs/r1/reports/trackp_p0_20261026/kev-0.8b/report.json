@@ -1,0 +1,59 @@
+{
+  "describe": {
+    "action_head": true,
+    "family": "kev",
+    "head_form": "softmax12",
+    "kev_hybrid": true,
+    "model_version": "trackp_model/v1"
+  },
+  "engineering": {
+    "batch_size": 8,
+    "gradient_checkpointing": true,
+    "oom": false,
+    "peak_vram_mib": 3342.82080078125,
+    "probe_tokens": 1024,
+    "step_time_s": 0.8313682698644698
+  },
+  "family": "kev",
+  "forward_one": {
+    "action": 0.6273254156112671,
+    "belief_shape": [
+      1,
+      12
+    ],
+    "belief_sum": 1.0
+  },
+  "gradient_checkpointing": true,
+  "head_lr": 0.001,
+  "lr": 2e-05,
+  "packing": {
+    "max_diff": null,
+    "ok": false,
+    "reason": "linear-attention (Gated DeltaNet) layers cannot take a tree mask"
+  },
+  "provenance": {
+    "head_sha256": "f400bd12802b2b105ae45d6b03774a158a3db4fccff42413734ddca2e5c920b6",
+    "init_from": "/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571",
+    "resolved": "/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571",
+    "tensors": 372,
+    "weights_sha256": "9b908623acb162118575f4e7a94524f9c139c335be4bfb74d6cfceca01e1885a"
+  },
+  "reload_action_max_diff": 0.0,
+  "reload_identical": true,
+  "reload_max_diff": 0.0,
+  "saved_sha256": {
+    "adapter/README.md": "56a276a30ac9e74bb5d0409be1e00857c5f5e535bbe3c334f6e1a9061ecbce6f",
+    "adapter/adapter_config.json": "1f1ef02d90465a83f12a2700256fd0c4c064283b1a04a85627d9d98c69ae45d0",
+    "adapter/adapter_model.safetensors": "f092dbe84a5bd0957a40e251cee61a8fe9aedc93075092545e0f769873da4495",
+    "heads.safetensors": "54d6b5e22eb169fff5652e7df7e4367da90ea400c86fc8b2ea72267505baa47e"
+  },
+  "toy_sft": {
+    "checkpoint": "/home/dowling/r1_trackp/runs/p0/kev-0.8b/toy_sft/ckpt/step_0000010",
+    "completed": true,
+    "loss_first": 3.3932530879974365,
+    "loss_last": 2.929624080657959,
+    "steps": 10,
+    "stopped_at": 10
+  },
+  "trainable_parameters": 11350529
+}
