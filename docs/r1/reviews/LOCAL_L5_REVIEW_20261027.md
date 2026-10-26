@@ -16,3 +16,12 @@ AI-assisted independent review of commit `b0700226b0538a2d56aee212a4dfa5e59cbb10
 - L3's reviewed conservative scenario explicitly ends 31 January, 15 calendar days after its estimated 16 January abstract date (`ICML_REPLAN_20261027.md`, lines 63–83); the estimate is conditional and does not establish a deadline or feasibility. The proposal preserves the host-equivalence, authorization and gate boundaries. The cited `ROUTE_PROPOSALS_20261027.md` R2–R6 identifies the bin-edge, hard-belief-label, R-A0, RPS scaling and shared-representation issues as author decisions, rather than silently resolving them.
 
 No real model was loaded, no training was performed, and no SSH, external API, frozen protocol or other repository file was changed during this review.
+
+## Independent re-review of correction — 27 October 2026
+
+**Verdict: accepted** for the L5 proposal at commit `96b0169101ca35b68b92a719bc5802db5c0d6ad5`. The original not-accepted verdict above remains the historical first review.
+
+1. **Resolved.** The revised proposal removes the unsupported optimism claim, states that the in-sample denominator is held fixed across draws, and explicitly says its uncertainty is omitted and the direction of bias is not established. It also clarifies that the assumed 600 rows is not an exact per-draw count. The proxy remains an illustrative calculation, not finalist power.
+2. **Resolved.** The revised table links A5 to B.5, the A3-or-A5 B.7 gate and later A5-based comparisons; this matches `RUNBOOK.md` B.5/B.7 and Track P.4. It maps R-A0/R-A1, R-A2/R-A3 and R-B to their comparisons and names the effect of deferral. It identifies E7 as adopted, describes the loss of head-selection evidence and requires an author decision for deferral, consistent with `TRACK_P_POST_TRAINING.md` §§5.4 and 5.7 and `PORTAL_TRACK_P_RUNBOOK.md` Phase 7. The proposal preserves the predeclared three-way comparison and PLAN §9 obligations and does not authorize scope cuts.
+
+The new separate E7 estimate is the spec's projection, not a TASL-7 measurement. The P.3b row's phrase “E7 ... add unknown cost” should be read as unknown actual total cost alongside that separate projected estimate; this wording is non-blocking. Acceptance is of the analysis and proposal only: the 0.160 proxy does not establish finalist detectable power, and no phase, experiment, scope change or author decision is authorized by this review. No model, training, remote operation or broad test suite was run during this re-review.

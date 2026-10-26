@@ -1,5 +1,14 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — local L5 feasibility proposal independently reviewed (AI-assisted; proposal only)
+
+- Independent reviewer accepted the corrected [Track P feasibility proposal](proposals/TRACKP_FEASIBILITY_20261027.md): [review](reviews/LOCAL_L5_REVIEW_20261027.md); proposal `b070022`, corrections `96b0169`. Its pilot-based bootstrap is an illustrative proxy, not a determination of detectable finalist differences; stage costs are sourced projections or explicitly unknown.
+- **STOP L5:** author decides which Track P stages to include and how to resolve the listed specification questions. This analysis authorizes no training or scope change.
+
+## 27 October 2026 — local L0 scope re-review (AI-assisted)
+
+- The independent [re-review](reviews/LOCAL_L0_REVIEW_20261027.md) accepts the fidelity of the documented baseline but rejects adherence to the test scope: synthetic node-model fits are confirmed, while the stopping points of other attempted subprocesses are unknown. See the [incident record](reports/LOCAL_TEST_SCOPE_INCIDENT_20261027.md); L4.4 remains unaccepted.
+
 ## 27 October 2026 — local test-scope incident (AI-assisted; review pending)
 
 - The L0 and L4.4 harness suites included an in-process test that fitted existing node models on synthetic CPU data; additional node-training subprocesses were attempted with incompletely known outcomes. Two Track G subagents also ran tests outside their stub-only brief. The [incident record](reports/LOCAL_TEST_SCOPE_INCIDENT_20261027.md) separates confirmed fits from unknown subprocess outcomes and preserves available evidence.
