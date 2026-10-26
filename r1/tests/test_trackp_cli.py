@@ -38,13 +38,27 @@ def run(*args, check=True):
     return res
 
 
-def test_check_config_lists_placeholders_and_real_runs_refuse_them(tmp_path):
+def _placeholder_config(tmp_path):
+    cfg = json.loads((REPO / "r1/scripts/configs/trackp_portal.json").read_text())
+    cfg["bases"]["kev-0.8b"]["local_path"] = "TODO_VERIFY_ON_HOST"
+    p = tmp_path / "cfg.json"
+    p.write_text(json.dumps(cfg))
+    return str(p)
+
+
+def test_shipped_config_is_filled():
     res = run("--check-config", check=False)
-    assert res.returncode == 1 and "TODO_VERIFY" not in res.stderr
-    assert "bases.kev-0.8b.local_path" in json.loads(res.stdout)["placeholders"]
-    res = run("spike", "--base", "kev-0.8b", "--run-dir", str(tmp_path / "x"), check=False)
+    assert res.returncode == 0 and json.loads(res.stdout)["placeholders"] == []
+
+
+def test_check_config_lists_placeholders_and_real_runs_refuse_them(tmp_path):
+    cfg = _placeholder_config(tmp_path)
+    res = run("--config", cfg, "--check-config", check=False)
+    assert res.returncode == 1 and json.loads(res.stdout)["placeholders"] == ["bases.kev-0.8b.local_path"]
+    res = run("--config", cfg, "spike", "--base", "kev-0.8b", "--run-dir", str(tmp_path / "x"), check=False)
     assert res.returncode == 2 and "TODO_VERIFY" in res.stderr
-    res = run("spike", "--base", "kev-0.8b", "--allow-placeholders", "--run-dir", str(tmp_path / "x"), check=False)
+    res = run("--config", cfg, "spike", "--base", "kev-0.8b", "--allow-placeholders", "--run-dir", str(tmp_path / "x"),
+              check=False)
     assert res.returncode == 2 and "--tiny dry runs only" in res.stderr
 
 
