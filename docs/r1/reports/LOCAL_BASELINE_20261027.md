@@ -2,6 +2,8 @@
 
 AI-assisted. These are engineering test outcomes, not experimental evidence or scientific results. L0 is accepted as a documented baseline with the limitations in the [independent review](../reviews/LOCAL_L0_REVIEW_20261027.md).
 
+**Subsequent scope discovery:** the harness suite included an in-process test fitting node models on synthetic CPU data, and other tests attempted node-training subprocesses. See the [test-scope incident](LOCAL_TEST_SCOPE_INCIDENT_20261027.md) for confirmed facts and unknowns. The original L0 acceptance preceded this discovery and is being rechecked with the additional record.
+
 ## Provenance and conditions
 
 - Paper branch `local-20261026`, based on `origin/main` at `8ba81b68c70c58d40612c7a316e8d1669ff5ca33`. The precise launch HEAD was not captured and is not established by the retained evidence. The paper JUnit timestamp predates the creation of `ad90149`; during the run `ad90149` updated PLAN and `5505eb1` updated STATUS. `git diff 8ba81b68..5505eb1 -- r1 Makefile` is empty; document and working-tree state at launch cannot be inferred from that fact.
