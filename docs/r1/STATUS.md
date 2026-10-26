@@ -2,7 +2,7 @@
 
 ## 26 October 2026 — Track P Mac scope clarified (AI-assisted)
 
-- Author clarified R1-TRACKP-RUNBOOK: the Mac restriction covers execution, including Track P training, GPU jobs, API calls and edits to `r1/c3/train/`, while reading documents and writing analyses and proposals, including L5 without runs, are allowed. Recorded as R1-TRACKP-RUNBOOK-SCOPE in PLAN §10.
+- Author clarified R1-TRACKP-RUNBOOK: the Mac restriction covers execution, including Track P training, GPU jobs, API calls and edits to `r1/c3/train/`, while reading documents and writing analyses and proposals, including L5 without runs, are allowed. CPU unit tests using tiny random-weight models are permitted under the author's conditions; test results are test outcomes only. Recorded as R1-TRACKP-RUNBOOK-SCOPE in PLAN §10.
 
 ## 26 October 2026 — local (Mac) work runbook (AI-assisted; documents only)
 
