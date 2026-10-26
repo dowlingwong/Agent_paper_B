@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — local L0 baseline independently reviewed (AI-assisted; engineering only)
+
+- L0 is accepted as a documented baseline with limitations: [report](reports/LOCAL_BASELINE_20261027.md), [independent review](reviews/LOCAL_L0_REVIEW_20261027.md). Paper: 500 passed, 66 failed, 72 skipped, 1 deselected; harness: 433 passed, 27 failed, 3 errors, 55 subtests passed. Raw outcomes and exact IDs are committed with the report. The launch HEAD was not captured; conditions and commands are operator-reported. Failures include sandbox-restricted fake servers and two reproducibility tests; the reviewer reproduced a record-level E0 difference without assigning its cause.
+- The author clarified that Mac scope permits read-only Track P proposals and CPU-only unit tests on tiny random-weight models under the stated restrictions; recorded as R1-TRACKP-RUNBOOK-SCOPE. No evidence run or real-model execution follows from this baseline.
+
 ## 26 October 2026 — Track P Mac scope clarified (AI-assisted)
 
 - Author clarified R1-TRACKP-RUNBOOK: the Mac restriction covers execution, including Track P training, GPU jobs, API calls and edits to `r1/c3/train/`, while reading documents and writing analyses and proposals, including L5 without runs, are allowed. CPU unit tests using tiny random-weight models are permitted under the author's conditions; test results are test outcomes only. Recorded as R1-TRACKP-RUNBOOK-SCOPE in PLAN §10.

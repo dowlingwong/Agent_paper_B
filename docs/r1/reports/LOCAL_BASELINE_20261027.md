@@ -1,6 +1,6 @@
 # Local baseline, 26–27 October 2026
 
-AI-assisted. These are engineering test outcomes, not experimental evidence or scientific results. L0 review is pending.
+AI-assisted. These are engineering test outcomes, not experimental evidence or scientific results. L0 is accepted as a documented baseline with the limitations in the [independent review](../reviews/LOCAL_L0_REVIEW_20261027.md).
 
 ## Provenance and conditions
 
@@ -39,4 +39,4 @@ env CUDA_VISIBLE_DEVICES='' HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_HOME=/pri
 
 ## Open follow-up
 
-Independent review must verify the captured counts, IDs, conditions and inventory before L0 is accepted. The sandbox-constrained failures are the baseline for later comparisons in this environment; they do not establish that a remote host is ready for an evidence run.
+The sandbox-constrained failures are the baseline for later comparisons in this environment; they do not establish that a remote host is ready for an evidence run. Any comparison must account for the operator-reported execution conditions and unknown launch HEAD.
