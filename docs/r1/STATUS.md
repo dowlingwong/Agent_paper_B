@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P overnight summary (AI-assisted; ENGINEERING_ONLY / DRYRUN)
+
+- Track P agent on zhixu portal, branch `trackp-20261026` (not merged). Phases 0–4 done and independently reviewed and accepted; Phase 5 (P.3a) not started (no authorization note); its one-model DRYRUN (kev-0.8b) ran: soft E0 mean slope 1.00 but width slope 0.11 (would fail E0), hard labels collapse width; A4 fails, A3 blocked by Kev's state limit — not evidence, nothing tuned.
+- No stop condition hit; ≈ 57 leased GPU-minutes. Summary and the author's questions: `docs/r1/reports/TRACKP_OVERNIGHT_20261026.md` (StartLux rung; Phase 5 design; spec interpretations; harness pin `6afdb0e` to GitHub; merge).
+
 ## 26 October 2026 — Track P Phase 4: P.1/P.2 toy batch (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
 
 - Same 64-example batch, 50 steps, both outputs, shared loop, all 8 families (StartLux included, rung pending the author): total, belief and action loss decrease on the whole batch in eval mode for every family; reload bit-identical. Laya needed one fix (its new heads now read the mean-pooled encoder output; the post-head [CLS] state is ~constant). Laya's belief still ends above the constant base rate (slow at lr 2e-5); the Qwen-0.8B control is unstable. Report `docs/r1/reports/TRACKP_P4_TOY_BATCH_20261026.md`, review `docs/r1/reviews/TRACKP_4_REVIEW_20261026.md` (accepted).

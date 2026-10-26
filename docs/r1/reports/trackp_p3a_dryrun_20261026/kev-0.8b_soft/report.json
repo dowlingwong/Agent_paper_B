@@ -1,0 +1,54 @@
+{
+  "head_fit": {
+    "mean_slope": 0.07510694978238176,
+    "mean_slope_vs_label": 0.07292252546168385,
+    "n": 1000,
+    "rps": 0.04842425576267095,
+    "rps_extrap": 0.07722117947795992,
+    "rps_interp": 0.030244142422023584,
+    "width_ratio": 2.4347008778862005,
+    "width_slope": 0.004854057042051252,
+    "width_slope_vs_label": 0.0017627944075903105
+  },
+  "lora": {
+    "mean_slope": 1.002808505852787,
+    "mean_slope_vs_label": 0.9745208773362135,
+    "n": 1000,
+    "rps": 0.002360128964870472,
+    "rps_extrap": 0.0030834875791739993,
+    "rps_interp": 0.0019034572132628613,
+    "width_ratio": 1.2950365745124317,
+    "width_slope": 0.11387401412006622,
+    "width_slope_vs_label": 0.12184433367429132
+  },
+  "n_test": 1000,
+  "n_train": 3000,
+  "pass": false,
+  "probes": {
+    "A1": {
+      "pass": null,
+      "reason": "model does not pack (spec \u00a75.6: packed models only)"
+    },
+    "A2": {
+      "pass": null,
+      "reason": "model does not pack (spec \u00a75.6: packed models only)"
+    },
+    "A3": {
+      "pass": null,
+      "reason": "not all lengths ran"
+    },
+    "A3_errors": {
+      "2000": "ContextOverflow: state exceeds 1024 tokens: 2383",
+      "8000": "ContextOverflow: state exceeds 1024 tokens: 8400"
+    },
+    "A4": {
+      "frac_monotone": 0.53125,
+      "pass": false
+    },
+    "A5": {
+      "pass": null,
+      "reason": "A5 applies to BinTokenWrapper only (spec \u00a75.6)"
+    }
+  },
+  "target": "y_soft"
+}
