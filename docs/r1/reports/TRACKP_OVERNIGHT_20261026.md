@@ -19,7 +19,7 @@ All reports and reviews are under `docs/r1/reports/` and `docs/r1/reviews/`. STA
 
 ## Commits
 
-43 commits on `trackp-20261026` from `b5a7aec` (= `main`) to this summary. Key points:
+44 commits on `trackp-20261026` from `b5a7aec` (= `main`) up to and including this summary (`3b539a0` and its count fix). Key points:
 - Phase 0: `870e6de`, `f08e5e4`, `ef3e2f3`.
 - Phase 1: `4919f59` … `51d0d57` (5 worker branches merged).
 - Phase 2: `7285791` … `7a4b74b`.
