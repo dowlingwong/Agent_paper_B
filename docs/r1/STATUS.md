@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — local L1 route review accepted; author proposals pending (AI-assisted)
+
+- Independent reviewer accepted the consistency scan, historical annotations and [technical route](TECH_ROUTE.md) after corrections to the dependency graph, references, gate and accounting: [review](reviews/LOCAL_L1_REVIEW_20261027.md). Scan and route commits `221d6d3` / `9a9f7e4`; review corrections `1954484` / `dc63abc` / `66b8079`.
+- **STOP L1:** author decisions remain open in [route proposals](proposals/ROUTE_PROPOSALS_20261027.md), including DAC headline framing, bin edges, hard-label diagnostic exceptions, R-A0, score scaling, belief/action coupling, DI endpoint and H.8 coordination. No new PLAN decision or evidence authorization is inferred. L2, L3 and independent L4 work continue.
+
 ## 27 October 2026 — local L0 baseline independently reviewed (AI-assisted; engineering only)
 
 - L0 is accepted as a documented baseline with limitations: [report](reports/LOCAL_BASELINE_20261027.md), [independent review](reviews/LOCAL_L0_REVIEW_20261027.md). Paper: 500 passed, 66 failed, 72 skipped, 1 deselected; harness: 433 passed, 27 failed, 3 errors, 55 subtests passed. Raw outcomes and exact IDs are committed with the report. The launch HEAD was not captured; conditions and commands are operator-reported. Failures include sandbox-restricted fake servers and two reproducibility tests; the reviewer reproduced a record-level E0 difference without assigning its cause.
