@@ -87,3 +87,35 @@ The Laya fix is justified and confined to `LayaWrapper`. Acceptance needs findin
 3. Fixed: deviation 1 now covers the cumulative head too and is an author question (Q1); the variation measurement is committed (`laya_readout_states.py` and its output).
 4. Fixed: `test_laya_new_heads_read_the_padding_invariant_masked_mean_of_the_encoder` (action and belief unchanged when batched with a longer prompt; action equals the head on the masked mean of the encoder output).
 Informational items: the trainer now logs the lr the step ran at; `run_all.sh` label fixed; the attempt-1 checkpoint path noted in the report.
+
+## Re-check (26 Oct 2026)
+
+Same reviewer. Commit checked: `f508758`, which equals `origin/trackp-20261026` and is the only commit after `02dd725`. It is authored `Dowling Wong <wangdowling@gmail.com>` and ends with the co-author line. The diff touches the report, four new evidence files, this review file, `r1/c3/train/trainer.py` (3 lines) and one new test. No run outputs or manifests were changed.
+
+What I re-ran:
+- **CPU tests:** `r1/tests/test_trackp_*.py` at `f508758` (`trackp-cpu`, `CUDA_VISIBLE_DEVICES=""`): **160 passed**, 0 failed. That is the previous 159 plus the new test.
+- **`p4_baselines.py`** (CPU): it reproduces `p4_baselines_output.json` exactly (belief 2.24317, action 0.73671, weighted positive fraction 0.64034). Its AUC and correlation for the saved Laya model (0.7854 and 0.4383) equal my own independent check (R10).
+- **`laya_readout_states.py`** (CPU, untrained Laya, 16 prompts): it reproduces `laya_readout_states_output.txt` line for line:
+  - encoder [CLS] 8.64 %;
+  - encoder mean 8.68 %;
+  - post-head marker mean 1.93 %;
+  - post-head [CLS] 1.17 %;
+  - post-head mean 1.62 %.
+
+  This measure (between-prompt std after LayerNorm) differs from my R9 measure, but both lead to the same conclusion.
+
+Findings:
+1. **Fixed.** The report now gives both constant baselines with a script and its output. It says plainly that Laya's belief ends above the base-rate baseline (2.406 vs 2.243), and that the Laya and Qwen-0.8B action losses end just below the best constant (0.737). It quotes the Laya AUC and correlation, which I verified.
+2. **Fixed.** The Qwen-0.8B result is now described as instability, not slowness. The report compares it with the 4B control, which uses the same readout. The lr question for the control is now author question Q2, before P.4. Grad norms 50–170 and loss spikes up to 6.3 match `metrics.jsonl` (6.33 at step 5, 6.43 at step 8).
+3. **Fixed.** Deviation 1 now covers Laya's cumulative head (E0 head fit, E7) and is author question Q1. The measurement is committed and reproduces. It also shows that the obvious alternatives after the head layers (mean 1.6 %, marker mean 1.9 %) are as flat as [CLS]. That supports reading the encoder output, as the fix does.
+4. **Fixed.** `test_laya_new_heads_read_the_padding_invariant_masked_mean_of_the_encoder` builds Laya with the `cumulative11` head form and checks three things:
+   - the action and belief outputs are unchanged when the prompt is batched with a much longer one (padding);
+   - with no padding, the action logit equals the action head applied to the encoder output's mean;
+   - from these, padding leaking into the mean would fail the first check, and a return to the post-head [CLS] would fail the second.
+
+   The test passes.
+5. **Informational item, fixed.** `trainer.py` now records `sched.get_last_lr()` *before* `opt.step()` / `sched.step()`. With `LambdaLR` that is the lr the step ran at (λ(0)·lr on step 1). The report's Notes say that the committed Phase 4 `toy_metrics.txt` files were written with the old convention, shifted by one step. The change is logging only; training is unaffected. The checkpoint-path note is in the report, and the `run_all.sh` label is outside the repo.
+
+I found no new issue. The Phase 4 evidence, the claims and the ground rules are as checked in the first round.
+
+Verdict: accepted
