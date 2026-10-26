@@ -2,12 +2,12 @@
 
 AI-assisted (Claude Code, Track P agent on zhixu portal). **DRYRUN — not evidence.** Asked for by the author (PLAN §10 R1-E0-PROTOCOL: "Re-run the DRYRUN on Kev-0.8B and Qwen-0.8B under the fixed protocol and report. I will set the E0 and A4 thresholds in a PLAN row after seeing it, then write the Phase 5 authorization"). No authorization note exists and no evidence run was started. The code and decision changes behind it were independently reviewed (`docs/r1/reviews/TRACKP_DECISIONS_REVIEW_20261026.md`). This report has no pass/fail verdict: the v2 thresholds are the author's.
 
-- **Commit and runs.** All runs are at commit **`8e13e77`** (clean tree; harness `897d83c` = `HARNESS_PIN_C3`). Each manifest records torch 2.6.0+cu124 and the kev / laya / startlux_decide pin commits, all checked at start.
+- **Commit and runs.** All runs are at commit **`8e13e77`**; harness `897d83c` = `HARNESS_PIN_C3`. All 14 manifests record the paper tree as *dirty*. The flag is read when each job ends, and every job ended after an uncommitted edit to a tracked documentation file: the reviewer's re-check appended to `docs/r1/reviews/TRACKP_DECISIONS_REVIEW_20261026.md`. No code was uncommitted: `git diff 8e13e77 a2859b3 -- r1` is empty. Manifests now also list the dirty files (`git_commit` → `dirty_files`). Each manifest records torch 2.6.0+cu124 and the kev / laya / startlux_decide pin commits, all checked at start.
 - **Driver and evidence.** Driver `trackp_e0v2_dryrun_20261026/driver.sh`; every report, manifest, curve and lease record is in `trackp_e0v2_dryrun_20261026/runs/`; tables from `summarize.py`.
 
 ## Protocol as run
 
-- **Data.** The committed E0 set (`e0_v1.jsonl.gz`, unchanged): train cells minus 6 validation cells, giving 2,700 train / 300 val. The test set is 1,000 prompts in the 10 held-out cells, 6 interpolation and 4 extrapolation.
+- **Data.** The committed E0 set (`e0_v1.jsonl.gz`, unchanged): train cells minus 6 validation cells, giving 2,714 train / 286 val. The test set is 1,000 prompts in the 10 held-out cells, 6 interpolation and 4 extrapolation.
 - **Fresh head, stage 1.** LayerNorm + Linear(hidden → 12) on each wrapper's readout state, fitted on frozen-backbone states at lr 1e-3.
 - **Fresh head, stage 2.** LoRA r = 16 together with that head; adapter lr from the grid {1e-5, 3e-5, 1e-4}, head 1e-3. The Qwen control's 14 token rows stay frozen.
 - **Training budget.** Both stages: batch 8, warm-up 5 % plus cosine over the 2,000-step cap. Val RPS every 100 steps (the start included), patience 5, best checkpoint restored. bf16 with gradient checkpointing.
@@ -48,16 +48,19 @@ AI-assisted (Claude Code, Track P agent on zhixu portal). **DRYRUN — not evide
 | qwen3.5-0.8b-base | native (bin tokens), lr 1e-4 | + LoRA | 0.0002 | **0.813** | 0.758 | 1.026 | 1.11 | 1700 / 2000 |
 
 The head-fit rows are the same at every lr: the head fit does not depend on the adapter lr, and the cached features are identical. Best val RPS per lr, as used by `e0-select`:
-- **Kev:** 3.4e-4 (1e-5), 1.2e-4 (3e-5), **4e-5 (1e-4)**.
+- **Kev:** 3.4e-4 (1e-5), 1.2e-4 (3e-5), **4.5e-5 (1e-4)**.
 - **Qwen:** 6.9e-4, 1.3e-4, **6e-5**.
 
 Full per-run JSON, including interpolation and extrapolation RPS, is in `runs/`.
 
 ### What the numbers say (no thresholds applied)
 
-1. **The frozen backbone carries no width information through a linear head.** The width slope is ≈ 0 for both bases, and the head predicts one broad distribution (width ratio ≈ 2). It does carry some location: mean slope 0.12 for Kev and 0.23 for Qwen. **Width is learned only once LoRA trains.** A threshold on the head-fit stage would fail every model.
+1. **Within 2,000 steps, the linear head on the frozen backbone learns no width.** The width slope is ≈ 0 for both bases, and the head predicts one broad distribution (width ratio ≈ 2). It does learn some location: mean slope 0.12 for Kev and 0.23 for Qwen.
+   - The head fit had not converged. Qwen's best was at the 2,000-step cap; Kev's was at step 1,600. Its test RPS is 0.034–0.043, against about 0.0002 after LoRA.
+   - So this does not show that the frozen features carry no width information.
+   - In this budget, width is learned only once LoRA trains, and a threshold on the head-fit stage would fail both models.
 2. **With LoRA, the selected soft runs reach** a width slope vs the label std of **0.92 (Kev) / 0.97 (Qwen)** and a mean slope of 1.01. That is 0.86 / 0.91 against s, compared with the label's own 0.925. The width slope rises with the lr: Kev 0.78 → 0.85 → 0.92, Qwen 0.65 → 0.86 → 0.97.
-3. **Convergence within 2,000 steps is not settled.** Every soft LoRA run had its best checkpoint at step 1,700–2,000. Kev at lr 1e-5 was still improving at the cap. Early stopping never triggered on a soft run: all ran to 2,000, and the starting model was never chosen. The hard runs stopped at 600.
+3. **Convergence within 2,000 steps is not settled**, for the head fit (item 1) and for LoRA. Every soft LoRA run had its best checkpoint at step 1,700–2,000. Kev at lr 1e-5 was still improving at the cap. Early stopping never triggered on a soft run: all ran to 2,000, and the starting model was never chosen. The hard runs stopped at 600.
    - So the result depends on the 2,000-step budget, and most of all at the low lrs.
    - The lr grid choice and the threshold interact: at 1e-5, Qwen reaches 0.65.
 4. **Hard labels collapse the width as the spec expects.** Width ratio 0.27 / 0.20, width slope ≈ 0, best at step 100. This is the appendix contrast.
@@ -101,7 +104,9 @@ Full per-run JSON, including interpolation and extrapolation RPS, is in `runs/`.
    - Keep 2,000?
    - Or raise the cap / judge only the selected lr?
    - The low-lr grid points have clearly not converged.
-3. **Head-fit stage.** It shows ≈ 0 width for both bases. Should it be reported only (descriptive), with thresholds on the LoRA stage?
+3. **Head-fit stage.** It shows ≈ 0 width for both bases and was still improving at the cap (Qwen) or close to it (Kev).
+   - Report it only (descriptive), with thresholds on the LoRA stage?
+   - Or give it its own, longer budget?
 4. **A5 for the Qwen control.** Read it on the fresh-head model, as run here, or on its bin-token readout? Also: should the bin tokens still be listed in the control's prompt when the belief comes from the fresh head?
 5. **My implementation choices**, listed under the 26 Oct PLAN rows. They include:
    - val cells;

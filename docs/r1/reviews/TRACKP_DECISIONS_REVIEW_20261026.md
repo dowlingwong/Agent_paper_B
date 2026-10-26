@@ -187,3 +187,73 @@ Same reviewer, same rules: CPU only, no GPU, no edits except this file. Tests at
 10. **Resolved.** The fresh variant freezes the Qwen token rows and reports `frozen_token_rows`.
 
 Verdict: changes required
+
+## Second re-check (`8e13e77..a2859b3`): finding 2 and the E0 v2 DRYRUN report
+
+Same reviewer and rules: CPU only, no GPU job, no edits except this file. I checked
+`docs/r1/reports/TRACKP_E0V2_DRYRUN_20261026.md` against the raw run directories in `~/r1_trackp/runs/p5_e0v2_dryrun/`
+and the lease log. My recomputation script is `/tmp/claude-1008/rv/recompute.py`.
+
+**Finding 2: closed.** "Lower than what is not stated; the Track P agent reads it as lower than the new heads' 1e-3 and
+uses 1e-4 — author to confirm" now stands in PLAN R1-TOKEN-INIT (`PLAN.md:516`) and in spec §2.2 and §4. The
+`trackh_modules.txt` header nit is fixed.
+
+**DRYRUN report: what checks out**
+- **Copied evidence.** Every top-level `report.json` / `manifest.json` under `runs/` is byte-identical to the raw run
+  directories. The curves are copied too.
+- **E0 numbers.** I recomputed every E0 table row from `pred_test_{head_fit,lora}.npy` with `e0_metrics_v2` on the 1,000
+  test items. RPS, width slope against the label's std, width slope against s, mean slope and width ratio all match
+  `report.json`, with a maximum difference of 0. The ceiling is 0.925 and the label's mean slope is 1.029. The v1
+  criterion 0.7 / 0.925 is 0.76.
+- **Selection and claims.**
+  - `e0-select` picked lr 1e-4 for both bases, the lowest best val RPS.
+  - Every soft LoRA run has its best step at 1,700–2,000 and ran to 2,000; Kev at 1e-5 is best at 2,000.
+  - The step-0 model was never selected.
+  - The hard runs are best at step 100 and stopped at 600, with width ratio 0.27 / 0.20.
+  - The head-fit rows are identical across the lr runs.
+  - The Qwen fresh runs report `frozen_token_rows: true`.
+  - Claims 2–5 of "What the numbers say" follow from these data.
+- **E6.**
+  - A3: ΔRPS is 2.1–2.9e-5 (Kev) and 2.5–2.6e-5 (Qwen). The budget fraction reached is 0.24 (min 0.23), 0.49 (0.48) and
+    1.00 (0.98). The budget runs 194–496 tokens, mean 374. Maximum tokens per family: StartLux 830 → 1,024, Kev 965,
+    Qwen 980, Laya 871.
+  - Kev's 2k / 8k levels end in `ContextOverflow` (2,383 / 8,400).
+  - A4 v2 is 1.00 for both bases, with median slopes 1.04 / 1.05.
+  - A5 max TV is 0.20, against the unchanged spec criterion.
+- **Attempts.** The smoke manifests are at a clean `70b7580`. The aborted run stopped after 15 evaluations (1,500
+  steps), and its lease has no end record.
+- **GPU use.** The 12 DRYRUN jobs from the manifests total 3.66 h; with the 2 smoke jobs that makes 14 jobs and 3.69 h,
+  09:33–13:49 UTC, which matches the lease log. The aborted job ran from 09:35:51 until the restart at 10:08:26
+  (≈ 0.5 h).
+- **Environment.** Every manifest records torch 2.6.0+cu124, peft 0.21.2, and kev / laya / startlux_decide at
+  `2074cc4` / `a478221` / `a99977d`. The harness is `897d83c`, clean. The evidence label is DRYRUN; the Track X marker
+  was absent at every start.
+- **Reserved items.** The report sets no E0 or A4 threshold and gives no E0 / A4 verdict (`pass: null`). It leaves the
+  budget, the head-fit and A5 readings and the Phase 5 authorization to the author. A3 and A5 are judged against the
+  spec's unchanged criteria, which is allowed.
+
+**New findings**
+
+R2-1. **minor — The "clean tree" claim is contradicted by the manifests.** The report ("All runs are at commit `8e13e77`
+(clean tree …)") and STATUS imply a clean tree. All 14 manifests record `git.paper.dirty: true`. That flag comes from
+`git status` when the manifest is written at the end of each job, and every one of those jobs ended at or after
+10:33Z. The likely cause is this reviewer's uncommitted append of the first re-check section to the tracked review file
+(mtime ≈ 10:17Z); `8e13e77..a2859b3` changes only docs, and no code file differs. Fix: state that the manifests show
+`dirty: true` and give the likely cause (a docs-only change to the tracked review file; code identical to `8e13e77`).
+Optionally, record `git status --porcelain` names in `git_commit` from now on, so that the cause of a dirty flag is
+recorded in the manifest itself.
+
+R2-2. **minor — "No width information in the frozen backbone" is overclaimed.** "What the numbers say" item 1 says
+the frozen backbone "carries no width information through a linear head", and STATUS says the head fit "learns no
+width". But the head fit had not converged. Qwen's head-fit val RPS was still falling at the cap (best at 2,000;
+0.0383 → 0.0365 over the last 400 steps), and Kev's was close to it (best at 1,600; 0.0493 → 0.0488). Head-fit test RPS
+is 0.034–0.043, against ≈ 0.0002 after LoRA. The data support only "within the 2,000-step head fit, which was still
+improving, the linear head recovered no width". Fix: reword item 1 and STATUS, and add the head fit to item 3 and to
+question 3 for the author. The question of reporting the head fit only descriptively rests on this reading.
+
+R2-3. **minor (nits).**
+- The protocol section says 2,700 train / 300 val; `e0_split` gives 2,714 / 286.
+- Kev's best val RPS at lr 1e-4 is 4.5e-5, not 4e-5.
+
+Verdict: changes required — every finding of the decisions review is now closed, including finding 2. Three minor
+findings on the DRYRUN report (R2-1 to R2-3) remain.
