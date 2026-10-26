@@ -137,7 +137,7 @@ def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=Fa
                              'parse_ok':ok,'repeat_message':repeated_message,'usage':reply.get('usage',{})})
             except Exception as exc:
                 failure='timeout' if 'timeout' in str(exc).lower() or 'timed out' in str(exc).lower() else 'parse'
-                
+
                 if structured: result['failure_classes'].append(failure)
                 pair.append({'structured':structured,'error':repr(exc)})
         responses.append({'prompt_id':row.get('id'),'responses':pair})
