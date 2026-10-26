@@ -19,3 +19,11 @@ r1-e2e:
 # Legacy suites (old route): 212 control / 6 release / 12 standalone tests. Needs Python 3.11+.
 legacy-test:
 	$(MAKE) -C archive/old_b_2026-10-09/code test PYTHON=$(LEGACY_PY)
+
+# L6 manuscript: draft builds display placeholders; final builds reject them.
+.PHONY: paper paper-final
+paper:
+	cd papers/r1 && latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
+
+paper-final:
+	cd papers/r1 && latexmk -pdf -interaction=nonstopmode -halt-on-error -jobname=final -pdflatex='pdflatex %O "\\def\\FinalPaper{1}\\input{%S}"' main.tex

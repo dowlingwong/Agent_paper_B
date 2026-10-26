@@ -1,0 +1,7 @@
+# L6 manuscript skeleton handoff — 27 October 2026
+
+Work in progress; no claim of task acceptance. The draft builds with the official ICML 2026 placeholder style and unresolved `\TBD` text; `make paper-final` deliberately fails on the first unresolved placeholder. Replace the style when the 2027 kit is published. Style source and archive hash are recorded in `papers/r1/STYLE_SOURCE.md`.
+
+Checks on the local TeX Live 2023 installation: `make paper` succeeded with no undefined citations or references in the final log; `pdfinfo` reported 3 total pages, with the main text spanning pages 1–2, against the 2026 eight-page main-body limit. PDF text grep for author names, KIT, ETP, repository URLs and Tailscale found no hits. This is a draft check, not a 2027 compliance or anonymity certification. `make paper-final` failed on the abstract's unresolved TBD, as intended.
+
+Build attempts: (1) failed because the mandatory ICML notice command was absent; (2) succeeded after adding it and initial citations, with the missing corresponding-author warning; (3) succeeded after adding the style's anonymous corresponding-author command. The final-mode guard was separately checked. The bibliography subagent verified selected entries against primary records and documented two source metadata discrepancies in the draft. Remaining work includes coverage review, an anonymous Paper A citation, author-checked theory statements, any adopted framing, and accepted data-driven results. The numbers file contains no results; the L4.3 generator remains outstanding.
