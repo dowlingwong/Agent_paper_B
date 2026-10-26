@@ -245,3 +245,22 @@ The author directly approved **“Approve archival and same-source retry.”** R
 Independently exercised the actual script in isolated local fixture roots, substituting only the approved absolute roots, expected tiny fixture sizes, and process/free-space probes. **Eight cases:** valid archival passes; wrong STOP, wrong partial size, unexpected partial, live worker, unavailable census, insufficient future reserve, and prior planned operation all reject. The valid case preserved all six fixture partials byte-for-byte, moved the active STOP only after verified archival, and left all five completed fixture files' inode/mtime/content unchanged. No portal mutation, actual process signal, network download or GPU operation occurred in these tests.
 
 **ACCEPTED — this scoped archival utility for the directly author-approved same-source retry.** No remaining reviewer blocker before transferring/executing it once against the unchanged guarded state. Execution must still produce and retain the real archival journal; any guard failure preserves state and stops. The subsequent receiving attempt must keep the existing immutable source pins, retained-partial HTTPS transport, six-worker bound, owned-process cancellation, disk floor and whole-file receiving checks. This utility acceptance is not Phase 2 acceptance: **5/22** artifacts are independently received and the phase remains incomplete.
+
+## Executed author-approved archival and retry — independent receiving verification
+
+Read `https_short_stop_resolution.json` and independently full-hashed **all six archived partials and all 17 archived history files** under `/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580`. Every recorded size and SHA256 matched; every file's device/inode/size/mtime was stable during its independent read. Review times Unix **1793049219.4489346–1793049258.7429945**. The journal status is `AUTHOR_APPROVED_SAME_SOURCE_RETRY_READY`. Archived partial bytes total **77,100,569,825**; all history bytes also verified.
+
+| Preserved partial | Size | SHA256 | Stable inode / mtime_ns |
+|---|---:|---|---|
+| olmo31_32b | 18,622,709,760 | `d568c84455c93550a33f2b722c4f764b152a8d4c5de308f9a0702406f7e2b73f` | 120859988 / 1793026264739069337 |
+| devstral_small2_24b | 5,184,159,744 | `20ffa2a67ab7a54ab6d7c6ef4f114a10f73caf08d6743cf38328440261791a2e` | 120859985 / 1793026358783073929 |
+| glm47_flash | 11,072,962,560 | `335d30f4a072c4e4b38948b91583ea922429cc9ec7a50ad9e031aff9e5f78561` | 120860059 / 1793026329245072487 |
+| qwen36_35b_a3b | 15,703,474,176 | `7b202de52fdd78cc17b0a6a9228ffa1c3f345c983b3b5fc5a4c80fce671fb2fc` | 120859989 / 1793026356678073827 |
+| lfm25_24b_a2b | 10,821,304,320 | `8452c61dd70b34cab21d6ea94ef0886ec8d1d259b9e4446536110e48c9d1a2d6` | 120860255 / 1793026355606073774 |
+| nemotron35_30b_a3b | 15,695,959,265 | `cfd4b7494a910f7fb55f0c2d3c8e3e4bdf83413269c40e70f9eea8155f2f30ca` | 120860057 / 1793026359839073981 |
+
+The archived STOP history SHA is `fe46bdf5a40aab8482b0e212100174f2e5de56883bd88e8060b690b6ca85a4e2`; archived original-controller log SHA is `0b3b172c0cc303a4ace83b946efc870f61ae4cb467d8a55ec554fc05eb2e05e4`. Prior complete artifact device/inode/size/mtime values for **all five** Qwen38/Qwen36/Muse/Gemma26/Gemma31 exactly match their independent full-hash receiving records above. Their existing review checks remain valid without redundant full-file rehashes.
+
+Read-only full module census found only retry controller **1615560**, start ticks **405890271**, with six matching worker processes all parented to it: 1615570, 1615571, 1617958, 1618197, 1618379, 1619911. No old or orphan matching transport module was present. Active certificate census is exactly the five known completed artifacts, without an active STOP marker. No transport process, archive, model byte or GPU state was modified by this reviewer.
+
+**ACCEPTED — executed archival preservation and scope of the directly author-approved same-source retry.** The six failed/cancelled partials and STOP/log/certificate history are independently verified as preserved, and the five completed artifacts retain their verified identities. This closes this recovery-handoff review only. **Overall Phase 2 remains NOT ACCEPTED: 5/22 artifacts independently received**, with 17 still requiring completed certificates and independent receiving before final reconciliation/acceptance. This review does not treat the growing new partials as completed artifacts.

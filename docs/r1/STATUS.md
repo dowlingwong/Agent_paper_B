@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — approved archival complete; same-source retry active (AI-assisted)
+
+The independently reviewed one-time resolver archived six partials (**77,100,569,825 bytes**, full SHA before/after) and retained 17 history files, including the original STOP/logs. Journal: [https_short_stop_resolution.json](reports/exam_phase2_20261026/https_short_stop_resolution.json). Five verified GGUF files remain unchanged. Author-approved retry started with unchanged six-worker receiver, controller **1615560**, fresh `https_downloads_retry1.log` and PID file under portal `work/phase2/`. Remaining 17 artifacts total 255,100,593,248 bytes; after archival available space was 531,513,647,104 bytes. The 100 GB floor remains enforced. Executed recovery independently **ACCEPTED**: all six archived partials and 17 history files match full hashes; five completed artifact identities remain unchanged; six workers belong to the new controller. STOP 2 remains open (5/22 received). No real Stage A, B1 or B2 has started.
+
 ## 26 October 2026 — author approves short-transfer archival and retry (AI-assisted)
 
 PLAN §10 R1-EXAM-TRANSFER-RETRY records direct author approval to archive all six retained partials with size/SHA records and retry the remaining files from the same immutable sources. All five verified artifacts and the original STOP/log history will be retained. Recovery utility is under independent review before portal mutation; no retry has started at this checkpoint. The 100 GB floor and STOP 2 independent receiving gate remain unchanged.

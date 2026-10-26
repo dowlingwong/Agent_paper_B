@@ -1,6 +1,6 @@
 # Portal exam Phase 2 — preparation and receiving
 
-26 October 2026. AI-assisted; ENGINEERING_ONLY. **STOPPED TRANSFER; REVIEW PENDING.** Independent review is pending; no Stage A, B1 or B2 has started.
+26 October 2026. AI-assisted; ENGINEERING_ONLY. **AUTHOR-APPROVED RETRY ACTIVE; REVIEW PENDING.** Independent review is pending; no Stage A, B1 or B2 has started.
 
 ## Authority and code transfer
 
@@ -53,3 +53,9 @@ A later read-only check found the controller absent and a preserved transport ST
 Approved prefill implementation checkpoint: focused exam suite **55 passed in 49.85 s**; final metadata-only adjustment rechecked with **5 prefill tests passed**. The fake endpoint now enforces the pinned prompt admission boundary. Actual declared context, prefill request/measurement, requested/measured generation and reserve fields survive failed-count probes. No real model request was sent. Independent receiving confirms all five completed artifacts, with prior two stable-file identities unchanged; remaining transfers are stopped pending the separate archival/retry decision.
 
 Independent probe-amendment engineering review **ACCEPTED** at code `6ef8d30`, bound by portal config `7ba7e2b`: 55 focused tests passed before the final shared-header correction; after that correction 12 targeted tests, both-context early-failure exercises and the final fake-server end-to-end test passed. Code transferred Mac → portal bare repo → checkout only. Phase 2 overall remains stopped and not accepted (5/22 received); the separate archival/retry decision is pending.
+
+## Author-approved same-source retry executed
+
+The author approved archival and same-source retry in PLAN R1-EXAM-TRANSFER-RETRY. Independent review accepted the exact guarded resolver after eight isolated fixture checks. Execution archived **six partials totalling 77,100,569,825 bytes**, each full-hashed before and after same-filesystem rename; **17 history files** were copied and verified. The five completed GGUF files were not moved or modified. Original STOP and worker logs remain in `/home/dowling/exam-x/work/phase2/transport_archives/https_short_1793049075447016580/`. The complete journal is `exam_phase2_20261026/https_short_stop_resolution.json`; final status `AUTHOR_APPROVED_SAME_SOURCE_RETRY_READY`.
+
+Only after successful archival, the unchanged six-worker stdlib HTTPS receiver was explicitly restarted for the same pinned artifacts. Controller **1615560**, PID file `/home/dowling/exam-x/work/phase2/https_downloads_retry1.pid`, fresh log `https_downloads_retry1.log`. Existing complete artifacts are revalidated/reused; remaining **17 artifacts total 255,100,593,248 bytes**. Available space after archival was **531,513,647,104 bytes**; every active worker and parent retains the 100 GB floor. No source, quantization, model, protocol or GPU phase changed. No automatic replay or scientific run occurred. Independent executed-recovery review **ACCEPTED**: all six archived partials (77,100,569,825 bytes) and all 17 history files full-hash match the journal, with stable identities during reads; the five completed artifacts retain their earlier independently verified identities. Live census found only controller 1615560 (start ticks 405890271) and its six workers, no old or orphan receiver. Overall STOP 2 remains open at **5/22 independently received**.
