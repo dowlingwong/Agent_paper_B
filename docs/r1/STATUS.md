@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — H.8 implementation review remains open (AI-assisted; fixture tests)
+
+- Author-authorized H.8 and sidecar edits were implemented and reviewed in three attempts (`089ed87`, `395aeff`, `d4c76d2`). The [independent review](reviews/LOCAL_L4_2_IMPLEMENTATION_REVIEW_20261027.md) remains **NOT ACCEPTED**: utility reference, price and split are caller assertions rather than a verified producer. The final scoped fixture check reports 27 passed; the reviewer confirms the `delta_hat` leak was removed.
+- The first review also included a cached pilot-table test outside the H.8 fixture-only instruction; that separate incident is retained in the review. No model inference, weight download, GPU/MPS or remote operation was reported. Under the three-attempt limit the item is handed to the coordinator rather than silently accepted; Track P picks up only after an accepted coordinator merge to main.
+
 ## 27 October 2026 — clarified CPU baseline independently reviewed (AI-assisted; restricted)
 
 - The corrected-environment [baseline](reports/LOCAL_BASELINE_CLARIFIED_20261027.md) and exact-ID harness comparison were accepted as restricted engineering documentation by [review](reviews/LOCAL_BASELINE_CLARIFIED_REVIEW_20261027.md): harness before/after 443 passed, 19 failed, one collection error, 55 subtests passed, same outcomes; paper baseline and separate tiny-model checks retain their recorded failures and skips.
