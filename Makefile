@@ -27,3 +27,8 @@ paper:
 
 paper-final:
 	cd papers/r1 && latexmk -pdf -interaction=nonstopmode -halt-on-error -jobname=final -pdflatex='pdflatex %O "\\def\\FinalPaper{1}\\input{%S}"' main.tex
+
+# Pilot summaries are draft-only and do not establish the C3 gate.
+.PHONY: r1-figures
+r1-figures:
+	$(R1_PY) -m r1.analysis.pilot_figures
