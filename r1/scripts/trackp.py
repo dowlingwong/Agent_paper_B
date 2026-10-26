@@ -105,7 +105,8 @@ def cmd_spike(args, cfg) -> dict:
         sp = cfg["spike"]
         rep = S.spike(model, args.run_dir, tok=tok, toy_examples=args.examples or sp["toy_examples"],
                       steps=args.steps or sp["steps"], batch_size=sp["batch_size"], seed=args.seed,
-                      measure=not args.no_measure, rebuild=make)
+                      measure=not args.no_measure, rebuild=make,
+                      grad_ckpt=bool(cfg["gpu"].get("gradient_checkpointing")) and not args.tiny)
     return {"report": rep, "base": base, "model_files": rep["saved_sha256"], "lease": lease_log,
             "data": S.toy_rows(args.examples or sp["toy_examples"])}
 

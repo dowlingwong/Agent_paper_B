@@ -121,17 +121,21 @@ def backbone_of(model):
 
 
 def spike(model, run_dir: Path | str, *, tok=None, toy_examples: int = 100, steps: int = 10, batch_size: int = 8,
-          seed: int = 0, measure: bool = True, rebuild=None) -> dict:
+          seed: int = 0, measure: bool = True, rebuild=None, grad_ckpt: bool = False) -> dict:
     """Run the P.0 spike on ``model``; ``rebuild()`` returns an identically built fresh wrapper for the reload check."""
     from r1.c3.train import packing as P
     run_dir = Path(run_dir)
     seed_everything(seed)
-    rep: dict = {"family": model.family, "describe": model.describe()}
+    rep: dict = {"family": model.family, "describe": model.describe(),
+                 "provenance": getattr(model, "provenance", None)}   # Kev: warm start from the released checkpoint
     one = toy_rows(1)
     b, a = probs(model, [one[0]["prompt"]])
     rep["forward_one"] = {"belief_shape": list(b.shape), "belief_sum": float(b.sum()),
                           "action": None if a is None else float(a[0])}
     rep["trainable_parameters"] = int(sum(p.numel() for p in model.trainable_parameters()))
+    if grad_ckpt:   # spec §4: bf16 + gradient checkpointing for every training run on the card
+        model.enable_gradient_checkpointing()
+        rep["gradient_checkpointing"] = True
     rows = toy_rows(toy_examples)
     cfg = TrainConfig(seed=seed, epochs=1e9, max_steps=steps, batch_size=batch_size, grad_accum=1, lr=1e-4)
     tr = Trainer(model, rows, sft_loss, cfg, run_dir / "toy_sft")
