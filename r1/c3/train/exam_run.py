@@ -109,65 +109,61 @@ def mean_rps(p: np.ndarray, rows: list[dict]) -> float:
     return float(L.rps(torch.tensor(p, dtype=torch.float32), y).mean())
 
 
-def fit_head_on_states(head: torch.nn.Module, tr: torch.Tensor, ytr: torch.Tensor, va: torch.Tensor,
-                       yva: torch.Tensor, *, lr: float, max_steps: int, eval_every: int, patience: int,
-                       batch_size: int, seed: int, warmup_frac: float = 0.05, log: Path | None = None) -> dict:
-    """Frozen-backbone head fit on cached states: AdamW at ``lr``, warm-up + cosine over ``max_steps``, val RPS
-    every ``eval_every`` steps, early stopping after ``patience`` evaluations without improvement, best restored.
-    The batch order follows the trainer's (seed, epoch) permutation."""
+def fit_head_lbfgs(head: torch.nn.Module, tr: torch.Tensor, ytr: torch.Tensor, va: torch.Tensor,
+                   yva: torch.Tensor, *, max_outer: int = 500, tol: float = 1e-9) -> dict:
+    """R1-E0-HEADFIT: the frozen-backbone head fit, descriptive only. Full-batch L-BFGS (strong-Wolfe line search) of
+    the train RPS on cached features, on CPU in float64, until the loss changes by less than ``tol`` (relative)
+    twice in a row with the L-BFGS history reset in between (or the gradient vanishes); the fitted head is copied back
+    into ``head``."""
     import copy
-    import json
-    import math
-    from r1.c3.train.trainer import cosine_lambda, epoch_order
-    head.train()
-    opt = torch.optim.AdamW(head.parameters(), lr=lr, weight_decay=0.0)
-    sched = torch.optim.lr_scheduler.LambdaLR(opt, cosine_lambda(max_steps, int(warmup_frac * max_steps)))
-    per_epoch = math.ceil(len(tr) / batch_size)
-    best, bad, curve = None, 0, []
+    work = copy.deepcopy(head).to("cpu", torch.float64)
+    work.train()
+    X, Y = tr.detach().to("cpu", torch.float64), ytr.detach().to("cpu", torch.float64)
+    make = lambda: torch.optim.LBFGS(work.parameters(), lr=1.0, max_iter=100, history_size=50,  # noqa: E731
+                                     tolerance_grad=1e-10, tolerance_change=1e-14, line_search_fn="strong_wolfe")
+    opt = make()
 
-    def val_rps() -> float:
-        head.eval()
-        with torch.no_grad():
-            v = float(L.rps(torch.softmax(head(va).float(), -1), yva).mean())
-        head.train()
-        return v
-    step = 0
-    while step < max_steps:
-        epoch, i = divmod(step, per_epoch)
-        idx = torch.as_tensor(epoch_order(len(tr), seed, epoch)[i * batch_size:(i + 1) * batch_size],
-                              device=tr.device)
-        loss = L.rps(torch.softmax(head(tr[idx]).float(), -1), ytr[idx]).mean()
+    def closure():
         opt.zero_grad(set_to_none=True)
+        loss = L.rps(torch.softmax(work(X), -1), Y).mean()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(head.parameters(), 1.0)
-        opt.step()
-        sched.step()
-        step += 1
-        if step % eval_every == 0 or step == max_steps:
-            v = val_rps()
-            curve.append({"step": step, "val_rps": v, "train_loss": float(loss.detach())})
-            if best is None or v < best["val_rps"]:
-                best, bad = {"step": step, "val_rps": v, "state": copy.deepcopy(head.state_dict())}, 0
-            else:
-                bad += 1
-                if bad >= patience:
-                    break
-    head.load_state_dict(best["state"])
+        return loss
+    # Converged when an outer step (up to 100 L-BFGS iterations) improves the loss by less than ``tol`` (relative)
+    # twice in a row with the history reset in between: a stalled line search is not taken for convergence.
+    prev, losses, converged, restarts, fresh = None, [], False, 0, True
+    for it in range(max_outer):
+        loss = float(opt.step(closure).detach())
+        losses.append(loss)
+        gnorm = float(torch.sqrt(sum((p.grad ** 2).sum() for p in work.parameters() if p.grad is not None)))
+        stalled = prev is not None and prev - loss <= tol * max(abs(prev), 1e-12)
+        if gnorm < 1e-12 or (stalled and fresh):
+            converged = True
+            break
+        if stalled:
+            opt, fresh, restarts = make(), True, restarts + 1
+        else:
+            fresh = False
+        prev = loss
+    with torch.no_grad():
+        work.eval()
+        v = float(L.rps(torch.softmax(work(va.detach().to("cpu", torch.float64)), -1),
+                        yva.detach().to("cpu", torch.float64)).mean())
+    head.load_state_dict({k: t.to(dtype=p.dtype) for (k, t), p in zip(work.state_dict().items(),
+                                                                     head.state_dict().values())})
     head.eval()
-    if log is not None:
-        log.parent.mkdir(parents=True, exist_ok=True)
-        log.write_text("".join(json.dumps(c) + "\n" for c in curve))
-    return {"best_step": best["step"], "best_val_rps": best["val_rps"], "stopped_at": step,
-            "early_stopped": step < max_steps, "curve": curve}
+    return {"method": "full-batch L-BFGS (strong Wolfe), CPU float64", "outer_iterations": it + 1,
+            "restarts": restarts, "converged": converged, "train_rps": losses[-1], "val_rps": v, "grad_norm": gnorm}
 
 
 def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "y_soft", lr: float,
           head_lr: float = 1e-3, token_lr: float | None = None, max_steps: int = 2000, eval_every: int = 100,
           patience: int = 5, batch_size: int = 8, seed: int = 0, n_train: int | None = None,
-          n_val: int | None = None, n_test: int | None = None) -> dict:
-    """E0 v2 for one (variant, target, lr). ``variant="fresh"``: the model was built with ``head_form="linear12"``;
-    (1) the fresh LayerNorm + linear belief head is fitted on frozen-backbone states at ``head_lr``, (2) then LoRA +
-    that head train together. ``variant="native"``: the family's own readout (released head / letter readout / bin
+          n_val: int | None = None, n_test: int | None = None, stage: str = "final") -> dict:
+    """E0 v2 for one (variant, target, lr) and ``stage`` ("screen": the lr screen, <= 2,000 steps; "final": the one
+    run at the selected lr, cap 6,000, patience 10 — R1-E0-BUDGET; the budget itself comes from the caller).
+    ``variant="fresh"``: the model was built with ``head_form="linear12"``; (1) the fresh LayerNorm + linear belief
+    head is fitted on cached frozen-backbone states by full-batch L-BFGS on CPU (descriptive only,
+    R1-E0-HEADFIT), (2) then LoRA + that head train together. ``variant="native"``: the family's own readout (released head / letter readout / bin
     tokens), zero-shot metrics first, then the LoRA stage. Both stages: early stopping on the validation cells
     (val RPS against the run's own target), at most ``max_steps``, the best checkpoint restored. Metrics on the
     held-out test cells (``e0_metrics_v2``)."""
@@ -184,7 +180,9 @@ def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "
     val = rows_of_items(va_items, target)[:n_val]
     test = rows_of_items([it for it in items if it["split"] == "test"], target)[:n_test]
     test_items = [r["item"] for r in test]
-    out: dict = {"protocol": E0_V2, "variant": variant, "target": target, "lr": lr, "head_lr": head_lr,
+    if stage not in ("screen", "final"):
+        raise ValueError("stage is 'screen' or 'final'")
+    out: dict = {"protocol": E0_V2, "stage": stage, "variant": variant, "target": target, "lr": lr, "head_lr": head_lr,
                  "token_lr": token_lr, "max_steps": max_steps, "eval_every": eval_every, "patience": patience,
                  "batch_size": batch_size, "n_train": len(train), "n_val": len(val), "n_test": len(test),
                  "val_cells": [list(c) for c in E.VAL_CELLS]}
@@ -192,13 +190,11 @@ def e0_v2(model, run_dir: Path | str, *, variant: str = "fresh", target: str = "
         dev = model.device
         s_tr, s_va, s_te = (states(model, [r["prompt"] for r in rows]) for rows in (train, val, test))
         y = lambda rows: torch.stack([r["y"] for r in rows]).to(dev)  # noqa: E731
-        fit = fit_head_on_states(model.heads["belief"], s_tr, y(train), s_va, y(val), lr=head_lr,
-                                 max_steps=max_steps, eval_every=eval_every, patience=patience,
-                                 batch_size=batch_size, seed=seed, log=run_dir / "head_fit" / "curve.jsonl")
+        fit = fit_head_lbfgs(model.heads["belief"], s_tr, y(train), s_va, y(val))
         with torch.no_grad():
             p_head = torch.softmax(model.heads["belief"](s_te).float(), -1).cpu().numpy()
-        out["head_fit"] = {**{k: v for k, v in fit.items() if k != "curve"},
-                           "test": E.e0_metrics_v2(p_head, test_items, target)}
+        out["head_fit"] = {**fit, "descriptive": True, "test": E.e0_metrics_v2(p_head, test_items, target)}
+        run_dir.mkdir(parents=True, exist_ok=True)
         np.save(run_dir / "pred_test_head_fit.npy", p_head)
     else:
         p0 = predict(model, [r["prompt"] for r in test])
@@ -293,7 +289,10 @@ def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0, counters: 
                 beliefs.append(per)
         finally:
             model.bin_order = keep
-        out["A5"] = E.a5_pass(np.array(beliefs))
+        # R1-CONTROL-READOUT: read on the readout used for selection (the fresh head when built so), descriptive only
+        out["A5"] = {**E.a5_pass(np.array(beliefs)), "readout": model.head_form, "descriptive": True}
+        out["A5"]["criterion_met"] = out["A5"].pop("pass")
+        out["A5"]["pass"] = None
     else:
         out["A5"] = {"pass": None, "reason": "A5 applies to BinTokenWrapper only (spec §5.6)"}
     # A1/A2 only for packed models

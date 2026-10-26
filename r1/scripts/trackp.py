@@ -158,7 +158,8 @@ def cmd_toy(args, cfg) -> dict:
 
 
 def cmd_e0(args, cfg) -> dict:
-    """E0 protocol v2 (R1-E0-PROTOCOL): one (variant, target, lr) per run; ``e0-select`` picks the lr."""
+    """E0 protocol v2 (R1-E0-PROTOCOL): one (stage, variant, target, lr) per run; ``e0-select`` picks the lr from the
+    screen runs; the final run (R1-E0-BUDGET) uses the final budget. ``--steps`` caps a short DRYRUN only."""
     from r1.c3.train import exam_run as X
     from r1.c3.train import exam_synthetic as E
     lease_log: list = []
@@ -175,11 +176,14 @@ def cmd_e0(args, cfg) -> dict:
         model, tok, make, base = _build(args, cfg)
         if cfg["gpu"].get("gradient_checkpointing") and not args.tiny:
             model.enable_gradient_checkpointing()   # spec §4
+        bud = e0c[args.stage]
         rep = X.e0_v2(model, args.run_dir, variant=args.variant, target="y_hard" if args.hard else "y_soft", lr=lr,
                       head_lr=cfg["head_lr"], token_lr=cfg.get("token_lr"),
-                      max_steps=args.steps or e0c["max_steps"], eval_every=args.eval_every or e0c["eval_every"],
-                      patience=e0c["patience"], batch_size=e0c["batch_size"], seed=args.seed,
-                      n_train=args.examples, n_val=args.n_val, n_test=args.n_test)
+                      max_steps=args.steps or bud["max_steps"], eval_every=args.eval_every or bud["eval_every"],
+                      patience=bud["patience"], batch_size=e0c["batch_size"], seed=args.seed,
+                      n_train=args.examples, n_val=args.n_val, n_test=args.n_test, stage=args.stage)
+        rep["budget_override"] = {"steps": args.steps, "eval_every": args.eval_every} \
+            if (args.steps or args.eval_every) else None
         files = model.save(Path(args.run_dir) / "saved")["files"]
         if args.with_probes:
             counters = None if args.tiny else _counters(cfg)
@@ -199,6 +203,8 @@ def cmd_e0_select(args, cfg) -> dict:
     for d in args.runs:
         rep = json.loads((Path(d) / "report.json").read_text())
         man = json.loads((Path(d) / "manifest.json").read_text())
+        if rep.get("stage") != "screen":
+            raise R.TrackPStop(f"e0-select reads lr-screen runs only; {d} is stage {rep.get('stage')!r}")
         runs.append({"run_dir": str(d), "lr": rep["lr"], "variant": rep["variant"], "target": rep["target"],
                      "base": man["base"], "best_val_rps": rep["lora"]["best_value"], "best_step": rep["lora"]["best_step"],
                      "git": man["git"]["paper"]["commit"]})
@@ -270,6 +276,8 @@ def main(argv=None) -> int:
         p.add_argument("--variant", default="fresh", choices=("fresh", "native"),
                        help="e0: fresh LayerNorm + linear belief head (linear12) or the family's native readout")
         p.add_argument("--lr", type=float, help="e0: adapter lr, one of config lr_grid")
+        p.add_argument("--stage", default="final", choices=("screen", "final"),
+                       help="e0: lr screen (<= 2,000 steps) or the final run at the selected lr (R1-E0-BUDGET)")
         p.add_argument("--eval-every", type=int)
         p.add_argument("--n-val", type=int)
         p.add_argument("--runs", nargs="+", help="e0-select: the run directories of one grid")

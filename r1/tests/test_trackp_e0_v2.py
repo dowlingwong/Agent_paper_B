@@ -160,19 +160,41 @@ def test_width_slope_against_the_labels_own_std_is_one_for_the_labels(items):
     assert abs(m["width_slope_vs_label"] - 1) < 1e-9 and abs(m["mean_slope_vs_label"] - 1) < 1e-9
     assert m["primary_width"] == "width_slope_vs_label"
     assert m["label_width_slope_vs_s"] == pytest.approx(m["width_slope"])   # the ceiling = the labels' own slope
-    assert E.e0_pass_v2(m) is None                                          # thresholds pending the author
-    assert E.e0_pass_v2(m, {"width_slope_vs_label_min": 0.7, "mean_slope_min": 0.8}) is True
+    assert m["width_slope_vs_label_lb95"] == pytest.approx(1.0) and E.e0_pass_v2(m) is True
+    # R1-E0-THRESHOLDS: >= 0.6 (inclusive), lower bound > 0 (strict), mean >= 0.8
+    t = E.E0_V2_THRESHOLDS
+    assert t == {"width_slope_vs_label_min": 0.6, "width_slope_vs_label_lb_gt": 0.0, "mean_slope_min": 0.8}
+    ok = {"width_slope_vs_label": 0.6, "width_slope_vs_label_lb95": 1e-6, "mean_slope": 0.8}
+    assert E.e0_pass_v2(ok) is True
+    assert E.e0_pass_v2({**ok, "width_slope_vs_label": 0.599}) is False
+    assert E.e0_pass_v2({**ok, "width_slope_vs_label_lb95": 0.0}) is False
+    assert E.e0_pass_v2({**ok, "mean_slope": 0.799}) is False
+
+
+def test_width_slope_bootstrap_interval_brackets_the_estimate(items):
+    test = [it for it in items if it["split"] == "test"]
+    rng = np.random.default_rng(0)
+    y = np.array([it["y_soft"] for it in test])
+    p = 0.5 * y + 0.5 * rng.dirichlet(np.ones(12), size=len(y))        # a noisy predictor
+    p[:, 0] = 0
+    p /= p.sum(1, keepdims=True)
+    m = E.e0_metrics_v2(p, test)
+    assert m["width_slope_vs_label_lb95"] < m["width_slope_vs_label"] < m["width_slope_vs_label_ub95"]
+    assert E.width_slope_bootstrap(p, test) == E.width_slope_bootstrap(p, test)    # seeded
 
 
 def test_a4_label_reference(items):
     lab = E.a4_label_std(n=20)
     assert lab.shape == (20, E.A4_STEPS)
     r = E.a4_pass_v2(lab, lab)
-    assert r["frac_monotone_vs_label"] == 1.0 and r["median_slope_vs_label"] == pytest.approx(1.0) and r["pass"] is None
+    assert r["frac_monotone_vs_label"] == 1.0 and r["median_slope_vs_label"] == pytest.approx(1.0) and r["pass"] is True
     flat = np.repeat(lab[:, :1], E.A4_STEPS, axis=1)
     assert E.a4_pass_v2(flat, lab)["median_slope_vs_label"] == pytest.approx(0.0)
     dec = lab[:, ::-1]
-    assert E.a4_pass_v2(dec, lab)["frac_monotone_vs_label"] < 0.5
+    assert E.a4_pass_v2(dec, lab)["frac_monotone_vs_label"] < 0.5 and not E.a4_pass_v2(dec, lab)["pass"]
+    bad = lab.copy()
+    bad[:2, -1] = bad[:2, 0] - 1                       # 2 of 20 prompts decrease: 90 % < 95 %
+    assert E.a4_pass_v2(bad, lab)["frac_monotone_vs_label"] == 0.9 and E.a4_pass_v2(bad, lab)["pass"] is False
 
 
 # ---------------------------------------------------------------- A3 budget (R1-A3-BUDGET)
@@ -237,11 +259,16 @@ def test_budget_counters_match_what_each_wrapper_feeds_the_model(family, tmp_pat
 def test_e0_v2_runs_both_stages_with_early_stopping(variant, tmp_path):
     w = _tiny("qwen_control", tmp_path, head_form="linear12" if variant == "fresh" else "softmax12")
     rep = X.e0_v2(w, tmp_path / "run", variant=variant, lr=1e-4, token_lr=1e-4, max_steps=4, eval_every=2,
-                  patience=1, batch_size=4, n_train=8, n_val=4, n_test=6)
-    assert rep["protocol"] == "trackp_e0/v2" and rep["n_val"] == 4
+                  patience=1, batch_size=4, n_train=8, n_val=4, n_test=6, stage="screen")
+    assert rep["protocol"] == "trackp_e0/v2" and rep["n_val"] == 4 and rep["stage"] == "screen"
+    if variant == "fresh":
+        hf = rep["head_fit"]
+        assert hf["descriptive"] and hf["method"].startswith("full-batch L-BFGS") and hf["converged"]
     assert ("head_fit" in rep) == (variant == "fresh") and ("zero_shot" in rep) == (variant == "native")
     assert rep["lora"]["best_step"] in (0, 2, 4) and "width_slope_vs_label" in rep["lora"]["test"]
-    assert rep["pass"] is None
+    assert rep["pass"] in (True, False)
+    with pytest.raises(ValueError):
+        X.e0_v2(w, tmp_path / "bad2", variant=variant, lr=1e-4, stage="other")
     with pytest.raises(ValueError):
         X.e0_v2(w, tmp_path / "bad", variant="fresh" if variant == "native" else "native", lr=1e-4)
 
@@ -315,3 +342,26 @@ def test_git_commit_lists_dirty_files_with_full_names(tmp_path):
     assert rec["dirty"] and rec["dirty_files"] == ["abc.txt", "def.txt"]
     run("checkout", "-q", "--", ".")
     assert R.git_commit(tmp_path)["dirty_files"] == [] and not R.git_commit(tmp_path)["dirty"]
+
+
+
+def test_lbfgs_head_fit_converges_to_a_stationary_point():
+    """R1-E0-HEADFIT: full-batch L-BFGS runs to convergence. LayerNorm's affine times the linear layer makes the fit
+    non-convex, so the check is stationarity: Adam started from the L-BFGS solution cannot improve it materially."""
+    from r1.c3.train import losses as L
+    torch.manual_seed(0)
+    X_ = torch.randn(200, 16)
+    Y = torch.softmax(X_ @ torch.randn(16, N_BINS), -1)
+    head = torch.nn.Sequential(torch.nn.LayerNorm(16), torch.nn.Linear(16, N_BINS))
+    fit = X.fit_head_lbfgs(head, X_, Y, X_[:50], Y[:50])
+    assert fit["converged"] and fit["outer_iterations"] < 500 and fit["grad_norm"] < 1e-4
+    with torch.no_grad():                            # the fitted weights are back in the caller's head
+        assert float(L.rps(torch.softmax(head(X_), -1), Y).mean()) == pytest.approx(fit["train_rps"], rel=1e-4)
+    w = head.double()
+    opt = torch.optim.Adam(w.parameters(), lr=1e-3)
+    for _ in range(2000):
+        opt.zero_grad()
+        loss = L.rps(torch.softmax(w(X_.double()), -1), Y.double()).mean()
+        loss.backward()
+        opt.step()
+    assert float(loss) > fit["train_rps"] * (1 - 1e-3)

@@ -113,12 +113,19 @@
  },
  "e0": {
   "protocol": "trackp_e0/v2",
-  "max_steps": 2000,
-  "eval_every": 100,
-  "patience": 5,
   "batch_size": 8,
   "seed": 0,
-  "comment": "R1-E0-PROTOCOL (author, 26 Oct): fresh LayerNorm + linear belief head (lr 1e-3) for every model, frozen-backbone fit then LoRA, both to convergence with early stopping on validation cells held out of the training grid, max 2,000 steps, same budget for every model. eval_every / patience chosen by the Track P agent (author to confirm)."
+  "screen": {
+   "max_steps": 2000,
+   "eval_every": 100,
+   "patience": 5
+  },
+  "final": {
+   "max_steps": 6000,
+   "eval_every": 100,
+   "patience": 10
+  },
+  "comment": "R1-E0-PROTOCOL + R1-E0-BUDGET (author, 26 Oct): lr screen on lr_grid (<= 2,000 steps, chosen by val RPS), then one run at the selected lr (cap 6,000, eval every 100, patience 10); E0 metrics from that run; the hard-label and native runs reuse the selected lr with the final budget. Screen patience 5 is the Track P agent's (eval every 100 confirmed, R1-TRACKP-CHOICES). Head fit: full-batch L-BFGS on CPU, descriptive (R1-E0-HEADFIT)."
  },
  "e3": {
   "steps": 300,

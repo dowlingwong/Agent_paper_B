@@ -1,4 +1,5 @@
-"""Track P 1.8: P.3 selection rule (spec §5.7) on synthetic exam results. ENGINEERING_ONLY; AI-assisted (Claude)."""
+"""Track P 1.8: P.3 selection rule v2 (spec §5.7; R1-EXAM-RULE-V2) on synthetic exam results. ENGINEERING_ONLY;
+AI-assisted (Claude)."""
 from __future__ import annotations
 
 import hashlib
@@ -23,12 +24,13 @@ def _base(items):
 
 
 def _model(name, family, skill, items, base, *, noise=0.002, seed=1, e2=0.1, width=1.0, ckpt="base", cost=1.0,
-           e0=(0.9, 0.95), oom=False, det=True, e6=None, e7=None, **kw):
+           e0=(0.9, 0.95, 0.5), oom=False, det=True, e6=None, e7=None, **kw):
     """Per-item RPS = base * (1 - skill) + small item noise, for 3 seeds."""
     rng = np.random.default_rng(seed)
     rps = {str(s): {i: base[i] * (1 - skill) + noise * rng.standard_normal() for i in items} for s in range(3)}
     m = {"model": name, "family": family, "checkpoint": ckpt,
-         "e0": None if e0 is None else {"protocol": "trackp_e0/v1", "width_slope": e0[0], "mean_slope": e0[1]},
+         "e0": None if e0 is None else {"protocol": "trackp_e0/v2", "width_slope_vs_label": e0[0],
+                                        "mean_slope": e0[1], "width_slope_vs_label_lb95": e0[2] if len(e0) > 2 else 0.5},
          "e2": {"val_rps_skill": e2}, "e3": {"rps": rps, "width_ratio": width},
          "e4": {"oom": oom, "reload_deterministic": det, "cost_s": cost}, "e6": e6, "e7": e7}
     m.update(kw)
@@ -56,11 +58,20 @@ def test_rule_file_hash_matches_committed():
     rule, digest = X.load_rule()
     assert digest == hashlib.sha256(X.RULE_PATH.read_bytes()).hexdigest()
     assert rule["bootstrap"]["resamples"] == 2000 and rule["bootstrap"]["alpha"] == 0.05
-    assert rule["e0_pass"] == {"width_slope_min": 0.7, "mean_slope_min": 0.8}
+    assert rule["version"] == "p3_rule/v2" and rule["e0_protocol"] == "trackp_e0/v2"
+    assert rule["e0_pass"] == {"width_slope_vs_label_min": 0.6, "width_slope_vs_label_lb95_gt": 0.0,
+                               "mean_slope_min": 0.8}
+    assert rule["finalists"]["e2_tie_tolerance"] == 0.01 and rule["pending_author_families"] == []
+    assert rule["e6"]["a4_min_frac_monotone_vs_label"] == 0.95
+
+
+def test_rule_v1_is_refused():
+    with pytest.raises(X.RuleSuperseded, match="v2 only"):
+        X.load_rule(X.RULE_PATH.with_name("p3_rule_v1.yaml"))
 
 
 def test_hash_mismatch_is_refused(tmp_path, env):
-    p = tmp_path / "p3_rule_v1.yaml"
+    p = tmp_path / "p3_rule_v2.yaml"
     shutil.copy(X.RULE_PATH, p)
     shutil.copy(str(X.RULE_PATH) + ".sha256", str(p) + ".sha256")
     p.write_text(p.read_text().replace("resamples: 2000", "resamples: 200"))
@@ -81,14 +92,17 @@ def test_skill_definition(env):
 def test_step1_discards_e0_and_e4_failures_only(env):
     res = _run(env,
                ("kev", "kev", 0.30, {}),
-               ("laya_w", "laya", 0.40, {"e0": (0.6, 0.95), "seed": 2}),
-               ("laya_m", "laya", 0.40, {"e0": (0.9, 0.7), "seed": 3}),
+               ("laya_w", "laya", 0.40, {"e0": (0.59, 0.95), "seed": 2}),
+               ("laya_m", "laya", 0.40, {"e0": (0.9, 0.79), "seed": 3}),
+               ("laya_lb", "laya", 0.40, {"e0": (0.7, 0.95, 0.0), "seed": 7}),
+               ("laya_ok", "laya", 0.10, {"e0": (0.6, 0.8, 0.01), "seed": 8}),
                ("extra_oom", "extra", 0.40, {"oom": True, "seed": 4}),
                ("extra_det", "extra", 0.40, {"det": False, "seed": 5}),
                ("extra_e6", "extra", 0.25, {"e6": {"A1": False, "A2": True, "A3": False}, "seed": 6}))
     assert res["discarded"] == {"laya_w": ["e0_width_slope"], "laya_m": ["e0_mean_slope"],
+                                "laya_lb": ["e0_width_slope_lb95"],
                                 "extra_oom": ["e4_oom"], "extra_det": ["e4_reload_nondeterministic"]}
-    assert res["ranking"] == ["kev", "extra_e6"]
+    assert res["ranking"] == ["kev", "extra_e6", "laya_ok"]          # thresholds are inclusive (>=), lb strict (>)
     r = res["records"]["extra_e6"]
     assert r["e6_failed"] == ["A1", "A3"] and r["packing_disabled"]
     assert not res["records"]["kev"]["packing_disabled"]
@@ -106,48 +120,61 @@ def test_ranking_tied_set_and_clear_loser(env):
     assert set(res["tied_set"]) == {"kev", "laya"}
 
 
-def test_tie_breaks_in_order(env):
+def test_second_finalist_by_sequential_tie_breaks(env):
     tie = {"noise": 0.02}
-    # E2 decides
+    # finalist 1 = E3 point top even with the worse E2 (R1-EXAM-RULE-V2)
     r = _run(env, ("kev", "kev", 0.300, {**tie, "seed": 1, "e2": 0.1}), ("laya", "laya", 0.299, {**tie, "seed": 2, "e2": 0.2}))
-    assert r["tied_set"] == ["laya", "kev"] and r["finalists"] == ["laya", "kev"]
-    # equal E2: width ratio closer to 1
-    r = _run(env, ("kev", "kev", 0.300, {**tie, "seed": 1, "width": 0.7}), ("ext", "extra", 0.299, {**tie, "seed": 2, "width": 1.1}))
-    assert r["tied_set"] == ["ext", "kev"]
-    # equal E2 and width distance: base before instruct
-    r = _run(env, ("kev", "kev", 0.300, {**tie, "seed": 1, "ckpt": "instruct"}), ("ext", "extra", 0.299, {**tie, "seed": 2}))
-    assert r["tied_set"] == ["ext", "kev"]
-    # all equal but cost
-    r = _run(env, ("kev", "kev", 0.300, {**tie, "seed": 1, "cost": 3.0}), ("ext", "extra", 0.299, {**tie, "seed": 2, "cost": 1.0}))
-    assert r["tied_set"] == ["ext", "kev"]
+    assert r["ranking"] == ["kev", "laya"] and r["finalists"] == ["kev", "laya"]   # v1 would have put laya first
+    # among tied models of another class: E2 decides beyond the 0.01 tolerance
+    r = _run(env, ("kev", "kev", 0.300, {**tie, "seed": 1}),
+             ("laya", "laya", 0.299, {**tie, "seed": 2, "e2": 0.10, "width": 1.0}),
+             ("ext", "extra", 0.299, {**tie, "seed": 3, "e2": 0.13, "width": 1.5}))
+    assert r["ranking"][0] == "kev" and r["finalists"] == ["kev", "ext"]
+    # E2 within 0.01: tied on E2, width ratio closer to 1 decides
+    r = _run(env, ("kev", "kev", 0.300, {**tie, "seed": 1}),
+             ("laya", "laya", 0.299, {**tie, "seed": 2, "e2": 0.105, "width": 1.0}),
+             ("ext", "extra", 0.299, {**tie, "seed": 3, "e2": 0.110, "width": 1.5}))
+    assert r["ranking"][0] == "kev" and r["finalists"] == ["kev", "laya"]
+    assert [t["key"] for t in r["second_finalist_trace"]] == ["e2_probe_skill", "width_ratio_distance"]
+
+
+def test_pick_second_filters_in_order():
+    rule = X.load_rule()[0]
+    m = lambda name, e2, w=1.0, ck="base", cost=1.0: {"model": name, "e2": {"val_rps_skill": e2},  # noqa: E731
+                                                     "e3": {"width_ratio": w}, "checkpoint": ck, "e4": {"cost_s": cost}}
+    assert X._pick_second(rule, [m("a", 0.20), m("b", 0.25)])[0]["model"] == "b"
+    assert X._pick_second(rule, [m("a", 0.20, w=0.9), m("b", 0.209, w=1.3)])[0]["model"] == "a"
+    assert X._pick_second(rule, [m("a", 0.2, ck="instruct"), m("b", 0.2)])[0]["model"] == "b"
+    assert X._pick_second(rule, [m("a", 0.2, cost=3.0), m("b", 0.2, cost=1.0)])[0]["model"] == "b"
+    pick, trace = X._pick_second(rule, [m("b", 0.2), m("a", 0.2)])
+    assert pick["model"] == "a" and trace[-1]["key"] == "model_name"
+    assert X._pick_second(rule, [{**m("a", 0.2), "e2": None}, m("b", 0.0)])[0]["model"] == "b"   # missing E2 = worst
+    assert X._pick_second(rule, []) == (None, [])
 
 
 def test_second_finalist_needs_a_different_class(env):
     tie = {"noise": 0.02}
     r = _run(env, ("kev08", "kev", 0.300, {**tie, "seed": 1, "e2": 0.3}), ("kev4", "kev", 0.300, {**tie, "seed": 2, "e2": 0.2}),
              ("laya", "laya", 0.300, {**tie, "seed": 3, "e2": 0.1}))
-    assert r["tied_set"] == ["kev08", "kev4", "laya"]
-    assert r["finalists"] == ["kev08", "laya"]
+    assert set(r["tied_set"]) == {"kev08", "kev4", "laya"}
+    assert r["ranking"][0] == "kev08" and r["finalists"] == ["kev08", "laya"]
     r = _run(env, ("kev08", "kev", 0.300, {**tie, "seed": 1}), ("kev4", "kev", 0.299, {**tie, "seed": 2}),
              ("laya", "laya", 0.05, {"seed": 3}))
-    assert r["finalists"] == ["kev08"]
+    assert r["finalists"] == [r["ranking"][0]] and r["ranking"][0] in ("kev08", "kev4")
 
 
 def test_control_always_carried_never_counts(env):
     r = _run(env, ("kev", "kev", 0.30, {"seed": 1}),
              ("q08", "qwen_control", 0.20, {"seed": 2}),
-             ("q4", "qwen_control", 0.35, {"seed": 3, "e0": (0.1, 0.1)}))
+             ("q4", "qwen_control", 0.35, {"seed": 3, "e0": (0.1, 0.1, 0.5)}))
     assert r["control"] == "q4"
     assert "q4" not in r["ranking"] and "q4" not in r["finalists"] and "q4" not in r["discarded"]
     assert r["records"]["q4"]["step1_failures"] == ["e0_width_slope", "e0_mean_slope"]
 
 
-def test_startlux_pending_author_unless_decided(env):
+def test_startlux_is_a_candidate_without_an_author_rung(env):
     r = _run(env, ("kev", "kev", 0.2, {"seed": 1}), ("slx", "startlux", 0.4, {"seed": 2}))
-    assert r["discarded"] == {"slx": ["pending_author"]} and r["top"] == "kev"
-    r = _run(env, ("kev", "kev", 0.2, {"seed": 1}),
-             ("slx", "startlux", 0.4, {"seed": 2, "author_rung": "trainable", "author_row": "R1-STARTLUX-RUNG"}))
-    assert r["top"] == "slx"
+    assert r["top"] == "slx" and "slx" not in r["discarded"]                  # R1-STARTLUX-TRAINABLE
 
 
 def test_floor_stop_and_pass(env):
@@ -190,12 +217,11 @@ def test_schema_and_missing_items_refused(env):
         X.analyze(d)
 
 
-def test_rule_v1_refuses_e0_records_of_another_protocol(env):
-    """R1-E0-PROTOCOL: the v1 thresholds were withdrawn; E0 v2 results need a rule v2 (author's thresholds)."""
+def test_e0_records_must_declare_protocol_v2(env):
     items, base = env
     m = _model("kev", "kev", 0.2, items, base)
-    m["e0"]["protocol"] = "trackp_e0/v2"
-    with pytest.raises(X.RuleSuperseded, match="rule v2"):
+    m["e0"]["protocol"] = "trackp_e0/v1"
+    with pytest.raises(X.RuleSuperseded, match="trackp_e0/v2"):
         X.analyze(_data(m))
     del m["e0"]["protocol"]
     with pytest.raises(X.RuleSuperseded):

@@ -26,8 +26,11 @@ label's std with the same bin representatives), ``width_slope_vs_label``; the
 label's own slopes vs s and m are reported as the ceiling
 (``label_width_slope_vs_s``, ``label_mean_slope_vs_m``). (b) Validation cells
 ``VAL_CELLS`` are held out of the training grid (``e0_split``) for early
-stopping. Pass thresholds of v2 are set by the author after the re-run DRYRUN
-(``E0_V2_THRESHOLDS`` is None until then, and ``e0_pass_v2`` returns None).
+stopping. Pass (R1-E0-THRESHOLDS, author 26 Oct evening; a floor, not a ranking):
+``width_slope_vs_label`` >= 0.6 with its bootstrap 95 % lower bound > 0, and
+``mean_slope`` >= 0.8 (``E0_V2_THRESHOLDS``). The lower bound is the 2.5th
+percentile of 2,000 resamples of the test prompts (``E0_BOOT``). A4 v2 passes
+when >= 95 % of prompts are monotone against the label's std.
 
 **E6** probe constructors with the spec's criteria: A1 branch isolation and A2
 sibling-order invariance (max |delta logit| <= 1e-3; packed models only), A3
@@ -72,7 +75,11 @@ HELDOUT = HELDOUT_INTERP + HELDOUT_EXTRAP
 # cells of the middle s row; none touches a test cell's row-and-column pair
 VAL_CELLS = ((1, 3), (3, 2), (5, 4), (8, 2), (0, 3), (9, 3))
 assert not set(VAL_CELLS) & set(HELDOUT)
-E0_V2_THRESHOLDS: dict | None = None   # set by the author after the v2 DRYRUN (PLAN row), then frozen in a rule file
+# R1-E0-THRESHOLDS (author, 26 Oct evening); the same values are frozen in r1/c3/rules/p3_rule_v2.yaml
+E0_V2_THRESHOLDS: dict | None = {"width_slope_vs_label_min": 0.6, "width_slope_vs_label_lb_gt": 0.0,
+                                 "mean_slope_min": 0.8}
+E0_BOOT = {"resamples": 2000, "alpha": 0.05, "seed": SEED, "unit": "test prompt"}
+A4_V2_MIN_FRAC = 0.95
 N_TRAIN, N_TEST = 3000, 1000
 DATA = Path(__file__).resolve().parent / "data"
 E0_FILE = DATA / "e0_v1.jsonl.gz"
@@ -287,17 +294,36 @@ def label_ceiling(items: Sequence[dict]) -> dict:
             "label_mean_slope_vs_m": _slope([it["m"] for it in items], mu_y)}
 
 
+def width_slope_bootstrap(p_pred, items: Sequence[dict], boot: dict = E0_BOOT) -> tuple[float, float]:
+    """Percentile interval (two-sided 1 - alpha) of ``width_slope_vs_label`` over resampled test prompts."""
+    _, tau = belief_moments(np.asarray(p_pred, float))
+    _, tau_y = belief_moments(np.array([it["y_soft"] for it in items], float))
+    rng = np.random.default_rng(boot["seed"])
+    n = len(tau)
+    idx = rng.integers(0, n, size=(boot["resamples"], n))
+    x, y = tau_y[idx], tau[idx]
+    xc = x - x.mean(axis=1, keepdims=True)
+    slopes = (xc * (y - y.mean(axis=1, keepdims=True))).sum(axis=1) / (xc ** 2).sum(axis=1)
+    lo, hi = np.quantile(slopes, [boot["alpha"] / 2, 1 - boot["alpha"] / 2])
+    return float(lo), float(hi)
+
+
 def e0_metrics_v2(p_pred, items: Sequence[dict], target: str = "y_soft") -> dict:
-    """v2 metrics: the v1 set plus the label ceiling; the primary width slope is ``width_slope_vs_label``."""
-    return {**e0_metrics(p_pred, items, target), **label_ceiling(items), "primary_width": "width_slope_vs_label"}
+    """v2 metrics: the v1 set, the label ceiling and the bootstrap interval of the primary width slope
+    (``width_slope_vs_label``)."""
+    lo, hi = width_slope_bootstrap(p_pred, items)
+    return {**e0_metrics(p_pred, items, target), **label_ceiling(items), "primary_width": "width_slope_vs_label",
+            "width_slope_vs_label_lb95": lo, "width_slope_vs_label_ub95": hi}
 
 
 def e0_pass_v2(metrics: dict, thresholds: dict | None = None) -> bool | None:
-    """None until the author sets the v2 thresholds; then ``width_slope_vs_label`` and ``mean_slope`` minima."""
+    """R1-E0-THRESHOLDS: width slope vs label std >= 0.6 and its bootstrap 95 % lower bound > 0; mean slope >= 0.8."""
     t = thresholds if thresholds is not None else E0_V2_THRESHOLDS
     if t is None:
         return None
-    return metrics["width_slope_vs_label"] >= t["width_slope_vs_label_min"] and metrics["mean_slope"] >= t["mean_slope_min"]
+    return bool(metrics["width_slope_vs_label"] >= t["width_slope_vs_label_min"]
+                and metrics["width_slope_vs_label_lb95"] > t["width_slope_vs_label_lb_gt"]
+                and metrics["mean_slope"] >= t["mean_slope_min"])
 
 
 # ---------------------------------------------------------------- E6 probes
@@ -494,7 +520,7 @@ def _note_values(proposal: str) -> tuple[float, float]:
 def a4_pass_v2(pred_std, label_std, tol: float = 0.0) -> dict:
     """v2 (label reference): a prompt passes when its predicted std does not decrease (by more than ``tol``) at any
     step where the label's std increases; the label's own fraction of monotone prompts is the ceiling. Also the
-    median per-prompt slope of predicted std on label std. ``pass`` is None until the author sets the threshold."""
+    median per-prompt slope of predicted std on label std. Pass: >= 95 % of prompts (R1-E0-THRESHOLDS)."""
     pred, lab = np.asarray(pred_std, float), np.asarray(label_std, float)
     dp, dl = np.diff(pred, axis=1), np.diff(lab, axis=1)
     up = dl > 0
@@ -502,7 +528,7 @@ def a4_pass_v2(pred_std, label_std, tol: float = 0.0) -> dict:
     slopes = [float(np.polyfit(lab[i], pred[i], 1)[0]) if np.ptp(lab[i]) > 0 else float("nan") for i in range(len(lab))]
     return {"frac_monotone_vs_label": float(ok.mean()), "label_ceiling_frac": float((dl >= 0).all(axis=1).mean()),
             "frac_monotone_raw": float((dp >= -tol).all(axis=1).mean()),
-            "median_slope_vs_label": float(np.nanmedian(slopes)), "pass": None}
+            "median_slope_vs_label": float(np.nanmedian(slopes)), "pass": bool(ok.mean() >= A4_V2_MIN_FRAC)}
 
 
 def a5_probe(n: int = 100, perms: int = 5, seed: int = SEED) -> list[list[DecisionPrompt]]:

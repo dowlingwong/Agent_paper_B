@@ -1,6 +1,6 @@
 # Track P — Decision-Model Post-Training and Labels (technical specification)
 
-Status: **adopted 2026-10-26 (PLAN §10 R1-C3-POST, with R1-C3-CONTROL, R1-SOFT-SIGMA, R1-PORTAL-SCHEDULE, R1-JEV-RUNG, R1-RB-TEACHER)**; proposed 2026-10-25, revised 2026-10-26 after the reference review. **Corrected 2026-10-26 (evening) by the author's Track P decisions** (PLAN §10 R1-STARTLUX-TRAINABLE, R1-E0-PROTOCOL, R1-A3-BUDGET, R1-RPS-NORM, R1-EDGES-10, R1-TIEBREAK, R1-HEADS-LN, R1-LAYA-POOL, R1-TEMPERATURE, R1-TOKEN-INIT, R1-LR-GRID, R1-ENV-PIN); edits marked "(26 Oct, R1-…)". Execution: `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`.
+Status: **adopted 2026-10-26 (PLAN §10 R1-C3-POST, with R1-C3-CONTROL, R1-SOFT-SIGMA, R1-PORTAL-SCHEDULE, R1-JEV-RUNG, R1-RB-TEACHER)**; proposed 2026-10-25, revised 2026-10-26 after the reference review. **Corrected 2026-10-26 (evening) by the author's Track P decisions** (PLAN §10 R1-STARTLUX-TRAINABLE, R1-E0-PROTOCOL, R1-A3-BUDGET, R1-RPS-NORM, R1-EDGES-10, R1-TIEBREAK, R1-HEADS-LN, R1-LAYA-POOL, R1-TEMPERATURE, R1-TOKEN-INIT, R1-LR-GRID, R1-ENV-PIN; and the same evening R1-E0-THRESHOLDS, R1-E0-BUDGET, R1-E0-HEADFIT, R1-CONTROL-READOUT, R1-TRACKP-CHOICES, R1-EXAM-RULE-V2); edits marked "(26 Oct, R1-…)". Execution: `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`.
 Supersedes the post-training part of R1-C3-BASE (24 Oct).
 Scope: C3 decision models (A5 / A6), label generation, the decision-model exam, SFT, RL, DAgger, evaluation.
 Runbook counterpart: `docs/r1/RUNBOOK.md` → Track P. Reading list: `docs/r1/references/README.md`. Base-model facts (Kev, StartLux, Laya) are those checked on 25 Oct and recorded in RUNBOOK Track P; P.0 confirms them.
@@ -74,7 +74,7 @@ The action head is optional (absent in Stage S and in the "rule-on-belief" arm).
 
 Shared serialisation: one text template, ≤ 1,024 tokens (Laya's limit), fixed bin names and order.
 
-Every new head (action, cumulative, the E0 linear belief head) reads a LayerNorm-ed state (26 Oct, R1-HEADS-LN). The reserved tokens `<b0>…<b11>`, `<exec>`, `<skip>` are initialised from the mean of the existing token embeddings; those rows are kept and trained in fp32 at a lower lr (lower than what is not stated; the Track P agent reads it as lower than the new heads' 1e-3 and uses 1e-4 — author to confirm) (26 Oct, R1-TOKEN-INIT).
+Every new head (action, cumulative, the E0 linear belief head) reads a LayerNorm-ed state (26 Oct, R1-HEADS-LN). The reserved tokens `<b0>…<b11>`, `<exec>`, `<skip>` are initialised from the mean of the existing token embeddings; those rows are kept and trained in fp32 at a lower lr, 1e-4 (26 Oct, R1-TOKEN-INIT; value confirmed by R1-TRACKP-CHOICES).
 
 ### 2.3 Belief head form (exam factor)
 
@@ -187,7 +187,7 @@ where keep_j comes from `r1/c3/rules.py` (`keep`) applied to the logged Δ̂_j u
 - PyTorch + PEFT (LoRA), no TRL. One loop, losses plugged in per stage.
 - Host: zhixu portal (1× RTX 4090 24 GB). Models ≤ 4B, bf16, gradient checkpointing.
 - Default LoRA: r = 16, α = 32, dropout 0.05, targets = attention q/k/v/o + MLP up/down/gate (+ DeltaNet projections on Qwen3.5 hybrid bases, as Kev does).
-- Learning rate: **one grid {1e-5, 3e-5, 1e-4} for the adapter of every family, chosen by val RPS** (26 Oct, R1-LR-GRID; replaces 2e-5 from a released adapter / 1e-4 for a fresh LoRA); released heads train at the adapter lr (Track P agent's reading, author to confirm); new heads 1e-3; new token rows (bin-token family) in fp32 at a lower lr (R1-TOKEN-INIT; 1e-4 chosen by the Track P agent, author to confirm).
+- Learning rate: **one grid {1e-5, 3e-5, 1e-4} for the adapter of every family, chosen by val RPS** (26 Oct, R1-LR-GRID; replaces 2e-5 from a released adapter / 1e-4 for a fresh LoRA); released heads train at the adapter lr (Track P agent's reading); new heads 1e-3; new token rows (bin-token family) in fp32 at lr 1e-4 (R1-TOKEN-INIT, R1-TRACKP-CHOICES).
 - Environment pinned (26 Oct, R1-ENV-PIN): torch 2.6.0+cu124 on driver 535; Kev code at the P.0 commit `2074cc4`, its diff to `kev-1.0` recorded.
 - Batches are tree-packed (§2.4) where the model supports it: one forward pass per state with all its proposals.
 - Three training seeds per configuration; report mean ± s.e.
@@ -208,7 +208,7 @@ Selected to span architectures, not sizes (all ≤ 4B). Record for each whether 
 | Decision-pretrained hybrid decoder + pointer head | Kev (Qwen3.5 hybrid base) | Value of decision pretraining |
 | Bidirectional-in-prompt decoder | StartLux Instant — **trainable candidate** (P.0 passed; 26 Oct, R1-STARTLUX-TRAINABLE). Licence CC BY-NC 4.0 (non-commercial research use), noted in the registry and in the appendix | Prompt-bidirectional attention for reading a diff + state |
 | Encoder, proper-scoring-trained decision head | Laya (ModernBERT-large, 421M, 1,024 ctx) | Small encoder vs decoders; value of prior proper-scoring training |
-| Plain causal LM base (control) | Qwen3.5-0.8B-Base, Qwen3.5-4B-Base | Same base as Kev; size effect |
+| Plain causal LM base (control) | Qwen3.5-0.8B-Base, Qwen3.5-4B-Base; **primary readout a fresh LayerNorm + linear head**, the bin-token readout a secondary row; bin list in the prompt in canonical order (26 Oct evening, R1-CONTROL-READOUT, amends R1-C3-CONTROL) | Same base as Kev; size effect |
 | Non-LLM floor (not a finalist) | Frozen embedding model + ordinal logistic regression; GBDT on hand features | Whether an LLM is needed at all |
 
 Optional extra slot: one further ≤ 4B architecture (e.g. a hybrid attention/SSM model) if its spike passes within the one-day budget.
@@ -262,12 +262,14 @@ The task-specific analogue of the biased-coin probe (§10, R1/R2): can the archi
 - Grid: m ∈ [−2.5, 2.5], s ∈ [0.1, 1.5]; ≈ 3,000 train / 1,000 test prompts; test (m, s) cells held out from training (interpolation and mild extrapolation cells).
 - Target: soft label = N(m, s²) integrated over the 12 bins (bin 0 never active).
 - **Protocol v2 (26 Oct, R1-E0-PROTOCOL; replaces "frozen backbone, then 200 LoRA steps" and the released-head fit):**
-  - A **fresh LayerNorm + linear belief head** (hidden → 12) at lr 1e-3 for every model, on the readout state its action head reads. (1) Fitted on the frozen backbone; (2) then LoRA + that head together, adapter lr from the grid {1e-5, 3e-5, 1e-4} chosen by val RPS (R1-LR-GRID).
-  - **To convergence:** validation cells are held out of the training grid; each stage stops early on val RPS (best checkpoint restored), at most 2,000 steps; the same budget (steps, evaluation interval, patience, batch) for every model. *(Track P agent's choices, for the author to confirm: the cap applies per stage; val cells (1,3), (3,2), (5,4), (8,2), (0,3), (9,3); evaluation every 100 steps, patience 5, the starting model counted; lr chosen on the soft fresh-head run and reused for the hard and native runs; the Qwen control's token rows frozen in the fresh-head run.)*
+  - A **fresh LayerNorm + linear belief head** (hidden → 12) for every model, on the readout state its action head reads (lr 1e-3 when it trains with LoRA).
+  - **Head fit (descriptive only; 26 Oct evening, R1-E0-HEADFIT):** cached frozen-backbone features, full-batch L-BFGS of the train RPS to convergence on CPU; it initialises the head of the LoRA stage. (The fit is non-convex — LayerNorm's affine times the linear layer — so "convergence" is a stationary point: two outer L-BFGS steps without relative improvement > 1e-9, the history reset in between.)
+  - **Budget, two stages, the same for every model (R1-E0-BUDGET):** (1) **lr screen** — LoRA + head on the grid {1e-5, 3e-5, 1e-4}, ≤ 2,000 steps, evaluation every 100, early stopping (patience 5, the Track P agent's value), the lr with the lowest best val RPS selected; (2) **one run at the selected lr**: cap 6,000 steps, evaluation every 100, patience 10, best checkpoint restored. **The E0 metrics come from that run.** The hard-label contrast and the native-readout run reuse the selected lr with the stage-2 budget.
+  - Validation cells (1,3), (3,2), (5,4), (8,2), (0,3), (9,3) are held out of the training grid and are disjoint from the held-out test cells; the starting model of a LoRA stage counts as an early-stopping candidate; the Qwen control's token rows stay frozen in the fresh-head run (confirmed, R1-TRACKP-CHOICES).
   - **Released heads are reported separately** (the family's native readout: zero-shot, then the same LoRA stage).
   - Contrast run: identical, but with **hard argmax labels**.
 - Metrics on held-out cells: RPS; **width slope = regression slope of the predicted std on the label's own std** (the binned soft label's std with the same bin representatives; target 1), with the **label's own slope vs s reported as the ceiling**; slope of predicted mean on m (target 1); the v1 slope of predicted std on s is still reported; for the hard-label run, width ratio (expected to collapse).
-- Pass: thresholds set by the author in a PLAN row after the v2 DRYRUN on Kev-0.8B and Qwen-0.8B (the v1 thresholds — width slope ≥ 0.7 and mean slope ≥ 0.8 — no longer apply). The soft-vs-hard contrast is an appendix figure.
+- **Pass (a floor, not a ranking; 26 Oct evening, R1-E0-THRESHOLDS):** width slope vs the label's own std **≥ 0.6** with its **bootstrap 95 % lower bound > 0** (2.5th percentile of 2,000 resamples of the 1,000 test prompts — resampling unit chosen by the Track P agent), and mean slope **≥ 0.8**, on the soft-label stage-2 run. Frozen in `r1/c3/rules/p3_rule_v2.yaml`. The soft-vs-hard contrast is an appendix figure.
 
 ### 5.6 E6 — architecture probes
 
@@ -278,16 +280,16 @@ Adapted from the Jev probe set (§10, R1). All on the soft-label E0 model unless
 | A1 Branch isolation | Same branch scored alone vs packed with 7 siblings | max |Δ logit| ≤ 1e-3 (bf16 tolerance); packed models only |
 | A2 Sibling-order invariance | Permute sibling order (5 permutations) | max |Δ logit| ≤ 1e-3 |
 | A3 History-length robustness | Prepend irrelevant acceptance history at **0 / 25 % / 50 % / 100 % of the remaining token budget**, under the smallest context limit in the pool (1,024 tokens) for every model, so the same text fits every model (26 Oct, R1-A3-BUDGET); 2k / 8k descriptive only | mean |Δ RPS| ≤ 0.01 |
-| A4 Width monotonicity | Same prompt, s increased in 5 steps; reference = the label's own std at each step (26 Oct, R1-E0-PROTOCOL) | predicted std non-decreasing wherever the label's std increases (criterion form chosen by the Track P agent, author to confirm); threshold set by the author after the v2 DRYRUN (was ≥ 95 % of prompts) |
-| A5 Slot bias | BinTokenWrapper: permute the order bin tokens are listed in the prompt (if listed) | belief invariant within 0.02 TV distance |
+| A4 Width monotonicity | Same prompt, s increased in 5 steps; reference = the label's own std at each step (26 Oct, R1-E0-PROTOCOL) | predicted std non-decreasing wherever the label's std increases, on **≥ 95 % of prompts** (R1-E0-THRESHOLDS; recorded under E6, not disqualifying — §5.7.1) |
+| A5 Slot bias | BinTokenWrapper: permute the order bin tokens are listed in the prompt (canonical order otherwise) | **descriptive only**, read on the readout used for selection (for the Qwen control the fresh head; 26 Oct evening, R1-CONTROL-READOUT); TV distance reported against the former 0.02 |
 
 ### 5.7 Pre-registered selection rule
 
 1. Discard models that fail E0, or fail E4 hard limits (OOM at 1,024 tokens, batch 8 with grad checkpointing; non-deterministic reload). E6 failures are recorded; A1/A2 failures disable packing for that model but do not disqualify it.
 2. Rank by E3 mean val RPS skill. Paired bootstrap over instances (2,000 resamples) against the top model.
 3. Models not significantly worse than the top (95 % paired bootstrap interval of the difference includes 0) form the tied set.
-4. Within the tied set only: a **lexicographic tie-break on point estimates** — higher E2 probe skill, then smaller |width ratio − 1|, then base over instruct, then lower cost (E4) (26 Oct, R1-TIEBREAK). The "top model" of step 5 is the first model of this order.
-5. **Finalists**: the top model; plus a second model only if it is in the tied set **and** of a different architecture class. The Qwen control (size chosen by E3) is always carried as the ablation arm and does not count towards the 1–2.
+4. **Finalist 1 = the E3 point-estimate top** (26 Oct evening, R1-EXAM-RULE-V2; supersedes R1-TIEBREAK).
+5. **Optional second finalist**: among the tied models of a different architecture class than finalist 1, picked by the tie-break order on point estimates — higher E2 probe skill (models within an RPS-skill difference ≤ 0.01 are tied on E2), then smaller |width ratio − 1|, then base over instruct, then lower cost (E4); a tie left after all four goes to the model name (Track P agent's rule). Rule v2: `r1/c3/rules/p3_rule_v2.yaml`, frozen with its sha256; `exam_analyze` accepts v2 only. The Qwen control (size chosen by E3) is always carried as the ablation arm and does not count towards the 1–2.
 6. E7 decides the head form for the finalists.
 7. If no LLM beats the non-LLM floor by a significant margin on E3, stop and escalate (this changes the paper's story).
 
@@ -418,7 +420,7 @@ Fixed budget, fresh instances, ≥ 3 harder benchmarks where available. Compare:
 - Confirm v_k (keep probability per bin) from the C2 theory.
 - Confirm ECE gate value after the first SFT run.
 - StartLux tier decided 26 Oct: trainable candidate (R1-STARTLUX-TRAINABLE).
-- E0 and A4 thresholds of protocol v2: set by the author after the v2 DRYRUN (R1-E0-PROTOCOL; owner: Dow). They go into a **rule v2** (`r1/c3/rules/p3_rule_v2.yaml`, frozen with its sha256 before any P.3b data; also drops StartLux from the pending-author families). Until then `exam_analyze` refuses E0 records that are not protocol v1, so the withdrawn v1 thresholds of `p3_rule_v1.yaml` cannot be applied to v2 results.
+- E0 and A4 thresholds of protocol v2: decided 26 Oct evening (R1-E0-THRESHOLDS); frozen with the exam rule in `r1/c3/rules/p3_rule_v2.yaml` (R1-EXAM-RULE-V2; StartLux no longer pending). `exam_analyze` accepts rule v2 only and E0 records of protocol v2 only.
 - Decided 26 Oct: Jev rung via the official API (R1-JEV-RUNG); R-B demonstrations by DeepSeek-V4.1-Flash-1017 (R1-RB-TEACHER); pooled σ̂ (R1-SOFT-SIGMA); Qwen control adopted (R1-C3-CONTROL); card schedule (R1-PORTAL-SCHEDULE).
 - Track H.8 `OfflineBanditEnv` defines action = bin; under belief/action decoupling the environment action should be execute/skip (keep from the rules), with the 12-bin belief as the model's forecast. Track H was accepted on 26 Oct with action = bin, so an H.8 amendment is needed before P.5 uses the environment (owner: Dow).
 
