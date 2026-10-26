@@ -78,6 +78,17 @@ def main():
     fig.tight_layout()
     fig.savefig(OUT / "noise_floor.pdf", metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
+    # Source-row categories are descriptive, include partial campaigns and are
+    # not a fresh-seed audit or an estimate for a population of campaigns.
+    waste = [(f"{source}:{node}:{memory}", count / total)
+             for source, node, memory, kind, count, total, _ in counts if kind == "duplicate"]
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    ax.barh([label for label, _ in waste], [fraction for _, fraction in waste])
+    ax.set_xlabel("Duplicate share of source rows in each stratum")
+    ax.set_title("ENGINEERING PILOT — includes partial campaigns")
+    fig.tight_layout()
+    fig.savefig(OUT / "proposal_categories.pdf", metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
     fig, ax = plt.subplots(figsize=(7, 4))
     labels = [row[0] for row in gate_rows]
     gains = [row[1] for row in gate_rows]
