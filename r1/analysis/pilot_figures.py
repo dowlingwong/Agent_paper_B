@@ -34,6 +34,20 @@ def waste_counts(rows):
     return sorted((*key, count, totals[key[:3]], count / totals[key[:3]]) for key, count in counts.items())
 
 
+def duplicate_shares(counts):
+    """Include every stratum, including those with no duplicate rows."""
+    strata = {}
+    for source, node, memory, kind, count, total, _share in counts:
+        key = (source, node, memory)
+        if key not in strata:
+            strata[key] = [0, total]
+        if strata[key][1] != total:
+            raise ValueError("inconsistent stratum denominator")
+        if kind == "duplicate":
+            strata[key][0] += count
+    return [(key, duplicate / total) for key, (duplicate, total) in sorted(strata.items())]
+
+
 def write_csv(path, header, rows, label):
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
@@ -80,8 +94,7 @@ def main():
     plt.close(fig)
     # Source-row categories are descriptive, include partial campaigns and are
     # not a fresh-seed audit or an estimate for a population of campaigns.
-    waste = [(f"{source}:{node}:{memory}", count / total)
-             for source, node, memory, kind, count, total, _ in counts if kind == "duplicate"]
+    waste = [(":".join(key), share) for key, share in duplicate_shares(counts)]
     fig, ax = plt.subplots(figsize=(8, 4.5))
     ax.barh([label for label, _ in waste], [fraction for _, fraction in waste])
     ax.set_xlabel("Duplicate share of source rows in each stratum")

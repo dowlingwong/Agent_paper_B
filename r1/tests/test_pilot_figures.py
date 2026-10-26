@@ -92,3 +92,18 @@ def test_all_historical_gate_rows_match_each_mode_and_price():
         assert row["provisional_status"] == "ENGINEERING_ONLY; historical pilot; not current C3 gate"
         for key in ("mean_per_proposal", "per_campaign", "exec_rate"):
             assert float(row[key]) == value[key]
+
+
+def test_duplicate_figure_includes_zero_duplicate_strata():
+    from r1.analysis.pilot_figures import duplicate_shares
+    counts = waste_counts([
+        {"source": "a", "node": "n", "memory_mode": "off", "inert": True, "inert_kind": "equals_incumbent"},
+        {"source": "a", "node": "m", "memory_mode": "on", "inert": True, "inert_kind": "duplicate"},
+    ])
+    shares = dict(duplicate_shares(counts))
+    assert shares == {("a", "m", "on"): 1.0, ("a", "n", "off"): 0.0}
+    with (PILOT / "proposals.jsonl").open() as handle:
+        counts = waste_counts(json.loads(line) for line in handle if line.strip())
+    shares = dict(duplicate_shares(counts))
+    assert set(shares) == {tuple(row[:3]) for row in counts}
+    assert shares[("dt4", "openml_ionosphere", "none")] == 0.0
