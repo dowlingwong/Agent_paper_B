@@ -1,4 +1,6 @@
-== /tmp/claude-1008/trackp_tmp/wt_ef3
+# 3 Track H modules with trackh_standin.py (review only); regenerated after the test update
+== ef3e2f3
+FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-1]
 FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[second_gains-1]
 FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-0]
 FAILED r1/tests/test_c3_direct_arms.py::test_awr_direct_and_llm_self_control_run_through_decide
@@ -11,9 +13,10 @@ FAILED r1/tests/test_c3_rule_controller.py::test_a4_queries_are_charged_to_the_l
 FAILED r1/tests/test_c3_rule_controller.py::test_skip_infeasible_and_no_features_continue
 FAILED r1/tests/test_c3_rule_controller.py::test_a1_with_verify_equals_the_index_policy_arm
 FAILED r1/tests/test_c3_sidecar.py::test_campaign_survives_a_dead_sidecar_and_logs_prior_unavailable
-ERROR r1/tests/test_c3_skip_display.py
-13 failed, 13 passed, 1 error in 3.82s
-== /home/dowling/r1_trackp/Agent_paper_B
+13 failed, 13 passed in 3.90s
+== a42d9fe
+FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-1]
+FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[second_gains-1]
 FAILED r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-0]
 FAILED r1/tests/test_c3_direct_arms.py::test_awr_direct_and_llm_self_control_run_through_decide
 FAILED r1/tests/test_c3_direct_arms.py::test_campaign_usage_reports_trials_and_the_trial_budget
@@ -24,7 +27,5 @@ FAILED r1/tests/test_c3_rule_controller.py::test_rule_skips_come_first_and_are_l
 FAILED r1/tests/test_c3_rule_controller.py::test_a4_queries_are_charged_to_the_llm_cap
 FAILED r1/tests/test_c3_rule_controller.py::test_skip_infeasible_and_no_features_continue
 FAILED r1/tests/test_c3_rule_controller.py::test_a1_with_verify_equals_the_index_policy_arm
-FAILED r1/tests/test_c3_sidecar.py::test_refuses_an_adapter_whose_sha256_differs_from_the_pin
 FAILED r1/tests/test_c3_sidecar.py::test_campaign_survives_a_dead_sidecar_and_logs_prior_unavailable
-ERROR r1/tests/test_c3_skip_display.py
-14 failed, 12 passed, 1 error in 4.35s
+13 failed, 13 passed in 3.84s

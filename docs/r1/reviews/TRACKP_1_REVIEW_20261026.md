@@ -145,3 +145,40 @@ Commits `ca5165e` (finding 1) and `5115232` (findings 2–10); handoff updated.
 9. Fixed. `test_laya_native_readout_equals_layas_own_forward` (atol 1e-5).
 10. Fixed. `JevVersionMismatch` is no longer a `JevError`; transport failures (URLError/timeout/OSError) are logged before raising in both clients; tests.
 11. Recorded as author questions (handoff Q1–Q3); no code change.
+
+## Re-check (26 Oct 2026, about 03:10–04:20 UTC)
+
+The same reviewer as above re-checked commits `ca5165e`, `5115232` and `a42d9fe` (range `ef3e2f3..a42d9fe` = `origin/trackp-20261026`), using the same environment and hard rules as the first pass. All three commits are authored and committed by Dowling Wong with the co-author line. Only `trackp-20261026` is on GitHub, and the harness clone is unchanged (clean at `264011e`).
+
+**Full paper suite:** 559 passed, 1 skipped, 11 failed, 4 collection errors. The failing and erroring set is identical to the baseline. The 23 additional passes are the new tests.
+
+**Findings 1–10 against the fixes:**
+
+1. **Resolved.**
+   - New parametrisation: logit S₁ = raw₁ and logit S_{k+1} = logit S_k − softplus(·), so S is strictly decreasing by construction. The cumulative max becomes an identity; I checked that S is strictly monotone on 1,000 random rows with scale 5. The belief logits are now log(p + 1e-12) with no clamp.
+   - My own probe at init: there are no dead bins (minimum bin probability 2.2e-5). Free logits trained on a bin-6 target give mean p₆ = 0.958 with no row below 0.5, against 139 dead rows before. An RPS fit to E0-style soft targets reaches 2.8e-4.
+   - Through the CLI on a fixed batch (`toy --family qwen_control --examples 8 --steps 40`): cumulative-11 loss went 6.71 → 3.66, against 3.29 → 3.08 for softmax-12, and before the fix it stalled at 11.17. The kev cumulative-11 spike went 5.86 → 4.46 and reloads identically.
+   - The new learnability tests (`test_head_forms_can_learn_from_free_logits`, `test_every_family_and_head_form_learns_a_fixed_batch`) can fail: they set a margin and assert positive mass in every bin.
+2. **Resolved.**
+   - With a filled config copy, `e0` and `probes` refuse without a note under both the default label and `--evidence ENGINEERING_ONLY` / `EVIDENCE`; `exam` refuses too.
+   - `--evidence DRYRUN` gets past the gate and stops at "no CUDA" (that run also showed that the config's `gpu.lock_path` is now used).
+   - The gate is tested in-process for every subcommand × label, with and without a note, and the `--tiny` CLI test now asserts rc 0 and a DRYRUN label.
+3. **Resolved.**
+   - `test_c3_sidecar.py` now expects `PinError` ("model pin needs").
+   - My own run of `test_c3_sidecar`, `test_c3_direct_arms` and `test_c3_rule_controller`, with my own stand-in for the missing symbols, gives the **identical** 13-failure set at `ef3e2f3` (exported) and at `a42d9fe`. The adapter-sha256 test passes at HEAD, and every remaining failure is the harness `run_real_campaign(skip_display=…)` signature error, which is environmental.
+   - The handoff sentence has been corrected.
+   - Small inaccuracy in `trackp_code_20261026/trackh_modules_before_after.txt`, not blocking: its two lists differ in the `test_hybrid_revises_then_rescreens_once` parametrisations (the "before" list has `[second_gains-1]`, the "after" list does not), and its "after" list still shows the sidecar sha256 test failing. It was evidently produced before the test update and with a different stand-in. My same-stand-in comparison shows no difference. Regenerating the file would be tidy but is not required.
+4. **Resolved.** `Trainer.__init__` calls `guard_rows`. The guard now scans nested keys, DecisionPrompt `meta` and seed-indexed names 7006–7010, and the new trainer test covers it. The label-table reader is still Phase 6 work, as stated.
+5. **Resolved.** `Trainer.resume` truncates `metrics.jsonl` to the checkpoint step, and a unit test checks that each step is logged once.
+   - My SIGKILL rerun again ended bit-identical to the uninterrupted run, with steps 1–16 each logged once.
+   - In that run the kill came right at a checkpoint (killed after 4 lines, latest checkpoint step 4), so it did not by itself exercise the truncation. The truncation code and its unit test do; the CLI test now uses 40 steps and asserts each step exactly once.
+6. **Resolved as far as possible in code.** The newest Track X/exam B1/B2 heading in STATUS decides, with running vs ended words; the config lock path is used; a test is added. The STATUS marker itself is an open question to the author (handoff Q6). The `nvidia-smi` and `flock` checks remain the hard protection.
+7. **Resolved.** `base_revision` is passed into Kev's `Meta`, and a checkpoint with a different revision is refused (test).
+8. **Resolved.** The manifest must list the adapter and heads files, and an adapter missing keys is refused; both cases run in every round-trip test.
+9. **Resolved.** `test_laya_native_readout_equals_layas_own_forward` (atol 1e-5).
+10. **Resolved.** `JevVersionMismatch` is no longer a `JevError`. Transport failures are logged before raising in both clients (tests).
+11. **Author questions, open by design** (handoff Q1–Q3, Q6, Q7): RPS normalisation, 10 edges plus the inert Noul, the exam step 4/5 reading, the Track X STATUS marker, and the cumulative-11 parametrisation. They do not block Phase 1 code acceptance, but must be settled in PLAN before the rule's sha256 is recorded there (Phase 6c) and before any P.3 evidence run.
+
+**Side effect of my re-check, undone.** The filled-config DRYRUN `e0` probe again wrote `~/r1_trackp/runs/gpu_lease_log.jsonl` (one start/end pair, no GPU work; the lock went to a TMPDIR path set in my config copy). I deleted the file and the directory, and `~/r1_locks` was not created. Note for later: `LEASE_LOG` is still hard-coded, while the lock path now comes from the config.
+
+Verdict: accepted. Phase 1 code (1.1–1.11) meets each "Done when" on tiny CPU models, and every review finding is resolved. Acceptance does not cover the author decisions listed in item 11 or the Phase 2/3 real-weight checks (StartLux 5.8 reference, Kev torch pin).

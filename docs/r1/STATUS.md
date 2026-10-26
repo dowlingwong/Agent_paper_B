@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 26 October 2026 — Track P Phase 1: code (AI-assisted; ENGINEERING_ONLY / DRYRUN; independently reviewed and accepted)
+
+- Track P agent on zhixu portal, branch `trackp-20261026` (not merged). Items 1.1–1.11 on tiny models, CPU only; report `docs/r1/reports/TRACKP_PHASE1_CODE_20261026.md`, handoff `docs/r1/overnight/TRACKP_CODE_HANDOFF.md`, review `docs/r1/reviews/TRACKP_1_REVIEW_20261026.md` (3 blocking, 8 minor findings fixed; accepted).
+- Tests: paper 407/1/11/4 → 559/1/11/4 (failing set unchanged, environmental: harness pin `6afdb0e` not on GitHub); harness unchanged.
+- Open for the author: handoff questions 1–7.
+
 ## 26 October 2026 — Track P Phase 0: portal host facts (AI-assisted; ENGINEERING_ONLY; independently reviewed and accepted)
 
 - Track P agent (Claude Code) on zhixu portal (`TASL-2`), work dir `/home/dowling/r1_trackp/`, branch `trackp-20261026` in both repos (paper from `main` `b5a7aec`; harness from `r1` `264011e`). Report `docs/r1/reports/PORTAL_TRACKP_HOST_FACTS_20261026.md` (commits `870e6de`, `f08e5e4`); review `docs/r1/reviews/TRACKP_0_REVIEW_20261026.md` (6 minor findings fixed; verdict accepted). Read-only apart from the clones; no installs, weights, GPU jobs or secrets.

@@ -92,7 +92,8 @@ def _lease(args, lease_log: list):
         yield None
         return
     with R.gpu_lease(f"trackp {args.cmd} {args.base}", run_log=lease_log,
-                     lock_path=Path(os.path.expanduser(args.cfg["gpu"]["lock_path"]))) as lease:
+                     lock_path=Path(os.path.expanduser(args.cfg["gpu"]["lock_path"])),
+                     log_path=Path(os.path.expanduser(args.cfg["runs_dir"])) / "gpu_lease_log.jsonl") as lease:
         yield lease
 
 
