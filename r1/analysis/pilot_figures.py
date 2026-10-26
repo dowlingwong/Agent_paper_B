@@ -58,6 +58,18 @@ def main():
     result = json.loads((PILOT / "offline_eval.json").read_text())
     gates = result["instance"]["per_g"]["0.1"]["gate"]
     gate_rows = [(n, v["gain_A3_minus_A2_per20"], *v["ci95"], v["delta_n"]) for n, v in sorted(gates.items())]
+    all_gates = []
+    all_arms = []
+    for mode in ("instance", "lono"):
+        for price, entry in result[mode]["per_g"].items():
+            for node, value in sorted(entry["gate"].items()):
+                all_gates.append((mode, price, node, value["gain_A3_minus_A2_per20"], *value["ci95"], value["delta_n"], value["pass"], value["n_instances"], value["n_eval_rows"]))
+            for arm, node_values in sorted(entry["arms"].items()):
+                for node, value in sorted(node_values.items()):
+                    all_arms.append((mode, price, arm, node, value["mean_per_proposal"], value["per_campaign"], value["exec_rate"]))
+    warning = "ENGINEERING_ONLY; historical pilot; not current C3 gate"
+    write_csv(OUT / "offline_all_gates.csv", ["mode", "g_over_sigma", "node", "gain_A3_minus_A2_per20", "ci_lower", "ci_upper", "delta_n", "historical_pass", "instances", "eval_rows"], all_gates, warning)
+    write_csv(OUT / "offline_all_arms.csv", ["mode", "g_over_sigma", "arm", "node", "mean_per_proposal", "per_campaign", "exec_rate"], all_arms, warning)
     write_csv(OUT / "offline_pilot.csv", ["node", "gain_A3_minus_A2_per20", "ci_lower", "ci_upper", "delta_n"], gate_rows, "ENGINEERING_ONLY; historical pilot; not current C3 gate")
     fig, ax = plt.subplots(figsize=(7, 4))
     ax.barh([x[0] for x in noise_rows], [x[3] for x in noise_rows])

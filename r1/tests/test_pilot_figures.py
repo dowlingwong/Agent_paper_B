@@ -61,3 +61,21 @@ def test_committed_noise_and_pilot_tables_match_sources_and_labels():
     manifest = json.loads((OUT / "provenance.json").read_text())
     for name, digest in manifest["inputs"].items():
         assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest
+
+
+def test_all_historical_gate_rows_match_each_mode_and_price():
+    import csv
+    from r1.analysis.pilot_figures import OUT
+
+    result = json.loads((PILOT / "offline_eval.json").read_text())
+    with (OUT / "offline_all_gates.csv").open() as handle:
+        rows = list(csv.DictReader(handle))
+    expected = sum(len(entry["gate"]) for mode in ("instance", "lono") for entry in result[mode]["per_g"].values())
+    assert len(rows) == expected
+    assert len({(r["mode"], r["g_over_sigma"], r["node"]) for r in rows}) == expected
+    for row in rows:
+        value = result[row["mode"]]["per_g"][row["g_over_sigma"]]["gate"][row["node"]]
+        assert row["provisional_status"] == "ENGINEERING_ONLY; historical pilot; not current C3 gate"
+        assert float(row["gain_A3_minus_A2_per20"]) == value["gain_A3_minus_A2_per20"]
+        assert [float(row["ci_lower"]), float(row["ci_upper"])] == value["ci95"]
+        assert (row["historical_pass"] == "True") is value["pass"]
