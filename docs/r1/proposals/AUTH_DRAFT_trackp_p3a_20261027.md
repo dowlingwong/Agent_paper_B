@@ -13,7 +13,8 @@ Evidence runs of **P.3a** as defined in `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.
 
 ## Conditions
 
-- **Host:** TASL-7 only (R1-TASL7-TRACKP), after its reboot, under the GPU lease (`flock ~/r1_locks/gpu0.lock`). No portal, no Ada, no API calls.
+- **Host:** TASL-7 only (R1-TASL7-TRACKP). No reboot is required (the author has no root); every job records `uptime`, `/proc/driver/nvidia/version` and the `nvidia-smi` driver version in its manifest; a driver/library version mismatch, an `nvidia-smi` failure, or an unplanned reboot is a STOP (completed units are kept; an interrupted unit is re-run whole). Use the GPU lease (`flock ~/r1_locks/gpu0.lock`). No portal, no Ada, no API calls.
+- **Host check (27 Oct 2026):** loaded NVIDIA module, `nvidia-utils-580` and `libnvidia-compute-580` are 580.178.04; `nvidia-smi` reports 580.178.04 and works. `Automatic-Reboot` has no active setting in the checked apt configuration or `apt-config dump` (the `false` example is commented); `20auto-upgrades` enables periodic package-list updates and unattended upgrades. Pending Linux images do not alone block P.3a under the author's correction.
 - **Pins:** the run venv whose freeze equals the recorded portal freeze (torch 2.6.0+cu124); model revisions and file hashes as in the committed registry; harness `897d83c`; code at the head of `trackp-20261026` at launch, recorded in every manifest with host and GPU UUID. A pin mismatch is a STOP.
 - **Order:** first one model (`kev-0.8b`) end to end as a DRYRUN under the final code, then all candidates as EVIDENCE. The protocol, thresholds and rule file are not changed after the first evidence result.
 - **Budget:** at most **60 GPU-hours** in total for P.3a. Reaching 45 GPU-hours with candidates outstanding is a STOP with a report.
