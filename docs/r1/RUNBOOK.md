@@ -77,6 +77,8 @@ A.2 (T4 proof check) runs alongside, on the Mac; it gates the manuscript, not th
 
 Added 25 Oct: Track X (proposer exam, zhixu portal) starts with X.1–X.2 once A.10/A.11 are done and must finish before B.5 uses the same card; Track H (DAC interface, Mac) and P.0 (post-training spikes, zhixu portal) run during Phase B and must be done before C.3. Added 26 Oct: Track P runs by `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`; P.0 spikes and P.3a use the 4090 in Track X's gaps (R1-PORTAL-SCHEDULE).
 
+Added 27 Oct (R1-LAYOUT-FLATTEN): after the labels freeze (3 Nov), with every agent at a STOP and no evidence job running, the coordinator removes the `r1` directory layer in one reviewed batch (merge branches, `git mv`-only commit, path-reference commit, old→new path map, `r1` package shim). Until then every path in this runbook and in the agent prompts stays as written.
+
 ### Phase A — Close out preparation (target ~1 Nov 2026)
 
 | # | Step | Host | Done when |
