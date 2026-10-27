@@ -59,7 +59,6 @@ def test_constant_bin_policies_reproduce_offline_eval(rows, b, gu):
             assert got[node]["exec_rate"] == pytest.approx(ref[node]["exec_rate"], rel=1e-12)
 
 
-@pytest.mark.skip(reason="19 Oct pilot is a test fixture only and must never be training data (R1-H8-SPLIT-MAPPING)")
 @needs_table
 def test_a_learned_fixed_policy_reproduces_offline_eval(rows):
     pytest.importorskip("lightgbm")

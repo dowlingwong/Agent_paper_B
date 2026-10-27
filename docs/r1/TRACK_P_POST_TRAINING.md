@@ -414,7 +414,7 @@ Fixed budget, fresh instances, ≥ 3 harder benchmarks where available. Compare:
 - Confirm ECE gate value after the first SFT run.
 - StartLux tier decision after P.0 (owner: Dow).
 - Decided 26 Oct: Jev rung via the official API (R1-JEV-RUNG); R-B demonstrations by DeepSeek-V4.1-Flash-1017 (R1-RB-TEACHER); pooled σ̂ (R1-SOFT-SIGMA); Qwen control adopted (R1-C3-CONTROL); card schedule (R1-PORTAL-SCHEDULE).
-- Track P trains directly on the label table. Track H retains its accepted bin-action `OfflineBanditEnv`; the execute/skip H.8 amendment and unaccepted sidecar prompt follow-up are deferred until A7/C4 needs an environment (R1-H8-DEFERRED). The 19 Oct pilot is a read-only test fixture only, never training data or evaluation evidence (R1-H8-SPLIT-MAPPING).
+- Track P trains directly on the label table. Track H retains its accepted bin-action `OfflineBanditEnv`; the execute/skip H.8 amendment and unaccepted sidecar prompt follow-up are deferred until A7/C4 needs an environment (R1-H8-DEFERRED). The 19 Oct pilot is a read-only test fixture only, never Track P training data or evaluation evidence (R1-H8-SPLIT-MAPPING).
 
 ---
 

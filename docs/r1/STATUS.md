@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — pilot regression clarification and failure (author; AI-assisted)
+
+- The author clarified that the 19 Oct pilot restriction concerns Track P training data and evaluation evidence; the named existing engineering regression tests may use it as a read-only fixture. Unconditional skip markers were removed. CPU test run: 30 passed and the soft-label v1 byte-identity test failed; see the [report](reports/LOCAL_PILOT_REGRESSION_CLARIFICATION_20261027.md). The [independent review](reviews/LOCAL_PILOT_REGRESSION_CLARIFICATION_REVIEW_20261027.md) rejects overall acceptance while this regression fails. No threshold or reference was changed.
+
 ## 27 October 2026 — H.8 deferred; Track G scope clarified (author; AI-assisted)
 
 - PLAN now records H.8 deferral until A7/C4 needs an environment, direct Track P label-table training, and the 19 Oct pilot as read-only test fixture only, never training or evaluation evidence. The rejected amendment is preserved at `origin/local-h8-20261027` (`f666a38`); the accepted bin-action environment and controller are restored. The unaccepted sidecar prompt follow-up is also deferred.
