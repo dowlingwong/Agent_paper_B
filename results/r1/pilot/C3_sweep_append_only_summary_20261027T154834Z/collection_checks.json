@@ -1,0 +1,29 @@
+{
+  "label": "PILOT",
+  "memory_mode": "append_only_summary",
+  "expected_roots": 144,
+  "roots": 144,
+  "root_failures": 0,
+  "llm_calls": 2934,
+  "llm_calls_failed": 0,
+  "llm_calls_retried": 0,
+  "retried_calls": [],
+  "parse_failures": 0,
+  "proposal_examples": [
+    "reduce-lr-1e-4",
+    "increase-hidden-units-64",
+    "increase-hidden-units-128",
+    "increase-batch-size-128",
+    "increase-batch-size-128"
+  ],
+  "manager_kind": "langgraph",
+  "transport_max_attempts": 3,
+  "verify_split_policy": "vary",
+  "action_versions": {
+    "keep_rule": "default/v1",
+    "verify_response": "mean_delta/v1",
+    "verify_failed": "original_stands/v1",
+    "verify_split_policy": "vary"
+  },
+  "written_utc": "20261027T224114Z"
+}

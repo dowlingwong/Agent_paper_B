@@ -1,0 +1,1 @@
+{"instance": "openml_ionosphere__s123", "node": "openml_ionosphere", "seed": 123, "snapshots": [], "start_files": {"config.yaml": "model_type: logistic_regression\nC: 0.15\nmax_depth: 5\nn_estimators: 100\nlearning_rate: 0.05\nclass_weight: balanced\nscaler: standard\nimputer: most_frequent\nmax_iter: 1000\n"}}
