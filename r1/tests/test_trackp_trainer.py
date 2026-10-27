@@ -160,7 +160,8 @@ def test_evaluation_seed_columns_are_refused_before_p4(tmp_path, monkeypatch):
     assert R.guard_rows(R.strip_eval_columns(table), purpose="sft")
 
 
-def test_gpu_lease_logs_and_refuses_when_held_or_track_x_runs(tmp_path):
+def test_gpu_lease_logs_and_refuses_when_held_or_track_x_runs(tmp_path, monkeypatch):
+    monkeypatch.setattr(R.socket, "gethostname", lambda: "TASL-2")
     lock, log, run_log = tmp_path / "gpu0.lock", tmp_path / "lease.jsonl", []
     kw = dict(lock_path=lock, log_path=log, status_text="## 26 Oct — Track P Phase 0", check_processes=False)
     with R.gpu_lease("job1", run_log=run_log, **kw):
@@ -168,7 +169,7 @@ def test_gpu_lease_logs_and_refuses_when_held_or_track_x_runs(tmp_path):
             with R.gpu_lease("job2", **kw):
                 pass
     assert [e["event"] for e in run_log] == ["start", "end"]
-    assert len(log.read_text().splitlines()) == 2
+    assert len(log.read_text().splitlines()) == 3
     with pytest.raises(R.TrackPStop, match="Track X"):
         with R.gpu_lease("job3", **{**kw, "status_text": "## 3 Nov 2026 — Track X B1 running on the portal"}):
             pass
@@ -229,3 +230,170 @@ def test_authorization_gate_for_every_non_dryrun_label(cmd, phase, tmp_path, mon
     for label in ("ENGINEERING_ONLY", "EVIDENCE"):
         cli._require_authorization(types.SimpleNamespace(cmd=cmd, tiny=False, evidence=label))
     cli._require_authorization(types.SimpleNamespace(cmd="spike", tiny=False, evidence="ENGINEERING_ONLY"))
+
+
+def test_tasl7_lease_ignores_portal_marker_and_status(tmp_path, monkeypatch):
+    monkeypatch.setattr(R.socket, "gethostname", lambda: "TASL-7")
+    marker = tmp_path / "trackx_evidence.active"
+    marker.write_text("B1")
+    kw = dict(lock_path=tmp_path / "gpu0.lock", log_path=tmp_path / "lease.jsonl",
+              status_text="## Track X B1 running", check_processes=False, marker_path=marker)
+    with R.gpu_lease("tasl7", **kw) as lease:
+        assert lease["job"] == "tasl7"
+
+
+def test_portal_lease_rejects_track_x_marker(tmp_path, monkeypatch):
+    monkeypatch.setattr(R.socket, "gethostname", lambda: "TASL-2")
+    marker = tmp_path / "trackx_evidence.active"
+    marker.write_text("B1")
+    with pytest.raises(R.TrackPStop, match="marker"):
+        with R.gpu_lease("portal", lock_path=tmp_path / "gpu0.lock", log_path=tmp_path / "lease.jsonl",
+                         status_text="## Track P", check_processes=False, marker_path=marker):
+            pass
+
+
+def test_tasl7_lease_records_driver_snapshots_and_stops_on_reboot(tmp_path, monkeypatch):
+    monkeypatch.setattr(R.socket, "gethostname", lambda: "TASL-7")
+    monkeypatch.setattr(R, "foreign_compute_processes", lambda: [])
+    snapshots = iter([{"boot_id": "boot-a", "uptime": "first"}, {"boot_id": "boot-a", "uptime": "last"}])
+    monkeypatch.setattr(R, "tasl7_driver_snapshot", lambda: next(snapshots))
+    events = []
+    with R.gpu_lease("ok", lock_path=tmp_path / "lock", log_path=tmp_path / "log", run_log=events):
+        pass
+    assert events[0]["tasl7_driver"]["uptime"] == "first"
+    assert events[-1]["tasl7_driver"]["uptime"] == "last"
+    snapshots = iter([{"boot_id": "boot-a"}, {"boot_id": "boot-b"}])
+    monkeypatch.setattr(R, "tasl7_driver_snapshot", lambda: next(snapshots))
+    with pytest.raises(R.TrackPStop, match="boot ID changed"):
+        with R.gpu_lease("reboot", lock_path=tmp_path / "lock", log_path=tmp_path / "log"):
+            pass
+
+
+def test_tasl7_driver_snapshot_rejects_mismatch_and_smi_failure(monkeypatch):
+    import subprocess
+    import types
+    old_read = R.Path.read_text
+    def read(path, *args, **kwargs):
+        if str(path) == "/proc/driver/nvidia/version":
+            return "NVRM version: NVIDIA UNIX x86_64 Kernel Module  580.178.04"
+        if str(path) == "/proc/sys/kernel/random/boot_id":
+            return "boot-a"
+        return old_read(path, *args, **kwargs)
+    monkeypatch.setattr(R.Path, "read_text", read)
+    def run(cmd, **kwargs):
+        if cmd[0] == "uptime":
+            return types.SimpleNamespace(stdout="up 1 day")
+        if cmd[0] == "nvidia-smi":
+            return types.SimpleNamespace(stdout="580.178.04\n")
+        return types.SimpleNamespace(stdout="libnvidia-compute-580 580.178.04-1\nnvidia-utils-580 580.178.04-1\n")
+    monkeypatch.setattr(R.subprocess, "run", run)
+    assert R.tasl7_driver_snapshot()["boot_id"] == "boot-a"
+    def mismatch(cmd, **kwargs):
+        if cmd[0] == "nvidia-smi":
+            return types.SimpleNamespace(stdout="580.178.05\n")
+        return run(cmd, **kwargs)
+    monkeypatch.setattr(R.subprocess, "run", mismatch)
+    with pytest.raises(R.TrackPStop, match="mismatch"):
+        R.tasl7_driver_snapshot()
+    def failure(cmd, **kwargs):
+        if cmd[0] == "nvidia-smi":
+            raise subprocess.CalledProcessError(1, cmd)
+        return run(cmd, **kwargs)
+    monkeypatch.setattr(R.subprocess, "run", failure)
+    with pytest.raises(R.TrackPStop, match="snapshot failed"):
+        R.tasl7_driver_snapshot()
+
+
+def test_training_stops_before_logging_nonfinite_evaluation(tmp_path):
+    t = make(tmp_path, TrainConfig(seed=3, epochs=1, batch_size=4))
+    with pytest.raises(RuntimeError, match="non-finite training metric"):
+        t._write({"kind": "eval", "nested": [1.0, float("nan")]})
+    assert not (tmp_path / "metrics.jsonl").exists()
+
+
+def test_training_stops_before_optimizer_on_nonfinite_gradient(tmp_path):
+    t = make(tmp_path, TrainConfig(seed=3, epochs=1, batch_size=4))
+    next(t.model.parameters()).register_hook(lambda grad: torch.full_like(grad, float("nan")))
+    before = params(t.model).clone()
+    with pytest.raises(RuntimeError, match="non-finite"):
+        t.train()
+    assert t.step == 0 and torch.equal(before, params(t.model))
+
+
+def test_lbfgs_refuses_nonfinite_train_and_validation():
+    from r1.c3.train import exam_run as X
+    head = torch.nn.Linear(2, 12)
+    tr = torch.zeros((4, 2))
+    y = torch.full((4, 12), 1 / 12)
+    before = [p.detach().clone() for p in head.parameters()]
+    bad_tr = tr.clone(); bad_tr[0, 0] = float("nan")
+    with pytest.raises(RuntimeError, match="non-finite L-BFGS loss"):
+        X.fit_head_lbfgs(head, bad_tr, y, tr, y, max_outer=1)
+    assert all(torch.equal(a, b) for a, b in zip(before, head.parameters()))
+    bad_va = tr.clone(); bad_va[0, 0] = float("nan")
+    with pytest.raises(RuntimeError, match="non-finite L-BFGS validation"):
+        X.fit_head_lbfgs(head, tr, y, bad_va, y, max_outer=1)
+    assert all(torch.equal(a, b) for a, b in zip(before, head.parameters()))
+
+
+def test_gpu_lease_rechecks_foreign_process_after_lock(tmp_path, monkeypatch):
+    monkeypatch.setattr(R.socket, "gethostname", lambda: "TASL-7")
+    checks=iter([[], ["999, foreign, 100 MiB"]])
+    monkeypatch.setattr(R, "foreign_compute_processes", lambda: next(checks))
+    with pytest.raises(R.TrackPStop, match="after lock acquisition"):
+        with R.gpu_lease("race", lock_path=tmp_path/"gpu.lock", log_path=tmp_path/"lease"):
+            pass
+
+
+def test_a3_does_not_swallow_gpu_error(monkeypatch):
+    from r1.c3.train import exam_run as X
+    def fail(*args, **kwargs):
+        raise RuntimeError("CUDA out of memory")
+    monkeypatch.setattr(X, "predict", fail)
+    with pytest.raises(RuntimeError, match="out of memory"):
+        X._a3_rps(None, [], [], {}, "frac_0.5")
+
+
+def test_predict_stops_on_nonfinite_logits():
+    from r1.c3.train import exam_run as X
+    class Bad:
+        def eval(self): pass
+        def __call__(self, rows):
+            return {"belief_logits": torch.full((len(rows),12),float("nan"))}
+    with pytest.raises(RuntimeError, match="non-finite prediction logits"):
+        X.predict(Bad(), [object()])
+
+
+def test_lease_clock_includes_slow_driver_checks_and_log_writes(tmp_path, monkeypatch):
+    import time
+    monkeypatch.setattr(R.socket, "gethostname", lambda: "TASL-7")
+    monkeypatch.setattr(R, "foreign_compute_processes", lambda: [])
+    def snapshot():
+        time.sleep(.12)
+        return {"boot_id":"boot"}
+    monkeypatch.setattr(R, "tasl7_driver_snapshot", snapshot)
+    original=R._log_lease
+    def slow(event,path):
+        time.sleep(.08)
+        original(event,path)
+    monkeypatch.setattr(R, "_log_lease", slow)
+    events=[]
+    with R.gpu_lease("slow", lock_path=tmp_path/"gpu.lock", log_path=tmp_path/"lease", run_log=events):
+        pass
+    assert events[1]["monotonic_s"]-events[0]["monotonic_s"] >= .39
+
+
+def test_driver_failure_records_lease_release(tmp_path, monkeypatch):
+    monkeypatch.setattr(R.socket, "gethostname", lambda: "TASL-7")
+    monkeypatch.setattr(R, "foreign_compute_processes", lambda: [])
+    def fail():
+        raise R.TrackPStop("driver mismatch")
+    monkeypatch.setattr(R, "tasl7_driver_snapshot", fail)
+    log=tmp_path/"lease"
+    with pytest.raises(R.TrackPStop, match="driver mismatch"):
+        with R.gpu_lease("failed",lock_path=tmp_path/"gpu.lock",log_path=log):
+            pass
+    events=[json.loads(line) for line in log.read_text().splitlines()]
+    assert [e["event"] for e in events]==["acquired","end"]
+    assert events[-1]["status"]=="failed_before_normal_release"
+    assert events[-1]["monotonic_s"]>=events[0]["monotonic_s"]

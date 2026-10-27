@@ -25,6 +25,7 @@ import os
 import re
 import socket
 import subprocess
+import time
 from pathlib import Path
 from typing import Iterable, Iterator
 
@@ -147,6 +148,27 @@ def foreign_compute_processes() -> list[str]:
     return [ln for ln in res.stdout.splitlines() if ln.strip() and int(ln.split(",")[0]) != mine]
 
 
+def tasl7_driver_snapshot() -> dict:
+    """Fail closed and record per-job host and driver state required by P.3a."""
+    try:
+        proc = Path("/proc/driver/nvidia/version").read_text().strip()
+        boot_id = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+        uptime = subprocess.run(["uptime"], capture_output=True, text=True, check=True, timeout=30).stdout.strip()
+        smi = subprocess.run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
+                             capture_output=True, text=True, check=True, timeout=30).stdout.strip().splitlines()
+        pkg = subprocess.run(["dpkg-query", "-W", "-f=${Package} ${Version}\n", "nvidia-utils-580", "libnvidia-compute-580"],
+                             capture_output=True, text=True, check=True, timeout=30).stdout.strip().splitlines()
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise TrackPStop(f"TASL-7 driver snapshot failed: {exc}") from exc
+    match = re.search(r"Kernel Module\s+(\d+\.\d+\.\d+)", proc)
+    if not match or not smi or any(v.strip() != match.group(1) for v in smi):
+        raise TrackPStop("TASL-7 NVIDIA kernel/user driver mismatch or empty nvidia-smi result")
+    if {line.split()[0] for line in pkg if line.split()} != {"nvidia-utils-580", "libnvidia-compute-580"} or any(len(line.split()) != 2 or line.split()[1].split("-")[0] != match.group(1) for line in pkg):
+        raise TrackPStop("TASL-7 NVIDIA installed package/kernel driver mismatch")
+    return {"uptime": uptime, "nvidia_kernel_module": proc, "nvidia_smi_driver": smi,
+            "nvidia_packages": pkg, "boot_id": boot_id}
+
+
 def _log_lease(event: dict, log_path: Path) -> None:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     with open(log_path, "a") as fh:
@@ -158,9 +180,10 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
               status_text: str | None = None, check_processes: bool = True,
               marker_path: Path = TRACKX_MARKER) -> Iterator[dict]:
     """Hold the GPU lease for one job (R1-PORTAL-SCHEDULE). Raises TrackPStop if it may not start."""
-    if marker_path.exists():
+    portal_guard = socket.gethostname().lower().split(".")[0] != "tasl-7"
+    if portal_guard and marker_path.exists():
         raise TrackPStop(f"Track X evidence marker {marker_path} exists (B1/B2 running): do not start")
-    if track_x_running(status_text):
+    if portal_guard and track_x_running(status_text):
         raise TrackPStop("a Track X evidence phase (B1/B2) is running on the card: do not start")
     if check_processes:
         other = foreign_compute_processes()
@@ -168,15 +191,26 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
             raise TrackPStop(f"another compute process holds the GPU: {other}")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     fh = open(lock_path, "a")
+    acquired_monotonic = None
+    end_logged = False
     try:
         try:
             fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            acquired_monotonic = time.monotonic()
+            _log_lease({"event": "acquired", "job": job, "pid": os.getpid(), "utc": utcnow(),
+                        "monotonic_s": acquired_monotonic, "trackx_marker": "pending checks"}, log_path)
         except BlockingIOError:
             raise TrackPStop(f"GPU lock {lock_path} is held by another job") from None
-        if marker_path.exists():   # re-read under the lock: a B1/B2 start between the check and the lock wins
+        if portal_guard and marker_path.exists():   # re-read under the lock on the portal
             raise TrackPStop(f"Track X evidence marker {marker_path} exists (B1/B2 running): do not start")
-        start = {"event": "start", "job": job, "pid": os.getpid(), "utc": utcnow(),
-                 "trackx_marker": f"absent: {marker_path}"}
+        if check_processes:
+            other = foreign_compute_processes()
+            if other:
+                raise TrackPStop(f"another compute process holds the GPU after lock acquisition: {other}")
+        initial_driver = tasl7_driver_snapshot() if not portal_guard and check_processes else None
+        start = {"event": "start", "job": job, "pid": os.getpid(), "utc": utcnow(), "monotonic_s": acquired_monotonic,
+                 "trackx_marker": f"absent: {marker_path}" if portal_guard else "not applicable on TASL-7",
+                 "tasl7_driver": initial_driver}
         _log_lease(start, log_path)
         if run_log is not None:
             run_log.append(start)
@@ -184,13 +218,30 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
         try:
             yield lease
         finally:
-            end = {"event": "end", "job": job, "pid": os.getpid(), "utc": utcnow()}
+            final_driver = tasl7_driver_snapshot() if initial_driver is not None else None
+            if initial_driver is not None and final_driver["boot_id"] != initial_driver["boot_id"]:
+                raise TrackPStop("TASL-7 boot ID changed during the job")
+            # Stamp just after actual unlock; includes all time holding the exclusive lease.
+            fcntl.flock(fh, fcntl.LOCK_UN)
+            end = {"event": "end", "job": job, "pid": os.getpid(), "utc": utcnow(), "monotonic_s": time.monotonic(),
+                   "tasl7_driver": final_driver}
             _log_lease(end, log_path)
+            end_logged = True
             if run_log is not None:
                 run_log.append(end)
     finally:
         fcntl.flock(fh, fcntl.LOCK_UN)
-        fh.close()
+        if acquired_monotonic is not None and not end_logged:
+            failure_end = {"event": "end", "job": job, "pid": os.getpid(), "utc": utcnow(),
+                           "monotonic_s": time.monotonic(), "status": "failed_before_normal_release"}
+            try:
+                _log_lease(failure_end, log_path)
+                if run_log is not None:
+                    run_log.append(failure_end)
+            finally:
+                fh.close()
+        else:
+            fh.close()
 
 
 # ---------------------------------------------------------------------- manifest

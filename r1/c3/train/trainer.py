@@ -25,6 +25,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import numbers
 import random
 import shutil
 import time
@@ -234,6 +235,16 @@ class Trainer:
         path.write_text("".join(ln + "\n" for ln in keep))
 
     def _write(self, record: dict) -> None:
+        def check(value):
+            if isinstance(value, numbers.Real) and not math.isfinite(value):
+                raise RuntimeError("STOP: non-finite training metric")
+            if isinstance(value, dict):
+                for item in value.values():
+                    check(item)
+            if isinstance(value, (list, tuple)):
+                for item in value:
+                    check(item)
+        check(record)
         self.run_dir.mkdir(parents=True, exist_ok=True)
         with open(self.run_dir / "metrics.jsonl", "a") as fh:
             fh.write(json.dumps(record, sort_keys=True, default=float) + "\n")
@@ -265,7 +276,7 @@ class Trainer:
                 loss.backward()
                 total_loss += float(loss.detach())
             params = [p for g in self.opt.param_groups for p in g["params"]]
-            gnorm = float(torch.nn.utils.clip_grad_norm_(params, self.cfg.max_grad_norm))
+            gnorm = float(torch.nn.utils.clip_grad_norm_(params, self.cfg.max_grad_norm, error_if_nonfinite=True))
             lr_used = self.sched.get_last_lr()[0]       # the lr this step ran at (before the scheduler advances)
             self.opt.step()
             self.sched.step()

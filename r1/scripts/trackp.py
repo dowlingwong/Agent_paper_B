@@ -314,11 +314,13 @@ def main(argv=None) -> int:
             R.check_environment(cfg)          # R1-ENV-PIN: torch and code pins before any GPU job
         res = COMMANDS[args.cmd](args, cfg)
         run_dir = Path(args.run_dir)
+        extra = {"argv": sys.argv[1:] if argv is None else list(argv), "head_form": args.head_form}
+        if not args.tiny and R.socket.gethostname().lower().split(".")[0] == "tasl-7":
+            extra["tasl7_driver"] = R.tasl7_driver_snapshot()
         manifest = R.run_manifest(subcommand=args.cmd, evidence=_evidence(args), cfg=cfg, seed=args.seed,
                                   base=res["base"], model_files=res["model_files"],
                                   data_hash=R.data_manifest_hash(res["data"]), lease_log=res["lease"],
-                                  extra={"argv": sys.argv[1:] if argv is None else list(argv),
-                                         "head_form": args.head_form})
+                                  extra=extra)
         _write_json(run_dir / "report.json", res["report"])
         _write_json(run_dir / "manifest.json", manifest)
         print(json.dumps({"run_dir": str(run_dir), "report": res["report"]}, indent=1, default=str)[:4000])

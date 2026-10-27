@@ -10,6 +10,7 @@ applicable. Evidence runs need the P.3a authorization note; the CLI enforces it.
 from __future__ import annotations
 
 from pathlib import Path
+import math
 
 import numpy as np
 import torch
@@ -42,6 +43,8 @@ def predict(model, prompts, batch_size: int = 16) -> np.ndarray:
     out = []
     for i in range(0, len(prompts), batch_size):
         lg = model(prompts[i:i + batch_size])["belief_logits"]
+        if not torch.isfinite(lg).all():
+            raise RuntimeError("STOP: non-finite prediction logits")
         out.append(torch.softmax(lg.float(), -1).cpu().numpy())
     return np.concatenate(out)
 
@@ -126,7 +129,11 @@ def fit_head_lbfgs(head: torch.nn.Module, tr: torch.Tensor, ytr: torch.Tensor, v
     def closure():
         opt.zero_grad(set_to_none=True)
         loss = L.rps(torch.softmax(work(X), -1), Y).mean()
+        if not torch.isfinite(loss):
+            raise RuntimeError("STOP: non-finite L-BFGS loss")
         loss.backward()
+        if any(p.grad is not None and not torch.isfinite(p.grad).all() for p in work.parameters()):
+            raise RuntimeError("STOP: non-finite L-BFGS gradient")
         return loss
     # Converged when an outer step (up to 100 L-BFGS iterations) improves the loss by less than ``tol`` (relative)
     # twice in a row with the history reset in between: a stalled line search is not taken for convergence.
@@ -135,6 +142,8 @@ def fit_head_lbfgs(head: torch.nn.Module, tr: torch.Tensor, ytr: torch.Tensor, v
         loss = float(opt.step(closure).detach())
         losses.append(loss)
         gnorm = float(torch.sqrt(sum((p.grad ** 2).sum() for p in work.parameters() if p.grad is not None)))
+        if not math.isfinite(loss) or not math.isfinite(gnorm):
+            raise RuntimeError("STOP: non-finite L-BFGS loss or gradient norm")
         stalled = prev is not None and prev - loss <= tol * max(abs(prev), 1e-12)
         if gnorm < 1e-12 or (stalled and fresh):
             converged = True
@@ -148,6 +157,8 @@ def fit_head_lbfgs(head: torch.nn.Module, tr: torch.Tensor, ytr: torch.Tensor, v
         work.eval()
         v = float(L.rps(torch.softmax(work(va.detach().to("cpu", torch.float64)), -1),
                         yva.detach().to("cpu", torch.float64)).mean())
+    if not math.isfinite(v):
+        raise RuntimeError("STOP: non-finite L-BFGS validation loss")
     head.load_state_dict({k: t.to(dtype=p.dtype) for (k, t), p in zip(work.state_dict().items(),
                                                                      head.state_dict().values())})
     head.eval()
@@ -236,9 +247,14 @@ def _a3_rps(model, prompts, targets, errors: dict, key) -> np.ndarray | None:
     try:
         p = predict(model, prompts)
         return L.rps(torch.tensor(p), torch.tensor(np.array(targets), dtype=torch.float32)).numpy()
-    except Exception as exc:  # e.g. Kev's strict state limit: recorded, not hidden
-        errors[str(key)] = f"{type(exc).__name__}: {exc}"[:300]
-        return None
+    except Exception as exc:
+        # Only the declared 2k/8k descriptive Kev overflow is non-fatal.
+        if str(key) in {"descriptive_2000", "descriptive_8000"}:
+            from kev.model import ContextOverflow
+            if isinstance(exc, ContextOverflow):
+                errors[str(key)] = f"{type(exc).__name__}: {exc}"[:300]
+                return None
+        raise
 
 
 def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0, counters: dict | None = None) -> dict:
@@ -310,10 +326,10 @@ def probes(model, run_dir: Path | str, *, n: int = 32, seed: int = 0, counters: 
     if getattr(model, "packing", False):
         with torch.no_grad():
             model.eval()
-            a1 = [E.a1_pass(model(s["alone"])["belief_logits"].float().numpy(),
-                            model(s["packed"])["belief_logits"][:1].float().numpy()) for s in E.a1_probe(n_states=n)]
+            a1 = [E.a1_pass(model(s["alone"])["belief_logits"].float().cpu().numpy(),
+                            model(s["packed"])["belief_logits"][:1].float().cpu().numpy()) for s in E.a1_probe(n_states=n)]
             out["A1"] = {"max_abs": max(r["max_abs"] for r in a1), "pass": all(r["pass"] for r in a1)}
-            a2 = [E.a2_pass([model(pk)["belief_logits"].float().numpy() for pk in s["packed"]], s["orders"])
+            a2 = [E.a2_pass([model(pk)["belief_logits"].float().cpu().numpy() for pk in s["packed"]], s["orders"])
                   for s in E.a2_probe(n_states=n)]
             out["A2"] = {"max_abs": max(r["max_abs"] for r in a2), "pass": all(r["pass"] for r in a2)}
     else:
