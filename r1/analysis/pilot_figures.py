@@ -63,7 +63,7 @@ def write_csv(path, header, rows, label):
         writer.writerows((label, *row) for row in rows)
 
 
-def main():
+def _render():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -132,9 +132,53 @@ def main():
         + "\\newcommand{\\PilotProposalRows}{" + str(total) + "}\n"
         + "\\newcommand{\\PilotDuplicateRows}{" + str(duplicate) + "}\n"
     )
-    manifest = {"label": "PILOT / ENGINEERING_ONLY — not accepted evidence or gate", "renderer": {"python": platform.python_version(), "matplotlib": matplotlib.__version__}, "inputs": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}, "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate."}
+    outputs = ("noise_floor.csv", "proposal_categories.csv", "offline_all_gates.csv", "offline_all_arms.csv",
+               "offline_pilot.csv", "noise_floor.pdf", "proposal_categories.pdf", "offline_pilot.pdf", "pilot_numbers.tex")
+    manifest = {"label": "PILOT / ENGINEERING_ONLY — not accepted evidence or gate",
+                "renderer": {"python": platform.python_version(), "matplotlib": matplotlib.__version__,
+                             "path": str(Path(__file__).resolve().relative_to(ROOT)),
+                             "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
+                "inputs": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
+                "outputs": {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest() for name in outputs},
+                "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate."}
     (OUT / "provenance.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
 
 
+def main():
+    OUT.mkdir(parents=True, exist_ok=True)
+    status = OUT / "render_status.json"
+    status.write_text(json.dumps({"status": "IN_PROGRESS"}) + "\n")
+    try:
+        _render()
+    except BaseException:
+        status.write_text(json.dumps({"status": "FAILED"}) + "\n")
+        raise
+    status.write_text(json.dumps({"status": "SUCCESS"}) + "\n")
+
+
+def verify_outputs(directory=OUT, root=ROOT):
+    """Reject failed, interrupted, stale or altered outputs; does not establish evidence status."""
+    status = json.loads((directory / "render_status.json").read_text())
+    if status.get("status") != "SUCCESS":
+        raise ValueError("pilot render is not successful")
+    manifest = json.loads((directory / "provenance.json").read_text())
+    renderer = manifest["renderer"]
+    if hashlib.sha256((root / renderer["path"]).read_bytes()).hexdigest() != renderer["sha256"]:
+        raise ValueError("renderer differs from recorded hash")
+    for name, digest in manifest["inputs"].items():
+        if hashlib.sha256((root / name).read_bytes()).hexdigest() != digest:
+            raise ValueError(f"input differs: {name}")
+    for name, digest in manifest["outputs"].items():
+        if hashlib.sha256((directory / name).read_bytes()).hexdigest() != digest:
+            raise ValueError(f"output differs: {name}")
+    return True
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--verify", action="store_true", help="check status and hashes of existing pilot outputs")
+    if parser.parse_args().verify:
+        verify_outputs()
+    else:
+        main()

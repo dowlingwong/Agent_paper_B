@@ -118,3 +118,23 @@ def test_rejects_unlabelled_or_non_split_pilot_inputs():
         validate_pilot_inputs({'label': 'UNKNOWN'}, evaluation)
     with pytest.raises(ValueError, match='seed-split'):
         validate_pilot_inputs(noise, {'label': 'ENGINEERING_ONLY', 'seed_split': False})
+
+
+def test_failed_render_marks_prior_outputs_unusable(tmp_path, monkeypatch):
+    from r1.analysis import pilot_figures as figures
+    monkeypatch.setattr(figures, 'OUT', tmp_path)
+    (tmp_path / 'old.csv').write_text('old content')
+    def fail():
+        raise ValueError('fixture failure')
+    monkeypatch.setattr(figures, '_render', fail)
+    with pytest.raises(ValueError, match='fixture failure'):
+        figures.main()
+    assert (tmp_path / 'old.csv').read_text() == 'old content'
+    assert json.loads((tmp_path / 'render_status.json').read_text())['status'] == 'FAILED'
+    with pytest.raises(ValueError, match='not successful'):
+        figures.verify_outputs(tmp_path)
+
+
+def test_committed_render_status_and_hashes():
+    from r1.analysis.pilot_figures import verify_outputs
+    assert verify_outputs()

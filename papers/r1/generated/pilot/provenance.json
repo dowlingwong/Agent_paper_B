@@ -6,8 +6,21 @@
   },
   "label": "PILOT / ENGINEERING_ONLY \u2014 not accepted evidence or gate",
   "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate.",
+  "outputs": {
+    "noise_floor.csv": "9275d5fdb9f0dd2983f46be78df42c430798ecf8210b8c5257a0d08c805dc438",
+    "noise_floor.pdf": "de904759fd99180fbdd35828d84673e5049f9359dbac5604ef6633e9140b1ed6",
+    "offline_all_arms.csv": "d17ef99053a368bd5d5e718248159a34e0855668bff183c792182bd5b53abeb8",
+    "offline_all_gates.csv": "f344e9d2217a8d20448d59a23a3fdc73f64860338b4f2a05aa014972092567f9",
+    "offline_pilot.csv": "cf902d430eef1e97ee44d9491beec8f9163094a2fbf04b3cd66a507a66ae4739",
+    "offline_pilot.pdf": "d5e01ffe04f8b76d16655c0eeba1f9fad7a37989bd1c4575dc8c56353913a13d",
+    "pilot_numbers.tex": "350e8b87e0a460b0606c4f3d55f322b00041d52e2b4a98919c5f8782c8c770dc",
+    "proposal_categories.csv": "be3d41a3c20565613e8af841c179e8eed5eaf3e63c24a1d9ccab91665224886c",
+    "proposal_categories.pdf": "df3900ec1d9d61c4464cb014dab90fde551df0901aeeb4e28bd305b91a3c0281"
+  },
   "renderer": {
     "matplotlib": "3.11.2",
-    "python": "3.13.4"
+    "path": "r1/analysis/pilot_figures.py",
+    "python": "3.13.4",
+    "sha256": "930de36bc27aa290f610828f471fb7759ff8d054b43253e7a5c8146ccb4f66a6"
   }
 }
