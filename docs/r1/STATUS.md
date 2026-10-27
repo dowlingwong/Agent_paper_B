@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — Deepthought preparation test failures reviewed (AI-assisted)
+
+Author-approved fresh preparation at paper `3c4651d` and harness `6adf385` stopped with `prepare.json` false: 553 paper tests passed, 38 skipped and 2 failed. The stopped batch `r1_c3_sweep_ENGINEERING_ONLY_20261027_18wc1y` and logs remain unchanged. Independent review accepted two test-only fixes; the author instructed “允许提交并重新准备”. Neither changes the experiment configuration, golden output or prepare acceptance gate. See [review](reviews/DT_SWEEP_PREP_TEST_FIXES_20261027.md). A new preparation is required; no sweep has started.
+
 ## 27 October 2026 — Deepthought preparation STOP and author-approved dependency fix (AI-assisted)
 
 Two pre-launch STOPs are preserved: the first preparation session name collided by tmux prefix with the launcher's duplicate-session check; on explicit author permission the second preparation created batch `r1_c3_sweep_ENGINEERING_ONLY_20261027_QCMMIn`, but its `prepare.json` is `ok: false` because the harness-only venv has no torch and `test_trackp_e0_v2.py` imports it at collection. No evidence was launched and that batch is not modified. The author approved the independently reviewed optional dependency guard and a fresh preparation attempt. On hosts without torch the entire Track P test module is skipped, not passed; with dependencies present 24 tests are collected and two CPU-only checks passed on Mac. The three pilot regression tests identified in the author clarification are unchanged. Details: [review](reviews/DT_SWEEP_PREP_TORCH_GUARD_20261027.md).

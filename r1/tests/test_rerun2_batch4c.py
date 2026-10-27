@@ -177,7 +177,7 @@ def test_dryrun_start_refuses_external_batch_before_log_write(tmp_path):
 
 def test_dryrun_refuses_all_effective_push_urls_without_network(tmp_path, monkeypatch, desktop_host):
     for key in tuple(os.environ):
-        if key.startswith('R1_RERUN2_') or key in ('R1_BATCH_DIRECTORY', 'R1_PAPER_ROOT', 'AR_HARNESS_ROOT'):
+        if key.startswith(('R1_RERUN2_', 'R1_C3_')) or key in ('R1_BATCH_DIRECTORY', 'R1_PAPER_ROOT', 'AR_HARNESS_ROOT'):
             monkeypatch.delenv(key, raising=False)
     (tmp_path / '.dryrun').write_text('DRYRUN\n')
     monkeypatch.setenv('R1_DRYRUN', '1')

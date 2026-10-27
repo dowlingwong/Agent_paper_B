@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -65,6 +66,13 @@ def _campaign(node: str, seed: int, repetition: int, budget: int = 10) -> list[s
         root = Path(tmp) / "node"
         shutil.copytree(HARNESS / "nodes" / node, root,
                         ignore=shutil.ignore_patterns("__pycache__", "data_cache"))
+        # Replay the committed golden's historical start, not today's harness config.
+        revision = json.loads(GOLDEN.read_text())["harness_commit"]
+        old_config = subprocess.run(
+            ["git", "-C", str(HARNESS), "show", f"{revision}:nodes/{node}/config.yaml"],
+            check=True, capture_output=True,
+        ).stdout
+        (root / "config.yaml").write_bytes(old_config)
         worker = _AlwaysKeepWorker(root)
         manager = ScriptedRandomManager(node, seed=seed, repetition=repetition)
         run_real_campaign(
@@ -78,7 +86,7 @@ def _campaign(node: str, seed: int, repetition: int, budget: int = 10) -> list[s
 
 def test_live_campaign_sequences_match_the_pre_change_golden():
     golden = json.loads(GOLDEN.read_text())
-    assert str(golden["harness_commit"]).startswith("9c4902d")
+    assert golden["harness_commit"] == "9c4902d0d8776f18a081e1ff2478d651fc7096c1"
     mismatches = []
     for scenario, expected in golden["scenarios"].items():
         node, rest = scenario.split("__s")
