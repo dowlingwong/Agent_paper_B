@@ -10,7 +10,8 @@ import json
 import os
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")  # not in the harness lock; present on the Track P hosts
 
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 transformers = pytest.importorskip("transformers")
@@ -166,7 +167,7 @@ def test_head_forms_can_learn_from_free_logits(form):
     n = 64
     y = torch.full((n, N_BINS), 0.01)
     y[torch.arange(n), 1 + torch.arange(n) % 11] += 1 - 0.01 * N_BINS
-    raw = torch.zeros(n, N_BINS if form == "softmax12" else M.N_CUM).normal_(0, 2).requires_grad_(True)
+    raw = torch.zeros(n, M.N_CUM if form == "cumulative11" else N_BINS).normal_(0, 2).requires_grad_(True)
     opt = torch.optim.Adam([raw], lr=0.05)
     lin = torch.nn.Identity()
     for _ in range(400):
@@ -566,8 +567,9 @@ def test_new_head_parameters_are_only_the_untrained_heads(tiny_dirs, qwen_tok):
     assert new == {id(p) for name in ("action", "cumulative") for p in w.heads[name].parameters()}
     assert not new & {id(p) for p in w.heads["pointer"].parameters()}      # Kev's released head: base lr
     q = M.build_model("qwen_control", _causal_lm(), qwen_tok)
-    names = {n for n, p in q.named_parameters() if id(p) in {id(x) for x in M.new_head_parameters(q)}}
-    assert names and all("trainable_tokens" in n for n in names)            # its new token rows
+    assert M.new_head_parameters(q) == []        # R1-TOKEN-INIT: its new token rows have their own lr group
+    names = {n for n, p in q.named_parameters() if id(p) in {id(x) for x in M.token_row_parameters(q)}}
+    assert names and all("trainable_tokens" in n for n in names)
 
 
 def test_new_heads_read_a_layernormed_state(tiny_dirs, qwen_tok):

@@ -9,3 +9,5 @@ DYLD_LIBRARY_PATH=/private/tmp/paper-b-openmp/libomp/23.1.4/lib CUDA_VISIBLE_DEV
 ```
 
 The H.1/H.8 tests passed. `r1/tests/test_trackp_soft_label_v2.py::test_existing_pilot_table_rebuilt_under_v1_is_byte_identical` failed on its first seed-split comparison: expected `5960856db849b59a839d225c8f39af21b253eebff21c6c71b1fecb0da178ccd7`, actual `57d5f45a2f8965a9617c6774bd7b95ee7578026ce8aa51c12405446464cacdbf`. The later comparison and evaluation assertion in that test were not reached. No reference or acceptance criterion was altered; environment/version versus code/data causes remain unestablished. A previously documented restricted baseline also recorded byte-identity failures (`LOCAL_BASELINE_CLARIFIED_20261027.md`); this observation alone does not establish that the causes coincide.
+
+During the merge of `origin/main` at `0a3f5c799340b9b8bfc16c67fa829bde03fedff9` into `960a53c`, the same command was repeated against the merged working tree: **30 passed, 1 failed in 8.02 s**, with the same first expected and actual hashes. This does not establish the cause of the mismatch.

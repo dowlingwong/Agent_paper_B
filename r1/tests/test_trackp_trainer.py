@@ -5,7 +5,8 @@ import hashlib
 import json
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")  # not in the harness lock; present on the Track P hosts
 
 from r1.c3.train import run as R
 from r1.c3.train.trainer import Trainer, TrainConfig, epoch_order, sha256_file, seed_everything
@@ -186,9 +187,21 @@ def test_manifest_records_commits_and_hashes():
                        base={"repo": "x", "revision": "y"}, model_files={"heads.pt": "0" * 64},
                        data_hash=R.data_manifest_hash(rows(3)), lease_log=[])
     assert len(m["git"]["paper"]["commit"]) == 40 and m["evidence_label"] == "ENGINEERING_ONLY"
+    assert m["host"]["hostname"] and "gpus" in m["host"]
     with pytest.raises(ValueError):
         R.run_manifest(subcommand="spike", evidence="PILOT", cfg={}, seed=0, base={}, model_files={}, data_hash="",
                        lease_log=[])
+
+
+def test_host_record_names_the_device_in_use():
+    import torch
+    h = R.host_record()
+    if not torch.cuda.is_available():
+        assert h["device"] is None
+        return
+    assert h["device"]["name"] == torch.cuda.get_device_name(torch.cuda.current_device())
+    if h["gpus"]:   # the device's UUID is one of the cards nvidia-smi lists
+        assert h["device"]["uuid"] in {g["uuid"] for g in h["gpus"]}
 
 
 def _trackp_cli():

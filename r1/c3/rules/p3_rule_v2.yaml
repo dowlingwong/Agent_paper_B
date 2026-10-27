@@ -1,0 +1,85 @@
+# P.3 decision-model exam: pre-registered selection rule v2 (spec docs/r1/TRACK_P_POST_TRAINING.md §5.5-§5.7;
+# PLAN §10 R1-EXAM-RULE-V2, R1-E0-THRESHOLDS, R1-E0-BUDGET, R1-STARTLUX-TRAINABLE, author 26 Oct 2026 evening).
+# Frozen: r1/c3/rules/p3_rule_v2.yaml.sha256 holds the sha256 of this file; r1/c3/train/exam_analyze.py accepts
+# only this rule version and refuses any other content. Committed before any P.3b data exists. Replaces v1.
+# ENGINEERING_ONLY; AI-assisted (Claude).
+version: p3_rule/v2
+spec: "TRACK_P_POST_TRAINING.md §5.4-§5.7 (adopted 2026-10-26, R1-C3-POST; corrected 2026-10-26 evening)"
+
+# Step 1a: E0 v2 (protocol trackp_e0/v2), held-out test cells, soft-label final run (R1-E0-BUDGET).
+# A floor, not a ranking (R1-E0-THRESHOLDS): width slope vs the label's own std >= 0.6 AND its bootstrap 95 % lower
+# bound > 0 (2.5th percentile of 2,000 resamples of the test prompts); mean slope >= 0.8.
+e0_protocol: trackp_e0/v2
+e0_pass:
+  width_slope_vs_label_min: 0.6
+  width_slope_vs_label_lb95_gt: 0.0
+  mean_slope_min: 0.8
+e0_bootstrap:            # the lower bound above: 2.5th percentile (two-sided 95 % percentile interval)
+  resamples: 2000
+  alpha: 0.05
+  seed: 20261026
+  unit: test_prompt
+  interval: two_sided_percentile
+
+# Step 1b: E4 hard limits (spec §5.7.1): OOM at 1,024 tokens, batch 8, gradient checkpointing; non-deterministic reload.
+e4_hard_limits:
+  seq_len: 1024
+  batch: 8
+  gradient_checkpointing: true
+  disqualify_on: [oom, reload_nondeterministic]
+
+# Step 1c: E6 failures are recorded; an A1 or A2 failure disables packing for that model, never disqualifies.
+# A4 v2 criterion (R1-E0-THRESHOLDS): predicted std monotone vs the label's std on >= 95 % of prompts.
+# A5 is read on the readout used for selection and is descriptive only (R1-CONTROL-READOUT).
+e6:
+  probes: [A1, A2, A3, A4, A5]
+  a4_min_frac_monotone_vs_label: 0.95
+  descriptive_only: [A5]
+  disable_packing_on: [A1, A2]
+  disqualify: false
+
+# Steps 2-3: rank by E3 mean val RPS skill; paired bootstrap over instances against the top model.
+# RPS skill of a seed = 1 - mean_items(RPS_model) / mean_items(RPS_base_rate); E3 skill = mean over seeds.
+# Bootstrap: resample instances (clusters of exam-val items) with replacement, the same draw for both models;
+# difference = skill(top) - skill(other); tied iff the two-sided (1 - alpha) percentile interval includes 0.
+bootstrap:
+  resamples: 2000
+  alpha: 0.05
+  seed: 20261026
+  unit: instance
+
+# Steps 4-5 (R1-EXAM-RULE-V2): finalist 1 = the E3 point-estimate top. The optional second finalist is picked
+# among the tied models of a different architecture class than finalist 1, by sequential filtering in this order:
+# E2 probe skill (models within e2_tie_tolerance of the best E2 skill are tied on E2; a missing E2 counts as worst),
+# then smallest |width ratio - 1|, then base before instruct, then lowest E4 cost (s per step at 1,024 tokens,
+# batch 8); a tie left after all four goes to the model name in sort order (recorded).
+finalists:
+  max: 2
+  first: e3_point_top
+  second_requires_different_class: true
+  second_tie_breaks: [e2_probe_skill_desc, width_ratio_distance_asc, base_before_instruct, e4_cost_asc]
+  e2_tie_tolerance: 0.01
+
+# Architecture classes of the candidate pool (spec §5.1). Keyed by family.
+architecture_classes:
+  kev: decision_pretrained_hybrid_pointer
+  startlux: bidirectional_prompt_decoder
+  laya: encoder_proper_scoring_head
+  extra: other_le_4b
+  qwen_control: plain_causal_control
+  floor: non_llm_floor
+roles:
+  control_families: [qwen_control]
+  floor_families: [floor]
+# StartLux is a trainable candidate (R1-STARTLUX-TRAINABLE): no family is pending the author.
+pending_author_families: []
+
+# Step 6: E7 (softmax-12 vs cumulative-11) on the finalists; higher E3 val RPS skill wins, ties -> softmax_12.
+e7:
+  forms: [softmax_12, cumulative_11]
+  default: softmax_12
+
+# Step 7: if no LLM (candidates and control, after step 1) beats the best non-LLM floor significantly on E3
+# (lower bound of the paired-bootstrap interval of skill(LLM) - skill(floor) > 0), stop and escalate.
+floor_check:
+  require_significant: true

@@ -1,8 +1,22 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — coordinator main merged into local branch (AI-assisted)
+
+- Merged `origin/main` at `0a3f5c7` (includes coordinator commit `c5ea037`) after pushing the pilot clarification at `960a53c`. The [independent review](reviews/LOCAL_MAIN_MERGE_REVIEW_20261027.md) accepts the conflict resolutions, which retain incoming Track P and D28 decisions alongside the newer pilot clarification. The post-merge CPU regression rerun again reports 30 passed and one v1 byte-identity failure; see the [test report](reports/LOCAL_PILOT_REGRESSION_CLARIFICATION_20261027.md).
+
 ## 27 October 2026 — pilot regression clarification and failure (author; AI-assisted)
 
 - The author clarified that the 19 Oct pilot restriction concerns Track P training data and evaluation evidence; the named existing engineering regression tests may use it as a read-only fixture. Unconditional skip markers were removed. CPU test run: 30 passed and the soft-label v1 byte-identity test failed; see the [report](reports/LOCAL_PILOT_REGRESSION_CLARIFICATION_20261027.md). The [independent review](reviews/LOCAL_PILOT_REGRESSION_CLARIFICATION_REVIEW_20261027.md) rejects overall acceptance while this regression fails. No threshold or reference was changed.
+
+## 27 October 2026 — Track P and deepthought branches merged; sweep-1 node repair decided (AI-assisted)
+
+- Coordinating session merged `trackp-20261026` (`a3cc81f`: author's 26 Oct decisions, E0 v2 and two-stage driver DRYRUNs, rule v2 `p3_rule_v2.yaml`, TASL-7 migration with host equivalence passed; all independently reviewed and accepted) and `dt-sweep1-20261026` (`cdeac81`: Phase 2 recheck, A.6 config, A.8 host smoke with the real server, A.7 D28 liveness 4 of 8 with read-only diagnosis; `serve.py` validates pins before importing torch; Track P test modules skip without torch). Conflicts in PLAN, STATUS and the Track P spec resolved by keeping both sides.
+- Author decision R1-D28-REPAIR (PLAN §10): repair the four no-headroom nodes by a pre-declared start-configuration rule, re-measure their D21 noise floor, re-run D28, then one sweep-1 batch on all eight nodes; reserve `openml_climate` only if a repaired node still fails.
+
+## 27 October 2026 — accepted local (Mac) work merged into `main` by the coordinating session (AI-assisted)
+
+- Path-selective commit from `local-20261026` at `fa87d79` (158 paths): PLAN §10 rows of 26–27 Oct, route/spec/theory annotations, `TECH_ROUTE.md`, proposals, reports, reviews, theory audit and author packets, sweep-1 resume-stamp note, Track G runbook, pre-declaration template and tool (L4.4/L4.5). Review: `docs/r1/reviews/LOCAL_MERGE_REVIEW_20261027.md`.
+- Not taken: the L6 manuscript and its Makefile/pyproject targets, the L4.3 renderer, and new skip markers on three existing regression tests (H.1/H.8 acceptance tests, soft-label v1 reproduction); clarification proposed to the author.
 
 ## 27 October 2026 — H.8 deferred; Track G scope clarified (author; AI-assisted)
 
@@ -148,11 +162,74 @@
 
 - New agent runbook `docs/r1/prompts/MAC_LOCAL_RUNBOOK.md` for one Claude Code agent on the Mac: L0 baseline; L1 technical-route review and consolidation (`TECH_ROUTE.md`, consistency scan, route proposals — incl. the DAC-framing conflict with R1-ROUTE); L2 theory-check support for A.2; L3 feasibility and ICML 2027 re-plan (proposal); L4 framework code (Track G adapters G.1, Track H follow-ups, regenerate-all analysis pipeline, D.2 scaffold, harness audit — harness pin 897d83c untouched); L5 Track P feasibility review (proposal); L6 ICML LaTeX skeleton in `papers/r1/`; L7 final pass. Subagent use and acceptance criteria per task; independent review at every STOP.
 
+## 26 October 2026 (night) — Track P migrated to TASL-7; host equivalence passed; STOP (AI-assisted; ENGINEERING_ONLY / DRYRUN; independently reviewed and accepted)
+
+- Track P agent on TASL-7, branch `trackp-20261026`. Merged `origin/main` (STATUS conflict: both entries kept, unchanged), then the portal session's last commits.
+- **Phase 0:** `docs/r1/reports/PORTAL_TRACKP_HOST_FACTS_TASL7_20261026.md`. RTX 4090, cc 8.9, driver 580 / CUDA 13.0, 965 G free. Work dir `/home/dowling/r1_trackp` (same paths as the portal). Reboot pending since 6 Oct; secrets file absent.
+- **Phase 2, same pins:** `docs/r1/reports/TRACKP_PHASE2_ENV_PINS_TASL7_20261026.md`. The venv freeze is identical to the portal's (torch 2.6.0+cu124). The GPU smoke test matches the portal to ~1e-6. All 8 repos (112 files) were re-hashed against the committed `registry.yaml`, which is unchanged. The config is unchanged and `--check-config` is clean.
+- **Host equivalence:** `docs/r1/reports/TRACKP_TASL7_EQUIVALENCE_20261026.md`. Kev-0.8B, fresh, soft, lr 1e-4, seed 0, 2,000-step caps, at `8e13e77`. Tolerance pre-declared and pushed first (`f3567e9`). **Equivalent:** Δ width slope −0.0095, Δ mean slope +0.0077, RPS −2.5 % (limits 0.05 / 0.05 / 10 %).
+- Code: run manifests record the host and the GPU in use, by UUID (R1-ADA-OVERFLOW).
+- Independent review: `docs/r1/reviews/TRACKP_TASL7_MIGRATION_REVIEW_20261026.md`. 5 minor findings fixed; **accepted**. 26.3 leased GPU-minutes on TASL-7.
+- **STOP. Waiting for the author:** `trackp_p3a_<date>.md`, and the questions in `docs/r1/reports/TRACKP_TASL7_MIGRATION_20261026.md` (Track X STATUS guard on TASL-7, config label, reboot, other users). No P.3a run. Not merged; the coordinating session merges.
+
+## 26 October 2026 (evening) — Track P: rule v2, two-stage E0 driver validated; portal work ends (AI-assisted)
+
+- The author's evening decisions are recorded as PLAN §10 rows on `trackp-20261026`: R1-E0-THRESHOLDS, R1-E0-BUDGET, R1-E0-HEADFIT, R1-CONTROL-READOUT, R1-TRACKP-CHOICES, R1-EXAM-RULE-V2, R1-P3A-READY. Spec and runbooks are updated, and the agent's own readings are marked for confirmation.
+- **Rule v2** is committed: `r1/c3/rules/p3_rule_v2.yaml`, sha256 `8c0ef908…`. `exam_analyze` accepts v2 only. Finalist 1 is the E3 point top; the tie-breaks pick only the second finalist. The rule holds the E0 thresholds (width slope vs label std ≥ 0.6 with bootstrap lower bound > 0, mean slope ≥ 0.8) and A4 ≥ 95 %.
+- **Two-stage driver validated** with a short DRYRUN on kev-0.8b (`docs/r1/reports/TRACKP_E0V2_TWOSTAGE_DRYRUN_20261026.md`; clean `5538b79`).
+  - The mechanics work. The shortened budget measures no E0.
+  - Attempt 1 showed that starting LoRA from the L-BFGS head makes it diverge, then saturate. The head fit therefore stays descriptive, and LoRA starts from the fresh head.
+  - ≈ 1.6 GPU-h.
+- Independent review: `docs/r1/reviews/TRACKP_RULEV2_REVIEW_20261026.md` (4 minor + 1 on the DRYRUN record, fixed; **verdict: accepted**). The decisions review was accepted earlier.
+- **Host change (R1-TASL7-TRACKP):** this is the last Track P GPU work on zhixu portal. The portal work dir, venvs and models are left untouched.
+  - Host-equivalence check on TASL-7: reproduce the selected Kev-0.8B run of the portal E0 v2 DRYRUN (code `8e13e77`, `--variant fresh --lr 0.0001`, seed 0, 2,000-step caps). On the portal it gave width slope vs label std 0.923, mean slope 1.012 and RPS 1.99e-4, as pre-declared by the TASL-7 agent in `f3567e9`.
+  - Optional: the short two-stage run at `5538b79`.
+- **Waiting for the author:** `trackp_p3a_<date>.md`, and the marked readings (descriptive head fit means LoRA starts fresh; bootstrap bound; A4 not disqualifying; final budget for the hard/native runs). Not merged; the coordinating session merges.
+
+## 26/27 October 2026 — Deepthought sweep 1: Phase 5 host smoke passes, Phase 6 D28 STOP (4 of 8 nodes) (AI-assisted; ENGINEERING_ONLY)
+
+Implementation agent (Claude) on deepthought, branch `dt-sweep1-20261026`. Phases 2, 4 and 5 complete and passing; **Phase 6 is a STOP for the author**. Readiness report: [DT_SWEEP1_READINESS_20261026.md](reports/DT_SWEEP1_READINESS_20261026.md). Phase 7 has not started and needs `docs/r1/authorizations/c3_sweep1_<date>.md` from the author.
+
+- **Phase 5 (A.8 host smoke) passes with the real `llama-server`, real GGUF and the schema on**, via the new `r1/scripts/c3_host_smoke.py` (the dry run's isolation, the host's own server, `nvidia-smi` and `ps`; no fault injected — it kills a real process by the pid the batch recorded after matching pid, process group and command line). Server killed mid-request → watchdog recorded the loss, restarted (generation 1) and re-ran both affected roots whole, batch completed (194.5 s); runner killed mid-campaign → completed root kept byte for byte, interrupted root re-run whole, orphan server stopped only on a full identity match (182.4 s). Report: [WATCHDOG_SMOKE_DT_20261026.md](reports/WATCHDOG_SMOKE_DT_20261026.md).
+- **R1-SCHEMA verified end to end.** The pinned build enforces per-request `response_format: json_schema`: the same prose-inviting prompt returns Markdown prose without it and strict six-field all-string JSON with it. Across Phase 6's **161 trials there were 0 parse failures**, with `manager_proposal/v1` recorded per trial, in the run manifest and in the sweep index.
+- **Phase 6 (A.7 D28 liveness, 8 nodes, 2 × W = 10, memory on, 1,592.8 s): 4 pass, 4 fail.** Pass: `digits_mlp`, `tabular_mlp`, `openml_credit_approval`, `openml_ionosphere`. Fail on `keep_after_trial_1`: `openml_breast_w`, `openml_sonar`, `openml_blood_transfusion`, `openml_wdbc` (also `invalid_rate` exactly 0.30). **No repair, no drop** — read-only diagnosis: [LIVENESS_LLAMACPP_20261026.md](reports/LIVENESS_LLAMACPP_20261026.md).
+- **Diagnosis:** every node passes `active_novelty_fraction`, so the manager is not inert. On the four failing nodes **no proposal in 20 trials produced a positive delta**: `max_iter` edits are exactly inert on an already converged model (Δ = 0 in 10–12 of 20 trials) and `C` edits mostly hurt, with baseline `val_auc` 0.9971 (`wdbc`) and 0.9919 (`breast_w`) leaving no headroom; `blood_transfusion` has headroom but nothing helped. The two MLP nodes, with three real knobs, reach Δ +0.17 to +0.22 and 9–10 keeps. All 18 invalid trials are value errors R1-SCHEMA deliberately leaves to the model (`max_iter` beyond the allowed `[100, 3000]`, `class_weight` outside `{None, "balanced"}`), each caught by D25.
+- **The 19 Oct risk did not materialise: `digits_mlp` is now the strongest node** (novelty 0.90, invalid rate 0.00, 10 keeps after trial 1).
+- **Full GPU offload** proven at every load and after every collection, route (ii) against the pinned footprint; the server pid held **exactly 5253 MiB** on the card in every start measured.
+- **Measured runtime basis:** mean LLM latency 7.46 s at a mean prompt of 827 tokens (max 1,232), worker runs 2.47 s per trial → sweep 1 on the pool of 8 (5,760 proposals) ≈ **14–20 h wall on one TITAN**; ≈ 7–10 h on the 4 passing nodes; Phase 8 audits ≈ 2–3 h wall on 16 workers.
+- **Blocking for the author:** the node pool (`min_live_nodes` = 8 would STOP at the runner's own liveness phase; options and their costs are in the liveness report). Also open: the paper pin can only be "the `main` head at launch" because the runner refuses a checkout that is not at the remote head (`main` moved three times during this work); whether "one manager per TITAN" means one batch on one card (what is built, and what is pinned) or four concurrent batches (not built; four sweep indexes, which the A.4 table build rejects as one sweep); whether to pin a `footprint_mib` below the measured 5253.
+- **Also fixed, so a real launch can pass the prepare gate:** `r1/c3/serve.py` validates a model pin before importing `torch`, and the four Track P test modules skip instead of failing collection where `torch` is absent (it is not in the harness lock). The accepted-failure list in `c3_prepare_check.py` was not changed.
+
+## 26 October 2026 — Deepthought sweep-1 restart: Phase 2 recheck and Phase 4 config (AI-assisted; ENGINEERING_ONLY)
+
+Implementation agent (Claude) on deepthought, branch `dt-sweep1-20261026` from `main` `7611338` (later merged `fc3e0da`); harness `r1` fast-forwarded to `897d83c` = `HARNESS_PIN_C3`. The six 25 Oct documentation commits were cherry-picked onto the new branch (report blobs byte-identical; STATUS conflicts resolved by keeping both sides). The old `dt-sweep1-20261025` is history. PLAN §10 records the author's R1-DT-RESTART / R1-DT-TESTGATE / R1-DT-SCRATCH / R1-DT-PIN.
+
+- **Phase 2 (redone at the new pins):** all nine data caches `ok` (climate included; the two non-OpenML nodes checked separately with the network blocked). Harness suite **454 passed / 8 failed / 1 collection error**, exactly the accepted 26 Oct baseline for `897d83c`. Paper suite **528 passed / 6 failed / 25 skipped / 4 collection errors**. Report: [DT_PHASE2_RECHECK_20261026.md](reports/DT_PHASE2_RECHECK_20261026.md).
+- **Two environment findings that change the launch.** (1) The `LocalWorker` runs bare `python3`, which on this host resolves to anaconda's **scikit-learn 1.5.1**, not the locked 1.8.0; three harness stage2 tests failed for that reason and pass with the venv `bin` first on `PATH`. The sweep must be launched with that `PATH`. (2) `narwhals` was missing (`lightgbm` had been installed `--no-deps`), which broke `r1/c3/arms.py`; `narwhals==2.27.1` installed `--no-deps`, metric libraries re-verified unchanged. `test_c3_control_dryrun` and `test_trackp_soft_label_v2` pass after it.
+- **R1-DT-TESTGATE (a):** met. Standalone with `--deadline 300`: `retry` 93.1 s (ollama) / **107.3 s** (llamacpp, deepthought config), `permanent` 44.2 / 48.0 s, `watchdog` **101.1 s**, all **passed**. Only the hardcoded 75 s limit fails.
+- **R1-DT-TESTGATE (b): resolved, one attempt.** The `interrupt` scenario **passes** on both backends, in the suite and standalone (123.5 s), archive assertion included. The 25 Oct failure was on pre-batch-B code; batch B deviation 5 documents that exact `openml_breast_w__s105` case and the assertion it changed, while keeping "a root with logged trials at the kill must still have its partial ledger archived". Nothing was relaxed here.
+- **Phase 4 (A.6): config completed, `--check-config` passes, no placeholders.** `r1/scripts/configs/c3_sweep_deepthought.json` sha256 `85431afc…` before this commit; `proposal_schema = manager_proposal/v1` on (R1-SCHEMA); re-probed on the host with the sweep's own server settings (`-np 1 -c 8192`): build `version: 0.7.0-dev (build 1, commit 620d222)`, GGUF sha256 `509287f7…`, verdict **FULL_GPU_OFFLOAD** by route (ii) (no offload line at default verbosity; CPU control 4.192× slower), **`footprint_mib` = 5253**; `gpu_uuid` pins TITAN index 1; port 18083; `workers` 16 of 40. Two tests that asserted the file was still a draft were updated and a completed-config test added.
+- **Host is not exclusive in practice.** Three other users held 5.3 GiB on TITAN index 0 and about 12.4 of 40 cores while this phase ran (co-tenancy is allowed and logged, PLAN §10 13 Oct). Ceph file-count headroom 45 % (275,839 of 500,000); `/ceph` 303 TiB free; scratch on local disk per R1-DT-SCRATCH.
+- **Open for the author:** whether the "one manager per TITAN" GPU plan means one batch on one card (what is built, and what sweep 1 assumes) or four concurrent batches (not built; four sweep indexes, which the A.4 table build does not accept as one sweep); `workers` 16 rather than the runbook's starting 24; whether to pin a slightly lower `footprint_mib` than the measured 5253.
+
 ## 26 October 2026 — hosts: TASL-7 dedicated to Track P; Ada as overflow (AI-assisted; documents only)
 
 - Author decisions recorded (PLAN §10): R1-ADA-OVERFLOW (zhixu experiment takes resumable overflow runs; one comparison table on one GPU type and one pinned environment unless declared) and R1-TASL7-TRACKP (second RTX 4090 node TASL-7, exclusive, dedicated to Track P; zhixu portal left to Track X).
 - RUNBOOK §3 host table and Track P hardware note updated; `PORTAL_TRACK_P_RUNBOOK.md` gains a host-change header with the migration steps (TASL-7 host facts, same pinned environment and model revisions, host-equivalence E0 DRYRUN with a pre-declared tolerance, independent review, STOP).
 - Needed from the author: SSH key and alias for TASL-7, GitHub authentication there, a reboot (the host reports "System restart required") before long runs, Claude Code on TASL-7, later `~/.config/r1/secrets.env`.
+
+## 26 October 2026 — Track P: author's decisions implemented; E0 v2 DRYRUN on Kev-0.8B and Qwen-0.8B (AI-assisted)
+
+- The author's 26 Oct decisions are recorded as PLAN §10 rows (R1-STARTLUX-TRAINABLE … R1-TRACKP-MERGE) on `trackp-20261026`, with the spec corrected to match. The agent's own implementation choices are listed under the rows for confirmation.
+- Code: E0 protocol v2, the A3 pool budget, token rows (mean-embedding init, fp32, own lr), the lr grid, early stopping, temperature scaling, the Track X marker in the GPU lease, 10 Jev questions, environment pins checked and recorded in every manifest.
+- Independent review: `docs/r1/reviews/TRACKP_DECISIONS_REVIEW_20261026.md` (1 blocking + 9 minor, then 3 minor on the DRYRUN report and 1 on the manifest dirty-file list; all fixed; **verdict: accepted**). The four Track H modules pass at harness `897d83c`: 29/29.
+- **E0 v2 DRYRUN** (DRYRUN, code at `8e13e77`; the manifests' dirty flag comes from an uncommitted review-file edit, not code): `docs/r1/reports/TRACKP_E0V2_DRYRUN_20261026.md`.
+  - Selected lr 1e-4 for both bases. Width slope vs the label's own std: 0.92 (Kev) and 0.97 (Qwen); mean slope 1.01. Label ceiling vs s: 0.925.
+  - Within 2,000 steps the frozen-backbone head fit learns no width (it had not converged). Hard labels collapse the width (ratio 0.27 / 0.20).
+  - A3 v2 is ≤ 3e-5 on both; A4 v2 is 1.00 on both; A5 fails on Qwen (TV 0.20).
+  - The soft runs peak near the 2,000-step cap.
+  - 3.7 GPU-h, plus ≈ 0.5 h for an aborted first attempt.
+- **Waiting for the author:** the E0/A4 threshold row, the training budget, the head-fit and A5 readings, and the Phase 5 authorization. Not merged; the coordinating session merges.
 
 ## 26 October 2026 — Track P branch merged into `main` by the coordinating session (AI-assisted)
 
@@ -284,6 +361,52 @@ Implementation agent (Claude) on branch `batch-b-25oct` in both repositories (pa
 - **Review fix (`8122600`):** on deepthought, llama.cpp v0.7.0 (commit 620d222) printed no `offloaded N/N layers` line at default verbosity (report on `dt-sweep1-20261025`), so the log-only check would STOP every real start. Now full offload passes by route (i) the N/N line (partial N/M = STOP) or route (ii) the server pid on the configured GPU with ≥ the pinned `footprint_mib` (refused if unset); CPU fallback stops both; the route is recorded. The probe records loaded telemetry before any assertion, adds a `-ngl 0` CPU control (≥ 2× slower) for route (ii), exits 1 on STOP and reports the footprint to pin. No verbosity flag added (not verifiable offline). Build pin format `version: 0.7.0-dev (build 1, commit 620d222)`; the working deepthought build recipe is in the handoff.
 - **Tests:** paper 327 passed / 1 failed → 359 passed / 1 failed → 384 passed / 1 failed after the review fix (same known `test_real_runner_desktop_dryrun`); harness 427 passed / 9 failed / 1 error → 434 / 9 / 1 (same failing set).
 - **Questions for the author:** one manager per TITAN (open; options and their needs in the handoff); `ctx_size` 8192 is a proposal (prompt lengths unmeasured); bit-repeatable same-seed retries would need `cache_prompt: false`; which GGUF is pinned; build pin = the `version:` line (or also the full commit); harness `264011e` must reach `r1` before a launch.
+
+## 25 October 2026 — climate reserve measured: qualifies (PILOT); stop before Phase 4
+
+AI-assisted by GPT-6 (Codex). **PILOT, not evidence.** `openml_climate` (OpenML 1467) fresh complete attempt: **552 unique runs, 0 failures, 0 missing metrics**, 30 seeds per condition on all six configurations, all six default/repeat metrics identical. Adopted D21 rule: **qualifies**, 3 material edits, mean P(wrong) **0.2907157594**, σ_joint **0.0399363099**, δ_n **0.0050897867**. Independent raw-pair rule agrees; paired bootstrap P(qualifies)=0.9055 (reported, not decisive). Four CPU workers, no LLM/GPU, 228.4 s.
+
+The first attempt STOPped at 348 records on Ceph file quota and lacks a manifest; it is preserved unchanged, excluded and never resumed or pooled. A fresh full attempt changed only output/scratch to local /tmp. Same paper `3d3ec48`, preparation harness `7305434`, locked metric libraries; Python 3.13.15 versus the unavailable reference patch 3.13.16 is explicitly recorded. Durable, hash-verified complete records: `results/r1/pilot/E1_CLIMATE_DT_20261025_ATTEMPT02/` on the author's Mac. Report: `reports/NOISE_FLOOR_CLIMATE_20261025.md`.
+
+Final test coverage addendum: five LightGBM skips were a missing optional Narwhals helper. The isolated test copy with Narwhals 2.27.1 ran the full C3-arms module: **10 passed**; locked metric-library versions remained unchanged. This does not clear the unresolved retry/resume integration gate.
+
+No Phase 4 configuration work, node substitution, final sweep-pin adoption, real D28 run, sweep, or authorization note. Batch B and the runner test gate remain unresolved. The requested stop before Phase 4 is reached.
+
+## 25 October 2026 — independent Phase 2 preparation performed; runner test gate blocked
+
+AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY. Fresh paper main `3d3ec48`; preparation harness `7305434` from the Batch A handoff, imported as an exact committed bundle because it was not published. The final C3 sweep pin was not changed or accepted. Python 3.13.15 (3.13.16 unavailable through uv); locked sklearn 1.8.0 / numpy 2.4.4 / pandas 3.0.3 / scipy 1.17.1 verified. Seven OpenML caches pass network-disabled checks; the two bundled/generated nodes also load offline. Climate metadata matches; no code correction.
+
+Initial paper suite: 317 passed / 5 failed / 6 skipped. Bounded unchanged-assertion integration retries: watchdog passed, retry still exceeds 75 s and interrupted-root archive assertion remains unresolved; no fourth retry of the exhausted item. Quota-induced live-golden failure passed in local scratch. Harness: 427 passed / 9 failed / 1 error, with an explicitly recorded difference in the artifact failure set. **No baseline acceptance or sweep readiness claimed.**
+
+Ceph file-count quota interrupted temporary writes despite ample byte space. New scratch moved to local /tmp; only inventoried task-created package/bytecode caches were cleared, preserving source, environments and every run record. The independent climate PILOT continued separately. Report: `reports/DT_PREPARATION_20261025.md`. Batch B/source/pin/test recheck remains required; stop before Phase 4.
+
+## 25 October 2026 — Deepthought Phase 1 retry passed (ENGINEERING_ONLY)
+
+AI-assisted by GPT-6 (Codex). Author revised offload acceptance and explicitly authorized engineering retries. Same source/GGUF pins; added verbose logging and saved loaded GPU/PID telemetry before acceptance. GPU 0 and GPU 1 each logged **29/29 layers offloaded**, with 4,920 MiB held per server before acceptance. GPU 1 loaded while GPU 0 remained resident. Twenty synthetic manager requests averaged 7.2609 s, 91.65 output tokens, 250.73 prompt tokens/s and 24.87 generation tokens/s. Three seeded temperature-0.2 responses were identical. Two one-token probes completed. Projection: 11.70 hours for 5,800 calls, inference only; worker/audit costs excluded. Both owned servers exited cleanly; prior STOP preserved. Report updated: `reports/LLAMACPP_PROBE_DT_20261025.md`.
+
+Phase 1 complete; no D28 or sweep evidence run. Current scope continues with Batch B–independent Phase 2 and climate Phase 3, then stops before Phase 4. Raw retry records stay on the host; only report/STATUS are pushed.
+
+## 25 October 2026 — Deepthought Phase 1 STOP: build and GGUF verified, full offload unproven
+
+AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY, not evidence. Phase 0 complete (`7a8ee19`). Built unmodified llama.cpp `v0.7.0` @ `620d2225cc436ab0b001e3200e590e3b286ef9ab` for sm_52 with CUDA 11.8 and installed GCC 13 C++ compiler (CUDA host compiler GCC 8; explicit iomanip include flag). Both binaries build. Official Qwen2.5-Coder-7B-Instruct Q4_K_M GGUF SHA-256 `509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c` verified twice. Original GCC 8 server build failure preserved.
+
+- STOP: GPU 0 server loaded and became healthy, but its log lacked the required full-offload line. The standalone probe recorded STOP before any completion request; no throughput, determinism or GPU 1 check. Loaded VRAM was not captured before the assertion (agent instrumentation error). No retry.
+- Diagnosis without model load: all four CUDA devices enumerate and CUDA dependencies resolve. Missing log does not establish offload failure; its cause remains unconfirmed. Draft verbose probe prepared and syntax-checked, not executed.
+- Cleanup: only owned PID/process group 3546902 signalled after command validation; exited cleanly. Final GPUs 0 MiB used and no compute processes; Ceph about 303 TiB free.
+- Report: `reports/LLAMACPP_PROBE_DT_20261025.md`. Hashed raw logs/scripts remain local; automatic approval review rejected publishing the full bundle, so this push includes summary documentation only. Phase 1 incomplete, Phases 2–9 unstarted. Author continuation required for the proposed verbose load attempt. Batch B on origin/main remains a prerequisite for Phase 2.
+
+## 25 October 2026 — Deepthought Phase 0 census complete
+
+AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY. Author continuation explicitly permits Phases 0–1 before Batch B is merged, superseding the orientation missing-handoff STOP for these phases only. Census: four idle TITAN X GPUs (5.2), driver 525.147.05, installed CUDA 11.8.89, 40 CPUs, 503 GiB RAM, about 303 TiB free on Ceph; GitHub/Hugging Face/PyPI/OpenML HTTP 200. No GPU/LLM run yet. Report: `reports/DT_HOST_CENSUS_20261025.md`. Next: Phase 1 build and probe; Phase 2 remains gated on Batch B on origin/main.
+
+## 25 October 2026 — Deepthought execution STOP before host census
+
+AI-assisted by GPT-6 (Codex); ENGINEERING_ONLY, not evidence. The author requested execution of the Deepthought llama.cpp/liveness/C3 runbook. Its required `overnight/BATCH_B_25OCT_HANDOFF.md` is absent, triggering its explicit missing-file STOP. Published `origin/main` was verified at `3d3ec488be5e1cdcb12ee66b8130305fc9c7db26`; no published `batch-b-25oct` ref was returned. The active local Batch B changes remain uncommitted and untouched.
+
+- Report: `reports/DT_ORIENTATION_STOP_20261025.md`, on branch `dt-sweep1-20261025`.
+- Checks: required reading and Git publication checks only. No SSH, host census, remote changes, GPU/LLM/worker run or evidence collection. No tests for this documentation-only STOP.
+- Not done: Phases 0–9; the required handoff and merged backend are unavailable.
+- Coordinator action: finish/review/publish Batch B with its handoff and merge it into main. Author continuation is needed after this STOP; sweep evidence still requires the separate author-committed authorization note.
 
 ## 24–25 October 2026 — Phase A coding batch: A.4, A.5, A.8, A.6 draft (AI-assisted; ENGINEERING_ONLY; reviewed and merged)
 

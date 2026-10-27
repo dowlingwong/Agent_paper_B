@@ -1,0 +1,70 @@
+{
+ "capability": [
+  8,
+  9
+ ],
+ "causal_conv1d": "1.7.0",
+ "checks": {
+  "bf16_matmul": {
+   "ms": 144.5011980831623,
+   "pass": true,
+   "rel_err_vs_fp32": 0.002874163445085287
+  },
+  "deltanet_forward_bfloat16": {
+   "argmax_agreement_vs_ref": 0.995110034942627,
+   "calibration": "torch path, bf16",
+   "calibration_vs_ref": 0.2651304006576538,
+   "fast_s": 0.1699622068554163,
+   "fast_vs_ref": 0.23607850074768066,
+   "finite": true,
+   "pass": true,
+   "peak_mib": 2095.94189453125,
+   "tol": 0.5302608013153076,
+   "torch_path_s": 0.18089384073391557
+  },
+  "deltanet_forward_float32": {
+   "argmax_agreement_vs_ref": 1.0,
+   "calibration": "torch path, TF32",
+   "calibration_vs_ref": 0.020127296447753906,
+   "fast_s": 0.15437118895351887,
+   "fast_vs_ref": 0.02934741973876953,
+   "finite": true,
+   "pass": true,
+   "peak_mib": 3345.16748046875,
+   "tol": 0.04025459289550781,
+   "torch_path_s": 0.17775719426572323
+  }
+ },
+ "cuda_runtime": "12.4",
+ "device": "NVIDIA GeForce RTX 4090",
+ "fla": "0.5.2",
+ "kernels_bound": {
+  "causal_conv1d_fn": "causal_conv1d.causal_conv1d_interface.causal_conv1d_fn",
+  "causal_conv1d_update": "causal_conv1d.causal_conv1d_interface.causal_conv1d_update",
+  "torch_chunk_gated_delta_rule": "fla.ops.gated_delta_rule.chunk.chunk_gated_delta_rule",
+  "torch_recurrent_gated_delta_rule": "fla.ops.gated_delta_rule.fused_recurrent.fused_recurrent_gated_delta_rule"
+ },
+ "lease": [
+  {
+   "event": "start",
+   "job": "trackp phase2 gpu smoke",
+   "pid": 4064387,
+   "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+   "utc": "2026-10-26T22:50:48Z"
+  },
+  {
+   "event": "end",
+   "job": "trackp phase2 gpu smoke",
+   "pid": 4064387,
+   "utc": "2026-10-26T22:51:39Z"
+  }
+ ],
+ "pass": true,
+ "reference": {
+  "logit_abs_max": 30.7484130859375,
+  "what": "fp32 CPU forward, torch path"
+ },
+ "seq_len": 409,
+ "torch": "2.6.0+cu124",
+ "transformers": "5.19.0"
+}

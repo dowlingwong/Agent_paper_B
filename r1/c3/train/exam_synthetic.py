@@ -17,14 +17,29 @@ Metrics on held-out cells (``e0_metrics``): RPS (spec §6.1: bins 1-11
 cumulative + bin-0 Brier), slope of the predicted std on s and of the
 predicted mean on m (moments over the bin midpoints, ``labels.moments``;
 a perfect predictor gives 0.98 / 1.03 on this grid), width ratio (mean
-predicted std / mean label std). Pass (``e0_pass``): width slope >= 0.7 and
-mean slope >= 0.8.
+predicted std / mean label std). Pass (``e0_pass``, protocol v1): width slope
+>= 0.7 and mean slope >= 0.8.
+
+**E0 protocol v2 (author, 26 Oct; R1-E0-PROTOCOL).** (a) The width slope is the
+regression of the predicted std on the *label's own* std (the binned soft
+label's std with the same bin representatives), ``width_slope_vs_label``; the
+label's own slopes vs s and m are reported as the ceiling
+(``label_width_slope_vs_s``, ``label_mean_slope_vs_m``). (b) Validation cells
+``VAL_CELLS`` are held out of the training grid (``e0_split``) for early
+stopping. Pass (R1-E0-THRESHOLDS, author 26 Oct evening; a floor, not a ranking):
+``width_slope_vs_label`` >= 0.6 with its bootstrap 95 % lower bound > 0, and
+``mean_slope`` >= 0.8 (``E0_V2_THRESHOLDS``). The lower bound is the 2.5th
+percentile of 2,000 resamples of the test prompts (``E0_BOOT``). A4 v2 passes
+when >= 95 % of prompts are monotone against the label's std.
 
 **E6** probe constructors with the spec's criteria: A1 branch isolation and A2
 sibling-order invariance (max |delta logit| <= 1e-3; packed models only), A3
 history-length robustness (0 / 2k / 8k tokens of irrelevant history prepended
-to the history block; mean |delta RPS| <= 0.01), A4 width monotonicity
-(predicted std non-decreasing in s over 5 steps in >= 95 % of prompts), A5 slot
+to the history block; mean |delta RPS| <= 0.01; protocol v2: 0 / 25 / 50 / 100 %
+of the remaining budget under the pool's smallest limit, ``a3_probe_budget``,
+with 2k / 8k descriptive only), A4 width monotonicity
+(predicted std non-decreasing in s over 5 steps in >= 95 % of prompts; v2 adds
+the label reference, ``a4_pass_v2``), A5 slot
 bias (options listed in permuted order; belief mapped back to canonical order
 within TV 0.02 of the canonical listing). A permuted listing carries
 ``meta["option_perm"]``: ``options[i] == BIN_OPTIONS[perm[i]]``.
@@ -56,6 +71,16 @@ M_CELLS, S_CELLS = 10, 7
 HELDOUT_INTERP = ((2, 1), (3, 4), (4, 2), (5, 5), (6, 1), (7, 3))
 HELDOUT_EXTRAP = ((0, 0), (0, 6), (9, 0), (9, 6))
 HELDOUT = HELDOUT_INTERP + HELDOUT_EXTRAP
+# E0 v2: validation cells held out of the training grid (early stopping): four interior cells and the two m-edge
+# cells of the middle s row; none touches a test cell's row-and-column pair
+VAL_CELLS = ((1, 3), (3, 2), (5, 4), (8, 2), (0, 3), (9, 3))
+assert not set(VAL_CELLS) & set(HELDOUT)
+# R1-E0-THRESHOLDS (author, 26 Oct evening); the same values are frozen in r1/c3/rules/p3_rule_v2.yaml
+# (key names as in the rule file; a test checks the two agree)
+E0_V2_THRESHOLDS: dict | None = {"width_slope_vs_label_min": 0.6, "width_slope_vs_label_lb95_gt": 0.0,
+                                 "mean_slope_min": 0.8}
+E0_BOOT = {"resamples": 2000, "alpha": 0.05, "seed": SEED, "unit": "test_prompt", "interval": "two_sided_percentile"}
+A4_V2_MIN_FRAC = 0.95
 N_TRAIN, N_TEST = 3000, 1000
 DATA = Path(__file__).resolve().parent / "data"
 E0_FILE = DATA / "e0_v1.jsonl.gz"
@@ -64,6 +89,8 @@ E0_SHA = DATA / "e0_v1.sha256"
 E0_WIDTH_SLOPE_MIN, E0_MEAN_SLOPE_MIN = 0.7, 0.8
 A12_MAX_ABS = 1e-3
 A3_LENGTHS = (0, 2000, 8000)
+A3_FRACS = (0.0, 0.25, 0.5, 1.0)          # v2: fractions of the remaining token budget (R1-A3-BUDGET)
+A3_DESCRIPTIVE = (2000, 8000)             # v2: longer levels, descriptive only
 A3_MAX_DRPS = 0.01
 A4_STEPS = 5
 A4_MIN_FRAC = 0.95
@@ -253,6 +280,53 @@ def e0_pass(metrics: dict) -> bool:
     return metrics["width_slope"] >= E0_WIDTH_SLOPE_MIN and metrics["mean_slope"] >= E0_MEAN_SLOPE_MIN
 
 
+def e0_split(items: Sequence[dict]) -> tuple[list[dict], list[dict]]:
+    """v2: training items outside / inside ``VAL_CELLS``."""
+    val = {tuple(c) for c in VAL_CELLS}
+    tr = [it for it in items if it["split"] == "train" and tuple(it["cell"]) not in val]
+    va = [it for it in items if it["split"] == "train" and tuple(it["cell"]) in val]
+    return tr, va
+
+
+def label_ceiling(items: Sequence[dict]) -> dict:
+    """v2 ceiling: the soft label's own std / mean slopes vs the stated s / m (same bin representatives)."""
+    mu_y, tau_y = belief_moments(np.array([it["y_soft"] for it in items], float))
+    return {"label_width_slope_vs_s": _slope([it["s"] for it in items], tau_y),
+            "label_mean_slope_vs_m": _slope([it["m"] for it in items], mu_y)}
+
+
+def width_slope_bootstrap(p_pred, items: Sequence[dict], boot: dict = E0_BOOT) -> tuple[float, float]:
+    """Percentile interval (two-sided 1 - alpha) of ``width_slope_vs_label`` over resampled test prompts."""
+    _, tau = belief_moments(np.asarray(p_pred, float))
+    _, tau_y = belief_moments(np.array([it["y_soft"] for it in items], float))
+    rng = np.random.default_rng(boot["seed"])
+    n = len(tau)
+    idx = rng.integers(0, n, size=(boot["resamples"], n))
+    x, y = tau_y[idx], tau[idx]
+    xc = x - x.mean(axis=1, keepdims=True)
+    slopes = (xc * (y - y.mean(axis=1, keepdims=True))).sum(axis=1) / (xc ** 2).sum(axis=1)
+    lo, hi = np.quantile(slopes, [boot["alpha"] / 2, 1 - boot["alpha"] / 2])
+    return float(lo), float(hi)
+
+
+def e0_metrics_v2(p_pred, items: Sequence[dict], target: str = "y_soft") -> dict:
+    """v2 metrics: the v1 set, the label ceiling and the bootstrap interval of the primary width slope
+    (``width_slope_vs_label``)."""
+    lo, hi = width_slope_bootstrap(p_pred, items)
+    return {**e0_metrics(p_pred, items, target), **label_ceiling(items), "primary_width": "width_slope_vs_label",
+            "width_slope_vs_label_lb95": lo, "width_slope_vs_label_ub95": hi}
+
+
+def e0_pass_v2(metrics: dict, thresholds: dict | None = None) -> bool | None:
+    """R1-E0-THRESHOLDS: width slope vs label std >= 0.6 and its bootstrap 95 % lower bound > 0; mean slope >= 0.8."""
+    t = thresholds if thresholds is not None else E0_V2_THRESHOLDS
+    if t is None:
+        return None
+    return bool(metrics["width_slope_vs_label"] >= t["width_slope_vs_label_min"]
+                and metrics["width_slope_vs_label_lb95"] > t["width_slope_vs_label_lb95_gt"]
+                and metrics["mean_slope"] >= t["mean_slope_min"])
+
+
 # ---------------------------------------------------------------- E6 probes
 
 def _probe_rng(tag: str, seed: int) -> np.random.Generator:
@@ -346,6 +420,69 @@ def a3_pass(rps_by_length: dict) -> dict:
     return {"mean_abs_drps": d, "pass": all(v <= A3_MAX_DRPS for v in d.values())}
 
 
+def a3_probe_budget(counters: dict, n: int = 100, fracs: Sequence[float] = A3_FRACS, limit: int | None = None,
+                    seed: int = SEED) -> dict:
+    """A3 v2: per prompt, irrelevant history at ``fracs`` of the remaining budget ``limit - max_f len_f(prompt)``
+    (``counters``: the pool families' input-token counters, ``budget.pool_counters``). A level takes the longest
+    prefix, counted in words, of one fixed history stream (whole lines, then the next line cut at a word) whose
+    longest rendering is within ``base + frac * budget``. Returns {frac: [prompts]}, the soft targets, per prompt
+    the budget, the tokens per level and family, and the fraction of the budget each level actually reached."""
+    from r1.c3.train.budget import POOL_LIMIT, max_tokens
+    limit = POOL_LIMIT if limit is None else limit
+    rng = _probe_rng("A3", seed)
+    rows = []
+    for _ in range(n):
+        cell = (int(rng.integers(M_CELLS)), int(rng.integers(S_CELLS)))
+        rows.append((_context(rng), *_sample_in(cell, rng)))
+    stream = irrelevant_history(_Words(), 4 * limit, seed)   # far more words than any budget takes
+    words = [ln.split(" ") for ln in stream]
+    total = sum(len(w) for w in words)
+
+    def history(t: int) -> list[str]:
+        out, left = [], t
+        for w in words:
+            if left <= 0:
+                break
+            out.append(" ".join(w[:left]))
+            left -= len(w)
+        return out
+    out = {"targets": [soft_target(m, s) for _, m, s in rows], "prompts": {f: [] for f in fracs}, "budget": [],
+           "tokens": {f: [] for f in fracs}, "reached": {f: [] for f in fracs}, "limit": limit,
+           "families": sorted(counters)}
+    for i, (ctx, m, s) in enumerate(rows):
+        make = lambda t: build_prompt(ctx, m, s, extra_history=history(t), group=f"a3-{i:03d}")  # noqa: E731
+        base = max_tokens(counters, make(0))
+        budget = limit - base
+        if budget <= 0:
+            raise ValueError(f"A3 prompt {i} has no budget before any history ({base} >= {limit})")
+        out["budget"].append(budget)
+        for f in fracs:
+            cap = base + f * budget
+            lo, hi = 0, total               # longest word prefix within the cap (token counts grow with words)
+            while lo < hi:
+                mid = (lo + hi + 1) // 2
+                if max_tokens(counters, make(mid)) <= cap:
+                    lo = mid
+                else:
+                    hi = mid - 1
+            p = build_prompt(ctx, m, s, extra_history=history(lo), group=f"a3-{i:03d}",
+                             meta={"a3_frac": f, "extra_history_words": lo})
+            tok = {fam: c(p) for fam, c in counters.items()}
+            if max(tok.values()) > cap:
+                raise RuntimeError(f"A3 prompt {i} level {f}: {max(tok.values())} tokens over the cap {cap}")
+            out["prompts"][f].append(p)
+            out["tokens"][f].append(tok)
+            out["reached"][f].append((max(tok.values()) - base) / budget)
+    return out
+
+
+class _Words:
+    """Whitespace token count: sizes the history stream only (the budget itself uses the pool counters)."""
+
+    def __call__(self, text, add_special_tokens=False):
+        return {"input_ids": text.split()}
+
+
 def a4_probe(n: int = 200, steps: int = A4_STEPS, seed: int = SEED) -> list[list[DecisionPrompt]]:
     """A4: the same prompt with s increased in ``steps`` steps (0.2 -> 1.4), m fixed."""
     rng = _probe_rng("A4", seed)
@@ -363,6 +500,36 @@ def a4_pass(pred_std, tol: float = 0.0) -> dict:
     d = np.diff(np.asarray(pred_std, float), axis=1)
     frac = float(np.mean((d >= -tol).all(axis=1)))
     return {"frac_monotone": frac, "pass": frac >= A4_MIN_FRAC}
+
+
+def a4_label_std(n: int = 200, steps: int = A4_STEPS, seed: int = SEED) -> np.ndarray:
+    """[n, steps] std of the soft label of each A4 prompt (same (m, s) as ``a4_probe``, same bin representatives)."""
+    out = []
+    for row in a4_probe(n, steps, seed):
+        ms = [_note_values(p.proposal) for p in row]
+        out.append(belief_moments(np.array([soft_target(m, s) for m, s in ms]))[1])
+    return np.array(out)
+
+
+def _note_values(proposal: str) -> tuple[float, float]:
+    line = next(ln for ln in proposal.splitlines() if ln.startswith("Forecast note:"))
+    m = float(line.split("m = ")[1].split(",")[0])
+    s = float(line.split("noise s = ")[1])
+    return m, s
+
+
+def a4_pass_v2(pred_std, label_std, tol: float = 0.0) -> dict:
+    """v2 (label reference): a prompt passes when its predicted std does not decrease (by more than ``tol``) at any
+    step where the label's std increases; the label's own fraction of monotone prompts is the ceiling. Also the
+    median per-prompt slope of predicted std on label std. Pass: >= 95 % of prompts (R1-E0-THRESHOLDS)."""
+    pred, lab = np.asarray(pred_std, float), np.asarray(label_std, float)
+    dp, dl = np.diff(pred, axis=1), np.diff(lab, axis=1)
+    up = dl > 0
+    ok = ((dp >= -tol) | ~up).all(axis=1)
+    slopes = [float(np.polyfit(lab[i], pred[i], 1)[0]) if np.ptp(lab[i]) > 0 else float("nan") for i in range(len(lab))]
+    return {"frac_monotone_vs_label": float(ok.mean()), "label_ceiling_frac": float((dl >= 0).all(axis=1).mean()),
+            "frac_monotone_raw": float((dp >= -tol).all(axis=1).mean()),
+            "median_slope_vs_label": float(np.nanmedian(slopes)), "pass": bool(ok.mean() >= A4_V2_MIN_FRAC)}
 
 
 def a5_probe(n: int = 100, perms: int = 5, seed: int = SEED) -> list[list[DecisionPrompt]]:

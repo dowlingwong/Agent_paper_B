@@ -66,18 +66,15 @@ def fake():
         s.close()
 
 
-def jev_reply(model="jev-1.14.0", inert=0.1, jitter=0.0):
+def jev_reply(model="jev-1.14.0", jitter=0.0):
     calls = {"n": 0}
 
     def reply(body):
         calls["n"] += 1
         answers = {}
         for name in body["questions"]:
-            if name == J.INERT_Q:
-                p = inert
-            else:
-                k = int(name[-2:])
-                p = float(np.clip(1 - (k / 11) + jitter * (calls["n"] - 2), 0, 1))
+            k = int(name[-2:])
+            p = float(np.clip(1 - (k / 11) + jitter * (calls["n"] - 2), 0, 1))
             answers[name] = {"type": "noul", "noul": p}
         return 200, {"model": model, "answers": answers, "usage": {"input_tokens": 100, "output_tokens": 11}}
     return reply
@@ -98,21 +95,20 @@ def test_unversioned_model_names_are_refused(bad):
         J.JevConfig(model=bad)
 
 
-def test_eleven_questions_one_per_edge_plus_inert():
-    qs = J.questions()
-    assert len(qs) == 11 and J.INERT_Q in qs and len(J.FINITE_EDGES) == 10
+def test_ten_questions_one_per_finite_edge():
+    qs = J.questions()                      # R1-EDGES-10: 10 yes/no questions, no inert question
+    assert len(qs) == 10 == len(J.FINITE_EDGES)
     assert all(q["type"] == "noul" for q in qs.values())
-    assert len(J.questions(include_inert=False)) == 10
+    assert sorted(qs) == [J.edge_name(k) for k in range(1, 11)]
 
 
 def test_bins_monotone_cdf_and_mass():
     s = np.array([0.95, 0.9, 0.92, 0.7, 0.6, 0.65, 0.3, 0.2, 0.1, 0.05])  # two non-monotone steps
-    ans = {J.edge_name(k + 1): {"noul": v} for k, v in enumerate(s)} | {J.INERT_Q: {"noul": 0.2}}
+    ans = {J.edge_name(k + 1): {"noul": v} for k, v in enumerate(s)}
     p = J.bins_from_answers(ans)
-    assert p.shape == (12,) and np.isclose(p.sum(), 1) and np.all(p >= 0) and np.isclose(p[0], 0.2)
+    assert p.shape == (12,) and np.isclose(p.sum(), 1) and np.all(p >= 0) and p[0] == 0
     cdf = np.maximum.accumulate(1 - s)
-    assert np.allclose(np.cumsum(p[1:])[:-1] / 0.8, cdf)
-    assert J.bins_from_answers(ans, include_inert=False)[0] == 0
+    assert np.allclose(np.cumsum(p[1:])[:-1], cdf)
 
 
 def test_forecast_three_repeats_one_request_each_and_full_log(fake, tmp_path):
@@ -122,7 +118,7 @@ def test_forecast_three_repeats_one_request_each_and_full_log(fake, tmp_path):
     assert len(srv.requests) == 3 and len(out["repeats"]) == 3
     assert np.isclose(sum(out["probs"]), 1) and max(out["spread"]) > 0
     body = srv.requests[0]
-    assert body["model"] == "jev-1.14.0" and len(body["questions"]) == 11
+    assert body["model"] == "jev-1.14.0" and len(body["questions"]) == 10
     assert body["state"].startswith(PROMPT.state) and PROMPT.proposal in body["state"]
     assert srv.headers[0]["Authorization"] == f"Bearer {FAKE_KEY}"
     log = (tmp_path / "jev" / "20261024" / "calls.jsonl").read_text()

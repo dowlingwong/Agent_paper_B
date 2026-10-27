@@ -1,6 +1,7 @@
 {
- "comment": "DRAFT (RUNBOOK A.6 + A.10, 25 Oct 2026): C3 label sweep on deepthought (deepthought.etp.kit.edu, 4 x GTX TITAN X 12 GB, compute capability 5.2, driver 525.147.05), the primary sweep host (PLAN §10 R1-SWEEP-HOST, 24 Oct; no mixing hosts within one labelled table). SAME DESIGN AS THE ADA CONFIG (r1/scripts/configs/c3_sweep_ada.json): the eight D21 nodes, 18 instances, W = 20, both memory modes, liveness 2 x W = 10 memory on, transport retry 3, gates, audit K = 10 (7001..7010, 5 + 5). BACKEND llama.cpp (PLAN §10 R1-INFER-LLAMACPP, 25 Oct; RUNBOOK A.10): a dedicated llama-server per batch, pinned by the sha256 of the GGUF file (llamacpp.model_sha256) and the exact 'version: <n> (<commit>)' line of `llama-server --version` (llamacpp.build); the runner refuses on any mismatch, requires every layer offloaded to the GPU (server log; CPU fallback or partial offload is a STOP), the alias served on /v1/models and the GGUF path on /props. Collectors use the harness llamacpp provider (llamacpp/r1-manager, LLAMACPP_BASE_URL .../v1, D26 seed in each request). n_gpu_layers 999 = all layers; ctx_size 8192 and the alias are proposals (open question in BATCH_B_25OCT_HANDOFF). footprint_mib = the loaded server's GPU memory in MiB as measured by the one-token load probe on this host (co-tenancy margin, 13 Oct). AUTHOR ANSWERS (25 Oct): watchdog on; resume max_restarts 5, watchdog max_restarts 3; min_live_nodes 8 (a pool below 8 is an author decision, RUNBOOK §6); Paper A check = not applicable on this host (Paper A runs on zhixu experiment). Every \"TODO_VERIFY_ON_HOST\" value is read on the host (checklist in docs/r1/overnight/BATCH_B_25OCT_HANDOFF.md); the runner refuses to launch while any is left; `--check-config --allow-placeholders` validates the rest. AI-assisted (Claude); ENGINEERING_ONLY config; the sweep output is PILOT label data. ONE MANAGER PER TITAN: the runner drives ONE dedicated llama-server on ONE card per batch (gpu_uuid); four cards need four batches or a multi-instance runner (open question 3, not built). KNOWN RISK: llama.cpp must be built with CUDA for sm_52 against a toolkit the 525 driver supports (<= 12.0); RUNBOOK A.11 (one-token load probe proving full offload) comes before any use of this file.",
+ "comment": "RUNBOOK A.6 + A.10, filled on the host 26 Oct 2026 (PLAN §10 R1-DT-RESTART / R1-DT-PIN / R1-DT-SCRATCH / R1-DT-TESTGATE): C3 label sweep 1 on deepthought (deepthought.etp.kit.edu, 4 x GTX TITAN X 12 GB, compute capability 5.2, driver 525.147.05), the primary sweep host (PLAN §10 R1-SWEEP-HOST, 24 Oct; no mixing hosts within one labelled table). SAME DESIGN AS THE ADA CONFIG (r1/scripts/configs/c3_sweep_ada.json): the eight D21 nodes, 18 instances, W = 20, both memory modes, liveness 2 x W = 10 memory on, transport retry 3, gates, audit K = 10 (7001..7010, 5 + 5). BACKEND llama.cpp (PLAN §10 R1-INFER-LLAMACPP, 25 Oct; RUNBOOK A.10): a dedicated llama-server per batch, pinned by the sha256 of the GGUF file and the exact 'version: ...' line of `llama-server --version`. STRUCTURED OUTPUT (PLAN §10 R1-SCHEMA, 26 Oct): proposal_schema = manager_proposal/v1, structure only (six string fields), so D25 key/value validity stays the model's; a parse failure is recorded and counted, never replaced by the heuristic default. HOST VALUES READ ON 26 OCT 2026: binary and GGUF from the 25 Oct Phase 1 bring-up (reports/LLAMACPP_PROBE_DT_20261025.md), re-verified here by r1.scripts.llamacpp_probe with the sweep's own server settings (-np 1, -c 8192): build 'version: 0.7.0-dev (build 1, commit 620d222)', GGUF sha256 509287f7..., verdict FULL_GPU_OFFLOAD by route (ii) (this build prints no 'offloaded N/N layers' line at default verbosity; CPU control 4.192x slower), footprint_mib = 5253 as measured for the loaded server on the card. gpu_uuid pins TITAN index 1 (GPU-2516f262-...), free at 3 MiB when measured; index 0 carried 5.3 GiB of three other users' processes (co-tenancy is allowed and logged, PLAN §10 13 Oct). port 18083 is free (not 11434, not the probe's 18082). workers = 16 of 40 CPUs: about 12.4 cores were measured in use by three other users on 26 Oct, so 16 collector workers plus the runner and llama-server leave >= 10 cores of headroom, and the Phase 8 fresh-seed audits run on these CPUs afterwards (the runbook's starting suggestion was 24; reduced for the measured co-tenancy, an engineering choice flagged for the author). AUTHOR ANSWERS (25 Oct): watchdog on; resume max_restarts 5, watchdog max_restarts 3; min_live_nodes 8 (a pool below 8 is an author decision, RUNBOOK §6); Paper A check = not applicable on this host (Paper A runs on zhixu experiment). ONE MANAGER PER TITAN: the runner drives ONE dedicated llama-server on ONE card per batch (gpu_uuid); sweep 1 is one batch on one TITAN, and no card ever hosts two managers. Four concurrent batches would produce four sweep indexes, which the A.4 table build does not accept as one sweep; that option is not built and is an open question for the author. AI-assisted (Claude); ENGINEERING_ONLY config; the sweep output is EVIDENCE label data and needs the author's authorization note.",
  "backend": "llamacpp",
+ "proposal_schema": "manager_proposal/v1",
  "nodes": [
   "digits_mlp",
   "tabular_mlp",
@@ -18,7 +19,7 @@
   "append_only_summary",
   "none"
  ],
- "workers": "TODO_VERIFY_ON_HOST",
+ "workers": 16,
  "transport_max_attempts": 3,
  "liveness": {
   "instances": 2,
@@ -37,23 +38,23 @@
   ],
   "timeout": 120
  },
- "gpu_uuid": "TODO_VERIFY_ON_HOST",
+ "gpu_uuid": "GPU-2516f262-6a75-eee3-26ee-b2e8d908c07d",
  "gpu_wait_seconds": 21600,
  "llamacpp": {
-  "binary": "TODO_VERIFY_ON_HOST",
-  "model_path": "TODO_VERIFY_ON_HOST",
-  "model_sha256": "TODO_VERIFY_ON_HOST",
+  "binary": "/ceph/dwong/opt/llama.cpp/build-gcc13/bin/llama-server",
+  "model_path": "/ceph/dwong/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+  "model_sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
   "model_alias": "r1-manager",
-  "build": "TODO_VERIFY_ON_HOST",
-  "port": "TODO_VERIFY_ON_HOST",
+  "build": "version: 0.7.0-dev (build 1, commit 620d222)",
+  "port": 18083,
   "n_gpu_layers": 999,
   "ctx_size": 8192,
-  "footprint_mib": "TODO_VERIFY_ON_HOST",
+  "footprint_mib": 5253,
   "extra_args": [],
   "start_timeout": 300
  },
  "allowed_hosts": [
-  "TODO_VERIFY_ON_HOST"
+  "deepthought"
  ],
  "audit": {
   "seeds": [

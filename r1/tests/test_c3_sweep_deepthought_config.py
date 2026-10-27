@@ -1,9 +1,14 @@
-"""RUNBOOK A.6 (draft) and A.10: the deepthought and zhixu portal sweep configs on the llama.cpp backend,
+"""RUNBOOK A.6 and A.10: the deepthought and zhixu portal sweep configs on the llama.cpp backend,
 and unresolved-value handling. No host access.
 
-A.10 (25 Oct 2026, PLAN §10 R1-INFER-LLAMACPP): both host drafts use ``backend: llamacpp``; the
+A.10 (25 Oct 2026, PLAN §10 R1-INFER-LLAMACPP): both configs use ``backend: llamacpp``; the
 author's answers to batch A's open questions apply (watchdog on, restart limits 5 / 3,
 min_live_nodes 8, Paper A check "not applicable" on these hosts).
+
+A.6 completed on the host (26 Oct 2026, PLAN §10 R1-DT-PIN / R1-SCHEMA): the deepthought config is
+no longer a draft - every host value is read on deepthought and ``proposal_schema`` is on - so it
+must carry no placeholder and ``--check-config`` must pass on it. The zhixu portal config is still
+a draft and keeps the placeholder behaviour.
 
 AI-assisted (Claude); ENGINEERING_ONLY.
 """
@@ -43,11 +48,12 @@ def test_placeholders_are_refused_unless_explicitly_allowed(tmp_path):
     assert sweep.placeholders(sweep.load_config(ADA)) == []
 
 
-@pytest.mark.parametrize("path,host", [(DEEPTHOUGHT, "deepthought"), (PORTAL, "zhixu portal")])
-def test_host_drafts_keep_the_ada_design_on_llamacpp_and_mark_only_host_values(path, host):
+@pytest.mark.parametrize("path,host,open_values", [(DEEPTHOUGHT, "deepthought", set()),
+                                                   (PORTAL, "zhixu portal", HOST_VALUES)])
+def test_host_configs_keep_the_ada_design_on_llamacpp_and_mark_only_host_values(path, host, open_values):
     ada = sweep.load_config(ADA)
     draft = sweep.load_config(path, allow_placeholders=True)
-    assert set(sweep.placeholders(draft)) == HOST_VALUES
+    assert set(sweep.placeholders(draft)) == open_values
     for key in ("nodes", "nodes_pending", "instances", "runs", "memory_modes", "transport_max_attempts",
                 "liveness", "max_parse_failure_rate", "max_collect_sessions", "audit"):
         assert draft[key] == ada[key], key
@@ -74,11 +80,28 @@ def test_paper_a_not_applicable_command_clears_off_the_paper_a_host():
         sweep.paper_a_check(on_ada, "ucrtasl")
 
 
-def test_check_config_cli_on_the_draft():
-    base = [sys.executable, str(REPO / "r1/scripts/c3_label_sweep.py"), "--config", str(DEEPTHOUGHT), "--check-config"]
+def test_check_config_cli_on_the_portal_draft():
+    base = [sys.executable, str(REPO / "r1/scripts/c3_label_sweep.py"), "--config", str(PORTAL), "--check-config"]
     refused = subprocess.run(base, capture_output=True, text=True, cwd=REPO, timeout=60)
     assert refused.returncode == 2 and "unresolved TODO_VERIFY" in refused.stdout
     draft = subprocess.run([*base, "--allow-placeholders"], capture_output=True, text=True, cwd=REPO, timeout=60)
     assert draft.returncode == 0 and json.loads(draft.stdout)["nodes"][-1] == "openml_blood_transfusion"
     assert draft.stderr.startswith("UNRESOLVED (9): ")
     assert set(draft.stderr.split(": ", 1)[1].strip().split(", ")) == HOST_VALUES
+
+
+def test_check_config_cli_passes_on_the_completed_deepthought_config():
+    """A.6 completed on the host (26 Oct): no placeholder is left and the schema is on (R1-SCHEMA)."""
+    base = [sys.executable, str(REPO / "r1/scripts/c3_label_sweep.py"), "--config", str(DEEPTHOUGHT),
+            "--check-config"]
+    done = subprocess.run(base, capture_output=True, text=True, cwd=REPO, timeout=60)
+    assert done.returncode == 0, done.stdout[-2000:] + done.stderr[-2000:]
+    config = json.loads(done.stdout)
+    assert sweep.placeholders(config) == []
+    assert config["backend"] == "llamacpp" and config["proposal_schema"] == "manager_proposal/v1"
+    assert config["allowed_hosts"] == ["deepthought"]
+    spec = config["llamacpp"]
+    assert spec["binary"].startswith("/") and spec["model_path"].endswith(".gguf")
+    assert sweep.lsi.VERSION_RE.fullmatch(spec["build"])
+    assert len(spec["model_sha256"]) == 64 and spec["footprint_mib"] >= 1 and spec["port"] >= 1024
+    assert spec["ctx_size"] == 8192 and spec["n_gpu_layers"] == 999

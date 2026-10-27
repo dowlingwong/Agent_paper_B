@@ -1,0 +1,9 @@
+kev-0.8b: 12/12 files match (jaredpalmer/kev-0.8b@788ddbdd6571) dir=/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571
+kev-4b: 16/16 files match (jaredpalmer/kev-4b@591dcb5bd6d0) dir=/home/dowling/r1_trackp/models/jaredpalmer__kev-4b@591dcb5bd6d0
+laya: 8/8 files match (convaiinnovations/laya-typed-decisions@e929ae5cf69b) dir=/home/dowling/r1_trackp/models/convaiinnovations__laya-typed-decisions@e929ae5cf69b
+qwen3.5-0.8b-base: 12/12 files match (Qwen/Qwen3.5-0.8B-Base@dc7cdfe2ee41) dir=/home/dowling/r1_trackp/models/Qwen__Qwen3.5-0.8B-Base@dc7cdfe2ee41
+qwen3.5-4b-base: 13/13 files match (Qwen/Qwen3.5-4B-Base@1001bb4d826a) dir=/home/dowling/r1_trackp/models/Qwen__Qwen3.5-4B-Base@1001bb4d826a
+startlux-0.8b: 16/16 files match (startlux-models/StartLux-Decision-v1.1-0.8B-Instant@6496ae641cc7) dir=/home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-0.8B-Instant@6496ae641cc7
+startlux-2b: 17/17 files match (startlux-models/StartLux-Decision-v1.1-2B-Instant@f1e6cd147dda) dir=/home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-2B-Instant@f1e6cd147dda
+startlux-4b: 18/18 files match (startlux-models/StartLux-Decision-v1.1-4B-Instant@416088f77cfc) dir=/home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-4B-Instant@416088f77cfc
+ALL OK

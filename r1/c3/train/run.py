@@ -6,8 +6,10 @@ ENGINEERING_ONLY; AI-assisted (Claude).
 * **Seeds.** Training labels come only from audit seeds 7001–7005 (``*_train`` columns). ``guard_rows`` refuses
   evaluation columns (``*_eval``, seeds 7006–7010) unless the caller is the P.4 final evaluation *and* its
   authorization note exists (``docs/r1/authorizations/trackp_p4_<date>.md``).
-* **GPU lease (R1-PORTAL-SCHEDULE).** ``gpu_lease`` checks STATUS on ``origin/main`` for a running Track X evidence
-  phase, that ``nvidia-smi`` lists no compute process, then holds ``~/r1_locks/gpu0.lock`` with ``flock``
+* **GPU lease (R1-PORTAL-SCHEDULE).** ``gpu_lease`` checks the Track X evidence marker
+  ``~/r1_locks/trackx_evidence.active`` (present while B1 or B2 runs; R1-TRACKX-MARKER, 26 Oct), STATUS on
+  ``origin/main`` for a running Track X evidence phase (kept as a second check), that ``nvidia-smi`` lists no
+  compute process, then holds ``~/r1_locks/gpu0.lock`` with ``flock``
   semantics (``fcntl.flock``, non-blocking — the same lock ``flock -n`` takes) and logs start/end.
 * **Manifest.** ``run_manifest`` records base revision, adapter/heads sha256, data-manifest hash, seed, git commits
   of both repos, the GPU-lease log, the evidence label and the config digest.
@@ -21,6 +23,7 @@ import hashlib
 import json
 import os
 import re
+import socket
 import subprocess
 from pathlib import Path
 from typing import Iterable, Iterator
@@ -33,6 +36,7 @@ TRAIN_SEEDS = (7001, 7002, 7003, 7004, 7005)
 EVAL_SEEDS = (7006, 7007, 7008, 7009, 7010)
 EVAL_COLUMNS = re.compile(r"(^|_)eval($|_)|^y_eval|^z_eval|^u_eval|^mu_eval|(^|\D)70(0[6-9]|10)(\D|$)")
 LOCK_PATH = Path.home() / "r1_locks" / "gpu0.lock"
+TRACKX_MARKER = Path.home() / "r1_locks" / "trackx_evidence.active"   # exists while Track X B1 or B2 runs
 LEASE_LOG = Path.home() / "r1_trackp" / "runs" / "gpu_lease_log.jsonl"
 AUTH_DIR = REPO / "docs" / "r1" / "authorizations"
 # Track X evidence phases (PORTAL_EXAM_RUNBOOK B1/B2) in STATUS.md (newest entry first). The newest heading that
@@ -151,8 +155,11 @@ def _log_lease(event: dict, log_path: Path) -> None:
 
 @contextlib.contextmanager
 def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_LOG, run_log: list | None = None,
-              status_text: str | None = None, check_processes: bool = True) -> Iterator[dict]:
+              status_text: str | None = None, check_processes: bool = True,
+              marker_path: Path = TRACKX_MARKER) -> Iterator[dict]:
     """Hold the GPU lease for one job (R1-PORTAL-SCHEDULE). Raises TrackPStop if it may not start."""
+    if marker_path.exists():
+        raise TrackPStop(f"Track X evidence marker {marker_path} exists (B1/B2 running): do not start")
     if track_x_running(status_text):
         raise TrackPStop("a Track X evidence phase (B1/B2) is running on the card: do not start")
     if check_processes:
@@ -166,7 +173,10 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
             fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise TrackPStop(f"GPU lock {lock_path} is held by another job") from None
-        start = {"event": "start", "job": job, "pid": os.getpid(), "utc": utcnow()}
+        if marker_path.exists():   # re-read under the lock: a B1/B2 start between the check and the lock wins
+            raise TrackPStop(f"Track X evidence marker {marker_path} exists (B1/B2 running): do not start")
+        start = {"event": "start", "job": job, "pid": os.getpid(), "utc": utcnow(),
+                 "trackx_marker": f"absent: {marker_path}"}
         _log_lease(start, log_path)
         if run_log is not None:
             run_log.append(start)
@@ -188,8 +198,11 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
 def git_commit(repo: Path) -> dict:
     def g(*a):
         return subprocess.run(["git", "-C", str(repo), *a], capture_output=True, text=True).stdout.strip()
+    raw = subprocess.run(["git", "-C", str(repo), "status", "--porcelain", "-z", "--untracked-files=no"],
+                         capture_output=True, text=True).stdout   # unstripped: "XY path" entries, NUL-separated
+    dirty = [e[3:] for e in raw.split("\0") if len(e) > 3]
     return {"path": str(repo), "commit": g("rev-parse", "HEAD"), "branch": g("rev-parse", "--abbrev-ref", "HEAD"),
-            "dirty": bool(g("status", "--porcelain", "--untracked-files=no"))}
+            "dirty": bool(dirty), "dirty_files": dirty}
 
 
 def data_manifest_hash(rows: Iterable[dict]) -> str:
@@ -201,6 +214,82 @@ def data_manifest_hash(rows: Iterable[dict]) -> str:
     return h.hexdigest()
 
 
+CODE_PACKAGES = {"kev": "kev", "laya": "laya", "startlux_decide": "startlux_decide"}
+
+
+def environment_record() -> dict:
+    """Library versions and, per code-pinned package, the commit pip recorded and the git state of the directory the
+    import actually resolves to (R1-ENV-PIN)."""
+    import importlib
+    import importlib.metadata as md
+    out: dict = {"packages": {}}
+    for lib in ("torch", "transformers", "peft"):
+        try:
+            out[lib] = importlib.import_module(lib).__version__
+        except ImportError:
+            out[lib] = None
+    for dist, mod in CODE_PACKAGES.items():
+        rec: dict = {}
+        try:
+            direct = md.distribution(dist).read_text("direct_url.json")
+            rec["pip_commit"] = (json.loads(direct).get("vcs_info") or {}).get("commit_id") if direct else None
+        except md.PackageNotFoundError:
+            rec["pip_commit"] = None
+        try:
+            src = Path(importlib.import_module(mod).__file__).resolve().parent
+            rec["path"] = str(src)
+            if (src.parent / ".git").exists():
+                rec["git"] = git_commit(src.parent)
+        except ImportError:
+            rec["path"] = None
+        out["packages"][dist] = rec
+    return out
+
+
+def check_environment(cfg: dict, env: dict | None = None) -> dict:
+    """STOP unless torch and the code pins are the configured ones (R1-ENV-PIN): pip's recorded commit, and the
+    imported checkout (if it is one) at that commit with a clean tree."""
+    env = environment_record() if env is None else env
+    want_torch = cfg["venv"]["torch"]
+    if env["torch"] != want_torch:
+        raise TrackPStop(f"torch {env['torch']} is not the pinned {want_torch}")
+    for dist, pin in cfg["code_pins"].items():
+        commit = pin.split("@")[-1]
+        rec = env["packages"].get(dist) or {}
+        if rec.get("pip_commit") != commit:
+            raise TrackPStop(f"{dist}: installed commit {rec.get('pip_commit')} is not the pinned {commit}")
+        g = rec.get("git")
+        if g and (g["commit"] != commit or g["dirty"]):
+            raise TrackPStop(f"{dist}: imported from {rec['path']} at {g['commit']} (dirty={g['dirty']}), "
+                             f"not the pinned {commit}")
+    return env
+
+
+def host_record() -> dict:
+    """Host and GPU of the run (R1-ADA-OVERFLOW: every manifest records them; one GPU type per comparison table)."""
+    gpus = None
+    try:
+        res = subprocess.run(["nvidia-smi", "--query-gpu=name,compute_cap,driver_version,uuid",
+                              "--format=csv,noheader"], capture_output=True, text=True, timeout=60)
+        if res.returncode == 0:
+            gpus = [dict(zip(("name", "compute_capability", "driver", "uuid"), (x.strip() for x in ln.split(","))))
+                    for ln in res.stdout.splitlines() if ln.strip()]
+    except (OSError, subprocess.SubprocessError):
+        pass
+    device = None   # the card this process uses, by UUID (nvidia-smi and CUDA may order cards differently)
+    try:
+        import torch
+        if torch.cuda.is_available():
+            props = torch.cuda.get_device_properties(torch.cuda.current_device())
+            device = {"name": props.name, "uuid": f"GPU-{props.uuid}",
+                      "compute_capability": f"{props.major}.{props.minor}"}
+    except (ImportError, RuntimeError, AttributeError):
+        pass
+    return {"hostname": socket.gethostname(), "gpus": gpus, "device": device,
+            "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+            "cuda_device_order": os.environ.get("CUDA_DEVICE_ORDER")}
+
+
 def run_manifest(*, subcommand: str, evidence: str, cfg: dict, seed: int, base: dict, model_files: dict,
                  data_hash: str, lease_log: list, extra: dict | None = None) -> dict:
     if evidence not in EVIDENCE_LABELS:
@@ -209,4 +298,5 @@ def run_manifest(*, subcommand: str, evidence: str, cfg: dict, seed: int, base: 
             "evidence_label": evidence, "seed": seed, "base": base, "model_files_sha256": model_files,
             "data_manifest_sha256": data_hash, "config_sha256": config_digest(cfg),
             "git": {"paper": git_commit(REPO), "harness": git_commit(harness_root())},
+            "environment": environment_record(), "host": host_record(),
             "gpu_lease": lease_log, **(extra or {})}

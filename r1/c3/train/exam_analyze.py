@@ -1,4 +1,4 @@
-"""P.3 exam analysis under the frozen selection rule (spec §5.7; rule file r1/c3/rules/p3_rule_v1.yaml).
+"""P.3 exam analysis under the frozen selection rule (spec §5.7; rule file r1/c3/rules/p3_rule_v2.yaml).
 
 ENGINEERING_ONLY; AI-assisted (Claude). Self-contained: RPS skill is computed
 from the per-item RPS values in the input, not from ``losses``/``metrics``.
@@ -12,12 +12,18 @@ Input (JSON, schema ``trackp_exam_results/v1``)::
         "model": "kev-0.8b", "family": "kev",          # family keys rule.architecture_classes
         "checkpoint": "base" | "instruct",
         "author_rung": null | "trainable", "author_row": null | "PLAN row id",   # pending-author families only
-        "e0": {"width_slope": float, "mean_slope": float} | null,             # null for the floor
+        "e0": {"protocol": "trackp_e0/v2", "width_slope_vs_label": float, "width_slope_vs_label_lb95": float,
+               "mean_slope": float} | null,                                    # null for the floor
         "e2": {"val_rps_skill": float} | null,
         "e3": {"rps": {seed: {item_id: rps}}, "width_ratio": float},
         "e4": {"oom": bool, "reload_deterministic": bool, "cost_s": float} | null,
         "e6": {"A1": bool | null, ..., "A5": bool | null} | null,
         "e7": {"softmax_12": skill, "cumulative_11": skill} | null}, ...]}
+
+Only rule v2 is accepted (R1-EXAM-RULE-V2; v1's E0 thresholds were withdrawn by R1-E0-PROTOCOL), and every E0
+record must declare ``"protocol": "trackp_e0/v2"``. Finalist 1 is the E3 point-estimate top; the tie-break order
+picks only the optional second finalist, among tied models of another class, by sequential filtering (E2 within
+the rule's tolerance, then |width ratio - 1|, base before instruct, E4 cost, then name).
 
 Output: ranking (E3 skill), discards with reasons, tied set and its order, finalists, control size, head forms,
 floor verdict (``stop_escalate``), packing flags, the rule's sha256.
@@ -33,13 +39,18 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-RULE_PATH = Path(__file__).resolve().parents[1] / "rules" / "p3_rule_v1.yaml"
+RULE_PATH = Path(__file__).resolve().parents[1] / "rules" / "p3_rule_v2.yaml"
+RULE_VERSION = "p3_rule/v2"
 SCHEMA = "trackp_exam_results/v1"
 OUTPUT_SCHEMA = "trackp_exam_selection/v1"
 
 
 class RuleHashError(RuntimeError):
     pass
+
+
+class RuleSuperseded(RuntimeError):
+    """The input's E0 protocol is not the one the rule's thresholds were written for."""
 
 
 def load_rule(path: Path | str = RULE_PATH) -> tuple[dict, str]:
@@ -50,7 +61,11 @@ def load_rule(path: Path | str = RULE_PATH) -> tuple[dict, str]:
     expected = Path(str(path) + ".sha256").read_text().split()[0]
     if digest != expected:
         raise RuleHashError(f"{path.name}: sha256 {digest} != committed {expected}")
-    return yaml.safe_load(raw), digest
+    rule = yaml.safe_load(raw)
+    if rule.get("version") != RULE_VERSION:
+        raise RuleSuperseded(f"{path.name} is {rule.get('version')!r}; exam_analyze accepts {RULE_VERSION} only "
+                             "(R1-EXAM-RULE-V2)")
+    return rule, digest
 
 
 class _Exam:
@@ -111,9 +126,12 @@ def _step1(rule, m) -> list[str]:
     if e0 is None:
         reasons.append("e0_missing")
     else:
-        if not e0["width_slope"] >= rule["e0_pass"]["width_slope_min"]:
+        t = rule["e0_pass"]
+        if not e0["width_slope_vs_label"] >= t["width_slope_vs_label_min"]:
             reasons.append("e0_width_slope")
-        if not e0["mean_slope"] >= rule["e0_pass"]["mean_slope_min"]:
+        if not e0["width_slope_vs_label_lb95"] > t["width_slope_vs_label_lb95_gt"]:
+            reasons.append("e0_width_slope_lb95")
+        if not e0["mean_slope"] >= t["mean_slope_min"]:
             reasons.append("e0_mean_slope")
     e4 = m.get("e4")
     if e4 is None:
@@ -126,13 +144,28 @@ def _step1(rule, m) -> list[str]:
     return reasons
 
 
-def _order_key(m):
-    """Tie-break order within the tied set (rule.tie_breaks)."""
-    e2 = (m.get("e2") or {}).get("val_rps_skill")
-    return (-(e2 if e2 is not None else -np.inf),
-            abs(m["e3"]["width_ratio"] - 1.0),
-            0 if m.get("checkpoint") == "base" else 1,
-            (m.get("e4") or {}).get("cost_s", np.inf))
+def _pick_second(rule, pool: list) -> tuple[dict | None, list]:
+    """Sequential filtering over ``pool`` (tied, other class): E2 within tolerance of the best, then the smallest
+    |width ratio - 1|, base before instruct, lowest cost, then name. Returns the pick and the trace."""
+    if not pool:
+        return None, []
+    tol = rule["finalists"]["e2_tie_tolerance"]
+    e2 = lambda m: (m.get("e2") or {}).get("val_rps_skill")  # noqa: E731
+    keys = [("e2_probe_skill", lambda m: -(e2(m) if e2(m) is not None else -np.inf), tol),
+            ("width_ratio_distance", lambda m: abs(m["e3"]["width_ratio"] - 1.0), 0.0),
+            ("base_before_instruct", lambda m: 0 if m.get("checkpoint") == "base" else 1, 0.0),
+            ("e4_cost", lambda m: (m.get("e4") or {}).get("cost_s", np.inf), 0.0)]
+    trace, left = [], list(pool)
+    for name, key, t in keys:
+        best = min(key(m) for m in left)
+        left = [m for m in left if key(m) <= best + t + 1e-12]     # a difference of exactly ``t`` is a tie
+        trace.append({"key": name, "kept": [m["model"] for m in left]})
+        if len(left) == 1:
+            break
+    left = sorted(left, key=lambda m: m["model"])
+    if len(left) > 1:
+        trace.append({"key": "model_name", "kept": [left[0]["model"]]})
+    return left[0], trace
 
 
 def _head_form(rule, m):
@@ -150,6 +183,11 @@ def analyze(data: dict, rule_path: Path | str = RULE_PATH) -> dict:
     names = [m["model"] for m in models]
     if len(set(names)) != len(names):
         raise ValueError("duplicate model names")
+    want = rule["e0_protocol"]
+    stale = [m["model"] for m in models if m.get("e0") is not None and m["e0"].get("protocol") != want]
+    if stale:
+        raise RuleSuperseded(f"{rule['version']} has E0 thresholds for {want}; E0 records of {stale} do not declare "
+                             "it (R1-E0-PROTOCOL)")
     roles = rule["roles"]
     W = ex.boot_weights(rule)
     alpha = rule["bootstrap"]["alpha"]
@@ -196,19 +234,18 @@ def analyze(data: dict, rule_path: Path | str = RULE_PATH) -> dict:
             comparisons[m["model"]] = {"diff_vs_top": d, "lo": lo, "hi": hi, "tied": bool(lo <= 0 <= hi)}
             if lo <= 0 <= hi:
                 tied.append(m)
-    tied_order = sorted(tied, key=_order_key)
-    finalists = []
-    if tied_order:
-        finalists.append(tied_order[0])
-        for m in tied_order[1:]:
-            if len(finalists) >= rule["finalists"]["max"]:
-                break
-            if not rule["finalists"]["second_requires_different_class"] or _class(rule, m) != _class(rule, finalists[0]):
-                finalists.append(m)
-                break
+    finalists, second_trace = [], []
+    if ranking:
+        finalists.append(ranking[0])                       # R1-EXAM-RULE-V2: the E3 point-estimate top
+        pool = [m for m in tied[1:] if not rule["finalists"]["second_requires_different_class"]
+                or _class(rule, m) != _class(rule, ranking[0])]
+        second, second_trace = _pick_second(rule, pool)
+        if second is not None and rule["finalists"]["max"] >= 2:
+            finalists.append(second)
     control = max(controls, key=lambda m: skill[m["model"]]) if controls else None
     out.update({"top": ranking[0]["model"] if ranking else None, "comparisons_vs_top": comparisons,
-                "tied_set": [m["model"] for m in tied_order], "finalists": [m["model"] for m in finalists],
+                "tied_set": [m["model"] for m in tied], "finalists": [m["model"] for m in finalists],
+                "second_finalist_trace": second_trace,
                 "control": control["model"] if control else None,
                 "head_forms": {m["model"]: _head_form(rule, m) for m in finalists}})
 

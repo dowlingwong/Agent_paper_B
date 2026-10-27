@@ -1,0 +1,830 @@
+{
+ "kev-0.8b": {
+  "final": {
+   "git": {
+    "branch": "trackp-20261026",
+    "commit": "5538b793d0013581c74dd5982fc649a39798c787",
+    "dirty": false,
+    "dirty_files": [],
+    "path": "/home/dowling/r1_trackp/Agent_paper_B"
+   },
+   "lease": [
+    {
+     "event": "start",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 203218,
+     "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+     "utc": "2026-10-26T23:05:55Z"
+    },
+    {
+     "event": "end",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 203218,
+     "utc": "2026-10-26T23:18:29Z"
+    }
+   ],
+   "report": {
+    "batch_size": 8,
+    "budget_override": {
+     "eval_every": null,
+     "steps": 400
+    },
+    "eval_every": 100,
+    "frozen_token_rows": false,
+    "head_fit": {
+     "converged": true,
+     "descriptive": true,
+     "grad_norm": 3.629132045933844e-05,
+     "lora_starts_from": "the fresh head (restored after this fit)",
+     "method": "full-batch L-BFGS (strong Wolfe), CPU float64",
+     "outer_iterations": 390,
+     "restarts": 1,
+     "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.869585129704556,
+      "mean_slope_vs_label": 0.8446804432974053,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.01662770892309259,
+      "rps_extrap": 0.015371022933359513,
+      "rps_interp": 0.017421081644180193,
+      "width_ratio": 0.7835617954964705,
+      "width_slope": 0.010626150152081234,
+      "width_slope_vs_label": 0.006764349512282702,
+      "width_slope_vs_label_lb95": -0.03328815917162067,
+      "width_slope_vs_label_ub95": 0.04933196126734014
+     },
+     "train_rps": 0.0019332714146003127,
+     "val_rps": 0.01407216303050518
+    },
+    "head_lr": 0.001,
+    "lora": {
+     "best_step": 400,
+     "best_value": 0.0007770294905640185,
+     "checkpoint": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/final/lora/ckpt/step_0000400",
+     "completed": true,
+     "early_stopped": false,
+     "stopped_at": 400,
+     "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 1.0275078778419549,
+      "mean_slope_vs_label": 0.9983061061199994,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.0024813783300927476,
+      "rps_extrap": 0.003043190630396402,
+      "rps_interp": 0.002126694218808059,
+      "width_ratio": 1.2755137408749753,
+      "width_slope": -0.01797438566551248,
+      "width_slope_vs_label": -0.021420588047771635,
+      "width_slope_vs_label_lb95": -0.02917847691142563,
+      "width_slope_vs_label_ub95": -0.01400792542115507
+     }
+    },
+    "lr": 0.0001,
+    "max_steps": 400,
+    "n_test": 1000,
+    "n_train": 2714,
+    "n_val": 286,
+    "pass": false,
+    "patience": 10,
+    "protocol": "trackp_e0/v2",
+    "stage": "final",
+    "target": "y_soft",
+    "token_lr": 0.0001,
+    "val_cells": [
+     [
+      1,
+      3
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      9,
+      3
+     ]
+    ],
+    "variant": "fresh"
+   }
+  },
+  "hard": {
+   "git": {
+    "branch": "trackp-20261026",
+    "commit": "5538b793d0013581c74dd5982fc649a39798c787",
+    "dirty": false,
+    "dirty_files": [],
+    "path": "/home/dowling/r1_trackp/Agent_paper_B"
+   },
+   "lease": [
+    {
+     "event": "start",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 964214,
+     "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+     "utc": "2026-10-26T23:18:33Z"
+    },
+    {
+     "event": "end",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 964214,
+     "utc": "2026-10-26T23:23:54Z"
+    }
+   ],
+   "report": {
+    "batch_size": 8,
+    "budget_override": {
+     "eval_every": null,
+     "steps": 400
+    },
+    "eval_every": 100,
+    "frozen_token_rows": false,
+    "head_lr": 0.001,
+    "lora": {
+     "best_step": 100,
+     "best_value": 0.0188501738011837,
+     "checkpoint": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/hard/lora/ckpt/step_0000400",
+     "completed": true,
+     "early_stopped": false,
+     "stopped_at": 400,
+     "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.8345091255258029,
+      "mean_slope_vs_label": 0.8138061927667282,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.034432450971464405,
+      "rps_extrap": 0.060697766646999524,
+      "rps_interp": 0.017850595887562142,
+      "width_ratio": 0.6620500544309592,
+      "width_slope": 0.0029208657137321636,
+      "width_slope_vs_label": 0.0034299587052380462,
+      "width_slope_vs_label_lb95": 6.29345376012767e-05,
+      "width_slope_vs_label_ub95": 0.006753585781008425
+     }
+    },
+    "lr": 0.0001,
+    "max_steps": 400,
+    "n_test": 1000,
+    "n_train": 2714,
+    "n_val": 286,
+    "pass": null,
+    "patience": 10,
+    "protocol": "trackp_e0/v2",
+    "stage": "final",
+    "target": "y_hard",
+    "token_lr": 0.0001,
+    "val_cells": [
+     [
+      1,
+      3
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      9,
+      3
+     ]
+    ],
+    "variant": "fresh"
+   }
+  },
+  "native": {
+   "git": {
+    "branch": "trackp-20261026",
+    "commit": "5538b793d0013581c74dd5982fc649a39798c787",
+    "dirty": false,
+    "dirty_files": [],
+    "path": "/home/dowling/r1_trackp/Agent_paper_B"
+   },
+   "lease": [
+    {
+     "event": "start",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 1012758,
+     "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+     "utc": "2026-10-26T23:23:58Z"
+    },
+    {
+     "event": "end",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 1012758,
+     "utc": "2026-10-26T23:29:49Z"
+    }
+   ],
+   "report": {
+    "batch_size": 8,
+    "budget_override": {
+     "eval_every": null,
+     "steps": 400
+    },
+    "eval_every": 100,
+    "frozen_token_rows": false,
+    "head_lr": 0.001,
+    "lora": {
+     "best_step": 400,
+     "best_value": 0.00012911924568470567,
+     "checkpoint": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/native/lora/ckpt/step_0000400",
+     "completed": true,
+     "early_stopped": false,
+     "stopped_at": 400,
+     "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 1.0188578337466443,
+      "mean_slope_vs_label": 0.990274162451451,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.0002398286425418751,
+      "rps_extrap": 0.0003372965332779964,
+      "rps_interp": 0.00017829508020112645,
+      "width_ratio": 1.1170151238852066,
+      "width_slope": 0.8037303260775331,
+      "width_slope_vs_label": 0.8618831997998998,
+      "width_slope_vs_label_lb95": 0.8476855625691492,
+      "width_slope_vs_label_ub95": 0.8762547392390252
+     }
+    },
+    "lr": 0.0001,
+    "max_steps": 400,
+    "n_test": 1000,
+    "n_train": 2714,
+    "n_val": 286,
+    "pass": null,
+    "patience": 10,
+    "protocol": "trackp_e0/v2",
+    "stage": "final",
+    "target": "y_soft",
+    "token_lr": 0.0001,
+    "val_cells": [
+     [
+      1,
+      3
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      9,
+      3
+     ]
+    ],
+    "variant": "native",
+    "zero_shot": {
+     "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.034774351719015696,
+      "mean_slope_vs_label": 0.03374420932468776,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.07776897846179819,
+      "rps_extrap": 0.11281460853517415,
+      "rps_interp": 0.05564392326049884,
+      "width_ratio": 2.0847151213900594,
+      "width_slope": -0.026067035344890625,
+      "width_slope_vs_label": -0.029485616882354827,
+      "width_slope_vs_label_lb95": -0.04551901527994575,
+      "width_slope_vs_label_ub95": -0.012503212583306904
+     },
+     "val_rps": 0.08146195858716965
+    }
+   }
+  },
+  "probes": {
+   "git": {
+    "branch": "trackp-20261026",
+    "commit": "5538b793d0013581c74dd5982fc649a39798c787",
+    "dirty": false,
+    "dirty_files": [],
+    "path": "/home/dowling/r1_trackp/Agent_paper_B"
+   },
+   "lease": [
+    {
+     "event": "start",
+     "job": "trackp probes kev-0.8b",
+     "pid": 1065446,
+     "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+     "utc": "2026-10-26T23:29:57Z"
+    },
+    {
+     "event": "end",
+     "job": "trackp probes kev-0.8b",
+     "pid": 1065446,
+     "utc": "2026-10-26T23:30:30Z"
+    }
+   ],
+   "report": {
+    "A1": {
+     "pass": null,
+     "reason": "model does not pack (spec \u00a75.6: packed models only)"
+    },
+    "A2": {
+     "pass": null,
+     "reason": "model does not pack (spec \u00a75.6: packed models only)"
+    },
+    "A3": {
+     "budget_fraction_reached_min_mean": {
+      "0.0": [
+       0.0,
+       0.0
+      ],
+      "0.25": [
+       0.2290909090909091,
+       0.2412722744688019
+      ],
+      "0.5": [
+       0.4782608695652174,
+       0.49392625745058527
+      ],
+      "1.0": [
+       0.9766536964980544,
+       0.9966256573691556
+      ]
+     },
+     "budget_min_mean_max": [
+      198,
+      378.75,
+      496
+     ],
+     "families": [
+      "kev",
+      "laya",
+      "qwen_control",
+      "startlux"
+     ],
+     "limit": 1024,
+     "max_tokens_by_level": {
+      "0.0": {
+       "kev": 767,
+       "laya": 693,
+       "qwen_control": 782,
+       "startlux": 826
+      },
+      "0.25": {
+       "kev": 815,
+       "laya": 728,
+       "qwen_control": 830,
+       "startlux": 874
+      },
+      "0.5": {
+       "kev": 863,
+       "laya": 766,
+       "qwen_control": 878,
+       "startlux": 922
+      },
+      "1.0": {
+       "kev": 965,
+       "laya": 858,
+       "qwen_control": 980,
+       "startlux": 1024
+      }
+     },
+     "mean_abs_drps": {
+      "0.25": 0.00010496251707081683,
+      "0.5": 0.00013687103455595206,
+      "1.0": 0.00013294406790009816
+     },
+     "pass": true,
+     "protocol": "v2_budget"
+    },
+    "A3_descriptive": {
+     "pass": null,
+     "ran": [
+      0
+     ]
+    },
+    "A3_errors": {
+     "descriptive_2000": "ContextOverflow: state exceeds 1024 tokens: 2383",
+     "descriptive_8000": "ContextOverflow: state exceeds 1024 tokens: 8400"
+    },
+    "A4": {
+     "frac_monotone_raw": 0.25,
+     "frac_monotone_vs_label": 0.25,
+     "label_ceiling_frac": 1.0,
+     "median_slope_vs_label": 0.00732240560338651,
+     "pass": false
+    },
+    "A4_v1_raw": {
+     "criterion_met": false,
+     "descriptive": true,
+     "frac_monotone": 0.25
+    },
+    "A5": {
+     "pass": null,
+     "reason": "A5 applies to BinTokenWrapper only (spec \u00a75.6)"
+    }
+   }
+  },
+  "screen_lr0.0001": {
+   "git": {
+    "branch": "trackp-20261026",
+    "commit": "5538b793d0013581c74dd5982fc649a39798c787",
+    "dirty": false,
+    "dirty_files": [],
+    "path": "/home/dowling/r1_trackp/Agent_paper_B"
+   },
+   "lease": [
+    {
+     "event": "start",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 174272,
+     "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+     "utc": "2026-10-26T23:02:40Z"
+    },
+    {
+     "event": "end",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 174272,
+     "utc": "2026-10-26T23:05:44Z"
+    }
+   ],
+   "report": {
+    "batch_size": 8,
+    "budget_override": {
+     "eval_every": null,
+     "steps": 200
+    },
+    "eval_every": 100,
+    "frozen_token_rows": false,
+    "head_lr": 0.001,
+    "lora": {
+     "best_step": 200,
+     "best_value": 0.0011281730839982629,
+     "checkpoint": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr0.0001/lora/ckpt/step_0000200",
+     "completed": true,
+     "early_stopped": false,
+     "stopped_at": 200,
+     "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.9684312139358816,
+      "mean_slope_vs_label": 0.9410518953523651,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.002769362248754885,
+      "rps_extrap": 0.003683236480402279,
+      "rps_interp": 0.0021924139165402983,
+      "width_ratio": 1.2591312742639036,
+      "width_slope": -0.011916405285864294,
+      "width_slope_vs_label": -0.01171226972062889,
+      "width_slope_vs_label_lb95": -0.024133689697076785,
+      "width_slope_vs_label_ub95": 0.0008606231976395351
+     }
+    },
+    "lr": 0.0001,
+    "max_steps": 200,
+    "n_test": 1000,
+    "n_train": 2714,
+    "n_val": 286,
+    "pass": null,
+    "patience": 5,
+    "protocol": "trackp_e0/v2",
+    "stage": "screen",
+    "target": "y_soft",
+    "token_lr": 0.0001,
+    "val_cells": [
+     [
+      1,
+      3
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      9,
+      3
+     ]
+    ],
+    "variant": "fresh"
+   }
+  },
+  "screen_lr1e-05": {
+   "git": {
+    "branch": "trackp-20261026",
+    "commit": "5538b793d0013581c74dd5982fc649a39798c787",
+    "dirty": false,
+    "dirty_files": [],
+    "path": "/home/dowling/r1_trackp/Agent_paper_B"
+   },
+   "lease": [
+    {
+     "event": "start",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 112384,
+     "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+     "utc": "2026-10-26T22:56:20Z"
+    },
+    {
+     "event": "end",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 112384,
+     "utc": "2026-10-26T22:59:24Z"
+    }
+   ],
+   "report": {
+    "batch_size": 8,
+    "budget_override": {
+     "eval_every": null,
+     "steps": 200
+    },
+    "eval_every": 100,
+    "frozen_token_rows": false,
+    "head_lr": 0.001,
+    "lora": {
+     "best_step": 200,
+     "best_value": 0.0031984676606953144,
+     "checkpoint": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr1e-05/lora/ckpt/step_0000200",
+     "completed": true,
+     "early_stopped": false,
+     "stopped_at": 200,
+     "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.8479312805738644,
+      "mean_slope_vs_label": 0.825065324221735,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.006181247878651472,
+      "rps_extrap": 0.008881018997498429,
+      "rps_interp": 0.004476824676377781,
+      "width_ratio": 1.2634749723578764,
+      "width_slope": -0.014772451095721484,
+      "width_slope_vs_label": -0.009817620451637022,
+      "width_slope_vs_label_lb95": -0.024437927034425426,
+      "width_slope_vs_label_ub95": 0.004515697991679994
+     }
+    },
+    "lr": 1e-05,
+    "max_steps": 200,
+    "n_test": 1000,
+    "n_train": 2714,
+    "n_val": 286,
+    "pass": null,
+    "patience": 5,
+    "protocol": "trackp_e0/v2",
+    "stage": "screen",
+    "target": "y_soft",
+    "token_lr": 0.0001,
+    "val_cells": [
+     [
+      1,
+      3
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      9,
+      3
+     ]
+    ],
+    "variant": "fresh"
+   }
+  },
+  "screen_lr3e-05": {
+   "git": {
+    "branch": "trackp-20261026",
+    "commit": "5538b793d0013581c74dd5982fc649a39798c787",
+    "dirty": false,
+    "dirty_files": [],
+    "path": "/home/dowling/r1_trackp/Agent_paper_B"
+   },
+   "lease": [
+    {
+     "event": "start",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 143909,
+     "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+     "utc": "2026-10-26T22:59:32Z"
+    },
+    {
+     "event": "end",
+     "job": "trackp e0 kev-0.8b",
+     "pid": 143909,
+     "utc": "2026-10-26T23:02:36Z"
+    }
+   ],
+   "report": {
+    "batch_size": 8,
+    "budget_override": {
+     "eval_every": null,
+     "steps": 200
+    },
+    "eval_every": 100,
+    "frozen_token_rows": false,
+    "head_lr": 0.001,
+    "lora": {
+     "best_step": 200,
+     "best_value": 0.0014544432051479816,
+     "checkpoint": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr3e-05/lora/ckpt/step_0000200",
+     "completed": true,
+     "early_stopped": false,
+     "stopped_at": 200,
+     "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.925494805767089,
+      "mean_slope_vs_label": 0.8996501290009122,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.0037162816041071086,
+      "rps_extrap": 0.005166505806853789,
+      "rps_interp": 0.0028007240731724183,
+      "width_ratio": 1.3077065684961346,
+      "width_slope": -0.01321427877258769,
+      "width_slope_vs_label": -0.013083282877219566,
+      "width_slope_vs_label_lb95": -0.029034035780183112,
+      "width_slope_vs_label_ub95": 0.0026902881052178382
+     }
+    },
+    "lr": 3e-05,
+    "max_steps": 200,
+    "n_test": 1000,
+    "n_train": 2714,
+    "n_val": 286,
+    "pass": null,
+    "patience": 5,
+    "protocol": "trackp_e0/v2",
+    "stage": "screen",
+    "target": "y_soft",
+    "token_lr": 0.0001,
+    "val_cells": [
+     [
+      1,
+      3
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      9,
+      3
+     ]
+    ],
+    "variant": "fresh"
+   }
+  },
+  "select": {
+   "git": {
+    "branch": "trackp-20261026",
+    "commit": "5538b793d0013581c74dd5982fc649a39798c787",
+    "dirty": false,
+    "dirty_files": [],
+    "path": "/home/dowling/r1_trackp/Agent_paper_B"
+   },
+   "lease": [],
+   "report": {
+    "criterion": "lowest best val RPS (R1-LR-GRID)",
+    "runs": [
+     {
+      "base": {
+       "adapter_repo": "jaredpalmer/kev-0.8b",
+       "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+       "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+       "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+       "family": "kev"
+      },
+      "best_step": 200,
+      "best_val_rps": 0.0011281730839982629,
+      "git": "5538b793d0013581c74dd5982fc649a39798c787",
+      "lr": 0.0001,
+      "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr0.0001",
+      "target": "y_soft",
+      "variant": "fresh"
+     },
+     {
+      "base": {
+       "adapter_repo": "jaredpalmer/kev-0.8b",
+       "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+       "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+       "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+       "family": "kev"
+      },
+      "best_step": 200,
+      "best_val_rps": 0.0031984676606953144,
+      "git": "5538b793d0013581c74dd5982fc649a39798c787",
+      "lr": 1e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr1e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+     },
+     {
+      "base": {
+       "adapter_repo": "jaredpalmer/kev-0.8b",
+       "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+       "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+       "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+       "family": "kev"
+      },
+      "best_step": 200,
+      "best_val_rps": 0.0014544432051479816,
+      "git": "5538b793d0013581c74dd5982fc649a39798c787",
+      "lr": 3e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr3e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+     }
+    ],
+    "selected": {
+     "base": {
+      "adapter_repo": "jaredpalmer/kev-0.8b",
+      "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+      "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+      "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+      "family": "kev"
+     },
+     "best_step": 200,
+     "best_val_rps": 0.0011281730839982629,
+     "git": "5538b793d0013581c74dd5982fc649a39798c787",
+     "lr": 0.0001,
+     "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr0.0001",
+     "target": "y_soft",
+     "variant": "fresh"
+    }
+   }
+  }
+ }
+}

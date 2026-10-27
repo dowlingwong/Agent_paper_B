@@ -344,6 +344,8 @@ models:
         sha256: ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003
         size: 6722759
         verified_against: git_blob_sha1
+    licence: CC-BY-NC-4.0 (LICENSE 'Attribution-NonCommercial 4.0 International';
+      non-commercial research use)
     local_path: /home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-0.8B-Instant@6496ae641cc7
     repo: startlux-models/StartLux-Decision-v1.1-0.8B-Instant
     revision: 6496ae641cc71b149ce9dad69bd97f2a44e7bf11
@@ -419,6 +421,8 @@ models:
         sha256: ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003
         size: 6722759
         verified_against: git_blob_sha1
+    licence: CC-BY-NC-4.0 (LICENSE 'Attribution-NonCommercial 4.0 International';
+      non-commercial research use)
     local_path: /home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-2B-Instant@f1e6cd147dda
     repo: startlux-models/StartLux-Decision-v1.1-2B-Instant
     revision: f1e6cd147dda82c9ffa3e8e725d5c1f175566fb1
@@ -498,6 +502,8 @@ models:
         sha256: ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003
         size: 6722759
         verified_against: git_blob_sha1
+    licence: CC-BY-NC-4.0 (LICENSE 'Attribution-NonCommercial 4.0 International';
+      non-commercial research use)
     local_path: /home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-4B-Instant@416088f77cfc
     repo: startlux-models/StartLux-Decision-v1.1-4B-Instant
     revision: 416088f77cfce09633906a3675c7cd2e5dabcf10
