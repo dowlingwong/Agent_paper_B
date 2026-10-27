@@ -48,6 +48,14 @@ def duplicate_shares(counts):
     return [(key, duplicate / total) for key, (duplicate, total) in sorted(strata.items())]
 
 
+def validate_pilot_inputs(noise, evaluation):
+    """Refuse to present unlabeled or non-split data as the historical pilot."""
+    if noise.get("label") != "PILOT" or noise.get("summaries", {}).get("common_30", {}).get("label") != "PILOT":
+        raise ValueError("noise summary must be explicitly PILOT")
+    if evaluation.get("label") != "ENGINEERING_ONLY" or evaluation.get("seed_split") is not True:
+        raise ValueError("offline summary must be ENGINEERING_ONLY and seed-split")
+
+
 def write_csv(path, header, rows, label):
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
@@ -63,13 +71,14 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     sources = [NOISE, PILOT / "proposals.jsonl", PILOT / "offline_eval.json"]
     noise = json.loads(NOISE.read_text())
+    result = json.loads((PILOT / "offline_eval.json").read_text())
+    validate_pilot_inputs(noise, result)
     nodes = noise["summaries"]["common_30"]["nodes"]
     noise_rows = [(n, v["sigma_train"], v["sigma_split"], v["sigma_joint"]) for n, v in sorted(nodes.items())]
     write_csv(OUT / "noise_floor.csv", ["node", "sigma_train", "sigma_split", "sigma_joint"], noise_rows, "PILOT; pending author acceptance")
     with (PILOT / "proposals.jsonl").open() as handle:
         counts = waste_counts(json.loads(line) for line in handle if line.strip())
     write_csv(OUT / "proposal_categories.csv", ["source", "node", "memory_mode", "inert_kind", "rows", "stratum_rows", "share"], counts, "ENGINEERING_ONLY; partial campaigns; source-row shares")
-    result = json.loads((PILOT / "offline_eval.json").read_text())
     gates = result["instance"]["per_g"]["0.1"]["gate"]
     gate_rows = [(n, v["gain_A3_minus_A2_per20"], *v["ci95"], v["delta_n"]) for n, v in sorted(gates.items())]
     all_gates = []

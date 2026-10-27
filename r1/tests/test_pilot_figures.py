@@ -107,3 +107,14 @@ def test_duplicate_figure_includes_zero_duplicate_strata():
     shares = dict(duplicate_shares(counts))
     assert set(shares) == {tuple(row[:3]) for row in counts}
     assert shares[("dt4", "openml_ionosphere", "none")] == 0.0
+
+
+def test_rejects_unlabelled_or_non_split_pilot_inputs():
+    from r1.analysis.pilot_figures import validate_pilot_inputs
+    noise = {'label': 'PILOT', 'summaries': {'common_30': {'label': 'PILOT'}}}
+    evaluation = {'label': 'ENGINEERING_ONLY', 'seed_split': True}
+    validate_pilot_inputs(noise, evaluation)
+    with pytest.raises(ValueError, match='PILOT'):
+        validate_pilot_inputs({'label': 'UNKNOWN'}, evaluation)
+    with pytest.raises(ValueError, match='seed-split'):
+        validate_pilot_inputs(noise, {'label': 'ENGINEERING_ONLY', 'seed_split': False})
