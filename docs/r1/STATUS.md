@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — pilot noise transformation independently reviewed (AI-assisted)
+
+- The partial L4.3 renderer at `5143b24` recomputes the displayed noise fields from captured historical pilot data and checks them against the stored summary. Independent [review](reviews/LOCAL_PILOT_NOISE_REVIEW_20261027.md) accepts this limited engineering transformation: all 30 displayed sigma values match, with 12 focused tests passing.
+- This is not acceptance of the pilot as evidence or of the complete L4.3 pipeline. The source-hash limitation applies to both the renderer and its imported summarizer; working-tree committedness is not enforced at runtime.
+
 ## 27 October 2026 — pilot safeguard correction re-reviewed (AI-assisted)
 
 - Independent [re-review](reviews/LOCAL_PILOT_GUARD_REVIEW_20261027.md) confirms the expected file sets, input-byte hashes and cooperative locking in `8a1ecf5`; 11 focused tests passed. The renderer hash is read near the end and cannot prove which source bytes Python loaded if it changed during execution. Full L4.3 remains unaccepted.
