@@ -4,7 +4,7 @@
 
 ## G.2: container access and evaluator provenance
 
-The author/coordinator establishes whether the MLGym tasks can run in an approved container and records access, task version, evaluator digest and data provenance. MLGym is deferred unless a container is available by 10 Nov (R1-FOCUSED-SCOPE). Obtain and verify an authoritative 1GC-7RC task source, evaluator, license and revision before implementing its four adapters; the currently inspected paper is insufficient to establish executable contracts. The author requires validation-only selection for test-scored tasks (R1-TRACKG-ROLE); obtain an authoritative compatible validation contract. Restricted edit-scope compatibility remains to be verified.
+The author/coordinator establishes whether the MLGym tasks can run in an approved container and records access, task version, evaluator digest and data provenance. MLGym is deferred unless a container is available by 10 Nov (R1-FOCUSED-SCOPE). 1GC-7RC is removed from G.1 for now because its named repository is not public (R1-TRACKG-SCOPE). The author requires validation-only selection for test-scored tasks (R1-TRACKG-ROLE); obtain an authoritative compatible validation contract. Restricted edit-scope compatibility remains to be verified.
 
 ## G.3: proposed noise-floor preparation
 
@@ -20,6 +20,5 @@ After the applicable earlier gates and G.4 decision, pre-declare instances, arms
 
 ## Open questions
 
-1. Can the coordinator provide authoritative, revision-pinned 1GC task code with a validation-only selection contract?
-2. Will a suitable MLGym container be available by 10 Nov?
-3. What audit budget, comparisons and seed counts should be pre-declared for Track G?
+1. Will a suitable MLGym container be available by 10 Nov?
+2. What audit budget, comparisons and seed counts should be pre-declared for Track G?

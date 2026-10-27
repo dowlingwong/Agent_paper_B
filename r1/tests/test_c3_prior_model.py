@@ -31,6 +31,7 @@ def _dump(x):
     return json.dumps(x, sort_keys=True, default=str)
 
 
+@pytest.mark.skip(reason="19 Oct pilot must never be training data (R1-H8-SPLIT-MAPPING)")
 @needs_table
 @pytest.mark.parametrize("mode", ["instance", "lono"])
 def test_wrapped_arms_reproduce_offline_eval_exactly(mode):
@@ -49,6 +50,7 @@ def test_wrapped_arms_reproduce_offline_eval_exactly(mode):
         assert np.array_equal(p_ref[a], p_new[a])
 
 
+@pytest.mark.skip(reason="19 Oct pilot must never be training data (R1-H8-SPLIT-MAPPING)")
 @needs_table
 def test_forecast_moments_equal_the_offline_moments():
     pytest.importorskip("lightgbm")

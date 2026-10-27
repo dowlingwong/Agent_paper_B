@@ -108,14 +108,14 @@ Added 25 Oct: Track X (proposer exam, zhixu portal) starts with X.1–X.2 once A
 
 ### Track G — Harder benchmarks (added 24 Oct; runs alongside Phases B–D)
 
-Adopted (author, 24 Oct): Karpathy's autoresearch, 1GC-7RC (2026) and MLGym (Meta) join the benchmark set. **Their role is proposed, not adopted:** evaluation and transfer nodes, because one audited proposal on a 5-minute GPU run costs about 100 GPU-minutes, too much for full-scale labels. C3 arms trained on the CPU pool are tested on them without retraining (extends H2b).
+Author decisions (27 Oct; R1-TRACKG-SCOPE and R1-TRACKG-ROLE): Track G comprises autoresearch and, if a container is available by 10 Nov, MLGym. 1GC-7RC is removed from G.1 for now: the repository named on arXiv 2605.17046 is not public. Track G is for evaluation and transfer; test-scored tasks select on validation only. The audit budget remains for the author to decide.
 
 | # | Step | Host | Done when |
 |---|---|---|---|
-| G.1 | Adapters: check and update the harness autoresearch node (5-min `train.py` runs, val_bpb); 1GC-7RC light tasks (T1 TinyShakespeare, T5 Forest Cover, T6 ETTh1, T7 AG News; `train.py` + locked `prepare.py`); MLGym light tasks | Mac (code) | Smoke campaign per node |
+| G.1 | Adapters: check and update the harness autoresearch node (5-min `train.py` runs, val_bpb); MLGym light tasks only if a container is available by 10 Nov | Mac (code) | Smoke campaign per node |
 | G.2 | Container check for MLGym: Docker or Podman on deepthought (pending with the admin) or zhixu portal | deepthought / zhixu portal | MLGym task runs, or MLGym dropped with a reason |
-| G.3 | Noise floor on the new nodes: determinism, σ_n for training and split seeds, run cost (fewer seeds than the CPU pool if cost requires; declared in advance) | zhixu portal (autoresearch also on zhixu experiment, resumable) | Rows added to the noise-floor report |
-| G.4 | Author: role of the new nodes (evaluation/transfer only, or small label sets) and their audit budget | Mac (author) | PLAN §10 row |
+| G.3 | Noise floor on the new nodes: determinism, σ_n for training and split seeds, run cost (fewer seeds than the CPU pool if cost requires; declared in advance) | Ada | Rows added to the noise-floor report |
+| G.4 | Author: decide the audit budget for the new nodes; their role is evaluation/transfer only | Mac (author) | PLAN §10 row |
 | G.5 | Transfer evaluation of A1–A6 on the new nodes with a reduced, pre-declared audit budget | zhixu portal (+ zhixu experiment, resumable) | Transfer table, part of D.1 |
 
 ### Track X — Proposer candidacy exam (appendix; added 25 Oct)
@@ -175,7 +175,7 @@ Cost and order: Stage A ≈ 10–15 min per model; B1 ≈ 240 proposals per mode
 | H.5 | Sidecar service `r1/c3/serve.py`: loads base + LoRA adapter + head (sha256-pinned), `POST /forecast` → 12 probabilities; timeout 1 s → fall back to the A1 prior and log `prior_unavailable` (never crash the campaign); a fake sidecar for dry runs. Co-residency: ≤ 2B models beside the manager on a TITAN, 4B on zhixu portal. | Mac (code); deepthought smoke | Fake-sidecar dry run; timeout fallback test |
 | H.6 | Accounting: A4 queries count against the LLM-call cap; sidecar calls count only compute; latency descriptive (13 Oct rule). | Mac | `matching_report` shows equal W and LLM cap across arms |
 | H.7 | Direct-action arms through the same `decide()`: AWR-MLP (Harness-MDP style), LLM self-control (`r1/llm_control.py`), hybrid (prior decides whether, LLM decides how). `matching_report` extended to identical instances, W, LLM cap and information set. This is the three-way comparison of PLAN D.2. | Mac | Report on a dry run |
-| H.8 | Environments (`r1/c3/env.py`, Gymnasium API): `OfflineBanditEnv` over a labelled table (context = proposal features; action = bin; reward r = Δ_audit·keep − g·execute under the rules), used by Track P; `OnlineCampaignEnv` (DACBench-style instance set over the harness) built only if C4 finds a material DI violation (A7). | Mac | OfflineBanditEnv reproduces offline one-step values |
+| H.8 | Environments (`r1/c3/env.py`, Gymnasium API): `OfflineBanditEnv` over a labelled table (context = proposal features; action = bin; reward r = Δ_audit·keep − g·execute under the rules); Track P trains directly on the label table. The execute/skip amendment and unaccepted `row["prompt"]` follow-up are deferred until A7/C4 needs an environment (R1-H8-DEFERRED); `OnlineCampaignEnv` (DACBench-style instance set over the harness) built only if C4 finds a material DI violation (A7). | Mac | OfflineBanditEnv reproduces offline one-step values |
 | H.9 | End-to-end dry run: fake llama-server + fake sidecar, 2 nodes, arms A0–A6 (A5/A6 stubbed), interruption and resume, `matching_report` passes. | Mac → deepthought | Dry-run manifest |
 | H.10 | Fresh-session review + one correction round; author accepts. Must be done before C.3. | — | Review in `docs/r1/reviews/` |
 
@@ -218,7 +218,7 @@ Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs
 
 **Host change (26 Oct, evening, R1-TASL7-TRACKP; R1-ADA-OVERFLOW).** Track P moves to the dedicated 4090 node **TASL-7**; wherever this section says zhixu portal for Track P work, read TASL-7. zhixu experiment (Ada) takes resumable overflow runs; one comparison table stays on one GPU type and one pinned environment. **Hardware and card schedule (R1-PORTAL-SCHEDULE, 26 Oct; now the portal is Track X's only).** All A5/A6 training and the exam on zhixu portal (4090 24 GB): ≤ 4B LoRA in bf16; the Track P agent, its code and its CPU-only unit tests also live on the portal; the Mac runs no Track P work. Track X evidence phases (B1, B2) have priority on the card; Track P uses it only in the gaps (P.0 and P.3a during Track X's code phase, ≈ 27 Oct–1 Nov, and after B2). One GPU job at a time, enforced by `flock` on `~/r1_locks/gpu0.lock` on the portal plus a check that no other compute process is on the card. API calls (Jev, DeepSeek) run on the portal (fallback deepthought; never the Mac without the author's approval); keys live only in `~/.config/r1/secrets.env` (mode 600) on that host.
 
-**Open items.** StartLux rung after P.0 (author). Track H.8 `OfflineBanditEnv` defines action = bin; under R1-C3-POST the environment action is execute/skip with the 12-bin belief as the model's forecast — an H.8 amendment is needed before P.5 uses it (author).
+**Open items.** StartLux rung after P.0 (author). Track H.8 retains the accepted bin-action `OfflineBanditEnv`. Track P trains directly on the label table; the execute/skip amendment and unaccepted sidecar prompt follow-up are deferred until A7/C4 needs an environment (R1-H8-DEFERRED).
 
 ### Phase C — Post-training and online pilot (target ~20 Dec 2026, only if B.7 passes)
 

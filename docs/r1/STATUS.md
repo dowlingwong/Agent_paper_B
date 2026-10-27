@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — H.8 deferred; Track G scope clarified (author; AI-assisted)
+
+- PLAN now records H.8 deferral until A7/C4 needs an environment, direct Track P label-table training, and the 19 Oct pilot as read-only test fixture only, never training or evaluation evidence. The rejected amendment is preserved at `origin/local-h8-20261027` (`f666a38`); the accepted bin-action environment and controller are restored. The unaccepted sidecar prompt follow-up is also deferred.
+- Track G is autoresearch plus MLGym only if a container is available by 10 Nov; 1GC is removed from G.1. The [independent review](reviews/LOCAL_DEFER_H8_G1_REVIEW_20261027.md) accepts these scoped changes; a synthetic CPU environment fixture passed and five pilot-training test cases were skipped. This is not an exhaustive audit of all pilot references.
+
 ## 27 October 2026 — L4.3 fixture boundary reviewed (AI-assisted)
 
 - The renderer now reads the 22 Oct C1 source only and writes a separate C1 directory; the 19 Oct pilot is a read-only test fixture only, never training data or evaluation evidence. Historical outputs are preserved. The [scoped review](reviews/LOCAL_L4_3_FIXTURE_SCOPE_REVIEW_20261027.md) accepts the boundary; five fixture tests passed independently and one committed-source render was deselected. Full L4.3 remains unaccepted, including provenance limitations.

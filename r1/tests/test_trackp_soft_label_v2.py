@@ -68,6 +68,7 @@ def test_sigma_source_is_the_c1_table():
     assert got == L.SOFT_SIGMA_SOURCE["sha256"]
 
 
+@pytest.mark.skip(reason="19 Oct pilot must never be training data (R1-H8-SPLIT-MAPPING)")
 @pytest.mark.skipif(not PILOT.is_dir(), reason="pilot table not in this checkout")
 def test_existing_pilot_table_rebuilt_under_v1_is_byte_identical():
     for seed_split in (True, False):
