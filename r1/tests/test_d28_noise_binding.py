@@ -158,7 +158,25 @@ def test_composite_is_reproducible_and_node_sources_are_exact():
     repair=B.check_run(B.ROOT/B.REPAIR,(*B.REPAIRED,"openml_blood_transfusion"))
     climate=B.check_run(B.ROOT/B.CLIMATE,("openml_climate",))
     composite=B.build()
-    assert (json.dumps(composite,indent=2,sort_keys=True)+"\n").encode()==(B.ROOT/B.OUT).read_bytes()
+    # The shipped artifact is byte-pinned. A fresh calculation can differ by a few
+    # floating-point ULPs across platforms in descriptive statistics only.
+    import hashlib
+    artifact = (B.ROOT/B.OUT).read_bytes()
+    assert hashlib.sha256(artifact).hexdigest() == "3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310"
+    recorded = json.loads(artifact)
+    approximate_fields = {"p_model", "decision_regret", "rho_joint", "regret_share_material"}
+    def compare(a, b, key=None):
+        if isinstance(a, dict):
+            assert isinstance(b, dict) and a.keys() == b.keys()
+            for k in a: compare(a[k], b[k], k)
+        elif isinstance(a, list):
+            assert isinstance(b, list) and len(a) == len(b)
+            for x, y in zip(a, b): compare(x, y)
+        elif key in approximate_fields:
+            assert a == pytest.approx(b, rel=1e-14, abs=1e-15)
+        else:
+            assert a == b
+    compare(composite, recorded)
     assert all(composite["nodes"][n]==common["nodes"][n] for n in B.UNCHANGED)
     assert all(composite["nodes"][n]==repair["nodes"][n] for n in B.REPAIRED)
     assert composite["nodes"]["openml_climate"]==climate["nodes"]["openml_climate"]
