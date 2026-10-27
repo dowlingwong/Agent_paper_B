@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — autoresearch fake CLI smoke independently reviewed (AI-assisted)
+
+- Harness branch `r1-local-20261027-autoresearch` commit `d63cb91` contains an explicitly fake three-trial CLI smoke using the local worker and synthetic metrics. The [independent review](reviews/LOCAL_AUTORESEARCH_STUB_REVIEW_20261027.md) accepts this fixture-only subitem; one focused fixture passed independently. No real node training or scientific run is inferred.
+- L4.1 overall remains unaccepted: the authoritative 1GC task source and its adapters are unavailable, other integration criteria and post-merge full-environment checks remain open.
+
 ## 27 October 2026 — final authorized H.8 attempt independently rejected (AI-assisted)
 
 - Author authorized one further table-utility attempt; `d9a4338` computes through `labels.action_target` using a training-only A1 and table split. Fresh independent [review](reviews/LOCAL_L4_2_FINAL_REVIEW_20261027.md) **rejects** it: a mixed-split environment exposes test episodes during training, rule-equipped no-ops can execute, and a failed reset can leave stale state. Fifteen scoped fixture tests passed but did not catch these counterexamples. The train/val/test label-block mapping remains an assumption pending author confirmation.
