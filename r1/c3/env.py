@@ -10,23 +10,22 @@ depending on Gymnasium: it subclasses ``gymnasium.Env`` and is registered as
   full row stays available in ``info`` for bookkeeping.
 * **Action** = execute (0) or skip (1); observation carries features and a 12-bin
   belief supplied by an explicit provider receiving only pre-decision fields.
-  The caller must establish that provider's model and precomputed utilities have
-  no label/evaluation leakage; the API cannot certify a closure's provenance.
+  The caller must establish that the belief provider has no label/evaluation
+  leakage; the API cannot certify an external closure's provenance.
   Historical bin actions are available only with ``version="bin/v0"``.
 * **Legacy plug-in** (``bin/v0``, historical C3_DESIGN §5 stage 2): ``"greedy"`` uses pi = 1{b = no-op},
   mu = sigma_node mid(b), tau = sigma_node tau_node[node] (dev-estimated, in z
   units); ``"onehot_moments"`` uses ``labels.moments`` of the one-hot bin with the
   arms' tau floor, i.e. exactly the decision ``offline_eval`` takes for an arm
   whose forecast is that one-hot distribution (the acceptance check).
-* **Reward** in the amended version is the precomputed split-specific Track P
-  utility u for execute and zero for skip; u uses the fixed A1 reference keep.
+* **Reward** in the amended version is split-specific Track P utility u,
+  computed from label columns and a training-only A1 constant prior; skip pays zero.
   In bin/v0 the legacy plug-in determines r = Delta * keep - g * execute.
   The rule layer prevents duplicate execution.
-* **Seeds.** ``split="label"`` (training) uses the label half of the audit
-  seeds (``audit.split_audit``; 7001-7005 for K = 10) and the training weights;
-  duplicates have no label and are excluded.  ``split="eval"`` uses the
-  evaluation half (``delta_true``) and the evaluation weights.  The label
-  population never reads ``delta_true``.
+* **Seeds.** In the amended version, each row's table ``split`` selects
+  ``z_train`` for train/val and ``z_eval`` for test (Track P §3.6). A1 is
+  fitted once from training-split ``y_train`` only. In ``bin/v0``, the
+  historical label/eval seed and weighting behavior remains selectable.
 
 ``OnlineCampaignEnv`` is not built (only if C4 finds a material DI violation).
 """
@@ -40,10 +39,10 @@ from typing import Any, Callable, Mapping
 import numpy as np
 
 from r1.c3 import offline_eval as OE
-from r1.c3.arms import is_duplicate, is_noop
+from r1.c3.arms import ConstantPrior, is_duplicate, is_noop
 from r1.c3.audit import split_audit
 from r1.c3.features import FEATURES
-from r1.c3.labels import INERT, MIDPOINTS, N_BINS
+from r1.c3.labels import INERT, MIDPOINTS, N_BINS, action_target
 
 try:  # Gymnasium is optional: subclass and register only when it is importable
     import gymnasium as _gym
@@ -82,44 +81,64 @@ def onehot(b: int) -> np.ndarray:
     return p
 
 
-def fixed_a1_utility(delta: float, delta_hat: float, *, mu: float, tau: float,
-                     sigma_cmp: float, sigma_node: float, g_units: float) -> float:
-    """Compute Track P's split-specific fixed-reference u from already available inputs.
-
-    This pure function does not fit a model or establish input provenance.
-    """
-    from r1.c3 import rules
-    OE._g_role(g_units)
-    values = (delta, delta_hat, mu, tau, sigma_cmp, sigma_node)
-    if not all(np.isfinite(v) for v in values) or tau <= 0 or sigma_cmp < 0 or sigma_node <= 0:
-        raise ValueError("invalid fixed-reference utility input")
-    return float(delta * bool(rules.keep(delta_hat, mu, tau, sigma_cmp)) - g_units * sigma_node)
-
 
 class OfflineBanditEnv(_Base):
     metadata = {"render_modes": []}
 
-    def __init__(self, rows: list[dict], *, split: str = "label", g_units: float = OE.G_PRIMARY,
+    def __init__(self, rows: list[dict], *, split: str | None = None, g_units: float | None = None,
                  rule_layer: bool = True, plugin: str = "greedy", tau_node: Mapping[str, float] | None = None,
                  order: str = "sequential", seed: int | None = None, version: str = "execute-skip/v1",
                  belief_provider: Callable[[Mapping[str, Any]], Any] | None = None) -> None:
         if version not in ("execute-skip/v1", "bin/v0"):
             raise ValueError("unknown environment version")
-        if split not in SPLITS or plugin not in PLUGINS or order not in ("sequential", "random"):
-            raise ValueError(f"split in {SPLITS}, plugin in {PLUGINS}, order sequential|random")
-        if version == "bin/v0" and plugin == "greedy" and not tau_node:
-            raise ValueError("the greedy plug-in needs tau_node (z units, dev-estimated) per node")
-        OE._g_role(g_units)  # only the declared g values (PLAN §10, g (22 Oct))
-        self.split, self.g_units, self.rule_layer, self.plugin = split, float(g_units), bool(rule_layer), plugin
+        if plugin not in PLUGINS or order not in ("sequential", "random"):
+            raise ValueError(f"plugin in {PLUGINS}, order sequential|random")
         self.version, self.belief_provider = version, belief_provider
         self.tau_node = dict(tau_node or {})
         self._belief = None
-        if split == "label":
-            pop = [r for r in rows if r.get("delta_label") is not None and r.get("weight", 0) > 0]
-            self._value, self._weight = "delta_label", "weight"
+        self.rule_layer, self.plugin = bool(rule_layer), plugin
+        if version == "bin/v0":
+            split = "label" if split is None else split
+            g_units = OE.G_PRIMARY if g_units is None else g_units
+            if split not in SPLITS:
+                raise ValueError(f"split in {SPLITS}")
+            if plugin == "greedy" and not tau_node:
+                raise ValueError("the greedy plug-in needs tau_node (z units, dev-estimated) per node")
+            OE._g_role(g_units)
+            self.split, self.g_units = split, float(g_units)
+            if split == "label":
+                pop = [r for r in rows if r.get("delta_label") is not None and r.get("weight", 0) > 0]
+                self._value, self._weight = "delta_label", "weight"
+            else:
+                pop = [r for r in rows if r.get("eval_weight", 0) > 0]
+                self._value, self._weight = "delta_true", "eval_weight"
         else:
-            pop = [r for r in rows if r.get("eval_weight", 0) > 0]
-            self._value, self._weight = "delta_true", "eval_weight"
+            if split is not None or g_units is not None:
+                raise ValueError("split and g are determined by the table and configuration")
+            self.split, self.g_units = None, float(OE.G_PRIMARY)
+            self._value, self._weight = None, "weight"
+            pop = []
+            training = []
+            for original in rows:
+                r = dict(original)
+                if r.get("split") not in ("train", "val", "test"):
+                    raise ValueError("table split must be train, val or test")
+                if "is_noop" in r and "noop" not in r:
+                    r["noop"] = bool(r["is_noop"])
+                r["weight"] = float(r.get("weight", 1.0))
+                if not np.isfinite(r["weight"]) or r["weight"] < 0:
+                    raise ValueError("invalid table weight")
+                if r["weight"] == 0:
+                    continue
+                pop.append(r)
+                if r["split"] == "train" and not is_duplicate(r):
+                    y = np.asarray(r.get("y_train"), dtype=float)
+                    if y.shape != (N_BINS,) or not np.all(np.isfinite(y)) or np.any(y < 0) or not np.isclose(y.sum(), 1.0, rtol=0, atol=1e-7):
+                        raise ValueError("training rows require a valid y_train distribution")
+                    training.append({"node": r["node"], "soft": y, "weight": r["weight"]})
+            if not training:
+                raise ValueError("fixed A1 requires labelled training-split rows")
+            self._a1 = ConstantPrior().fit(training)
         if not pop:
             raise ValueError(f"no rows for split {split!r}")
         self.rows = pop
@@ -153,7 +172,7 @@ class OfflineBanditEnv(_Base):
         r = self._current
         info = {"index": self._i, "proposal_id": r["proposal_id"], "node": r["node"], "weight": r[self._weight],
                 "sigma_node": r["sigma_node"], "sigma_cmp": r["sigma_cmp"], "delta_hat": r["delta_hat"],
-                "noop": is_noop(r), "duplicate": is_duplicate(r), "split": self.split}
+                "noop": is_noop(r), "duplicate": is_duplicate(r), "split": self.split if self.version == "bin/v0" else r["split"]}
         if self.version == "bin/v0":
             return self.observe(r), info
         info.pop("delta_hat")  # unavailable before execute
@@ -211,13 +230,19 @@ class OfflineBanditEnv(_Base):
             ex = b == 0 and not (self.rule_layer and is_duplicate(row))
             g = self.g_units * row["sigma_node"]
             obs = {"features": self.observe(row), "belief": self._belief.copy()}
-            utility_key = "u_train" if self.split == "label" else "u_eval"
             if ex:
-                if row.get("u_reference") != "A1" or row.get("u_g_units") != self.g_units:
-                    raise ValueError("utility requires fixed A1 provenance and matching u_g_units")
-                if utility_key not in row or not np.isfinite(row[utility_key]):
-                    raise ValueError(f"missing or non-finite {utility_key}; fixed-reference utility is required")
-                reward = float(row[utility_key])
+                # Val is drawn from training instances and uses the training-label block;
+                # test uses the independent evaluation block (Track P §3.6).
+                label_key = "z_train" if row["split"] in ("train", "val") else "z_eval"
+                z = np.asarray(row.get(label_key), dtype=float)
+                if z.ndim != 1 or z.size == 0 or not np.all(np.isfinite(z)):
+                    raise ValueError(f"{label_key} must contain finite split-specific labels")
+                sig = float(row["sigma_node"])
+                if not np.isfinite(sig) or sig <= 0:
+                    raise ValueError("sigma_node must be positive and finite")
+                a1_probs = self._a1.predict([row])[0]
+                reward = float(action_target(float(z.mean()) * sig, row["delta_hat"], a1_probs,
+                                             sig, row["sigma_cmp"], g_units=self.g_units))
             else:
                 reward = 0.0
             kp = None  # keep is already incorporated in fixed-reference utility
