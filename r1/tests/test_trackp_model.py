@@ -10,7 +10,8 @@ import json
 import os
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")  # not in the harness lock; present on the Track P hosts
 
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 transformers = pytest.importorskip("transformers")

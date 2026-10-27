@@ -1,0 +1,31 @@
+{
+  "criteria": {
+    "active_novelty_fraction": {
+      "equals_incumbent_trials": 1,
+      "evaluated_trials": 21,
+      "novel_trials": 16,
+      "novelty_source": "events",
+      "observed": 0.7619047619047619,
+      "required": ">= 0.5",
+      "seen_before_trials": 5
+    },
+    "invalid_rate": {
+      "observed": 0.047619047619047616,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 9,
+      "required": "at least 1 keep with budget_index > 1"
+    }
+  },
+  "failed_criteria": [],
+  "inactive_key_rejections": 0,
+  "ledgers": [
+    "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/tabular_mlp__s102/root_trials.jsonl",
+    "/ceph/dwong/agent_paper_B/results/r1/engineering/liveness_llamacpp_20261026T230913Z/ledgers/tabular_mlp__s112/root_trials.jsonl"
+  ],
+  "n_trials": 21,
+  "node": "tabular_mlp",
+  "novelty_source": "events",
+  "pass": true
+}
