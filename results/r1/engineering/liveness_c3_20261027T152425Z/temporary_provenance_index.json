@@ -1,0 +1,2247 @@
+{
+  "original_work_root": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work",
+  "references": [
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-001/patch.diff",
+      "sha256": "ee8bc5b7f0ed02fd940bcdfdfe4821f957ff3363c18560555d9955c8fe0cc62d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-001/run.log",
+      "sha256": "cb6478cf377f55b6ef53e4706a4c0c7feafe8285b001096e077681d025b929e5"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-002/patch.diff",
+      "sha256": "c6429906e1dcf6c0fecba37e447eb546be25d8ed7186b12a1e2f6283c9923217"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-002/run.log",
+      "sha256": "eeb8ad50f876587b7f4a8aff8836459c263648f80e2eb937775d093e78bb2b46"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-003/patch.diff",
+      "sha256": "58b86655a9e04314eebe854f4af346d9bdd85d711a3296e0454197e6a66e6891"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-003/run.log",
+      "sha256": "26b97c86ff1d78ed04e5767dc2d2ba9dc1946606c392c25871cf29306537b9d8"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-004/patch.diff",
+      "sha256": "c20b6128d89ce07063c8d3e3d5bf02231d77640055aae38476cb718f21d44366"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-004/run.log",
+      "sha256": "700b2a0fa79e35877ad765cd86ca324fb07239e428763d437f9b9f3381c6ed44"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-005/patch.diff",
+      "sha256": "c20b6128d89ce07063c8d3e3d5bf02231d77640055aae38476cb718f21d44366"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-005/run.log",
+      "sha256": "700b2a0fa79e35877ad765cd86ca324fb07239e428763d437f9b9f3381c6ed44"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-006/patch.diff",
+      "sha256": "c20b6128d89ce07063c8d3e3d5bf02231d77640055aae38476cb718f21d44366"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-006/run.log",
+      "sha256": "700b2a0fa79e35877ad765cd86ca324fb07239e428763d437f9b9f3381c6ed44"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-007/patch.diff",
+      "sha256": "e16c59e86707515ab6a49633259c798e6e36210ab1a3e44ab480bb87b4f8f959"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-007/run.log",
+      "sha256": "678dbafe14f9631461462061f30796b4f39f6c2b83b1dab2c0f94f4bbba01a22"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-008/patch.diff",
+      "sha256": "4225b432ae23de1d3e834fbb5acb689595c8f866031487c8bb28caaef55b9043"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-008/run.log",
+      "sha256": "202ec683e6b165dacec0e079f37aefbaf88e8c18cda5895d4d2482338470adcb"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-009/patch.diff",
+      "sha256": "4bdd55fe993425227be092a301d5aacacfeeca1d7e1de98355fa98a050f1b010"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-009/run.log",
+      "sha256": "90d3b989dfdac2ad973ce16959a37c1511e6ce5e8db6842c0e387f1e9a48da3e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-010/patch.diff",
+      "sha256": "c2bf598cf0bfd30a37077085e0d0704eaec48ed571efd810bf1ad8fb6a918c52"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s104/art/trial-010/run.log",
+      "sha256": "3843793b433b50bde774f941240c3d70e1faca0bf360b4376cadd31943f320af"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-001/patch.diff",
+      "sha256": "ee8bc5b7f0ed02fd940bcdfdfe4821f957ff3363c18560555d9955c8fe0cc62d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-001/run.log",
+      "sha256": "7fd16704cf1673e3b815f828a7c0960f218f03c6199a5e2726c138e7f08c469d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-002/patch.diff",
+      "sha256": "c6429906e1dcf6c0fecba37e447eb546be25d8ed7186b12a1e2f6283c9923217"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-002/run.log",
+      "sha256": "84059452b6a8dd4ea31d58f8b860c2e4cb0ae6a7706db716568a229a20a53d4b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-003/patch.diff",
+      "sha256": "58b86655a9e04314eebe854f4af346d9bdd85d711a3296e0454197e6a66e6891"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-003/run.log",
+      "sha256": "ebb835e99abe7c81b20e427cc464450a9ebac764add20f3704dfd1eb71cb011b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-004/patch.diff",
+      "sha256": "c20b6128d89ce07063c8d3e3d5bf02231d77640055aae38476cb718f21d44366"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-004/run.log",
+      "sha256": "940abb3302837ef090fb377a28b9580d3871f76f322a324a1fa64840fb9ec820"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-005/patch.diff",
+      "sha256": "e16c59e86707515ab6a49633259c798e6e36210ab1a3e44ab480bb87b4f8f959"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-005/run.log",
+      "sha256": "970d69df68531086f81b9598cf7032487aa948defd211786dddb5f1ddf7fe699"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-006/patch.diff",
+      "sha256": "c2bf598cf0bfd30a37077085e0d0704eaec48ed571efd810bf1ad8fb6a918c52"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-006/run.log",
+      "sha256": "4a4dcde1bc7c034e823ec7baf33b135a1ef2f6f64700e7d71cffeaa60bfac704"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-007/patch.diff",
+      "sha256": "a841652d0cc2214026b7e07a7c88dc90c61befe1e38673229c00151b073718c6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-007/run.log",
+      "sha256": "3302d5185d93f79889959c58fea37b992828c4a333b1c713d0f946268308d137"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-008/patch.diff",
+      "sha256": "752262dba2cca30101875506394f909f2e66bc41e028032d8e427cf35adfd372"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-008/run.log",
+      "sha256": "9bffc50b482548c470e7a9d394875b9d62b74ae412d007616571a930e7a927fa"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-009/patch.diff",
+      "sha256": "643124353e5ffb2ff6896cc53bf2c64b4f43b1ba39310740a221093542fb90e8"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-009/run.log",
+      "sha256": "951ca41502841dc2ecb6b4123fa59e7d0de73a4ed0d1e121e15647ae4b9e8c44"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-010/patch.diff",
+      "sha256": "d6bc097aa970375405d70ce4b3721583a754618e7e9defa9705c6b971fa1cbb6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/digits_mlp__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/digits_mlp__s114/art/trial-010/run.log",
+      "sha256": "da5a61853a5bb974632ffffd9d4af741c1511d1fc00040e6efa3316d1ae36bf1"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-001/patch.diff",
+      "sha256": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-001/run.log",
+      "sha256": "c4493d73718ad03aa91e8cb2a1e8cef14ecd30c8e8278df1dd895222d35e35e0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-002/patch.diff",
+      "sha256": "5deeff62687b4beeff13546c21fd4cd202a575aa6f596b75e66966d9ee8ece02"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-002/run.log",
+      "sha256": "c4493d73718ad03aa91e8cb2a1e8cef14ecd30c8e8278df1dd895222d35e35e0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-003/patch.diff",
+      "sha256": "5deeff62687b4beeff13546c21fd4cd202a575aa6f596b75e66966d9ee8ece02"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-003/run.log",
+      "sha256": "c4493d73718ad03aa91e8cb2a1e8cef14ecd30c8e8278df1dd895222d35e35e0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-004/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-004/run.log",
+      "sha256": "c4493d73718ad03aa91e8cb2a1e8cef14ecd30c8e8278df1dd895222d35e35e0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-005/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-005/run.log",
+      "sha256": "c4493d73718ad03aa91e8cb2a1e8cef14ecd30c8e8278df1dd895222d35e35e0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-006/patch.diff",
+      "sha256": "b8bebcd527e92cce511a749c9297530196a2df5c4d56e0f3c440f82c04bf1195"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-006/run.log",
+      "sha256": "c4493d73718ad03aa91e8cb2a1e8cef14ecd30c8e8278df1dd895222d35e35e0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-007/patch.diff",
+      "sha256": "1f86d618718dabaec24ad639e8212e7a85709a3a277b0131fab1e150d3f8fa03"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-007/run.log",
+      "sha256": "c4493d73718ad03aa91e8cb2a1e8cef14ecd30c8e8278df1dd895222d35e35e0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-008/patch.diff",
+      "sha256": "54840aa8fa1c0a56a2e9c76560244929d8f37d71a047fd667fe3f50548169d86"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-008/run.log",
+      "sha256": "d28e1c6a60c6bf7aae615e15b5fa0b8dea7a3eb92a4e92a185b8136bce9dfaa4"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-009/patch.diff",
+      "sha256": "9659d4077481c34d3e9ddd1cbd0af914d8f61c6e2a00a94e2c72549832911111"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-009/run.log",
+      "sha256": "438c5a783fe2702d29058dcb5fb6ffc0da9503f462b89036120c9c1c323e74a4"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-010/patch.diff",
+      "sha256": "45616224d44d2ad4049c27f676ddba496ee09ce5d97b95fee8408780054fb658"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s105/art/trial-010/run.log",
+      "sha256": "cda21961afdef96581308dfa052bad8187764eac8800f80c618327ddd802c415"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-001/patch.diff",
+      "sha256": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-001/run.log",
+      "sha256": "9621f67f1e091bc3ff1ff8991a484defa403993de19a0288b7a72cc060b47cc6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-002/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-002/run.log",
+      "sha256": "9621f67f1e091bc3ff1ff8991a484defa403993de19a0288b7a72cc060b47cc6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-003/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-003/run.log",
+      "sha256": "9621f67f1e091bc3ff1ff8991a484defa403993de19a0288b7a72cc060b47cc6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-004/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-004/run.log",
+      "sha256": "9621f67f1e091bc3ff1ff8991a484defa403993de19a0288b7a72cc060b47cc6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-005/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-005/run.log",
+      "sha256": "9621f67f1e091bc3ff1ff8991a484defa403993de19a0288b7a72cc060b47cc6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-006/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-006/run.log",
+      "sha256": "9621f67f1e091bc3ff1ff8991a484defa403993de19a0288b7a72cc060b47cc6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-007/patch.diff",
+      "sha256": "1f86d618718dabaec24ad639e8212e7a85709a3a277b0131fab1e150d3f8fa03"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-007/run.log",
+      "sha256": "9621f67f1e091bc3ff1ff8991a484defa403993de19a0288b7a72cc060b47cc6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-008/patch.diff",
+      "sha256": "54840aa8fa1c0a56a2e9c76560244929d8f37d71a047fd667fe3f50548169d86"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-008/run.log",
+      "sha256": "13075a6c5f9603b7d4285ad6fad7c48d35171315e14932a6623730b11d3b5f13"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-009/patch.diff",
+      "sha256": "6f5316ad1de814d2676f34fbb34c75d5831989f9fb807d69b4d045d41d727cda"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-009/run.log",
+      "sha256": "c764f4fed3d6cf19ea1b477d29597cad165994af930ab1f79e614220beb3ec26"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-010/patch.diff",
+      "sha256": "17ac2810305e8a3a60a979c288b1981ce445b4f8b4e7876fe4714cbce072252d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_breast_w__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_breast_w__s115/art/trial-010/run.log",
+      "sha256": "c764f4fed3d6cf19ea1b477d29597cad165994af930ab1f79e614220beb3ec26"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-001/patch.diff",
+      "sha256": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-001/run.log",
+      "sha256": "82054906a52651756748b2f08888c74b3edb5fe16ccc81f3905b9562fb2bc3ba"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-002/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-002/run.log",
+      "sha256": "82054906a52651756748b2f08888c74b3edb5fe16ccc81f3905b9562fb2bc3ba"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-003/patch.diff",
+      "sha256": "f03dfd50af1a397772bdbea7d0b23b0835fb6c38b21746e70a06c9852f50bd4c"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-003/run.log",
+      "sha256": "13fc5598dadb90302c55f631399a509dc8595ab86ddba10b9ef921bffa866dee"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-004/patch.diff",
+      "sha256": "fd57f08911fd171f9cd170df9ab8e21993bfc51ae1512040a791364be05fc4b9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-004/run.log",
+      "sha256": "568dc6807b197fe72be26c532593f139b4020de5738ded612b91e3c20119a312"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-005/patch.diff",
+      "sha256": "86c39c02e09043463825916ec1a3f88882ae45f505556163abfae1f7fd35e446"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-005/run.log",
+      "sha256": "275a1a1e9f96971bc36a20ad6f3feb93f769494e7b5b20e26adc8b84253c578c"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-006/patch.diff",
+      "sha256": "153435b66ea2ea16d5ca1263005b472b025a1396ec017ba0ce599e6ef58fce8e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-006/run.log",
+      "sha256": "275a1a1e9f96971bc36a20ad6f3feb93f769494e7b5b20e26adc8b84253c578c"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-007/patch.diff",
+      "sha256": "153435b66ea2ea16d5ca1263005b472b025a1396ec017ba0ce599e6ef58fce8e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-007/run.log",
+      "sha256": "275a1a1e9f96971bc36a20ad6f3feb93f769494e7b5b20e26adc8b84253c578c"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-008/patch.diff",
+      "sha256": "153435b66ea2ea16d5ca1263005b472b025a1396ec017ba0ce599e6ef58fce8e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-008/run.log",
+      "sha256": "275a1a1e9f96971bc36a20ad6f3feb93f769494e7b5b20e26adc8b84253c578c"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-009/patch.diff",
+      "sha256": "5c05e00715ad274d2f3f55f9c445a1eab8493303b909fcaa4a22d68ed7e09915"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-009/run.log",
+      "sha256": "005651a6b92c0c839b5206742ac58c6f98507c0c46cb1e778fe8c29945abe16a"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-010/patch.diff",
+      "sha256": "153435b66ea2ea16d5ca1263005b472b025a1396ec017ba0ce599e6ef58fce8e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s104/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s104/art/trial-010/run.log",
+      "sha256": "275a1a1e9f96971bc36a20ad6f3feb93f769494e7b5b20e26adc8b84253c578c"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-001/patch.diff",
+      "sha256": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-001/run.log",
+      "sha256": "9fa4463bac64207a3b8784f726f0a1870693c667d1e3df001a4e9de2935af214"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-002/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-002/run.log",
+      "sha256": "9fa4463bac64207a3b8784f726f0a1870693c667d1e3df001a4e9de2935af214"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-003/patch.diff",
+      "sha256": "4b7cbea61e54d38721d23fd58761ff830fc6238225018e812dcfb0353c60e707"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-003/run.log",
+      "sha256": "7405efe1c21757006ca7b611d8666d053563bcf49b50956ecd49c29dbe5253d4"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-004/patch.diff",
+      "sha256": "4b7cbea61e54d38721d23fd58761ff830fc6238225018e812dcfb0353c60e707"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-004/run.log",
+      "sha256": "7405efe1c21757006ca7b611d8666d053563bcf49b50956ecd49c29dbe5253d4"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-005/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-005/run.log",
+      "sha256": "9fa4463bac64207a3b8784f726f0a1870693c667d1e3df001a4e9de2935af214"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-006/patch.diff",
+      "sha256": "8b131cc69e79ac68b4fde8b15d230513faf41f2441e6ccce7b2c8e54729a0b7f"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-006/run.log",
+      "sha256": "8f6f66eefc163505e66c2d74184938bceb3e61e7923e271dddd09b8599ea28a6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-007/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-007/run.log",
+      "sha256": "9fa4463bac64207a3b8784f726f0a1870693c667d1e3df001a4e9de2935af214"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-008/patch.diff",
+      "sha256": "25e24013cc86c60ac85e37215445840ee0e75352c776884e5677b73b89366062"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-008/run.log",
+      "sha256": "23582c5895c27aa1144dda80123e121bdc0adde8cfe309d100c2223e64d051b6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-009/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-009/run.log",
+      "sha256": "9fa4463bac64207a3b8784f726f0a1870693c667d1e3df001a4e9de2935af214"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-010/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_climate__s114/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_climate__s114/art/trial-010/run.log",
+      "sha256": "9fa4463bac64207a3b8784f726f0a1870693c667d1e3df001a4e9de2935af214"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-001/patch.diff",
+      "sha256": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-001/run.log",
+      "sha256": "a835876933d46aac8f369a573fff8544129ce0f0a98ab967d2c5e02fdd60b7bb"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-002/patch.diff",
+      "sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-002/run.log",
+      "sha256": "a835876933d46aac8f369a573fff8544129ce0f0a98ab967d2c5e02fdd60b7bb"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-003/patch.diff",
+      "sha256": "3a3e7992b48f914707b9aae4bc8e83248af8d6dc22dfd7863c9f92e6d652e080"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-003/run.log",
+      "sha256": "3aa7fa0f70d0e62407a8a0a4eb89631e7f7ae63ab53b5d027d99d8ee87261d10"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-004/patch.diff",
+      "sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-004/run.log",
+      "sha256": "3aa7fa0f70d0e62407a8a0a4eb89631e7f7ae63ab53b5d027d99d8ee87261d10"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-005/patch.diff",
+      "sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-005/run.log",
+      "sha256": "3aa7fa0f70d0e62407a8a0a4eb89631e7f7ae63ab53b5d027d99d8ee87261d10"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-006/patch.diff",
+      "sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-006/run.log",
+      "sha256": "3aa7fa0f70d0e62407a8a0a4eb89631e7f7ae63ab53b5d027d99d8ee87261d10"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-007/patch.diff",
+      "sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-007/run.log",
+      "sha256": "3aa7fa0f70d0e62407a8a0a4eb89631e7f7ae63ab53b5d027d99d8ee87261d10"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-008/patch.diff",
+      "sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-008/run.log",
+      "sha256": "3aa7fa0f70d0e62407a8a0a4eb89631e7f7ae63ab53b5d027d99d8ee87261d10"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-009/patch.diff",
+      "sha256": "275c0b3c23b6d73b777081b419074b40c451e916cd8f53a6fb9675861d60efd4"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-009/run.log",
+      "sha256": "a835876933d46aac8f369a573fff8544129ce0f0a98ab967d2c5e02fdd60b7bb"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-010/patch.diff",
+      "sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s100/art/trial-010/run.log",
+      "sha256": "3aa7fa0f70d0e62407a8a0a4eb89631e7f7ae63ab53b5d027d99d8ee87261d10"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-001/patch.diff",
+      "sha256": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-001/run.log",
+      "sha256": "5e5b575029750e9631ca2e3019605fd5328ace34bf596898531f40e59f1b0418"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-002/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-002/run.log",
+      "sha256": "5e5b575029750e9631ca2e3019605fd5328ace34bf596898531f40e59f1b0418"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-003/patch.diff",
+      "sha256": "8b131cc69e79ac68b4fde8b15d230513faf41f2441e6ccce7b2c8e54729a0b7f"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-003/run.log",
+      "sha256": "3eaba38bf6620a8ef5fcd40c0e174674b3bb4a0405a6b07fc784b228b2c81629"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-004/patch.diff",
+      "sha256": "7227f3cf27858ffa3d77c566a48e4391b770a4ac3ba3b8b6717db256ec4320cf"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-004/run.log",
+      "sha256": "fa3b5c183d3a2ca5da54e1951fa69759e9239070e02d9555f6e4011cd95c989d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-005/patch.diff",
+      "sha256": "a43ef1e9554f49baef9d388124e72f83eca3312f0df852373dcfa0c94825f060"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-005/run.log",
+      "sha256": "e6b65ff708cbe868f9003e3f796923584a0c12599b35166a3ffd9200c982351a"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-006/patch.diff",
+      "sha256": "28428d56132b744a78b54432aecceff2551c91e1d53a62c99eb49f9bacd0b461"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-006/run.log",
+      "sha256": "40c135ba9192004af0d0ef9cc81bca7718bf33ddaca413d98e4032cacc3a35a1"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-007/patch.diff",
+      "sha256": "8b131cc69e79ac68b4fde8b15d230513faf41f2441e6ccce7b2c8e54729a0b7f"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-007/run.log",
+      "sha256": "3eaba38bf6620a8ef5fcd40c0e174674b3bb4a0405a6b07fc784b228b2c81629"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-008/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-008/run.log",
+      "sha256": "5e5b575029750e9631ca2e3019605fd5328ace34bf596898531f40e59f1b0418"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-009/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-009/run.log",
+      "sha256": "5e5b575029750e9631ca2e3019605fd5328ace34bf596898531f40e59f1b0418"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-010/patch.diff",
+      "sha256": "88b703a6ea6f67e585b0543980210d2036c7fe2beabbd01a363d4a844393eaaa"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_credit_approval__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_credit_approval__s110/art/trial-010/run.log",
+      "sha256": "dbf5cb0bdc20c3427d2ecd009e8627cfb07e6bf4fe7484059ccbfb49c7d67d2e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-001/patch.diff",
+      "sha256": "8b131cc69e79ac68b4fde8b15d230513faf41f2441e6ccce7b2c8e54729a0b7f"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-001/run.log",
+      "sha256": "80357f510a34d018a9b812ccf148ce9d48bdaabe7a3409b676b7069c63e864cf"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-002/patch.diff",
+      "sha256": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-002/run.log",
+      "sha256": "80357f510a34d018a9b812ccf148ce9d48bdaabe7a3409b676b7069c63e864cf"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-003/patch.diff",
+      "sha256": "f4bf9014879a345b580d10c0a2a30e49ad5fc0423ae4d0e259b5c4b5bbcf3998"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-003/run.log",
+      "sha256": "80357f510a34d018a9b812ccf148ce9d48bdaabe7a3409b676b7069c63e864cf"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-004/patch.diff",
+      "sha256": "7a5db5e5d04efeb14602bb671991851ce38fbb5d903a8a69b92db2f63c13b017"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-004/run.log",
+      "sha256": "80357f510a34d018a9b812ccf148ce9d48bdaabe7a3409b676b7069c63e864cf"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-005/patch.diff",
+      "sha256": "5d929b2ca5877c2c5012e369b0e9f58624aa6bfb7dace2eec20c6954525b8541"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-005/run.log",
+      "sha256": "06dbd48f3b392e0d6384376690a98f425e2340c7a92e8ea419b4bc948c8e79b5"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-006/patch.diff",
+      "sha256": "17ac2810305e8a3a60a979c288b1981ce445b4f8b4e7876fe4714cbce072252d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-006/run.log",
+      "sha256": "04582e06ffa72fe938d3f67b505bf524d86670427d7dddd08206c2fb74898687"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-007/patch.diff",
+      "sha256": "5d929b2ca5877c2c5012e369b0e9f58624aa6bfb7dace2eec20c6954525b8541"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-007/run.log",
+      "sha256": "06dbd48f3b392e0d6384376690a98f425e2340c7a92e8ea419b4bc948c8e79b5"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-008/patch.diff",
+      "sha256": "5d929b2ca5877c2c5012e369b0e9f58624aa6bfb7dace2eec20c6954525b8541"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-008/run.log",
+      "sha256": "06dbd48f3b392e0d6384376690a98f425e2340c7a92e8ea419b4bc948c8e79b5"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-009/patch.diff",
+      "sha256": "3648689fd9940b6e43c5aac60396fa041fe3a2d105f1789b7e9670ceeeabc80b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-009/run.log",
+      "sha256": "f807a7a80bbee2a55dd0cd2a2e6eca365bc5a17080146c1d1700789e07ab9cb4"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-010/patch.diff",
+      "sha256": "5dac471b1cc1bda7d253cf80689ef488dab771e2ea07bac77013d3ef8e57487a"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s103/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s103/art/trial-010/run.log",
+      "sha256": "370a2f5462549b0adec29a352c2e11a059dbdaef3d5832d8ea87d91ea4311b46"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-001/patch.diff",
+      "sha256": "a150943df1c2e405acc19c1c296bd0f6f990e07f568c28b1f1305302b40f8260"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-001/run.log",
+      "sha256": "5e10de32482116d2d2992e1b94aac5f3e5b634c22f5bffed7c4feb83dbd919d9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-002/patch.diff",
+      "sha256": "395921b41a869775df1e950346750ea1233c572f31012d80e1f691f0f2e6535b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-002/run.log",
+      "sha256": "5e10de32482116d2d2992e1b94aac5f3e5b634c22f5bffed7c4feb83dbd919d9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-003/patch.diff",
+      "sha256": "4b7cbea61e54d38721d23fd58761ff830fc6238225018e812dcfb0353c60e707"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-003/run.log",
+      "sha256": "5e10de32482116d2d2992e1b94aac5f3e5b634c22f5bffed7c4feb83dbd919d9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-004/patch.diff",
+      "sha256": "4b7cbea61e54d38721d23fd58761ff830fc6238225018e812dcfb0353c60e707"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-004/run.log",
+      "sha256": "5e10de32482116d2d2992e1b94aac5f3e5b634c22f5bffed7c4feb83dbd919d9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-005/patch.diff",
+      "sha256": "8b131cc69e79ac68b4fde8b15d230513faf41f2441e6ccce7b2c8e54729a0b7f"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-005/run.log",
+      "sha256": "5e10de32482116d2d2992e1b94aac5f3e5b634c22f5bffed7c4feb83dbd919d9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-006/patch.diff",
+      "sha256": "25e24013cc86c60ac85e37215445840ee0e75352c776884e5677b73b89366062"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-006/run.log",
+      "sha256": "bbd2f984b9ecb9475e7ccf2f62c4e93ac28d090a56872c528c84c6f0171f875e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-007/patch.diff",
+      "sha256": "7227f3cf27858ffa3d77c566a48e4391b770a4ac3ba3b8b6717db256ec4320cf"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-007/run.log",
+      "sha256": "b49ccda05fafe8b2e58ffaa2d54970017449205fafefd0a2f9eb42cffed30f40"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-008/patch.diff",
+      "sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-008/run.log",
+      "sha256": "5e10de32482116d2d2992e1b94aac5f3e5b634c22f5bffed7c4feb83dbd919d9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-009/patch.diff",
+      "sha256": "28428d56132b744a78b54432aecceff2551c91e1d53a62c99eb49f9bacd0b461"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-009/run.log",
+      "sha256": "701fa14b0c1da5a34cd78c48791f0671e3696733e39cf34f142494b4b4fd4a18"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-010/patch.diff",
+      "sha256": "341ea56c11ab6f3d22641310b50cabda49d1db0f3abfb8448f0bd01af80febf9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_ionosphere__s113/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_ionosphere__s113/art/trial-010/run.log",
+      "sha256": "5e10de32482116d2d2992e1b94aac5f3e5b634c22f5bffed7c4feb83dbd919d9"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-001/patch.diff",
+      "sha256": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-001/run.log",
+      "sha256": "48a8fb2b416c8ea1ef619822baf0cf8176ae9c725be0d8fb019c2682932cb946"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-002/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-002/run.log",
+      "sha256": "48a8fb2b416c8ea1ef619822baf0cf8176ae9c725be0d8fb019c2682932cb946"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-003/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-003/run.log",
+      "sha256": "48a8fb2b416c8ea1ef619822baf0cf8176ae9c725be0d8fb019c2682932cb946"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-004/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-004/run.log",
+      "sha256": "48a8fb2b416c8ea1ef619822baf0cf8176ae9c725be0d8fb019c2682932cb946"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-005/patch.diff",
+      "sha256": "1f86d618718dabaec24ad639e8212e7a85709a3a277b0131fab1e150d3f8fa03"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-005/run.log",
+      "sha256": "48a8fb2b416c8ea1ef619822baf0cf8176ae9c725be0d8fb019c2682932cb946"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-006/patch.diff",
+      "sha256": "2b93692fd5f6b8041b38bc83365464844b2a52593c6e054f2fee152e43ae5bb7"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-006/run.log",
+      "sha256": "48a8fb2b416c8ea1ef619822baf0cf8176ae9c725be0d8fb019c2682932cb946"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-007/patch.diff",
+      "sha256": "54840aa8fa1c0a56a2e9c76560244929d8f37d71a047fd667fe3f50548169d86"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-007/run.log",
+      "sha256": "c9ffb11b2185d4d57eeb180e515b2fb99a71bff4ee95393454998d5fbf16a534"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-008/patch.diff",
+      "sha256": "6f5316ad1de814d2676f34fbb34c75d5831989f9fb807d69b4d045d41d727cda"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-008/run.log",
+      "sha256": "15ee8e216b45bf271a0c05554e4af615d1d4f9f186f24d4a734c4c18589079d7"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-009/patch.diff",
+      "sha256": "17ac2810305e8a3a60a979c288b1981ce445b4f8b4e7876fe4714cbce072252d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-009/run.log",
+      "sha256": "445457bec7757ef83efe3d69e564cc357cd493834d6d3afac343f514cf234fef"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-010/patch.diff",
+      "sha256": "08035e8ffceaf252a4b56d7cf02f769eeb3d6fe258f3d6c42f4cdbb79a24121b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s105/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s105/art/trial-010/run.log",
+      "sha256": "005a5e1aa59241435e615103303e24424c11a29f8b4809a8f7c3f05c2c464d1d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-001/patch.diff",
+      "sha256": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-001/run.log",
+      "sha256": "26c0d39d9c3bd198aa1411c9a23f0265ca8c8d56a0193e11e0f49bedf28a0ce1"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-002/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-002/run.log",
+      "sha256": "26c0d39d9c3bd198aa1411c9a23f0265ca8c8d56a0193e11e0f49bedf28a0ce1"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-003/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-003/run.log",
+      "sha256": "26c0d39d9c3bd198aa1411c9a23f0265ca8c8d56a0193e11e0f49bedf28a0ce1"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-004/patch.diff",
+      "sha256": "54840aa8fa1c0a56a2e9c76560244929d8f37d71a047fd667fe3f50548169d86"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-004/run.log",
+      "sha256": "4c87b75a52d909645998025375111af21bf6226274b8ee4d83e113c9489211ab"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-005/patch.diff",
+      "sha256": "da6a177c3a1fe28a8aa0d7b9b6642e798950e3e90921e817c4223fb74e52b497"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-005/run.log",
+      "sha256": "dac665a7d45d8740df6c0b4d56652ff5420f333cafb5d1152f4ad482352bb222"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-006/patch.diff",
+      "sha256": "524f83aa0c910254039dcee8706101eb7b9149d11347ddd4437be9cb36550979"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-006/run.log",
+      "sha256": "c8fde2c38029418e8a252c354907c7b8c9edcc8a98440f543b28300cf5929464"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-007/patch.diff",
+      "sha256": "7ce80c9d83ef9bc17032f86dbfb6a65c2601872784e309f56ca97bd39f8b768a"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-007/run.log",
+      "sha256": "2ed8a8a3ae902a3f09d5d129b47f487a368e5d473b84a21ea695de545885d999"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-008/patch.diff",
+      "sha256": "c624df8065c972a10646cebada60f140acc5238dacf832dfe8f5de230b1282a0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-008/run.log",
+      "sha256": "2ed8a8a3ae902a3f09d5d129b47f487a368e5d473b84a21ea695de545885d999"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-009/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-009/run.log",
+      "sha256": "2ed8a8a3ae902a3f09d5d129b47f487a368e5d473b84a21ea695de545885d999"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-010/patch.diff",
+      "sha256": "f8964fa40d51555ae39bd9953240bdc5a9a7a9a254ee53b2aa6b318bb2b72593"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_sonar__s115/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_sonar__s115/art/trial-010/run.log",
+      "sha256": "2ed8a8a3ae902a3f09d5d129b47f487a368e5d473b84a21ea695de545885d999"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-001/patch.diff",
+      "sha256": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-001/run.log",
+      "sha256": "c7c72027bd0364d0dd77d447a2e6d35cc1a156e7d8b78389cf1d373630e18bb6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-002/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-002/run.log",
+      "sha256": "c7c72027bd0364d0dd77d447a2e6d35cc1a156e7d8b78389cf1d373630e18bb6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-003/patch.diff",
+      "sha256": "f77b8ddadb5f30dfd6d5bbe09f92f768ea901e1de1d4484dbab0cc2b6b9fa307"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-003/run.log",
+      "sha256": "c7c72027bd0364d0dd77d447a2e6d35cc1a156e7d8b78389cf1d373630e18bb6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-004/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-004/run.log",
+      "sha256": "c7c72027bd0364d0dd77d447a2e6d35cc1a156e7d8b78389cf1d373630e18bb6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-005/patch.diff",
+      "sha256": "54840aa8fa1c0a56a2e9c76560244929d8f37d71a047fd667fe3f50548169d86"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-005/run.log",
+      "sha256": "a8b8c5828ad8752482f870aa1a7a27e67a0309db045351c2491f7e3033468ec0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-006/patch.diff",
+      "sha256": "1f86d618718dabaec24ad639e8212e7a85709a3a277b0131fab1e150d3f8fa03"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-006/run.log",
+      "sha256": "c7c72027bd0364d0dd77d447a2e6d35cc1a156e7d8b78389cf1d373630e18bb6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-007/patch.diff",
+      "sha256": "54840aa8fa1c0a56a2e9c76560244929d8f37d71a047fd667fe3f50548169d86"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-007/run.log",
+      "sha256": "a8b8c5828ad8752482f870aa1a7a27e67a0309db045351c2491f7e3033468ec0"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-008/patch.diff",
+      "sha256": "d9a0eaeeaf240de8230f6bd945be3f360956dd1a3a1695acb5c6ad3daffcd5b4"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-008/run.log",
+      "sha256": "0141f439862bfadb3cc069048b4bcb13db45028485ba93bffc225c48d45e510a"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-009/patch.diff",
+      "sha256": "d9a0eaeeaf240de8230f6bd945be3f360956dd1a3a1695acb5c6ad3daffcd5b4"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-009/run.log",
+      "sha256": "0141f439862bfadb3cc069048b4bcb13db45028485ba93bffc225c48d45e510a"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-010/patch.diff",
+      "sha256": "1f86d618718dabaec24ad639e8212e7a85709a3a277b0131fab1e150d3f8fa03"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s100/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s100/art/trial-010/run.log",
+      "sha256": "c7c72027bd0364d0dd77d447a2e6d35cc1a156e7d8b78389cf1d373630e18bb6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-001/patch.diff",
+      "sha256": "8ddfb662ea122da9d12faeff486a977d40395add7623d4fc3dd10c5e9bf71b71"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-001/run.log",
+      "sha256": "a15d5a66b9ced141fba04b4081f4035fee23d97421be919bc924202509c948bc"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-002/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-002/run.log",
+      "sha256": "a15d5a66b9ced141fba04b4081f4035fee23d97421be919bc924202509c948bc"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-003/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-003/run.log",
+      "sha256": "a15d5a66b9ced141fba04b4081f4035fee23d97421be919bc924202509c948bc"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-004/patch.diff",
+      "sha256": "54840aa8fa1c0a56a2e9c76560244929d8f37d71a047fd667fe3f50548169d86"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-004/run.log",
+      "sha256": "ee40d89932de139947bb6c29b3e5e662bec8e679d4e09cd1fea9e3f02bd0137e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-005/patch.diff",
+      "sha256": "35adca0c4f5a3576c7471be4e82338a8937df772176258ceea27f8e98e276a9f"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-005/run.log",
+      "sha256": "ee40d89932de139947bb6c29b3e5e662bec8e679d4e09cd1fea9e3f02bd0137e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-006/patch.diff",
+      "sha256": "a4823db3810e45003d333f0ec62125d97e1f8208d69552e40bfcbe9916bc4438"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-006/run.log",
+      "sha256": "ee40d89932de139947bb6c29b3e5e662bec8e679d4e09cd1fea9e3f02bd0137e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-007/patch.diff",
+      "sha256": "51bbcc3a1091258606c7f049bfa7e4214ec7b6be61a30778540099157ab27fce"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-007/run.log",
+      "sha256": "ee40d89932de139947bb6c29b3e5e662bec8e679d4e09cd1fea9e3f02bd0137e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-008/patch.diff",
+      "sha256": "1f86d618718dabaec24ad639e8212e7a85709a3a277b0131fab1e150d3f8fa03"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-008/run.log",
+      "sha256": "ee40d89932de139947bb6c29b3e5e662bec8e679d4e09cd1fea9e3f02bd0137e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-009/patch.diff",
+      "sha256": "6f5316ad1de814d2676f34fbb34c75d5831989f9fb807d69b4d045d41d727cda"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-009/run.log",
+      "sha256": "ee40d89932de139947bb6c29b3e5e662bec8e679d4e09cd1fea9e3f02bd0137e"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-010/patch.diff",
+      "sha256": "da6a177c3a1fe28a8aa0d7b9b6642e798950e3e90921e817c4223fb74e52b497"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/openml_wdbc__s110/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/openml_wdbc__s110/art/trial-010/run.log",
+      "sha256": "cd954c8f63471c5042c9ff127cf728c9ad7eff2928ee109085e04083f752c598"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-001/patch.diff",
+      "sha256": "ee8bc5b7f0ed02fd940bcdfdfe4821f957ff3363c18560555d9955c8fe0cc62d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-001/run.log",
+      "sha256": "445cd5f9126affb997b9d05d2298b01606f5aececb073e2046af3242ae4b5228"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-002/patch.diff",
+      "sha256": "c6429906e1dcf6c0fecba37e447eb546be25d8ed7186b12a1e2f6283c9923217"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-002/run.log",
+      "sha256": "fde0b4ddfa98087108d935974d2ebcad85b747dd42a9df4633c149f60ae17efe"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-003/patch.diff",
+      "sha256": "58b86655a9e04314eebe854f4af346d9bdd85d711a3296e0454197e6a66e6891"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-003/run.log",
+      "sha256": "9be1e74e6c7802fd877bd44f513d89f72bee845d078d7c9a20112cbc81d5dba3"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-004/patch.diff",
+      "sha256": "c20b6128d89ce07063c8d3e3d5bf02231d77640055aae38476cb718f21d44366"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-004/run.log",
+      "sha256": "e2f92401c5462dbe007cb4b535ce1e00930c998708043eb72c726de80ca66de4"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-005/patch.diff",
+      "sha256": "e16c59e86707515ab6a49633259c798e6e36210ab1a3e44ab480bb87b4f8f959"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-005/run.log",
+      "sha256": "011ae23fe456471c3c2d82208a60787bc4490c14ccbf1d14bfa93ac816c1b09c"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-006/patch.diff",
+      "sha256": "4225b432ae23de1d3e834fbb5acb689595c8f866031487c8bb28caaef55b9043"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-006/run.log",
+      "sha256": "0e44a7147190ccce4fd37576dc74c02752bfd7a9030d5b32b71aa6c5c22c44c7"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-007/patch.diff",
+      "sha256": "4225b432ae23de1d3e834fbb5acb689595c8f866031487c8bb28caaef55b9043"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-007/run.log",
+      "sha256": "0e44a7147190ccce4fd37576dc74c02752bfd7a9030d5b32b71aa6c5c22c44c7"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-008/patch.diff",
+      "sha256": "4225b432ae23de1d3e834fbb5acb689595c8f866031487c8bb28caaef55b9043"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-008/run.log",
+      "sha256": "0e44a7147190ccce4fd37576dc74c02752bfd7a9030d5b32b71aa6c5c22c44c7"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-009/patch.diff",
+      "sha256": "4225b432ae23de1d3e834fbb5acb689595c8f866031487c8bb28caaef55b9043"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-009/run.log",
+      "sha256": "0e44a7147190ccce4fd37576dc74c02752bfd7a9030d5b32b71aa6c5c22c44c7"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-010/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-010/patch.diff",
+      "sha256": "c2bf598cf0bfd30a37077085e0d0704eaec48ed571efd810bf1ad8fb6a918c52"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s102/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-010/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s102/art/trial-010/run.log",
+      "sha256": "ffbf700fb24a66fca99ffade9043082f17d95a018737c7a82b7e1aaec1702be6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-001/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-001/patch.diff",
+      "sha256": "ee8bc5b7f0ed02fd940bcdfdfe4821f957ff3363c18560555d9955c8fe0cc62d"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-001/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-001/run.log",
+      "sha256": "580bdffac1adb18dda7541b73ee84a7d612dc667b07e1e8d634bcb384ee3e688"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-002/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-002/patch.diff",
+      "sha256": "c6429906e1dcf6c0fecba37e447eb546be25d8ed7186b12a1e2f6283c9923217"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-002/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-002/run.log",
+      "sha256": "2f25f8ba4a9726be35cdb1d3005be6b220c7510be895861d7e72ede3d2bef7d1"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-003/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-003/patch.diff",
+      "sha256": "58b86655a9e04314eebe854f4af346d9bdd85d711a3296e0454197e6a66e6891"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-003/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-003/run.log",
+      "sha256": "afff2db6513829637dcaea9e7f813102ddc320ce3d340bee9512e7df6dd0c59b"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-004/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-004/patch.diff",
+      "sha256": "c20b6128d89ce07063c8d3e3d5bf02231d77640055aae38476cb718f21d44366"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-004/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-004/run.log",
+      "sha256": "a6b05f3561eacc3f6d0d03b2a1b69f48d52f1a9fa03c69a15152d45b25982e69"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-005/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-005/patch.diff",
+      "sha256": "c20b6128d89ce07063c8d3e3d5bf02231d77640055aae38476cb718f21d44366"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-005/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-005/run.log",
+      "sha256": "a6b05f3561eacc3f6d0d03b2a1b69f48d52f1a9fa03c69a15152d45b25982e69"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-006/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-006/patch.diff",
+      "sha256": "e16c59e86707515ab6a49633259c798e6e36210ab1a3e44ab480bb87b4f8f959"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-006/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-006/run.log",
+      "sha256": "e7e974511fa354357ce8ea005ef087291b6bdf358c1ba80a02af32de935ce242"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-007/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-007/patch.diff",
+      "sha256": "4225b432ae23de1d3e834fbb5acb689595c8f866031487c8bb28caaef55b9043"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-007/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-007/run.log",
+      "sha256": "bca9f95372414402081dbb180fe35410f8f3a7092a38ee9adc1a0b890fed4beb"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-008/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-008/patch.diff",
+      "sha256": "c2bf598cf0bfd30a37077085e0d0704eaec48ed571efd810bf1ad8fb6a918c52"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-008/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-008/run.log",
+      "sha256": "1ac89edb6f0173a56ad12f1100ff799ebf7f94a8f23a28edf706848d4a963fee"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-009/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-009/patch.diff",
+      "sha256": "752262dba2cca30101875506394f909f2e66bc41e028032d8e427cf35adfd372"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-009/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-009/run.log",
+      "sha256": "38fdebe743a0a40f3a8768f5ea661a3a4eef614444d885f421c87d886b5b586c"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "patch_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-011/patch.diff",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-011/patch.diff",
+      "sha256": "d6bc097aa970375405d70ce4b3721583a754618e7e9defa9705c6b971fa1cbb6"
+    },
+    {
+      "ledger": "liveness_20261027T152425Z/roots/tabular_mlp__s112/root_trials.jsonl",
+      "field": "raw_log_ref",
+      "original_ref": "/tmp/r1_sweep1_dwong_20261026/r1_c3_f7323c5a858490a81668/liveness_work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-011/run.log",
+      "member": "work/liveness_20261027T152425Z/roots/tabular_mlp__s112/art/trial-011/run.log",
+      "sha256": "9408a8152bb6794eef2421f90578f4b9b9ad0e2a14aa5fa67270cedcfd784ff3"
+    }
+  ],
+  "truncated_interrupted_tails": [],
+  "truncated_interrupted_events": []
+}
