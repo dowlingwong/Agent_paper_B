@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — L4.5 harness audit independently accepted (AI-assisted)
+
+- The [governance audit](proposals/HARNESS_GOVERNANCE_20261027.md) and its two added legacy-metric fixtures (`4e25521`) are accepted under the author's amended restricted Mac criterion: [review](reviews/LOCAL_L4_5_RULING_REVIEW_20261027.md); independent fixture run 2 passed. The known resume-stamp defect has a separate accepted `r1-local-20261027` repair gated until after sweep 1 and B.2.
+- The restricted comparisons predate the new test file and intervening pilot-figure changes; no fresh whole-selection claim is made. Full-environment suite comparison remains after merge. Generic non-AUC metric behavior remains an audit question, not a proven deployed defect.
+
 ## 27 October 2026 — resume stamp repair independently reviewed (AI-assisted)
 
 - Harness branch `r1-local-20261027` commit `7567215` is pushed and independently accepted for the scoped engineering fix ([review](reviews/LOCAL_RESUME_STAMP_FIX_REVIEW_20261027.md)). Fixture tests cover resumed E1 evaluated and skip plus E2 verify rescue/veto and live/resumed behavior; 3 passed. The fix recomputes the final count after a verify decision can change, while preserving the pre-verify snapshot view.
