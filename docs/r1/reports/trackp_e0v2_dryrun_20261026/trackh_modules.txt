@@ -1,0 +1,35 @@
+# Track H test modules (R1-TRACKP-MERGE, 26 Oct 2026). AI-assisted (Claude).
+# paper: 9365ab4465eeaa83206234b023e6d8a6a0023eda (trackp-20261026; one tracked change at run time: this file itself, being rewritten by the command that produced it)
+# harness: 897d83c8efa364ec2fdd37288241cc42e01d7274 = HARNESS_PIN_C3 897d83c8efa364ec2fdd37288241cc42e01d7274 (descendant of 6afdb0e, which is on origin/r1)
+# venv trackp-cpu; HF_HOME=/home/dowling/r1_trackp/hf_cache; 2026-10-26T10:08:02Z
+# (an earlier version of this file ran at harness 6afdb0e with uncommitted changes: 29 passed)
+r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-1] PASSED [  3%]
+r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[second_gains-1] PASSED [  6%]
+r1/tests/test_c3_direct_arms.py::test_hybrid_revises_then_rescreens_once[nogain-0] PASSED [ 10%]
+r1/tests/test_c3_direct_arms.py::test_awr_direct_arm_learns_to_skip_harmful_edits PASSED [ 13%]
+r1/tests/test_c3_direct_arms.py::test_awr_training_never_reads_the_evaluation_half PASSED [ 17%]
+r1/tests/test_c3_direct_arms.py::test_awr_direct_and_llm_self_control_run_through_decide PASSED [ 20%]
+r1/tests/test_c3_direct_arms.py::test_llm_self_control_restricted_to_e1_e2 PASSED [ 24%]
+r1/tests/test_c3_direct_arms.py::test_matching_report_checks_instances_w_llm_cap_and_information_set PASSED [ 27%]
+r1/tests/test_c3_direct_arms.py::test_matching_report_without_new_fields_is_unchanged PASSED [ 31%]
+r1/tests/test_c3_direct_arms.py::test_c3_budgets_keep_the_trial_budget_non_binding PASSED [ 34%]
+r1/tests/test_c3_direct_arms.py::test_matching_report_flags_a_campaign_that_ended_on_the_trial_budget PASSED [ 37%]
+r1/tests/test_c3_direct_arms.py::test_campaign_usage_reports_trials_and_the_trial_budget PASSED [ 41%]
+r1/tests/test_c3_rule_controller.py::test_a1_through_rule_controller_equals_the_index_policy[probs0-True] PASSED [ 44%]
+r1/tests/test_c3_rule_controller.py::test_a1_through_rule_controller_equals_the_index_policy[probs1-False] PASSED [ 48%]
+r1/tests/test_c3_rule_controller.py::test_one_forecast_serves_e1_and_e2_and_is_recorded PASSED [ 51%]
+r1/tests/test_c3_rule_controller.py::test_rule_skips_come_first_and_are_logged PASSED [ 55%]
+r1/tests/test_c3_rule_controller.py::test_a4_queries_are_charged_to_the_llm_cap PASSED [ 58%]
+r1/tests/test_c3_rule_controller.py::test_skip_infeasible_and_no_features_continue PASSED [ 62%]
+r1/tests/test_c3_rule_controller.py::test_a1_with_verify_equals_the_index_policy_arm PASSED [ 65%]
+r1/tests/test_c3_rule_controller.py::test_kg_verify_with_r2_never_pays_at_the_declared_g PASSED [ 68%]
+r1/tests/test_c3_sidecar.py::test_forecast_round_trip_and_pin PASSED     [ 72%]
+r1/tests/test_c3_sidecar.py::test_refuses_an_adapter_whose_sha256_differs_from_the_pin PASSED [ 75%]
+r1/tests/test_c3_sidecar.py::test_timeout_and_errors_fall_back_to_a1[timeout] PASSED [ 79%]
+r1/tests/test_c3_sidecar.py::test_timeout_and_errors_fall_back_to_a1[error] PASSED [ 82%]
+r1/tests/test_c3_sidecar.py::test_timeout_and_errors_fall_back_to_a1[down] PASSED [ 86%]
+r1/tests/test_c3_sidecar.py::test_campaign_survives_a_dead_sidecar_and_logs_prior_unavailable PASSED [ 89%]
+r1/tests/test_c3_skip_display.py::test_skipped_proposals_show_one_line_without_metric[append_only_summary] PASSED [ 93%]
+r1/tests/test_c3_skip_display.py::test_skipped_proposals_show_one_line_without_metric[append_only_summary_with_rationale] PASSED [ 96%]
+r1/tests/test_c3_skip_display.py::test_manifest_records_the_display_version PASSED [100%]
+============================== 29 passed in 7.55s ==============================

@@ -1,0 +1,10 @@
+# Full paper suite, 26 Oct 2026 (AI-assisted, Claude). venv trackp-cpu, HF_HOME=/home/dowling/r1_trackp/hf_cache, harness 897d83c (= HARNESS_PIN_C3).
+## trackp-20261026 at 70b7580 + the decision changes (run before the review fixes):
+FAILED r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic
+FAILED r1/tests/test_c3_control_dryrun.py::test_control_dryrun_end_to_end - A...
+FAILED r1/tests/test_c3_sweep_dryrun.py::test_c3_sweep_dryrun_llamacpp_from_the_deepthought_config
+FAILED r1/tests/test_exam_dryrun.py::test_exam_fake_end_to_end - AssertionErr...
+FAILED r1/tests/test_rerun2_batch4c.py::test_real_runner_desktop_dryrun - Ass...
+5 failed, 660 passed, 1 skipped, 2 warnings in 1052.23s (0:17:32)
+## the same five tests on origin/main (7611338), same venv and harness: 5 failed (pre-existing, environmental: worker/llama runs and desktop paths absent on the portal)
+## after the review fixes: r1/tests/test_trackp_*.py 190 passed; Track H modules 29 passed (trackh_modules.txt)

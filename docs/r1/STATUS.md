@@ -149,11 +149,48 @@
 
 - New agent runbook `docs/r1/prompts/MAC_LOCAL_RUNBOOK.md` for one Claude Code agent on the Mac: L0 baseline; L1 technical-route review and consolidation (`TECH_ROUTE.md`, consistency scan, route proposals — incl. the DAC-framing conflict with R1-ROUTE); L2 theory-check support for A.2; L3 feasibility and ICML 2027 re-plan (proposal); L4 framework code (Track G adapters G.1, Track H follow-ups, regenerate-all analysis pipeline, D.2 scaffold, harness audit — harness pin 897d83c untouched); L5 Track P feasibility review (proposal); L6 ICML LaTeX skeleton in `papers/r1/`; L7 final pass. Subagent use and acceptance criteria per task; independent review at every STOP.
 
+## 26 October 2026 (night) — Track P migrated to TASL-7; host equivalence passed; STOP (AI-assisted; ENGINEERING_ONLY / DRYRUN; independently reviewed and accepted)
+
+- Track P agent on TASL-7, branch `trackp-20261026`. Merged `origin/main` (STATUS conflict: both entries kept, unchanged), then the portal session's last commits.
+- **Phase 0:** `docs/r1/reports/PORTAL_TRACKP_HOST_FACTS_TASL7_20261026.md`. RTX 4090, cc 8.9, driver 580 / CUDA 13.0, 965 G free. Work dir `/home/dowling/r1_trackp` (same paths as the portal). Reboot pending since 6 Oct; secrets file absent.
+- **Phase 2, same pins:** `docs/r1/reports/TRACKP_PHASE2_ENV_PINS_TASL7_20261026.md`. The venv freeze is identical to the portal's (torch 2.6.0+cu124). The GPU smoke test matches the portal to ~1e-6. All 8 repos (112 files) were re-hashed against the committed `registry.yaml`, which is unchanged. The config is unchanged and `--check-config` is clean.
+- **Host equivalence:** `docs/r1/reports/TRACKP_TASL7_EQUIVALENCE_20261026.md`. Kev-0.8B, fresh, soft, lr 1e-4, seed 0, 2,000-step caps, at `8e13e77`. Tolerance pre-declared and pushed first (`f3567e9`). **Equivalent:** Δ width slope −0.0095, Δ mean slope +0.0077, RPS −2.5 % (limits 0.05 / 0.05 / 10 %).
+- Code: run manifests record the host and the GPU in use, by UUID (R1-ADA-OVERFLOW).
+- Independent review: `docs/r1/reviews/TRACKP_TASL7_MIGRATION_REVIEW_20261026.md`. 5 minor findings fixed; **accepted**. 26.3 leased GPU-minutes on TASL-7.
+- **STOP. Waiting for the author:** `trackp_p3a_<date>.md`, and the questions in `docs/r1/reports/TRACKP_TASL7_MIGRATION_20261026.md` (Track X STATUS guard on TASL-7, config label, reboot, other users). No P.3a run. Not merged; the coordinating session merges.
+
+## 26 October 2026 (evening) — Track P: rule v2, two-stage E0 driver validated; portal work ends (AI-assisted)
+
+- The author's evening decisions are recorded as PLAN §10 rows on `trackp-20261026`: R1-E0-THRESHOLDS, R1-E0-BUDGET, R1-E0-HEADFIT, R1-CONTROL-READOUT, R1-TRACKP-CHOICES, R1-EXAM-RULE-V2, R1-P3A-READY. Spec and runbooks are updated, and the agent's own readings are marked for confirmation.
+- **Rule v2** is committed: `r1/c3/rules/p3_rule_v2.yaml`, sha256 `8c0ef908…`. `exam_analyze` accepts v2 only. Finalist 1 is the E3 point top; the tie-breaks pick only the second finalist. The rule holds the E0 thresholds (width slope vs label std ≥ 0.6 with bootstrap lower bound > 0, mean slope ≥ 0.8) and A4 ≥ 95 %.
+- **Two-stage driver validated** with a short DRYRUN on kev-0.8b (`docs/r1/reports/TRACKP_E0V2_TWOSTAGE_DRYRUN_20261026.md`; clean `5538b79`).
+  - The mechanics work. The shortened budget measures no E0.
+  - Attempt 1 showed that starting LoRA from the L-BFGS head makes it diverge, then saturate. The head fit therefore stays descriptive, and LoRA starts from the fresh head.
+  - ≈ 1.6 GPU-h.
+- Independent review: `docs/r1/reviews/TRACKP_RULEV2_REVIEW_20261026.md` (4 minor + 1 on the DRYRUN record, fixed; **verdict: accepted**). The decisions review was accepted earlier.
+- **Host change (R1-TASL7-TRACKP):** this is the last Track P GPU work on zhixu portal. The portal work dir, venvs and models are left untouched.
+  - Host-equivalence check on TASL-7: reproduce the selected Kev-0.8B run of the portal E0 v2 DRYRUN (code `8e13e77`, `--variant fresh --lr 0.0001`, seed 0, 2,000-step caps). On the portal it gave width slope vs label std 0.923, mean slope 1.012 and RPS 1.99e-4, as pre-declared by the TASL-7 agent in `f3567e9`.
+  - Optional: the short two-stage run at `5538b79`.
+- **Waiting for the author:** `trackp_p3a_<date>.md`, and the marked readings (descriptive head fit means LoRA starts fresh; bootstrap bound; A4 not disqualifying; final budget for the hard/native runs). Not merged; the coordinating session merges.
+
 ## 26 October 2026 — hosts: TASL-7 dedicated to Track P; Ada as overflow (AI-assisted; documents only)
 
 - Author decisions recorded (PLAN §10): R1-ADA-OVERFLOW (zhixu experiment takes resumable overflow runs; one comparison table on one GPU type and one pinned environment unless declared) and R1-TASL7-TRACKP (second RTX 4090 node TASL-7, exclusive, dedicated to Track P; zhixu portal left to Track X).
 - RUNBOOK §3 host table and Track P hardware note updated; `PORTAL_TRACK_P_RUNBOOK.md` gains a host-change header with the migration steps (TASL-7 host facts, same pinned environment and model revisions, host-equivalence E0 DRYRUN with a pre-declared tolerance, independent review, STOP).
 - Needed from the author: SSH key and alias for TASL-7, GitHub authentication there, a reboot (the host reports "System restart required") before long runs, Claude Code on TASL-7, later `~/.config/r1/secrets.env`.
+
+## 26 October 2026 — Track P: author's decisions implemented; E0 v2 DRYRUN on Kev-0.8B and Qwen-0.8B (AI-assisted)
+
+- The author's 26 Oct decisions are recorded as PLAN §10 rows (R1-STARTLUX-TRAINABLE … R1-TRACKP-MERGE) on `trackp-20261026`, with the spec corrected to match. The agent's own implementation choices are listed under the rows for confirmation.
+- Code: E0 protocol v2, the A3 pool budget, token rows (mean-embedding init, fp32, own lr), the lr grid, early stopping, temperature scaling, the Track X marker in the GPU lease, 10 Jev questions, environment pins checked and recorded in every manifest.
+- Independent review: `docs/r1/reviews/TRACKP_DECISIONS_REVIEW_20261026.md` (1 blocking + 9 minor, then 3 minor on the DRYRUN report and 1 on the manifest dirty-file list; all fixed; **verdict: accepted**). The four Track H modules pass at harness `897d83c`: 29/29.
+- **E0 v2 DRYRUN** (DRYRUN, code at `8e13e77`; the manifests' dirty flag comes from an uncommitted review-file edit, not code): `docs/r1/reports/TRACKP_E0V2_DRYRUN_20261026.md`.
+  - Selected lr 1e-4 for both bases. Width slope vs the label's own std: 0.92 (Kev) and 0.97 (Qwen); mean slope 1.01. Label ceiling vs s: 0.925.
+  - Within 2,000 steps the frozen-backbone head fit learns no width (it had not converged). Hard labels collapse the width (ratio 0.27 / 0.20).
+  - A3 v2 is ≤ 3e-5 on both; A4 v2 is 1.00 on both; A5 fails on Qwen (TV 0.20).
+  - The soft runs peak near the 2,000-step cap.
+  - 3.7 GPU-h, plus ≈ 0.5 h for an aborted first attempt.
+- **Waiting for the author:** the E0/A4 threshold row, the training budget, the head-fit and A5 readings, and the Phase 5 authorization. Not merged; the coordinating session merges.
 
 ## 26 October 2026 — Track P branch merged into `main` by the coordinating session (AI-assisted)
 

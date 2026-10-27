@@ -1,0 +1,69 @@
+{
+  "criterion": "lowest best val RPS (R1-LR-GRID)",
+  "runs": [
+    {
+      "base": {
+        "adapter_repo": null,
+        "adapter_revision": null,
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "qwen_control"
+      },
+      "best_step": 1900,
+      "best_val_rps": 5.8775545767275617e-05,
+      "git": "8e13e77cd49532c7ac2e78ad8e5c1ee45401b286",
+      "lr": 0.0001,
+      "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_dryrun/qwen3.5-0.8b-base/fresh_soft_lr0.0001",
+      "target": "y_soft",
+      "variant": "fresh"
+    },
+    {
+      "base": {
+        "adapter_repo": null,
+        "adapter_revision": null,
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "qwen_control"
+      },
+      "best_step": 1800,
+      "best_val_rps": 0.0006921130116097629,
+      "git": "8e13e77cd49532c7ac2e78ad8e5c1ee45401b286",
+      "lr": 1e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_dryrun/qwen3.5-0.8b-base/fresh_soft_lr1e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+    },
+    {
+      "base": {
+        "adapter_repo": null,
+        "adapter_revision": null,
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "qwen_control"
+      },
+      "best_step": 1800,
+      "best_val_rps": 0.00013164672418497503,
+      "git": "8e13e77cd49532c7ac2e78ad8e5c1ee45401b286",
+      "lr": 3e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_dryrun/qwen3.5-0.8b-base/fresh_soft_lr3e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+    }
+  ],
+  "selected": {
+    "base": {
+      "adapter_repo": null,
+      "adapter_revision": null,
+      "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+      "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+      "family": "qwen_control"
+    },
+    "best_step": 1900,
+    "best_val_rps": 5.8775545767275617e-05,
+    "git": "8e13e77cd49532c7ac2e78ad8e5c1ee45401b286",
+    "lr": 0.0001,
+    "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_dryrun/qwen3.5-0.8b-base/fresh_soft_lr0.0001",
+    "target": "y_soft",
+    "variant": "fresh"
+  }
+}

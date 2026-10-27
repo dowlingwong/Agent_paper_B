@@ -91,8 +91,10 @@ def test_toy_batch_e0_and_probes_dry_run(tmp_path, family):
     rep = json.loads((tmp_path / "e0" / "report.json").read_text())
     assert {"head_fit", "lora", "pass", "probes"} <= set(rep)
     assert set(rep["probes"]) >= {"A1", "A2", "A3", "A4", "A5"}
-    if family == "qwen_control":
-        assert rep["probes"]["A5"]["pass"] is not None
+    if family == "qwen_control":                    # R1-CONTROL-READOUT: descriptive, read on the selection readout
+        a5 = rep["probes"]["A5"]
+        assert a5["pass"] is None and a5["descriptive"] and a5["criterion_met"] in (True, False)
+        assert a5["readout"] == "linear12"
 
 
 def test_exam_subcommand_runs_the_frozen_rule(tmp_path):
@@ -111,7 +113,7 @@ def test_exam_subcommand_runs_the_frozen_rule(tmp_path):
               "--results", str(p), check=False)
     assert res.returncode == 0, res.stderr[-2000:]
     rep = json.loads((tmp_path / "exam" / "report.json").read_text())
-    assert rep["rule_sha256"] == (REPO / "r1/c3/rules/p3_rule_v1.yaml.sha256").read_text().split()[0]
+    assert rep["rule_sha256"] == (REPO / "r1/c3/rules/p3_rule_v2.yaml.sha256").read_text().split()[0]
 
 
 def _params(run_dir: Path):

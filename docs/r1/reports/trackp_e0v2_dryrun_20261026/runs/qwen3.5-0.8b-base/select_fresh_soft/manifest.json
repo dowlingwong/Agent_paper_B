@@ -1,0 +1,63 @@
+{
+  "argv": [
+    "e0-select",
+    "--evidence",
+    "DRYRUN",
+    "--run-dir",
+    "/home/dowling/r1_trackp/runs/p5_e0v2_dryrun/qwen3.5-0.8b-base/select_fresh_soft",
+    "--runs",
+    "/home/dowling/r1_trackp/runs/p5_e0v2_dryrun/qwen3.5-0.8b-base/fresh_soft_lr0.0001",
+    "/home/dowling/r1_trackp/runs/p5_e0v2_dryrun/qwen3.5-0.8b-base/fresh_soft_lr1e-05",
+    "/home/dowling/r1_trackp/runs/p5_e0v2_dryrun/qwen3.5-0.8b-base/fresh_soft_lr3e-05"
+  ],
+  "base": {
+    "adapter_repo": null,
+    "adapter_revision": null,
+    "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+    "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+    "family": "qwen_control"
+  },
+  "config_sha256": "588869fa8e721eec2005607dc25f6f46229aa0960bd3f64dbf5155323094f4b9",
+  "created_utc": "2026-10-26T13:12:51Z",
+  "data_manifest_sha256": "85930b7e63833c07ad7e0fb623c04d10fa361bae976f350df531063e16bafce0",
+  "environment": {
+    "packages": {
+      "kev": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/kev",
+        "pip_commit": "2074cc44256200bb37540103fa4572901faa10f3"
+      },
+      "laya": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/laya",
+        "pip_commit": "a478221bcad24d1a9c47b361c79328ebd2b100c6"
+      },
+      "startlux_decide": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/startlux_decide",
+        "pip_commit": "a99977d9332decc9fb27a2488b4a83b533b6cd5f"
+      }
+    },
+    "peft": "0.21.2",
+    "torch": "2.6.0+cu124",
+    "transformers": "5.19.0"
+  },
+  "evidence_label": "DRYRUN",
+  "git": {
+    "harness": {
+      "branch": "trackp-20261026",
+      "commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+      "dirty": false,
+      "path": "/home/dowling/r1_trackp/autoresearch_harness"
+    },
+    "paper": {
+      "branch": "trackp-20261026",
+      "commit": "8e13e77cd49532c7ac2e78ad8e5c1ee45401b286",
+      "dirty": true,
+      "path": "/home/dowling/r1_trackp/Agent_paper_B"
+    }
+  },
+  "gpu_lease": [],
+  "head_form": "softmax12",
+  "model_files_sha256": {},
+  "schema": "trackp_run_manifest/v1",
+  "seed": 0,
+  "subcommand": "e0-select"
+}

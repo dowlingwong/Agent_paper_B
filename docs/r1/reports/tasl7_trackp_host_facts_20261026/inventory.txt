@@ -1,0 +1,245 @@
+# collected 2026-10-26T22:33:04Z (local: Mon Oct 26 03:33:04 PM PDT 2026)
+## 0.1 host, user, OS, disk
+
+$ hostname; id -un; id
+TASL-7
+dowling
+uid=1011(dowling) gid=1011(dowling) groups=1011(dowling)
+[exit 0]
+
+$ head -4 /etc/os-release; uname -r
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+6.8.0-138-generic
+[exit 0]
+
+$ df -h / /home/dowling; df -B1 /home/dowling
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p2  1.9T  817G  965G  46% /
+/dev/nvme0n1p2  1.9T  817G  965G  46% /
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1p2 2014574526464 876511535104 1035652718592  46% /
+[exit 0]
+
+$ nproc; free -g
+24
+               total        used        free      shared  buff/cache   available
+Mem:              62           3          10           0          48          58
+Swap:              1           0           1
+[exit 0]
+
+$ ls -ld /home/dowling/r1_trackp /home/dowling/r1_trackp/* 2>&1
+drwxrwxr-x  4 dowling dowling 4096 Oct 26 15:32 /home/dowling/r1_trackp
+drwxrwxr-x  8 dowling dowling 4096 Oct 26 15:28 /home/dowling/r1_trackp/Agent_paper_B
+drwxrwxr-x 16 dowling dowling 4096 Oct 26 15:32 /home/dowling/r1_trackp/autoresearch_harness
+[exit 0]
+## 0.2 GPU
+
+$ nvidia-smi
+Mon Oct 26 15:33:04 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.178.04             Driver Version: 580.178.04     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4090        Off |   00000000:01:00.0 Off |                  Off |
+|  0%   36C    P8             13W /  450W |     236MiB /  24564MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A         1786546      G   /usr/lib/xorg/Xorg                      167MiB |
+|    0   N/A  N/A         1786580      G   /usr/bin/gnome-shell                     12MiB |
++-----------------------------------------------------------------------------------------+
+[exit 0]
+
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,memory.total,memory.used --format=csv
+name, driver_version, compute_cap, memory.total [MiB], memory.used [MiB]
+NVIDIA GeForce RTX 4090, 580.178.04, 8.9, 24564 MiB, 236 MiB
+[exit 0]
+
+$ nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv
+pid, process_name, used_gpu_memory [MiB]
+[exit 0]
+## 0.3 toolchain
+
+$ command -v python3 && python3 --version 2>&1 | head -1
+/usr/bin/python3
+Python 3.10.12
+[exit 0]
+
+$ command -v python3.11 && python3.11 --version 2>&1 | head -1
+[exit 1]
+
+$ command -v python3.12 && python3.12 --version 2>&1 | head -1
+[exit 1]
+
+$ command -v uv && uv --version 2>&1 | head -1
+[exit 1]
+
+$ command -v pip3 && pip3 --version 2>&1 | head -1
+/usr/local/bin/pip3
+pip 22.0.2 from /usr/lib/python3/dist-packages/pip (python 3.10)
+[exit 0]
+
+$ command -v git && git --version 2>&1 | head -1
+/usr/bin/git
+git version 2.34.1
+[exit 0]
+
+$ command -v git-lfs && git-lfs --version 2>&1 | head -1
+/usr/bin/git-lfs
+git-lfs/3.0.2 (GitHub; linux amd64; go 1.18.1)
+[exit 0]
+
+$ command -v gh && gh --version 2>&1 | head -1
+/usr/bin/gh
+gh version 2.102.0 (2026-09-30)
+[exit 0]
+
+$ command -v tmux && tmux --version 2>&1 | head -1
+/usr/bin/tmux
+usage: tmux [-2CDlNuvV] [-c shell-command] [-f file] [-L socket-name]
+[exit 0]
+
+$ command -v flock && flock --version 2>&1 | head -1
+/usr/bin/flock
+flock from util-linux 2.37.2
+[exit 0]
+
+$ command -v nvcc && nvcc --version 2>&1 | head -1
+[exit 1]
+
+$ command -v huggingface-cli && huggingface-cli --version 2>&1 | head -1
+[exit 1]
+
+$ command -v hf && hf --version 2>&1 | head -1
+[exit 1]
+
+$ command -v conda && conda --version 2>&1 | head -1
+[exit 1]
+
+$ ls -d /usr/local/cuda*; /usr/local/cuda/bin/nvcc --version | tail -2
+/usr/local/cuda-11.7
+/usr/local/cuda-12.2
+bash: line 1: /usr/local/cuda/bin/nvcc: No such file or directory
+[exit 0]
+
+$ python3 -c "import importlib.util as u; print({m: bool(u.find_spec(m)) for m in ['torch','transformers','huggingface_hub','peft','venv','ensurepip']})"
+{'torch': False, 'transformers': False, 'huggingface_hub': False, 'peft': False, 'venv': True, 'ensurepip': True}
+[exit 0]
+
+$ curl -sIL --max-time 10 -o /dev/null -w '%{http_code}\n' https://download.pytorch.org/whl/
+200
+[exit 0]
+
+$ curl -sIL --max-time 10 -o /dev/null -w '%{http_code}\n' https://pypi.org/simple/
+200
+[exit 0]
+
+$ curl -sIL --max-time 10 -o /dev/null -w '%{http_code}\n' https://astral.sh/uv/install.sh
+200
+[exit 0]
+
+$ curl -sIL --max-time 10 -o /dev/null -w '%{http_code}\n' https://github.com/astral-sh/python-build-standalone/releases
+200
+[exit 0]
+## 0.4 network (HTTP status only, no keys)
+
+$ curl -sI --max-time 10 -o /dev/null -w '%{http_code}\n' https://github.com
+200
+[exit 0]
+
+$ curl -sI --max-time 10 -o /dev/null -w '%{http_code}\n' https://huggingface.co
+200
+[exit 0]
+
+$ curl -sI --max-time 10 -o /dev/null -w '%{http_code}\n' https://api.typesafe.ai
+404
+[exit 0]
+
+$ curl -sI --max-time 10 -o /dev/null -w '%{http_code}\n' https://docs.typesafe.ai/api
+307
+[exit 0]
+
+$ curl -sI --max-time 10 -o /dev/null -w '%{http_code}\n' https://api.deepseek.com
+401
+[exit 0]
+
+$ curl -sI --max-time 10 -o /dev/null -w '%{http_code}\n' https://api.anthropic.com
+404
+[exit 0]
+
+$ GIT_TERMINAL_PROMPT=0 git ls-remote https://github.com/dowlingwong/Agent_paper_B | head -5
+fc3e0dab0e38256e8ce77d2040fb23138ceeb947	HEAD
+75c8f5ce1b9966a9f7ec75c04f7c6b9801f78257	refs/heads/dt-sweep1-20261025
+6d49ddf8b5c9bbc5ed79bffbd849306cbe43c4f5	refs/heads/dt-sweep1-20261026
+8a819f75cb301b073b498895524e0618f509a306	refs/heads/exam-x-20261026
+fc3e0dab0e38256e8ce77d2040fb23138ceeb947	refs/heads/main
+[exit 0]
+
+$ GIT_TERMINAL_PROMPT=0 git ls-remote https://github.com/dowlingwong/autoresearch_harness | grep -E "HEAD|refs/heads/r1$"
+3c80b53c4fb22dd26b6cef1cc34acea45fc350b6	HEAD
+897d83c8efa364ec2fdd37288241cc42e01d7274	refs/heads/r1
+[exit 0]
+
+$ gh api repos/dowlingwong/Agent_paper_B --jq '{private:.private, push:.permissions.push}'
+{"private":true,"push":true}
+[exit 0]
+
+$ cd /home/dowling/r1_trackp/Agent_paper_B && GIT_TERMINAL_PROMPT=0 git push --dry-run origin HEAD:refs/heads/trackp-20261026 2>&1 | tail -1
+   471f93f..af158f1  HEAD -> trackp-20261026
+[exit 0]
+## 0.5 Hugging Face
+
+$ curl -s -o /dev/null -w "%{http_code}\n" https://huggingface.co/api/whoami-v2
+401
+[exit 0]
+
+$ test -f ~/.cache/huggingface/token && echo token-file-present || echo no-token-file; env | grep -c -E "^HF_TOKEN=|^HUGGING_FACE_HUB_TOKEN=" || true
+no-token-file
+0
+[exit 0]
+{"repo": "jaredpalmer/kev-0.8b", "api_status": 200, "sha": "bf75a6a8848ea6960ff2ed108d9ed44c2941174f", "gated": false, "private": false, "license": ["apache-2.0"], "base_model": ["base_model:Qwen/Qwen3.5-0.8B-Base", "base_model:adapter:Qwen/Qwen3.5-0.8B-Base"], "n_files": 12, "total_bytes": 65566187, "weights": ["adapter_model.safetensors", "head.pt"], "last_modified": "2026-10-01T17:17:58.000Z", "tags": {"night2-du-release": "20768323abc27a24a7a5e9723a36eaec4a103318", "v1.0": "788ddbdd65715bb03a56788c822f6c632c9a551d", "v7-base": "f9bd9f47d6ab83797e69704971d6538cf1402cdf"}, "config_head": 404}
+{"repo": "jaredpalmer/kev-4b", "api_status": 200, "sha": "6cfce5c2fa4b4bd64026336ab649c5ca78857d52", "gated": false, "private": false, "license": ["apache-2.0"], "base_model": ["base_model:Qwen/Qwen3.5-4B-Base", "base_model:adapter:Qwen/Qwen3.5-4B-Base"], "n_files": 16, "total_bytes": 159741853, "weights": ["adapter_model.safetensors", "head.pt"], "last_modified": "2026-10-01T17:18:26.000Z", "tags": {"night2-du-release": "485ace8703592fcf405488b262449990824cfed1", "qwen3": "c113c66d2ca8ae40d2d52d918015f77a7a8a7dc0", "r8-documents-release": "238c172f86e7f722e01d6739d183a39338f866a1", "v1.0": "591dcb5bd6d05eb0b5131ea6608f93f10243335c", "v7-base": "c1b3758b14b30d9e0e7f2e90aa12a1823ff2df46"}, "config_head": 404}
+{"repo": "Qwen/Qwen3.5-0.8B-Base", "api_status": 200, "sha": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68", "gated": false, "private": false, "license": ["apache-2.0"], "base_model": [], "n_files": 12, "total_bytes": 1769913749, "weights": ["model.safetensors-00001-of-00001.safetensors"], "last_modified": "2026-04-23T11:14:09.000Z", "tags": {}, "config_head": 200}
+{"repo": "Qwen/Qwen3.5-4B-Base", "api_status": 200, "sha": "1001bb4d826a52d1f399e183466143f4da7b741b", "gated": false, "private": false, "license": ["apache-2.0"], "base_model": [], "n_files": 13, "total_bytes": 9342824751, "weights": ["model.safetensors-00001-of-00002.safetensors", "model.safetensors-00002-of-00002.safetensors"], "last_modified": "2026-04-23T11:13:30.000Z", "tags": {}, "config_head": 200}
+{"repo": "NandhaKishorM/laya", "api_status": 401}
+{"repo": "convaiinnovations/laya-typed-decisions", "api_status": 200, "sha": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0", "gated": false, "private": false, "license": ["apache-2.0"], "base_model": [], "n_files": 8, "total_bytes": 846203738, "weights": ["model.safetensors"], "last_modified": "2026-10-03T18:00:10.000Z", "tags": {}, "config_head": 200}
+{"repo": "convaiinnovations/laya", "api_status": 200, "sha": "7b928d828b7b0e022f929d9bd2e44165aa270148", "gated": false, "private": false, "license": ["apache-2.0"], "base_model": [], "n_files": 39, "total_bytes": 2372594929, "weights": ["model.safetensors", "multilingual/model.safetensors", "typed-decisions/model.safetensors"], "last_modified": "2026-10-03T18:00:07.000Z", "tags": {}, "config_head": 200}
+{"repo": "startlux-models/StartLux-Decision-v1.1-0.8B-Instant", "api_status": 200, "sha": "6496ae641cc71b149ce9dad69bd97f2a44e7bf11", "gated": false, "private": false, "license": ["cc-by-nc-4.0"], "base_model": [], "n_files": 16, "total_bytes": 1770282793, "weights": ["model-00001-of-00001.safetensors"], "last_modified": "2026-10-14T15:30:34.000Z", "tags": {}, "config_head": 200}
+{"repo": "startlux-models/StartLux-Decision-v1.1-2B-Instant", "api_status": 200, "sha": "f1e6cd147dda82c9ffa3e8e725d5c1f175566fb1", "gated": false, "private": false, "license": ["cc-by-nc-4.0"], "base_model": [], "n_files": 17, "total_bytes": 4571582034, "weights": ["model-00001-of-00001.safetensors"], "last_modified": "2026-10-14T15:30:40.000Z", "tags": {}, "config_head": 200}
+{"repo": "startlux-models/StartLux-Decision-v1.1-4B-Instant", "api_status": 200, "sha": "416088f77cfce09633906a3675c7cd2e5dabcf10", "gated": false, "private": false, "license": ["cc-by-nc-4.0"], "base_model": [], "n_files": 18, "total_bytes": 9343199307, "weights": ["model-00001-of-00002.safetensors", "model-00002-of-00002.safetensors"], "last_modified": "2026-10-14T15:30:44.000Z", "tags": {}, "config_head": 200}
+## 0.6 lock
+
+$ command -v flock; ls -ld ~/r1_locks; test -w ~ && echo home-writable
+/usr/bin/flock
+ls: cannot access '/home/dowling/r1_locks': No such file or directory
+home-writable
+[exit 0]
+## 0.7 secrets file (metadata only)
+
+$ stat -c "%a %U" ~/.config/r1/secrets.env
+stat: cannot statx '/home/dowling/.config/r1/secrets.env': No such file or directory
+[exit 1]
+## 0.8 clones
+
+$ cd /home/dowling/r1_trackp/Agent_paper_B && git branch --show-current && git rev-parse HEAD origin/main
+trackp-20261026
+af158f1b7f4bca52f98e716796937fcbec22b779
+fc3e0dab0e38256e8ce77d2040fb23138ceeb947
+[exit 0]
+
+$ cd /home/dowling/r1_trackp/autoresearch_harness && git branch --show-current && git rev-parse HEAD origin/r1
+trackp-20261026
+897d83c8efa364ec2fdd37288241cc42e01d7274
+897d83c8efa364ec2fdd37288241cc42e01d7274
+[exit 0]

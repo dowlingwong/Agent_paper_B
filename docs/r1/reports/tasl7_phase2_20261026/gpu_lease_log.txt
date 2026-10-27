@@ -1,0 +1,4 @@
+{"event": "start", "job": "trackp phase2 gpu smoke", "pid": 4064387, "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active", "utc": "2026-10-26T22:50:48Z"}
+{"event": "end", "job": "trackp phase2 gpu smoke", "pid": 4064387, "utc": "2026-10-26T22:51:39Z"}
+{"event": "start", "job": "trackp e0 kev-0.8b", "pid": 4065542, "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active", "utc": "2026-10-26T22:52:16Z"}
+{"event": "end", "job": "trackp e0 kev-0.8b", "pid": 4065542, "utc": "2026-10-26T23:17:42Z"}

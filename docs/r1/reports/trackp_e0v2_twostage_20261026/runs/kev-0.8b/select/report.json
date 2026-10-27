@@ -1,0 +1,69 @@
+{
+  "criterion": "lowest best val RPS (R1-LR-GRID)",
+  "runs": [
+    {
+      "base": {
+        "adapter_repo": "jaredpalmer/kev-0.8b",
+        "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "kev"
+      },
+      "best_step": 200,
+      "best_val_rps": 0.0011281730839982629,
+      "git": "5538b793d0013581c74dd5982fc649a39798c787",
+      "lr": 0.0001,
+      "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr0.0001",
+      "target": "y_soft",
+      "variant": "fresh"
+    },
+    {
+      "base": {
+        "adapter_repo": "jaredpalmer/kev-0.8b",
+        "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "kev"
+      },
+      "best_step": 200,
+      "best_val_rps": 0.0031984676606953144,
+      "git": "5538b793d0013581c74dd5982fc649a39798c787",
+      "lr": 1e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr1e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+    },
+    {
+      "base": {
+        "adapter_repo": "jaredpalmer/kev-0.8b",
+        "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "kev"
+      },
+      "best_step": 200,
+      "best_val_rps": 0.0014544432051479816,
+      "git": "5538b793d0013581c74dd5982fc649a39798c787",
+      "lr": 3e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr3e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+    }
+  ],
+  "selected": {
+    "base": {
+      "adapter_repo": "jaredpalmer/kev-0.8b",
+      "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+      "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+      "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+      "family": "kev"
+    },
+    "best_step": 200,
+    "best_val_rps": 0.0011281730839982629,
+    "git": "5538b793d0013581c74dd5982fc649a39798c787",
+    "lr": 0.0001,
+    "run_dir": "/home/dowling/r1_trackp/runs/p5_e0v2_twostage_short/kev-0.8b/screen_lr0.0001",
+    "target": "y_soft",
+    "variant": "fresh"
+  }
+}
