@@ -1,0 +1,9 @@
+# Deepthought preparation: optional torch dependency — 27 October 2026
+
+AI-assisted (OpenAI Codex); independently reviewed by a separate Codex reviewer. The author's explicit instruction approved this fix and a fresh preparation: “允许修正并重新准备”.
+
+The first preparation stopped before creating a batch because the preparation tmux session name matched the launcher target by prefix; its log is `/tmp/r1_sweep1_dwong_20261026/operator_prepare_20261027.log`. The author approved another preparation. Its distinct batch `/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_QCMMIn` pinned paper `55ab283ccdd9b11d2b4cdf774fcc35fd32221b16` and harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7`. `prepare.json` has `ok: false`: paper collection failed because `r1/tests/test_trackp_e0_v2.py` imports torch absent from the harness-only venv. The harness failures were in its declared accepted environmental set. The batch, prepare record and both logs are retained unmodified; the launcher does not permit it to start.
+
+The one-line correction uses `pytest.importorskip("torch")`, matching existing Track P modules and the previously documented no-torch host convention. It does not alter C3 code, prepare acceptance, scientific pins, or the three pilot regression tests the author asked to restore. Independent review accepted this scoped change and stressed that a skipped module is not a pass. On the Deepthought locked environment, an independent temporary-file diagnostic reported one skipped module; on the Mac, with torch, transformers and peft installed, all 24 tests collected and two CPU-only environment/git checks passed (22 deselected). Full Track P module execution was not performed here.
+
+A new preparation must use a fresh batch, rerun both required suites, verify its own prepare record and pins, and obey all existing STOP conditions. Nothing in this correction authorizes ignoring test failures or changing the stopped batch.

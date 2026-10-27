@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — Deepthought preparation STOP and author-approved dependency fix (AI-assisted)
+
+Two pre-launch STOPs are preserved: the first preparation session name collided by tmux prefix with the launcher's duplicate-session check; on explicit author permission the second preparation created batch `r1_c3_sweep_ENGINEERING_ONLY_20261027_QCMMIn`, but its `prepare.json` is `ok: false` because the harness-only venv has no torch and `test_trackp_e0_v2.py` imports it at collection. No evidence was launched and that batch is not modified. The author approved the independently reviewed optional dependency guard and a fresh preparation attempt. On hosts without torch the entire Track P test module is skipped, not passed; with dependencies present 24 tests are collected and two CPU-only checks passed on Mac. The three pilot regression tests identified in the author clarification are unchanged. Details: [review](reviews/DT_SWEEP_PREP_TORCH_GUARD_20261027.md).
+
 ## 27 October 2026 — D28 engineering readiness independently accepted (AI-assisted; STOP)
 
 Independent review accepted the D28 repair and noise binding at paper branch `3892354` and harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7`; see [independent review](reviews/DT_D28_REPAIR_REVIEW_20261027.md) and [merge review](reviews/DT_SWEEP1_MERGE_REVIEW_20261027.md). Mac CPU merge checks retain the pre-existing soft-label v1 hash failure; historical provenance and cross-platform floating-point limits remain recorded. Sweep 1 and B.2 remain unstarted and require explicit author authorization and launch-time pin verification.

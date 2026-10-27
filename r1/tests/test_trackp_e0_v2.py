@@ -9,7 +9,7 @@ import os
 
 import numpy as np
 import pytest
-import torch
+torch = pytest.importorskip("torch")  # optional on the Deepthought harness-only host
 
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 pytest.importorskip("transformers")
