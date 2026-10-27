@@ -1,0 +1,14 @@
+Author decision (27 Oct): sweep-1 node pool = option "repair, then one batch on all eight". Recorded as PLAN §10 **R1-D28-REPAIR** on `main` (`git fetch origin; git merge origin/main` into `dt-sweep1-20261026` first — your branch was merged into main by the coordinator; resolve STATUS/PLAN by keeping both sides). Read R1-D28-REPAIR in full before starting.
+
+Answers to your open questions: one batch on one TITAN (as built); `footprint_mib` = 5253 as measured; `workers` = 16; the paper pin is `main` HEAD at launch — tell the coordinator (through the author) when you are about to launch so `main` is not moved in that window.
+
+Do, in order, with a STOP only where marked:
+
+1. **Declare the repair rule before measuring.** For `openml_breast_w`, `openml_sonar`, `openml_blood_transfusion`, `openml_wdbc`: one written rule that sets a start configuration with headroom, applied identically to all four, inside the existing edit space and allowed ranges (e.g. regularisation and iteration count at declared points of their allowed ranges). Do not change the edit space, allowed values, the manager prompt, R1-SCHEMA or any D28 criterion. Justify the rule only from the liveness diagnosis, not from new runs. Commit and push it (`docs/r1/reports/D28_REPAIR_RULE_<date>.md`) before step 2.
+2. **Implement it as a harness change** on a new branch from `897d83c` (`r1-dt-repair-<date>`) containing only the node start-configuration change, with tests. Push the branch; do not change `r1`. The resume-stamp fix is not included (it goes in after B.2).
+3. **Re-measure D21 (30 seeds)** for the four repaired nodes on the deepthought CPUs with the 22 Oct protocol (CPU only, scratch on local disk). Each must still qualify under the adopted D21 rule. Report.
+4. **Re-run D28** (llama.cpp, schema on, memory on, same settings as Phase 6) for the four repaired nodes at the new harness commit. The four passing nodes keep their Phase 6 result only if the harness change does not touch them; state this explicitly with the diff.
+5. If a repaired node still fails D21 or D28: run D21 status check and D28 for the reserve `openml_climate` under the same pins and substitute it only if it passes; record. If fewer than eight nodes pass after that, **STOP** with the per-node evidence.
+6. **Readiness and STOP.** Update `DT_SWEEP1_READINESS_<date>.md` with the final pinned set (paper commit to be taken at launch; new harness commit; build; GGUF sha256; config sha256; eight nodes; schema version; instances, W, seeds; GPU plan; runtime estimate from the measured 14–20 h). Push and STOP. Sweep 1 starts only after the author commits `docs/r1/authorizations/c3_sweep1_<date>.md` matching that set.
+
+Rules unchanged: engineering problems are yours (≤ 3 attempts, recorded, no criterion relaxed); TITANs only; never disturb other users' processes; label everything correctly (D21/D28 here are PILOT/ENGINEERING_ONLY); STATUS entry and push at each step.

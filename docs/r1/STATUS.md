@@ -1,5 +1,15 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — latest main update merged into local branch (AI-assisted)
+
+- Incorporated the later `origin/main` commit `b5a5d38` after the initial merge. The [independent review](reviews/LOCAL_MAIN_UPDATE_REVIEW_20261027.md) accepts the status conflict resolution and verifies the incoming documents.
+
+## 27 October 2026 — coordination handed to a local operator agent (AI-assisted; documents only)
+
+- `docs/r1/prompts/OPERATOR_HANDOVER_20261027.md`: state of the four agents, ground rules, immediate queue, monitoring, merge protocol, upcoming gates and open author decisions, for a Mac agent with SSH access that takes over coordination and monitoring.
+- `docs/r1/prompts/DEEPTHOUGHT_NODE_REPAIR_PROMPT.md`: instruction for the deepthought agent under R1-D28-REPAIR.
+- `docs/r1/proposals/AUTH_DRAFT_trackp_p3a_20261027.md`: draft P.3a authorization for the author (authorizes nothing until committed under `docs/r1/authorizations/`).
+
 ## 27 October 2026 — coordinator main merged into local branch (AI-assisted)
 
 - Merged `origin/main` at `0a3f5c7` (includes coordinator commit `c5ea037`) after pushing the pilot clarification at `960a53c`. The [independent review](reviews/LOCAL_MAIN_MERGE_REVIEW_20261027.md) accepts the conflict resolutions, which retain incoming Track P and D28 decisions alongside the newer pilot clarification. The post-merge CPU regression rerun again reports 30 passed and one v1 byte-identity failure; see the [test report](reports/LOCAL_PILOT_REGRESSION_CLARIFICATION_20261027.md).
