@@ -531,6 +531,12 @@ The earlier R1-EXAM-RUNBOOK wording that protocol adoption is pending is superse
 | R1-THEORY-REPAIR-PROPOSAL (27 Oct) | Draft corrected T2 Propositions 1, 2, 5 and T4 Propositions 8, 10(a) as proposals: interventional DI includes information revealed by execution, or claims are restricted to the one-step/Lagrangian index. Do not edit claims in theory files; author decides. |
 | R1-HARNESS-NEXT-PIN (27 Oct) | Harness fixes integrate after sweep 1 and B.2 as a new pin. Now perform a read-only trace of `repeated_bad_count` stamping on resumed E1/skip paths at 897d83c; report a confirmed defect immediately. |
 
+
+| R1-RESUME-STAMP (27 Oct, 01:30) | Author: the 897d83c resume-stamp defect does not affect sweep 1: interrupted roots rerun whole, and C3 features do not read `repeated_bad_count`. Fix on `r1-local-*` with fixtures for resumed E1 evaluated, skip and E2 verify; settle E2 verify semantics. Merge as a new `r1` pin only after sweep 1 and B.2, before C.3. Write a one-paragraph sweep-1 authorization note with code references. |
+| R1-MAC-RESTRICTED-ACCEPTANCE (27 Oct, 01:30) | For L4.4 and L4.5, the restricted comparison with identical outcome IDs on the allowed selection is the accepted Mac comparison criterion. A full-suite comparison runs after merge on a host with the full environment. Independent reviewers re-check; other item requirements are not waived. |
+| R1-H8-TABLE-UTILITY (27 Oct, 01:30) | One further H.8 attempt: `OfflineBanditEnv` computes u itself from the table label columns via `labels.action_target` using the A1 constant prior and g = 0.1 σ_node from configuration. Split comes from the table's split column; no caller-supplied u, split or g. Committed tables including the 19 Oct pilot may be read-only test fixtures. Independent review required. |
+| R1-LOCAL-CONTINUE (27 Oct, 01:30) | Continue L4.1, L4.3 and L6. L6 waits for author proof check and citation gaps. Push branches; coordinator merges accepted work. |
+
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|
 | D1 | Budget unit | Compute (worker runs or seconds) + LLM-call cap | 0.3 hooks |

@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 01:30 — author rulings and L4.4 acceptance (AI-assisted)
+
+- PLAN §10 records the authorized resume-stamp repair on `r1-local-*`, sweep-1 non-applicability note and post-sweep/B.2 merge timing; restricted comparison is the accepted Mac criterion for L4.4/L4.5 with full-suite comparison after merge; one more H.8 table-utility attempt is authorized, including read-only committed-table fixtures.
+- Independent [L4.4 ruling review](reviews/LOCAL_L4_4_RULING_REVIEW_20261027.md) **accepts** the pre-declaration scaffold under the amended Mac criterion: all 581 common selected paper outcomes match and 13 new predeclaration cases pass; harness and tiny-model restricted comparisons match. The full environment suite remains a post-merge check. Implementation `9e4ca52`, comparison evidence `1c09b77`.
+- The [L4.5 ruling review](reviews/LOCAL_L4_5_RULING_REVIEW_20261027.md) accepts the restricted comparisons but rejects item completion because the separate tests-added-and-passing requirement remains unestablished. H.8 and harness repair are in progress.
+
 ## 27 October 2026 — pre-scaffold restricted comparison independently reviewed (AI-assisted)
 
 - The [pre-scaffold comparison](reports/LOCAL_BASELINE_CLARIFIED_20261027.md) was independently checked ([baseline review](reviews/LOCAL_BASELINE_CLARIFIED_REVIEW_20261027.md), [L4.4 review](reviews/LOCAL_L4_4_REVIEW_20261027.md); evidence `1c09b77`). Of the selected paper tests, 581 IDs common to `8ba81b6` and `d4c76d2` have matching outcomes; the 13 newly added predeclaration cases pass. The separate tiny-model selection matches across 48 IDs. Matching IDs do not imply identical test code.
