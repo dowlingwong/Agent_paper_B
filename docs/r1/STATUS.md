@@ -1,5 +1,8 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — D28 reserve climate D21 passes (AI-assisted; PILOT)
+
+The separate climate status check at harness `6adf385` completed 552 unique records with no failures or missing metrics; climate qualifies under D21 (3 material edits, mean P(wrong) 0.2907157594). Report: [DT_D28_CLIMATE_D21_20261027.md](reports/DT_D28_CLIMATE_D21_20261027.md). Climate remains a reserve until its own D28 passes; the original failed and completed climate attempts remain unchanged.
 
 ## 27 October 2026 — D28 repair D21 re-measurement (AI-assisted; PILOT)
 

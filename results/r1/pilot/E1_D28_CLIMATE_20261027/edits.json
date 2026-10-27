@@ -1,0 +1,29 @@
+{
+  "openml_climate": [
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.075"
+    },
+    {
+      "symbol": "C",
+      "old": "0.15",
+      "new": "0.3"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ]
+}

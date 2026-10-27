@@ -1,0 +1,47 @@
+{
+  "bootstrap": {
+    "B": 2000,
+    "mean_p_wrong_q05_q50_q95": [
+      0.21552997042695735,
+      0.27457689550864106,
+      0.31649352589746677
+    ],
+    "n_material_dist": {
+      "0": 0.0,
+      "1": 0.0945,
+      "2": 0.245,
+      "3": 0.524,
+      "4": 0.1255,
+      "5": 0.011
+    },
+    "n_seeds": 30,
+    "p_qualifies": 0.9055
+  },
+  "rule": {
+    "criteria": {
+      "mean_p_wrong_ge_0.10": true,
+      "n_material_ge_2": true,
+      "seeds_30_per_condition": true,
+      "sigma_joint_gt_0": true
+    },
+    "qualifies": true
+  },
+  "seed_counts": {
+    "joint": 30,
+    "split": 30,
+    "train": 30
+  },
+  "sigma_joint": 0.03993630988973815,
+  "summary": {
+    "campaign_wrong": 1,
+    "mean_flip_emp_resolved": 0.37777777777777777,
+    "mean_p_model_material": 0.2907157593635569,
+    "median_sd_joint": 0.02035914690239018,
+    "median_train_to_joint_ratio": 0.0,
+    "n_edits": 5,
+    "n_material": 3,
+    "n_resolved": 3,
+    "n_unresolved_noisy": 2,
+    "regret_share_material": 0.27274465656541697
+  }
+}
