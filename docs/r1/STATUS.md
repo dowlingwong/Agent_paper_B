@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — pilot metadata guard independently reviewed (AI-assisted)
+
+- The partial L4.3 renderer input-status guard (`8b8b623`) is independently accepted for its limited metadata check ([review](reviews/LOCAL_PILOT_GUARD_REVIEW_20261027.md)); focused source and fixture checks: 7 passed. Full L4.3 remains unaccepted.
+- On a failed guard, previous output files remain; their existence is not evidence of a successful current render. The existing provenance lacks a renderer revision. Both limits remain open and no pilot output is an accepted scientific result.
+
 ## 27 October 2026 — sweep-1 stamp note independently reviewed (AI-assisted)
 
 - The one-paragraph [authorization note](reports/SWEEP1_RESUME_STAMP_NOTE_20261027.md) is independently accepted for scoped source accuracy ([review](reviews/LOCAL_SWEEP1_STAMP_NOTE_REVIEW_20261027.md)): interrupted sweep roots are rerun whole and C3 features do not read the stamp. The note preserves the separate live E2 verification caveat and does not assert a particular historical execution state. The author’s sweep-1 non-applicability ruling controls.
