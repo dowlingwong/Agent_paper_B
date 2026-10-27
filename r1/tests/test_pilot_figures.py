@@ -138,3 +138,39 @@ def test_failed_render_marks_prior_outputs_unusable(tmp_path, monkeypatch):
 def test_committed_render_status_and_hashes():
     from r1.analysis.pilot_figures import verify_outputs
     assert verify_outputs()
+
+
+def test_verify_rejects_empty_or_redirected_manifest(tmp_path):
+    from r1.analysis.pilot_figures import verify_outputs
+    (tmp_path / 'render_status.json').write_text('{"status":"SUCCESS"}')
+    (tmp_path / 'provenance.json').write_text(json.dumps({'renderer': {'path': 'fake', 'sha256': 'x'}, 'inputs': {}, 'outputs': {}}))
+    with pytest.raises(ValueError, match='file set'):
+        verify_outputs(tmp_path)
+
+
+def test_verify_rejects_changed_input_or_output(tmp_path):
+    import hashlib
+    from r1.analysis.pilot_figures import INPUT_REL, OUTPUT_NAMES, RENDERER_REL, verify_outputs
+    root, out = tmp_path / 'root', tmp_path / 'out'
+    root.mkdir()
+    out.mkdir()
+    digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+    for name in (*INPUT_REL, RENDERER_REL):
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(name)
+    for name in OUTPUT_NAMES:
+        (out / name).write_text(name)
+    manifest = {'renderer': {'path': RENDERER_REL, 'sha256': digest(root / RENDERER_REL)},
+                'inputs': {name: digest(root / name) for name in INPUT_REL},
+                'outputs': {name: digest(out / name) for name in OUTPUT_NAMES}}
+    (out / 'render_status.json').write_text('{"status":"SUCCESS"}')
+    (out / 'provenance.json').write_text(json.dumps(manifest))
+    assert verify_outputs(out, root)
+    (root / INPUT_REL[0]).write_text('changed')
+    with pytest.raises(ValueError, match='input differs'):
+        verify_outputs(out, root)
+    (root / INPUT_REL[0]).write_text(INPUT_REL[0])
+    (out / OUTPUT_NAMES[0]).write_text('changed')
+    with pytest.raises(ValueError, match='output differs'):
+        verify_outputs(out, root)

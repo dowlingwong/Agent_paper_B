@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import collections
 import csv
+import fcntl
 import hashlib
 import json
 import platform
@@ -15,6 +16,12 @@ ROOT = Path(__file__).resolve().parents[2]
 NOISE = ROOT / "results/r1/pilot/E1_20261022T214606Z/compare.json"
 PILOT = ROOT / "results/r1/engineering/c3_audit_pilot_20261019T001338Z"
 OUT = ROOT / "papers/r1/generated/pilot"
+RENDERER_REL = "r1/analysis/pilot_figures.py"
+INPUT_REL = ("results/r1/pilot/E1_20261022T214606Z/compare.json",
+             "results/r1/engineering/c3_audit_pilot_20261019T001338Z/proposals.jsonl",
+             "results/r1/engineering/c3_audit_pilot_20261019T001338Z/offline_eval.json")
+OUTPUT_NAMES = ("noise_floor.csv", "proposal_categories.csv", "offline_all_gates.csv", "offline_all_arms.csv",
+                "offline_pilot.csv", "noise_floor.pdf", "proposal_categories.pdf", "offline_pilot.pdf", "pilot_numbers.tex")
 
 
 def waste_counts(rows):
@@ -69,15 +76,15 @@ def _render():
     import matplotlib.pyplot as plt
 
     OUT.mkdir(parents=True, exist_ok=True)
-    sources = [NOISE, PILOT / "proposals.jsonl", PILOT / "offline_eval.json"]
-    noise = json.loads(NOISE.read_text())
-    result = json.loads((PILOT / "offline_eval.json").read_text())
+    sources = [ROOT / name for name in INPUT_REL]
+    source_bytes = {str(p.relative_to(ROOT)): p.read_bytes() for p in sources}
+    noise = json.loads(source_bytes[INPUT_REL[0]])
+    result = json.loads(source_bytes[INPUT_REL[2]])
     validate_pilot_inputs(noise, result)
     nodes = noise["summaries"]["common_30"]["nodes"]
     noise_rows = [(n, v["sigma_train"], v["sigma_split"], v["sigma_joint"]) for n, v in sorted(nodes.items())]
     write_csv(OUT / "noise_floor.csv", ["node", "sigma_train", "sigma_split", "sigma_joint"], noise_rows, "PILOT; pending author acceptance")
-    with (PILOT / "proposals.jsonl").open() as handle:
-        counts = waste_counts(json.loads(line) for line in handle if line.strip())
+    counts = waste_counts(json.loads(line) for line in source_bytes[INPUT_REL[1]].splitlines() if line.strip())
     write_csv(OUT / "proposal_categories.csv", ["source", "node", "memory_mode", "inert_kind", "rows", "stratum_rows", "share"], counts, "ENGINEERING_ONLY; partial campaigns; source-row shares")
     gates = result["instance"]["per_g"]["0.1"]["gate"]
     gate_rows = [(n, v["gain_A3_minus_A2_per20"], *v["ci95"], v["delta_n"]) for n, v in sorted(gates.items())]
@@ -132,45 +139,49 @@ def _render():
         + "\\newcommand{\\PilotProposalRows}{" + str(total) + "}\n"
         + "\\newcommand{\\PilotDuplicateRows}{" + str(duplicate) + "}\n"
     )
-    outputs = ("noise_floor.csv", "proposal_categories.csv", "offline_all_gates.csv", "offline_all_arms.csv",
-               "offline_pilot.csv", "noise_floor.pdf", "proposal_categories.pdf", "offline_pilot.pdf", "pilot_numbers.tex")
     manifest = {"label": "PILOT / ENGINEERING_ONLY — not accepted evidence or gate",
                 "renderer": {"python": platform.python_version(), "matplotlib": matplotlib.__version__,
                              "path": str(Path(__file__).resolve().relative_to(ROOT)),
                              "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
-                "inputs": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
-                "outputs": {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest() for name in outputs},
+                "inputs": {name: hashlib.sha256(data).hexdigest() for name, data in source_bytes.items()},
+                "outputs": {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest() for name in OUTPUT_NAMES},
                 "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate."}
     (OUT / "provenance.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
 
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    status = OUT / "render_status.json"
-    status.write_text(json.dumps({"status": "IN_PROGRESS"}) + "\n")
-    try:
-        _render()
-    except BaseException:
-        status.write_text(json.dumps({"status": "FAILED"}) + "\n")
-        raise
-    status.write_text(json.dumps({"status": "SUCCESS"}) + "\n")
+    with (OUT / ".render.lock").open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        status = OUT / "render_status.json"
+        status.write_text(json.dumps({"status": "IN_PROGRESS"}) + "\n")
+        try:
+            _render()
+        except BaseException:
+            status.write_text(json.dumps({"status": "FAILED"}) + "\n")
+            raise
+        status.write_text(json.dumps({"status": "SUCCESS"}) + "\n")
 
 
 def verify_outputs(directory=OUT, root=ROOT):
-    """Reject failed, interrupted, stale or altered outputs; does not establish evidence status."""
-    status = json.loads((directory / "render_status.json").read_text())
-    if status.get("status") != "SUCCESS":
-        raise ValueError("pilot render is not successful")
-    manifest = json.loads((directory / "provenance.json").read_text())
-    renderer = manifest["renderer"]
-    if hashlib.sha256((root / renderer["path"]).read_bytes()).hexdigest() != renderer["sha256"]:
-        raise ValueError("renderer differs from recorded hash")
-    for name, digest in manifest["inputs"].items():
-        if hashlib.sha256((root / name).read_bytes()).hexdigest() != digest:
-            raise ValueError(f"input differs: {name}")
-    for name, digest in manifest["outputs"].items():
-        if hashlib.sha256((directory / name).read_bytes()).hexdigest() != digest:
-            raise ValueError(f"output differs: {name}")
+    """Reject failed, interrupted, incomplete or altered outputs; not evidence approval."""
+    with (directory / ".render.lock").open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
+        status = json.loads((directory / "render_status.json").read_text())
+        if status.get("status") != "SUCCESS":
+            raise ValueError("pilot render is not successful")
+        manifest = json.loads((directory / "provenance.json").read_text())
+        renderer = manifest["renderer"]
+        if renderer.get("path") != RENDERER_REL or set(manifest["inputs"]) != set(INPUT_REL) or set(manifest["outputs"]) != set(OUTPUT_NAMES):
+            raise ValueError("incomplete or unexpected provenance file set")
+        if hashlib.sha256((root / RENDERER_REL).read_bytes()).hexdigest() != renderer["sha256"]:
+            raise ValueError("renderer differs from recorded hash")
+        for name, digest in manifest["inputs"].items():
+            if hashlib.sha256((root / name).read_bytes()).hexdigest() != digest:
+                raise ValueError(f"input differs: {name}")
+        for name, digest in manifest["outputs"].items():
+            if hashlib.sha256((directory / name).read_bytes()).hexdigest() != digest:
+                raise ValueError(f"output differs: {name}")
     return True
 
 
