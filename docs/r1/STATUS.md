@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — pilot safeguard correction re-reviewed (AI-assisted)
+
+- Independent [re-review](reviews/LOCAL_PILOT_GUARD_REVIEW_20261027.md) confirms the expected file sets, input-byte hashes and cooperative locking in `8a1ecf5`; 11 focused tests passed. The renderer hash is read near the end and cannot prove which source bytes Python loaded if it changed during execution. Full L4.3 remains unaccepted.
+
 ## 27 October 2026 — pilot metadata guard independently reviewed (AI-assisted)
 
 - The partial L4.3 renderer input-status guard (`8b8b623`) is independently accepted for its limited metadata check ([review](reviews/LOCAL_PILOT_GUARD_REVIEW_20261027.md)); focused source and fixture checks: 7 passed. Full L4.3 remains unaccepted.
