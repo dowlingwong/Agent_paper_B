@@ -1,10 +1,10 @@
-"""Render selected committed pilot summaries; no experiments are executed.
+"""Render provisional C1 noise summaries from committed 22 October pilot data.
 
-Outputs are provisional and do not constitute the C3 gate or accepted C1 evidence.
+The 19 October C3 pilot is a test fixture only and is never an input here.
+No experiments are executed; these outputs are not accepted evidence.
 """
 from __future__ import annotations
 
-import collections
 import csv
 import fcntl
 import hashlib
@@ -14,61 +14,16 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-NOISE = ROOT / "results/r1/pilot/E1_20261022T214606Z/compare.json"
-PILOT = ROOT / "results/r1/engineering/c3_audit_pilot_20261019T001338Z"
-OUT = ROOT / "papers/r1/generated/pilot"
+OUT = ROOT / "papers/r1/generated/c1_pilot"
 RENDERER_REL = "r1/analysis/pilot_figures.py"
 INPUT_REL = ("results/r1/pilot/E1_20261022T214606Z/compare.json",
-             "results/r1/engineering/c3_audit_pilot_20261019T001338Z/proposals.jsonl",
-             "results/r1/engineering/c3_audit_pilot_20261019T001338Z/offline_eval.json",
              "results/r1/pilot/E1_20261022T214606Z/runs.jsonl",
              "results/r1/pilot/E1_20261022T214606Z/edits.json",
              "r1/noise/e1_report.py")
-OUTPUT_NAMES = ("noise_floor.csv", "proposal_categories.csv", "offline_all_gates.csv", "offline_all_arms.csv",
-                "offline_pilot.csv", "noise_floor.pdf", "proposal_categories.pdf", "offline_pilot.pdf", "pilot_numbers.tex")
-
-
-def waste_counts(rows):
-    """Count source-table rows by stratum and inert kind; no deduplication."""
-    counts = collections.Counter()
-    for row in rows:
-        if "inert" not in row or not isinstance(row["inert"], bool) or "inert_kind" not in row:
-            raise ValueError("missing or invalid inert fields")
-        kind = row["inert_kind"]
-        if (row["inert"] and (not isinstance(kind, str) or not kind.strip() or kind == "non-inert")) or (not row["inert"] and kind is not None):
-            raise ValueError("inconsistent inert label and kind")
-        key = (row["source"], row["node"], row["memory_mode"], kind if kind is not None else "non-inert")
-        counts[key] += 1
-    totals = collections.Counter()
-    for (source, node, memory, _kind), count in counts.items():
-        totals[(source, node, memory)] += count
-    return sorted((*key, count, totals[key[:3]], count / totals[key[:3]]) for key, count in counts.items())
-
-
-def duplicate_shares(counts):
-    """Include every stratum, including those with no duplicate rows."""
-    strata = {}
-    for source, node, memory, kind, count, total, _share in counts:
-        key = (source, node, memory)
-        if key not in strata:
-            strata[key] = [0, total]
-        if strata[key][1] != total:
-            raise ValueError("inconsistent stratum denominator")
-        if kind == "duplicate":
-            strata[key][0] += count
-    return [(key, duplicate / total) for key, (duplicate, total) in sorted(strata.items())]
-
-
-def validate_pilot_inputs(noise, evaluation):
-    """Refuse to present unlabeled or non-split data as the historical pilot."""
-    if noise.get("label") != "PILOT" or noise.get("summaries", {}).get("common_30", {}).get("label") != "PILOT":
-        raise ValueError("noise summary must be explicitly PILOT")
-    if evaluation.get("label") != "ENGINEERING_ONLY" or evaluation.get("seed_split") is not True:
-        raise ValueError("offline summary must be ENGINEERING_ONLY and seed-split")
+OUTPUT_NAMES = ("noise_floor.csv", "noise_floor.pdf")
 
 
 def validate_noise_reproduction(recomputed, recorded):
-    """Require exact agreement for all sigma fields used by this plot/table."""
     if set(recomputed) != set(recorded):
         raise ValueError("noise node set differs from recorded pilot")
     for node in recomputed:
@@ -77,97 +32,41 @@ def validate_noise_reproduction(recomputed, recorded):
                 raise ValueError(f"noise summary mismatch: {node} {key}")
 
 
-def write_csv(path, header, rows, label):
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
-        writer.writerow(["provisional_status", *header])
-        writer.writerows((label, *row) for row in rows)
-
-
 def _render():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-
-    OUT.mkdir(parents=True, exist_ok=True)
-    sources = [ROOT / name for name in INPUT_REL]
-    source_bytes = {str(p.relative_to(ROOT)): p.read_bytes() for p in sources}
-    noise = json.loads(source_bytes[INPUT_REL[0]])
-    result = json.loads(source_bytes[INPUT_REL[2]])
-    validate_pilot_inputs(noise, result)
-    recorded_nodes = noise["summaries"]["common_30"]["nodes"]
-    # Summarise captured bytes in scratch: no training, workers, or source writes.
     from r1.noise.e1_report import summarise
+
+    source_bytes = {name: (ROOT / name).read_bytes() for name in INPUT_REL}
+    noise = json.loads(source_bytes[INPUT_REL[0]])
+    if noise.get("label") != "PILOT" or noise.get("summaries", {}).get("common_30", {}).get("label") != "PILOT":
+        raise ValueError("noise summary must be explicitly PILOT")
     with tempfile.TemporaryDirectory(prefix="r1-pilot-noise-") as tmp:
         scratch = Path(tmp)
-        (scratch / "runs.jsonl").write_bytes(source_bytes[INPUT_REL[3]])
-        (scratch / "edits.json").write_bytes(source_bytes[INPUT_REL[4]])
+        (scratch / "runs.jsonl").write_bytes(source_bytes[INPUT_REL[1]])
+        (scratch / "edits.json").write_bytes(source_bytes[INPUT_REL[2]])
         nodes = summarise(scratch)["nodes"]
-    validate_noise_reproduction(nodes, recorded_nodes)
-    noise_rows = [(n, v["sigma_train"], v["sigma_split"], v["sigma_joint"]) for n, v in sorted(nodes.items())]
-    write_csv(OUT / "noise_floor.csv", ["node", "sigma_train", "sigma_split", "sigma_joint"], noise_rows, "PILOT; pending author acceptance")
-    counts = waste_counts(json.loads(line) for line in source_bytes[INPUT_REL[1]].splitlines() if line.strip())
-    write_csv(OUT / "proposal_categories.csv", ["source", "node", "memory_mode", "inert_kind", "rows", "stratum_rows", "share"], counts, "ENGINEERING_ONLY; partial campaigns; source-row shares")
-    gates = result["instance"]["per_g"]["0.1"]["gate"]
-    gate_rows = [(n, v["gain_A3_minus_A2_per20"], *v["ci95"], v["delta_n"]) for n, v in sorted(gates.items())]
-    all_gates = []
-    all_arms = []
-    for mode in ("instance", "lono"):
-        for price, entry in result[mode]["per_g"].items():
-            for node, value in sorted(entry["gate"].items()):
-                all_gates.append((mode, price, node, value["gain_A3_minus_A2_per20"], *value["ci95"], value["delta_n"], value["pass"], value["n_instances"], value["n_eval_rows"]))
-            for arm, node_values in sorted(entry["arms"].items()):
-                for node, value in sorted(node_values.items()):
-                    all_arms.append((mode, price, arm, node, value["mean_per_proposal"], value["per_campaign"], value["exec_rate"]))
-    warning = "ENGINEERING_ONLY; historical pilot; not current C3 gate"
-    write_csv(OUT / "offline_all_gates.csv", ["mode", "g_over_sigma", "node", "gain_A3_minus_A2_per20", "ci_lower", "ci_upper", "delta_n", "historical_pass", "instances", "eval_rows"], all_gates, warning)
-    write_csv(OUT / "offline_all_arms.csv", ["mode", "g_over_sigma", "arm", "node", "mean_per_proposal", "per_campaign", "exec_rate"], all_arms, warning)
-    write_csv(OUT / "offline_pilot.csv", ["node", "gain_A3_minus_A2_per20", "ci_lower", "ci_upper", "delta_n"], gate_rows, "ENGINEERING_ONLY; historical pilot; not current C3 gate")
+    validate_noise_reproduction(nodes, noise["summaries"]["common_30"]["nodes"])
+    rows = [(n, v["sigma_train"], v["sigma_split"], v["sigma_joint"]) for n, v in sorted(nodes.items())]
+    with (OUT / "noise_floor.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["provisional_status", "node", "sigma_train", "sigma_split", "sigma_joint"])
+        writer.writerows(("PILOT; pending author acceptance", *row) for row in rows)
     fig, ax = plt.subplots(figsize=(7, 4))
-    ax.barh([x[0] for x in noise_rows], [x[3] for x in noise_rows])
+    ax.barh([x[0] for x in rows], [x[3] for x in rows])
     ax.set_xlabel("Joint-seed standard deviation of baseline metric")
     ax.set_title("PILOT — pending author acceptance")
     fig.tight_layout()
     fig.savefig(OUT / "noise_floor.pdf", metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
-    # Source-row categories are descriptive, include partial campaigns and are
-    # not a fresh-seed audit or an estimate for a population of campaigns.
-    denominators = {tuple(row[:3]): row[5] for row in counts}
-    waste = [("{} (n={})".format(":".join(key), denominators[key]), share)
-             for key, share in duplicate_shares(counts)]
-    fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.barh([label for label, _ in waste], [fraction for _, fraction in waste])
-    ax.set_xlabel("Duplicate share of source rows in each stratum")
-    ax.set_title("ENGINEERING PILOT — partial campaigns", fontsize=9)
-    fig.tight_layout()
-    fig.savefig(OUT / "proposal_categories.pdf", metadata={"CreationDate": None, "ModDate": None})
-    plt.close(fig)
-    fig, ax = plt.subplots(figsize=(7, 4))
-    labels = [row[0] for row in gate_rows]
-    gains = [row[1] for row in gate_rows]
-    lower = [row[1] - row[2] for row in gate_rows]
-    upper = [row[3] - row[1] for row in gate_rows]
-    ax.errorbar(gains, labels, xerr=[lower, upper], fmt="o", capsize=3)
-    ax.axvline(0, color="black", linewidth=0.8)
-    ax.set_xlabel("Historical A3 minus A2 per-campaign estimate")
-    ax.set_title("ENGINEERING PILOT — not the C3 gate")
-    fig.tight_layout()
-    fig.savefig(OUT / "offline_pilot.pdf", metadata={"CreationDate": None, "ModDate": None})
-    plt.close(fig)
-    total = sum(row[4] for row in counts)
-    duplicate = sum(row[4] for row in counts if row[3] == "duplicate")
-    (OUT / "pilot_numbers.tex").write_text(
-        "% ENGINEERING_ONLY pilot; includes partial campaigns; not accepted evidence.\n"
-        + "\\newcommand{\\PilotProposalRows}{" + str(total) + "}\n"
-        + "\\newcommand{\\PilotDuplicateRows}{" + str(duplicate) + "}\n"
-    )
-    manifest = {"label": "PILOT / ENGINEERING_ONLY — not accepted evidence or gate",
+    manifest = {"label": "PILOT — not accepted evidence",
                 "renderer": {"python": platform.python_version(), "matplotlib": matplotlib.__version__,
-                             "path": str(Path(__file__).resolve().relative_to(ROOT)),
+                             "path": RENDERER_REL,
                              "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
                 "inputs": {name: hashlib.sha256(data).hexdigest() for name, data in source_bytes.items()},
                 "outputs": {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest() for name in OUTPUT_NAMES},
-                "limitations": "Noise sigma fields are recomputed from captured committed pilot runs and checked against the stored summary. Other outputs extract existing summaries; proposal rows include partial campaigns. Not a complete manuscript pipeline or current gate."}
+                "limitations": "Noise sigma fields recomputed from captured pilot runs and checked against stored summary; not accepted evidence or a complete manuscript pipeline."}
     (OUT / "provenance.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
 
 
@@ -186,7 +85,7 @@ def main():
 
 
 def verify_outputs(directory=OUT, root=ROOT):
-    """Reject failed, interrupted, incomplete or altered outputs; not evidence approval."""
+    """Check status and hashes, without approving outputs as evidence."""
     with (directory / ".render.lock").open("a+") as lock:
         fcntl.flock(lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
         status = json.loads((directory / "render_status.json").read_text())
@@ -210,7 +109,7 @@ def verify_outputs(directory=OUT, root=ROOT):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--verify", action="store_true", help="check status and hashes of existing pilot outputs")
+    parser.add_argument("--verify", action="store_true", help="check status and hashes of C1 outputs")
     if parser.parse_args().verify:
         verify_outputs()
     else:

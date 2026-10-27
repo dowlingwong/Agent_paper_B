@@ -1,127 +1,42 @@
+"""The renderer is provisional; tests exercise only transformations, not evidence."""
+import csv
+import hashlib
 import json
 
 import pytest
 
-from r1.analysis.pilot_figures import PILOT, waste_counts
+from r1.analysis import pilot_figures as figures
 
 
-def test_waste_counts_preserves_strata_and_categories():
-    rows = [
-        {"source": "a", "node": "n", "memory_mode": "none", "inert": True, "inert_kind": "duplicate"},
-        {"source": "a", "node": "n", "memory_mode": "none", "inert": True, "inert_kind": "duplicate"},
-        {"source": "a", "node": "n", "memory_mode": "on", "inert": False, "inert_kind": None},
-    ]
-    assert waste_counts(rows) == [("a", "n", "none", "duplicate", 2, 2, 1.0), ("a", "n", "on", "non-inert", 1, 1, 1.0)]
+def test_noise_reproduction_mismatch_is_not_silently_accepted():
+    expected = {'n': {'sigma_train': 1.0, 'sigma_split': 2.0, 'sigma_joint': 3.0}}
+    figures.validate_noise_reproduction(expected, expected)
+    with pytest.raises(ValueError, match='noise summary mismatch'):
+        figures.validate_noise_reproduction({'n': {'sigma_train': 1.1, 'sigma_split': 2.0, 'sigma_joint': 3.0}}, expected)
+    with pytest.raises(ValueError, match='node set'):
+        figures.validate_noise_reproduction({}, expected)
 
 
-def test_rejects_missing_and_contradictory_inert_labels():
-    base = {"source": "a", "node": "n", "memory_mode": "none"}
-    with pytest.raises(ValueError):
-        waste_counts([base])
-    with pytest.raises(ValueError):
-        waste_counts([{**base, "inert": True, "inert_kind": None}])
-    with pytest.raises(ValueError):
-        waste_counts([{**base, "inert": False, "inert_kind": "duplicate"}])
-    with pytest.raises(ValueError):
-        waste_counts([{**base, "inert": True, "inert_kind": "non-inert"}])
+def test_c1_renderer_has_no_19_oct_pilot_inputs():
+    assert all('20261019' not in path and 'c3_audit_pilot' not in path for path in figures.INPUT_REL)
+    assert figures.OUT.name == 'c1_pilot'
 
 
-def test_committed_pilot_categories_preserve_source_rows():
-    with (PILOT / "proposals.jsonl").open() as handle:
-        counts = waste_counts(json.loads(line) for line in handle if line.strip())
-    assert sum(row[4] for row in counts) == 1323
-    assert sum(row[4] for row in counts if row[3] == "duplicate") == 727
-    assert all(row[5] > 0 and 0 <= row[6] <= 1 for row in counts)
-
-
-def test_committed_noise_and_pilot_tables_match_sources_and_labels():
-    import csv
-    import hashlib
-
-    from r1.analysis.pilot_figures import NOISE, OUT, ROOT
-
-    noise = json.loads(NOISE.read_text())["summaries"]["common_30"]["nodes"]
-    with (OUT / "noise_floor.csv").open() as handle:
+def test_render_matches_committed_c1_summary(tmp_path, monkeypatch):
+    monkeypatch.setattr(figures, 'OUT', tmp_path)
+    figures.main()
+    assert figures.verify_outputs(tmp_path)
+    recorded = json.loads((figures.ROOT / figures.INPUT_REL[0]).read_text())['summaries']['common_30']['nodes']
+    with (tmp_path / 'noise_floor.csv').open() as handle:
         rows = list(csv.DictReader(handle))
-    assert {row["node"] for row in rows} == set(noise)
+    assert {row['node'] for row in rows} == set(recorded)
     for row in rows:
-        assert row["provisional_status"] == "PILOT; pending author acceptance"
-        for column in ("sigma_train", "sigma_split", "sigma_joint"):
-            assert float(row[column]) == noise[row["node"]][column]
-    gate = json.loads((PILOT / "offline_eval.json").read_text())["instance"]["per_g"]["0.1"]["gate"]
-    with (OUT / "offline_pilot.csv").open() as handle:
-        rows = list(csv.DictReader(handle))
-    assert {row["node"] for row in rows} == set(gate)
-    for row in rows:
-        assert row["provisional_status"] == "ENGINEERING_ONLY; historical pilot; not current C3 gate"
-        source = gate[row["node"]]
-        assert float(row["gain_A3_minus_A2_per20"]) == source["gain_A3_minus_A2_per20"]
-        assert [float(row["ci_lower"]), float(row["ci_upper"])] == source["ci95"]
-        assert float(row["delta_n"]) == source["delta_n"]
-    manifest = json.loads((OUT / "provenance.json").read_text())
-    for name, digest in manifest["inputs"].items():
-        assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest
-
-
-def test_all_historical_gate_rows_match_each_mode_and_price():
-    import csv
-    from r1.analysis.pilot_figures import OUT
-
-    result = json.loads((PILOT / "offline_eval.json").read_text())
-    with (OUT / "offline_all_gates.csv").open() as handle:
-        rows = list(csv.DictReader(handle))
-    expected = sum(len(entry["gate"]) for mode in ("instance", "lono") for entry in result[mode]["per_g"].values())
-    assert len(rows) == expected
-    assert len({(r["mode"], r["g_over_sigma"], r["node"]) for r in rows}) == expected
-    for row in rows:
-        value = result[row["mode"]]["per_g"][row["g_over_sigma"]]["gate"][row["node"]]
-        assert row["provisional_status"] == "ENGINEERING_ONLY; historical pilot; not current C3 gate"
-        assert float(row["gain_A3_minus_A2_per20"]) == value["gain_A3_minus_A2_per20"]
-        assert [float(row["ci_lower"]), float(row["ci_upper"])] == value["ci95"]
-        assert (row["historical_pass"] == "True") is value["pass"]
-        assert float(row["delta_n"]) == value["delta_n"]
-        assert int(row["instances"]) == value["n_instances"]
-        assert int(row["eval_rows"]) == value["n_eval_rows"]
-    with (OUT / "offline_all_arms.csv").open() as handle:
-        arms = list(csv.DictReader(handle))
-    expected_arms = sum(len(node_values) for mode in ("instance", "lono") for entry in result[mode]["per_g"].values() for node_values in entry["arms"].values())
-    assert len(arms) == expected_arms
-    assert len({(r["mode"], r["g_over_sigma"], r["arm"], r["node"]) for r in arms}) == expected_arms
-    for row in arms:
-        value = result[row["mode"]]["per_g"][row["g_over_sigma"]]["arms"][row["arm"]][row["node"]]
-        assert row["provisional_status"] == "ENGINEERING_ONLY; historical pilot; not current C3 gate"
-        for key in ("mean_per_proposal", "per_campaign", "exec_rate"):
-            assert float(row[key]) == value[key]
-
-
-def test_duplicate_figure_includes_zero_duplicate_strata():
-    from r1.analysis.pilot_figures import duplicate_shares
-    counts = waste_counts([
-        {"source": "a", "node": "n", "memory_mode": "off", "inert": True, "inert_kind": "equals_incumbent"},
-        {"source": "a", "node": "m", "memory_mode": "on", "inert": True, "inert_kind": "duplicate"},
-    ])
-    shares = dict(duplicate_shares(counts))
-    assert shares == {("a", "m", "on"): 1.0, ("a", "n", "off"): 0.0}
-    with (PILOT / "proposals.jsonl").open() as handle:
-        counts = waste_counts(json.loads(line) for line in handle if line.strip())
-    shares = dict(duplicate_shares(counts))
-    assert set(shares) == {tuple(row[:3]) for row in counts}
-    assert shares[("dt4", "openml_ionosphere", "none")] == 0.0
-
-
-def test_rejects_unlabelled_or_non_split_pilot_inputs():
-    from r1.analysis.pilot_figures import validate_pilot_inputs
-    noise = {'label': 'PILOT', 'summaries': {'common_30': {'label': 'PILOT'}}}
-    evaluation = {'label': 'ENGINEERING_ONLY', 'seed_split': True}
-    validate_pilot_inputs(noise, evaluation)
-    with pytest.raises(ValueError, match='PILOT'):
-        validate_pilot_inputs({'label': 'UNKNOWN'}, evaluation)
-    with pytest.raises(ValueError, match='seed-split'):
-        validate_pilot_inputs(noise, {'label': 'ENGINEERING_ONLY', 'seed_split': False})
+        assert row['provisional_status'] == 'PILOT; pending author acceptance'
+        for column in ('sigma_train', 'sigma_split', 'sigma_joint'):
+            assert float(row[column]) == recorded[row['node']][column]
 
 
 def test_failed_render_marks_prior_outputs_unusable(tmp_path, monkeypatch):
-    from r1.analysis import pilot_figures as figures
     monkeypatch.setattr(figures, 'OUT', tmp_path)
     (tmp_path / 'old.csv').write_text('old content')
     def fail():
@@ -135,52 +50,34 @@ def test_failed_render_marks_prior_outputs_unusable(tmp_path, monkeypatch):
         figures.verify_outputs(tmp_path)
 
 
-def test_committed_render_status_and_hashes():
-    from r1.analysis.pilot_figures import verify_outputs
-    assert verify_outputs()
-
-
 def test_verify_rejects_empty_or_redirected_manifest(tmp_path):
-    from r1.analysis.pilot_figures import verify_outputs
     (tmp_path / 'render_status.json').write_text('{"status":"SUCCESS"}')
     (tmp_path / 'provenance.json').write_text(json.dumps({'renderer': {'path': 'fake', 'sha256': 'x'}, 'inputs': {}, 'outputs': {}}))
     with pytest.raises(ValueError, match='file set'):
-        verify_outputs(tmp_path)
+        figures.verify_outputs(tmp_path)
 
 
 def test_verify_rejects_changed_input_or_output(tmp_path):
-    import hashlib
-    from r1.analysis.pilot_figures import INPUT_REL, OUTPUT_NAMES, RENDERER_REL, verify_outputs
     root, out = tmp_path / 'root', tmp_path / 'out'
     root.mkdir()
     out.mkdir()
     digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
-    for name in (*INPUT_REL, RENDERER_REL):
+    for name in (*figures.INPUT_REL, figures.RENDERER_REL):
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(name)
-    for name in OUTPUT_NAMES:
+    for name in figures.OUTPUT_NAMES:
         (out / name).write_text(name)
-    manifest = {'renderer': {'path': RENDERER_REL, 'sha256': digest(root / RENDERER_REL)},
-                'inputs': {name: digest(root / name) for name in INPUT_REL},
-                'outputs': {name: digest(out / name) for name in OUTPUT_NAMES}}
+    manifest = {'renderer': {'path': figures.RENDERER_REL, 'sha256': digest(root / figures.RENDERER_REL)},
+                'inputs': {name: digest(root / name) for name in figures.INPUT_REL},
+                'outputs': {name: digest(out / name) for name in figures.OUTPUT_NAMES}}
     (out / 'render_status.json').write_text('{"status":"SUCCESS"}')
     (out / 'provenance.json').write_text(json.dumps(manifest))
-    assert verify_outputs(out, root)
-    (root / INPUT_REL[0]).write_text('changed')
+    assert figures.verify_outputs(out, root)
+    (root / figures.INPUT_REL[0]).write_text('changed')
     with pytest.raises(ValueError, match='input differs'):
-        verify_outputs(out, root)
-    (root / INPUT_REL[0]).write_text(INPUT_REL[0])
-    (out / OUTPUT_NAMES[0]).write_text('changed')
+        figures.verify_outputs(out, root)
+    (root / figures.INPUT_REL[0]).write_text(figures.INPUT_REL[0])
+    (out / figures.OUTPUT_NAMES[0]).write_text('changed')
     with pytest.raises(ValueError, match='output differs'):
-        verify_outputs(out, root)
-
-
-def test_noise_reproduction_mismatch_is_not_silently_accepted():
-    from r1.analysis.pilot_figures import validate_noise_reproduction
-    expected = {'n': {'sigma_train': 1.0, 'sigma_split': 2.0, 'sigma_joint': 3.0}}
-    validate_noise_reproduction(expected, expected)
-    with pytest.raises(ValueError, match='noise summary mismatch'):
-        validate_noise_reproduction({'n': {'sigma_train': 1.1, 'sigma_split': 2.0, 'sigma_joint': 3.0}}, expected)
-    with pytest.raises(ValueError, match='node set'):
-        validate_noise_reproduction({}, expected)
+        figures.verify_outputs(out, root)

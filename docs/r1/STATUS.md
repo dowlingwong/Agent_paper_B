@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — L4.3 fixture boundary reviewed (AI-assisted)
+
+- The renderer now reads the 22 Oct C1 source only and writes a separate C1 directory; the 19 Oct pilot is a read-only test fixture only, never training data or evaluation evidence. Historical outputs are preserved. The [scoped review](reviews/LOCAL_L4_3_FIXTURE_SCOPE_REVIEW_20261027.md) accepts the boundary; five fixture tests passed independently and one committed-source render was deselected. Full L4.3 remains unaccepted, including provenance limitations.
+
 ## 27 October 2026 — citation follow-up independently reviewed (AI-assisted)
 
 - The NeurIPS publication distinguishes the two authors named Yang Yue. The Jev essay signature and footer support, but do not directly establish, its full-name byline, which remains marked unverified. The [scoped review](reviews/LOCAL_L6_CITATION_FOLLOWUP_REVIEW_20261027.md) accepts these annotations. L6 remains unaccepted pending the author proof check and remaining citation gaps.
