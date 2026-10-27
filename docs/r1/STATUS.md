@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — scoped citation checks independently reviewed (AI-assisted)
+
+- The bibliography now records a documented DACBench publisher spelling conflict, with the spelling supported by the paper and project citation; a Bechhofer single-sample paper is added only as an explicitly unverified candidate for the underspecified reading-list entry. The [scoped review](reviews/LOCAL_CITATION_GAPS_REVIEW_20261027.md) accepts these draft corrections, not the bibliography as a whole.
+- L6 remains unaccepted: author proof check, direct metadata/identity verification where marked and other citation gaps remain.
+
 ## 27 October 2026 — autoresearch fake CLI smoke independently reviewed (AI-assisted)
 
 - Harness branch `r1-local-20261027-autoresearch` commit `d63cb91` contains an explicitly fake three-trial CLI smoke using the local worker and synthetic metrics. The [independent review](reviews/LOCAL_AUTORESEARCH_STUB_REVIEW_20261027.md) accepts this fixture-only subitem; one focused fixture passed independently. No real node training or scientific run is inferred.

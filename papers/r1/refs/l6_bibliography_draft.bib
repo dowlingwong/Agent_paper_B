@@ -127,8 +127,9 @@
 % 16: PRESENT chick2012sequential -- Chick & Frazier 2012, Mgmt Sci 58(3)
 % 17: PRESENT branke2007selecting -- Branke, Chick & Schmidt 2007, Mgmt Sci 53(12)
 % 18: PRESENT hong2007sequential -- Hong & Nelson 2007, IIE Trans. 39(7)
-% 19: GAP -- Bechhofer 1954; the source list does not identify a title;
-% multiple 1954 Bechhofer papers exist. Resolve intended work before citing.
+% 19: CANDIDATE bechhofer1954single -- the source says only Bechhofer 1954, origin of IZ;
+% the 1954 Oxford paper describes his earlier single-sample formulation. The source
+% does not identify a title, so the intended identity remains UNVERIFIED.
 % 24: PRESENT frazier2009correlated -- Frazier, Powell & Dayanik 2009, INFORMS JoC 21(4)
 % 25: PRESENT ryzhov2012kg -- Ryzhov, Powell & Frazier 2012, Oper. Res. 60(1)
 % 26: PRESENT letham2017noisy -- Letham et al. 2019, Bayesian Analysis (arXiv 1706.07094)
@@ -266,7 +267,8 @@
 }
 % Primary record checked (title, authors, venue or preprint status, year):
 % https://www.ijcai.org/proceedings/2021/0230.pdf ; https://www.ijcai.org/proceedings/2021/230
-% UNVERIFIED: author spelling unresolved: paper PDF Adriaensen; proceedings webpage Adriansen.
+% Publisher page spells Adriansen; the paper PDF and the authors' DACBench repository
+% citation both give Adriaensen: https://github.com/automl/DACBench/blob/main/README.md
 @inproceedings{eimer2021dacbench,
   title = {{DACBench}: A Benchmark Library for Dynamic Algorithm Configuration}, author = {Eimer, Theresa and Biedenkapp, Andr{\'e} and Reimer, Maximilian and Adriaensen, Steven and Hutter, Frank and Lindauer, Marius},
   booktitle = {Proceedings of the Thirtieth International Joint Conference on Artificial Intelligence}, year = {2021}, pages = {1668--1674}, doi = {10.24963/ijcai.2021/230}, url = {https://www.ijcai.org/proceedings/2021/0230.pdf}
@@ -1098,4 +1100,15 @@
 % https://proceedings.mlr.press/v202/shi23a.html
 @inproceedings{shi2023distracted,
  title = {Large Language Models Can Be Easily Distracted by Irrelevant Context}, author = {Shi, Freda and Chen, Xinyun and Misra, Kanishka and Scales, Nathan and Dohan, David and Chi, Ed H. and Sch{\"a}rli, Nathanael and Zhou, Denny}, booktitle = {Proceedings of the 40th International Conference on Machine Learning}, series = {Proceedings of Machine Learning Research}, volume = {202}, pages = {31210--31227}, year = {2023}, url = {https://proceedings.mlr.press/v202/shi23a.html}
+}
+
+% CANDIDATE: The reading-list entry lacks a title, so intended identity is UNVERIFIED.
+% Primary metadata DOI: https://doi.org/10.1214/aoms/1177728845
+% The 1954 follow-up identifies the earlier single-sample formulation:
+% https://academic.oup.com/biomet/article-abstract/41/1-2/170/456783
+@article{bechhofer1954single,
+  author = {Bechhofer, Robert E.},
+  title = {A Single-Sample Multiple Decision Procedure for Ranking Means of Normal Populations with Known Variances},
+  journal = {The Annals of Mathematical Statistics}, volume = {25}, number = {1},
+  pages = {16--39}, year = {1954}, doi = {10.1214/aoms/1177728845}
 }
