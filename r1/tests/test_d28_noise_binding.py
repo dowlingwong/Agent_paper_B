@@ -173,7 +173,7 @@ def test_composite_is_reproducible_and_node_sources_are_exact():
             assert isinstance(b, list) and len(a) == len(b)
             for x, y in zip(a, b): compare(x, y)
         elif key in approximate_fields:
-            assert a == pytest.approx(b, rel=1e-14, abs=1e-15)
+            assert a == pytest.approx(b, rel=0, abs=1e-15)
         else:
             assert a == b
     compare(composite, recorded)
