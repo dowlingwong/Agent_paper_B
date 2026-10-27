@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — resume stamp repair independently reviewed (AI-assisted)
+
+- Harness branch `r1-local-20261027` commit `7567215` is pushed and independently accepted for the scoped engineering fix ([review](reviews/LOCAL_RESUME_STAMP_FIX_REVIEW_20261027.md)). Fixture tests cover resumed E1 evaluated and skip plus E2 verify rescue/veto and live/resumed behavior; 3 passed. The fix recomputes the final count after a verify decision can change, while preserving the pre-verify snapshot view.
+- The [sweep-1 note](reports/SWEEP1_RESUME_STAMP_NOTE_20261027.md) records the author's non-applicability ruling and source limits. `r1` remains pinned at `897d83c`; the coordinator may merge this as a new pin only after sweep 1 and B.2, before C.3 (R1-RESUME-STAMP). No historical impact or evidence readiness is inferred.
+
 ## 27 October 2026 01:30 — author rulings and L4.4 acceptance (AI-assisted)
 
 - PLAN §10 records the authorized resume-stamp repair on `r1-local-*`, sweep-1 non-applicability note and post-sweep/B.2 merge timing; restricted comparison is the accepted Mac criterion for L4.4/L4.5 with full-suite comparison after merge; one more H.8 table-utility attempt is authorized, including read-only committed-table fixtures.
