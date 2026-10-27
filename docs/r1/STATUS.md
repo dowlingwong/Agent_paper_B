@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — final authorized H.8 attempt independently rejected (AI-assisted)
+
+- Author authorized one further table-utility attempt; `d9a4338` computes through `labels.action_target` using a training-only A1 and table split. Fresh independent [review](reviews/LOCAL_L4_2_FINAL_REVIEW_20261027.md) **rejects** it: a mixed-split environment exposes test episodes during training, rule-equipped no-ops can execute, and a failed reset can leave stale state. Fifteen scoped fixture tests passed but did not catch these counterexamples. The train/val/test label-block mapping remains an assumption pending author confirmation.
+- No further H.8 code attempt is authorized by the current one-more-attempt ruling. Preserve the branch for coordinator review; the earlier H.8 reviewer’s pilot-table fixture-scope incident remains in its review. No `r1/c3/train/` edits were made.
+
 ## 27 October 2026 — L4.5 harness audit independently accepted (AI-assisted)
 
 - The [governance audit](proposals/HARNESS_GOVERNANCE_20261027.md) and its two added legacy-metric fixtures (`4e25521`) are accepted under the author's amended restricted Mac criterion: [review](reviews/LOCAL_L4_5_RULING_REVIEW_20261027.md); independent fixture run 2 passed. The known resume-stamp defect has a separate accepted `r1-local-20261027` repair gated until after sweep 1 and B.2.
