@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — citation follow-up independently reviewed (AI-assisted)
+
+- The NeurIPS publication distinguishes the two authors named Yang Yue. The Jev essay signature and footer support, but do not directly establish, its full-name byline, which remains marked unverified. The [scoped review](reviews/LOCAL_L6_CITATION_FOLLOWUP_REVIEW_20261027.md) accepts these annotations. L6 remains unaccepted pending the author proof check and remaining citation gaps.
+
 ## 27 October 2026 — H.8 split mapping clarified (author)
 
 - Author confirmed `train` and `val` use `z_train`; `test` uses `z_eval` (PLAN R1-H8-SPLIT-MAPPING). A split assignment for the older pilot is test-only. This supersedes the pending-mapping note in the prior entry, without accepting the rejected implementation or authorizing another attempt.
