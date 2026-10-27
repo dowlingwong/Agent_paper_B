@@ -42,6 +42,7 @@ from r1.c3.features import (NODE_INFO, Proposal, configuration, files_hash, norm
 from r1.harness import REPO, harness_root
 from r1.exam.namespace import refuse_exam
 
+LEGACY_LIVENESS_HARNESS = "411c6054c8505f93a6429e2f9eed526952793882"
 E1_SUMMARY = "results/r1/pilot/E1_20261022T214606Z/summary.json"  # common 30-seed run, the C1 noise-floor table (PLAN §10, 22 Oct); was E1_20261012T145353Z
 SOURCES = {
     "dt4": {"dir": "results/r1/pilot/E1b_20261013T151857Z", "ledgers": "provenance/ledgers/roots/*/root_trials.jsonl*",
@@ -115,9 +116,23 @@ def _start_files(src_dir: Path, inst: str, node: str, strict: bool = False) -> d
         return json.loads(rj.read_text())["start_files"]
     if strict:  # sweep outputs always record start files; never fall back to today's node files
         raise ValueError(f"{rj}: root record with start files missing")
-    # liveness runs store no start files; same harness commit (411c605) -> node files.
+    # Historical liveness has no captured start files. Use its recorded clean harness commit,
+    # not the current checkout, which may have a different start configuration.
+    if src_dir.resolve() != (REPO / SOURCES["liveness"]["dir"]).resolve():
+        raise ValueError(f"{src_dir}: no authorized historical start-file fallback")
+    manifest_path = src_dir / "manifest.json"
+    if not manifest_path.is_file():
+        raise ValueError(f"{src_dir}: missing historical manifest for start files")
+    harness = json.loads(manifest_path.read_text()).get("harness") or {}
+    revision = harness.get("commit")
+    if revision != LEGACY_LIVENESS_HARNESS or harness.get("dirty") is not False:
+        raise ValueError(f"{src_dir}: historical start files require the recorded clean liveness harness commit")
     path = "train.py" if NODE_INFO[node]["family"] == "mlp" else "config.yaml"
-    return {path: (harness_root() / "nodes" / node / path).read_text()}
+    result = subprocess.run(["git", "-C", str(harness_root()), "show", f"{revision}:nodes/{node}/{path}"],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        raise ValueError(f"{src_dir}: historical harness object {revision}:nodes/{node}/{path} unavailable")
+    return {path: result.stdout}
 
 
 def _replay_sources(specs: dict, noise: dict, strict_start_files: bool = False) -> tuple[list, dict, dict]:

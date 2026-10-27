@@ -206,3 +206,40 @@ def test_composite_builder_refuses_missing_wrong_seed_or_failed_edit(tmp_path,mo
     with pytest.raises(ValueError,match="edit not applied"): B.check_run(root,("openml_climate",))
     rows[92]["edit_applied"]=True; rows.pop(); write()
     with pytest.raises(ValueError,match="incomplete"): B.check_run(root,("openml_climate",))
+
+
+def test_historical_fallback_uses_each_clean_manifest_pin_and_never_current_checkout(tmp_path,monkeypatch):
+    import subprocess
+    repo=tmp_path/"harness"; repo.mkdir()
+    def git(*args):
+        return subprocess.run(["git","-C",str(repo),*args],check=True,capture_output=True,text=True).stdout.strip()
+    git("init","-q")
+    git("config","user.name","fixture"); git("config","user.email","fixture@example.invalid")
+    config=repo/"nodes/openml_breast_w/config.yaml"; config.parent.mkdir(parents=True)
+    config.write_text("C: 0.15\n"); git("add","."); git("commit","-qm","old")
+    old=git("rev-parse","HEAD")
+    config.write_text("C: 0.01\n"); git("commit","-qam","new")
+    new=git("rev-parse","HEAD")
+    config.write_text("C: 99\n")
+    monkeypatch.setattr(D,"harness_root",lambda:repo)
+    monkeypatch.setattr(D,"REPO",tmp_path)
+    monkeypatch.setattr(D,"SOURCES",{**D.SOURCES,"liveness":{"dir":"first"}})
+    monkeypatch.setattr(D,"LEGACY_LIVENESS_HARNESS",old)
+    first=tmp_path/"first"; second=tmp_path/"second"; first.mkdir();second.mkdir()
+    (first/"manifest.json").write_text(json.dumps({"harness":{"commit":old,"dirty":False}}))
+    (second/"manifest.json").write_text(json.dumps({"harness":{"commit":new,"dirty":False}}))
+    assert D._start_files(first,"missing","openml_breast_w")=={"config.yaml":"C: 0.15\n"}
+    with pytest.raises(ValueError,match="no authorized"):
+        D._start_files(second,"missing","openml_breast_w")
+    with pytest.raises(ValueError,match="root record"):
+        D._start_files(first,"missing","openml_breast_w",strict=True)
+    (first/"manifest.json").write_text(json.dumps({"harness":{"commit":old,"dirty":True}}))
+    with pytest.raises(ValueError,match="recorded clean"):
+        D._start_files(first,"missing","openml_breast_w")
+    (first/"manifest.json").write_text(json.dumps({"harness":{"commit":"f"*40,"dirty":False}}))
+    monkeypatch.setattr(D,"LEGACY_LIVENESS_HARNESS","f"*40)
+    with pytest.raises(ValueError,match="unavailable"):
+        D._start_files(first,"missing","openml_breast_w")
+    (first/"manifest.json").unlink()
+    with pytest.raises(ValueError,match="missing historical manifest"):
+        D._start_files(first,"missing","openml_breast_w")
