@@ -92,6 +92,7 @@ import os
 import platform
 import re
 import shlex
+import hashlib
 import shutil
 import signal
 import subprocess
@@ -143,6 +144,7 @@ DEFAULTS = {
     # Candidate nodes that are NOT run: recorded only, moved into 'nodes' by a later
     # config once they qualify (e.g. the 22 Oct node-pool re-measurement).
     'nodes_pending': [],
+    'noise_source': None,  # optional pinned E1 summary; historical defaults unchanged
     # RUNBOOK A.5 (24 Oct): a restarted runner resumes an interrupted sweep phase from its last
     # completed campaign root (interrupted roots re-run whole); at most max_restarts per batch.
     'resume': {'sweeps': True, 'max_restarts': 5},
@@ -206,6 +208,15 @@ def load_config(path=None, allow_placeholders: bool = False) -> dict:
     if not config['memory_modes'] or not set(config['memory_modes']) <= {'append_only_summary', 'none'}:
         raise Stop('STOP: memory modes are append_only_summary and/or none (D24)')
     validate_audit(config['audit'])
+    source = config.get('noise_source')
+    if source is not None:
+        if not isinstance(source, dict) or set(source) != {'path', 'sha256'}:
+            raise Stop('STOP: noise_source must have path and sha256')
+        path, digest = source['path'], source['sha256']
+        if not isinstance(path, str) or not path or Path(path).is_absolute() or '..' in Path(path).parts:
+            raise Stop('STOP: noise_source path must be repository-relative')
+        if not isinstance(digest, str) or len(digest) != 64 or any(c not in '0123456789abcdef' for c in digest):
+            raise Stop('STOP: noise_source sha256 must be lowercase hexadecimal')
     if set(config['nodes_pending']) & set(config['nodes']):
         raise Stop('STOP: a node is both in nodes and nodes_pending')
     if len(set(config['nodes'])) != len(config['nodes']):
@@ -859,7 +870,45 @@ class SweepRunner:
             raise Stop(f'STOP: harness head {harness_head} differs from r1/scripts/HARNESS_PIN_C3')
         return paper_head, harness_head
 
+    def check_noise_source(self) -> dict | None:
+        source = self.config.get('noise_source')
+        if source is None:
+            return None
+        path = (self.paper / source['path']).resolve()
+        if not path.is_relative_to(self.paper.resolve()) or not path.is_file():
+            raise Stop('STOP: pinned noise source is missing or outside paper repo')
+        if hashlib.sha256(path.read_bytes()).hexdigest() != source['sha256']:
+            raise Stop('STOP: pinned noise source sha256 mismatch')
+        try:
+            nodes = json.loads(path.read_text())['nodes']
+        except (ValueError, KeyError, TypeError) as exc:
+            raise Stop(f'STOP: invalid pinned noise source: {exc}') from exc
+        if not set(self.config['nodes']) <= set(nodes):
+            raise Stop('STOP: pinned noise source lacks configured nodes')
+        return dict(source)
+
+    def check_noise_manifest(self, out: Path) -> None:
+        source = self.check_noise_source()
+        if source is None:
+            return
+        manifest = json.loads((out / 'manifest.json').read_text())
+        if (manifest.get('c3_label_sweep') or {}).get('noise_source') != source:
+            raise Stop('STOP: collector manifest noise source differs from pinned config')
+        if set(manifest.get('noise', {})) != set(manifest['nodes']):
+            raise Stop('STOP: collector manifest noise nodes mismatch')
+        from r1.headroom.e1b_collect import node_noise
+        for node, entry in manifest['noise'].items():
+            path = Path(entry.get('source', ''))
+            if not path.is_absolute():
+                path = self.paper / path
+            if path.resolve() != (self.paper / source['path']).resolve():
+                raise Stop('STOP: collector manifest noise path differs from pin')
+            expected = node_noise(self.paper / source['path'], node)
+            if any(entry.get(key) != expected[key] for key in ('sigma_t', 'sigma_s', 'sigma_d', 'definition')):
+                raise Stop(f'STOP: collector manifest noise values differ from pin for {node}')
+
     def preconditions(self) -> None:
+        self.check_noise_source()
         plan = (self.paper / 'docs/r1/PLAN.md').read_text()
         missing = [row for row in ROWS if row not in plan]
         if missing:
@@ -1018,9 +1067,11 @@ class SweepRunner:
         entry = self.state['steps'][step]
         eligible = self.state['steps']['liveness']['eligible_nodes']
         self.require_liveness(eligible, memory_mode)  # D28 gate first
+        noise_source = self.check_noise_source()
         base = [self.py, '-m', 'r1.headroom.e1b_collect']
         previous = Path(entry['out']) if entry.get('out') else None
         if previous is not None and (previous / 'manifest.json').exists():
+            self.check_noise_manifest(previous)
             # RUNBOOK A.5: resume an interrupted sweep from its last completed campaign root.
             out, work = previous, Path(entry['work'])
             resume = [*base, '--resume', str(out), '--workers', str(self.config['workers'])]
@@ -1060,6 +1111,9 @@ class SweepRunner:
                 'llamacpp_build': (self.service_record().get('build') or {}).get('version_line')}),
             'gpu': self.state.get('gpu'), 'audit': 'pending (r1/c3/audit.py)',
             'audit_seeds': self.config['audit']['seeds'], 'nodes_pending': self.config['nodes_pending']}}
+        if noise_source is not None:
+            extra['c3_label_sweep']['noise_source'] = noise_source
+        noise_args = ['--e1-summary', str(self.paper / noise_source['path'])] if noise_source else []
         label_args = ['--label', 'DRYRUN', '--split', 'engineering'] if self.dryrun else \
             ['--label', 'PILOT', '--split', 'c3_labels']
         resume = [*base, '--resume', str(out), '--workers', str(self.config['workers'])]
@@ -1069,13 +1123,14 @@ class SweepRunner:
                       '--memory-mode', memory_mode,
                       '--transport-max-attempts', str(self.config['transport_max_attempts']),
                       *self.manager_model_args(), '--root-failures', 'record', '--extra-manifest', json.dumps(extra),
-                      '--workers', str(self.config['workers']), '--out', str(out), '--work', str(work), *label_args],
+                      '--workers', str(self.config['workers']), '--out', str(out), '--work', str(work), *noise_args, *label_args],
                      step, out, work, resume)
         self.collect_sessions(out, work, step, resume, eligible, memory_mode)
 
     def collect_sessions(self, out: Path, work: Path, step: str, resume: list, eligible, memory_mode) -> None:
         """Resume sessions until one finds no job; then gates, offload check, archive, commit."""
         for _ in range(int(self.config['max_collect_sessions'])):
+            self.check_noise_manifest(out)
             manifest = json.loads((out / 'manifest.json').read_text())
             if manifest['sessions'] and manifest['sessions'][-1]['jobs_before'] == 0:
                 break
@@ -1177,9 +1232,11 @@ class SweepRunner:
     def index(self) -> None:
         """The sweep index: the input contract of the audit stage (``r1/c3/audit.py``)."""
         sweeps = []
+        noise_source = self.check_noise_source()
         for mode in self.config['memory_modes']:
             entry = self.state['steps'][f'sweep_{mode}']
             out = Path(entry['out'])
+            self.check_noise_manifest(out)
             sweeps.append({'memory_mode': mode, 'arm_role': 'contrast' if mode == 'none' else 'primary',
                            'out': str(out.relative_to(self.paper)),
                            'manifest': str((out / 'manifest.json').relative_to(self.paper)),
@@ -1192,6 +1249,7 @@ class SweepRunner:
                  'liveness': str(Path(live['out']).relative_to(self.paper)),
                  'harness_commit': self.state.get('harness_head_at_launch'), 'sweeps': sweeps,
                  'nodes_pending': self.config['nodes_pending'],
+                 **({'noise_source': noise_source} if noise_source is not None else {}),
                  **({'manager': {'backend': 'llamacpp', 'model': 'llamacpp/' + self.config['llamacpp']['model_alias'],
                                  'model_sha256': self.config['llamacpp']['model_sha256'],
                                  'llamacpp_build': self.config['llamacpp']['build'],

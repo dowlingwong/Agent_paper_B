@@ -10,8 +10,8 @@ result is already known from the ledger and they are handled by the rule layer
 
 Soft-label width (R1-SOFT-SIGMA, 26 Oct; Track P spec §3.4). Two versioned modes:
 - ``pooled_node`` (v2, the default for new tables): s = sigma_pooled / sqrt(K_label),
-  sigma_pooled pooled from the C1 30-seed noise-floor table (``SOFT_SIGMA_SOURCE``);
-  in z units s = 1/sqrt(K) when sigma_pooled = sigma_node. Tables built with it record
+  sigma_pooled supplied from the table's pinned noise source; ``SOFT_SIGMA_SOURCE`` documents
+  the legacy C1 source. In z units s = 1/sqrt(K) when sigma_pooled = sigma_node. Tables record
   ``SOFT_LABEL_VERSIONS["pooled_node"]``.
 - ``se_audit`` (v1): the per-proposal audit standard error; kept, selected explicitly,
   to reproduce existing tables (``offline_eval.assemble`` default).
@@ -37,7 +37,7 @@ def hard_bin(z: float) -> int:
 
 SOFT_LABEL_VERSIONS = {"se_audit": "soft_label/v1_se_audit", "pooled_node": "soft_label/v2_pooled_node"}
 DEFAULT_SIGMA_MODE = "pooled_node"  # new tables only; reproductions pass sigma_mode="se_audit"
-# C1 30-seed noise-floor table the pooled sigma comes from (dataset.E1_SUMMARY; PLAN §10, 22 Oct)
+# Historical C1 source for legacy tables (dataset.E1_SUMMARY). New sweep tables record their pinned noise_source in build.json.
 SOFT_SIGMA_SOURCE = {"file": "results/r1/pilot/E1_20261022T214606Z/summary.json",
                      "sha256": "eabc2f5c05b08cf900ab988838e41dc7f8db35a4131f4b57e72514e0e5513793",
                      "pooled_sigma": "dataset.noise_table()[node]['sigma_node'] (median sd_joint over material edits)"}
