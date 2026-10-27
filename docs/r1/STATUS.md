@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — H.8 split mapping clarified (author)
+
+- Author confirmed `train` and `val` use `z_train`; `test` uses `z_eval` (PLAN R1-H8-SPLIT-MAPPING). A split assignment for the older pilot is test-only. This supersedes the pending-mapping note in the prior entry, without accepting the rejected implementation or authorizing another attempt.
+
 ## 27 October 2026 — pilot noise transformation independently reviewed (AI-assisted)
 
 - The partial L4.3 renderer at `5143b24` recomputes the displayed noise fields from captured historical pilot data and checks them against the stored summary. Independent [review](reviews/LOCAL_PILOT_NOISE_REVIEW_20261027.md) accepts this limited engineering transformation: all 30 displayed sigma values match, with 12 focused tests passing.

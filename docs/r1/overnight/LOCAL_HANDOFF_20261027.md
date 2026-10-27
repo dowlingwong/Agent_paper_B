@@ -13,7 +13,7 @@ AI-assisted. Paper branch `local-20261026` and the separate `r1-local-*` harness
 
 1. Which of the proposed corrected theory statements and DI formulations survive the author's proof check?
 2. Can the coordinator obtain revision-pinned authoritative 1GC task/evaluator sources, and what Track G audit budget and container availability should be used? Track G role is already decided: evaluation/transfer only, validation-only selection for test-scored tasks; G.3 on Ada. MLGym is deferred unless a container is available by 10 Nov.
-3. For the H.8 table split column, does train/val use `z_train` and test use `z_eval`? The author-authorized final attempt was independently rejected for mixed-split episode exposure, no-op execution and stale reset state. Further H.8 implementation needs a new author ruling; Track P takes accepted integration through main after coordinator merge.
+3. Should another H.8 repair attempt be authorized? The author-authorized final attempt was independently rejected for mixed-split episode exposure, no-op execution and stale reset state. The author confirmed train/val use `z_train` and test uses `z_eval` (R1-H8-SPLIT-MAPPING); Track P takes accepted integration through main after coordinator merge.
 4. How should the retained byte-identity and other environment failures be investigated on the full-environment host after merge? The author accepted the restricted Mac comparison criterion specifically for L4.4 and L4.5.
 
 ## Incomplete work
