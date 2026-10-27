@@ -1,5 +1,10 @@
 # Paper B (route R1) — status log
 
+
+## 27 October 2026 — D28 repair D21 re-measurement (AI-assisted; PILOT)
+
+Four repaired nodes measured at harness `6adf385` after predeclaration `b2f8b74`: 2,208 unique records, zero failures or missing metrics, 30 seeds per condition. Breast_w, sonar and wdbc qualify under the unchanged D21 rule; blood_transfusion does not (mean P(wrong) 0.07715375 < 0.10). Report: [DT_D28_D21_REPAIR_20261027.md](reports/DT_D28_D21_REPAIR_20261027.md). Preserve this finding; no re-run or threshold adjustment. The reserve climate D21 status check is running separately under the same harness pin; D28 and sweep 1 have not started.
+
 ## 27 October 2026 — coordination handed to a local operator agent (AI-assisted; documents only)
 
 - `docs/r1/prompts/OPERATOR_HANDOVER_20261027.md`: state of the four agents, ground rules, immediate queue, monitoring, merge protocol, upcoming gates and open author decisions, for a Mac agent with SSH access that takes over coordination and monitoring.

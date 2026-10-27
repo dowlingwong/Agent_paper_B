@@ -1,0 +1,110 @@
+{
+  "openml_breast_w": [
+    {
+      "symbol": "C",
+      "old": "0.01",
+      "new": "0.005"
+    },
+    {
+      "symbol": "C",
+      "old": "0.01",
+      "new": "0.02"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_sonar": [
+    {
+      "symbol": "C",
+      "old": "0.01",
+      "new": "0.005"
+    },
+    {
+      "symbol": "C",
+      "old": "0.01",
+      "new": "0.02"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_blood_transfusion": [
+    {
+      "symbol": "C",
+      "old": "0.01",
+      "new": "0.005"
+    },
+    {
+      "symbol": "C",
+      "old": "0.01",
+      "new": "0.02"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ],
+  "openml_wdbc": [
+    {
+      "symbol": "C",
+      "old": "0.01",
+      "new": "0.005"
+    },
+    {
+      "symbol": "C",
+      "old": "0.01",
+      "new": "0.02"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "random_forest"
+    },
+    {
+      "symbol": "model_type",
+      "old": "logistic_regression",
+      "new": "gradient_boosting"
+    },
+    {
+      "symbol": "class_weight",
+      "old": "balanced",
+      "new": "null"
+    }
+  ]
+}
