@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — repair D28 complete; sweep-1 readiness STOP (AI-assisted; ENGINEERING_ONLY)
+
+Three D21-qualified repaired nodes and the climate reserve passed D28, with full GPU offload before and after. Blood_transfusion failed D21 and is replaced by climate under R1-D28-REPAIR. Proposed eight-node config and harness pin are prepared on this branch; [readiness report](reports/DT_SWEEP1_READINESS_20261027.md), D28 raw records and archived temporary provenance are retained. Independent review is pending. **STOP:** sweep 1 and B.2 remain unstarted and require the author's authorization and a matching final pin set.
+
 ## 27 October 2026 — D28 reserve climate D21 passes (AI-assisted; PILOT)
 
 The separate climate status check at harness `6adf385` completed 552 unique records with no failures or missing metrics; climate qualifies under D21 (3 material edits, mean P(wrong) 0.2907157594). Report: [DT_D28_CLIMATE_D21_20261027.md](reports/DT_D28_CLIMATE_D21_20261027.md). Climate remains a reserve until its own D28 passes; the original failed and completed climate attempts remain unchanged.

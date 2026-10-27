@@ -10,7 +10,7 @@
   "openml_wdbc",
   "openml_credit_approval",
   "openml_sonar",
-  "openml_blood_transfusion"
+  "openml_climate"
  ],
  "nodes_pending": [],
  "instances": 18,
