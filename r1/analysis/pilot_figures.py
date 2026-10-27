@@ -10,6 +10,7 @@ import fcntl
 import hashlib
 import json
 import platform
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,7 +20,10 @@ OUT = ROOT / "papers/r1/generated/pilot"
 RENDERER_REL = "r1/analysis/pilot_figures.py"
 INPUT_REL = ("results/r1/pilot/E1_20261022T214606Z/compare.json",
              "results/r1/engineering/c3_audit_pilot_20261019T001338Z/proposals.jsonl",
-             "results/r1/engineering/c3_audit_pilot_20261019T001338Z/offline_eval.json")
+             "results/r1/engineering/c3_audit_pilot_20261019T001338Z/offline_eval.json",
+             "results/r1/pilot/E1_20261022T214606Z/runs.jsonl",
+             "results/r1/pilot/E1_20261022T214606Z/edits.json",
+             "r1/noise/e1_report.py")
 OUTPUT_NAMES = ("noise_floor.csv", "proposal_categories.csv", "offline_all_gates.csv", "offline_all_arms.csv",
                 "offline_pilot.csv", "noise_floor.pdf", "proposal_categories.pdf", "offline_pilot.pdf", "pilot_numbers.tex")
 
@@ -63,6 +67,16 @@ def validate_pilot_inputs(noise, evaluation):
         raise ValueError("offline summary must be ENGINEERING_ONLY and seed-split")
 
 
+def validate_noise_reproduction(recomputed, recorded):
+    """Require exact agreement for all sigma fields used by this plot/table."""
+    if set(recomputed) != set(recorded):
+        raise ValueError("noise node set differs from recorded pilot")
+    for node in recomputed:
+        for key in ("sigma_train", "sigma_split", "sigma_joint"):
+            if recomputed[node][key] != recorded[node][key]:
+                raise ValueError(f"noise summary mismatch: {node} {key}")
+
+
 def write_csv(path, header, rows, label):
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
@@ -81,7 +95,15 @@ def _render():
     noise = json.loads(source_bytes[INPUT_REL[0]])
     result = json.loads(source_bytes[INPUT_REL[2]])
     validate_pilot_inputs(noise, result)
-    nodes = noise["summaries"]["common_30"]["nodes"]
+    recorded_nodes = noise["summaries"]["common_30"]["nodes"]
+    # Summarise captured bytes in scratch: no training, workers, or source writes.
+    from r1.noise.e1_report import summarise
+    with tempfile.TemporaryDirectory(prefix="r1-pilot-noise-") as tmp:
+        scratch = Path(tmp)
+        (scratch / "runs.jsonl").write_bytes(source_bytes[INPUT_REL[3]])
+        (scratch / "edits.json").write_bytes(source_bytes[INPUT_REL[4]])
+        nodes = summarise(scratch)["nodes"]
+    validate_noise_reproduction(nodes, recorded_nodes)
     noise_rows = [(n, v["sigma_train"], v["sigma_split"], v["sigma_joint"]) for n, v in sorted(nodes.items())]
     write_csv(OUT / "noise_floor.csv", ["node", "sigma_train", "sigma_split", "sigma_joint"], noise_rows, "PILOT; pending author acceptance")
     counts = waste_counts(json.loads(line) for line in source_bytes[INPUT_REL[1]].splitlines() if line.strip())
@@ -145,7 +167,7 @@ def _render():
                              "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
                 "inputs": {name: hashlib.sha256(data).hexdigest() for name, data in source_bytes.items()},
                 "outputs": {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest() for name in OUTPUT_NAMES},
-                "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate."}
+                "limitations": "Noise sigma fields are recomputed from captured committed pilot runs and checked against the stored summary. Other outputs extract existing summaries; proposal rows include partial campaigns. Not a complete manuscript pipeline or current gate."}
     (OUT / "provenance.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
 
 

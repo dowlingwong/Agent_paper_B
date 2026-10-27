@@ -1,11 +1,14 @@
 {
   "inputs": {
+    "r1/noise/e1_report.py": "0b9e2c0c69aef69f70bfe7c522283a99291837b75913cc6fc62956b7162ec7b9",
     "results/r1/engineering/c3_audit_pilot_20261019T001338Z/offline_eval.json": "9412e0ab6a417bd69886d344a55916151d42e82262b574df2555941ba4d2f5a2",
     "results/r1/engineering/c3_audit_pilot_20261019T001338Z/proposals.jsonl": "3ba2f1854efe595835546812a69a470969671352f9f04a9199beaa8de361214b",
-    "results/r1/pilot/E1_20261022T214606Z/compare.json": "e096cedf653aae8214acffbe5f0f46aeb522e1fddba2d0de9db955ac0c923e80"
+    "results/r1/pilot/E1_20261022T214606Z/compare.json": "e096cedf653aae8214acffbe5f0f46aeb522e1fddba2d0de9db955ac0c923e80",
+    "results/r1/pilot/E1_20261022T214606Z/edits.json": "a37adfa3ffbfb7847f3e03fee061760172af7923d453c6c0649bbf730df6a7f6",
+    "results/r1/pilot/E1_20261022T214606Z/runs.jsonl": "03aa9ee1231a59f38422c58733e7f4ac059df7d2014076485d0f907a0c0d5a22"
   },
   "label": "PILOT / ENGINEERING_ONLY \u2014 not accepted evidence or gate",
-  "limitations": "Selected existing summaries, not a complete manuscript regeneration pipeline; proposal rows include partial campaigns. Offline estimates are old pilot outputs, not the current gate.",
+  "limitations": "Noise sigma fields are recomputed from captured committed pilot runs and checked against the stored summary. Other outputs extract existing summaries; proposal rows include partial campaigns. Not a complete manuscript pipeline or current gate.",
   "outputs": {
     "noise_floor.csv": "9275d5fdb9f0dd2983f46be78df42c430798ecf8210b8c5257a0d08c805dc438",
     "noise_floor.pdf": "de904759fd99180fbdd35828d84673e5049f9359dbac5604ef6633e9140b1ed6",
@@ -21,6 +24,6 @@
     "matplotlib": "3.11.2",
     "path": "r1/analysis/pilot_figures.py",
     "python": "3.13.4",
-    "sha256": "c4b0aae7ed65d280c6aa90e24b8752fe9d5ca9069e28b4025330d7649ccbb5d7"
+    "sha256": "ac5c632ddf0dfd8340a437f66001cc02a3a0cbde64e1bcc039fc84b6c55630d7"
   }
 }

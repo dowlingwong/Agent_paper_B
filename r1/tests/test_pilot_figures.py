@@ -174,3 +174,13 @@ def test_verify_rejects_changed_input_or_output(tmp_path):
     (out / OUTPUT_NAMES[0]).write_text('changed')
     with pytest.raises(ValueError, match='output differs'):
         verify_outputs(out, root)
+
+
+def test_noise_reproduction_mismatch_is_not_silently_accepted():
+    from r1.analysis.pilot_figures import validate_noise_reproduction
+    expected = {'n': {'sigma_train': 1.0, 'sigma_split': 2.0, 'sigma_joint': 3.0}}
+    validate_noise_reproduction(expected, expected)
+    with pytest.raises(ValueError, match='noise summary mismatch'):
+        validate_noise_reproduction({'n': {'sigma_train': 1.1, 'sigma_split': 2.0, 'sigma_joint': 3.0}}, expected)
+    with pytest.raises(ValueError, match='node set'):
+        validate_noise_reproduction({}, expected)
