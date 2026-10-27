@@ -49,6 +49,8 @@ def run_campaigns(args) -> Path:
         root = Path(os.environ['R1_DRYRUN_ROOT']).resolve()
         if not out.resolve().is_relative_to(root) or not work.resolve().is_relative_to(root):
             raise RuntimeError('STOP: DRYRUN liveness output/work escapes the temporary directory')
+    if getattr(args, 'extra_manifest', None) and out.exists() and any(out.iterdir()):
+        raise RuntimeError('STOP: managed liveness output already exists and is not empty')
     out.mkdir(parents=True, exist_ok=True)
     work.mkdir(parents=True, exist_ok=True)
     manager = collect.MANAGER if args.manager == "scripted" else {
@@ -76,6 +78,19 @@ def run_campaigns(args) -> Path:
         "host": {"platform": platform.platform(), "python": platform.python_version()},
         "work": str(work), "campaigns": [],
     }
+    extra = getattr(args, "extra_manifest", None)
+    if extra:
+        extra = json.loads(extra)
+        if not isinstance(extra, dict) or set(extra) & set(manifest):
+            raise RuntimeError("STOP: liveness extra manifest must be an object without existing keys")
+        manifest.update(extra)
+    # Persist provenance before the first campaign; the final write updates it.
+    initial_manifest = out / "manifest.initial.tmp"
+    if (out / "manifest.json").exists():
+        raise RuntimeError('STOP: liveness manifest already exists')
+    with initial_manifest.open("x", encoding="utf-8") as f:
+        f.write(json.dumps(manifest, indent=2) + "\n")
+    initial_manifest.replace(out / "manifest.json")
     t0 = time.time()
     for node in manifest["nodes"]:
         for k in range(manifest["instances"]):
@@ -96,7 +111,10 @@ def run_campaigns(args) -> Path:
                                           "seed": summary["seed"]})
     manifest["elapsed_seconds"] = round(time.time() - t0, 1)
     manifest["finished_utc"] = _stamp()
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    final_manifest = out / "manifest.final.tmp"
+    with final_manifest.open("x", encoding="utf-8") as f:
+        f.write(json.dumps(manifest, indent=2) + "\n")
+    final_manifest.replace(out / "manifest.json")
     report = evaluate_ledger_paths(
         [out / "ledgers"], generated_utc=manifest["finished_utc"], manager_kind=args.manager,
         memory_mode=manifest["memory_mode"],
@@ -124,6 +142,8 @@ def main() -> int:
                         help="langgraph manager model id (default ollama/qwen2.5-coder:7b); llamacpp/<alias> "
                              "for a llama-server (RUNBOOK A.10)")
     parser.add_argument('--proposal-schema', choices=['manager_proposal/v1'], default=None)
+    parser.add_argument('--extra-manifest', default=None,
+                        help='JSON object merged into the initial manifest; existing keys cannot be overridden')
     parser.add_argument("--out", default=None)
     parser.add_argument("--work", default="/tmp/r1_liveness")
     args = parser.parse_args()

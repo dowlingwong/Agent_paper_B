@@ -97,6 +97,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tarfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -155,6 +156,12 @@ DEFAULTS = {
 BACKENDS = ('ollama', 'llamacpp')
 LLAMACPP_REQUIRED = ('binary', 'model_path', 'model_sha256', 'model_alias', 'build', 'footprint_mib')
 PHASES_FIXED = ('preconditions', 'liveness')
+DEEPTHOUGHT_AUTHORIZED_PINS = {
+    'harness_commit': '6adf3859de66c4814fcf376eed59880fbd8eeaf7',
+    'config_sha256': '2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b',
+    'model_sha256': '509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c',
+    'llamacpp_build': 'version: 0.7.0-dev (build 1, commit 620d222)',
+}
 INTERRUPTION_SCHEMA = 'r1.c3_sweep_interruption/1'
 GPU_HELPERS = {'gpu_rows', 'gpu_census', 'check_gpu', 'assert_full_offload'}
 GPU_CONSTANTS = {'MODEL_FOOTPRINT_MIB', 'MARGIN_MIB'}
@@ -316,6 +323,17 @@ def proc_table() -> dict:
     return table
 
 
+def owned_process_cwd(pid: int) -> Path | None:
+    """Resolve a same-user Linux process cwd without inspecting or signalling other users."""
+    entry = Path('/proc') / str(pid)
+    try:
+        if entry.stat().st_uid != os.getuid():
+            return None
+        return (entry / 'cwd').resolve(strict=True)
+    except (OSError, RuntimeError):
+        return None
+
+
 def descendants(pid: int, table: dict | None = None) -> list:
     table = proc_table() if table is None else table
     children, frontier = [], [pid]
@@ -472,12 +490,16 @@ def paper_a_check(spec: dict, host: str) -> dict:
 
 
 class SweepRunner:
-    def __init__(self, config: dict, *, batch: Path, paper: Path, harness: Path, python: str) -> None:
+    def __init__(self, config: dict, *, batch: Path, paper: Path, harness: Path, python: str,
+                 config_path: Path | str | None = None) -> None:
         refuse_exam(config, context='C3 sweep runner admission')
         self.config = config
         self.dryrun = validate_dryrun()
         self.label = 'DRYRUN' if self.dryrun else 'ENGINEERING_ONLY'
         self.batch, self.paper, self.harness, self.py = batch, paper, harness, python
+        self.config_path = Path(config_path).resolve() if config_path else None
+        scratch_base = Path(os.environ['R1_DRYRUN_ROOT'] if self.dryrun else os.environ.get('TMPDIR', '/tmp')).resolve()
+        self.scratch = scratch_base / ('r1_c3_' + hashlib.sha256(str(batch.resolve()).encode()).hexdigest()[:20])
         self.remote = 'dryrun' if self.dryrun else 'origin'
         self.host = platform.node().split('.')[0]
         self.state: dict = {'label': self.label, 'steps': {}, 'batch': str(batch), 'host': platform.node(),
@@ -609,10 +631,17 @@ class SweepRunner:
         while pid in table:  # our ancestors (the launcher's shell names the batch too)
             pid = table[pid][0]
             mine.add(pid)
-        batch = str(self.batch)
-        return [{'pid': p, 'cmdline': c[:300]} for p, (_, c) in sorted(table.items())
-                if p not in mine and batch in c and ('c3_label_sweep' in c or 'r1.headroom.e1b_collect' in c
-                                                     or 'r1.liveness' in c)]
+        batch, scratch = str(self.batch), str(self.scratch)
+        found = []
+        for p, (_, c) in sorted(table.items()):
+            if p in mine:
+                continue
+            named = ((batch in c or scratch in c) and
+                     any(name in c for name in ('c3_label_sweep', 'r1.headroom.e1b_collect', 'r1.liveness')))
+            cwd = owned_process_cwd(p)
+            if named or (cwd is not None and cwd.is_relative_to(self.scratch.resolve())):
+                found.append({'pid': p, 'cmdline': c[:300], **({'cwd': str(cwd)} if cwd else {})})
+        return found
 
     def restart_service(self, reason: str, phase: str) -> dict:
         """Stop the lost (or orphaned) dedicated instance and start a new one after the launch checks."""
@@ -727,6 +756,12 @@ class SweepRunner:
 
     def runner_lost(self, event: dict, out: Path, work: Path, step: str, session_started: float | None = None):
         """RUNBOOK A.8: record the loss, restart the dedicated instance, re-run affected roots whole (A.5)."""
+        if 'launch_provenance' in self.state:
+            self.check_launch_manifest(out)
+            self.verify_resumed_provenance()
+        earlier = self.earlier_processes()
+        if earlier:
+            raise Stop(f'STOP: processes of this batch remain alive after collector loss: {earlier}')
         event['last_request'] = self.last_request(work)
         try:
             restart = self.restart_service('runner_lost', step)
@@ -861,6 +896,7 @@ class SweepRunner:
 
     # -- phases --------------------------------------------------------------
     def check_heads(self) -> tuple[str, str]:
+        self.check_tracked_clean()
         paper_head = self.git(self.paper, 'rev-parse', 'HEAD')
         if paper_head != self.git(self.paper, 'ls-remote', self.remote, 'refs/heads/main').split()[0]:
             raise Stop('STOP: paper checkout is not at the remote main head')
@@ -869,6 +905,20 @@ class SweepRunner:
         if not pin_file.exists() or pin_file.read_text().strip() != harness_head:
             raise Stop(f'STOP: harness head {harness_head} differs from r1/scripts/HARNESS_PIN_C3')
         return paper_head, harness_head
+
+    def check_tracked_clean(self) -> None:
+        for repo in (self.paper, self.harness):
+            if self.git(repo, 'status', '--porcelain', '--untracked-files=no').strip():
+                raise Stop(f'STOP: tracked files changed in {repo}; preserve and report')
+
+    def check_prepared_heads(self, paper_head: str, harness_head: str) -> None:
+        try:
+            prepare = json.loads((self.batch / 'prepare.json').read_text())
+        except (OSError, ValueError) as exc:
+            raise Stop('STOP: preparation record missing or invalid') from exc
+        if not prepare.get('ok') or prepare.get('suites_skipped_dryrun') or \
+                prepare.get('paper_head') != paper_head or prepare.get('harness_head') != harness_head:
+            raise Stop('STOP: preparation record does not match the tested launch commits')
 
     def check_noise_source(self) -> dict | None:
         source = self.config.get('noise_source')
@@ -907,6 +957,65 @@ class SweepRunner:
             if any(entry.get(key) != expected[key] for key in ('sigma_t', 'sigma_s', 'sigma_d', 'definition')):
                 raise Stop(f'STOP: collector manifest noise values differ from pin for {node}')
 
+    def check_launch_manifest(self, out: Path) -> None:
+        provenance = self.state.get('launch_provenance')
+        if provenance is None:
+            if self.host == 'deepthought' and not self.dryrun:
+                raise Stop('STOP: pinned batch lacks launch provenance')
+            return  # pre-existing legacy batches do not declare this field
+        try:
+            recorded = json.loads((out / 'manifest.json').read_text()).get('launch_provenance')
+        except (OSError, ValueError) as exc:
+            raise Stop(f'STOP: launch manifest missing or invalid: {out}') from exc
+        if recorded != provenance:
+            raise Stop(f'STOP: launch provenance mismatch in {out}')
+
+    def verify_resumed_provenance(self) -> None:
+        provenance = self.state.get('launch_provenance')
+        if provenance is None:
+            if (self.host == 'deepthought' and not self.dryrun) or self.config.get('noise_source') is not None:
+                raise Stop('STOP: resumed pinned batch lacks launch provenance')
+            return
+        if not isinstance(provenance, dict) or set(provenance) != {
+                'paper_commit', 'harness_commit', 'config_sha256', 'model_sha256', 'llamacpp_build'}:
+            raise Stop('STOP: malformed launch provenance')
+        if self.host == 'deepthought' and not self.dryrun:
+            note = self.paper / 'docs/r1/authorizations/c3_sweep1_20261027.md'
+            try:
+                prepare = json.loads((self.batch / 'prepare.json').read_text())
+                approved = note.read_text()
+            except (OSError, ValueError) as exc:
+                raise Stop('STOP: authorization or preparation record missing on resume') from exc
+            if not prepare.get('ok') or prepare.get('paper_head') != provenance['paper_commit'] or \
+                    prepare.get('harness_head') != provenance['harness_commit'] or \
+                    self.state.get('paper_head_at_launch') != provenance['paper_commit'] or \
+                    any(provenance[k] != v or v not in approved for k, v in DEEPTHOUGHT_AUTHORIZED_PINS.items()):
+                raise Stop('STOP: resumed provenance differs from author authorization or launch record')
+        self.check_tracked_clean()
+        if self.config_path is None or not self.config_path.is_file() or \
+                hashlib.sha256(self.config_path.read_bytes()).hexdigest() != provenance['config_sha256']:
+            raise Stop('STOP: resumed configuration differs from launch provenance')
+        if str(self.scratch) != self.state.get('scratch_root') or not self.scratch.is_dir():
+            raise Stop('STOP: resumed local scratch is missing or differs from launch')
+        if self.git(self.harness, 'rev-parse', 'HEAD') != provenance['harness_commit']:
+            raise Stop('STOP: resumed harness differs from launch provenance')
+        self.check_paper_history(provenance['paper_commit'])
+        pins = self.llamacpp_pins()
+        if pins['model_sha256'] != provenance['model_sha256'] or \
+                pins['build']['version_line'] != provenance['llamacpp_build']:
+            raise Stop('STOP: resumed model or build differs from launch provenance')
+
+    def check_paper_history(self, launch_commit: str) -> None:
+        if subprocess.run(['git', '-C', str(self.paper), 'merge-base', '--is-ancestor',
+                           launch_commit, 'HEAD']).returncode != 0 or \
+                subprocess.run(['git', '-C', str(self.paper), 'diff', '--quiet', launch_commit, 'HEAD',
+                                '--', '.', ':(exclude)results/r1/**']).returncode != 0:
+            raise Stop('STOP: resumed paper contains non-result changes since launch')
+        actual = self.git(self.paper, 'log', '--format=%H', '--reverse', f'{launch_commit}..HEAD').splitlines()
+        recorded = [entry['commit'] for entry in self.state.get('steps', {}).values() if entry.get('commit')]
+        if actual != recorded:
+            raise Stop('STOP: resumed paper history differs from recorded runner result commits')
+
     def preconditions(self) -> None:
         self.check_noise_source()
         plan = (self.paper / 'docs/r1/PLAN.md').read_text()
@@ -914,7 +1023,40 @@ class SweepRunner:
         if missing:
             raise Stop(f'STOP: PLAN §10 lacks the author rows {missing}')
         paper_head, harness_head = self.check_heads()
+        if self.host == 'deepthought' and not self.dryrun:
+            self.check_prepared_heads(paper_head, harness_head)
         self.state.update(paper_head_at_launch=paper_head, harness_head_at_launch=harness_head)
+        if self.host == 'deepthought' and not self.dryrun:
+            base = self.scratch.parent
+            if not base.is_relative_to(Path('/tmp').resolve()):
+                raise Stop('STOP: deepthought scratch must be under local /tmp')
+            fs = subprocess.check_output(['findmnt', '-n', '-o', 'FSTYPE', '--target', str(base)], text=True).strip()
+            if fs not in {'xfs', 'ext4', 'btrfs'}:
+                raise Stop(f'STOP: deepthought scratch filesystem is not verified local: {fs!r}')
+        if self.scratch.exists():
+            raise Stop('STOP: scratch path already exists for this new batch; preserve it')
+        self.scratch.mkdir(parents=True)
+        self.state['scratch_root'] = str(self.scratch)
+        if (self.host == 'deepthought' and not self.dryrun) or self.config.get('noise_source') is not None:
+            if self.config_path is None or not self.config_path.is_file() or self.backend != 'llamacpp':
+                raise Stop('STOP: pinned sweep requires its config file and llama.cpp backend')
+            if self.config.get('noise_source') is None:
+                raise Stop('STOP: pinned deepthought sweep requires its noise source')
+            if self.host == 'deepthought' and not self.dryrun and self.config_path.read_bytes() != \
+                    (self.paper / 'r1/scripts/configs/c3_sweep_deepthought.json').read_bytes():
+                raise Stop('STOP: launch configuration differs from the pinned paper config')
+            pins = self.llamacpp_pins()
+            self.state['launch_provenance'] = {
+                'paper_commit': paper_head, 'harness_commit': harness_head,
+                'config_sha256': hashlib.sha256(self.config_path.read_bytes()).hexdigest(),
+                'model_sha256': pins['model_sha256'], 'llamacpp_build': pins['build']['version_line'],
+            }
+            if self.host == 'deepthought' and not self.dryrun:
+                if any(self.state['launch_provenance'][k] != v for k, v in DEEPTHOUGHT_AUTHORIZED_PINS.items()):
+                    raise Stop('STOP: launch pins do not match the author-approved sweep authorization')
+                note = self.paper / 'docs/r1/authorizations/c3_sweep1_20261027.md'
+                if not note.is_file() or any(v not in note.read_text() for v in DEEPTHOUGHT_AUTHORIZED_PINS.values()):
+                    raise Stop('STOP: matching author authorization is missing')
         self.save()
         self.start_service()
 
@@ -1037,13 +1179,20 @@ class SweepRunner:
     def liveness(self) -> None:
         live = self.config['liveness']
         out = self.paper / 'results/r1/engineering' / f'liveness_c3_{stamp()}'
+        work = self.scratch / 'liveness_work'
         self.cmd([self.py, '-m', 'r1.liveness', '--run', '--manager', 'langgraph',
                   '--memory-mode', live['memory_mode'], '--nodes', *self.config['nodes'],
                   '--instances', str(live['instances']), '--runs', str(live['runs']),
                   '--transport-max-attempts', str(self.config['transport_max_attempts']),
                   *self.manager_model_args(),
-                  '--out', str(out), '--work', str(self.batch / 'liveness_work')],
+                  *(['--extra-manifest', json.dumps({'launch_provenance': self.state['launch_provenance']})]
+                    if 'launch_provenance' in self.state else []),
+                  '--out', str(out), '--work', str(work)],
                  log='liveness.log', env=self.service_env())
+        self.check_launch_manifest(out)
+        if self.earlier_processes():
+            raise Stop('STOP: batch processes still use scratch after liveness')
+        self.archive_work_references(out, work)
         report = json.loads((out / 'liveness.json').read_text())
         nodes = self.config['nodes']
         eligible = [n for n in nodes if report['nodes'].get(n, {}).get('pass')]
@@ -1065,12 +1214,16 @@ class SweepRunner:
     def sweep(self, memory_mode: str) -> None:
         step = f'sweep_{memory_mode}'
         entry = self.state['steps'][step]
+        if 'launch_provenance' in self.state:
+            self.verify_resumed_provenance()
+            self.check_launch_manifest(Path(self.state['steps']['liveness']['out']))
         eligible = self.state['steps']['liveness']['eligible_nodes']
         self.require_liveness(eligible, memory_mode)  # D28 gate first
         noise_source = self.check_noise_source()
         base = [self.py, '-m', 'r1.headroom.e1b_collect']
         previous = Path(entry['out']) if entry.get('out') else None
         if previous is not None and (previous / 'manifest.json').exists():
+            self.check_launch_manifest(previous)
             self.check_noise_manifest(previous)
             # RUNBOOK A.5: resume an interrupted sweep from its last completed campaign root.
             out, work = previous, Path(entry['work'])
@@ -1094,7 +1247,7 @@ class SweepRunner:
                            None, step)
             self.pending_restart = None
         out = self.paper / 'results/r1/pilot' / f'C3_sweep_{memory_mode}_{stamp()}'
-        work = self.batch / f'c3_{memory_mode}_work'
+        work = self.scratch / f'c3_{memory_mode}_work'
         if out.exists():
             raise Stop('STOP: sweep destination already exists; no overwrite')
         self.state['steps'][step].update(out=str(out), work=str(work))
@@ -1113,6 +1266,8 @@ class SweepRunner:
             'audit_seeds': self.config['audit']['seeds'], 'nodes_pending': self.config['nodes_pending']}}
         if noise_source is not None:
             extra['c3_label_sweep']['noise_source'] = noise_source
+        if 'launch_provenance' in self.state:
+            extra['launch_provenance'] = self.state['launch_provenance']
         noise_args = ['--e1-summary', str(self.paper / noise_source['path'])] if noise_source else []
         label_args = ['--label', 'DRYRUN', '--split', 'engineering'] if self.dryrun else \
             ['--label', 'PILOT', '--split', 'c3_labels']
@@ -1130,10 +1285,13 @@ class SweepRunner:
     def collect_sessions(self, out: Path, work: Path, step: str, resume: list, eligible, memory_mode) -> None:
         """Resume sessions until one finds no job; then gates, offload check, archive, commit."""
         for _ in range(int(self.config['max_collect_sessions'])):
+            self.check_launch_manifest(out)
             self.check_noise_manifest(out)
             manifest = json.loads((out / 'manifest.json').read_text())
             if manifest['sessions'] and manifest['sessions'][-1]['jobs_before'] == 0:
                 break
+            if 'launch_provenance' in self.state:
+                self.verify_resumed_provenance()
             if not self.service_alive():
                 if not self.watchdog_on():
                     break  # a dead model service: the gates below record it and stop
@@ -1146,6 +1304,8 @@ class SweepRunner:
             raise Stop('STOP: collector failed to reach a zero-job session')
         checks = self.collection_gates(out, work, eligible, memory_mode)
         self.check_offload(f'{memory_mode}_collection')
+        if self.earlier_processes():
+            raise Stop('STOP: batch processes still use scratch after collection')
         self.archive(out, work)
         self.state['steps'][step]['checks'] = checks
         self.save()
@@ -1187,12 +1347,14 @@ class SweepRunner:
                  'verify_split_policy': manifest.get('verify_split_policy'),
                  'action_versions': manifest.get('action_versions'), 'written_utc': stamp()}
         if (work / 'interrupted').exists():  # RUNBOOK A.5: calls spent on attempts that were re-run whole
+            event_records = [self.interrupted_events(path) for path in (work / 'interrupted').rglob('root_events.jsonl')]
             check['interrupted_attempts'] = {
                 'root_attempts': len([d for d in (work / 'interrupted').glob('*/roots/*') if d.is_dir()]),
-                'llm_calls': sum(1 for path in (work / 'interrupted').rglob('root_events.jsonl')
-                                 for line in path.read_text().splitlines()
-                                 if line.strip() and json.loads(line).get('event_type') == 'llm_call'),
+                'llm_calls': sum(count for count, _ in event_records),
                 'interruptions': len(self.state.get('interruptions', []))}
+            tails = [tail for _, tail in event_records if tail is not None]
+            if tails:
+                check['interrupted_attempts']['truncated_event_tails'] = tails
         (out / 'collection_checks.json').write_text(json.dumps(check, indent=2) + '\n')
         if failures or len(roots) != expected:
             payload = {'label': self.label, 'written_utc': stamp(), 'n_failures': len(failures),
@@ -1210,8 +1372,126 @@ class SweepRunner:
             raise Stop('STOP: manager parse failures exceed the configured rate')
         return {k: v for k, v in check.items() if k not in ('retried_calls', 'proposal_examples')}
 
+    @staticmethod
+    def interrupted_events(path: Path) -> tuple[int, dict | None]:
+        count, tail = 0, None
+        lines = path.read_bytes().splitlines(keepends=True)
+        for number, line in enumerate(lines, 1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except (ValueError, UnicodeDecodeError) as exc:
+                if number == len(lines) and not line.endswith(b'\n'):
+                    tail = {'path': str(path), 'line': number, 'bytes': len(line),
+                            'sha256': hashlib.sha256(line).hexdigest()}
+                    break
+                raise Stop(f'STOP: malformed interrupted event ledger {path}:{number}') from exc
+            count += row.get('event_type') == 'llm_call'
+        return count, tail
+
+    def archive_work_references(self, out: Path, work: Path) -> None:
+        """Persist and verify every ledger-referenced patch/log before local scratch can disappear."""
+        work = work.resolve()
+        ledgers = sorted(work.rglob('root_trials.jsonl'))
+        if not ledgers:
+            raise Stop(f'STOP: no trial ledgers to archive in {work}')
+        files = set(ledgers) | set(work.rglob('root_events.jsonl'))
+        references, truncated_tails, incomplete_roots, event_tails = [], [], set(), []
+        for ledger in ledgers:
+            parts = ledger.relative_to(work).parts
+            if len(parts) >= 3 and parts[0] == 'roots':
+                instance, moved = parts[1], None
+            elif len(parts) >= 5 and parts[0] == 'interrupted' and parts[2] == 'roots':
+                instance, moved = parts[3], parts[1]
+            elif len(parts) >= 4 and parts[1] == 'roots':  # liveness_<stamp>/roots/<instance>
+                instance, moved = parts[2], None
+            else:
+                raise Stop(f'STOP: unrecognized ledger location {ledger}')
+            # Liveness work has one stamped directory before roots; sweep work does not.
+            prefix = Path(parts[0]) if len(parts) >= 4 and parts[1] == 'roots' else Path()
+            original_root = (work / prefix / 'roots' / instance).resolve()
+            lines = ledger.read_bytes().splitlines(keepends=True)
+            for line_number, line in enumerate(lines, 1):
+                if not line.strip():
+                    continue
+                try:
+                    record = json.loads(line)
+                except (ValueError, UnicodeDecodeError) as exc:
+                    if moved and line_number == len(lines) and not line.endswith(b'\n'):
+                        truncated_tails.append({'ledger': str(ledger.relative_to(work)), 'line': line_number,
+                                                'bytes': len(line), 'sha256': hashlib.sha256(line).hexdigest()})
+                        incomplete_roots.add(ledger.parent)
+                        continue
+                    raise Stop(f'STOP: malformed provenance ledger {ledger}:{line_number}') from exc
+                for key in ('patch_ref', 'raw_log_ref'):
+                    ref = record.get(key)
+                    if not ref:
+                        continue
+                    original = Path(ref).resolve()
+                    if not original.is_relative_to(original_root):
+                        raise Stop(f'STOP: {key} is missing or outside local work: {ref}')
+                    path = (work / 'interrupted' / moved / 'roots' / instance /
+                            original.relative_to(original_root)).resolve() if moved else original
+                    if not path.is_relative_to(work) or not path.is_file():
+                        raise Stop(f'STOP: {key} is missing or outside local work: {ref}')
+                    files.add(path)
+                    references.append({'ledger': str(ledger.relative_to(work)), 'field': key, 'original_ref': ref,
+                                       'member': str(Path('work') / path.relative_to(work)),
+                                       'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
+        for events in (work / 'interrupted').rglob('root_events.jsonl') if (work / 'interrupted').exists() else []:
+            _, tail = self.interrupted_events(events)
+            if tail is not None:
+                event_tails.append(tail)
+                incomplete_roots.add(events.parent)
+        # An interrupted worker may write artifacts before writing any corresponding ledger line.
+        if (work / 'interrupted').exists():
+            for root in (work / 'interrupted').glob('*/roots/*'):
+                if root.is_symlink() or not root.resolve().is_relative_to(work):
+                    raise Stop(f'STOP: unsafe interrupted root {root}')
+                if root.is_dir():
+                    incomplete_roots.add(root)
+        for root in incomplete_roots:
+            art = root / 'art'
+            if art.is_symlink():
+                raise Stop(f'STOP: unsafe interrupted artifact directory {art}')
+            if art.exists():
+                for path in art.rglob('*'):
+                    if path.is_symlink() or not path.resolve().is_relative_to(work):
+                        raise Stop(f'STOP: unsafe interrupted artifact path {path}')
+                    if path.is_file():
+                        files.add(path)
+        archive = out / 'temporary_provenance.tar.gz'
+        if archive.exists():
+            raise Stop(f'STOP: temporary provenance archive already exists: {archive}')
+        with tarfile.open(archive, 'x:gz') as tar:
+            for path in sorted(files):
+                if path.is_symlink() or not path.resolve().is_relative_to(work):
+                    raise Stop(f'STOP: unsafe local provenance path {path}')
+                tar.add(path, arcname=str(Path('work') / path.relative_to(work)), recursive=False)
+        with tarfile.open(archive, 'r:gz') as tar:
+            for path in files:
+                name = str(Path('work') / path.relative_to(work))
+                member = tar.getmember(name)
+                data = tar.extractfile(member)
+                if data is None or hashlib.sha256(data.read()).digest() != hashlib.sha256(path.read_bytes()).digest():
+                    raise Stop(f'STOP: archived provenance differs for {path}')
+        manifest_path = out / 'manifest.json'
+        index_path = out / 'temporary_provenance_index.json'
+        with index_path.open('x') as f:
+            json.dump({'original_work_root': str(work), 'references': references,
+                       'truncated_interrupted_tails': truncated_tails,
+                       'truncated_interrupted_events': event_tails}, f, indent=2)
+            f.write('\n')
+        manifest = json.loads(manifest_path.read_text())
+        manifest['local_work_archive'] = {'path': archive.name, 'sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
+                                          'index': index_path.name, 'index_sha256': hashlib.sha256(index_path.read_bytes()).hexdigest(),
+                                          'original_work_root': str(work), 'files': len(files)}
+        manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
+
     def archive(self, out: Path, work: Path) -> None:
         """Copy root ledgers and events into the run; the audit stage then needs only committed inputs."""
+        self.archive_work_references(out, work)
         archive = out / 'provenance' / 'ledgers'
         paths = sorted((work / 'roots').rglob('*.jsonl'))
         if (work / 'interrupted').exists():  # RUNBOOK A.5: partial attempts of re-run roots, kept as provenance
@@ -1236,6 +1516,7 @@ class SweepRunner:
         for mode in self.config['memory_modes']:
             entry = self.state['steps'][f'sweep_{mode}']
             out = Path(entry['out'])
+            self.check_launch_manifest(out)
             self.check_noise_manifest(out)
             sweeps.append({'memory_mode': mode, 'arm_role': 'contrast' if mode == 'none' else 'primary',
                            'out': str(out.relative_to(self.paper)),
@@ -1248,6 +1529,7 @@ class SweepRunner:
                  'instances': self.config['instances'], 'runs': self.config['runs'],
                  'liveness': str(Path(live['out']).relative_to(self.paper)),
                  'harness_commit': self.state.get('harness_head_at_launch'), 'sweeps': sweeps,
+                 **({'launch_provenance': self.state['launch_provenance']} if 'launch_provenance' in self.state else {}),
                  'nodes_pending': self.config['nodes_pending'],
                  **({'noise_source': noise_source} if noise_source is not None else {}),
                  **({'manager': {'backend': 'llamacpp', 'model': 'llamacpp/' + self.config['llamacpp']['model_alias'],
@@ -1275,6 +1557,8 @@ class SweepRunner:
 
     def main(self) -> None:
         self.load_previous_state()
+        if self.state.get('steps', {}).get('preconditions', {}).get('completed'):
+            self.verify_resumed_provenance()
         if self.state.get('finished_utc'):
             raise Stop('STOP: this C3 sweep batch already finished; start a new batch')
         if not self.dryrun and self.host not in set(self.config['allowed_hosts']):
@@ -1328,7 +1612,8 @@ def build_runner(config_path=None) -> SweepRunner:
     harness = Path(os.environ['AR_HARNESS_ROOT'])
     python = os.environ.get('R1_C3_PY', str(harness / '.venv/bin/python'))
     config = load_config(config_path or os.environ.get('R1_C3_CONFIG'))
-    return SweepRunner(config, batch=batch, paper=paper, harness=harness, python=python)
+    return SweepRunner(config, batch=batch, paper=paper, harness=harness, python=python,
+                       config_path=config_path or os.environ.get('R1_C3_CONFIG'))
 
 
 def entrypoint(argv=None) -> int:

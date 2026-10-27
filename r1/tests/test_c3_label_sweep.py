@@ -102,6 +102,7 @@ def test_launch_refuses_before_any_gpu_or_ollama_when_paper_a_waits(tmp_path, mo
     config = sweep.load_config(None)
     config["paper_a_check"] = {"command": _cmd('{"paper_a_live_waiting_for_card": true}')}
     runner = sweep.SweepRunner(config, batch=batch, paper=paper, harness=harness, python="py")
+    runner.host = 'unit-test-host'  # synthetic repos are not a Deepthought production launch
     touched = []
     runner.gpu["gpu_rows"] = lambda: touched.append("gpu") or ([], [])
     with pytest.raises(sweep.Stop, match="Paper A"):
@@ -266,10 +267,11 @@ def test_dryrun_overrides_only_desktop_keys(tmp_path):
     bin_dir.mkdir()
     config, overridden = dry.dryrun_config(base, tmp_path, bin_dir)
     assert set(overridden) == {"nodes", "instances", "runs", "workers", "liveness", "min_live_nodes",
-                               "gpu_wait_seconds", "max_collect_sessions", "paper_a_check", "ollama"}
+                               "gpu_uuid", "gpu_wait_seconds", "max_collect_sessions", "paper_a_check", "ollama"}
     for key in set(base) - set(overridden):
         assert config[key] == base[key], key
     assert config["nodes"] == ["digits_mlp", "openml_breast_w"]
+    assert config["gpu_uuid"] == "GPU-DRYRUN"
     command = config["paper_a_check"]["command"]
     assert command[:2] == base["paper_a_check"]["command"][:2]
     fake = json.loads(Path(command[command.index("--config") + 1]).read_text())

@@ -33,11 +33,13 @@ def _no_dryrun(monkeypatch):
 
 def _runner(tmp_path, **config_overrides):
     config = sweep.load_config(None)
-    config["allowed_hosts"] = [platform.node().split(".")[0]]
+    config["allowed_hosts"] = ['unit-test-host']
     config.update(config_overrides)
     batch = tmp_path / "batch"
     batch.mkdir(exist_ok=True)
-    return sweep.SweepRunner(config, batch=batch, paper=tmp_path, harness=tmp_path, python="py")
+    runner = sweep.SweepRunner(config, batch=batch, paper=tmp_path, harness=tmp_path, python="py")
+    runner.host = 'unit-test-host'  # these synthetic fixtures do not claim a production host
+    return runner
 
 
 def test_resume_and_watchdog_config_defaults_and_validation(tmp_path):

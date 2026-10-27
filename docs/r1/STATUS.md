@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — sweep launch stopped; provenance and local scratch repair (AI-assisted)
+
+The author-approved launch batch `r1_c3_sweep_ENGINEERING_ONLY_20261027_LkGdPo` stopped during engineering liveness, before B.1, after discovering that native manifests did not contain the authorized paper launch pin and work scratch used Ceph. The author chose “停止后修复原生 manifest，再重新准备（推荐）”; the owned runner, liveness and model service were stopped and the partial batch is retained. The repair records initial launch provenance in the native liveness and sweep manifests, moves temporary work to verified local disk, and durably archives referenced work; see [coordinator review](reviews/DT_SWEEP_PROVENANCE_SCRATCH_REVIEW_20261027.md) and [independent review](reviews/DT_SWEEP_PROVENANCE_SCRATCH_INDEPENDENT_20261027.md). Linux scoped tests: 79 passed, 1 skipped; fake retry/permanent/interrupt/watchdog all passed under the author-approved R1-DT-TESTGATE longer-timeout exception. The 75-second timeout and earlier diagnostic failures remain recorded. This is engineering validation, not sweep evidence. A fresh batch must pass the unchanged full prepare gate and launch checks; the stopped batch must not be resumed.
+
 ## 27 October 2026 — Deepthought preparation test failures reviewed (AI-assisted)
 
 Author-approved fresh preparation at paper `3c4651d` and harness `6adf385` stopped with `prepare.json` false: 553 paper tests passed, 38 skipped and 2 failed. The stopped batch `r1_c3_sweep_ENGINEERING_ONLY_20261027_18wc1y` and logs remain unchanged. Independent review accepted two test-only fixes; the author instructed “允许提交并重新准备”. Neither changes the experiment configuration, golden output or prepare acceptance gate. See [review](reviews/DT_SWEEP_PREP_TEST_FIXES_20261027.md). A new preparation is required; no sweep has started.

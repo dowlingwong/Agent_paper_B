@@ -241,6 +241,8 @@ def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names:
         manifest_path = paper_root / sweep["manifest"]
         manifest = json.loads(manifest_path.read_text())
         refuse_exam(manifest, context=f'C3 manifest {manifest_path}')
+        if manifest.get("launch_provenance") != index.get("launch_provenance"):
+            raise ValueError(f"{manifest_path}: launch provenance differs from sweep index")
         noise_source = index.get("noise_source")
         if noise_source is not None:
             if (manifest.get("c3_label_sweep") or {}).get("noise_source") != noise_source:

@@ -233,15 +233,13 @@ def dryrun_config(base: dict, root: Path, bin_dir: Path) -> tuple[dict, list]:
         raise RuntimeError('STOP: base paper_a_check.command is neither a --config check nor --not-applicable')
     overrides = {'nodes': nodes, 'instances': 2, 'runs': 6, 'workers': 2,
                  'liveness': dict(base.get('liveness', {}), instances=1, runs=4), 'min_live_nodes': 2,
-                 'gpu_wait_seconds': 0, 'max_collect_sessions': 3,
+                 'gpu_uuid': 'GPU-DRYRUN', 'gpu_wait_seconds': 0, 'max_collect_sessions': 3,
                  'paper_a_check': dict(base['paper_a_check'], command=command),
                  'ollama': {'binary': str(bin_dir / 'ollama'), 'start_timeout': 30, 'port': None,
                             'seed_models_from': None}}
     if base.get('backend') == 'llamacpp':
         overrides['llamacpp'] = llamacpp_fixture(root, bin_dir, base.get('llamacpp'))
-    # Host values still open in a draft (and only those): the fake card and this desktop.
-    if str(base.get('gpu_uuid')).startswith('TODO_VERIFY'):
-        overrides['gpu_uuid'] = 'auto'
+    # The fake card has a fixture UUID even when the real host config is fully pinned.
     if any(str(h).startswith('TODO_VERIFY') for h in base.get('allowed_hosts', [])):
         overrides['allowed_hosts'] = [platform.node().split('.')[0]]
     config.update(overrides)
@@ -435,6 +433,10 @@ def check_llamacpp_manifests(result: dict) -> dict:
     for step in ('sweep_append_only_summary', 'sweep_none'):
         manifest = json.loads((Path(state['steps'][step]['out']) / 'manifest.json').read_text())
         assert manifest['manager']['model'] == model, manifest['manager']
+        if config.get('proposal_schema'):
+            assert manifest['manager'].get('proposal_schema') == config['proposal_schema'], manifest['manager']
+        if state.get('launch_provenance') is not None:
+            assert manifest.get('launch_provenance') == state['launch_provenance']
         assert manifest['seed_policy']['kind'] == 'llamacpp_seed', manifest['seed_policy']
         block = manifest['c3_label_sweep']
         assert block['backend'] == 'llamacpp' and block['llama_server']['model_sha256'] == config['llamacpp']['model_sha256']
@@ -442,10 +444,19 @@ def check_llamacpp_manifests(result: dict) -> dict:
         out[step] = manifest['manager']['model']
     live = json.loads((Path(state['steps']['liveness']['out']) / 'manifest.json').read_text())
     assert live['manager']['model'] == model and live['seed_policy']['kind'] == 'llamacpp_seed'
+    if config.get('proposal_schema'):
+        assert live['manager'].get('proposal_schema') == config['proposal_schema']
+    if state.get('launch_provenance') is not None:
+        assert live.get('launch_provenance') == state['launch_provenance']
     index = json.loads(Path(state['steps']['index']['path']).read_text())
-    assert index['manager'] == {'backend': 'llamacpp', 'model': model,
-                                'model_sha256': config['llamacpp']['model_sha256'],
-                                'llamacpp_build': config['llamacpp']['build']}, index.get('manager')
+    if state.get('launch_provenance') is not None:
+        assert index.get('launch_provenance') == state['launch_provenance']
+    expected = {'backend': 'llamacpp', 'model': model,
+                'model_sha256': config['llamacpp']['model_sha256'],
+                'llamacpp_build': config['llamacpp']['build']}
+    if config.get('proposal_schema'):
+        expected['proposal_schema'] = config['proposal_schema']
+    assert index['manager'] == expected, index.get('manager')
     return {'manager_model': model, 'index_manager': index['manager']}
 
 
