@@ -65,6 +65,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from collections import defaultdict
 from pathlib import Path
@@ -474,6 +475,30 @@ def sensitivity_view(evaluation: dict) -> dict:
     return out
 
 
+def table_noise(table_path: Path):
+    """For pinned sweep tables, verify and load the identical noise source; preserve legacy default."""
+    meta_path = table_path / "build.json"
+    meta = json.loads(meta_path.read_text()) if meta_path.is_file() else {}
+    source = meta.get("noise_source")
+    noise = None
+    if source is not None:
+        from r1.harness import REPO
+        if not isinstance(source, dict) or set(source) != {"path", "sha256"}:
+            raise ValueError("table has malformed noise source")
+        rel = Path(source["path"])
+        if rel.is_absolute() or ".." in rel.parts:
+            raise ValueError("table noise source must be repository-relative")
+        path = (REPO / rel).resolve()
+        if not path.is_relative_to(REPO.resolve()) or not path.is_file():
+            raise ValueError("table noise source missing or outside repository")
+        if hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:
+            raise ValueError("table noise source sha256 mismatch")
+        noise = noise_table(path)
+        if noise != meta.get("noise"):
+            raise ValueError("table noise constants do not match pinned source")
+    return noise
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--table", required=True)
@@ -482,10 +507,14 @@ def main(argv=None) -> int:
     ap.add_argument("--folds", type=int, default=3)
     ap.add_argument("--no-seed-split", action="store_true", help="use all audit seeds for labels and values")
     args = ap.parse_args(argv)
-    rows = assemble(Path(args.table), Path(args.audits) if args.audits else None, not args.no_seed_split)
-    instance = evaluate(rows, "instance", args.folds)
-    lono = evaluate(rows, "lono")
+    table_path = Path(args.table)
+    noise = table_noise(table_path)
+    rows = assemble(table_path, Path(args.audits) if args.audits else None, not args.no_seed_split)
+    instance = evaluate(rows, "instance", args.folds, noise=noise)
+    lono = evaluate(rows, "lono", noise=noise)
     result = {"label": "ENGINEERING_ONLY", "ai_assisted": "AI-assisted (Claude)",
+              **({"noise_source": json.loads((table_path / "build.json").read_text())["noise_source"]}
+                 if noise is not None else {}),
               "note": "Engineering check unless run on the frozen sweep data; tiny audited samples are not the C3 "
                       "gate decision.",
               "seed_split": not args.no_seed_split, "n_rows": len(rows),

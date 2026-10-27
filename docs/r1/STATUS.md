@@ -1,5 +1,25 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — D28 engineering readiness independently accepted (AI-assisted; STOP)
+
+Independent review accepted the D28 repair and noise binding at paper branch `3892354` and harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7`; see [independent review](reviews/DT_D28_REPAIR_REVIEW_20261027.md) and [merge review](reviews/DT_SWEEP1_MERGE_REVIEW_20261027.md). Mac CPU merge checks retain the pre-existing soft-label v1 hash failure; historical provenance and cross-platform floating-point limits remain recorded. Sweep 1 and B.2 remain unstarted and require explicit author authorization and launch-time pin verification.
+
+## 27 October 2026 — repair noise-source binding prepared (AI-assisted; ENGINEERING_ONLY)
+
+The D28 review found the sweep collector and later C3 build defaulted to the old common noise table, which lacks climate and predates the repaired configurations. An eight-node composite is pinned and linked through the runner, collector manifests, sweep index, table and offline evaluation; historical defaults remain. Composite SHA256 `3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310`; final deepthought config SHA256 `2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b`. [Binding report](reports/DT_D28_NOISE_BINDING_20261027.md) records CPU tests and the legacy pilot fixture limitation. Independent re-review is pending; readiness STOP remains and no sweep or B.2 has started.
+
+## 27 October 2026 — repair D28 complete; sweep-1 readiness STOP (AI-assisted; ENGINEERING_ONLY)
+
+Three D21-qualified repaired nodes and the climate reserve passed D28, with full GPU offload before and after. Blood_transfusion failed D21 and is replaced by climate under R1-D28-REPAIR. Proposed eight-node config and harness pin are prepared on this branch; [readiness report](reports/DT_SWEEP1_READINESS_20261027.md), D28 raw records and archived temporary provenance are retained. Independent review is pending. **STOP:** sweep 1 and B.2 remain unstarted and require the author's authorization and a matching final pin set.
+
+## 27 October 2026 — D28 reserve climate D21 passes (AI-assisted; PILOT)
+
+The separate climate status check at harness `6adf385` completed 552 unique records with no failures or missing metrics; climate qualifies under D21 (3 material edits, mean P(wrong) 0.2907157594). Report: [DT_D28_CLIMATE_D21_20261027.md](reports/DT_D28_CLIMATE_D21_20261027.md). Climate remains a reserve until its own D28 passes; the original failed and completed climate attempts remain unchanged.
+
+## 27 October 2026 — D28 repair D21 re-measurement (AI-assisted; PILOT)
+
+Four repaired nodes measured at harness `6adf385` after predeclaration `b2f8b74`: 2,208 unique records, zero failures or missing metrics, 30 seeds per condition. Breast_w, sonar and wdbc qualify under the unchanged D21 rule; blood_transfusion does not (mean P(wrong) 0.07715375 < 0.10). Report: [DT_D28_D21_REPAIR_20261027.md](reports/DT_D28_D21_REPAIR_20261027.md). Preserve this finding; no re-run or threshold adjustment. The reserve climate D21 status check is running separately under the same harness pin; D28 and sweep 1 have not started.
+
 ## 27 October 2026 — coordination handed to a local operator agent (AI-assisted; documents only)
 
 - `docs/r1/prompts/OPERATOR_HANDOVER_20261027.md`: state of the four agents, ground rules, immediate queue, monitoring, merge protocol, upcoming gates and open author decisions, for a Mac agent with SSH access that takes over coordination and monitoring.

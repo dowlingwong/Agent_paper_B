@@ -1,0 +1,84 @@
+{
+  "schema": "r1.liveness_run/1",
+  "label": "ENGINEERING_ONLY",
+  "started_utc": "20261027T123037Z",
+  "harness": {
+    "root": "/ceph/dwong/r1_prepare_20261025/autoresearch_harness",
+    "commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+    "branch": "r1-dt-repair-20261027",
+    "dirty": false
+  },
+  "manager": {
+    "kind": "langgraph",
+    "model": "llamacpp/r1-manager",
+    "temperature": 0.2,
+    "proposal_schema": "manager_proposal/v1",
+    "transport_max_attempts": 3
+  },
+  "manager_kind": "langgraph",
+  "memory_mode": "append_only_summary",
+  "seed_policy": {
+    "kind": "llamacpp_seed",
+    "temperature": 0.2,
+    "transport": "POST /v1/chat/completions seed",
+    "derivation": "manager_seed(campaign_id, budget_index, repetition, revision_attempt)"
+  },
+  "nodes": [
+    "openml_breast_w",
+    "openml_sonar",
+    "openml_wdbc",
+    "openml_climate"
+  ],
+  "instances": 2,
+  "runs": 10,
+  "branching": false,
+  "host": {
+    "platform": "Linux-4.18.0-553.156.1.el8_10.x86_64-x86_64-with-glibc2.28",
+    "python": "3.13.15"
+  },
+  "work": "/tmp/r1_d28_liveness_20261027_attempt02/liveness_work_20261027T122913Z/liveness_20261027T123037Z",
+  "campaigns": [
+    {
+      "instance": "openml_breast_w__s105",
+      "node": "openml_breast_w",
+      "seed": 105
+    },
+    {
+      "instance": "openml_breast_w__s115",
+      "node": "openml_breast_w",
+      "seed": 115
+    },
+    {
+      "instance": "openml_sonar__s105",
+      "node": "openml_sonar",
+      "seed": 105
+    },
+    {
+      "instance": "openml_sonar__s115",
+      "node": "openml_sonar",
+      "seed": 115
+    },
+    {
+      "instance": "openml_wdbc__s100",
+      "node": "openml_wdbc",
+      "seed": 100
+    },
+    {
+      "instance": "openml_wdbc__s110",
+      "node": "openml_wdbc",
+      "seed": 110
+    },
+    {
+      "instance": "openml_climate__s104",
+      "node": "openml_climate",
+      "seed": 104
+    },
+    {
+      "instance": "openml_climate__s114",
+      "node": "openml_climate",
+      "seed": 114
+    }
+  ],
+  "elapsed_seconds": 769.6,
+  "finished_utc": "20261027T124326Z"
+}

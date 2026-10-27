@@ -1,0 +1,42 @@
+{
+  "schema": "r1.e1_noise_floor/2",
+  "label": "PILOT",
+  "started_utc": "20261027T122551Z",
+  "harness": {
+    "root": "/ceph/dwong/r1_prepare_20261025/autoresearch_harness",
+    "commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+    "branch": "r1-dt-repair-20261027",
+    "dirty": false
+  },
+  "seeds_per_condition": 30,
+  "seed_bases": {
+    "train": 1001,
+    "split": 2001,
+    "joint": 3001
+  },
+  "nodes": [
+    "openml_climate"
+  ],
+  "host": {
+    "platform": "Linux-4.18.0-553.156.1.el8_10.x86_64-x86_64-with-glibc2.28",
+    "python": "3.13.15",
+    "cpus": 40,
+    "libraries": {
+      "scikit-learn": "1.8.0",
+      "numpy": "2.4.4",
+      "scipy": "1.17.1",
+      "pandas": "3.0.3"
+    }
+  },
+  "note": "Pilot only; not evidence (RUNBOOK \u00a71 rule 3). Wall times are measured under parallel load.",
+  "sessions": [
+    {
+      "start_utc": "20261027T122551Z",
+      "todo_before": 552,
+      "written": 552,
+      "remaining": 0,
+      "elapsed_seconds": 82.2
+    }
+  ],
+  "finished_utc": "20261027T122713Z"
+}

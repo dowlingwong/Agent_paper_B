@@ -42,6 +42,7 @@ from r1.c3.features import (NODE_INFO, Proposal, configuration, files_hash, norm
 from r1.harness import REPO, harness_root
 from r1.exam.namespace import refuse_exam
 
+LEGACY_LIVENESS_HARNESS = "411c6054c8505f93a6429e2f9eed526952793882"
 E1_SUMMARY = "results/r1/pilot/E1_20261022T214606Z/summary.json"  # common 30-seed run, the C1 noise-floor table (PLAN §10, 22 Oct); was E1_20261012T145353Z
 SOURCES = {
     "dt4": {"dir": "results/r1/pilot/E1b_20261013T151857Z", "ledgers": "provenance/ledgers/roots/*/root_trials.jsonl*",
@@ -115,9 +116,23 @@ def _start_files(src_dir: Path, inst: str, node: str, strict: bool = False) -> d
         return json.loads(rj.read_text())["start_files"]
     if strict:  # sweep outputs always record start files; never fall back to today's node files
         raise ValueError(f"{rj}: root record with start files missing")
-    # liveness runs store no start files; same harness commit (411c605) -> node files.
+    # Historical liveness has no captured start files. Use its recorded clean harness commit,
+    # not the current checkout, which may have a different start configuration.
+    if src_dir.resolve() != (REPO / SOURCES["liveness"]["dir"]).resolve():
+        raise ValueError(f"{src_dir}: no authorized historical start-file fallback")
+    manifest_path = src_dir / "manifest.json"
+    if not manifest_path.is_file():
+        raise ValueError(f"{src_dir}: missing historical manifest for start files")
+    harness = json.loads(manifest_path.read_text()).get("harness") or {}
+    revision = harness.get("commit")
+    if revision != LEGACY_LIVENESS_HARNESS or harness.get("dirty") is not False:
+        raise ValueError(f"{src_dir}: historical start files require the recorded clean liveness harness commit")
     path = "train.py" if NODE_INFO[node]["family"] == "mlp" else "config.yaml"
-    return {path: (harness_root() / "nodes" / node / path).read_text()}
+    result = subprocess.run(["git", "-C", str(harness_root()), "show", f"{revision}:nodes/{node}/{path}"],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        raise ValueError(f"{src_dir}: historical harness object {revision}:nodes/{node}/{path} unavailable")
+    return {path: result.stdout}
 
 
 def _replay_sources(specs: dict, noise: dict, strict_start_files: bool = False) -> tuple[list, dict, dict]:
@@ -226,6 +241,25 @@ def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names:
         manifest_path = paper_root / sweep["manifest"]
         manifest = json.loads(manifest_path.read_text())
         refuse_exam(manifest, context=f'C3 manifest {manifest_path}')
+        noise_source = index.get("noise_source")
+        if noise_source is not None:
+            if (manifest.get("c3_label_sweep") or {}).get("noise_source") != noise_source:
+                raise ValueError(f"{manifest_path}: noise source differs from sweep index")
+            if set(manifest.get("noise", {})) != set(manifest["nodes"]):
+                raise ValueError(f"{manifest_path}: noise-node set differs from manifest nodes")
+            pinned = (paper_root / noise_source["path"]).resolve()
+            if not pinned.is_relative_to(paper_root.resolve()) or not pinned.is_file() or _sha256(pinned) != noise_source["sha256"]:
+                raise ValueError(f"{manifest_path}: pinned noise source missing or sha256 mismatch")
+            from r1.headroom.e1b_collect import node_noise
+            for node, entry in manifest["noise"].items():
+                source_path = Path(entry.get("source", ""))
+                if not source_path.is_absolute():
+                    source_path = paper_root / source_path
+                if source_path.resolve() != pinned:
+                    raise ValueError(f"{manifest_path}: noise path differs from sweep index")
+                expected = node_noise(pinned, node)
+                if any(entry.get(key) != expected[key] for key in ("sigma_t", "sigma_s", "sigma_d", "definition")):
+                    raise ValueError(f"{manifest_path}: noise values differ from pinned source for {node}")
         ledgers = paper_root / sweep["ledgers"]
         if (d / "collection_failures.json").exists() or any((d / "failures").glob("*.json")):
             raise ValueError(f"{d}: the sweep recorded failures; no table from an incomplete sweep")
@@ -262,6 +296,21 @@ def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | N
     index_path, root = resolve_sweep(sweep, paper_root)
     index = json.loads(Path(index_path).read_text())
     specs = sweep_sources(index, Path(index_path), Path(root), source_names)
+    source = index.get("noise_source")
+    if source is not None:
+        if not isinstance(source, dict) or set(source) != {"path", "sha256"}:
+            raise ValueError("sweep index has malformed noise source")
+        rel = Path(source["path"])
+        if rel.is_absolute() or ".." in rel.parts:
+            raise ValueError("sweep noise source must be repository-relative")
+        pinned = (Path(root) / rel).resolve()
+        if not pinned.is_relative_to(Path(root).resolve()) or not pinned.is_file():
+            raise ValueError("sweep noise source missing or outside paper root")
+        if _sha256(pinned) != source["sha256"]:
+            raise ValueError("sweep noise source sha256 mismatch")
+        if e1_summary is not None and Path(e1_summary).resolve() != pinned:
+            raise ValueError("explicit E1 summary differs from pinned sweep noise source")
+        e1_summary = pinned
     noise = noise_table() if e1_summary is None else noise_table(e1_summary)
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
@@ -274,7 +323,8 @@ def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | N
                             "nodes": index.get("nodes"), "excluded_nodes": index.get("excluded_nodes"),
                             "instances": index.get("instances"), "runs": index.get("runs"),
                             "harness_commit": index.get("harness_commit"), "audit": index.get("audit")},
-            "e1_summary": str(e1_summary) if e1_summary is not None else E1_SUMMARY}
+            "e1_summary": source["path"] if source is not None else (str(e1_summary) if e1_summary is not None else E1_SUMMARY),
+            **({"noise_source": source} if source is not None else {})}
     return _write_table(out, rows, configs, checks, head, noise)
 
 
