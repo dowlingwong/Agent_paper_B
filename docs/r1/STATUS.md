@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — coordination handed to a local operator agent (AI-assisted; documents only)
+
+- `docs/r1/prompts/OPERATOR_HANDOVER_20261027.md`: state of the four agents, ground rules, immediate queue, monitoring, merge protocol, upcoming gates and open author decisions, for a Mac agent with SSH access that takes over coordination and monitoring.
+- `docs/r1/prompts/DEEPTHOUGHT_NODE_REPAIR_PROMPT.md`: instruction for the deepthought agent under R1-D28-REPAIR.
+- `docs/r1/proposals/AUTH_DRAFT_trackp_p3a_20261027.md`: draft P.3a authorization for the author (authorizes nothing until committed under `docs/r1/authorizations/`).
+
 ## 27 October 2026 — Track P and deepthought branches merged; sweep-1 node repair decided (AI-assisted)
 
 - Coordinating session merged `trackp-20261026` (`a3cc81f`: author's 26 Oct decisions, E0 v2 and two-stage driver DRYRUNs, rule v2 `p3_rule_v2.yaml`, TASL-7 migration with host equivalence passed; all independently reviewed and accepted) and `dt-sweep1-20261026` (`cdeac81`: Phase 2 recheck, A.6 config, A.8 host smoke with the real server, A.7 D28 liveness 4 of 8 with read-only diagnosis; `serve.py` validates pins before importing torch; Track P test modules skip without torch). Conflicts in PLAN, STATUS and the Track P spec resolved by keeping both sides.
