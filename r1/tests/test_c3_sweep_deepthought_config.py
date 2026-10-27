@@ -54,10 +54,18 @@ def test_host_configs_keep_the_ada_design_on_llamacpp_and_mark_only_host_values(
     ada = sweep.load_config(ADA)
     draft = sweep.load_config(path, allow_placeholders=True)
     assert set(sweep.placeholders(draft)) == open_values
-    for key in ("nodes", "nodes_pending", "instances", "runs", "memory_modes", "transport_max_attempts",
+    for key in ("nodes_pending", "instances", "runs", "memory_modes", "transport_max_attempts",
                 "liveness", "max_parse_failure_rate", "max_collect_sessions", "audit"):
         assert draft[key] == ada[key], key
-    assert draft["nodes"] == sweep.D21_NODES and len(draft["nodes"]) == 8
+    if path == DEEPTHOUGHT:
+        expected = ["openml_climate" if n == "openml_blood_transfusion" else n for n in ada["nodes"]]
+        assert draft["nodes"] == expected and len(expected) == 8
+        assert draft["noise_source"] == {
+            "path": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+            "sha256": "3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310",
+        }
+    else:
+        assert draft["nodes"] == ada["nodes"] == sweep.D21_NODES and len(draft["nodes"]) == 8
     assert ada["backend"] == "ollama" and draft["backend"] == "llamacpp"  # the Ada config stays historical
     # Author's answers to batch A (25 Oct): watchdog on, limits 5 / 3, min_live_nodes 8, Paper A n/a here.
     assert draft["resume"] == {"sweeps": True, "max_restarts": 5}
