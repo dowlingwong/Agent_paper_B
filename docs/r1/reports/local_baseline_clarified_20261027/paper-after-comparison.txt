@@ -1,0 +1,9 @@
+junit.xml baseline {'passed': 510, 'skipped': 34, 'failed': 55} after {'passed': 510, 'skipped': 34, 'failed': 55}
+baseline-only IDs: []
+after-only IDs: []
+status or message changes: 1
+('r1.tests.test_c3_sweep_resume::test_resume_refuses_while_an_earlier_runner_process_lives', ('failed', 'assert [] == [60993]'), ('failed', 'assert [] == [70915]'))
+focused-junit.xml baseline {'passed': 8, 'skipped': 39, 'failed': 1} after {'passed': 8, 'skipped': 39, 'failed': 1}
+baseline-only IDs: []
+after-only IDs: []
+status or message changes: 0

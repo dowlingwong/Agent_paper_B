@@ -1,5 +1,7 @@
 # T5 — Campaign-level simulation of the T4 theory
 
+> **Historical simulation.** Development tuning of g and the model's treatment of duplicates below are simulation assumptions, not the later C3 protocol. PLAN §10 fixes g and distinguishes duplicate proposals from no-ops; the simulated results are unchanged.
+
 *Theory track T5. Run 19 Oct 2026 overnight by an AI agent (Claude) for the author. AI-assisted; label `ENGINEERING_ONLY`. Every number here comes from a model. None is a measurement of the harness. The author has not checked the code or this note, and no human has reviewed them.*
 
 - **Code:** `r1/theory/simulate_t4.py` (the model, the policies and the branch study) and `r1/theory/t5_report.py` (the runner and the tables). Tests: `r1/tests/test_t5_simulate.py` (14 tests).

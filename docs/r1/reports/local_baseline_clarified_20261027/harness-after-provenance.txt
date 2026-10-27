@@ -1,0 +1,8 @@
+Mon Oct 26 23:43:12 UTC 2026
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+Darwin Dowlings-MacBook-Pro-2.local 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:18:49 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T6000 arm64
+Python 3.13.4
+pytest 9.0.3
+897d83c8efa364ec2fdd37288241cc42e01d7274

@@ -1,5 +1,7 @@
 # T1 — The governed loop as noisy sequential selection with an incumbent
 
+> **Historical protocol context.** The 12 Oct fixed-split and frozen-response descriptions below are historical. PLAN §10 later adopts `vary` and the D4 amendment. A ledger-dependent proposer can create feedback; whether decision independence holds is a condition to examine, not an automatic empirical finding. The theory remains unchecked by the author.
+
 *Theory track T1 (RUNBOOK §3, added 12 Oct 2026). Drafted 12 Oct 2026 by an AI agent (Claude) at the author's request; AI-assisted, not reviewed by a human. Nothing here is evidence. Citations marked [v] were checked against a publisher, proceedings or arXiv page on 12 Oct 2026; the others are standard references that still need a check before they enter a manuscript.*
 
 ## 1. The loop as the harness implements it

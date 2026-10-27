@@ -1,5 +1,150 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — accepted local (Mac) work merged into `main` by the coordinating session (AI-assisted)
+
+- Path-selective commit from `local-20261026` at `fa87d79` (158 paths): PLAN §10 rows of 26–27 Oct, route/spec/theory annotations, `TECH_ROUTE.md`, proposals, reports, reviews, theory audit and author packets, sweep-1 resume-stamp note, Track G runbook, pre-declaration template and tool (L4.4/L4.5). Review: `docs/r1/reviews/LOCAL_MERGE_REVIEW_20261027.md`.
+- Not taken: the L6 manuscript and its Makefile/pyproject targets, the L4.3 renderer, and new skip markers on three existing regression tests (H.1/H.8 acceptance tests, soft-label v1 reproduction); clarification proposed to the author.
+
+## 27 October 2026 — H.8 deferred; Track G scope clarified (author; AI-assisted)
+
+- PLAN now records H.8 deferral until A7/C4 needs an environment, direct Track P label-table training, and the 19 Oct pilot as read-only test fixture only, never training or evaluation evidence. The rejected amendment is preserved at `origin/local-h8-20261027` (`f666a38`); the accepted bin-action environment and controller are restored. The unaccepted sidecar prompt follow-up is also deferred.
+- Track G is autoresearch plus MLGym only if a container is available by 10 Nov; 1GC is removed from G.1. The [independent review](reviews/LOCAL_DEFER_H8_G1_REVIEW_20261027.md) accepts these scoped changes; a synthetic CPU environment fixture passed and five pilot-training test cases were skipped. This is not an exhaustive audit of all pilot references.
+
+## 27 October 2026 — L4.3 fixture boundary reviewed (AI-assisted)
+
+- The renderer now reads the 22 Oct C1 source only and writes a separate C1 directory; the 19 Oct pilot is a read-only test fixture only, never training data or evaluation evidence. Historical outputs are preserved. The [scoped review](reviews/LOCAL_L4_3_FIXTURE_SCOPE_REVIEW_20261027.md) accepts the boundary; five fixture tests passed independently and one committed-source render was deselected. Full L4.3 remains unaccepted, including provenance limitations.
+
+## 27 October 2026 — citation follow-up independently reviewed (AI-assisted)
+
+- The NeurIPS publication distinguishes the two authors named Yang Yue. The Jev essay signature and footer support, but do not directly establish, its full-name byline, which remains marked unverified. The [scoped review](reviews/LOCAL_L6_CITATION_FOLLOWUP_REVIEW_20261027.md) accepts these annotations. L6 remains unaccepted pending the author proof check and remaining citation gaps.
+
+## 27 October 2026 — H.8 split mapping clarified (author)
+
+- Author confirmed `train` and `val` use `z_train`; `test` uses `z_eval` (PLAN R1-H8-SPLIT-MAPPING). A split assignment for the older pilot is test-only. This supersedes the pending-mapping note in the prior entry, without accepting the rejected implementation or authorizing another attempt.
+
+## 27 October 2026 — pilot noise transformation independently reviewed (AI-assisted)
+
+- The partial L4.3 renderer at `5143b24` recomputes the displayed noise fields from captured historical pilot data and checks them against the stored summary. Independent [review](reviews/LOCAL_PILOT_NOISE_REVIEW_20261027.md) accepts this limited engineering transformation: all 30 displayed sigma values match, with 12 focused tests passing.
+- This is not acceptance of the pilot as evidence or of the complete L4.3 pipeline. The source-hash limitation applies to both the renderer and its imported summarizer; working-tree committedness is not enforced at runtime.
+
+## 27 October 2026 — pilot safeguard correction re-reviewed (AI-assisted)
+
+- Independent [re-review](reviews/LOCAL_PILOT_GUARD_REVIEW_20261027.md) confirms the expected file sets, input-byte hashes and cooperative locking in `8a1ecf5`; 11 focused tests passed. The renderer hash is read near the end and cannot prove which source bytes Python loaded if it changed during execution. Full L4.3 remains unaccepted.
+
+## 27 October 2026 — pilot metadata guard independently reviewed (AI-assisted)
+
+- The partial L4.3 renderer input-status guard (`8b8b623`) is independently accepted for its limited metadata check ([review](reviews/LOCAL_PILOT_GUARD_REVIEW_20261027.md)); focused source and fixture checks: 7 passed. Full L4.3 remains unaccepted.
+- On a failed guard, previous output files remain; their existence is not evidence of a successful current render. The existing provenance lacks a renderer revision. Both limits remain open and no pilot output is an accepted scientific result.
+
+## 27 October 2026 — sweep-1 stamp note independently reviewed (AI-assisted)
+
+- The one-paragraph [authorization note](reports/SWEEP1_RESUME_STAMP_NOTE_20261027.md) is independently accepted for scoped source accuracy ([review](reviews/LOCAL_SWEEP1_STAMP_NOTE_REVIEW_20261027.md)): interrupted sweep roots are rerun whole and C3 features do not read the stamp. The note preserves the separate live E2 verification caveat and does not assert a particular historical execution state. The author’s sweep-1 non-applicability ruling controls.
+
+## 27 October 2026 — scoped citation checks independently reviewed (AI-assisted)
+
+- The bibliography now records a documented DACBench publisher spelling conflict, with the spelling supported by the paper and project citation; a Bechhofer single-sample paper is added only as an explicitly unverified candidate for the underspecified reading-list entry. The [scoped review](reviews/LOCAL_CITATION_GAPS_REVIEW_20261027.md) accepts these draft corrections, not the bibliography as a whole.
+- L6 remains unaccepted: author proof check, direct metadata/identity verification where marked and other citation gaps remain.
+
+## 27 October 2026 — autoresearch fake CLI smoke independently reviewed (AI-assisted)
+
+- Harness branch `r1-local-20261027-autoresearch` commit `d63cb91` contains an explicitly fake three-trial CLI smoke using the local worker and synthetic metrics. The [independent review](reviews/LOCAL_AUTORESEARCH_STUB_REVIEW_20261027.md) accepts this fixture-only subitem; one focused fixture passed independently. No real node training or scientific run is inferred.
+- L4.1 overall remains unaccepted: the authoritative 1GC task source and its adapters are unavailable, other integration criteria and post-merge full-environment checks remain open.
+
+## 27 October 2026 — final authorized H.8 attempt independently rejected (AI-assisted)
+
+- Author authorized one further table-utility attempt; `d9a4338` computes through `labels.action_target` using a training-only A1 and table split. Fresh independent [review](reviews/LOCAL_L4_2_FINAL_REVIEW_20261027.md) **rejects** it: a mixed-split environment exposes test episodes during training, rule-equipped no-ops can execute, and a failed reset can leave stale state. Fifteen scoped fixture tests passed but did not catch these counterexamples. The train/val/test label-block mapping remains an assumption pending author confirmation.
+- No further H.8 code attempt is authorized by the current one-more-attempt ruling. Preserve the branch for coordinator review; the earlier H.8 reviewer’s pilot-table fixture-scope incident remains in its review. No `r1/c3/train/` edits were made.
+
+## 27 October 2026 — L4.5 harness audit independently accepted (AI-assisted)
+
+- The [governance audit](proposals/HARNESS_GOVERNANCE_20261027.md) and its two added legacy-metric fixtures (`4e25521`) are accepted under the author's amended restricted Mac criterion: [review](reviews/LOCAL_L4_5_RULING_REVIEW_20261027.md); independent fixture run 2 passed. The known resume-stamp defect has a separate accepted `r1-local-20261027` repair gated until after sweep 1 and B.2.
+- The restricted comparisons predate the new test file and intervening pilot-figure changes; no fresh whole-selection claim is made. Full-environment suite comparison remains after merge. Generic non-AUC metric behavior remains an audit question, not a proven deployed defect.
+
+## 27 October 2026 — resume stamp repair independently reviewed (AI-assisted)
+
+- Harness branch `r1-local-20261027` commit `7567215` is pushed and independently accepted for the scoped engineering fix ([review](reviews/LOCAL_RESUME_STAMP_FIX_REVIEW_20261027.md)). Fixture tests cover resumed E1 evaluated and skip plus E2 verify rescue/veto and live/resumed behavior; 3 passed. The fix recomputes the final count after a verify decision can change, while preserving the pre-verify snapshot view.
+- The [sweep-1 note](reports/SWEEP1_RESUME_STAMP_NOTE_20261027.md) records the author's non-applicability ruling and source limits. `r1` remains pinned at `897d83c`; the coordinator may merge this as a new pin only after sweep 1 and B.2, before C.3 (R1-RESUME-STAMP). No historical impact or evidence readiness is inferred.
+
+## 27 October 2026 01:30 — author rulings and L4.4 acceptance (AI-assisted)
+
+- PLAN §10 records the authorized resume-stamp repair on `r1-local-*`, sweep-1 non-applicability note and post-sweep/B.2 merge timing; restricted comparison is the accepted Mac criterion for L4.4/L4.5 with full-suite comparison after merge; one more H.8 table-utility attempt is authorized, including read-only committed-table fixtures.
+- Independent [L4.4 ruling review](reviews/LOCAL_L4_4_RULING_REVIEW_20261027.md) **accepts** the pre-declaration scaffold under the amended Mac criterion: all 581 common selected paper outcomes match and 13 new predeclaration cases pass; harness and tiny-model restricted comparisons match. The full environment suite remains a post-merge check. Implementation `9e4ca52`, comparison evidence `1c09b77`.
+- The [L4.5 ruling review](reviews/LOCAL_L4_5_RULING_REVIEW_20261027.md) accepts the restricted comparisons but rejects item completion because the separate tests-added-and-passing requirement remains unestablished. H.8 and harness repair are in progress.
+
+## 27 October 2026 — pre-scaffold restricted comparison independently reviewed (AI-assisted)
+
+- The [pre-scaffold comparison](reports/LOCAL_BASELINE_CLARIFIED_20261027.md) was independently checked ([baseline review](reviews/LOCAL_BASELINE_CLARIFIED_REVIEW_20261027.md), [L4.4 review](reviews/LOCAL_L4_4_REVIEW_20261027.md); evidence `1c09b77`). Of the selected paper tests, 581 IDs common to `8ba81b6` and `d4c76d2` have matching outcomes; the 13 newly added predeclaration cases pass. The separate tiny-model selection matches across 48 IDs. Matching IDs do not imply identical test code.
+- Both reviews retain the exclusions, skips and failures; this is restricted engineering documentation, not a full-suite pass or L4.4 acceptance.
+
+## 27 October 2026 — H.8 implementation review remains open (AI-assisted; fixture tests)
+
+- Author-authorized H.8 and sidecar edits were implemented and reviewed in three attempts (`089ed87`, `395aeff`, `d4c76d2`). The [independent review](reviews/LOCAL_L4_2_IMPLEMENTATION_REVIEW_20261027.md) remains **NOT ACCEPTED**: utility reference, price and split are caller assertions rather than a verified producer. The final scoped fixture check reports 27 passed; the reviewer confirms the `delta_hat` leak was removed.
+- The first review also included a cached pilot-table test outside the H.8 fixture-only instruction; that separate incident is retained in the review. No model inference, weight download, GPU/MPS or remote operation was reported. Under the three-attempt limit the item is handed to the coordinator rather than silently accepted; Track P picks up only after an accepted coordinator merge to main.
+
+## 27 October 2026 — clarified CPU baseline independently reviewed (AI-assisted; restricted)
+
+- The corrected-environment [baseline](reports/LOCAL_BASELINE_CLARIFIED_20261027.md) and exact-ID harness comparison were accepted as restricted engineering documentation by [review](reviews/LOCAL_BASELINE_CLARIFIED_REVIEW_20261027.md): harness before/after 443 passed, 19 failed, one collection error, 55 subtests passed, same outcomes; paper baseline and separate tiny-model checks retain their recorded failures and skips.
+- Eight dry-run test IDs and two individual cases were excluded from the paper selections; the original unrestricted full-suite criterion and L4.4/L4.5 acceptance remain unestablished. No failure was converted to an accepted exception and no scientific evidence is inferred.
+
+## 27 October 2026 — L7 decision consistency pass independently accepted (AI-assisted)
+
+- The [post-decision scan](reports/LOCAL_POST_DECISION_SCAN_20261027.md), updated [technical route](TECH_ROUTE.md), Track P specification, manuscript outline and handoff were independently reviewed after corrections: [review](reviews/LOCAL_L7_REVIEW_20261027.md), initial alignment `4f30ed2`, review corrections `fc439ad`. DAC framing, bin/RPS decisions, scope, H.8, C4 and Track G rulings are recorded in PLAN §10 and reconciled in the reviewed files.
+- This is acceptance of the consistency pass, not acceptance of the separately unfinished L4.2 or L6 work, author proof checking, an evidence run or a merge.
+
+## 27 October 2026 — theory proposal and pinned resume trace reviewed (AI-assisted)
+
+- The [resume trace](reports/LOCAL_RESUME_STAMP_TRACE_20261027.md) is independently confirmed ([review](reviews/LOCAL_RESUME_STAMP_REVIEW_20261027.md), `a4bed47`): at `897d83c`, resumed E1/skip records omit cumulative `repeated_bad_count` stamping when the true count is positive. Historical impact and E2 verify semantics are not established; the sweep pin is unchanged.
+- The [theory-correction proposal](proposals/THEORY_CORRECTIONS_20261027.md) was revised after review and accepted only as an aid for author proof check ([review](reviews/LOCAL_THEORY_CORRECTIONS_REVIEW_20261027.md), `183ebe9` / `395aeff`). No theory-file claim was changed, and no proof is marked author checked.
+
+## 27 October 2026 — author rulings and Mac test-scope clarification (AI-assisted)
+
+- Author rulings recorded in PLAN §10: noise-aware DAC headline; canonical bins and RPS; limited hard-label ablations; R-A0/R-A2 and C4 endpoint decisions; H.8 execute/skip amendment with legacy version; focused scope, internal freezes, Track P and Track G roles, theory correction proposals, and a post-sweep/B.2 harness pin.
+- The author superseded the narrower test ruling: existing CPU tests, including sklearn fits and node subprocesses, are permitted subject to the stated exclusions. The [incident record](reports/LOCAL_TEST_SCOPE_INCIDENT_20261027.md) is closed **within scope after clarification**; previous observations and unknown subprocess outcomes remain intact. Re-run baselines and comparisons in a corrected subprocess environment; test outputs are not evidence.
+- The pinned-harness read-only trace has identified a confirmed resumed E1/skip `repeated_bad_count` stamping defect; the trace and independent review are in progress. No pinned harness change is authorized before sweep 1 and B.2.
+
+## 27 October 2026 — local test-scope inventory independently reviewed (AI-assisted; static only)
+
+- The corrected [non-exhaustive static audit](reports/LOCAL_TEST_SELECTION_AUDIT_20261027.md) is accepted for its limited inventory purpose: [review](reviews/LOCAL_TEST_SELECTION_REVIEW_20261027.md), initial inventory `c0ffd1f`, correction `dfbfa96`. It identifies further node-training and LightGBM paths to exclude or inspect and a conservative matched-allowlist procedure.
+- No actual allowlist, compliant broad run or full-suite baseline comparison has been certified. The L0 incident remains documented and L4 acceptance criteria remain unchanged.
+
+## 27 October 2026 — local L5 feasibility proposal independently reviewed (AI-assisted; proposal only)
+
+- Independent reviewer accepted the corrected [Track P feasibility proposal](proposals/TRACKP_FEASIBILITY_20261027.md): [review](reviews/LOCAL_L5_REVIEW_20261027.md); proposal `b070022`, corrections `96b0169`. Its pilot-based bootstrap is an illustrative proxy, not a determination of detectable finalist differences; stage costs are sourced projections or explicitly unknown.
+- **STOP L5:** author decides which Track P stages to include and how to resolve the listed specification questions. This analysis authorizes no training or scope change.
+
+## 27 October 2026 — local L0 scope re-review (AI-assisted)
+
+- The independent [re-review](reviews/LOCAL_L0_REVIEW_20261027.md) accepts the fidelity of the documented baseline but rejects adherence to the test scope: synthetic node-model fits are confirmed, while the stopping points of other attempted subprocesses are unknown. See the [incident record](reports/LOCAL_TEST_SCOPE_INCIDENT_20261027.md); L4.4 remains unaccepted.
+
+## 27 October 2026 — local test-scope incident (AI-assisted; review pending)
+
+- The L0 and L4.4 harness suites included an in-process test that fitted existing node models on synthetic CPU data; additional node-training subprocesses were attempted with incompletely known outcomes. Two Track G subagents also ran tests outside their stub-only brief. The [incident record](reports/LOCAL_TEST_SCOPE_INCIDENT_20261027.md) separates confirmed fits from unknown subprocess outcomes and preserves available evidence.
+- The operator stopped the L4.4 paper-suite repeat upon discovering the scope issue; it is incomplete. No further broad suite or node-training test has been launched since. L0 was independently rechecked with the new facts; L4.4 remains unaccepted. No scientific evidence or authorization is inferred.
+
+## 27 October 2026 — local L2 theory support independently reviewed (AI-assisted; ENGINEERING_ONLY)
+
+- Independent reviewer accepted [the proof audit](theory/T_AUDIT_20261027.md), ten author-check packets and [T3/T5 CPU reproduction](reports/LOCAL_T_SIMULATION_REPRO_20261027.md) after one numerical correction: [review](reviews/LOCAL_L2_REVIEW_20261027.md); commits `7429cb8`, `59527dd`, `99039a3`. The audit flags a zero-noise edge error, a diminishing-returns counterexample and decision-independence conditioning gaps, among other qualified findings. These are AI-assisted audit results, not author-checked propositions.
+- Generated T3/T5 tables matched their committed tables byte for byte; the underlying numeric fields had the recorded floating-point differences. The simulations are model-only engineering outputs, not measurements. The author's T4 proof check remains outstanding; no claim or protocol was silently changed.
+
+## 27 October 2026 — local L3 timeline proposal accepted for author review (AI-assisted)
+
+- Independent reviewer accepted the [conditional planning proposal](proposals/ICML_REPLAN_20261027.md) after re-deriving the illustrative schedule and checking assumptions: [review](reviews/LOCAL_L3_REVIEW_20261027.md), proposal commits `d537578` / `be233a9`. The full-route scenario uses guessed windows; Track X completion, resource contention and actual host capacity remain unknown. Official ICML 2027 deadlines were not found on the checked official future-meetings page.
+- **STOP L3:** author decides scope and dates, including quality-bar consequences and response windows; only then may the coordinator re-date RUNBOOK. Acceptance is neither adoption nor authorization. Independent L2/L4/L5 work continues.
+
+## 27 October 2026 — local L1 route review accepted; author proposals pending (AI-assisted)
+
+- Independent reviewer accepted the consistency scan, historical annotations and [technical route](TECH_ROUTE.md) after corrections to the dependency graph, references, gate and accounting: [review](reviews/LOCAL_L1_REVIEW_20261027.md). Scan and route commits `221d6d3` / `9a9f7e4`; review corrections `1954484` / `dc63abc` / `66b8079`.
+- **STOP L1:** author decisions remain open in [route proposals](proposals/ROUTE_PROPOSALS_20261027.md), including DAC headline framing, bin edges, hard-label diagnostic exceptions, R-A0, score scaling, belief/action coupling, DI endpoint and H.8 coordination. No new PLAN decision or evidence authorization is inferred. L2, L3 and independent L4 work continue.
+
+## 27 October 2026 — local L0 baseline independently reviewed (AI-assisted; engineering only)
+
+- L0 is accepted as a documented baseline with limitations: [report](reports/LOCAL_BASELINE_20261027.md), [independent review](reviews/LOCAL_L0_REVIEW_20261027.md). Paper: 500 passed, 66 failed, 72 skipped, 1 deselected; harness: 433 passed, 27 failed, 3 errors, 55 subtests passed. Raw outcomes and exact IDs are committed with the report. The launch HEAD was not captured; conditions and commands are operator-reported. Failures include sandbox-restricted fake servers and two reproducibility tests; the reviewer reproduced a record-level E0 difference without assigning its cause.
+- The author clarified that Mac scope permits read-only Track P proposals and CPU-only unit tests on tiny random-weight models under the stated restrictions; recorded as R1-TRACKP-RUNBOOK-SCOPE. No evidence run or real-model execution follows from this baseline.
+
+## 26 October 2026 — Track P Mac scope clarified (AI-assisted)
+
+- Author clarified R1-TRACKP-RUNBOOK: the Mac restriction covers execution, including Track P training, GPU jobs, API calls and edits to `r1/c3/train/`, while reading documents and writing analyses and proposals, including L5 without runs, are allowed. CPU unit tests using tiny random-weight models are permitted under the author's conditions; test results are test outcomes only. Recorded as R1-TRACKP-RUNBOOK-SCOPE in PLAN §10.
+
 ## 26 October 2026 — local (Mac) work runbook (AI-assisted; documents only)
 
 - New agent runbook `docs/r1/prompts/MAC_LOCAL_RUNBOOK.md` for one Claude Code agent on the Mac: L0 baseline; L1 technical-route review and consolidation (`TECH_ROUTE.md`, consistency scan, route proposals — incl. the DAC-framing conflict with R1-ROUTE); L2 theory-check support for A.2; L3 feasibility and ICML 2027 re-plan (proposal); L4 framework code (Track G adapters G.1, Track H follow-ups, regenerate-all analysis pipeline, D.2 scaffold, harness audit — harness pin 897d83c untouched); L5 Track P feasibility review (proposal); L6 ICML LaTeX skeleton in `papers/r1/`; L7 final pass. Subagent use and acceptance criteria per task; independent review at every STOP.

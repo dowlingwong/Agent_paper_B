@@ -2,6 +2,8 @@
 
 Status: **adopted 2026-10-26 (PLAN §10 R1-C3-POST, with R1-C3-CONTROL, R1-SOFT-SIGMA, R1-PORTAL-SCHEDULE, R1-JEV-RUNG, R1-RB-TEACHER)**; proposed 2026-10-25, revised 2026-10-26 after the reference review. Execution: `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`.
 Supersedes the post-training part of R1-C3-BASE (24 Oct).
+
+> **Later host and scope decisions.** PLAN §10 R1-TASL7-TRACKP moves Track P to TASL-7 after its host-equivalence check; R1-ADA-OVERFLOW permits scoped resumable overflow. R1-JEV-RUNG adopts the Jev rung. R1-LOCAL-TEST-SCOPE permits existing Mac CPU tests under the author's exclusions; Track P read-only analysis and proposals remain allowed. Older portal and optional-Jev wording below is historical. The author resolved bin edges, hard-label diagnostic exceptions, R-A0 and score scaling in PLAN §10 R1-BIN-EDGES, R1-HARD-LABEL-ABLATION, R1-RA0-RULE and R1-RPS-CANONICAL (27 Oct); later scope and H.8 decisions are also recorded there.
 Scope: C3 decision models (A5 / A6), label generation, the decision-model exam, SFT, RL, DAgger, evaluation.
 Runbook counterpart: `docs/r1/RUNBOOK.md` → Track P. Reading list: `docs/r1/references/README.md`. Base-model facts (Kev, StartLux, Laya) are those checked on 25 Oct and recorded in RUNBOOK Track P; P.0 confirms them.
 
@@ -12,7 +14,7 @@ Runbook counterpart: `docs/r1/RUNBOOK.md` → Track P. Reading list: `docs/r1/re
 | Item in R1-C3-BASE | Correction | Consequence |
 |---|---|---|
 | "StartLux plugs directly into TRL GRPO" | Not verified and probably false. StartLux-Decision v1.1 (code Apache-2.0, weights CC BY-NC 4.0): no public training code; the Instant models answer in one forward pass with bidirectional attention over the prompt, served through a vLLM plugin. | StartLux must pass a training spike in plain transformers with the correct prompt mask (P.0). If it fails, it becomes an inference-only zero-shot rung (owner decision). |
-| Kev as a ready RL target | Kev (`jaredpalmer/kev`, Apache-2.0): rank-16 LoRA on Qwen3.5 hybrid bases (attention, MLP and DeltaNet projections) plus a pointer head scoring each option's `</opt>` state against the question's `<decide>` state; one question per row; trainer takes one hard label per question, no RL code. | Kev is wrapped by our own loop (patched trainer or `kev/model.py`). Hard-label training is not used: argmax-style targets collapse outcome distributions into step functions (§10, R1/R2). |
+| Kev as a ready RL target | Kev (`jaredpalmer/kev`, Apache-2.0): rank-16 LoRA on Qwen3.5 hybrid bases (attention, MLP and DeltaNet projections) plus a pointer head scoring each option's `</opt>` state against the question's `<decide>` state; one question per row; trainer takes one hard label per question, no RL code. | Kev is wrapped by our own loop (patched trainer or `kev/model.py`). Candidate training uses soft labels. Author-approved exceptions are the synthetic E0 hard-label contrast and one real-label appendix-only ablation, never a candidate (R1-HARD-LABEL-ABLATION). |
 | Laya soft-label support | Laya (`NandhaKishorM/laya`, Apache-2.0): ModernBERT-large **encoder**, 421M, 1,024-token context, typed-decision head; fine-tune notebooks ("RLCD": RL against strictly proper scoring rules) with temperature calibration per option count. Soft-label support undocumented. | Wrapped by our loop with soft targets; prompts must fit 1,024 tokens. Laya cannot generate text, so it is not eligible for the reasoning arm R-B. On a head output, RL against a proper score has the same optimum as SFT with that score (§0.1), so its RLCD notebook serves as a cross-check of our loop, not as a separate stage. |
 | TRL as the training backbone | Dropped. | One shared PyTorch + PEFT loop for all models (§4). |
 | A6 = "12 bins as 12 actions, maximise expected reward + KL to SFT" | Structurally conflicts with calibration: the maximiser of expected reward over discrete actions is a point mass, so the belief stops being a probability; the KL term only slows the collapse. A smoothed-rule variant (belief → rule → utility) still lets the decision term distort the belief near the threshold. | **Belief and action are separate outputs** (§2, §6.3). The belief is trained only with a bounded proper scoring rule; the action is trained with the decision reward. Follows the RLCR argument (§10, R4). |
@@ -29,8 +31,8 @@ RL on the same base also mainly **sharpens** the base distribution rather than a
 
 ### 0.2 Reward rules (all stages)
 
-- Rewards and losses that touch the **belief** are bounded proper scores only: RPS (primary) or Brier. CE (log score) is allowed in supervised Stage S but **never inside an RL reward** — an unbounded score can dominate and collapse the policy (RLCR's log-score variant collapsed to 0 % accuracy).
-- The decision reward acts **only on the action output**, never on the belief.
+- In the main decoupled arms, the belief loss uses bounded proper scores: RPS (primary) or Brier. CE is allowed in supervised Stage S but not in an RL reward. The retained R-A3 smoothed-rule ablation explicitly adds a decision term to the belief objective and is monitored for distortion (R1-C3-POST; R1-TRACKP-FOCUS).
+- In the main decoupled arms the decision reward trains the action output; R-A3 is the explicit ablation exception.
 
 ---
 
@@ -121,9 +123,9 @@ For proposal *j* on instance *i* and seed *r*: Δ_{j,r} = metric(incumbent + edi
 ### 3.3 Standardisation and bins
 
 - Standardise by the node noise floor: *z = Δ / σ_node*, with σ_node from the C1 30-seed noise-floor table (pooled per node). This makes bins mean the same thing across nodes, which LONO requires.
-- Default bin edges for bins 1–11 in *z* units (confirm against the R1-C3-BASE bin table; if that table already fixes edges, it wins):
+- Canonical bin edges for bins 1–11 in *z* units (R1-BIN-EDGES):
 
-  `(−∞, −2, −1, −0.5, −0.25, −0.1, 0.1, 0.25, 0.5, 1, 2, +∞)`
+  `(−∞, −3, −2, −1, −0.5, −0.15, 0.15, 0.5, 1, 2, 3, +∞)`
 
 - Bin 0 (no-op): assigned by rule to proposals whose edit is a no-op under the harness definition; these do not enter the Gaussian integration.
 
@@ -140,7 +142,7 @@ s_j = σ̂ / √5, where σ̂ is the **pooled** node noise σ (in *z* units σ̂
 
 y_{j,k} = Φ((e_{k+1} − μ_j)/s_j) − Φ((e_k − μ_j)/s_j),  k = 1…11; y_{j,0} = 0.
 
-The same construction with seeds 7006–7010 gives `y_eval`. **Hard (argmax) labels are never used for training.**
+The same construction with seeds 7006–7010 gives `y_eval`. **Candidate training uses soft labels; the author permits the synthetic E0 contrast and one real-label appendix-only hard ablation, never a candidate (R1-HARD-LABEL-ABLATION).**
 
 ### 3.5 Action target
 
@@ -160,7 +162,7 @@ where keep_j comes from `r1/c3/rules.py` (`keep`) applied to the logged Δ̂_j u
 
 ### 3.7 Expansion
 
-- B.6: expand to 8–10k labels (same protocol). Decide after the learning curve (§7.3): expand only if RPS skill is still rising between the 1k and 2k points.
+- B.6 is deferred under R1-FOCUSED-SCOPE; second-manager generalisation is a deployment check with the Track X pick.
 - C.2: one DAgger round (§6.5).
 
 ### 3.8 Label files
@@ -293,7 +295,7 @@ Caveat recorded in the appendix: the exam set is small, so ranking is coarse; it
 ### 6.1 Stage S — SFT (A5), belief only
 
 - Loss: L_S = RPS(p_θ, y_train) + CE(p_θ, y_train). Both are proper; RPS respects bin order, CE keeps sharp gradients early. Ablation: CE only.
-- RPS(p, y) = Σ_k (P_k − Y_k)² over cumulative distributions of bins 1–11 (bin 0 handled as a separate Bernoulli term, Brier).
+- Canonical RPS(p, y) = ½[(p₀ − y₀)² + (1 − y₀) mean_k(Q_k − R_k)²] ∈ [0, 1], where Q and R are cumulative conditional distributions over non-inert bins, excluding their last cumulative endpoint; this matches `r1/c3/train/losses.py` (R1-RPS-CANONICAL).
 - lr as in §4 (2e-5 from released adapters, 1e-4 fresh LoRA, 1e-3 new heads), cosine, warm-up 5 %, effective batch 16, ≤ 5 epochs, evaluation every ¼ epoch.
 - Kev's trainer is patched (or bypassed via `kev/model.py`) to accept soft targets.
 - Output: the A5 table (B.5).
@@ -315,9 +317,9 @@ Head models (Kev, Qwen control, StartLux if trainable). Exact objectives; no sam
 
 | Arm | Belief | Action | Purpose |
 |---|---|---|---|
-| R-A0 rule-on-belief | Stage S belief | execute iff V(p) = Σ_k p_k v_k > g | Theory policy with learned prior (main C3 arm) |
+| R-A0 rule-on-belief | Stage S belief | moments-based `rules.decide` | Theory policy with learned prior (main C3 arm; R1-RA0-RULE) |
 | R-A1 action head, detached | Stage S belief (frozen) | Linear action head on **stop-gradient** hidden state | Learned policy without touching the belief |
-| R-A2 action head, shared | Belief keeps training with RPS | Action head; its loss also updates the shared LoRA | Learned policy with shared representation |
+| R-A2 action head, shared | Belief keeps training with RPS | Action head; its loss also updates the shared LoRA | Monitored ablation with existing rollback limits (R1-RA2-MONITOR) |
 | R-A3 smoothed rule (ablation) | RPS − λ · a_τ(p) · u | none | Former A6 proposal; shows belief distortion |
 
 **Losses**
@@ -327,7 +329,7 @@ Head models (Kev, Qwen control, StartLux if trainable). Exact objectives; no sam
 
   L_action = −E[π · u] = −π · u, implemented as cost-sensitive BCE: target 1[u > 0], weight |u|.
 
-  The belief stays proper because the decision reward never reaches the belief output (RLCR's decoupling argument, §10, R4). In R-A2 the shared LoRA can still shift the belief indirectly; the belief's own loss remains proper, and the width ratio and ECE are monitored for drift.
+  The belief’s own scoring loss is proper, but in R-A2 the action loss updates shared LoRA and can shift the belief indirectly; joint training does not establish calibration or propriety of the resulting prediction. Monitor width ratio and ECE and apply the existing rollback limits (R1-RA2-MONITOR).
 - R-A3 (ablation only): L = RPS(p, y) − λ · a_τ(p) · u, a_τ(p) = sigmoid((V(p) − g)/τ), τ annealed 0.5 → 0.05, λ ∈ {0.1, 0.3, 1, 3}.
 
 **Deployment**: an A6 arm is served as rule(belief) (R-A0) or as the action head (R-A1/2), never as the greedy bin (this replaces "deploy the greedy bin" in the 25 Oct P.4).
@@ -384,11 +386,11 @@ This is the "LLM self-control" arm of the self-control vs trained-configurator v
 ### 7.2 Generalisation
 
 - LONO folds: all metrics per held-out node.
-- Ablations: Qwen base + LoRA vs Kev (same base) isolates decision pretraining; softmax-12 vs cumulative-11 head; soft vs hard labels (E0 + one real-label run).
+- Ablations: Qwen base + LoRA vs Kev (same base) isolates decision pretraining; softmax-12 vs cumulative-11 head; soft vs hard labels (synthetic E0 plus one real-label appendix-only ablation, never a candidate; R1-HARD-LABEL-ABLATION).
 
 ### 7.3 Learning curve
 
-Train on 250 / 500 / 1k / 2k (and 8k after B.6) labels; plot test RPS skill and gap closed. This decides B.6.
+Learning-curve comparisons at 250 / 500 / 1k / 2k labels remain planned; B.6 and its 8k expansion are deferred (R1-FOCUSED-SCOPE).
 
 ### 7.4 Closed loop (main table)
 
@@ -400,19 +402,19 @@ Fixed budget, fresh instances, ≥ 3 harder benchmarks where available. Compare:
 
 - Training is cheap: ≤ 4B LoRA on ≈ 2k examples is minutes to an hour per run on the 4090; tree packing cuts forward passes further.
 - E0 and E6 are label-free and can run while the label sweep is still going.
-- The cost driver is **auditing**: ≈ 2,000 × 10 training runs on deepthought. Estimate total time from per-node run length before committing to B.6's 8–10k.
+- The cost driver is **auditing**: ≈ 2,000 × 10 training runs on deepthought. Estimate total time from per-node run length; B.6 expansion is deferred (R1-FOCUSED-SCOPE).
 - Jev zero-shot rows cost API calls; one request per state (11 Noul branches × proposals).
 
 ---
 
 ## 9. Open items
 
-- Confirm bin edges and the no-op definition against R1-C3-BASE.
+- Bin edges are fixed by R1-BIN-EDGES; maintain the declared no-op definition and versioned labels.
 - Confirm v_k (keep probability per bin) from the C2 theory.
 - Confirm ECE gate value after the first SFT run.
 - StartLux tier decision after P.0 (owner: Dow).
 - Decided 26 Oct: Jev rung via the official API (R1-JEV-RUNG); R-B demonstrations by DeepSeek-V4.1-Flash-1017 (R1-RB-TEACHER); pooled σ̂ (R1-SOFT-SIGMA); Qwen control adopted (R1-C3-CONTROL); card schedule (R1-PORTAL-SCHEDULE).
-- Track H.8 `OfflineBanditEnv` defines action = bin; under belief/action decoupling the environment action should be execute/skip (keep from the rules), with the 12-bin belief as the model's forecast. Track H was accepted on 26 Oct with action = bin, so an H.8 amendment is needed before P.5 uses the environment (owner: Dow).
+- Track P trains directly on the label table. Track H retains its accepted bin-action `OfflineBanditEnv`; the execute/skip H.8 amendment and unaccepted sidecar prompt follow-up are deferred until A7/C4 needs an environment (R1-H8-DEFERRED). The 19 Oct pilot is a read-only test fixture only, never training data or evaluation evidence (R1-H8-SPLIT-MAPPING).
 
 ---
 

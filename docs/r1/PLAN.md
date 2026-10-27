@@ -17,6 +17,8 @@
 
 ## 1. Decisions adopted on 9 October 2026 (author)
 
+> **Historical section.** Later dated rows in §10 control: R1-VENUE-3 changes the venue to ICML 2027; R1-C3 and R1-C3-POST update the C3 route; the C3 gate governs online deployment. R1-ROUTE's earlier headline framing is superseded by R1-ROUTE-DAC (27 Oct); R1-DAC-INTERFACE remains the interface decision.
+
 | ID | Decision |
 |---|---|
 | R1-ROUTE | Paper B takes route R1: **noise-aware learned control of governed autoresearch loops**. DAC is related-work vocabulary only, not the headline framing. |
@@ -183,6 +185,8 @@ The decision is made (R1-BENCH): no ResNet; agent benchmarks throughout. Which b
 
 ## 7. Configurator architecture (proposal for discussion; D16 open)
 
+> **Historical proposal; superseded in part.** See §10 R1-C3, R1-C3-BASE, R1-C3-CONTROL and R1-C3-POST for the adopted ladder, base pool and separated belief/action outputs. The later rows drop CLM and the greedy-bin action design; this section is retained for provenance.
+
 > **Deferred (R1-GATE-FIRST, 12 Oct).** No architecture is selected and no configurator scaffold is built until the headroom gate passes (RUNBOOK 0.4b pre-check, then 1.5). This section is context for that later decision, not a work item. If the gate fails, it is not needed.
 
 **Verified open candidates** (repository pages read 9 Oct 2026):
@@ -256,7 +260,7 @@ Criterion: carry an item only if it is useful for R1, cheap to adapt, and has lo
 - `papers/paper_b/` (the old manuscript);
 - release scripts.
 
-They stay where they are only because tests and release tooling import them. RUNBOOK task 0.1 decides whether to move them into the archive once R1's reuse is settled. Treat them as read-only history.
+Historical wording: they were retained for tests and release tooling and RUNBOOK task 0.1 was to decide the move. The move was subsequently completed under the 18 Oct RUNBOOK 0.1 row in §10; the archive remains read-only history.
 
 ## 9. Venue, quality bar and timeline
 
@@ -313,6 +317,8 @@ They stay where they are only because tests and release tooling import them. RUN
 | TMLR submission | ~31 Mar 2027 |
 
 ## 10. Open decisions
+
+> **Historical index.** Dated author rows below take precedence over this index. In particular the D4 amendment, D18, D23, the `vary` split policy, R1-INFER-LLAMACPP and R1-EXAM-PROTOCOL supersede older defaults. R1-TASL7-TRACKP changes the earlier portal placement; its host-equivalence gate remains required.
 
 D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with options and a recommendation. They are decided at the Phase 0 STOP using Phase 0 numbers, except where a phase needs one earlier.
 
@@ -468,6 +474,8 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 
 **Decided 25 Oct 2026 by the author (proposer exam pool; DAC interface).** Fixed, not proposals. Recorded by an AI agent (Claude, coordinating session).
 
+The earlier R1-EXAM-POOL and R1-EXAM-FIT references to a proposed protocol and context are historical: R1-EXAM-CTX and R1-EXAM-PROTOCOL adopt those matters later, with separate evidence-authorization gates.
+
 | ID | Decision (decided 25 Oct 2026 by the author) |
 |---|---|
 | R1-EXAM-POOL (25 Oct) | **Proposer exam (appendix) pool and host.** All candidates of RUNBOOK Track X enter the exam except TeichAI/Qwen3.6-27B-Claude-Opus-Reasoning-Distill-v2 (excluded by the author). The exam runs on **zhixu portal (1 × RTX 4090)**. **Size rule replaced:** instead of the 24 Oct ceiling (27B dense to 35B-A3B MoE), any model that the pinned llama.cpp build serves fully on one RTX 4090 at Q4_K_M is admissible, which brings in 31–33B dense models (Gemma 4 31B, Muse Glimmer 30B, OLMo 3.1 32B). Q4_K_M stays (gpt-oss-20b at native MXFP4 as a declared exception). The operational fit test (16k context, q8_0 KV, ≥ 1 GiB free, measured not estimated) and the exam protocol X.2–X.6 are **proposed, not adopted**. The 2026-09 Round-7 candidacy exam (Paper A repo) is reused for machinery only, not as evidence. |
@@ -476,6 +484,8 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-EXAM-FIT (25 Oct, evening) | **The fit estimate for exam admissibility is based on the Q4_K_M GGUF** (file size + KV at the declared context + compute buffers ≤ 23.5 GiB on the RTX 4090), confirmed by the X.2 probe. The declared context (proposed 32,768) and the revised Stage B design (B1 screen ranked on audited proposal increments, B2 power-planned finalists, roles separated) are proposals. |
 
 **Decided 26 Oct 2026 by the author (exam execution).** Fixed, not proposals. Recorded by an AI agent (Claude, coordinating session).
+
+The earlier R1-EXAM-RUNBOOK wording that protocol adoption is pending is superseded by R1-EXAM-PROTOCOL below. The original portal-sharing instructions in R1-PORTAL-SCHEDULE and R1-TRACKP-RUNBOOK are historical for Track P placement after R1-TASL7-TRACKP; the per-host lease and specified host-equivalence check remain applicable.
 
 | ID | Decision (decided 26 Oct 2026 by the author) |
 |---|---|
@@ -494,6 +504,7 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-JEV-RUNG (26 Oct) | The Jev zero-shot rung is run, through **TypeSafe's official API** with the author's key: a versioned model name pinned (never an alias), the version returned by the API, endpoint, date and full request/response logged, three repeats per state; proposal diffs and loop state are sent to TypeSafe (accepted by the author); Jev outputs are never labels. |
 | R1-RB-TEACHER (26 Oct) | The P.6 warm-up demonstrations (≈ 500) are written by **DeepSeek-V4.1-Flash-1017** (`deepseek-flash`) via the DeepSeek API, from the same leak-guarded view the decision model sees and never with labels or audit fields; the returned model version, prompts and outputs are logged; off-peak hours; R-B is reported as a distilled arm. |
 | R1-TRACKP-RUNBOOK (26 Oct; revised the same night) | Track P is executed by one agent (Claude Code) **running on zhixu portal itself**, started by the author, following `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`: its own clone of the repos in the Track P work dir on the portal, code and CPU-only unit tests there, GPU jobs in `tmux` under the GPU lease, API calls from the portal, keys only in `~/.config/r1/secrets.env` (mode 600; never read, printed or passed on a command line), labels pulled from `main`; a STOP and an independent review after every phase (same loop as R1-EXAM-REVIEW). The Mac runs no Track P work. Replaces the first version of this row (agent on the Mac driving the portal over SSH); decided by the author. |
+| R1-TRACKP-RUNBOOK-SCOPE (26 Oct) | Author clarification: “The Mac runs no Track P work” means execution only: Track P training, GPU jobs, API calls and edits to `r1/c3/train/`. It does not cover reading Track P documents and reports, or writing analyses and proposals about them. L5 is allowed on the Mac as read-only analysis plus a proposals file; no edits to `r1/c3/train/` and no runs. Execution excludes CPU unit tests on tiny random-weight models, including `test_trackp_trainer.py`: CPU only, tiny random-weight or `hf-internal-testing` models only, no real Track P base weights, results reported only as test outcomes. Skip and report tests that would download real weights or run longer than approximately 10 minutes. Repository test suites may run on the Mac under these conditions. |
 | R1-ADA-OVERFLOW (26 Oct, evening) | **zhixu experiment (Ada) may run overflow experiments** (author: "ada 可以做溢出实验"): only jobs that resume from their last completed unit (checkpoint per campaign root, epoch, eval step or fold), under the 13 Oct co-tenancy rule and the 19 Oct Paper A coordination rule; never the only copy of a long un-resumable job. Intended uses: Track G noise floors and transfer runs, LONO folds, multi-seed replicates, the C4 debiased-memory A/B, and E0/P.3 runs that do not fit the dedicated card. **Within one comparison table every model is trained and evaluated on the same GPU type and the same pinned environment**, unless a mixed table is declared before the runs; each manifest records the host and GPU. |
 | R1-TASL7-TRACKP (26 Oct, evening) | **A second RTX 4090 node, TASL-7 (Ubuntu 22.04, driver 580 / CUDA 13.0; Tailscale; user `dowling`), exclusive to the author, is dedicated to Track P.** Track P (spikes, decision-model exam P.3a/P.3b, A5, A6, R-B, LONO retraining, 4B sidecar arms in C.3/D.3) moves there; zhixu portal is then used by Track X (R1-EXAM-HOST) and is no longer shared with Track P. Track P keeps the pinned environment of R1-ENV-PIN (torch 2.6.0+cu124 venv) on TASL-7 for comparability with the portal spikes; a host-equivalence check (one E0 v2 DRYRUN reproduced) precedes any Track P evidence run there, and every P.3a and later evidence table is produced on TASL-7 only. The Track P runbook applies with "zhixu portal" read as TASL-7 for Track P work; the GPU lease (`flock ~/r1_locks/gpu0.lock`) applies per host. |
 | R1-EXAM-STORAGE (26 Oct, STOP 0) | **Author approved** `/home/dowling/exam-x/models` and `/home/dowling/exam-x/work` (author corrected the initially supplied `/ceph` paths after the portal check found no `/ceph` mount). Stop any download or run if available space on that filesystem falls below **100 GB (100,000,000,000 bytes)**. Verify the actual filesystem and enforce the floor before and during downloads/runs; use these corrected home-directory paths; do not substitute another filesystem. |
@@ -501,6 +512,33 @@ D1–D13 are defined in `inputs/PROBLEM_SPEC_DRAFT_20261009.md` §9, each with o
 | R1-EXAM-ORNITH (26 Oct, STOP 0) | **Remove Ornith-1.0-31B from the pool, with no substitute:** not publicly released (author checked 26 Oct: `ornith-ai`, `deepreinforce-ai` and the official collection list only 9B, 35B, 397B). Effective pool: **21 candidates and 3 anchors**, plus the declared OLMo Think sensitivity. The 35B candidate maps to `ornith-ai/Ornith-1.0-35B` (35B-A3B, MIT). In Phase 2 check vendor `ornith-ai/Ornith-1.0-35B-GGUF` for Q4_K_M first, as required by R1-QUANT-SOURCE. |
 | R1-EXAM-TRANSFER (26 Oct, STOP 0) | **No GitHub credentials on portal.** Push code from the Mac over SSH to bare repositories under `/home/dowling/exam-x/work/`, then check out from those repositories into the approved work location. Keep bare repositories (e.g. `work/remotes/*.git`) separate from working checkouts under that same approved work directory. Never push protected branches to GitHub or transfer credentials. |
 | R1-EXAM-USER-RUNTIME (26 Oct, STOP 0) | **Author permits installation of uv and user-level Python >=3.11 under `/home/dowling`**, no sudo and no changes to system Python. Record installed paths/versions. STOP 0 disk/licence/identity decisions are resolved by these rows; proceed with Phase 1 and its independent STOP 1 review. Later phase and evidence authorisation gates remain in force. |
+
+
+| R1-LOCAL-TEST-SCOPE (27 Oct) | Author supersedes the narrower Mac test-scope ruling: existing repository tests may run on Mac CPU, including sklearn fits on synthetic or cached data and node subprocesses. Excluded: LLM inference, downloading real model weights, GPU/MPS, runs producing evidence or labels, and remote hosts. Test outputs are test outcomes only. Close the recorded incident as within scope after clarification, preserving observations and uncertainty. Fix subprocess NumPy environment and complete L0, L4.4 and L4.5 comparisons. |
+| R1-ROUTE-DAC (27 Oct; R1) | Paper B headline is **noise-aware DAC**, superseding R1-ROUTE's related-work-only wording. Feedback, decision independence and DAgger are hypotheses until measured (R9). |
+| R1-FEEDBACK-HYPOTHESES (27 Oct; R9) | Feedback, decision independence and DAgger remain hypotheses until measured; no causal or sequential-feedback conclusion follows from the descriptive partial diagnostic. |
+| R1-BIN-EDGES (27 Oct; R2) | Canonical bin edges are those in C3_DESIGN and labels.py: −∞, −3, −2, −1, −0.5, −0.15, 0.15, 0.5, 1, 2, 3, +∞. Correct the Track P specification default list accordingly. |
+| R1-HARD-LABEL-ABLATION (27 Oct; R3) | Synthetic E0 hard-label contrast is allowed. One real-label hard ablation is allowed in the appendix only; it is never a candidate. This is a narrow exception to R1-C3-POST. |
+| R1-RA0-RULE (27 Oct; R4) | R-A0 uses moments-based `rules.decide`; V(p) is used only in R-A3. |
+| R1-RPS-CANONICAL (27 Oct; R5) | The implemented RPS, ½[Brier₀ + (1−y₀)·mean], in [0,1], is canonical; align the Track P specification. |
+| R1-RA2-MONITOR (27 Oct; R6) | Keep R-A2 as a monitored ablation with existing rollback limits. |
+| R1-C4-ENDPOINT (27 Oct; R7) | The partial diagnostic remains descriptive. The prospective C4 endpoint is the audited increment over each branch's incumbent. |
+| R1-H8-AMENDMENT (27 Oct; R8) | Approved: `OfflineBanditEnv` action is execute/skip; observation carries the 12-bin belief; reward is u. Preserve the old bin-action environment under a version flag. Local agent may edit `r1/c3/env.py` and `control.py` for `row["prompt"]`; `serve.py` or `prior_model.py` only if needed; never `r1/c3/train/`. Use fixture-only CPU tests, preserve old behavior elsewhere, obtain independent review; coordinator merges and Track P picks up via main. |
+| R1-FOCUSED-SCOPE (27 Oct) | Focus on C1–C3. Defer MLGym unless a container is available by 10 Nov; defer B.6 and make second-manager generalisation a deployment check with the Track X pick. Move C4 A/B to appendix or later. R-B is conditional on B.7 passing and time allowing. |
+| R1-INTERNAL-FREEZES (27 Oct) | Internal freezes: labels 3 Nov, B.7 26 Nov, D.3 complete 20 Dec, manuscript 10 Jan. These are author-set internal targets, not official conference deadlines. |
+| R1-TRACKP-FOCUS (27 Oct) | Essential Track P: P.3, A5, R-A0, R-A1. Keep E7, R-A2 and R-A3. R-B remains conditional. |
+| R1-TRACKG-ROLE (27 Oct) | G.3 on Ada; G.4 role is evaluation/transfer only. For test-scored tasks, select on validation only. |
+| R1-THEORY-REPAIR-PROPOSAL (27 Oct) | Draft corrected T2 Propositions 1, 2, 5 and T4 Propositions 8, 10(a) as proposals: interventional DI includes information revealed by execution, or claims are restricted to the one-step/Lagrangian index. Do not edit claims in theory files; author decides. |
+| R1-HARNESS-NEXT-PIN (27 Oct) | Harness fixes integrate after sweep 1 and B.2 as a new pin. Now perform a read-only trace of `repeated_bad_count` stamping on resumed E1/skip paths at 897d83c; report a confirmed defect immediately. |
+
+
+| R1-RESUME-STAMP (27 Oct, 01:30) | Author: the 897d83c resume-stamp defect does not affect sweep 1: interrupted roots rerun whole, and C3 features do not read `repeated_bad_count`. Fix on `r1-local-*` with fixtures for resumed E1 evaluated, skip and E2 verify; settle E2 verify semantics. Merge as a new `r1` pin only after sweep 1 and B.2, before C.3. Write a one-paragraph sweep-1 authorization note with code references. |
+| R1-MAC-RESTRICTED-ACCEPTANCE (27 Oct, 01:30) | For L4.4 and L4.5, the restricted comparison with identical outcome IDs on the allowed selection is the accepted Mac comparison criterion. A full-suite comparison runs after merge on a host with the full environment. Independent reviewers re-check; other item requirements are not waived. |
+| R1-H8-TABLE-UTILITY (27 Oct, 01:30) | One further H.8 attempt: `OfflineBanditEnv` computes u itself from the table label columns via `labels.action_target` using the A1 constant prior and g = 0.1 σ_node from configuration. Split comes from the table's split column; no caller-supplied u, split or g. Committed tables including the 19 Oct pilot may be read-only test fixtures. Independent review required. |
+| R1-H8-SPLIT-MAPPING (27 Oct) | Author confirms: table split values `train` and `val` use the `z_train` seed block; `test` uses `z_eval`. The 19 Oct pilot predates the split column, so any split assignment for its fixture is test-only and does not modify the committed table. The 19 Oct pilot is a read-only test fixture only, never training data or evaluation evidence. This confirmation does not authorize an additional H.8 implementation attempt. |
+| R1-H8-DEFERRED (27 Oct) | Author: defer the H.8 amendment until A7/C4 needs an environment; do not retry it now. Keep Track H’s accepted bin-action `OfflineBanditEnv`. Track P trains on the label table directly. Defer the unaccepted `row["prompt"]` sidecar follow-up with H.8. Preserve the H.8 branch. This supersedes R1-H8-AMENDMENT and R1-H8-TABLE-UTILITY where they call for immediate implementation. |
+| R1-TRACKG-SCOPE (27 Oct) | Author: remove 1GC-7RC from G.1 for now because the repository named on arXiv 2605.17046 is not public. Track G comprises autoresearch, plus MLGym if a container is available by 10 Nov. This supersedes the inclusion of 1GC in R1-BENCH-HARD. |
+| R1-LOCAL-CONTINUE (27 Oct, 01:30) | Continue L4.1, L4.3 and L6. L6 waits for author proof check and citation gaps. Push branches; coordinator merges accepted work. |
 
 | ID | Topic | Recommended default | Needed before |
 |---|---|---|---|

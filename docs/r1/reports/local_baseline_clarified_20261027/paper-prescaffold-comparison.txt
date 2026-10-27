@@ -1,0 +1,31 @@
+
+junit.xml PRE {'passed': 492, 'skipped': 34, 'failed': 55} POST {'passed': 510, 'skipped': 34, 'failed': 55}
+PRE only 0
+POST only 18
+   r1.tests.test_pilot_figures::test_all_historical_gate_rows_match_each_mode_and_price ('passed', '')
+   r1.tests.test_pilot_figures::test_committed_noise_and_pilot_tables_match_sources_and_labels ('passed', '')
+   r1.tests.test_pilot_figures::test_committed_pilot_categories_preserve_source_rows ('passed', '')
+   r1.tests.test_pilot_figures::test_rejects_missing_and_contradictory_inert_labels ('passed', '')
+   r1.tests.test_pilot_figures::test_waste_counts_preserves_strata_and_categories ('passed', '')
+   r1.tests.test_predeclaration::test_hash_and_verify_exact_bytes_without_mutation ('passed', '')
+   r1.tests.test_predeclaration::test_malformed_digest_is_rejected[ 000000000000000000000000000000000000000000000000000000000000000] ('passed', '')
+   r1.tests.test_predeclaration::test_malformed_digest_is_rejected[00000000000000000000000000000000000000000000000000000000000000000] ('passed', '')
+   r1.tests.test_predeclaration::test_malformed_digest_is_rejected[000000000000000000000000000000000000000000000000000000000000000] ('passed', '')
+   r1.tests.test_predeclaration::test_malformed_digest_is_rejected[] ('passed', '')
+   r1.tests.test_predeclaration::test_malformed_digest_is_rejected[gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg] ('passed', '')
+   r1.tests.test_predeclaration::test_missing_cli_arguments_are_rejected[args0] ('passed', '')
+   r1.tests.test_predeclaration::test_missing_cli_arguments_are_rejected[args1] ('passed', '')
+   r1.tests.test_predeclaration::test_missing_cli_arguments_are_rejected[args2] ('passed', '')
+   r1.tests.test_predeclaration::test_missing_cli_arguments_are_rejected[args3] ('passed', '')
+   r1.tests.test_predeclaration::test_missing_file_is_rejected_without_creating_it[hash] ('passed', '')
+   r1.tests.test_predeclaration::test_missing_file_is_rejected_without_creating_it[verify] ('passed', '')
+   r1.tests.test_predeclaration::test_newline_changes_the_byte_digest ('passed', '')
+COMMON 581 status changes 0
+SAME STATUS MESSAGE DIFFERENCES
+   r1.tests.test_c3_sweep_resume::test_resume_refuses_while_an_earlier_runner_process_lives ('failed', 'assert [] == [74914]') => ('failed', 'assert [] == [70915]')
+
+focused-junit.xml PRE {'passed': 8, 'skipped': 39, 'failed': 1} POST {'passed': 8, 'skipped': 39, 'failed': 1}
+PRE only 0
+POST only 0
+COMMON 48 status changes 0
+SAME STATUS MESSAGE DIFFERENCES

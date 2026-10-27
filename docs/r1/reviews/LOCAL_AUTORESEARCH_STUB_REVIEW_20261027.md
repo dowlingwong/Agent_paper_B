@@ -1,0 +1,17 @@
+# Independent review: Track G autoresearch stub — 27 October 2026
+
+AI-assisted. **Verdict: ACCEPTED for the autoresearch fake-only CLI smoke subitem. L4.1 overall remains NOT ACCEPTED.** This review concerns the isolated harness worktree `/private/tmp/paper-b-g-autoresearch-20261027`, branch `r1-local-20261027-autoresearch`, commit `d63cb915ecafb5139e0b09d36b3307224588a13a`. It does not accept real training, benchmark execution, or later Track G phases.
+
+`docs/r1/prompts/MAC_LOCAL_RUNBOOK.md:86` requires a loaded node, validated proposals, a stub metric and a completed three-trial campaign. The fixture at `tests/stage2/test_track_g_autoresearch.py:79–114` loads the registered spec, replaces its command with the current Python interpreter running a temporary two-line synthetic `train.py`, and injects deterministic `StubProposals` (`:22–35`). It passes `--worker local` and a temporary node root to the actual CLI entry point; the CLI constructs `LocalWorker` (`scripts/run_campaign.py:173–180`), which the fixture checks before forwarding to the actual campaign loop. It verifies the three synthetic metrics `1.0, 0.9, 1.1`, keep/keep/discard decisions, valid recorded scope, and an unchanged synthetic `prepare.py`. The separate scope check at `tests/stage2/test_track_g_autoresearch.py:38–51` checks that `train.py` is allowed and `prepare.py` rejected; this separate check was inspected, not executed here. The metric parser chooses the final value and rejects non-finite or negative values (`src/autoresearch/nodes/autoresearch_macos/track_g_metric.py:8–18`).
+
+The independently inspected focused fixture was run on CPU with plugin autoload and bytecode writes disabled:
+
+```text
+PYTHONPATH=src PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONDONTWRITEBYTECODE=1 /Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider tests/stage2/test_track_g_autoresearch.py::test_cli_local_worker_three_trial_stub
+.                                                                        [100%]
+1 passed in 0.38s
+```
+
+An initial `python3 -m pytest` attempt exited before collection because that interpreter had no pytest; the focused fixture above is the only collected test. The fixture invokes a synthetic Python script for its three subprocesses; it performs no real model training or inference. No GPU, MPS, weights, SSH, or network was used. The test replaces the command and proposal backend, so it does not validate the unmodified real CLI configuration. The registered command is `uv run train.py` (`configs/nodes/track_g_autoresearch.yaml:37–40`), and LocalWorker executes the supplied command in its node root (`src/autoresearch/worker/local_worker.py:281–305`); this acceptance is not permission to run that command on the real node.
+
+The prior review remains controlling for other L4.1 requirements (`docs/r1/reviews/LOCAL_L4_1_REVIEW_20261027.md:31–38`): four 1GC adapters and stub campaigns are absent, authentic MLGym integration is unresolved, the separate harness changes have not been integrated and reviewed together, and the required two-suite no-new-failure comparison is not established within the testing restrictions. The handoff's stale references also need updating. `MAC_LOCAL_RUNBOOK.md:92,140` retains the test, baseline, handoff and reviewer requirements. This focused result supplies no seed-control, reproducibility, noise-floor, runtime, or scientific evidence; it neither adopts the proposed runbook nor authorizes G.2–G.5.

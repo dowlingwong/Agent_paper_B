@@ -1,0 +1,12 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "utc": "20261026T231118Z",
+  "campaigns": 3000,
+  "runs": 40,
+  "seed": 7,
+  "host": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.4"
+  },
+  "units": "final true gain J(c_T) - J(c_0) in 1e-3 metric units; v = mean verifies per campaign"
+}
