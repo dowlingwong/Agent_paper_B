@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 27 October 2026 — sweep-1 stamp note independently reviewed (AI-assisted)
+
+- The one-paragraph [authorization note](reports/SWEEP1_RESUME_STAMP_NOTE_20261027.md) is independently accepted for scoped source accuracy ([review](reviews/LOCAL_SWEEP1_STAMP_NOTE_REVIEW_20261027.md)): interrupted sweep roots are rerun whole and C3 features do not read the stamp. The note preserves the separate live E2 verification caveat and does not assert a particular historical execution state. The author’s sweep-1 non-applicability ruling controls.
+
 ## 27 October 2026 — scoped citation checks independently reviewed (AI-assisted)
 
 - The bibliography now records a documented DACBench publisher spelling conflict, with the spelling supported by the paper and project citation; a Bechhofer single-sample paper is added only as an explicitly unverified candidate for the underspecified reading-list entry. The [scoped review](reviews/LOCAL_CITATION_GAPS_REVIEW_20261027.md) accepts these draft corrections, not the bibliography as a whole.
