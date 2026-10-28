@@ -3,6 +3,8 @@
 Status: **adopted 2026-10-26 (PLAN §10 R1-C3-POST, with R1-C3-CONTROL, R1-SOFT-SIGMA, R1-PORTAL-SCHEDULE, R1-JEV-RUNG, R1-RB-TEACHER)**; proposed 2026-10-25, revised 2026-10-26 after the reference review. **Corrected 2026-10-26 (evening) by the author's Track P decisions** (PLAN §10 R1-STARTLUX-TRAINABLE, R1-E0-PROTOCOL, R1-A3-BUDGET, R1-RPS-NORM, R1-EDGES-10, R1-TIEBREAK, R1-HEADS-LN, R1-LAYA-POOL, R1-TEMPERATURE, R1-TOKEN-INIT, R1-LR-GRID, R1-ENV-PIN; and the same evening R1-E0-THRESHOLDS, R1-E0-BUDGET, R1-E0-HEADFIT, R1-CONTROL-READOUT, R1-TRACKP-CHOICES, R1-EXAM-RULE-V2); edits marked "(26 Oct, R1-…)". Execution: `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`.
 Supersedes the post-training part of R1-C3-BASE (24 Oct).
 
+> **28 Oct (PLAN §10 R1-C3-POOL, R1-C3-POOL-EXAM, R1-TABPFN):** the decision-model candidates are **Kev-0.8B and Kev-4B**, with the Qwen3.5-0.8B/4B-Base control; **StartLux and Laya are removed**; **TabPFN** is added as a ladder rung (in-context, fine-tuned, R-A0, R-A1; not in P.3a, not in R-B). Where the text below names StartLux or Laya as candidates, these rows control. **Also 28 Oct (R1-CONTEXT-BASELINE):** a context-only rung A1-ctx (node descriptors only, fitted across training nodes per LONO fold) and a context-aware vs context-oblivious prompt ablation on Kev-0.8B at Stage S.
+
 > **Later host and scope decisions.** PLAN §10 R1-TASL7-TRACKP moves Track P to TASL-7 after its host-equivalence check; R1-ADA-OVERFLOW permits scoped resumable overflow. R1-JEV-RUNG adopts the Jev rung. R1-LOCAL-TEST-SCOPE permits existing Mac CPU tests under the author's exclusions; Track P read-only analysis and proposals remain allowed. Older portal and optional-Jev wording below is historical. The author resolved bin edges, hard-label diagnostic exceptions, R-A0 and score scaling in PLAN §10 R1-BIN-EDGES, R1-HARD-LABEL-ABLATION, R1-RA0-RULE and R1-RPS-CANONICAL (27 Oct); later scope and H.8 decisions are also recorded there.
 Scope: C3 decision models (A5 / A6), label generation, the decision-model exam, SFT, RL, DAgger, evaluation.
 Runbook counterpart: `docs/r1/RUNBOOK.md` → Track P. Reading list: `docs/r1/references/README.md`. Base-model facts (Kev, StartLux, Laya) are those checked on 25 Oct and recorded in RUNBOOK Track P; P.0 confirms them.
@@ -345,7 +347,7 @@ Head models (Kev, Qwen control, StartLux if trainable). Exact objectives; no sam
 
 **Key metrics**: decision utility of each arm; **disagreement rate** between the action head and rule(belief) — the direct measurement of "learned policy vs theory policy on the same belief"; belief ECE/width drift vs Stage S.
 
-**GRPO estimator check (unit test, not a contribution).** On R-A1: sample execute ~ Bernoulli(π), reward r = u · execute, group size 8, group-normalised advantage. Over a fixed batch of 256 prompts, the GRPO gradient must match the exact gradient of L_action with cosine ≥ 0.95 (averaged over 64 resamples). This validates the RL machinery before R-B, where no exact gradient exists.
+**GRPO estimator check (unit test, not a contribution).** On R-A1: sample execute ~ Bernoulli(π), reward r = u · execute, group size 8, the primary advantage of §6.4 (leave-one-out, no std normalisation; R1-RB-GRPO). Over a fixed batch of 256 prompts, the GRPO gradient must match the exact gradient of L_action with cosine ≥ 0.95 (averaged over 64 resamples). This validates the RL machinery before R-B, where no exact gradient exists.
 
 ### 6.4 Stage R-B — reasoning arm (GRPO), belief and action decoupled
 
@@ -363,7 +365,11 @@ This is the "LLM self-control" arm of the self-control vs trained-configurator v
 
   RPS is bounded (≤ 1); u is clipped to [−u_max, u_max] with u_max from the 99th percentile on train. No log score in the reward (§0.2).
 - Gradient path: policy gradient through sampled tokens (analysis + action); the belief term's dependence on the analysis also goes through the policy gradient; the belief logits at the read-out position additionally receive the exact RPS gradient.
-- GRPO: group size 8 (16 if memory allows), KL to the warm-started policy β ∈ {0, 0.02}, LoRA r = 16, lr 1e-6 → 5e-6, ≤ 500 steps.
+- GRPO (update rule fixed 28 Oct, PLAN §10 R1-RB-GRPO): group size G = 8 (16 if memory allows) completions per context (one proposal and its state), LoRA r = 16, lr 1e-6 → 5e-6, ≤ 500 steps.
+  - **Advantage (primary):** leave-one-out baseline without std normalisation, A_i = r_i − (1/(G−1)) Σ_{j≠i} r_j; one sequence-level advantage per completion, applied to every sampled token of that completion, with no per-length normalisation. **Sensitivity:** the original GRPO form (r_i − mean_G r) / std_G r.
+  - **Update:** PPO-style clipped surrogate, L = −E[min(ρ·A, clip(ρ, 1 − ε, 1 + ε)·A)], ρ = π_θ / π_old per sampled token, **ε = 0.2**, **2 update epochs per sampled batch** (so the clip is active; π_old is refreshed after each batch).
+  - **KL:** penalty β · KL(π_θ ‖ π_ref) with π_ref = the SFT warm-up checkpoint (step 2 of the warm start), k3 estimator per sampled token, β ∈ {0, 0.02} (β = 0 is the ablation).
+  - **Monitors** (logged every step, descriptive): share of zero-advantage groups (all G rewards equal), share of clipped tokens, mean KL to π_ref.
 - Report the same disagreement rate as R-A (action vs rule applied to the model's own belief), and the R-B analysis ablation (with vs without `<analysis>`).
 
 **Stop rule (R-A2, R-A3, R-B).** Roll back to the best checkpoint if any of:

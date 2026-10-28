@@ -1,0 +1,7 @@
+alpha=1.0 g=0.5 kappa=1.0; MC n=2e6 with common random numbers; values: closed form (MC mean +- se)
+beta=2: myopic=0.0642 (0.0646+-0.0009)  probe=0.4716 (0.4724+-0.0011)  loss=0.4074 (0.4078+-0.0005)  always=0.1968  screening gain=-0.1326 (-0.1331+-0.0006)
+beta=10: myopic=2.3209 (2.3232+-0.0046)  probe=3.6434 (3.6466+-0.0044)  loss=1.3224 (1.3234+-0.0020)  always=3.3884  screening gain=-1.0674 (-1.0686+-0.0020)
+beta=100: myopic=27.7095 (27.7320+-0.0459)  probe=39.5437 (39.5753+-0.0416)  loss=11.8342 (11.8433+-0.0197)  always=39.2932  screening gain=-11.5837 (-11.5930+-0.0197)
+beta=1000: myopic=281.5948 (281.8200+-0.4586)  probe=398.5913 (398.9061+-0.4133)  loss=116.9965 (117.0861+-0.1967)  always=398.3412  screening gain=-116.7464 (-116.8362+-0.1967)
+asymptotic loss slope in beta (kappa=1): 0.11684748862755456
+R3 check (beta=10): actual screening gain J(myopic)-J(always) = -1.0674 ; formula sum (g - V*)^+ with myopic V*'s = 0.1011

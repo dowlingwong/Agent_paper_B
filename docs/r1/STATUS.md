@@ -1,5 +1,15 @@
 # Paper B (route R1) — status log
 
+## 28 October 2026 — C3 decision-model pool narrowed; TabPFN added (AI-assisted; documents only)
+
+- Author decisions recorded (PLAN §10): **R1-C3-POOL** (candidates Kev-0.8B and Kev-4B; StartLux 0.8B/2B/4B and Laya removed; Qwen3.5-0.8B/4B-Base kept as control), **R1-C3-POOL-EXAM** (P.3a on those four bases, a subset of the 27 Oct authorization; the architecture-class finalist rule no longer selects), **R1-TABPFN** (TabPFN rung: in-context, fine-tuned, R-A0, R-A1).
+- RUNBOOK Track P and the Track P spec: one pointer line each to these rows. No code, registry, rule file or authorization changed; no run started or stopped.
+- **Open:** TabPFN version (author); the Track P operator must apply R1-C3-POOL-EXAM before the P.3a DRYRUN/EVIDENCE launch.
+- Also recorded: **R1-RB-GRPO** (R-B update rule: leave-one-out advantage without std normalisation, PPO clip ε = 0.2 with 2 epochs per batch, KL to the SFT warm-up checkpoint, β ∈ {0, 0.02}); spec §6.4 and the R-A1 estimator check amended. Aligning the R-A1 check code is for the Track P agent.
+- Also recorded: **R1-CONTEXT-BASELINE** (context-only rung A1-ctx from node descriptors, fitted across training nodes per LONO fold; context-aware vs context-oblivious prompt ablation on Kev-0.8B at Stage S). No new labels.
+- Also recorded: **R1-T4-DI-FIX** (combined route for T4 Proposition 10: one-step theorem; global optimality only under no-feedback and no-information; new Proposition 10(c)). Draft and independent review under `proposals/` and `reviews/`; theory files unchanged pending the author's proof check.
+- Branch `docs/c3-pool-28oct` (local, from `main` `30303d8`); not pushed or merged — for the coordinator.
+
 ## 27 October 2026 — sweep launch stopped; provenance and local scratch repair (AI-assisted)
 
 The author-approved launch batch `r1_c3_sweep_ENGINEERING_ONLY_20261027_LkGdPo` stopped during engineering liveness, before B.1, after discovering that native manifests did not contain the authorized paper launch pin and work scratch used Ceph. The author chose “停止后修复原生 manifest，再重新准备（推荐）”; the owned runner, liveness and model service were stopped and the partial batch is retained. The repair records initial launch provenance in the native liveness and sweep manifests, moves temporary work to verified local disk, and durably archives referenced work; see [coordinator review](reviews/DT_SWEEP_PROVENANCE_SCRATCH_REVIEW_20261027.md) and [independent review](reviews/DT_SWEEP_PROVENANCE_SCRATCH_INDEPENDENT_20261027.md). Linux scoped tests: 79 passed, 1 skipped; fake retry/permanent/interrupt/watchdog all passed under the author-approved R1-DT-TESTGATE longer-timeout exception. The 75-second timeout and earlier diagnostic failures remain recorded. This is engineering validation, not sweep evidence. A fresh batch must pass the unchanged full prepare gate and launch checks; the stopped batch must not be resumed.
