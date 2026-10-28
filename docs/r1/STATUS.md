@@ -1,5 +1,12 @@
 # Paper B (route R1) — status log
 
+## 28 October 2026 — C3 decision-model pool narrowed; TabPFN added (AI-assisted; documents only)
+
+- Author decisions recorded (PLAN §10): **R1-C3-POOL** (candidates Kev-0.8B and Kev-4B; StartLux 0.8B/2B/4B and Laya removed; Qwen3.5-0.8B/4B-Base kept as control), **R1-C3-POOL-EXAM** (P.3a on those four bases, a subset of the 27 Oct authorization; the architecture-class finalist rule no longer selects), **R1-TABPFN** (TabPFN rung: in-context, fine-tuned, R-A0, R-A1).
+- RUNBOOK Track P and the Track P spec: one pointer line each to these rows. No code, registry, rule file or authorization changed; no run started or stopped.
+- **Open:** TabPFN version (author); the Track P operator must apply R1-C3-POOL-EXAM before the P.3a DRYRUN/EVIDENCE launch.
+- Branch `docs/c3-pool-28oct` (local, from `main` `30303d8`); not pushed or merged — for the coordinator.
+
 ## 27 October 2026 — sweep launch stopped; provenance and local scratch repair (AI-assisted)
 
 The author-approved launch batch `r1_c3_sweep_ENGINEERING_ONLY_20261027_LkGdPo` stopped during engineering liveness, before B.1, after discovering that native manifests did not contain the authorized paper launch pin and work scratch used Ceph. The author chose “停止后修复原生 manifest，再重新准备（推荐）”; the owned runner, liveness and model service were stopped and the partial batch is retained. The repair records initial launch provenance in the native liveness and sweep manifests, moves temporary work to verified local disk, and durably archives referenced work; see [coordinator review](reviews/DT_SWEEP_PROVENANCE_SCRATCH_REVIEW_20261027.md) and [independent review](reviews/DT_SWEEP_PROVENANCE_SCRATCH_INDEPENDENT_20261027.md). Linux scoped tests: 79 passed, 1 skipped; fake retry/permanent/interrupt/watchdog all passed under the author-approved R1-DT-TESTGATE longer-timeout exception. The 75-second timeout and earlier diagnostic failures remain recorded. This is engineering validation, not sweep evidence. A fresh batch must pass the unchanged full prepare gate and launch checks; the stopped batch must not be resumed.
