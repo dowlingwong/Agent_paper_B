@@ -347,7 +347,7 @@ Head models (Kev, Qwen control, StartLux if trainable). Exact objectives; no sam
 
 **Key metrics**: decision utility of each arm; **disagreement rate** between the action head and rule(belief) — the direct measurement of "learned policy vs theory policy on the same belief"; belief ECE/width drift vs Stage S.
 
-**GRPO estimator check (unit test, not a contribution).** On R-A1: sample execute ~ Bernoulli(π), reward r = u · execute, group size 8, group-normalised advantage. Over a fixed batch of 256 prompts, the GRPO gradient must match the exact gradient of L_action with cosine ≥ 0.95 (averaged over 64 resamples). This validates the RL machinery before R-B, where no exact gradient exists.
+**GRPO estimator check (unit test, not a contribution).** On R-A1: sample execute ~ Bernoulli(π), reward r = u · execute, group size 8, the primary advantage of §6.4 (leave-one-out, no std normalisation; R1-RB-GRPO). Over a fixed batch of 256 prompts, the GRPO gradient must match the exact gradient of L_action with cosine ≥ 0.95 (averaged over 64 resamples). This validates the RL machinery before R-B, where no exact gradient exists.
 
 ### 6.4 Stage R-B — reasoning arm (GRPO), belief and action decoupled
 
@@ -365,7 +365,11 @@ This is the "LLM self-control" arm of the self-control vs trained-configurator v
 
   RPS is bounded (≤ 1); u is clipped to [−u_max, u_max] with u_max from the 99th percentile on train. No log score in the reward (§0.2).
 - Gradient path: policy gradient through sampled tokens (analysis + action); the belief term's dependence on the analysis also goes through the policy gradient; the belief logits at the read-out position additionally receive the exact RPS gradient.
-- GRPO: group size 8 (16 if memory allows), KL to the warm-started policy β ∈ {0, 0.02}, LoRA r = 16, lr 1e-6 → 5e-6, ≤ 500 steps.
+- GRPO (update rule fixed 28 Oct, PLAN §10 R1-RB-GRPO): group size G = 8 (16 if memory allows) completions per context (one proposal and its state), LoRA r = 16, lr 1e-6 → 5e-6, ≤ 500 steps.
+  - **Advantage (primary):** leave-one-out baseline without std normalisation, A_i = r_i − (1/(G−1)) Σ_{j≠i} r_j; one sequence-level advantage per completion, applied to every sampled token of that completion, with no per-length normalisation. **Sensitivity:** the original GRPO form (r_i − mean_G r) / std_G r.
+  - **Update:** PPO-style clipped surrogate, L = −E[min(ρ·A, clip(ρ, 1 − ε, 1 + ε)·A)], ρ = π_θ / π_old per sampled token, **ε = 0.2**, **2 update epochs per sampled batch** (so the clip is active; π_old is refreshed after each batch).
+  - **KL:** penalty β · KL(π_θ ‖ π_ref) with π_ref = the SFT warm-up checkpoint (step 2 of the warm start), k3 estimator per sampled token, β ∈ {0, 0.02} (β = 0 is the ablation).
+  - **Monitors** (logged every step, descriptive): share of zero-advantage groups (all G rewards equal), share of clipped tokens, mean KL to π_ref.
 - Report the same disagreement rate as R-A (action vs rule applied to the model's own belief), and the R-B analysis ablation (with vs without `<analysis>`).
 
 **Stop rule (R-A2, R-A3, R-B).** Roll back to the best checkpoint if any of:
