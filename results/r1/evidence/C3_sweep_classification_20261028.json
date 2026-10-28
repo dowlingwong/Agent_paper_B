@@ -1,0 +1,27 @@
+{
+  "schema": "r1.c3_classification/1",
+  "label": "EVIDENCE",
+  "decision_id": "R1-SWEEP1-CLASSIFY",
+  "authorization": {
+    "path": "docs/r1/authorizations/c3_sweep1_20261027.md",
+    "sha256": "563374f6b0a8369cadc7739878725362a89ec28e3774bf1b69859cc0076797cd"
+  },
+  "index": {
+    "path": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+    "sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab"
+  },
+  "sweeps": [
+    {
+      "memory_mode": "append_only_summary",
+      "old_dir": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "new_dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+      "manifest_sha256": "f18f8a8b47ba17dc1da9e875d500831d6d0d03c69aa7d12b216444aeff1af98f"
+    },
+    {
+      "memory_mode": "none",
+      "old_dir": "results/r1/pilot/C3_sweep_none_20261027T224356Z",
+      "new_dir": "results/r1/evidence/C3_sweep_none_20261027T224356Z",
+      "manifest_sha256": "5053067331676e1aaefb0c757cac47ec82200ad124ff81f3d2ae074cf197d440"
+    }
+  ]
+}
