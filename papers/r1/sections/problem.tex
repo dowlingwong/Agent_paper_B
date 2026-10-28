@@ -1,0 +1,48 @@
+\section{Problem Formulation}
+\label{sec:problem}
+
+\paragraph{The governed loop.}
+A campaign runs on one \emph{node}: a training task with a configuration file and a validation metric. At trial $n=1,\dots,N$, a language-model manager proposes a bounded edit $x_n$ to the incumbent configuration. The control plane decides at two epochs:
+\begin{itemize}
+\item at epoch E1 it executes the edit ($a_n=1$) or skips it ($a_n=0$);
+\item after an execution, at epoch E2, it keeps the candidate as the new incumbent ($k_n=1$) or discards it ($k_n=0$), with $k_n\le a_n$.
+\end{itemize}
+Before keeping, it may spend $2r$ further runs on a paired fresh-seed verification. An execution consumes one worker run from a budget of $W$ runs, and $N$ caps the number of manager calls.
+
+\paragraph{Observation model.}
+Let $\Delta_n$ be the true increment of the candidate over the incumbent, and $I_n$ the event that the edit leaves the incumbent's effective configuration unchanged (a \emph{no-op}, $\Delta_n=0$). An execution reveals $H_n=\Delta_n+\eta_n$, where $\eta_n$ is comparison noise with per-comparison scale $\sigma_n$; increments are standardised by a node-level scale $\sigma_{\mathrm{node}}$. Every other run output that could predict later increments (the absolute metric, crashes, wall time) is treated as part of $H_n$. A skip reveals nothing. Edits that repeat an earlier evaluated configuration (\emph{duplicates}) have a known result, and a rule layer handles them.
+
+\paragraph{Information.}
+The information before execution is
+\[
+\mathcal{O}_n=\sigma\bigl(x_{1:n},\,(a_j,k_j,a_jH_j)_{j<n},\,U\bigr),
+\]
+where $U$ collects all control-plane randomness. After an execution the controller also sees $H_n$. The displayed memory and the remaining budgets are functions of $\mathcal{O}_n$. This distinction matters below: executing has information value that skipping does not.
+
+\paragraph{Objective and estimand.}
+For analysis we use the Lagrangian objective
+\[
+J_g(\pi)=\mathbb{E}^\pi\Bigl[\textstyle\sum_{n\le N}(\Delta_n k_n-g\,a_n)\Bigr],
+\]
+which prices a run at $g$. It is the Lagrangian relaxation of the budget constraint $\mathbb{E}[\sum_n a_n]\le W$; verification runs are not priced in it.
+
+The primary empirical estimand is the final incumbent's improvement over the start configuration, audited on fresh seeds on held-out campaigns, under matched worker-run and manager-call budgets. The improvement recorded during the run is not this outcome: it is selected on noise (Section~\ref{sec:theory}). In-run observations used for decisions are kept separate from the final audit. \TBD{Formal statement of the matched-budget accounting and the predeclared contrasts.}
+
+\paragraph{Noise-aware dynamic algorithm configuration.}
+We cast the control plane as a dynamic algorithm configuration (DAC) problem \citep{biedenkapp2020dac,adriaensen2022dac}:
+\begin{itemize}
+\item the \emph{target algorithm} is the governed loop;
+\item an \emph{instance} is a node;
+\item the \emph{state} at trial $n$ is the history, the current proposal, the incumbent and the remaining budget;
+\item the \emph{configuration} at trial $n$ is $\theta_n=(c_n,t_n,r_n)$:
+  \begin{itemize}
+  \item a screening threshold $c_n$ (execute if and only if the forecast value of the proposal is at least $c_n$);
+  \item a keep threshold $t_n$ on the observed increment;
+  \item a verification budget $r_n$.
+  \end{itemize}
+\end{itemize}
+Execute-or-skip and keep-or-discard are the decisions that these parameters induce.
+
+The default governed loop is the static configuration $c_n=-\infty$, $t_n=0$, $r_n=0$: execute everything and keep any observed improvement. A configuration can also be set once per instance, either fitted on that instance's own campaigns or predicted from its descriptors. Or it can be set dynamically, per proposal, as a function of a forecast of the proposal's increment. These three levels (static, per-instance and dynamic) organise our baselines (Section~\ref{sec:setup}).
+
+A configuration policy is learned on training campaigns. It is evaluated on held-out campaigns of the same nodes (primary) and on held-out nodes (transfer), as in contextual DAC benchmarks \citep{eimer2021dacbench}. Section~\ref{sec:theory} characterises when this DAC problem reduces to a sequence of independent one-step decisions, and when it does not.

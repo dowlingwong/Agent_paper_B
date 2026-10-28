@@ -1,0 +1,40 @@
+\documentclass{article}
+\usepackage{icml2026} % Replace this one line when the official 2027 style is released.
+\usepackage{amsmath,amssymb,booktabs}
+\usepackage{amsthm}
+\usepackage{url}
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\ifdefined\FinalPaper
+  \newcommand{\TBD}[1]{\PackageError{paper}{Unresolved TBD: #1}{Resolve all placeholders before final build.}}
+\else
+  \newcommand{\TBD}[1]{\textbf{[TBD: #1]}}
+\fi
+\input{generated/numbers.tex}
+\icmltitlerunning{Noise-Aware Dynamic Algorithm Configuration}
+\begin{document}
+\twocolumn[
+\icmltitle{Noise-Aware Dynamic Algorithm Configuration for Governed Autoresearch}
+\begin{icmlauthorlist}\icmlauthor{Anonymous Authors}{anon}\end{icmlauthorlist}
+\icmlaffiliation{anon}{Anonymous Institution}
+\icmlcorrespondingauthor{Anonymous Author}{anon.email@domain.com}
+\icmlkeywords{noisy evaluation, automated research, decision making}
+\vskip 0.3in
+]
+\printAffiliationsAndNotice{}
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/problem}
+\input{sections/theory}
+\input{sections/method}
+\input{sections/setup}
+\input{sections/results}
+\input{sections/related}
+\input{sections/limitations}
+\bibliographystyle{icml2026}
+\bibliography{refs/l6_bibliography_draft,refs/anonymous}
+\clearpage
+\appendix
+\input{sections/appendix}
+\end{document}

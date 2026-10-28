@@ -19,6 +19,10 @@
 - Also recorded: **R1-T4-DI-FIX** (combined route for T4 Proposition 10: one-step theorem; global optimality only under no-feedback and no-information; new Proposition 10(c)). Draft and independent review under `proposals/` and `reviews/`; theory files unchanged pending the author's proof check.
 - Branch `docs/c3-pool-28oct` (local, from `main` `30303d8`); not pushed or merged — for the coordinator.
 
+## 27 October 2026 — latest main update merged into local branch (AI-assisted)
+
+- Incorporated the later `origin/main` commit `b5a5d38` after the initial merge. The [independent review](reviews/LOCAL_MAIN_UPDATE_REVIEW_20261027.md) accepts the status conflict resolution and verifies the incoming documents.
+
 ## 27 October 2026 — sweep launch stopped; provenance and local scratch repair (AI-assisted)
 
 The author-approved launch batch `r1_c3_sweep_ENGINEERING_ONLY_20261027_LkGdPo` stopped during engineering liveness, before B.1, after discovering that native manifests did not contain the authorized paper launch pin and work scratch used Ceph. The author chose “停止后修复原生 manifest，再重新准备（推荐）”; the owned runner, liveness and model service were stopped and the partial batch is retained. The repair records initial launch provenance in the native liveness and sweep manifests, moves temporary work to verified local disk, and durably archives referenced work; see [coordinator review](reviews/DT_SWEEP_PROVENANCE_SCRATCH_REVIEW_20261027.md) and [independent review](reviews/DT_SWEEP_PROVENANCE_SCRATCH_INDEPENDENT_20261027.md). Linux scoped tests: 79 passed, 1 skipped; fake retry/permanent/interrupt/watchdog all passed under the author-approved R1-DT-TESTGATE longer-timeout exception. The 75-second timeout and earlier diagnostic failures remain recorded. This is engineering validation, not sweep evidence. A fresh batch must pass the unchanged full prepare gate and launch checks; the stopped batch must not be resumed.
@@ -62,6 +66,14 @@ Four repaired nodes measured at harness `6adf385` after predeclaration `b2f8b74`
 - `docs/r1/prompts/OPERATOR_HANDOVER_20261027.md`: state of the four agents, ground rules, immediate queue, monitoring, merge protocol, upcoming gates and open author decisions, for a Mac agent with SSH access that takes over coordination and monitoring.
 - `docs/r1/prompts/DEEPTHOUGHT_NODE_REPAIR_PROMPT.md`: instruction for the deepthought agent under R1-D28-REPAIR.
 - `docs/r1/proposals/AUTH_DRAFT_trackp_p3a_20261027.md`: draft P.3a authorization for the author (authorizes nothing until committed under `docs/r1/authorizations/`).
+
+## 27 October 2026 — coordinator main merged into local branch (AI-assisted)
+
+- Merged `origin/main` at `0a3f5c7` (includes coordinator commit `c5ea037`) after pushing the pilot clarification at `960a53c`. The [independent review](reviews/LOCAL_MAIN_MERGE_REVIEW_20261027.md) accepts the conflict resolutions, which retain incoming Track P and D28 decisions alongside the newer pilot clarification. The post-merge CPU regression rerun again reports 30 passed and one v1 byte-identity failure; see the [test report](reports/LOCAL_PILOT_REGRESSION_CLARIFICATION_20261027.md).
+
+## 27 October 2026 — pilot regression clarification and failure (author; AI-assisted)
+
+- The author clarified that the 19 Oct pilot restriction concerns Track P training data and evaluation evidence; the named existing engineering regression tests may use it as a read-only fixture. Unconditional skip markers were removed. CPU test run: 30 passed and the soft-label v1 byte-identity test failed; see the [report](reports/LOCAL_PILOT_REGRESSION_CLARIFICATION_20261027.md). The [independent review](reviews/LOCAL_PILOT_REGRESSION_CLARIFICATION_REVIEW_20261027.md) rejects overall acceptance while this regression fails. No threshold or reference was changed.
 
 ## 27 October 2026 — Track P and deepthought branches merged; sweep-1 node repair decided (AI-assisted)
 
