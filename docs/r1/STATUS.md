@@ -1,5 +1,14 @@
 # Paper B (route R1) — status log
 
+## 28 October 2026 — Mac-local preparation: NI masking test, TabPFN pin and A1-ctx proposals, manuscript sections (AI-assisted; ENGINEERING_ONLY / documents)
+
+- New code (fixture-only tests): `r1/c3/ni_masking.py`, the results-masking test for (NI) of `proposals/T4_PROP10_REVISION_20261028.md` §6. It cross-fits A3 with and without the six direct outcome features. RPS is scored against the **evaluation-half** soft label (audit seeds 7006–7010). Fold modes: campaign, pair-grouped (with fold diagnostics) and LONO. The output flag is `results_add_predictive_value`, not evidence for or against NI by itself. Tests: `r1/tests/test_c3_ni_masking.py`, 15 cases. No table, label or evaluation seed was used.
+- Proposals (author decides): `proposals/TABPFN_PIN_PROPOSAL_20261028.md` (`tabpfn==9.2.0`; v3.5 + v2 recommended; licence, gating and attribution steps for the author) and `proposals/A1_CTX_IMPLEMENTATION_NOTE_20261028.md` (A1-ctx model; shared `NO_RULE_ARMS` for `offline_eval.py:362` **and** `prior_model.py:120`; prompt-ablation options (a)/(b)).
+- Manuscript sections problem, theory and setup, drafted on branch `docs/manuscript-28oct` (from `codex/r1-manuscript-28oct` `fb68ff3`). Theory is marked as pending the author's proof check; results remain `\TBD{}`.
+- Independent review with re-review and final check: `reviews/MAC_LOCAL_DELIVERABLES_REVIEW_20261028.md`. All four deliverables ACCEPTED.
+- Findings for the plan, from the review: the rule layer is chosen by arm name in two places; edit-hash grouping, cited in TECH_ROUTE, is not implemented in `offline_eval` folds; `offline_eval` scores C3 RPS/log scores against label-half soft labels; climate's descriptors are still PROVISIONAL in `features.py`; `serialize.POOL` still lists the Laya and StartLux tokenizers.
+- Branches `docs/c3prep-28oct` (from `main` `a1ba5cf`) and `docs/manuscript-28oct`, both local; not pushed or merged — for the coordinator.
+
 ## 28 October 2026 — C3 decision-model pool narrowed; TabPFN added (AI-assisted; documents only)
 
 - Author decisions recorded (PLAN §10): **R1-C3-POOL** (candidates Kev-0.8B and Kev-4B; StartLux 0.8B/2B/4B and Laya removed; Qwen3.5-0.8B/4B-Base kept as control), **R1-C3-POOL-EXAM** (P.3a on those four bases, a subset of the 27 Oct authorization; the architecture-class finalist rule no longer selects), **R1-TABPFN** (TabPFN rung: in-context, fine-tuned, R-A0, R-A1).
