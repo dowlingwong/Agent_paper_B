@@ -1,0 +1,31 @@
+{
+  "criteria": {
+    "active_novelty_fraction": {
+      "equals_incumbent_trials": 0,
+      "evaluated_trials": 20,
+      "novel_trials": 17,
+      "novelty_source": "events",
+      "observed": 0.85,
+      "required": ">= 0.5",
+      "seen_before_trials": 3
+    },
+    "invalid_rate": {
+      "observed": 0.0,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 5,
+      "required": "at least 1 keep with budget_index > 1"
+    }
+  },
+  "failed_criteria": [],
+  "inactive_key_rejections": 0,
+  "ledgers": [
+    "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/engineering/liveness_c3_20261027T152425Z/ledgers/openml_sonar__s105/root_trials.jsonl",
+    "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/engineering/liveness_c3_20261027T152425Z/ledgers/openml_sonar__s115/root_trials.jsonl"
+  ],
+  "n_trials": 20,
+  "node": "openml_sonar",
+  "novelty_source": "events",
+  "pass": true
+}

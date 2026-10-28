@@ -1,0 +1,31 @@
+{
+  "criteria": {
+    "active_novelty_fraction": {
+      "equals_incumbent_trials": 4,
+      "evaluated_trials": 20,
+      "novel_trials": 14,
+      "novelty_source": "events",
+      "observed": 0.7,
+      "required": ">= 0.5",
+      "seen_before_trials": 6
+    },
+    "invalid_rate": {
+      "observed": 0.2,
+      "required": "< 0.3"
+    },
+    "keep_after_trial_1": {
+      "observed": 1,
+      "required": "at least 1 keep with budget_index > 1"
+    }
+  },
+  "failed_criteria": [],
+  "inactive_key_rejections": 0,
+  "ledgers": [
+    "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/engineering/liveness_c3_20261027T152425Z/ledgers/openml_ionosphere__s103/root_trials.jsonl",
+    "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/engineering/liveness_c3_20261027T152425Z/ledgers/openml_ionosphere__s113/root_trials.jsonl"
+  ],
+  "n_trials": 20,
+  "node": "openml_ionosphere",
+  "novelty_source": "events",
+  "pass": true
+}

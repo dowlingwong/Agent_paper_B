@@ -1,0 +1,87 @@
+{
+  "schema": "r1.c3_sweep_index/1",
+  "label": "ENGINEERING_ONLY",
+  "written_utc": "20261028T033315Z",
+  "nodes": [
+    "digits_mlp",
+    "tabular_mlp",
+    "openml_breast_w",
+    "openml_ionosphere",
+    "openml_wdbc",
+    "openml_credit_approval",
+    "openml_sonar",
+    "openml_climate"
+  ],
+  "excluded_nodes": [],
+  "instances": 18,
+  "runs": 20,
+  "liveness": "results/r1/engineering/liveness_c3_20261027T152425Z",
+  "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+  "sweeps": [
+    {
+      "memory_mode": "append_only_summary",
+      "arm_role": "primary",
+      "out": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z",
+      "manifest": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/manifest.json",
+      "ledgers": "results/r1/pilot/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots",
+      "commit": "224c2483b09d5e8798b36075785446ac06a87cf6"
+    },
+    {
+      "memory_mode": "none",
+      "arm_role": "contrast",
+      "out": "results/r1/pilot/C3_sweep_none_20261027T224356Z",
+      "manifest": "results/r1/pilot/C3_sweep_none_20261027T224356Z/manifest.json",
+      "ledgers": "results/r1/pilot/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots",
+      "commit": "259722cfe4d12b7025f9818299d70c45634e0586"
+    }
+  ],
+  "launch_provenance": {
+    "paper_commit": "ccb47128aad82e331f79df4a893dbc1ee7e42f51",
+    "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+    "config_sha256": "2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b",
+    "model_sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
+    "llamacpp_build": "version: 0.7.0-dev (build 1, commit 620d222)"
+  },
+  "nodes_pending": [],
+  "noise_source": {
+    "path": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+    "sha256": "3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310"
+  },
+  "manager": {
+    "backend": "llamacpp",
+    "model": "llamacpp/r1-manager",
+    "model_sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
+    "llamacpp_build": "version: 0.7.0-dev (build 1, commit 620d222)",
+    "proposal_schema": "manager_proposal/v1"
+  },
+  "audit": {
+    "status": "pending",
+    "seeds": [
+      7001,
+      7002,
+      7003,
+      7004,
+      7005,
+      7006,
+      7007,
+      7008,
+      7009,
+      7010
+    ],
+    "label_seeds": [
+      7001,
+      7002,
+      7003,
+      7004,
+      7005
+    ],
+    "evaluation_seeds": [
+      7006,
+      7007,
+      7008,
+      7009,
+      7010
+    ],
+    "stage": "r1/c3/audit.py (separate stage; C3_DESIGN \u00a74: K = 10 common fresh joint seeds per non-inert evaluated proposal; first half label, second half evaluation)"
+  }
+}
