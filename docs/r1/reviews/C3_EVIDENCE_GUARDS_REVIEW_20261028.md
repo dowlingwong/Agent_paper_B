@@ -8,6 +8,8 @@ The original preparation record does not bind a complete historical runtime free
 
 The joint-seed protocol uses seeds 7006–7010 for the audited task's model fitting and split as well as evaluation. The author has been asked whether that task-level use is compatible with the prohibition on evidence training and selection. Neither the seed set nor joint-seed semantics were changed.
 
+**Author clarification, 28 October:** the author permits 7006–7010 for B.2 task-level joint-seed retraining and evaluation only, and prohibits their use for C3/Track P training, tuning or selection. The author chose continued investigation of historical environment records, with B.2 still stopped. This clarification resolves the task-level seed question, not the environment or downstream data-boundary checks.
+
 Unlabelled or stripped ordinary dictionaries cannot be reliably identified as evidence by a marker-based downstream boundary. Thus global training/selection isolation is NOT CHECKABLE without a trusted, provenance-bound label-only input boundary. The guards conservatively reject identifiable evidence rows at currently unsupported training entrances. They must not be represented as a proof of global isolation or as acceptance of subsequent training.
 
 The classification and pure-move commits are currently local: an automatic approval review rejected the attempted push to main, stating that the specific push was not explicitly authorized and code repair/review should be completed first. Until an authorized push and fresh remote verification, published-decision guards correctly reject B.2. No B.2 audit was launched; preserved source records were not edited.
