@@ -24,6 +24,10 @@ overwritten with the configuration's texts: the mechanism of
 
 Cache: ``runs.jsonl`` rows keyed by (node, config hash, seed); every run is
 written as soon as it finishes, so an interrupted call resumes where it stopped.
+For EVIDENCE, raw runs remain in the dedicated audit directory and the completed
+audit writes separate label/evaluation blocks, each bound by a SHA256 manifest;
+it does not write the legacy mixed ``audits.jsonl``. An EVIDENCE STOP is not
+automatically resumed.
 
 CLI (time-boxed, resumable):
   python -m r1.c3.audit run --plan DIR/plan.jsonl --configs DIR/configs.json --out DIR \
@@ -37,6 +41,7 @@ import importlib
 import json
 import math
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -55,6 +60,46 @@ DEFAULT_SEEDS = tuple(range(7001, 7011))  # K = 10: 5 label + 5 evaluation seeds
 PILOT_SEEDS = tuple(range(7001, 7007))  # K = 6 of the 19 Oct pilot audits (3 + 3)
 SEEDS_FILE = "audit_seeds.json"
 PILOT_DATA_CACHE = "experiments/r1/pilot/L8_20261009T152916Z/nodes/{node}/data_cache"
+
+
+def _package_list_hash(packages: dict[str, str]) -> str:
+    return hashlib.sha256(json.dumps(packages, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
+def worker_runtime(expected: dict, run_command: str, env: dict) -> dict:
+    """Probe the same PATH and command interpreter the pinned worker will execute."""
+    try:
+        tokens = shlex.split(run_command)
+    except ValueError as exc:
+        raise ValueError('STOP: unsupported worker command') from exc
+    if not tokens or tokens[0] != 'python3' or any(c in run_command for c in ';|&<>`\n$'):
+        raise ValueError('STOP: worker command is not a direct python3 invocation')
+    command = shutil.which(tokens[0], path=env.get('PATH'))
+    if not command:
+        raise ValueError('STOP: worker python3 is unavailable')
+    code = """import hashlib, importlib.metadata as m, json, os, sys
+p={}
+for d in m.distributions():
+ n=(d.metadata.get('Name') or '').lower().replace('_','-')
+ if not n or n in p: raise ValueError('duplicate or missing package name')
+ p[n]=d.version
+v={n:m.version(n) for n in ('scikit-learn','numpy','scipy','pandas')}
+print(json.dumps({'worker_python':sys.executable,'worker_python_realpath':os.path.realpath(sys.executable),
+ 'prefix':sys.prefix,'base_prefix':sys.base_prefix,
+ 'versions':v,'package_list_sha256':hashlib.sha256(json.dumps(p,sort_keys=True,separators=(',',':')).encode()).hexdigest()}))
+"""
+    try:
+        observed = json.loads(subprocess.check_output([command, '-B', '-c', code], env=env, text=True, timeout=30))
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        raise ValueError('STOP: worker python probe failed') from exc
+    observed['worker_command_python'] = command
+    if not observed.get('worker_python_realpath') or observed.get('prefix') == observed.get('base_prefix') or \
+            observed.get('worker_python') != expected.get('worker_python') or \
+            observed.get('prefix') != expected.get('worker_prefix') or \
+            observed.get('versions') != expected.get('worker_versions') or \
+            observed.get('package_list_sha256') != expected.get('package_list_sha256'):
+        raise ValueError('STOP: worker interpreter, versions, or package list mismatch')
+    return observed
 
 
 def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, stop_on_failure: bool = False,
@@ -86,12 +131,18 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, sto
         noedit = ManagerProposal(manager_mode="c3_audit", proposal_summary="audit", proposal_rationale="",
                                  target_files=spec.editable_paths, objective="Audit run; no change.")
         for i, s in enumerate(seeds):
+            runtime = None
+            if stop_on_failure:
+                from autoresearch.worker.seeds import seed_environment
+                runtime = worker_runtime((journal_identity or {}).get('expected_worker', {}),
+                                         spec.run_command, seed_environment(s, s))
             t0 = time.perf_counter()
             res = worker.run_trial_at_seed(noedit, spec, i + 1, train_seed=s, split_seed=s)
             out.append({"seed": s, "success": bool(res.success), "failure": res.failure_message,
                         "metric": res.parsed_metrics.get(spec.metric_name) if res.success else None,
                         "changed_files": bool(res.changed_files),
-                        "wall_seconds": round(time.perf_counter() - t0, 4)})
+                        "wall_seconds": round(time.perf_counter() - t0, 4),
+                        **({'worker_runtime': runtime} if runtime is not None else {})})
             if journal:
                 with open(journal, 'a', encoding='utf-8') as fh:
                     fh.write(json.dumps({**(journal_identity or {}), **out[-1]}) + '\n')
@@ -355,8 +406,14 @@ def evidence_environment(paper_root: Path, sweep_environment: Path | None) -> di
     actual = import_metadata.version('scikit-learn')
     if len(versions) != 1 or versions[0] != actual or actual != '1.8.0' or sys.version_info[:2] != (3, 13):
         raise ValueError('Python or sklearn version differs from sweep locked environment')
+    numerical_versions = {name: import_metadata.version(name) for name in ('scikit-learn', 'numpy', 'scipy', 'pandas')}
+    if sys.prefix == sys.base_prefix or numerical_versions != {'scikit-learn': '1.8.0', 'numpy': '2.4.4',
+                                                                'scipy': '1.17.1', 'pandas': '3.0.3'}:
+        raise ValueError('STOP: audit is not in the expected numerical venv or versions differ')
     return {'harness_commit': commit, 'harness_dirty': False, 'harness_root': str(harness),
             'uv_lock_sha256': _digest(harness / 'uv.lock'), 'python': sys.version, 'scikit_learn': actual,
+            'worker_python': sys.executable, 'worker_prefix': sys.prefix, 'worker_versions': numerical_versions,
+            'package_list_sha256': _package_list_hash(installed),
             'sweep_environment_path': source_rel, 'sweep_environment_sha256': source_hash}
 
 
@@ -510,6 +567,47 @@ def validate_evidence_results(plan: list[dict], cache: RunCache) -> list[dict]:
     return result
 
 
+def evidence_blocks(table: Path, results: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Build disjoint role blocks; only rule-noops and auditable proposals get labels."""
+    from r1.c3.arms import is_duplicate, is_noop
+    from r1.c3.dataset import load_table
+    rows = load_table(Path(table))
+    audits = {row['proposal_id']: row for row in results}
+    if len(audits) != len(results):
+        raise ValueError('duplicate proposal ID in audit results')
+    labels, evaluations, used = [], [], set()
+    for row in rows:
+        pid, node = row['proposal_id'], row['node']
+        if is_noop(row):
+            labels.append({'proposal_id': pid, 'node': node, 'label_kind': 'rule_noop',
+                           'delta_label': 0.0, 'se_label': 0.0,
+                           'soft_parameters': {'inert': True}})
+        elif is_duplicate(row):
+            if pid in audits:
+                raise ValueError('duplicate proposal must not receive an audit label')
+        else:
+            result = audits.get(pid)
+            if result is None or result.get('node') != node or result.get('seeds') != list(DEFAULT_SEEDS):
+                raise ValueError('evidence result does not cover eligible table rows')
+            label, evaluation = split_audit(result)
+            if label['k'] != 5 or evaluation['k'] != 5 or label['se'] is None or evaluation['se'] is None:
+                raise ValueError('evidence result lacks complete 5+5 paired values')
+            sigma = float(row['sigma_node'])
+            if not math.isfinite(sigma) or sigma <= 0:
+                raise ValueError('invalid node sigma for evidence soft-label parameters')
+            labels.append({'proposal_id': pid, 'node': node, 'label_kind': 'audit',
+                           'seeds': list(DEFAULT_SEEDS[:5]), 'delta_label': label['delta_audit'],
+                           'se_label': label['se'], 'soft_parameters': {'inert': False,
+                               'sigma_node': sigma, 'k_label': 5,
+                               'delta_label': label['delta_audit'], 'se_label': label['se']}})
+            evaluations.append({'proposal_id': pid, 'node': node, 'seeds': list(DEFAULT_SEEDS[5:]),
+                                'delta_evaluation': evaluation['delta_audit'], 'se_evaluation': evaluation['se']})
+            used.add(pid)
+    if used != set(audits):
+        raise ValueError('audit results contain unexpected proposal IDs')
+    return labels, evaluations
+
+
 def evidence_cache(plan: list[dict], path: Path) -> RunCache:
     expected = {(p['node'], p[k], seed) for p in plan
                 for k in ('candidate_hash', 'incumbent_hash') for seed in DEFAULT_SEEDS}
@@ -523,6 +621,25 @@ def evidence_cache(plan: list[dict], path: Path) -> RunCache:
     if seen != expected:
         raise ValueError('evidence cache key set incomplete')
     return RunCache(path)
+
+
+def validate_worker_records(path: Path, environment: dict) -> None:
+    """Every worker seed record must identify the approved venv and package snapshot."""
+    expected = {k: environment.get(k) for k in
+                ('worker_python', 'worker_prefix', 'worker_versions', 'package_list_sha256')}
+    if not all(expected.values()):
+        raise ValueError('missing expected worker runtime')
+    for line in Path(path).read_text().splitlines():
+        if not line.strip():
+            continue
+        runtime = json.loads(line).get('worker_runtime') or {}
+        if runtime.get('worker_python') != expected['worker_python'] or \
+                runtime.get('prefix') != expected['worker_prefix'] or \
+                runtime.get('prefix') == runtime.get('base_prefix') or \
+                runtime.get('versions') != expected['worker_versions'] or \
+                runtime.get('package_list_sha256') != expected['package_list_sha256'] or \
+                not runtime.get('worker_command_python') or not runtime.get('worker_python_realpath'):
+            raise ValueError('worker runtime record differs from approved venv')
 
 
 def monitor_evidence_resources(scratch: Path, required_scratch_bytes: int, ceph_reserve_files: int) -> dict:
@@ -608,8 +725,11 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
                     node, h = jobs.pop(0)
                     journal_id = hashlib.sha256(json.dumps([node, h]).encode()).hexdigest()
                     journal = out / 'seed_journals' / f'{journal_id}.jsonl'
+                    expected_worker = {k: environment[k] for k in
+                                       ('worker_python', 'worker_prefix', 'worker_versions', 'package_list_sha256')}
                     pending[pool.submit(run_config, node, configs[h]['files'], list(DEFAULT_SEEDS), scratch, True,
-                                        str(journal), {'node': node, 'config_hash': h})] = (node, h)
+                                        str(journal), {'node': node, 'config_hash': h,
+                                                       'expected_worker': expected_worker})] = (node, h)
                 if not pending:
                     break
                 finished, _ = wait(list(pending), return_when=FIRST_COMPLETED, timeout=5)
@@ -633,18 +753,24 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
                     'paper_provenance': provenance}, indent=2) + '\n')
                 raise ValueError(f'{failure}; in-flight work preserved; STOP')
         monitor_evidence_resources(Path(scratch), required_scratch_bytes, ceph_reserve_files)
+        validate_worker_records(out / 'runs.jsonl', environment)
         result = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
-        (out / 'audits.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in result))
+        labels, evaluations = evidence_blocks(table, result)
+        (out / 'label_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in labels))
+        (out / 'evaluation_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in evaluations))
         status = {'configs_run_this_call': done, 'configs_remaining': len(jobs),
                   'proposals_complete': len(result), 'proposals_planned': len(plan)}
-        completion = {'schema': 'r1.c3_audit_completion/1', 'label': 'EVIDENCE',
+        completion = {'schema': 'r1.c3_audit_completion/2', 'label': 'EVIDENCE',
             'authorization_sha256': _digest(Path(paper_root) / 'docs/r1/authorizations/c3_sweep1_20261027.md'),
             'classification_sha256': _digest(classification), 'index_sha256': _digest(index),
             'build_sha256': _digest(Path(table) / 'build.json'),
             'proposals_sha256': _digest(Path(table) / 'proposals.jsonl'),
             'configs_sha256': _digest(Path(table) / 'configs.json'),
-            'plan_sha256': _digest(out / 'plan.jsonl'), 'audits_sha256': _digest(out / 'audits.jsonl'),
+            'plan_sha256': _digest(out / 'plan.jsonl'),
+            'label_block_sha256': _digest(out / 'label_block.jsonl'),
+            'evaluation_block_sha256': _digest(out / 'evaluation_block.jsonl'),
             'runs_sha256': _digest(out / 'runs.jsonl'), 'environment_sha256': _digest(out / 'environment.json'),
+            'per_run_worker_runtime': 'runs.jsonl:worker_runtime',
             'resources_sha256': _digest(out / 'resources.json'),
             'counts': binding['counts'], 'label_seeds': list(DEFAULT_SEEDS[:5]),
             'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
@@ -659,16 +785,18 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
     """Validate complete evidence on consumption; never trust summary metrics alone."""
     table, audits_path = Path(table), Path(audits_path)
     out = audits_path.parent
-    if audits_path.name != 'audits.jsonl' or (out / 'STOP.json').exists():
-        raise ValueError('audit stopped or unexpected audits path')
+    if audits_path.name != 'label_block.jsonl' or (out / 'STOP.json').exists() or (out / 'audits.jsonl').exists():
+        raise ValueError('audit stopped, mixed audit file present, or unexpected label block path')
     completion = json.loads((out / 'evidence_completion.json').read_text())
     plan, binding = evidence_plan(table, paper_root, index, classification)
-    expected = {'schema': 'r1.c3_audit_completion/1', 'label': 'EVIDENCE',
+    expected = {'schema': 'r1.c3_audit_completion/2', 'label': 'EVIDENCE',
         'authorization_sha256': _digest(Path(paper_root) / 'docs/r1/authorizations/c3_sweep1_20261027.md'),
         'classification_sha256': _digest(classification), 'index_sha256': _digest(index),
         'build_sha256': _digest(table / 'build.json'), 'proposals_sha256': _digest(table / 'proposals.jsonl'),
         'configs_sha256': _digest(table / 'configs.json'), 'plan_sha256': _digest(out / 'plan.jsonl'),
-        'audits_sha256': _digest(audits_path), 'runs_sha256': _digest(out / 'runs.jsonl'),
+        'label_block_sha256': _digest(audits_path),
+        'evaluation_block_sha256': _digest(out / 'evaluation_block.jsonl'),
+        'runs_sha256': _digest(out / 'runs.jsonl'), 'per_run_worker_runtime': 'runs.jsonl:worker_runtime',
         'environment_sha256': _digest(out / 'environment.json'), 'resources_sha256': _digest(out / 'resources.json'),
         'counts': binding['counts'],
         'label_seeds': list(DEFAULT_SEEDS[:5]), 'evaluation_seeds': list(DEFAULT_SEEDS[5:])}
@@ -683,6 +811,7 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
             not environment.get('python', '').startswith('3.13.') or not environment.get('uv_lock_sha256') or \
             environment.get('paper_code_clean') is not True:
         raise ValueError('recorded evidence environment is invalid')
+    validate_worker_records(out / 'runs.jsonl', environment)
     environment_path = environment.get('sweep_environment_path', '')
     source_record, source_rel, source_hash = original_sweep_environment(paper_root, Path(paper_root) / environment_path)
     if environment.get('sweep_environment_sha256') != source_hash or environment.get('python') != source_record.get('python'):
@@ -703,9 +832,11 @@ def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path,
     subprocess.run(['git', '-C', str(root), 'merge-base', '--is-ancestor', reviewed_commit, published],
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     recomputed = validate_evidence_results(plan, evidence_cache(plan, out / 'runs.jsonl'))
-    recorded_audits = [json.loads(x) for x in audits_path.read_text().splitlines() if x.strip()]
-    if recorded_audits != recomputed:
-        raise ValueError('evidence audits differ from raw seed results')
+    expected_labels, expected_evaluations = evidence_blocks(table, recomputed)
+    recorded_labels = [json.loads(x) for x in audits_path.read_text().splitlines() if x.strip()]
+    recorded_evaluations = [json.loads(x) for x in (out / 'evaluation_block.jsonl').read_text().splitlines() if x.strip()]
+    if recorded_labels != expected_labels or recorded_evaluations != expected_evaluations:
+        raise ValueError('evidence role blocks differ from raw seed results')
     return completion
 
 

@@ -7,6 +7,9 @@ import pytest
 
 from r1.c3 import audit, dataset
 
+FAKE_ENV = {'worker_python': '/venv/bin/python', 'worker_prefix': '/venv',
+            'worker_versions': {'scikit-learn': '1.8.0', 'numpy': '2.4.4',
+                                'scipy': '1.17.1', 'pandas': '3.0.3'}, 'package_list_sha256': 'hash'}
 
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -116,7 +119,7 @@ def test_evidence_plan_covers_all_and_rejects_stale_table(tmp_path, monkeypatch)
 
 def test_evidence_audit_refuses_existing_output_even_without_cache(tmp_path, monkeypatch):
     monkeypatch.setattr(audit, 'evidence_plan', lambda *args: ([{'proposal_id': 'a'}], {}))
-    monkeypatch.setattr(audit, 'evidence_environment', lambda *args: {})
+    monkeypatch.setattr(audit, 'evidence_environment', lambda *args: dict(FAKE_ENV))
     monkeypatch.setattr(audit, 'evidence_paper_provenance', lambda *args: {})
     monkeypatch.setattr(audit, 'evidence_resources', lambda *args: {})
     monkeypatch.setattr(audit, 'monitor_evidence_resources', lambda *args: {})
@@ -181,7 +184,7 @@ def test_first_worker_failure_stops_new_dispatch_and_preserves_stop(tmp_path, mo
     (table / 'configs.json').write_text(json.dumps({h: {'files': {}} for h in ('a', 'b', 'c')}))
     plan = [{'node': 'n', 'candidate_hash': 'a', 'incumbent_hash': 'b'},
             {'node': 'n', 'candidate_hash': 'c', 'incumbent_hash': 'a'}]
-    monkeypatch.setattr(audit, 'evidence_environment', lambda *args: {})
+    monkeypatch.setattr(audit, 'evidence_environment', lambda *args: dict(FAKE_ENV))
     monkeypatch.setattr(audit, 'evidence_paper_provenance', lambda *args: {'paper_code_commit': 'fixture'})
     monkeypatch.setattr(audit, 'evidence_plan', lambda *args: (plan, {'counts': {}}))
     monkeypatch.setattr(audit, 'evidence_resources', lambda *args: {})
@@ -230,7 +233,7 @@ def test_final_failure_keeps_scratch_and_writes_stop(tmp_path, monkeypatch, fail
     index.write_text('index')
     classification.write_text('classification')
     plan = [{'proposal_id': 'p', 'node': 'n', 'candidate_hash': 'a', 'incumbent_hash': 'b'}]
-    monkeypatch.setattr(audit, 'evidence_environment', lambda *args: {})
+    monkeypatch.setattr(audit, 'evidence_environment', lambda *args: dict(FAKE_ENV))
     monkeypatch.setattr(audit, 'evidence_paper_provenance', lambda *args: {'paper_code_commit': 'fixture'})
     monkeypatch.setattr(audit, 'evidence_plan', lambda *args: (plan, {'counts': {'eligible': 1}}))
     monkeypatch.setattr(audit, 'evidence_resources', lambda *args: {})
@@ -246,6 +249,8 @@ def test_final_failure_keeps_scratch_and_writes_stop(tmp_path, monkeypatch, fail
         def submit(self, *args): return Future()
     monkeypatch.setattr(audit, 'ProcessPoolExecutor', Pool)
     monkeypatch.setattr(audit, 'wait', lambda pending, **kw: ({pending[0]}, set(pending[1:])))
+    monkeypatch.setattr(audit, 'evidence_blocks', lambda *args: ([{'proposal_id': 'p'}], [{'proposal_id': 'p'}]))
+    monkeypatch.setattr(audit, 'validate_worker_records', lambda *args: None)
     if failure == 'validation':
         monkeypatch.setattr(audit, 'evidence_cache', lambda *args: (_ for _ in ()).throw(ValueError('bad cache')))
     else:
@@ -269,7 +274,7 @@ def test_resource_floor_stops_dispatch_and_drains_inflight(tmp_path, monkeypatch
     (table / 'configs.json').write_text(json.dumps({h: {'files': {}} for h in ('a', 'b', 'c')}))
     plan = [{'node': 'n', 'candidate_hash': 'a', 'incumbent_hash': 'b'},
             {'node': 'n', 'candidate_hash': 'c', 'incumbent_hash': 'a'}]
-    monkeypatch.setattr(audit, 'evidence_environment', lambda *args: {})
+    monkeypatch.setattr(audit, 'evidence_environment', lambda *args: dict(FAKE_ENV))
     monkeypatch.setattr(audit, 'evidence_paper_provenance', lambda *args: {})
     monkeypatch.setattr(audit, 'evidence_plan', lambda *args: (plan, {'counts': {}}))
     monkeypatch.setattr(audit, 'evidence_resources', lambda *args: {})
@@ -448,7 +453,8 @@ def test_evidence_cache_rejects_duplicate_and_unexpected_rows(tmp_path):
         audit.evidence_cache(plan, path)
 
 
-def test_completion_rejects_rewritten_audit_even_if_digest_recomputed(tmp_path, monkeypatch):
+@pytest.mark.parametrize('role', ['label', 'evaluation'])
+def test_completion_rejects_rewritten_audit_even_if_digest_recomputed(tmp_path, monkeypatch, role):
     table = tmp_path / 'table'
     table.mkdir()
     for name in ('build.json', 'proposals.jsonl', 'configs.json'):
@@ -467,15 +473,26 @@ def test_completion_rejects_rewritten_audit_even_if_digest_recomputed(tmp_path, 
     out.mkdir()
     (out / 'plan.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in plan))
     cache = audit.RunCache(out / 'runs.jsonl')
+    runtime = {'worker_python': FAKE_ENV['worker_python'], 'prefix': FAKE_ENV['worker_prefix'],
+               'base_prefix': '/base', 'versions': FAKE_ENV['worker_versions'],
+               'package_list_sha256': FAKE_ENV['package_list_sha256'], 'worker_command_python': '/wrapper/python3',
+               'worker_python_realpath': '/system/python3'}
     cache.add([{'node': 'n', 'config_hash': h, 'seed': s, 'success': True,
-                'changed_files': False, 'metric': float(s), 'wall_seconds': 1}
+                'changed_files': False, 'metric': float(s), 'wall_seconds': 1, 'worker_runtime': runtime}
                for h in ('c', 'i') for s in audit.DEFAULT_SEEDS])
     result = audit.validate_evidence_results(plan, cache)
-    (out / 'audits.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in result))
+    def blocks(_table, values):
+        return ([{'proposal_id': 'x', 'delta_label': values[0]['delta_audit']}],
+                [{'proposal_id': 'x', 'delta_evaluation': values[0]['delta_audit']}])
+    monkeypatch.setattr(audit, 'evidence_blocks', blocks)
+    labels, evaluations = blocks(table, result)
+    (out / 'label_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in labels))
+    (out / 'evaluation_block.jsonl').write_text(''.join(json.dumps(x) + '\n' for x in evaluations))
     environment = {'harness_commit': '6adf3859de66c4814fcf376eed59880fbd8eeaf7', 'harness_dirty': False,
                    'scikit_learn': '1.8.0', 'python': '3.13.2', 'uv_lock_sha256': 'locked',
                    'paper_code_clean': True, 'paper_code_commit': 'a' * 40, 'review_path': 'docs/r1/reviews/test.md',
-                   'sweep_environment_path': 'docs/r1/reports/env.json', 'sweep_environment_sha256': 'envhash'}
+                   'sweep_environment_path': 'docs/r1/reports/env.json', 'sweep_environment_sha256': 'envhash',
+                   **FAKE_ENV}
     monkeypatch.setattr(audit, 'original_sweep_environment', lambda *a: ({'python': '3.13.2'}, 'p', 'envhash'))
     review = b'Code-Commit: ' + b'a' * 40 + b'\nVerdict: ACCEPTED\n'
     environment['review_sha256'] = hashlib.sha256(review).hexdigest()
@@ -484,19 +501,23 @@ def test_completion_rejects_rewritten_audit_even_if_digest_recomputed(tmp_path, 
     monkeypatch.setattr(audit.subprocess, 'run', lambda *args, **kw: None)
     (out / 'environment.json').write_text(json.dumps(environment))
     (out / 'resources.json').write_text('{}')
-    completion = {'schema': 'r1.c3_audit_completion/1', 'label': 'EVIDENCE',
+    completion = {'schema': 'r1.c3_audit_completion/2', 'label': 'EVIDENCE',
         'authorization_sha256': sha(auth), 'classification_sha256': sha(classification), 'index_sha256': sha(index),
         'build_sha256': sha(table / 'build.json'), 'proposals_sha256': sha(table / 'proposals.jsonl'),
         'configs_sha256': sha(table / 'configs.json'), 'plan_sha256': sha(out / 'plan.jsonl'),
-        'audits_sha256': sha(out / 'audits.jsonl'), 'runs_sha256': sha(out / 'runs.jsonl'),
+        'label_block_sha256': sha(out / 'label_block.jsonl'),
+        'evaluation_block_sha256': sha(out / 'evaluation_block.jsonl'),
+        'runs_sha256': sha(out / 'runs.jsonl'), 'per_run_worker_runtime': 'runs.jsonl:worker_runtime',
         'environment_sha256': sha(out / 'environment.json'), 'counts': counts,
         'resources_sha256': sha(out / 'resources.json'),
         'label_seeds': list(range(7001, 7006)), 'evaluation_seeds': list(range(7006, 7011))}
     (out / 'evidence_completion.json').write_text(json.dumps(completion))
-    audit.verify_evidence_completion(table, out / 'audits.jsonl', tmp_path, index, classification)
-    result[0]['delta_audit'] = 123
-    (out / 'audits.jsonl').write_text(json.dumps(result[0]) + '\n')
-    completion['audits_sha256'] = sha(out / 'audits.jsonl')
+    audit.verify_evidence_completion(table, out / 'label_block.jsonl', tmp_path, index, classification)
+    target = out / f'{role}_block.jsonl'
+    rewritten = labels[0] if role == 'label' else evaluations[0]
+    rewritten['delta_label' if role == 'label' else 'delta_evaluation'] = 123
+    target.write_text(json.dumps(rewritten) + '\n')
+    completion[f'{role}_block_sha256'] = sha(target)
     (out / 'evidence_completion.json').write_text(json.dumps(completion))
     with pytest.raises(ValueError, match='raw seed results'):
-        audit.verify_evidence_completion(table, out / 'audits.jsonl', tmp_path, index, classification)
+        audit.verify_evidence_completion(table, out / 'label_block.jsonl', tmp_path, index, classification)
