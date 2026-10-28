@@ -19,6 +19,9 @@
 # interruption; runner.log is appended to, never truncated.
 set -euo pipefail
 DRYRUN=${R1_DRYRUN:-0}
+if [ "$DRYRUN" = 1 ] && { [ -n "${R1_C3_EVIDENCE_NOTE:-}" ] || [ -n "${R1_C3_EVIDENCE_BATCH_NAME:-}" ]; }; then
+  echo 'STOP: DRYRUN cannot request an EVIDENCE authorization' >&2; exit 1
+fi
 if [ "$DRYRUN" = 1 ]; then
   [ "$(hostname -s)" != ucrtasl ] || { echo 'STOP: DRYRUN is forbidden on Ada'; exit 1; }
   python3 -c 'from r1.scripts.dryrun_guard import validate_dryrun; validate_dryrun()'
@@ -38,7 +41,16 @@ case "${1:-}" in
 --prepare)
   refuse_duplicates
   [ -n "${R1_GIT_NAME:-}" ] && [ -n "${R1_GIT_EMAIL:-}" ] || { echo 'STOP: R1_GIT_NAME and R1_GIT_EMAIL are required'; exit 1; }
-  BATCH=$(mktemp -d "$BATCH_ROOT/r1_c3_sweep_${LABEL}_$(date -u +%Y%m%d)_XXXXXX")
+  if [ -n "${R1_C3_EVIDENCE_BATCH_NAME:-}" ] || [ -n "${R1_C3_EVIDENCE_NOTE:-}" ]; then
+    [[ "${R1_C3_EVIDENCE_BATCH_NAME:-}" =~ ^r1_c3_sweep_EVIDENCE_[a-zA-Z0-9_-]{8,64}$ ]] && \
+    [[ "${R1_C3_EVIDENCE_NOTE:-}" =~ ^docs/r1/authorizations/[a-zA-Z0-9_.-]+\.md$ ]] || {
+      echo 'STOP: evidence preparation requires a predeclared batch name and note path' >&2; exit 1;
+    }
+    BATCH="$BATCH_ROOT/$R1_C3_EVIDENCE_BATCH_NAME"
+    (umask 077; mkdir "$BATCH") || { echo 'STOP: evidence batch already exists or cannot be created' >&2; exit 1; }
+  else
+    BATCH=$(mktemp -d "$BATCH_ROOT/r1_c3_sweep_${LABEL}_$(date -u +%Y%m%d)_XXXXXX")
+  fi
   git clone -q "$PAPER_REMOTE" "$BATCH/agent_paper_B"
   PAPER_HEAD=$(git -C "$BATCH/agent_paper_B" rev-parse HEAD)
   PIN=$(tr -d '[:space:]' < "$BATCH/agent_paper_B/r1/scripts/HARNESS_PIN_C3")
@@ -78,6 +90,7 @@ case "${1:-}" in
     echo "export PYTHONPATH=$BATCH/autoresearch_harness/src:$BATCH/agent_paper_B"
     echo "export PATH=$(dirname "$PY"):\$PATH"
     [ -f "$BATCH/c3_config.json" ] && echo "export R1_C3_CONFIG=$BATCH/c3_config.json"
+    [ -n "${R1_C3_EVIDENCE_NOTE:-}" ] && printf 'export R1_C3_EVIDENCE_NOTE=%q\n' "$R1_C3_EVIDENCE_NOTE"
     echo "export R1_COAUTHOR='${R1_COAUTHOR:-AI-assisted <noreply@example.com>}'"
     if [ "$DRYRUN" = 1 ]; then
       printf 'export R1_DRYRUN=1\nexport R1_DRYRUN_ROOT=%q\nexport R1_DRYRUN_CHILD=1\nexport R1_FAKE_OLLAMA_ROOT=%q\n' "$R1_DRYRUN_ROOT" "$R1_DRYRUN_ROOT"
@@ -85,6 +98,13 @@ case "${1:-}" in
     fi
     true
   } > "$BATCH/env.sh"
+  if [ -n "${R1_C3_EVIDENCE_NOTE:-}" ]; then
+    ( . "$BATCH/env.sh"; cd "$BATCH/agent_paper_B"; "$PY" -c \
+      'import sys; from r1.scripts.c3_label_sweep import build_runner; r = build_runner(); r.check_evidence_authorization(sys.argv[1], sys.argv[2])' \
+      "$PAPER_HEAD" "$PIN" ) > "$BATCH/evidence_note_check.log" 2>&1 || {
+      echo 'STOP: prepared evidence authorization does not match batch or pins' >&2; exit 1;
+    }
+  fi
   if [ "${R1_C3_SKIP_SUITES:-0}" = 1 ]; then
     [ "$DRYRUN" = 1 ] || { echo 'STOP: test suites may be skipped only in DRYRUN'; exit 1; }
     echo 'SKIPPED (DRYRUN: suites run separately)' > "$BATCH/harness_tests.log"
@@ -112,7 +132,14 @@ case "${1:-}" in
     python3 -c 'from r1.scripts.dryrun_guard import validate_dryrun; validate_dryrun()'
   fi
   python3 -c "import json,sys; p=json.load(open('$B/prepare.json')); sys.exit(0 if p.get('ok') else 'STOP: prepare.json is not clean: ' + str(p.get('unexpected')))"
-  tmux new-session -d -s "$SESSION" "bash -c '. $B/env.sh && cd $B/agent_paper_B && \$R1_C3_PY r1/scripts/c3_label_sweep.py >> $B/runner.log 2>&1'"
+  EVIDENCE_ASSIGN=''
+  if [ -n "${R1_C3_EVIDENCE_NOTE:-}" ]; then
+    [[ "$R1_C3_EVIDENCE_NOTE" =~ ^docs/r1/authorizations/[a-zA-Z0-9_.-]+\.md$ ]] || {
+      echo 'STOP: invalid evidence authorization path' >&2; exit 1;
+    }
+    printf -v EVIDENCE_ASSIGN 'export R1_C3_EVIDENCE_NOTE=%q; ' "$R1_C3_EVIDENCE_NOTE"
+  fi
+  tmux new-session -d -s "$SESSION" "bash -c '${EVIDENCE_ASSIGN}. $B/env.sh && cd $B/agent_paper_B && \$R1_C3_PY r1/scripts/c3_label_sweep.py >> $B/runner.log 2>&1'"
   echo "Launched. Batch: $B"
   ;;
 *)

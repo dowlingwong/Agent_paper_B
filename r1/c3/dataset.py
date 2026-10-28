@@ -166,6 +166,9 @@ def _write_table(out: Path, rows: list, configs: dict, checks: dict, head: dict,
     tot = {k: sum(c[k] for c in checks.values()) for k in next(iter(checks.values()))}
     meta = {**head, "noise": noise, "replay_checks_total": tot,
             "replay_checks": checks, "n_proposals": len(rows), "n_configs": len(configs)}
+    if head.get('label') == 'EVIDENCE':
+        meta['table_sha256'] = {name: hashlib.sha256((out / name).read_bytes()).hexdigest()
+                                for name in ('proposals.jsonl', 'configs.json')}
     (out / "build.json").write_text(json.dumps(meta, indent=1))
     return meta
 
@@ -195,6 +198,127 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def _safe_relative(root: Path, value: str) -> Path:
+    rel = Path(value)
+    if rel.is_absolute() or not rel.parts or '..' in rel.parts:
+        raise ValueError('classification paths must be repository-relative')
+    result = (root / rel).resolve()
+    if not result.is_relative_to(root.resolve()):
+        raise ValueError('classification path escapes repository')
+    return result
+
+
+def _verify_published(root: Path, paths: list[str]) -> None:
+    """Require exact authority bytes from the current, remotely published main."""
+    def git(*args):
+        return subprocess.check_output(['git', '-C', str(root), *args], stderr=subprocess.DEVNULL, timeout=30)
+    remote = git('ls-remote', 'origin', 'refs/heads/main').decode().split()[0]
+    if git('rev-parse', 'refs/remotes/origin/main').decode().strip() != remote:
+        raise ValueError('origin/main is stale or missing; fetch before evidence use')
+    for rel in paths:
+        if git('show', f'{remote}:{rel}') != _safe_relative(root, rel).read_bytes():
+            raise ValueError(f'published origin/main differs from evidence authority: {rel}')
+
+
+def _verify_original_blobs(root: Path, index: dict, entries: list[dict]) -> None:
+    """Every moved file must be byte-identical to its original sweep commit."""
+    if subprocess.check_output(['git', '-C', str(root), 'rev-parse', '--show-object-format']).decode().strip() != 'sha1':
+        raise ValueError('unsupported git object format')
+    for sweep in index['sweeps']:
+        entry = next(e for e in entries if e['memory_mode'] == sweep['memory_mode'])
+        old, new = Path(entry['old_dir']), _safe_relative(root, entry['new_dir'])
+        raw = subprocess.check_output(['git', '-C', str(root), 'ls-tree', '-r', '-z',
+                                       sweep['commit'], '--', str(old)])
+        expected = {}
+        for line in raw.split(b'\0'):
+            if not line:
+                continue
+            header, path = line.split(b'\t', 1)
+            mode, kind, digest = header.decode().split()
+            relative = Path(path.decode()).relative_to(old)
+            if kind != 'blob' or mode not in ('100644', '100755'):
+                raise ValueError('sweep contains unsupported git object')
+            expected[str(relative)] = digest
+        if not expected:
+            raise ValueError('no original sweep blobs found')
+        actual = {}
+        for path in new.rglob('*'):
+            if path.is_symlink():
+                raise ValueError('symlinks forbidden in classified sweep')
+            if path.is_file():
+                data = path.read_bytes()
+                actual[str(path.relative_to(new))] = hashlib.sha1(
+                    b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+        if actual != expected:
+            raise ValueError('moved sweep differs from original commit blobs')
+
+
+def evidence_classification(index_path: Path, paper_root: Path, sidecar_path: Path) -> dict:
+    """Resolve the author's exact immutable classification, never rewrite native records."""
+    root = Path(paper_root).resolve()
+    sidecar = Path(sidecar_path).resolve()
+    index_path = Path(index_path).resolve()
+    if not sidecar.is_relative_to(root) or not index_path.is_relative_to(root):
+        raise ValueError('classification and index must be inside repository')
+    decision = json.loads(sidecar.read_text())
+    if decision.get('schema') != 'r1.c3_classification/1' or decision.get('label') != 'EVIDENCE' or decision.get('decision_id') != 'R1-SWEEP1-CLASSIFY':
+        raise ValueError('invalid evidence classification')
+    auth = decision['authorization']
+    source = decision['index']
+    if auth['path'] != 'docs/r1/authorizations/c3_sweep1_20261027.md' or _sha256(_safe_relative(root, auth['path'])) != auth['sha256']:
+        raise ValueError('authorization missing or hash mismatch')
+    if source['path'] != 'results/r1/pilot/C3_sweep_index_20261028T033315Z.json' or _safe_relative(root, source['path']) != index_path or _sha256(index_path) != source['sha256']:
+        raise ValueError('index path or hash mismatch')
+    side_rel = str(sidecar.relative_to(root))
+    required = ('R1-SWEEP1-CLASSIFY', 'EVIDENCE', auth['path'], source['path'], source['sha256'], side_rel, _sha256(sidecar))
+    rows = (root / 'docs/r1/PLAN.md').read_text().splitlines()
+    if not any(line.startswith('| R1-SWEEP1-CLASSIFY ') and all(x in line for x in required) for line in rows):
+        raise ValueError('matching author PLAN classification row missing')
+    _verify_published(root, ['docs/r1/PLAN.md', auth['path'], source['path'], side_rel])
+    index = json.loads(index_path.read_text())
+    provenance = index.get('launch_provenance') or {}
+    expected_pins = {
+        'paper_commit': 'ccb47128aad82e331f79df4a893dbc1ee7e42f51',
+        'harness_commit': '6adf3859de66c4814fcf376eed59880fbd8eeaf7',
+        'config_sha256': '2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b',
+        'model_sha256': '509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c',
+        'llamacpp_build': 'version: 0.7.0-dev (build 1, commit 620d222)',
+    }
+    note = _safe_relative(root, auth['path']).read_text()
+    if provenance != expected_pins or any(v not in note for k, v in expected_pins.items() if k != 'paper_commit'):
+        raise ValueError('classification launch pins do not match authorization')
+    nodes = ['digits_mlp', 'tabular_mlp', 'openml_breast_w', 'openml_ionosphere', 'openml_wdbc',
+             'openml_credit_approval', 'openml_sonar', 'openml_climate']
+    if index.get('nodes') != nodes or index.get('excluded_nodes') != [] or index.get('instances') != 18 or index.get('runs') != 20 or \
+            index.get('manager', {}).get('proposal_schema') != 'manager_proposal/v1':
+        raise ValueError('classified sweep design differs from authorization')
+    audit = index.get('audit') or {}
+    if audit.get('seeds') != list(range(7001, 7011)) or audit.get('label_seeds') != list(range(7001, 7006)) or \
+            audit.get('evaluation_seeds') != list(range(7006, 7011)):
+        raise ValueError('classified sweep audit seeds differ from authorization')
+    entries = decision['sweeps']
+    if len(entries) != 2 or {e['memory_mode'] for e in entries} != {'none', 'append_only_summary'}:
+        raise ValueError('classification must bind both memory modes')
+    indexed = {s['memory_mode']: s for s in index['sweeps']}
+    if set(indexed) != {e['memory_mode'] for e in entries}:
+        raise ValueError('classification does not bind exact index modes')
+    for entry in entries:
+        recorded = indexed[entry['memory_mode']]
+        old = Path(recorded['out'])
+        if str(old) != entry['old_dir'] or old.parts[:3] != ('results', 'r1', 'pilot'):
+            raise ValueError('classification old directory differs from index')
+        expected_new = Path('results/r1/evidence') / old.name
+        if str(expected_new) != entry['new_dir'] or recorded['manifest'] != str(old / 'manifest.json') or not Path(recorded['ledgers']).is_relative_to(old):
+            raise ValueError('classification path mapping differs from index')
+        manifest = _safe_relative(root, str(expected_new / 'manifest.json'))
+        if _sha256(manifest) != entry['manifest_sha256']:
+            raise ValueError('classified manifest hash mismatch')
+        if json.loads(manifest.read_text()).get('launch_provenance') != provenance:
+            raise ValueError('classified manifest launch pins differ from index')
+    _verify_original_blobs(root, index, entries)
+    return decision
+
+
 def resolve_sweep(sweep: Path | str, paper_root: Path | str | None = None) -> tuple[Path, Path]:
     """(index file, paper root) from an index file or a completed sweep batch directory."""
     sweep = Path(sweep)
@@ -207,7 +331,8 @@ def resolve_sweep(sweep: Path | str, paper_root: Path | str | None = None) -> tu
             raise ValueError(f"{sweep}: the sweep's index phase is not completed; no table from an unfinished sweep")
         root = Path(paper_root) if paper_root else sweep / "agent_paper_B"
         recorded = Path(step["path"])
-        index = recorded if recorded.exists() else root / "results/r1/pilot" / recorded.name
+        local = root / "results/r1/pilot" / recorded.name
+        index = local if paper_root and local.exists() else recorded if recorded.exists() else local
         return index, root
     if paper_root:
         return sweep, Path(paper_root)
@@ -217,7 +342,8 @@ def resolve_sweep(sweep: Path | str, paper_root: Path | str | None = None) -> tu
     raise ValueError(f"{sweep}: index outside <paper>/results/r1/pilot; pass paper_root")
 
 
-def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names: dict | None = None) -> dict:
+def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names: dict | None = None,
+                  classification: dict | None = None) -> dict:
     """Validated per-memory-mode sources of a sweep index: {name: (spec, sweep dir)}.
 
     Refuses (ValueError) a wrong schema, a sweep with recorded root failures, a
@@ -233,6 +359,12 @@ def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names:
     names = dict(source_names or {})
     specs = {}
     for sweep in index["sweeps"]:
+        sweep = dict(sweep)
+        if classification is not None:
+            binding = next(e for e in classification['sweeps'] if e['memory_mode'] == sweep['memory_mode'])
+            old, new = Path(binding['old_dir']), Path(binding['new_dir'])
+            for key in ('out', 'manifest', 'ledgers'):
+                sweep[key] = str(new / Path(sweep[key]).relative_to(old))
         mode = sweep["memory_mode"]
         name = names.pop(mode, f"c3_{tag}_{mode}")
         if not SOURCE_NAME.fullmatch(name) or name in specs:
@@ -293,11 +425,13 @@ def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names:
 
 
 def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | None = None,
-                     e1_summary: Path | str | None = None, source_names: dict | None = None) -> dict:
+                     e1_summary: Path | str | None = None, source_names: dict | None = None,
+                     classification: Path | str | None = None) -> dict:
     """A completed C3 label sweep -> the C3 proposal table (same files and row format as ``build``)."""
     index_path, root = resolve_sweep(sweep, paper_root)
     index = json.loads(Path(index_path).read_text())
-    specs = sweep_sources(index, Path(index_path), Path(root), source_names)
+    decision = evidence_classification(index_path, Path(root), Path(classification)) if classification else None
+    specs = sweep_sources(index, Path(index_path), Path(root), source_names, decision)
     source = index.get("noise_source")
     if source is not None:
         if not isinstance(source, dict) or set(source) != {"path", "sha256"}:
@@ -315,11 +449,12 @@ def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | N
         e1_summary = pinned
     noise = noise_table() if e1_summary is None else noise_table(e1_summary)
     out = Path(out)
-    out.mkdir(parents=True, exist_ok=True)
+    out.mkdir(parents=True, exist_ok=decision is None)
     rows, configs, checks = _replay_sources(specs, noise, strict_start_files=True)
     if not checks:
         raise ValueError(f"{index_path}: no root ledgers")
-    head = {"label": index.get("label"), "ai_assisted": "AI-assisted (Claude)", "commit": git_head(),
+    head = {"label": decision['label'] if decision else index.get("label"), "ai_assisted": "AI-assisted (Claude)", "commit": git_head(),
+            **({'classification': {'path': str(Path(classification).resolve()), 'sha256': _sha256(Path(classification)), 'native_index_label': index.get('label')}} if decision else {}),
             "sources": {k: v[0] for k, v in specs.items()},
             "sweep_index": {"path": str(index_path), "sha256": _sha256(index_path), "label": index.get("label"),
                             "nodes": index.get("nodes"), "excluded_nodes": index.get("excluded_nodes"),
@@ -405,6 +540,7 @@ def main(argv=None) -> int:
     w.add_argument("--paper-root", default=None, help="paper checkout the index paths are relative to")
     w.add_argument("--e1-summary", default=None, help=f"noise source (default {E1_SUMMARY})")
     w.add_argument("--source-name", nargs="*", default=[], help="MODE=NAME source names (default c3_<UTC>_<mode>)")
+    w.add_argument("--classification", default=None, help="author classification sidecar (validated before evidence use)")
     p = sub.add_parser("plan")
     p.add_argument("--table", required=True)
     p.add_argument("--out", default=None)
@@ -417,7 +553,7 @@ def main(argv=None) -> int:
     elif args.cmd == "build-sweep":
         names = dict(item.split("=", 1) for item in args.source_name)
         meta = build_from_sweep(Path(args.index), Path(args.out), paper_root=args.paper_root,
-                                e1_summary=args.e1_summary, source_names=names)
+                                e1_summary=args.e1_summary, source_names=names, classification=args.classification)
         print(json.dumps({"n_proposals": meta["n_proposals"], "sources": list(meta["sources"]),
                           "checks": meta["replay_checks_total"]}))
     else:
