@@ -1,4 +1,96 @@
 \section{Theory}
-\textbf{Draft status: pending author proof check.} The proposed analysis separates a one-step screening and acceptance problem from the question of optimality over a sequence of decisions. For an executed proposal, let $H_n$ denote the observed noisy comparison, let $\Delta_n$ denote its latent increment, and let $\mathcal O_n$ contain the information available before execution. A candidate analysis uses the posterior quantity $m_n=\mathbb E[\Delta_n\mid\mathcal O_n,H_n]$ and the pre-execution value $V_n=\mathbb E[(m_n)^+\mid\mathcal O_n]$; on a skip, $H_n$ is not observed.
+\label{sec:theory}
 
-The draft in \texttt{T4\_PROP10\_REVISION\_20261028.md} proposes a one-step index statement and a separate sequential statement under no feedback and no information conditions. It also examines the distinct consequences of failure of each condition. These are proposed statements for author verification, not accepted claims: in particular, the proposed sequential result uses a fixed proposal horizon and a Lagrangian cost, and does not establish optimality under a hard run budget. \TBD{After author proof check, state the accepted propositions, conditions, proofs and scope.} \TBD{Resolve the incumbent-error model and which proposed empirical tests enter the plan.}
+\TBD{Author proof check pending for every statement in this section (draft of 28 Oct 2026, from the independently reviewed T4 revision). Do not cite these results as established before the check.}
+
+Write $s^2=\tau^2+\sigma^2$ and $z=(t-\mu)/s$, and define
+\[
+V(t;\mu,\tau,\sigma)=\mu\,\Phi(-z)+\tfrac{\tau^2}{s}\,\phi(z).
+\]
+$V$ is the value $\mathbb{E}[\Delta\,\mathbf{1}\{\Delta+\eta>t\}]$ of keeping a candidate whenever its observation exceeds $t$, for $\Delta\sim\mathcal{N}(\mu,\tau^2)$ and $\eta\sim\mathcal{N}(0,\sigma^2)$ independent of $\Delta$.
+
+\paragraph{One-step configuration.}
+The first result needs no independence across trials. It gives the optimal configuration for a single proposal.
+
+\begin{proposition}[One-step index]\label{prop:onestep}
+Fix trial $n$ and assume $\mathbb{E}|\Delta_n|<\infty$. Let $m_n=\mathbb{E}[\Delta_n\mid\mathcal{O}_n\vee\sigma(H_n)]$ and $V^*_n=\mathbb{E}[m_n^+\mid\mathcal{O}_n]$. Then, almost surely on $\mathcal{O}_n$:
+\begin{enumerate}
+\item[(i)] $\mathbb{E}[\Delta_n k_n\mid\mathcal{O}_n]\le a_nV^*_n$ for every admissible keep rule, with equality for $k_n=a_n\mathbf{1}\{m_n>0\}$;
+\item[(ii)] executing is optimal for the immediate payoff if and only if $V^*_n\ge g$, and its immediate gain over always executing (and keeping by (i)) is $(g-V^*_n)^+$.
+\end{enumerate}
+Suppose further that, given $\mathcal{O}_n$, the edit is a no-op with probability $\pi_n$. Otherwise $\Delta_n\sim\mathcal{N}(\mu_n,\tau_n^2)$ with $\tau_n>0$, observed with independent noise $\mathcal{N}(0,\sigma_n^2)$ that has a continuous law; no-ops are observed exactly. Then on $\{H_n\neq0\}$ the keep rule is the per-proposal Bayes threshold $H_n>t^*_n=-\mu_n\sigma_n^2/\tau_n^2$; on $\{H_n=0\}$ every keep decision has value 0. Moreover $V^*_n=(1-\pi_n)\,V(t^*_n;\mu_n,\tau_n,\sigma_n)$.
+\end{proposition}
+
+In DAC terms, for $r_n=0$, Proposition~\ref{prop:onestep} gives the optimal screening and keep thresholds in closed form from a forecast $(\pi_n,\mu_n,\tau_n)$ of the proposal's increment: $c_n=g$ and $t_n=t^*_n$. Verification ($r_n>0$) is an information action, and these results do not cover it.
+
+The default rule ($t=0$) is optimal for a proposal only if $\mu_n=0$. A sceptical forecast ($\mu_n<0$) raises the bar; a confident one lowers it. A learned configurator must therefore supply a \emph{calibrated forecast}, not an action.
+
+\paragraph{The recorded incumbent is biased.}
+The next result uses a different noise model from the closed form above: comparisons share the recorded incumbent's error.
+
+\begin{proposition}[Selection bias of the record]\label{prop:bias}
+Let the recorded incumbent value be $B=J(\mathrm{inc})+e$, and let a comparison be $\hat\Delta_n=\Delta_n+\varepsilon_n-e$, with candidate error $\varepsilon_n=\varrho_n e+\sigma_{c,n}\xi_n$. Here $\varrho_n\in[0,1)$ and $\sigma_{c,n}>0$ are $\mathcal{O}_n$-measurable, and $\xi_n\sim\mathcal{N}(0,1)$ is independent of $(\mathcal{O}_n,e,\Delta_n)$. Under the default keep rule, conditionally on $(\mathcal{O}_n,e,\Delta_n)$ and on a keep, the new incumbent's error $e'=\varepsilon_n$ satisfies
+\[
+\mathbb{E}[e'\mid\mathrm{keep}]>\max(e-\Delta_n,\ \varrho_n e).
+\]
+This holds for every proposer, however it uses the ledger.
+\end{proposition}
+
+Noise-driven keeps therefore inflate the record \citep[cf.][]{smith2006optimizer,andrews2024winners}. Later true improvements then face a raised bar, and the inflated record is what the manager's memory displays.
+
+\paragraph{When one-step configuration is globally optimal.}
+Let $\omega_n=(x_n,\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ collect the exogenous variables of trial $n$. Consider two conditions.
+
+\textbf{No feedback (NF).} The joint law of $\omega_{1:N}$ is the same under every policy, and $U$ is independent of it. (NF) holds if $U$ is independent of $\omega_{1:N}$ and the following three conditions hold. They are sufficient, not necessary, and they are also the ways (NF) typically fails.
+\begin{itemize}
+\item The proposals do not react to what was executed, kept or displayed.
+\item The edits' increments do not depend on which earlier edits were kept, and the joint law of the comparison noises does not depend on the incumbent's identity or history.
+\item No-op and duplicate status is a function of $x_{1:n}$ alone, the same under every policy, and filtered proposals do not use up the horizon (alternatively, no earlier effective configuration is re-proposed within the horizon).
+\end{itemize}
+
+\textbf{No information (NI).} For every $n$, $(\mathbf{1}\{I_n\},\Delta_n,\eta_n)$ is conditionally independent of the earlier trials' outcomes given $x_{1:n}$.
+
+\begin{theorem}[Reduction to independent one-step decisions]\label{thm:reduction}
+Under (NF) and (NI), with every run output that predicts later increments counted as part of $H_n$:
+\begin{itemize}
+\item $m_n=\mathbb{E}[\Delta_n\mid x_{1:n},H_n]$ and $V^*_n=\mathbb{E}[m_n^+\mid x_{1:n}]$;
+\item the policy that applies Proposition~\ref{prop:onestep} at every trial maximises $J_g$ over all non-anticipating, possibly randomised, policies, with value $\sum_n\mathbb{E}[(V^*_n-g)^+]$;
+\item its gain over always executing (and keeping by Proposition~\ref{prop:onestep}(i)) is $\sum_n\mathbb{E}[(g-V^*_n)^+]$.
+\end{itemize}
+\end{theorem}
+
+The proof is a per-trial upper bound that a single policy attains at every trial simultaneously, so no value-function argument is needed (proof in the appendix).
+
+The contrapositive limits what a learned non-myopic policy can add: a policy can beat the Bayes one-step policy only if (NF) or (NI) fails. Failure is necessary, not sufficient, and nothing here says that reinforcement learning in particular is needed. When either condition fails, the loss can be unbounded:
+
+\begin{proposition}[Failure of each condition]\label{prop:failures}
+There are loops in which the Bayes one-step policy loses an amount that grows without bound:
+\begin{enumerate}
+\item[(a)] \emph{feedback}, with (NI) holding under each policy's law: keeping an edit with a known small loss shifts the law of the next proposal;
+\item[(b)] \emph{information}, with (NF) intact: a cheap probe and a larger later edit share a latent node sensitivity.
+\end{enumerate}
+\end{proposition}
+
+In case (b) the setting is $N=2$ with fixed, non-interacting proposals. The probe has scale $\alpha=1$, so its immediate value $\alpha\phi(0)\approx0.40$ is below the run price $g=0.5$, and the one-step policy never runs it. The later edit has scale $\beta$ and observation noise $\kappa\beta$ with $\kappa=1$. The exact optimality gap grows linearly in $\beta$, with slope $\phi(0)(1-1/\sqrt{2})\approx0.117$. It stays bounded if $\kappa=0$.
+
+\paragraph{Scope.}
+All statements are for a fixed run price with both actions always feasible. Under a hard budget, or when freed runs are re-spent, the opportunity cost of a run depends on the remaining budget and the incumbent. That makes the thresholds state-dependent; we treat it as a declared sensitivity, not a theorem.
+
+The noise model of Proposition~\ref{prop:bias}, in which comparisons share the recorded incumbent's error, violates both (NF) and (NI). \TBD{Author decision on the incumbent-error model for Proposition~\ref{prop:onestep} and Theorem~\ref{thm:reduction}: an incumbent error re-drawn per comparison, or a shared latent error (outside Theorem~\ref{thm:reduction}).}
+
+\paragraph{Consequences for learning and testing.}
+Proposition~\ref{prop:onestep} and Theorem~\ref{thm:reduction} motivate two design choices:
+\begin{itemize}
+\item train a probabilistic forecast with a bounded proper scoring rule \citep{damani2025uncertainty}, separately from any action output;
+\item read the configuration off the forecast through the closed form.
+\end{itemize}
+
+Theorem~\ref{thm:reduction} also has two testable implications.
+\begin{itemize}
+\item Under (NF) and (NI), the Bayes forecast given the whole proposal history $x_{1:n}$ gains nothing from executed results. A forecaster given less of the history can gain from results even under (NI).
+\item Under (NF), forcing a keep or a discard at matched histories should not change later proposals. This tests only the keep channel of (NF), not execute versus skip or what is displayed.
+\end{itemize}
+We plan corresponding checks \TBD{author decision on which checks enter the plan}. Neither check can establish its condition; each can only provide evidence against it.
+
+\paragraph{Relation to classical tools.}
+The classical tools here are ranking and selection, the knowledge gradient \citep{frazier2008knowledge,chick2012sequential}, and racing \citep{birattari2002frace}. They assume a fixed set of alternatives. Three features of the loop fall outside them: a proposer whose law depends on the ledger, an incumbent that can be restored, and a selection bias that feeds back into the proposer.

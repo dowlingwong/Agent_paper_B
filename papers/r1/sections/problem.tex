@@ -1,6 +1,48 @@
 \section{Problem Formulation}
-We formulate governed automated research as noise-aware dynamic algorithm configuration (DAC) \citep{biedenkapp2020dac,adriaensen2022dac}. At decision step $n$, a proposer offers a bounded edit to the current incumbent on an instance, or node. The configuration $\theta_n=(c_n,t_n,r_n)$ specifies a screening threshold $c_n$, a keep threshold $t_n$, and a verification budget $r_n$. These controls determine whether the candidate is executed, whether an evaluated candidate is kept, and how much additional verification is allocated, subject to the declared run and model-call budgets.
+\label{sec:problem}
 
-Execution produces a noisy comparison of the candidate with its incumbent. A skipped proposal does not reveal that comparison; a kept candidate changes the incumbent for subsequent steps. The controller may use the proposal, node descriptors, observed history and remaining budgets, but it cannot condition a decision on an outcome that has not been observed. Repeated proposals and no-ops are recorded explicitly, because their status can depend on which earlier candidates were evaluated or retained.
+\paragraph{The governed loop.}
+A campaign runs on one \emph{node}: a training task with a configuration file and a validation metric. At trial $n=1,\dots,N$, a language-model manager proposes a bounded edit $x_n$ to the incumbent configuration. The control plane decides at two epochs:
+\begin{itemize}
+\item at epoch E1 it executes the edit ($a_n=1$) or skips it ($a_n=0$);
+\item after an execution, at epoch E2, it keeps the candidate as the new incumbent ($k_n=1$) or discards it ($k_n=0$), with $k_n\le a_n$.
+\end{itemize}
+Before keeping, it may spend $2r$ further runs on a paired fresh-seed verification. An execution consumes one worker run from a budget of $W$ runs, and $N$ caps the number of manager calls.
 
-The target is improvement of the final incumbent, evaluated on held-out instances with fresh audit seeds and matched worker and model-call budgets. In-run observations used for decisions are distinct from the final audit. \TBD{Specify the formal estimand, feasible configuration space, cost accounting and predeclared contrasts.}
+\paragraph{Observation model.}
+Let $\Delta_n$ be the true increment of the candidate over the incumbent, and $I_n$ the event that the edit leaves the incumbent's effective configuration unchanged (a \emph{no-op}, $\Delta_n=0$). An execution reveals $H_n=\Delta_n+\eta_n$, where $\eta_n$ is comparison noise with per-comparison scale $\sigma_n$; increments are standardised by a node-level scale $\sigma_{\mathrm{node}}$. Every other run output that could predict later increments (the absolute metric, crashes, wall time) is treated as part of $H_n$. A skip reveals nothing. Edits that repeat an earlier evaluated configuration (\emph{duplicates}) have a known result, and a rule layer handles them.
+
+\paragraph{Information.}
+The information before execution is
+\[
+\mathcal{O}_n=\sigma\bigl(x_{1:n},\,(a_j,k_j,a_jH_j)_{j<n},\,U\bigr),
+\]
+where $U$ collects all control-plane randomness. After an execution the controller also sees $H_n$. The displayed memory and the remaining budgets are functions of $\mathcal{O}_n$. This distinction matters below: executing has information value that skipping does not.
+
+\paragraph{Objective and estimand.}
+For analysis we use the Lagrangian objective
+\[
+J_g(\pi)=\mathbb{E}^\pi\Bigl[\textstyle\sum_{n\le N}(\Delta_n k_n-g\,a_n)\Bigr],
+\]
+which prices a run at $g$. It is the Lagrangian relaxation of the budget constraint $\mathbb{E}[\sum_n a_n]\le W$; verification runs are not priced in it.
+
+The primary empirical estimand is the final incumbent's improvement over the start configuration, audited on fresh seeds on held-out campaigns, under matched worker-run and manager-call budgets. The improvement recorded during the run is not this outcome: it is selected on noise (Section~\ref{sec:theory}). In-run observations used for decisions are kept separate from the final audit. \TBD{Formal statement of the matched-budget accounting and the predeclared contrasts.}
+
+\paragraph{Noise-aware dynamic algorithm configuration.}
+We cast the control plane as a dynamic algorithm configuration (DAC) problem \citep{biedenkapp2020dac,adriaensen2022dac}:
+\begin{itemize}
+\item the \emph{target algorithm} is the governed loop;
+\item an \emph{instance} is a node;
+\item the \emph{state} at trial $n$ is the history, the current proposal, the incumbent and the remaining budget;
+\item the \emph{configuration} at trial $n$ is $\theta_n=(c_n,t_n,r_n)$:
+  \begin{itemize}
+  \item a screening threshold $c_n$ (execute if and only if the forecast value of the proposal is at least $c_n$);
+  \item a keep threshold $t_n$ on the observed increment;
+  \item a verification budget $r_n$.
+  \end{itemize}
+\end{itemize}
+Execute-or-skip and keep-or-discard are the decisions that these parameters induce.
+
+The default governed loop is the static configuration $c_n=-\infty$, $t_n=0$, $r_n=0$: execute everything and keep any observed improvement. A configuration can also be set once per instance, either fitted on that instance's own campaigns or predicted from its descriptors. Or it can be set dynamically, per proposal, as a function of a forecast of the proposal's increment. These three levels (static, per-instance and dynamic) organise our baselines (Section~\ref{sec:setup}).
+
+A configuration policy is learned on training campaigns. It is evaluated on held-out campaigns of the same nodes (primary) and on held-out nodes (transfer), as in contextual DAC benchmarks \citep{eimer2021dacbench}. Section~\ref{sec:theory} characterises when this DAC problem reduces to a sequence of independent one-step decisions, and when it does not.

@@ -1,6 +1,11 @@
 \documentclass{article}
 \usepackage{icml2026} % Replace this one line when the official 2027 style is released.
 \usepackage{amsmath,amssymb,booktabs}
+\usepackage{amsthm}
+\usepackage{url}
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
 \ifdefined\FinalPaper
   \newcommand{\TBD}[1]{\PackageError{paper}{Unresolved TBD: #1}{Resolve all placeholders before final build.}}
 \else

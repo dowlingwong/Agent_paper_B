@@ -1,6 +1,73 @@
 \section{Experimental Setup}
-The planned evaluation separates proposal generation, label construction, model selection and final audit. Nodes define instances for evaluating generalisation, including leave-one-node-out folds. Previously evaluated duplicates are excluded from learned-label and learned-arm evaluation sets and counted separately; rule-based skips remain accounted for together with the comparator's execution cost. The specific nodes, sample sizes, noise-floor estimates and eligibility decisions require a reviewed record. \TBD{Insert the accepted node inventory and measurement protocol.}
+\label{sec:setup}
 
-The controller ladder includes a constant-prior rule, rule-detectable waste, a tabular prior, a zero-shot forecast and small decision models. The planned context-only reference is fitted across the training nodes in each leave-one-node-out fold and applied unchanged to proposals on the held-out node. Kev-0.8B and Kev-4B are decision-model candidates; matched Qwen3.5 base models are controls. The final arm definitions, evaluation availability and inference costs remain to be specified from accepted records. \TBD{Specify the adopted arms, information sets and compute matching.}
+\paragraph{Nodes and noise floors.}
+We use eight CPU training nodes:
+\begin{itemize}
+\item two multilayer-perceptron tasks (digits, and a synthetic tabular task);
+\item six OpenML classification tasks \citep{vanschoren2013openml}: breast-w, ionosphere, wdbc, credit-approval, sonar and climate-model-simulation-crashes.
+\end{itemize}
 
-The planned protocol separates label and evaluation seed blocks by stage. The audit is to use seeds 7001--7005 for labels and 7006--7010 for task-level joint-seed retraining and evaluation. The latter are prohibited from downstream C3 or Track P training or selection; the loader guard enforcing this boundary remains to be implemented and independently reviewed. The 19 October pilot used seeds 7001--7006 on other proposals for engineering work. \TBD{Document the accepted split guards, uncertainty estimates, gate calculation and author pre-declaration before reporting evidence.}
+\emph{Noise level.} On each node, $\sigma_{\mathrm{node}}$ is the median joint-seed standard deviation of the paired difference over material edits, measured with 30 seeds per condition. Increments are reported in $z=\Delta/\sigma_{\mathrm{node}}$.
+
+\emph{Qualification.} A node qualifies if the default keep rule's mean probability of a wrong decision over the node's material edits is at least 10\%, with a minimum number of material edits.
+
+\emph{Repair and replacement.} Four candidate nodes failed a pre-collection liveness check: no proposal improved on their near-ceiling start configuration. They were repaired by a pre-declared start-configuration rule and re-measured. Three then qualified; the fourth was replaced by a pre-declared reserve node.
+
+\TBD{Per-node noise-floor table from generated data, and the full list of screened candidate nodes.}
+
+\paragraph{Manager and campaigns.}
+The manager is a pinned open-weight model, Qwen2.5-Coder-7B-Instruct \citep{hui2024qwencoder}, at 4-bit (Q4\_K\_M) quantization and served by llama.cpp \citep{llamacpp}. Its proposals follow a fixed structured schema. \TBD{Confirm structure-only JSON-schema decoding in the recorded manager path.}
+
+Each node has 18 campaign seeds, and each seed is run under both memory modes: the manager either sees an append-only summary of earlier trials (primary) or has no memory (contrast). This gives 36 campaigns per node, each with a budget of $W=20$ worker runs. In the DAC terms of Section~\ref{sec:problem}, the node is the instance and its campaigns are repeated runs on it.
+
+\paragraph{Labels and splits.}
+The non-inert, non-duplicate proposals are audited on $K=10$ fresh joint seeds, disjoint from the campaign seeds. \TBD{All audited, or a random sample reweighted by inverse sampling probability.} The ten audit seeds have separate roles:
+\begin{itemize}
+\item the first five (7001--7005) form the training label, a 12-bin soft label over $z$;
+\item the last five (7006--7010) give the evaluation value.
+\end{itemize}
+Every audit seed is a task-level joint-seed retraining of the candidate and the incumbent. The evaluation seeds are to be excluded from every decision-model training, tuning or selection step. \TBD{The loader guard that enforces this boundary is to be implemented and independently reviewed.}
+
+The width of the soft label differs by model class:
+\begin{itemize}
+\item for the decision models it is the pooled node noise, $\sigma_{\mathrm{node}}/\sqrt5$;
+\item for A1--A3 it is the audit standard error.
+\end{itemize}
+TabPFN regresses a scalar and has no soft-label width. \TBD{TabPFN regression target and width; align the soft-label width across arms, or report the difference.}
+
+No-ops receive the no-op label. Duplicates of an earlier evaluated configuration carry no label; they are counted separately and skipped by the rule layer. Folds are by campaign seed, so a seed's campaigns in both memory modes share a fold. We add leave-one-node-out (LONO) folds for transfer. \TBD{Grouping of recurring (candidate, incumbent) pairs across campaigns in the folds.} \TBD{Counts of audited, no-op and duplicate proposals per node from generated data.}
+
+\paragraph{Configuration policies.}
+The policies follow the static, per-instance and dynamic levels of Section~\ref{sec:problem}.
+\begin{itemize}
+\item \emph{Static:} the default loop (A0).
+\item \emph{Per-instance:}
+  \begin{itemize}
+  \item a constant prior fitted on the node's own campaigns (A1);
+  \item a context-only prior predicted from node descriptors, fitted across the training nodes (A1-ctx).
+  \end{itemize}
+\item \emph{Dynamic:}
+  \begin{itemize}
+  \item A1 plus a rule layer that skips no-ops and duplicates (A2);
+  \item a gradient-boosted prior on proposal features (A3; \citealp{ke2017lightgbm});
+  \item a tabular-foundation-model prior on the same features (TabPFN; \citealp{hollmann2025tabpfn});
+  \item the manager's own zero-shot forecast (A4);
+  \item small decision language models fine-tuned to output the 12-bin forecast (A5): Kev-0.8B and Kev-4B \citep{kev2026}, plus, as a control that isolates decision pre-training, the same fine-tuning applied to their Qwen3.5 base models \citep{qwen35};
+  \item a learned execute-or-skip action head on the A5 representation (A6), compared with the closed-form rule applied to the same forecast.
+  \end{itemize}
+\end{itemize}
+A1--A5 use the closed-form rules of Proposition~\ref{prop:onestep} and differ only in the forecast. A2 and the later arms add the rule layer, and A1 keeps knowledge-gradient verification. A6 replaces the screening rule with a learned action head. \TBD{Final list of arms after the decision-model exam and the author's scope decisions; TabPFN version pin.}
+
+\paragraph{Offline gate and statistics.}
+The run price is declared before any evaluation and is never tuned: $g=0.1\,\sigma_{\mathrm{node}}$ (primary), with $0.05$ and $0.2$ as sensitivities.
+
+The primary offline quantity is an arm's held-out one-step value scaled to 20 logged proposals. In the sweep, every proposal is executed, so one proposal corresponds to one run. Skips are credited at $g$, and freed runs are not re-spent. Outside (NF) and (NI), this scaled one-step gain has no guaranteed sign relation to the campaign gain. It is a declared gate quantity, not an estimate of that gain. Offline evaluation of skipping is also optimistic for a Bayes myopic controller under (NF), and unbiased under (NI). The reason is that sweep histories contain results that a skipping controller would not have observed online. For learned forecasters the sign of this bias is undetermined.
+
+The offline gate asks whether A3 or A5 exceeds A2 by the node's practical threshold $\delta_n$ on at least two nodes, with the lower 95\% bound above zero. The threshold is
+\[
+\delta_n=\max(0.002,\ 0.25\,\tilde s_n),
+\]
+where $\tilde s_n$ is the median paired standard deviation over the node's edits. Uncertainty comes from a cluster bootstrap over campaign seeds (2{,}000 draws); a seed's campaigns in both memory modes form one cluster.
+
+\TBD{Which checks of Theorem~\ref{thm:reduction} enter the plan (results masking; forced keep versus discard).} \TBD{Matched worker-run and manager-call accounting for the online comparison, and its pre-declaration.} \TBD{Harder held-out benchmarks and their audit budget, if adopted.}
