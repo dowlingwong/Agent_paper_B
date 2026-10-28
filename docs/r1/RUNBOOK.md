@@ -183,7 +183,7 @@ Cost and order: Stage A ≈ 10–15 min per model; B1 ≈ 240 proposals per mode
 
 ### Track P — Post-training pipeline for A5/A6 (added 25 Oct; revised and adopted 26 Oct, R1-C3-POST)
 
-**28 Oct (PLAN §10 R1-C3-POOL, R1-C3-POOL-EXAM, R1-TABPFN):** the decision-model candidates are **Kev-0.8B and Kev-4B**, with the Qwen3.5-0.8B/4B-Base control; **StartLux and Laya are removed**; **TabPFN** is added as a ladder rung (in-context, fine-tuned, R-A0, R-A1; not in P.3a, not in R-B). Where the text below names StartLux or Laya as candidates, these rows control.
+**28 Oct (PLAN §10 R1-C3-POOL, R1-C3-POOL-EXAM, R1-TABPFN):** the decision-model candidates are **Kev-0.8B and Kev-4B**, with the Qwen3.5-0.8B/4B-Base control; **StartLux and Laya are removed**; **TabPFN** is added as a ladder rung (in-context, fine-tuned, R-A0, R-A1; not in P.3a, not in R-B). Where the text below names StartLux or Laya as candidates, these rows control. **Also 28 Oct (R1-CONTEXT-BASELINE):** a context-only rung A1-ctx (node descriptors only, fitted across training nodes per LONO fold) and a context-aware vs context-oblivious prompt ablation on Kev-0.8B at Stage S.
 
 Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs/r1/references/README.md`. **Execution:** one agent running on zhixu portal itself follows `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` with a STOP and an independent review after every phase (R1-TRACKP-RUNBOOK).
 

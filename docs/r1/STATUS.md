@@ -6,6 +6,7 @@
 - RUNBOOK Track P and the Track P spec: one pointer line each to these rows. No code, registry, rule file or authorization changed; no run started or stopped.
 - **Open:** TabPFN version (author); the Track P operator must apply R1-C3-POOL-EXAM before the P.3a DRYRUN/EVIDENCE launch.
 - Also recorded: **R1-RB-GRPO** (R-B update rule: leave-one-out advantage without std normalisation, PPO clip ε = 0.2 with 2 epochs per batch, KL to the SFT warm-up checkpoint, β ∈ {0, 0.02}); spec §6.4 and the R-A1 estimator check amended. Aligning the R-A1 check code is for the Track P agent.
+- Also recorded: **R1-CONTEXT-BASELINE** (context-only rung A1-ctx from node descriptors, fitted across training nodes per LONO fold; context-aware vs context-oblivious prompt ablation on Kev-0.8B at Stage S). No new labels.
 - Branch `docs/c3-pool-28oct` (local, from `main` `30303d8`); not pushed or merged — for the coordinator.
 
 ## 27 October 2026 — sweep launch stopped; provenance and local scratch repair (AI-assisted)
