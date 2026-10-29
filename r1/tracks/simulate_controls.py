@@ -1,0 +1,1016 @@
+"""Fast simulator of the Track S regime: S0.6 synthetic calibration, and fixtures for ``analyze.py``.
+
+AI-assisted (Claude, 29 Oct 2026). Output records are labelled ``FIXTURE`` (phase ``synthetic`` / ``dev_tuning``
+/ ``campaign``): they are not the synthetic control nodes run through the real collector (runbook §4), and
+nothing here is evidence. Every default is illustrative until S0.5/S0.7 fix the regime (see ``match_noise``).
+
+Campaign model (raw metric units, digits-like scale): ``llm_cap`` trials; a share ``p_rule`` of proposals is
+rule-detectable and ineligible; trial 1 is executed and kept. A proposal edits key j with size s; true increment
+δ = s·(θ_j − offset) + η; measured Δ̂ = δ + ε. Increments add to the incumbent. Base controller A2-U: per-key
+conjugate normal posterior on θ_j; V̂* = E[max(m̂, 0)]; τ_pred = predictive sd of δ. Campaign Y = true incumbent
++ audit noise + σ_campaign noise (matched to the pilot σ_D or the dev between-configuration sd).
+
+Worlds: N0 (NF + NI, fresh keys, non-binding W); B0 (as N0 at a binding W); P0 budget, P1 information,
+P2± keep feedback (VARIANTS, each diffuse / concentrated, strength calibrated so that the best member's oracle
+gain equals δ_Y). Fork leaves (``simulate``): E1 skip / execute / ghost / ctrl_only and E2 keep / discard arms
+at r = 2 repetitions with common random numbers. ``planted_forks``: fork-level generator with planted channel
+effects for analysis tests. S0.6 (``s06_node``): N0 false-positive rate and oracle check, calibration of every P
+variant, power with the one resize, P(correct selection), P(route B | positive control).
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import zlib
+from dataclasses import asdict, dataclass, field, fields, replace
+from pathlib import Path
+from typing import Callable, Sequence
+
+import numpy as np
+
+from r1.tracks import analyze as A
+from r1.tracks.schema import (
+    STATE_FEATURES,
+    TRACKS_LEAF_SCHEMA,
+    TRACKS_ROOT_SCHEMA,
+    Forecast,
+    LeafRecord,
+    Provenance,
+    RootRecord,
+    Selection,
+)
+
+SIM_HOST = "sim-cpu"
+_SQRT2 = math.sqrt(2.0)
+_SQRT2PI = math.sqrt(2.0 * math.pi)
+
+
+def sim_provenance(label: str = "FIXTURE", host: str = SIM_HOST) -> Provenance:
+    return Provenance(host=host, gpu="none", harness_commit="none", paper_commit="none", manager_gguf_sha256="none",
+                      llama_build="none", controller_version="a2u-sim/v1", prior_sha256="none", phase="synthetic",
+                      label=label)
+
+
+@dataclass
+class Regime:
+    W: int = 10
+    llm_cap: int = 40
+    p_rule: float = 0.55
+    n_instances: int = 30
+    forks_per_instance: float = 20.0
+    p_over: float = 0.5
+    band_e1: float = 0.0004
+    band_e2: float = 0.002
+    channel_share: float = 1.0 / 3.0
+    K_audit: int = 5
+    sigma_audit: float = 0.004
+    sigma_term: float = 0.0
+    sigma_campaign: float = 0.0     # extra per-campaign terminal noise (campaign phase), calibrates σ_D
+    g: float = 0.00066
+
+
+@dataclass
+class World:
+    kind: str = "N0"
+    strength: float = 0.0
+    mu0: float = -0.0005
+    tau0: float = 0.004
+    sigma_eta: float = 0.002
+    sigma_cmp: float = 0.0066
+    size_filler: float = 1.0
+    size_sd: float = 0.6
+    size_probe: float = 1.0
+    probe_offset: float = 1.5      # probe mean is −probe_offset·τθ (in units of size·θ)
+    p_probe: float = 0.25
+    n_follow: int = 2
+    sigma_probe: float | None = None  # P1: measurement sd of the probe kind (None -> sigma_cmp)
+    sigma_follow: float | None = None  # P1: measurement sd of the follow-up kind (None -> sigma_cmp)
+    follow_offset: float = 0.0         # P1: follow-up mean is size·(θ − follow_offset·τθ)
+    probe_max_trial: int = 40          # P1: probes are proposed only up to this trial
+    n_keys: int = 0                    # > 0: proposals edit one of n_keys recurring keys (shared θ per key)
+    fb_early_bf: float | None = None   # P2: budget-fraction cut of the feedback law (see Sim.fb_scale)
+    fb_shape: str = "const"            # P2: "const" | "step" | "linear" | "r_linear" | "r_step" (Sim.fb_scale)
+    fb_sign: float = 1.0               # P2+ (+1) / P2− (−1) for the r_* shapes
+    fb_r_cut: float | None = None      # r_step cut on r = runs remaining fraction
+    p_big: float = 0.0                 # P0 concentrated: share of "big" proposals (size × (1 + strength))
+    lag_min: int = 2
+    lag_max: int = 5
+    fb_len: int = 3
+    y0: float = 0.90
+
+    def __post_init__(self):
+        if self.kind not in ("N0", "B0", "P0", "P1", "P2"):
+            raise ValueError(f"unknown world {self.kind}")
+
+
+# P1 world family found by the 29 Oct exploratory scan (ANALYSIS_NOTES.md §P1): a precise early probe with a
+# low one-step value, followed by two large, noisy follow-ups on the same key. Under a binding W a probe's
+# information has to beat the shadow price of its run; the milder variants tried first did not.
+P1_DEFAULTS = dict(sigma_probe=0.0005, sigma_eta=0.001, size_sd=0.3, lag_min=3, lag_max=10, follow_offset=0.5,
+                   probe_offset=1.0, n_follow=2, sigma_follow=0.05, mu0=0.0005, p_probe=0.8, probe_max_trial=16)
+DEFAULT_WORLD_KW = {"P1": P1_DEFAULTS}
+
+# Revision-6 control variants (best member's oracle gain calibrated to δ_Y by ``calibrate_strength``):
+#   P0 (budget): binding W, NF + NI, heterogeneous proposal values, so the best execute threshold depends on the
+#     runs remaining. concentrated: 10 % "big" proposals (size × (1 + strength)); diffuse: size_sd = 0.3 + strength.
+#   P1 (information, Prop. 10(c)): fillers on 3 recurring keys; probes open fresh keys (high τ_pred, low one-step
+#     value, precise result) and schedule two large follow-ups on the probe's key; strength = follow-up size.
+#     concentrated: p_probe 0.25; diffuse: p_probe 0.8.
+#   P2+ / P2− (keep feedback, Prop. 10(b)): a keep shifts the θ mean of the next fb_len proposals by
+#     ± strength × scale(r). diffuse: scale = r, 6 trials; concentrated: scale = 1{r > 0.7}, 10 trials.
+VARIANTS = {
+    ("P0", "concentrated"): dict(p_big=0.1),
+    ("P0", "diffuse"): dict(),
+    ("P1", "concentrated"): dict(P1_DEFAULTS, n_keys=3, p_probe=0.25),
+    ("P1", "diffuse"): dict(P1_DEFAULTS, n_keys=3, p_probe=0.8),
+    ("P2+", "diffuse"): dict(fb_shape="r_linear", fb_sign=1.0, fb_len=6),
+    ("P2+", "concentrated"): dict(fb_shape="r_step", fb_sign=1.0, fb_r_cut=0.7, fb_len=10),
+    ("P2-", "diffuse"): dict(fb_shape="r_linear", fb_sign=-1.0, fb_len=6),
+    ("P2-", "concentrated"): dict(fb_shape="r_step", fb_sign=-1.0, fb_r_cut=0.7, fb_len=10),
+}
+CAL_GRIDS = {"P0": (0.5, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0), "P1": (2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0),
+             "P2+": (0.002, 0.004, 0.006, 0.008, 0.01, 0.012, 0.016, 0.02),
+             "P2-": (0.002, 0.004, 0.006, 0.008, 0.01, 0.012, 0.016, 0.02)}
+
+
+def make_world(kind: str, strength: float = 0.0, variant: str | None = None, **kw) -> World:
+    if variant is not None:
+        base = dict(VARIANTS[(kind, variant)])
+        if kind == "P0" and variant == "diffuse":
+            base["size_sd"] = 0.3 + strength
+        return World(kind=kind.rstrip("+-"), strength=strength, **{**base, **kw})
+    return World(kind=kind, strength=strength, **{**DEFAULT_WORLD_KW.get(kind, {}), **kw})
+
+
+# --------------------------------------------------------------------------------------------- policies
+class A2UPolicy:
+    """Myopic A2-U at a static run price g: execute iff V̂* ≥ g; keep iff m̂ > 0."""
+
+    def __init__(self, g: float):
+        self.g = float(g)
+        self.name = f"a2u_g:{self.g:.6g}"
+
+    def e1(self, f: dict) -> bool:
+        return f["index_value"] >= self.g
+
+    def e2(self, f: dict) -> bool:
+        return f["index_value"] > 0
+
+
+class LinearPolicy:
+    """Fast evaluator of a serialised ``tracks_policy/v1`` model (π′ or m̃); equals ``analyze.policy_act``."""
+
+    def __init__(self, pol: dict, name: str | None = None):
+        self.pol = pol
+        self.name = name or f"{pol['kind']}:{A.policy_sha256(pol)[:16]}"
+        p = len(pol["features"])
+        coef = np.asarray(pol["coef"], float)
+        st = pol["standardization"]
+        self.par = {}
+        for ep, j in (("E1", 0), ("E2", 1)):
+            key = ep if pol["interactions"] == "epoch" else "all"
+            if key not in st or ep not in pol["trained_epochs"]:
+                continue
+            mean = np.asarray(st[key]["mean"], float)
+            sd = np.asarray([np.inf if x is None else x for x in st[key]["sd"]], float)
+            if pol["interactions"] == "epoch":
+                b = coef[2 + j * p: 2 + (j + 1) * p]
+            else:
+                b = coef[2:2 + p]
+            self.par[ep] = (coef[j] - pol["thresholds"][ep], mean, b / sd)
+
+    def score(self, f: dict, ep: str) -> float:
+        c0, mean, b = self.par[ep]
+        x = np.fromiter((f[k] for k in self.pol["features"]), float, len(self.pol["features"]))
+        return float(c0 + ((x - mean) * b).sum())
+
+    def e1(self, f: dict) -> bool:
+        # an epoch the model was not trained on falls back to A2-U's myopic rule at g = 0 (documented)
+        return self.score(f, "E1") > 0 if "E1" in self.par else f["index_value"] >= 0
+
+    def e2(self, f: dict) -> bool:
+        return self.score(f, "E2") > 0 if "E2" in self.par else f["index_value"] > 0
+
+
+# --------------------------------------------------------------------------------------------- A2-U
+def v_star(a: float, A_: float, sigma_cmp: float) -> float:
+    """E[max(m̂, 0)], m̂ ~ N(a, v), v = A²/(A + σ_cmp²) (preposterior variance of the posterior mean)."""
+    v = A_ * A_ / (A_ + sigma_cmp ** 2)
+    sv = math.sqrt(v)
+    z = a / sv
+    return a * 0.5 * (1.0 + math.erf(z / _SQRT2)) + sv * math.exp(-0.5 * z * z) / _SQRT2PI
+
+
+@dataclass
+class State:
+    t: int = 1
+    runs_used: int = 0
+    keeps: int = 0
+    prior_skips: int = 0
+    y_true: float = 0.0
+    post: dict = field(default_factory=dict)
+    executed_keys: set = field(default_factory=set)
+    pending: list = field(default_factory=list)   # (due_trial, key, size)
+    keep_trials: list = field(default_factory=list)
+
+    def copy(self) -> "State":
+        return State(self.t, self.runs_used, self.keeps, self.prior_skips, self.y_true, dict(self.post),
+                     set(self.executed_keys), list(self.pending), list(self.keep_trials))
+
+
+class Stream:
+    """Manager + worker randomness for one campaign path (root, or one repetition of one fork)."""
+
+    def __init__(self, rng: np.random.Generator, n: int):
+        self.u_rule = rng.random(n + 2)
+        self.u_kind = rng.random(n + 2)
+        self.lag = rng.random(n + 2)
+        self.eta = rng.standard_normal(n + 2)
+        self.eps = rng.standard_normal(n + 2)
+        self.z_size = rng.standard_normal(n + 2)
+
+
+class Sim:
+    def __init__(self, world: World, regime: Regime, seed: int):
+        self.w, self.r, self.seed = world, regime, seed
+        self.W = regime.llm_cap if world.kind == "N0" else regime.W
+        self.a2u = A2UPolicy(regime.g)
+        self.dlog = None
+
+    # ---- model pieces
+    def theta(self, theta_tab: np.ndarray, key: int, t: int, st: State) -> float:
+        th = theta_tab[key]
+        if self.w.kind == "P2":
+            recent = [sc for (k, sc) in st.keep_trials if t - self.w.fb_len <= k < t]
+            if recent:
+                th += self.w.strength * recent[-1]
+        return th
+
+    def fb_scale(self, bf: float) -> float:
+        """P2: how a keep made at budget fraction bf shifts the later proposal law (sign and size)."""
+        w = self.w
+        if w.fb_shape == "const":
+            return 1.0 if (w.fb_early_bf is None or bf < w.fb_early_bf) else 0.0
+        if w.fb_shape == "step":   # helpful early, harmful late
+            return 1.0 if bf < (w.fb_early_bf if w.fb_early_bf is not None else 0.5) else -1.0
+        if w.fb_shape == "linear":
+            return 1.0 - 2.0 * bf
+        if w.fb_shape == "r_linear":   # revision 6: P2± diffuse, scale = sign · r (r = runs remaining fraction)
+            return w.fb_sign * (1.0 - bf)
+        if w.fb_shape == "r_step":     # revision 6: P2± concentrated, scale = sign · 1{r > cut}
+            return w.fb_sign * (1.0 if (1.0 - bf) > (w.fb_r_cut if w.fb_r_cut is not None else 0.7) else 0.0)
+        raise ValueError(w.fb_shape)
+
+    def propose(self, st: State, t: int, s: Stream):
+        """None (rule-detectable) or (key, size, offset, kind); δ = size·(θ_key − offset) + η.
+
+        Keys are the trial index of the proposal that created them. In P1 a probe (edit kind "probe", known
+        offset ``probe_offset``·τθ: low one-step value, but informative about θ) schedules ``n_follow``
+        follow-up edits of size ``strength`` on the same key at increasing lags.
+        """
+        w = self.w
+        if w.kind == "P1":
+            due = [p for p in st.pending if p[0] <= t]
+            if due:
+                p = min(due)
+                st.pending.remove(p)
+                return (p[1], p[2], w.follow_offset * w.tau0, "follow")
+        if s.u_rule[t] < self.r.p_rule:
+            return None
+        if w.kind == "P1" and t <= w.probe_max_trial and s.u_kind[t] < w.p_probe:
+            due = t
+            for i in range(w.n_follow):
+                due += w.lag_min + int(((s.lag[t] * (i + 3.7)) % 1.0) * (w.lag_max - w.lag_min + 1))
+                if due <= self.r.llm_cap:
+                    st.pending.append((due, t, w.strength))
+            return (t, w.size_probe, w.probe_offset * w.tau0, "probe")
+        key = (self.r.llm_cap + 2 + int(s.u_kind[t] * w.n_keys)) if w.n_keys > 0 else t
+        size = w.size_filler * math.exp(w.size_sd * s.z_size[t])
+        if w.kind == "P0" and w.p_big > 0 and s.lag[t] < w.p_big:
+            size *= 1.0 + w.strength
+        return (key, size, 0.0, "filler")
+
+    def sig(self, kind: str) -> float:
+        """Measurement sd by edit kind (known to the controller): probe / follow-up kinds may differ (P1)."""
+        if kind == "probe" and self.w.sigma_probe is not None:
+            return self.w.sigma_probe
+        if kind == "follow" and self.w.sigma_follow is not None:
+            return self.w.sigma_follow
+        return self.w.sigma_cmp
+
+    def forecast(self, st: State, key: int, size: float, off: float = 0.0, kind: str = "filler"):
+        mu, var = st.post.get(key, (self.w.mu0, self.w.tau0 ** 2))
+        a = size * (mu - off)
+        A_ = size * size * var + self.w.sigma_eta ** 2
+        return a, A_, v_star(a, A_, self.sig(kind))
+
+    def m_hat(self, a, A_, dhat, kind: str = "filler"):
+        return a + A_ / (A_ + self.sig(kind) ** 2) * (dhat - a)
+
+    def update(self, st: State, key: int, size: float, dhat: float, off: float = 0.0, kind: str = "filler"):
+        """Conjugate normal update of θ_key from Δ̂ + size·offset = size·θ + (η + ε)."""
+        mu, var = st.post.get(key, (self.w.mu0, self.w.tau0 ** 2))
+        nv = self.w.sigma_eta ** 2 + self.sig(kind) ** 2
+        prec = 1.0 / var + size * size / nv
+        st.post[key] = ((mu / var + size * (dhat + size * off) / nv) / prec, 1.0 / prec)
+        st.executed_keys.add(key)
+
+    def keep(self, st: State, delta: float, t: int):
+        st.y_true += delta
+        st.keeps += 1
+        if t >= 2:  # trial 1 is kept without comparison; it carries no feedback signal (P2)
+            sc = self.fb_scale(st.runs_used / self.W) if self.w.kind == "P2" else 1.0
+            if sc != 0.0:
+                st.keep_trials.append((t, sc))
+
+    # ---- one trial under a policy (default: A2-U at the declared price g)
+    def trial(self, st: State, t: int, s: Stream, theta_tab, log: list | None, policy=None):
+        policy = policy or self.a2u
+        prop = self.propose(st, t, s)
+        rec = {"t": t, "rule": prop is None, "pending_after": list(st.pending)}
+        if prop is None:
+            if log is not None:
+                log.append(rec)
+            return
+        key, size, off, kind = prop
+        delta = size * (self.theta(theta_tab, key, t, st) - off) + self.w.sigma_eta * s.eta[t]
+        eps = self.sig(kind) * s.eps[t]
+        a, A_, vs = self.forecast(st, key, size, off, kind)
+        runs_left = self.W - st.runs_used
+        e1_elig = t >= 2 and runs_left > 0
+        f1 = self.features(st, t, key, vs) if e1_elig else None
+        if f1 is not None:
+            f1["tau_pred"] = math.sqrt(A_)
+        rec.update(key=key, size=size, off=off, kind=kind, delta=delta, eps=eps, v_star=vs, a=a, A=A_,
+                   e1_eligible=e1_elig, state_e1=f1)
+        if t == 1:
+            st.runs_used += 1
+            self.update(st, key, size, delta + eps, off, kind)
+            self.keep(st, delta, t)
+            rec.update(executed=True, kept=True)
+        elif e1_elig and policy.e1(f1):
+            st.runs_used += 1
+            dhat = delta + eps
+            mh = self.m_hat(a, A_, dhat, kind)
+            f2 = self.features(st, t, key, mh, pre_update_key_seen=key in st.executed_keys)
+            rec.update(executed=True, dhat=dhat, m_hat=mh, e2_eligible=True, state_e2=f2)
+            self.update(st, key, size, dhat, off, kind)
+            if log is not None:
+                rec["snap_e2"] = st.copy()
+            if policy.e2(f2):
+                self.keep(st, delta, t)
+                rec["kept"] = True
+        else:
+            if e1_elig:
+                st.prior_skips += 1
+            rec["executed"] = False
+        if log is not None:
+            log.append(rec)
+        if self.dlog is not None and t >= 2:
+            if e1_elig:
+                self.dlog.append({"index": t, "epoch": "E1", "eligible": True, "index_value": vs,
+                                  "budget_fraction": f1["budget_fraction"], "tau_pred": f1["tau_pred"],
+                                  "action": "execute" if rec.get("executed") else "skip"})
+            if rec.get("e2_eligible"):
+                self.dlog.append({"index": t, "epoch": "E2", "eligible": True, "index_value": rec["m_hat"],
+                                  "budget_fraction": rec["state_e2"]["budget_fraction"],
+                                  "action": "keep" if rec.get("kept") else "discard"})
+
+    def features(self, st: State, t: int, key: int, index_value: float, pre_update_key_seen=None) -> dict:
+        seen = (key in st.executed_keys) if pre_update_key_seen is None else pre_update_key_seen
+        return {"budget_fraction": st.runs_used / self.W, "runs_left": float(self.W - st.runs_used),
+                "trial_index": float(t), "key_seen": float(seen), "prior_skips": float(st.prior_skips),
+                "keeps_so_far": float(st.keeps), "index_value": float(index_value)}
+
+    # ---- root campaign
+    def run_root(self, inst: int, theta_tab):
+        st = State(y_true=self.w.y0)
+        s = Stream(np.random.default_rng([self.seed, inst, 0]), self.r.llm_cap)
+        log = []
+        for t in range(1, self.r.llm_cap + 1):
+            snap = st.copy()
+            n_before = len(log)
+            self.trial(st, t, s, theta_tab, log)
+            log[n_before]["snap_e1"] = snap
+        return st, log
+
+    # ---- one whole campaign under a policy (campaign phase)
+    def run_campaign(self, theta_tab, policy, stream_seed, noise_rng: np.random.Generator | None,
+                     noiseless: bool = False, decisions: list | None = None) -> float:
+        st = State(y_true=self.w.y0)
+        s = Stream(np.random.default_rng(stream_seed), self.r.llm_cap)
+        self.dlog = decisions
+        try:
+            for t in range(1, self.r.llm_cap + 1):
+                self.trial(st, t, s, theta_tab, None, policy)
+        finally:
+            self.dlog = None
+        if noiseless:
+            return float(st.y_true)
+        aud = self.r.sigma_audit * noise_rng.standard_normal(self.r.K_audit)
+        return float(st.y_true + aud.mean() + self.r.sigma_campaign * noise_rng.standard_normal())
+
+    # ---- continuation of one leaf
+    def run_leaf(self, snap: State, fork: dict, epoch: str, arm: str, s: Stream, theta_tab, audit_rng):
+        st = snap.copy()
+        t = fork["t"]
+        runs0 = st.runs_used
+        keeps0 = st.keeps
+        kept_at_fork = False
+        delta = fork["delta"]
+        if epoch == "E1":
+            # the fork trial's proposal is the root's; P1 pending entries created by it are restored below
+            st.pending = list(fork["pending_after"])  # manager plan after proposing the fork trial (P1)
+            if arm == "skip":
+                st.prior_skips += 1
+            else:
+                st.runs_used += 1
+                dhat = delta + fork["eps"]
+                if arm in ("execute", "ctrl_only"):
+                    mh = self.m_hat(fork["a"], fork["A"], dhat, fork["kind"])
+                    self.update(st, fork["key"], fork["size"], dhat, fork["off"], fork["kind"])
+                    if arm == "execute" and mh > 0:
+                        self.keep(st, delta, t)
+                        kept_at_fork = True
+        else:  # E2: snapshot is after the run and the controller update, before the keep decision
+            if arm == "keep":
+                self.keep(st, delta, t)
+                kept_at_fork = True
+        for tt in range(t + 1, self.r.llm_cap + 1):
+            self.trial(st, tt, s, theta_tab, None)
+        K = self.r.K_audit
+        per_seed = st.y_true + self.r.sigma_audit * audit_rng.standard_normal(K)
+        term = self.r.sigma_term * audit_rng.standard_normal()
+        per_seed = per_seed + term
+        imm = (delta + float(np.mean(self.r.sigma_audit * audit_rng.standard_normal(K)))) if kept_at_fork else 0.0
+        return {"y_terminal": float(np.mean(per_seed)), "per_seed": [float(x) for x in per_seed],
+                "immediate": float(imm), "runs_used": st.runs_used - runs0, "keeps_after": st.keeps - keeps0,
+                "binding": st.runs_used >= self.W, "llm_calls": self.r.llm_cap - t + 1}
+
+
+def theta_table(world: World, regime: Regime, seed: int, inst: int) -> np.ndarray:
+    """The node's latent θ per key for one instance (shared by roots, leaves and campaigns of that instance)."""
+    rng = np.random.default_rng([seed, inst, 99])
+    return world.mu0 + world.tau0 * rng.standard_normal(regime.llm_cap + 2 + max(world.n_keys, 0))
+
+
+def _p_uniform(near: np.ndarray, target: float, p_over: float) -> float:
+    lo, hi = 0.0, 1.0
+    for _ in range(60):
+        p = 0.5 * (lo + hi)
+        e = np.where(near, p + (1 - p) * p_over, p).sum()
+        lo, hi = (p, hi) if e < target else (lo, p)
+    return 0.5 * (lo + hi)
+
+
+def simulate(world: World, regime: Regime, seed: int = 1, *, label: str = "FIXTURE", host: str = SIM_HOST,
+             node: str | None = None, meta: dict | None = None) -> tuple[list[LeafRecord], list[RootRecord]]:
+    """Simulate roots and fork leaves. ``meta`` (optional) is filled with {fork_id: edit kind} for diagnostics."""
+    sim = Sim(world, regime, seed)
+    node = node or f"synthetic_{world.kind}"
+    prov = sim_provenance(label, host)
+    roots_out, cands = [], []
+    thetas = {}
+    for inst in range(regime.n_instances):
+        theta_tab = theta_table(world, regime, seed, inst)
+        thetas[inst] = theta_tab
+        st, log = sim.run_root(inst, theta_tab)
+        e1n = e2n = 0
+        decisions = []
+        for k, rec in enumerate(log):
+            if rec.get("rule"):
+                decisions.append({"index": rec["t"], "epoch": "E1", "action": "rule_skip", "index_value": None,
+                                  "eligible": False})
+                continue
+            if rec.get("e1_eligible"):
+                e1n += 1
+                near = abs(rec["v_star"] - regime.g) <= regime.band_e1
+                cands.append((inst, rec, "E1", near))
+            decisions.append({"index": rec["t"], "epoch": "E1", "action": "execute" if rec.get("executed") else "skip",
+                              "index_value": rec["v_star"], "eligible": bool(rec.get("e1_eligible"))})
+            if rec.get("e2_eligible"):
+                e2n += 1
+                near = abs(rec["m_hat"]) <= regime.band_e2
+                cands.append((inst, rec, "E2", near))
+                decisions.append({"index": rec["t"], "epoch": "E2", "action": "keep" if rec.get("kept") else "discard",
+                                  "index_value": rec["m_hat"], "eligible": True})
+        roots_out.append(RootRecord(
+            schema=TRACKS_ROOT_SCHEMA, node=node, instance_id=f"i{inst:03d}", root_id=f"r{inst:03d}", W=sim.W,
+            llm_cap=regime.llm_cap, y_start=world.y0, y_after_trial1=None, y_terminal=float(st.y_true),
+            eligible_e1=e1n, eligible_e2=e2n, binding=st.runs_used >= sim.W, runs_used=st.runs_used,
+            llm_calls=regime.llm_cap, decisions=decisions, provenance=prov))
+    near = np.array([c[3] for c in cands])
+    target = regime.forks_per_instance * regime.n_instances
+    p_u = _p_uniform(near, target, regime.p_over) if len(cands) > target else 1.0
+    sel_rng = np.random.default_rng([seed, 7])
+    leaves = []
+    for fidx, (inst, rec, epoch, nr) in enumerate(cands):
+        u1, u2, u3 = sel_rng.random(3)
+        uni = u1 < p_u
+        over = bool(nr and u2 < regime.p_over)
+        if not (uni or over):
+            continue
+        p_sel = p_u + (1 - p_u) * regime.p_over if nr else p_u
+        chan = bool(epoch == "E1" and u3 < regime.channel_share)
+        sel = Selection(uniform=bool(uni), oversample=over, p_select=float(min(1.0, p_sel)), channel_arms=chan)
+        fork_id = f"{node}/i{inst:03d}/t{rec['t']:02d}/{epoch}"
+        if meta is not None:
+            meta[fork_id] = rec["kind"]
+        if epoch == "E1":
+            arms = ["skip", "execute"] + (["ghost", "ctrl_only"] if chan else [])
+            snap = rec["snap_e1"]
+            state = rec["state_e1"]
+            fc = Forecast(pi=0.0, mu=rec["a"], tau=math.sqrt(rec["A"]), sigma=world.sigma_cmp, v_star=rec["v_star"],
+                          m_hat=None, g=regime.g)
+            myo = "execute" if rec.get("executed") else "skip"
+        else:
+            arms = ["keep", "discard"]
+            snap = rec["snap_e2"]
+            state = rec["state_e2"]
+            fc = Forecast(pi=0.0, mu=rec["a"], tau=math.sqrt(rec["A"]), sigma=world.sigma_cmp, v_star=rec["v_star"],
+                          m_hat=rec["m_hat"], g=regime.g)
+            myo = "keep" if rec.get("kept") else "discard"
+        for rep in (1, 2):
+            s = Stream(np.random.default_rng([seed, inst, 1000 + fidx, rep]), regime.llm_cap)
+            for ai, arm in enumerate(arms):
+                audit_rng = np.random.default_rng([seed, inst, 1000 + fidx, rep, 50 + ai])
+                out = sim.run_leaf(snap, rec, epoch, arm, s, thetas[inst], audit_rng)
+                leaves.append(LeafRecord(
+                    schema=TRACKS_LEAF_SCHEMA, node=node, instance_id=f"i{inst:03d}", root_id=f"r{inst:03d}",
+                    fork_id=fork_id, epoch=epoch, fork_trial_index=rec["t"], arm=arm, rep=rep,
+                    llm_seed_base=int(seed * 1000 + rep), myopic_action=myo, selection=sel,
+                    state={k: state[k] for k in STATE_FEATURES},
+                    forecast=fc, immediate_measured=out["immediate"], y_terminal=out["y_terminal"],
+                    y_terminal_per_seed=out["per_seed"], audit_seeds=list(range(regime.K_audit)),
+                    runs_used=out["runs_used"], llm_calls=out["llm_calls"], keeps_after=out["keeps_after"],
+                    binding=bool(out["binding"]), nf_c_events=0, dup_filtered_due_to_fork=0, next_proposals=[],
+                    provenance=prov))
+    return leaves, roots_out
+
+
+# --------------------------------------------------------------------------------------------- planted generator
+def planted_forks(*, n_instances: int = 40, forks_per_instance: int = 15, share_e1: float = 0.7,
+                  budget: Callable[[dict], float] | float = 0.0, info: Callable[[dict], float] | float = 0.0,
+                  feedback: Callable[[dict], float] | float = 0.0, e2_keep: Callable[[dict], float] | float = 0.0,
+                  sigma: float = 0.003, index_bias: Callable[[dict, str], float] | float = 0.0,
+                  channel_share: float = 1.0 / 3.0, g: float = 0.0005, seed: int = 0, node: str = "planted",
+                  label: str = "FIXTURE", host: str = SIM_HOST) -> list[LeafRecord]:
+    """Fork-level generator with planted channel effects (no campaign dynamics), for analysis tests.
+
+    E1 continuations: C_skip = c0, C_ghost = c0 − B(s), C_ctrl = c0 − B(s) + I(s), C_exec = C_ctrl + F(s);
+    E2: C_keep − C_discard = K(s). ``index_bias`` plants a one-step miscalibration: the true immediate
+    increment is the forecast plus the bias (it enters y_terminal and immediate_measured, not C).
+    """
+    f = lambda v: (v if callable(v) else (lambda s, _c=v: _c))  # noqa: E731
+    B, I, F, K = f(budget), f(info), f(feedback), f(e2_keep)
+    bias = index_bias if callable(index_bias) else (lambda s, ep, _c=index_bias: _c)
+    rng = np.random.default_rng(seed)
+    prov = sim_provenance(label, host)
+    leaves = []
+    for inst in range(n_instances):
+        for k in range(forks_per_instance):
+            e1 = rng.random() < share_e1
+            W = 10
+            used = int(rng.integers(1, W))
+            state = {"budget_fraction": used / W, "runs_left": float(W - used), "trial_index": float(rng.integers(2, 41)),
+                     "key_seen": float(rng.random() < 0.3), "prior_skips": float(rng.integers(0, 8)),
+                     "keeps_so_far": float(rng.integers(1, 6)), "index_value": 0.0}
+            idx = float(abs(rng.normal(0.0008, 0.0008))) if e1 else float(rng.normal(0.0, 0.002))
+            state["index_value"] = idx
+            p_sel = 0.5 if rng.random() < 0.5 else 1.0
+            chan = bool(e1 and rng.random() < channel_share)
+            sel = Selection(uniform=True, oversample=p_sel < 1.0, p_select=p_sel, channel_arms=chan)
+            ep = "E1" if e1 else "E2"
+            fc = Forecast(pi=0.0, mu=None, tau=None, sigma=None, v_star=idx if e1 else 0.001,
+                          m_hat=None if e1 else idx, g=g)
+            myo = ("execute" if idx >= g else "skip") if e1 else ("keep" if idx > 0 else "discard")
+            imm_true = idx + bias(state, ep)
+            for rep in (1, 2):
+                c0 = rng.normal(0.0, sigma)
+                if e1:
+                    cont = {"skip": c0, "ghost": c0 - B(state), "ctrl_only": c0 - B(state) + I(state),
+                            "execute": c0 - B(state) + I(state) + F(state)}
+                    arms = ["skip", "execute"] + (["ghost", "ctrl_only"] if chan else [])
+                    act = "execute"
+                else:
+                    cont = {"discard": c0, "keep": c0 + K(state)}
+                    arms = ["keep", "discard"]
+                    act = "keep"
+                for arm in arms:
+                    c = cont[arm] + rng.normal(0.0, sigma)
+                    imm = imm_true + rng.normal(0.0, 0.001) if arm == act else 0.0
+                    y = 0.9 + imm + c
+                    leaves.append(LeafRecord(
+                        schema=TRACKS_LEAF_SCHEMA, node=node, instance_id=f"i{inst:03d}", root_id=f"r{inst:03d}",
+                        fork_id=f"{node}/i{inst:03d}/f{k:02d}", epoch=ep, fork_trial_index=int(state["trial_index"]),
+                        arm=arm, rep=rep, llm_seed_base=rep, myopic_action=myo, selection=sel, state=dict(state),
+                        forecast=fc, immediate_measured=float(imm), y_terminal=float(y), y_terminal_per_seed=[float(y)],
+                        audit_seeds=[0], runs_used=0, llm_calls=0, keeps_after=0, binding=False, nf_c_events=0,
+                        dup_filtered_due_to_fork=0, next_proposals=[], provenance=prov))
+    return leaves
+
+
+# --------------------------------------------------------------------------------------------- campaign records
+def make_campaign_root(node: str, inst: str, policy: str, rep: int, y: float, *, W: int, llm_cap: int,
+                       label: str = "FIXTURE", host: str = SIM_HOST, phase: str = "campaign",
+                       suffix: str = "") -> RootRecord:
+    """A campaign-phase RootRecord carrying ``policy`` and ``rep`` (attributes while schema.py lacks the fields)."""
+    prov = replace(sim_provenance(label, host), phase=phase)
+    kw = dict(schema=TRACKS_ROOT_SCHEMA, node=node, instance_id=inst,
+              root_id=f"{inst}/{policy}/rep{rep}{('/' + suffix) if suffix else ''}", W=W,
+              llm_cap=llm_cap, y_start=None, y_after_trial1=None, y_terminal=float(y), eligible_e1=0, eligible_e2=0,
+              binding=False, runs_used=0, llm_calls=llm_cap, decisions=[], provenance=prov)
+    names = {f.name for f in fields(RootRecord)}
+    extra = {"policy": policy, "rep": rep}
+    kw.update({k: v for k, v in extra.items() if k in names})
+    r = RootRecord(**kw)
+    for k, v in extra.items():
+        if k not in names:
+            object.__setattr__(r, k, v)
+    return r
+
+
+def campaign_roots_from_values(node: str, values: dict[str, list[float]], *, label: str = "FIXTURE",
+                               host: str = SIM_HOST) -> list[RootRecord]:
+    """values: policy -> per-instance Y (instance k = f"c{k:04d}")."""
+    out = []
+    for pol, ys in values.items():
+        for k, y in enumerate(ys):
+            out.append(make_campaign_root(node, f"c{k:04d}", pol, 1, y, W=10, llm_cap=40, label=label, host=host))
+    return out
+
+
+# --------------------------------------------------------------------------------------------- threshold families
+class ThresholdPolicy:
+    """``static:g,h`` / ``dynamic:g0,b_budget,b_info,h0,h_budget`` with revision-6 semantics (``analyze``)."""
+
+    def __init__(self, s: str):
+        self.name = s
+        self.p = A.as_dynamic(s)
+
+    def e1(self, f: dict) -> bool:
+        g0, bb, bi, _, _ = self.p
+        return f["index_value"] + bi * f["tau_pred"] > g0 - bb * (1.0 - f["budget_fraction"])
+
+    def e2(self, f: dict) -> bool:
+        _, _, _, h0, hb = self.p
+        return f["index_value"] > h0 - hb * (1.0 - f["budget_fraction"])
+
+
+@dataclass
+class Plan:
+    """One node's S0.6 plan (illustrative defaults until S0.5/S0.7; see ``match_noise``)."""
+    delta_Y: float = 0.0033
+    sigma_node: float = 0.0066
+    sigma_D: float = 0.008                 # pilot sd of campaign-level paired differences (S0.5b)
+    m_pairs: int = 20
+    n_campaign: int | None = None          # fresh instances; None -> campaign_n(σ_D,UCL, δ_Y) capped at n_max
+    n_max: int = 300
+    n_dev: int = 20
+    alpha: float = 0.05
+
+    @property
+    def n_planned(self) -> int:
+        return self.n_campaign or A.campaign_n(A.sigma_D_ucl(self.sigma_D, self.m_pairs), self.delta_Y)
+
+    @property
+    def n(self) -> int:
+        return min(self.n_planned, self.n_max)
+
+    @property
+    def b_eligible(self) -> bool:
+        return self.n_planned <= self.n_max
+
+
+def sigma_campaign_for(sigma_D: float, regime: Regime) -> float:
+    """Per-campaign noise so that sd(D) ≈ σ_D when two policies agree: σ_D² ≈ 2(σ_aud²/K + σ_c²)."""
+    return float(math.sqrt(max(0.0, sigma_D ** 2 / 2 - regime.sigma_audit ** 2 / regime.K_audit)))
+
+
+def dev_between_config_sd(world: World, regime: Regime, plan: Plan, seed: int = 77) -> float:
+    """Mean over static-grid configuration pairs of sd_i(Y_c(i) − Y_c'(i)) on paired dev instances."""
+    sim = Sim(world, regime, seed)
+    cfgs = A.FamilyDecl().static_configs(plan.sigma_node)
+    Y = np.array([[sim.run_campaign(theta_table(world, regime, seed, i), ThresholdPolicy(c), [seed, i, 5000],
+                                    np.random.default_rng([seed, i, zlib.crc32(c.encode())]))
+                   for i in range(max(plan.n_dev, 20))] for c in cfgs])
+    sds = [np.std(Y[a] - Y[b], ddof=1) for a in range(len(cfgs)) for b in range(a + 1, len(cfgs))]
+    return float(np.mean(sds))
+
+
+def match_noise(regime: Regime, plan: Plan, *, sigma_D: float | None = None, pilot_D: list[float] | None = None,
+                dev_between_sd: float | None = None, sigma_d: float | None = None,
+                world: World | None = None) -> tuple[Regime, dict]:
+    """Set the simulator's noise from measured pilot values.
+
+    dev_between_sd (revision 6.1, preferred): the dev between-configuration sd; σ_campaign is found by bisection so
+    that ``dev_between_config_sd`` matches it. Otherwise sigma_D / pilot_D (campaign-level paired differences)
+    via ``sigma_campaign_for``. sigma_d: rep-averaged fork ΔQ sd -> σ_term (fork leaves)."""
+    rec: dict = {}
+    w = world or make_world("N0")
+    if pilot_D is not None:
+        sigma_D = float(np.std(pilot_D, ddof=1))
+        rec["m_pairs"] = len(pilot_D)
+    if dev_between_sd is not None:
+        lo, hi = 0.0, max(0.05, 4 * dev_between_sd)
+        for _ in range(20):
+            mid = 0.5 * (lo + hi)
+            v = dev_between_config_sd(w, replace(regime, sigma_campaign=mid), plan)
+            lo, hi = (mid, hi) if v < dev_between_sd else (lo, mid)
+        regime = replace(regime, sigma_campaign=0.5 * (lo + hi))
+        rec["dev_between_sd"] = dev_between_sd
+    elif sigma_D is not None:
+        regime = replace(regime, sigma_campaign=sigma_campaign_for(sigma_D, regime))
+        rec["sigma_D"] = sigma_D
+    if sigma_d is not None:
+        regime = replace(regime, sigma_term=calibrate_sigma_term(w, regime, sigma_d))
+        rec["sigma_d"] = sigma_d
+    rec.update(sigma_campaign=regime.sigma_campaign, sigma_term=regime.sigma_term)
+    return regime, rec
+
+
+def calibrate_sigma_term(world: World, regime: Regime, sigma_d_target: float, seed: int = 11) -> float:
+    """σ_term so that the sd of rep-averaged fork ΔQ matches ``sigma_d_target`` (adds σ_term² to its variance)."""
+    lv, rt = simulate(world, replace(regime, sigma_term=0.0), seed, node="calib")
+    ft = A.build_fork_table("calib", lv, rt)
+    base = float(np.sqrt(np.cov(ft.qbar, aweights=ft.w)))
+    return float(math.sqrt(max(0.0, sigma_d_target ** 2 - base ** 2)))
+
+
+def sim_predeclaration(node: str, plan: Plan, *, seed: int = 20261029) -> A.Predeclaration:
+    nd = A.NodeDecl(node, "primary", plan.delta_Y, sigma_node=plan.sigma_node,
+                    sizing=A.SizingDecl(A.sigma_D_ucl(plan.sigma_D, plan.m_pairs), plan.n_max))
+    return A.Predeclaration(nodes={node: nd}, primary_nodes=[node], seed=seed, alpha=plan.alpha,
+                            fallback_active=True, winners_curse_splits=50)
+
+
+def measured_k_n(roots: list[RootRecord]) -> float:
+    return float(np.mean([r.eligible_e1 + r.eligible_e2 for r in roots]))
+
+
+def _campaign_root(sim, node, inst, c, rep, theta, stream, noise, *, phase, label, host, suffix="", log=False):
+    dec = [] if log else None
+    y = sim.run_campaign(theta, ThresholdPolicy(c), stream, noise, decisions=dec)
+    r = make_campaign_root(node, inst, c, rep, y, W=sim.W, llm_cap=sim.r.llm_cap, label=label, host=host,
+                           phase=phase, suffix=suffix)
+    if dec:
+        r.decisions.extend(dec)
+    return r
+
+
+def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str = "FIXTURE",
+            host: str = SIM_HOST) -> dict:
+    """Dev tuning (12 statics on n_dev paired instances, the one edge extension, then the 4 members anchored at
+    m*, all on the same instances), then fresh campaigns on plan.n instances: π* and m* (rep 1, same manager
+    seeds), m* at rep 2 (descriptive placebo) and again at rep 1 (exact placebo), matched static (rep 1)."""
+    node = f"synthetic_{world.kind}"
+    sim = Sim(world, regime, seed)
+    fam = A.FamilyDecl()
+    pd = sim_predeclaration(node, plan, seed=seed)
+    dev: list[RootRecord] = []
+
+    def run_dev(cfgs, log=False):
+        for c in cfgs:
+            for i in range(plan.n_dev):
+                dev.append(_campaign_root(sim, node, f"d{i:04d}", c, 1, theta_table(world, regime, seed, i),
+                                          [seed, i, 5000], np.random.default_rng([seed, i, zlib.crc32(c.encode())]),
+                                          phase="dev_tuning", label=label, host=host, log=log))
+
+    run_dev(fam.static_configs(plan.sigma_node))
+    sel = A.selection_report(dev, pd, pd.nodes[node])
+    if sel["status"] == "extension_needed":
+        run_dev(sel["extension_configs"])
+        sel = A.selection_report(dev, pd, pd.nodes[node])
+    if sel["status"] == "members_needed":
+        run_dev(list(sel["members"].values()), log=True)
+        sel = A.selection_report(dev, pd, pd.nodes[node])
+    pi_s, m_s, ms = sel["pi_star"], sel["m_star"], sel["matched_static"]["policy"]
+    fresh = []
+    for k in range(plan.n):
+        inst = 100000 + k
+        th = theta_table(world, regime, seed, inst)
+        runs = [(pi_s, 1, ""), (m_s, 1, ""), (m_s, 2, ""), (m_s, 1, "dup")]
+        if ms not in (pi_s, m_s):
+            runs.append((ms, 1, ""))
+        for c, rep, suf in runs:
+            fresh.append(_campaign_root(sim, node, f"c{k:04d}", c, rep, th, [seed, inst, 6000, rep],
+                                        np.random.default_rng([seed, inst, rep, 7]), phase="campaign",
+                                        label=label, host=host, suffix=suf))
+    res = A.analyze_s3e(node, dev, fresh, pd.nodes[node], pd)
+    return {"result": res, "dev_roots": dev, "fresh_roots": fresh}
+
+
+# --------------------------------------------------------------------------------------------- oracle gains
+def oracle_gain(world: World, regime: Regime, plan: Plan, *, n_oracle: int = 10_000, seed: int = 9000,
+                chunk: int | None = None) -> dict:
+    """Noiseless large-replication oracle: m*_o = best static (with the edge extension), members anchored at
+    m*_o, gain = best member − m*_o (common instances and seeds)."""
+    sim = Sim(world, regime, seed)
+    fam = A.FamilyDecl()
+    th = [theta_table(world, regime, seed, 400000 + i) for i in range(n_oracle)]
+
+    def ev(c):
+        pol = ThresholdPolicy(c)
+        return np.array([sim.run_campaign(th[i], pol, [seed, 400000 + i, 8000], None, noiseless=True)
+                         for i in range(n_oracle)])
+
+    stat = {c: ev(c) for c in fam.static_configs(plan.sigma_node)}
+    best = max(stat, key=lambda c: stat[c].mean())
+    extended = False
+    if fam.on_upper_edge(best, plan.sigma_node):
+        stat.update({c: ev(c) for c in fam.extension_configs(plan.sigma_node)})
+        best, extended = max(stat, key=lambda c: stat[c].mean()), True
+    mem = {name: ev(c) for name, c in fam.members(best, plan.sigma_node).items()}
+    top = max(mem, key=lambda k: mem[k].mean())
+    d = mem[top] - stat[best]
+    return {"gain": float(d.mean()), "gain_se": float(d.std(ddof=1) / math.sqrt(n_oracle)), "m_oracle": best,
+            "member_oracle": top, "pi_oracle": fam.members(best, plan.sigma_node)[top], "extended": extended,
+            "member_gains": {k: float((v - stat[best]).mean()) for k, v in mem.items()}, "n_oracle": n_oracle}
+
+
+def calibrate_strength(kind: str, variant: str, regime: Regime, plan: Plan, *, grid: Sequence[float],
+                       n_cal: int = 600, n_oracle: int = 10_000, tol: float = 0.05, iters: int = 6,
+                       refine: int = 4) -> dict:
+    """Fix the best member's oracle gain at δ_Y: scan ``grid`` (n_cal) for the first upward crossing, bisect
+    inside it, then verify (and refine by bisection) at n_oracle until |gain − δ_Y| ≤ tol·δ_Y."""
+    target, trace = plan.delta_Y, []
+
+    def gain(st, n):
+        g = oracle_gain(make_world(kind, st, variant), regime, plan, n_oracle=n)
+        trace.append((st, n, g["gain"], g["gain_se"]))
+        return g
+
+    prev, hit = None, None
+    for st in grid:
+        if gain(st, n_cal)["gain"] >= target:
+            hit = st
+            break
+        prev = st
+    if hit is None:
+        return {"kind": kind, "variant": variant, "strength": None, "trace": trace, "within_tolerance": False,
+                "note": f"no grid strength reached an oracle gain of δ_Y = {target}"}
+    lo, hi = (prev if prev is not None else hit), hit
+    for _ in range(iters if prev is not None else 0):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (lo, mid) if gain(mid, n_cal)["gain"] >= target else (mid, hi)
+    st = hi
+    g = gain(st, n_oracle)
+    for _ in range(refine):
+        if abs(g["gain"] - target) <= tol * target:
+            break
+        if g["gain"] > target:
+            hi = st
+        else:
+            lo = st
+        st = 0.5 * (lo + hi)
+        g = gain(st, n_oracle)
+    return {"kind": kind, "variant": variant, "strength": st, "oracle": g, "planted_gain": g["gain"],
+            "within_tolerance": bool(abs(g["gain"] - target) <= tol * target), "tolerance": tol * target,
+            "trace": trace}
+
+
+# --------------------------------------------------------------------------------------------- replication
+def _rate(k: int, n: int) -> dict:
+    lo, hi = A.clopper_pearson(k, n)
+    return {"k": k, "n": n, "rate": k / n if n else float("nan"), "ci95_clopper_pearson": [lo, hi]}
+
+
+def replicate(world: World, regime: Regime, plan: Plan, R: int, seed0: int = 1000, *,
+              oracle: dict | None = None) -> dict:
+    outs = []
+    for r in range(R):
+        res = run_s3e(world, regime, plan, seed0 + r)["result"]
+        t = res["test"]
+        outs.append({"route": res["route_single_node"], "mean": t["mean"], "lb": t["lb"], "ub": t["ub"],
+                     "ci": t["ci_two_sided"], "pi": res["pi_star"], "channel": res["pi_star_channel"],
+                     "m": res["m_star"], "flip": res["selection"]["flip"]["flip_rate"],
+                     "z": res["placebo_descriptive"].get("z"), "exact": res["placebo_exact"]["status"]})
+    kA = sum(o["route"] in ("A", "A-small") for o in outs)
+    kB = sum(o["route"] == "B" and (o["flip"] or 0) >= 0.10 for o in outs)
+    out = {"world": asdict(world), "plan": asdict(plan) | {"n": plan.n}, "R": R, "k_A": kA,
+           "route_A": _rate(kA, R), "route_B_node_conditions": _rate(kB, R),
+           "exact_placebo_fail": sum(o["exact"] != "pass" for o in outs),
+           "placebo_abs_z_gt_3_5": sum(abs(o["z"] or 0) > 3.5 for o in outs),
+           "mean_D": float(np.mean([o["mean"] for o in outs])),
+           "flip_rate_mean": float(np.mean([o["flip"] or 0 for o in outs])),
+           "channel_choices": {c: sum(o["channel"] == c for o in outs) for c in sorted({o["channel"] for o in outs})}}
+    if oracle is not None:
+        out["p_correct_selection_member"] = _rate(sum(o["channel"] == oracle["member_oracle"] for o in outs), R)
+        out["p_correct_selection_m_star"] = _rate(sum(o["m"] == oracle["m_oracle"] for o in outs), R)
+        out["p_correct_selection_both"] = _rate(sum(o["channel"] == oracle["member_oracle"] and
+                                                    o["m"] == oracle["m_oracle"] for o in outs), R)
+        out["coverage_vs_oracle"] = {
+            "lb95_le_oracle": _rate(sum(o["lb"] <= oracle["gain"] for o in outs), R),
+            "two_sided95_covers": _rate(sum(o["ci"][0] <= oracle["gain"] <= o["ci"][1] for o in outs), R),
+            "note": "the S3e estimand is the gain of the *selected* pair, which is ≤ the oracle gain in expectation"}
+    out["runs"] = outs
+    return out
+
+
+def s06_node(node: str, regime: Regime, plan: Plan, *, R: int = 200, n_cal: int = 600, n_oracle: int = 10_000,
+             kinds: Sequence[str] = ("P0", "P1", "P2+", "P2-"), resize_to: int = 40) -> tuple[dict, dict]:
+    """S0.6 for one B-eligible node: N0 FPR and oracle check; calibrate every P variant to δ_Y; power at
+    n_dev; the one resize (n_dev -> resize_to) if any power LB < 0.6; P(correct selection), P(B | P)."""
+    rep: dict = {"node": node, "plan": asdict(plan) | {"n": plan.n, "n_planned": plan.n_planned,
+                                                       "b_eligible": plan.b_eligible},
+                 "regime": asdict(regime)}
+    n0w = make_world("N0")
+    n0o = oracle_gain(n0w, regime, plan, n_oracle=n_oracle)
+    n0r = replicate(n0w, regime, plan, R, 1000, oracle=n0o)
+    rep["N0"] = {k: v for k, v in n0r.items() if k != "runs"} | {
+        "oracle": n0o, "oracle_ok": bool(n0o["gain"] <= 0.05 * plan.delta_Y),
+        "fp_gate": A.fp_gate(n0r["k_A"], R, alpha=plan.alpha)}
+    ctl = {"n": plan.n, "b_eligible": plan.b_eligible, "N0": {"R": R, "k_A": n0r["k_A"], "oracle_gain": n0o["gain"]}}
+    cals = {}
+    for kind in kinds:
+        for variant in ("diffuse", "concentrated"):
+            cals[(kind, variant)] = calibrate_strength(kind, variant, regime, plan, grid=CAL_GRIDS[kind],
+                                                       n_cal=n_cal, n_oracle=n_oracle)
+            rep[f"{kind}_{variant}_calibration"] = cals[(kind, variant)]
+
+    def power_at(n_dev):
+        pl = replace(plan, n_dev=n_dev)
+        out = {}
+        for (kind, variant), cal in cals.items():
+            if cal["strength"] is None:
+                out[(kind, variant)] = None
+                continue
+            r = replicate(make_world(kind, cal["strength"], variant), regime, pl, R, 5000, oracle=cal["oracle"])
+            out[(kind, variant)] = r
+        return out
+
+    pw = power_at(plan.n_dev)
+    gates0 = {f"{k}_{v}": (A.power_gate(r["k_A"], R) if r else {"ok": False}) for (k, v), r in pw.items()}
+    rz = A.resize_rule(gates0, plan.n_dev, resize_to)
+    rep["power_initial"] = {f"{k}_{v}": ({kk: vv for kk, vv in r.items() if kk != "runs"} if r else None)
+                            for (k, v), r in pw.items()}
+    if rz["resize"]:
+        pw = power_at(resize_to)
+        rep["power_resized"] = {f"{k}_{v}": ({kk: vv for kk, vv in r.items() if kk != "runs"} if r else None)
+                                for (k, v), r in pw.items()}
+    ctl["resize"] = rz
+    ctl["n_dev"] = rz["n_dev"]
+    for (kind, variant), r in pw.items():
+        if r is None:
+            continue
+        ctl.setdefault(kind, {})[variant] = {
+            "R": R, "k_A": r["k_A"], "planted_gain": cals[(kind, variant)]["planted_gain"],
+            "within_tolerance": cals[(kind, variant)]["within_tolerance"], "strength": cals[(kind, variant)]["strength"],
+            "n_dev": rz["n_dev"], "p_correct_selection": r["p_correct_selection_both"]["rate"],
+            "p_route_B": r["route_B_node_conditions"]["rate"]}
+    return rep, ctl
+
+
+def merge_controls(per_node: dict[str, dict], label: str = "FIXTURE") -> dict:
+    return {"schema": "tracks_controls/v2", "label": label, "source": "simulate_controls (not the collector)",
+            "nodes": per_node}
+
+
+def write_node(out_dir: Path, leaves=(), roots=(), dev_roots=(), campaign_roots=(), *, manifest: dict | None = None):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, recs in (("leaves.jsonl", leaves), ("roots.jsonl", roots), ("dev_roots.jsonl", dev_roots),
+                       ("campaign_roots.jsonl", campaign_roots)):
+        if recs:
+            with (out_dir / name).open("w") as fh:
+                for rec in recs:
+                    fh.write(json.dumps(A.record_to_dict(rec)) + "\n")
+    (out_dir / "manifest.json").write_text(json.dumps(manifest or {"label": "FIXTURE", "phase": "synthetic"}, indent=2))
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description="Track S S0.6 synthetic calibration (FIXTURE; not evidence)")
+    ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--node", default="digits_mlp", help="the B-eligible node this S0.6 run is for")
+    ap.add_argument("--delta-Y", type=float, default=0.0033)
+    ap.add_argument("--sigma-node", type=float, default=0.0066)
+    ap.add_argument("--sigma-D", type=float, default=0.008, help="pilot campaign-level σ_D (S0.5b)")
+    ap.add_argument("--dev-between-sd", type=float, default=None, help="pilot dev between-configuration sd")
+    ap.add_argument("--m-pairs", type=int, default=20)
+    ap.add_argument("--n-campaign", type=int, default=None)
+    ap.add_argument("--n-max", type=int, default=300)
+    ap.add_argument("--n-dev", type=int, default=20)
+    ap.add_argument("--W", type=int, default=10)
+    ap.add_argument("--reps", type=int, default=200)
+    ap.add_argument("--n-cal", type=int, default=600)
+    ap.add_argument("--n-oracle", type=int, default=10_000)
+    ap.add_argument("--kinds", default="P0,P1,P2+,P2-")
+    args = ap.parse_args(argv)
+    plan = Plan(delta_Y=args.delta_Y, sigma_node=args.sigma_node, sigma_D=args.sigma_D, m_pairs=args.m_pairs,
+                n_campaign=args.n_campaign, n_max=args.n_max, n_dev=args.n_dev)
+    regime, noise = match_noise(Regime(W=args.W), plan, sigma_D=args.sigma_D, dev_between_sd=args.dev_between_sd)
+    rep, ctl = s06_node(args.node, regime, plan, R=args.reps, n_cal=args.n_cal, n_oracle=args.n_oracle,
+                        kinds=tuple(args.kinds.split(",")))
+    rep["noise_matching"] = noise
+    args.out.mkdir(parents=True, exist_ok=True)
+    (args.out / f"controls_{args.node}.json").write_text(json.dumps(merge_controls({args.node: ctl}), indent=2,
+                                                                     default=A._json_default))
+    (args.out / f"s06_report_{args.node}.json").write_text(json.dumps(rep, indent=2, default=A._json_default))
+    ex = run_s3e(make_world("N0"), regime, plan, seed=777)
+    write_node(args.out / "synthetic_N0", dev_roots=ex["dev_roots"], campaign_roots=ex["fresh_roots"])
+    print(json.dumps(ctl, default=A._json_default))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
