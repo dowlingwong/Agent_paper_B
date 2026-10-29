@@ -53,20 +53,26 @@ class PolicyTests(unittest.TestCase):
                   "dynamic:0.001,0,0,0.0005,-0.003,0.6,0.004,0.5"):
             p = S.ThresholdPolicy(s)
             for _ in range(50):
-                f = {"budget_fraction": rng.random(), "index_value": rng.normal(0, 0.002),
-                     "tau_pred": abs(rng.normal(0.004, 0.001))}
+                f = {"budget_fraction": rng.random(), "r": rng.uniform(-0.5, 0.5),
+                     "index_value": rng.normal(0, 0.002), "tau_pred": abs(rng.normal(0.004, 0.001))}
                 self.assertEqual(p.e1(f), A.threshold_act(s, f, "E1", f["tau_pred"]))
                 self.assertEqual(p.e2(f), A.threshold_act(s, f, "E2"))
 
 
 class PipelineTests(unittest.TestCase):
     def test_s3e_pipeline_selection_placebos_and_matched_static(self):
-        plan = S.Plan(n_campaign=12, n_dev=8)
+        plan = S.Plan(n_campaign=16, n_dev=8, n_dev_members=12)
         reg = replace(SMALL, sigma_campaign=0.004)
         out = S.run_s3e(S.make_world("P2", 0.008, fb_shape="r_linear", fb_len=6), reg, plan, seed=2)
         res = out["result"]
         self.assertEqual(res["placebo_exact"]["status"], "pass")         # same rep, same policy: D = 0 exactly
+        self.assertEqual(res["placebo_exact"]["n_groups"], 10)
         self.assertIn(res["placebo_descriptive"]["status"], ("pass", "STOP"))
+        self.assertEqual(res["placebo_descriptive"]["n"], 15)
+        self.assertEqual(res["selection"]["tuning"]["campaigns"], 4 * 12)
+        self.assertIsInstance(res["other_members_vs_m_star"], dict)
+        self.assertEqual(len(res["other_members_vs_m_star"]), 3)
+        self.assertIn(res["route_single_node"], ("A", "A-small", "no gain found"))
         self.assertIn(res["pi_star_channel"], A.CHANNEL_MEMBERS)
         self.assertEqual(res["selection"]["n_dev_instances"], 8)
         self.assertTrue(res["selection"]["paired_dev_instances"])
@@ -75,7 +81,7 @@ class PipelineTests(unittest.TestCase):
         self.assertFalse(dev_i & {r.instance_id for r in out["fresh_roots"]})
         ms = res["selection"]["matched_static"]["policy"]
         if ms not in (res["pi_star"], res["m_star"]):
-            self.assertEqual(res["matched_static_runs"]["n_instances"], 12)  # matched static on all n instances
+            self.assertEqual(res["matched_static_runs"]["n_instances"], 16)  # matched static on all n instances
 
     def test_oracle_and_calibration_machinery(self):
         plan = S.Plan()
@@ -91,13 +97,13 @@ class PipelineTests(unittest.TestCase):
     def test_replicate_reports_rates_with_binomial_cis(self):
         plan = S.Plan(n_campaign=8, n_dev=6)
         reg = replace(SMALL, sigma_campaign=0.004)
-        oracle = {"gain": 0.0, "member_oracle": "budget", "m_oracle": "static:0.00033,0"}
+        oracle = {"gain": 0.0, "member_oracle": "budget×1", "m_oracle": "static:0.00033,0"}
         r = S.replicate(S.make_world("N0"), reg, plan, 3, oracle=oracle)
         self.assertEqual(r["R"], 3)
-        lo, hi = r["route_A"]["ci95_clopper_pearson"]
-        self.assertTrue(0.0 <= lo <= r["route_A"]["rate"] <= hi <= 1.0)
-        self.assertIn("p_correct_selection_both", r)
-        self.assertEqual(r["exact_placebo_fail"], 0)
+        lo, hi = r["route_A_or_A_small"]["ci95_clopper_pearson"]
+        self.assertTrue(0.0 <= lo <= r["route_A_or_A_small"]["rate"] <= hi <= 1.0)
+        self.assertIn("p_correct_member", r)
+        self.assertEqual(r["exact_placebo_not_pass"], 3)          # n = 8 < the 10 declared exact-placebo instances
 
     def test_design_study_replicate_and_schedule_oracle(self):
         plan = S.Plan(n_campaign=10)
@@ -122,6 +128,13 @@ class PipelineTests(unittest.TestCase):
     def test_noise_matching(self):
         reg, rec = S.match_noise(S.Regime(), S.Plan(), sigma_D=0.01)
         self.assertAlmostEqual(reg.sigma_campaign, S.sigma_campaign_for(0.01, S.Regime()))
+        small = replace(SMALL, llm_cap=20)
+        reg3, rec3 = S.match_noise(small, S.Plan(), between_policy_sd=0.012)   # first S0.6 run (pilot)
+        self.assertEqual(rec3["matched_to"], "S0.5 pilot between-policy sd")
+        got = S.pilot_between_policy_sd(S.make_world("N0"), reg3, S.Plan())
+        self.assertAlmostEqual(got, 0.012, delta=0.002)
+        reg4, rec4 = S.match_noise(small, S.Plan(), between_policy_sd=0.012, dev_between_sd=0.01)  # post-S0.7 re-run
+        self.assertEqual(rec4["matched_to"], "dev between-configuration sd (post-S0.7 re-run)")
         reg2, rec2 = S.match_noise(S.Regime(), S.Plan(), pilot_D=list(np.random.default_rng(0).normal(0, 0.01, 25)))
         self.assertEqual(rec2["m_pairs"], 25)
 

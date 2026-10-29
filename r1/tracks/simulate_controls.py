@@ -392,18 +392,21 @@ class Sim:
         if self.dlog is not None and t >= 2:
             if e1_elig:
                 self.dlog.append({"index": t, "epoch": "E1", "eligible": True, "index_value": vs,
-                                  "budget_fraction": f1["budget_fraction"], "tau_pred": f1["tau_pred"],
+                                  "budget_fraction": f1["budget_fraction"], "r": f1["r"], "tau_pred": f1["tau_pred"],
                                   "action": "execute" if rec.get("executed") else "skip"})
             if rec.get("e2_eligible"):
                 self.dlog.append({"index": t, "epoch": "E2", "eligible": True, "index_value": rec["m_hat"],
-                                  "budget_fraction": rec["state_e2"]["budget_fraction"],
+                                  "budget_fraction": rec["state_e2"]["budget_fraction"], "r": rec["state_e2"]["r"],
                                   "action": "keep" if rec.get("kept") else "discard"})
 
     def features(self, st: State, t: int, key: int, index_value: float, pre_update_key_seen=None) -> dict:
         seen = (key in st.executed_keys) if pre_update_key_seen is None else pre_update_key_seen
+        cap = self.r.llm_cap
         return {"budget_fraction": st.runs_used / self.W, "runs_left": float(self.W - st.runs_used),
                 "trial_index": float(t), "key_seen": float(seen), "prior_skips": float(st.prior_skips),
-                "keeps_so_far": float(st.keeps), "index_value": float(index_value)}
+                "keeps_so_far": float(st.keeps), "index_value": float(index_value),
+                # runbook rev 7: r = runs_left/W − proposals_left/N_cap, proposals_left including the current one
+                "r": (self.W - st.runs_used) / self.W - (cap - t + 1) / cap}
 
     # ---- root campaign
     def run_root(self, inst: int, theta_tab):
@@ -680,13 +683,13 @@ class ThresholdPolicy:
         self.name = s
         self.p = A.as_dynamic(s)
 
-    def e1(self, f: dict) -> bool:
+    def e1(self, f: dict) -> bool:   # execute uses ≥ (runbook rev 7.1)
         g0, bb, bi, _, _, r1, tb, _ = self.p
-        return f["index_value"] + bi * (f["tau_pred"] - tb) > g0 - bb * ((1.0 - f["budget_fraction"]) - r1)
+        return f["index_value"] + bi * (f["tau_pred"] - tb) >= g0 - bb * (f["r"] - r1)
 
-    def e2(self, f: dict) -> bool:
+    def e2(self, f: dict) -> bool:   # keep uses >
         _, _, _, h0, hb, _, _, r2 = self.p
-        return f["index_value"] > h0 - hb * ((1.0 - f["budget_fraction"]) - r2)
+        return f["index_value"] > h0 - hb * (f["r"] - r2)
 
 
 @dataclass
@@ -698,7 +701,8 @@ class Plan:
     m_pairs: int = 20
     n_campaign: int | None = None          # fresh instances; None -> campaign_n(σ_D,UCL, δ_Y) capped at n_max
     n_max: int = 300
-    n_dev: int = 20
+    n_dev: int = 20                        # D2: static stage, 15 configurations × 20 paired dev instances
+    n_dev_members: int = 40                # D2: 4 members × 40 paired dev instances
     alpha: float = 0.05
 
     @property
@@ -707,11 +711,8 @@ class Plan:
 
     @property
     def n(self) -> int:
+        """S3e n: min(n_planned, n_max); a capped node runs at n_max (MDE reported)."""
         return min(self.n_planned, self.n_max)
-
-    @property
-    def b_eligible(self) -> bool:
-        return self.n_planned <= self.n_max
 
 
 def sigma_campaign_for(sigma_D: float, regime: Regime) -> float:
@@ -730,29 +731,51 @@ def dev_between_config_sd(world: World, regime: Regime, plan: Plan, seed: int = 
     return float(np.mean(sds))
 
 
-def match_noise(regime: Regime, plan: Plan, *, sigma_D: float | None = None, pilot_D: list[float] | None = None,
-                dev_between_sd: float | None = None, sigma_d: float | None = None,
-                world: World | None = None) -> tuple[Regime, dict]:
-    """Set the simulator's noise from measured pilot values.
+def pilot_between_policy_sd(world: World, regime: Regime, plan: Plan, *, n_inst: int = 40, seed: int = 78) -> float:
+    """The S0.5 pilot's between-policy sd: sd over instances of Y(A2-U at g = 0.1 σ) − Y(A2-U at g = 0.3 σ), each
+    instance run under both prices at W = cap (pilot regime), paired by instance."""
+    reg = replace(regime, W=regime.llm_cap)
+    sim = Sim(world, reg, seed)
+    a, b = A2UPolicy(0.1 * plan.sigma_node), A2UPolicy(0.3 * plan.sigma_node)
+    D = [sim.run_campaign(theta_table(world, reg, seed, i), a, [seed, i, 5100], np.random.default_rng([seed, i, 1]))
+         - sim.run_campaign(theta_table(world, reg, seed, i), b, [seed, i, 5100], np.random.default_rng([seed, i, 2]))
+         for i in range(n_inst)]
+    return float(np.std(D, ddof=1))
 
-    dev_between_sd (revision 6.1, preferred): the dev between-configuration sd; σ_campaign is found by bisection so
-    that ``dev_between_config_sd`` matches it. Otherwise sigma_D / pilot_D (campaign-level paired differences)
-    via ``sigma_campaign_for``. sigma_d: rep-averaged fork ΔQ sd -> σ_term (fork leaves)."""
+
+def _bisect_sigma_campaign(regime: Regime, target: float, measure) -> float:
+    lo, hi = 0.0, max(0.05, 4 * target)
+    for _ in range(18):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if measure(replace(regime, sigma_campaign=mid)) < target else (lo, mid)
+    return 0.5 * (lo + hi)
+
+
+def match_noise(regime: Regime, plan: Plan, *, sigma_D: float | None = None, pilot_D: list[float] | None = None,
+                between_policy_sd: float | None = None, dev_between_sd: float | None = None,
+                sigma_d: float | None = None, world: World | None = None) -> tuple[Regime, dict]:
+    """Set the simulator's campaign noise σ_campaign from measured values (runbook rev 7.1 S0.6), in order of
+    precedence: dev_between_sd (the S0.7 dev between-configuration sd; the post-S0.7 re-run), between_policy_sd
+    (the S0.5 pilot's between-policy sd: the first S0.6 run), sigma_D / pilot_D (campaign-level paired differences
+    via ``sigma_campaign_for``). sigma_d: rep-averaged fork ΔQ sd -> σ_term (fork leaves)."""
     rec: dict = {}
     w = world or make_world("N0")
     if pilot_D is not None:
         sigma_D = float(np.std(pilot_D, ddof=1))
         rec["m_pairs"] = len(pilot_D)
     if dev_between_sd is not None:
-        lo, hi = 0.0, max(0.05, 4 * dev_between_sd)
-        for _ in range(20):
-            mid = 0.5 * (lo + hi)
-            v = dev_between_config_sd(w, replace(regime, sigma_campaign=mid), plan)
-            lo, hi = (mid, hi) if v < dev_between_sd else (lo, mid)
-        regime = replace(regime, sigma_campaign=0.5 * (lo + hi))
+        regime = replace(regime, sigma_campaign=_bisect_sigma_campaign(
+            regime, dev_between_sd, lambda reg: dev_between_config_sd(w, reg, plan)))
+        rec["matched_to"] = "dev between-configuration sd (post-S0.7 re-run)"
         rec["dev_between_sd"] = dev_between_sd
+    elif between_policy_sd is not None:
+        regime = replace(regime, sigma_campaign=_bisect_sigma_campaign(
+            regime, between_policy_sd, lambda reg: pilot_between_policy_sd(w, reg, plan)))
+        rec["matched_to"] = "S0.5 pilot between-policy sd"
+        rec["between_policy_sd"] = between_policy_sd
     elif sigma_D is not None:
         regime = replace(regime, sigma_campaign=sigma_campaign_for(sigma_D, regime))
+        rec["matched_to"] = "campaign-level σ_D"
         rec["sigma_D"] = sigma_D
     if sigma_d is not None:
         regime = replace(regime, sigma_term=calibrate_sigma_term(w, regime, sigma_d))
@@ -771,11 +794,13 @@ def calibrate_sigma_term(world: World, regime: Regime, sigma_d_target: float, se
 
 def sim_predeclaration(node: str, plan: Plan, *, seed: int = 20261029, families: A.FamilyDecl | None = None,
                        tuning: dict | None = None) -> A.Predeclaration:
+    # in the simulator the grid unit σ_cmp,vary equals plan.sigma_node
     nd = A.NodeDecl(node, "primary", plan.delta_Y, sigma_node=plan.sigma_node,
-                    sizing=A.SizingDecl(A.sigma_D_ucl(plan.sigma_D, plan.m_pairs), plan.n_max))
+                    sizing=A.SizingDecl(A.sigma_D_ucl(plan.sigma_D, plan.m_pairs), plan.n_max),
+                    sigma_cmp_vary=plan.sigma_node)
     return A.Predeclaration(nodes={node: nd}, primary_nodes=[node], seed=seed, alpha=plan.alpha,
                             fallback_active=True, winners_curse_splits=50, families=families or A.FamilyDecl(),
-                            tuning=tuning or {"procedure": "argmax", "n_dev": plan.n_dev})
+                            tuning=tuning or {"procedure": "argmax", "n_dev": plan.n_dev_members})
 
 
 def measured_k_n(roots: list[RootRecord]) -> float:
@@ -794,9 +819,10 @@ def _campaign_root(sim, node, inst, c, rep, theta, stream, noise, *, phase, labe
 
 def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str = "FIXTURE",
             host: str = SIM_HOST) -> dict:
-    """Dev tuning (12 statics on n_dev paired instances, the one edge extension, then the 4 members anchored at
-    m*, all on the same instances), then fresh campaigns on plan.n instances: π* and m* (rep 1, same manager
-    seeds), m* at rep 2 (descriptive placebo) and again at rep 1 (exact placebo), matched static (rep 1)."""
+    """D2 tuning (15 statics × plan.n_dev paired dev instances, the one edge extension, then the 4 centred members
+    anchored at m* × plan.n_dev_members), then fresh campaigns on plan.n instances: π* and m* (rep 1, same seeds),
+    the exact placebo (m* again at rep 1, 10 instances), the descriptive placebo (m* at rep 2, 15 instances),
+    matched static (all n) and the other members (30 instances)."""
     node = f"synthetic_{world.kind}"
     sim = Sim(world, regime, seed)
     fam = A.FamilyDecl()
@@ -827,9 +853,15 @@ def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str =
     for k in range(plan.n):
         inst = 100000 + k
         th = theta_table(world, regime, seed, inst)
-        runs = [(pi_s, 1, ""), (m_s, 1, ""), (m_s, 2, ""), (m_s, 1, "dup")]
-        if ms not in (pi_s, m_s):
+        runs = [(pi_s, 1, ""), (m_s, 1, "")]
+        if k < 15:                       # descriptive placebo: m* at a second LLM repetition on >= 15 instances
+            runs.append((m_s, 2, ""))
+        if k < 10:                       # exact placebo: m* again at the same repetition on 10 instances
+            runs.append((m_s, 1, "dup"))
+        if ms not in (pi_s, m_s):        # matched static on all n instances
             runs.append((ms, 1, ""))
+        if k < 30:                       # the other channels' members on a declared subset of 30 instances
+            runs += [(c, 1, "") for c in sel["members"].values() if c != pi_s]
         for c, rep, suf in runs:
             fresh.append(_campaign_root(sim, node, f"c{k:04d}", c, rep, th, [seed, inst, 6000, rep],
                                         np.random.default_rng([seed, inst, rep, zlib.crc32(c.encode())]),
@@ -923,87 +955,77 @@ def _rate(k: int, n: int) -> dict:
 
 def replicate(world: World, regime: Regime, plan: Plan, R: int, seed0: int = 1000, *,
               oracle: dict | None = None) -> dict:
+    """R end-to-end replicates (D2 tuning + S3e through ``analyze``); route rates with Clopper–Pearson CIs,
+    P(correct member), realised gain, flip rate."""
     outs = []
     for r in range(R):
         res = run_s3e(world, regime, plan, seed0 + r)["result"]
         t = res["test"]
         outs.append({"route": res["route_single_node"], "mean": t["mean"], "lb": t["lb"], "ub": t["ub"],
-                     "ci": t["ci_two_sided"], "pi": res["pi_star"], "channel": res["pi_star_channel"],
+                     "ci": t["ci_two_sided"], "pi": res["pi_star"], "member": res["selection"]["pi_star_member"],
                      "m": res["m_star"], "flip": res["selection"]["flip"]["flip_rate"],
                      "z": res["placebo_descriptive"].get("z"), "exact": res["placebo_exact"]["status"]})
     kA = sum(o["route"] in ("A", "A-small") for o in outs)
-    kB = sum(o["route"] == "B" and (o["flip"] or 0) >= 0.10 for o in outs)
-    out = {"world": asdict(world), "plan": asdict(plan) | {"n": plan.n}, "R": R, "k_A": kA,
-           "route_A": _rate(kA, R), "route_B_node_conditions": _rate(kB, R),
-           "exact_placebo_fail": sum(o["exact"] != "pass" for o in outs),
+    out = {"world": asdict(world), "plan": asdict(plan) | {"n": plan.n, "n_planned": plan.n_planned}, "R": R,
+           "k_A": kA, "route_A_or_A_small": _rate(kA, R),
+           "route_A_small": _rate(sum(o["route"] == "A-small" for o in outs), R),
+           "no_gain_found": _rate(sum(o["route"] == "no gain found" for o in outs), R),
+           "exact_placebo_not_pass": sum(o["exact"] != "pass" for o in outs),
            "placebo_abs_z_gt_3_5": sum(abs(o["z"] or 0) > 3.5 for o in outs),
-           "mean_D": float(np.mean([o["mean"] for o in outs])),
+           "realised_gain_mean_D": float(np.mean([o["mean"] for o in outs])),
+           "ub95_mean": float(np.mean([o["ub"] for o in outs])),
            "flip_rate_mean": float(np.mean([o["flip"] or 0 for o in outs])),
-           "channel_choices": {c: sum(o["channel"] == c for o in outs) for c in sorted({o["channel"] for o in outs})}}
+           "member_choices": {c: sum(o["member"] == c for o in outs) for c in sorted({o["member"] for o in outs})}}
     if oracle is not None:
-        out["p_correct_selection_member"] = _rate(sum(o["channel"] == oracle["member_oracle"] for o in outs), R)
-        out["p_correct_selection_m_star"] = _rate(sum(o["m"] == oracle["m_oracle"] for o in outs), R)
-        out["p_correct_selection_both"] = _rate(sum(o["channel"] == oracle["member_oracle"] and
-                                                    o["m"] == oracle["m_oracle"] for o in outs), R)
-        out["coverage_vs_oracle"] = {
-            "lb95_le_oracle": _rate(sum(o["lb"] <= oracle["gain"] for o in outs), R),
-            "two_sided95_covers": _rate(sum(o["ci"][0] <= oracle["gain"] <= o["ci"][1] for o in outs), R),
-            "note": "the S3e estimand is the gain of the *selected* pair, which is ≤ the oracle gain in expectation"}
+        out["p_correct_member"] = _rate(sum(o["member"] == oracle["member_oracle"] for o in outs), R)
+        out["p_correct_m_star"] = _rate(sum(o["m"] == oracle["m_oracle"] for o in outs), R)
+        out["p_correct_both"] = _rate(sum(o["member"] == oracle["member_oracle"] and o["m"] == oracle["m_oracle"]
+                                          for o in outs), R)
     out["runs"] = outs
     return out
 
 
+S06_CAL_GRIDS = {"P2+": (0.002, 0.004, 0.006, 0.008, 0.01, 0.012, 0.016, 0.02),
+                 "P1": (4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 20.0)}
+
+
 def s06_node(node: str, regime: Regime, plan: Plan, *, R: int = 200, n_cal: int = 600, n_oracle: int = 10_000,
-             kinds: Sequence[str] = ("P0", "P1", "P2+", "P2-"), resize_to: int = 40) -> tuple[dict, dict]:
-    """S0.6 for one B-eligible node: N0 FPR and oracle check; calibrate every P variant to δ_Y; power at
-    n_dev; the one resize (n_dev -> resize_to) if any power LB < 0.6; P(correct selection), P(B | P)."""
-    rep: dict = {"node": node, "plan": asdict(plan) | {"n": plan.n, "n_planned": plan.n_planned,
-                                                       "b_eligible": plan.b_eligible},
-                 "regime": asdict(regime)}
+             cache: dict | None = None) -> tuple[dict, dict]:
+    """Runbook rev 7.1 S0.6 for one decision node (D2 design, S3e at plan.n): N0 (STOP iff ≥ 19 of 200), P2+ diffuse
+    and concentrated at δ_Y, P1-diffuse at 2 δ_Y. Power (Clopper–Pearson), P(correct member), realised gain and the
+    achieved oracle gain are reported, not gated; P0, P2− and P1-concentrated are listed as unmeasured.
+    ``cache`` may hold earlier calibrations ({(kind, variant): calibration}) so a noise re-run reuses them."""
+    rep: dict = {"node": node, "plan": asdict(plan) | {"n": plan.n, "n_planned": plan.n_planned},
+                 "regime": asdict(regime), "unmeasured_sensitivity": list(A.S06_UNMEASURED)}
     n0w = make_world("N0")
     n0o = oracle_gain(n0w, regime, plan, n_oracle=n_oracle)
     n0r = replicate(n0w, regime, plan, R, 1000, oracle=n0o)
     rep["N0"] = {k: v for k, v in n0r.items() if k != "runs"} | {
-        "oracle": n0o, "oracle_ok": bool(n0o["gain"] <= 0.05 * plan.delta_Y),
+        "oracle": n0o, "oracle_le_0_within_tol": bool(n0o["gain"] <= 0.05 * plan.delta_Y),
         "fp_gate": A.fp_gate(n0r["k_A"], R, alpha=plan.alpha)}
-    ctl = {"n": plan.n, "b_eligible": plan.b_eligible, "N0": {"R": R, "k_A": n0r["k_A"], "oracle_gain": n0o["gain"]}}
-    cals = {}
-    for kind in kinds:
-        for variant in ("diffuse", "concentrated"):
-            cals[(kind, variant)] = calibrate_strength(kind, variant, regime, plan, grid=CAL_GRIDS[kind],
-                                                       n_cal=n_cal, n_oracle=n_oracle)
-            rep[f"{kind}_{variant}_calibration"] = cals[(kind, variant)]
-
-    def power_at(n_dev):
-        pl = replace(plan, n_dev=n_dev)
-        out = {}
-        for (kind, variant), cal in cals.items():
-            if cal["strength"] is None:
-                out[(kind, variant)] = None
-                continue
-            r = replicate(make_world(kind, cal["strength"], variant), regime, pl, R, 5000, oracle=cal["oracle"])
-            out[(kind, variant)] = r
-        return out
-
-    pw = power_at(plan.n_dev)
-    gates0 = {f"{k}_{v}": (A.power_gate(r["k_A"], R) if r else {"ok": False}) for (k, v), r in pw.items()}
-    rz = A.resize_rule(gates0, plan.n_dev, resize_to)
-    rep["power_initial"] = {f"{k}_{v}": ({kk: vv for kk, vv in r.items() if kk != "runs"} if r else None)
-                            for (k, v), r in pw.items()}
-    if rz["resize"]:
-        pw = power_at(resize_to)
-        rep["power_resized"] = {f"{k}_{v}": ({kk: vv for kk, vv in r.items() if kk != "runs"} if r else None)
-                                for (k, v), r in pw.items()}
-    ctl["resize"] = rz
-    ctl["n_dev"] = rz["n_dev"]
-    for (kind, variant), r in pw.items():
-        if r is None:
+    ctl: dict = {"n": plan.n, "N0": {"R": R, "k_A": n0r["k_A"], "oracle_gain": n0o["gain"]},
+                 "unmeasured": list(A.S06_UNMEASURED)}
+    cache = cache if cache is not None else {}
+    for kind, variant, mult in A.S06_CONTROLS:
+        key = (kind, variant)
+        if key not in cache:
+            cache[key] = calibrate_strength(kind, variant, regime, replace(plan, delta_Y=mult * plan.delta_Y),
+                                            grid=S06_CAL_GRIDS[kind], n_cal=n_cal, n_oracle=n_oracle)
+        cal = cache[key]
+        entry: dict = {"calibration": {k: v for k, v in cal.items() if k != "trace"}, "planted_multiple": mult}
+        if cal["strength"] is None:
+            entry["note"] = "not calibratable at this n / noise; reported as unmeasured"
+            rep[f"{kind}_{variant}"] = entry
             continue
+        r = replicate(make_world(kind, cal["strength"], variant), regime, plan, R, 5000, oracle=cal["oracle"])
+        entry["replication"] = {k: v for k, v in r.items() if k != "runs"}
+        entry["power"] = A.power_report(r["k_A"], R)
+        rep[f"{kind}_{variant}"] = entry
         ctl.setdefault(kind, {})[variant] = {
-            "R": R, "k_A": r["k_A"], "planted_gain": cals[(kind, variant)]["planted_gain"],
-            "within_tolerance": cals[(kind, variant)]["within_tolerance"], "strength": cals[(kind, variant)]["strength"],
-            "n_dev": rz["n_dev"], "p_correct_selection": r["p_correct_selection_both"]["rate"],
-            "p_route_B": r["route_B_node_conditions"]["rate"]}
+            "R": R, "k_A": r["k_A"], "planted_multiple": mult, "target_gain": mult * plan.delta_Y,
+            "achieved_oracle_gain": cal["planted_gain"], "planted_gain": cal["planted_gain"],
+            "within_tolerance": cal["within_tolerance"], "strength": cal["strength"],
+            "p_correct_selection": r["p_correct_member"]["rate"], "realised_gain": r["realised_gain_mean_D"]}
     return rep, ctl
 
 
@@ -1076,7 +1098,7 @@ def schedule_oracle(world: World, regime: Regime, plan: Plan, *, n_search: int =
 
 
 FAMILIES = {"fixed": A.FamilyDecl(member_units={k: list(v) for k, v in A.FIXED_MEMBER_UNITS.items()}),
-            "grid": A.FamilyDecl()}
+            "grid": A.FamilyDecl(member_units={k: list(v) for k, v in A.GRID_MEMBER_UNITS.items()})}
 DESIGNS = {  # name: (family, tuning)
     "D1 fixed-4, argmax n=20": ("fixed", {"procedure": "argmax", "n_dev": 20}),
     "D2 fixed-4, argmax n=40": ("fixed", {"procedure": "argmax", "n_dev": 40}),
@@ -1189,33 +1211,36 @@ def write_node(out_dir: Path, leaves=(), roots=(), dev_roots=(), campaign_roots=
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Track S S0.6 synthetic calibration (FIXTURE; not evidence)")
+    ap = argparse.ArgumentParser(description="Track S S0.6 synthetic calibration, runbook rev 7.1 (FIXTURE; not evidence)")
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--node", default="digits_mlp", help="the B-eligible node this S0.6 run is for")
+    ap.add_argument("--node", default="digits_mlp", help="the decision node this S0.6 run is for")
     ap.add_argument("--delta-Y", type=float, default=0.0033)
-    ap.add_argument("--sigma-node", type=float, default=0.0066)
-    ap.add_argument("--sigma-D", type=float, default=0.008, help="pilot campaign-level σ_D (S0.5b)")
-    ap.add_argument("--dev-between-sd", type=float, default=None, help="pilot dev between-configuration sd")
+    ap.add_argument("--sigma-unit", type=float, default=0.0066, help="σ_cmp,vary, the grid unit")
+    ap.add_argument("--sigma-D", type=float, default=0.008, help="pilot campaign-level σ_D (S0.5b) for n")
+    ap.add_argument("--between-policy-sd", type=float, default=None,
+                    help="S0.5 pilot between-policy sd (first S0.6 run)")
+    ap.add_argument("--dev-between-sd", type=float, default=None,
+                    help="S0.7 dev between-configuration sd (the post-S0.7 re-run)")
     ap.add_argument("--m-pairs", type=int, default=20)
-    ap.add_argument("--n-campaign", type=int, default=None)
+    ap.add_argument("--n-campaign", type=int, default=None, help="final S3e n (default: sizing helper)")
     ap.add_argument("--n-max", type=int, default=300)
-    ap.add_argument("--n-dev", type=int, default=20)
     ap.add_argument("--W", type=int, default=10)
     ap.add_argument("--reps", type=int, default=200)
     ap.add_argument("--n-cal", type=int, default=600)
     ap.add_argument("--n-oracle", type=int, default=10_000)
-    ap.add_argument("--kinds", default="P0,P1,P2+,P2-")
     args = ap.parse_args(argv)
-    plan = Plan(delta_Y=args.delta_Y, sigma_node=args.sigma_node, sigma_D=args.sigma_D, m_pairs=args.m_pairs,
-                n_campaign=args.n_campaign, n_max=args.n_max, n_dev=args.n_dev)
-    regime, noise = match_noise(Regime(W=args.W), plan, sigma_D=args.sigma_D, dev_between_sd=args.dev_between_sd)
-    rep, ctl = s06_node(args.node, regime, plan, R=args.reps, n_cal=args.n_cal, n_oracle=args.n_oracle,
-                        kinds=tuple(args.kinds.split(",")))
+    plan = Plan(delta_Y=args.delta_Y, sigma_node=args.sigma_unit, sigma_D=args.sigma_D, m_pairs=args.m_pairs,
+                n_campaign=args.n_campaign, n_max=args.n_max)
+    regime, noise = match_noise(Regime(W=args.W), plan, sigma_D=args.sigma_D,
+                                between_policy_sd=args.between_policy_sd, dev_between_sd=args.dev_between_sd)
+    rep, ctl = s06_node(args.node, regime, plan, R=args.reps, n_cal=args.n_cal, n_oracle=args.n_oracle)
     rep["noise_matching"] = noise
+    ctl["noise_matching"] = noise
     args.out.mkdir(parents=True, exist_ok=True)
-    (args.out / f"controls_{args.node}.json").write_text(json.dumps(merge_controls({args.node: ctl}), indent=2,
-                                                                     default=A._json_default))
-    (args.out / f"s06_report_{args.node}.json").write_text(json.dumps(rep, indent=2, default=A._json_default))
+    tag = "post_s07" if args.dev_between_sd is not None else "pre_s07"
+    (args.out / f"controls_{args.node}_{tag}.json").write_text(json.dumps(merge_controls({args.node: ctl}), indent=2,
+                                                                          default=A._json_default))
+    (args.out / f"s06_report_{args.node}_{tag}.json").write_text(json.dumps(rep, indent=2, default=A._json_default))
     ex = run_s3e(make_world("N0"), regime, plan, seed=777)
     write_node(args.out / "synthetic_N0", dev_roots=ex["dev_roots"], campaign_roots=ex["fresh_roots"])
     print(json.dumps(ctl, default=A._json_default))

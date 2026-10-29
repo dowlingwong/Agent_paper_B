@@ -1,38 +1,52 @@
 Track S analysis - implementation notes, ambiguities, design study (plain text; .md was refused to the subagent)
 AI-assisted (Claude, 29 Oct 2026). ENGINEERING_ONLY. All simulator numbers are FIXTURE, not evidence.
 
-1. SPEC FOLLOWED
-Runbook rev. 3 plus coordinator amendments rev. 4, 5, 6, 6.1 and the rev-7 fixed changes (later wins):
- (a) the static grid includes g = 0: g in {0, 0.05, 0.1, 0.2, 0.4} sigma_node x h in {-0.25, 0, +0.25}
-     sigma_node = 15 configurations, extended once to g = 0.8 sigma if m* is on the upper edge;
- (b) the dynamic terms are mean-centred:
-       execute iff Vhat* + b_info (tau_pred - tau_bar) > g0 - b_budget (r - r1_bar)
-       keep    iff mhat > h0 - h_budget (r - r2_bar)
-     r1_bar and tau_bar are the means over m*'s eligible dev E1 decisions, r2_bar over its E2 decisions
-     (analyze.decision_centres). The policy string carries the centres:
-       dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar
-     The 5-value form is the uncentred special case;
- (c) z = 2.93 in n = ceil((2.93 sigma_D,UCL / delta_Y)^2);
- (d) N0 STOP iff >= 19 of 200 (exact one-sided binomial p < 0.01);
- (e) the inconclusive wording uses delta_Y.
+1. SPEC FOLLOWED (runbook revision 7.1, one-way screen; supersedes revisions 3-6.1 and the rev-7 study design)
+ - Policies (RootRecord.policy, unchanged string for the collector):
+     static:g,h                                       execute iff Vhat* >= g;  keep iff mhat > h
+     dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar
+                                                      execute iff Vhat* + b_info (tau_pred - tau_bar) >= g0 - b_budget (r - r1_bar)
+                                                      keep    iff mhat > h0 - h_budget (r - r2_bar)
+   EXECUTE USES >=, KEEP USES > (rev 7.1): g = 0 with Vhat* = 0 executes; mhat = h does not keep (tested).
+   r = runs_left/W - proposals_left/N_cap (rev 7.1), evaluated before the decision; proposals_left includes the
+   current proposal. The collector supplies r in each decision record; analyze.r_value can also compute it
+   from runs_left and trial_index. At E2 the simulator evaluates r after the fork trial's run.
+   r1_bar, tau_bar: means over m*'s eligible E1 dev decisions; r2_bar: over its E2 dev decisions.
+   Zero coefficients reproduce static exactly (tested).
+ - Design D2. Static family: 15 configurations, g in {0, 0.05, 0.1, 0.2, 0.4} sigma_cmp,vary x h in
+   {-0.25, 0, +0.25} sigma_cmp,vary, on 20 paired dev instances (one extension to g = 0.8 if m* is on the upper
+   edge). Dynamic family: 4 fixed-size members anchored at m*: budget +1 sigma, info +0.5, keep+ +0.5 sigma,
+   keep- -0.5 sigma, on 40 paired dev instances. Total 300 + 160 = 460 campaigns per node.
+ - Sizing: sigma_D,UCL = max(S0.5b, S0.7 dev); n = ceil((2.93 sigma_D,UCL / delta_Y)^2). 2.93 = z.95 + z.90 is
+   90 % unadjusted power; under Holm with one null node it is about 83 % power at a true gain of delta_Y on one
+   node. n_max = 300: a capped node runs at 300 and its minimum detectable effect 2.93 sigma_D,UCL / sqrt(300)
+   is reported.
+ - Outcomes: A > A-small > "no gain found", and "Track S not run" if no node survives the S0.5b fallback
+   (declare not_run_reason). Nothing else can be output (tested by fuzzing; VOID_STOP is a STOP, not an
+   outcome). Route B, B-eligibility, the flip-rate gate and the resize are removed.
+   A wording: the budget member is "a dynamic-knapsack threshold, explained by known OR theory"; if the matched
+   static rule recovers >= half of pi*'s point gain, "a threshold-level shift found by the dynamic tuning".
+   "No gain found" is reported per node with UB95, the S3e flip rate and S0.6's P(correct member) side by side,
+   in the rev-7.1 section-0 sentence filled with that node's S0.6 values, plus the three rules: not evidence of
+   one-step; bounds pi* only, not the family; UB95 < delta_Y is not an equivalence or negligibility result.
+ - STOPs: S0.6 N0 route-A count >= 19 of 200 (exact p < 0.01); exact placebo D != 0 (10 instances); descriptive
+   placebo |z| > 3.5 (>= 15 instances). Missing or insufficient controls or placebos only produce warnings.
+ - S0.6 (simulate_controls.s06_node): N0; P2+ diffuse and concentrated at delta_Y; P1-diffuse at 2 delta_Y; P0,
+   P2- and P1-concentrated listed as unmeasured. Reported per node, never gated: power (Clopper-Pearson),
+   P(correct member), realised gain, and the achieved oracle gain whenever +-5 % of the target is not reached.
+   Noise is matched to the S0.5 pilot's between-policy sd (A2-U at 0.1 vs 0.3 sigma, W = cap) for the first
+   run, and to the S0.7 dev between-configuration sd for the post-S0.7 re-run
+   (--between-policy-sd / --dev-between-sd; both tables are written, tagged pre_s07 / post_s07).
 
 2. CHOICES THE SPEC LEAVES OPEN (please confirm)
- 1. Members are anchored at m* (g0 = g*, h0 = h*), so tuning is two-stage: statics, then members. The `select`
-    CLI reports the next stage, or the (policy, dev instance) pairs the collector must run.
- 2. Centring is per epoch: r1_bar and tau_bar over E1 decisions, r2_bar over E2 decisions of m*.
- 3. Overall B with mixed nodes: overall B if >= 1 B-eligible node meets every B condition and there is no Holm
-    rejection; each node is worded separately.
- 4. Tuning procedures (analyze.tune_members):
-    - argmax(n): every member on dev instances 0..n-1;
-    - halving(budget): ceil(log2 M) rounds with an equal budget per round; survivors (top half) extend to more
-      paired instances; ties go to the smaller |parameters|;
-    - channel_first(n1, n2): the middle size of each channel on n1 instances picks the channel, then its sizes
-      on n2 instances pick the magnitude.
-    The static stage is always argmax over 15 configurations x 20 instances (300 campaigns; +60 on extension).
- 5. Flip rate: over pi*'s eligible dev decisions on the static dev instances; reported overall, E1 and E2;
-    the >= 10 % B condition uses the overall rate.
- 6. "Realised gain of the selected member" is estimated by the mean over replicates of the fresh S3e mean D
-    (unbiased for the expected realised gain of the selected pair).
+ 1. Members are anchored at m* (g0 = g*, h0 = h*), so tuning is two-stage. The `select` CLI reports the next
+    stage, or the (policy, dev instance) pairs to run.
+ 2. Centring is per epoch (r1_bar, tau_bar over E1; r2_bar over E2 of m*).
+ 3. In the "no gain found" sentence, the keep-feedback gain and power are given for both P2+ variants
+    (diffuse / concentrated), with the achieved oracle gain in units of the target.
+ 4. The other channels' members are run on 30 fresh instances in the simulator and are reported vs m* when
+    present (secondary).
+ 5. The tuning procedures halving and channel_first remain available (study), but D2 = argmax is the default.
 
 3. SIMULATOR FIXES MADE DURING THE STUDY
  - In run_s3e, pi* and m* on the same fresh instance shared one noise stream, which made D unrealistically
@@ -56,7 +70,8 @@ Runbook rev. 3 plus coordinator amendments rev. 4, 5, 6, 6.1 and the rev-7 fixed
  P2- keep feedback. A keep lowers the theta mean of every later proposal, cumulatively, by strength x r
    (diffuse) or strength x 1{r > 0.7} (concentrated).
 
-5. DESIGN STUDY (FIXTURE; digits-like node: sigma_node 0.0066, delta_Y 0.0033, W 10, cap 40,
+5. DESIGN STUDY (FIXTURE; computed BEFORE rev 7.1, with r = runs_left/W and a strict > at E1, so its numbers
+   motivate D2 but are not the S0.6 table, which must be re-run under rev 7.1; digits-like node: sigma_node 0.0066, delta_Y 0.0033, W 10, cap 40,
    sigma_D 0.01 -> sigma_D,UCL 0.0118 -> S3e n = 110 (B-eligible); sigma_D 0.02 -> UCL 0.0235 -> n = 437 > 300,
    so the node is not B-eligible and S3e runs at n_max = 300.)
 

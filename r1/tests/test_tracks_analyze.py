@@ -18,7 +18,7 @@ from r1.tracks.schema import STATE_FEATURES
 
 def pd_fork(B: int = 40, **kw) -> A.Predeclaration:
     nd = A.NodeDecl("planted", "primary", 0.0033, k_n=20.0, sigma_node=0.0066,
-                    sizing=A.SizingDecl(0.009, 300))
+                    sizing=A.SizingDecl(0.009, 300), sigma_cmp_vary=0.0066)
     return A.Predeclaration(nodes={"planted": nd}, primary_nodes=["planted"], bootstrap_B=B, fallback_active=True,
                             **kw)
 
@@ -151,10 +151,12 @@ class SizingAndGateTests(unittest.TestCase):
         sz = A.plan_sizing(A.SizingDecl(0.009, 300), 0.0033, dev_ucl=0.012)
         self.assertEqual(sz["sigma_D_ucl"], 0.012)                      # max of S0.5b and S0.7
         self.assertEqual(sz["n_planned"], A.campaign_n(0.012, 0.0033))
-        self.assertTrue(sz["b_eligible"])
+        self.assertFalse(sz["capped"])
         big = A.plan_sizing(A.SizingDecl(0.03, 300), 0.0033, dev_ucl=None)
-        self.assertFalse(big["b_eligible"])
+        self.assertTrue(big["capped"])                                    # n > n_max: run at 300, report MDE
         self.assertEqual(big["n_run_target"], 300)
+        self.assertAlmostEqual(big["mde_at_run"], 2.93 * 0.03 / math.sqrt(300))
+        self.assertGreater(big["mde_at_run"], 0.0033)
 
     def test_fp_gate_count_rule(self):
         self.assertTrue(A.fp_gate(19, 200)["stop"])
@@ -163,19 +165,20 @@ class SizingAndGateTests(unittest.TestCase):
         self.assertLess(A.fp_gate(19, 200)["p_binom"], 0.01)
         self.assertTrue(A.fp_gate(9, 50)["stop"] == (A.fp_gate(9, 50)["p_binom"] < 0.01))
 
-    def test_power_gate_and_resize(self):
-        self.assertTrue(A.power_gate(150, 200)["ok"])
-        self.assertFalse(A.power_gate(125, 200)["ok"])
-        g = {"P0_diffuse": A.power_gate(150, 200), "P1_concentrated": A.power_gate(110, 200)}
-        rz = A.resize_rule(g, 20, 40)
-        self.assertTrue(rz["resize"])
-        self.assertEqual(rz["n_dev"], 40)
-        self.assertFalse(A.resize_rule({"x": A.power_gate(190, 200)})["resize"])
+    def test_power_report_and_s06_controls(self):
+        pr = A.power_report(150, 200)
+        self.assertAlmostEqual(pr["power"], 0.75)
+        self.assertTrue(pr["ci95"][0] < 0.75 < pr["ci95"][1])
+        self.assertNotIn("ok", pr)                                        # reported, never gated
+        self.assertEqual({(k, v, m) for k, v, m in A.S06_CONTROLS},
+                         {("P2+", "diffuse", 1.0), ("P2+", "concentrated", 1.0), ("P1", "diffuse", 2.0)})
+        self.assertEqual(len(A.S06_UNMEASURED), 3)
+        self.assertFalse(hasattr(A, "resize_rule"))
 
     def test_freeze_check(self):
         sz = A.plan_sizing(A.SizingDecl(0.009, 300), 0.0033, None)
-        self.assertFalse(A.freeze_check(sz, {"n": sz["n_run_target"], "b_eligible": True})["rerun_s06"])
-        self.assertTrue(A.freeze_check(sz, {"n": sz["n_run_target"] + 5, "b_eligible": True})["rerun_s06"])
+        self.assertFalse(A.freeze_check(sz, {"n": sz["n_run_target"]})["rerun_s06"])
+        self.assertTrue(A.freeze_check(sz, {"n": sz["n_run_target"] + 5})["rerun_s06"])
         self.assertTrue(A.freeze_check(sz, None)["rerun_s06"])
 
     def test_holm_by_p_value(self):
@@ -197,7 +200,7 @@ class SizingAndGateTests(unittest.TestCase):
         t = A.mean_test(0.001 + rng.normal(0, 0.0005, 80))
         self.assertEqual(A.campaign_route(t, 0.0033), "A-small")
         t = A.mean_test(rng.normal(0, 0.002, 80))
-        self.assertEqual(A.campaign_route(t, 0.0033), "B")
+        self.assertEqual(A.campaign_route(t, 0.0033), "no gain found")
 
 
 def _roots(node, pol, ys, rep=1, phase="campaign", suffix="", inst_prefix="c", host=S.SIM_HOST):
@@ -212,6 +215,8 @@ class PlaceboTests(unittest.TestCase):
         r[-1] = S.make_campaign_root("n", "c0001", "static:0.001,0", 1, 0.9100001, W=10, llm_cap=40, suffix="dup")
         self.assertEqual(A.placebo_exact(r, "static:0.001,0")["status"], "STOP")
         self.assertEqual(A.placebo_exact(r[:2], "static:0.001,0")["status"], "missing")
+        ok = _roots("n", "p", [0.9] * 4) + _roots("n", "p", [0.9] * 4, suffix="dup")
+        self.assertEqual(A.placebo_exact(ok, "p", min_groups=10)["status"], "insufficient")
 
     def test_descriptive_placebo(self):
         rng = np.random.default_rng(2)
@@ -228,7 +233,8 @@ class SelectionTests(unittest.TestCase):
     def setUp(self):
         self.fam = A.FamilyDecl()
         self.sn = 0.0066
-        self.nd = A.NodeDecl("n", "primary", 0.0033, sigma_node=self.sn, sizing=A.SizingDecl(0.009, 300))
+        self.nd = A.NodeDecl("n", "primary", 0.0033, sigma_node=self.sn, sizing=A.SizingDecl(0.009, 300),
+                             sigma_cmp_vary=self.sn)
         self.pd = A.Predeclaration(nodes={"n": self.nd}, primary_nodes=["n"], fallback_active=True,
                                    winners_curse_splits=20)
 
@@ -250,11 +256,11 @@ class SelectionTests(unittest.TestCase):
         means = {c: 0.0 for c in stat}
         edge = A.policy_string("static", (0.4 * self.sn, 0.0))
         means[edge] = 0.002                                            # m* on the upper g edge
-        m_dec = [{"index": 3, "epoch": "E1", "eligible": True, "index_value": 0.003, "budget_fraction": 0.2,
+        m_dec = [{"index": 3, "epoch": "E1", "eligible": True, "index_value": 0.003, "r": 0.2,
                   "tau_pred": 0.004, "action": "execute"},
-                 {"index": 4, "epoch": "E1", "eligible": True, "index_value": 0.001, "budget_fraction": 0.4,
+                 {"index": 4, "epoch": "E1", "eligible": True, "index_value": 0.001, "r": 0.4,
                   "tau_pred": 0.006, "action": "skip"},
-                 {"index": 3, "epoch": "E2", "eligible": True, "index_value": 0.001, "budget_fraction": 0.3,
+                 {"index": 3, "epoch": "E2", "eligible": True, "index_value": 0.001, "r": 0.1,
                   "action": "keep"}]
         dev = self._dev(means)
         sel = A.selection_report(dev, self.pd, self.nd)
@@ -266,33 +272,33 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(sel["status"], "members_needed")
         self.assertEqual(sel["m_star"], edge)
         c = sel["centres"]
-        self.assertAlmostEqual(c["r1bar"], 0.7)                        # mean r over m*'s E1 decisions
+        self.assertAlmostEqual(c["r1bar"], 0.3)                        # mean r over m*'s E1 decisions
         self.assertAlmostEqual(c["taubar"], 0.005)
-        self.assertAlmostEqual(c["r2bar"], 0.7)
+        self.assertAlmostEqual(c["r2bar"], 0.1)
         mem = A.FamilyDecl().members(edge, self.sn, c)
-        self.assertEqual(len(mem), 12)
+        self.assertEqual(set(mem), {"budget×1", "info×0.5", "keep+×0.5", "keep-×0.5"})   # D2 fixed sizes
         self.assertEqual(sel["members"], mem)
-        decs = [{"index": 5, "epoch": "E1", "eligible": True, "index_value": 0.0026, "budget_fraction": 0.1,
+        decs = [{"index": 5, "epoch": "E1", "eligible": True, "index_value": 0.0026, "r": 0.5,
                  "tau_pred": 0.004, "action": "execute"},
-                {"index": 6, "epoch": "E1", "eligible": True, "index_value": 0.004, "budget_fraction": 0.3,
+                {"index": 6, "epoch": "E1", "eligible": True, "index_value": 0.004, "r": 0.3,
                  "tau_pred": 0.004, "action": "execute"},
-                {"index": 6, "epoch": "E2", "eligible": True, "index_value": 0.0005, "budget_fraction": 0.4,
+                {"index": 6, "epoch": "E2", "eligible": True, "index_value": 0.0005, "r": 0.2,
                  "action": "keep"}]
         best = mem["budget×1"]
-        dev += self._dev({p: (0.003 if p == best else 0.001) for p in mem.values()}, decisions={best: decs})
+        dev += self._dev({p: (0.003 if p == best else 0.001) for p in mem.values()}, n=40, decisions={best: decs})
         sel = A.selection_report(dev, self.pd, self.nd)
         self.assertEqual(sel["status"], "ok")
         self.assertEqual(sel["pi_star"], best)
         self.assertEqual(sel["pi_star_member"], "budget×1")
-        self.assertEqual(sel["tuning"]["campaigns"], 12 * 20)
+        self.assertEqual(sel["tuning"]["campaigns"], 4 * 40)               # D2: 4 members × 40
         self.assertTrue(sel["paired_dev_instances"])
         self.assertTrue(sel["static_extended"])
-        # m* = static(0.4σ, 0) executes V* > 0.00264: flips at the first E1 decision only
+        # m* = static(0.4σ, 0) executes V* ≥ 0.00264: flips at the first E1 decision only
         self.assertAlmostEqual(sel["flip"]["flip_rate"], 1 / 3)
         self.assertAlmostEqual(sel["flip"]["flip_rate_E1"], 0.5)
         self.assertEqual(sel["flip"]["flip_rate_E2"], 0.0)
         g0, bb = 0.4 * self.sn, 1.0 * self.sn
-        self.assertAlmostEqual(sel["matched_static"]["g_eff"], np.mean([g0 - bb * (0.9 - 0.7), g0 - bb * (0.7 - 0.7)]))
+        self.assertAlmostEqual(sel["matched_static"]["g_eff"], np.mean([g0 - bb * (0.5 - 0.3), g0 - bb * (0.3 - 0.3)]))
 
     def test_tuning_procedures(self):
         members = {f"{ch}×{u}": f"dynamic:0.001,{0.001 * k},0,0,0" for k, (ch, u) in
@@ -316,72 +322,104 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(A._argmax_simplest(cfgs, np.array([0.5, 0.5])), 1)
 
     def test_centred_semantics(self):
-        s = "dynamic:0.001,0.002,0,0,0,0.5,0,0.5"
-        self.assertTrue(A.threshold_act(s, {"budget_fraction": 0.0, "index_value": 0.0005}, "E1"))   # r = 1 > r̄
-        self.assertFalse(A.threshold_act(s, {"budget_fraction": 0.5, "index_value": 0.0005}, "E1"))  # r = r̄
-        eff = A.effective_thresholds(s, [{"epoch": "E1", "eligible": True, "budget_fraction": 0.3},
-                                         {"epoch": "E1", "eligible": True, "budget_fraction": 0.7}])
+        s = "dynamic:0.001,0.002,0,0,0,0.1,0,0.1"
+        self.assertTrue(A.threshold_act(s, {"r": 0.5, "index_value": 0.0005}, "E1"))    # r > r̄₁: lower threshold
+        self.assertFalse(A.threshold_act(s, {"r": 0.1, "index_value": 0.0005}, "E1"))   # r = r̄₁: m*'s threshold
+        eff = A.effective_thresholds(s, [{"epoch": "E1", "eligible": True, "r": 0.0},
+                                         {"epoch": "E1", "eligible": True, "r": 0.2}])
         self.assertAlmostEqual(eff["g_eff"], 0.001)                     # centred: same mean threshold as m*
 
-    def test_threshold_semantics(self):
-        st = {"budget_fraction": 0.0, "index_value": 0.0008}
-        self.assertFalse(A.threshold_act("static:0.001,0", st, "E1"))
-        self.assertTrue(A.threshold_act("dynamic:0.001,0.0005,0,0,0", st, "E1"))      # runs plentiful: lower
-        self.assertFalse(A.threshold_act("dynamic:0.001,0.0005,0,0,0", {**st, "budget_fraction": 1.0}, "E1"))
-        self.assertTrue(A.threshold_act("dynamic:0.001,0,0.1,0,0", st, "E1", tau_pred=0.004))
+    def test_comparison_operators(self):
+        # execute uses ≥ (g = 0 with V̂* = 0 executes), keep uses > (m̂ = h does not keep)
+        self.assertTrue(A.threshold_act("static:0,0", {"index_value": 0.0}, "E1"))
+        self.assertFalse(A.threshold_act("static:0,0", {"index_value": 0.0}, "E2"))
+        self.assertTrue(A.threshold_act("dynamic:0,0,0,0,0,0.2,0.004,0.2", {"index_value": 0.0, "r": 0.9}, "E1"))
+        self.assertFalse(A.threshold_act("dynamic:0,0,0,0,0,0.2,0.004,0.2", {"index_value": 0.0, "r": 0.9}, "E2"))
+        p = S.ThresholdPolicy("static:0,0")
+        self.assertTrue(p.e1({"index_value": 0.0, "r": 0.0, "tau_pred": 0.0}))
+        self.assertFalse(p.e2({"index_value": 0.0, "r": 0.0}))
+
+    def test_zero_coefficients_reproduce_static(self):
+        rng = np.random.default_rng(1)
+        for _ in range(200):
+            st = {"index_value": rng.normal(0, 0.002), "r": rng.uniform(-0.5, 0.5), "tau_pred": 0.004}
+            for ep in ("E1", "E2"):
+                self.assertEqual(A.threshold_act("static:0.001,-0.0005", st, ep),
+                                 A.threshold_act("dynamic:0.001,0,0,-0.0005,0,0.3,0.004,0.2", st, ep))
+
+    def test_r_definition_and_budget_term_after_a_skip(self):
+        # D1′-style check: r = runs_left/W − proposals_left/N_cap; after a skip runs are unchanged and one fewer
+        # proposal is left, so r rises and the budget term (b_budget > 0) lowers the execute threshold
+        W, cap = 2, 4
+        before = A.r_value({"runs_left": 1, "trial_index": 2}, W, cap)      # 1/2 − 3/4
+        after_skip = A.r_value({"runs_left": 1, "trial_index": 3}, W, cap)  # 1/2 − 2/4
+        self.assertAlmostEqual(before, -0.25)
+        self.assertAlmostEqual(after_skip, 0.0)
+        s = "dynamic:0.002,0.004,0,0,0,0,0,0"
+        x = {"index_value": 0.0019}
+        self.assertFalse(A.threshold_act(s, {**x, "r": before}, "E1"))
+        self.assertTrue(A.threshold_act(s, {**x, "r": after_skip + 0.1}, "E1"))
         with self.assertRaises(A.TrackSAnalysisError):
-            A.threshold_act("dynamic:0.001,0,0.1,0,0", st, "E1")
-        e2 = {"budget_fraction": 0.0, "index_value": -0.0005}
-        self.assertTrue(A.threshold_act("dynamic:0,0,0,0,0.001", e2, "E2"))            # keep+
-        self.assertFalse(A.threshold_act("dynamic:0,0,0,0,-0.001", {**e2, "index_value": 0.0005}, "E2"))  # keep−
+            A.threshold_act(s, x, "E1")                                  # r must be supplied
+
+    def test_threshold_semantics(self):
+        e2 = {"r": 0.3, "index_value": -0.0005}
+        self.assertTrue(A.threshold_act("dynamic:0,0,0,0,0.002", e2, "E2"))            # keep+ (uncentred)
+        self.assertFalse(A.threshold_act("dynamic:0,0,0,0,-0.002", {**e2, "index_value": 0.0005}, "E2"))  # keep−
+        self.assertTrue(A.threshold_act("dynamic:0.001,0,0.1,0,0", {"index_value": 0.0008}, "E1", tau_pred=0.004))
+        with self.assertRaises(A.TrackSAnalysisError):
+            A.threshold_act("dynamic:0.001,0,0.1,0,0", {"index_value": 0.0008}, "E1")
         self.assertEqual(A.channel_of("dynamic:0,0,0,0,-0.001"), "keep-")
 
 
 # ----------------------------------------------------------------------------------------------- decision rule
-def fake_campaign(mean, lb, ub, p, *, flip=0.2, b_eligible=True, exact="pass", z=0.1, n=70, share=None,
-                  channel="budget"):
-    return {"label": "FIXTURE", "pi_star": "dynamic:0.001,0.002,0,0,0", "pi_star_channel": channel,
+def fake_campaign(mean, lb, ub, p, *, flip=0.05, exact="pass", z=0.1, n=70, share=None, channel="budget",
+                  capped=False):
+    return {"label": "FIXTURE", "pi_star": "dynamic:0.001,0.0066,0,0,0,0.1,0.004,0.1", "pi_star_channel": channel,
             "m_star": "static:0.001,0", "delta_Y": 0.0033,
             "test": {"mean": mean, "lb": lb, "ub": ub, "p_one_sided": p, "n": n},
-            "placebo_exact": {"status": exact, "n_mismatch": 0 if exact == "pass" else 1},
-            "placebo_descriptive": {"status": "STOP" if abs(z) > 3.5 else "pass", "z": z},
-            "sizing": {"b_eligible": b_eligible, "n_planned": n if b_eligible else 400, "n_max": 300,
-                       "n_run_target": n},
+            "placebo_exact": {"status": exact, "n_mismatch": 0 if exact == "pass" else 1, "n_groups": 10,
+                              "min_groups": 10},
+            "placebo_descriptive": {"status": "STOP" if abs(z) > 3.5 else "pass", "z": z, "n": 15},
+            "sizing": {"n_planned": 400 if capped else n, "n_max": 300, "n_run_target": n, "capped": capped,
+                       "mde_at_run": 0.004 if capped else 0.002},
             "underpowered_vs_plan": False,
-            "selection": {"flip": {"flip_rate": flip}, "paired_dev_instances": True, "n_dev_instances": 20},
+            "selection": {"flip": {"flip_rate": flip}, "paired_dev_instances": True, "n_dev_instances": 20,
+                          "pi_star_member": f"{channel}×1"},
             "matched_static": {"policy": "static:0.0005,0", "recovers_share": share}}
 
 
-def controls(nodes=("a", "b"), k0=5, power_k=170, n=70):
-    var = {v: {"R": 200, "k_A": power_k, "planted_gain": 0.0033, "n_dev": 20} for v in ("diffuse", "concentrated")}
-    per = {"n": n, "b_eligible": True, "n_dev": 20, "N0": {"R": 200, "k_A": k0},
-           "resize": {"resize": False, "n_dev": 20}}
-    per.update({c: copy.deepcopy(var) for c in ("P0", "P1", "P2+", "P2-")})
+def controls(nodes=("a", "b"), k0=5, n=70):
+    def v(mult, k):
+        return {"R": 200, "k_A": k, "target_gain": mult * 0.0033, "achieved_oracle_gain": mult * 0.0033 * 0.98,
+                "p_correct_selection": 0.9}
+    per = {"n": n, "N0": {"R": 200, "k_A": k0}, "P2+": {"diffuse": v(1, 150), "concentrated": v(1, 154)},
+           "P1": {"diffuse": v(2, 126)}}
     return {"label": "FIXTURE", "nodes": {nd: copy.deepcopy(per) for nd in nodes}}
 
 
 class DecisionTests(unittest.TestCase):
     def setUp(self):
-        nd = {x: A.NodeDecl(x, "primary", 0.0033, sigma_node=0.0066, sizing=A.SizingDecl(0.009, 300))
-              for x in ("a", "b")}
+        nd = {x: A.NodeDecl(x, "primary", 0.0033, sigma_node=0.0066, sizing=A.SizingDecl(0.009, 300),
+                            sigma_cmp_vary=0.0066) for x in ("a", "b")}
         self.pd = A.Predeclaration(nodes=nd, primary_nodes=["a", "b"])
 
     def res(self, ca, cb):
-        return {"a": {"role": "primary", "campaign": ca, "fork": None},
-                "b": {"role": "primary", "campaign": cb, "fork": None}}
+        return {"a": {"role": "primary", "campaign": ca, "fork": None, "label": "FIXTURE"},
+                "b": {"role": "primary", "campaign": cb, "fork": None, "label": "FIXTURE"}}
 
-    def test_route_A_with_holm(self):
+    def test_route_A_with_holm_and_budget_wording(self):
         d = A.decide(self.res(fake_campaign(0.006, 0.002, 0.01, 0.004), fake_campaign(0.0, -0.002, 0.002, 0.5)),
                      controls(), self.pd)
         self.assertEqual(d["route"], "A")
         self.assertEqual(d["rejected_nodes"], ["a"])
         self.assertIn("≥ δ_Y", d["wording"])
-        self.assertIn(A.CHANNEL_WORDING["budget"], d["wording"])
+        self.assertIn("a dynamic-knapsack threshold, explained by known OR theory", d["wording"])
 
     def test_threshold_level_shift_wording(self):
         d = A.decide(self.res(fake_campaign(0.006, 0.002, 0.01, 0.004, share=0.6),
                               fake_campaign(0.0, -0.002, 0.002, 0.5)), controls(), self.pd)
-        self.assertIn("threshold-level shift", d["wording"])
+        self.assertIn("a threshold-level shift found by the dynamic tuning", d["wording"])
 
     def test_route_A_small(self):
         d = A.decide(self.res(fake_campaign(0.0015, 0.0004, 0.0026, 0.01), fake_campaign(0.0, -0.002, 0.002, 0.5)),
@@ -389,46 +427,67 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual(d["route"], "A-small")
         self.assertIn("not worded as ≥ δ_Y", d["wording"])
 
-    def test_route_B_per_node_and_its_conditions(self):
-        good = dict(mean=0.0, lb=-0.002, ub=0.002, p=0.5)
-        d = A.decide(self.res(fake_campaign(**good), fake_campaign(**good)), controls(), self.pd)
-        self.assertEqual(d["route"], "B")
-        self.assertEqual(d["per_node"], {"a": "B", "b": "B"})
-        d = A.decide(self.res(fake_campaign(**good), fake_campaign(**good, flip=0.05)), controls(), self.pd)
-        self.assertEqual(d["per_node"], {"a": "B", "b": "inconclusive"})
-        self.assertEqual(d["route"], "B")
-        self.assertIn("inconclusive", d["wording"])
-        d = A.decide(self.res(fake_campaign(**good, b_eligible=False), fake_campaign(**good, b_eligible=False)),
-                     controls(), self.pd)
-        self.assertEqual(d["route"], "inconclusive")
-        self.assertEqual(d["wording"], A.INCONCLUSIVE_WORDING)
-        d = A.decide(self.res(fake_campaign(**good), fake_campaign(**good)), controls(power_k=120), self.pd)
-        self.assertEqual(d["route"], "inconclusive")
-        d = A.decide(self.res(fake_campaign(**good), fake_campaign(**good)), controls(n=90), self.pd)
-        self.assertEqual(d["route"], "inconclusive")                   # S0.6 ran at another n: re-run
-        self.assertTrue(any("re-run" in x for x in d["node_B_failures"]["a"]))
-        d = A.decide(self.res(fake_campaign(**good), fake_campaign(**good)), None, self.pd)
-        self.assertEqual(d["route"], "inconclusive")
+    def test_no_gain_found_per_node_wording(self):
+        d = A.decide(self.res(fake_campaign(0.0, -0.002, 0.0021, 0.5, flip=0.07),
+                              fake_campaign(0.001, -0.001, 0.004, 0.2, capped=True)), controls(), self.pd)
+        self.assertEqual(d["route"], "no gain found")
+        w = d["wording"]
+        self.assertIn("a: the selected dynamic member π* did not beat the tuned static rule m*; its mean gain is "
+                      "below UB₉₅ = 0.0021.", w)
+        self.assertIn("power 0.75", w)                                     # this node's S0.6 keep-feedback power
+        self.assertIn("information-world gain of 2 δ_Y with power 0.63", w)
+        self.assertIn("The budget channel, negative keep feedback and the information member itself are unprobed.", w)
+        self.assertIn("It bounds π* only, not the four-member family.", w)
+        self.assertIn("UB₉₅ < δ_Y is not an equivalence or negligibility result", w)
+        self.assertIn("This is not evidence that the loop is one-step.", w)
+        self.assertIn("minimum detectable effect", w)                      # node b is capped at n_max
+        row = d["per_node"]["a"]
+        self.assertEqual((row["UB95"], row["flip_rate_S3e_dev"]), (0.0021, 0.07))
+        self.assertEqual(row["S06_P_correct_member"]["P2+-diffuse"], 0.9)
 
-    def test_inconclusive_wording_is_exact(self):
-        d = A.decide(self.res(fake_campaign(0.002, -0.001, 0.005, 0.1), fake_campaign(0.0, -0.002, 0.004, 0.5)),
-                     controls(), self.pd)
-        self.assertEqual(d["route"], "inconclusive")
-        self.assertEqual(d["wording"], "Neither a gain ≥ δ_Y nor its absence was shown; gains up to UB₉₅ remain "
-                                       "compatible with the data.")
+    def test_track_s_not_run(self):
+        pd = A.parse_predeclaration({"schema": A.PREDECLARATION_SCHEMA, "primary_nodes": [], "nodes": {},
+                                     "not_run_reason": "both nodes exceed 4 days (S0.5b fallback)"})
+        d = A.decide({}, None, pd)
+        self.assertEqual(d["route"], "Track S not run")
+        self.assertIn("4 days", d["wording"])
+        with self.assertRaises(A.TrackSAnalysisError):
+            A.parse_predeclaration({"schema": A.PREDECLARATION_SCHEMA, "primary_nodes": [], "nodes": {}})
 
     def test_stops(self):
         good = dict(mean=0.0, lb=-0.002, ub=0.002, p=0.5)
         self.assertEqual(A.decide(self.res(fake_campaign(**good), fake_campaign(**good)), controls(k0=19),
                                   self.pd)["route"], "VOID_STOP")
         self.assertEqual(A.decide(self.res(fake_campaign(**good), fake_campaign(**good)), controls(k0=18),
-                                  self.pd)["route"], "B")
+                                  self.pd)["route"], "no gain found")
         self.assertEqual(A.decide(self.res(fake_campaign(**good, exact="STOP"), fake_campaign(**good)), controls(),
                                   self.pd)["route"], "VOID_STOP")
         self.assertEqual(A.decide(self.res(fake_campaign(**good, z=3.6), fake_campaign(**good)), controls(),
                                   self.pd)["route"], "VOID_STOP")
-        self.assertEqual(A.decide(self.res(fake_campaign(**good, z=3.4), fake_campaign(**good)), controls(),
-                                  self.pd)["route"], "B")
+        d = A.decide(self.res(fake_campaign(**good, exact="insufficient"), fake_campaign(**good)), None, self.pd)
+        self.assertEqual(d["route"], "no gain found")                        # missing controls warn, never gate
+        self.assertTrue(any("exact placebo insufficient" in w for w in d["warnings"]))
+
+    def test_only_declared_outcomes_can_be_output(self):
+        rng = np.random.default_rng(11)
+        seen = set()
+        for _ in range(400):
+            cs = []
+            for _ in range(2):
+                m = rng.normal(0.0, 0.004)
+                se = abs(rng.normal(0.0015, 0.0007)) + 1e-5
+                cs.append(fake_campaign(m, m - 1.7 * se, m + 1.7 * se, float(rng.uniform(0, 1)),
+                                        flip=float(rng.uniform(0, 0.3)), share=rng.choice([None, 0.2, 0.7]),
+                                        channel=str(rng.choice(A.CHANNEL_MEMBERS)), capped=bool(rng.random() < 0.3),
+                                        z=float(rng.normal(0, 1.5)), exact=str(rng.choice(["pass", "pass", "STOP",
+                                                                                             "missing"]))))
+            ctl = controls(k0=int(rng.integers(0, 30))) if rng.random() < 0.8 else None
+            d = A.decide(self.res(*cs), ctl, self.pd)
+            self.assertIn(d["route"], A.OUTCOMES + ("VOID_STOP",))
+            seen.add(d["route"])
+        self.assertTrue({"A", "A-small", "no gain found", "VOID_STOP"} <= seen)
+        self.assertNotIn("B", seen)
+        self.assertNotIn("inconclusive", seen)
 
     def test_labels(self):
         self.assertEqual(A.combine_labels(["EVIDENCE", "EVIDENCE"]), "EVIDENCE")
@@ -442,6 +501,7 @@ class PredeclarationAndCliTests(unittest.TestCase):
         d = {"schema": A.PREDECLARATION_SCHEMA, "primary_nodes": ["synthetic_N0"], "fallback_active": True,
              "bootstrap_B": 20, "winners_curse_splits": 20,
              "nodes": {"synthetic_N0": {"role": "primary", "sigma_node": 0.0066, "delta_Y": 0.0033,
+                                        "sigma_cmp_vary": 0.0066,
                                         "sizing": {"sigma_D_ucl_s05b": 0.0093, "n_max": 300}}}}
         d.update(over)
         return d
@@ -449,7 +509,8 @@ class PredeclarationAndCliTests(unittest.TestCase):
     def test_parse(self):
         pd = A.parse_predeclaration(self.decl())
         self.assertEqual(len(pd.families.static_configs(0.0066)), 15)
-        self.assertEqual(len(pd.families.members("static:0.001,0", 0.0066)), 12)
+        self.assertEqual(len(pd.families.members("static:0.001,0", 0.0066)), 4)     # D2
+        self.assertEqual(pd.tuning, {"procedure": "argmax", "n_dev": 40})
         bad = self.decl()
         bad["nodes"]["synthetic_N0"]["delta_Y"] = 0.004
         with self.assertRaises(A.TrackSAnalysisError):
