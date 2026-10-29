@@ -51,6 +51,10 @@ class Provenance:
     prior_sha256: str            # A2-U prior file (S0.4)
     phase: str                   # "S0.4" | "S0.5" | "S3" | "S3d" | "synthetic" | "fixture"
     label: str                   # "ENGINEERING_ONLY" | "PILOT" | "EVIDENCE" | "FIXTURE"
+    # Added 29 Oct (collector, rev.-4 amendment 2): the declared run price g and the pilot price g0 the
+    # roots and continuations ran at (raw metric units); None in records written before the fields existed.
+    g_declared: float | None = None
+    g0: float | None = None
 
 
 @dataclass
@@ -102,6 +106,11 @@ class LeafRecord:
     provenance: Provenance
     status: str = "ok"           # "ok" | "failed"
     error: str | None = None
+    # Added 29 Oct (collector): A/A leaves only (arm "aa", rep 0): True iff the leaf's decisions after the fork
+    # equal the root's (budget index, decision, proposal summary, metric); None for every other arm.
+    aa_reproduced: bool | None = None
+    # Added 29 Oct (rev.-4 amendment 3): the named policy of the continuation ("" = the root controller).
+    policy: str = ""
 
 
 @dataclass
@@ -124,6 +133,9 @@ class RootRecord:
     provenance: Provenance | None = None
     status: str = "ok"
     error: str | None = None
+    # Added 29 Oct (rev.-4 amendment 3): the named policy of the campaign, e.g. "a2u:g0" for roots,
+    # "static:g=<x>,e2off=<y>" or "pi_prime:<model_file>" in the S3e "campaign" phase ("" = unspecified).
+    policy: str = ""
 
 
 def to_dict(rec) -> dict:
@@ -136,3 +148,10 @@ def leaf_from_dict(d: dict) -> LeafRecord:
     d["forecast"] = Forecast(**d["forecast"])
     d["provenance"] = Provenance(**d["provenance"])
     return LeafRecord(**d)
+
+
+def root_from_dict(d: dict) -> RootRecord:
+    d = dict(d)
+    if d.get("provenance") is not None:
+        d["provenance"] = Provenance(**d["provenance"])
+    return RootRecord(**d)
