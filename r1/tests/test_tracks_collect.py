@@ -17,13 +17,29 @@ from r1.tracks.a2u import A2UPrior, RidgeScore, SCORE_MODEL_SCHEMA
 from r1.tracks.schema import STATE_FEATURES, TRACKS_LEAF_SCHEMA, leaf_from_dict, root_from_dict, to_dict
 
 
+LL = {"mechanism": "loglinear"}
+
+
 def _run(tmp: Path, *extra: str, node: str = "synthetic_N0", phase: str = "synthetic", out: str = "out") -> Path:
     args = ["--phase", phase, "--node", node, "--llm-cap", "10", "--out", str(tmp / out), "--work", str(tmp / "work"),
             "--label", "FIXTURE", "--host-label", "ci", "--gpu", "none", *extra]
     if phase != "S0.4" and "--W" not in extra:
         args += ["--W", "10"]
-    assert C.main(args) == 0
+    assert C.main(_legacy(args)) == 0
     return tmp / out
+
+
+def _legacy(args: list[str]) -> list[str]:
+    """These tests exercise the collector on the rev.-6 log-linear synthetic nodes (``mechanism=loglinear``);
+    the rev.-7 world nodes are tested in test_tracks_worlds.py and test_tracks_oracle.py."""
+    if not args[args.index("--node") + 1].startswith("synthetic_"):
+        return args
+    if "--synthetic-params" in args:
+        i = args.index("--synthetic-params") + 1
+        params = json.loads(args[i])
+        params.setdefault("mechanism", "loglinear")
+        return args[:i] + [json.dumps(params)] + args[i + 1:]
+    return args + ["--synthetic-params", json.dumps({"mechanism": "loglinear"})]
 
 
 # ---------------------------------------------------------------------------
@@ -121,8 +137,11 @@ def test_collector_end_to_end_resume_and_schema(tmp_path):
 
 
 def test_dry_run_runs_nothing(tmp_path, capsys):
-    assert C.main(["--phase", "synthetic", "--node", "synthetic_N0", "--W", "10", "--out", str(tmp_path / "o"),
-                   "--work", str(tmp_path / "w"), "--instances", "3", "--dry-run"]) == 0
+    assert C.main(["--phase", "synthetic", "--node", "synthetic_N0", "--W", "10", "--llm-cap", "10",
+                   "--out", str(tmp_path / "o"), "--work", str(tmp_path / "w"), "--instances", "3", "--dry-run"]) == 0
+    with pytest.raises(ValueError, match="non-binding"):  # the N0 world runs at W = llm_cap only
+        C.main(["--phase", "synthetic", "--node", "synthetic_N0", "--W", "10", "--llm-cap", "40",
+                "--out", str(tmp_path / "o"), "--work", str(tmp_path / "w"), "--instances", "3", "--dry-run"])
     out = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert out["dry_run"] and out["roots_todo"] == 3 and not (tmp_path / "o").exists()
 
@@ -142,8 +161,8 @@ def test_campaign_phase_policies_and_same_repetition_placebo(tmp_path):
     model.write_text(json.dumps({"schema": SCORE_MODEL_SCHEMA, "intercept": -0.0005,
                                  "coef": {"index_value": 1.0, "budget_gap": 0.001, "e2": 0.0005}}))
     g0 = 0.0005
-    pols = [f"static:g={g0},e2off=0", f"dynamic:g0={g0}", f"dynamic:g0={g0},b_budget=0.004,b_info=0.5,h_budget=0.001",
-            f"matched_static:g={g0},h=0.001", f"pi_prime:{model}"]
+    pols = [f"static:{g0},0", f"dynamic:{g0},0,0,0,0", f"dynamic:{g0},0.004,0.5,0,0.001",
+            f"static:{g0},0.001", f"pi_prime:{model}"]
     out = _run(tmp_path, "--instances", "2", *sum((["--policy", p] for p in pols), []), "--rep", "3",
                phase="campaign", node="synthetic_P2p")
     roots = [root_from_dict(r) for r in C.read_jsonl(out / "roots.jsonl")]
@@ -158,25 +177,38 @@ def test_campaign_phase_policies_and_same_repetition_placebo(tmp_path):
 
 
 def test_tune_phase_runs_every_configuration_on_the_same_paired_instances(tmp_path):
+    """Rev. 7 D2: 15 statics on 20 paired dev instances; the 4 fixed members (centred at m*'s decision means
+    from the static stage's roots) on 40, the first 20 of which are the statics' instances."""
     grid = C.tuning_grid("static", 0.003)
-    assert len(grid) == 15 and "static:g=0.00015,e2off=-0.00075" in grid and "static:g=0.0012,e2off=0.00075" in grid
-    assert "static:g=0,e2off=0" in grid  # rev. 7 (a)
+    assert len(grid) == 15 and "static:0.00015,-0.00075" in grid and "static:0.0012,0.00075" in grid
+    assert "static:0,0" in grid  # rev. 7 (a)
     assert len(C.tuning_grid("static", 0.003, extend=True)) == 18
-    dyn = C.tuning_grid("dynamic", 0.003, (0.1, 0.0))
-    assert dyn == ["dynamic:g0=0.0003,h0=0,b_budget=0.003", "dynamic:g0=0.0003,h0=0,b_info=0.5",
-                   "dynamic:g0=0.0003,h0=0,h_budget=0.0015", "dynamic:g0=0.0003,h0=0,h_budget=-0.0015"]
-    out = _run(tmp_path, "--instances", "2", "--tune-grid", "all", "--sigma-cmp-vary", "0.003", "--m-star", "0.1,0",
-               phase="tune")
-    roots = C.read_jsonl(out / "roots.jsonl")
-    assert Counter(r["policy"] for r in roots) == Counter({p: 2 for p in grid + dyn})
+    dyn = C.tuning_grid("dynamic", 0.003, "static:0.0003,0", centres={"r1bar": 0.1, "taubar": 0.002, "r2bar": 0.05})
+    assert dyn == ["dynamic:0.0003,0.003,0,0,0,0.1,0.002,0.05", "dynamic:0.0003,0,0.5,0,0,0.1,0.002,0.05",
+                   "dynamic:0.0003,0,0,0,0.0015,0.1,0.002,0.05", "dynamic:0.0003,0,0,0,-0.0015,0.1,0.002,0.05"]
+    st = _run(tmp_path, "--tune-grid", "static", "--sigma-cmp-vary", "0.003", phase="tune", out="static")
+    roots = C.read_jsonl(st / "roots.jsonl")
+    assert Counter(r["policy"] for r in roots) == Counter({p: C.TUNE_N_STATIC for p in grid})
+    m_star = "static:0.0003,0"
+    centres = C.centres_from_roots(str(st / "roots.jsonl"), m_star)
+    assert centres["n_E1"] > 0 and centres["n_E2"] > 0
+    mem = _run(tmp_path, "--tune-grid", "dynamic", "--sigma-cmp-vary", "0.003", "--m-star", m_star,
+               "--centres-from", str(st / "roots.jsonl"), phase="tune", out="members")
+    mroots = C.read_jsonl(mem / "roots.jsonl")
+    members = C.tuning_grid("dynamic", 0.003, m_star, centres=centres)
+    assert Counter(r["policy"] for r in mroots) == Counter({p: C.TUNE_N_MEMBERS for p in members})
+    assert json.loads((mem / "manifest.json").read_text())["centres"] == centres
     by_policy: dict[str, set] = {}
-    for r in roots:
+    for r in roots + mroots:
         by_policy.setdefault(r["policy"], set()).add(r["instance_id"])
-    assert len({frozenset(v) for v in by_policy.values()}) == 1  # paired: the same instances everywhere
-    seeds = {int(r["instance_id"].rsplit("__s", 1)[1]) for r in roots}
+    static_ids = {frozenset(by_policy[p]) for p in grid}
+    member_ids = {frozenset(by_policy[p]) for p in members}
+    assert len(static_ids) == 1 and len(member_ids) == 1  # paired within each stage
+    (s_ids,), (m_ids,) = static_ids, member_ids
+    assert s_ids < m_ids and sorted(m_ids)[:C.TUNE_N_STATIC] == sorted(s_ids)  # the first 20 are shared
+    seeds = {int(i.rsplit("__s", 1)[1]) for i in m_ids}
     lo, hi = C.INSTANCE_SEED_BLOCKS["tune"]
-    assert seeds == {lo + k for k in range(2)}  # the dev (tuning) block
-    assert lo + 40 <= hi
+    assert seeds == {lo + k for k in range(C.TUNE_N_MEMBERS)}  # the dev (tuning) block
 
 
 def test_s04_and_fit_prior(tmp_path):
@@ -196,16 +228,18 @@ def test_policy_parsing_and_verify_refusal(tmp_path):
     from r1.tracks.synthetic import synthetic_node
     from r1.c3.features import NodeContext
     from r1.tracks.synthetic import surface_start_files
-    node = synthetic_node("synthetic_N0")
+    node = synthetic_node("synthetic_N0", LL)
     pr = node.prior()
     ctx = NodeContext(node="digits_mlp", start_files=surface_start_files(), sigma_node=pr.sigma_node, runs_total=10,
                       memory_mode="append_only_summary")
-    st = C.policy_controller("static:g=0.001,e2off=0.002", pr, ctx, g0=0.0)
-    dy = C.policy_controller("dynamic:g0=0.001,h0=0.002", pr, ctx, g0=0.0)
-    ms = C.policy_controller("matched_static:g=0.001,h=0.002", pr, ctx, g0=0.0)
-    assert (st.g, st.h0, st.version) == (dy.g, dy.h0, dy.version) == (ms.g, ms.h0, ms.version)
-    with pytest.raises(ValueError):
-        C.policy_controller("dynamic:b_budget=1", pr, ctx, g0=0.0)
+    st = C.policy_controller("static:0.001,0.002", pr, ctx, g0=0.0)
+    dy = C.policy_controller("dynamic:0.001,0,0,0.002,0", pr, ctx, g0=0.0)
+    dc = C.policy_controller("dynamic:0.001,0,0,0.002,0,0.3,0.004,0.2", pr, ctx, g0=0.0)
+    assert (st.g, st.h0) == (dy.g, dy.h0) == (dc.g, dc.h0) and st.version == dy.version
+    assert st.policy_name == "static:0.001,0.002" and dc.r2_bar == 0.2
+    for bad in ("dynamic:b_budget=1", "static:g=0.001,e2off=0", "matched_static:0.001,0.002", "dynamic:1,2"):
+        with pytest.raises(ValueError):
+            C.policy_controller(bad, pr, ctx, g0=0.0)
     with pytest.raises(ValueError):
         C.policy_controller("budget_dp:table.json", pr, ctx, g0=0.0)
     with pytest.raises(SystemExit, match="verify"):
@@ -229,7 +263,7 @@ def test_s05b_truncated_incumbent_audits(tmp_path):
     # The truncation equals a campaign actually run at that W (A2-U is budget-blind).
     from r1.tracks import oracle as O
     from r1.tracks.synthetic import synthetic_node
-    node = synthetic_node("synthetic_P0")
+    node = synthetic_node("synthetic_P0", LL)
     for r in rows:
         if r["W"] == 6:
             seed = int(r["instance_id"].rsplit("__s", 1)[1])

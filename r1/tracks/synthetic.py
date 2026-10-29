@@ -1,4 +1,10 @@
-"""Synthetic control nodes of Track S: P1, P2 (positive controls) and N0 (null). Runbook rev. 3, §4.
+"""Synthetic control nodes of Track S: P1, P2 (positive controls) and N0 (null). Runbook rev. 3, §4; rev. 7.
+
+Rev. 7 (default): every node name is a world of the analysis simulator (``WorldNode``, mechanism in
+``r1.tracks.worlds``; N0, P0, P1, P2+ = ``synthetic_P2p``, P2- = ``synthetic_P2m``, variants diffuse /
+concentrated, ``strength`` the S0.6 value), run through the real harness loop; see the end of this module and
+IMPLEMENTATION_NOTES "Rev. 7 / 7.1 alignment". The rev.-6 log-linear nodes described below remain available with
+``params={"mechanism": "loglinear", ...}`` for engineering tests only; they are not declared controls.
 
 AI-assisted (Claude, 29 Oct 2026). ENGINEERING_ONLY. Parameters are constructor
 arguments; their values are to be set by simulation of the primary estimand in the
@@ -58,7 +64,7 @@ from typing import Any
 
 import numpy as np
 
-from r1.c3.features import apply_edit
+from r1.c3.features import apply_edit, parsed_metric
 from r1.diagnostics.di_test import configuration
 from r1.harness import import_harness
 from r1.tracks.a2u import A2UPrior, KindPrior
@@ -431,8 +437,270 @@ DEFAULT_PARAMS = {
 }
 
 
-def synthetic_node(name: str, params: dict | None = None) -> SyntheticNode:
+# ---------------------------------------------------------------------------
+# Rev. 7: the analysis simulator's worlds on the real pipeline (``r1.tracks.worlds``)
+# ---------------------------------------------------------------------------
+
+NODE_WORLDS = {"synthetic_N0": "N0", "synthetic_P0": "P0", "synthetic_P1": "P1", "synthetic_P2p": "P2+",
+               "synthetic_P2m": "P2-"}
+WORLD_EDIT_KEY = "ALPHA"     # the surface constant every world edit changes (to a value unique to the trial)
+WORLD_EDIT_STEP = 1e-3       # ALPHA_t = ALPHA_start x exp(1e-3 t): no edit is a no-op or a duplicate
+WORLD_STREAM_TAG = 7000      # stream seed of (instance, repetition): [world_seed, instance, 7000, repetition]
+TRUE_Y_TAG = "# tracks-true-y:"
+KEEP_LOG_TAG = "# tracks-keep-log:"
+WORLD_PARAMS = ("mechanism", "variant", "strength", "world_seed", "llm_cap", "p_rule", "sigma_audit", "W", "world")
+
+
+def _get_tag(text: str, tag: str) -> str | None:
+    m = re.search(r"^" + re.escape(tag) + r" (.+?)\s*$", text, re.MULTILINE)
+    return m.group(1) if m else None
+
+
+def _set_tag(text: str, tag: str, value: str) -> str:
+    line = f"{tag} {value}"
+    pat = re.compile(r"^" + re.escape(tag) + r" .*$", re.MULTILINE)
+    if pat.search(text):
+        return pat.sub(lambda _: line, text)
+    return text.rstrip("\n") + "\n" + line + "\n"
+
+
+def world_state(text: str, y0: float) -> tuple[float, float, list]:
+    """(true y, recorded offset, keep log) carried by a world node's ``train.py`` (start: y0, 0, [])."""
+    ty = _get_tag(text, TRUE_Y_TAG)
+    log = _get_tag(text, KEEP_LOG_TAG)
+    return (float(ty) if ty is not None else float(y0), read_offset(text),
+            [tuple(x) for x in json.loads(log)] if log is not None else [])
+
+
+class WorldManager:
+    """Scripted manager of a world node: the world's proposal law (decision-independent given the stream).
+
+    A rule-detectable proposal is a structured no-op (the harness rejects it before any run, as the C3 rules
+    would); every other proposal sets ALPHA to a value unique to the trial and names its world key, size, offset,
+    kind and stream in ``extra.scripted.world`` (the controller reads key / size / offset / kind only). A fork
+    continuation (``fork_trial``) proposes from the root stream (repetition 0) up to the fork trial and from its
+    own repetition's stream after it, as the analysis simulator's ``run_leaf``."""
+
+    deterministic = True
+
+    def __init__(self, node: "WorldNode", seed: int, repetition: int, fork_trial: int | None = None) -> None:
+        from r1.tracks import worlds as WD
+        self.node, self.seed, self.repetition = node, int(seed), int(repetition)
+        self.mode = f"scripted_{node.name}"
+        w, rg = node.world(), node.regime()
+        tab = WD.theta_table(w, rg, node.world_seed, self.seed)
+        root_seed = node.stream_seed(self.seed, 0)
+        own_seed = node.stream_seed(self.seed, self.repetition)
+        if fork_trial is None or self.repetition == 0:
+            segs, self.seg_seeds = WD.Stream(own_seed, rg.llm_cap), [(1, own_seed)]
+        else:
+            segs = [(1, WD.Stream(root_seed, rg.llm_cap)), (int(fork_trial) + 1, WD.Stream(own_seed, rg.llm_cap))]
+            self.seg_seeds = [(1, root_seed), (int(fork_trial) + 1, own_seed)]
+        self.sequence = WD.proposal_sequence(w, rg, tab, segs)
+        self.start = start_values()
+
+    def stream_of(self, t: int) -> list:
+        return [sd for t0, sd in self.seg_seeds if t0 <= t][-1]
+
+    def propose_next_trial(self, status, memory_context, node_spec) -> ManagerProposal:
+        t = int(status.budget_index)
+        p = self.sequence[t - 1]
+        key = WORLD_EDIT_KEY
+        old = str(status.current_constants[key])
+        new = old if p.rule else repr(float(self.start[key]) * math.exp(WORLD_EDIT_STEP * t))
+        path = node_spec.editable_paths[0]
+        world = {"t": t, "kind": "rule"} if p.rule else \
+            {"t": t, "key": p.key, "size": p.size, "off": p.off, "kind": p.kind, "stream": list(self.stream_of(t))}
+        return ManagerProposal(
+            manager_mode=self.mode, proposal_summary=f"{self.node.name} t={t} {p.kind}",
+            proposal_rationale=f"Scripted {self.node.name} world proposal (Track S synthetic control).",
+            target_files=tuple(node_spec.editable_paths),
+            objective=f"Change {key} from {old} to {new} in {path} and keep all other hyperparameters unchanged.",
+            extra={"structured_edit": {"type": "python_constant", "path": path, "symbol": key, "old": old, "new": new},
+                   "scripted": {"node": self.node.name, "seed": self.seed, "repetition": self.repetition,
+                                "world": world}})
+
+
+class WorldWorker:
+    """Harness ``Worker`` of a world node: delta from the world law, delta_hat = delta + eps exactly.
+
+    The candidate's ``train.py`` carries its true value (incumbent's + delta), its recorded offset (incumbent's +
+    eps) and the keep log (incumbent's + this trial's feedback record, used by P2 if the candidate is kept);
+    reported metric = true value + offset. ``runs`` counts this campaign's worker runs (a leaf starts from the
+    snapshot's count): the P2 feedback scale uses runs_used / W at the keep."""
+
+    mode = "tracks_world_worker"
+
+    def __init__(self, node_root: str | Path, node: "WorldNode", seed: int, *, runs0: int = 0) -> None:
+        self.node_root = Path(node_root).resolve()
+        self.node, self.seed, self.runs = node, int(seed), int(runs0)
+        self._train_seed = self._split_seed = int(seed)  # recorded by harness snapshots (leaf rebuild)
+
+    def run_trial(self, proposal, node_spec, budget_index):
+        self.runs += 1
+        path = self.node_root / "train.py"
+        files = self.node.candidate_files({"train.py": path.read_text()}, proposal, self.seed, self.runs)
+        path.write_text(files["train.py"])
+        y, off, _ = world_state(files["train.py"], self.node.world().y0)
+        return WorkerResult(worker_mode=self.mode, changed_files=("train.py",), success=True,
+                            parsed_metrics={"val_score": float(y + off)}, raw_log_ref="", patch_ref="synthetic.diff",
+                            git_commit_before="", git_commit_after="", failure_message=None)
+
+
+@dataclass
+class WorldNode:
+    """A rev.-7 synthetic control node: an analysis-simulator world (``r1.tracks.worlds``) on the digits_mlp
+    surface. ``params``: variant (P worlds: diffuse | concentrated), strength (the declared S0.6 value), world_seed,
+    llm_cap and W (bound by the collector to the run's), p_rule, sigma_audit, and ``world`` (World overrides)."""
+
+    name: str
+    params: dict
+    surface: str = SURFACE
+    synthetic_world: bool = True
+
+    def __post_init__(self) -> None:
+        from r1.tracks import worlds as WD
+        bad = set(self.params) - set(WORLD_PARAMS)
+        if bad:
+            raise ValueError(f"{self.name}: unknown world-node parameters {sorted(bad)} (legacy nodes: "
+                             "mechanism=loglinear)")
+        kind = NODE_WORLDS[self.name]
+        if kind == "N0":
+            if self.params.get("variant") not in (None, "none"):
+                raise ValueError("N0 has no variant")
+            if float(self.params.get("strength", 0.0)) != 0.0:
+                raise ValueError("N0 has zero oracle gain by construction; strength must be 0")
+        elif self.params.get("variant", "diffuse") not in VARIANTS:
+            raise ValueError(f"variant must be one of {VARIANTS}")
+        self.world()  # validates the overrides
+        W, cap = self.params.get("W"), self.params.get("llm_cap", 40)
+        if kind == "N0" and W is not None and int(W) != int(cap):
+            raise ValueError("N0 runs at the non-binding W = llm_cap (analysis simulator)")
+        _ = WD
+
+    # ---- the world
+    @property
+    def kind(self) -> str:
+        return NODE_WORLDS[self.name]
+
+    @property
+    def variant(self) -> str | None:
+        return None if self.kind == "N0" else self.params.get("variant", "diffuse")
+
+    @property
+    def world_seed(self) -> int:
+        return int(self.params.get("world_seed", 20261029))
+
+    def world(self):
+        from r1.tracks import worlds as WD
+        return WD.make_world(self.kind, float(self.params.get("strength", 0.0)), self.variant,
+                             **dict(self.params.get("world") or {}))
+
+    def regime(self):
+        from r1.tracks import worlds as WD
+        return WD.Regime(llm_cap=int(self.params.get("llm_cap", 40)), p_rule=float(self.params.get("p_rule", 0.55)),
+                         sigma_audit=float(self.params.get("sigma_audit", 0.004)))
+
+    def bind(self, *, W: int, llm_cap: int) -> "WorldNode":
+        """The run's W and LLM cap (the world's trial horizon and the P2 budget fraction use them)."""
+        if self.params.get("W") is not None and int(self.params["W"]) != int(W):
+            raise ValueError(f"{self.name}: params W={self.params['W']} != run W={W}")
+        if self.params.get("llm_cap") is not None and int(self.params["llm_cap"]) != int(llm_cap):
+            raise ValueError(f"{self.name}: params llm_cap={self.params['llm_cap']} != run cap={llm_cap}")
+        p = {**self.params, "W": int(W), "llm_cap": int(llm_cap)}
+        return WorldNode(self.name, p)
+
+    def stream_seed(self, seed: int, repetition: int) -> list[int]:
+        return [self.world_seed, int(seed), WORLD_STREAM_TAG, int(repetition)]
+
+    @property
+    def W(self) -> int:
+        if self.params.get("W") is None:
+            raise ValueError(f"{self.name}: W is not bound (WorldNode.bind)")
+        return int(self.params["W"])
+
+    @property
+    def sigma_node(self) -> float:
+        return float(self.world().sigma_cmp)
+
+    # ---- the file transform shared by the worker, the oracle and the collector's replays
+    def candidate_files(self, inc_files: dict[str, str], proposal, seed: int, runs_used: int) -> dict[str, str]:
+        """The candidate's files after a run of ``proposal`` on the incumbent (``runs_used`` incl. this run)."""
+        from r1.tracks import worlds as WD
+        extra = proposal.get("extra") if isinstance(proposal, dict) else proposal.extra
+        edit, blk = extra["structured_edit"], extra["scripted"]["world"]
+        if blk.get("kind") == WD.RULE:
+            raise ValueError("a rule-detectable world proposal is never run")
+        w, rg = self.world(), self.regime()
+        text = apply_edit(dict(inc_files), edit)["train.py"]
+        y_inc, off_inc, log = world_state(inc_files["train.py"], w.y0)
+        tab = WD.theta_table(w, rg, self.world_seed, int(seed))
+        s = WD.Stream(blk["stream"], rg.llm_cap)
+        p = WD.Proposal(int(blk["t"]), False, int(blk["key"]), float(blk["size"]), float(blk["off"]), blk["kind"])
+        delta = WD.true_increment(w, rg, tab, p, s, log)
+        eps = WD.measurement_noise(w, p, s)
+        entry = WD.keep_log_entry(w, p.t, int(runs_used), self.W)
+        text = _set_tag(text, TRUE_Y_TAG, repr(float(y_inc + delta)))
+        text = set_offset(text, off_inc + eps)
+        text = _set_tag(text, KEEP_LOG_TAG, json.dumps(log + ([list(entry)] if entry else [])))
+        return {**inc_files, "train.py": text}
+
+    def files_after(self, rows: list[dict], start_files: dict[str, str], seed: int, upto: int) -> dict[str, str]:
+        """Incumbent files after trial ``upto``, replaying the kept trials with the world transform."""
+        files, runs = dict(start_files), 0
+        for row in rows:
+            if int(row["budget_index"]) > upto:
+                break
+            if parsed_metric(row) is None or row.get("decision") == "skipped":
+                continue
+            runs += 1
+            if row["decision"] == "kept":
+                files = self.candidate_files(files, {"extra": (row.get("extra") or {}).get("manager") or {}},
+                                             seed, runs)
+        return files
+
+    # ---- node interface (as ``SyntheticNode``)
+    def manager(self, seed: int, repetition: int, fork_trial: int | None = None) -> WorldManager:
+        return WorldManager(self, seed, repetition, fork_trial=fork_trial)
+
+    def worker(self, node_root: Path, seed: int, runs0: int = 0) -> WorldWorker:
+        return WorldWorker(node_root, self, seed, runs0=runs0)
+
+    def true_y(self, files: dict[str, str]) -> float:
+        return world_state(files["train.py"], self.world().y0)[0]
+
+    def audit(self, seed_instance: int, files: dict[str, str], seeds) -> list[float]:
+        y = self.true_y(files)
+        sa = self.regime().sigma_audit
+        h = int(hashlib.sha256(files["train.py"].encode()).hexdigest()[:8], 16)
+        return [float(y + sa * np.random.default_rng([int(seed_instance), int(s), h, 31]).standard_normal())
+                for s in seeds]
+
+    def prior(self) -> A2UPrior:
+        """The controller's model of the world (keyed mode): the theta prior and the measurement model only."""
+        from r1.tracks import worlds as WD
+        from r1.tracks.a2u import KEYED_MODEL
+        w = self.world()
+        kp = KindPrior(mu0=float(w.mu0), tau0=float(w.tau0), sigma_cmp=float(w.sigma_cmp), tau_w=float(w.sigma_eta))
+        return A2UPrior(node=SURFACE, sigma_node=float(w.sigma_cmp), kinds={"local": kp},
+                        meta={"label": "SYNTHETIC", "node": self.name, "model": KEYED_MODEL,
+                              "world": WD.world_meta(w, self.regime())})
+
+    def describe(self) -> dict:
+        return {"name": self.name, "surface": self.surface, "mechanism": "world", "world_kind": self.kind,
+                "variant": self.variant, "params": json.loads(json.dumps(self.params)),
+                "world": self.world().to_dict()}
+
+
+def synthetic_node(name: str, params: dict | None = None):
+    """A synthetic node: the rev.-7 world (``WorldNode``, default) or, with ``mechanism="loglinear"``, the
+    rev.-6 log-linear placeholder node (``SyntheticNode``; engineering tests only, not a declared control)."""
     if name not in SYNTHETIC_NODES:
         raise ValueError(f"unknown synthetic node {name!r}; declared: {SYNTHETIC_NODES}")
-    merged = {**DEFAULT_PARAMS[name], **dict(params or {})}
-    return SyntheticNode(name=name, params=merged)
+    params = dict(params or {})
+    if params.get("mechanism", "world") == "loglinear":
+        params.pop("mechanism")
+        merged = {**DEFAULT_PARAMS[name], **params}
+        return SyntheticNode(name=name, params=merged)
+    params.pop("mechanism", None)
+    return WorldNode(name=name, params=params)

@@ -262,7 +262,7 @@ def test_5_worker_seeds_and_workspace_identical_across_arms(root, arms):
 def test_mechanical_budget_check_skip_vs_ghost_at_W2(tmp_path):
     """At W = 2 the ghost spends the last run: skip and ghost must differ clearly (Delta_B > 0)."""
     # The N0 law (independent values fixed in advance, no information, no feedback) run at a binding W = 2.
-    node = synthetic_node("synthetic_N0", {"mu_step": 0.02, "spread": 0.001, "sigma_run": 0.0005})
+    node = synthetic_node("synthetic_N0", {"mechanism": "loglinear", "mu_step": 0.02, "spread": 0.001, "sigma_run": 0.0005})
     spec = load_registered_node(SURFACE, repo_root=HARNESS)
     nd = tmp_path / "node"
     shutil.copytree(HARNESS / "nodes" / SURFACE, nd, ignore=shutil.ignore_patterns("__pycache__"))

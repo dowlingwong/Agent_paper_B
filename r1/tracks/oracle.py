@@ -16,8 +16,9 @@ the node's own law and manager, so it differs from the pipeline only in skipping
 featurizer's text replay. ``r1/tests/test_tracks_oracle.py`` checks that it reproduces the pipeline's
 terminal Y, worker runs and decisions exactly.
 
-Policies: ``a2u`` (at g0), ``a2``, ``static:``, ``matched_static:``, ``dynamic:`` (incl. ``r_bar``/``tau_bar``);
-``pi_prime:`` is not supported here.
+Policies: ``a2u`` (at g0), ``a2``, ``static:g,h``, ``dynamic:`` (5 or 8 positional values, rev. 7);
+``pi_prime:`` is not supported here. World nodes (rev. 7, ``synthetic.WorldNode``) use ``simulate_world``, which
+the analysis simulator reproduces exactly (``r1/tests/test_tracks_worlds.py``).
 
 ``certify`` (review M4) is the gate: Y is the exact expected value of each campaign's final configuration
 (the law's ``y_true``, no audit noise); the best static is chosen on a selection seed block and the members are
@@ -26,8 +27,8 @@ paired campaigns is sized from a pilot so that the 95 % half-width of every memb
 ``tol`` x delta_Y (default 5 %), and the call fails if that is not reached within ``n_max``.
 
   python -m r1.tracks.oracle --node synthetic_P0 --W 10 --cap 40 --delta-Y 0.0033 \\
-      --static static:g=0.0003,e2off=0 --static static:g=0.0006,e2off=0 \\
-      --member dynamic:g0=0.0003,h0=0,b_budget=0.003 --out p0_oracle.json
+      --static static:0.00033,0 --static static:0.00066,0 \\
+      --member dynamic:0.00033,0.0066,0,0,0 --out p0_oracle.json
 """
 from __future__ import annotations
 
@@ -86,9 +87,99 @@ def _budget(W: int, cap: int, runs: int, consumed: int) -> SimpleNamespace:
                                    "llm_calls_remaining": cap, "llm_calls_used": 0})
 
 
+def _e1_execute(controller: a2u.A2UController, mu: float, tau: float, sigma: float, view) -> bool:
+    """The policy's E1 rule (``A2UController._decide_e1`` without the record): execute uses ">="."""
+    v_star = float(rules.proposal_value(0.0, mu, tau, sigma))
+    if controller.dynamic_e1:
+        gap = a2u.budget_gap(view, controller.W)
+        bonus = controller.b_info * (tau - controller.tau_bar)
+        return v_star + bonus >= controller.g - controller.b_budget * (gap - controller.r1_bar)
+    return a2u.static_execute(mu, tau, sigma, controller.g)
+
+
+def _keep_prior(controller: a2u.A2UController, mu: float, tau: float, sigma: float, view) -> KeepPrior:
+    """The policy's E2 keep prior (the harness keeps iff delta_hat > its threshold, i.e. m_hat > h)."""
+    if controller.default_keep:
+        return KeepPrior(mu=mu, tau=tau, sigma=sigma)
+    thr = controller.h0 - (controller.h_budget * (a2u.budget_gap(view, controller.W) - controller.r2_bar)
+                           if controller.h_budget != 0.0 else 0.0)
+    return a2u.encoded_keep_prior(lambda m: m - thr, mu, tau, sigma, "oracle")
+
+
+def _consts(text: str) -> dict[str, str]:
+    import re
+    pattern = re.compile(r"^(?P<name>[A-Z][A-Z0-9_]*)\s*=\s*(?P<value>[^#\n]+?)(?:\s*#.*)?$")
+    out = {}
+    for line in text.splitlines():
+        m = pattern.match(line.strip())
+        if m:
+            out[m.group("name")] = m.group("value").strip()
+    return out
+
+
+def simulate_world(node, controller: a2u.A2UController, seed: int, *, W: int, cap: int, repetition: int = 0,
+                   audit_seeds=(34001, 34002, 34003, 34004, 34005)) -> dict:
+    """One campaign of a world node (``synthetic.WorldNode``) in memory, with the pipeline's semantics: rule
+    proposals are rejected before any run, trial 1 is executed and kept, E1 / E2 by the policy on the keyed
+    forecast (``a2u.A2UController._keyed_forecast``), the world worker's file transform."""
+    from r1.tracks import worlds as WD
+    from r1.tracks.synthetic import world_state
+    node = node.bind(W=W, llm_cap=cap)
+    manager = node.manager(seed, repetition)
+    spec = SimpleNamespace(editable_paths=("train.py",))
+    files = surface_start_files()
+    meta = controller.prior.meta["world"]
+    prior_post = (float(meta["mu0"]), float(meta["tau0"]) ** 2)
+    posts: dict[int, tuple[float, float]] = {}
+    runs, best, decisions, records = 0, None, [], []
+    for t in range(1, cap + 1):
+        if runs >= W:
+            break
+        prop = manager.propose_next_trial(SimpleNamespace(budget_index=t, current_constants=_consts(files["train.py"])),
+                                          None, spec)
+        blk = prop.extra["scripted"]["world"]
+        if blk["kind"] == WD.RULE:
+            decisions.append((t, "precondition_failed"))
+            continue
+        k, size, off = int(blk["key"]), float(blk["size"]), float(blk["off"])
+        sigma = WD.sig_from_meta(meta, blk["kind"])
+        post = posts.get(k, prior_post) if controller.update else prior_post
+        a, A_ = WD.key_forecast(post, size, off, float(meta["sigma_eta"]))
+        mu, tau = a, math.sqrt(A_)
+        if t >= 2 and best is not None:
+            ex = _e1_execute(controller, mu, tau, sigma, _budget(W, cap, runs, t - 1))
+            records.append({"index": t, "epoch": "E1", "eligible": True, "action": "execute" if ex else "skip",
+                            "index_value": float(rules.proposal_value(0.0, mu, tau, sigma)), "tau_pred": tau,
+                            "r": a2u.budget_gap(_budget(W, cap, runs, t - 1), W)})
+            if not ex:
+                decisions.append((t, "skip"))
+                continue
+        runs += 1
+        cand = node.candidate_files(files, prop, seed, runs)
+        y, o, _ = world_state(cand["train.py"], node.world().y0)
+        metric = y + o
+        if best is None:
+            keep, dhat = True, metric - float(meta["y0"])
+        else:
+            dhat = metric - best
+            keep = dhat > _keep_prior(controller, mu, tau, sigma, _budget(W, cap, runs, t - 1)).threshold
+            records.append({"index": t, "epoch": "E2", "eligible": True, "action": "keep" if keep else "discard",
+                            "index_value": a2u.posterior_mean(dhat, mu, tau, sigma), "tau_pred": tau,
+                            "r": a2u.budget_gap(_budget(W, cap, runs, t - 1), W)})
+        posts[k] = WD.key_update(posts.get(k, prior_post), size, dhat, off, float(meta["sigma_eta"]), sigma)
+        decisions.append((t, "keep" if keep else "discard"))
+        if keep:
+            files, best = cand, metric
+    ys = node.audit(seed, files, audit_seeds)
+    return {"y_terminal": float(np.mean(ys)), "y_per_seed": ys, "y_true_terminal": node.true_y(files),
+            "runs_used": runs, "decisions": decisions, "final": files, "records": records}
+
+
 def simulate(node, controller: a2u.A2UController, seed: int, *, W: int, cap: int, repetition: int = 0,
              audit_seeds=(34001, 34002, 34003, 34004, 34005)) -> dict:
     """One campaign in memory (module docstring). Returns y_terminal, runs_used, decisions."""
+    if getattr(node, "synthetic_world", False):
+        return simulate_world(node, controller, seed, W=W, cap=cap, repetition=repetition, audit_seeds=audit_seeds)
     law = node.law(seed)
     manager = node.manager(seed, repetition)
     consts = dict(START)
@@ -122,15 +213,7 @@ def simulate(node, controller: a2u.A2UController, seed: int, *, W: int, cap: int
             mu, tau_n = a2u.group_posterior(kp, obs, controller.obs_inflation)
             tau = math.sqrt(tau_n ** 2 + kp.tau_w ** 2)
             sigma = kp.sigma_cmp
-            v_star = float(rules.proposal_value(0.0, mu, tau, sigma))
-            if controller.dynamic_e1:
-                gap = a2u.budget_gap(_budget(W, cap, runs, t - 1), controller.W)
-                bonus = controller.b_info * (tau - controller.tau_bar)
-                threshold = controller.g - controller.b_budget * (gap - controller.r_bar)
-                execute = v_star + bonus >= threshold
-            else:
-                execute = a2u.static_execute(mu, tau, sigma, controller.g)
-            if not execute:
+            if not _e1_execute(controller, mu, tau, sigma, _budget(W, cap, runs, t - 1)):
                 decisions.append((t, "skip"))
                 continue
         # Execute: the worker's offset mechanism and per-trial noise.
@@ -143,14 +226,7 @@ def simulate(node, controller: a2u.A2UController, seed: int, *, W: int, cap: int
             keep, delta = True, None
         else:
             delta = metric - best_before
-            if controller.default_keep:
-                prior = KeepPrior(mu=mu, tau=tau, sigma=sigma)
-            else:
-                view = _budget(W, cap, runs, t - 1)
-                thr = controller.h0 - (controller.h_budget * (a2u.budget_gap(view, controller.W) - controller.r_bar)
-                                       if controller.h_budget != 0.0 else 0.0)
-                prior = a2u.encoded_keep_prior(lambda m: m - thr, mu, tau, sigma, "oracle")
-            keep = delta > prior.threshold
+            keep = delta > _keep_prior(controller, mu, tau, sigma, _budget(W, cap, runs, t - 1)).threshold
         seen.add(cand_proj)
         if best_before is not None:
             seen.add(inc_proj)

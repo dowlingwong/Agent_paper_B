@@ -348,7 +348,7 @@ def test_d1_prime_controller_decision_and_centred_terms(tmp_path):
     """Review m9: the D1' instance through ``A2UController.decide``. N = 2 proposals, K = 1 run: at proposal 1
     r = 0 and the budget member decides as static; at proposal 2 after a skip r = +0.5 and the budget member
     executes a proposal that static (at the same g0, just above its V*) skips. Rev. 7 (b): centring at
-    r_bar = 0.5 restores the static decision there."""
+    r1bar = 0.5 restores the static decision there."""
     from types import SimpleNamespace
     _, _, rows = _ledger(tmp_path)
     ctx = node_context(SIGMA)
@@ -368,7 +368,7 @@ def test_d1_prime_controller_decision_and_centred_terms(tmp_path):
     g0 = fc["v_star"] + 1e-5  # static skips this proposal
     static = a2u.A2UController.static_price(prior(), ctx, g0)
     budget = a2u.A2UController.dynamic(prior(), ctx, g0=g0, b_budget=1e-3)
-    centred = a2u.A2UController.dynamic(prior(), ctx, g0=g0, b_budget=1e-3, r_bar=0.5)
+    centred = a2u.A2UController.dynamic(prior(), ctx, g0=g0, b_budget=1e-3, r1_bar=0.5)
     mask = {"continue": True, "skip": True}
     d1 = budget.decide(view(proposal_1), mask)
     assert d1.detail["budget_gap"] == 0.0 and d1.action == static.decide(view(proposal_1), mask).action == "skip"
@@ -407,3 +407,47 @@ def test_per_group_priors_override_the_kind_prior(tmp_path):
             assert fa["mu"] == fb["mu"]
     q = a2u.A2UPrior.from_payload(json.loads(grouped.canonical_bytes()))
     assert q == grouped and "groups" in grouped.to_payload() and "groups" not in base.to_payload()
+
+
+def test_operators_execute_ge_keep_gt_and_g0_executes_zero_index(tmp_path):
+    """Rev. 7.1 m9: execute uses >= and keep uses > in every policy (static, dynamic, the matched static, A2-U);
+    ``static:0,h`` executes a proposal whose V* is exactly 0."""
+    from types import SimpleNamespace
+    from r1.tracks import collect as C
+    _, _, rows = _ledger(tmp_path)
+    ctx = node_context(SIGMA)
+    v = _view(rows, 3)
+    budget = {"worker_runs_used": 1, "worker_runs_remaining": 9, "trials_remaining": 38, "trials_total": 40,
+              "llm_calls_remaining": 37, "llm_calls_used": 3}
+    view = SimpleNamespace(epoch="E1", budget_index=v.budget_index, ledger_prefix=v.ledger_prefix,
+                           current_best=v.current_best, proposal=v.proposal, provisional=None, budget=budget,
+                           input_hash=lambda: "h")
+    mask = {"continue": True, "skip": True}
+    base = a2u.A2UController(prior(), ctx).forecast(view)
+    assert not base["noop"] and not base["duplicate"]
+    zero = {**base, "mu": -1.0, "tau": 1e-9, "tau_n": 0.0, "sigma": SIGMA, "v_star": 0.0}
+    assert float(a2u.rules.proposal_value(0.0, -1.0, 1e-9, SIGMA)) == 0.0  # V* underflows to exactly 0
+
+    def ctl(policy):
+        c = C.policy_controller(policy, prior(), ctx, g0=0.0, W=10)
+        return c
+
+    for pol in ("static:0,0", "static:0,0.00165", "dynamic:0,0,0,0,0", "dynamic:0,0,0,0,0,0.3,0.004,0.2", "a2u"):
+        c = ctl(pol)
+        c.forecast = lambda _view, fc=zero: fc
+        assert c.decide(view, mask).action == "continue", pol  # V* = 0 >= g = 0: executed
+    # ">=" at a tie for the dynamic rule: V* + b_info (tau - taubar) == g0 - b_budget (r - r1bar)
+    r = a2u.budget_gap(view, 10)
+    vs = base["v_star"]
+    exact = a2u.A2UController.dynamic(prior(), ctx, g0=vs, b_budget=0.002, r1_bar=r, W=10)
+    assert exact.decide(view, mask).action == "continue"          # equality executes
+    above = a2u.A2UController.dynamic(prior(), ctx, g0=vs + 1e-12, b_budget=0.002, r1_bar=r, W=10)
+    assert above.decide(view, mask).action == "skip"
+    st = a2u.A2UController.static_price(prior(), ctx, vs)
+    assert st.decide(view, mask).action == "continue"              # static: V* >= g at equality
+    # keep ">": delta_hat exactly at the threshold is discarded, every policy's keep prior
+    from autoresearch.control_plane.action_versions import bayes_keep as bayes_keep_decision
+    for pol in ("static:0,0", "static:0,0.00165", "dynamic:0,0,0,0.00165,0.0033,0.3,0.004,0.2", "a2u"):
+        kp = C.policy_controller(pol, prior(), ctx, g0=0.0, W=10).keep_prior(
+            SimpleNamespace(**{**vars(view), "epoch": "E2"}))
+        assert not bayes_keep_decision(kp.threshold, kp) and bayes_keep_decision(kp.threshold + 1e-12, kp), pol

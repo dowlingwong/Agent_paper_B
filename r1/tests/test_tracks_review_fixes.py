@@ -19,14 +19,30 @@ from r1.tracks.schema import leaf_from_dict, root_from_dict
 from r1.tracks.synthetic import synthetic_node
 
 
+LL = {"mechanism": "loglinear"}
+
+
 def _run(tmp: Path, *extra: str, node: str = "synthetic_N0", phase: str = "synthetic", out: str = "out",
          W: str | None = "10", cap: str = "10") -> Path:
     args = ["--phase", phase, "--node", node, "--llm-cap", cap, "--out", str(tmp / out), "--work", str(tmp / "work"),
             "--label", "FIXTURE", "--host-label", "ci", "--gpu", "none", *extra]
     if W is not None and phase != "S0.4" and "--W" not in extra:
         args += ["--W", W]
-    assert C.main(args) == 0
+    assert C.main(_legacy(args)) == 0
     return tmp / out
+
+
+def _legacy(args: list[str]) -> list[str]:
+    """These tests exercise the collector on the rev.-6 log-linear synthetic nodes (``mechanism=loglinear``);
+    the rev.-7 world nodes are tested in test_tracks_worlds.py and test_tracks_oracle.py."""
+    if not args[args.index("--node") + 1].startswith("synthetic_"):
+        return args
+    if "--synthetic-params" in args:
+        i = args.index("--synthetic-params") + 1
+        params = json.loads(args[i])
+        params.setdefault("mechanism", "loglinear")
+        return args[:i] + [json.dumps(params)] + args[i + 1:]
+    return args + ["--synthetic-params", json.dumps({"mechanism": "loglinear"})]
 
 
 def _ledger(work: Path, root_id: str) -> list[str]:
@@ -82,9 +98,10 @@ def test_b1_manifests_and_records_carry_their_own_block(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_m1_root_policy_runs_roots_rebuilds_and_leaves(tmp_path):
-    s = synthetic_node("synthetic_P2p").sigma_node
+    s = synthetic_node("synthetic_P2p", LL).sigma_node
     h = 0.5 * s
-    m_star = f"static:g=0,e2off={h:.6g}"  # executes every non-rule proposal, keeps iff m_hat > h
+    m_star = C.policy_string("static", (0.0, h))  # executes every non-rule proposal, keeps iff m_hat > h
+    h = C.as_dynamic(m_star)[3]
     out = _run(tmp_path, "--instances", "2", "--forks", "6", "--root-policy", m_star, "--near-band", str(0.3 * s),
                "--p-near", "1.0", "--aa-fraction", "1.0", node="synthetic_P2p")
     roots = [root_from_dict(r) for r in C.read_jsonl(out / "roots.jsonl")]
@@ -105,9 +122,9 @@ def test_m1_root_policy_runs_roots_rebuilds_and_leaves(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_m2_seed_key_and_s05_policy_rep_pairs(tmp_path):
-    node = synthetic_node("synthetic_P2p")
+    node = synthetic_node("synthetic_P2p", LL)
     g0 = 0.1 * node.sigma_node
-    same_rule = f"static:g={g0!r},e2off=0"  # the same rule as the primary a2u root
+    same_rule = C.policy_string("static", (g0, 0.0))  # the same rule as the primary a2u root (g0 to 9 d.p.)
     out = _run(tmp_path, "--instances", "2", "--forks", "0", "--policy", same_rule, "--policy", "a2u",
                "--rep", "0", "--rep", "1", node="synthetic_P2p", phase="S0.5", W="20", cap="12")
     roots = C.read_jsonl(out / "roots.jsonl")
@@ -241,26 +258,26 @@ def test_m6_s05_calibration_rows(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_m4_oracle_exact_values_and_certification():
-    node = synthetic_node("synthetic_N0")
-    noisy = synthetic_node("synthetic_N0", {"sigma_audit": 0.01})
+    node = synthetic_node("synthetic_N0", LL)
+    noisy = synthetic_node("synthetic_N0", {**LL, "sigma_audit": 0.01})
     ctl = O.controller_for(node, "a2u", W=40)
     seeds = range(O.ORACLE_EVAL_BASE, O.ORACLE_EVAL_BASE + 20)
     # Exact expected Y: audit noise does not enter.
     assert np.array_equal(O.exact_values(node, ctl, seeds, W=40, cap=12),
                           O.exact_values(noisy, O.controller_for(noisy, "a2u", W=40), seeds, W=40, cap=12))
     s = node.sigma_node
-    statics = [f"static:g={0.05 * s:.6g},e2off=0", f"static:g={0.4 * s:.6g},e2off=0"]
-    res = O.certify("synthetic_N0", statics, [f"dynamic:g0={0.05 * s:.6g},b_budget={s:.6g}"], delta_Y=0.01, W=40,
-                    cap=12, n_select=50, n_pilot=60, n_max=5000)
+    statics = [C.policy_string("static", (0.05 * s, 0)), C.policy_string("static", (0.4 * s, 0))]
+    res = O.certify("synthetic_N0", statics, [C.policy_string("dynamic", (0.05 * s, s, 0, 0, 0))], delta_Y=0.01,
+                    W=40, cap=12, n_select=50, n_pilot=60, n_max=5000, params=LL)
     assert res["best_static"] in statics and res["pass"]
     assert res["selection"]["seeds"][1] <= res["evaluation"]["seeds"][0]  # independent seeds
     g = next(iter(res["gains"].values()))
     assert g["half_width"] <= 0.05 * 0.01
-    s0 = synthetic_node("synthetic_P0").sigma_node
+    s0 = synthetic_node("synthetic_P0", LL).sigma_node
     with pytest.raises(O.OracleToleranceError):  # a member that does differ, with a tolerance n_max cannot reach
-        O.certify("synthetic_P0", [f"static:g={0.05 * s0:.6g},e2off=0"],
-                  [f"dynamic:g0={0.05 * s0:.6g},b_budget={2 * s0:.6g}"], delta_Y=1e-6, W=8, cap=12, n_select=10,
-                  n_pilot=30, n_max=40)
+        O.certify("synthetic_P0", [C.policy_string("static", (0.05 * s0, 0))],
+                  [C.policy_string("dynamic", (0.05 * s0, 2 * s0, 0, 0, 0))], delta_Y=1e-6, W=8, cap=12, n_select=10,
+                  n_pilot=30, n_max=40, params=LL)
 
 
 # ---------------------------------------------------------------------------
@@ -268,7 +285,7 @@ def test_m4_oracle_exact_values_and_certification():
 # ---------------------------------------------------------------------------
 
 def test_m3_p0_values_are_observable_and_p2_trigger_varies():
-    node = synthetic_node("synthetic_P0")
+    node = synthetic_node("synthetic_P0", LL)
     prior = node.prior()
     assert len(prior.groups) == 4
     from r1.c3 import rules
@@ -278,36 +295,43 @@ def test_m3_p0_values_are_observable_and_p2_trigger_varies():
     order = sorted(vs, key=means.get)
     assert all(vs[a] < vs[b] for a, b in zip(order, order[1:]))  # V* strictly increases with the group mean
     assert vs[order[-1]] > 10 * vs[order[0]]
-    conc = synthetic_node("synthetic_P0", {"variant": "concentrated"}).prior()
+    conc = synthetic_node("synthetic_P0", {**LL, "variant": "concentrated"}).prior()
     assert len(conc.groups) == 3
-    p2 = synthetic_node("synthetic_P2p")
+    p2 = synthetic_node("synthetic_P2p", LL)
     triggers = {p2.trigger_trial(s) for s in range(36000, 36040)}
     assert len(triggers) > 3 and min(triggers) >= 2 and max(triggers) <= 12
-    assert synthetic_node("synthetic_P2p", {"trigger_trial": 5}).trigger_trial(1) == 5
+    assert synthetic_node("synthetic_P2p", {**LL, "trigger_trial": 5}).trigger_trial(1) == 5
     with pytest.raises(ValueError):
-        synthetic_node("synthetic_N0", {"gain": 0.01})
+        synthetic_node("synthetic_N0", {**LL, "gain": 0.01})
 
 
-def _best_member(name: str, W: int, params: dict | None = None, cap: int = 20) -> tuple[str, dict]:
+def _best_member(name: str, W: int, params: dict | None = None, cap: int = 20, n_select: int = 120,
+                 n_eval: int = 200) -> tuple[str, dict]:
+    """Best static on the selection block, then the four fixed rev.-7 members anchored at it (uncentred for the
+    log-linear nodes, centred at its decision means for the world nodes) on the evaluation block."""
+    params = LL if params is None else params
     node = synthetic_node(name, params)
     s = node.sigma_node
     statics = C.tuning_grid("static", s)
-    best = O.certify(name, statics, [], delta_Y=1.0, W=W, cap=cap, n_select=120, n_pilot=2, params=params,
+    best = O.certify(name, statics, [], delta_Y=1.0, W=W, cap=cap, n_select=n_select, n_pilot=2, params=params,
                      strict=False)["best_static"]
-    kv = C._kv(best, "static:", {"g", "e2off"}, {"g"})
-    members = {"budget": C.tuning_grid("magnitude", s, (kv["g"] / s, kv.get("e2off", 0.0) / s))[:3],
-               "info": C.tuning_grid("magnitude", s, (kv["g"] / s, kv.get("e2off", 0.0) / s))[3:6],
-               "keep": C.tuning_grid("magnitude", s, (kv["g"] / s, kv.get("e2off", 0.0) / s))[6:]}
-    flat = [m for ms in members.values() for m in ms]
-    res = O.certify(name, [best], flat, delta_Y=1.0, W=W, cap=cap, n_select=2, n_pilot=200, n_max=200, params=params,
-                    strict=False)
+    centres = None
+    if getattr(node, "synthetic_world", False):
+        bound = node.bind(W=W, llm_cap=cap)
+        ctl = O.controller_for(bound, best, W=W)
+        recs = [d for i in range(100) for d in
+                O.simulate(bound, ctl, O.ORACLE_SELECT_BASE + n_select + i, W=W, cap=cap)["records"]]
+        centres = C.decision_centres(recs)
+    members = C.member_policies(best, s, centres)
+    res = O.certify(name, [best], list(members.values()), delta_Y=1.0, W=W, cap=cap, n_select=2, n_pilot=n_eval,
+                    n_max=n_eval, params=params, strict=False)
     top = res["best_member"]
-    channel = next(c for c, ms in members.items() if top in ms)
+    channel = next(n for n, m in members.items() if m == top).split("×")[0]
     return channel, res
 
 
 def test_m3_p0_best_member_is_the_budget_channel():
-    channel, res = _best_member("synthetic_P0", W=8, cap=40)  # W = 8 of 40 proposals: the budget binds
+    channel, res = _best_member("synthetic_P0", W=8, cap=40, n_eval=800)  # W = 8 of 40 proposals: the budget binds
     assert channel == "budget"
     g = res["gains"][res["best_member"]]
     assert g["gain"] > 2 * g["half_width"]
@@ -319,23 +343,13 @@ def test_m3_n0_has_no_gain():
         assert abs(g["gain"]) <= max(g["half_width"], 1e-12)
 
 
-PENDING_REV7 = ("world mechanism and parameters are being redesigned by the rev-7 simulation study (coordinator); "
-                "with the placeholder worlds the channel is not planted with a significant margin")
-
-
-@pytest.mark.xfail(strict=False, reason="P2 " + PENDING_REV7)
-@pytest.mark.parametrize("name", ["synthetic_P2p", "synthetic_P2m"])
-def test_m3_p2_best_member_is_the_keep_channel(name):
-    channel, res = _best_member(name, W=20)  # non-binding W (= the 20 proposals)
-    assert channel == "keep"
-    g = res["gains"][res["best_member"]]
-    assert g["gain"] > 2 * g["half_width"]
-
-
-@pytest.mark.xfail(strict=False, reason="P1 " + PENDING_REV7)
-def test_m3_p1_best_member_is_the_info_channel():
-    channel, res = _best_member("synthetic_P1", W=20)
-    assert channel == "info"
+def test_m3_world_p2p_best_member_is_the_keep_channel():
+    """Rev. 7 world P2+ (concentrated, strength 0.012: about 1 delta_Y for keep+ in the analysis study): the best
+    centred member is keep+, significantly. (The rev.-6 placeholder P1 / P2 xfail tests are superseded by the
+    worlds; P1's planted gain is not an info-member gain, analysis notes 5.1, and P2- is not a control.)"""
+    channel, res = _best_member("synthetic_P2p", W=10, params={"variant": "concentrated", "strength": 0.012},
+                                cap=40, n_select=120, n_eval=300)
+    assert channel == "keep+"
     g = res["gains"][res["best_member"]]
     assert g["gain"] > 2 * g["half_width"]
 
@@ -346,35 +360,39 @@ def test_m3_p1_best_member_is_the_info_channel():
 
 def test_rev7_g0_is_execute_all_non_rule(tmp_path):
     params = json.dumps({"mu_step": -0.02, "spread": 0.002})  # strongly negative values: g > 0 would skip
-    out = _run(tmp_path, "--instances", "2", "--policy", "static:g=0,e2off=0", "--policy", "static:g=0.001,e2off=0",
+    out = _run(tmp_path, "--instances", "2", "--policy", "static:0,0", "--policy", "static:0.001,0",
                "--synthetic-params", params, phase="campaign", W="40")
     roots = C.read_jsonl(out / "roots.jsonl")
     for r in roots:
         skips = [d for d in r["decisions"] if d["epoch"] == "E1" and d["action"] == "skip"]
-        if r["policy"] == "static:g=0,e2off=0":
+        if r["policy"] == "static:0,0":
             assert not skips
         else:
             assert skips
 
 
-def test_rev7_magnitude_grid_and_centring():
-    grid = C.tuning_grid("magnitude", 0.002, (0.1, 0.0), r_bar=0.2, tau_bar=0.001)
-    assert len(grid) == 12
-    assert sum("b_budget=" in g for g in grid) == 3 and sum("b_info=" in g for g in grid) == 3
-    assert sum("h_budget=" in g for g in grid) == 6 and any("h_budget=-0.002" in g for g in grid)
-    assert all("r_bar=0.2" in g and "tau_bar=0.001" in g for g in grid)
-    assert "dynamic:g0=0.0002,h0=0,b_budget=0.001,r_bar=0.2,tau_bar=0.001" in grid
+def test_rev7_fixed_members_and_centring():
+    """Rev. 7 D2: no magnitude grids; four fixed members, centred (r1bar, taubar at E1, r2bar at E2)."""
+    with pytest.raises(ValueError):
+        C.tuning_grid("magnitude", 0.002, "static:0.0002,0")
+    grid = C.member_policies("static:0.0002,0", 0.002, {"r1bar": 0.2, "taubar": 0.001, "r2bar": 0.1})
+    assert grid == {"budget×1": "dynamic:0.0002,0.002,0,0,0,0.2,0.001,0.1",
+                    "info×0.5": "dynamic:0.0002,0,0.5,0,0,0.2,0.001,0.1",
+                    "keep+×0.5": "dynamic:0.0002,0,0,0,0.001,0.2,0.001,0.1",
+                    "keep-×0.5": "dynamic:0.0002,0,0,0,-0.001,0.2,0.001,0.1"}
+    assert C.resolve_m_star("0.1,0", 0.002) == "static:0.0002,0"
 
 
 def test_rev7_tune_accepts_explicit_jobs(tmp_path):
     jobs = tmp_path / "jobs.json"
-    jobs.write_text(json.dumps([{"policy": "static:g=0,e2off=0", "instances": [0, 1, 2]},
-                                {"policy": "static:g=0.001,e2off=0", "instances": [1, 2], "rep": 0}]))
+    jobs.write_text(json.dumps([{"policy": "static:0,0", "instances": [0, 1, 2]},
+                                {"policy": "static:1e-3,0", "instances": [1, 2], "rep": 0}]))
     out = _run(tmp_path, "--jobs", str(jobs), phase="tune")
     roots = C.read_jsonl(out / "roots.jsonl")
-    assert Counter(r["policy"] for r in roots) == Counter({"static:g=0,e2off=0": 3, "static:g=0.001,e2off=0": 2})
+    # job policies are recorded in the analysis spelling
+    assert Counter(r["policy"] for r in roots) == Counter({"static:0,0": 3, "static:0.001,0": 2})
     lo = C.INSTANCE_SEED_BLOCKS["tune"][0]
-    assert {r["instance_id"] for r in roots if r["policy"] == "static:g=0.001,e2off=0"} == \
+    assert {r["instance_id"] for r in roots if r["policy"] == "static:0.001,0"} == \
         {f"synthetic_N0__s{lo + k}" for k in (1, 2)}
     with pytest.raises(SystemExit):
         _run(tmp_path, "--jobs", str(jobs), phase="campaign", out="o2")
@@ -430,8 +448,9 @@ def test_m4_minor_seed_block_bounds(tmp_path):
 
 
 def test_m5_minor_s05b_refuses_budget_reading_roots(tmp_path):
-    s = synthetic_node("synthetic_P0").sigma_node
-    out = _run(tmp_path, "--instances", "1", "--forks", "0", "--root-policy", f"dynamic:g0={0.1 * s},b_budget={s}",
+    s = synthetic_node("synthetic_P0", LL).sigma_node
+    out = _run(tmp_path, "--instances", "1", "--forks", "0", "--root-policy",
+               C.policy_string("dynamic", (0.1 * s, s, 0, 0, 0)),
                node="synthetic_P0", phase="S0.5", W="20", cap="12")
     with pytest.raises(SystemExit, match="reads the budget"):
         C.main(["--phase", "S0.5b", "--node", "synthetic_P0", "--out", str(out), "--work", str(tmp_path / "work"),

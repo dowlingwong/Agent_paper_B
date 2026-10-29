@@ -1,8 +1,8 @@
 # Track S S0.3 (collector side): implementation notes
 
 AI-assisted (Claude, 29 Oct 2026). ENGINEERING_ONLY. Spec: runbook rev. 3 (§2 S0.3 and the arm-invariance
-tests, §3 A2-U, §4 controls and settings, §5, §6 arms) plus the coordinator's amendments for rev. 4, 5, 6 and
-6.1 (rev. 6 supersedes rev. 5's dynamic family).
+tests, §3 A2-U, §4 controls and settings, §5, §6 arms) plus the coordinator's amendments for rev. 4, 5, 6, 6.1, 7 and 7.1 (rev. 6 supersedes rev. 5's dynamic family;
+rev. 7 the policy strings, tuning family and synthetic worlds).
 This file lists every place where the code had to choose between readings, and what is not implemented.
 Nothing here is a result.
 
@@ -16,10 +16,11 @@ Nothing here is a result.
 | Manager seed key (`LangGraphManager(seed_key=...)`) | harness `manager/langgraph_manager.py` |
 | A2-U, policies, prior fit, predictive intervals | `r1/tracks/a2u.py` |
 | Collector (all phases) | `r1/tracks/collect.py` |
-| Synthetic nodes P1, P2, N0 | `r1/tracks/synthetic.py` |
+| Synthetic nodes (rev. 7 worlds: `WorldNode`; rev. 6 log-linear test nodes: `SyntheticNode`) | `r1/tracks/synthetic.py` |
+| World mechanism (port of the analysis simulator's worlds) | `r1/tracks/worlds.py` |
 | S0.1 probe, S1.1 factorial | `r1/tracks/probes/` |
 | Fast oracle simulator of synthetic nodes (10^4 campaigns per member) | `r1/tracks/oracle.py` |
-| Tests | harness `tests/stage2/test_r1_track_s_arms.py`; `r1/tests/test_tracks_*.py` |
+| Tests | harness `tests/stage2/test_r1_track_s_arms.py`; `r1/tests/test_tracks_*.py` (agreement with the analysis branch: `test_tracks_worlds.py`) |
 
 ## Decisions (readings of the spec)
 
@@ -130,7 +131,8 @@ Nothing here is a result.
 
 ## Review fixes (COLLECTOR_REVIEW_20261029: 1 BLOCKING, 6 MAJOR, 9 MINOR)
 
-These supersede the items above where they conflict (5, 11, 12, 16, 18).
+These supersede the items above where they conflict (5, 11, 12, 16, 18); the rev.-7 alignment below supersedes
+items 8–9 and the M3 / rev-7-support rows.
 
 | # | Fix | Test (`r1/tests/`) |
 |---|---|---|
@@ -157,12 +159,74 @@ V* + b_info (τ_pred − τ̄) ≥ g0 − b_budget (r − r̄); keep iff m̂ > h
 b_budget ∈ {0.5, 1, 2}σ, b_info ∈ {0.25, 0.5, 1}, h_budget ∈ {±0.25, ±0.5, ±1}σ at m*; (d) `tune --jobs FILE`
 (explicit (policy, instance subset, rep) jobs, e.g. successive halving).
 
+## Rev. 7 / 7.1 alignment with the analysis branch (apb_analysis b5d6b50, read only)
+
+1. **Policy strings are positional, as `analyze.policy_string`:** `static:g,h` and
+   `dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar` (the 5-value form = zero centres), raw metric
+   units, numbers formatted by `fmt_num` (9 decimals, `.9g`). The collector records the canonical spelling
+   (`canonical_policy`), so `static:6.6e-4,0` is stored as `static:0.00066,0`. The rev.-6 key=value forms and
+   `matched_static:` are refused (the matched static is a plain `static:` string). E1: execute iff
+   V̂* + b_info (τ_pred − τ̄) ≥ g0 − b_budget (r − r̄₁); E2: keep iff m̂ > h0 − h_budget (r − r̄₂). Zero coefficients
+   give the static rule exactly, whatever the centres (tested; identical controller versions).
+2. **Operators (7.1 m9):** execute uses ≥ and keep uses > in static, dynamic, the matched static and A2-U
+   (`static:0,h` executes a proposal with V̂* = 0; a dynamic tie executes; Δ̂ exactly at a keep threshold is
+   discarded) — `test_tracks_a2u.py::test_operators_*`, and `analyze.threshold_act` reproduces every recorded
+   eligible action of collector roots (`test_tracks_worlds.py`). π′ score models keep `score > 0` at both
+   epochs, as the analysis' `LinearPolicy`.
+3. **Records for the analysis:** every decision carries `epoch`, `action`, `index_value` (V̂* at E1, m̂ at E2),
+   `eligible`, `margin`, `r` (runs_left/W − proposals_left/N_cap before the decision, proposals incl. the
+   current one; at E2 the run is already counted, as in the simulator) and `tau_pred`. Decisions of campaigns
+   that are not forked (tune / campaign / extra roots) are eligible by the controller alone (forked roots still
+   need a snapshot). E2 entries of rule-rejected trials carry the ledger decision (`failed_invalid`), never
+   `discard`. `RootRecord.llm_seed_base` = `manager_seed(seed_key, 0, rep, 0)`: equal for all policies of an
+   instance at one repetition, distinct across repetitions. Round trip through `analyze.load_roots` tested.
+4. **Tune (D2):** `--tune-grid static` = the 15 statics (g ∈ {0, .05, .1, .2, .4} × h ∈ {−.25, 0, .25} σ;
+   `--tune-g-extension` adds g = .8) on 20 paired dev instances; `--tune-grid dynamic --m-star static:g,h
+   --centres-from <static-stage roots.jsonl>` = the four fixed members (budget 1σ, info 0.5, keep± 0.5σ; names as
+   `FamilyDecl.members`) centred at m*'s eligible-decision means (`decision_centres`, as the analysis) on 40
+   paired dev instances. Both stages use instances 0, 1, … of the tune seed block, so **the members' first 20
+   instances are the statics' 20 (same instance ids)**. Magnitude grids are removed. σ is `--sigma-cmp-vary`
+   (the analysis' σ_node).
+5. **Synthetic worlds = the analysis simulator's worlds** (`worlds.py`, a port; `WorldNode` runs it through the
+   real harness): N0, P0, P1, P2+ (`synthetic_P2p`), P2− (`synthetic_P2m`) with `VARIANTS` diffuse /
+   concentrated, `strength` = the S0.6 value (no default is a declared value), `world_seed` (default 20261029),
+   per-instance θ table and stream seeds `[world_seed, instance seed, 7000, rep]`. A proposal names its world
+   key, size, offset and kind in `extra.scripted.world`; a rule-detectable proposal is a structured no-op that
+   the harness rejects before any run. The worker computes δ = s(θ_key − off) + σ_η η from the world and carries
+   the true value, the recorded offset and the keep log in comment lines of `train.py`, so Δ̂ = δ + ε exactly and
+   P2's feedback (keep log with fb_scale(runs_used/W)) follows the incumbent. A2-U runs in **keyed mode**
+   (`a2u.KEYED_MODEL`): per-key conjugate posterior on θ, a = s(μ − off), A = s² var + σ_η², τ_pred = √A, σ by
+   edit kind — the simulator's `forecast` / `update`. World nodes are bound to the run's W and LLM cap; N0
+   refuses W ≠ cap (non-binding, as the simulator). Leaves: the continuation manager proposes from the root
+   stream up to the fork trial (incl. the P1 follow-up plan) and from its repetition's stream after, as
+   `run_leaf`. Audits of world nodes are keyed on the file text (the configuration alone does not carry the
+   value). Calibrated controls: N0, P2+ (both variants), P1-diffuse; P0 and P2− implemented, not controls.
+   The rev.-6 log-linear nodes remain under `mechanism=loglinear` for engineering tests only.
+6. **Agreement (test_tracks_worlds.py):** world components (World fields, VARIANTS, θ tables, streams, fb_scale,
+   V*), and whole campaigns: for N0, P2+ diffuse / concentrated, P1-diffuse, P0-concentrated and P2−-diffuse,
+   3 statics and the 4 centred members on 12 instances each, the oracle's terminal value equals
+   `Sim.run_campaign(noiseless=True)` to 1e-12 and the decision sequences are identical; the oracle equals the
+   pipeline exactly (`test_tracks_oracle.py`), so pipeline = oracle = simulator. A collector `campaign` run
+   (P2+ diffuse, 2 instances × 4 policies × 2 reps) loads with `analyze.load_roots`, and its r, τ_pred and
+   index values equal the simulator's.
+7. **Open: trial 1.** The simulator draws the rule share at t = 1 too; when trial 1 is rule-detectable its first
+   executed trial is decided by the policy against y0. The harness keeps the first executed trial without
+   comparison (no incumbent metric), so the world manager never makes trial 1 rule-detectable
+   (`worlds.proposal_sequence(first_non_rule=True)`); the agreement tests use instances whose u_rule[1] ≥ p_rule
+   (about 45 %). Suggest the simulator do the same (runbook: "trial 1 is executed and kept"); otherwise
+   calibrated strengths differ slightly between the simulator and the collector's controls.
+8. **Channel check (oracle):** P2+ concentrated at strength 0.012, W 10, cap 40: the best centred member over the
+   best static is keep+ (gain ≈ 1 δ_Y, > 2 half-widths) — `test_m3_world_p2p_*`. The rev.-6 P1 / P2 xfail
+   tests on the placeholder worlds are superseded and removed.
+
 ## Schema changes (`r1/tracks/schema.py`; defaulted fields at the end only)
 
 * `Provenance.g_declared`, `Provenance.g0` (rev.-4 amendment 2).
 * `LeafRecord.aa_reproduced` (A/A check), `LeafRecord.policy` (rev.-4 amendment 3).
 * `RootRecord.policy` (rev.-4 amendment 3); helper `root_from_dict`.
 * Review round: `RootRecord.rep` (M2), `Provenance.harness_dirty`, `Provenance.paper_dirty` (m3).
+* Rev. 7.1 (analysis request): `RootRecord.llm_seed_base` (int, default None); per-decision `r`, `tau_pred`
+  in `RootRecord.decisions` (dict entries, no dataclass change).
 * Prior file: optional `groups` (per-(key, sign) priors), written only when non-empty.
 
 ## Not implemented (open)

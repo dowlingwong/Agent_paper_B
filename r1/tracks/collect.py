@@ -18,15 +18,23 @@ Phases (``--phase``):
 * ``S0.5b`` — the incumbent of every S0.5 root ledger truncated at each ``--truncate-W`` (``truncate_at_W``),
   audited on the S0.5 audit block; ``s05b_truncated.jsonl``. Refuses roots whose policy reads the budget.
 * ``S3`` / ``synthetic`` — roots and continuations under ``--root-policy`` (m*, review M1), fork selection,
-  leaves per arm x repetition, A/A leaves, audits. ``synthetic`` runs the synthetic control nodes.
+  leaves per arm x repetition, A/A leaves, audits. ``synthetic`` runs the synthetic control nodes (rev.-7 world
+  nodes run in ``synthetic``, ``tune`` and ``campaign``; ``--synthetic-params`` gives variant / strength).
 * ``tune`` (S0.7) — policy strings on dev instances (tuning seed block), every configuration on the same
-  paired instances; ``--tune-grid static|dynamic|magnitude|all`` adds the declared grids (``tuning_grid``);
+  paired instances; ``--tune-grid static|dynamic`` adds the declared stage (``tuning_grid``, see Tune below);
   ``--jobs FILE`` gives an explicit list of (policy, instance subset, rep) jobs (e.g. successive halving).
 * ``campaign`` (S3e) — every ``--policy`` x ``--rep`` on every fresh instance.
 
-Policies: ``a2u`` (A2-U at g0), ``a2``, ``static:g=..,e2off=..``, ``matched_static:g=..,h=..``,
-``dynamic:g0=..,b_budget=..,b_info=..,h0=..,h_budget=..,r_bar=..,tau_bar=..`` (rev. 7 centred terms),
-``pi_prime:<model_file>``.
+Policies: ``a2u`` (A2-U at g0), ``a2``, ``static:g,h``, ``dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar``
+(or its 5-value form), ``pi_prime:<model_file>``. Static and dynamic strings are positional, raw metric units,
+and recorded in the analysis branch's spelling (``canonical_policy`` = ``analyze.policy_string``); the matched
+static is a plain ``static:`` string. Execute uses ">=" and keep ">" in every policy (rev. 7.1 m9).
+
+Tune (rev. 7, D2): ``--tune-grid static`` runs the 15 statics (g in {0, .05, .1, .2, .4} x h in {-.25, 0, .25}
+sigma; ``--tune-g-extension`` adds g = .8) on 20 paired dev instances; ``--tune-grid dynamic --m-star static:g,h
+--centres-from <static-stage roots.jsonl>`` runs the four fixed members (budget x1 sigma, info x0.5, keep+ / keep-
+x0.5 sigma) centred at m*'s eligible-decision means on 40 paired dev instances. Both stages use instances
+0, 1, ... of the tune seed block, so the members' first 20 instances are the statics' 20 (same instance ids).
 
 Seeds (all declared below and recorded in the manifest):
 * instance blocks per phase (bounds checked; review m4);
@@ -80,6 +88,7 @@ from autoresearch.control_plane.snapshot import (ArmOverride, capture_snapshot, 
                                                  resume_campaign, write_snapshot)
 from autoresearch.memory.event_store import CampaignEventStore  # noqa: E402
 from autoresearch.nodes.registry import load_registered_node  # noqa: E402
+from autoresearch.manager.langgraph_manager import manager_seed  # noqa: E402
 from autoresearch.worker.local_worker import LocalWorker  # noqa: E402
 
 from r1.c3.features import NodeContext, apply_edit, replay_campaign  # noqa: E402
@@ -216,7 +225,13 @@ class RealNode:
     def leaf_worker(self, into: Path, snapshot):
         return None  # restore_snapshot rebuilds the LocalWorker with the snapshot's seeds
 
-    def manager(self, seed: int, repetition: int, seed_key: str | None = None):
+    def files_after(self, rows: list[dict], start: dict[str, str], seed: int, upto: int) -> dict[str, str]:
+        return config_after(rows, start, upto)
+
+    def candidate_files(self, inc_files: dict[str, str], proposal, seed: int, runs_used: int) -> dict[str, str]:
+        return apply_edit(inc_files, proposal.extra["structured_edit"])
+
+    def manager(self, seed: int, repetition: int, seed_key: str | None = None, fork_trial: int | None = None):
         cfg = self.manager_cfg
         if cfg.get("kind") == "langgraph":
             from autoresearch.manager.langgraph_manager import LangGraphManager
@@ -257,11 +272,35 @@ class SynthNode:
     def worker(self, node_dir: Path, seed: int, art: Path):
         return self.node.worker(node_dir, seed)
 
+    @property
+    def world(self) -> bool:
+        return bool(getattr(self.node, "synthetic_world", False))
+
+    def bind(self, *, W: int, llm_cap: int) -> None:
+        """World nodes take the run's W and LLM cap (their trial horizon and the P2 budget fraction)."""
+        if self.world:
+            self.node = self.node.bind(W=W, llm_cap=llm_cap)
+
     def leaf_worker(self, into: Path, snapshot):
+        if self.world:  # the world worker counts the campaign's runs from the snapshot's count on
+            return self.node.worker(into, int(snapshot.train_seed),
+                                    runs0=int(snapshot.compute_budget_state.get("worker_runs", 0)))
         return self.node.worker(into, int(snapshot.train_seed))
 
-    def manager(self, seed: int, repetition: int, seed_key: str | None = None):
+    def manager(self, seed: int, repetition: int, seed_key: str | None = None, fork_trial: int | None = None):
+        if self.world:
+            return self.node.manager(seed, repetition, fork_trial=fork_trial)
         return self.node.manager(seed, repetition)  # scripted: keyed by the instance seed
+
+    def files_after(self, rows: list[dict], start: dict[str, str], seed: int, upto: int) -> dict[str, str]:
+        if self.world:
+            return self.node.files_after(rows, start, seed, upto)
+        return config_after(rows, start, upto)
+
+    def candidate_files(self, inc_files: dict[str, str], proposal, seed: int, runs_used: int) -> dict[str, str]:
+        if self.world:
+            return self.node.candidate_files(inc_files, proposal, seed, runs_used)
+        return apply_edit(inc_files, proposal.extra["structured_edit"])
 
     def audit(self, salt: int, files: dict[str, str], seeds, work: Path) -> list[float | None]:
         return self.node.audit(salt, files, seeds)
@@ -290,7 +329,10 @@ class AuditCache:
 
     def metrics(self, salt: int, files: dict[str, str], seeds) -> list[float | None]:
         salt = int(salt) if self.adapter.synthetic else 0  # real-node audits do not depend on the instance
-        h = cfg_hash(files)
+        # A world node's value is carried by its file text (true value, offset, keep log), not by the
+        # configuration alone: key its audits on the text.
+        h = cfg_hash(files) if not getattr(self.adapter, "world", False) else \
+            "text:" + hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()[:16]
         missing = [s for s in seeds if (self.adapter.name, salt, h, int(s)) not in self.rows]
         if missing:
             values = self.adapter.audit(salt, files, missing, self.work / "audit_tmp")
@@ -316,11 +358,51 @@ def paired_increment(cand: list, inc: list) -> float | None:
 # Policies
 # ---------------------------------------------------------------------------
 
-def _kv(policy: str, prefix: str, allowed: set, required: set) -> dict:
-    kv = dict(item.split("=", 1) for item in policy[len(prefix):].split(",") if item)
-    if set(kv) - allowed or required - set(kv):
-        raise ValueError(f"{prefix[:-1]} policy takes {sorted(allowed)} (required {sorted(required)}), got {policy!r}")
-    return {k: float(v) for k, v in kv.items()}
+def fmt_num(x: float) -> str:
+    """Number format of policy strings (the analysis branch's ``analyze.fmt_num``)."""
+    return format(round(float(x), 9) + 0.0, ".9g")
+
+
+def policy_string(kind: str, params) -> str:
+    """``static:g,h`` or ``dynamic:g0,b_budget,b_info,h0,h_budget[,r1bar,taubar,r2bar]`` (``analyze.policy_string``)."""
+    ok = (kind == "static" and len(params) == 2) or (kind == "dynamic" and len(params) in (5, 8))
+    if not ok:
+        raise ValueError(f"bad policy {kind}{tuple(params)}")
+    return f"{kind}:" + ",".join(fmt_num(p) for p in params)
+
+
+def parse_policy(policy: str) -> tuple[str, tuple[float, ...]]:
+    """Positional static / dynamic strings (rev. 7, as ``analyze.parse_policy``). The rev.-6 key=value forms and
+    ``matched_static:`` are refused: the matched static is the static string ``static:g_eff,h_eff``."""
+    if policy.startswith("matched_static:"):
+        raise ValueError(f"{policy!r}: the matched static is a plain static policy, static:g,h (rev. 7)")
+    kind, rest = policy.split(":", 1)
+    if "=" in rest:
+        raise ValueError(f"{policy!r}: policy strings are positional since rev. 7 "
+                         "(static:g,h | dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar)")
+    try:
+        vals = tuple(float(x) for x in rest.split(","))
+    except ValueError as exc:
+        raise ValueError(f"bad policy string {policy!r}") from exc
+    if not ((kind == "static" and len(vals) == 2) or (kind == "dynamic" and len(vals) in (5, 8))) \
+            or not all(math.isfinite(v) for v in vals):
+        raise ValueError(f"bad policy string {policy!r}")
+    return kind, vals
+
+
+def canonical_policy(policy: str) -> str:
+    """The analysis spelling of a static / dynamic string (other policies unchanged), so records match it."""
+    if policy.startswith(("static:", "dynamic:", "matched_static:")):
+        return policy_string(*parse_policy(policy))
+    return policy
+
+
+def as_dynamic(policy: str) -> tuple[float, ...]:
+    """8-tuple (g0, b_budget, b_info, h0, h_budget, r1bar, taubar, r2bar) of a static or dynamic string."""
+    kind, v = parse_policy(policy)
+    if kind == "static":
+        return (v[0], 0.0, 0.0, v[1], 0.0, 0.0, 0.0, 0.0)
+    return v if len(v) == 8 else v + (0.0, 0.0, 0.0)
 
 
 def policy_controller(policy: str, prior, ctx, *, g0: float, obs_inflation: float = 1.0, W: int | None = None):
@@ -329,17 +411,14 @@ def policy_controller(policy: str, prior, ctx, *, g0: float, obs_inflation: floa
         return a2u.A2UController(prior, ctx, g=g0, obs_inflation=obs_inflation, W=W)
     if policy == "a2":
         return a2u.A2UController(prior, ctx, g=g0, update=False, obs_inflation=obs_inflation, W=W)
-    if policy.startswith("static:"):
-        kv = _kv(policy, "static:", {"g", "e2off"}, {"g"})
-        return a2u.A2UController.static_price(prior, ctx, kv["g"], e2_offset=kv.get("e2off", 0.0),
-                                              obs_inflation=obs_inflation, W=W, policy_name=policy)
-    if policy.startswith("matched_static:"):
-        kv = _kv(policy, "matched_static:", {"g", "h"}, {"g", "h"})
-        return a2u.A2UController.static_price(prior, ctx, kv["g"], e2_offset=kv["h"], obs_inflation=obs_inflation,
-                                              W=W, policy_name=policy)
-    if policy.startswith("dynamic:"):
-        kv = _kv(policy, "dynamic:", {"g0", "b_budget", "b_info", "h0", "h_budget", "r_bar", "tau_bar"}, {"g0"})
-        return a2u.A2UController.dynamic(prior, ctx, **kv, obs_inflation=obs_inflation, W=W, policy_name=policy)
+    if policy.startswith(("static:", "dynamic:", "matched_static:")):
+        name = canonical_policy(policy)
+        g, bb, bi, h, hb, r1, tb, r2 = as_dynamic(name)
+        if name.startswith("static:"):
+            return a2u.A2UController.static_price(prior, ctx, g, e2_offset=h, obs_inflation=obs_inflation, W=W,
+                                                  policy_name=name)
+        return a2u.A2UController.dynamic(prior, ctx, g0=g, b_budget=bb, b_info=bi, h0=h, h_budget=hb, r1_bar=r1,
+                                         tau_bar=tb, r2_bar=r2, obs_inflation=obs_inflation, W=W, policy_name=name)
     if policy.startswith("pi_prime:"):
         model, sha = a2u.RidgeScore.load(policy[len("pi_prime:"):])
         return a2u.A2UController(prior, ctx, g=g0, score_fn=model, obs_inflation=obs_inflation, W=W,
@@ -355,47 +434,82 @@ def _policy_tag(policy: str) -> str:
     return hashlib.sha256(policy.encode()).hexdigest()[:8]
 
 
-TUNE_G = (0.0, 0.05, 0.1, 0.2, 0.4)   # rev. 7 (a): g = 0 = execute every non-rule proposal; 5 x 3 = 15 static
-TUNE_G_EXTENSION = (0.8,)             # optional (``--tune-g-extension``)
+# Rev. 7 (D2) tuning declaration, in sigma units (the analysis branch's ``FamilyDecl`` defaults).
+TUNE_G = (0.0, 0.05, 0.1, 0.2, 0.4)   # g = 0 = execute every non-rule proposal; 5 x 3 = 15 statics
+TUNE_G_EXTENSION = (0.8,)             # the one edge extension (``--tune-g-extension``)
 TUNE_H = (-0.25, 0.0, 0.25)
-DYNAMIC_MEMBERS = {"budget": {"b_budget": 1.0}, "info": {"b_info": 0.5}, "keep+": {"h_budget": 0.5},
-                   "keep-": {"h_budget": -0.5}}
-# rev. 7 (c): the magnitude grid per channel (b_budget, h_budget in sigma units; b_info dimensionless).
-MAGNITUDE_GRID = {"budget": [{"b_budget": v} for v in (0.5, 1.0, 2.0)],
-                  "info": [{"b_info": v} for v in (0.25, 0.5, 1.0)],
-                  "keep": [{"h_budget": s * v} for v in (0.25, 0.5, 1.0) for s in (1.0, -1.0)]}
+# The four fixed single-channel members anchored at m* (no magnitude grids): b_budget = +1 sigma,
+# b_info = +0.5 (dimensionless, x tau_pred), h_budget = +-0.5 sigma; names as ``FamilyDecl.members``.
+DYNAMIC_MEMBERS = {"budget×1": ("budget", 1.0), "info×0.5": ("info", 0.5), "keep+×0.5": ("keep+", 0.5),
+                   "keep-×0.5": ("keep-", 0.5)}
+TUNE_N_STATIC = 20    # paired dev instances of the static stage (instances 0..19 of the tune block)
+TUNE_N_MEMBERS = 40   # paired dev instances of the member stage (0..39: the first 20 are the statics' instances)
 
 
-def _dynamic_string(g: float, h: float, member: dict, s: float, r_bar: float, tau_bar: float) -> str:
-    parts = {"g0": g * s, "h0": h * s, **{k: (v if k == "b_info" else v * s) for k, v in member.items()}}
-    if r_bar:
-        parts["r_bar"] = r_bar
-    if tau_bar:
-        parts["tau_bar"] = tau_bar
-    return "dynamic:" + ",".join(f"{k}={v:.10g}" for k, v in parts.items())
+def static_grid(sigma: float, extend: bool = False) -> list[str]:
+    gs = TUNE_G + (TUNE_G_EXTENSION if extend else ())
+    return [policy_string("static", (g * sigma, h * sigma)) for g in gs for h in TUNE_H]
 
 
-def tuning_grid(stage: str, sigma_cmp_vary: float, m_star: tuple[float, float] | None = None,
-                extend: bool = False, r_bar: float = 0.0, tau_bar: float = 0.0) -> list[str]:
-    """Declared tuning grids as policy strings, in units of sigma_cmp,vary (values to 10 s.f.).
-
-    ``static``: g x h; ``dynamic``: the four members at m*'s (g, h); ``magnitude``: the per-channel magnitude
-    grid at m* (rev. 7 c); ``all``: static + dynamic. r_bar / tau_bar centre the dynamic terms (rev. 7 b)."""
-    s = float(sigma_cmp_vary)
-    out: list[str] = []
-    if stage not in ("static", "dynamic", "magnitude", "all"):
-        raise ValueError(f"unknown tuning stage {stage!r}")
-    if stage in ("static", "all"):
-        gs = TUNE_G + (TUNE_G_EXTENSION if extend else ())
-        out += [f"static:g={g * s:.10g},e2off={h * s:.10g}" for g in gs for h in TUNE_H]
-    if stage in ("dynamic", "magnitude", "all"):
-        if m_star is None:
-            raise ValueError("the dynamic and magnitude stages need m*'s (g, h)")
-        g, h = m_star
-        members = list(DYNAMIC_MEMBERS.values()) if stage != "magnitude" else \
-            [m for grid in MAGNITUDE_GRID.values() for m in grid]
-        out += [_dynamic_string(g, h, m, s, r_bar, tau_bar) for m in members]
+def member_policies(m_star: str, sigma: float, centres: dict | None = None) -> dict[str, str]:
+    """The four members anchored at m* = static:g*,h* and centred at ``centres`` (r1bar, taubar, r2bar)."""
+    kind, (g, h) = parse_policy(m_star)
+    if kind != "static":
+        raise ValueError("m* must be a static policy string")
+    c = centres or {"r1bar": 0.0, "taubar": 0.0, "r2bar": 0.0}
+    cc = (float(c["r1bar"]), float(c["taubar"]), float(c["r2bar"]))
+    out = {}
+    for name, (ch, u) in DYNAMIC_MEMBERS.items():
+        p = {"budget": (g, u * sigma, 0.0, h, 0.0), "info": (g, 0.0, u, h, 0.0),
+             "keep+": (g, 0.0, 0.0, h, u * sigma), "keep-": (g, 0.0, 0.0, h, -u * sigma)}[ch]
+        out[name] = policy_string("dynamic", p + cc)
     return out
+
+
+def decision_centres(decisions: list[dict]) -> dict:
+    """r1bar, taubar over eligible E1 decisions and r2bar over eligible E2 decisions (``analyze.decision_centres``)."""
+    e1 = [d for d in decisions if d.get("eligible") and d["epoch"] == "E1"]
+    e2 = [d for d in decisions if d.get("eligible") and d["epoch"] == "E2"]
+    if any(d.get("r") is None for d in e1 + e2):
+        raise ValueError("decision_centres: a decision lacks r")
+    r1 = float(np.mean([float(d["r"]) for d in e1])) if e1 else 0.0
+    tb = float(np.mean([float(d["tau_pred"]) for d in e1 if d.get("tau_pred") is not None])) if e1 else 0.0
+    r2 = float(np.mean([float(d["r"]) for d in e2])) if e2 else r1
+    return {"r1bar": r1, "taubar": tb, "r2bar": r2, "n_E1": len(e1), "n_E2": len(e2)}
+
+
+def centres_from_roots(path: str, m_star: str) -> dict:
+    """Centres from m*'s dev roots (the static-stage ``roots.jsonl``)."""
+    m_star = canonical_policy(m_star)
+    decs = [d for r in read_jsonl(Path(path)) if r.get("policy") == m_star for d in (r.get("decisions") or [])
+            if d.get("eligible")]
+    if not decs:
+        raise SystemExit(f"--centres-from {path}: no eligible decisions of {m_star}")
+    return decision_centres(decs)
+
+
+def tuning_grid(stage: str, sigma: float, m_star: str | None = None, extend: bool = False,
+                centres: dict | None = None) -> list[str]:
+    """Declared tuning configurations (raw units; ``sigma`` = the node's sigma unit).
+
+    ``static``: the 15 statics g x h (+3 with ``extend``); ``dynamic``: the four centred members at m*."""
+    if stage == "static":
+        return static_grid(sigma, extend)
+    if stage == "dynamic":
+        if m_star is None:
+            raise ValueError("the dynamic stage needs m* (a static policy string)")
+        return list(member_policies(m_star, sigma, centres).values())
+    raise ValueError(f"unknown tuning stage {stage!r} (rev. 7: static | dynamic)")
+
+
+def resolve_m_star(value: str | None, sigma: float | None) -> str | None:
+    """--m-star: ``static:g,h`` (raw units) or ``g,h`` in sigma units; returned as the canonical static string."""
+    if not value:
+        return None
+    if value.startswith("static:"):
+        return canonical_policy(value)
+    g, h = (float(x) for x in value.split(","))
+    return policy_string("static", (g * float(sigma), h * float(sigma)))
 
 
 def load_jobs(path: str) -> list[dict]:
@@ -596,8 +710,12 @@ def w_binds(runs: int, W: int, trials: int, trial_cap: int) -> bool:
     return runs >= W and trials < trial_cap
 
 
-def decisions_from(rows: list[dict], events: list[dict], snapshots: dict) -> list[dict]:
-    """Per-trial E1/E2 decisions of a campaign from its ledger and ``control_decision`` events."""
+def decisions_from(rows: list[dict], events: list[dict], snapshots: dict | None) -> list[dict]:
+    """Per-trial E1/E2 decisions of a campaign from its ledger and ``control_decision`` events.
+
+    ``snapshots``: the forked root's snapshots (a fork-eligible decision needs one); ``None`` for campaigns that
+    are not forked (tune / campaign / extra roots), whose eligibility is the controller's alone."""
+    snap_ok = (lambda key: True) if snapshots is None else (lambda key: key in snapshots)
     by_trial: dict[int, dict] = {}
     for e in events:
         if e.get("event_type") != "control_decision":
@@ -611,18 +729,21 @@ def decisions_from(rows: list[dict], events: list[dict], snapshots: dict) -> lis
         e1 = ev.get("E1")
         if e1 is not None:
             d = e1.get("detail") or {}
-            eligible = bool(d.get("eligible")) and b >= 2 and ("E1", b) in snapshots
+            eligible = bool(d.get("eligible")) and b >= 2 and snap_ok(("E1", b))
             out.append({"index": b, "epoch": "E1", "action": "skip" if e1["action"] == "skip" else "execute",
                         "index_value": d.get("v_star"), "margin": d.get("margin"), "eligible": eligible,
+                        "r": d.get("r"), "tau_pred": d.get("tau_pred"),
                         "skip_reason": d.get("skip_reason"), "detail": d})
         e2 = ev.get("E2")
         if e2 is not None:
             d = e2.get("detail") or {}
             e1_ok = bool(((ev.get("E1") or {}).get("detail") or {}).get("eligible"))
             eligible = bool(d.get("eligible")) and e1_ok and row.get("validity_status") == "valid" \
-                and ("E2", b) in snapshots
-            out.append({"index": b, "epoch": "E2", "action": "keep" if row["decision"] == "kept" else "discard",
-                        "index_value": d.get("m_hat"), "margin": d.get("margin"), "eligible": eligible, "detail": d})
+                and snap_ok(("E2", b))
+            action = {"kept": "keep", "discarded": "discard"}.get(row["decision"], str(row["decision"]))
+            out.append({"index": b, "epoch": "E2", "action": action,
+                        "index_value": d.get("m_hat"), "margin": d.get("margin"), "eligible": eligible,
+                        "r": d.get("r"), "tau_pred": d.get("tau_pred"), "detail": d})
     return out
 
 
@@ -670,10 +791,10 @@ def run_root(run: Run, k: int, *, policy: str | None, rep: int, primary: bool) -
         **kwargs)
     rows = read_jsonl(root_dir / "root_trials.jsonl")
     events = read_jsonl(root_dir / "root_events.jsonl")
-    decisions = decisions_from(rows, events, snaps.written if snaps else {})
+    decisions = decisions_from(rows, events, snaps.written if snaps else None)
     start = adapter.start_files()
     y_start = _mean(run.audits.metrics(seed, start, run.seeds))
-    y1 = _mean(run.audits.metrics(seed, config_after(rows, start, 1), run.seeds)) if rows else None
+    y1 = _mean(run.audits.metrics(seed, adapter.files_after(rows, start, seed, 1), run.seeds)) if rows else None
     final = _workspace_files(adapter, node_dir)
     y_seeds = run.audits.metrics(seed, final, run.seeds)
     runs_used = worker_runs_of(rows, events)
@@ -685,7 +806,8 @@ def run_root(run: Run, k: int, *, policy: str | None, rep: int, primary: bool) -
                      binding=w_binds(runs_used, run.W, len(rows), int(kwargs["budget"])), runs_used=runs_used,
                      llm_calls=_llm_calls(events),
                      decisions=[{k_: v for k_, v in d.items() if k_ != "detail"} for d in decisions],
-                     provenance=_prov(run, controller), policy=policy or run.root_policy, rep=int(rep))
+                     provenance=_prov(run, controller), policy=policy or run.root_policy, rep=int(rep),
+                     llm_seed_base=int(manager_seed(cid, 0, int(rep), 0)))
     out = to_dict(rec)
     out["_snapshots"] = {f"{e}_b{b:03d}": p for (e, b), p in (snaps.written.items() if snaps else ())}
     out["_y_terminal_per_seed"] = y_seeds
@@ -717,6 +839,8 @@ def s05b_phase(args) -> int:
     if manifest["phase"] != "S0.5":
         raise SystemExit("S0.5b post-processes an S0.5 output directory")
     adapter = make_adapter(manifest["node"], manifest.get("manager") or {}, manifest.get("synthetic_params"))
+    if adapter.synthetic and adapter.world:
+        raise SystemExit("S0.5b does not take world synthetic nodes")
     audits = AuditCache(out / "audit_runs.jsonl", adapter, work)
     seeds = tuple(manifest["audit_seeds"])  # the S0.5 audit block
     prior = a2u.A2UPrior.load(manifest["prior_path"]) if manifest.get("prior_path") else \
@@ -996,7 +1120,8 @@ def run_leaf(run: Run, fork: dict, arm: str, rep: int, root_rows: list[dict]) ->
     result = resume_campaign(
         snap, into, arm=override, first_action=first_action, policy=controller,
         horizon=max(snap.budget_total - snap.budget_consumed - 1, 0), worker=adapter.leaf_worker(into, snap),
-        manager=adapter.manager(int(fork["seed"]), repetition, seed_key=snap.campaign_id),
+        manager=adapter.manager(int(fork["seed"]), repetition, seed_key=snap.campaign_id,
+                                fork_trial=int(fork["index"])),
         keep_prior=controller.keep_prior)
     rows = read_jsonl(result.restored.records_path)
     events = read_jsonl(result.restored.events_path)
@@ -1012,7 +1137,8 @@ def run_leaf(run: Run, fork: dict, arm: str, rep: int, root_rows: list[dict]) ->
         if fork["epoch"] == "E2":
             cand_files = {k: v.decode() for k, v in snap.editable_files.items() if v is not None}
         else:
-            cand_files = apply_edit(inc_files, snap.proposal.extra["structured_edit"])
+            cand_files = adapter.candidate_files(inc_files, snap.proposal, seed,
+                                                 int(snap.compute_budget_state.get("worker_runs", 0)) + 1)
         immediate = paired_increment(run.audits.metrics(seed, cand_files, run.seeds),
                                      run.audits.metrics(seed, inc_files, run.seeds))
     e2 = fork["epoch"] == "E2"
@@ -1081,7 +1207,9 @@ def build_manifest(args, adapter, prior_sha: str, sigma_node: float, g_declared:
     lo, hi = INSTANCE_SEED_BLOCKS[phase]
     seed_base = int(args.seed_base if args.seed_base is not None else lo)
     jobs = load_jobs(args.jobs) if args.jobs else None
-    n_instances = (max(k_ for j in jobs for k_ in j["instances"]) + 1) if jobs else int(args.instances)
+    if jobs:
+        jobs = [{**j, "policy": canonical_policy(j["policy"])} for j in jobs]
+    n_instances = (max(k_ for j in jobs for k_ in j["instances"]) + 1) if jobs else int(args.instances or 1)
     if not (lo <= seed_base and seed_base + n_instances <= hi):
         raise SystemExit(f"instance seeds {seed_base}..{seed_base + n_instances - 1} leave the {phase} block "
                          f"[{lo}, {hi}) (review m4)")
@@ -1101,10 +1229,12 @@ def build_manifest(args, adapter, prior_sha: str, sigma_node: float, g_declared:
         "prior_path": args.prior, "manager": manager_cfg(args), "obs_inflation": float(args.obs_inflation),
         "a2_fraction": float(args.a2_fraction if args.a2_fraction is not None else
                              (A2_FRACTION_DEFAULT if phase == "S3" else 0.0)),
-        "policies": list(args.policy or []), "llm_reps": list(args.rep or [0]),
-        "root_policy": args.root_policy, "jobs": jobs, "calibration": bool(phase == "S0.5" and not args.no_calibration),
+        "policies": [canonical_policy(p) for p in (args.policy or [])], "llm_reps": list(args.rep or [0]),
+        "root_policy": canonical_policy(args.root_policy), "tune_stage": getattr(args, "tune_grid", None),
+        "centres": getattr(args, "centres", None), "jobs": jobs, "calibration": bool(phase == "S0.5" and not args.no_calibration),
         "max_retries": int(args.max_retries), "e2_verify": False,
         "synthetic_params": json.loads(args.synthetic_params) if args.synthetic_params else None,
+        "synthetic_node": adapter.node.describe() if adapter.synthetic else None,
         "host": args.host_label, "created_utc": utc(), "sessions": [],
     }
 
@@ -1313,7 +1443,8 @@ def parse_args(argv=None):
     ap.add_argument("--host-label", default="unknown", help='e.g. "TASL-2" (provenance)')
     ap.add_argument("--W", type=int, default=None, help="worker-run budget (S0.4 default: the LLM cap, non-binding)")
     ap.add_argument("--llm-cap", type=int, default=DEFAULT_LLM_CAP)
-    ap.add_argument("--instances", type=int, default=1)
+    ap.add_argument("--instances", type=int, default=None,
+                    help="instances (default 1; tune: 20 for --tune-grid static, 40 for --tune-grid dynamic)")
     ap.add_argument("--forks", type=float, default=4.0, help="expected uniform forks per root")
     ap.add_argument("--near-band", type=float, default=None,
                     help="b of the near-threshold oversample: |margin to the root policy's threshold| <= b (raw units)")
@@ -1335,22 +1466,29 @@ def parse_args(argv=None):
     ap.add_argument("--g", type=float, default=None, help="declared run price (default 0.1 sigma_node)")
     ap.add_argument("--g0", type=float, default=None, help="pilot price of the 'a2u' policy (default --g)")
     ap.add_argument("--root-policy", default="a2u", help="S0.5 / S3 / synthetic: policy of roots, rebuilds and "
-                    "continuations (m*), e.g. static:g=..,e2off=..")
+                    "continuations (m*), e.g. static:<g>,<h>")
     ap.add_argument("--obs-inflation", type=float, default=1.0, help="A2-U observation-variance inflation lambda")
     ap.add_argument("--within-key", choices=["estimated", "none"], default="estimated", help="fit_prior only")
     ap.add_argument("--a2-fraction", type=float, default=None, help="descriptive A2 roots (S3 default 0.2)")
     ap.add_argument("--policy", action="append", default=None, help="tune / campaign / S0.5 extra policies: a2u | "
-                    "static:.. | matched_static:.. | dynamic:.. | pi_prime:<model_file> (repeatable)")
+                    "static:g,h | dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar | pi_prime:<model_file> "
+                    "(repeatable; raw units, positional as the analysis branch)")
     ap.add_argument("--rep", type=int, action="append", default=None,
                     help="LLM repetition(s) of the policy campaigns (repeatable; default 0)")
     ap.add_argument("--jobs", default=None, help="tune: JSON list of {policy, instances, rep} jobs")
-    ap.add_argument("--tune-grid", choices=["static", "dynamic", "magnitude", "all"], default=None,
-                    help="tune phase: add a declared grid (needs --sigma-cmp-vary; dynamic/magnitude need --m-star)")
-    ap.add_argument("--sigma-cmp-vary", type=float, default=None, help="grid unit sigma_cmp,vary (raw units)")
-    ap.add_argument("--tune-g-extension", action="store_true", help="add g = 0.8 to the static grid")
-    ap.add_argument("--m-star", default=None, help="g,h of the best static member, in sigma_cmp,vary units")
-    ap.add_argument("--r-bar", type=float, default=0.0, help="centring of r in the dynamic grids (rev. 7 b)")
-    ap.add_argument("--tau-bar", type=float, default=0.0, help="centring of tau_pred in the dynamic grids (rev. 7 b)")
+    ap.add_argument("--tune-grid", choices=["static", "dynamic"], default=None,
+                    help="tune phase (rev. 7 D2): static = the 15 statics on 20 instances; dynamic = the 4 centred "
+                    "members at --m-star on 40 instances (the first 20 are the static stage's instances)")
+    ap.add_argument("--sigma-cmp-vary", type=float, default=None,
+                    help="grid unit (raw units): the node's sigma (the analysis' sigma_node)")
+    ap.add_argument("--tune-g-extension", action="store_true", help="add the g = 0.8 edge extension (3 statics)")
+    ap.add_argument("--m-star", default=None, help="m*: a static policy string static:g,h (raw units), or g,h in "
+                    "sigma units")
+    ap.add_argument("--centres-from", default=None, help="dynamic stage: roots.jsonl of the static stage; the centres "
+                    "are m*'s eligible-decision means (r1bar, taubar over E1; r2bar over E2)")
+    ap.add_argument("--r1-bar", type=float, default=None, help="explicit E1 centre of r (instead of --centres-from)")
+    ap.add_argument("--tau-bar", type=float, default=None, help="explicit E1 centre of tau_pred")
+    ap.add_argument("--r2-bar", type=float, default=None, help="explicit E2 centre of r")
     ap.add_argument("--truncate-W", default=None, help="S0.5b: comma-separated W values (e.g. 8,10,12,20)")
     ap.add_argument("--no-calibration", action="store_true", help="S0.5: skip the calibration audits")
     ap.add_argument("--e2-verify", action="store_true", help="refused: E2 verify is off for every Track S policy")
@@ -1385,10 +1523,23 @@ def main(argv=None) -> int:
     if args.tune_grid:
         if args.phase != "tune" or args.sigma_cmp_vary is None:
             raise SystemExit("--tune-grid needs --phase tune and --sigma-cmp-vary")
-        m_star = tuple(float(x) for x in args.m_star.split(",")) if args.m_star else None
+        m_star = resolve_m_star(args.m_star, args.sigma_cmp_vary)
+        args.centres = None
+        if args.tune_grid == "dynamic":
+            if m_star is None:
+                raise SystemExit("--tune-grid dynamic needs --m-star")
+            explicit = (args.r1_bar, args.tau_bar, args.r2_bar)
+            if args.centres_from and any(x is not None for x in explicit):
+                raise SystemExit("give --centres-from or the explicit centres, not both")
+            if args.centres_from:
+                args.centres = centres_from_roots(args.centres_from, m_star)
+            else:
+                args.centres = {"r1bar": float(args.r1_bar or 0.0), "taubar": float(args.tau_bar or 0.0),
+                                "r2bar": float(args.r2_bar if args.r2_bar is not None else (args.r1_bar or 0.0))}
         args.policy = list(args.policy or []) + tuning_grid(args.tune_grid, args.sigma_cmp_vary, m_star,
-                                                            extend=args.tune_g_extension, r_bar=args.r_bar,
-                                                            tau_bar=args.tau_bar)
+                                                            extend=args.tune_g_extension, centres=args.centres)
+        if args.instances is None and not args.jobs:
+            args.instances = TUNE_N_STATIC if args.tune_grid == "static" else TUNE_N_MEMBERS
     if args.jobs and args.phase != "tune":
         raise SystemExit("--jobs is a tune-phase option")
     if args.phase in POLICY_PHASES and not (args.policy or args.jobs):
@@ -1404,6 +1555,11 @@ def main(argv=None) -> int:
     g_declared = float(args.g if args.g is not None else G_UNITS * sigma_node)
     g0 = float(args.g0 if args.g0 is not None else g_declared)
     manifest = build_manifest(args, adapter, prior_sha, sigma_node, g_declared, g0)
+    if adapter.synthetic:
+        if adapter.world and args.phase in ("S0.4", "S0.5"):
+            raise SystemExit("world synthetic nodes run in the 'synthetic', 'tune' and 'campaign' phases (their "
+                             "prior is known; S0.4 / S0.5 replays are for the log-linear test nodes)")
+        adapter.bind(W=manifest["W"], llm_cap=manifest["llm_cap"])
     # Validate every policy string before anything runs.
     ctx = NodeContext(node=adapter.surface, start_files=adapter.start_files(), sigma_node=sigma_node,
                       runs_total=manifest["W"], memory_mode=manifest["memory_mode"])

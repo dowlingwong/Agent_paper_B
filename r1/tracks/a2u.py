@@ -40,16 +40,17 @@ Policies on the same machinery (one class):
 
 * ``A2UController(prior, ctx, g=g0)``: the root / continuation controller at the
   pilot price g0 (rev.-4 amendment 2; the declared g is recorded separately);
-* the dynamic threshold family (rev.-6 amendment 1, superseding rev. 5; the primary candidate)
-  ``dynamic:g0=..,b_budget=..,b_info=..,h0=..,h_budget=..``, with
+* the dynamic threshold family (rev. 7, positional as the analysis branch's ``analyze.policy_string``)
+  ``dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar`` (or the 5-value form, zero centres), with
   r = runs_left / W - proposals_left / N_cap (worker runs; proposals incl. the current one):
-  E1 execute iff V*_n + b_info tau_pred,n >= g0 - b_budget r  (b_budget > 0: the threshold falls when
-  runs are plentiful relative to proposals); E2 keep iff m_hat_n > h0 - h_budget r (h_budget of either
-  sign). The E1 comparison is ">=" so that zero slopes reproduce the static rule (``rules.execute``)
-  exactly; ties have probability zero;
-* ``static_price(prior, ctx, g_hat, e2_offset=y)``: m_g-hat and ``static:g=<x>,e2off=<y>``
+  E1 execute iff V*_n + b_info (tau_pred,n - taubar) >= g0 - b_budget (r - r1bar); E2 keep iff
+  m_hat_n > h0 - h_budget (r - r2bar) (h_budget of either sign). r1bar, taubar are m*'s mean r and
+  tau_pred over its eligible E1 dev decisions, r2bar its mean r over eligible E2 decisions;
+* ``static_price(prior, ctx, g_hat, e2_offset=y)``: m_g-hat and ``static:<x>,<y>``
   (E1 execute iff V* >= x, E2 keep iff m_hat > y): exactly the dynamic family with
-  b_budget = b_info = h_budget = 0;
+  b_budget = b_info = h_budget = 0, whatever the centres;
+* operators (rev. 7.1 m9), every policy: execute uses ">=" and keep uses ">" (``static:0,h`` executes
+  every non-rule proposal, V* = 0 included); ties otherwise have probability zero;
 * ``c_hat=fn``: pi' of §3, execute iff V* + C(s) > 0, keep iff m_hat + C(s) > 0;
 * ``score_fn=fn``: ``pi_prime:<model_file>`` (secondary), execute iff f(s_E1) > 0, keep iff
   f(s_E2) > 0 (``RidgeScore`` loads f from JSON); its features include the A2-U index and the
@@ -99,6 +100,7 @@ EXECUTE_NON_RULE_VERSION = "execute_non_rule/v2"
 PRIOR_SCHEMA = "tracks_a2u_prior/v2"
 SCORE_MODEL_SCHEMA = "tracks_score_model/v1"
 KINDS = ("local", "structural")
+KEYED_MODEL = "keyed_size/v1"  # prior.meta["model"] of the synthetic worlds (``_keyed_forecast``)
 # Extra policy inputs (not schema state features): r of the dynamic family and the predictive sd tau_pred.
 POLICY_EXTRA_FEATURES = ("budget_gap", "tau_pred")
 SKIP_DISPLAY = SKIP_DISPLAY_ONE_LINE  # the deployed display (R1-SKIP-DISPLAY); runbook §4 settings
@@ -412,6 +414,17 @@ class RidgeScore:
 # The controller
 # ---------------------------------------------------------------------------
 
+def world_block(obj) -> dict | None:
+    """The ``extra.scripted.world`` block of a proposal (object or dict) or of a ledger row (``extra.manager``)."""
+    if obj is None:
+        return None
+    extra = obj.get("extra") if isinstance(obj, dict) else getattr(obj, "extra", None)
+    extra = extra or {}
+    if "manager" in extra and isinstance(extra["manager"], dict):
+        extra = extra["manager"]
+    return ((extra.get("scripted") or {}).get("world")) or None
+
+
 class A2UController:
     """A2-U and the policies built on it (module docstring). Harness ``Controller`` + ``keep_prior``."""
 
@@ -420,29 +433,32 @@ class A2UController:
     def __init__(self, prior: A2UPrior, node_ctx: NodeContext, *, g: float | None = None, update: bool = True,
                  obs_inflation: float = 1.0, c_hat: Callable[[dict], float] | None = None,
                  score_fn: Callable[[dict], float] | None = None, h0: float = 0.0, b_budget: float = 0.0,
-                 b_info: float = 0.0, h_budget: float = 0.0, r_bar: float = 0.0, tau_bar: float = 0.0,
-                 W: int | None = None, g_units: float = 0.1, policy_name: str | None = None) -> None:
+                 b_info: float = 0.0, h_budget: float = 0.0, r1_bar: float = 0.0, tau_bar: float = 0.0,
+                 r2_bar: float = 0.0, W: int | None = None, g_units: float = 0.1,
+                 policy_name: str | None = None) -> None:
         if not math.isclose(prior.sigma_node, node_ctx.sigma_node, rel_tol=1e-9):
             raise ValueError("prior.sigma_node must equal node_ctx.sigma_node")
         if obs_inflation < 1.0 and not math.isclose(obs_inflation, 1.0):
             raise ValueError("obs_inflation must be >= 1")
         if c_hat is not None and score_fn is not None:
             raise ValueError("give c_hat (pi') or score_fn (a full score), not both")
-        if (c_hat is not None or score_fn is not None) and (h0 or b_budget or b_info or h_budget or r_bar or tau_bar):
+        if (c_hat is not None or score_fn is not None) and (h0 or b_budget or b_info or h_budget or r1_bar or tau_bar
+                                                            or r2_bar):
             raise ValueError("the dynamic-threshold parameters do not combine with c_hat / score_fn")
         self.prior, self.ctx = prior, node_ctx
         self.g = float(g_units * prior.sigma_node if g is None else g)
         self.update, self.obs_inflation = bool(update), float(obs_inflation)
         self.c_hat, self.score_fn, self.W = c_hat, score_fn, W
         self.h0, self.b_budget, self.b_info, self.h_budget = float(h0), float(b_budget), float(b_info), float(h_budget)
-        self.r_bar, self.tau_bar = float(r_bar), float(tau_bar)  # rev. 7 centring (0 = uncentred)
+        # rev. 7 centring (0 = uncentred): r1_bar, tau_bar at E1 and r2_bar at E2 (m*'s dev decision means)
+        self.r1_bar, self.tau_bar, self.r2_bar = float(r1_bar), float(tau_bar), float(r2_bar)
         self.policy_name = policy_name  # recorded by the collector; not part of the version, so two policies
         # with identical rules (e.g. static and dynamic with zero slopes) have identical records
         base = SCORE_POLICY_VERSION if score_fn is not None else PI_PRIME_VERSION if c_hat is not None else A2U_VERSION
         tags = [f"prior={prior.sha256[:12]}", f"g={self.g:.6g}"]
         tags += [] if update else ["no_update"]
         tags += [] if self.obs_inflation == 1.0 else [f"lambda={self.obs_inflation:g}"]
-        for name in ("h0", "b_budget", "b_info", "h_budget", "r_bar", "tau_bar"):
+        for name in ("h0", "b_budget", "b_info", "h_budget", "r1_bar", "tau_bar", "r2_bar"):
             tags += [] if getattr(self, name) == 0.0 else [f"{name}={getattr(self, name):g}"]
         self.version = f"{base}[{','.join(tags)}]"
         self.log: list[dict] = []  # record only; never read by a decision
@@ -455,11 +471,12 @@ class A2UController:
 
     @classmethod
     def dynamic(cls, prior: A2UPrior, node_ctx: NodeContext, *, g0: float, b_budget: float = 0.0,
-                b_info: float = 0.0, h0: float = 0.0, h_budget: float = 0.0, r_bar: float = 0.0,
-                tau_bar: float = 0.0, **kwargs) -> "A2UController":
-        """The dynamic threshold family (module docstring); zero slopes give ``static_price(g0, e2_offset=h0)``."""
+                b_info: float = 0.0, h0: float = 0.0, h_budget: float = 0.0, r1_bar: float = 0.0,
+                tau_bar: float = 0.0, r2_bar: float = 0.0, **kwargs) -> "A2UController":
+        """``dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar`` (module docstring); zero slopes give
+        ``static_price(g0, e2_offset=h0)`` exactly, whatever the centres."""
         return cls(prior, node_ctx, g=float(g0), b_budget=b_budget, b_info=b_info, h0=h0, h_budget=h_budget,
-                   r_bar=r_bar, tau_bar=tau_bar, **kwargs)
+                   r1_bar=r1_bar, tau_bar=tau_bar, r2_bar=r2_bar, **kwargs)
 
     @property
     def default_keep(self) -> bool:
@@ -486,6 +503,8 @@ class A2UController:
         res = rep.current
         if res is None:
             return None
+        if self.keyed:
+            return self._keyed_forecast(view, rep, res)
         edit = res.edit
         key = edit.get("symbol") if edit else None
         group = (key, sign_of(res.features.get("direction")))
@@ -504,6 +523,63 @@ class A2UController:
                 "t_star": t_star, "v_star": v_star, "noop": bool(res.noop), "duplicate": bool(res.duplicate),
                 "duplicate_of": rep.first_eval.get(cand_proj) if res.duplicate else None,
                 "candidate_projection_sha": _proj_sha(cand_proj)}
+
+    @property
+    def keyed(self) -> bool:
+        return self.prior.meta.get("model") == KEYED_MODEL
+
+    def _keyed_forecast(self, view, rep: "Replay", res) -> dict:
+        """Keyed mode (``KEYED_MODEL``, the synthetic worlds of ``r1.tracks.worlds``): the proposal names its
+        world key, size, offset and edit kind (``extra.scripted.world``); per key a conjugate normal posterior on
+        theta from N(mu0, tau0^2) is updated by every earlier executed trial on that key (delta_hat = the metric
+        minus the incumbent's, or minus the known start value y0 at trial 1), and the forecast is
+        a = size (mu - offset), A = size^2 var + sigma_eta^2 (mu = a, tau = tau_pred = sqrt(A), sigma by kind)."""
+        from r1.tracks import worlds
+        meta = self.prior.meta["world"]
+        prior_post = (float(meta["mu0"]), float(meta["tau0"]) ** 2)
+        blk = world_block(view.proposal)
+        posts: dict[int, tuple[float, float]] = {}
+        counts: dict[int, int] = defaultdict(int)
+        if self.update:
+            for record in view.ledger_prefix:
+                row = _as_row(record)
+                b = world_block(row)
+                metric = parsed_metric(row)
+                if b is None or b.get("kind") == worlds.RULE or metric is None or row.get("decision") == "skipped":
+                    continue
+                if row.get("current_best_before") is None:
+                    dhat = float(metric) - float(meta["y0"])
+                elif row.get("delta_vs_best") is not None:
+                    dhat = float(row["delta_vs_best"])
+                else:
+                    continue
+                k = int(b["key"])
+                posts[k] = worlds.key_update(posts.get(k, prior_post), float(b["size"]), dhat, float(b["off"]),
+                                             float(meta["sigma_eta"]), worlds.sig_from_meta(meta, b["kind"]))
+                counts[k] += 1
+        rule = blk is None or blk.get("kind") == worlds.RULE
+        k = -1 if rule else int(blk["key"])
+        kind = "filler" if rule else str(blk["kind"])
+        size, off = (1.0, 0.0) if rule else (float(blk["size"]), float(blk["off"]))
+        post = posts.get(k, prior_post)
+        a, A_ = worlds.key_forecast(post, size, off, float(meta["sigma_eta"]))
+        tau = math.sqrt(A_)
+        sigma = worlds.sig_from_meta(meta, kind)
+        cand_proj = active_projection(configuration(res.candidate_files), self.ctx.node)
+        return {"rep": rep, "res": res, "key": f"w{k}", "sign": kind, "kind": "local", "kind_fallback": False,
+                "n_group": counts.get(k, 0), "pi": 0.0, "mu": a, "tau_n": abs(size) * math.sqrt(post[1]),
+                "tau_w": float(meta["sigma_eta"]), "tau": tau, "sigma": sigma,
+                "t_star": float(rules.bayes_threshold(a, tau, sigma)),
+                "v_star": float(rules.proposal_value(0.0, a, tau, sigma)),
+                "noop": bool(res.noop) or rule, "duplicate": bool(res.duplicate) and not rule,
+                "duplicate_of": rep.first_eval.get(cand_proj) if (res.duplicate and not rule) else None,
+                "candidate_projection_sha": _proj_sha(cand_proj)}
+
+    def _r(self, view) -> float | None:
+        try:
+            return float(budget_gap(view, self.W))
+        except (ValueError, TypeError, ZeroDivisionError):
+            return None
 
     @staticmethod
     def _numbers(fc: dict) -> dict:
@@ -533,7 +609,8 @@ class A2UController:
             detail = {**base, "reason": "no_features", "eligible": False}
             self.log.append({"budget_index": b, "action": "continue", **detail})
             return ControlDecision("continue", {}, self.version, view.input_hash(), detail=detail)
-        detail = {**base, **self._numbers(fc), "g": self.g}
+        # r and tau_pred of every decision are recorded (the analysis' decision_centres / threshold_act inputs).
+        detail = {**base, **self._numbers(fc), "g": self.g, "r": self._r(view), "tau_pred": _f(fc["tau"])}
         if fc["noop"] or fc["duplicate"]:
             action, extra = self._skip(mask, "rule_noop" if fc["noop"] else "rule_duplicate")
             detail.update(extra, eligible=False)
@@ -548,7 +625,7 @@ class A2UController:
         elif self.dynamic_e1:
             gap = budget_gap(view, self.W)
             bonus = self.b_info * (fc["tau"] - self.tau_bar)
-            threshold = self.g - self.b_budget * (gap - self.r_bar)
+            threshold = self.g - self.b_budget * (gap - self.r1_bar)
             execute = fc["v_star"] + bonus >= threshold
             margin = fc["v_star"] + bonus - threshold
             detail.update(budget_gap=gap, info_bonus=bonus, e1_threshold=threshold)
@@ -580,14 +657,14 @@ class A2UController:
         threshold = self.keep_prior(view).threshold
         m_thr = posterior_mean(threshold, fc["mu"], fc["tau"], fc["sigma"])
         detail.update(self._numbers(fc), delta_hat=float(delta_hat), m_hat=m_hat, keep_threshold_m=_f(m_thr),
-                      margin=_f(m_hat - m_thr), eligible=True)
+                      margin=_f(m_hat - m_thr), eligible=True, r=self._r(view), tau_pred=_f(fc["tau"]))
         return detail
 
     # ---- E2: the keep prior (KeepPriorProvider) ----------------------------
     def _keep_score(self, view, fc: dict) -> Callable[[float], float]:
         """h(m_hat): keep iff h(m_hat) > 0 (the policy's E2 rule)."""
         if self.score_fn is None and self.c_hat is None:
-            threshold = self.h0 - (self.h_budget * (budget_gap(view, self.W) - self.r_bar) if self.h_budget != 0.0 else 0.0)
+            threshold = self.h0 - (self.h_budget * (budget_gap(view, self.W) - self.r2_bar) if self.h_budget != 0.0 else 0.0)
             return lambda m: m - threshold
         rep, W = fc["rep"], self.W
 

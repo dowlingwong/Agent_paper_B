@@ -137,10 +137,13 @@ class RootRecord:
     status: str = "ok"
     error: str | None = None
     # Added 29 Oct (rev.-4 amendment 3): the named policy of the campaign, e.g. "a2u:g0" for roots,
-    # "static:g=<x>,e2off=<y>" or "pi_prime:<model_file>" in the S3e "campaign" phase ("" = unspecified).
+    # "static:<g>,<h>", "dynamic:<8 values>" or "pi_prime:<model_file>" in the tune / campaign phases.
     policy: str = ""
     # Added 29 Oct (review M2): the D26 LLM repetition of the campaign (0 = the root repetition).
     rep: int = 0
+    # Added 29 Oct (rev. 7.1, analysis request): the D26 seed base of this (seed key, repetition):
+    # manager_seed(seed_key, 0, rep, 0); equal for all policies of an instance at the same repetition.
+    llm_seed_base: int | None = None
 
 
 def to_dict(rec) -> dict:
