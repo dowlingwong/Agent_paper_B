@@ -125,6 +125,15 @@ class PipelineTests(unittest.TestCase):
                                                 [1, 0, 1], None, noiseless=True)
             self.assertTrue(np.isfinite(y))
 
+    def test_trial_one_is_never_rule_detectable_and_kept(self):
+        reg = replace(SMALL, p_rule=0.95)
+        sim = S.Sim(S.make_world("N0"), reg, 3)
+        for inst in range(30):
+            st, log = sim.run_root(inst, S.theta_table(S.make_world("N0"), reg, 3, inst))
+            self.assertFalse(log[0]["rule"])
+            self.assertTrue(log[0].get("executed") and log[0].get("kept"))
+            self.assertFalse(log[0].get("e1_eligible"))
+
     def test_noise_matching(self):
         reg, rec = S.match_noise(S.Regime(), S.Plan(), sigma_D=0.01)
         self.assertAlmostEqual(reg.sigma_campaign, S.sigma_campaign_for(0.01, S.Regime()))

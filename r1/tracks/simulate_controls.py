@@ -5,7 +5,8 @@ AI-assisted (Claude, 29 Oct 2026). Output records are labelled ``FIXTURE`` (phas
 nothing here is evidence. Every default is illustrative until S0.5/S0.7 fix the regime (see ``match_noise``).
 
 Campaign model (raw metric units, digits-like scale): ``llm_cap`` trials; a share ``p_rule`` of proposals is
-rule-detectable and ineligible; trial 1 is executed and kept. A proposal edits key j with size s; true increment
+rule-detectable and ineligible; trial 1 is never rule-detectable and is executed and kept
+without comparison (as in the harness and the collector's worlds.py). A proposal edits key j with size s; true increment
 δ = s·(θ_j − offset) + η; measured Δ̂ = δ + ε. Increments add to the incumbent. Base controller A2-U: per-key
 conjugate normal posterior on θ_j; V̂* = E[max(m̂, 0)]; τ_pred = predictive sd of δ. Campaign Y = true incumbent
 + audit noise + σ_campaign noise (matched to the pilot σ_D or the dev between-configuration sd).
@@ -296,7 +297,7 @@ class Sim:
                 p = min(due)
                 st.pending.remove(p)
                 return (p[1], p[2], w.follow_offset * w.tau0, "follow")
-        if s.u_rule[t] < self._prule:
+        if t != 1 and s.u_rule[t] < self._prule:   # trial 1 is never rule-detectable (harness / collector port)
             return None
         if w.kind == "P1" and t <= w.probe_max_trial and s.u_kind[t] < w.p_probe:
             due = t
