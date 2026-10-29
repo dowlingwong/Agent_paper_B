@@ -15,7 +15,7 @@ PRIMARY, per node:
      execute iff V̂* + b_info·τ_pred > g0 − b_budget·r, keep iff m̂ > h0 − h_budget·r (r = runs remaining
      fraction); π* = best member (the static member is not eligible). Reported: flip rate (overall, E1, E2),
      matched static (mean effective thresholds of π* on its dev campaigns), winner's curse, S0.7 dev σ_D.
-  2. Sizing: σ_D,UCL = max(S0.5b UCL, S0.7 dev UCL); n = ceil((2.90·σ_D,UCL/δ_Y)²); B-eligible iff n ≤ n_max
+  2. Sizing: σ_D,UCL = max(S0.5b UCL, S0.7 dev UCL); n = ceil((2.93·σ_D,UCL/δ_Y)²); B-eligible iff n ≤ n_max
      (300); n and B-eligibility frozen at S0.8 (``freeze_check`` flags a needed S0.6 re-run).
   3. S3e (campaign_roots.jsonl, fresh instances): D_i = Ȳ_i(π*) − Ȳ_i(m*), paired t, one-sided 95 % bounds;
      Holm by p-value over the primary nodes; matched static on all n instances (π* vs matched static with CI).
@@ -61,7 +61,7 @@ PREDECLARATION_SCHEMA = "tracks_predeclaration/v4"
 POLICY_SCHEMA = "tracks_policy/v1"
 
 # Exact runbook §0 wording; never paraphrase.
-INCONCLUSIVE_WORDING = ("Neither a gain ≥ δ_dec nor its absence was shown; gains up to UB₉₅ remain "
+INCONCLUSIVE_WORDING = ("Neither a gain ≥ δ_Y nor its absence was shown; gains up to UB₉₅ remain "
                         "compatible with the data.")
 ROUTE_A_WORDING = "Route A: sequential structure matters (the tuned dynamic rule beats the tuned static rule)."
 A_SMALL_WORDING = ("Route A-small: a real but practically small gain (at least one Holm-adjusted rejection, and "
@@ -79,7 +79,7 @@ LABEL_RANK = {"FIXTURE": 0, "ENGINEERING_ONLY": 1, "PILOT": 2, "EVIDENCE": 3}
 ROLES = ("primary", "P1", "P2", "N0", "descriptive")
 CHANNELS = ("delta_B", "delta_I", "delta_F", "e2_keep")
 NON_BUDGET_CHANNELS = ("delta_I", "delta_F", "e2_keep")
-Z_SIZING = 2.90  # revision 5: n = ceil((2.90 σ_D_UCL / δ_Y)²); note z_0.95 + z_0.90 = 2.93
+Z_SIZING = 2.93  # revision 7: n = ceil((2.93 σ_D,UCL / δ_Y)²), z_0.95 + z_0.90
 
 
 class TrackSAnalysisError(ValueError):
@@ -197,16 +197,19 @@ def check_hosts(node: str, leaves: Sequence[LeafRecord] = (), roots: Sequence[Ro
 
 
 # ============================================================================================= threshold policy families
-# Policy strings shared with the collector (RootRecord.policy), revision 6 (signs fixed, no indicator):
-#   static:g,h                              execute iff V̂* > g;                         keep iff m̂ > h
-#   dynamic:g0,b_budget,b_info,h0,h_budget  execute iff V̂* + b_info·τ_pred > g0 − b_budget·r;
-#                                           keep iff m̂ > h0 − h_budget·r
-# r = runs_left / W = 1 − budget_fraction (fraction of the run budget still available) and τ_pred the base
-# controller's predictive sd of the proposal's increment (Forecast.tau). b_budget > 0 lowers the execute threshold
-# while runs are plentiful; h_budget > 0 ("keep+") keeps more readily while runs are plentiful, h_budget < 0
-# ("keep−") less readily; b_info > 0 is an uncertainty (information) bonus.
+# Policy strings shared with the collector (RootRecord.policy), revision 7 (mean-centred dynamic terms):
+#   static:g,h        execute iff V̂* > g;  keep iff m̂ > h
+#   dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar
+#                     execute iff V̂* + b_info·(τ_pred − τ̄) > g0 − b_budget·(r − r̄₁);
+#                     keep    iff m̂ > h0 − h_budget·(r − r̄₂)
+# r = runs_left / W = 1 − budget_fraction; τ_pred = the base controller's predictive sd of the increment.
+# r̄₁, τ̄ (E1) and r̄₂ (E2) are the means over m*'s eligible dev decisions (fixed after S0.7a), so a member has the
+# same average threshold as m* and cannot win by a level shift. The 5-value form (revision 6) is the uncentred
+# special case r̄ = τ̄ = 0. b_budget > 0 lowers the execute threshold while runs are more plentiful than usual;
+# h_budget > 0 ("keep+") keeps more readily then, h_budget < 0 ("keep−") less readily; b_info > 0 is an
+# uncertainty (information) bonus.
 STATIC_PARAMS = ("g", "h")
-DYNAMIC_PARAMS = ("g0", "b_budget", "b_info", "h0", "h_budget")
+DYNAMIC_PARAMS = ("g0", "b_budget", "b_info", "h0", "h_budget", "r1bar", "taubar", "r2bar")
 CHANNEL_MEMBERS = ("budget", "info", "keep+", "keep-")
 
 
@@ -215,8 +218,8 @@ def fmt_num(x: float) -> str:
 
 
 def policy_string(kind: str, params: Sequence[float]) -> str:
-    want = len(STATIC_PARAMS) if kind == "static" else len(DYNAMIC_PARAMS)
-    if kind not in ("static", "dynamic") or len(params) != want:
+    ok = (kind == "static" and len(params) == 2) or (kind == "dynamic" and len(params) in (5, 8))
+    if not ok:
         raise TrackSAnalysisError(f"bad policy {kind}{tuple(params)}")
     return f"{kind}:" + ",".join(fmt_num(p) for p in params)
 
@@ -227,7 +230,7 @@ def parse_policy(s: str) -> tuple[str, tuple[float, ...]]:
         vals = tuple(float(x) for x in rest.split(","))
     except ValueError as exc:
         raise TrackSAnalysisError(f"bad policy string {s!r}") from exc
-    if kind not in ("static", "dynamic") or len(vals) != (2 if kind == "static" else 5):
+    if not ((kind == "static" and len(vals) == 2) or (kind == "dynamic" and len(vals) in (5, 8))):
         raise TrackSAnalysisError(f"bad policy string {s!r}")
     if not all(math.isfinite(v) for v in vals):
         raise TrackSAnalysisError(f"bad policy string {s!r}")
@@ -235,33 +238,45 @@ def parse_policy(s: str) -> tuple[str, tuple[float, ...]]:
 
 
 def as_dynamic(s: str) -> tuple[float, ...]:
+    """8-tuple (g0, b_budget, b_info, h0, h_budget, r̄₁, τ̄, r̄₂); statics and the 5-value form have zero centres."""
     kind, v = parse_policy(s)
-    return (v[0], 0.0, 0.0, v[1], 0.0) if kind == "static" else v
+    if kind == "static":
+        return (v[0], 0.0, 0.0, v[1], 0.0, 0.0, 0.0, 0.0)
+    return v if len(v) == 8 else v + (0.0, 0.0, 0.0)
 
 
 def threshold_act(s: str | tuple, state: dict, epoch: str, tau_pred: float | None = None) -> bool:
     """Decision of a static/dynamic policy at one eligible decision. ``state`` holds STATE_FEATURES;
     ``tau_pred`` (or state['tau_pred']) is needed at E1 when b_info ≠ 0."""
-    g0, bb, bi, h0, hb = as_dynamic(s) if isinstance(s, str) else s
+    g0, bb, bi, h0, hb, r1, tb, r2 = as_dynamic(s) if isinstance(s, str) else s
     r = 1.0 - float(state["budget_fraction"])
     x = float(state["index_value"])
     if epoch == "E1":
         tp = tau_pred if tau_pred is not None else state.get("tau_pred")
         if bi != 0.0 and tp is None:
             raise TrackSAnalysisError("threshold_act: b_info ≠ 0 needs tau_pred")
-        return x + bi * (float(tp) if bi != 0.0 else 0.0) > g0 - bb * r
-    return x > h0 - hb * r
+        return x + (bi * (float(tp) - tb) if bi != 0.0 else 0.0) > g0 - bb * (r - r1)
+    return x > h0 - hb * (r - r2)
 
 
 def effective_thresholds(s: str, decisions: Sequence[dict]) -> dict:
-    """Mean effective thresholds of a policy over its own eligible decisions (matched-static secondary):
-    g_eff = mean(g0 − b_budget·r − b_info·τ_pred) over E1; h_eff = mean(h0 − h_budget·r) over E2."""
-    g0, bb, bi, h0, hb = as_dynamic(s)
-    ge = [g0 - bb * (1 - d["budget_fraction"]) - bi * float(d.get("tau_pred") or 0.0)
+    """Mean effective thresholds of a policy over its own eligible decisions (matched-static secondary)."""
+    g0, bb, bi, h0, hb, r1, tb, r2 = as_dynamic(s)
+    ge = [g0 - bb * ((1 - d["budget_fraction"]) - r1) - bi * (float(d.get("tau_pred") or 0.0) - tb)
           for d in decisions if d.get("eligible") and d["epoch"] == "E1"]
-    he = [h0 - hb * (1 - d["budget_fraction"]) for d in decisions if d.get("eligible") and d["epoch"] == "E2"]
+    he = [h0 - hb * ((1 - d["budget_fraction"]) - r2) for d in decisions if d.get("eligible") and d["epoch"] == "E2"]
     return {"g_eff": float(np.mean(ge)) if ge else g0, "h_eff": float(np.mean(he)) if he else h0,
             "n_E1": len(ge), "n_E2": len(he)}
+
+
+def decision_centres(decisions: Sequence[dict]) -> dict:
+    """r̄₁, τ̄ over eligible E1 decisions and r̄₂ over eligible E2 decisions (revision 7, from m*'s dev campaigns)."""
+    e1 = [d for d in decisions if d.get("eligible") and d["epoch"] == "E1"]
+    e2 = [d for d in decisions if d.get("eligible") and d["epoch"] == "E2"]
+    r1 = float(np.mean([1 - d["budget_fraction"] for d in e1])) if e1 else 0.0
+    tb = float(np.mean([float(d["tau_pred"]) for d in e1 if d.get("tau_pred") is not None])) if e1 else 0.0
+    r2 = float(np.mean([1 - d["budget_fraction"] for d in e2])) if e2 else r1
+    return {"r1bar": r1, "taubar": tb, "r2bar": r2, "n_E1": len(e1), "n_E2": len(e2)}
 
 
 def channel_of(s: str) -> str:
@@ -273,17 +288,20 @@ def channel_of(s: str) -> str:
     return nz[0] if len(nz) == 1 else ("static" if not nz else "mixed")
 
 
+FIXED_MEMBER_UNITS = {"budget": [1.0], "info": [0.5], "keep+": [0.5], "keep-": [0.5]}
+GRID_MEMBER_UNITS = {"budget": [0.5, 1.0, 2.0], "info": [0.25, 0.5, 1.0], "keep+": [0.25, 0.5, 1.0],
+                     "keep-": [0.25, 0.5, 1.0]}
+
+
 @dataclass
 class FamilyDecl:
-    """Revision 6.1. Static grid g × h in units of the node's σ_node (12 configurations; one extension to
-    g = g_ext if m* lies on the upper g edge); 4 single-channel dynamic members anchored at m*. b_budget and
-    h_budget are in σ_node units; b_info is dimensionless (it multiplies τ_pred, already in raw units)."""
-    g_units: list[float] = field(default_factory=lambda: [0.05, 0.1, 0.2, 0.4])
+    """Revision 7. Static grid g × h in σ_node units (g = 0 included: 15 configurations; one extension to g_ext
+    if m* is on the upper g edge); single-channel dynamic members anchored at m* and mean-centred, with a
+    magnitude grid per channel (b_budget, h_budget in σ_node units; b_info dimensionless × τ_pred)."""
+    g_units: list[float] = field(default_factory=lambda: [0.0, 0.05, 0.1, 0.2, 0.4])
     h_units: list[float] = field(default_factory=lambda: [-0.25, 0.0, 0.25])
     g_ext_units: float = 0.8
-    b_budget_units: float = 0.3
-    b_info: float = 0.3
-    h_budget_units: float = 0.6
+    member_units: dict = field(default_factory=lambda: {k: list(v) for k, v in GRID_MEMBER_UNITS.items()})
 
     def static_configs(self, sigma_node: float, extended: bool = False) -> list[str]:
         gs = list(self.g_units) + ([self.g_ext_units] if extended else [])
@@ -295,30 +313,45 @@ class FamilyDecl:
     def on_upper_edge(self, m_star: str, sigma_node: float) -> bool:
         return abs(parse_policy(m_star)[1][0] - max(self.g_units) * sigma_node) <= 1e-12 + 1e-9 * sigma_node
 
-    def members(self, m_star: str, sigma_node: float) -> dict[str, str]:
-        """The 4 single-channel members anchored at m* = static:g*,h* (the static member is not eligible)."""
+    def members(self, m_star: str, sigma_node: float, centres: dict | None = None) -> dict[str, str]:
+        """Single-channel members anchored at m* = static:g*,h* and centred at ``centres`` (the static member is
+        not eligible). Names are '<channel>×<size>'."""
         _, (g, h) = parse_policy(m_star)
-        bb, hb = self.b_budget_units * sigma_node, self.h_budget_units * sigma_node
-        return {"budget": policy_string("dynamic", (g, bb, 0.0, h, 0.0)),
-                "info": policy_string("dynamic", (g, 0.0, self.b_info, h, 0.0)),
-                "keep+": policy_string("dynamic", (g, 0.0, 0.0, h, hb)),
-                "keep-": policy_string("dynamic", (g, 0.0, 0.0, h, -hb))}
+        c = centres or {"r1bar": 0.0, "taubar": 0.0, "r2bar": 0.0}
+        cc = (c["r1bar"], c["taubar"], c["r2bar"])
+        out = {}
+        for ch, sizes in self.member_units.items():
+            for u in sizes:
+                if ch == "budget":
+                    p = (g, u * sigma_node, 0.0, h, 0.0)
+                elif ch == "info":
+                    p = (g, 0.0, u, h, 0.0)
+                elif ch == "keep+":
+                    p = (g, 0.0, 0.0, h, u * sigma_node)
+                elif ch == "keep-":
+                    p = (g, 0.0, 0.0, h, -u * sigma_node)
+                else:
+                    raise TrackSAnalysisError(f"unknown channel {ch}")
+                out[f"{ch}×{fmt_num(u)}"] = policy_string("dynamic", p + cc)
+        return out
 
 
 def parse_families(d: dict | str | None) -> FamilyDecl:
     if d in (None, "default"):
         return FamilyDecl()
     fd = FamilyDecl(g_units=[float(x) for x in d["g_units"]], h_units=[float(x) for x in d["h_units"]],
-                    g_ext_units=float(d["g_ext_units"]), b_budget_units=float(d["b_budget_units"]),
-                    b_info=float(d["b_info"]), h_budget_units=float(d["h_budget_units"]))
-    if len(fd.g_units) * len(fd.h_units) != 12:
-        raise TrackSAnalysisError("families: revision 6.1 declares a 12-configuration static grid (4 g × 3 h)")
+                    g_ext_units=float(d["g_ext_units"]),
+                    member_units={k: [float(x) for x in v] for k, v in d.get("member_units", GRID_MEMBER_UNITS).items()})
+    if len(fd.g_units) < 4 or len(fd.h_units) != 3:
+        raise TrackSAnalysisError("families: need >= 4 g values and 3 h values")
+    if min(fd.g_units) != 0.0:
+        raise TrackSAnalysisError("families: revision 7 includes g = 0 (execute every non-rule proposal)")
     if not (min(fd.h_units) < 0 < max(fd.h_units)):
         raise TrackSAnalysisError("families: the h grid must be two-sided")
     if not fd.g_ext_units > max(fd.g_units):
         raise TrackSAnalysisError("families: g_ext must exceed the grid's largest g")
-    if not (fd.b_budget_units > 0 and fd.b_info > 0 and fd.h_budget_units > 0):
-        raise TrackSAnalysisError("families: channel magnitudes must be positive (keep− uses −h_budget)")
+    if set(fd.member_units) - set(CHANNEL_MEMBERS) or any(u <= 0 for v in fd.member_units.values() for u in v):
+        raise TrackSAnalysisError("families: member_units must map channels to positive magnitudes")
     return fd
 
 
@@ -361,13 +394,14 @@ class Predeclaration:
     analysis_script_sha256: str | None = None
     winners_curse_splits: int = 200
     power_lb_min: float = 0.6
-    fp_k_stop: int = 18          # of fp_R replications (revision 6: STOP iff ≥ 18 of 200)
+    fp_k_stop: int = 19          # of fp_R replications (revision 7: STOP iff ≥ 19 of 200, exact p < 0.01)
     fp_R: int = 200
     placebo_z_stop: float = 3.5
     flip_min: float = 0.10
     n_dev_initial: int = 20
     n_dev_resized: int = 40
     matched_static_share: float = 0.5
+    tuning: dict = field(default_factory=lambda: {"procedure": "argmax", "n_dev": 20})
     raw: dict = field(default_factory=dict)
 
 
@@ -427,10 +461,11 @@ def parse_predeclaration(d: dict) -> Predeclaration:
         h_grid=[float(x) for x in grid.get("h", default_grid(-0.004, 0.004))],
         fallback_active=fallback, analysis_script_sha256=d.get("analysis_script_sha256"),
         winners_curse_splits=int(d.get("winners_curse_splits", 200)), power_lb_min=float(d.get("power_lb_min", 0.6)),
-        fp_k_stop=int(d.get("fp_k_stop", 18)), fp_R=int(d.get("fp_R", 200)),
+        fp_k_stop=int(d.get("fp_k_stop", 19)), fp_R=int(d.get("fp_R", 200)),
         placebo_z_stop=float(d.get("placebo_z_stop", 3.5)), flip_min=float(d.get("flip_min", 0.10)),
         n_dev_initial=int(d.get("n_dev_initial", 20)), n_dev_resized=int(d.get("n_dev_resized", 40)),
-        matched_static_share=float(d.get("matched_static_share", 0.5)), raw=d)
+        matched_static_share=float(d.get("matched_static_share", 0.5)),
+        tuning=dict(d.get("tuning", {"procedure": "argmax", "n_dev": 20})), raw=d)
     if pd.interactions not in ("epoch", "none"):
         raise TrackSAnalysisError("interactions must be 'epoch' or 'none'")
     if pd.folds < 2 or pd.bootstrap_B < 1 or not pd.ridge_alpha > 0 or not 0 < pd.alpha < 0.5:
@@ -1128,17 +1163,130 @@ def select_static(dev_roots: Sequence[RootRecord], fam: FamilyDecl, sigma_node: 
     return out
 
 
-def select_dynamic(dev_roots: Sequence[RootRecord], fam: FamilyDecl, m_star: str, sigma_node: float) -> dict:
-    members = fam.members(m_star, sigma_node)
-    cfgs = list(members.values())
-    fm = family_matrix(dev_roots, cfgs)
-    if fm["Y"].size == 0 or np.isnan(fm["Y"]).any():
-        missing = [c for c, row in zip(cfgs, fm["Y"]) if not np.isfinite(row).all()] if fm["Y"].size else cfgs
-        return {"status": "members_needed", "members": members, "missing": missing}
-    vals = _row_means(fm["Y"])
-    k = _argmax_simplest(cfgs, vals)
-    return {"status": "ok", "members": members, "pi_star": cfgs[k], "pi_star_channel": list(members)[k],
-            "pi_star_dev_mean": float(vals[k]), "means": dict(zip(cfgs, map(float, vals))), "_matrix": fm}
+class MissingDev(Exception):
+    """A tuning step needs dev campaigns that are not in the data: ``needed`` = [(policy, instance_id), ...]."""
+
+    def __init__(self, needed):
+        super().__init__(f"{len(needed)} dev campaigns needed")
+        self.needed = needed
+
+
+def _dev_lookup(dev_roots: Sequence[RootRecord]) -> tuple[dict, list[str]]:
+    table: dict[tuple[str, str], float] = {}
+    for r in dev_roots:
+        if _ok_root(r):
+            table.setdefault((policy_of(r), r.instance_id), float(r.y_terminal))
+    insts = sorted({i for _, i in table} | {r.instance_id for r in dev_roots})
+    return table, insts
+
+
+def halving_schedule(n_members: int, budget: int) -> list[tuple[int, int]]:
+    """Successive halving: [(survivors, cumulative instances per survivor)] per round; equal budget per round."""
+    rounds, m, sched, cum = max(1, math.ceil(math.log2(max(n_members, 2)))), n_members, [], 0
+    per_round = budget / rounds
+    for _ in range(rounds):
+        cum += max(1, int(per_round // m))
+        sched.append((m, cum))
+        m = max(1, math.ceil(m / 2))
+        if len(sched) == rounds:
+            break
+    return sched
+
+
+def tune_members(get, members: dict[str, str], tuning: dict) -> dict:
+    """Select π* among ``members`` (name -> policy) with the declared procedure; ``get(policy, k)`` returns the dev
+    Y of a policy on paired dev instance k (raises KeyError if missing). Returns winner, campaigns used, log."""
+    names = list(members)
+    used: set[tuple[str, int]] = set()
+    needed: list[tuple[str, int]] = []
+
+    def means(sub, k):
+        out = []
+        for nm in sub:
+            vals = []
+            for i in range(k):
+                try:
+                    vals.append(get(members[nm], i))
+                    used.add((members[nm], i))
+                except KeyError:
+                    needed.append((members[nm], i))
+            out.append(float(np.mean(vals)) if vals else float("nan"))
+        if needed:
+            raise MissingDev(list(needed))
+        return np.asarray(out)
+
+    def best(sub, vals):
+        cf = [members[nm] for nm in sub]
+        return sub[_argmax_simplest(cf, vals)]
+
+    proc = tuning.get("procedure", "argmax")
+    log = []
+    if proc == "argmax":
+        n = int(tuning.get("n_dev", 20))
+        v = means(names, n)
+        win = best(names, v)
+        log.append({"round": 1, "members": names, "n": n, "means": v.tolist()})
+    elif proc == "halving":
+        sub = names
+        for rnd, (m, cum) in enumerate(halving_schedule(len(names), int(tuning["member_budget"])), 1):
+            v = means(sub, cum)
+            log.append({"round": rnd, "members": list(sub), "n": cum, "means": v.tolist()})
+            if len(sub) == 1:
+                break
+            keep = max(1, math.ceil(len(sub) / 2))
+            order = sorted(range(len(sub)), key=lambda k: (-v[k], complexity_key(members[sub[k]])))
+            sub = [sub[k] for k in order[:keep]]
+        if len(sub) > 1:
+            v = means(sub, log[-1]["n"])
+            sub = [best(sub, v)]
+        win = sub[0]
+    elif proc == "channel_first":
+        n1, n2 = int(tuning.get("n1", 20)), int(tuning.get("n2", 60))
+        chans = sorted({nm.split("×")[0] for nm in names})
+        mids = []
+        for ch in chans:
+            sizes = [nm for nm in names if nm.split("×")[0] == ch]
+            mids.append(sizes[len(sizes) // 2])
+        v = means(mids, n1)
+        ch = best(mids, v).split("×")[0]
+        log.append({"round": 1, "members": mids, "n": n1, "means": v.tolist()})
+        sizes = [nm for nm in names if nm.split("×")[0] == ch]
+        v = means(sizes, n2)
+        win = best(sizes, v)
+        log.append({"round": 2, "members": sizes, "n": n2, "means": v.tolist()})
+    else:
+        raise TrackSAnalysisError(f"unknown tuning procedure {proc!r}")
+    return {"winner": win, "policy": members[win], "campaigns": len(used), "log": log, "procedure": proc}
+
+
+def complexity_key(s: str) -> tuple:
+    return (sum(abs(x) for x in parse_policy(s)[1][:5]), s)
+
+
+def select_dynamic(dev_roots: Sequence[RootRecord], fam: FamilyDecl, m_star: str, sigma_node: float,
+                   tuning: dict | None = None) -> dict:
+    """Members anchored at m* and centred at m*'s dev decision means; π* by the declared tuning procedure."""
+    centres = decision_centres(_decisions_of(dev_roots, m_star))
+    members = fam.members(m_star, sigma_node, centres)
+    table, insts = _dev_lookup(dev_roots)
+
+    def inst_id(k):  # paired dev instances in sorted id order; beyond the data, the collector's naming d0000…
+        return insts[k] if k < len(insts) else f"d{k:04d}"
+
+    def get(pol, k):
+        return table[(pol, inst_id(k))]
+
+    try:
+        t = tune_members(get, members, tuning or {"procedure": "argmax", "n_dev": 20})
+    except MissingDev as m:
+        return {"status": "members_needed", "members": members, "centres": centres,
+                "missing": sorted({(p, inst_id(k)) for p, k in m.needed})}
+    name = t["winner"]
+    pi_vals = [table[(t["policy"], i)] for i in insts if (t["policy"], i) in table]
+    return {"status": "ok", "members": members, "centres": centres, "pi_star": t["policy"],
+            "pi_star_channel": name.split("×")[0], "pi_star_member": name,
+            "pi_star_dev_mean": float(np.mean(pi_vals)), "tuning": {k: v for k, v in t.items() if k != "policy"},
+            "_table": table, "_insts": insts}
 
 
 def _decisions_of(roots: Sequence[RootRecord], policy: str) -> list[dict]:
@@ -1177,14 +1325,12 @@ def matched_static(dev_roots: Sequence[RootRecord], pi_star: str) -> dict:
     return eff
 
 
-def dev_sigma_ucl(dev_sel_static: dict, dev_sel_dyn: dict, conf: float = 0.8) -> dict:
-    """S0.7 dev estimate: sd over the paired dev instances of Y(π*) − Y(m*), with its one-sided UCL."""
-    Ms, Md = dev_sel_static["_matrix"], dev_sel_dyn["_matrix"]
-    ks = Ms["configs"].index(dev_sel_static["m_star"])
-    kd = Md["configs"].index(dev_sel_dyn["pi_star"])
-    common = sorted(set(Ms["instances"]) & set(Md["instances"]))
-    D = np.array([Md["Y"][kd, Md["instances"].index(i)] - Ms["Y"][ks, Ms["instances"].index(i)] for i in common])
-    D = D[np.isfinite(D)]
+def dev_sigma_ucl(sel_s: dict, sel_d: dict, conf: float = 0.8) -> dict:
+    """S0.7 dev estimate: sd over the paired dev instances (where both ran) of Y(π*) − Y(m*), with its UCL."""
+    table = sel_d["_table"]
+    D = [table[(sel_d["pi_star"], i)] - table[(sel_s["m_star"], i)] for i in sel_d["_insts"]
+         if (sel_d["pi_star"], i) in table and (sel_s["m_star"], i) in table]
+    D = np.asarray(D, float)
     if len(D) < 2:
         return {"sigma_hat": None, "ucl": None, "m": len(D)}
     s = float(D.std(ddof=1))
@@ -1193,31 +1339,26 @@ def dev_sigma_ucl(dev_sel_static: dict, dev_sel_dyn: dict, conf: float = 0.8) ->
 
 
 def winners_curse(sel_s: dict, sel_d: dict, fresh_gap: float | None, *, splits: int = 200, seed: int = 0) -> dict:
-    """Dev gap of the winners vs the fresh gap, and split-half optimism (select on one half of the paired dev
-    instances, evaluate on the other). The dynamic members are those run (anchored at the full-data m*)."""
-    Ms, Md = sel_s["_matrix"], sel_d["_matrix"]
-    insts = sorted(set(Ms["instances"]) & set(Md["instances"]))
-    Ys = Ms["Y"][:, [Ms["instances"].index(i) for i in insts]]
-    Yd = Md["Y"][:, [Md["instances"].index(i) for i in insts]]
-    dev_gap = sel_d["pi_star_dev_mean"] - sel_s["m_star_dev_mean"]
+    """Dev gap of the winners on their common dev instances vs the fresh gap; split-half optimism of the static
+    stage (select on one half of the paired dev instances, evaluate on the other)."""
+    table = sel_d["_table"]
+    common = [i for i in sel_d["_insts"] if (sel_d["pi_star"], i) in table and (sel_s["m_star"], i) in table]
+    dev_gap = float(np.mean([table[(sel_d["pi_star"], i)] - table[(sel_s["m_star"], i)] for i in common])) \
+        if common else None
+    Ms = sel_s["_matrix"]
+    Ys, n = Ms["Y"], len(Ms["instances"])
     rng = np.random.default_rng([seed, 4242])
-    o_s, o_d, o_g, held = [], [], [], []
-    n = len(insts)
+    opt = []
     for _ in range(splits if n >= 4 else 0):
         perm = rng.permutation(n)
         h1, h2 = perm[: n // 2], perm[n // 2:]
-        vs, vd = np.nanmean(Ys[:, h1], axis=1), np.nanmean(Yd[:, h1], axis=1)
-        ks, kd = _argmax_simplest(Ms["configs"], vs), _argmax_simplest(Md["configs"], vd)
-        s2, d2 = float(np.nanmean(Ys[ks, h2])), float(np.nanmean(Yd[kd, h2]))
-        o_s.append(vs[ks] - s2)
-        o_d.append(vd[kd] - d2)
-        o_g.append((vd[kd] - vs[ks]) - (d2 - s2))
-        held.append(d2 - s2)
-    f = lambda x: float(np.mean(x)) if x else None  # noqa: E731
-    return {"dev_gap_winners": float(dev_gap), "fresh_gap": fresh_gap,
-            "shrinkage_dev_minus_fresh": float(dev_gap - fresh_gap) if fresh_gap is not None else None,
-            "split_half_optimism": {"static": f(o_s), "dynamic": f(o_d), "gap": f(o_g)},
-            "split_half_heldout_gap_mean": f(held), "splits": splits if n >= 4 else 0,
+        v1 = np.nanmean(Ys[:, h1], axis=1)
+        k = _argmax_simplest(Ms["configs"], v1)
+        opt.append(float(v1[k] - np.nanmean(Ys[k, h2])))
+    return {"dev_gap_winners": dev_gap, "fresh_gap": fresh_gap,
+            "shrinkage_dev_minus_fresh": (dev_gap - fresh_gap) if (dev_gap is not None and fresh_gap is not None)
+            else None, "split_half_optimism": {"static": float(np.mean(opt)) if opt else None, "gap": None},
+            "member_tuning_log": sel_d.get("tuning", {}).get("log"),
             "note": "the fresh S3e test is free of selection bias; these numbers describe dev optimism only"}
 
 
@@ -1249,11 +1390,11 @@ def placebo_descriptive(roots: Sequence[RootRecord], policy: str, *, z_stop: flo
             "z_stop": z_stop, "n": t["n"]}
 
 
-def fp_gate(k_A: int, R: int, *, alpha: float = 0.05, k_stop: int = 18, R_decl: int = 200,
+def fp_gate(k_A: int, R: int, *, alpha: float = 0.05, k_stop: int = 19, R_decl: int = 200,
             p_crit: float = 0.01) -> dict:
     """S0.6 false-positive check on N0 (STOP only on a significantly high route-A rate). At the declared R the
-    declared count rule applies (revision 6: ≥ 18 of 200); otherwise the exact one-sided binomial p < p_crit.
-    Note: P(X ≥ 18 | 200, 0.05) = 0.012, so the count rule is slightly more conservative than p < 0.01 (19)."""
+    declared count rule applies (revision 7: ≥ 19 of 200, i.e. exact one-sided binomial p < 0.01); otherwise the
+    exact p < p_crit."""
     p = float(binom.sf(k_A - 1, R, alpha)) if k_A > 0 else 1.0
     stop = (k_A >= k_stop) if R == R_decl else (p < p_crit)
     return {"k_A": k_A, "R": R, "rate": k_A / R, "rate_ci95": list(clopper_pearson(k_A, R)), "p_binom": p,
@@ -1285,7 +1426,7 @@ def sigma_D_ucl(sigma_hat: float, m_pairs: int, conf: float = 0.8) -> float:
 
 
 def campaign_n(sigma_D: float, delta_Y: float, z: float = Z_SIZING) -> int:
-    """Fresh instances per node: n = ceil((z·σ_D,UCL / δ_Y)²), z = 2.90 (revision 5/6)."""
+    """Fresh instances per node: n = ceil((z·σ_D,UCL / δ_Y)²), z = 2.93 (revision 7)."""
     if not sigma_D > 0 or not delta_Y > 0:
         raise ValueError("sigma_D and delta_Y must be positive")
     return int(math.ceil((z * sigma_D / delta_Y) ** 2))
@@ -1355,19 +1496,17 @@ def selection_report(dev_roots: Sequence[RootRecord], pd: Predeclaration, decl: 
     if ss["extension_needed"]:
         return {"status": "extension_needed", "m_star_provisional": ss["m_star"],
                 "extension_configs": ss["extension_configs"], "_static": ss}
-    sd = select_dynamic(dev_roots, pd.families, ss["m_star"], sn)
+    sd = select_dynamic(dev_roots, pd.families, ss["m_star"], sn, pd.tuning)
     out = {"m_star": ss["m_star"], "m_star_dev_mean": ss["m_star_dev_mean"], "static_means": ss["means"],
-           "static_extended": ss["extended"], "members": sd["members"], "status": sd["status"],
-           "n_dev_instances": len(ss["_matrix"]["instances"]), "_static": ss, "_dynamic": sd}
+           "static_extended": ss["extended"], "members": sd["members"], "centres": sd["centres"],
+           "status": sd["status"], "n_dev_instances": len(ss["_matrix"]["instances"]), "_static": ss, "_dynamic": sd}
     if sd["status"] != "ok":
         out["missing_members"] = sd["missing"]
         return out
-    if sd["_matrix"]["instances"] != ss["_matrix"]["instances"] or np.isnan(ss["_matrix"]["Y"]).any():
-        out["paired_dev_instances"] = False
-    else:
-        out["paired_dev_instances"] = True
-    out.update(pi_star=sd["pi_star"], pi_star_channel=sd["pi_star_channel"], pi_star_dev_mean=sd["pi_star_dev_mean"],
-               member_means=sd["means"], flip=flip_rate(dev_roots, sd["pi_star"], ss["m_star"]),
+    out["paired_dev_instances"] = bool(not np.isnan(ss["_matrix"]["Y"]).any())
+    out.update(pi_star=sd["pi_star"], pi_star_channel=sd["pi_star_channel"], pi_star_member=sd["pi_star_member"],
+               pi_star_dev_mean=sd["pi_star_dev_mean"], tuning=sd["tuning"],
+               flip=flip_rate(dev_roots, sd["pi_star"], ss["m_star"]),
                matched_static=matched_static(dev_roots, sd["pi_star"]), dev_sigma=dev_sigma_ucl(ss, sd))
     if decl is not None and decl.sizing is not None:
         out["sizing"] = plan_sizing(decl.sizing, decl.delta_Y, out["dev_sigma"]["ucl"])

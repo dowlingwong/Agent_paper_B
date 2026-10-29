@@ -48,7 +48,9 @@ class PolicyTests(unittest.TestCase):
     def test_threshold_policy_matches_analyze(self):
         rng = np.random.default_rng(0)
         for s in ("static:0.001,-0.001", "dynamic:0.001,0.002,0,0,0", "dynamic:0.001,0,0.3,0,0",
-                  "dynamic:0.0005,0,0,0,0.004", "dynamic:0.0005,0,0,0.001,-0.004"):
+                  "dynamic:0.0005,0,0,0,0.004", "dynamic:0.0005,0,0,0.001,-0.004",
+                  "dynamic:0.001,0.002,0,0,0,0.6,0.004,0.5", "dynamic:0.001,0,0.5,0,0,0.6,0.004,0.5",
+                  "dynamic:0.001,0,0,0.0005,-0.003,0.6,0.004,0.5"):
             p = S.ThresholdPolicy(s)
             for _ in range(50):
                 f = {"budget_fraction": rng.random(), "index_value": rng.normal(0, 0.002),
@@ -78,7 +80,8 @@ class PipelineTests(unittest.TestCase):
     def test_oracle_and_calibration_machinery(self):
         plan = S.Plan()
         g = S.oracle_gain(S.make_world("N0"), SMALL, plan, n_oracle=40)
-        self.assertIn(g["member_oracle"], A.CHANNEL_MEMBERS)
+        self.assertIn(g["member_oracle"].split("×")[0], A.CHANNEL_MEMBERS)
+        self.assertGreater(g["centres"]["r1bar"], 0.0)
         cal = S.calibrate_strength("P2+", "diffuse", SMALL, plan, grid=(0.004, 0.012, 0.02), n_cal=40, n_oracle=60,
                                    iters=2, refine=1)
         self.assertTrue(cal["trace"])
@@ -95,6 +98,26 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(0.0 <= lo <= r["route_A"]["rate"] <= hi <= 1.0)
         self.assertIn("p_correct_selection_both", r)
         self.assertEqual(r["exact_placebo_fail"], 0)
+
+    def test_design_study_replicate_and_schedule_oracle(self):
+        plan = S.Plan(n_campaign=10)
+        reg = replace(SMALL, sigma_campaign=0.005)
+        r = S.study_replicate(S.make_world("P2+", 0.008, "diffuse"), reg, plan, 3, S.DESIGNS)
+        self.assertEqual(set(r["designs"]), set(S.DESIGNS))
+        for d in r["designs"].values():
+            self.assertLessEqual(d["campaigns"], 640 + 60)
+            self.assertIn(d["winner"].split("×")[0], A.CHANNEL_MEMBERS)
+        self.assertEqual(r["designs"]["D1 fixed-4, argmax n=20"]["campaigns"], r["static_campaigns"] + 4 * 20)
+        o = S.schedule_oracle(S.make_world("N0"), SMALL, plan, n_search=8, n_verify=8, sweeps=1)
+        self.assertGreaterEqual(o["gain"], -1e-12)              # the schedule nests the best static rule
+
+    def test_rev7_worlds(self):
+        for kind, variant, st in (("P0", "diffuse", 0.004), ("P0", "concentrated", 0.004),
+                                  ("P2-", "diffuse", 0.004), ("P2-", "concentrated", 0.004)):
+            w = S.make_world(kind, st, variant)
+            y = S.Sim(w, SMALL, 1).run_campaign(S.theta_table(w, SMALL, 1, 0), S.ThresholdPolicy("static:0,0"),
+                                                [1, 0, 1], None, noiseless=True)
+            self.assertTrue(np.isfinite(y))
 
     def test_noise_matching(self):
         reg, rec = S.match_noise(S.Regime(), S.Plan(), sigma_D=0.01)

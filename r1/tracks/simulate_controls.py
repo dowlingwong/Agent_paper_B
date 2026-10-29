@@ -93,7 +93,14 @@ class World:
     fb_shape: str = "const"            # P2: "const" | "step" | "linear" | "r_linear" | "r_step" (Sim.fb_scale)
     fb_sign: float = 1.0               # P2+ (+1) / P2− (−1) for the r_* shapes
     fb_r_cut: float | None = None      # r_step cut on r = runs remaining fraction
-    p_big: float = 0.0                 # P0 concentrated: share of "big" proposals (size × (1 + strength))
+    p_big: float = 0.0                 # P0 (rev 6): share of "big" proposals (size × (1 + strength))
+    trend_shape: str | None = None     # P0 (rev 7): "linear" | "early_window" drift of the θ mean over trials
+    trend_window: int = 8              # P0 concentrated: length of the early window
+    trend_late: float = 0.0            # P0 concentrated: θ shift after the window, in units of strength
+    inst_prule_spread: float = 0.0     # P0 (rev-7 attempt, kept): instance-level rule-skip share spread
+    inst_busy_p: float = 0.0           # P0 concentrated (rev 7): share of "busy" instances
+    inst_busy_drop: float = 0.0        # P0 concentrated: their rule-skip share is p_rule − drop
+    fb_accum: bool = False             # P2: shifts of keeps in the window add up (rev 7 P2−)
     lag_min: int = 2
     lag_max: int = 5
     fb_len: int = 3
@@ -120,16 +127,23 @@ DEFAULT_WORLD_KW = {"P1": P1_DEFAULTS}
 #   P2+ / P2− (keep feedback, Prop. 10(b)): a keep shifts the θ mean of the next fb_len proposals by
 #     ± strength × scale(r). diffuse: scale = r, 6 trials; concentrated: scale = 1{r > 0.7}, 10 trials.
 VARIANTS = {
-    ("P0", "concentrated"): dict(p_big=0.1),
-    ("P0", "diffuse"): dict(),
+    # P0 (rev 7): proposal quality drifts over the campaign (θ mean + strength·f(t), unknown to A2-U's prior) at a
+    # binding W: runs spent while they are plentiful (early) buy good proposals, runs spent late buy poor ones, so a
+    # threshold that is lenient while runs are plentiful and strict when they are scarce beats any static one.
+    # diffuse: f = 1 − 2t/T; concentrated: f = 1 for the first 8 trials, else 0. (Pure across-campaign budget
+    # heterogeneity, the first rev-7 attempt, gave ≤ 0.2 δ_Y even for the unrestricted schedule.)
+    ("P0", "concentrated"): dict(trend_shape="early_window", trend_window=8),
+    ("P0", "diffuse"): dict(trend_shape="linear"),
     ("P1", "concentrated"): dict(P1_DEFAULTS, n_keys=3, p_probe=0.25),
     ("P1", "diffuse"): dict(P1_DEFAULTS, n_keys=3, p_probe=0.8),
     ("P2+", "diffuse"): dict(fb_shape="r_linear", fb_sign=1.0, fb_len=6),
     ("P2+", "concentrated"): dict(fb_shape="r_step", fb_sign=1.0, fb_r_cut=0.7, fb_len=10),
-    ("P2-", "diffuse"): dict(fb_shape="r_linear", fb_sign=-1.0, fb_len=6),
-    ("P2-", "concentrated"): dict(fb_shape="r_step", fb_sign=-1.0, fb_r_cut=0.7, fb_len=10),
+    # P2− (rev 7): a keep made while runs are plentiful lowers the θ mean of every later proposal (cumulative,
+    # rest of the campaign); late keeps are harmless. diffuse: scale r; concentrated: scale 1{r > 0.7}.
+    ("P2-", "diffuse"): dict(fb_shape="r_linear", fb_sign=-1.0, fb_len=40, fb_accum=True),
+    ("P2-", "concentrated"): dict(fb_shape="r_step", fb_sign=-1.0, fb_r_cut=0.7, fb_len=40, fb_accum=True),
 }
-CAL_GRIDS = {"P0": (0.5, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0), "P1": (2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0),
+CAL_GRIDS = {"P0": (0.001, 0.002, 0.003, 0.004, 0.006, 0.008, 0.012), "P1": (2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0),
              "P2+": (0.002, 0.004, 0.006, 0.008, 0.01, 0.012, 0.016, 0.02),
              "P2-": (0.002, 0.004, 0.006, 0.008, 0.01, 0.012, 0.016, 0.02)}
 
@@ -137,8 +151,6 @@ CAL_GRIDS = {"P0": (0.5, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0), "P1": (2.0, 4.0, 6.0, 8.
 def make_world(kind: str, strength: float = 0.0, variant: str | None = None, **kw) -> World:
     if variant is not None:
         base = dict(VARIANTS[(kind, variant)])
-        if kind == "P0" and variant == "diffuse":
-            base["size_sd"] = 0.3 + strength
         return World(kind=kind.rstrip("+-"), strength=strength, **{**base, **kw})
     return World(kind=kind, strength=strength, **{**DEFAULT_WORLD_KW.get(kind, {}), **kw})
 
@@ -237,14 +249,22 @@ class Sim:
         self.W = regime.llm_cap if world.kind == "N0" else regime.W
         self.a2u = A2UPolicy(regime.g)
         self.dlog = None
+        self._mult = 1.0
+        self._prule = regime.p_rule
 
     # ---- model pieces
     def theta(self, theta_tab: np.ndarray, key: int, t: int, st: State) -> float:
         th = theta_tab[key]
+        if self.w.kind == "P0" and self.w.trend_shape:
+            x = t / self.r.llm_cap
+            if self.w.trend_shape == "linear":          # good early, poor late
+                th += self.w.strength * (1.0 - 2.0 * x)
+            elif self.w.trend_shape == "early_window":  # a short early window of very good proposals
+                th += self.w.strength if t <= self.w.trend_window else self.w.trend_late * self.w.strength
         if self.w.kind == "P2":
             recent = [sc for (k, sc) in st.keep_trials if t - self.w.fb_len <= k < t]
             if recent:
-                th += self.w.strength * recent[-1]
+                th += self.w.strength * (sum(recent) if self.w.fb_accum else recent[-1])
         return th
 
     def fb_scale(self, bf: float) -> float:
@@ -276,7 +296,7 @@ class Sim:
                 p = min(due)
                 st.pending.remove(p)
                 return (p[1], p[2], w.follow_offset * w.tau0, "follow")
-        if s.u_rule[t] < self.r.p_rule:
+        if s.u_rule[t] < self._prule:
             return None
         if w.kind == "P1" and t <= w.probe_max_trial and s.u_kind[t] < w.p_probe:
             due = t
@@ -286,7 +306,7 @@ class Sim:
                     st.pending.append((due, t, w.strength))
             return (t, w.size_probe, w.probe_offset * w.tau0, "probe")
         key = (self.r.llm_cap + 2 + int(s.u_kind[t] * w.n_keys)) if w.n_keys > 0 else t
-        size = w.size_filler * math.exp(w.size_sd * s.z_size[t])
+        size = w.size_filler * math.exp(w.size_sd * s.z_size[t]) * self._mult
         if w.kind == "P0" and w.p_big > 0 and s.lag[t] < w.p_big:
             size *= 1.0 + w.strength
         return (key, size, 0.0, "filler")
@@ -327,6 +347,8 @@ class Sim:
     # ---- one trial under a policy (default: A2-U at the declared price g)
     def trial(self, st: State, t: int, s: Stream, theta_tab, log: list | None, policy=None):
         policy = policy or self.a2u
+        self._mult = float(theta_tab[-1])
+        self._prule = float(theta_tab[-2])
         prop = self.propose(st, t, s)
         rec = {"t": t, "rule": prop is None, "pending_after": list(st.pending)}
         if prop is None:
@@ -452,7 +474,16 @@ class Sim:
 def theta_table(world: World, regime: Regime, seed: int, inst: int) -> np.ndarray:
     """The node's latent θ per key for one instance (shared by roots, leaves and campaigns of that instance)."""
     rng = np.random.default_rng([seed, inst, 99])
-    return world.mu0 + world.tau0 * rng.standard_normal(regime.llm_cap + 2 + max(world.n_keys, 0))
+    tab = world.mu0 + world.tau0 * rng.standard_normal(regime.llm_cap + 4 + max(world.n_keys, 0))
+    # last two slots: the instance's proposal-size multiplier and rule-skip share (P0 revision 7)
+    u, v = rng.random(), rng.random()
+    tab[-1] = 1.0
+    tab[-2] = regime.p_rule
+    if world.inst_prule_spread > 0:      # diffuse: p_rule_i ~ U(p_rule − spread, p_rule + spread)
+        tab[-2] = min(0.95, max(0.0, regime.p_rule + world.inst_prule_spread * (2 * v - 1)))
+    elif world.inst_busy_p > 0:          # concentrated: a share of "busy" instances with many eligible proposals
+        tab[-2] = max(0.0, regime.p_rule - world.inst_busy_drop) if u < world.inst_busy_p else regime.p_rule
+    return tab
 
 
 def _p_uniform(near: np.ndarray, target: float, p_over: float) -> float:
@@ -650,12 +681,12 @@ class ThresholdPolicy:
         self.p = A.as_dynamic(s)
 
     def e1(self, f: dict) -> bool:
-        g0, bb, bi, _, _ = self.p
-        return f["index_value"] + bi * f["tau_pred"] > g0 - bb * (1.0 - f["budget_fraction"])
+        g0, bb, bi, _, _, r1, tb, _ = self.p
+        return f["index_value"] + bi * (f["tau_pred"] - tb) > g0 - bb * ((1.0 - f["budget_fraction"]) - r1)
 
     def e2(self, f: dict) -> bool:
-        _, _, _, h0, hb = self.p
-        return f["index_value"] > h0 - hb * (1.0 - f["budget_fraction"])
+        _, _, _, h0, hb, _, _, r2 = self.p
+        return f["index_value"] > h0 - hb * ((1.0 - f["budget_fraction"]) - r2)
 
 
 @dataclass
@@ -738,11 +769,13 @@ def calibrate_sigma_term(world: World, regime: Regime, sigma_d_target: float, se
     return float(math.sqrt(max(0.0, sigma_d_target ** 2 - base ** 2)))
 
 
-def sim_predeclaration(node: str, plan: Plan, *, seed: int = 20261029) -> A.Predeclaration:
+def sim_predeclaration(node: str, plan: Plan, *, seed: int = 20261029, families: A.FamilyDecl | None = None,
+                       tuning: dict | None = None) -> A.Predeclaration:
     nd = A.NodeDecl(node, "primary", plan.delta_Y, sigma_node=plan.sigma_node,
                     sizing=A.SizingDecl(A.sigma_D_ucl(plan.sigma_D, plan.m_pairs), plan.n_max))
     return A.Predeclaration(nodes={node: nd}, primary_nodes=[node], seed=seed, alpha=plan.alpha,
-                            fallback_active=True, winners_curse_splits=50)
+                            fallback_active=True, winners_curse_splits=50, families=families or A.FamilyDecl(),
+                            tuning=tuning or {"procedure": "argmax", "n_dev": plan.n_dev})
 
 
 def measured_k_n(roots: list[RootRecord]) -> float:
@@ -777,13 +810,17 @@ def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str =
                                           [seed, i, 5000], np.random.default_rng([seed, i, zlib.crc32(c.encode())]),
                                           phase="dev_tuning", label=label, host=host, log=log))
 
-    run_dev(fam.static_configs(plan.sigma_node))
+    run_dev(fam.static_configs(plan.sigma_node), log=True)
     sel = A.selection_report(dev, pd, pd.nodes[node])
     if sel["status"] == "extension_needed":
-        run_dev(sel["extension_configs"])
+        run_dev(sel["extension_configs"], log=True)
         sel = A.selection_report(dev, pd, pd.nodes[node])
-    if sel["status"] == "members_needed":
-        run_dev(list(sel["members"].values()), log=True)
+    while sel["status"] == "members_needed":
+        for c, inst in sel["missing_members"]:
+            i = int(inst[1:])
+            dev.append(_campaign_root(sim, node, inst, c, 1, theta_table(world, regime, seed, i), [seed, i, 5000],
+                                      np.random.default_rng([seed, i, zlib.crc32(c.encode())]),
+                                      phase="dev_tuning", label=label, host=host, log=True))
         sel = A.selection_report(dev, pd, pd.nodes[node])
     pi_s, m_s, ms = sel["pi_star"], sel["m_star"], sel["matched_static"]["policy"]
     fresh = []
@@ -795,7 +832,8 @@ def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str =
             runs.append((ms, 1, ""))
         for c, rep, suf in runs:
             fresh.append(_campaign_root(sim, node, f"c{k:04d}", c, rep, th, [seed, inst, 6000, rep],
-                                        np.random.default_rng([seed, inst, rep, 7]), phase="campaign",
+                                        np.random.default_rng([seed, inst, rep, zlib.crc32(c.encode())]),
+                                        phase="campaign",
                                         label=label, host=host, suffix=suf))
     res = A.analyze_s3e(node, dev, fresh, pd.nodes[node], pd)
     return {"result": res, "dev_roots": dev, "fresh_roots": fresh}
@@ -803,68 +841,75 @@ def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str =
 
 # --------------------------------------------------------------------------------------------- oracle gains
 def oracle_gain(world: World, regime: Regime, plan: Plan, *, n_oracle: int = 10_000, seed: int = 9000,
-                chunk: int | None = None) -> dict:
-    """Noiseless large-replication oracle: m*_o = best static (with the edge extension), members anchored at
-    m*_o, gain = best member − m*_o (common instances and seeds)."""
+                family: A.FamilyDecl | None = None, n_centre: int = 400) -> dict:
+    """Noiseless large-replication oracle: m*_o = best static (with the edge extension); members anchored at m*_o
+    and centred at m*_o's decision means (from n_centre instances); gain = best member − m*_o."""
     sim = Sim(world, regime, seed)
-    fam = A.FamilyDecl()
+    fam = family or A.FamilyDecl()
     th = [theta_table(world, regime, seed, 400000 + i) for i in range(n_oracle)]
 
-    def ev(c):
+    def ev(c, dec=None, n=n_oracle):
         pol = ThresholdPolicy(c)
-        return np.array([sim.run_campaign(th[i], pol, [seed, 400000 + i, 8000], None, noiseless=True)
-                         for i in range(n_oracle)])
+        return np.array([sim.run_campaign(th[i], pol, [seed, 400000 + i, 8000], None, noiseless=True,
+                                          decisions=dec if (dec is not None and i < n_centre) else None)
+                         for i in range(n)])
 
     stat = {c: ev(c) for c in fam.static_configs(plan.sigma_node)}
-    best = max(stat, key=lambda c: stat[c].mean())
+    best = max(stat, key=lambda c: (stat[c].mean(), -A.complexity_key(c)[0]))
     extended = False
     if fam.on_upper_edge(best, plan.sigma_node):
         stat.update({c: ev(c) for c in fam.extension_configs(plan.sigma_node)})
         best, extended = max(stat, key=lambda c: stat[c].mean()), True
-    mem = {name: ev(c) for name, c in fam.members(best, plan.sigma_node).items()}
+    dec: list = []
+    ev(best, dec, n=min(n_centre, n_oracle))
+    centres = A.decision_centres(dec)
+    members = fam.members(best, plan.sigma_node, centres)
+    mem = {name: ev(c) for name, c in members.items()}
     top = max(mem, key=lambda k: mem[k].mean())
     d = mem[top] - stat[best]
     return {"gain": float(d.mean()), "gain_se": float(d.std(ddof=1) / math.sqrt(n_oracle)), "m_oracle": best,
-            "member_oracle": top, "pi_oracle": fam.members(best, plan.sigma_node)[top], "extended": extended,
-            "member_gains": {k: float((v - stat[best]).mean()) for k, v in mem.items()}, "n_oracle": n_oracle}
+            "member_oracle": top, "pi_oracle": members[top], "extended": extended, "centres": centres,
+            "member_gains": {k: float((v - stat[best]).mean()) for k, v in mem.items()},
+            "static_means": {k: float(v.mean()) for k, v in stat.items()}, "n_oracle": n_oracle}
 
 
 def calibrate_strength(kind: str, variant: str, regime: Regime, plan: Plan, *, grid: Sequence[float],
-                       n_cal: int = 600, n_oracle: int = 10_000, tol: float = 0.05, iters: int = 6,
-                       refine: int = 4) -> dict:
-    """Fix the best member's oracle gain at δ_Y: scan ``grid`` (n_cal) for the first upward crossing, bisect
-    inside it, then verify (and refine by bisection) at n_oracle until |gain − δ_Y| ≤ tol·δ_Y."""
+                       n_cal: int = 600, n_oracle: int = 10_000, tol: float = 0.05, iters: int = 0,
+                       refine: int = 6, family: A.FamilyDecl | None = None, world_kw: dict | None = None) -> dict:
+    """Fix the best member's oracle gain at δ_Y: scan ``grid`` at n_cal for the first upward crossing (the gain is
+    not monotone over the whole range), then bisect that grid bracket at n_oracle (all evaluations share instances
+    and seeds) until |gain − δ_Y| ≤ tol·δ_Y or ``refine`` steps are spent. The bracket is re-checked at n_oracle
+    and widened to the next grid point if the coarse scan misplaced the crossing."""
     target, trace = plan.delta_Y, []
 
     def gain(st, n):
-        g = oracle_gain(make_world(kind, st, variant), regime, plan, n_oracle=n)
+        g = oracle_gain(make_world(kind, st, variant, **(world_kw or {})), regime, plan, n_oracle=n, family=family)
         trace.append((st, n, g["gain"], g["gain_se"]))
         return g
 
-    prev, hit = None, None
-    for st in grid:
+    grid = list(grid)
+    hit = None
+    for j, st in enumerate(grid):
         if gain(st, n_cal)["gain"] >= target:
-            hit = st
+            hit = j
             break
-        prev = st
     if hit is None:
         return {"kind": kind, "variant": variant, "strength": None, "trace": trace, "within_tolerance": False,
-                "note": f"no grid strength reached an oracle gain of δ_Y = {target}"}
-    lo, hi = (prev if prev is not None else hit), hit
-    for _ in range(iters if prev is not None else 0):
-        mid = 0.5 * (lo + hi)
-        lo, hi = (lo, mid) if gain(mid, n_cal)["gain"] >= target else (mid, hi)
-    st = hi
-    g = gain(st, n_oracle)
+                "note": f"no grid strength reached an oracle gain of δ_Y = {target} at n = {n_cal}"}
+    j_lo, j_hi = max(0, hit - 1), hit
+    g_hi = gain(grid[j_hi], n_oracle)
+    while g_hi["gain"] < target and j_hi + 1 < len(grid):
+        j_lo, j_hi = j_hi, j_hi + 1
+        g_hi = gain(grid[j_hi], n_oracle)
+    lo, hi, st, g = grid[j_lo], grid[j_hi], grid[j_hi], g_hi
     for _ in range(refine):
-        if abs(g["gain"] - target) <= tol * target:
+        if abs(g["gain"] - target) <= tol * target or lo == hi:
             break
-        if g["gain"] > target:
-            hi = st
-        else:
-            lo = st
-        st = 0.5 * (lo + hi)
-        g = gain(st, n_oracle)
+        mid = 0.5 * (lo + hi)
+        gm = gain(mid, n_oracle)
+        if abs(gm["gain"] - target) < abs(g["gain"] - target):
+            st, g = mid, gm
+        lo, hi = (lo, mid) if gm["gain"] >= target else (mid, hi)
     return {"kind": kind, "variant": variant, "strength": st, "oracle": g, "planted_gain": g["gain"],
             "within_tolerance": bool(abs(g["gain"] - target) <= tol * target), "tolerance": tol * target,
             "trace": trace}
@@ -960,6 +1005,171 @@ def s06_node(node: str, regime: Regime, plan: Plan, *, R: int = 200, n_cal: int 
             "n_dev": rz["n_dev"], "p_correct_selection": r["p_correct_selection_both"]["rate"],
             "p_route_B": r["route_B_node_conditions"]["rate"]}
     return rep, ctl
+
+
+# --------------------------------------------------------------------------------------------- design study (rev. 7)
+class SchedulePolicy:
+    """Unrestricted-oracle proxy: execute iff V̂* > G[r-tercile][τ-half]; keep iff m̂ > H[r-tercile]
+    (r = runs remaining fraction; τ split at ``tau_split``). 9 free thresholds."""
+
+    def __init__(self, G, H, tau_split: float):
+        self.G, self.H, self.ts = [list(g) for g in G], list(H), tau_split
+        self.name = f"schedule:{G}|{H}"
+
+    @staticmethod
+    def rb(f):
+        r = 1.0 - f["budget_fraction"]
+        return 0 if r > 2 / 3 else (1 if r > 1 / 3 else 2)
+
+    def e1(self, f):
+        return f["index_value"] > self.G[self.rb(f)][1 if f["tau_pred"] > self.ts else 0]
+
+    def e2(self, f):
+        return f["index_value"] > self.H[self.rb(f)]
+
+
+def schedule_oracle(world: World, regime: Regime, plan: Plan, *, n_search: int = 400, n_verify: int = 2000,
+                    sweeps: int = 2, seed: int = 9100) -> dict:
+    """Coordinate-descent search of the 9-threshold schedule from the best static rule (noiseless, common random
+    numbers); the gain over the best static is re-measured on n_verify fresh oracle instances."""
+    sim = Sim(world, regime, seed)
+    sn = plan.sigma_node
+    fam = A.FamilyDecl()
+
+    def value(pol, n, off):
+        return np.array([sim.run_campaign(theta_table(world, regime, seed, off + i), pol, [seed, off + i, 8100], None,
+                                          noiseless=True) for i in range(n)])
+
+    stat = {c: value(ThresholdPolicy(c), n_search, 500000).mean()
+            for c in fam.static_configs(sn, extended=True)}
+    best = max(stat, key=stat.get)
+    g, h = A.parse_policy(best)[1]
+    dec: list = []
+    sim.run_campaign(theta_table(world, regime, seed, 500000), ThresholdPolicy(best), [seed, 500000, 8100], None,
+                     noiseless=True, decisions=dec)
+    for i in range(1, 60):
+        sim.run_campaign(theta_table(world, regime, seed, 500000 + i), ThresholdPolicy(best), [seed, 500000 + i, 8100],
+                         None, noiseless=True, decisions=dec)
+    taus = [d["tau_pred"] for d in dec if d["epoch"] == "E1"]
+    ts = float(np.median(taus)) if taus else 0.0
+    G, H = [[g, g] for _ in range(3)], [h, h, h]
+    g_vals = [u * sn for u in (-0.5, -0.25, 0.0, 0.05, 0.1, 0.2, 0.4, 0.8, 1.6)]
+    h_vals = [u * sn for u in (-1.0, -0.5, -0.25, 0.0, 0.25, 0.5, 1.0, 2.0, 4.0)]
+    cur = value(SchedulePolicy(G, H, ts), n_search, 500000).mean()
+    for _ in range(sweeps):
+        for k in range(9):
+            vals = g_vals if k < 6 else h_vals
+            for v in vals:
+                G2, H2 = [list(x) for x in G], list(H)
+                if k < 6:
+                    G2[k // 2][k % 2] = v
+                else:
+                    H2[k - 6] = v
+                y = value(SchedulePolicy(G2, H2, ts), n_search, 500000).mean()
+                if y > cur + 1e-12:
+                    cur, G, H = y, G2, H2
+    a = value(SchedulePolicy(G, H, ts), n_verify, 600000)
+    b = value(ThresholdPolicy(best), n_verify, 600000)
+    d = a - b
+    return {"gain": float(d.mean()), "gain_se": float(d.std(ddof=1) / math.sqrt(n_verify)), "m_oracle": best,
+            "G": G, "H": H, "tau_split": ts, "search_gain": float(cur - stat[best]), "n_verify": n_verify}
+
+
+FAMILIES = {"fixed": A.FamilyDecl(member_units={k: list(v) for k, v in A.FIXED_MEMBER_UNITS.items()}),
+            "grid": A.FamilyDecl()}
+DESIGNS = {  # name: (family, tuning)
+    "D1 fixed-4, argmax n=20": ("fixed", {"procedure": "argmax", "n_dev": 20}),
+    "D2 fixed-4, argmax n=40": ("fixed", {"procedure": "argmax", "n_dev": 40}),
+    "D3 grid-12, argmax n=20": ("grid", {"procedure": "argmax", "n_dev": 20}),
+    "D4 grid-12, halving 340": ("grid", {"procedure": "halving", "member_budget": 340}),
+    "D5 grid-12, channel-first 20/60": ("grid", {"procedure": "channel_first", "n1": 20, "n2": 60}),
+}
+
+
+def study_replicate(world: World, regime: Regime, plan: Plan, seed: int, designs: dict, oracle: dict | None = None,
+                    n_static_dev: int = 20) -> dict:
+    """One replicate of tuning + S3e for several designs sharing the static stage, the dev instances and the fresh
+    instances (each policy is run once per instance and cached)."""
+    sim = Sim(world, regime, seed)
+    sn = plan.sigma_node
+    fam0 = A.FamilyDecl()
+    dev_cache, dec_cache = {}, {}
+
+    def dev_y(c, k):
+        if (c, k) not in dev_cache:
+            dec = [] if k < n_static_dev else None
+            dev_cache[(c, k)] = sim.run_campaign(theta_table(world, regime, seed, k), ThresholdPolicy(c),
+                                                 [seed, k, 5000], np.random.default_rng([seed, k, zlib.crc32(c.encode())]),
+                                                 decisions=dec)
+            if dec is not None:
+                dec_cache.setdefault(c, []).extend(dec)
+        return dev_cache[(c, k)]
+
+    statics = fam0.static_configs(sn)
+    vals = np.array([np.mean([dev_y(c, k) for k in range(n_static_dev)]) for c in statics])
+    m_s = statics[A._argmax_simplest(statics, vals)]
+    static_campaigns = len(statics) * n_static_dev
+    if fam0.on_upper_edge(m_s, sn):
+        ext = fam0.extension_configs(sn)
+        statics = statics + ext
+        vals = np.array([np.mean([dev_y(c, k) for k in range(n_static_dev)]) for c in statics])
+        m_s = statics[A._argmax_simplest(statics, vals)]
+        static_campaigns += len(ext) * n_static_dev
+    centres = A.decision_centres(dec_cache[m_s])
+    fresh_cache = {}
+
+    def fresh_y(c, k):
+        if (c, k) not in fresh_cache:
+            inst = 100000 + k
+            fresh_cache[(c, k)] = sim.run_campaign(theta_table(world, regime, seed, inst), ThresholdPolicy(c),
+                                                   [seed, inst, 6000, 1],
+                                                   np.random.default_rng([seed, inst, 1, zlib.crc32(c.encode())]))
+        return fresh_cache[(c, k)]
+
+    m_o = next((o.get("m_oracle") for o in (oracle or {}).values() if isinstance(o, dict)), None)
+    out = {"m_star": m_s, "static_campaigns": static_campaigns, "m_star_correct": m_o == m_s, "designs": {}}
+    for dname, (fname, tuning) in designs.items():
+        members = FAMILIES[fname].members(m_s, sn, centres)
+        t = A.tune_members(lambda p, k: dev_y(p, k), members, tuning)
+        pi = t["policy"]
+        for k in range(n_static_dev):
+            dev_y(pi, k)
+        flips = []
+        for d in dec_cache.get(pi, []):
+            st = {"budget_fraction": d["budget_fraction"], "index_value": d["index_value"]}
+            flips.append(A.threshold_act(m_s, st, d["epoch"], d.get("tau_pred")) != (d["action"] in ("execute", "keep")))
+        D = np.array([fresh_y(pi, k) - fresh_y(m_s, k) for k in range(plan.n)])
+        test = A.mean_test(D, alpha=plan.alpha)
+        o = (oracle or {}).get(fname)
+        out["designs"][dname] = {
+            "winner": t["winner"], "campaigns": static_campaigns + t["campaigns"], "mean_D": test["mean"],
+            "lb": test["lb"], "ub": test["ub"], "route": A.campaign_route(test, plan.delta_Y),
+            "flip": float(np.mean(flips)) if flips else 0.0,
+            "correct_member": bool(o is not None and t["winner"] == o["member_oracle"]),
+            "correct_both": bool(o is not None and t["winner"] == o["member_oracle"] and m_s == o["m_oracle"])}
+    return out
+
+
+def study_world(world: World, regime: Regime, plan: Plan, R: int, designs: dict, oracle: dict | None,
+                seed0: int = 20000) -> dict:
+    reps = [study_replicate(world, regime, plan, seed0 + r, designs, oracle) for r in range(R)]
+    res = {}
+    for d in designs:
+        rows = [x["designs"][d] for x in reps]
+        kA = sum(r["route"] in ("A", "A-small") for r in rows)
+        kB = sum(r["route"] == "B" and r["flip"] >= 0.10 for r in rows)
+        kU = sum(r["ub"] < plan.delta_Y for r in rows)
+        kF = sum(r["flip"] >= 0.10 for r in rows)
+        res[d] = {"R": R, "k_A": kA, "route_A": _rate(kA, R), "P_B": _rate(kB, R), "P_ub_below": _rate(kU, R),
+                  "P_flip_ge_10": _rate(kF, R),
+                  "P_correct_member": _rate(sum(r["correct_member"] for r in rows), R),
+                  "P_correct_both": _rate(sum(r["correct_both"] for r in rows), R),
+                  "realised_gain_mean_D": float(np.mean([r["mean_D"] for r in rows])),
+                  "campaigns_mean": float(np.mean([r["campaigns"] for r in rows])),
+                  "campaigns_max": int(max(r["campaigns"] for r in rows)),
+                  "flip_mean": float(np.mean([r["flip"] for r in rows]))}
+    res["_m_star_correct"] = _rate(sum(x["m_star_correct"] for x in reps), R)
+    return res
 
 
 def merge_controls(per_node: dict[str, dict], label: str = "FIXTURE") -> dict:
