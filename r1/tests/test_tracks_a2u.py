@@ -342,3 +342,68 @@ def test_predictive_intervals_and_coverage(tmp_path):
     assert a2u.coverage(ivs, audited)["coverage"] == 1.0
     audited = {iv["budget_index"]: iv["hi"] + 1 for iv in ivs}
     assert a2u.coverage(ivs, audited)["coverage"] == 0.0
+
+
+def test_d1_prime_controller_decision_and_centred_terms(tmp_path):
+    """Review m9: the D1' instance through ``A2UController.decide``. N = 2 proposals, K = 1 run: at proposal 1
+    r = 0 and the budget member decides as static; at proposal 2 after a skip r = +0.5 and the budget member
+    executes a proposal that static (at the same g0, just above its V*) skips. Rev. 7 (b): centring at
+    r_bar = 0.5 restores the static decision there."""
+    from types import SimpleNamespace
+    _, _, rows = _ledger(tmp_path)
+    ctx = node_context(SIGMA)
+    v = _view(rows, 3)
+    proposal_1 = {"worker_runs_used": 0, "worker_runs_remaining": 1, "trials_remaining": 2, "trials_total": 2,
+                  "llm_calls_remaining": 1, "llm_calls_used": 1}
+    proposal_2 = {"worker_runs_used": 0, "worker_runs_remaining": 1, "trials_remaining": 1, "trials_total": 2,
+                  "llm_calls_remaining": 0, "llm_calls_used": 2}
+
+    def view(budget):
+        return SimpleNamespace(epoch="E1", budget_index=v.budget_index, ledger_prefix=v.ledger_prefix,
+                               current_best=v.current_best, proposal=v.proposal, provisional=None, budget=budget,
+                               input_hash=lambda: "h")
+
+    fc = a2u.A2UController(prior(), ctx).forecast(view(proposal_1))
+    assert not fc["noop"] and not fc["duplicate"]
+    g0 = fc["v_star"] + 1e-5  # static skips this proposal
+    static = a2u.A2UController.static_price(prior(), ctx, g0)
+    budget = a2u.A2UController.dynamic(prior(), ctx, g0=g0, b_budget=1e-3)
+    centred = a2u.A2UController.dynamic(prior(), ctx, g0=g0, b_budget=1e-3, r_bar=0.5)
+    mask = {"continue": True, "skip": True}
+    d1 = budget.decide(view(proposal_1), mask)
+    assert d1.detail["budget_gap"] == 0.0 and d1.action == static.decide(view(proposal_1), mask).action == "skip"
+    d2 = budget.decide(view(proposal_2), mask)
+    assert d2.detail["budget_gap"] == 0.5 and d2.detail["e1_threshold"] == pytest.approx(g0 - 0.5e-3)
+    assert static.decide(view(proposal_2), mask).action == "skip" and d2.action == "continue"
+    c2 = centred.decide(view(proposal_2), mask)
+    assert c2.detail["e1_threshold"] == pytest.approx(g0) and c2.action == "skip"
+    # tau_bar centres the information bonus: b_info (tau - tau_bar) = 0 at tau_bar = tau.
+    info = a2u.A2UController.dynamic(prior(), ctx, g0=g0, b_info=1.0, tau_bar=fc["tau"])
+    assert info.decide(view(proposal_1), mask).detail["info_bonus"] == pytest.approx(0.0, abs=1e-15)
+    assert a2u.A2UController.dynamic(prior(), ctx, g0=g0, b_info=1.0).decide(view(proposal_1), mask).action == "continue"
+
+
+def test_predictive_intervals_carry_n_group_strata(tmp_path):
+    _, _, rows = _ledger(tmp_path)
+    ivs = a2u.predictive_intervals(rows, a2u.A2UController(prior(), node_context(SIGMA)))
+    assert {"n_group", "stratum"} <= set(ivs[0])
+    assert all(iv["stratum"] == a2u.n_group_stratum(iv["n_group"]) for iv in ivs)
+    assert [a2u.n_group_stratum(n) for n in (0, 1, 2, 3, 7)] == ["0", "1-2", "1-2", ">=3", ">=3"]
+    cov = a2u.coverage(ivs, {iv["budget_index"]: iv["mu"] for iv in ivs})
+    assert cov["coverage"] == 1.0 and all(v["coverage"] == 1.0 for v in cov["by_stratum"].values())
+
+
+def test_per_group_priors_override_the_kind_prior(tmp_path):
+    _, _, rows = _ledger(tmp_path)
+    base = prior()
+    special = a2u.KindPrior(mu0=0.01, tau0=1e-6, sigma_cmp=SIGMA, tau_w=0.001)
+    grouped = a2u.A2UPrior(node=NODE, sigma_node=SIGMA, kinds=base.kinds, groups={"ALPHA|+": special})
+    ctl, plain = a2u.A2UController(grouped, node_context(SIGMA)), a2u.A2UController(base, node_context(SIGMA))
+    for i in range(1, len(rows)):
+        fa, fb = ctl.forecast(_view(rows, i)), plain.forecast(_view(rows, i))
+        if fa["key"] == "ALPHA" and fa["sign"] == "+" and fa["n_group"] == 0:
+            assert fa["mu"] == pytest.approx(0.01) and fb["mu"] == pytest.approx(0.001)
+        elif fa["key"] != "ALPHA":
+            assert fa["mu"] == fb["mu"]
+    q = a2u.A2UPrior.from_payload(json.loads(grouped.canonical_bytes()))
+    assert q == grouped and "groups" in grouped.to_payload() and "groups" not in base.to_payload()

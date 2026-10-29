@@ -87,7 +87,7 @@ def test_collector_end_to_end_resume_and_schema(tmp_path):
     assert forks and leaves and all(l.status == "ok" for l in leaves)
     assert all(to_dict(l) == raw for l, raw in zip(leaves, leaves_raw))  # schema round trip
     assert all(l.schema == TRACKS_LEAF_SCHEMA and tuple(l.state) == STATE_FEATURES for l in leaves)
-    expected = Counter((f["fork_id"], arm, rep) for f in forks for arm, rep in C.leaf_arms(f, 2))
+    expected = Counter((f["fork_id"], arm, rep) for f in forks for arm, rep in C.leaf_arms(f, 2, 1))
     assert Counter((l.fork_id, l.arm, l.rep) for l in leaves) == expected
     for l in leaves:
         assert l.provenance.g0 == manifest["g0"] and l.provenance.label == "FIXTURE"
@@ -159,8 +159,9 @@ def test_campaign_phase_policies_and_same_repetition_placebo(tmp_path):
 
 def test_tune_phase_runs_every_configuration_on_the_same_paired_instances(tmp_path):
     grid = C.tuning_grid("static", 0.003)
-    assert len(grid) == 12 and "static:g=0.00015,e2off=-0.00075" in grid and "static:g=0.0012,e2off=0.00075" in grid
-    assert len(C.tuning_grid("static", 0.003, extend=True)) == 15
+    assert len(grid) == 15 and "static:g=0.00015,e2off=-0.00075" in grid and "static:g=0.0012,e2off=0.00075" in grid
+    assert "static:g=0,e2off=0" in grid  # rev. 7 (a)
+    assert len(C.tuning_grid("static", 0.003, extend=True)) == 18
     dyn = C.tuning_grid("dynamic", 0.003, (0.1, 0.0))
     assert dyn == ["dynamic:g0=0.0003,h0=0,b_budget=0.003", "dynamic:g0=0.0003,h0=0,b_info=0.5",
                    "dynamic:g0=0.0003,h0=0,h_budget=0.0015", "dynamic:g0=0.0003,h0=0,h_budget=-0.0015"]
@@ -173,8 +174,9 @@ def test_tune_phase_runs_every_configuration_on_the_same_paired_instances(tmp_pa
         by_policy.setdefault(r["policy"], set()).add(r["instance_id"])
     assert len({frozenset(v) for v in by_policy.values()}) == 1  # paired: the same instances everywhere
     seeds = {int(r["instance_id"].rsplit("__s", 1)[1]) for r in roots}
-    assert seeds == {C.INSTANCE_SEED_BASE["tune"] + k for k in range(2)}  # the dev (tuning) block
-    assert C.INSTANCE_SEED_BASE["tune"] + 40 <= C.INSTANCE_SEED_BASE["S0.5"]
+    lo, hi = C.INSTANCE_SEED_BLOCKS["tune"]
+    assert seeds == {lo + k for k in range(2)}  # the dev (tuning) block
+    assert lo + 40 <= hi
 
 
 def test_s04_and_fit_prior(tmp_path):
@@ -212,7 +214,8 @@ def test_policy_parsing_and_verify_refusal(tmp_path):
 
 
 def test_s05b_truncated_incumbent_audits(tmp_path):
-    out = _run(tmp_path, "--instances", "2", "--forks", "0", "--aa-fraction", "0", "--W", "20", node="synthetic_P0")
+    out = _run(tmp_path, "--instances", "2", "--forks", "0", "--aa-fraction", "0", "--W", "20", node="synthetic_P0",
+               phase="S0.5")
     assert C.main(["--phase", "S0.5b", "--node", "synthetic_P0", "--out", str(out), "--work", str(tmp_path / "work"),
                    "--truncate-W", "3,6,20"]) == 0
     rows = C.read_jsonl(out / "s05b_truncated.jsonl")
@@ -220,7 +223,7 @@ def test_s05b_truncated_incumbent_audits(tmp_path):
     roots = {r["root_id"]: r for r in C.read_jsonl(out / "roots.jsonl")}
     for r in rows:
         assert r["runs_used"] <= r["W"]
-        assert r["binding"] == (r["runs_used"] >= r["W"])
+        assert r["binding"] == (r["runs_used"] >= r["W"] and r["trials"] < 10)  # W used while proposals remained
         if r["W"] == 20:  # the full ledger: the root's own terminal audit
             assert r["y_terminal"] == roots[r["root_id"]]["y_terminal"]
     # The truncation equals a campaign actually run at that W (A2-U is budget-blind).
@@ -244,4 +247,6 @@ def test_truncate_at_W():
     prefix, binding = C.truncate_at_W(rows, 2)
     assert [r["budget_index"] for r in prefix] == [1, 2, 3] and binding
     prefix, binding = C.truncate_at_W(rows, 10)
+    assert len(prefix) == 6 and not binding
+    prefix, binding = C.truncate_at_W(rows, 4)  # the 4th run is the last trial: W did not stop anything
     assert len(prefix) == 6 and not binding

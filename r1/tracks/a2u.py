@@ -129,6 +129,12 @@ class A2UPrior:
     sigma_node: float
     kinds: dict          # kind -> KindPrior
     meta: dict = field(default_factory=dict)
+    # Optional per-group priors "KEY|sign" -> KindPrior (e.g. the synthetic P0 world, whose groups have known
+    # distinct means so that V* varies across proposals). Empty for fitted priors; then the kind prior serves.
+    groups: dict = field(default_factory=dict)
+
+    def for_group(self, kind: str, key: str | None, sign: str) -> KindPrior:
+        return self.groups.get(f"{key}|{sign}") or self.kind(kind)
 
     def kind(self, kind: str) -> KindPrior:
         if kind in self.kinds:
@@ -138,8 +144,11 @@ class A2UPrior:
         raise KeyError(f"prior has no kind {kind!r}")
 
     def to_payload(self) -> dict:
-        return {"schema": PRIOR_SCHEMA, "node": self.node, "sigma_node": float(self.sigma_node),
-                "kinds": {k: asdict(v) for k, v in sorted(self.kinds.items())}, "meta": self.meta}
+        payload = {"schema": PRIOR_SCHEMA, "node": self.node, "sigma_node": float(self.sigma_node),
+                   "kinds": {k: asdict(v) for k, v in sorted(self.kinds.items())}, "meta": self.meta}
+        if self.groups:
+            payload["groups"] = {k: asdict(v) for k, v in sorted(self.groups.items())}
+        return payload
 
     def canonical_bytes(self) -> bytes:
         return (json.dumps(self.to_payload(), sort_keys=True, indent=1) + "\n").encode("utf-8")
@@ -158,7 +167,8 @@ class A2UPrior:
         if payload.get("schema") != PRIOR_SCHEMA:
             raise ValueError(f"not an A2-U prior ({payload.get('schema')!r})")
         return cls(node=str(payload["node"]), sigma_node=float(payload["sigma_node"]),
-                   kinds={k: KindPrior(**v) for k, v in payload["kinds"].items()}, meta=dict(payload.get("meta") or {}))
+                   kinds={k: KindPrior(**v) for k, v in payload["kinds"].items()}, meta=dict(payload.get("meta") or {}),
+                   groups={k: KindPrior(**v) for k, v in (payload.get("groups") or {}).items()})
 
     @classmethod
     def load(cls, path: str | Path, expect_sha256: str | None = None) -> "A2UPrior":
@@ -410,7 +420,7 @@ class A2UController:
     def __init__(self, prior: A2UPrior, node_ctx: NodeContext, *, g: float | None = None, update: bool = True,
                  obs_inflation: float = 1.0, c_hat: Callable[[dict], float] | None = None,
                  score_fn: Callable[[dict], float] | None = None, h0: float = 0.0, b_budget: float = 0.0,
-                 b_info: float = 0.0, h_budget: float = 0.0,
+                 b_info: float = 0.0, h_budget: float = 0.0, r_bar: float = 0.0, tau_bar: float = 0.0,
                  W: int | None = None, g_units: float = 0.1, policy_name: str | None = None) -> None:
         if not math.isclose(prior.sigma_node, node_ctx.sigma_node, rel_tol=1e-9):
             raise ValueError("prior.sigma_node must equal node_ctx.sigma_node")
@@ -418,20 +428,21 @@ class A2UController:
             raise ValueError("obs_inflation must be >= 1")
         if c_hat is not None and score_fn is not None:
             raise ValueError("give c_hat (pi') or score_fn (a full score), not both")
-        if (c_hat is not None or score_fn is not None) and (h0 or b_budget or b_info or h_budget):
+        if (c_hat is not None or score_fn is not None) and (h0 or b_budget or b_info or h_budget or r_bar or tau_bar):
             raise ValueError("the dynamic-threshold parameters do not combine with c_hat / score_fn")
         self.prior, self.ctx = prior, node_ctx
         self.g = float(g_units * prior.sigma_node if g is None else g)
         self.update, self.obs_inflation = bool(update), float(obs_inflation)
         self.c_hat, self.score_fn, self.W = c_hat, score_fn, W
         self.h0, self.b_budget, self.b_info, self.h_budget = float(h0), float(b_budget), float(b_info), float(h_budget)
+        self.r_bar, self.tau_bar = float(r_bar), float(tau_bar)  # rev. 7 centring (0 = uncentred)
         self.policy_name = policy_name  # recorded by the collector; not part of the version, so two policies
         # with identical rules (e.g. static and dynamic with zero slopes) have identical records
         base = SCORE_POLICY_VERSION if score_fn is not None else PI_PRIME_VERSION if c_hat is not None else A2U_VERSION
         tags = [f"prior={prior.sha256[:12]}", f"g={self.g:.6g}"]
         tags += [] if update else ["no_update"]
         tags += [] if self.obs_inflation == 1.0 else [f"lambda={self.obs_inflation:g}"]
-        for name in ("h0", "b_budget", "b_info", "h_budget"):
+        for name in ("h0", "b_budget", "b_info", "h_budget", "r_bar", "tau_bar"):
             tags += [] if getattr(self, name) == 0.0 else [f"{name}={getattr(self, name):g}"]
         self.version = f"{base}[{','.join(tags)}]"
         self.log: list[dict] = []  # record only; never read by a decision
@@ -444,9 +455,11 @@ class A2UController:
 
     @classmethod
     def dynamic(cls, prior: A2UPrior, node_ctx: NodeContext, *, g0: float, b_budget: float = 0.0,
-                b_info: float = 0.0, h0: float = 0.0, h_budget: float = 0.0, **kwargs) -> "A2UController":
+                b_info: float = 0.0, h0: float = 0.0, h_budget: float = 0.0, r_bar: float = 0.0,
+                tau_bar: float = 0.0, **kwargs) -> "A2UController":
         """The dynamic threshold family (module docstring); zero slopes give ``static_price(g0, e2_offset=h0)``."""
-        return cls(prior, node_ctx, g=float(g0), b_budget=b_budget, b_info=b_info, h0=h0, h_budget=h_budget, **kwargs)
+        return cls(prior, node_ctx, g=float(g0), b_budget=b_budget, b_info=b_info, h0=h0, h_budget=h_budget,
+                   r_bar=r_bar, tau_bar=tau_bar, **kwargs)
 
     @property
     def default_keep(self) -> bool:
@@ -477,7 +490,7 @@ class A2UController:
         key = edit.get("symbol") if edit else None
         group = (key, sign_of(res.features.get("direction")))
         kind = edit_kind(edit)
-        kp = self.prior.kind(kind)
+        kp = self.prior.for_group(kind, key, group[1])
         obs = rep.deltas.get(group, []) if (self.update and key) else []
         mu_n, tau_n = group_posterior(kp, obs, self.obs_inflation)
         tau = math.sqrt(tau_n ** 2 + kp.tau_w ** 2)   # predictive sd (rev.-4 MA-1)
@@ -530,16 +543,21 @@ class A2UController:
             state = policy_state(view, fc["rep"], fc, epoch="E1", index_value=fc["v_star"], W=self.W)
             score = float(self.score_fn(state)) if self.score_fn is not None else fc["v_star"] + float(self.c_hat(state))
             execute = score > 0
+            margin = score
             detail.update(score=score, state=state)
         elif self.dynamic_e1:
             gap = budget_gap(view, self.W)
-            bonus = self.b_info * fc["tau"]
-            threshold = self.g - self.b_budget * gap
+            bonus = self.b_info * (fc["tau"] - self.tau_bar)
+            threshold = self.g - self.b_budget * (gap - self.r_bar)
             execute = fc["v_star"] + bonus >= threshold
+            margin = fc["v_star"] + bonus - threshold
             detail.update(budget_gap=gap, info_bonus=bonus, e1_threshold=threshold)
         else:
-            execute = bool(rules.execute(0.0, fc["mu"], fc["tau"], fc["sigma"], self.g))
-        detail.update(execute=bool(execute), eligible=True)
+            execute = static_execute(fc["mu"], fc["tau"], fc["sigma"], self.g)
+            margin = fc["v_star"] - self.g
+        # ``margin``: the decision's distance to its own threshold (>= 0 executes); the collector's
+        # near-threshold band is |margin| <= b, so it is centred on the policy's threshold (review M1).
+        detail.update(execute=bool(execute), eligible=True, margin=_f(margin))
         if execute:
             action = "continue"
         else:
@@ -557,14 +575,19 @@ class A2UController:
         if fc is None or delta_hat is None:
             return {**detail, "reason": "no_features_or_no_comparison", "eligible": False}
         m_hat = posterior_mean(delta_hat, fc["mu"], fc["tau"], fc["sigma"])
-        detail.update(self._numbers(fc), delta_hat=float(delta_hat), m_hat=m_hat, eligible=True)
+        # The policy's keep threshold on the m_hat scale (0 for the plain Bayes keep, h for static e2off = h, ...);
+        # margin = m_hat - h is what the collector's E2 band |m_hat - h| <= b uses (review M1).
+        threshold = self.keep_prior(view).threshold
+        m_thr = posterior_mean(threshold, fc["mu"], fc["tau"], fc["sigma"])
+        detail.update(self._numbers(fc), delta_hat=float(delta_hat), m_hat=m_hat, keep_threshold_m=_f(m_thr),
+                      margin=_f(m_hat - m_thr), eligible=True)
         return detail
 
     # ---- E2: the keep prior (KeepPriorProvider) ----------------------------
     def _keep_score(self, view, fc: dict) -> Callable[[float], float]:
         """h(m_hat): keep iff h(m_hat) > 0 (the policy's E2 rule)."""
         if self.score_fn is None and self.c_hat is None:
-            threshold = self.h0 - (self.h_budget * budget_gap(view, self.W) if self.h_budget != 0.0 else 0.0)
+            threshold = self.h0 - (self.h_budget * (budget_gap(view, self.W) - self.r_bar) if self.h_budget != 0.0 else 0.0)
             return lambda m: m - threshold
         rep, W = fc["rep"], self.W
 
@@ -602,6 +625,23 @@ def encoded_keep_prior(h: Callable[[float], float], mu: float, tau: float, sigma
     t_prime = -a / slope
     mu_prime = -t_prime * tau ** 2 / sigma ** 2
     return KeepPrior(mu=mu_prime, tau=tau, sigma=sigma, source=f"{source}:keep_threshold={t_prime:.6g}")
+
+
+def static_execute(mu: float, tau: float, sigma: float, g: float) -> bool:
+    """The static E1 rule: execute iff V*(mu, tau, sigma) >= g (Prop. 8, pi = 0).
+
+    g = 0 executes every non-rule proposal (rev. 7 a): V* >= 0 holds exactly in theory; the explicit branch
+    keeps floating-point rounding of V* for very negative mu from turning it into a skip."""
+    if g == 0.0:
+        return True
+    return bool(rules.execute(0.0, mu, tau, sigma, g))
+
+
+def reads_budget(controller: "A2UController") -> bool:
+    """True when the controller's decisions depend on the budget (then a root ledger cannot be truncated at a
+    smaller W as if it had been run there; S0.5b refuses such roots)."""
+    return bool(controller.b_budget or controller.h_budget or controller.score_fn is not None
+                or controller.c_hat is not None)
 
 
 class ExecuteNonRuleController(A2UController):
@@ -654,14 +694,25 @@ def predictive_intervals(ledger, controller: A2UController, *, level: float = 0.
             continue
         se = float((audit_se or {}).get(b, 0.0) or 0.0)
         sd = math.sqrt(fc["tau"] ** 2 + se ** 2)
-        out.append({"budget_index": b, "key": fc["key"], "sign": fc["sign"], "mu": fc["mu"], "sd": sd,
+        out.append({"budget_index": b, "key": fc["key"], "sign": fc["sign"], "n_group": fc["n_group"],
+                    "stratum": n_group_stratum(fc["n_group"]), "mu": fc["mu"], "sd": sd,
                     "lo": fc["mu"] - z * sd, "hi": fc["mu"] + z * sd, "level": level})
     return out
 
 
+def n_group_stratum(n: int) -> str:
+    """Calibration strata by the group's executed observations before the proposal: 0, 1-2, >= 3."""
+    return "0" if n == 0 else "1-2" if n <= 2 else ">=3"
+
+
 def coverage(intervals: list[dict], audited: Mapping[int, float]) -> dict:
     """Share of intervals that contain the audited Delta (``audited``: budget index -> Delta_audit)."""
-    hits = [float(iv["lo"] <= audited[iv["budget_index"]] <= iv["hi"]) for iv in intervals
-            if audited.get(iv["budget_index"]) is not None]
+    pairs = [(iv.get("stratum"), float(iv["lo"] <= audited[iv["budget_index"]] <= iv["hi"])) for iv in intervals
+             if audited.get(iv["budget_index"]) is not None]
+    hits = [h for _, h in pairs]
+    strata = {}
+    for name in sorted({st for st, _ in pairs if st is not None}):
+        hs = [h for st, h in pairs if st == name]
+        strata[name] = {"n": len(hs), "coverage": float(np.mean(hs))}
     return {"n": len(hits), "coverage": float(np.mean(hits)) if hits else None,
-            "level": intervals[0]["level"] if intervals else None}
+            "level": intervals[0]["level"] if intervals else None, "by_stratum": strata}

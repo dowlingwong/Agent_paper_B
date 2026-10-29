@@ -17,10 +17,14 @@ def test_payload_matches_the_harness_request_shape():
 
 
 def test_identity_and_cross_identity():
-    assert D.identity_rate({0: ["a", "a"], 1: ["b", "c"], 2: ["d"]}) == 0.5
+    # A prompt with a missing or errored repeat is NOT identical (review m7).
+    assert D.identity_rate({0: ["a", "a"], 1: ["b", "c"], 2: ["d"]}) == pytest.approx(1 / 3)
+    assert D.identity_rate({0: ["a", "a"], 1: ["b", None]}, repeats=2) == 0.5
+    assert D.identity_rate({0: ["a", "a"], 1: ["b"]}, repeats=2) == 0.5
     assert D.identity_rate({}) is None
     per = {"u1": {0: ["a", "a"], 1: ["b", "b"]}, "u2": {0: ["a", "x"], 1: ["c", "c"]}}
     assert D.cross_identity(per) == 0.5
+    assert D.cross_identity({"u1": {0: [None], 1: ["b"]}, "u2": {0: [None], 1: ["b"]}}) == 0.5
     assert D.cross_identity({"u1": per["u1"]}) is None
 
 
@@ -35,6 +39,16 @@ def test_fixed_prompts_are_deterministic_and_seeded():
     a, b = D.fixed_prompts(3), D.fixed_prompts(3)
     assert a == b and len({p["seed"] for p in a}) == 3
     assert "Budget index (trial number): 2" in a[0]["prompt"]
+    # Both prompt shapes are probed: empty memory and a memory block (review m7).
+    assert "No prior trial memory available." in a[0]["prompt"]
+    assert "Prior trial memory:" in a[1]["prompt"] and "skipped by the control plane" in D.memory_text(3)
+
+
+def test_payload_can_carry_the_sweep1_grammar():
+    p = D.chat_payload("hi", 1, "m", proposal_schema="manager_proposal/v1")
+    assert p["response_format"]["type"] == "json_schema"
+    assert p["response_format"]["json_schema"]["name"] == "manager_proposal_v1"
+    assert "response_format" not in D.chat_payload("hi", 1, "m")
 
 
 def test_factorial_design_and_levels():

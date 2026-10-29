@@ -32,12 +32,16 @@ with the same sd, the large value with probability q, plus a small jitter: rare 
 * **N0** (zero oracle gain): non-binding W (the run's W must not bind), independent proposal values fixed in
   advance (key and step from the instance seed and the trial index only), theta known: no information, no
   feedback. ``gain`` must be 0; ``spread`` is the sd of the values.
-* **P0** (budget channel): as N0 but run at a binding W; ``gain`` is the spread of the independent values, so
-  skipping a low-value proposal frees a run worth more when spread is large.
+* **P0** (budget channel): independent proposal values that the controller can observe (review M3): four
+  (key, sign) groups with known distinct means (theta_ALPHA = +1, theta_LR = -1; group means
+  ``group_means`` x ``gain``; within-group sd ``within`` x ``gain``) and a per-group A2-U prior, so V* varies
+  across proposals; run at a binding W. ``diffuse``: the four groups equally likely; ``concentrated``: the
+  best group (mean ``conc_best`` x gain) with probability q, otherwise one of two slightly negative groups.
 * **P1** (Prop. 10(c), information): a probe edit (step alpha) and a later large edit (step beta) on the SAME
   key share the instance's latent theta (sd ``gain``): Delta_1 = alpha theta, Delta_2 = beta theta; noise sd
   sigma_run + kappa |step|. Filler edits on the other key are iid.
-* **P2p / P2m** (Prop. 10(b), budget-dependent keep feedback, both signs): a trigger edit at a fixed trial;
+* **P2p / P2m** (Prop. 10(b), budget-dependent keep feedback, both signs): a trigger edit at a trial drawn per
+  instance uniformly in [``trigger_min``, ``trigger_max``] (review M3: so r at the trigger varies);
   if it is kept (visible to the manager as the incumbent's value of the trigger key), every later proposal's
   mean step moves by +gain (P2p) or -gain (P2m) (concentrated: a fraction q of later proposals moves by
   +-gain/q). The value of keeping grows with the proposals left, hence with the budget.
@@ -228,6 +232,46 @@ class IidManager(_ScriptedSteps):
         return key, draw_step(rng, self.mu_step, self.spread, self.variant, self.q)
 
 
+P0_GROUPS = (("ALPHA", "+"), ("LEARNING_RATE_INIT", "-"), ("ALPHA", "-"), ("LEARNING_RATE_INIT", "+"))
+P0_THETA = {"ALPHA": 1.0, "LEARNING_RATE_INIT": -1.0}
+
+
+def p0_groups(p: dict) -> list[dict]:
+    """The P0 groups: key, sign, mean increment, within-group sd and draw probability."""
+    gain, q = float(p["gain"]), float(p.get("q", 0.1))
+    if p.get("variant", "diffuse") == "diffuse":
+        groups = P0_GROUPS
+        means, probs = [float(m) * gain for m in p.get("group_means", (1.5, 0.5, -0.5, -1.5))], [0.25] * 4
+    else:  # the rare best group (ALPHA+) and two slightly negative groups (ALPHA-, LR+)
+        groups = (P0_GROUPS[0], P0_GROUPS[2], P0_GROUPS[3])
+        neg = float(p.get("conc_rest", -0.25)) * gain
+        means, probs = [float(p.get("conc_best", 3.0)) * gain, neg, neg], [q, (1 - q) / 2, (1 - q) / 2]
+    w = float(p.get("within", 0.2)) * gain
+    out = []
+    for (key, sign), m, pr in zip(groups, means, probs):
+        if (m / P0_THETA[key] > 0) != (sign == "+"):
+            raise ValueError(f"P0 group {key}{sign}: mean {m} is incompatible with the step sign")
+        out.append({"key": key, "sign": sign, "mean": m, "sd": w, "p": pr})
+    return out
+
+
+class P0Manager(_ScriptedSteps):
+    """P0: a group drawn per trial (fixed in advance), increment N(mean, sd^2) kept on the group's sign."""
+
+    def __init__(self, seed: int, repetition: int, *, groups: list[dict]) -> None:
+        super().__init__("synthetic_P0", seed, repetition)
+        self.groups = groups
+
+    def plan(self, status):
+        rng = np.random.default_rng([self.seed, int(status.budget_index), 109])
+        g = self.groups[int(rng.choice(len(self.groups), p=[x["p"] for x in self.groups]))]
+        delta = float(rng.normal(g["mean"], g["sd"]))
+        theta = P0_THETA[g["key"]]
+        if (delta / theta > 0) != (g["sign"] == "+"):
+            delta = g["mean"]  # keep the step on the group's sign (rare when sd << |mean|)
+        return g["key"], delta / theta
+
+
 class P1Manager(_ScriptedSteps):
     def __init__(self, seed: int, repetition: int, *, probe_key: str, probe_trial: int, big_trial: int,
                  alpha: float, beta: float, filler_mu: float, filler_sd: float) -> None:
@@ -298,8 +342,10 @@ class SyntheticNode:
         common = dict(salt=int(seed), base=float(p.get("base", 0.9)), sigma_run=float(p["sigma_run"]),
                       kappa=float(p.get("kappa", 0.0)), incumbent_error=bool(p.get("incumbent_error", False)),
                       sigma_audit=float(p.get("sigma_audit", 0.0)))
-        if self.name in ("synthetic_N0", "synthetic_P0"):
+        if self.name == "synthetic_N0":
             return LogLinearLaw(theta={k: 1.0 for k in FLOAT_KEYS}, **common)
+        if self.name == "synthetic_P0":
+            return LogLinearLaw(theta=dict(P0_THETA), **common)
         if self.name == "synthetic_P1":
             rng = np.random.default_rng([int(seed), 211])
             th = draw_step(rng, float(p["theta_mean"]), float(p["gain"]), p.get("variant", "diffuse"), float(p.get("q", 0.1)))
@@ -314,15 +360,23 @@ class SyntheticNode:
         if self.name == "synthetic_N0":
             return IidManager(self.name, seed, repetition, mu_step=p["mu_step"], spread=p["spread"], variant=variant, q=q)
         if self.name == "synthetic_P0":
-            return IidManager(self.name, seed, repetition, mu_step=p["mu_step"], spread=p["gain"], variant=variant, q=q)
+            return P0Manager(seed, repetition, groups=p0_groups(p))
         if self.name == "synthetic_P1":
             return P1Manager(seed, repetition, probe_key=p["probe_key"], probe_trial=p["probe_trial"],
                              big_trial=p["big_trial"], alpha=p["alpha"], beta=p["beta"],
                              filler_mu=p["filler_mu"], filler_sd=p["filler_sd"])
         return P2Manager(self.name, seed, repetition, sign=+1.0 if self.name == "synthetic_P2p" else -1.0,
-                         trigger_key=p["trigger_key"], trigger_trial=p["trigger_trial"],
+                         trigger_key=p["trigger_key"], trigger_trial=self.trigger_trial(seed),
                          trigger_step=p["trigger_step"], mu_base=p["mu_base"], gain=p["gain"], sd_step=p["sd_step"],
                          variant=variant, q=q)
+
+    def trigger_trial(self, seed: int) -> int:
+        """P2: the instance's trigger trial, uniform in [trigger_min, trigger_max] (``trigger_trial`` pins it)."""
+        p = self.params
+        if p.get("trigger_trial") is not None:
+            return int(p["trigger_trial"])
+        lo, hi = int(p["trigger_min"]), int(p["trigger_max"])
+        return int(np.random.default_rng([int(seed), 223]).integers(lo, hi + 1))
 
     def worker(self, node_root: Path, seed: int) -> SyntheticWorker:
         return SyntheticWorker(node_root, self.law(seed), train_seed=seed, split_seed=seed)
@@ -338,10 +392,17 @@ class SyntheticNode:
         s = float(p["sigma_run"])
         if p.get("prior"):
             kp = KindPrior(**p["prior"])
-        elif self.name in ("synthetic_N0", "synthetic_P0"):
+        elif self.name == "synthetic_N0":
             # Independent values N(mu_step, spread^2) (same sd in both variants): no shared group mean.
-            spread = float(p["spread"] if self.name == "synthetic_N0" else p["gain"])
-            kp = KindPrior(mu0=float(p["mu_step"]), tau0=1e-6 * s, sigma_cmp=s, tau_w=max(spread, 1e-9))
+            kp = KindPrior(mu0=float(p["mu_step"]), tau0=1e-6 * s, sigma_cmp=s, tau_w=max(float(p["spread"]), 1e-9))
+        elif self.name == "synthetic_P0":
+            groups = p0_groups(p)
+            kp = KindPrior(mu0=float(np.dot([g["p"] for g in groups], [g["mean"] for g in groups])), tau0=1e-6 * s,
+                           sigma_cmp=s, tau_w=max(float(np.std([g["mean"] for g in groups])), 1e-9))
+            group_priors = {f"{g['key']}|{g['sign']}": KindPrior(mu0=g["mean"], tau0=1e-6 * s, sigma_cmp=s,
+                                                                 tau_w=max(g["sd"], 1e-9)) for g in groups}
+            return A2UPrior(node=SURFACE, sigma_node=s, kinds={"local": kp}, groups=group_priors,
+                            meta={"label": "SYNTHETIC", "node": self.name, "params": json.loads(json.dumps(p))})
         elif self.name == "synthetic_P1":
             kp = KindPrior(mu0=float(p["filler_mu"]), tau0=max(abs(float(p["alpha"])) * float(p["gain"]), 1e-9),
                            sigma_cmp=s, tau_w=float(p["filler_sd"]))
@@ -355,11 +416,13 @@ class SyntheticNode:
 
 
 # Defaults: runnable placeholders only (to be replaced by the simulated, declared values; runbook §4 mi-6).
-_P2 = {"trigger_key": "LEARNING_RATE_INIT", "trigger_trial": 2, "trigger_step": 0.1, "theta_trigger": -0.01,
+_P2 = {"trigger_key": "LEARNING_RATE_INIT", "trigger_trial": None, "trigger_min": 2, "trigger_max": 12,
+       "trigger_step": 0.1, "theta_trigger": -0.01,
        "mu_base": -0.002, "gain": 0.005, "sd_step": 0.004, "sigma_run": 0.003, "variant": "diffuse", "q": 0.1}
 DEFAULT_PARAMS = {
     "synthetic_N0": {"mu_step": 0.0, "spread": 0.01, "gain": 0.0, "sigma_run": 0.005, "variant": "diffuse", "q": 0.1},
-    "synthetic_P0": {"mu_step": -0.002, "gain": 0.01, "sigma_run": 0.003, "variant": "diffuse", "q": 0.1},
+    "synthetic_P0": {"gain": 0.004, "group_means": [1.5, 0.5, -0.5, -1.5], "within": 0.2, "conc_best": 3.0,
+                     "conc_rest": -0.25, "sigma_run": 0.003, "variant": "diffuse", "q": 0.1},
     "synthetic_P1": {"probe_key": "LEARNING_RATE_INIT", "probe_trial": 2, "big_trial": 6, "alpha": 0.1,
                      "beta": 1.0, "theta_mean": 0.0, "gain": 0.05, "kappa": 0.01, "sigma_run": 0.002,
                      "filler_mu": -0.002, "filler_sd": 0.004, "variant": "diffuse", "q": 0.1},

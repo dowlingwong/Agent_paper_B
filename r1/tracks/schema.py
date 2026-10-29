@@ -55,6 +55,9 @@ class Provenance:
     # roots and continuations ran at (raw metric units); None in records written before the fields existed.
     g_declared: float | None = None
     g0: float | None = None
+    # Added 29 Oct (review m3): checkout dirtiness at collection time (None = not recorded).
+    harness_dirty: bool | None = None
+    paper_dirty: bool | None = None
 
 
 @dataclass
@@ -136,6 +139,8 @@ class RootRecord:
     # Added 29 Oct (rev.-4 amendment 3): the named policy of the campaign, e.g. "a2u:g0" for roots,
     # "static:g=<x>,e2off=<y>" or "pi_prime:<model_file>" in the S3e "campaign" phase ("" = unspecified).
     policy: str = ""
+    # Added 29 Oct (review M2): the D26 LLM repetition of the campaign (0 = the root repetition).
+    rep: int = 0
 
 
 def to_dict(rec) -> dict:

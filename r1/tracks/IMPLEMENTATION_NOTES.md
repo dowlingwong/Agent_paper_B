@@ -128,11 +128,42 @@ Nothing here is a result.
 21. **S0.1** prompts are the harness LangGraph prompts of the node at trials 2..N+1 with empty memory, sent
     directly to `/chat/completions` with the D26 seeds; identity = all repeats of a prompt identical.
 
+## Review fixes (COLLECTOR_REVIEW_20261029: 1 BLOCKING, 6 MAJOR, 9 MINOR)
+
+These supersede the items above where they conflict (5, 11, 12, 16, 18).
+
+| # | Fix | Test (`r1/tests/`) |
+|---|---|---|
+| B1 | Phase-keyed audit blocks (20 seeds each): S0.4 33001+, S0.5 (calibration, S0.5b) 33101+, tune/S0.7 33201+, S3/S3a 33301+, campaign/S3e 33401+ (no other phase), synthetic 33501+, fixture 33601+; pairwise disjoint and disjoint from the instance, S1.1, selection and oracle seeds; the manifest records `audit_block`, `audit_seeds` and every block | `test_tracks_review_fixes.py::test_b1_*` |
+| M1 | `--root-policy` (m*) for S0.5 / S3 / synthetic: roots, rebuild checks and continuations; the near band uses each decision's `margin` to the root policy's own threshold (E1: V* (+ bonus) − threshold; E2: m̂ − h, h read from the policy's keep prior) | `test_m1_root_policy_*` |
+| M2 | Campaign id = seed key = `tracks_<node>__s<seed>` (no phase/policy tag); root ids carry phase, policy and rep; S0.5 takes `--policy` / repeatable `--rep` for paired extra roots; `RootRecord.rep` | `test_m2_*` (byte-identical same-rule twin) |
+| M3 | Mechanics only (world parameters pending rev 7): P0 has four (key, sign) groups with known distinct means and per-group A2-U priors (`A2UPrior.groups`), so V* varies; P2's trigger trial is drawn per instance; oracle channel tests: P0 → budget (significant) and N0 → no gain pass; P1 → info and P2± → keep are `xfail` (not planted significantly by the placeholder worlds) | `test_m3_*` |
+| M4 | `oracle.certify`: exact expected Y (`y_true`, no audit noise), best static chosen on a selection block, members evaluated on a disjoint evaluation block (both ≥ 10^6, disjoint from all collector seeds), n sized from a pilot, fails if a 95 % half-width exceeds 5 % of δ_Y | `test_m4_*`, `test_tracks_oracle.py` |
+| M5 | Forks deduplicated on fork_id and written before the root line (the commit marker); failures go to `failed_units.jsonl`, are never done, and are retried on later sessions up to `--max-retries` (then listed as exhausted); a truncated last JSONL line is ignored and repaired before the next append | `test_m5_*` |
+| M6 | S0.5 calibration audits: each executed non-rule proposal of a primary S0.5 root audited on the S0.5 block, with the 80 % predictive interval, `n_group` and its stratum (0, 1–2, ≥ 3) in `s05_calibration.jsonl`; `coverage` reports `by_stratum` | `test_m6_*`, `test_tracks_a2u.py::test_predictive_intervals_carry_n_group_strata` |
+| m1 | `--reps` (2) on channel forks, `--reps-ordinary` (1) elsewhere. Note: U_split needs two repetitions per fork; an author choice | `test_m1_minor_*` |
+| m2 | An A/A mismatch writes the leaf and raises STOP | `test_m2_minor_*` |
+| m3 | LLM runs refuse without GGUF sha256, llama.cpp build and host label; `harness_dirty` / `paper_dirty` in `Provenance`; `label` is a resume key | `test_m3_minor_*` |
+| m4 | Instance seeds must lie in the phase's block | `test_m4_minor_*` |
+| m5 | S0.5b refuses roots whose policy reads the budget; `binding` = W runs used while proposals remained (also for roots and leaves) | `test_m5_minor_*`, `test_truncate_at_W` |
+| m6 | The oracle exactness test covers P1 (both variants) and centred dynamic and g = 0 policies | `test_tracks_oracle.py` |
+| m7 | S0.1: a prompt with an errored or missing repeat is not identical; `--proposal-schema` sends sweep 1's `json_schema` grammar; every other prompt carries a memory block | `test_tracks_probes.py` |
+| m8 | See M5 | |
+| m9 | The D1′ test drives `A2UController.decide` (r = 0 at proposal 1, +0.5 after a skip; budget member executes what static skips) | `test_tracks_a2u.py::test_d1_prime_*` |
+
+Rev-7 support: (a) g = 0 in the static grid (15 static configurations; `a2u.static_execute` makes g = 0 execute every
+non-rule proposal exactly); (b) centred dynamic terms `r_bar`, `tau_bar` in `dynamic:` strings (execute iff
+V* + b_info (τ_pred − τ̄) ≥ g0 − b_budget (r − r̄); keep iff m̂ > h0 − h_budget (r − r̄)); (c) `--tune-grid magnitude`:
+b_budget ∈ {0.5, 1, 2}σ, b_info ∈ {0.25, 0.5, 1}, h_budget ∈ {±0.25, ±0.5, ±1}σ at m*; (d) `tune --jobs FILE`
+(explicit (policy, instance subset, rep) jobs, e.g. successive halving).
+
 ## Schema changes (`r1/tracks/schema.py`; defaulted fields at the end only)
 
 * `Provenance.g_declared`, `Provenance.g0` (rev.-4 amendment 2).
 * `LeafRecord.aa_reproduced` (A/A check), `LeafRecord.policy` (rev.-4 amendment 3).
 * `RootRecord.policy` (rev.-4 amendment 3); helper `root_from_dict`.
+* Review round: `RootRecord.rep` (M2), `Provenance.harness_dirty`, `Provenance.paper_dirty` (m3).
+* Prior file: optional `groups` (per-(key, sign) priors), written only when non-empty.
 
 ## Not implemented (open)
 
