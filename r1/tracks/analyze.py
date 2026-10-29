@@ -1,10 +1,10 @@
-"""Track S analysis (runbook revision 7.1, one-way screen): campaign-level S3e test of a tuned, mean-centred,
+"""Track S analysis (runbook revision 7.3, one-way screen): campaign-level S3e test of a tuned, mean-centred,
 single-channel dynamic threshold member against the tuned static rule (primary), with fork-level learning and
 attribution as secondaries.
 
 AI-assisted (Claude, 29 Oct 2026). ENGINEERING_ONLY until a Track S authorization exists; this script authorizes
 nothing and produces no evidence by itself. Spec: docs/r1/proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md
-revision 7.1. Notes and the S0.6 design study (FIXTURE): r1/tracks/ANALYSIS_NOTES.txt. Raw metric units
+revision 7.3. Notes and the S0.6 design study (FIXTURE): r1/tracks/ANALYSIS_NOTES.md. Raw metric units
 everywhere; threshold grids are declared in σ_cmp,vary units and converted with the node's declared value.
 
 PRIMARY, per decision node:
@@ -14,10 +14,12 @@ PRIMARY, per decision node:
      (budget +1σ, info +0.5, keep+ +0.5σ, keep− −0.5σ; 40 instances): execute iff V̂* + b_info(τ_pred − τ̄) ≥
      g0 − b_budget(r − r̄₁), keep iff m̂ > h0 − h_budget(r − r̄₂), r = runs_left/W − proposals_left/N_cap.
      π* = best member. Flip rate, matched static and winner's curse are descriptive.
-  2. Sizing: σ_D,UCL = max(S0.5b, S0.7 dev); n = ceil((2.93 σ_D,UCL/δ_Y)²) (≈ 83 % power under Holm with one null
-     node); n_max = 300, a capped node runs at 300 and its minimum detectable effect is reported.
-  3. S3e (campaign_roots.jsonl, fresh instances): D_i = Y_i(π*) − Y_i(m*), paired t, one-sided 95 % bounds; Holm by
-     p-value over the decision nodes; exact placebo (10 instances, D must be 0) and descriptive placebo (15).
+  2. Sizing (rev 7.2): n = 300 fresh instances per node, fixed. σ_D,UCL = max(S0.5b, S0.7 dev) and the formula
+     ceil((2.93 σ_D,UCL/δ_Y)²) only report the minimum detectable effect at n = 300 (2.93 σ_D,UCL/√300).
+  3. S3e (campaign_roots.jsonl, fresh instances): D_i = Y_i(π*, rep 0) − Y_i(m*, rep 0) (the primary D26
+     repetition only), paired t, one-sided 95 % bounds; Holm by p-value over the decision nodes; exact placebo (m*
+     run twice at rep 0 on 10 instances, D must be 0) and descriptive placebo (m* at rep 0 vs rep 1, 15 instances).
+     Repetition convention (collector = analysis): rep 0 is the primary, rep 1 the descriptive placebo's second.
   4. Outcomes (the only ones): A > A-small > "no gain found"; "Track S not run" if no node survives the fallback.
      STOPs (not outcomes): S0.6 N0 route-A count ≥ 19 of 200; exact placebo D ≠ 0; descriptive |z| > 3.5.
      S0.6 power and P(correct member) are reported per node, never gated.
@@ -86,6 +88,9 @@ NON_BUDGET_CHANNELS = ("delta_I", "delta_F", "e2_keep")
 # n = ceil((2.93 σ_D,UCL / δ_Y)²): 2.93 = z₀.₉₅ + z₀.₉₀ is 90 % unadjusted power; under Holm with one null node the
 # first test runs at α/2, giving ≈ 83 % power at a true gain of δ_Y on one node (runbook rev 7.1, m10).
 Z_SIZING = 2.93
+N_S3E = 300           # rev 7.2: fresh S3e instances per node, fixed
+PRIMARY_REP = 0       # D26 repetition of every primary campaign (collector convention, final review MAJOR 2)
+DESCRIPTIVE_REP = 1   # the descriptive placebo's second repetition
 
 
 class TrackSAnalysisError(ValueError):
@@ -378,7 +383,7 @@ def parse_families(d: dict | str | None) -> FamilyDecl:
 @dataclass
 class SizingDecl:
     sigma_D_ucl_s05b: float   # S0.5b one-sided 80 % UCL of σ_D at the chosen W (truncated ledgers)
-    n_max: int = 300          # largest affordable fresh-instance count; n > n_max -> node not B-eligible
+    n: int = 300              # fresh S3e instances per node, fixed (rev 7.2); the formula only reports the MDE
 
 
 @dataclass
@@ -391,6 +396,7 @@ class NodeDecl:
     budget_positive_control: bool = False
     sizing: SizingDecl | None = None
     sigma_cmp_vary: float | None = None   # unit of every threshold grid (runbook rev 7 S0.5b)
+    g_declared: float | None = None       # the declared run price g (secondary m* vs A2-U at g)
 
     @property
     def sigma_unit(self) -> float | None:
@@ -460,13 +466,15 @@ def parse_predeclaration(d: dict) -> Predeclaration:
         if k_n is not None and not float(k_n) > 0:
             raise TrackSAnalysisError(f"node {name}: k_n must be > 0")
         sz = nd.get("sizing")
-        sd = SizingDecl(float(sz["sigma_D_ucl_s05b"]), int(sz.get("n_max", 300))) if sz is not None else None
+        sd = SizingDecl(float(sz["sigma_D_ucl_s05b"]), int(sz.get("n", N_S3E))) \
+            if sz is not None else None
         scv = nd.get("sigma_cmp_vary")
         if role == "primary" and (sd is None or scv is None):
             raise TrackSAnalysisError(f"node {name}: a primary node needs sigma_cmp_vary and a sizing declaration")
         nodes[name] = NodeDecl(name, role, dY, float(k_n) if k_n is not None else None, sigma,
                                bool(nd.get("budget_positive_control", False)), sd,
-                               float(scv) if scv is not None else None)
+                               float(scv) if scv is not None else None,
+                               float(nd["g_declared"]) if nd.get("g_declared") is not None else None)
     primary = list(d.get("primary_nodes", []))
     for p in primary:
         if p not in nodes or nodes[p].role != "primary":
@@ -1088,28 +1096,31 @@ def policy_act(pol: dict, state: dict, epoch: str) -> bool:
 
 # ============================================================================================= campaign level: records
 def rep_of(r) -> int:
-    return int(getattr(r, "rep", 1) or 1)
+    """The collector's D26 repetition (0 = primary; missing = 0)."""
+    return int(getattr(r, "rep", PRIMARY_REP) or 0)
 
 
 def _ok_root(r) -> bool:
     return r.status == "ok" and r.y_terminal is not None and math.isfinite(r.y_terminal)
 
 
-def per_instance_means(roots: Sequence[RootRecord], policy: str) -> dict[str, float]:
-    """Mean Y per instance over distinct LLM repetitions (a duplicate root of the same repetition — the exact
-    placebo — is not counted twice)."""
-    by: dict[str, dict[int, float]] = {}
+def per_instance_means(roots: Sequence[RootRecord], policy: str, rep: int = PRIMARY_REP) -> dict[str, float]:
+    """Y per instance at one D26 repetition (default the primary, rep 0; final review MAJOR 3: the second
+    repetition is used only by the descriptive placebo). A duplicate root of the same repetition (the exact
+    placebo) is not counted twice: the first one is used."""
+    by: dict[str, float] = {}
     for r in roots:
-        if policy_of(r) == policy and _ok_root(r):
-            by.setdefault(r.instance_id, {}).setdefault(rep_of(r), float(r.y_terminal))
-    return {i: float(np.mean(list(v.values()))) for i, v in by.items()}
+        if policy_of(r) == policy and _ok_root(r) and rep_of(r) == rep:
+            by.setdefault(r.instance_id, float(r.y_terminal))
+    return by
 
 
-def campaign_pairs(roots: Sequence[RootRecord], candidate: str, comparator: str) -> dict:
-    """D_i = Ȳ_i(candidate) − Ȳ_i(comparator), paired by instance (means over LLM repetitions)."""
-    a, b = per_instance_means(roots, candidate), per_instance_means(roots, comparator)
+def campaign_pairs(roots: Sequence[RootRecord], candidate: str, comparator: str, rep: int = PRIMARY_REP) -> dict:
+    """D_i = Y_i(candidate) − Y_i(comparator) at the primary repetition, paired by instance."""
+    a, b = per_instance_means(roots, candidate, rep), per_instance_means(roots, comparator, rep)
     paired = sorted(set(a) & set(b))
-    failed = sum(1 for r in roots if policy_of(r) in (candidate, comparator) and not _ok_root(r))
+    failed = sum(1 for r in roots if policy_of(r) in (candidate, comparator) and not _ok_root(r)
+                 and rep_of(r) == rep)
     return {"instances": paired, "D": np.array([a[i] - b[i] for i in paired]),
             "n_unpaired": len(set(a) ^ set(b)), "n_failed": failed}
 
@@ -1166,8 +1177,8 @@ def _argmax_simplest(configs: Sequence[str], vals: np.ndarray) -> int:
 
 
 def select_static(dev_roots: Sequence[RootRecord], fam: FamilyDecl, sigma_node: float) -> dict:
-    """m* = highest mean dev Y on the 12-configuration grid; if m* is on the upper g edge, the grid is extended
-    once to g_ext (3 more configurations, same dev instances) and m* is re-selected over the 15."""
+    """m* = highest mean dev Y on the 15-configuration grid; if m* is on the upper g edge, the grid is extended
+    once to g_ext (3 more configurations, same dev instances) and m* is re-selected over the 18."""
     cfgs = fam.static_configs(sigma_node)
     fm = family_matrix(dev_roots, cfgs)
     if fm["Y"].size == 0 or np.isnan(fm["Y"]).all():
@@ -1324,9 +1335,10 @@ def _decisions_of(roots: Sequence[RootRecord], policy: str) -> list[dict]:
     return out
 
 
-def flip_rate(dev_roots: Sequence[RootRecord], pi_star: str, m_star: str) -> dict:
-    """Share of π*'s eligible dev decisions at which m* would have acted differently (same state)."""
-    ds = _decisions_of(dev_roots, pi_star)
+def flip_rate(roots: Sequence[RootRecord], pi_star: str, m_star: str) -> dict:
+    """Share of π*'s eligible decisions (in ``roots``: dev or fresh S3e campaigns, primary repetition) at which m*
+    would have acted differently in the same state."""
+    ds = _decisions_of([r for r in roots if rep_of(r) == PRIMARY_REP], pi_star)
     need = ("epoch", "action", "index_value", "r")
     usable = [d for d in ds if all(k in d for k in need) and (d["epoch"] == "E2" or "tau_pred" in d
                                                               or as_dynamic(m_star)[2] == 0.0)]
@@ -1343,7 +1355,7 @@ def flip_rate(dev_roots: Sequence[RootRecord], pi_star: str, m_star: str) -> dic
     by = {ep: (float(f[e == ep].mean()) if (e == ep).any() else None) for ep in ("E1", "E2")}
     return {"flip_rate": float(f.mean()), "flip_rate_E1": by["E1"], "flip_rate_E2": by["E2"], "n": len(flips),
             "n_E1": int((e == "E1").sum()), "n_E2": int((e == "E2").sum()),
-            "note": "the ≥ 10 % B condition applies to the overall rate"}
+            "note": "descriptive only (rev 7.1 one-way screen)"}
 
 
 def matched_static(dev_roots: Sequence[RootRecord], pi_star: str) -> dict:
@@ -1405,12 +1417,13 @@ def placebo_exact(roots: Sequence[RootRecord], policy: str, min_groups: int = 1)
 
 def placebo_descriptive(roots: Sequence[RootRecord], policy: str, *, z_stop: float = 3.5, alpha: float = 0.05,
                         min_n: int = 2) -> dict:
-    """Same policy at LLM repetitions 1 and 2 on the same instances: z of mean D reported; STOP only if |z| > z_stop."""
+    """Same policy at D26 repetitions 0 (primary) and 1 on the same instances: D = Y(rep 0) − Y(rep 1); z of mean D
+    reported; STOP only if |z| > z_stop."""
     reps: dict[str, dict[int, float]] = {}
     for r in roots:
         if policy_of(r) == policy and _ok_root(r):
             reps.setdefault(r.instance_id, {}).setdefault(rep_of(r), float(r.y_terminal))
-    D = [v[1] - v[2] for v in reps.values() if 1 in v and 2 in v]
+    D = [v[PRIMARY_REP] - v[DESCRIPTIVE_REP] for v in reps.values() if PRIMARY_REP in v and DESCRIPTIVE_REP in v]
     if len(D) < 2:
         return {"policy": policy, "status": "missing", "n": len(D), "z": None}
     t = mean_test(np.asarray(D), alpha=alpha)
@@ -1462,14 +1475,14 @@ def min_detectable_effect(sigma_D: float, n: int, z: float = Z_SIZING) -> float:
 
 
 def plan_sizing(sz: SizingDecl, delta_Y: float, dev_ucl: float | None) -> dict:
-    """σ_D,UCL = max(S0.5b UCL at the chosen W, S0.7 dev UCL); n = ceil((2.93 σ_D,UCL/δ_Y)²); if n > n_max the
-    node runs at n_max and the minimum detectable effect at n_max is reported (runbook rev 7 S0.5b)."""
+    """Rev 7.2: n = 300 per node, fixed (``SizingDecl.n``). σ_D,UCL = max(S0.5b UCL at the chosen W, S0.7 dev
+    UCL); the formula n_formula = ceil((2.93 σ_D,UCL/δ_Y)²) and the minimum detectable effect at n are reported
+    only (they never change n)."""
     ucl = max(sz.sigma_D_ucl_s05b, dev_ucl or 0.0)
-    n = campaign_n(ucl, delta_Y)
-    n_run = min(n, sz.n_max)
     return {"sigma_D_ucl_s05b": sz.sigma_D_ucl_s05b, "sigma_D_ucl_s07_dev": dev_ucl, "sigma_D_ucl": ucl,
-            "n_planned": n, "n_max": sz.n_max, "n_run_target": n_run, "capped": bool(n > sz.n_max),
-            "mde_at_run": min_detectable_effect(ucl, n_run), "z": Z_SIZING}
+            "n_formula": campaign_n(ucl, delta_Y) if ucl > 0 else None, "n_run_target": int(sz.n),
+            "n_fixed": True, "mde_at_run": min_detectable_effect(ucl, int(sz.n)),
+            "below_rev72_n": bool(sz.n < N_S3E), "z": Z_SIZING}
 
 
 def freeze_check(sizing: dict | None, s06: dict | None) -> dict:
@@ -1542,6 +1555,31 @@ def public(sel: dict) -> dict:
     return {k: v for k, v in sel.items() if not k.startswith("_")}
 
 
+def a2u_policy_for(fresh_roots: Sequence[RootRecord], decl: NodeDecl) -> str | None:
+    """The S3e A2-U campaigns at the declared g: policy "a2u" (the collector's A2-U at g0; used only when every
+    such root ran at g0 = the declared g) or, equivalently, ``static:<g_declared>,0``."""
+    a2u = [r for r in fresh_roots if policy_of(r) == "a2u"]
+    if a2u and all(r.provenance is not None and r.provenance.g0 is not None and r.provenance.g_declared is not None
+                   and abs(r.provenance.g0 - r.provenance.g_declared) <= 1e-12 for r in a2u):
+        return "a2u"
+    if decl.g_declared is not None:
+        s = policy_string("static", (decl.g_declared, 0.0))
+        if any(policy_of(r) == s for r in fresh_roots):
+            return s
+    return None
+
+
+def m_star_vs_a2u(fresh_roots: Sequence[RootRecord], m_star: str, decl: NodeDecl, pd: Predeclaration) -> dict | str:
+    """Secondary (descriptive): D = Y(m*) − Y(A2-U at the declared g), primary repetition, paired by instance."""
+    pol = a2u_policy_for(fresh_roots, decl)
+    if pol is None:
+        return "not run"
+    pr = campaign_pairs(fresh_roots, m_star, pol)
+    if len(pr["D"]) < 2:
+        return {"a2u_policy": pol, "n": len(pr["D"]), "note": "fewer than 2 paired instances"}
+    return {"a2u_policy": pol, "test": mean_test(pr["D"], alpha=pd.alpha), "n_unpaired": pr["n_unpaired"]}
+
+
 def analyze_s3e(node: str, dev_roots: Sequence[RootRecord], fresh_roots: Sequence[RootRecord], decl: NodeDecl,
                 pd: Predeclaration) -> dict:
     """Select m* and π* on dev data; test D = Y(π*) − Y(m*) on fresh instances; secondaries and placebos."""
@@ -1557,12 +1595,15 @@ def analyze_s3e(node: str, dev_roots: Sequence[RootRecord], fresh_roots: Sequenc
     for want in (pi_star, m_star):
         if want not in fresh_pols:
             raise TrackSAnalysisError(f"node {node}: no fresh campaigns for the selected policy {want!r}")
-    used = [r for r in list(fresh_roots) + list(dev_roots) if r.provenance is not None]
-    label = combine_labels([r.provenance.label for r in used] or ["FIXTURE"])
+    # The primary's label comes from the S3e inputs only; the dev (S0.7) label is reported separately (MINOR 4).
+    label = combine_labels([r.provenance.label for r in fresh_roots if r.provenance is not None] or ["FIXTURE"])
+    dev_label = combine_labels([r.provenance.label for r in dev_roots if r.provenance is not None] or ["FIXTURE"])
     pr = campaign_pairs(fresh_roots, pi_star, m_star)
     test = mean_test(pr["D"], alpha=pd.alpha)
     sizing = sel.get("sizing")
-    out = {"label": label, "pi_star": pi_star, "pi_star_channel": sel["pi_star_channel"], "m_star": m_star,
+    out = {"label": label, "dev_label": dev_label, "pi_star": pi_star, "pi_star_channel": sel["pi_star_channel"],
+           "m_star": m_star, "rep": PRIMARY_REP,
+           "flip_S3e": flip_rate(fresh_roots, pi_star, m_star),
            "n_unpaired": pr["n_unpaired"], "n_failed": pr["n_failed"], "test": test, "delta_Y": decl.delta_Y,
            "route_single_node": campaign_route(test, decl.delta_Y),
            "worded_ge_delta_Y": bool(test["mean"] >= decl.delta_Y), "sizing": sizing,
@@ -1580,6 +1621,7 @@ def analyze_s3e(node: str, dev_roots: Sequence[RootRecord], fresh_roots: Sequenc
             if len(pp["D"]) >= 2:
                 others[name] = mean_test(pp["D"], alpha=pd.alpha)
     out["other_members_vs_m_star"] = others or "not run"
+    out["m_star_vs_a2u"] = m_star_vs_a2u(fresh_roots, m_star, decl, pd)
     ms = sel["matched_static"]["policy"]
     out["matched_static_runs"] = {"n_instances": len(per_instance_means(fresh_roots, ms)), "n_planned": test["n"]}
     if ms in fresh_pols and ms != m_star:
@@ -1642,7 +1684,7 @@ def no_gain_node_text(node: str, test: dict, cn: dict | None) -> str:
 
 
 def decide(results: dict[str, dict], controls: dict | None, pd: Predeclaration) -> dict:
-    """Runbook rev 7 one-way screen: A > A-small > no gain found; STOP gates first. Route B does not exist."""
+    """Runbook rev 7 one-way screen: A > A-small > no gain found; STOP gates first."""
     nodes = pd.primary_nodes
     if not nodes:
         return {"route": "Track S not run", "wording": NOT_RUN_WORDING + (f" Reason: {pd.not_run_reason}"
@@ -1695,8 +1737,11 @@ def decide(results: dict[str, dict], controls: dict | None, pd: Predeclaration) 
             warnings.append(f"{p}: descriptive placebo {ds['status']} (n = {ds['n']})")
         if c.get("underpowered_vs_plan"):
             warnings.append(f"{p}: {c['test']['n']} fresh pairs < planned {c['sizing']['n_run_target']}")
+        if (c.get("sizing") or {}).get("below_rev72_n"):
+            warnings.append(f"{p}: declared n {c['sizing']['n_run_target']} < {N_S3E} (rev 7.2 fixes n = {N_S3E})")
     out.update(s06=s06, warnings=warnings,
-               flip_rates={p: results[p]["campaign"]["selection"]["flip"] for p in nodes})
+               flip_rates={p: {"S3e": results[p]["campaign"].get("flip_S3e"),
+                               "dev": results[p]["campaign"]["selection"]["flip"]} for p in nodes})
     labels = [results[p]["campaign"]["label"] for p in nodes] + ([controls["label"]] if controls.get("label") else [])
     out["label"] = combine_labels(labels)
     if stops:
@@ -1729,10 +1774,11 @@ def decide(results: dict[str, dict], controls: dict | None, pd: Predeclaration) 
         sz = c.get("sizing") or {}
         cn = (controls.get("nodes") or {}).get(p)
         txt = no_gain_node_text(p, tests[p], cn)
-        if sz.get("capped"):
-            txt += f" (n capped at {sz['n_run_target']}; minimum detectable effect {sz['mde_at_run']:.4g})"
+        if sz.get("mde_at_run") is not None:
+            txt += f" (n = {sz['n_run_target']} fixed; minimum detectable effect {sz['mde_at_run']:.4g})"
         per.append(txt)
-        table[p] = {"UB95": tests[p]["ub"], "flip_rate_S3e_dev": c["selection"]["flip"]["flip_rate"],
+        table[p] = {"UB95": tests[p]["ub"], "flip_rate_S3e": (c.get("flip_S3e") or {}).get("flip_rate"),
+                    "flip_rate_dev": c["selection"]["flip"]["flip_rate"],
                     "S06_P_correct_member": {f"{k}-{v}": (_s06_value(cn, k, v) or {}).get("p_correct_selection")
                                              for k, v, _ in S06_CONTROLS}}
     out.update(route="no gain found", per_node=table,
@@ -1760,10 +1806,12 @@ def markdown_report(result: dict) -> str:
         if d.get(k):
             lines += [f"{k}: {d[k]}", ""]
     if d.get("per_node"):
-        lines += ["| Node | UB95 | S3e flip rate (π* dev states) | S0.6 P(correct member) |", "|---|---|---|---|"]
+        lines += ["| Node | UB95 | flip rate (π* S3e states) | flip rate (π* dev states) | S0.6 P(correct member) |",
+                  "|---|---|---|---|---|"]
         for p, v in d["per_node"].items():
             pcs = ", ".join(f"{k}: {_fmt(x)}" for k, x in v["S06_P_correct_member"].items())
-            lines.append(f"| {p} | {_fmt(v['UB95'])} | {_fmt(v['flip_rate_S3e_dev'])} | {pcs} |")
+            lines.append(f"| {p} | {_fmt(v['UB95'])} | {_fmt(v['flip_rate_S3e'])} | {_fmt(v['flip_rate_dev'])} | "
+                         f"{pcs} |")
         lines.append("")
     lines += ["## Primary: S3e, tuned dynamic π* vs tuned static m* on fresh instances (raw metric units)", "",
               "| Node | π* (member) | m* | n | mean D | LB95 | UB95 | p (one-sided) | δ_Y | Node outcome | Holm | Label |",
@@ -1779,20 +1827,24 @@ def markdown_report(result: dict) -> str:
                      f"{t['n']} | {_fmt(t['mean'])} | {_fmt(t['lb'])} | {_fmt(t['ub'])} | {_fmt(t['p_one_sided'])} | "
                      f"{_fmt(c['delta_Y'])} | {c['route_single_node']} | {hs} | {c['label']} |")
     lines += ["", "### Sizing, selection, flip rate, winner's curse, matched static, placebos (descriptive)", "",
-              "| Node | flip (all / E1 / E2) | σ_D,UCL | n planned | n run | MDE at n run | dev gap | "
-              "matched static (share) | exact placebo | placebo z | Label |",
-              "|---|---|---|---|---|---|---|---|---|---|---|"]
+              "| Node | flip S3e (all / E1 / E2) | flip dev | σ_D,UCL | n (fixed) | n formula | MDE at n | dev gap | "
+              "matched static (share) | m* − A2-U(g) | exact placebo | placebo z | Label (dev) |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for name, r in result["nodes"].items():
         c = r.get("campaign")
         if not c:
             continue
         sz, wc, ms, fl = c.get("sizing") or {}, c["winners_curse"], c.get("matched_static") or {}, \
-            c["selection"]["flip"]
+            c.get("flip_S3e") or {}
+        a2 = c.get("m_star_vs_a2u")
+        a2s = _fmt(a2["test"]["mean"]) if isinstance(a2, dict) and a2.get("test") else "not run"
         lines.append(f"| {name} | {_fmt(fl.get('flip_rate'))} / {_fmt(fl.get('flip_rate_E1'))} / "
-                     f"{_fmt(fl.get('flip_rate_E2'))} | {_fmt(sz.get('sigma_D_ucl'))} | {_fmt(sz.get('n_planned'))} | "
-                     f"{_fmt(sz.get('n_run_target'))} | {_fmt(sz.get('mde_at_run'))} | {_fmt(wc['dev_gap_winners'])} | "
-                     f"`{ms.get('policy', '—')}` ({_fmt(ms.get('recovers_share'))}) | {c['placebo_exact']['status']} | "
-                     f"{_fmt(c['placebo_descriptive'].get('z'))} | {c['label']} |")
+                     f"{_fmt(fl.get('flip_rate_E2'))} | {_fmt(c['selection']['flip'].get('flip_rate'))} | "
+                     f"{_fmt(sz.get('sigma_D_ucl'))} | {_fmt(sz.get('n_run_target'))} | {_fmt(sz.get('n_formula'))} | "
+                     f"{_fmt(sz.get('mde_at_run'))} | {_fmt(wc['dev_gap_winners'])} | "
+                     f"`{ms.get('policy', '—')}` ({_fmt(ms.get('recovers_share'))}) | {a2s} | "
+                     f"{c['placebo_exact']['status']} | {_fmt(c['placebo_descriptive'].get('z'))} | "
+                     f"{c['label']} ({c.get('dev_label')}) |")
     if d.get("s06"):
         lines += ["", "### S0.6 sensitivity (reported, not gated; N0 is the only STOP)", "",
                   "| Node | Control | k / R | rate or power | 95 % CI | achieved oracle gain | P(correct member) |",
@@ -1869,6 +1921,129 @@ def run_analysis(node_dirs: dict[str, Path], pd: Predeclaration, *, controls: di
             "decision": decide(results, controls, pd)}
 
 
+# ============================================================================================= S0.5 / S0.5b summary
+S05_SCHEMA = "tracks_s05_summary/v1"
+S05_W_CANDIDATES = (8, 10, 12, 20)
+S05_W_DEFAULT = 20   # deployment W (the largest candidate) when no candidate binds; the budget member is dropped
+
+
+def _jsonl(path: Path) -> list[dict]:
+    return _read_jsonl(path) if Path(path).exists() else []
+
+
+def calibration_gate(rows: Sequence[dict], *, band: tuple[float, float] = (0.70, 0.90), min_n: int = 100,
+                     stratum_min: int = 20) -> dict:
+    """S0.5 (iii): coverage of the 80 % predictive intervals overall and by n_group stratum (0, 1-2, ≥3); pass iff
+    ≥ ``min_n`` predictions and coverage in ``band`` overall and in every stratum with ≥ ``stratum_min``."""
+    use = [r for r in rows if r.get("covered") is not None]
+    n = len(use)
+    cov = (sum(bool(r["covered"]) for r in use) / n) if n else None
+    strata: dict[str, list[bool]] = {}
+    for r in use:
+        strata.setdefault(str(r.get("stratum")), []).append(bool(r["covered"]))
+    by = {k: {"n": len(v), "coverage": sum(v) / len(v), "gated": len(v) >= stratum_min,
+              "in_band": band[0] <= sum(v) / len(v) <= band[1]} for k, v in sorted(strata.items())}
+    if n < min_n:
+        status = "insufficient"
+    elif band[0] <= cov <= band[1] and all(v["in_band"] for v in by.values() if v["gated"]):
+        status = "pass"
+    else:
+        status = "fail"
+    return {"n": n, "coverage": cov, "by_stratum": by, "band": list(band), "min_n": min_n, "stratum_min": stratum_min,
+            "status": status, "rule": "fail -> revise the inflation factor once and re-check; a second fail is a STOP"}
+
+
+def _sd_ucl(D: Sequence[float], conf: float) -> dict:
+    D = np.asarray(D, float)
+    if len(D) < 2:
+        return {"m": int(len(D)), "sigma_hat": None, "ucl": None}
+    sd = float(D.std(ddof=1))
+    return {"m": int(len(D)), "mean": float(D.mean()), "sigma_hat": sd,
+            "ucl": sigma_D_ucl(sd, len(D), conf) if sd > 0 else 0.0, "conf": conf}
+
+
+def s05_node_summary(d: Path, *, W: int | None = None, policy_pair: Sequence[str] | None = None,
+                     conf: float = 0.8, Ws: Sequence[int] = S05_W_CANDIDATES, **gate_kw) -> dict:
+    """One node's S0.5 out-dir (roots.jsonl, s05b_truncated.jsonl, s05_calibration.jsonl, manifest.json)."""
+    d = Path(d)
+    man = json.loads((d / "manifest.json").read_text()) if (d / "manifest.json").exists() else {}
+    roots = {r["root_id"]: r for r in _jsonl(d / "roots.jsonl") if r.get("status", "ok") == "ok"}
+    trunc = _jsonl(d / "s05b_truncated.jsonl")
+    by_W: dict[int, dict[str, dict]] = {}
+    for t in trunc:
+        if t["root_id"] in roots:
+            by_W.setdefault(int(t["W"]), {})[t["root_id"]] = t
+    shares = {int(w): (sum(bool(t["binding"]) for t in by_W[w].values()) / len(by_W[w]) if by_W.get(w) else None)
+              for w in Ws}
+
+    def y(w: int, rid: str):
+        t = by_W.get(w, {}).get(rid)
+        return None if t is None else t.get("y_terminal")
+
+    def table(w: int):
+        out: dict[tuple[str, str, int], float] = {}
+        for rid, r in roots.items():
+            v = y(w, rid)
+            if v is not None:
+                out[(r["instance_id"], r.get("policy") or "", int(r.get("rep", 0) or 0))] = float(v)
+        return out
+
+    rep0_pols = sorted({r.get("policy") or "" for r in roots.values() if int(r.get("rep", 0) or 0) == PRIMARY_REP})
+    pair = list(policy_pair) if policy_pair else (rep0_pols if len(rep0_pols) == 2 else None)
+    rep_pols = sorted({r.get("policy") or "" for r in roots.values() if int(r.get("rep", 0) or 0) == DESCRIPTIVE_REP})
+
+    def sigmas(w: int) -> dict:
+        tab = table(w)
+        out = {"W": w}
+        if pair:
+            a, b = pair
+            D = [tab[(i, a, 0)] - tab[(i, b, 0)] for (i, p, rp) in tab if p == a and rp == 0 and (i, b, 0) in tab]
+            out["between_policies"] = {"policies": pair, **_sd_ucl(D, conf)}
+        else:
+            out["between_policies"] = {"policies": rep0_pols, "note": "give --policy-pair (not exactly 2 policies)"}
+        rr = {}
+        for pol in rep_pols:
+            D = [tab[(i, p, 0)] - tab[(i, p, 1)] for (i, p, rp) in tab if p == pol and rp == 0 and (i, p, 1) in tab]
+            rr[pol] = _sd_ucl(D, conf)
+        out["between_repetitions"] = rr
+        return out
+
+    cal = _jsonl(d / "s05_calibration.jsonl")
+    sds = [float(r["sd_paired"]) if r.get("sd_paired") is not None else
+           (float(r["se"]) * math.sqrt(int(r["k"])) if r.get("se") is not None and r.get("k") else None) for r in cal]
+    sds = [x for x in sds if x is not None and math.isfinite(x)]
+    n_roots = len(roots)
+    audits = sum(int(sess.get("audit_runs") or 0) for sess in man.get("sessions", []))
+    return {"out_dir": str(d), "label": man.get("label"), "host": man.get("host"), "W_pilot": man.get("W"),
+            "n_roots": n_roots, "binding_shares": shares,
+            "sigma_cmp_vary": float(np.median(sds)) if sds else None, "sigma_cmp_vary_n": len(sds),
+            "sigma_D_by_W": {int(w): sigmas(int(w)) for w in Ws if by_W.get(int(w))},
+            "sigma_D_at_W": sigmas(int(W)) if W is not None and by_W.get(int(W)) else None,
+            "calibration": calibration_gate(cal, **gate_kw),
+            "llm_calls_per_campaign": float(np.mean([r.get("llm_calls", 0) for r in roots.values()])) if roots else None,
+            "audit_runs_per_campaign": audits / n_roots if n_roots else None}
+
+
+def s05_summary(node_dirs: dict[str, Path], *, policy_pair: Sequence[str] | None = None, conf: float = 0.8,
+                Ws: Sequence[int] = S05_W_CANDIDATES, primary: Sequence[str] | None = None, **gate_kw) -> dict:
+    """S0.5 / S0.5b decision quantities (runbook S0.5, S0.5b; final review MAJOR 5): binding shares per W and the
+    chosen W (the largest candidate binding in ≥ 50 % of pilot campaigns on every primary node; none -> the largest
+    candidate, W = 20, and the budget member is dropped), σ_cmp,vary (median paired sd of Δ̂ under vary, from the calibration audits),
+    σ_D between the two pilot policies and between repetitions with the one-sided ``conf`` χ² UCL at the chosen W,
+    and the calibration gate."""
+    first = {n: s05_node_summary(d, policy_pair=policy_pair, conf=conf, Ws=Ws, **gate_kw)
+             for n, d in node_dirs.items()}
+    prim = list(primary or node_dirs)
+    ok = [w for w in sorted(Ws) if all((first[n]["binding_shares"].get(w) or 0.0) >= 0.5 for n in prim)]
+    W = max(ok) if ok else max(Ws)   # none binds: the deployment W = 20, the largest declared candidate
+    nodes = {n: s05_node_summary(d, W=W, policy_pair=policy_pair, conf=conf, Ws=Ws, **gate_kw)
+             for n, d in node_dirs.items()}
+    return {"schema": S05_SCHEMA, "label": combine_labels([v["label"] or "FIXTURE" for v in nodes.values()]),
+            "W_candidates": list(Ws), "W_chosen": W, "budget_binds": bool(ok), "primary_nodes": prim,
+            "budget_member": "kept" if ok else "dropped (no candidate W binds in >= 50 % on every primary node)",
+            "nodes": nodes}
+
+
 def _json_default(o):
     if isinstance(o, np.floating):
         return float(o)
@@ -1898,7 +2073,26 @@ def main(argv: Sequence[str] | None = None) -> int:
     a.add_argument("--out-md", type=Path, required=True)
     a.add_argument("--policy-out", type=Path, default=None, help="write the secondary π′ and m̃ JSON here")
     a.add_argument("--bootstrap-B", type=int, default=None, help="override (engineering runs only; recorded)")
+    q = sub.add_parser("s05-summary", help="S0.5 / S0.5b: binding shares and W, sigma_cmp,vary, sigma_D UCLs, "
+                                          "calibration gate")
+    q.add_argument("--node", action="append", required=True, metavar="NAME=S05_OUT_DIR")
+    q.add_argument("--primary", action="append", default=None, help="primary nodes for the W choice (default: all)")
+    q.add_argument("--policy-pair", default=None, help="the two pilot policies 'A|B' (default: the two rep-0 ones)")
+    q.add_argument("--W-candidates", default="8,10,12,20")
+    q.add_argument("--conf", type=float, default=0.8)
+    q.add_argument("--min-predictions", type=int, default=100)
+    q.add_argument("--stratum-min", type=int, default=20)
+    q.add_argument("--out", type=Path, required=True)
     args = ap.parse_args(argv)
+    if args.cmd == "s05-summary":
+        dirs = {k: Path(v) for k, v in (spec.split("=", 1) for spec in args.node)}
+        res = s05_summary(dirs, policy_pair=args.policy_pair.split("|") if args.policy_pair else None,
+                          conf=args.conf, Ws=[int(w) for w in args.W_candidates.split(",")], primary=args.primary,
+                          min_n=args.min_predictions, stratum_min=args.stratum_min)
+        args.out.write_text(json.dumps(res, indent=2, default=_json_default))
+        print(f"W={res['W_chosen']} budget_binds={res['budget_binds']} "
+              + " ".join(f"{n}:cal={v['calibration']['status']}" for n, v in res["nodes"].items()))
+        return 0
     pd = parse_predeclaration(json.loads(args.predeclaration.read_text()))
     try:
         if args.cmd == "select":
@@ -1934,5 +2128,5 @@ if __name__ == "__main__":
 
 
 # =============================================================================================
-# IMPLEMENTATION NOTES: see r1/tracks/ANALYSIS_NOTES.txt (runbook rev 7.1 choices, simulator, S0.6 design study).
+# IMPLEMENTATION NOTES: see r1/tracks/ANALYSIS_NOTES.md (runbook rev 7.x choices, simulator, S0.6 design study).
 # =============================================================================================

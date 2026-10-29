@@ -23,7 +23,14 @@ Phases (``--phase``):
 * ``tune`` (S0.7) — policy strings on dev instances (tuning seed block), every configuration on the same
   paired instances; ``--tune-grid static|dynamic`` adds the declared stage (``tuning_grid``, see Tune below);
   ``--jobs FILE`` gives an explicit list of (policy, instance subset, rep) jobs (e.g. successive halving).
-* ``campaign`` (S3e) — every ``--policy`` x ``--rep`` on every fresh instance.
+* ``campaign`` (S3e) — every ``--policy`` x ``--rep`` on every fresh instance. The placebos (final review MINOR 1, 8):
+  ``--placebo-policy m* --exact-placebo-n 10`` runs m* twice at rep 0 on the first 10 instances FIRST (a mismatch
+  is a STOP before anything else runs); ``--descriptive-placebo-n 15`` runs m* at rep 1 on the first 15
+  instances. ``--rep-instances n`` restricts repetitions other than 0 to the first n instances (e.g. the S0.5
+  10-instance repetition subset).
+* ``python -m r1.tracks.collect assemble --node N --out DIR --dev <tune out-dirs> --campaign <campaign out-dirs>
+  [--fork <S3 / synthetic out-dirs>]`` — the analysis node directory (``dev_roots.jsonl``,
+  ``campaign_roots.jsonl``, ``roots.jsonl`` + ``leaves.jsonl``), with checks and ``assemble.json``.
 
 Policies: ``a2u`` (A2-U at g0), ``a2``, ``static:g,h``, ``dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar``
 (or its 5-value form), ``pi_prime:<model_file>``. Static and dynamic strings are positional, raw metric units,
@@ -40,6 +47,12 @@ Seeds (all declared below and recorded in the manifest):
 * instance blocks per phase (bounds checked; review m4);
 * audit blocks per phase (review B1): S0.4, S0.5 (calibration and S0.5b), tune (S0.7), S3 (S3a), campaign
   (S3e, used by no other phase), synthetic, fixture; pairwise disjoint and disjoint from the instance blocks;
+  audit seeds are PER INSTANCE (final review MAJOR 1): instance i of a phase is audited on
+  base + i * 20 + k, k < K (``instance_audit_seeds``), shared by every policy and repetition on that instance,
+  for real and synthetic nodes alike;
+* repetitions (final review MAJOR 2): a campaign's ``rep`` is its D26 repetition; 0 is the primary, 1 the
+  descriptive placebo's second repetition (the analysis uses the same convention); fork leaves use
+  REP_BASE + 1, 2, ...;
 * the campaign id and LLM seed key of every campaign is (node, instance seed) only (review M2), so all
   policies and repetitions of an instance share the D26 seeds at the same repetition and the worker, verify
   and audit seeds; root ids carry the phase, policy and repetition.
@@ -103,13 +116,19 @@ MANIFEST_SCHEMA = "tracks_manifest/v2"
 INSTANCE_SEED_BLOCKS = {"S0.4": (30000, 30250), "tune": (30250, 30500), "S0.5": (30500, 31000),
                         "S3": (31000, 32000), "campaign": (32000, 33000), "synthetic": (36000, 37000),
                         "fixture": (39000, 40000)}
-_AUDIT_BLOCK_SIZE = 20
-AUDIT_SEED_BLOCKS = {name: tuple(range(start, start + _AUDIT_BLOCK_SIZE)) for name, start in (
-    ("S0.4", 33001), ("S0.5", 33101), ("tune", 33201), ("S3", 33301), ("campaign", 33401),
-    ("synthetic", 33501), ("fixture", 33601))}
+# Audit seeds are PER INSTANCE (final review MAJOR 1, coordinator decision): instance i of a phase (i = its
+# seed minus the phase's instance-block start) is audited on seeds base + i * AUDIT_STRIDE + k, k < K, from the
+# phase's own audit block; every policy and repetition on that instance shares them (pairing kept), and no two
+# instances share a seed, so a recurring configuration does not carry one fixed audit error across the sample.
+# Real and synthetic nodes use the same rule.
+AUDIT_STRIDE = 20                                   # max K
+AUDIT_BLOCK_CAPACITY = 100_000
+AUDIT_SEED_BASES = {"S0.4": 100_000, "S0.5": 200_000, "tune": 300_000, "S3": 400_000, "campaign": 500_000,
+                    "synthetic": 600_000, "fixture": 700_000}
+AUDIT_SEED_BLOCKS = {name: range(base, base + AUDIT_BLOCK_CAPACITY) for name, base in AUDIT_SEED_BASES.items()}
 PHASE_AUDIT_BLOCK = {"S0.4": "S0.4", "S0.5": "S0.5", "S0.5b": "S0.5", "tune": "tune", "S3": "S3",
-                     "campaign": "campaign", "synthetic": "synthetic"}
-DEV_AUDIT_SEEDS = AUDIT_SEED_BLOCKS["S0.4"][:5]   # S0.4 dev rows, K = 5
+                     "campaign": "campaign", "synthetic": "synthetic", "fixture": "fixture"}
+DEV_K = 5                                           # S0.4 dev rows, K = 5
 SELECTION_SEED = 35001
 REP_BASE = 100                                    # leaf repetition r -> D26 repetition REP_BASE + r
 CHANNEL_FRACTION = 1.0 / 3.0
@@ -146,11 +165,24 @@ def cfg_hash(files: dict[str, str]) -> str:
     return hashlib.sha256(json.dumps(configuration(files), sort_keys=True, default=str).encode()).hexdigest()[:20]
 
 
-def audit_seeds_for(phase: str, k: int) -> tuple[str, tuple]:
+def audit_rule(phase: str, k: int) -> dict:
+    """The phase's per-instance audit-seed rule (recorded in the manifest)."""
     block = PHASE_AUDIT_BLOCK[phase]
-    if not 1 <= k <= _AUDIT_BLOCK_SIZE:
-        raise SystemExit(f"--k-audit must lie in 1..{_AUDIT_BLOCK_SIZE}")
-    return block, AUDIT_SEED_BLOCKS[block][:k]
+    if not 1 <= k <= AUDIT_STRIDE:
+        raise SystemExit(f"--k-audit must lie in 1..{AUDIT_STRIDE}")
+    return {"block": block, "base": AUDIT_SEED_BASES[block], "stride": AUDIT_STRIDE, "K": int(k),
+            "instance_block": list(INSTANCE_SEED_BLOCKS[block]),
+            "rule": "seed = base + (instance_seed - instance_block[0]) * stride + k, k < K"}
+
+
+def instance_audit_seeds(phase: str, instance_seed: int, k: int) -> tuple[int, ...]:
+    """The K audit seeds of one instance of a phase (shared by every policy and repetition on it)."""
+    r = audit_rule(phase, k)
+    lo, hi = r["instance_block"]
+    if not lo <= int(instance_seed) < hi:
+        raise ValueError(f"instance seed {instance_seed} is outside the {r['block']} instance block [{lo}, {hi})")
+    first = r["base"] + (int(instance_seed) - lo) * AUDIT_STRIDE
+    return tuple(range(first, first + int(k)))
 
 
 # ---------------------------------------------------------------------------
@@ -420,7 +452,7 @@ def policy_controller(policy: str, prior, ctx, *, g0: float, obs_inflation: floa
         return a2u.A2UController.dynamic(prior, ctx, g0=g, b_budget=bb, b_info=bi, h0=h, h_budget=hb, r1_bar=r1,
                                          tau_bar=tb, r2_bar=r2, obs_inflation=obs_inflation, W=W, policy_name=name)
     if policy.startswith("pi_prime:"):
-        model, sha = a2u.RidgeScore.load(policy[len("pi_prime:"):])
+        model, sha = a2u.load_score_model(policy[len("pi_prime:"):])
         return a2u.A2UController(prior, ctx, g=g0, score_fn=model, obs_inflation=obs_inflation, W=W,
                                  policy_name=f"pi_prime:{sha[:12]}")
     raise ValueError(f"unknown or unimplemented policy {policy!r} (budget_dp / probe_first are not implemented)")
@@ -549,9 +581,9 @@ class Run:
     def cap(self) -> int:
         return int(self.manifest["llm_cap"])
 
-    @property
-    def seeds(self) -> tuple:
-        return tuple(self.manifest["audit_seeds"])
+    def seeds(self, instance_seed: int) -> tuple:
+        """This phase's audit seeds of one instance (``instance_audit_seeds``)."""
+        return instance_audit_seeds(self.manifest["phase"], int(instance_seed), int(self.manifest["K"]))
 
     @property
     def root_policy(self) -> str:
@@ -697,12 +729,13 @@ def root_id_for(run: Run, seed: int, variant: str = "") -> str:
     return f"tracks_{tag}_{run.adapter.name}__s{seed}{variant}"
 
 
-def root_variant(policy: str | None, rep: int, *, primary: bool) -> str:
+def root_variant(policy: str | None, rep: int, *, primary: bool, dup: bool = False) -> str:
+    """Root-id suffix; ``dup``: the exact placebo's second run of the same (policy, rep) on an instance."""
     if primary:
         return ""
     if policy == "a2":
         return "__A2"
-    return f"__{_policy_tag(policy or 'a2u')}_r{rep}"
+    return f"__{_policy_tag(policy or 'a2u')}_r{rep}" + ("_dup" if dup else "")
 
 
 def w_binds(runs: int, W: int, trials: int, trial_cap: int) -> bool:
@@ -768,12 +801,12 @@ def _llm_calls(events: list[dict]) -> int:
                and (e.get("payload") or {}).get("purpose") != "self_forecast")
 
 
-def run_root(run: Run, k: int, *, policy: str | None, rep: int, primary: bool) -> dict:
+def run_root(run: Run, k: int, *, policy: str | None, rep: int, primary: bool, dup: bool = False) -> dict:
     """One campaign of instance k (``primary``: the forked root of a fork phase). Raises on failure."""
     adapter = run.adapter
     seed = instance_seed(run, k)
     cid = seed_key_for(adapter.name, seed)
-    root_id = root_id_for(run, seed, root_variant(policy, rep, primary=primary))
+    root_id = root_id_for(run, seed, root_variant(policy, rep, primary=primary, dup=dup))
     root_dir = run.work / "roots" / root_id
     if root_dir.exists():
         shutil.rmtree(root_dir)  # an interrupted root is re-run whole, never patched
@@ -793,10 +826,10 @@ def run_root(run: Run, k: int, *, policy: str | None, rep: int, primary: bool) -
     events = read_jsonl(root_dir / "root_events.jsonl")
     decisions = decisions_from(rows, events, snaps.written if snaps else None)
     start = adapter.start_files()
-    y_start = _mean(run.audits.metrics(seed, start, run.seeds))
-    y1 = _mean(run.audits.metrics(seed, adapter.files_after(rows, start, seed, 1), run.seeds)) if rows else None
+    y_start = _mean(run.audits.metrics(seed, start, run.seeds(seed)))
+    y1 = _mean(run.audits.metrics(seed, adapter.files_after(rows, start, seed, 1), run.seeds(seed))) if rows else None
     final = _workspace_files(adapter, node_dir)
-    y_seeds = run.audits.metrics(seed, final, run.seeds)
+    y_seeds = run.audits.metrics(seed, final, run.seeds(seed))
     runs_used = worker_runs_of(rows, events)
     rec = RootRecord(schema=TRACKS_ROOT_SCHEMA, node=adapter.name, instance_id=f"{adapter.name}__s{seed}",
                      root_id=root_id, W=run.W, llm_cap=run.cap, y_start=y_start, y_after_trial1=y1,
@@ -811,6 +844,7 @@ def run_root(run: Run, k: int, *, policy: str | None, rep: int, primary: bool) -
     out = to_dict(rec)
     out["_snapshots"] = {f"{e}_b{b:03d}": p for (e, b), p in (snaps.written.items() if snaps else ())}
     out["_y_terminal_per_seed"] = y_seeds
+    out["_audit_seeds"] = list(run.seeds(seed))
     out["_seed"] = seed
     if run.manifest["phase"] == "S0.4":
         dev_rows(run, rows, seed, cid)
@@ -842,7 +876,6 @@ def s05b_phase(args) -> int:
     if adapter.synthetic and adapter.world:
         raise SystemExit("S0.5b does not take world synthetic nodes")
     audits = AuditCache(out / "audit_runs.jsonl", adapter, work)
-    seeds = tuple(manifest["audit_seeds"])  # the S0.5 audit block
     prior = a2u.A2UPrior.load(manifest["prior_path"]) if manifest.get("prior_path") else \
         (adapter.node.prior() if adapter.synthetic else None)
     ctx = NodeContext(node=adapter.surface, start_files=adapter.start_files(), sigma_node=manifest["sigma_node"],
@@ -860,6 +893,7 @@ def s05b_phase(args) -> int:
                              "truncated ledger is not what a campaign at a smaller W would have done")
         rows = read_jsonl(work / "roots" / root["root_id"] / "root_trials.jsonl")
         seed = int(root["instance_id"].rsplit("__s", 1)[1])
+        seeds = instance_audit_seeds("S0.5b", seed, int(manifest["K"]))  # per instance, the S0.5 audit block
         for W in Ws:
             if (root["root_id"], W) in done:
                 continue
@@ -870,6 +904,7 @@ def s05b_phase(args) -> int:
             ys = audits.metrics(seed, files, seeds)
             append_jsonl(out / "s05b_truncated.jsonl", {
                 "root_id": root["root_id"], "instance_id": root["instance_id"], "W": W, "binding": binding,
+                "policy": root.get("policy"), "rep": root.get("rep", 0),
                 "trials": len(prefix), "runs_used": worker_runs_of(prefix, []), "y_terminal": _mean(ys),
                 "y_terminal_per_seed": ys, "audit_seeds": list(seeds), "label": manifest.get("label")})
             n += 1
@@ -905,17 +940,23 @@ def _paired(cand: list, inc: list) -> tuple[float | None, float | None, int]:
     return (float(np.mean(d)) if d else None, float(np.std(d, ddof=1) / np.sqrt(len(d))) if len(d) > 1 else None, len(d))
 
 
+def _paired_sd(cand: list, inc: list) -> float | None:
+    """sd over audit seeds of the paired candidate - incumbent difference (Delta-hat noise under ``vary``)."""
+    d = [c - i for c, i in zip(cand, inc) if c is not None and i is not None]
+    return float(np.std(d, ddof=1)) if len(d) > 1 else None
+
+
 def dev_rows(run: Run, rows: list[dict], seed: int, cid: str) -> None:
     """Audit every executed non-rule proposal of a dev campaign on the S0.4 block (candidate vs incumbent)."""
     from r1.c3.control import edit_kind
     for p in _audited_proposals(run, rows, cid, "tracks_S0.4"):
-        da, se, k = _paired(run.audits.metrics(seed, p.candidate_files, DEV_AUDIT_SEEDS),
-                            run.audits.metrics(seed, p.incumbent_files, DEV_AUDIT_SEEDS))
+        da, se, k = _paired(run.audits.metrics(seed, p.candidate_files, instance_audit_seeds("S0.4", seed, DEV_K)),
+                            run.audits.metrics(seed, p.incumbent_files, instance_audit_seeds("S0.4", seed, DEV_K)))
         append_jsonl(run.out / "s04_rows.jsonl", {
             "node": run.adapter.name, "instance": cid, "budget_index": p.budget_index,
             "key": p.edit.get("symbol"), "sign": a2u.sign_of(p.features.get("direction")),
             "kind": edit_kind(p.edit), "delta_hat": p.outcome["delta_hat"], "delta_audit": da, "se": se, "k": k,
-            "seeds": list(DEV_AUDIT_SEEDS)})
+            "seeds": list(instance_audit_seeds("S0.4", seed, DEV_K))})
 
 
 def calibration_rows(run: Run, rows: list[dict], seed: int, cid: str, root_id: str, controller) -> None:
@@ -923,19 +964,20 @@ def calibration_rows(run: Run, rows: list[dict], seed: int, cid: str, root_id: s
     the S0.5 block (never the S0.4 training block), with the root controller's 80 % predictive interval of its
     audited Delta (widened by the audit's se) and its ``n_group`` stratum."""
     props = {p.budget_index: p for p in _audited_proposals(run, rows, cid, "tracks_S0.5")}
-    audited, ses = {}, {}
+    audited, ses, sds, ks = {}, {}, {}, {}
     for b, p in props.items():
-        da, se, _ = _paired(run.audits.metrics(seed, p.candidate_files, run.seeds),
-                            run.audits.metrics(seed, p.incumbent_files, run.seeds))
-        audited[b], ses[b] = da, se
+        cand = run.audits.metrics(seed, p.candidate_files, run.seeds(seed))
+        inc = run.audits.metrics(seed, p.incumbent_files, run.seeds(seed))
+        da, se, k = _paired(cand, inc)
+        audited[b], ses[b], sds[b], ks[b] = da, se, _paired_sd(cand, inc), k
     for iv in a2u.predictive_intervals(rows, controller, level=0.8, audit_se=ses):
         b = iv["budget_index"]
         if b not in props:
             continue
         da = audited[b]
         append_jsonl(run.out / "s05_calibration.jsonl", {
-            "root_id": root_id, "instance": cid, **iv, "delta_audit": da, "se": ses[b],
-            "covered": None if da is None else bool(iv["lo"] <= da <= iv["hi"]), "audit_seeds": list(run.seeds)})
+            "root_id": root_id, "instance": cid, **iv, "delta_audit": da, "se": ses[b], "sd_paired": sds[b], "k": ks[b],
+            "covered": None if da is None else bool(iv["lo"] <= da <= iv["hi"]), "audit_seeds": list(run.seeds(seed))})
 
 
 # ---------------------------------------------------------------------------
@@ -1130,7 +1172,7 @@ def run_leaf(run: Run, fork: dict, arm: str, rep: int, root_rows: list[dict]) ->
     details = _e1_details(events)
     seed = int(fork["seed"])
     final = _workspace_files(adapter, into)
-    y_seeds = run.audits.metrics(seed, final, run.seeds)
+    y_seeds = run.audits.metrics(seed, final, run.seeds(seed))
     immediate = 0.0
     if first["decision"] == "kept":
         inc_files = {k: v.decode() for k, v in snap.incumbent_files.items() if v is not None}
@@ -1139,8 +1181,8 @@ def run_leaf(run: Run, fork: dict, arm: str, rep: int, root_rows: list[dict]) ->
         else:
             cand_files = adapter.candidate_files(inc_files, snap.proposal, seed,
                                                  int(snap.compute_budget_state.get("worker_runs", 0)) + 1)
-        immediate = paired_increment(run.audits.metrics(seed, cand_files, run.seeds),
-                                     run.audits.metrics(seed, inc_files, run.seeds))
+        immediate = paired_increment(run.audits.metrics(seed, cand_files, run.seeds(seed)),
+                                     run.audits.metrics(seed, inc_files, run.seeds(seed)))
     e2 = fork["epoch"] == "E2"
     # Runs from the fork trial on, its own run included (at E2 it was spent before the snapshot).
     runs_before = int(snap.compute_budget_state.get("worker_runs", 0)) - (1 if e2 else 0)
@@ -1160,7 +1202,7 @@ def run_leaf(run: Run, fork: dict, arm: str, rep: int, root_rows: list[dict]) ->
         llm_seed_base=repetition, myopic_action=fork["myopic_action"], selection=Selection(**fork["selection"]),
         state=fork["state"], forecast=Forecast(**fork["forecast"]),
         immediate_measured=float(immediate) if immediate is not None else math.nan, y_terminal=_mean(y_seeds),
-        y_terminal_per_seed=y_seeds, audit_seeds=list(run.seeds), runs_used=runs_used, llm_calls=_llm_calls(events),
+        y_terminal_per_seed=y_seeds, audit_seeds=list(run.seeds(seed)), runs_used=runs_used, llm_calls=_llm_calls(events),
         keeps_after=sum(1 for r in after if r["decision"] == "kept"),
         binding=w_binds(runs_before + runs_used, run.W, len(rows), int(snap.budget_total)), nf_c_events=0,
         dup_filtered_due_to_fork=dup_due, next_proposals=_next_proposals(after, details),
@@ -1192,9 +1234,13 @@ def _slim_leaf_dir(into: Path) -> None:
 # ---------------------------------------------------------------------------
 
 MANIFEST_KEYS = ("label", "phase", "node", "W", "llm_cap", "instances", "forks", "near_band", "p_near",
-                 "aa_fraction", "reps", "reps_ordinary", "K", "audit_block", "audit_seeds", "seed_base",
+                 "aa_fraction", "reps", "reps_ordinary", "K", "audit_block", "audit_rule", "seed_base",
                  "memory_mode", "skip_display", "g_declared", "g0", "prior_sha256", "manager", "obs_inflation",
-                 "a2_fraction", "policies", "llm_reps", "root_policy", "jobs", "calibration", "synthetic_params")
+                 "a2_fraction", "policies", "llm_reps", "rep_instances", "root_policy", "jobs", "calibration",
+                 "synthetic_params", "host", "exact_placebo", "descriptive_placebo")
+LABELS = ("FIXTURE", "ENGINEERING_ONLY", "PILOT", "EVIDENCE")   # the analysis' LABEL_RANK
+PRIMARY_REP = 0               # the D26 repetition of every primary campaign (S3e pairs pi* and m* at rep 0)
+DESCRIPTIVE_PLACEBO_REP = 1   # the descriptive placebo's second repetition
 
 
 def build_manifest(args, adapter, prior_sha: str, sigma_node: float, g_declared: float, g0: float) -> dict:
@@ -1203,7 +1249,8 @@ def build_manifest(args, adapter, prior_sha: str, sigma_node: float, g_declared:
     if W is None:
         raise SystemExit("--W is required for this phase (S0.4 defaults to the LLM cap: non-binding)")
     k = int(args.k_audit)
-    block, seeds = audit_seeds_for(phase, k)
+    rule = audit_rule(phase, k)
+    block = rule["block"]
     lo, hi = INSTANCE_SEED_BLOCKS[phase]
     seed_base = int(args.seed_base if args.seed_base is not None else lo)
     jobs = load_jobs(args.jobs) if args.jobs else None
@@ -1218,7 +1265,7 @@ def build_manifest(args, adapter, prior_sha: str, sigma_node: float, g_declared:
         "llm_cap": int(args.llm_cap), "instances": n_instances, "forks": float(args.forks),
         "near_band": args.near_band, "p_near": float(args.p_near), "aa_fraction": float(args.aa_fraction),
         "reps": int(args.reps), "reps_ordinary": int(args.reps_ordinary), "K": k, "audit_block": block,
-        "audit_seeds": list(seeds), "dev_audit_seeds": list(DEV_AUDIT_SEEDS),
+        "audit_rule": rule,
         "seed_base": seed_base, "instance_block": [lo, hi],
         "seed_blocks": {"instances": {p: list(b) for p, b in INSTANCE_SEED_BLOCKS.items()},
                         "audits": {p: [b[0], b[-1]] for p, b in AUDIT_SEED_BLOCKS.items()},
@@ -1230,6 +1277,8 @@ def build_manifest(args, adapter, prior_sha: str, sigma_node: float, g_declared:
         "a2_fraction": float(args.a2_fraction if args.a2_fraction is not None else
                              (A2_FRACTION_DEFAULT if phase == "S3" else 0.0)),
         "policies": [canonical_policy(p) for p in (args.policy or [])], "llm_reps": list(args.rep or [0]),
+        "rep_instances": args.rep_instances, "exact_placebo": _placebo_decl(args, "exact"),
+        "descriptive_placebo": _placebo_decl(args, "descriptive"),
         "root_policy": canonical_policy(args.root_policy), "tune_stage": getattr(args, "tune_grid", None),
         "centres": getattr(args, "centres", None), "jobs": jobs, "calibration": bool(phase == "S0.5" and not args.no_calibration),
         "max_retries": int(args.max_retries), "e2_verify": False,
@@ -1237,6 +1286,19 @@ def build_manifest(args, adapter, prior_sha: str, sigma_node: float, g_declared:
         "synthetic_node": adapter.node.describe() if adapter.synthetic else None,
         "host": args.host_label, "created_utc": utc(), "sessions": [],
     }
+
+
+def _placebo_decl(args, kind: str) -> dict | None:
+    """Campaign phase: the exact placebo (the policy again at rep 0 on the first n instances; run FIRST, a
+    mismatch is a STOP) and the descriptive placebo (the policy at rep 1 on the first n instances)."""
+    n = getattr(args, f"{kind}_placebo_n")
+    pol = getattr(args, "placebo_policy")
+    if not n:
+        return None
+    if args.phase != "campaign" or not pol:
+        raise SystemExit(f"--{kind}-placebo-n needs --phase campaign and --placebo-policy")
+    return {"policy": canonical_policy(pol), "instances": int(n),
+            "rep": PRIMARY_REP if kind == "exact" else DESCRIPTIVE_PLACEBO_REP}
 
 
 def manager_cfg(args) -> dict:
@@ -1263,16 +1325,30 @@ def _dedupe(rows: list[dict], key: str) -> list[dict]:
     return out
 
 
-def root_jobs(run: Run) -> list[tuple[int, str | None, int, bool, str]]:
-    """(instance k, policy, repetition, primary, root_id) of every campaign this run must have."""
+def root_jobs(run: Run) -> list[tuple[int, str | None, int, bool, str, bool]]:
+    """(instance k, policy, repetition, primary, root_id, dup) of every campaign this run must have, in run
+    order. Campaign phase: the exact placebo pairs (policy at rep 0, then its duplicate) run FIRST (final review
+    MINOR 8); the descriptive placebo (rep 1) on its instances. ``rep_instances``: repetitions other than 0 run
+    on the first n instances only (MINOR 9)."""
     m = run.manifest
-    out = []
+    out, seen = [], set()
 
-    def add(k: int, pol: str | None, rep: int, primary: bool) -> None:
-        rid = root_id_for(run, instance_seed(run, k), root_variant(pol, rep, primary=primary))
-        out.append((k, pol, rep, primary, rid))
+    def add(k: int, pol: str | None, rep: int, primary: bool, dup: bool = False) -> None:
+        rid = root_id_for(run, instance_seed(run, k), root_variant(pol, rep, primary=primary, dup=dup))
+        if rid not in seen:
+            seen.add(rid)
+            out.append((k, pol, rep, primary, rid, dup))
+
+    def rep_ok(k: int, rep: int) -> bool:
+        n = m.get("rep_instances")
+        return rep == PRIMARY_REP or n is None or k < int(n)
 
     if m["phase"] in POLICY_PHASES:
+        ex, de = m.get("exact_placebo"), m.get("descriptive_placebo")
+        if ex:
+            for k in range(min(int(ex["instances"]), m["instances"])):
+                add(k, ex["policy"], ex["rep"], False)
+                add(k, ex["policy"], ex["rep"], False, dup=True)
         if m.get("jobs"):
             for job in m["jobs"]:
                 for k in job["instances"]:
@@ -1281,7 +1357,11 @@ def root_jobs(run: Run) -> list[tuple[int, str | None, int, bool, str]]:
             for k in range(m["instances"]):
                 for pol in m["policies"]:
                     for rep in m["llm_reps"]:
-                        add(k, pol, rep, False)
+                        if rep_ok(k, rep):
+                            add(k, pol, rep, False)
+        if de:
+            for k in range(min(int(de["instances"]), m["instances"])):
+                add(k, de["policy"], de["rep"], False)
         return out
     for k in range(m["instances"]):
         add(k, None, 0, True)
@@ -1289,10 +1369,24 @@ def root_jobs(run: Run) -> list[tuple[int, str | None, int, bool, str]]:
             for rep in m["llm_reps"]:
                 if pol == run.root_policy and rep == 0:
                     continue  # that is the primary root
-                add(k, pol, rep, False)
+                if rep_ok(k, rep):
+                    add(k, pol, rep, False)
         if m["a2_fraction"] and _u("a2", root_id_for(run, instance_seed(run, k)))[0] < m["a2_fraction"]:
             add(k, "a2", 0, False)
     return out
+
+
+def check_exact_placebo(run: Run, dup_root: dict) -> None:
+    """The exact placebo's duplicate must reproduce its original exactly (Y and decisions); else STOP."""
+    orig_id = dup_root["root_id"][: -len("_dup")]
+    orig = next((r for r in read_jsonl(run.out / "roots.jsonl") if r["root_id"] == orig_id), None)
+    if orig is None:
+        raise Stop(f"exact placebo {dup_root['root_id']}: its original {orig_id} is missing")
+    same = (orig["y_terminal"] == dup_root["y_terminal"] and orig["decisions"] == dup_root["decisions"]
+            and orig["runs_used"] == dup_root["runs_used"])
+    if not same:
+        raise Stop(f"exact placebo mismatch on {orig['instance_id']} ({dup_root['policy']}): "
+                   f"Y {orig['y_terminal']!r} vs {dup_root['y_terminal']!r}")
 
 
 def plan(run: Run) -> dict:
@@ -1330,12 +1424,12 @@ def session(run: Run) -> dict:
     done = {"roots": 0, "forks": 0, "leaves": 0, "failed": 0, "exhausted": len(todo["exhausted"]),
             "deadline_hit": False}
     known_forks = {f["fork_id"] for f in read_jsonl(run.out / "forks.jsonl")}
-    for k, pol, rep, primary, rid in todo["roots_todo"]:
+    for k, pol, rep, primary, rid, dup in todo["roots_todo"]:
         if not run.time_left():
             done["deadline_hit"] = True
             break
         try:
-            root = run_root(run, k, policy=pol, rep=rep, primary=primary)
+            root = run_root(run, k, policy=pol, rep=rep, primary=primary, dup=dup)
         except Stop:
             raise
         except Exception as exc:  # noqa: BLE001 - logged, never counted as done; retried on resume
@@ -1354,10 +1448,13 @@ def session(run: Run) -> dict:
             done["forks"] += len(forks)
         (run.work / "root_meta").mkdir(parents=True, exist_ok=True)
         (run.work / "root_meta" / f"{root['root_id']}.json").write_text(json.dumps(
-            {"_y_terminal_per_seed": root.get("_y_terminal_per_seed"), "_seed": root.get("_seed")}))
+            {"_y_terminal_per_seed": root.get("_y_terminal_per_seed"), "_audit_seeds": root.get("_audit_seeds"),
+             "_seed": root.get("_seed")}))
         # The root line is the commit marker: written last.
         append_jsonl(run.out / "roots.jsonl", {k_: v for k_, v in root.items() if not k_.startswith("_")})
         done["roots"] += 1
+        if dup:
+            check_exact_placebo(run, root)
     if m["phase"] in FORK_PHASES:
         todo = plan(run)
         forks = {f["fork_id"]: f for f in _dedupe(read_jsonl(run.out / "forks.jsonl"), "fork_id")}
@@ -1412,7 +1509,7 @@ def fit_prior_phase(args) -> int:
     if sigma is None:
         raise SystemExit("--sigma-node is required")
     src = out / "s04_rows.jsonl"
-    prior = a2u.fit_prior(rows, adapter.surface, float(sigma), k_label=len(DEV_AUDIT_SEEDS), within_key=args.within_key,
+    prior = a2u.fit_prior(rows, adapter.surface, float(sigma), k_label=DEV_K, within_key=args.within_key,
                           sources={"s04_rows": str(src), "s04_rows_sha256": sha256_file(src)})
     target = Path(args.prior or (out / "a2u_prior.json"))
     sha = prior.save(target)
@@ -1421,13 +1518,14 @@ def fit_prior_phase(args) -> int:
 
 
 def check_llm_provenance(args, cfg: dict) -> None:
-    """Real llama.cpp runs need the GGUF sha256, the llama.cpp build and a host label (review m3)."""
+    """Real llama.cpp runs need the GGUF sha256, the llama.cpp build and a host label (review m3); "unknown"
+    counts as missing (final review)."""
     if cfg.get("kind") != "langgraph":
         return
     missing = []
-    if not (args.gguf_sha256 or args.gguf):
+    if not (args.gguf_sha256 or args.gguf) or str(args.gguf_sha256 or "").lower() == "unknown":
         missing.append("--gguf or --gguf-sha256")
-    if not (args.llama_build or args.llama_server_bin):
+    if not (args.llama_build or args.llama_server_bin) or str(args.llama_build or "").lower() == "unknown":
         missing.append("--llama-build or --llama-server-bin")
     if args.host_label in (None, "", "unknown"):
         missing.append("--host-label")
@@ -1474,7 +1572,17 @@ def parse_args(argv=None):
                     "static:g,h | dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar | pi_prime:<model_file> "
                     "(repeatable; raw units, positional as the analysis branch)")
     ap.add_argument("--rep", type=int, action="append", default=None,
-                    help="LLM repetition(s) of the policy campaigns (repeatable; default 0)")
+                    help="D26 repetition(s) of the policy campaigns (repeatable; default 0). Convention: 0 is the "
+                    "primary, 1 the descriptive placebo's second repetition")
+    ap.add_argument("--rep-instances", type=int, default=None,
+                    help="repetitions other than 0 run on the first n instances only (e.g. the S0.5 10-instance "
+                    "repetition subset)")
+    ap.add_argument("--placebo-policy", default=None, help="campaign: the placebo policy (m*)")
+    ap.add_argument("--exact-placebo-n", type=int, default=0,
+                    help="campaign: run --placebo-policy twice at rep 0 on the first n instances, FIRST (STOP on a "
+                    "mismatch)")
+    ap.add_argument("--descriptive-placebo-n", type=int, default=0,
+                    help="campaign: run --placebo-policy at rep 1 on the first n instances")
     ap.add_argument("--jobs", default=None, help="tune: JSON list of {policy, instances, rep} jobs")
     ap.add_argument("--tune-grid", choices=["static", "dynamic"], default=None,
                     help="tune phase (rev. 7 D2): static = the 15 statics on 20 instances; dynamic = the 4 centred "
@@ -1503,12 +1611,89 @@ def parse_args(argv=None):
     ap.add_argument("--llama-build", default=None)
     ap.add_argument("--llama-server-bin", default=None)
     ap.add_argument("--gpu", default=None)
-    ap.add_argument("--label", default="ENGINEERING_ONLY")
+    ap.add_argument("--label", default="ENGINEERING_ONLY", choices=LABELS)
     ap.add_argument("--synthetic-params", default=None, help="JSON object of synthetic node parameters")
     return ap.parse_args(argv)
 
 
+ASSEMBLE_SCHEMA = "tracks_assemble/v1"
+ASSEMBLE_KINDS = {"dev": (("tune",), "dev_roots.jsonl"), "campaign": (("campaign",), "campaign_roots.jsonl"),
+                  "fork": (("S3", "synthetic", "S0.5"), "roots.jsonl")}
+
+
+def assemble(node: str, out: Path, *, dev=(), campaign=(), fork=()) -> dict:
+    """Collector out-dirs -> one analysis node directory (final review MINOR 1).
+
+    ``dev``: tune (S0.7) out-dirs (static stage, extension, member stage) -> ``dev_roots.jsonl``;
+    ``campaign``: campaign (S3e) out-dirs (pi*, m*, matched static, the exact and descriptive placebos, which
+    one run declares with --placebo-policy / --exact-placebo-n / --descriptive-placebo-n, or separate runs at
+    rep 0 / rep 1) -> ``campaign_roots.jsonl``; ``fork``: S3 / synthetic out-dirs -> ``roots.jsonl`` and
+    ``leaves.jsonl``. Checks every manifest's node and phase, the host (one per node), and that a root id
+    occurring twice has identical content (then it is kept once); writes ``assemble.json`` with the sources'
+    sha256 and labels."""
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    report = {"schema": ASSEMBLE_SCHEMA, "node": node, "sources": {}, "outputs": {}, "hosts": set(), "labels": {}}
+    for kind, dirs in (("dev", dev), ("campaign", campaign), ("fork", fork)):
+        if not dirs:
+            continue
+        phases, target = ASSEMBLE_KINDS[kind]
+        roots: dict[str, dict] = {}
+        leaves: list[dict] = []
+        for d in map(Path, dirs):
+            man = json.loads((d / "manifest.json").read_text())
+            if man["node"] != node:
+                raise SystemExit(f"assemble: {d} is node {man['node']!r}, not {node!r}")
+            if man["phase"] not in phases:
+                raise SystemExit(f"assemble: {d} is phase {man['phase']!r}; {kind} takes {phases}")
+            report["hosts"].add(man.get("host"))
+            report["labels"].setdefault(kind, set()).add(man.get("label"))
+            src = {"phase": man["phase"], "label": man.get("label"), "host": man.get("host")}
+            for name in ("roots.jsonl", "leaves.jsonl"):
+                if (d / name).exists():
+                    src[name] = sha256_file(d / name)
+            report["sources"][str(d)] = src
+            for r in read_jsonl(d / "roots.jsonl"):
+                if r["root_id"] in roots and roots[r["root_id"]] != r:
+                    raise SystemExit(f"assemble: root {r['root_id']} differs between out-dirs")
+                roots.setdefault(r["root_id"], r)
+            leaves += read_jsonl(d / "leaves.jsonl") if kind == "fork" else []
+        path = out / target
+        path.write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in roots.values()))
+        report["outputs"][target] = {"n": len(roots), "sha256": sha256_file(path)}
+        if kind == "fork":
+            lp = out / "leaves.jsonl"
+            uniq = {(x["fork_id"], x["arm"], x["rep"]): x for x in reversed(leaves)}
+            kept = [x for x in leaves if uniq.get((x["fork_id"], x["arm"], x["rep"])) is x]
+            lp.write_text("".join(json.dumps(x, sort_keys=True) + "\n" for x in kept))
+            report["outputs"]["leaves.jsonl"] = {"n": len(kept), "sha256": sha256_file(lp)}
+    if len(report["hosts"]) > 1:
+        raise SystemExit(f"assemble: node {node} mixes hosts {sorted(map(str, report['hosts']))}")
+    report["hosts"] = sorted(map(str, report["hosts"]))
+    report["labels"] = {k: sorted(map(str, v)) for k, v in report["labels"].items()}
+    (out / "assemble.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
+
+
+def assemble_main(argv) -> int:
+    ap = argparse.ArgumentParser(prog="python -m r1.tracks.collect assemble", description=assemble.__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--node", required=True)
+    ap.add_argument("--out", required=True, help="the analysis node directory")
+    ap.add_argument("--dev", nargs="*", default=[])
+    ap.add_argument("--campaign", nargs="*", default=[])
+    ap.add_argument("--fork", nargs="*", default=[])
+    a = ap.parse_args(argv)
+    rep = assemble(a.node, Path(a.out), dev=a.dev, campaign=a.campaign, fork=a.fork)
+    print(json.dumps(rep["outputs"]))
+    return 0
+
+
 def main(argv=None) -> int:
+    import sys
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "assemble":
+        return assemble_main(argv[1:])
     args = parse_args(argv)
     if args.phase == "fit_prior":
         return fit_prior_phase(args)

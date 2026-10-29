@@ -1,5 +1,18 @@
-Track S analysis - implementation notes, ambiguities, design study (plain text; .md was refused to the subagent)
+# Track S analysis: implementation notes, ambiguities, design study
 AI-assisted (Claude, 29 Oct 2026). ENGINEERING_ONLY. All simulator numbers are FIXTURE, not evidence.
+
+0. FINAL-REVIEW CHANGES (runbook 7.3; CODE_ACCEPTANCE_20261029)
+ - n = 300 fresh S3e instances per node, fixed (rev 7.2): SizingDecl.n (default 300); the formula
+   ceil((2.93 sigma_D,UCL / delta_Y)^2) and the MDE at n = 300 are reported only; S0.6 defaults to n = 300, so
+   no "re-run S0.6" warning arises at n = 300.
+ - One repetition convention with the collector: a campaign's rep 0 is the primary D26 repetition, rep 1 the
+   descriptive placebo's second (fork leaves keep 1, 2). The primary D = Y(pi*, rep 0) - Y(m*, rep 0) only; the
+   exact placebo is m* twice at rep 0; the descriptive placebo is m* at rep 0 vs rep 1.
+ - The primary's label comes from the S3e inputs only; the S0.7 dev label is reported separately (dev_label).
+ - S3e flip rate is computed on pi*'s fresh S3e decisions (flip_S3e); the dev-state rate is kept as flip (dev).
+ - Secondary m* vs A2-U at the declared g (policy "a2u" run at g0 = g_declared, or static:<g_declared>,0).
+ - `analyze s05-summary`: S0.5 / S0.5b decision quantities (binding shares and W, sigma_cmp,vary, sigma_D between
+   policies and repetitions with the 80 % chi-square UCL, calibration gate).
 
 1. SPEC FOLLOWED (runbook revision 7.1, one-way screen; supersedes revisions 3-6.1 and the rev-7 study design)
  - Policies (RootRecord.policy, unchanged string for the collector):
@@ -19,11 +32,11 @@ AI-assisted (Claude, 29 Oct 2026). ENGINEERING_ONLY. All simulator numbers are F
    keep- -0.5 sigma, on 40 paired dev instances. Total 300 + 160 = 460 campaigns per node.
  - Sizing: sigma_D,UCL = max(S0.5b, S0.7 dev); n = ceil((2.93 sigma_D,UCL / delta_Y)^2). 2.93 = z.95 + z.90 is
    90 % unadjusted power; under Holm with one null node it is about 83 % power at a true gain of delta_Y on one
-   node. n_max = 300: a capped node runs at 300 and its minimum detectable effect 2.93 sigma_D,UCL / sqrt(300)
-   is reported.
+   node. Superseded by rev 7.2 (section 0): n = 300 fixed; the formula and the MDE 2.93 sigma_D,UCL / sqrt(300)
+   are reported only.
  - Outcomes: A > A-small > "no gain found", and "Track S not run" if no node survives the S0.5b fallback
    (declare not_run_reason). Nothing else can be output (tested by fuzzing; VOID_STOP is a STOP, not an
-   outcome). Route B, B-eligibility, the flip-rate gate and the resize are removed.
+   outcome). The old second route, its eligibility, the flip-rate gate and the resize are removed.
    A wording: the budget member is "a dynamic-knapsack threshold, explained by known OR theory"; if the matched
    static rule recovers >= half of pi*'s point gain, "a threshold-level shift found by the dynamic tuning".
    "No gain found" is reported per node with UB95, the S3e flip rate and S0.6's P(correct member) side by side,
@@ -72,8 +85,8 @@ AI-assisted (Claude, 29 Oct 2026). ENGINEERING_ONLY. All simulator numbers are F
 
 5. DESIGN STUDY (FIXTURE; computed BEFORE rev 7.1, with r = runs_left/W and a strict > at E1, so its numbers
    motivate D2 but are not the S0.6 table, which must be re-run under rev 7.1; digits-like node: sigma_node 0.0066, delta_Y 0.0033, W 10, cap 40,
-   sigma_D 0.01 -> sigma_D,UCL 0.0118 -> S3e n = 110 (B-eligible); sigma_D 0.02 -> UCL 0.0235 -> n = 437 > 300,
-   so the node is not B-eligible and S3e runs at n_max = 300.)
+   sigma_D 0.01 -> sigma_D,UCL 0.0118 -> formula n = 110; sigma_D 0.02 -> UCL 0.0235 -> formula n = 437;
+   under rev 7.2 S3e runs at n = 300 in both cases.)
 
 5.1 Is there a gain to find? Unrestricted-oracle proxy: a 9-threshold schedule (execute threshold by r tercile
     x tau_pred half; keep threshold by r tercile), coordinate descent from the best static, noiseless common

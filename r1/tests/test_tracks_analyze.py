@@ -120,7 +120,7 @@ class ForkLevelTests(unittest.TestCase):
         lv[0] = replace(lv[0], provenance=replace(lv[0].provenance, host="TASL-7"))
         with self.assertRaises(A.HostMixingError):
             A.build_fork_table("planted", lv)
-        r = S.make_campaign_root("planted", "c0", "static:0,0", 1, 0.9, W=10, llm_cap=40, host="TASL-2")
+        r = S.make_campaign_root("planted", "c0", "static:0,0", 0, 0.9, W=10, llm_cap=40, host="TASL-2")
         with self.assertRaises(A.HostMixingError):
             A.check_hosts("planted", S.planted_forks(n_instances=2, forks_per_instance=1, seed=9), [r])
 
@@ -150,11 +150,13 @@ class SizingAndGateTests(unittest.TestCase):
         self.assertGreater(u, 0.008)
         sz = A.plan_sizing(A.SizingDecl(0.009, 300), 0.0033, dev_ucl=0.012)
         self.assertEqual(sz["sigma_D_ucl"], 0.012)                      # max of S0.5b and S0.7
-        self.assertEqual(sz["n_planned"], A.campaign_n(0.012, 0.0033))
-        self.assertFalse(sz["capped"])
-        big = A.plan_sizing(A.SizingDecl(0.03, 300), 0.0033, dev_ucl=None)
-        self.assertTrue(big["capped"])                                    # n > n_max: run at 300, report MDE
+        self.assertEqual(sz["n_formula"], A.campaign_n(0.012, 0.0033))    # reported only (rev 7.2)
+        self.assertEqual(sz["n_run_target"], 300)                         # n fixed at 300 whatever the formula
+        self.assertFalse(sz["below_rev72_n"])
+        big = A.plan_sizing(A.SizingDecl(0.03), 0.0033, dev_ucl=None)
+        self.assertGreater(big["n_formula"], 300)
         self.assertEqual(big["n_run_target"], 300)
+        self.assertTrue(A.plan_sizing(A.SizingDecl(0.03, 100), 0.0033, None)["below_rev72_n"])
         self.assertAlmostEqual(big["mde_at_run"], 2.93 * 0.03 / math.sqrt(300))
         self.assertGreater(big["mde_at_run"], 0.0033)
 
@@ -203,7 +205,7 @@ class SizingAndGateTests(unittest.TestCase):
         self.assertEqual(A.campaign_route(t, 0.0033), "no gain found")
 
 
-def _roots(node, pol, ys, rep=1, phase="campaign", suffix="", inst_prefix="c", host=S.SIM_HOST):
+def _roots(node, pol, ys, rep=0, phase="campaign", suffix="", inst_prefix="c", host=S.SIM_HOST):
     return [S.make_campaign_root(node, f"{inst_prefix}{k:04d}", pol, rep, y, W=10, llm_cap=40, phase=phase,
                                  suffix=suffix, host=host) for k, y in enumerate(ys)]
 
@@ -212,7 +214,7 @@ class PlaceboTests(unittest.TestCase):
     def test_exact_placebo(self):
         r = _roots("n", "static:0.001,0", [0.9, 0.91]) + _roots("n", "static:0.001,0", [0.9, 0.91], suffix="dup")
         self.assertEqual(A.placebo_exact(r, "static:0.001,0")["status"], "pass")
-        r[-1] = S.make_campaign_root("n", "c0001", "static:0.001,0", 1, 0.9100001, W=10, llm_cap=40, suffix="dup")
+        r[-1] = S.make_campaign_root("n", "c0001", "static:0.001,0", 0, 0.9100001, W=10, llm_cap=40, suffix="dup")
         self.assertEqual(A.placebo_exact(r, "static:0.001,0")["status"], "STOP")
         self.assertEqual(A.placebo_exact(r[:2], "static:0.001,0")["status"], "missing")
         ok = _roots("n", "p", [0.9] * 4) + _roots("n", "p", [0.9] * 4, suffix="dup")
@@ -222,10 +224,14 @@ class PlaceboTests(unittest.TestCase):
         rng = np.random.default_rng(2)
         y1 = 0.9 + rng.normal(0, 0.005, 60)
         y2 = 0.9 + rng.normal(0, 0.005, 60)
-        r = _roots("n", "p", y1, 1) + _roots("n", "p", y2, 2)
+        r = _roots("n", "p", y1, 0) + _roots("n", "p", y2, 1)   # rep 0 (primary) vs rep 1 (final review MAJOR 2)
         d = A.placebo_descriptive(r, "p")
         self.assertEqual(d["status"], "pass")
-        r = _roots("n", "p", y1, 1) + _roots("n", "p", y1 - 0.004, 2)
+        r = _roots("n", "p", y1, 0) + _roots("n", "p", y1 - 0.004, 1)
+        self.assertEqual(A.placebo_descriptive(r, "p")["status"], "STOP")
+        r = _roots("n", "p", y1, 1) + _roots("n", "p", y2, 2)       # reps 1 and 2 are not the placebo pair
+        self.assertEqual(A.placebo_descriptive(r, "p")["status"], "missing")
+        r = _roots("n", "p", y1, 0) + _roots("n", "p", y1 - 0.004, 1)
         self.assertEqual(A.placebo_descriptive(r, "p")["status"], "STOP")
 
 
@@ -381,8 +387,9 @@ def fake_campaign(mean, lb, ub, p, *, flip=0.05, exact="pass", z=0.1, n=70, shar
             "placebo_exact": {"status": exact, "n_mismatch": 0 if exact == "pass" else 1, "n_groups": 10,
                               "min_groups": 10},
             "placebo_descriptive": {"status": "STOP" if abs(z) > 3.5 else "pass", "z": z, "n": 15},
-            "sizing": {"n_planned": 400 if capped else n, "n_max": 300, "n_run_target": n, "capped": capped,
+            "sizing": {"n_formula": 400 if capped else n, "n_run_target": n, "n_fixed": True,
                        "mde_at_run": 0.004 if capped else 0.002},
+            "flip_S3e": {"flip_rate": flip},
             "underpowered_vs_plan": False,
             "selection": {"flip": {"flip_rate": flip}, "paired_dev_instances": True, "n_dev_instances": 20,
                           "pi_star_member": f"{channel}×1"},
@@ -440,9 +447,9 @@ class DecisionTests(unittest.TestCase):
         self.assertIn("It bounds π* only, not the four-member family.", w)
         self.assertIn("UB₉₅ < δ_Y is not an equivalence or negligibility result", w)
         self.assertIn("This is not evidence that the loop is one-step.", w)
-        self.assertIn("minimum detectable effect", w)                      # node b is capped at n_max
+        self.assertIn("minimum detectable effect", w)                      # the MDE at the fixed n is reported
         row = d["per_node"]["a"]
-        self.assertEqual((row["UB95"], row["flip_rate_S3e_dev"]), (0.0021, 0.07))
+        self.assertEqual((row["UB95"], row["flip_rate_S3e"], row["flip_rate_dev"]), (0.0021, 0.07, 0.07))
         self.assertEqual(row["S06_P_correct_member"]["P2+-diffuse"], 0.9)
 
     def test_track_s_not_run(self):

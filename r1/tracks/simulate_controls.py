@@ -16,7 +16,8 @@ P2± keep feedback (VARIANTS, each diffuse / concentrated, strength calibrated s
 gain equals δ_Y). Fork leaves (``simulate``): E1 skip / execute / ghost / ctrl_only and E2 keep / discard arms
 at r = 2 repetitions with common random numbers. ``planted_forks``: fork-level generator with planted channel
 effects for analysis tests. S0.6 (``s06_node``): N0 false-positive rate and oracle check, calibration of every P
-variant, power with the one resize, P(correct selection), P(route B | positive control).
+variant, power at the fixed n = 300 (rev 7.2), P(correct selection). Repetition convention (= the collector's): a
+campaign's rep 0 is the primary D26 repetition, rep 1 the descriptive placebo's second; fork leaves keep reps 1, 2.
 """
 from __future__ import annotations
 
@@ -672,7 +673,7 @@ def campaign_roots_from_values(node: str, values: dict[str, list[float]], *, lab
     out = []
     for pol, ys in values.items():
         for k, y in enumerate(ys):
-            out.append(make_campaign_root(node, f"c{k:04d}", pol, 1, y, W=10, llm_cap=40, label=label, host=host))
+            out.append(make_campaign_root(node, f"c{k:04d}", pol, 0, y, W=10, llm_cap=40, label=label, host=host))
     return out
 
 
@@ -700,20 +701,20 @@ class Plan:
     sigma_node: float = 0.0066
     sigma_D: float = 0.008                 # pilot sd of campaign-level paired differences (S0.5b)
     m_pairs: int = 20
-    n_campaign: int | None = None          # fresh instances; None -> campaign_n(σ_D,UCL, δ_Y) capped at n_max
-    n_max: int = 300
+    n_campaign: int = A.N_S3E              # fresh S3e instances, fixed at 300 (rev 7.2)
+    n_max: int = 300                       # kept for old call sites; unused (n is fixed)
     n_dev: int = 20                        # D2: static stage, 15 configurations × 20 paired dev instances
     n_dev_members: int = 40                # D2: 4 members × 40 paired dev instances
     alpha: float = 0.05
 
     @property
     def n_planned(self) -> int:
-        return self.n_campaign or A.campaign_n(A.sigma_D_ucl(self.sigma_D, self.m_pairs), self.delta_Y)
+        return A.campaign_n(A.sigma_D_ucl(self.sigma_D, self.m_pairs), self.delta_Y)
 
     @property
     def n(self) -> int:
-        """S3e n: min(n_planned, n_max); a capped node runs at n_max (MDE reported)."""
-        return min(self.n_planned, self.n_max)
+        """S3e n: fixed (rev 7.2, 300 by default); ``n_planned`` (the formula) is reported only."""
+        return int(self.n_campaign)
 
 
 def sigma_campaign_for(sigma_D: float, regime: Regime) -> float:
@@ -797,7 +798,7 @@ def sim_predeclaration(node: str, plan: Plan, *, seed: int = 20261029, families:
                        tuning: dict | None = None) -> A.Predeclaration:
     # in the simulator the grid unit σ_cmp,vary equals plan.sigma_node
     nd = A.NodeDecl(node, "primary", plan.delta_Y, sigma_node=plan.sigma_node,
-                    sizing=A.SizingDecl(A.sigma_D_ucl(plan.sigma_D, plan.m_pairs), plan.n_max),
+                    sizing=A.SizingDecl(A.sigma_D_ucl(plan.sigma_D, plan.m_pairs), plan.n),
                     sigma_cmp_vary=plan.sigma_node)
     return A.Predeclaration(nodes={node: nd}, primary_nodes=[node], seed=seed, alpha=plan.alpha,
                             fallback_active=True, winners_curse_splits=50, families=families or A.FamilyDecl(),
@@ -821,8 +822,8 @@ def _campaign_root(sim, node, inst, c, rep, theta, stream, noise, *, phase, labe
 def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str = "FIXTURE",
             host: str = SIM_HOST) -> dict:
     """D2 tuning (15 statics × plan.n_dev paired dev instances, the one edge extension, then the 4 centred members
-    anchored at m* × plan.n_dev_members), then fresh campaigns on plan.n instances: π* and m* (rep 1, same seeds),
-    the exact placebo (m* again at rep 1, 10 instances), the descriptive placebo (m* at rep 2, 15 instances),
+    anchored at m* × plan.n_dev_members), then fresh campaigns on plan.n instances: π* and m* (rep 0, same seeds),
+    the exact placebo (m* again at rep 0, 10 instances), the descriptive placebo (m* at rep 1, 15 instances),
     matched static (all n) and the other members (30 instances)."""
     node = f"synthetic_{world.kind}"
     sim = Sim(world, regime, seed)
@@ -833,7 +834,7 @@ def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str =
     def run_dev(cfgs, log=False):
         for c in cfgs:
             for i in range(plan.n_dev):
-                dev.append(_campaign_root(sim, node, f"d{i:04d}", c, 1, theta_table(world, regime, seed, i),
+                dev.append(_campaign_root(sim, node, f"d{i:04d}", c, 0, theta_table(world, regime, seed, i),
                                           [seed, i, 5000], np.random.default_rng([seed, i, zlib.crc32(c.encode())]),
                                           phase="dev_tuning", label=label, host=host, log=log))
 
@@ -845,7 +846,7 @@ def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str =
     while sel["status"] == "members_needed":
         for c, inst in sel["missing_members"]:
             i = int(inst[1:])
-            dev.append(_campaign_root(sim, node, inst, c, 1, theta_table(world, regime, seed, i), [seed, i, 5000],
+            dev.append(_campaign_root(sim, node, inst, c, 0, theta_table(world, regime, seed, i), [seed, i, 5000],
                                       np.random.default_rng([seed, i, zlib.crc32(c.encode())]),
                                       phase="dev_tuning", label=label, host=host, log=True))
         sel = A.selection_report(dev, pd, pd.nodes[node])
@@ -854,15 +855,15 @@ def run_s3e(world: World, regime: Regime, plan: Plan, seed: int, *, label: str =
     for k in range(plan.n):
         inst = 100000 + k
         th = theta_table(world, regime, seed, inst)
-        runs = [(pi_s, 1, ""), (m_s, 1, "")]
+        runs = [(pi_s, 0, ""), (m_s, 0, "")]
         if k < 15:                       # descriptive placebo: m* at a second LLM repetition on >= 15 instances
-            runs.append((m_s, 2, ""))
+            runs.append((m_s, 1, ""))
         if k < 10:                       # exact placebo: m* again at the same repetition on 10 instances
-            runs.append((m_s, 1, "dup"))
+            runs.append((m_s, 0, "dup"))
         if ms not in (pi_s, m_s):        # matched static on all n instances
-            runs.append((ms, 1, ""))
+            runs.append((ms, 0, ""))
         if k < 30:                       # the other channels' members on a declared subset of 30 instances
-            runs += [(c, 1, "") for c in sel["members"].values() if c != pi_s]
+            runs += [(c, 0, "") for c in sel["members"].values() if c != pi_s]
         for c, rep, suf in runs:
             fresh.append(_campaign_root(sim, node, f"c{k:04d}", c, rep, th, [seed, inst, 6000, rep],
                                         np.random.default_rng([seed, inst, rep, zlib.crc32(c.encode())]),
@@ -1153,7 +1154,7 @@ def study_replicate(world: World, regime: Regime, plan: Plan, seed: int, designs
         if (c, k) not in fresh_cache:
             inst = 100000 + k
             fresh_cache[(c, k)] = sim.run_campaign(theta_table(world, regime, seed, inst), ThresholdPolicy(c),
-                                                   [seed, inst, 6000, 1],
+                                                   [seed, inst, 6000, 0],
                                                    np.random.default_rng([seed, inst, 1, zlib.crc32(c.encode())]))
         return fresh_cache[(c, k)]
 
@@ -1220,7 +1221,7 @@ def write_node(out_dir: Path, leaves=(), roots=(), dev_roots=(), campaign_roots=
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Track S S0.6 synthetic calibration, runbook rev 7.1 (FIXTURE; not evidence)")
+    ap = argparse.ArgumentParser(description="Track S S0.6 synthetic calibration, runbook rev 7.3 (FIXTURE; not evidence)")
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--node", default="digits_mlp", help="the decision node this S0.6 run is for")
     ap.add_argument("--delta-Y", type=float, default=0.0033)
@@ -1231,7 +1232,7 @@ def main(argv=None) -> int:
     ap.add_argument("--dev-between-sd", type=float, default=None,
                     help="S0.7 dev between-configuration sd (the post-S0.7 re-run)")
     ap.add_argument("--m-pairs", type=int, default=20)
-    ap.add_argument("--n-campaign", type=int, default=None, help="final S3e n (default: sizing helper)")
+    ap.add_argument("--n-campaign", type=int, default=A.N_S3E, help="S3e n (fixed at 300 per node, rev 7.2)")
     ap.add_argument("--n-max", type=int, default=300)
     ap.add_argument("--W", type=int, default=10)
     ap.add_argument("--reps", type=int, default=200)

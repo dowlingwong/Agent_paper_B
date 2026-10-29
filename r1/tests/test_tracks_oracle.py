@@ -46,14 +46,13 @@ def test_oracle_reproduces_the_pipeline_exactly(tmp_path, node_name, W, params):
         args += ["--policy", pol]
     assert C.main(args) == 0
     roots = C.read_jsonl(tmp_path / "out" / "roots.jsonl")
-    seeds = json.loads((tmp_path / "out" / "manifest.json").read_text())["audit_seeds"]
     node = synthetic_node(node_name, params)
     checked = 0
     for r in roots:
         seed = int(r["instance_id"].rsplit("__s", 1)[1])
         pol = r["policy"]
         ctl = O.controller_for(node, pol, W=W, g0=g0)
-        sim = O.simulate(node, ctl, seed, W=W, cap=12, audit_seeds=seeds)
+        sim = O.simulate(node, ctl, seed, W=W, cap=12, audit_seeds=C.instance_audit_seeds("campaign", seed, 5))
         assert sim["y_terminal"] == r["y_terminal"], (node_name, pol, seed)
         assert sim["runs_used"] == r["runs_used"]
         pipe = [(d["index"], "skip" if d["action"] == "skip" else d["action"]) for d in r["decisions"]
@@ -66,10 +65,10 @@ def test_oracle_reproduces_the_pipeline_exactly(tmp_path, node_name, W, params):
 def test_oracle_is_fast_enough_for_large_replication():
     node = synthetic_node("synthetic_P2p", {"strength": 0.01}).bind(W=10, llm_cap=40)
     ctl = O.controller_for(node, "a2u", W=10)
-    t0 = time.perf_counter()
+    t0 = time.process_time()  # CPU time: robust to parallel test runs
     for i in range(50):
         O.simulate(node, ctl, 36000 + i, W=10, cap=40)
-    per = (time.perf_counter() - t0) / 50
+    per = (time.process_time() - t0) / 50
     assert per < 0.05  # 10^4 campaigns per member in well under 10 minutes on one core
 
 

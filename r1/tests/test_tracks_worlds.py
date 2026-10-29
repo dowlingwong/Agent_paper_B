@@ -1,17 +1,13 @@
 """Track S rev. 7: the collector's synthetic worlds and policy strings agree with the analysis branch.
 
-ENGINEERING_ONLY; AI-assisted (Claude, 29 Oct 2026). The analysis modules (``r1/tracks/analyze.py`` and
-``simulate_controls.py`` of the analysis worktree, read only) are loaded by path from ``$APB_ANALYSIS_ROOT``
-(default ``/home/claude/work/apb_analysis``); the tests skip if they are absent. They import this repository's
-``r1.tracks.schema``, so the round trip also checks the schema the collector writes.
+ENGINEERING_ONLY; AI-assisted (Claude, 29 Oct 2026). The analysis modules are this repository's
+``r1/tracks/analyze.py`` and ``simulate_controls.py`` (merged), so the round trip also checks the schema the
+collector writes.
 """
 from __future__ import annotations
 
 import dataclasses
-import importlib.util
 import json
-import os
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -22,38 +18,14 @@ from r1.tracks import oracle as O
 from r1.tracks import worlds as WD
 from r1.tracks.synthetic import synthetic_node
 
-ANALYSIS = Path(os.environ.get("APB_ANALYSIS_ROOT", "/home/claude/work/apb_analysis"))
-NAMES = ("r1.tracks.analyze", "r1.tracks.simulate_controls")
 WS = 20261029  # world seed (the WorldNode default)
 
 
 @pytest.fixture(scope="module")
 def AS():
-    files = [ANALYSIS / "r1" / "tracks" / f"{n.rsplit('.', 1)[1]}.py" for n in NAMES]
-    if not all(f.exists() for f in files):
-        pytest.skip(f"analysis modules not found under {ANALYSIS}")
-    import r1.tracks as pkg
-    saved = {n: sys.modules.get(n) for n in NAMES}
-    mods = []
-    try:
-        for n, f in zip(NAMES, files):
-            spec = importlib.util.spec_from_file_location(n, f)
-            mod = importlib.util.module_from_spec(spec)
-            sys.modules[n] = mod
-            setattr(pkg, n.rsplit(".", 1)[1], mod)
-            spec.loader.exec_module(mod)
-            mods.append(mod)
-        yield tuple(mods)
-    finally:
-        for n, m in saved.items():
-            short = n.rsplit(".", 1)[1]
-            if m is None:
-                sys.modules.pop(n, None)
-                if hasattr(pkg, short):
-                    delattr(pkg, short)
-            else:
-                sys.modules[n] = m
-                setattr(pkg, short, m)
+    """The in-repo analysis modules (final review MINOR 5: no outside path, no silent skip)."""
+    from r1.tracks import analyze, simulate_controls
+    return analyze, simulate_controls
 
 
 # ---------------------------------------------------------------------------- policy strings

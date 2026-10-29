@@ -12,8 +12,9 @@ from r1.tracks.probes import s1_factorial as F
 
 def test_payload_matches_the_harness_request_shape():
     p = D.chat_payload("hi", 123, "r1-manager")
-    assert p == {"model": "r1-manager", "messages": [{"role": "user", "content": "hi"}], "temperature": 0.2,
-                 "seed": 123, "max_tokens": 512, "stream": False}
+    # Final review MAJOR 6: the harness's own request body (no max_tokens: the harness sets none).
+    assert p == {"model": "r1-manager", "messages": [{"content": "hi", "role": "user"}], "temperature": 0.2,
+                 "seed": 123, "stream": False}
 
 
 def test_identity_and_cross_identity():

@@ -219,6 +219,31 @@ b_budget ∈ {0.5, 1, 2}σ, b_info ∈ {0.25, 0.5, 1}, h_budget ∈ {±0.25, ±0
    best static is keep+ (gain ≈ 1 δ_Y, > 2 half-widths) — `test_m3_world_p2p_*`. The rev.-6 P1 / P2 xfail
    tests on the placeholder worlds are superseded and removed.
 
+## Final code acceptance (CODE_ACCEPTANCE_20261029: 6 MAJOR, 9 MINOR; coordinator decisions)
+
+| # | Fix | Test (`r1/tests/`) |
+|---|---|---|
+| MAJOR 1 | Audit seeds are per instance: seed = base(phase block) + (instance seed − instance-block start) · 20 + k, k < K; shared by every policy and repetition on the instance; blocks of 100 000 seeds at 100 000 (S0.4), 200 000 (S0.5 / S0.5b), 300 000 (tune), 400 000 (S3), 500 000 (campaign), 600 000 (synthetic), 700 000 (fixture); the manifest records `audit_rule`, roots record their seeds in `root_meta`. Real and synthetic nodes use the same `Run.seeds` | `test_tracks_final_review.py::test_major1_*`, `test_tracks_review_fixes.py::test_b1_*` |
+| MAJOR 2 | One repetition convention: a campaign's `rep` is its D26 repetition, 0 = primary, 1 = the descriptive placebo's second; `analyze.rep_of` defaults to 0; the descriptive placebo is rep 0 vs rep 1; the simulator uses the same | `test_major2_natural_rep1_run_gives_passing_placebos` |
+| MAJOR 3 | Primary D = Y(π*, rep 0) − Y(m*, rep 0) (`per_instance_means(..., rep=0)`); dev selection likewise | `test_major3_*` |
+| MAJOR 4 | n = 300 fixed (`SizingDecl.n`, `N_S3E`); the formula (`n_formula`) and the MDE at n are reported only; S0.6 (`Plan`, `--n-campaign`) defaults to 300, so no re-run warning at 300; a warning if a node declares n < 300 | `test_major4_*`, `test_tracks_analyze.py::test_n_helper` |
+| MAJOR 5 | `python -m r1.tracks.analyze s05-summary --node NAME=S05_OUT ...`: binding shares per candidate W and the chosen W (largest binding in ≥ 50 % on every primary node; none → the largest candidate, 20, budget member dropped), σ_cmp,vary (median paired sd of Δ̂ over the calibration audits; the collector now records `sd_paired`, `k`), σ_D between the two pilot policies and between repetitions with the one-sided 80 % χ² UCL at the chosen W (from `s05b_truncated.jsonl`, which now carries policy and rep), calibration gate (≥ 100 predictions; [0.70, 0.90] overall and in every stratum with ≥ 20), calls and audit runs per campaign | `test_major5_*` |
+| MAJOR 6 | S0.1 probe v2: every client sends every (prompt, repeat) once in its own shuffled order (`--order-seed`, recorded), so repeats interleave with different predecessors; `--clients-per-url 2` (two concurrent streams per server); the request body is the harness's own (`_build_chat_model(...)._get_request_payload`; no max_tokens; same seed, temperature, grammar); the report records GGUF sha256, llama.cpp build, server arguments (required; "unknown" refused) and the server's `/props` | `test_major6_*` (local fake server), `test_tracks_probes.py` |
+| MINOR 1 | `collect assemble` (out-dirs → analysis node dir, node / phase / host checks, duplicate roots kept once); placebos documented and declared in one campaign run | `test_minor1_*`, `test_tracks_e2e.py` |
+| MINOR 2 | `pi_prime:<file>` loads the analysis' `tracks_policy/v1` (`a2u.PolicyFileScore` = `analyze.policy_score`) or `tracks_score_model/v1`; nesting test: π′ with score V* − g / m̂ − h reproduces `static:g,h` decisions and Y | `test_minor2_*` |
+| MINOR 3 | Secondary m* vs A2-U at the declared g (`a2u` roots run at g0 = g_declared, or `static:<g_declared>,0`); predeclaration `g_declared` | `test_tracks_e2e.py` |
+| MINOR 4 | The primary's label comes from the S3e inputs only; `dev_label` reported separately; `--label` restricted to FIXTURE / ENGINEERING_ONLY / PILOT / EVIDENCE | `test_minor4_*`, `test_tracks_e2e.py` |
+| MINOR 5 | `test_tracks_worlds.py` uses the in-repo `analyze.py` / `simulate_controls.py` (no outside path, no skip) | `test_tracks_worlds.py` |
+| MINOR 6 | `flip_S3e` computed on π*'s fresh S3e decisions; the dev-state rate is reported as `flip_rate_dev` | `test_tracks_e2e.py`, `test_tracks_analyze.py` |
+| MINOR 7 | Route-B / B-eligibility / "12-configuration" / `.txt` wording removed; `ANALYSIS_NOTES.md` header and a section 0 for this round | — |
+| MINOR 8 | `host` is a resume key; the exact placebo runs first in the campaign phase and a mismatch is a STOP immediately (`check_exact_placebo`) | `test_minor8_*`, `test_tracks_e2e.py` |
+| MINOR 9 | `--rep-instances n`: repetitions other than 0 on the first n instances only | `test_major5_s05_summary_on_a_pilot_fixture` |
+| (m3 earlier) | `llama_build` / `gguf_sha256` "unknown" refused for LLM runs | — |
+
+End to end (`r1/tests/test_tracks_e2e.py`, small sizes: 15 statics × 8, 4 members × 16, n = 40, exact placebo 10,
+descriptive 15, fixed seeds): P2+ concentrated (strength 0.03, W 10) → route A with π* = keep+; N0 (W = cap = 20)
+→ "no gain found"; both with passing placebos, S3e flip rate and the A2-U secondary.
+
 ## Schema changes (`r1/tracks/schema.py`; defaulted fields at the end only)
 
 * `Provenance.g_declared`, `Provenance.g0` (rev.-4 amendment 2).

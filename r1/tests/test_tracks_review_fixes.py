@@ -73,9 +73,16 @@ def test_b1_audit_blocks_are_disjoint_and_phase_keyed():
         O.ORACLE_SELECT_BASE + O.ORACLE_BLOCK_SIZE
     # The S3e block is used by no other phase; S0.7 tuning and S3e never share seeds.
     assert list(C.PHASE_AUDIT_BLOCK.values()).count("campaign") == 1
-    assert not set(C.audit_seeds_for("tune", 20)[1]) & set(C.audit_seeds_for("campaign", 20)[1])
-    assert C.audit_seeds_for("S0.5b", 5) == ("S0.5", C.AUDIT_SEED_BLOCKS["S0.5"][:5])
-    assert set(C.DEV_AUDIT_SEEDS) <= set(C.AUDIT_SEED_BLOCKS["S0.4"])
+    assert C.audit_rule("S0.5b", 5)["block"] == "S0.5"
+    # Per-instance seeds (final review MAJOR 1): inside the phase's block, disjoint across instances and phases.
+    for phase, (lo, hi) in C.INSTANCE_SEED_BLOCKS.items():
+        block = C.PHASE_AUDIT_BLOCK[phase]
+        per = [C.instance_audit_seeds(phase, s, C.AUDIT_STRIDE) for s in (lo, lo + 1, hi - 1)]
+        assert all(set(x) <= set(C.AUDIT_SEED_BLOCKS[block]) for x in per)
+        assert not set(per[0]) & set(per[1]) and not set(per[1]) & set(per[2])
+    assert C.instance_audit_seeds("campaign", 32000, 5)[:3] == C.instance_audit_seeds("campaign", 32000, 3)
+    with pytest.raises(ValueError):
+        C.instance_audit_seeds("campaign", 31999, 5)  # an S3 instance seed is not a campaign instance
     instance_ranges = [range(*b) for b in C.INSTANCE_SEED_BLOCKS.values()]
     for i, a in enumerate(instance_ranges):
         for b in instance_ranges[i + 1:]:
@@ -87,10 +94,11 @@ def test_b1_manifests_and_records_carry_their_own_block(tmp_path):
     camp = _run(tmp_path, "--instances", "1", "--policy", "a2u", phase="campaign", out="camp")
     mt, mc = (json.loads((d / "manifest.json").read_text()) for d in (tune, camp))
     assert (mt["audit_block"], mc["audit_block"]) == ("tune", "campaign")
-    assert not set(mt["audit_seeds"]) & set(mc["audit_seeds"])
-    assert mc["seed_blocks"]["audits"]["campaign"] == [33401, 33420]
+    assert (mt["audit_rule"]["base"], mc["audit_rule"]["base"]) == (C.AUDIT_SEED_BASES["tune"],
+                                                                     C.AUDIT_SEED_BASES["campaign"])
+    assert mc["seed_blocks"]["audits"]["campaign"] == [500000, 599999]
     rows = C.read_jsonl(tmp_path / "camp" / "audit_runs.jsonl")
-    assert rows and {r["seed"] for r in rows} <= set(mc["audit_seeds"])
+    assert rows and {r["seed"] for r in rows} <= set(C.instance_audit_seeds("campaign", mc["seed_base"], 5))
 
 
 # ---------------------------------------------------------------------------
@@ -242,7 +250,9 @@ def test_m6_s05_calibration_rows(tmp_path):
     rows = C.read_jsonl(out / "s05_calibration.jsonl")
     assert rows and manifest["audit_block"] == "S0.5"
     for r in rows:
-        assert r["audit_seeds"] == manifest["audit_seeds"]
+        seed = int(r["instance"].rsplit("__s", 1)[1])
+        assert r["audit_seeds"] == list(C.instance_audit_seeds("S0.5", seed, manifest["K"]))
+        assert r["sd_paired"] is not None and r["k"] == manifest["K"]
         assert r["stratum"] == a2u.n_group_stratum(r["n_group"]) and r["level"] == 0.8
         assert r["delta_audit"] is not None and isinstance(r["covered"], bool)
         assert r["lo"] < r["mu"] < r["hi"]

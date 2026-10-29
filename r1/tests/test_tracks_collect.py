@@ -107,7 +107,9 @@ def test_collector_end_to_end_resume_and_schema(tmp_path):
     assert Counter((l.fork_id, l.arm, l.rep) for l in leaves) == expected
     for l in leaves:
         assert l.provenance.g0 == manifest["g0"] and l.provenance.label == "FIXTURE"
-        assert len(l.y_terminal_per_seed) == manifest["K"] and l.audit_seeds == manifest["audit_seeds"]
+        seed = int(l.instance_id.rsplit("__s", 1)[1])
+        assert len(l.y_terminal_per_seed) == manifest["K"] and \
+            l.audit_seeds == list(C.instance_audit_seeds(manifest["phase"], seed, manifest["K"]))
         if l.arm in ("skip", "ghost", "ctrl_only", "discard"):
             assert l.immediate_measured == 0.0
         assert (l.aa_reproduced is True) if l.arm == "aa" else (l.aa_reproduced is None)
@@ -216,7 +218,7 @@ def test_s04_and_fit_prior(tmp_path):
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["W"] == manifest["llm_cap"]  # non-binding W in S0.4
     rows = C.read_jsonl(out / "s04_rows.jsonl")
-    assert rows and all(r["delta_audit"] is not None and r["k"] == len(C.DEV_AUDIT_SEEDS) for r in rows)
+    assert rows and all(r["delta_audit"] is not None and r["k"] == C.DEV_K for r in rows)
     assert {r["sign"] for r in rows} <= {"+", "-", "0"}
     assert C.main(["--phase", "fit_prior", "--node", "synthetic_N0", "--out", str(out), "--sigma-node", "0.005"]) == 0
     prior = A2UPrior.load(out / "a2u_prior.json")

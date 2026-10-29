@@ -410,6 +410,43 @@ class RidgeScore:
             hashlib.sha256(data).hexdigest()
 
 
+POLICY_FILE_SCHEMA = "tracks_policy/v1"   # the analysis' π′ / m̃ export (``analyze.write_policy``)
+
+
+@dataclass(frozen=True)
+class PolicyFileScore:
+    """π′ from the analysis' ``tracks_policy/v1`` file (final review MINOR 2): score(s) = the ridge model's output
+    minus the epoch's threshold, exactly ``analyze.policy_score`` (act iff > 0). An epoch the model was not trained
+    on falls back to A2-U's myopic rule at g = 0 (score = the index value), as the analysis simulator's
+    ``LinearPolicy``."""
+
+    policy: dict
+
+    def __post_init__(self) -> None:
+        if self.policy.get("schema") != POLICY_FILE_SCHEMA or list(self.policy.get("features", [])) != list(STATE_FEATURES):
+            raise ValueError("not a tracks_policy/v1 file with the schema's STATE_FEATURES order")
+
+    def __call__(self, state: Mapping) -> float:
+        from r1.tracks import analyze
+        epoch = state["epoch"]
+        if epoch not in self.policy.get("trained_epochs", []):
+            return float(state["index_value"])
+        return float(analyze.policy_score(self.policy, state, epoch))
+
+
+def load_score_model(path: str | Path):
+    """(score function, sha256 of the file bytes) of ``pi_prime:<file>``: ``tracks_policy/v1`` (the analysis'
+    export) or ``tracks_score_model/v1`` (``RidgeScore``)."""
+    data = Path(path).read_bytes()
+    payload = json.loads(data)
+    sha = hashlib.sha256(data).hexdigest()
+    if payload.get("schema") == POLICY_FILE_SCHEMA:
+        return PolicyFileScore(payload), sha
+    if payload.get("schema") == SCORE_MODEL_SCHEMA:
+        return RidgeScore(float(payload["intercept"]), dict(payload["coef"]), dict(payload.get("meta") or {})), sha
+    raise ValueError(f"{path}: not a Track S policy file ({payload.get('schema')!r})")
+
+
 # ---------------------------------------------------------------------------
 # The controller
 # ---------------------------------------------------------------------------
