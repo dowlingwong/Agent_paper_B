@@ -1628,13 +1628,13 @@ def _s06_value(cn: dict | None, ctl: str, variant: str) -> dict | None:
 def no_gain_node_text(node: str, test: dict, cn: dict | None) -> str:
     """Runbook rev 7.1 §0 'no gain found' sentence for one node, with that node's S0.6 values at the final n."""
     def pw(v):
-        if not v:
-            return "not available"
+        if not v or v.get("calibrated") is False:
+            return "not available (not calibratable)"
         pr = power_report(int(v["k_A"]), int(v["R"]))
         return f"{pr['power']:.2f} [{pr['ci95'][0]:.2f}, {pr['ci95'][1]:.2f}]"
     keeps = [(_s06_value(cn, "P2+", v), v) for v in ("diffuse", "concentrated")]
     gains = [f"{(k.get('achieved_oracle_gain') or k.get('planted_gain') or 0) / k['target_gain']:.2f} ({v})"
-             if k and k.get("target_gain") else f"— ({v})" for k, v in keeps]
+             if k and k.get("target_gain") and k.get("calibrated") is not False else f"— ({v})" for k, v in keeps]
     powers = [f"{pw(k)} ({v})" for k, v in keeps]
     info = _s06_value(cn, "P1", "diffuse")
     return node + ": " + NO_GAIN_NODE_TEMPLATE.format(ub=f"{test['ub']:.4g}", keep_gain=" / ".join(gains),
@@ -1669,7 +1669,11 @@ def decide(results: dict[str, dict], controls: dict | None, pd: Predeclaration) 
             warnings.append(f"{p}: S0.6 N0 false-positive check missing")
         for ctl, variant, mult in S06_CONTROLS:
             v = ((cn or {}).get(ctl) or {}).get(variant)
-            if v:
+            if v and v.get("calibrated") is False:
+                rep[f"{ctl}_{variant}"] = {"calibrated": False, "planted_multiple": mult,
+                                           "max_achieved_oracle_gain": v.get("max_achieved_oracle_gain")}
+                warnings.append(f"{p}: S0.6 {ctl}-{variant} not calibratable (unmeasured)")
+            elif v:
                 rep[f"{ctl}_{variant}"] = {**power_report(int(v["k_A"]), int(v["R"])), "planted_multiple": mult,
                                            **{k: v.get(k) for k in ("planted_gain", "p_correct_selection",
                                                                     "realised_gain")}}

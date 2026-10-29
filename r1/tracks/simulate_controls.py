@@ -1015,8 +1015,16 @@ def s06_node(node: str, regime: Regime, plan: Plan, *, R: int = 200, n_cal: int 
         cal = cache[key]
         entry: dict = {"calibration": {k: v for k, v in cal.items() if k != "trace"}, "planted_multiple": mult}
         if cal["strength"] is None:
+            best = max(cal["trace"], key=lambda x: x[2]) if cal["trace"] else None
             entry["note"] = "not calibratable at this n / noise; reported as unmeasured"
+            entry["max_achieved_oracle_gain"] = ({"strength": best[0], "n": best[1], "gain": best[2],
+                                                  "gain_in_target_units": best[2] / (mult * plan.delta_Y)}
+                                                 if best else None)
+            entry["trace"] = cal["trace"]
             rep[f"{kind}_{variant}"] = entry
+            ctl.setdefault(kind, {})[variant] = {"calibrated": False, "planted_multiple": mult,
+                                                 "target_gain": mult * plan.delta_Y,
+                                                 "max_achieved_oracle_gain": best[2] if best else None}
             continue
         r = replicate(make_world(kind, cal["strength"], variant), regime, plan, R, 5000, oracle=cal["oracle"])
         entry["replication"] = {k: v for k, v in r.items() if k != "runs"}
