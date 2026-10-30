@@ -13,7 +13,7 @@ Both runs are labelled **EVIDENCE**.
 
 ## Conditions
 
-- **Design and rules:** design revision 7.4 (`docs/r1/proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md` at docs commit `<commit>`, sha256 `<sha256>`); the operator runbook revision 2 at `<commit>`; the pre-declaration `docs/r1/predeclarations/trackS_<date>.json` with sha256 `<hash>`, and PLAN §10 rows R1-TRACKS-ADOPT, R1-TRACKS-S02, R1-TRACKS-FRAMING and R1-TRACKS-HOST/-2.
+- **Design and rules:** design revision 7.4 (`docs/r1/proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md` at docs commit `<commit>`, sha256 `<sha256>`); the operator runbook revision 3 (or the revision in force) at `<commit>`; the pre-declaration `docs/r1/predeclarations/trackS_<date>.json` with sha256 `<hash>`, and PLAN §10 rows R1-TRACKS-ADOPT, R1-TRACKS-S02, R1-TRACKS-FRAMING and R1-TRACKS-HOST/-2.
 - **Hosts:** `digits_mlp` runs on TASL-2 only and `tabular_mlp` on TASL-7 only. The GPU lease is held throughout. Track X and Track P evidence runs keep priority.
 - **Pins:**
   - paper `9bb64ba<full hash>`;

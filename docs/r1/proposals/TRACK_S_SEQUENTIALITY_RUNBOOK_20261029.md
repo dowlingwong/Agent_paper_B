@@ -92,7 +92,7 @@ Paths: `apb/` is this repo at `docs/c3-pool-28oct`; `h/` is `autoresearch_harnes
 
 ## 2. Preconditions (S0) — in this order; STOP until each is done
 
-**Seed blocks.** There are five disjoint instance-seed blocks: S0.4 prior, S0.5 pilot, S0.7 tuning, S3a forks, S3e fresh. S3e also has its own audit-seed block. All campaigns of one instance share one instance-level seed key, covering LLM, worker, verify and audit seeds, whichever policy they run, so that runs pair exactly. **E2 verify is disabled for every Track S policy**, which is a declared choice: cheaper grid prices could make KG verify fire and spend 2r runs (D1″).
+**Seed blocks.** There are five disjoint instance-seed blocks: S0.4 prior, S0.5 pilot, S0.7 tuning, S3a forks, S3e fresh. S3e also has its own audit-seed block. **Audit seeds are per instance** (from the phase's block, e.g. base + instance index · K + k) and are shared by every policy and repetition on that instance, so an audit error never repeats across instances (code-acceptance MAJOR 1, 29 Oct). **Repetition convention:** rep 0 is primary; rep 1 is used only by the descriptive placebo. The primary D = π\*(rep 0) − m\*(rep 0). All campaigns of one instance share one instance-level seed key, covering LLM, worker, verify and audit seeds, whichever policy they run, so that runs pair exactly. **E2 verify is disabled for every Track S policy**, which is a declared choice: cheaper grid prices could make KG verify fire and spend 2r runs (D1″).
 
 | # | Step | Host | Done when |
 |---|---|---|---|
@@ -363,6 +363,8 @@ If both hosts stay free, the decision falls at **≈ 15–23 Nov**.
 - m11: S0.6 matched to the pilot, then re-run after S0.7.
 - m12: cost row and g = 0.8 extension.
 - q4: the info-member rationale is corrected.
+
+**Revision 7.3 → 7.4** (code acceptance review, `reviews/CODE_ACCEPTANCE_20261029.md`): per-instance audit seeds and the repetition convention are now stated (§2). The other items are code fixes with no change to the design.
 
 **Revision 7.2 → 7.3:** the simulator's trial 1 is aligned with the harness (never rule-detectable, kept without comparison). The final FIXTURE S0.6 run at n = 300 calibrates only P2+ concentrated (power 0.86); P2+ diffuse and P1-diffuse do not calibrate. The sensitivity statements are updated (§10). The world designs for P2+ diffuse and P1 may be revisited before S0.8, but only to make them calibratable; the runbook's rules do not change.
 

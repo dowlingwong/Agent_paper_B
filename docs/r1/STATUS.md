@@ -8,10 +8,10 @@
   - the decisions draft;
   - the seven design reviews and the code acceptance review;
   - the review prompts;
-  - the operator runbook `prompts/TRACK_S_OPERATOR_RUNBOOK_20261030.md` with its independent review;
+  - the operator runbook `prompts/TRACK_S_OPERATOR_RUNBOOK_20261030.md`, revision 3.1, with its independent review `reviews/TRACKS_OPERATOR_RUNBOOK_REVIEW_20261030.md` (revision 3 **accepted**; its four minors are fixed in 3.1). Next: the author starts the operator agent at Phase 0 and supplies the Phase 0.3 items;
   - the authorization draft `proposals/AUTH_DRAFT_trackS_20261030.md`.
 - Wording corrections: TRACK_P §6.5 step 4; a C3_DESIGN note on A2.
-- Track S code: paper branch `trackS-20261029` (`835efcf`; 151 Track S tests pass; the end-to-end synthetic test returns A on P2+ and "no gain found" on N0) and harness branch `trackS-20261029` (`115df37`, on GitHub). No host run has started.
+- Track S code: paper branch `trackS-20261029` at **`9bb64ba`** after the ops-readiness round (168 Track S tests pass; the end-to-end synthetic test returns A on P2+ and "no gain found" on N0) and harness branch `trackS-20261029` (`115df37`, on GitHub). No host run has started.
 - Branch `docs/trackS-decisions-30oct` (from `docs/c3-pool-28oct` `cefa389`), delivered as a bundle; for the coordinator. **Note:** the Mac's main working tree (`exam-x-20261026`) currently shows an uncommitted move of `docs/r1/*` to `docs/*`. It was not made by this session and was left untouched.
 
 ## 29 October 2026 — Track S host decision recorded (AI-assisted; documents only)
