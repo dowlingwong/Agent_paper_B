@@ -1,7 +1,10 @@
 # Track S — Phase 0 host facts, environments, pins and smoke test (TASL-2, TASL-7)
 
 **Written 30 Oct 2026 by the Track S operator agent; AI-assisted.** Phase 0 of
-`docs/r1/prompts/TRACK_S_OPERATOR_RUNBOOK_20261030.md` (revision 3.2). Every output below is
+`docs/r1/prompts/TRACK_S_OPERATOR_RUNBOOK_20261030.md` (revision 3.2,
+sha256 `1789c000dbeaaa96202e00d72714d6b5df4e87733ca8f5823b9afd01ac7091ab`; the copy in the Mac's
+main tree and the one on `docs/trackS-decisions-30oct` are byte-identical, and the document is read
+from that branch per runbook §0.1 — it is not part of the pinned paper commit). Every output below is
 **ENGINEERING_ONLY**: it feeds the pre-declaration and is never quoted as a result.
 
 Operator worktree: `.claude-worktrees/trackS-ops-20261030`, branch **`trackS-ops-20261030`**, from paper
