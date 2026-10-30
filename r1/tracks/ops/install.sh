@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Install the §11 ops scripts into <host>:<R>/bin, filling HOST_LABEL and GPU UUID per host.
+# Also installs the STOP-1 diagnostic runner (ops/diag) as bin/trks-diag + bin/cache_prompt_diag.py.
 # usage: install.sh <ssh-alias> <host-label> <gpu-uuid>
 set -euo pipefail
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -11,6 +12,11 @@ for f in trks trks-run trks-servers trks-watch trks-status; do
   sed -e "s|@HOST_LABEL@|$label|g" -e "s|@GPU_ID@|$uuid|g" "$here/$f" > "$tmp/$f"
   bash -n "$tmp/$f"
 done
-scp -q "$tmp"/trks "$tmp"/trks-run "$tmp"/trks-servers "$tmp"/trks-watch "$tmp"/trks-status "$host":/home/dowling/r1_tracks/bin/
-ssh "$host" 'chmod +x /home/dowling/r1_tracks/bin/trks /home/dowling/r1_tracks/bin/trks-run /home/dowling/r1_tracks/bin/trks-servers /home/dowling/r1_tracks/bin/trks-watch /home/dowling/r1_tracks/bin/trks-status; cd /home/dowling/r1_tracks/bin && sha256sum trks trks-run trks-servers trks-watch trks-status && grep -E "^HOST_LABEL=|^GPU_ID=" trks'
+# diagnostic runner (no host substitution; identical on both hosts)
+cp "$here/diag/trks-diag" "$tmp/trks-diag"; bash -n "$tmp/trks-diag"
+cp "$here/diag/cache_prompt_diag.py" "$tmp/cache_prompt_diag.py"
+python3 -m py_compile "$tmp/cache_prompt_diag.py"
+scp -q "$tmp"/trks "$tmp"/trks-run "$tmp"/trks-servers "$tmp"/trks-watch "$tmp"/trks-status \
+       "$tmp"/trks-diag "$tmp"/cache_prompt_diag.py "$host":/home/dowling/r1_tracks/bin/
+ssh "$host" 'cd /home/dowling/r1_tracks/bin && chmod +x trks trks-run trks-servers trks-watch trks-status trks-diag && sha256sum trks trks-run trks-servers trks-watch trks-status trks-diag cache_prompt_diag.py && grep -E "^HOST_LABEL=|^GPU_ID=" trks'
 echo "installed on $host as $label ($uuid)"

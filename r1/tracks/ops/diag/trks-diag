@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Track S diagnostic runner (ENGINEERING_ONLY / DIAGNOSTIC). Same environment as bin/trks, but it runs the
+# standalone diagnostic module instead of the collector/probe subcommands. It never touches a phase.
+set -euo pipefail
+R=/home/dowling/r1_tracks; . "$R/venv/bin/activate"
+export AR_HARNESS_ROOT=$R/work/autoresearch_harness OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+# A script run by path puts its own dir on sys.path, not the cwd, so add the paper checkout explicitly.
+export PYTHONPATH=$R/work/Agent_paper_B${PYTHONPATH:+:$PYTHONPATH}
+cd "$R/work/Agent_paper_B"
+exec python "$R/bin/cache_prompt_diag.py" "$@"

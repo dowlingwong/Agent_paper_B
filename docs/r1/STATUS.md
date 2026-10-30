@@ -1,5 +1,20 @@
 # Paper B (route R1) — status log
 
+## 30 October 2026 — STOP-1 diagnostic: `cache_prompt: false` gives 100 % identity (AI-assisted; ENGINEERING_ONLY / DIAGNOSTIC)
+
+- **Authority.** The author's ruling on STOP 1 (30 Oct): **option 2, an authorised diagnostic re-run** — not a final STOP, not a halt. **Not a phase**: no k is set and Phase 3 was not started.
+- **Question.** Is llama-server's default prompt caching the cause of the S0.1 serial non-identity (0.930 digits / 0.870 tabular)? Report: `reports/TRACKS_S01_CACHEPROMPT_DIAG_20261030.md`.
+- **Method.** A committed diagnostic (`r1/tracks/ops/diag/cache_prompt_diag.py`, runner `trks-diag`, launch scripts `tasl{2,7}_diag_cache.sh`) reuses the **pinned** S0.1 probe unchanged — fixed prompts, per-prompt seeds, harness `chat_payload` body, the serial interleaved schedule (`order_seed 1`, `url_index 0`, `client 0`), `identity_rate`/`latency_stats`/`cpu_census` — and adds **only** one request field, `"cache_prompt"`: `false` (test) then `true` (control), identical prompts/seeds/body/order. One server per host (`trks-servers 1`, port 18101, under the lease); raw responses kept. No pinned code changed.
+- **Result — the trigger condition is met.**
+  - `cache_prompt: false` identity **1.0000 (200/200) on both hosts**.
+  - `cache_prompt: true` control: **1.0000** (digits) and **0.9900** (tabular; prompts 60 and 92 differ).
+  - Latency cost of `false`: **+8.2 %** (0.6828 s vs 0.6309 s) on digits, **+7.7 %** (0.6985 s vs 0.6488 s) on tabular.
+  - **The field is genuinely honoured**: prompt tokens *evaluated* fall from 383 781 / 387 381 (≈640 per call) with `false` to 600 / 4 865 (1–8 per call) with `true` — not a null test.
+  - Output sha256: digits `4ada2f72b17524903a3adac7865918f399cb9017f0ef8435b8ea734c98313a40`, tabular `4407899844d3e2940d5fee3d283875580de460d334c5ae8076031f6910da613f`.
+- **Observation flagged, not interpreted.** The control (`cache_prompt: true`, 1.000/0.990) did **not** reproduce the original S0.1 serial failure (0.930/0.870). The runs differ in that the diagnostic used **one** server whereas S0.1's serial probe ran with **two** servers resident (only 18101 used). The diagnostic therefore shows `false` gives 100 % identity under the single-server configuration but does **not** by itself establish prompt caching as the cause of the original failure. Whether that matters for the "if false reaches 100 %, do a code change + full S0.1 re-run" rule is the coordinating session's call; the operator took no reading.
+- **Operator did not implement the next step.** The stated next step is a code change by the coordinating session (harness/collector switch, review, new pins, a PLAN row) and then a full S0.1 re-run. `9bb64ba` / `115df37` are unchanged.
+- **State.** Servers stopped, lease released and verified free, no compute apps, watcher running, drill marker absent; results copied back; both hosts clean at the pins.
+
 ## 30 October 2026 — Runbook revision 3.3 received and adopted (AI-assisted; procedure only)
 
 - **Revision of record is now 3.3.** Fetched from the refreshed bundle `.claude-worktrees/_snapshots/trackS_30oct.bundle` (sha256 `96dfdee13df767cb056bc8fc7cbb79aa520646105a765dde7404d8b18cb0d215`, matching `trackS_30oct.heads.txt`) and fast-forwarded the docs branch `docs/trackS-decisions-30oct` **`3ac0fbf4` → `13badb0d`**.
