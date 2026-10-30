@@ -1,4 +1,4 @@
-# Track S — operator runbook for TASL-2 (zhixu portal) and TASL-7 (revision 3.2)
+# Track S — operator runbook for TASL-2 (zhixu portal) and TASL-7 (revision 3.3)
 
 **Written 30 Oct 2026 by the chat session (Claude) at the author's request; AI-assisted.** One operator agent (Claude Code), started by the author on the Mac with SSH access to both hosts, carries out this runbook phase by phase. Every phase ends with a **STOP**, an independent review and, where marked, an author decision. Do not skip a STOP.
 
@@ -76,6 +76,7 @@ Use only `trks collect …`, `trks analyze …`, `trks probe …` and `trks s11 
   1. On TASL-2, that `~/r1_locks/trackx_evidence.active` is absent.
   2. On TASL-7, that `~/r1_locks/trackp_evidence.active` is absent. This marker must be created by Track P for its evidence runs; the author arranges it in Phase 0. Also check that no `r1p_*` tmux session is running a GPU job.
   3. That `nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv` lists no compute process.
+  4. On both hosts, that the drill marker `$R/trks_drill.active` is absent (`trks-servers` refuses to start otherwise).
 - **Watcher.** `tmux new -d -s trks_watch /home/dowling/r1_tracks/bin/trks-watch` (template §11.4). Start it in Phase 0 and keep it running; restart it after a reboot. It polls every 60 s. If a priority marker appears, it:
   1. touches a `STOP` file in **every** directory under `$R/out` that has a `manifest.json` (finished phases ignore it);
   2. waits until no `r1.tracks.collect` process of ours is left (each collector finishes its current unit and exits 0 with status "paused");
@@ -99,6 +100,13 @@ Use only `trks collect …`, `trks analyze …`, `trks probe …` and `trks s11 
   - **3** ("STOP: server unhealthy", after 3 consecutive transport or health failures): check the server log. Restart the servers once through `trks-servers`. If the next session also exits 3, **STOP** for the author.
   - Any other non-zero exit is a STOP. Read the manifest and `failed_units.jsonl`.
 - **Retries.** A unit that fails `--max-retries` times stays in `failed_units.jsonl` and is never counted as done. More than **2 %** failed units in a phase is a STOP.
+- **Where the counts are.** The manifest is written at the start and at the end of each session, and each session appends its own record. Read the latest one: `jq '.sessions[-1].done' manifest.json` (status `complete`, `deadline`, `paused` or `STOP: server unhealthy`; a session that died has `interrupted` instead of `done`). Its `roots`, `leaves` and `failed` count **that session only**. Committed units are the distinct ids in `roots.jsonl` (`root_id`) and `leaves.jsonl` (`fork_id`, `arm`, `rep`), across sessions. Forks are not units; they have no retries of their own.
+- **How the 2 % is counted (rev 3.3; Phase 0 review m10).**
+  - Failed units are **permanently failed units**: units whose retries are used up. Read them as `exhausted` in the latest session's `done`; it is cumulative.
+  - The rate is Σ over the phase's shards of `exhausted`, divided by Σ over the shards of (committed roots + committed leaves + `exhausted`).
+  - Lines in `failed_units.jsonl` and `done.failed` count **failed attempts**, not failed units. An attempt that a later retry completed does not count.
+  - **A phase is finished** when, for every shard, the identical command with `--dry-run` added prints `roots_todo` = 0 and `leaves_todo` = 0. (For a fork phase, leaves are planned only after their root commits, so a dry run before that under-counts them.) Re-run the sessions with the same commands until then, or until the 2 % rule stops the phase.
+  - If a report needs any other reading of a STOP rule, do not adopt it in the report. Flag it to the coordinating session, which changes this runbook.
 - **Checks.** At every working session, check `tmux ls`, each manifest's progress and status, `failed_units.jsonl`, `nvidia-smi` and the server logs. `trks-status` (§11.5) prints all of this.
 
 ### 0.7 Labels and gates
@@ -140,7 +148,7 @@ Use only `trks collect …`, `trks analyze …`, `trks probe …` and `trks s11 
 **0.3 Access and author items.**
 - (a) **SSH access (confirmed by the author, 30 Oct).** The operator reaches TASL-2 as `ssh portal_zhixu` and TASL-7 as `ssh tasl7`, from the Mac, without a password prompt. Check both with `ssh <alias> 'hostname; id'` at the start of Phase 0. If either fails, STOP and ask.
 - (b) **Work directory (approved by the author, 30 Oct).** `/home/dowling/r1_tracks/` on both hosts is the operator's work directory. The operator may create, read and write anything under it without asking; nothing outside it is written, except the lease lock `~/r1_locks/gpu0.lock`, which `flock` uses.
-- (c) **Still needed before STOP 0 passes:** the author arranges that Track P creates and removes `~/r1_locks/trackp_evidence.active` around its evidence runs on TASL-7.
+- (c) **Track P marker on TASL-7.** The author arranges that Track P creates and removes `~/r1_locks/trackp_evidence.active` around its evidence runs, through the helper in `docs/r1/proposals/TRACKP_EVIDENCE_MARKER_20261030.md` (PLAN row R1-TASL7-TRACKP-MARKER). For STOP 0, the author's confirmation that this is being arranged is enough. **Gate (rev 3.3):** no Track S phase from Phase 6 on starts on TASL-7 until either the helper is installed and the 3.0b check has passed, or the author has stated in writing (STATUS or the phase report) that no Track P evidence run will start on TASL-7 while that phase runs. Phases 1–5 are short and need neither.
 
 **0.4 Transfer (R1-EXAM-TRANSFER).**
 - On each host, create `/home/dowling/r1_tracks/{remotes,work,opt,models,bin,logs,launch,out,scratch}`, with `git init --bare remotes/Agent_paper_B.git`.
@@ -181,7 +189,7 @@ Then run `sha256sum`. It must equal the pin.
 
 **Output:** `docs/r1/reports/TRACKS_HOST_FACTS_<date>.md`.
 
-**STOP 0:** the review loop (the reviewer re-runs the facts, both test suites and the pin checks), plus item 0.3(c).
+**STOP 0:** the review loop (the reviewer re-runs the facts, both test suites and the pin checks), plus the author's confirmation for item 0.3(c).
 
 ## Phase 1 — S0.1 determinism, latency, CPU census (each host; < 1 GPU-h)
 
@@ -223,10 +231,30 @@ This is reported with the result. It is not a gate. It is reviewed together with
 
 ## Phase 3 — S0.4 dev campaigns, D28 liveness, A2-U prior (each node on its host; k servers may run, but S0.4 uses one process)
 
+**3.0 Pause drill (rev 3.3; both hosts, during S0.4; before any multi-day phase).** The watcher's pause path has not yet run on a real host. Exercise it once per host with Track S's own **drill marker** `$R/trks_drill.active`, which the watcher (§11.4) treats like a priority marker. Never create another track's marker (`trackx_…`, `trackp_…`) by hand.
+1. Start S0.4 as below. Once at least one unit has committed (`jq -r .root_id $OUT/s04/roots.jsonl | sort -u | wc -l` ≥ 1; the manifest is not updated during a session), record that count, `tmux ls`, and that the lease is held (`flock -n ~/r1_locks/gpu0.lock true` fails).
+2. `touch $R/trks_drill.active` and note the time.
+3. **Expected:**
+   - within about 1 min, `logs/watch.log` says `priority marker seen ($R/trks_drill.active): pausing`;
+   - after the current unit, `trks_s04` exits with `rc=0` in `logs/trks_s04.exit`, and `jq '.sessions[-1].done.status' $OUT/s04/manifest.json` is `"paused"`;
+   - then `servers stopped; lease released`; `trks_llm` is gone, `flock -n ~/r1_locks/gpu0.lock true` succeeds, and `nvidia-smi` lists no compute process;
+   - no `FORCED` entry.
+4. `rm $R/trks_drill.active`. Wait for `marker gone` in the log. Then resume as in §0.4: `find $R/out -name STOP -delete`, start the servers, re-run the S0.4 launch script.
+5. **Expected after the resume:**
+   - the distinct `root_id` count in `roots.jsonl` keeps growing from the count at the pause (the new session's own `done.roots` starts at 0; that is normal);
+   - no unit is committed twice: `jq -r .root_id $OUT/s04/roots.jsonl | sort | uniq -d` prints nothing;
+   - `s04_rows.jsonl`, the file `fit_prior` reads, has no duplicate (instance, budget_index) pair;
+   - `exhausted` stays 0.
+6. Record the timestamps, the pause latency (marker to lease released) and the outputs in the Phase 3 report.
+
+Any deviation is a **STOP**. The drill pause is not a failure, and its exit is not an exit 3.
+
+**3.0b Track P integration check (TASL-7; only when Track P is idle and has installed its marker helper, `docs/r1/proposals/TRACKP_EVIDENCE_MARKER_20261030.md`).** Ask the author first. Then, during a Track S LLM session on TASL-7: `~/r1_locks/bin/trackp-evidence begin drill-trackS`; check that Track S pauses as in step 3 and that `trackp-evidence status` shows the lease free; `trackp-evidence end drill-trackS`; then resume and check as in steps 4–5. This is the only time the operator may create the Track P marker, and only through the helper with the author's permission. If Track P is not ready, record this check as open. It does not block STOP 3, but it gates Phase 6 on TASL-7 (Phase 0.3(c)).
+
 ```
 trks-run trks_s04 18101 collect --phase S0.4 --node <node> --instances 10 --label ENGINEERING_ONLY \
   --deadline 28800 --stop-file $OUT/s04/STOP --out $OUT/s04 --work $WORK/s04
-# after trks_s04 has exited 0 with status "done" (CPU, no servers needed; short, so run directly):
+# after trks_s04 has exited 0 with status "complete" (CPU, no servers needed; short, so run directly):
 trks collect --phase liveness --node <node> --out $OUT/s04          # exit 3 = STOP (node fails D28)
 trks collect --phase fit_prior --node <node> --out $OUT/s04 --sigma-node <σ_node> --obs-inflation 1.0 --prior $OUT/a2u_prior.json
 ```
@@ -236,9 +264,10 @@ Here σ_node = 0.0066 for digits and 0.0019 for tabular (PLAN D18 table).
 **Done when:**
 - liveness passes;
 - `a2u_prior.json` and its sha256 are recorded;
-- failed units are ≤ 2 % and were retried.
+- failed units are ≤ 2 % (exhausted / planned, §0.6) and were retried;
+- the pause drill (3.0 above) passed on both hosts.
 
-**STOP 3:** the review loop, covering Phases 2 and 3.
+**STOP 3:** the review loop, covering Phases 2 and 3 and the drill.
 
 ## Phase 4 — S0.5 pilot, S0.5b truncation, summary
 
@@ -248,7 +277,7 @@ The declared price is g = 0.1 σ_node: digits **0.00066**, tabular **0.00019**. 
 trks-run trks_s05 18101 collect --phase S0.5 --node <node> --prior $OUT/a2u_prior.json --prior-sha256 <sha> --obs-inflation 1.0 \
   --W 40 --instances 20 --policy "static:<0.3·σ_node>,0" --rep 0 --rep 1 --rep-instances 10 --forks 1.5 --aa-fraction 0.1 \
   --label ENGINEERING_ONLY --deadline 28800 --stop-file $OUT/s05/STOP --out $OUT/s05 --work $WORK/s05
-# after trks_s05 has exited 0 with status "done" (CPU; long, so in its own session, which survives an ssh drop):
+# after trks_s05 has exited 0 with status "complete" (CPU; long, so in its own session, which survives an ssh drop):
 trks-run trks_s05b - collect --phase S0.5b --node <node> --truncate-W 8,10,12,20 --out $OUT/s05 --work $WORK/s05
 ```
 
@@ -355,7 +384,7 @@ trks-run trks_s3e_placebo 18101 collect --phase campaign "${S3E[@]}" --exact-pla
   --stop-file $OUT/s3e_placebo/STOP --out $OUT/s3e_placebo --work $WORK/s3e_placebo
 ```
 
-Only after `trks_s3e_placebo` has exited 0 with status "done" and no mismatch, run **three separate launch scripts, one after another** (`<host>_s3e_main.sh`, `<host>_s3e_other.sh`, `<host>_s3e_sec.sh`), each looping over i in 0…k−1. Start the next script only after every session of the previous one has exited with rc=0 and status "done" (`trks-status`). Each script defines the arrays it uses:
+Only after `trks_s3e_placebo` has exited 0 with status "complete" and no mismatch, run **three separate launch scripts, one after another** (`<host>_s3e_main.sh`, `<host>_s3e_other.sh`, `<host>_s3e_sec.sh`), each looping over i in 0…k−1. Start the next script only after every session of the previous one has exited with rc=0 and status "done" (`trks-status`). Each script defines the arrays it uses:
 
 ```bash
 # <host>_s3e_main.sh
@@ -500,7 +529,7 @@ echo "started $s ($cmdf)"
 # run as: tmux new -d -s trks_llm /home/dowling/r1_tracks/bin/trks-servers <k>
 set -euo pipefail
 R=/home/dowling/r1_tracks; k=${1:?k}
-for f in ~/r1_locks/trackx_evidence.active ~/r1_locks/trackp_evidence.active; do
+for f in ~/r1_locks/trackx_evidence.active ~/r1_locks/trackp_evidence.active $R/trks_drill.active; do
   if [ -e "$f" ]; then echo "priority marker $f"; exit 1; fi
 done
 exec flock -n ~/r1_locks/gpu0.lock bash -c '
@@ -519,12 +548,13 @@ exec flock -n ~/r1_locks/gpu0.lock bash -c '
 # run as: tmux new -d -s trks_watch /home/dowling/r1_tracks/bin/trks-watch
 R=/home/dowling/r1_tracks
 log() { echo "$(date -u +%FT%TZ) $*" >> "$R/logs/watch.log"; }
-marker() { [ -e ~/r1_locks/trackx_evidence.active ] || [ -e ~/r1_locks/trackp_evidence.active ]; }
+MARKERS="$HOME/r1_locks/trackx_evidence.active $HOME/r1_locks/trackp_evidence.active $R/trks_drill.active"
+marker() { for f in $MARKERS; do if [ -e "$f" ]; then seen=$f; return 0; fi; done; return 1; }
 ours() { pgrep -u "$(id -u)" -f 'python -m r1\.tracks\.collect .*--stop-file' >/dev/null; }   # LLM collectors only
 log "watch started"
 while sleep 60; do
   marker || continue
-  log "priority marker seen: pausing"
+  log "priority marker seen ($seen): pausing"
   find "$R/out" -name manifest.json -print0 2>/dev/null | while IFS= read -r -d '' m; do touch "$(dirname "$m")/STOP"; done
   t=0
   while ours; do
@@ -601,3 +631,11 @@ The fields are those written by `collect` S0.5 (`mu`, `sd` = predictive sd with 
 | GGUF never re-hashed after Phase 0 | `trks-status` re-hashes it against the pin (§11.5) |
 
 **Revision 3.1 → 3.2** (author, 30 Oct; no review needed: facts only). SSH aliases `portal_zhixu` (TASL-2) and `tasl7` (TASL-7) recorded; the work directory `/home/dowling/r1_tracks/` approved, so the operator needs no further approval for it (§0.1, Phase 0.3).
+
+**Revision 3.2 → 3.3** (30 Oct, after the Phase 0 review; at the author's request).
+- §0.6: the 2 % rule's denominator is stated: exhausted units / planned units, over all shards (Phase 0 review m10; the operator had stated it only in its report). Reports never re-read a STOP rule; the runbook does.
+- Phase 3.0: a **pause drill** on both hosts during S0.4, with Track S's own drill marker `$R/trks_drill.active` (Phase 0 review n3: the pause path was unexercised). 3.0b: an optional Track P integration check through Track P's marker helper, with the author's permission.
+- §11.4: the watcher also reacts to `$R/trks_drill.active` and logs which marker it saw; §11.3 and §0.4: the servers refuse to start while it exists. **Re-install `bin/trks-watch` and `bin/trks-servers` on both hosts and restart `trks_watch` before Phase 3.**
+- §0.6: where the counts are (per-session manifest records; committed ids in `roots.jsonl` / `leaves.jsonl`); a phase is finished when a `--dry-run` shows nothing left to do. The collector's final status is `complete`, not `done`.
+- Phase 0.3(c): a gate for Phase 6 and later on TASL-7 (the Track P helper and check 3.0b, or the author's written statement).
+- Independent review of 3.3 (30 Oct): no BLOCKING; 3 MAJOR and 9 MINOR, all addressed here or in the helper (rev 2 of `proposals/trackp-evidence.sh`).
