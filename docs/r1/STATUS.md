@@ -1,5 +1,26 @@
 # Paper B (route R1) — status log
 
+## 30 October 2026 — Track S adopted; settings, framing and wording recorded (author; AI-assisted, documents only)
+
+- Author decisions recorded (PLAN §10): **R1-TRACKS-ADOPT**, **R1-TRACKS-S02**, **R1-TRACKS-FRAMING**, **R1-WORDING-30OCT** and **R1-REPO-ACCESS**. Together with R1-TRACKS-HOST/-2 (29 Oct; previously uncommitted in the `c3-pool-28oct` worktree, committed here).
+- Track S documents committed under `docs/r1/`:
+  - the runbook, rev 7.4;
+  - the decisions draft;
+  - the seven design reviews and the code acceptance review;
+  - the review prompts;
+  - the operator runbook `prompts/TRACK_S_OPERATOR_RUNBOOK_20261030.md` with its independent review;
+  - the authorization draft `proposals/AUTH_DRAFT_trackS_20261030.md`.
+- Wording corrections: TRACK_P §6.5 step 4; a C3_DESIGN note on A2.
+- Track S code: paper branch `trackS-20261029` (`835efcf`; 151 Track S tests pass; the end-to-end synthetic test returns A on P2+ and "no gain found" on N0) and harness branch `trackS-20261029` (`115df37`, on GitHub). No host run has started.
+- Branch `docs/trackS-decisions-30oct` (from `docs/c3-pool-28oct` `cefa389`), delivered as a bundle; for the coordinator. **Note:** the Mac's main working tree (`exam-x-20261026`) currently shows an uncommitted move of `docs/r1/*` to `docs/*`. It was not made by this session and was left untouched.
+
+## 29 October 2026 — Track S host decision recorded (AI-assisted; documents only)
+
+- Author decision recorded (PLAN §10): **R1-TRACKS-HOST**. If Track S runs, its LLM-backed steps run on zhixu portal after Track X releases the card or in Track X gaps, under the portal lease. deepthought keeps sweep 1 and B.2 only.
+- Track S runbook revision 2 (`proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md`, untracked on the `exam-x-20261026` checkout) §2 and §9 are updated to match. Track S itself remains a proposal: not adopted, not authorized, and no run started.
+- Later the same day: **R1-TRACKS-HOST-2**. Track S is split over two 4090 hosts: `digits_mlp` on TASL-2 (zhixu portal) and `tabular_mlp` on TASL-7, with Track X and Track P priority kept. The runbook (revision 3) §1, §2, §4 and §9 are updated to match.
+- Edited in this worktree's files only; not committed (the chat session cannot run git writes in this folder). For the coordinator.
+
 ## 28 October 2026 — C3 decision-model pool narrowed; TabPFN added (AI-assisted; documents only)
 
 - Author decisions recorded (PLAN §10): **R1-C3-POOL** (candidates Kev-0.8B and Kev-4B; StartLux 0.8B/2B/4B and Laya removed; Qwen3.5-0.8B/4B-Base kept as control), **R1-C3-POOL-EXAM** (P.3a on those four bases, a subset of the 27 Oct authorization; the architecture-class finalist rule no longer selects), **R1-TABPFN** (TabPFN rung: in-context, fine-tuned, R-A0, R-A1).
