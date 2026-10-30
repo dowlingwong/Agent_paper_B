@@ -36,9 +36,16 @@ body and call order in both. Both modes ran in one invocation, **test first**, o
 - **Raw responses are kept** per call: call-order position, prompt index, repeat, latency, content
   sha256 and length, and the server's reported token counts; and per prompt, its per-repeat contents, so
   identity can be re-derived from the file.
+- **Provenance gaps in the raw file (review S4).** The output JSON records no run timestamps and no
+  `request_example`/payload hash (the pinned probe records a `request_example`). So the "only added field"
+  claim is checkable from the committed code plus the token evidence (§2.1), not from the output file, and
+  the run's wall-clock timing rests on file mtimes and the session logs. Any future diagnostic should add
+  `request_example`, start/end timestamps and a script sha256.
 - Server: `llama-server … --alias r1-manager --host 127.0.0.1 --port 18101 -ngl 999 -c 8192 --parallel 1
-  --verbose`; both hosts logged `offloaded 29/29 layers to GPU` and `GET /health` → `{"status":"ok"}`.
-  `GET /props` exposes no `cache_prompt` key, so the server's default could not be read from there.
+  --verbose`; both hosts logged `offloaded 29/29 layers to GPU`. A **manual** `curl -s …/health` returned
+  `{"status":"ok"}` before the run (recorded here as a live observation; the diagnostic itself does not
+  call `/health` and no artifact retains it — review S3). `GET /props` exposes no `cache_prompt` key, so
+  the server's default could not be read from there.
 - Pre-checks (§0.4): `~/r1_locks` held only `gpu0.lock` (no `trackx_…`, no `trackp_…`),
   `$R/trks_drill.active` absent, no compute process, no `trks_llm` session (before starting).
 
@@ -72,6 +79,10 @@ prompt is served from the KV cache (1 token per call on digits; 1–684 on tabul
 cache misses). So the two runs really did differ in prompt-cache behaviour — the experiment is not a
 null test.
 
+A stronger check (suggested by the reviewer): **`usage.prompt_tokens` is identical across the two modes**
+(mean 639.635 on digits, 645.635 on tabular), so the prompts and the request body were unchanged and only
+the number of *evaluated* tokens fell. That is what distinguishes the two modes.
+
 ### 2.2 Output sha256
 
 | file | sha256 |
@@ -83,17 +94,32 @@ null test.
 
 The control run (`cache_prompt: true`) gave **1.000 / 0.990**, but the original S0.1 serial probe — whose
 body carries **no** `cache_prompt` field and is otherwise the same request — gave **0.930 / 0.870** on
-the same hosts, same GGUF and same build. The two runs differ in at least this respect: **the diagnostic
-ran with one server (`trks-servers 1`) as the author specified, whereas the S0.1 serial probe ran while
-two servers were resident (`trks-servers 2`; only 18101 was used).**
+the same hosts, same GGUF and same build. The data show **three** differences between the two, not one:
+
+1. **Server count.** The diagnostic ran with one server (`trks-servers 1`, as the author specified);
+   S0.1's serial probe ran while two servers were resident (`trks-servers 2`; only 18101 was used).
+2. **Cache warmth (review S1; visible in this run's own data).** The control ran *after* the test run, so
+   its cache was already populated: per prompt, the first `true`-phase call was a cache hit for **200/200**
+   prompts on digits and **197/200** on tabular (`prompt_n = 1`, or 616/682/617 for the three misses),
+   whereas in the `false` phase **0/200** first calls hit. S0.1's serial probe was the first client of a
+   freshly started server, i.e. **cold**, so every prompt's first call there was a full re-evaluation.
+3. **No contrast on digits.** On `digits_mlp` the control is 1.000 with zero differing prompts, so that
+   host contributes **no** true/false contrast at all; the entire contrast in this diagnostic is **2 of
+   200 `tabular_mlp` prompts**.
 
 Consequence, stated plainly and **not interpreted by the operator**: the diagnostic establishes that
-`cache_prompt: false` yields 100 % identity under the single-server configuration, but it does **not**
-establish that prompt caching is the cause of the original 0.930/0.870 — the control did not reproduce
-that failure. The server-count difference (or another factor) may matter. Whether that matters for the
-author's "if false reaches 100 %, do a code change and a full S0.1 re-run" rule is the coordinating
-session's call; the operator has not taken it, and per the author's instruction has not re-read any STOP
-rule.
+`cache_prompt: false` yields 100 % identity under the single-server configuration — the author's trigger
+condition is met as a **fact of this run** — but it does **not** establish that prompt caching is the cause
+of the original 0.930/0.870, because neither mode reproduced that failure. Two cheap follow-ups would
+settle it and both are **outside what the operator was authorised to run**, so neither was run:
+
+- a **control-only run on a freshly started (cold) server** (~7 min on one host) — this isolates cache
+  warmth from the true/false comparison;
+- a **single-server repeat of the plain S0.1 serial probe** (no `cache_prompt` field) — this isolates the
+  server-count difference.
+
+Whether either is needed before the coordinating session's code change is its call; the operator has
+taken no reading of any STOP rule.
 
 ## 4. Trigger condition and what the operator did not do
 
@@ -110,9 +136,38 @@ Servers stopped, GPU lease **released and verified free**, no compute apps, no `
 Results copied back under `results/r1/tracks/*/s01_diag/`. Both hosts remain at paper `9bb64ba` and
 harness `115df37` with no tracked-file modifications.
 
+**One out-of-scope write observed and recorded (review S5).** On TASL-2,
+`/home/dowling/.claude/.credentials.json` (and its parent) has mtime 04:23:43 PDT. It is a Claude Code
+credentials cache; **no Track S command writes it** (the operator's TASL-2 commands are `ssh`, `git`,
+`sha256sum`, `python`, `tmux`, `curl`, `scp`, `nvidia-smi`, `flock`). The most plausible writer is the
+long-running interactive `claude` session in tmux `12` on TASL-2, which predates Phase 0 and was left
+untouched. The operator did not open the file and does not attribute it with certainty; it is flagged for
+the author. TASL-7 is clean.
+
 ## 6. Files
 
 - `docs/r1/reports/TRACKS_S01_CACHEPROMPT_DIAG_20261030.md` (this report)
 - `r1/tracks/ops/diag/cache_prompt_diag.py`, `r1/tracks/ops/diag/trks-diag`
 - `r1/tracks/ops/launch/tasl{2,7}_diag_cache.sh`
 - `results/r1/tracks/{digits_mlp,tabular_mlp}/s01_diag/cache_prompt.json`
+
+## 7. Review record
+
+**Round 1** (`docs/r1/reviews/TRACKS_OPS_S01DIAG_REVIEW_20261030.md`, fresh independent reviewer):
+**ACCEPTED** — 0 BLOCKING, 0 MAJOR, **5 MINOR** (S1–S5). The reviewer re-read the committed diagnostic
+against the pinned probe, recomputed every reported number from the raw JSON (identity, differing indices,
+latencies, token counts), confirmed the output sha256s against the hosts, confirmed the installed scripts
+are byte-identical to the committed code and predate the outputs, verified that `usage.prompt_tokens` is
+identical across modes (so the prompts/body were unchanged), and confirmed the hosts' state, pins and that
+no k was set and no later phase started.
+
+| # | Severity | Finding | Disposition |
+|---|---|---|---|
+| S1 | MINOR | The report blamed the control's non-reproduction only on the server count; the control's cache was pre-warmed by the test run, and on digits the control is already 1.000 so the whole contrast is 2/200 tabular prompts | **Fixed** — §3 now lists all three differences (server count, cache warmth with the 200/200 vs 0/200 hit counts, and no digits contrast) and names the two cheap follow-ups the operator was not authorised to run |
+| S2 | MINOR | STATUS's "1–8 per call" reads as a per-call range; the actual range is 1–684 (mean 8.11) | **Fixed** — STATUS now says "mean 1.0 / 8.1 per call (max 684)"; the report body was already right |
+| S3 | MINOR | "`GET /health` → `{"status":"ok"}`" had no retained artifact | **Fixed** — §1 now labels it a manual `curl` observation, notes the diagnostic does not call `/health`, and records that no artifact retains it |
+| S4 | MINOR | The raw JSON has no timestamps and no `request_example`/payload hash | **Recorded** — §1 states the gap and what the "only added field" claim rests on; future diagnostics should add `request_example`, start/end times and a script sha256 |
+| S5 | MINOR | An unrecorded out-of-scope write: TASL-2 `/home/dowling/.claude/.credentials.json` | **Recorded** — §5 states the mtime, that no Track S command writes it, the most plausible (interactive `claude` tmux `12`) writer, and that it is flagged for the author; the file was not opened |
+
+The reviewer also noted it could not verify the author's own ruling text (it is relayed, with no author
+artifact in the repo) and did not replay requests live; neither affects the reported numbers.
