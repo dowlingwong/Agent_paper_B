@@ -2,12 +2,13 @@
 # run as: tmux new -d -s trks_watch /home/dowling/r1_tracks/bin/trks-watch
 R=/home/dowling/r1_tracks
 log() { echo "$(date -u +%FT%TZ) $*" >> "$R/logs/watch.log"; }
-marker() { [ -e ~/r1_locks/trackx_evidence.active ] || [ -e ~/r1_locks/trackp_evidence.active ]; }
+MARKERS="$HOME/r1_locks/trackx_evidence.active $HOME/r1_locks/trackp_evidence.active $R/trks_drill.active"
+marker() { for f in $MARKERS; do if [ -e "$f" ]; then seen=$f; return 0; fi; done; return 1; }
 ours() { pgrep -u "$(id -u)" -f 'python -m r1\.tracks\.collect .*--stop-file' >/dev/null; }   # LLM collectors only
 log "watch started"
 while sleep 60; do
   marker || continue
-  log "priority marker seen: pausing"
+  log "priority marker seen ($seen): pausing"
   find "$R/out" -name manifest.json -print0 2>/dev/null | while IFS= read -r -d '' m; do touch "$(dirname "$m")/STOP"; done
   t=0
   while ours; do

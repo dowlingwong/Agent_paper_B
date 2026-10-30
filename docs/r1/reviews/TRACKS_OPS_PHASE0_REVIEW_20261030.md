@@ -507,13 +507,15 @@ fix. The worktree is clean apart from this review file.
 The reviewer's round-2 text above is unaltered. One item it left open has since been fixed, and one
 number corrected:
 
-- **m10 (STILL OPEN → fixed).** The reviewer was right that the report's m10 disposition row claimed the
-  runbook §0.6 "> 2 % failed units" denominator was stated in the body when it was not. Rather than
-  withdraw the claim, the sentence was added to report §3 0.10: the STOP is read with the denominator
-  *permanently failed (`exhausted`) units over planned units*, not the number of lines in
-  `failed_units.jsonl` (the TASL-7 manifest shows `done.failed: 0`, `roots: 1/1` for the unit whose
-  attempt is still logged). Final disposition counts after that commit: **13 FIXED, 2 SATISFACTORILY
-  ANSWERED, 0 STILL OPEN**.
+- **m10 (STILL OPEN → flagged, not read).** The reviewer was right that the report's m10 disposition row
+  claimed the runbook §0.6 "> 2 % failed units" denominator was stated in the body when it was not. The
+  claim was withdrawn; the report now records the *fact* (the file counts failure events; the TASL-7
+  manifest shows `done.failed: 0`, `roots: 1/1` for a still-logged attempt) and **flags** that §0.6 has no
+  defined denominator. Per the author's instruction of 30 Oct, the operator does not reinterpret STOP
+  rules. **Runbook revision 3.3 §0.6 subsequently defined the denominator** as
+  `exhausted / (committed roots + committed leaves + exhausted)` over all shards, which resolves the item
+  without any operator reading. Revised disposition counts: **12 FIXED, 2 SATISFACTORILY ANSWERED
+  (B1, M1), 1 FLAGGED-AND-RESOLVED-BY-RUNBOOK (m10), 0 STILL OPEN**.
 - **n1 (number corrected).** The rule-of-three bound is **3/20 = 15 %**; the exact one-sided 95 % upper
   limit for 0/20 is 1 − 0.05^(1/20) ≈ 13.9 %. The report and STATUS now say this instead of "≈ 14 %".
 - **n3** is recorded as an open author action, not an operator-fixable item: there is no Track P-side
