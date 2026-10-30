@@ -249,7 +249,7 @@ This is reported with the result. It is not a gate. It is reviewed together with
 
 Any deviation is a **STOP**. The drill pause is not a failure, and its exit is not an exit 3.
 
-**3.0b Track P integration check (TASL-7; only when Track P is idle and has installed its marker helper, `docs/r1/proposals/TRACKP_EVIDENCE_MARKER_20261030.md`).** Ask the author first. Then, during a Track S LLM session on TASL-7: `~/r1_locks/bin/trackp-evidence begin drill-trackS`; check that Track S pauses as in step 3 and that `trackp-evidence status` shows the lease free; `trackp-evidence end drill-trackS`; then resume and check as in steps 4–5. This is the only time the operator may create the Track P marker, and only through the helper with the author's permission. If Track P is not ready, record this check as open. It does not block STOP 3, but it gates Phase 6 on TASL-7 (Phase 0.3(c)).
+**3.0b Track P integration check (TASL-7; only when Track P is idle and has installed its marker helper, `docs/r1/proposals/TRACKP_EVIDENCE_MARKER_20261030.md`).** Ask the author first. Then, during a Track S LLM session on TASL-7: `~/r1_locks/bin/trackp-evidence begin drill-trackS`; check that Track S pauses as in step 3 (the watcher's log line then names `~/r1_locks/trackp_evidence.active`, not the drill marker) and that `trackp-evidence status` shows the lease free; `trackp-evidence end drill-trackS`; then resume and check as in steps 4–5. This is the only time the operator may create the Track P marker, and only through the helper with the author's permission. If Track P is not ready, record this check as open. It does not block STOP 3, but it gates Phase 6 on TASL-7 (Phase 0.3(c)).
 
 ```
 trks-run trks_s04 18101 collect --phase S0.4 --node <node> --instances 10 --label ENGINEERING_ONLY \
@@ -264,7 +264,7 @@ Here σ_node = 0.0066 for digits and 0.0019 for tabular (PLAN D18 table).
 **Done when:**
 - liveness passes;
 - `a2u_prior.json` and its sha256 are recorded;
-- failed units are ≤ 2 % (exhausted / planned, §0.6) and were retried;
+- failed units are ≤ 2 % (exhausted / (committed + exhausted), §0.6) and were retried;
 - the pause drill (3.0 above) passed on both hosts.
 
 **STOP 3:** the review loop, covering Phases 2 and 3 and the drill.
@@ -384,7 +384,7 @@ trks-run trks_s3e_placebo 18101 collect --phase campaign "${S3E[@]}" --exact-pla
   --stop-file $OUT/s3e_placebo/STOP --out $OUT/s3e_placebo --work $WORK/s3e_placebo
 ```
 
-Only after `trks_s3e_placebo` has exited 0 with status "complete" and no mismatch, run **three separate launch scripts, one after another** (`<host>_s3e_main.sh`, `<host>_s3e_other.sh`, `<host>_s3e_sec.sh`), each looping over i in 0…k−1. Start the next script only after every session of the previous one has exited with rc=0 and status "done" (`trks-status`). Each script defines the arrays it uses:
+Only after `trks_s3e_placebo` has exited 0 with status "complete" and no mismatch, run **three separate launch scripts, one after another** (`<host>_s3e_main.sh`, `<host>_s3e_other.sh`, `<host>_s3e_sec.sh`), each looping over i in 0…k−1. Start the next script only after every session of the previous one has exited with rc=0 and status "complete" (`trks-status`). Each script defines the arrays it uses:
 
 ```bash
 # <host>_s3e_main.sh
@@ -633,9 +633,9 @@ The fields are those written by `collect` S0.5 (`mu`, `sd` = predictive sd with 
 **Revision 3.1 → 3.2** (author, 30 Oct; no review needed: facts only). SSH aliases `portal_zhixu` (TASL-2) and `tasl7` (TASL-7) recorded; the work directory `/home/dowling/r1_tracks/` approved, so the operator needs no further approval for it (§0.1, Phase 0.3).
 
 **Revision 3.2 → 3.3** (30 Oct, after the Phase 0 review; at the author's request).
-- §0.6: the 2 % rule's denominator is stated: exhausted units / planned units, over all shards (Phase 0 review m10; the operator had stated it only in its report). Reports never re-read a STOP rule; the runbook does.
+- §0.6: the 2 % rule is stated: exhausted / (committed + exhausted) units, over all shards (Phase 0 review m10; the operator had stated it only in its report). Reports never re-read a STOP rule; the runbook does.
 - Phase 3.0: a **pause drill** on both hosts during S0.4, with Track S's own drill marker `$R/trks_drill.active` (Phase 0 review n3: the pause path was unexercised). 3.0b: an optional Track P integration check through Track P's marker helper, with the author's permission.
 - §11.4: the watcher also reacts to `$R/trks_drill.active` and logs which marker it saw; §11.3 and §0.4: the servers refuse to start while it exists. **Re-install `bin/trks-watch` and `bin/trks-servers` on both hosts and restart `trks_watch` before Phase 3.**
 - §0.6: where the counts are (per-session manifest records; committed ids in `roots.jsonl` / `leaves.jsonl`); a phase is finished when a `--dry-run` shows nothing left to do. The collector's final status is `complete`, not `done`.
 - Phase 0.3(c): a gate for Phase 6 and later on TASL-7 (the Track P helper and check 3.0b, or the author's written statement).
-- Independent review of 3.3 (30 Oct): no BLOCKING; 3 MAJOR and 9 MINOR, all addressed here or in the helper (rev 2 of `proposals/trackp-evidence.sh`).
+- Independent review of 3.3 (30 Oct): no BLOCKING; 3 MAJOR and 9 MINOR, all addressed here or in the helper (rev 2 of `proposals/trackp-evidence.sh`). Re-check: **accepted**; its three wording items are fixed.

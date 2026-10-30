@@ -39,7 +39,7 @@ It has **not** been run on TASL-7.
 > **Evidence marker on TASL-7 (R1-TASL7-TRACKP-MARKER).** Track P evidence phases on TASL-7 (P.3a and later, A5, A6, R-B, LONO retraining, sidecar arms) run between `trackp-evidence begin <phase>` and `trackp-evidence end <phase>`.
 > - **Begin** before the first evidence job of the phase.
 > - **End** after its last job, or when the phase is stopped for good. Not between jobs: a gap would let other tracks restart.
-> - **GPU jobs** of the phase run as `trackp-evidence run -- <command>`. A job that takes `gpu0.lock` itself must not be wrapped, because a second `flock` on the same file from inside the wrapper would wait on itself. Such a job keeps its own lock, but with a wait (`flock -o -w 4200`), not `flock -n`. Keep `-o`: without it, any child the job leaves running inherits the lock and holds the lease after the job has ended.
+> - **GPU jobs** of the phase run as `trackp-evidence run -- <command>`. A job that takes `gpu0.lock` itself must not be wrapped, because a second `flock` on the same file from inside the wrapper would wait on itself. Such a job keeps its own lock, but with a wait (`flock -o -w 4200`), not `flock -n`. Keep `-o`: without it, any child the job leaves running inherits the lock and holds the lease after the job has ended. The flip side: a background child the job leaves behind is not covered by the lease once the job exits, so jobs should not leave GPU children running; the next holder's 60 s GPU check catches most such cases.
 > - **If a Track P session dies** with the marker in place, the marker stays and other tracks stay paused. This is the safe default. End the phase by hand once its state has been checked.
 > - ENGINEERING_ONLY and DRYRUN work does not need the marker.
 
