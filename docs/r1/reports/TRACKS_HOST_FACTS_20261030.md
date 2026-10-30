@@ -208,10 +208,11 @@ Installed sha256 (per host; identical for the four host-independent scripts):
    name that already has a session), into the same `--out`/`--work`, which is how §0.6 says a stopped
    session resumes. The retry completed the campaign and wrote one `ok` root. `failed_units.jsonl`
    still holds the attempt-1 record: it counts **failure events**, not permanently failed units, and
-   the collector does not delete a line when a later attempt succeeds. **Read the runbook §0.6
-   "> 2 % failed units" STOP with the denominator *permanently failed (`exhausted`) units over planned
-   units*, not the number of lines in `failed_units.jsonl`** — at TASL-7 the manifest shows
-   `done.failed: 0` and `roots: 1/1` for the unit whose attempt is still logged.
+   the collector does not delete a line when a later attempt succeeds. At TASL-7 the manifest shows
+   `done.failed: 0` and `roots: 1/1` for the unit whose attempt is still logged, so the file's line
+   count and the number of permanently failed units differ. **Flag for the runbook owner:** §0.6's
+   "> 2 % failed units in a phase" STOP does not define its denominator. The operator has **not**
+   adopted a reading; this needs a runbook amendment.
 4. `tmux kill-session -t trks_llm` on both hosts; afterwards `nvidia-smi --query-compute-apps` is empty
    and `flock -n ~/r1_locks/gpu0.lock` succeeds, i.e. the lease is released.
 
@@ -333,7 +334,7 @@ Disposition of each finding:
 | m7 | MINOR | tabular `t_run` 1.847 s includes the failed attempt's 10 runs | **Fixed** — retry-only mean 1.9135 s (n=155) reported and used; the excluded 10 runs (0.8200 s) are stated (§3 0.10, §4) |
 | m8 | MINOR | worktree HEAD `62980aef` vs task-pinned `ddf8f08d` | **Explained** — `62980aef` was a report-only commit made after the round-1 task text was written; reviewed substance is `ddf8f08d` + report wording. This report is committed on top of `f966e15b` (round-2 review), with the m10/n1/n4 corrections in the commit that follows; the chain is `ddf8f08d` → `62980aef` → `d7010422` → `eeb0599d` → `f4b7b3b4` → `f966e15b` |
 | m9 | MINOR | no GitHub push of `trackS-ops-20261030` | **Fixed** — pushed to `origin` (`github.com/dowlingwong/Agent_paper_B.git`) and to both hosts |
-| m10 | MINOR | `failed_units` count = attempts, not permanent failures | **Fixed** — stated explicitly in §3 0.10, and the §0.6 denominator is now stated as **permanently failed (`exhausted`) units over planned units** |
+| m10 | MINOR | `failed_units` count = attempts, not permanent failures | **Fixed as a fact, flagged as a rule gap** — §3 0.10 now records that the file counts failure events and that the manifest can show `done.failed: 0` for a logged attempt, and flags that §0.6's STOP denominator is undefined. Per the author's instruction (30 Oct) the operator does not reinterpret STOP rules; the definition is for the runbook |
 | m11 | MINOR | `trks-status` does not check HEAD pins | **Fixed** — it now verifies paper/harness/llama.cpp HEADs, reports tracked-file modifications, and finds manifests recursively (§3 0.9, sha256 `a217f6b8…`) |
 | m12 | MINOR | "host timestamps UTC" wording | **Fixed** — §0 now distinguishes UTC report stamps from local-PDT raw log excerpts |
 | m13 | MINOR | uv "absent" ambiguous | **Fixed and checked further** — "not installed" (§1) is the right reading, and `stat` settles it: `~/.local/bin/uv` has **birth** time 2026-10-29 17:57:06 (TASL-2) / 17:56:38 (TASL-7) — i.e. created by the §0.5 installer during Phase 0 — while its 2026-10-26 **mtime** is only the downloaded archive's timestamp. An earlier draft of this report briefly misread the mtime as pre-existence; that draft was discarded and never committed. |

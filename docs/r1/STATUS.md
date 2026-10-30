@@ -1,5 +1,21 @@
 # Paper B (route R1) — status log
 
+## 30 October 2026 — Track S Phase 1 (S0.1) raises STOP 1; Phase 2 (S1.1) done (AI-assisted; ENGINEERING_ONLY)
+
+- **Phase 1 / S0.1 did not reach 100 % identity in either setting**, so under the runbook's Phase 1 "Done when" rule the outcome is the **STOP** branch, not a k choice. Report: `reports/TRACKS_PHASE1_20261030.md`.
+  - Serial (1 server, 18101): within-server identity **0.930** (digits_mlp, TASL-2) and **0.870** (tabular_mlp, TASL-7); latency mean 0.6446 s / 0.6582 s.
+  - Concurrent (2 servers, 2 clients each): identity 18101 **1.000 / 1.000**, 18102 **0.925 / 0.855**, `cross_server_identity` **0.915 / 0.875**; latency mean 2.52 s / 2.60 s.
+  - 0 transport errors in all four probes; requests carry a fixed per-prompt seed, so this is not a missing-seed artifact.
+  - The rule's tiers: k = 2 needs 100 % on both URLs **and** 100 % cross-server (fails); k = 1 needs 100 % serial (fails); else STOP. **k is therefore unset and no later phase was started.**
+- **Projection** (formula from §Phase 1; k undecided so both branches): digits 21.90 h (k=1) / 31.84 h (k=2); tabular 30.57 h / 36.91 h. No node crosses the 4-day fallback. Note k = 2 roughly quadruples per-call latency (0.64 → 2.52 s) and so doubles the LLM term — it buys no LLM throughput, only CPU overlap.
+- **Phase 2 / S1.1** (CPU, no LLM; not a gate) completed on both hosts and on the Mac for `openml_breast_w`. All three MLP-node factor pairs have interactions whose 95 % t-interval excludes 0 (digits +0.0057/−0.0035/+0.0082; tabular +0.0026/−0.0027/+0.0049). `breast_w` `max_iter × C` is exactly 0 because `max_iter` 100 vs 200 is inert on `val_auc` (cells 00≡10, 01≡11).
+- **Flags for the runbook owner (no operator reading adopted, per the author's instruction).**
+  - The Phase 1 rule does not say what to do when the two concurrent servers disagree (here 18101 reached 1.000, 18102 did not) or whether a re-run is authorised before the STOP is final.
+  - Runbook §0.6's "> 2 % failed units" STOP has no defined denominator; `failed_units.jsonl` counts failure events, and the TASL-7 manifest shows `done.failed: 0`, `roots: 1/1` for a still-logged attempt (carried from Phase 0).
+  - `r1/tracks/probes/s1_factorial.py:139` raises `KeyError: 'ci95_t'` after writing its file when a pair yields no data (hit on the first `breast_w` attempt). No code changed.
+- **Mac-side S1.1 environment.** Ran against a pinned harness clone at `115df37` in a scratch dir outside the worktree (not committed), Python 3.11, numpy 2.4.6 / scipy 1.17.1 / scikit-learn 1.9.1 / pandas (the node needs pandas for `fetch_openml(as_frame=True)`).
+- **State.** Both hosts at the pins, lease free, no compute apps, watcher running; Phase 1/2 outputs copied back. Nothing after Phase 2 was started.
+
 ## 30 October 2026 — Track S Phase 0 complete on both hosts; STOP 0 **passed** (AI-assisted; ENGINEERING_ONLY)
 
 - **Operator branch.** `trackS-ops-20261030` from paper `9bb64ba` (worktree `.claude-worktrees/trackS-ops-20261030`). Bundle `trackS_30oct.bundle` verified against `trackS_30oct.heads.txt`; `docs/trackS-decisions-30oct` fast-forwarded `cdb3cdc3` → `3ac0fbf4`. The main tree (`exam-x-20261026`, uncommitted `docs/r1/*` → `docs/*`) was not touched.
