@@ -1,4 +1,4 @@
-# Track S — operator runbook for TASL-2 (zhixu portal) and TASL-7 (revision 3.1)
+# Track S — operator runbook for TASL-2 (zhixu portal) and TASL-7 (revision 3.2)
 
 **Written 30 Oct 2026 by the chat session (Claude) at the author's request; AI-assisted.** One operator agent (Claude Code), started by the author on the Mac with SSH access to both hosts, carries out this runbook phase by phase. Every phase ends with a **STOP**, an independent review and, where marked, an author decision. Do not skip a STOP.
 
@@ -28,8 +28,8 @@ Track S is a **one-way screen**. It asks whether a tuned, state-dependent (dynam
 | Work | Where |
 |---|---|
 | You, git, review loops, reports, analysis (CPU) | **Mac**, in a **separate worktree** of the author's `agent_paper_B` on branch `trackS-ops-<YYYYMMDD>` (from `trackS-20261029` at `9bb64ba`). The main working tree (`exam-x-20261026`) has an uncommitted move of `docs/r1/*` → `docs/*` made by someone else: **do not touch it** |
-| Everything for `digits_mlp` (llama-servers, collectors, worker runs, audits) | **TASL-2**, `ssh portal_zhixu`, user `dowling`, 32 CPUs, 1 × RTX 4090, driver 535 / CUDA 12.2. Track X evidence has priority |
-| Everything for `tabular_mlp` | **TASL-7**, Tailscale `tasl-7` (100.106.74.51), user `dowling`, 24 CPUs, 1 × RTX 4090, driver 580 / CUDA 13.0, **no sudo**, a pending reboot may happen. Track P evidence has priority. Record your SSH alias in Phase 0 |
+| Everything for `digits_mlp` (llama-servers, collectors, worker runs, audits) | **TASL-2**, SSH alias **`portal_zhixu`** (`ssh portal_zhixu`), user `dowling`, 32 CPUs, 1 × RTX 4090, driver 535 / CUDA 12.2. Track X evidence has priority |
+| Everything for `tabular_mlp` | **TASL-7**, SSH alias **`tasl7`** (`ssh tasl7`; Tailscale `tasl-7`, 100.106.74.51), user `dowling`, 24 CPUs, 1 × RTX 4090, driver 580 / CUDA 13.0, **no sudo**, a pending reboot may happen. Track P evidence has priority |
 | S0.6 synthetic calibration, `breast_w` S1.1 | Mac or the container (CPU, no LLM) |
 | Author | Commits the pre-declaration (S0.8) and the authorization note (S0.9); decides where marked |
 
@@ -137,10 +137,10 @@ Use only `trks collect …`, `trks analyze …`, `trks probe …` and `trks s11 
 - `ls -la ~/r1_locks; tmux ls`;
 - any existing llama.cpp build or GGUF (reuse only if commit and sha256 match).
 
-**0.3 Author items (STOP 0 cannot pass without them).**
-- (a) Approve the work directory `/home/dowling/r1_tracks/` on both hosts.
-- (b) Arrange that Track P creates and removes `~/r1_locks/trackp_evidence.active` around its evidence runs on TASL-7.
-- (c) Confirm the SSH aliases.
+**0.3 Access and author items.**
+- (a) **SSH access (confirmed by the author, 30 Oct).** The operator reaches TASL-2 as `ssh portal_zhixu` and TASL-7 as `ssh tasl7`, from the Mac, without a password prompt. Check both with `ssh <alias> 'hostname; id'` at the start of Phase 0. If either fails, STOP and ask.
+- (b) **Work directory (approved by the author, 30 Oct).** `/home/dowling/r1_tracks/` on both hosts is the operator's work directory. The operator may create, read and write anything under it without asking; nothing outside it is written, except the lease lock `~/r1_locks/gpu0.lock`, which `flock` uses.
+- (c) **Still needed before STOP 0 passes:** the author arranges that Track P creates and removes `~/r1_locks/trackp_evidence.active` around its evidence runs on TASL-7.
 
 **0.4 Transfer (R1-EXAM-TRANSFER).**
 - On each host, create `/home/dowling/r1_tracks/{remotes,work,opt,models,bin,logs,launch,out,scratch}`, with `git init --bare remotes/Agent_paper_B.git`.
@@ -181,7 +181,7 @@ Then run `sha256sum`. It must equal the pin.
 
 **Output:** `docs/r1/reports/TRACKS_HOST_FACTS_<date>.md`.
 
-**STOP 0:** the review loop (the reviewer re-runs the facts, both test suites and the pin checks), plus the author items in 0.3.
+**STOP 0:** the review loop (the reviewer re-runs the facts, both test suites and the pin checks), plus item 0.3(c).
 
 ## Phase 1 — S0.1 determinism, latency, CPU census (each host; < 1 GPU-h)
 
@@ -599,3 +599,5 @@ The fields are those written by `collect` S0.5 (`mu`, `sd` = predictive sd with 
 | Watcher waited on CPU-only phases | The watcher matches only collectors with `--stop-file`; S0.5b runs via `trks-run … -` (§11.4, Phase 4) |
 | Probes exposed to an ssh drop | Phase 1 probes run via `trks-run … - probe` |
 | GGUF never re-hashed after Phase 0 | `trks-status` re-hashes it against the pin (§11.5) |
+
+**Revision 3.1 → 3.2** (author, 30 Oct; no review needed: facts only). SSH aliases `portal_zhixu` (TASL-2) and `tasl7` (TASL-7) recorded; the work directory `/home/dowling/r1_tracks/` approved, so the operator needs no further approval for it (§0.1, Phase 0.3).
