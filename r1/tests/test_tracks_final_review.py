@@ -313,6 +313,12 @@ def test_minor1_assemble_refuses_mixed_nodes_and_phases(tmp_path):
         C.assemble("synthetic_N0", tmp_path / "nd", campaign=[a])
     with pytest.raises(SystemExit, match="node"):
         C.assemble("synthetic_P2p", tmp_path / "nd", dev=[a])
-    rep = C.assemble("synthetic_N0", tmp_path / "nd", dev=[a, a])          # the same root twice is kept once
+    with pytest.raises(SystemExit, match="twice"):
+        C.assemble("synthetic_N0", tmp_path / "nd", dev=[a, a])
+    import shutil
+    shutil.copytree(a, tmp_path / "a_copy")
+    with pytest.raises(SystemExit, match="duplicate"):                     # ops review: duplicates are refused
+        C.assemble("synthetic_N0", tmp_path / "nd", dev=[a, tmp_path / "a_copy"])
+    rep = C.assemble("synthetic_N0", tmp_path / "nd", dev=[a])
     assert rep["outputs"]["dev_roots.jsonl"]["n"] == 1 and rep["hosts"] == ["ci"]
     assert A.load_roots(tmp_path / "nd" / "dev_roots.jsonl")[0].policy == "static:0,0"

@@ -88,6 +88,8 @@ NON_BUDGET_CHANNELS = ("delta_I", "delta_F", "e2_keep")
 # n = ceil((2.93 σ_D,UCL / δ_Y)²): 2.93 = z₀.₉₅ + z₀.₉₀ is 90 % unadjusted power; under Holm with one null node the
 # first test runs at α/2, giving ≈ 83 % power at a true gain of δ_Y on one node (runbook rev 7.1, m10).
 Z_SIZING = 2.93
+RIDGE_ALPHA_GRID = (0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0)   # π′ ridge λ grid (inner CV, ``fit-policy``)
+TODO = "TODO"
 N_S3E = 300           # rev 7.2: fresh S3e instances per node, fixed
 PRIMARY_REP = 0       # D26 repetition of every primary campaign (collector convention, final review MAJOR 2)
 DESCRIPTIVE_REP = 1   # the descriptive placebo's second repetition
@@ -414,6 +416,8 @@ class Predeclaration:
     families: FamilyDecl = field(default_factory=FamilyDecl)
     folds: int = 5
     ridge_alpha: float = 0.1
+    ridge_alpha_grid: list[float] = field(default_factory=lambda: list(RIDGE_ALPHA_GRID))
+    draft: bool = False
     interactions: str = "epoch"
     bootstrap_B: int = 2000
     seed: int = 20261029
@@ -444,9 +448,35 @@ def margin_delta_Y(sigma_node: float) -> float:
     return max(0.002, 0.5 * float(sigma_node))
 
 
-def parse_predeclaration(d: dict) -> Predeclaration:
+def _strip_todo(x):
+    """A draft's TODO placeholders (strings starting with "TODO") are dropped before parsing."""
+    if isinstance(x, dict):
+        return {k: _strip_todo(v) for k, v in x.items() if not (isinstance(v, str) and v.startswith(TODO))}
+    if isinstance(x, list):
+        return [_strip_todo(v) for v in x]
+    return x
+
+
+def has_todo(x) -> bool:
+    if isinstance(x, str):
+        return x.startswith(TODO)
+    if isinstance(x, dict):
+        return any(has_todo(v) for v in x.values())
+    if isinstance(x, list):
+        return any(has_todo(v) for v in x)
+    return False
+
+
+def parse_predeclaration(d: dict, *, allow_draft: bool = False) -> Predeclaration:
+    """``allow_draft``: a ``predecl-template`` draft (``"draft": true``, TODO placeholders) is accepted (``select``
+    during S0.7); the final analysis refuses drafts and any TODO."""
     if d.get("schema") != PREDECLARATION_SCHEMA:
         raise TrackSAnalysisError(f"pre-declaration schema {d.get('schema')!r} != {PREDECLARATION_SCHEMA}")
+    if (d.get("draft") or has_todo(d)) and not allow_draft:
+        raise TrackSAnalysisError("the pre-declaration is a draft (draft: true or TODO fields); only `select` "
+                                  "accepts a draft")
+    raw_in = d
+    d = _strip_todo(d)
     nodes = {}
     for name, nd in d.get("nodes", {}).items():
         role = nd.get("role")
@@ -502,7 +532,9 @@ def parse_predeclaration(d: dict) -> Predeclaration:
         placebo_exact_min=int(d.get("placebo_exact_min", 10)),
         placebo_descriptive_min=int(d.get("placebo_descriptive_min", 15)),
         matched_static_share=float(d.get("matched_static_share", 0.5)),
-        tuning=dict(d.get("tuning", {"procedure": "argmax", "n_dev": 40})), not_run_reason=not_run, raw=d)
+        tuning=dict(d.get("tuning", {"procedure": "argmax", "n_dev": 40})), not_run_reason=not_run, raw=raw_in,
+        ridge_alpha_grid=[float(x) for x in d.get("ridge_alpha_grid", RIDGE_ALPHA_GRID)],
+        draft=bool(d.get("draft", False)))
     if pd.interactions not in ("epoch", "none"):
         raise TrackSAnalysisError("interactions must be 'epoch' or 'none'")
     if pd.folds < 2 or pd.bootstrap_B < 1 or not pd.ridge_alpha > 0 or not 0 < pd.alpha < 0.5:
@@ -1033,18 +1065,50 @@ def _ridge_from_json(d: dict, interactions: str) -> RidgeModel:
     return RidgeModel(np.asarray(d["coef"], float), mean, sd, {e == "E1" for e in d["trained_epochs"]}, interactions)
 
 
-def fit_policies(ft: ForkTable, pd: Predeclaration) -> dict[str, dict]:
-    """Fit π′ (f̂ on all forks) and m̃ (Î on all forks, (ĝ, ĥ) tuned on cross-fitted Î) for deployment."""
+def ridge_cv(ft: ForkTable, y: np.ndarray, grid: Sequence[float], pd: Predeclaration) -> dict:
+    """Inner cross-validation of the ridge λ: instance-level folds (``pd.folds``, seed ``pd.seed``), IPW-weighted
+    squared error of the held-out predictions; λ = the grid value with the smallest mean (ties: the larger λ)."""
+    ok = ~np.isnan(y)
+    X, e1, w, inst = ft.X[ok], ft.e1[ok], ft.w[ok], ft.instance[ok]
+    yy = y[ok]
+    fmap = assign_folds(inst.tolist(), pd.folds, np.random.default_rng([pd.seed, 7177]))
+    fold = np.array([fmap[k] for k in inst])
+    mse = {}
+    for a in grid:
+        err, wt = 0.0, 0.0
+        for k in range(pd.folds):
+            te = fold == k
+            if not te.any() or te.all():
+                continue
+            m = fit_ridge(X[~te], e1[~te], yy[~te], w[~te], float(a), pd.interactions)
+            pr = predict_ridge(m, X[te], e1[te])
+            good = ~np.isnan(pr)
+            err += float((w[te][good] * (pr[good] - yy[te][good]) ** 2).sum())
+            wt += float(w[te][good].sum())
+        mse[float(a)] = err / wt if wt > 0 else math.inf
+    best = min(mse, key=lambda a: (mse[a], -a))
+    return {"alpha": best, "grid": [float(a) for a in grid], "cv_mse": {str(a): v for a, v in mse.items()},
+            "folds": pd.folds, "seed": [pd.seed, 7177], "criterion": "IPW-weighted held-out squared error"}
+
+
+def fit_policies(ft: ForkTable, pd: Predeclaration, *, cv: bool = False) -> dict[str, dict]:
+    """Fit π′ (f̂ on all forks) and m̃ (Î on all forks, (ĝ, ĥ) tuned on cross-fitted Î) for deployment. ``cv``:
+    each model's ridge λ is chosen by inner CV over ``pd.ridge_alpha_grid`` (``ridge_cv``) and recorded;
+    otherwise ``pd.ridge_alpha``."""
     X, e1, w = ft.X, ft.e1, ft.w
-    fm = fit_ridge(X, e1, ft.qbar, w, pd.ridge_alpha, pd.interactions)
-    im = fit_ridge(X, e1, ft.immbar, w, pd.ridge_alpha, pd.interactions)
+    sel_f = ridge_cv(ft, ft.qbar, pd.ridge_alpha_grid, pd) if cv else None
+    sel_i = ridge_cv(ft, ft.immbar, pd.ridge_alpha_grid, pd) if cv else None
+    a_f = sel_f["alpha"] if sel_f else pd.ridge_alpha
+    a_i = sel_i["alpha"] if sel_i else pd.ridge_alpha
+    fm = fit_ridge(X, e1, ft.qbar, w, a_f, pd.interactions)
+    im = fit_ridge(X, e1, ft.immbar, w, a_i, pd.interactions)
     rng = np.random.default_rng(pd.seed)
     fmap = assign_folds(ft.instance.tolist(), pd.folds, rng)
     fold_row = np.array([fmap[k] for k in ft.instance])
     ihat = np.full(len(ft), np.nan)
     for k in range(pd.folds):
         te = fold_row == k
-        ihat[te] = predict_ridge(fit_ridge(X[~te], e1[~te], ft.immbar[~te], w[~te], pd.ridge_alpha, pd.interactions),
+        ihat[te] = predict_ridge(fit_ridge(X[~te], e1[~te], ft.immbar[~te], w[~te], a_i, pd.interactions),
                                  X[te], e1[te])
     ok = ~np.isnan(ihat)
     g, h = tune_thresholds(ihat[ok], e1[ok], ft.qbar[ok], w[ok], pd.g_grid, pd.h_grid)
@@ -1052,9 +1116,35 @@ def fit_policies(ft: ForkTable, pd: Predeclaration) -> dict[str, dict]:
               "interactions": pd.interactions, "ridge_alpha": pd.ridge_alpha, "label": ft.label, "host": ft.host,
               "n_forks": len(ft), "fork_ids_sha256": hashlib.sha256("\n".join(ft.fork_id).encode()).hexdigest()}
     return {"pi_prime": {**common, "kind": "pi_prime", "target": "Q_act - Q_not", **_ridge_to_json(fm),
-                         "thresholds": {"E1": 0.0, "E2": 0.0}},
+                         "thresholds": {"E1": 0.0, "E2": 0.0}, "ridge_alpha": a_f,
+                         **({"ridge_alpha_selection": sel_f} if sel_f else {})},
             "m_tilde": {**common, "kind": "m_tilde", "target": "immediate_measured(act)", **_ridge_to_json(im),
-                        "thresholds": {"E1": g, "E2": h}}}
+                        "thresholds": {"E1": g, "E2": h}, "ridge_alpha": a_i,
+                        **({"ridge_alpha_selection": sel_i} if sel_i else {})}}
+
+
+def fit_policy_files(node: str, node_dir: Path, pd: Predeclaration, out_dir: Path) -> dict:
+    """``analyze fit-policy``: fit and freeze π′ (and m̃) from S3a fork data alone (``leaves.jsonl`` +
+    ``roots.jsonl``; no S3e), λ by inner CV over the declared grid; writes ``<node>.pi_prime.json`` /
+    ``<node>.m_tilde.json`` (canonical bytes) and ``<node>.pi_prime.sha256``."""
+    d = Path(node_dir)
+    leaves = load_leaves(d / "leaves.jsonl")
+    roots = load_roots(d / "roots.jsonl")
+    if not leaves:
+        raise TrackSAnalysisError(f"node {node}: no S3a leaves in {d}")
+    check_hosts(node, leaves, roots)
+    ft = build_fork_table(node, leaves, roots)
+    pols = fit_policies(ft, pd, cv=True)
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    res = {"node": node, "n_forks": len(ft), "files": {}}
+    for kind, pol in pols.items():
+        f = out_dir / f"{node}.{kind}.json"
+        sha = write_policy(pol, f)
+        (out_dir / f"{node}.{kind}.sha256").write_text(f"{sha}  {f.name}\n")
+        res["files"][kind] = {"path": str(f), "sha256": sha, "ridge_alpha": pol["ridge_alpha"]}
+    res["inputs_sha256"] = {n: file_sha256(d / n) for n in ("leaves.jsonl", "roots.jsonl") if (d / n).exists()}
+    return res
 
 
 def policy_bytes(pol: dict) -> bytes:
@@ -1364,6 +1454,23 @@ def matched_static(dev_roots: Sequence[RootRecord], pi_star: str) -> dict:
     return eff
 
 
+def dev_between_sd(sel_s: dict, fam: FamilyDecl, sigma_unit: float) -> dict:
+    """The S0.7 dev between-configuration sd, as ``simulate_controls --dev-between-sd`` expects
+    (``dev_between_config_sd``): the mean over pairs of the 15 static-grid configurations of
+    sd_i(Y_c(i) − Y_c'(i)) over the paired dev instances where both ran (primary repetition)."""
+    M = sel_s["_matrix"]
+    idx = {c: k for k, c in enumerate(M["configs"])}
+    cfgs = [c for c in fam.static_configs(sigma_unit) if c in idx]
+    sds = []
+    for a in range(len(cfgs)):
+        for b in range(a + 1, len(cfgs)):
+            ya, yb = M["Y"][idx[cfgs[a]]], M["Y"][idx[cfgs[b]]]
+            ok = np.isfinite(ya) & np.isfinite(yb)
+            if ok.sum() >= 2:
+                sds.append(float(np.std(ya[ok] - yb[ok], ddof=1)))
+    return {"dev_between_sd": float(np.mean(sds)) if sds else None, "n_pairs": len(sds), "n_configs": len(cfgs)}
+
+
 def dev_sigma_ucl(sel_s: dict, sel_d: dict, conf: float = 0.8) -> dict:
     """S0.7 dev estimate: sd over the paired dev instances (where both ran) of Y(π*) − Y(m*), with its UCL."""
     table = sel_d["_table"]
@@ -1536,6 +1643,7 @@ def selection_report(dev_roots: Sequence[RootRecord], pd: Predeclaration, decl: 
                 "extension_configs": ss["extension_configs"], "_static": ss}
     sd = select_dynamic(dev_roots, pd.families, ss["m_star"], sn, pd.tuning)
     out = {"m_star": ss["m_star"], "m_star_dev_mean": ss["m_star_dev_mean"], "static_means": ss["means"],
+           "dev_between": dev_between_sd(ss, pd.families, sn),
            "static_extended": ss["extended"], "members": sd["members"], "centres": sd["centres"],
            "status": sd["status"], "n_dev_instances": len(ss["_matrix"]["instances"]), "_static": ss, "_dynamic": sd}
     if sd["status"] != "ok":
@@ -1742,8 +1850,10 @@ def decide(results: dict[str, dict], controls: dict | None, pd: Predeclaration) 
     out.update(s06=s06, warnings=warnings,
                flip_rates={p: {"S3e": results[p]["campaign"].get("flip_S3e"),
                                "dev": results[p]["campaign"]["selection"]["flip"]} for p in nodes})
-    labels = [results[p]["campaign"]["label"] for p in nodes] + ([controls["label"]] if controls.get("label") else [])
-    out["label"] = combine_labels(labels)
+    # The primary label comes from the S3e inputs only (ops review 14); the S0.6 controls carry their own label.
+    out["label"] = combine_labels([results[p]["campaign"]["label"] for p in nodes])
+    out["controls_label"] = controls.get("label") or (sorted(set((controls.get("labels") or {}).values()))
+                                                     if controls.get("labels") else None)
     if stops:
         out.update(route="VOID_STOP", wording=VOID_WORDING, void_reasons=stops)
         return out
@@ -1909,7 +2019,7 @@ def run_analysis(node_dirs: dict[str, Path], pd: Predeclaration, *, controls: di
             res["fork"] = analyze_forks(ft, decl, pd)
             if policy_out is not None:
                 policy_out.mkdir(parents=True, exist_ok=True)
-                for kind, pol in fit_policies(ft, pd).items():
+                for kind, pol in fit_policies(ft, pd, cv=True).items():
                     policies[f"{name}/{kind}"] = write_policy(pol, policy_out / f"{name}.{kind}.json")
         if data["dev"] and data["fresh"]:
             res["campaign"] = analyze_s3e(name, data["dev"], data["fresh"], decl, pd)
@@ -1922,7 +2032,8 @@ def run_analysis(node_dirs: dict[str, Path], pd: Predeclaration, *, controls: di
 
 
 # ============================================================================================= S0.5 / S0.5b summary
-S05_SCHEMA = "tracks_s05_summary/v1"
+S05_SCHEMA = "tracks_s05_summary/v2"
+NEAR_BAND_FACTOR = 0.5
 S05_W_CANDIDATES = (8, 10, 12, 20)
 S05_W_DEFAULT = 20   # deployment W (the largest candidate) when no candidate binds; the budget member is dropped
 
@@ -2008,6 +2119,28 @@ def s05_node_summary(d: Path, *, W: int | None = None, policy_pair: Sequence[str
         out["between_repetitions"] = rr
         return out
 
+    # S0.6 input (``simulate_controls --between-policy-sd``, ``pilot_between_policy_sd``): sd over instances of
+    # Y(policy A) − Y(policy B) at W = cap, i.e. the untruncated pilot roots, primary repetition, paired by instance.
+    ycap = {(r["instance_id"], r.get("policy") or ""): float(r["y_terminal"]) for r in roots.values()
+            if int(r.get("rep", 0) or 0) == PRIMARY_REP and r.get("y_terminal") is not None}
+    bp_cap = None
+    if pair:
+        a, b = pair
+        Dcap = [ycap[(i, a)] - ycap[(i, b)] for (i, p) in ycap if p == a and (i, b) in ycap]
+        bp_cap = {"policies": pair, "W": man.get("W"), **_sd_ucl(Dcap, conf)}
+    # Near-threshold band b (declared rule): NEAR_BAND_FACTOR x the median |margin| of the eligible decisions of
+    # the pilot's primary roots (root policy, rep 0); one b for both epochs, as the collector's --near-band.
+    root_pol = man.get("root_policy") or "a2u"
+    margins = {"E1": [], "E2": []}
+    for r in roots.values():
+        if (r.get("policy") or "") == root_pol and int(r.get("rep", 0) or 0) == PRIMARY_REP:
+            for dd in r.get("decisions") or []:
+                if dd.get("eligible") and dd.get("margin") is not None:
+                    margins[dd["epoch"]].append(abs(float(dd["margin"])))
+    allm = margins["E1"] + margins["E2"]
+    near = {"b": NEAR_BAND_FACTOR * float(np.median(allm)) if allm else None, "factor": NEAR_BAND_FACTOR,
+            "rule": "b = 0.5 x median |margin| over eligible E1 and E2 decisions of the pilot's primary roots",
+            "n": len(allm), **{f"median_abs_margin_{e}": (float(np.median(v)) if v else None) for e, v in margins.items()}}
     cal = _jsonl(d / "s05_calibration.jsonl")
     sds = [float(r["sd_paired"]) if r.get("sd_paired") is not None else
            (float(r["se"]) * math.sqrt(int(r["k"])) if r.get("se") is not None and r.get("k") else None) for r in cal]
@@ -2020,6 +2153,8 @@ def s05_node_summary(d: Path, *, W: int | None = None, policy_pair: Sequence[str
             "sigma_D_by_W": {int(w): sigmas(int(w)) for w in Ws if by_W.get(int(w))},
             "sigma_D_at_W": sigmas(int(W)) if W is not None and by_W.get(int(W)) else None,
             "calibration": calibration_gate(cal, **gate_kw),
+            "between_policy_sd_at_cap": bp_cap["sigma_hat"] if bp_cap else None, "between_policy_at_cap": bp_cap,
+            "near_band": near, "obs_inflation": man.get("obs_inflation"), "root_policy": root_pol,
             "llm_calls_per_campaign": float(np.mean([r.get("llm_calls", 0) for r in roots.values()])) if roots else None,
             "audit_runs_per_campaign": audits / n_roots if n_roots else None}
 
@@ -2038,10 +2173,82 @@ def s05_summary(node_dirs: dict[str, Path], *, policy_pair: Sequence[str] | None
     W = max(ok) if ok else max(Ws)   # none binds: the deployment W = 20, the largest declared candidate
     nodes = {n: s05_node_summary(d, W=W, policy_pair=policy_pair, conf=conf, Ws=Ws, **gate_kw)
              for n, d in node_dirs.items()}
+
+    def ucl(v, which):
+        x = (v.get("sigma_D_at_W") or {}).get(which) or {}
+        return x.get("ucl") if which == "between_policies" else \
+            max([y.get("ucl") for y in x.values() if y.get("ucl") is not None], default=None)
+
+    # Machine-readable values for the runbook / pre-declaration (ops review 16).
+    values = {"W": W, "budget_binds": bool(ok), "nodes": {n: {
+        "sigma_cmp_vary": v["sigma_cmp_vary"],
+        "sigma_D_ucl_s05b": ucl(v, "between_policies"),
+        "sigma_D_ucl_between_repetitions": ucl(v, "between_repetitions"),
+        "between_policy_sd_at_cap": v["between_policy_sd_at_cap"],
+        "near_band_b": v["near_band"]["b"],
+        "calibration_status": v["calibration"]["status"],
+        "obs_inflation": v["obs_inflation"]} for n, v in nodes.items()}}
     return {"schema": S05_SCHEMA, "label": combine_labels([v["label"] or "FIXTURE" for v in nodes.values()]),
             "W_candidates": list(Ws), "W_chosen": W, "budget_binds": bool(ok), "primary_nodes": prim,
             "budget_member": "kept" if ok else "dropped (no candidate W binds in >= 50 % on every primary node)",
-            "nodes": nodes}
+            "values": values, "nodes": nodes}
+
+
+def merge_controls(docs: Sequence[dict]) -> dict:
+    """Several S0.6 controls files (one per node) -> one: nodes are united (a node in two files is refused); each
+    node keeps its file's label (``labels``); ``label`` is their combination (never used for the primary)."""
+    nodes, labels = {}, {}
+    for doc in docs:
+        for n, v in (doc.get("nodes") or {}).items():
+            if n in nodes:
+                raise TrackSAnalysisError(f"controls: node {n} appears in two controls files")
+            nodes[n], labels[n] = v, doc.get("label", "FIXTURE")
+    return {"label": combine_labels(labels.values()) if labels else None, "labels": labels, "nodes": nodes}
+
+
+def predecl_template(s05: dict | None, selects: dict[str, dict] | None = None, s06: dict | None = None, *,
+                     sigma_node: dict[str, float] | None = None, primary: Sequence[str] | None = None,
+                     fallback_active: bool | None = None, collection: dict | None = None) -> dict:
+    """A ``tracks_predeclaration/v4`` draft (``"draft": true``) from ``s05-summary``, ``select`` and the S0.6
+    controls; every value still to be decided is a "TODO: ..." string. ``select`` accepts the draft (S0.7);
+    ``analyze`` refuses it until no TODO remains and ``draft`` is removed."""
+    s05v = (s05 or {}).get("values") or {"nodes": {}}
+    names = list(primary or s05v.get("nodes") or (selects or {}))
+    sn = dict(sigma_node or {})
+    nodes = {}
+    for n in names:
+        v = s05v["nodes"].get(n, {})
+        sel = (selects or {}).get(n) or {}
+        sig = sn.get(n)
+        nd = {"role": "primary",
+              "sigma_node": sig if sig is not None else "TODO: sigma_node (median paired sd of delta-hat, runbook B2)",
+              "sigma_cmp_vary": v.get("sigma_cmp_vary") if v.get("sigma_cmp_vary") is not None else
+              "TODO: sigma_cmp_vary (s05-summary)",
+              "g_declared": (0.1 * sig) if sig is not None else "TODO: declared g (default 0.1 sigma_node)",
+              "sizing": {"sigma_D_ucl_s05b": v.get("sigma_D_ucl_s05b") if v.get("sigma_D_ucl_s05b") is not None else
+                         "TODO: sigma_D UCL at W (s05-summary)", "n": N_S3E}}
+        if sig is not None:
+            nd["delta_Y"] = margin_delta_Y(sig)
+        if sel:
+            nd["selection"] = {k: sel.get(k) for k in ("m_star", "pi_star", "pi_star_member", "centres", "members")}
+            nd["selection"]["matched_static"] = sel.get("matched_static")
+            nd["selection"]["dev_between_sd"] = (sel.get("dev_between") or {}).get("dev_between_sd")
+            nd["selection"]["dev_sigma_ucl"] = (sel.get("dev_sigma") or {}).get("ucl")
+        nodes[n] = nd
+    fb = fallback_active if fallback_active is not None else (len(names) == 1)
+    coll = {"W": s05v.get("W", "TODO: W (s05-summary)"), "llm_cap": 40,
+            "obs_inflation": {n: v.get("obs_inflation") for n, v in s05v.get("nodes", {}).items()} or
+            "TODO: obs_inflation per node",
+            "near_band_b": {n: v.get("near_band_b") for n, v in s05v.get("nodes", {}).items()} or
+            "TODO: near-band b per node",
+            "p_near": "TODO: p_near (S3a)", "s3a_roots": "TODO: S3a roots per node",
+            "s3a_forks_per_root": "TODO: expected forks per root", "shard_map": "instance index mod k (collect --shard i/k)",
+            "a2_fraction": 0.0, **(collection or {})}
+    return {"schema": PREDECLARATION_SCHEMA, "draft": True, "primary_nodes": names, "fallback_active": fb,
+            "nodes": nodes, "tuning": {"procedure": "argmax", "n_dev": 40}, "ridge_alpha_grid": list(RIDGE_ALPHA_GRID),
+            "collection": coll, "s06_controls": s06 if s06 is not None else "TODO: S0.6 controls (simulate_controls)",
+            "analysis_script_sha256": file_sha256(Path(__file__)),
+            "not_run_reason": None if names else "TODO: reason (no primary node)"}
 
 
 def _json_default(o):
@@ -2058,23 +2265,52 @@ def _json_default(o):
     raise TypeError(type(o))
 
 
+def _select_values(sel: dict) -> dict:
+    """The machine-readable selection values (ops review 16)."""
+    ms = sel.get("matched_static") or {}
+    return {"status": sel.get("status"), "m_star": sel.get("m_star"), "pi_star": sel.get("pi_star"),
+            "pi_star_member": sel.get("pi_star_member"), "centres": sel.get("centres"),
+            "members": sel.get("members"), "matched_static": ms.get("policy"), "g_eff": ms.get("g_eff"),
+            "h_eff": ms.get("h_eff"), "dev_between_sd": (sel.get("dev_between") or {}).get("dev_between_sd"),
+            "dev_sigma_ucl": (sel.get("dev_sigma") or {}).get("ucl"),
+            "extension_configs": sel.get("extension_configs"), "missing_members": sel.get("missing_members")}
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("select", help="dev selection: m* from the static grid; then the 4 members; then π*")
+    s = sub.add_parser("select", help="dev selection: m* from the static grid; then the 4 members; then π* "
+                                      "(accepts a predecl-template draft)")
     s.add_argument("--predeclaration", type=Path, required=True)
     s.add_argument("--node", required=True, metavar="NAME=DIR")
     s.add_argument("--out", type=Path, required=True)
     a = sub.add_parser("analyze", help="full analysis and decision")
     a.add_argument("--predeclaration", type=Path, required=True)
     a.add_argument("--node", action="append", default=[], metavar="NAME=DIR")
-    a.add_argument("--controls", type=Path, default=None, help="S0.6 controls summary JSON (tracks_controls/v2, per node)")
+    a.add_argument("--controls", type=Path, action="append", default=None,
+                   help="S0.6 controls summary JSON (repeatable: one file per node; merged)")
     a.add_argument("--out-json", type=Path, required=True)
     a.add_argument("--out-md", type=Path, required=True)
     a.add_argument("--policy-out", type=Path, default=None, help="write the secondary π′ and m̃ JSON here")
     a.add_argument("--bootstrap-B", type=int, default=None, help="override (engineering runs only; recorded)")
+    f = sub.add_parser("fit-policy", help="fit and freeze π′ (and m̃) from S3a fork data alone (no S3e); "
+                                          "ridge λ by inner CV over the declared grid")
+    f.add_argument("--predeclaration", type=Path, required=True)
+    f.add_argument("--node", required=True, metavar="NAME=DIR", help="DIR holds leaves.jsonl and roots.jsonl (S3a)")
+    f.add_argument("--out-dir", type=Path, required=True, help="writes <node>.pi_prime.json and its .sha256")
+    m = sub.add_parser("merge-controls", help="merge per-node S0.6 controls files into one")
+    m.add_argument("--controls", type=Path, action="append", required=True)
+    m.add_argument("--out", type=Path, required=True)
+    t = sub.add_parser("predecl-template", help="a tracks_predeclaration/v4 draft from s05-summary, select and "
+                                                "S0.6 outputs; open values are TODO")
+    t.add_argument("--s05", type=Path, default=None, help="s05-summary output")
+    t.add_argument("--select", action="append", default=[], metavar="NAME=SELECT_JSON")
+    t.add_argument("--controls", type=Path, action="append", default=None, help="S0.6 controls file(s)")
+    t.add_argument("--sigma-node", action="append", default=[], metavar="NAME=VALUE")
+    t.add_argument("--primary", action="append", default=None)
+    t.add_argument("--out", type=Path, required=True)
     q = sub.add_parser("s05-summary", help="S0.5 / S0.5b: binding shares and W, sigma_cmp,vary, sigma_D UCLs, "
-                                          "calibration gate")
+                                          "calibration gate, between-policy sd at cap, near band b")
     q.add_argument("--node", action="append", required=True, metavar="NAME=S05_OUT_DIR")
     q.add_argument("--primary", action="append", default=None, help="primary nodes for the W choice (default: all)")
     q.add_argument("--policy-pair", default=None, help="the two pilot policies 'A|B' (default: the two rep-0 ones)")
@@ -2084,17 +2320,35 @@ def main(argv: Sequence[str] | None = None) -> int:
     q.add_argument("--stratum-min", type=int, default=20)
     q.add_argument("--out", type=Path, required=True)
     args = ap.parse_args(argv)
-    if args.cmd == "s05-summary":
-        dirs = {k: Path(v) for k, v in (spec.split("=", 1) for spec in args.node)}
-        res = s05_summary(dirs, policy_pair=args.policy_pair.split("|") if args.policy_pair else None,
-                          conf=args.conf, Ws=[int(w) for w in args.W_candidates.split(",")], primary=args.primary,
-                          min_n=args.min_predictions, stratum_min=args.stratum_min)
-        args.out.write_text(json.dumps(res, indent=2, default=_json_default))
-        print(f"W={res['W_chosen']} budget_binds={res['budget_binds']} "
-              + " ".join(f"{n}:cal={v['calibration']['status']}" for n, v in res["nodes"].items()))
-        return 0
-    pd = parse_predeclaration(json.loads(args.predeclaration.read_text()))
     try:
+        if args.cmd == "s05-summary":
+            dirs = {k: Path(v) for k, v in (spec.split("=", 1) for spec in args.node)}
+            res = s05_summary(dirs, policy_pair=args.policy_pair.split("|") if args.policy_pair else None,
+                              conf=args.conf, Ws=[int(w) for w in args.W_candidates.split(",")], primary=args.primary,
+                              min_n=args.min_predictions, stratum_min=args.stratum_min)
+            args.out.write_text(json.dumps(res, indent=2, default=_json_default))
+            print(json.dumps(res["values"], default=_json_default))
+            return 0
+        if args.cmd == "merge-controls":
+            merged = merge_controls([json.loads(p.read_text()) for p in args.controls])
+            args.out.write_text(json.dumps(merged, indent=2, default=_json_default))
+            print(json.dumps({"nodes": sorted(merged["nodes"]), "labels": merged["labels"]}))
+            return 0
+        if args.cmd == "predecl-template":
+            sels = {k: json.loads(Path(v).read_text()) for k, v in (x.split("=", 1) for x in args.select)}
+            ctl = merge_controls([json.loads(p.read_text()) for p in args.controls]) if args.controls else None
+            draft = predecl_template(json.loads(args.s05.read_text()) if args.s05 else None, sels, ctl,
+                                     sigma_node={k: float(v) for k, v in (x.split("=", 1) for x in args.sigma_node)},
+                                     primary=args.primary)
+            args.out.write_text(json.dumps(draft, indent=2, default=_json_default))
+            print(json.dumps({"out": str(args.out), "todo": has_todo(draft)}))
+            return 0
+        pd = parse_predeclaration(json.loads(args.predeclaration.read_text()), allow_draft=args.cmd == "select")
+        if args.cmd == "fit-policy":
+            name, d = args.node.split("=", 1)
+            res = fit_policy_files(name, Path(d), pd, args.out_dir)
+            print(json.dumps(res["files"]))
+            return 0
         if args.cmd == "select":
             name, d = args.node.split("=", 1)
             if name not in pd.nodes:
@@ -2103,14 +2357,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             sel = public(selection_report(data["dev"], pd, pd.nodes[name]))
             sel.update(node=name, dev_roots_sha256=data["sha256"].get("dev_roots.jsonl"),
                        label=combine_labels([r.provenance.label for r in data["dev"] if r.provenance] or ["FIXTURE"]),
-                       predeclaration_sha256=file_sha256(args.predeclaration))
+                       predeclaration_sha256=file_sha256(args.predeclaration), predeclaration_draft=pd.draft)
+            sel["values"] = _select_values(sel)
             args.out.write_text(json.dumps(sel, indent=2, default=_json_default))
-            print(f"status={sel['status']} m_star={sel['m_star']} pi_star={sel.get('pi_star')}")
+            print(json.dumps(sel["values"], default=_json_default))
             return 0
         if args.bootstrap_B is not None:
             pd.bootstrap_B = args.bootstrap_B
         dirs = dict(spec.split("=", 1) for spec in args.node)
-        controls = json.loads(args.controls.read_text()) if args.controls else None
+        controls = merge_controls([json.loads(p.read_text()) for p in args.controls]) if args.controls else None
         result = run_analysis({k: Path(v) for k, v in dirs.items()}, pd, controls=controls,
                               policy_out=args.policy_out)
     except TrackSAnalysisError as exc:

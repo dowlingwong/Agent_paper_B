@@ -83,6 +83,7 @@ import shutil
 import subprocess
 import time
 import traceback
+import dataclasses
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -132,14 +133,19 @@ DEV_K = 5                                           # S0.4 dev rows, K = 5
 SELECTION_SEED = 35001
 REP_BASE = 100                                    # leaf repetition r -> D26 repetition REP_BASE + r
 CHANNEL_FRACTION = 1.0 / 3.0
-A2_FRACTION_DEFAULT = 0.2                        # descriptive A2 roots (S3 only)
+A2_FRACTION_DEFAULT = 0.0                        # descriptive A2 roots: none in any Track S phase (ops review)
 DEFAULT_LLM_CAP = 40
 DEFAULT_K = 5
 DEFAULT_MAX_RETRIES = 2
 G_UNITS = 0.1                                     # declared g = 0.1 sigma_node unless --g (C3 convention)
 # sigma_node (median paired sd Delta-hat), runbook §1 B2 (NOISE_FLOOR_COMMON_20261022); a prior file overrides.
 SIGMA_NODE_DEFAULTS = {"digits_mlp": 0.0066, "tabular_mlp": 0.0019}
-PHASES = ("S0.4", "fit_prior", "S0.5", "S0.5b", "S3", "synthetic", "tune", "campaign")
+PHASES = ("S0.4", "fit_prior", "set_obs_inflation", "liveness", "S0.5", "S0.5b", "S3", "synthetic", "tune",
+          "campaign")
+LATER_PHASES = ("S0.5b", "S3", "synthetic", "tune", "campaign")   # obs_inflation must match the prior file's
+BLAS_VARS = ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")
+DEFAULT_WORK = os.environ.get("R1_TMP", "/tmp/r1_tracks")
+DEFAULT_MAX_TRANSPORT_FAILURES = 3
 POLICY_PHASES = ("tune", "campaign")
 FORK_PHASES = ("S0.5", "S3", "synthetic")
 E1_LEAF_ARMS = ("skip", "execute")
@@ -189,12 +195,23 @@ def instance_audit_seeds(phase: str, instance_seed: int, k: int) -> tuple[int, .
 # JSONL with crash tolerance (review M5, m8)
 # ---------------------------------------------------------------------------
 
+def _text(path: Path) -> str:
+    if str(path).endswith(".gz"):
+        import gzip
+        with gzip.open(path, "rt") as fh:
+            return fh.read()
+    return path.read_text()
+
+
 def read_jsonl(path: Path) -> list[dict]:
-    """Rows of a JSONL file; a truncated (unparsable) LAST line is ignored, a corrupt earlier line raises."""
+    """Rows of a JSONL file (or ``.jsonl.gz``; ``x.jsonl`` falls back to ``x.jsonl.gz``); a truncated
+    (unparsable) LAST line is ignored, a corrupt earlier line raises."""
     path = Path(path)
+    if not path.exists() and Path(str(path) + ".gz").exists():
+        path = Path(str(path) + ".gz")
     if not path.exists():
         return []
-    lines = [line for line in path.read_text().splitlines() if line.strip()]
+    lines = [line for line in _text(path).splitlines() if line.strip()]
     out = []
     for i, line in enumerate(lines):
         try:
@@ -481,6 +498,11 @@ TUNE_N_MEMBERS = 40   # paired dev instances of the member stage (0..39: the fir
 def static_grid(sigma: float, extend: bool = False) -> list[str]:
     gs = TUNE_G + (TUNE_G_EXTENSION if extend else ())
     return [policy_string("static", (g * sigma, h * sigma)) for g in gs for h in TUNE_H]
+
+
+def extension_grid(sigma: float) -> list[str]:
+    """The g = 0.8 edge extension alone (3 statics; ``analyze.FamilyDecl.extension_configs``)."""
+    return [policy_string("static", (g * sigma, h * sigma)) for g in TUNE_G_EXTENSION for h in TUNE_H]
 
 
 def member_policies(m_star: str, sigma: float, centres: dict | None = None) -> dict[str, str]:
@@ -868,10 +890,20 @@ def truncate_at_W(rows: list[dict], W: int) -> tuple[list[dict], bool]:
 
 
 def s05b_phase(args) -> int:
-    out, work = Path(args.out), Path(args.work)
+    out = Path(args.out)
     manifest = json.loads((out / "manifest.json").read_text())
     if manifest["phase"] != "S0.5":
         raise SystemExit("S0.5b post-processes an S0.5 output directory")
+    # The S0.5 work dir holds the campaign ledgers (ops review B3): use the recorded one; never fall back.
+    if manifest.get("work"):
+        work = Path(manifest["work"])
+        if args.work and Path(args.work).resolve() != work.resolve():
+            raise SystemExit(f"S0.5b: --work {args.work} differs from the S0.5 work dir {work} recorded in the "
+                             "manifest; the ledgers are there")
+    elif args.work:
+        work = Path(args.work)
+    else:
+        raise SystemExit("S0.5b: the S0.5 manifest records no work dir; pass the S0.5 --work explicitly")
     adapter = make_adapter(manifest["node"], manifest.get("manager") or {}, manifest.get("synthetic_params"))
     if adapter.synthetic and adapter.world:
         raise SystemExit("S0.5b does not take world synthetic nodes")
@@ -891,7 +923,12 @@ def s05b_phase(args) -> int:
                                                                     W=int(manifest["W"]))):
             raise SystemExit(f"S0.5b refuses {root['root_id']}: its policy {root['policy']!r} reads the budget, so a "
                              "truncated ledger is not what a campaign at a smaller W would have done")
-        rows = read_jsonl(work / "roots" / root["root_id"] / "root_trials.jsonl")
+        ledger = work / "roots" / root["root_id"] / "root_trials.jsonl"
+        rows = read_jsonl(ledger)
+        if not rows:
+            raise SystemExit(f"S0.5b: the campaign ledger {ledger} is missing or empty; refusing (a truncated "
+                             "incumbent cannot be rebuilt without it, and the start configuration is never audited "
+                             "in its place)")
         seed = int(root["instance_id"].rsplit("__s", 1)[1])
         seeds = instance_audit_seeds("S0.5b", seed, int(manifest["K"]))  # per instance, the S0.5 audit block
         for W in Ws:
@@ -900,7 +937,9 @@ def s05b_phase(args) -> int:
             if W > int(root["W"]):
                 raise SystemExit(f"cannot truncate a W={root['W']} root at W={W}")
             prefix, binding = truncate_at_W(rows, W)
-            files = config_after(prefix, start, int(prefix[-1]["budget_index"])) if prefix else start
+            if not prefix:
+                raise SystemExit(f"S0.5b: {root['root_id']} has no trial before W={W} (ledger {ledger})")
+            files = config_after(prefix, start, int(prefix[-1]["budget_index"]))
             ys = audits.metrics(seed, files, seeds)
             append_jsonl(out / "s05b_truncated.jsonl", {
                 "root_id": root["root_id"], "instance_id": root["instance_id"], "W": W, "binding": binding,
@@ -1237,7 +1276,8 @@ MANIFEST_KEYS = ("label", "phase", "node", "W", "llm_cap", "instances", "forks",
                  "aa_fraction", "reps", "reps_ordinary", "K", "audit_block", "audit_rule", "seed_base",
                  "memory_mode", "skip_display", "g_declared", "g0", "prior_sha256", "manager", "obs_inflation",
                  "a2_fraction", "policies", "llm_reps", "rep_instances", "root_policy", "jobs", "calibration",
-                 "synthetic_params", "host", "exact_placebo", "descriptive_placebo")
+                 "synthetic_params", "host", "exact_placebo", "descriptive_placebo", "shard", "exact_placebo_only",
+                 "work")
 LABELS = ("FIXTURE", "ENGINEERING_ONLY", "PILOT", "EVIDENCE")   # the analysis' LABEL_RANK
 PRIMARY_REP = 0               # the D26 repetition of every primary campaign (S3e pairs pi* and m* at rep 0)
 DESCRIPTIVE_PLACEBO_REP = 1   # the descriptive placebo's second repetition
@@ -1285,6 +1325,8 @@ def build_manifest(args, adapter, prior_sha: str, sigma_node: float, g_declared:
         "synthetic_params": json.loads(args.synthetic_params) if args.synthetic_params else None,
         "synthetic_node": adapter.node.describe() if adapter.synthetic else None,
         "host": args.host_label, "created_utc": utc(), "sessions": [],
+        "shard": args.shard, "exact_placebo_only": bool(args.exact_placebo_only),
+        "work": str(Path(args.work).resolve()),
     }
 
 
@@ -1302,8 +1344,15 @@ def _placebo_decl(args, kind: str) -> dict | None:
 
 
 def manager_cfg(args) -> dict:
+    """Synthetic nodes: their scripted manager. Real nodes (ops review M1): ``--manager`` is required; ``scripted``
+    only with ``--dry-run`` or label FIXTURE."""
     if args.node in SYNTHETIC_NODES:
         return {"kind": "scripted_synthetic"}
+    if args.manager is None:
+        raise SystemExit("--manager is required for real nodes (llamacpp | scripted; scripted only with --dry-run "
+                         "or --label FIXTURE)")
+    if args.manager == "scripted" and not (args.dry_run or args.label == "FIXTURE"):
+        raise SystemExit("--manager scripted on a real node needs --dry-run or --label FIXTURE")
     if args.manager == "llamacpp":
         if not args.manager_model or not args.manager_model.startswith("llamacpp/"):
             raise SystemExit("--manager llamacpp needs --manager-model llamacpp/<alias> (LLAMACPP_BASE_URL set)")
@@ -1362,7 +1411,7 @@ def root_jobs(run: Run) -> list[tuple[int, str | None, int, bool, str, bool]]:
         if de:
             for k in range(min(int(de["instances"]), m["instances"])):
                 add(k, de["policy"], de["rep"], False)
-        return out
+        return _shard_filter(m, out)
     for k in range(m["instances"]):
         add(k, None, 0, True)
         for pol in m["policies"]:
@@ -1373,7 +1422,46 @@ def root_jobs(run: Run) -> list[tuple[int, str | None, int, bool, str, bool]]:
                     add(k, pol, rep, False)
         if m["a2_fraction"] and _u("a2", root_id_for(run, instance_seed(run, k)))[0] < m["a2_fraction"]:
             add(k, "a2", 0, False)
-    return out
+    return _shard_filter(m, out)
+
+
+def parse_shard(spec: str | None) -> tuple[int, int] | None:
+    """``--shard i/k`` -> (i, k), 0 <= i < k; None = unsharded."""
+    if not spec:
+        return None
+    try:
+        i, k = (int(x) for x in str(spec).split("/"))
+    except ValueError as exc:
+        raise SystemExit(f"--shard must be i/k, got {spec!r}") from exc
+    if not (k >= 1 and 0 <= i < k):
+        raise SystemExit(f"--shard {spec!r}: need 0 <= i < k")
+    return i, k
+
+
+def shard_of(k: int, shards: int) -> int:
+    """The deterministic instance -> shard map, identical in every phase: instance index k (seed - seed_base)
+    belongs to shard k mod shards."""
+    return int(k) % int(shards)
+
+
+def _shard_filter(m: dict, jobs: list) -> list:
+    """Sharding (ops review B2): a shard runs only its instances (index = i mod k). The exact placebo (when
+    declared) is run alone by ``--exact-placebo-only`` (no shard) and is excluded from every shard."""
+    ex = m.get("exact_placebo")
+
+    def placebo_unit(job) -> bool:
+        k, pol, rep = job[0], job[1], job[2]
+        return bool(ex) and pol == ex["policy"] and rep == ex["rep"] and k < int(ex["instances"])
+
+    if m.get("exact_placebo_only"):
+        if not ex:
+            raise SystemExit("--exact-placebo-only needs --placebo-policy and --exact-placebo-n")
+        return [j for j in jobs if placebo_unit(j)]
+    sh = parse_shard(m.get("shard"))
+    if sh is None:
+        return jobs
+    i, n = sh
+    return [j for j in jobs if shard_of(j[0], n) == i and not placebo_unit(j)]
 
 
 def check_exact_placebo(run: Run, dup_root: dict) -> None:
@@ -1418,15 +1506,106 @@ def plan(run: Run) -> dict:
             "fork_roots": fork_roots}
 
 
+def is_transport_error(exc: BaseException) -> bool:
+    """A manager-server transport failure (connection refused / reset, timeout, 5xx), by the harness's own
+    classifier (``transport_retry.classify_transport_error``) or the standard library's connection errors, anywhere
+    in the exception chain."""
+    import socket
+    import urllib.error
+    from autoresearch.llm.transport_retry import classify_transport_error
+    seen = set()
+    e: BaseException | None = exc
+    while e is not None and id(e) not in seen:
+        seen.add(id(e))
+        if classify_transport_error(e) is not None or isinstance(
+                e, (ConnectionError, TimeoutError, socket.timeout, urllib.error.URLError)):
+            return True
+        e = e.__cause__ or e.__context__
+    return False
+
+
+def server_url() -> str | None:
+    return os.environ.get("LLAMACPP_BASE_URL")
+
+
+def server_healthy(url: str | None, timeout: float = 10.0) -> bool:
+    """GET <server>/health (llama-server), else <url>/models; True on HTTP 200."""
+    import urllib.request
+    if not url:
+        return False
+    base = url.rstrip("/")
+    root = base[:-3] if base.endswith("/v1") else base
+    for probe in (root + "/health", base + "/models"):
+        try:
+            with urllib.request.urlopen(probe, timeout=timeout) as resp:  # noqa: S310 - operator-given local URL
+                if resp.status == 200:
+                    return True
+        except Exception:  # noqa: BLE001 - unhealthy
+            continue
+    return False
+
+
+class _Guard:
+    """Between units: the stop file (pause), the server health check and the transport circuit breaker."""
+
+    def __init__(self, run: Run, done: dict) -> None:
+        a = run.args
+        self.run, self.done = run, done
+        self.stop_file = getattr(a, "stop_file", None)
+        self.llm = (run.manifest.get("manager") or {}).get("kind") == "langgraph"
+        self.limit = int(getattr(a, "max_transport_failures", None) or DEFAULT_MAX_TRANSPORT_FAILURES)
+        self.wait = float(getattr(a, "health_wait", 5.0) or 0.0)
+        self.consecutive = 0
+
+    def proceed(self) -> bool:
+        """False: stop the session now (paused, deadline or STOP: server unhealthy; ``done['status']``)."""
+        if not self.run.time_left():
+            self.done.update(deadline_hit=True, status="deadline")
+            return False
+        if self.stop_file and Path(self.stop_file).exists():
+            self.done["status"] = "paused"
+            return False
+        if not self.llm:
+            return True
+        while not server_healthy(server_url()):
+            self.consecutive += 1
+            if self.consecutive >= self.limit:
+                self.done["status"] = "STOP: server unhealthy"
+                return False
+            time.sleep(self.wait)
+        return True
+
+    def failed(self, exc: BaseException) -> bool:
+        """True if the failure was a transport failure (the unit is NOT logged: no retry is consumed)."""
+        if not is_transport_error(exc):
+            self.consecutive = 0
+            return False
+        self.consecutive += 1
+        self.done["transport_failures"] = self.done.get("transport_failures", 0) + 1
+        if self.consecutive >= self.limit:
+            self.done["status"] = "STOP: server unhealthy"
+        return True
+
+    def ok(self) -> None:
+        self.consecutive = 0
+
+    @property
+    def stopped(self) -> bool:
+        return str(self.done.get("status", "")).startswith("STOP")
+
+
 def session(run: Run) -> dict:
+    """Run every unit still to do. ``done['status']``: "complete", "deadline", "paused" (the stop file exists; the
+    current unit was finished; not a failure) or "STOP: server unhealthy" (``--max-transport-failures``
+    consecutive transport failures or failed health checks; no unit retry is consumed)."""
     m = run.manifest
     todo = plan(run)
     done = {"roots": 0, "forks": 0, "leaves": 0, "failed": 0, "exhausted": len(todo["exhausted"]),
-            "deadline_hit": False}
+            "deadline_hit": False, "status": "complete"}
+    guard = _Guard(run, done)
     known_forks = {f["fork_id"] for f in read_jsonl(run.out / "forks.jsonl")}
     for k, pol, rep, primary, rid, dup in todo["roots_todo"]:
-        if not run.time_left():
-            done["deadline_hit"] = True
+        if not guard.proceed():
             break
         try:
             root = run_root(run, k, policy=pol, rep=rep, primary=primary, dup=dup)
@@ -1435,9 +1614,14 @@ def session(run: Run) -> dict:
         except Exception as exc:  # noqa: BLE001 - logged, never counted as done; retried on resume
             details = failure_details(exc, "root_campaign")
             _write_failure(run.out, "root", rid, details)
+            if guard.failed(exc):
+                if guard.stopped:
+                    break
+                continue
             log_failed_unit(run.out, rid, "root", details)
             done["failed"] += 1
             continue
+        guard.ok()
         if m["phase"] in FORK_PHASES and primary:
             forks = select_forks(run, root)
             for f in forks:
@@ -1455,13 +1639,12 @@ def session(run: Run) -> dict:
         done["roots"] += 1
         if dup:
             check_exact_placebo(run, root)
-    if m["phase"] in FORK_PHASES:
+    if m["phase"] in FORK_PHASES and done["status"] == "complete":
         todo = plan(run)
         forks = {f["fork_id"]: f for f in _dedupe(read_jsonl(run.out / "forks.jsonl"), "fork_id")}
         root_rows_cache: dict[str, list[dict]] = {}
         for fork_id, arm, rep in todo["leaves_todo"]:
-            if not run.time_left():
-                done["deadline_hit"] = True
+            if not guard.proceed():
                 break
             fork = forks[fork_id]
             if fork["root_id"] not in root_rows_cache:
@@ -1474,9 +1657,14 @@ def session(run: Run) -> dict:
             except Exception as exc:  # noqa: BLE001
                 details = failure_details(exc, "leaf")
                 _write_failure(run.out, "leaf", unit, details)
+                if guard.failed(exc):
+                    if guard.stopped:
+                        break
+                    continue
                 log_failed_unit(run.out, unit, "leaf", details)
                 done["failed"] += 1
                 continue
+            guard.ok()
             append_jsonl(run.out / "leaves.jsonl", leaf)
             done["leaves"] += 1
     done["exhausted"] = len(plan(run)["exhausted"])
@@ -1511,10 +1699,73 @@ def fit_prior_phase(args) -> int:
     src = out / "s04_rows.jsonl"
     prior = a2u.fit_prior(rows, adapter.surface, float(sigma), k_label=DEV_K, within_key=args.within_key,
                           sources={"s04_rows": str(src), "s04_rows_sha256": sha256_file(src)})
+    prior = dataclasses.replace(prior, meta={**prior.meta, "obs_inflation": float(args.obs_inflation)})
     target = Path(args.prior or (out / "a2u_prior.json"))
     sha = prior.save(target)
     print(json.dumps({"prior": str(target), "sha256": sha, "kinds": {k: vars(v) for k, v in prior.kinds.items()}}))
     return 0
+
+
+def set_obs_inflation_phase(args) -> int:
+    """A copy of ``--prior`` whose metadata records ``--obs-inflation`` (the S0.5 calibration revision), written
+    to ``--prior-out``; every later phase refuses a different lambda."""
+    if not args.prior or not args.prior_out:
+        raise SystemExit("set_obs_inflation needs --prior IN --prior-out OUT --obs-inflation LAMBDA")
+    if float(args.obs_inflation) < 1.0:
+        raise SystemExit("--obs-inflation must be >= 1")
+    src = a2u.A2UPrior.load(args.prior, expect_sha256=args.prior_sha256)
+    new = dataclasses.replace(src, meta={**src.meta, "obs_inflation": float(args.obs_inflation),
+                                         "obs_inflation_from_prior_sha256": src.sha256})
+    sha = new.save(args.prior_out)
+    print(json.dumps({"prior": str(args.prior_out), "sha256": sha, "obs_inflation": float(args.obs_inflation)}))
+    return 0
+
+
+def liveness_phase(args) -> int:
+    """D28 liveness (ops review M7) over the ledgers of a Track S out-dir (normally S0.4, which runs the llama.cpp
+    manager under Track S settings: memory append_only_summary, split vary): the ``r1.liveness`` criteria, with the
+    manager kind and memory mode taken from the out-dir's manifest, written to ``<out>/liveness/``. Exit 3 (STOP)
+    if a node fails."""
+    from r1.liveness.check import evaluate_ledger_paths, write_reports
+    out = Path(args.out)
+    man = json.loads((out / "manifest.json").read_text())
+    work = Path(man.get("work") or args.work or DEFAULT_WORK)
+    roots = [r for r in read_jsonl(out / "roots.jsonl") if r.get("status", "ok") == "ok"]
+    dirs = [work / "roots" / r["root_id"] for r in roots]
+    missing = [str(d) for d in dirs if not (d / "root_trials.jsonl").exists()]
+    if missing or not dirs:
+        raise SystemExit(f"liveness: campaign ledgers missing under {work}: {missing[:3] or 'no roots'}")
+    kind = "langgraph" if (man.get("manager") or {}).get("kind") == "langgraph" else "scripted"
+    report = evaluate_ledger_paths(dirs, manager_kind=kind, memory_mode=man.get("memory_mode"))
+    report["source"] = {"out": str(out), "phase": man.get("phase"), "label": man.get("label"), "host": man.get("host")}
+    write_reports(report, out / "liveness")
+    verdict = {n: ("PASS" if v["pass"] else "FAIL") for n, v in report["nodes"].items()}
+    print(json.dumps({"liveness": verdict, "manager_kind": kind, "memory_mode": man.get("memory_mode")}))
+    return 0 if all(v == "PASS" for v in verdict.values()) else 3
+
+
+def check_evidence(args, cfg: dict) -> None:
+    """EVIDENCE needs the llama.cpp manager with GGUF sha256, build, server binary and base URL (ops review M1)."""
+    if args.label == "EVIDENCE" and cfg.get("kind") != "langgraph":
+        raise SystemExit("label EVIDENCE needs --manager llamacpp (with --gguf/--gguf-sha256, --llama-build, "
+                         "--llama-server-bin and LLAMACPP_BASE_URL)")
+
+
+def blas_threads() -> str:
+    """Pin the BLAS thread variables to 1 for worker / audit subprocesses unless set (ops review 9); the values."""
+    for v in BLAS_VARS:
+        os.environ.setdefault(v, "1")
+    return ",".join(f"{v}={os.environ[v]}" for v in BLAS_VARS)
+
+
+def check_obs_inflation(args, prior) -> None:
+    """Phases after S0.5 run at the prior file's recorded lambda (``fit_prior`` / ``set_obs_inflation``)."""
+    if prior is None or args.phase not in LATER_PHASES:
+        return
+    want = float(prior.meta.get("obs_inflation", 1.0))
+    if abs(float(args.obs_inflation) - want) > 1e-12:
+        raise SystemExit(f"--obs-inflation {args.obs_inflation} differs from the prior file's recorded {want} "
+                         "(set it with fit_prior --obs-inflation or --phase set_obs_inflation)")
 
 
 def check_llm_provenance(args, cfg: dict) -> None:
@@ -1529,6 +1780,11 @@ def check_llm_provenance(args, cfg: dict) -> None:
         missing.append("--llama-build or --llama-server-bin")
     if args.host_label in (None, "", "unknown"):
         missing.append("--host-label")
+    if args.label == "EVIDENCE":
+        if not args.llama_server_bin:
+            missing.append("--llama-server-bin (EVIDENCE)")
+        if not server_url():
+            missing.append("LLAMACPP_BASE_URL in the environment (EVIDENCE)")
     if missing:
         raise SystemExit(f"an LLM run needs provenance: {', '.join(missing)}")
 
@@ -1553,7 +1809,19 @@ def parse_args(argv=None):
     ap.add_argument("--k-audit", type=int, default=DEFAULT_K)
     ap.add_argument("--seed-base", type=int, default=None, help="instance seed base (inside the phase's block)")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--work", default=os.environ.get("R1_TMP", "/tmp/r1_tracks"))
+    ap.add_argument("--work", default=None, help=f"scratch / ledger dir (default $R1_TMP or /tmp/r1_tracks); recorded "
+                    "in the manifest; S0.5b uses the S0.5 one")
+    ap.add_argument("--shard", default=None, help="i/k: run only the instances whose index = i mod k (own --out and "
+                    "own LLAMACPP_BASE_URL per shard; the exact placebo is excluded, see --exact-placebo-only)")
+    ap.add_argument("--exact-placebo-only", action="store_true",
+                    help="campaign: run only the exact-placebo units (m* twice at rep 0), alone, before any shard")
+    ap.add_argument("--stop-file", default=None, help="if this file exists between units: finish the current unit "
+                    "and exit with status 'paused' (not a failure)")
+    ap.add_argument("--max-transport-failures", type=int, default=DEFAULT_MAX_TRANSPORT_FAILURES,
+                    help="consecutive transport failures / failed health checks before 'STOP: server unhealthy' "
+                    "(no unit retry is consumed)")
+    ap.add_argument("--health-wait", type=float, default=5.0, help="seconds between failed health checks")
+    ap.add_argument("--prior-out", default=None, help="set_obs_inflation: the new prior file")
     ap.add_argument("--deadline", type=float, default=1e12, help="seconds; no new unit starts after it")
     ap.add_argument("--dry-run", action="store_true", help="print the plan and exit (nothing runs)")
     ap.add_argument("--max-retries", type=int, default=DEFAULT_MAX_RETRIES,
@@ -1567,7 +1835,7 @@ def parse_args(argv=None):
                     "continuations (m*), e.g. static:<g>,<h>")
     ap.add_argument("--obs-inflation", type=float, default=1.0, help="A2-U observation-variance inflation lambda")
     ap.add_argument("--within-key", choices=["estimated", "none"], default="estimated", help="fit_prior only")
-    ap.add_argument("--a2-fraction", type=float, default=None, help="descriptive A2 roots (S3 default 0.2)")
+    ap.add_argument("--a2-fraction", type=float, default=None, help="descriptive A2 roots (default 0 in every phase)")
     ap.add_argument("--policy", action="append", default=None, help="tune / campaign / S0.5 extra policies: a2u | "
                     "static:g,h | dynamic:g0,b_budget,b_info,h0,h_budget,r1bar,taubar,r2bar | pi_prime:<model_file> "
                     "(repeatable; raw units, positional as the analysis branch)")
@@ -1590,6 +1858,10 @@ def parse_args(argv=None):
     ap.add_argument("--sigma-cmp-vary", type=float, default=None,
                     help="grid unit (raw units): the node's sigma (the analysis' sigma_node)")
     ap.add_argument("--tune-g-extension", action="store_true", help="add the g = 0.8 edge extension (3 statics)")
+    ap.add_argument("--tune-g-extension-only", action="store_true",
+                    help="tune: run only the 3 g = 0.8 statics (on the same paired instances; new --out)")
+    ap.add_argument("--tune-configs", default=None,
+                    help="tune: run only these configurations, 'policy;policy;...' (same paired instances; new --out)")
     ap.add_argument("--m-star", default=None, help="m*: a static policy string static:g,h (raw units), or g,h in "
                     "sigma units")
     ap.add_argument("--centres-from", default=None, help="dynamic stage: roots.jsonl of the static stage; the centres "
@@ -1602,7 +1874,8 @@ def parse_args(argv=None):
     ap.add_argument("--e2-verify", action="store_true", help="refused: E2 verify is off for every Track S policy")
     ap.add_argument("--memory-mode", default="append_only_summary")
     ap.add_argument("--skip-display", default=a2u.SKIP_DISPLAY)
-    ap.add_argument("--manager", choices=["scripted", "llamacpp"], default="scripted")
+    ap.add_argument("--manager", choices=["scripted", "llamacpp"], default=None,
+                    help="required for real nodes; scripted only with --dry-run or --label FIXTURE")
     ap.add_argument("--manager-model", default=None)
     ap.add_argument("--proposal-schema", default=None)
     ap.add_argument("--transport-max-attempts", type=int, default=3)
@@ -1629,44 +1902,69 @@ def assemble(node: str, out: Path, *, dev=(), campaign=(), fork=()) -> dict:
     one run declares with --placebo-policy / --exact-placebo-n / --descriptive-placebo-n, or separate runs at
     rep 0 / rep 1) -> ``campaign_roots.jsonl``; ``fork``: S3 / synthetic out-dirs -> ``roots.jsonl`` and
     ``leaves.jsonl``. Checks every manifest's node and phase, the host (one per node), and that a root id
-    occurring twice has identical content (then it is kept once); writes ``assemble.json`` with the sources'
-    sha256 and labels."""
+    occurring in two out-dirs is refused, and that shards of one run (``--shard i/k``) have disjoint instance sets;
+    reads ``.jsonl.gz`` too; writes ``assemble.json`` with the sources' sha256, labels and shards."""
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
-    report = {"schema": ASSEMBLE_SCHEMA, "node": node, "sources": {}, "outputs": {}, "hosts": set(), "labels": {}}
+    report = {"schema": ASSEMBLE_SCHEMA, "node": node, "sources": {}, "outputs": {}, "hosts": set(), "labels": {},
+              "shards": {}}
     for kind, dirs in (("dev", dev), ("campaign", campaign), ("fork", fork)):
         if not dirs:
             continue
+        if len({str(Path(d).resolve()) for d in dirs}) != len(dirs):
+            raise SystemExit(f"assemble: an out-dir is given twice for {kind}")
         phases, target = ASSEMBLE_KINDS[kind]
         roots: dict[str, dict] = {}
+        origin: dict[str, str] = {}
         leaves: list[dict] = []
+        shard_insts: dict[tuple, dict[str, set]] = {}
         for d in map(Path, dirs):
-            man = json.loads((d / "manifest.json").read_text())
+            man = json.loads(_text(d / "manifest.json") if (d / "manifest.json").exists()
+                             else _text(d / "manifest.json.gz"))
             if man["node"] != node:
                 raise SystemExit(f"assemble: {d} is node {man['node']!r}, not {node!r}")
             if man["phase"] not in phases:
                 raise SystemExit(f"assemble: {d} is phase {man['phase']!r}; {kind} takes {phases}")
             report["hosts"].add(man.get("host"))
             report["labels"].setdefault(kind, set()).add(man.get("label"))
-            src = {"phase": man["phase"], "label": man.get("label"), "host": man.get("host")}
-            for name in ("roots.jsonl", "leaves.jsonl"):
+            src = {"phase": man["phase"], "label": man.get("label"), "host": man.get("host"),
+                   "shard": man.get("shard"), "exact_placebo_only": man.get("exact_placebo_only", False)}
+            for name in ("roots.jsonl", "leaves.jsonl", "roots.jsonl.gz", "leaves.jsonl.gz"):
                 if (d / name).exists():
                     src[name] = sha256_file(d / name)
             report["sources"][str(d)] = src
-            for r in read_jsonl(d / "roots.jsonl"):
-                if r["root_id"] in roots and roots[r["root_id"]] != r:
-                    raise SystemExit(f"assemble: root {r['root_id']} differs between out-dirs")
-                roots.setdefault(r["root_id"], r)
+            rows = read_jsonl(d / "roots.jsonl")
+            if man.get("shard"):
+                # shards of one run (same policies / seeds, different shard): instance sets must be disjoint
+                key = (man["phase"], json.dumps(man.get("policies")), man.get("seed_base"),
+                       parse_shard(man["shard"])[1])
+                shard_insts.setdefault(key, {})[man["shard"]] = {r["instance_id"] for r in rows}
+            for r in rows:
+                if r["root_id"] in roots:
+                    raise SystemExit(f"assemble: root {r['root_id']} occurs in {origin[r['root_id']]} and {d} "
+                                     "(duplicate units across out-dirs are refused)")
+                roots[r["root_id"]], origin[r["root_id"]] = r, str(d)
             leaves += read_jsonl(d / "leaves.jsonl") if kind == "fork" else []
+        for key, by in shard_insts.items():
+            names = sorted(by)
+            for i, a in enumerate(names):
+                for b in names[i + 1:]:
+                    if by[a] & by[b]:
+                        raise SystemExit(f"assemble: shards {a} and {b} share instances {sorted(by[a] & by[b])[:3]}")
+            report["shards"][kind] = names
         path = out / target
         path.write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in roots.values()))
         report["outputs"][target] = {"n": len(roots), "sha256": sha256_file(path)}
         if kind == "fork":
             lp = out / "leaves.jsonl"
-            uniq = {(x["fork_id"], x["arm"], x["rep"]): x for x in reversed(leaves)}
-            kept = [x for x in leaves if uniq.get((x["fork_id"], x["arm"], x["rep"])) is x]
-            lp.write_text("".join(json.dumps(x, sort_keys=True) + "\n" for x in kept))
-            report["outputs"]["leaves.jsonl"] = {"n": len(kept), "sha256": sha256_file(lp)}
+            seen_l: set = set()
+            for x in leaves:
+                k3 = (x["fork_id"], x["arm"], x["rep"])
+                if k3 in seen_l:
+                    raise SystemExit(f"assemble: leaf {k3} occurs twice")
+                seen_l.add(k3)
+            lp.write_text("".join(json.dumps(x, sort_keys=True) + "\n" for x in leaves))
+            report["outputs"]["leaves.jsonl"] = {"n": len(leaves), "sha256": sha256_file(lp)}
     if len(report["hosts"]) > 1:
         raise SystemExit(f"assemble: node {node} mixes hosts {sorted(map(str, report['hosts']))}")
     report["hosts"] = sorted(map(str, report["hosts"]))
@@ -1695,8 +1993,13 @@ def main(argv=None) -> int:
     if argv and argv[0] == "assemble":
         return assemble_main(argv[1:])
     args = parse_args(argv)
+    blas = blas_threads()
     if args.phase == "fit_prior":
         return fit_prior_phase(args)
+    if args.phase == "set_obs_inflation":
+        return set_obs_inflation_phase(args)
+    if args.phase == "liveness":
+        return liveness_phase(args)
     if args.phase == "S0.5b":
         if not args.truncate_W:
             raise SystemExit("S0.5b needs --truncate-W W1,W2,...")
@@ -1725,6 +2028,22 @@ def main(argv=None) -> int:
                                                             extend=args.tune_g_extension, centres=args.centres)
         if args.instances is None and not args.jobs:
             args.instances = TUNE_N_STATIC if args.tune_grid == "static" else TUNE_N_MEMBERS
+    if args.tune_configs or args.tune_g_extension_only:
+        if args.phase != "tune" or args.tune_grid:
+            raise SystemExit("--tune-configs / --tune-g-extension-only: --phase tune, without --tune-grid")
+        extra = [canonical_policy(p.strip()) for p in (args.tune_configs or "").split(";") if p.strip()]
+        if args.tune_g_extension_only:
+            if args.sigma_cmp_vary is None:
+                raise SystemExit("--tune-g-extension-only needs --sigma-cmp-vary")
+            extra += extension_grid(args.sigma_cmp_vary)
+        args.policy = list(args.policy or []) + extra
+        if args.instances is None and not args.jobs:
+            args.instances = TUNE_N_STATIC
+    if args.exact_placebo_only and args.shard:
+        raise SystemExit("--exact-placebo-only runs alone (no --shard)")
+    parse_shard(args.shard)
+    if args.work is None:
+        args.work = DEFAULT_WORK
     if args.jobs and args.phase != "tune":
         raise SystemExit("--jobs is a tune-phase option")
     if args.phase in POLICY_PHASES and not (args.policy or args.jobs):
@@ -1734,9 +2053,11 @@ def main(argv=None) -> int:
     out, work = Path(args.out), Path(args.work)
     synth_params = json.loads(args.synthetic_params) if args.synthetic_params else None
     cfg = manager_cfg(args)
+    check_evidence(args, cfg)
     check_llm_provenance(args, cfg)
     adapter = make_adapter(args.node, cfg, synth_params)
     prior, prior_sha, sigma_node = resolve_prior(args, adapter)
+    check_obs_inflation(args, prior)
     g_declared = float(args.g if args.g is not None else G_UNITS * sigma_node)
     g0 = float(args.g0 if args.g0 is not None else g_declared)
     manifest = build_manifest(args, adapter, prior_sha, sigma_node, g_declared, g0)
@@ -1775,7 +2096,9 @@ def main(argv=None) -> int:
                             llama_build=llama_build(args), controller_version="unknown",
                             prior_sha256=prior_sha, phase=args.phase, label=args.label,
                             g_declared=g_declared, g0=g0, harness_dirty=bool(hc.get("dirty")),
-                            paper_dirty=_git_dirty(REPO))
+                            paper_dirty=_git_dirty(REPO), shard=args.shard,
+                            server_url=server_url() if cfg.get("kind") == "langgraph" else None,
+                            obs_inflation=float(args.obs_inflation), blas_threads=blas)
     run = Run(args, adapter, out, work, manifest, prior, prior_sha, sigma_node, g_declared, g0, provenance,
               AuditCache(out / "audit_runs.jsonl", adapter, work), time.time())
     start = utc()
@@ -1789,7 +2112,7 @@ def main(argv=None) -> int:
                                      **({"done": done} if done is not None else {"interrupted": True})})
         (out / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str) + "\n")
     print(json.dumps({"out": str(out), **done}))
-    return 0
+    return 3 if str(done.get("status", "")).startswith("STOP") else 0
 
 
 if __name__ == "__main__":

@@ -244,12 +244,34 @@ End to end (`r1/tests/test_tracks_e2e.py`, small sizes: 15 statics × 8, 4 membe
 descriptive 15, fixed seeds): P2+ concentrated (strength 0.03, W 10) → route A with π* = keep+; N0 (W = cap = 20)
 → "no gain found"; both with passing placebos, S3e flip rate and the A2-U secondary.
 
+## Ops readiness (TRACKS_OPERATOR_RUNBOOK_REVIEW_20261030; coordinator items 1-16)
+
+| # | Change | Test (`r1/tests/test_tracks_ops.py`) |
+|---|---|---|
+| 1 | `--shard i/k`: instance index ≡ i mod k (index = instance seed − seed base; the same map in every phase); own `--out`, own `LLAMACPP_BASE_URL`; the shard and the server URL are in `Provenance`; a sharded run excludes the exact-placebo units, which `--exact-placebo-only` runs alone; `assemble` refuses a root id in two out-dirs and shards of one run with overlapping instances | `test_shard*` |
+| 2 | `--stop-file PATH` (between units: status "paused", exit 0); health check of the server (GET /health, else /v1/models) before every unit of an LLM run; circuit breaker `--max-transport-failures N` (default 3: consecutive transport failures or failed health checks) → status "STOP: server unhealthy", exit 3, no unit logged as failed (no retry consumed); `--health-wait` | `test_stop_file_pauses`, `test_transport_failures_*`, `test_health_check_*` |
+| 3 | `--work` is recorded in the manifest (a resume key); S0.5b uses the recorded dir, refuses a different `--work`, refuses a missing or empty ledger, never audits the start configuration in its place | `test_s05b_*` |
+| 4 | `--tune-configs "p;p;..."` and `--tune-g-extension-only` (3 statics at g = 0.8σ), on the same paired instances (default 20), new `--out` | `test_tune_configs_and_extension_only` |
+| 5 | `--a2-fraction` default 0 in every phase | `test_a2_fraction_defaults_to_zero` |
+| 6 | `--manager` required for real nodes; `scripted` only with `--dry-run` or `--label FIXTURE`; EVIDENCE needs `--manager llamacpp` + GGUF sha256 + build + `--llama-server-bin` + `LLAMACPP_BASE_URL` | `test_manager_flags_*` |
+| 7 | `Provenance.obs_inflation`; `fit_prior --obs-inflation λ` and `--phase set_obs_inflation --prior IN --obs-inflation λ --prior-out OUT` record λ in the prior's metadata; S0.5b, S3, synthetic, tune and campaign refuse a different `--obs-inflation` | `test_obs_inflation_*` |
+| 8 | `read_jsonl` / `assemble` read `.jsonl.gz` | `test_assemble_reads_gz_*` |
+| 9 | `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS` set to 1 unless set (inherited by worker and audit subprocesses); `Provenance.blas_threads` | same |
+| 10 | D28: `r1.liveness --run` uses the E1b collector (its own W = 10 campaigns, not Track S settings); its `--offline` mode cannot record the manager kind / memory mode that the D28 gate requires. New `--phase liveness` evaluates the D28 criteria over a Track S out-dir's ledgers (S0.4: llama.cpp manager, `append_only_summary`, split `vary`) with the manifest's manager kind and memory mode; writes `<out>/liveness/`; exit 3 (STOP) if a node fails | `test_liveness_phase_*` |
+| 11 | `analyze fit-policy`: π′ (and m̃) from S3a leaves + roots alone; ridge λ by inner instance-fold CV over `ridge_alpha_grid` (default 0.01 … 10), recorded with the CV table; `<node>.pi_prime.json` + `.sha256`. `analyze analyze --policy-out` uses the same CV | `test_fit_policy_*` |
+| 12 | `s05-summary`: `between_policy_sd_at_cap` (sd over instances of Y(A) − Y(B) of the untruncated pilot roots, rep 0 = `simulate_controls --between-policy-sd`); `select`: `dev_between.dev_between_sd` (mean pairwise sd over the 15 statics = `--dev-between-sd`) | `test_s05_summary_values_*`, `test_select_reports_dev_between_sd_*` |
+| 13 | `analyze analyze --controls` repeatable (merged); `analyze merge-controls` | `test_controls_*` |
+| 14 | The decision label comes from S3e inputs only; `controls_label` separately | same |
+| 15 | `analyze predecl-template` (draft v4 with TODO fields); `select` accepts the draft; `analyze` / `fit-policy` refuse it | `test_predecl_template_*` |
+| 16 | `s05-summary` prints `values` (W, σ_cmp,vary, σ_D UCL, between-repetitions UCL, between_policy_sd_at_cap, near-band b, calibration status, λ); `select` prints `values` (m*, π*, member, centres r̄₁ τ̄ r̄₂, matched static, g_eff, h_eff, dev_between_sd, dev σ_D UCL, extension configs, missing members). Near band rule: b = 0.5 × median \|margin\| of the eligible E1 and E2 decisions of the pilot's primary roots | same |
+
 ## Schema changes (`r1/tracks/schema.py`; defaulted fields at the end only)
 
 * `Provenance.g_declared`, `Provenance.g0` (rev.-4 amendment 2).
 * `LeafRecord.aa_reproduced` (A/A check), `LeafRecord.policy` (rev.-4 amendment 3).
 * `RootRecord.policy` (rev.-4 amendment 3); helper `root_from_dict`.
 * Review round: `RootRecord.rep` (M2), `Provenance.harness_dirty`, `Provenance.paper_dirty` (m3).
+* Ops round: `Provenance.shard`, `Provenance.server_url`, `Provenance.obs_inflation`, `Provenance.blas_threads`.
 * Rev. 7.1 (analysis request): `RootRecord.llm_seed_base` (int, default None); per-decision `r`, `tau_pred`
   in `RootRecord.decisions` (dict entries, no dataclass change).
 * Prior file: optional `groups` (per-(key, sign) priors), written only when non-empty.

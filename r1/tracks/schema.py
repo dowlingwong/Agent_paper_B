@@ -58,6 +58,13 @@ class Provenance:
     # Added 29 Oct (review m3): checkout dirtiness at collection time (None = not recorded).
     harness_dirty: bool | None = None
     paper_dirty: bool | None = None
+    # Added 30 Oct (ops review): the collector shard "i/k" (None = unsharded), the manager's server URL
+    # (LLAMACPP_BASE_URL of the process; None for scripted managers), A2-U's observation-variance inflation, and
+    # the BLAS thread settings of worker / audit subprocesses ("OMP=1,OPENBLAS=1,MKL=1").
+    shard: str | None = None
+    server_url: str | None = None
+    obs_inflation: float | None = None
+    blas_threads: str | None = None
 
 
 @dataclass
