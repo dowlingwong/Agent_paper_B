@@ -250,8 +250,8 @@ systematic risk:
 - an instance seed is fixed for exact pairing, so a unit whose manager keeps emitting a stale edit can
   exhaust `--max-retries` (default 2) and stay failed;
 - §0.6 makes **> 2 % failed units in a phase a STOP**, and S3e has 300 instances per node, S0.7 has
-  460 campaigns per node — so the failure rate must be known before Phase 3/8, not discovered during
-  EVIDENCE.
+  460 campaigns per node — so the failure rate must be known before **S0.7/S3e** (S0.4, the phase that
+  measures it, is itself Phase 3), not discovered during EVIDENCE.
 
 I did **not** change the pinned paper code (9bb64ba) or harness (115df37); §0.2 forbids that without an
 author PLAN row and §10 sends anything uncovered to a STOP.
@@ -324,7 +324,7 @@ Disposition of each finding:
 | m10 | MINOR | `failed_units` count = attempts, not permanent failures | **Fixed** — stated explicitly in §3 0.10 |
 | m11 | MINOR | `trks-status` does not check HEAD pins | **Fixed** — it now verifies paper/harness/llama.cpp HEADs and reports tracked-file modifications (§3 0.9, sha256 `ac7dd996…`) |
 | m12 | MINOR | "host timestamps UTC" wording | **Fixed** — §0 now distinguishes UTC report stamps from local-PDT raw log excerpts |
-| m13 | MINOR | uv "absent" ambiguous | **Fixed** — "not installed" (§1) |
+| m13 | MINOR | uv "absent" ambiguous | **Fixed and checked further** — "not installed" (§1) is the right reading, and `stat` settles it: `~/.local/bin/uv` has **birth** time 2026-10-29 17:57:06 (TASL-2) / 17:56:38 (TASL-7) — i.e. created by the §0.5 installer during Phase 0 — while its 2026-10-26 **mtime** is only the downloaded archive's timestamp. An earlier draft of this report briefly misread the mtime as pre-existence; that draft was discarded and never committed. |
 | — | — | could not verify: historical start state, historical `pgrep` count, `GET /health` claim, watcher pause path, GitHub credentials at the time, exact original wall times | **Answered** — the start state and the `pgrep` count are historical and not reconstructable; the `/health` result was a direct `curl` observation (llama-server does not log it); the watcher pause path was deliberately not synthesised (see §5.2) though the watcher is alive and its `marker()`/`ours()` predicates were checked; GitHub push is now demonstrated; wall times vary with load while pass counts match |
 
 **Round 2** is requested from the same reviewer on the committed fixes above.
