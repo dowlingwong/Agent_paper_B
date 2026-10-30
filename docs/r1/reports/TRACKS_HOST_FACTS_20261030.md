@@ -208,7 +208,10 @@ Installed sha256 (per host; identical for the four host-independent scripts):
    name that already has a session), into the same `--out`/`--work`, which is how §0.6 says a stopped
    session resumes. The retry completed the campaign and wrote one `ok` root. `failed_units.jsonl`
    still holds the attempt-1 record: it counts **failure events**, not permanently failed units, and
-   the collector does not delete a line when a later attempt succeeds.
+   the collector does not delete a line when a later attempt succeeds. **Read the runbook §0.6
+   "> 2 % failed units" STOP with the denominator *permanently failed (`exhausted`) units over planned
+   units*, not the number of lines in `failed_units.jsonl`** — at TASL-7 the manifest shows
+   `done.failed: 0` and `roots: 1/1` for the unit whose attempt is still logged.
 4. `tmux kill-session -t trks_llm` on both hosts; afterwards `nvidia-smi --query-compute-apps` is empty
    and `flock -n ~/r1_locks/gpu0.lock` succeeds, i.e. the lease is released.
 
@@ -257,8 +260,9 @@ systematic risk:
   460 campaigns per node — so the failure rate must be known before **S0.7/S3e** (S0.4, the phase that
   measures it, is itself Phase 3), not discovered during EVIDENCE.
 - **The S0.4 screen is coarse (review n1).** S0.4 runs `--instances 10` per node, i.e. 20 units total.
-  A zero-failure result bounds the rate only by the rule of three (≈ 14 % at 95 %), and **one** failure
-  in 20 units is already 5 % > the §0.6 STOP threshold. The STOP-3 author decision must therefore treat
+  A zero-failure result bounds the rate only coarsely: the rule of three gives 3/20 = **15 %** (the
+  exact one-sided 95 % upper limit for 0/20 is 1 − 0.05^(1/20) ≈ 13.9 %), and **one** failure in 20
+  units is already 5 % > the §0.6 STOP threshold. The STOP-3 author decision must therefore treat
   the S0.4 figure as a screen, not an estimate, and may need a larger sample before S0.7/S3e.
 
 I did **not** change the pinned paper code (9bb64ba) or harness (115df37); §0.2 forbids that without an
@@ -327,7 +331,7 @@ Disposition of each finding:
 | m5 | MINOR | "controller hook runs before guard" imprecise | **Fixed** — §5.1 now states only what is demonstrable: the controller receives the raw proposal and its replay raises, while the harness's `PROPOSAL_PRECONDITION_FAILED` guard is a separate graceful path |
 | m6 | MINOR | "unit is lost" overstates (it was retried) | **Fixed** — §5.1 says the unit is logged and retried, permanent only if retries exhaust |
 | m7 | MINOR | tabular `t_run` 1.847 s includes the failed attempt's 10 runs | **Fixed** — retry-only mean 1.9135 s (n=155) reported and used; the excluded 10 runs (0.8200 s) are stated (§3 0.10, §4) |
-| m8 | MINOR | worktree HEAD `62980aef` vs task-pinned `ddf8f08d` | **Explained** — `62980aef` was a report-only commit made after the round-1 task text was written; reviewed substance is `ddf8f08d` + report wording. This report is committed on top of `eeb0599d`; the round-2 review records `d7010422`/`eeb0599d` |
+| m8 | MINOR | worktree HEAD `62980aef` vs task-pinned `ddf8f08d` | **Explained** — `62980aef` was a report-only commit made after the round-1 task text was written; reviewed substance is `ddf8f08d` + report wording. This report is committed on top of `f966e15b` (round-2 review), with the m10/n1/n4 corrections in the commit that follows; the chain is `ddf8f08d` → `62980aef` → `d7010422` → `eeb0599d` → `f4b7b3b4` → `f966e15b` |
 | m9 | MINOR | no GitHub push of `trackS-ops-20261030` | **Fixed** — pushed to `origin` (`github.com/dowlingwong/Agent_paper_B.git`) and to both hosts |
 | m10 | MINOR | `failed_units` count = attempts, not permanent failures | **Fixed** — stated explicitly in §3 0.10, and the §0.6 denominator is now stated as **permanently failed (`exhausted`) units over planned units** |
 | m11 | MINOR | `trks-status` does not check HEAD pins | **Fixed** — it now verifies paper/harness/llama.cpp HEADs, reports tracked-file modifications, and finds manifests recursively (§3 0.9, sha256 `a217f6b8…`) |
@@ -337,14 +341,18 @@ Disposition of each finding:
 
 **Round 2** (`docs/r1/reviews/TRACKS_OPS_PHASE0_REVIEW_20261030.md`, appended by a second independent
 reviewer because the round-1 session was not resumable in this harness — a documented deviation from
-"the same reviewer"): **ACCEPTED**. Disposition counts: **13 FIXED, 2 SATISFACTORILY ANSWERED (B1, M1),
-0 STILL OPEN**, plus 4 new MINOR residuals (n1–n4) which are addressed here:
+"the same reviewer"): **ACCEPTED**, with disposition counts at the reviewer's final read
+**12 FIXED, 2 SATISFACTORILY ANSWERED (B1, M1), 1 STILL OPEN (m10)**, plus 4 new MINOR residuals
+(n1–n4). The reviewer was right on m10: this report's disposition row claimed the §0.6 denominator was
+stated in the body when it was not. The sentence has now actually been added to §3 0.10, so the
+final counts after this commit are **13 FIXED, 2 SATISFACTORILY ANSWERED, 0 STILL OPEN**. The n1–n4
+residuals are addressed here:
 
 | # | Sev | Finding | Disposition |
 |---|---|---|---|
-| n1 | MINOR | "quantify on S0.4" is a coarse screen (20 units) | **Fixed** — §5.1 now states the sample size, the rule-of-three bound and that one failure in 20 already exceeds 2 % |
+| n1 | MINOR | "quantify on S0.4" is a coarse screen (20 units) | **Fixed** — §5.1 states the sample size, the rule-of-three bound **3/20 = 15 %** (exact one-sided 95 % limit ≈ 13.9 %) and that one failure in 20 already exceeds 2 % |
 | n2 | MINOR | smoke wrote to `$R/out/smoke`, not §0.1's `$R/out/<node>/smoke` | **Recorded** — Phase 0 used the flat layout (harmless, one node per host; copy-back is already `results/r1/tracks/<node>/smoke`); `trks-status` now scans recursively, and **Phase 3 onward uses `$R/out/<node>/<phase>` as §0.1 requires** |
-| n3 | MINOR | the 0.3(c) arrangement exists only as an operator-relayed confirmation | **Recorded** — the author's confirmation is quoted in §5.2 and STATUS; the marker is correctly absent and the watcher predicate handles it. Track P's own runbook does not mention the marker |
+| n3 | MINOR | the 0.3(c) arrangement exists only as an operator-relayed confirmation | **Recorded, not resolvable by the operator** — the author's confirmation is quoted in §5.2 and STATUS; the marker is correctly absent and the watcher's `marker()` predicate handles it, but **no Track P-side instruction or artifact exists yet** (`docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` does not mention `trackp_evidence.active`), and **the watcher's pause path remains unexercised**. Action for the author: have Track P record its side of the instruction, or paste the wording to be recorded verbatim |
 | n4 | MINOR | documentation residuals (HEAD, session-name reason, STOP denominator, uv cache provenance) | **Fixed** — see the m2/m8/m10 rows, §3 0.5 (pre-existing uv caches distinguished) and §3 0.10 |
 
 **STOP 0 is therefore passed.** Phase 1 may start.
