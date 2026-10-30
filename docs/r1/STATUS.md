@@ -1,5 +1,20 @@
 # Paper B (route R1) — status log
 
+## 30 October 2026 — Runbook revision 3.3 received and adopted (AI-assisted; procedure only)
+
+- **Revision of record is now 3.3.** Fetched from the refreshed bundle `.claude-worktrees/_snapshots/trackS_30oct.bundle` (sha256 `96dfdee13df767cb056bc8fc7cbb79aa520646105a765dde7404d8b18cb0d215`, matching `trackS_30oct.heads.txt`) and fast-forwarded the docs branch `docs/trackS-decisions-30oct` **`3ac0fbf4` → `13badb0d`**.
+  - Runbook `docs/r1/prompts/TRACK_S_OPERATOR_RUNBOOK_20261030.md` on `13badb0d`, sha256 **`a93fb84bd04f650d726ddb683acb0c6d0a621196d3dd5460d91be89ff4c82a53`** — byte-identical to the copy in the Mac main tree that was read at 11:24.
+  - Paper pin **`9bb64ba`** and harness pin **`115df37`** are **unchanged** in the refreshed bundle.
+  - The refresh also added `proposals/TRACKP_EVIDENCE_MARKER_20261030.md`, `proposals/trackp-evidence.sh` (rev 2) and `reviews/TRACKS_OPS_RUNBOOK_3_3_REVIEW_20261030.md` (no BLOCKING; re-check accepted).
+- **§12 "Revision 3.2 → 3.3" read.** It confirms: the §0.6 2 % definition (`exhausted / (committed + exhausted)` over all shards), the Phase 3.0 pause drill with `$R/trks_drill.active` and the optional 3.0b Track P check, the §11.3/§11.4 drill-marker change plus the instruction to re-install and restart the watcher before Phase 3, the per-session count rules and `complete` status wording, and the Phase 0.3(c) gate for Phase 6+ on TASL-7.
+- **Pre-Phase-3 handoff requirements verified as already satisfied.**
+  - `r1/tracks/ops/trks-servers` and `trks-watch` are **byte-identical to the 3.3 §11.3/§11.4 templates** (sha256 `124316b5ce46d13129ff347b92356bb9904b56b025377f16917759f9d38ff22d` and `cf68843ea8dea38c22094ec86c3e864a3be7b79f3cbf144f224a1807993f8112`), installed identically on **both** hosts, `bash -n` clean.
+  - `trks_watch` **restarted on both hosts**; `$R/trks_drill.active` **absent** on both, `~/r1_locks` holds only `gpu0.lock`, and there are **no** stale `STOP` files under `$R/out`.
+  - The new drill gate was exercised safely earlier: with the drill marker present, `trks-servers` refused with `priority marker …/trks_drill.active` and rc=1 without starting a server.
+- **Pause-drill mechanism settled by the author's 3.3 instruction:** the drill is Phase 3.0 using Track S's own `$R/trks_drill.active` on both hosts during S0.4 (required for STOP 3); 3.0b is only with the author's permission; another track's marker is **never** created by hand. The earlier request to create `trackp_evidence.active` by hand is therefore superseded and was never carried out.
+- **Working rule restated:** count failed units as `exhausted / (committed + exhausted)` over all shards, read counts from the latest `sessions[-1].done` and from `roots.jsonl` / `leaves.jsonl` (never from `failed_units.jsonl`), treat a phase as finished only when a `--dry-run` of each shard shows `roots_todo = leaves_todo = 0`, and **flag — never re-read — any STOP rule** in a report.
+- **Phase 1/2 are already complete** (see the entry below) and were executed under 3.2; §12/§12.1 change no Phase 1 or Phase 2 rule, so the **STOP 1 outcome stands unchanged under 3.3**. It remains open for the author: final STOP, an authorised re-run or changed server/probe setting, or halt.
+
 ## 30 October 2026 — Track S Phase 1 (S0.1) raises STOP 1; Phase 2 (S1.1) done (AI-assisted; ENGINEERING_ONLY)
 
 - **Phase 1 / S0.1 did not reach 100 % identity in either setting**, so under the runbook's Phase 1 "Done when" rule the outcome is the **STOP** branch, not a k choice. Report: `reports/TRACKS_PHASE1_20261030.md`.
