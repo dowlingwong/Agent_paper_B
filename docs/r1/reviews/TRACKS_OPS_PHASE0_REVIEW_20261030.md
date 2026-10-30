@@ -364,12 +364,13 @@ rather than reading them from the report.
 **Artifacts and heads.** Worktree `.claude-worktrees/trackS-ops-20261030`, branch `trackS-ops-20261030`.
 The task names head **`d7010422`**; at the start of this re-check the worktree was at `d7010422` and clean.
 During the re-check the operator committed **`eeb0599d`** ("fix the S0.7/S3e wording and record the uv
-birth-time evidence"; report-only, +3/−3) and pushed it to `origin` and to both hosts' bare repositories.
-I reviewed `d7010422` and re-checked `eeb0599d`; no pinned code, commit, GGUF, flag or server state
-changed. The report and STATUS references below are to `eeb0599d`. At the time of writing there is also
-an uncommitted `r1/tracks/ops/trks-status` draft (sha256 `a217f6b8…`, recursive manifest scan) installed
-on both hosts; the committed HEAD and the report's sha table still say `ac7dd996…` (m11, n5). All times
-UTC unless stated.
+birth-time evidence"; report-only, +3/−3), then **`f4b7b3b4`** ("STOP 0 passed (round 2 accepted) and
+n1-n4 recorded"), which commits the operator's response to n1–n4, the recursive `trks-status` fix
+(sha256 `a217f6b8…`), the report/STATUS updates and a snapshot of this review, and then **`f966e15b`**
+(a note on the resolved `trks-status` provenance item; review-file only); all were pushed to `origin` and to both hosts' bare
+repositories. I reviewed `d7010422`, `eeb0599d`, `f4b7b3b4` and `f966e15b`; no pinned code, commit,
+GGUF, flag or server state changed. The report and STATUS references below are to `f966e15b` (their
+content is unchanged from `f4b7b3b4`). All times UTC unless stated.
 
 ## 1. What I re-verified and how
 
@@ -409,16 +410,18 @@ UTC unless stated.
 | **m5** | MINOR | "controller hook runs before that guard" imprecise | **FIXED** | Report §5.1 no longer claims an ordering before the guard; it says the controller receives the raw proposal and its replay raises, while the harness's `PROPOSAL_PRECONDITION_FAILED` path is separate. Code inspection confirms the guard is at `campaign.py:917–983` and the E2 hook at `:1859` is passed the raw `proposal`. |
 | **m6** | MINOR | "the unit is lost" overstates | **FIXED** | Report §5.1 now says the unit is logged and retried, permanently lost only if `--max-retries` (default 2) is exhausted; `roots.jsonl` has the retry's `status: ok`, `failed_units.jsonl` retains the attempt-1 line. |
 | **m7** | MINOR | tabular `t_run` 1.847 s included the failed attempt's 10 runs | **FIXED** | Retry-only n=155, mean **1.913548 s**, median 1.9, max 4.6; the excluded failed-attempt n=10 has mean 0.8200. Report §3 0.10 and §4 use 1.9135 and state the exclusion; I recomputed both from the raw logs. |
-| **m8** | MINOR | worktree HEAD `62980aef` vs task-pinned `ddf8f08d` | **FIXED** | The round-2 task pins `d7010422`; the worktree is now at `eeb0599d` (report-only, on top) and the review records it. Note: the report's §8 row says "current HEAD is listed in §6" — §6 does not list it; n4(a). |
-| **m9** | MINOR | `trackS-ops-20261030` not pushed to GitHub | **FIXED** | `git ls-remote --heads origin trackS-ops-20261030` → `eeb0599d…`; both host bare repositories → `eeb0599d…`; tag `trackS-code-9bb64ba` → `9bb64ba…` on both. |
-| **m10** | MINOR | `failed_units` counts attempts, not permanent failures | **FIXED** | Report §3 0.10 now states it counts **failure events**, not permanently failed units, and that the collector does not delete a line when a later attempt succeeds; code confirms `log_failed_unit()` appends and `plan()` counts attempts up to `1 + max_retries`. The >2 % STOP denominator could be stated explicitly — n4(c). |
-| **m11** | MINOR | `trks-status` does not check HEAD pins | **FIXED** | The committed template `ac7dd996…` was installed on both hosts and byte-identical at first check; it prints `OK paper 9bb64ba…`, `OK harness 115df37…`, `OK llama.cpp 620d2225…`, `paper tracked-file modifications: 0`; `bash -n` passes. During the re-check the operator installed an uncommitted draft `a217f6b8…` (recursive `rglob`) on both hosts; I re-ran it and it still prints the three `OK` HEAD lines and `paper tracked-file modifications: 0`. The report's m11 sha is now stale — n5. |
+| **m8** | MINOR | worktree HEAD `62980aef` vs task-pinned `ddf8f08d` | **FIXED** | The round-2 task pins `d7010422`; the worktree is now at `f966e15b` (report/ops/review commits on top), and this review records the chain. Note: the report's m8 row still says "committed on top of `eeb0599d`" and does not name `f4b7b3b4`/`f966e15b`; n4(a). |
+| **m9** | MINOR | `trackS-ops-20261030` not pushed to GitHub | **FIXED** | `git ls-remote --heads origin trackS-ops-20261030` → `f966e15b…`; both host bare repositories → `f966e15b…`; tag `trackS-code-9bb64ba` → `9bb64ba…` on both. |
+| **m10** | MINOR | `failed_units` counts attempts, not permanent failures | **STILL OPEN (MINOR)** | Report §3 0.10 now correctly states the file counts **failure events**, not permanently failed units, and the collector does not delete a line when a later attempt succeeds (code: `log_failed_unit()` appends; `plan()` counts attempts up to `1 + max_retries`). But the §8 m10 row's claim that "the §0.6 denominator is now stated as **permanently failed (`exhausted`) units over planned units**" is not true of the report body: §0.6 still says only "More than 2 % failed units in a phase is a STOP", and §3 0.10 never states the denominator. Add the sentence to §0.6/§3 0.10 or withdraw the claim; the file semantics themselves are correct. |
+| **m11** | MINOR | `trks-status` does not check HEAD pins | **FIXED** | The template committed at `f4b7b3b4` is `a217f6b8…` (recursive `rglob`) and is installed on both hosts; I re-ran it and it prints `OK paper 9bb64ba…`, `OK harness 115df37…`, `OK llama.cpp 620d2225…`, `paper tracked-file modifications: 0`; `bash -n` passes. (The earlier `ac7dd996…` template had the same HEAD checks but a flat manifest scan.) |
 | **m12** | MINOR | "host timestamps UTC" wording | **FIXED** | Report §0 now distinguishes UTC report stamps from the hosts' local-PDT raw log excerpts (local `18:17` = `01:17Z`); `timedatectl` confirms TASL-2 `synchronized: no`, TASL-7 `synchronized: yes` as stated. |
 | **m13** | MINOR | uv "absent" ambiguous | **FIXED** | `eeb0599d` records the decisive evidence: `~/.local/bin/uv` **birth** time is 2026-10-29 17:57:06 (TASL-2) / 17:56:38 (TASL-7), i.e. created by the §0.5 installer; the 26 Oct value is only the downloaded archive mtime. "not installed" at Phase 0 start is correct. I verified both birth times myself. |
 
-**Counts: 13 FIXED, 2 SATISFACTORILY ANSWERED, 0 STILL OPEN.** B1 and M1 are author actions, not operator
-defects; the two author decisions properly discharge them. The 13 minors are factual/provenance
-corrections, all now made in the committed report.
+**Counts: 12 FIXED, 2 SATISFACTORILY ANSWERED, 1 STILL OPEN (m10).** B1 and M1 are author actions, not
+operator defects; the two author decisions properly discharge them. m10 is a documentation gap (the
+report's disposition row claims a denominator sentence that is not in the body); it does not affect the
+technical evidence. The other twelve minors are fixed. This corrects the report/STATUS "0 STILL OPEN"
+claim at `f4b7b3b4` to **one** open minor.
 
 ## 3. New findings
 
@@ -428,33 +431,28 @@ All new findings are **MINOR**; none affects the technical evidence or the STOP 
   zero-failure S0.4 result gives only a weak upper bound (rule of three: ≈15 % at 95 %), not evidence that
   the stale-proposal rate is below 2 %. "Quantify on S0.4" is therefore a screen, not a precise estimate.
   The report should state the sample size and that the STOP-3 author decision must allow for it before
-  S0.7/S3e; a single failure in 20 units (5 %) already exceeds the §0.6 STOP threshold.
+  S0.7/S3e; a single failure in 20 units (5 %) already exceeds the §0.6 STOP threshold. The report's new
+  §5.1 text states the caveat but gives the rule-of-three bound as ≈14 %; the correct value is ≈15 %
+  (3/20; exact Clopper–Pearson 16.1 %).
 - **n2 (MINOR, process; round 1 missed it).** The smoke wrote to `$R/out/smoke`, while runbook §0.1 defines
   `OUT=$R/out/<node>` and §0.10 says `$OUT/smoke`. It is harmless now (one node per host) and the copy-back
   to `results/r1/tracks/<node>/smoke` is correct, but later `$OUT/s04`/`$OUT/s0.7` paths, `trks-status`'s
   `out/*/manifest.json` scan and `assemble` should be reconciled to one layout before Phase 3. The
-  operator has drafted and installed a recursive-glob fix (`a217f6b8…`) that finds both layouts; it is
-  uncommitted and not reflected in the report's sha table (n5).
+  operator committed the recursive-glob `trks-status` fix at `f4b7b3b4` (`a217f6b8…`), installed it on
+  both hosts, and the report records the Phase 3 layout; this is addressed.
 - **n3 (MINOR, cross-track/provenance).** The 0.3(c) arrangement exists only as an operator-relayed author
   confirmation. Track P's own runbook (`docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`) does not mention
   `trackp_evidence.active`, and no Track P-side instruction or artifact is committed. The marker is
   correctly absent and the watcher's `marker()` predicate handles it, but the pause path remains
   unexercised. Recording the Track P-side instruction (or the author's wording) in STATUS would make the
   arrangement auditable.
-- **n4 (MINOR, documentation residuals).** (a) The §8 m8 row says the current HEAD is listed in §6; it is
-  not — record `eeb0599d`. (b) The §8 m2 row says the new session name was "required by `trks-run`"; at
-  retry time the `trks_smoke` tmux session had ended, so the rename was a provenance choice, not a tool
-  requirement. (c) §3 0.10 clarifies failure events vs permanent failures but not the `> 2 %` STOP
-  denominator; say "permanently failed (`exhausted`) units over planned units". (d) §3 0.5 attributes the
-  `~/.local/share/uv` and `~/.cache/uv` trees to the Phase 0 installer although they pre-date Phase 0
-  (25/26 Oct; 322 M/14 G and 207 M/10 G) and contain earlier Python installs (and a uv credentials
-  lock on TASL-7); distinguish pre-existing caches from what Phase 0 added.
-- **n5 (MINOR, provenance).** At review time `r1/tracks/ops/trks-status` has an uncommitted draft
-  (`a217f6b8…`) installed on both hosts, while the committed HEAD and the report's m11 row still say
-  `ac7dd996…`. The draft is behavior-compatible (it still prints the three pinned HEAD checks and the
-  manifest line) and it addresses n2, but the installed tool no longer matches the reviewed commit. Commit
-  the draft and update the report's sha/m11 row (and the installed-script table), or reinstall the
-  committed version, before closing Phase 0.
+- **n4 (MINOR, documentation residuals).** (a) The report's m8 row now says it is "committed on top of
+  `eeb0599d`" but does not name the commit that contains it (`f4b7b3b4`/`f966e15b`); record the current
+  head. (b) The m2
+  row is now correct: the rename was a provenance choice, not a `trks-run` requirement. (c) The `> 2 %`
+  STOP denominator is still not stated in the body — this is m10 above. (d) §3 0.5 now distinguishes the
+  pre-existing `~/.local/share/uv` and `~/.cache/uv` trees (25/26 Oct; 322 M/14 G and 207 M/10 G) from
+  what Phase 0 added, and notes the uv credentials lock on TASL-7.
 
 ## 4. Safety, pins and non-interference (re-checked)
 
@@ -495,27 +493,11 @@ servers, and the author has now confirmed the arrangement, accurately recorded i
 The MAJOR item (M1) is a real, unchanged defect in pinned code, but the author has made an explicit
 decision — keep the pins, accept retries, measure the rate on S0.4 and report it at STOP 3 and before any
 EVIDENCE phase — which is a proper disposition for Phase 0 and states the residual risk; the small S0.4
-sample (n1) and the missing Track P-side artifact (n3) are follow-ups, not STOP 0 blockers. All thirteen
-minor findings are fixed, the pins, GGUF, build, scripts, tests, smoke outputs, copy-back, lease, watcher
-and non-interference re-verify on both hosts, and the remaining n1–n4 items are documentation/process
-improvements that do not change the evidence. The transient uncommitted uv draft I observed during the
-re-check was discarded and never committed; `eeb0599d` records the correct birth-time evidence. The
-worktree is clean apart from this review file and the uncommitted `trks-status` draft (n5), which must be
-committed and reflected in the report or reverted before Phase 0 is closed.
-
----
-
-## Operator note after round 2 (added by the operator; the reviewer's text above is unaltered)
-
-**n5 is resolved in commit `f4b7b3b4`.** The `trks-status` draft you observed mid-check (recursive
-`rglob` manifest scan) was committed in that same commit, the report's sha table was updated to it, and
-the script was left installed on both hosts. Immediately after `f4b7b3b4`:
-
-- committed template `r1/tracks/ops/trks-status` sha256 = `a217f6b8b14b4c1b68c657e3e02c9c1b4f3ebfdf0a12e326fd5966fbd1c6e644`
-- installed on TASL-2 and on TASL-7 = the same sha256
-- report §3 0.9 sha table = the same sha256
-
-so the committed HEAD, the report and both hosts now agree. `n1`–`n4` are recorded in the report §8 with
-their dispositions (n1 as a caveat on the S0.4 screen, n2 with Phase 3 onward on `out/<node>/<phase>`,
-n3 as the operator-relayed 0.3(c) arrangement, n4 as documentation fixes). The operator did not modify
-the round-2 verdict, which stands: **ACCEPTED**, STOP 0 passed.
+sample (n1) and the missing Track P-side artifact (n3) are follow-ups, not STOP 0 blockers. Twelve minor
+findings are fixed; m10 remains a small documentation gap (the report's disposition row claims the STOP
+denominator is stated, but the body does not state it — add the sentence or withdraw the claim), and n1–n4
+are documentation/process residuals that do not change the evidence. The pins, GGUF, build, scripts,
+tests, smoke outputs, copy-back, lease, watcher and non-interference re-verify on both hosts. The
+transient uncommitted uv draft I observed during the re-check was discarded and never committed;
+`eeb0599d` records the correct birth-time evidence, and `f4b7b3b4` commits the recursive `trks-status`
+fix. The worktree is clean apart from this review file.
