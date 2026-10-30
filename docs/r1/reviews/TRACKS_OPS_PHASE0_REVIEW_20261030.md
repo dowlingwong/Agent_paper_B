@@ -351,3 +351,142 @@ addition, the observed stale-manager-proposal `ReplayError` (M1) is a real pinne
 root units and must be decided by the author before S0.4/S0.7/S3e; the operator correctly stopped rather
 than changing the pin. Once 0.3(c) is arranged, M1 is decided, and the minor corrections (m1–m13) are
 addressed or answered, the same reviewer should re-check and record acceptance.
+
+---
+
+# Round 2 — independent re-check after the operator's remediation
+
+**Reviewer and scope.** I took over the re-check after the round-1 session became unavailable. I re-derived
+every fact below from the runbook, the pinned code, the host state and the artifacts; I did not adopt round
+1's conclusions. I was adversarial about the two author-action items and re-computed the smoke numbers
+rather than reading them from the report.
+
+**Artifacts and heads.** Worktree `.claude-worktrees/trackS-ops-20261030`, branch `trackS-ops-20261030`.
+The task names head **`d7010422`**; at the start of this re-check the worktree was at `d7010422` and clean.
+During the re-check the operator committed **`eeb0599d`** ("fix the S0.7/S3e wording and record the uv
+birth-time evidence"; report-only, +3/−3) and pushed it to `origin` and to both hosts' bare repositories.
+I reviewed `d7010422` and re-checked `eeb0599d`; no pinned code, commit, GGUF, flag or server state
+changed. The report and STATUS references below are to `eeb0599d`. All times UTC unless stated.
+
+## 1. What I re-verified and how
+
+- **Hosts, read-only.** `ssh portal_zhixu` (TASL-2) and `ssh tasl7` (TASL-7): `git rev-parse`/`status`/`tag`,
+  `llama-server --version`, `sha256sum` of the GGUF, `bash -n` on all five installed scripts and
+  `install.sh`, installed-script hashes, `trks-status`, `tmux ls`, `pgrep`, `flock -n`, `nvidia-smi
+  --query-compute-apps`, `timedatectl`, and `stat` birth times for the uv binary. I did not start a GPU
+  server, did not touch pinned code/commits/GGUF/flags, and left `trks_watch` running.
+- **Tests.** Harness suite `python -m pytest -q -p no:cacheprovider tests/stage2/test_r1_track_s_arms.py`
+  → **14 passed** on both hosts (0.38 s / 0.32 s). Paper suite
+  `python -m pytest -q -p no:cacheprovider r1/tests/test_tracks_*.py` from `$R/work/Agent_paper_B` with
+  `AR_HARNESS_ROOT=$R/work/autoresearch_harness` → **168 passed in 249.57 s** on TASL-2. The `python -m`
+  invocation is the repo Makefile convention; the `pytest` console script still cannot import `r1`.
+- **Smoke numbers.** Recomputed `t_run` from the raw host logs (not the report): digits n=77,
+  mean **0.909091 s**, median 0.8, max 1.9; tabular failed attempt n=10, mean **0.8200 s**; tabular retry
+  n=155, mean **1.913548 s**, median 1.9, max 4.6. Counted `s04_rows.jsonl` (11 / 24), `audit_runs.jsonl`
+  (65 / 130), parsed both manifests, and compared every copied-back `results/r1/tracks/**` file with the
+  host `$R/out/smoke/**` by sha256 (all identical, including the `failures/` payload and
+  `failed_units.jsonl`).
+- **Pinned code.** Read `r1/c3/features.py:144–154,337–342`, `r1/tracks/a2u.py:280–313,537–539,628–686`
+  and the host harness `control_plane/campaign.py:917–983,1859` to confirm the reported failure path and
+  the separate harness guard.
+- **Provenance.** `git ls-remote --heads origin trackS-ops-20261030`; both host bare repositories;
+  `trackS_30oct.bundle`; the main Mac tree (unchanged, HEAD `8a819f75`, 220 pre-existing `docs/r1/*` move
+  entries).
+
+## 2. Disposition of every round-1 finding
+
+| ID | Sev | Round-1 finding | Disposition | Round-2 evidence |
+|---|---|---|---|---|
+| **B1** | **BLOCKING** | 0.3(c) unmet: no Track P `trackp_evidence.active` arrangement on TASL-7 | **SATISFACTORILY ANSWERED** | 0.3(c) requires the author to *arrange* that Track P creates and removes the marker around its evidence runs — not that the marker be present at STOP 0. §0.4 in fact requires the marker to be **absent** before Track S starts its servers. The author confirmed the arrangement on 30 Oct (report §5.2, STATUS, §8 B1). Live: `~/r1_locks` on both hosts holds only `gpu0.lock`; no `r1p_*` tmux session or GPU job on TASL-7 — the correct state. Residual: the arrangement is operator-relayed and has no Track P-side artifact (n3). |
+| **M1** | **MAJOR** | stale manager proposal raises `ReplayError` in pinned A2-U code and loses the root unit | **SATISFACTORILY ANSWERED** | The defect is real and unchanged: failure payload `error_class r1.c3.features.ReplayError`, `"trial 11: stale edit: HIDDEN_UNITS is '1024', edit expects '512'"`; traceback `campaign.py:1859 (_controller_hook)` → `a2u.py` `forecast/replay/candidate` → `features.py:340/154`; the failed attempt's own log shows trial-009 applied `HIDDEN_UNITS 512 → 1024`, and the failure message reports the current value as `'1024'`. The harness guard (`PROPOSAL_PRECONDITION_FAILED`, `campaign.py:917–983`) is a separate graceful path; the controller still receives the raw proposal. **Author decision (30 Oct): keep the pins, accept retries, quantify the stale-proposal rate on S0.4, report it at STOP 3 and before any EVIDENCE phase; a second pin remains available if the rate matters.** No pinned code was changed. Residual: S0.4 is a small sample (n1). |
+| **m1** | MINOR | `s04_rows 24` / audit `130` misattributed to "both attempts" | **FIXED** | 24 rows, 130 audits, all from the successful session; manifest attempt 1 `audit_runs: 0`, `done.failed: 1`; attempt 2 `audit_runs: 130`, `roots: 1`, `done.failed: 0`; the 24 budget indices are a unique subset of 2…39; copied-back files hash-identical to the host. |
+| **m2** | MINOR | retry used `trks_smoke_retry`, not "the identical `trks_smoke` command" | **FIXED** | `trks_smoke.exit` (01:17:19Z rc=0, failed unit) and `trks_smoke_retry.exit` (01:24:38Z rc=0, ok); `.cmd` diff is only the log/exit filenames; report §3 0.10 now names both sessions and says the argument list was the same. Note: the rename was a provenance choice, not forced by `trks-run` (the old tmux session had ended) — n4(b). |
+| **m3** | MINOR | `get_gguf.log` not copied back | **FIXED** | Committed `r1/tracks/ops/host_setup/tasl{2,7}/get_gguf.log` are byte-identical to the hosts: TASL-2 `13364414…`, TASL-7 `be5b3d11…` (sha256 recomputed both sides); each has `CURL_RC=0`, the size, the pinned sha and `SHA_RC=0`. |
+| **m4** | MINOR | "work directory used exclusively" contradicted by the uv installer's writes | **FIXED** | Report §3 0.3/0.5 now discloses the mandated writes outside `$R`: `~/.local/bin/uv`, `~/.local/bin/env`, `~/.local/share/uv` (Python installs), `~/.cache/uv`, `~/.config/uv/uv-receipt.json`, and the PATH lines in `~/.bashrc`/`~/.profile`/`~/.zshrc`/fish. Live check confirms these are the installer's footprints. Note: the large `~/.local/share/uv` and `~/.cache/uv` trees pre-date Phase 0 (25/26 Oct) — n4(d). |
+| **m5** | MINOR | "controller hook runs before that guard" imprecise | **FIXED** | Report §5.1 no longer claims an ordering before the guard; it says the controller receives the raw proposal and its replay raises, while the harness's `PROPOSAL_PRECONDITION_FAILED` path is separate. Code inspection confirms the guard is at `campaign.py:917–983` and the E2 hook at `:1859` is passed the raw `proposal`. |
+| **m6** | MINOR | "the unit is lost" overstates | **FIXED** | Report §5.1 now says the unit is logged and retried, permanently lost only if `--max-retries` (default 2) is exhausted; `roots.jsonl` has the retry's `status: ok`, `failed_units.jsonl` retains the attempt-1 line. |
+| **m7** | MINOR | tabular `t_run` 1.847 s included the failed attempt's 10 runs | **FIXED** | Retry-only n=155, mean **1.913548 s**, median 1.9, max 4.6; the excluded failed-attempt n=10 has mean 0.8200. Report §3 0.10 and §4 use 1.9135 and state the exclusion; I recomputed both from the raw logs. |
+| **m8** | MINOR | worktree HEAD `62980aef` vs task-pinned `ddf8f08d` | **FIXED** | The round-2 task pins `d7010422`; the worktree is now at `eeb0599d` (report-only, on top) and the review records it. Note: the report's §8 row says "current HEAD is listed in §6" — §6 does not list it; n4(a). |
+| **m9** | MINOR | `trackS-ops-20261030` not pushed to GitHub | **FIXED** | `git ls-remote --heads origin trackS-ops-20261030` → `eeb0599d…`; both host bare repositories → `eeb0599d…`; tag `trackS-code-9bb64ba` → `9bb64ba…` on both. |
+| **m10** | MINOR | `failed_units` counts attempts, not permanent failures | **FIXED** | Report §3 0.10 now states it counts **failure events**, not permanently failed units, and that the collector does not delete a line when a later attempt succeeds; code confirms `log_failed_unit()` appends and `plan()` counts attempts up to `1 + max_retries`. The >2 % STOP denominator could be stated explicitly — n4(c). |
+| **m11** | MINOR | `trks-status` does not check HEAD pins | **FIXED** | Installed `trks-status` sha256 `ac7dd9960ae45d6a0304cef64da4344993ebc5b8197d544443ca490740143be3` on both hosts, byte-identical to the template; it prints `OK paper 9bb64ba…`, `OK harness 115df37…`, `OK llama.cpp 620d2225…`, `paper tracked-file modifications: 0`; `bash -n` passes. |
+| **m12** | MINOR | "host timestamps UTC" wording | **FIXED** | Report §0 now distinguishes UTC report stamps from the hosts' local-PDT raw log excerpts (local `18:17` = `01:17Z`); `timedatectl` confirms TASL-2 `synchronized: no`, TASL-7 `synchronized: yes` as stated. |
+| **m13** | MINOR | uv "absent" ambiguous | **FIXED** | `eeb0599d` records the decisive evidence: `~/.local/bin/uv` **birth** time is 2026-10-29 17:57:06 (TASL-2) / 17:56:38 (TASL-7), i.e. created by the §0.5 installer; the 26 Oct value is only the downloaded archive mtime. "not installed" at Phase 0 start is correct. I verified both birth times myself. |
+
+**Counts: 13 FIXED, 2 SATISFACTORILY ANSWERED, 0 STILL OPEN.** B1 and M1 are author actions, not operator
+defects; the two author decisions properly discharge them. The 13 minors are factual/provenance
+corrections, all now made in the committed report.
+
+## 3. New findings
+
+All new findings are **MINOR**; none affects the technical evidence or the STOP 0 gate.
+
+- **n1 (MINOR, residual risk of M1).** S0.4 uses `--instances 10` per node, i.e. 20 units total. A
+  zero-failure S0.4 result gives only a weak upper bound (rule of three: ≈15 % at 95 %), not evidence that
+  the stale-proposal rate is below 2 %. "Quantify on S0.4" is therefore a screen, not a precise estimate.
+  The report should state the sample size and that the STOP-3 author decision must allow for it before
+  S0.7/S3e; a single failure in 20 units (5 %) already exceeds the §0.6 STOP threshold.
+- **n2 (MINOR, process; round 1 missed it).** The smoke wrote to `$R/out/smoke`, while runbook §0.1 defines
+  `OUT=$R/out/<node>` and §0.10 says `$OUT/smoke`. It is harmless now (one node per host) and the copy-back
+  to `results/r1/tracks/<node>/smoke` is correct, but later `$OUT/s04`/`$OUT/s0.7` paths, `trks-status`'s
+  `out/*/manifest.json` scan and `assemble` should be reconciled to one layout before Phase 3.
+- **n3 (MINOR, cross-track/provenance).** The 0.3(c) arrangement exists only as an operator-relayed author
+  confirmation. Track P's own runbook (`docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md`) does not mention
+  `trackp_evidence.active`, and no Track P-side instruction or artifact is committed. The marker is
+  correctly absent and the watcher's `marker()` predicate handles it, but the pause path remains
+  unexercised. Recording the Track P-side instruction (or the author's wording) in STATUS would make the
+  arrangement auditable.
+- **n4 (MINOR, documentation residuals).** (a) The §8 m8 row says the current HEAD is listed in §6; it is
+  not — record `eeb0599d`. (b) The §8 m2 row says the new session name was "required by `trks-run`"; at
+  retry time the `trks_smoke` tmux session had ended, so the rename was a provenance choice, not a tool
+  requirement. (c) §3 0.10 clarifies failure events vs permanent failures but not the `> 2 %` STOP
+  denominator; say "permanently failed (`exhausted`) units over planned units". (d) §3 0.5 attributes the
+  `~/.local/share/uv` and `~/.cache/uv` trees to the Phase 0 installer although they pre-date Phase 0
+  (25/26 Oct; 322 M/14 G and 207 M/10 G) and contain earlier Python installs (and a uv credentials
+  lock on TASL-7); distinguish pre-existing caches from what Phase 0 added.
+
+## 4. Safety, pins and non-interference (re-checked)
+
+Both hosts remain at paper `9bb64ba` (detached, clean, tag `trackS-code-9bb64ba`), harness `115df37`
+(clean) and llama.cpp `620d2225`/`v0.7.0` (`llama-server` build 11669, CUDA backend, `ARCHS=89`,
+`CONFIGURE_RC=0`, `BUILD_RC=0`, `offloaded 29/29 layers`). GGUF sha256 is exactly
+`509287f7…4d3c` on both. The venv freeze is unchanged from round 1 (65 packages, identical sha256). The
+GPU lease is free (`flock -n … echo LOCK-FREE`), `nvidia-smi --query-compute-apps` is empty, no `trks_llm`
+session remains, and `trks_watch` is running on both hosts. The two Track P `llama-server` processes on
+TASL-2 (pids 2945752 / 3747685, started 26 Oct 02:43 / 03:05) are GPU-free and untouched. The main Mac
+tree is still at `8a819f75` with its pre-existing 220-entry `docs/r1/*` move; I did not touch it. The only
+file I modified is this review.
+
+## 5. Acceptance checklist (runbook Phase 0 / STOP 0)
+
+| Item | Round-2 status |
+|---|---|
+| 0.1 Code on the Mac | PASS |
+| 0.2 Host facts | PASS (dynamic values only) |
+| 0.3(a) SSH access | PASS |
+| 0.3(b) Work directory | PASS (uv writes disclosed) |
+| 0.3(c) Track P marker arrangement | **SATISFACTORILY ANSWERED** (author arrangement recorded; marker correctly absent) |
+| 0.4 Transfer | PASS |
+| 0.5 Environment | PASS (venv frozen, identical freeze) |
+| 0.6 Tests | PASS (168 paper, 14 harness; 168 re-run on TASL-2, 14 on both) |
+| 0.7 llama.cpp build | PASS |
+| 0.8 GGUF | PASS |
+| 0.9 Scripts | PASS (`bash -n`, pins, installed hashes, `trks-status` HEAD checks) |
+| 0.10 Smoke test | PASS with the n1–n2 caveats |
+| **STOP 0** | **PASS** (review loop complete; 0.3(c) answered; M1 decided) |
+
+REVIEW VERDICT: ACCEPTED
+
+The Phase 0 work is accepted. Round 1's BLOCKING item (B1) was based on the marker's absence, but 0.3(c)
+requires the author to *arrange* that Track P creates and removes the marker around its evidence runs, not
+to leave it present at STOP 0; the marker's absence is in fact required by §0.4 before Track S starts its
+servers, and the author has now confirmed the arrangement, accurately recorded in the report and STATUS.
+The MAJOR item (M1) is a real, unchanged defect in pinned code, but the author has made an explicit
+decision — keep the pins, accept retries, measure the rate on S0.4 and report it at STOP 3 and before any
+EVIDENCE phase — which is a proper disposition for Phase 0 and states the residual risk; the small S0.4
+sample (n1) and the missing Track P-side artifact (n3) are follow-ups, not STOP 0 blockers. All thirteen
+minor findings are fixed, the pins, GGUF, build, scripts, tests, smoke outputs, copy-back, lease, watcher
+and non-interference re-verify on both hosts, and the remaining n1–n4 items are documentation/process
+improvements that do not change the evidence. The transient uncommitted uv draft I observed during the
+re-check was discarded and never committed; `eeb0599d` records the correct birth-time evidence and the
+worktree is clean apart from this review file.

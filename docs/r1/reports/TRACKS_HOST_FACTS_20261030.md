@@ -107,8 +107,10 @@ logs/pip_freeze.txt`.
 - **Writes outside `$R`, as mandated by §0.5.** The astral installer put the `uv` binary in
   `~/.local/bin/uv`, its Python and package caches under `~/.local/share/uv` (and `~/.cache/uv`), and
   appended a PATH line to `~/.profile` / `~/.bashrc` (and the fish/zsh equivalents where present).
-  These are the documented side effects of `curl … | sh`; they are the only files created outside
-  `/home/dowling/r1_tracks/` apart from the §0.4 lease lock.
+  These are the documented side effects of `curl … | sh`; they are the only files Phase 0 created
+  outside `/home/dowling/r1_tracks/` apart from the §0.4 lease lock. Note that the large
+  `~/.local/share/uv` and `~/.cache/uv` trees **pre-date** Phase 0 (25/26 Oct, containing earlier
+  Python installs and another track's cache); Phase 0 added to them rather than creating them.
 
 **0.6 Tests.** Byte-for-byte the expected counts, on both hosts:
 
@@ -163,7 +165,9 @@ Checks, all passing on both hosts:
   (`trks: --manager is injected by the wrapper`, `trks: --gpu is injected by the wrapper`).
 - `bin/trks-status` runs. Beyond the §11.5 list it also checks the three **pinned HEADs** (paper,
   harness, llama.cpp) and reports tracked-file modifications; on both hosts all three print `OK` and
-  paper has 0 modifications.
+  paper has 0 modifications. It discovers manifests **recursively** under `$R/out`, so it works with
+  both the `$R/out/<phase>` layout used in Phase 0 and the runbook §0.1 `$R/out/<node>/<phase>` layout
+  used from Phase 3 on.
 - Watcher started on both hosts (`tmux new -d -s trks_watch $R/bin/trks-watch`; `logs/watch_started`
   touched first) and **left running**. It stayed alive across an ~8.5 h gap during which the operator's
   SSH was unavailable (it runs on the hosts, not the Mac).
@@ -176,7 +180,7 @@ Installed sha256 (per host; identical for the four host-independent scripts):
 | `trks-run` | `b53bc811…64c4` | same |
 | `trks-servers` | `47dcf336…257b` | same |
 | `trks-watch` | `3108566d…570c` | same |
-| `trks-status` | `ac7dd9960ae45d6a0304cef64da4344993ebc5b8197d544443ca490740143be3` | same |
+| `trks-status` | `a217f6b8b14b4c1b68c657e3e02c9c1b4f3ebfdf0a12e326fd5966fbd1c6e644` | same |
 
 **0.10 Smoke test (ENGINEERING_ONLY).**
 
@@ -252,6 +256,10 @@ systematic risk:
 - §0.6 makes **> 2 % failed units in a phase a STOP**, and S3e has 300 instances per node, S0.7 has
   460 campaigns per node — so the failure rate must be known before **S0.7/S3e** (S0.4, the phase that
   measures it, is itself Phase 3), not discovered during EVIDENCE.
+- **The S0.4 screen is coarse (review n1).** S0.4 runs `--instances 10` per node, i.e. 20 units total.
+  A zero-failure result bounds the rate only by the rule of three (≈ 14 % at 95 %), and **one** failure
+  in 20 units is already 5 % > the §0.6 STOP threshold. The STOP-3 author decision must therefore treat
+  the S0.4 figure as a screen, not an estimate, and may need a larger sample before S0.7/S3e.
 
 I did **not** change the pinned paper code (9bb64ba) or harness (115df37); §0.2 forbids that without an
 author PLAN row and §10 sends anything uncovered to a STOP.
@@ -284,7 +292,7 @@ and self-checked; the watcher running on both hosts (survived the operator's SSH
 released; `$OUT` copied back; `trackS-ops-20261030` pushed to both hosts' bare repositories and to
 GitHub (`https://github.com/dowlingwong/Agent_paper_B.git`).
 
-Blocking STOP 0: only the completion of the review loop. Round 1 returned **NOT ACCEPTED**; see §8.
+STOP 0: **PASSED** — the review loop accepted the phase at round 2 (see §8). Phase 1 may start.
 
 ## 7. Files
 
@@ -313,18 +321,30 @@ Disposition of each finding:
 | B1 | BLOCKING | 0.3(c) unmet: no Track P marker arrangement on TASL-7 | **Answered** — author confirms (30 Oct) the arrangement is in place and Track P handles it; the marker is Track P's to create around its own evidence runs (§5.2) |
 | M1 | MAJOR | pinned-code stale-proposal `ReplayError` loses a root unit | **Answered by author** — accept retries and quantify the rate on S0.4, pins unchanged (§5.1); report already states the operator did not modify the pin |
 | m1 | MINOR | `s04_rows 24 / audit_runs 130` misattributed to "both attempts" | **Fixed** — both come from the successful attempt only; attempt 1 recorded 0 rows and `audit_runs: 0` (§3 0.10) |
-| m2 | MINOR | retry used `trks_smoke_retry`, not "the identical `trks_smoke` command" | **Fixed** — same argument list, new session name required by `trks-run`; wording corrected (§3 0.10) |
+| m2 | MINOR | retry used `trks_smoke_retry`, not "the identical `trks_smoke` command" | **Fixed** — same argument list; the new session name was a provenance choice (the old tmux session had already ended, so `trks-run` would have accepted the old name); wording corrected (§3 0.10) |
 | m3 | MINOR | `get_gguf.log` not copied back though the report says "their logs" | **Fixed** — copied back for both hosts and committed under `r1/tracks/ops/host_setup/` |
 | m4 | MINOR | uv installer wrote shell profiles and uv caches outside `$R`, contradicting "exclusively" | **Fixed** — §3 0.5 now lists the mandated writes outside `$R` and scopes the "only experiment directory" claim |
 | m5 | MINOR | "controller hook runs before guard" imprecise | **Fixed** — §5.1 now states only what is demonstrable: the controller receives the raw proposal and its replay raises, while the harness's `PROPOSAL_PRECONDITION_FAILED` guard is a separate graceful path |
 | m6 | MINOR | "unit is lost" overstates (it was retried) | **Fixed** — §5.1 says the unit is logged and retried, permanent only if retries exhaust |
 | m7 | MINOR | tabular `t_run` 1.847 s includes the failed attempt's 10 runs | **Fixed** — retry-only mean 1.9135 s (n=155) reported and used; the excluded 10 runs (0.8200 s) are stated (§3 0.10, §4) |
-| m8 | MINOR | worktree HEAD `62980aef` vs task-pinned `ddf8f08d` | **Explained** — `62980aef` is the round-1 report-only commit made after the task text was written; the reviewed substance is `ddf8f08d` plus report wording. The current HEAD is listed in §6/round-2 note |
+| m8 | MINOR | worktree HEAD `62980aef` vs task-pinned `ddf8f08d` | **Explained** — `62980aef` was a report-only commit made after the round-1 task text was written; reviewed substance is `ddf8f08d` + report wording. This report is committed on top of `eeb0599d`; the round-2 review records `d7010422`/`eeb0599d` |
 | m9 | MINOR | no GitHub push of `trackS-ops-20261030` | **Fixed** — pushed to `origin` (`github.com/dowlingwong/Agent_paper_B.git`) and to both hosts |
-| m10 | MINOR | `failed_units` count = attempts, not permanent failures | **Fixed** — stated explicitly in §3 0.10 |
-| m11 | MINOR | `trks-status` does not check HEAD pins | **Fixed** — it now verifies paper/harness/llama.cpp HEADs and reports tracked-file modifications (§3 0.9, sha256 `ac7dd996…`) |
+| m10 | MINOR | `failed_units` count = attempts, not permanent failures | **Fixed** — stated explicitly in §3 0.10, and the §0.6 denominator is now stated as **permanently failed (`exhausted`) units over planned units** |
+| m11 | MINOR | `trks-status` does not check HEAD pins | **Fixed** — it now verifies paper/harness/llama.cpp HEADs, reports tracked-file modifications, and finds manifests recursively (§3 0.9, sha256 `a217f6b8…`) |
 | m12 | MINOR | "host timestamps UTC" wording | **Fixed** — §0 now distinguishes UTC report stamps from local-PDT raw log excerpts |
 | m13 | MINOR | uv "absent" ambiguous | **Fixed and checked further** — "not installed" (§1) is the right reading, and `stat` settles it: `~/.local/bin/uv` has **birth** time 2026-10-29 17:57:06 (TASL-2) / 17:56:38 (TASL-7) — i.e. created by the §0.5 installer during Phase 0 — while its 2026-10-26 **mtime** is only the downloaded archive's timestamp. An earlier draft of this report briefly misread the mtime as pre-existence; that draft was discarded and never committed. |
 | — | — | could not verify: historical start state, historical `pgrep` count, `GET /health` claim, watcher pause path, GitHub credentials at the time, exact original wall times | **Answered** — the start state and the `pgrep` count are historical and not reconstructable; the `/health` result was a direct `curl` observation (llama-server does not log it); the watcher pause path was deliberately not synthesised (see §5.2) though the watcher is alive and its `marker()`/`ours()` predicates were checked; GitHub push is now demonstrated; wall times vary with load while pass counts match |
 
-**Round 2** is requested from the same reviewer on the committed fixes above.
+**Round 2** (`docs/r1/reviews/TRACKS_OPS_PHASE0_REVIEW_20261030.md`, appended by a second independent
+reviewer because the round-1 session was not resumable in this harness — a documented deviation from
+"the same reviewer"): **ACCEPTED**. Disposition counts: **13 FIXED, 2 SATISFACTORILY ANSWERED (B1, M1),
+0 STILL OPEN**, plus 4 new MINOR residuals (n1–n4) which are addressed here:
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| n1 | MINOR | "quantify on S0.4" is a coarse screen (20 units) | **Fixed** — §5.1 now states the sample size, the rule-of-three bound and that one failure in 20 already exceeds 2 % |
+| n2 | MINOR | smoke wrote to `$R/out/smoke`, not §0.1's `$R/out/<node>/smoke` | **Recorded** — Phase 0 used the flat layout (harmless, one node per host; copy-back is already `results/r1/tracks/<node>/smoke`); `trks-status` now scans recursively, and **Phase 3 onward uses `$R/out/<node>/<phase>` as §0.1 requires** |
+| n3 | MINOR | the 0.3(c) arrangement exists only as an operator-relayed confirmation | **Recorded** — the author's confirmation is quoted in §5.2 and STATUS; the marker is correctly absent and the watcher predicate handles it. Track P's own runbook does not mention the marker |
+| n4 | MINOR | documentation residuals (HEAD, session-name reason, STOP denominator, uv cache provenance) | **Fixed** — see the m2/m8/m10 rows, §3 0.5 (pre-existing uv caches distinguished) and §3 0.10 |
+
+**STOP 0 is therefore passed.** Phase 1 may start.

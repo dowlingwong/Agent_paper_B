@@ -59,7 +59,9 @@ echo; echo "== manifests =="
 import json, sys, pathlib
 out = pathlib.Path(sys.argv[1])
 n = 0
-for m in sorted(out.glob("*/manifest.json")):
+# Recursive: finds both the legacy $R/out/<phase> layout (Phase 0 smoke) and the
+# runbook §0.1 $R/out/<node>/<phase>[_s<i>] layout used from Phase 3 on.
+for m in sorted(out.rglob("manifest.json")):
     n += 1
     try:
         d = json.loads(m.read_text())
@@ -72,7 +74,7 @@ for m in sorted(out.glob("*/manifest.json")):
     done = last.get("done") or {}
     fu = m.parent / "failed_units.jsonl"
     nfu = sum(1 for _ in fu.open()) if fu.exists() else 0
-    print(f"{m.parent.name}: phase={d.get('phase')} label={d.get('label')} node={d.get('node')} "
+    print(f"{m.parent.relative_to(out)}: phase={d.get('phase')} label={d.get('label')} node={d.get('node')} "
           f"shard={prov.get('shard')} status={done.get('status', 'no-session')} "
           f"roots={done.get('roots')}/{d.get('instances')} forks={done.get('forks')} "
           f"leaves={done.get('leaves')} session_failed={done.get('failed')} failed_units={nfu}"
