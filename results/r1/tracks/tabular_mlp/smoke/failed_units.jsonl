@@ -1,0 +1,1 @@
+{"unit": "tracks_S04_tabular_mlp__s30000", "kind": "root", "utc": "20261030T011718Z", "error_class": "r1.c3.features.ReplayError", "error_message": " trial 11: stale edit: HIDDEN_UNITS is '1024', edit expects '512'"}

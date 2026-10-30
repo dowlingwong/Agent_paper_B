@@ -1,5 +1,19 @@
 # Paper B (route R1) — status log
 
+## 30 October 2026 — Track S Phase 0 complete on both hosts; STOP 0 open (AI-assisted; ENGINEERING_ONLY)
+
+- **Operator branch.** `trackS-ops-20261030` from paper `9bb64ba` (worktree `.claude-worktrees/trackS-ops-20261030`). Bundle `trackS_30oct.bundle` verified against `trackS_30oct.heads.txt`; `docs/trackS-decisions-30oct` fast-forwarded `cdb3cdc3` → `3ac0fbf4`. The main tree (`exam-x-20261026`, uncommitted `docs/r1/*` → `docs/*`) was not touched.
+- **Hosts.** TASL-2 (`portal_zhixu`) and TASL-7 (`tasl7`) at paper `9bb64ba` and harness `115df37`, detached; `uv` + Python 3.11 venvs frozen identically (`pip_freeze.txt` byte-identical, 65 packages); llama.cpp **v0.7.0** at `620d2225…` built for sm_89 with CUDA 12.2 on both; pinned GGUF sha256 `509287f7…4d3c` matched on both.
+- **Tests.** 168 passed (`r1/tests/test_tracks_*.py`) and 14 passed (harness `test_r1_track_s_arms.py`) on **both** hosts. Invocation deviation recorded: use `python -m pytest` (repo Makefile convention), not the `pytest` console script, which cannot import `r1`.
+- **Ops scripts.** `trks`, `trks-run`, `trks-servers`, `trks-watch`, `trks-status` installed per host from `r1/tracks/ops/` (§11); all pin-injection, `--phase`/`--phase=` parsing and flag-refusal checks pass; watcher running.
+- **Smoke (ENGINEERING_ONLY).** Full offload `29/29 layers`; digits_mlp one root `ok` (102 s); tabular_mlp one root `ok` on retry (329 s). `t_run` = 0.909 s (digits) / 1.847 s (tabular). GPU lease released and verified.
+- **Report.** `reports/TRACKS_HOST_FACTS_20261030.md`.
+- **Open, blocking STOP 0:**
+  - **F5.1** a stale manager proposal (`old` no longer current) makes A2-U `forecast → replay → apply_edit` raise `ReplayError` and loses the root unit; the harness tolerates the same event via its `PROPOSAL_PRECONDITION_FAILED` guard. Stochastic, recovered on retry, but §0.6 makes > 2 % failed units a STOP, so it must be decided before S0.4/S0.7/S3e. The pinned code was **not** changed — author decision requested (accept retries, or authorise a new pin whose forecast returns `no_features_or_no_comparison` for a stale proposal).
+  - **0.3(c)** the author must arrange the `~/r1_locks/trackp_evidence.active` marker on TASL-7 before Phase 1 may start.
+  - STOP 0 review loop not yet accepted.
+- **Also noted.** Two idle, GPU-free Track P dry-run `llama-server` processes and two interactive tmux sessions are resident on TASL-2; left untouched per §0.4 ownership, flagged for cross-track confirmation. TASL-2 is not NTP-synchronised (PDT, 7 h behind UTC); all runbook stamps are recorded in UTC.
+
 ## 28 October 2026 — Mac-local preparation: NI masking test, TabPFN pin and A1-ctx proposals, manuscript sections (AI-assisted; ENGINEERING_ONLY / documents)
 
 - New code (fixture-only tests): `r1/c3/ni_masking.py`, the results-masking test for (NI) of `proposals/T4_PROP10_REVISION_20261028.md` §6. It cross-fits A3 with and without the six direct outcome features. RPS is scored against the **evaluation-half** soft label (audit seeds 7006–7010). Fold modes: campaign, pair-grouped (with fold diagnostics) and LONO. The output flag is `results_add_predictive_value`, not evidence for or against NI by itself. Tests: `r1/tests/test_c3_ni_masking.py`, 15 cases. No table, label or evaluation seed was used.

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# run as: tmux new -d -s trks_llm /home/dowling/r1_tracks/bin/trks-servers <k>
+set -euo pipefail
+R=/home/dowling/r1_tracks; k=${1:?k}
+for f in ~/r1_locks/trackx_evidence.active ~/r1_locks/trackp_evidence.active; do
+  if [ -e "$f" ]; then echo "priority marker $f"; exit 1; fi
+done
+exec flock -n ~/r1_locks/gpu0.lock bash -c '
+  R=/home/dowling/r1_tracks
+  for i in $(seq 1 '"$k"'); do
+    $R/opt/llama.cpp/build/bin/llama-server -m $R/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf --alias r1-manager \
+      --host 127.0.0.1 --port 1810$i -ngl 999 -c 8192 --parallel 1 --verbose >> $R/logs/llama_1810$i.log 2>&1 &
+  done
+  wait'

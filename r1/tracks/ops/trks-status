@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# §11.5 operator status: GGUF pin re-hash, tmux, GPU compute apps, server/watch logs, exit codes, manifest progress.
+set -uo pipefail
+R=/home/dowling/r1_tracks
+OUT=$R/out
+GGUF=$R/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf
+GGUF_SHA=509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c
+
+echo "== host =="; hostname; date -u
+
+echo; echo "== GGUF sha256 vs pin =="
+if [ -f "$GGUF" ]; then
+  got=$(sha256sum "$GGUF" | awk '{print $1}')
+  if [ "$got" = "$GGUF_SHA" ]; then echo "OK   $got"; else echo "STOP: GGUF sha256 $got != pin $GGUF_SHA"; fi
+else
+  echo "MISSING $GGUF"
+fi
+
+echo; echo "== llama-server --version =="
+"$R/opt/llama.cpp/build/bin/llama-server" --version 2>&1 | head -3 || true
+
+echo; echo "== tmux =="
+tmux ls 2>&1 || true
+
+echo; echo "== nvidia-smi compute apps =="
+nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv 2>&1 || true
+
+echo; echo "== server logs (tail 5) =="
+for f in "$R"/logs/llama_1810*.log; do
+  [ -e "$f" ] || continue
+  echo "-- $f"; tail -5 "$f"
+done
+
+echo; echo "== watch log (tail 10) =="
+tail -10 "$R/logs/watch.log" 2>/dev/null || echo "(none)"
+
+echo; echo "== exit codes =="
+for f in "$R"/logs/*.exit; do
+  [ -e "$f" ] || continue
+  echo "-- $(basename "$f")"; cat "$f"
+done
+
+echo; echo "== manifests =="
+"$R/venv/bin/python" - "$OUT" <<'PY'
+import json, sys, pathlib
+out = pathlib.Path(sys.argv[1])
+n = 0
+for m in sorted(out.glob("*/manifest.json")):
+    n += 1
+    try:
+        d = json.loads(m.read_text())
+    except Exception as exc:  # noqa: BLE001
+        print(f"{m.parent.name}: UNREADABLE manifest ({exc})")
+        continue
+    sess = d.get("sessions") or []
+    last = sess[-1] if sess else {}
+    prov = last.get("provenance") or {}
+    done = last.get("done") or {}
+    fu = m.parent / "failed_units.jsonl"
+    nfu = sum(1 for _ in fu.open()) if fu.exists() else 0
+    print(f"{m.parent.name}: phase={d.get('phase')} label={d.get('label')} node={d.get('node')} "
+          f"shard={prov.get('shard')} status={done.get('status', 'no-session')} "
+          f"roots={done.get('roots')}/{d.get('instances')} forks={done.get('forks')} "
+          f"leaves={done.get('leaves')} session_failed={done.get('failed')} failed_units={nfu}"
+          + ("  STOP-file present" if (m.parent / "STOP").exists() else ""))
+if not n:
+    print("(no manifests)")
+PY

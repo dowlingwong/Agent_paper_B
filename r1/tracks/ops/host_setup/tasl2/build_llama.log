@@ -1,0 +1,77 @@
+=== llama.cpp build start 2026-10-30T01:05:29Z ===
+-- Found OpenMP_C: -fopenmp (found version "4.5") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found OpenMP: TRUE (found version "4.5")  
+-- Including CPU backend
+-- x86 detected
+-- Adding CPU backend variant ggml-cpu: -march=native 
+-- Found CUDAToolkit: /usr/local/cuda/include (found version "12.2.140") 
+-- CUDA Toolkit found
+-- The CUDA compiler identification is NVIDIA 12.2.140
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /usr/local/cuda-12.2/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Using CMAKE_CUDA_ARCHITECTURES=89 CMAKE_CUDA_ARCHITECTURES_NATIVE=
+-- FlashAttention K-V type combinations: f16-f16;q4_0-q4_0;q8_0-q8_0;bf16-bf16
+-- Could NOT find NCCL (missing: NCCL_LIBRARY NCCL_INCLUDE_DIR) 
+-- Warning: NCCL not found, performance for multiple CUDA GPUs will be suboptimal
+-- CUDA host compiler is GNU 11.4.0
+-- Including CUDA backend
+-- ggml version: 0.27.0
+-- ggml commit:  620d2225c
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+-- Performing Test OPENSSL_VERSION_SUPPORTED
+-- Performing Test OPENSSL_VERSION_SUPPORTED - Success
+-- OpenSSL found: 3.0.2
+-- Generating embedded license file for target: llama-app
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/dowling/r1_tracks/opt/llama.cpp/build
+CONFIGURE_RC=0
+[ 90%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/step3vl.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/trie.cpp.o
+[ 90%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/siglip.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/unicode.cpp.o
+[ 90%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/deepseekocr2.cpp.o
+[ 91%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/whisper-enc.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/lexer.cpp.o
+[ 90%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/mobilenetv5.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/parser.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/value.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/string.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/runtime.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/caps.cpp.o
+[ 93%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/youtuvl.cpp.o
+[ 95%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/parakeet.cpp.o
+[ 95%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/yasa2.cpp.o
+[ 95%] Linking CXX shared library ../../bin/libmtmd.so
+[ 95%] Built target mtmd
+[ 95%] Linking CXX shared library ../bin/libllama-common.so
+[ 95%] Built target llama-common
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-task.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-stream.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-mcp.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-chat.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-queue.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-common.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-context.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-schema.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-tools.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-decision.cpp.o
+[ 98%] Linking CXX static library libserver-context.a
+[ 98%] Built target server-context
+[ 98%] Building CXX object tools/server/CMakeFiles/llama-server-impl.dir/server.cpp.o
+[ 98%] Building CXX object tools/server/CMakeFiles/llama-server-impl.dir/server-http.cpp.o
+[100%] Building CXX object tools/server/CMakeFiles/llama-server-impl.dir/server-models.cpp.o
+[100%] Linking CXX shared library ../../bin/libllama-server-impl.so
+[100%] Built target llama-server-impl
+[100%] Building CXX object tools/server/CMakeFiles/llama-server.dir/main.cpp.o
+[100%] Linking CXX executable ../../bin/llama-server
+[100%] Built target llama-server
+BUILD_RC=0
+-rwxrwxr-x 1 dowling dowling 17864 10月 29 18:07 opt/llama.cpp/build/bin/llama-server
+version: 0.7.0-dev (build 11669, commit 620d2225c)
+built with GNU 11.4.0 for Linux x86_64
+=== build done 2026-10-30T01:07:42Z ===

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Runs one trks command as the command of its own tmux session; records the command, its output and its exit code.
+set -euo pipefail
+R=/home/dowling/r1_tracks
+[ $# -ge 3 ] || { echo "usage: trks-run trks_<name> <port|-> <trks args...>" >&2; exit 2; }
+s=$1; p=$2; shift 2
+case "$s" in trks_*) ;; *) echo "trks-run: session name must start with trks_" >&2; exit 2 ;; esac
+if tmux has-session -t "$s" 2>/dev/null; then echo "trks-run: session $s already exists" >&2; exit 1; fi
+cmdf=$R/logs/$s.cmd
+{
+  echo '#!/usr/bin/env bash'
+  if [ "$p" != "-" ]; then echo "export TRKS_PORT=$p"; fi
+  printf '%q ' "$R/bin/trks" "$@"; echo ">> $R/logs/$s.log 2>&1"
+  echo "rc=\$?; echo \"\$(date -u +%FT%TZ) rc=\$rc\" >> $R/logs/$s.exit"
+} > "$cmdf"
+tmux new -d -s "$s" "bash $cmdf"
+echo "started $s ($cmdf)"
