@@ -6,14 +6,10 @@ import pytest
 from r1.scripts import c3_mount_inode_candidate as guard
 
 
-def test_recovered_fixture_cli_is_explicitly_blocked():
-    import subprocess
-    import sys
-    result = subprocess.run(
-        [sys.executable, '-m', 'r1.scripts.c3_cache_offline_fixture'],
-        check=False, capture_output=True, text=True, timeout=10)
-    assert result.returncode != 0
-    assert 'STOP: recovered fixture is not authorized for execution' in result.stderr
+def test_no_recovered_fixture_or_seccomp_import_entry():
+    import importlib.util
+    assert importlib.util.find_spec('r1.scripts.c3_cache_offline_fixture') is None
+    assert importlib.util.find_spec('r1.scripts.c3_replay_seccomp_candidate') is None
 
 
 def test_valid_readonly_mount_binds_device_inode_and_mount_id():
@@ -75,50 +71,12 @@ def test_anchored_tree_read_does_not_follow_replaced_root(tmp_path):
         os.close(fd)
 
 
-def test_bind_pinning_rejects_replaced_directory_and_closes_fds(tmp_path,monkeypatch):
-    root=tmp_path/'source'; root.mkdir(); other=tmp_path/'other'; other.mkdir()
-    opened=[]; original_read=Path.read_text; real_readlink=os.readlink
-    def fake_open(path):
-        fd=os.open(root if not opened else other,os.O_RDONLY|os.O_DIRECTORY)
-        opened.append(fd)
-        return fd
-    def fake_text(path,*a,**k):
-        if str(path)=='/proc/self/mountinfo': return '1 2 4:1 / / rw - ext4 /dev/x rw\n'
-        if str(path).startswith('/proc/self/fdinfo/'): return 'mnt_id:\t3\n'
-        return original_read(path,*a,**k)
-    def fake_link(path,*a,**k):
-        return 'mnt:[22]' if path=='/proc/self/ns/mnt' else real_readlink(path,*a,**k)
-    called=[]
-    monkeypatch.setattr(guard.os,'getuid',lambda:0)
-    monkeypatch.setattr(guard.os,'readlink',fake_link)
-    monkeypatch.setattr(Path,'read_text',fake_text)
-    monkeypatch.setattr(guard,'open_dir_absolute_nofollow',fake_open)
-    monkeypatch.setattr(guard,'_raw_mount',lambda source,target,flags:called.append((source,target,flags)))
-    with pytest.raises(ValueError,match='changed'):
-        guard.bind_readonly_fd_pinned(root,{'child_mount_namespace':'mnt:[22]'})
-    assert len(called)==1
-    for fd in opened:
-        with pytest.raises(OSError): os.fstat(fd)
-
-
-def test_never_remounts_if_reopened_fd_has_original_mount_id(tmp_path,monkeypatch):
-    root=tmp_path/'source'; root.mkdir(); opened=[]; original_read=Path.read_text; real_readlink=os.readlink
-    def fake_open(path):
-        fd=os.open(root,os.O_RDONLY|os.O_DIRECTORY); opened.append(fd); return fd
-    def fake_text(path,*a,**k):
-        if str(path)=='/proc/self/mountinfo': return '3 2 4:1 / / rw - ext4 /dev/x rw\n'
-        if str(path).startswith('/proc/self/fdinfo/'): return 'mnt_id:\t3\n'
-        return original_read(path,*a,**k)
-    def fake_link(path,*a,**k):
-        return 'mnt:[22]' if path=='/proc/self/ns/mnt' else real_readlink(path,*a,**k)
-    called=[]
-    monkeypatch.setattr(guard.os,'getuid',lambda:0)
-    monkeypatch.setattr(guard.os,'readlink',fake_link)
-    monkeypatch.setattr(Path,'read_text',fake_text)
-    monkeypatch.setattr(guard,'open_dir_absolute_nofollow',fake_open)
-    monkeypatch.setattr(guard,'_raw_mount',lambda source,target,flags:called.append((source,target,flags)))
-    with pytest.raises(ValueError,match='distinct mount'):
-        guard.bind_readonly_fd_pinned(root,{'child_mount_namespace':'mnt:[22]'})
-    assert len(called)==1  # bind attempted; no remount of the wrong FD
-    for fd in opened:
-        with pytest.raises(OSError): os.fstat(fd)
+def test_bind_and_raw_mount_always_stop_before_io(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(guard.os, 'open', lambda *args, **kwargs: calls.append('open'))
+    monkeypatch.setattr(guard.os, 'readlink', lambda *args, **kwargs: calls.append('readlink'))
+    with pytest.raises(ValueError, match='mounting is disabled'):
+        guard.bind_readonly_fd_pinned(tmp_path / 'source', {'child_mount_namespace': 'mnt:[22]'})
+    with pytest.raises(ValueError, match='mounting is disabled'):
+        guard._raw_mount('/proc/self/fd/3', '/proc/self/fd/3', 4096)
+    assert calls == []

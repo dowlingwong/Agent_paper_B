@@ -109,65 +109,13 @@ def open_dir_absolute_nofollow(path: Path) -> int:
 
 
 def _raw_mount(source: str | None, target: str, flags: int) -> None:
-    """Direct kernel mount(2), without userspace path canonicalization."""
-    import ctypes
-    libc = ctypes.CDLL(None, use_errno=True)
-    libc.mount.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_ulong, ctypes.c_void_p]
-    libc.mount.restype = ctypes.c_int
-    src = os.fsencode(source) if source is not None else None
-    if libc.mount(src, os.fsencode(target), None, flags, None) != 0:
-        error = ctypes.get_errno()
-        raise OSError(error, os.strerror(error))
+    """Direct mounting is intentionally unavailable in the recovered candidate."""
+    fail('recovered candidate mounting is disabled pending independent review')
 
 
 def bind_readonly_fd_pinned(path: Path, namespace_attestation: dict) -> tuple[int, dict]:
-    """Bind+remount a pinned directory; retain and return verified ro mount FD.
-
-    ONLY call from a previously verified private mount namespace. This function
-    has not been tested against the target Linux kernel and is not accepted.
-    """
-    path = Path(path)
-    if os.getuid() != 0 or namespace_attestation.get('child_mount_namespace') != os.readlink('/proc/self/ns/mnt'):
-        fail('verified child mount namespace missing')
-    mountinfo = Path('/proc/self/mountinfo').read_text()
-    for line in mountinfo.splitlines():
-        left, sep, _ = line.partition(' - ')
-        fields = left.split()
-        if not sep or len(fields) < 6:
-            fail('malformed mountinfo')
-        if any(x.startswith('shared:') for x in fields[6:]):
-            fail('mount propagation is not private')
-        decoded = re.sub(r'\\([0-7]{3})', lambda m: chr(int(m.group(1), 8)), fields[4])
-        mounted = Path(decoded)
-        if mounted != path and mounted.is_relative_to(path):
-            fail('nested source mount present before bind')
-    source = open_dir_absolute_nofollow(path)
-    temporary = -1
-    verified = -1
-    try:
-        original_stat = os.fstat(source)
-        original_info = Path(f'/proc/self/fdinfo/{source}').read_text()
-        _raw_mount(f'/proc/self/fd/{source}', f'/proc/self/fd/{source}', 4096)  # MS_BIND
-        temporary = open_dir_absolute_nofollow(path)
-        temporary_stat = os.fstat(temporary)
-        if (temporary_stat.st_dev, temporary_stat.st_ino) != (original_stat.st_dev, original_stat.st_ino):
-            fail('source changed before bind reopened')
-        verify_binding(original_stat, temporary_stat, original_info,
-                       Path(f'/proc/self/fdinfo/{temporary}').read_text(),
-                       Path('/proc/self/mountinfo').read_text(), path, require_readonly=False)
-        _raw_mount(None, f'/proc/self/fd/{temporary}', 4096 | 32 | 1)  # MS_BIND|MS_REMOUNT|MS_RDONLY
-        verified = open_dir_absolute_nofollow(path)
-        proof = verify_binding(original_stat, os.fstat(verified), original_info,
-                               Path(f'/proc/self/fdinfo/{verified}').read_text(),
-                               Path('/proc/self/mountinfo').read_text(), path)
-        result, verified = verified, -1
-        return result, proof
-    finally:
-        os.close(source)
-        if temporary >= 0:
-            os.close(temporary)
-        if verified >= 0:
-            os.close(verified)
+    """A claimed namespace attestation must not enable a host mount."""
+    fail('recovered candidate mounting is disabled pending independent review')
 
 
 def manifest_directory_nofollow(directory_fd: int) -> dict[str, str]:
