@@ -18,6 +18,7 @@ from r1.exam.analyze import load_rule
 from r1.exam.campaign import read_rows, write_json
 from r1.exam.guards import digest_file, licence_blockers, quantization_blockers, space_check
 from r1.exam.namespace import check_exam_seeds
+from r1.exam.cooperative_lease import LeaseStop
 from r1.scripts import llama_server_instance as lsi
 from r1.scripts.c3_label_sweep import RunnerWatchdog, stop_tree
 
@@ -32,6 +33,39 @@ class PreparationStop(RuntimeError):
 
 class MechanicalFailure(RuntimeError):
     """A verified candidate failed its mechanical load/offload probe."""
+
+
+def handle_live_orphan(record, phase):
+    """Stage A must preserve any live prior server and stop for review."""
+    if phase=='stage-a':
+        raise PreparationStop('STOP: live previous Stage A server; preserve without signalling')
+    ours,reason=lsi.orphan_matches(record)
+    if not ours: raise PreparationStop(f'STOP: cannot prove orphan ownership: {reason}')
+    return lsi.stop_orphan(record)
+
+
+def reject_stopped_batch(state):
+    """Never resume or rewrite a stopped batch; preserve it for review."""
+    if not isinstance(state,dict):
+        raise PreparationStop('STOP: existing batch state is malformed')
+    if str(state.get('status','')).upper() in {'STOP','STOPPED','FAILED'} or state.get('stop_reason') is not None:
+        raise PreparationStop('STOP: existing stopped batch must not be resumed')
+
+
+def refuse_existing_stage_a_output(path):
+    """Stage A starts only in an absent or empty output directory.
+
+    A RUNNING state or stale marker can be left by a supervisor killed before
+    it wrote STOPPED. Do not rename, overwrite or infer safe recovery.
+    """
+    path=Path(path)
+    if not path.exists():return
+    if not path.is_dir():raise PreparationStop('STOP: Stage A output path is not a directory')
+    try:
+        if next(path.iterdir(),None) is not None:
+            raise PreparationStop('STOP: existing Stage A output cannot be resumed or overwritten')
+    except OSError as exc:
+        raise PreparationStop('STOP: Stage A output cannot be inspected') from exc
 
 
 def placeholders(value, prefix=''):
@@ -135,6 +169,29 @@ def verify_campaign(path, binding):
     return m
 
 
+def require_server_lease_inheritance(instance):
+    """Fail closed unless the started native server carries verified lease inheritance.
+
+    Stage A may not issue any request to a server whose inherited lease open
+    file description is unproved; this reads the record the server start wrote
+    after the ancestor->descendant kcmp and /proc FD checks succeeded.
+    """
+    from r1.exam.cache_runtime import validate_lease_inheritance_record
+    record = getattr(instance, 'record', None)
+    inheritance = record.get('lease_inheritance') if isinstance(record, dict) else None
+    if not isinstance(inheritance, dict):
+        raise PreparationStop('STOP: cooperative server record lacks lease inheritance evidence')
+    try:
+        validate_lease_inheritance_record(inheritance)
+    except LeaseStop as exc:
+        raise PreparationStop(f'STOP: lease inheritance evidence invalid: {exc}') from exc
+    if record.get('pid') != inheritance.get('server_pid'):
+        raise PreparationStop('STOP: lease inheritance server pid mismatch')
+    if record.get('start_ticks') != inheritance.get('server_start_ticks'):
+        raise PreparationStop('STOP: lease inheritance start ticks mismatch')
+    return inheritance
+
+
 class ExamRunner:
     def __init__(self, cfg, out, *, registry_path=None):
         self.cfg=cfg;self.out=Path(out).resolve();host_check(cfg,self.out)
@@ -160,10 +217,20 @@ class ExamRunner:
     def save(self): write_json(self.out/'batch_state.json',self.state)
 
     def start(self, phase):
+        if phase=='stage-a':
+            # Defense in depth: the reviewed cooperative D3 context must already
+            # be authorized (guardian lease + explicit false) before any output,
+            # server or worker exists.
+            from r1.exam.cache_runtime import require_authorized_stagea
+            require_authorized_stagea()
+        if phase in ('b1','b2'):
+            raise PreparationStop('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
+        if phase=='stage-a':refuse_existing_stage_a_output(self.out)
         self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
         if path.exists():
             self.state=json.loads(path.read_text())
+            reject_stopped_batch(self.state)
             if self.state['binding']!=self.binding or self.state['phase']!=phase: raise RuntimeError('STOP: resume identity/config/rule mismatch')
             for key,entry in self.state['completed'].items():
                 if digest_file(entry['path'])!=entry['sha256']: raise RuntimeError(f'STOP: completed root changed: {key}')
@@ -193,9 +260,7 @@ class ExamRunner:
             if not record.get('pid') or record.get('stopped_utc'): continue
             try: os.kill(record['pid'],0)
             except ProcessLookupError: continue
-            ours,reason=lsi.orphan_matches(record)
-            if not ours: raise PreparationStop(f'STOP: cannot prove orphan ownership: {reason}')
-            result=lsi.stop_orphan(record);recovery.append(result)
+            result=handle_live_orphan(record,phase);recovery.append(result)
             record.update(stopped_utc=result.get('utc'),orphan_cleanup=result);write_json(record_path,record)
         if recovery: self.state.setdefault('orphan_cleanup',[]).extend(recovery)
         for interval in self.state.get('server_intervals',[]):
@@ -260,6 +325,12 @@ class ExamRunner:
                                    ctx_size=ctx,n_gpu_layers=999,gpu_uuid=self.cfg['gpu_uuid'],extra_args=args,
                                    thinking_policy=thinking,generation=len(list((self.out/'servers'/spec['id']).glob('*.json'))),
                                    label=self.state['execution_label'],start_timeout=server['start_timeout'])
+        lease_fd=None
+        if self.state.get('phase')=='stage-a':
+            # The native server must inherit the verified lease OFD; the start
+            # verification STOPs before any request if that chain is unproved.
+            from r1.exam.cache_runtime import verified_lease_fd
+            lease_fd=verified_lease_fd()
         if not self.cfg.get('dryrun'):
             help_text=subprocess.check_output([server['binary'],'--help'],text=True,stderr=subprocess.STDOUT,timeout=20)
             required=['--chat-template-kwargs'] if thinking.get('off_switch') else []
@@ -279,11 +350,14 @@ class ExamRunner:
                 try: self.space()
                 except Exception as exc:
                     disk_error.append(str(exc))
-                    if inst.process is not None and inst.record.get('pgid'): inst.stop()
+                    if self.state.get('phase')!='stage-a' and inst.process is not None and inst.record.get('pgid'): inst.stop()
                     break
         monitor=threading.Thread(target=watch_loading,daemon=True);monitor.start()
         try:
-            try: inst.start(build=build,model_sha256=spec['quant_source']['sha256'])
+            try: inst.start(build=build,model_sha256=spec['quant_source']['sha256'],
+                            preserve_on_failure=self.state.get('phase')=='stage-a',lease_fd=lease_fd)
+            except LeaseStop as exc:
+                raise PreparationStop(f'STOP: cooperative lease inheritance failed: {exc}') from exc
             except RuntimeError as exc:
                 if disk_error: raise PreparationStop(disk_error[0]) from exc
                 if 'port' in str(exc) and 'in use' in str(exc): raise PreparationStop(str(exc)) from exc
@@ -291,6 +365,10 @@ class ExamRunner:
             if disk_error: raise PreparationStop(disk_error[0])
         finally:
             stopped.set();monitor.join(timeout=20)
+        if lease_fd is not None:
+            # Preserve the proved inheritance row beside the server record: the
+            # server JSON record cannot be edited later without invalidating it.
+            write_json(inst.batch/'lease_inheritance.json',require_server_lease_inheritance(inst))
         report=inst.offload(footprint_mib=spec['runtime']['footprint_mib'],apps=[] if self.cfg.get('dryrun') else None)
         write_json(inst.batch/'exam_offload.json',report)
         if not report['full']: raise MechanicalFailure('full GPU offload not established')
@@ -299,18 +377,27 @@ class ExamRunner:
         return inst
 
     def run_job(self, job, module, *, interrupt=False):
+        if interrupt and self.state.get('phase')=='stage-a':
+            raise PreparationStop('STOP: Stage A workers must not be signalled')
         self.space()
         path=Path(job['out']);path.mkdir(parents=True,exist_ok=True)
         write_json(path/'job.json',job)
         env={**os.environ,'PYTHONPATH':str(REPO),'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','MKL_NUM_THREADS':'1'}
         if self.service: env['LLAMACPP_BASE_URL']=self.service.openai_base_url
+        kwargs={}
+        if self.state.get('phase')=='stage-a':
+            from r1.exam.cache_runtime import verified_lease_fd
+            kwargs['pass_fds']=(verified_lease_fd(),)
         with (path/'runner.log').open('ab') as log:
-            self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+            self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
         self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
         watchdog=RunnerWatchdog(self.service,self.cfg['watchdog']) if self.service else None
         started=time.monotonic();killed=False
         try:
             while self.child.poll() is None:
+                if self.state.get('phase')=='stage-a':
+                    from r1.exam.cache_runtime import reject_unverified_lease
+                    reject_unverified_lease()
                 self.space()
                 if not self.cfg.get('dryrun') and self.service:
                     apps=lsi.gpu_compute_apps();sample=gpu_sample(self.cfg)
@@ -325,7 +412,8 @@ class ExamRunner:
                 time.sleep(float(self.cfg['watchdog']['poll_seconds']))
             if self.child.returncode: raise RuntimeError(f'STOP: root worker exit {self.child.returncode}; see {path}/runner.log')
         except BaseException as exc:
-            if self.child.poll() is None: stop_tree(self.child.pid);self.child.wait(timeout=30)
+            if self.child.poll() is None and self.state.get('phase')!='stage-a':
+                stop_tree(self.child.pid);self.child.wait(timeout=30)
             self.state['interruptions'].append({'path':str(path),'error':str(exc),'returncode':self.child.returncode,'killed':killed,'time':time.time()})
             self.save();raise
         self.child=None
@@ -375,6 +463,9 @@ class ExamRunner:
                 if entry['end'] is None: entry['end']=time.time();break
             self.save()
 
-    def close(self):
+    def close(self, *, preserve_running=False):
+        if preserve_running:
+            # Preserve server, worker, and marker after STOP for explicit review.
+            return
         self.stop_service()
         if self.lock: self.lock.unlink(missing_ok=True);self.lock=None

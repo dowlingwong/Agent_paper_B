@@ -267,21 +267,21 @@ def test_no_audited_increments_retains_candidate_diagnostics(tmp_path):
 
 def test_evidence_refuses_changed_stage_a_and_b1_inputs(tmp_path):
     from types import SimpleNamespace
-    from r1.scripts.exam_runner import evidence
+    from r1.scripts.exam_runner import _evidence_unreviewed
     from r1.exam.runtime import PreparationStop
     from r1.exam.guards import digest_file
     source=tmp_path/'stage.json';source.write_text('{}')
     cfg={'stage_a_table':str(source),'stage_a_table_sha256':digest_file(source)}
     runner=SimpleNamespace(cfg=cfg)
     source.write_text('{"changed": true}')
-    with pytest.raises(PreparationStop,match='Stage A table digest'): evidence(runner,'b1',None,False)
+    with pytest.raises(PreparationStop,match='Stage A table digest'): _evidence_unreviewed(runner,'b1',None,False)
     cfg['stage_a_table_sha256']=digest_file(source)
     cfg.update(b1_analysis=str(source),b1_analysis_sha256='0'*64)
-    with pytest.raises(PreparationStop,match='B1 analysis digest'): evidence(runner,'b2',None,False)
+    with pytest.raises(PreparationStop,match='B1 analysis digest'): _evidence_unreviewed(runner,'b2',None,False)
 
 
 def test_b2_respects_stage_a_thinking_disable(tmp_path):
-    from r1.scripts.exam_runner import evidence
+    from r1.scripts.exam_runner import _evidence_unreviewed
     from r1.exam.guards import digest_file
     from r1.exam.campaign import write_json
     from r1.exam.runtime import PreparationStop
@@ -302,11 +302,11 @@ def test_b2_respects_stage_a_thinking_disable(tmp_path):
             return {'mode':mode,'node':node,'instance_seed':seed,'audited_proposals':[],
                     'diagnostics':dict.fromkeys(('trials','evaluated','invalid','duplicates','noops','parse_failed'),0),
                     'd28':{'nodes':{'digits_mlp':{'pass':True}}},'final_audits':[]}
-    runner=Fake();evidence(runner,'b2',None,False)
+    runner=Fake();_evidence_unreviewed(runner,'b2',None,False)
     assert runner.calls==['off']
     data=json.loads(screen.read_text());data['rows'][0]['b2_thinking_mode']='on';write_json(screen,data)
     runner=Fake()
-    with pytest.raises(PreparationStop,match='disabled by Stage A'): evidence(runner,'b2',None,False)
+    with pytest.raises(PreparationStop,match='disabled by Stage A'): _evidence_unreviewed(runner,'b2',None,False)
     assert runner.calls==[]
 
 
@@ -371,3 +371,12 @@ def test_rico_uses_standalone_vendor_template_and_native_thinking_policy():
     assert b'enable_thinking' not in template and b'<think>' in template
     assert s['thinking_policy']['mode']=='always_on' and s['thinking_policy']['budget']==2048
     assert not s['thinking_policy']['switchable'] and not s['thinking_policy']['off_switch']
+
+
+def test_b1_b2_evidence_entry_remains_hard_stop():
+    from types import SimpleNamespace
+    from r1.scripts.exam_runner import evidence
+    from r1.exam.runtime import PreparationStop
+    for phase in ('b1','b2'):
+        with pytest.raises(PreparationStop,match='B1/B2 reviewed harness pin'):
+            evidence(SimpleNamespace(cfg={}),phase,None,False)

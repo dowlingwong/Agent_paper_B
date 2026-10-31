@@ -4,7 +4,7 @@
   "models_dir": "/home/dowling/exam-x/models",
   "work_dir": "/home/dowling/exam-x/work",
   "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
-  "comment": "Author approved /home/dowling/exam-x/{models,work}. Host values remain placeholders until Phase 2. No GitHub credentials on portal; SSH bare transfer repositories go under work/remotes.",
+  "comment": "Author approved /home/dowling/exam-x/{models,work}. Stage A D3 uses the author's cooperative same-UID assumption (R1-EXAM-COOPERATIVE-UID): same-UID non-interference is assumed, host-global single-server is NOT_CHECKABLE. Paper commit is bound after independent review; no GitHub credentials on portal.",
   "minimum_free_bytes": 100000000000,
   "ctx_size": 32768,
   "cache_type_k": "q8_0",
@@ -16,10 +16,10 @@
   "rule": "r1/exam/rules/x5_rule_v1.yaml",
   "rule_sha256": "0665903b276f34eca4cd4d03ac483192cd3ef3b41c24d188e2dd103d65423b6e",
   "value_grids": "r1/exam/value_grids.yaml",
-  "paper_commit": "6ef8d30c8654375d8954114161b5c068bc1549f9",
+  "paper_commit": "COMMIT_PENDING",
   "harness_commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
-  "prompts": "TODO_VERIFY_ON_HOST",
-  "prompts_sha256": "TODO_VERIFY_ON_HOST",
+  "prompts": "/home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl",
+  "prompts_sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
   "server": {
     "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
     "binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
@@ -71,5 +71,7 @@
   "d22_pick": "TODO_AUTHOR_D22_PICK",
   "workers": 4,
   "stage_a_table_sha256": "TODO_VERIFY_ON_HOST",
-  "b1_analysis_sha256": "TODO_VERIFY_ON_HOST"
+  "b1_analysis_sha256": "TODO_VERIFY_ON_HOST",
+  "cache_prompt": false,
+  "d3_policy": "author_same_uid_cooperative_20261031"
 }

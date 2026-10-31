@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -15,7 +16,51 @@ from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, Prepa
 from r1.scripts import llama_server_instance as lsi
 
 
+def run_fresh_qualification(runner, path, spec, ctx):
+    """One fresh attempt only; any worker/infra exception remains STOP."""
+    path=Path(path)
+    try:
+        path.mkdir(parents=True,exist_ok=False)
+    except FileExistsError as exc:
+        raise PreparationStop('STOP: qualification attempt already exists; preserve it') from exc
+    runner.run_job({'out':str(path),'config':runner.cfg,'candidate':spec,'ctx':ctx},'r1.exam.qualify')
+    result_path=path/'qualification.json'
+    if not result_path.is_file(): raise PreparationStop('STOP: qualification output missing')
+    result=json.loads(result_path.read_text())
+    if result.get('model_sha256')!=spec['quant_source']['sha256'] or result.get('context')!=ctx:
+        raise PreparationStop('STOP: qualification model/context binding mismatch')
+    if result.get('status') not in ('PASS','MECHANICAL_FAILURE'):
+        raise PreparationStop('STOP: qualification failed or has unknown status')
+    if result['status']=='MECHANICAL_FAILURE':
+        allocation=result.get('allocation_failure_evidence') or {}
+        if allocation.get('kind')!='cuda_allocation_out_of_memory' or allocation.get('healthy_idle_after_stop') is not True:
+            raise PreparationStop('STOP: qualification mechanical failure lacks completed OOM/idle evidence')
+    if not runner.cfg.get('dryrun'):
+        raw=Path(result.get('raw_probe') or '')
+        if (not raw.is_file() or not raw.resolve().is_relative_to(path.resolve()) or
+            digest_file(raw)!=result.get('raw_probe_sha256')):
+            raise PreparationStop('STOP: qualification raw probe path or digest mismatch')
+    return result
+
+
 def stage_a(runner, selected):
+    # D3 conditions (explicit false, descriptive cold-true-first, per-call
+    # evidence) are enforced inside _stage_a_cooperative and the worker path.
+    if runner.cfg.get('cache_prompt') is not False:
+        raise PreparationStop('STOP: Stage A cache_prompt must be explicitly false')
+    if runner.cfg.get('d3_policy')!='author_same_uid_cooperative_20261031':
+        raise PreparationStop('STOP: cooperative D3 policy not explicit')
+    return _stage_a_cooperative(runner,selected)
+
+
+def _stage_a_cooperative(runner, selected):
+    """Reviewed implementation only; guarded public entry is still STOP."""
+    from r1.exam.stage_a import require_d3_evidence
+    try: require_d3_evidence()
+    except RuntimeError as exc: raise PreparationStop(str(exc)) from exc
+    # Defense in depth if the outer D3 gate is ever replaced after review.
+    from r1.exam.cache_runtime import reject_unverified_lease
+    reject_unverified_lease()
     out=[]
     for candidate in runner.spec_order(selected):
         if candidate.get('kind') not in ('random_valid','scripted'): runner.validate_spec(candidate,allow_pending_footprint=True)
@@ -34,6 +79,7 @@ def stage_a(runner, selected):
             for ctx in (32768,16384):
                 spec=copy.deepcopy(candidate_source);mode=spec['thinking_policy']['mode']
                 path=runner.out/spec['id']/'stage-a'/str(ctx)/'stage_a.json'
+                completed_normally=False
                 try:
                     if not runner.cfg.get('dryrun') or placeholders(spec['runtime'].get('footprint_mib')) or spec['runtime'].get('footprint_mib') is None:
                         if not runner.cfg.get('dryrun'):
@@ -41,28 +87,36 @@ def stage_a(runner, selected):
                             if apps is None or apps or sample['free_mib']<1024 or sample['utilisation_percent']>5:
                                 raise PreparationStop('STOP: GPU not available for independent qualification')
                         qual_dir=path.parent/'qualification'
-                        try: runner.run_job({'out':str(qual_dir),'config':runner.cfg,'candidate':spec,'ctx':ctx},'r1.exam.qualify')
-                        except RuntimeError:
-                            if not (qual_dir/'qualification.json').exists(): raise
-                        qualification=json.loads((qual_dir/'qualification.json').read_text())
+                        qualification=run_fresh_qualification(runner,qual_dir,spec,ctx)
                         if qualification['status']=='PREPARATION_STOP': raise PreparationStop('STOP: offload qualification lacks required telemetry')
                         if qualification['status']!='PASS': raise MechanicalFailure('independent exact-path offload qualification failed')
                         spec['runtime']['footprint_mib']=qualification['footprint_mib']
                     else: qualification={'status':'PINNED','footprint_mib':spec['runtime']['footprint_mib']}
                     inst=runner.server(spec,mode,ctx)
-                    runner.run_job({'out':str(path.parent),'config':runner.cfg,'candidate':spec,'port':inst.port,'ctx':ctx},'r1.exam.stage_a')
+                    # This wiring captures observed identity only. It explicitly
+                    # rejects dispatch: freshness is not derivable from a PID or
+                    # a sampled server census. Outer D3 STOP remains in force.
+                    from r1.exam.cache_runtime import capture_parent_identity, reject_unverified_cold
+                    identity=capture_parent_identity(inst,binary_sha256=runner.cfg['server']['binary_sha256'],
+                                                     model_sha256=spec['quant_source']['sha256'])
+                    reject_unverified_cold(identity)
+                    runner.run_job({'out':str(path.parent),'config':runner.cfg,'candidate':spec,'port':inst.port,
+                                    'ctx':ctx,'cache_identity':identity},'r1.exam.stage_a')
                     result=json.loads(path.read_text())
                     result.update(qualification=qualification,proposal_schema='manager_proposal/v1',model_sha256=spec['quant_source']['sha256'],
                                   build=runner.cfg['server']['build'],thinking_policy=spec['thinking_policy'],
-                                  server_record=str(inst.record_path),ctx_size=ctx,cache_type='q8_0',n_gpu_layers=999)
+                                  server_record=str(inst.record_path),ctx_size=ctx,cpu_pool_only=(ctx==16384),cache_type='q8_0',n_gpu_layers=999)
                     write_json(path,result)
+                    completed_normally=True
                 except MechanicalFailure as exc:
+                    if runner.service:
+                        raise PreparationStop('STOP: preserve Stage A server after failure') from exc
                     result={'candidate':spec['id'],'label':'EXAM','phase':'stage-a','passed':False,'failure_classes':['offload'],
                             'error':repr(exc),'prompts':0,'cpu_pool_only':ctx==16384,
                             **prefill_metadata(ctx),'prefill_not_attempted_reason':'qualification/load failure'}
                     write_json(path,result)
                 finally:
-                    if runner.service: runner.stop_service()
+                    if runner.service and completed_normally: runner.stop_service()
                 if result['passed'] or not set(result['failure_classes']).intersection({'offload','fit_estimate'}): break
         result['source_label']=artifact_label(spec);write_json(path,result)
         runner.state['completed'][key]={'path':str(path),'sha256':digest_file(path)};runner.save();out.append(result)
@@ -85,6 +139,11 @@ def anchor_gate(manifests, cfg):
 
 
 def evidence(runner, phase, selected, interrupt):
+    raise PreparationStop('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
+
+
+def _evidence_unreviewed(runner, phase, selected, interrupt):
+    """B1/B2 body retained for unit tests only; unreachable from any entry point."""
     cfg=runner.cfg;rows=[]
     if digest_file(cfg['stage_a_table'])!=cfg['stage_a_table_sha256']: raise PreparationStop('STOP: Stage A table digest mismatch')
     if phase=='b2' and digest_file(cfg['b1_analysis'])!=cfg['b1_analysis_sha256']: raise PreparationStop('STOP: B1 analysis digest mismatch')
@@ -156,6 +215,38 @@ def evidence(runner, phase, selected, interrupt):
     write_json(runner.out/f'{phase}_manifests.json',{'label':'EXAM','manifests':rows})
 
 
+def _alive(pid):
+    try: os.kill(int(pid),0)
+    except ProcessLookupError: return False
+    except PermissionError as exc:
+        raise PreparationStop('STOP: server liveness unobservable') from exc
+    return True
+
+
+def _write_lease_completion(runner):
+    """Fail-closed natural-completion evidence; the guardian alone releases the lock."""
+    evidence=os.environ.get('TRACKX_LEASE_EVIDENCE_DIR')
+    if not evidence or not Path(evidence).is_dir():
+        raise PreparationStop('STOP: lease evidence directory absent')
+    from r1.exam.cache_proc import process_start_ticks
+    from r1.exam.cooperative_lease import write_completion
+    records=[]
+    for path in sorted(runner.out.rglob('llama_server_*.json')):
+        row=json.loads(path.read_text())
+        pid=row.get('pid');ticks=row.get('start_ticks');stopped=row.get('stopped_utc')
+        if type(pid) is not int or type(ticks) is not int or not isinstance(stopped,str) or not stopped:
+            raise PreparationStop('STOP: server record incomplete for lease completion')
+        if _alive(pid) and process_start_ticks(pid)==ticks:
+            raise PreparationStop('STOP: server still alive; natural completion unproven')
+        records.append({'pid':pid,'start_ticks':ticks,'stopped_utc':stopped,
+                        'record_sha256':digest_file(path),'record_path':str(path.resolve())})
+    if not records:
+        raise PreparationStop('STOP: no server records; natural completion unproven')
+    return write_completion(evidence,batch_state_path=str(runner.out/'batch_state.json'),
+                            servers=records,runner_pid=os.getpid(),
+                            runner_start_ticks=process_start_ticks(os.getpid()))
+
+
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('phase',choices=['stage-a','b1','b2'],nargs='?')
     p.add_argument('--config',default=str(DEFAULT_CONFIG));p.add_argument('--out');p.add_argument('--candidate',action='append')
@@ -163,8 +254,15 @@ def main(argv=None):
     p.add_argument('--check-config',action='store_true');p.add_argument('--allow-placeholders',action='store_true')
     p.add_argument('--interrupt-root',action='store_true',help='DRYRUN only: kill first root worker after one ledger append')
     a=p.parse_args(argv)
+    if not a.check_config and a.phase in ('b1','b2'):
+        raise PreparationStop('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
+    if not a.check_config and a.phase=='stage-a' and not os.environ.get('TRACKX_GPU_LEASE_FD'):
+        raise PreparationStop('STOP: D3 cold-cache cooperative lease FD absent')
     if a.allow_placeholders and not a.check_config: p.error('--allow-placeholders is only for --check-config')
     cfg=load_config(a.config,allow_placeholders=a.allow_placeholders)
+    if not a.check_config and a.phase=='stage-a':
+        from r1.exam.cache_runtime import authorize_cooperative_stagea
+        authorize_cooperative_stagea(cfg)
     if a.free_sensitivity:
         if a.phase!='b2': p.error('--free-sensitivity requires b2')
         cfg['free_sensitivity']=True
@@ -177,16 +275,23 @@ def main(argv=None):
     unresolved=placeholders({k:cfg[k] for k in required})
     if unresolved: raise RuntimeError(f'STOP: unresolved phase settings: {unresolved}')
     runner=ExamRunner(cfg,a.out)
+    preserve_running=False
     try:
         runner.start(a.phase)
         if a.phase=='stage-a': stage_a(runner,a.candidate)
         else: evidence(runner,a.phase,a.candidate,a.interrupt_root)
         runner.state['status']='COMPLETE';runner.save()
     except BaseException as exc:
+        preserve_running=a.phase=='stage-a'
         runner.state.update(status='STOPPED',stop_reason=f'{type(exc).__name__}: {exc}')
+        if preserve_running:
+            runner.state['gpu_lease_after_stop']='NOT_CHECKABLE: runner marker is not evidence of held flock'
         if runner.lock is not None: runner.save()
         print(runner.state['stop_reason'],file=sys.stderr);return 1
-    finally: runner.close()
+    finally: runner.close(preserve_running=preserve_running)
+    # Only after close() so no later write can invalidate the batch_state digest
+    # the guardian validates before releasing the lock.
+    if a.phase=='stage-a' and not cfg.get('dryrun'): _write_lease_completion(runner)
     return 0
 
 if __name__=='__main__': raise SystemExit(main())

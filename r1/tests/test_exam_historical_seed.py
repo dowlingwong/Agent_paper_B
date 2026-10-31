@@ -1,5 +1,6 @@
 import hashlib
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -126,16 +127,23 @@ def test_replay_calls_and_records_same_seed(tmp_path,monkeypatch):
     class Instance:
         ctx_size=4
         def chat(self, prompt, *, seed, **kwargs):
-            calls.append(seed)
+            calls.append((seed, kwargs['extra']['cache_prompt']))
             return {'choices':[{'message':{'content':'{}'}}], 'usage':{}}
+        def completion(self, payload):
+            return {'tokens_evaluated':3,'tokens_predicted':1}
     def post(instance, route, payload):
         if route=='/tokenize': return {'tokens':[1]}
         if route=='/completion': return {'tokens_evaluated':3,'tokens_predicted':1}
         return {'prompt':'rendered'}
+    monkeypatch.setattr('r1.exam.stage_a.require_d3_evidence',lambda:None)
+    monkeypatch.setattr('r1.exam.cache_descriptive.true_replay',lambda *args,**kwargs:{'synthetic':True})
     monkeypatch.setattr('r1.exam.stage_a.post',post)
     monkeypatch.setattr('r1.exam.stage_a.parse_proposal',lambda *args:(True,True))
-    out=run_stage_a(Instance(),{'id':'fixture','thinking_policy':{'mode':'off'}},rows[:1],
+    instance=Instance()
+    nongen=SimpleNamespace(post=lambda route,payload:post(instance,route,payload))
+    out=run_stage_a(instance,{'id':'fixture','thinking_policy':{'mode':'off'}},rows[:1],
                     gpu_sample=lambda:{'free_mib':2048,'used_mib':128},schema_format={},
-                    template_renderer=lambda messages:'rendered')
-    assert calls==[rows[0]['seed']]*4
+                    template_renderer=lambda messages:'rendered',cache_context={'false_recorder':instance,'non_generation_recorder':nongen})
+    assert calls==[(rows[0]['seed'],False)]*4
+    assert out['cache_prompt_planned'] is False
     assert [item['seed'] for item in out['responses'][0]['responses']]==[rows[0]['seed']]*2

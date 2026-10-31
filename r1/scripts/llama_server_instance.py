@@ -56,6 +56,8 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from r1.exam.cache_proc import process_start_ticks
+from r1.exam.cooperative_lease import LeaseStop
 from r1.scripts.ollama_instance import _utc, free_port, pid_alive, port_is_free
 
 OFFLOAD_RE = re.compile(r'offloaded (\d+)/(\d+) layers to GPU')
@@ -316,9 +318,23 @@ class LlamaServerInstance:
         pid = (self.record or {}).get('pid') or (self.process.pid if self.process else None)
         return offload_check(self.log_text(), pid=pid, gpu_uuid=self.gpu_uuid, footprint_mib=footprint_mib, apps=apps)
 
-    def start(self, *, build: dict | None = None, model_sha256: str | None = None) -> dict:
+    def start(self, *, build: dict | None = None, model_sha256: str | None = None,
+              preserve_on_failure: bool = False, lease_fd: int | None = None) -> dict:
+        """Start the native server; cooperative Stage A passes the inherited lease FD.
+
+        ``lease_fd`` must be the verified lease descriptor of this process.  When
+        it is ``None`` and ``TRACKX_GPU_LEASE_FD`` is present, the environment
+        contract is re-verified and that FD is used (the cooperative chain never
+        runs a native server without it).  The server must retain the same open
+        file description: once it is healthy, ``lease_inheritance`` is proved
+        with ancestor->descendant ``kcmp(KCMP_FILE)`` plus /proc FD dev/ino,
+        pid/start-ticks/parent-pid identity; any mismatch is a STOP before the
+        caller may issue a request.
+        """
         if self.process is not None:
             raise RuntimeError('STOP: this instance was already started')
+        if lease_fd is not None and (type(lease_fd) is not int or lease_fd < 3):
+            raise RuntimeError('STOP: explicit lease FD invalid')
         if not port_is_free(self.port):
             raise RuntimeError(f'STOP: port {self.port} is in use; a dedicated instance never shares a server')
         if not Path(self.model_path).is_file():
@@ -327,11 +343,22 @@ class LlamaServerInstance:
         env, removed = self.env()
         argv = self.argv
         log = self.log_path.open('ab')
-        self.process = subprocess.Popen(argv, env=env, stdout=log, stderr=subprocess.STDOUT,
-                                        stdin=subprocess.DEVNULL, start_new_session=True)
-        log.close()
+        if lease_fd is None and os.environ.get('TRACKX_GPU_LEASE_FD'):
+            from r1.exam.cache_runtime import verified_lease_fd
+            lease_fd = verified_lease_fd()
+        try:
+            self.process = subprocess.Popen(argv, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                            stdin=subprocess.DEVNULL, start_new_session=True,
+                                            pass_fds=() if lease_fd is None else (lease_fd,))
+        finally:
+            log.close()
+        try:
+            server_ticks = process_start_ticks(self.process.pid)
+        except (RuntimeError, ValueError):
+            server_ticks = None
         self.record = {'label': self.label, 'backend': self.BACKEND, 'binary': self.binary, 'argv': argv,
                        'pid': self.process.pid, 'pgid': os.getpgid(self.process.pid), 'port': self.port,
+                       'start_ticks': server_ticks,
                        'url': self.url, 'openai_base_url': self.openai_base_url, 'model_path': self.model_path,
                        'model_sha256': model_sha256, 'alias': self.alias, 'n_gpu_layers': self.n_gpu_layers,
                        'ctx_size': self.ctx_size, 'parallel_slots': 1, 'gpu_uuid': self.gpu_uuid,
@@ -356,6 +383,11 @@ class LlamaServerInstance:
             status, body = _get_json(self.url + '/health', 2.0)
             last = {'status': status, 'body': body}
             if status == 200:
+                if lease_fd is not None:
+                    inheritance = self._verify_lease_inheritance(lease_fd, server_ticks)
+                    self.record['lease_inheritance'] = inheritance
+                    self.record['start_ticks'] = inheritance['server_start_ticks']
+                    server_ticks = inheritance['server_start_ticks']
                 try:  # the exec has happened by now: the command line is the server's own
                     self.record['cmdline'] = proc_cmdline(self.process.pid)
                 except OSError:
@@ -365,8 +397,33 @@ class LlamaServerInstance:
                 return self.record
             time.sleep(0.2)
         self.record['last_health'] = last
-        self.stop()
+        if not preserve_on_failure:
+            self.stop()
         raise RuntimeError(f'STOP: dedicated llama-server did not become healthy (last /health: {last})')
+
+    def _verify_lease_inheritance(self, lease_fd: int, server_ticks):
+        """Prove the native server retained the inherited lease OFD, else STOP.
+
+        The direction is the legal ancestor->descendant one: this process (the
+        server's parent) kcmp-checks its descendant.  A missing FD, a different
+        dev/ino, a different pid/start-ticks/parent or an EPERM kcmp is never
+        treated as success.
+        """
+        from r1.exam.cache_runtime import verify_server_lease_inheritance
+        try:
+            return verify_server_lease_inheritance(self.process.pid, lease_fd, runner_pid=os.getpid(),
+                                                   started_ticks=server_ticks)
+        except LeaseStop as exc:
+            self.record['lease_inheritance_failure'] = {
+                'method': 'proc_fd_dev_ino_and_kcmp_file_ancestor_to_descendant',
+                'lease_fd': lease_fd, 'server_pid': self.process.pid,
+                'server_start_ticks': server_ticks, 'reason': str(exc), 'utc': _utc(),
+                'kcmp_direction': 'ancestor->descendant', 'retry_permitted': False}
+            try:
+                self._save()
+            except OSError:
+                pass
+            raise
 
     def alive(self) -> bool:
         return self.process is not None and self.process.poll() is None

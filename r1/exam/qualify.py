@@ -30,6 +30,9 @@ def known_load_oom(raw, cfg, out):
 
 
 def qualify(job):
+    # Direct qualification must not bypass Stage A's pending D3 review gate.
+    from r1.exam.stage_a import require_d3_evidence
+    require_d3_evidence()
     cfg=job['config'];spec=job['candidate'];out=Path(job['out'])
     out.mkdir(parents=True,exist_ok=True)
     if cfg.get('dryrun'):
@@ -39,6 +42,8 @@ def qualify(job):
         args=['--binary',cfg['server']['binary'],'--model',spec['runtime']['model_path'],'--gpu',cfg['gpu_uuid'],
               '--port',str(free_port()),'--ctx',str(job['ctx']),'--alias',spec['id'],'--out',str(out),
               '--expect-sha256',spec['quant_source']['sha256'],'--expect-build',cfg['server']['build'],
+              '--expect-binary-sha256',cfg['server']['binary_sha256'],
+              '--exam-stage-a',
               '--min-gpu-mib',str(math.ceil(.9*spec['quant_source']['size_bytes']/2**20)),
               '--server-extra-args',json.dumps(['--jinja','--cache-type-k','q8_0','--cache-type-v','q8_0']),
               '--thinking-policy',json.dumps(thinking)]
@@ -47,7 +52,11 @@ def qualify(job):
         # No footprint can be adopted without loaded-state PID/GPU telemetry.
         footprint=raw.get('footprint_mib_to_pin')
         success=code==0 and isinstance(footprint,(int,float)) and math.isfinite(footprint) and footprint>0
-        status='PASS' if success else ('PREPARATION_STOP' if footprint is None else 'MECHANICAL_FAILURE')
+        # A nonzero probe or failed telemetry is an infrastructure STOP unless
+        # explicitly classified below from a retained, pinned allocation OOM
+        # and a healthy idle post-state. A positive footprint alone is not proof
+        # of a completed mechanical failure.
+        status='PASS' if success else 'PREPARATION_STOP'
         allocation=known_load_oom(raw,cfg,out) if footprint is None else None
         if allocation and allocation['healthy_idle_after_stop']:status='MECHANICAL_FAILURE'
         result={'status':status,'footprint_mib':footprint,
@@ -58,8 +67,22 @@ def qualify(job):
     return result
 
 
+def qualification_exit_code(result):
+    """Only a fully recorded candidate OOM can return normally for fallback."""
+    status=result.get('status') if isinstance(result,dict) else None
+    if status=='PASS': return 0
+    if status=='MECHANICAL_FAILURE':
+        evidence=result.get('allocation_failure_evidence') or {}
+        if evidence.get('kind')=='cuda_allocation_out_of_memory' and evidence.get('healthy_idle_after_stop') is True:
+            return 0
+    return 1
+
+
 def main(argv=None):
     p=argparse.ArgumentParser();p.add_argument('--job',required=True);a=p.parse_args(argv)
-    result=qualify(json.loads(Path(a.job).read_text()));return 0 if result['status']=='PASS' else 1
+    job=json.loads(Path(a.job).read_text())
+    from r1.exam.cache_runtime import authorize_cooperative_stagea
+    authorize_cooperative_stagea(job['config'])
+    result=qualify(job);return qualification_exit_code(result)
 
 if __name__=='__main__': raise SystemExit(main())

@@ -19,9 +19,12 @@ def test_load_failure_classification(tmp_path,monkeypatch,mode,expected):
     monkeypatch.setattr(q,'free_port',lambda:18481)
     monkeypatch.setattr(q.lsi,'gpu_compute_apps',lambda:None if mode=='no_census' else ([{'pid':123}] if mode=='foreign' else []))
     monkeypatch.setattr(runtime,'gpu_sample',lambda cfg:{'free_mib':23000})
-    job={'config':{'server':{'binary':'fixture','build':'fixture'},'gpu_uuid':'GPU-test'},'candidate':{'id':'fixture',
+    job={'config':{'server':{'binary':'fixture','build':'fixture','binary_sha256':'00'*32},'gpu_uuid':'GPU-test'},'candidate':{'id':'fixture',
           'thinking_policy':{'mode':'off'},'runtime':{'model_path':'fixture.gguf'},'quant_source':{'size_bytes':100,'sha256':'0'*64}},
          'out':str(tmp_path),'ctx':32768}
-    result=q.qualify(job)
+    from r1.exam import cache_runtime
+    token=cache_runtime._authorized.set(True)
+    try: result=q.qualify(job)
+    finally: cache_runtime._authorized.reset(token)
     assert result['status']==expected and result['footprint_mib'] is None
     if mode=='oom':assert result['allocation_failure_evidence']['healthy_idle_after_stop']

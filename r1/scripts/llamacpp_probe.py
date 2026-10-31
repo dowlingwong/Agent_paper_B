@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import platform
 import subprocess
 import sys
@@ -81,13 +82,29 @@ def tokens_per_second(reply: dict, seconds: float) -> tuple[float | None, str]:
     return None, 'unavailable'
 
 
-def generation(inst, tokens: int) -> dict:
+def generation(inst, tokens: int, *, exam_stage_a=False) -> dict:
     started = time.monotonic()
-    reply = inst.chat(GEN_PROMPT, max_tokens=tokens, seed=0, extra={'ignore_eos': True})
+    extra={'ignore_eos': True}
+    if exam_stage_a: extra['cache_prompt']=False
+    reply = inst.chat(GEN_PROMPT, max_tokens=tokens, seed=0, extra=extra)
     seconds = time.monotonic() - started
     tps, source = tokens_per_second(reply, seconds)
     return {'tokens_per_second': tps, 'source': source, 'wall_seconds': round(seconds, 3),
             'usage': reply.get('usage'), 'timings': reply.get('timings')}
+
+
+def qualification_recorder(inst, args, path):
+    """One identity-bound false-request journal; cold proof is not implied."""
+    from r1.exam.cache_runtime import capture_parent_identity
+    from r1.exam.cache_proc import sample_llama_server_processes
+    from r1.exam.cache_false import FalseCallRecorder
+    if not args.expect_binary_sha256 or not args.expect_sha256:
+        raise RuntimeError('STOP: qualification recorder binary/model pins required')
+    identity=capture_parent_identity(inst,binary_sha256=args.expect_binary_sha256,
+                                     model_sha256=args.expect_sha256)
+    census=lambda:sample_llama_server_processes(identity)
+    recorder=FalseCallRecorder(inst.url,inst.alias,census=census,identity=identity,journal_path=path)
+    return recorder,identity
 
 
 def main(argv=None) -> int:
@@ -106,11 +123,17 @@ def main(argv=None) -> int:
                     help='route (ii) memory floor when no footprint is pinned yet (default: 90%% of the GGUF size)')
     ap.add_argument('--expect-footprint-mib', type=int, default=None, help='route (ii) against a pinned footprint')
     ap.add_argument('--expect-sha256', default=None)
+    ap.add_argument('--expect-binary-sha256',default=None)
     ap.add_argument('--expect-build', default=None, help='the exact "version: ..." line')
     ap.add_argument('--server-extra-args', default=None, help='JSON list of flags for exact exam-path qualification')
     ap.add_argument('--thinking-policy', default=None, help='JSON exam thinking policy')
+    ap.add_argument('--exam-stage-a',action='store_true',help='Stage A isolation, cache, and STOP preservation')
     ap.add_argument('--out', required=True, help='log directory (created)')
     args = ap.parse_args(argv)
+    if args.exam_stage_a:
+        # This direct entry point cannot bypass the Stage A D3 gate.
+        from r1.exam.stage_a import require_d3_evidence
+        require_d3_evidence()
     server_options = {}
     if args.server_extra_args is not None:
         flags = json.loads(args.server_extra_args)
@@ -154,6 +177,16 @@ def main(argv=None) -> int:
     result['model_sha256'] = lsi.sha256_file(args.model)
     result['sha256_seconds'] = round(time.monotonic() - started, 1)
     say(f'sha256: {result["model_sha256"]} ({result["sha256_seconds"]} s)')
+    if args.exam_stage_a:
+        # Pin failures must be discovered before starting any qualification
+        # process, so failure never causes a later cleanup signal.
+        binary_sha=lsi.sha256_file(args.binary)
+        result['binary_sha256']=binary_sha
+        if (not args.expect_binary_sha256 or not args.expect_sha256 or not args.expect_build or
+            binary_sha!=args.expect_binary_sha256 or result['model_sha256']!=args.expect_sha256 or
+            result['build']['version_line']!=args.expect_build):
+            stop('Stage A qualification binary/model/build pin mismatch')
+            result['verdict']='STOP';save();return 1
     gguf_mib = Path(args.model).stat().st_size / 2 ** 20
     floor = args.expect_footprint_mib or args.min_gpu_mib or math.ceil(0.9 * gguf_mib)
     uuid = resolve_gpu_uuid(args.gpu)
@@ -170,14 +203,36 @@ def main(argv=None) -> int:
                                       port=args.port, n_gpu_layers=args.ngl, ctx_size=args.ctx, gpu_uuid=args.gpu,
                                       label='ENGINEERING_ONLY probe', start_timeout=args.start_timeout, **server_options)
     offload = None
+    gpu_recorder=None
     try:
-        result['server'] = inst.start(build=result['build'], model_sha256=result['model_sha256'])
+        result['server'] = inst.start(build=result['build'], model_sha256=result['model_sha256'],
+                                      preserve_on_failure=args.exam_stage_a)
         say(f'server healthy: pid {inst.record["pid"]}, log {inst.log_path}')
+        # Cooperative Stage A: this worker's native server must be proved to hold
+        # the SAME inherited lease open file description before any request is
+        # issued (the start already verified ancestor->descendant kcmp + /proc).
+        result['lease_inheritance'] = (result['server'] or {}).get('lease_inheritance')
+        if os.environ.get('TRACKX_GPU_LEASE_FD'):
+            from r1.exam.cache_runtime import validate_lease_inheritance_record
+            try:
+                validate_lease_inheritance_record(result['lease_inheritance'])
+            except RuntimeError as exc:
+                raise RuntimeError(f'STOP: qualification server lease inheritance unproved: {exc}') from exc
+            if (result['server'] or {}).get('start_ticks') != result['lease_inheritance']['server_start_ticks']:
+                raise RuntimeError('STOP: qualification server lease inheritance start ticks mismatch')
         result['served_models'] = inst.model_ids()
         props = inst.props() or {}
         result['props'] = {k: props.get(k) for k in ('model_path', 'total_slots', 'build_info')}
-        result['one_token'] = inst.chat('Reply OK', max_tokens=1, seed=0).get('usage')
-        result['gpu_generation'] = generation(inst, args.gen_tokens)
+        target=inst
+        if args.exam_stage_a:
+            journal=probe_dir/'d3_qualification_gpu.jsonl'
+            gpu_recorder,identity=qualification_recorder(inst,args,journal)
+            result['qualification_gpu_identity']=identity
+            result['qualification_gpu_journal']=str(journal)
+            target=gpu_recorder
+        one_extra={'cache_prompt':False} if args.exam_stage_a else None
+        result['one_token'] = target.chat('Reply OK', max_tokens=1, seed=0,extra=one_extra).get('usage')
+        result['gpu_generation'] = generation(target, args.gen_tokens,exam_stage_a=args.exam_stage_a)
         # Loaded-state telemetry before any assertion (deepthought 25 Oct: it was missing when the probe stopped).
         apps = lsi.gpu_compute_apps()
         mine = [r for r in (apps or []) if r['pid'] == inst.record['pid']]
@@ -188,13 +243,22 @@ def main(argv=None) -> int:
         save()
         offload = lsi.offload_check(inst.log_text(), pid=inst.record['pid'], gpu_uuid=uuid, footprint_mib=floor,
                                     apps=apps)
+        if args.exam_stage_a and (args.alias not in (result.get('served_models') or []) or not offload['full']):
+            stop('Stage A qualification did not establish alias and full offload')
     except Exception as exc:  # noqa: BLE001 - recorded; the verdict is then STOP
         stop(f'{type(exc).__name__}: {exc}')
     finally:
-        result['server_stop'] = {k: inst.stop().get(k) for k in ('stopped_utc', 'returncode', 'killed')} \
-            if inst.process is not None else None
+        if gpu_recorder is not None: gpu_recorder.close()
+        if args.exam_stage_a and result['stop_reasons']:
+            result['server_stop']=None
+            result['server_preserved_on_stop']=inst.process is not None
+        else:
+            result['server_stop'] = {k: inst.stop().get(k) for k in ('stopped_utc', 'returncode', 'killed')} \
+                if inst.process is not None else None
         result['server_log'] = str(inst.log_path)
         save()
+    if args.exam_stage_a and result['stop_reasons']:
+        result['verdict']='STOP';save();return 1
     if offload is None:
         offload = lsi.offload_report(inst.log_text())
         offload['full'] = False
@@ -217,14 +281,32 @@ def main(argv=None) -> int:
                                              generation=1, **server_options)
         info = {'argv_ngl': '0', 'log': str(control.log_path)}
         result['cpu_control'] = info
+        cpu_recorder=None
         try:
-            control.start(build=result['build'], model_sha256=result['model_sha256'])
-            info['generation'] = generation(control, args.gen_tokens)
+            control.start(build=result['build'], model_sha256=result['model_sha256'],preserve_on_failure=args.exam_stage_a)
+            target=control
+            if args.exam_stage_a:
+                journal=probe_dir/'d3_qualification_cpu.jsonl'
+                cpu_recorder,identity=qualification_recorder(control,args,journal)
+                info['identity']=identity;info['journal']=str(journal);target=cpu_recorder
+            info['generation'] = generation(target, args.gen_tokens,exam_stage_a=args.exam_stage_a)
+            if args.exam_stage_a:
+                gpu_tps=(result.get('gpu_generation') or {}).get('tokens_per_second')
+                cpu_tps=(info.get('generation') or {}).get('tokens_per_second')
+                info['speedup']=round(gpu_tps/cpu_tps,3) if gpu_tps and cpu_tps else None
+                info['passed']=info['speedup'] is not None and info['speedup']>=args.min_speedup
+                if not info['passed']:
+                    info['error']='Stage A CPU control speedup missing or below threshold'
         except Exception as exc:  # noqa: BLE001
             info['error'] = f'{type(exc).__name__}: {exc}'
         finally:
-            if control.process is not None:
+            if cpu_recorder is not None: cpu_recorder.close()
+            if control.process is not None and not (args.exam_stage_a and 'error' in info):
                 info['server_stop'] = {k: control.stop().get(k) for k in ('stopped_utc', 'returncode', 'killed')}
+            elif args.exam_stage_a and 'error' in info:
+                info['server_preserved_on_stop']=control.process is not None
+        if args.exam_stage_a and 'error' in info:
+            stop('Stage A CPU control failed; process preserved');result['verdict']='STOP';save();return 1
         gpu_tps = (result.get('gpu_generation') or {}).get('tokens_per_second')
         cpu_tps = (info.get('generation') or {}).get('tokens_per_second')
         info['speedup'] = round(gpu_tps / cpu_tps, 3) if gpu_tps and cpu_tps else None

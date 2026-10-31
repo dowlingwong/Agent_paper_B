@@ -1,0 +1,165 @@
+"""No real server, model, GPU, or network; Stage A qualification remains STOP."""
+from types import SimpleNamespace
+import pytest
+from r1.exam import qualify
+from r1.scripts import llamacpp_probe
+from r1.scripts.exam_runner import run_fresh_qualification
+from r1.exam.runtime import PreparationStop
+
+
+def test_direct_qualification_stops_before_job_access_or_output():
+    class NoAccess:
+        def __getitem__(self,key):raise AssertionError('job accessed')
+    with pytest.raises(RuntimeError,match='D3 cold-cache'):
+        qualify.qualify(NoAccess())
+
+
+def test_stagea_probe_direct_entry_stops_before_output(tmp_path):
+    out=tmp_path/'should-not-exist'
+    with pytest.raises(RuntimeError,match='D3 cold-cache'):
+        llamacpp_probe.main(['--binary','/fake','--model','/fake','--gpu','GPU-FAKE',
+                            '--port','12345','--out',str(out),'--exam-stage-a'])
+    assert not out.exists()
+
+
+def test_stagea_qualification_generation_passes_explicit_false():
+    calls=[]
+    def chat(prompt,*,max_tokens,seed,extra):
+        calls.append(extra)
+        return {'usage':{'completion_tokens':1}}
+    llamacpp_probe.generation(SimpleNamespace(chat=chat),1,exam_stage_a=True)
+    assert calls==[{'ignore_eos':True,'cache_prompt':False}]
+
+
+def test_stagea_qualification_recorder_binds_observed_identity(tmp_path,monkeypatch):
+    from r1.exam import cache_runtime,cache_proc,cache_false
+    identity={'pid':7,'process_start_ticks':9,'fresh':False}
+    monkeypatch.setattr(cache_runtime,'capture_parent_identity',lambda inst,**pins:identity)
+    monkeypatch.setattr(cache_proc,'sample_llama_server_processes',lambda i:{'pid':7,'count':1})
+    calls=[]
+    def make(url,alias,**kwargs):
+        calls.append((url,alias,kwargs));return 'synthetic-recorder'
+    monkeypatch.setattr(cache_false,'FalseCallRecorder',make)
+    inst=SimpleNamespace(url='http://fixture',alias='fixture')
+    args=SimpleNamespace(expect_binary_sha256='binary-pin',expect_sha256='model-pin')
+    recorder,bound=llamacpp_probe.qualification_recorder(inst,args,tmp_path/'qual.jsonl')
+    assert recorder=='synthetic-recorder' and bound is identity
+    assert calls[0][2]['identity'] is identity and calls[0][2]['journal_path']==tmp_path/'qual.jsonl'
+    assert calls[0][2]['census']()=={'pid':7,'count':1}
+    assert not (tmp_path/'qual.jsonl').exists()
+
+
+def test_qualification_recorder_rejects_missing_pins_before_capture(tmp_path,monkeypatch):
+    from r1.exam import cache_runtime
+    monkeypatch.setattr(cache_runtime,'capture_parent_identity',lambda *a,**k:pytest.fail('capture called'))
+    with pytest.raises(RuntimeError,match='pins required'):
+        llamacpp_probe.qualification_recorder(None,SimpleNamespace(expect_binary_sha256=None,expect_sha256='x'),tmp_path/'j')
+
+
+def test_qualification_bad_pins_stop_before_server_launch(tmp_path,monkeypatch):
+    monkeypatch.setattr('r1.exam.stage_a.require_d3_evidence',lambda:None)
+    monkeypatch.setattr(llamacpp_probe,'port_is_free',lambda p:True)
+    monkeypatch.setattr(llamacpp_probe.lsi,'build_info',lambda p:{'version_line':'actual-build'})
+    monkeypatch.setattr(llamacpp_probe.lsi,'sha256_file',lambda p:'actual-sha')
+    monkeypatch.setattr(llamacpp_probe.lsi,'LlamaServerInstance',lambda *a,**k:pytest.fail('server launched'))
+    rc=llamacpp_probe.main(['--binary','/fake','--model','/fake','--gpu','GPU-FAKE','--port','12345',
+                            '--out',str(tmp_path/'probe'),'--exam-stage-a','--expect-sha256','expected-model',
+                            '--expect-binary-sha256','expected-binary','--expect-build','expected-build'])
+    assert rc==1
+
+
+def test_qualification_existing_directory_never_reused(tmp_path):
+    existing=tmp_path/'attempt';existing.mkdir();old=existing/'qualification.json';old.write_text('old')
+    runner=SimpleNamespace(cfg={},run_job=lambda *a,**k:pytest.fail('old attempt reused'))
+    with pytest.raises(PreparationStop,match='already exists'):
+        run_fresh_qualification(runner,existing,{'quant_source':{'sha256':'pin'}},32768)
+    assert old.read_text()=='old'
+
+
+def test_qualification_worker_stop_not_swallowed_even_if_output_exists(tmp_path):
+    def run(job,module):
+        (tmp_path/'attempt'/'qualification.json').write_text('{"status":"PASS"}')
+        raise RuntimeError('synthetic watchdog STOP')
+    runner=SimpleNamespace(cfg={'dryrun':True},run_job=run)
+    with pytest.raises(RuntimeError,match='watchdog STOP'):
+        run_fresh_qualification(runner,tmp_path/'attempt',{'quant_source':{'sha256':'pin'}},32768)
+    assert (tmp_path/'attempt'/'qualification.json').exists()
+
+
+def test_fresh_qualification_rejects_wrong_context(tmp_path):
+    import json
+    def run(job,module):
+        (tmp_path/'attempt'/'qualification.json').write_text(json.dumps({'status':'PASS','model_sha256':'pin','context':16384}))
+    runner=SimpleNamespace(cfg={'dryrun':True},run_job=run)
+    with pytest.raises(PreparationStop,match='model/context binding'):
+        run_fresh_qualification(runner,tmp_path/'attempt',{'quant_source':{'sha256':'pin'}},32768)
+
+
+def test_qualification_exit_protocol_allows_only_bound_oom_fallback():
+    from r1.exam.qualify import qualification_exit_code
+    oom={'status':'MECHANICAL_FAILURE','allocation_failure_evidence':{
+        'kind':'cuda_allocation_out_of_memory','healthy_idle_after_stop':True}}
+    assert qualification_exit_code(oom)==0
+    assert qualification_exit_code({'status':'PASS'})==0
+    for bad in ({'status':'MECHANICAL_FAILURE'}, {'status':'PREPARATION_STOP'},
+                {'status':'MECHANICAL_FAILURE','allocation_failure_evidence':{
+                    'kind':'cuda_allocation_out_of_memory','healthy_idle_after_stop':False}}):
+        assert qualification_exit_code(bad)==1
+
+
+def test_fake_32k_oom_falls_back_to_16k_only_after_bound_receipt(tmp_path,monkeypatch):
+    import json
+    from r1.scripts import exam_runner
+    from r1.exam import cache_runtime,stage_a as worker
+    monkeypatch.setattr(worker,'require_d3_evidence',lambda:None)
+    monkeypatch.setattr(cache_runtime,'reject_unverified_lease',lambda:None)
+    monkeypatch.setattr(cache_runtime,'capture_parent_identity',lambda *a,**k:{'synthetic':True})
+    monkeypatch.setattr(cache_runtime,'reject_unverified_cold',lambda *a:None)
+    spec={'id':'fixture','role':'candidate','runtime':{'footprint_mib':None},
+          'quant_source':{'sha256':'pin'},'thinking_policy':{'mode':'off'}}
+    class Runner:
+        cfg={'dryrun':True,'server':{'binary_sha256':'bin','build':'fake'}}
+        out=tmp_path
+        state={'completed':{}}
+        service=None
+        contexts=[]
+        def spec_order(self,selected=None):return [spec]
+        def validate_spec(self,*args,**kwargs):pass
+        def save(self):pass
+        def server(self,spec,mode,ctx):
+            self.contexts.append(ctx);self.service=SimpleNamespace(record_path='synthetic',port=18482);return self.service
+        def stop_service(self):self.service=None
+        def run_job(self,job,module):
+            out=Path(job['out']);out.mkdir(parents=True,exist_ok=True)
+            if module=='r1.exam.qualify':
+                ctx=job['ctx']
+                if ctx==32768:
+                    result={'status':'MECHANICAL_FAILURE','context':ctx,'model_sha256':'pin',
+                            'allocation_failure_evidence':{'kind':'cuda_allocation_out_of_memory',
+                                                           'healthy_idle_after_stop':True}}
+                else:result={'status':'PASS','context':ctx,'model_sha256':'pin','footprint_mib':50}
+                from r1.exam.qualify import qualification_exit_code
+                if qualification_exit_code(result):raise RuntimeError('worker failed')
+                (out/'qualification.json').write_text(json.dumps(result))
+            else:
+                (out/'stage_a.json').write_text(json.dumps({'passed':True,'failure_classes':[]}))
+    from pathlib import Path
+    r=Runner()
+    exam_runner._stage_a_cooperative(r,None)
+    assert r.contexts==[16384]
+    table=json.loads((tmp_path/'stage_a_table.json').read_text())
+    row=table['rows'][0]
+    assert row['ctx_size']==16384 and row['cpu_pool_only'] is True
+    assert (tmp_path/'fixture/stage-a/32768/qualification/qualification.json').exists()
+    assert (tmp_path/'fixture/stage-a/16384/qualification/qualification.json').exists()
+
+
+def test_unverified_mechanical_failure_cannot_fallback(tmp_path):
+    import json
+    def run(job,module):
+        (Path(job['out'])/'qualification.json').write_text(json.dumps({
+            'status':'MECHANICAL_FAILURE','context':32768,'model_sha256':'pin'}))
+    from pathlib import Path
+    runner=SimpleNamespace(cfg={'dryrun':True},run_job=run)
+    with pytest.raises(PreparationStop,match='lacks completed OOM/idle evidence'):
+        run_fresh_qualification(runner,tmp_path/'attempt',{'quant_source':{'sha256':'pin'}},32768)

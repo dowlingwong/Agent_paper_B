@@ -59,7 +59,15 @@ class FixtureWorker:
                             'DRYRUN.log','DRYRUN.diff','DRYRUN-before','DRYRUN-after')
 
 
+def observer_for_campaign(job, out):
+    """Bind the observer journal to this root without opening it in advance."""
+    candidate=job['candidate']
+    if candidate.get('kind','llm')!='llm': return None
+    return SelfForecastObserver(job['base_url'],candidate['id'],journal_path=Path(out)/'a4_observer_requests.jsonl')
+
+
 def collect(job):
+    raise RuntimeError('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
     out=Path(job['out'])
     import platform
     if not job['dryrun'] and platform.node().split('.')[0]!='TASL-2': raise RuntimeError('STOP: EXAM workers run only on portal')
@@ -79,12 +87,15 @@ def collect(job):
     elif kind=='scripted': manager=ScriptedRandomManager(node,seed=seed,repetition=0)
     else: manager=LangGraphManager(model='llamacpp/'+candidate['id'],proposal_schema=job['proposal_schema'],transport_retry=None)
     worker=FixtureWorker(node_root,seed) if job['dryrun'] else LocalWorker(node_root=node_root,artifact_dir=out/'art',train_seed=seed,split_seed=seed)
-    observer=SelfForecastObserver(job['base_url'],candidate['id']) if kind=='llm' else None
-    run_real_campaign(node_spec=spec,campaign_id=f'{node}__s{seed}',budget=job['llm_call_cap'] if kind=='llm' else 1_000_000,
-                      manager_mode='baseline_manager',memory_mode='append_only_summary',records_path=out/'root_trials.jsonl',worker=worker,
-                      proposal_backend=manager,compute_budget=ComputeBudget(max_worker_runs=job['W'],max_llm_calls=job['llm_call_cap']),
-                      action_versions=ActionVersions.new_campaign(),verify_split_policy='vary',
-                      event_store=CampaignEventStore(out/'root_events.jsonl'),proposal_observer=observer)
+    observer=observer_for_campaign(job,out)
+    try:
+        run_real_campaign(node_spec=spec,campaign_id=f'{node}__s{seed}',budget=job['llm_call_cap'] if kind=='llm' else 1_000_000,
+                          manager_mode='baseline_manager',memory_mode='append_only_summary',records_path=out/'root_trials.jsonl',worker=worker,
+                          proposal_backend=manager,compute_budget=ComputeBudget(max_worker_runs=job['W'],max_llm_calls=job['llm_call_cap']),
+                          action_versions=ActionVersions.new_campaign(),verify_split_policy='vary',
+                          event_store=CampaignEventStore(out/'root_events.jsonl'),proposal_observer=observer)
+    finally:
+        if observer is not None: observer.close()
     records=read_rows(out/'root_trials.jsonl');events=read_rows(out/'root_events.jsonl')
     props,checks=replay_campaign(records,start,node,f'{node}__s{seed}','EXAM','append_only_summary',job['W'],1.)
     forecasts={e['trial_id']:e['payload'] for e in events if e['event_type']=='exam_self_forecast'}
