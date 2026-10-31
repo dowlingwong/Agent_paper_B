@@ -680,12 +680,19 @@ def evidence_scratch(out: Path, scratch_root: Path, provenance: dict):
         raise
 
 
+def _require_task_native_runtime_attestation() -> None:
+    """Block EVIDENCE until actual task-process attestation is implemented and reviewed."""
+    # worker_runtime is a separate subprocess and does not attest the task.
+    raise ValueError('STOP: actual task-native runtime attestation is not implemented')
+
+
 def evidence_run(table: Path, paper_root: Path, index: Path, classification: Path, out: Path,
                  workers: int, deadline: float, *, code_commit: str | None = None,
                  code_review: str | None = None, sweep_environment: Path | None = None,
                  scratch_root: Path | None = None, required_scratch_bytes: int = 0,
                  ceph_reserve_files: int = 0) -> dict:
     """One fresh audit output; no pilot cache, existing directory, or automatic resume."""
+    _require_task_native_runtime_attestation()
     if workers < 1 or not math.isfinite(deadline) or deadline <= 0:
         raise ValueError('workers and deadline must be positive')
     provenance = evidence_paper_provenance(paper_root, code_commit, code_review)

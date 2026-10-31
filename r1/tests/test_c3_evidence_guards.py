@@ -118,6 +118,8 @@ def test_evidence_plan_covers_all_and_rejects_stale_table(tmp_path, monkeypatch)
 
 
 def test_evidence_audit_refuses_existing_output_even_without_cache(tmp_path, monkeypatch):
+    # Test downstream path protection independently of the real entry STOP.
+    monkeypatch.setattr(audit, '_require_task_native_runtime_attestation', lambda: None)
     monkeypatch.setattr(audit, 'evidence_plan', lambda *args: ([{'proposal_id': 'a'}], {}))
     monkeypatch.setattr(audit, 'evidence_environment', lambda *args: dict(FAKE_ENV))
     monkeypatch.setattr(audit, 'evidence_paper_provenance', lambda *args: {})
@@ -179,6 +181,7 @@ def test_published_authority_rejects_unpublished_changes(tmp_path, monkeypatch):
 
 
 def test_first_worker_failure_stops_new_dispatch_and_preserves_stop(tmp_path, monkeypatch):
+    monkeypatch.setattr(audit, '_require_task_native_runtime_attestation', lambda: None)
     table = tmp_path / 'table'
     table.mkdir()
     (table / 'configs.json').write_text(json.dumps({h: {'files': {}} for h in ('a', 'b', 'c')}))
@@ -221,6 +224,7 @@ def test_first_worker_failure_stops_new_dispatch_and_preserves_stop(tmp_path, mo
 
 @pytest.mark.parametrize('failure', ['validation', 'completion_write'])
 def test_final_failure_keeps_scratch_and_writes_stop(tmp_path, monkeypatch, failure):
+    monkeypatch.setattr(audit, '_require_task_native_runtime_attestation', lambda: None)
     table = tmp_path / 'table'
     table.mkdir()
     (table / 'configs.json').write_text(json.dumps({h: {'files': {}} for h in ('a', 'b')}))
@@ -269,6 +273,7 @@ def test_final_failure_keeps_scratch_and_writes_stop(tmp_path, monkeypatch, fail
 
 
 def test_resource_floor_stops_dispatch_and_drains_inflight(tmp_path, monkeypatch):
+    monkeypatch.setattr(audit, '_require_task_native_runtime_attestation', lambda: None)
     table = tmp_path / 'table'
     table.mkdir()
     (table / 'configs.json').write_text(json.dumps({h: {'files': {}} for h in ('a', 'b', 'c')}))

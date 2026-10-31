@@ -1,0 +1,8 @@
+# C3 isolation fixture source recovery — 31 October
+
+These are byte-for-byte copies of already retained synthetic-only engineering fixture sources and selected evidence; they are not production isolation guards and do not authorize execution of a real task or reuse of a stopped batch. No old fixture was run, modified, or removed in recovering them.
+
+- `cache/` was copied read-only from `/tmp/r1_cache_mount_retry_authorized_ZRq5CxgF` on deepthought. The archived original fixture output says `1 passed in 15.68s`; the recorded before/after host mountinfo hashes agree (`dea2e7c345744026ea28d38be2a7b9201fe01cdef4207139438afd69b7a3176c`). Source SHA-256: script `9c7a0851eb82c8688b78be0e0cc948fed7892cfc718a2a8ba3c463743a25e798`, test `b22857e80ca0f6ba07275ef3603744a7bf177cee5049d0e4cbc3b2b87a778861`, log `fb34f0668bae4f49d54011ec7daf9dcd286d7985e4a0bba97490e48d7c6b2325`. It is the authorized older synthetic candidate, not the later missing dirfd guard. Its original docstring is preserved as historical source text.
+- `seccomp/` was copied read-only from `/tmp/r1_replay_seccomp_fixture_OTnIFWlV` on deepthought. Source SHA-256: script `d03c03a3213585aabb854e6b29dd5f794b5ad97eb2be06994e9e483ccbacb410`, test `066d1a931d7f49dfc2ad2433050d764873b9a96d0c570caaf0a5d13e04c84056`. Previously reported as an engineering-only four-test fixture; no test log was found in that directory and no new test was run for this recovery.
+
+The previously failed `/tmp/r1_cache_mount_fixture_sd7E5GwG` remains untouched. Neither the later production dirfd candidate nor the real sklearn procfd path is verified by these artifacts. All B.2 and replay gates remain STOP.

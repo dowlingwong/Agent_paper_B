@@ -79,6 +79,8 @@ def test_each_raw_run_must_carry_matching_venv_and_versions(tmp_path):
 
 
 def test_synthetic_evidence_audit_writes_distinct_hashed_blocks(tmp_path, monkeypatch):
+    # Fixture verifies block semantics only; real EVIDENCE is still blocked.
+    monkeypatch.setattr(audit, '_require_task_native_runtime_attestation', lambda: None)
     table = tmp_path / 'table'
     table.mkdir()
     for name, data in [('build.json', '{}'), ('proposals.jsonl', '{}\n'),
