@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 31 October 2026 — coordinator decisions recorded (AI-assisted; no execution)
+
+- Author decisions D1–D6 are recorded in PLAN §10 as R1-EXAM-STOP2-ACCEPT, R1-EXAM-PROMPTSET-FREEZE, R1-EXAM-CACHE, R1-P3A-OOM, R1-B2-DECOUPLE and R1-TRACKS-S01-FOLLOWUP; full conditional instructions: `docs/r1/authorizations/COORDINATOR_DECISIONS_20261031.md`.
+- This entry records decisions only. STOP 2 source/fit verification and receiving record reconstruction, prompt freeze checks, Stage A review, P.3a diagnosis, B.1 classification and Track S follow-up reviews remain pending. B.2 is not authorized to start. The 4 November layout gate remains unchanged.
+- Census: prior coordinator temporary worktrees and OPS_LOG are absent; local-only B.2 candidates `9fe7f2a` and `00d35d3` were not found in the local Git object database. TASL-2 retains two orphaned DRYRUN server wrapper processes; no GPU compute process was seen. Preserve and investigate read-only.
+
 ## 28 October 2026 — Mac-local preparation: NI masking test, TabPFN pin and A1-ctx proposals, manuscript sections (AI-assisted; ENGINEERING_ONLY / documents)
 
 - New code (fixture-only tests): `r1/c3/ni_masking.py`, the results-masking test for (NI) of `proposals/T4_PROP10_REVISION_20261028.md` §6. It cross-fits A3 with and without the six direct outcome features. RPS is scored against the **evaluation-half** soft label (audit seeds 7006–7010). Fold modes: campaign, pair-grouped (with fold diagnostics) and LONO. The output flag is `results_add_predictive_value`, not evidence for or against NI by itself. Tests: `r1/tests/test_c3_ni_masking.py`, 15 cases. No table, label or evaluation seed was used.

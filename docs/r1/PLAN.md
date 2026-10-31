@@ -634,6 +634,19 @@ The earlier R1-EXAM-RUNBOOK wording that protocol adoption is pending is superse
 | D22 | Stronger manager for the self-control arm | One API model, or a larger open model on Ada (one card); at least as a deployment check | Phase 3 declaration |
 | D23 | Index policy used as the primary comparator | KG-style (Bayesian; uses σ_n and ϱ) vs PACE-style (anytime-valid e-process); possibly both | After the T2 draft, before 0.4b |
 
+### 31 October coordinator decisions
+
+Source: `docs/r1/authorizations/COORDINATOR_DECISIONS_20261031.md`. These rows record the author's decisions; every stated condition and independent-review gate remains in force.
+
+| Decision | Author decision |
+|---|---|
+| R1-EXAM-STOP2-ACCEPT | Accept the 22-file receiving review conditional on independent verification of source pins and 32k fit estimates. If the review was lost, independently reconstruct all 22 entries from registry pins, certificates, journals and on-disk sizes without rehashing; STOP on missing certificates. Commit and push the reconstructed review. |
+| R1-EXAM-PROMPTSET-FREEZE | Freeze the existing 50 prompts unchanged only after verifying no candidate or anchor output and no selection using exam-model output. Record hash, source, draw/rule/freeze timestamps, post-hoc selection and the qwen2.5-coder:7b manager disclosure. The set is not preregistered. |
+| R1-EXAM-CACHE | Stage A primary uses explicit `cache_prompt: false` on all request paths, recorded in config, manifests and calls. Also report `true` descriptively with a fresh cold single server before any false call, including per-call cache evidence. Independent review precedes Stage A; B1/B2 setting is an author decision at STOP 3. |
+| R1-P3A-OOM | Diagnose the qwen3.5-4b control probe OOM read-only. Only if independently established as environmental, verify and hash completed native outputs, empty card and projected budget, then permit an unchanged probes-only attempt 2 preserving attempt 1. Intrinsic or unclear cause remains STOP for author decision. E6 OOM is not E4 training hard-limit failure. |
+| R1-B2-DECOUPLE | Labels freeze uses independently verified B.1 classification only and slips if unverified; B.2 does not enter the frozen labels and does not start. Continue engineering blocker closure. Labels use seeds 7001–7005; 7006–7010 are limited to B.2 task-level joint-seed retraining and evaluation, never C3/Track P training, tuning or selection. |
+| R1-TRACKS-S01-FOLLOWUP | Track S operator runs F1 cold cache-true and F2 plain single-server diagnostics on both hosts under the stated GPU leases, retaining raw per-call cache evidence. Independent review recomputes results; STOP for author before code changes or full S0.1 rerun. Track X has TASL-2 priority. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
