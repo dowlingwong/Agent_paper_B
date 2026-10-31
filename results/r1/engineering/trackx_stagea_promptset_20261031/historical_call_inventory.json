@@ -1,0 +1,936 @@
+{
+  "scope": "Retained source roots and historical rerun-2 branches only; unchanged seed and response records are not counted as new calls.",
+  "contexts": [
+    {
+      "context_sha256": "96738f34b6aa96ed59737da71490e613454a0f3cdf6cf412e7585fc9612eef3d",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s104-trial-002",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "ccea51d6fdcbceab77e4d6ce59abbbee4df641834ac52474b55e846056b2fd9b",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s104-trial-003",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "a49de3fdd1025dfbb57a7b171cce52dcce46703bbb7812d2bb1eeee6312140d2",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s104-trial-004",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "69ba640cac174f43ff508ffe8ba8ddcfd3b7b45a758278d0b893f4d4419930b2",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s104-trial-005",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "c3d1c6ebc87c5c64206a088d0dd0acaaa549d7e79b86006329d409d330b149e7",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s104-trial-006",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "b29e69a601a580347e6053924f581e50cb3c774133977a129f2d8cc13ea835df",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s104-trial-007",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "bba9fa7d3aa1f02fabfbafb297cfe191f59407b44e3490e1d0977e4618c3cd27",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s104-trial-008",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "b8d72856ab4dcd2892c0b9fe21a018df1898b658caf8845e8cb4b2dff85566a0",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s104-trial-009",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "c04724b2b1f4238a03bdcaf9b4ebcac69c5776567197b1f2de5cc67ce82c1bba",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s104-trial-010",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "6911c1f38e1c2bcef3013f6aa7f0586eeb9d092df2fde725e54c17bd19d20027",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s114-trial-002",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "2cea16ba177b2727984d4c2e37e91006451d7420628da51dc830997739ecca28",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s114-trial-003",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "d16abb18d87b4dde4584c575d6c083662749d0f68931de952cc55fe8a12475ed",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s114-trial-004",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "0b01cd895227f316978cdf08d01fdfd5257d44382b2c186cc865e15177fae548",
+      "node": "digits_mlp",
+      "trial_id": "digits_mlp__s114-trial-005",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "f354e8fd06b26a0055902fad6617790eca6063ebba8cf8764202c82ddad71e04",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-002",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 12,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "364453ed44e051d68d5527ae51f353e169e1267d9a000b5dee4de063b711ad15",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-003",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 12,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "9eadd6723f7a3f500bb003c1777679fde26fa78d726cacdfab1aeafd612f5066",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-004",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 12,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "2906bacee479f869bf5dfe6f3d36810c918c0443f9fe4bfd99ec4f2195a08340",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-005",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 4,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b004__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b004__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b004__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b004__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "54e937add988d3552dfbb83f8769626041bc3c5f6513cf5c78606daee2d1d5d0",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-006",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b004__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b004__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "08e7c0149919cf3d659c13ec8ce0c19c6928a5e972fd18355fff62a5f1631bca",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-007",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b004__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b004__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "68ed043b9d09d7864a2f73033c5aa2486e6624c64889b36fc857d1205f7d384d",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-008",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b004__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b004__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "fa6c2b158c3da91c0ac0681ef3d0bf4e306a7d9747fe02082fd2ad0b1094c64c",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-009",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 4,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b008__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b008__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b008__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b008__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "ffcea5545b5444f8738120ddb87ee37702575928ba752612dc840c5e21448cf9",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-010",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": [
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b008__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b008__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "59904995a46705b6cd125fed4ef8c375773fc8f2b12e30217c4aa33388bb9b2f",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-011",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "9bede1db022981d2c047a3ff2888b6dbdfed4e5ea74c5d9a4d6e596446a67493",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-012",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "e2fcc56e95680bcc4ca5050ab3bb441b78016e8defcee8c34297a06548c36da9",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-013",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 4,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b012__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b012__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b012__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b012__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "3867856a096739737f961db9544765fb553a0215f72aa13bf16d3d0f2abdd9eb",
+      "node": "openml_breast_w",
+      "trial_id": "openml_breast_w__s105-trial-014",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 3,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "openml_breast_w__s105__b012__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b012__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_breast_w__s105__b012__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "21511a2d345e59c9a612568355a18a785e013107ca289bc74f0c49a6b74ddf92",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-002",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 12,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "e5f21e9f28433cefead4ea1c5a7b7ecef171357223e94a9ad51933f6eac59d91",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-003",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 12,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "aebf21604e14172ee7d7a6e8f0135cd588d04d9c4bfc01869569253aa474d71b",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-004",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 12,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "8c9e01e716314e9a9699e5db9b06a9336854f5a230c6e3db2cd0ba3d61b804c0",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-005",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 4,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b004__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b004__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b004__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b004__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "03a8acf900187765fdc7ab96d2dae6fc1aeb22234c60cc6765dec7b0bcf34a54",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-006",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 3,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b004__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b004__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b004__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "ee10008530c615cc9d31e7441396f1473a75f504f0d1e00f457ee0752298bdcc",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-007",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b004__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b004__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "dc65329ad90c76036475ef6dd6e2cfaa470c71083b4843dde17e71f41664ac9a",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-008",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b004__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b004__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "7609668f96f99c8f67e7a44da534f69f31e91ef3df37984fa705bb3a76c48ab9",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-009",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 4,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b008__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b008__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b008__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b008__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "79f01f98d5fa7fe6d47572636c7341dacd4f3b70bded5d82026ac2bac3ae1914",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-010",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b008__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b008__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "4c7504cbc03c0a51aba84892261d9fb3d3036e897641d1ea735aa6057e054574",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-011",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "4462787c31995ac0030b553ff04286d2e67b41a3b83deb5cd48e6df33d9bee00",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-012",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "04c2ec0bfa809018ad907a7c54e029851855e75937cf0e9543c8bac46f064181",
+      "node": "openml_ionosphere",
+      "trial_id": "openml_ionosphere__s103-trial-013",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 4,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": [
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b012__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b012__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "openml_ionosphere__s103__b012__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "openml_ionosphere__s103__b012__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "655a0a196112761707105fe70b3a61690003154476e6310aaf1a71f2bb0342c0",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-002",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 12,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "010412ed6add2affaa7393823e460b7fdeaac2cd1bea398b8d949d56ccff83ab",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-003",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 12,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "3791de41e949e111968609f0ad857160c2a59cf3fb94b5634570bebe37c44182",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-004",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 12,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "4dbd9bb1b57f76f1d6652b9a4122ddf07c07b49a09d67dc9758c940acd2a05ca",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-005",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 4,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "tabular_mlp__s102__b004__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b004__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b004__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "tabular_mlp__s102__b004__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "bb09b6416f6795868713100f9e29f6f39971acb201a3dd64ae3725d6538ee76e",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-006",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 4,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "tabular_mlp__s102__b004__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b004__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b004__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "tabular_mlp__s102__b004__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "34472f4688b701baa8f0497a6669b1097cc51ffe9cab1beaf2308ab5111bf967",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-007",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "tabular_mlp__s102__b004__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b004__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "23a52fca7e01f6a8fceef3afad6e74764702edbdc1f2c2e6e61a825d62e687a4",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-008",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 8,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "a22a2b5ce565e9b6caa9c27c4990636820c804d9e31f3c429451910a96164186",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-009",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 2,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 4,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": [
+        {
+          "branch": "verify",
+          "ledger": "tabular_mlp__s102__b008__verify__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b008__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b008__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "tabular_mlp__s102__b008__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "220e25eb0e66f5886870c4f2b87c5173824683f0838ee3801fed642227d5faa9",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-010",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 1,
+      "distinct_later_continue_calls": 1,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": [
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b008__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "verify",
+          "ledger": "tabular_mlp__s102__b008__verify__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    },
+    {
+      "context_sha256": "79726057074bbd44aefd5db79838350651d81fa111e032991ec7cfe89e56a2db",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-011",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "e8925c1293b98b701d10cd38152c61b2f12553f36ee7eb3b55128f7f2ccd8683",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-012",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 0,
+      "distinct_later_total": 0,
+      "later_output_differs_from_source": false,
+      "inherited_or_same_seed_and_response_records": 4,
+      "branch_records": []
+    },
+    {
+      "context_sha256": "5c9e403bfc3d5b882ddaa10dbb86bf7da93aecae417107b09bb14c59c37206b2",
+      "node": "tabular_mlp",
+      "trial_id": "tabular_mlp__s102-trial-013",
+      "source_trajectory_calls": 1,
+      "distinct_later_verify_calls": 0,
+      "distinct_later_continue_calls": 2,
+      "distinct_later_total": 2,
+      "later_output_differs_from_source": true,
+      "inherited_or_same_seed_and_response_records": 0,
+      "branch_records": [
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b012__continue__r1/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        },
+        {
+          "branch": "continue",
+          "ledger": "tabular_mlp__s102__b012__continue__r2/branch_trials.jsonl.gz",
+          "output_differs_from_source": true
+        }
+      ]
+    }
+  ]
+}
