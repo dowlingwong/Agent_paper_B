@@ -16,25 +16,50 @@ def post(instance, route, payload, timeout=300):
         return json.load(r)
 
 
-def load_prompts(path, expected, *, dryrun=False):
-    if digest_file(path)!=expected: raise ValueError('frozen prompt-set digest mismatch')
-    rows=[json.loads(s) for s in Path(path).read_text().splitlines() if s.strip()]
+def load_prompts(path, expected, *, dryrun=False, historical_seeds=False):
+    # Use the same bytes for digest checking and parsing; never edit the source.
+    data=Path(path).read_bytes()
+    if hashlib.sha256(data).hexdigest()!=expected: raise ValueError('frozen prompt-set digest mismatch')
+    rows=[json.loads(s) for s in data.decode('utf-8').splitlines() if s.strip()]
     if len(rows)!=50 or len({r['node'] for r in rows})<4: raise ValueError('50 prompts across >=4 nodes required')
     sources={};seen=set()
     for row in rows:
         if not row.get('prompt') or not row.get('active_keys'): raise ValueError('prompt and active keys required')
         if not dryrun:
             source=Path(row['ledger_path'])
-            if row.get('memory_mode')!='append_only_summary' or digest_file(source)!=row['ledger_sha256']:
+            if source not in sources:
+                raw=source.read_bytes()
+                sources[source]=(hashlib.sha256(raw).hexdigest(),
+                                 [json.loads(s) for s in raw.decode('utf-8').splitlines() if s.strip()])
+            sha, records=sources[source]
+            if row.get('memory_mode')!='append_only_summary' or sha!=row['ledger_sha256']:
                 raise ValueError('prompt-set source ledger/memory provenance mismatch')
             key=(str(source.resolve()),row['trial_id'])
             if key in seen: raise ValueError('duplicate frozen ledger/trial prompt')
             seen.add(key)
-            if source not in sources: sources[source]=[json.loads(s) for s in source.read_text().splitlines() if s.strip()]
-            record=next((r for r in sources[source] if r.get('trial_id')==row['trial_id']),None)
+            matches=[r for r in records if r.get('trial_id')==row['trial_id']]
+            if len(matches)!=1: raise ValueError('source ledger trial must be unique')
+            record=matches[0]
             if (record is None or record.get('memory_mode')!='append_only_summary' or record.get('node_id')!=row['node'] or
                 ((record.get('extra') or {}).get('manager') or (record.get('extra') or {})).get('context_sha256')!=hashlib.sha256(row['prompt'].encode()).hexdigest()):
                 raise ValueError('frozen prompt does not match its recorded memory-on manager context')
+            if historical_seeds:
+                # D26 in harness 411c6054: SHA-256(campaign|budget|0|0), first
+                # four bytes big-endian. Require the historical llm_call to
+                # agree; a newly supplied seed cannot override source evidence.
+                campaign=record.get('campaign_id'); budget=record.get('budget_index')
+                manager=(record.get('extra') or {}).get('manager') or {}
+                call=manager.get('llm_call') or {}
+                recorded=call.get('seed')
+                if not isinstance(campaign,str) or not campaign or type(budget) is not int or budget<0 or type(recorded) is not int:
+                    raise ValueError('missing historical D26 seed inputs')
+                payload=f'{campaign}|{budget}|0|0'.encode('utf-8')
+                derived=int.from_bytes(hashlib.sha256(payload).digest()[:4],'big')
+                if recorded!=derived or ('seed' in row and (type(row['seed']) is not int or row['seed']!=derived)):
+                    raise ValueError('historical D26 seed mismatch')
+                row['seed']=derived
+        elif historical_seeds:
+            raise ValueError('historical D26 seeds require verified source ledgers')
     return rows
 
 
@@ -152,13 +177,13 @@ def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=Fa
                 else: result['free_seed_reproducible'] &= repeated_message==message
                 reasoning=(reply.get('usage',{}).get('completion_tokens_details') or {}).get('reasoning_tokens')
                 token_rows.append({**reply.get('usage',{}),'reasoning_tokens':reasoning})
-                pair.append({'structured':structured,'raw_content':content,'reasoning_content':message.get('reasoning_content'),
+                pair.append({'structured':structured,'seed':row['seed'],'raw_content':content,'reasoning_content':message.get('reasoning_content'),
                              'parse_ok':ok,'repeat_message':repeated_message,'usage':reply.get('usage',{})})
             except Exception as exc:
                 failure='timeout' if 'timeout' in str(exc).lower() or 'timed out' in str(exc).lower() else 'parse'
 
                 if structured: result['failure_classes'].append(failure)
-                pair.append({'structured':structured,'error':repr(exc)})
+                pair.append({'structured':structured,'seed':row['seed'],'error':repr(exc)})
         responses.append({'prompt_id':row.get('id'),'responses':pair})
     result.update(responses=responses,token_counts=token_rows,
                   latency_p50=float(np.quantile(timings,.5)) if timings else None,
@@ -187,7 +212,8 @@ def main(argv=None):
     job=json.loads(Path(a.job).read_text());cfg=job['config'];spec=job['candidate']
     inst=LlamaServerInstance(job['out'],cfg['server']['binary'],model_path=spec['runtime']['model_path'],alias=spec['id'],
                              ctx_size=job['ctx'],port=job['port'])
-    prompts=load_prompts(cfg['prompts'],cfg['prompts_sha256'],dryrun=bool(cfg.get('dryrun')))
+    prompts=load_prompts(cfg['prompts'],cfg['prompts_sha256'],dryrun=bool(cfg.get('dryrun')),
+                         historical_seeds=not bool(cfg.get('dryrun')))
     render=(lambda ms: ''.join(f"{m['role']}: {m['content']}\n" for m in ms)+'assistant: ') if cfg.get('dryrun') else None
     result=run_stage_a(inst,spec,prompts,gpu_sample=lambda:gpu_sample(cfg),schema_format=manager_response_format(),
                        dryrun=bool(cfg.get('dryrun')),template_renderer=render)
@@ -199,12 +225,12 @@ def main(argv=None):
             message=reply['choices'][0]['message'];final=re.sub(r'<think>.*?</think>\s*','',message['content'],flags=re.S)
             parsed=json.loads(final);reasoning=(reply.get('usage',{}).get('completion_tokens_details') or {}).get('reasoning_tokens')
             grammar=bool(reasoning or message.get('reasoning_content')) and isinstance(parsed,dict) and set(parsed)==set(manager_response_format()['json_schema']['schema']['required'])
-            result['thinking_grammar_probe']={'passed':grammar,'message':message,'usage':reply.get('usage'),'request_controls':controls}
+            result['thinking_grammar_probe']={'passed':grammar,'seed':prompts[0]['seed'],'message':message,'usage':reply.get('usage'),'request_controls':controls}
             result['thinking_disabled_due_grammar']=not grammar and spec['thinking_policy']['mode']!='always_on'
             if not grammar and spec['thinking_policy']['mode']=='always_on':
                 result['failure_classes']=sorted(set(result['failure_classes']+['grammar']));result['passed']=False
         except Exception as exc:
-            result['thinking_grammar_probe']={'passed':False,'error':repr(exc),'request_controls':controls}
+            result['thinking_grammar_probe']={'passed':False,'seed':prompts[0]['seed'],'error':repr(exc),'request_controls':controls}
             result['thinking_disabled_due_grammar']=spec['thinking_policy']['mode']!='always_on'
             if not result['thinking_disabled_due_grammar']: result['passed']=False;result['failure_classes'].append('grammar')
     if not cfg.get('dryrun'):
