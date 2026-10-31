@@ -428,3 +428,185 @@ pid, or the lease. These require a corrected launch script (and an install/copy 
 before F1/F2 may run; the diagnostic code can be carried forward with the m1/m2/m3 fixes.
 
 REVIEW VERDICT: NOT ACCEPTED
+
+---
+
+## Round 2 — re-review after `0c6f43e6` (31 Oct 2026)
+
+**Reviewer:** independent (fresh; not the author or the operator). **Under review:** worktree
+`.claude-worktrees/trackS-ops-20261030`, branch `trackS-ops-20261030`, head **`64a13270`** (the round-1 review)
+on the remediation **`0c6f43e6`** atop `fc842b6d`; `git show 0c6f43e6` (4 files, +209/−54:
+`cache_prompt_diag.py` +72, `install.sh` +9, each `tasl{2,7}_d6.sh` +91/−27). Pins: paper `9bb64ba`,
+harness `115df37`, llama.cpp `620d2225`, GGUF `509287f7…4d3c`; runbook 3.3. **I did not run a GPU job, a
+server, or the diagnostic.** Host access was read-only (`ssh portal_zhixu`, `ssh tasl7`): `git`,
+`sha256sum`, `ss`, `nvidia-smi --query-compute-apps=pid`, `ps`, `grep`, `wc`, `df`, `tmux ls`, and the
+round-1 `flock -n … true` lease probe; I started no process and wrote nothing. One synthetic Python test of
+the diagnostic's `run_mode`/`summarise` with a fake `post_full` (no HTTP, no GPU) checked the `absent` body
+and the first-call metrics.
+
+### 2.1 Worktree, hashes, static checks, pins
+
+```
+git rev-parse HEAD                      # 64a13270
+git status --porcelain                  # clean
+git diff 9bb64ba..HEAD -- r1/tracks/probes r1/harness r1/tests   # empty
+sha256sum r1/tracks/probes/determinism.py                         # 081adb63… (also at 9bb64ba)
+bash -n r1/tracks/ops/launch/tasl{2,7}_d6.sh; bash -n r1/tracks/ops/install.sh   # OK
+python3 -m py_compile r1/tracks/ops/diag/cache_prompt_diag.py                    # OK
+sha256sum .../tasl2_d6.sh .../tasl7_d6.sh .../cache_prompt_diag.py .../install.sh
+  # cce9bfdf…, c75956f5…, 1ef268eb…, 38ec70e8…
+```
+
+The diff is confined to the diagnostic, `install.sh` and the two launch scripts; `determinism.py` is
+`081adb63…` at `9bb64ba` and at HEAD (and on both hosts). The two launch scripts differ only in
+host/node/out paths (diff lines 2, 11-12, 64-65). `trks-diag` is unchanged (`7ab8b5c9…`); `trks-servers`
+is `124316b5…`, byte-identical to the installed host copy.
+
+Hosts (read-only): TASL-2/TASL-7 paper `9bb64ba` (`git status` 0 lines), harness `115df37`, llama.cpp
+`620d2225`, GGUF `509287f7…4d3c`; no `trks_llm` tmux session; no listener on 18101;
+`nvidia-smi --query-compute-apps=pid` empty; `flock -n ~/r1_locks/gpu0.lock true` succeeds (lease free);
+no `.active` priority markers; installed `$R/bin/cache_prompt_diag.py` still **v1** `5012efc4…` and
+`$R/launch` only the 30 Oct scripts; `install.sh` has not been run (so F1/F2 cannot run yet). The host
+checkout at `9bb64ba` has no `r1/tracks/ops/launch`; `install.sh` reads `$here/launch/*.sh` from the
+worktree and `scp`s them to `$R/launch`, so this is handled. Track P on TASL-2: listeners on 39705
+(pid 2945752) and 60275 (pid 3747685), comm `llama-server`, `/proc/<pid>/exe` = `…/python3.12`, not on
+18101; not touched.
+
+### 2.2 B1 — the identification chain
+
+```
+ss -H -ltnp 'sport = :18101' | grep -o 'pid=[0-9]*' | head -1 | cut -d= -f2
+readlink -f /proc/<pid>/exe            # must end in llama-server
+nvidia-smi --query-compute-apps=pid    # exactly one line, equal to <pid>
+tr '\0' ' ' </proc/<pid>/cmdline       # must contain --port 18101
+```
+
+On iproute2 5.15.0 on both hosts a same-user listener renders as
+`LISTEN 0 5 127.0.0.1:39705 0.0.0.0:* users:(("llama-server",pid=2945752,fd=3))`; the extraction returned
+2945752; `ss -H -ltnp 'sport = :18101'` is empty (rc 0) with no listener. The script no longer uses
+`pgrep`; the port scopes the match to 18101, so the `trks-servers` `bash -c` wrapper (not a listener) and
+Track P's 39705/60275 listeners cannot match. Even if a Python-wrapped listener were on 18101,
+`readlink -f /proc/<pid>/exe` = `…/python3.12` would fail the `*/llama-server` case. The GPU pid equality
+and the `--port 18101` cmdline check tie the listener to the single GPU process. B1's old failure cannot
+reproduce. Residuals: N5 (no explicit "exactly one listener" count; `head -1`) and N6 (zero-listener
+silent abort).
+
+### 2.3 M3 — the lease
+
+Line 43 asserts the lease is held: `flock -n "$HOME/r1_locks/gpu0.lock" true && { …exit 1; }` — held →
+`flock -n` exits 1 → the `&&` list is skipped and the script continues; free → `flock -n` exits 0 → STOP.
+I verified this shell semantics on both hosts' bash 5.1.16 (`false && { echo STOP; exit 1; }; echo SURVIVED`
+→ `SURVIVED`; `true && { … }` → `STOP`, rc 1). It never takes the lock (no `flock` without `-n`). After
+the stop (line 82) `flock -n … true || { STOP }` — free → continue, held → STOP; verified. The counted pid
+must be the listener and the single GPU compute pid (lines 46-53). Residual: the holder is not tied to the
+pid, but `trks-servers` cannot acquire the lock if a foreign holder exists, in which case the script never
+reaches the listener checks and STOPs on the wait; acceptable.
+
+### 2.4 M1 and B2 — the freshness gate is vacuous and always fails
+
+The per-invocation part is right: the log is rotated (line 34), the script starts its own
+`tmux new -d -s trks_llm "$R/bin/trks-servers 1"` (line 37), waits for
+`listening on http://127.0.0.1:18101` and `offloaded 29/29 layers` (38-40), refuses an existing output (31),
+and the diagnostic records a measured `server` block (pid/exe/cmdline/sha256/start, lines 217, 236, 252)
+and refuses when `completions_before != 0` (218-220). Both greps match this build: the 30 Oct logs on both
+hosts contain `srv llama_server: listening on http://127.0.0.1:18101` and
+`load_tensors: offloaded 29/29 layers to GPU`.
+
+**But the completion count is not logged by this build.** The pinned `tools/server/server-http.cpp:53`
+defines `log_server_request`, and line 181 is
+`// srv->set_logger(log_server_request); // TODO @ngxson : this is too spamy, no very useful; improve it in the future`
+— the logger is not installed and there is no flag to enable it. The 30 Oct `llama_18101.log` covers the
+1200-call `s01_diag` run (`cache_prompt.json` 1200 calls; log mtime 04:47:58 TASL-2 / 04:48:28 TASL-7;
+build `620d2225`, `--verbose`) yet contains **0** occurrences of `chat/completions`, `POST`, `request:`
+and `/v1/` on both hosts (TASL-2: 6,468,112 lines / 496,417,811 bytes; TASL-7: 6,677,873 lines /
+510,512,002 bytes). Therefore:
+
+- `before=$(grep -c '/chat/completions' "$LOG" || true)` is always 0 → the cold gate is a no-op;
+- the diagnostic's `completions_before` is always 0 → its refusal never triggers;
+- `after=$(…)` is always 0 → line 74's `[ "$after" -gt 0 ]` **always STOPs** after a successful 600-call
+  diagnostic; the script exits 1 and never reaches `echo "D6 $phase DONE"`; only the JSON survives;
+- the artifact's `server.completions_before/after` are always 0, i.e. the claimed "measured completion
+  counts" are false.
+
+This is **B2 (BLOCKING)**. The actual freshness is still guaranteed in substance (each invocation starts a
+new `llama-server`, and the pre-start checks ensure none exists), but the implemented gate does not measure
+anything and the wrapper's postcondition is always false. Fix: use a real signal — e.g. record a script
+start UTC and require `server.start_lstart` (already recorded) to be after it, and/or gate on the
+artifact's `first_call_cache_hits`/`first_call_prompt_n_mean` for F1 (read the JSON back), or a server-side
+counter that this build exposes — and remove/replace the `after` check; do not record `completions_*` as a
+measurement unless it is one.
+
+### 2.5 M2 — install
+
+`install.sh` now copies `$here/launch/*.sh` to `$tmp/launch`, `bash -n`s each, `scp`s them to
+`$host:$R/launch/`, `chmod +x`es them and prints their sha256s (lines 20-22, 25-26). It reads the
+worktree, not the host checkout at `9bb64ba`, so the missing `r1/tracks/ops/launch` on the hosts is
+irrelevant; the reviewed `tasl{2,7}_d6.sh` (`cce9bfdf…`/`c75956f5…`) will be installed and their hashes
+printed. The hosts still have v1 and no D6 scripts until the operator runs it — a required pre-run step,
+not a defect. Residuals: N3 (both host-specific scripts land on both hosts) and N4 (the old
+`tasl*_diag_cache.sh` call `trks-diag` without the new required flags).
+
+### 2.6 Disposition of the round-1 findings
+
+| id | round-1 finding | disposition | evidence (Round 2) |
+|---|---|---|---|
+| **B1** | `pgrep -f "bin/llama-server"` over-matches the wrapper and Track P; the script exits before `trks-diag` | **FIXED** | No `pgrep`; port-scoped `ss` listener → `/proc/<pid>/exe` `*/llama-server` → single `nvidia-smi` pid → cmdline `--port 18101` (lines 46-55). `ss` shape/extraction verified on iproute2 5.15; the wrapper is not a listener; Track P is on 39705/60275 and its exe is python3.12. Residuals N5/N6. |
+| **M1** | Freshness not enforced or gated; a warm server still prints DONE | **STILL OPEN** | The fresh-server-per-invocation, log rotation, listening/offload wait, out-file refusal and measured `server` block are in place, and F1/F2 cannot share a server. But the cold gate and the diagnostic's refusal count `/chat/completions`, which this build never logs (B2): `before` is always 0, `completions_before/after` in the artifact are always 0, and the post-run `after > 0` check always STOPs. |
+| **M2** | `install.sh` does not install the launch scripts; hosts have v1 | **FIXED** | `install.sh` now `scp`s `launch/*.sh`, `chmod +x` and prints sha256s; reads the worktree (host checkout's missing `ops/launch` irrelevant). Hosts still v1 until the operator runs it. Residuals N3/N4. |
+| **M3** | Assertions not tied to 18101, the GPU pid or the lease | **FIXED** | Listener pid == single GPU compute pid, exe and `--port` cmdline checks; lease **asserted held** (`flock -n … true` must fail; semantics tested on bash 5.1), never taken; release verified after the stop. |
+| **m1** | All-missing first-call `prompt_n` gives a phantom `0.0`; counts ambiguous | **FIXED** | `first_call_prompt_n_mean` is `None` when nothing was observed; `first_call_prompt_n_observed`/`_missing` are recorded; synthetic test: all-missing → `None`, observed 0/missing 2; mixed → hit 1, miss 1, observed 2/missing 1, mean 188.0. Residual: the comment still does not say partial reuse counts as a miss; prompts with no successful call are not in observed+missing (derivable as `n_prompts - observed - missing`). |
+| **m2** | Docstring/example omit `absent`/`--resident-server-count`; `both` = 3 modes; no phase label | **STILL OPEN** | Example and `absent` description added; `phase_label` recorded (240). But the docstring (14-16) still says "the only difference … false … true", and line 23 says "`both` is the 30 Oct pair" while `MODES = ("false","true","absent")` and `--mode both` runs all three (215). Minor. |
+| **m3** | No script sha, payload hash, phase label; error calls have no UTC | **FIXED** | `script_sha256` (242), per-mode `payload_sha256` (243-244), `phase_label` (240), error-call `utc` (106-107), per-call `utc` (111), per-mode started/finished (225-227). |
+| **m4** | Fixed output paths overwrite raw evidence | **FIXED** | The launch script refuses an existing output before it starts the server (31). Residual: the diagnostic run directly still `write_text`s (266); the reviewed path is safe. |
+| **m5** | Foreground client; no readiness/offload check | **FIXED** | Waits for `listening` and `offloaded 29/29 layers` (38-40, both strings verified in the hosts' logs); the EXIT trap runs on SIGHUP/SIGTERM in a lab test and stops the session; it is still foreground (not `trks-run`/tmux), a residual resilience note only. |
+| **m6** | Resident count is an assertion, not a measurement | **FIXED** | The artifact now carries a measured `server` block (pid/exe/cmdline/sha256/start/log) and the launch script measures the listener + GPU count; `resident_server_count` itself is still the hardcoded 1 (note). |
+| **m7** | Priority markers not re-checked | **FIXED** | Lines 24-26 check the Track X/P and drill markers at start; the loop semantics were tested on bash 5.1 (survives when all absent). |
+
+### 2.7 New findings
+
+| id | severity | finding |
+|---|---|---|
+| **B2** | **BLOCKING** | The freshness gate/post-run check counts `/chat/completions` in the server log, but the pinned build disables request logging (`server-http.cpp:181`, commented out); 0 occurrences in the 6.4M/6.7M-line 30 Oct logs that cover 1200 completions. The cold gate is a no-op, the diagnostic's `completions_before` refusal never fires, `server.completions_before/after` are always 0 (false "measured" evidence), and the launch script **always** STOPs after a successful diagnostic (`after=0`), exits 1 and never prints `D6 … DONE`. |
+| **N1** | **MAJOR** | `trap 'cleanup' EXIT` is armed at line 21, before the `tmux has-session -t trks_llm` check at 27; `cleanup()` unconditionally `tmux kill-session -t trks_llm`. The "STOP: a trks_llm session already exists" path (and a marker path with such a session) therefore **kills the server it just refused to touch** — a server this invocation did not start, contrary to runbook §0.4. Fix: arm the trap only after `tmux new` succeeds (e.g. a `started=0/1` flag), or kill only the pid/session this script created. |
+| **N3** | MINOR | `install.sh` copies **both** host-specific `tasl{2,7}_d6.sh` to **both** hosts; running the wrong one on a host uses the other node's prompts and writes `$R/out/<other-node>/…` with the wrong `--host-label` (no host guard in the script). Copy only the matching script, or add a `HOST_LABEL` guard. |
+| **N4** | MINOR | The v2 diagnostic makes `--server-pid/--server-log/--phase-label` required; the still-installed/synced 30 Oct `tasl{2,7}_diag_cache.sh` call `trks-diag` without them and now fail with an argparse error (the 30 Oct STOP-1 control cannot be reproduced with the installed scripts). Document/update or make the new flags optional. |
+| **N5** | MINOR | The listener identification takes `head -1` of the `pid=` matches and never requires exactly one; if `ss` shows several `users:(…)` on 18101 (SO_REUSEPORT), a non-GPU second listener could be silently ignored while the GPU pid equality passes. Count the matched pids and require exactly one. |
+| **N6** | MINOR | Zero-listener behaviour after the "listening" check: `pid=$(ss … \| grep -o … \| head -1 \| cut …)` and `exe=$(readlink -f …)` are bare command substitutions under `set -euo pipefail`; if the listener vanished, `grep`/`readlink` return non-zero and the script aborts **silently**, so the explicit `STOP: no listener pid` (47) is unreachable. Verified on TASL-2: the zero-listener snippet exits 1 with no output. Add `\|\| true` and keep the explicit check. |
+| **N7** | MINOR | The diagnostic's `server_facts` reads the whole server log into memory (≈250 MB for a 600-call F1/F2 run) to count a string that is never present (B2); the log rotation also keeps every old 250-500 MB log. Harmless on these hosts (265 GB free on TASL-2, 908 GB on TASL-7) but wasteful; fix together with B2. |
+| **N8** | MINOR | After `cleanup; trap - EXIT` (77), the wait loop (78-80) and the `STOP: port still listening` (81) run with the trap disarmed and no explicit `kill "$pid"`; a server that survives `tmux kill-session` is detected but left running. Add a `kill "$pid"` fallback before the STOP (the pid is measured). |
+
+No other pinned code is touched, no `k`/phase is set, and the hosts are idle at the pins.
+
+### 2.8 D6 checklist
+
+| # | rule | result |
+|---|---|---|
+| 1 | Diagnostic, not a phase; `k` unset; Phase 3 not started | **PASS** — no k/phase; only the follow-up outputs. |
+| 2 | No pinned-code change | **PASS** — `determinism.py` `081adb63…` at `9bb64ba`/HEAD/hosts; `9bb64ba..HEAD` probes/harness/tests empty. |
+| 3 | Reuse the committed diagnostic | **PASS** — `trks-diag` → `$R/bin/cache_prompt_diag.py`; `install.sh` updates it (hosts still v1). |
+| 4 | F1 cold control, no prior call, one server | **FAIL** — B2 (vacuous gate, always-STOP wrapper); the fresh-server-per-invocation part is correct. |
+| 5 | F1 pinned prompts/seeds/body/schedule | **PASS** — `D.fixed_prompts`, `D.chat_payload`, `D.schedule(200,3,1,0,0)`; `order_head` matches the 30 Oct file. |
+| 6 | F2 plain S0.1, no `cache_prompt`, one resident server | **PASS on body/schedule** — synthetic `absent` posts `messages, model, seed, temperature` only; pinned `identity_rate`/`latency_stats`/`cpu_census`; **freshness gate broken (B2)**. |
+| 7 | New launch script committed and reviewed before use | **COMMITTED** (`0c6f43e6`) and reviewed here; **NOT ACCEPTED**. |
+| 8 | Keep raw responses; per call prompt_n vs usage; first-call hits; resident count; timestamps | **PASS with notes** — `calls[].tokens` has both counts, per-call/mode UTC, first-call hits/misses/observed/missing/mean; the completion counts are false (B2); `resident_server_count` is asserted (m6 note). |
+| 9 | Every GPU job under `flock ~/r1_locks/gpu0.lock` | **PASS** — server via `trks-servers` holds it; the script asserts, never takes; release verified. |
+| 10 | Track X/Track P keep priority | **PASS** — markers checked at start; the identification chain cannot match the Track P listeners; they were not touched. |
+| 11 | Out paths do not collide; `mkdir -p` correct | **PASS** — no `s01_diag_f1/f2` on either host; the launch script refuses an existing file. |
+| 12 | `bash -n`, `py_compile`, installed copies updated | **PASS static**; `install.sh` syncs the launch scripts; the hosts must be updated (operator step) before use. |
+
+### 2.9 Verdict
+
+The rewrite does fix B1 (the port-scoped listener → exe → GPU-pid → cmdline chain), M3 (the lease is
+asserted held, never taken, and its release is verified), M2 (`install.sh` now syncs the launch scripts)
+and most of the minors; the diagnostic's `absent` body, pinned prompts/schedule, imports, first-call
+metrics and hashes are correct. But the M1 freshness gate added in this commit is not a measurement: the
+pinned llama.cpp build disables request logging (`server-http.cpp:181`), so the `/chat/completions` count is
+always 0 — the cold gate and the diagnostic's refusal are vacuous, `server.completions_before/after` are
+false evidence, and the launch script's post-run check **always** STOPs after a successful diagnostic
+(exit 1, no DONE). In addition, the EXIT trap is armed before the `trks_llm`-exists check and
+unconditionally kills that session, so the refusal path kills a server the invocation did not start.
+F1/F2 must not run until the gate is replaced with a real signal and the trap is armed only after the
+script starts its own session; the remaining items are minor. The code can be carried forward once B2 (and
+N1) are fixed.
+
+REVIEW VERDICT: NOT ACCEPTED
