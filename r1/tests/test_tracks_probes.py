@@ -13,8 +13,17 @@ from r1.tracks.probes import s1_factorial as F
 def test_payload_matches_the_harness_request_shape():
     p = D.chat_payload("hi", 123, "r1-manager")
     # Final review MAJOR 6: the harness's own request body (no max_tokens: the harness sets none).
+    # R1-CACHEPROMPT-FALSE (31 Oct 2026): the harness sends cache_prompt explicitly (default false) and the
+    # OpenAI SDK merges it into the body; the probe mirrors that merge, so it appears here too.
     assert p == {"model": "r1-manager", "messages": [{"content": "hi", "role": "user"}], "temperature": 0.2,
-                 "seed": 123, "stream": False}
+                 "seed": 123, "stream": False, "cache_prompt": False}
+
+
+def test_payload_cache_prompt_follows_the_harness_setting(monkeypatch):
+    monkeypatch.setenv("LLAMACPP_CACHE_PROMPT", "true")
+    assert D.chat_payload("hi", 123, "r1-manager")["cache_prompt"] is True
+    monkeypatch.setenv("LLAMACPP_CACHE_PROMPT", "false")
+    assert D.chat_payload("hi", 123, "r1-manager")["cache_prompt"] is False
 
 
 def test_identity_and_cross_identity():

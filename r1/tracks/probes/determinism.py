@@ -60,7 +60,14 @@ def chat_payload(prompt: str, seed: int, model: str, *, temperature: float = 0.2
     os.environ["LLAMACPP_BASE_URL"] = "http://127.0.0.1:9/v1"   # the URL is not part of the body; nothing is sent
     try:
         llm = _build_chat_model(resolve_llm_config(f"llamacpp/{model}"), float(temperature), seed=int(seed), **kwargs)
-        return dict(llm._get_request_payload([HumanMessage(content=prompt)]))
+        payload = dict(llm._get_request_payload([HumanMessage(content=prompt)]))
+        # R1-CACHEPROMPT-FALSE (31 Oct 2026): the OpenAI SDK merges ``extra_body`` into the JSON body it
+        # posts, so the harness's on-the-wire body carries ``cache_prompt`` at top level. This probe posts
+        # the payload itself, so it must do the same merge to send exactly what the harness sends.
+        extra = payload.pop("extra_body", None)
+        if isinstance(extra, dict):
+            payload.update(extra)
+        return payload
     finally:
         if old is None:
             os.environ.pop("LLAMACPP_BASE_URL", None)

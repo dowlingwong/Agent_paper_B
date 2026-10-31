@@ -1357,11 +1357,26 @@ def manager_cfg(args) -> dict:
         if not args.manager_model or not args.manager_model.startswith("llamacpp/"):
             raise SystemExit("--manager llamacpp needs --manager-model llamacpp/<alias> (LLAMACPP_BASE_URL set)")
         cfg = {"kind": "langgraph", "model": args.manager_model, "temperature": 0.2,
-               "transport_max_attempts": int(args.transport_max_attempts)}
+               "transport_max_attempts": int(args.transport_max_attempts),
+               # R1-CACHEPROMPT-FALSE (31 Oct 2026): the value the harness sends on every request is
+               # recorded here, so a manifest states the setting it ran under.
+               "cache_prompt": _manager_cache_prompt()}
         if args.proposal_schema:
             cfg["proposal_schema"] = args.proposal_schema
         return cfg
     return {"kind": "scripted", "model": "scripted_random", "temperature": 0.2}
+
+
+def _manager_cache_prompt() -> bool:
+    """The ``cache_prompt`` the llamacpp provider sends (delegated to the harness so the two cannot drift).
+
+    R1-CACHEPROMPT-FALSE (31 Oct 2026): llama-server's prompt cache makes otherwise identical
+    (prompt, seed) calls non-identical; the harness sends ``cache_prompt`` explicitly and this records it.
+    """
+    from r1.harness import import_harness
+    import_harness()
+    from autoresearch.llm.providers import llamacpp_cache_prompt
+    return llamacpp_cache_prompt()
 
 
 def _dedupe(rows: list[dict], key: str) -> list[dict]:
