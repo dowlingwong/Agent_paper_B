@@ -1,5 +1,7 @@
 # Paper B (route R1) — status log
 
+- Track X author permits cooperative same-UID assumption and observable checks for a new Stage A, subject to repaired code, independent review, published pins and valid lease/preflight; same-UID noninterference remains an assumption. Stopped fixture remains immutable; P.3a and B.2 remain STOP.
+
 - Track X synthetic namespace fixture STOP (31 Oct): same-UID user→network setns succeeded; namespace exclusivity not proven. Preserve `/tmp/d3_namespace_fixture_20261031_d61db5e9b02188f7`, do not retry; Stage A BLOCK. See `docs/r1/reports/EXAM_D3_NAMESPACE_FIXTURE_STOP_20261031.md`. P.3a and B.2 remain STOP.
 
 - Author allows the D3 single-resident-server proof within an isolated user+network namespace, with host-wide status disclosed NOT CHECKABLE. Independent CPU isolation verification and proof of GPU, lease and server compatibility remain required; Stage A is still BLOCK.

@@ -674,6 +674,8 @@ Source: `docs/r1/authorizations/COORDINATOR_DECISIONS_20261031.md`. These rows r
 
 | R1-EXAM-SERVER-NAMESPACE-SCOPE (31 Oct) | Author permits the D3 one-resident-server requirement to be evaluated within an isolated user+network namespace; disclose that host-wide single-server status remains NOT CHECKABLE. Before execution, the isolation must pass independent CPU review and tests, and GPU device, GPU flock lease and server compatibility must be proved. Preserve STOP on any failed check; no host-wide claim follows from namespace isolation. |
 
+| R1-EXAM-COOPERATIVE-UID (31 Oct) | Author permits a weaker D3 Stage A assumption: trust same-UID users not to interfere and report only observed evidence. This supersedes proof of adversarial same-UID exclusion in R1-EXAM-SERVER-NAMESPACE-SCOPE for the new Stage A; same-UID noninterference and host-global exclusivity remain assumptions / NOT CHECKABLE, not established facts. Repair implementation, independently review and verify pins/lease/preflight before starting a new Stage A. Never retry or modify the stopped fixture. P.3a and B.2 remain STOP. See `docs/r1/authorizations/TRACKX_SAME_UID_COOPERATIVE_20261031.md`. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
