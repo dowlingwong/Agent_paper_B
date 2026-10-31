@@ -30,10 +30,10 @@ Both: same pinned `fixed_prompts`, per-prompt seeds, `chat_payload` body, and se
 | installed hashes (both hosts) | `cache_prompt_diag.py` `c62fdb73…`, `trks-diag` `7ab8b5c9…`, `tasl2_d6.sh` `0f3ca947…`, `tasl7_d6.sh` `06424cb1…` |
 | per-invocation server | each script rotates the log, starts its **own** server via `bin/trks-servers 1` (which holds `flock ~/r1_locks/gpu0.lock`), stops it at the end; the lease is **asserted held, never taken** |
 | server identification | listener on port 18101 via `ss` → pid → `/proc/<pid>/exe` must be `llama-server` → pid must equal the single `nvidia-smi` compute pid → cmdline must carry `--port 18101` |
-| coldness | process-age check (`/proc/<pid>` start ≥ script start) plus zero-first-call-hit evidence; this build does **not** log request paths, so log counting was abandoned (pre-use review B2) |
+| coldness | process-age check (`/proc/<pid>` `st_mtime` ≥ script start — a one-sided heuristic, not a strict process-start proof) plus the first-call evidence below; this build does **not** log request paths, so log counting was abandoned (pre-use review B2) |
 | pre-use review | three rounds before first use: NOT ACCEPTED (B1/M1–M3), NOT ACCEPTED (B2/N1), **ACCEPTED** (`reviews/TRACKS_OPS_D6_PREUSE_REVIEW_20261031.md`) |
 | runs | `f1` then `f2` on each host, one server at a time; all four exited **rc=0**, `D6 f1/f2 DONE` |
-| first calls | **0 / 200 cache hits on every run** (every first call re-evaluated its full prompt) — the servers were genuinely cold |
+| first calls | **0 / 200 *complete* cache hits on every run** (`prompt_n == 1` never occurred). Only the very first call of the run (order 0) evaluated a full prompt; the other 199 first calls still re-evaluated most of their prompt, reusing only the shared prefix (**≈22.3 %** of prompt tokens reused on digits, **≈23.0 %** on tabular) |
 
 ## 2. Results
 
@@ -67,7 +67,10 @@ The two runs are identical in outcome, not merely similar:
 - identical `tokens_evaluated_total` (99 801 / 99 807) and identical first-call statistics;
 - the request bodies differ **only** by the presence of the `cache_prompt` key
   (F1 keys: `cache_prompt, messages, model, response_format, seed, stream, temperature`;
-  F2 keys: the same without `cache_prompt`).
+  F2 keys: the same without `cache_prompt`), and the reviewer confirmed the F2 body is byte-identical to the
+  S0.1 serial probe's body;
+- the reviewer additionally found the **per-prompt contents identical for all 600 calls** and the same
+  per-call `prompt_n` sequence in both runs.
 
 **So omitting the field is indistinguishable from sending `cache_prompt: true`: `true` is the server
 default, and the harness body (which sends no such field) therefore runs in the cached mode.**
@@ -76,9 +79,9 @@ default, and the harness body (which sends no such field) therefore runs in the 
 
 | S1 difference | Verdict | Evidence |
 |---|---|---|
-| **Server count** | **isolated — no effect** | F2 ran with **one** server and gave exactly S0.1's two-server numbers (0.930 / 0.870), prompt-for-prompt. |
+| **Server count** | **isolated — no effect** | F2 ran with **one** server and gave S0.1's two-server aggregates (0.930 / 0.870). An exact per-prompt match cannot be checked: the S0.1 probe kept no per-prompt contents (only the aggregate rate). |
 | **Cache warmth** | **isolated — explains the 30 Oct control** | Cold `true` (F1) = 0.930 / 0.870; the same setting with a **warm** cache (30 Oct control) = 1.000 / 0.990. Warmth raises apparent identity, so the 30 Oct control was not a valid control. |
-| **Contrast size** | **resolved** | The true contrast is `false` vs `true`/default at the same cold state: **1.000 vs 0.930** (digits) and **1.000 vs 0.870** (tabular) — 14 and 26 of 200 prompts differ. The earlier "2 of 200" was an artefact of the warm control. |
+| **Contrast size** | **resolved (with one caveat)** | The true contrast is `false` vs `true`/default: **1.000 vs 0.930** (digits) and **1.000 vs 0.870** (tabular) — 14 and 26 of 200 prompts differ; the earlier "2 of 200" was an artefact of the warm control. *Caveat:* the `false` side is the **30 Oct** run, whose file carries no server/freshness fields. Its cache state is defensible as cold (it ran first on a freshly started server and re-evaluated the full prompt on all 600 calls), but its server-process freshness is not evidenced in the artifact. |
 
 **Conclusion (facts, not a decision):** with the server count, the cache state and the request body held
 fixed, `cache_prompt: false` yields **100 % identity on both hosts** while `cache_prompt: true` — the
@@ -86,9 +89,10 @@ server default, and what the harness body currently gets — yields 0.930 / 0.87
 therefore stands on a clean comparison, and the author's D6 trigger condition is met with the confounds
 removed.
 
-Cost of the determinism setting: `false` re-evaluates the full prompt each call (≈640 tokens/call) and was
-measured at **+6 to +8 %** mean latency versus the cached mode (0.6828 vs 0.6438 s on digits; 0.6985 vs
-0.6573 s on tabular).
+Cost of the determinism setting: `false` re-evaluates the full prompt each call (≈640 evaluated tokens/call)
+and cost **+6.06 %** mean latency on digits (0.6828 vs 0.6438 s, against the cold F1 baseline) and **+6.27 %**
+on tabular (0.6985 vs 0.6573 s). (The larger ≈+8 % figure would compare against the *warm* 30 Oct control,
+which is not the right baseline.)
 
 ## 4. Recommendation (for the author; the operator has not acted)
 
@@ -122,4 +126,21 @@ the per-prompt per-repeat contents, the measured `server` block, `freshness`, `p
 
 ## 7. Review record
 
-_To be completed by the independent post-run reviewer._
+**Post-run review** (`docs/r1/reviews/TRACKS_OPS_D6_REVIEW_20261031.md`, fresh independent reviewer):
+**ACCEPTED** — 0 BLOCKING, 0 MAJOR, 6 MINOR. The reviewer recomputed every reported number from the raw
+JSON, confirmed the four host originals are sha256-identical to the copies, found distinct server pids per
+invocation with no residual processes, confirmed the lease was asserted not taken, the listener was tied to
+the single GPU compute pid, both hosts were clean at the pins, and that the F1≡F2 claim holds more strongly
+than stated (identical per-prompt contents for all 600 calls, identical `prompt_n` sequence, F2 body
+byte-identical to the S0.1 body). It accepted the confound conclusions and the recommendation as proper
+advice.
+
+| # | Severity | Finding | Disposition |
+|---|---|---|---|
+| 1 | MINOR | "prompt-for-prompt" reproduction of S0.1 is unverifiable (S0.1 kept no per-prompt contents) | **Fixed** — §3 now says the aggregates match and that an exact per-prompt match cannot be checked |
+| 2 | MINOR | The `false` side's cold/same-state claim rests on the 30 Oct file, which lacks server/freshness fields | **Fixed** — §3 carries an explicit caveat: cache-cold is defensible, server-process freshness is not evidenced |
+| 3 | MINOR | "every first call re-evaluated its full prompt" was false | **Fixed** — §1 now says 0/200 *complete* hits, only order 0 full, the other 199 reusing ≈22–23 % of prompt tokens |
+| 4 | MINOR | "+6 to +8 %" mixed baselines | **Fixed** — §4 gives +6.06 % / +6.27 % against the cold F1 baseline and notes the ≈8 % figure would use the warm control |
+| 5 | MINOR | the coldness signal is `/proc/<pid>` `st_mtime`, not process start | **Fixed** — §1 says so and calls it a one-sided heuristic |
+| 6 | MINOR | the pre-use review file was touched again in the results commit | **Recorded** — commit `715febd1` carried the reviewer's own round-3 wording edit; verdict and findings unchanged |
+
