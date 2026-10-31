@@ -31,10 +31,16 @@ import hashlib
 import json
 import time
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA = "tracks_s01_cacheprompt_diag/v1"
-MODES = ("false", "true")  # test first, then the control
+
+def utc() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+SCHEMA = "tracks_s01_cacheprompt_diag/v2"
+# "absent" sends no cache_prompt field at all -- the plain S0.1 request stream (F2).
+MODES = ("false", "true", "absent")
 
 
 def post_full(url: str, payload: dict, timeout: float = 300.0):
@@ -74,8 +80,8 @@ def tokens_of(body: dict):
     return out or None
 
 
-def run_mode(url: str, payloads: list[dict], order: list[tuple[int, int]], flag: bool, timeout: float) -> dict:
-    """One serial client stream in ``order`` with ``cache_prompt`` forced to ``flag``."""
+def run_mode(url: str, payloads: list[dict], order: list[tuple[int, int]], flag, timeout: float) -> dict:
+    """One serial client stream in ``order`` with ``cache_prompt`` set to ``flag`` (``None`` = omit the field)."""
     n = len(payloads)
     contents: dict[int, list] = {i: [] for i in range(n)}
     latencies: list[float] = []
@@ -83,7 +89,8 @@ def run_mode(url: str, payloads: list[dict], order: list[tuple[int, int]], flag:
     errors = 0
     for pos, (i, r) in enumerate(order):
         payload = dict(payloads[i])
-        payload["cache_prompt"] = flag
+        if flag is not None:  # None = "absent": send the plain S0.1 body, no cache_prompt field
+            payload["cache_prompt"] = flag
         try:
             text, dt, body = post_full(url, payload, timeout)
         except Exception as exc:  # noqa: BLE001 - counted, never retried (matches the pinned probe)
@@ -93,7 +100,7 @@ def run_mode(url: str, payloads: list[dict], order: list[tuple[int, int]], flag:
             continue
         contents[i].append(text)
         latencies.append(dt)
-        calls.append({"order": pos, "prompt": i, "repeat": r, "latency_s": dt,
+        calls.append({"order": pos, "prompt": i, "repeat": r, "latency_s": dt, "utc": utc(),
                       "content_sha256": hashlib.sha256(text.encode()).hexdigest(),
                       "content_len": len(text), "tokens": tokens_of(body)})
     return {"cache_prompt": flag, "contents": contents, "latencies": latencies, "calls": calls, "errors": errors}
@@ -104,13 +111,33 @@ def summarise(res: dict, repeats: int) -> dict:
     contents = res["contents"]
     identical = [i for i, v in contents.items()
                  if len(v) == repeats and None not in v and len(set(v)) == 1]
+    # First call of each prompt in this mode: a first call with prompt_n == 1 was served entirely from the
+    # KV cache (a hit); a first call that evaluated its full prompt is a miss. This is the cache-warmth
+    # evidence for review S1 / F1 / F2.
+    first = {}
+    for c in res["calls"]:
+        if c.get("error"):
+            continue
+        first.setdefault(c["prompt"], c)
+    pn_first = [((c.get("tokens") or {}).get("prompt_n")) for c in first.values()]
+    hits = sum(1 for x in pn_first if x == 1)
     return {"cache_prompt": res["cache_prompt"], "identity_rate": identity_rate(contents, repeats),
             "n_prompts": len(contents), "n_identical_prompts": len(identical),
             "n_differing_prompts": len(contents) - len(identical),
             "differing_prompt_indices": sorted(set(contents) - set(identical)),
             "errors": res["errors"], "latency": latency_stats(res["latencies"]),
             "tokens_evaluated_total": sum((c.get("tokens") or {}).get("prompt_n", 0)
-                                          for c in res["calls"] if c.get("tokens")) or None}
+                                          for c in res["calls"] if c.get("tokens")) or None,
+            "first_call_cache_hits": hits, "first_call_cache_misses": len(pn_first) - hits,
+            "first_call_prompt_n_mean": (sum(x for x in pn_first if x is not None) /
+                                         max(1, len([x for x in pn_first if x is not None]))) if pn_first else None,
+            "usage_prompt_tokens_mean": _mean([(c.get("tokens") or {}).get("prompt_tokens") for c in res["calls"]]),
+            "started_utc": res.get("started_utc"), "finished_utc": res.get("finished_utc")}
+
+
+def _mean(vals):
+    xs = [v for v in vals if v is not None]
+    return sum(xs) / len(xs) if xs else None
 
 
 def main(argv=None) -> int:
@@ -124,7 +151,10 @@ def main(argv=None) -> int:
     ap.add_argument("--temperature", type=float, default=0.2)
     ap.add_argument("--proposal-schema", default="manager_proposal/v1")
     ap.add_argument("--timeout", type=float, default=300.0)
-    ap.add_argument("--mode", choices=["false", "true", "both"], default="both")
+    ap.add_argument("--mode", choices=["false", "true", "absent", "both"], default="both",
+                    help="absent = no cache_prompt field (the plain S0.1 request stream, F2)")
+    ap.add_argument("--resident-server-count", type=int, required=True,
+                    help="how many llama-server processes were resident on the GPU during this run")
     ap.add_argument("--host-label", required=True)
     ap.add_argument("--gguf", required=True)
     ap.add_argument("--llama-build", required=True)
@@ -145,9 +175,15 @@ def main(argv=None) -> int:
     census_before = D.cpu_census()
     results = {}
     for mode in modes:
-        flag = mode == "true"
+        flag = {"true": True, "false": False, "absent": None}[mode]
+        started = utc()
         raw = run_mode(args.url, payloads, order, flag, args.timeout)
+        raw["started_utc"], raw["finished_utc"] = started, utc()
+        ex = dict(payloads[0])
+        if flag is not None:
+            ex["cache_prompt"] = flag
         results[mode] = {"summary": summarise(raw, args.repeats),
+                         "request_example": ex,
                          "calls": raw["calls"],
                          "contents": {str(i): v for i, v in raw["contents"].items()}}
     census_after = D.cpu_census()
@@ -161,6 +197,12 @@ def main(argv=None) -> int:
         "order_head": order[:10], "temperature": args.temperature,
         "proposal_schema": args.proposal_schema,
         "mode_order": list(modes), "raw_responses_kept": True,
+        "resident_server_count": args.resident_server_count,
+        "run_utc": utc(),
+        # S4 fix: the exact body that was sent, for the mode that adds a field, so "only added field" is
+        # checkable from this file alone. Kept for each mode under results[*].request_example.
+        "modes_definition": {"false": "cache_prompt=false added", "true": "cache_prompt=true added",
+                             "absent": "no cache_prompt field (plain S0.1 body)"},
         "provenance": {"gguf_path": args.gguf, "gguf_sha256": D.sha256_path(args.gguf),
                        "llama_build": args.llama_build, "llama_server_bin": args.llama_server_bin,
                        "server_version": server_version(args.llama_server_bin),
