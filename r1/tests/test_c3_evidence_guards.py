@@ -460,6 +460,8 @@ def test_evidence_cache_rejects_duplicate_and_unexpected_rows(tmp_path):
 
 @pytest.mark.parametrize('role', ['label', 'evaluation'])
 def test_completion_rejects_rewritten_audit_even_if_digest_recomputed(tmp_path, monkeypatch, role):
+    # Exercise downstream digest checks with fixture-only attestation bypassed.
+    monkeypatch.setattr(audit, '_require_task_native_runtime_attestation', lambda: None)
     table = tmp_path / 'table'
     table.mkdir()
     for name in ('build.json', 'proposals.jsonl', 'configs.json'):

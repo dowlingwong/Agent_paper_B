@@ -16,3 +16,12 @@ def test_evidence_stops_before_files_or_worker_preflight(tmp_path, monkeypatch):
     assert called == []
     assert not out.exists()
     assert not scratch.exists()
+
+
+def test_evidence_consumption_stops_before_reading_unattested_records(tmp_path, monkeypatch):
+    called = []
+    monkeypatch.setattr(audit, 'evidence_plan', lambda *args: called.append('plan'))
+    with pytest.raises(ValueError, match='actual task-native runtime attestation'):
+        audit.verify_evidence_completion(tmp_path, tmp_path / 'label_block.jsonl',
+                                         tmp_path, tmp_path, tmp_path)
+    assert called == []

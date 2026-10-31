@@ -790,6 +790,9 @@ def evidence_run(table: Path, paper_root: Path, index: Path, classification: Pat
 def verify_evidence_completion(table: Path, audits_path: Path, paper_root: Path, index: Path,
                                classification: Path) -> dict:
     """Validate complete evidence on consumption; never trust summary metrics alone."""
+    # Old runs.jsonl worker_runtime values come from a separate probe and cannot
+    # establish the identity of the task process when consuming EVIDENCE either.
+    _require_task_native_runtime_attestation()
     table, audits_path = Path(table), Path(audits_path)
     out = audits_path.parent
     if audits_path.name != 'label_block.jsonl' or (out / 'STOP.json').exists() or (out / 'audits.jsonl').exists():
