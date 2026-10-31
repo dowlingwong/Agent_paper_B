@@ -610,3 +610,259 @@ script starts its own session; the remaining items are minor. The code can be ca
 N1) are fixed.
 
 REVIEW VERDICT: NOT ACCEPTED
+
+---
+
+## Round 3 — re-review after `c1312b41` (31 Oct 2026)
+
+**Reviewer:** independent (fresh; not the author or the operator; no access to work in progress).
+**Under review:** worktree `.claude-worktrees/trackS-ops-20261030`, branch `trackS-ops-20261030`, head
+**`adadc4b1`** (the round-2 review record) on the round-3 remediation **`c1312b41`** (`git show c1312b41`:
+5 files, +119/−91 — `cache_prompt_diag.py`, both `tasl{2,7}_d6.sh`, both `tasl{2,7}_diag_cache.sh`). Pins:
+paper `9bb64ba`, harness `115df37`, llama.cpp `620d2225`; runbook 3.3. **I did not run a GPU job, a server,
+or the diagnostic.** Host access was read-only (`ssh portal_zhixu`, `ssh tasl7`): `git`, `sha256sum`, `ss`,
+`nvidia-smi --query-compute-apps=pid`, `ps`, `stat`, `readlink`, `grep`, `tmux ls`, `ls`, plus one transient
+`bash -c` subshell on each host (a `sleep 3` child; no GPU, no lock, no write) to establish what
+`/proc/<pid>` `st_mtime` actually is. I started no server and wrote nothing on the hosts. One local synthetic
+Python test of `run_mode` with a fake `post_full` (no HTTP, no GPU) checked the `absent` body and the
+`calls_made` JSON literal; `bash -n` and `py_compile` were run locally and, via stdin, on the hosts' bash
+5.1.16 / Python 3.10.12.
+
+### 3.1 Worktree, pins, static checks
+
+```
+git rev-parse HEAD                       # adadc4b1
+git status --porcelain                   # clean
+git diff 9bb64ba..HEAD -- r1/tracks/probes r1/harness r1/tests    # empty (0 lines)
+git show 9bb64ba:r1/tracks/probes/determinism.py | sha256sum      # 081adb63…
+sha256sum r1/tracks/probes/determinism.py                         # 081adb63…
+sha256sum r1/tracks/ops/diag/cache_prompt_diag.py                 # c62fdb73…
+sha256sum r1/tracks/ops/launch/tasl2_d6.sh tasl7_d6.sh            # 0f3ca947… / 06424cb1…
+sha256sum r1/tracks/ops/launch/tasl2_diag_cache.sh tasl7_diag_cache.sh  # 5979150a… / 28776e70…
+sha256sum r1/tracks/ops/install.sh                               # 38ec70e8…
+sha256sum r1/tracks/ops/trks-servers r1/tracks/ops/diag/trks-diag # 124316b5… / 7ab8b5c9…
+bash -n r1/tracks/ops/launch/*.sh r1/tracks/ops/install.sh       # OK
+python3 -m py_compile r1/tracks/ops/diag/cache_prompt_diag.py    # OK
+ssh <host> bash -n -s < tasl{2,7}_d6.sh                           # OK (bash 5.1.16)
+ssh <host> python3 -c 'compile(sys.stdin.read(), …)' < diag.py    # OK (Python 3.10.12)
+```
+
+The diff is confined to the diagnostic and the four launch scripts; the pinned probe is `081adb63…` at
+`9bb64ba` and at HEAD (and on both hosts), and `git diff 9bb64ba..HEAD -- r1/tracks/probes r1/harness
+r1/tests` is empty. `trks-diag` (`7ab8b5c9…`) and `trks-servers` (`124316b5…`) are unchanged and match the
+installed host copies. The hashes the operator will install are: diagnostic `c62fdb73…`, `tasl2_d6.sh`
+`0f3ca947…`, `tasl7_d6.sh` `06424cb1…`, `tasl2_diag_cache.sh` `5979150a…`, `tasl7_diag_cache.sh`
+`28776e70…`.
+
+Hosts (read-only):
+
+| item | TASL-2 (`portal_zhixu`) | TASL-7 (`tasl7`) |
+|---|---|---|
+| `hostname` | **TASL-2** | **TASL-7** |
+| paper / harness / llama.cpp | `9bb64ba` / `115df37` / `620d2225`, clean | same, clean |
+| `trks_llm` session / 18101 listener | absent / none | absent / none |
+| `nvidia-smi` compute pid | none | none |
+| lease `flock -n ~/r1_locks/gpu0.lock true` | free (rc 0) | free (rc 0) |
+| `~/r1_locks` / `$R/trks_drill.active` | only `gpu0.lock` / absent | only `gpu0.lock` / absent |
+| installed `$R/bin/cache_prompt_diag.py` | **v1** `5012efc4…` | **v1** `5012efc4…` |
+| installed `trks-diag`, `trks-servers` | `7ab8b5c9…`, `124316b5…` | same |
+| `$R/launch` | `tasl2_diag_cache.sh`, `tasl2_s01.sh` | `tasl7_diag_cache.sh`, `tasl7_s01.sh` |
+| 30 Oct evidence | `out/digits_mlp/s01_diag/cache_prompt.json` (1,095,382 B) | `out/tabular_mlp/s01_diag/cache_prompt.json` (1,119,804 B) |
+| new `s01_diag_f1`/`f2` paths | absent | absent |
+| `$R/logs/llama_18101.log` | 496,417,811 B; both startup strings; 0 `chat/completions` | 510,512,002 B; same |
+
+Both hosts: bash 5.1.16, tmux 3.2a, flock util-linux 2.37.2, ss iproute2-5.15.0, GNU stat 8.32.
+`ss -H -ltn "sport = :22"` renders the listener rows and `"sport = :18101"` is empty (rc 0) on both; the
+`-H`/`-p` extraction is the shape round 2 verified against the Track P listeners (now gone). Both current
+`llama_18101.log` files contain `listening on http://127.0.0.1:18101` and `offloaded 29/29 layers` and
+**0** occurrences of `chat/completions`; `tools/server/server-http.cpp:181` is the commented-out
+`set_logger(log_server_request)` on both hosts — the round-2 premise, re-confirmed.
+
+### 3.2 B2 — the log gate is gone; the run reaches DONE
+
+`grep` over `r1/tracks/ops` finds **no** `/chat/completions` log parsing, no `completions_before`/`_after`,
+no `completions_in_server_log_after`, and no `--server-log`; the only `chat/completions` literal is
+`post_full`'s request URL (`cache_prompt_diag.py:56`). `server_facts` (`:155-181`) takes only the pid, reads
+`/proc/<pid>/{exe,cmdline}`, `stat`s `/proc/<pid>` and runs `ps -o lstart=`; it never opens the log, and the
+artifact's `server` block has no `log` or `completions_*` key. The diagnostic now requires
+`--script-start-epoch` (`:201-202`) instead of `--server-log`, refuses unless `facts["start_epoch"] >=
+args.script_start_epoch` (`:221-225`), and records a `freshness` block (`:226-227`, `:258`).
+
+The wrapper records `script_start_epoch=$(date +%s)` at line 38, **before** `tmux new -d -s trks_llm
+"$R/bin/trks-servers 1"` (39); after identifying the listener (51-63) it re-checks `stat -c %Y /proc/$pid >=
+script_start_epoch` (66-68). The post-run gate is now `[ -s "$out" ]` plus `grep -q '"calls_made": 600'
+"$out"` (80-81); `calls_made` is `len(res["latencies"])` (`:138`), and `json.dumps(..., indent=2)` renders
+`"calls_made": 600` (verified locally). The round-2 failure (`after=0` → always exit 1) is gone.
+
+**On-paper end-to-end trace (successful F1; F2 is the same with `mode=absent` and the other out path).**
+Every gate, with the value measured on the hosts:
+
+| # | gate (line) | live value / result |
+|---|---|---|
+| 1 | host guard (14) | `hostname` = `TASL-2` (verified) |
+| 2 | phase (15-16) | `f1` → `out=$OUT/s01_diag_f1/cache_prompt_true_cold.json`, `mode=true` |
+| 3 | priority/drill markers (24-26) | only `gpu0.lock`; drill absent |
+| 4 | `tmux has-session -t trks_llm` (27) | absent |
+| 5 | no listener on 18101 (28-29) | 0 |
+| 6 | no GPU compute process (30-31) | 0 |
+| 7 | out file absent (32) | absent |
+| 8 | `mkdir -p` (33) | creates `s01_diag_f1` |
+| 9 | log rotation (35) | moves the 496 MB log |
+| 10 | `script_start_epoch` (38) | captured before the server |
+| 11 | `tmux new … trks-servers 1` (39) | one server via the lease holder |
+| 12 | wait `listening on http://127.0.0.1:18101` (44-45) | string present in this build's log |
+| 13 | `offloaded 29/29 layers` (46) | string present |
+| 14 | lease held (49) | `flock -n` fails (held); free branch tested (`STOP`, rc 1) |
+| 15 | exactly one listener (52-53) | one IPv4 socket on `127.0.0.1:18101` |
+| 16 | listener pid readable (54-55) | same-user listener; `readlink` works for own processes |
+| 17 | exe `*/llama-server` (56-57) | `$R/opt/llama.cpp/build/bin/llama-server` |
+| 18 | single GPU pid == listener (58-61) | one CUDA context, the server |
+| 19 | cmdline has `--port 18101` (62-63) | `trks-servers` passes it |
+| 20 | age check (66-68) | fresh process → `stat %Y /proc/<pid> >= script_start_epoch` |
+| 21 | `trks-diag` (72-78) | v2 (after install); all required args; pinned imports |
+| 22 | diagnostic freshness (221-227) | same pid/epoch; passes |
+| 23 | 600 calls (200 × 3) | `calls_made` = 600 |
+| 24 | `[ -s out ]` + `grep '"calls_made": 600'` (80-81) | file written; literal present |
+| 25 | cleanup session + pid (84) | this invocation's session/server only |
+| 26 | port free, lease free (85-87) | after the stop |
+| 27 | `echo "D6 $phase DONE"` (88) | reached |
+
+The only external prerequisite is that the **v2 diagnostic is installed** (the hosts still have v1
+`5012efc4…`; `install.sh` is the documented pre-run step and also installs the three new/changed launch
+scripts). With that, nothing in the script is a no-op that always fails: the two post-run checks are on a
+file the diagnostic writes on success, and the startup strings the wrapper waits for are in this build's
+log.
+
+**Caveat (n1, MINOR).** The "process age" signal is not the process start. On TASL-2 a `bash -c` parent and
+a child `$BASHPID` started at the same second; after `sleep 3`, `stat -c %Y /proc/$BASHPID` returned the
+**stat time** (1793409419), not the start (1793409416). Long-lived processes behave the same: on TASL-2,
+`sd-pam` pid 1058559 has a `/proc/1058559` mtime 5.25 days **after** its `ps lstart`, while others match.
+`/proc/<pid>` `st_mtime` is the time the procfs inode was (last) instantiated — always ≥ the process start,
+but possibly much later. Consequences: (i) it **cannot fail** for the fresh server (the inode is
+instantiated after the server starts, which is after `script_start_epoch`; the child test returned `GE`), so
+the wrapper still completes; (ii) it is one-sided: an *old* server whose `/proc` entry is looked up after
+`script_start_epoch` would also pass, so the diagnostic's standalone refusal (and the 30 Oct `diag_cache`
+reproduction) is a heuristic, not a true age proof. For F1/F2 the freshness that matters is guaranteed by
+construction — the preconditions require no `trks_llm`, no 18101 listener and no GPU process; the script
+starts exactly one server and stops it; the first HTTP request is the first completion — and the artifact
+still records the true start (`server.start_lstart`) beside the epochs, so a reviewer can check it. The
+comment at `:172` ("`/proc/<pid> mtime = start`") and `freshness.rule` at `:227` ("server process start >=
+launch-script start") overstate the signal. Fix (not blocking): use `/proc/<pid>/stat` field 22 (starttime)
+with `/proc/stat` `btime`, or parse `ps -o lstart=` into an epoch, and word the rule as "procfs entry
+instantiated after the launch start".
+
+**B2 disposition: FIXED** — the log gate and the always-failing `after` check are gone, the false
+`completions_*` evidence is gone, the run is asserted by `calls_made: 600`, and the traced success path
+reaches `D6 … DONE`. n1 concerns the strength of the replacement signal, not an always-fail.
+
+### 3.3 N1 — the trap is armed only after this invocation starts its own server
+
+```
+23-32  preconditions (markers, tmux has-session, l0 listener, n0 GPU, out exists) -> exit 1 on any
+33     mkdir -p (no process)
+35     log rotation (no process)
+38     script_start_epoch
+39     tmux new -d -s trks_llm "$R/bin/trks-servers 1"      # our session/server starts here
+40     pid=""
+41     cleanup() { tmux kill-session -t trks_llm ...; [ -n "${pid:-}" ] && kill "$pid" ...; }
+42     trap cleanup EXIT
+```
+
+The trap is armed **after** this invocation starts its session; every refusal path (marker, existing
+`trks_llm`, existing 18101 listener, existing GPU process, existing out file) exits before line 42 and kills
+nothing. `cleanup` can only kill the `trks_llm` session this invocation created (line 27 proved none
+existed, line 39 created it) and `$pid`, which stays empty until the 18101 listener is identified (54-63)
+and is the server this invocation started. The explicit stop at line 84 calls the same `cleanup` and then
+disarms the trap. A signal in the three-line window between 39 and 42 would still leak the session/server
+(m5's foreground resilience), but that is not the round-2 defect.
+
+**N1 disposition: FIXED.**
+
+### 3.4 Round-1/2 items re-verified
+
+| item | status | evidence |
+|---|---|---|
+| B1 port-scoped server identity | still FIXED | exactly one listener (52-53) → `pid=` (54) → `readlink -f /proc/pid/exe` `*/llama-server` (56-57) → single `nvidia-smi` pid equal to it (58-61) → cmdline `--port 18101` (62-63). No `pgrep`; the `trks-servers` wrapper is not a listener, and Track P's Python-wrapped servers fail the exe or `--port` check. |
+| M2 install syncs launch scripts | still FIXED | `install.sh:20-26` copies `$here/launch/*.sh`, `bash -n`s, `scp`s to `$R/launch`, `chmod +x`, prints hashes. Hosts still v1/old until the operator runs it. |
+| M3 lease asserted held, never taken | still FIXED | line 49 `flock -n … true && { STOP }` (held → skip; free → STOP); no `flock` without `-n`; line 87 release check. Free branch re-run on both hosts: `STOP`, rc 1. |
+| m1 first-call metric None | still FIXED | `first_call_prompt_n_mean` `None` when nothing observed (145); observed/missing counts (143-144). Residual: partial reuse counts as a miss and the comment (122-124) does not say so. |
+| m3 hashes/phase/UTC | still FIXED | `script_sha256` (248), `payload_sha256` (249-250), `phase_label` (246), error-call `utc` (106-107), per-call `utc` (111), per-mode started/finished (232-234). |
+| m4 overwrite refusal | still FIXED | line 32 refuses an existing out before the server starts. |
+| m5 readiness | still FIXED (residual) | waits for `listening` and `offloaded 29/29 layers` (44-46); still foreground under ssh, not `trks-run`/tmux. |
+| m6 measured server block | still FIXED (note) | `server` block is measured (`/proc`, `ps`); `resident_server_count` is still the asserted 1. |
+| m7 priority markers | still FIXED | lines 24-26 check Track X/P and drill markers; `trks-watch` handles later ones. |
+
+### 3.5 Round-2 minors
+
+| id | round-2 finding | disposition | evidence (Round 3) |
+|---|---|---|---|
+| N3 | both host-specific `tasl{2,7}_d6.sh` installed on both hosts, no guard | **FIXED** | `[ "$(hostname)" = "TASL-2" ]` at line 14 (TASL-7 in the other); `hostname` is exactly `TASL-2`/`TASL-7`. Residual n2 for the `diag_cache` pair. |
+| N4 | 30 Oct `tasl{2,7}_diag_cache.sh` call `trks-diag` without the new required flags | **FIXED** | both require `SERVER_PID`/`SCRIPT_START_EPOCH` (5-6), pass `--server-pid`/`--script-start-epoch` (16), and refuse to overwrite the existing 30 Oct `cache_prompt.json` unless `FORCE=1` (9-12). The evidence files exist on both hosts, so the guard engages. Note: `--mode both` now runs three modes; with `FORCE=1` the legacy file would be v2/3-mode, so leave it frozen. |
+| N5 | `head -1`, no exactly-one-listener | **FIXED** | `l1=$(ss -H -ltn … | grep -c . || true); [ "$l1" = 1 ]` (52-53). Residual n4. |
+| N6 | unreadable pid/exe aborts silently | **FIXED** | `pid=… || true` + explicit STOP (54-55); `exe=$(readlink … || true)` + STOP with `${exe:-unreadable}` (56-57). Residual n3 for `cmd`/`gp`. |
+| N7 | `server_facts` reads the whole log; log retention | **FIXED** | `server_facts(pid)` has no log argument or read; no artifact `log`/`completions_*`; the script only `grep -q`s the two startup lines, which appear early. Old logs are still renamed to `.prev.log` (retention only; 265/908 GB free). |
+| N8 | post-stop leaves a surviving server | **FIXED** | `cleanup` kills the session and `kill "$pid"` (41, 84); the port is re-checked and STOPs if it survives (85-86). Residual n5 (SIGTERM only). |
+| m2 | docstring still says one added field / `both` = 30 Oct pair | **STILL OPEN** | lines 14-16 still say the only difference is one added `cache_prompt` field; line 23 still says "`both` is the 30 Oct pair" while `MODES = ("false","true","absent")` and `--mode both` runs all three (219). The commit message claims "the docstring now says `both` runs all three modes", but the only docstring change in `c1312b41` is the usage example's `--server-log` → `--script-start-epoch`; the claim is inaccurate. Documentation only. |
+
+### 3.6 New findings
+
+| id | severity | finding |
+|---|---|---|
+| n1 | MINOR | The age signal is `/proc/<pid>` `st_mtime` = procfs inode instantiation time, not the process start (see 3.2); the comment and `freshness.rule` overstate it. The check passes for the fresh server and F1/F2 are cold by construction; the diagnostic's standalone refusal is a heuristic, not an age proof. |
+| n2 | MINOR | N3 residual: `tasl{2,7}_diag_cache.sh` remain host-specific with no `hostname` guard, and `install.sh:21/25` copies both to both hosts. Running the wrong one uses the other node's prompts and writes `$R/out/<other-node>/s01_diag/…` with the wrong `--host-label`; on TASL-2 the `out/tabular_mlp/s01_diag/cache_prompt.json` guard path does not exist, so it would not refuse. The D6 pair is guarded and D6 does not run these; add the same guard. |
+| n3 | MINOR | N6 residual: `gp=$(nvidia-smi … | tr … | head -1)` (60) and `cmd=$(tr … < /proc/$pid/cmdline | sed …)` (62) are still bare substitutions under `set -euo pipefail`; if the listener/smi vanishes between the preceding check and these lines, the script aborts without a STOP (the trap cleans up). A failing `ss`/`nvidia-smi` in the preconditions is swallowed as 0 and later STOPs with "found 0" rather than naming the tool failure. Low likelihood; add `|| true` + explicit STOP. |
+| n4 | MINOR | N5 residual: `l1` counts `ss` *lines*, not `pid=` occurrences; a single listening socket shared by two processes (inherited fd) would show one line and `head -1` would pick the first. Not reachable here (llama-server does not share 18101; the port was free before start), but the count is not strictly one pid. |
+| n5 | MINOR | N8 residual: `cleanup` sends SIGTERM only; a server that survives `tmux kill-session` + `kill` is detected by the port check and STOPs, but is left running — and the flock pane may be gone, so the lease could be released while the server lives. Add a bounded `kill -9`/wait, or keep the lease until the pid is gone. Low likelihood (llama-server exits on SIGTERM; round-2 lab test). |
+| n6 | MINOR | m2 still open (see 3.5) and the commit message's m2 claim is inaccurate; the docstring's `both` description contradicts `MODES`. Documentation only. |
+
+No BLOCKING and no MAJOR new finding. No other pinned code is touched, no `k`/phase is set, and the hosts
+are idle at the pins.
+
+### 3.7 D6 checklist
+
+| # | rule | result |
+|---|---|---|
+| 1 | Diagnostic, not a phase; `k` unset; Phase 3 not started | **PASS** — no k/phase writes; `c1312b41` touches only ops code; `trks-servers 1` is the server count. |
+| 2 | No pinned-code change | **PASS** — `determinism.py` `081adb63…` at `9bb64ba`/HEAD/hosts; pinned diff empty. |
+| 3 | Reuse the committed diagnostic | **PASS after install** — `trks-diag` → `$R/bin/cache_prompt_diag.py`; hosts still v1, so `install.sh` is a required pre-run step. |
+| 4 | F1 cold control, no prior call, one server | **PASS in substance** — own server per invocation + preconditions + age check; n1 caveat on the signal's strength. |
+| 5 | F1 pinned prompts/seeds/body/schedule | **PASS** — `D.fixed_prompts`, `D.chat_payload`, `D.schedule(200,3,1,0,0)`. |
+| 6 | F2 plain S0.1 body, no `cache_prompt`, one resident server | **PASS** — synthetic `absent` posts `messages, model, response_format, seed, temperature` only, base payload unmutated; pinned prompts/schedule; one server. |
+| 7 | New launch script committed and reviewed before use | **COMMITTED** (`c1312b41`) and reviewed here; **ACCEPTED**. |
+| 8 | Raw responses; per-call tokens; first-call hits; resident count; timestamps | **PASS with the m6 note** — `contents`, `calls[].tokens` (prompt_n and prompt_tokens), first-call hits/misses/observed/missing/mean, per-call/mode UTC, `freshness` epochs; `resident_server_count` is asserted. |
+| 9 | Every GPU job under `flock` | **PASS** — server via `trks-servers` holds it; the script asserts, never takes; release checked. |
+| 10 | Track X / Track P keep priority | **PASS** — markers at start; watcher for later; d6 host guard; identification cannot match Track P. |
+| 11 | Out paths no collision; `mkdir -p` | **PASS** — `s01_diag_f1/f2` absent on both hosts; existing out refused. |
+| 12 | `bash -n`, `py_compile`, installed copies | **PASS static**; `install.sh` syncs the scripts; hosts must be updated first. |
+
+### 3.8 Required pre-run steps
+
+1. Run `r1/tracks/ops/install.sh portal_zhixu TASL-2 <gpu-uuid>` and `… tasl7 TASL-7 <gpu-uuid>`; confirm the
+   printed `cache_prompt_diag.py` is `c62fdb73…`, `tasl2_d6.sh` `0f3ca947…`, `tasl7_d6.sh` `06424cb1…`,
+   `trks-diag` `7ab8b5c9…`, `trks-servers` `124316b5…`.
+2. On each host run the matching script, one phase per invocation, in the lease gap: TASL-2
+   `bash $R/launch/tasl2_d6.sh f1` then `f2`; TASL-7 `bash $R/launch/tasl7_d6.sh f1` then `f2`. Each starts
+   and stops its own server; do not run two at once, and do not run the other host's script (it refuses).
+3. Keep the raw `s01_diag_f1/…json` and `s01_diag_f2/…json`; if a run STOPs after writing, move the file,
+   do not delete it (the wrapper refuses to overwrite an existing out).
+4. The hosts are currently idle and clean; no marker, lease or server is held. Nothing in the scripts kills
+   a process it did not start.
+
+### 3.9 Verdict
+
+The two round-2 blockers are genuinely fixed. B2's log-based completion gate and its `after > 0` postcondition
+are gone, the false `completions_*` evidence is gone, and the wrapper now asserts a real run with
+`calls_made: 600`; I traced the whole success path against live host values and every gate can pass and
+reaches `D6 … DONE`, so the round-2 "always exits 1" failure mode cannot recur. N1 is fixed by ordering: the
+EXIT trap is armed after this invocation creates its own `trks_llm` session, all refusal paths exit before
+it, and `cleanup` can only kill the session/pid this run started. The round-1 identification chain, lease
+assertion, install sync, host guard, `absent` body, pinned prompts/schedule/imports and pins are intact;
+N3–N8 are fixed (each with a benign residual) and only the documentation-only m2 remains open. The one
+substantive new caveat (n1) is that `/proc/<pid>` `st_mtime` is the procfs inode timestamp, not the process
+start, so the new age check is a one-sided heuristic rather than a strict age proof; it cannot fail for the
+fresh server, and F1/F2 coldness is guaranteed by the preconditions plus the per-invocation server, so it does
+not block use. With the mandatory `install.sh` step and the matching host script, the operator may run F1/F2
+as specified and the scripts will complete successfully; n1–n6 should be addressed in the next docs/ops
+touch.
+
+REVIEW VERDICT: ACCEPTED
