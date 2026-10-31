@@ -2,6 +2,7 @@
 
 ## 31 October 2026 — coordinator decisions recorded (AI-assisted; no execution)
 
+- Track X STOP 2 receiving condition: after the author's later conditional authorization, all 22 files were independently rehashed and matched; the independent verdict in `docs/r1/reviews/EXAM_STOP2_VERDICT_20261031.md` ACCEPTS receiving, source-pin comparison and reproduced fit estimates with its stated limitations. The author's conditional STOP 2 acceptance is recorded. The 32k table is an estimate, not a measured fit. This does not authorize Stage A, whose prompt-set conditions remain unresolved.
 - Author decisions D1–D6 are recorded in PLAN §10 as R1-EXAM-STOP2-ACCEPT, R1-EXAM-PROMPTSET-FREEZE, R1-EXAM-CACHE, R1-P3A-OOM, R1-B2-DECOUPLE and R1-TRACKS-S01-FOLLOWUP; full conditional instructions: `docs/r1/authorizations/COORDINATOR_DECISIONS_20261031.md`.
 - This entry records decisions only. STOP 2 source/fit verification and receiving record reconstruction, prompt freeze checks, Stage A review, P.3a diagnosis, B.1 classification and Track S follow-up reviews remain pending. B.2 is not authorized to start. The 4 November layout gate remains unchanged.
 - Census: prior coordinator temporary worktrees and OPS_LOG are absent; local-only B.2 candidates `9fe7f2a` and `00d35d3` were not found in the local Git object database. TASL-2 retains two orphaned DRYRUN server wrapper processes; no GPU compute process was seen. Preserve and investigate read-only.
