@@ -63,8 +63,43 @@ def test_missing_invalid_or_ambiguous_historical_seed_stops(tmp_path,mutate):
 def test_source_ledger_change_stops(tmp_path):
     source,digest=fixture(tmp_path)
     row=json.loads(source.read_text().splitlines()[0])
-    with open(row['ledger_path'],'a') as out: out.write(' ')
+    with open(row['ledger_path'],'w') as out: out.write('changed')
     with pytest.raises(ValueError, match='provenance'):
+        load_prompts(source,digest,historical_seeds=True)
+
+
+def test_relative_ledger_resolves_from_bundle_not_runner_cwd(tmp_path,monkeypatch):
+    bundle=tmp_path/'bundle'
+    bundle.mkdir()
+    source,_=fixture(bundle)
+    rows=[json.loads(line) for line in source.read_text().splitlines()]
+    for row in rows: row['ledger_path']='ledger.jsonl'
+    source.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    digest=hashlib.sha256(source.read_bytes()).hexdigest()
+    runner=tmp_path/'runner'
+    runner.mkdir()
+    monkeypatch.chdir(runner)
+    resolved=load_prompts(source,digest,historical_seeds=True)
+    assert len(resolved)==50 and all(type(row['seed']) is int for row in resolved)
+
+
+@pytest.mark.parametrize('mode',['traversal','outside_absolute','symlink_escape'])
+def test_ledger_cannot_escape_prompt_bundle(tmp_path,mode):
+    bundle=tmp_path/'bundle'
+    bundle.mkdir()
+    source,_=fixture(bundle)
+    outside=tmp_path/'outside.jsonl'
+    outside.write_bytes((bundle/'ledger.jsonl').read_bytes())
+    if mode=='traversal': path='../outside.jsonl'
+    elif mode=='outside_absolute': path=str(outside)
+    else:
+        (bundle/'link.jsonl').symlink_to(outside)
+        path='link.jsonl'
+    rows=[json.loads(line) for line in source.read_text().splitlines()]
+    rows[0]['ledger_path']=path
+    source.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    digest=hashlib.sha256(source.read_bytes()).hexdigest()
+    with pytest.raises(ValueError,match='traversal|outside'):
         load_prompts(source,digest,historical_seeds=True)
 
 

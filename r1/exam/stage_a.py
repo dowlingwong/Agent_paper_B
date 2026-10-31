@@ -18,7 +18,9 @@ def post(instance, route, payload, timeout=300):
 
 def load_prompts(path, expected, *, dryrun=False, historical_seeds=False):
     # Use the same bytes for digest checking and parsing; never edit the source.
-    data=Path(path).read_bytes()
+    prompt_path=Path(path).resolve(strict=True)
+    bundle_root=prompt_path.parent
+    data=prompt_path.read_bytes()
     if hashlib.sha256(data).hexdigest()!=expected: raise ValueError('frozen prompt-set digest mismatch')
     rows=[json.loads(s) for s in data.decode('utf-8').splitlines() if s.strip()]
     if len(rows)!=50 or len({r['node'] for r in rows})<4: raise ValueError('50 prompts across >=4 nodes required')
@@ -26,11 +28,20 @@ def load_prompts(path, expected, *, dryrun=False, historical_seeds=False):
     for row in rows:
         if not row.get('prompt') or not row.get('active_keys'): raise ValueError('prompt and active keys required')
         if not dryrun:
-            source=Path(row['ledger_path'])
+            ledger_path=Path(row['ledger_path'])
+            if '..' in ledger_path.parts:
+                raise ValueError('source ledger path traversal forbidden')
+            source=(ledger_path if ledger_path.is_absolute() else bundle_root/ledger_path).resolve(strict=True)
+            try:
+                source.relative_to(bundle_root)
+            except ValueError:
+                raise ValueError('source ledger outside prompt bundle') from None
             if source not in sources:
                 raw=source.read_bytes()
-                sources[source]=(hashlib.sha256(raw).hexdigest(),
-                                 [json.loads(s) for s in raw.decode('utf-8').splitlines() if s.strip()])
+                sha=hashlib.sha256(raw).hexdigest()
+                if row.get('memory_mode')!='append_only_summary' or sha!=row['ledger_sha256']:
+                    raise ValueError('prompt-set source ledger/memory provenance mismatch')
+                sources[source]=(sha,[json.loads(s) for s in raw.decode('utf-8').splitlines() if s.strip()])
             sha, records=sources[source]
             if row.get('memory_mode')!='append_only_summary' or sha!=row['ledger_sha256']:
                 raise ValueError('prompt-set source ledger/memory provenance mismatch')
@@ -44,9 +55,11 @@ def load_prompts(path, expected, *, dryrun=False, historical_seeds=False):
                 ((record.get('extra') or {}).get('manager') or (record.get('extra') or {})).get('context_sha256')!=hashlib.sha256(row['prompt'].encode()).hexdigest()):
                 raise ValueError('frozen prompt does not match its recorded memory-on manager context')
             if historical_seeds:
-                # D26 in harness 411c6054: SHA-256(campaign|budget|0|0), first
-                # four bytes big-endian. Require the historical llm_call to
-                # agree; a newly supplied seed cannot override source evidence.
+                # D26: SHA-256(campaign|budget|0|0), first four bytes big-endian.
+                # Source records were produced with harness 411c6054; the
+                # separately pinned Stage A harness is 897d83c8. Both record
+                # the same manager_seed formula; neither pin is replaced here.
+                # Require the historical llm_call to agree with the formula.
                 campaign=record.get('campaign_id'); budget=record.get('budget_index')
                 manager=(record.get('extra') or {}).get('manager') or {}
                 call=manager.get('llm_call') or {}
