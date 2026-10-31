@@ -672,6 +672,8 @@ Source: `docs/r1/authorizations/COORDINATOR_DECISIONS_20261031.md`. These rows r
 
 | R1-EXAM-PROMPT-FREEZE-1200 (31 Oct) | Author amends D2: freeze the existing 50-context Stage A set on checks completed so far, explicitly disclose incomplete Track S per-call records and post-hoc selection; regenerate pinned Track S inputs on CPU only after freeze and disclose hits without altering the set or blocking Stage A. This does not assert exhaustive absence of unlogged calls. Phase-specific future outputs and the B1 anchor reference remain deferred to their phases. See `docs/r1/authorizations/COORDINATOR_PROMPT_20261031_AMENDED_1200.md` and the freeze provenance. |
 
+| R1-EXAM-SERVER-NAMESPACE-SCOPE (31 Oct) | Author permits the D3 one-resident-server requirement to be evaluated within an isolated user+network namespace; disclose that host-wide single-server status remains NOT CHECKABLE. Before execution, the isolation must pass independent CPU review and tests, and GPU device, GPU flock lease and server compatibility must be proved. Preserve STOP on any failed check; no host-wide claim follows from namespace isolation. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

@@ -1,5 +1,7 @@
 # Paper B (route R1) — status log
 
+- Author allows the D3 single-resident-server proof within an isolated user+network namespace, with host-wide status disclosed NOT CHECKABLE. Independent CPU isolation verification and proof of GPU, lease and server compatibility remain required; Stage A is still BLOCK.
+
 - 31 Oct author D2 amendment: 50 Stage A prompts frozen at 2026-10-31T11:02:44Z; SHA-256 `70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a`; historical-source exception and incomplete Track S request coverage disclosed in `results/r1/engineering/trackx_stagea_promptset_20261031/PROVENANCE.md`. CPU-only Track S regeneration remains a post-freeze disclosure check. Stage A still requires D1/D3/config independent review; P.3a and B.2 remain STOP.
 
 ## 31 October 2026 — coordinator decisions recorded (AI-assisted; no execution)
