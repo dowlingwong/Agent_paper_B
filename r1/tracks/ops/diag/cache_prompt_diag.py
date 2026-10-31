@@ -26,7 +26,7 @@ Modes: ``false`` / ``true`` add ``cache_prompt``; ``absent`` sends no such field
       --node digits_mlp --n 200 --repeats 3 --order-seed 1 \
       --proposal-schema manager_proposal/v1 --mode absent \
       --resident-server-count 1 --server-pid <listener pid> \
-      --server-log /path/llama_18101.log --phase-label f2 --host-label TASL-2 \
+      --script-start-epoch <epoch> --phase-label f2 --host-label TASL-2 \
       --gguf /path/model.gguf --llama-build 620d2225... \
       --llama-server-bin /path/llama-server --server-args '<measured cmdline>' \
       --out diag.json
@@ -135,6 +135,7 @@ def summarise(res: dict, repeats: int) -> dict:
             "n_differing_prompts": len(contents) - len(identical),
             "differing_prompt_indices": sorted(set(contents) - set(identical)),
             "errors": res["errors"], "latency": latency_stats(res["latencies"]),
+            "calls_made": len(res["latencies"]),
             "tokens_evaluated_total": sum((c.get("tokens") or {}).get("prompt_n", 0)
                                           for c in res["calls"] if c.get("tokens")) or None,
             "first_call_cache_hits": hits,
@@ -151,30 +152,32 @@ def _mean(vals):
     return sum(xs) / len(xs) if xs else None
 
 
-def server_facts(pid: int, log_path: str) -> dict:
-    """Measured server identity and request counts -- not claims. ``/proc`` reads only."""
-    def read(p):
-        try:
-            return Path(p).read_text(errors="replace")
-        except OSError:
-            return ""
-    facts = {"pid": pid, "exe": None, "cmdline": None, "cmdline_sha256": None, "start_lstart": None,
-             "log": log_path, "completions_before": None, "completions_after": None}
+def server_facts(pid: int) -> dict:
+    """Measured server identity -- not claims. ``/proc`` reads only; no log parsing (this llama.cpp build
+    does not log request paths, so request-count evidence from a log does not exist)."""
+    facts = {"pid": pid, "exe": None, "cmdline": None, "cmdline_sha256": None,
+             "start_lstart": None, "start_epoch": None}
     try:
         facts["exe"] = str(Path("/proc/%d/exe" % pid).resolve())
     except OSError:
         pass
-    cmd = read("/proc/%d/cmdline" % pid).replace("\x00", " ").strip()
+    try:
+        cmd = Path("/proc/%d/cmdline" % pid).read_text(errors="replace").replace("\x00", " ").strip()
+    except OSError:
+        cmd = ""
     if cmd:
         facts["cmdline"] = cmd
         facts["cmdline_sha256"] = hashlib.sha256(cmd.encode()).hexdigest()
+    try:
+        facts["start_epoch"] = int(Path("/proc/%d" % pid).stat().st_mtime)  # /proc/<pid> mtime = start
+    except OSError:
+        pass
     import subprocess
     try:
         r = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True, timeout=15)
         facts["start_lstart"] = r.stdout.strip() or None
     except Exception:  # noqa: BLE001
         pass
-    facts["completions_before"] = read(log_path).count("/chat/completions")
     return facts
 
 
@@ -195,7 +198,8 @@ def main(argv=None) -> int:
                     help="how many llama-server processes were resident on the GPU during this run")
     ap.add_argument("--server-pid", type=int, required=True,
                     help="the pid listening on the probed port (measured by the launch script)")
-    ap.add_argument("--server-log", required=True, help="that server's own log, for request counts")
+    ap.add_argument("--script-start-epoch", type=int, required=True,
+                    help="when the launch script started, epoch seconds; the server must be newer")
     ap.add_argument("--phase-label", required=True, help="f1 | f2 -- which follow-up this run is")
     ap.add_argument("--host-label", required=True)
     ap.add_argument("--gguf", required=True)
@@ -214,10 +218,13 @@ def main(argv=None) -> int:
     order = D.schedule(len(prompts), args.repeats, args.order_seed, 0, 0)  # serial: url_index 0, client 0
     modes = MODES if args.mode == "both" else (args.mode,)
 
-    facts = server_facts(args.server_pid, args.server_log)
-    if (facts["completions_before"] or 0) != 0:
-        raise SystemExit(f"refusing: the server log already shows {facts['completions_before']} completions "
-                         f"before this run; the server is not fresh")
+    facts = server_facts(args.server_pid)
+    fresh = (facts["start_epoch"] is not None and facts["start_epoch"] >= args.script_start_epoch)
+    if not fresh:
+        raise SystemExit(f"refusing: the server (pid {args.server_pid}, start_epoch {facts['start_epoch']}) "
+                         f"is not newer than this invocation (script_start_epoch {args.script_start_epoch})")
+    freshness = {"script_start_epoch": args.script_start_epoch, "server_start_epoch": facts["start_epoch"],
+                 "fresh": True, "rule": "server process start >= launch-script start"}
     census_before = D.cpu_census()
     results = {}
     for mode in modes:
@@ -233,7 +240,6 @@ def main(argv=None) -> int:
                          "calls": raw["calls"],
                          "contents": {str(i): v for i, v in raw["contents"].items()}}
     census_after = D.cpu_census()
-    facts["completions_after"] = server_facts(args.server_pid, args.server_log)["completions_before"]
 
     report = {
         "schema": SCHEMA, "label": "DIAGNOSTIC", "engineering_label": "ENGINEERING_ONLY",
@@ -249,7 +255,7 @@ def main(argv=None) -> int:
         "proposal_schema": args.proposal_schema,
         "mode_order": list(modes), "raw_responses_kept": True,
         "resident_server_count": args.resident_server_count,
-        "server": facts,
+        "server": facts, "freshness": freshness,
         "run_utc": utc(),
         # S4 fix: the exact body that was sent, for the mode that adds a field, so "only added field" is
         # checkable from this file alone. Kept for each mode under results[*].request_example.
