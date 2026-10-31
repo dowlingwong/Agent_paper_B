@@ -621,12 +621,12 @@ REVIEW VERDICT: NOT ACCEPTED
 5 files, +119/−91 — `cache_prompt_diag.py`, both `tasl{2,7}_d6.sh`, both `tasl{2,7}_diag_cache.sh`). Pins:
 paper `9bb64ba`, harness `115df37`, llama.cpp `620d2225`; runbook 3.3. **I did not run a GPU job, a server,
 or the diagnostic.** Host access was read-only (`ssh portal_zhixu`, `ssh tasl7`): `git`, `sha256sum`, `ss`,
-`nvidia-smi --query-compute-apps=pid`, `ps`, `stat`, `readlink`, `grep`, `tmux ls`, `ls`, plus one transient
-`bash -c` subshell on each host (a `sleep 3` child; no GPU, no lock, no write) to establish what
-`/proc/<pid>` `st_mtime` actually is. I started no server and wrote nothing on the hosts. One local synthetic
-Python test of `run_mode` with a fake `post_full` (no HTTP, no GPU) checked the `absent` body and the
-`calls_made` JSON literal; `bash -n` and `py_compile` were run locally and, via stdin, on the hosts' bash
-5.1.16 / Python 3.10.12.
+`nvidia-smi --query-compute-apps=pid`, `ps`, `stat`, `readlink`, `grep`, `tmux ls`, `ls`, plus transient
+`bash -c` gate snippets on both hosts and one `sleep 3` child on TASL-2 (no GPU, no lock, no write) to
+establish what `/proc/<pid>` `st_mtime` actually is. I started no server and wrote nothing on the hosts. One
+local synthetic Python test of `run_mode` with a fake `post_full` (no HTTP, no GPU) checked the `absent` body
+and the `calls_made` JSON literal; `bash -n` and `py_compile` were run locally and, via stdin, on the hosts'
+bash 5.1.16 / Python 3.10.12.
 
 ### 3.1 Worktree, pins, static checks
 
@@ -728,15 +728,16 @@ Every gate, with the value measured on the hosts:
 | 27 | `echo "D6 $phase DONE"` (88) | reached |
 
 The only external prerequisite is that the **v2 diagnostic is installed** (the hosts still have v1
-`5012efc4…`; `install.sh` is the documented pre-run step and also installs the three new/changed launch
-scripts). With that, nothing in the script is a no-op that always fails: the two post-run checks are on a
+`5012efc4…`; `install.sh` is the documented pre-run step and also installs all `launch/*.sh`, including the
+four new/changed ones). With that, nothing in the script is a no-op that always fails: the two post-run checks are on a
 file the diagnostic writes on success, and the startup strings the wrapper waits for are in this build's
 log.
 
 **Caveat (n1, MINOR).** The "process age" signal is not the process start. On TASL-2 a `bash -c` parent and
 a child `$BASHPID` started at the same second; after `sleep 3`, `stat -c %Y /proc/$BASHPID` returned the
-**stat time** (1793409419), not the start (1793409416). Long-lived processes behave the same: on TASL-2,
-`sd-pam` pid 1058559 has a `/proc/1058559` mtime 5.25 days **after** its `ps lstart`, while others match.
+**stat time** (1793409419), not the start (1793409416). Some long-lived processes show the same: on TASL-2,
+`sd-pam` pid 1058559 has a `/proc/1058559` mtime 5.26 days **after** its `ps lstart`, while pid 1058558
+(systemd, same `lstart`) matches it.
 `/proc/<pid>` `st_mtime` is the time the procfs inode was (last) instantiated — always ≥ the process start,
 but possibly much later. Consequences: (i) it **cannot fail** for the fresh server (the inode is
 instantiated after the server starts, which is after `script_start_epoch`; the child test returned `GE`), so
@@ -773,7 +774,7 @@ The trap is armed **after** this invocation starts its session; every refusal pa
 nothing. `cleanup` can only kill the `trks_llm` session this invocation created (line 27 proved none
 existed, line 39 created it) and `$pid`, which stays empty until the 18101 listener is identified (54-63)
 and is the server this invocation started. The explicit stop at line 84 calls the same `cleanup` and then
-disarms the trap. A signal in the three-line window between 39 and 42 would still leak the session/server
+disarms the trap. A signal in the short window between 39 and 42 would still leak the session/server
 (m5's foreground resilience), but that is not the round-2 defect.
 
 **N1 disposition: FIXED.**

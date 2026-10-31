@@ -1,5 +1,26 @@
 # Paper B (route R1) — status log
 
+## 31 October 2026 — Track S D6 follow-ups F1/F2 run on both hosts: `cache_prompt` is the cause (AI-assisted; ENGINEERING_ONLY / DIAGNOSTIC)
+
+- **Authority.** Author decision **D6 / R1-TRACKS-S01-FOLLOWUP (31 Oct)**: run both STOP-1 follow-ups on both hosts. **Not a phase**: `k` unset, Phase 3 not started, no pinned code changed. Report: `reports/TRACKS_D6_FOLLOWUP_20261031.md`.
+- **Pre-use review (required before first use).** Three rounds: NOT ACCEPTED (B1 — `pgrep` over-matched Track P's Python-wrapped servers and the `trks-servers` wrapper; M1–M3), NOT ACCEPTED (B2 — the pinned build never logs request paths, so the log-based cold gate was vacuous and the post-run check always failed; N1 — the EXIT trap could kill a server it did not start), then **ACCEPTED** (`reviews/TRACKS_OPS_D6_PREUSE_REVIEW_20261031.md`). The accepted design identifies the server by the port-18101 listener tied to the single GPU compute pid, proves coldness by process age instead of log parsing, asserts (never takes) the lease, and starts/stops its own server per invocation.
+- **Results — identity (200 prompts, 3 repeats):**
+
+| configuration | servers | cache_prompt | digits_mlp | tabular_mlp |
+|---|---|---|---|---|
+| S0.1 (30 Oct) | 2 | absent | 0.930 | 0.870 |
+| **F1 cold control** | 1 | `true` | **0.930** | **0.870** |
+| **F2 plain repeat** | 1 | absent | **0.930** | **0.870** |
+| 30 Oct test | 1 | `false` | 1.000 | 1.000 |
+| 30 Oct control | 1 | `true` (warm) | 1.000 | 0.990 |
+
+- **F1 ≡ F2.** Same identity, the *identical* set of differing prompt indices (14 on digits, 26 on tabular), identical evaluated-token totals (99 801 / 99 807); the bodies differ only by the `cache_prompt` key. **Omitting the field equals `cache_prompt: true`** — `true` is the server default, which is what the harness body currently gets.
+- **S1 differences resolved.** Server count: **no effect** (F2, one server, reproduces S0.1's two-server numbers prompt-for-prompt). Cache warmth: **explains the 30 Oct control** (cold `true` 0.930/0.870 vs warm `true` 1.000/0.990). Contrast size: the real contrast is `false` 1.000 vs `true`/default 0.930/0.870, cold on both sides — 14 and 26 of 200 prompts, not 2.
+- **Coldness actually verified**: 0/200 first-call cache hits on all four runs; every server was freshly started by its own invocation and stopped afterwards.
+- **Cost of `false`**: full prompt re-evaluation (≈640 evaluated tokens/call vs ≈166 in the cached mode) and **+6–8 %** mean latency (0.6828 vs 0.6438 s digits; 0.6985 vs 0.6573 s tabular).
+- **Recommendation (not acted on).** Accept the diagnosis; do the harness/collector `cache_prompt: false` switch with review, new pins and a PLAN row, then a full S0.1 re-run under the new pins. `k` stays unset and Phase 3 unstarted until S0.1 passes.
+- **State.** Lease free, no GPU compute process, no 18101 listener, no `trks_llm`, watcher running, markers absent; both hosts clean at the pins; raw outputs copied back with sha256 recorded in the report.
+
 ## 30 October 2026 — STOP-1 diagnostic: `cache_prompt: false` gives 100 % identity (AI-assisted; ENGINEERING_ONLY / DIAGNOSTIC)
 
 - **Authority.** The author's ruling on STOP 1 (30 Oct): **option 2, an authorised diagnostic re-run** — not a final STOP, not a halt. **Not a phase**: no k is set and Phase 3 was not started.
