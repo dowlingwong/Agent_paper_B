@@ -661,6 +661,13 @@ Source: `docs/r1/authorizations/COORDINATOR_DECISIONS_20261031.md`. These rows r
 | R1-EXAM-PROMPT-HISTORICAL-ANCHOR | The historical source manager `ollama/qwen2.5-coder:7b`, also an exam anchor, is permitted to have generated outputs on these source contexts. Disclose that fact; exam candidates and subsequent evaluation must not have used these prompts, and the requirement that selection did not use exam-model output remains. All other prompt provenance, independent-review and freeze gates remain. |
 | R1-EXAM-PROMPT-SEED | Keep the recovered 50-prompt file byte-identical. At Stage A call time use each source ledger's historical seed derived under D26; verify the source binding and deterministic derivation independently, and record the actual seed. Missing or conflicting seed evidence stops execution. |
 
+**Revised author decisions (31 October 2026,** `docs/r1/authorizations/COORDINATOR_DECISIONS_REVISED_20261031.md`**, D3 and D5):**
+
+| Decision | Clarification |
+|---|---|
+| R1-EXAM-CACHE-REV (31 Oct) | Supersedes the B1/B2 deferral in R1-EXAM-CACHE: every Track X Stage A, B1 and B2 request uses explicit `cache_prompt: false`, recorded in config, manifests and llm_call records. Stage A also requires the previously specified descriptive true-first, cold single-server comparison and per-call cache evidence; it is not a selection criterion. The Track S operator owns the harness provider change; exam B1/B2 require its independently reviewed new pin, whereas Stage A does not wait for that pin. |
+| R1-SWEEP1-CACHE-DISCLOSURE (31 Oct) | Sweep 1 used the llama-server default with `cache_prompt` absent, corresponding to true in the tested D6 setup. Under the author's decision, sweep-1 LLM outputs are **not seed-replayable call by call** and no claim of D26 seed reproducibility may be made for sweep 1; retain observed outcomes unchanged, do not rerun. This is a provenance/reproducibility limitation, not a claim that each individual B.1 call was retested or that missing fresh-seed soft-label tables already exist. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

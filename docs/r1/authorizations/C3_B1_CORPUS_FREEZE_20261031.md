@@ -10,3 +10,5 @@ Status: **FROZEN — trajectory and source-provenance corpus only**, at 2026-10-
 - Each mode has 144 root trajectories. Offload evidence is sampled; subprocess seed snapshots are absent. Scope of seed and launch claims is as documented in the independent reviews.
 
 The audited 7001–7005 soft-label tables do not yet exist; they require the separately gated fresh-seed audit and a later separate freeze. Neither this candidate nor the existing move edits native `PILOT` or batch `ENGINEERING_ONLY` strings.
+
+**Cache provenance disclosure (author decision 31 October 2026).** Sweep 1 sent no explicit `cache_prompt` field, corresponding to the llama-server default / `true` in the tested Track S D6 setup. Its LLM outputs are **not seed-replayable call by call**; do not claim D26 seed reproducibility for this sweep. Retain the observed trajectories unchanged. D6 is evidence from its own diagnostic, not a per-call rerun or direct reproducibility test of every B.1 output. Actual fresh-seed soft labels do not yet exist.
