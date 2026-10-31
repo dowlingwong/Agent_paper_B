@@ -19,10 +19,17 @@ Raw responses are kept: for every call, the call order, prompt index, repeat, la
 and length, and the server's token counts when it reports them; and for every prompt, its per-repeat
 contents, so identity can be re-derived from the file.
 
-  python r1/tracks/ops/diag/cache_prompt_diag.py --url http://127.0.0.1:18101/v1 --node digits_mlp \\
-      --n 200 --repeats 3 --order-seed 1 --proposal-schema manager_proposal/v1 --mode both \\
-      --host-label TASL-2 --gguf /path/model.gguf --llama-build 620d2225... \\
-      --llama-server-bin /path/llama-server --server-args "<exact server cmd>" --out diag.json
+Modes: ``false`` / ``true`` add ``cache_prompt``; ``absent`` sends no such field
+(the plain S0.1 body, F2); ``both`` is the 30 Oct pair.
+
+  python r1/tracks/ops/diag/cache_prompt_diag.py --url http://127.0.0.1:18101/v1 \
+      --node digits_mlp --n 200 --repeats 3 --order-seed 1 \
+      --proposal-schema manager_proposal/v1 --mode absent \
+      --resident-server-count 1 --server-pid <listener pid> \
+      --server-log /path/llama_18101.log --phase-label f2 --host-label TASL-2 \
+      --gguf /path/model.gguf --llama-build 620d2225... \
+      --llama-server-bin /path/llama-server --server-args '<measured cmdline>' \
+      --out diag.json
 """
 from __future__ import annotations
 
@@ -96,7 +103,8 @@ def run_mode(url: str, payloads: list[dict], order: list[tuple[int, int]], flag,
         except Exception as exc:  # noqa: BLE001 - counted, never retried (matches the pinned probe)
             errors += 1
             contents[i].append(None)
-            calls.append({"order": pos, "prompt": i, "repeat": r, "error": f"{type(exc).__name__}: {exc}"})
+            calls.append({"order": pos, "prompt": i, "repeat": r, "utc": utc(),
+                          "error": f"{type(exc).__name__}: {exc}"})
             continue
         contents[i].append(text)
         latencies.append(dt)
@@ -120,7 +128,8 @@ def summarise(res: dict, repeats: int) -> dict:
             continue
         first.setdefault(c["prompt"], c)
     pn_first = [((c.get("tokens") or {}).get("prompt_n")) for c in first.values()]
-    hits = sum(1 for x in pn_first if x == 1)
+    pn_obs = [x for x in pn_first if x is not None]
+    hits = sum(1 for x in pn_obs if x == 1)
     return {"cache_prompt": res["cache_prompt"], "identity_rate": identity_rate(contents, repeats),
             "n_prompts": len(contents), "n_identical_prompts": len(identical),
             "n_differing_prompts": len(contents) - len(identical),
@@ -128,9 +137,11 @@ def summarise(res: dict, repeats: int) -> dict:
             "errors": res["errors"], "latency": latency_stats(res["latencies"]),
             "tokens_evaluated_total": sum((c.get("tokens") or {}).get("prompt_n", 0)
                                           for c in res["calls"] if c.get("tokens")) or None,
-            "first_call_cache_hits": hits, "first_call_cache_misses": len(pn_first) - hits,
-            "first_call_prompt_n_mean": (sum(x for x in pn_first if x is not None) /
-                                         max(1, len([x for x in pn_first if x is not None]))) if pn_first else None,
+            "first_call_cache_hits": hits,
+            "first_call_cache_misses": len(pn_obs) - hits,
+            "first_call_prompt_n_observed": len(pn_obs),
+            "first_call_prompt_n_missing": len(pn_first) - len(pn_obs),
+            "first_call_prompt_n_mean": (sum(pn_obs) / len(pn_obs)) if pn_obs else None,
             "usage_prompt_tokens_mean": _mean([(c.get("tokens") or {}).get("prompt_tokens") for c in res["calls"]]),
             "started_utc": res.get("started_utc"), "finished_utc": res.get("finished_utc")}
 
@@ -138,6 +149,33 @@ def summarise(res: dict, repeats: int) -> dict:
 def _mean(vals):
     xs = [v for v in vals if v is not None]
     return sum(xs) / len(xs) if xs else None
+
+
+def server_facts(pid: int, log_path: str) -> dict:
+    """Measured server identity and request counts -- not claims. ``/proc`` reads only."""
+    def read(p):
+        try:
+            return Path(p).read_text(errors="replace")
+        except OSError:
+            return ""
+    facts = {"pid": pid, "exe": None, "cmdline": None, "cmdline_sha256": None, "start_lstart": None,
+             "log": log_path, "completions_before": None, "completions_after": None}
+    try:
+        facts["exe"] = str(Path("/proc/%d/exe" % pid).resolve())
+    except OSError:
+        pass
+    cmd = read("/proc/%d/cmdline" % pid).replace("\x00", " ").strip()
+    if cmd:
+        facts["cmdline"] = cmd
+        facts["cmdline_sha256"] = hashlib.sha256(cmd.encode()).hexdigest()
+    import subprocess
+    try:
+        r = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True, timeout=15)
+        facts["start_lstart"] = r.stdout.strip() or None
+    except Exception:  # noqa: BLE001
+        pass
+    facts["completions_before"] = read(log_path).count("/chat/completions")
+    return facts
 
 
 def main(argv=None) -> int:
@@ -155,6 +193,10 @@ def main(argv=None) -> int:
                     help="absent = no cache_prompt field (the plain S0.1 request stream, F2)")
     ap.add_argument("--resident-server-count", type=int, required=True,
                     help="how many llama-server processes were resident on the GPU during this run")
+    ap.add_argument("--server-pid", type=int, required=True,
+                    help="the pid listening on the probed port (measured by the launch script)")
+    ap.add_argument("--server-log", required=True, help="that server's own log, for request counts")
+    ap.add_argument("--phase-label", required=True, help="f1 | f2 -- which follow-up this run is")
     ap.add_argument("--host-label", required=True)
     ap.add_argument("--gguf", required=True)
     ap.add_argument("--llama-build", required=True)
@@ -172,6 +214,10 @@ def main(argv=None) -> int:
     order = D.schedule(len(prompts), args.repeats, args.order_seed, 0, 0)  # serial: url_index 0, client 0
     modes = MODES if args.mode == "both" else (args.mode,)
 
+    facts = server_facts(args.server_pid, args.server_log)
+    if (facts["completions_before"] or 0) != 0:
+        raise SystemExit(f"refusing: the server log already shows {facts['completions_before']} completions "
+                         f"before this run; the server is not fresh")
     census_before = D.cpu_census()
     results = {}
     for mode in modes:
@@ -187,10 +233,15 @@ def main(argv=None) -> int:
                          "calls": raw["calls"],
                          "contents": {str(i): v for i, v in raw["contents"].items()}}
     census_after = D.cpu_census()
+    facts["completions_after"] = server_facts(args.server_pid, args.server_log)["completions_before"]
 
     report = {
         "schema": SCHEMA, "label": "DIAGNOSTIC", "engineering_label": "ENGINEERING_ONLY",
-        "purpose": "Does cache_prompt=false restore bit-identical repeats? (STOP 1 diagnostic)",
+        "phase_label": args.phase_label,
+        "purpose": "STOP-1 follow-ups F1 (cold cache_prompt=true) and F2 (plain S0.1 body, one server)",
+        "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "payload_sha256": {m: hashlib.sha256(json.dumps(r["request_example"], sort_keys=True).encode()).hexdigest()
+                           for m, r in results.items()},
         "reuses": "r1/tracks/probes/determinism.py at paper 9bb64ba, unchanged",
         "host": args.host_label, "url": args.url, "model": args.model, "node": args.node,
         "n_prompts": len(prompts), "repeats": args.repeats, "order_seed": args.order_seed,
@@ -198,6 +249,7 @@ def main(argv=None) -> int:
         "proposal_schema": args.proposal_schema,
         "mode_order": list(modes), "raw_responses_kept": True,
         "resident_server_count": args.resident_server_count,
+        "server": facts,
         "run_utc": utc(),
         # S4 fix: the exact body that was sent, for the mode that adds a field, so "only added field" is
         # checkable from this file alone. Kept for each mode under results[*].request_example.
