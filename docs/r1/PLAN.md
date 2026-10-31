@@ -647,6 +647,14 @@ Source: `docs/r1/authorizations/COORDINATOR_DECISIONS_20261031.md`. These rows r
 | R1-B2-DECOUPLE | Labels freeze uses independently verified B.1 classification only and slips if unverified; B.2 does not enter the frozen labels and does not start. Continue engineering blocker closure. Labels use seeds 7001–7005; 7006–7010 are limited to B.2 task-level joint-seed retraining and evaluation, never C3/Track P training, tuning or selection. |
 | R1-TRACKS-S01-FOLLOWUP | Track S operator runs F1 cold cache-true and F2 plain single-server diagnostics on both hosts under the stated GPU leases, retaining raw per-call cache evidence. Independent review recomputes results; STOP for author before code changes or full S0.1 rerun. Track X has TASL-2 priority. |
 
+**Author clarifications (31 October 2026, in response to the coordinator's three questions):**
+
+| Decision | Clarification |
+|---|---|
+| R1-B1-CORPUS-FREEZE | First freeze the independently verified B.1 trajectories and source provenance. Fresh-seed soft-label tables are frozen separately after the audit; they do not yet exist. B.2 remains stopped. This does not assert that the R1-LAYOUT-FLATTEN labels-freeze gate is satisfied. |
+| R1-EXAM-PROMPT-HISTORICAL-ANCHOR | The historical source manager `ollama/qwen2.5-coder:7b`, also an exam anchor, is permitted to have generated outputs on these source contexts. Disclose that fact; exam candidates and subsequent evaluation must not have used these prompts, and the requirement that selection did not use exam-model output remains. All other prompt provenance, independent-review and freeze gates remain. |
+| R1-EXAM-PROMPT-SEED | Keep the recovered 50-prompt file byte-identical. At Stage A call time use each source ledger's historical seed derived under D26; verify the source binding and deterministic derivation independently, and record the actual seed. Missing or conflicting seed evidence stops execution. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
