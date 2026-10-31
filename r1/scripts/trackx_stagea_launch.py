@@ -146,8 +146,25 @@ def main(argv=None) -> int:
         raise LaunchStop('STOP: checkout does not match the expected commit')
     if git(repo, 'status', '--porcelain'):
         raise LaunchStop('STOP: checkout is dirty; the reviewed bytes must be the committed bytes')
-    if cfg['paper_commit'] != head:
-        raise LaunchStop('STOP: config paper_commit does not equal the checked-out commit; bind it first')
+    # The config is part of the repository, so it can only name an ANCESTOR
+    # commit; this mirrors the runtime check exactly: paper_commit must be an
+    # ancestor of the checked-out commit and none of the runtime-checked code
+    # paths may differ between them (the config binding commit changes only the
+    # config/tests/launcher, which the manifest pins separately by SHA-256).
+    paper_commit = cfg['paper_commit']
+    if not isinstance(paper_commit, str) or len(paper_commit) < 7:
+        raise LaunchStop('STOP: config paper_commit is not a commit id')
+    try:
+        subprocess.run(['git', '-C', str(repo), 'merge-base', '--is-ancestor', paper_commit, head],
+                       check=True, capture_output=True)
+        changed = git(repo, 'diff', '--name-only', paper_commit,
+                      '--', 'r1/exam', 'r1/scripts/exam_runner.py',
+                      'r1/scripts/llama_server_instance.py', 'r1/scripts/llamacpp_probe.py',
+                      'r1/headroom/e1b_collect.py')
+    except subprocess.CalledProcessError as exc:
+        raise LaunchStop('STOP: config paper_commit is not a commit on this checkout') from exc
+    if changed.strip():
+        raise LaunchStop('STOP: runtime-checked code differs from the pinned paper commit')
 
     prompts = Path(cfg['prompts']).resolve(strict=True)
     if sha256_file(prompts) != cfg['prompts_sha256']:
