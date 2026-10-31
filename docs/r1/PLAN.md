@@ -634,6 +634,13 @@ The earlier R1-EXAM-RUNBOOK wording that protocol adoption is pending is superse
 | D22 | Stronger manager for the self-control arm | One API model, or a larger open model on Ada (one card); at least as a deployment check | Phase 3 declaration |
 | D23 | Index policy used as the primary comparator | KG-style (Bayesian; uses σ_n and ϱ) vs PACE-style (anytime-valid e-process); possibly both | After the T2 draft, before 0.4b |
 
+
+### R1-CACHEPROMPT-FALSE (31 Oct 2026, author) — accepted
+
+| Row | Decision |
+|---|---|
+| R1-CACHEPROMPT-FALSE (31 Oct) | **llama-server's prompt cache is the cause of Track S's S0.1 non-identity, and `cache_prompt` is now explicit.** D6 F1/F2 isolated the confounds (cold control 0.930/0.870 = S0.1; omitting the field ≡ `true`; server count no effect; warmth explained the 30 Oct control); `false` gives 1.000/1.000 on both hosts. The **harness** `llamacpp` provider sends `cache_prompt` explicitly on every request, default **false**, configured by `LLAMACACHE_PROMPT`→`LLAMACPP_CACHE_PROMPT`, and every manifest and `llm_call` record stores the value used; pre-change records are labelled "absent (= true, llama-server default)". Independent review accepted the change (**round 2**) at harness `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (branch `cacheprompt-20261031`, **not merged into `r1`**) with paper pin `d10b05b738fc0e0dba54e0e692c248bedf095482`. The author's ruling file is `docs/prompts/TRACKS_CACHEPROMPT_FIX_PROMPT_20261031.md`. Cost: ≈640 evaluated prompt tokens/call and +6.06 % (digits) / +6.27 % (tabular) mean latency versus the cached mode. A full S0.1 re-run under the new pins is authorised; `k` stays unset and Phase 3 does not start until it passes. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
