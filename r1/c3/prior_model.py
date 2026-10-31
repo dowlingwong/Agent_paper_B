@@ -55,6 +55,8 @@ class Forecast:
     llm_calls: int = 0           # LLM calls made for this forecast (A4)
     fallback: str | None = None  # why the fallback prior answered instead (None = the prior itself)
     info: dict = field(default_factory=dict)
+    # R1-CACHEPROMPT-FALSE (31 Oct 2026): the value the A4 client sent; None when the prior made no LLM call.
+    cache_prompt: bool | None = None
 
     def __post_init__(self) -> None:
         p = np.asarray(self.probs, float)
@@ -250,22 +252,38 @@ class IsotonicMap:
         return _sha(self.maps)
 
 
+def _llamacpp_cache_prompt() -> bool:
+    """The ``cache_prompt`` setting the harness sends (one source of truth for every paper client)."""
+    from r1.harness import import_harness
+    import_harness()
+    from autoresearch.llm.providers import llamacpp_cache_prompt
+    return llamacpp_cache_prompt()
+
+
 def chat_client(base_url: str, model: str, *, timeout_s: float = 60.0, max_tokens: int = 64,
-                temperature: float = 0.0, seed: int = 0) -> Callable[[str], str]:
+                temperature: float = 0.0, seed: int = 0,
+                cache_prompt: bool | None = None) -> Callable[[str], str]:
     """``prompt -> reply`` against an OpenAI-compatible ``/chat/completions`` endpoint (e.g. llama-server).
 
     Used for A4 and LLM self-control queries to the manager model; every call
     is one LLM call and the controller charges it to the cap.
+
+    R1-CACHEPROMPT-FALSE (31 Oct 2026): the body carries ``cache_prompt`` explicitly, resolved from the
+    harness by default, so these side queries are deterministic for the same reason the manager is. The
+    value is exposed as ``call.cache_prompt`` and recorded in the observer/forecast payloads.
     """
     url = base_url.rstrip("/") + "/chat/completions"
+    cp = _llamacpp_cache_prompt() if cache_prompt is None else bool(cache_prompt)
 
     def call(prompt: str) -> str:
         body = json.dumps({"model": model, "messages": [{"role": "user", "content": prompt}],
-                           "max_tokens": max_tokens, "temperature": temperature, "seed": seed}).encode()
+                           "max_tokens": max_tokens, "temperature": temperature, "seed": seed,
+                           "cache_prompt": cp}).encode()
         req = urllib.request.Request(url, data=body, method="POST", headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310 - local model server
             reply = json.loads(resp.read().decode())
         return str(reply["choices"][0]["message"]["content"])
+    call.cache_prompt = cp
     return call
 
 
@@ -283,6 +301,7 @@ class ManagerQuestionPrior:
     def __init__(self, llm: Any, fallback, calibration: IsotonicMap | None = None,
                  model_id: str = "manager") -> None:
         self.llm, self.fallback = llm, fallback
+        self._cache_prompt = getattr(llm, "cache_prompt", None)
         self.calibration = calibration or IsotonicMap()
         self.version = f"A4/typed_questions/v1/{model_id}"
         self.digest = _sha({"calibration": self.calibration.maps, "template": _SIZE_TEMPLATE,
@@ -299,12 +318,13 @@ class ManagerQuestionPrior:
             answer = parse_typed_answer(_call_llm(self.llm, self.prompt(row)))
         except Exception as exc:  # noqa: BLE001 - a failed or malformed answer falls back, still charged
             fb = self.fallback.forecast(row)
-            return Forecast(probs=fb.probs, version=self.version, digest=self.digest,
+            return Forecast(probs=fb.probs, version=self.version, digest=self.digest, cache_prompt=self._cache_prompt,
                             latency_s=time.perf_counter() - t0, llm_calls=1, fallback=f"a4_answer_failed: {exc!r}"[:300],
                             info={"fallback_version": fb.version, "fallback_digest": fb.digest})
         p0 = self.calibration("p_no_effect", answer["p_no_effect"])
         pp = self.calibration("p_positive", answer["p_positive"])
         return Forecast(probs=typed_to_bins(p0, pp, answer["size"]), version=self.version, digest=self.digest,
+                        cache_prompt=self._cache_prompt,
                         latency_s=time.perf_counter() - t0, llm_calls=1, info={"answer": answer})
 
 

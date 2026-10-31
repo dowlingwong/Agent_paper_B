@@ -25,4 +25,6 @@ class SelfForecastObserver:
                 'p_delta_positive':(1-answer['p_no_effect'])*answer['p_positive'],
                 'p_positive_given_effect':answer['p_positive'], 'size':answer['size'],
                 'raw_answer':raw, 'prompt_sha256':hashlib.sha256(prompt.encode()).hexdigest(),
-                'llm_calls':1}
+                'llm_calls':1,
+                # R1-CACHEPROMPT-FALSE (31 Oct 2026): the value the A4 client sent.
+                'cache_prompt':getattr(self.client,'cache_prompt',None)}

@@ -320,6 +320,13 @@ def main(argv=None) -> int:
               "per_url": {u: {k: v for k, v in r.items() if k != "contents"} for u, r in results.items()},
               "cross_server_identity": cross_identity({u: r["contents"] for u, r in results.items()}),
               "cpu_before": census_before, "cpu_after": cpu_census()}
+    # R1-CACHEPROMPT-FALSE (31 Oct 2026): top-level field so a summariser does not have to dig into the
+    # request body. Records written before the harness sent the field carry no cache_prompt key at all;
+    # they are labelled with the author's wording, because an absent field means llama-server's default.
+    cp = (report.get("request_example") or {}).get("cache_prompt", "__absent__")
+    report["cache_prompt"] = None if cp == "__absent__" else bool(cp)
+    report["cache_prompt_label"] = ("absent (= true, llama-server default)" if cp == "__absent__"
+                                    else "explicit")
     Path(args.out).write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report["per_url"]))
     return 0
