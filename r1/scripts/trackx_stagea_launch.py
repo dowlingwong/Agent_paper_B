@@ -128,8 +128,14 @@ def main(argv=None) -> int:
     lock = existing_regular(args.lock, 'GPU lock')
     evidence = absolute_new(args.evidence_dir, 'evidence directory')
     out = absolute_new(args.out, 'output directory')
-    python = Path(args.python).resolve(strict=True)
-    if not python.is_file():
+    # Keep the interpreter path verbatim: a venv `python` is usually a symlink to
+    # the base interpreter, and resolving it silently leaves the venv (and its
+    # site-packages) behind.  The manifest pins the script bytes, not this path;
+    # the guardian only requires an absolute python* argv[0].
+    if not args.python or not Path(args.python).is_absolute():
+        raise LaunchStop('STOP: interpreter must be an absolute path')
+    python = Path(args.python)
+    if not python.exists() or not python.is_file():
         raise LaunchStop('STOP: interpreter is not a file')
 
     if placeholders({k: cfg[k] for k in ('prompts', 'prompts_sha256')}):
