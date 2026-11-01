@@ -50,9 +50,12 @@ remain STOP.**
 
 Reviewer: a separate independent reviewer subagent (not the implementer, no edits to the
 artifact), document `docs/r1/reviews/TRACKX_STAGEA_COOPERATIVE_REVIEW_20261101.md`
-(SHA-256 `8b7a5765c7ca9a4c6b09022e962314515d0821e82f831a306983081b19ab5135`).
+(SHA-256 `8b7a5765c7ca9a4c6b09022e962314515d0821e82f831a306983081b19ab5135`). The executed
+phase (preflight, STOP and preservation) was separately receiving-reviewed:
+`docs/r1/reviews/EXAM_TRACKX_STAGEA_RECEIVING_REVIEW_20261101.md` (`RECEIVING ACCEPT` with
+documentary corrections, which this revision applies).
 
-- First verdict on snapshot v2 (`SHA256SUMS` `5d8b1065…98f9`): **BLOCK** with three real
+- First verdict on snapshot v2 (`SHA256SUMS` `5d8b1065a32000d7f4c748bfd53f8e0e9cc678c87a87355becb126d4a1a32486`): **BLOCK** with three real
   defects (Stage A dispatch still hard-stopped; completion record coverage limited to
   `servers/` so a clean run could never release; preflight record outside that tree).
 - All three were fixed; re-review of v3 (`SHA256SUMS` `8f033b81…3413d`):
@@ -83,7 +86,10 @@ final commit **366 passed, 1 skipped**.
   contender succeeds afterwards, lock inode unchanged), manifest pinning and reserved
   env rejection.
 - Host synthetic chain (TASL-2, new `/tmp/trackx_lease_synthetic_20261101_*` roots, new
-  synthetic locks, `/bin/sleep` stand-in, no GPU/model/real lock): 16/16 checks, including
+  synthetic locks, `/bin/sleep` stand-in, no GPU/model/real lock): 16/16 checks were
+  reported by the implementation engineer; this report does not re-run that synthetic chain,
+  although the reviewer separately reproduced the kernel `kcmp` direction behaviour. The
+  checks included
   real `kcmp` rc 0 in both ancestor→descendant edges and broken-stdout hold.
 - Kernel note: on TASL-2 (6.8.0-136, Yama `ptrace_scope=1`) a descendant→ancestor
   `kcmp(KCMP_FILE)` READ was observed to return 0; no edge relies on that direction and
@@ -107,8 +113,8 @@ server and released the lock through the validated completion contract.
 | Native server FD set | `[4]`, exact; ppid = runner pid; start ticks recorded |
 | Generation requests | 0 |
 | Release | `released: true`, `reason: validated_completion`, `records_verified: 1` |
-| Lock after | not held (`/proc/locks` empty for the inode), inode/size/nlink unchanged |
-| GPU after | back to the pre-run desktop footprint (436 MiB, 0 % util) |
+| Lock after preflight | not held immediately after the validated release (`/proc/locks` had no entry for the inode), inode/size/nlink unchanged; the lock was later re-acquired by the separate Stage A attempt and is currently retained by its STOPped guardian |
+| GPU after preflight | pre-run sample was 436 MiB / 0 % util; the first after-stop sample read 43 % utilisation, so only the memory footprint (436 MiB) is claimed as returned; utilisation was not continuously sampled |
 
 Interpreter/environment (condition M3) recorded in
 `r1_stagea_preflight_20261101_a7c41e_env.json`; the preflight evidence directory also holds
@@ -152,8 +158,9 @@ Preserved site (nothing was signalled, cleaned, retried or resumed):
 - preserved native server pid 2611135 holds FD 4 → `gpu0.lock`; the guardian→server
   `kcmp(KCMP_FILE)` on that FD returns 0, so the same open file description is retained
   even though the runner STOPped — the intended retention behaviour, directly observed;
-- tmux session `r1stagea_a7c41e` (guardian) and the preserved server remain alive for
-  review; the run root and evidence directory are untouched.
+- the guardian process (pid 2576846) and the preserved server (pid 2611135) remain alive
+  for review; the tmux session that hosts the guardian was not independently re-checked by
+  this report; the run root and evidence directory are untouched.
 
 **No retry or resolution was attempted.** A new attempt requires the author's decision on
 recovery (release the retained lock/server after review) and a new independently reviewed
@@ -162,8 +169,11 @@ fix of the footprint-floor check; the existing STOPped batch must not be resumed
 ## 6. Not claimed / NOT CHECKABLE
 
 Real Stage A request/response/cache evidence (cold true-first zero-cached and explicit
-false were exercised only on the preserved attempt up to the STOP, and no Stage A table was
-produced); host-global single-server; same-UID non-interference (author assumption);
+false were **not exercised at all**: the STOP preceded the descriptive replay, so there is
+no `d3_true_calls.jsonl`/`d3_false_calls.jsonl`/`stage_a.json` under this attempt; only the
+qualification probe's own `cache_prompt: false` calls were journaled
+(`d3_qualification_gpu.jsonl`/`d3_qualification_cpu.jsonl`). No Stage A table, cold-true-first
+observation or explicit-false Stage A series was produced); host-global single-server; same-UID non-interference (author assumption);
 continuous observation between samples; guardian behaviour under SIGKILL/SIGSTOP/host
 crash; fresh `--version` build-line re-read (retained-record corroboration only);
 the contents of the stopped namespace fixture (only mtime/ctime and the absence of retry
