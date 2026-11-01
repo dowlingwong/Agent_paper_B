@@ -61,3 +61,27 @@ evidence review (recorded action; the batch is never resumed or reused) and (b) 
 separately identified Stage A attempt at a reviewed checkpoint. The new attempt must use
 route (i) (`route: log_line`, no fallback), must show the census gap fields in every sample
 (missing → STOP), and must STOP if an out-of-set census errno recurs.
+
+## Recovery — author-authorized shutdown (1 Nov ~10:24 UTC)
+
+On the author's instruction to pause the zhixu experiments and kill the experiment processes,
+the preserved STOP-2 site and all other `dowling`-owned experiment processes were ended; the
+stopped namespace fixture and all evidence directories were left untouched, and no attempt was
+resumed, retried or relabelled.
+
+- Ended: preserved native server 3005245 (qwen38_27b) → guardian 2920661 (real `gpu0.lock`)
+  → guardian bash wrapper 2920659 → old Track P C3 DRYRUN wrappers 2945752, 3747685 → Track S
+  `trks-watch` 3860698 (+ child) → old Track P `claude` 1734168 and its bash 1733485 → all
+  `dowling` tmux sessions (`tmux kill-server`).
+- Verified after: `gpu0.lock` free (`/proc/locks` has no entry for inode 120090387) with the
+  lock file unchanged (dev 66306, inode 120090387, size 0, nlink 1); no `dowling` experiment
+  process remains; no tmux sessions; evidence directories intact
+  (`r1_stagea_20261101_b3d7f2` 8.5 MB, lease 20 KB, STOP-1 dirs 220 KB/20 KB); the stopped
+  namespace fixture untouched (mtime=ctime=1793446875, mode 700).
+- Left alone (not ours, not signalled): a root-owned `/opt/venv/bin/python3
+  /home/user/messy_desk_env.py` process and the other-users' services.
+- Evidence of the shutdown action (process lists before/after, record JSON, hashes) is kept on
+  the portal at `/home/dowling/exam-x/work/r1_shutdown_20261101T102406Z/`
+  (`shutdown_record.json` SHA-256 `a6ec368486e2a31296bd94ae653fc5a4c285b9f106fa9ab8952d878d22360cc4`;
+  `before.txt` `b2420071…`; `after.txt` `13228d0f…`). This is an operational record, not Stage A
+  evidence.
