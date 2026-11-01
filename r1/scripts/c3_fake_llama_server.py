@@ -76,6 +76,12 @@ def parse(argv):
             args[item] = True
         elif item in args or item in ('--cache-type-k', '--cache-type-v', '--chat-template-kwargs', '--reasoning-budget'):
             args[item] = next(it)
+        elif item in ('-lv', '--verbosity', '--log-verbosity'):
+            # Exam evidence plumbing: real llama.cpp accepts the verbosity flag;
+            # the fake accepts and ignores it so the exam argv stays truthful.
+            args[item] = next(it)
+        elif item in ('-v', '--verbose', '--log-verbose'):
+            args[item] = True
         else:
             raise SystemExit(f'fake llama-server: unsupported argument {item!r}')
     return args

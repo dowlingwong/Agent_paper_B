@@ -24,6 +24,12 @@ from r1.scripts.c3_label_sweep import RunnerWatchdog, stop_tree
 
 REPO=Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG=REPO/'r1/scripts/configs/exam_portal.json'
+# Exact exam server flags.  ``-lv 4`` is required evidence plumbing, not a tuning
+# knob: the pinned llama.cpp build (620d222, v0.7.0-dev) prints the route (i)
+# ``load_tensors: offloaded N/N layers to GPU`` line only at verbosity >= 4, and
+# the offload check could otherwise only fall back to the stricter route (ii)
+# process-memory floor (R1-EXAM-OFFLOAD-ROUTE, 1 Nov).
+EXAM_SERVER_ARGS=['--jinja','--cache-type-k','q8_0','--cache-type-v','q8_0','-lv','4']
 EXPECTED_CANDIDATES=frozenset('qwen38_27b qwen36_27b gemma4_31b muse_glimmer_30b olmo31_32b devstral_small2_24b qwen36_35b_a3b gemma4_26b_a4b nemotron35_30b_a3b glm47_flash lfm25_24b_a2b laguna_xs21 ornith10_35b qwen3_coder_30b_a3b gpt_oss_20b qwen35_9b gemma4_12b ornith10_9b ministral3_14b rico03_qwen36_27b'.split())
 
 
@@ -320,7 +326,7 @@ class ExamRunner:
         build=self.validate_spec(spec)
         model=spec['runtime']['model_path'];server=self.cfg['server']
         thinking={**spec['thinking_policy'],'mode':mode,'budget':2048 if mode!='off' else 0}
-        args=['--jinja','--cache-type-k','q8_0','--cache-type-v','q8_0']
+        args=list(EXAM_SERVER_ARGS)
         inst=lsi.LlamaServerInstance(self.out/'servers'/spec['id'],server['binary'],model_path=model,alias=spec['id'],
                                    ctx_size=ctx,n_gpu_layers=999,gpu_uuid=self.cfg['gpu_uuid'],extra_args=args,
                                    thinking_policy=thinking,generation=len(list((self.out/'servers'/spec['id']).glob('*.json'))),

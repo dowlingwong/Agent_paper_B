@@ -32,7 +32,7 @@ from r1.exam.cache_runtime import (authorize_cooperative_stagea, verified_lease_
                                    validate_lease_inheritance_record)
 from r1.exam.campaign import write_json
 from r1.exam.guards import digest_file
-from r1.exam.runtime import load_config, read_registry, gpu_sample
+from r1.exam.runtime import EXAM_SERVER_ARGS, load_config, read_registry, gpu_sample
 from r1.scripts import llama_server_instance as lsi
 
 
@@ -78,7 +78,7 @@ def main(argv=None) -> int:
     if apps_before is None or apps_before or before['free_mib'] < 1024:
         raise RuntimeError('STOP: GPU not quietly available before preflight')
     lease_fd = verified_lease_fd()
-    args_list = ['--jinja', '--cache-type-k', 'q8_0', '--cache-type-v', 'q8_0']
+    args_list = list(EXAM_SERVER_ARGS)
     inst = lsi.LlamaServerInstance(out / 'server', server['binary'], model_path=str(model), alias=args.candidate,
                                    ctx_size=args.ctx, n_gpu_layers=999, gpu_uuid=cfg['gpu_uuid'],
                                    extra_args=args_list, start_timeout=server['start_timeout'])
