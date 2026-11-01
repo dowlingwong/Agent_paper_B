@@ -109,6 +109,10 @@ def main(argv=None) -> int:
     parser.add_argument('--config')
     parser.add_argument('--python')
     parser.add_argument('--runner', help='python file the guardian must launch (default: exam_runner.py)')
+    parser.add_argument('--candidate', action='append', default=[],
+                        help='narrow the pre-run model-file size check to these registry ids '
+                             '(the runtime always re-verifies every model it loads); '
+                             'used by the lease preflight, which only loads one model')
     parser.add_argument('--runner-arg', action='append', default=[],
                         help='extra argv entry passed to --runner (repeatable; preflight fixture only)')
     parser.add_argument('--evidence-dir', required=True)
@@ -190,7 +194,17 @@ def main(argv=None) -> int:
     for key in ('rule', 'value_grids'):
         if not (repo / cfg[key]).is_file():
             raise LaunchStop(f'STOP: missing pinned {key}')
-    for spec in read_registry(registry)['candidates'] + read_registry(registry).get('sensitivities', []):
+    data = read_registry(registry)
+    models = data['candidates'] + data.get('sensitivities', [])
+    if args.candidate:
+        known = {spec['id'] for spec in models}
+        unknown = set(args.candidate) - known
+        if unknown:
+            raise LaunchStop(f'STOP: unknown --candidate ids: {sorted(unknown)}')
+        models = [spec for spec in models if spec['id'] in set(args.candidate)]
+        if not models:
+            raise LaunchStop('STOP: --candidate selected no model specs')
+    for spec in models:
         model = Path(spec['runtime']['model_path'])
         if not model.is_file() or model.stat().st_size != spec['quant_source']['size_bytes']:
             raise LaunchStop(f'STOP: model file/size mismatch for {spec["id"]}')

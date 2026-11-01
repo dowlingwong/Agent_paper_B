@@ -93,3 +93,13 @@ def test_runner_override_builds_preflight_argv(tmp_path):
     assert "'--expected-runner'" in source
     assert "AR_HARNESS_ROOT" in launch.environment(Path('/tmp/repo'), {'work_dir': '/home/dowling/exam-x/work'},
                                                    Path('/tmp/repo/llama-server'))
+
+
+def test_candidate_filter_is_parsed_and_validated():
+    source = Path(launch.__file__).read_text()
+    assert "parser.add_argument('--candidate', action='append'" in source
+    assert "unknown --candidate ids" in source
+    # The filter may only NARROW the launcher's pre-run size check; the runtime
+    # re-verifies every model it loads (validate_spec), so Stage A without
+    # --candidate still checks all 22 files.
+    assert "if args.candidate:" in source
