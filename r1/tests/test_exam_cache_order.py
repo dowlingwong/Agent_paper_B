@@ -13,6 +13,7 @@ def sample(time):
     result={'method':CENSUS_METHOD,'scope':CENSUS_SCOPE,'count':1,'pid':7,'process_start_ticks':9,
             'observed':[{'pid':7,'process_start_ticks':9,'executable':'/fixture/llama-server'}],'monotonic_ns':time,
             'inaccessible_executable_links':0,'missing_executable_links':0,
+            'unreadable_executable_links':0,'unreadable_executable_errnos':[],'unreadable_executable_samples':[],
             'unobserved_same_uid_calls':'assumed absent by author decision, not measured',
             'host_global_single_server':'NOT_CHECKABLE'}
     result['snapshot_sha256']=census_digest(result)

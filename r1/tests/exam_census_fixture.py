@@ -9,6 +9,7 @@ def fake_census(identity):
             'observed':[{'pid':identity['pid'],'process_start_ticks':identity['process_start_ticks'],
                          'executable':identity['binary']}], 'monotonic_ns':time.monotonic_ns(),
             'inaccessible_executable_links':0,'missing_executable_links':0,
+            'unreadable_executable_links':0,'unreadable_executable_errnos':[],'unreadable_executable_samples':[],
             'unobserved_same_uid_calls':'assumed absent by author decision, not measured',
             'host_global_single_server':'NOT_CHECKABLE'}
     sample['snapshot_sha256']=census_digest(sample)
