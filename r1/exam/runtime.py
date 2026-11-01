@@ -24,6 +24,12 @@ from r1.scripts.c3_label_sweep import RunnerWatchdog, stop_tree
 
 REPO=Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG=REPO/'r1/scripts/configs/exam_portal.json'
+# Approved exam hosts.  The author's 1 Nov decision moved the new Stage A attempt to
+# TASL-7; both hosts run the same Ubuntu 22.04 + RTX 4090 environment and share the
+# approved paths, so the host gate is an allowlist with the config host pinned to the
+# actual node (never infer on the Mac).
+APPROVED_EXAM_HOSTS=frozenset({'TASL-2','TASL-7'})
+EXAM_X_ROOT=Path('/home/dowling/exam-x')
 # Exact exam server flags.  ``-lv 4`` is required evidence plumbing, not a tuning
 # knob: the pinned llama.cpp build (620d222, v0.7.0-dev) prints the route (i)
 # ``load_tensors: offloaded N/N layers to GPU`` line only at verbosity >= 4, and
@@ -113,10 +119,12 @@ def host_check(cfg, out):
         return
     if any(os.environ.get(k) for k in ('R1_DRYRUN','R1_FAKE_OLLAMA_ROOT','R1_EXAM_DRYRUN')):
         raise RuntimeError('STOP: DRYRUN environment must not enter a production exam')
-    if platform.node().split('.')[0]!='TASL-2' or cfg['host']!='TASL-2':
-        raise RuntimeError('STOP: the whole exam runs on zhixu portal TASL-2 only; never infer on the Mac')
+    node=platform.node().split('.')[0]
+    if node not in APPROVED_EXAM_HOSTS or cfg['host']!=node:
+        raise RuntimeError('STOP: the exam runs only on an approved portal host '
+                           f'({"/".join(sorted(APPROVED_EXAM_HOSTS))}) and cfg.host must equal the node; never infer on the Mac')
     for key in ('models','work'):
-        approved=Path('/home/dowling/exam-x')/key
+        approved=EXAM_X_ROOT/key
         path=Path(cfg[key+'_dir'])
         if path!=approved or path.resolve()!=approved: raise RuntimeError(f'STOP: {key} storage is not the author-approved path')
         space_check(path)

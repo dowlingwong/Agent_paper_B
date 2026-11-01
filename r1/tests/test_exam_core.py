@@ -380,3 +380,20 @@ def test_b1_b2_evidence_entry_remains_hard_stop():
     for phase in ('b1','b2'):
         with pytest.raises(PreparationStop,match='B1/B2 reviewed harness pin'):
             evidence(SimpleNamespace(cfg={}),phase,None,False)
+
+
+def test_host_check_allows_the_two_approved_portals_and_pins_config_host(tmp_path,monkeypatch):
+    from r1.exam import runtime
+    (tmp_path/'models').mkdir();(tmp_path/'work').mkdir()
+    monkeypatch.setattr(runtime,'EXAM_X_ROOT',tmp_path)
+    cfg={'host':'TASL-7','models_dir':str(tmp_path/'models'),
+         'work_dir':str(tmp_path/'work')}
+    monkeypatch.setattr(runtime.platform,'node',lambda:'TASL-7')
+    monkeypatch.setattr(runtime,'space_check',lambda path:None)
+    out=tmp_path/'work'/'out'
+    runtime.host_check(cfg,out)  # accepted on the approved host with matching cfg.host
+    with pytest.raises(RuntimeError,match='approved portal host'):
+        runtime.host_check({**cfg,'host':'TASL-2'},out)
+    monkeypatch.setattr(runtime.platform,'node',lambda:'Dowlings-MacBook-Pro-2')
+    with pytest.raises(RuntimeError,match='approved portal host'):
+        runtime.host_check({**cfg},out)

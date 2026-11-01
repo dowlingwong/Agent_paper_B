@@ -32,7 +32,8 @@ from r1.exam.cache_runtime import (authorize_cooperative_stagea, verified_lease_
                                    validate_lease_inheritance_record)
 from r1.exam.campaign import write_json
 from r1.exam.guards import digest_file
-from r1.exam.runtime import EXAM_SERVER_ARGS, load_config, read_registry, gpu_sample
+from r1.exam.runtime import (APPROVED_EXAM_HOSTS, EXAM_SERVER_ARGS, load_config,
+                             read_registry, gpu_sample)
 from r1.scripts import llama_server_instance as lsi
 
 
@@ -53,8 +54,9 @@ def main(argv=None) -> int:
     if out.exists():
         raise RuntimeError('STOP: preflight output exists; never resume')
     cfg = load_config(args.config)
-    if platform.node().split('.')[0] != 'TASL-2' or cfg['host'] != 'TASL-2':
-        raise RuntimeError('STOP: preflight runs on TASL-2 only')
+    node = platform.node().split('.')[0]
+    if node not in APPROVED_EXAM_HOSTS or cfg['host'] != node:
+        raise RuntimeError('STOP: preflight runs only on an approved portal host with cfg.host equal to the node')
     if not out.resolve().is_relative_to(Path(cfg['work_dir'])):
         raise RuntimeError('STOP: preflight output must be under the approved work directory')
 

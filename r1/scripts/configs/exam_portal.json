@@ -1,10 +1,10 @@
 {
   "schema": "exam_config/v1",
-  "host": "TASL-2",
+  "host": "TASL-7",
   "models_dir": "/home/dowling/exam-x/models",
   "work_dir": "/home/dowling/exam-x/work",
-  "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
-  "comment": "Author approved /home/dowling/exam-x/{models,work}. Stage A D3 uses the author's cooperative same-UID assumption (R1-EXAM-COOPERATIVE-UID): same-UID non-interference is assumed, host-global single-server is NOT_CHECKABLE. Paper commit is bound after independent review; no GitHub credentials on portal.",
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "comment": "Author approved /home/dowling/exam-x/{models,work}. The author moved the new Stage A attempt to TASL-7 (1 Nov); the same approved paths, pinned llama-server build (copied byte-identically), frozen inputs and lease lock are used there. Stage A D3 uses the author's cooperative same-UID assumption (R1-EXAM-COOPERATIVE-UID): same-UID non-interference is assumed, host-global single-server is NOT_CHECKABLE. No GitHub credentials on the host.",
   "minimum_free_bytes": 100000000000,
   "ctx_size": 32768,
   "cache_type_k": "q8_0",
