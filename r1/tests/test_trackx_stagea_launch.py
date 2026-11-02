@@ -103,3 +103,22 @@ def test_candidate_filter_is_parsed_and_validated():
     # re-verifies every model it loads (validate_spec), so Stage A without
     # --candidate still checks all 22 files.
     assert "if args.candidate:" in source
+
+
+def test_visible_llama_servers_and_occupancy_refusal(tmp_path):
+    root = tmp_path / 'proc'
+    (root / '10').mkdir(parents=True); (root / '10' / 'exe').symlink_to('/x/llama-server')
+    (root / '11').mkdir(); (root / '11' / 'exe').symlink_to('/x/python3')
+    (root / '12').mkdir()  # no exe link (vanished/unreadable)
+    assert launch.visible_llama_servers(str(root)) == [10]
+    assert launch.visible_llama_servers(str(tmp_path / 'missing')) == []
+
+
+def test_host_occupancy_check_refuses_stale_server_or_gpu_app():
+    launch.host_occupancy_check(servers_fn=lambda: [], apps_fn=lambda: [])
+    with pytest.raises(launch.LaunchStop, match='visible llama-server'):
+        launch.host_occupancy_check(servers_fn=lambda: [1234], apps_fn=lambda: [])
+    with pytest.raises(launch.LaunchStop, match='GPU compute'):
+        launch.host_occupancy_check(servers_fn=lambda: [], apps_fn=lambda: [{'pid': 7}])
+    # nvidia-smi unavailable (apps_fn None) never blocks by itself
+    launch.host_occupancy_check(servers_fn=lambda: [], apps_fn=None)

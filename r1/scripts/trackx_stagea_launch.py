@@ -60,6 +60,45 @@ def existing_regular(path: str, what: str) -> Path:
     return target
 
 
+def visible_llama_servers(proc_root: str = '/proc') -> list[int]:
+    """PIDs whose /proc executable basename is exactly 'llama-server'.
+
+    This is an occupancy check, not a proof of exclusivity: unreadable links, other
+    executable names, other namespaces and between-sample lifetimes are not covered.
+    """
+    found = []
+    try:
+        entries = list(Path(proc_root).iterdir())
+    except OSError:
+        return found
+    for entry in entries:
+        if not entry.name.isdecimal():
+            continue
+        try:
+            executable = os.readlink(entry / 'exe')
+        except OSError:
+            continue
+        if Path(executable).name == 'llama-server':
+            found.append(int(entry.name))
+    return sorted(found)
+
+
+def host_occupancy_check(*, servers_fn=visible_llama_servers, apps_fn=None) -> None:
+    """Refuse to prepare a run when the host already serves an exam/DRYRUN server.
+
+    A stale llama-server (e.g. from a killed diagnostic) makes the Stage A census see
+    two servers and STOP the new batch at its first qualification, so fail here first.
+    The GPU compute-app check is skipped when nvidia-smi is unavailable (Mac tests).
+    """
+    servers = servers_fn()
+    if servers:
+        raise LaunchStop(f'STOP: visible llama-server process(es) before launch: {servers}')
+    if apps_fn is not None:
+        apps = apps_fn()
+        if apps:
+            raise LaunchStop(f'STOP: GPU compute process(es) present before launch: {apps}')
+
+
 def git(repo: Path, *args: str) -> str:
     return subprocess.run(['git', '-C', str(repo), *args], capture_output=True, text=True, check=True).stdout.strip()
 
@@ -151,6 +190,8 @@ def main(argv=None) -> int:
     if not Path(cfg['prompts']).is_relative_to(Path(cfg['work_dir']).parent):
         raise LaunchStop('STOP: frozen prompt bundle must be under the approved exam-x root')
 
+    from r1.scripts.llama_server_instance import gpu_compute_apps
+    host_occupancy_check(apps_fn=gpu_compute_apps)
     head = git(repo, 'rev-parse', 'HEAD')
     if args.expect_commit and head != args.expect_commit:
         raise LaunchStop('STOP: checkout does not match the expected commit')
