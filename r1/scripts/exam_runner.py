@@ -43,6 +43,10 @@ def run_fresh_qualification(runner, path, spec, ctx):
         allocation=result.get('allocation_failure_evidence') or {}
         if allocation.get('kind')!='cuda_allocation_out_of_memory' or allocation.get('healthy_idle_after_stop') is not True:
             raise PreparationStop('STOP: qualification mechanical failure lacks completed OOM/idle evidence')
+        log=Path(allocation.get('server_log') or '')
+        if (not log.is_file() or not log.resolve().is_relative_to(path.resolve()) or
+            digest_file(log)!=allocation.get('server_log_sha256')):
+            raise PreparationStop('STOP: qualification OOM server log path or digest mismatch')
     if not runner.cfg.get('dryrun'):
         raw=Path(result.get('raw_probe') or '')
         if (not raw.is_file() or not raw.resolve().is_relative_to(path.resolve()) or

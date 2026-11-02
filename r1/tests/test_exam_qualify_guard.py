@@ -134,9 +134,14 @@ def test_fake_32k_oom_falls_back_to_16k_only_after_bound_receipt(tmp_path,monkey
             if module=='r1.exam.qualify':
                 ctx=job['ctx']
                 if ctx==32768:
+                    from r1.exam.guards import digest_file
+                    log=out/'oom_server.log'
+                    log.write_text('0.03.957.863 E ggml_backend_cuda_buffer_type_alloc_buffer: allocating 102.00 MiB on device 0: cudaMalloc failed: out of memory\n')
                     result={'status':'MECHANICAL_FAILURE','context':ctx,'model_sha256':'pin',
                             'allocation_failure_evidence':{'kind':'cuda_allocation_out_of_memory',
-                                                           'healthy_idle_after_stop':True}}
+                                                           'healthy_idle_after_stop':True,
+                                                           'server_log':str(log),
+                                                           'server_log_sha256':digest_file(log)}}
                 else:result={'status':'PASS','context':ctx,'model_sha256':'pin','footprint_mib':50}
                 from r1.exam.qualify import qualification_exit_code
                 if qualification_exit_code(result):raise RuntimeError('worker failed')

@@ -11,16 +11,43 @@ from r1.exam.runtime import EXAM_SERVER_ARGS
 from r1.exam.guards import digest_file
 
 
-def known_load_oom(raw, cfg, out):
-    """Distinguish an evidenced allocation failure from missing/unknown telemetry."""
+def known_load_oom(raw, cfg, out, spec):
+    """Distinguish an evidenced allocation failure from missing/unknown telemetry.
+
+    Real startup-OOM probes retain top-level gpu_uuid/binary_sha256/model_sha256/build
+    and a ``dedicated llama-server exited during start (rc=1)`` stop reason, but leave
+    ``server_stop``/``pins_match`` unset (same real shape as the template STOP).  The
+    pinned identity therefore comes from those top-level fields, and the recorded exit
+    from ``server_stop`` or the stop reason; the *log* must be retained inside the
+    attempt directory and contain the cudaMalloc OOM line.  The post-stop census must be
+    healthy for the 16k fallback to be allowed.
+    """
     log=Path(raw.get('server_log',''))
-    pins=raw.get('pins_match') or {}
-    if (not log.is_file() or not log.resolve().is_relative_to(Path(out).resolve()) or
-        raw.get('gpu_uuid')!=cfg['gpu_uuid'] or any(pins.get(k) is not True for k in ('build','model_sha256')) or
-        not raw.get('server_stop') or raw['server_stop'].get('returncode') is None): return None
+    try:
+        inside=log.is_file() and log.resolve().is_relative_to(Path(out).resolve())
+    except OSError:
+        inside=False
+    if not inside: return None
+    if raw.get('verdict')!='STOP' or raw.get('footprint_mib_to_pin') is not None: return None
+    if raw.get('gpu_uuid')!=cfg['gpu_uuid']: return None
+    if raw.get('binary_sha256')!=cfg['server']['binary_sha256']: return None
+    if raw.get('model_sha256')!=(spec.get('quant_source') or {}).get('sha256'): return None
+    build=raw.get('build') or {}
+    if build.get('version_line')!=cfg['server']['build']: return None
+    exits=[str(reason) for reason in (raw.get('stop_reasons') or [])
+           if re.search(r'dedicated llama-server exited during start \(rc=\d+\)',str(reason))]
+    stopped=(raw.get('server_stop') or {}).get('returncode') if isinstance(raw.get('server_stop'),dict) else None
+    if stopped is None and not exits: return None
     text=log.read_text(errors='replace')
-    if not re.search(r'^ggml_backend_cuda_buffer_type_alloc_buffer:.*cudaMalloc failed: out of memory\s*$',text,re.M): return None
-    evidence={'kind':'cuda_allocation_out_of_memory','server_log_sha256':digest_file(log),'healthy_idle_after_stop':False}
+    match=re.search(r'ggml_backend_cuda_buffer_type_alloc_buffer:.*cudaMalloc failed: out of memory\s*$',text,re.M)
+    if not match: return None
+    evidence={'kind':'cuda_allocation_out_of_memory','server_log':str(log.resolve()),
+              'server_log_sha256':digest_file(log),'matched_line':match.group(0).strip()[:300],
+              'exit_evidence':{'server_stop':raw.get('server_stop'),
+                               'stop_reason':exits[0] if exits else None},
+              'pins':{'gpu_uuid':raw.get('gpu_uuid'),'binary_sha256':raw.get('binary_sha256'),
+                      'model_sha256':raw.get('model_sha256'),'build':build.get('version_line')},
+              'healthy_idle_after_stop':False}
     try:
         from r1.exam.runtime import gpu_sample
         apps=lsi.gpu_compute_apps();sample=gpu_sample(cfg)
@@ -99,7 +126,7 @@ def qualify(job):
         # and a healthy idle post-state. A positive footprint alone is not proof
         # of a completed mechanical failure.
         status='PASS' if success else 'PREPARATION_STOP'
-        allocation=known_load_oom(raw,cfg,out) if footprint is None else None
+        allocation=known_load_oom(raw,cfg,out,spec) if footprint is None else None
         template=None
         if allocation and allocation['healthy_idle_after_stop']:status='MECHANICAL_FAILURE'
         elif footprint is None:
