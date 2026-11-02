@@ -77,3 +77,30 @@ Out: `~/exam-x/work/r1_stagea_20261102_t7d4`; lease evidence:
 journal/ledger progress, guardian/lease/`/proc/locks`, disk). Template-class hits become
 candidate rows and do not stop the batch; any STOP preserves the site and is recovered only
 under the author's standing authorization.
+
+## Author decision on the template policy (2 Nov)
+
+The author approved the coordinator's recommendation:
+
+1. **(a) now** — keep the current attempt running; template-class hits are recorded as
+   candidate exclusion rows (current behaviour). Do not interrupt or edit the run, and do
+   not splice repaired measurements into its table.
+2. **After the attempt completes** — produce a complete template failure map and per-model
+   render-diff evidence (the frozen 5 fixed prompts and, to avoid overfitting, all 50 frozen
+   prompts): llama.cpp `--jinja` rendering vs the pinned HF tokenizer rendering, retained with
+   SHA-256. Then prepare **targeted (b)** one-repair-per-model proposals where a repaired
+   pinned `--chat-template` makes the two renderings **byte-equal on the 5 fixed prompts and
+   all 50 frozen prompts** and lets the pinned build generate its parser; priority
+   `olmo31_32b` (whole family, parser failure) → `gemma4_31b` (only if the diff is benign and
+   reproducible) → `muse_glimmer_30b` last (its grammar failure may persist). Each repair must
+   be declared in PLAN/authorization, SHA-pinned, independently reviewed, and its Stage A rows
+   must come from a **new, explicitly declared repair measurement**, not from the current
+   table.
+3. **(c) only if needed** — a llama.cpp build-pin change requires a diagnostic first: build the
+   candidate commit on TASL-2 (CUDA toolkit present), copy the binary to TASL-7, and run a
+   template parse/render screen over all 22 models **as a diagnostic (no exam evidence)**;
+   only if it demonstrably fixes the class does a new pin with full re-validation and a new
+   attempt follow. Never apply a new build to existing evidence.
+
+No changes are made to the running attempt or to any template until that post-run evidence and
+independent review exist. B1/B2, P.3a and B.2 remain STOP.
