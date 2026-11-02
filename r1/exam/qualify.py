@@ -30,6 +30,47 @@ def known_load_oom(raw, cfg, out):
     return evidence
 
 
+def known_template_parse_failure(raw, cfg, out, spec):
+    """A pinned-build *chat template* incompatibility is a candidate failure class.
+
+    The runbook keeps template failures apart from offload/parse/timeout failures.
+    llama.cpp exits during startup when its automatic parser generator cannot parse
+    the model template (e.g. an unguarded ``tools | tojson``); that is a property of
+    this candidate under the pinned build, not an infrastructure STOP.  Only retained
+    evidence qualifies: a server log inside the attempt directory whose SHA-256 is
+    recorded, matching pinned GPU/binary/build/model identities, a recorded startup
+    exit (``server_stop.returncode`` or a ``dedicated llama-server exited during
+    start (rc=N)`` stop reason), and the explicit template parser error followed by
+    the model-loading failure.  Anything else remains PREPARATION_STOP.
+    """
+    log=Path(raw.get('server_log',''))
+    try:
+        inside=log.is_file() and log.resolve().is_relative_to(Path(out).resolve())
+    except OSError:
+        inside=False
+    if not inside: return None
+    if raw.get('verdict')!='STOP' or raw.get('footprint_mib_to_pin') is not None: return None
+    if raw.get('gpu_uuid')!=cfg['gpu_uuid']: return None
+    if raw.get('binary_sha256')!=cfg['server']['binary_sha256']: return None
+    if raw.get('model_sha256')!=(spec.get('quant_source') or {}).get('sha256'): return None
+    build=raw.get('build') or {}
+    if build.get('version_line')!=cfg['server']['build']: return None
+    exits=[str(reason) for reason in (raw.get('stop_reasons') or [])
+           if re.search(r'dedicated llama-server exited during start \(rc=\d+\)',str(reason))]
+    stopped=(raw.get('server_stop') or {}).get('returncode') if isinstance(raw.get('server_stop'),dict) else None
+    if stopped is None and not exits: return None
+    text=log.read_text(errors='replace')
+    match=re.search(r'^.*chat template parsing error.*$',text,re.M)
+    if not match or 'exiting due to model loading error' not in text: return None
+    return {'kind':'chat_template_parse_error','server_log':str(log.resolve()),
+            'server_log_sha256':digest_file(log),'matched_line':match.group(0).strip()[:300],
+            'exit_evidence':{'server_stop':raw.get('server_stop'),
+                             'stop_reason':exits[0] if exits else None},
+            'pins':{'gpu_uuid':raw.get('gpu_uuid'),'binary_sha256':raw.get('binary_sha256'),
+                    'model_sha256':raw.get('model_sha256'),'build':build.get('version_line')},
+            'failure_class':'template','retry_at_16k':False}
+
+
 def qualify(job):
     # Direct qualification must not bypass Stage A's pending D3 review gate.
     from r1.exam.stage_a import require_d3_evidence
@@ -59,11 +100,16 @@ def qualify(job):
         # of a completed mechanical failure.
         status='PASS' if success else 'PREPARATION_STOP'
         allocation=known_load_oom(raw,cfg,out) if footprint is None else None
+        template=None
         if allocation and allocation['healthy_idle_after_stop']:status='MECHANICAL_FAILURE'
+        elif footprint is None:
+            template=known_template_parse_failure(raw,cfg,out,spec)
+            if template: status='TEMPLATE_FAILURE'
         result={'status':status,'footprint_mib':footprint,
                 'label':'ENGINEERING_ONLY','raw_probe':str(raw_path),'raw_probe_sha256':digest_file(raw_path),
                 'model_sha256':spec['quant_source']['sha256'],'context':job['ctx'],'offload_route':raw.get('route'),
-                'stop_reasons':raw.get('stop_reasons',[]),'allocation_failure_evidence':allocation}
+                'stop_reasons':raw.get('stop_reasons',[]),'allocation_failure_evidence':allocation,
+                'template_failure_evidence':template}
     write_json(out/'qualification.json',result)
     return result
 
@@ -75,6 +121,10 @@ def qualification_exit_code(result):
     if status=='MECHANICAL_FAILURE':
         evidence=result.get('allocation_failure_evidence') or {}
         if evidence.get('kind')=='cuda_allocation_out_of_memory' and evidence.get('healthy_idle_after_stop') is True:
+            return 0
+    if status=='TEMPLATE_FAILURE':
+        evidence=result.get('template_failure_evidence') or {}
+        if evidence.get('kind')=='chat_template_parse_error' and evidence.get('failure_class')=='template':
             return 0
     return 1
 

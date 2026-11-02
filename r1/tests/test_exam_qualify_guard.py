@@ -163,3 +163,71 @@ def test_unverified_mechanical_failure_cannot_fallback(tmp_path):
     runner=SimpleNamespace(cfg={'dryrun':True},run_job=run)
     with pytest.raises(PreparationStop,match='lacks completed OOM/idle evidence'):
         run_fresh_qualification(runner,tmp_path/'attempt',{'quant_source':{'sha256':'pin'}},32768)
+
+
+def test_template_failure_candidate_row_continues_to_next_candidate(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+    from r1.scripts import exam_runner
+    from r1.exam import cache_runtime, stage_a as worker
+    from r1.exam.guards import digest_file
+    monkeypatch.setattr(worker, 'require_d3_evidence', lambda: None)
+    monkeypatch.setattr(cache_runtime, 'reject_unverified_lease', lambda: None)
+    monkeypatch.setattr(cache_runtime, 'capture_parent_identity', lambda *a, **k: {'synthetic': True})
+    monkeypatch.setattr(cache_runtime, 'reject_unverified_cold', lambda *a: None)
+
+    def make_spec(cid):
+        return {'id': cid, 'role': 'candidate', 'runtime': {'footprint_mib': None},
+                'quant_source': {'sha256': 'pin-' + cid}, 'thinking_policy': {'mode': 'off'}}
+
+    specs = [make_spec('tmpl_bad'), make_spec('tmpl_good')]
+
+    class Runner:
+        cfg = {'dryrun': True, 'server': {'binary_sha256': 'bin', 'build': 'fake'}}
+        out = tmp_path
+        state = {'completed': {}}
+        service = None
+        def __init__(self):
+            self.served = []
+        def spec_order(self, selected=None): return [dict(s) for s in specs]
+        def validate_spec(self, *a, **k): pass
+        def save(self): pass
+        def server(self, spec, mode, ctx):
+            self.served.append(spec['id'])
+            self.service = SimpleNamespace(record_path='synthetic', port=18482)
+            return self.service
+        def stop_service(self): self.service = None
+        def run_job(self, job, module):
+            out = Path(job['out']); out.mkdir(parents=True, exist_ok=True)
+            if module == 'r1.exam.qualify':
+                cid = job['candidate']['id']
+                if cid == 'tmpl_bad':
+                    log = out / 'server.log'
+                    log.write_text('init: chat template parsing error: Unable to generate parser\n'
+                                   'llama_server: exiting due to model loading error\n')
+                    result = {'status': 'TEMPLATE_FAILURE', 'context': job['ctx'],
+                              'model_sha256': job['candidate']['quant_source']['sha256'],
+                              'template_failure_evidence': {
+                                  'kind': 'chat_template_parse_error', 'failure_class': 'template',
+                                  'retry_at_16k': False, 'server_log': str(log),
+                                  'server_log_sha256': digest_file(log)}}
+                else:
+                    result = {'status': 'PASS', 'context': job['ctx'],
+                              'model_sha256': job['candidate']['quant_source']['sha256'],
+                              'footprint_mib': 50}
+                (out / 'qualification.json').write_text(json.dumps(result))
+            else:
+                (out / 'stage_a.json').write_text(json.dumps({
+                    'candidate': job['candidate']['id'], 'passed': True, 'failure_classes': []}))
+
+    token = cache_runtime._authorized.set(True)
+    try:
+        r = Runner()
+        exam_runner._stage_a_cooperative(r, None)
+    finally:
+        cache_runtime._authorized.reset(token)
+    table = json.loads((tmp_path / 'stage_a_table.json').read_text())
+    rows = {row['candidate']: row for row in table['rows']}
+    assert rows['tmpl_bad']['passed'] is False and rows['tmpl_bad']['failure_classes'] == ['template']
+    assert rows['tmpl_good']['passed'] is True
+    assert r.served == ['tmpl_good']  # the template-failed candidate never started a server

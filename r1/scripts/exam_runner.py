@@ -29,8 +29,16 @@ def run_fresh_qualification(runner, path, spec, ctx):
     result=json.loads(result_path.read_text())
     if result.get('model_sha256')!=spec['quant_source']['sha256'] or result.get('context')!=ctx:
         raise PreparationStop('STOP: qualification model/context binding mismatch')
-    if result.get('status') not in ('PASS','MECHANICAL_FAILURE'):
+    if result.get('status') not in ('PASS','MECHANICAL_FAILURE','TEMPLATE_FAILURE'):
         raise PreparationStop('STOP: qualification failed or has unknown status')
+    if result['status']=='TEMPLATE_FAILURE':
+        evidence=result.get('template_failure_evidence') or {}
+        if evidence.get('kind')!='chat_template_parse_error':
+            raise PreparationStop('STOP: qualification template failure lacks retained evidence')
+        log=Path(evidence.get('server_log') or '')
+        if (not log.is_file() or not log.resolve().is_relative_to(path.resolve()) or
+            digest_file(log)!=evidence.get('server_log_sha256')):
+            raise PreparationStop('STOP: qualification template server log path or digest mismatch')
     if result['status']=='MECHANICAL_FAILURE':
         allocation=result.get('allocation_failure_evidence') or {}
         if allocation.get('kind')!='cuda_allocation_out_of_memory' or allocation.get('healthy_idle_after_stop') is not True:
@@ -89,6 +97,17 @@ def _stage_a_cooperative(runner, selected):
                         qual_dir=path.parent/'qualification'
                         qualification=run_fresh_qualification(runner,qual_dir,spec,ctx)
                         if qualification['status']=='PREPARATION_STOP': raise PreparationStop('STOP: offload qualification lacks required telemetry')
+                        if qualification['status']=='TEMPLATE_FAILURE':
+                            # Candidate-level template failure (runbook failure class
+                            # "template"): record the row and continue with the next
+                            # candidate; a context fallback cannot fix a parser error.
+                            result={'candidate':spec['id'],'label':'EXAM','phase':'stage-a','passed':False,
+                                    'failure_classes':['template'],'prompts':0,'cpu_pool_only':False,
+                                    'error':'pinned llama.cpp build cannot parse the model chat template',
+                                    'template_failure_evidence':qualification.get('template_failure_evidence'),
+                                    **prefill_metadata(ctx),
+                                    'prefill_not_attempted_reason':'chat template parser generation failed at startup'}
+                            write_json(path,result);completed_normally=True;break
                         if qualification['status']!='PASS': raise MechanicalFailure('independent exact-path offload qualification failed')
                         spec['runtime']['footprint_mib']=qualification['footprint_mib']
                     else: qualification={'status':'PINNED','footprint_mib':spec['runtime']['footprint_mib']}
