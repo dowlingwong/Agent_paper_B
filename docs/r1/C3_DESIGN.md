@@ -63,7 +63,7 @@ This ladder is C3.
 - **Scale.**
   - One rerun-2-sized sweep (4 nodes × 18 instances × 2 memory modes × 20) gives ≈ 2,900 proposals, of which ≈ 1,000 are non-inert.
   - Audit cost: ≈ 12 runs × 1–2 s per proposal, about 6 CPU-hours per sweep; under an hour on Ada cores.
-  - Target ≈ 8–10k labelled proposals, from: the OpenML pool extended to 12–15 datasets (D20, small new code), 3 MLP nodes, and a second manager model for proposal diversity. That is 2–3 sweeps.
+  - Target ≈ 8–10k labelled proposals, from: the OpenML pool extended to 12–15 datasets (D20, small new code), 3 MLP nodes, and a second manager model for proposal diversity. That is 2–3 sweeps. *(3 Nov, PLAN R1-MAIN-PROPOSER: the main sweep uses the Track X pick, thinking off; `qwen2.5-coder:7b` sweep 1 is the second manager.)*
 - **Covariate shift.** Deployed arms skip and re-propose, so the proposal distribution shifts. One aggregation round fixes this: collect proposals under the deployed tabular arm, audit them, retrain (DAgger-style).
 
 ## 5. Arms (the ladder) and training

@@ -166,7 +166,7 @@ where keep_j comes from `r1/c3/rules.py` (`keep`) applied to the logged Δ̂_j u
 
 ### 3.7 Expansion
 
-- B.6 is deferred under R1-FOCUSED-SCOPE; second-manager generalisation is a deployment check with the Track X pick.
+- ~~B.6 is deferred under R1-FOCUSED-SCOPE; second-manager generalisation is a deployment check with the Track X pick.~~ Superseded 3 Nov (PLAN R1-MAIN-PROPOSER): the main training data come from sweep 2 with the Track X pick (thinking off); sweep 1 (`qwen2.5-coder:7b`) is the second source; both sources share one instance split, and cross-source duplicates are grouped by (instance, incumbent hash, edit hash). Until sweep 2 exists, Track P work on sweep-1 labels is ENGINEERING_ONLY with label seeds 7001–7005 only.
 - C.2: one DAgger round (§6.5).
 
 ### 3.8 Label files
