@@ -126,12 +126,12 @@ Added 27 Oct (R1-LAYOUT-FLATTEN): after the labels freeze (3 Nov), with every ag
 - the context size;
 - q8_0 KV cache and `--jinja`;
 - the thinking flag;
-- the harness pin (`6adf385` against the next pin, which carries `415d99e`'s Track S commits and any R1-HARNESS-NEXT-PIN fixes) and the paper commit. Prerequisite 3 checks that the harness defaults the sweep relies on are unchanged.
+- the harness pin (`6adf385` against the next pin, which carries the `cacheprompt-20261031` fix at `a3fedbb` with its Track S ancestry and any R1-HARNESS-NEXT-PIN fixes) and the paper commit. Prerequisite 3 checks that the harness defaults the sweep relies on are unchanged.
 
 **Manager and server.**
 - **Model.** The Track X pick (X.7 (a), as amended). Use its registry entry: HF repo @ revision, GGUF sha256, quantization source, chat-template source and any declared template repair. Use the pinned llama.cpp build, with full offload on the sweep card.
 - **Thinking off, set at the server, as in the exam.** The sweep's server start (`c3_label_sweep.py` `start_llamacpp`, about line 1146) passes the pick's `thinking_policy` with mode `off` to `LlamaServerInstance`. That produces `--chat-template-kwargs {"enable_thinking":false}` through `llama_server_instance.thinking_args`, together with the exam's `--jinja --cache-type-k q8_0 --cache-type-v q8_0`. Check that these flags appear in the pinned build's `--help`, as the exam runtime does. This is a **paper-repo change**; the harness has no thinking switch and needs none.
-- **`cache_prompt: false` on every call.** This needs the harness's opt-in switch, which lives on harness `trackS-20261029` @ `415d99e` (reviewed 30 Oct). It is not yet in the sweep's harness pin `6adf385`. Merge it as the next harness pin.
+- **`cache_prompt: false` on every call.** This needs the accepted harness fix on branch `cacheprompt-20261031` @ `a3fedbb` (R1-CACHEPROMPT-FALSE, 31 Oct, recorded on `trackS-ops-20261030`): the llamacpp provider sends `cache_prompt` explicitly on every request, default false. It is not yet in the sweep's harness pin `6adf385` and not merged into harness `r1`. Merge it as the next harness pin. (The earlier opt-in switch on `trackS-20261029` @ `415d99e` is superseded and unused.)
 - **Context.** 16,384. Every admitted model qualified at 16,384 or more in Stage A. Prompt lengths are re-measured with the pick's tokenizer at the D28 run. The 25 Oct figure of ≤ 1,345 tokens was counted with the 7B's tokenizer.
 - **Recorded per call.** `cache_prompt`, the seed, prompt and completion tokens, latency, and the server's thinking flag (in the server record).
 - **Thinking content.** A completion with a non-empty `reasoning_content`, a `<think>` tag in `content`, or `reasoning_tokens > 0` counts as thinking content. More than 1 % of calls is a STOP.
