@@ -100,13 +100,59 @@ Added 27 Oct (R1-LAYOUT-FLATTEN): after the labels freeze (3 Nov), with every ag
 
 | # | Step | Host | Done when |
 |---|---|---|---|
-| B.1 | C3 label sweep 1: 8 nodes × 18 instances × 2 memory modes × W = 20 (≈ 5,800 proposals) | deepthought only (24 Oct: no mixing hosts within one table) | Manifest; completion or a documented STOP |
-| B.2 | Fresh-seed audits, K = 10 (5 label + 5 evaluation seeds) | deepthought CPUs | Labels for every non-inert, non-duplicate proposal |
+| B.1 | C3 label sweep 1: 8 nodes × 18 instances × 2 memory modes × W = 20 (≈ 5,800 proposals), manager `qwen2.5-coder:7b`. **Since 3 Nov (R1-MAIN-PROPOSER): the second source**, frozen (R1-B1-CORPUS-FREEZE) | deepthought only (24 Oct: no mixing hosts within one table) | Manifest; completion or a documented STOP (done; classified EVIDENCE by R1-SWEEP1-CLASSIFY) |
+| **B.1b** | **C3 label sweep 2 — the main source (added 3 Nov, R1-MAIN-PROPOSER):** the B.1 design with the Track X pick (thinking off) as manager, on the same instances; spec below | one RTX 4090 host for the whole sweep (TASL-2 or TASL-7) | Manifest; completion or a documented STOP |
+| B.2 | Fresh-seed audits, K = 10 (5 label + 5 evaluation seeds), for sweep 1 and (after B.1b) for sweep 2 under the same rules | deepthought CPUs (sweep 2: proposed, R1-MAIN-PROPOSER (e)) | Labels for every non-inert, non-duplicate proposal, per source |
 | B.3 | A0–A3 offline (rules, constant prior, LightGBM, NGBoost) | Mac | Offline one-step values with CIs |
-| B.4 | A4: manager zero-shot typed questions; isotonic calibration on dev | deepthought | Calibrated A4 table |
+| B.4 | A4: manager zero-shot typed questions; isotonic calibration on dev. Main row with the main proposer (the pick); the 7B row is secondary | 4090 host for the pick; deepthought for the 7B row | Calibrated A4 table |
 | B.5 | A5 SFT per Track P.4 (belief only; soft-label RPS + CE, R1-SOFT-SIGMA) on the P.3 finalists plus the Qwen3.5-0.8B/4B-Base control (R1-C3-CONTROL); candidates screened by the decision-model exam P.3 from Kev-0.8B/4B, StartLux 0.8B/2B/4B (if trainable after P.0) and Laya 421M | zhixu portal | RPS skill, calibration (all-bins and top-1 ECE, PIT, width ratio), offline value per model |
-| B.6 | Extend labels toward 8–10k: second sweep (extra OpenML / MLP nodes, second manager model for diversity) | deepthought (+ zhixu experiment shards) | Second manifest |
-| B.7 | **STOP — C3 gate (author):** A3 or A5 beats A2 by ≥ δ_n on ≥ 2 nodes, lower 95 % bound > 0 | Mac (author) | PLAN §10 row: pass → Phase C; fail → C3 reported as the measured negative, C1 + C2 carry the paper |
+| B.6 | ~~Second manager for diversity~~: covered by sweep 1 as the second source since 3 Nov (R1-MAIN-PROPOSER (c)). Still open: extend toward 8–10k with extra OpenML / MLP nodes, only if the A5 learning curve asks for it | the main proposer's sweep host | Manifest, if run |
+| B.7 | **STOP — C3 gate (author):** A3 or A5 beats A2 by ≥ δ_n on ≥ 2 nodes, lower 95 % bound > 0, **on the main proposer's data (sweep 2)**; the cross-proposer table is reported beside it | Mac (author) | PLAN §10 row: pass → Phase C; fail → C3 reported as the measured negative, C1 + C2 carry the paper |
+
+#### B.1b — sweep 2 with the main proposer (added 3 Nov 2026; R1-MAIN-PROPOSER)
+
+**Purpose.** The labelled proposals C3 is trained and gated on, from the proposer the paper deploys. Sweep 1 (`qwen2.5-coder:7b`) is the second source.
+
+**Design: sweep 1's, unchanged except the manager.**
+- Nodes: the eight of `authorizations/c3_sweep1_20261027.md`, with the same start configurations, D21 noise source and repair rule.
+- 18 instances per node; the instance seeds are those of sweep 1 (fixed per (node, k) by the collector), so every sweep-2 campaign has a sweep-1 twin on the same start.
+- W = 20; memory `append_only_summary` and `none`; `vary` split; structure-only `manager_proposal/v1` schema; temperature 0.2 with the D26 seed; transport retry 3; watchdog and resume as in sweep 1.
+- Audits: K = 10, seeds 7001–7005 (labels) and 7006–7010 (evaluation); duplicates get no label; no-ops are labelled by rule; the seed-block rules of R1-SWEEP1-CLASSIFY and R1-B2-DECOUPLE apply unchanged.
+
+**Manager.**
+- The Track X pick (X.7 (a), as amended): its registry entry (HF repo @ revision, GGUF sha256, quantization source, chat-template source and any declared template repair), the pinned llama.cpp build, and full offload on the sweep card.
+- **Thinking off on every call**, through the model's own chat-template switch exactly as in its thinking-off B2 run.
+- **`cache_prompt: false` on every call.**
+- Context: the smallest of 16,384 and the context the pick qualified at in Stage A. The sweep's prompts are short: ≤ 1,345 tokens with memory on, measured 25 Oct.
+- Every call records the thinking setting, `cache_prompt`, the seed, prompt and completion tokens and the latency. A call with thinking content in its completion is counted and reported; more than 1 % of calls is a STOP.
+
+**Prerequisites (in order; each reviewed before the next).**
+1. **Harness pin.** The llamacpp provider must send the thinking-off switch (`chat_template_kwargs`, or the model's declared mechanism) and `cache_prompt: false`.
+   - The `cache_prompt` switch exists on harness `trackS-20261029` (`415d99e`, independently reviewed 30 Oct). The thinking switch is new code, to be built the same way: opt-in, default body unchanged, recorded in `llm_call`, with tests against a stand-in server.
+   - The sweep collector must pass both through the manager config and record them in the manifest. A resume with other values is refused.
+   - Merged as the next harness pin (R1-HARNESS-NEXT-PIN applies: after sweep 1 and B.2 of sweep 1, or by an explicit author exception).
+2. **Config.** `r1/scripts/configs/c3_sweep2_<host>.json`, with the pick's model path and sha256, build, `ctx_size`, the GPU UUID, `allowed_hosts` = the sweep host, and workers sized from that host's census.
+3. **D28 liveness** of the pick on the eight nodes (ENGINEERING_ONLY, the sweep-1 settings: 2 instances × W = 10, memory on). A node that fails is a STOP for the author; a node is never dropped silently.
+4. **Projection.** Calls × the pick's thinking-off latency + runs × CPU time / workers, reported for the author. Above 4 days of one 4090, STOP for the author (proposed threshold, R1-MAIN-PROPOSER (f)).
+5. **Authorization note** by the author (`docs/r1/authorizations/c3_sweep2_<date>.md`). Sweep 2 is EVIDENCE.
+
+**Host and priority.**
+- One 4090 host for the whole sweep: TASL-2 or TASL-7, chosen by the author with the Track S and Track P schedules in view.
+- The host's lease (`flock ~/r1_locks/gpu0.lock`) and priority markers apply: Track X evidence (TASL-2) and Track P evidence (TASL-7) keep priority unless the author rules otherwise in the authorization note.
+- The audits run on deepthought's CPUs (proposed): copy the sweep's batch directory and audit with the B.2 code and pins. If the runner cannot audit a transferred batch, the audits run on the sweep host, and 50 proposals are audited on both hosts and reported.
+
+**STOPs.** All sweep-1 STOPs (`prompts/DEEPTHOUGHT_SWEEP1_RUNBOOK.md` §2) apply, plus:
+- a thinking-off or `cache_prompt` mismatch in any call record;
+- more than 1 % of completions with thinking content;
+- the pick's pin not matching the X.7 row;
+- a priority marker appearing (a pause, not a failure).
+
+**Operator runbook.** Written once the pick is known (its pins fill the config), from `DEEPTHOUGHT_SWEEP1_RUNBOOK.md` Phases 4–9, with the 4090 host's lease and watcher and the copy-to-deepthought audit step. The runbook is reviewed independently before the authorization note.
+
+**Analysis additions.**
+- Proposal statistics per source, paired by instance: duplicate, no-op and valid rates; audited increment distribution; rule-skippable share.
+- The cross-proposer table: train on sweep 1 → test on sweep 2, and the reverse; RPS skill, ECE and decision utility.
+- These are reported with the B.7 gate, which is read on sweep 2.
 
 ### Track G — Harder benchmarks (added 24 Oct; runs alongside Phases B–D)
 
@@ -132,7 +178,7 @@ Author decisions (27 Oct; R1-TRACKG-SCOPE and R1-TRACKG-ROLE): Track G comprises
 
 Reused: the machinery (artifact pinning and quantization/licence blockers, Wilson intervals, paired template bootstrap, occupancy and contamination handling, frozen selection rule before data). Not reused: its numbers or its pool verdicts.
 
-**Purpose.** (i) Choose, by a rule frozen before data, the strong proposer for the D22 deployment check and the second manager for B.6. (ii) An appendix table of how proposer choice moves the C3-relevant quantities (duplicate and no-op rates, audited proposal increments, final audited Y). Exam campaigns are never C3 labels.
+**Purpose.** (i) Choose, by a rule frozen before data, **the main proposer of Paper B, run with thinking off** (R1-MAIN-PROPOSER, 3 Nov; previously the D22 deployment-check proposer and the B.6 second manager). (ii) An appendix table of how proposer choice moves the C3-relevant quantities (duplicate and no-op rates, audited proposal increments, final audited Y). Exam campaigns are never C3 labels.
 
 **Pool (author, 25 Oct).** Every candidate below enters Stage A. TeichAI/Qwen3.6-27B-Claude-Opus-Reasoning-Distill-v2 is excluded by the author.
 
@@ -155,8 +201,8 @@ Reused: the machinery (artifact pinning and quantization/licence blockers, Wilso
 | X.3 | **Discrimination check with anchors** on the X.4 design: random-valid < scripted on audited mean proposal increment, and `qwen2.5-coder:7b` reproduces its pilot duplicate rate within CI. If the exam cannot order the anchors, STOP: it has no discriminating power. | zhixu portal + CPU | Anchor table |
 | X.4 | **Stage B1 (screen, all admissible candidates).** Nodes: three D21 nodes (proposed: `digits_mlp` if D28 passes, else `tabular_mlp`; `openml_credit_approval`; `openml_ionosphere`). Exam-namespace instance seeds 9001–9004 (never used by any sweep), W = 20, memory `append_only_summary`, `"vary"` split, temperature 0.2 + D26 seed. Thinking (amended 26 Oct): thinking off is the primary mode for every model that can switch it off; those models also run thinking on (2,048-token budget) on one node, and the mode with the higher audited μ̂ is used in B2; always-thinking models run with a 2,048-token budget. After each proposal one charged side query asks the model for P(Δ > 0) and P(no effect) of its own edit (the A4 question), scored against the audit. Audits: each non-inert, non-duplicate proposal on K = 4 fresh seeds (9101–9104, disjoint from 7001–7010). | zhixu portal (manager) + CPU workers | Manifest per candidate; completion or STOP |
 | X.5 | **B1 analysis and finalist rule (frozen before X.4 starts, committed with a hash).** Per candidate: valid-proposal rate, novelty (D28), no-op and duplicate rates, invalid-run rate, audited mean proposal increment μ̂ and P(Δ > 0), dispersion of audited increments (the input to T4 Proposition 7's bound), A4 log score and calibration, s/proposal, GPU-h; cluster bootstrap by instance. Eligibility = Stage A pass + D28 criteria. **Finalists:** top 4 by μ̂, plus the best model of any family absent from them (≤ 5). μ̂ is the ranking quantity because it is resolvable here (≈ 80–110 audited proposals per model after duplicates, rough se ≈ 0.001 on `digits_mlp`; corrected 26 Oct) while final Y is not (rough se ≈ 0.002 with 12 instances). | Mac | B1 report |
-| X.6 | **Stage B2 (finalists, power-planned).** Final audited Y (K = 10, seeds 9201–9210) on the three nodes with fresh instances 9011+, the number of instances fixed from the B1 variance before B2 starts; plus one Track G node only if G.1 and G.3 are done, the node runs on zhixu portal beside the manager within the fit rule, and the author adds it; otherwise transfer to Track G nodes stays in Track G (G.5). Top 3 also rerun once with thinking off where possible. | zhixu portal only (R1-EXAM-HOST) | B2 report `docs/r1/reports/PROPOSER_EXAM_<date>.md` |
-| X.7 | **Author, by role:** (a) **D22 strong proposer** = best B2 Y (ties → lower GPU-h); (b) **B.6 second manager** = the finalist whose proposal distribution (edited key and step-size distribution, declared distance) differs most from `qwen2.5-coder:7b` among those that fit the B.6 sweep host; if none fits a 12 GB TITAN, the second sweep's host changes (R1-SWEEP-HOST: one host type per table); (c) **appendix:** C3 premises (rule-skippable share, increment dispersion, A4 calibration) against proposer strength. If the anchors and the finalists do not differ on any C3 quantity beyond CI, the appendix reports that null and B.6 chooses by cost. | Mac (author) | PLAN §10 row |
+| X.6 | **Stage B2 (finalists, power-planned).** Final audited Y (K = 10, seeds 9201–9210) on the three nodes with fresh instances 9011+, the number of instances fixed from the B1 variance before B2 starts; plus one Track G node only if G.1 and G.3 are done, the node runs on zhixu portal beside the manager within the fit rule, and the author adds it; otherwise transfer to Track G nodes stays in Track G (G.5). Top 3 also rerun once with thinking off where possible. **Since 3 Nov (R1-MAIN-PROPOSER (a)):** every finalist that can run with thinking off has a thinking-off B2 run, because the pick is chosen on thinking-off Y. | zhixu portal only (R1-EXAM-HOST) | B2 report `docs/r1/reports/PROPOSER_EXAM_<date>.md` |
+| X.7 | **Amended 3 Nov (R1-MAIN-PROPOSER):** (a) is now the **main proposer** = the best B2 audited Y **with thinking off** among the finalists that can run thinking off (always-thinking models are not eligible; ties → lower GPU-h); it is also the strong LLM of the self-control comparison. (b) is retired: sweep 1's `qwen2.5-coder:7b` is the second source. (c) stays. Original text: **Author, by role:** (a) **D22 strong proposer** = best B2 Y (ties → lower GPU-h); (b) **B.6 second manager** = the finalist whose proposal distribution (edited key and step-size distribution, declared distance) differs most from `qwen2.5-coder:7b` among those that fit the B.6 sweep host; if none fits a 12 GB TITAN, the second sweep's host changes (R1-SWEEP-HOST: one host type per table); (c) **appendix:** C3 premises (rule-skippable share, increment dispersion, A4 calibration) against proposer strength. If the anchors and the finalists do not differ on any C3 quantity beyond CI, the appendix reports that null and B.6 chooses by cost. | Mac (author) | PLAN §10 row |
 
 Cost and order: Stage A ≈ 10–15 min per model; B1 ≈ 240 proposals per model (+ the non-thinking node), 0.3–3 GPU-h depending on speed and thinking; B2 ≈ 5 models × a few GPU-h; ≈ 3–5 days in all. The 4090 is also the B.5 training card, so Track X must finish by ~15 Nov or B.5 moves. X.1–X.2 start after A.10/A.11 (llama.cpp path).
 
