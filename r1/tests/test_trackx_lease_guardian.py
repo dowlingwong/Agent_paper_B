@@ -831,3 +831,35 @@ def test_completion_server_start_ticks_must_match_its_record(tmp_path):
             validate_completion(tampered, lock, fd, expected, ticks_map())
     finally:
         os.close(fd)
+
+
+def test_completion_accepts_a_failed_start_record_with_lease_inheritance(tmp_path):
+    """A pre-readiness failure is a legitimate stopped record if it carries the proof."""
+    completion, record_path, batch_state = completion_fixture(tmp_path)
+    record = json.loads(record_path.read_text())
+    record.update(exited_early=1, returncode=1, stopped_before_ready=True)
+    record.pop('healthy_utc', None)
+    record_path.write_text(json.dumps(record) + '\n')
+    completion['servers'][0]['record_sha256'] = digest(record_path)
+    lock, fd, expected = completion_lock(tmp_path)
+    try:
+        summary = validate_completion(completion, lock, fd, expected, ticks_map())
+        assert summary['records_verified'] == 1
+    finally:
+        os.close(fd)
+
+
+def test_completion_rejects_a_failed_start_record_without_inheritance(tmp_path):
+    completion, record_path, batch_state = completion_fixture(tmp_path)
+    record = json.loads(record_path.read_text())
+    record.update(exited_early=1, returncode=1, stopped_before_ready=True)
+    record.pop('lease_inheritance')
+    record.pop('healthy_utc', None)
+    record_path.write_text(json.dumps(record) + '\n')
+    completion['servers'][0]['record_sha256'] = digest(record_path)
+    lock, fd, expected = completion_lock(tmp_path)
+    try:
+        with pytest.raises(guardian.Stop, match='lacks lease inheritance evidence'):
+            validate_completion(completion, lock, fd, expected, ticks_map())
+    finally:
+        os.close(fd)

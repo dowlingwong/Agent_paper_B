@@ -372,11 +372,42 @@ class LlamaServerInstance:
         except OSError:
             self.record['cmdline'] = None
         self._save()
+        # Capture the SAME-OFD lease inheritance proof BEFORE the readiness loop:
+        # a server can exit before /health (template parser error, 32k OOM, ...) and
+        # lease completion requires an inheritance proof on every server record.  The
+        # FD is inherited at fork/exec, so ancestor->descendant kcmp and /proc FD
+        # dev/ino work while the child is barely alive.  If the child is already gone
+        # we cannot prove anything; fall through so the readiness loop records the
+        # failed start (the completion then stays fail-closed), and if the child is
+        # alive but the proof fails this is a genuine STOP.
+        if lease_fd is not None:
+            try:
+                inheritance = self._verify_lease_inheritance(lease_fd, server_ticks)
+            except Exception as exc:  # noqa: BLE001 - classified below
+                self.record['lease_inheritance_capture'] = {
+                    'captured': False, 'utc': _utc(), 'error': f'{type(exc).__name__}: {exc}'}
+                try:
+                    self._save()
+                except OSError:
+                    pass
+                if self.process.poll() is None:
+                    raise
+            else:
+                self.record['lease_inheritance'] = inheritance
+                self.record['start_ticks'] = inheritance['server_start_ticks']
+                server_ticks = inheritance['server_start_ticks']
+                self._save()
         deadline = time.monotonic() + self.start_timeout
         last = None
         while time.monotonic() < deadline:
             if self.process.poll() is not None:
+                # A server that exited before readiness is over, so its record must be
+                # finalized here (stopped_utc/returncode): lease completion accounting
+                # requires every observed server record to name a stop.  The process was
+                # never healthy, so no request could have been served.
                 self.record.update(exited_early=self.process.returncode, failed_utc=_utc(),
+                                   stopped_utc=_utc(), returncode=self.process.returncode,
+                                   stopped_before_ready=True,
                                    log_tail=self.log_text().splitlines()[-20:])
                 self._save()
                 raise RuntimeError(f'STOP: dedicated llama-server exited during start (rc={self.process.returncode})')

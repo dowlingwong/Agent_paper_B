@@ -236,3 +236,31 @@ def test_template_failure_candidate_row_continues_to_next_candidate(tmp_path, mo
     assert rows['tmpl_bad']['passed'] is False and rows['tmpl_bad']['failure_classes'] == ['template']
     assert rows['tmpl_good']['passed'] is True
     assert r.served == ['tmpl_good']  # the template-failed candidate never started a server
+
+
+def test_lease_completion_accepts_a_failed_start_record(tmp_path, monkeypatch):
+    """The runner's completion writer must accept a finalized pre-readiness failure."""
+    import json, os
+    from pathlib import Path
+    from r1.scripts import exam_runner
+    from r1.exam import cache_proc
+    out = tmp_path / 'out'
+    rec_dir = out / 'servers' / 'cand'
+    rec_dir.mkdir(parents=True)
+    record = {'pid': 999999, 'start_ticks': 555, 'stopped_utc': '2026-11-03T00:00:00Z',
+              'returncode': 1, 'exited_early': 1, 'stopped_before_ready': True,
+              'lease_inheritance': {'version': 'trackx_lease_inheritance/v1',
+                                    'server_pid': 999999, 'server_start_ticks': 555,
+                                    'kcmp_rc': 0, 'kcmp_same_ofd': True}}
+    (rec_dir / 'llama_server_9000.json').write_text(json.dumps(record) + '\n')
+    (out / 'batch_state.json').write_text(json.dumps({'status': 'COMPLETE'}) + '\n')
+    evidence = tmp_path / 'evidence'; evidence.mkdir()
+    monkeypatch.setenv('TRACKX_LEASE_EVIDENCE_DIR', str(evidence))
+    monkeypatch.setattr(cache_proc, 'process_start_ticks', lambda pid: 4242)
+    exam_runner._write_lease_completion(SimpleNamespace(out=out))
+    completion = json.loads((evidence / 'lease_completion.json').read_text())
+    assert completion['servers'] == [{'pid': 999999, 'start_ticks': 555,
+                                      'stopped_utc': '2026-11-03T00:00:00Z',
+                                      'record_sha256': completion['servers'][0]['record_sha256'],
+                                      'record_path': completion['servers'][0]['record_path']}]
+    assert completion['runner_start_ticks'] == 4242

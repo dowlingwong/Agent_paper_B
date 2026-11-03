@@ -323,3 +323,70 @@ def test_a_matching_process_of_another_user_is_never_signalled(fake, monkeypatch
     ours, reason = lsi.orphan_matches(inst.record)
     assert not ours and reason == "pid belongs to another user"
     assert lsi.stop_orphan(inst.record)["action"] == "none" and inst.alive()
+
+
+def test_server_exiting_before_ready_finalizes_its_record(tmp_path):
+    """Lease completion requires every observed server record to name a stop.
+
+    A failed start (template parser error, 32k OOM, ...) is over; its record must carry
+    stopped_utc/returncode even though it was never healthy (so it served no request).
+    """
+    binary = tmp_path / 'bin' / 'llama-server'
+    binary.parent.mkdir()
+    binary.write_text('#!/bin/sh\nsleep 0.4\nexit 1\n')
+    binary.chmod(0o755)
+    model = tmp_path / 'models' / 'm.gguf'
+    model.parent.mkdir()
+    model.write_bytes(b'GGUF fixture')
+    inst = lsi.LlamaServerInstance(tmp_path / 'batch', str(binary), model_path=str(model),
+                                   alias='r1-manager', start_timeout=10)
+    with pytest.raises(RuntimeError, match='exited during start'):
+        inst.start()
+    record = json.loads(inst.record_path.read_text())
+    assert isinstance(record.get('stopped_utc'), str) and record['stopped_utc']
+    assert record.get('returncode') == 1
+    assert record.get('exited_early') == 1 and record.get('stopped_before_ready') is True
+    assert 'healthy_utc' not in record
+    assert inst.alive() is False
+
+
+def test_failed_start_records_the_lease_inheritance_proof(tmp_path, monkeypatch):
+    """A server that exits before readiness must still carry the SAME-OFD proof.
+
+    Lease completion requires an inheritance row on every server record; the proof is
+    captured immediately after Popen (the FD is inherited at fork/exec) instead of only
+    in the /health branch.
+    """
+    from r1.exam import cache_runtime
+
+    seen = []
+    def fake_verify(pid, lease_fd, **kwargs):
+        seen.append((pid, lease_fd, kwargs))
+        return {'version': 'trackx_lease_inheritance/v1', 'server_pid': pid,
+                'server_start_ticks': 777, 'lease_fd': lease_fd, 'kcmp_rc': 0,
+                'kcmp_same_ofd': True, 'method': 'synthetic-fixture'}
+    monkeypatch.setattr(cache_runtime, 'verify_server_lease_inheritance', fake_verify)
+    binary = tmp_path / 'bin' / 'llama-server'
+    binary.parent.mkdir()
+    binary.write_text('#!/bin/sh\nsleep 0.6\nexit 1\n')
+    binary.chmod(0o755)
+    model = tmp_path / 'models' / 'm.gguf'
+    model.parent.mkdir()
+    model.write_bytes(b'GGUF fixture')
+    lease_path = tmp_path / 'lease'
+    lease_path.touch()
+    lease_fd = os.open(lease_path, os.O_RDWR)
+    inst = lsi.LlamaServerInstance(tmp_path / 'batch', str(binary), model_path=str(model),
+                                   alias='r1-manager', start_timeout=10)
+    try:
+        with pytest.raises(RuntimeError, match='exited during start'):
+            inst.start(lease_fd=lease_fd)
+    finally:
+        os.close(lease_fd)
+    record = json.loads(inst.record_path.read_text())
+    assert record['lease_inheritance']['kcmp_same_ofd'] is True
+    assert record['lease_inheritance']['server_pid'] == record['pid']
+    assert record['start_ticks'] == 777
+    assert isinstance(record.get('stopped_utc'), str) and record['stopped_utc']
+    assert record.get('returncode') == 1 and record.get('stopped_before_ready') is True
+    assert seen and seen[0][1] == lease_fd
