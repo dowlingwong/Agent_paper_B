@@ -65,6 +65,37 @@ def stage_a(runner, selected):
     return _stage_a_cooperative(runner,selected)
 
 
+GPU_IDLE_ATTEMPTS=12
+GPU_IDLE_INTERVAL_SECONDS=5.0
+
+
+def await_idle_gpu(cfg, *, attempts=GPU_IDLE_ATTEMPTS, interval=GPU_IDLE_INTERVAL_SECONDS,
+                   sleep=time.sleep):
+    """Wait a bounded time for the GPU to go quiescent before an independent qualification.
+
+    A server that just OOM-ed/exited can linger in nvidia-smi for a few seconds (CUDA
+    teardown); treating that instant as "GPU not available" aborts a multi-hour run at a
+    retry boundary.  The acceptance criterion is unchanged and fail-closed: the final
+    observation must have no compute apps, >=1024 MiB free and <=5% utilisation; foreign
+    workloads never become acceptable by waiting.  The last observation is included in the
+    STOP message for diagnosis.
+    """
+    from r1.scripts import llama_server_instance as lsi
+    from r1.exam.runtime import gpu_sample
+    last=None
+    for attempt in range(attempts):
+        sample=gpu_sample(cfg);apps=lsi.gpu_compute_apps()
+        last={'attempt':attempt+1,'apps':apps,'gpu':sample}
+        if apps is None:
+            # Unknown census is not a transient state: never wait out an unobservable GPU.
+            raise PreparationStop(f'STOP: GPU census unavailable for independent qualification: {last}')
+        if apps==[] and sample['free_mib']>=1024 and sample['utilisation_percent']<=5:
+            return apps,sample
+        if attempt+1<attempts: sleep(interval)
+    raise PreparationStop(f'STOP: GPU not available for independent qualification after '
+                          f'{attempts} observations: {last}')
+
+
 def _stage_a_cooperative(runner, selected):
     """Reviewed implementation only; guarded public entry is still STOP."""
     from r1.exam.stage_a import require_d3_evidence
@@ -95,9 +126,7 @@ def _stage_a_cooperative(runner, selected):
                 try:
                     if not runner.cfg.get('dryrun') or placeholders(spec['runtime'].get('footprint_mib')) or spec['runtime'].get('footprint_mib') is None:
                         if not runner.cfg.get('dryrun'):
-                            sample=gpu_sample(runner.cfg);apps=lsi.gpu_compute_apps()
-                            if apps is None or apps or sample['free_mib']<1024 or sample['utilisation_percent']>5:
-                                raise PreparationStop('STOP: GPU not available for independent qualification')
+                            await_idle_gpu(runner.cfg)
                         qual_dir=path.parent/'qualification'
                         qualification=run_fresh_qualification(runner,qual_dir,spec,ctx)
                         if qualification['status']=='PREPARATION_STOP': raise PreparationStop('STOP: offload qualification lacks required telemetry')

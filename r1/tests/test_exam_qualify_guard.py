@@ -264,3 +264,43 @@ def test_lease_completion_accepts_a_failed_start_record(tmp_path, monkeypatch):
                                       'record_sha256': completion['servers'][0]['record_sha256'],
                                       'record_path': completion['servers'][0]['record_path']}]
     assert completion['runner_start_ticks'] == 4242
+
+
+def test_await_idle_gpu_retries_a_transient_teardown(monkeypatch):
+    """A just-exited server may linger in nvidia-smi; a bounded wait must absorb it."""
+    from r1.scripts import exam_runner
+    from r1.exam import runtime
+    from r1.scripts import llama_server_instance as lsi
+    samples = iter([{'free_mib': 100, 'utilisation_percent': 99},
+                    {'free_mib': 200, 'utilisation_percent': 40},
+                    {'free_mib': 20000, 'utilisation_percent': 0}])
+    apps = iter([[], [], []])
+    monkeypatch.setattr(runtime, 'gpu_sample', lambda cfg: next(samples))
+    monkeypatch.setattr(lsi, 'gpu_compute_apps', lambda: next(apps))
+    slept = []
+    observed, sample = exam_runner.await_idle_gpu({}, attempts=5, interval=0, sleep=slept.append)
+    assert observed == [] and sample['free_mib'] == 20000 and len(slept) == 2
+
+
+def test_await_idle_gpu_still_stops_for_a_foreign_app(monkeypatch):
+    from r1.scripts import exam_runner
+    from r1.exam import runtime
+    from r1.scripts import llama_server_instance as lsi
+    monkeypatch.setattr(runtime, 'gpu_sample', lambda cfg: {'free_mib': 20000, 'utilisation_percent': 0})
+    monkeypatch.setattr(lsi, 'gpu_compute_apps', lambda: [{'pid': 123, 'used_memory': '1 MiB'}])
+    slept = []
+    with pytest.raises(PreparationStop, match='after 3 observations'):
+        exam_runner.await_idle_gpu({}, attempts=3, interval=0, sleep=slept.append)
+    assert len(slept) == 2  # waits only between attempts
+
+
+def test_await_idle_gpu_stops_immediately_when_the_census_is_unknown(monkeypatch):
+    from r1.scripts import exam_runner
+    from r1.exam import runtime
+    from r1.scripts import llama_server_instance as lsi
+    monkeypatch.setattr(runtime, 'gpu_sample', lambda cfg: {'free_mib': 20000, 'utilisation_percent': 0})
+    monkeypatch.setattr(lsi, 'gpu_compute_apps', lambda: None)
+    slept = []
+    with pytest.raises(PreparationStop, match='GPU census unavailable'):
+        exam_runner.await_idle_gpu({}, attempts=5, interval=0, sleep=slept.append)
+    assert slept == []
