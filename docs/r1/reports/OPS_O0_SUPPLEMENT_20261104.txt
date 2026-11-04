@@ -1,0 +1,82 @@
+O0 supplementary read-only evidence (2026-11-04, approx. 15:44 UTC)
+Commands: git -C <listed directory> rev-parse HEAD; git -C <listed directory> status --short --branch; ps -eo user,pid,comm | grep -E tmux. On deepthought: getfattr for ceph.quota.max_bytes, ceph.quota.max_files, ceph.dir.rfiles and ceph.dir.rbytes on /ceph/dwong. On Ada: tail -n 4 of the named Paper A console.log. Usernames in ps may be truncated by ps. These are observations, not proofs that other sessions or directories do not exist.
+
+--- TASL-2 ---
+REPO /home/dowling/r1_tracks/work/Agent_paper_B
+d10b05b738fc0e0dba54e0e692c248bedf095482
+## HEAD（非分支）
+REPO /home/dowling/r1_tracks/work/autoresearch_harness
+a3fedbbd44309b3fdf99d853ad841b9ec2c299e2
+## HEAD（非分支）
+REPO /home/dowling/exam-x/work/agent_paper_B
+9bfabe5457a336f90cca31749eab143b36ca143f
+## HEAD（非分支）
+zhixu     634506 tmux: server
+
+--- TASL-7 ---
+REPO /home/dowling/r1_tracks/work/Agent_paper_B
+d10b05b738fc0e0dba54e0e692c248bedf095482
+## HEAD (no branch)
+REPO /home/dowling/r1_tracks/work/paper_cp
+d10b05b738fc0e0dba54e0e692c248bedf095482
+## HEAD (no branch)
+REPO /home/dowling/r1_tracks/work/autoresearch_harness
+a3fedbbd44309b3fdf99d853ad841b9ec2c299e2
+## HEAD (no branch)
+REPO /home/dowling/r1_trackp/Agent_paper_B
+b9ad6f8fe2e771732100f704accd7f2ce7cf20f0
+## trackp-20261026...origin/trackp-20261026
+REPO /home/dowling/r1_trackp/autoresearch_harness
+897d83c8efa364ec2fdd37288241cc42e01d7274
+## trackp-20261026...origin/r1
+REPO /home/dowling/exam-x/work/agent_paper_B
+74a0790739b736f98d6bcb13436fb84b7e058000
+## HEAD (no branch)
+REPO /home/dowling/exam-x/work/autoresearch_harness
+897d83c8efa364ec2fdd37288241cc42e01d7274
+## HEAD (no branch)
+tianyu    934891 tmux: server
+dowling  1388759 tmux: server
+
+--- deepthought ---
+Wed Nov  4 15:44:09 UTC 2026
+getfattr: Removing leading '/' from absolute path names
+# file: ceph/dwong
+ceph.quota.max_bytes="0"
+
+getfattr: Removing leading '/' from absolute path names
+# file: ceph/dwong
+ceph.quota.max_files="500000"
+
+getfattr: Removing leading '/' from absolute path names
+# file: ceph/dwong
+ceph.dir.rfiles="389043"
+
+getfattr: Removing leading '/' from absolute path names
+# file: ceph/dwong
+ceph.dir.rbytes="1438371715214"
+
+REPO /ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B
+22cc8936c61c52700b7fae4f91151d0705425c10
+## main...origin/main [behind 107]
+amonsch   621926 tmux: server
+dwong    1245056 tmux: server
+mmoser   1539137 tmux: server
+kschaeu+ 3618971 tmux: server
+mmolch   3670583 tmux: server
+mmolch   4003169 tmux: client
+mmartini 4088414 tmux: server
+
+--- Ada ---
+Wed Nov  4 03:44:31 PM UTC 2026
+REPO /home/dowling/Agent_paper_B
+17b7394e75fc2c5e67798e265742a9c13370fb63
+## main...origin/main
+shuohan+ 1056234 tmux: server
+jzhan744 1219483 tmux: server
+yuanliu  2104038 tmux: server
+vla-rea+ 4146832 tmux: server
+=== 2026-10-21T12:48:17+00:00 supervisor (live): segment 30: resume
+COMPLETED
+served from /home/dowling/agent-checkpoint-intervention/results/paper_a/replay_panel_v4/live_20261018T234416Z/serve_20261021T124817Z; command exit 0
+=== 2026-10-21T13:11:35+00:00 supervisor (live): segment 30 ended (exit 0): not resuming: the run completed
