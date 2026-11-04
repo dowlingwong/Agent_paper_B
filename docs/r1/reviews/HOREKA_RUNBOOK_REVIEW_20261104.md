@@ -400,3 +400,134 @@ Then restate line 120 as: "by D every job has ended and every result is copied a
 Fix BLOCKING-1 and MAJOR-1 to MAJOR-11. The MINOR and NIT findings should be applied or answered one by one. I will re-check the next revision against this list.
 
 Verdict: NOT ACCEPTED
+
+---
+
+## Round 2 — re-check of revision 2 (commit `fbb33c15`)
+
+**Reviewer:** the same independent agent (Claude), AI-assisted. Documents only. I edited nothing in the runbook and committed nothing.
+**Checked:** `git diff 0e13a9fc fbb33c15 -- docs/r1/prompts/HOREKA_RUNBOOK_20261104.md`, the full revision 2 text, and its §9 answer table, against the round-1 required list. Line numbers below refer to revision 2. I ran the new `nodessh-raw` construction locally under a path containing spaces (scratch directory, stub `ssh` body).
+
+### Status of the round-1 findings
+
+| Finding | Status | Evidence in rev 2 |
+|---|---|---|
+| BLOCKING-1 (NHR (c), production submission) | **Resolved** (one new MINOR, R2-m1, on the mechanism) | Lines 133–140: the PLAN *(open)* item is quoted; the tunnel answers only (a); until the §7 item 1 ruling the agent submits only `dev-*` and `cpu` jobs for HK1/HK2, the author submits every `gpu-*` job, and there are no continuations. §3 item 1 (line 419), §5 (line 462), §6 (line 485), §7 item 1, §8 (line 518) |
+| MAJOR-1 (backfill premise) | **Resolved** | Line 56 marks it a hypothesis, with "1 GPU × 4 h → also 12 Nov" and the dev partition named as separate; line 249; HK0 step 4 branch (lines 293–297); one-sample caveat (line 290) |
+| MAJOR-2 (cutoff, freeze, copy-back) | **Resolved** | §0.5 table (lines 234–238); F in `hk2_submit.py` (line 416); C used for `--deadline`, the submission check and the in-job stop; the copy-back window runs from C to D. See "Points the coordinator asked about" (1) |
+| MAJOR-3 (one session per user) | **Resolved** | Line 55; lines 73–81; §5 "session slot busy"; §4 risks |
+| MAJOR-4 (budget bypass and basis) | **Resolved** | §0.4 lines 215–230: a submission guard counting used + reserved + new GPU-h, applied to the author's submissions too; allocation basis; the 320/480 figures as lower bounds; a STOP gate before HK6 (line 375) |
+| MAJOR-5 (fixed steps not sufficient) | **Resolved** | Lines 169–184: conditions (a)–(c), the 3-job fallback, infrastructure failure *(proposed; §7 item 7)*, timeout at the chosen placement. HK3 step 3; HK2 step 1; §5 2 % STOP |
+| MAJOR-6 (k and placement, co-location) | **Resolved** (one new MINOR, R2-m2) | Placement defined (lines 158–167); HK3 reordered with a STOP at step 6 before the floor (lines 333–341); co-location arm (step 5); J1b loaded identity test (line 265); J3 co-locates only if both pass (line 267) |
+| MAJOR-7 (llama-server exposure) | **Resolved** (NIT R2-n2) | Lines 273–277; §3 item 3; §5 |
+| MAJOR-8 (sealed copy-back) | **Resolved** (NIT R2-n3) | Lines 113–123; §3 item 6 |
+| MAJOR-9 (second proposer) | **Resolved** | Lines 188–191 *(open)*, with R1-BX-D6 and PROPOSED-CONFIRM D6 standing; §7 item 6 with the family caveat |
+| MAJOR-10 (§8 row, HK0 circularity) | **Resolved** | §8 decision cell holds only a placeholder for the author's words; the 17:12 quotes are a context line; consequences, amended rows and open items sit below the table. HK0 is desk work ending in a new row, R1-HOREKA-TMAX (line 298). Line 18 clarifies drafting vs committing |
+| MAJOR-11 (D28, S1.1) | **Resolved** | HK4b (lines 351–359), with G.3 waiting for it; S1.1 in HK6 (line 385) and in the projection (line 226) |
+| m1 | Resolved | Line 46 source note; 746,880 MB; HK0 step 2; HK1 step 4 |
+| m2 | **Partly**; see R2-M1 | Scrubbed environment, `DEADLINE` handling and no `--time-min` are done. The real self-submission test (HK1 step 5) is placed wrongly |
+| m3 | Resolved (NIT R2-n1 on invocation quoting) | Lines 86–101, 104 |
+| m4 | Resolved (MINOR R2-m3 on placement) | Line 263; §3 items 1–2 |
+| m5 | Resolved (MINOR R2-m4 on signal delivery) | Lines 251–257; §3 item 5 |
+| m6 – m13 | Resolved | Seeds (line 156); branch *(proposed)* (line 200); terms (lines 27–30); 1.5 × STOP; §4 risks; probed shape (line 249) and report path (line 287); the budget as an interpretation (line 213); own-process exclusion (line 425); ungated downloads (lines 108–111) |
+| n1 – n6 | Resolved | Line 269; line 50; line 51; line 52; line 237 and HK1 step 2; HK1 needs M1 (line 302) |
+
+### Points the coordinator asked about
+
+1. **F / C / D = Fri 20 Nov 12:00 / Fri 20 Nov 20:00 / Sat 21 Nov 18:00.** These are consistent and acceptable.
+   - Between F and C there are 8 h, which is more than T_max (4 h by default). A job submitted just before F can still end by C.
+   - `--deadline=C` removes any pending job that can no longer finish by C. That is correct Slurm semantics, and line 241 states it correctly.
+   - D leaves 30 h before 23 Nov 00:00, so the margin still holds if the shutdown starts early that morning.
+   - All later references match: §0.4 "since 20 Nov", §4, §5 "F is reached", §7 item 3, HK8.
+   - The copy-back still needs one author-opened session between Friday 20:00 and Saturday 18:00. Line 240 and §7 item 3 make his availability an explicit item, which is enough.
+2. **The interim rule (§0.3).** It is the right fix for BLOCKING-1: production `gpu-*` work waits for the author's ruling. Two gaps remain (R2-m1):
+   - the mechanism by which "the author submits" is undefined;
+   - the scope of the rule ("only for HK1 and HK2", line 138) and the tool's guard (only `gpu-*`, line 419) differ.
+3. **The HK1 step 5 self-submission test inside QoS `dev`.** It cannot stay as written (**R2-M1**, below). It breaks NHR@KIT's rule on dev partitions and three rules of this runbook.
+4. **The `nodessh-raw` heredoc.** The construction is correct.
+   - I reproduced it with `$S` containing spaces: `printf %q` writes `S=/…/home\ sp/snap\ dir`, the quoted inner heredoc passes `"$S"` and `"$@"` through literally, the gate check refuses before `gate2_ok` exists, and arguments with spaces reach `ssh` intact.
+   - Two fragile spots remain in how it is called (R2-n1). Under the same test, `GIT_SSH_COMMAND="$S/nodessh-raw"` (line 105) failed: git hands `GIT_SSH_COMMAND` to `sh`, which splits at the space ("…/home: not found"). With `GIT_SSH_COMMAND="'$S/nodessh-raw'"` the wrapper was reached.
+   - `rsync -e` likewise splits its command at spaces unless quoted (rsync manual, `--rsh`).
+   - The real path (`~/Documents/agent_paper_B/.claude-worktrees/_snapshots/…`) has no space, so this is a NIT.
+
+### New findings (round 2)
+
+**R2-M1 (MAJOR) — The HK1 step 5 self-submission test breaks NHR@KIT's dev-partition rule and three rules of this runbook.**
+*Evidence.* Line 309: "a `dev-cpu` job submits one `dev-cpu` job … QoS `dev` allows only one running job, so the child waits until its parent ends". The QoS semantics are right (MaxJobsPU = 1, MaxSubmitPU = 3), but the test breaks four rules:
+- NHR@KIT's Slurm page, as quoted in `reviews/HOREKA_1GC_REVIEW_20261104.md` line 122: "Do not misuse these partitions for regular, short-running jobs or **chain jobs**!" A job in a dev partition that submits a job in a dev partition is a chain job there.
+- `hk2_submit.py` refuses "a second job in QoS `dev` while one is outstanding" (line 413). Continuations must go through `hk2_submit.py` (line 259), so the tool itself would refuse the child.
+- §0.3 (line 140): "No job submits its own continuation", until the §7 item 1 ruling.
+- Self-submission is needed only if the author allows continuations. Before that ruling, the test has no purpose.
+
+*Fix.* Replace HK1 step 5 with:
+> "*(only after the §7 item 1 ruling allows continuations)* One real self-submission test in `cpu`: a parent job (`-c 1 --mem=1G -t 00:05:00`) calls `hk2_submit.py` with a scrubbed environment to submit one child (`-c 1 --mem=1G -t 00:02:00 --wrap true`). Record the child's environment (`env | grep ^SLURM_`) and its `sacct` line. Never in a `dev-*` partition."
+
+Also add to §1 Continuations: "never in a `dev-*` partition". Add to §3 item 1: "refuses any submission from inside a job (`SLURM_JOB_ID` set and partition ≠ `agent`) into a `dev-*` partition."
+
+**R2-m1 (MINOR) — The author's submissions have no defined mechanism, and the rule's scope differs from the tool's guard.**
+*Evidence.*
+- Line 139: the author submits each `gpu-*` job "himself, in a session he opens for that". It does not say whether that is the agent's tunnel session (where the agent types) or his own terminal.
+- The budget guard, F, C and the probed-shape checks apply "to every submission, the author's included" (line 220). That holds only if he uses `hk2_submit.py`, not plain `sbatch`.
+- Line 138 limits the agent to `dev-*` and `cpu` "for HK1 and HK2". The tool refuses only `gpu-*` (line 419), so a `cpu` job in a later phase is not covered.
+
+*Fix.*
+- "The agent writes the manifest and the `--dry-run` output into the session folder. The author runs `hk2_submit.py submit <manifest>` himself from his own terminal, on the login node or in the agent session. A `gpu-*` submission asks for a confirmation typed at `/dev/tty`, which the agent's `BatchMode` calls never answer. The author always submits through `hk2_submit.py`, never plain `sbatch`, so the guards hold."
+- Align line 138 and line 419: either both say "`gpu-*` only", or the tool also refuses agent submissions outside HK1/HK2.
+- §4's gate column lists "the §7 item 1 ruling" for HK1 (line 438), yet §0.3 lets HK1 run without it. Remove the ruling from HK1's gate or explain it.
+
+**R2-m2 (MINOR) — The 2-GPU J3 fallback is refused by the tool's own shape guard.**
+*Evidence.*
+- Line 267: if co-location fails, "J3 uses 2 GPUs, one for each".
+- Line 249 and §3 item 1 (line 415) refuse any request above the probed shape, and the queue probe measured only 1-GPU and 4-GPU exclusive shapes.
+- A 2-GPU job also doubles J3's allocation GPU-h.
+
+*Fix.* Either allow `--gres=gpu:2 -c ≤ 64 --mem ≤ 360G` explicitly as an *(proposed)* unprobed shape (its first waits recorded, and its GPU-h in the HK5 projection), or name the fallback "the probed 4-GPU exclusive shape, running two campaigns' proposer–runner pairs". Add the choice to §7 item 5.
+
+**R2-m3 (MINOR) — J0 now puts downloads and hashing on the single dev GPU node.**
+*Evidence.*
+- Line 263: J0 runs entirely in `dev-gpu-h100`, "≤ 1 h, in several steps". That includes the venv, downloads of GGUFs of up to about 20 GB, and sha256 checks.
+- That node is the only one in its partition, QoS `dev` allows one job at a time, and HK2's smoke tests need the same slot.
+- With `-DGGML_NATIVE=OFF` and an explicit CUDA architecture, the build no longer depends on the build host's CPU. So the round-1 reason to leave `cpu` (m4) no longer applies to the build itself.
+
+*Fix.* "J0a in `cpu`: venv, downloads, sha256, and optionally the llama.cpp build (`GGML_NATIVE=OFF`). J0b in `dev-gpu-h100` (≤ 1 h): the GPU check and a one-token llama-server load. If J0a builds the binary, J0b also runs `llama-server --version` and a short CPU-side test on the GPU node, to rule out an illegal instruction."
+
+**R2-m4 (MINOR) — `--signal=B:USR1@600` reaches only the batch shell.**
+*Evidence.*
+- Lines 254 and 271. With `B:`, Slurm signals only the batch script's shell.
+- Bash runs a `trap` only after its foreground child exits, so a runner started as a plain foreground command never sees the signal in time.
+
+*Fix.* Line 254: "the batch script `exec`s the runner, or starts it in the background and `wait`s with a `trap` that forwards `USR1`". Add a real-job test of this in HK1 (a `cpu` job with `-t 00:12:00` and `--signal=B:USR1@600`), besides the fake-signal unit test in §3 item 7.
+
+**R2-m5 (MINOR) — The session folder changes, but the scan procedure's wrappers hard-code the scan folder.**
+*Evidence.*
+- Line 70: a new folder `hk2_session_<UTC date-time>` per session.
+- The scan prompt rev 5.6 that line 69 reuses hard-codes `S=…/horeka_scan_20261104` in every block and inside the `nodessh` wrapper (scan prompt lines 50, 61, 68), and names `~/r1_scan_20261104/`. The queue-probe prompt handled this with an explicit "replace every occurrence" rule (`HOREKA_QUEUE_PROBE` change 1); revision 2 has none.
+
+*Fix.* Add under "Sessions": "In every block and wrapper of the scan procedure, replace `horeka_scan_20261104` with this session's folder name. Remote files go under `/hfs2/…/r1/`, never `~/r1_scan_20261104/`. The scan's §3 query script and §4 probe are not run."
+
+**R2-m6 (MINOR) — An unsourced claim.**
+*Evidence.* Line 455: "With Track X's B1 now at 15 candidates". I found no source for "15 candidates" in PLAN, RUNBOOK, STATUS or the Mac and operator runbooks on this branch.
+*Fix.* Cite its source (a STATUS entry or the author's words, with the date) or delete the clause. The conclusion that B.7 on 8 Dec with T1 labels is unlikely does not depend on it.
+
+**R2-n1 (NIT) — The wrapper invocations are not space-safe.** Lines 105 and 110, and the copy-back `rsync`. Use `GIT_SSH_COMMAND="'$S/nodessh-raw'"` and `rsync -e "'$S/nodessh-raw'"`, or assert at session start that `$S` contains no whitespace.
+
+**R2-n2 (NIT) — llama-server does not report a sha.** Line 275, "the server reports the pinned model path and sha". The runner should compute the GGUF's sha256 before launch, compare it with the pin, and then check that the server's reported model path is that file.
+
+**R2-n3 (NIT) — The sealed folder sits inside a git worktree.** Line 120: `<Mac>/results/r1/trackg/hk2_sealed/`. If that path is inside a worktree, add it to `.gitignore` there, or place it outside every worktree, so that a `git add -A` cannot commit it.
+
+**R2-n4 (NIT) — Per-job scratch loss is stated as fact.** Line 58, "/scratch … is lost at job end". The scan showed only a private per-job directory. Write "expected to be lost at job end; HK1 checks it".
+
+### Governance re-check
+
+- Nothing is attributed to the author beyond his quoted words. The 17:12 quotes are context only, and the §8 decision cell is an empty placeholder for his adoption words.
+- Agent additions are marked: *(proposed)* for the times, the budget STOP, the infrastructure-failure rule, the branch, the sealed-folder rule and the job resources; *(open)* or *(interpretation)* for the second proposer, question (c), the 400 GPU-h ceiling and H200.
+- No PLAN row is presented as existing that does not exist. R1-BX-D6 is stated to stand. R1-HOREKA-TMAX is described as a future row.
+- The runbook still authorizes nothing before the §8 row (lines 17–20). Production `gpu-*` submission waits for the author's ruling.
+
+### Round 2 verdict
+
+All of BLOCKING-1 and MAJOR-1 to MAJOR-11 are resolved, and so are the round-1 MINOR and NIT findings, apart from m2's test placement. Revision 2 adds one new MAJOR (R2-M1, the dev-partition self-submission test), six MINOR and four NIT findings.
+
+R2-M1 is a one-paragraph fix: move the test to `cpu`, after the §7 item 1 ruling, and add the two refusals. Once it is applied and R2-m1 to R2-m6 are applied or answered, I expect to accept without another full round; a check of the changed lines will be enough.
+
+Verdict: not accepted

@@ -1,6 +1,6 @@
-# Paper B (route R1) — HoreKa agent runbook: the T1 tier on HoreKa 2 (4 Nov 2026, revision 2)
+# Paper B (route R1) — HoreKa agent runbook: the T1 tier on HoreKa 2 (4 Nov 2026, revision 3)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("写 HoreKa 执行 runbook", 17:12); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_RUNBOOK_REVIEW_20261104.md`, which did not accept revision 1 (1 BLOCKING, 11 MAJOR, 13 MINOR, 6 NIT). The answers to that review are in §9.
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("写 HoreKa 执行 runbook", 17:12); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_RUNBOOK_REVIEW_20261104.md`, which did not accept revision 1 (1 BLOCKING, 11 MAJOR, 13 MINOR, 6 NIT). Revision 3 applies its round 2 (not accepted: 1 MAJOR, 6 MINOR, 4 NIT). The answers to both rounds are in §9.
 
 **Sources.**
 - The scan report `docs/r1/reports/HOREKA_SCAN_20261104.md`, with its raw output under `reports/horeka_scan_20261104/`.
@@ -55,7 +55,7 @@ Report to the author in **Chinese**, short and concrete. Write reports, reviews 
 | `agent` | One compute node, 384 cores, 3 days. QoS `agent` caps a user at **2 CPUs**, which one session uses | **One session per user at a time** (§0.2) |
 | Queue | `--test-only` estimates for `gpu-h100`: 4 GPUs × 24 h exclusive → 12 Nov; **1 GPU × 4 h → also 12 Nov**. A 15-min job in the separate `dev-gpu-h100` partition, estimated at +6 h, started after 29 min | *(hypothesis, tested by the queue probe)* Short 1-GPU jobs also start well before their estimates in `gpu-h100`. HK0 decides |
 | GPU (`hkn0901`) | H100, 95,830 MiB, `sm_90`, driver 615.71.09, CUDA UMD 13.4, MIG off. Xorg holds 17 MiB. `SLURM_JOB_GPUS=3` shows up as `CUDA_VISIBLE_DEVICES=0` | Map GPUs through `CUDA_VISIBLE_DEVICES` and UUIDs, never node indices. The occupancy check ignores Xorg (§3) |
-| Storage | `$HOME` and `$PROJECT=/hfs2/data/project/hk-project-p0027888/ka_ir7683` are on the same GPFS (5.4 PB, 3 % used); no quota could be measured. `/scratch` (= `/tmp`) is per job and private, 3.4 TB on `hkn0901` | Code, venv, GGUFs and results go under `$PROJECT`. Per-run working copies go under the job's `/scratch`, which is lost at job end |
+| Storage | `$HOME` and `$PROJECT=/hfs2/data/project/hk-project-p0027888/ka_ir7683` are on the same GPFS (5.4 PB, 3 % used); no quota could be measured. `/scratch` (= `/tmp`) is per job and private, 3.4 TB on `hkn0901` | Code, venv, GGUFs and results go under `$PROJECT`. Per-run working copies go under the job's `/scratch`. Whether it is cleaned at job end was not measured; nothing relies on it after the job |
 | Network | The front pages of `huggingface.co`, `pypi.org` and `github.com` answer from the `agent` node and from `hkn0901`, with no proxy | HK1 tests the exact download URLs, including redirects |
 | Modules | `CUDA/12.6.0 … 13.3.0`, `GCC/12.3.0 … 16.2.0`, `CMake/4.2.1-GCCcore-15.2.0`, `Python/3.11.3 … 3.14.2`. System `python3` is 3.9.21. Present: git, git-lfs, apptainer, rsync. Missing: `uv`, `conda` | The modules are pinned in HK1 and recorded in every job |
 | Downtime | **23 Nov – 4 Dec 2026**. No time of day is published, nor any policy for pending jobs. Weekly reboot window: Thursdays 07:00–09:00 | §0.5 |
@@ -67,7 +67,7 @@ Report to the author in **Chinese**, short and concrete. Write reports, reviews 
 
 **Sessions.**
 - Open and close each session by `prompts/HOREKA_SCAN_PROMPT_20261104.md` revision 5.6, §1 steps 0–5: the wrappers, the author's open master connection, the session script, the forward, the two gates, and the ordered teardown.
-- Use a new folder for each session: `…/_snapshots/hk2_session_<UTC date-time>/`.
+- Use a new folder for each session: `…/_snapshots/hk2_session_<UTC date-time>/`. In every command of the scan procedure, the two wrapper scripts included, replace `horeka_scan_20261104` with that folder name.
 - Gate 2 passes when both of these hold, as in the scan: `SLURM_JOB_ID` equals the session job id, and `squeue -u $USER -p agent -t R` shows that job running on the host. (`scontrol show node` is refused on this account.)
 - On the login node, exactly two things run for you: the session script, and the forward on the author's master connection.
 - **One session per user.** The `agent` QoS allows 2 CPUs per user, and one session takes both.
@@ -98,11 +98,11 @@ EOF
 
 - Use it only with the host `vscode-hk2`.
 - Remote paths are always absolute: `/hfs2/data/project/hk-project-p0027888/ka_ir7683/r1/…`. Git and rsync quote remote paths, so `$PROJECT` would not be expanded.
-- Give rsync `--timeout=300`. Record `rsync --version` and `git --version` from the Mac in the HK1 report; macOS may ship openrsync.
+- Give rsync `--timeout=300`. The session path must not contain spaces: `GIT_SSH_COMMAND` is quoted as above, but `rsync -e` splits at spaces. Record `rsync --version` and `git --version` from the Mac in the HK1 report; macOS may ship openrsync.
 
 **Code transfer.** There are no GitHub credentials on HoreKa, as on the portal (R1-EXAM-TRANSFER).
 - Create the bare repository first: `"$S/nodessh" 'git init --bare /hfs2/data/project/hk-project-p0027888/ka_ir7683/r1/git/<repo>.git'`.
-- Push from the Mac: `GIT_SSH_COMMAND="$S/nodessh-raw" git push vscode-hk2:/hfs2/…/r1/git/<repo>.git <commit>:refs/heads/<branch>`.
+- Push from the Mac: `GIT_SSH_COMMAND="'$S/nodessh-raw'" git push vscode-hk2:/hfs2/…/r1/git/<repo>.git <commit>:refs/heads/<branch>`.
 - Check out **detached** at the pinned commits into `/hfs2/…/r1/work/<repo>@<short sha>/`.
 
 **Downloads.**
@@ -117,9 +117,9 @@ EOF
 
 **Copy-back.**
 - Normal copy-back: `engineering/` only, to `<Mac worktree>/results/r1/trackg/hk2/`. Commit JSON, manifests and `.jsonl` up to 20 MB; gzip larger files and list them in `SHA256SUMS`.
-- Sealed copy: `evidence/` to `<Mac>/results/r1/trackg/hk2_sealed/`.
+- Sealed copy: `evidence/` to `~/r1_sealed/hk2/` on the Mac, outside every git worktree.
   - *(proposed)* That folder is never committed to any branch. Only its `SHA256SUMS` and file counts are committed.
-  - The Mac agent makes every analysis reader refuse the `hk2_sealed/` path, in addition to the D8 PLAN check.
+  - The Mac agent makes every analysis reader refuse the `r1_sealed/` path, in addition to the D8 PLAN check.
   - After R1-BX-D8-CONFIRM, the author decides how the evidence enters analysis.
 
 **The author does these things for you:**
@@ -135,8 +135,8 @@ EOF
 - The tunnel route answers only draft §4 question (a): where the agent's commands run.
 - Question (c) is still open: does an LLM proposer loop inside a GPU batch job count as an "AI agent workload"?
 - **Until the author rules on this (§7 item 1):**
-  - You submit only jobs in `dev-cpu`, `dev-gpu-h100` and `cpu`, and only for HK1 and HK2.
-  - Every `gpu-h100`/`gpu-h200` job is prepared by you with `hk2_submit.py --dry-run`. The author submits it himself, in a session he opens for that.
+  - You submit only jobs in `dev-cpu`, `dev-gpu-h100` and `cpu`, in any phase.
+  - Every `gpu-h100`/`gpu-h200` job is prepared by you: a manifest and its `hk2_submit.py --dry-run` output, committed. **The author submits it himself**, from his own terminal (a person may use the login node), by running `hk2_submit.py --submit --author <manifest>` in the pinned checkout under `$PROJECT`. All the tool's guards apply. You never pass `--author`.
   - No job submits its own continuation.
 
 **Never touch what you did not start.**
@@ -251,20 +251,26 @@ If (c) fails, σ̂ comes from floor seeds spread over at least 3 jobs on differe
 **Units.**
 - The unit is one run, one campaign root, or one audit pair.
 - A unit's records are written only when the unit is complete.
-- Each job sets `#SBATCH --signal=B:USR1@600`. On the signal, the runner moves the open unit to `results/_interrupted/<jobid>/` and exits cleanly.
+- Each job sets `#SBATCH --signal=B:USR1@600`. That signal reaches only the batch shell, so the job script starts the runner in the background and forwards the signal:
+  ```bash
+  runner … & pid=$!
+  trap 'kill -USR1 "$pid"' USR1
+  wait "$pid"; wait "$pid"
+  ```
+  On `USR1`, the runner moves the open unit to `results/_interrupted/<jobid>/` and exits cleanly. HK1 tests this on a real job.
 - The next job re-runs that unit whole, from a fresh working copy. No `*_pending.json` guard carries over.
 - A unit cut twice is a STOP.
 - HK5 must show that a campaign root fits in ≤ 0.6 × T_max.
 
-**Continuations.** A job may submit its own continuation only after the author's ruling in §7 item 1, and only through `hk2_submit.py` with all its guards: budget, F, C, 90 jobs. `sbatch` is called with a scrubbed environment (no `SLURM_*` or `SBATCH_*` variables). HK1 tests one real self-submission first.
+**Continuations.** A job may submit its own continuation only after the author's ruling in §7 item 1, never from a dev partition (NHR@KIT: dev partitions are not for chain jobs), and only through `hk2_submit.py` with all its guards: budget, F, C, 90 jobs. `sbatch` is called with a scrubbed environment (no `SLURM_*` or `SBATCH_*` variables). HK1 tests one real self-submission first.
 
 | Job | Partition and resources *(proposed)* | What it runs |
 |---|---|---|
-| **J0 setup** | `dev-gpu-h100`, 1 GPU, ≤ 1 h, in several steps | The venv under `$PROJECT` from pinned wheels. llama.cpp at the pinned commit, built **on the GPU compute node** with `-DGGML_NATIVE=OFF -DCMAKE_CUDA_ARCHITECTURES=90` and `CUDA/12.9.1` + `GCC/14.3.0` *(proposed; the cluster's own pairing for CUDA 12.9.1)*. Downloads from exact, tested URLs. sha256 against the staging manifest. Version records |
+| **J0 setup** | `cpu`, 16 cores, ≤ 2 h; then `dev-gpu-h100`, 1 GPU, ≤ 30 min, only for the GPU check | On `cpu`: the venv under `$PROJECT` from pinned wheels; downloads; hashing; llama.cpp at the pinned commit, built with `-DGGML_NATIVE=OFF -DCMAKE_CUDA_ARCHITECTURES=90` and `CUDA/12.9.1` + `GCC/14.3.0` *(proposed; the cluster's own pairing for CUDA 12.9.1)*. With `GGML_NATIVE=OFF` the build needs no GPU. Downloads from exact, tested URLs. sha256 against the staging manifest. Version records. On `dev-gpu-h100`: the GPU check only |
 | **J1 smoke** | `dev-gpu-h100`, 1 GPU, ≤ 1 h, one at a time | One fixed-step run per ported task node with a stub manager; the frozen-path refusal; a llama-server load test of a model the author names |
 | **J1b proposer qualification** | 1 GPU, ≤ T_max | O5-style checks: full offload, 50 prompts × 3 at `cache_prompt: false`, latency, a projection. **Within-server identity twice: on an idle GPU, and with k task runs on the same GPU.** The pass criterion is committed by the author before it runs |
 | **J2 census** | 1 GPU, ≤ T_max | In the HK3 order: determinism, concurrency sweep, co-location arm, then floors at the fixed placement |
-| **J3 campaigns** (HK4b liveness, HK5 pilot, HK6 sweep) | 1 GPU, ≤ T_max | llama-server for the main proposer (thinking off, `cache_prompt: false`) and the campaign's task runs. They share the GPU **only if** the HK3 co-location arm and J1b's loaded identity test pass; otherwise J3 uses 2 GPUs, one for each *(proposed)* |
+| **J3 campaigns** (HK4b liveness, HK5 pilot, HK6 sweep) | 1 GPU, ≤ T_max | llama-server for the main proposer (thinking off, `cache_prompt: false`) and the campaign's task runs. They share the GPU **only if** the HK3 co-location arm and J1b's loaded identity test pass; otherwise J3 uses 2 GPUs, one for each *(proposed)*. That layout needs the author's ruling at HK3 step 6, an exception to the probed-shape guard set by a manifest flag, and doubles J3's GPU-h in the projection |
 | **J4 audits** | 1 GPU, ≤ T_max | Candidate–incumbent pairs on the K seeds, k runs per GPU, no llama-server. A pair is written only when complete |
 | **J5 merge** | `cpu`, ≤ 1 h, `--mem` explicit (the `cpu` default is 1,945 MB per CPU) | Merges shards; refuses duplicates, missing pairs and wrong seeds (§0.3); builds the T1 label table |
 
@@ -272,7 +278,7 @@ If (c) fails, σ̂ comes from floor seeds spread over at least 3 jobs on differe
 
 **The llama-server in J1b and J3, on a shared compute node.**
 - It listens on 127.0.0.1 with `--api-key` set to a random per-job token generated inside the job. The token is not a credential to any outside service.
-- Before the first request, the runner checks two things: the listening socket belongs to its own llama-server PID (`ss -ltnp`), and the server reports the pinned model path and sha.
+- Before the first request, the runner checks two things: the listening socket belongs to its own llama-server PID (`ss -ltnp`), and the server's reported model path (`/props`) is the pinned GGUF, whose sha256 the runner computes itself before starting the server (llama-server does not report a sha).
 - If the derived port is taken, the runner picks the next free port and records it.
 - Any mismatch is a STOP.
 
@@ -306,8 +312,9 @@ Durations are estimates.
 2. Check `date +%Z`.
 3. Create the bare repositories and push (§0.2).
 4. Run J0. Test the exact download URLs with redirects first.
-5. Run one real self-submission test: a `dev-cpu` job submits one `dev-cpu` job with a scrubbed environment. QoS `dev` allows only one running job, so the child waits until its parent ends.
-6. Record the modules, the versions and `rsync`/`git` on the Mac.
+5. Test the `USR1` forwarding on a real `dev-cpu` job (`--time=00:15:00`): the runner stand-in must archive its open unit.
+6. **No self-submission test here.** It runs once, in `cpu` (a `cpu` job submits one `cpu` job with a scrubbed environment), only after the §7 item 1 ruling allows continuations.
+7. Record the modules, the versions and `rsync`/`git` on the Mac.
 
 **Done when** a fresh reviewer has accepted `HK2_HK1_<date>.md`.
 
@@ -410,13 +417,13 @@ These revise draft §5. The Mac runbook's M10 paragraph points here once the §8
 1. **`r1/scripts/hk2/hk2_submit.py`.** It uses the standard library only and runs under the system Python 3.9 (tested under 3.9). It generates job scripts from a manifest and records the manifest sha256 in each. It calls `sbatch` with a scrubbed environment, and records the `--test-only` output at submission. It refuses:
    - a missing partition, time, account or `--mem`;
    - more than 90 jobs outstanding;
-   - a second job in QoS `dev` while one is outstanding;
+   - a second job in QoS `dev` while one is outstanding, and any submission from inside a job running in a dev partition;
    - any production job on a dev partition;
    - a request above the probed shape;
    - any submission after F;
    - now + `--time` > C;
    - the budget guard of §0.4;
-   - until the §7 item 1 ruling: any `gpu-*` submission not run by the author.
+   - until the §7 item 1 ruling: any `gpu-*` submission without `--author`, and any submission from inside a job. You never pass `--author`.
 
    It sets `--deadline=<C>` and `--signal=B:USR1@600`.
 2. **`hk2_status.py`** (standard library only, Python 3.9). It runs `squeue -u $USER` and `sacct -u $USER` only, at most once every 60 s. It treats the `DEADLINE` state as expected, and it fills the ledger.
@@ -427,7 +434,7 @@ These revise draft §5. The Mac runbook's M10 paragraph points here once the §8
    - The Ada-only Paper A check is skipped. Commits stay local.
 4. **The GPU slot allocator.** It places k runs per GPU on the job's GPUs, with the co-located or 2-GPU J3 layout as HK3 decides. The CPU-node path stays byte-identical (tested).
 5. **Resumable units.** Unit-complete writes, the `USR1` handler, the `_interrupted/` archive, and the "cut twice" STOP. `audit.py --shard i/S` and `audit.py merge` refuse duplicates, missing pairs and wrong seeds.
-6. **The evidence/engineering split** (§0.2), and readers that refuse `hk2_sealed/`.
+6. **The evidence/engineering split** (§0.2), and readers that refuse `r1_sealed/`.
 7. **Templates J0–J5.** Tests run against fake Slurm variables (including `SLURM_JOB_GPUS=3` with `CUDA_VISIBLE_DEVICES=0`), a fake Xorg process, a fake llama-server, a taken port, and a `USR1` signal.
 
 ## 4. Schedule (estimates) and risks
@@ -435,8 +442,8 @@ These revise draft §5. The Mac runbook's M10 paragraph points here once the §8
 | When | What | Gates |
 |---|---|---|
 | 4–6 Nov | Queue probe; HK0; the §8 row; M10 step 0 and §3 code | The author's rows |
-| 6–9 Nov | HK1 | §3 reviewed; the §7 item 1 ruling |
-| 9–16 Nov | HK2 ports and smoke; HK3 census, task node by task node | Each port reviewed |
+| 6–9 Nov | HK1 | §3 reviewed |
+| 9–16 Nov | HK2 ports and smoke; HK3 census, task node by task node | Each port reviewed; `gpu-*` jobs submitted by the author until the §7 item 1 ruling |
 | about 13–19 Nov | HK4, HK4b and HK5, **if X.7 has named the pick by then** | X.7, G.2 pinned, G.3 |
 | 20 Nov | F 12:00, C 20:00 | — |
 | 21 Nov | D 18:00: copy-back and sealed copy done | — |
@@ -452,7 +459,7 @@ These revise draft §5. The Mac runbook's M10 paragraph points here once the §8
 - The probe gives one sample per shape.
 
 **For PLAN item H1 (B.7 ≈ 8 Dec, R1-BX-D14).**
-- The T1 labels need X.7, then HK4–HK5, then HK6–HK7. With Track X's B1 now at 15 candidates, most of HK6/HK7 will fall after 5 Dec, and may wait for the queue there.
+- The T1 labels need X.7, then HK4–HK5, then HK6–HK7. If Stage A's acceptance (operator O1, under review on 4 Nov) adds t7j10's 7 passing candidates, B1 has 15 candidates, and most of HK6/HK7 will fall after 5 Dec, and may wait for the queue there.
 - B.7 on 8 Dec with T1 labels is therefore unlikely.
 - The author decides once HK3 and HK5 give numbers.
 
@@ -549,4 +556,15 @@ The NHR@KIT question (c) stays open (§0.3, §7 item 1).
 | m11 | §0.4 marked as an interpretation |
 | m12 | §3 item 3 occupancy check |
 | m13 | §0.2 downloads |
+| Round 2: R2-M1 (dev self-submission test) | HK1 steps 5–6: no dev self-submission test; one `cpu` test after the §7 item 1 ruling; refusals in §1 continuations and §3 item 1 |
+| R2-m1 (how the author submits; scope) | §0.3: `--submit --author` from his own terminal; agent scope dev/cpu in any phase; §3 item 1; §4 gates moved to HK3 |
+| R2-m2 (2-GPU J3 fallback) | J3 row: author ruling, manifest flag, doubled GPU-h |
+| R2-m3 (J0 on the dev node) | J0 on `cpu`; dev only for the GPU check |
+| R2-m4 (`--signal=B:`) | §1 units: background-and-wait trap; HK1 step 5 test |
+| R2-m5 (session folder in the wrappers) | §0.2 sessions |
+| R2-m6 (15 candidates) | §4: conditional on O1 |
+| R2-n1 (spaces) | §0.2: quoted `GIT_SSH_COMMAND`; no spaces in the session path |
+| R2-n2 (sha) | §1: runner hashes the GGUF; `/props` path |
+| R2-n3 (sealed folder in a worktree) | `~/r1_sealed/hk2/`, outside every worktree |
+| R2-n4 (`/scratch` at job end) | §0.1 storage row |
 | n1–n6 | J5 `--mem`; §0.1 GrpJobs and MaxSubmit, QoS `dev` shared; `sinfo_t_idle` not used; `--exclusive` from `--test-only` only; the deadline format and `date +%Z`; M1 under HK1's needs |
