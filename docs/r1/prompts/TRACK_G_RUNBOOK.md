@@ -38,14 +38,14 @@ In order of preference:
    - record the `.sif` sha256 in provenance, like a GGUF.
 4. Never ask for `docker` group membership. If deepthought2 is ever needed, ask for rootless Podman (subuid/subgid entries for `dwong`) or Apptainer.
 
-*Open:* the author's 4 Nov check found Apptainer and Singularity, no Podman and no subuid/subgid entries, on a host still to be named. The author confirms the host with `hostname`; if it was deepthought, the check is repeated on deepthought2. deepthought2 is not a run host unless a PLAN row adds it.
+*Resolved 4 Nov (R1-APPTAINER-HOST):* the check (Apptainer and Singularity present; no Podman; no subuid/subgid entries) was on **deepthought2**; no repeat is needed. On deepthought the author is in the `docker` group. deepthought2 is not a run host unless a PLAN row adds it.
 
 ## 4. Steps
 
 ### G.0 — Availability and raw cost (operator; Ada first; ENGINEERING_ONLY)
 
 Before G.0 starts on Ada, the O0 census of Ada checks Paper A occupancy (no Paper B GPU launch while a Paper A campaign waits for a card) and the co-tenancy margin. Per candidate task:
-1. **Licence and availability:** the repository, its licence, and the licence of each dataset. In particular, check whether the 1GC-7RC repository (arXiv 2605.17046) is public now; R1-TRACKG-SCOPE found it was not. If it is still not public, **STOP** for the author (rebuild from the paper and public data, disclosed; or MLAgentBench as the third suite).
+1. **Licence and availability:** the repository, its licence, and the licence of each dataset. In particular, check whether the 1GC-7RC repository (arXiv 2605.17046) is public now; R1-TRACKG-SCOPE found it was not. If it is still not public, MLAgentBench becomes the third suite (R1-1GC-FALLBACK); report it.
 2. **Raw cost:** the suite's own baseline script at a candidate step count, on each GPU model available: RTX 6000 Ada (first), RTX 4090, TITAN X. Record wall time, peak VRAM, and CPU and RAM use. No code beyond the suite's own script and a step-count argument; where a script has no such argument (autoresearch has a wall-clock budget), its raw cost is measured after G.1, at the fixed-step wrapper.
 
 ### G.1 — Porting (operator ports; Mac shared pieces first)
@@ -103,8 +103,8 @@ About 40 GPU-h per T1 node at 2-minute runs and K = 6: noise floor (5 edits × 1
 
 ## 6. Open questions for the author
 
-1. Is the 1GC-7RC repository public now? If not, rebuild its tasks or switch to MLAgentBench as the third suite.
-2. Which GPU model runs the T1 label table, and where is the proposer served?
-3. Which host was the Apptainer check run on?
-4. Memory modes and the campaign count per T1 node (proposed: as T0, about 12 campaigns).
+1. ~~Is the 1GC-7RC repository public now?~~ Ruled 4 Nov (R1-1GC-FALLBACK): checked in G.0; if not public, MLAgentBench is the third suite.
+2. ~~Which GPU model runs the T1 label table, and where is the proposer served?~~ Ada for T1 label runs; the proposer on deepthought (two TITANs) if O5 passes, else a 4090 (R1-BX-PROPOSED-CONFIRM).
+3. ~~Which host was the Apptainer check run on?~~ deepthought2 (R1-APPTAINER-HOST).
+4. ~~Memory modes and the campaign count per T1 node~~ both modes, about 12 campaigns (R1-BX-PROPOSED-CONFIRM).
 5. Whether the main proposer's diff competence suffices (first measured in G.0 step 6 and G.4).

@@ -1,6 +1,6 @@
-# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026, revision 3)
+# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026, revision 3.1)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 2 addressed an independent review (not accepted: 2 BLOCKING, 6 MAJOR, 9 MINOR). Revision 3 (4 Nov) applies the author's full adoption of `proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS): new tasks M10–M13, and changes to M1, M6–M9. See §4.**
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 2 addressed an independent review (not accepted: 2 BLOCKING, 6 MAJOR, 9 MINOR). Revision 3 (4 Nov) applies the author's full adoption of `proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS): new tasks M10–M13, and changes to M1, M6–M9. Revision 3.1 (4 Nov, 11:29) applies the author's rulings (PLAN §10, "4 November 2026 (11:29)"), reduces the packet to the items still open, and adds M14–M15. See §4.**
 
 One Claude Code agent on the author's Mac runs this runbook. It covers every part of the current plan that needs no GPU, no LLM inference and no remote host:
 - integrating the plan documents;
@@ -144,6 +144,8 @@ Run it, and commit both the script and its output.
 - **Sweep 1:** `ccb4712` / `6adf385`.
 - **Track X:** the coordinator's recorded Stage A pins.
 - **Track P:** `trackp-20261026` and its recorded pins.
+
+**Ruled on 4 Nov (11:29).** The author ruled on items (a), (d) (always-thinking models skip B1), (d′), (e), (f), (g) and (j); see PLAN §10 "4 November 2026 (11:29)" (R1-HANDOVER-04NOV … R1-BX-PROPOSED-CONFIRM). For those items the packet now only drafts the follow-up rows and notes: R1-EXAM-RULE-X5V2 with the sha (M2), R1-BX-D8-CONFIRM with the gate-code sha (M11), the replay and B.2 authorization notes (M3), and the Track S S0.1 re-run note if the operator needs one. **Still open, and still drafted with options:** (a)'s acknowledgement of the `codex/b2-repair-20261031` files outside its scope, (b) R1-HOSTS-04NOV, (c)'s B.1b difference list, (h), (i) after G.4, and the exact API model (D6).
 
 **Step 5: write the decision packet** `docs/r1/proposals/AUTHOR_DECISIONS_20261104.md`. Each section gives the options, a recommendation and a paste-ready draft PLAN row:
 
@@ -416,14 +418,14 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 **Governs:** R1-BX-D3 (conditional).
 
 **Steps.**
-1. Draft the check protocol from R1-BX-D3's proposed text (packet (j)): **label seeds 7001–7005 only** (every 3-subset against all five), with criteria (i) and (ii). A gate-stability criterion using 7006–7010 runs only if the author grants an explicit exception, and only after R1-BX-D8-CONFIRM. The author commits the protocol before you run it.
+1. The protocol is fixed by R1-BX-PROPOSED-CONFIRM: **label seeds 7001–7005 only** (every 3-subset against all five), criteria (i) and (ii); no evaluation-seed exception; no gate-stability criterion. Write it as a script with its parameters, have it reviewed, then run it.
 2. Run it on the Mac CPU on the label table the operator copied back (verify its sha first).
 3. Report `docs/r1/reports/MAC_K_SUBSAMPLE_CHECK_<date>.md`, with an independent review.
 4. **If it fails:** K stays 10. STOP and tell the author at once, with the T1 cost and the dates recomputed at K = 10.
 
 **Done when:** the report and its review exist and the author has the verdict. Only an author row puts K = 6 into force.
 
-### M13 — Serialisation order and the E6 probe A6 (only if packet (a) names you editor of `r1/c3/train/`)
+### M13 — Serialisation order and the E6 probe A6 (you are the editor of `r1/c3/train/` by R1-HANDOVER-04NOV)
 
 **Governs:** R1-BX-REVISIONS (d); TRACK_P §2.2 ("Order of the serialised parts") and §5.6 (probe A6).
 
@@ -432,7 +434,29 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 2. Add a template version with the 4 Nov order (history → proposal → `<decide>`). Keep the old version loadable, so that P.3a records stay reproducible.
 3. Add probe A6 (history-first vs proposal-first) to the E6 probe set, with tests on a tiny random-weight model on the CPU.
 
-If you are not the editor, write the same as a spec for the author.
+P.3a is re-run under the new order only if probe A6 shows mean |Δ RPS| > 0.01 (R1-BX-PROPOSED-CONFIRM).
+
+### M14 — B.3 offline arms, A4 calibration and the C3 tables (after labels and R1-BX-D8-CONFIRM)
+
+**Governs:** RUNBOOK B.3, B.4 (calibration), B.7; C3_DESIGN §5–§6; R1-BX-D7, D8, D9.
+
+**Steps.**
+1. Verify the sha and counts of every label table the operator copies back (O4, O6, O8 G.5). Never rebuild a table.
+2. **B.3:** A0–A3 offline (rules, constant prior, LightGBM, NGBoost) and the practitioner baselines in their offline form, through the M11 code. CPU only.
+3. **A4 calibration (B.4):** fit the isotonic map on dev from the operator's raw A4 answers (O9). Score on test with `y_eval` only.
+4. **Tables:** per-node and pooled one-step values; the cross-proposer table (R1-MAIN-PROPOSER (e)); the R1-BX-D8 gate statistic on T0 + T1 with tier as a stratum; the screening funnel (R1-BX-D12).
+5. **The B.7 gate report** for the author, ≈ 8 Dec. If only some T1 nodes have labels by then, read the gate on T0 plus the labelled T1 nodes and state the node count (R1-BX-PROPOSED-CONFIRM).
+
+The TabPFN rows and the A5/A6 rows come from TASL-7 (O7); you only tabulate them. **Duration (estimate):** 1–2 days once the tables arrive. **Done when:** the reviewer has accepted the gate report.
+
+### M15 — Phase C and D desktop parts (C.4 analysis, D.1, D.2, D.4)
+
+**Governs:** RUNBOOK C.4, D.1, D.2, D.4; C3_DESIGN §7; R1-BX-D1, D6, D7, D9, D12.
+
+1. **C.4 DI test** (offline): on the existing E1b branch pairs, then on the operator's debiased-memory A/B (O10). Estimate: 1–2 days.
+2. **D.1 transfer tables:** leave-one-suite-out (primary; T0 is never the held-out suite) and LONO within T0 (secondary), for A3, A5, A6. Estimate: 1 day after the A5/A6 checkpoints.
+3. **D.2 pre-declaration draft:** contrasts H1–H5; the three-way comparison with A4 as self-control (R-B only as an optional ablation); the practitioner baselines; the API proposer's rows; the non-qualifying-node appendix; instances, sample sizes, matched W and LLM-call cap; the analysis script and its hash. The author commits it. Estimate: 1–2 days, about mid-December, before the D.3 note.
+4. **D.4 analysis** after O11: the contrasts exactly as pre-declared, C1 error rates per arm, the T4 bound vs the realised gain. Estimate: 2–3 days, early January, feeding the 10 Jan manuscript.
 
 ### M9 — Not now
 
@@ -446,6 +470,8 @@ If you are not the editor, write the same as a spec for the author.
 - Keep the decision packet current, and show it when the author asks "what's pending".
 
 ## 4. Review record
+
+**Revision 3 → 3.1** (4 Nov, 11:29). The author's rulings reduce the packet (M1, ruled-items note), fix M12's protocol and make you editor of `r1/c3/train/` (M13). New tasks M14 (B.3, A4 calibration, gate report) and M15 (C.4, D.1, D.2, D.4) fill the gaps found in the 11:21 work table.
 
 **Revision 2.1 → 3** (4 Nov). Applies the author's full adoption of `proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` (PLAN §10 R1-BX-*): §1 state and branch row; the order of tasks; packet (a) adds the `r1/c3/train/` editor, (b) adds Ada for the Track G census, (c) is reduced to the DTQ criterion, (i) follows R1-BX-D14, and (j) collects the rows' proposed and open items; M6 adds the Track S GPU-node design; M7 and M8 take the 4 Nov wording; new tasks M10 (Track G code), M11 (baselines, gate, TabPFN view), M12 (K check), M13 (serialisation order); M9 no longer defers Track G. Reviewed with the operator runbook, PLAN and RUNBOOK in one independent review (`reviews/BENCH_EXPANSION_REVISION_REVIEW_20261104.md`).
 
