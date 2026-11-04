@@ -793,6 +793,7 @@ At 13:45 the author wrote: "T1 整层（census、噪声底、proposer、sweep、
 - *(proposed)* `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` (revision 2, independently accepted as a draft) becomes the design basis. Its job design, its §5 code, the proposer's H100 qualification (J1b, with a pass criterion the author commits) and the copy-out cutoff before the 23 Nov – 4 Dec downtime are adopted only by a later row, after the read-only scan.
 - *(open)* NHR@KIT prohibits "interactive AI agent usage on login nodes". The author asked for a scan prompt, `prompts/HOREKA_SCAN_PROMPT_20261104.md`. It asks him first to choose between option A (the agent runs about 12 non-interactive SSH calls and one 15-minute dev job) and option B (he runs the two commands himself). Whether agents may submit and monitor jobs routinely stays open until NHR@KIT answers the draft's §4 questions. Until then the author submits production jobs.
 - *(open)* The fallback to Ada moves the whole T1 label table; one GPU model per table (R1-BX-D5).
+- *(open)* At 14:22 the author chose to scan **legacy HoreKa only** (`ir7683@horeka.scc.kit.edu`) and not HoreKa 2. Per his cheat sheet, legacy HoreKa now has A100 (Green) and CPU nodes; it becomes login-only in December and is decommissioned at the end of December. Whether T1 stays on H100 (HoreKa 2) or uses legacy A100 nodes is decided after the scan.
 
 ## 11. Relation to Paper A
 
