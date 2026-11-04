@@ -49,6 +49,37 @@ lease `start.json` `a6f54d3d…`, `lease_inheritance.json` `2e1a90d9…`,
 - STOP-8 bounded GPU-quiescence wait: the 16k retry proceeded after the 32k teardown without a
   spurious "GPU not available" STOP.
 
+## International review: Stage A receiving verdict
+
+Independent receiving review (`docs/r1/reviews/TRACKX_STAGEA_RECEIVING_T7H8_20261104.md`,
+SHA-256 `141c1dd3…`): **ACCEPT (with conditions)**. The reviewer independently verified the
+release (43/43 records covered, 0 uncovered/extra, 0 digest mismatches, 0 survivors; three
+failed-start probes carry the SAME-OFD proof), the batch/table hashes, the manifest/M1
+evidence, the candidate outcomes and the STOP-6/7/8 validations, and classified **`t7h8` as
+the Stage A evidence set** (t7c3/t7d4/t7e5/t7g7 were STOPped; t7f6's batch is COMPLETE but
+its completion validation STOPped, so it is engineering evidence only with no validated
+release; none reused).
+
+Conditions: (a) produce the template failure map + 5/50-prompt render-diff analysis (targeted
+byte-equal repairs and any build-pin remain separate author decisions; no template/build
+change is authorized by the review); (b) B1/B2 remain STOP (also P.3a/B.2) and B1 needs the
+author's separate authorization, the eligible-candidate set and the template-policy decision;
+(c) retain the t7h8 evidence and STOP1–8 reports, no STOPped-batch reuse/relabel; (d) record
+the environment/M3 with this report; (e) keep the completion report on the coordinator docs
+branch and the template policy in PLAN.
+
+## Environment / M3
+
+- Runner argv (from `lease/start.json`): `/home/dowling/exam-x/work/venv/bin/python
+  /home/dowling/exam-x/work/agent_paper_B/r1/scripts/exam_runner.py stage-a --config
+  …/r1/scripts/configs/exam_portal.json --out …/r1_stagea_20261103_t7h8`.
+- Batch `template_reference_versions`: transformers `5.20.2`, jinja2 `3.1.6`, tokenizers
+  `0.23.3` (the versions used for the pinned-template render checks).
+- Manifest pins (M1 checkpoint): binary `b70f4882…`, prompts `70872a77…`, code-file hashes
+  incl. v15 `exam_runner eeec5e9a…` and v14b `llama_server_instance b697fc44…`.
+- HF cache on TASL-7 `~/exam-x/work/hf` (model/tokenizer artifacts for the pinned revisions);
+  venv `/home/dowling/exam-x/work/venv` (Python 3.13.4); 22/22 GGUF verified.
+
 ## Next (per the author's decisions)
 
 1. Independent **Stage A receiving review** (request sent with the evidence above).
