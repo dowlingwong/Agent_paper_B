@@ -113,7 +113,9 @@ def load_config(path, *, allow_placeholders=False):
     if cfg['temperature']!=.2 or cfg['proposal_schema']!='manager_proposal/v1': raise ValueError('exam sampling/schema mismatch')
     check_exam_seeds(cfg['instance_seeds'],cfg['audit_seeds'])
     if cfg['minimum_free_bytes']!=100_000_000_000: raise ValueError('author disk floor is 100 GB')
-    later={'b2_instances_per_node','b1_analysis','b1_analysis_sha256','stage_a_table','stage_a_table_sha256','anchor_duplicate_reference','llm_call_cap','nodes','prompts','prompts_sha256','d22_pick'}
+    later={'b2_instances_per_node','b1_analysis','b1_analysis_sha256','stage_a_table','stage_a_table_sha256','anchor_duplicate_reference','llm_call_cap','nodes','prompts','prompts_sha256','d22_pick',
+           # x5_rule/v2 B1/B2: the operator-accepted A1 amendment table (t7j10) and its acceptance, bound by sha (R1-TRACKX-HANDOVER-RULING)
+           'stage_a_amendment_table','stage_a_amendment_table_sha256','stage_a_amendment_acceptance','stage_a_amendment_acceptance_sha256'}
     common={k:v for k,v in cfg.items() if k not in later}
     if placeholders(common) and not allow_placeholders: raise ValueError(f'unresolved common placeholders: {placeholders(common)}')
     return cfg
@@ -176,6 +178,9 @@ def author_gate(cfg, phase, rule_sha):
     if not any(rule_sha in line and 'R1-EXAM-RULE' in line for line in plan.splitlines()):
         raise RuntimeError('STOP: accepted frozen rule sha256 absent from author PLAN row')
     if data.get('nodes')!=cfg['nodes'] or data.get('stage_a_table_sha256')!=cfg['stage_a_table_sha256']: raise RuntimeError('STOP: authorization does not bind nodes and accepted Stage A table')
+    if 'stage_a_amendment_table_sha256' in cfg and (data.get('stage_a_amendment_table_sha256')!=cfg['stage_a_amendment_table_sha256'] or
+                                                    data.get('stage_a_amendment_acceptance_sha256')!=cfg['stage_a_amendment_acceptance_sha256']):
+        raise RuntimeError('STOP: authorization does not bind the accepted A1 amendment table')
     if phase=='b2' and data.get('b1_analysis_sha256')!=cfg['b1_analysis_sha256']: raise RuntimeError('STOP: authorization does not bind B1 analysis')
     if not isinstance(cfg['llm_call_cap'],int) or isinstance(cfg['llm_call_cap'],bool) or cfg['llm_call_cap']<2: raise RuntimeError('STOP: positive paired LLM-call cap required')
     if phase=='b1' and (len(cfg['nodes'])!=3 or set(cfg['nodes']) not in ({'digits_mlp','openml_credit_approval','openml_ionosphere'},{'tabular_mlp','openml_credit_approval','openml_ionosphere'})): raise RuntimeError('STOP: B1 requires three protocol nodes')

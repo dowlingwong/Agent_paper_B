@@ -14,6 +14,7 @@ from r1.exam.campaign import write_json
 from r1.exam.stage_a import prefill_metadata
 from r1.exam.guards import artifact_label, digest_file, paired_instance_bootstrap
 from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders
+from r1.exam.analyze import is_v2, thinking_off_capable
 from r1.scripts import llama_server_instance as lsi
 
 
@@ -222,6 +223,59 @@ def anchor_gate(manifests, cfg):
             'DRYRUN_gate_override':bool(cfg.get('dryrun'))}
 
 
+# R1-EXAM-B1-HARNESS-PIN (author, 4 Nov): Track X B1/B2 run on harness cacheprompt-20261031 @ a3fedbb,
+# which sends explicit cache_prompt (default false) on every llama-server request (R1-EXAM-CACHE-REV).
+B1_HARNESS_PIN='a3fedbbd44309b3fdf99d853ad841b9ec2c299e2'
+STAGE_A_AMENDMENT_KEYS=('stage_a_amendment_table','stage_a_amendment_table_sha256',
+                        'stage_a_amendment_acceptance','stage_a_amendment_acceptance_sha256')
+
+
+def stage_a_pass_set(cfg, registry_candidates, *, v2):
+    """The Stage A pass set B1/B2 read: candidate id -> accepted Stage A row.
+
+    v1: the rows of the sha-bound ``stage_a_table`` with ``passed`` (unchanged).
+    v2 (R1-TRACKX-HANDOVER-RULING, packet (d); DRAFT until the author commits R1-EXAM-RULE-X5V2): the
+    ``t7h8`` PASS rows of ``stage_a_table`` UNION the PASS rows of the declared A1 amendment measurement
+    (``t7j10``) table, which is an explicit sha-bound input and is refused unless both the table and the
+    operator's acceptance record are supplied with their sha256.  Only registry ``candidate`` rows enter
+    from the amendment table; anchors keep their ``stage_a_table`` rows and run as anchors.  The D28 and
+    thinking-off conditions are applied later (B1 manifests / ``analyze``), never here.
+    """
+    if digest_file(cfg['stage_a_table'])!=cfg['stage_a_table_sha256']: raise PreparationStop('STOP: Stage A table digest mismatch')
+    stages=json.loads(Path(cfg['stage_a_table']).read_text())['rows']
+    if not v2: return {r['candidate']:r for r in stages if r['passed']}
+    eligible={r['candidate']:{**r,'stage_a_pass_source':'stage_a_table'} for r in stages if r['passed']}
+    missing=[k for k in STAGE_A_AMENDMENT_KEYS if not cfg.get(k) or placeholders(cfg[k])]
+    if missing: raise PreparationStop(f'STOP: x5_rule/v2 needs the operator-accepted A1 amendment table bound by sha256: {missing}')
+    table,acceptance=Path(cfg['stage_a_amendment_table']),Path(cfg['stage_a_amendment_acceptance'])
+    if not table.is_file() or digest_file(table)!=cfg['stage_a_amendment_table_sha256']:
+        raise PreparationStop('STOP: A1 amendment table digest mismatch')
+    if not acceptance.is_file() or digest_file(acceptance)!=cfg['stage_a_amendment_acceptance_sha256']:
+        raise PreparationStop('STOP: operator acceptance of the A1 amendment table missing or digest mismatch')
+    data=json.loads(table.read_text())
+    if data.get('label')!='ENGINEERING_ONLY' or not isinstance(data.get('rows'),list):
+        raise PreparationStop('STOP: A1 amendment table malformed')
+    for r in data['rows']:
+        if r.get('passed') is True and r['candidate'] in registry_candidates and r['candidate'] not in eligible:
+            eligible[r['candidate']]={**r,'stage_a_pass_source':'a1_amendment_measurement'}
+    return eligible
+
+
+def template_repair_record(spec):
+    """The SHA-pinned repair template a model is served with (R1-EXAM-A1-M1-REQUIREMENTS (1)), or None."""
+    repair=spec.get('template_repair')
+    return {'file':repair.get('file'),'sha256':repair.get('sha256')} if repair else None
+
+
+def check_template_repairs(cfg, specs):
+    """v2 configs bind each repaired model's template sha; the registry must agree byte for byte."""
+    declared=cfg.get('template_repairs')
+    if not isinstance(declared,dict): raise PreparationStop('STOP: x5_rule/v2 config must bind template_repairs')
+    actual={s['id']:s['template_repair']['sha256'] for s in specs if s.get('template_repair')}
+    if declared!=actual: raise PreparationStop(f'STOP: config template_repairs {declared} differ from registry {actual}')
+    return actual
+
+
 def evidence(runner, phase, selected, interrupt):
     raise PreparationStop('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
 
@@ -229,9 +283,15 @@ def evidence(runner, phase, selected, interrupt):
 def _evidence_unreviewed(runner, phase, selected, interrupt):
     """B1/B2 body retained for unit tests only; unreachable from any entry point."""
     cfg=runner.cfg;rows=[]
+    v2=is_v2(getattr(runner,'rule',None))
     if digest_file(cfg['stage_a_table'])!=cfg['stage_a_table_sha256']: raise PreparationStop('STOP: Stage A table digest mismatch')
     if phase=='b2' and digest_file(cfg['b1_analysis'])!=cfg['b1_analysis_sha256']: raise PreparationStop('STOP: B1 analysis digest mismatch')
-    stages=json.loads(Path(cfg['stage_a_table']).read_text())['rows'];eligible={r['candidate']:r for r in stages if r['passed']}
+    if v2:
+        if cfg.get('cache_prompt') is not False: raise PreparationStop('STOP: B1/B2 cache_prompt must be explicitly false (R1-EXAM-CACHE-REV)')
+        if not cfg.get('dryrun') and cfg.get('harness_commit')!=B1_HARNESS_PIN: raise PreparationStop('STOP: B1/B2 harness pin must be a3fedbb (R1-EXAM-B1-HARNESS-PIN)')
+        check_template_repairs(cfg,runner.spec_order())
+    registry_candidates={s['id'] for s in runner.spec_order() if s.get('role')=='candidate'}
+    eligible=stage_a_pass_set(cfg,registry_candidates,v2=v2)
     specs=runner.spec_order(selected)
     if phase=='b2':
         screen=json.loads(Path(cfg['b1_analysis']).read_text())
@@ -244,6 +304,12 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
         if not specs: raise RuntimeError('STOP: B2 needs frozen B1 finalists')
     for spec in specs:
         if spec['id'] not in eligible: continue
+        if (v2 and phase=='b1' and spec.get('role') in ('candidate','sensitivity') and runner.rule['thinking_mode']['always_on_in_b1']=='skip'
+                and not thinking_off_capable(spec.get('thinking_policy'))):
+            # R1-EXAM-ALWAYS-ON-SKIP: always-thinking models do not run B1; the appendix reports them from Stage A.
+            runner.state.setdefault('b1_skipped_always_on',[])
+            if spec['id'] not in runner.state['b1_skipped_always_on']: runner.state['b1_skipped_always_on'].append(spec['id'])
+            runner.save();continue
         if phase=='b1' and spec['role']=='candidate' and not runner.state.get('anchor_gate'):
             runner.state['anchor_gate']=anchor_gate(rows,cfg);runner.save()
         spec=copy.deepcopy(spec)
@@ -256,15 +322,25 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
         modes=[mode]
         if phase=='b1' and spec.get('thinking_policy',{}).get('switchable') is True and not eligible[spec['id']].get('thinking_disabled_due_grammar'):
             modes.append('on')
-        if phase=='b2':
+        if phase=='b2' and not v2:
             row=next(r for r in screen['rows'] if r['candidate']==spec['id']);mode=row['b2_thinking_mode'];modes=[mode]
             if mode=='on' and eligible[spec['id']].get('thinking_disabled_due_grammar'): raise PreparationStop('STOP: B1 chose thinking-on disabled by Stage A')
             rank=screen['finalists'].index(spec['id']) if spec['id'] in screen['finalists'] else 99
             if not cfg.get('free_sensitivity') and rank<3 and spec.get('thinking_policy',{}).get('switchable') is True and not eligible[spec['id']].get('thinking_disabled_due_grammar'): modes.append('on' if mode=='off' else 'off')
+        if phase=='b2' and v2:
+            # x5_rule/v2: B2 runs thinking off for every finalist; the top-3 rerun is thinking-on and descriptive only.
+            row=next((r for r in screen['rows'] if r['candidate']==spec['id']),None)
+            if row is not None and row.get('b2_thinking_mode')!='off': raise PreparationStop('STOP: x5_rule/v2 B1 analysis must assign B2 mode off')
+            if spec.get('kind') not in ('random_valid','scripted') and not thinking_off_capable(spec.get('thinking_policy')):
+                raise PreparationStop('STOP: x5_rule/v2 B2 finalist cannot run thinking off')
+            mode='off';modes=['off']
+            rank=screen['finalists'].index(spec['id']) if spec['id'] in screen['finalists'] else 99
+            if not cfg.get('free_sensitivity') and rank<3 and spec.get('thinking_policy',{}).get('switchable') is True and not eligible[spec['id']].get('thinking_disabled_due_grammar'): modes.append('on')
         root_results=[];began=time.monotonic()
         try:
             for mode_index,current_mode in enumerate(modes):
-                nodes=([cfg['schema_sensitivity_node']] if cfg.get('free_sensitivity') else (cfg['nodes'] if mode_index==0 or phase=='b2' else ['openml_credit_approval']))
+                sensitivity_node=runner.rule['thinking_mode']['b1_sensitivity']['node'] if v2 else 'openml_credit_approval'
+                nodes=([cfg['schema_sensitivity_node']] if cfg.get('free_sensitivity') else (cfg['nodes'] if mode_index==0 or phase=='b2' else [sensitivity_node]))
                 seeds=cfg['instance_seeds'] if phase=='b1' else list(range(9011,9011+cfg['b2_instances_per_node']))
                 needs_run=any(f'{spec["id"]}/{phase}/{current_mode}/{n}__s{s}' not in runner.state['completed'] for n in nodes for s in seeds)
                 if needs_run and spec.get('kind') not in ('random_valid','scripted'): runner.server(spec,current_mode,16384 if eligible[spec['id']].get('cpu_pool_only') else 32768)
@@ -291,6 +367,17 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
                   'total_gpu_hours':sum((x['end']-x['start'])/3600 for x in runner.state.get('server_intervals',[]) if x['candidate']==spec['id'] and x['phase']==phase and x['end'] is not None),
                   'gpu_hours_method':'dedicated_server_wall_intervals_including_load_and_audit',
                   'execution_label':'DRYRUN' if cfg.get('dryrun') else 'EVIDENCE','root_manifests':[str(runner.out/f'{spec["id"]}/{phase}/{r["mode"]}/{r["node"]}__s{r["instance_seed"]}/campaign_manifest.json') for r in root_results]}
+        if v2:
+            manifest.update(rule_version='x5_rule/v2',cache_prompt=cfg['cache_prompt'],harness_commit=cfg.get('harness_commit'),
+                            template_repair=template_repair_record(spec),
+                            stage_a_pass_source=eligible[spec['id']].get('stage_a_pass_source'),
+                            stage_a_amendment_table_sha256=cfg['stage_a_amendment_table_sha256'],
+                            stage_a_amendment_acceptance_sha256=cfg['stage_a_amendment_acceptance_sha256'],
+                            cache_prompt_by_root=[root.get('cache_prompt') for root in root_results])
+            if spec.get('kind') not in ('random_valid','scripted') and not all((root.get('cache_prompt') or {}).get('all_false') is True for root in root_results):
+                raise PreparationStop('STOP: a B1/B2 root lacks llm_call evidence of cache_prompt false')
+            if len(modes)>1:
+                manifest['thinking_on_rerun' if phase=='b2' else 'thinking_on_sensitivity']='descriptive'
         uncertain=any(x.get('cost_is_upper_bound') for x in runner.state.get('server_intervals',[]) if x['candidate']==spec['id'] and x['phase']==phase)
         manifest['gpu_hours_upper_bound']=manifest['gpu_hours']
         manifest['gpu_hours_status']='upper_bound_after_interruption' if uncertain else 'recorded_dedicated_intervals'
@@ -359,6 +446,9 @@ def main(argv=None):
     if a.interrupt_root and not cfg.get('dryrun'): p.error('--interrupt-root is DRYRUN only')
     required=['prompts','prompts_sha256'] if a.phase=='stage-a' else ['stage_a_table','stage_a_table_sha256','nodes','llm_call_cap','anchor_duplicate_reference']
     if a.phase=='b2': required += ['b1_analysis','b1_analysis_sha256','b2_instances_per_node']
+    if a.phase in ('b1','b2'):
+        from r1.exam.analyze import load_rule
+        if is_v2(load_rule(cfg['rule'],cfg['rule_sha256'])[0]): required += list(STAGE_A_AMENDMENT_KEYS)
     unresolved=placeholders({k:cfg[k] for k in required})
     if unresolved: raise RuntimeError(f'STOP: unresolved phase settings: {unresolved}')
     runner=ExamRunner(cfg,a.out)

@@ -1,0 +1,85 @@
+{
+  "schema": "exam_config/v1",
+  "host": "TODO_AUTHOR_R1_HOSTS_04NOV",
+  "models_dir": "/home/dowling/exam-x/models",
+  "work_dir": "/home/dowling/exam-x/work",
+  "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+  "comment": "Track X B2 under x5_rule_v2 (MAC runbook M2, 4 Nov 2026; AI-assisted, Claude). DRAFT: governs nothing until the author commits R1-EXAM-RULE-X5V2 with the rule sha and the B1/B2 authorization notes. Binds rule x5_rule_v2.yaml by sha (Stage A's exam_portal.json keeps v1), harness cacheprompt-20261031 @ a3fedbb (R1-EXAM-B1-HARNESS-PIN) with explicit cache_prompt false on every request (R1-EXAM-CACHE-REV), and each repaired model's SHA-pinned template (R1-EXAM-A1-M1-REQUIREMENTS (1); checked against the registry). The Stage A pass set = stage_a_table (t7h8) PASS union the PASS rows of the operator-accepted A1 amendment table (t7j10), both bound by sha (R1-TRACKX-HANDOVER-RULING; draft packet (d)); the runner refuses B1/B2 until the amendment table and the operator's acceptance record are supplied. Host per the open R1-HOSTS-04NOV (proposed TASL-2; collect() is TASL-2-only). paper_commit is the reviewed M2 commit.",
+  "minimum_free_bytes": 100000000000,
+  "ctx_size": 32768,
+  "cache_type_k": "q8_0",
+  "cache_type_v": "q8_0",
+  "n_gpu_layers": 999,
+  "temperature": 0.2,
+  "proposal_schema": "manager_proposal/v1",
+  "registry": "r1/exam/registry.yaml",
+  "rule": "r1/exam/rules/x5_rule_v2.yaml",
+  "rule_sha256": "79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20",
+  "value_grids": "r1/exam/value_grids.yaml",
+  "paper_commit": "TODO_REVIEWED_M2_COMMIT",
+  "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+  "prompts": "/home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl",
+  "prompts_sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
+  "server": {
+    "binary": "/home/dowling/exam-x/work/llama.cpp/build-exam/bin/llama-server",
+    "binary_sha256": "b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b",
+    "build": "version: 0.7.0-dev (build 1, commit 620d222)",
+    "start_timeout": 300
+  },
+  "instance_seeds": [
+    9001,
+    9002,
+    9003,
+    9004
+  ],
+  "audit_seeds": [
+    9101,
+    9102,
+    9103,
+    9104
+  ],
+  "W": 20,
+  "llm_call_cap": "TODO_AUTHOR_LLM_CALL_CAP",
+  "nodes": [
+    "TODO_VERIFY_D28_DIGITS_OR_TABULAR",
+    "openml_credit_approval",
+    "openml_ionosphere"
+  ],
+  "stage_a_table": "TODO_VERIFY_ON_HOST",
+  "anchor_duplicate_reference": {
+    "source": "TODO_VERIFY_ON_HOST",
+    "sha256": "TODO_VERIFY_ON_HOST",
+    "lower": "TODO_VERIFY_ON_HOST",
+    "upper": "TODO_VERIFY_ON_HOST"
+  },
+  "authorizations": {
+    "b1": "TODO_AUTHOR_B1_V2_AUTHORIZATION_NOTE",
+    "b2": "TODO_AUTHOR_B2_V2_AUTHORIZATION_NOTE"
+  },
+  "b1_analysis": "TODO_VERIFY_ON_HOST",
+  "b2_instances_per_node": "TODO_AUTHOR_B2_POWER_PLAN",
+  "watchdog": {
+    "enabled": true,
+    "poll_seconds": 0.5,
+    "health_timeout": 2,
+    "unresponsive_checks": 3,
+    "model_checks": 3,
+    "max_restarts": 3
+  },
+  "root_timeout_seconds": 43200,
+  "schema_sensitivity_node": "openml_credit_approval",
+  "d22_pick": "TODO_AUTHOR_D22_PICK",
+  "workers": 4,
+  "stage_a_table_sha256": "TODO_VERIFY_ON_HOST",
+  "b1_analysis_sha256": "TODO_VERIFY_ON_HOST",
+  "cache_prompt": false,
+  "template_repairs": {
+    "olmo31_32b": "5d275f78a64ad01740b8b65ff5554e624062229348b4f95c930c45a7db820466",
+    "devstral_small2_24b": "a0c0ed8a45c2c75c85fd756316a10419b90eb4f3dbe64d00f5c0b8ad4de5209a",
+    "ministral3_14b": "2f545122222db8bb43ca0ea0c49e9185320a8670f7d35575b0da0eb48b1e8970"
+  },
+  "stage_a_amendment_table": "TODO_OPERATOR_O1_T7J10_TABLE",
+  "stage_a_amendment_table_sha256": "TODO_OPERATOR_O1_T7J10_TABLE_SHA256",
+  "stage_a_amendment_acceptance": "TODO_OPERATOR_O1_T7J10_ACCEPTANCE",
+  "stage_a_amendment_acceptance_sha256": "TODO_OPERATOR_O1_T7J10_ACCEPTANCE_SHA256"
+}

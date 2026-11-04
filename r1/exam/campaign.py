@@ -66,6 +66,32 @@ def observer_for_campaign(job, out):
     return SelfForecastObserver(job['base_url'],candidate['id'],journal_path=Path(out)/'a4_observer_requests.jsonl')
 
 
+def exam_manager(candidate, proposal_schema):
+    """The LLM proposer of an exam campaign, exactly as ``collect`` builds it.
+
+    The llamacpp provider of the pinned harness decides the wire value of ``cache_prompt``: at the
+    B1/B2 pin ``a3fedbb`` (R1-EXAM-B1-HARNESS-PIN) it is sent explicitly, default false, and recorded
+    in every ``llm_call`` record (R1-EXAM-CACHE-REV)."""
+    return LangGraphManager(model='llamacpp/'+candidate['id'],proposal_schema=proposal_schema,transport_retry=None)
+
+
+def cache_prompt_evidence(records, events):
+    """Fail closed unless every LLM call of the root recorded ``cache_prompt`` false.
+
+    Reads the ``llm_call`` events and the per-trial ``extra.manager.llm_call`` records.  A call
+    without the field (an older harness pin that does not send it) or with any other value is a STOP."""
+    calls=[e['payload'] for e in events if e.get('event_type')=='llm_call']
+    failed=[e['payload'] for e in events if e.get('event_type')=='llm_call_failed']
+    trial=[((r.get('extra') or {}).get('manager') or {}).get('llm_call') for r in records]
+    trial=[t for t in trial if t]
+    values=[c.get('cache_prompt','MISSING') for c in calls+failed+trial]
+    if not calls: raise RuntimeError('STOP: no llm_call records; cache_prompt unproven')
+    if any(v is not False for v in values):
+        raise RuntimeError(f'STOP: llm_call cache_prompt not explicitly false: {sorted(set(map(str,values)))}')
+    return {'cache_prompt':False,'llm_call_events':len(calls),'llm_call_failed_events':len(failed),
+            'trial_llm_call_records':len(trial),'all_false':True}
+
+
 def collect(job):
     raise RuntimeError('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
     out=Path(job['out'])
@@ -85,7 +111,7 @@ def collect(job):
     if kind=='random_valid':
         manager=RandomValidManager(yaml.safe_load(Path(job['value_grids']).read_text())['nodes'][node])
     elif kind=='scripted': manager=ScriptedRandomManager(node,seed=seed,repetition=0)
-    else: manager=LangGraphManager(model='llamacpp/'+candidate['id'],proposal_schema=job['proposal_schema'],transport_retry=None)
+    else: manager=exam_manager(candidate,job['proposal_schema'])
     worker=FixtureWorker(node_root,seed) if job['dryrun'] else LocalWorker(node_root=node_root,artifact_dir=out/'art',train_seed=seed,split_seed=seed)
     observer=observer_for_campaign(job,out)
     try:
@@ -129,6 +155,7 @@ def collect(job):
         audits.append({'proposal_id':p.proposal_id,'instance_id':f'{node}__s{seed}','node':node,'mode':job['mode'],
                        'audit_seeds':job['audit_seeds'],'candidate_hash':p.candidate_hash,'incumbent_hash':p.incumbent_hash,'candidate_metrics':arrays[0],'incumbent_metrics':arrays[1],
                        **result,**{k:v for k,v in forecasts.get(trial,{}).items() if k in ('p_delta_positive','p_no_effect')}})
+    cache_prompt=cache_prompt_evidence(records,events) if kind=='llm' else None
     live=evaluate_ledger_paths([out/'root_trials.jsonl'],manager_kind='scripted' if kind!='llm' else 'langgraph',memory_mode='append_only_summary')
     novelty=[e['payload'] for e in events if e['event_type']=='edit_novelty']
     evaluated=len(novelty)
@@ -152,7 +179,7 @@ def collect(job):
             'compute_budget':budget,'termination':'worker_cap' if budget['worker_runs']>=job['W'] else 'llm_cap_or_reserved_observer_pair',
             'job_binding':job['binding'],'job_sha256':digest_file(out/'job.json'),
             'evidence_hashes':{name:digest_file(out/name) if (out/name).exists() else None for name in ('root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json')},
-            'diagnostics':diagnostics,'audited_proposals':audits,'replay_checks':checks,'d28':live,'final_audits':final}
+            'cache_prompt':cache_prompt,'diagnostics':diagnostics,'audited_proposals':audits,'replay_checks':checks,'d28':live,'final_audits':final}
     write_json(out/'campaign_manifest.json',result)
     return result
 
