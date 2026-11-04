@@ -489,12 +489,99 @@ def paper_a_check(spec: dict, host: str) -> dict:
     return record
 
 
+def package_runtime(executable: str) -> dict:
+    """Hash the complete installed distribution list in the *executed* interpreter.
+
+    Shell wrappers and venv symlinks make the command path insufficient to
+    identify the interpreter.  Probe it without writing bytecode; retain the
+    actual sys.executable and prefix alongside a canonical package-list hash.
+    """
+    probe = r'''import importlib.metadata as md, json, os, re, sys
+packages = []
+for d in md.distributions():
+    name = d.metadata.get("Name")
+    version = d.version
+    if not name or not version:
+        raise RuntimeError("distribution lacks name or version")
+    packages.append(re.sub(r"[-_.]+", "-", name).lower() + "==" + version)
+print(json.dumps({"executable": os.path.abspath(sys.executable), "prefix": os.path.abspath(sys.prefix),
+                  "base_prefix": os.path.abspath(sys.base_prefix), "packages": sorted(packages)}))'''
+    try:
+        raw = subprocess.check_output([str(executable), '-B', '-c', probe], text=True, timeout=60,
+                                      env={**os.environ, 'PYTHONDONTWRITEBYTECODE': '1'})
+        data = json.loads(raw)
+        if not isinstance(data, dict) or not isinstance(data.get('packages'), list) or not data['packages'] or \
+                not all(isinstance(v, str) and '==' in v for v in data['packages']) or \
+                data['packages'] != sorted(data['packages']) or \
+                any(not isinstance(data.get(k), str) or not os.path.isabs(data[k])
+                    for k in ('executable', 'prefix', 'base_prefix')):
+            raise ValueError('invalid interpreter or package list')
+        canonical = ('\n'.join(data.pop('packages')) + '\n').encode('utf-8')
+        return {'command': str(executable), **data, 'package_list_sha256': hashlib.sha256(canonical).hexdigest(),
+                'package_count': len(canonical.decode('utf-8').splitlines()),
+                'format': 'normalized-name==version, sorted UTF-8 lines with final newline'}
+    except (OSError, subprocess.SubprocessError, ValueError, TypeError, KeyError) as exc:
+        raise Stop(f'STOP: could not record actual interpreter package list: {executable}: {exc}') from exc
+
+
+def package_environment(collector_python: str) -> dict:
+    """Ensure the PATH worker and collector execute the same Python environment."""
+    worker_python = shutil.which('python3')
+    if not worker_python:
+        raise Stop('STOP: worker python3 is not present on PATH')
+    controller = package_runtime(collector_python)
+    worker = package_runtime(worker_python)
+    if os.path.realpath(controller['executable']) != os.path.realpath(worker['executable']) or \
+            any(controller[k] != worker[k] for k in ('prefix', 'base_prefix', 'package_list_sha256')):
+        raise Stop('STOP: worker python3 and collector interpreter environments differ')
+    return {'collector': controller, 'worker_python3': worker}
+
+
+def evidence_node_commands(python: str, harness: Path, nodes: list[str]) -> dict[str, str]:
+    """Resolve the pinned NodeSpecs and admit only known direct worker commands.
+
+    LocalWorker executes NodeSpec.run_command via a shell.  Matching a PATH
+    python3 probe is meaningful only when the actual command is exactly one
+    of these forms: no wrappers, shell operators, alternate Python, or flags.
+    """
+    if not nodes or len(set(nodes)) != len(nodes) or not all(isinstance(n, str) for n in nodes):
+        raise Stop('STOP: invalid evidence node list for worker command checks')
+    script = r'''import json, pathlib, sys
+root = pathlib.Path(sys.argv[1]).resolve()
+src = (root / "src").resolve()
+sys.path.insert(0, str(src))
+import autoresearch.nodes.registry as registry
+if not pathlib.Path(registry.__file__).resolve().is_relative_to(src):
+    raise RuntimeError("node registry was not loaded from the pinned harness")
+nodes = json.loads(sys.argv[2])
+print(json.dumps({node: registry.load_registered_node(node, repo_root=root).run_command for node in nodes}))'''
+    try:
+        raw = subprocess.check_output([str(python), '-B', '-c', script, str(harness), json.dumps(nodes)],
+                                      text=True, timeout=60,
+                                      env={**os.environ, 'PYTHONDONTWRITEBYTECODE': '1'})
+        commands = json.loads(raw)
+    except (OSError, subprocess.SubprocessError, TypeError, ValueError) as exc:
+        raise Stop(f'STOP: cannot resolve pinned evidence NodeSpecs: {exc}') from exc
+    allowed = {'python3 train.py', 'python3 train.py --config config.yaml'}
+    if not isinstance(commands, dict) or set(commands) != set(nodes) or \
+            any(not isinstance(command, str) or command not in allowed for command in commands.values()):
+        raise Stop('STOP: evidence node command is not a verified direct python3 invocation')
+    return commands
+
+
 class SweepRunner:
     def __init__(self, config: dict, *, batch: Path, paper: Path, harness: Path, python: str,
                  config_path: Path | str | None = None) -> None:
         refuse_exam(config, context='C3 sweep runner admission')
         self.config = config
         self.dryrun = validate_dryrun()
+        self.evidence_note = os.environ.get('R1_C3_EVIDENCE_NOTE')
+        if self.evidence_note and self.dryrun:
+            raise Stop('STOP: DRYRUN cannot request an EVIDENCE authorization')
+        # An evidence launch is always a new batch; neither old pilot batches nor
+        # interrupted/stopped evidence batches may be resumed or reclassified.
+        if self.evidence_note and (batch / 'batch_state.json').exists():
+            raise Stop('STOP: EVIDENCE requires a new batch with no previous state')
         self.label = 'DRYRUN' if self.dryrun else 'ENGINEERING_ONLY'
         self.batch, self.paper, self.harness, self.py = batch, paper, harness, python
         self.config_path = Path(config_path).resolve() if config_path else None
@@ -920,6 +1007,62 @@ class SweepRunner:
                 prepare.get('paper_head') != paper_head or prepare.get('harness_head') != harness_head:
             raise Stop('STOP: preparation record does not match the tested launch commits')
 
+    def check_evidence_authorization(self, paper_head: str, harness_head: str) -> dict:
+        """Match an explicit, committed new-batch authorization before any model work.
+
+        The original 20261027 note authorized the already-executed batch and
+        does not authorize another B.1 launch. A future author must commit a
+        separate Markdown note containing exactly one fenced JSON object with
+        schema ``r1.c3.new_b1_authorization/1``. Its batch name binds this note
+        to the freshly prepared batch; paper HEAD is bound by the existing
+        prepare/main checks rather than self-referencing the note's commit.
+        """
+        relative = Path(self.evidence_note or '')
+        if (not relative.parts or relative.is_absolute() or '..' in relative.parts or
+                relative.parent != Path('docs/r1/authorizations') or relative.suffix != '.md' or
+                relative.name == 'c3_sweep1_20261027.md'):
+            raise Stop('STOP: new B.1 requires a separate committed authorization note')
+        path = (self.paper / relative).resolve()
+        if not path.is_relative_to((self.paper / 'docs/r1/authorizations').resolve()):
+            raise Stop('STOP: evidence authorization path escapes its directory')
+        try:
+            raw = path.read_bytes()
+            tracked = subprocess.check_output(['git', '-C', str(self.paper), 'show',
+                                               f'{paper_head}:{relative.as_posix()}'])
+            text = raw.decode('utf-8')
+            blocks = re.findall(r'```json\s*\n(.*?)\n```', text, re.DOTALL)
+            if raw != tracked or len(blocks) != 1:
+                raise ValueError('note is uncommitted, changed, or lacks one JSON block')
+            note = json.loads(blocks[0])
+        except (OSError, UnicodeError, ValueError, subprocess.CalledProcessError) as exc:
+            raise Stop(f'STOP: invalid or uncommitted EVIDENCE authorization: {exc}') from exc
+        identity = {
+            'schema': 'r1.c3.new_b1_authorization/1',
+            'decision': 'AUTHOR_AUTHORIZES_NEW_B1_EVIDENCE',
+            'batch_name': self.batch.name,
+            'host': 'deepthought',
+            'paper_commit_policy': 'main_at_launch',
+        }
+        keys = set(identity) | {'harness_commit', 'config_sha256', 'model_sha256', 'llamacpp_build'}
+        if (self.host != 'deepthought' or not isinstance(note, dict) or set(note) != keys or
+                any(note.get(k) != v for k, v in identity.items()) or
+                not re.fullmatch(r'[0-9a-f]{40}', str(note.get('harness_commit', ''))) or
+                not re.fullmatch(r'[0-9a-f]{64}', str(note.get('config_sha256', ''))) or
+                not re.fullmatch(r'[0-9a-f]{64}', str(note.get('model_sha256', ''))) or
+                not lsi.VERSION_RE.fullmatch(str(note.get('llamacpp_build', ''))) or
+                note.get('harness_commit') != harness_head or
+                self.config_path is None or not self.config_path.is_file() or
+                hashlib.sha256(self.config_path.read_bytes()).hexdigest() != note.get('config_sha256') or
+                self.config != load_config(self.config_path) or
+                self.config.get('backend') != 'llamacpp' or
+                self.config.get('llamacpp', {}).get('model_sha256') != note.get('model_sha256') or
+                self.config.get('llamacpp', {}).get('build') != note.get('llamacpp_build') or
+                'Committed on the author' not in text):
+            raise Stop('STOP: EVIDENCE authorization does not exactly match this batch and pins')
+        return {'path': relative.as_posix(), 'sha256': hashlib.sha256(raw).hexdigest(),
+                'paper_commit': paper_head, 'batch_name': self.batch.name,
+                'pins': {k: note[k] for k in ('harness_commit', 'config_sha256', 'model_sha256', 'llamacpp_build')}}
+
     def check_noise_source(self) -> dict | None:
         source = self.config.get('noise_source')
         if source is None:
@@ -957,18 +1100,25 @@ class SweepRunner:
             if any(entry.get(key) != expected[key] for key in ('sigma_t', 'sigma_s', 'sigma_d', 'definition')):
                 raise Stop(f'STOP: collector manifest noise values differ from pin for {node}')
 
-    def check_launch_manifest(self, out: Path) -> None:
+    def check_launch_manifest(self, out: Path, *, engineering_liveness: bool = False) -> None:
         provenance = self.state.get('launch_provenance')
         if provenance is None:
             if self.host == 'deepthought' and not self.dryrun:
                 raise Stop('STOP: pinned batch lacks launch provenance')
-            return  # pre-existing legacy batches do not declare this field
+            if 'package_environment' not in self.state:
+                return  # pre-existing legacy batches do not declare this field
         try:
-            recorded = json.loads((out / 'manifest.json').read_text()).get('launch_provenance')
+            manifest = json.loads((out / 'manifest.json').read_text())
+            recorded = manifest.get('launch_provenance')
         except (OSError, ValueError) as exc:
             raise Stop(f'STOP: launch manifest missing or invalid: {out}') from exc
         if recorded != provenance:
             raise Stop(f'STOP: launch provenance mismatch in {out}')
+        if 'package_environment' in self.state and manifest.get('package_environment') != self.state['package_environment']:
+            raise Stop(f'STOP: launch package environment mismatch in {out}')
+        if self.label == 'EVIDENCE' and not engineering_liveness and (manifest.get('label') != 'EVIDENCE' or
+                manifest.get('evidence_authorization') != self.state.get('evidence_authorization')):
+            raise Stop(f'STOP: evidence classification or authorization mismatch in {out}')
 
     def verify_resumed_provenance(self) -> None:
         provenance = self.state.get('launch_provenance')
@@ -980,17 +1130,27 @@ class SweepRunner:
                 'paper_commit', 'harness_commit', 'config_sha256', 'model_sha256', 'llamacpp_build'}:
             raise Stop('STOP: malformed launch provenance')
         if self.host == 'deepthought' and not self.dryrun:
-            note = self.paper / 'docs/r1/authorizations/c3_sweep1_20261027.md'
             try:
                 prepare = json.loads((self.batch / 'prepare.json').read_text())
-                approved = note.read_text()
             except (OSError, ValueError) as exc:
                 raise Stop('STOP: authorization or preparation record missing on resume') from exc
             if not prepare.get('ok') or prepare.get('paper_head') != provenance['paper_commit'] or \
                     prepare.get('harness_head') != provenance['harness_commit'] or \
-                    self.state.get('paper_head_at_launch') != provenance['paper_commit'] or \
-                    any(provenance[k] != v or v not in approved for k, v in DEEPTHOUGHT_AUTHORIZED_PINS.items()):
+                    self.state.get('paper_head_at_launch') != provenance['paper_commit']:
                 raise Stop('STOP: resumed provenance differs from author authorization or launch record')
+            if self.label == 'EVIDENCE':
+                record = self.check_evidence_authorization(provenance['paper_commit'], provenance['harness_commit'])
+                if record != self.state.get('evidence_authorization') or any(
+                        provenance[k] != v for k, v in record['pins'].items()):
+                    raise Stop('STOP: resumed provenance differs from the evidence authorization')
+            else:
+                note = self.paper / 'docs/r1/authorizations/c3_sweep1_20261027.md'
+                try:
+                    approved = note.read_text()
+                except OSError as exc:
+                    raise Stop('STOP: authorization record missing on resume') from exc
+                if any(provenance[k] != v or v not in approved for k, v in DEEPTHOUGHT_AUTHORIZED_PINS.items()):
+                    raise Stop('STOP: resumed provenance differs from author authorization or launch record')
         self.check_tracked_clean()
         if self.config_path is None or not self.config_path.is_file() or \
                 hashlib.sha256(self.config_path.read_bytes()).hexdigest() != provenance['config_sha256']:
@@ -1025,6 +1185,9 @@ class SweepRunner:
         paper_head, harness_head = self.check_heads()
         if self.host == 'deepthought' and not self.dryrun:
             self.check_prepared_heads(paper_head, harness_head)
+        if self.evidence_note:
+            self.state['evidence_authorization'] = self.check_evidence_authorization(paper_head, harness_head)
+            self.label = self.state['label'] = 'EVIDENCE'
         self.state.update(paper_head_at_launch=paper_head, harness_head_at_launch=harness_head)
         if self.host == 'deepthought' and not self.dryrun:
             base = self.scratch.parent
@@ -1051,7 +1214,11 @@ class SweepRunner:
                 'config_sha256': hashlib.sha256(self.config_path.read_bytes()).hexdigest(),
                 'model_sha256': pins['model_sha256'], 'llamacpp_build': pins['build']['version_line'],
             }
-            if self.host == 'deepthought' and not self.dryrun:
+            if self.host == 'deepthought' and not self.dryrun and self.label == 'EVIDENCE':
+                if any(self.state['launch_provenance'][k] != v for k, v in
+                       self.state['evidence_authorization']['pins'].items()):
+                    raise Stop('STOP: launch pins do not match the evidence authorization')
+            elif self.host == 'deepthought' and not self.dryrun:
                 if any(self.state['launch_provenance'][k] != v for k, v in DEEPTHOUGHT_AUTHORIZED_PINS.items()):
                     raise Stop('STOP: launch pins do not match the author-approved sweep authorization')
                 note = self.paper / 'docs/r1/authorizations/c3_sweep1_20261027.md'
@@ -1070,6 +1237,16 @@ class SweepRunner:
                 self.state['paper_a_check'] = exc.args[1]
             self.save()
             raise
+        observed_env = package_environment(self.py)
+        worker_env = observed_env['worker_python3']
+        if self.label == 'EVIDENCE':
+            if worker_env['prefix'] == worker_env['base_prefix']:
+                raise Stop('STOP: evidence worker python is not a virtual environment')
+            observed_env['node_commands'] = evidence_node_commands(self.py, self.harness, self.config['nodes'])
+        previous_env = self.state.get('package_environment')
+        if previous_env is not None and previous_env != observed_env:
+            raise Stop('STOP: package environment changed since launch')
+        self.state['package_environment'] = observed_env
         self.save()
         self.state['gpu'] = self.select_card()
         uuid = self.state['gpu'].split(',')[1].strip()
@@ -1185,11 +1362,15 @@ class SweepRunner:
                   '--instances', str(live['instances']), '--runs', str(live['runs']),
                   '--transport-max-attempts', str(self.config['transport_max_attempts']),
                   *self.manager_model_args(),
-                  *(['--extra-manifest', json.dumps({'launch_provenance': self.state['launch_provenance']})]
-                    if 'launch_provenance' in self.state else []),
+                  *(['--extra-manifest', json.dumps({
+                        **({'launch_provenance': self.state['launch_provenance']}
+                           if 'launch_provenance' in self.state else {}),
+                        **({'package_environment': self.state['package_environment']}
+                           if 'package_environment' in self.state else {})})]
+                    if 'launch_provenance' in self.state or 'package_environment' in self.state else []),
                   '--out', str(out), '--work', str(work)],
                  log='liveness.log', env=self.service_env())
-        self.check_launch_manifest(out)
+        self.check_launch_manifest(out, engineering_liveness=True)
         if self.earlier_processes():
             raise Stop('STOP: batch processes still use scratch after liveness')
         self.archive_work_references(out, work)
@@ -1216,7 +1397,7 @@ class SweepRunner:
         entry = self.state['steps'][step]
         if 'launch_provenance' in self.state:
             self.verify_resumed_provenance()
-            self.check_launch_manifest(Path(self.state['steps']['liveness']['out']))
+            self.check_launch_manifest(Path(self.state['steps']['liveness']['out']), engineering_liveness=True)
         eligible = self.state['steps']['liveness']['eligible_nodes']
         self.require_liveness(eligible, memory_mode)  # D28 gate first
         noise_source = self.check_noise_source()
@@ -1246,7 +1427,7 @@ class SweepRunner:
                             'note': 'restart before the sweep started', 'service_restart': self.pending_restart},
                            None, step)
             self.pending_restart = None
-        out = self.paper / 'results/r1/pilot' / f'C3_sweep_{memory_mode}_{stamp()}'
+        out = self.paper / ('results/r1/evidence' if self.label == 'EVIDENCE' else 'results/r1/pilot') / f'C3_sweep_{memory_mode}_{stamp()}'
         work = self.scratch / f'c3_{memory_mode}_work'
         if out.exists():
             raise Stop('STOP: sweep destination already exists; no overwrite')
@@ -1268,9 +1449,13 @@ class SweepRunner:
             extra['c3_label_sweep']['noise_source'] = noise_source
         if 'launch_provenance' in self.state:
             extra['launch_provenance'] = self.state['launch_provenance']
+        if 'package_environment' in self.state:
+            extra['package_environment'] = self.state['package_environment']
+        if self.label == 'EVIDENCE':
+            extra['evidence_authorization'] = self.state['evidence_authorization']
         noise_args = ['--e1-summary', str(self.paper / noise_source['path'])] if noise_source else []
         label_args = ['--label', 'DRYRUN', '--split', 'engineering'] if self.dryrun else \
-            ['--label', 'PILOT', '--split', 'c3_labels']
+            ['--label', 'EVIDENCE' if self.label == 'EVIDENCE' else 'PILOT', '--split', 'c3_labels']
         resume = [*base, '--resume', str(out), '--workers', str(self.config['workers'])]
         self.collect([*base, '--manager', 'langgraph', '--roots-only', '--points', '--reps', '0',
                       '--audit-seeds', '0', '--nodes', *eligible, '--instances', str(self.config['instances']),
@@ -1530,6 +1715,8 @@ class SweepRunner:
                  'liveness': str(Path(live['out']).relative_to(self.paper)),
                  'harness_commit': self.state.get('harness_head_at_launch'), 'sweeps': sweeps,
                  **({'launch_provenance': self.state['launch_provenance']} if 'launch_provenance' in self.state else {}),
+                 **({'package_environment': self.state['package_environment']} if 'package_environment' in self.state else {}),
+                 **({'evidence_authorization': self.state['evidence_authorization']} if self.label == 'EVIDENCE' else {}),
                  'nodes_pending': self.config['nodes_pending'],
                  **({'noise_source': noise_source} if noise_source is not None else {}),
                  **({'manager': {'backend': 'llamacpp', 'model': 'llamacpp/' + self.config['llamacpp']['model_alias'],
@@ -1543,7 +1730,7 @@ class SweepRunner:
                            'stage': f'r1/c3/audit.py (separate stage; C3_DESIGN §4: K = '
                                     f'{len(self.config["audit"]["seeds"])} common fresh joint seeds per '
                                     'non-inert evaluated proposal; first half label, second half evaluation)'}}
-        path = self.paper / 'results/r1/pilot' / f'C3_sweep_index_{stamp()}.json'
+        path = self.paper / ('results/r1/evidence' if self.label == 'EVIDENCE' else 'results/r1/pilot') / f'C3_sweep_index_{stamp()}.json'
         path.write_text(json.dumps(index, indent=2) + '\n')
         self.state['steps']['index']['path'] = str(path)
         self.save()

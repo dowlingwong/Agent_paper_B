@@ -1,0 +1,83 @@
+{
+  "format": "base64",
+  "purpose": "non-importable preservation of blocked candidate source",
+  "entries": [
+    {
+      "previous_path": "docs/r1/recovery/c3-fixtures-20261031/cache/r1/scripts/c3_cache_offline_fixture.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/docs/r1/recovery/c3-fixtures-20261031/cache/r1/scripts/c3_cache_offline_fixture.py.b64",
+      "bytes": 29486,
+      "sha256": "9c7a0851eb82c8688b78be0e0cc948fed7892cfc718a2a8ba3c463743a25e798",
+      "git_blob_sha1": "5f39fa66780821154a2729c872780a04468234c2"
+    },
+    {
+      "previous_path": "docs/r1/recovery/c3-fixtures-20261031/cache/r1/tests/test_c3_cache_offline_fixture.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/docs/r1/recovery/c3-fixtures-20261031/cache/r1/tests/test_c3_cache_offline_fixture.py.b64",
+      "bytes": 17367,
+      "sha256": "b22857e80ca0f6ba07275ef3603744a7bf177cee5049d0e4cbc3b2b87a778861",
+      "git_blob_sha1": "efeff20b929eb4df03c8f1b47b25b64d1349160a"
+    },
+    {
+      "previous_path": "docs/r1/recovery/c3-fixtures-20261031/dirfd/c3_cache_offline_fixture_00d.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/docs/r1/recovery/c3-fixtures-20261031/dirfd/c3_cache_offline_fixture_00d.py.b64",
+      "bytes": 33614,
+      "sha256": "03d554dd0c37063f09ce9cb93d2ba8ed01bd656d8b5abfdca88d255222ee6a8a",
+      "git_blob_sha1": "5afae90e29b5f7dad163fc6322acd86ab970db63"
+    },
+    {
+      "previous_path": "docs/r1/recovery/c3-fixtures-20261031/dirfd/c3_mount_inode_candidate_reconstructed.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/docs/r1/recovery/c3-fixtures-20261031/dirfd/c3_mount_inode_candidate_reconstructed.py.b64",
+      "bytes": 10388,
+      "sha256": "8da8132ba72dadfea1f1355ed357cef90b49aba8f26dff232268128c1cada7a8",
+      "git_blob_sha1": "8a08957b9cc44c0ff588c5ffddf88526f82fa653"
+    },
+    {
+      "previous_path": "docs/r1/recovery/c3-fixtures-20261031/dirfd/test_c3_cache_offline_fixture_reconstructed.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/docs/r1/recovery/c3-fixtures-20261031/dirfd/test_c3_cache_offline_fixture_reconstructed.py.b64",
+      "bytes": 18644,
+      "sha256": "cf1d6d20c841a7855adb49f9521cfcb1ee86e1d222a6c155f4dbb5be9e3a4252",
+      "git_blob_sha1": "e2d08a82d2844ba0e6119a886b66b1981da027e5"
+    },
+    {
+      "previous_path": "docs/r1/recovery/c3-fixtures-20261031/dirfd/test_c3_mount_inode_candidate_reconstructed.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/docs/r1/recovery/c3-fixtures-20261031/dirfd/test_c3_mount_inode_candidate_reconstructed.py.b64",
+      "bytes": 5786,
+      "sha256": "71f4c8dbfe896837edfcdfbbcab77e2fedaf706c784dbdd150add95142671fef",
+      "git_blob_sha1": "ef576d7944060d68f035cf9f10e526023185ad54"
+    },
+    {
+      "previous_path": "docs/r1/recovery/c3-fixtures-20261031/seccomp/r1/scripts/c3_replay_seccomp_candidate.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/docs/r1/recovery/c3-fixtures-20261031/seccomp/r1/scripts/c3_replay_seccomp_candidate.py.b64",
+      "bytes": 3128,
+      "sha256": "d03c03a3213585aabb854e6b29dd5f794b5ad97eb2be06994e9e483ccbacb410",
+      "git_blob_sha1": "05df13ecf657653fd66dd78047bc79b0f19f4854"
+    },
+    {
+      "previous_path": "docs/r1/recovery/c3-fixtures-20261031/seccomp/r1/tests/test_c3_replay_seccomp_candidate.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/docs/r1/recovery/c3-fixtures-20261031/seccomp/r1/tests/test_c3_replay_seccomp_candidate.py.b64",
+      "bytes": 1564,
+      "sha256": "066d1a931d7f49dfc2ad2433050d764873b9a96d0c570caaf0a5d13e04c84056",
+      "git_blob_sha1": "2698757cf27aa343d3e7df85afb4fef8fb83583f"
+    },
+    {
+      "previous_path": "r1/scripts/c3_cache_offline_fixture.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/r1/scripts/c3_cache_offline_fixture.py.b64",
+      "bytes": 33683,
+      "sha256": "f62668f3a749eb697735bb8c55a8e5c41d45162da14f31a948994ff00dabc1b5",
+      "git_blob_sha1": "3e753535d3fc676770964412826017264d61ff67"
+    },
+    {
+      "previous_path": "r1/scripts/c3_replay_seccomp_candidate.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/r1/scripts/c3_replay_seccomp_candidate.py.b64",
+      "bytes": 3128,
+      "sha256": "d03c03a3213585aabb854e6b29dd5f794b5ad97eb2be06994e9e483ccbacb410",
+      "git_blob_sha1": "05df13ecf657653fd66dd78047bc79b0f19f4854"
+    },
+    {
+      "previous_path": "r1/tests/test_c3_cache_offline_fixture.py",
+      "data_path": "_to_delete/c3-recovery-source-data-20261031/r1/tests/test_c3_cache_offline_fixture.py.b64",
+      "bytes": 18644,
+      "sha256": "cf1d6d20c841a7855adb49f9521cfcb1ee86e1d222a6c155f4dbb5be9e3a4252",
+      "git_blob_sha1": "e2d08a82d2844ba0e6119a886b66b1981da027e5"
+    }
+  ]
+}

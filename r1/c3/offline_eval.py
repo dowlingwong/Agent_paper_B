@@ -114,6 +114,19 @@ BOOT = 2000
 SEED = 20261019
 
 
+def _verify_evidence_inputs(table_dir: Path, audits_path: Path, metadata: dict) -> None:
+    """Bind evidence evaluation to the independently completed audit and author decision."""
+    from r1.c3.audit import verify_evidence_completion
+    from r1.harness import REPO
+
+    classification = metadata.get("classification") or {}
+    sweep_index = metadata.get("sweep_index") or {}
+    if not classification.get("path") or not sweep_index.get("path"):
+        raise ValueError("EVIDENCE requires classification and index provenance")
+    verify_evidence_completion(Path(table_dir), Path(audits_path), REPO,
+                               Path(sweep_index["path"]), Path(classification["path"]))
+
+
 def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool = True,
              sigma_mode: str = "se_audit") -> list[dict]:
     """Join proposals with audits.
@@ -130,14 +143,35 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
     existing tables; ``"pooled_node"`` (v2) uses s = sigma_node / sqrt(K_label) and
     records ``soft_version`` on every labelled row.
     """
-    rows = load_table(table_dir)
+    meta_path = Path(table_dir) / "build.json"
+    meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+    evidence = meta.get("label") == "EVIDENCE"
+    if meta.get("classification") and not evidence:
+        raise ValueError("classified table must carry an EVIDENCE label")
+    if evidence and not seed_split:
+        raise ValueError("EVIDENCE requires the declared label/evaluation seed split")
     audits_path = audits_path or Path(table_dir) / "audits.jsonl"
+    if evidence:
+        _verify_evidence_inputs(Path(table_dir), Path(audits_path), meta)
+    rows = load_table(table_dir)
     audits = {}
     for line in Path(audits_path).read_text().splitlines():
         if line.strip():
             a = json.loads(line)
+            if evidence:
+                expected = list(range(7001, 7011))
+                if a.get("seeds") != expected:
+                    raise ValueError("EVIDENCE audits require ordered seeds 7001–7010")
+                for key in ("candidate_metrics", "incumbent_metrics"):
+                    values = a.get(key)
+                    if not isinstance(values, list) or len(values) != 10 or any(
+                            not isinstance(x, (int, float)) or isinstance(x, bool) or not np.isfinite(x)
+                            for x in values):
+                        raise ValueError(f"EVIDENCE audit has invalid {key}")
             audits[a["proposal_id"]] = a
-    strata = {(r["source"], r["node"]) for r in rows if r["proposal_id"] in audits}
+    # The complete EVIDENCE population includes no-op/duplicate-only strata.
+    # Pilot tables retain their original sampled-stratum behavior.
+    strata = {(r["source"], r["node"]) for r in rows if evidence or r["proposal_id"] in audits}
     n_non = defaultdict(int)
     n_rand = defaultdict(int)
     for r in rows:
@@ -145,7 +179,7 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
         if k in strata and not rule_skip(r):
             n_non[k] += 1
             a = audits.get(r["proposal_id"])
-            if a and "random" in a["reason"] and a["delta_audit"] is not None:
+            if a and (evidence or ("random" in a["reason"] and a["delta_audit"] is not None)):
                 n_rand[k] += 1
     out = []
     for r in rows:
@@ -153,12 +187,14 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
         if k not in strata:
             continue
         r = dict(r)
+        if evidence:
+            r["_evidence_seed_split"] = True
         if is_noop(r):
             r.update(soft=soft_label(None, None, r["sigma_node"], inert=True), delta_true=0.0,
                      weight=1.0, eval_weight=1.0, audit_reason=None)
         elif is_duplicate(r):
             a = audits.get(r["proposal_id"])
-            if a and a.get("delta_audit") is not None:
+            if a and (evidence or a.get("delta_audit") is not None):
                 if seed_split:
                     ev = split_audit(a)[1]
                 else:
@@ -170,7 +206,7 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
                      audit_reason=a["reason"] if a else None)
         else:
             a = audits.get(r["proposal_id"])
-            if not a or a["delta_audit"] is None:
+            if not a or (not evidence and a["delta_audit"] is None):
                 continue
             ratio = n_non[k] / max(n_rand[k], 1)
             if seed_split:
@@ -184,9 +220,12 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
             else:
                 soft = soft_label(lab["delta_audit"], None, r["sigma_node"], sigma_mode=sigma_mode, k_label=lab["k"])
                 r["soft_version"] = soft_label_version(sigma_mode)
-            r.update(soft=soft, delta_true=ev["delta_audit"],
-                     delta_audit_all=a["delta_audit"], se_audit=a["se"], weight=ratio, eval_weight=ratio if "random" in a["reason"] else 0.0,
-                     audit_reason=a["reason"])
+            r.update(soft=soft, delta_true=ev["delta_audit"], weight=ratio,
+                     eval_weight=ratio if evidence or "random" in a["reason"] else 0.0, audit_reason=a["reason"])
+            if evidence:
+                r.update(label_delta_audit=lab["delta_audit"], label_se_audit=lab["se"])
+            else:
+                r.update(delta_audit_all=a["delta_audit"], se_audit=a["se"])
         out.append(r)
     return out
 
@@ -209,8 +248,16 @@ def crossfit(rows, mode="instance", k=3, arms=None):
     for gval in sorted(set(groups.tolist())):
         te = np.where(groups == gval)[0]
         tr = np.where(groups != gval)[0]
-        train = [rows[i] for i in tr]
-        test = [rows[i] for i in te]
+        def model_row(row, *, training):
+            if not row.get("_evidence_seed_split"):
+                return row
+            # Evaluation-only outcomes are never passed to fit or predict.
+            allowed = {"node", "features", "noop", "duplicate", "_evidence_seed_split"}
+            if training:
+                allowed |= {"soft", "weight"}
+            return {key: value for key, value in row.items() if key in allowed}
+        train = [model_row(rows[i], training=True) for i in tr]
+        test = [model_row(rows[i], training=False) for i in te]
         for a, cls in arms.items():
             preds[a][te] = cls().fit(train).predict(test)
     return preds
