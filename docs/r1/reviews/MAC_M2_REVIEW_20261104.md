@@ -16,6 +16,17 @@
 - v2 configs remain drafts: `workers=4` and TODO nodes, call cap and paper pin differ from the subsequently selected 20/80/digits choices; these need an independently reviewed binding before any authorized launch. The authorization gate does not bind `workers` or `host`. The handoff correctly describes `workers` as the per-root paired-audit process pool; BLAS/OMP variables are propagated through the worker environment.
 - M5's independently reviewed Stage A safety fixes reside on a separate branch and are absent from `75134796`; integrating/reviewing those changes is a separate prerequisite to deploying a corrected code pin. The author's Stage A acceptance and existing data were not changed by this review.
 
+## Re-check of B2 containment — accepted only as a disabled partial fix
+
+The same Codex reviewer re-checked the uncommitted diff from `75134796` in `/private/tmp/paper-b-m2-fix-20261104`, SHA-256 of `git diff --binary` `bdba0df383945b9116266367643b1cc048afb76f6dc5f4cc839f1b65b86dfcbf`. This accepts only the fail-closed containment, not M2 as a whole or B2 ranking. No actual data, models or server operations were used.
+
+- Duplicate `purpose=primary` candidate IDs now raise before any v2 ranking; separate descriptive/schema rows remain separate. A new negative test exercises duplicate primaries.
+- `_b2_summary_v2` unconditionally raises before calculating or returning a ranking for *all* inputs. This contains incomplete or duplicated grid input; it does not implement the author-bound grid verification. A future implementation must validate complete unique node/instance coverage and be independently re-reviewed before removing the STOP.
+- The independent local CPU command `AR_HARNESS_ROOT=/Users/wongdowling/Documents/autoresearch_harness /Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python -m pytest -q r1/tests/test_exam_x5_rule_v2.py -k b2` returned **26 passed, 44 deselected**; no live network, GPU or models. Prior 69-pass testing was for `75134796`, not this diff.
+- Tests previously checking that thinking-on never wins and GPU-hours break ties have been replaced by STOP assertions. Accordingly those behaviors are not established by these new tests while ranking is disabled; restore meaningful ranking tests after implementing grid verification. The full-suite before/after comparison in progress is for `75134796`, not this changed snapshot.
+
+**M2 remains NOT ACCEPTED**, and B2 ranking is unusable. The original round-1 reviewer cannot be recovered, remaining handoff questions need author decisions, the final handoff and full-suite comparison are not complete, and the M5 safety fix remains separate. This partial review authorizes no measurement or execution.
+
 ## Compatibility observation
 
 The no-rule v1 function remains usable for legacy unstamped manifests, but the CLI always supplies its default v1 rule. A synthetic unstamped v1 B2 manifest that the original CLI accepted now raises a rule-hash error. Actual old manifest impact is not established. The handoff should not describe every v1 caller as byte-for-byte unchanged without this qualification. The stricter check also prevents ambiguous inputs from being silently treated as v1; preserving that safety may require an explicitly documented compatibility boundary rather than simply removing it.
