@@ -931,12 +931,14 @@ The author's words at 17:12, as recorded in the runbook's §8: "批准第 1 步�
   - R1-T1-HOREKA's *(open)* "the author submits production jobs", if the author rules on the runbook's §7 item 1;
   - R1-BX-PORTING-CONFIRM: porting by the HoreKa agent on `hk2-trackg-<date>`;
   - R1-ADA-CENSUS.
-- *(open)* The runbook's §7 items 1–9 (production submission and NHR@KIT question (c); T_max and the GPU model, row R1-HOREKA-TMAX; F, C and D; the 400 GPU-h ceiling and the 300 GPU-h STOP; k, the J4 placement and J3 co-location; the second proposer; infrastructure failure versus divergence; the J1b pass criterion; PLAN item H1).
+- *(open)* The runbook's §7 items 1–9 (production submission and NHR@KIT question (c); T_max and the GPU model, row R1-HOREKA-TMAX; F, C and D (proposed 20 Nov 12:00, 20 Nov 20:00, 21 Nov 18:00) and the author's availability for sessions on 20–21 Nov; the 400 GPU-h ceiling and the 300 GPU-h STOP; k, the J4 placement and J3 co-location; the second proposer; infrastructure failure versus divergence; the J1b pass criterion; PLAN item H1, i.e. the B.7 timing and its partial-T1 fallback (not the hybrid arm H1 of D.2), after HK3 and HK5).
 - The Mac runbook's M10 HoreKa paragraph now points to the runbook's §3 (author, 18:00); the Mac agent writes that code, `hk2_submit.py` and `hk2_status.py` first because HK1 needs them.
 
 ### 4 November 2026 (18:00) — HoreKa production submission (author; recorded by an AI agent, Claude, Mac-local agent)
 
-At 18:06 the author wrote: "HoreKa 正式作业提交：我裁定（4 Nov 18:00）"agent 可以从 agent 节点提交 GPU 作业，包括续作业，同时等 NHR 回复。" 请写成 PLAN 行，决策格用这句原话。它解决 R1-T1-HOREKA 里"在 NHR 回答之前由作者提交正式作业"那条 (open)，也是 HoreKa runbook §7 第 1 项的裁定；runbook §0.3 的临时规则（GPU 作业由我用 `--author` 提交）随之失效。consequences 里写明：NHR 回复如果限制 agent 提交或批作业里的 LLM 循环，按 runbook §5 立即 STOP。"
+At 18:06 the author wrote (the whole message, verbatim):
+
+> HoreKa 正式作业提交：我裁定（4 Nov 18:00）"agent 可以从 agent 节点提交 GPU 作业，包括续作业，同时等 NHR 回复。" 请写成 PLAN 行，决策格用这句原话。它解决 R1-T1-HOREKA 里"在 NHR 回答之前由作者提交正式作业"那条 (open)，也是 HoreKa runbook §7 第 1 项的裁定；runbook §0.3 的临时规则（GPU 作业由我用 `--author` 提交）随之失效。consequences 里写明：NHR 回复如果限制 agent 提交或批作业里的 LLM 循环，按 runbook §5 立即 STOP。另外在 M10 的 `hk2_submit.py` 里，把"在裁定之前拒绝不带 `--author` 的 gpu-* 提交"改成以这一行为条件。交新 reviewer 审。
 
 | Decision | Author decision (4 Nov 2026, 18:00) |
 |---|---|
@@ -948,7 +950,10 @@ At 18:06 the author wrote: "HoreKa 正式作业提交：我裁定（4 Nov 18:00�
 - If NHR@KIT's reply restricts agent submission or LLM loops in batch jobs, the HoreKa agent STOPs at once under HoreKa runbook §5.
 - In M10's `hk2_submit.py`, the refusal of `gpu-*` submissions without `--author` "before the ruling" is conditioned on this row.
 
-*Recorder's note (not the author's words):* the runbook's §7 item 1 option (ii) reads "the HoreKa agent submits production jobs from the `agent` node (continuations included), and … J3 runs inside GPU batch jobs, pending NHR@KIT's answer". The author's sentence names submission and continuations; his STOP condition on "LLM 循环 in 批作业" refers to the J3 part. HoreKa runbook §0.3's other rules stay (dev-QoS limits, never touching another user's jobs, no inherited recovery authorization).
+*Recorder's notes (not the author's words):*
+- The runbook's §7 item 1 option (ii) has two parts: (1) the HoreKa agent submits production jobs from the `agent` node, continuations included; (2) J3, the LLM proposer loop, runs inside GPU batch jobs, pending NHR@KIT's answer (NHR question (c), runbook §0.3). The author's sentence names part (1). His STOP condition mentions "批作业里的 LLM 循环", which suggests part (2) is meant as well; that is the recorder's reading only. **Whether part (2) — question (c) — is decided stays open until the author confirms.**
+- Runbook §0.3's block "Until the author rules on this (§7 item 1)" has three interim rules: submit only in `dev-cpu`, `dev-gpu-h100` and `cpu`; every `gpu-h100`/`gpu-h200` job submitted by the author with `--author`; no job submits its own continuation. For submission and continuations the ruling lifts all three. The rules under "Never touch what you did not start" stay, as do the dev-QoS limits of runbook §0.1, §1 and §3 item 1.
+- In `hk2_submit.py`, runbook §3 item 1 ties two refusals to the §7 item 1 ruling: "any `gpu-*` submission without `--author`" and "any submission from inside a job". The author asked to tie the first to this row; "包括续作业" implies the second as well, so both are conditioned on it. This is flagged for the M10 reviewer.
 
 ### 4 November 2026 (18:10) — Track X B1/B2 host (author; recorded by an AI agent, Claude, Mac-local agent)
 
