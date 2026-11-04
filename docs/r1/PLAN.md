@@ -1019,6 +1019,24 @@ Consequences noted by the recording agent (not part of the decision):
 
 - *(proposed)* STOP the node when more than 20% of its T1 label proposals are divergent. A move to T2 requires a separate author row. The 20% figure originated as an agent proposal, not a measured threshold.
 
+### 4 November 2026 (20:38 CET) — Track S, X.5 sensitivity and HoreKa submission design
+
+The author answered the questions described in the recorder's notes below. Each decision cell quotes the author's reply verbatim. These replies do not authorize any job or experiment.
+
+| ID | Author's decision |
+|---|---|
+| R1-TRACKS-PICK-REPEAT-DEFER | "结果出来后再决定" |
+| R1-EXAM-X5-B1-SENSITIVITY | "保留描述性检查" |
+| R1-EXAM-X5-D28-SCOPE | "只用 thinking-off 作门槛" |
+| R1-HOREKA-UNIFIED-SUBMISSION | "采用统一提交与等待记账" |
+
+Consequences noted by the recording agent (not part of the decisions):
+
+- *(proposed)* Decide after the Track S result whether to repeat it with the final exam pick; this reply does not launch a repeat.
+- *(proposed)* Keep the draft `x5_rule_v2` B1 thinking-on sensitivity check on `openml_credit_approval`, four instances per switchable model, descriptive only. It does not affect B2 ranking. The rule remains a draft until its own review and R1-EXAM-RULE-X5V2.
+- *(proposed)* For v2 finalist eligibility, D28 uses primary thinking-off roots only; record thinking-on D28 separately as descriptive. This is not an authorization to run B1 or B2.
+- *(proposed)* All HoreKa jobs for this project go through one submission tool and shared lock, with submissions paused when accounting is not reconciled. This is a design choice to be implemented and independently reviewed; it does not establish site-enforced exclusivity, accounting completeness, or control over unrelated jobs or submission routes. Those limitations remain open and the current real-submit STOP remains until resolved and reviewed.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
