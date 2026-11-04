@@ -5,6 +5,7 @@ import argparse
 import copy
 import json
 import os
+import platform
 import sys
 import time
 from pathlib import Path
@@ -55,14 +56,15 @@ def run_fresh_qualification(runner, path, spec, ctx):
     return result
 
 
-def stage_a(runner, selected):
+def stage_a(runner, selected, only=None, amendment=None, amendment_reason=None):
     # D3 conditions (explicit false, descriptive cold-true-first, per-call
     # evidence) are enforced inside _stage_a_cooperative and the worker path.
     if runner.cfg.get('cache_prompt') is not False:
         raise PreparationStop('STOP: Stage A cache_prompt must be explicitly false')
     if runner.cfg.get('d3_policy')!='author_same_uid_cooperative_20261031':
         raise PreparationStop('STOP: cooperative D3 policy not explicit')
-    return _stage_a_cooperative(runner,selected)
+    return _stage_a_cooperative(runner,selected,only=only,amendment=amendment,
+                                amendment_reason=amendment_reason)
 
 
 GPU_IDLE_ATTEMPTS=12
@@ -96,8 +98,14 @@ def await_idle_gpu(cfg, *, attempts=GPU_IDLE_ATTEMPTS, interval=GPU_IDLE_INTERVA
                           f'{attempts} observations: {last}')
 
 
-def _stage_a_cooperative(runner, selected):
-    """Reviewed implementation only; guarded public entry is still STOP."""
+def _stage_a_cooperative(runner, selected, only=None, amendment=None, amendment_reason=None):
+    """Reviewed implementation only; guarded public entry is still STOP.
+
+    ``only`` is the declared A1 amendment-measurement subset: it must be an explicit
+    registry-known id list accompanied by an amendment declaration, it is recorded in
+    ``batch_state.amendment_measurement`` and it never changes any check; normal Stage A
+    runs pass None and carry no amendment record.
+    """
     from r1.exam.stage_a import require_d3_evidence
     try: require_d3_evidence()
     except RuntimeError as exc: raise PreparationStop(str(exc)) from exc
@@ -105,9 +113,33 @@ def _stage_a_cooperative(runner, selected):
     from r1.exam.cache_runtime import reject_unverified_lease
     reject_unverified_lease()
     out=[]
-    for candidate in runner.spec_order(selected):
+    every_spec=runner.spec_order(selected)
+    only_set=None
+    if only:
+        if amendment!='A1' or not amendment_reason:
+            raise PreparationStop('STOP: --only requires an A1 amendment declaration')
+        only_set=set(only)
+        known={spec['id'] for spec in every_spec}
+        unknown=sorted(only_set-known)
+        if unknown: raise PreparationStop(f'STOP: --only names unknown ids {unknown}')
+        if not only_set: raise PreparationStop('STOP: --only must name at least one id')
+        repairs={spec['id']: (spec.get('template_repair') or {}).get('sha256')
+                 for spec in every_spec if spec['id'] in only_set and spec.get('template_repair')}
+        runner.state['amendment_measurement']={
+            'schema':'r1.exam.amendment_measurement/v1','amendment':'A1',
+            'attempt':str(getattr(runner,'out','')),'host':platform.node(),
+            'reason':amendment_reason,'models':sorted(only_set),
+            'build':(runner.cfg.get('server') or {}).get('build'),
+            'prompts_sha256':runner.cfg.get('prompts_sha256'),
+            'code_commit':runner.cfg.get('paper_commit'),
+            'manifest_sha256':os.environ.get('TRACKX_MANIFEST_SHA256'),
+            'repairs':dict(sorted(repairs.items())),
+            'scope':'separate amendment measurement; never spliced into the Stage A table'}
+        runner.save()
+    for candidate in every_spec:
         if candidate.get('kind') not in ('random_valid','scripted'): runner.validate_spec(candidate,allow_pending_footprint=True)
-    for spec in runner.spec_order(selected):
+    for spec in every_spec:
+        if only_set is not None and spec['id'] not in only_set: continue
         key=spec['id']+'/stage-a'
         if key in runner.state['completed']:
             out.append(json.loads(Path(runner.state['completed'][key]['path']).read_text()));continue
@@ -305,6 +337,9 @@ def main(argv=None):
     p.add_argument('--free-sensitivity',action='store_true',help='B2 only: one-node free-generation sensitivity for 7B and the author-recorded D22 pick')
     p.add_argument('--check-config',action='store_true');p.add_argument('--allow-placeholders',action='store_true')
     p.add_argument('--interrupt-root',action='store_true',help='DRYRUN only: kill first root worker after one ledger append')
+    p.add_argument('--only',help='A1 amendment measurement only: comma-separated registry ids (requires --amendment A1)')
+    p.add_argument('--amendment',choices=['A1'],help='declared template-check amendment for a measurement run')
+    p.add_argument('--amendment-reason',help='declared reason for the amendment measurement')
     a=p.parse_args(argv)
     if not a.check_config and a.phase in ('b1','b2'):
         raise PreparationStop('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
@@ -330,7 +365,14 @@ def main(argv=None):
     preserve_running=False
     try:
         runner.start(a.phase)
-        if a.phase=='stage-a': stage_a(runner,a.candidate)
+        if a.phase=='stage-a':
+            only=[x.strip() for x in a.only.split(',')] if a.only else None
+            if only is not None and (a.amendment!='A1' or not a.amendment_reason):
+                raise PreparationStop('STOP: --only requires --amendment A1 and --amendment-reason')
+            if only is None and (a.amendment or a.amendment_reason):
+                raise PreparationStop('STOP: amendment flags require --only')
+            stage_a(runner,a.candidate,only=only,amendment=a.amendment,
+                    amendment_reason=a.amendment_reason)
         else: evidence(runner,a.phase,a.candidate,a.interrupt_root)
         runner.state['status']='COMPLETE';runner.save()
     except BaseException as exc:

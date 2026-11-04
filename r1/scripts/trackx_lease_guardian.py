@@ -635,7 +635,8 @@ def run(lock_path, manifest_path, manifest_sha, evidence_dir, *, expected_runner
                     'TRACKX_GPU_LEASE_UID': str(expected.st_uid),
                     'TRACKX_GPU_GUARDIAN_PID': str(guardian_pid),
                     'TRACKX_GPU_GUARDIAN_START_TICKS': str(guardian_ticks),
-                    'TRACKX_LEASE_EVIDENCE_DIR': evidence_dir})
+                    'TRACKX_LEASE_EVIDENCE_DIR': evidence_dir,
+                    'TRACKX_MANIFEST_SHA256': manifest_sha})
         persist_exclusive(dirfd, 'start.json', {
             'schema': START_SCHEMA, 'guardian_pid': guardian_pid,
             'guardian_start_ticks': guardian_ticks, 'lease_fd': fd,

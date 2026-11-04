@@ -304,3 +304,82 @@ def test_await_idle_gpu_stops_immediately_when_the_census_is_unknown(monkeypatch
     with pytest.raises(PreparationStop, match='GPU census unavailable'):
         exam_runner.await_idle_gpu({}, attempts=5, interval=0, sleep=slept.append)
     assert slept == []
+
+
+def _only_runner(tmp_path, specs):
+    from types import SimpleNamespace
+    class Runner:
+        cfg={'dryrun':True,'server':{'binary_sha256':'bin','build':'fake'}}
+        out=tmp_path; state={'completed':{}}; service=None
+        def spec_order(self,selected=None): return [dict(s) for s in specs]
+        def validate_spec(self,*a,**k): pass
+        def save(self): pass
+    return Runner()
+
+
+def test_only_requires_amendment_declaration(tmp_path, monkeypatch):
+    from r1.scripts import exam_runner
+    from r1.exam.runtime import PreparationStop
+    from r1.exam import cache_runtime, stage_a as worker
+    monkeypatch.setattr(worker, 'require_d3_evidence', lambda: None)
+    monkeypatch.setattr(cache_runtime, 'reject_unverified_lease', lambda: None)
+    specs=[{'id':'a','role':'candidate','runtime':{'footprint_mib':None},'quant_source':{'sha256':'p'},'thinking_policy':{'mode':'off'}}]
+    runner=_only_runner(tmp_path,specs)
+    with pytest.raises(PreparationStop, match='requires an A1 amendment'):
+        exam_runner._stage_a_cooperative(runner,None,only=['a'],amendment=None,amendment_reason=None)
+
+
+def test_only_rejects_unknown_ids(tmp_path, monkeypatch):
+    from r1.scripts import exam_runner
+    from r1.exam.runtime import PreparationStop
+    from r1.exam import cache_runtime, stage_a as worker
+    monkeypatch.setattr(worker, 'require_d3_evidence', lambda: None)
+    monkeypatch.setattr(cache_runtime, 'reject_unverified_lease', lambda: None)
+    specs=[{'id':'a','role':'candidate','runtime':{'footprint_mib':None},'quant_source':{'sha256':'p'},'thinking_policy':{'mode':'off'}}]
+    runner=_only_runner(tmp_path,specs)
+    with pytest.raises(PreparationStop, match='unknown ids'):
+        exam_runner._stage_a_cooperative(runner,None,only=['bogus'],amendment='A1',amendment_reason='test')
+
+
+def test_only_subset_is_recorded_and_filtered(tmp_path, monkeypatch):
+    from r1.scripts import exam_runner
+    from r1.exam import cache_runtime, stage_a as worker
+    from types import SimpleNamespace
+    monkeypatch.setattr(worker,'require_d3_evidence',lambda:None)
+    monkeypatch.setattr(cache_runtime,'reject_unverified_lease',lambda:None)
+    monkeypatch.setattr(cache_runtime,'capture_parent_identity',lambda *a,**k:{'synthetic':True})
+    monkeypatch.setattr(cache_runtime,'reject_unverified_cold',lambda *a:None)
+    def spec(cid, rep=None):
+        row={'id':cid,'role':'candidate','runtime':{'footprint_mib':None},'quant_source':{'sha256':'p'},
+             'thinking_policy':{'mode':'off'}}
+        if rep: row['template_repair']={'schema':'r1.exam.template_repair/v1','sha256':rep,'file':'x.jinja'}
+        return row
+    specs=[spec('a'),spec('b'),spec('c',rep='rep-sha')]
+    class Runner:
+        cfg={'dryrun':True,'server':{'binary_sha256':'bin','build':'fake'},'prompts_sha256':'prompts','paper_commit':'commit'}
+        out=tmp_path; state={'completed':{}}; service=None
+        served=[]
+        def spec_order(self,selected=None): return [dict(s) for s in specs]
+        def validate_spec(self,*a,**k): pass
+        def save(self): pass
+        def server(self,s,m,c): self.served.append(s['id']); self.service=SimpleNamespace(record_path='r',port=1); return self.service
+        def stop_service(self): self.service=None
+        def run_job(self,job,module):
+            import json
+            from pathlib import Path as _P
+            out=_P(job['out']); out.mkdir(parents=True,exist_ok=True)
+            if module=='r1.exam.qualify':
+                (out/'qualification.json').write_text(json.dumps({'status':'PASS','context':job['ctx'],
+                    'model_sha256':job['candidate']['quant_source']['sha256'],'footprint_mib':50}))
+            else:
+                (out/'stage_a.json').write_text(json.dumps({'candidate':job['candidate']['id'],'passed':True,'failure_classes':[]}))
+    token=cache_runtime._authorized.set(True)
+    try:
+        runner=Runner()
+        exam_runner._stage_a_cooperative(runner,None,only=['a','c'],amendment='A1',amendment_reason='M1 test')
+    finally:
+        cache_runtime._authorized.reset(token)
+    decl=runner.state['amendment_measurement']
+    assert decl['amendment']=='A1' and decl['models']==['a','c'] and decl['repairs']=={'c':'rep-sha'}
+    assert runner.served==['a','c']
+    assert 'amendment_measurement' not in _only_runner(tmp_path,specs).state

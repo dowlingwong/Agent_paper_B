@@ -23,6 +23,25 @@ from r1.scripts import llama_server_instance as lsi
 from r1.scripts.c3_label_sweep import RunnerWatchdog, stop_tree
 
 REPO=Path(__file__).resolve().parents[2]
+
+TEMPLATE_REPAIR_SCHEMA='r1.exam.template_repair/v1'
+
+def template_repair_args(spec) -> list[str]:
+    """Declared per-candidate template repair (A1): serve the pinned repair template.
+
+    The declaration is part of the pinned registry (file + sha256); a missing file or a
+    digest mismatch is a STOP.  Used by the replay server and the qualification probe so
+    that measurement and probe run the same template."""
+    repair=(spec or {}).get('template_repair')
+    if not repair: return []
+    if not isinstance(repair,dict) or repair.get('schema')!=TEMPLATE_REPAIR_SCHEMA:
+        raise RuntimeError('STOP: template repair declaration malformed')
+    path=Path(str(repair.get('file') or ''))
+    if not path.is_absolute(): path=REPO/path
+    if not path.is_file(): raise RuntimeError('STOP: template repair file missing')
+    if digest_file(path)!=repair.get('sha256'):
+        raise RuntimeError('STOP: template repair digest mismatch')
+    return ['--chat-template-file', str(path.resolve())]
 DEFAULT_CONFIG=REPO/'r1/scripts/configs/exam_portal.json'
 # Approved exam hosts.  The author's 1 Nov decision moved the new Stage A attempt to
 # TASL-7; both hosts run the same Ubuntu 22.04 + RTX 4090 environment and share the
@@ -334,7 +353,7 @@ class ExamRunner:
         build=self.validate_spec(spec)
         model=spec['runtime']['model_path'];server=self.cfg['server']
         thinking={**spec['thinking_policy'],'mode':mode,'budget':2048 if mode!='off' else 0}
-        args=list(EXAM_SERVER_ARGS)
+        args=list(EXAM_SERVER_ARGS)+template_repair_args(spec)
         inst=lsi.LlamaServerInstance(self.out/'servers'/spec['id'],server['binary'],model_path=model,alias=spec['id'],
                                    ctx_size=ctx,n_gpu_layers=999,gpu_uuid=self.cfg['gpu_uuid'],extra_args=args,
                                    thinking_policy=thinking,generation=len(list((self.out/'servers'/spec['id']).glob('*.json'))),

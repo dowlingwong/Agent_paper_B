@@ -105,6 +105,9 @@ def git(repo: Path, *args: str) -> str:
 
 def pinned_files(repo: Path, config: Path, prompts: Path, extra: list[Path]) -> list[dict]:
     files = sorted((repo / 'r1').rglob('*.py')) + sorted((repo / 'r1').rglob('*.yaml'))
+    templates = repo / 'r1/exam/templates'
+    if templates.is_dir():
+        files += sorted(templates.rglob('*.jinja'))
     files += [config, prompts, repo / 'r1/scripts/trackx_lease_guardian.py', *extra]
     rows, seen = [], set()
     for path in files:

@@ -78,6 +78,61 @@ def load_prompts(path, expected, *, dryrun=False, historical_seeds=False):
     return rows
 
 
+_A1_TOKENIZERS = {}
+
+
+def a1_tokenizer(spec):
+    """Pinned HF tokenizer for the A1 template rule (versioned, cached)."""
+    source = spec['chat_template_source']; key = (source['repo'], source['revision'])
+    if key not in _A1_TOKENIZERS:
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(source['repo'], revision=source['revision'],
+                                                  trust_remote_code=False, token=False)
+        if hashlib.sha256(tokenizer.get_chat_template().encode()).hexdigest() != source['template_sha256']:
+            raise ValueError('HF template differs from pinned template bytes')
+        _A1_TOKENIZERS[key] = tokenizer
+    return _A1_TOKENIZERS[key]
+
+
+def a1_template_equal(spec, actual, expected, server_tokenize, tokenizer=None):
+    """A1 (2026-11-04): byte equality, or exactly one leading tokenizer-BOS prefix.
+
+    The second path is accepted only when (i) the HF render is the server render prefixed
+    by the tokenizer's own single BOS token, (ii) the HF token ids satisfy
+    ids(hf) == [bos_id] + ids(served), and (iii) the *pinned build's* own /tokenize of the
+    served text equals those HF ids.  Any other difference remains a template failure.
+    """
+    evidence = {'a1_version': 'A1', 'byte_equal': actual == expected, 'prefix_token': None,
+                'prefix_token_id': None, 'tokens_equal': None, 'server_tokenize': None,
+                'method': None, 'served_len': len(actual), 'hf_len': len(expected)}
+    if evidence['byte_equal']:
+        evidence['method'] = 'byte'
+        return True, evidence
+    try:
+        tokenizer = tokenizer or a1_tokenizer(spec)
+    except Exception as exc:  # noqa: BLE001 - recorded; the check then fails closed
+        evidence['error'] = f'{type(exc).__name__}: {exc}'
+        return False, evidence
+    bos, bos_id = tokenizer.bos_token, tokenizer.bos_token_id
+    if not isinstance(bos, str) or not bos or not isinstance(bos_id, int) or not expected.startswith(bos):
+        evidence['served_head'] = actual[:80]; evidence['hf_head'] = expected[:90]
+        return False, evidence
+    if actual != expected[len(bos):]:
+        evidence['served_head'] = actual[:80]; evidence['hf_head'] = expected[:90]
+        return False, evidence
+    prefix_ids = [int(x) for x in tokenizer(bos, add_special_tokens=False).input_ids]
+    hf_ids = [int(x) for x in tokenizer(expected, add_special_tokens=False).input_ids]
+    served_ids = [int(x) for x in tokenizer(actual, add_special_tokens=False).input_ids]
+    evidence.update(prefix_token=bos, prefix_token_id=bos_id)
+    hf_side = len(prefix_ids) == 1 and hf_ids == prefix_ids + served_ids
+    server_ids = server_tokenize(actual) if callable(server_tokenize) else None
+    server_side = isinstance(server_ids, list) and [int(x) for x in server_ids] == hf_ids
+    evidence.update(tokens_equal=bool(hf_side), server_tokenize=bool(server_side))
+    ok = bool(hf_side and server_side)
+    evidence['method'] = 'token' if ok else None
+    return ok, evidence
+
+
 def hf_render(spec, messages):
     from transformers import AutoTokenizer  # optional host dependency; no model is loaded
     source=spec['chat_template_source']
@@ -201,13 +256,36 @@ def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=Fa
             raise D3EvidenceStop('STOP: VRAM monitoring unavailable or <1 GiB free during prefill')
         component='template'
         render=template_renderer or (lambda messages:hf_render(spec,messages))
-        for i in range(5):
-            messages=[{'role':'user','content':f'Fixed template check {i}: JSON, whitespace, Unicode α, newline\nend.'}]
+        thinking=spec['thinking_policy']['mode']!='off'
+        def server_tokenize(text):
+            try:
+                reply=non_generation.post('/tokenize',{'content':text,'add_special':True})
+                tokens=reply.get('tokens') if isinstance(reply,dict) else None
+                return [int(t) for t in tokens] if isinstance(tokens,list) else None
+            except Exception:  # noqa: BLE001 - absence of the endpoint fails the A1 token path
+                return None
+        evidence=[]
+        def template_check(kind,ident,messages):
             actual=non_generation.post('/apply-template',{'messages':messages,'add_generation_prompt':True,
-                        'chat_template_kwargs':{'enable_thinking':spec['thinking_policy']['mode']!='off'}})['prompt']
+                        'chat_template_kwargs':{'enable_thinking':thinking}})['prompt']
             expected=render(messages)
-            result['template_checks'].append(actual==expected)
-        if not all(result['template_checks']): result['failure_classes'].append('template')
+            if dryrun:
+                ok=actual==expected
+                row={'a1_version':'A1','byte_equal':ok,'prefix_token':None,'prefix_token_id':None,
+                     'tokens_equal':None,'server_tokenize':None,'method':'dryrun_byte',
+                     'served_len':len(actual),'hf_len':len(expected)}
+            else:
+                ok,row=a1_template_equal(spec,actual,expected,server_tokenize)
+            evidence.append({'kind':kind,'id':ident,**row})
+            return ok
+        result['template_checks']=[template_check('fixed',i,
+            [{'role':'user','content':f'Fixed template check {i}: JSON, whitespace, Unicode α, newline\nend.'}])
+            for i in range(5)]
+        result['template_checks_frozen']=[template_check('frozen',row.get('trial_id'),
+            [{'role':'user','content':row['prompt']}]) for row in prompts]
+        result['template_check_evidence']=evidence
+        if not all(result['template_checks']) or not all(result['template_checks_frozen']):
+            result['failure_classes'].append('template')
     except D3EvidenceStop:
         raise
     except Exception as exc:

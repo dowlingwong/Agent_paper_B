@@ -7,7 +7,7 @@ from pathlib import Path
 from r1.scripts import llamacpp_probe, llama_server_instance as lsi
 from r1.scripts.ollama_instance import free_port
 from r1.exam.campaign import write_json
-from r1.exam.runtime import EXAM_SERVER_ARGS
+from r1.exam.runtime import EXAM_SERVER_ARGS, template_repair_args
 from r1.exam.guards import digest_file
 
 
@@ -114,7 +114,7 @@ def qualify(job):
               '--expect-binary-sha256',cfg['server']['binary_sha256'],
               '--exam-stage-a',
               '--min-gpu-mib',str(math.ceil(.9*spec['quant_source']['size_bytes']/2**20)),
-              '--server-extra-args',json.dumps(list(EXAM_SERVER_ARGS)),
+              '--server-extra-args',json.dumps(list(EXAM_SERVER_ARGS)+template_repair_args(spec)),
               '--thinking-policy',json.dumps(thinking)]
         code=llamacpp_probe.main(args)
         raw_path=max(out.glob('probe_*.json'));raw=json.loads(raw_path.read_text())
