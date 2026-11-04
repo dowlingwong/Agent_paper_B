@@ -9,7 +9,7 @@ Supersedes the post-training part of R1-C3-BASE (24 Oct).
 > - **Self-control arm = A4** (the Track X pick, zero-shot, isotonic-calibrated). **R-B (§6.4) is an optional "trained self-control" ablation**, no longer the self-control arm of the three-way comparison (R1-BX-D9).
 > - **Wording:** in the paper only R-B is called RL; Stage R-A (§6.3) is called **"decision-focused fine-tuning"** (R1-BX-D9).
 > - **Serialisation order:** the proposal goes **after** the history, immediately before `<decide>`; a new E6 probe (A6, §5.6) compares history-first with proposal-first (R1-BX-REVISIONS (d)).
-> - **Labels:** T0 (CPU nodes) and T1 (GPU label nodes, code-level diffs); per-node σ̂ for every node; divergence is a separate outcome class (§3.4); K = 6 on T1 only if R1-BX-D3's check passes.
+> - **Labels:** T0 (CPU nodes) and T1 (GPU label nodes, code-level diffs); per-node σ̂ for every node; divergence is a separate outcome class (§3.4); K = 10 unless an author row puts R1-BX-D3's K = 6 into force (T1 only, proposed). Sweep-2 and T1 label tables are read for analysis only after R1-BX-D8-CONFIRM.
 > - **Generalisation:** leave-one-suite-out is primary; LONO within T0 is secondary (§3.6, §7.2).
 > - **TabPFN:** an information-matched comparison against Kev, TabPFN in regression mode (R1-BX-D13).
 > - **Stage D:** one round on 1–2 T1 nodes only (R1-BX-D11).
@@ -87,7 +87,7 @@ The action head is optional (absent in Stage S and in the "rule-on-belief" arm).
 
 Shared serialisation: one text template, ≤ 1,024 tokens (Laya's limit), fixed bin names and order.
 
-**Order of the serialised parts (4 Nov, R1-BX-REVISIONS (d)).** For causal (decoder) models, history tokens placed **before** the proposal cannot attend to it, so the readout at `<decide>` sees the history only through the proposal's own tokens. The template therefore reads: task and node context → ledger history → **the proposal** → `<decide>` (and the options, where the family's interface lists them). The template carries a version field. The Track P agent first checks which order the template used in P.3a. If P.3a used proposal-first, its results are recorded with that template version and are not re-labelled; E6 probe A6 measures the difference, and P.3b onward uses the 4 Nov order. *(open: whether P.3a must be re-run under the new order is the author's call after the probe.)*
+**Order of the serialised parts (4 Nov, R1-BX-REVISIONS (d)).** For causal (decoder) models, history tokens placed **before** the proposal cannot attend to it, so the readout at `<decide>` sees the history only through the proposal's own tokens. The template therefore reads: task and node context → ledger history → **the proposal** → `<decide>` (and the options, where the family's interface lists them). The template carries a version field. The editor of `r1/c3/train/` (the Mac agent under MAC_LOCAL M13, if the handover row names it) first checks which order the template used in P.3a. If P.3a used proposal-first, its results are recorded with that template version and are not re-labelled; E6 probe A6 measures the difference, and P.3b onward uses the 4 Nov order. *(open: whether P.3a must be re-run under the new order is the author's call after the probe.)*
 
 Every new head (action, cumulative, the E0 linear belief head) reads a LayerNorm-ed state (26 Oct, R1-HEADS-LN). The reserved tokens `<b0>…<b11>`, `<exec>`, `<skip>` are initialised from the mean of the existing token embeddings; those rows are kept and trained in fp32 at a lower lr, 1e-4 (26 Oct, R1-TOKEN-INIT; value confirmed by R1-TRACKP-CHOICES).
 
@@ -157,7 +157,7 @@ s_j = σ̂ / √5, where σ̂ is the **pooled** node noise σ (in *z* units σ̂
 
 y_{j,k} = Φ((e_{k+1} − μ_j)/s_j) − Φ((e_k − μ_j)/s_j),  k = 1…11; y_{j,0} = 0.
 
-**4 Nov (R1-BX-REVISIONS (c), R1-BX-D3).** σ̂ is each node's own: from the C1 30-seed table on T0, and from each T1 node's own noise floor, measured on that table's GPU model. If a T1 floor is heavy-tailed, the Student-t form above is declared for that node before labels are built *(proposed)*. A divergent run (a non-finite loss, or no metric at the fixed budget) produces no z-value: the proposal is recorded in a separate outcome class with its divergence count, and enters neither μ_j nor the bins. With K = 6 on T1 (only if R1-BX-D3's check passes), s_j = σ̂/√3.
+**4 Nov (R1-BX-REVISIONS (c), R1-BX-D3).** σ̂ is each node's own: from the C1 30-seed table on T0, and from each T1 node's own noise floor, measured on that table's GPU model. If a T1 floor is heavy-tailed, the Student-t form above is declared for that node before labels are built *(proposed)*. A divergent run is a separate outcome class (R1-BX-REVISIONS (c)). *(proposed:* a non-finite loss, or no metric at the fixed budget; it produces no z-value, the proposal is recorded with its divergence count, and it enters neither μ_j nor the bins.*)* With K = 6 on T1 (only once an author row puts R1-BX-D3 into force), s_j = σ̂/√3.
 
 The same construction with seeds 7006–7010 gives `y_eval`. **Candidate training uses soft labels; the author permits the synthetic E0 contrast and one real-label appendix-only hard ablation, never a candidate (R1-HARD-LABEL-ABLATION).**
 

@@ -32,12 +32,13 @@ recorded value. R1 treats this loop as noisy sequential selection with an incumb
 | Tier | Role | Tasks |
 |---|---|---|
 | T0 | Controlled testbed: theory checks, Track S, ablations; single-parameter edits as the low-interaction condition | The 8 CPU nodes (OpenML and small-MLP) |
-| T1 | C3 labels and evaluation; the B.7 gate | GPU tasks from autoresearch, 1GC-7RC and MLGym, run at fixed step budgets with code-level diffs |
-| T2 | Evaluation only (closed loop, a second API proposer) | Larger 1GC-7RC tasks; optionally MLAgentBench |
+| T1 | C3 labels and closed-loop evaluation (also with a second, API proposer); the B.7 gate | GPU tasks from autoresearch, 1GC-7RC and MLGym, run at fixed step budgets with code-level diffs |
+| T2 | Evaluation only (closed loop, also with the API proposer) | Larger 1GC-7RC tasks; optionally MLAgentBench |
 
 - **Target:** 12–16 real tasks from ≥ 3 suites and ≥ 5 domains.
 - **Primary generalisation:** leave-one-suite-out.
 - **Integration:** the suites' task assets run as harness nodes; their agent frameworks are not used.
+- **Open:** whether the 1GC-7RC repository is public is checked in the Track G census; the T1/T2 lists are fixed by the author after it.
 - **Proposers:** the main proposer is the Track X exam pick, run with thinking off (R1-MAIN-PROPOSER). `qwen2.5-coder:7b` (sweep 1, frozen) is the second source.
 - **Dates:** current targets are B.7 ≈ 8 Dec 2026, D.3 ≈ 3 Jan 2027, manuscript 10 Jan 2027 (R1-BX-D14). They are recomputed after the T1 pilot.
 
@@ -78,5 +79,6 @@ make legacy-test LEGACY_PY=/path/to/python3.13         # old-route suites (212/6
 ```
 
 LLM workloads never run on the Mac (PLAN R1-COMPUTE). They run on the servers: two RTX 4090 hosts
-(TASL-2, TASL-7), deepthought (4 × TITAN X; CPU audits; the main proposer may be served across two cards)
+(TASL-2, TASL-7), deepthought (4 × TITAN X; CPU audits; the main proposer may be served across two cards if a
+dual-card qualification passes)
 and Ada (8 × RTX 6000 Ada, shared, resumable work only; the Track G census starts there).

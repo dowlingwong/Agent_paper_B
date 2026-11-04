@@ -2,7 +2,7 @@
 
 **Written 4 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 2 addressed an independent review (not accepted: 3 BLOCKING, 7 MAJOR, 7 MINOR). Revision 3 (4 Nov) applies the author's full adoption of `proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS): Track G becomes the critical path (O8), Ada takes the GPU-node census, the dual-card host follows R1-BX-REVISIONS (f), and Track S gets GPU nodes and a fallback date. The mapping is in §4.**
 
-One operator agent (Claude Code), started by the author on the Mac with SSH access to the servers, runs all experiments of the current plan through this runbook. The **Mac-local agent** (`docs/r1/prompts/MAC_LOCAL_RUNBOOK_20261104.md`) writes the code, the drafts and the analyses, and hands you reviewed commits through the author. You never edit code to make a run work: if code is wrong, STOP and report.
+One operator agent (Claude Code), started by the author on the Mac with SSH access to the servers, runs all experiments of the current plan through this runbook. The **Mac-local agent** (`docs/r1/prompts/MAC_LOCAL_RUNBOOK_20261104.md`) writes the code, the drafts and the analyses, and hands you reviewed commits through the author. You never edit code to make a run work: if code is wrong, STOP and report. *(proposed, PLAN R1-BX-REVISIONS (h); in force once the author confirms it)* The one exception is **porting the suites' task assets into harness nodes** (review document §7 routes it to you): you may write new node assets only — data preparation, fixed-step wrappers, metric parsers, node specs, the declared representative edits — on your own branch `ops-trackg-<date>`, building on the Mac agent's shared pieces, and each port is independently reviewed before use. You never edit harness core code, label code or the gate.
 
 **This runbook authorizes nothing.** Every run needs what its track runbook and the PLAN require. An EVIDENCE run needs the author's committed authorization note and PLAN row.
 
@@ -52,7 +52,8 @@ Report to the author in **Chinese**, short and concrete. Reports, reviews and co
 - **Run labels.**
   - ENGINEERING_ONLY, PILOT and DIAGNOSTIC runs follow their track runbook. Track X Stage A, for example, runs under its own reviewed procedure, without a note.
   - EVIDENCE runs need a committed note and a PLAN row: sweeps, audits, B1/B2, Track S Phase 8, and P.3a/P.3b/A5 evidence.
-- **Seeds.** Seeds 7006–7010 are for evaluation only. Exam seeds (9001+, 9101+, 9201+) never enter a C3 sweep. Audits use K = 10 until an author row puts R1-BX-D3's K = 6 into force (T1 only).
+- **Seeds.** Seeds 7006–7010 are for evaluation only. Exam seeds (9001+, 9101+, 9201+) never enter a C3 sweep. Audits use K = 10 until an author row puts R1-BX-D3's K = 6 into force (scope *proposed*: T1 only).
+- **Analysis gate (R1-BX-D8).** No sweep-2 (T0 or T1) label table is copied back for analysis, or handed to any analysis code, before the author's **R1-BX-D8-CONFIRM** row exists.
 - **GPU task runs (Track G, 4 Nov).** Fixed step budgets, never wall-clock; one GPU model per label table; a divergence is recorded as its own outcome and never re-run to hide it (R1-BX-D5, R1-BX-REVISIONS (c)).
 - **Secrets (Track P).** Never read `~/.config/r1/secrets.env`. API calls (Jev, DeepSeek) go only from the host process that the Track P runbook names, and only when authorized.
 - **Review loop at every STOP.**
@@ -108,7 +109,7 @@ Each phase lists: what it is, the host, the type, a rough duration (an estimate)
 - the deepthought alias.
 
 **Steps.**
-1. On each host: `ssh <alias> 'hostname; id; uptime; nvidia-smi --query-gpu=index,uuid,memory.used,memory.total --format=csv'`.
+1. On each host, **including Ada** (`experiment_zhixu`, for the Track G census): `ssh <alias> 'hostname; id; uptime; nvidia-smi --query-gpu=index,uuid,memory.used,memory.total --format=csv'`. On Ada also record other users' jobs, free cards, and whether a Paper A campaign is waiting for a card (then no Paper B GPU launch there).
 2. Census per host, changing nothing. Record:
    - `tmux ls` and the owner of each session;
    - `python` and `llama-server` processes with their command lines;
@@ -201,7 +202,7 @@ Each phase lists: what it is, the host, the type, a rough duration (an estimate)
    The desktop parts go to the Mac agent through the author: S0.5 summary, S0.6, S0.7 selection, the pre-declaration draft, the Phase 9 analysis.
 
 4. **GPU nodes (R1-BX-D10, 4 Nov).** Only after the Track S GPU-node design revision (Mac M6) is reviewed and the author commits its row: 1–2 GPU nodes (autoresearch short fixed-step; one high-noise RL-type task from the census). Until then, nothing runs on GPU nodes for Track S.
-5. **Fallback date ≈ 15 Dec 2026.** Report Track S's state to the author on 8 Dec and on 15 Dec. If there is no campaign-level result by 15 Dec, the paper's DAC-reduction argument falls back to the theorem plus synthetic controls; Track S may continue, but its result is no longer on the critical path.
+5. **Fallback date ≈ 15 Dec 2026.** Report Track S's state to the author on 8 Dec and on 15 Dec. If there is no campaign-level result by 15 Dec, the paper's DAC-reduction argument falls back to the theorem plus synthetic controls; *(proposed)* Track S may continue, but its result is no longer on the critical path.
 
 **Priority:** yield to Track X on TASL-2 and to Track P on TASL-7. A pause is not a failure.
 
@@ -275,6 +276,7 @@ Sweep 2's **T1 part** is O8 G.5.
 - the projection under the 4-day gate (proposed);
 - the author's note `c3_sweep2_<date>.md`;
 - the host decision (O5 and the author's STOP 5 ruling).
+- before the label table is copied back for analysis: **R1-BX-D8-CONFIRM**.
 
 **Run:**
 - one host for the whole sweep;
@@ -305,23 +307,25 @@ Sweep 2's **T1 part** is O8 G.5.
    - option 3: omit the descriptive 2k/8k probes.
 
    Any rerun preserves attempt 1. E0 and E6 need no labels.
-2. **P.3b, A5 and R-A.** These start only after:
+2. **TabPFN rows (R1-TABPFN, R1-BX-D13)** run here on TASL-7, native and information-matched, from the Mac agent's M11 code at its reviewed commit, including the text-embedding model, once labels exist and R1-BX-D8-CONFIRM is committed.
+3. **P.3b, A5 and R-A.** These start only after:
    - labels exist (O4; for evidence, sweep 2 per R1-MAIN-PROPOSER);
    - the Mac agent has produced the exam-set membership sha;
    - the P.3b authorization note is committed.
-3. **ENGINEERING_ONLY pipeline runs** on sweep-1 labels use seeds 7001–7005 only.
-4. **4 Nov scope (R1-BX-D9, D11, R1-BX-REVISIONS (d)).** R-B (P.6) is an optional ablation: run it only if the author asks. Stage D is one round on 1–2 T1 nodes. From P.3b on, the serialisation template puts the proposal after the history (TRACK_P §2.2); E6 probe A6 runs once the template code exists (Mac M13).
-5. **Track P marker helper.** Install it (`proposals/trackp-evidence.sh` → `~/r1_locks/bin/trackp-evidence`) only after the author's row. Then, while Track P is idle, run Track S check 3.0b.
+4. **ENGINEERING_ONLY pipeline runs** on sweep-1 labels use seeds 7001–7005 only.
+5. **4 Nov scope (R1-BX-D9, D11, R1-BX-REVISIONS (d)).** R-B (P.6) is an optional ablation: run it only if the author asks. Stage D is one round on 1–2 T1 nodes. From P.3b on, the serialisation template puts the proposal after the history (TRACK_P §2.2); E6 probe A6 runs once the template code exists (Mac M13).
+6. **Track P marker helper.** Install it (`proposals/trackp-evidence.sh` → `~/r1_locks/bin/trackp-evidence`) only after the author's row. Then, while Track P is idle, run Track S check 3.0b.
 
 ### O8 — Track G: real-task benchmarks (**the critical path since 4 Nov**, R1-BX-D14)
 
 **Governs:** RUNBOOK Track G (G.0–G.6) and `prompts/TRACK_G_RUNBOOK.md` (rewritten 4 Nov); R1-BX-D1, D2, D4, D5, D6, D12, R1-BX-REVISIONS (c), (e), (f), (g).
 
-1. **G.0 census — start right after STOP 0, on Ada** (ENGINEERING_ONLY). Per candidate task: licence and repository status (**the 1GC-7RC repository: if still not public, STOP**); run time at a fixed step budget on each GPU model, VRAM, determinism, a 10-seed noise floor on 3–5 representative edits, the D21 verdict, and later D28 diff liveness with the main proposer. Data and task assets go native into a harness venv; a container only through Apptainer, as `TRACK_G_RUNBOOK.md` §3 says. Report `docs/r1/reports/TRACKG_CENSUS_<date>.md` with the screening funnel. **STOP 8a.**
-2. **G.1 smoke:** a stub-manager campaign per ported node at the Mac agent's M10 commit; scope enforcement shown. **STOP 8b.**
-3. **G.4 T1 pilot** (after the author's G.3 row and the pinned diff support, M10): 2–3 T1 nodes, main proposer, thinking off, `cache_prompt: false`. Report throughput, diff liveness, duplicate, inert and divergence rates. The coordinating agent recomputes the R1-BX-D14 dates from it and reports changes to the author before applying them. **STOP 8c.**
-4. **G.5 sweep 2, T1 part** (EVIDENCE; the author's note): about 12 campaigns × W = 20 per T1 node, about 150 audited proposals per node, audits at the K in force; the S1.1 interaction measurement. **STOP 8d.**
-5. **G.6 T2 closed loop** (EVIDENCE; part of D.3, ≈ 3 Jan) with the main proposer and the API proposer (R1-BX-D6). API calls only from the host the note names; never read `~/.config/r1/secrets.env`; log every request and the returned model version. **STOP 8e.**
+1. **G.0 availability and raw cost — start right after STOP 0, on Ada** (ENGINEERING_ONLY): licences and repository status (**the 1GC-7RC repository: if still not public, STOP**), and the suite's own baseline script at a candidate step count on each GPU model (run time, VRAM). No code beyond the suite's script and a step-count argument.
+2. **G.1 porting** (your scoped exception, §0 intro): once the Mac agent's M10 step 0 shared pieces are at a reviewed commit, port each task on `ops-trackg-<date>` — data preparation, fixed-step wrapper, metric parser, node spec, resource limits, and 3–5 representative edits declared as diffs and committed with a hash **before** any measurement. A fresh reviewer accepts each port; then a stub-manager smoke campaign per node shows scope enforcement. Data and task assets go native into a harness venv; a container only through Apptainer (`TRACK_G_RUNBOOK.md` §3).
+3. **G.1b census measurements** (ENGINEERING_ONLY, Ada first): determinism, a 10-seed noise floor on the declared edits plus the baseline (seeds 8001–8010, *proposed*), the D21 verdict, and later D28 diff liveness with the main proposer. Report `docs/r1/reports/TRACKG_CENSUS_<date>.md` with the screening funnel. **STOP 8a** (after G.0) and **STOP 8b** (after G.1/G.1b).
+4. **G.4 T1 pilot** (after the author's G.3 row and the pinned diff support, M10): 2–3 T1 nodes, main proposer, thinking off, `cache_prompt: false`. Report throughput, diff liveness, duplicate, inert and divergence rates. The Mac agent recomputes the R1-BX-D14 dates from your numbers and reports changes to the author before applying them. **STOP 8c.**
+5. **G.5 sweep 2, T1 part** (EVIDENCE; the author's note): about 12 campaigns × W = 20 per T1 node (*proposed*), about 150 audited proposals per node, audits at the K in force; the S1.1 interaction measurement. The label table is copied back for analysis only after R1-BX-D8-CONFIRM. **STOP 8d.**
+6. **G.6 closed loop on T1 and T2 nodes** (EVIDENCE; part of D.3, ≈ 3 Jan) with the main proposer and the API proposer (R1-BX-D6), plus the non-qualifying nodes of the R1-BX-D12 appendix. API calls only from the host the note names, through the Mac agent's provider; never read `~/.config/r1/secrets.env`; log every request and the returned model version. **STOP 8e.**
 
 **Hosts:** census on Ada first; the T1 table on one GPU model chosen by the author (G.3); the proposer on deepthought (two TITANs, if O5 passes) or a 4090.
 
@@ -333,9 +337,9 @@ O0 ──► O1 Stage A (TASL-7) ──► O2 B1 (needs M2, R1-EXAM-RULE-X5V2, c
 O1 accepted ──► TASL-7 free for Track P (O7) and Track S tabular_mlp (O3)
 M3 + replay authorization (e1) ──► O4 replay ──► replay passed + gates closed + B.2 ruling (e2) ──► O4 B.2 ──► label table ──► O7 engineering on sweep 1; R1-HARNESS-NEXT-PIN gate
 M4 + DTQ pass criterion (R1-BX-REVISIONS (f)) + R1-EXAM-RULE-X5V2 ──► O5 DTQ ──► host decision for the proposer (sweep 2 T0, T1 runs)
-X.7 + O4 + M4 + D28 + projection + note ──► O6 sweep 2 ──► audits ──► evidence labels ──► B.3–B.5, B.7
+X.7 + O4 + M4 + D28 + projection + note ──► O6 sweep 2 (T0) ──► audits ──► R1-BX-D8-CONFIRM ──► evidence labels analysed ──► B.3–B.5, B.7
 O3 Track S digits_mlp on TASL-2: from O0 on, paused while Track X B1/B2 run
-O0 ──► O8 G.0 census on Ada (critical path) ──► G.3 author row ──► M10 diff support pinned ──► G.4 T1 pilot ──► date recomputation ──► G.5 T1 sweep (note) ──► T0 + T1 labels ──► B.7 ≈ 8 Dec
+O0 (incl. Ada) ──► O8 G.0 availability on Ada (critical path) ──► M10 step 0 shared pieces ──► G.1 ports (reviewed) ──► G.1b census ──► G.3 author row ──► M10 diff support pinned ──► G.4 T1 pilot ──► Mac date recomputation ──► G.5 T1 sweep (note) ──► R1-BX-D8-CONFIRM ──► T0 + T1 labels analysed ──► B.7 ≈ 8 Dec
 O4 labels ──► Mac M12 K check ──► author row (K = 6 on T1, or K stays 10)
 Mac M6 Track S GPU design + row ──► O3 GPU nodes; Track S fallback check 15 Dec
 D.2 + notes ──► D.3 ≈ 3 Jan (T0, T1, T2; G.6 API proposer)

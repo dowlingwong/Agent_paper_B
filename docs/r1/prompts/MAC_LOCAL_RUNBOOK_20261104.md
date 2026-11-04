@@ -102,7 +102,7 @@ Report to the author in **Chinese**, short and concrete. Write documents and com
 - **Track S** waits for the S0.1 re-run.
 - **`cache_prompt: false`** is decided for Track X (R1-EXAM-CACHE-REV) and Track S (R1-CACHEPROMPT-FALSE), and for sweep 2 by R1-MAIN-PROPOSER. Sweep 1 is disclosed as not seed-replayable (R1-SWEEP1-CACHE-DISCLOSURE).
 - **Benchmark expansion (4 Nov, R1-BX-*).** The CPU nodes are T0; GPU label nodes (T1) and evaluation nodes (T2) come from autoresearch, 1GC-7RC and MLGym; **Track G is the critical path**; B.7 ≈ 8 Dec on the aggregate criterion; B.6 cut; K = 6 only after the subsampling check. The rows' *(proposed)* and *(open)* items need the author (packet (j)).
-- **Deepthought dual-card**: the author said in chat on 4 Nov: "deepthought我们可以用双卡deploy模型，一部分实验可以放到那上". This is intent; there is no PLAN row yet. R1-BX-REVISIONS (f) (4 Nov) now amends R1-MAIN-PROPOSER (f): the main proposer may be served on deepthought across two TITANs if the dual-card qualification (operator O5) passes.
+- **Deepthought dual-card**: the author said in chat on 4 Nov: "deepthought我们可以用双卡deploy模型，一部分实验可以放到那上". That intent is now recorded in PLAN R1-BX-REVISIONS (f) (4 Nov), which amends R1-MAIN-PROPOSER (f): the main proposer may be served on deepthought across two TITANs. Its conditions (O5 passing against an author-committed criterion; one serving configuration per source and tier) are *proposed*, and whether sweep 2's T0 and T1 parts share a proposer host is *open* (packet (j)).
 
 ## 2. Tasks, in priority order
 
@@ -114,7 +114,8 @@ Every task ends in a **STOP**: the review loop, a STATUS entry, then a report to
 - **M4** comes after M3, because both edit `r1/scripts/c3_label_sweep.py`. M4 rebases on M3's accepted commit.
 - **M10** (Track G code) is on the critical path (R1-BX-D14): start it right after M1, in parallel with M2 and M3. Its G.2 diff support must be reviewed and pinned before any GPU sweep.
 - **M11** (baselines, gate, TabPFN view) follows M1; its gate guard must exist before any sweep-2 label is analysed.
-- **M12** (the K subsampling check) waits for sweep-1 B.2 audits (operator O4).
+- **M12** (the K subsampling check) waits for sweep-1 B.2 audits (operator O4); any gate-stability part also waits for R1-BX-D8-CONFIRM and an explicit author exception.
+- **Before any sweep-2 (T0 or T1) label table is analysed:** the author's **R1-BX-D8-CONFIRM** row and M11's guard. Draft that row early.
 - **M13** (serialisation order and the E6 probe) waits for packet (a) to name the editor of `r1/c3/train/`.
 
 ### M1 — One authoritative plan (integration branch) and the author's decision packet (1 day)
@@ -206,7 +207,15 @@ Run it, and commit both the script and its output.
 - R1-BX-D4: the schema name `manager_proposal/v2-diff`; what happens if the pick fails diff liveness;
 - R1-BX-D6: which API proposer, its pin, its host and its cost cap;
 - R1-BX-D7: r and α for fixed-r; relabelling A0 as the Karpathy default;
-- R1-BX-D8: the numbers of the gate. **This one must be committed before any sweep-2 label is analysed;**
+- R1-BX-D8: the numbers of the gate, as a paste-ready **R1-BX-D8-CONFIRM** row carrying the numbers and the gate-code sha (M11). **It must be committed before any sweep-2 (T0 or T1) label table is copied back for analysis;**
+- R1-BX-D8: pooling T0 and T1 labels in one gate (tier as a stratum) against R1-SWEEP-HOST's no-mixing rule;
+- R1-BX-D3: whether a gate-stability criterion may use 7006–7010 on non-test sweep-1 instances (an explicit exception), or the check stays label-seed-only;
+- R1-BX-REVISIONS (c): the divergence definition;
+- R1-BX-REVISIONS (f): the O5 pass criterion; whether sweep 2's T0 and T1 parts share a proposer host;
+- R1-BX-REVISIONS (h): the operator's scoped code exception for porting task assets;
+- Track G: the census noise-floor seed block (proposed 8001–8010); memory modes and campaigns per T1 node (proposed as T0, about 12); the G.5 divergence STOP; the K = 6 seed subsets (proposed 7001–7003 / 7006–7008);
+- TRACK_P: T0 never the held-out suite in leave-one-suite-out; probe A6 descriptive; whether P.3a is re-run under the 4 Nov order;
+- Track S: whether it continues after 15 Dec, off the critical path;
 - R1-BX-D10: the Track S manager on GPU nodes;
 - R1-BX-D13: the embedding model and the PCA dimension;
 - R1-BX-REVISIONS (c): the Student-t rule for heavy-tailed floors;
@@ -374,6 +383,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 **Branches.** Paper `mac-trackg-20261104`; harness `r1-local-trackg-20261104` from `origin/r1`.
 
 **Steps.**
+0. **Shared pieces for the operator's ports (before G.1; review document §7 routes porting itself to the operator):** a node template (`NodeSpec` with editable and frozen paths, a fixed step or token budget, never wall-clock), a base metric parser that reports divergence as its own outcome, a per-run working-copy runner with resource limits, validation-only selection for test-scored tasks, and a checklist for declaring the 3–5 representative edits. Tests on fake runs, including a frozen-path edit being refused. Hand the commit to the operator for G.1.
 1. **Diff support in the harness (G.2):**
    - apply a diff in a per-run working copy and refuse any hunk outside `editable_paths` or inside `frozen_paths`, through the existing scope validator;
    - inert detection (empty after normalisation, or an AST equal to the incumbent's);
@@ -381,10 +391,11 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
    - provenance fields: diff text, its hash, files touched, code-state hash;
    - the proposal schema `manager_proposal/v2-diff` (name proposed, packet (j));
    - **the T0 path is unchanged:** a test shows that a `manager_proposal/v1` campaign produces byte-identical requests and records.
-2. **Node scaffolding (G.1),** written as census rows arrive from the operator: per task, a `NodeSpec` with editable and frozen paths, a fixed step or token budget (never wall-clock), a metric parser that reports divergence as its own outcome, a per-run working copy and resource limits, and validation-only selection for test-scored tasks. Tests on fake runs, including a frozen-path edit being refused.
+2. **Review support for the ports:** the operator's ports (G.1, on `ops-trackg-<date>`) are reviewed by a fresh agent; you answer questions on the shared pieces but do not edit the operator's branch. The **S1.1 edit–edit interaction analysis for diffs** (per-node interaction strength as a covariate) is yours.
 3. **Divergence class** in the trial record and in `r1/c3/labels`: a divergent run gets no z-value; the label builder reports it separately (R1-BX-REVISIONS (c)).
 4. **Apptainer runner option** for a task that ships only as an image: `apptainer exec --nv --containall`, a bound per-run copy, the `.sif` sha256 in provenance. Only if the census finds such a task.
-5. **Drafts:** the T1/T2 selection row for the author (G.3), from the census; the T1 pilot plan (G.4); the T1 sweep authorization draft (G.5).
+5. **API proposer (R1-BX-D6):** a provider for the model the author names (packet (j)), with a version pin, a full request/response log and the returned model version recorded per call, and a cost counter. Keys are never read by you; the calls run only on the host the authorization note names.
+6. **Drafts:** the T1/T2 selection row for the author (G.3), from the census; the T1 pilot plan (G.4); the T1 sweep authorization draft (G.5); the closed-loop plan for G.6 including the non-qualifying nodes of the R1-BX-D12 appendix; and the **date recomputation** after G.4 (packet (i)).
 
 **Done when:** the harness and paper tests pass with an unchanged failure set apart from new tests; the reviewer has accepted and checked in particular that the T0 path is byte-identical; the hand-off gives the operator the commits for G.1 smoke and G.4.
 
@@ -395,8 +406,8 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 **Steps.**
 1. **Practitioner baselines (D7)** in `r1/c3/arms.py` (or beside it; `arms.py` is not a shared file) and in the controller path: the Karpathy default (check first whether A0 is exactly this rule; if so, label A0 as such rather than duplicating it) and fixed-r replication + t-test with r and α from packet (j), charged for its replicate runs. Offline forms for B.3; online forms through `RuleController`'s interface. `control.py` is shared: STOP and ask before editing it.
 2. **Gate statistic (D8)** in `r1/c3/offline_eval` (or a new `r1/c3/gate.py`): gap closed per node against the noisy-oracle ceiling, the IQM across nodes, the probability of improvement, and the node-stratified bootstrap. Tests on synthetic tables with known answers.
-3. **The pre-registration guard:** the gate code refuses to read sweep-2 or T1 `y_eval` unless a PLAN line containing `R1-BX-D8` and the numbers' confirmation exists, the same way `runtime.author_gate` reads the PLAN. Test it.
-4. **TabPFN information-matched view (D13):** a feature view of hand features plus a PCA-reduced proposal-text embedding (the embedding model from packet (j); PCA fitted on training rows only); TabPFN in regression mode with its predictive distribution binned over the 12 canonical bins; the class cap checked and recorded for the installed version. The Kev side of the matched comparison is Track P code: write a spec only, unless packet (a) makes you its editor.
+3. **The pre-registration guard:** every reader of a sweep-2 (T0 or T1) label table — the `dataset` build of evaluation columns, offline evaluation, the gate, and (as a spec for the `r1/c3/train/` editor) the Track P loaders — refuses to run unless a PLAN §10 line containing **`R1-BX-D8-CONFIRM`** exists, the same way `runtime.author_gate` reads the PLAN. The current R1-BX-D8 row does not satisfy it. Test both cases. Record the gate code's sha for the confirmation row.
+4. **TabPFN information-matched view (D13):** a feature view of hand features plus a PCA-reduced proposal-text embedding (the embedding model from packet (j); PCA fitted on training rows only); TabPFN in regression mode with its predictive distribution binned over the 12 canonical bins; the class cap checked and recorded for the installed version. **Code and CPU fixture tests only:** the TabPFN rows and the embedding model run on TASL-7 (R1-TABPFN; operator O7), never on the Mac (R1-COMPUTE). The Kev side of the matched comparison is Track P code: write a spec only, unless packet (a) makes you its editor.
 
 **Done when:** tests pass; the reviewer has accepted and checked that no evaluation label is read; the hand-off names the commit.
 
@@ -405,7 +416,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 **Governs:** R1-BX-D3 (conditional).
 
 **Steps.**
-1. Draft the check protocol from R1-BX-D3's proposed text (packet (j)): 3-subsets of the label seeds; evaluation-seed statistics on training and dev instances only, never the test partition; the pass thresholds. The author commits it before you run it.
+1. Draft the check protocol from R1-BX-D3's proposed text (packet (j)): **label seeds 7001–7005 only** (every 3-subset against all five), with criteria (i) and (ii). A gate-stability criterion using 7006–7010 runs only if the author grants an explicit exception, and only after R1-BX-D8-CONFIRM. The author commits the protocol before you run it.
 2. Run it on the Mac CPU on the label table the operator copied back (verify its sha first).
 3. Report `docs/r1/reports/MAC_K_SUBSAMPLE_CHECK_<date>.md`, with an independent review.
 4. **If it fails:** K stays 10. STOP and tell the author at once, with the T1 cost and the dates recomputed at K = 10.

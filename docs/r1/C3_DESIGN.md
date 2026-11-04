@@ -6,9 +6,9 @@
 
 > **4 Nov 2026 (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS).** Where this file conflicts, these rows control:
 > - **Labels come from T0 and T1.** T0 is the 8 CPU nodes (single-parameter edits, the low-interaction condition); T1 is GPU label nodes from autoresearch, 1GC-7RC and MLGym (code-level diffs, fixed step budgets, one GPU model per table). T2 nodes are evaluation only. Primary generalisation is **leave-one-suite-out**; LONO within T0 is secondary (§6).
-> - **K.** T1 audits use K = 6 (3 label + 3 evaluation seeds) only if the sweep-1 subsampling check passes (R1-BX-D3); until then, and if it fails, K = 10. The soft-label width uses each node's own σ̂ (s = σ̂_node/√K_label). Divergent runs are a separate outcome class (§4).
+> - **K.** K = 10 until an author row puts K = 6 (3 label + 3 evaluation seeds) into force after the sweep-1 subsampling check passes (R1-BX-D3; scope *proposed*: T1 audits only). The soft-label width uses each node's own σ̂ (s = σ̂_node/√K_label). Divergent runs are a separate outcome class (§4).
 > - **Ladder additions (§5):** the Karpathy default and fixed-r replication + t-test (R1-BX-D7); TabPFN information-matched, in regression mode (R1-BX-D13).
-> - **Gate (§6):** the aggregate IQM of gap closed and probability of improvement with node-stratified bootstrap CIs replaces the per-node criterion (R1-BX-D8).
+> - **Gate (§6):** the aggregate IQM of gap closed and probability of improvement with node-stratified bootstrap CIs replaces the per-node criterion (R1-BX-D8); its numbers are fixed in **R1-BX-D8-CONFIRM** before any sweep-2 label is analysed.
 > - **Self-control arm:** A4 (R1-BX-D9). The decision-focused stage A6 is called "decision-focused fine-tuning"; only R-B (an optional ablation) is called RL.
 
 ## 1. One-paragraph summary
@@ -74,8 +74,8 @@ This ladder is C3.
 - **4 Nov additions (R1-BX-D3, D4, D5, R1-BX-REVISIONS (c)).**
   - On T1 nodes a proposal is a code-level diff. Inert and duplicate detection for diffs is part of the harness change (a normalised diff hash and an equality check against the incumbent's code); no-ops are labelled by rule as on T0.
   - σ̂ for a T1 node comes from that node's own noise floor, measured on the label table's GPU model. If the floor is heavy-tailed, a Student-t soft label is declared before labels are built *(proposed)*.
-  - A run that diverges (a non-finite loss, or no metric at the fixed budget) is recorded as its own outcome class. It gets no z-value and is reported separately, never averaged into μ.
-  - About 150 audited proposals per T1 node; K = 6 if R1-BX-D3's check passes, otherwise K = 10.
+  - A run that diverges is recorded as its own outcome class and never averaged into μ (R1-BX-REVISIONS (c)). *(proposed:* divergence = a non-finite loss, or no metric at the fixed budget; it gets no z-value and is reported separately.*)*
+  - About 150 audited proposals per T1 node; K = 10 unless an author row puts R1-BX-D3's K = 6 into force.
 - **Covariate shift.** Deployed arms skip and re-propose, so the proposal distribution shifts. One aggregation round fixes this: collect proposals under the deployed tabular arm, audit them, retrain (DAgger-style).
 
 ## 5. Arms (the ladder) and training
@@ -132,12 +132,13 @@ This ladder is C3.
 | H4 | A4 vs A5 | the manager's own zero-shot judgement vs a small trained model (the LLM-self-control arm in its useful form) |
 | H5 | gain by memory mode | screening value is largest for the weaker proposal law (memory off) |
 
-**C3 gate, since 4 Nov (PLAN §10 R1-BX-D8; replaces the 18 Oct per-node criterion below).** The primary criterion is the **across-node aggregate**: the IQM of gap closed and the probability of improvement of A3 or A5 over A2, with node-stratified bootstrap CIs, on the main proposer's T0 + T1 labels. The per-node table is secondary. The numbers are fixed in the R1-BX-D8 row before any sweep-2 label is analysed. The row's proposed operationalisation:
+**C3 gate, since 4 Nov (PLAN §10 R1-BX-D8; replaces the 18 Oct per-node criterion below).** The primary criterion is the **across-node aggregate**: the IQM of gap closed and the probability of improvement of A3 or A5 over A2, with node-stratified bootstrap CIs, on the main proposer's T0 + T1 labels. The per-node table is secondary. The numbers are fixed in a separate author row **R1-BX-D8-CONFIRM** (with the gate-code sha) before any sweep-2 label table is copied back for analysis. The row's proposed operationalisation:
 - gap closed per node = (U_arm − U_A2)/(U_oracle − U_A2) on test instances with `y_eval`, U_oracle being the noisy-oracle ceiling of TRACK_P §7.1;
 - the IQM across nodes;
 - probability of improvement = the per-node share of test instances where the arm beats A2 (ties ½), averaged over nodes;
 - 2,000 node-stratified bootstrap resamples;
-- pass if, for A3 or A5 (Holm, one-sided α = 0.05), the lower bound of the IQM gap closed is > 0 and the lower bound of the probability of improvement is > 0.5; the point IQM is reported against a practical size of 0.1.
+- nodes whose denominator U_oracle − U_A2 is below δ_n on dev are excluded from the IQM (listed) and kept in the probability of improvement;
+- pass if, for A3 or A5 with Holm at family-wise one-sided α = 0.05 (one-sided 97.5 % bounds for the first-ranked arm, 95 % for the second), the lower bound of the IQM gap closed is > 0 and the lower bound of the probability of improvement is > 0.5; the point IQM is reported against a practical size of 0.1.
 
 **Generalisation, since 4 Nov (R1-BX-D1):** leave-one-suite-out is the primary transfer test; LONO within T0 is secondary. The H2b contrast is read on held-out suites first.
 
