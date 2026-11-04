@@ -46,10 +46,11 @@ In order of preference:
 
 Before G.0 starts on Ada, the O0 census of Ada checks Paper A occupancy (no Paper B GPU launch while a Paper A campaign waits for a card) and the co-tenancy margin. Per candidate task:
 1. **Licence and availability:** the repository, its licence, and the licence of each dataset. In particular, check whether the 1GC-7RC repository (arXiv 2605.17046) is public now; R1-TRACKG-SCOPE found it was not. If it is still not public, **STOP** for the author (rebuild from the paper and public data, disclosed; or MLAgentBench as the third suite).
-2. **Raw cost:** the suite's own baseline script at a candidate step count, on each GPU model available: RTX 6000 Ada (first), RTX 4090, TITAN X. Record wall time, peak VRAM, and CPU and RAM use. No code beyond the suite's own script and a step-count argument.
+2. **Raw cost:** the suite's own baseline script at a candidate step count, on each GPU model available: RTX 6000 Ada (first), RTX 4090, TITAN X. Record wall time, peak VRAM, and CPU and RAM use. No code beyond the suite's own script and a step-count argument; where a script has no such argument (autoresearch has a wall-clock budget), its raw cost is measured after G.1, at the fixed-step wrapper.
 
 ### G.1 — Porting (operator ports; Mac shared pieces first)
 
+0. The author has confirmed R1-BX-REVISIONS (h)'s porting exception.
 1. The Mac agent's M10 step 0 delivers the shared pieces at a reviewed commit.
 2. The operator ports each task on `ops-trackg-<date>`: data preparation, the fixed-step wrapper, the metric parser, the `NodeSpec`, resource limits, and **3–5 representative edits declared as diffs before any measurement** (committed with a hash).
 3. Each port is reviewed by a fresh agent before use.
