@@ -402,7 +402,7 @@ Head models (Kev, Qwen control, StartLux if trainable). Exact objectives; no sam
 1. Run the loop with the current configurator on fresh training instances.
 2. Collect states the configurator visits; audit the newly proposed edits with the same 10-seed protocol (7001–7005 for labels).
 3. Aggregate with existing labels; retrain from the Stage S recipe (and the selected R-A arm).
-4. One round in C.2, **on 1–2 T1 nodes only (R1-BX-D11)**; report the shift in proposer behaviour (acceptance-history feedback) as evidence of the sequential (DAC) structure.
+4. One round in C.2, **on 1–2 T1 nodes only (R1-BX-D11)**; report the shift in proposer behaviour (acceptance-history feedback) as evidence of state-distribution shift, not of a policy-value gap (PLAN §10 R1-WORDING-30OCT; replaces "evidence of the sequential (DAC) structure").
 
 ---
 
