@@ -1,0 +1,13 @@
+# C3 isolation fixture source recovery — BLOCK
+
+Historical fixture sources and tests are preserved **as Base64 data**, not importable Python, under `_to_delete/c3-recovery-source-data-20261031/`. The accompanying `source_data_manifest.json` records each prior path, data path, decoded byte length, decoded SHA-256 and Git blob SHA-1. Decode only for offline review; no source is authorized for execution. This records the independent review finding that executable archives and direct imports were unsafe.
+
+The cache fixture was copied read-only from deepthought's `/tmp/r1_cache_mount_retry_authorized_ZRq5CxgF`, with source and test SHA-256 `9c7a0851eb82c8688b78be0e0cc948fed7892cfc718a2a8ba3c463743a25e798` and `b22857e80ca0f6ba07275ef3603744a7bf177cee5049d0e4cbc3b2b87a778861`. Its retained `cache/fixture.log` records `1 passed in 15.68s` and before/after host mountinfo hashes are both `dea2e7c345744026ea28d38be2a7b9201fe01cdef4207139438afd69b7a3176c`. This is an older synthetic fixture, not the later dirfd guard.
+
+The retained seccomp source and tests came from `/tmp/r1_replay_seccomp_fixture_OTnIFWlV`. Their decoded SHA-256 are `d03c03a3213585aabb854e6b29dd5f794b5ad97eb2be06994e9e483ccbacb410` and `066d1a931d7f49dfc2ad2433050d764873b9a96d0c570caaf0a5d13e04c84056`. Earlier results described four engineering-only passes, but no log was found there. No real task was run.
+
+The dataset fixture source reconstructed from historical edits has Git blob `5afae90e29b5f7dad163fc6322acd86ab970db63`, matching `5afae90` recorded in the independent review's `git show 00d35d3` diff. The base was confirmed by the historical diff as blob `5f39fa66780821154a2729c872780a04468234c2`. This establishes that source blob only; the historical full commit and tree were not recovered. Final historical blob IDs for the reconstructed mount module and tests were not found, so full-tree byte identity is not claimed.
+
+Only pure inode/mountinfo and descriptor-relative read/manifest verification remains importable. The active raw-mount and bind entry points unconditionally STOP before path inspection or syscalls, including when called by import with a fabricated attestation. No recovered cache launcher or seccomp command executor exists as an importable module. The former working sources and tests also remain encoded in `_to_delete`; original Git history is unchanged. Independent review is required.
+
+Linux mount/rename/teardown, real sklearn procfd data-home, source mutation races, B.1 replay integration and numerical equivalence remain unverified. No real cache, task, mount fixture or replay was run; B.2 remains STOP.

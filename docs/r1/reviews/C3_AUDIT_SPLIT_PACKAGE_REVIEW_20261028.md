@@ -1,0 +1,11 @@
+# C3 split audit and runner package record: review checkpoint
+
+AI-assisted independent review (OpenAI Codex), 28 October 2026. **BLOCK: do not launch B.2 or merge these guards into main.** This checkpoint preserves preparation on the authorized operations branch; it is not final acceptance.
+
+The proposed EVIDENCE audit writes separate `label_block.jsonl` (7001–7005) and `evaluation_block.jsonl` (7006–7010), binds their SHA256 values and the retained raw-run file in its completion record, and verifies their contents against the raw records. Duplicates get no label; no-ops use the declared rule. Independent synthetic tests of split blocks, existing guards and audit passed 37 tests. The operator's combined synthetic package/split/authorization test group passed 56 tests. No actual audit was started.
+
+**Actual worker environment: NOT CHECKABLE / BLOCK.** The current run-level Python, virtual-environment, four-library and package-hash record comes from a separate preflight child process. It is not emitted by the actual task Python process and cannot prove identity across the probe-to-execution interval. A candidate task-entry attestation has not been shown to preserve the frozen harness, arguments, working directory, import behavior and numerical semantics; do not silently change the pinned harness or treat a probe as a native task report.
+
+The runner's package-list recording now checks the fixed evidence node commands, includes dry-run and legacy paths, and was independently tested in 26 targeted synthetic cases. The check does not establish protection against every ignored or untracked module shadowing the pinned harness. A full local fake-service integration attempt failed before establishing coverage of these changes because the fixture cloned the previous committed HEAD and its fake GPU observation did not list the server PID; the failure is not assigned to this patch or dismissed as a baseline. Actual deepthought Linux guard tests, real wrapper/import identity and independent re-review remain required.
+
+The legacy EVIDENCE `offline_eval` path fails closed on the new split files. A trusted label-only loader that refuses evaluation-block and raw-run inputs is required before P.3b, not as a condition of producing the B.2 blocks. The current marker guards do not prove global seed isolation.
