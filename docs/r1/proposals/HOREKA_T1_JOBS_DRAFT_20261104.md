@@ -1,115 +1,137 @@
-# Draft — running Track G T1 work on HoreKa 2 by Slurm job submission (4 Nov 2026)
+# Draft — running Track G T1 work on HoreKa 2 by Slurm job submission (4 Nov 2026, revision 2)
 
-**Status.** AI-assisted draft (Claude, chat session), written at the author's request ("怎么把t1改写成horeka compatible的提交任务"). It is **not adopted** and authorizes nothing. Whether T1 moves to HoreKa 2 is the author's decision. PLAN §10 currently puts the T1 label runs on Ada (R1-BX-PROPOSED-CONFIRM). If the author moves them, a PLAN row records it and RUNBOOK G.0–G.5 and the two execution runbooks are revised, with an independent review.
+**Status.** AI-assisted draft (Claude, chat session), written at the author's request ("怎么把t1改写成horeka compatible的提交任务"). It is **not adopted** and authorizes nothing. Revision 2 addresses the independent review `reviews/HOREKA_1GC_REVIEW_20261104.md` (not accepted: 7 MAJOR, 11 MINOR).
 
-**Sources.**
-- The author's cheat sheet "HoreKa / HoreKa 2 — Slurm Job Submission" (chat attachment, 4 Nov).
-- NHR@KIT documentation: <https://docs.nhr.kit.edu/usage/slurm/> and <https://docs.nhr.kit.edu/get-started/migration/>, read 4 Nov.
+**Sources.** The author's cheat sheet "HoreKa / HoreKa 2 — Slurm Job Submission" (chat attachment, 4 Nov; it is the only source for the host name, the user name and the downtime dates). NHR@KIT documentation, read 4 Nov: <https://docs.nhr.kit.edu/usage/slurm/> and <https://docs.nhr.kit.edu/get-started/migration/>. Facts not in these sources are marked *(to check)*.
 
-Facts not found in these sources are marked *(to check)*.
+## 0. What adopting this would change
+
+PLAN currently places the T1 label runs on Ada and the census on Ada. Moving T1 to HoreKa 2 needs an author row that amends:
+- R1-BX-PROPOSED-CONFIRM (the REVISIONS (f) and E1 bullets: T1 label runs on Ada; the proposer on deepthought or a 4090);
+- R1-ADA-CENSUS (census and noise floors on Ada);
+- R1-BX-REVISIONS (f) (hosts);
+- R1-BX-D14 ("noise floors and liveness start on Ada");
+- RUNBOOK G.0's GPU-model list, and "Ada first" in RUNBOOK G.0/G.1b, TRACK_G and OPERATOR O0/O8.
+
+Two further points:
+- A proposer served on H100 is a **new serving configuration** for the T1 tier. It needs a qualification like O5 (full offload, within-server identity 1.000 at `cache_prompt: false`, a projection), and it is listed among the stack differences.
+- "Ada as fallback" can only mean that **the whole T1 label table** moves to Ada. One GPU model per table (R1-BX-D5) forbids splitting it.
 
 ## 1. Facts that shape the design
 
 | Fact | Source | Consequence |
 |---|---|---|
-| H100 (Teal) and H200 (Ruby) are on HoreKa 2, `hk2-x86.scc.kit.edu`, user `ka_ir7683`; partition `gpu-h100`, 4 × H100 per node, max 2 days per job, `--partition` and `--time` mandatory | cheat sheet; slurm page | Every job carries an explicit partition and time; every job ≤ 2 days and resumable |
-| **Downtime 23 Nov – 4 Dec 2026**: no data access, no jobs | cheat sheet | No job may run into 23 Nov 00:00; results must be copied out before then |
-| Max 100 submitted jobs per user (300 per group); dev partitions 1 job | cheat sheet; slurm page | Pack many short runs into one job; never one job per training run |
-| `squeue` polled faster than every 30 s gets jobs killed | cheat sheet | Every status helper sleeps ≥ 60 s |
-| "Compute intensive tasks must not run on login nodes" | slurm page | Builds, tests and smoke runs go to `dev-*` or batch jobs |
-| **"Interactive AI agent usage on login nodes is prohibited"**; an `agent` partition (1 core, ≤ 3 days) exists for AI agent workloads | migration page; slurm page | The SSH operator agent must not drive HoreKa from the login nodes without the centre's confirmation (§4) |
-| `$HOME` 50 GB / 2 M inodes; a `PROJECT` directory per compute project; workspaces exist | migration page | Venvs, data, GGUFs and outputs go under `PROJECT` (or a workspace), not `$HOME` |
-| Modules move to EasyBuild, with different names | migration page | Module names are discovered on the system and pinned in the job template |
-| Compute resources are tied to the project and accounted by Slurm | slurm page | The project's remaining GPU-hours must be checked before planning (§6) |
-| Internet from compute nodes; node-local scratch; H100 memory; container support | not stated | *(to check)*. Plan as if there is no internet on compute nodes: stage everything first |
+| H100 (Teal) and H200 (Ruby) are on HoreKa 2, `hk2-x86.scc.kit.edu`, user `ka_ir7683` | cheat sheet | — |
+| `gpu-h100`: 4 × H100 per node, maximum 2 days; access policy **"Shared"**; `--exclusive` reserves a whole node | slurm page | Jobs use `--exclusive`. Exclusive allocation is *(to check)*; the jobs keep a light occupancy check |
+| `--partition` and `--time` are mandatory | cheat sheet | Every job script sets both |
+| Downtime 23 Nov – 4 Dec 2026: no data access, no jobs | cheat sheet | The exact start hour, whether 4 Dec is included, and what happens to pending jobs are *(to check)* |
+| Max 100 submitted jobs per user (300 per group) | cheat sheet; slurm page | Pack many runs per job |
+| Dev partitions: one job per user; not for production | cheat sheet; slurm page | Dev partitions only for setup and smoke tests |
+| `squeue` polled faster than every 30 s gets jobs killed | cheat sheet | Status helper polls once a minute at most |
+| "Compute intensive tasks must not run on login nodes" | slurm page | Builds, hashing of large files and tests run in jobs |
+| **"Interactive AI agent usage on login nodes is prohibited"**; an `agent` partition (1 core, ≤ 3 days) exists | migration page; slurm page | The SSH operator does not act on HoreKa until NHR@KIT confirms what is allowed (§4) |
+| `$HOME` 50 GB / 2 M inodes; a `PROJECT` directory per compute project | migration page | Data, venvs, GGUFs and outputs under `PROJECT` |
+| Modules move to EasyBuild with new names | migration page | Names discovered and pinned per template |
+| Resources are tied to the compute project and accounted by Slurm | slurm page | The remaining GPU-hours are checked first (§6) |
+| HoreKa 2 CPU nodes are shared: set `--ntasks`, `--cpus-per-task`, `--mem` | cheat sheet; migration page | Set in every template, GPU jobs included |
+| Internet from compute nodes, node-local scratch, H100 memory, the CUDA arch flag (`sm_90` expected), the file-system type | not stated | *(to check)* |
 
-## 2. Why HoreKa 2 suits T1
+## 2. Why HoreKa 2 could suit T1
 
-- **One GPU model for the whole T1 table (H100).** This meets R1-BX-D5 without the cross-model rule change proposed on 4 Nov.
-- **Whole GPUs allocated per job.** No co-tenancy, and no interruption by other users.
-- **Most of the work is independent short runs.** About 75 % of the T1 GPU-hours are audits (R1-BX-REVISIONS (f)), which pack naturally into a few long jobs.
+- **One GPU model (H100) for the whole T1 table.** This meets R1-BX-D5 without mixing GPU models.
+- **Whole nodes by `--exclusive`.** If confirmed *(to check)*, this removes co-tenancy noise.
+- **The work splits well.** About three quarters of the T1 GPU-hours are audits (30 of 40 GPU-h per node at K = 6; R1-BX-REVISIONS (f)), and audits are independent pairs of runs.
 
 ## 3. Job types
 
-All jobs are generated from one manifest by a submit tool (§5), never written by hand.
+All jobs are generated from one manifest by the submit tool (§5).
 
-| Job | Partition, resources, time | What it runs | Resume |
+| Job | Partition, resources, time | What it runs | Resume unit |
 |---|---|---|---|
-| **J0 setup** | `dev-cpu` (1 h), then one `dev-gpu-h100` job (1 h) | Create the venv under `PROJECT` from pinned wheels; build llama.cpp `620d222` for sm_90 inside the GPU job; record versions and sha256 | Re-runnable |
-| **J1 smoke** | `dev-gpu-h100`, 1 GPU, ≤ 1 h | One fixed-step run per ported T1 node with a stub manager; llama-server load probe of the main proposer's GGUF | — |
-| **J2 census** (G.0 cost, G.1b noise floor) | `gpu-h100`, 1 node × 4 GPUs, ≤ 12 h | For each node, the declared representative edits × seeds 8001–8010, plus a concurrency sweep (1, 2, 4 runs per GPU) to measure runs per GPU | Per-run result files; skips done runs |
-| **J3 campaigns** (G.4 pilot, G.5 sweep 2 T1) | `gpu-h100`, 1 node × 4 GPUs, `--time` ≤ 47 h and ending before the downtime | GPU 0 hosts llama-server for the main proposer (thinking off, `cache_prompt: false`, port derived from `SLURM_JOB_ID`, bound to 127.0.0.1). Task runs go into k slots per GPU on GPUs 0–3 (k from J2). The collector runs with `--deadline` = job time − 45 min | Per campaign root, as sweep 1. An interrupted root is re-run whole |
-| **J4 audits** | `gpu-h100`, 1 node × 4 GPUs, ≤ 24 h each; the plan split into S shards, one job per shard | The audit plan (candidate and incumbent on the K seeds), k runs per GPU | Per-shard run cache (as `r1/c3/audit.py` `RunCache`); deadline then exit; re-submitted until the shard is done |
-| **J5 merge** | `dev-cpu` or `cpu`, ≤ 1 h | Merge shard caches, check for duplicates and missing runs, build the T1 label table per Track G | — |
+| **J0 setup** | `dev-cpu` (≤ 1 h), then `dev-gpu-h100` (≤ 1 h) | Venv under `PROJECT` from pinned wheels; llama.cpp `620d222` built for the H100 arch *(to check)*; version and sha256 records | Re-runnable |
+| **J0b hashing** | `cpu`, a few cores, ≤ 2 h | sha256 of the staged datasets and GGUFs against the staging manifest | Re-runnable |
+| **J1 smoke** | `dev-gpu-h100`, 1 GPU, ≤ 1 h | One fixed-step run per ported T1 node with a stub manager; llama-server load probe of the main proposer | — |
+| **J1b proposer qualification** | `gpu-h100`, 1 GPU, ≤ 4 h | O5-style: full offload, 50 prompts × 3 at `cache_prompt: false`, identity, latency, projection (§0) | — |
+| **J2 census** (G.0 cost, G.1b noise floors) | `gpu-h100 --exclusive`, 1 node, ≤ 12 h | Declared representative edits × seeds 8001–8010 plus the baseline; a concurrency sweep (1, 2, 4 runs per GPU) | Per run |
+| **J3 campaigns** (G.4 pilot, G.5 sweep 2 T1) | `gpu-h100 --exclusive`, 1 node, `--time` ≤ 47 h | **GPU 0:** llama-server for the main proposer (thinking off, `cache_prompt: false`, port from `SLURM_JOB_ID`, bound to 127.0.0.1), with no task runs on it. **GPUs 1–3:** task runs, k per GPU | Per campaign root (as sweep 1); an interrupted root is re-run whole |
+| **J4 audits** | `gpu-h100 --exclusive`, 1 node, ≤ 24 h each; the plan split into S shards | Candidate–incumbent pairs on the K seeds, k runs per GPU | **Per pair**: a pair's runs are written only when all of them have finished. A pair cut off by the deadline is discarded and re-run whole in the next job |
+| **J5 merge** | `cpu`, ≤ 1 h | Merge shard results; refuse duplicates or missing pairs; build the T1 label table **from label seeds only** (7001–7003 at K = 6, 7001–7005 at K = 10). Evaluation seeds 7006–7010 go only into the evaluation columns | — |
 
-**Pairing rule.** For each audited proposal, the candidate and its incumbent run on all K seeds inside the same job, on H100. Pairs are never split across jobs.
+**Rules for every job.**
+- **Same k in the floor and the labels.** The label runs use the same runs-per-GPU k and the same GPU placement as the noise floor that sets σ̂ for that node. If k changes, the floor is re-measured.
+- **Pairing.** A candidate and its incumbent run all K seeds on H100 within one job. Pairs are never split, and the resume unit is the pair.
+- **Templates set** `--account`, `--partition`, `--time`, `--ntasks`, `--cpus-per-task`, `--mem`, `--gres=gpu:4`, `--exclusive` *(to check)*, and Slurm's `--deadline`.
 
-**Packing.** One job uses one node (4 GPUs). Jobs per wave: J2 about 1–3, J3 about 2–4, J4 about S = 4–8. This stays far below the 100-job limit.
+**Packing.** One job uses one node. Per wave: J2 1–3 jobs, J3 2–4, J4 S = 4–8 — far below 100.
 
-## 4. Who submits: the AI-agent rule
+## 4. Who acts on HoreKa: the AI-agent rule
 
-The migration page prohibits "interactive AI agent usage on login nodes". The operator agent runs on the Mac and acts through SSH, so commands it issues would execute on the login node. Until the centre answers, the proposal is:
+The migration page prohibits "interactive AI agent usage on login nodes". The operator agent works through SSH, so its commands would run on the login node. Until NHR@KIT answers:
+1. **The author** runs the submit tool (`--dry-run`, then the real submission), the status helper, the staging download, and the `rsync` copy-back. The operator only analyses files the author copies back.
+2. **The question to NHR@KIT support**, in three parts:
+   - (a) may an AI agent outside the cluster run `sbatch`, `squeue` and `rsync` through SSH?
+   - (b) may it run as a dispatcher in the `agent` partition?
+   - (c) does an LLM-driven loop running inside a GPU batch job (the campaign proposer) count as an "AI agent workload" that belongs in the `agent` partition?
+3. Only after a positive answer does the operator runbook get a HoreKa section.
 
-1. **The author submits.** Each wave is two or three commands that the author runs on the login node: `hk2_submit.py --manifest <m> --dry-run`, then `hk2_submit.py --manifest <m>`. The tool writes every job script, checks the rules in §5 and prints the job ids.
-2. **Status and copy-back are also done by the author**, with `hk2_status.py`, which polls at most once a minute, and an `rsync` of the output tree to the Mac. The operator then analyses the copied files.
-3. **The author asks NHR@KIT support** whether an AI agent may (a) run `sbatch`, `squeue` and `rsync` through SSH from outside, or (b) run as a dispatcher in the `agent` partition. If they allow (a) or (b), the operator runbook gets a HoreKa section, and only then.
+## 5. Code changes (Mac agent; for review)
 
-## 5. Code changes (Mac agent; draft, for review)
+1. **`r1/scripts/hk2/hk2_submit.py`** generates the job scripts from a manifest and records the manifest sha256 in each. Its downtime guard has three layers:
+   - **at submission**, it refuses a job if now + `--time` reaches the downtime start;
+   - **every template** sets Slurm's `--deadline` to the downtime start, so a job still pending then is never started;
+   - **inside each job**, the runner checks the clock and stops cleanly before the downtime starts.
 
-All of these live in the paper repo except the provider bits already in the harness. Each change is tested against fake Slurm environment variables and a fake llama-server.
+   It also refuses a missing partition or time, more than 90 jobs outstanding, and any production job on a dev partition.
+2. **`hk2_status.py`** queries at most once every 60 s.
+3. **`slurm` host mode** in `c3_label_sweep.py` and the collector:
+   - GPUs come from Slurm;
+   - the Ada-only Paper A check is skipped;
+   - the `gpu_uuid` occupancy wait is replaced by a light check at job start: no foreign compute process on the allocated GPUs, else exit;
+   - provenance records `SLURM_JOB_ID`, the node, GPU UUIDs, driver, CUDA and modules;
+   - commits are local only.
+4. **GPU slot allocator** for task runs: one GPU per worker, k workers per GPU, GPU 0 excluded in J3. The CPU-node path stays byte-identical (tested).
+5. **Pair-unit audit sharding:** `audit.py --shard i/S` takes whole pairs; a pair is committed only when complete; `audit.py merge` checks for duplicates and missing pairs.
+6. **Staging:**
+   - `hk2_stage.py`, **run by the author** on the login node, only downloads files listed in a manifest;
+   - hashing runs in J0b, not on the login node.
+7. **Templates J0–J5**, and tests against fake Slurm variables and a fake llama-server.
 
-1. **`r1/scripts/hk2/hk2_submit.py`** generates `#SBATCH` scripts from a manifest. It refuses:
-   - a missing `--partition` or `--time`;
-   - any job whose start plus `--time` reaches **2026-11-23 00:00 Europe/Berlin** (or a later downtime listed in the manifest);
-   - more than 90 jobs outstanding;
-   - a dev partition used for production.
+## 6. Checks before any plan depends on HoreKa (author, read-only)
 
-   It records the manifest sha256 in each job script.
-2. **`hk2_status.py`** prints `squeue` and `sacct` at most once every 60 s.
-3. **A `slurm` host mode** in `r1/scripts/c3_label_sweep.py` and the collector:
-   - GPUs come from Slurm's `CUDA_VISIBLE_DEVICES`;
-   - the `gpu_uuid` occupancy wait, the co-tenancy margin check and the Paper A check are skipped (whole GPUs, not Ada);
-   - provenance records `SLURM_JOB_ID`, the node name, GPU UUIDs from `nvidia-smi`, the driver, CUDA and the module list;
-   - phase commits are local (no push from compute nodes).
-4. **A GPU slot allocator** for task runs, used by the collector and `r1/c3/audit.py`. Each worker process gets `CUDA_VISIBLE_DEVICES=<one GPU>`, with k workers per GPU (`--gpu-slots k`). The CPU-node path stays unchanged and byte-identical (tested).
-5. **Audit sharding:**
-   - `audit.py --shard i/S` takes a deterministic slice of the plan, keeping each candidate–incumbent pair whole;
-   - each shard has its own cache file, so no file locking is needed on GPFS;
-   - `audit.py merge` combines the shards and refuses duplicates or missing runs.
-6. **Staging tool**, run on the login node: downloads datasets, GGUFs and pinned wheels into `PROJECT`, verifies the sha256s and writes a staging manifest. Its size must be light enough for the login node; it fetches files and does no computation.
-7. **Templates for J0–J5.**
+1. **Account:** `sacctmgr show associations user=$USER -n -P format=Account`, and the project's remaining GPU-hours.
+2. **Storage:** `echo $PROJECT; df -h $PROJECT`.
+3. **Modules:** `module avail 2>&1 | grep -i -E 'cuda|python|gcc'`.
+4. **Inside a `dev-gpu-h100` job:**
+   - `nvidia-smi` — H100 memory and driver;
+   - `curl -sI https://huggingface.co` — internet from the compute node;
+   - `df -h /tmp $TMPDIR` — local scratch;
+   - `scontrol show partition gpu-h100` — whether `--exclusive` is honoured.
+5. **The downtime details:** the exact start hour, and what happens to pending jobs.
+6. **The NHR@KIT question** in §4.
 
-## 6. Before any plan depends on HoreKa (author, read-only commands)
+## 7. Schedule (if adopted; estimates, with gates)
 
-1. `sacctmgr show associations user=$USER -n -P format=Account`: the project account. Also check the project's remaining GPU-hours.
-2. `echo $PROJECT; df -h $PROJECT; ws_list` *(if workspaces are used)*: the storage location and quota.
-3. `module avail 2>&1 | grep -i -E 'cuda|python|gcc'`: the EasyBuild names to pin.
-4. Inside a `dev-gpu-h100` job: `nvidia-smi` (H100 memory and driver); `curl -sI https://huggingface.co` (internet from compute nodes); `df -h /tmp $TMPDIR` (node-local scratch).
-5. The question to NHR@KIT support in §4.
+| When | What | Gates |
+|---|---|---|
+| Now – 15 Nov | §6 checks; J0, J0b; code §5 reviewed; J1 smoke on the first ported nodes | Author's HoreKa row; R1-BX-PORTING-CONFIRM; M10 shared pieces |
+| 15 – 22 Nov | J1b proposer qualification; J2 census (the T1 noise floors on H100); J3 pilot (G.4) on 2–3 nodes; if possible, a first J3 + J4 wave. **Copy everything out before the downtime** | X.7 (the pick); G.3 row; M10 diff support pinned; the K row (R1-BX-D3); the G.5 authorization note for any EVIDENCE wave |
+| 23 Nov – 4 Dec | Downtime: no jobs. Porting and Mac-side work continue | — |
+| From 5 Dec | Remaining J3 + J4 waves; J5; B.7 | R1-BX-D8-CONFIRM before any label table is analysed |
 
-## 7. Schedule (if adopted; estimates)
-
-| When | What |
-|---|---|
-| Now – 15 Nov | §6 checks; J0 setup; code §5 with review; J1 smoke on the first ported T1 nodes |
-| 15 – 22 Nov | J2 census on H100, which gives the noise floors for the T1 table; J3 pilot (G.4) on 2–3 nodes; if time allows, a first J3 + J4 wave for the nodes already ported. **Copy everything out by 22 Nov** |
-| 23 Nov – 4 Dec | Downtime: nothing runs. Porting and the Mac-side work continue |
-| From 5 Dec | Remaining J3 + J4 waves; J5 merge; B.7. B.7 lands around 10–12 Dec unless the first wave covered enough nodes (the H1 decision is still pending) |
-
-**GPU-hours.** The T1 estimate of about 400 GPU-h assumed 2-minute runs on a 4090-class card. On H100 with k runs per GPU, the wall time is roughly 400 / (GPUs held × speed-up × k). For example, 8 GPUs give about 2 days at a speed-up × k of about 3. This is an estimate, replaced by J2's measurements.
+**GPU-hours (estimate).** After the 1GC change about 8 T1 candidates remain: autoresearch (1), MLGym (about 4) and MLAgentBench (about 3). R1-BX-REVISIONS (f) gives about 40 GPU-h per node at 2-minute runs and K = 6, and about 60 at K = 10. That totals about **320 GPU-h at K = 6** and **480 at K = 10**. Wall time ≈ total / (GPUs held × H100 speed-up × effective k). For example, 8 GPUs with speed-up × k ≈ 3 gives 320 / 24 ≈ 13 h, or 480 / 24 = 20 h. J3 uses only 3 of its 4 GPUs for task runs. J2 replaces these guesses with measurements.
 
 ## 8. What stays elsewhere
 
 - Track X (TASL-2, R1-EXAM-HOST);
 - Track S (host-pinned identity, S0.1);
-- B.2 sweep-1 audits (the replay must use the sweep's own environment on deepthought);
+- B.2 sweep-1 audits (replay in the sweep's own environment on deepthought);
 - Track P (TASL-7).
 
-D.1 fold retraining and the T2 closed loop (D.3) may follow on HoreKa 2 later, by separate rows.
+D.1 fold retraining and the D.3 T2 closed loop may follow on HoreKa 2 later, by separate rows.
 
 ## 9. Open for the author
 
-1. Move the T1 tier (census, noise floors, proposer, campaigns, audits) to HoreKa 2 H100, with Ada as fallback?
-2. The downtime plan: a first wave before 22 Nov, the rest from 5 Dec; and the B.7 date (H1).
-3. Ask NHR@KIT about AI-agent use (§4); until then the author submits.
+1. Move the whole T1 tier to HoreKa 2 H100 (census, floors, proposer, campaigns, audits), with Ada as a whole-table fallback (§0)?
+2. The downtime plan and the B.7 date (H1, pending).
+3. The NHR@KIT question (§4); until it is answered, the author submits and copies.
 4. The project account and its GPU-hour budget.

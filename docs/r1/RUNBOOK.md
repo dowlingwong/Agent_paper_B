@@ -195,8 +195,8 @@ Track G starts now; it no longer waits for B.7. The older Track G text (24–27 
 | Tier | Role | Candidates (cost per run verified one by one in G.0) |
 |---|---|---|
 | T0 | Theory validation, Track S, ablations, low-interaction condition | The 8 CPU nodes of sweep 1 |
-| T1 | Label + evaluation: train C3, the B.7 gate, leave-one-suite-out | autoresearch (short fixed-step variant); MLGym lighter tasks: CIFAR-10, Fashion-MNIST, House Price, a MinAtar/MountainCar-type RL task (to be checked against the MLGym task table in G.0); MLAgentBench light tasks (for example cifar10, imdb, ogbn-arxiv); *(4 Nov, R1-1GC-FALLBACK: 1GC-7RC is not used as a suite; its public datasets — TinyShakespeare, Forest Cover, ETTh1, AG News, ogbg-molhiv — may be extra tasks that count toward no suite)* |
-| T2 | Evaluation only: closed-loop transfer, the API proposer | heavier MLGym and MLAgentBench tasks, chosen in the census; ~~1GC-7RC TinyImageNet and VOC~~ (R1-1GC-FALLBACK) |
+| T1 | Label + evaluation: train C3, the B.7 gate, leave-one-suite-out | autoresearch (short fixed-step variant); MLGym lighter tasks: CIFAR-10, Fashion-MNIST, House Price, a MinAtar/MountainCar-type RL task (to be checked against the MLGym task table in G.0); MLAgentBench light tasks (for example cifar10, imdb, ogbn-arxiv); *(4 Nov, R1-1GC-FALLBACK: 1GC-7RC is not a suite. Its public datasets — TinyShakespeare, Forest Cover, ETTh1, AG News, ogbg-molhiv, TinyImageNet, VOC — may be extra tasks; their tier, whether they count toward 12–16, and their fold role are open, fixed in G.3.)* |
+| T2 | Evaluation only: closed-loop transfer, the API proposer | heavier MLGym and MLAgentBench tasks, chosen in the census (1GC-7RC extra tasks: see the T1 row) |
 | Not used | — | RE-Bench and MLE-bench (hours per run, cannot be audited); DACBench (different problem type) |
 
 **Integration principle.** Each suite's **task assets** (data, baseline script, evaluator) become a harness node with a `NodeSpec` (editable and frozen paths, run command, metric and direction, fixed step budget). The suites' agent frameworks are not used. Every node then shares one runner, one provenance record and one audit path, and most of the need for containers disappears.
@@ -376,6 +376,7 @@ Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs
 | 4B models do not fit or are too slow | Drop to ≤ 2B for online arms; keep 4B offline only |
 | The R1-BX-D3 subsampling check fails | K stays 10; STOP for the author (cost and dates are recomputed at K = 10) |
 | ~~The 1GC-7RC repository is still not public~~ | Settled 4 Nov 12:45: MLAgentBench is the third suite (R1-1GC-FALLBACK) |
+| No MLAgentBench task qualifies for T1 (G.1b) | STOP for the author: leave-one-suite-out needs a labelled T1 node in every suite |
 | The main proposer fails diff liveness on a T1 node | STOP for the author; no node is dropped silently |
 | Track S has no campaign-level result by ≈ 15 Dec | The DAC-reduction argument rests on the theorem plus synthetic controls; the paper says so explicitly (R1-BX-D10) |
 | A T1 node diverges often under the fixed budget | Divergence is reported as its own class; the author decides whether the node stays in T1 |

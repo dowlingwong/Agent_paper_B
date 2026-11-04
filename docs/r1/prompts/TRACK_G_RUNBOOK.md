@@ -14,8 +14,8 @@
 
 - **Target:** 12–16 real tasks from ≥ 3 suites and ≥ 5 domains (LM, vision, graph, tabular, time series, text classification, RL). Variants of one task do not count.
 - **T0:** the 8 CPU nodes (testbed; single-parameter edits as the low-interaction condition).
-- **T1 (label + evaluation):** autoresearch (short fixed-step variant); MLGym lighter tasks: CIFAR-10, Fashion-MNIST, House Price, a MinAtar/MountainCar-type RL task (to be checked against the MLGym task table in G.0); MLAgentBench light tasks (for example cifar10, imdb, ogbn-arxiv); *(4 Nov, R1-1GC-FALLBACK: 1GC-7RC is not used as a suite; its public datasets — TinyShakespeare, Forest Cover, ETTh1, AG News, ogbg-molhiv — may be extra tasks that count toward no suite)*.
-- **T2 (evaluation only):** heavier MLGym and MLAgentBench tasks, chosen in the census (1GC-7RC is not used, R1-1GC-FALLBACK).
+- **T1 (label + evaluation):** autoresearch (short fixed-step variant); MLGym lighter tasks: CIFAR-10, Fashion-MNIST, House Price, a MinAtar/MountainCar-type RL task (to be checked against the MLGym task table in G.0); MLAgentBench light tasks (for example cifar10, imdb, ogbn-arxiv); *(4 Nov, R1-1GC-FALLBACK: 1GC-7RC is not a suite. Its public datasets — TinyShakespeare, Forest Cover, ETTh1, AG News, ogbg-molhiv, TinyImageNet, VOC — may be extra tasks; their tier, whether they count toward 12–16, and their fold role are open, fixed in G.3.)*.
+- **T2 (evaluation only):** heavier MLGym and MLAgentBench tasks, chosen in the census (1GC-7RC extra tasks: see T1).
 - **Not used:** RE-Bench, MLE-bench (hours per run, cannot be audited); DACBench (different problem type).
 - The author fixes the T1/T2 lists after the census (G.3).
 
