@@ -1,17 +1,26 @@
-# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026)
+# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026, revision 2)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted.** One Claude Code agent on the author's Mac carries out this runbook. It covers every part of the current plan that needs no GPU, no LLM inference and no remote host: integrating the plan documents, code changes and their tests, drafts for the author, analysis of results that the experiment operator copies back, and the manuscript.
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 2 addresses an independent review (not accepted: 2 BLOCKING, 6 MAJOR, 9 MINOR); see §4.**
 
-A separate agent, the **experiment operator**, runs everything on the servers. Its runbook is `docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md`. The two agents never talk to each other directly. Work passes between them only through **pushed git branches** and the **author**.
+One Claude Code agent on the author's Mac runs this runbook. It covers every part of the current plan that needs no GPU, no LLM inference and no remote host:
+- integrating the plan documents;
+- code changes and their tests;
+- drafts for the author;
+- analysis of the results the experiment operator copies back;
+- the manuscript.
 
-**Authority, in order:**
-1. `docs/r1/PLAN.md` §10, every dated author row;
+A separate **experiment operator** runs everything on the servers (`docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md`). The two agents never talk directly. Work passes between them only through **pushed git branches** and **the author**.
+
+**This runbook authorizes nothing.**
+
+**Authority, in this order:**
+1. `docs/r1/PLAN.md` §10 (every dated author row);
 2. `docs/r1/RUNBOOK.md`;
 3. `docs/r1/STATUS.md`;
-4. the specs (`C3_DESIGN.md`, `TRACK_P_POST_TRAINING.md`, `proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md`);
+4. the specs: `C3_DESIGN.md`, `TRACK_P_POST_TRAINING.md`, `proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md`;
 5. this file.
 
-If they disagree, stop and ask the author. **Only the author decides.** A decision exists only as a dated PLAN §10 row. You draft rows, notes and options; you never adopt them.
+If two of these disagree, stop and ask the author. **Only the author decides.** A decision exists only as a dated PLAN §10 row. You draft rows, notes and options; you never adopt them. The author commits rows and authorization notes, or tells you in chat to commit a specific one on their behalf. In that case, quote their words in the commit body.
 
 Report to the author in **Chinese**, short and concrete. Write documents and commit messages in **English**.
 
@@ -19,212 +28,337 @@ Report to the author in **Chinese**, short and concrete. Write documents and com
 
 ## 0. Ground rules
 
-- **Host.** The Mac only: repo `~/Documents/agent_paper_B`, harness `~/Documents/autoresearch_harness`.
-  - No SSH to any server.
-  - No LLM inference, no model training, no evidence runs.
-  - CPU-only tests, fake servers, tiny random-weight models, LaTeX builds and CPU simulations (Track S S0.6) are fine.
-- **The main working tree is off-limits.** `~/Documents/agent_paper_B` is checked out on `exam-x-20261026` and has an uncommitted move of `docs/r1/*` to `docs/*` that someone else made. Never edit, stage, stash or switch branches there.
-  - Work only in your own worktrees: `git -C ~/Documents/agent_paper_B worktree add .claude-worktrees/<name> -b <branch> <base>`.
-  - Use a worktree of `~/Documents/autoresearch_harness` for harness code.
-- **Deletions.** If a delete is refused, move the file to `~/Documents/agent_paper_B/_to_delete/` and tell the author.
-- **Branches.** Push only your own branches: `mac-int-<date>`, `mac-<task>-<date>` and harness `r1-local-<date>`.
-  - Never push `main`, `r1` or `exam-x-*`, and never another agent's branch. Never force-push.
-  - Commit author: `Dowling Wong <wangdowling@gmail.com>`. Message bodies say "AI-assisted" and end with the attribution lines the author gives you.
-- **Frozen things stay frozen.** Never edit a file after its first evidence use: rule files, frozen prompt sets, configs pinned for a run, authorization notes, label tables, frozen corpora.
-  - A change to any of these is a new version with its own sha, review and PLAN row.
-  - Never touch seeds 7006–7010 except where a PLAN row allows them (evaluation only).
-- **Decisions versus consistency edits.**
-  - Consistency edits are yours to make: marking superseded text, fixing stale references, correcting arithmetic, carrying a decided value into the documents.
-  - Anything that changes a decision, a threshold, a design choice or a claim is a **proposal**, in `docs/r1/proposals/`, plus a draft PLAN row for the author.
-- **Honesty.** Every number traces to a committed file. Estimates are marked as estimates. AI-assisted work is labelled.
-- **Review loop at every STOP.**
-  1. Spawn a **fresh** reviewer subagent that has not seen your work in progress.
-  2. Give it the task goal, this runbook, the relevant PLAN rows, the branch and commit range, and the task's "Done when". Do not give it your conclusions.
-  3. It writes `docs/r1/reviews/MAC_<TASK>_REVIEW_<date>.md`.
-  4. You fix or answer each finding, and the same reviewer re-checks.
-  5. A task is done only when that reviewer writes **accepted**. You never accept your own work.
-- **Handing work to the operator.** When a task produces something the operator needs (a code commit, a config, a protocol):
-  1. push the branch;
-  2. write the exact commit hash into a **handoff entry** in STATUS on your branch;
-  3. give the author a paste-ready message for the operator naming the branch, the commit and the step it unlocks.
+**Host and compute**
+- The Mac only: repo `~/Documents/agent_paper_B`, harness `~/Documents/autoresearch_harness`.
+- No SSH to any server.
+- No LLM inference, no model training, no evidence runs (R1-COMPUTE).
+- Allowed: CPU-only tests, fake servers, tiny random-weight models, LaTeX builds and CPU simulations (Track S S0.6).
 
-  The operator deploys only reviewed commits whose hashes the author has passed on.
-- **Results from the operator** arrive as pushed `ops-*` branches. Read them with `git fetch` and `git show`, and analyse them in your worktree. Never edit an `ops-*` branch.
+**Worktrees**
+- Never touch the main working tree. `~/Documents/agent_paper_B` is on `exam-x-20261026` and carries an uncommitted move of `docs/r1/*` to `docs/*` made by someone else. Never edit, stage, stash or switch branches there.
+- Work only in your own worktrees: `git -C ~/Documents/agent_paper_B worktree add .claude-worktrees/<name> -b <branch> <base>`. Use the same pattern for the harness.
+- If a delete is refused, move the file to `~/Documents/agent_paper_B/_to_delete/` and tell the author.
 
-## 1. What is already decided or drafted (read first)
+**Code ownership**
+- These rules follow MAC_LOCAL_RUNBOOK §0 of 26 Oct, updated for the 4 Nov handover:
+  - `r1/c3/train/` is Track P code. Do not edit it unless the author's handover row assigns it to you.
+  - `r1/c3/env.py`, `control.py`, `serve.py` and `prior_model.py` are shared. STOP and ask before editing them.
+  - `r1/exam/` and `r1/scripts/exam_*` become yours **only if** the handover row (packet (a)) reassigns them from the Track X agent to you. Then you are their single editor.
+  - Never edit code on a branch another agent is still using.
 
-| Item | Where | Status |
+**Branches and commits**
+- Push only your own branches: `mac-int-<date>`, `mac-<task>-<date>` and harness `r1-local-<date>`.
+- Never push `main` or `r1`. Never force-push.
+- Commit author: `Dowling Wong <wangdowling@gmail.com>`. The body says "AI-assisted" and ends with the attribution lines the author gives you.
+
+**Frozen things stay frozen**
+- Never edit a file after its first evidence use: rule files, frozen prompt sets, configs pinned for a run, authorization notes, label tables, frozen corpora. A change is a new version with its own sha, review and PLAN row.
+- Seeds 7006–7010 are used only where PLAN rows allow: evaluation, and B.2 task-level joint-seed retraining and evaluation (R1-B2-DECOUPLE). Never for C3 or Track P training, tuning or selection.
+
+**Decisions versus consistency edits**
+- Yours: consistency edits, such as marking superseded text, fixing stale references, correcting arithmetic, and carrying a decided value into the documents.
+- A proposal: any change to a decision, a threshold, a design or a claim. It goes in `docs/r1/proposals/` with a draft PLAN row.
+
+**Honesty**
+- Every number must trace to a committed file.
+- Mark estimates as estimates.
+- Label AI-assisted work.
+
+**Review loop at every STOP**
+1. Spawn a **fresh** reviewer subagent. Give it the task goal, this runbook, the relevant PLAN rows, the branch and commit range, and the task's "Done when". Do not give it your conclusions.
+2. It writes `docs/r1/reviews/MAC_<TASK>_REVIEW_<date>.md`.
+3. Fix or answer each finding. The same reviewer re-checks until it writes **accepted**.
+4. You never accept your own work.
+
+**Hand-off to the operator**
+- Push the branch.
+- Write the exact commit hash into a **handoff entry** in STATUS on your branch.
+- Give the author a paste-ready message naming the branch, the commit and the operator step it unlocks.
+- The operator deploys only reviewed commits whose hashes the author passed on.
+
+**Results from the operator**
+- They arrive on pushed `ops-*` branches, or on `trackS-ops-20261030`. Read them with `git fetch` and `git show`, and analyse them in your own worktree.
+- Never edit an operator branch.
+
+## 1. Sources and state (read first)
+
+| Branch (GitHub) | Head | What it holds |
 |---|---|---|
-| Main proposer = the Track X pick, run with thinking off; sweep 2 (B.1b); sweep 1 (7B) as the second source | PLAN R1-MAIN-PROPOSER; RUNBOOK B.1b; branch `docs/main-proposer-03nov` | Author decision of 3 Nov. The draft was independently accepted on 4 Nov. **Not yet merged** with the coordinator branch |
-| Proposer-exam rule `x5_rule_v2` | `docs/r1/proposals/X5_RULE_V2_DRAFT_20261104.md` | Draft; you implement it (task M2) |
-| Track S | Design rev 7.4; operator runbook **rev 3.3 of record** plus the operator's R1-CACHEPROMPT-FALSE procedure | Pins: paper `d10b05b7`, harness `cacheprompt-20261031` @ `a3fedbb`, recorded on `trackS-ops-20261030`. Rev 3.4/3.5 of the operator runbook were overtaken by D6 and are not of record. The S0.1 re-run is pending |
-| `cache_prompt: false` for all Paper B LLM calls | PLAN rows of 31 Oct (R1-EXAM-CACHE-REV; R1-CACHEPROMPT-FALSE on `trackS-ops-20261030`) | Decided. The harness fix is not yet merged into harness `r1` |
-| B.2 audits of sweep 1 | R1-SWEEP1-CLASSIFY, R1-B2-DECOUPLE, R1-B1-CORPUS-FREEZE | STOP. Still needed: the runner and audit classification fix, the environment-replay driver, and the author's start ruling |
-| Track P P.3a | R1-P3A-OOM; `reviews/TRACKP_P3A_OOM_DIAGNOSIS_20261031.md` | STOP, verdict UNCLEAR. Waits on the author's choice among options 1–3 |
-| Track X Stage A | Coordinator branch `codex/coordinator-20261031` (STOP 8 at `3a853917`) | Restarted 3 Nov as `t7h8` on TASL-7 |
-| deepthought dual-card deployment | Author in chat, 4 Nov: "deepthought我们可以用双卡deploy模型，一部分实验可以放到那上" | Intent stated. A PLAN row is still needed (task M1) |
+| `codex/coordinator-20261031` | `3a853917` (3 Nov) | Latest coordinator: PLAN rows to 3 Nov, Track X Stage A STOPs 1–8, the 31 Oct decisions |
+| `codex/trackx-stagea-cooperative-20261031` | `19b8f33f` | Track X Stage A code pin |
+| **`codex/b2-repair-20261031`** | **`f98e315e`** (31 Oct; contains `codex/r1-operator-drafts` `007a8d1`) | **Not merged into the coordinator.** It holds: <br>• the reviewed environment-replay plan `docs/r1/proposals/C3_ENV_RECONSTRUCTION_REPLAY_DRAFT_20261028.md` and its review; <br>• `reviews/C3_AUDIT_SPLIT_PACKAGE_REVIEW_20261028.md` (B.2 blockers); <br>• the evidence-guard, split-audit and classification code in `r1/c3/audit.py` and `r1/scripts/c3_label_sweep*`, with tests; <br>• 8 PLAN lines. |
+| `docs/main-proposer-03nov` | `14dc0fea` | R1-MAIN-PROPOSER, RUNBOOK B.1b and the `x5_rule_v2` draft (independently accepted 4 Nov) |
+| `docs/runbooks-04nov` | this branch | This runbook and the operator runbook |
+| `docs/trackS-decisions-30oct` | `13badb0` on GitHub (a newer local head `8bfd003` exists in a bundle) | R1-TRACKS-* rows; Track S design rev 7.4; the Track S operator runbook. **Rev 3.3 of record is the file at `13badb0`**, sha `a93fb84b…`. Later heads carry rev 3.4/3.5 with superseded pins and are not of record |
+| `trackS-ops-20261030` | `f5d5c6b0` (31 Oct) | Track S operator branch. R1-CACHEPROMPT-FALSE (under its own heading, outside §10), D6 reports, pins paper `d10b05b7` and harness `cacheprompt-20261031` @ `a3fedbb` (`a3fedbb` ⊃ `115df37` ⊃ `6adf385`) |
+| `trackp-20261026` | `b9ad6f8f` | Track P code. It adds no PLAN rows |
+| `docs/manuscript-28oct` | `9aaa6f69` | The manuscript draft, from `codex/r1-manuscript-28oct` `fb68ff3`. Use `docs/manuscript-28oct` |
+
+**State.**
+- **Sweep 1** (B.1) is frozen.
+- **B.2** is STOP. The gates of the replay draft's "Separate B.2 gates" section and the AUDIT_SPLIT review are open, and there is no start ruling.
+- **Track X Stage A**: attempt `t7h8` is on TASL-7.
+- **Track P P.3a** is STOP (OOM, verdict UNCLEAR; options 1–3).
+- **Track S** waits for the S0.1 re-run.
+- **`cache_prompt: false`** is decided for Track X (R1-EXAM-CACHE-REV) and Track S (R1-CACHEPROMPT-FALSE), and for sweep 2 by R1-MAIN-PROPOSER. Sweep 1 is disclosed as not seed-replayable (R1-SWEEP1-CACHE-DISCLOSURE).
+- **Deepthought dual-card**: the author said in chat on 4 Nov: "deepthought我们可以用双卡deploy模型，一部分实验可以放到那上". This is intent; there is no PLAN row yet. Note that R1-MAIN-PROPOSER (f) and B.1b currently say sweep 2 runs on "one RTX 4090 host".
 
 ## 2. Tasks, in priority order
 
-Each task ends with a **STOP**: the review loop, then a STATUS entry, then a report to the author. Tasks M2, M3 and M4 can run in parallel in separate worktrees once M1 is accepted.
+Every task ends in a **STOP**: the review loop, a STATUS entry, then a report to the author.
 
-### M1 — One authoritative plan (integration branch) and the author's decision packet (½–1 day)
+**Order.**
+- **M1 first.**
+- **M2 and M3** can then run in parallel.
+- **M4** comes after M3, because both edit `r1/scripts/c3_label_sweep.py`. M4 rebases on M3's accepted commit.
 
-**Why.** Author decisions are now spread over several branches:
-- `codex/coordinator-20261031` (latest coordinator, Track X Stage A STOPs 1–8, 31 Oct decisions);
-- `docs/main-proposer-03nov` (R1-MAIN-PROPOSER);
-- `docs/trackS-decisions-30oct` (R1-TRACKS-* rows, Track S design and operator runbook);
-- `trackS-ops-20261030` (R1-CACHEPROMPT-FALSE, the Track S PLAN rows and pins);
-- `trackp-*` (Track P);
-- this runbook's branch, `docs/runbooks-04nov`.
+### M1 — One authoritative plan (integration branch) and the author's decision packet (1 day)
 
-The operator needs one place to read.
+**Step 1: create the branch.** `git fetch origin`. Create `mac-int-20261104` from `origin/codex/coordinator-20261031`.
+
+**Step 2: integrate each source branch** — `docs/main-proposer-03nov`, `docs/runbooks-04nov`, `codex/b2-repair-20261031`, `docs/trackS-decisions-30oct` @ `13badb0` and `trackS-ops-20261030` — like this:
+- **List the files** with `git diff --name-status $(git merge-base HEAD <br>) <br>`.
+- **New files:** add them.
+- **Changed text files** (docs and code): a three-way `git merge-file` against the merge-base. **Never** `git checkout <br> -- <path>`: that overwrites newer rows silently.
+- **Code** comes only from `codex/b2-repair-20261031`, `docs/main-proposer-03nov` and `docs/runbooks-04nov`. **Track S code stays on its branch** and is used by pin.
+- **PLAN and STATUS:** insert the branch's rows and entries by hand, in date order, without changing their text.
+  - R1-CACHEPROMPT-FALSE moves under §10 with its own heading line, unchanged.
+  - Do not deduplicate rows by id: ids repeat (for example R1-COMPUTE occurs 12 times).
+  - If two rows contradict each other, STOP and ask.
+
+**Step 3: verify the integration.** Write `r1/scripts/plan_row_check.py`:
+- it extracts every §10 table row and every STATUS entry from each source branch;
+- it checks that each appears byte-identical in the result;
+- it lists any row that exists only in the result.
+
+Run it, and commit both the script and its output.
+
+**Step 4: add a pin table** at the top of RUNBOOK §5, "Current code pins (4 Nov)". For each track, record the paper commit, the harness commit, the llama.cpp build, the GGUF sha256, the governing runbook (commit and sha) and the branch. Read every value from the branch that records it:
+- **Track S:** `d10b05b7` / `a3fedbb`; runbook rev 3.3 @ `13badb0`, sha `a93fb84b…`.
+- **Sweep 1:** `ccb4712` / `6adf385`.
+- **Track X:** the coordinator's recorded Stage A pins.
+- **Track P:** `trackp-20261026` and its recorded pins.
+
+**Step 5: write the decision packet** `docs/r1/proposals/AUTHOR_DECISIONS_20261104.md`. Each section gives the options, a recommendation and a paste-ready draft PLAN row:
+
+**(a) Handover row.**
+- From the date of the row, the operator of `OPERATOR_RUNBOOK_20261104.md` is the only agent acting on the servers.
+- The coordinator, the Track X agent, the Track S operator, the Track P agent and the deepthought agent stop at their next safe point.
+- `trackS-ops-20261030` is transferred to the operator.
+- `r1/exam/` and `r1/scripts/exam_*` are transferred to you as single editor, or stay with Track X: state which.
+- It replaces the scope of R1-OPERATOR-TAKEOVER, and R1-TRACKP-RUNBOOK's assumption of an agent on the host.
+- Standing recovery authorizations held by previous agents are not inherited. The author re-issues the ones the operator needs, in writing and with a scope.
+
+**(b) R1-HOSTS-04NOV (proposed amendment).**
+- TASL-7: Track X Stage A until it is accepted. After that, Track P (the PLAN host), with Track S `tabular_mlp` in the gaps. No Track S GPU job runs on TASL-7 before Stage A is accepted.
+- TASL-2: Track S `digits_mlp`, with Track X B1/B2 taking priority (their campaign worker is TASL-2-only).
+- deepthought: B.2 replay and audits on CPU; the DTQ qualification; the A4 7B row.
+- Ada: overflow only.
+- **Speed figures for the packet, stated as estimates:**
+  - Sweep 1 on one TITAN X made 5,813 proposals in about 11.6 h. That is about 7 s per proposal of *wall throughput*, worker CPU included, at `cache_prompt` default.
+  - The recorded per-call latency averages about 112 s because 16 workers queue on one `-np 1` server.
+  - Track S's serial latency on a 4090 is 0.68–0.70 s per call.
+  - These figures concern the 7B. Sweep 2 uses the Track X pick, whose speed on any host is still unmeasured.
+
+**(c) R1-DT-DUALCARD (proposed).**
+- Allow one llama-server across two TITAN X cards (`--split-mode layer --tensor-split 1,1`), after the DTQ qualification.
+- **Explicitly amend R1-MAIN-PROPOSER (f) and RUNBOOK B.1b** so that sweep 2 may run on deepthought if the pick qualifies. Otherwise it stays on "one RTX 4090 host".
+- Add the sm_52 build and the two-card split to B.1b's list of differences from sweep 1.
+- Also mention, as a separate option: `deepthought2.etp.kit.edu` (2 × L40S, 48 GB each) is out of scope today. A PLAN row could add it as a sweep-2 host.
+
+**(d) R1-EXAM-RULE-X5V2.**
+- First the author's ruling on always-thinking models: skip B1, or run them descriptively. This value enters the YAML **before** its sha is computed.
+- Then the row carrying the sha, from M2.
+
+**(e) B.2, in two steps.**
+- (e1) An authorization for the **environment replay**, an ENGINEERING_ONLY CPU job on deepthought, as the replay draft requires.
+- (e2) After the replay passes and the remaining "Separate B.2 gates" are closed: the **B.2 start ruling**, lifting R1-B2-DECOUPLE's "does not start", together with the B.2 authorization addendum.
+
+**(f) P.3a OOM.** Option 1, 2 or 3 of the diagnosis review.
+
+**(g) Track S.**
+- The **S0.1 re-run procedure row**: fresh servers; k = 2 serial and then concurrent, at `cache_prompt: false`; the probe output suffix; new output directories. Rev 3.3 has no re-run procedure, and the ruling file cited by R1-CACHEPROMPT-FALSE is not on any branch.
+- The k rule's clause (b): if both tiers pass, choose the faster k.
+- A statement that rev 3.4/3.5 are **not of record**.
+- The Track P marker helper (`proposals/TRACKP_EVIDENCE_MARKER_20261030.md`): install it or not.
+
+**(h) R1-MAIN-PROPOSER's "(proposed)" items:**
+- deepthought-CPU audits for sweep 2;
+- the 4-day projection STOP;
+- pooled training versus sweep 2 only, decided on validation;
+- Track S keeps the 7B;
+- P.3b drawn from sweep 2's training partition.
+
+**(i) Internal freezes.** R1-INTERNAL-FREEZES has labels on 3 Nov (already slipped), B.7 on 26 Nov, D.3 complete on 20 Dec and the manuscript on 10 Jan. Propose new dates once the operator's projections exist. Never invent numbers.
+
+**Step 6: hand the packet to the author.** Give the author the packet and the paste-ready rows. The author commits them on `mac-int-20261104`, or tells you in chat to commit named rows on their behalf, which you then do. After that:
+- push the branch;
+- give the author a paste-ready message telling the operator to read from `mac-int-20261104` at that commit.
+
+**Done when:**
+- `plan_row_check.py` shows every source row and entry present and byte-identical;
+- the pin table is filled from the recorded sources;
+- the packet exists;
+- the reviewer has accepted, and the review covers: no row lost, altered or contradicted; code merged only from the three branches; options faithful to the sources; no decision taken.
+
+### M2 — `x5_rule_v2` and its code (1 day; **must finish before Track X B1 starts**; only if packet (a) makes you editor of `r1/exam/`)
+
+**Base.** The latest Track X Stage A code pin recorded by the coordinator, `codex/trackx-stagea-cooperative-20261031` (`19b8f33f` at writing). Rebase if the pin moves.
+
+**Prerequisite.** The author's ruling on always-thinking models (packet (d)).
 
 **Steps.**
-1. **Create the branch.** `git fetch origin`, then create `mac-int-20261104` from `origin/codex/coordinator-20261031`.
-2. **Merge the branches.**
-   - Merge `docs/main-proposer-03nov` and `docs/runbooks-04nov`.
-   - Take the **docs paths only** (`docs/r1/**`) from `docs/trackS-decisions-30oct` and `trackS-ops-20261030`, path-selectively.
-   - Do **not** take their code: code stays on its track branches and is used by pin.
-   - PLAN and STATUS conflicts: keep both sides in date order and change no text. If two rows contradict each other, stop and ask.
-3. **Add a pin table** at the top of RUNBOOK §5, "Current code pins (4 Nov)". For each track, give the paper commit, the harness commit, the llama.cpp build, the GGUF sha256 and the branch where it lives. Track S: `d10b05b7` / `a3fedbb`. Sweep 1: `ccb4712` / `6adf385`. Track X: the coordinator's recorded pins. Track P: its recorded pins. Read each from the branch that records it; never from memory.
-4. **Mark superseded text.** In the Track S operator runbook (docs branch), mark rev 3.4/3.5 as "not of record: overtaken by D6 (R1-TRACKS-S01-FOLLOWUP-REV) and R1-CACHEPROMPT-FALSE".
-5. **Write the decision packet.** `docs/r1/proposals/AUTHOR_DECISIONS_20261104.md`: one section per open decision, each with its options, a recommendation and a paste-ready draft PLAN row. Cover at least these:
-   - **(a) Handover.** The operator of `OPERATOR_RUNBOOK_20261104.md` becomes the only agent acting on the servers. The previous operators stop at their next safe point, once the author has told them so: the coordinator and Track X agent, the Track S operator, and the Track P and deepthought agents.
-   - **(b) R1-HOSTS-04NOV, host allocation.**
-     - TASL-7: Track X Stage A until it is accepted, then Track P (its PLAN-assigned host); Track S `tabular_mlp` in the gaps.
-     - TASL-2: Track X B1/B2 (whose campaign worker is TASL-2-only, R1-EXAM-HOST-TASL7) and Track S `digits_mlp`. Track X evidence has priority there.
-     - deepthought: B.2 audits (CPU), the dual-card qualification (DTQ), sweep 2 if the pick qualifies there, and the 7B A4 row.
-     - Ada: overflow only.
-     - Rationale: on a TITAN X the 7B runs at about 6–7 s per call (from sweep-1 records: 5,813 calls in about 11.7 h with one server) against about 0.65 s on a 4090. So Track S, with about 80k calls per node, stays on the 4090s, while sweep 2, with about 6k calls, can use deepthought.
-   - **(c) R1-DT-DUALCARD.** A deepthought model may be served by one llama-server across **two** TITAN X cards (`--split-mode layer --tensor-split 1,1`), only after the DTQ qualification (operator runbook O5) and only for workloads the PLAN assigns. One host type per labelled table still holds.
-   - **(d) R1-EXAM-RULE-X5V2.** The sha comes from task M2 after review. Also open: whether always-thinking models skip B1.
-   - **(e) B.2 start ruling.** This lifts R1-B2-DECOUPLE's "does not start" once the prerequisites of M3 are met and the environment replay passes.
-   - **(f) P.3a OOM.** The author picks option 1, 2 or 3 of the diagnosis review.
-   - **(g) Track S.**
-     - k rule clause (b): if both tiers pass, choose the faster k;
-     - S0.1 re-run acceptance procedure;
-     - Track P marker gate before Phase 6 on TASL-7;
-     - whether the Track P marker helper (`proposals/TRACKP_EVIDENCE_MARKER_20261030.md`) is installed.
-   - **(h) The R1-MAIN-PROPOSER "(proposed)" items:** deepthought-CPU audits for sweep 2; the 4-day projection STOP; pooled training versus sweep 2 only, decided on validation; Track S keeps the 7B; P.3b drawn from sweep 2's training partition.
-   - **(i) Internal freezes.** R1-INTERNAL-FREEZES set labels on 3 Nov, B.7 on 26 Nov, D.3 complete on 20 Dec and the manuscript on 10 Jan. Labels have already slipped. Propose new dates from the operator's projections; do not invent numbers.
-6. **Report.** Give the author a paste-ready list of rows to commit. Once the author has committed, push `mac-int-20261104`, and give the author a paste-ready message telling the operator to read the runbook and PLAN from that branch at that commit.
-
-**Done when:** `mac-int-20261104` contains every author PLAN row from all the listed branches, in date order and unchanged; the pin table is filled from the recorded sources; the decision packet exists; the reviewer has accepted the integration (no row lost, altered or contradicted) and the packet (options faithful to the sources, no decision taken).
-
-### M2 — `x5_rule_v2` and its code (1 day; **must finish before Track X B1 starts**)
-
-**Base.** The coordinator's Track X code branch (`codex/trackx-stagea-cooperative-20261031` or the branch the coordinator records as the exam code pin; check STATUS).
-**Worktree branch.** `mac-x5v2-20261104`.
-
-**Steps.**
-1. Create `r1/exam/rules/x5_rule_v2.yaml` exactly as in `proposals/X5_RULE_V2_DRAFT_20261104.md`, with every mode quoted (`"off"`), plus its `.sha256`. `x5_rule_v1.yaml` is not modified.
-2. `r1/exam/analyze.py`:
-   - `load_rule` accepts `x5_rule/v2`, and its default path points at v2;
-   - `b1_summary` takes μ̂ from thinking-off observations only, marks registry `thinking_policy.mode == 'always_on'` as ineligible, reports thinking-on rows separately and reads `thinking_mode.b1_sensitivity.node`;
-   - `choose_finalists` ranks only eligible rows;
-   - `b2_summary` ranks only primary rows with `mode == "off"` and raises an error on any other mode.
-3. `r1/scripts/exam_runner.py:109–117`:
-   - always-on models skip B1 if the author keeps `always_on_in_b1: skip`;
+1. **The rule file.** Create `r1/exam/rules/x5_rule_v2.yaml` from `proposals/X5_RULE_V2_DRAFT_20261104.md`, with every mode quoted (`"off"`) and `always_on_in_b1` set to the author's ruling, plus its `.sha256`. **`x5_rule_v1.yaml` stays unchanged and loadable**, because Stage A's config (`exam_portal.json`) binds v1.
+2. **`r1/exam/analyze.py`** (cite functions, not line numbers):
+   - `load_rule` accepts both `x5_rule/v1` and `x5_rule/v2`, and the default path stays v1;
+   - `b1_summary` and `b2_summary` follow the draft when given v2, and are unchanged under v1;
+   - v2 reads `thinking_mode.b1_sensitivity.node`.
+3. **`r1/scripts/exam_runner.py`**, in the B1/B2 mode logic (the block that builds `modes` per spec):
+   - under v2, always-on models skip B1 if the ruling says so;
    - B2 runs with mode `"off"`;
-   - the top-3 rerun becomes thinking-on and is marked descriptive;
-   - the B1 and B2 configs bind v2's path and sha.
-4. Tests:
-   - the rule loads only with its sha, and its mode fields are strings;
-   - an always-on model never becomes a finalist;
+   - the top-3 rerun is thinking-on and is marked descriptive.
+4. **The free schema-sensitivity guard.** The X.7 pick row names the pick as **D22 pick** on the same line, so the guard's PLAN-line check is satisfied. Keep the guard unchanged.
+5. **New configs.** Add `r1/scripts/configs/exam_b1_v2.json` and `exam_b2_v2.json`, binding v2's path and sha. Leave the Stage A config unchanged.
+6. **Tests:**
+   - the YAML mode fields are strings;
+   - v2 loads only with its sha;
+   - an always-on model is never a finalist;
    - a thinking-on row with a higher Y never wins;
    - ties go to lower GPU-h;
    - B2 refuses a non-off primary manifest;
-   - the existing exam tests still pass, except where they test v1-only behaviour, which stays tested against v1.
-5. Hand off: the sha of `x5_rule_v2.yaml`, the commit hash, and the draft PLAN row R1-EXAM-RULE-X5V2 carrying the sha (the id must contain `R1-EXAM-RULE` for `runtime.author_gate`).
+   - every v1 test still passes against v1.
+7. **Hand-off.** The v2 sha, the commit, and the draft row R1-EXAM-RULE-X5V2 carrying the sha.
 
-**Done when:** the tests pass on the Mac CPU, with a failure set identical to the base apart from the new tests; the reviewer has accepted (YAML types, the code paths in `analyze.py` and `exam_runner.py`, nothing in v1 changed); the handoff is written.
+**Done when:** the tests pass on the Mac CPU, with a failure set equal to the base's apart from the new tests; the reviewer has accepted; the hand-off is written.
 
-### M3 — B.2 prerequisites (1–2 days)
+### M3 — B.2 prerequisites, continuing `codex/b2-repair-20261031` (1–2 days)
 
-**Base.** The coordinator branch. Find the reviewed 16-case environment-replay plan referenced in `reviews/C3_B2_REPLAY_LLM_SCOPE_REVIEW_20261031.md` and the runner and audit classification defect recorded in R1-SWEEP1-CLASSIFY.
-
-**Steps.**
-1. **Classification fix** (R1-SWEEP1-CLASSIFY). The sweep runner and the audit step label EVIDENCE runs correctly from a matching authorization. Add tests. The original sweep-1 records are never rewritten: the classification sidecar stays the binding record.
-2. **Environment-replay driver.** Implement the reviewed 16-case plan:
-   - rebuild worker configurations from the retained structured edits;
-   - re-run them on the audit host's environment;
-   - compare the primary worker metrics with zero tolerance;
-   - send no manager LLM requests;
-   - write a JSON report with every case, both values and the environment fingerprint;
-   - include a `--dry-run` mode and fixture tests.
-3. **Audit step for sweep 1.** Check that the B.2 audit command of `DEEPTHOUGHT_SWEEP1_RUNBOOK.md` Phase 8 works on the frozen corpus as committed, run as a dry run against a copy:
-   - K = 10;
-   - seeds 7001–7005 for labels and 7006–7010 for evaluation, kept separate;
-   - duplicates get no label, and no-ops are labelled by rule;
-   - the counts are reported by kind.
-4. **Hand off.** The commit, the dry-run outputs, and a **draft** B.2 authorization addendum for the author (`docs/r1/proposals/AUTH_DRAFT_b2_<date>.md`) naming the pins, the replay requirement and its pass rule, the host (deepthought CPUs), the worker count and the STOPs.
-
-**Done when:** the tests pass; the dry runs work on the frozen corpus layout; the reviewer has accepted. The operator then runs the replay and B.2 (operator runbook O4), only after the author's start ruling.
-
-### M4 — Sweep 2 and deepthought dual-card code (1–2 days; parallel with M2 and M3)
-
-**Base.** The sweep code at the sweep-1 paper pin, plus the harness `cache_prompt` fix.
-**Branches.** `mac-sweep2-20261104`; harness `r1-local-20261104`.
+**Base.** `codex/b2-repair-20261031` (`f98e315e`) on `mac-b2-20261104`. **Do not re-implement** what that branch already contains.
 
 **Steps.**
-1. **Harness pin candidate.** On `r1-local-20261104` (from `origin/r1`), merge harness branch `cacheprompt-20261031` @ `a3fedbb`, together with the Track S commits it carries from `115df37`.
+1. **Read the existing work:**
+   - `proposals/C3_ENV_RECONSTRUCTION_REPLAY_DRAFT_20261028.md` (its predeclared replay protocol, and "Separate B.2 gates");
+   - `reviews/C3_ENV_REPLAY_DRAFT_REVIEW_20261028.md`;
+   - `reviews/C3_AUDIT_SPLIT_PACKAGE_REVIEW_20261028.md`;
+   - `reviews/C3_B2_REPLAY_LLM_SCOPE_REVIEW_20261031.md`;
+   - the evidence-guard code and tests on the branch;
+   - R1-SWEEP1-CLASSIFY;
+   - the audit procedure in `docs/r1/overnight/C3_OFFLINE_HANDOFF.md`, which DEEPTHOUGHT_SWEEP1_RUNBOOK Phase 8 points to.
+2. **Make a gate table** (`docs/r1/reports/MAC_B2_GATES_20261104.md`). List every gate from the replay draft and the reviews, with its state: closed, with commit and test, or open, with what is missing. Typical gates, all from the sources:
+   - classification and guard code reviewed and published;
+   - a validated original-file mapping;
+   - a complete eligible-proposal plan;
+   - the package-list hash and the per-run resolved Python and package versions;
+   - the non-venv / version-mismatch STOP;
+   - the replay driver.
+3. **Close the open gates in code,** with tests:
+   - the environment-replay driver that implements the predeclared protocol, with `--dry-run` and fixture tests;
+   - any classification or guard fix still open.
+
+   The original sweep-1 records are never rewritten.
+4. **Dry-run the audit plan** against a copy of the frozen corpus layout:
+   - K = 10; seeds 7001–7005 for labels and 7006–7010 for evaluation, never mixed;
+   - duplicates get no label;
+   - no-ops are labelled by rule;
+   - counts reported by kind.
+5. **Drafts for the author:**
+   - `proposals/AUTH_DRAFT_c3_replay_<date>.md`, packet (e1);
+   - `proposals/AUTH_DRAFT_b2_<date>.md`, packet (e2).
+
+   Each names the pins, the host (deepthought CPUs), the worker count, the pass rule and the STOPs.
+
+**Done when:** the gate table shows every gate either closed or explicitly left to the author; the tests pass; the dry runs work; the reviewer has accepted. The operator runs the replay, then B.2 (operator O4), each only after its authorization.
+
+### M4 — Sweep-2 code and deepthought dual-card serving (1–2 days; after M3, rebased on its accepted commit)
+
+**Branches.** `mac-sweep2-20261104` (paper) and `r1-local-20261104` (harness).
+
+**Steps.**
+1. **Harness pin candidate.** On `r1-local-20261104`, from `origin/r1`, merge `cacheprompt-20261031` @ `a3fedbb`, which carries the Track S commits since `6adf385`.
    - Run the full harness suite and compare the failure set with `origin/r1`.
-   - Write a "defaults unchanged" check: with `cache_prompt` and the thinking flag unset, the request body equals the old one byte for byte, as the 30 Oct stand-in-server check did.
-   - **Do not merge into `r1`.** R1-HARNESS-NEXT-PIN allows that only after sweep-1 B.2, or by an author exception.
-2. **Sweep runner** (`r1/scripts/c3_label_sweep.py`, `r1/scripts/llama_server_instance.py`):
-   - (a) pass the pick's registry `thinking_policy` with mode `"off"` and the exam's server flags (`--jinja`, q8_0 KV) to `LlamaServerInstance`, and check the flags against the build's `--help`;
-   - (b) thread `cache_prompt` through the manager config, record it in the manifest, and refuse a resume with other values;
-   - (c) record the instance-seed list and check it against the sweep-1 index;
-   - (d) the thinking-content counter: a non-empty `reasoning_content`, a `<think>` tag in `content`, or `reasoning_tokens > 0`;
-   - (e) **two-GPU serving:** a config key `gpu_uuids: [uuid1, uuid2]` with `tensor_split`, which sets `CUDA_VISIBLE_DEVICES` to both and passes `--split-mode layer --tensor-split <split>`. The offload proof must show N/N layers across both cards. The occupancy census checks both cards. `gpu_uuid` (one card) keeps working unchanged.
-3. **Configs.** Templates `r1/scripts/configs/c3_sweep2_tasl2.json` and `c3_sweep2_deepthought2gpu.json`, with placeholders for the pick and comments saying where each value comes from.
-4. **The deepthought dual-card qualification tool (DTQ)** (`r1/scripts/dt_dualcard_qualify.py`). For a given GGUF:
-   - start one server on two named cards;
-   - prove full offload;
-   - replay N sweep-shaped prompts (default 50 × 3 repeats, with `cache_prompt: false`, thinking off and the D26 seeds), reusing the Track S probe's schedule and identity code where possible;
-   - report the within-server identity, latency mean and p95, tokens per call, peak memory per card and a projection for sweep 2 (calls × latency).
-   - Mark the output ENGINEERING_ONLY. It has a dry-run mode against a fake server.
-5. **Tests:** fake-server tests for (a)–(e) and the tool; existing sweep tests unchanged.
+   - Add a "defaults unchanged" test against a stand-in server: with the new fields unset, the request body equals the old body byte for byte.
+   - **Do not merge into `r1`.** R1-HARNESS-NEXT-PIN applies: only after sweep-1 B.2, or by an author exception.
+2. **Sweep runner.** Change `r1/scripts/c3_label_sweep.py` (`start_llamacpp`) and `r1/scripts/llama_server_instance.py` (`LlamaServerInstance`):
+   - (a) Pass the pick's registry `thinking_policy` with mode `"off"`, and the exam's server flags (`--jinja`, q8_0 KV), to `LlamaServerInstance`. Do not check the flags against `--help` here: the operator checks them on the host against the pinned build (620d222). You read the build's source tag only to confirm the flags exist.
+   - (b) Thread `cache_prompt` through the manager config and the manifest. Refuse a resume that has other values.
+   - (c) Record the instance-seed list and check it against the sweep-1 index.
+   - (d) Count thinking content: a non-empty `reasoning_content`, a `<think>` tag in `content`, or `reasoning_tokens > 0`.
+   - (e) **Two-GPU serving.** Add `gpu_uuids: [u1, u2]` with `tensor_split`. It sets `CUDA_VISIBLE_DEVICES` to both cards and passes `--split-mode layer --tensor-split`. The offload proof must show N/N layers across both cards, and the occupancy census must check both. The single-GPU `gpu_uuid` path stays unchanged.
+3. **Configs.**
+   - Write `r1/scripts/configs/c3_sweep2_tasl2.json` now, as a template.
+   - Write `c3_sweep2_deepthought2gpu.json` **only after the author commits R1-DT-DUALCARD**.
+   - Every placeholder carries a comment naming the source of its value.
+4. **DTQ tool.** Write `r1/scripts/dt_dualcard_qualify.py` and reuse the Track S probe at `d10b05b7` (`r1/tracks/probes/determinism.py`: schedule, identity, `--keep-contents`). For a GGUF, it:
+   - serves on two named cards, with the B.1b settings (context 16,384, q8_0 KV, `--jinja`, thinking off, `-np 1`, `cache_prompt: false`);
+   - proves offload;
+   - replays 50 sweep-shaped prompts drawn from sweep-1 contexts, disjoint from the exam's frozen prompt sets, × 3 repeats;
+   - reports identity, latency mean and p95, tokens per call, peak memory per card, and the sweep-2 projection.
 
-**Done when:** the tests pass with an unchanged failure set; the reviewer has accepted, checking especially that the one-GPU path and the default request body are unchanged; the handoff gives the operator the commit for O5 (DTQ) and later O6.
+   The output is labelled ENGINEERING_ONLY. It has a dry-run mode against a fake server.
+5. **Tests.** Fake-server tests for (a)–(e) and for the tool. Existing tests must pass unchanged.
 
-### M5 — Track S desktop parts (on demand, as the operator copies results back)
+**Done when:** the tests pass with an unchanged failure set; the reviewer has accepted, and checked in particular that the single-GPU path and the default request body are unchanged; the hand-off gives the operator the commit for O5 and, later, O6.
 
-These follow the Track S operator runbook (rev 3.3 of record) and design rev 7.4:
-- **S0.5 summary** (`analyze s05-summary`) and the **S0.6 synthetic calibration** (`simulate_controls`, about 1 h per node of CPU), run when the S0.5 outputs arrive. STOP 5 review.
-- **S0.7 selection** (`collect assemble`, `analyze select`) after the tuning outputs arrive.
-- **S0.8 pre-declaration draft** (`analyze predecl-template`) and the filled authorization draft `proposals/AUTH_DRAFT_trackS_20261030.md`. Both are drafts; the author commits them.
-- **Phase 9 analysis** after S3e.
+### M5 — Track X Stage A support (on request)
 
-Each is a STOP with review. Never change a Track S pin, rule or threshold.
+When the operator stops at a Stage A STOP that needs code, follow the coordinator's established pattern:
+1. diagnosis from the preserved evidence the operator copies back;
+2. a minimal fix with a test on the Stage A code branch;
+3. an independent review;
+4. a hand-off.
 
-### M6 — Track P desktop parts (on demand)
+This applies only if you are the `r1/exam/` editor (packet (a)). Otherwise, prepare the diagnosis for the author.
 
-- Once B.2 labels exist:
-  - build the label table (`r1.c3.dataset build-sweep`) from the operator's copy-back;
-  - draw the P.3b exam-set membership, which is a fixed subset of the training partition. Per R1-MAIN-PROPOSER (proposed), it comes from sweep 2 once that exists; if P.3b must run earlier, it comes from sweep 1, disclosed;
-  - compute its sha256 and prepare the P.3b authorization draft.
-- Fold the Track P marker helper text into `TRACK_P_POST_TRAINING.md`, and the RUNBOOK Track P section, after the author's decision (M1 (g)).
+### M6 — Track S desktop parts (on demand; Track S code pin `d10b05b7`)
 
-### M7 — Theory and manuscript (background; whenever M1–M4 are waiting)
+These follow rev 3.3 @ `13badb0` and design rev 7.4:
+- **S0.5 summary** (`analyze s05-summary`) and **S0.6** (`simulate_controls`, about 1 h of CPU per node). STOP 5.
+- **S0.7 selection** (`collect assemble`, `analyze select`).
+- **S0.8 pre-declaration draft** (`analyze predecl-template`) and the filled `proposals/AUTH_DRAFT_trackS_20261030.md`. Both are drafts.
+- **Phase 9 analysis.**
 
-- Support the author's proof check of T4 Proposition 10's revision (`proposals/T4_PROP10_REVISION_20261028.md`). Prepare a one-page checklist of what the author must verify. Do not change theory files without the author.
-- **Manuscript** (`docs/manuscript-28oct` → your branch). Update the setup and methods sections to R1-MAIN-PROPOSER: the main proposer, two sources, cross-proposer analysis, stack differences and selection-effect disclosure. Add the formal-setup layering:
-  - DAC as the problem;
-  - the decision model as the policy class;
-  - single-step training objectives as a surrogate, justified by Prop. 10(a′) and tested by Track S.
+Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or threshold.
 
-  Results stay `\TBD{}`.
+### M7 — Track P desktop parts (on demand)
 
-### M8 — Not now
+- **Label table and P.3b.** Once B.2 labels exist:
+  - build the label table (`r1.c3.dataset build-sweep`) from the copy-back;
+  - draw the P.3b exam-set membership: a fixed subset of the training partition, from sweep 2 once it exists (R1-MAIN-PROPOSER, proposed), otherwise from sweep 1, disclosed;
+  - record its sha256;
+  - write the P.3b authorization draft.
+- **Track P marker helper text.** Add it to `TRACK_P_POST_TRAINING.md` and to the RUNBOOK Track P section, after the author's ruling (packet (g)).
 
-- **R1-LAYOUT-FLATTEN** waits for the labels freeze, which has not happened yet.
-- **Track H H.8** stays deferred.
-- **Track G** adapters only if the author keeps Track G (MLGym needs a container by 10 Nov).
+### M8 — Theory and manuscript (background)
 
-## 3. Reporting cadence
+- **T4 Proposition 10 proof check.** Write a one-page checklist for the author's proof check of the revision (`proposals/T4_PROP10_REVISION_20261028.md`). Never change the theory files without the author.
+- **Manuscript.** On `docs/manuscript-28oct`, in your own branch `mac-ms-20261104`:
+  - align setup and methods with R1-MAIN-PROPOSER: main proposer; two sources; cross-proposer analysis; stack differences; selection-effect disclosure;
+  - add the formal setup in three layers: DAC is the problem; the decision model is the policy class; one-step training objectives are a surrogate, justified by Prop. 10(a′) and tested by Track S;
+  - results stay `\TBD{}`.
 
-- After each STOP, send the author a few Chinese lines: done, commits, review verdict, what the operator can now do, and decisions needed.
-- Keep `docs/r1/proposals/AUTHOR_DECISIONS_20261104.md` current; show it when the author asks "what's pending".
-- Do not wake the author for routine progress.
+### M9 — Not now
+
+- R1-LAYOUT-FLATTEN waits for the labels freeze.
+- Track H H.8 stays deferred.
+- Track G adapters are written only if the author keeps Track G.
+
+## 3. Reporting
+
+- After each STOP, send a few Chinese lines: what was done, commits, the review verdict, what the operator can now do, and the decisions needed.
+- Keep the decision packet current, and show it when the author asks "what's pending".
+
+## 4. Review record
+
+**Revision 1 → 2** (independent review, not accepted):
+
+| Finding | Fix |
+|---|---|
+| B1: the unmerged B.2 branch `codex/b2-repair-20261031` (with `codex/r1-operator-drafts`) was missing | Added to §1 and M1; M3 now continues it; M3 runs before M4 on `c3_label_sweep.py` |
+| B2: unsafe path-selective merge | Per-file three-way merge, rows inserted by hand, and `plan_row_check.py` checking byte-identical rows (M1 steps 2–3) |
+| M-a: deepthought sweep 2 contradicts R1-MAIN-PROPOSER (f) and B.1b | Made a proposed amendment (packet (c)); the deepthought config is written only after the row |
+| M-b: the speed figure | Restated as wall throughput per proposal, an estimate, and kept only as background |
+| M-c: the Track S runbook file on the docs head is rev 3.5 | Rev 3.3 pinned at `13badb0`, sha `a93fb84b…`; "not of record" moved to a packet row |
+| M-d: M2 gaps | Ruling before the sha; functions cited instead of line numbers; new B1/B2 configs with v1 kept; D22 guard; ownership through packet (a); rebase on the latest Stage A pin |
+| M-e: missing Stage A support task; ownership rules | M5 added; ownership rules restored (§0) |
+| M-f: M3 sources; packet (e) circular | Phase 8 now points to C3_OFFLINE_HANDOFF; (e) split into replay authorization (e1) and B.2 ruling (e2) |
+| Minors | Track P branch named; the `--help` check moved to the operator; DTQ reuses the probe at `d10b05b7`; harness ancestry stated; the `cache_prompt` wording corrected; the 7006–7010 scope corrected; Track S code pin in M6; manuscript branch named; who commits the rows (M1 step 6) |
