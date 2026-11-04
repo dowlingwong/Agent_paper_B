@@ -92,11 +92,26 @@ def cache_prompt_evidence(records, events):
             'trial_llm_call_records':len(trial),'all_false':True}
 
 
+def require_worker_host(job, node=None):
+    """B1/B2 campaign workers run only on the configured exam host (R1-EXAM-HOST-B1B2-TASL7, author 4 Nov 18:10).
+
+    Replaces the hard-coded TASL-2 check: the job's ``host`` (``cfg.host``, set by ``ExamRunner.root``)
+    must be one of ``runtime.APPROVED_EXAM_HOSTS`` and must equal this node's short hostname.  DRYRUN jobs
+    never call this (their marked temporary root is checked instead)."""
+    import platform
+    from r1.exam.runtime import APPROVED_EXAM_HOSTS
+    host=job.get('host')
+    if host not in APPROVED_EXAM_HOSTS:
+        raise RuntimeError(f'STOP: EXAM worker host {host!r} is not an approved exam host {sorted(APPROVED_EXAM_HOSTS)}')
+    node=(node if node is not None else platform.node()).split('.')[0]
+    if node!=host: raise RuntimeError(f'STOP: EXAM worker on {node!r} but the configured exam host is {host!r}')
+    return host
+
+
 def collect(job):
     raise RuntimeError('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
     out=Path(job['out'])
-    import platform
-    if not job['dryrun'] and platform.node().split('.')[0]!='TASL-2': raise RuntimeError('STOP: EXAM workers run only on portal')
+    if not job['dryrun']: require_worker_host(job)
     if job['dryrun'] and not any((p/'.dryrun').is_file() for p in out.resolve().parents): raise RuntimeError('STOP: unmarked DRYRUN child')
     out.mkdir(parents=True,exist_ok=True)
     node=job['node'];seed=job['seed'];spec=load_registered_node(node,repo_root=HARNESS)

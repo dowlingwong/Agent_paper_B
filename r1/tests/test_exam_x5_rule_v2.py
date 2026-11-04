@@ -348,7 +348,9 @@ def test_v2_configs_bind_the_o1_accepted_tables():
         assert cfg['stage_a_amendment_table_sha256'] == '71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103'
         assert cfg['stage_a_amendment_acceptance'] == 'docs/r1/reports/OPS_O1_20261104.md'
         assert cfg['stage_a_amendment_acceptance_sha256'] == '0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e'
-        assert cfg['gpu_uuid'].startswith('TODO_AUTHOR_R1_HOSTS_04NOV')
+        # R1-EXAM-HOST-B1B2-TASL7 (author, 4 Nov 18:10) supersedes review F9's placeholder: TASL-7 and its GPU.
+        portal = json.loads(DEFAULT_CONFIG.read_text())
+        assert cfg['host'] == 'TASL-7' and cfg['gpu_uuid'] == portal['gpu_uuid'] == 'GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1'
 
 
 def test_author_gate_binds_amendment_shas(tmp_path, monkeypatch):
@@ -747,3 +749,55 @@ def test_stage_a_harness_pin_does_not_send_cache_prompt_so_b1_evidence_stops(tmp
     r = _drive(tmp_path, harness)
     assert r['requests'] and all('cache_prompt' not in q['body'] for q in r['requests'])
     assert r['manifest_cache_prompt'] is None and 'not explicitly false' in r['stop']
+
+
+# ---------------------------------------------------------------- B1/B2 worker host (R1-EXAM-HOST-B1B2-TASL7)
+def test_b1_b2_worker_host_follows_cfg_host():
+    """Author 4 Nov 18:10: B1/B2 on TASL-7; the worker must run on cfg.host, which must be an approved exam host."""
+    from r1.exam.campaign import require_worker_host
+    from r1.exam.runtime import APPROVED_EXAM_HOSTS
+    assert APPROVED_EXAM_HOSTS == frozenset({'TASL-2', 'TASL-7'})
+    assert require_worker_host({'host': 'TASL-7'}, node='TASL-7') == 'TASL-7'
+    assert require_worker_host({'host': 'TASL-7'}, node='TASL-7.example.kit.edu') == 'TASL-7'
+    assert require_worker_host({'host': 'TASL-2'}, node='TASL-2') == 'TASL-2'
+    with pytest.raises(RuntimeError, match='configured exam host'):
+        require_worker_host({'host': 'TASL-7'}, node='TASL-2')
+    with pytest.raises(RuntimeError, match='configured exam host'):
+        require_worker_host({'host': 'TASL-7'}, node='macbook')
+    for bad in ('deepthought', 'TODO_AUTHOR', None):
+        with pytest.raises(RuntimeError, match='not an approved exam host'):
+            require_worker_host({'host': bad}, node=str(bad))
+
+
+def test_worker_host_uses_platform_node(monkeypatch):
+    from r1.exam import campaign
+    import platform
+    monkeypatch.setattr(platform, 'node', lambda: 'TASL-7')
+    assert campaign.require_worker_host({'host': 'TASL-7'}) == 'TASL-7'
+    monkeypatch.setattr(platform, 'node', lambda: 'TASL-2')
+    with pytest.raises(RuntimeError, match='configured exam host'):
+        campaign.require_worker_host({'host': 'TASL-7'})
+
+
+def test_collect_no_longer_hardcodes_tasl2_and_root_job_carries_host():
+    import inspect
+    from r1.exam import campaign, runtime
+    src = inspect.getsource(campaign.collect)
+    assert "'TASL-2'" not in src and 'require_worker_host(job)' in src
+    assert "'host':self.cfg['host']" in inspect.getsource(runtime.ExamRunner.root)
+
+
+def test_stage_a_host_rules_unchanged(tmp_path, monkeypatch):
+    """Stage A keeps exam_portal.json (TASL-7) and host_check's approved-host rule."""
+    import platform
+    from r1.exam import runtime
+    portal = json.loads(DEFAULT_CONFIG.read_text())
+    assert portal['host'] == 'TASL-7' and 'workers' in portal
+    monkeypatch.delenv('R1_DRYRUN', raising=False); monkeypatch.delenv('R1_FAKE_OLLAMA_ROOT', raising=False)
+    monkeypatch.delenv('R1_EXAM_DRYRUN', raising=False)
+    monkeypatch.setattr(platform, 'node', lambda: 'TASL-2')
+    with pytest.raises(RuntimeError, match='approved portal host'):
+        runtime.host_check(portal, tmp_path)          # cfg.host TASL-7 on node TASL-2: refused, as before
+    monkeypatch.setattr(platform, 'node', lambda: 'macbook')
+    with pytest.raises(RuntimeError, match='never infer on the Mac'):
+        runtime.host_check({**portal, 'host': 'macbook'}, tmp_path)

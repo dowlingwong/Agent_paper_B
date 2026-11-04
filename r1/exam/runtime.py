@@ -475,7 +475,7 @@ class ExamRunner:
                 self.state.pop('in_progress',None);self.save();return recovered
             archived=self.out/'interrupted'/f'{time.time_ns()}_{spec["id"]}_{node}_s{seed}'
             archived.parent.mkdir(exist_ok=True);path.rename(archived)
-        job={'out':str(path),'binding':self.binding,'workers':self.cfg['workers'],'phase':phase,'node':node,'seed':seed,'candidate':spec,'mode':mode,
+        job={'out':str(path),'binding':self.binding,'workers':self.cfg['workers'],'host':self.cfg['host'],'phase':phase,'node':node,'seed':seed,'candidate':spec,'mode':mode,
              'dryrun':bool(self.cfg.get('dryrun')),'W':self.cfg['W'],'llm_call_cap':self.cfg['llm_call_cap'],
              'audit_seeds':self.cfg['audit_seeds'] if phase=='b1' else list(range(9201,9211)),
              'base_url':self.service.openai_base_url if self.service else None,'value_grids':self.cfg['value_grids'],
