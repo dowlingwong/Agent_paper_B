@@ -2,6 +2,8 @@
 
 **Status.** Rewritten 4 Nov 2026 by the chat session (Claude), AI-assisted, after the author adopted `docs/r1/proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` in full (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS). The 27 Oct proposal this file used to hold (autoresearch plus MLGym only if a container existed by 10 Nov; evaluation/transfer only) is superseded; it is in git at `fa60704e`.
 
+> **Reading old markers (4 Nov, 11:29).** The items listed in PLAN §10 R1-BX-PROPOSED-CONFIRM and R1-BX-PORTING-CONFIRM are decided, even where this file still says *(proposed)*. Anything else is still proposed or open.
+
 **This file authorizes nothing.** RUNBOOK Track G (G.0–G.6) and the PLAN §10 rows govern. Census, porting and pilots are ENGINEERING_ONLY. The T1 sweep (G.5) and the T2 closed loop (G.6) are EVIDENCE and need the author's authorization notes.
 
 **Who does what.**
@@ -79,7 +81,7 @@ Output: `docs/r1/reports/TRACKG_CENSUS_<date>.md`, one row per candidate, plus t
 
 ### G.3 — T1/T2 selection (author)
 
-From the census: the T1 and T2 lists, the T1 label-run GPU model, and the proposer host (deepthought two-card serving if O5 qualifies it; otherwise a 4090). One GPU model per label table; σ̂ for a table comes from a floor measured on that GPU model. PLAN §10 row.
+From the census: the T1 and T2 lists. Already fixed on 4 Nov (R1-BX-PROPOSED-CONFIRM): the T1 label runs on Ada; the proposer on deepthought two-card serving if O5 qualifies it, otherwise a 4090. One GPU model per label table; σ̂ for a table comes from a floor measured on that GPU model. PLAN §10 row.
 
 ### G.4 — T1 pilot (operator; ENGINEERING_ONLY)
 
