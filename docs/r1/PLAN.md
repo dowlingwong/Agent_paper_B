@@ -897,6 +897,25 @@ The Mac agent asked (in its reply to the author's 17:26 message "啥进展了") 
 
 *Recorder's note (not the author's words):* the M5 review covers `19b8f33f..74a07907` (focus `ab74203`, and also `e996af8`, on which `ab74203` builds and whose cited reviews are likewise not committed) and is written to `reviews/MAC_M5_AB74203_REVIEW_20261104.md`. "Result status" for the software anchors refers to their Stage A row fields (`passed`, `software_anchor`, `failure_classes`, `mechanical_model_checks`; `3b3283f:r1/scripts/exam_runner.py`).
 
+### 4 November 2026 (17:54) — Stage A accepted (author; recorded by an AI agent, Claude, Mac-local agent)
+
+The author wrote at 17:54 (his item 9): "Stage A 验收：我接受 Stage A：t7h8（`r1_stagea_20261103_t7h8`）和 M1（`r1_stagea_20261104_t7j10`），operator 验收报告 `OPS_O1_20261104.md` 和复核记录在 `ops-20261104` @ `f52db28e`。B1 候选 = t7h8 的 8 个 PASS + t7j10 的 7 个 PASS + 3 个对照。请写成 PLAN 行（决策格用这段话），交新 reviewer 审，推送后把 SHA 给我转发 operator。" The operator's O1 receiving audit and its independent review, on `ops-20261104` @ `f52db28e`, are merged into `mac-int-20261104` (`reports/OPS_O1_20261104.md`, `reviews/OPS_O1_REVIEW_20261104.md`).
+
+| Decision | Author decision (4 Nov 2026, 17:54) |
+|---|---|
+| R1-EXAM-STAGEA-ACCEPT | "我接受 Stage A：t7h8（`r1_stagea_20261103_t7h8`）和 M1（`r1_stagea_20261104_t7j10`），operator 验收报告 `OPS_O1_20261104.md` 和复核记录在 `ops-20261104` @ `f52db28e`。B1 候选 = t7h8 的 8 个 PASS + t7j10 的 7 个 PASS + 3 个对照。" |
+
+**Consequences** (not part of the decision cell):
+- Stage A is accepted on the two attempts named: `t7h8` and the A1 amendment measurement `t7j10`.
+- The B1 candidate set is the 8 PASS of `t7h8`, the 7 PASS of `t7j10` and the 3 anchors. This fills in R1-TRACKX-HANDOVER-RULING's "the `t7j10` passes … after the operator's acceptance".
+- B1 starts only under its own authorization note and R1-EXAM-RULE-X5V2 (R1-MAIN-PROPOSER (a), (g)).
+
+*Recorder's note (not the author's words; from the merged O1 report and earlier rows):*
+- Stage A table sha256: `t7h8` `00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c`; `t7j10` `71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103` (`t7j10` code `ab74203`, manifest `64a2712c…`).
+- `t7h8` PASS (R1-EXAM-STAGEA-COMPLETE): `glm47_flash`, `ornith10_35b`, `ornith10_9b`, `qwen35_9b`, `qwen36_27b`, `qwen36_35b_a3b`, `qwen38_27b`, `qwen3_coder_30b_a3b`. `t7j10` amendment candidates, all checked in O1's row-by-row section: `gemma4_31b`, `gemma4_26b_a4b`, `gemma4_12b`, `laguna_xs21` (BOS-artifact rows) and `olmo31_32b`, `devstral_small2_24b`, `ministral3_14b` (repaired; their SHA-pinned templates carry into B1, B2 and later sweeps, R1-EXAM-A1-M1-REQUIREMENTS (1)). Anchors: `random_valid`, `scripted`, `qwen25_coder_7b`.
+- The anchor comparison followed R1-EXAM-A1-ANCHOR-CRITERION and an author ruling given to the operator, quoted verbatim in the O1 report: N/A applicability and PASS identical for the two software anchors; numerical equality only for `qwen25_coder_7b`.
+- B1 eligibility under `x5_rule_v2` still applies its other conditions (D28 pass, able to run thinking-off; always-thinking models skip B1).
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
