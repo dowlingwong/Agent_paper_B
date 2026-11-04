@@ -531,3 +531,67 @@ All of BLOCKING-1 and MAJOR-1 to MAJOR-11 are resolved, and so are the round-1 M
 R2-M1 is a one-paragraph fix: move the test to `cpu`, after the §7 item 1 ruling, and add the two refusals. Once it is applied and R2-m1 to R2-m6 are applied or answered, I expect to accept without another full round; a check of the changed lines will be enough.
 
 Verdict: not accepted
+
+---
+
+## Round 3 — re-check of revision 3 (commit `ea8757eb`), changed lines only
+
+**Reviewer:** the same independent agent (Claude), AI-assisted. Documents only. I made no runbook edit and no commit.
+**Checked:** `git diff fbb33c15 ea8757eb -- docs/r1/prompts/HOREKA_RUNBOOK_20261104.md`, the new rows of the §9 table, and whether the changed lines contradict any unchanged text. Line numbers refer to revision 3.
+
+**Local tests.**
+- I ran the §1 `USR1` pattern (`runner … & pid=$!; trap 'kill -USR1 "$pid"' USR1; wait "$pid"; wait "$pid"`) under bash 5.2 with a stand-in runner, on four paths:
+  - no signal, runner exits 0: job rc 0;
+  - no signal, runner exits 5: job rc 5;
+  - `USR1` sent to the job shell, runner archives and exits 0: job rc 0;
+  - `USR1`, runner exits 3: job rc 3.
+
+  So the second `wait` returns the runner's own status on every path. This matches the coordinator's test.
+- I looked for the source of the "15 candidates" clause. It is in PLAN on `mac-int-20261104` (lines 857–860): "B1 candidate set: the 8 PASS of `t7h8` + the anchors + the `t7j10` passes, the latter counting only after the operator's acceptance".
+
+### Status of the round-2 findings
+
+| Finding | Status | Evidence in rev 3 |
+|---|---|---|
+| R2-M1 (dev self-submission test) | **Resolved** | HK1 step 6 (line 316): no dev test; one `cpu` test, only after the §7 item 1 ruling. §1 continuations (line 265): "never from a dev partition (NHR@KIT: … chain jobs)". §3 item 1 (lines 420, 426): refuses any submission from inside a dev-partition job, and, until the ruling, any submission from inside a job. HK1 step 5's `USR1` test on one `dev-cpu` job submits nothing, so it is a setup test, not a chain |
+| R2-m1 (how the author submits; scope) | **Resolved** (NITs R3-n1, R3-n2) | §0.3 (lines 138–140): the agent's scope is `dev-*`/`cpu` in any phase, matching the tool's `gpu-*` guard. The author runs `hk2_submit.py --submit --author <manifest>` from his own terminal, with all guards. "You never pass `--author`". §4 gate column moved to HK2/HK3 (lines 445–446) |
+| R2-m2 (2-GPU J3 fallback) | **Resolved** | J3 row (line 273): author ruling at HK3 step 6, a manifest-flag exception to the probed-shape guard, and doubled GPU-h in the projection |
+| R2-m3 (J0 on the dev node) | **Resolved** | J0 row (line 269): venv, downloads, hashing and the `GGML_NATIVE=OFF` build on `cpu` (16 cores, ≤ 2 h); `dev-gpu-h100` ≤ 30 min only for the GPU check |
+| R2-m4 (`--signal=B:`) | **Resolved** (NIT R3-n3) | §1 units (lines 254–260): background-and-wait pattern, verified above; real-job test in HK1 step 5 |
+| R2-m5 (session folder in the wrappers) | **Resolved** | §0.2 Sessions (line 70). The `~/r1_scan_20261104/` name does not arise, because only §1 steps 0–5 are reused and they create no remote files |
+| R2-m6 (15 candidates) | **Resolved** | §4 (line 462) is now conditional on O1's acceptance, and its basis is in PLAN on `mac-int-20261104` (lines 857–860). The count "7 passing" is not checked here. The conclusion does not depend on it |
+| R2-n1 (spaces) | **Resolved** | Line 101 forbids spaces in the session path. Line 105 quotes `GIT_SSH_COMMAND="'$S/nodessh-raw'"`, the form I verified in round 2 |
+| R2-n2 (sha) | **Resolved** | Line 281: the runner hashes the GGUF itself and compares `/props`'s model path. HK1's GPU check should confirm that the pinned llama.cpp commit reports the path in `/props`. If it does not, use the server's `--alias` or its startup log line |
+| R2-n3 (sealed folder in a worktree) | **Resolved** | `~/r1_sealed/hk2/` lies outside every worktree. Readers refuse `r1_sealed/` (§0.2 line 120; §3 item 6) |
+| R2-n4 (`/scratch` at job end) | **Resolved** | §0.1 storage row (line 58) |
+
+### Consistency of the changed lines with the rest
+
+- **Submission rules.** §0.3, §1 continuations, §3 item 1, HK1 steps 5–6 and the §4 gates now agree. Until the ruling: the agent submits `dev-*`/`cpu` jobs only, the author submits `gpu-*` jobs with `--author`, and no job submits a job. After it: continuations are allowed, never from a dev partition, and only through the guards.
+- **Dev QoS.** HK1 step 5 (one `dev-cpu` job) and J0's GPU check (one `dev-gpu-h100` job) are sequential single jobs, within `MaxJobsPU = 1`.
+- **Sealed folder.** Every mention was updated. No reference to `hk2_sealed/` remains in the runbook.
+- **F / C / D, the budget guard and the probed shape** are unchanged and still apply to the author's `--author` submissions (lines 140, 220).
+
+I found no new contradiction.
+
+### New findings (round 3)
+
+All are NITs and optional. None blocks acceptance.
+
+- **R3-n1 — Where the author's manifest lives on HoreKa.** Line 139: the manifest and its dry-run are "committed", and the author runs the tool "in the pinned checkout under `$PROJECT`". The manifest sits on the agent's `hk2-ops` branch on the Mac, not in that checkout. *Fix:* "In its session, the agent writes the manifest to `/hfs2/…/r1/manifests/<name>.json`. The committed dry-run records its sha256. The author's command names that path, and the tool prints the sha before submitting."
+- **R3-n2 — `--author` rests only on an instruction.** Only line 139's "You never pass `--author`" keeps the agent from using it. *Optional fix:* with `--author`, the tool also requires an interactive terminal (`sys.stdin.isatty()`) and a typed confirmation of the manifest sha. The agent's `BatchMode` calls have no terminal.
+- **R3-n3 — The trap pattern breaks under `set -e`.** With `set -e`, the first `wait` (status > 128 after the trap) ends the script before the second `wait`. *Fix:* the job script does not use `set -e` around these lines. Add a one-line note in §1 and a template test.
+- **R3-n4 — HK1's deferred step.** HK1 step 6 runs only after the ruling. *Fix:* say that HK1's acceptance does not wait for it, and that the test gets its own short review when it runs.
+
+### Governance re-check
+
+- The changed lines attribute nothing new to the author.
+- The new design choices are marked *(proposed)* or come with an author ruling point: the manifest-flag exception, the `cpu` J0 resources, and the `~/r1_sealed/` location under the existing *(proposed)* bullet.
+- No PLAN row is presented as existing that does not exist.
+- The runbook still authorizes nothing before the §8 row. Production `gpu-*` work still waits for the author's ruling or his own `--author` submission.
+
+### Round 3 verdict
+
+Every finding of rounds 1 and 2 is resolved. The changed lines add no contradiction. R3-n1 to R3-n4 are optional NITs that can be applied without another review round.
+
+Verdict: accepted

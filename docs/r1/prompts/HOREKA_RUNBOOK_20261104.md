@@ -1,6 +1,6 @@
 # Paper B (route R1) — HoreKa agent runbook: the T1 tier on HoreKa 2 (4 Nov 2026, revision 3)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("写 HoreKa 执行 runbook", 17:12); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_RUNBOOK_REVIEW_20261104.md`, which did not accept revision 1 (1 BLOCKING, 11 MAJOR, 13 MINOR, 6 NIT). Revision 3 applies its round 2 (not accepted: 1 MAJOR, 6 MINOR, 4 NIT). The answers to both rounds are in §9.
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("写 HoreKa 执行 runbook", 17:12); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_RUNBOOK_REVIEW_20261104.md`, which did not accept revision 1 (1 BLOCKING, 11 MAJOR, 13 MINOR, 6 NIT). Revision 3 applies its round 2 (not accepted: 1 MAJOR, 6 MINOR, 4 NIT); round 3 accepted revision 3, and its four optional NITs are applied here. The answers to both rounds are in §9.
 
 **Sources.**
 - The scan report `docs/r1/reports/HOREKA_SCAN_20261104.md`, with its raw output under `reports/horeka_scan_20261104/`.
@@ -136,7 +136,7 @@ EOF
 - Question (c) is still open: does an LLM proposer loop inside a GPU batch job count as an "AI agent workload"?
 - **Until the author rules on this (§7 item 1):**
   - You submit only jobs in `dev-cpu`, `dev-gpu-h100` and `cpu`, in any phase.
-  - Every `gpu-h100`/`gpu-h200` job is prepared by you: a manifest and its `hk2_submit.py --dry-run` output, committed. **The author submits it himself**, from his own terminal (a person may use the login node), by running `hk2_submit.py --submit --author <manifest>` in the pinned checkout under `$PROJECT`. All the tool's guards apply. You never pass `--author`.
+  - Every `gpu-h100`/`gpu-h200` job is prepared by you: a manifest and its `hk2_submit.py --dry-run` output, committed. **The author submits it himself**, from his own terminal (a person may use the login node), by running `hk2_submit.py --submit --author /hfs2/…/r1/manifests/<name>.json` in the pinned checkout under `$PROJECT`. The manifest is pushed with that checkout, and the committed dry-run records its sha256. All the tool's guards apply. You never pass `--author`.
   - No job submits its own continuation.
 
 **Never touch what you did not start.**
@@ -257,7 +257,7 @@ If (c) fails, σ̂ comes from floor seeds spread over at least 3 jobs on differe
   trap 'kill -USR1 "$pid"' USR1
   wait "$pid"; wait "$pid"
   ```
-  On `USR1`, the runner moves the open unit to `results/_interrupted/<jobid>/` and exits cleanly. HK1 tests this on a real job.
+  Templates do not use `set -e` around these lines; it breaks the pattern. On `USR1`, the runner moves the open unit to `results/_interrupted/<jobid>/` and exits cleanly. HK1 tests this on a real job.
 - The next job re-runs that unit whole, from a fresh working copy. No `*_pending.json` guard carries over.
 - A unit cut twice is a STOP.
 - HK5 must show that a campaign root fits in ≤ 0.6 × T_max.
@@ -316,7 +316,9 @@ Durations are estimates.
 6. **No self-submission test here.** It runs once, in `cpu` (a `cpu` job submits one `cpu` job with a scrubbed environment), only after the §7 item 1 ruling allows continuations.
 7. Record the modules, the versions and `rsync`/`git` on the Mac.
 
-**Done when** a fresh reviewer has accepted `HK2_HK1_<date>.md`.
+8. Check whether the pinned llama-server reports the model path in `/props`. If it does not, the runner checks the path from the server's command line (`/proc/<pid>/cmdline`) instead.
+
+**Done when** a fresh reviewer has accepted `HK2_HK1_<date>.md`. It does not wait for the deferred step 6 test.
 
 ### HK2 — Ports and smoke (G.1; ENGINEERING_ONLY; 3–5 days)
 
@@ -423,7 +425,7 @@ These revise draft §5. The Mac runbook's M10 paragraph points here once the §8
    - any submission after F;
    - now + `--time` > C;
    - the budget guard of §0.4;
-   - until the §7 item 1 ruling: any `gpu-*` submission without `--author`, and any submission from inside a job. You never pass `--author`.
+   - until the §7 item 1 ruling: any `gpu-*` submission without `--author`, and any submission from inside a job. You never pass `--author`. `--author` also requires an interactive terminal (`isatty`) and the first 8 characters of the manifest's sha256, typed by the author.
 
    It sets `--deadline=<C>` and `--signal=B:USR1@600`.
 2. **`hk2_status.py`** (standard library only, Python 3.9). It runs `squeue -u $USER` and `sacct -u $USER` only, at most once every 60 s. It treats the `DEADLINE` state as expected, and it fills the ledger.
