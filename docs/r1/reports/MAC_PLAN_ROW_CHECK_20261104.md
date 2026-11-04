@@ -4,7 +4,9 @@ Command (run on the commit before this file was added; this file adds no PLAN or
 
     python r1/scripts/plan_row_check.py --result HEAD --source origin/codex/coordinator-20261031 --source origin/docs/main-proposer-03nov --source origin/docs/runbooks-04nov --source origin/codex/b2-repair-20261031 --source 13badb0 --source origin/trackS-ops-20261030
 
-Result: `5e96fa56`. Source heads: coordinator `10742f85`, main-proposer `14dc0fea`, runbooks `c15b1102`, b2-repair `f98e315e`, trackS-decisions `13badb0d`, trackS-ops `f5d5c6b0`.
+Result: `2cc32728`. Source heads: coordinator `10742f85`, main-proposer `14dc0fea`, runbooks `c15b1102`, b2-repair `f98e315e`, trackS-decisions `13badb0d`, trackS-ops `f5d5c6b0`.
+
+Expected RESULT-ONLY: the M1 STATUS entry this branch adds (nothing else).
 
 ```
 ## PLAN §10
@@ -34,13 +36,14 @@ origin/trackS-ops-20261030: 32 items, 31 present byte-identical
     kept in result: > **Historical index.** Dated author rows below take precedence over this index. In particular the D4 amendment, D18, D23, the `vary` split policy, R1-INFER-LLA
 RESULT-ONLY: 0
 ## STATUS
-origin/codex/coordinator-20261031: 665 items, 665 present byte-identical
-origin/docs/main-proposer-03nov: 659 items, 659 present byte-identical
-origin/docs/runbooks-04nov: 668 items, 668 present byte-identical
-origin/codex/b2-repair-20261031: 610 items, 610 present byte-identical
-13badb0: 629 items, 629 present byte-identical
-origin/trackS-ops-20261030: 692 items, 692 present byte-identical
-RESULT-ONLY: 0
+origin/codex/coordinator-20261031: 853 items, 853 present byte-identical
+origin/docs/main-proposer-03nov: 847 items, 847 present byte-identical
+origin/docs/runbooks-04nov: 856 items, 856 present byte-identical
+origin/codex/b2-repair-20261031: 798 items, 798 present byte-identical
+13badb0: 817 items, 817 present byte-identical
+origin/trackS-ops-20261030: 887 items, 887 present byte-identical
+RESULT-ONLY: 1
+  RESULT-ONLY x1: - M1 integration (4 Nov, Mac-local agent; AI-assisted, documents and merge only; MAC_LOCAL_RUNBOOK_20261104 rev 3.2): branch `mac-int-20261104` on coordinator `
 MISSING total: 0
 exit status: 0
 ```
