@@ -34,3 +34,25 @@ The standalone Welch function performs one-sided r=3 on independent samples, cha
 - `test_c3_practitioner.py`: `6562433b9ab2ae38cca718b4cb730f2aa28288d49c48b4699881ef2ec8309a10`
 
 The eight worker-working-tree files were byte-compared to the snapshot immediately before testing. `PYTHONDONTWRITEBYTECODE=1 /Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider` on these four test files: **13 passed**. Tests exercise synthetic fixtures only and do not establish provenance, a live gate, or operational readiness. No code or source artifact was modified in the reviewer checkout.
+
+## Same-reviewer re-check of frozen v3 — accepted only as a disabled synthetic draft
+
+The same independent reviewer inspected `/private/tmp/paper-b-m11-review-v3-20261104` and independently ran the four synthetic test files using Python 3.11 from the local harness venv, with bytecode and pytest cache disabled: **11 passed**. All eight files in the worker tree were byte-compared with the snapshot immediately before tests. No real label, model, GPU or remote host was accessed.
+
+- The caller-controlled PLAN bypass has been contained in the new entry points: `require_gate_confirmation()` unconditionally STOPs, and `aggregate_gate`, `load_sweep2_jsonl` and `offline_welch_values` stop before iterating or opening supplied inputs. This is a deliberate disabled stub, not a verified implementation of a committed author gate. No claim is made that old readers are protected.
+- `MatchedView.fit` unconditionally stops before consuming rows or embeddings; this contains the unverified training-provenance issue but does not implement D13. The unsafe prototype bootstrap and provisional verdict have been removed; the required aggregate statistic and its inference are not implemented. Sealed provenance and source classification remain open.
+- **Residual boundary:** public `welch_replicates` consumes supplied numeric samples and returns a keep decision without a PLAN or provenance check. It does not itself open a label table, but a caller could use it on real observations. Accept it only as a standalone synthetic engineering calculation; any integration with sweep-2 or other evidence data must be guarded before data are read and independently reviewed. The private `_summaries` and CDF helpers are also calculations, not analysis authorization.
+- Existing `dataset`, `offline_eval`, `ni_masking`, and Track P readers remain unguarded. The old per-node gate remains present. The new disabled helpers must not be represented as guarding those paths. The frozen status is **M11 NOT READY; B.7 NOT READY**. A future usable implementation needs authenticated author decision provenance, verified source/split/oracle, accepted inference, all-reader integration, and a fresh review of the actual final bytes.
+
+Frozen SHA-256 values:
+
+| File | SHA-256 |
+|---|---|
+| `r1/c3/gate.py` | `4b9e06f0876b51d8e7b0c631b656d25b4840b059cc2ac0fe0021b505fb246d6a` |
+| `r1/c3/guarded_labels.py` | `146dbf270575b877287fd8beb86087a9af8d2191fee6cdcdfba0af38721a8ee2` |
+| `r1/c3/matched_view.py` | `5ef47720c790199ca37af86557a4bc5b9eef9f97bcf920975b483a211fdd1579` |
+| `r1/c3/practitioner.py` | `274ba4d09abb4c6c7854b70d7ec84bcba1704f98b028dbd81e3c84e0137373aa` |
+| `r1/tests/test_c3_aggregate_gate.py` | `503457c21e03cd67dc512c453a67fd4c7fc141e0292271dde0329ab9df55c5fc` |
+| `r1/tests/test_c3_guarded_labels.py` | `fdb8d15a0fd9576b968dd065721b7fd5c01d2b8483749c75f3b38098e364f94d` |
+| `r1/tests/test_c3_matched_view.py` | `d33a9b4124ab150dfad87874b0007f5daebcf19e1532f3de791c1b8a3bcc2b6e` |
+| `r1/tests/test_c3_practitioner.py` | `8a5162b699353617400bb1d03b6542ddc9b0142236c1a7009679a222d8df6297` |
