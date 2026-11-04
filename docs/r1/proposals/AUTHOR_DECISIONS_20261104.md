@@ -2,7 +2,7 @@
 
 **Drafted 4 Nov 2026 by the Mac-local agent (Claude), MAC_LOCAL_RUNBOOK_20261104 rev 3.2, M1 step 5; AI-assisted. Nothing here is a decision.** A decision exists only as a dated PLAN §10 row that the author commits, or tells the agent in chat to commit on his behalf (the commit body then quotes his words).
 
-Integration branch: `mac-int-20261104`, based on coordinator `10742f85`, with `docs/runbooks-04nov` @ `c15b1102` (⊃ `docs/main-proposer-03nov` @ `14dc0fea`), `codex/b2-repair-20261031` @ `f98e315e`, `docs/trackS-decisions-30oct` @ `13badb0d` and `trackS-ops-20261030` @ `f5d5c6b0`. Row check: `reports/MAC_PLAN_ROW_CHECK_20261104.md` (0 missing).
+Integration branch: `mac-int-20261104`, based on coordinator `10742f85`, with `docs/runbooks-04nov` @ `c15b1102` (⊃ `docs/main-proposer-03nov` @ `14dc0fea`), later `0abfaf2b` (merged separately, `4ca40393`), `codex/b2-repair-20261031` @ `f98e315e`, `docs/trackS-decisions-30oct` @ `13badb0d` and `trackS-ops-20261030` @ `f5d5c6b0`. Row check: `reports/MAC_PLAN_ROW_CHECK_20261104.md` (0 missing).
 
 **Already ruled (not repeated here):** (a) R1-HANDOVER-04NOV, amended by R1-SERVER-AGENTS-TWO; (d) R1-EXAM-ALWAYS-ON-SKIP; (d′) R1-EXAM-B1-HARNESS-PIN; (e) R1-B2-REPLAY-GO; (f) R1-P3A-OOM-OPTION3; (g) R1-TRACKS-S01-RERUN (S0.1 re-run procedure, clause (b), rev 3.4/3.5 not of record, marker helper installed, Track S after 15 Dec); the confirmed R1-BX items in R1-BX-PROPOSED-CONFIRM (including the DTQ pass criterion under REVISIONS (f)); R1-1GC-FALLBACK; R1-T1-HOREKA; R1-APPTAINER-HOST.
 
@@ -27,7 +27,7 @@ Each section: what is open, options, a recommendation, and a paste-ready PLAN ro
 
 (1: Option A as an exception to the handover row — the Track X agent finishes the A1 amendment and the t7i9 measurement, then stops; `r1/exam/` passes to the Mac agent from `96f1146`, M2 based on it. 2: the handover row first — A1 code frozen at `96f1146`, t7i9 run by the operator; the Mac agent takes over `r1/exam/` from `96f1146`. 3: other.) The ruling below chose 2, with two changes the author stated: the relaunched `t7j10` is allowed to finish where it runs, and the hand-over point is `74a0790` / `ab74203`, not `96f1146`.
 
-**Author's ruling.** At 15:33 the author wrote "按原定计划走" ("go with the original plan"). At 15:44 he wrote: "裁定：选 2，交接行优先（作者 15:33 "按原定计划走"）。`t7j10` 已在 TASL-7 上运行，允许它跑完，Track X agent 随后停止。`t7j10` 的核验和接收审查、Stage A 验收归 operator 的 O1。你从 `74a0790`（代码 `ab74203`）起接手 `r1/exam/`，M2 以它为基。如果 `ab74203` 还缺独立 review，就按 M5 流程补。B1 候选集为 `t7h8` 的 8 个 PASS + anchors + `t7j10` 的通过者，`t7j10` 要经 operator 验收后才算数。" The quotation is the author's 15:44 message as received, including its parenthetical citing his 15:33 message; the commit body of `a43e1b47` quotes the same message with elisions marked "…". In English: option 2, the handover row takes precedence; `t7j10`, already running on TASL-7, may run to completion, after which the Track X agent stops; the verification and receiving review of `t7j10` and the Stage A acceptance belong to the operator's O1; the Mac agent takes over `r1/exam/` from `74a0790` (code `ab74203`) and bases M2 on it; if `ab74203` still lacks an independent review, the Mac agent supplies one by the M5 procedure; the B1 candidate set is t7h8's 8 PASS + anchors + the `t7j10` passes, which count only after the operator's acceptance.
+**Author's ruling.** At 15:33 the author wrote "按原定计划走" ("go with the original plan"). At 15:44 he wrote: "裁定：选 2，交接行优先（作者 15:33 "按原定计划走"）。`t7j10` 已在 TASL-7 上运行，允许它跑完，Track X agent 随后停止。`t7j10` 的核验和接收审查、Stage A 验收归 operator 的 O1。你从 `74a0790`（代码 `ab74203`）起接手 `r1/exam/`，M2 以它为基。如果 `ab74203` 还缺独立 review，就按 M5 流程补。B1 候选集为 `t7h8` 的 8 个 PASS + anchors + `t7j10` 的通过者，`t7j10` 要经 operator 验收后才算数。这条裁定写进决策包第一项。整合以 `10742f85` 为底。" The quotation is the author's 15:44 message as received, including its parenthetical citing his 15:33 message; the commit body of `a43e1b47` quotes the same message with elisions marked "…". In English: option 2, the handover row takes precedence; `t7j10`, already running on TASL-7, may run to completion, after which the Track X agent stops; the verification and receiving review of `t7j10` and the Stage A acceptance belong to the operator's O1; the Mac agent takes over `r1/exam/` from `74a0790` (code `ab74203`) and bases M2 on it; if `ab74203` still lacks an independent review, the Mac agent supplies one by the M5 procedure; the B1 candidate set is t7h8's 8 PASS + anchors + the `t7j10` passes, which count only after the operator's acceptance; this ruling goes into the decision packet's first item; the integration is based on `10742f85`.
 
 **Row recording the ruling** (paste-ready; the author commits it, or tells the Mac agent in chat to commit it on his behalf):
 ```
@@ -200,16 +200,22 @@ Items confirmed in R1-BX-PROPOSED-CONFIRM are not repeated. Each item: options �
 
 2. **"Failure set equal apart from new tests" is not literally met.** Three failures are in the existing `r1/tests/test_c3_launch_provenance.py`. They fail on `codex/b2-repair-20261031` itself: that branch changed `r1/scripts/c3_label_sweep.py` without updating this test's fixtures. Recommendation: accept as an exception, with the fixture fix assigned to M3.
 
+*Superseded by the author's 16:13 reply (above); kept as history:*
 ```
 | R1-M1-TEST-EXCEPTIONS (4 Nov) | M1's tests may run in the chat session's cloud workspace (CPU, same scope as R1-LOCAL-TEST-SCOPE) while the Mac cannot reach GitHub. The three `test_c3_launch_provenance.py` failures inherited from `codex/b2-repair-20261031` are accepted as an exception to M1's Done-when; M3 fixes the fixtures. |
+```
+
+Redrafted to the author's 16:13 condition (paste-ready if he wants a row):
+```
+| R1-M1-TEST-EXCEPTIONS (4 Nov, 16:13) | M1's tests may run in the chat session's cloud workspace (CPU, same scope as R1-LOCAL-TEST-SCOPE). The three `test_c3_launch_provenance.py` failures inherited from `codex/b2-repair-20261031` count as a known exception to M1's Done-when only once M3 has fixed them (author: "只有在 M3 修好的前提下才算已知例外"). |
 ```
 
 ---
 
 ## Hand-off to the operator — gated
 
-The operator is pointed at `mac-int-20261104` **only after R1-TRACKX-HANDOVER-RULING is committed to PLAN §10** (by the author, or by the Mac agent on his chat instruction with his words quoted). Until then PLAN on the branch still contains both R1-HANDOVER-04NOV and the coordinator's later Track X rows, unreconciled.
+The operator is pointed at `mac-int-20261104` only after R1-TRACKX-HANDOVER-RULING is in PLAN §10. That row is committed (`f89e13d4`, wording fix in the commit after it), independently reviewed (`reviews/MAC_RULING_ROW_REVIEW_20261104.md`), and pushed with the branch; the integrator gives the author the message with the pushed commit.
 
-Paste-ready message, once that row is committed:
+Message template (the integrator fills `<commit>` with the pushed head):
 
-> Read the plan from `mac-int-20261104` at `<commit with R1-TRACKX-HANDOVER-RULING>`. It integrates coordinator `10742f85`, `docs/runbooks-04nov` @ `c15b1102`, `codex/b2-repair-20261031` (five out-of-scope files held), the Track S documents and the RUNBOOK §5 pin table. Your runbook is `docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md` on that commit. Under R1-TRACKX-HANDOVER-RULING, O1 includes the verification and receiving review of `t7j10` and the Stage A acceptance. No other new server step is unlocked by M1.
+> Read the plan from `mac-int-20261104` at `<commit>`. It integrates coordinator `10742f85`, `docs/runbooks-04nov` @ `0abfaf2b`, `codex/b2-repair-20261031` (five out-of-scope files held, under review in M3), the Track S documents and the RUNBOOK §5 pin table. Your runbook is `docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md` on that commit. PLAN §10 R1-TRACKX-HANDOVER-RULING (4 Nov 15:44) applies: `t7j10` may run to completion on TASL-7, then the Track X agent stops; the verification and receiving review of `t7j10` and the Stage A acceptance are part of your O1; the B1 candidate set is `t7h8`'s 8 PASS + anchors + the `t7j10` passes you accept. No other new server step is unlocked by M1.

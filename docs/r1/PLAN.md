@@ -853,12 +853,14 @@ After the 11:29 handover the coordinator branch recorded Track X work in `r1/exa
 | R1-TRACKX-HANDOVER-RULING | "按原定计划走" |
 
 **Consequences** (the author's details from 15:44 and 16:13, recorded here at his instruction; not part of the decision cell):
-- R1-HANDOVER-04NOV takes precedence over the Track X agent's post-handover work.
-- The declared measurement `r1_stagea_20261104_t7j10` (code `ab74203`, binding `74a0790`), already running on TASL-7, runs to completion; the Track X agent then stops.
+- R1-HANDOVER-04NOV takes precedence (15:44: "交接行优先").
+- `t7j10`, already running on TASL-7, may run to completion; the Track X agent then stops. (Code `ab74203` and binding `74a0790` as recorded in R1-EXAM-STOP9-JOURNAL.)
 - The verification and receiving review of `t7j10`, and the Stage A acceptance, belong to the operator's O1.
 - The Mac-local agent takes over `r1/exam/` from `74a0790` (code `ab74203`) and bases M2 on it; if `ab74203` lacks an independent review, the Mac agent supplies one by the M5 procedure. (`r1/scripts/exam_*` already passed to the Mac agent under R1-HANDOVER-04NOV.)
 - B1 candidate set: the 8 PASS of `t7h8` + the anchors + the `t7j10` passes, the latter counting only after the operator's acceptance.
 - The integration branch `mac-int-20261104` is based on coordinator `10742f85`.
+
+*Recorder's note (not the author's words):* the B1 candidate set above narrows R1-EXAM-TEMPLATE-AMENDMENT-IMPLEMENTED's "B1 eligible set = t7h8 8 PASS + anchors + M1-passing rows": the amendment measurement's passes count only from `t7j10` and only after the operator's acceptance.
 
 ## 11. Relation to Paper A
 
