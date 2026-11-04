@@ -378,15 +378,26 @@ def test_resource_checks_reject_ceph_scratch_mount(tmp_path, monkeypatch):
         audit.evidence_resources([], 1, 300, Path('/tmp/r1_c3_audit_EVIDENCE_missing'), 1, 20)
 
 
+def _hide_loaded_harness_modules(monkeypatch):
+    # Other tests in the same session may already have imported the real harness;
+    # those modules would trip the import check before the condition under test.
+    for name in [n for n in audit.sys.modules if n == 'autoresearch' or n.startswith('autoresearch.')]:
+        monkeypatch.delitem(audit.sys.modules, name)
+
+
 def test_evidence_environment_rejects_harness_import_spoof(tmp_path, monkeypatch):
     import types
+    from r1 import harness
     monkeypatch.setenv('AR_HARNESS_ROOT', str(tmp_path / 'harness'))
     monkeypatch.setattr(audit, 'original_sweep_environment', lambda *a: ({'python': audit.sys.version, 'packages': {}}, 'p', 'h'))
     monkeypatch.setattr(audit.import_metadata, 'distributions', lambda: [])
     monkeypatch.setattr(audit.subprocess, 'check_output',
         lambda cmd, **kw: '6adf3859de66c4814fcf376eed59880fbd8eeaf7\n' if 'rev-parse' in cmd else '')
+    # Patch the module object, and patch importlib.import_module last: audit.importlib is the
+    # global importlib, and pytest resolves dotted monkeypatch targets with import_module.
+    monkeypatch.setattr(harness, 'import_harness', lambda: tmp_path)
+    _hide_loaded_harness_modules(monkeypatch)
     monkeypatch.setattr(audit.importlib, 'import_module', lambda name: None)
-    monkeypatch.setattr('r1.harness.import_harness', lambda: tmp_path)
     fake = types.ModuleType('autoresearch')
     fake.__file__ = str(tmp_path / 'spoofed.py')
     monkeypatch.setitem(audit.sys.modules, 'autoresearch', fake)
@@ -403,8 +414,10 @@ def test_evidence_environment_rejects_wrong_locked_sklearn(tmp_path, monkeypatch
         lambda cmd, **kw: '6adf3859de66c4814fcf376eed59880fbd8eeaf7\n' if 'rev-parse' in cmd else '')
     monkeypatch.setattr(audit.import_metadata, 'version', lambda name: '1.7.0')
     # Stub actual harness imports; the version mismatch remains fail-closed.
+    from r1 import harness
+    monkeypatch.setattr(harness, 'import_harness', lambda: tmp_path)
+    _hide_loaded_harness_modules(monkeypatch)
     monkeypatch.setattr(audit.importlib, 'import_module', lambda name: None)
-    monkeypatch.setattr('r1.harness.import_harness', lambda: tmp_path)
     with pytest.raises(ValueError, match='sklearn'):
         audit.evidence_environment(tmp_path, tmp_path)
 

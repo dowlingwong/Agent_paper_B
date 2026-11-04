@@ -94,14 +94,24 @@ def test_evidence_consumer_uses_completion_verifier(tmp_path, monkeypatch):
 
 def test_evidence_missing_completion_cannot_be_consumed(tmp_path, monkeypatch):
     from r1 import harness
+    from r1.c3 import audit as audit_module
     table = tmp_path / "table"
     table.mkdir()
     (table / "build.json").write_text(json.dumps({"label": "EVIDENCE",
         "classification": {"path": str(tmp_path / "sidecar.json")},
         "sweep_index": {"path": str(tmp_path / "index.json")}}))
     monkeypatch.setattr(harness, "REPO", tmp_path)
-    with pytest.raises(FileNotFoundError):
+    # Since 7df307be, consumption stops first on the missing task-native runtime attestation.
+    with pytest.raises(ValueError, match="task-native runtime attestation"):
         oe.assemble(table, tmp_path / "audit" / "audits.jsonl")
+    # With that STOP bypassed (fixture only), the missing completion record still cannot be consumed.
+    # A legacy mixed audits.jsonl path is refused outright (007a8d1c: EVIDENCE consumes label_block.jsonl only).
+    monkeypatch.setattr(audit_module, "_require_task_native_runtime_attestation", lambda: None)
+    with pytest.raises(ValueError, match="unexpected label block path"):
+        oe.assemble(table, tmp_path / "audit" / "audits.jsonl")
+    # The split label block without its completion record cannot be consumed either.
+    with pytest.raises(FileNotFoundError, match="evidence_completion.json"):
+        oe.assemble(table, tmp_path / "audit" / "label_block.jsonl")
 
 
 def test_evidence_retains_noop_only_stratum(tmp_path, monkeypatch):
