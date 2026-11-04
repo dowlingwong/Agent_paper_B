@@ -17,6 +17,14 @@ from r1.scripts import c3_env_replay as R
 REPO = Path(__file__).resolve().parents[2]
 
 
+@pytest.fixture(autouse=True)
+def _replay_process_without_llm_modules(monkeypatch):
+    """The real replay runs in its own process; other tests in this pytest session may have
+    imported LLM client modules, which the driver's guard (correctly) treats as a STOP."""
+    for name in [m for m in sys.modules if any(m == p or m.startswith(p + '.') for p in R.LLM_MODULES)]:
+        monkeypatch.delitem(sys.modules, name)
+
+
 def _sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -352,3 +360,15 @@ def test_wrapper_to_another_interpreter_is_a_stop(host_env):
 def test_cli_dry_run(tmp_path, capsys):
     code = R.main(['--paper-root', str(REPO), '--out', str(tmp_path / 'cli'), '--dry-run'])
     assert code == 0 and json.loads(capsys.readouterr().out)['cases'] == 16
+
+
+def test_resources_require_new_local_tmp_scratch_and_headroom(tmp_path):
+    with pytest.raises(R.Stop, match='directly under /tmp'):
+        R.check_resources(tmp_path / 'out', tmp_path / 'r1_c3_env_replay_x', 1)
+    scratch = Path('/tmp') / f'r1_c3_env_replay_test_{os.getpid()}'
+    with pytest.raises(R.Stop, match='headroom'):
+        R.check_resources(tmp_path / 'out', scratch, 10**18)
+    (tmp_path / 'out').mkdir()
+    with pytest.raises(R.Stop, match='must be new'):
+        R.check_resources(tmp_path / 'out', scratch, 1)
+    assert not scratch.exists()
