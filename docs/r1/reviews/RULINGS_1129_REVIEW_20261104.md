@@ -228,3 +228,44 @@ Verdict (round 2): not accepted
 - R2-MINOR-1: M13 cites R1-P3A-OOM-OPTION3.
 - R2-MINOR-2: M15 no longer starts C.4 before B.7.
 - R2-MINOR-3: RUNBOOK C.1 and D.1 host cells annotated with TASL-7 (R1-TASL7-TRACKP).
+
+---
+
+## Round 3 (re-check of `6e3dad99` and `5a0b39b0`, `git diff e110fe53 5a0b39b0`)
+
+**Reviewer:** the same independent agent. Documents only; nothing committed.
+
+### Status of the round-2 findings
+
+| Finding | Status | Evidence |
+|---|---|---|
+| R2-MAJOR-1 (H1 and "T0 never held out" stated as operative) | Fixed | M14 step 5 now STOPs for the author and cites H1 as pending (PLAN §10, 4 Nov 11:29). O10 step 4 says "whether T0 may be the held-out suite is open", which matches M15 step 2 and PLAN's "Still open" list |
+| m1 (stale markers) | Fixed | RUNBOOK G.1's leftover *(proposed)* is removed. RUNBOOK G.3 and TRACK_G G.3 now fix only the T1/T2 lists and cite R1-BX-PROPOSED-CONFIRM for Ada and the proposer host. O8's Hosts line says Ada and agrees with §0.3. RUNBOOK and TRACK_G gain a "Reading old markers" note: the items listed in R1-BX-PROPOSED-CONFIRM and R1-BX-PORTING-CONFIRM are decided, everything else stays proposed or open, and the note names the 1GC fallback and the B.7 timing as pending. The remaining B.2, G.1b, G.2 and G.5 markers resolve correctly under that note. G.5's divergence STOP stays *(proposed)*, which matches PLAN |
+| R2-MINOR-1 (M13 citation) | Fixed | M13 now cites R1-P3A-OOM-OPTION3. "Re-run only if > 0.01" is logically equivalent to the row's "not re-run if ≤ 0.01" |
+| R2-MINOR-2 (C.4 before B.7) | Fixed | The M15 Order bullet and its prerequisites now gate everything on B.7, as RUNBOOK Phase C does |
+| R2-MINOR-3 (C.1 and D.1 host cells) | Fixed | RUNBOOK C.1 and D.1 are annotated "TASL-7 since R1-TASL7-TRACKP", with operator O10 and Mac M15 named |
+
+### New findings
+
+**R3-MINOR-1.** RUNBOOK G.4's Host cell still reads "Operator: the hosts fixed in G.3", but G.3 no longer fixes hosts; R1-BX-PROPOSED-CONFIRM does. *Fix:* "Operator: Ada for task runs; the proposer host per R1-BX-PROPOSED-CONFIRM (REVISIONS (f))".
+
+**R3-MINOR-2.** The RUNBOOK 4 Nov header says the two execution runbooks are "both revision 3". They are revision 3.1. *Fix:* change to "revision 3.1".
+
+Neither changes a decision, a host or an authorization. I checked the fixes for regressions and found none:
+- no pending item (A4, H1) and no open item ("T0 never held out", the G.5 divergence STOP, A6 descriptive) is stated as operative in PLAN, RUNBOOK, Track G or the two runbooks;
+- the D8-CONFIRM prerequisite, the seeds (8001–8010; 7001–7005 for labels; 7006–7010 for evaluation only) and the authorization needs are unchanged;
+- no document authorizes a run.
+
+### Remaining findings
+
+- R3-MINOR-1
+- R3-MINOR-2
+
+No BLOCKING or MAJOR finding remains.
+
+Verdict: accepted
+
+## Post-round-3 fixes (executing agent, 4 Nov)
+
+- R3-MINOR-1: RUNBOOK G.4 host cell cites Ada and the proposer host per R1-BX-PROPOSED-CONFIRM.
+- R3-MINOR-2: RUNBOOK header says revision 3.1.
