@@ -119,7 +119,7 @@ The migration page prohibits "interactive AI agent usage on login nodes". The op
 
 | When | What | Gates |
 |---|---|---|
-| Now – 15 Nov | §6 checks; J0, J0b; code §5 reviewed; J1 smoke on the first ported nodes | Author's HoreKa row; R1-BX-PORTING-CONFIRM; M10 shared pieces |
+| Now – 15 Nov | §6 checks; J0, J0b; code §5 reviewed; J1 smoke on the first ported nodes | Author's HoreKa row; R1-BX-PORTING-CONFIRM (amended: the HoreKa agent ports, R1-SERVER-AGENTS-TWO); M10 shared pieces |
 | 15 – 22 Nov | J1b proposer qualification; J2 census (the T1 noise floors on H100); J3 pilot (G.4) on 2–3 nodes; if possible, a first J3 + J4 wave. **Copy everything out before the downtime** | X.7 (the pick); G.3 row; M10 diff support pinned; the K row (R1-BX-D3); the G.5 authorization note for any EVIDENCE wave |
 | 23 Nov – 4 Dec | Downtime: no jobs. Porting and Mac-side work continue | — |
 | From 5 Dec | Remaining J3 + J4 waves; J5; B.7 | R1-BX-D8-CONFIRM before any label table is analysed |

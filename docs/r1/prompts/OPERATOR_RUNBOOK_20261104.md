@@ -82,7 +82,7 @@ Report to the author in **Chinese**, short and concrete. Reports, reviews and co
   3. Send the author a short Chinese message: done, commits, checks, review verdict, decisions needed.
 - **Deletions.** Never delete evidence or preserved STOP sites. Scratch only where the track runbook allows.
 
-> **Reading old markers (rev 3.1).** Where this file still says *(proposed)*, "packet (a)", "(d′)" or "(e1)", read the 4 Nov (11:29) ruling rows: R1-HANDOVER-04NOV, R1-EXAM-B1-HARNESS-PIN, R1-B2-REPLAY-GO and the items confirmed in R1-BX-PROPOSED-CONFIRM. Anything those rows do not list is still proposed or open.
+> **Reading old markers (rev 3.1).** Where this file still says *(proposed)*, "packet (a)", "(d′)" or "(e1)", read the 4 Nov (11:29) ruling rows: R1-HANDOVER-04NOV (amended by R1-SERVER-AGENTS-TWO), R1-EXAM-B1-HARNESS-PIN, R1-B2-REPLAY-GO and the items confirmed in R1-BX-PROPOSED-CONFIRM. Anything those rows do not list is still proposed or open.
 
 ### 0.3 Host allocation (proposed; holds only after the author commits R1-HOSTS-04NOV; Ada and the deepthought proposer follow the 4 Nov R1-BX rows)
 
@@ -108,7 +108,7 @@ Each phase lists: what it is, the host, the type, a rough duration (an estimate)
 
 **Needs:**
 - M1 accepted and `mac-int-20261104` given to you;
-- the author's handover row **R1-HANDOVER-04NOV** (4 Nov);
+- the author's handover row **R1-HANDOVER-04NOV** (4 Nov), as amended by **R1-SERVER-AGENTS-TWO** (4 Nov 14:58);
 - the deepthought alias.
 
 **Steps.**
@@ -316,9 +316,9 @@ The T1 tier — porting, census, noise floors, pilot, sweep and audits — is ru
 
 What remains yours in Track G:
 1. **X.7 feeds T1.** *(proposed)* The main proposer chosen in O2 (X.7) is what the HoreKa agent qualifies on H100. Report X.7's pins (registry entry, GGUF sha256) to the author as soon as the row exists; he passes them on.
-4. **Track S GPU nodes (O3):** they need ported nodes and census results from the HoreKa agent, passed through the author. *(open)* Whether they need their own 4090 noise floor.
 2. **Ada fallback.** If the author moves the whole T1 label table back to Ada (R1-T1-HOREKA's fallback), a PLAN row says so and this section is rewritten. *(open)* Whether G.0 raw-cost work continues on Ada meanwhile.
-3. **D.3's T0 part** is yours (O11); its T1/T2 part is the HoreKa agent's.
+3. **D.3's T0 part** is yours (O11); its T1/T2 part follows the Phase C/D host plan *(open)*.
+4. **Track S GPU nodes (O3):** they need ported nodes and census results from the HoreKa agent, passed through the author. *(open)* Whether they need their own 4090 noise floor.
 
 *(The 4 Nov text of O8, and the earlier §0.1 HoreKa row — alias `hk2`, user `ka_ir7683`, the 23 Nov – 4 Dec downtime, the `squeue` limit — are in git at `c6774025`; *(proposed)* they move into the HoreKa runbook.)*
 

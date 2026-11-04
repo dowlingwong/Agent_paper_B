@@ -274,3 +274,7 @@ All findings addressed in the follow-up commit: B1 (operator intro and porting e
 - **Mac runbook:** only the step-0 heading and step 2's "operator's branch" (R2-m5) remain. The other "operator" mentions concern T0, Track S, B.2, O9, O10 and O11 work, all of which is still the operator's.
 
 **Verdict (round 2): ACCEPTED. No BLOCKING or MAJOR finding remains open. Seven MINOR items (R2-m1 … R2-m7) should be applied, and they need no further review round.**
+
+## Post-round-2 fixes (executing agent, 4 Nov)
+
+R2-m1 (O8 item 3: T1/T2 per the open host plan), R2-m2 (PLAN 14:22 item marked open with the 14:37 pointer), R2-m3 (RUNBOOK G.0 "Ada first" struck; G.1 branch name), R2-m4 (TRACK_G G.0 precondition; container-check owner open), R2-m5 (Mac M10 wording), R2-m6 (amended-row markers), R2-m7 (O8 numbering).

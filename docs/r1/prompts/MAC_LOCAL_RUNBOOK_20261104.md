@@ -390,7 +390,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 **Branches.** Paper `mac-trackg-20261104`; harness `r1-local-trackg-20261104` from `origin/r1`.
 
 **Steps.**
-0. **Shared pieces for the operator's ports (before G.1; review document §7 routes porting itself to the operator):** a node template (`NodeSpec` with editable and frozen paths, a fixed step or token budget, never wall-clock), a base metric parser that reports divergence as its own outcome, a per-run working-copy runner with resource limits, validation-only selection for test-scored tasks, and a checklist for declaring the 3–5 representative edits. Tests on fake runs, including a frozen-path edit being refused. Hand the commit, through the author, to **the HoreKa agent** for G.1 (R1-SERVER-AGENTS-TWO).
+0. **Shared pieces for the HoreKa agent's ports (before G.1; review document §7 routes porting to the server agent, now the HoreKa agent, R1-SERVER-AGENTS-TWO):** a node template (`NodeSpec` with editable and frozen paths, a fixed step or token budget, never wall-clock), a base metric parser that reports divergence as its own outcome, a per-run working-copy runner with resource limits, validation-only selection for test-scored tasks, and a checklist for declaring the 3–5 representative edits. Tests on fake runs, including a frozen-path edit being refused. Hand the commit, through the author, to **the HoreKa agent** for G.1 (R1-SERVER-AGENTS-TWO).
 1. **Diff support in the harness (G.2):**
    - apply a diff in a per-run working copy and refuse any hunk outside `editable_paths` or inside `frozen_paths`, through the existing scope validator;
    - inert detection (empty after normalisation, or an AST equal to the incumbent's);
@@ -398,7 +398,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
    - provenance fields: diff text, its hash, files touched, code-state hash;
    - the proposal schema `manager_proposal/v2-diff` (name proposed, packet (j));
    - **the T0 path is unchanged:** a test shows that a `manager_proposal/v1` campaign produces byte-identical requests and records.
-2. **Review support for the ports:** the HoreKa agent's ports (G.1, on its own branch) are reviewed by a fresh agent; you answer questions on the shared pieces but do not edit the operator's branch. The **S1.1 edit–edit interaction analysis for diffs** (per-node interaction strength as a covariate) is yours.
+2. **Review support for the ports:** the HoreKa agent's ports (G.1, on its own branch) are reviewed by a fresh agent; you answer questions on the shared pieces but do not edit the HoreKa agent's branch. The **S1.1 edit–edit interaction analysis for diffs** (per-node interaction strength as a covariate) is yours.
 3. **Divergence class** in the trial record and in `r1/c3/labels`: a divergent run gets no z-value; the label builder reports it separately (R1-BX-REVISIONS (c)).
 4. **Apptainer runner option** for a task that ships only as an image: `apptainer exec --nv --containall`, a bound per-run copy, the `.sif` sha256 in provenance. Only if the census finds such a task.
 5. **API proposer (R1-BX-D6):** a provider for the model the author names (packet (j)), with a version pin, a full request/response log and the returned model version recorded per call, and a cost counter. Keys are never read by you; the calls run only on the host the authorization note names.

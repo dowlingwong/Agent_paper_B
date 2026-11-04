@@ -32,7 +32,7 @@ Use each suite's **task assets** — data, baseline script, evaluator — as a h
 
 In order of preference:
 1. **No container.** Port the task natively into the harness venv. Most T1 candidates are plain PyTorch scripts.
-2. **Docker where it exists:** on deepthought the author is in the `docker` group. On the 4090 hosts, check `groups`, `docker info` and `podman --version` first.
+2. **Docker where it exists:** on deepthought the author is in the `docker` group. On the 4090 hosts, check `groups`, `docker info` and `podman --version` first — *(open: owner; the operator's hosts, not the HoreKa agent's)*.
 3. **Apptainer** where Docker is unavailable, without admin help. *Open:* Apptainer is confirmed only on deepthought2, which is not a run host; check `which apptainer singularity` on the 4090 hosts and Ada in G.0.
    - `apptainer pull <name>.sif docker://<image>`;
    - `apptainer exec --nv --containall --bind <per-run copy>:<path> <name>.sif …`, or `--writable-tmpfs`;
@@ -46,7 +46,7 @@ In order of preference:
 
 ### G.0 — Availability and raw cost (HoreKa agent on HoreKa 2; ENGINEERING_ONLY) *(4 Nov 13:45, R1-T1-HOREKA: the whole T1 tier moves to HoreKa 2 H100; Ada is the whole-table fallback)*
 
-Before G.0 starts on Ada, the O0 census of Ada checks Paper A occupancy (no Paper B GPU launch while a Paper A campaign waits for a card) and the co-tenancy margin. Per candidate task:
+*(Since R1-T1-HOREKA, G.0 runs on HoreKa 2; the earlier Ada precondition — the operator's O0 Ada census for Paper A occupancy — applies only if the author moves T1 back to Ada.)* Per candidate task:
 1. **Licence and availability:** the repository, its licence, and the licence of each dataset. 1GC-7RC is not used: **MLAgentBench is the third suite** (R1-1GC-FALLBACK, adopted 4 Nov 12:45); check MLAgentBench's task-asset licences instead.
 2. **Raw cost:** the suite's own baseline script at a candidate step count, on HoreKa 2 H100 (R1-T1-HOREKA). *(open)* Raw cost on Ada for the fallback, if the author wants it. Record wall time, peak VRAM, and CPU and RAM use. No code beyond the suite's own script and a step-count argument; where a script has no such argument (autoresearch has a wall-clock budget), its raw cost is measured after G.1, at the fixed-step wrapper.
 
