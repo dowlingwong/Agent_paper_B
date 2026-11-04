@@ -950,6 +950,21 @@ At 18:06 the author wrote: "HoreKa 正式作业提交：我裁定（4 Nov 18:00�
 
 *Recorder's note (not the author's words):* the runbook's §7 item 1 option (ii) reads "the HoreKa agent submits production jobs from the `agent` node (continuations included), and … J3 runs inside GPU batch jobs, pending NHR@KIT's answer". The author's sentence names submission and continuations; his STOP condition on "LLM 循环 in 批作业" refers to the J3 part. HoreKa runbook §0.3's other rules stay (dev-QoS limits, never touching another user's jobs, no inherited recovery authorization).
 
+### 4 November 2026 (18:10) — Track X B1/B2 host (author; recorded by an AI agent, Claude, Mac-local agent)
+
+At 18:10 the author wrote: "B1/B2 主机：我授权 Track X B1 和 B2 在 TASL-7 上运行（修改 R1-EXAM-HOST-TASL7 的"B1/B2 campaign worker 只在 TASL-2"），整场考试在同一台主机上。TASL-7 上 Track X 证据阶段优先于 Track P：B1/B2 运行期间 P.3a 暂停，只在 B1 与 B2 之间或 B2 之后运行。请写成 PLAN 行（决策格用这段话），并检查 `APPROVED_EXAM_HOSTS`、`cfg.host` 和 B1/B2 v2 配置里 worker 主机的设置，必要时在 M2 里改，交 reviewer 审。B1 授权说明按 TASL-7 起草，worker 数按 24 核来定。"
+
+| Decision | Author decision (4 Nov 2026, 18:10) |
+|---|---|
+| R1-EXAM-HOST-B1B2-TASL7 | "我授权 Track X B1 和 B2 在 TASL-7 上运行（修改 R1-EXAM-HOST-TASL7 的"B1/B2 campaign worker 只在 TASL-2"），整场考试在同一台主机上。TASL-7 上 Track X 证据阶段优先于 Track P：B1/B2 运行期间 P.3a 暂停，只在 B1 与 B2 之间或 B2 之后运行。" |
+
+**Consequences** (not part of the decision cell):
+- It amends R1-EXAM-HOST-TASL7's "the B1/B2 campaign worker stays TASL-2-only, so any B1/B2 on TASL-7 needs separate authorization": B1 and B2 run on TASL-7, the whole exam on one host.
+- On TASL-7, Track X evidence phases take priority over Track P: P.3a pauses while B1 or B2 runs, and runs only between B1 and B2 or after B2.
+- The B1 authorization draft names TASL-7, with the worker count set for its 24 logical CPUs (author, 18:10).
+
+*Recorder's note (not the author's words):* at `8eae4f84` (M2), `r1/exam/runtime.py` has `APPROVED_EXAM_HOSTS = {TASL-2, TASL-7}`, but `r1/exam/campaign.py` refuses a non-dry-run exam worker on any host other than `TASL-2` ("EXAM workers run only on portal"); M2 changes that check to the configured host and sets the B1/B2 v2 configs' `host` to TASL-7. TASL-7 has 24 logical CPUs (AMD Ryzen 9 7900X), 62 GiB RAM (`reports/PORTAL_TRACKP_HOST_FACTS_TASL7_20261026.md`). This row also settles the TASL-7 part of the open R1-HOSTS-04NOV draft (packet (b)) for Track X.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
