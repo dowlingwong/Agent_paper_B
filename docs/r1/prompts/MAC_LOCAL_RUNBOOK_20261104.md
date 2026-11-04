@@ -405,7 +405,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 
 **Done when:** the harness and paper tests pass with an unchanged failure set apart from new tests; the reviewer has accepted and checked in particular that the T0 path is byte-identical; the hand-off gives the operator the commits for G.1 smoke and G.4.
 
-**4 Nov (13:45, R1-T1-HOREKA):** the T1 tier runs on HoreKa 2. M10 therefore also includes the HoreKa code of `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` §5: the submit tool with its downtime guard, the status helper, the `slurm` host mode, the GPU slot allocator, pair-unit audit sharding, the staging tool and the job templates. Write it after the scan report, and have it reviewed.
+**4 Nov (13:45, R1-T1-HOREKA):** the T1 tier runs on HoreKa 2. *(proposed; only once a later PLAN row adopts the HoreKa job design, after the scan; write nothing before that row)* M10 would then also include the HoreKa code of `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` §5: the submit tool with its downtime guard, the status helper, the `slurm` host mode, the GPU slot allocator, pair-unit audit sharding, the staging tool and the job templates. Write it after the scan report, and have it reviewed.
 
 ### M11 — Practitioner baselines, the aggregate gate and the TabPFN matched view (after M1)
 

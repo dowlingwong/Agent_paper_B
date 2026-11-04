@@ -44,7 +44,7 @@ In order of preference:
 
 ## 4. Steps
 
-### G.0 — Availability and raw cost (operator; Ada first; ENGINEERING_ONLY)
+### G.0 — Availability and raw cost (operator; Ada first; ENGINEERING_ONLY) *(4 Nov 13:45, R1-T1-HOREKA: the whole T1 tier moves to HoreKa 2 H100; Ada is the whole-table fallback)*
 
 Before G.0 starts on Ada, the O0 census of Ada checks Paper A occupancy (no Paper B GPU launch while a Paper A campaign waits for a card) and the co-tenancy margin. Per candidate task:
 1. **Licence and availability:** the repository, its licence, and the licence of each dataset. 1GC-7RC is not used: **MLAgentBench is the third suite** (R1-1GC-FALLBACK, adopted 4 Nov 12:45); check MLAgentBench's task-asset licences instead.
@@ -58,7 +58,7 @@ Before G.0 starts on Ada, the O0 census of Ada checks Paper A occupancy (no Pape
 3. Each port is reviewed by a fresh agent before use.
 4. A stub-manager smoke campaign per node on the census host. Done when scope enforcement rejects an edit to a frozen path and the smoke manifest is complete.
 
-### G.1b — Census measurements (operator; Ada first; ENGINEERING_ONLY)
+### G.1b — Census measurements (operator; Ada first; ENGINEERING_ONLY) *(4 Nov 13:45, R1-T1-HOREKA: the whole T1 tier moves to HoreKa 2 H100; Ada is the whole-table fallback)*
 
 Per ported node:
 1. **Determinism:** the same seed twice; record whether outputs are bit-identical.
@@ -81,7 +81,7 @@ Output: `docs/r1/reports/TRACKG_CENSUS_<date>.md`, one row per candidate, plus t
 
 ### G.3 — T1/T2 selection (author)
 
-From the census: the T1 and T2 lists. Already fixed on 4 Nov (R1-BX-PROPOSED-CONFIRM): the T1 label runs on Ada; the proposer on deepthought two-card serving if O5 qualifies it, otherwise a 4090. One GPU model per label table; σ̂ for a table comes from a floor measured on that GPU model. PLAN §10 row.
+From the census: the T1 and T2 lists. Already fixed on 4 Nov: ~~the T1 label runs on Ada; the proposer on deepthought two-card serving if O5 qualifies it, otherwise a 4090 (R1-BX-PROPOSED-CONFIRM)~~ — since 13:45 (R1-T1-HOREKA) the whole T1 tier, proposer included, runs on HoreKa 2 H100, with Ada as the whole-table fallback. One GPU model per label table; σ̂ for a table comes from a floor measured on that GPU model. PLAN §10 row.
 
 ### G.4 — T1 pilot (operator; ENGINEERING_ONLY)
 
@@ -106,7 +106,7 @@ About 40 GPU-h per T1 node at 2-minute runs and K = 6: noise floor (5 edits × 1
 ## 6. Open questions for the author
 
 1. ~~1GC-7RC~~ Settled 4 Nov 12:45: not public; MLAgentBench is the third suite (R1-1GC-FALLBACK).
-2. ~~Which GPU model runs the T1 label table, and where is the proposer served?~~ Ada for T1 label runs; the proposer on deepthought (two TITANs) if O5 passes, else a 4090 (R1-BX-PROPOSED-CONFIRM).
+2. ~~Which GPU model runs the T1 label table, and where is the proposer served?~~ HoreKa 2 H100 for the whole T1 tier, Ada as whole-table fallback (R1-T1-HOREKA, 4 Nov 13:45). *(Earlier: Ada for T1 label runs;* the proposer on deepthought (two TITANs) if O5 passes, else a 4090 (R1-BX-PROPOSED-CONFIRM).
 3. ~~Which host was the Apptainer check run on?~~ deepthought2 (R1-APPTAINER-HOST).
 4. ~~Memory modes and the campaign count per T1 node~~ both modes, about 12 campaigns (R1-BX-PROPOSED-CONFIRM).
 5. Whether the main proposer's diff competence suffices (first measured in G.0 step 6 and G.4).
