@@ -916,6 +916,24 @@ The author wrote at 17:54 (his item 9): "Stage A 验收：我接受 Stage A：t7
 - The anchor comparison followed R1-EXAM-A1-ANCHOR-CRITERION and an author ruling given to the operator, quoted verbatim in the O1 report: N/A applicability and PASS identical for the two software anchors; numerical equality only for `qwen25_coder_7b`.
 - B1 eligibility under `x5_rule_v2` still applies its other conditions (D28 pass, able to run thinking-off; always-thinking models skip B1).
 
+### 4 November 2026 (18:00) — HoreKa agent runbook adopted (author; recorded by an AI agent, Claude, Mac-local agent)
+
+The author's words at 17:12, as recorded in the runbook's §8: "批准第 1 步的排队实测"; "400GPU小时没问题"; "11月12开始太晚了"; "写 HoreKa 执行 runbook". At 18:00 he adopted the runbook and asked for this row: "请按 runbook §8 记成 R1-HOREKA-RUNBOOK 行，决策格用这段话，其余写进 consequences，交新 reviewer 审。"
+
+| Decision | Author decision (4 Nov 2026, 18:00) |
+|---|---|
+| R1-HOREKA-RUNBOOK | "我采纳 `prompts/HOREKA_RUNBOOK_20261104.md` rev 3（`docs/runbooks-04nov` @ `c55e2461`，审查记录 `reviews/HOREKA_RUNBOOK_REVIEW_20261104.md`，第 3 轮 ACCEPTED），作为 HoreKa agent 的执行 runbook。" |
+
+**Consequences noted by the recording agent (not part of the decision)** (as the runbook's §8 lists them):
+- *(proposed)* `prompts/HOREKA_RUNBOOK_20261104.md` (rev 3, as accepted at `c55e2461`) governs the HoreKa agent: short 1-GPU jobs; the budget guard; F, C and D; the evidence/engineering split.
+- Rows this amends or settles:
+  - R1-T1-HOREKA's *(proposed)* "the draft becomes the design basis";
+  - R1-T1-HOREKA's *(open)* "the author submits production jobs", if the author rules on the runbook's §7 item 1;
+  - R1-BX-PORTING-CONFIRM: porting by the HoreKa agent on `hk2-trackg-<date>`;
+  - R1-ADA-CENSUS.
+- *(open)* The runbook's §7 items 1–9 (production submission and NHR@KIT question (c); T_max and the GPU model, row R1-HOREKA-TMAX; F, C and D; the 400 GPU-h ceiling and the 300 GPU-h STOP; k, the J4 placement and J3 co-location; the second proposer; infrastructure failure versus divergence; the J1b pass criterion; PLAN item H1).
+- The Mac runbook's M10 HoreKa paragraph now points to the runbook's §3 (author, 18:00); the Mac agent writes that code, `hk2_submit.py` and `hk2_status.py` first because HK1 needs them.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
