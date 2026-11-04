@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.11, pytest-9.0.3, pluggy-1.6.0 -- /Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python
+hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase(PosixPath('/private/tmp/paper-b-m2-final-tests-20261104/.hypothesis/examples'))
+rootdir: /private/tmp/paper-b-m2-final-tests-20261104
+configfile: pyproject.toml
+plugins: langsmith-0.8.3, hypothesis-6.112.1, anyio-4.13.0
+collecting ... collected 2 items
+
+r1/tests/test_exam_x5_rule_v2.py::test_exam_campaign_request_manifest_and_llm_call_carry_cache_prompt_false PASSED [ 50%]
+r1/tests/test_exam_x5_rule_v2.py::test_stage_a_harness_pin_does_not_send_cache_prompt_so_b1_evidence_stops PASSED [100%]
+
+============================== 2 passed in 6.37s ===============================

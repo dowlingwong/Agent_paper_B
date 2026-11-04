@@ -1,5 +1,28 @@
 # M2 hand-off — `x5_rule_v2` and its code (4 Nov 2026)
 
+## Mac continuation, 4 November — NOT ACCEPTED
+
+AI-assisted (Codex). This continuation supersedes the unfinished round-2 test placeholder below. Full CPU suites ran on the Mac with the same harness checkout and compulsory B1 harness checks; no model, GPU or remote host was used. The draft rule file still hashes to `79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20`; this is not an author freeze.
+
+| Tested code | Passed | Failed | Skipped |
+|---|---:|---:|---:|
+| Baseline `74a07907` | 821 | 39 | 11 |
+| Original M2 `75134796` | 890 | 39 | 11 |
+| M2 plus containment and M5 `5fcea745d2d31716a1e016153008465a2cb83442` | 894 | 39 | 11 |
+
+All three have the same 39 failed test IDs; this is an unchanged failure set in this Mac environment, not a passing suite. Full logs and their SHA-256 values are in `reports/mac_m2_tests_20261104/`; final run includes the required a3fedbb positive and 897d83c negative harness checks. The test operator identified and terminated only the local mock servers orphaned by these test suites. Independent review of this handoff is required.
+
+The final suite used Darwin, Python 3.11.11 and pytest 9.0.3, with `AR_HARNESS_ROOT=/Users/wongdowling/Documents/autoresearch_harness`, `AR_HARNESS_B1_ROOT=/private/tmp/paper-b-m2-harness-a3fedbb`, `R1_REQUIRE_B1_HARNESS=1` and `PYTHONDONTWRITEBYTECODE=1`; command: `/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python -m pytest -q -p no:cacheprovider r1/tests`. The baseline used the same interpreter, root and pytest options; its code has no v2 controls, so the two v2-specific variables were not set. Positive and negative controls were additionally rerun verbosely on `5fcea74`: both PASSED, as `combined_harness_controls.log` records. They use local stand-in servers, not actual inference. The pinned positive checkout was `a3fedbb`, the negative control `897d83c`.
+
+M5 code `d5f7b75` was applied as byte-identical cherry-pick `5fcea74`; the earlier independent review accepts that fix and the M2 reviewer checked the integration. The M2 review discovered duplicate B2 primary candidates and missing complete unique node/instance coverage validation. Commit `1cd2dcc` refuses duplicates and unconditionally STOPs v2 B2 ranking pending an author-bound power-plan grid implementation and independent review; the reviewer accepts only this fail-closed containment. Restore real thinking-on exclusion and GPU-hour tie tests before enabling ranking. M2 remains **NOT ACCEPTED** and B1/B2 code entry STOPs remain.
+
+`workers` controls a process pool for paired audit configurations after collection, not parallel campaigns; the roots and seeds are sequential and worker thread limits are set. The author selected the proposed 20 workers and 80 call cap, but practical resource headroom remains unmeasured. The author-selected digits node variant is recorded in PLAN. Review and the separately committed rule row and authorization remain necessary; TASL-7 paths must be confirmed by the operator.
+
+
+## Historical worker handoff — superseded where it conflicts with the continuation above
+
+Sections 1–10 below are preserved as historical context. In particular, the candidate code pin `0e5ce25f`, pending Mac tests, pending M5 review and proposed worker choice are stale; use the continuation and current PLAN. The draft row in §8 has not been adopted.
+
 **Written by a worker subagent of the Mac-local agent (Claude), MAC_LOCAL_RUNBOOK_20261104 rev 3.3, task M2; AI-assisted. This is input to an independent review, not accepted work. Nothing here is a decision.**
 
 - Branch `mac-x5v2-20261104`, base `74a07907` (head of `codex/trackx-stagea-cooperative-20261031`; config binding `74a0790`, code `ab74203`), per the author's 15:44 ruling (packet §0, R1-TRACKX-HANDOVER-RULING).
@@ -150,7 +173,7 @@ The failure set after M2 is **identical** to the base's (28 tests; same names). 
 
 **Config values filled (both v2 configs):** `stage_a_table_sha256` `00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c` (t7h8), `stage_a_amendment_table_sha256` `71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103` (t7j10), both from O1; `stage_a_amendment_acceptance` = `docs/r1/reports/OPS_O1_20261104.md`, sha `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e` (the blob at `f52db28e`, computed here). Paths: `/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json` and `…/r1_stagea_20261104_t7j10/stage_a_table.json` (derived; see §7).
 
-**Tests (round 2):** TESTS_ROUND2
+**Tests (round 2):** see the Mac continuation at the top, including the tested commits, full-suite results and limitations.
 
 ## 10. B1/B2 host = TASL-7 (R1-EXAM-HOST-B1B2-TASL7, author 4 Nov 18:10; commit `0e5ce25f`)
 
