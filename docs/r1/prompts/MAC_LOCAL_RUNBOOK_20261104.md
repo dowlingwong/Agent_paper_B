@@ -116,7 +116,9 @@ Every task ends in a **STOP**: the review loop, a STATUS entry, then a report to
 - **M11** (baselines, gate, TabPFN view) follows M1; its gate guard must exist before any sweep-2 label is analysed.
 - **M12** (the K subsampling check) waits for sweep-1 B.2 audits (operator O4); any gate-stability part also waits for R1-BX-D8-CONFIRM and an explicit author exception.
 - **Before any sweep-2 (T0 or T1) label table is analysed:** the author's **R1-BX-D8-CONFIRM** row and M11's guard. Draft that row early.
-- **M13** (serialisation order and the E6 probe) waits for packet (a) to name the editor of `r1/c3/train/`.
+- **M13** (serialisation order and the E6 probe): you are the editor of `r1/c3/train/` (R1-HANDOVER-04NOV); start after M1.
+- **M14** (B.3, A4 calibration, the gate report) waits for the label tables and R1-BX-D8-CONFIRM; the gate report is due ≈ 8 Dec.
+- **M15** (C.4, D.1, D.2, D.4): C.4's offline DI test on the E1b pairs can start any time; the rest follows B.7 and the operator's O10/O11.
 
 ### M1 — One authoritative plan (integration branch) and the author's decision packet (1 day)
 
@@ -145,7 +147,9 @@ Run it, and commit both the script and its output.
 - **Track X:** the coordinator's recorded Stage A pins.
 - **Track P:** `trackp-20261026` and its recorded pins.
 
-**Ruled on 4 Nov (11:29).** The author ruled on items (a), (d) (always-thinking models skip B1), (d′), (e), (f), (g) and (j); see PLAN §10 "4 November 2026 (11:29)" (R1-HANDOVER-04NOV … R1-BX-PROPOSED-CONFIRM). For those items the packet now only drafts the follow-up rows and notes: R1-EXAM-RULE-X5V2 with the sha (M2), R1-BX-D8-CONFIRM with the gate-code sha (M11), the replay and B.2 authorization notes (M3), and the Track S S0.1 re-run note if the operator needs one. **Still open, and still drafted with options:** (a)'s acknowledgement of the `codex/b2-repair-20261031` files outside its scope, (b) R1-HOSTS-04NOV, (c)'s B.1b difference list, (h), (i) after G.4, and the exact API model (D6).
+**Ruled on 4 Nov (11:29).** The author ruled on items (a), (d) (always-thinking models skip B1), (d′), (e), (f), (g) and (j); see PLAN §10 "4 November 2026 (11:29)" (R1-HANDOVER-04NOV … R1-BX-PROPOSED-CONFIRM). For those items the packet now only drafts the follow-up rows and notes: R1-EXAM-RULE-X5V2 with the sha (M2), R1-BX-D8-CONFIRM with the gate-code sha (M11), the replay and B.2 authorization notes (M3), and the Track S S0.1 re-run note if the operator needs one. **Pending the author's confirmation after the 4 Nov explanations:** A4 (the 1GC-7RC fallback, R1-1GC-FALLBACK) and H1 (the B.7 timing and its partial-T1 fallback). **Still open, and still drafted with options:** (a)'s acknowledgement of the `codex/b2-repair-20261031` files outside its scope, (b) R1-HOSTS-04NOV, (c)'s B.1b difference list, (h), (i) after G.4, the exact API model (D6), the Phase C/D host plan, the container route on the run hosts, and the R1-BX *(proposed)* items that the 11:21 list did not cover (see PLAN §10, 4 Nov 11:29, "Still open").
+
+> **Reading old markers (rev 3.1).** Where this file still says *(proposed)*, "packet (a)", "(d′)" or "(e1)", read the 4 Nov (11:29) rulings: R1-HANDOVER-04NOV (you are the editor of `r1/exam/` and `r1/c3/train/`), R1-EXAM-B1-HARNESS-PIN, R1-B2-REPLAY-GO and the items confirmed in R1-BX-PROPOSED-CONFIRM. Anything those rows do not list is still proposed or open.
 
 **Step 5: write the decision packet** `docs/r1/proposals/AUTHOR_DECISIONS_20261104.md`. Each section gives the options, a recommendation and a paste-ready draft PLAN row:
 
@@ -418,7 +422,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 **Governs:** R1-BX-D3 (conditional).
 
 **Steps.**
-1. The protocol is fixed by R1-BX-PROPOSED-CONFIRM: **label seeds 7001–7005 only** (every 3-subset against all five), criteria (i) and (ii); no evaluation-seed exception; no gate-stability criterion. Write it as a script with its parameters, have it reviewed, then run it.
+1. Draft the protocol within R1-BX-PROPOSED-CONFIRM: **label seeds 7001–7005 only** (every 3-subset against all five), criteria (i) and (ii); no evaluation-seed exception; no gate-stability criterion. Write it as a script with its parameters and have it reviewed. **The author commits the protocol before you run it** (R1-BX-D3).
 2. Run it on the Mac CPU on the label table the operator copied back (verify its sha first).
 3. Report `docs/r1/reports/MAC_K_SUBSAMPLE_CHECK_<date>.md`, with an independent review.
 4. **If it fails:** K stays 10. STOP and tell the author at once, with the T1 cost and the dates recomputed at K = 10.
@@ -449,12 +453,16 @@ P.3a is re-run under the new order only if probe A6 shows mean |Δ RPS| > 0.01 (
 
 The TabPFN rows and the A5/A6 rows come from TASL-7 (O7); you only tabulate them. **Duration (estimate):** 1–2 days once the tables arrive. **Done when:** the reviewer has accepted the gate report.
 
-### M15 — Phase C and D desktop parts (C.4 analysis, D.1, D.2, D.4)
+### M15 — Phase C and D desktop parts (C.2 merge, C.4 analysis, D.1, D.2, D.4)
 
-**Governs:** RUNBOOK C.4, D.1, D.2, D.4; C3_DESIGN §7; R1-BX-D1, D6, D7, D9, D12.
+**Governs:** RUNBOOK C.2, C.4, D.1, D.2, D.4; C3_DESIGN §7; R1-BX-D1, D6, D7, D9, D12.
+
+**Prerequisites:** B.7 passed (except step 1's E1b part); the operator's tables at verified shas (O10, O11); the A5/A6 checkpoints from TASL-7.
+
+0. **C.2 merge:** verify the DAgger audit table from O10, merge it with the existing labels (one instance assignment; duplicates grouped as in R1-MAIN-PROPOSER (e)), and write the retraining spec (Stage S recipe plus the selected R-A arm) that the operator runs on TASL-7.
 
 1. **C.4 DI test** (offline): on the existing E1b branch pairs, then on the operator's debiased-memory A/B (O10). Estimate: 1–2 days.
-2. **D.1 transfer tables:** leave-one-suite-out (primary; T0 is never the held-out suite) and LONO within T0 (secondary), for A3, A5, A6. Estimate: 1 day after the A5/A6 checkpoints.
+2. **D.1 transfer tables:** leave-one-suite-out (primary) and LONO within T0 (secondary), for A3, A5, A6. A3 is refitted per fold on the Mac CPU; A5/A6 come from the operator's per-fold retraining on TASL-7 (O10 step 4). Whether T0 may ever be the held-out suite is still open. Estimate: 1 day after the per-fold checkpoints.
 3. **D.2 pre-declaration draft:** contrasts H1–H5; the three-way comparison with A4 as self-control (R-B only as an optional ablation); the practitioner baselines; the API proposer's rows; the non-qualifying-node appendix; instances, sample sizes, matched W and LLM-call cap; the analysis script and its hash. The author commits it. Estimate: 1–2 days, about mid-December, before the D.3 note.
 4. **D.4 analysis** after O11: the contrasts exactly as pre-declared, C1 error rates per arm, the T4 bound vs the realised gain. Estimate: 2–3 days, early January, feeding the 10 Jan manuscript.
 

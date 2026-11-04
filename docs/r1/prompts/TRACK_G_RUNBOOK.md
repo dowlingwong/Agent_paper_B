@@ -31,7 +31,7 @@ Use each suite's **task assets** — data, baseline script, evaluator — as a h
 In order of preference:
 1. **No container.** Port the task natively into the harness venv. Most T1 candidates are plain PyTorch scripts.
 2. **Docker where it exists:** on deepthought the author is in the `docker` group. On the 4090 hosts, check `groups`, `docker info` and `podman --version` first.
-3. **Apptainer** where Docker is unavailable, without admin help:
+3. **Apptainer** where Docker is unavailable, without admin help. *Open:* Apptainer is confirmed only on deepthought2, which is not a run host; check `which apptainer singularity` on the 4090 hosts and Ada in G.0.
    - `apptainer pull <name>.sif docker://<image>`;
    - `apptainer exec --nv --containall --bind <per-run copy>:<path> <name>.sif …`, or `--writable-tmpfs`;
    - `APPTAINER_CACHEDIR` and `APPTAINER_TMPDIR` under `/ceph/dwong/`;
@@ -45,12 +45,12 @@ In order of preference:
 ### G.0 — Availability and raw cost (operator; Ada first; ENGINEERING_ONLY)
 
 Before G.0 starts on Ada, the O0 census of Ada checks Paper A occupancy (no Paper B GPU launch while a Paper A campaign waits for a card) and the co-tenancy margin. Per candidate task:
-1. **Licence and availability:** the repository, its licence, and the licence of each dataset. In particular, check whether the 1GC-7RC repository (arXiv 2605.17046) is public now; R1-TRACKG-SCOPE found it was not. If it is still not public, MLAgentBench becomes the third suite (R1-1GC-FALLBACK); report it.
+1. **Licence and availability:** the repository, its licence, and the licence of each dataset. In particular, check whether the 1GC-7RC repository (arXiv 2605.17046) is public now; R1-TRACKG-SCOPE found it was not. If it is still not public, **STOP for the author**: R1-1GC-FALLBACK (MLAgentBench as the third suite) is recommended but pending the author's confirmation (PLAN §10, 4 Nov 11:29).
 2. **Raw cost:** the suite's own baseline script at a candidate step count, on each GPU model available: RTX 6000 Ada (first), RTX 4090, TITAN X. Record wall time, peak VRAM, and CPU and RAM use. No code beyond the suite's own script and a step-count argument; where a script has no such argument (autoresearch has a wall-clock budget), its raw cost is measured after G.1, at the fixed-step wrapper.
 
 ### G.1 — Porting (operator ports; Mac shared pieces first)
 
-0. The author has confirmed R1-BX-REVISIONS (h)'s porting exception.
+0. The porting exception is confirmed (R1-BX-PORTING-CONFIRM, 4 Nov).
 1. The Mac agent's M10 step 0 delivers the shared pieces at a reviewed commit.
 2. The operator ports each task on `ops-trackg-<date>`: data preparation, the fixed-step wrapper, the metric parser, the `NodeSpec`, resource limits, and **3–5 representative edits declared as diffs before any measurement** (committed with a hash).
 3. Each port is reviewed by a fresh agent before use.
@@ -103,7 +103,7 @@ About 40 GPU-h per T1 node at 2-minute runs and K = 6: noise floor (5 edits × 1
 
 ## 6. Open questions for the author
 
-1. ~~Is the 1GC-7RC repository public now?~~ Ruled 4 Nov (R1-1GC-FALLBACK): checked in G.0; if not public, MLAgentBench is the third suite.
+1. Is the 1GC-7RC repository public now? Checked on G.0's first day. If not, the recommended fallback, MLAgentBench as the third suite (R1-1GC-FALLBACK), is pending the author's confirmation.
 2. ~~Which GPU model runs the T1 label table, and where is the proposer served?~~ Ada for T1 label runs; the proposer on deepthought (two TITANs) if O5 passes, else a 4090 (R1-BX-PROPOSED-CONFIRM).
 3. ~~Which host was the Apptainer check run on?~~ deepthought2 (R1-APPTAINER-HOST).
 4. ~~Memory modes and the campaign count per T1 node~~ both modes, about 12 campaigns (R1-BX-PROPOSED-CONFIRM).
