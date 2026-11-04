@@ -38,7 +38,9 @@ their M1 rows pass under A1; `lfm25_24b_a2b`/`muse_glimmer_30b` (genuine grammar
 (offload) remain excluded. If an M1 row fails (e.g. the olmo repair does not start), it is
 excluded and the build-pin diagnostic route applies under policy (c), not a template edit.
 
-## Declared repairs (SHA-pinned, M1-only)
+## Declared repairs (SHA-pinned, effective from M1, carried with the model)
+
+*Heading changed 4 Nov 2026 by the Mac-local agent per PLAN §10 R1-EXAM-A1-M1-REQUIREMENTS (1) (author, 16:39: "把报告里的"M1-only"改成"M1 起生效，随模型延续""); it read "M1-only". A repaired model that enters B1 through M1 keeps the same SHA-pinned repair template in B1, B2 and every later sweep.*
 
 `olmo31_32b` guarded-`tools` template `5d275f78…` (declared deviation from pinned `49a944c9…`;
 byte-equal 5/5 + 50/50 renders, pinned parser generation OK); `devstral_small2_24b` pinned HF
