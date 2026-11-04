@@ -67,6 +67,8 @@ All jobs are generated from one manifest by the submit tool (§5).
 
 ## 4. Who acts on HoreKa: the AI-agent rule
 
+> **Update 4 Nov (14:37).** The NHR@KIT login page (<https://docs.nhr.kit.edu/usage/login/>) now gives the sanctioned route: "Agents should run on a compute node through the SSH tunnel" (<https://docs.nhr.kit.edu/services/ides/#ssh-tunnel-to-compute-nodes>). The author starts `start-vscode-remote-ssh.sh`, which opens an interactive job in the `agent` partition with an `sshd`, and then the tunnel. The agent works only on that node. Its `sbatch` and `squeue` calls go from there, never from a login node. The scan prompt (revision 4) uses this route. The text below is the earlier fallback. Question (a) to NHR@KIT is largely answered; (c) remains.
+
 The migration page prohibits "interactive AI agent usage on login nodes". The operator agent works through SSH, so its commands would run on the login node. Until NHR@KIT answers:
 1. **The author** runs the submit tool (`--dry-run`, then the real submission), the status helper, the staging download, and the `rsync` copy-back. The operator only analyses files the author copies back.
 2. **The question to NHR@KIT support**, in three parts:

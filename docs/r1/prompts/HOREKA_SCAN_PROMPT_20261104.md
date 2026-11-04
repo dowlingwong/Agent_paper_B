@@ -1,41 +1,49 @@
-# Prompt — legacy HoreKa read-only scan for Track G T1 (4 Nov 2026, revision 3)
+# Prompt — HoreKa 2 read-only scan for Track G T1 (4 Nov 2026, revision 4)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR); its round 2 accepted it, and the remaining minors N1–N6 were applied. **Revision 3 (4 Nov, 14:22): the target is now legacy HoreKa, `ir7683@horeka.scc.kit.edu` (SSH alias `horeka`), by the author's choice.** He was told that, per his cheat sheet, legacy HoreKa now has A100 (Green) and CPU nodes only, becomes login-only in December and is decommissioned at the end of December. HoreKa 2 (`hk2`) is not scanned. Paste everything below the line into a Claude Code agent on the author's Mac that can `ssh hk2`. It authorizes nothing beyond the scan described here.
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR); its round 2 accepted it, and the remaining minors N1–N6 were applied. Revision 3 retargeted legacy HoreKa. **Revision 4 (4 Nov, 14:37) returns to HoreKa 2 at the author's instruction ("改改扫描的runbook，我们在horeka2上扫"), and moves all agent work off the login nodes onto a compute node in the `agent` partition, through NHR@KIT's documented SSH tunnel.** Paste everything below the line into a Claude Code agent on the author's Mac. It authorizes nothing beyond the scan described here.
 
 ---
 
-You are a **read-only scanning agent** for the **legacy HoreKa** cluster at KIT (NHR@KIT): `horeka.scc.kit.edu`, user `ir7683`, SSH alias `horeka`. The author is Dowling Wong. Do not connect to HoreKa 2 (`hk2`).
+You are a **read-only scanning agent** for the HoreKa 2 cluster at KIT (NHR@KIT). The author is Dowling Wong.
 
-He plans to run the Track G T1 work of Paper B (route R1) on HoreKa GPUs: census, noise floors, proposer, sweep and audits (PLAN §10 R1-T1-HOREKA, 4 Nov 2026). He asked for this scan of the legacy system. Before any job is designed for real, we need facts about his account, the GPUs actually available there (A100 for certain; the docs still list H100/H200 partitions, which the cheat sheet says have moved to HoreKa 2), and how long the system stays usable.
+He has decided to run the Track G T1 work of Paper B (route R1) on HoreKa 2 H100 nodes: census, noise floors, proposer, sweep and audits (PLAN §10 R1-T1-HOREKA, 4 Nov 2026). Before any job is designed for real, we need facts about his account and the cluster.
 
 Your task: collect those facts, change nothing, and write one report. Report to the author in **Chinese**, short and concrete. Write the report file in **English**.
 
-## 0. Before anything else: the author's choice
+## 0. Before anything else: compliance and the author's choice
 
-NHR@KIT's migration page (<https://docs.nhr.kit.edu/get-started/migration/>) says: **"Interactive AI agent usage on login nodes is prohibited."** Every SSH command you run executes on a login node.
+NHR@KIT's login page (<https://docs.nhr.kit.edu/usage/login/>) says: **"Interactive use of AI agents on login nodes is prohibited. Agents should run on a compute node through the SSH tunnel described at <https://docs.nhr.kit.edu/services/ides/#ssh-tunnel-to-compute-nodes>."** You therefore **never run anything on a login node**. You work only on a compute node of the `agent` partition, reached through that tunnel, which the author opens himself.
 
-Show the author this sentence and ask him to choose:
-- **Option A** — you run the scan yourself over SSH, as §3–§4 describe: about 12 non-interactive SSH calls and one 15-minute dev job.
-- **Option B** — you prepare the two scripts in `$S`. He runs these three commands himself from the Mac:
-  1. `ssh horeka 'bash -l -s' < "$S/scan_login.sh" > "$S/login_scan.txt" 2>&1`;
-  2. `ssh horeka 'mkdir -p ~/r1_scan_20261104 && cat > ~/r1_scan_20261104/probe.sh && cd ~/r1_scan_20261104 && sbatch --parsable probe.sh' < "$S/probe.sh"`, which prints the job id;
-  3. about 15–30 minutes later, `ssh horeka "cat ~/r1_scan_20261104/probe-<id>.out" > "$S/probe_out.txt"`.
+Show the author this rule and ask him to choose:
+- **Option A** — he opens an agent session (§1), and you run the scan from that compute node as §3–§4 describe: about 12 non-interactive SSH calls and one 15-minute dev GPU job.
+- **Option B** — you prepare the two scripts in `$S`. He runs these three commands himself from his own terminal (a person on the login node is allowed):
+  1. `ssh hk2 'bash -l -s' < "$S/scan_queries.sh" > "$S/query_scan.txt" 2>&1`;
+  2. `ssh hk2 'mkdir -p ~/r1_scan_20261104 && cat > ~/r1_scan_20261104/probe.sh && cd ~/r1_scan_20261104 && sbatch --parsable probe.sh' < "$S/probe.sh"`, which prints the job id;
+  3. about 15–30 minutes later, `ssh hk2 "cat ~/r1_scan_20261104/probe-<id>.out" > "$S/probe_out.txt"`.
 
   He tells you when the files are there. You only write the report.
 
 Quote his answer word for word at the top of the report. Without an explicit choice, do nothing on HoreKa. Under option B, skip every `ssh` step below and work only on the files he hands you.
 
-## 1. Local paths and SSH preflight
+## 1. Local paths, the agent session, and preflight
 
 All local files go under one absolute folder. Never use relative paths, and never `cd` into `~/Documents/agent_paper_B` itself. Another branch is checked out there with someone else's uncommitted changes. Never run `git add` or `git commit` anywhere.
 
-Your shell calls do not share variables, so **start every shell call with this preamble**:
+**The author opens the agent session (option A).** Give him these steps; never run them yourself:
+1. In one terminal: `ssh -t hk2 start-vscode-remote-ssh.sh`. With no arguments it starts an interactive job in the `agent` partition (one core, usually immediate), starts `sshd` on that compute node, and prints an `~/.ssh/config` snippet and a tunnel command. **This terminal stays open for the whole scan.** If he belongs to more than one compute project, the script fails until he sets a default account (`sacctmgr modify user $USER set defaultaccount=<project>`); that choice and that command are his.
+2. He adds the printed config snippet to `~/.ssh/config`. Its host is named `vscode-hk2` by default.
+3. In a second terminal he runs the printed tunnel command (of the form `ssh -N -L 22222:<node>:22222 <user>@<login host>`) and leaves it open.
+4. He tells you the host name of the snippet, if it is not `vscode-hk2`.
+
+When the scan is done, tell him he can end the session (Ctrl+C in the first terminal, then close the tunnel).
+
+Your shell calls do not share variables, so **start every shell call with this preamble** (replace `vscode-hk2` if he named another host):
 
 ```bash
-S="$HOME/Documents/agent_paper_B/.claude-worktrees/_snapshots/horeka_legacy_scan_20261104"
+S="$HOME/Documents/agent_paper_B/.claude-worktrees/_snapshots/horeka_scan_20261104"
 mkdir -p "$S"
 T=""; command -v timeout >/dev/null && T="timeout 600"; command -v gtimeout >/dev/null && T="gtimeout 600"
-SSH="$T ssh -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=30 -o ServerAliveCountMax=4 horeka"
+SSH="$T ssh -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=30 -o ServerAliveCountMax=4 vscode-hk2"
 ```
 
 macOS has no `timeout`, unless coreutils provides `gtimeout`. Without either, `$T` is empty, and the SSH options above bound the waiting.
@@ -46,15 +54,16 @@ The design draft you compare against is `docs/r1/proposals/HOREKA_T1_JOBS_DRAFT_
 
 If that ref is missing, use `origin/docs/runbooks-04nov`. If both are missing, ask the author.
 
-SSH preflight (option A):
+**Preflight (option A):**
 
 ```bash
-ssh -G horeka | grep -E '^(hostname|user|controlpath) '   # expect horeka.scc.kit.edu, ir7683
-ssh -O check horeka                                        # is the master connection open?
+ssh -G vscode-hk2 | grep -E '^(hostname|port|user|proxyjump|proxycommand) '   # expect the tunnel (localhost and the printed port) and ka_ir7683
+$SSH 'hostname; echo "job=$SLURM_JOB_ID partition=$SLURM_JOB_PARTITION"'
 ```
 
-- If the host name or user differs, STOP.
-- If no master connection is open, ask the author to open it himself with `ssh -fN horeka`. Opening it may need a password or OTP. Never type, store, read or ask for credentials.
+- The second command must report a compute node in the `agent` partition: a job id is set, and the host name is not a `login` host. If it shows a login node, or no job, **STOP**. You would otherwise be running on a login node.
+- If the connection is refused, the session or tunnel is not open: ask the author.
+- Never type, store, read or ask for credentials.
 
 Every later call uses `$SSH …` from the preamble. `BatchMode` makes a call fail instead of prompting. If a call fails for authentication, STOP. Set your own tool timeout above 600 s for these calls.
 
@@ -62,10 +71,10 @@ Never read `~/.ssh/*` key files, `~/.config/r1/secrets.env`, tokens, or other us
 
 ## 2. Rules
 
-1. **Login nodes: queries only.**
-   - The login-node work is one script run in one non-interactive SSH call (§3). After that come only these calls: one that copies and submits the probe; at most 9 status checks, at most one every **5 minutes**; one final `sacct` plus fetch of the output.
-   - No interactive shell and no editor.
-2. **Exactly one short job:** the probe of §4, on `dev_accelerated` (A100), 1 GPU, 15 minutes. **Never resubmit it**, whatever happens. `sbatch --test-only` starts nothing and is allowed.
+1. **Only on the agent-session compute node; never on a login node.**
+   - The query work is one script run in one non-interactive SSH call (§3). After that come only these calls: one that copies and submits the probe; at most 9 status checks, at most one every **5 minutes**; one final `sacct` plus fetch of the output.
+   - The agent node has one core: keep everything light. No interactive shell and no editor.
+2. **Exactly one short job:** the probe of §4, on `dev-gpu-h100`, 1 GPU, 15 minutes. **Never resubmit it**, whatever happens. `sbatch --test-only` starts nothing and is allowed.
 3. **Change nothing.**
    - No `sacctmgr modify`, `ws_allocate`, `module save`, installs (`pip`, `uv`, `conda`), `git clone` or downloads.
    - No dotfile edits.
@@ -73,9 +82,9 @@ Never read `~/.ssh/*` key files, `~/.config/r1/secrets.env`, tokens, or other us
    - Expected side effects that are fine: Lmod may write its user cache, and SSH may update `known_hosts`.
 4. **Report what exists; never guess.** If a command is missing or refused, keep its exact output and move on. Do not try substitute tools you were not given.
 
-## 3. Login-node part (one SSH call)
+## 3. Query part (one SSH call, on the agent node)
 
-Write this to `"$S/scan_login.sh"`. Run it with `$SSH 'bash -l -s' < "$S/scan_login.sh" > "$S/login_scan.txt" 2>&1` (after the preamble). The `bash -l` gives a login shell, so `module` is defined. The `main … </dev/null` wrapper stops any command from consuming the rest of the script. Do not add commands.
+Write this to `"$S/scan_queries.sh"`. Run it with `$SSH 'bash -l -s' < "$S/scan_queries.sh" > "$S/query_scan.txt" 2>&1` (after the preamble). The `bash -l` gives a login shell, so `module` is defined. The `main … </dev/null` wrapper stops any command from consuming the rest of the script. Do not add commands.
 
 ```bash
 main(){
@@ -98,7 +107,7 @@ h "3 usage this year (CPU and GPU hours)"
                  sreport -t hours --tres=cpu,gres/gpu cluster AccountUtilizationByUser user="$USER" start=2026-01-01 2>&1 | head -40
 h "4 partitions (sinfo may be restricted; a refusal is a finding)"
                  sinfo -s 2>&1 | head -40
-                 for p in accelerated accelerated-h100 accelerated-h200 accelerated-h200-8 dev_accelerated dev_accelerated-h100 cpuonly dev_cpuonly large; do echo "--- $p"; scontrol show partition "$p" 2>&1; done
+                 for p in gpu-h100 gpu-h200 dev-gpu-h100 cpu dev-cpu agent; do echo "--- $p"; scontrol show partition "$p" 2>&1; done
                  command -v sinfo_t_idle >/dev/null && sinfo_t_idle 2>&1 | head -40
                  scontrol show config 2>&1 | grep -i -E 'PrivateData|SelectTypeParameters|PreemptMode'
 h "5 reservations (maintenance window, flags)"; scontrol show reservation 2>&1 | head -80
@@ -109,24 +118,23 @@ h "6 storage";   env | grep -E '^(HOME|PROJECT|WORK|SCRATCH|TMPDIR)=' | sort
                  command -v ws_list >/dev/null && ws_list 2>&1 | head -20
                  quota -s 2>&1 | head -20
 h "7 queue estimates (--test-only starts nothing)"
-                 for shape in "-p accelerated --gres=gpu:4 --exclusive -t 24:00:00 -N 1" \
-                              "-p accelerated --gres=gpu:4 --exclusive -t 24:00:00 -N 1 --deadline=2026-11-22T00:00:00" \
-                              "-p accelerated --gres=gpu:1 -t 04:00:00 -N 1" \
-                              "-p accelerated-h100 --gres=gpu:4 -t 04:00:00 -N 1" \
-                              "-p dev_accelerated --gres=gpu:1 -t 00:15:00 -N 1" \
-                              "-p dev_cpuonly -n 1 -c 8 -t 01:00:00"; do
+                 for shape in "-p gpu-h100 --gres=gpu:4 --exclusive -t 24:00:00 -N 1" \
+                              "-p gpu-h100 --gres=gpu:4 --exclusive -t 24:00:00 -N 1 --deadline=2026-11-22T00:00:00" \
+                              "-p gpu-h100 --gres=gpu:1 -t 04:00:00 -N 1" \
+                              "-p dev-gpu-h100 --gres=gpu:1 -t 00:15:00 -N 1" \
+                              "-p cpu -n 1 -c 8 --mem=16G -t 01:00:00"; do
                    echo "--- $shape"; sbatch --test-only $shape --wrap "true" 2>&1; done
-                 echo "--- accelerated job states (counts; may be partial if PrivateData hides other users)"
-                 squeue -p accelerated -h -o '%T' 2>&1 | sort | uniq -c
+                 echo "--- gpu-h100 job states (counts; may be partial if PrivateData hides other users)"
+                 squeue -p gpu-h100 -h -o '%T' 2>&1 | sort | uniq -c
                  echo "--- my jobs"; squeue -u "$USER" 2>&1
 h "8 modules (EasyBuild names)"
                  module -t avail 2>&1 | grep -i -E '(^|/)(cuda|cudnn|nccl|python|gcc|gcccore|cmake|git|apptainer|singularity)' | sort -u | head -80
                  for m in CUDA GCC CMake Python; do echo "--- spider $m"; module -t spider "$m" 2>&1 | head -20; done
-h "9 tools on login"
+h "9 tools on the agent node"
                  for t in python3 git git-lfs apptainer singularity podman docker uv conda cmake nvcc rsync; do printf '%s: ' "$t"; command -v "$t" || echo missing; done
                  python3 --version 2>&1
                  env | grep -i -E '^(https?|no)_proxy=' | cut -d= -f1
-h "10 network from login (headers only)"
+h "10 network from the agent node (headers only)"
                  for u in https://huggingface.co https://pypi.org/simple/ https://github.com https://download.pytorch.org/whl/; do printf '%s ' "$u"; curl -sI -m 10 -o /dev/null -w '%{http_code}\n' "$u"; done
 h "11 own jobs (7 days)"; sacct -u "$USER" -S now-7days -n -P -o JobID,Partition,State,Elapsed 2>&1 | head -20
 h "end"; date -Is
@@ -145,10 +153,11 @@ Write this to `"$S/probe.sh"`, adding the `--account` line if needed:
 ```bash
 #!/bin/bash -l
 #SBATCH --job-name=r1scan
-#SBATCH --partition=dev_accelerated
+#SBATCH --partition=dev-gpu-h100
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
+#SBATCH --mem=16G
 #SBATCH --time=00:15:00
 #SBATCH --deadline=now+2hours
 #SBATCH --output=probe-%j.out
@@ -168,7 +177,7 @@ h "local scratch"; df -hT /tmp "${TMPDIR:-/tmp}" /scratch 2>&1; ls -ld /tmp "${T
 h "network from compute node (headers only)"
                for u in https://huggingface.co https://pypi.org/simple/ https://github.com; do printf '%s ' "$u"; curl -sI -m 10 -o /dev/null -w '%{http_code}\n' "$u"; done
                env | grep -i -E '^(https?|no)_proxy=' | cut -d= -f1
-h "can a job submit a job? (test-only, cpuonly partition)"; command -v sbatch; sbatch --test-only -p cpuonly -N 1 -t 00:10:00 --wrap true 2>&1
+h "can a job submit a job? (test-only, cpu partition)"; command -v sbatch; sbatch --test-only -p cpu -n 1 -c 1 --mem=1G -t 00:05:00 --wrap true 2>&1
 h "modules inside job"; module -t avail 2>&1 | grep -i -E '(^|/)(cuda|python|gcc)' | sort -u | head -30
 h "python";    command -v python3; python3 --version
 h "end";       date -Is
@@ -179,11 +188,11 @@ h "end";       date -Is
 
 - **Status checks:** every 5 minutes, at most 9 times, `$SSH "squeue -j $(cat "$S/jobid.txt") -h -o '%T %M %R'"`. If it is still pending after the ninth check, report it as pending. Do not cancel it unless the author says so.
 - **When it has finished,** one call: `$SSH "sacct -j $(cat "$S/jobid.txt") -n -P -o JobID,State,Elapsed,ExitCode; cat ~/r1_scan_20261104/probe-$(cat "$S/jobid.txt").out" > "$S/probe_out.txt"`.
-- **If the job is refused** (no access to `dev_accelerated`, or an account error), record the exact message. Do not try another partition.
+- **If the job is refused** (no access to `dev-gpu-h100`, or an account error), record the exact message. Do not try another partition.
 
 ## 5. Optional, from the Mac (no SSH)
 
-If you can browse, look on <https://www.nhr.kit.edu/> and <https://docs.nhr.kit.edu/> for the announcements of the 23 Nov – 4 Dec maintenance and of the legacy system's login-only period and decommissioning. Quote its exact start, end, and what happens to pending jobs. If you find nothing, write "not found".
+If you can browse, look on <https://www.nhr.kit.edu/> and <https://docs.nhr.kit.edu/> for the announcement of the 23 Nov – 4 Dec maintenance. Quote its exact start, end, and what happens to pending jobs. If you find nothing, write "not found".
 
 ## 6. Report
 
@@ -192,23 +201,25 @@ Write `"$S/HOREKA_SCAN_20261104.md"`. It starts with the author's option A or B,
 | # | Question | Why |
 |---|---|---|
 | Q1 | Default and all accounts; for each, the GPU-hour budget, used and left, from `scontrol show assoc_mgr`, the per-account `sacctmgr`/`sshare` rows and `sreport --tres=gres/gpu` | Whether about 320–480 GPU-h fits |
-| Q2 | Which GPU partitions actually exist (`accelerated` A100; do `accelerated-h100`/`-h200` still exist?), and for each: GPUs per node, MaxTime, OverSubscribe (`EXCLUSIVE` or `NO` with `--exclusive` honoured means whole nodes; `FORCE` means sharing is forced), DefMemPerGPU, CPUs per GPU, SelectTypeParameters; whether `--exclusive` is accepted (`--test-only`) | Whole nodes or not |
-| Q3 | Queue: job-state counts in `accelerated`, and whether PrivateData may hide other users' jobs; the `--test-only` start estimates, including the `--deadline` shape | Realistic wall time |
-| Q4 | Maintenance and lifetime of **legacy** HoreKa: the exact start, end and flags of any reservation (`scontrol show reservation`), whether the 23 Nov – 4 Dec downtime applies here, and when the system becomes login-only and is decommissioned (motd, §5) | How long T1 could run here |
+| Q2 | `gpu-h100`: GPUs per node, MaxTime, OverSubscribe (`EXCLUSIVE` or `NO` with `--exclusive` honoured means whole nodes; `FORCE` means sharing is forced), DefMemPerGPU, CPUs per GPU, SelectTypeParameters; whether `--exclusive` is accepted (`--test-only`) | Whole nodes or not |
+| Q3 | Queue: job-state counts in `gpu-h100`, and whether PrivateData may hide other users' jobs; the `--test-only` start estimates, including the `--deadline` shape | Realistic wall time |
+| Q4 | Maintenance: the exact start, end and flags from `scontrol show reservation`, the motd, or §5 | The copy-out cutoff |
 | Q5 | Storage: `$PROJECT` and the other storage variables, free space, file-system type, `$HOME` quota, workspaces | Where data, GGUFs (~20 GB each) and outputs go |
 | Q6 | Exact EasyBuild module names for CUDA, GCC, CMake and Python | Pins for llama.cpp and the venv |
 | Q7 | Tools present (git, git-lfs, apptainer, uv, conda, cmake, nvcc); proxy variable names | What setup needs |
-| Q8 | Network from the login node and from the compute node, per URL | Where staging must happen |
+| Q8 | Network from the agent-partition node and from the GPU compute node, per URL | Where staging must happen |
 | Q9 | H100 model, memory, driver, CUDA version, compute capability, MIG mode, compute mode; processes on our GPU. Do not conclude anything about co-tenancy from a 1-GPU job | Proposer plus task fit |
 | Q10 | Compute node: cores, RAM, local scratch and its size | Worker counts, temporary files |
 | Q11 | Whether `sbatch --test-only` works from inside a job | Self-resubmission |
-| Q12 | Anything in the motd or partition list about AI agents, the `agent` partition, or usage rules | Compliance |
+| Q12 | Anything in the motd or partition list about AI agents, the `agent` partition (its limits from `scontrol show partition agent`), or usage rules | Compliance |
 
-End with **"Surprises and blockers"**: anything that contradicts `"$S/draft.md"`. Copy the raw files `login_scan.txt`, `jobid.txt` and `probe_out.txt` beside the report.
+End with **"Surprises and blockers"**: anything that contradicts `"$S/draft.md"`. Copy the raw files `query_scan.txt`, `jobid.txt` and `probe_out.txt` beside the report.
 
 Then send the author a short Chinese message: done or stopped, the report path, the three most important findings, and anything needing his action.
 
 ## 7. STOP conditions
+
+- The preflight shows a login node or no Slurm job, or the agent session ends during the scan.
 
 - No explicit option A or B from the author.
 - The SSH preflight fails, or any call fails for authentication or asks for a credential.
