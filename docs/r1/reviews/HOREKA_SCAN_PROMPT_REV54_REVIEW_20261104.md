@@ -137,3 +137,94 @@ I ran these on Linux with OpenSSH 9.6p1, against two throw-away `sshd`s on 127.0
 | 5 | NHR rule | **Holds.** The `-O` calls are local, and the login node still runs only the session script and the forward's `direct-tcpip` traffic |
 
 Once MAJOR-1 is fixed (the one-line `ssh -G` precondition is enough), the prompt is fit to run. MINOR-1 to MINOR-3 are small and worth applying in the same pass.
+
+---
+
+# Round 2 — revision 5.5 (`7f99da11`)
+
+**Scope:** `git diff 0abfaf2b 7f99da11`, plus run 3's session log (job 120238) and its report, from the uploaded snapshot. I did not edit the prompt and committed nothing.
+
+**Lab tests** (same setup as round 1: OpenSSH 9.6p1 on Linux, a throw-away login `sshd` and node `sshd`, the author-like ControlMaster). The stand-in remote script prints `salloc: Granted job allocation 999` and `READY`, loops on `read` from stdin, and logs `HUP`, `INT` and stdin EOF.
+
+| Test | Result |
+|---|---|
+| Rev 5.4 start (`nohup hk2ssh -tt … < /dev/null &`) through the mux | After 14 s the client is alive and the remote **never saw EOF**: with `-tt`, the `/dev/null` EOF does not reach the remote pty |
+| `kill -9` of that client | The remote gets HUP and the master survives. The log has **no** `Shared connection to … closed.` line. With SIGTERM, round 1, the line is printed |
+| Rev 5.5 start (`nohup bash -c 'tail -f /dev/null \| "$1/hk2ssh" -tt …' _ "$S"`) | `session.pid` is the `bash -c` parent. Its two direct children are `tail -f /dev/null` and `ssh … -tt hk2 start-vscode-remote-ssh.sh`, because the wrapper execs `ssh` and keeps the PID |
+| Liveness `pgrep -P "$p" -fl '[s]tart-vscode-remote-ssh'`, in the same call and in a later call | Lists the ssh client both times, rc 0 |
+| Teardown block 5.3 | The `ps … \| grep -q 'hk2ssh" -tt hk2 [s]tart-…\.sh'` check matches the parent's command line. `pkill -P` ends `tail` and `ssh`, and the parent exits. It prints `CLIENT_GONE`. The remote gets HUP, the master keeps its PID, and the log ends with `Shared connection … closed.` |
+| `-O forward -L 127.0.0.1:22222:127.0.0.1:2223` | `FORWARD_OK`. The `lsof -t` listener equals the master PID from `-O check` |
+| `nodessh`-style config (`HostName 127.0.0.1`, `Port <L>`) | Logs in through the forward |
+| `-O cancel -L 22222:127.0.0.1:2223` (listen host missing) | `port not forwarded`, and the port **stays** listening. So the spec must match exactly |
+| `-O cancel -L "$(cat forward_spec)"` | `NO_LISTENER`; master PID unchanged |
+| A passphrase-protected key that is not in ssh-agent, with `BatchMode` | `Permission denied (publickey).`, the same text as an unregistered key |
+| `bash -n` on all 11 bash blocks of rev 5.5 (placeholders substituted) and on 5 inline commands | All pass |
+
+## (a) Round-1 findings
+
+| Finding | Status |
+|---|---|
+| MAJOR-1, config forwards | **Fixed** in step 1 (a one-line STOP). Not mirrored in §7 (R2-3) |
+| MINOR-1, `-O forward` status and owner | **Fixed.** The `if` block writes `forward_spec` only on success, and the listener PID is checked against `<N>` (tested). §7 still says "no listener appears" (R2-3) |
+| MINOR-2, cancel verification and master survival | **Fixed:** `master_before.txt` and `master_after.txt`, an `lsof` check expecting `NO_LISTENER`, and both results in the report (tested) |
+| MINOR-3, sandbox and socket STOP | **Fixed** in step 1, with split messages and "never go on to step 2". Not mirrored in §7 (R2-3) |
+| NIT-1 to NIT-3 | **Fixed.** The history is in order and 5.1 is marked superseded. The §0 wording is reworded. The forward binds `127.0.0.1`, `HostName 127.0.0.1`, and the end message has the 8 h note |
+
+## (b) Session start, liveness and teardown
+
+- **The mechanics are correct.** `session.pid` names the `bash -c` parent. Both `nohup` (BSD and GNU) and the wrapper exec, and bash forks every element of a pipeline, so `ssh` is a direct child of that parent. Liveness and teardown behave as intended (tested). On run 3's macOS, `/bin/bash` is 3.2; it forks pipelines the same way.
+- **macOS `pgrep` and `pkill`** (FreeBSD-derived):
+  - `-f` matches the full argument list as an extended regex. With `-f`, `-l` prints the PID and the full arguments (Linux procps prints only the name, which is also fine).
+  - `-P ppid` with no pattern is allowed in `pkill`, because `-P` counts as a criterion.
+  - macOS `pgrep` already leaves out itself and its ancestors by default, so the `[s]` trick is unnecessary there but harmless. It is needed on Linux procps: my own lab `pgrep -af sshd | grep lab2` matched its own shell.
+  - `ps -o command=` on macOS prints full width when its output is a pipe, so the `grep -q` sees the whole line.
+- **R2-1 (MAJOR) — the `tail -f /dev/null` fix probably does not address why run 3's client died.**
+  - EOF on stdin does not reach the remote under `-tt` through the mux (tested: the remote's `read` was still blocked after 14 s).
+  - A client that ends normally, or by SIGTERM or SIGHUP, writes `Shared connection to … closed.` into `session.log`. Run 3's log has no such line, and no `salloc: Relinquishing …` either. That fits a client killed from outside with SIGKILL. The likely killer is the agent harness, which reaps `nohup … &` children after a tool call or after the reply. Claude Code's own Bash tool documents that a process the shell detaches with `nohup`/`&` "is usually stopped a few minutes after the reply".
+  - Revision 5.5's liveness check will catch this safely. But run 4 would then most likely STOP at the second liveness check. The Timeouts paragraph ("The background processes below keep running between your calls") is the assumption run 3 contradicted.
+  - *Fix:* in step 2, add:
+    > If your Bash tool has a `run_in_background` option, start the session with it, with its timeout set to at least 5 400 000 ms. The script asks for `--time=01:00:00`, and the default background limit, often 30 minutes, would kill the session mid-scan. Use this command (no `nohup`), wrapped in `bash -s <<'EOF' … EOF` as usual:
+    > ```bash
+    > S="$HOME/Documents/agent_paper_B/.claude-worktrees/_snapshots/horeka_scan_20261104"
+    > bash -c 'tail -f /dev/null | "$1/hk2ssh" -tt hk2 start-vscode-remote-ssh.sh' _ "$S" > "$S/session.log" 2>&1 < /dev/null &
+    > echo $! > "$S/session.pid"; date -u +%Y-%m-%dT%H:%M:%S > "$S/session_start_utc"; wait
+    > ```
+    > Use the `nohup … &` form only if there is no such option. Never end your reply to the author while the session is open, except at a STOP after step 5.
+
+    Change the Timeouts sentence to "The session must stay alive between your calls; step 2 says how." The `ps`/`grep` and `pkill -P` checks of step 5.3 work unchanged with this form, because the parent's command line is the same.
+- **R2-2 (NIT) — the global `pgrep` at the end of step 5.3 can list the author's own session clients.** If he runs the script himself in a terminal, `CLIENT_GONE` will not print, and the report will be misleading. *Fix:* check only your own processes: `if ps -p "$p" >/dev/null 2>&1 || pgrep -P "$p" >/dev/null 2>&1; then echo CLIENT_STILL_THERE; else echo CLIENT_GONE; fi`.
+
+## (c) Ports
+
+- **Correct.**
+  - `<lport>`, `<node>` and `<rport>` come from the printed `-L 22222:hk2n1254:22228`. `<L>` is the first free port in `<lport>`…`<lport>+20`. The snippet's `Port` is ignored, and `vscode_ssh_config` uses `Port <L>` with `HostName 127.0.0.1`. Gate 1 accepts `127.0.0.1` and rejects port 22.
+  - Step 3.4 writes the exact `SPEC` string `127.0.0.1:<L>:<node>:<rport>` to `forward_spec`, only on success. Step 5.2 cancels with that same string, and `cut -d: -f2` gives `<L>` for the `lsof` check.
+  - Tested: a spec without the listen host does **not** cancel the forward, so reading it back from the file is the right design.
+- *NIT:* `lsof` without root on macOS may not show sockets of other users. A port held by another user's process passes step 3.2, then `-O forward` fails and the run STOPs. That is fail-safe; optionally, on `FORWARD_FAILED` try the next free port once, within the same `+20` range.
+
+## (d) FIRST-TIME SETUP rule
+
+- **The approach is sound.** Run 3's log confirms the guide is printed on every run. Setup C is the snippet, with `IdentityFile ~/.ssh/id_ed25519_vscode-hk2`. Setup B is `ssh-copy-id` to the login node, which lands in the shared home's `authorized_keys`, used by the script's unprivileged `sshd` (`Server listening on 0.0.0.0 port 22228`). `test -f` is a `stat` and does not read the key, so it meets "never open or read". Gate 2 still runs before any scan command, so a refused key costs nothing.
+- **R2-4 (MINOR) — `Permission denied` from `nodessh` does not prove that Setup B is not done.**
+  - `-F` skips `~/.ssh/config`, so `UseKeychain` and `AddKeysToAgent` do not apply. If the key has a passphrase (`ssh-keygen` in Setup A asks for one by default) and is not loaded in ssh-agent, `BatchMode` gives exactly `Permission denied (publickey).` (tested).
+  - The report would then send the author to redo Setup B for nothing.
+  - *Fix:* in step 4 and §7, change the cause to "Setup B is not done, **or** the key has a passphrase and is not loaded in ssh-agent". In the message to the author, ask him to check both: on macOS, `ssh-add --apple-use-keychain ~/.ssh/id_ed25519_vscode-hk2` loads it. The agent never runs `ssh-add` itself.
+- **R2-5 (MINOR) — `test -f` cannot tell "missing" from "access denied".** If the local sandbox or permission rules block `~/.ssh`, `test -f` fails silently, and the agent reports "key missing". *Fix:* use `ls -l <IdentityFile with ~ expanded>`, which shows metadata only and never the content, and quote its exact output. `No such file or directory` means missing. `Operation not permitted` means the sandbox: STOP and ask the author to allow `stat` there.
+
+## (e) Leftover inconsistencies
+
+- **R2-3 (MINOR) — §7 is behind the steps.**
+  - Step 1 lacks the configured-forwards STOP, and the `Operation not permitted` (sandbox) STOP.
+  - Step 3 says "no listener appears"; the rule is now "`FORWARD_OK` missing, or the listener PID is not the master's".
+  - *Fix:*
+    - Step 1: "… or no master connection is running (ask him to open it); or `Operation not permitted` on the control socket (ask him to allow it); or `ssh -G hk2` lists a configured forward."
+    - Step 3: "… `-O forward` fails, or the listener is not the master."
+- **R2-6 (MINOR) — the step 0 tool check does not cover `pgrep` and `pkill`,** which liveness and teardown now depend on. If the sandbox refuses `pgrep`, the liveness check fails and is misread as a dead client. *Fix:* extend step 0.2 to `ps -p $$ -o command= && lsof -v >/dev/null 2>&1 && command -v pgrep pkill >/dev/null && { pgrep -x nonexistent_zz; [ $? -le 1 ]; } && echo LOCAL_TOOLS_OK` (tested: it prints `LOCAL_TOOLS_OK`, and a failing earlier step prevents it), and §7 step 0 to "refuses `ps`, `lsof`, `pgrep`, `pkill` or `kill`". `pgrep` exits 1 for "no match" and 2 or 3 for an error, so rc ≤ 1 means it ran.
+- **R2-7 (NIT) — rule 3's list of expected side effects does not name `~/.ssh/environment`,** which §0 now allows. *Fix:* add "the session script itself rewrites `~/.ssh/environment` (§0); never touch it."
+- No `-S none`, `tunnel.pid`, 2FA-hour or same-port (`<port>:<node>:<port>`) text is left. The STOP lists for step 2 and step 4 match the steps.
+
+## Round 2 verdict: PASS-WITH-FIXES
+
+All round-1 findings are fixed correctly in the steps. The new port handling and the cancel spec are exact. The `[s]`/`pgrep -P`/`pkill -P` teardown works, and it is sound on macOS. Safety is unchanged: the master is never stopped, nothing outside the master is reconfigured, and no credential is handled.
+
+Before run 4, apply **R2-1**: the likely cause of run 3's dead client is the harness reaping `nohup … &`, not stdin EOF, and 5.5 does not change that. Then apply the small edits R2-3 to R2-6. R2-2 and R2-7 are cosmetic.
