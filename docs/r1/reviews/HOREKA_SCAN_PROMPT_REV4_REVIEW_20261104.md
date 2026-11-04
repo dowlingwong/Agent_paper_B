@@ -208,3 +208,73 @@ A direct `curl` of docs.nhr.kit.edu was refused by this sandbox's egress proxy. 
 There are no BLOCKING findings: no step in revision 4 lets the agent change cluster state or work from a login node unchecked. Three MAJOR findings make option A likely to stop at its preflight, or lean on a weak gate. MAJOR-1 is the job check through environment variables. MAJOR-2 is that `ssh -G` is not a gate. MAJOR-3 is the missing key and host-key setup. Fix those three, and preferably MINOR-2, MINOR-3 and MINOR-7, before handing the prompt to the agent on the Mac.
 
 Verdict: not accepted (0 BLOCKING, 3 MAJOR, 9 MINOR)
+
+## Round 2 — re-check of revision 4.1 against `88b219d9` (4 Nov 2026)
+
+**Scope.**
+- `git diff 0f53c0dd 88b219d9` for the prompt, STATUS and the draft §4 box.
+- The full prompt at HEAD, re-read.
+- I made no SSH connection and contacted no cluster. I committed nothing. This section is my only edit.
+
+**Local tests.**
+- `bash -n` passes on all five bash blocks at HEAD: Gate 1, Gate 2, the preamble, `scan_queries.sh` and `probe.sh`.
+- `bash -n` also passes on every inline command. For the test I replaced `<S>`, `<id>`, `<port>`, `<node>` and `<user>@<login host>` with sample values. The inline commands include option B's three commands, the author's session commands (`ssh vscode-hk2 hostname`, `ssh -o BatchMode=yes vscode-hk2 true`) and the login-node `curl`.
+- Gate 1 is the text I tested in round 1, unchanged. It passes `localhost` / `22222` / `ka_ir7683`. It stops on a login host on port 22, and on `proxyjump hk2`.
+
+### Status of the round-1 findings
+
+| Finding | Status | Evidence in rev 4.1 |
+|---|---|---|
+| MAJOR-1 preflight job check | **Fixed** | Gate 2 checks on the Slurm side: `scontrol show node "$h"` must show `agent` in `Partitions=`, and `squeue -u $USER -p agent -t R` must list a running job on that host. `job_env` is "a finding only". The host-name heuristic is gone |
+| MAJOR-2 `ssh -G` not a gate | **Fixed** | Gate 1 is local and runs "before any `$SSH` call", with a STOP. Step 5 says "Never accept `hk2`, any `*.scc.kit.edu` name, or any login host as the session host". §7 lists the failures of Gate 1 and Gate 2 |
+| MAJOR-3 key and host-key setup | **Fixed** | Step 2 has him follow the printed one-time setup. Step 4 has him run `ssh vscode-hk2 hostname` himself, accept the key, then run `ssh -o BatchMode=yes vscode-hk2 true` with no prompt. The preflight bullets send host-key errors back to step 4 ("Never change `known_hosts` yourself") |
+| MINOR-1 verbatim quote | **Partly fixed** | STATUS and the draft box now quote the heading and the phrase correctly. §0 still paraphrases and has a new attribution error: see R2-1 |
+| MINOR-2 session lifetime | **Fixed** | `%L` is checked, and if under about 75 minutes the agent asks before §3. §7 says "Never fall back to `hk2` or any login host" and gives him the job id and option B step 3 |
+| MINOR-3 `AllocNodes` go/no-go | **Fixed, with a gap** | The §3 go/no-go uses `AllocNodes` and the `dev-gpu-h100 --test-only` line, with option B step 2 as the fallback. What happens after his submission is not stated: see R2-2 |
+| MINOR-4 session job in the budget | **Fixed** | Rule 2: the `agent` session job (about one core for about an hour) appears under "my jobs" and in `sacct`, and is "not a STOP". It is not in the §0 option A line, which is acceptable |
+| MINOR-5 default account | **Fixed** | The log-out-and-back-in note is there. §3 reuses the account chosen in §1 and asks only if he made no choice. The optional `--account` to the script was not added; I flagged that as unverified, so this is acceptable |
+| MINOR-6 login-node network | **Fixed** | §3 asks the author whether he will run one `curl` on the login node; otherwise Q8 says "not measured". Only `huggingface.co` is listed; adding `pypi.org` and `github.com` would match Q8. Optional |
+| MINOR-7 option B consistency | **Fixed** | (a) `<S>` written out as the full path. (b) Two hand-offs: step 1, then the §3 checks, then the final `probe.sh`. (c) Step 3 runs `sacct` and `cat`, and repeats at most every 5 minutes. (d) Results under option B are labelled as login-node results |
+| MINOR-8 second OTP on the tunnel | **Fixed** | Step 3 suggests using the `hk2` alias as the login-host part |
+| MINOR-9 small text | **Fixed** | "about 13" SSH calls, which matches: Gate 2, the query, the submit, 9 checks and the fetch. The §7 list is one list again. The title is a new issue: see R2-3 |
+
+### New findings (round 2)
+
+**R2-1 (MINOR) — §0 misattributes the operative sentence and asks the agent to quote wording it does not have.**
+- *Where:* §0, first paragraph.
+- *Problem:*
+  - "It sends agents to the SSH tunnel at <…/ides/#ssh-tunnel-to-compute-nodes>, which says to 'use the SSH tunnel to compute nodes to run AI agents on a dedicated compute node instead'" attributes that sentence to the IDE page. In fact it is the last sentence of the login page's admonition.
+  - "Quote the page's own wording to the author; this is a paraphrase" gives the agent no verbatim text. It would have to browse, which §5 makes optional, or quote from memory, which invites a made-up quote.
+- *Fix:* put the verbatim text in §0 and drop the instruction:
+  - Heading: **"Interactive AI agent usage on login nodes is prohibited."**
+  - Body: "Interactive use of AI agents (such as ChatGPT, Claude, or similar tools) on login nodes is not allowed. This includes running AI agent processes, API calls, or similar interactive workloads on login nodes. … Use the SSH tunnel to compute nodes to run AI agents on a dedicated compute node instead."
+  - Then: "Show the author this text."
+
+**R2-2 (MINOR) — After the go/no-go fallback, it is not said who polls and fetches.**
+- *Where:* §3 "Go/no-go…: … Give the author option B step 2 for the probe, then continue with his output."
+- *Problem:* he gets the job id in his own terminal. It is not stated whether the agent then writes it to `$S/jobid.txt` and continues with §4's status checks and final fetch over `$SSH`, which is allowed from the agent node and keeps the budget of 9 checks, or whether he also runs option B step 3.
+- *Fix:* "He tells you the job id. Write it to `$S/jobid.txt`, check it with the numeric test, and continue with §4's status checks and final fetch over `$SSH`."
+
+**R2-3 (MINOR) — The revision label is inconsistent.**
+- *Where:* the title line; the header paragraph.
+- *Problem:* the title still says "revision 4". The header puts the sentence on revision 4.1 before the sentence on revision 4.
+- *Fix:* change the title to "revision 4.1", and move the 4.1 sentence after the revision 4 sentence.
+
+**Note, not a finding.** Gate 2 compares `hostname -s` with Slurm's node name. If HoreKa 2's `NodeName` differs from the short host name, Gate 2 STOPs on a correct node. That fails safe, and the raw `preflight.txt` would show it. If it happens, the author can confirm by hand. The prompt need not change.
+
+**Safety re-check.**
+- Rev 4.1 adds two remote commands: Gate 2's `hostname`, `scontrol show node` and `squeue`, all read-only and run only after Gate 1. It adds three local author commands.
+- It adds no write on HoreKa. The rules still forbid the agent `sacctmgr modify`, dotfile edits and `known_hosts` changes.
+- The budget is unchanged: one 15-minute 1-GPU dev job, never resubmitted.
+- Every STOP from round 1 is still there. The new STOPs are Gate 1, Gate 2 and the session ending (with no login-host fallback).
+- Polling stays at 5 minutes or more, under both option A and option B.
+
+### Round 2 verdict
+
+All three MAJOR findings are fixed. Eight of the nine MINOR findings are fixed. MINOR-1 is only partly fixed, and its residual is R2-1. Rev 4.1 adds three MINOR findings (R2-1 to R2-3). None of them affects compliance, read-only safety or budget. R2-1 is worth fixing before handover, because the agent shows §0 to the author as the rule.
+
+Verdict: accepted (0 BLOCKING, 0 MAJOR; residual MINOR R2-1, R2-2, R2-3)
+
+## Post-round-2 fixes (executing agent, 4 Nov)
+
+R2-1: §0 now quotes the login page verbatim (heading and four sentences, fetched 4 Nov). R2-2: in the go/no-go fallback the author gives the job id; the agent writes `$S/jobid.txt` and continues §4. R2-3: title revision 4.2; header order fixed.
