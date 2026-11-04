@@ -1,13 +1,13 @@
 # DRAFT — Authorization: Track X Stage B1 under `x5_rule_v2` (4 November 2026)
 
-**This is a draft prepared by the Mac-local agent (Claude; AI-assisted) at the author's request of 4 Nov 17:54 ("起草 B1 授权说明，绑定 `rule_sha256`、`nodes`、`stage_a_table_sha256`（两张表）、`llm_call_cap`，由我审定后提交"). It authorizes nothing.** The author reviews it, fills the open values, sets `"approved": true`, and commits the final note under `docs/r1/authorizations/` (the path the B1 config's `authorizations.b1` names). The machine-readable block below has the fields `r1.exam.runtime.author_gate` checks for phase `b1`; the gate refuses to run unless the committed bytes match and PLAN carries the R1-EXAM-RULE row with the same rule sha.
+**This is a draft prepared by the Mac-local agent (Claude; AI-assisted) at the author's request of 4 Nov 17:54 ("起草 B1 授权说明，绑定 `rule_sha256`、`nodes`、`stage_a_table_sha256`（两张表）、`llm_call_cap`，由我审定后提交"). It authorizes nothing.** The author reviews it, fills the open values, sets `"approved": true`, and commits the final note under `docs/r1/authorizations/` (the path the B1 config's `authorizations.b1` names). The machine-readable block below has the fields `r1.exam.runtime.author_gate` checks for phase `b1` (plus `host` and `workers`, recorded for the operator; the gate at `8eae4f84` does not check them); the gate refuses to run unless the committed bytes match and PLAN carries the R1-EXAM-RULE row with the same rule sha.
 
 ## Preconditions before the author commits the final note
 
 1. M2 (`mac-x5v2-20261104`) accepted by its independent reviewer, and the reviewed commit is the paper pin. *(M2 is being fixed after review round 1; the rule file and its sha are not changed by those fixes.)*
 2. PLAN §10 row **R1-EXAM-RULE-X5V2** committed by the author with the rule sha below.
 3. R1-EXAM-STAGEA-ACCEPT (Stage A accepted; B1 candidates = `t7h8`'s 8 PASS + `t7j10`'s 7 PASS + 3 anchors) is in PLAN — committed, under independent review at the time of drafting.
-4. The B1 host is settled (open: R1-HOSTS-04NOV; packet (b) proposes TASL-2, where the campaign worker runs).
+4. Host: **TASL-7** (R1-EXAM-HOST-B1B2-TASL7, 18:10): B1 and B2 on TASL-7, the whole exam on one host; P.3a pauses while B1 or B2 runs. M2 makes the exam worker follow the configured host (it was hard-pinned to TASL-2).
 
 ## Bound values
 
@@ -19,6 +19,8 @@
 | `stage_a_amendment_table_sha256` | `71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103` (`t7j10`) | `reports/OPS_O1_20261104.md` (Identity and custody) |
 | `stage_a_amendment_acceptance_sha256` | *TODO — depends on M2's acceptance-record format.* Candidate: `reports/OPS_O1_20261104.md` blob sha256 `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e` (as merged from `ops-20261104` @ `f52db28e`). | M2 is checking which file its loader binds as the acceptance record. |
 | `llm_call_cap` | **author's choice** — see options below | none in PLAN or the protocol |
+| host / `gpu_uuid` | `TASL-7` / `GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1` | R1-EXAM-HOST-B1B2-TASL7; the TASL-7 GPU UUID already in `exam_b1_v2.json` (same card as Stage A `t7h8`/`t7j10`) |
+| `workers` | **20** *(proposed)* — see below | author, 18:10: "worker 数按 24 核来定" |
 
 The author asked for "two tables" under `stage_a_table_sha256`. The gate and M2's config bind them as two fields: `stage_a_table_sha256` (`t7h8`) and `stage_a_amendment_table_sha256` (`t7j10`), plus the operator acceptance record. Both tables are listed above.
 
@@ -32,6 +34,10 @@ B1 runs each campaign with W = 20 worker runs, and after each executed proposal 
 | B | 40 | Exactly one pair per worker run. Any skipped, inert or duplicate proposal (no worker run) still costs calls, so campaigns with many non-executed proposals end before W. |
 | C | other | Author's value. |
 
+### `workers` on TASL-7 (24 logical CPUs) — proposal
+
+TASL-7 has 24 logical CPUs (AMD Ryzen 9 7900X, 12 cores × 2 threads) and 62 GiB RAM (`reports/PORTAL_TRACKP_HOST_FACTS_TASL7_20261026.md`). The proposal keeps 4 logical CPUs for the llama-server host thread, the runner, the guardian and the OS, and gives each worker one logical CPU: **`workers = 20`**, with each worker limited to one BLAS/OpenMP thread (`OMP_NUM_THREADS=MKL_NUM_THREADS=OPENBLAS_NUM_THREADS=1`) so 20 workers do not oversubscribe the CPUs. *Pending:* M2 reports how `workers` is used (processes vs threads, and whether the exam runner already limits BLAS threads per worker); if a worker uses more than one thread, the count is lowered to 24 − 4 divided by threads per worker. The Stage A config used 4; sweep 1 on deepthought used 16. **Author confirms or sets the value.**
+
 ## Pins carried from the B1 config (`r1/scripts/configs/exam_b1_v2.json` on `mac-x5v2-20261104`)
 
 - Paper: the M2 commit accepted by review (*TODO*); harness `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (R1-EXAM-B1-HARNESS-PIN); `cache_prompt: false` on every call.
@@ -41,7 +47,7 @@ B1 runs each campaign with W = 20 worker runs, and after each executed proposal 
 
 ## Scope and STOPs (from RUNBOOK X.4, R1-MAIN-PROPOSER and the rows cited)
 
-- Authorizes B1 only, on the host named in the final note, for the 18 candidates of R1-EXAM-STAGEA-ACCEPT (`t7h8`'s 8 PASS, `t7j10`'s 7 PASS, 3 anchors). Always-thinking models skip B1 (R1-EXAM-ALWAYS-ON-SKIP; none of the 18 is always-on). `x5_rule_v2`'s finalist eligibility (D28 pass, measured in B1, and thinking-off capable) applies at finalist selection, not at B1 entry.
+- Authorizes B1 only, on TASL-7 (R1-EXAM-HOST-B1B2-TASL7), for the 18 candidates of R1-EXAM-STAGEA-ACCEPT (`t7h8`'s 8 PASS, `t7j10`'s 7 PASS, 3 anchors). Always-thinking models skip B1 (R1-EXAM-ALWAYS-ON-SKIP; none of the 18 is always-on). `x5_rule_v2`'s finalist eligibility (D28 pass, measured in B1, and thinking-off capable) applies at finalist selection, not at B1 entry.
 - Not authorized: B2, any sweep, any change to the rule file, the frozen prompt set, the registry or the repair templates, any other host.
 - STOP: any pin mismatch; a template-repair digest mismatch; a request without `cache_prompt: false`; an LLM-call cap reached before W on more than *(author to set, if wanted)* of campaigns; OOM or CPU fallback; a non-finite metric.
 
@@ -57,7 +63,9 @@ B1 runs each campaign with W = 20 worker runs, and after each executed proposal 
   "stage_a_table_sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
   "stage_a_amendment_table_sha256": "71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103",
   "stage_a_amendment_acceptance_sha256": "TODO_AFTER_M2_ACCEPTANCE_FORMAT",
-  "llm_call_cap": "TODO_AUTHOR_CHOICE"
+  "llm_call_cap": "TODO_AUTHOR_CHOICE",
+  "host": "TASL-7",
+  "workers": "TODO_AUTHOR_CONFIRMS_20"
 }
 ```
 
