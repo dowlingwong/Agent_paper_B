@@ -1,0 +1,19 @@
+# M10 unified-submission design and test review — 4 November 2026
+
+Independent review by Codex, AI-assisted. The M10 reviewer from the prior turn is not available in this session; this is a fresh reviewer, not a claim of the same reviewer continuing. Initial review of the uncommitted diff on base `5fbf99b3f987745ae80ad7efa9f870cfb47cb32c` in `/private/tmp/paper-b-m10-unified-20261104`. Binary diff SHA-256 `4cdab9e413f847f3f9e616fa1abfb2bcce639913c7aedb4d434a45c80806cfca`; design `aafb1602ab4b68b32812f9edfa7131454393e08ae433b9f702985fb02c9b5c4f`; test `2405dcffb493a3ff6949c1d6ee8ca4fa51f31c6a5d34fa12559bc854dde1bf0a`.
+
+## Initial verdict: revision requested
+
+The prior author reply is accurately quoted and described as applying to project jobs. The design explicitly retains user-wide accounting, outstanding-job and dev-QoS checks, says the shared project lock cannot control unrelated routes, and does not claim site exclusivity, a complete accounting watermark, immutable runtime, evidence authorization or job permission. It preserves the requirement to STOP when guarantees are absent.
+
+The design says `R1-HOREKA-UNIFIED-SUBMISSION` has merely been drafted and must be checked for publication. The row is now committed in `mac-int-20261104` at `8c7677a`, with independent review `MAC_REPLY_ROWS_REVIEW_20261104.md`. Update the wording to identify this verified local commit and retain the requirement to check the published authority for any eventual implementation. Do not imply that publication establishes site controls or authorizes execution.
+
+The added mocked test passes a fake PLAN containing both rows and exercises ordinary, author and continuation `--submit` calls. `main` invokes the unconditional `require_submission_readiness()` before reading the PLAN or running any Slurm query, so this verifies the STOP despite the supplied PLAN argument; it does **not** independently establish that either row is parsed or grants anything. The test has a misleading risk if described as validation of those PLAN rows. Please state its actual scope in the docstring/report.
+
+I independently ran `PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -m unittest discover -s r1/tests/hk2 -v`, Python 3.9.6, in the isolated working snapshot: **22 tests passed**. Slurm calls in the tests are mocked; no server, real Slurm query, job, GPU or model was used. No submission-ready claim is supported; M10/HK1 remain incomplete. The dry-run path renders without live checks, and the real-submit path still fails before any scheduler query. Existing race and accounting guarantees remain unresolved.
+
+## Re-check by this reviewer: accepted only as a conditional design and offline test update
+
+The revised binary diff from the same base has SHA-256 `fd1ee4317b3ef0c7ed8aef73949bd34cfeb85d4db42c16dc908b19724f1558bb`; design SHA-256 `1f2c961f41fffccbceb15bdd75ea844d99665fc403900764729ef6e7b89f95b9`; test SHA-256 `e098cb5e1caf25b41ae326718dd8b61880987d90bfe267efbdc83690c808fc47`. The design now identifies the independently reviewed PLAN row at `8c7677a` and accurately explains that the mocked test never reaches PLAN parsing. Both initial findings are resolved.
+
+Independent local rerun: `PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -m unittest discover -s r1/tests/hk2 -q`, Python 3.9.6: **22 passed**. No real Slurm invocation, host connection, model or job occurred. The accepted scope is exclusively the author-reply design update and its offline regression: it does not accept the submit/status tools for deployment, authenticate future manifests, prove exclusive user-wide submission, establish accounting completeness or verify site behavior. `--submit` remains disabled before any query; M10 and HK1 remain incomplete. A future implementation and operational procedure require independent review and the outstanding site guarantees before enabling submission.
