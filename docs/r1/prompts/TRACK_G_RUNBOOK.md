@@ -106,7 +106,7 @@ About 40 GPU-h per T1 node at 2-minute runs and K = 6: noise floor (5 edits × 1
 ## 6. Open questions for the author
 
 1. ~~1GC-7RC~~ Settled 4 Nov 12:45: not public; MLAgentBench is the third suite (R1-1GC-FALLBACK).
-2. ~~Which GPU model runs the T1 label table, and where is the proposer served?~~ HoreKa 2 H100 for the whole T1 tier, Ada as whole-table fallback (R1-T1-HOREKA, 4 Nov 13:45). *(Earlier: Ada for T1 label runs;* the proposer on deepthought (two TITANs) if O5 passes, else a 4090 (R1-BX-PROPOSED-CONFIRM).
+2. ~~Which GPU model runs the T1 label table, and where is the proposer served?~~ HoreKa 2 H100 for the whole T1 tier, Ada as whole-table fallback (R1-T1-HOREKA, 4 Nov 13:45). *(Earlier: Ada for T1 label runs; the proposer on deepthought (two TITANs) if O5 passes, else a 4090, R1-BX-PROPOSED-CONFIRM.)*
 3. ~~Which host was the Apptainer check run on?~~ deepthought2 (R1-APPTAINER-HOST).
 4. ~~Memory modes and the campaign count per T1 node~~ both modes, about 12 campaigns (R1-BX-PROPOSED-CONFIRM).
 5. Whether the main proposer's diff competence suffices (first measured in G.0 step 6 and G.4).

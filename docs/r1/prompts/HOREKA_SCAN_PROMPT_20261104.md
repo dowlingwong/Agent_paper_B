@@ -1,6 +1,6 @@
 # Prompt — HoreKa 2 read-only scan for Track G T1 (4 Nov 2026, revision 2)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR). Paste everything below the line into a Claude Code agent on the author's Mac that can `ssh hk2`. It authorizes nothing beyond the scan described here.
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR); its round 2 accepted it, and the remaining minors N1–N6 are applied here. Paste everything below the line into a Claude Code agent on the author's Mac that can `ssh hk2`. It authorizes nothing beyond the scan described here.
 
 ---
 
@@ -16,7 +16,12 @@ NHR@KIT's migration page (<https://docs.nhr.kit.edu/get-started/migration/>) say
 
 Show the author this sentence and ask him to choose:
 - **Option A** — you run the scan yourself over SSH, as §3–§4 describe: about 12 non-interactive SSH calls and one 15-minute dev job.
-- **Option B** — you prepare the two scripts. He runs the two commands of §3 and §4 himself and gives you the output files. You only write the report.
+- **Option B** — you prepare the two scripts in `$S`. He runs these three commands himself from the Mac:
+  1. `ssh hk2 'bash -l -s' < "$S/scan_login.sh" > "$S/login_scan.txt" 2>&1`;
+  2. `ssh hk2 'mkdir -p ~/r1_scan_20261104 && cat > ~/r1_scan_20261104/probe.sh && cd ~/r1_scan_20261104 && sbatch --parsable probe.sh' < "$S/probe.sh"`, which prints the job id;
+  3. about 15–30 minutes later, `ssh hk2 "cat ~/r1_scan_20261104/probe-<id>.out" > "$S/probe_out.txt"`.
+
+  He tells you when the files are there. You only write the report.
 
 Quote his answer word for word at the top of the report. Without an explicit choice, do nothing on HoreKa. Under option B, skip every `ssh` step below and work only on the files he hands you.
 
@@ -24,10 +29,16 @@ Quote his answer word for word at the top of the report. Without an explicit cho
 
 All local files go under one absolute folder. Never use relative paths, and never `cd` into `~/Documents/agent_paper_B` itself. Another branch is checked out there with someone else's uncommitted changes. Never run `git add` or `git commit` anywhere.
 
+Your shell calls do not share variables, so **start every shell call with this preamble**:
+
 ```bash
 S="$HOME/Documents/agent_paper_B/.claude-worktrees/_snapshots/horeka_scan_20261104"
 mkdir -p "$S"
+T=""; command -v timeout >/dev/null && T="timeout 600"; command -v gtimeout >/dev/null && T="gtimeout 600"
+SSH="$T ssh -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=30 -o ServerAliveCountMax=4 hk2"
 ```
+
+macOS has no `timeout`, unless coreutils provides `gtimeout`. Without either, `$T` is empty, and the SSH options above bound the waiting.
 
 The design draft you compare against is `docs/r1/proposals/HOREKA_T1_JOBS_DRAFT_20261104.md`, on branch `docs/runbooks-04nov`. Read it without touching the working tree:
 
@@ -45,7 +56,7 @@ ssh -O check hk2                                        # is the master connecti
 - If the host name or user differs, STOP.
 - If no master connection is open, ask the author to open it himself with `ssh -fN hk2`. Opening it may need a password or OTP. Never type, store, read or ask for credentials.
 
-Every later call uses `timeout 600 ssh -o BatchMode=yes hk2 …`. With `BatchMode` a call fails instead of prompting. If a call fails for authentication, STOP. Set your own tool timeout above 600 s for these calls.
+Every later call uses `$SSH …` from the preamble. `BatchMode` makes a call fail instead of prompting. If a call fails for authentication, STOP. Set your own tool timeout above 600 s for these calls.
 
 Never read `~/.ssh/*` key files, `~/.config/r1/secrets.env`, tokens, or other users' files.
 
@@ -64,7 +75,7 @@ Never read `~/.ssh/*` key files, `~/.config/r1/secrets.env`, tokens, or other us
 
 ## 3. Login-node part (one SSH call)
 
-Write this to `"$S/scan_login.sh"`. Run it with `timeout 600 ssh -o BatchMode=yes hk2 'bash -l -s' < "$S/scan_login.sh" > "$S/login_scan.txt" 2>&1`. The `bash -l` gives a login shell, so `module` is defined. The `main … </dev/null` wrapper stops any command from consuming the rest of the script. Do not add commands.
+Write this to `"$S/scan_login.sh"`. Run it with `$SSH 'bash -l -s' < "$S/scan_login.sh" > "$S/login_scan.txt" 2>&1` (after the preamble). The `bash -l` gives a login shell, so `module` is defined. The `main … </dev/null` wrapper stops any command from consuming the rest of the script. Do not add commands.
 
 ```bash
 main(){
@@ -116,7 +127,7 @@ h "9 tools on login"
                  env | grep -i -E '^(https?|no)_proxy=' | cut -d= -f1
 h "10 network from login (headers only)"
                  for u in https://huggingface.co https://pypi.org/simple/ https://github.com https://download.pytorch.org/whl/; do printf '%s ' "$u"; curl -sI -m 10 -o /dev/null -w '%{http_code}\n' "$u"; done
-h "11 own jobs (7 days)"; sacct -u "$USER" -S now-7days -n -P format=JobID,Partition,State,Elapsed 2>&1 | head -20
+h "11 own jobs (7 days)"; sacct -u "$USER" -S now-7days -n -P -o JobID,Partition,State,Elapsed 2>&1 | head -20
 h "end"; date -Is
 }
 main </dev/null
@@ -164,10 +175,10 @@ h "end";       date -Is
 ```
 
 **Copy and submit in one call:**
-`timeout 600 ssh -o BatchMode=yes hk2 'mkdir -p ~/r1_scan_20261104 && cat > ~/r1_scan_20261104/probe.sh && cd ~/r1_scan_20261104 && sbatch --parsable probe.sh' < "$S/probe.sh" > "$S/jobid.txt"`
+`$SSH 'mkdir -p ~/r1_scan_20261104 && cat > ~/r1_scan_20261104/probe.sh && cd ~/r1_scan_20261104 && sbatch --parsable probe.sh' < "$S/probe.sh" 2> "$S/submit_err.txt" | cut -d';' -f1 > "$S/jobid.txt"`, then `grep -qE '^[0-9]+$' "$S/jobid.txt"`. If that check fails, the submission failed: report `submit_err.txt` and STOP. Never resubmit.
 
-- **Status checks:** every 5 minutes, at most 9 times, `timeout 600 ssh -o BatchMode=yes hk2 "squeue -j $(cat "$S/jobid.txt") -h -o '%T %M %R'"`. If it is still pending after the ninth check, report it as pending. Do not cancel it unless the author says so.
-- **When it has finished,** one call: `timeout 600 ssh -o BatchMode=yes hk2 "sacct -j <id> -n -P format=JobID,State,Elapsed,ExitCode; cat ~/r1_scan_20261104/probe-<id>.out" > "$S/probe_out.txt"`.
+- **Status checks:** every 5 minutes, at most 9 times, `$SSH "squeue -j $(cat "$S/jobid.txt") -h -o '%T %M %R'"`. If it is still pending after the ninth check, report it as pending. Do not cancel it unless the author says so.
+- **When it has finished,** one call: `$SSH "sacct -j $(cat "$S/jobid.txt") -n -P -o JobID,State,Elapsed,ExitCode; cat ~/r1_scan_20261104/probe-$(cat "$S/jobid.txt").out" > "$S/probe_out.txt"`.
 - **If the job is refused** (no access to `dev-gpu-h100`, or an account error), record the exact message. Do not try another partition.
 
 ## 5. Optional, from the Mac (no SSH)
@@ -181,7 +192,7 @@ Write `"$S/HOREKA_SCAN_20261104.md"`. It starts with the author's option A or B,
 | # | Question | Why |
 |---|---|---|
 | Q1 | Default and all accounts; for each, the GPU-hour budget, used and left, from `scontrol show assoc_mgr`, the per-account `sacctmgr`/`sshare` rows and `sreport --tres=gres/gpu` | Whether about 320–480 GPU-h fits |
-| Q2 | `gpu-h100`: GPUs per node, MaxTime, OverSubscribe, DefMemPerGPU, CPUs per GPU, SelectTypeParameters; whether `--exclusive` is accepted (`--test-only`) | Whole nodes or not |
+| Q2 | `gpu-h100`: GPUs per node, MaxTime, OverSubscribe (`EXCLUSIVE` or `NO` with `--exclusive` honoured means whole nodes; `FORCE` means sharing is forced), DefMemPerGPU, CPUs per GPU, SelectTypeParameters; whether `--exclusive` is accepted (`--test-only`) | Whole nodes or not |
 | Q3 | Queue: job-state counts in `gpu-h100`, and whether PrivateData may hide other users' jobs; the `--test-only` start estimates, including the `--deadline` shape | Realistic wall time |
 | Q4 | Maintenance: the exact start, end and flags from `scontrol show reservation`, the motd, or §5 | The copy-out cutoff |
 | Q5 | Storage: `$PROJECT` and the other storage variables, free space, file-system type, `$HOME` quota, workspaces | Where data, GGUFs (~20 GB each) and outputs go |
@@ -202,5 +213,5 @@ Then send the author a short Chinese message: done or stopped, the report path, 
 - No explicit option A or B from the author.
 - The SSH preflight fails, or any call fails for authentication or asks for a credential.
 - An existing `dev-*` job of the author's, or more than one account with no choice made.
-- A message that names this account, warns about misuse or abuse, or says that a command or job was blocked by policy. A plain Slurm refusal of a partition is a finding, not a STOP.
+- A message that names this account, warns about misuse or abuse, or says that a command or job was blocked by policy. Refusals from `sinfo` and from `sbatch --test-only` (for example "Job violates accounting/QOS policy"), and a plain Slurm refusal of a partition, are findings to report, not STOPs.
 - Any need to run something not listed here.

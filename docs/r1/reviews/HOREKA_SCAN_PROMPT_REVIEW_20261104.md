@@ -253,3 +253,93 @@
 Seven MAJOR findings. MAJOR-1, MAJOR-2, MAJOR-3 and MAJOR-5 affect how the scan runs on the cluster and on the Mac. MAJOR-4 means the scan probably misses its first question. MAJOR-6 and MAJOR-7 are governance and propagation. None is BLOCKING: no command in the prompt changes cluster or account state, and the STOPs are in place. But the prompt should not be handed to an SSH agent until MAJOR-1 to MAJOR-5 are fixed.
 
 Verdict: not accepted
+
+---
+
+## Round 2 — re-check against `454587cf` (4 Nov 2026)
+
+**Scope:** `git diff 387798ed 454587cf` covers the prompt (revision 2), PLAN R1-T1-HOREKA, OPERATOR (host table, O8), TRACK_G (G.0, G.1b, G.3, §6) and the MAC_LOCAL M10 line. Documents only; nothing committed.
+
+**Shell checks run locally:**
+- I extracted the four `bash` blocks of the prompt: the local-path block, the SSH preflight, `scan_login.sh` and `probe.sh`. **`bash -n` passes on all four.**
+- I ran `scan_login.sh` under `bash -s`, as the prompt runs it, with stub versions of every Slurm, Lmod and site command on `PATH`. The stub `sinfo_t_idle` reads stdin on purpose.
+  - All 11 section headers and `end` print.
+  - The stdin-reading stub did not swallow the rest of the script. The `main … </dev/null` wrapper works.
+  - The five `--test-only` shapes expand to the intended argument lists, including `--deadline=2026-11-22T00:00:00`.
+- `shellcheck` is not installed here, so I did not run it.
+
+### Status of the round-1 findings
+
+| Finding | Status | Evidence in revision 2 |
+|---|---|---|
+| MAJOR-1 compliance basis | **Fixed** | §0 quotes the rule and offers option A (the agent) or option B (the author runs the commands). It asks the agent to quote the author's answer and to do nothing on HoreKa without an explicit choice; §7 makes that a STOP. The OPERATOR row adds the scan exception "only under the author's explicit option A". The sentence "The author knows about the rule" is gone |
+| MAJOR-2 polling and SSH-call count | **Fixed** | §2.1: one login call, one copy-and-submit call, at most 9 checks at least 5 minutes apart, one final `sacct` plus fetch (about 12 calls, as §0 states). The two counts are merged into `squeue -o '%T' \| sort \| uniq -c`. Submission uses `--parsable`, and §2.2 says never resubmit |
+| MAJOR-3 local paths | **Fixed** | §1: one absolute `$S` for every file; never `cd` into the main tree; no `git add` or `commit`. The ignore check of `.claude-worktrees/_snapshots` was not added; this is acceptable, because `.claude-worktrees/` is the established worktree location. See also N2 |
+| MAJOR-4 budget | **Fixed** | `scontrol show assoc_mgr … flags=assoc`, a per-account `sacctmgr` and `sshare` loop, and `sreport -t hours --tres=cpu,gres/gpu`. Q1 names these sources |
+| MAJOR-5 `--account` | **Fixed** | After §3: if more than one account is listed, STOP and ask, then add `#SBATCH --account`. §7 lists it, and the probe's `scontrol show job` grep now includes `Account` |
+| MAJOR-6 M10 scope | **Fixed** | M10 line: "*(proposed; only once a later PLAN row adopts the HoreKa job design, after the scan; write nothing before that row)*" |
+| MAJOR-7 O8 and TRACK_G still on Ada | **Fixed, with a residual (N6)** | Pointers to R1-T1-HOREKA are added at the OPERATOR Ada row, O8 items 1 and 3, the O8 Hosts line, TRACK_G G.0, G.1b, G.3 and §6 item 2. The Ada question is recorded as *(open)* on the O8 Hosts line |
+| MINOR-1 stdin and stderr | Fixed | `main(){ exec 2>&1; … }; main </dev/null`; the probe has `exec </dev/null 2>&1` |
+| MINOR-2 queue counts and PrivateData | Fixed | `2>&1` on the merged count; `scontrol show config \| grep PrivateData …`; Q3 asks about PrivateData |
+| MINOR-3 `sinfo` | Fixed | Kept, labelled "sinfo may be restricted; a refusal is a finding". But see the residual under MINOR-6 |
+| MINOR-4 module grep | Fixed | `(^\|/)(cuda\|…)`; `spider` loop over CUDA, GCC, CMake, Python |
+| MINOR-5 dev-cpu resubmission test | Fixed | The test now targets `-p cpu -n 1 -c 1 --mem=1G -t 00:05:00` |
+| MINOR-6 policy STOP too broad | **Partly fixed** | Narrowed; "a plain Slurm refusal of a partition is a finding". But the bullet still STOPs on a message saying "a command or job was blocked by policy". Two outputs the script can be expected to produce match that wording: Slurm's QOS refusal text "Job violates accounting/QOS policy …" from a `--test-only` shape, and the `sinfo` refusal that §3 labels a finding. Fix: add "Refusals from `sinfo` and from `--test-only` (including QOS or accounting-limit messages) are findings, not STOPs." |
+| MINOR-7 SSH preflight and timeouts | Fixed, but see N1 | `ssh -G`, `ssh -O check`, `BatchMode=yes`, `timeout 600`, and a harness timeout above 600 s |
+| MINOR-8 probe hygiene | Fixed | `--deadline=now+2hours`, `--mem=16G`, `--parsable`, never resubmit, final `sacct` |
+| MINOR-9 coverage | Fixed | `compute_cap`; `df -hT` and `stat -f`; proxy names only; storage variables; `/etc/motd.d`; a `--deadline` test shape; reservation flags in Q4; §5 maintenance page from the Mac, including what happens to pending jobs. The OverSubscribe=FORCE reading is not spelled out in Q2 (optional) |
+| MINOR-10 `nvidia-smi -L` | Fixed | Header relabelled; Q9 says to draw no co-tenancy conclusion |
+| MINOR-11 draft on the Mac | Fixed | `git -C … show docs/runbooks-04nov:… > "$S/draft.md"`, with a fallback to `origin/…`, then ask the author |
+| MINOR-12 side effects | Fixed | §2.3 names the Lmod cache and `known_hosts` |
+| MINOR-13 PLAN decision cell | Fixed | The cell now holds the author's sentence, with the host name cited to the cheat sheet. The mapping is moved to the consequences, marked "*(the recording agent's mapping, possibly incomplete)*", and now includes RUNBOOK G.0/G.1b, TRACK_G and OPERATOR O0/O8 |
+| MINOR-14 OPERATOR row marker | Fixed | "*(proposed, from the HoreKa draft §4)*" and the scan exception |
+
+### New findings (round 2)
+
+All are MINOR. Each one fails safe (a refused or failed command, no state change), but each can stall the scan or invite improvisation.
+
+**N1 (MINOR) — `timeout` is not part of macOS.**
+- *Where:* prompt §1 ("Every later call uses `timeout 600 ssh …`"), §3, §4.
+- *Problem:* the agent runs on the author's Mac. Stock macOS has no `timeout`; Homebrew coreutils installs it as `gtimeout`. Without it, every SSH call fails with "command not found". That fails safe, but the agent then hits "any need to run something not listed" and STOPs, or improvises.
+- *Fix:* add to §1: `T=$(command -v timeout || command -v gtimeout)`, and use `${T:+$T 600} ssh -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 hk2 …`. If neither exists, the harness tool timeout is the bound.
+
+**N2 (MINOR) — `$S` does not persist between harness shell calls.**
+- *Where:* §1, and every later `"$S/…"`.
+- *Problem:* Claude Code shell state does not carry over between Bash calls. A later call with an empty `$S` targets `/scan_login.sh`, `/login_scan.txt` and so on. These are refused on macOS's read-only root, so it fails safe, but the run fails.
+- *Fix:* "Start every shell call with the `S=…` line", or write the literal absolute path in each command.
+
+**N3 (MINOR) — `sacct` takes `-o`/`--format=`, not a bare `format=`.**
+- *Where:* §3 section 11 (`sacct -u "$USER" -S now-7days -n -P format=…`) and the final fetch in §4 (`sacct -j <id> -n -P format=…`). This was already in revision 1, and I missed it in round 1.
+- *Problem:* the bare `format=` word is the syntax of `sacctmgr` and `sreport`. `sacct` documents only `--format`/`-o`, so depending on the Slurm version the word is rejected or ignored. The `;` before `cat` means the probe output is still fetched, but the job-state line may be lost.
+- *Fix:* `sacct … -n -P -o JobID,Partition,State,Elapsed` and `sacct -j <id> -n -P -o JobID,State,Elapsed,ExitCode`.
+
+**N4 (MINOR) — Make the job id robust and keep the submit error.**
+- *Where:* §4, the copy-and-submit and status-check commands.
+- *Problem:*
+  - `sbatch --parsable` prints `jobid;cluster` on multi-cluster or federated setups. The status check puts that id inside a remote double-quoted command, so the remote shell would treat `;cluster …` as a second command. That is harmless but breaks the check.
+  - A refusal message goes only to the terminal (stderr), not to a file.
+- *Fix:* `… sbatch --parsable probe.sh' < "$S/probe.sh" 2> "$S/submit_err.txt" | cut -d';' -f1 > "$S/jobid.txt"`. Check that `jobid.txt` is numeric before polling, and copy `submit_err.txt` beside the report.
+
+**N5 (MINOR) — Option B is under-described.**
+- *Where:* §0, option B ("He runs the two commands of §3 and §4 himself").
+- *Problem:* §4 is not one command. It is the copy-and-submit, the later status checks and the final fetch, and all of them use `$S` and `timeout`.
+- *Fix:* "Option B: you write `$S/scan_login.sh` and `$S/probe.sh` and give him three commands: the §3 command, the §4 copy-and-submit, and the §4 fetch, the last to run once `squeue -j <id>` shows nothing. He hands back `login_scan.txt`, `jobid.txt` and `probe_out.txt`."
+
+**N6 (MINOR, the residual of MAJOR-7) — O8 item 1 still reads as an instruction to start on Ada.**
+- *Where:* OPERATOR O8 item 1; the O8 Hosts line; TRACK_G §6 item 2.
+- *Problem:* item 1 still says "start right after STOP 0, on Ada", followed only by a parenthetical pointer. The Hosts line calls the Ada question *(open)*. An operator could still start G.0 GPU work on Ada before the author answers.
+- *Fix:* add to O8 item 1: "GPU work of G.0/G.1b waits for the author's answer to the open item on the Hosts line; licence and repository checks may proceed." Separately, TRACK_G §6 item 2 opens "*(Earlier:" and never closes the parenthesis or the italics. Close both after "(R1-BX-PROPOSED-CONFIRM)".
+
+### Round 2 verdict
+
+All seven MAJOR findings are fixed. MAJOR-7 leaves a MINOR residual (N6).
+- Twelve of the fourteen MINOR findings are fixed. MINOR-7 is fixed but has the macOS gap N1. MINOR-6 is only partly fixed.
+- The six new findings are MINOR, and each fails safe.
+- No command in revision 2 changes cluster or account state. The STOPs and the option A/B gate are in place.
+- I recommend applying N1–N5 and the MINOR-6 residual before the prompt is handed to the SSH agent. N1 and N2 in particular can stop option A on a stock Mac.
+
+Verdict: accepted
+
+## Post-round-2 fixes (executing agent, 4 Nov)
+
+N1 (macOS timeout: preamble with `timeout`/`gtimeout` or none, plus SSH ConnectTimeout/ServerAlive), N2 (preamble at the start of every shell call), N3 (`sacct -o`), N4 (`--parsable` id cut at `;`, numeric check, `submit_err.txt`, STOP), N5 (option B spelled out as three commands), N6 (OPERATOR O8 item 1 waits for the Ada answer; TRACK_G §6 item 2 parenthesis closed), MINOR-6 (sinfo and `--test-only` refusals are findings, not STOPs), and the optional OverSubscribe reading note in Q2.
