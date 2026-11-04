@@ -1,0 +1,7 @@
+# O7 — Track P marker and P.3a authorization check (4 November 2026)
+
+**STOP: amended P.3a authorization requested; no Track P run started.** The author requested installation of the marker helper and examination of the existing authorization for the excluded 2k/8k history-length rows.
+
+On TASL-7 `~/r1_locks/bin/trackp-evidence` did not exist. Installed the file from `docs/r1/proposals/trackp-evidence.sh`, mode 0755. `bash -n` passed and the installed SHA-256 matched the source `f457a04ef1bbaba1750d9c04aa9211d51df1692ac36139bb720318f2d2533cec`. No marker was created and no helper `run` or training job was invoked. At the precheck the GPU had no reported compute app, no GPU lock holder was found, Track S's watcher was present, and the Track P paper checkout was clean at `b9ad6f8fe2e771732100f704accd7f2ce7cf20f0`.
+
+The committed `authorizations/trackp_p3a_20261027.md` does not literally spell out 2k or 8k. It authorizes **E6 architecture probes A1–A5** and incorporates `TRACK_P_POST_TRAINING.md` §5.5–5.6; §5.6's A3 history-length row includes the 2k/8k probes as descriptive. Accordingly the old note covers those rows by reference, even though PLAN R1-P3A-OOM-OPTION3 and the current author instruction exclude them. An amended committed note explicitly excluding 2k/8k is requested before launching P.3a. The prior OOM attempt remains preserved. No inference is made about subsequent readiness, model pins, available budget, the Stage A author row, or completion of other P.3a prerequisites.
