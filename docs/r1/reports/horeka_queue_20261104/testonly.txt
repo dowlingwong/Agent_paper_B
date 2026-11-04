@@ -1,0 +1,35 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+--- r1q_h100_g1_1h
+    opts: -p gpu-h100 --gres=gpu:1 -c 32 --mem=180G -t 01:00:00
+sbatch: Job 120374 to start at 2026-11-12T00:26:35 a using 32 processors on nodes hkn0904 in partition gpu-h100
+--- r1q_h100_g1_4h
+    opts: -p gpu-h100 --gres=gpu:1 -c 32 --mem=180G -t 04:00:00
+sbatch: Job 120375 to start at 2026-11-12T00:26:35 a using 32 processors on nodes hkn0904 in partition gpu-h100
+--- r1q_h100_g1_12h
+    opts: -p gpu-h100 --gres=gpu:1 -c 32 --mem=180G -t 12:00:00
+sbatch: Job 120376 to start at 2026-11-12T00:26:35 a using 32 processors on nodes hkn0904 in partition gpu-h100
+--- r1q_h100_x4_4h
+    opts: -p gpu-h100 --gres=gpu:4 --exclusive -t 04:00:00
+sbatch: Job 120377 to start at 2026-11-12T03:10:23 a using 128 processors on nodes hkn0919 in partition gpu-h100
+--- r1q_h100_x4_12h
+    opts: -p gpu-h100 --gres=gpu:4 --exclusive -t 12:00:00
+sbatch: Job 120378 to start at 2026-11-12T03:10:23 a using 128 processors on nodes hkn0919 in partition gpu-h100
+--- r1q_h200_g1_1h
+    opts: -p gpu-h200 --gres=gpu:1 -c 32 --mem=180G -t 01:00:00
+sbatch: Job 120379 to start at 2026-11-19T10:24:47 a using 32 processors on nodes hkn1951 in partition gpu-h200
+--- r1q_h200_g1_4h
+    opts: -p gpu-h200 --gres=gpu:1 -c 32 --mem=180G -t 04:00:00
+sbatch: Job 120380 to start at 2026-11-19T10:24:47 a using 32 processors on nodes hkn1951 in partition gpu-h200
+--- r1q_h200_g1_12h
+    opts: -p gpu-h200 --gres=gpu:1 -c 32 --mem=180G -t 12:00:00
+sbatch: Job 120381 to start at 2026-11-19T10:24:47 a using 32 processors on nodes hkn1951 in partition gpu-h200
+--- r1q_h200_x4_4h
+    opts: -p gpu-h200 --gres=gpu:4 --exclusive -t 04:00:00
+sbatch: Job 120382 to start at 2026-11-19T10:24:47 a using 192 processors on nodes hkn1951 in partition gpu-h200
+--- r1q_h200_x4_12h
+    opts: -p gpu-h200 --gres=gpu:4 --exclusive -t 12:00:00
+sbatch: Job 120383 to start at 2026-11-19T10:24:47 a using 192 processors on nodes hkn1951 in partition gpu-h200
+=== my jobs now ===
+120373 vscode-remote-ssh RUNNING 2026-11-04T17:24:32 hk2n1254
