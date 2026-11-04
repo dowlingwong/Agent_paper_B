@@ -1,6 +1,6 @@
-# Prompt — HoreKa 2 read-only scan for Track G T1 (4 Nov 2026, revision 5.4)
+# Prompt — HoreKa 2 read-only scan for Track G T1 (4 Nov 2026, revision 5.6)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR); its round 2 accepted it, and the remaining minors N1–N6 were applied. Revision 3 retargeted legacy HoreKa. **Revision 4 (4 Nov, 14:37) returns to HoreKa 2 at the author's instruction ("改改扫描的runbook，我们在horeka2上扫"), and moves all agent work off the login nodes onto a compute node in the `agent` partition, through NHR@KIT's documented SSH tunnel.** Revisions 4.1 and 4.2 apply the review `reviews/HOREKA_SCAN_PROMPT_REV4_REVIEW_20261104.md` (round 1: 3 MAJOR and 9 MINOR findings; round 2: accepted, with 3 MINOR findings remaining). **Revision 5 (4 Nov, 15:11):** the agent handles everything itself, including the session and the tunnel, at the author's instruction ("扫描不能让agent直接去做吗，做这么多步。改runbook，直接让他全权处理扫描"). **Revision 5.1** applies the review `reviews/HOREKA_SCAN_PROMPT_REV5_REVIEW_20261104.md` (1 BLOCKING, 3 MAJOR, 9 MINOR): key setup and fresh 2FA stay with the author; the tunnel goes through `hk2` with no master connection; teardown is ordered; there are no restarts. **Revision 5.4** (4 Nov, 16:01): the login-node commands reuse the author's open master connection ("那就允许它复用链接"), because the second run was refused key authentication on a new connection. The forward is added with `-O forward` and removed with `-O cancel`; the master is never stopped. **Revision 5.3** (4 Nov, 15:52): zsh-safe bash wrappers replace `$OPTS`/`$SSH` word splitting, which stopped the first run under the macOS default zsh; a local-tools check (`ps`, `lsof`) now runs before anything touches HoreKa; earlier attempts are kept in `attempt_<n>/`. Paste everything below the line into a Claude Code agent on the author's Mac that can `ssh hk2` with his activated key. It authorizes nothing beyond the scan described here.
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR); its round 2 accepted it, and the remaining minors N1–N6 were applied. Revision 3 retargeted legacy HoreKa. **Revision 4 (4 Nov, 14:37) returns to HoreKa 2 at the author's instruction ("改改扫描的runbook，我们在horeka2上扫"), and moves all agent work off the login nodes onto a compute node in the `agent` partition, through NHR@KIT's documented SSH tunnel.** Revisions 4.1 and 4.2 apply the review `reviews/HOREKA_SCAN_PROMPT_REV4_REVIEW_20261104.md` (round 1: 3 MAJOR and 9 MINOR findings; round 2: accepted, with 3 MINOR findings remaining). **Revision 5 (4 Nov, 15:11):** the agent handles everything itself, including the session and the tunnel, at the author's instruction ("扫描不能让agent直接去做吗，做这么多步。改runbook，直接让他全权处理扫描"). **Revision 5.1** applies the review `reviews/HOREKA_SCAN_PROMPT_REV5_REVIEW_20261104.md` (1 BLOCKING, 3 MAJOR, 9 MINOR): key setup and fresh 2FA stay with the author; the tunnel goes through `hk2` with no master connection (fresh 2FA and no master: both superseded by 5.4); teardown is ordered; there are no restarts. **Revision 5.3** (4 Nov, 15:52): zsh-safe bash wrappers replace `$OPTS`/`$SSH` word splitting, which stopped the first run under the macOS default zsh; a local-tools check (`ps`, `lsof`) now runs before anything touches HoreKa; earlier attempts are kept in `attempt_<n>/`. **Revision 5.4** (4 Nov, 16:01): the login-node commands reuse the author's open master connection ("那就允许它复用链接"), because the second run was refused key authentication on a new connection. The forward is added with `-O forward` and removed with `-O cancel`; the master is never stopped. **Revision 5.5** (4 Nov, 16:20), after the third run stopped at step 3: the tunnel's local and remote ports may differ (the script moves the node port when 22222 is taken); the script's FIRST-TIME SETUP guide, which it prints on every run, is no longer a STOP by itself (the agent checks that the key file exists, and the compute node's answer decides); the session client keeps an open stdin and is checked for being alive; the script's own write to `~/.ssh/environment` on HoreKa is expected. It also applies the review `reviews/HOREKA_SCAN_PROMPT_REV54_REVIEW_20261104.md` (PASS-WITH-FIXES: 1 MAJOR, 3 MINOR, 3 NIT): STOP if `hk2` has configured forwards; the forward's success and its owner (the master) are checked; teardown records the master before and after; a sandbox block of the control socket gets its own STOP. **Revision 5.6** (4 Nov, 16:40) applies round 2 of that review (PASS-WITH-FIXES: 1 MAJOR, 4 MINOR, 2 NIT): run 3's client was most likely killed by the agent harness, which reaps `nohup … &` children, so the session now runs as a managed background task that stays open; `ls -l` replaces `test -f`; `Permission denied` names both causes (Setup B not done, or a passphrase key not loaded in ssh-agent); `pgrep`/`pkill` are in the tools check; §7 matches the steps. Paste everything below the line into a Claude Code agent on the author's Mac that can `ssh hk2` with his activated key. It authorizes nothing beyond the scan described here.
 
 ---
 
@@ -23,11 +23,14 @@ The author told you to run the scan yourself (4 Nov, 15:11: "直接让他全权�
 1. the session script `start-vscode-remote-ssh.sh`, which submits the interactive `agent`-partition job;
 2. the tunnel's port forward. It is added to, and later removed from, the author's own open connection (`ssh -O forward` / `-O cancel`), and it only carries traffic.
 
-These are the same commands the docs give a person. Everything else runs on the compute node.
+The session script is the one the docs give a person; the forward is the docs' tunnel, added to his open connection instead of a new login. Everything else runs on the compute node.
 
 **What only the author can do.** Tell him this before you start:
 - **An open master connection to `hk2`.** His `~/.ssh/config` has `ControlMaster auto` and `ControlPersist 8h`. The author allowed you to reuse that connection (4 Nov, 16:01: "那就允许它复用链接"). He opens it himself (`ssh -fN hk2`, or any `ssh hk2` login with OTP and password). All your login-node commands then run over it, and no new authentication is needed. **Never open, stop or exit the master** (`ssh -O exit` / `-O stop` are forbidden).
-- **The script's one-time setup, if it prints one.** NHR manages keys only through FeLS, and `~/.ssh/authorized_keys` files are ignored. Any key setup is his, never yours. If the session log shows a setup guide that has not been done, you end the session (step 5), copy the guide into the report, and STOP.
+- **The script's one-time key setup.** `start-vscode-remote-ssh.sh` prints a "FIRST-TIME SETUP" guide on **every** run: Setup A creates a local key `~/.ssh/id_ed25519_vscode-hk2`, Setup B copies its public key to the shared HoreKa home, Setup C adds a `~/.ssh/config` entry. The sshd that the script starts on the compute node accepts that key. Setup A and B are the author's, never yours. You never need Setup C, because you write your own private config (step 3). So the guide in the log is **not** a STOP by itself:
+  - you check only that the key file named in the snippet exists (`ls -l`, metadata only; never open or read it);
+  - if it does not exist, or the compute node refuses the key (`Permission denied` from `"$S/nodessh"`), you end the session (step 5), copy the guide into the report, and STOP. `Permission denied` has two possible causes: Setup B is not done, or the key has a passphrase and is not loaded in ssh-agent (the author loads it with `ssh-add --apple-use-keychain ~/.ssh/id_ed25519_vscode-hk2`). Name both; never run `ssh-add` yourself.
+- **Expected side effect.** The script writes the job's `SLURM_*` variables to `~/.ssh/environment` in the HoreKa home, for its sshd. That is the documented script's own behaviour, not an edit of yours: record it in the report and do not touch the file.
 
 ## 1. Setup: paths, the agent session, the tunnel, preflight
 
@@ -39,7 +42,7 @@ These are the same commands the docs give a person. Everything else runs on the 
 
 **Your shell may be zsh** (the macOS default), and zsh does not split `$VAR` into separate arguments. So nothing in this prompt relies on word splitting: every ssh call goes through two small **bash wrapper scripts** that you create once in step 0. Run any multi-line block with `bash -s <<'EOF' … EOF`, never pasted straight into zsh.
 
-**Timeouts.** Set your own tool timeout to its maximum (600 s) for every SSH call. The node wrapper stops each call at 540 s where `timeout` or `gtimeout` exists. The background processes below keep running between your calls. Wait with `sleep` inside a call, at most 120 s per call, and never in a busy loop.
+**Timeouts.** Set your own tool timeout to its maximum (600 s) for every SSH call. The node wrapper stops each call at 540 s where `timeout` or `gtimeout` exists. The session of step 2 must stay alive between your calls; step 2 says how. Wait with `sleep` inside a call, at most 120 s per call, and never in a busy loop.
 
 Your shell calls do not share variables. **Start every shell call with this one line:**
 
@@ -50,7 +53,7 @@ S="$HOME/Documents/agent_paper_B/.claude-worktrees/_snapshots/horeka_scan_202611
 **Step 0 — once: earlier attempts, local tools, wrappers.**
 
 1. If `$S` already holds files from an earlier attempt, move them all into `$S/attempt_<n>/` (the next free n) first. Never delete them.
-2. Check that the local tools teardown needs are allowed: `ps -p $$ -o command= && lsof -v >/dev/null 2>&1 && echo LOCAL_TOOLS_OK`. If the local sandbox refuses `ps`, `lsof` or `kill`, STOP **now**, before anything touches HoreKa. Ask the author to allow them for this session.
+2. Check that the local tools teardown needs are allowed: `ps -p $$ -o command= && lsof -v >/dev/null 2>&1 && command -v pgrep pkill >/dev/null && { pgrep -x nonexistent_zz; [ $? -le 1 ]; } && echo LOCAL_TOOLS_OK` (`pgrep` exits 1 for no match, 2 or more for an error). If the local sandbox refuses `ps`, `lsof`, `pgrep`, `pkill` or `kill`, STOP **now**, before anything touches HoreKa. Ask the author to allow them for this session.
 3. Create the wrappers:
 
 ```bash
@@ -89,14 +92,29 @@ date +%s > "$S/session_tag"                              # names this session's 
 ```
 
 - If the host or the user differs, STOP.
-- `"$S/hk2ssh" -O check hk2` must report `Master running`. If it does not, STOP and ask the author to open the master connection (`ssh -fN hk2`).
+- `"$S/hk2ssh" -O check hk2 2>&1 | tee "$S/master_before.txt"` must report `Master running (pid=<N>)`. Keep `<N>`, the master's PID.
+  - `No such file or directory` or `Connection refused`: no master is open. STOP and ask the author to open it (`ssh -fN hk2`).
+  - `Operation not permitted`: your local sandbox blocks the control socket. STOP and ask the author to allow it for this session. Never go on to step 2 in this case.
+- **Configured forwards.** `ssh -G hk2 | grep -E '^(localforward|remoteforward|dynamicforward) '` must print nothing. If it prints anything, STOP: `-O cancel` in step 5 would also remove the author's own forwards.
 
 **Step 2 — start the agent session, in the background (login-node command 1).**
 
+**Run 3's client was killed from outside**, most likely by the agent harness, which stops processes detached with `nohup … &` after a call or a reply. So:
+
+- **If your shell tool has a background option** (Claude Code: `run_in_background: true`), start the session with it, with that call's timeout set to **at least 5 400 000 ms** (the script asks for `--time=01:00:00`; the usual 30-minute default would kill the session mid-scan). The call keeps running in the background while you make your other calls:
+
 ```bash
-nohup "$S/hk2ssh" -tt hk2 start-vscode-remote-ssh.sh > "$S/session.log" 2>&1 < /dev/null &
-echo $! > "$S/session.pid"; date -u +%Y-%m-%dT%H:%M:%S > "$S/session_start_utc"
+bash -s <<'EOF'
+S="$HOME/Documents/agent_paper_B/.claude-worktrees/_snapshots/horeka_scan_20261104"
+bash -c 'tail -f /dev/null | "$1/hk2ssh" -tt hk2 start-vscode-remote-ssh.sh' _ "$S" > "$S/session.log" 2>&1 < /dev/null &
+echo $! > "$S/session.pid"; date -u +%Y-%m-%dT%H:%M:%S > "$S/session_start_utc"; wait
+EOF
 ```
+
+- **Only if there is no such option**, use the same block with `nohup` in front of the inner `bash -c` and without the final `wait`.
+- **Never end your reply to the author while the session is open,** except at a STOP after step 5. Ending the reply is when the harness stops background processes.
+- `session.pid` is the parent shell; the ssh client and `tail` are its children. `tail -f /dev/null |` keeps the client's input open.
+- **Liveness.** At the 30-s read below, and again at the start of your next separate shell call, run `pgrep -P "$(cat "$S/session.pid")" -fl '[s]tart-vscode-remote-ssh'` and keep the output in `"$S/liveness.txt"`. It must list the ssh client both times. If it does not, STOP after step 5, with both outputs and the end of the log in the report. Do not restart.
 
 - Wait 30 s, then read `"$S/session.log"`. Read it at most once every 30 s.
 - First strip carriage returns and colour codes when you parse the log: `tr -d '\r' < "$S/session.log" | perl -pe 's/\e\[[0-9;]*[A-Za-z]//g'`.
@@ -110,29 +128,33 @@ echo $! > "$S/session.pid"; date -u +%Y-%m-%dT%H:%M:%S > "$S/session_start_utc"
   - **Authentication fails** (`Permission denied`): the master connection was not used or has closed.
   - **No snippet after 5 minutes.**
   - **Account error:** the log says the job failed because he belongs to more than one project. Ask him which project to use. He sets it himself with `sacctmgr modify user $USER set defaultaccount=<project>`, then logs out and back in. Never run `sacctmgr modify` yourself.
-  - **A one-time setup guide that is not done yet:** see §0.
+  - The "FIRST-TIME SETUP" guide alone is **not** a STOP: see §0 and step 3.
 
 **Step 3 — build the session config and open the tunnel (login-node command 2).**
 
-1. From the snippet, take `HostName`, `Port`, `User` and `IdentityFile`, and write `"$S/vscode_ssh_config"`:
+1. From the tunnel command, take `<lport>`, `<node>` and `<rport>` (the form `-L <lport>:<node>:<rport>`). The two ports may differ: when 22222 is taken on the node, the script moves the node port (third run: `-L 22222:hk2n1254:22228`). If there is no command of this form, STOP after step 5.
+2. Choose the local port `<L>`: `<lport>` if `lsof -nP -iTCP:<lport> -sTCP:LISTEN` prints nothing, otherwise the first port from `<lport>+1` to `<lport>+20` for which it prints nothing. If none is free, STOP after step 5.
+3. From the snippet, take `User` and `IdentityFile`. Check the key file exists without reading it: `ls -l <IdentityFile with ~ expanded>` (metadata only), and quote its output. `No such file or directory`: the key is missing, STOP after step 5 (see §0). `Operation not permitted`: your sandbox blocks it, STOP after step 5 and ask the author to allow `ls` there. Write `"$S/vscode_ssh_config"`:
    ```
    Host vscode-hk2
-       HostName <from the snippet>
-       Port <from the snippet>
+       HostName 127.0.0.1
+       Port <L>
        User <from the snippet, else ka_ir7683>
-       IdentityFile <from the snippet, if any>
+       IdentityFile <from the snippet>
    ```
-   Do not copy any other lines.
-2. From the tunnel command, take `<port>` and `<node>` (the form `-L <port>:<node>:<port>`). If it does not have that form, STOP after step 5.
-3. Check that the port is free locally: `lsof -nP -iTCP:<port> -sTCP:LISTEN`. It must print nothing; otherwise STOP after step 5.
+   Do not copy any other lines. The snippet's own `Port` is ignored; `<L>` is the port your forward listens on.
 4. Add the forward to the author's master connection, and record it so that step 5 can remove exactly this one:
 
 ```bash
-"$S/hk2ssh" -O forward -L <port>:<node>:<port> hk2 > "$S/tunnel.log" 2>&1; echo "<port>:<node>:<port>" > "$S/forward_spec"
-sleep 3; lsof -nP -iTCP:<port> -sTCP:LISTEN
+bash -s <<'EOF'
+S="$HOME/Documents/agent_paper_B/.claude-worktrees/_snapshots/horeka_scan_20261104"
+SPEC="127.0.0.1:<L>:<node>:<rport>"
+if "$S/hk2ssh" -O forward -L "$SPEC" hk2 > "$S/tunnel.log" 2>&1; then echo "$SPEC" > "$S/forward_spec"; echo FORWARD_OK; else echo FORWARD_FAILED; cat "$S/tunnel.log"; fi
+sleep 3; lsof -nP -t -iTCP:<L> -sTCP:LISTEN
+EOF
 ```
 
-The `-O forward` call must succeed, and `lsof` must show an ssh process listening on `<port>`. If either fails, STOP after step 5.
+It must print `FORWARD_OK`, and the listener PID that `lsof -t` prints must equal the master's PID `<N>` from step 1. Otherwise STOP after step 5. (A successful `-O forward -L` prints nothing; only its exit status tells.)
 
 **Step 4 — preflight: two gates, in this order.**
 
@@ -160,6 +182,7 @@ grep -qxE 'hostname (localhost|127\.0\.0\.1|::1)' "$S/ssh_G.txt" \
   A login node is not a Slurm compute node, so `scontrol` answers "not found" there. If the check fails, STOP after step 5.
 - Record `job_env` as a finding only.
 - `%L` is the session's remaining time. Never restart the session for more time. Instead, fit the probe's status checks (§4) into the remaining time, minus 10 minutes. If less than 30 minutes remain, skip the probe and report its questions as "not measured".
+- **`Permission denied` from `"$S/nodessh"`**: the compute node refused the key. Either Setup B is not done, or the key has a passphrase and is not loaded in ssh-agent (`-F` skips `UseKeychain`). STOP after step 5, copy the guide into the report, and name both causes. Do not retry, and never run `ssh-add`.
 - **A connection refused right after setup** usually means the tunnel is not up yet. Wait 30 s and retry, at most 3 times, then STOP after step 5.
 - **Host keys.** The compute node's host key is accepted only into this session's private file `$KH`, by `accept-new`. If a call says "REMOTE HOST IDENTIFICATION HAS CHANGED", STOP after step 5.
 
@@ -170,14 +193,26 @@ grep -qxE 'hostname (localhost|127\.0\.0\.1|::1)' "$S/ssh_G.txt" \
 2. Remove your forward from the master, and only that forward. The master itself stays open:
 
 ```bash
-[ -s "$S/forward_spec" ] && "$S/hk2ssh" -O cancel -L "$(cat "$S/forward_spec")" hk2
+bash -s <<'EOF'
+S="$HOME/Documents/agent_paper_B/.claude-worktrees/_snapshots/horeka_scan_20261104"
+if [ -s "$S/forward_spec" ]; then
+  "$S/hk2ssh" -O cancel -L "$(cat "$S/forward_spec")" hk2; sleep 2
+  lsof -nP -iTCP:"$(cut -d: -f2 "$S/forward_spec")" -sTCP:LISTEN || echo NO_LISTENER
+fi
+"$S/hk2ssh" -O check hk2 2>&1 | tee "$S/master_after.txt"
+EOF
 ```
 
-3. Stop the session client you started, after checking that it is still that command:
+`-O cancel` exits 0 even when it cancelled nothing, so the `lsof` line is the check: expect `NO_LISTENER`. `master_after.txt` must show the same PID as `master_before.txt`. Put both results in the report.
+
+3. Stop the session client you started and its `tail`, after checking that the parent is still your command:
 
 ```bash
-p=$(cat "$S/session.pid" 2>/dev/null) && ps -p "$p" -o command= | grep -qE '^ssh .*hk2 start-vscode-remote-ssh\.sh' && kill "$p"
+p=$(cat "$S/session.pid" 2>/dev/null) && ps -p "$p" -o command= | grep -q 'hk2ssh" -tt hk2 [s]tart-vscode-remote-ssh\.sh' && { pkill -P "$p"; sleep 2; kill "$p" 2>/dev/null; }
+if ps -p "$p" >/dev/null 2>&1 || pgrep -P "$p" >/dev/null 2>&1; then echo CLIENT_STILL_THERE; else echo CLIENT_GONE; fi
 ```
+
+If the client had already died, say so and give the session job id, so the author can check it.
 
 Never read the author's `~/.ssh/*` key files, `~/.config/r1/secrets.env`, tokens, or other users' files.
 
@@ -196,7 +231,7 @@ Never read the author's `~/.ssh/*` key files, `~/.config/r1/secrets.env`, tokens
 2. **Exactly one short job:** the probe of §4, on `dev-gpu-h100`, 1 GPU, 15 minutes. **Never resubmit it**, whatever happens. `sbatch --test-only` starts nothing and is allowed. The author's own `agent` session job, about one core for about an hour, also appears under "my jobs" and in `sacct`. It is not a STOP.
 3. **Change nothing.**
    - No `sacctmgr modify`, `ws_allocate`, `module save`, installs (`pip`, `uv`, `conda`), `git clone` or downloads.
-   - No dotfile edits.
+   - No dotfile edits. (The session script itself rewrites `~/.ssh/environment`, §0; never touch it.)
    - The only files you create on HoreKa are under `~/r1_scan_20261104/`: the probe script and its output, a few kB, left in place.
    - Expected side effects that are fine: Lmod may write its user cache. The compute node's host key goes into this session's private file `$KH`, never into `~/.ssh/known_hosts`.
 4. **Report what exists; never guess.** If a command is missing or refused, keep its exact output and move on. Do not try substitute tools you were not given.
@@ -317,7 +352,7 @@ If you can browse, look on <https://www.nhr.kit.edu/> and <https://docs.nhr.kit.
 
 ## 6. Report
 
-Write `"$S/HOREKA_SCAN_20261104.md"`. It starts with the author's instruction, quoted ("直接让他全权处理扫描"), then lists the setup steps you took: the session job id, the tunnel port and node, and whether teardown succeeded. For each question below, give the answer with its raw evidence: the command and the output lines. Mark anything missing as "not found", and never infer.
+Write `"$S/HOREKA_SCAN_20261104.md"`. It starts with the author's instruction, quoted ("直接让他全权处理扫描"), then lists the setup steps you took: the session job id, the tunnel port and node, and whether teardown succeeded. At the end of your message to the author, tell him that his master connection stays open for up to 8 hours after its last use (`ControlPersist 8h`), and that he can close it himself with `ssh -O exit hk2`. For each question below, give the answer with its raw evidence: the command and the output lines. Mark anything missing as "not found", and never infer.
 
 | # | Question | Why |
 |---|---|---|
@@ -342,16 +377,17 @@ Then send the author a short Chinese message: done or stopped, the report path, 
 
 Once step 2 has started, **run step 5 before stopping**.
 
-- **Step 0:** the local sandbox refuses `ps`, `lsof` or `kill` (ask the author to allow them).
+- **Step 0:** the local sandbox refuses `ps`, `lsof`, `pgrep`, `pkill` or `kill` (ask the author to allow them).
 
-- **Step 1:** `ssh -G hk2` shows another host or user, or no master connection is running (ask the author to open it with `ssh -fN hk2`).
-- **Step 2:** authentication fails; no snippet after 5 minutes; no job id in the log; an account error (ask which project; the author sets it and logs out and in); or an undone one-time setup guide (copy it into the report).
-- **Step 3:** a tunnel command of another form; the local port already in use; `-O forward` fails or no listener appears.
+- **Step 1:** `ssh -G hk2` shows another host or user; no master connection is running (ask the author to open it with `ssh -fN hk2`); `Operation not permitted` on the control socket (ask him to allow it); or `ssh -G hk2` lists a configured forward.
+- **Step 2:** authentication fails; no snippet after 5 minutes; no job id in the log; an account error (ask which project; the author sets it and logs out and in); or the session client is not alive at either liveness check.
+- **Step 3:** no `-L <lport>:<node>:<rport>` tunnel command; no free local port from `<lport>` to `<lport>+20`; the snippet's key file is missing (copy the guide into the report) or `ls -l` is refused; `-O forward` fails (no `FORWARD_OK`), or the listener is not the master.
 - **Step 4:**
   - Gate 1 fails: `ssh -G` shows no localhost tunnel endpoint for `ka_ir7683`.
   - Gate 2 fails: the node is not an `agent` compute node running the session job.
   - The connection is still refused after 3 retries.
   - The host key has changed.
+  - `"$S/nodessh"` gets `Permission denied` (Setup B not done, or the key's passphrase not loaded in ssh-agent; copy the guide into the report).
 - **The session ends during the scan.** Never fall back to `hk2` or any login host. Report the probe's job id; its output stays in `~/r1_scan_20261104/`.
 - **Any call asks for a credential.**
 - **An existing `dev-*` job** of the author's.
