@@ -69,3 +69,38 @@ def test_report_directory_must_be_new(tmp_path):
     (tmp_path / 'report').mkdir()
     with pytest.raises(ValueError, match='must be new'):
         D.dryrun(REPO, tmp_path / 'report')
+
+
+def test_frozen_source_pins_reject_self_consistent_replacement(tmp_path, monkeypatch):
+    index = tmp_path / D.INDEX
+    sidecar = tmp_path / D.SIDECAR
+    index.parent.mkdir(parents=True)
+    sidecar.parent.mkdir(parents=True)
+    index.write_text('{"index":"original"}')
+    sidecar.write_text(json.dumps({'index': {'sha256': D._sha(index)}, 'note': 'original'}))
+    monkeypatch.setattr(D, 'INDEX_SHA256', D._sha(index))
+    monkeypatch.setattr(D, 'SIDECAR_SHA256', D._sha(sidecar))
+    D.verify_source_pins(tmp_path)
+    sidecar.write_text(json.dumps({'index': {'sha256': D._sha(index)}, 'note': 'tampered'}))
+    with pytest.raises(ValueError, match='fixed source digest'):
+        D.verify_source_pins(tmp_path)
+    index.write_text('{"index":"changed"}')
+    sidecar.write_text(json.dumps({'index': {'sha256': D._sha(index)}}))
+    with pytest.raises(ValueError, match='fixed source digest'):
+        D.verify_source_pins(tmp_path)
+
+
+def test_dryrun_refuses_frozen_corpus_batch_and_symlink_alias_before_writes(tmp_path, monkeypatch):
+    paper = tmp_path / 'paper'
+    corpus = paper / 'results/frozen'
+    batch = tmp_path / 'batch'
+    corpus.mkdir(parents=True)
+    batch.mkdir()
+    alias = tmp_path / 'alias'
+    alias.symlink_to(corpus, target_is_directory=True)
+    monkeypatch.setattr(D, 'CORPUS_TREES', {'results/frozen': 'fixture'})
+    monkeypatch.setattr(D, 'BATCH', str(batch))
+    for output in (corpus / 'new', alias / 'new', batch / 'new'):
+        with pytest.raises(ValueError, match='inside preserved'):
+            D.dryrun(paper, output, verify_git=False)
+        assert not output.exists()

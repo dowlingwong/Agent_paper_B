@@ -291,8 +291,34 @@ def test_openml_node_without_local_cache_is_a_stop_before_running(tmp_path):
     (root / 'configs/nodes/openml_sonar.yaml').write_text(real.read_text())
     case = _case(node='openml_sonar', metric_key='val_auc', files={'config.yaml': 'C: 1\n'})
     (tmp_path / 's').mkdir()
-    with pytest.raises(R.Stop, match='would download'):
+    with pytest.raises(R.Stop, match='offline dataset availability'):
         R.execute_case(case, root, tmp_path / 's', {})
+
+
+def test_openml_run_stops_before_scheduling_even_with_nonempty_cache(tmp_path, monkeypatch):
+    cases = [_case(case_id=f'c{i}:t001', node='openml_sonar') for i in range(16)]
+    monkeypatch.setattr(R, 'verify_corpus', lambda paper: {'index_doc': {'nodes': list('abcdefgh')}, 'sweeps': {}})
+    monkeypatch.setattr(R, 'verify_collector_binding', lambda paper: {})
+    monkeypatch.setattr(R, 'select_cases', lambda *a: cases)
+    monkeypatch.setattr(R.platform, 'node', lambda: 'deepthought')
+    called = []
+    with pytest.raises(R.Stop, match='no replay scheduled'):
+        R.run(tmp_path, tmp_path / 'out', dry_run=False,
+              execute=lambda *a: called.append(a))
+    assert not called and not (tmp_path / 'out').exists()
+
+
+def test_dry_run_and_execution_use_distinct_output_paths(tmp_path, monkeypatch):
+    cases = [_case(case_id=f'c{i}:t001') for i in range(16)]
+    monkeypatch.setattr(R, 'verify_corpus', lambda paper: {'index_doc': {'nodes': list('abcdefgh')}, 'sweeps': {}})
+    monkeypatch.setattr(R, 'verify_collector_binding', lambda paper: {})
+    monkeypatch.setattr(R, 'select_cases', lambda *a: cases)
+    dry_out = tmp_path / 'dry'
+    R.run(tmp_path, dry_out, dry_run=True)
+    execute, calls = _fake_execute(lambda _: '0.718663')
+    summary, live_out = _host_run(tmp_path, monkeypatch, execute)
+    assert dry_out != live_out and dry_out.joinpath('replay_plan.json').is_file()
+    assert summary['verdict'] == 'PASS' and len(calls) == 16
 
 
 # ---------------------------------------------------------------------------- host environment checks
@@ -362,7 +388,8 @@ def test_cli_dry_run(tmp_path, capsys):
     assert code == 0 and json.loads(capsys.readouterr().out)['cases'] == 16
 
 
-def test_resources_require_new_local_tmp_scratch_and_headroom(tmp_path):
+def test_resources_require_new_local_tmp_scratch_and_headroom(tmp_path, monkeypatch):
+    monkeypatch.setattr('r1.c3.audit._local_scratch_mount', lambda _: {'synthetic': True})
     with pytest.raises(R.Stop, match='directly under /tmp'):
         R.check_resources(tmp_path / 'out', tmp_path / 'r1_c3_env_replay_x', 1)
     scratch = Path('/tmp') / f'r1_c3_env_replay_test_{os.getpid()}'

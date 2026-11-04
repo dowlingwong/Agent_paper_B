@@ -32,6 +32,7 @@ import tempfile
 from pathlib import Path
 
 from r1.c3.audit import DEFAULT_SEEDS, evidence_blocks, partition_population, split_seeds
+from r1.scripts.c3_env_replay import INDEX_SHA256, SIDECAR_SHA256, CORPUS_TREES, BATCH
 
 INDEX = 'results/r1/pilot/C3_sweep_index_20261028T033315Z.json'
 SIDECAR = 'results/r1/evidence/C3_sweep_classification_20261028.json'
@@ -42,6 +43,23 @@ K = 10
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def verify_source_pins(paper: Path) -> None:
+    for rel, expected in ((INDEX, INDEX_SHA256), (SIDECAR, SIDECAR_SHA256)):
+        path = Path(paper) / rel
+        if path.is_symlink() or not path.is_file() or _sha(path) != expected:
+            raise ValueError(f'unverified fixed source digest: {rel}')
+
+
+def check_output(paper: Path, out: Path) -> None:
+    target = Path(out).resolve()
+    protected = [(Path(paper) / rel).resolve() for rel in CORPUS_TREES]
+    protected.append(Path(BATCH).resolve())
+    if any(target.is_relative_to(root) for root in protected):
+        raise ValueError('output inside preserved batch or frozen corpus')
+    if Path(out).exists():
+        raise ValueError('report directory must be new')
 
 
 def design_check() -> dict:
@@ -56,6 +74,8 @@ def build_table(paper: Path, out: Path, *, verify_git: bool = True) -> dict:
     """Same steps as build_from_sweep with the classification, minus its publication check."""
     from r1.c3 import dataset
     paper = Path(paper).resolve()
+    check_output(paper, out)
+    verify_source_pins(paper)
     index_path = paper / INDEX
     index = json.loads(index_path.read_text())
     decision = json.loads((paper / SIDECAR).read_text())
@@ -125,8 +145,7 @@ def dryrun(paper: Path, out: Path, *, verify_git: bool = True) -> dict:
     from r1.c3.arms import is_duplicate, is_noop
     from r1.c3.dataset import load_table
     out = Path(out)
-    if out.exists():
-        raise ValueError('report directory must be new')
+    check_output(paper, out)
     design = design_check()
     with tempfile.TemporaryDirectory(prefix='r1_c3_audit_dryrun_') as tmp:
         table = Path(tmp) / 'table'

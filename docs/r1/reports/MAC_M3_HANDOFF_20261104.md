@@ -23,10 +23,10 @@ Untouched (verified with `git diff f98e315e HEAD`):
 ## 2. Gate table summary (`reports/MAC_B2_GATES_20261104.md`)
 
 - **Replay (e1).**
-  - A1–A13 are closed in code with fixture tests.
+  - A4 offline execution remains OPEN. OpenML replay is refused before scheduling until an independently reviewed offline mechanism exists; the other gate entries remain subject to review.
   - Case selection, configuration recovery, patch verification and seed binding (A3–A6) are also verified on the frozen corpus.
   - A14–A16 are the author's note and the operator's run.
-  - The e1 note now waits only on the independent review of this branch (R1-B2-REPLAY-GO).
+  - The e1 note cannot authorize execution yet: the OpenML offline mechanism and its independent review remain open (R1-B2-REPLAY-GO).
 - **B.2 (e2).**
   - Closed: B2 (original-file mapping), B3 (complete plan), B5 (non-venv/version STOP), B9–B10 (split blocks, K = 10 design, duplicate and no-op rules), B13, B16, B17. B11 is closed within its stated, non-global scope.
   - Host: B7 (Ceph and scratch numbers), B8 (guard tests on deepthought), B14 (replay result).
@@ -104,7 +104,7 @@ All five come from one commit, `9bab3d6f`, and none was modified later on the br
 3. **`r1/c3/audit.py` was edited** (refactor only: `partition_population` extracted from `evidence_plan`, with the same logic and messages). It is not a listed shared file. Covered by the existing `evidence_plan` tests, all of which pass.
 4. **Replay comparison on the emitted token.** The draft says to compare "as emitted", with "original recorded precision". The driver compares the replayed log's token with the token in the **archived original `run.log`** (verified against its archive hash), and also requires float equality with the ledger value. This is my reading of "as emitted" and needs the reviewer's check.
 5. **One worker for the replay.** The draft does not set a worker count. 16 runs of about 2 s each do not need parallelism, and serial execution makes "STOP at first mismatch, no retry" exact.
-6. **OpenML data cache.** The driver copies the node directory from the batch harness exactly as the `ccb4712` collector's `_node_copy` did, and STOPs if an OpenML node would have to download. The batch's actual cache state is unknown here (gitignored); the operator's dry run on the host will show it.
+6. **OpenML data cache.** The driver copies the node directory from the batch harness as the `ccb4712` collector did. The cache-presence check cannot prove offline execution; every real replay containing OpenML cases currently STOPs before scheduling. The 16-case plan includes OpenML cases. An offline enforcement mechanism and independent review remain open; a dry run does not clear this gate.
 7. **The full fake-service integration** that [AS] mentions (the fixture cloned the previous HEAD) was not repaired. The sweep dry-run failures are in the base set and are environmental here (B19).
 
 ## 7. Open questions (STOP items for the author or the integrator)
@@ -116,5 +116,5 @@ All five come from one commit, `9bab3d6f`, and none was modified later on the br
 
 ## 8. What the operator gets after acceptance
 
-- **e1 (replay):** the accepted commit; `python -B -m r1.scripts.c3_env_replay --dry-run …` first, then the run, per `proposals/AUTH_DRAFT_c3_replay_20261104.md`.
+- **e1 (replay), once the OpenML offline gate is closed and the code independently accepted:** the accepted commit; `python -B -m r1.scripts.c3_env_replay --dry-run …` first, then the run, per `proposals/AUTH_DRAFT_c3_replay_20261104.md`.
 - **e2 (B.2):** only after the e2 choices and the follow-up code for B1, B4 and B6.

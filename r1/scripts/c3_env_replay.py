@@ -479,6 +479,8 @@ def check_resources(out: Path, scratch: Path, min_free_bytes: int) -> dict:
 
 def execute_case(case: dict, node_source: Path, scratch: Path, env_overrides: dict) -> dict:
     """Run one recovered configuration once at its recorded seed through the pinned LocalWorker."""
+    if case['node'].startswith('openml_'):
+        raise Stop('STOP: OpenML offline dataset availability and worker network denial are not verified')
     from r1.harness import import_harness
     harness = import_harness()
     from autoresearch.manager.base import ManagerProposal
@@ -573,6 +575,8 @@ def run(paper: Path, out: Path, *, dry_run: bool, harness: Path | None = None, b
                 'nodes': sorted({c['node'] for c in cases})}
     if platform.node().split('.')[0] != HOST:
         raise Stop(f'STOP: the replay runs on {HOST} only')
+    if any(case['node'].startswith('openml_') for case in cases):
+        raise Stop('STOP: OpenML offline dataset availability and worker network denial are not verified; no replay scheduled')
     if harness is None or batch is None or scratch is None:
         raise Stop('STOP: --harness, --batch and --scratch are required')
     harness, batch, scratch = Path(harness), Path(batch), Path(scratch)

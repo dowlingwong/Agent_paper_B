@@ -39,7 +39,9 @@ python -B -m r1.scripts.c3_env_replay --paper-root <reviewed paper checkout> \
   --harness <batch>/autoresearch_harness --batch <batch> \
   --scratch /tmp/r1_c3_env_replay_<stamp> --out <output dir> --min-free-bytes <operator estimate>
 ```
-First run the same command with `--dry-run`, then run it without `--dry-run`.
+First run the command with `--dry-run` and a distinct new `--out <dry-run output dir>`; retain that directory. After inspection and the required authorization, run without `--dry-run` using a different new `--out <output dir>`. Never reuse either output directory.
+
+**Open execution STOP:** the present driver refuses any actual replay containing an OpenML case until an independently reviewed mechanism proves that the exact datasets are available offline and enforces no network download in worker subprocesses. The dry-run plan alone does not establish that condition or permit a run.
 
 ## Pass rule (declared before execution; not changeable afterwards)
 
