@@ -970,6 +970,21 @@ At 18:10 the author wrote: "B1/B2 主机：我授权 Track X B1 和 B2 在 TASL-
 
 *Recorder's note (not the author's words):* at `8eae4f84` (M2), `r1/exam/runtime.py` has `APPROVED_EXAM_HOSTS = {TASL-2, TASL-7}`, but `r1/exam/campaign.py` refuses a non-dry-run exam worker on any host other than `TASL-2` ("EXAM workers run only on portal"); M2 changes that check to the configured host and sets the B1/B2 v2 configs' `host` to TASL-7. TASL-7 has 24 logical CPUs (AMD Ryzen 9 7900X), 62 GiB RAM (`reports/PORTAL_TRACKP_HOST_FACTS_TASL7_20261026.md`). This row also settles the TASL-7 part of the open R1-HOSTS-04NOV draft (packet (b)) for Track X.
 
+### 4 November 2026 (19:03 CET) — second proposer and B1 draft values
+
+The author was asked to confirm the earlier instruction "用 exam 第二名", with the proposed consequences below, and replied as quoted in the first decision cell. The author was also asked about the proposed B1 values `digits_mlp`, `llm_call_cap=80`, and `workers=20`, and replied as quoted in the second cell. The amendment-acceptance digest was described as still dependent on the M2 format.
+
+| ID | Author's decision |
+|---|---|
+| R1-BX-D6-EXAM-RUNNER-UP | "是我的决定" |
+| R1-EXAM-B1-DRAFT-VALUES | "按照建议决定" |
+
+Consequences noted by the recording agent (not part of the decisions):
+
+- *(proposed)* Rank the second proposer by `x5_rule_v2` B2 thinking-off audited Y. It must be of a different family from the pick under D6 (F3); otherwise use the next different-family finalist. Serve it locally with pinned llama.cpp, without API calls, for closed-loop evaluation only.
+- *(proposed)* For the B1 draft, use the `digits_mlp` node variant with `openml_credit_approval` and `openml_ionosphere`, `llm_call_cap=80`, and `workers=20`. `workers` controls the paired audit process pool after collection; its practical resource headroom is not yet measured.
+- *(open)* `stage_a_amendment_acceptance_sha256` awaits confirmation of M2's acceptance-record format. The B1 note remains a draft; code STOPs, independent review, the rule row and a separate author authorization remain required before B1.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

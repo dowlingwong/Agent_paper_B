@@ -8,6 +8,7 @@
 2. PLAN §10 row **R1-EXAM-RULE-X5V2** committed by the author with the rule sha below.
 3. R1-EXAM-STAGEA-ACCEPT (Stage A accepted; B1 candidates = `t7h8`'s 8 PASS + `t7j10`'s 7 PASS + 3 anchors) is in PLAN — committed, under independent review at the time of drafting.
 4. Host: **TASL-7** (R1-EXAM-HOST-B1B2-TASL7, 18:10): B1 and B2 on TASL-7, the whole exam on one host; P.3a pauses while B1 or B2 runs. M2 makes the exam worker follow the configured host (it was hard-pinned to TASL-2).
+5. *(open)* The existing B1/B2 hard STOPs in `exam_runner.py`, `ExamRunner.start` and `campaign.collect` must be resolved through the owning task, with the reviewed harness pin and observer cache evidence implemented and independently reviewed. The current M2 head `75134796` cannot launch B1. Do not remove the guards without satisfying and reviewing their conditions. The final note and paper pin must be re-checked after that work; this draft authorizes no launch.
 
 ## Bound values
 
@@ -36,7 +37,7 @@ B1 runs each campaign with W = 20 worker runs, and after each executed proposal 
 
 ### `workers` on TASL-7 (24 logical CPUs) — proposal
 
-TASL-7 has 24 logical CPUs (AMD Ryzen 9 7900X, 12 cores × 2 threads) and 62 GiB RAM (`reports/PORTAL_TRACKP_HOST_FACTS_TASL7_20261026.md`). The proposal keeps 4 logical CPUs for the llama-server host thread, the runner, the guardian and the OS, and gives each worker one logical CPU: **`workers = 20`**, with each worker limited to one BLAS/OpenMP thread (`OMP_NUM_THREADS=MKL_NUM_THREADS=OPENBLAS_NUM_THREADS=1`) so 20 workers do not oversubscribe the CPUs. *Pending:* M2 reports how `workers` is used (processes vs threads, and whether the exam runner already limits BLAS threads per worker); if a worker uses more than one thread, the count is lowered to 24 − 4 divided by threads per worker. The Stage A config used 4; sweep 1 on deepthought used 16. **Author confirms or sets the value.**
+TASL-7 has 24 logical CPUs (AMD Ryzen 9 7900X, 12 cores × 2 threads) and 62 GiB RAM (`reports/PORTAL_TRACKP_HOST_FACTS_TASL7_20261026.md`). **`workers = 20` is proposed, pending the author's decision.** At M2 `75134796`, `workers` controls the process pool for paired audit configurations after collection; roots and seeds are run sequentially, and the worker setup limits BLAS/OpenMP threads. It is not the number of parallel campaigns. The practical CPU and memory headroom for 20 audit processes is not measured here; M2's final reviewed handoff must confirm the behavior before the author sets the value.
 
 ## Pins carried from the B1 config (`r1/scripts/configs/exam_b1_v2.json` on `mac-x5v2-20261104`)
 

@@ -1,5 +1,25 @@
 # Review: ops-20261104 integration and R1-EXAM-STAGEA-ACCEPT (`cabbe400..74c5da10`)
 
+## Round 2 re-check — 4 November 2026: accepted for draft scope
+
+The same Codex reviewer re-checked the revised draft at `/private/tmp/paper-b-b1-draft-20261104/docs/r1/proposals/AUTH_DRAFT_trackx_b1_20261104.md`, SHA256 `5b29910f08f476a9a1b82e2030b4e221485bdee72f4f12ea56ce9dde2befa268` (working-tree bytes, not a commit). **MAJOR 1 resolved for the draft:** precondition 5 explicitly records the existing hard STOPs, the need for implementation and independent review, and prohibits removing the guards without satisfying their conditions. **MINOR 1 resolved:** `workers` is described as the post-collection audit process pool, with resource headroom unmeasured and the author's choice open. `75134796:r1/exam/runtime.py` supplies the three BLAS/OpenMP environment limits to the worker job; actual performance is not established here.
+
+**Accepted for the Stage A row correction, host row and draft review only.** This does not accept M2 or any B1 code, clear any hard STOP, approve the draft, fix the remaining author choices, or establish launch readiness. The final note and code pin still require re-check after the STOP is resolved. The original round-1 Claude reviewer was unavailable; the present independent reviewer handled this round and its re-check.
+
+---
+
+## Round 2 — 4 November 2026: not accepted
+
+Independent re-review by Codex (AI-assisted; a fresh reviewer, not the author of the changes). The prior Claude reviewer was stopped at handover and is not available in this session; this is a new independent reviewer, not a claim that the same reviewer re-checked. Reviewed `f5f29801`, `5c1d3f80`, `a52aa7b1`, and `c87a277a` at `8bbdafd4`; cross-checked the unfinished M2 code at `751347969d1a0de0239c6beedbc8136541685f2f`. No server, model or GPU was used. Verdict concerns the draft and handoff readiness; it does not reopen the author's Stage A decision or authorize B1.
+
+**MAJOR 1 — B1 remains blocked in code, but the authorization draft does not state the prerequisite.** At M2 `75134796`, `r1/scripts/exam_runner.py` refuses B1/B2 in both `main` and `evidence`; `r1/exam/runtime.py` refuses them in `ExamRunner.start`; and `r1/exam/campaign.py` refuses `collect` with `STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented`. The preserved evidence body is explicitly unreviewed and unreachable. Draft precondition 1 requires M2 acceptance but does not identify this separate, existing hard STOP or the work and independent review needed before a B1 launch. The prior A1 requirements review also identified the unreachable path. Add the prerequisite to the draft and handoff, and route the underlying STOP to the owning task for diagnosis, implementation and independent review under the existing authorization and STOP rules. Do not simply remove the fail-closed checks. Re-check the final code pin and authorization draft before presenting a launch-ready note.
+
+**MINOR 1 — The proposed worker rationale describes the wrong phase.** At `75134796`, `campaign.py` uses `workers` as the `ProcessPoolExecutor` size for audit configurations after the sequential campaign collection, not as the number of simultaneous campaign execution workers. The proposal's CPU reservation and thread-limit language is hypothetical; it must describe audit processes and retain the author's choice as open, pending M2's concrete report and verified thread controls. This does not change the recorded host decision.
+
+**Checks passed.** `f5f29801` replaces the original review's MINOR 1 with its suggested finalist-eligibility wording, without changing the author decision cell; the B1 draft uses the same distinction. The host row's decision cell is an exact substring of the author quotation above it, and its consequences preserve the TASL-7 and P.3a conditions. Both table digests agree with the accepted Stage A recorder's note; the proposed acceptance-record SHA256 equals the merged O1 report bytes, and `75134796`'s draft config uses that same report. The rule file at `75134796` hashes to `79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20`. The JSON block remains `approved: false`, with unresolved author choices; `author_gate` at `75134796` binds author, phase, rule, nodes, tables, acceptance record and call cap, but does not bind `host` or `workers`, as the draft states. Node, cap and worker selections remain proposals, not decisions. These checks do not establish production readiness.
+
+---
+
 Independent reviewer (AI agent, Claude; fresh context, did not write the work). Verified from git objects only on branch `mac-int-20261104`; no server, LLM or GPU used; nothing staged, committed or pushed. Range reviewed: `96bca12b` (integrate `ops-20261104` @ `f52db28e`) and `74c5da10` (PLAN §10 R1-EXAM-STAGEA-ACCEPT). The branch tip has since moved on (`33988105`, HoreKa rows); commits after `74c5da10` are outside this review.
 
 ## Verdict: **accepted**

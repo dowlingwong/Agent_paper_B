@@ -1,0 +1,10 @@
+# Independent review: second proposer and B1 draft value rows (4 November 2026)
+
+**Verdict: accepted for the two decision records, with the scope below.** Independent review by Codex (AI-assisted), who did not write the rows. Reviewed the uncommitted `docs/r1/PLAN.md` at `/private/tmp/paper-b-mac-20261104`, SHA256 `b0dc9cc58e61ae30c4a7a15c62972f267e1edf1a152fd2e0b65876586ddb47bc`, and its diff against the current branch. `git diff --check -- docs/r1/PLAN.md` passed. The evidence for the recent author replies is the coordinator's verbatim relay of the chat questions and answers; this reviewer did not independently see the author's chat.
+
+- The first decision cell contains exactly the relayed author reply, `"是我的决定"`, and the second exactly `"按照建议决定"`. The intro identifies the questions those short replies answer, including the earlier wording `"用 exam 第二名"`; the row does not attribute the recorder's explanations to the author.
+- The different-family B2 thinking-off audited-Y ranking, local pinned llama.cpp, and closed-loop-only consequences are below the table and marked *(proposed)*. This matches the coordinator's description of the confirmation question. Their implementation remains subject to the existing decision and review process.
+- The B1 `digits_mlp` variant, call cap 80 and worker count 20 are below the table as *(proposed)*, and the resource headroom is identified as unmeasured. The amendment-acceptance SHA is *(open)* pending M2's format, consistent with the relayed question. The actual final note must bind the author's selected values and be reviewed against the final code and acceptance record.
+- The row expressly leaves the B1 note a draft and requires the code STOPs, independent review, rule row and separate author authorization before B1. It does not itself authorize a launch, clear any STOP, approve the code, or establish resource feasibility.
+
+This is a review of the two new rows only, not of the other uncommitted files or of B1 launch readiness. Re-check if the reviewed PLAN bytes change.
