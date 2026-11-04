@@ -85,6 +85,9 @@ This ladder is C3.
 | A0 | ρ, the default rule | — |
 | A1 | **C2 index policy:** constant (π, μ, τ) per node; constant Bayes threshold; KG verify per D23 | dev campaigns |
 | A2 | A1 + **rules:** π = 1 on hash duplicates and inactive keys (D25, D27) | — |
+
+> **Note (30 Oct, PLAN §10 R1-WORDING-30OCT).** A2's prior is one constant per node for every non-rule proposal, so A2 ignores the history. It is therefore **not** the Bayes-myopic rule of T4 Prop. 10(a′), which uses the posterior given the history. Track S uses the history-updating A2-U for that role.
+
 | A3 | **tabular:** LightGBM multiclass on the 12 bins (plus an NGBoost-Gaussian variant) | log loss, soft labels |
 | A4 | **LLM zero-shot:** the manager answers typed questions (P(no effect), P(Δ > 0), size bucket), mapped to bins by isotonic calibration fitted on dev | calibration map only |
 | A5 | **small LM, stage 1:** Kev-0.8B / Kev-4B and StartLux-Decision-v1.1 0.8B / 2B / 4B (main), Laya 421M as an encoder rung (R1-C3-BASE, 24 Oct; ≤ 4B), LoRA r = 16, next-token distribution over 12 bin tokens | SFT with soft-label cross-entropy (log score) |
