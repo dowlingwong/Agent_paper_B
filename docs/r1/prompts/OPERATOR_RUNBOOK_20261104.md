@@ -123,6 +123,8 @@ Each phase lists: what it is, the host, the type, a rough duration (an estimate)
    Anything else is reported, not touched.
 4. Write the report `docs/r1/reports/OPS_O0_CENSUS_20261104.md`.
 
+**Between the handover row and STOP 0,** a Stage A STOP is preserved as it stands, with its lease held, until the author re-issues the recovery authorization to you.
+
 **STOP 0.** Run the review loop. The author confirms or re-issues the scoped standing authorizations you will hold, for example "Stage A recoveries as in the coordinator STATUS".
 
 ### O1 — Track X Stage A to acceptance (TASL-7; exam engineering; ~1 day if no new STOP)
@@ -143,9 +145,9 @@ Each phase lists: what it is, the host, the type, a rough duration (an estimate)
 
 **Needs:**
 - O1 accepted.
-- The Mac agent's M2 (`x5_rule_v2`, its code and the new B1/B2 configs `exam_b1_v2.json` / `exam_b2_v2.json`) at its reviewed commit.
+- M2 (`x5_rule_v2`, its code and the new B1/B2 configs `exam_b1_v2.json` / `exam_b2_v2.json`), from whichever agent is named `r1/exam/` editor in the handover row (a), at its reviewed commit.
 - The author's row **R1-EXAM-RULE-X5V2** carrying the rule's sha.
-- **The independently reviewed harness pin with explicit `cache_prompt: false`**, recorded in config, manifests and `llm_call` (R1-EXAM-CACHE-REV).
+- **The independently reviewed harness pin with explicit `cache_prompt: false`**, recorded in config, manifests and `llm_call` (R1-EXAM-CACHE-REV): harness `cacheprompt-20261031` @ `a3fedbb`, used directly as confirmed by packet row (d′). B1 therefore does not wait on sweep-1 B.2.
 - The B1 authorization note, which binds:
   - `author`, `phase`, `approved: true`;
   - `rule_sha256`;
@@ -313,7 +315,7 @@ Per `prompts/TRACK_G_RUNBOOK.md`. MLGym needs a container by 10 Nov, otherwise i
 M1 accepted + handover row ──► O0 ──► every other phase
 O0 ──► O1 Stage A (TASL-7) ──► O2 B1 (needs M2, R1-EXAM-RULE-X5V2, cache_prompt harness pin, B1 note) ──► B2 (note) ──► X.7
 O1 accepted ──► TASL-7 free for Track P (O7) and Track S tabular_mlp (O3)
-M3 + B.2 ruling ──► O4 B.2 ──► label table ──► O7 engineering on sweep 1; R1-HARNESS-NEXT-PIN gate
+M3 + replay authorization (e1) ──► O4 replay ──► replay passed + gates closed + B.2 ruling (e2) ──► O4 B.2 ──► label table ──► O7 engineering on sweep 1; R1-HARNESS-NEXT-PIN gate
 M4 + R1-DT-DUALCARD + R1-EXAM-RULE-X5V2 ──► O5 DTQ ──► host decision for sweep 2
 X.7 + O4 + M4 + D28 + projection + note ──► O6 sweep 2 ──► audits ──► evidence labels ──► B.3–B.5, B.7
 O3 Track S digits_mlp on TASL-2: from O0 on, paused while Track X B1/B2 run
@@ -346,7 +348,7 @@ O3 Track S digits_mlp on TASL-2: from O0 on, paused while Track X B1/B2 run
 | M8: reboot procedure | Added (§0.2) |
 | M9: DTQ feasibility | Free cards checked at start; co-tenant is a STOP; B.1b settings; fit noted; after R1-EXAM-RULE-X5V2; prompts disjoint from the exam |
 | M10: governance | "Authorizes nothing"; Stage A label wording fixed; handover as a committed row; secrets rule |
-| Minor 11–17 | Orphan wrappers ended 1 Nov; speed ≈ 6–8.5 s; O0 gated on M1; `author_gate` HEAD and note fields; Track S branch transfer; copy-back defers to track runbooks; deepthought locking and co-tenancy; layout-flatten note |
+| Minor 11–17 | Orphan wrappers ended 1 Nov; speed restated as about 7 s per proposal of wall throughput (an estimate); O0 gated on M1; `author_gate` HEAD and note fields; Track S branch transfer; copy-back defers to track runbooks; deepthought locking and co-tenancy; layout-flatten note |
 
 **Alignment with the Mac runbook's revision 2:**
 - the speed figure is now wall throughput per proposal, labelled an estimate;
@@ -356,3 +358,16 @@ O3 Track S digits_mlp on TASL-2: from O0 on, paused while Track X B1/B2 run
 - M3 continues `codex/b2-repair-20261031`;
 - new B1/B2 configs for v2;
 - the DTQ flag check runs on the host.
+
+**Revision 2 → 2.1** (4 Nov). The second-round findings of both reviewers were applied without a further review round, on the author's instruction ("stop reviewing"):
+- Track X B1's harness pin is named (`a3fedbb`, packet (d′)), with a Track X test;
+- M2's editor is now conditional in O2;
+- e1 has been added to the dependency line;
+- the replay assignment moves to the operator;
+- the Stage A STOP window before STOP 0 is covered;
+- the b2-repair files outside its scope need the author's acknowledgement, and M1 runs a full test;
+- the v1 default is recorded as a deviation from the draft;
+- the label table has one owner (O4);
+- the sweep-2 operator runbook is assigned to M4 step 6;
+- the source of the clause (b) text is given;
+- the speed figure is aligned.

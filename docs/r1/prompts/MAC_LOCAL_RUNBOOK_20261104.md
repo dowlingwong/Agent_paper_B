@@ -147,6 +147,8 @@ Run it, and commit both the script and its output.
 - `trackS-ops-20261030` is transferred to the operator.
 - `r1/exam/` and `r1/scripts/exam_*` are transferred to you as single editor, or stay with Track X: state which.
 - It replaces the scope of R1-OPERATOR-TAKEOVER, and R1-TRACKP-RUNBOOK's assumption of an agent on the host.
+- It moves the CPU replay that the replay draft assigns to the deepthought agent over to the operator.
+- It names the files that `codex/b2-repair-20261031` changes outside its own scope: Track P's `r1/c3/train/{run,trainer}.py` and the shared `r1/c3/env.py`, `control.py` and `prior_model.py`. M1 merges them only with the author's acknowledgement (or Track P's).
 - Standing recovery authorizations held by previous agents are not inherited. The author re-issues the ones the operator needs, in writing and with a scope.
 
 **(b) R1-HOSTS-04NOV (proposed amendment).**
@@ -166,6 +168,8 @@ Run it, and commit both the script and its output.
 - Add the sm_52 build and the two-card split to B.1b's list of differences from sweep 1.
 - Also mention, as a separate option: `deepthought2.etp.kit.edu` (2 × L40S, 48 GB each) is out of scope today. A PLAN row could add it as a sweep-2 host.
 
+**(d′) Harness pin for Track X B1/B2.** R1-EXAM-CACHE-REV requires the Track S operator's independently reviewed `cache_prompt` pin, which is harness `cacheprompt-20261031` @ `a3fedbb` (review `TRACKS_OPS_CACHEPROMPT_REVIEW_20261031.md`). The draft row confirms that the exam may use this unmerged commit directly as its harness pin, so B1 does not wait on sweep-1 B.2. R1-HARNESS-NEXT-PIN concerns merging into harness `r1` and stays as it is.
+
 **(d) R1-EXAM-RULE-X5V2.**
 - First the author's ruling on always-thinking models: skip B1, or run them descriptively. This value enters the YAML **before** its sha is computed.
 - Then the row carrying the sha, from M2.
@@ -178,7 +182,7 @@ Run it, and commit both the script and its output.
 
 **(g) Track S.**
 - The **S0.1 re-run procedure row**: fresh servers; k = 2 serial and then concurrent, at `cache_prompt: false`; the probe output suffix; new output directories. Rev 3.3 has no re-run procedure, and the ruling file cited by R1-CACHEPROMPT-FALSE is not on any branch.
-- The k rule's clause (b): if both tiers pass, choose the faster k.
+- The k rule's clause (b): if both tiers pass, choose the faster k. Its draft text is in `proposals/TRACKS_NOCACHE_20261030.md` §5–6 at `8bfd003`; quote it in the packet.
 - A statement that rev 3.4/3.5 are **not of record**.
 - The Track P marker helper (`proposals/TRACKP_EVIDENCE_MARKER_20261030.md`): install it or not.
 
@@ -197,6 +201,7 @@ Run it, and commit both the script and its output.
 
 **Done when:**
 - `plan_row_check.py` shows every source row and entry present and byte-identical;
+- the paper test suite on `mac-int-20261104` (CPU, R1-LOCAL-TEST-SCOPE) has a failure set equal to the coordinator's, apart from new tests;
 - the pin table is filled from the recorded sources;
 - the packet exists;
 - the reviewer has accepted, and the review covers: no row lost, altered or contradicted; code merged only from the three branches; options faithful to the sources; no decision taken.
@@ -208,9 +213,10 @@ Run it, and commit both the script and its output.
 **Prerequisite.** The author's ruling on always-thinking models (packet (d)).
 
 **Steps.**
+0. **Harness binding.** The new B1/B2 configs bind harness `a3fedbb` (packet (d′)). Add a Track X test, using a stand-in server, showing that an exam campaign request carries `cache_prompt: false` and that the value is recorded in the manifest and in `llm_call`.
 1. **The rule file.** Create `r1/exam/rules/x5_rule_v2.yaml` from `proposals/X5_RULE_V2_DRAFT_20261104.md`, with every mode quoted (`"off"`) and `always_on_in_b1` set to the author's ruling, plus its `.sha256`. **`x5_rule_v1.yaml` stays unchanged and loadable**, because Stage A's config (`exam_portal.json`) binds v1.
 2. **`r1/exam/analyze.py`** (cite functions, not line numbers):
-   - `load_rule` accepts both `x5_rule/v1` and `x5_rule/v2`, and the default path stays v1;
+   - `load_rule` accepts both `x5_rule/v1` and `x5_rule/v2`, and the default path stays v1. This is a recorded deviation from the draft, which pointed the default at v2: keeping v1 keeps Stage A unchanged;
    - `b1_summary` and `b2_summary` follow the draft when given v2, and are unchanged under v1;
    - v2 reads `thinking_mode.b1_sensitivity.node`.
 3. **`r1/scripts/exam_runner.py`**, in the B1/B2 mode logic (the block that builds `modes` per spec):
@@ -297,6 +303,8 @@ Run it, and commit both the script and its output.
    The output is labelled ENGINEERING_ONLY. It has a dry-run mode against a fake server.
 5. **Tests.** Fake-server tests for (a)–(e) and for the tool. Existing tests must pass unchanged.
 
+6. **Sweep-2 operator runbook (after X.7).** Write `prompts/SWEEP2_RUNBOOK_<date>.md` from `DEEPTHOUGHT_SWEEP1_RUNBOOK.md` Phases 4–9, filled with the pick's pins and the host decision. It covers the 4090 host's lease and watcher, or deepthought's two-card census, and the audit-transfer step. Reviewed before the authorization note.
+
 **Done when:** the tests pass with an unchanged failure set; the reviewer has accepted, and checked in particular that the single-GPU path and the default request body are unchanged; the hand-off gives the operator the commit for O5 and, later, O6.
 
 ### M5 — Track X Stage A support (on request)
@@ -322,7 +330,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 ### M7 — Track P desktop parts (on demand)
 
 - **Label table and P.3b.** Once B.2 labels exist:
-  - build the label table (`r1.c3.dataset build-sweep`) from the copy-back;
+  - the operator builds the label table on deepthought (O4 step 3) and copies it back; you do not rebuild it. Verify its sha and counts;
   - draw the P.3b exam-set membership: a fixed subset of the training partition, from sweep 2 once it exists (R1-MAIN-PROPOSER, proposed), otherwise from sweep 1, disclosed;
   - record its sha256;
   - write the P.3b authorization draft.
@@ -362,3 +370,16 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 | M-e: missing Stage A support task; ownership rules | M5 added; ownership rules restored (§0) |
 | M-f: M3 sources; packet (e) circular | Phase 8 now points to C3_OFFLINE_HANDOFF; (e) split into replay authorization (e1) and B.2 ruling (e2) |
 | Minors | Track P branch named; the `--help` check moved to the operator; DTQ reuses the probe at `d10b05b7`; harness ancestry stated; the `cache_prompt` wording corrected; the 7006–7010 scope corrected; Track S code pin in M6; manuscript branch named; who commits the rows (M1 step 6) |
+
+**Revision 2 → 2.1** (4 Nov). The second-round findings of both reviewers were applied without a further review round, on the author's instruction ("stop reviewing"):
+- Track X B1's harness pin is named (`a3fedbb`, packet (d′)), with a Track X test;
+- M2's editor is now conditional in O2;
+- e1 has been added to the dependency line;
+- the replay assignment moves to the operator;
+- the Stage A STOP window before STOP 0 is covered;
+- the b2-repair files outside its scope need the author's acknowledgement, and M1 runs a full test;
+- the v1 default is recorded as a deviation from the draft;
+- the label table has one owner (O4);
+- the sweep-2 operator runbook is assigned to M4 step 6;
+- the source of the clause (b) text is given;
+- the speed figure is aligned.
