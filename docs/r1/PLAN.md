@@ -780,6 +780,19 @@ At 11:55 the author wrote "1GC-7RC没公开repo" ("1GC-7RC has not published its
 - *(open)* how the 1GC extra tasks count: their tier, whether they count toward 12–16, the per-suite funnel, and their role in the folds (always training data, or excluded);
 - *(open)* domain coverage: time series was covered only by ETTh1, now an extra task; MLAgentBench cifar10 (and possibly house-price) nearly duplicate MLGym tasks, so the census should prefer non-duplicating tasks.
 
+### 4 November 2026 (13:45) — T1 on HoreKa 2 (author; recorded by an AI agent, Claude, chat session)
+
+At 13:45 the author wrote: "T1 整层（census、噪声底、proposer、sweep、审计）搬到 HoreKa 2 的 H100，Ada 作整表后备" ("move the whole T1 tier — census, noise floors, proposer, sweep, audits — to HoreKa 2's H100; Ada as the whole-table fallback"). He also asked for a scan prompt: "horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫" ("HoreKa needs scanning; write me a prompt, and I'll have an agent that can ssh into HoreKa scan it").
+
+| Decision | Author decision (4 Nov 2026, 13:45) |
+|---|---|
+| R1-T1-HOREKA | **The whole T1 tier runs on HoreKa 2 H100 (`hk2-x86.scc.kit.edu`): census, noise floors, proposer, sweep and audits. Ada is the whole-table fallback.** This amends, as listed in `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` §0: R1-BX-PROPOSED-CONFIRM (the REVISIONS (f) and E1 bullets, where T1 label runs are on Ada and the proposer on deepthought or a 4090); R1-ADA-CENSUS (Ada for census and floors); R1-BX-REVISIONS (f) (hosts); and R1-BX-D14 ("start on Ada"). |
+
+**Consequences noted by the recording agent (not part of the decision):**
+- *(proposed)* `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` (revision 2, independently accepted as a draft) becomes the design basis. Its job design, its §5 code, the proposer's H100 qualification (J1b, with a pass criterion the author commits) and the copy-out cutoff before the 23 Nov – 4 Dec downtime are adopted only by a later row, after the read-only scan.
+- *(open)* NHR@KIT prohibits "interactive AI agent usage on login nodes". The author asked for an agent-run scan, `prompts/HOREKA_SCAN_PROMPT_20261104.md`, which keeps the login-node part to one non-interactive SSH call plus one 15-minute dev job. Whether agents may submit and monitor jobs routinely stays open until NHR@KIT answers the draft's §4 questions. Until then the author submits production jobs.
+- *(open)* The fallback to Ada moves the whole T1 label table; one GPU model per table (R1-BX-D5).
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
