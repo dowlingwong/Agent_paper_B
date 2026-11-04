@@ -844,6 +844,22 @@ The chat session proposed (14:55): "我起草交接修正行（两个服务器 a
 - *(proposed)* The HoreKa agent works only from an `agent`-partition compute node through the SSH tunnel the author opens (NHR@KIT's rule). Its execution runbook is written after the read-only scan and is reviewed independently.
 - *(proposed)* Neither server agent acts on the other's hosts. Hand-overs between them pass through the author or pushed branches: X.7's pins go from the operator to the HoreKa agent, and T1 labels go from the HoreKa agent to the Mac agent.
 
+### 4 November 2026 (15:44) — Track X handover ruling (author; recorded by an AI agent, Claude, Mac-local agent)
+
+After the 11:29 handover the coordinator branch recorded Track X work in `r1/exam/` and on TASL-7 (R1-EXAM-STAGEA-COMPLETE … R1-EXAM-STOP9-JOURNAL). The Mac-local agent flagged the conflict with R1-HANDOVER-04NOV and offered options (`proposals/AUTHOR_DECISIONS_20261104.md` §0). The author replied at 15:33 "按原定计划走" ("go with the original plan") and at 15:44 chose option 2, "交接行优先" ("the handover row takes precedence"). At 16:13 he asked for this row: "决策格只写我的原话"按原定计划走"（15:44），其余细节……写进 consequences" ("the decision cell holds only my words …, the other details go into the consequences").
+
+| Decision | Author decision (4 Nov 2026, 15:44) |
+|---|---|
+| R1-TRACKX-HANDOVER-RULING | "按原定计划走" |
+
+**Consequences** (the author's details from 15:44 and 16:13, recorded here at his instruction; not part of the decision cell):
+- R1-HANDOVER-04NOV takes precedence over the Track X agent's post-handover work.
+- The declared measurement `r1_stagea_20261104_t7j10` (code `ab74203`, binding `74a0790`), already running on TASL-7, runs to completion; the Track X agent then stops.
+- The verification and receiving review of `t7j10`, and the Stage A acceptance, belong to the operator's O1.
+- The Mac-local agent takes over `r1/exam/` from `74a0790` (code `ab74203`) and bases M2 on it; if `ab74203` lacks an independent review, the Mac agent supplies one by the M5 procedure. (`r1/scripts/exam_*` already passed to the Mac agent under R1-HANDOVER-04NOV.)
+- B1 candidate set: the 8 PASS of `t7h8` + the anchors + the `t7j10` passes, the latter counting only after the operator's acceptance.
+- The integration branch `mac-int-20261104` is based on coordinator `10742f85`.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
