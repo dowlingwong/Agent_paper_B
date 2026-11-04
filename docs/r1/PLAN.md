@@ -793,7 +793,7 @@ At 13:45 the author wrote: "T1 整层（census、噪声底、proposer、sweep、
 - *(proposed)* `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` (revision 2, independently accepted as a draft) becomes the design basis. Its job design, its §5 code, the proposer's H100 qualification (J1b, with a pass criterion the author commits) and the copy-out cutoff before the 23 Nov – 4 Dec downtime are adopted only by a later row, after the read-only scan.
 - *(open)* NHR@KIT prohibits "interactive AI agent usage on login nodes". The author asked for a scan prompt, `prompts/HOREKA_SCAN_PROMPT_20261104.md`. It asks him first to choose between option A (the agent runs about 12 non-interactive SSH calls and one 15-minute dev job) and option B (he runs the two commands himself). Whether agents may submit and monitor jobs routinely stays open until NHR@KIT answers the draft's §4 questions. Until then the author submits production jobs.
 - *(open)* The fallback to Ada moves the whole T1 label table; one GPU model per table (R1-BX-D5).
-- *(open)* At 14:22 the author chose to scan **legacy HoreKa only** (`ir7683@horeka.scc.kit.edu`) and not HoreKa 2. Per his cheat sheet, legacy HoreKa now has A100 (Green) and CPU nodes; it becomes login-only in December and is decommissioned at the end of December. Whether T1 stays on H100 (HoreKa 2) or uses legacy A100 nodes is decided after the scan.
+- *(superseded at 14:37: the author returned the scan to HoreKa 2, "改改扫描的runbook，我们在horeka2上扫")* At 14:22 the author chose to scan **legacy HoreKa only** (`ir7683@horeka.scc.kit.edu`) and not HoreKa 2. Per his cheat sheet, legacy HoreKa now has A100 (Green) and CPU nodes; it becomes login-only in December and is decommissioned at the end of December. Whether T1 stays on H100 (HoreKa 2) or uses legacy A100 nodes is decided after the scan.
 
 ### 4 November 2026 (14:58) — two server agents (author; recorded by an AI agent, Claude, chat session)
 
@@ -801,9 +801,15 @@ The chat session proposed (14:55): "我起草交接修正行（两个服务器 a
 
 | Decision | Author decision (4 Nov 2026, 14:58) |
 |---|---|
-| R1-SERVER-AGENTS-TWO | **Two server agents with disjoint hosts.** (1) The **operator** of `prompts/OPERATOR_RUNBOOK_20261104.md`: TASL-2, TASL-7, deepthought, and Ada as fallback. (2) A separate **HoreKa agent**: HoreKa 2 only, for the whole T1 tier. Its operator runbook O8 becomes "T1 belongs to the HoreKa thread". The Mac-local agent stays the third thread. *Amends* R1-HANDOVER-04NOV ("the only agent acting on the servers") and R1-BX-PORTING-CONFIRM (porting is done by the HoreKa agent, on HoreKa). |
+| R1-SERVER-AGENTS-TWO | **Two server agents with disjoint hosts; the operator runbook's O8 becomes "T1 belongs to the HoreKa thread".** |
 
 **Consequences noted by the recording agent (not part of the decision):**
+- *(proposed)* Host lists: the **operator** of `prompts/OPERATOR_RUNBOOK_20261104.md` covers TASL-2, TASL-7 and deepthought, plus Ada for overflow (R1-ADA-OVERFLOW), C.4, and the T1 whole-table fallback. The **HoreKa agent** covers HoreKa 2 (`hk2`), which is where the author returned the scan at 14:37 ("我们在horeka2上扫"). This supersedes, for the T1 host, the open 14:22 legacy-HoreKa item. The Mac-local agent stays the third thread.
+- *(proposed)* Rows this amends: R1-HANDOVER-04NOV ("the only agent acting on the servers"); R1-BX-PORTING-CONFIRM and R1-BX-REVISIONS (h) (porting moves to the HoreKa agent, on HoreKa); R1-ADA-CENSUS (Ada census only as the fallback).
+- *(open)* Whether G.0 raw-cost work continues on Ada for the fallback in the meantime.
+- *(open)* The Phase C/D host plan: C.2 on 1–2 T1 nodes, C.3, T2 and the API-proposer closed loop, and the A4 answers for T1 proposals.
+- *(open)* Track S GPU nodes (operator, O3): they need ported nodes and census results from the HoreKa agent. Whether they also need their own 4090 noise floor (one GPU model per table) is not yet decided.
+- *(open)* The container check on the 4090 hosts and on Ada has no owner yet.
 - *(proposed)* The HoreKa agent works only from an `agent`-partition compute node through the SSH tunnel the author opens (NHR@KIT's rule). Its execution runbook is written after the read-only scan and is reviewed independently.
 - *(proposed)* Neither server agent acts on the other's hosts. Hand-overs between them pass through the author or pushed branches: X.7's pins go from the operator to the HoreKa agent, and T1 labels go from the HoreKa agent to the Mac agent.
 

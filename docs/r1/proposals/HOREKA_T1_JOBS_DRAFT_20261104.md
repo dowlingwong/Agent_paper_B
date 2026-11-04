@@ -1,5 +1,7 @@
 # Draft — running Track G T1 work on HoreKa 2 by Slurm job submission (4 Nov 2026, revision 2)
 
+> **4 Nov 14:58 (R1-SERVER-AGENTS-TWO).** In this draft, "the operator" acting on HoreKa means the **HoreKa agent**, and "the operator runbook" means its own runbook, which is written after the scan.
+
 **Status.** AI-assisted draft (Claude, chat session), written at the author's request ("怎么把t1改写成horeka compatible的提交任务"). It is **not adopted** and authorizes nothing. Revision 2 addresses the independent review `reviews/HOREKA_1GC_REVIEW_20261104.md` (not accepted: 7 MAJOR, 11 MINOR).
 
 **Sources.** The author's cheat sheet "HoreKa / HoreKa 2 — Slurm Job Submission" (chat attachment, 4 Nov; it is the only source for the host name, the user name and the downtime dates). NHR@KIT documentation, read 4 Nov: <https://docs.nhr.kit.edu/usage/slurm/> and <https://docs.nhr.kit.edu/get-started/migration/>. Facts not in these sources are marked *(to check)*.

@@ -2,12 +2,12 @@
 
 **Status.** Rewritten 4 Nov 2026 by the chat session (Claude), AI-assisted, after the author adopted `docs/r1/proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` in full (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS). The 27 Oct proposal this file used to hold (autoresearch plus MLGym only if a container existed by 10 Nov; evaluation/transfer only) is superseded; it is in git at `fa60704e`.
 
-> **Reading old markers (4 Nov, 11:29).** The items listed in PLAN §10 R1-BX-PROPOSED-CONFIRM and R1-BX-PORTING-CONFIRM are decided, even where this file still says *(proposed)*. Anything else is still proposed or open.
+> **Reading old markers (4 Nov, 11:29).** The items listed in PLAN §10 R1-BX-PROPOSED-CONFIRM and R1-BX-PORTING-CONFIRM (porting now by the HoreKa agent) are decided, even where this file still says *(proposed)*. Anything else is still proposed or open.
 
 **This file authorizes nothing.** RUNBOOK Track G (G.0–G.6) and the PLAN §10 rows govern. Census, porting and pilots are ENGINEERING_ONLY. The T1 sweep (G.5) and the T2 closed loop (G.6) are EVIDENCE and need the author's authorization notes.
 
 **Who does what.**
-- The **operator** (`OPERATOR_RUNBOOK_20261104.md`, phase O8) ports the task assets into harness nodes (review document §7), and runs the census, the smoke runs, the pilot, the sweep and the closed loop. *(proposed)* For porting it holds a scoped exception to "never edit code": new node assets only, on its own branch `ops-trackg-<date>`, each port independently reviewed before use (PLAN R1-BX-REVISIONS (h)).
+- **Since 4 Nov 14:58 (R1-SERVER-AGENTS-TWO): the HoreKa agent, on HoreKa 2, does everything this file gives "the operator" for T1; read "operator" below as "HoreKa agent". Its runbook follows the scan.** Earlier text: the **operator** (`OPERATOR_RUNBOOK_20261104.md`, phase O8) ports the task assets into harness nodes (review document §7), and runs the census, the smoke runs, the pilot, the sweep and the closed loop. *(proposed)* For porting it holds a scoped exception to "never edit code": new node assets only, on its own branch `ops-trackg-<date>`, each port independently reviewed before use (PLAN R1-BX-REVISIONS (h)).
 - The **Mac agent** (`MAC_LOCAL_RUNBOOK_20261104.md`, task M10) writes the shared pieces the ports build on (node template, base metric parser with the divergence class, per-run working-copy runner), the harness diff support, the S1.1 analysis for diffs, the API-proposer provider, and drafts the T1/T2 selection and the authorization notes. It also recomputes the dates after the pilot.
 
 ## 1. Tiers and target
@@ -44,21 +44,21 @@ In order of preference:
 
 ## 4. Steps
 
-### G.0 — Availability and raw cost (operator; Ada first; ENGINEERING_ONLY) *(4 Nov 13:45, R1-T1-HOREKA: the whole T1 tier moves to HoreKa 2 H100; Ada is the whole-table fallback)*
+### G.0 — Availability and raw cost (HoreKa agent on HoreKa 2; ENGINEERING_ONLY) *(4 Nov 13:45, R1-T1-HOREKA: the whole T1 tier moves to HoreKa 2 H100; Ada is the whole-table fallback)*
 
 Before G.0 starts on Ada, the O0 census of Ada checks Paper A occupancy (no Paper B GPU launch while a Paper A campaign waits for a card) and the co-tenancy margin. Per candidate task:
 1. **Licence and availability:** the repository, its licence, and the licence of each dataset. 1GC-7RC is not used: **MLAgentBench is the third suite** (R1-1GC-FALLBACK, adopted 4 Nov 12:45); check MLAgentBench's task-asset licences instead.
-2. **Raw cost:** the suite's own baseline script at a candidate step count, on each GPU model available: RTX 6000 Ada (first), RTX 4090, TITAN X. Record wall time, peak VRAM, and CPU and RAM use. No code beyond the suite's own script and a step-count argument; where a script has no such argument (autoresearch has a wall-clock budget), its raw cost is measured after G.1, at the fixed-step wrapper.
+2. **Raw cost:** the suite's own baseline script at a candidate step count, on HoreKa 2 H100 (R1-T1-HOREKA). *(open)* Raw cost on Ada for the fallback, if the author wants it. Record wall time, peak VRAM, and CPU and RAM use. No code beyond the suite's own script and a step-count argument; where a script has no such argument (autoresearch has a wall-clock budget), its raw cost is measured after G.1, at the fixed-step wrapper.
 
-### G.1 — Porting (operator ports; Mac shared pieces first)
+### G.1 — Porting (HoreKa agent ports; Mac shared pieces first)
 
-0. The porting exception is confirmed (R1-BX-PORTING-CONFIRM, 4 Nov).
+0. The porting exception is confirmed (R1-BX-PORTING-CONFIRM, 4 Nov) *(amended by R1-SERVER-AGENTS-TWO, 4 Nov 14:58: the HoreKa agent, not the operator)*.
 1. The Mac agent's M10 step 0 delivers the shared pieces at a reviewed commit.
-2. The operator ports each task on `ops-trackg-<date>`: data preparation, the fixed-step wrapper, the metric parser, the `NodeSpec`, resource limits, and **3–5 representative edits declared as diffs before any measurement** (committed with a hash).
+2. The HoreKa agent ports each task on its own branch (proposed `hk2-trackg-<date>`): data preparation, the fixed-step wrapper, the metric parser, the `NodeSpec`, resource limits, and **3–5 representative edits declared as diffs before any measurement** (committed with a hash).
 3. Each port is reviewed by a fresh agent before use.
 4. A stub-manager smoke campaign per node on the census host. Done when scope enforcement rejects an edit to a frozen path and the smoke manifest is complete.
 
-### G.1b — Census measurements (operator; Ada first; ENGINEERING_ONLY) *(4 Nov 13:45, R1-T1-HOREKA: the whole T1 tier moves to HoreKa 2 H100; Ada is the whole-table fallback)*
+### G.1b — Census measurements (HoreKa agent on HoreKa 2 H100; ENGINEERING_ONLY) *(4 Nov 13:45, R1-T1-HOREKA: the whole T1 tier moves to HoreKa 2 H100; Ada is the whole-table fallback)*
 
 Per ported node:
 1. **Determinism:** the same seed twice; record whether outputs are bit-identical.
@@ -83,11 +83,11 @@ Output: `docs/r1/reports/TRACKG_CENSUS_<date>.md`, one row per candidate, plus t
 
 From the census: the T1 and T2 lists. Already fixed on 4 Nov: ~~the T1 label runs on Ada; the proposer on deepthought two-card serving if O5 qualifies it, otherwise a 4090 (R1-BX-PROPOSED-CONFIRM)~~ — since 13:45 (R1-T1-HOREKA) the whole T1 tier, proposer included, runs on HoreKa 2 H100, with Ada as the whole-table fallback. One GPU model per label table; σ̂ for a table comes from a floor measured on that GPU model. PLAN §10 row.
 
-### G.4 — T1 pilot (operator; ENGINEERING_ONLY)
+### G.4 — T1 pilot (HoreKa agent; ENGINEERING_ONLY)
 
 On 2–3 T1 nodes: a short sweep-2-shaped run with the main proposer, thinking off, `cache_prompt: false`. Measure throughput (proposals per hour, run time), diff liveness, duplicate, inert and divergence rates, and prompt lengths with code context. **Then the Mac agent recomputes the R1-BX-D14 dates from these numbers and reports any change to the author before applying it.**
 
-### G.5 — Sweep 2, T1 part (operator; EVIDENCE; needs the author's note)
+### G.5 — Sweep 2, T1 part (HoreKa agent; EVIDENCE; needs the author's note)
 
 - W = 20; about 12 campaigns per T1 node; memory `append_only_summary` and `none` as on T0 *(proposed)*.
 - About 150 audited proposals per node. K = 10, unless an author row puts R1-BX-D3's K = 6 into force (then labels 7001–7003 and evaluation 7006–7008, *proposed*).
@@ -95,7 +95,7 @@ On 2–3 T1 nodes: a short sweep-2-shaped run with the main proposer, thinking o
 - The S1.1 edit–edit interaction measurement on each T1 node; per-node interaction strength reported as a covariate.
 - STOPs: as B.1b, plus a divergence rate above the census rate by more than a factor of 2 *(proposed)*, a scope violation, or a pin mismatch.
 
-### G.6 — Closed loop on T1 and T2 nodes (operator; EVIDENCE; part of D.3)
+### G.6 — Closed loop on T1 and T2 nodes (per the Phase C/D host plan, open; EVIDENCE; part of D.3)
 
 The main proposer and the API proposer (R1-BX-D6), plus the non-qualifying nodes for the R1-BX-D12 appendix. The API provider and its request log are Mac code (M10). API calls go only from the host the authorization note names, under the secrets rule; every request and response is logged with the returned model version.
 

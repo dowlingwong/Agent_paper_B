@@ -1,4 +1,4 @@
-# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026, revision 3.1)
+# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026, revision 3.2)
 
 **Written 4 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 2 addressed an independent review (not accepted: 2 BLOCKING, 6 MAJOR, 9 MINOR). Revision 3 (4 Nov) applies the author's full adoption of `proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS): new tasks M10–M13, and changes to M1, M6–M9. Revision 3.1 (4 Nov, 11:29) applies the author's rulings (PLAN §10, "4 November 2026 (11:29)"), reduces the packet to the items still open, and adds M14–M15. See §4.**
 
@@ -9,7 +9,7 @@ One Claude Code agent on the author's Mac runs this runbook. It covers every par
 - analysis of the results the experiment operator copies back;
 - the manuscript.
 
-Two server agents run the experiments (R1-SERVER-AGENTS-TWO, 4 Nov 14:58): the **operator** on TASL-2, TASL-7 and deepthought (`docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md`), and the **HoreKa agent** on HoreKa 2 for the whole T1 tier (its runbook follows the scan, `prompts/HOREKA_SCAN_PROMPT_20261104.md`). You never talk to either directly. Work passes between them only through **pushed git branches** and **the author**.
+Two server agents run the experiments (R1-SERVER-AGENTS-TWO, 4 Nov 14:58): the **operator** on TASL-2, TASL-7 and deepthought, with Ada for overflow and the T1 fallback (`docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md`), and the **HoreKa agent** on HoreKa 2 for the whole T1 tier (its runbook follows the scan, `prompts/HOREKA_SCAN_PROMPT_20261104.md`). You never talk to either directly. Work passes between them only through **pushed git branches** and **the author**.
 
 **This runbook authorizes nothing.**
 
@@ -76,8 +76,8 @@ Report to the author in **Chinese**, short and concrete. Write documents and com
 - Give the author a paste-ready message naming the branch, the commit and the operator step it unlocks.
 - The operator deploys only reviewed commits whose hashes the author passed on.
 
-**Results from the operator**
-- They arrive on pushed `ops-*` branches, or on `trackS-ops-20261030`. Read them with `git fetch` and `git show`, and analyse them in your own worktree.
+**Results from the server agents**
+- They arrive on the operator's pushed `ops-*` branches, on `trackS-ops-20261030`, or *(proposed)* on the HoreKa agent's pushed `hk2-*` branches (T1 census, labels). Read them with `git fetch` and `git show`, and analyse them in your own worktree.
 - Never edit an operator branch.
 
 ## 1. Sources and state (read first)
@@ -153,7 +153,7 @@ Run it, and commit both the script and its output.
 
 **Step 5: write the decision packet** `docs/r1/proposals/AUTHOR_DECISIONS_20261104.md`. Each section gives the options, a recommendation and a paste-ready draft PLAN row:
 
-**(a) Handover row.**
+**(a) Handover row** *(recorded as R1-HANDOVER-04NOV; amended by R1-SERVER-AGENTS-TWO: two server agents)*.
 - From the date of the row, the operator of `OPERATOR_RUNBOOK_20261104.md` is the only agent acting on the servers.
 - The coordinator, the Track X agent, the Track S operator, the Track P agent and the deepthought agent stop at their next safe point.
 - `trackS-ops-20261030` is transferred to the operator.
@@ -168,7 +168,8 @@ Run it, and commit both the script and its output.
 - TASL-7: Track X Stage A until it is accepted. After that, Track P (the PLAN host), with Track S `tabular_mlp` in the gaps. No Track S GPU job runs on TASL-7 before Stage A is accepted.
 - TASL-2: Track S `digits_mlp`, with Track X B1/B2 taking priority (their campaign worker is TASL-2-only).
 - deepthought: B.2 replay and audits on CPU; the DTQ qualification; the A4 7B row; the main proposer across two TITANs if O5 qualifies it (R1-BX-REVISIONS (f)).
-- Ada: overflow, **plus the Track G census and GPU-node noise floors (G.0)**, which R1-BX-D14 starts on Ada while Track X holds TASL-2. Resumable units only.
+- Ada: overflow and C.4; ~~the Track G census and GPU-node noise floors (G.0)~~ moved to HoreKa 2 (R1-T1-HOREKA; R1-ADA-CENSUS as amended), Ada is the T1 whole-table fallback. Resumable units only.
+- HoreKa 2: the HoreKa agent, the whole T1 tier (R1-SERVER-AGENTS-TWO).
 - **Speed figures for the packet, stated as estimates:**
   - Sweep 1 on one TITAN X made 5,813 proposals in about 11.6 h. That is about 7 s per proposal of *wall throughput*, worker CPU included, at `cache_prompt` default.
   - The recorded per-call latency averages about 112 s because 16 workers queue on one `-np 1` server.
@@ -218,7 +219,7 @@ Run it, and commit both the script and its output.
 - R1-BX-D3: whether a gate-stability criterion may use 7006–7010 on non-test sweep-1 instances (an explicit exception), or the check stays label-seed-only;
 - R1-BX-REVISIONS (c): the divergence definition; how a divergent proposal enters the belief and the action target u; partial divergence across audit seeds;
 - R1-BX-REVISIONS (f): the O5 pass criterion; whether sweep 2's T0 and T1 parts share a proposer host;
-- R1-BX-REVISIONS (h): the operator's scoped code exception for porting task assets;
+- R1-BX-REVISIONS (h): the scoped code exception for porting task assets (confirmed; holder now the HoreKa agent, R1-SERVER-AGENTS-TWO);
 - Track G: the census noise-floor seed block (proposed 8001–8010); memory modes and campaigns per T1 node (proposed as T0, about 12); the G.5 divergence STOP; the K = 6 seed subsets (proposed 7001–7003 / 7006–7008);
 - TRACK_P: T0 never the held-out suite in leave-one-suite-out; probe A6 descriptive; whether P.3a is re-run under the 4 Nov order;
 - Track S: whether it continues after 15 Dec, off the critical path;
@@ -389,7 +390,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 **Branches.** Paper `mac-trackg-20261104`; harness `r1-local-trackg-20261104` from `origin/r1`.
 
 **Steps.**
-0. **Shared pieces for the operator's ports (before G.1; review document §7 routes porting itself to the operator):** a node template (`NodeSpec` with editable and frozen paths, a fixed step or token budget, never wall-clock), a base metric parser that reports divergence as its own outcome, a per-run working-copy runner with resource limits, validation-only selection for test-scored tasks, and a checklist for declaring the 3–5 representative edits. Tests on fake runs, including a frozen-path edit being refused. Hand the commit to the operator for G.1.
+0. **Shared pieces for the operator's ports (before G.1; review document §7 routes porting itself to the operator):** a node template (`NodeSpec` with editable and frozen paths, a fixed step or token budget, never wall-clock), a base metric parser that reports divergence as its own outcome, a per-run working-copy runner with resource limits, validation-only selection for test-scored tasks, and a checklist for declaring the 3–5 representative edits. Tests on fake runs, including a frozen-path edit being refused. Hand the commit, through the author, to **the HoreKa agent** for G.1 (R1-SERVER-AGENTS-TWO).
 1. **Diff support in the harness (G.2):**
    - apply a diff in a per-run working copy and refuse any hunk outside `editable_paths` or inside `frozen_paths`, through the existing scope validator;
    - inert detection (empty after normalisation, or an AST equal to the incumbent's);
@@ -397,13 +398,13 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
    - provenance fields: diff text, its hash, files touched, code-state hash;
    - the proposal schema `manager_proposal/v2-diff` (name proposed, packet (j));
    - **the T0 path is unchanged:** a test shows that a `manager_proposal/v1` campaign produces byte-identical requests and records.
-2. **Review support for the ports:** the operator's ports (G.1, on `ops-trackg-<date>`) are reviewed by a fresh agent; you answer questions on the shared pieces but do not edit the operator's branch. The **S1.1 edit–edit interaction analysis for diffs** (per-node interaction strength as a covariate) is yours.
+2. **Review support for the ports:** the HoreKa agent's ports (G.1, on its own branch) are reviewed by a fresh agent; you answer questions on the shared pieces but do not edit the operator's branch. The **S1.1 edit–edit interaction analysis for diffs** (per-node interaction strength as a covariate) is yours.
 3. **Divergence class** in the trial record and in `r1/c3/labels`: a divergent run gets no z-value; the label builder reports it separately (R1-BX-REVISIONS (c)).
 4. **Apptainer runner option** for a task that ships only as an image: `apptainer exec --nv --containall`, a bound per-run copy, the `.sif` sha256 in provenance. Only if the census finds such a task.
 5. **API proposer (R1-BX-D6):** a provider for the model the author names (packet (j)), with a version pin, a full request/response log and the returned model version recorded per call, and a cost counter. Keys are never read by you; the calls run only on the host the authorization note names.
 6. **Drafts:** the T1/T2 selection row for the author (G.3), from the census; the T1 pilot plan (G.4); the T1 sweep authorization draft (G.5); the closed-loop plan for G.6 including the non-qualifying nodes of the R1-BX-D12 appendix; and the **date recomputation** after G.4 (packet (i)).
 
-**Done when:** the harness and paper tests pass with an unchanged failure set apart from new tests; the reviewer has accepted and checked in particular that the T0 path is byte-identical; the hand-off gives the operator the commits for G.1 smoke and G.4.
+**Done when:** the harness and paper tests pass with an unchanged failure set apart from new tests; the reviewer has accepted and checked in particular that the T0 path is byte-identical; the hand-off gives the HoreKa agent the commits for G.1 smoke and G.4.
 
 **4 Nov (13:45, R1-T1-HOREKA):** the T1 tier runs on HoreKa 2. *(proposed; only once a later PLAN row adopts the HoreKa job design, after the scan; write nothing before that row)* M10 would then also include the HoreKa code of `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` §5: the submit tool with its downtime guard, the status helper, the `slurm` host mode, the GPU slot allocator, pair-unit audit sharding, the staging tool and the job templates. Write it after the scan report, and have it reviewed.
 
@@ -447,7 +448,7 @@ P.3a is re-run under the new order only if probe A6 shows mean |Δ RPS| > 0.01 (
 **Governs:** RUNBOOK B.3, B.4 (calibration), B.7; C3_DESIGN §5–§6; R1-BX-D7, D8, D9.
 
 **Steps.**
-1. Verify the sha and counts of every label table the operator copies back (O4, O6, O8 G.5). Never rebuild a table.
+1. Verify the sha and counts of every label table the server agents copy back (operator O4, O6; HoreKa agent T1). Never rebuild a table.
 2. **B.3:** A0–A3 offline (rules, constant prior, LightGBM, NGBoost) and the practitioner baselines in their offline form, through the M11 code. CPU only.
 3. **A4 calibration (B.4):** fit the isotonic map on dev from the operator's raw A4 answers (O9). Score on test with `y_eval` only.
 4. **Tables:** per-node and pooled one-step values; the cross-proposer table (R1-MAIN-PROPOSER (e)); the R1-BX-D8 gate statistic on T0 + T1 with tier as a stratum; the screening funnel (R1-BX-D12).
@@ -480,6 +481,8 @@ The TabPFN rows and the A5/A6 rows come from TASL-7 (O7); you only tabulate them
 - Keep the decision packet current, and show it when the author asks "what's pending".
 
 ## 4. Review record
+
+**Revision 3.1 → 3.2** (4 Nov). R1-SERVER-AGENTS-TWO: the HoreKa agent takes the T1 ports and results (M10, M14, results paths, packet (a)/(b)); per the review `reviews/SERVER_AGENTS_TWO_REVIEW_20261104.md`.
 
 **Revision 3 → 3.1** (4 Nov, 11:29). The author's rulings reduce the packet (M1, ruled-items note), fix M12's protocol and make you editor of `r1/c3/train/` (M13). New tasks M14 (B.3, A4 calibration, gate report) and M15 (C.4, D.1, D.2, D.4) fill the gaps found in the 11:21 work table.
 
