@@ -62,7 +62,7 @@ no result exists (RUNBOOK §1, STATUS).
 | Path | What it is |
 |---|---|
 | `r1/` | R1 analysis code: noise pilot (`noise/`), headroom pilot (`headroom/`), theory code (`theory/`), liveness, branch schema, baselines, Ada/Deepthought runners (`scripts/`), tests (`tests/`). |
-| `docs/r1/` | Plan, runbooks, status, specs (`C3_DESIGN.md`, `TRACK_P_POST_TRAINING.md`, `TECH_ROUTE.md`), theory notes (T1–T5), proposals, authorizations, reports, reviews and agent prompts (`prompts/`). |
+| `docs/r1/` | Plan, runbooks, status, specs (`C3_DESIGN.md`, `TRACK_P_POST_TRAINING.md`, `TECH_ROUTE.md`), theory notes (T1–T5), proposals, authorizations, reports, reviews and agent prompts (`prompts/`; which are in use: `prompts/README.md`). Branch inventory: `BRANCHES_20261104.md`. |
 | `results/r1/` | Committed pilot and engineering outputs (`pilot/`, `engineering/`). |
 | `papers/` | Manuscript (not started; format open, PLAN R1-FORMAT). |
 | `archive/old_b_2026-10-09/` | The retired route: plans (`docs_paper_split/`), manuscript (`paper_b_manuscript/`) and, since 18 Oct 2026, all its code, tests, protocols, release tooling and the vendored Pi tree (`code/`, with `PROVENANCE.md` and licences). Read-only history. |
