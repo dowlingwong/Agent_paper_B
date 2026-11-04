@@ -934,6 +934,22 @@ The author's words at 17:12, as recorded in the runbook's §8: "批准第 1 步�
 - *(open)* The runbook's §7 items 1–9 (production submission and NHR@KIT question (c); T_max and the GPU model, row R1-HOREKA-TMAX; F, C and D; the 400 GPU-h ceiling and the 300 GPU-h STOP; k, the J4 placement and J3 co-location; the second proposer; infrastructure failure versus divergence; the J1b pass criterion; PLAN item H1).
 - The Mac runbook's M10 HoreKa paragraph now points to the runbook's §3 (author, 18:00); the Mac agent writes that code, `hk2_submit.py` and `hk2_status.py` first because HK1 needs them.
 
+### 4 November 2026 (18:00) — HoreKa production submission (author; recorded by an AI agent, Claude, Mac-local agent)
+
+At 18:06 the author wrote: "HoreKa 正式作业提交：我裁定（4 Nov 18:00）"agent 可以从 agent 节点提交 GPU 作业，包括续作业，同时等 NHR 回复。" 请写成 PLAN 行，决策格用这句原话。它解决 R1-T1-HOREKA 里"在 NHR 回答之前由作者提交正式作业"那条 (open)，也是 HoreKa runbook §7 第 1 项的裁定；runbook §0.3 的临时规则（GPU 作业由我用 `--author` 提交）随之失效。consequences 里写明：NHR 回复如果限制 agent 提交或批作业里的 LLM 循环，按 runbook §5 立即 STOP。"
+
+| Decision | Author decision (4 Nov 2026, 18:00) |
+|---|---|
+| R1-HOREKA-AGENT-SUBMIT | "agent 可以从 agent 节点提交 GPU 作业，包括续作业，同时等 NHR 回复。" |
+
+**Consequences** (the author's own, from his 18:06 message; not part of the decision cell):
+- It settles R1-T1-HOREKA's *(open)* item "until NHR@KIT answers … the author submits production jobs", and it is the ruling on HoreKa runbook §7 item 1.
+- The interim rule of HoreKa runbook §0.3 (every `gpu-*` job submitted by the author with `--author`) lapses.
+- If NHR@KIT's reply restricts agent submission or LLM loops in batch jobs, the HoreKa agent STOPs at once under HoreKa runbook §5.
+- In M10's `hk2_submit.py`, the refusal of `gpu-*` submissions without `--author` "before the ruling" is conditioned on this row.
+
+*Recorder's note (not the author's words):* the runbook's §7 item 1 option (ii) reads "the HoreKa agent submits production jobs from the `agent` node (continuations included), and … J3 runs inside GPU batch jobs, pending NHR@KIT's answer". The author's sentence names submission and continuations; his STOP condition on "LLM 循环 in 批作业" refers to the J3 part. HoreKa runbook §0.3's other rules stay (dev-QoS limits, never touching another user's jobs, no inherited recovery authorization).
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
