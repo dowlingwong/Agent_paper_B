@@ -11,7 +11,7 @@ Repository: `https://github.com/dowlingwong/agent_paper_b`. Read everything on b
 ## 1. Files to read
 
 **The comment**
-- `docs/r1/proposals/REVIEW_COMMENT_SEQUENTIAL_POLICY_20261104.md`. Its links point to the Mac's `docs/` layout; here the same files are under `docs/r1/`.
+- `docs/r1/proposals/REVIEW_COMMENT_SEQUENTIAL_POLICY_20261104.md`, on branch **`docs/runbooks-04nov`** (not yet merged into `mac-int`). Its links point to the Mac's `docs/` layout; here the same files are under `docs/r1/`.
 
 **The plan and its state**
 - `docs/r1/PLAN.md`: §1–§9 for the question and the claims, and all of §10. The rows dated 3 and 4 November control. Read in particular:
