@@ -1,0 +1,370 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+
+===== 1 identity =====
+hk2n1254.localdomain
+uid=504267(ka_ir7683) gid=44940(ka_ekp) groups=44940(ka_ekp),502887(hk-project-p0027888) context=unconfined_u:unconfined_r:unconfined_t:s0
+2026-11-04T16:25:36+01:00
+01-header.motd
+10-site.motd
+20-banner-hk2.motd
+30-versions-hk2.motd
+40-docu-hk2.motd
+50-support-hk2.motd
+70-training-hk2.motd
+80-state-hk2.motd
+90-maintenance-hk2.motd
+99-footer.motd
+********************************************************************************
+*                                                                              *
+*                   Karlsruher Institut für Technologie (KIT)                  *
+*                       Scientific Computing Center (SCC)                      *
+*                   _    _                 _  __       ___                     *
+*                  | |  | |               | |/ /      |__ \                    *
+*                  | |__| | ___  _ __ ___ | ' / __ _     ) |                   *
+*              ----|  __  |/ _ \| '__/ _ \|  < / _` |   / / ---->              *
+*              ----| |  | | (_) | | |  __/| . \ (_| |  / /_ ---->              *
+*              ----|_|  |_|\___/|_|  \___||_|\_\__,_| |____|---->              *
+
+*                                                                              *
+*                       (KITE2 1.0, RHEL 9.6, GPFS 6.0.1)                      *
+*                                                                              *
+*                   documentation: https://docs.nhr.kit.edu/                   *
+*                                                                              *
+*             ticket system: https://nhr-helpdesk.scc.kit.edu/                 *
+*                                                                              *
+*         operational state: the system is in production                       *
+*                            some nodes are still being migrated               *
+*                            and prepared for production                       *
+*                                                                              *
+* From November 23, 2026, through December 4, the computer building (449.3) on *
+* the KIT North Campus will be completely disconnected from the power grid due *
+* to legally required inspections and maintenance work on the power supply.    *
+*                                                                              *
+* You will not be able to access your data during this time. Computation jobs  *
+* will not run during this period.                                             *
+*                                                                              *
+* To avoid further downtime in the near future, we are coordinating this       *
+* building-related downtime with our own maintenance work. As soon as the      *
+* maintenance work is complete, we will resume operation of the HPC systems in *
+* clusters. The resumption of operations for all systems is scheduled to be    *
+* completed by December 4, 2026.                                               *
+*                                                                              *
+********************************************************************************
+
+===== 2 accounts =====
+ka_ir7683|hk-project-p0027888
+hk-project-p0027888||normal||||100
+--- account hk-project-p0027888
+hk-project-p0027888|ka_ir7683|||
+Account                    User  RawShares  NormShares    RawUsage   NormUsage  EffectvUsage  FairShare    LevelFS                    GrpTRESMins                    TRESRunMins 
+-------------------- ---------- ---------- ----------- ----------- ----------- ------------- ---------- ---------- ------------------------------ ------------------------------ 
+hk-project-p0027888   ka_ir7683          1    0.333333        2856    0.000000      0.005407   0.788235  61.645892                                cpu=117,mem=228796,energy=0,n+ 
+Current Association Manager state
+
+Association Records
+
+ClusterName=hk2 Account=hk-project-p0027888 UserName=ka_ir7683(504267) Partition= Priority=0 ID=537
+    SharesRaw/Norm/Level/Factor=1/0.33/3/0.79
+    UsageRaw/Norm/Efctv=2856.00/0.00/0.01
+    ParentAccount= Lineage=/hk2/hk-project-p0027888/0-ka_ir7683/ DefAssoc=Yes
+    GrpJobs=50(1) GrpJobsAccrue=N(0)
+    GrpSubmitJobs=N(1) GrpWall=N(23.80)
+    GrpTRES=cpu=N(2),mem=N(3890),energy=N(0),node=N(1),billing=N(2),fs/disk=N(0),vmem=N(0),pages=N(0),fs/lustre=N(0),gres/gpu=N(0),gres/gpumem=N(0),gres/gpuutil=N(0),ic/ofed=N(0)
+    GrpTRESMins=cpu=N(47),mem=N(92582),energy=N(0),node=N(23),billing=N(47),fs/disk=N(0),vmem=N(0),pages=N(0),fs/lustre=N(0),gres/gpu=N(0),gres/gpumem=N(0),gres/gpuutil=N(0),ic/ofed=N(0)
+    GrpTRESRunMins=cpu=N(117),mem=N(228796),energy=N(0),node=N(58),billing=N(117),fs/disk=N(0),vmem=N(0),pages=N(0),fs/lustre=N(0),gres/gpu=N(0),gres/gpumem=N(0),gres/gpuutil=N(0),ic/ofed=N(0)
+    MaxJobs= MaxJobsAccrue= MaxSubmitJobs=100(1) MaxWallPJ=
+    MaxTRESPJ=
+    MaxTRESPN=
+    MaxTRESMinsPJ=
+    MinPrioThresh=
+    Comment=(null)
+normal||||
+agent||cpu=2||
+dev|||1|3
+
+===== 3 usage this year (CPU and GPU hours) =====
+--------------------------------------------------------------------------------
+Cluster/Account/User Utilization 2026-01-01T00:00:00 - 2026-11-04T00:59:59 (26528400 secs)
+Usage reported in TRES Hours
+--------------------------------------------------------------------------------
+  Cluster         Account     Login     Proper Name      TRES Name          Used 
+--------- --------------- --------- --------------- -------------- ------------- 
+
+===== 4 partitions (sinfo may be restricted; a refusal is a finding) =====
+slurm_load_node: Access/permission denied
+--- gpu-h100
+PartitionName=gpu-h100
+   AllowGroups=ALL AllowAccounts=ALL AllowQos=ALL
+   AllocNodes=ALL Default=NO QoS=N/A
+   DefaultTime=00:10:00 DisableRootJobs=NO Exclusive=NO GraceTime=0 Hidden=NO
+   MaxNodes=16 MaxTime=2-00:00:00 MinNodes=1 LLN=NO MaxCPUsPerNode=128 MaxCPUsPerSocket=UNLIMITED
+   Nodes=hkn[0902-0922]
+   PriorityJobFactor=1 PriorityTier=1 RootOnly=NO ReqResv=NO OverSubscribe=NO
+   OverTimeLimit=NONE PreemptMode=OFF
+   State=UP TotalCPUs=2688 TotalNodes=21 SelectTypeParameters=NONE
+   JobDefaults=DefCpuPerGPU=16,DefMemPerGPU=186720
+   DefMemPerNode=UNLIMITED MaxMemPerNode=UNLIMITED
+   TRES=cpu=2688,mem=15684480M,node=21,billing=2688,gres/gpu=84
+
+--- gpu-h200
+PartitionName=gpu-h200
+   AllowGroups=ALL AllowAccounts=ALL AllowQos=ALL
+   AllocNodes=ALL Default=NO QoS=N/A
+   DefaultTime=00:10:00 DisableRootJobs=NO Exclusive=NO GraceTime=0 Hidden=NO
+   MaxNodes=13 MaxTime=2-00:00:00 MinNodes=1 LLN=NO MaxCPUsPerNode=192 MaxCPUsPerSocket=UNLIMITED
+   Nodes=hkn[1951-1963]
+   PriorityJobFactor=1 PriorityTier=1 RootOnly=NO ReqResv=NO OverSubscribe=NO
+   OverTimeLimit=NONE PreemptMode=OFF
+   State=UP TotalCPUs=2496 TotalNodes=13 SelectTypeParameters=NONE
+   JobDefaults=DefCpuPerGPU=48,DefMemPerGPU=186720
+   DefMemPerNode=UNLIMITED MaxMemPerNode=UNLIMITED
+   TRES=cpu=2496,mem=9709440M,node=13,billing=2496,gres/gpu=52
+
+--- dev-gpu-h100
+PartitionName=dev-gpu-h100
+   AllowGroups=ALL AllowAccounts=ALL AllowQos=ALL
+   AllocNodes=ALL Default=NO QoS=dev
+   DefaultTime=00:10:00 DisableRootJobs=NO Exclusive=NO GraceTime=0 Hidden=NO
+   MaxNodes=1 MaxTime=01:00:00 MinNodes=1 LLN=NO MaxCPUsPerNode=128 MaxCPUsPerSocket=UNLIMITED
+   Nodes=hkn0901
+   PriorityJobFactor=1 PriorityTier=1 RootOnly=NO ReqResv=NO OverSubscribe=NO
+   OverTimeLimit=NONE PreemptMode=OFF
+   State=UP TotalCPUs=128 TotalNodes=1 SelectTypeParameters=NONE
+   JobDefaults=DefCpuPerGPU=16,DefMemPerGPU=186720
+   DefMemPerNode=UNLIMITED MaxMemPerNode=UNLIMITED
+   TRES=cpu=128,mem=746880M,node=1,billing=128,gres/gpu=4
+
+--- cpu
+PartitionName=cpu
+   AllowGroups=ALL AllowAccounts=ALL AllowQos=ALL
+   AllocNodes=ALL Default=NO QoS=N/A
+   DefaultTime=00:10:00 DisableRootJobs=NO Exclusive=NO GraceTime=0 Hidden=NO
+   MaxNodes=UNLIMITED MaxTime=3-00:00:00 MinNodes=1 LLN=NO MaxCPUsPerNode=384 MaxCPUsPerSocket=UNLIMITED
+   Nodes=hk2n[1003-1056,1101-1154,1201-1253]
+   PriorityJobFactor=1 PriorityTier=1 RootOnly=NO ReqResv=NO OverSubscribe=NO
+   OverTimeLimit=NONE PreemptMode=OFF
+   State=UP TotalCPUs=61824 TotalNodes=161 SelectTypeParameters=NONE
+   JobDefaults=(null)
+   DefMemPerCPU=1945 MaxMemPerNode=746880
+   TRES=cpu=61824,mem=120247680M,node=161,billing=61824
+
+--- dev-cpu
+PartitionName=dev-cpu
+   AllowGroups=ALL AllowAccounts=ALL AllowQos=ALL
+   AllocNodes=ALL Default=NO QoS=dev
+   DefaultTime=00:10:00 DisableRootJobs=NO Exclusive=NO GraceTime=0 Hidden=NO
+   MaxNodes=UNLIMITED MaxTime=01:00:00 MinNodes=1 LLN=NO MaxCPUsPerNode=384 MaxCPUsPerSocket=UNLIMITED
+   Nodes=hk2n[1001-1002]
+   PriorityJobFactor=1 PriorityTier=1 RootOnly=NO ReqResv=NO OverSubscribe=NO
+   OverTimeLimit=NONE PreemptMode=OFF
+   State=UP TotalCPUs=768 TotalNodes=2 SelectTypeParameters=NONE
+   JobDefaults=(null)
+   DefMemPerCPU=1945 MaxMemPerNode=746880
+   TRES=cpu=768,mem=1493760M,node=2,billing=768
+
+--- agent
+PartitionName=agent
+   AllowGroups=ALL AllowAccounts=ALL AllowQos=ALL
+   AllocNodes=ALL Default=NO QoS=agent
+   DefaultTime=00:10:00 DisableRootJobs=NO Exclusive=NO GraceTime=0 Hidden=NO
+   MaxNodes=UNLIMITED MaxTime=3-00:00:00 MinNodes=1 LLN=NO MaxCPUsPerNode=384 MaxCPUsPerSocket=UNLIMITED
+   Nodes=hk2n1254
+   PriorityJobFactor=1 PriorityTier=1 RootOnly=NO ReqResv=NO OverSubscribe=NO
+   OverTimeLimit=NONE PreemptMode=OFF
+   State=UP TotalCPUs=384 TotalNodes=1 SelectTypeParameters=NONE
+   JobDefaults=(null)
+   DefMemPerCPU=1945 MaxMemPerNode=746880
+   TRES=cpu=384,mem=746880M,node=1,billing=384
+
+Partition dev-cpu                 :      0 nodes n/a
+Partition cpu                     :      1 nodes drain
+Partition agent                   :      0 nodes n/a
+Partition large                   :      2 nodes idle
+Partition dev-gpu-h100            :      0 nodes n/a
+Partition gpu-h100                :      0 nodes n/a
+Partition gpu-h200                :      0 nodes n/a
+Partition gpu-h200-8              :      0 nodes n/a
+PreemptMode             = OFF
+PrivateData             = accounts,events,jobs,nodes,reservations,usage,users
+SelectTypeParameters    = CR_CORE_MEMORY,CR_ONE_TASK_PER_CORE,ENFORCE_BINDING_GRES
+
+===== 5 reservations (maintenance window, flags) =====
+No reservations in the system
+
+===== 6 storage =====
+HOME=/home/ka_ekp/ka_ir7683
+PROJECT=/hfs2/data/project/hk-project-p0027888/ka_ir7683
+SCRATCH=/scratch
+TMPDIR=/scratch
+Filesystem     Type  Size  Used Avail Use% Mounted on
+hfs2-home      gpfs  5.4P  114T  5.3P   3% /hfs2/data
+hfs2-home      gpfs  5.4P  114T  5.3P   3% /hfs2/data
+/home/ka_ekp/ka_ir7683 gpfs
+/hfs2/data/project/hk-project-p0027888/ka_ir7683 gpfs
+hfs2-home /hfs2/data
+hfs2-work /hfs2/work
+hkfs-home /hkfs/home
+hkfs-work /hkfs/work
+Lsdf01 /gfse/data/LSDF/lsdf01
+Lsdf02 /gfse/data/LSDF/lsdf02
+
+===== 7 queue estimates (--test-only starts nothing) =====
+--- -p gpu-h100 --gres=gpu:4 --exclusive -t 24:00:00 -N 1
+sbatch: Job 120270 to start at 2026-11-12T04:28:23 a using 128 processors on nodes hkn0919 in partition gpu-h100
+--- -p gpu-h100 --gres=gpu:4 --exclusive -t 24:00:00 -N 1 --deadline=2026-11-22T00:00:00
+sbatch: Job 120271 to start at 2026-11-12T04:28:23 a using 128 processors on nodes hkn0919 in partition gpu-h100
+--- -p gpu-h100 --gres=gpu:1 -t 04:00:00 -N 1
+sbatch: Job 120272 to start at 2026-11-12T00:26:31 a using 32 processors on nodes hkn0904 in partition gpu-h100
+--- -p dev-gpu-h100 --gres=gpu:1 -t 00:15:00 -N 1
+sbatch: Job 120273 to start at 2026-11-04T22:34:06 a using 32 processors on nodes hkn0901 in partition dev-gpu-h100
+--- -p cpu -n 1 -c 8 --mem=16G -t 01:00:00
+sbatch: Job 120274 to start at 2026-11-05T07:55:36 a using 8 processors on nodes hk2n1035 in partition cpu
+--- gpu-h100 job states (counts; may be partial if PrivateData hides other users)
+--- my jobs
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+            120262     agent vscode-r ka_ir768  R       1:11      1 hk2n1254
+
+===== 8 modules (EasyBuild names) =====
+CMake/
+CMake/3.18.4
+CMake/3.26.3-GCCcore-12.3.0
+CMake/3.27.6-GCCcore-13.2.0
+CMake/3.29.3-GCCcore-13.3.0
+CMake/3.31.11-GCCcore-15.2.0
+CMake/3.31.12
+CMake/3.31.3-GCCcore-14.2.0
+CMake/3.31.8-GCCcore-14.3.0
+CMake/4.0.3-GCCcore-14.3.0
+CMake/4.2.1-GCCcore-15.2.0
+CUDA/
+CUDA/12.6.0
+CUDA/12.8.0
+CUDA/12.9.1
+CUDA/13.0.2
+CUDA/13.1.1
+CUDA/13.2.0
+CUDA/13.3.0
+cuDNN/
+cuDNN/9.10.1.4-CUDA-12.8.0
+cuDNN/9.10.2.21-CUDA-12.6.0
+cuDNN/9.15.0.57-CUDA-12.9.1
+GCC/
+GCC/12.3.0
+GCC/13.2.0
+GCC/13.3.0
+GCC/14.2.0
+GCC/14.3.0
+GCC/15.2.0
+GCC/16.2.0
+GCCcore/
+GCCcore/12.3.0
+GCCcore/13.2.0
+GCCcore/13.3.0
+GCCcore/14.2.0
+GCCcore/14.3.0
+GCCcore/15.2.0
+GCCcore/16.2.0
+git/
+git/2.41.0-GCCcore-12.3.0-nodocs
+git/2.42.0-GCCcore-13.2.0
+git/2.45.1-GCCcore-13.3.0
+git/2.49.0-GCCcore-14.2.0
+git/2.50.1-GCCcore-14.3.0
+git/2.52.0-GCCcore-15.2.0
+NCCL/
+NCCL/2.22.3-GCCcore-13.3.0-CUDA-12.6.0
+NCCL/2.25.1-GCCcore-14.2.0-CUDA-12.8.0
+NCCL/2.27.5-GCCcore-13.3.0-CUDA-12.6.0
+NCCL/2.27.7-GCCcore-14.2.0-CUDA-12.8.0
+NCCL/2.27.7-GCCcore-14.3.0-CUDA-12.9.1
+Python/
+Python/2.7.18-GCCcore-12.3.0
+Python/3.11.3-GCCcore-12.3.0
+Python/3.11.5-GCCcore-13.2.0
+Python/3.12.3-GCCcore-13.3.0
+Python/3.13.1-GCCcore-14.2.0
+Python/3.13.5-GCCcore-14.3.0
+Python/3.14.2-GCCcore-15.2.0
+Python-bundle-PyPI/
+Python-bundle-PyPI/2023.06-GCCcore-12.3.0
+Python-bundle-PyPI/2023.10-GCCcore-13.2.0
+Python-bundle-PyPI/2024.06-GCCcore-13.3.0
+Python-bundle-PyPI/2025.04-GCCcore-14.2.0
+Python-bundle-PyPI/2025.07-GCCcore-14.3.0
+Python-bundle-PyPI/2026.04-GCCcore-15.2.0
+--- spider CUDA
+CUDA/12.6.0
+CUDA/12.8.0
+CUDA/12.9.1
+CUDA/13.0.2
+CUDA/13.1.1
+CUDA/13.2.0
+CUDA/13.3.0
+--- spider GCC
+GCC/12.3.0
+GCC/13.2.0
+GCC/13.3.0
+GCC/14.2.0
+GCC/14.3.0
+GCC/15.2.0
+GCC/16.2.0
+--- spider CMake
+CMake/3.18.4
+CMake/3.26.3-GCCcore-12.3.0
+CMake/3.27.6-GCCcore-13.2.0
+CMake/3.29.3-GCCcore-13.3.0
+CMake/3.31.3-GCCcore-14.2.0
+CMake/3.31.8-GCCcore-14.3.0
+CMake/3.31.11-GCCcore-15.2.0
+CMake/3.31.12
+CMake/4.0.3-GCCcore-14.3.0
+CMake/4.2.1-GCCcore-15.2.0
+--- spider Python
+Python/2.7.18-GCCcore-12.3.0
+Python/3.11.3-GCCcore-12.3.0
+Python/3.11.5-GCCcore-13.2.0
+Python/3.12.3-GCCcore-13.3.0
+Python/3.13.1-GCCcore-14.2.0
+Python/3.13.5-GCCcore-14.3.0
+Python/3.14.2-GCCcore-15.2.0
+
+===== 9 tools on the agent node =====
+python3: /usr/bin/python3
+git: /usr/bin/git
+git-lfs: /usr/bin/git-lfs
+apptainer: /usr/bin/apptainer
+singularity: /usr/bin/singularity
+podman: missing
+docker: missing
+uv: missing
+conda: missing
+cmake: missing
+nvcc: missing
+rsync: /usr/bin/rsync
+Python 3.9.21
+
+===== 10 network from the agent node (headers only) =====
+https://huggingface.co 200
+https://pypi.org/simple/ 200
+https://github.com 200
+https://download.pytorch.org/whl/ 200
+
+===== 11 own jobs (7 days) =====
+120165|agent|FAILED|00:00:37
+120165.extern||COMPLETED|00:00:37
+120165.0||FAILED|00:00:36
+120168|agent|FAILED|00:10:55
+120168.extern||COMPLETED|00:10:56
+120168.0||FAILED|00:10:54
+120169|agent|CANCELLED by 504267|00:00:00
+120238|agent|CANCELLED by 504267|00:11:05
+120238.extern||COMPLETED|00:11:05
+120238.0||FAILED|00:11:04
+120262|agent|RUNNING|00:01:14
+120262.extern||RUNNING|00:01:14
+120262.0||RUNNING|00:01:13
+
+===== end =====
+2026-11-04T16:25:39+01:00
