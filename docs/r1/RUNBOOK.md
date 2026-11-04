@@ -6,6 +6,16 @@ Canonical plan: [PLAN.md](PLAN.md). Progress goes only into [STATUS.md](STATUS.m
 
 > **Current routing and historical rows.** The sweep host is `deepthought.etp.kit.edu` (see `prompts/DEEPTHOUGHT_SWEEP1_RUNBOOK.md` §1), not the deepthought2 hostname in the older host table. R1-TASL7-TRACKP moves Track P and its listed 4B/LONO work from portal to TASL-7 after the host-equivalence gate; R1-ADA-OVERFLOW permits scoped resumable overflow. R1-INFER-LLAMACPP replaces Ollama for sweep 1. R1-EXAM-CTX sets 32,768 context with the specified 16,384 fallback; R1-EXAM-TRANSFER governs transfer without portal GitHub credentials. Track X and Track P have their own independent review loops. Older rows below are retained as history where they conflict with these later decisions.
 
+> **4 Nov 2026 revision (PLAN §10 R1-BX-D1 … R1-BX-D14, R1-BX-REVISIONS; the author adopted `proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` in full).** These rows control wherever older text below conflicts:
+> - **Tiers.** T0 = the 8 CPU nodes (controlled testbed, single-parameter low-interaction condition); T1 = GPU label + evaluation tasks; T2 = GPU evaluation only. Target 12–16 real tasks, ≥ 3 suites (autoresearch, 1GC-7RC, MLGym), ≥ 5 domains. Primary generalisation is leave-one-suite-out.
+> - **Track G is the critical path** and starts now (rewritten below). GPU-node census and noise floors start on Ada while Track X holds TASL-2.
+> - **Labels on GPU nodes:** fixed step budgets, code-level diffs, one GPU model per table, divergence as its own outcome class; K = 6 only if the sweep-1 subsampling check passes (R1-BX-D3), otherwise K = 10.
+> - **Gate:** B.7 uses the aggregate IQM gap closed and probability of improvement with node-stratified bootstrap CIs (R1-BX-D8), on CPU + T1 labels, ≈ 8 Dec.
+> - **Cuts:** B.6 cut; Stage D (C.2) one round on 1–2 T1 nodes; R-B optional. A4 is the self-control arm; R-A is "decision-focused fine-tuning".
+> - **Additions:** practitioner baselines (Karpathy default, fixed-r + t-test); an information-matched TabPFN comparison in regression mode; an API proposer in closed-loop evaluation only; 1–2 GPU nodes for Track S with a fallback date ≈ 15 Dec.
+> - **Dates (targets, recomputed after the T1 pilot):** B.7 ≈ 8 Dec, Track S fallback ≈ 15 Dec, D.3 ≈ 3 Jan, manuscript 10 Jan with writing from early December.
+> - **Execution split:** `prompts/MAC_LOCAL_RUNBOOK_20261104.md` (the Claude on the Mac) and `prompts/OPERATOR_RUNBOOK_20261104.md` (the single SSH operator), both revision 3.
+
 > **Venue changed to ICML 2027 (author, 24 Oct).** The deadline is not yet announced; a projection from the previous cycle puts abstract registration around 16 Jan 2027 and full papers around 22 Jan 2027. Only the venue changed: the plan, the phase targets and the quality bar stay as they are (author, 24 Oct).
 
 ## 1. Ground rules (unchanged)
@@ -32,7 +42,7 @@ Canonical plan: [PLAN.md](PLAN.md). Progress goes only into [STATUS.md](STATUS.m
 | Host | Hardware | Access | Use for |
 |---|---|---|---|
 | **Mac** | MacBook Pro, M1 Max, 64 GB unified memory | Exclusive | Code, docs, tests, theory, analysis, offline evaluation of non-LLM arms (A0–A3), CPU pilots with the scripted proposer, fetching OpenML caches (networked). **LLM and small-model work only as a last resort** (R1-COMPUTE revised 24 Oct): allowed only when no other host can do the step, with the author's approval per use. The hardware can run LoRA SFT or single-token RL for ≤ 4B models (MLX / MPS). |
-| **deepthought** (deepthought2.etp.kit.edu, code under `/ceph/dwong/`) | Many CPU cores, large RAM and storage; 4 × TITAN 12 GB | **Exclusive** | Long LLM-backed collection that must not be interrupted: C3 label sweeps (one pinned manager per TITAN, CPU workers and audits on the cores), liveness checks, A4 zero-shot queries, the aggregation round, online deployment of arms that fit 12 GB. |
+| **deepthought** (`deepthought.etp.kit.edu`, code under `/ceph/dwong/`; *4 Nov: may serve the main proposer across two TITANs if the dual-card qualification passes, R1-BX-REVISIONS (f)*) | Many CPU cores, large RAM and storage; 4 × TITAN 12 GB | **Exclusive** | Long LLM-backed collection that must not be interrupted: C3 label sweeps (one pinned manager per TITAN, CPU workers and audits on the cores), liveness checks, A4 zero-shot queries, the aggregation round, online deployment of arms that fit 12 GB. |
 | **zhixu portal** (TASL-2) | 1 × RTX 4090 24 GB | **Exclusive** | Track X proposer exam (R1-EXAM-HOST). Until 26 Oct also Track P; Track P moved to TASL-7 (R1-TASL7-TRACKP). |
 | **TASL-7** (Tailscale; added 26 Oct) | 1 × RTX 4090 24 GB; driver 580 / CUDA 13.0 | **Exclusive** | Track P: small-model training and evaluation ≤ 4B (spikes, decision-model exam, A5 SFT, A6, R-B, LONO retraining); 4B sidecar arms in C.3/D.3 (R1-TASL7-TRACKP). |
 | **zhixu experiment** (Ada, `ucrtasl`, SSH alias `experiment_zhixu`) | 8 × RTX 6000 Ada 48 GB | **Shared; jobs may be interrupted** | Overflow and parallel capacity only, for jobs that are resumable in short segments (checkpoint per campaign root or per training epoch): extra sweep shards, the C4 debiased-memory A/B, replicate seeds. Never the only copy of a long, un-resumable job. |
@@ -96,18 +106,18 @@ Added 27 Oct (R1-LAYOUT-FLATTEN): after the labels freeze (3 Nov), with every ag
 | A.10 | Port from Ollama to llama.cpp (R1-INFER-LLAMACPP, 25 Oct): `llama-server` instance manager, GGUF sha256 + build-commit pin, health/offload checks, watchdog, fake server for dry runs, configs; check the harness `llamacpp` provider (OpenAI-compatible base URL with `/v1`, D26 seed pass-through) | Mac (code) | Dry runs and resume/watchdog tests pass on the llama.cpp path |
 | A.11 | Build llama.cpp on the sweep host and run a one-token GPU load probe of the pinned GGUF (TITAN X: compute 5.2, driver 525, so build against a CUDA toolkit the driver supports, `CMAKE_CUDA_ARCHITECTURES=52`) | deepthought (author's terminal) | Probe shows full GPU offload, or the author picks another host |
 
-### Phase B — C3 labels and the offline gate (target ~22 Nov 2026)
+### Phase B — C3 labels and the offline gate (target ≈ 8 Dec 2026, R1-BX-D14; was ~22 Nov)
 
 | # | Step | Host | Done when |
 |---|---|---|---|
 | B.1 | C3 label sweep 1: 8 nodes × 18 instances × 2 memory modes × W = 20 (≈ 5,800 proposals), manager `qwen2.5-coder:7b`. **Since 3 Nov (R1-MAIN-PROPOSER): the second source**, frozen (R1-B1-CORPUS-FREEZE) | deepthought only (24 Oct: no mixing hosts within one table) | Manifest; completion or a documented STOP (done; classified EVIDENCE by R1-SWEEP1-CLASSIFY) |
-| **B.1b** | **C3 label sweep 2 — the main source (added 3 Nov, R1-MAIN-PROPOSER):** the B.1 design with the Track X pick (thinking off) as manager, on the same instances; spec below | one RTX 4090 host for the whole sweep (TASL-2 or TASL-7) | Manifest; completion or a documented STOP |
-| B.2 | Fresh-seed audits, K = 10 (5 label + 5 evaluation seeds), for sweep 1 and (after B.1b) for sweep 2 under the same rules | deepthought CPUs (sweep 2: proposed, R1-MAIN-PROPOSER (e)) | Labels for every non-inert, non-duplicate proposal, per source |
-| B.3 | A0–A3 offline (rules, constant prior, LightGBM, NGBoost) | Mac | Offline one-step values with CIs |
+| **B.1b** | **C3 label sweep 2 — the main source (added 3 Nov, R1-MAIN-PROPOSER):** the B.1 design with the Track X pick (thinking off) as manager, on the same instances; spec below | one RTX 4090 host for the whole sweep (TASL-2 or TASL-7), or the proposer on deepthought across two TITANs (R1-BX-REVISIONS (f), after O5) | Manifest; completion or a documented STOP. **4 Nov:** this is sweep 2's **T0 part**; its **T1 part** is Track G G.5 |
+| B.2 | Fresh-seed audits, K = 10 (5 label + 5 evaluation seeds), for sweep 1 and (after B.1b) for sweep 2 under the same rules. **4 Nov (R1-BX-D3):** after sweep-1 B.2, the K = 10 → 6 subsampling check runs on the Mac (CPU); K = 6 applies to T1 audits only if it passes | deepthought CPUs (sweep 2: proposed, R1-MAIN-PROPOSER (e)) | Labels for every non-inert, non-duplicate proposal, per source |
+| B.3 | A0–A3 offline (rules, constant prior, LightGBM, NGBoost). **4 Nov:** plus the practitioner baselines in their offline form (R1-BX-D7) and the TabPFN rows, native and information-matched (R1-BX-D13) | Mac | Offline one-step values with CIs |
 | B.4 | A4: manager zero-shot typed questions; isotonic calibration on dev. Main row with the main proposer (the pick); the 7B row is secondary | 4090 host for the pick; deepthought for the 7B row | Calibrated A4 table |
 | B.5 | A5 SFT per Track P.4 (belief only; soft-label RPS + CE, R1-SOFT-SIGMA) on the P.3 finalists plus the Qwen3.5-0.8B/4B-Base control (R1-C3-CONTROL); candidates screened by the decision-model exam P.3 from Kev-0.8B/4B, StartLux 0.8B/2B/4B (if trainable after P.0) and Laya 421M | zhixu portal | RPS skill, calibration (all-bins and top-1 ECE, PIT, width ratio), offline value per model |
-| B.6 | ~~Second manager for diversity~~: covered by sweep 1 as the second source since 3 Nov (R1-MAIN-PROPOSER (c)). Still open: extend toward 8–10k with extra OpenML / MLP nodes, only if the A5 learning curve asks for it | the main proposer's sweep host | Manifest, if run |
-| B.7 | **STOP — C3 gate (author):** A3 or A5 beats A2 by ≥ δ_n on ≥ 2 nodes, lower 95 % bound > 0, **on the main proposer's data (sweep 2)**; the cross-proposer table is reported beside it | Mac (author) | PLAN §10 row: pass → Phase C; fail → C3 reported as the measured negative, C1 + C2 carry the paper |
+| B.6 | ~~Second manager for diversity~~: covered by sweep 1 as the second source since 3 Nov (R1-MAIN-PROPOSER (c)). ~~Still open: extend toward 8–10k with extra OpenML / MLP nodes, only if the A5 learning curve asks for it~~ **Cut 4 Nov (R1-BX-D11):** replaced by the T1 GPU nodes (Track G) | the main proposer's sweep host | Manifest, if run |
+| B.7 | **STOP — C3 gate (author), ≈ 8 Dec (R1-BX-D14).** **Since 4 Nov (R1-BX-D8):** the primary criterion is the across-node aggregate — IQM of gap closed and probability of improvement of A3 or A5 over A2, with node-stratified bootstrap CIs — on the main proposer's labels from T0 (sweep 2) **and T1** (Track G G.5); the per-node table and the cross-proposer table are reported beside it. The numbers of the criterion are confirmed in the R1-BX-D8 row before any sweep-2 label is analysed. ~~A3 or A5 beats A2 by ≥ δ_n on ≥ 2 nodes, lower 95 % bound > 0~~ (18 Oct criterion, superseded) | Mac (author) | PLAN §10 row: pass → Phase C; fail → C3 reported as the measured negative, C1 + C2 carry the paper |
 
 #### B.1b — sweep 2 with the main proposer (added 3 Nov 2026, revised 4 Nov after independent review; R1-MAIN-PROPOSER)
 
@@ -169,17 +179,54 @@ Added 27 Oct (R1-LAYOUT-FLATTEN): after the labels freeze (3 Nov), with every ag
 - **Cross-proposer table** (with the B.7 gate, which is read on sweep 2): one source's train partition → the other source's test partition, both directions. Report RPS skill, ECE and decision utility, with instance-cluster bootstrap intervals and the stack differences listed above.
 - **Disclosure.** The exam nodes are among the eight sweep nodes. Instances and seeds are disjoint, but the pick's absolute Y carries a selection effect, so results lead with paired contrasts.
 
-### Track G — Harder benchmarks (added 24 Oct; runs alongside Phases B–D)
+### Track G — Real-task benchmarks: tiers T1 and T2 (rewritten 4 Nov 2026; R1-BX-D1, D2, D4, D5, D12, R1-BX-REVISIONS; **the critical path**)
 
-Author decisions (27 Oct; R1-TRACKG-SCOPE and R1-TRACKG-ROLE): Track G comprises autoresearch and, if a container is available by 10 Nov, MLGym. 1GC-7RC is removed from G.1 for now: the repository named on arXiv 2605.17046 is not public. Track G is for evaluation and transfer; test-scored tasks select on validation only. The audit budget remains for the author to decide.
+**Why it changed.** Six of the eight CPU nodes share one OpenML logistic-regression template, and the 7B manager edits almost only `max_iter` and `C`. The CPU pool alone cannot carry the main evidence, and C3 cannot be trained and gated only there (review document P1–P3). Since 4 Nov:
+- the CPU nodes are **tier T0**, the controlled testbed;
+- part of the GPU tasks are **label nodes (T1)** that train C3 and enter the B.7 gate;
+- the rest are **evaluation only (T2)**;
+- the primary generalisation test is **leave-one-suite-out**.
+
+Track G starts now; it no longer waits for B.7. The older Track G text (24–27 Oct: autoresearch plus MLGym if a container exists by 10 Nov; evaluation/transfer only) is superseded. Its rule that test-scored tasks select on validation only stands (R1-TRACKG-ROLE).
+
+**Target.** 12–16 real tasks from ≥ 3 suites and ≥ 5 domains. Variants of one task do not count.
+
+| Tier | Role | Candidates (cost per run verified one by one in G.0) |
+|---|---|---|
+| T0 | Theory validation, Track S, ablations, low-interaction condition | The 8 CPU nodes of sweep 1 |
+| T1 | Label + evaluation: train C3, the B.7 gate, leave-one-suite-out | autoresearch (short fixed-step variant); 1GC-7RC lighter tasks: TinyShakespeare, Forest Cover, ETTh1, AG News, possibly ogbg-molhiv; MLGym lighter tasks: CIFAR-10, Fashion-MNIST, House Price, a MinAtar/MountainCar-type RL task (checked against the MLGym task table) |
+| T2 | Evaluation only: closed-loop transfer, the API proposer | 1GC-7RC TinyImageNet and VOC; optional fourth suite: MLAgentBench light tasks (cifar10, imdb, ogbn-arxiv) |
+| Not used | — | RE-Bench and MLE-bench (hours per run, cannot be audited); DACBench (different problem type) |
+
+**Integration principle.** Each suite's **task assets** (data, baseline script, evaluator) become a harness node with a `NodeSpec` (editable and frozen paths, run command, metric and direction, fixed step budget). The suites' agent frameworks are not used. Every node then shares one runner, one provenance record and one audit path, and most of the need for containers disappears.
+
+**Fixed rules for every T1/T2 node.**
+- **Budget:** a fixed step or token budget, never wall-clock (R1-BX-D5). Label runs take 1–2 min; closed-loop evaluation may use longer fixed budgets (about 5 min).
+- **Hardware:** one GPU model per label table, and the noise floor that sets σ̂ for a table is measured on that table's GPU model.
+- **Edits:** code-level diffs under `manager_proposal/v2-diff` (proposed name), within the node's `editable_paths` (R1-BX-D4).
+- **Outcomes:** a divergence (a non-finite loss, or no metric at the fixed budget) is its own outcome class and is never folded into the mean (R1-BX-REVISIONS (c)).
+- **Audits:** K = 6 (3 + 3) only once R1-BX-D3's check has passed; K = 10 until then. Label seeds come from 7001–7005 and evaluation seeds from 7006–7010, never mixed, under the R1-SWEEP1-CLASSIFY and R1-B2-DECOUPLE rules. *(proposed: at K = 6, labels 7001–7003 and evaluation 7006–7008.)*
+- **Screening funnel:** every screened candidate is reported with its D21 and D28 verdicts, per suite; non-qualifying nodes are evaluated in an appendix (R1-BX-D12).
 
 | # | Step | Host | Done when |
 |---|---|---|---|
-| G.1 | Adapters: check and update the harness autoresearch node (5-min `train.py` runs, val_bpb); MLGym light tasks only if a container is available by 10 Nov | Mac (code) | Smoke campaign per node |
-| G.2 | Container check for MLGym: Docker or Podman on deepthought (pending with the admin) or zhixu portal | deepthought / zhixu portal | MLGym task runs, or MLGym dropped with a reason |
-| G.3 | Noise floor on the new nodes: determinism, σ_n for training and split seeds, run cost (fewer seeds than the CPU pool if cost requires; declared in advance) | Ada | Rows added to the noise-floor report |
-| G.4 | Author: decide the audit budget for the new nodes; their role is evaluation/transfer only | Mac (author) | PLAN §10 row |
-| G.5 | Transfer evaluation of A1–A6 on the new nodes with a reduced, pre-declared audit budget | zhixu portal (+ zhixu experiment, resumable) | Transfer table, part of D.1 |
+| G.0 | **Census per candidate task** (review document §3): run time at the fixed budget on each GPU model (4090, TITAN X, RTX 6000 Ada), VRAM, determinism (same seed twice), a 10-seed noise floor on 3–5 representative edits, the D21 verdict, and D28 liveness with the main proposer once the pick is known. Also: whether each suite's repository and licence permit use of its task assets. In particular, R1-TRACKG-SCOPE found the 1GC-7RC repository (arXiv 2605.17046) not public; if it still is not, STOP for the author (R1-BX-D2 (open)). **Ada first**, while Track X holds TASL-2. ENGINEERING_ONLY. | Ada (resumable), then the 4090s when free | `docs/r1/reports/TRACKG_CENSUS_<date>.md`, one row per candidate, with the funnel |
+| G.1 | **Port task assets into harness nodes**, natively in the harness venv where possible: a per-run working copy, resource limits, a fixed step budget, a metric parser, and a `NodeSpec` with `editable_paths` / `frozen_paths`. Containers only where a task ships only as an image, through Apptainer (`apptainer exec --nv`, `--containall`, read-only image with a bound per-run copy, cache and tmp under `/ceph/dwong/`, the `.sif` sha256 in provenance; R1-BX-REVISIONS (g)). | Mac (code: node specs, parsers, tests on fakes); the operator for host smoke runs | Smoke campaign per node with a stub manager; scope enforcement tested |
+| G.2 | **Harness diff support (R1-BX-D4):** diff application; inert and duplicate detection for diffs (a normalised diff hash, and an AST or whitespace-insensitive equality check against the incumbent); provenance (diff text, hash, files touched); the `manager_proposal/v2-diff` schema. Drafted, reviewed and pinned before any GPU sweep. The single-parameter path for T0 stays unchanged and byte-identical (tested). | Mac (harness `r1-local-*` branch) | Tests; independent review; pin recorded in the RUNBOOK pin table |
+| G.3 | **T1 selection.** From the census, the author fixes the T1 and T2 lists (12–16 tasks in all, ≥ 3 suites, ≥ 5 domains), the T1 label-run GPU model, and the proposer host. The proposer may be served on deepthought across two TITANs if the dual-card qualification (operator O5) passes (R1-BX-REVISIONS (f)). | Mac (author) | PLAN §10 row |
+| G.4 | **T1 pilot:** on 2–3 T1 nodes, a short sweep-2-shaped run (proposer on its host, task runs on the T1 GPU model) to measure throughput, diff liveness, the duplicate and inert rates for diffs, and the divergence rate. ENGINEERING_ONLY. **The coordinating agent then recomputes the R1-BX-D14 dates from the measured throughput and reports any change to the author before applying it.** | Operator: the hosts fixed in G.3 | Pilot report; date recomputation sent to the author |
+| G.5 | **Sweep 2, T1 part:** W = 20, about 12 campaigns per T1 node, about 150 audited proposals per node; the main proposer, thinking off, `cache_prompt: false`; the S1.1 edit–edit interaction measurement, with per-node interaction strength as a covariate. Then audits at the K that R1-BX-D3 leaves in force. EVIDENCE: needs the author's authorization note. | Operator | Manifests; labels per node |
+| G.6 | **T2 closed-loop evaluation** with the main proposer and with the **API proposer** (R1-BX-D6; closed-loop only, not seed-replayable). Part of D.3. | Operator (+ API) | Closed-loop tables, part of D.3/D.4 |
+
+**Cost (rough; calibrate with G.4).** About 40 GPU-h per T1 node at 2-minute runs and K = 6: noise floor about 2, sweep-2 executions (about 12 campaigns × W = 20) about 8, audits (150 × 6) about 30. About 400 GPU-h for 10 T1 nodes, and about 600 with T2. At K = 10 the audits take about 50 GPU-h per node.
+
+**Execution.** `docs/r1/prompts/TRACK_G_RUNBOOK.md` (rewritten 4 Nov) holds the step detail. The Mac agent does G.1 code, G.2 and the drafts (MAC_LOCAL M10); the operator does G.0, the host smoke of G.1, G.4–G.6 (OPERATOR O8).
+
+### Track S — 4 Nov additions (R1-BX-D10)
+
+The Track S design (rev 7.4) and its operator runbook (rev 3.3 of record) are on branch `docs/trackS-decisions-30oct` and enter this file through the Mac agent's integration (MAC_LOCAL M1). The 4 Nov decisions add:
+- **1–2 GPU nodes:** autoresearch (short fixed-step variant) and one RL-type task with high noise and interacting edits, chosen from the Track G census. The GPU-node design is a Track S design revision, drafted in `proposals/TRACK_S_GPU_EXTENSION_20261104.md`, reviewed and committed before any GPU-node Track S run. Which manager runs on the GPU nodes is open (R1-BX-D10).
+- **Fallback date ≈ 15 Dec 2026.** If Track S has no campaign-level result by then, the DAC-reduction argument rests on the theorem plus synthetic controls, and the paper says so explicitly.
 
 ### Track X — Proposer candidacy exam (appendix; added 25 Oct)
 
@@ -246,6 +293,8 @@ Cost and order: Stage A ≈ 10–15 min per model; B1 ≈ 240 proposals per mode
 
 **28 Oct (PLAN §10 R1-C3-POOL, R1-C3-POOL-EXAM, R1-TABPFN):** the decision-model candidates are **Kev-0.8B and Kev-4B**, with the Qwen3.5-0.8B/4B-Base control; **StartLux and Laya are removed**; **TabPFN** is added as a ladder rung (in-context, fine-tuned, R-A0, R-A1; not in P.3a, not in R-B). Where the text below names StartLux or Laya as candidates, these rows control. **Also 28 Oct (R1-CONTEXT-BASELINE):** a context-only rung A1-ctx (node descriptors only, fitted across training nodes per LONO fold) and a context-aware vs context-oblivious prompt ablation on Kev-0.8B at Stage S.
 
+**4 Nov (R1-BX-D9, D11, D13, R1-BX-REVISIONS (c)(d)):** the self-control arm of the three-way comparison is **A4**, not R-B; **R-B (P.6) is an optional trained-self-control ablation**; R-A (P.5) is called **decision-focused fine-tuning** in the paper, and only R-B is called RL; the proposal is serialised **after** the history, immediately before `<decide>`, with a new E6 probe comparing the two orders; each node's soft-label width uses its own σ̂, and divergence is a separate outcome class; TabPFN gets an information-matched comparison; Stage D is one round on 1–2 T1 nodes.
+
 Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs/r1/references/README.md`. **Execution:** one agent running on zhixu portal itself follows `docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md` with a STOP and an independent review after every phase (R1-TRACKP-RUNBOOK).
 
 **Facts checked 25 Oct (repo pages; to be confirmed by P.0).**
@@ -268,7 +317,7 @@ Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs
 | P.3b | **Decision-model exam, labelled** (once ≈ 400–500 training-partition labels exist from B.2): E1 zero-shot (native decision interfaces; verbalized top-k instruct LLM via llama.cpp; Jev rung through TypeSafe's official API, R1-JEV-RUNG), E2 frozen probe, E3 short LoRA SFT (300 steps × 3 seeds), E4 VRAM/speed/reload at 1,024 tokens, E5 ECE; E7 belief-head form (softmax-12 vs cumulative-11) on the top 2. Non-LLM floor (embedding + ordinal regression; GBDT) included; base vs instruct recorded. Selection rule committed with its sha256 before any P.3b data. | zhixu portal (+ API) | Pre-registered rule (spec §5.7): top model + optional second of a different class if statistically tied; Qwen control always kept; no LLM beats the floor → stop and escalate. Author confirms finalists (PLAN row). Appendix table |
 | P.4 | **A5 SFT (belief only)** on the finalists + control: soft-label RPS + CE on the B.2 labels (soft label per R1-SOFT-SIGMA); LoRA r = 16, adapter lr from the grid {1e-5, 3e-5, 1e-4} chosen by val RPS for every family (26 Oct, R1-LR-GRID), early stop on dev RPS, best checkpoint; temperature / isotonic recalibration on dev. Kev's trainer is patched (or bypassed via `kev/model.py`) to accept soft targets. Report RPS skill, NLL, all-bins and top-1 ECE, PIT, width ratio, then offline one-step value through `rules.decide`; learning curve 250/500/1k/2k. **RL gate** for P.5/P.6: RPS skill > 0 significantly, > 99 % mass on bin outputs over 3 seeds, all-bins ECE ≤ 0.05, width ratio in [0.8, 1.25]. | zhixu portal | A5 table (B.5); gate record |
 | P.5 | **A6 decoupled stage** (only after B.7 passes; = C.1): arms R-A0 rule on the A5 belief; R-A1 action head on detached features; R-A2 action head with shared LoRA (belief still RPS-only); R-A3 smoothed-rule ablation. Action loss = cost-sensitive BCE with target 1[u > 0], weight \|u\|, u = mean over label seeds of Δ·keep − g (keep from the rules under the A1 reference prior; g = 0.1 σ_node). GRPO (K = 8, group-mean baseline) on R-A1 checked against the exact gradient (cosine ≥ 0.95); report zero-variance groups. Report action/rule disagreement. Rollback if dev ECE +0.02, dev RPS worse by > 1 s.e. without utility gain, width ratio < 0.8, or entropy −20 % within 100 steps. Deploy rule(belief) or the action head, never the greedy bin. | zhixu portal | A6 vs A5 offline, located where T4 §7 predicts |
-| P.6 | **Reasoning arm (trained LLM self-control; feeds H.7):** generative bases only (Qwen control; Kev's base LM). `<analysis>` ≤ 256 tokens → belief (read) → action token (sampled). Warm-up SFT on ≈ 500 demonstration analyses written by DeepSeek-V4.1-Flash-1017 (`deepseek-flash`) via the DeepSeek API from the same leak-guarded view, without access to labels (R1-RB-TEACHER); fallback: format-only SFT. GRPO, group 8–16, β ∈ {0, 0.02}, lr 1e-6 → 5e-6, ≤ 500 steps; reward = −RPS(belief) + λ_a · 1[exec] · u (clipped) − format penalty; never the log score. Same rollback rule as P.5; ablation with vs without analysis. Reported as a distilled arm. | zhixu portal (+ API) | R-B row in the three-way comparison |
+| P.6 | **Reasoning arm (trained LLM self-control; feeds H.7). Optional ablation since 4 Nov (R1-BX-D9); A4 is the self-control arm:** generative bases only (Qwen control; Kev's base LM). `<analysis>` ≤ 256 tokens → belief (read) → action token (sampled). Warm-up SFT on ≈ 500 demonstration analyses written by DeepSeek-V4.1-Flash-1017 (`deepseek-flash`) via the DeepSeek API from the same leak-guarded view, without access to labels (R1-RB-TEACHER); fallback: format-only SFT. GRPO, group 8–16, β ∈ {0, 0.02}, lr 1e-6 → 5e-6, ≤ 500 steps; reward = −RPS(belief) + λ_a · 1[exec] · u (clipped) − format penalty; never the log score. Same rollback rule as P.5; ablation with vs without analysis. Reported as a distilled arm. | zhixu portal (+ API) | R-B row in the three-way comparison |
 | P.7 | Pins: base revision, adapter + heads sha256, calibration map, training seed, data-manifest hash; every A5/A6 arm served by H.5 from these pins only. Jev rung: exact model version returned by the API, endpoint, date, full request/response log. DeepSeek demonstrations: returned model version, prompts, outputs. | — | Pin file per arm |
 
 **Labels (how they are solved).**
@@ -285,29 +334,29 @@ Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs
 
 **Open items.** StartLux rung after P.0 (author). Track H.8 retains the accepted bin-action `OfflineBanditEnv`. Track P trains directly on the label table; the execute/skip amendment and unaccepted sidecar prompt follow-up are deferred until A7/C4 needs an environment (R1-H8-DEFERRED).
 
-### Phase C — Post-training and online pilot (target ~20 Dec 2026, only if B.7 passes)
+### Phase C — Post-training and online pilot (only if B.7 passes; dates follow R1-BX-D14 and the T1 pilot)
 
 | # | Step | Host | Done when |
 |---|---|---|---|
 | C.1 | A6 decoupled stage on the A5 finalists, per Track P.5 (rule on belief; action head detached/shared; smoothed-rule ablation; GRPO checked against the exact action gradient) | zhixu portal | A6 vs A5 offline, located where T4 §7 predicts |
-| C.2 | Aggregation round (DAgger-style): collect proposals under the deployed tabular arm, audit, retrain | deepthought *(3 Nov: a 4090 host, since the proposer is the main proposer, R1-MAIN-PROPOSER (f); to be planned)* | Retrained arms |
+| C.2 | Aggregation round (DAgger-style): collect proposals under the deployed tabular arm, audit, retrain. **4 Nov (R1-BX-D11): one round on 1–2 T1 nodes only** | deepthought *(3 Nov: a 4090 host, since the proposer is the main proposer, R1-MAIN-PROPOSER (f); to be planned)* | Retrained arms |
 | C.3 | Online pilot A1–A5 on qualifying nodes (manager + small LM co-resident: ≤ 2B models on TITANs, 4B on zhixu portal; *3 Nov: with the main proposer, co-residence on a 4090 must be re-planned against the pick's footprint*) | deepthought + zhixu portal *(3 Nov: 4090 hosts, to be planned)* | PILOT report |
 | C.4 | C4: DI test on existing branch pairs (offline) and the debiased-memory A/B on 2–4 nodes | Mac (analysis); A/B on zhixu experiment (resumable, a few GPU-hours) | C4 report |
 
-### Phase D — Transfer, pre-declaration, deployment (target ~28 Feb 2027)
+### Phase D — Transfer, pre-declaration, deployment (D.3 closed loop ≈ 3 Jan 2027, R1-BX-D14)
 
 | # | Step | Host | Done when |
 |---|---|---|---|
-| D.1 | Leave-one-node-out transfer (H2b) for A3, A5, A6, plus transfer to the Track G nodes (G.5) | zhixu portal | LONO and transfer tables |
-| D.2 | Pre-declare deployment: contrasts H1–H5, including the three-way comparison (LLM self-control A4 vs trained configurator A5/A6 vs hybrid), instances, sample sizes, matched W and LLM-call cap, analysis script, with hash | Mac (author commits) | Hash in PLAN §10 |
-| D.3 | Authorization note; online deployment, 18 instances per node, 2 repetitions, fresh-seed audited Y | deepthought (+ zhixu portal for 4B arms) *(3 Nov: 4090 hosts with the main proposer, to be planned)* | Manifests; completion or STOP |
+| D.1 | **Leave-one-suite-out (primary since 4 Nov, R1-BX-D1)** and leave-one-node-out within T0 (secondary) for A3, A5, A6; transfer to the T2 nodes (Track G G.6) | zhixu portal | LONO and transfer tables |
+| D.2 | Pre-declare deployment: contrasts H1–H5, including the three-way comparison (LLM self-control A4 vs trained configurator A5/A6 vs hybrid; R-B only as an optional ablation, R1-BX-D9), the practitioner baselines (R1-BX-D7), the API proposer's closed-loop rows (R1-BX-D6), the non-qualifying-node appendix (R1-BX-D12), instances, sample sizes, matched W and LLM-call cap, analysis script, with hash | Mac (author commits) | Hash in PLAN §10 |
+| D.3 | Authorization note; online deployment, 18 instances per node, 2 repetitions, fresh-seed audited Y; **≈ 3 Jan 2027**, on T0, T1 and T2 nodes (R1-BX-D14) | deepthought (+ zhixu portal for 4B arms) *(3 Nov: 4090 hosts with the main proposer, to be planned)* | Manifests; completion or STOP |
 | D.4 | Analysis: contrasts as pre-declared, C1 error rates per arm, T4 bound vs realised gain | Mac | Report |
 
-### Phase E — Write-up (target ~31 Mar 2027)
+### Phase E — Write-up (manuscript 10 Jan 2027, writing in parallel from early December; R1-BX-D14)
 
 | # | Step | Host | Done when |
 |---|---|---|---|
-| E.1 | Manuscript in `papers/r1/` on the ICML 2027 template (venue changed 24 Oct) | Mac | Draft |
+| E.1 | Manuscript in `papers/r1/` on the ICML 2027 template (venue changed 24 Oct). **4 Nov wording (R1-BX-D9, D12):** R-A is "decision-focused fine-tuning", only R-B is called RL; the screening funnel per suite is reported; the T0 single-parameter nodes are presented as the low-interaction condition | Mac | Draft |
 | E.2 | Rerun the novelty sweep; read SAGE, FOREAGENT, Beneath the Diff, arXiv 2610.15738 in full before citing specifics | Mac | Related work updated |
 | E.3 | Disclosure (ETAAI workshop paper), anonymised harness copy, Paper A cited anonymously | Mac | Package ready |
 | E.4 | PLAN §9 quality-bar checklist; ICML 2027 abstract registration and full submission | Mac (author) | Submitted |
@@ -323,6 +372,11 @@ Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs
 | LLM self-control (A4) matches the trained models | A finding, not a failure; report under H4 |
 | DI strongly violated (C4) | One-step offline values are biased; A7 (online RL) becomes justified, with T4 Proposition 10(b) |
 | 4B models do not fit or are too slow | Drop to ≤ 2B for online arms; keep 4B offline only |
+| The R1-BX-D3 subsampling check fails | K stays 10; STOP for the author (cost and dates are recomputed at K = 10) |
+| The 1GC-7RC repository is still not public (G.0) | STOP for the author: rebuild its tasks from the paper and public data (disclosed), or make MLAgentBench the third suite |
+| The main proposer fails diff liveness on a T1 node | STOP for the author; no node is dropped silently |
+| Track S has no campaign-level result by ≈ 15 Dec | The DAC-reduction argument rests on the theorem plus synthetic controls; the paper says so explicitly (R1-BX-D10) |
+| A T1 node diverges often under the fixed budget | Divergence is reported as its own class; the author decides whether the node stays in T1 |
 
 ## 7. Reporting
 

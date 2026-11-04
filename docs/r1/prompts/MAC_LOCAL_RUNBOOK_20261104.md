@@ -1,6 +1,6 @@
-# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026, revision 2)
+# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026, revision 3)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 2 addresses an independent review (not accepted: 2 BLOCKING, 6 MAJOR, 9 MINOR); see §4.**
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 2 addressed an independent review (not accepted: 2 BLOCKING, 6 MAJOR, 9 MINOR). Revision 3 (4 Nov) applies the author's full adoption of `proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS): new tasks M10–M13, and changes to M1, M6–M9. See §4.**
 
 One Claude Code agent on the author's Mac runs this runbook. It covers every part of the current plan that needs no GPU, no LLM inference and no remote host:
 - integrating the plan documents;
@@ -17,7 +17,7 @@ A separate **experiment operator** runs everything on the servers (`docs/r1/prom
 1. `docs/r1/PLAN.md` §10 (every dated author row);
 2. `docs/r1/RUNBOOK.md`;
 3. `docs/r1/STATUS.md`;
-4. the specs: `C3_DESIGN.md`, `TRACK_P_POST_TRAINING.md`, `proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md`;
+4. the specs: `C3_DESIGN.md`, `TRACK_P_POST_TRAINING.md`, `proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md`, `prompts/TRACK_G_RUNBOOK.md` (rewritten 4 Nov);
 5. this file.
 
 If two of these disagree, stop and ask the author. **Only the author decides.** A decision exists only as a dated PLAN §10 row. You draft rows, notes and options; you never adopt them. The author commits rows and authorization notes, or tells you in chat to commit a specific one on their behalf. In that case, quote their words in the commit body.
@@ -88,7 +88,7 @@ Report to the author in **Chinese**, short and concrete. Write documents and com
 | `codex/trackx-stagea-cooperative-20261031` | `19b8f33f` | Track X Stage A code pin |
 | **`codex/b2-repair-20261031`** | **`f98e315e`** (31 Oct; contains `codex/r1-operator-drafts` `007a8d1`) | **Not merged into the coordinator.** It holds: <br>• the reviewed environment-replay plan `docs/r1/proposals/C3_ENV_RECONSTRUCTION_REPLAY_DRAFT_20261028.md` and its review; <br>• `reviews/C3_AUDIT_SPLIT_PACKAGE_REVIEW_20261028.md` (B.2 blockers); <br>• the evidence-guard, split-audit and classification code in `r1/c3/audit.py` and `r1/scripts/c3_label_sweep*`, with tests; <br>• 8 PLAN lines. |
 | `docs/main-proposer-03nov` | `14dc0fea` | R1-MAIN-PROPOSER, RUNBOOK B.1b and the `x5_rule_v2` draft (independently accepted 4 Nov) |
-| `docs/runbooks-04nov` | this branch | This runbook and the operator runbook |
+| `docs/runbooks-04nov` | this branch | This runbook and the operator runbook (both revision 3); the 4 Nov rows **R1-BX-D1 … D14 and R1-BX-REVISIONS** in PLAN §10 (recorded from the author's full adoption of the review document); the matching RUNBOOK, C3_DESIGN, TRACK_P, TECH_ROUTE and README revisions; the rewritten `prompts/TRACK_G_RUNBOOK.md`; `proposals/TRACK_S_GPU_EXTENSION_20261104.md` |
 | `docs/trackS-decisions-30oct` | `13badb0` on GitHub (a newer local head `8bfd003` exists in a bundle) | R1-TRACKS-* rows; Track S design rev 7.4; the Track S operator runbook. **Rev 3.3 of record is the file at `13badb0`**, sha `a93fb84b…`. Later heads carry rev 3.4/3.5 with superseded pins and are not of record |
 | `trackS-ops-20261030` | `f5d5c6b0` (31 Oct) | Track S operator branch. R1-CACHEPROMPT-FALSE (under its own heading, outside §10), D6 reports, pins paper `d10b05b7` and harness `cacheprompt-20261031` @ `a3fedbb` (`a3fedbb` ⊃ `115df37` ⊃ `6adf385`) |
 | `trackp-20261026` | `b9ad6f8f` | Track P code. It adds no PLAN rows |
@@ -101,7 +101,8 @@ Report to the author in **Chinese**, short and concrete. Write documents and com
 - **Track P P.3a** is STOP (OOM, verdict UNCLEAR; options 1–3).
 - **Track S** waits for the S0.1 re-run.
 - **`cache_prompt: false`** is decided for Track X (R1-EXAM-CACHE-REV) and Track S (R1-CACHEPROMPT-FALSE), and for sweep 2 by R1-MAIN-PROPOSER. Sweep 1 is disclosed as not seed-replayable (R1-SWEEP1-CACHE-DISCLOSURE).
-- **Deepthought dual-card**: the author said in chat on 4 Nov: "deepthought我们可以用双卡deploy模型，一部分实验可以放到那上". This is intent; there is no PLAN row yet. Note that R1-MAIN-PROPOSER (f) and B.1b currently say sweep 2 runs on "one RTX 4090 host".
+- **Benchmark expansion (4 Nov, R1-BX-*).** The CPU nodes are T0; GPU label nodes (T1) and evaluation nodes (T2) come from autoresearch, 1GC-7RC and MLGym; **Track G is the critical path**; B.7 ≈ 8 Dec on the aggregate criterion; B.6 cut; K = 6 only after the subsampling check. The rows' *(proposed)* and *(open)* items need the author (packet (j)).
+- **Deepthought dual-card**: the author said in chat on 4 Nov: "deepthought我们可以用双卡deploy模型，一部分实验可以放到那上". This is intent; there is no PLAN row yet. R1-BX-REVISIONS (f) (4 Nov) now amends R1-MAIN-PROPOSER (f): the main proposer may be served on deepthought across two TITANs if the dual-card qualification (operator O5) passes.
 
 ## 2. Tasks, in priority order
 
@@ -111,6 +112,10 @@ Every task ends in a **STOP**: the review loop, a STATUS entry, then a report to
 - **M1 first.**
 - **M2 and M3** can then run in parallel.
 - **M4** comes after M3, because both edit `r1/scripts/c3_label_sweep.py`. M4 rebases on M3's accepted commit.
+- **M10** (Track G code) is on the critical path (R1-BX-D14): start it right after M1, in parallel with M2 and M3. Its G.2 diff support must be reviewed and pinned before any GPU sweep.
+- **M11** (baselines, gate, TabPFN view) follows M1; its gate guard must exist before any sweep-2 label is analysed.
+- **M12** (the K subsampling check) waits for sweep-1 B.2 audits (operator O4).
+- **M13** (serialisation order and the E6 probe) waits for packet (a) to name the editor of `r1/c3/train/`.
 
 ### M1 — One authoritative plan (integration branch) and the author's decision packet (1 day)
 
@@ -146,6 +151,7 @@ Run it, and commit both the script and its output.
 - The coordinator, the Track X agent, the Track S operator, the Track P agent and the deepthought agent stop at their next safe point.
 - `trackS-ops-20261030` is transferred to the operator.
 - `r1/exam/` and `r1/scripts/exam_*` are transferred to you as single editor, or stay with Track X: state which.
+- `r1/c3/train/` (Track P code) gets a single editor once the Track P agent stops: you, or nobody until the author names one. State which (needed by M13).
 - It replaces the scope of R1-OPERATOR-TAKEOVER, and R1-TRACKP-RUNBOOK's assumption of an agent on the host.
 - It moves the CPU replay that the replay draft assigns to the deepthought agent over to the operator.
 - It names the files that `codex/b2-repair-20261031` changes outside its own scope: Track P's `r1/c3/train/{run,trainer}.py` and the shared `r1/c3/env.py`, `control.py` and `prior_model.py`. M1 merges them only with the author's acknowledgement (or Track P's).
@@ -154,15 +160,15 @@ Run it, and commit both the script and its output.
 **(b) R1-HOSTS-04NOV (proposed amendment).**
 - TASL-7: Track X Stage A until it is accepted. After that, Track P (the PLAN host), with Track S `tabular_mlp` in the gaps. No Track S GPU job runs on TASL-7 before Stage A is accepted.
 - TASL-2: Track S `digits_mlp`, with Track X B1/B2 taking priority (their campaign worker is TASL-2-only).
-- deepthought: B.2 replay and audits on CPU; the DTQ qualification; the A4 7B row.
-- Ada: overflow only.
+- deepthought: B.2 replay and audits on CPU; the DTQ qualification; the A4 7B row; the main proposer across two TITANs if O5 qualifies it (R1-BX-REVISIONS (f)).
+- Ada: overflow, **plus the Track G census and GPU-node noise floors (G.0)**, which R1-BX-D14 starts on Ada while Track X holds TASL-2. Resumable units only.
 - **Speed figures for the packet, stated as estimates:**
   - Sweep 1 on one TITAN X made 5,813 proposals in about 11.6 h. That is about 7 s per proposal of *wall throughput*, worker CPU included, at `cache_prompt` default.
   - The recorded per-call latency averages about 112 s because 16 workers queue on one `-np 1` server.
   - Track S's serial latency on a 4090 is 0.68–0.70 s per call.
   - These figures concern the 7B. Sweep 2 uses the Track X pick, whose speed on any host is still unmeasured.
 
-**(c) R1-DT-DUALCARD (proposed).**
+**(c) R1-DT-DUALCARD — mostly settled by R1-BX-REVISIONS (f) (4 Nov).** That row already lets the main proposer run on deepthought across two TITANs if the qualification passes. The packet now only drafts the **DTQ pass criterion** (identity, latency and projection thresholds) and the B.1b difference list. The original draft items, kept for reference:
 - Allow one llama-server across two TITAN X cards (`--split-mode layer --tensor-split 1,1`), after the DTQ qualification.
 - **Explicitly amend R1-MAIN-PROPOSER (f) and RUNBOOK B.1b** so that sweep 2 may run on deepthought if the pick qualifies. Otherwise it stays on "one RTX 4090 host".
 - Add the sm_52 build and the two-card split to B.1b's list of differences from sweep 1.
@@ -193,7 +199,20 @@ Run it, and commit both the script and its output.
 - Track S keeps the 7B;
 - P.3b drawn from sweep 2's training partition.
 
-**(i) Internal freezes.** R1-INTERNAL-FREEZES has labels on 3 Nov (already slipped), B.7 on 26 Nov, D.3 complete on 20 Dec and the manuscript on 10 Jan. Propose new dates once the operator's projections exist. Never invent numbers.
+**(i) Dates.** R1-BX-D14 (4 Nov) supersedes R1-INTERNAL-FREEZES: B.7 ≈ 8 Dec, Track S fallback ≈ 15 Dec, D.3 ≈ 3 Jan, manuscript 10 Jan. They are targets. After the T1 pilot (G.4), recompute them from the measured throughput and give the author the changes **before** they are applied. Never invent numbers.
+
+**(j) The R1-BX rows' *(proposed)* and *(open)* items.** One section per item, each with options, a recommendation and a paste-ready confirmation line:
+- R1-BX-D3: the scope (T1 only; T0 stays at K = 10) and the check protocol and thresholds;
+- R1-BX-D4: the schema name `manager_proposal/v2-diff`; what happens if the pick fails diff liveness;
+- R1-BX-D6: which API proposer, its pin, its host and its cost cap;
+- R1-BX-D7: r and α for fixed-r; relabelling A0 as the Karpathy default;
+- R1-BX-D8: the numbers of the gate. **This one must be committed before any sweep-2 label is analysed;**
+- R1-BX-D10: the Track S manager on GPU nodes;
+- R1-BX-D13: the embedding model and the PCA dimension;
+- R1-BX-REVISIONS (c): the Student-t rule for heavy-tailed floors;
+- (f): the T1 label-run GPU model and the proposer host (also Track G G.3);
+- (g): which host the Apptainer check ran on;
+- R1-BX-D2: the 1GC-7RC repository's status, once G.0 reports it.
 
 **Step 6: hand the packet to the author.** Give the author the packet and the paste-ready rows. The author commits them on `mac-int-20261104`, or tells you in chat to commit named rows on their behalf, which you then do. After that:
 - push the branch;
@@ -292,7 +311,7 @@ Run it, and commit both the script and its output.
    - (e) **Two-GPU serving.** Add `gpu_uuids: [u1, u2]` with `tensor_split`. It sets `CUDA_VISIBLE_DEVICES` to both cards and passes `--split-mode layer --tensor-split`. The offload proof must show N/N layers across both cards, and the occupancy census must check both. The single-GPU `gpu_uuid` path stays unchanged.
 3. **Configs.**
    - Write `r1/scripts/configs/c3_sweep2_tasl2.json` now, as a template.
-   - Write `c3_sweep2_deepthought2gpu.json` **only after the author commits R1-DT-DUALCARD**.
+   - Write `c3_sweep2_deepthought2gpu.json` once the DTQ pass criterion (packet (c)) is committed; R1-BX-REVISIONS (f) permits deepthought two-card serving if O5 passes.
    - Every placeholder carries a comment naming the source of its value.
 4. **DTQ tool.** Write `r1/scripts/dt_dualcard_qualify.py` and reuse the Track S probe at `d10b05b7` (`r1/tracks/probes/determinism.py`: schedule, identity, `--keep-contents`). For a GGUF, it:
    - serves on two named cards, with the B.1b settings (context 16,384, q8_0 KV, `--jinja`, thinking off, `-np 1`, `cache_prompt: false`);
@@ -324,6 +343,7 @@ These follow rev 3.3 @ `13badb0` and design rev 7.4:
 - **S0.7 selection** (`collect assemble`, `analyze select`).
 - **S0.8 pre-declaration draft** (`analyze predecl-template`) and the filled `proposals/AUTH_DRAFT_trackS_20261030.md`. Both are drafts.
 - **Phase 9 analysis.**
+- **GPU-node design revision (R1-BX-D10, 4 Nov).** From `proposals/TRACK_S_GPU_EXTENSION_20261104.md`, write the Track S design revision for 1–2 GPU nodes (autoresearch short fixed-step; one high-noise RL-type task from the Track G census) against design rev 7.4: the manager (open), seed-replayability, budget, host, and what counts as a campaign-level result for the **≈ 15 Dec fallback**. A draft for review and an author row; it changes no existing Track S pin.
 
 Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or threshold.
 
@@ -335,6 +355,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
   - record its sha256;
   - write the P.3b authorization draft.
 - **Track P marker helper text.** Add it to `TRACK_P_POST_TRAINING.md` and to the RUNBOOK Track P section, after the author's ruling (packet (g)).
+- **4 Nov:** R-B (P.6) is an optional ablation and A4 is the self-control arm (R1-BX-D9); Stage D is one round on 1–2 T1 nodes (R1-BX-D11). Keep the label table, the P.3b membership and the Track P drafts consistent with that.
 
 ### M8 — Theory and manuscript (background)
 
@@ -342,13 +363,71 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 - **Manuscript.** On `docs/manuscript-28oct`, in your own branch `mac-ms-20261104`:
   - align setup and methods with R1-MAIN-PROPOSER: main proposer; two sources; cross-proposer analysis; stack differences; selection-effect disclosure;
   - add the formal setup in three layers: DAC is the problem; the decision model is the policy class; one-step training objectives are a surrogate, justified by Prop. 10(a′) and tested by Track S;
+  - **4 Nov wording (R1-BX-D9, D12, R1-BX-D1/D4):** R-A is "decision-focused fine-tuning"; only R-B is called RL; A4 is the self-control arm; the screening funnel per suite and the non-qualifying-node appendix; T0 single-parameter nodes as the low-interaction condition against T1 code diffs (the NF contrast); leave-one-suite-out as the primary generalisation test; the Track S fallback statement if it applies on 15 Dec;
+  - writing runs in parallel from early December, for the 10 Jan manuscript (R1-BX-D14);
   - results stay `\TBD{}`.
+
+### M10 — Track G code: nodes, fixed budgets and diff support (critical path; starts after M1)
+
+**Governs:** RUNBOOK Track G (G.1, G.2), `prompts/TRACK_G_RUNBOOK.md` §§2–4, R1-BX-D2, D4, D5, R1-BX-REVISIONS (c), (g).
+
+**Branches.** Paper `mac-trackg-20261104`; harness `r1-local-trackg-20261104` from `origin/r1`.
+
+**Steps.**
+1. **Diff support in the harness (G.2):**
+   - apply a diff in a per-run working copy and refuse any hunk outside `editable_paths` or inside `frozen_paths`, through the existing scope validator;
+   - inert detection (empty after normalisation, or an AST equal to the incumbent's);
+   - duplicate detection (a normalised diff hash and the resulting code-state hash against every evaluated state of the campaign);
+   - provenance fields: diff text, its hash, files touched, code-state hash;
+   - the proposal schema `manager_proposal/v2-diff` (name proposed, packet (j));
+   - **the T0 path is unchanged:** a test shows that a `manager_proposal/v1` campaign produces byte-identical requests and records.
+2. **Node scaffolding (G.1),** written as census rows arrive from the operator: per task, a `NodeSpec` with editable and frozen paths, a fixed step or token budget (never wall-clock), a metric parser that reports divergence as its own outcome, a per-run working copy and resource limits, and validation-only selection for test-scored tasks. Tests on fake runs, including a frozen-path edit being refused.
+3. **Divergence class** in the trial record and in `r1/c3/labels`: a divergent run gets no z-value; the label builder reports it separately (R1-BX-REVISIONS (c)).
+4. **Apptainer runner option** for a task that ships only as an image: `apptainer exec --nv --containall`, a bound per-run copy, the `.sif` sha256 in provenance. Only if the census finds such a task.
+5. **Drafts:** the T1/T2 selection row for the author (G.3), from the census; the T1 pilot plan (G.4); the T1 sweep authorization draft (G.5).
+
+**Done when:** the harness and paper tests pass with an unchanged failure set apart from new tests; the reviewer has accepted and checked in particular that the T0 path is byte-identical; the hand-off gives the operator the commits for G.1 smoke and G.4.
+
+### M11 — Practitioner baselines, the aggregate gate and the TabPFN matched view (after M1)
+
+**Governs:** R1-BX-D7, D8, D13; C3_DESIGN §5–§6; RUNBOOK B.3, B.7.
+
+**Steps.**
+1. **Practitioner baselines (D7)** in `r1/c3/arms.py` (or beside it; `arms.py` is not a shared file) and in the controller path: the Karpathy default (check first whether A0 is exactly this rule; if so, label A0 as such rather than duplicating it) and fixed-r replication + t-test with r and α from packet (j), charged for its replicate runs. Offline forms for B.3; online forms through `RuleController`'s interface. `control.py` is shared: STOP and ask before editing it.
+2. **Gate statistic (D8)** in `r1/c3/offline_eval` (or a new `r1/c3/gate.py`): gap closed per node against the noisy-oracle ceiling, the IQM across nodes, the probability of improvement, and the node-stratified bootstrap. Tests on synthetic tables with known answers.
+3. **The pre-registration guard:** the gate code refuses to read sweep-2 or T1 `y_eval` unless a PLAN line containing `R1-BX-D8` and the numbers' confirmation exists, the same way `runtime.author_gate` reads the PLAN. Test it.
+4. **TabPFN information-matched view (D13):** a feature view of hand features plus a PCA-reduced proposal-text embedding (the embedding model from packet (j); PCA fitted on training rows only); TabPFN in regression mode with its predictive distribution binned over the 12 canonical bins; the class cap checked and recorded for the installed version. The Kev side of the matched comparison is Track P code: write a spec only, unless packet (a) makes you its editor.
+
+**Done when:** tests pass; the reviewer has accepted and checked that no evaluation label is read; the hand-off names the commit.
+
+### M12 — The K = 10 → 6 subsampling check (after O4 delivers sweep-1 B.2 audits)
+
+**Governs:** R1-BX-D3 (conditional).
+
+**Steps.**
+1. Draft the check protocol from R1-BX-D3's proposed text (packet (j)): 3-subsets of the label seeds; evaluation-seed statistics on training and dev instances only, never the test partition; the pass thresholds. The author commits it before you run it.
+2. Run it on the Mac CPU on the label table the operator copied back (verify its sha first).
+3. Report `docs/r1/reports/MAC_K_SUBSAMPLE_CHECK_<date>.md`, with an independent review.
+4. **If it fails:** K stays 10. STOP and tell the author at once, with the T1 cost and the dates recomputed at K = 10.
+
+**Done when:** the report and its review exist and the author has the verdict. Only an author row puts K = 6 into force.
+
+### M13 — Serialisation order and the E6 probe A6 (only if packet (a) names you editor of `r1/c3/train/`)
+
+**Governs:** R1-BX-REVISIONS (d); TRACK_P §2.2 ("Order of the serialised parts") and §5.6 (probe A6).
+
+**Steps.**
+1. Find which order the current template uses (proposal before or after history) and which template version P.3a ran with. Report it.
+2. Add a template version with the 4 Nov order (history → proposal → `<decide>`). Keep the old version loadable, so that P.3a records stay reproducible.
+3. Add probe A6 (history-first vs proposal-first) to the E6 probe set, with tests on a tiny random-weight model on the CPU.
+
+If you are not the editor, write the same as a spec for the author.
 
 ### M9 — Not now
 
 - R1-LAYOUT-FLATTEN waits for the labels freeze.
 - Track H H.8 stays deferred.
-- Track G adapters are written only if the author keeps Track G.
+- ~~Track G adapters are written only if the author keeps Track G.~~ Track G is the critical path since 4 Nov (M10).
 
 ## 3. Reporting
 
@@ -356,6 +435,9 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 - Keep the decision packet current, and show it when the author asks "what's pending".
 
 ## 4. Review record
+
+**Revision 2.1 → 3** (4 Nov). Applies the author's full adoption of `proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` (PLAN §10 R1-BX-*): §1 state and branch row; the order of tasks; packet (a) adds the `r1/c3/train/` editor, (b) adds Ada for the Track G census, (c) is reduced to the DTQ criterion, (i) follows R1-BX-D14, and (j) collects the rows' proposed and open items; M6 adds the Track S GPU-node design; M7 and M8 take the 4 Nov wording; new tasks M10 (Track G code), M11 (baselines, gate, TabPFN view), M12 (K check), M13 (serialisation order); M9 no longer defers Track G. Reviewed with the operator runbook, PLAN and RUNBOOK in one independent review (`reviews/BENCH_EXPANSION_REVISION_REVIEW_20261104.md`).
+
 
 **Revision 1 → 2** (independent review, not accepted):
 

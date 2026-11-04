@@ -4,6 +4,13 @@
 
 > **Later decisions.** The old §5 bin-as-action and greedy-bin deployment, and related prior-only training description, are superseded by separated belief and execute/skip outputs (PLAN §10 R1-C3-POST). R1-SOFT-SIGMA replaces the per-proposal audit-SE label for new tables; duplicates are rule-skipped and excluded from labels rather than assigned the no-op bin (22 Oct duplicates row). The 22 Oct row fixes g; K=10 is the total audit seed count. R1-INFER-LLAMACPP, R1-VENUE-3 and the current RUNBOOK supersede the old backend and venue references. Historical simulation assumptions, costs and dates below are retained; the venue decision did not itself adopt a new timeline.
 
+> **4 Nov 2026 (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS).** Where this file conflicts, these rows control:
+> - **Labels come from T0 and T1.** T0 is the 8 CPU nodes (single-parameter edits, the low-interaction condition); T1 is GPU label nodes from autoresearch, 1GC-7RC and MLGym (code-level diffs, fixed step budgets, one GPU model per table). T2 nodes are evaluation only. Primary generalisation is **leave-one-suite-out**; LONO within T0 is secondary (§6).
+> - **K.** T1 audits use K = 6 (3 label + 3 evaluation seeds) only if the sweep-1 subsampling check passes (R1-BX-D3); until then, and if it fails, K = 10. The soft-label width uses each node's own σ̂ (s = σ̂_node/√K_label). Divergent runs are a separate outcome class (§4).
+> - **Ladder additions (§5):** the Karpathy default and fixed-r replication + t-test (R1-BX-D7); TabPFN information-matched, in regression mode (R1-BX-D13).
+> - **Gate (§6):** the aggregate IQM of gap closed and probability of improvement with node-stratified bootstrap CIs replaces the per-node criterion (R1-BX-D8).
+> - **Self-control arm:** A4 (R1-BX-D9). The decision-focused stage A6 is called "decision-focused fine-tuning"; only R-B (an optional ablation) is called RL.
+
 ## 1. One-paragraph summary
 
 The learned component does **not** choose actions. It predicts, **before a run is spent**, the distribution of the true increment of the proposed edit: the inert probability π, the mean μ and the spread τ, conditional on the edit and the ledger. These three numbers go into rules derived in C2:
@@ -64,6 +71,11 @@ This ladder is C3.
   - One rerun-2-sized sweep (4 nodes × 18 instances × 2 memory modes × 20) gives ≈ 2,900 proposals, of which ≈ 1,000 are non-inert.
   - Audit cost: ≈ 12 runs × 1–2 s per proposal, about 6 CPU-hours per sweep; under an hour on Ada cores.
   - Target ≈ 8–10k labelled proposals, from: the OpenML pool extended to 12–15 datasets (D20, small new code), 3 MLP nodes, and a second manager model for proposal diversity. That is 2–3 sweeps. *(3 Nov, PLAN R1-MAIN-PROPOSER: the main sweep uses the Track X pick, thinking off; `qwen2.5-coder:7b` sweep 1 is the second manager.)*
+- **4 Nov additions (R1-BX-D3, D4, D5, R1-BX-REVISIONS (c)).**
+  - On T1 nodes a proposal is a code-level diff. Inert and duplicate detection for diffs is part of the harness change (a normalised diff hash and an equality check against the incumbent's code); no-ops are labelled by rule as on T0.
+  - σ̂ for a T1 node comes from that node's own noise floor, measured on the label table's GPU model. If the floor is heavy-tailed, a Student-t soft label is declared before labels are built *(proposed)*.
+  - A run that diverges (a non-finite loss, or no metric at the fixed budget) is recorded as its own outcome class. It gets no z-value and is reported separately, never averaged into μ.
+  - About 150 audited proposals per T1 node; K = 6 if R1-BX-D3's check passes, otherwise K = 10.
 - **Covariate shift.** Deployed arms skip and re-propose, so the proposal distribution shifts. One aggregation round fixes this: collect proposals under the deployed tabular arm, audit them, retrain (DAgger-style).
 
 ## 5. Arms (the ladder) and training
@@ -79,6 +91,9 @@ This ladder is C3.
 | A6 | **small LM, stage 2:** A5 then decision-focused post-training | see below |
 | (A7) | stage 3 online RL | only if the DI test (§7) shows a material violation |
 | ref | AWR-MLP acting on actions directly (Harness-MDP style); PACE gate | as PLAN §5 |
+| prac-1 (4 Nov) | **Karpathy default:** always execute, single run, keep if Δ̂ > 0 (if A0 is exactly this rule, A0 is relabelled rather than duplicated) | — |
+| prac-2 (4 Nov) | **Fixed-r replication + t-test** (racing style): r runs per candidate, keep by a one-sided t-test at a declared level *(proposed: r = 3, Welch, α = 0.05)*, charged for its runs at matched compute | — |
+| TabPFN (28 Oct; 4 Nov) | In-context and fine-tuned beliefs on the featurizer features (R1-TABPFN), **plus an information-matched row (R1-BX-D13):** hand features + a PCA-reduced proposal-text embedding for TabPFN, and the same information for Kev; TabPFN in regression mode with its predictive distribution binned | as R1-TABPFN |
 
 **Stage 2, precisely.**
 - **Environment:** the plug-in rules plus the logged labels. It is an offline contextual bandit; no harness runs during training.
@@ -117,7 +132,16 @@ This ladder is C3.
 | H4 | A4 vs A5 | the manager's own zero-shot judgement vs a small trained model (the LLM-self-control arm in its useful form) |
 | H5 | gain by memory mode | screening value is largest for the weaker proposal law (memory off) |
 
-**C3 gate (replaces RUNBOOK 1.5 for C3; adopted 18 Oct, PLAN §10).** Proceed to online deployment if the offline one-step gain of A3 or A5 over A2, scaled to a 20-run campaign, reaches δ_n (D18) on at least two nodes, with its lower 95 % bound above 0. Otherwise report C3 as the measured negative, with T4 Proposition 7's dispersion bound as the explanation; C1 + C2 carry the paper.
+**C3 gate, since 4 Nov (PLAN §10 R1-BX-D8; replaces the 18 Oct per-node criterion below).** The primary criterion is the **across-node aggregate**: the IQM of gap closed and the probability of improvement of A3 or A5 over A2, with node-stratified bootstrap CIs, on the main proposer's T0 + T1 labels. The per-node table is secondary. The numbers are fixed in the R1-BX-D8 row before any sweep-2 label is analysed. The row's proposed operationalisation:
+- gap closed per node = (U_arm − U_A2)/(U_oracle − U_A2) on test instances with `y_eval`, U_oracle being the noisy-oracle ceiling of TRACK_P §7.1;
+- the IQM across nodes;
+- probability of improvement = the per-node share of test instances where the arm beats A2 (ties ½), averaged over nodes;
+- 2,000 node-stratified bootstrap resamples;
+- pass if, for A3 or A5 (Holm, one-sided α = 0.05), the lower bound of the IQM gap closed is > 0 and the lower bound of the probability of improvement is > 0.5; the point IQM is reported against a practical size of 0.1.
+
+**Generalisation, since 4 Nov (R1-BX-D1):** leave-one-suite-out is the primary transfer test; LONO within T0 is secondary. The H2b contrast is read on held-out suites first.
+
+*Superseded (18 Oct):* **C3 gate (replaces RUNBOOK 1.5 for C3; adopted 18 Oct, PLAN §10).** Proceed to online deployment if the offline one-step gain of A3 or A5 over A2, scaled to a 20-run campaign, reaches δ_n (D18) on at least two nodes, with its lower 95 % bound above 0. Otherwise report C3 as the measured negative, with T4 Proposition 7's dispersion bound as the explanation; C1 + C2 carry the paper.
 
 ## 7. Add-ons: B (part of C2) and D (= C4)
 
@@ -139,6 +163,8 @@ Placement fixed on 18 Oct 2026 (PLAN §10, R1-C4).
 | Most predictable waste is rule-detectable | Learning gain small in distribution | A2 is a declared baseline. The LM's claim moves to transfer (H2b) and to free-form edits later. |
 | Tabular ties LM | H2a null | Reported as such; H2b and H4 carry the LM part |
 | Too few nodes for LONO | Weak transfer evidence | Extend the OpenML pool and MLP nodes to ≥ 8 qualifying nodes (L8b-style code) |
+| Toy nodes only (4 Nov review, P1–P3) | Labels and gate on one template with one knob; near-bandit by construction | T1 GPU label nodes with code-level diffs; leave-one-suite-out; T0 kept as the low-interaction condition (R1-BX-D1, D2, D4) |
+| Node screening favours the method (P9) | Selection-bias criticism | Screening funnel per suite; non-qualifying nodes in an appendix (R1-BX-D12) |
 | g mis-tuned | Over- or under-skipping | g tuned on dev instances; sensitivity curve reported |
 | DI violated strongly | Plug-in rule not optimal; one-step offline value biased | Measured by the D test; then A7 (online RL) becomes justified, with the T4 Proposition 10(b) explanation |
 | Predictor miscalibration | T5 (check 6): a predictor that is uncalibrated, or overconfident in τ, does **worse than the constant-prior baseline** | Calibration is the primary model-selection criterion (log score, reliability of P(Δ > 0) and π) before any deployment. Isotonic recalibration on dev instances. Ship only arms whose offline one-step value beats A2. |
@@ -146,6 +172,8 @@ Placement fixed on 18 Oct 2026 (PLAN §10, R1-C4).
 | Label noise | Blurred targets | Soft labels; K raised to 10 on edits near t* |
 
 ## 9. Timeline (fits PLAN §9)
+
+> **Superseded 4 Nov (R1-BX-D14):** B.7 ≈ 8 Dec 2026 on T0 + T1 labels, D.3 ≈ 3 Jan 2027, manuscript 10 Jan 2027; recomputed after the T1 pilot. The table below is history.
 
 | By | Step |
 |---|---|
