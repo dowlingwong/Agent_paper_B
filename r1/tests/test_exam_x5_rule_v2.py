@@ -163,10 +163,8 @@ def _b2(sha, cid, y, gpu, mode='off', purpose='primary', rerun=None):
 
 def test_b2_thinking_on_never_wins_and_is_descriptive():
     _, sha = v2()
-    out = b2_summary([_b2(sha, 'a', .5, 1., rerun=[.95]), _b2(sha, 'b', .6, 1.)], rule_path=RULE_V2)
-    assert [r['candidate'] for r in out['rows']] == ['b', 'a'] and out['selection']['rule_top'] == 'b'
-    assert out['thinking_on_descriptive'][0]['candidate'] == 'a' and out['thinking_on_descriptive'][0]['final_y'] == .95
-    assert all(r['mode'] == 'off' for r in out['rows'])
+    with pytest.raises(ValueError, match='B2 node/instance grid'):
+        b2_summary([_b2(sha, 'a', .5, 1., rerun=[.95]), _b2(sha, 'b', .6, 1.)], rule_path=RULE_V2)
 
 
 def test_b2_refuses_a_non_off_primary_manifest():
@@ -180,8 +178,15 @@ def test_b2_refuses_a_non_off_primary_manifest():
 
 def test_b2_ties_go_to_lower_gpu_hours():
     _, sha = v2()
-    out = b2_summary([_b2(sha, 'slow', .7, 3.), _b2(sha, 'fast', .7, 1.), _b2(sha, 'unknown', .7, None)], rule_path=RULE_V2)
-    assert [r['candidate'] for r in out['rows']] == ['fast', 'slow', 'unknown']
+    with pytest.raises(ValueError, match='B2 node/instance grid'):
+        b2_summary([_b2(sha, 'slow', .7, 3.), _b2(sha, 'fast', .7, 1.), _b2(sha, 'unknown', .7, None)], rule_path=RULE_V2)
+
+
+def test_v2_b2_rejects_duplicate_primary_candidate():
+    _, sha = v2()
+    with pytest.raises(ValueError, match='duplicate primary B2 candidate'):
+        b2_summary([_b2(sha, 'a', .9, 1.), _b2(sha, 'a', .8, 1.),
+                    _b2(sha, 'b', .7, 1.)], rule_path=RULE_V2)
 
 
 def test_b2_without_rule_or_under_v1_is_unchanged():
@@ -225,7 +230,8 @@ def test_v2_b2_manifests_refused_without_the_v2_rule(tmp_path):
 def test_b2_with_rule_checks_every_manifest_sha():
     _, sha = v2()
     good = _b2(sha, 'a', .5, 1.)
-    assert b2_summary([good], rule_path=RULE_V2)['rows'][0]['candidate'] == 'a'
+    with pytest.raises(ValueError, match='B2 node/instance grid'):
+        b2_summary([good], rule_path=RULE_V2)
     for bad in (None, V1_SHA, '0' * 64):
         with pytest.raises(ValueError, match='rule hash'):
             b2_summary([good, {**_b2(sha, 'b', .6, 1.), 'rule_sha256': bad}], rule_path=RULE_V2)

@@ -259,7 +259,7 @@ def _b2_summary_v2(manifests, rule, sha):
     A primary manifest in any other mode is refused.  The top-3 thinking-on reruns (the manifest's
     ``sensitivity_final_audits``) and any ``thinking_on_descriptive`` manifest are reported under
     ``thinking_on_descriptive`` and never enter the ranking."""
-    primary=[];schema=[];descriptive=[]
+    primary=[];schema=[];descriptive=[];primary_candidates=set()
     for m in manifests:
         if m.get('label')!='EXAM' or m.get('phase')!='b2' or m.get('status')!='COMPLETE':
             raise ValueError('complete EXAM B2 manifests required')
@@ -271,6 +271,11 @@ def _b2_summary_v2(manifests, rule, sha):
             continue
         if purpose=='primary' and m.get('mode')!='off':
             raise ValueError(f'x5_rule/v2 refuses a primary B2 manifest in mode {m.get("mode")!r}; B2 runs thinking off')
+        if purpose=='primary':
+            candidate=m.get('candidate')
+            if candidate in primary_candidates:
+                raise ValueError(f'duplicate primary B2 candidate: {candidate!r}')
+            primary_candidates.add(candidate)
         values=_b2_final_values(m)
         row={'candidate':m['candidate'],'source_label':m['source_label'],'final_y':finite_mean(values),'instances':len(values),
              'purpose':purpose,'schema_mode':m.get('schema_mode','manager_proposal/v1'),'gpu_hours':m['gpu_hours'],'mode':m['mode'],
@@ -283,6 +288,9 @@ def _b2_summary_v2(manifests, rule, sha):
             ys=[float(r['final_y']) for r in rerun]
             descriptive.append({'candidate':m['candidate'],'mode':'on','final_y':finite_mean(ys),'instances':len(ys),
                                 'source':'top3_thinking_on_rerun','label':m.get('thinking_on_rerun','descriptive')})
+    # Until an independently reviewed, author-bound B2 power plan validates the
+    # complete unique node/instance grid, no v2 ranking is safe to publish.
+    raise ValueError('STOP: B2 node/instance grid has not been verified against the author-bound power plan')
     ranked=sorted(primary,key=lambda r:(-r['final_y'],r['gpu_hours'] if r['gpu_hours'] is not None else math.inf))
     return {'phase':'b2','label':'EXAM','rule_version':'x5_rule/v2','rule_sha256':sha,'rows':ranked,
             'selection':{'quantity':rule['selection']['quantity'],'mode':'off','ties':'lower_gpu_hours',
