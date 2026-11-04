@@ -27,6 +27,14 @@ The same Codex reviewer re-checked the uncommitted diff from `75134796` in `/pri
 
 **M2 remains NOT ACCEPTED**, and B2 ranking is unusable. The original round-1 reviewer cannot be recovered, remaining handoff questions need author decisions, the final handoff and full-suite comparison are not complete, and the M5 safety fix remains separate. This partial review authorizes no measurement or execution.
 
+## M5 safety-fix integration re-check — partial, not M2 acceptance
+
+The same Codex reviewer checked the M2/M5 combined tree at `/private/tmp/paper-b-m2-fix-20261104` commit `5fcea74` (parent `a1f222b`); it cherry-picks the separately accepted M5 fix `d5f7b75`. `git show --format= --binary 5fcea74` SHA-256 is `c5faeefb7c03efbc4a68e448e4728aea9a07ff1acae4cf816f8724db553e1d35`, byte-identical to the separately reviewed M5 patch. It touches only `r1/exam/stage_a.py` and the two related synthetic test files. The earlier B2 duplicate check and unconditional v2 ranking STOP remain present in the combined tree.
+
+Independent focused local CPU run used `AR_HARNESS_ROOT=/Users/wongdowling/Documents/autoresearch_harness /Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python -m pytest -q r1/tests/test_exam_template_a1.py r1/tests/test_exam_cache_order.py r1/tests/test_exam_qualify_guard.py r1/tests/test_template_repair.py r1/tests/test_exam_x5_rule_v2.py -k 'not test_exam_campaign_request_manifest_and_llm_call_carry_cache_prompt_false and not test_stage_a_harness_pin_does_not_send_cache_prompt_so_b1_evidence_stops'`: **148 passed, 2 deselected**. The two omitted tests require stand-in server binding and were independently passed at `75134796`; this run does not re-establish them on `5fcea74`. No live service, model or GPU was used.
+
+The M5 patch integrates cleanly with the current M2 tree in this tested scope. This is **not an acceptance of M2**, not B2 ranking readiness, and not a claim that the full-suite failure set matches. A full suite on `5fcea74` is reportedly in progress and must be reviewed with its baseline, exact environment, and final handoff before a final conclusion. Neither this integration nor its tests changes or revalidates historical Stage A measurements.
+
 ## Compatibility observation
 
 The no-rule v1 function remains usable for legacy unstamped manifests, but the CLI always supplies its default v1 rule. A synthetic unstamped v1 B2 manifest that the original CLI accepted now raises a rule-hash error. Actual old manifest impact is not established. The handoff should not describe every v1 caller as byte-for-byte unchanged without this qualification. The stricter check also prevents ambiguous inputs from being silently treated as v1; preserving that safety may require an explicitly documented compatibility boundary rather than simply removing it.
