@@ -142,3 +142,78 @@ The 15–22 Nov window has the G.4 pilot and possibly a first J3 + J4 (G.5) wave
 The 1GC-7RC propagation is complete and consistent, apart from MAJOR-1 and m1–m5. The HoreKa draft decides nothing, but needs MAJOR-2 to MAJOR-7 fixed before the author can rely on it.
 
 Verdict: not accepted
+
+---
+
+## Round 2 — re-check of commit `d5bcf108` (`git diff bf402b24 d5bcf108`)
+
+**Reviewer:** the same independent agent (Claude), AI-assisted. Documents only; nothing committed or pushed. The files checked are PLAN, RUNBOOK, `prompts/MAC_LOCAL_RUNBOOK_20261104.md`, `prompts/TRACK_G_RUNBOOK.md` and `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` (revision 2). The round-1 text of this review is unchanged in that commit.
+
+### Status of the round-1 findings
+
+| Finding | Status | Evidence |
+|---|---|---|
+| MAJOR-1 (row adds to A4) | **Resolved** | PLAN line 773. The cell now holds A4's clauses and the author's two quotes. The dropped first-day check is explained by the 11:55 quote. The agent's consequences are below the table under "not part of the decision", with *(proposed)* and *(open)* marked where they matter, and the leave-one-suite-out requirement is now stated. |
+| MAJOR-2 (pairing vs resume) | **Resolved** | Draft J4 row and §3 "Pairing". The pair is the resume unit: it is written only when complete and is otherwise discarded and re-run whole. §5.5 matches. |
+| MAJOR-3 (arithmetic) | **Resolved** | Draft §7. 8 × 40 = 320 and 8 × 60 = 480 GPU-h. 320/24 ≈ 13 h and 480/24 = 20 h are correct. The K = 10 figure follows (f): the audit share rises to about 50, giving about 60 per node. "4090-class" is gone, and the 3-of-4 GPUs caveat for J3 is stated. |
+| MAJOR-4 (downtime guard) | **Resolved** (one new MINOR, n2) | Draft §5.1. The guard now has three layers: a check at submission, Slurm `--deadline`, and an in-job clock check. The start hour, whether 4 Dec is included, and pending jobs are marked *(to check)* (§1, §6.5). |
+| MAJOR-5 (shared nodes) | **Resolved** | Draft §1 row 25 now matches the Slurm page ("Shared"; `--exclusive` reserves a whole node). Exclusive allocation is *(to check)*. §5.3 keeps a light occupancy check instead of skipping it. |
+| MAJOR-6 (staging on the login node) | **Resolved** | Draft §4.1 and §5.6. The author runs `hk2_stage.py` (downloads only), and hashing moves to J0b on `cpu`. |
+| MAJOR-7 (rows affected) | **Resolved** (one residual MINOR, n3) | Draft §0 lists R1-BX-PROPOSED-CONFIRM (f)/E1, R1-ADA-CENSUS, R1-BX-REVISIONS (f), R1-BX-D14, RUNBOOK G.0, TRACK_G and OPERATOR O0/O8. It adds a qualification for an H100-served proposer (J1b) and makes the fallback move the whole table. |
+| m1 (PLAN forward pointers) | **Resolved** | PLAN line 752 is struck through and marked "Adopted 4 Nov 12:45". R1-BX-D2 carries "Settled 4 Nov 12:45". The optional note in `RECOMMENDATIONS_1121_20261104.md` was not added; that is acceptable. |
+| m2 (garbled Mac line) | **Resolved** | MAC_LOCAL line 150 now reads as suggested. |
+| m3 (extra-task placement) | **Resolved** | RUNBOOK lines 198–199 and TRACK_G lines 17–18: tier, count toward 12–16 and fold role are now marked open for G.3, and TinyImageNet and VOC are treated like the other datasets. The note still sits in the T1 cell, but it no longer assigns a tier. The funnel question is in PLAN's consequences. |
+| m4 (domains, near-duplicates) | **Resolved** | Recorded as *(open)* in PLAN's consequences. TRACK_G line 15 still lists time series, which is acceptable now that the open item exists. |
+| m5 (no MLAgentBench STOP) | **Resolved** (one consistency MINOR, n1) | New RUNBOOK risk row. |
+| m6 (evaluation seeds in labels) | **Resolved** | Draft J5: labels come from label seeds only (7001–7003 / 7001–7005), and evaluation seeds go only into evaluation columns. |
+| m7 (k and GPU 0) | **Resolved** | Draft §3 "Same k" rule (same k and placement as the floor; the floor is re-measured if k changes). GPU 0 runs no tasks in J3 (§5.4). |
+| m8 (dev partition, directives) | **Resolved** (see n4) | J5 runs on `cpu`. The templates set `--account`, `--ntasks`, `--cpus-per-task` and `--mem`. |
+| m9 (attribution) | **Resolved** | The host and user come from the cheat sheet only (row 24, sources line). `sm_90` and the file-system type are *(to check)*. The cross-model reference is removed. "Per user" for the 100-job limit stays; the page says per association, which is negligible here. |
+| m10 (NHR@KIT question) | **Resolved** | Draft §4.2 (c). |
+| m11 (schedule gates) | **Resolved** (one residual, n5) | Draft §7 has a gates column: the author's HoreKa row, PORTING-CONFIRM, M10, X.7, G.3, the K row, the G.5 authorization note and R1-BX-D8-CONFIRM. Code in §5 is gated on the author's row. |
+
+### New findings (round 2)
+
+All are MINOR.
+
+**n1 — The RUNBOOK risk row states as settled what PLAN marks open.**
+*Location:* RUNBOOK risk table, new row "No MLAgentBench task qualifies for T1"; PLAN line 773, consequences list.
+PLAN marks this consequence *(open)*. The RUNBOOK row states it as a settled rule. A STOP for the author decides nothing, so the risk is small, but the two documents should use the same marking.
+*Fix:* Append "*(proposed; PLAN R1-1GC-FALLBACK consequences)*" to the RUNBOOK row.
+
+**n2 — `--deadline` set to the downtime start leaves no time to copy results out.**
+*Location:* draft §5.1, second and third layers.
+`--deadline` and the in-job check both stop at the downtime start. There is no data access during the downtime, and §7 says "Copy everything out before the downtime". A job ending at 23 Nov 00:00 therefore leaves its results unreachable until about 5 Dec.
+*Fix:* Use a copy-out cutoff (for example the downtime start minus 12–24 h, set in the manifest) for all three layers.
+
+**n3 — The draft does not say what happens to Ada census work done before adoption.**
+*Location:* draft §0.
+O8 starts G.0/G.1b on Ada after STOP 0, independently of this draft.
+*Fix:* Add one line: Ada census results kept before adoption remain valid for raw cost and for any Ada table, but set no σ̂ for an H100 table (R1-BX-REVISIONS (f)).
+
+**n4 — "Rules for every job" contradicts several job rows.**
+*Location:* draft §3 "Rules for every job", third bullet.
+The bullet says every template sets `--gres=gpu:4` and `--exclusive`. That contradicts J0 (`dev-cpu`), J0b and J5 (`cpu`, no GPU), and J1 and J1b (1 GPU). `--exclusive` on a dev partition is also questionable.
+*Fix:* Make GPU count and `--exclusive` per job type: `--gres=gpu:4 --exclusive` for J2–J4 only. Keep account, partition, time, ntasks, cpus-per-task, mem and `--deadline` for every job.
+
+**n5 — Proposer timing and the J1b pass criterion.**
+*Location:* draft J1, J1b and §7.
+J1 (first window, before X.7) runs a "load probe of the main proposer", but the pick is gated on X.7 in the second window. J1b copies O5's measurements, but O5's pass criterion (a sweep-2 T0 projection ≤ 4 days) does not carry over to H100 T1 serving. No criterion is named.
+*Fix:* J1 probes a Stage A candidate named by the author, as O5 does before X.7. Add: "the author commits J1b's pass criterion before J1b runs".
+
+### Governance re-check
+
+- **No run authorized.** The draft's status is unchanged, and §0 requires an author row.
+- **The draft decides nothing.** §9 lists only questions, and §5 code is gated in §7.
+- **Seeds 7006–7010 are evaluation-only.** This is now explicit in J5.
+- **The 1GC row records only the author's decision.** The agent's consequences are labelled as not part of it.
+
+Verdict: accepted
+
+## Post-round-2 fixes (executing agent, 4 Nov)
+
+- n1: the RUNBOOK MLAgentBench STOP row is tagged *(proposed)*.
+- n2: the three downtime layers use a copy-out cutoff 24 h before the downtime (proposed).
+- n3: §0 says Ada census results stay valid for raw cost and Ada tables, but set no H100 noise width.
+- n4: `--gres=gpu:4` and `--exclusive` apply to J2–J4 only.
+- n5: J1 probes an author-named Stage A candidate before X.7; J1b needs an author-committed pass criterion.

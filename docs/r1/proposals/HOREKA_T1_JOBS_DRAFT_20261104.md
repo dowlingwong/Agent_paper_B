@@ -16,6 +16,7 @@ PLAN currently places the T1 label runs on Ada and the census on Ada. Moving T1 
 Two further points:
 - A proposer served on H100 is a **new serving configuration** for the T1 tier. It needs a qualification like O5 (full offload, within-server identity 1.000 at `cache_prompt: false`, a projection), and it is listed among the stack differences.
 - "Ada as fallback" can only mean that **the whole T1 label table** moves to Ada. One GPU model per table (R1-BX-D5) forbids splitting it.
+- Census work already done on Ada before adoption stays valid for raw cost and for any Ada table, but it sets no noise width for an H100 table. The H100 floors are measured in J2.
 
 ## 1. Facts that shape the design
 
@@ -50,8 +51,8 @@ All jobs are generated from one manifest by the submit tool (§5).
 |---|---|---|---|
 | **J0 setup** | `dev-cpu` (≤ 1 h), then `dev-gpu-h100` (≤ 1 h) | Venv under `PROJECT` from pinned wheels; llama.cpp `620d222` built for the H100 arch *(to check)*; version and sha256 records | Re-runnable |
 | **J0b hashing** | `cpu`, a few cores, ≤ 2 h | sha256 of the staged datasets and GGUFs against the staging manifest | Re-runnable |
-| **J1 smoke** | `dev-gpu-h100`, 1 GPU, ≤ 1 h | One fixed-step run per ported T1 node with a stub manager; llama-server load probe of the main proposer | — |
-| **J1b proposer qualification** | `gpu-h100`, 1 GPU, ≤ 4 h | O5-style: full offload, 50 prompts × 3 at `cache_prompt: false`, identity, latency, projection (§0) | — |
+| **J1 smoke** | `dev-gpu-h100`, 1 GPU, ≤ 1 h | One fixed-step run per ported T1 node with a stub manager; a llama-server load probe of a Stage A candidate the author names (before X.7) or of the pick (after) | — |
+| **J1b proposer qualification** | `gpu-h100`, 1 GPU, ≤ 4 h | O5-style: full offload, 50 prompts × 3 at `cache_prompt: false`, identity, latency, projection (§0). **Its pass criterion is committed by the author before it runs**; O5's "≤ 4 days" projection does not carry over to H100 | — |
 | **J2 census** (G.0 cost, G.1b noise floors) | `gpu-h100 --exclusive`, 1 node, ≤ 12 h | Declared representative edits × seeds 8001–8010 plus the baseline; a concurrency sweep (1, 2, 4 runs per GPU) | Per run |
 | **J3 campaigns** (G.4 pilot, G.5 sweep 2 T1) | `gpu-h100 --exclusive`, 1 node, `--time` ≤ 47 h | **GPU 0:** llama-server for the main proposer (thinking off, `cache_prompt: false`, port from `SLURM_JOB_ID`, bound to 127.0.0.1), with no task runs on it. **GPUs 1–3:** task runs, k per GPU | Per campaign root (as sweep 1); an interrupted root is re-run whole |
 | **J4 audits** | `gpu-h100 --exclusive`, 1 node, ≤ 24 h each; the plan split into S shards | Candidate–incumbent pairs on the K seeds, k runs per GPU | **Per pair**: a pair's runs are written only when all of them have finished. A pair cut off by the deadline is discarded and re-run whole in the next job |
@@ -60,7 +61,7 @@ All jobs are generated from one manifest by the submit tool (§5).
 **Rules for every job.**
 - **Same k in the floor and the labels.** The label runs use the same runs-per-GPU k and the same GPU placement as the noise floor that sets σ̂ for that node. If k changes, the floor is re-measured.
 - **Pairing.** A candidate and its incumbent run all K seeds on H100 within one job. Pairs are never split, and the resume unit is the pair.
-- **Templates set** `--account`, `--partition`, `--time`, `--ntasks`, `--cpus-per-task`, `--mem`, `--gres=gpu:4`, `--exclusive` *(to check)*, and Slurm's `--deadline`.
+- **Every template sets** `--account`, `--partition`, `--time`, `--ntasks`, `--cpus-per-task`, `--mem` and Slurm's `--deadline`. **J2–J4 also set** `--gres=gpu:4` and `--exclusive` *(to check)*. J1 and J1b request one GPU; J0, J0b and J5 request none.
 
 **Packing.** One job uses one node. Per wave: J2 1–3 jobs, J3 2–4, J4 S = 4–8 — far below 100.
 
@@ -77,9 +78,10 @@ The migration page prohibits "interactive AI agent usage on login nodes". The op
 ## 5. Code changes (Mac agent; for review)
 
 1. **`r1/scripts/hk2/hk2_submit.py`** generates the job scripts from a manifest and records the manifest sha256 in each. Its downtime guard has three layers:
-   - **at submission**, it refuses a job if now + `--time` reaches the downtime start;
-   - **every template** sets Slurm's `--deadline` to the downtime start, so a job still pending then is never started;
-   - **inside each job**, the runner checks the clock and stops cleanly before the downtime starts.
+   - all three layers use a **copy-out cutoff 24 h before the downtime starts** *(proposed)*, leaving time to copy results out while data access still works;
+   - **at submission**, it refuses a job if now + `--time` reaches the cutoff;
+   - **every template** sets Slurm's `--deadline` to the cutoff, so a job still pending then is never started;
+   - **inside each job**, the runner checks the clock and stops cleanly before the cutoff.
 
    It also refuses a missing partition or time, more than 90 jobs outstanding, and any production job on a dev partition.
 2. **`hk2_status.py`** queries at most once every 60 s.

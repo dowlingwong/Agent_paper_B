@@ -376,7 +376,7 @@ Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs
 | 4B models do not fit or are too slow | Drop to ≤ 2B for online arms; keep 4B offline only |
 | The R1-BX-D3 subsampling check fails | K stays 10; STOP for the author (cost and dates are recomputed at K = 10) |
 | ~~The 1GC-7RC repository is still not public~~ | Settled 4 Nov 12:45: MLAgentBench is the third suite (R1-1GC-FALLBACK) |
-| No MLAgentBench task qualifies for T1 (G.1b) | STOP for the author: leave-one-suite-out needs a labelled T1 node in every suite |
+| No MLAgentBench task qualifies for T1 (G.1b) | *(proposed)* STOP for the author: leave-one-suite-out needs a labelled T1 node in every suite |
 | The main proposer fails diff liveness on a T1 node | STOP for the author; no node is dropped silently |
 | Track S has no campaign-level result by ≈ 15 Dec | The DAC-reduction argument rests on the theorem plus synthetic controls; the paper says so explicitly (R1-BX-D10) |
 | A T1 node diverges often under the fixed budget | Divergence is reported as its own class; the author decides whether the node stays in T1 |
