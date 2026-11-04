@@ -9,7 +9,7 @@ One Claude Code agent on the author's Mac runs this runbook. It covers every par
 - analysis of the results the experiment operator copies back;
 - the manuscript.
 
-A separate **experiment operator** runs everything on the servers (`docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md`). The two agents never talk directly. Work passes between them only through **pushed git branches** and **the author**.
+Two server agents run the experiments (R1-SERVER-AGENTS-TWO, 4 Nov 14:58): the **operator** on TASL-2, TASL-7 and deepthought (`docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md`), and the **HoreKa agent** on HoreKa 2 for the whole T1 tier (its runbook follows the scan, `prompts/HOREKA_SCAN_PROMPT_20261104.md`). You never talk to either directly. Work passes between them only through **pushed git branches** and **the author**.
 
 **This runbook authorizes nothing.**
 
