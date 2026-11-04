@@ -1,6 +1,6 @@
 # Prompt — HoreKa 2 read-only scan for Track G T1 (4 Nov 2026, revision 4)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR); its round 2 accepted it, and the remaining minors N1–N6 were applied. Revision 3 retargeted legacy HoreKa. **Revision 4 (4 Nov, 14:37) returns to HoreKa 2 at the author's instruction ("改改扫描的runbook，我们在horeka2上扫"), and moves all agent work off the login nodes onto a compute node in the `agent` partition, through NHR@KIT's documented SSH tunnel.** Paste everything below the line into a Claude Code agent on the author's Mac. It authorizes nothing beyond the scan described here.
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR); its round 2 accepted it, and the remaining minors N1–N6 were applied. Revision 3 retargeted legacy HoreKa. **Revision 4.1** applies the review `reviews/HOREKA_SCAN_PROMPT_REV4_REVIEW_20261104.md` (3 MAJOR, 9 MINOR). **Revision 4 (4 Nov, 14:37) returns to HoreKa 2 at the author's instruction ("改改扫描的runbook，我们在horeka2上扫"), and moves all agent work off the login nodes onto a compute node in the `agent` partition, through NHR@KIT's documented SSH tunnel.** Paste everything below the line into a Claude Code agent on the author's Mac. It authorizes nothing beyond the scan described here.
 
 ---
 
@@ -12,16 +12,16 @@ Your task: collect those facts, change nothing, and write one report. Report to 
 
 ## 0. Before anything else: compliance and the author's choice
 
-NHR@KIT's login page (<https://docs.nhr.kit.edu/usage/login/>) says: **"Interactive use of AI agents on login nodes is prohibited. Agents should run on a compute node through the SSH tunnel described at <https://docs.nhr.kit.edu/services/ides/#ssh-tunnel-to-compute-nodes>."** You therefore **never run anything on a login node**. You work only on a compute node of the `agent` partition, reached through that tunnel, which the author opens himself.
+NHR@KIT's login page (<https://docs.nhr.kit.edu/usage/login/>) has a section headed **"Interactive AI agent usage on login nodes is prohibited"**. It sends agents to the SSH tunnel at <https://docs.nhr.kit.edu/services/ides/#ssh-tunnel-to-compute-nodes>, which says to "use the SSH tunnel to compute nodes to run AI agents on a dedicated compute node instead". Quote the page's own wording to the author; this is a paraphrase. You therefore **never run anything on a login node**. You work only on a compute node of the `agent` partition, reached through that tunnel, which the author opens himself.
 
 Show the author this rule and ask him to choose:
-- **Option A** — he opens an agent session (§1), and you run the scan from that compute node as §3–§4 describe: about 12 non-interactive SSH calls and one 15-minute dev GPU job.
-- **Option B** — you prepare the two scripts in `$S`. He runs these three commands himself from his own terminal (a person on the login node is allowed):
-  1. `ssh hk2 'bash -l -s' < "$S/scan_queries.sh" > "$S/query_scan.txt" 2>&1`;
-  2. `ssh hk2 'mkdir -p ~/r1_scan_20261104 && cat > ~/r1_scan_20261104/probe.sh && cd ~/r1_scan_20261104 && sbatch --parsable probe.sh' < "$S/probe.sh"`, which prints the job id;
-  3. about 15–30 minutes later, `ssh hk2 "cat ~/r1_scan_20261104/probe-<id>.out" > "$S/probe_out.txt"`.
+- **Option A** — he opens an agent session (§1), and you run the scan from that compute node as §3–§4 describe: about 13 non-interactive SSH calls and one 15-minute dev GPU job.
+- **Option B** — you prepare the two scripts in `$S`. He runs them himself from his own terminal; a person on the login node is allowed. Give him the commands with `$S` written out as the full path, because his terminal does not have it set:
+  1. `ssh hk2 'bash -l -s' < <S>/scan_queries.sh > <S>/query_scan.txt 2>&1`. He then sends it to you. You check §3's "after it runs" points (dev jobs, accounts, `--account`) and hand him the final `probe.sh`.
+  2. `ssh hk2 'mkdir -p ~/r1_scan_20261104 && cat > ~/r1_scan_20261104/probe.sh && cd ~/r1_scan_20261104 && sbatch --parsable probe.sh' < <S>/probe.sh`. This prints the job id.
+  3. About 15–30 minutes later: `ssh hk2 "sacct -j <id> -n -P -o JobID,State,Elapsed,ExitCode; cat ~/r1_scan_20261104/probe-<id>.out" > <S>/probe_out.txt`. If `sacct` shows the job still pending or running, wait and repeat, at most once every 5 minutes.
 
-  He tells you when the files are there. You only write the report.
+  He tells you when the files are there. You only write the report. Under option B, the "agent node" results in §3 sections 9–10 and in Q7/Q8 are login-node results; label them so.
 
 Quote his answer word for word at the top of the report. Without an explicit choice, do nothing on HoreKa. Under option B, skip every `ssh` step below and work only on the files he hands you.
 
@@ -30,10 +30,12 @@ Quote his answer word for word at the top of the report. Without an explicit cho
 All local files go under one absolute folder. Never use relative paths, and never `cd` into `~/Documents/agent_paper_B` itself. Another branch is checked out there with someone else's uncommitted changes. Never run `git add` or `git commit` anywhere.
 
 **The author opens the agent session (option A).** Give him these steps; never run them yourself:
-1. In one terminal: `ssh -t hk2 start-vscode-remote-ssh.sh`. With no arguments it starts an interactive job in the `agent` partition (one core, usually immediate), starts `sshd` on that compute node, and prints an `~/.ssh/config` snippet and a tunnel command. **This terminal stays open for the whole scan.** If he belongs to more than one compute project, the script fails until he sets a default account (`sacctmgr modify user $USER set defaultaccount=<project>`); that choice and that command are his.
-2. He adds the printed config snippet to `~/.ssh/config`. Its host is named `vscode-hk2` by default.
-3. In a second terminal he runs the printed tunnel command (of the form `ssh -N -L 22222:<node>:22222 <user>@<login host>`) and leaves it open.
-4. He tells you the host name of the snippet, if it is not `vscode-hk2`.
+1. In one terminal: `ssh -t hk2 start-vscode-remote-ssh.sh`. With no arguments it starts an interactive job in the `agent` partition (one core, usually immediate), starts `sshd` on that compute node, and prints a one-time setup guide, an `~/.ssh/config` snippet and a tunnel command. **This terminal stays open for the whole scan.**
+   - If he belongs to more than one compute project, the script fails until he sets a default account: `sacctmgr modify user $USER set defaultaccount=<project>`. He then has to log out and back in. That choice and that command are his. Use the account he chooses here again in §3 instead of asking a second time.
+2. He follows the printed one-time setup (for example the SSH key generation) and adds the config snippet to `~/.ssh/config`. Its host is named `vscode-hk2` by default.
+3. In a second terminal he runs the printed tunnel command, of the form `ssh -N -L <port>:<node>:<port> <user>@<login host>`, and leaves it open. Using his `hk2` alias as the `<user>@<login host>` part reuses his existing connection and may avoid a second OTP prompt.
+4. In a third terminal he runs `ssh vscode-hk2 hostname` once himself and accepts the new host key. This is the docs' own check; it should print a compute node. Then he runs `ssh -o BatchMode=yes vscode-hk2 true`, which must return with no prompt at all.
+5. He tells you it is ready, and the snippet's host name if it is not `vscode-hk2`. **Never accept `hk2`, any `*.scc.kit.edu` name, or any login host as the session host.**
 
 When the scan is done, tell him he can end the session (Ctrl+C in the first terminal, then close the tunnel).
 
@@ -54,15 +56,30 @@ The design draft you compare against is `docs/r1/proposals/HOREKA_T1_JOBS_DRAFT_
 
 If that ref is missing, use `origin/docs/runbooks-04nov`. If both are missing, ask the author.
 
-**Preflight (option A):**
+**Preflight (option A), in this order.**
+
+*Gate 1, local only.* It must pass before any `$SSH` call:
 
 ```bash
-ssh -G vscode-hk2 | grep -E '^(hostname|port|user|proxyjump|proxycommand) '   # expect the tunnel (localhost and the printed port) and ka_ir7683
-$SSH 'hostname; echo "job=$SLURM_JOB_ID partition=$SLURM_JOB_PARTITION"'
+ssh -G vscode-hk2 | grep -E '^(hostname|port|user|proxyjump|proxycommand) ' > "$S/ssh_G.txt"
+grep -qxE 'hostname (localhost|127\.0\.0\.1|::1)' "$S/ssh_G.txt" \
+  && grep -qx 'user ka_ir7683' "$S/ssh_G.txt" \
+  && ! grep -qx 'port 22' "$S/ssh_G.txt" \
+  && ! grep -qE '^(proxyjump|proxycommand) ' "$S/ssh_G.txt" \
+  || { echo "STOP: vscode-hk2 is not the local tunnel endpoint"; exit 1; }
 ```
 
-- The second command must report a compute node in the `agent` partition: a job id is set, and the host name is not a `login` host. If it shows a login node, or no job, **STOP**. You would otherwise be running on a login node.
-- If the connection is refused, the session or tunnel is not open: ask the author.
+*Gate 2, Slurm side.* The session's environment may not carry `SLURM_*` variables, so check through Slurm itself:
+
+```bash
+$SSH 'h=$(hostname -s); echo "host=$h job_env=${SLURM_JOB_ID:-unset}"; scontrol show node "$h" 2>&1 | grep -oE "(NodeName|Partitions|State)=[^ ]*"; squeue -h -u "$USER" -p agent -t R -o "%i %N %L" 2>&1' > "$S/preflight.txt" 2>&1
+```
+
+- **Pass** only if `scontrol show node` finds the host with `Partitions=` containing `agent`, **and** `squeue` lists a running `agent` job of the author's whose node list is that host. A login node is not a Slurm compute node, so `scontrol` answers "not found" there. Otherwise **STOP**.
+- Record `job_env` as a finding only; it does not decide anything.
+- `%L` is the session's remaining time. If it is under about 75 minutes, ask the author before §3.
+- **If the connection is refused,** the session or the tunnel is not open: ask the author.
+- **If a call says "Host key verification failed" or "REMOTE HOST IDENTIFICATION HAS CHANGED",** ask the author to repeat step 4. Never change `known_hosts` yourself.
 - Never type, store, read or ask for credentials.
 
 Every later call uses `$SSH …` from the preamble. `BatchMode` makes a call fail instead of prompting. If a call fails for authentication, STOP. Set your own tool timeout above 600 s for these calls.
@@ -74,7 +91,7 @@ Never read `~/.ssh/*` key files, `~/.config/r1/secrets.env`, tokens, or other us
 1. **Only on the agent-session compute node; never on a login node.**
    - The query work is one script run in one non-interactive SSH call (§3). After that come only these calls: one that copies and submits the probe; at most 9 status checks, at most one every **5 minutes**; one final `sacct` plus fetch of the output.
    - The agent node has one core: keep everything light. No interactive shell and no editor.
-2. **Exactly one short job:** the probe of §4, on `dev-gpu-h100`, 1 GPU, 15 minutes. **Never resubmit it**, whatever happens. `sbatch --test-only` starts nothing and is allowed.
+2. **Exactly one short job:** the probe of §4, on `dev-gpu-h100`, 1 GPU, 15 minutes. **Never resubmit it**, whatever happens. `sbatch --test-only` starts nothing and is allowed. The author's own `agent` session job, about one core for about an hour, also appears under "my jobs" and in `sacct`. It is not a STOP.
 3. **Change nothing.**
    - No `sacctmgr modify`, `ws_allocate`, `module save`, installs (`pip`, `uv`, `conda`), `git clone` or downloads.
    - No dotfile edits.
@@ -144,7 +161,9 @@ main </dev/null
 
 **After it runs, before §4:**
 - If the author already has a job in a `dev-*` partition (section 7, "my jobs"), STOP and ask him.
-- If section 2 lists **more than one account**, STOP and ask which one to use. Put `#SBATCH --account=<that account>` into the probe.
+- If section 2 lists **more than one account**, use the one the author chose in §1. If he did not choose one there, STOP and ask. Put `#SBATCH --account=<that account>` into the probe.
+- **Go/no-go for submitting from the agent node:** section 4's `dev-gpu-h100` partition must show `AllocNodes=ALL`, or a list that includes the agent node, and section 7's `dev-gpu-h100 --test-only` line must not be refused. If either fails, do not submit. Give the author option B step 2 for the probe, then continue with his output.
+- Option A does not measure the login node's network. Ask the author whether he wants to run `curl -sI -m 10 -o /dev/null -w '%{http_code}\n' https://huggingface.co` on the login node himself. Otherwise Q8's login-node part is "not measured".
 
 ## 4. The one short GPU job
 
@@ -219,8 +238,9 @@ Then send the author a short Chinese message: done or stopped, the report path, 
 
 ## 7. STOP conditions
 
-- The preflight shows a login node or no Slurm job, or the agent session ends during the scan.
-
+- Gate 1 fails: `ssh -G` does not show a localhost tunnel endpoint for `ka_ir7683`.
+- Gate 2 fails: the node is not an `agent` compute node with the author's running job.
+- The agent session ends during the scan. **Never fall back to `hk2` or any login host.** Tell the author the probe's job id and give him option B step 3 to fetch the output.
 - No explicit option A or B from the author.
 - The SSH preflight fails, or any call fails for authentication or asks for a credential.
 - An existing `dev-*` job of the author's, or more than one account with no choice made.
