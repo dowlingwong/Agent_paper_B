@@ -862,6 +862,25 @@ After the 11:29 handover the coordinator branch recorded Track X work in `r1/exa
 
 *Recorder's note (not the author's words):* the B1 candidate set above narrows R1-EXAM-TEMPLATE-AMENDMENT-IMPLEMENTED's "B1 eligible set = t7h8 8 PASS + anchors + M1-passing rows": the amendment measurement's passes count only from `t7j10` and only after the operator's acceptance.
 
+### 4 November 2026 (16:39) — A1 amendment and `t7j10`: three requirements (author; recorded by an AI agent, Claude, Mac-local agent)
+
+The author wrote at 16:39: "关于 A1 修订和 `t7j10`（M1），我补三条要求，请写进 PLAN（决策格用我这句话，细节放 consequences），并交新 reviewer 审" ("on the A1 amendment and `t7j10` (M1), I add three requirements; write them into PLAN (decision cell my sentence, details in the consequences) and have a new reviewer review it").
+
+| Decision | Author decision (4 Nov 2026, 16:39) |
+|---|---|
+| R1-EXAM-A1-M1-REQUIREMENTS | "关于 A1 修订和 `t7j10`（M1），我补三条要求" |
+
+**Consequences** (the author's three requirements, verbatim, with an English rendering; not part of the decision cell):
+- **(1)** "三个修复模板（olmo31_32b、devstral_small2_24b、ministral3_14b）凡是通过 M1 进了 B1 的，B1、B2 和之后所有 sweep 都必须用同一个 SHA 固定的修复模板；把报告里的"M1-only"改成"M1 起生效，随模型延续"。先查 B1 启动器是否已经从 registry 的 `template_repair` 自动读取：是的话补一个测试证明，不是的话改代码加测试。" — Any of the three repaired models (`olmo31_32b`, `devstral_small2_24b`, `ministral3_14b`) that enters B1 through M1 uses the same SHA-pinned repair template in B1, B2 and every later sweep. The report's "M1-only" becomes "effective from M1, carried with the model". First check whether the B1 launcher already reads the registry's `template_repair`: if so, add a test proving it; if not, change the code and add a test.
+- **(2)** "`t7j10` 的验收标准加一条：三个对照基准（random_valid、scripted、qwen25_coder_7b）在 M1 里的 Stage A 数字（解析率、可复现性、模板结果）必须和 `t7h8` 一致；不一致就不算验收通过，先报告我。这条放进你要转给 operator 的消息。" — An added acceptance criterion for `t7j10`: the three anchors' Stage A numbers in M1 (parse rate, reproducibility, template result) must agree with `t7h8`; if they do not, `t7j10` is not accepted and the operator reports to the author first. This goes into the message to the operator.
+- **(3)** "论文写作要求：附录写明 A1 是看到 Stage A 结果之后做的修订，原表（t7h8）和补测表（M1）都列出来，并说明原因（6 个 BOS 误判、3 个声明过的修复、lfm25 和 muse 因语法检查不过仍排除）。" — Manuscript requirement: the appendix states that A1 is an amendment made after seeing the Stage A results, lists both the original table (`t7h8`) and the supplementary table (M1), and gives the reasons (6 BOS false failures, 3 declared repairs, `lfm25` and `muse` still excluded for failing the grammar check).
+- "不要动正在跑的 `t7j10`。" — The running `t7j10` is not touched.
+
+*Recorder's notes (not the author's words):*
+- Requirement (1) supersedes the "M1-only" wording in R1-EXAM-TEMPLATE-AMENDMENT-IMPLEMENTED ("repairs SHA-pinned/reviewed/M1-only"); that row stays as history.
+- At `74a0790` the registry's `template_repair` is read by `r1.exam.runtime.template_repair_args`, which the replay server and the qualification probe call (SHA mismatch is a STOP). The proof for the B1/B2 path is M2's (the Mac agent is the `r1/exam/` editor); "every later sweep" falls to the sweep-2 code (M4).
+- Requirement (3) is for the manuscript (M8).
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
