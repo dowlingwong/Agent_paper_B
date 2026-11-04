@@ -26,8 +26,10 @@ def _validate_v2(rule):
            'thinking_mode.b2_mode':rule['thinking_mode'].get('b2_mode'),'selection.mode':rule['selection'].get('mode')}
     bad={k:v for k,v in modes.items() if not isinstance(v,str) or v!='off'}
     if bad: raise ValueError(f'x5_rule/v2 mode fields must be the string "off": {bad}')
-    if rule['thinking_mode'].get('always_on_in_b1') not in ('skip','run_descriptive'):
-        raise ValueError('x5_rule/v2 always_on_in_b1 must be skip or run_descriptive')
+    # Only 'skip' is implemented and ruled (R1-EXAM-ALWAYS-ON-SKIP); the draft's alternative
+    # 'run_descriptive' has no code path, so it is refused rather than half-supported.
+    if rule['thinking_mode'].get('always_on_in_b1')!='skip':
+        raise ValueError('x5_rule/v2 always_on_in_b1 must be skip (R1-EXAM-ALWAYS-ON-SKIP)')
     sens=rule['thinking_mode'].get('b1_sensitivity') or {}
     if not isinstance(sens.get('node'),str) or not sens['node']: raise ValueError('x5_rule/v2 b1_sensitivity.node required')
     if rule['eligibility'].get('exclude_thinking_policy_mode')!='always_on': raise ValueError('x5_rule/v2 must exclude always_on models')
@@ -200,12 +202,30 @@ def stage_a_summary(manifests):
          'cpu_pool_only':m.get('cpu_pool_only',False)} for m in manifests]}
 
 
+def _v2_sha():
+    return Path(str(RULE_V2)+'.sha256').read_text().split()[0]
+
+
 def b2_summary(manifests, *, rule_path=None, expected=None):
-    """B2 summary.  Without a rule, or under x5_rule/v1, this is the unchanged v1 summary.  Under
-    x5_rule/v2 (R1-MAIN-PROPOSER (a)) see ``_b2_summary_v2``."""
+    """B2 summary.
+
+    * With a rule (v1 or v2): every manifest's ``rule_sha256`` must equal the loaded rule's sha;
+      under x5_rule/v2 the summary is ``_b2_summary_v2``, under v1 the unchanged v1 ranking.
+    * Without a rule: the historical v1 summary, kept only for manifests that carry no v2 stamp.
+      A manifest stamped ``rule_version == 'x5_rule/v2'`` or carrying the v2 rule sha is refused,
+      so v2 B2 results can never be ranked under v1 semantics by omission.
+    """
     if rule_path is not None:
         rule,sha=load_rule(rule_path,expected)
+        for m in manifests:
+            if m.get('rule_sha256')!=sha:
+                raise ValueError(f'B2 manifest {m.get("candidate")!r} rule hash differs from the given rule ({rule["version"]})')
         if is_v2(rule): return _b2_summary_v2(manifests,rule,sha)
+    else:
+        v2sha=_v2_sha()
+        for m in manifests:
+            if m.get('rule_version')=='x5_rule/v2' or m.get('rule_sha256')==v2sha:
+                raise ValueError('x5_rule/v2 B2 manifest requires the v2 rule (pass --rule x5_rule_v2.yaml with its sha)')
     rows=[]
     for m in manifests:
         if m.get('label')!='EXAM' or m.get('phase')!='b2' or m.get('status')!='COMPLETE':

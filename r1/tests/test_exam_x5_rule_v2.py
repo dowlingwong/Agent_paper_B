@@ -186,10 +186,60 @@ def test_b2_ties_go_to_lower_gpu_hours():
 
 def test_b2_without_rule_or_under_v1_is_unchanged():
     m = _b2(V1_SHA, 'x', .7, 1., mode='on')
-    m.pop('rule_sha256')
     old = b2_summary([m])
     assert old['rows'][0]['mode'] == 'on' and 'thinking_on_descriptive' not in old
     assert b2_summary([m], rule_path=RULE) == old
+    unstamped = {k: v for k, v in m.items() if k != 'rule_sha256'}
+    assert b2_summary([unstamped])['rows'][0]['candidate'] == 'x'      # historical no-rule call still works
+
+
+def _v2_b2_pair(sha):
+    on = {**_b2(sha, 'on_model', .9, 1., mode='on'), 'rule_version': 'x5_rule/v2'}
+    off = {**_b2(sha, 'off_model', .5, 1.), 'rule_version': 'x5_rule/v2'}
+    return [on, off]
+
+
+def test_v2_b2_manifests_refused_without_the_v2_rule(tmp_path):
+    """Review F1: v2 manifests are never ranked under v1 semantics by omitting --rule."""
+    _, sha = v2()
+    ms = _v2_b2_pair(sha)
+    with pytest.raises(ValueError, match='requires the v2 rule'):
+        b2_summary(ms)
+    for m in ms:                                     # either stamp alone is enough
+        only_sha = {k: v for k, v in m.items() if k != 'rule_version'}
+        only_version = {**m, 'rule_sha256': None}
+        for variant in (only_sha, only_version):
+            with pytest.raises(ValueError, match='requires the v2 rule'):
+                b2_summary([variant])
+    with pytest.raises(ValueError, match='rule hash differs'):
+        b2_summary(ms, rule_path=RULE)               # v1 given explicitly: sha check refuses v2 manifests
+    paths = []
+    for m in ms:
+        path = tmp_path / f"{m['candidate']}.json"; write_json(path, m); paths.append(str(path))
+    with pytest.raises(ValueError):
+        analyze.main(['b2', *paths])                 # CLI default --rule (v1)
+    with pytest.raises(ValueError, match='refuses a primary B2 manifest'):
+        analyze.main(['b2', *paths, '--rule', str(RULE_V2), '--rule-sha256', sha])
+
+
+def test_b2_with_rule_checks_every_manifest_sha():
+    _, sha = v2()
+    good = _b2(sha, 'a', .5, 1.)
+    assert b2_summary([good], rule_path=RULE_V2)['rows'][0]['candidate'] == 'a'
+    for bad in (None, V1_SHA, '0' * 64):
+        with pytest.raises(ValueError, match='rule hash'):
+            b2_summary([good, {**_b2(sha, 'b', .6, 1.), 'rule_sha256': bad}], rule_path=RULE_V2)
+    with pytest.raises(ValueError, match='rule hash differs'):
+        b2_summary([_b2(None, 'x', .7, 1.)], rule_path=RULE)
+
+
+def test_v2_validator_refuses_run_descriptive(tmp_path):
+    """Review F4: only the ruled 'skip' is accepted; the frozen v2 bytes are untouched."""
+    assert digest_file(RULE_V2) == '79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20'
+    bad = tmp_path / 'alt.yaml'
+    bad.write_text(RULE_V2.read_text().replace('always_on_in_b1: skip', 'always_on_in_b1: run_descriptive'))
+    with pytest.raises(ValueError, match='must be skip'):
+        load_rule(bad, hashlib.sha256(bad.read_bytes()).hexdigest())
 
 
 # ---------------------------------------------------------------- runner: Stage A pass set
@@ -202,7 +252,8 @@ def _amend_cfg(tmp_path, stage_rows, amend_rows):
     stage = _stage_table(tmp_path / 'stage.json', stage_rows)
     amend = _stage_table(tmp_path / 'amend.json', amend_rows)
     acc = tmp_path / 'acceptance.md'
-    acc.write_text('operator O1 acceptance of t7j10 (fixture)\n')
+    acc.write_text(f'operator O1 acceptance of t7j10 (fixture): table SHA {digest_file(amend)}; '
+                   f'Stage A table SHA {digest_file(stage)}\n')
     return {'stage_a_table': str(stage), 'stage_a_table_sha256': digest_file(stage),
             'stage_a_amendment_table': str(amend), 'stage_a_amendment_table_sha256': digest_file(amend),
             'stage_a_amendment_acceptance': str(acc), 'stage_a_amendment_acceptance_sha256': digest_file(acc)}
@@ -243,6 +294,87 @@ def test_v2_pass_set_refuses_changed_amendment_or_acceptance(tmp_path):
     _stage_table(Path(cfg['stage_a_amendment_table']), [{'candidate': 'gemma4_31b', 'passed': True}, {'candidate': 'x', 'passed': True}])
     with pytest.raises(PreparationStop, match='amendment table digest'):
         stage_a_pass_set(cfg, {'gemma4_31b'}, v2=True)
+
+
+@pytest.mark.parametrize('rows', [[{'passed': True}], [{'candidate': 'gemma4_31b'}], [{'candidate': 7, 'passed': True}],
+                                  [{'candidate': 'gemma4_31b', 'passed': 'yes'}], ['gemma4_31b']])
+def test_v2_pass_set_malformed_amendment_rows_stop(tmp_path, rows):
+    """Review F8: malformed amendment rows are a STOP, not a KeyError."""
+    from r1.scripts.exam_runner import stage_a_pass_set
+    cfg = _amend_cfg(tmp_path, [{'candidate': 'qwen38_27b', 'passed': True}], rows)
+    with pytest.raises(PreparationStop, match='row malformed'):
+        stage_a_pass_set(cfg, {'gemma4_31b'}, v2=True)
+
+
+def test_v2_pass_set_acceptance_must_name_both_table_shas(tmp_path):
+    from r1.scripts.exam_runner import stage_a_pass_set
+    cfg = _amend_cfg(tmp_path, [{'candidate': 'qwen38_27b', 'passed': True}], [{'candidate': 'gemma4_31b', 'passed': True}])
+    acc = Path(cfg['stage_a_amendment_acceptance'])
+    acc.write_text('accepted, without naming the tables\n')
+    cfg['stage_a_amendment_acceptance_sha256'] = digest_file(acc)
+    with pytest.raises(PreparationStop, match='does not name'):
+        stage_a_pass_set(cfg, {'gemma4_31b'}, v2=True)
+
+
+def test_real_t7j10_shape_and_o1_acceptance_fit_the_loader(tmp_path):
+    """The t7j10 rows (O1 report, ops-20261104 @ f52db28e): 3 anchors + 7 amendment candidates, all PASS,
+    in the Stage A table shape.  The B1 candidate set is t7h8's 8 PASS + t7j10's 7 PASS (+ 3 anchors)."""
+    from r1.scripts.exam_runner import stage_a_pass_set
+    t7h8_pass = ['glm47_flash', 'ornith10_35b', 'ornith10_9b', 'qwen35_9b', 'qwen36_27b', 'qwen36_35b_a3b', 'qwen38_27b',
+                 'qwen3_coder_30b_a3b']
+    t7h8_fail = ['devstral_small2_24b', 'gemma4_12b', 'gemma4_26b_a4b', 'gemma4_31b', 'laguna_xs21', 'ministral3_14b',
+                 'olmo31_32b', 'lfm25_24b_a2b', 'muse_glimmer_30b', 'gpt_oss_20b', 'rico03_qwen36_27b', 'nemotron35_30b_a3b']
+    anchors = ['random_valid', 'scripted', 'qwen25_coder_7b']
+    m1 = ['gemma4_31b', 'olmo31_32b', 'devstral_small2_24b', 'gemma4_26b_a4b', 'laguna_xs21', 'gemma4_12b', 'ministral3_14b']
+    stage = [{'candidate': c, 'passed': True, 'software_anchor': c in anchors[:2]} for c in anchors] + \
+            [{'candidate': c, 'passed': True} for c in t7h8_pass] + [{'candidate': c, 'passed': False} for c in t7h8_fail]
+    amend = [{'candidate': c, 'passed': True, 'software_anchor': True, 'prompts': 0} for c in anchors[:2]] + \
+            [{'candidate': c, 'passed': True, 'template_checks_frozen': [True] * 50} for c in ['qwen25_coder_7b'] + m1]
+    cfg = _amend_cfg(tmp_path, stage, amend)
+    registry = {r['id'] for r in REGISTRY['candidates'] if r['role'] == 'candidate'}
+    got = stage_a_pass_set(cfg, registry, v2=True)
+    cands = sorted(c for c in got if c in registry)
+    assert cands == sorted(t7h8_pass + m1) and len(cands) == 15
+    assert set(got) - registry == set(anchors)
+    assert all(got[c]['stage_a_pass_source'] == 'stage_a_table' for c in anchors)
+    for cid in REPAIRED: assert got[cid]['stage_a_pass_source'] == 'a1_amendment_measurement'
+
+
+def test_v2_configs_bind_the_o1_accepted_tables():
+    """The shas the v2 configs bind are the ones the accepted O1 report records."""
+    for name in ('exam_b1_v2.json', 'exam_b2_v2.json'):
+        cfg = json.loads((CONFIGS / name).read_text())
+        assert cfg['stage_a_table_sha256'] == '00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c'
+        assert cfg['stage_a_amendment_table_sha256'] == '71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103'
+        assert cfg['stage_a_amendment_acceptance'] == 'docs/r1/reports/OPS_O1_20261104.md'
+        assert cfg['stage_a_amendment_acceptance_sha256'] == '0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e'
+        assert cfg['gpu_uuid'].startswith('TODO_AUTHOR_R1_HOSTS_04NOV')
+
+
+def test_author_gate_binds_amendment_shas(tmp_path, monkeypatch):
+    """Review F8: runtime.author_gate's amendment clause (positive and negative)."""
+    from r1.exam import runtime
+    rule_sha = Path(str(RULE_V2) + '.sha256').read_text().split()[0]
+    monkeypatch.setattr(runtime, 'REPO', tmp_path)
+    (tmp_path / 'docs/r1').mkdir(parents=True)
+    (tmp_path / 'docs/r1/PLAN.md').write_text(f'| R1-EXAM-RULE-X5V2 | `{rule_sha}` |\n')
+    note = tmp_path / 'note.json'
+    cfg = {'authorizations': {'b1': str(note)}, 'nodes': ['digits_mlp', 'openml_credit_approval', 'openml_ionosphere'],
+           'stage_a_table_sha256': 'a' * 64, 'llm_call_cap': 40, 'instance_seeds': [9001, 9002, 9003, 9004],
+           'audit_seeds': [9101, 9102, 9103, 9104], 'stage_a_amendment_table_sha256': 'b' * 64,
+           'stage_a_amendment_acceptance_sha256': 'c' * 64}
+    base = {'author': 'Dowling Wong', 'phase': 'b1', 'approved': True, 'rule_sha256': rule_sha, 'nodes': cfg['nodes'],
+            'stage_a_table_sha256': 'a' * 64, 'llm_call_cap': 40}
+
+    def gate(data):
+        note.write_text(json.dumps(data))
+        monkeypatch.setattr(runtime.subprocess, 'check_output', lambda *a, **k: note.read_bytes())
+        runtime.author_gate(cfg, 'b1', rule_sha)
+    gate({**base, 'stage_a_amendment_table_sha256': 'b' * 64, 'stage_a_amendment_acceptance_sha256': 'c' * 64})
+    for bad in ({}, {'stage_a_amendment_table_sha256': 'b' * 64},
+                {'stage_a_amendment_table_sha256': 'b' * 64, 'stage_a_amendment_acceptance_sha256': 'd' * 64}):
+        with pytest.raises(RuntimeError, match='amendment table'):
+            gate({**base, **bad})
 
 
 # ---------------------------------------------------------------- runner: B1/B2 mode logic under v2
@@ -346,6 +478,75 @@ def test_runner_v2_refuses_cache_prompt_harness_and_root_evidence(tmp_path):
         _evidence_unreviewed(runner, 'b1', None, False)
 
 
+def test_runner_v2_d28_gate_reads_thinking_off_roots_only(tmp_path):
+    """Review F2: a failing descriptive thinking-on D28 never removes a model from v2 selection."""
+    from r1.scripts.exam_runner import _evidence_unreviewed
+    rule, sha = v2()
+    specs = [_spec('sw', SWITCH)]
+    runner = FakeRunner(tmp_path, specs, _runner_cfg(tmp_path, specs, ['sw']), rule, sha)
+    base_root = runner.root
+
+    def root(spec, phase, node, seed, mode, **kw):
+        r = base_root(spec, phase, node, seed, mode, **kw)
+        r['d28'] = {'nodes': {node: {'pass': mode == 'off'}}}
+        return r
+    runner.root = root
+    _evidence_unreviewed(runner, 'b1', None, False)
+    m = json.loads((tmp_path / 'sw/b1_manifest.json').read_text())
+    assert m['d28_pass'] is True and m['d28_scope'] == 'thinking_off_roots_only'
+    assert m['thinking_on_d28'] == {'pass': False, 'roots': 1, 'role': 'descriptive_never_changes_eligibility'}
+    # a failing thinking-off root still fails the gate
+    (tmp_path / 'b').mkdir()
+    runner2 = FakeRunner(tmp_path / 'b', specs, _runner_cfg(tmp_path, specs, ['sw']), rule, sha)
+    base2 = runner2.root
+
+    def root2(spec, phase, node, seed, mode, **kw):
+        r = base2(spec, phase, node, seed, mode, **kw)
+        r['d28'] = {'nodes': {node: {'pass': not (mode == 'off' and node == 'openml_ionosphere')}}}
+        return r
+    runner2.root = root2
+    _evidence_unreviewed(runner2, 'b1', None, False)
+    m2 = json.loads((tmp_path / 'b/sw/b1_manifest.json').read_text())
+    assert m2['d28_pass'] is False and m2['thinking_on_d28']['pass'] is True
+    # v1 keeps the historical all-roots D28
+    rule1, sha1 = load_rule()
+    (tmp_path / 'c').mkdir()
+    runner1 = FakeRunner(tmp_path / 'c', specs, _runner_cfg(tmp_path, specs, ['sw']), rule1, sha1)
+    runner1.root = root
+    _evidence_unreviewed(runner1, 'b1', None, False)
+    assert json.loads((tmp_path / 'c/sw/b1_manifest.json').read_text())['d28_pass'] is False
+
+
+def test_runner_v2_b2_refuses_finalist_without_b1_row(tmp_path):
+    """Review F7."""
+    from r1.scripts.exam_runner import _evidence_unreviewed
+    rule, sha = v2()
+    specs = [_spec('nt', NONTHINK), _spec('sw', SWITCH)]
+    screen = tmp_path / 'b1.json'
+    write_json(screen, {'rule_sha256': sha, 'finalists': ['nt', 'sw'], 'rows': [{'candidate': 'nt', 'b2_thinking_mode': 'off'}]})
+    cfg = _runner_cfg(tmp_path, specs, ['nt', 'sw'], extra={'b1_analysis': str(screen), 'b1_analysis_sha256': digest_file(screen)})
+    with pytest.raises(PreparationStop, match='no B1 analysis row'):
+        _evidence_unreviewed(FakeRunner(tmp_path, specs, cfg, rule, sha), 'b2', None, False)
+
+
+@pytest.mark.parametrize('value,ok', [(None, True), ('', True), ('false', True), ('0', True), ('true', False), ('1', False),
+                                      ('yes-please', False)])
+def test_runner_v2_refuses_cache_prompt_env_override(tmp_path, monkeypatch, value, ok):
+    """Review F6: pre-flight refusal of LLAMACPP_CACHE_PROMPT set to anything but false/empty."""
+    from r1.scripts.exam_runner import _evidence_unreviewed
+    rule, sha = v2()
+    if value is None: monkeypatch.delenv('LLAMACPP_CACHE_PROMPT', raising=False)
+    else: monkeypatch.setenv('LLAMACPP_CACHE_PROMPT', value)
+    specs = [_spec('nt', NONTHINK)]
+    runner = FakeRunner(tmp_path, specs, _runner_cfg(tmp_path, specs, ['nt']), rule, sha)
+    if ok:
+        _evidence_unreviewed(runner, 'b1', None, False)
+    else:
+        with pytest.raises(PreparationStop, match='LLAMACPP_CACHE_PROMPT'):
+            _evidence_unreviewed(runner, 'b1', None, False)
+        assert runner.served == []
+
+
 def test_v1_runner_path_unchanged_without_v2_rule(tmp_path):
     """The v1 B2 path still follows the B1 analysis' mode (existing behaviour) when the rule is v1."""
     from r1.scripts.exam_runner import _evidence_unreviewed
@@ -390,7 +591,11 @@ class _Captured(Exception):
 
 
 def _served_args(monkeypatch, tmp_path, spec, phase, mode='off'):
-    """Drive the real ExamRunner.server -> _server path up to the llama-server construction."""
+    """Drive the real ExamRunner.server -> _server path up to the llama-server construction.
+
+    ``_server`` has no B1- or B2-specific branch, so the ``phase`` parameter here is nominal; the B1/B2
+    proof is this test together with ``test_runner_passes_registry_repair_to_server_and_records_sha``,
+    which drives the B1/B2 body itself (review F8)."""
     from r1.exam import runtime
     captured = {}
 
@@ -422,8 +627,9 @@ def test_b1_b2_server_serves_the_pinned_repair_template(monkeypatch, tmp_path, p
 
 
 @pytest.mark.parametrize('phase', ['b1', 'b2'])
-def test_b1_b2_repair_digest_mismatch_is_a_stop(monkeypatch, tmp_path, phase):
-    spec = copy.deepcopy(_repaired_specs()['olmo31_32b'])
+@pytest.mark.parametrize('cid', REPAIRED)
+def test_b1_b2_repair_digest_mismatch_is_a_stop(monkeypatch, tmp_path, phase, cid):
+    spec = copy.deepcopy(_repaired_specs()[cid])
     spec['runtime'] = {'model_path': str(tmp_path / 'm.gguf'), 'footprint_mib': 1}
     spec['template_repair']['sha256'] = '0' * 64
     from r1.exam import runtime
@@ -483,12 +689,11 @@ def test_v2_configs_bind_rule_harness_cache_and_repairs(name):
     assert cfg['template_repairs'] == {cid: s['template_repair']['sha256'] for cid, s in _repaired_specs().items()}
     for key in ('stage_a_amendment_table', 'stage_a_amendment_table_sha256',
                 'stage_a_amendment_acceptance', 'stage_a_amendment_acceptance_sha256'):
-        assert key in cfg                       # explicit, sha-bound input; still a placeholder until O1 acceptance
+        assert key in cfg and not str(cfg[key]).startswith('TODO_')   # filled from the accepted O1 report
     portal = json.loads(DEFAULT_CONFIG.read_text())
-    assert {k: v for k, v in cfg.items() if k in portal and k not in (
-        'comment', 'rule', 'rule_sha256', 'harness_commit', 'paper_commit', 'host', 'authorizations', 'cache_prompt',
-        'd3_policy')} == {k: portal[k] for k in cfg if k in portal and k not in (
-        'comment', 'rule', 'rule_sha256', 'harness_commit', 'paper_commit', 'host', 'authorizations', 'cache_prompt', 'd3_policy')}
+    differ = ('comment', 'rule', 'rule_sha256', 'harness_commit', 'paper_commit', 'host', 'authorizations', 'cache_prompt',
+              'd3_policy', 'gpu_uuid', 'stage_a_table', 'stage_a_table_sha256')
+    assert {k: v for k, v in cfg.items() if k in portal and k not in differ} == {k: portal[k] for k in cfg if k in portal and k not in differ}
 
 
 # ---------------------------------------------------------------- harness binding: cache_prompt false on the wire
@@ -514,7 +719,9 @@ def _drive(tmp_path, harness):
 def test_exam_campaign_request_manifest_and_llm_call_carry_cache_prompt_false(tmp_path):
     harness = _b1_harness_root()
     if harness is None:
-        pytest.skip('harness a3fedbb checkout not found; set AR_HARNESS_B1_ROOT')
+        if os.environ.get('R1_REQUIRE_B1_HARNESS') == '1':
+            pytest.fail('R1_REQUIRE_B1_HARNESS=1 but no a3fedbb checkout found; set AR_HARNESS_B1_ROOT')
+        pytest.skip('harness a3fedbb checkout not found; set AR_HARNESS_B1_ROOT (R1_REQUIRE_B1_HARNESS=1 makes this fail)')
     head = subprocess.check_output(['git', '-C', str(harness), 'rev-parse', 'HEAD'], text=True).strip()
     assert head == A3FEDBB, f'B1/B2 harness pin must be {A3FEDBB}, found {head}'
     r = _drive(tmp_path, harness)
@@ -534,6 +741,8 @@ def test_stage_a_harness_pin_does_not_send_cache_prompt_so_b1_evidence_stops(tmp
     harness = harness_root()
     head = subprocess.check_output(['git', '-C', str(harness), 'rev-parse', 'HEAD'], text=True).strip()
     if head != '897d83c8efa364ec2fdd37288241cc42e01d7274':
+        if os.environ.get('R1_REQUIRE_B1_HARNESS') == '1':
+            pytest.fail(f'R1_REQUIRE_B1_HARNESS=1 but AR_HARNESS_ROOT is not the Stage A pin (found {head})')
         pytest.skip(f'AR_HARNESS_ROOT is not the Stage A pin (found {head})')
     r = _drive(tmp_path, harness)
     assert r['requests'] and all('cache_prompt' not in q['body'] for q in r['requests'])

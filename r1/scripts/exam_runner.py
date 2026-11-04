@@ -247,18 +247,41 @@ def stage_a_pass_set(cfg, registry_candidates, *, v2):
     eligible={r['candidate']:{**r,'stage_a_pass_source':'stage_a_table'} for r in stages if r['passed']}
     missing=[k for k in STAGE_A_AMENDMENT_KEYS if not cfg.get(k) or placeholders(cfg[k])]
     if missing: raise PreparationStop(f'STOP: x5_rule/v2 needs the operator-accepted A1 amendment table bound by sha256: {missing}')
-    table,acceptance=Path(cfg['stage_a_amendment_table']),Path(cfg['stage_a_amendment_acceptance'])
+    table,acceptance=_repo_path(cfg['stage_a_amendment_table']),_repo_path(cfg['stage_a_amendment_acceptance'])
     if not table.is_file() or digest_file(table)!=cfg['stage_a_amendment_table_sha256']:
         raise PreparationStop('STOP: A1 amendment table digest mismatch')
     if not acceptance.is_file() or digest_file(acceptance)!=cfg['stage_a_amendment_acceptance_sha256']:
         raise PreparationStop('STOP: operator acceptance of the A1 amendment table missing or digest mismatch')
-    data=json.loads(table.read_text())
-    if data.get('label')!='ENGINEERING_ONLY' or not isinstance(data.get('rows'),list):
+    # The acceptance record must name the very tables it accepts (OPS_O1 names both full shas).
+    text=acceptance.read_text(errors='replace')
+    if cfg['stage_a_amendment_table_sha256'] not in text or cfg['stage_a_table_sha256'] not in text:
+        raise PreparationStop('STOP: acceptance record does not name the amendment and Stage A table sha256')
+    try: data=json.loads(table.read_text())
+    except ValueError as exc: raise PreparationStop('STOP: A1 amendment table is not JSON') from exc
+    if not isinstance(data,dict) or data.get('label')!='ENGINEERING_ONLY' or not isinstance(data.get('rows'),list):
         raise PreparationStop('STOP: A1 amendment table malformed')
     for r in data['rows']:
-        if r.get('passed') is True and r['candidate'] in registry_candidates and r['candidate'] not in eligible:
+        if not isinstance(r,dict) or not isinstance(r.get('candidate'),str) or not isinstance(r.get('passed'),bool):
+            raise PreparationStop(f'STOP: A1 amendment table row malformed: {str(r)[:120]}')
+        if r['passed'] and r['candidate'] in registry_candidates and r['candidate'] not in eligible:
             eligible[r['candidate']]={**r,'stage_a_pass_source':'a1_amendment_measurement'}
     return eligible
+
+
+def _repo_path(value):
+    """Absolute paths as given; relative ones (e.g. a committed acceptance report) from the repo root."""
+    path=Path(value)
+    return path if path.is_absolute() else Path(__file__).resolve().parents[2]/path
+
+
+_FALSE_ENV=('','0','false','no','off')
+
+
+def refuse_cache_prompt_override(environ=None):
+    """Pre-flight (review F6): the a3fedbb harness reads LLAMACPP_CACHE_PROMPT; B1/B2 refuse any true value."""
+    value=(environ if environ is not None else os.environ).get('LLAMACPP_CACHE_PROMPT','')
+    if value.strip().lower() not in _FALSE_ENV:
+        raise PreparationStop(f'STOP: LLAMACPP_CACHE_PROMPT={value!r} would override cache_prompt false (R1-EXAM-CACHE-REV)')
 
 
 def template_repair_record(spec):
@@ -289,6 +312,7 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
     if v2:
         if cfg.get('cache_prompt') is not False: raise PreparationStop('STOP: B1/B2 cache_prompt must be explicitly false (R1-EXAM-CACHE-REV)')
         if not cfg.get('dryrun') and cfg.get('harness_commit')!=B1_HARNESS_PIN: raise PreparationStop('STOP: B1/B2 harness pin must be a3fedbb (R1-EXAM-B1-HARNESS-PIN)')
+        refuse_cache_prompt_override()
         check_template_repairs(cfg,runner.spec_order())
     registry_candidates={s['id'] for s in runner.spec_order() if s.get('role')=='candidate'}
     eligible=stage_a_pass_set(cfg,registry_candidates,v2=v2)
@@ -330,6 +354,7 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
         if phase=='b2' and v2:
             # x5_rule/v2: B2 runs thinking off for every finalist; the top-3 rerun is thinking-on and descriptive only.
             row=next((r for r in screen['rows'] if r['candidate']==spec['id']),None)
+            if row is None and not cfg.get('free_sensitivity'): raise PreparationStop('STOP: x5_rule/v2 B2 finalist has no B1 analysis row')
             if row is not None and row.get('b2_thinking_mode')!='off': raise PreparationStop('STOP: x5_rule/v2 B1 analysis must assign B2 mode off')
             if spec.get('kind') not in ('random_valid','scripted') and not thinking_off_capable(spec.get('thinking_policy')):
                 raise PreparationStop('STOP: x5_rule/v2 B2 finalist cannot run thinking off')
@@ -352,7 +377,11 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
             if runner.service: runner.stop_service()
         audits=[r for root in root_results for r in root['audited_proposals']]
         diag={k:sum(r['diagnostics'].get(k,0) for r in root_results) for k in ('trials','evaluated','invalid','duplicates','noops','parse_failed','forecast_queries','forecast_query_failed')}
-        d28=all(all(n['pass'] for n in r['d28']['nodes'].values()) for r in root_results)
+        def d28_of(roots): return all(all(n['pass'] for n in r['d28']['nodes'].values()) for r in roots)
+        # v2 (review F2): the D28 eligibility gate reads the thinking-off (primary-mode) roots only; the
+        # descriptive thinking-on roots get their own D28 record and never change eligibility.
+        d28=d28_of([r for r in root_results if r['mode']==modes[0]]) if v2 else d28_of(root_results)
+        d28_descriptive=[r for r in root_results if r['mode']!=modes[0]] if v2 else []
         manifest={'label':'EXAM','phase':phase,'status':'COMPLETE','candidate':spec['id'],'family':spec['family'],'role':spec['role'],
                   'source_label':artifact_label(spec),'rule_sha256':runner.rule_sha,'registry_sha256':digest_file(runner.registry_path),'registry_path':str(runner.out/'registry_snapshot.yaml'),'registry_order':[s['id'] for s in runner.spec_order()].index(spec['id']),
                   'model_sha256':(spec.get('quant_source') or {}).get('sha256'),'llamacpp_build':cfg['server']['build'] if not spec.get('kind') else None,
@@ -373,7 +402,9 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
                             stage_a_pass_source=eligible[spec['id']].get('stage_a_pass_source'),
                             stage_a_amendment_table_sha256=cfg['stage_a_amendment_table_sha256'],
                             stage_a_amendment_acceptance_sha256=cfg['stage_a_amendment_acceptance_sha256'],
-                            cache_prompt_by_root=[root.get('cache_prompt') for root in root_results])
+                            cache_prompt_by_root=[root.get('cache_prompt') for root in root_results],
+                            d28_scope='thinking_off_roots_only',
+                            thinking_on_d28={'pass':d28_of(d28_descriptive),'roots':len(d28_descriptive),'role':'descriptive_never_changes_eligibility'} if d28_descriptive else None)
             if spec.get('kind') not in ('random_valid','scripted') and not all((root.get('cache_prompt') or {}).get('all_false') is True for root in root_results):
                 raise PreparationStop('STOP: a B1/B2 root lacks llm_call evidence of cache_prompt false')
             if len(modes)>1:
