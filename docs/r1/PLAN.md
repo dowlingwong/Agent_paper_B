@@ -892,8 +892,10 @@ The Mac agent asked (in its reply to the author's 17:26 message "啥进展了") 
 | R1-EXAM-AB74203-M5-REVIEW | "按 M5 流程另开新 reviewer 重新审。" |
 
 **Consequences** (not part of the decision cells):
-- `t7j10`'s acceptance under R1-EXAM-A1-M1-REQUIREMENTS (2): `qwen25_coder_7b`'s parse rate, reproducibility and template result in `t7j10` must be exactly equal to `t7h8`'s; `random_valid` and `scripted` are compared on their result status only. Otherwise `t7j10` is not accepted and the operator reports to the author first.
-- The cited but uncommitted reviews of `e996af8` and `ab74203` are not relied on. A fresh independent reviewer reviews `19b8f33f..74a07907` (focus `ab74203`, covering `e996af8`) by the M5 procedure; the review goes to `reviews/MAC_M5_AB74203_REVIEW_20261104.md`. The running `t7j10` is not touched.
+- `t7j10`'s acceptance under R1-EXAM-A1-M1-REQUIREMENTS (2): `qwen25_coder_7b`'s three items (parse rate, reproducibility, template result) in `t7j10` must be exactly equal to `t7h8`'s; `random_valid` and `scripted` are compared on their result status only. Otherwise `t7j10` is not accepted and the operator reports to the author first.
+- The cited but uncommitted review of `ab74203` is not relied on; a fresh independent reviewer reviews it by the M5 procedure. The running `t7j10` is not touched.
+
+*Recorder's note (not the author's words):* the M5 review covers `19b8f33f..74a07907` (focus `ab74203`, and also `e996af8`, on which `ab74203` builds and whose cited reviews are likewise not committed) and is written to `reviews/MAC_M5_AB74203_REVIEW_20261104.md`. "Result status" for the software anchors refers to their Stage A row fields (`passed`, `software_anchor`, `failure_classes`, `mechanical_model_checks`; `3b3283f:r1/scripts/exam_runner.py`).
 
 ## 11. Relation to Paper A
 
