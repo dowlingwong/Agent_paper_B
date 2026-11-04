@@ -985,6 +985,39 @@ Consequences noted by the recording agent (not part of the decisions):
 - *(proposed)* For the B1 draft, use the `digits_mlp` node variant with `openml_credit_approval` and `openml_ionosphere`, `llm_call_cap=80`, and `workers=20`. `workers` controls the paired audit process pool after collection; its practical resource headroom is not yet measured.
 - *(open)* `stage_a_amendment_acceptance_sha256` awaits confirmation of M2's acceptance-record format. The B1 note remains a draft; code STOPs, independent review, the rule row and a separate author authorization remain required before B1.
 
+### 4 November 2026 (19:08 CET) — J3 and decision packet replies
+
+The author answered the questions summarized below. The cells quote the replies verbatim; the questions and proposed consequences give their context. These replies do not authorize a run.
+
+| ID | Author's decision |
+|---|---|
+| R1-HOREKA-J3-CONFIRM | "确认涵盖 J3" |
+| R1-HOSTS-04NOV-DEFER | "保留现有逐项决定" |
+| R1-B1B-DIFF-DT-DEFER | "先等 DTQ 结果" |
+| R1-MAIN-PROPOSER-ITEMS | "采用五项建议" |
+| R1-B7-PARTIAL-T1 | "采用此部分 T1 方案" |
+| R1-BX-PACKET-J | "现在逐项展开" |
+
+Consequences noted by the recording agent (not part of the decisions):
+
+- *(proposed)* J3's local LLM proposer loop in a HoreKa GPU batch job is included in R1-HOREKA-AGENT-SUBMIT pending NHR@KIT's answer. If NHR restricts agent submission or LLM loops, STOP immediately. The independent-review, budget, resource and phase/evidence authorization gates still apply.
+- *(open)* Keep existing host rows; B1/B2 stay on TASL-7. Do not adopt the stale packet's TASL-2 B1/B2 placement. Defer the conditional deepthought stack disclosure until DTQ results.
+- *(proposed)* The five (h) items are: fresh-seed audits on deepthought CPUs, otherwise on the sweep host with a 50-proposal two-host check; STOP if projected one-host duration exceeds four days; choose pooled versus sweep-2-only training on validation before any test read; keep `qwen2.5-coder:7b` on Track S CPU nodes and decide its GPU-node manager later; draw the P.3b exam set from sweep 2's training partition, or from sweep 1's with disclosure until sweep 2 exists.
+- *(proposed)* If only some T1 nodes have labels at B.7, read the gate on T0 plus the labelled T1 nodes and disclose the node count. Leave-one-suite-out needs at least one labelled T1 node per suite, otherwise STOP. Record this in R1-BX-D8-CONFIRM before analysis; existing pre-registration and analysis gates remain.
+- *(open)* Present packet (j) items individually with options and recommendations; no item is decided by the request to expand them.
+
+### 4 November 2026 — T1 divergence STOP
+
+Asked whether a T1 node should STOP when its audited label proposals' divergence fraction exceeds 20%, or instead be judged case by case, the author replied:
+
+| ID | Author's decision |
+|---|---|
+| R1-TRACKG-G5-DIVERGENCE | "设 20% STOP" |
+
+Consequences noted by the recording agent (not part of the decision):
+
+- *(proposed)* STOP the node when more than 20% of its T1 label proposals are divergent. A move to T2 requires a separate author row. The 20% figure originated as an agent proposal, not a measured threshold.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

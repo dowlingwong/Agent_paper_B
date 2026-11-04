@@ -28,3 +28,14 @@ The fixture `test_resources_require_new_local_tmp_scratch_and_headroom` assumes 
 - The exact emitted-token comparison is stricter than numerical float equality and is explicitly disclosed in the handoff. The 16-case replay remains a bounded check, not a launch snapshot or proof for every root, even if later passed.
 
 The author still decides e2, the five inherited files, and the open publication, runtime-attestation and historical-environment gates. The same reviewer should re-check the fixes and final diff; no code or launch acceptance is implied here.
+
+## Same-reviewer re-check — safety remediation only
+
+**Verdict: ACCEPTED for the specified remediation diff only; M3 as a whole remains NOT ACCEPTED and the e1 replay remains STOPPED.** Reviewed the uncommitted binary diff from `d09acb63` in `/private/tmp/paper-b-m3-fix-20261104`, SHA256 `812f8d6da8c1cb6eb80be430381e22c74b6b551865f3d15454edb9ded7669338`. Re-check the final commit's binary diff against this digest before attributing this verdict to it.
+
+- Major 1 is mitigated fail-closed: real `run` refuses the entire case set containing an OpenML node before scheduling, and `execute_case` independently refuses an OpenML case. The hard STOP does **not** prove offline availability or implement the 16-case replay. Gate A1 is now OPEN/partial and A4 offline is OPEN; the handoff and e1 draft state this accurately. The offline mechanism and its independent review remain required.
+- Major 2 is addressed for the selected fixed inputs and locations: fixed SHA256 pins are checked for both index and sidecar; both audit dry-run entry paths reject output resolving within the frozen corpus or fixed preserved batch, including tested symlink aliases. This does not claim atomic protection against concurrent filesystem mutation; the task's corpus immutability and publication gates still apply.
+- Major 3 is addressed by separate new and preserved dry-run and execution output directories. The synthetic test exercises different output paths, not an authorized real replay.
+- The headroom fixture now replaces the platform-specific mount probe for the isolated headroom assertion; a real Linux host check is still needed.
+
+Independent Mac CPU focused test using the local Python 3.11 harness venv: **76 passed, 1 skipped in 21.38 s** across the four files listed above. No real replay or host check was performed. Original B.2 B1/B4/B6 gates, author decisions, and all execution authorizations remain open. M3's full done-when is not met by acceptance of these safety changes.

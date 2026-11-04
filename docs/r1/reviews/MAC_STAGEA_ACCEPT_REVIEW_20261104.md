@@ -1,5 +1,19 @@
 # Review: ops-20261104 integration and R1-EXAM-STAGEA-ACCEPT (`cabbe400..74c5da10`)
 
+## Author-value wording re-check — 4 November 2026: accepted for draft scope
+
+The same Codex reviewer re-checked the revised working-tree draft at `/private/tmp/paper-b-mac-20261104/docs/r1/proposals/AUTH_DRAFT_trackx_b1_20261104.md`, SHA256 `c3db0396dc8f9b9161986584852c02267aff07f2b4f841af1e50a119279847c3`. MINOR 2 is resolved: the selected node, cap, and worker values are distinguished from the historical options, and the Stage A review status is updated with the limitation on historical measurement revalidation. `approved` remains false, the acceptance SHA remains TODO, and the hard STOPs and separate review/authorization requirements remain. **Accepted for the draft wording and value update only**; no code is accepted, no STOP is cleared, and B1 is not launch-ready.
+
+---
+
+## Author-value update re-check — 4 November 2026: not accepted pending wording fix
+
+The same Codex reviewer checked the uncommitted B1 draft at `/private/tmp/paper-b-mac-20261104/docs/r1/proposals/AUTH_DRAFT_trackx_b1_20261104.md`, SHA256 `48bb9629b604261467c256e5ac3b92220cbcd2539444d3fb4101712af32eee1a`, against the relayed 19:03 author decision and the previous review. The block has the selected `digits_mlp` variant, integer call cap 80 and workers 20, but keeps `approved: false` and `stage_a_amendment_acceptance_sha256` as a TODO. Precondition 5 retains the hard STOPs and independent review; no launch is authorized. The CPU headroom remains unmeasured.
+
+**MINOR 2 — stale wording contradicts the recorded selections:** the heading `llm_call_cap — options (none is a decision)` now contradicts the selected value 80; the worker heading still calls the section a proposal; and the nodes row labels the selected variant *(proposed)*. The Stage A precondition says the row is under review at drafting time; update its status only if the reviewed record has in fact been integrated. Present the choices as a historical rationale and clearly distinguish selected values from the still-unapproved final authorization. Re-check after edits; this review does not accept any code or establish launch readiness.
+
+---
+
 ## Round 2 re-check — 4 November 2026: accepted for draft scope
 
 The same Codex reviewer re-checked the revised draft at `/private/tmp/paper-b-b1-draft-20261104/docs/r1/proposals/AUTH_DRAFT_trackx_b1_20261104.md`, SHA256 `5b29910f08f476a9a1b82e2030b4e221485bdee72f4f12ea56ce9dde2befa268` (working-tree bytes, not a commit). **MAJOR 1 resolved for the draft:** precondition 5 explicitly records the existing hard STOPs, the need for implementation and independent review, and prohibits removing the guards without satisfying their conditions. **MINOR 1 resolved:** `workers` is described as the post-collection audit process pool, with resource headroom unmeasured and the author's choice open. `75134796:r1/exam/runtime.py` supplies the three BLAS/OpenMP environment limits to the worker job; actual performance is not established here.
