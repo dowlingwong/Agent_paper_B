@@ -176,6 +176,27 @@ class ToolsTest(unittest.TestCase):
             self.assertEqual(submit.main([str(manifest), "--plan", str(self.plan), "--submit"]), 2)
         runner.assert_not_called()
 
+    def test_unified_submission_decision_does_not_enable_unqualified_submission(self):
+        """STOP precedes row parsing; this fixture does not validate PLAN authority."""
+        self.plan.write_text(
+            '## 10. Decisions\n'
+            '| R1-HOREKA-AGENT-SUBMIT | approved |\n'
+            '| R1-HOREKA-UNIFIED-SUBMISSION | adopted |\n'
+        )
+        manifest = Path(self.tmp.name) / 'job.json'
+        manifest.write_text(json.dumps(self.job))
+        # Neither an author invocation nor a continuation changes readiness.
+        for flags, job_env in [([], {}), (['--author'], {}),
+                               ([], {'SLURM_JOB_ID': '42', 'SLURM_JOB_PARTITION': 'cpu'})]:
+            with self.subTest(flags=flags, job_env=job_env), \
+                 patch.object(c, 'load_config', return_value=self.config), \
+                 patch.object(c, 'query_snapshot') as query, \
+                 patch.object(submit.subprocess, 'run') as runner, \
+                 patch.dict(os.environ, job_env, clear=True):
+                self.assertEqual(submit.main([str(manifest), '--plan', str(self.plan), '--submit'] + flags), 2)
+                query.assert_not_called()
+                runner.assert_not_called()
+
     def test_corrupt_submission_journal_fails_closed(self):
         directory = c.records_dir(self.config)
         directory.mkdir(parents=True)
