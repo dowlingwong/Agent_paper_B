@@ -12,6 +12,8 @@ Each section: what is open, options, a recommendation, and a paste-ready PLAN ro
 
 ## 0. Track X work recorded after the handover — **RULED by the author (4 Nov, 15:33 and 15:44)**
 
+> **Recorded in PLAN §10 (4 Nov, 16:13 instruction)** as R1-TRACKX-HANDOVER-RULING, in the form the author set: the decision cell holds only his words "按原定计划走"; the details are under its Consequences. The draft row below is kept as history and is superseded by the committed row.
+
 **What the sources say.**
 - R1-HANDOVER-04NOV (11:29): the operator is "the only agent acting on the servers"; "the coordinator, the Track X agent, … stop at their next safe point"; "the **Mac-local agent is the single editor** of `r1/exam/`, `r1/scripts/exam_*` and `r1/c3/train/`". R1-SERVER-AGENTS-TWO (14:58) keeps the operator on TASL-2, TASL-7 and deepthought.
 - The coordinator branch then recorded, between 14:09 and 15:29: R1-EXAM-STAGEA-COMPLETE; R1-EXAM-TEMPLATE-FAILURE-MAP; R1-EXAM-TEMPLATE-AMENDMENT-PROPOSAL ("Author chose Option A"); R1-EXAM-TEMPLATE-AMENDMENT-V16; R1-EXAM-TEMPLATE-AMENDMENT-IMPLEMENTED (code `e996af8`, binding `96f1146`; "B1 eligible set = t7h8 8 PASS + anchors + M1-passing rows (author's decision)"); R1-EXAM-STOP9-JOURNAL (code `ab74203`, binding `74a0790`; the declared measurement relaunched on TASL-7 as `r1_stagea_20261104_t7j10`).
@@ -57,6 +59,8 @@ Without the five files, the branch's own tests in `test_c3_evidence_other_bounda
 2. Acknowledge the two `r1/c3/train/` files only (the Mac agent is their editor); the three shared files wait.
 3. **Defer:** M3 (which continues `codex/b2-repair-20261031`) takes the five changes into its scope and its independent review; the author acknowledges them together with M3's accepted commit.
 4. Do not acknowledge; they stay on the branch.
+
+> **Author, 4 Nov 16:13:** "(a) 同意：5 个范围外文件并入 M3 一起审，审完我再决定。" (option 3: reviewed within M3; he decides after that review). Not yet a PLAN row.
 
 **Recommendation: 3.** The changes are protective in intent, but their one review blocked, and `run.py` changes behaviour for unmarked rows. M3's review has to cover the B.2 guard code anyway, so reviewing these five there costs little and gives the acknowledgement a reviewed basis.
 
@@ -192,6 +196,8 @@ Items confirmed in R1-BX-PROPOSED-CONFIRM are not repeated. Each item: options �
 ## (k) M1 exceptions for the author to acknowledge
 
 1. **Tests ran in the cloud workspace, not on the Mac.** The Mac's git cannot reach GitHub through its proxy, so the integration and the CPU suite ran in the chat session's Linux workspace (Python 3.13, fresh venv, harness `897d83c`), both runs in the same environment (`reports/MAC_M1_TESTS_20261104.md`). R1-LOCAL-TEST-SCOPE speaks of the Mac CPU.
+> **Author, 4 Nov 16:13:** "(k) 同意：测试在云端跑可以；那 3 个 `test_c3_launch_provenance` 失败只有在 M3 修好的前提下才算已知例外。" (cloud tests accepted; the three failures count as a known exception only once M3 has fixed them). Not yet a PLAN row.
+
 2. **"Failure set equal apart from new tests" is not literally met.** Three failures are in the existing `r1/tests/test_c3_launch_provenance.py`. They fail on `codex/b2-repair-20261031` itself: that branch changed `r1/scripts/c3_label_sweep.py` without updating this test's fixtures. Recommendation: accept as an exception, with the fixture fix assigned to M3.
 
 ```
