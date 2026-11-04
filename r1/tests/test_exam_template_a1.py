@@ -62,3 +62,15 @@ def test_missing_bos_fails():
     tokenizer = FakeTokenizer(bos='', bos_id=None)
     ok, ev = a1_template_equal({}, served, expected, lambda text: [2], tokenizer=tokenizer)
     assert ok is False
+
+
+def test_fallback_tokenize_row_is_gated_on_an_actual_tokenize_attempt():
+    """Pre-A1 errors (non-BOS prefix, extra difference, missing BOS) must not expect a
+    /tokenize journal row; only an attempted token path does."""
+    from r1.exam.stage_a import fallback_tokenize_row
+    assert fallback_tokenize_row('served', {'server_tokenize': None}) is None
+    assert fallback_tokenize_row('served', {'server_tokenize': False}) == ('/tokenize', {'content': 'served', 'add_special': True})
+    assert fallback_tokenize_row('served', {'server_tokenize': True}) == ('/tokenize', {'content': 'served', 'add_special': True})
+    # an early-failure A1 call leaves server_tokenize None
+    ok, ev = a1_template_equal({}, 'hello', 'Xhello', lambda text: [2], tokenizer=FakeTokenizer())
+    assert ok is False and ev['server_tokenize'] is None and fallback_tokenize_row('hello', ev) is None

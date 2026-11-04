@@ -11,8 +11,23 @@ from r1.exam.cache_evidence import validate_chat_cache_evidence
 from r1.exam.cache_proc import validate_census_snapshot
 
 
-def validate_local_order(true_rows,false_rows,nongen_rows,prompts,*,alias,ctx_size,schema_format,expect_grammar,thinking_enabled,identity):
+def _nongen_expected_rows(thinking_enabled,nongen_expected=None):
+    rows=[('/tokenize',{'content':'a ','add_special':True})]
+    if nongen_expected is None:
+        for i in range(5):
+            messages=[{'role':'user','content':f'Fixed template check {i}: JSON, whitespace, Unicode α, newline\nend.'}]
+            rows.append(('/apply-template',{'messages':messages,'add_generation_prompt':True,
+                                            'chat_template_kwargs':{'enable_thinking':thinking_enabled}}))
+    else:
+        for route,payload in nongen_expected:
+            rows.append((str(route),payload))
+    return rows
+
+
+def validate_local_order(true_rows,false_rows,nongen_rows,prompts,*,alias,ctx_size,schema_format,expect_grammar,thinking_enabled,identity,nongen_expected=None):
     def fail(reason):raise ValueError('STOP: D3 local journal '+reason)
+    expected_non_generation=_nongen_expected_rows(thinking_enabled,nongen_expected)
+    nongen_required=len(expected_non_generation)
     def canonical(value):return json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)
     def timestamps(rows):
         times=[r.get('monotonic_ns') for r in rows]
@@ -139,7 +154,7 @@ def validate_local_order(true_rows,false_rows,nongen_rows,prompts,*,alias,ctx_si
         checks=[r for r in rows if r.get('event')=='checked']
         attempt_by_kind[label]=attempts;check_by_kind[label]=checks
         responses=[r for r in rows if r.get('event')=='response']
-        required=(201+int(expect_grammar)) if label=='false' else 6
+        required=(201+int(expect_grammar)) if label=='false' else nongen_required
         if len(attempts)!=required or len(checks)!=len(attempts) or len(responses)!=len(attempts):
             fail(label+' request/check coverage incomplete')
         seq=list(range(1,len(attempts)+1))
@@ -226,11 +241,6 @@ def validate_local_order(true_rows,false_rows,nongen_rows,prompts,*,alias,ctx_si
                     type(request.get('reasoning_budget_tokens')) is not int or request.get('reasoning_budget_tokens')!=2048):
                     fail('false grammar probe binding invalid')
         else:
-            expected_non_generation=[('/tokenize',{'content':'a ','add_special':True})]
-            for i in range(5):
-                messages=[{'role':'user','content':f'Fixed template check {i}: JSON, whitespace, Unicode α, newline\nend.'}]
-                expected_non_generation.append(('/apply-template',{'messages':messages,'add_generation_prompt':True,
-                                                'chat_template_kwargs':{'enable_thinking':thinking_enabled}}))
             if canonical(parsed)!=canonical(expected_non_generation):
                 fail('non-generation tokenize/template binding invalid')
     tokenize_check=check_by_kind['non-generation'][0]['monotonic_ns']

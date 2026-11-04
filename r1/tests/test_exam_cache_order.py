@@ -322,3 +322,14 @@ def test_true_repeat_non_cache_difference_cannot_pass():
     change_request(second,{'top_p':.01})
     with pytest.raises(ValueError,match='true repeats differ'):
         validate(true,false,nongen,prompts)
+
+
+def test_nongen_expected_rows_accepts_the_a1_extension():
+    """A1 added 50 frozen template checks (plus tokenize fallbacks); the validator must be
+    told the exact expected non-generation rows instead of the legacy 5-check whitelist."""
+    from r1.exam.cache_order import _nongen_expected_rows
+    legacy = _nongen_expected_rows(False)
+    assert legacy[0][0] == '/tokenize' and len(legacy) == 6
+    extended = _nongen_expected_rows(False, [('/apply-template', {'messages': []}),
+                                             ('/tokenize', {'content': 'x', 'add_special': True})])
+    assert [r[0] for r in extended] == ['/tokenize', '/apply-template', '/tokenize']

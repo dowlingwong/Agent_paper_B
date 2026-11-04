@@ -133,6 +133,17 @@ def a1_template_equal(spec, actual, expected, server_tokenize, tokenizer=None):
     return ok, evidence
 
 
+def fallback_tokenize_row(actual, evidence):
+    """The /tokenize fallback row is expected only when A1 actually called the server.
+
+    ``evidence['server_tokenize']`` is None when A1 failed before contacting /tokenize
+    (non-BOS prefix, extra difference, missing BOS, tokenizer error); it is a bool once the
+    endpoint was attempted.  The journal expectation must follow exactly that."""
+    if evidence.get('server_tokenize') is None:
+        return None
+    return ('/tokenize', {'content': actual, 'add_special': True})
+
+
 def hf_render(spec, messages):
     from transformers import AutoTokenizer  # optional host dependency; no model is loaded
     source=spec['chat_template_source']
@@ -264,10 +275,12 @@ def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=Fa
                 return [int(t) for t in tokens] if isinstance(tokens,list) else None
             except Exception:  # noqa: BLE001 - absence of the endpoint fails the A1 token path
                 return None
-        evidence=[]
+        evidence=[];nongen_expected=[]
         def template_check(kind,ident,messages):
-            actual=non_generation.post('/apply-template',{'messages':messages,'add_generation_prompt':True,
-                        'chat_template_kwargs':{'enable_thinking':thinking}})['prompt']
+            payload={'messages':messages,'add_generation_prompt':True,
+                     'chat_template_kwargs':{'enable_thinking':thinking}}
+            nongen_expected.append(('/apply-template',payload))
+            actual=non_generation.post('/apply-template',payload)['prompt']
             expected=render(messages)
             if dryrun:
                 ok=actual==expected
@@ -276,6 +289,9 @@ def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=Fa
                      'served_len':len(actual),'hf_len':len(expected)}
             else:
                 ok,row=a1_template_equal(spec,actual,expected,server_tokenize)
+                fallback=fallback_tokenize_row(actual,row)
+                if fallback is not None:
+                    nongen_expected.append(fallback)
             evidence.append({'kind':kind,'id':ident,**row})
             return ok
         result['template_checks']=[template_check('fixed',i,
@@ -284,6 +300,7 @@ def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=Fa
         result['template_checks_frozen']=[template_check('frozen',row.get('trial_id'),
             [{'role':'user','content':row['prompt']}]) for row in prompts]
         result['template_check_evidence']=evidence
+        result['nongen_expected']=nongen_expected
         if not all(result['template_checks']) or not all(result['template_checks_frozen']):
             result['failure_classes'].append('template')
     except D3EvidenceStop:
@@ -409,7 +426,8 @@ def main(argv=None):
         journal_rows(output/'d3_true_calls.jsonl'),journal_rows(output/'d3_false_calls.jsonl'),
         journal_rows(output/'d3_non_generation_calls.jsonl'),prompts,alias=spec['id'],ctx_size=job['ctx'],
         schema_format=schema_format,expect_grammar=bool(spec['thinking_policy'].get('switchable') is True or spec['thinking_policy']['mode']=='always_on'),
-        thinking_enabled=spec['thinking_policy']['mode']!='off',identity=identity)
+        thinking_enabled=spec['thinking_policy']['mode']!='off',identity=identity,
+        nongen_expected=None if cfg.get('dryrun') else result.get('nongen_expected'))
     if not cfg.get('dryrun'):
         from r1.exam.fit import estimate
         source=Path(spec['runtime']['model_config_path'])
