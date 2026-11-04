@@ -17,18 +17,24 @@ Each section: what is open, options, a recommendation, and a paste-ready PLAN ro
 - The coordinator branch then recorded, between 14:09 and 15:29: R1-EXAM-STAGEA-COMPLETE; R1-EXAM-TEMPLATE-FAILURE-MAP; R1-EXAM-TEMPLATE-AMENDMENT-PROPOSAL ("Author chose Option A"); R1-EXAM-TEMPLATE-AMENDMENT-V16; R1-EXAM-TEMPLATE-AMENDMENT-IMPLEMENTED (code `e996af8`, binding `96f1146`; "B1 eligible set = t7h8 8 PASS + anchors + M1-passing rows (author's decision)"); R1-EXAM-STOP9-JOURNAL (code `ab74203`, binding `74a0790`; the declared measurement relaunched on TASL-7 as `r1_stagea_20261104_t7j10`).
 - So after 11:29 the Track X agent edited `r1/exam/` and runs on TASL-7. Both sets of rows are kept unchanged in the integration; no row reconciled them.
 
-**Options put to the author (chat, 4 Nov ~15:30).** 1. Option A as an exception to the handover: the Track X agent finishes `t7j10` and its receiving review, then stops. 2. **The handover wins**; `r1/exam/` passes to the Mac agent at `74a0790`. 3. Something else.
+**Options put to the author.** The Mac agent's chat message of 4 Nov (about 15:30, before the coordinator's STOP 9 commit was known to it) offered, verbatim:
 
-**Author's ruling.** At 15:33 the author wrote "按原定计划走" ("go with the original plan"). At 15:44 he wrote: "裁定：选 2，交接行优先（作者 15:33 "按原定计划走"）。`t7j10` 已在 TASL-7 上运行，允许它跑完，Track X agent 随后停止。`t7j10` 的核验和接收审查、Stage A 验收归 operator 的 O1。你从 `74a0790`（代码 `ab74203`）起接手 `r1/exam/`，M2 以它为基。如果 `ab74203` 还缺独立 review，就按 M5 流程补。B1 候选集为 `t7h8` 的 8 个 PASS + anchors + `t7j10` 的通过者，`t7j10` 要经 operator 验收后才算数。" In English: option 2, the handover row takes precedence; `t7j10`, already running on TASL-7, may run to completion, after which the Track X agent stops; the verification and receiving review of `t7j10` and the Stage A acceptance belong to the operator's O1; the Mac agent takes over `r1/exam/` from `74a0790` (code `ab74203`) and bases M2 on it; if `ab74203` still lacks an independent review, the Mac agent supplies one by the M5 procedure; the B1 candidate set is t7h8's 8 PASS + anchors + the `t7j10` passes, which count only after the operator's acceptance.
+> 1. Option A 视为对交接行的例外：Track X agent 完成 A1 修订 + t7i9 测量后再停；`r1/exam/` 交给我从 `96f1146` 起接手（M2 以它为基）。
+> 2. 交接行优先：A1 代码已冻结在 `96f1146`，t7i9 由 operator 执行；我从 `96f1146` 起接手 `r1/exam/`。
+> 3. 其他。
+
+(1: Option A as an exception to the handover row — the Track X agent finishes the A1 amendment and the t7i9 measurement, then stops; `r1/exam/` passes to the Mac agent from `96f1146`, M2 based on it. 2: the handover row first — A1 code frozen at `96f1146`, t7i9 run by the operator; the Mac agent takes over `r1/exam/` from `96f1146`. 3: other.) The ruling below chose 2, with two changes the author stated: the relaunched `t7j10` is allowed to finish where it runs, and the hand-over point is `74a0790` / `ab74203`, not `96f1146`.
+
+**Author's ruling.** At 15:33 the author wrote "按原定计划走" ("go with the original plan"). At 15:44 he wrote: "裁定：选 2，交接行优先（作者 15:33 "按原定计划走"）。`t7j10` 已在 TASL-7 上运行，允许它跑完，Track X agent 随后停止。`t7j10` 的核验和接收审查、Stage A 验收归 operator 的 O1。你从 `74a0790`（代码 `ab74203`）起接手 `r1/exam/`，M2 以它为基。如果 `ab74203` 还缺独立 review，就按 M5 流程补。B1 候选集为 `t7h8` 的 8 个 PASS + anchors + `t7j10` 的通过者，`t7j10` 要经 operator 验收后才算数。" The quotation is the author's 15:44 message as received, including its parenthetical citing his 15:33 message; the commit body of `a43e1b47` quotes the same message with elisions marked "…". In English: option 2, the handover row takes precedence; `t7j10`, already running on TASL-7, may run to completion, after which the Track X agent stops; the verification and receiving review of `t7j10` and the Stage A acceptance belong to the operator's O1; the Mac agent takes over `r1/exam/` from `74a0790` (code `ab74203`) and bases M2 on it; if `ab74203` still lacks an independent review, the Mac agent supplies one by the M5 procedure; the B1 candidate set is t7h8's 8 PASS + anchors + the `t7j10` passes, which count only after the operator's acceptance.
 
 **Row recording the ruling** (paste-ready; the author commits it, or tells the Mac agent in chat to commit it on his behalf):
 ```
-| R1-TRACKX-HANDOVER-RULING (4 Nov, 15:44) | **R1-HANDOVER-04NOV takes precedence over the Track X agent's post-handover work** (author: "按原定计划走", 15:33; "选 2，交接行优先", 15:44). The declared measurement `r1_stagea_20261104_t7j10` (code `ab74203`, binding `74a0790`), already running on TASL-7, may run to completion; the Track X agent then stops and makes no further change. The verification and receiving review of `t7j10`, and the Stage A acceptance, belong to the operator's O1. The Mac-local agent is the single editor of `r1/exam/` and `r1/scripts/exam_*` from `74a0790` (code `ab74203`) and bases M2 on it; if `ab74203` lacks an independent code review, the Mac agent supplies one by the M5 procedure. **B1 candidate set:** the 8 PASS of `t7h8` + the anchors + the `t7j10` passes, the latter counting only after the operator's acceptance. |
+| R1-TRACKX-HANDOVER-RULING (4 Nov, 15:44) | **The handover row takes precedence** (author: "按原定计划走", 15:33; "选 2，交接行优先", 15:44). The declared measurement `r1_stagea_20261104_t7j10` (code `ab74203`, binding `74a0790`), already running on TASL-7, may run to completion; the Track X agent then stops. The verification and receiving review of `t7j10`, and the Stage A acceptance, belong to the operator's O1. The Mac-local agent takes over `r1/exam/` from `74a0790` (code `ab74203`) and bases M2 on it (with `r1/scripts/exam_*`, as R1-HANDOVER-04NOV already assigns); if `ab74203` lacks an independent review, the Mac agent supplies one by the M5 procedure. **B1 candidate set:** the 8 PASS of `t7h8` + the anchors + the `t7j10` passes, the latter counting only after the operator's acceptance. |
 ```
 
 ## (a) `codex/b2-repair-20261031` files outside its scope
 
-**Open.** R1-HANDOVER-04NOV leaves the acknowledgement open. M1 merged everything else from the branch and **held** these five diffs (`git diff 30303d87 f98e315e -- <file>`):
+**Open.** R1-HANDOVER-04NOV leaves the acknowledgement open. M1 merged everything else from the branch and **held** these five diffs (`git diff 30303d87 f98e315e -- <file>`). All five come from one commit, `9bab3d6f` ("Prepare guarded C3 evidence provenance and audit").
 
 | File | Change | Owner |
 |---|---|---|
@@ -38,15 +44,25 @@ Each section: what is open, options, a recommendation, and a paste-ready PLAN ro
 | `r1/c3/control.py` | `fit_awr_direct` refuses EVIDENCE rows and the evaluation-side value keys | shared |
 | `r1/c3/prior_model.py` | `TableArmPrior.fit` refuses EVIDENCE rows | shared |
 
-All five only add fail-closed refusals through the new `r1/c3/evidence_boundary.py` (merged). They were reviewed with the branch (`reviews/C3_EVIDENCE_GUARDS_REVIEW_20261028.md`). Without them, the branch's own tests that exercise these boundaries fail on `mac-int-20261104` (see the M1 test comparison).
+**Review status.** The only review of that commit, `reviews/C3_EVIDENCE_GUARDS_REVIEW_20261028.md`, gives the verdict **"BLOCK / NOT ACCEPTED FOR B.2 LAUNCH"** for code commit `9bab3d6f`. It states that marker-based boundaries cannot identify stripped rows, so global training/selection isolation is "NOT CHECKABLE", and that the guards are not to be represented as a proof of isolation or as acceptance of later training. No later review on the branch covers these five files.
 
-**Options.** 1. Acknowledge all five; M1 merges them. 2. Acknowledge the two `r1/c3/train/` files only (the Mac agent is their editor); the three shared files wait. 3. Acknowledge none.
+**Effect.** Most changes refuse rows that carry an EVIDENCE marker. Two do more: the wider `EVAL_COLUMNS` in `run.py` makes `guard_rows` refuse the keys `delta_true`, `delta_audit_all`, `se_audit`, `candidate_metrics`, `incumbent_metrics` on **any** row, marked or not, for every purpose except `p4_final_eval`, and `_keys` now finds such keys inside lists. Track P inputs that carry one of these keys are therefore refused where they were accepted before.
 
-**Recommendation: 1.** The changes only refuse inputs; they do not change any result on rows without EVIDENCE markers.
+**Overlap.** `trackS-ops-20261030` also changes `r1/c3/prior_model.py` (explicit `cache_prompt` for the A4 client, R1-CACHEPROMPT-FALSE). That change stays on its branch and is used by pin; if the b2-repair change is acknowledged, it is merged three-way into the base version, not on top of the Track S version.
 
-**Draft row.**
+Without the five files, the branch's own tests in `test_c3_evidence_other_boundaries.py` fail on `mac-int-20261104` (11 tests; `reports/MAC_M1_TESTS_20261104.md`).
+
+**Options.**
+1. Acknowledge all five now; M1 merges them.
+2. Acknowledge the two `r1/c3/train/` files only (the Mac agent is their editor); the three shared files wait.
+3. **Defer:** M3 (which continues `codex/b2-repair-20261031`) takes the five changes into its scope and its independent review; the author acknowledges them together with M3's accepted commit.
+4. Do not acknowledge; they stay on the branch.
+
+**Recommendation: 3.** The changes are protective in intent, but their one review blocked, and `run.py` changes behaviour for unmarked rows. M3's review has to cover the B.2 guard code anyway, so reviewing these five there costs little and gives the acknowledgement a reviewed basis.
+
+**Draft row (option 3).**
 ```
-| R1-B2-REPAIR-SCOPE-ACK (4 Nov) | The author acknowledges the five changes of `codex/b2-repair-20261031` (`f98e315e`) outside that branch's scope — `r1/c3/train/run.py`, `r1/c3/train/trainer.py`, `r1/c3/env.py`, `r1/c3/control.py`, `r1/c3/prior_model.py` — as reviewed in `reviews/C3_EVIDENCE_GUARDS_REVIEW_20261028.md`. They are merged into `mac-int-20261104` unchanged. |
+| R1-B2-REPAIR-SCOPE-ACK (4 Nov) | The five changes of `codex/b2-repair-20261031` outside its scope (commit `9bab3d6f`: `r1/c3/train/run.py`, `r1/c3/train/trainer.py`, `r1/c3/env.py`, `r1/c3/control.py`, `r1/c3/prior_model.py`) are taken into M3's scope and reviewed with it; the author acknowledges them, or not, with M3's accepted commit. Until then they are not merged. Their earlier review (`reviews/C3_EVIDENCE_GUARDS_REVIEW_20261028.md`, BLOCK for B.2 launch) is not an acceptance. |
 ```
 
 ---
@@ -91,11 +107,11 @@ All five only add fail-closed refusals through the new `r1/c3/evidence_boundary.
 
 ## (d) R1-EXAM-RULE-X5V2 (follow-up row, after M2)
 
-**Open.** M2 writes `x5_rule_v2.yaml` with `always_on_in_b1: skip` (R1-EXAM-ALWAYS-ON-SKIP) and computes its sha. The eligibility question (v2's "Stage A pass" versus the amendment row's "t7h8 PASS + anchors + M1-passing rows") is **settled by the section 0 ruling**: t7h8's 8 PASS + anchors + the `t7j10` passes after the operator's acceptance. M2 encodes that; only the sha row remains.
+**Open.** M2 writes `x5_rule_v2.yaml` with `always_on_in_b1: skip` (R1-EXAM-ALWAYS-ON-SKIP) and computes its sha. The ruling of section 0 fixes the **B1 candidate set** (t7h8's 8 PASS + anchors + the operator-accepted `t7j10` passes). For v2 that means: the set of **Stage A passes** v2 reads is t7h8's PASS ∪ the operator-accepted `t7j10` PASS; the anchors enter B1 as anchors, not as eligible candidates; and v2's other eligibility conditions still apply — D28 pass and able to run with thinking off (R1-MAIN-PROPOSER (a)), and always-thinking models skip B1 (R1-EXAM-ALWAYS-ON-SKIP). Only the sha row remains.
 
-**Draft row (sha filled after M2 and its review).**
+**Draft row (sha filled after M2 and its review; to be committed after R1-TRACKX-HANDOVER-RULING).**
 ```
-| R1-EXAM-RULE-X5V2 (date) | `r1/exam/rules/x5_rule_v2.yaml` sha256 `<sha>` (from `proposals/X5_RULE_V2_DRAFT_20261104.md`; `always_on_in_b1: skip` per R1-EXAM-ALWAYS-ON-SKIP; eligibility = the 8 PASS of `t7h8` + anchors + the operator-accepted `t7j10` passes, per R1-TRACKX-HANDOVER-RULING) is frozen for Track X B1/B2, with code `<commit>` and review `reviews/MAC_M2_REVIEW_<date>.md`. `x5_rule_v1.yaml` stays as Stage A's rule. |
+| R1-EXAM-RULE-X5V2 (date) | `r1/exam/rules/x5_rule_v2.yaml` sha256 `<sha>` (from `proposals/X5_RULE_V2_DRAFT_20261104.md`; `always_on_in_b1: skip` per R1-EXAM-ALWAYS-ON-SKIP) is frozen for Track X B1/B2, with code `<commit>` and review `reviews/MAC_M2_REVIEW_<date>.md`. The Stage A pass set it reads is the `t7h8` PASS ∪ the operator-accepted `t7j10` PASS (R1-TRACKX-HANDOVER-RULING); anchors run as anchors; the D28 and thinking-off conditions of R1-MAIN-PROPOSER (a) apply unchanged. `x5_rule_v1.yaml` stays as Stage A's rule. |
 ```
 
 ---
@@ -144,26 +160,50 @@ R1-BX-D14's dates are targets (B.7 ≈ 8 Dec, Track S fallback ≈ 15 Dec, D.3 �
 
 ## (j) R1-BX and 4 Nov items still *(proposed)* or *(open)*
 
-Items confirmed in R1-BX-PROPOSED-CONFIRM are not repeated. One line each: options → recommendation.
+Items confirmed in R1-BX-PROPOSED-CONFIRM are not repeated. Each item: options → recommendation → paste-ready line, or "no row now". **Numbers marked † are the Mac agent's own proposals with no source in PLAN or the specs; they are starting points for the author, not derived values.**
 
-1. **R1-BX-D8-CONFIRM** — the numbers are accepted; the row waits for M11's gate-code sha. Draft: `| R1-BX-D8-CONFIRM (date) | Gate code `<path>` @ `<commit>`, sha256 `<sha>`, implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8) and R1-B7-PARTIAL-T1; T0 and T1 pooled with tier as a stratum. Sweep-2 label tables may be analysed from this row on. |` — **must be committed before any sweep-2 (T0 or T1) label table is copied back for analysis.**
+1. **R1-BX-D8-CONFIRM** — the numbers are accepted (R1-BX-PROPOSED-CONFIRM, D8); the row waits for M11's gate-code sha. **Must be committed before any sweep-2 (T0 or T1) label table is copied back for analysis.**
+   `| R1-BX-D8-CONFIRM (date) | Gate code `<path>` @ `<commit>`, sha256 `<sha>`, implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8) and, if adopted, R1-B7-PARTIAL-T1; T0 and T1 pooled with tier as a stratum. Sweep-2 label tables may be analysed from this row on. |`
 2. **D6 exact API model** — R1-BX-PROPOSED-CONFIRM fixes the class (commercial mid-tier, another family than the pick's, not DeepSeek, cap €100–200). Recommendation: the author names the model and its version pin after X.7, once the pick's family is known.
-3. **G.5 divergence STOP** (TRACK_G) — STOP if > X % of T1 label proposals diverge on a node. Recommendation: 20 % per node, node moves to T2 by author row.
-4. **T0 never the held-out suite** in leave-one-suite-out — options: never / also as a secondary fold. Recommendation: never in the primary test; a T0-held-out fold reported as secondary.
-5. **Probe A6** — R1-P3A-OOM-OPTION3 already uses it for the re-run decision (mean |Δ RPS| > 0.01). Recommendation: descriptive otherwise; no further row.
-6. **Student-t details beyond E5** — when a floor counts as heavy-tailed. Recommendation: excess kurtosis of the 10-seed floor > 3 on ≥ 2 of the 3–5 representative edits; ν fixed at 5; declared in the G.3 selection row.
-7. **Licence check (REVISIONS (e))** — result due from G.0 (HoreKa agent). Nothing to decide now.
-8. **T1/T2 task lists (G.3)** — after the census. Nothing to decide now.
-9. **Container route on run hosts** — Docker on deepthought known; 4090s, Ada and HoreKa 2 unchecked. Recommendation: the operator checks the 4090s and Ada in O0, the HoreKa agent checks HoreKa 2 in its scan; R1-BX-REVISIONS (g)'s order of preference applies.
-10. **Phase C/D host plan** (B.4 pick row, C.2 on 1–2 T1 nodes, C.3, T2, API closed loop, A4 answers for T1) — Recommendation: plan after G.4 and B.7, as one row with the date recomputation.
-11. **R1-SERVER-AGENTS-TWO (proposed)** — host lists (covered by (b)); amended rows (R1-HANDOVER-04NOV, R1-BX-PORTING-CONFIRM, R1-BX-REVISIONS (h), R1-ADA-CENSUS); the HoreKa agent's working mode (agent-partition node, author-opened tunnel). Recommendation: confirm in the (b) row or a one-line confirmation.
+   `| R1-BX-D6-MODEL (date) | API proposer: `<provider/model>`, version pin `<pin>`, cost cap `<€>`, calls only from `<host>` with full request/response and returned model version logged; closed-loop evaluation only. |`
+3. **G.5 divergence STOP** (TRACK_G) — options: a per-node share of divergent T1 label proposals above which the node STOPs, or no fixed threshold (STOP on the author's reading of G.5's report). Recommendation: a fixed share, 20 %†, with the node moved to T2 only by an author row.
+   `| R1-TRACKG-G5-DIVERGENCE (date) | G.5 STOPs a T1 node for the author when more than <20 %†> of its label proposals are divergent (R1-BX-PROPOSED-CONFIRM, REVISIONS (c)); the node moves to T2 only by an author row. |`
+4. **T0 as the held-out suite** in leave-one-suite-out — options: never; also as a secondary fold. Recommendation: never in the primary test; a T0-held-out fold reported as secondary.
+   `| R1-LOSO-T0 (date) | T0 is never the held-out suite in the primary leave-one-suite-out test; a T0-held-out fold is reported as secondary. |`
+5. **Probe A6** — R1-P3A-OOM-OPTION3 already uses it for the re-run decision (mean |Δ RPS| > 0.01). Recommendation: descriptive otherwise. No row now.
+6. **Student-t details beyond E5** — when a node's floor counts as heavy-tailed, and which degrees of freedom. Options: a declared numeric test (e.g. excess kurtosis of the 10-seed floor > 3† on ≥ 2 of the representative edits, ν = 5†), or a per-node author call in the G.3 selection row. Recommendation: the per-node author call in G.3, with the census's kurtosis reported; the numbers† only if the author wants a mechanical rule.
+   `| R1-NOISE-STUDENT-T (date) | Heavy-tailed floors are declared per node in the G.3 selection row, with each node's 10-seed excess kurtosis reported; the declared nodes use a Student-t soft label with ν = <ν> before labels are built. |`
+7. **Licence check (REVISIONS (e))** — result due from G.0 (HoreKa agent). No row now.
+8. **T1/T2 task lists (G.3)** — after the census. No row now.
+9. **Container route on run hosts** — Docker on deepthought known; 4090s, Ada and HoreKa 2 unchecked. Recommendation: the operator checks the 4090s and Ada in O0; the HoreKa agent checks HoreKa 2 in its scan; R1-BX-REVISIONS (g)'s order of preference applies.
+   `| R1-CONTAINER-CHECKS (date) | The operator checks container availability (Docker, Podman, Apptainer) on TASL-2, TASL-7 and Ada in O0; the HoreKa agent checks HoreKa 2 in its scan; R1-BX-REVISIONS (g)'s order of preference applies. |`
+10. **Phase C/D host plan** (B.4 pick row, C.2 on 1–2 T1 nodes, C.3, T2, API closed loop, A4 answers for T1) — Recommendation: plan after G.4 and B.7, as one row with the date recomputation. No row now.
+11. **R1-SERVER-AGENTS-TWO (proposed)** — host lists (covered by (b)); amended rows (R1-HANDOVER-04NOV, R1-BX-PORTING-CONFIRM, R1-BX-REVISIONS (h), R1-ADA-CENSUS); the HoreKa agent's working mode (agent-partition node, author-opened tunnel). Recommendation: confirm.
+    `| R1-SERVER-AGENTS-TWO-CONFIRM (date) | Confirms R1-SERVER-AGENTS-TWO's proposed consequences: the host lists (see R1-HOSTS-04NOV), the rows it amends (R1-HANDOVER-04NOV, R1-BX-PORTING-CONFIRM, R1-BX-REVISIONS (h), R1-ADA-CENSUS), the HoreKa agent working only from an agent-partition compute node through the author's tunnel, and hand-overs between the two server agents only through the author or pushed branches. |`
 12. **R1-SERVER-AGENTS-TWO (open)** — G.0 raw-cost work on Ada for the fallback in the meantime (recommend: no, until the HoreKa scan says HoreKa 2 cannot run T1); Track S GPU nodes' own 4090 noise floor (recommend: yes — one GPU model per table, R1-BX-D5).
-13. **R1-T1-HOREKA (proposed)** — `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` as the design basis; adopted only by a later row after the scan. Nothing to decide now.
+    `| R1-ADA-FALLBACK-HOLD (date) | No G.0 work on Ada until the HoreKa scan shows HoreKa 2 cannot run T1. Track S GPU nodes measure their own 4090 noise floor (one GPU model per table, R1-BX-D5). |`
+13. **R1-T1-HOREKA (proposed)** — `proposals/HOREKA_T1_JOBS_DRAFT_20261104.md` as the design basis, adopted only by a later row after the scan. No row now.
 14. **R1-1GC-FALLBACK (open)** — MLAgentBench light tasks as T1 and T2 candidates (recommend: yes, fixed in G.3); the 1GC extra tasks' tier and role (recommend: T2 only, outside the 12–16 count, always training-side in folds); domain coverage (recommend: decide in G.3 with the census).
-15. **R1-BX-D10 (Track S manager on GPU nodes)** — committed after G.0/D28 (R1-BX-PROPOSED-CONFIRM). Nothing to decide now.
+    `| R1-1GC-FALLBACK-CONFIRM (date) | MLAgentBench light tasks are T1 and T2 candidates, fixed in G.3; 1GC-7RC's public-dataset tasks are T2 only, outside the 12–16 count, and always on the training side of leave-one-suite-out folds; domain coverage is decided in G.3. |`
+15. **R1-BX-D10 (Track S manager on GPU nodes)** — committed after G.0/D28 (R1-BX-PROPOSED-CONFIRM). No row now.
 
 ---
 
-## Paste-ready message to the operator (after the author commits the rows he chooses)
+## (k) M1 exceptions for the author to acknowledge
 
-> Read the plan from `mac-int-20261104` at `<commit>`. It integrates coordinator `10742f85`, `docs/runbooks-04nov` @ `c15b1102`, `codex/b2-repair-20261031`, Track S docs and the RUNBOOK §5 pin table. Your runbook is `docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md` on that commit. No new server step is unlocked by M1 itself.
+1. **Tests ran in the cloud workspace, not on the Mac.** The Mac's git cannot reach GitHub through its proxy, so the integration and the CPU suite ran in the chat session's Linux workspace (Python 3.13, fresh venv, harness `897d83c`), both runs in the same environment (`reports/MAC_M1_TESTS_20261104.md`). R1-LOCAL-TEST-SCOPE speaks of the Mac CPU.
+2. **"Failure set equal apart from new tests" is not literally met.** Three failures are in the existing `r1/tests/test_c3_launch_provenance.py`. They fail on `codex/b2-repair-20261031` itself: that branch changed `r1/scripts/c3_label_sweep.py` without updating this test's fixtures. Recommendation: accept as an exception, with the fixture fix assigned to M3.
+
+```
+| R1-M1-TEST-EXCEPTIONS (4 Nov) | M1's tests may run in the chat session's cloud workspace (CPU, same scope as R1-LOCAL-TEST-SCOPE) while the Mac cannot reach GitHub. The three `test_c3_launch_provenance.py` failures inherited from `codex/b2-repair-20261031` are accepted as an exception to M1's Done-when; M3 fixes the fixtures. |
+```
+
+---
+
+## Hand-off to the operator — gated
+
+The operator is pointed at `mac-int-20261104` **only after R1-TRACKX-HANDOVER-RULING is committed to PLAN §10** (by the author, or by the Mac agent on his chat instruction with his words quoted). Until then PLAN on the branch still contains both R1-HANDOVER-04NOV and the coordinator's later Track X rows, unreconciled.
+
+Paste-ready message, once that row is committed:
+
+> Read the plan from `mac-int-20261104` at `<commit with R1-TRACKX-HANDOVER-RULING>`. It integrates coordinator `10742f85`, `docs/runbooks-04nov` @ `c15b1102`, `codex/b2-repair-20261031` (five out-of-scope files held), the Track S documents and the RUNBOOK §5 pin table. Your runbook is `docs/r1/prompts/OPERATOR_RUNBOOK_20261104.md` on that commit. Under R1-TRACKX-HANDOVER-RULING, O1 includes the verification and receiving review of `t7j10` and the Stage A acceptance. No other new server step is unlocked by M1.
