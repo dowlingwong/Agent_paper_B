@@ -2,6 +2,10 @@
 
 ## Mac continuation, 4 November — NOT ACCEPTED
 
+**20:38 follow-up (AI-assisted, Codex).** The author selected the retained thinking-on descriptive sensitivity and thinking-off-only D28 gate in PLAN R1-EXAM-X5-B1-SENSITIVITY and R1-EXAM-X5-D28-SCOPE (`mac-int-20261104` @ `8c7677a`). The B1 scope review then found that `author_gate` could accept a prose or dirty PLAN mention as a rule decision; code `0437cea` therefore refuses all X5 v2 authorizations until an independently reviewed, trusted published authority is bound. The disabled containment was independently reviewed (`reviews/MAC_B1_SCOPE_REVIEW_20261104.md`); legacy v1 compatibility is not fully established. An authenticated-authority design is a conditional proposal at `320ef6f`, not an implementation or author decision. B1/B2 entry STOPs and the B2 ranking STOP remain.
+
+Full Mac CPU suite on base `bf8b2da` plus the reviewed `0437cea` patch (binary diff SHA-256 `92083f7f4bfe720def1dd6120e84a0a56aeec2f425c632e79123cbf9496cbf90`): **896 passed / 39 failed / 11 skipped**. Its 39 failed test IDs equal those of `5fcea74`; no tests were added to or removed from the failure set. The forced harness configuration and interpreter were the same as the earlier final suite below. Log `reports/mac_m2_tests_20261104/authority_0437cea.log` has SHA-256 `f379057178992d94633e016656598b64809060740b184bf19f85096e6877b218`. The local test operator reports one identified orphan mock server was stopped and exited. This is not an all-passing suite or acceptance of M2.
+
 AI-assisted (Codex). This continuation supersedes the unfinished round-2 test placeholder below. Full CPU suites ran on the Mac with the same harness checkout and compulsory B1 harness checks; no model, GPU or remote host was used. The draft rule file still hashes to `79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20`; this is not an author freeze.
 
 | Tested code | Passed | Failed | Skipped |
