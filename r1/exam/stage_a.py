@@ -124,7 +124,7 @@ def a1_template_equal(spec, actual, expected, server_tokenize, tokenizer=None):
     hf_ids = [int(x) for x in tokenizer(expected, add_special_tokens=False).input_ids]
     served_ids = [int(x) for x in tokenizer(actual, add_special_tokens=False).input_ids]
     evidence.update(prefix_token=bos, prefix_token_id=bos_id)
-    hf_side = len(prefix_ids) == 1 and hf_ids == prefix_ids + served_ids
+    hf_side = prefix_ids == [bos_id] and hf_ids == [bos_id] + served_ids
     server_ids = server_tokenize(actual) if callable(server_tokenize) else None
     server_side = isinstance(server_ids, list) and [int(x) for x in server_ids] == hf_ids
     evidence.update(tokens_equal=bool(hf_side), server_tokenize=bool(server_side))
@@ -273,6 +273,8 @@ def run_stage_a(instance, spec, prompts, *, gpu_sample, schema_format, dryrun=Fa
                 reply=non_generation.post('/tokenize',{'content':text,'add_special':True})
                 tokens=reply.get('tokens') if isinstance(reply,dict) else None
                 return [int(t) for t in tokens] if isinstance(tokens,list) else None
+            except D3EvidenceStop:
+                raise
             except Exception:  # noqa: BLE001 - absence of the endpoint fails the A1 token path
                 return None
         evidence=[];nongen_expected=[]

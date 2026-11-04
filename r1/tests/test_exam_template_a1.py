@@ -45,6 +45,36 @@ def test_server_tokenize_mismatch_fails():
     assert ok is False and ev['server_tokenize'] is False and ev['method'] is None
 
 
+def test_prefix_token_must_be_declared_bos_id():
+    tokenizer = FakeTokenizer(bos_id=2, prefix_ids=(9,), mapping={'<bos>x': [9, 7], 'x': [7]})
+    ok, evidence = a1_template_equal({}, 'x', '<bos>x', lambda text: [9, 7], tokenizer=tokenizer)
+    assert not ok
+    assert evidence['prefix_token_id'] == 2
+    assert evidence['tokens_equal'] is False
+
+
+def test_tokenize_evidence_stop_ends_stage_a_without_later_requests(monkeypatch):
+    from r1.exam import stage_a
+    from r1.exam.cache_false import D3EvidenceStop
+    calls = []
+    monkeypatch.setattr(stage_a, 'require_d3_evidence', lambda: None)
+    monkeypatch.setattr('r1.exam.cache_descriptive.true_replay', lambda *a, **k: {})
+    monkeypatch.setattr(stage_a, 'fit_prefill', lambda *a: {'prefill_tokens': 3, 'prefill_generated_tokens': 1})
+    monkeypatch.setattr(stage_a, 'a1_tokenizer', lambda spec: _tok('<bos>x', 'x'))
+    def post(route, payload):
+        calls.append(route)
+        if route == '/apply-template':
+            return {'prompt': 'x'}
+        raise D3EvidenceStop('synthetic journal failure')
+    spec = {'id': 'fixture', 'thinking_policy': {'mode': 'off'}}
+    with pytest.raises(D3EvidenceStop, match='synthetic journal failure'):
+        stage_a.run_stage_a(SimpleNamespace(ctx_size=4), spec, [{'prompt': 'fixture'}],
+            gpu_sample=lambda: {'free_mib': 22000, 'used_mib': 1000}, schema_format={},
+            template_renderer=lambda messages: '<bos>x',
+            cache_context={'false_recorder': object(), 'non_generation_recorder': SimpleNamespace(post=post)})
+    assert calls == ['/apply-template', '/tokenize']
+
+
 def test_non_bos_prefix_fails():
     served = 'hello'; expected = 'X' + served
     ok, ev = a1_template_equal({}, served, expected, lambda text: [2] + [7 + (ord(c) % 50) for c in served], tokenizer=FakeTokenizer())

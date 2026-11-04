@@ -26,7 +26,7 @@ def retime_census(rows):
         elif row['event']=='checked':row['census_after']=sample(row['monotonic_ns']-1)
 
 
-def records():
+def records(a1_extended=False):
     prompts=[{'trial_id':f't{i}','prompt':f'synthetic{i}','seed':i} for i in range(50)]
     true=[{'event':'startup','identity':IDENTITY,'monotonic_ns':1}];clock=10;seq=0
     def response(seq,clock):
@@ -78,6 +78,11 @@ def records():
         messages=[{'role':'user','content':f'Fixed template check {i}: JSON, whitespace, Unicode α, newline\nend.'}]
         nongen.append(('/apply-template',{'messages':messages,'add_generation_prompt':True,
                                           'chat_template_kwargs':{'enable_thinking':False}}))
+    if a1_extended:
+        for row in prompts:
+            nongen.append(('/apply-template', {'messages': [{'role': 'user', 'content': row['prompt']}],
+                'add_generation_prompt': True, 'chat_template_kwargs': {'enable_thinking': False}}))
+            nongen.append(('/tokenize', {'content': row['prompt'], 'add_special': True}))
     false_rows=prim(false);nongen_rows=prim(nongen)
     t=true[-1]['monotonic_ns']+10
     for row in nongen_rows[:3]+false_rows[:3]+nongen_rows[3:]+false_rows[3:]:
@@ -333,3 +338,25 @@ def test_nongen_expected_rows_accepts_the_a1_extension():
     extended = _nongen_expected_rows(False, [('/apply-template', {'messages': []}),
                                              ('/tokenize', {'content': 'x', 'add_special': True})])
     assert [r[0] for r in extended] == ['/tokenize', '/apply-template', '/tokenize']
+
+
+def test_extended_a1_journal_accepts_exact_trace_and_rejects_tampering():
+    true, false, nongen, prompts = records(a1_extended=True)
+    expected = [(row['route'], json.loads(row['request_body'])) for row in nongen[3::3]]
+    def check(rows):
+        return validate_local_order(true, false, rows, prompts, alias='fixture', ctx_size=4,
+            schema_format={'fixture': True}, expect_grammar=False, thinking_enabled=False,
+            identity=IDENTITY, nongen_expected=expected)
+    check(nongen)
+    with pytest.raises(ValueError):
+        check(nongen[:-3])
+    changed = [dict(row) for row in nongen]
+    change_request(changed[-3], {'content': 'tampered'})
+    with pytest.raises(ValueError):
+        check(changed)
+    reordered = [dict(row) for row in nongen]
+    a, b = reordered[-6], reordered[-3]
+    for key in ('route', 'request_body', 'request_body_sha256'):
+        a[key], b[key] = b[key], a[key]
+    with pytest.raises(ValueError):
+        check(reordered)
