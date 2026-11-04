@@ -1,4 +1,4 @@
-# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026, revision 3.2)
+# Paper B (route R1) — Mac-local agent runbook (4 Nov 2026, revision 3.3)
 
 **Written 4 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 2 addressed an independent review (not accepted: 2 BLOCKING, 6 MAJOR, 9 MINOR). Revision 3 (4 Nov) applies the author's full adoption of `proposals/PAPER_B_REVIEW_BENCH_EXPANSION_20261104.md` (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS): new tasks M10–M13, and changes to M1, M6–M9. Revision 3.1 (4 Nov, 11:29) applies the author's rulings (PLAN §10, "4 November 2026 (11:29)"), reduces the packet to the items still open, and adds M14–M15. See §4.**
 
@@ -69,6 +69,13 @@ Report to the author in **Chinese**, short and concrete. Write documents and com
 2. It writes `docs/r1/reviews/MAC_<TASK>_REVIEW_<date>.md`.
 3. Fix or answer each finding. The same reviewer re-checks until it writes **accepted**.
 4. You never accept your own work.
+
+**Subagents and parallel work** (author, 4 Nov 16:00: "mac agent我们是不是没允许它开多agent？写个prompt允许它开")
+- You may spawn subagents. Reviewers are required by the review loop above. You may also run worker subagents for independent tasks in parallel, for example M2, M3, M10, M11 and M13 once M1 is accepted.
+- **Separation.** Each worker gets its own worktree and its own `mac-<task>-<date>` branch. No two workers edit the same file at the same time. Shared files go to one worker only, and the others wait. Shared here means PLAN, STATUS, RUNBOOK, `r1/scripts/c3_label_sweep.py` and the harness. M4 still waits for M3.
+- **Limits.** At most 3 worker subagents at once, plus their reviewers. No worker touches a server, runs an LLM or a GPU job, or edits the main working tree.
+- **Briefing.** Give each worker this runbook, its task section, its "Done when", and the relevant PLAN rows. Its result is your input, not accepted work. Every worker's result goes through the review loop with a fresh reviewer that did not write it. Neither a worker nor you accepts its own work.
+- **You stay the single integrator.** Only you merge workers' branches, write hand-offs and STATUS entries, and report to the author.
 
 **Hand-off to the operator**
 - Push the branch.
@@ -481,6 +488,8 @@ The TabPFN rows and the A5/A6 rows come from TASL-7 (O7); you only tabulate them
 - Keep the decision packet current, and show it when the author asks "what's pending".
 
 ## 4. Review record
+
+**Revision 3.2 → 3.3** (4 Nov, 16:00). Subagents and parallel work allowed, per the author's instruction (§0).
 
 **Revision 3.1 → 3.2** (4 Nov). R1-SERVER-AGENTS-TWO: the HoreKa agent takes the T1 ports and results (M10, M14, results paths, packet (a)/(b)); per the review `reviews/SERVER_AGENTS_TWO_REVIEW_20261104.md`.
 
