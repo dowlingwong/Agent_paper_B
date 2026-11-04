@@ -101,7 +101,7 @@ Report to the author in **Chinese**, short and concrete. Write documents and com
 - **Track P P.3a** is STOP (OOM, verdict UNCLEAR; options 1–3).
 - **Track S** waits for the S0.1 re-run.
 - **`cache_prompt: false`** is decided for Track X (R1-EXAM-CACHE-REV) and Track S (R1-CACHEPROMPT-FALSE), and for sweep 2 by R1-MAIN-PROPOSER. Sweep 1 is disclosed as not seed-replayable (R1-SWEEP1-CACHE-DISCLOSURE).
-- **Benchmark expansion (4 Nov, R1-BX-*).** The CPU nodes are T0; GPU label nodes (T1) and evaluation nodes (T2) come from autoresearch, 1GC-7RC and MLGym; **Track G is the critical path**; B.7 ≈ 8 Dec on the aggregate criterion; B.6 cut; K = 6 only after the subsampling check. The rows' *(proposed)* and *(open)* items need the author (packet (j)).
+- **Benchmark expansion (4 Nov, R1-BX-*).** The CPU nodes are T0; GPU label nodes (T1) and evaluation nodes (T2) come from autoresearch, MLGym and MLAgentBench (1GC-7RC replaced 4 Nov 12:45, R1-1GC-FALLBACK); **Track G is the critical path**; B.7 ≈ 8 Dec on the aggregate criterion; B.6 cut; K = 6 only after the subsampling check. The rows' *(proposed)* and *(open)* items need the author (packet (j)).
 - **Deepthought dual-card**: the author said in chat on 4 Nov: "deepthought我们可以用双卡deploy模型，一部分实验可以放到那上". That intent is now recorded in PLAN R1-BX-REVISIONS (f) (4 Nov), which amends R1-MAIN-PROPOSER (f): the main proposer may be served on deepthought across two TITANs. Its conditions (O5 passing against an author-committed criterion; one serving configuration per source and tier) are *proposed*, and whether sweep 2's T0 and T1 parts share a proposer host is *open* (packet (j)).
 
 ## 2. Tasks, in priority order
@@ -147,7 +147,7 @@ Run it, and commit both the script and its output.
 - **Track X:** the coordinator's recorded Stage A pins.
 - **Track P:** `trackp-20261026` and its recorded pins.
 
-**Ruled on 4 Nov (11:29).** The author ruled on items (a), (d) (always-thinking models skip B1), (d′), (e), (f), (g) and (j); see PLAN §10 "4 November 2026 (11:29)" (R1-HANDOVER-04NOV … R1-BX-PROPOSED-CONFIRM). For those items the packet now only drafts the follow-up rows and notes: R1-EXAM-RULE-X5V2 with the sha (M2), R1-BX-D8-CONFIRM with the gate-code sha (M11), the replay and B.2 authorization notes (M3), and the Track S S0.1 re-run note if the operator needs one. **Pending the author's confirmation after the 4 Nov explanations:** A4 (the 1GC-7RC fallback, R1-1GC-FALLBACK) and H1 (the B.7 timing and its partial-T1 fallback). **Still open, and still drafted with options:** (a)'s acknowledgement of the `codex/b2-repair-20261031` files outside its scope, (b) R1-HOSTS-04NOV, (c)'s B.1b difference list, (h), (i) after G.4, the exact API model (D6), the Phase C/D host plan, the container route on the run hosts, and the R1-BX *(proposed)* items that the 11:21 list did not cover (see PLAN §10, 4 Nov 11:29, "Still open").
+**Ruled on 4 Nov (11:29).** The author ruled on items (a), (d) (always-thinking models skip B1), (d′), (e), (f), (g) and (j); see PLAN §10 "4 November 2026 (11:29)" (R1-HANDOVER-04NOV … R1-BX-PROPOSED-CONFIRM). For those items the packet now only drafts the follow-up rows and notes: R1-EXAM-RULE-X5V2 with the sha (M2), R1-BX-D8-CONFIRM with the gate-code sha (M11), the replay and B.2 authorization notes (M3), and the Track S S0.1 re-run note if the operator needs one. **Pending the author's confirmation after the 4 Nov explanations:** H1 (A4, the 1GC-7RC fallback, was adopted at 12:45 as R1-1GC-FALLBACK) — (the B.7 timing and its partial-T1 fallback). **Still open, and still drafted with options:** (a)'s acknowledgement of the `codex/b2-repair-20261031` files outside its scope, (b) R1-HOSTS-04NOV, (c)'s B.1b difference list, (h), (i) after G.4, the exact API model (D6), the Phase C/D host plan, the container route on the run hosts, and the R1-BX *(proposed)* items that the 11:21 list did not cover (see PLAN §10, 4 Nov 11:29, "Still open").
 
 > **Reading old markers (rev 3.1).** Where this file still says *(proposed)*, "packet (a)", "(d′)" or "(e1)", read the 4 Nov (11:29) rulings: R1-HANDOVER-04NOV (you are the editor of `r1/exam/` and `r1/c3/train/`), R1-EXAM-B1-HARNESS-PIN, R1-B2-REPLAY-GO and the items confirmed in R1-BX-PROPOSED-CONFIRM. Anything those rows do not list is still proposed or open.
 
@@ -227,7 +227,7 @@ Run it, and commit both the script and its output.
 - R1-BX-REVISIONS (c): the Student-t rule for heavy-tailed floors;
 - (f): the T1 label-run GPU model and the proposer host (also Track G G.3);
 - (g): which host the Apptainer check ran on;
-- R1-BX-D2: the 1GC-7RC repository's status, once G.0 reports it.
+- ~~R1-BX-D2: the 1GC-7RC repository's status~~ settled (R1-1GC-FALLBACK).
 
 **Step 6: hand the packet to the author.** Give the author the packet and the paste-ready rows. The author commits them on `mac-int-20261104`, or tells you in chat to commit named rows on their behalf, which you then do. After that:
 - push the branch;

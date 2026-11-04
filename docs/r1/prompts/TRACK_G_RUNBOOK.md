@@ -14,8 +14,8 @@
 
 - **Target:** 12–16 real tasks from ≥ 3 suites and ≥ 5 domains (LM, vision, graph, tabular, time series, text classification, RL). Variants of one task do not count.
 - **T0:** the 8 CPU nodes (testbed; single-parameter edits as the low-interaction condition).
-- **T1 (label + evaluation):** autoresearch (short fixed-step variant); 1GC-7RC lighter tasks: TinyShakespeare, Forest Cover, ETTh1, AG News, possibly ogbg-molhiv; MLGym lighter tasks: CIFAR-10, Fashion-MNIST, House Price, a MinAtar/MountainCar-type RL task (to be checked against the MLGym task table in G.0).
-- **T2 (evaluation only):** 1GC-7RC TinyImageNet and VOC; optional fourth suite: MLAgentBench light tasks (cifar10, imdb, ogbn-arxiv).
+- **T1 (label + evaluation):** autoresearch (short fixed-step variant); MLGym lighter tasks: CIFAR-10, Fashion-MNIST, House Price, a MinAtar/MountainCar-type RL task (to be checked against the MLGym task table in G.0); MLAgentBench light tasks (for example cifar10, imdb, ogbn-arxiv); *(4 Nov, R1-1GC-FALLBACK: 1GC-7RC is not used as a suite; its public datasets — TinyShakespeare, Forest Cover, ETTh1, AG News, ogbg-molhiv — may be extra tasks that count toward no suite)*.
+- **T2 (evaluation only):** heavier MLGym and MLAgentBench tasks, chosen in the census (1GC-7RC is not used, R1-1GC-FALLBACK).
 - **Not used:** RE-Bench, MLE-bench (hours per run, cannot be audited); DACBench (different problem type).
 - The author fixes the T1/T2 lists after the census (G.3).
 
@@ -47,7 +47,7 @@ In order of preference:
 ### G.0 — Availability and raw cost (operator; Ada first; ENGINEERING_ONLY)
 
 Before G.0 starts on Ada, the O0 census of Ada checks Paper A occupancy (no Paper B GPU launch while a Paper A campaign waits for a card) and the co-tenancy margin. Per candidate task:
-1. **Licence and availability:** the repository, its licence, and the licence of each dataset. In particular, check whether the 1GC-7RC repository (arXiv 2605.17046) is public now; R1-TRACKG-SCOPE found it was not. If it is still not public, **STOP for the author**: R1-1GC-FALLBACK (MLAgentBench as the third suite) is recommended but pending the author's confirmation (PLAN §10, 4 Nov 11:29).
+1. **Licence and availability:** the repository, its licence, and the licence of each dataset. 1GC-7RC is not used: **MLAgentBench is the third suite** (R1-1GC-FALLBACK, adopted 4 Nov 12:45); check MLAgentBench's task-asset licences instead.
 2. **Raw cost:** the suite's own baseline script at a candidate step count, on each GPU model available: RTX 6000 Ada (first), RTX 4090, TITAN X. Record wall time, peak VRAM, and CPU and RAM use. No code beyond the suite's own script and a step-count argument; where a script has no such argument (autoresearch has a wall-clock budget), its raw cost is measured after G.1, at the fixed-step wrapper.
 
 ### G.1 — Porting (operator ports; Mac shared pieces first)
@@ -105,7 +105,7 @@ About 40 GPU-h per T1 node at 2-minute runs and K = 6: noise floor (5 edits × 1
 
 ## 6. Open questions for the author
 
-1. Is the 1GC-7RC repository public now? Checked on G.0's first day. If not, the recommended fallback, MLAgentBench as the third suite (R1-1GC-FALLBACK), is pending the author's confirmation.
+1. ~~1GC-7RC~~ Settled 4 Nov 12:45: not public; MLAgentBench is the third suite (R1-1GC-FALLBACK).
 2. ~~Which GPU model runs the T1 label table, and where is the proposer served?~~ Ada for T1 label runs; the proposer on deepthought (two TITANs) if O5 passes, else a 4090 (R1-BX-PROPOSED-CONFIRM).
 3. ~~Which host was the Apptainer check run on?~~ deepthought2 (R1-APPTAINER-HOST).
 4. ~~Memory modes and the campaign count per T1 node~~ both modes, about 12 campaigns (R1-BX-PROPOSED-CONFIRM).

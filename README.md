@@ -32,13 +32,13 @@ recorded value. R1 treats this loop as noisy sequential selection with an incumb
 | Tier | Role | Tasks |
 |---|---|---|
 | T0 | Controlled testbed: theory checks, Track S, ablations; single-parameter edits as the low-interaction condition | The 8 CPU nodes (OpenML and small-MLP) |
-| T1 | C3 labels and closed-loop evaluation (also with a second, API proposer); the B.7 gate | GPU tasks from autoresearch, 1GC-7RC and MLGym, run at fixed step budgets with code-level diffs |
-| T2 | Evaluation only (closed loop, also with the API proposer) | Larger 1GC-7RC tasks; optionally MLAgentBench |
+| T1 | C3 labels and closed-loop evaluation (also with a second, API proposer); the B.7 gate | GPU tasks from autoresearch, MLGym and MLAgentBench, run at fixed step budgets with code-level diffs |
+| T2 | Evaluation only (closed loop, also with the API proposer) | Heavier MLGym and MLAgentBench tasks |
 
 - **Target:** 12–16 real tasks from ≥ 3 suites and ≥ 5 domains.
 - **Primary generalisation:** leave-one-suite-out.
 - **Integration:** the suites' task assets run as harness nodes; their agent frameworks are not used.
-- **Open:** whether the 1GC-7RC repository is public is checked in the Track G census; the T1/T2 lists are fixed by the author after it.
+- **Suites:** 1GC-7RC was dropped because its repository is not public (4 Nov); the T1/T2 lists are fixed by the author after the Track G census.
 - **Proposers:** the main proposer is the Track X exam pick, run with thinking off (R1-MAIN-PROPOSER). `qwen2.5-coder:7b` (sweep 1, frozen) is the second source.
 - **Dates:** current targets are B.7 ≈ 8 Dec 2026, D.3 ≈ 3 Jan 2027, manuscript 10 Jan 2027 (R1-BX-D14). They are recomputed after the T1 pilot.
 
