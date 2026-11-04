@@ -1,3 +1,42 @@
+# M2 round 2 — independent review in progress (4 Nov 2026)
+
+**Verdict: NOT ACCEPTED / IN PROGRESS.** This is a new independent Codex reviewer. The prior Claude reviewer was stopped at handover and is not recoverable in this session; do not describe this as a re-check by that original reviewer. Scope reviewed so far: `74a07907..75134796`, particularly the round-1 fixes `99a9f566` and host change `0e5ce25f`. Full-suite comparison and final handoff were not available during this review. No real server, GPU, or experiment was used.
+
+## Blocking findings
+
+1. **Duplicate B2 primary candidate manifests can be ranked twice.** `_b2_summary_v2` appends all primary manifests without checking unique candidate identity; the synthetic list `a(.9), a(.8), b(.7)` produced the ranked IDs `[a, a, b]`. This can corrupt winner/runner-up selection. Unlike `choose_finalists`, B2 does not reject duplicates. Add a fail-closed uniqueness check for primary candidates and a regression test; distinguish separate descriptive or schema sensitivity rows.
+
+2. **B2 ranking does not verify complete, unique node/instance coverage.** X.6 requires three nodes and the author-fixed number of fresh instances per node. `_b2_final_values` validates 10 audit seeds and mean per supplied entry but never checks instance IDs, node names, freshness, uniqueness, or the authorized grid. `_b2_summary_v2` accepts and ranks a primary with a single audit with neither `node` nor `instance_id`: the test helper `_b2` already constructs this input. A missing, duplicated, or non-protocol root can therefore change final Y while a self-reported `COMPLETE` passes. Bind the expected design to reviewed author-approved configuration/provenance and fail closed on absent, duplicate or wrong coverage before ranking; otherwise keep the analysis STOP until that exists. This does not assert that the real operator has produced such an artifact.
+
+## Verified so far
+
+- Round-1 F1: v2-stamped or pinned-v2-sha B2 data without the v2 rule is refused; explicit rule checks all manifest shas. Round-1 F2: v2 D28 reads primary mode only and records sensitivity separately; v1 keeps its prior behavior. F3 is present as an author question. The validator refuses `run_descriptive`. Host guard is tied to `cfg.host` and both configs bind TASL-7; `collect` remains unconditionally stopped. No conclusion on production readiness follows.
+- SHA256 of `r1/exam/rules/x5_rule_v2.yaml` is `79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20`, matching its `.sha256` file and both v2 config fields. It remains a draft until the author settles the handoff's sensitivity/D28 questions and commits R1-EXAM-RULE-X5V2.
+- Independent Mac CPU focused run with pinned harnesses `a3fedbb` and `897d83c`, `R1_REQUIRE_B1_HARNESS=1`: `r1/tests/test_exam_x5_rule_v2.py`, **69 passed**, including both localhost fake-server controls. A sandboxed trial failed localhost permissions and used a non-Git harness path; the corrected independent run used local-only stand-ins with sandbox permission to bind localhost. No model was run.
+- v2 configs remain drafts: `workers=4` and TODO nodes, call cap and paper pin differ from the subsequently selected 20/80/digits choices; these need an independently reviewed binding before any authorized launch. The authorization gate does not bind `workers` or `host`. The handoff correctly describes `workers` as the per-root paired-audit process pool; BLAS/OMP variables are propagated through the worker environment.
+- M5's independently reviewed Stage A safety fixes reside on a separate branch and are absent from `75134796`; integrating/reviewing those changes is a separate prerequisite to deploying a corrected code pin. The author's Stage A acceptance and existing data were not changed by this review.
+
+## Re-check of B2 containment — accepted only as a disabled partial fix
+
+The same Codex reviewer re-checked the uncommitted diff from `75134796` in `/private/tmp/paper-b-m2-fix-20261104`, SHA-256 of `git diff --binary` `bdba0df383945b9116266367643b1cc048afb76f6dc5f4cc839f1b65b86dfcbf`. This accepts only the fail-closed containment, not M2 as a whole or B2 ranking. No actual data, models or server operations were used.
+
+- Duplicate `purpose=primary` candidate IDs now raise before any v2 ranking; separate descriptive/schema rows remain separate. A new negative test exercises duplicate primaries.
+- `_b2_summary_v2` unconditionally raises before calculating or returning a ranking for *all* inputs. This contains incomplete or duplicated grid input; it does not implement the author-bound grid verification. A future implementation must validate complete unique node/instance coverage and be independently re-reviewed before removing the STOP.
+- The independent local CPU command `AR_HARNESS_ROOT=/Users/wongdowling/Documents/autoresearch_harness /Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python -m pytest -q r1/tests/test_exam_x5_rule_v2.py -k b2` returned **26 passed, 44 deselected**; no live network, GPU or models. Prior 69-pass testing was for `75134796`, not this diff.
+- Tests previously checking that thinking-on never wins and GPU-hours break ties have been replaced by STOP assertions. Accordingly those behaviors are not established by these new tests while ranking is disabled; restore meaningful ranking tests after implementing grid verification. The full-suite before/after comparison in progress is for `75134796`, not this changed snapshot.
+
+**M2 remains NOT ACCEPTED**, and B2 ranking is unusable. The original round-1 reviewer cannot be recovered, remaining handoff questions need author decisions, the final handoff and full-suite comparison are not complete, and the M5 safety fix remains separate. This partial review authorizes no measurement or execution.
+
+## Compatibility observation
+
+The no-rule v1 function remains usable for legacy unstamped manifests, but the CLI always supplies its default v1 rule. A synthetic unstamped v1 B2 manifest that the original CLI accepted now raises a rule-hash error. Actual old manifest impact is not established. The handoff should not describe every v1 caller as byte-for-byte unchanged without this qualification. The stricter check also prevents ambiguous inputs from being silently treated as v1; preserving that safety may require an explicitly documented compatibility boundary rather than simply removing it.
+
+## Pending before a final verdict
+
+The integrator must supply the finished handoff and same-environment full-suite before/after test lists. Inspect fixes for both B2 blockers, author questions, rule/file bindings, and all remaining prior findings. This draft is not acceptance, not a decision row, and not authorization to run B1/B2.
+
+---
+
 # Review of M2: `x5_rule_v2` and its code (4 Nov 2026)
 
 **Reviewer:** a fresh, independent reviewer subagent (Claude). AI-assisted. I did not write the work under review.
