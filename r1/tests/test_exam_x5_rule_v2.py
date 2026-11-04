@@ -367,7 +367,7 @@ def test_author_gate_binds_amendment_shas(tmp_path, monkeypatch):
     (tmp_path / 'docs/r1').mkdir(parents=True)
     (tmp_path / 'docs/r1/PLAN.md').write_text(f'| R1-EXAM-RULE-X5V2 | `{rule_sha}` |\n')
     note = tmp_path / 'note.json'
-    cfg = {'authorizations': {'b1': str(note)}, 'nodes': ['digits_mlp', 'openml_credit_approval', 'openml_ionosphere'],
+    cfg = {'rule': str(RULE_V2), 'authorizations': {'b1': str(note)}, 'nodes': ['digits_mlp', 'openml_credit_approval', 'openml_ionosphere'],
            'stage_a_table_sha256': 'a' * 64, 'llm_call_cap': 40, 'instance_seeds': [9001, 9002, 9003, 9004],
            'audit_seeds': [9101, 9102, 9103, 9104], 'stage_a_amendment_table_sha256': 'b' * 64,
            'stage_a_amendment_acceptance_sha256': 'c' * 64}
@@ -377,12 +377,32 @@ def test_author_gate_binds_amendment_shas(tmp_path, monkeypatch):
     def gate(data):
         note.write_text(json.dumps(data))
         monkeypatch.setattr(runtime.subprocess, 'check_output', lambda *a, **k: note.read_bytes())
+        # Exercise the legacy amendment binding below the v2 STOP in isolation.
+        monkeypatch.setattr(runtime, 'load_rule', lambda path, sha: ({'version': 'x5_rule/v1'}, sha))
         runtime.author_gate(cfg, 'b1', rule_sha)
     gate({**base, 'stage_a_amendment_table_sha256': 'b' * 64, 'stage_a_amendment_acceptance_sha256': 'c' * 64})
     for bad in ({}, {'stage_a_amendment_table_sha256': 'b' * 64},
                 {'stage_a_amendment_table_sha256': 'b' * 64, 'stage_a_amendment_acceptance_sha256': 'd' * 64}):
         with pytest.raises(RuntimeError, match='amendment table'):
             gate({**base, **bad})
+
+
+@pytest.mark.parametrize('alternate', [False, True])
+def test_v2_author_gate_fails_closed_even_with_forged_plan(tmp_path, monkeypatch, alternate):
+    from r1.exam import runtime
+    rule_path = RULE_V2
+    if alternate:
+        rule_path = tmp_path / 'alternate.yaml'
+        rule_path.write_bytes(RULE_V2.read_bytes() + b'\n# different bytes, same v2 version\n')
+    rule_sha = digest_file(rule_path)
+    monkeypatch.setattr(runtime, 'REPO', tmp_path)
+    (tmp_path / 'docs/r1').mkdir(parents=True)
+    (tmp_path / 'docs/r1/PLAN.md').write_text(f'<!-- R1-EXAM-RULE-X5V2 {rule_sha} -->\n')
+    note = tmp_path / 'note.json'
+    note.write_text(json.dumps({'author': 'Dowling Wong', 'phase': 'b1', 'approved': True, 'rule_sha256': rule_sha}))
+    monkeypatch.setattr(runtime.subprocess, 'check_output', lambda *a, **k: note.read_bytes())
+    with pytest.raises(RuntimeError, match='published author authority'):
+        runtime.author_gate({'rule': str(rule_path), 'authorizations': {'b1': str(note)}}, 'b1', rule_sha)
 
 
 # ---------------------------------------------------------------- runner: B1/B2 mode logic under v2

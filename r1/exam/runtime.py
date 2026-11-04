@@ -174,7 +174,20 @@ def author_gate(cfg, phase, rule_sha):
     rel=note.resolve().relative_to(REPO)
     committed=subprocess.check_output(['git','-C',str(REPO),'show',f'HEAD:{rel}'])
     if committed!=raw: raise RuntimeError('STOP: authorization bytes are not committed')
-    plan=(REPO/'docs/r1/PLAN.md').read_text()
+    plan_path=REPO/'docs/r1/PLAN.md'
+    plan_raw=plan_path.read_bytes()
+    plan=plan_raw.decode('utf-8')
+    # The v2 path must never treat prose, comments, dirty files or an arbitrary
+    # local HEAD as author approval. The trusted published authority has not yet
+    # been specified; preserve a STOP until that separate binding is reviewed.
+    try:
+        loaded_rule, loaded_sha = load_rule(cfg['rule'], rule_sha)
+    except (KeyError, OSError, ValueError, TypeError) as exc:
+        raise RuntimeError('STOP: cannot verify authorization rule version') from exc
+    if loaded_sha != rule_sha:
+        raise RuntimeError('STOP: authorization rule digest mismatch')
+    if loaded_rule.get('version') == 'x5_rule/v2':
+        raise RuntimeError('STOP: X5 v2 published author authority is not yet bound and verified')
     if not any(rule_sha in line and 'R1-EXAM-RULE' in line for line in plan.splitlines()):
         raise RuntimeError('STOP: accepted frozen rule sha256 absent from author PLAN row')
     if data.get('nodes')!=cfg['nodes'] or data.get('stage_a_table_sha256')!=cfg['stage_a_table_sha256']: raise RuntimeError('STOP: authorization does not bind nodes and accepted Stage A table')
