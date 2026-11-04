@@ -237,3 +237,103 @@ Verdict: not accepted (1 BLOCKING, 3 MAJOR, 9 MINOR)
 ## Fixes applied (executing agent, 4 Nov) — revision 5.1
 
 BLOCKING-1: key setup and the fresh-2FA hour are the author's (§0); on an undone setup guide the agent ends the session and STOPs. MAJOR-1: tunnel via `hk2` with `-S none`, `ExitOnForwardFailure=yes`, a free-port check and ps/lsof checks; master-connection option dropped. MAJOR-2: job id from session.log; scancel first, then kill only matching PIDs; teardown check. MAJOR-3: no restarts; status checks fitted to %L. MINOR-1 (no `ssh hk2 true`), -2 (timeouts, background waiting), -3 (config built from snippet values, CR/ANSI stripped), -4 (IdentitiesOnly), -5 (per-session known_hosts), -6 (stale text), -7 (STOP list per step, step 5 first), -8 (log out and back in), -9 (call budget).
+
+## Round 2 — re-check of revision 5.1 (`8e355e2a`, 4 Nov 2026)
+
+**Scope.**
+- `git diff c5691d4d 8e355e2a` for the prompt, and the full prompt at HEAD, re-read.
+- I made no connection to HoreKa and committed nothing. This section is my only edit.
+
+**Sources.** I re-fetched <https://docs.nhr.kit.edu/usage/login/sshkeys/>. The new §0 quotation, "Interactive SSH Keys are only valid for one hour after the last 2-factor login.", is verbatim.
+
+**Local tests.**
+- `bash -n` passes on all 9 bash blocks: the preamble, step 1, step 2, the step-3 tunnel, Gate 1, Gate 2, step 5, `scan_queries.sh` and `probe.sh`.
+- It also passes on all 16 inline commands, with `<port>`, `<node>` and `<id>` substituted. These include the CR/ANSI strip, `lsof`, `$SSH "scancel $(cat "$S/session_jobid")"`, `$SSH true` and the author's later `ssh hk2 "cat …"`.
+- The step-3 config block is plain `ssh_config` text, not bash, so I did not run it.
+- In the throw-away `sshd` lab, the step-5 PID check `ps -p "$p" -o command= | grep -qE '^ssh -S none .*hk2'` matches the real `ps` output of both the session and the tunnel, as launched by steps 2 and 3. A reused PID that belongs to anything else would not match.
+- The ANSI strip works with GNU `sed`. For macOS, see R2-4.
+
+### Status of the round-1 findings
+
+| Finding | Status | Evidence in rev 5.1 |
+|---|---|---|
+| BLOCKING-1 key setup | **Fixed** | §0: a fresh 2FA login and any one-time setup are "his, never yours". §1: "never create or install keys". An undone setup guide leads to step 5 and a STOP, with the guide copied into the report. Rule 3 again holds without exception |
+| MAJOR-1 tunnel | **Fixed** | `ssh -S none $OPTS -o ExitOnForwardFailure=yes -N -L <port>:<node>:<port> hk2`. An `lsof` free-port check comes first, and `ps` plus `lsof` checks follow. The master-connection option is gone, and the session `ssh` also uses `-S none` |
+| MAJOR-2 teardown | **Fixed, with residuals** | The job id comes from `session.log`, and Gate 2 requires that id on that host. `scancel` runs first, then only PIDs whose command matches are killed. Residuals: R2-2 and R2-3 |
+| MAJOR-3 restart loop | **Fixed** | "Never restart the session for more time." Status checks fit within `%L` minus 10 minutes, and the probe is skipped under 30 minutes |
+| MINOR-1 `ssh hk2 true` | **Fixed** | Step 1 is local only. The login node now runs only the script and the forward |
+| MINOR-2 timeouts and waiting | **Partly fixed** | The waiting rule was added. "Tool timeout above 600 s" cannot be set; this was my error in round 1 (R2-1) |
+| MINOR-3 snippet parsing | **Fixed, with a residual** | The config is built from `HostName`, `Port`, `User` and `IdentityFile`, with `User` defaulting to `ka_ir7683`, and CR/ANSI are stripped. Reusing an earlier config when no snippet is printed was not adopted. That is acceptable: a STOP is fail-safe. The `sed` form is not portable (R2-4) |
+| MINOR-4 `IdentitiesOnly` | **Fixed** | `-o IdentitiesOnly=yes` in `$SSH` |
+| MINOR-5 shared `known_hosts` | **Fixed** | `KH="$S/known_hosts_<session_tag>"`, with a new tag in step 1 of each run |
+| MINOR-6 stale text | **Partly fixed** | The option A line, the duplicate "do not submit", rule 3 and §7 are fixed. §6 still mentions keys (R2-5) |
+| MINOR-7 STOP list | **Fixed** | §7 now lists the STOPs per step and leads with "run step 5 before stopping". One case is missing (R2-6) |
+| MINOR-8 log out and in | **Fixed** | Step 2 account error and §7 |
+| MINOR-9 call budget | **Fixed** | Rule 1 lists Gate 2 with its retries, the query, the submit, fitted checks, the fetch, and step 5's `scancel` and `true` |
+
+**Compliance re-check (request item 1).** With rev 5.1, the agent's only login-node commands are `start-vscode-remote-ssh.sh` and the `-N -L` forward:
+- Step 1 is local.
+- Every other remote call is `$SSH`, behind Gate 1 and Gate 2. Step 5 is the exception; see R2-2.
+- The `ssh hk2 "cat …"` in §4 is a command for the author to run later, not for the agent.
+
+### New findings (round 2)
+
+**R2-1 (MINOR) — "Tool timeout above 600 s" is impossible in Claude Code, and my round-1 suggestion of 660 s was wrong.**
+- *Where:* §1 "Timeouts"; the preamble's `T="timeout 600"`.
+- *Problem:*
+  - Claude Code's Bash tool caps a foreground call at 600 s (600 000 ms). The agent can only set 600 s, which equals `$T`. The two limits then race, and the tool may kill the call first, leaving a partial `query_scan.txt`.
+  - Without `gtimeout`, `$T` is empty, and nothing but the tool limit bounds a long call.
+- *Fix:* set `T="timeout 540"` and `T="gtimeout 540"`. Change the sentence to "Set your tool timeout to its maximum (600 s) for every SSH call."
+
+**R2-2 (MINOR) — Step 5's `$SSH` can run before Gate 1 and Gate 2 have passed.**
+- *Where:* §1 step 5, item 1, "If `$SSH` still answers…", run "before any STOP once step 2 has started". Gate 1 says "It must pass before any `$SSH` call".
+- *Problem:*
+  - On a STOP in step 3, for example the step-3 STOP "the local port already in use", `$S/vscode_ssh_config` already exists. Step 5's `$SSH "scancel …"` then connects to whatever is listening on that port, possibly the author's own VS Code tunnel. `accept-new` trusts that host, and the command runs there.
+  - The command is only `scancel <own session id>`, so the harm is small. But it breaks the "Gate 1 before any `$SSH`" invariant. Item 3's check may then even succeed, and report wrongly that the session is not gone.
+  - Before Gate 1, an odd snippet `HostName` is unchecked too.
+- *Fix:* when Gate 2 passes, write `$S/gate2_ok`. In step 5: "Run items 1 and 3 only if `$S/gate2_ok` exists. Otherwise skip them; killing the session `ssh` (item 2) ends the job by SIGHUP. Report that `scancel` was not run."
+
+**R2-3 (MINOR) — Step 5's `$SSH true` check proves nothing about the session.**
+- *Where:* §1 step 5, item 3, "Check afterwards that `$SSH true` now fails (the session is gone)".
+- *Problem:* by then item 2 has killed the tunnel, so `$SSH` fails whether the job ended or not. The report would record "session gone" without evidence.
+- *Fix:* reorder: (1) `scancel`; (2) wait about 10 s, then `$SSH true` while the tunnel is still up. Connection refused or closed means the node's `sshd` is gone with the job. (3) Kill the checked PIDs. Record the result of (2) as "session `sshd` gone: yes/no". Without `gate2_ok` (R2-2), record "not checked".
+
+**R2-4 (MINOR) — The ANSI strip uses `\x1b` inside a plain `sed` script, which macOS's BSD `sed` may not support.**
+- *Where:* §1 step 2: `tr -d '\r' < "$S/session.log" | sed 's/\x1b\[[0-9;]*m//g'`.
+- *Problem:*
+  - GNU `sed` interprets `\x1b` (tested). BSD `sed` on macOS does not document `\xHH` escapes, so the colour codes may stay.
+  - This is fail-safe: Gate 1 STOPs on a garbled value, and the agent copies the values by hand anyway. But the clean-up may silently do nothing.
+- *Fix:* let bash produce the ESC byte: `tr -d '\r' < "$S/session.log" | sed $'s/\x1b\\[[0-9;]*[A-Za-z]//g'`. Or use `perl -pe 's/\e\[[0-9;]*[A-Za-z]//g'`; macOS ships `perl`.
+
+**R2-5 (MINOR) — §6 still asks for "any key generated and where it was installed".**
+- *Where:* §6, first paragraph.
+- *Problem:* the agent may no longer create or install keys (§0 and §1). The leftover wording invites the very action the prompt now forbids.
+- *Fix:* "…and the list of setup steps you took (session start, its job id, the session config you built, the tunnel)."
+
+**R2-6 (MINOR) — No STOP for "no job id in the session log".**
+- *Where:* §1 step 2, "Record the job id from this log"; §7, step 2.
+- *Problem:*
+  - If the script prints no job id, Gate 2 cannot pass, so the outcome is fail-safe.
+  - But an agent may "helpfully" take the id from `preflight.txt`. On a shared `agent` node that could be the author's own job, which step 5 would then `scancel`. That is exactly the round-1 MAJOR-2 risk.
+- *Fix:* in step 2 and in the §7 step-2 bullet, add: "no job id in the log: STOP after step 5. Never take the id from `squeue`."
+
+**R2-7 (MINOR, text) — The header puts revision 5.1 before revision 5.**
+- *Where:* the header paragraph.
+- *Fix:* move the "Revision 5.1 applies…" sentence after the "Revision 5 (4 Nov, 15:11)…" sentence.
+
+### Round 2 verdict
+
+The BLOCKING finding and all three MAJOR findings are fixed:
+- the agent no longer touches keys;
+- the login node runs only the two documented commands;
+- the tunnel fails loudly and avoids the master connection;
+- the teardown targets the session's own job and its own processes;
+- there are no restarts.
+
+Seven of the nine round-1 MINOR findings are fixed. MINOR-2 and MINOR-6 are partly fixed, with residuals in R2-1 and R2-5. Round 2 adds seven MINOR findings: R2-1 to R2-7. None of them lets the agent change cluster state, touch credentials or run on a login node behind the gates. R2-2 and R2-6 are the two worth fixing before handover, because both concern which job step 5 may cancel and from where.
+
+Verdict: accepted (0 BLOCKING, 0 MAJOR; residual MINOR R2-1 to R2-7)
+
+## Post-round-2 fixes (executing agent, 4 Nov) — revision 5.2
+
+R2-1 ($T 540 s, tool timeout 600 s), R2-2 (`gate2_ok` marker gates every step-5 `$SSH`), R2-3 (`$SSH true` after scancel, before kill), R2-4 (perl for ANSI stripping), R2-5 (report wording), R2-6 (job id only from the session log; STOP if missing), R2-7 (header order).

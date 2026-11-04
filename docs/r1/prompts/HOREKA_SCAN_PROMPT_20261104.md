@@ -1,6 +1,6 @@
-# Prompt — HoreKa 2 read-only scan for Track G T1 (4 Nov 2026, revision 5.1)
+# Prompt — HoreKa 2 read-only scan for Track G T1 (4 Nov 2026, revision 5.2)
 
-**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR); its round 2 accepted it, and the remaining minors N1–N6 were applied. Revision 3 retargeted legacy HoreKa. **Revision 4 (4 Nov, 14:37) returns to HoreKa 2 at the author's instruction ("改改扫描的runbook，我们在horeka2上扫"), and moves all agent work off the login nodes onto a compute node in the `agent` partition, through NHR@KIT's documented SSH tunnel.** Revisions 4.1 and 4.2 apply the review `reviews/HOREKA_SCAN_PROMPT_REV4_REVIEW_20261104.md` (round 1: 3 MAJOR and 9 MINOR findings; round 2: accepted, with 3 MINOR findings remaining). **Revision 5.1** applies the review `reviews/HOREKA_SCAN_PROMPT_REV5_REVIEW_20261104.md` (1 BLOCKING, 3 MAJOR, 9 MINOR): key setup and fresh 2FA stay with the author; the tunnel goes through `hk2` with no master connection; teardown is ordered; there are no restarts. **Revision 5 (4 Nov, 15:11):** the agent handles everything itself, including the session and the tunnel, at the author's instruction ("扫描不能让agent直接去做吗，做这么多步。改runbook，直接让他全权处理扫描"). Paste everything below the line into a Claude Code agent on the author's Mac that can `ssh hk2` with his activated key. It authorizes nothing beyond the scan described here.
+**Written 4 Nov 2026 by the chat session (Claude) at the author's request ("horeka需要扫的，你去给我写一个prompt，我让一个能ssh进horeka的agent去扫"); AI-assisted.** Revision 2 addresses the independent review `reviews/HOREKA_SCAN_PROMPT_REVIEW_20261104.md` (not accepted: 7 MAJOR, 14 MINOR); its round 2 accepted it, and the remaining minors N1–N6 were applied. Revision 3 retargeted legacy HoreKa. **Revision 4 (4 Nov, 14:37) returns to HoreKa 2 at the author's instruction ("改改扫描的runbook，我们在horeka2上扫"), and moves all agent work off the login nodes onto a compute node in the `agent` partition, through NHR@KIT's documented SSH tunnel.** Revisions 4.1 and 4.2 apply the review `reviews/HOREKA_SCAN_PROMPT_REV4_REVIEW_20261104.md` (round 1: 3 MAJOR and 9 MINOR findings; round 2: accepted, with 3 MINOR findings remaining). **Revision 5 (4 Nov, 15:11):** the agent handles everything itself, including the session and the tunnel, at the author's instruction ("扫描不能让agent直接去做吗，做这么多步。改runbook，直接让他全权处理扫描"). **Revision 5.1** applies the review `reviews/HOREKA_SCAN_PROMPT_REV5_REVIEW_20261104.md` (1 BLOCKING, 3 MAJOR, 9 MINOR): key setup and fresh 2FA stay with the author; the tunnel goes through `hk2` with no master connection; teardown is ordered; there are no restarts. Paste everything below the line into a Claude Code agent on the author's Mac that can `ssh hk2` with his activated key. It authorizes nothing beyond the scan described here.
 
 ---
 
@@ -37,14 +37,14 @@ These are the same commands the docs give a person. Everything else runs on the 
 - Never run `git add` or `git commit` anywhere.
 - **Never edit `~/.ssh/config` or `~/.ssh/known_hosts`, and never create or install keys.**
 
-**Timeouts.** Set your own tool timeout above 600 s for every SSH call. The background processes below keep running between your calls. Wait with `sleep` inside a call (at most 120 s per call), and never in a busy loop.
+**Timeouts.** Set your own tool timeout to its maximum (600 s) for every SSH call; `$T` stops each call at 540 s. The background processes below keep running between your calls. Wait with `sleep` inside a call (at most 120 s per call), and never in a busy loop.
 
 Your shell calls do not share variables. **Start every shell call with this preamble:**
 
 ```bash
 S="$HOME/Documents/agent_paper_B/.claude-worktrees/_snapshots/horeka_scan_20261104"
 mkdir -p "$S"
-T=""; command -v timeout >/dev/null && T="timeout 600"; command -v gtimeout >/dev/null && T="gtimeout 600"
+T=""; command -v timeout >/dev/null && T="timeout 540"; command -v gtimeout >/dev/null && T="gtimeout 540"
 OPTS="-o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=30 -o ServerAliveCountMax=4"
 KH="$S/known_hosts_$(cat "$S/session_tag" 2>/dev/null || echo none)"
 SSH="$T ssh -F $S/vscode_ssh_config $OPTS -o IdentitiesOnly=yes -o UserKnownHostsFile=$KH -o StrictHostKeyChecking=accept-new vscode-hk2"
@@ -76,13 +76,13 @@ echo $! > "$S/session.pid"; date -u +%Y-%m-%dT%H:%M:%S > "$S/session_start_utc"
 ```
 
 - Wait 30 s, then read `"$S/session.log"`. Read it at most once every 30 s.
-- First strip carriage returns and colour codes when you parse the log: `tr -d '\r' < "$S/session.log" | sed 's/\x1b\[[0-9;]*m//g'`.
+- First strip carriage returns and colour codes when you parse the log: `tr -d '\r' < "$S/session.log" | perl -pe 's/\e\[[0-9;]*[A-Za-z]//g'`.
 - It should show:
   - the interactive `agent`-partition job and its job id;
   - a `~/.ssh/config` snippet (host `vscode-hk2` by default);
   - a tunnel command.
 
-  Record the **job id from this log** in `"$S/session_jobid"`.
+  Record the **job id from this log** in `"$S/session_jobid"`. **Never take it from `squeue`**: the author may have his own `agent` session. If the log shows no job id, STOP after step 5.
 - **STOP after running step 5**, quoting the log, in any of these cases:
   - **Authentication fails** (`Permission denied`): his 2FA hour has passed.
   - **No snippet after 5 minutes.**
@@ -131,7 +131,7 @@ grep -qxE 'hostname (localhost|127\.0\.0\.1|::1)' "$S/ssh_G.txt" \
 $SSH 'h=$(hostname -s); echo "host=$h job_env=${SLURM_JOB_ID:-unset}"; scontrol show node "$h" 2>&1 | grep -oE "(NodeName|Partitions|State)=[^ ]*"; squeue -h -u "$USER" -p agent -t R -o "%i %N %L %S" 2>&1' > "$S/preflight.txt" 2>&1
 ```
 
-- **Pass** only if both hold:
+- **Pass** only if both hold (then run `touch "$S/gate2_ok"`):
   - `scontrol show node` finds the host, with `Partitions=` containing `agent`;
   - `squeue` lists the job id from `"$S/session_jobid"` as running on that host.
 
@@ -143,15 +143,14 @@ $SSH 'h=$(hostname -s); echo "host=$h job_env=${SLURM_JOB_ID:-unset}"; scontrol 
 
 **Step 5 — end the session.** Run it at the very end, and before any STOP once step 2 has started. Do it in this order:
 
-1. If `$SSH` still answers, cancel only the session job: `$SSH "scancel $(cat "$S/session_jobid")"`. Never cancel anything else, and never cancel the probe job.
+1. **Only if `"$S/gate2_ok"` exists**, cancel only the session job, then check that it is gone:
+   `$SSH "scancel $(cat "$S/session_jobid")"; sleep 20; $SSH true`. The second call should fail; record its result. Without `gate2_ok`, never call `$SSH`: the port may belong to something else. Report the session job id instead, so the author can cancel it himself.
 2. Kill only processes you started, and only after checking that each is still the ssh command you launched:
 
 ```bash
 for f in tunnel.pid session.pid; do p=$(cat "$S/$f" 2>/dev/null) || continue
   ps -p "$p" -o command= | grep -qE '^ssh -S none .*hk2' && kill "$p"; done
 ```
-
-3. Check afterwards that `$SSH true` now fails (the session is gone), and record it.
 
 Never read the author's `~/.ssh/*` key files, `~/.config/r1/secrets.env`, tokens, or other users' files.
 
@@ -291,7 +290,7 @@ If you can browse, look on <https://www.nhr.kit.edu/> and <https://docs.nhr.kit.
 
 ## 6. Report
 
-Write `"$S/HOREKA_SCAN_20261104.md"`. It starts with the author's instruction, quoted ("直接让他全权处理扫描"), and the list of setup steps you took (session, any key generated and where it was installed, tunnel). For each question below, give the answer with its raw evidence: the command and the output lines. Mark anything missing as "not found", and never infer.
+Write `"$S/HOREKA_SCAN_20261104.md"`. It starts with the author's instruction, quoted ("直接让他全权处理扫描"), then lists the setup steps you took: the session job id, the tunnel port and node, and whether teardown succeeded. For each question below, give the answer with its raw evidence: the command and the output lines. Mark anything missing as "not found", and never infer.
 
 | # | Question | Why |
 |---|---|---|
@@ -317,7 +316,7 @@ Then send the author a short Chinese message: done or stopped, the report path, 
 Once step 2 has started, **run step 5 before stopping**.
 
 - **Step 1:** `ssh -G hk2` shows another host or user, or the author's last 2FA login is unknown or more than 50 minutes old (ask him to log in again).
-- **Step 2:** authentication fails; no snippet after 5 minutes; an account error (ask which project; the author sets it and logs out and in); or an undone one-time setup guide (copy it into the report).
+- **Step 2:** authentication fails; no snippet after 5 minutes; no job id in the log; an account error (ask which project; the author sets it and logs out and in); or an undone one-time setup guide (copy it into the report).
 - **Step 3:** a tunnel command of another form; the local port already in use; the tunnel process or listener missing.
 - **Step 4:**
   - Gate 1 fails: `ssh -G` shows no localhost tunnel endpoint for `ka_ir7683`.
