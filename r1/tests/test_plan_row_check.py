@@ -32,6 +32,9 @@ STATUS = """# Status
 
 ## 31 October 2026 — section
 - inside section
+
+| table | under a heading |
+A free paragraph.
 """
 
 
@@ -47,8 +50,15 @@ def test_plan_other_lines():
 
 def test_status_entries_keep_continuations():
     e = prc.status_entries(STATUS)
-    assert e[0] == "- top entry (4 Nov)\n  - nested line\n| a | table under the entry |"
+    assert e[0] == "# Status"
+    assert e[1] == "- top entry (4 Nov)\n  - nested line\n| a | table under the entry |"
     assert "- second entry" in e and "## 31 October 2026 — section" in e and "- inside section" in e
+
+
+def test_status_lines_outside_entries_are_items():
+    e = prc.status_entries(STATUS)
+    assert "# Status" in e and "| table | under a heading |" in e and "A free paragraph." in e
+    assert all(x.strip() for x in e)
 
 
 def test_key_uses_first_cell():

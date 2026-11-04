@@ -9,7 +9,9 @@ MAC_LOCAL_RUNBOOK_20261104 M1 step 3. For each source ref:
 * every other non-blank §10 line (headings, notes, bullets) likewise;
 * every STATUS.md entry (a ``## `` section heading or a top-level ``- ``
   bullet together with its indented continuation lines) must occur
-  byte-identically in the result's STATUS.md, with multiplicity.
+  byte-identically in the result's STATUS.md, with multiplicity; every
+  other non-blank STATUS line (the title, free paragraphs, tables under a
+  ``## `` heading) counts as an item of its own.
 
 A source row missing from the result is reported as ``MISSING``, unless
 another source holds a different version of a row the merge-base also had
@@ -93,6 +95,9 @@ def status_entries(text: str) -> list[str]:
             if cur is not None:
                 entries.append("\n".join(cur))
             cur = None
+            if line.strip():
+                # title, free paragraphs and tables under a `## ` heading: each line is its own item
+                entries.append(line)
     if cur is not None:
         entries.append("\n".join(cur))
     return entries
