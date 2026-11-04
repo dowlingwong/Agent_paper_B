@@ -10,26 +10,21 @@ Each section: what is open, options, a recommendation, and a paste-ready PLAN ro
 
 ---
 
-## 0. NEW — Track X work recorded after the handover (needs a ruling first)
+## 0. Track X work recorded after the handover — **RULED by the author (4 Nov, 15:33 and 15:44)**
 
 **What the sources say.**
 - R1-HANDOVER-04NOV (11:29): the operator is "the only agent acting on the servers"; "the coordinator, the Track X agent, … stop at their next safe point"; "the **Mac-local agent is the single editor** of `r1/exam/`, `r1/scripts/exam_*` and `r1/c3/train/`". R1-SERVER-AGENTS-TWO (14:58) keeps the operator on TASL-2, TASL-7 and deepthought.
 - The coordinator branch then recorded, between 14:09 and 15:29: R1-EXAM-STAGEA-COMPLETE; R1-EXAM-TEMPLATE-FAILURE-MAP; R1-EXAM-TEMPLATE-AMENDMENT-PROPOSAL ("Author chose Option A"); R1-EXAM-TEMPLATE-AMENDMENT-V16; R1-EXAM-TEMPLATE-AMENDMENT-IMPLEMENTED (code `e996af8`, binding `96f1146`; "B1 eligible set = t7h8 8 PASS + anchors + M1-passing rows (author's decision)"); R1-EXAM-STOP9-JOURNAL (code `ab74203`, binding `74a0790`; the declared measurement relaunched on TASL-7 as `r1_stagea_20261104_t7j10`).
-- So after 11:29 the Track X agent edited `r1/exam/` and runs on TASL-7. Both sets of rows are kept unchanged in the integration. They are not reconciled by any row.
+- So after 11:29 the Track X agent edited `r1/exam/` and runs on TASL-7. Both sets of rows are kept unchanged in the integration; no row reconciled them.
 
-**Options.**
-1. **Option A is an exception to the handover for the A1 amendment only.** The Track X agent finishes `t7j10` and its receiving review, then stops; `r1/exam/` passes to the Mac agent at the reviewed head of `codex/trackx-stagea-cooperative-20261031`; B1/B2 run under the operator.
-2. **The handover wins now.** `t7j10` continues under the operator (who takes over the running attempt's guardian and lease as they stand); `r1/exam/` passes to the Mac agent at `74a0790`.
-3. Pause `t7j10` until the ownership is settled.
+**Options put to the author (chat, 4 Nov ~15:30).** 1. Option A as an exception to the handover: the Track X agent finishes `t7j10` and its receiving review, then stops. 2. **The handover wins**; `r1/exam/` passes to the Mac agent at `74a0790`. 3. Something else.
 
-**Recommendation: 1.** The attempt is already running under a reviewed guardian, and moving a live lease between agents is the riskier step. Stating the end point in a row keeps one editor per file from then on.
+**Author's ruling.** At 15:33 the author wrote "按原定计划走" ("go with the original plan"). At 15:44 he wrote: "裁定：选 2，交接行优先（作者 15:33 "按原定计划走"）。`t7j10` 已在 TASL-7 上运行，允许它跑完，Track X agent 随后停止。`t7j10` 的核验和接收审查、Stage A 验收归 operator 的 O1。你从 `74a0790`（代码 `ab74203`）起接手 `r1/exam/`，M2 以它为基。如果 `ab74203` 还缺独立 review，就按 M5 流程补。B1 候选集为 `t7h8` 的 8 个 PASS + anchors + `t7j10` 的通过者，`t7j10` 要经 operator 验收后才算数。" In English: option 2, the handover row takes precedence; `t7j10`, already running on TASL-7, may run to completion, after which the Track X agent stops; the verification and receiving review of `t7j10` and the Stage A acceptance belong to the operator's O1; the Mac agent takes over `r1/exam/` from `74a0790` (code `ab74203`) and bases M2 on it; if `ab74203` still lacks an independent review, the Mac agent supplies one by the M5 procedure; the B1 candidate set is t7h8's 8 PASS + anchors + the `t7j10` passes, which count only after the operator's acceptance.
 
-**Draft row.**
+**Row recording the ruling** (paste-ready; the author commits it, or tells the Mac agent in chat to commit it on his behalf):
 ```
-| R1-TRACKX-AMENDMENT-SCOPE (4 Nov) | **The Track X agent's A1 amendment work is an exception to R1-HANDOVER-04NOV, limited to the declared measurement `r1_stagea_20261104_t7j10` (code `ab74203`, binding `74a0790`) and its receiving review.** It makes no other change to `r1/exam/` or `r1/scripts/exam_*` and starts no other server job. After the receiving review it stops; from then the Mac-local agent is the single editor of `r1/exam/` and `r1/scripts/exam_*`, starting from the reviewed head of `codex/trackx-stagea-cooperative-20261031`, and Track X B1/B2 run under the operator. |
+| R1-TRACKX-HANDOVER-RULING (4 Nov, 15:44) | **R1-HANDOVER-04NOV takes precedence over the Track X agent's post-handover work** (author: "按原定计划走", 15:33; "选 2，交接行优先", 15:44). The declared measurement `r1_stagea_20261104_t7j10` (code `ab74203`, binding `74a0790`), already running on TASL-7, may run to completion; the Track X agent then stops and makes no further change. The verification and receiving review of `t7j10`, and the Stage A acceptance, belong to the operator's O1. The Mac-local agent is the single editor of `r1/exam/` and `r1/scripts/exam_*` from `74a0790` (code `ab74203`) and bases M2 on it; if `ab74203` lacks an independent code review, the Mac agent supplies one by the M5 procedure. **B1 candidate set:** the 8 PASS of `t7h8` + the anchors + the `t7j10` passes, the latter counting only after the operator's acceptance. |
 ```
-
----
 
 ## (a) `codex/b2-repair-20261031` files outside its scope
 
@@ -60,7 +55,7 @@ All five only add fail-closed refusals through the new `r1/c3/evidence_boundary.
 
 **Open.** The rows since 26 Oct place hosts piecemeal; R1-SERVER-AGENTS-TWO's host lists are *(proposed)*. A consolidated row:
 
-- **TASL-7:** Track X until the A1 measurement (`t7j10`) is received (section 0); then Track P (P.3a, option 3 follow-ups), with Track S `tabular_mlp` in the gaps. No Track S GPU job before that.
+- **TASL-7:** `t7j10` runs to completion (section 0 ruling) and the operator's O1 accepts it; then Track P (P.3a, option 3 follow-ups), with Track S `tabular_mlp` in the gaps. No Track S GPU job before that.
 - **TASL-2:** Track S `digits_mlp`, with Track X B1/B2 first (their campaign worker is TASL-2-only).
 - **deepthought:** B.2 environment replay and audits on CPU; DTQ (O5); the A4 7B row; the main proposer across two TITANs if DTQ passes (R1-BX-REVISIONS (f), criterion confirmed in R1-BX-PROPOSED-CONFIRM).
 - **Ada:** overflow (R1-ADA-OVERFLOW), C.4, and the T1 whole-table fallback (R1-T1-HOREKA). Resumable units only.
@@ -68,13 +63,13 @@ All five only add fail-closed refusals through the new `r1/c3/evidence_boundary.
 
 **Speed figures (estimates, background only).** Sweep 1 on one TITAN X made 5,813 proposals in about 11.6 h, about 7 s per proposal of wall throughput, worker CPU included, at `cache_prompt` default; the recorded per-call latency averages about 112 s because 16 workers queue on one `-np 1` server. Track S's serial latency on a 4090 is 0.68–0.70 s per call. These are the 7B; the pick's speed is unmeasured on every host.
 
-**Options.** 1. Adopt as listed. 2. Adopt with TASL-7 handed to Track P now and the A1 measurement moved to TASL-2. 3. Leave per-row placement.
+**Options.** 1. Adopt as listed. 2. Adopt with Track P starting on TASL-7 in the gaps of O1's acceptance work. 3. Leave per-row placement.
 
 **Recommendation: 1** (it only writes down what the rows already imply, and confirms R1-SERVER-AGENTS-TWO's proposed host lists).
 
 **Draft row.**
 ```
-| R1-HOSTS-04NOV (4 Nov) | **Host plan.** TASL-7: Track X until the A1 measurement `t7j10` is received; then Track P, with Track S `tabular_mlp` in the gaps, and no Track S GPU job before that. TASL-2: Track S `digits_mlp`, Track X B1/B2 first. deepthought: B.2 replay and audits (CPU), DTQ (O5), the A4 7B row, and the main proposer across two TITANs if DTQ passes. Ada: overflow, C.4 and the T1 whole-table fallback, resumable units only. HoreKa 2: the HoreKa agent and the whole T1 tier. The operator acts on TASL-2, TASL-7, deepthought and Ada; the HoreKa agent on HoreKa 2 only; neither acts on the other's hosts. This confirms R1-SERVER-AGENTS-TWO's proposed host lists. |
+| R1-HOSTS-04NOV (4 Nov) | **Host plan.** TASL-7: `t7j10` runs to completion and is accepted in O1; then Track P, with Track S `tabular_mlp` in the gaps, and no Track S GPU job before that. TASL-2: Track S `digits_mlp`, Track X B1/B2 first. deepthought: B.2 replay and audits (CPU), DTQ (O5), the A4 7B row, and the main proposer across two TITANs if DTQ passes. Ada: overflow, C.4 and the T1 whole-table fallback, resumable units only. HoreKa 2: the HoreKa agent and the whole T1 tier. The operator acts on TASL-2, TASL-7, deepthought and Ada; the HoreKa agent on HoreKa 2 only; neither acts on the other's hosts. This confirms R1-SERVER-AGENTS-TWO's proposed host lists. |
 ```
 
 ---
@@ -96,15 +91,11 @@ All five only add fail-closed refusals through the new `r1/c3/evidence_boundary.
 
 ## (d) R1-EXAM-RULE-X5V2 (follow-up row, after M2)
 
-**Open.** M2 writes `x5_rule_v2.yaml` with `always_on_in_b1: skip` (R1-EXAM-ALWAYS-ON-SKIP) and computes its sha. A point for the author: R1-EXAM-TEMPLATE-AMENDMENT-IMPLEMENTED defines the B1 eligible set as "t7h8 8 PASS + anchors + M1-passing rows". v2's eligibility reads "Stage A pass". M2 will make v2 read the amendment measurement's pass rows as Stage A passes only if the author says so.
-
-**Options.** 1. v2 eligibility = t7h8 PASS ∪ received `t7j10` PASS (as the amendment row says). 2. t7h8 PASS only.
-
-**Recommendation: 1** (the amendment row records it as the author's decision).
+**Open.** M2 writes `x5_rule_v2.yaml` with `always_on_in_b1: skip` (R1-EXAM-ALWAYS-ON-SKIP) and computes its sha. The eligibility question (v2's "Stage A pass" versus the amendment row's "t7h8 PASS + anchors + M1-passing rows") is **settled by the section 0 ruling**: t7h8's 8 PASS + anchors + the `t7j10` passes after the operator's acceptance. M2 encodes that; only the sha row remains.
 
 **Draft row (sha filled after M2 and its review).**
 ```
-| R1-EXAM-RULE-X5V2 (date) | `r1/exam/rules/x5_rule_v2.yaml` sha256 `<sha>` (from `proposals/X5_RULE_V2_DRAFT_20261104.md`; `always_on_in_b1: skip` per R1-EXAM-ALWAYS-ON-SKIP; eligibility includes the received A1 measurement's PASS rows per R1-EXAM-TEMPLATE-AMENDMENT-IMPLEMENTED) is frozen for Track X B1/B2, with code `<commit>` and review `reviews/MAC_M2_REVIEW_<date>.md`. `x5_rule_v1.yaml` stays as Stage A's rule. |
+| R1-EXAM-RULE-X5V2 (date) | `r1/exam/rules/x5_rule_v2.yaml` sha256 `<sha>` (from `proposals/X5_RULE_V2_DRAFT_20261104.md`; `always_on_in_b1: skip` per R1-EXAM-ALWAYS-ON-SKIP; eligibility = the 8 PASS of `t7h8` + anchors + the operator-accepted `t7j10` passes, per R1-TRACKX-HANDOVER-RULING) is frozen for Track X B1/B2, with code `<commit>` and review `reviews/MAC_M2_REVIEW_<date>.md`. `x5_rule_v1.yaml` stays as Stage A's rule. |
 ```
 
 ---
