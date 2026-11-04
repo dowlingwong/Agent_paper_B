@@ -41,7 +41,7 @@ B1 runs each campaign with W = 20 worker runs, and after each executed proposal 
 
 ## Scope and STOPs (from RUNBOOK X.4, R1-MAIN-PROPOSER and the rows cited)
 
-- Authorizes B1 only, on the host named in the final note, for the candidates of R1-EXAM-STAGEA-ACCEPT under `x5_rule_v2`'s eligibility (D28 pass, thinking-off capable; always-thinking models skip B1, R1-EXAM-ALWAYS-ON-SKIP).
+- Authorizes B1 only, on the host named in the final note, for the 18 candidates of R1-EXAM-STAGEA-ACCEPT (`t7h8`'s 8 PASS, `t7j10`'s 7 PASS, 3 anchors). Always-thinking models skip B1 (R1-EXAM-ALWAYS-ON-SKIP; none of the 18 is always-on). `x5_rule_v2`'s finalist eligibility (D28 pass, measured in B1, and thinking-off capable) applies at finalist selection, not at B1 entry.
 - Not authorized: B2, any sweep, any change to the rule file, the frozen prompt set, the registry or the repair templates, any other host.
 - STOP: any pin mismatch; a template-repair digest mismatch; a request without `cache_prompt: false`; an LLM-call cap reached before W on more than *(author to set, if wanted)* of campaigns; OOM or CPU fallback; a non-finite metric.
 

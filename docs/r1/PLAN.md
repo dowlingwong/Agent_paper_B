@@ -914,7 +914,7 @@ The author wrote at 17:54 (his item 9): "Stage A 验收：我接受 Stage A：t7
 - Stage A table sha256: `t7h8` `00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c`; `t7j10` `71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103` (`t7j10` code `ab74203`, manifest `64a2712c…`).
 - `t7h8` PASS (R1-EXAM-STAGEA-COMPLETE): `glm47_flash`, `ornith10_35b`, `ornith10_9b`, `qwen35_9b`, `qwen36_27b`, `qwen36_35b_a3b`, `qwen38_27b`, `qwen3_coder_30b_a3b`. `t7j10` amendment candidates, all checked in O1's row-by-row section: `gemma4_31b`, `gemma4_26b_a4b`, `gemma4_12b`, `laguna_xs21` (BOS-artifact rows) and `olmo31_32b`, `devstral_small2_24b`, `ministral3_14b` (repaired; their SHA-pinned templates carry into B1, B2 and later sweeps, R1-EXAM-A1-M1-REQUIREMENTS (1)). Anchors: `random_valid`, `scripted`, `qwen25_coder_7b`.
 - The anchor comparison followed R1-EXAM-A1-ANCHOR-CRITERION and an author ruling given to the operator, quoted verbatim in the O1 report: N/A applicability and PASS identical for the two software anchors; numerical equality only for `qwen25_coder_7b`.
-- B1 eligibility under `x5_rule_v2` still applies its other conditions (D28 pass, able to run thinking-off; always-thinking models skip B1).
+- Finalist eligibility under `x5_rule_v2` (draft; R1-EXAM-RULE-X5V2 not yet committed) adds D28 pass, measured in B1, and the ability to run thinking off. Always-thinking models skip B1 (R1-EXAM-ALWAYS-ON-SKIP); none of these 18 is always-on.
 
 ### 4 November 2026 (18:00) — HoreKa agent runbook adopted (author; recorded by an AI agent, Claude, Mac-local agent)
 
