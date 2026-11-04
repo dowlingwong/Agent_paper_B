@@ -882,6 +882,19 @@ The author wrote at 16:39: "关于 A1 修订和 `t7j10`（M1），我补三条�
 - Requirement (3) is for the manuscript (M8).
 - For requirement (2): in `t7h8` (code `3b3283f`) the Stage A rows of `random_valid` and `scripted` are software-anchor rows without model checks (`prompts: 0`, `mechanical_model_checks: not_applicable`); only `qwen25_coder_7b` carries parse-rate, reproducibility and template values. How "一致" applies to the two software anchors, and whether it means exact equality, is put to the author.
 
+### 4 November 2026 (17:30) — anchor criterion for `t7j10` and the M5 review of `ab74203` (author; recorded by an AI agent, Claude, Mac-local agent)
+
+The Mac agent asked (in its reply to the author's 17:26 message "啥进展了") how "一致" in R1-EXAM-A1-M1-REQUIREMENTS (2) applies to the software anchors `random_valid` and `scripted`, which carry no parse-rate, reproducibility or template values, and whether the cited but uncommitted reviews of `ab74203` count. Options for the first: A — `qwen25_coder_7b`'s three numbers exactly equal, software anchors compared on result status only; B — a tolerance; C — other. For the second: A — treat as reviewed; B — a fresh review by the M5 procedure. The author answered at 17:30: "1. `qwen25_coder_7b` 的三项完全相等，软件锚点只比结果状态 2. 按 M5 流程另开新 reviewer 重新审。"
+
+| Decision | Author decision (4 Nov 2026, 17:30) |
+|---|---|
+| R1-EXAM-A1-ANCHOR-CRITERION | "`qwen25_coder_7b` 的三项完全相等，软件锚点只比结果状态" |
+| R1-EXAM-AB74203-M5-REVIEW | "按 M5 流程另开新 reviewer 重新审。" |
+
+**Consequences** (not part of the decision cells):
+- `t7j10`'s acceptance under R1-EXAM-A1-M1-REQUIREMENTS (2): `qwen25_coder_7b`'s parse rate, reproducibility and template result in `t7j10` must be exactly equal to `t7h8`'s; `random_valid` and `scripted` are compared on their result status only. Otherwise `t7j10` is not accepted and the operator reports to the author first.
+- The cited but uncommitted reviews of `e996af8` and `ab74203` are not relied on. A fresh independent reviewer reviews `19b8f33f..74a07907` (focus `ab74203`, covering `e996af8`) by the M5 procedure; the review goes to `reviews/MAC_M5_AB74203_REVIEW_20261104.md`. The running `t7j10` is not touched.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
