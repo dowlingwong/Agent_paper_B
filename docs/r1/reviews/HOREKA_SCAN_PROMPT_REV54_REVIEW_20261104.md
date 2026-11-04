@@ -228,3 +228,38 @@ Once MAJOR-1 is fixed (the one-line `ssh -G` precondition is enough), the prompt
 All round-1 findings are fixed correctly in the steps. The new port handling and the cancel spec are exact. The `[s]`/`pgrep -P`/`pkill -P` teardown works, and it is sound on macOS. Safety is unchanged: the master is never stopped, nothing outside the master is reconfigured, and no credential is handled.
 
 Before run 4, apply **R2-1**: the likely cause of run 3's dead client is the harness reaping `nohup … &`, not stdin EOF, and 5.5 does not change that. Then apply the small edits R2-3 to R2-6. R2-2 and R2-7 are cosmetic.
+
+---
+
+# Round 3 — revision 5.6 (`3defa7b6`)
+
+**Scope:** `git diff 7f99da11 3defa7b6` only. `bash -n` passes on all 11 bash blocks. I did not edit the prompt and committed nothing.
+
+| Round-2 item | Status |
+|---|---|
+| R2-1, session lifetime | **Applied correctly** (details below) |
+| R2-2, own-process client check | **Applied correctly** (details below) |
+| R2-3, §7 behind the steps | **Applied.** Step 1 now lists the sandbox socket error and configured forwards. Step 3 lists `FORWARD_OK` missing, or the listener not the master, plus `ls -l` refused |
+| R2-4, two causes of `Permission denied` | **Applied** in §0, step 4 and §7. `ssh-add` is the author's only |
+| R2-5, `ls -l` instead of `test -f` | **Applied** in §0, step 3.3 and §7 |
+| R2-6, `pgrep`/`pkill` in the tool check | **Applied**, with the corrected `{ pgrep …; [ $? -le 1 ]; }` form, and in §7 step 0 |
+| R2-7, `~/.ssh/environment` in rule 3 | **Applied** |
+| Timeouts paragraph | **Updated** ("must stay alive … step 2 says how") |
+
+**R2-1 in detail.**
+- The background block is right. With no `nohup`, `$!` is the `bash -c` parent, and its command line is unchanged, so step 5.3's `ps … | grep` still matches. The `wait` holds the background call open. The 5 400 000 ms timeout is under Claude Code's 7 200 000 ms maximum. The "never end your reply" rule is in.
+- The `nohup` fallback wording ("`nohup` in front of the inner `bash -c` and without the final `wait`") reproduces rev 5.5's line exactly.
+
+**R2-2 in detail.**
+- `$p` comes from the line above in the same block, so it is in scope.
+- If the parent's PID now belongs to an unrelated process, the `grep` fails, nothing is killed, and the check prints `CLIENT_STILL_THERE`. That is the safe direction.
+- In the background form, the waiting `bash -s` reaps the parent at once, so no zombie gives a false `CLIENT_STILL_THERE`.
+
+**New inconsistencies:** none of substance. Three NITs, none blocking:
+1. If the ssh client dies early, `tail -f /dev/null` keeps the parent, and so the background call, alive until step 5.3's `pkill -P`, or until the call's timeout. The harness's "background task exited" notice therefore does not signal a dead session. The two liveness checks are the real detector, and they are already required. *Optional:* add "a still-running background call does not prove the session is alive; only the liveness check does".
+2. In step 5.3, an empty `$p` (no `session.pid`) prints `CLIENT_GONE`. *Fix:* `[ -n "$p" ] || echo "NO_SESSION_PID"` before the `if`.
+3. In step 3.3, a blocked `ls -l` may say `Permission denied` rather than `Operation not permitted`. *Fix:* "`No such file or directory`: missing; any other error: sandbox, STOP and quote it." The history line's "2 NIT" for round 2 should be 3; this is cosmetic.
+
+## Round 3 verdict: PASS
+
+All R2-1 to R2-7 fixes are applied correctly, and the change brings in no new inconsistency of substance. The prompt is fit for run 4. The three NITs above are optional.
