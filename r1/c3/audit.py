@@ -510,24 +510,11 @@ def evidence_resources(plan: list[dict], workers: int, deadline: float, scratch_
             'scratch_free_bytes': shutil.disk_usage(scratch_root.parent).free}
 
 
-def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Path) -> tuple[list[dict], dict]:
-    """Build the complete, non-sampled eligible plan and bind it to author provenance."""
+def partition_population(rows: list[dict], configs: dict) -> tuple[list[dict], dict]:
+    """Complete, non-sampled partition: rule no-ops, duplicates (never audited), eligible (all audited)."""
     from r1.c3.arms import is_duplicate, is_noop
-    from r1.c3.dataset import evidence_classification, load_table
-    evidence_classification(index, paper_root, classification)
-    table = Path(table)
-    metadata = json.loads((table / 'build.json').read_text())
-    expected = metadata.get('classification') or {}
-    if metadata.get('label') != 'EVIDENCE' or expected.get('sha256') != _digest(classification) or \
-            metadata.get('sweep_index', {}).get('sha256') != _digest(index):
-        raise ValueError('table does not match authorized evidence classification')
-    if metadata.get('table_sha256') != {name: _digest(table / name) for name in ('proposals.jsonl', 'configs.json')}:
-        raise ValueError('evidence table contents differ from build record')
-    _verify_replay(table, paper_root, index, classification)
-    rows = load_table(table)
     if not rows or len({r['proposal_id'] for r in rows}) != len(rows):
         raise ValueError('empty table or duplicate proposal IDs')
-    configs = json.loads((table / 'configs.json').read_text())
     counts = {'noops': 0, 'duplicates': 0, 'eligible': 0}
     selected = []
     for row in rows:
@@ -545,6 +532,25 @@ def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Pa
             counts['eligible'] += 1
     if not selected or sum(counts.values()) != len(rows):
         raise ValueError('evidence plan has no eligible proposals or incomplete partition')
+    return selected, counts
+
+
+def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Path) -> tuple[list[dict], dict]:
+    """Build the complete, non-sampled eligible plan and bind it to author provenance."""
+    from r1.c3.dataset import evidence_classification, load_table
+    evidence_classification(index, paper_root, classification)
+    table = Path(table)
+    metadata = json.loads((table / 'build.json').read_text())
+    expected = metadata.get('classification') or {}
+    if metadata.get('label') != 'EVIDENCE' or expected.get('sha256') != _digest(classification) or \
+            metadata.get('sweep_index', {}).get('sha256') != _digest(index):
+        raise ValueError('table does not match authorized evidence classification')
+    if metadata.get('table_sha256') != {name: _digest(table / name) for name in ('proposals.jsonl', 'configs.json')}:
+        raise ValueError('evidence table contents differ from build record')
+    _verify_replay(table, paper_root, index, classification)
+    rows = load_table(table)
+    configs = json.loads((table / 'configs.json').read_text())
+    selected, counts = partition_population(rows, configs)
     binding = {'label': 'EVIDENCE', 'index_sha256': _digest(index),
                'classification_sha256': _digest(classification), 'proposals_sha256': _digest(table / 'proposals.jsonl'),
                'configs_sha256': _digest(table / 'configs.json'), 'counts': counts,
