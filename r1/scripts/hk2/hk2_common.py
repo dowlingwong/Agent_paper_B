@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import csv
 import datetime as dt
+import fcntl
 import hashlib
 import json
 import os
@@ -223,18 +224,59 @@ def current_user() -> str:
 
 def gpus_from_tres(text: str) -> int:
     """GPU count from a TRES/GRES string: ``gres/gpu=1``, ``gres/gpu:h100=2``, ``gres:gpu:1``, ``gpu:4``."""
-    total = 0
+    generic = []
+    typed = []
     for item in str(text or "").split(","):
         item = item.strip()
-        if "gpu" not in item:
+        if "gpu" not in item.lower():
             continue
         head = item.split("(", 1)[0]
-        if "gres/gpu:" in head and "=" in head:
-            continue  # typed duplicate of an untyped gres/gpu= entry (sacct lists both)
         match = re.search(r"[:=](\d+)$", head)
-        if match:
-            total += int(match.group(1))
-    return total
+        if not match:
+            raise Hk2Error(f"cannot determine GPU allocation from {item!r}")
+        count = int(match.group(1))
+        if re.match(r"^(?:gres/)?gpu(?:=|:)(?:\d+)$", head):
+            generic.append(count)
+        else:
+            typed.append(count)
+    if len(generic) > 1:
+        raise Hk2Error(f"ambiguous GPU totals in {text!r}")
+    if generic and typed and sum(typed) > generic[0]:
+        raise Hk2Error(f"GPU totals disagree in {text!r}")
+    return generic[0] if generic else sum(typed)
+
+
+class QueryLock:
+    """Cross-process lock covering query, guard and submission/ledger write."""
+
+    def __init__(self, path: Path):
+        self.path = Path(path)
+        self.file = None
+
+    def __enter__(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.file = self.path.open("a+")
+        fcntl.flock(self.file.fileno(), fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, *args):
+        fcntl.flock(self.file.fileno(), fcntl.LOCK_UN)
+        self.file.close()
+
+
+def query_snapshot(config, runner=default_runner):
+    """Query once under QueryLock; require at least 60 s since the preceding query."""
+    directory = records_dir(config)
+    interval = max(60, float(config["values"]["query_min_interval_s"]))
+    throttle = QueryThrottle(directory / "query_state.json", interval)
+    delay = throttle.wait_needed()
+    if delay > 0:
+        raise Hk2Error(f"query throttled; retry after {delay:.1f} seconds")
+    # Mark before either call, including failed calls, so errors cannot cause rapid polling.
+    throttle.mark()
+    user = current_user()
+    return (squeue_jobs(runner, user),
+            sacct_jobs(runner, user, parse_iso(str(config["values"]["campaign_start"]))))
 
 
 SQUEUE_FORMAT = "%i|%P|%T|%l|%b|%q|%j"
@@ -253,8 +295,13 @@ def squeue_jobs(runner: Runner, user: str) -> List[Dict[str, object]]:
         if len(parts) != 7:
             raise Hk2Error(f"unexpected squeue line {line!r}")
         jid, part, state, limit, tres, qos, name = (p.strip() for p in parts)
+        if "[" in jid or "," in part or not jid.isdigit():
+            raise Hk2Error(f"cannot account for aggregate/ambiguous squeue entry {line!r}")
+        gpu_count = gpus_from_tres(tres)
+        if (part.startswith("gpu-") or part.startswith("dev-gpu")) and not gpu_count:
+            raise Hk2Error(f"GPU request missing from squeue entry {line!r}")
         jobs.append({"job_id": jid, "partition": part, "state": state, "time_limit_s": parse_slurm_time(limit),
-                     "gpus": gpus_from_tres(tres), "qos": qos, "name": name})
+                     "gpus": gpu_count, "qos": qos, "name": name})
     return jobs
 
 
@@ -275,8 +322,13 @@ def sacct_jobs(runner: Runner, user: str, since: dt.datetime) -> List[Dict[str, 
         if len(parts) != 9:
             raise Hk2Error(f"unexpected sacct line {line!r}")
         jid, name, part, state, elapsed, tres, start_s, end_s, limit = (p.strip() for p in parts)
+        if not re.fullmatch(r"\d+(?:_\d+)?", jid) or not elapsed.isdigit():
+            raise Hk2Error(f"ambiguous accounting entry {line!r}")
+        gpu_count = gpus_from_tres(tres)
+        if int(elapsed) and (part.startswith("gpu-") or part.startswith("dev-gpu")) and not gpu_count:
+            raise Hk2Error(f"GPU allocation missing from accounting entry {line!r}")
         jobs.append({"job_id": jid, "name": name, "partition": part, "state": state.split()[0] if state else "",
-                     "elapsed_s": int(elapsed) if elapsed.isdigit() else 0, "gpus": gpus_from_tres(tres),
+                     "elapsed_s": int(elapsed), "gpus": gpu_count,
                      "start": start_s, "end": end_s,
                      "time_limit_s": int(limit) * 60 if limit.isdigit() else None})
     return jobs
@@ -302,9 +354,18 @@ class QueryThrottle:
 
     def last(self) -> Optional[float]:
         try:
-            return float(json.loads(self.path.read_text())["last_query_epoch"])
-        except (OSError, ValueError, KeyError, TypeError):
+            raw = self.path.read_text()
+        except FileNotFoundError:
             return None
+        except OSError as exc:
+            raise Hk2Error(f"query throttle state is unreadable: {exc}")
+        try:
+            timestamp = float(json.loads(raw)["last_query_epoch"])
+        except (ValueError, KeyError, TypeError) as exc:
+            raise Hk2Error(f"query throttle state is invalid: {exc}")
+        if not (0 <= timestamp < float("inf")):
+            raise Hk2Error("query throttle timestamp is invalid")
+        return timestamp
 
     def wait_needed(self) -> float:
         last = self.last()
@@ -362,25 +423,29 @@ def submission_phases(records_dir: Path) -> Dict[str, str]:
             continue
         try:
             rec = json.loads(line)
-        except ValueError:
-            continue
+        except ValueError as exc:
+            raise Hk2Error(f"corrupt submission record at {path}: {exc}")
+        if not isinstance(rec, dict):
+            raise Hk2Error(f"invalid submission record at {path}")
         if rec.get("job_id"):
             out[str(rec["job_id"])] = str(rec.get("phase", ""))
     return out
 
 
 def budget_state(outstanding: List[Dict[str, object]], accounted: List[Dict[str, object]]) -> Dict[str, float]:
-    """Allocation GPU-h used and reserved (runbook §0.4), never double counted, never under counted.
-
-    *used* sums elapsed x GPUs of every ``sacct`` job that is no longer outstanding; *reserved* sums the full time
-    limit x GPUs of every outstanding job (``squeue``), running jobs included. A running job's elapsed time is
-    therefore inside its reserved limit, which is the conservative reading of "used + reserved".
-    """
-    outstanding_ids = {str(j["job_id"]) for j in outstanding}
-    used = sum(gpu_hours(float(j["elapsed_s"]), int(j["gpus"])) for j in accounted  # type: ignore[arg-type]
-               if str(j["job_id"]) not in outstanding_ids)
+    """Use the runbook's conservative used plus full outstanding reservation."""
+    used = sum(gpu_hours(float(j["elapsed_s"]), int(j["gpus"])) for j in accounted)  # type: ignore[arg-type]
     reserved = sum(gpu_hours(float(j["time_limit_s"]), int(j["gpus"])) for j in outstanding)  # type: ignore[arg-type]
-    return {"used_gpu_h": round(used, 4), "reserved_gpu_h": round(reserved, 4)}
+    return {"used_gpu_h": used, "reserved_gpu_h": reserved}
+
+
+def require_submission_accounted(config, outstanding, accounted):
+    """Fail closed if a recorded submission is absent from both Slurm sources."""
+    known = set(submission_phases(records_dir(config)))
+    visible = {str(j["job_id"]) for j in outstanding + accounted}
+    missing = known - visible
+    if missing:
+        raise Hk2Error("submitted jobs absent from both queue and accounting: " + ", ".join(sorted(missing)))
 
 
 def records_dir(config: Dict[str, object]) -> Path:
