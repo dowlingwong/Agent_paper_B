@@ -320,7 +320,7 @@ Sweep 2's **T1 part** is O8 G.5.
 5. **G.5 sweep 2, T1 part** (EVIDENCE; the author's note): about 12 campaigns × W = 20 per T1 node (*proposed*), about 150 audited proposals per node, audits at the K in force; the S1.1 interaction measurement. The label table is copied back for analysis only after R1-BX-D8-CONFIRM. **STOP 8d.**
 6. **G.6 closed loop on T1 and T2 nodes** (EVIDENCE; part of D.3, ≈ 3 Jan) with the main proposer and the API proposer (R1-BX-D6), plus the non-qualifying nodes of the R1-BX-D12 appendix. API calls only from the host the note names, through the Mac agent's provider; never read `~/.config/r1/secrets.env`; log every request and the returned model version. **STOP 8e.**
 
-**Hosts:** census on Ada first; the T1 table on one GPU model chosen by the author (G.3); the proposer on deepthought (two TITANs, if O5 passes) or a 4090.
+**Hosts:** census on Ada first; the T1 label table on Ada (R1-BX-PROPOSED-CONFIRM); the proposer on deepthought (two TITANs, if O5 passes) or a 4090.
 
 ### O9 — B.4: A4, the manager's zero-shot forecast (the self-control arm; after X.7 and labels)
 
@@ -342,7 +342,7 @@ Sweep 2's **T1 part** is O8 G.5.
 1. **C.2 DAgger, one round on 1–2 T1 nodes** (R1-BX-D11): run campaigns under the deployed tabular arm (A3, through the Track H `RuleController`), audit the new proposals at the K in force, and hand the table to the Mac agent (M15 merges it and specifies the retraining). The retraining runs on TASL-7 from the Stage S recipe and the selected R-A arm. Host: per the Phase C host plan (open). EVIDENCE: the author's note. Estimate: about 2 days.
 2. **C.3 online pilot** A1–A5 on 2–4 qualifying nodes: the manager plus the A5 sidecar (Track H H.5), co-resident within the fit and co-tenancy rules. Host: per the Phase C host plan (open). Label PILOT, started on the author's written go-ahead. Estimate: 2–3 days.
 3. **C.4 debiased-memory A/B** on 2–4 nodes on Ada (resumable; a few GPU-h; RUNBOOK C.4), audited as in B.2. Label EVIDENCE for C4; it needs the author's note. The DI test itself is the Mac agent's offline analysis (M15).
-4. **D.1 fold retraining:** one A5 (and the selected A6) checkpoint per leave-one-suite-out fold (T0 never held out) and per LONO fold within T0, on **TASL-7**, from the Stage S recipe. The Mac agent tabulates the results (M15). Estimate (mine): 2–4 days of training.
+4. **D.1 fold retraining:** one A5 (and the selected A6) checkpoint per leave-one-suite-out fold (whether T0 may be the held-out suite is open, PLAN §10 4 Nov 11:29) and per LONO fold within T0, on **TASL-7**, from the Stage S recipe. The Mac agent tabulates the results (M15). Estimate (mine): 2–4 days of training.
 
 **STOP 10** after each.
 

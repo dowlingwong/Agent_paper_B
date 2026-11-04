@@ -161,3 +161,70 @@ None of these choices was in A1–H1, and Phase C/D host planning is not listed 
 - **(d) Authorization and seeds.** No document authorizes a run. Every EVIDENCE phase still names an author-committed note: O9, O10 C.2, O11, G.5, G.6, and B.2 e1/e2. m5's wording should still be tightened. There is no use of 7006–7010 outside evaluation; the gate-stability exception is dropped. MAJOR-5 removes an author commit gate on a CPU analysis; it is not a run authorization, but it must be restored.
 
 Verdict: not accepted
+
+---
+
+## Round 2 (re-check of `e110fe53`, `git diff 467b92d2 e110fe53`)
+
+**Reviewer:** the same independent agent. Documents only; nothing committed. I confirmed that `proposals/RECOMMENDATIONS_1121_20261104.md` is byte-identical to the list used in round 1.
+
+### Status of the round-1 findings
+
+| Finding | Status | Evidence |
+|---|---|---|
+| MAJOR-1 (selective quotation; A4 and H1) | **Fixed in PLAN, STATUS, RUNBOOK, TRACK_G and O8**, with one residue (see R2-MAJOR-1) | PLAN §10 11:29 quotes the full reply. A4 and H1 are under "Pending". G.0 and the failure row STOP for the author |
+| MAJOR-2 (substance added to PROPOSED-CONFIRM and 1GC) | **Fixed in PLAN**, with one residue in the operator runbook (see R2-MAJOR-1) | The confirmation is now item by item, each item mapped to its recommendation. The G.5 STOP, "T0 never held out" and "A6 descriptive" are listed as still open. "Under another suite's label" and "(executed, not kept)" are removed |
+| MAJOR-3 (D6 cap and constraints) | Fixed | €100–200; host, logging and closed-loop constraints added; the exact model is open |
+| MAJOR-4 (D10 timing) | Fixed | "The row deciding it is committed after the G.0/D28 results" |
+| MAJOR-5 (M12 author gate) | Fixed | M12 step 1: "The author commits the protocol before you run it (R1-BX-D3)" |
+| MAJOR-6 (hosts of the new phases) | Fixed | O9 is on a 4090 per RUNBOOK B.4. C.2, C.3 and D.3 are "per the Phase C/D host plan (open)" and do not start before it. The plan is listed as still open in PLAN. C.4 on Ada agrees with RUNBOOK C.4 |
+| MAJOR-7 (C.1 and D.1 coverage) | Fixed | O10 step 0 (C.1: TASL-7, after B.7, note, estimate, STOP 10a); O10 step 4 (D.1 per-fold retraining on TASL-7); M15 step 2 depends on it. O7 step 3 no longer lists R-A |
+| m1 (stale markers) | **Partly fixed** | Both runbooks now carry a "Reading old markers" note. Remaining: RUNBOOK G.1 says "The porting exception is confirmed" and is immediately followed by "*(proposed)*"; RUNBOOK G.3 and TRACK_G G.3 still have the author fixing the T1 GPU model and the proposer host; the RUNBOOK B.2, G.1b, G.2 and G.5 markers. The operator runbook's O8 **Hosts** line ("the T1 table on one GPU model chosen by the author (G.3)") contradicts its own §0.3, which says Ada per R1-BX-PROPOSED-CONFIRM. MINOR, open |
+| m2 (Order list) | Fixed | M14 and M15 added |
+| m3 (B2; H1 into D8-CONFIRM) | Fixed | B2 is in R1-EXAM-ALWAYS-ON-SKIP; the H1 fallback is under Pending, with the D8-CONFIRM note |
+| m4 (Still-open lists) | Fixed | The B.1b list, the licence check, the container route, the Phase C/D host plan and the uncovered R1-BX items are listed. The §10 index is narrowed |
+| m5 (R1-B2-REPLAY-GO wording) | Fixed | "This row is neither note nor ruling"; e2 is a separate later ruling |
+| m6 (1GC "first day"; unsourced context) | Fixed | "On G.0's first day"; the context is marked as background from the session's own check |
+| m7 (marker helper wording; duplicate install) | Fixed | "Is to be installed"; O7 step 6 now covers only check 3.0b |
+| m8 (b2-repair files) | Fixed | Named in R1-HANDOVER-04NOV, with the acknowledgement kept open |
+| m9 (C.2 retraining owner; labels; M15 prerequisites) | Fixed | M15 step 0; C.3 PILOT on the author's written go-ahead; C.4 and O9 EVIDENCE with a note; M15 prerequisites stated |
+| m10 (P.3a under option 3) | Fixed | O7 step 1 names the label and the note, and asks for an amended note if the existing one names the 2k/8k rows |
+
+### New findings
+
+**R2-MAJOR-1. The runbooks still state the pending H1 item and the open "T0 never held out" item as operative rules.**
+*Locations:*
+- `MAC_LOCAL_RUNBOOK_20261104.md` M14 step 5: "If only some T1 nodes have labels by then, read the gate on T0 plus the labelled T1 nodes and state the node count (R1-BX-PROPOSED-CONFIRM)". H1 is pending, and R1-BX-PROPOSED-CONFIRM no longer contains this rule, so the citation is false and the instruction applies an unadopted decision.
+- `OPERATOR_RUNBOOK_20261104.md` O10 step 4: "per leave-one-suite-out fold (T0 never held out)". PLAN §10 lists "T0 never the held-out suite" as still open, and M15 step 2 says the same, so the two runbooks contradict each other.
+
+The new "Reading old markers" notes do not cover these, because both are written as plain instructions, not as *(proposed)* markers.
+
+*Fix:*
+- M14 step 5: "If only some T1 nodes have labels by then, STOP for the author; the partial-T1 reading (H1) is pending his confirmation (PLAN §10, 4 Nov 11:29, Pending)."
+- O10 step 4: replace "(T0 never held out)" with "(whether T0 may be a held-out fold is open, PLAN §10 11:29)".
+
+**R2-MINOR-1.** M13 cites R1-BX-PROPOSED-CONFIRM for "P.3a is re-run … only if … mean |Δ RPS| > 0.01". The rule (G2) is now recorded in R1-P3A-OOM-OPTION3. *Fix:* correct the citation. Better still, use the row's wording: "not re-run if mean |Δ RPS| ≤ 0.01".
+
+**R2-MINOR-2.** The M15 Order bullet and its prerequisites ("C.4's offline DI test on the E1b pairs can start any time"; "except step 1's E1b part") let C.4 run before B.7. RUNBOOK puts C.4 in Phase C, "only if B.7 passes". This is analysis, not a run, but it disagrees with the canonical RUNBOOK. *Fix:* either gate it on B.7 like the RUNBOOK, or label the pre-B.7 part as ENGINEERING_ONLY or exploratory, not the C.4 result, and ask the author.
+
+**R2-MINOR-3.** O10 places C.1 and the D.1 fold retraining on TASL-7. RUNBOOK C.1 and D.1 still say "zhixu portal". R1-TASL7-TRACKP (Track P to TASL-7) supports TASL-7, so this is a stale RUNBOOK host cell, not a conflicting ruling. *Fix:* annotate RUNBOOK C.1 and D.1 with "(TASL-7 per R1-TASL7-TRACKP)".
+
+### Remaining findings
+
+- R2-MAJOR-1
+- m1 (partly fixed)
+- R2-MINOR-1
+- R2-MINOR-2
+- R2-MINOR-3
+
+No BLOCKING finding. No run is authorized, and seeds 7006–7010 remain evaluation-only.
+
+Verdict (round 2): not accepted
+
+## Post-round-2 fixes (executing agent, 4 Nov)
+
+- R2-MAJOR-1: M14 step 5 now STOPs for the author when only some T1 nodes are labelled, citing H1 as pending; O10 step 4 marks "T0 as held-out suite" as open, matching M15 and PLAN.
+- m1: RUNBOOK G.1's leftover *(proposed)* removed; RUNBOOK G.3 and TRACK_G G.3 state the GPU model and proposer host already fixed by R1-BX-PROPOSED-CONFIRM; RUNBOOK and TRACK_G gain a "Reading old markers" note for the remaining B.2 / G.1b / G.2 / G.5 markers; operator O8's Hosts line now says Ada.
+- R2-MINOR-1: M13 cites R1-P3A-OOM-OPTION3.
+- R2-MINOR-2: M15 no longer starts C.4 before B.7.
+- R2-MINOR-3: RUNBOOK C.1 and D.1 host cells annotated with TASL-7 (R1-TASL7-TRACKP).

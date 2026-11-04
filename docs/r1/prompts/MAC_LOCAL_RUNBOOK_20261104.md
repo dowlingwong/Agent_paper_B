@@ -118,7 +118,7 @@ Every task ends in a **STOP**: the review loop, a STATUS entry, then a report to
 - **Before any sweep-2 (T0 or T1) label table is analysed:** the author's **R1-BX-D8-CONFIRM** row and M11's guard. Draft that row early.
 - **M13** (serialisation order and the E6 probe): you are the editor of `r1/c3/train/` (R1-HANDOVER-04NOV); start after M1.
 - **M14** (B.3, A4 calibration, the gate report) waits for the label tables and R1-BX-D8-CONFIRM; the gate report is due ≈ 8 Dec.
-- **M15** (C.4, D.1, D.2, D.4): C.4's offline DI test on the E1b pairs can start any time; the rest follows B.7 and the operator's O10/O11.
+- **M15** (C.4, D.1, D.2, D.4): everything follows B.7 (Phase C runs only if B.7 passes; RUNBOOK Phase C), then the operator's O10/O11.
 
 ### M1 — One authoritative plan (integration branch) and the author's decision packet (1 day)
 
@@ -438,7 +438,7 @@ Run them in a worktree at `d10b05b7`. Never change a Track S pin, rule or thresh
 2. Add a template version with the 4 Nov order (history → proposal → `<decide>`). Keep the old version loadable, so that P.3a records stay reproducible.
 3. Add probe A6 (history-first vs proposal-first) to the E6 probe set, with tests on a tiny random-weight model on the CPU.
 
-P.3a is re-run under the new order only if probe A6 shows mean |Δ RPS| > 0.01 (R1-BX-PROPOSED-CONFIRM).
+P.3a is re-run under the new order only if probe A6 shows mean |Δ RPS| > 0.01 (R1-P3A-OOM-OPTION3).
 
 ### M14 — B.3 offline arms, A4 calibration and the C3 tables (after labels and R1-BX-D8-CONFIRM)
 
@@ -449,7 +449,7 @@ P.3a is re-run under the new order only if probe A6 shows mean |Δ RPS| > 0.01 (
 2. **B.3:** A0–A3 offline (rules, constant prior, LightGBM, NGBoost) and the practitioner baselines in their offline form, through the M11 code. CPU only.
 3. **A4 calibration (B.4):** fit the isotonic map on dev from the operator's raw A4 answers (O9). Score on test with `y_eval` only.
 4. **Tables:** per-node and pooled one-step values; the cross-proposer table (R1-MAIN-PROPOSER (e)); the R1-BX-D8 gate statistic on T0 + T1 with tier as a stratum; the screening funnel (R1-BX-D12).
-5. **The B.7 gate report** for the author, ≈ 8 Dec. If only some T1 nodes have labels by then, read the gate on T0 plus the labelled T1 nodes and state the node count (R1-BX-PROPOSED-CONFIRM).
+5. **The B.7 gate report** for the author, ≈ 8 Dec. If only some T1 nodes have labels by then, **STOP for the author**. The recommended fallback (H1: read the gate on T0 plus the labelled T1 nodes and state the node count) is pending his confirmation (PLAN §10, 4 Nov 11:29).
 
 The TabPFN rows and the A5/A6 rows come from TASL-7 (O7); you only tabulate them. **Duration (estimate):** 1–2 days once the tables arrive. **Done when:** the reviewer has accepted the gate report.
 
@@ -457,7 +457,7 @@ The TabPFN rows and the A5/A6 rows come from TASL-7 (O7); you only tabulate them
 
 **Governs:** RUNBOOK C.2, C.4, D.1, D.2, D.4; C3_DESIGN §7; R1-BX-D1, D6, D7, D9, D12.
 
-**Prerequisites:** B.7 passed (except step 1's E1b part); the operator's tables at verified shas (O10, O11); the A5/A6 checkpoints from TASL-7.
+**Prerequisites:** B.7 passed; the operator's tables at verified shas (O10, O11); the A5/A6 checkpoints from TASL-7.
 
 0. **C.2 merge:** verify the DAgger audit table from O10, merge it with the existing labels (one instance assignment; duplicates grouped as in R1-MAIN-PROPOSER (e)), and write the retraining spec (Stage S recipe plus the selected R-A arm) that the operator runs on TASL-7.
 
