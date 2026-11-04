@@ -215,3 +215,62 @@ O0 still justifies the Ada census by "the Track G census". The census itself is 
 ## Fixes applied (executing agent, 4 Nov)
 
 All findings addressed in the follow-up commit: B1 (operator intro and porting exception), M1 (row trimmed; specifics moved to proposed/open consequences, including the 14:37 return to HoreKa 2), M2–M3 (host tables, Ada scope: overflow, C.4, T1 fallback), M4 (Ada raw cost restored as open), M5 (T2/API loop, C.2, C.3, A4 for T1 as open Phase C/D host plan), M6 (O9, M14 and result paths), M7 (RUNBOOK Track G host cells, G.3, G.4, execution line, banner), M8 (TRACK_G who-does-what and headings), M9 (Mac M10 and packet (a)/(b)), M10 (Track S GPU-node dependency and 4090 floor as open; container check owner open), m1 (amended rows marked where referenced), m2 (proposed markers), m3 (dependency gates restored), m4 (removed HoreKa row pointer), m5 (escalation removed), m6 (Mac rev 3.2 and record; O11 heading), m7 (HoreKa draft note).
+
+## Round 2 — re-check of `7a63aead` (same reviewer, 4 Nov)
+
+**Scope.** `git diff 6d72672a HEAD` (HEAD = `7a63aead`). The diff covers PLAN, RUNBOOK, the operator runbook (now rev 3.3), the Mac runbook (now rev 3.2), `TRACK_G_RUNBOOK.md` and the HoreKa job draft. I also grepped all four runbooks for any T1 work still assigned to the operator. Line numbers are those at HEAD. *(Note: the fix commit also committed this review file together with the executing agent's "Fixes applied" paragraph above. That is harmless; this section is appended uncommitted.)*
+
+### Status of the round-1 findings
+
+| Finding | Status | Evidence / residual |
+|---|---|---|
+| B1 | **Fixed** | Operator line 5 now limits the operator to TASL-2, TASL-7, deepthought and Ada. The porting exception is struck and passed to the HoreKa agent, and operator porting for Track S is marked *(open)*. The line-3 header notes that the census has moved. |
+| M1 | **Fixed** | The PLAN decision cell (line 804) now holds only what the author approved. The host lists and the amended rows, now including R1-BX-REVISIONS (h), are *(proposed)* consequences. The open questions are listed as *(open)*. See R2-m2 for the 14:22 marker. |
+| M2 | **Fixed** | The §0.1 Ada row (line 33), the §0.3 deepthought and Ada rows (lines 95–96), STOP 5 (line 262) and the dependency line (line 368) no longer give the operator T1 work. |
+| M3 | **Fixed** | §0.2 (line 37) now gives Ada as "overflow, C.4, and the T1 fallback". O0 step 1 (line 115) gives the new reasons for the Ada census. |
+| M4 | **Fixed** | Ada raw cost is restored as *(open)* in PLAN, in operator §0.1, §0.3 and O8 item 2, in RUNBOOK G.0 and in TRACK_G G.0. |
+| M5 | **Partly fixed** | C.2 (line 342), C.3, O9's A4 answers for T1 proposals (line 329), O11 (lines 349 and 356), RUNBOOK G.6 and TRACK_G G.6 are now *(open)*. The O8 intro (line 315) says T2 belongs to the Phase C/D host plan. **Residual:** O8 item 3 (line 321) still says "its T1/T2 part is the HoreKa agent's". This contradicts the line above it and O11. It takes work away from the operator rather than giving it any, so the residual is downgraded to R2-m1. |
+| M6 | **Fixed** | O9 (line 332) and M14 (Mac line 451) now cite "the HoreKa agent's T1 tables". The Mac runbook's "Results from the server agents" adds the *(proposed)* `hk2-*` branches. |
+| M7 | **Mostly fixed** | The line-18 pointer now covers "operator" and the deepthought/4090 proposer. Line 19 marks PORTING-CONFIRM as amended, and line 20 is corrected. The G.0–G.5 Host cells name the HoreKa agent, G.6 is *(open)*, and line 227 is rewritten. **Residuals:** see R2-m3. |
+| M8 | **Mostly fixed** | Line 10 tells the reader to read "operator" as "HoreKa agent". The G.0–G.5 headings and step G.1.2 now name the HoreKa agent, G.6 is *(open)*, and line 55 marks PORTING-CONFIRM as amended. **Residuals:** see R2-m4. |
+| M9 | **Mostly fixed** | M10 step 0's hand-off, step 2's ports and "Done when" now name the HoreKa agent. The line-221 open list and packet (b), with its Ada and HoreKa 2 lines, are corrected. **Residual:** see R2-m5. |
+| M10 | **Fixed** | PLAN now lists *(open)* items for the Track S GPU nodes and their 4090 floor, and for the owner of the container check. Operator O8 item 4 records the hand-over through the author. |
+| m1 | **Partly fixed** | The amendment is now marked at operator line 38, Mac line 156, RUNBOOK lines 19 and 217, TRACK_G lines 5 and 55, operator line 33 and Mac packet (b). **Residual:** see R2-m6. |
+| m2 | **Fixed** | *(proposed)* markers are on lines 31, 315, 318, 323 and 371. |
+| m3 | **Fixed** | The dependency line (line 371) restores the M10 shared pieces, the G.2 pin, the G.3 row, the date recomputation, the G.5 note and R1-BX-D8-CONFIRM. |
+| m4 | **Fixed** | The footnote (line 323) now covers the old §0.1 HoreKa row. |
+| m5 | **Fixed** | The T1 escalation trigger is removed. |
+| m6 | **Fixed** | The Mac runbook is at rev 3.2 with a review-record entry. Line 12 adds Ada. The O11 heading reads "T0 here". |
+| m7 | **Fixed** | The HoreKa draft has a line-3 note: "the operator" acting on HoreKa now means the HoreKa agent. |
+
+### Residual and new findings (all MINOR)
+
+- **R2-m1 (residual M5).** Operator line 321: "its T1/T2 part is the HoreKa agent's". *Fix:* "its T1/T2 part follows the Phase C/D host plan *(open)*".
+- **R2-m2 (new).** PLAN line 796 now opens with "*(superseded at 14:37 …)*" as a plain fact. The 14:37 message moved the *scan* target. The item's own last sentence leaves H100 against A100 to be decided after the scan. The new consequence on line 807 states the same supersession as *(proposed)*, so the two places disagree in status. *Fix:* write "*(superseded at 14:37 for the scan target; for the T1 host, see the (proposed) consequence of R1-SERVER-AGENTS-TWO)*".
+- **R2-m3 (residual M7).** Three residuals in RUNBOOK:
+  - The G.0 cell (line 216) still ends with "**Ada first**, while Track X holds TASL-2; Ada is checked for Paper A occupancy first", which contradicts the "on HoreKa 2 H100" earlier in the same cell. *Fix:* strike that sentence.
+  - G.1 (line 217) still names the porting branch `ops-trackg-<date>`. TRACK_G (line 57) proposes `hk2-trackg-<date>`, the Mac runbook proposes `hk2-*`, and `ops-*` is the operator's namespace, which the Mac agent reads as operator output. *Fix:* "its own branch (proposed `hk2-trackg-<date>`)".
+  - Lines 11 and 51 still call Ada the "first host of the Track G census". The line-18 pointer covers this reading, so this is cosmetic. *Fix:* optionally mark both with "(moved, R1-T1-HOREKA)".
+- **R2-m4 (residual M8).** Two residuals in `TRACK_G_RUNBOOK.md`:
+  - Line 49 still makes the operator's O0 census of Ada a precondition of G.0 ("Before G.0 starts on Ada …"). *Fix:* strike it, or recast it as the fallback's precondition.
+  - Lines 35–36 send the container checks to "the 4090 hosts and Ada in G.0". Under line 10's blanket "read operator as HoreKa agent", this would put the HoreKa agent on the operator's hosts, against the disjoint-host rule, while PLAN leaves the owner *(open)*. *Fix:* "the container check on the 4090 hosts and Ada: owner *(open)*, PLAN R1-SERVER-AGENTS-TWO consequences".
+- **R2-m5 (residual M9).** Mac line 393: the heading of M10 step 0 still reads "Shared pieces for the operator's ports (… routes porting itself to the operator)". Mac line 401 still says "do not edit the operator's branch". *Fix:* write "the HoreKa agent's ports" and "the HoreKa agent's branch".
+- **R2-m6 (residual m1).** Three places still lack an amendment marker:
+  - R1-HANDOVER-04NOV is unmarked at operator line 85 ("Reading old markers") and line 111 (O0 Needs). Mac lines 150 and 152 cite only its editor clause, which the amendment leaves untouched, so they are acceptable.
+  - The HoreKa draft line 122 lists "R1-BX-PORTING-CONFIRM" as a need, unmarked. The line-3 note covers it only indirectly.
+  - RUNBOOK lines 11 and 51 apply R1-ADA-CENSUS without naming it (see R2-m3).
+
+  *Fix:* add "(as amended by R1-SERVER-AGENTS-TWO)" in each place.
+- **R2-m7 (new).** Operator O8's list (lines 318–321) is numbered 1, 4, 2, 3. *Fix:* renumber it.
+
+### Grep for T1 work still assigned to the operator
+
+- **Operator runbook:** no live grant remains.
+  - The remaining T1 mentions are pointers to the HoreKa agent (lines 5, 31, 37, 266, 313–323, 332), *(open)* items (lines 329, 342, 349, 356), rules or descriptions (lines 56–57; line 310, "Stage D is one round on 1–2 T1 nodes", which describes Track P scope), and the history in §4.
+  - Line 321 (R2-m1) gives work away rather than to the operator.
+- **RUNBOOK Track G:** no Host cell names the operator. The G.0 "Ada first" sentence (R2-m3) is the only text that still implies the operator's host.
+  - Outside Track G, the Phase C row C.2 (line 346) and the Phase D row D.3 still name deepthought or a 4090 host for T1-node work. Both are qualified "to be planned", which matches the *(open)* host plan, so I raise no finding.
+- **TRACK_G_RUNBOOK:** after line 10's re-reading rule, only line 49 and lines 35–36 (R2-m4) still tie T1 work to the operator's hosts.
+- **Mac runbook:** only the step-0 heading and step 2's "operator's branch" (R2-m5) remain. The other "operator" mentions concern T0, Track S, B.2, O9, O10 and O11 work, all of which is still the operator's.
+
+**Verdict (round 2): ACCEPTED. No BLOCKING or MAJOR finding remains open. Seven MINOR items (R2-m1 … R2-m7) should be applied, and they need no further review round.**
