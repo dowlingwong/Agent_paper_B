@@ -2,6 +2,16 @@
 
 AI-assisted (Codex). Draft only: no row or option below is an author decision or authorization. Ordered by the work it would unblock. This is a living list; items are updated as the independent reviews proceed.
 
+## Q0 — B1 rule row and authorization note, after the blockers
+
+**Context.** The rule and unsigned note have received scoped review, but the pilot reference, three B1-related baseline failures, final combined checkout and TASL-7 handover remain open. A decision on the rule or note is the author's alone; no launch can start solely because the proposed line appears here.
+
+**Options.** (A) Once those prerequisites and Q1–Q2 are resolved, approve the candidate rule and the reviewed B1 note. (B) Defer or request revisions.
+
+**Recommendation.** B until the missing pilot evidence and B1 checks are resolved; then A if the author agrees. The author may give the wording to record verbatim in PLAN §10.
+
+**Paste-ready answer when prerequisites are closed.** `I approve x5_rule_v2 SHA256 53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad and the reviewed B1 authorization note for TASL-7, subject to the agreed anchor reference, exact final checkout, and all reviewed handover and phase gates.`
+
 ## Q1 — B1 amendment acceptance record
 
 **Context.** B1 binds the two Stage A table SHA-256 values and an amendment-acceptance record. The O1 report contains both accepted table digests and is already on the integration branch. Proposed format: `stage_a_amendment_acceptance_sha256` is the SHA-256 of the exact committed bytes of `docs/r1/reports/OPS_O1_20261104.md`, currently `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e`; the path is bound too. If those bytes are corrected, a new digest and re-review are required.
