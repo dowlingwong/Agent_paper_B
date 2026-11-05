@@ -96,7 +96,11 @@ def test_actual_pinned_loader_refuses_bad_synthetic_cache(tmp_path,monkeypatch,d
     if damage=='wrong_id':
         module.DATA_ID=60
     attempts=deny_network(monkeypatch)
-    with pytest.raises(Exception): module._load_frame()
+    if damage=='corrupt':
+        with pytest.raises(gzip.BadGzipFile): module._load_frame()
+    else:
+        with pytest.raises(RuntimeError,match='fixture (intercepted urlopen attempt|preserves cache files)'):
+            module._load_frame()
     if damage in ('missing','partial','wrong_id'): assert attempts
 
 
