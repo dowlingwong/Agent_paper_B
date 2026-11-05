@@ -26,7 +26,8 @@ def fixtures():
             snapshots[node]={'node':node,'offline_executability':'NOT_ESTABLISHED','cache':{'sha256':str(index)*64}}
         for budget in (1,2):
             files={p:(harness/f'nodes/{node}'/p).read_text() for p in schema['editable_paths']}
-            cases.append({'case_id':f'{node}:t{budget:03}','node':node,'budget_index':budget,
+            campaign=f'{node}__s{100+index}'
+            cases.append({'case_id':f'{campaign}:t{budget:03}','campaign_id':campaign,'node':node,'budget_index':budget,
                           'instance_seed':100+index,'train_seed':100+index,'split_seed':100+index,
                           'worker_command':schema['run_command'],'files':files,
                           'configuration_file_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in files.items()}})

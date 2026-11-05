@@ -77,6 +77,9 @@ def check_cases(cases,cache_snapshots,harness):
         node=case['node']
         if not isinstance(node,str) or not node.replace('_','').isalnum():
             raise ConfigStop('STOP: invalid node identity')
+        campaign=f"{node}__s{case['instance_seed']}"
+        if case.get('campaign_id')!=campaign or case['case_id']!=f"{campaign}:t{case['budget_index']:03d}":
+            raise ConfigStop('STOP: case, campaign, seed and trial identity mismatch')
         try:spec=json.loads(_git(harness,'show',f'{HARNESS_COMMIT}:configs/nodes/{node}.yaml'))
         except (ValueError,TypeError) as exc:raise ConfigStop('STOP: invalid pinned node schema') from exc
         if spec.get('name')!=node or spec.get('run_command')!=case['worker_command']:
