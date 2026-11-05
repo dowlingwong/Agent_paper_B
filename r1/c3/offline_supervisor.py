@@ -138,6 +138,8 @@ def supervise(spec,delegated,out,*,protected_roots,timeout_seconds=300,bootstrap
             remaining=deadline-time.monotonic()
             if remaining<=0:raise SupervisorStop('STOP: workload timeout')
             events=poller.poll(max(1,int(remaining*1000)))
+            if any(fd==listener and mask&(select.POLLERR|select.POLLHUP) for fd,mask in events):
+                raise SupervisorStop('STOP: listener error or hangup; monitor health is not established')
             if any(fd==listener and mask&select.POLLIN for fd,mask in events):
                 observed=seccomp.monitor_one(listener,group.kill_fd,audit_fd)
                 raise SupervisorStop(f"STOP: prohibited syscall {observed['syscall']}")

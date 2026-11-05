@@ -7,6 +7,12 @@ import pytest
 from r1.c3 import offline_mounts as mounts
 
 
+@pytest.fixture(autouse=True)
+def fake_xattr_on_platforms_without_support(monkeypatch):
+    if not hasattr(os,'listxattr'):
+        monkeypatch.setattr(os,'listxattr',lambda *a,**k:[],raising=False)
+
+
 def test_readonly_file_closure_mount_and_digest(tmp_path,monkeypatch):
     root=tmp_path/'root';root.mkdir(mode=0o700)
     source=tmp_path/'binary';source.write_bytes(b'fixture executable')
@@ -61,3 +67,13 @@ def test_work_file_copy_checks_digest_and_never_overwrites(tmp_path):
         mounts.populate_work(root,[{**item,'target':'/work/../outside'}])
     with pytest.raises(mounts.MountStop,match='hash mismatch'):
         mounts.populate_work(root,[{**item,'target':'/work/other','sha256':'0'*64}])
+
+
+def test_closure_refuses_setuid_and_file_capabilities(tmp_path,monkeypatch):
+    import stat
+    source=tmp_path/'source';source.write_bytes(b'fixture')
+    with monkeypatch.context() as patch:
+        patch.setattr(Path,'lstat',lambda path:SimpleNamespace(st_mode=stat.S_IFREG|stat.S_ISUID|0o755))
+        with pytest.raises(mounts.MountStop,match='privileged'):mounts._reject_privileged_source(source)
+    monkeypatch.setattr(os,'listxattr',lambda *a,**k:['security.capability'])
+    with pytest.raises(mounts.MountStop,match='file capabilities'):mounts._reject_privileged_source(source)

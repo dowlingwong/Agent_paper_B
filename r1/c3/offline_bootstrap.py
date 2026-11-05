@@ -57,7 +57,6 @@ def close_extra_fds(keep):
 
 def _pid1(spec,channel,parent_pidfd):
     ns.pid_init_parent_guard(parent_pidfd)
-    os.close(parent_pidfd)
     if os.getpid()!=1:raise BootstrapStop('STOP: child is not PID 1 in its namespace')
     root=spec['root']
     mounts.create_root(root,spec['tmpfs_bytes'])
@@ -69,8 +68,12 @@ def _pid1(spec,channel,parent_pidfd):
     if not any(line.split()==['NSpid:','1'] for line in status.splitlines()):
         raise BootstrapStop('STOP: private proc does not report PID namespace init')
     os.chroot(root);os.chdir('/work')
-    close_extra_fds({channel.fileno()})
+    close_extra_fds({channel.fileno(),parent_pidfd})
     caps.drop_and_verify()
+    # Recheck after credential/capability setup before dropping the parent
+    # descriptor and before any untrusted instruction can execute.
+    ns.pid_init_parent_guard(parent_pidfd)
+    os.close(parent_pidfd)
     listener=seccomp.install_listener(channel.fileno())
     try:seccomp.send_listener(channel,listener)
     finally:os.close(listener)
@@ -84,11 +87,17 @@ def bootstrap_child(spec,channel_fd,supervisor_pid):
     try:
         validate_spec(spec)
         channel=socket.socket(fileno=channel_fd)
+        if not hasattr(os,'pidfd_open'):raise BootstrapStop('STOP: pidfd support required')
+        supervisor_pidfd=os.pidfd_open(supervisor_pid,0)
         ns.parent_death_guard(supervisor_pid)
         if os.read(channel_fd,1)!=b'S':raise BootstrapStop('STOP: cgroup handoff failed')
         ns.unshare_bootstrap()
+        # User-namespace credential changes may clear PDEATHSIG. Re-arm it
+        # against the stable supervisor pidfd after the transition and before
+        # opening the pidfd used by the child PID-1 process.
+        ns.pid_init_parent_guard(supervisor_pidfd)
+        os.close(supervisor_pidfd)
         # Open stable identity before the PID namespace fork; PID-1 inherits it.
-        if not hasattr(os,'pidfd_open'):raise BootstrapStop('STOP: pidfd support required')
         parent_pidfd=os.pidfd_open(os.getpid(),0)
         pid=os.fork()
         if pid==0:

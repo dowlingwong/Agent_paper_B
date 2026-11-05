@@ -38,6 +38,10 @@ SYSCALLS = {
     'getsockopt':55, 'semget':64, 'semop':65, 'semctl':66, 'shmdt':67,
     'msgget':68, 'msgsnd':69, 'msgrcv':70, 'msgctl':71, 'shmget':29,
     'shmat':30, 'shmctl':31, 'ptrace':101, 'mount':165, 'umount2':166,
+    # Workload must not clear PID-1 PDEATHSIG via prctl or credential changes.
+    'setuid':105, 'setgid':106, 'setreuid':113, 'setregid':114,
+    'setgroups':116, 'setresuid':117, 'setresgid':119, 'setfsuid':122,
+    'setfsgid':123, 'capset':126, 'prctl':157,
     'add_key':248, 'request_key':249, 'keyctl':250, 'unshare':272,
     'accept4':288, 'recvmmsg':299, 'sendmmsg':307, 'setns':308,
     'process_vm_readv':310, 'process_vm_writev':311, 'seccomp':317,

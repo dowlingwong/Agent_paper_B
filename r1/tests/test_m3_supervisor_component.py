@@ -54,7 +54,8 @@ def test_durable_record_and_group_population(tmp_path):
     finally:os.close(fd)
 
 
-def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monkeypatch):
+@pytest.mark.parametrize('listener_error',[False,True])
+def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monkeypatch,listener_error):
     # Entire child/cgroup/kernel behavior is simulated; no fork or sockets occur.
     monkeypatch.setattr(sup.platform,'system',lambda:'Linux')
     monkeypatch.setattr(sup.platform,'machine',lambda:'x86_64')
@@ -81,15 +82,23 @@ def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monke
     monkeypatch.setattr(sup,'_wait_empty',lambda _:events.append(('empty',)))
     class Poll:
         def register(self,*args):pass
-        def poll(self,*args):return [(81,sup.select.POLLIN)]
+        def poll(self,*args):
+            return ([(80,sup.select.POLLERR),(81,sup.select.POLLIN)] if listener_error
+                    else [(81,sup.select.POLLIN)])
     monkeypatch.setattr(sup.select,'poll',lambda:Poll())
+    monkeypatch.setattr(sup.signal,'pidfd_send_signal',lambda *a:events.append(('pidfd_signal',)),raising=False)
     real_close=os.close
     monkeypatch.setattr(sup.os,'close',lambda fd:events.append(('closed_fd',fd)) if fd in (80,81) else real_close(fd))
-    result=sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
-    assert result['status']=='COMPLETE_UNQUALIFIED'
+    if listener_error:
+        with pytest.raises(sup.SupervisorStop,match='listener error or hangup'):
+            sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
+        assert ('killed',) in events
+    else:
+        result=sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
+        assert result['status']=='COMPLETE_UNQUALIFIED'
     assert events.index(('bound',55)) < events.index(('send',b'S'))
     assert events.index(('verified',80)) < events.index(('send',b'R'))
-    assert ('empty',) in events and ('killed',) not in events
+    assert ('empty',) in events
 
 
 def test_teardown_attempts_pidfd_even_if_cgroup_kill_fails(monkeypatch):
@@ -102,3 +111,31 @@ def test_teardown_attempts_pidfd_even_if_cgroup_kill_fails(monkeypatch):
     with pytest.raises(sup.SupervisorStop,match='teardown not verified'):
         sup._kill_and_reap(Group(),55,81,False)
     assert events==['group','pidfd','empty']
+
+
+def test_pid1_rearms_death_guard_after_capability_drop_before_exec(tmp_path,monkeypatch):
+    calls=[];root=tmp_path/'root';root.mkdir();spec=valid_spec();spec['root']=str(root)
+    class Channel:
+        def fileno(self):return 17
+        def close(self):calls.append('channel_close')
+    monkeypatch.setattr(boot.ns,'pid_init_parent_guard',lambda fd:calls.append(('guard',fd)))
+    monkeypatch.setattr(boot.os,'getpid',lambda:1)
+    monkeypatch.setattr(boot.mounts,'create_root',lambda *a:None)
+    monkeypatch.setattr(boot.mounts,'mount_closure',lambda *a:None)
+    monkeypatch.setattr(boot.mounts,'populate_work',lambda *a:None)
+    monkeypatch.setattr(boot.mounts,'mount_pid_proc',lambda *a:None)
+    monkeypatch.setattr(Path,'read_text',lambda *a,**k:'NSpid:\t1\n')
+    monkeypatch.setattr(boot.os,'chroot',lambda *a:None)
+    monkeypatch.setattr(boot.os,'chdir',lambda *a:None)
+    monkeypatch.setattr(boot,'close_extra_fds',lambda keep:calls.append(('close_extra',keep)))
+    monkeypatch.setattr(boot.caps,'drop_and_verify',lambda:calls.append('caps_dropped'))
+    monkeypatch.setattr(boot.seccomp,'install_listener',lambda fd:calls.append('filter') or 19)
+    monkeypatch.setattr(boot.seccomp,'send_listener',lambda *a:calls.append('listener_sent'))
+    monkeypatch.setattr(boot.os,'close',lambda fd:calls.append(('closed',fd)))
+    monkeypatch.setattr(boot.os,'read',lambda *a:b'R')
+    class StopExec(Exception):pass
+    monkeypatch.setattr(boot.os,'execve',lambda *a:(_ for _ in ()).throw(StopExec()))
+    with pytest.raises(StopExec):boot._pid1(spec,Channel(),18)
+    assert calls.count(('guard',18))==2
+    assert calls.index('caps_dropped') < max(i for i,v in enumerate(calls) if v==('guard',18)) < calls.index('filter')
+    assert calls.index(('closed',18)) < calls.index('filter')

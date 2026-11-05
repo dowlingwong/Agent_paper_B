@@ -45,6 +45,21 @@ def _regular_bytes(path):
     except OSError as exc:raise MountStop(f'STOP: closure input unreadable: {path}') from exc
 
 
+def _reject_privileged_source(path):
+    """Execing privileged files can clear parent-death settings; refuse them."""
+    path=Path(path)
+    try:
+        st=path.lstat()
+        if not stat.S_ISREG(st.st_mode) or st.st_mode & (stat.S_ISUID|stat.S_ISGID):
+            raise MountStop('STOP: privileged or non-regular closure file')
+        if not hasattr(os,'listxattr'):
+            raise MountStop('STOP: cannot inspect closure file privileges')
+        if 'security.capability' in os.listxattr(path,follow_symlinks=False):
+            raise MountStop('STOP: closure file has file capabilities')
+    except OSError as exc:
+        raise MountStop('STOP: cannot inspect closure file privileges') from exc
+
+
 def _target(root,target):
     if not isinstance(target,str) or not target.startswith('/') or target.startswith('//'):
         raise MountStop('STOP: closure target must be an absolute path')
@@ -98,6 +113,7 @@ def mount_closure(root,items):
         target=_target(root,item['target']);target_key=str(target)
         if target_key in targets:raise MountStop('STOP: duplicate closure target')
         targets.add(target_key)
+        _reject_privileged_source(item['source'])
         raw=_regular_bytes(item['source']);expected=item['sha256']
         if not isinstance(expected,str) or len(expected)!=64 or hashlib.sha256(raw).hexdigest()!=expected:
             raise MountStop('STOP: closure source hash mismatch')
