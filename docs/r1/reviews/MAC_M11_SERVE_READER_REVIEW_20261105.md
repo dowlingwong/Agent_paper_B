@@ -9,3 +9,9 @@ Independent focused suite on the clone with the local harness Python: `r1/tests/
 ## Remaining separate limitation
 
 `TorchLoraLoader.load` (`r1/c3/serve.py:139–151`) passes `pin.model['base_path']` to `_build`, while `Pin.verify` checks only `pin.files`. A base path that resolves under `r1_sealed/` can therefore reach model loading; this review does not cover or waive that path. The implementer should apply `refuse_sealed` to the resolved base path before any model build and have that fix separately reviewed. Other generic train/serve paths were not exhaustively audited here. The previously accepted D8 table gates and author-held files remain separate.
+
+## Same-reviewer base-path recheck
+
+**ACCEPTED for the scoped base-path fix** at `aaf34c926b48e2a68cf39ad1f33cfdce079b455b` (diff against `639e41d`). `TorchLoraLoader.load` now checks `pin.model['base_path']` with `refuse_sealed` before the `torch` import, builder invocation, or model loading. The guard handles both lexical and symlink-resolved `r1_sealed/` paths. The fix resolves the specific limitation above; this verdict does not establish universal protection of all generic train/serve inputs or hostile concurrent filesystem mutation.
+
+Independent `test_c3_analysis_guard.py`: **17 passed**. Two further independent temporary-path probes replaced the import mechanism and builder with failure sentinels: both lexical and symlinked sealed base paths stopped before either torch import or model construction. No model, server, GPU, network or experiment was used.
