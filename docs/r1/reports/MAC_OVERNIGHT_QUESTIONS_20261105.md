@@ -38,9 +38,9 @@ AI-assisted (Codex). Draft only: no row or option below is an author decision or
 
 **Options.** (A) Review an exact, evidence-backed list of non-B1 exceptions after the B1-path failures are resolved. (B) Require all tests to pass.
 
-**Recommendation.** A only for the independently reviewed outside-B1/environment cases, with unresolved cases excluded.
+**Recommendation.** A only for the independently reviewed outside-B1/environment cases, with unresolved cases excluded. The reviewed 23-ID draft is `docs/r1/proposals/M2_TEST_EXCEPTIONS_DRAFT_20261105.md` on `mac-b1-overnight-20261105`, review `MAC_M2_TEST_EXCEPTION_DRAFT_REVIEW_20261105.md`; the control dryrun and all B1-related failures are excluded.
 
-**Paste-ready answer.** `I accept the explicitly listed non-B1 test exceptions in <reviewed report and commit>; B1-path failures remain blocking.`
+**Paste-ready answer.** `I accept the 23 explicitly listed non-B1 exception candidates in M2_TEST_EXCEPTIONS_DRAFT_20261105.md; B1-related failures remain blocking.`
 
 ## Q5 — T1 divergence rule: denominator and timing
 
@@ -134,7 +134,7 @@ AI-assisted (Codex). Draft only: no row or option below is an author decision or
 |---|---|---|---|
 | B1 source/interval | Identify the comparable 7B pilot and its documented CI; put matching `lower`/`upper` in SHA-bound JSON and independently review definitions and provenance. | Mac agent prepares evidence; author chooses Q2; operator verifies host bytes. | Several hours if suitable local ledger data exist; otherwise depends on evidence availability. |
 | B1 residual tests | Diagnose and fix the obsolete Stage A/B1 dryrun and nested rerun2 cause; the real-worker determinism test needs an independently authorized model/worker run later. No model run is authorized tonight. | Mac agent for code and independent review; author/operator for the later scoped real-worker check. | Several hours for test repair; host test time unknown. |
-| B1 final checkout | Finish B1-scoped M2 review, confirm Q1 and Q2, publish the author's rule row and approved note, then review the exact resulting committed HEAD and host O2 handover. | Mac reviewer, author, then operator. | Local review hours plus author response and host preflight. |
+| B1 final checkout and GPU lease | Review and test the new B1 GPU flock candidate; finish B1-scoped M2 review, confirm Q1 and Q2, publish the author's rule row and approved note, then review the exact resulting committed HEAD and host O2 handover. | Mac implementer and reviewer, author, then operator. | Local review hours plus author response and host preflight. |
 | M3 offline replay | Implement and independently review descendant-safe Linux offline enforcement and all-configuration preflight; qualify the target Linux site under its own authority. | Mac implementer/reviewer, then authorized operator. | Multi-day engineering and site qualification; no host work tonight. |
 | M11 D8 | Review the final gate code and its SHA; author commits R1-BX-D8-CONFIRM. | Mac reviewer, then author. | Gate review hours plus author response. |
 | M10 HK1 | HK1 verifies actual `sacct`/`squeue` visibility, accounting latency, shared-lock behavior and site policy before enabling the one configuration switch. | HoreKa operator under HK1 authority. | Site-specific; a short capability check, elapsed time depends on accounting lag. |
