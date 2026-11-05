@@ -112,11 +112,18 @@ def worker_environment(base=None):
     env.update(PYTHONPATH=str(REPO),OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1')
     python_dir=Path(sys.executable).parent
     try:
-        if not os.path.samefile(python_dir/'python3',sys.executable):
-            raise OSError('python3 differs from the runner interpreter')
+        python3=python_dir/'python3'
+        if not python3.is_file() or not os.access(python3,os.X_OK) or not os.path.samefile(python3,sys.executable):
+            raise OSError('python3 is not an executable matching the runner interpreter')
     except OSError as exc:
         raise PreparationStop('STOP: B1 worker python3 does not match the runner interpreter') from exc
     env['PATH']=str(python_dir)+os.pathsep+env.get('PATH','')
+    resolved=shutil.which('python3',path=env['PATH'])
+    try:
+        if not resolved or not os.path.samefile(resolved,sys.executable):
+            raise OSError('PATH python3 differs from the runner interpreter')
+    except OSError as exc:
+        raise PreparationStop('STOP: B1 worker PATH resolves to a different python3') from exc
     return env
 
 

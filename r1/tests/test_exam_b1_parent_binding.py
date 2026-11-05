@@ -31,7 +31,7 @@ def test_parent_passes_authorized_configuration_and_head(tmp_path):
 
 def test_worker_command_uses_runner_python_environment(tmp_path,monkeypatch):
     import r1.exam.runtime as runtime
-    (tmp_path/'python').write_text('fixture');(tmp_path/'python3').symlink_to(tmp_path/'python')
+    (tmp_path/'python').write_text('fixture');(tmp_path/'python').chmod(0o700);(tmp_path/'python3').symlink_to(tmp_path/'python')
     monkeypatch.setattr(runtime.sys,'executable',str(tmp_path/'python'))
     env=runtime.worker_environment({'PATH':'/usr/bin','TOKEN':'fixture'})
     assert env['PATH']==str(tmp_path)+':/usr/bin'
@@ -45,6 +45,20 @@ def test_worker_refuses_a_different_or_absent_python3(tmp_path,monkeypatch):
     with pytest.raises(PreparationStop,match='worker python3'): runtime.worker_environment({'PATH':'/usr/bin'})
     (tmp_path/'python3').write_text('different')
     with pytest.raises(PreparationStop,match='worker python3'): runtime.worker_environment({'PATH':'/usr/bin'})
+
+
+def test_worker_refuses_non_executable_python_even_when_same_file(tmp_path,monkeypatch):
+    import r1.exam.runtime as runtime
+    venv=tmp_path/'venv';venv.mkdir();fallback=tmp_path/'fallback';fallback.mkdir()
+    (venv/'python').write_text('fixture');(venv/'python').chmod(0o600)
+    (venv/'python3').symlink_to(venv/'python')
+    marker=tmp_path/'fallback-executed'
+    (fallback/'python3').write_text('#!/bin/sh\nprintf wrong > "$1"\n');(fallback/'python3').chmod(0o700)
+    monkeypatch.setattr(runtime.sys,'executable',str(venv/'python'))
+    with pytest.raises(PreparationStop,match='worker python3'):
+        env=runtime.worker_environment({'PATH':str(fallback)})
+        runtime.subprocess.run(['python3',str(marker)],env=env,check=True)
+    assert not marker.exists()
 
 
 def test_parent_refuses_missing_head_before_worker(tmp_path):
