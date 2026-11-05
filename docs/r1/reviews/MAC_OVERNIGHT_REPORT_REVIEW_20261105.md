@@ -1,0 +1,28 @@
+# Independent Mac overnight report review — 5 November 2026
+
+AI-assisted (Codex). Interim draft checked in `/private/tmp/paper-b-mac-20261104`, SHA-256 `aa61860bba43ef47edea60611dc09de009b5034faadedddecaac3bbf20833a58`. **Round 1: NOT ACCEPTED** pending the corrections below. This review is documentation-only; no server, model, GPU, experiment, author decision or launch authority is supplied.
+
+1. The earlier draft's M10 section described the default-off switch and HK1 checks but omitted the separate EVIDENCE authorization STOP. `MAC_M10_INTEGRATION_REVIEW_20261105.md` states that EVIDENCE remains refused until the separate author-note gate exists. Include the unblock, owner and effort and do not imply enabling the switch closes it.
+2. The statement that no real server was contacted was too broad: feature branches were pushed to GitHub. Narrow it to no experiment host or real model service and disclose GitHub publication.
+
+Checks on the initial draft: the proposed B1 row has an empty decision cell and the English author approval line is explicitly conditional; the B1 rule digest, note fields, both Stage A digests and code pin agree with the unsigned note and prior reviews. The entire held operator quotation is byte-identical to `B1_OPERATOR_MESSAGE_V3_DRAFT_20261105.md`. B1 launch and M3 replay are correctly STOP; offline/synthetic and production limits are distinguished. Listed B1 and integration code commits are ancestors of their respective reviewed checkouts; M10's 33 fake-Slurm tests, M3's eight synthetic loader tests and M13's read-only inventory are supported by their named reviews. These are documentation checks, not independent re-execution of the full implementation.
+
+During this review a fresh M10 audit identified additional purported authority-parser and DEADLINE-resubmission blockers; the report is being updated. I independently reproduced the fenced-example parser defect on `b77ec1b` by mocking `Path.read_text`: `hk2_common.plan_has_row` returned `True` for an authorization ID appearing solely inside a fenced markdown example under dated §10. No Slurm or filesystem mutation was used. Await the fresh audit's durable written record and a corrected final report before recheck; do not represent M10 as currently accepted for use.
+
+## Same-reviewer interim recheck
+
+**ACCEPTED for the interim DRAFT only**, SHA-256 `6986972919b1179c126ed3587fe8214808f48a55bf38ca8a44cae8763169dff1`. The report now limits its no-contact claim to experiment hosts and real model services and discloses GitHub publication. The separately refused EVIDENCE path, necessary HK6/HK7/J5 implementation, scope binding and author-note gate are explicit, with owner and estimated effort. It records M10 as not accepted after the fresh audit and conditions HK1 switch enablement on repaired and independently reviewed code. The interim M10 parser, DEADLINE and EVIDENCE observations agree with `MAC_M10_FINAL_READINESS_REVIEW_20261105.md` at audit commit `34c8df4`. The held operator quotation remains byte-identical to the source draft, and the author decision cell remains empty.
+
+This is not acceptance of B1 launch, M10 use, M3 replay, any author decision or the eventual morning report. A changed report, including corrections reflecting subsequent M10 reviews and the actual morning handoff, needs a further independent recheck against its exact final bytes.
+
+## Same-reviewer interim recheck after M10 integration
+
+**ACCEPTED for the revised interim DRAFT only**, SHA-256 `da8e6ecfa43a5c98d6a1bf5d162127e3432f57a842007165b13c8792ffd3676b`. M10 commits `3e43e6c`, `59b08d3` and review commit `113eec8` are ancestors of the integration checkout. `MAC_M10_FINAL_INTEGRATION_REVIEW_20261105.md` supports the two engineering repairs, Python 3.9 fake-Slurm result of 38 passed, and retained full-M10/EVIDENCE STOP. The report now identifies Q19's proposed F/C/D, accounting, budget, timing, shape and marker choices as author decisions, and correctly discloses the caller-selected PLAN and exact-manifest-only DEADLINE process limits. These are not site or phase approvals. The held operator quotation still matches the source exactly; no author decision is filled in.
+
+This is a review of the interim report's claims, not re-execution or approval of the M10 implementation. The final morning report requires a further independent recheck against its final bytes and subsequent branch state.
+
+## Same-reviewer interim recheck after M10 and M11 updates
+
+**ACCEPTED for the revised interim DRAFT only**, SHA-256 `5d875d7ac452a84e43b244863f5faaf7ac208fbf9c36caa2f9f3352db308d04a`. Commits `3ff6de7`, `0d6d569`, `8645778`, `d9447e1`, `3d0b915` and `4025d8b` are ancestors of the integration checkout. `MAC_M10_EVIDENCE_NOTE_INTEGRATION_REVIEW_20261105.md` supports the standalone proposed-format checker's seven synthetic Python 3.9 tests and confirms that the submitter does not use it; EVIDENCE and HK6/HK7 remain refused. `MAC_M11_FINAL_READER_INTEGRATION_REVIEW_20261105.md` supports the reader corrections and 39 synthetic tests, while leaving D8, author confirmation, protected training-reader coverage and hostile alias/race protections outside its scope. The report names the remaining work, owner and estimated effort, and its M10 EVIDENCE estimate reflects the independently reviewed one-to-several-day range. The exact held operator quotation remains byte-identical and the author decision cell remains empty.
+
+This is a documentation recheck only. It does not authorize any experiment or accept full M10/M11, and it does not accept the final morning report. Recheck the latter against its final bytes and the then-current branch state.
