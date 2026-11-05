@@ -1,5 +1,7 @@
 # Paper B (route R1) — status log
 
+- B1 sealed-path correction (5 Nov; AI-assisted, Codex): case-insensitive `r1_sealed` aliases refused at `bab4b8c`; independent review `MAC_B1_BATCH_ADVERSARIAL_AUDIT_20261105.md` and unsigned-draft repin review at `4019756`. B1 remains not launch-ready pending author/anchor/test/site conditions and final checkout review.
+
 - M11 reader corrections (5 Nov; AI-assisted, Codex): D8 decision-table/date validation, case-insensitive sealed path rejection and audit seed-helper protection corrected at `8645778` / `d9447e1`, independently accepted at `3d0b915` (`MAC_M11_FINAL_READER_INTEGRATION_REVIEW_20261105.md`, 39 synthetic tests). Full D8 gate, author confirmation and protected training-reader coverage remain open.
 
 - M10 proposed EVIDENCE note checker (5 Nov; AI-assisted, Codex): standalone verifier `3ff6de7` independently accepted at `0d6d569` for the proposed format only, review `MAC_M10_EVIDENCE_NOTE_INTEGRATION_REVIEW_20261105.md`; seven Python 3.9 synthetic tests passed. It is not connected to submission and the format is not an author decision. HK6/HK7 EVIDENCE remains STOP pending Q18, actual work binding, phase gates and review.

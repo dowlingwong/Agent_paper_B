@@ -257,7 +257,7 @@ AI-assisted (Codex). Draft only: no row or option below is an author decision or
 - B1 committed-HEAD verifier: accepted at `f7ecf2c`, review `MAC_B1_AUTHORITY_OVERNIGHT_REVIEW_20261105.md`.
 - B1 observer, parent binding and production entry: accepted within separately named scopes, including code `cdd28dc` and review `MAC_B1_ENTRY_REVIEW_20261105.md`. The separate B2 entry and ranking remain STOP.
 - B1 cooperative lock, previous-server preservation and worker Python binding: scoped acceptances at `9d010a1`, `528f12e` and `bc52181`; actual TASL-7 behavior remains an operator check. Parent dry-run host exclusions were accepted at `650f6eb`.
-- B1 complete-batch verifier: accepted in offline/synthetic scope at `1dd6e88`, review `MAC_B1_BATCH_VERIFIER_REVIEW_20261105.md`. The unsigned note pin was independently reviewed at `06a21b3`; neither review establishes real-worker or host readiness.
+- B1 complete-batch verifier: accepted in offline/synthetic scope at `1dd6e88`, review `MAC_B1_BATCH_VERIFIER_REVIEW_20261105.md`; case-insensitive sealed-path correction `bab4b8c` reviewed in `MAC_B1_BATCH_ADVERSARIAL_AUDIT_20261105.md`. The unsigned note repin was independently reviewed at `4019756`; these reviews do not establish real-worker or host readiness.
 - M3 recovered-case/cache-identity binding: accepted for planning-only scope at `2e65bec`, review `MAC_M3_RECOVERED_CASE_BINDING_REVIEW_20261105.md`, published separately at `mac-m3-case-binding-20261105` @ `9ce6b3b`. It does not establish physically independent copies, offline executability or host containment, and depends on a separately held replay driver.
 
 ## Other current STOPs and resolution owners
