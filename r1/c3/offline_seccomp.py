@@ -155,6 +155,20 @@ def _ioctl_req(direction,number,size):
 # `struct seccomp_notif`: u64 id, u32 pid, u32 flags, seccomp_data (64 bytes).
 NOTIF_SIZE=80
 SECCOMP_IOCTL_NOTIF_RECV=_ioctl_req(3,0,NOTIF_SIZE)
+SECCOMP_IOCTL_NOTIF_ID_VALID=_ioctl_req(1,2,8)
+
+
+def verify_listener(listener_fd, *, ioctl=None):
+    """Confirm the FD is a seccomp listener using an impossible ID (zero)."""
+    if ioctl is None:
+        import fcntl
+        ioctl=fcntl.ioctl
+    try:
+        ioctl(listener_fd,SECCOMP_IOCTL_NOTIF_ID_VALID,struct.pack('=Q',0))
+    except OSError as exc:
+        if exc.errno==errno.ENOENT:return
+        raise RuntimeError('STOP: listener verification failed') from exc
+    raise RuntimeError('STOP: invalid zero seccomp notification ID unexpectedly accepted')
 
 
 def monitor_one(listener_fd, cgroup_kill_fd, audit_fd, *, ioctl=None, write=None, fsync=None):
