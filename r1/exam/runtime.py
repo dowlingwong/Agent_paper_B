@@ -68,9 +68,9 @@ class MechanicalFailure(RuntimeError):
 
 
 def handle_live_orphan(record, phase):
-    """Stage A must preserve any live prior server and stop for review."""
-    if phase=='stage-a':
-        raise PreparationStop('STOP: live previous Stage A server; preserve without signalling')
+    """Preserve previous Stage A and B1 servers for explicit recovery review."""
+    if phase in ('stage-a','b1'):
+        raise PreparationStop(f'STOP: live previous {phase} server; preserve without signalling')
     ours,reason=lsi.orphan_matches(record)
     if not ours: raise PreparationStop(f'STOP: cannot prove orphan ownership: {reason}')
     return lsi.stop_orphan(record)

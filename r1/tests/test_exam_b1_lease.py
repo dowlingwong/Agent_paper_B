@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 import pytest
 from r1.exam.b1_lease import B1LeaseStop, acquire, verify_server_fd
-from r1.exam.runtime import ExamRunner, PreparationStop
+from r1.exam.runtime import ExamRunner, PreparationStop, handle_live_orphan
 
 
 def test_shared_lock_is_exclusive_and_not_unlinked(tmp_path):
@@ -48,3 +48,11 @@ def test_real_b1_server_cannot_start_without_lease():
     runner.state={'phase':'b1'};runner.cfg={'dryrun':False};runner.b1_lease_fd=None
     with pytest.raises(PreparationStop,match='lease is missing before server start'):
         runner._server({},'off',32768)
+
+
+def test_b1_previous_server_is_never_signalled(monkeypatch):
+    from r1.exam import runtime
+    monkeypatch.setattr(runtime.lsi,'orphan_matches',lambda *a:pytest.fail('must not take over'))
+    monkeypatch.setattr(runtime.lsi,'stop_orphan',lambda *a:pytest.fail('must not signal'))
+    with pytest.raises(PreparationStop,match='preserve without signalling'):
+        handle_live_orphan({'pid':123},'b1')
