@@ -194,13 +194,63 @@ AI-assisted (Codex). Draft only: no row or option below is an author decision or
 
 ## Q19 — HoreKa submitted-job limits (open; HK0/HK1)
 
-**Context.** `r1/scripts/hk2/hk2_config.json` labels the following values as proposals, not decisions: freeze F 20 Nov 12:00 CET, cutoff C 20 Nov 20:00 CET, copyback D 21 Nov 18:00 CET; campaign accounting start 4 Nov 00:00 CET; 400 GPU-h ceiling and 300 GPU-h STOP; four-hour `T_max`; and the 1-GPU, 32-CPU, 180-GiB probed shape. The author's statement that 400 GPU-h is acceptable does not itself fix a ceiling or the 300 threshold. `T_max` is decided after HK0; the proposed STOP-marker path also needs a reviewed operational decision.
+**Context.** `r1/scripts/hk2/hk2_config.json` labels the following values as proposals, not decisions: freeze F 20 Nov 12:00 CET, cutoff C 20 Nov 20:00 CET, copyback D 21 Nov 18:00 CET; campaign accounting start 4 Nov 00:00 CET; 400 GPU-h ceiling and 300 GPU-h STOP; four-hour `T_max`; and the 1-GPU, 32-CPU, 180-GiB probed shape. The author's statement that 400 GPU-h is acceptable does not itself fix a ceiling or the 300 threshold. `T_max` and GPU model are decided after HK0; H100 is the current T1 choice and H200 would need an amending row. The 20–21 Nov session availability and proposed STOP-marker path also need confirmation.
 
-**Options.** (A) Decide F/C/D, accounting start and budget limits now, and decide `T_max`/shape after HK0. (B) Defer the full set until the queue-probe results and HK0 review. (C) Specify alternatives item by item.
+**Options.** (A) Decide F/C/D, 20–21 Nov session availability, accounting start and budget limits now, and decide `T_max`, GPU model and shape after HK0. (B) Defer the full set until the queue-probe results and HK0 review. (C) Specify alternatives item by item.
 
 **Recommendation.** B unless the author has the queue-probe results and wants to decide some items earlier. Before HK1 use, review every proposed config value and establish the exact authorized limits and marker handling; no default becomes a decision merely because the tool displays it.
 
-**Paste-ready answer.** `HoreKa limits: decide F/C/D, accounting start, budget ceiling/STOP, T_max, shape and STOP marker after HK0 and review.`
+**Paste-ready answer.** `HoreKa limits: decide F/C/D, 20–21 Nov session availability, accounting start, budget ceiling/STOP, T_max, GPU model, shape and STOP marker after HK0 and review.`
+
+## Q20 — HoreKa placement after HK3
+
+**Context.** HK3 measures concurrency at k = 1, 2, 4, task determinism and a co-location arm. The author then fixes runs per GPU, J4 audit placement and whether J3's proposer and task share a GPU; the proposed two-GPU fallback needs a separate shape exception and costs more.
+
+**Options.** (A) Decide after HK3 measurements and review. (B) Specify placement now.
+
+**Recommendation.** A, using co-location only if HK3 and the loaded J1b identity check pass; otherwise decide the reviewed fallback and budget separately.
+
+**Paste-ready answer.** `HoreKa placement: decide k, J4 placement and J3 co-location after HK3 and review.`
+
+## Q21 — Infrastructure failure, divergence and wave STOP
+
+**Context.** Runbook §0.3 proposes treating timeouts, Slurm termination and OOM caused by exceeding declared co-location memory as infrastructure failures; it proposes whole-unit reruns for those, while a run's own-cap OOM remains an edit outcome and non-finite loss/no metric at fixed budget is divergence. The runbook separately proposes a >2% infrastructure-failure STOP per wave. This is distinct from the already chosen >20% T1 divergence STOP.
+
+**Options.** (A) Adopt the proposed distinction, 3× placement-measured timeout and >2% wave STOP with a reviewed denominator. (B) Specify different categories, timeout or threshold. (C) Defer until the operator provides a concrete denominator and failure-report design.
+
+**Recommendation.** C for the exact wave denominator; consider A once the unit counts and handling of incomplete outcomes are reviewed. Never re-run a divergent outcome merely to conceal it.
+
+**Paste-ready answer.** `HoreKa failures: decide the categories, timeout and >2% wave denominator after the reviewed failure-report design.`
+
+## Q22 — J1b pass criterion
+
+**Context.** Before HK4, the author must commit the proposer qualification criterion. J1b checks full offload, 50 prompts × 3 with `cache_prompt: false`, identity on an idle GPU and with the chosen task load, latency and projection.
+
+**Options.** (A) Adopt a reviewed exact-identity criterion of 1.000 in both tests plus full offload and recorded latency/projection. (B) Specify a different criterion. (C) Decide after HK3 and the concrete J1b protocol are reviewed, before HK4.
+
+**Recommendation.** C, with A as the starting proposal and no tolerance inferred without an author decision.
+
+**Paste-ready answer.** `J1b: decide the committed criterion after HK3 and protocol review, before HK4; evaluate exact identity 1.000 as the proposed starting point.`
+
+## Q23 — Two server-agent routing consequences
+
+**Context.** The author already chose two server agents with disjoint hosts and asked to retain existing individual host decisions. PLAN R1-SERVER-AGENTS-TWO separately labels the detailed proposed row amendments, author-opened HoreKa tunnel and handover through the author or pushed branches as consequences for confirmation; this question does not replace individual host choices.
+
+**Options.** (A) Confirm the specific routing and amendments after reviewing them individually. (B) Keep them proposed and specify any changes. (C) Defer.
+
+**Recommendation.** A only for each consequence the author agrees with; preserve the existing individual host decisions and current NHR restrictions.
+
+**Paste-ready answer.** `Server-agent consequences: review the proposed amendments, tunnel and handover individually; retain the existing host decisions.`
+
+## Q24 — Five held M3 file diffs, after review
+
+**Context.** The held `9bab3d6f` changes affect `r1/c3/train/run.py`, `r1/c3/train/trainer.py`, `r1/c3/env.py`, `r1/c3/control.py` and `r1/c3/prior_model.py`. Their prior review blocked B.2 launch; the author asked to decide after M3 review. Full M3 is not accepted and these diffs have not been merged.
+
+**Options.** (A) After a complete independent M3 review, accept the exact reviewed diffs. (B) Request fixes or reject some/all. (C) Continue deferring pending that review.
+
+**Recommendation.** C now; provide the final diff and findings before asking for a file-level decision.
+
+**Paste-ready answer.** `Five held M3 files: defer my decision until the complete independent M3 review and exact diffs are available.`
 
 ## Resolved bounded units (not author decisions)
 
