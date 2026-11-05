@@ -285,6 +285,26 @@ class ToolsTest(unittest.TestCase):
             self.assertEqual(submit.main([str(manifest), '--plan', str(self.plan), '--submit']), 2)
             sbatch.assert_not_called()
 
+    def test_deadline_persists_when_earlier_guard_stops(self):
+        manifest = Path(self.tmp.name) / 'job.json'
+        manifest.write_text(json.dumps(self.job))
+        digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
+        directory = c.records_dir(self.config)
+        directory.mkdir(parents=True)
+        (directory / 'submissions.jsonl').write_text(json.dumps({
+            'event': 'submit', 'job_id': '25', 'manifest_sha256': digest, 'phase': 'HK1'}) + '\n')
+        snapshots = [([], [{'job_id': '25', 'state': 'DEADLINE', 'elapsed_s': 10, 'gpus': 1}]),
+                     ([], [{'job_id': '25', 'state': 'COMPLETED', 'elapsed_s': 10, 'gpus': 1}])]
+        times = [dt.datetime(2026, 11, 20, 12, tzinfo=dt.timezone.utc), self.now]
+        with patch.object(c, 'load_config', return_value=self.config), \
+             patch.object(c, 'query_snapshot', side_effect=snapshots), \
+             patch.object(c, 'utc_now', side_effect=times), \
+             patch.object(submit, 'require_submission_readiness'), \
+             patch.object(submit.subprocess, 'run') as sbatch:
+            self.assertEqual(submit.main([str(manifest), '--plan', str(self.plan), '--submit']), 2)
+            self.assertEqual(submit.main([str(manifest), '--plan', str(self.plan), '--submit']), 2)
+            sbatch.assert_not_called()
+
     def test_throttle_before_any_query_on_error(self):
         calls = []
         def runner(argv):

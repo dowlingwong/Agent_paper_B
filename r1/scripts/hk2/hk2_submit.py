@@ -160,6 +160,8 @@ def main(argv=None):
         directory = c.records_dir(config)
         with c.QueryLock(directory / "query.lock"):
             outstanding, accounted = c.query_snapshot(config)
+            # Persist terminal DEADLINE observations before any later guard can STOP.
+            c.record_deadline_jobs(config, accounted)
             budget = check_guards(data, config, args.plan, outstanding, accounted, c.utc_now(), args.author)
             c.refuse_deadline_resubmission(config, digest, accounted)
             directory.mkdir(parents=True, exist_ok=True)
