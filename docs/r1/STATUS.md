@@ -1678,3 +1678,9 @@ PLAN §7 is revised. The proposed primary is now a ModernBERT-family encoder dec
   - D1–D12 and D14–D18 (PLAN §10);
   - the configurator architecture discussion (D16);
   - venue confirmation (D17).
+
+## 5 Nov 2026 — Mac overnight accepted units
+
+- M10 fake-Slurm submission path accepted and integrated at `9f7675e`; review `MAC_M10_INTEGRATION_REVIEW_20261105.md`. HK1 must verify site accounting and enable the default-off switch only under its own authority.
+- M11 table readers and audit pre-read guards accepted at `44e1475` and `f6bc280`; reviews `MAC_M11_READER_GUARDS_REVIEW_R3_20261105.md` and `MAC_M11_AUDIT_GUARD_REVIEW_20261105.md`. D8 author confirmation remains open; generic protected train/serve readers are outside these units.
+- B1-scoped rule/entry and unsigned note reviews are on `mac-b1-overnight-20261105`; rule SHA `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad`. B1 still requires the author row/note, comparable anchor interval, remaining B1 tests, full B1-scoped combined review and host handover.
