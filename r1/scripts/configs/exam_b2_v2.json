@@ -14,7 +14,7 @@
   "proposal_schema": "manager_proposal/v1",
   "registry": "r1/exam/registry.yaml",
   "rule": "r1/exam/rules/x5_rule_v2.yaml",
-  "rule_sha256": "79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20",
+  "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
   "value_grids": "r1/exam/value_grids.yaml",
   "paper_commit": "TODO_REVIEWED_M2_COMMIT",
   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",

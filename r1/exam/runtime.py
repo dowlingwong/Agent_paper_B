@@ -376,8 +376,10 @@ class ExamRunner:
             # server or worker exists.
             from r1.exam.cache_runtime import require_authorized_stagea
             require_authorized_stagea()
-        if phase in ('b1','b2'):
-            raise PreparationStop('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
+        if phase=='b2':
+            raise PreparationStop('STOP: B2 reviewed observer integration is not implemented')
+        if phase=='b1' and self.rule.get('version')!='x5_rule/v2':
+            raise PreparationStop('STOP: B1 requires the reviewed x5_rule/v2')
         if phase=='b1': self.author_head=author_gate(self.cfg,phase,self.rule_sha)
         if phase=='stage-a':refuse_existing_stage_a_output(self.out)
         self.out.mkdir(parents=True,exist_ok=True)

@@ -37,7 +37,26 @@ def test_v2_mode_fields_are_strings_and_always_on_skip():
         assert isinstance(value, str) and value == 'off'
     assert raw['thinking_mode']['always_on_in_b1'] == 'skip'          # R1-EXAM-ALWAYS-ON-SKIP
     assert raw['thinking_mode']['b1_sensitivity']['node'] == 'openml_credit_approval'
+    sensitivity = raw['thinking_mode']['b1_sensitivity']
+    assert (sensitivity['enabled'], sensitivity['mode'], sensitivity['instances'], sensitivity['role']) == (True, 'on', 4, 'descriptive_only')
+    assert raw['eligibility']['d28_scope'] == 'thinking_off_only'
     assert raw['version'] == 'x5_rule/v2' and raw['supersedes'] == 'x5_rule/v1'
+
+
+@pytest.mark.parametrize('field,value', [('enabled',False),('mode','off'),('instances',3),('role','eligibility')])
+def test_v2_refuses_changed_sensitivity(tmp_path,field,value):
+    raw = yaml.safe_load(RULE_V2.read_text())
+    raw['thinking_mode']['b1_sensitivity'][field] = value
+    path=tmp_path/'rule.yaml';path.write_text(yaml.safe_dump(raw))
+    with pytest.raises(ValueError,match='descriptive thinking-on sensitivity'):
+        load_rule(path, hashlib.sha256(path.read_bytes()).hexdigest())
+
+
+def test_v2_refuses_d28_scope_other_than_thinking_off(tmp_path):
+    raw=yaml.safe_load(RULE_V2.read_text());raw['eligibility']['d28_scope']='all_modes'
+    path=tmp_path/'rule.yaml';path.write_text(yaml.safe_dump(raw))
+    with pytest.raises(ValueError,match='D28 eligibility'):
+        load_rule(path, hashlib.sha256(path.read_bytes()).hexdigest())
 
 
 def test_v2_loads_only_with_its_sha(tmp_path):
@@ -241,7 +260,7 @@ def test_b2_with_rule_checks_every_manifest_sha():
 
 def test_v2_validator_refuses_run_descriptive(tmp_path):
     """Review F4: only the ruled 'skip' is accepted; the frozen v2 bytes are untouched."""
-    assert digest_file(RULE_V2) == '79d8c5cb315d999dcad869afe696dd36c2e0c50e55eb0d9c6a9352510168eb20'
+    assert digest_file(RULE_V2) == '53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad'
     bad = tmp_path / 'alt.yaml'
     bad.write_text(RULE_V2.read_text().replace('always_on_in_b1: skip', 'always_on_in_b1: run_descriptive'))
     with pytest.raises(ValueError, match='must be skip'):
@@ -463,6 +482,27 @@ def test_runner_v2_b1_skips_always_on_and_runs_off_primary(tmp_path):
     m = json.loads((tmp_path / 'sw/b1_manifest.json').read_text())
     assert m['primary_mode'] == 'off' and m['thinking_on_sensitivity'] == 'descriptive'
     assert m['rule_version'] == 'x5_rule/v2' and m['cache_prompt'] is False and m['harness_commit'] == A3FEDBB
+
+
+def test_b1_stops_before_running_when_required_thinking_on_is_unavailable(tmp_path, monkeypatch):
+    from r1.scripts import exam_runner
+    rule,sha=v2();specs=[_spec('sw',SWITCH)]
+    runner=FakeRunner(tmp_path,specs,_runner_cfg(tmp_path,specs,['sw']),rule,sha)
+    monkeypatch.setattr(exam_runner,'stage_a_pass_set',lambda *a,**k:{'sw':{'thinking_disabled_due_grammar':True}})
+    with pytest.raises(PreparationStop,match='required thinking-on sensitivity disabled'):
+        exam_runner.evidence(runner,'b1',None,False)
+    assert not runner.served and not runner.roots
+
+
+def test_anchor_reference_requires_matching_source_and_finite_interval(tmp_path):
+    from r1.scripts.exam_runner import verify_anchor_reference
+    source=tmp_path/'reference.json';source.write_text('{"pilot":"fixture"}')
+    ref={'source':str(source),'sha256':digest_file(source),'lower':0.1,'upper':0.5}
+    verify_anchor_reference({'anchor_duplicate_reference':ref})
+    for changed in ({'sha256':'0'*64},{'lower':float('nan')},{'lower':0.8,'upper':0.2},
+                    {'lower':True},{'source':str(tmp_path/'missing')}):
+        with pytest.raises(PreparationStop,match='invalid anchor duplicate reference'):
+            verify_anchor_reference({'anchor_duplicate_reference':{**ref,**changed}})
 
 
 def test_b1_manifest_requires_and_records_authorized_head(tmp_path):
@@ -734,6 +774,7 @@ def test_v2_configs_bind_rule_harness_cache_and_repairs(name):
         assert key in cfg and not str(cfg[key]).startswith('TODO_')   # filled from the accepted O1 report
     portal = json.loads(DEFAULT_CONFIG.read_text())
     differ = ('comment', 'rule', 'rule_sha256', 'harness_commit', 'paper_commit', 'host', 'authorizations', 'cache_prompt',
+              'workers', 'llm_call_cap', 'nodes',
               'd3_policy', 'gpu_uuid', 'stage_a_table', 'stage_a_table_sha256')
     assert {k: v for k, v in cfg.items() if k in portal and k not in differ} == {k: portal[k] for k in cfg if k in portal and k not in differ}
 
@@ -822,7 +863,7 @@ def test_worker_host_uses_platform_node(monkeypatch):
 def test_collect_no_longer_hardcodes_tasl2_and_root_job_carries_host():
     import inspect
     from r1.exam import campaign, runtime
-    src = inspect.getsource(campaign.collect)
+    src = inspect.getsource(campaign._collect_b1_review)
     assert "'TASL-2'" not in src and 'require_worker_host(job)' in src
     assert "'host':self.cfg['host']" in inspect.getsource(runtime.ExamRunner.root)
 

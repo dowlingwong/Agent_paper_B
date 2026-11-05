@@ -35,7 +35,7 @@ url=f'http://127.0.0.1:{server.server_address[1]}/v1'
 os.environ['LLAMACPP_BASE_URL']=url
 for key in ('LLAMACPP_CACHE_PROMPT','OPENAI_API_KEY','OPENAI_BASE_URL'):
     os.environ.pop(key,None)
-from r1.exam.campaign import _collect_b1_review
+from r1.exam.campaign import collect
 from r1.exam.observer import B1ObserverFatal
 job={'out':str(out),'binding':'fixture','workers':1,'host':'fixture','phase':'b1','node':'digits_mlp','seed':9001,
      'candidate':{'id':'standin_candidate'},'mode':'off','dryrun':True,'W':2,'llm_call_cap':8,
@@ -43,7 +43,7 @@ job={'out':str(out),'binding':'fixture','workers':1,'host':'fixture','phase':'b1
      'proposal_schema':'manager_proposal/v1','authority_config':{'dryrun':True,'dryrun_root':str(root),'rule_sha256':'fixture'}}
 (out/'job.json').write_text(json.dumps(job))
 try:
-    try: _collect_b1_review(job);status='complete'
+    try: collect(job);status='complete'
     except B1ObserverFatal: status='observer_stop'
 finally:
     server.shutdown();server.server_close()

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import math
 import os
 import platform
 import re
@@ -224,6 +225,22 @@ def anchor_gate(manifests, cfg):
             'DRYRUN_gate_override':bool(cfg.get('dryrun'))}
 
 
+def verify_anchor_reference(cfg):
+    """Check the author-specified reference identity and interval before B1 starts."""
+    ref=cfg.get('anchor_duplicate_reference')
+    if not isinstance(ref,dict): raise PreparationStop('STOP: anchor reference is missing')
+    try:
+        sha=ref['sha256'];source=Path(ref['source']);lower=ref['lower'];upper=ref['upper']
+        valid_bounds=(type(lower) in (int,float) and type(upper) in (int,float) and
+                      math.isfinite(lower) and math.isfinite(upper) and 0<=lower<=upper<=1)
+        if not valid_bounds or not isinstance(sha,str) or not re.fullmatch(r'[0-9a-f]{64}',sha):
+            raise ValueError('invalid digest or interval')
+        if not source.is_file() or digest_file(source)!=sha:
+            raise ValueError('reference source digest mismatch')
+    except (KeyError,TypeError,ValueError,OSError) as exc:
+        raise PreparationStop('STOP: invalid anchor duplicate reference') from exc
+
+
 # R1-EXAM-B1-HARNESS-PIN (author, 4 Nov): Track X B1/B2 run on harness cacheprompt-20261031 @ a3fedbb,
 # which sends explicit cache_prompt (default false) on every llama-server request (R1-EXAM-CACHE-REV).
 B1_HARNESS_PIN='a3fedbbd44309b3fdf99d853ad841b9ec2c299e2'
@@ -301,11 +318,13 @@ def check_template_repairs(cfg, specs):
 
 
 def evidence(runner, phase, selected, interrupt):
-    raise PreparationStop('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
+    if phase != 'b1' or not is_v2(getattr(runner,'rule',None)):
+        raise PreparationStop('STOP: only x5_rule/v2 B1 evidence is implemented')
+    return _evidence_unreviewed(runner, phase, selected, interrupt)
 
 
 def _evidence_unreviewed(runner, phase, selected, interrupt):
-    """B1/B2 body retained for unit tests only; unreachable from any entry point."""
+    """Evidence collection body; the public entry admits reviewed B1 only."""
     cfg=runner.cfg;rows=[]
     v2=is_v2(getattr(runner,'rule',None))
     if digest_file(cfg['stage_a_table'])!=cfg['stage_a_table_sha256']: raise PreparationStop('STOP: Stage A table digest mismatch')
@@ -318,6 +337,12 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
     registry_candidates={s['id'] for s in runner.spec_order() if s.get('role')=='candidate'}
     eligible=stage_a_pass_set(cfg,registry_candidates,v2=v2)
     specs=runner.spec_order(selected)
+    if v2 and phase=='b1':
+        unavailable=[s['id'] for s in specs if s['id'] in eligible and
+                     (s.get('thinking_policy') or {}).get('switchable') is True and
+                     eligible[s['id']].get('thinking_disabled_due_grammar')]
+        if unavailable:
+            raise PreparationStop('STOP: required thinking-on sensitivity disabled by Stage A grammar: '+', '.join(unavailable))
     if phase=='b2':
         screen=json.loads(Path(cfg['b1_analysis']).read_text())
         if screen['rule_sha256']!=runner.rule_sha: raise RuntimeError('STOP: B1 rule identity mismatch')
@@ -463,8 +488,8 @@ def main(argv=None):
     p.add_argument('--amendment',choices=['A1'],help='declared template-check amendment for a measurement run')
     p.add_argument('--amendment-reason',help='declared reason for the amendment measurement')
     a=p.parse_args(argv)
-    if not a.check_config and a.phase in ('b1','b2'):
-        raise PreparationStop('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
+    if not a.check_config and a.phase=='b2':
+        raise PreparationStop('STOP: B2 reviewed observer integration is not implemented')
     if not a.check_config and a.phase=='stage-a' and not os.environ.get('TRACKX_GPU_LEASE_FD'):
         raise PreparationStop('STOP: D3 cold-cache cooperative lease FD absent')
     if a.allow_placeholders and not a.check_config: p.error('--allow-placeholders is only for --check-config')
@@ -486,6 +511,7 @@ def main(argv=None):
         if is_v2(load_rule(cfg['rule'],cfg['rule_sha256'])[0]): required += list(STAGE_A_AMENDMENT_KEYS)
     unresolved=placeholders({k:cfg[k] for k in required})
     if unresolved: raise RuntimeError(f'STOP: unresolved phase settings: {unresolved}')
+    if a.phase=='b1' and not cfg.get('dryrun'): verify_anchor_reference(cfg)
     runner=ExamRunner(cfg,a.out)
     preserve_running=False
     try:

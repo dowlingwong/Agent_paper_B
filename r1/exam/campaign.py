@@ -110,11 +110,13 @@ def require_worker_host(job, node=None):
 
 
 def collect(job):
-    raise RuntimeError('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
+    if job.get('phase') != 'b1':
+        raise RuntimeError('STOP: B2 observer integration is not implemented')
+    return _collect_b1_review(job)
 
 
 def _collect_b1_review(job):
-    """B1-only integration candidate; production entry remains stopped for review."""
+    """Collect a B1 campaign with the authorized observer and cache evidence."""
     if job.get('phase') != 'b1': raise RuntimeError('STOP: B1 candidate refuses other phases')
     out=Path(job['out'])
     if not job['dryrun']: require_worker_host(job)

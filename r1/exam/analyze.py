@@ -32,6 +32,12 @@ def _validate_v2(rule):
         raise ValueError('x5_rule/v2 always_on_in_b1 must be skip (R1-EXAM-ALWAYS-ON-SKIP)')
     sens=rule['thinking_mode'].get('b1_sensitivity') or {}
     if not isinstance(sens.get('node'),str) or not sens['node']: raise ValueError('x5_rule/v2 b1_sensitivity.node required')
+    if (sens.get('enabled') is not True or sens.get('mode')!='on' or
+            type(sens.get('instances')) is not int or sens['instances']!=4 or
+            sens.get('role')!='descriptive_only' or sens['node']!='openml_credit_approval'):
+        raise ValueError('x5_rule/v2 requires the four-instance descriptive thinking-on sensitivity')
+    if rule['eligibility'].get('d28_scope')!='thinking_off_only':
+        raise ValueError('x5_rule/v2 D28 eligibility must use thinking off only')
     if rule['eligibility'].get('exclude_thinking_policy_mode')!='always_on': raise ValueError('x5_rule/v2 must exclude always_on models')
     if rule['selection'].get('ties')!='lower_gpu_hours': raise ValueError('x5_rule/v2 B2 ties must go to lower GPU-h')
 
