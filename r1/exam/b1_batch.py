@@ -19,8 +19,17 @@ def _read(path):
 
 
 def _inside(root, path):
+    refuse_sealed(root,path)
     if not Path(path).resolve().is_relative_to(Path(root).resolve()):
         _stop('constituent path escapes its batch root')
+
+
+def refuse_sealed(*paths):
+    for raw in paths:
+        if raw is None: continue
+        path=Path(raw).expanduser()
+        if 'r1_sealed' in path.parts or 'r1_sealed' in path.resolve().parts:
+            _stop('sealed paths cannot be analyzed')
 
 
 def verify_batch(batch, cfg, rule_sha):
@@ -39,6 +48,9 @@ def verify_batch(batch, cfg, rule_sha):
     from r1.c3.features import replay_campaign, files_hash
     from r1.c3.audit import paired
     from r1.exam.observer import _authorized_candidate
+    refuse_sealed(batch,cfg.get('registry'),cfg.get('rule'),cfg.get('value_grids'),
+                  cfg.get('stage_a_table'),cfg.get('stage_a_amendment_table'),cfg.get('stage_a_amendment_acceptance'),
+                  (cfg.get('authorizations') or {}).get('b1'),(cfg.get('anchor_duplicate_reference') or {}).get('source'))
     if cfg.get('dryrun'): _stop('production verification refuses DRYRUN')
     head=author_gate(cfg,'b1',rule_sha)
     if not isinstance(head,str) or len(head)!=40: _stop('authorized HEAD absent')
@@ -84,6 +96,7 @@ def verify_batch(batch, cfg, rule_sha):
     expected_keys=set()
     for spec,m in zip(expected,manifests):
         cid=spec['id']; candidate_path=batch/cid/'b1_manifest.json'
+        _inside(batch,batch/cid)
         if not candidate_path.resolve().is_relative_to(batch) or _read(candidate_path)!=m:
             _stop('candidate manifest differs from aggregate')
         if (m.get('execution_label')!='EVIDENCE' or m.get('authorization_checkout_head')!=head or
@@ -112,11 +125,17 @@ def verify_batch(batch, cfg, rule_sha):
             entry=state_roots.get(key)
             if not Path(path).resolve().is_relative_to(batch): _stop('root path escapes batch')
             root_dir=Path(path).parent
+            _inside(batch,root_dir)
             for name in ('job.json','post_check.json','root_trials.jsonl','root_events.jsonl',
                          'audit_cache.json','audit_configs.json','a4_observer_requests.jsonl'):
                 _inside(root_dir,root_dir/name)
             if not isinstance(entry,dict) or entry.get('path')!=path or digest_file(path)!=entry.get('sha256'):
                 _stop('root missing or changed')
+            preliminary=_read(path)
+            names={'root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json','a4_observer_requests.jsonl'}
+            hashes=preliminary.get('evidence_hashes') if isinstance(preliminary,dict) else None
+            if not isinstance(hashes,dict) or set(hashes)!=names or any(hashes[k] is None for k in ('root_trials.jsonl','root_events.jsonl','audit_configs.json')):
+                _stop('root evidence index incomplete')
             root=verify_campaign(path,expected_binding);_verify_b1_root_authority(path,head)
             job=_read(Path(path).parent/'job.json')
             for field in ('workers','host','W','llm_call_cap','audit_seeds','proposal_schema'):
@@ -131,10 +150,6 @@ def verify_batch(batch, cfg, rule_sha):
             if (root.get('execution_label')!='EVIDENCE' or root.get('phase')!='b1' or root.get('candidate')!=cid or
                 root.get('mode')!=mode or root.get('node')!=node or root.get('instance_seed')!=seed):
                 _stop('root identity differs from grid')
-            names={'root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json','a4_observer_requests.jsonl'}
-            hashes=root.get('evidence_hashes')
-            if not isinstance(hashes,dict) or set(hashes)!=names or any(hashes[k] is None for k in ('root_trials.jsonl','root_events.jsonl','audit_configs.json')):
-                _stop('root evidence index incomplete')
             records=read_rows(Path(path).parent/'root_trials.jsonl');events=read_rows(Path(path).parent/'root_events.jsonl')
             novelty=[e['payload'] for e in events if e.get('event_type')=='edit_novelty']
             forecasts={e['trial_id']:e['payload'] for e in events if e.get('event_type')=='exam_self_forecast'}
@@ -148,14 +163,15 @@ def verify_batch(batch, cfg, rule_sha):
             if root.get('diagnostics')!=diagnostics: _stop('root diagnostics differ from ledger and events')
             completed=[e.get('payload') or {} for e in events if e.get('event_type')=='campaign_completed']
             if len(completed)!=1: _stop('root completion event missing or duplicated')
-            budget=completed[0].get('compute_budget')
+            worker_count=sum(not ((r.get('extra') or {}).get('worker') or {}).get('worker_skipped',False) and r.get('decision')!='skipped' for r in records)
+            software=spec.get('kind') in ('random_valid','scripted')
+            budget=completed[0].get('compute_budget') or ({'worker_runs':worker_count,'llm_calls':0} if software else None)
             if not isinstance(budget,dict) or root.get('compute_budget')!=budget:
                 _stop('root budget differs from completion event')
-            if (budget.get('max_worker_runs')!=cfg['W'] or budget.get('max_llm_calls')!=cfg['llm_call_cap'] or
+            if ((not software and (budget.get('max_worker_runs')!=cfg['W'] or budget.get('max_llm_calls')!=cfg['llm_call_cap'])) or
                 type(budget.get('worker_runs')) is not int or not 0<=budget['worker_runs']<=cfg['W'] or
                 type(budget.get('llm_calls')) is not int or not 0<=budget['llm_calls']<=cfg['llm_call_cap']):
                 _stop('root budget exceeds or differs from authorized caps')
-            worker_count=sum(not ((r.get('extra') or {}).get('worker') or {}).get('worker_skipped',False) and r.get('decision')!='skipped' for r in records)
             if budget['worker_runs']!=worker_count: _stop('worker count differs from trial ledger')
             call_events=[e.get('payload') or {} for e in events if e.get('event_type') in ('llm_call','llm_call_failed')]
             if any(type(e.get('llm_calls',1)) is not int or e.get('llm_calls',1)<1 for e in call_events) or \

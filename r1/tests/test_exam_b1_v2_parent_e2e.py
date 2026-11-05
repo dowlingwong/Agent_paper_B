@@ -143,3 +143,29 @@ def test_synthetic_worker_refuses_already_lost_parent(monkeypatch):
     monkeypatch.setattr(campaign.os,'getppid',lambda:999)
     with pytest.raises(RuntimeError,match='lost its original parent'):
         campaign._start_synthetic_parent_watch(123)
+
+
+@pytest.mark.parametrize('kind',['random_valid','scripted'])
+def test_pinned_harness_software_anchor_budget_shape(tmp_path,kind):
+    harness=os.environ.get('AR_HARNESS_B1_ROOT')
+    if not harness:
+        if os.environ.get('R1_REQUIRE_B1_HARNESS')=='1': pytest.fail('pinned B1 harness required')
+        pytest.skip('set AR_HARNESS_B1_ROOT to the pinned local harness')
+    assert subprocess.check_output(['git','-C',harness,'rev-parse','HEAD'],text=True).strip()=='a3fedbbd44309b3fdf99d853ad841b9ec2c299e2'
+    root=tmp_path/kind;root.mkdir();(root/'.dryrun').write_text('synthetic')
+    out=root/'root';out.mkdir()
+    job={'out':str(out),'binding':'fixture','workers':1,'host':'fixture','phase':'b1','node':'digits_mlp','seed':9001,
+         'candidate':{'id':kind,'kind':kind},'mode':'off','dryrun':True,'W':2,'llm_call_cap':8,
+         'audit_seeds':[9101,9102,9103,9104],'base_url':None,'value_grids':str(ROOT/'r1/exam/value_grids.yaml'),
+         'proposal_schema':'manager_proposal/v1','authority_config':{'dryrun':True,'dryrun_root':str(root),'rule_sha256':'fixture'}}
+    (out/'job.json').write_text(json.dumps(job))
+    env={**os.environ,'AR_HARNESS_ROOT':harness,'PYTHONPATH':str(ROOT),'PYTHONDONTWRITEBYTECODE':'1'}
+    proc=subprocess.run([sys.executable,'-m','r1.exam.campaign','--job',str(out/'job.json')],cwd=ROOT,
+                        env=env,capture_output=True,text=True,timeout=60)
+    assert proc.returncode==0,proc.stderr
+    result=json.loads((out/'campaign_manifest.json').read_text())
+    events=[json.loads(x) for x in (out/'root_events.jsonl').read_text().splitlines()]
+    completion=next(x['payload'] for x in events if x['event_type']=='campaign_completed')
+    assert not completion.get('compute_budget')
+    assert result['compute_budget']['llm_calls']==0
+    assert set(result['compute_budget'])=={'worker_runs','llm_calls'}

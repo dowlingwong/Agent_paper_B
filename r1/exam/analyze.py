@@ -43,6 +43,8 @@ def _validate_v2(rule):
 
 
 def load_rule(path=RULE, expected=None):
+    from r1.exam.b1_batch import refuse_sealed
+    refuse_sealed(path,Path(str(path)+'.sha256') if expected is None else None)
     if expected is None: expected=Path(str(path)+'.sha256').read_text().split()[0]
     sha=frozen_digest(path,expected)
     rule=yaml.safe_load(Path(path).read_text())
@@ -129,6 +131,8 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None, synthetic=False):
 
 def b1_summary_verified(batch, cfg, *, rule_path=RULE_V2, expected=None):
     """Produce v2 finalists only from the complete authorized evidence batch."""
+    from r1.exam.b1_batch import refuse_sealed
+    refuse_sealed(batch,rule_path)
     rule,sha=load_rule(rule_path,expected)
     if not is_v2(rule): raise ValueError('STOP: complete-batch verification requires x5_rule/v2')
     from r1.exam.b1_batch import verify_batch
@@ -331,7 +335,10 @@ def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('phase',choices=['stage-a','b1','b2'])
     p.add_argument('manifests',nargs='*');p.add_argument('--rule',default=str(RULE));p.add_argument('--rule-sha256')
     p.add_argument('--batch');p.add_argument('--config')
-    a=p.parse_args(argv);ms=[json.loads(Path(x).read_text()) for x in a.manifests]
+    a=p.parse_args(argv)
+    from r1.exam.b1_batch import refuse_sealed
+    refuse_sealed(a.batch,a.config,a.rule,*a.manifests)
+    ms=[json.loads(Path(x).read_text()) for x in a.manifests]
     if a.phase=='b1' and (a.batch or a.config):
         if not a.batch or not a.config or ms: p.error('verified B1 needs --batch and --config, without individual manifests')
         from r1.exam.runtime import load_config

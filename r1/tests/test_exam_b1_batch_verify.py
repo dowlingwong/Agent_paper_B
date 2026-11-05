@@ -63,9 +63,10 @@ def fixture(tmp_path,monkeypatch):
             records=[json.loads(x) for x in trials.read_text().splitlines()]
             _,checks=replay_campaign(records,start,node,f'{node}__s{seed}','EXAM','append_only_summary',cfg['W'],1.)
             software=spec.get('kind') in ('random_valid','scripted')
-            budget={'max_worker_runs':2,'max_llm_calls':8,'worker_runs':2,'llm_calls':0 if software else 1}
+            budget=({'worker_runs':2,'llm_calls':0} if software else
+                    {'max_worker_runs':2,'max_llm_calls':8,'worker_runs':2,'llm_calls':1})
             event_rows=([{'event_type':'llm_call','payload':{'cache_prompt':False}}] if not software else [])
-            event_rows.append({'event_type':'campaign_completed','payload':{'compute_budget':budget}})
+            event_rows.append({'event_type':'campaign_completed','payload':{} if software else {'compute_budget':budget}})
             events=root/'root_events.jsonl';events.write_text(''.join(json.dumps(x)+'\n' for x in event_rows))
             configs=root/'audit_configs.json';configs.write_text('{}')
             cache=None if software else {'cache_prompt':False,'llm_call_events':1,'llm_call_failed_events':0,'trial_llm_call_records':0,'all_false':True}
@@ -182,3 +183,56 @@ def test_batch_constituents_cannot_escape_via_symlink(tmp_path,monkeypatch,name)
     path.symlink_to(outside)
     with pytest.raises(ValueError,match='escapes'):
         analyze.b1_summary_verified(batch,cfg,rule_path=analyze.RULE_V2,expected=sha)
+
+
+@pytest.mark.parametrize('target',['root_directory','candidate_directory'])
+def test_directory_cannot_escape_even_if_manifest_links_back_inside(tmp_path,monkeypatch,target):
+    batch,cfg,sha,_,ms=fixture(tmp_path,monkeypatch)
+    selected=next(m for m in ms if m['candidate']=='a')
+    path=Path(selected['root_manifests'][0]).parent if target=='root_directory' else batch/'a'
+    saved=batch/'_to_delete';saved.mkdir();retained=saved/target;path.rename(retained)
+    external=tmp_path/('external_'+target);external.mkdir()
+    name='campaign_manifest.json' if target=='root_directory' else 'b1_manifest.json'
+    (external/name).symlink_to(retained/name)
+    path.symlink_to(external,target_is_directory=True)
+    with pytest.raises(ValueError,match='escapes'):
+        analyze.b1_summary_verified(batch,cfg,rule_path=analyze.RULE_V2,expected=sha)
+
+
+def test_untrusted_evidence_key_is_refused_before_campaign_verifier(tmp_path,monkeypatch):
+    batch,cfg,sha,state,ms=fixture(tmp_path,monkeypatch)
+    selected=next(m for m in ms if m['candidate']=='a');path=Path(selected['root_manifests'][0]);root=json.loads(path.read_text())
+    root['evidence_hashes']['../../outside']='0'*64;write(path,root)
+    cert=path.parent/'post_check.json';write(cert,{'binding':state['binding'],'manifest_sha256':digest_file(path),'passed':True})
+    entry=state['completed']['a/b1/off/digits_mlp__s9001'];entry.update(sha256=digest_file(path),post_check_sha256=digest_file(cert))
+    write(batch/'batch_state.json',state)
+    original=runtime.verify_campaign
+    def guarded(p,binding):
+        if Path(p)==path: pytest.fail('untrusted root reached campaign verifier')
+        return original(p,binding)
+    monkeypatch.setattr(runtime,'verify_campaign',guarded)
+    with pytest.raises(ValueError,match='evidence index incomplete'):
+        analyze.b1_summary_verified(batch,cfg,rule_path=analyze.RULE_V2,expected=sha)
+
+
+def test_sealed_batch_is_refused_before_authority_or_content(tmp_path,monkeypatch):
+    monkeypatch.setattr(runtime,'author_gate',lambda *a:pytest.fail('authority read before sealed refusal'))
+    with pytest.raises(ValueError,match='sealed paths'):
+        analyze.b1_summary_verified(tmp_path/'r1_sealed'/'missing',{},rule_path=analyze.RULE_V2)
+
+
+def test_real_anchor_gate_checks_paired_discrimination_and_reference(tmp_path):
+    from r1.scripts.exam_runner import anchor_gate, verify_anchor_reference
+    source=tmp_path/'reference.json';write(source,{'lower':0.1,'upper':0.5})
+    cfg={'dryrun':False,'anchor_duplicate_reference':{'source':str(source),'sha256':digest_file(source),'lower':0.1,'upper':0.5}}
+    def anchor(cid,value):
+        return {'candidate':cid,'audited_proposals':[{'instance_id':'digits_mlp__s9001','delta_audit':value}],
+                'diagnostics':{'duplicates':3,'evaluated':10}}
+    rows=[anchor('random_valid',0),anchor('scripted',1),anchor('qwen25_coder_7b',0)]
+    verify_anchor_reference(cfg)
+    gate=anchor_gate(rows,cfg)
+    assert gate['scripted_minus_random']['difference_lower']>0 and gate['anchor_duplicate_rate']==0.3
+    with pytest.raises(RuntimeError,match='discriminating power'):
+        anchor_gate([rows[0],anchor('scripted',-1),rows[2]],cfg)
+    with pytest.raises(RuntimeError,match='outside the pinned pilot interval'):
+        anchor_gate([rows[0],rows[1],{**rows[2],'diagnostics':{'duplicates':9,'evaluated':10}}],cfg)
