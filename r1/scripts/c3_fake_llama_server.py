@@ -307,9 +307,13 @@ def fake_nvidia_smi(argv):
             pid = int(path.stem)
             try:
                 os.kill(pid, 0)
-                stat = Path(f'/proc/{pid}/stat').read_text()
-                if stat.rsplit(')', 1)[1].split()[0] == 'Z':
-                    continue
+                # The synthetic GPU app list is also used by desktop tests on
+                # macOS, which has no procfs. On Linux keep the zombie check;
+                # on other systems kill(0) is the conservative liveness proxy.
+                if sys.platform.startswith('linux'):
+                    stat = Path(f'/proc/{pid}/stat').read_text()
+                    if stat.rsplit(')', 1)[1].split()[0] == 'Z':
+                        continue
             except (OSError, IndexError):
                 continue
             print(path.read_text().strip())
