@@ -315,6 +315,13 @@ def verify_campaign(path, binding):
     return m
 
 
+def _verify_b1_root_authority(path, expected_head):
+    """Refuse roots produced under a different B1 authorization checkout."""
+    job=json.loads((Path(path).parent/'job.json').read_text())
+    if not re.fullmatch(r'[0-9a-f]{40}',str(expected_head or '')) or job.get('authorization_checkout_head')!=expected_head:
+        raise PreparationStop('STOP: completed B1 root authorization HEAD mismatch')
+
+
 def require_server_lease_inheritance(instance):
     """Fail closed unless the started native server carries verified lease inheritance.
 
@@ -568,7 +575,12 @@ class ExamRunner:
     def root(self, spec, phase, node, seed, mode, *, interrupt=False):
         self.space()
         key=f'{spec["id"]}/{phase}/{mode}/{node}__s{seed}'
-        if key in self.state['completed']: return verify_campaign(self.state['completed'][key]['path'],self.binding)
+        if key in self.state['completed']:
+            saved=self.state['completed'][key]['path']
+            result=verify_campaign(saved,self.binding)
+            if phase=='b1' and self.rule.get('version')=='x5_rule/v2' and not self.cfg.get('dryrun'):
+                _verify_b1_root_authority(saved,self.author_head)
+            return result
         path=self.out/key
         if path.exists():
             old=self.state.get('in_progress') or {}
@@ -580,6 +592,8 @@ class ExamRunner:
             finished=path/'campaign_manifest.json'
             if finished.exists():
                 recovered=verify_campaign(finished,self.binding)
+                if phase=='b1' and self.rule.get('version')=='x5_rule/v2' and not self.cfg.get('dryrun'):
+                    _verify_b1_root_authority(finished,self.author_head)
                 self.state['completed'][key]={'path':str(finished),'sha256':digest_file(finished),'post_check_sha256':digest_file(path/'post_check.json')}
                 self.state.pop('in_progress',None);self.save();return recovered
             archived=self.out/'interrupted'/f'{time.time_ns()}_{spec["id"]}_{node}_s{seed}'
@@ -589,6 +603,11 @@ class ExamRunner:
              'audit_seeds':self.cfg['audit_seeds'] if phase=='b1' else list(range(9201,9211)),
              'base_url':self.service.openai_base_url if self.service else None,'value_grids':self.cfg['value_grids'],
              'proposal_schema':None if self.cfg.get('free_sensitivity') else 'manager_proposal/v1'}
+        if phase=='b1' and self.rule.get('version')=='x5_rule/v2':
+            if not job['dryrun'] and not re.fullmatch(r'[0-9a-f]{40}',str(self.author_head or '')):
+                raise PreparationStop('STOP: B1 worker needs the authorized checkout HEAD')
+            job['authority_config']=copy.deepcopy(self.cfg)
+            job['authorization_checkout_head']=self.author_head
         self.run_job(job,'r1.exam.campaign',interrupt=interrupt)
         manifest=path/'campaign_manifest.json'
         check={'binding':self.binding,'manifest_sha256':digest_file(manifest),'passed':True,'software_anchor':self.service is None}

@@ -18,7 +18,7 @@ def test_unmarked_dryrun_context_is_refused(tmp_path):
 def test_production_host_must_match_authorized_host(monkeypatch):
     monkeypatch.setattr('r1.exam.campaign.require_worker_host',lambda job:None)
     job={'phase':'b1','dryrun':False,'host':'TASL-2','node':'digits_mlp',
-         'authority_config':{'host':'TASL-7','nodes':['digits_mlp']}}
+         'authority_config':{'host':'TASL-7','nodes':['digits_mlp'],'cache_prompt':False}}
     with pytest.raises(observer.D3EvidenceStop,match='host/node'):
         with observer.authorized_b1_observer(job): pass
 
@@ -56,3 +56,29 @@ def test_interleaved_journal_sequences_are_refused(tmp_path):
     events=[{'event_type':'llm_call','payload':{'purpose':'self_forecast'}}]*2
     with pytest.raises(RuntimeError,match='not serial'):
         validate_observer_journal(path,events)
+
+
+@pytest.mark.parametrize('key,bad',[('workers',99),('W',999),('llm_call_cap',1000),('audit_seeds',[1]),('proposal_schema','free')])
+def test_child_cannot_change_authorized_b1_settings(monkeypatch,key,bad):
+    monkeypatch.setattr('r1.exam.campaign.require_worker_host',lambda job:None)
+    cfg={'dryrun':False,'host':'TASL-7','nodes':['digits_mlp'],'instance_seeds':[9001],
+         'workers':20,'W':20,'llm_call_cap':80,'audit_seeds':[9101,9102,9103,9104],
+         'proposal_schema':'manager_proposal/v1','cache_prompt':False}
+    job={'phase':'b1','dryrun':False,'host':'TASL-7','node':'digits_mlp','seed':9001,'mode':'off',
+         'workers':20,'W':20,'llm_call_cap':80,'audit_seeds':[9101,9102,9103,9104],
+         'proposal_schema':'manager_proposal/v1','authority_config':cfg}
+    job[key]=bad
+    with pytest.raises(observer.D3EvidenceStop,match='differs|mismatch'):
+        with observer.authorized_b1_observer(job): pass
+
+
+def test_child_rejects_nonfalse_cache_setting(monkeypatch):
+    monkeypatch.setattr('r1.exam.campaign.require_worker_host',lambda job:None)
+    cfg={'dryrun':False,'host':'TASL-7','nodes':['digits_mlp'],'instance_seeds':[9001],
+         'workers':20,'W':20,'llm_call_cap':80,'audit_seeds':[9101,9102,9103,9104],
+         'proposal_schema':'manager_proposal/v1','cache_prompt':True}
+    job={'phase':'b1','dryrun':False,'host':'TASL-7','node':'digits_mlp','seed':9001,'mode':'off',
+         'workers':20,'W':20,'llm_call_cap':80,'audit_seeds':[9101,9102,9103,9104],
+         'proposal_schema':'manager_proposal/v1','authority_config':cfg}
+    with pytest.raises(observer.D3EvidenceStop,match='schema/cache'):
+        with observer.authorized_b1_observer(job): pass

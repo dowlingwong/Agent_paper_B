@@ -25,6 +25,13 @@ def authorized_b1_observer(job):
     cfg=job['authority_config']
     if bool(cfg.get('dryrun')) != bool(job.get('dryrun')):
         raise D3EvidenceStop('STOP: B1 observer dryrun mismatch')
+    if not job.get('dryrun'):
+        for key in ('workers','W','llm_call_cap','audit_seeds'):
+            if job.get(key)!=cfg.get(key):
+                raise D3EvidenceStop(f'STOP: B1 observer job {key} differs from authorized configuration')
+        expected_schema=None if cfg.get('free_sensitivity') else cfg.get('proposal_schema')
+        if job.get('proposal_schema')!=expected_schema or cfg.get('cache_prompt') is not False:
+            raise D3EvidenceStop('STOP: B1 observer schema/cache settings mismatch')
     if job.get('dryrun'):
         import platform
         from r1.exam.runtime import APPROVED_EXAM_HOSTS

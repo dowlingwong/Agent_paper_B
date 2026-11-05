@@ -39,9 +39,9 @@
     9104
   ],
   "W": 20,
-  "llm_call_cap": "TODO_AUTHOR_LLM_CALL_CAP",
+  "llm_call_cap": 80,
   "nodes": [
-    "TODO_VERIFY_D28_DIGITS_OR_TABULAR",
+    "digits_mlp",
     "openml_credit_approval",
     "openml_ionosphere"
   ],
@@ -53,7 +53,7 @@
     "upper": "TODO_VERIFY_ON_HOST"
   },
   "authorizations": {
-    "b1": "TODO_AUTHOR_B1_V2_AUTHORIZATION_NOTE",
+    "b1": "docs/r1/authorizations/trackx_b1_20261105.md",
     "b2": "TODO_AUTHOR_B2_V2_AUTHORIZATION_NOTE"
   },
   "b1_analysis": "TODO_VERIFY_ON_HOST",
@@ -69,7 +69,7 @@
   "root_timeout_seconds": 43200,
   "schema_sensitivity_node": "openml_credit_approval",
   "d22_pick": "TODO_AUTHOR_D22_PICK",
-  "workers": 4,
+  "workers": 20,
   "stage_a_table_sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
   "b1_analysis_sha256": "TODO_VERIFY_ON_HOST",
   "cache_prompt": false,
