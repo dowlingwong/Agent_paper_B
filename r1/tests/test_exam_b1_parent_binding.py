@@ -29,6 +29,24 @@ def test_parent_passes_authorized_configuration_and_head(tmp_path):
     assert r.seen[0]['authorization_checkout_head']=='a'*40
 
 
+def test_worker_command_uses_runner_python_environment(tmp_path,monkeypatch):
+    import r1.exam.runtime as runtime
+    (tmp_path/'python').write_text('fixture');(tmp_path/'python3').symlink_to(tmp_path/'python')
+    monkeypatch.setattr(runtime.sys,'executable',str(tmp_path/'python'))
+    env=runtime.worker_environment({'PATH':'/usr/bin','TOKEN':'fixture'})
+    assert env['PATH']==str(tmp_path)+':/usr/bin'
+    assert env['TOKEN']=='fixture' and env['OMP_NUM_THREADS']=='1'
+
+
+def test_worker_refuses_a_different_or_absent_python3(tmp_path,monkeypatch):
+    import r1.exam.runtime as runtime
+    (tmp_path/'python').write_text('fixture')
+    monkeypatch.setattr(runtime.sys,'executable',str(tmp_path/'python'))
+    with pytest.raises(PreparationStop,match='worker python3'): runtime.worker_environment({'PATH':'/usr/bin'})
+    (tmp_path/'python3').write_text('different')
+    with pytest.raises(PreparationStop,match='worker python3'): runtime.worker_environment({'PATH':'/usr/bin'})
+
+
 def test_parent_refuses_missing_head_before_worker(tmp_path):
     r=runner(tmp_path,head=None)
     with pytest.raises(PreparationStop,match='authorized checkout HEAD'):

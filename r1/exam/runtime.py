@@ -106,6 +106,20 @@ def placeholders(value, prefix=''):
     return [prefix] if isinstance(value,str) and value.startswith('TODO_') else []
 
 
+def worker_environment(base=None):
+    """Run node `python3` commands in the same environment as this runner."""
+    env=dict(os.environ if base is None else base)
+    env.update(PYTHONPATH=str(REPO),OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1')
+    python_dir=Path(sys.executable).parent
+    try:
+        if not os.path.samefile(python_dir/'python3',sys.executable):
+            raise OSError('python3 differs from the runner interpreter')
+    except OSError as exc:
+        raise PreparationStop('STOP: B1 worker python3 does not match the runner interpreter') from exc
+    env['PATH']=str(python_dir)+os.pathsep+env.get('PATH','')
+    return env
+
+
 def load_config(path, *, allow_placeholders=False):
     cfg=json.loads(Path(path).read_text())
     if cfg['ctx_size']!=32768 or cfg['cache_type_k']!='q8_0' or cfg['cache_type_v']!='q8_0' or cfg['n_gpu_layers']!=999:
@@ -382,6 +396,7 @@ class ExamRunner:
         if phase=='b1' and self.rule.get('version')!='x5_rule/v2':
             raise PreparationStop('STOP: B1 requires the reviewed x5_rule/v2')
         if phase=='b1': self.author_head=author_gate(self.cfg,phase,self.rule_sha)
+        if phase=='b1': worker_environment()
         if phase=='stage-a':refuse_existing_stage_a_output(self.out)
         self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
@@ -555,7 +570,8 @@ class ExamRunner:
         self.space()
         path=Path(job['out']);path.mkdir(parents=True,exist_ok=True)
         write_json(path/'job.json',job)
-        env={**os.environ,'PYTHONPATH':str(REPO),'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','MKL_NUM_THREADS':'1'}
+        env=(worker_environment() if self.state.get('phase')=='b1' else
+             {**os.environ,'PYTHONPATH':str(REPO),'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','MKL_NUM_THREADS':'1'})
         if self.service: env['LLAMACPP_BASE_URL']=self.service.openai_base_url
         kwargs={}
         if self.state.get('phase')=='stage-a':
