@@ -93,6 +93,28 @@ def test_actual_author_table_header_styles_are_accepted(header):
     assert g._confirm_row(plan,sha)
 
 
+@pytest.mark.parametrize('heading', [
+    '### 4 November 2026 (19:03 CET) — second proposer and B1 draft values',
+    '### 4 November 2026 (19:08 CET) — J3 and decision packet replies',
+    '### 4 November 2026 — T1 divergence STOP',
+    '### 4 November 2026 (20:38 CET) — Track S, X.5 sensitivity and HoreKa submission design',
+])
+def test_actual_dated_headings_with_explicit_author_decision_header(heading):
+    sha='a'*64
+    row='| R1-BX-D8-CONFIRM | '+sha+' |\n'
+    prefix='## 10. Open decisions\n'+heading+'\n'
+    assert g._confirm_row(prefix+"| ID | Author's decision |\n|---|---|\n"+row,sha)
+    assert not g._confirm_row(prefix+'| ID | Decision |\n|---|---|\n'+row,sha)
+
+
+def test_explicit_author_header_cannot_override_negated_or_invalid_heading():
+    sha='a'*64
+    row="| ID | Author's decision |\n|---|---|\n| R1-BX-D8-CONFIRM | "+sha+' |\n'
+    for heading in ('### 40 November 2026 — author decisions',
+                    '### 5 November 2026 — not author decisions'):
+        assert not g._confirm_row('## 10. Open decisions\n'+heading+'\n'+row,sha)
+
+
 def test_sealed_components_casefolded_and_case_insensitive_alias(tmp_path):
     with pytest.raises(RuntimeError,match='r1_sealed'):
         g.refuse_sealed(tmp_path/'R1_SEALED'/'input')

@@ -31,27 +31,31 @@ def refuse_sealed(*paths):
 
 
 def _author_heading(line):
-    """Require a real calendar date and explicit, affirmative author marker."""
+    """Return 0 for invalid, 1 for dated, 2 for dated with an author marker."""
     match = re.search(r'\b(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})\b', line, re.I)
     if not match:
-        return False
+        return 0
     months = ('january', 'february', 'march', 'april', 'may', 'june',
               'july', 'august', 'september', 'october', 'november', 'december')
     try:
         date(int(match.group(3)), months.index(match.group(2).casefold()) + 1, int(match.group(1)))
     except ValueError:
-        return False
+        return 0
     if re.search(r'\b(?:not|non|no|without|never)[-\s]+(?:an?\s+|the\s+)?author\b', line, re.I):
-        return False
-    return bool(re.search(r"\bauthor(?:'s)?\s+(?:decisions?|rulings?|adoption)\b|\(\s*author\s*(?:[;,)])|\bauthor\s*$", line, re.I))
+        return 0
+    explicit = re.search(r"\bauthor(?:'s)?\s+(?:decisions?|rulings?|adoption)\b|\(\s*author\s*(?:[;,)])|\bauthor\s*$", line, re.I)
+    return 2 if explicit else 1
 
 
 def _decision_header(cells):
     if len(cells) < 2:
         return False
     first, second = (c.strip().strip('*` ').casefold() for c in cells[:2])
-    return (first in {'id', 'decision', 'row'} and
-            bool(re.fullmatch(r"(?:author(?:'s)?\s+)?decision(?:\s*\([^()]*\))?", second)))
+    if first not in {'id', 'decision', 'row'}:
+        return 0
+    if re.fullmatch(r"author(?:'s)?\s+decision(?:\s*\([^()]*\))?", second):
+        return 2
+    return 1 if re.fullmatch(r"decision(?:\s*\([^()]*\))?", second) else 0
 
 
 def _confirm_row(plan, gate_sha):
@@ -85,7 +89,7 @@ def _confirm_row(plan, gate_sha):
         if line.startswith('## '):
             section=bool(re.match(r'^## 10\.(?:\s|$)',line));dated_author=False;header=None;table=False;continue
         if line.startswith('### '):
-            dated_author=bool(section and _author_heading(line))
+            dated_author=_author_heading(line) if section else 0
             header=None;table=False;continue
         if line.startswith('#'):
             dated_author=False;header=None;table=False;continue
@@ -96,7 +100,8 @@ def _confirm_row(plan, gate_sha):
         if sep:
             table=header if header==len(cells) else False;header=None;continue
         if not table:
-            header=len(cells) if _decision_header(cells) else None;continue
+            strength=_decision_header(cells)
+            header=len(cells) if strength and (dated_author==2 or strength==2) else None;continue
         if len(cells)!=table: continue
         first=cells[0].strip().strip('*` ')
         if first != 'R1-BX-D8-CONFIRM': continue
