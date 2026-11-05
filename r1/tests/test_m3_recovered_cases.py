@@ -36,9 +36,9 @@ def test_recovered_cases_are_bound_to_exact_synthetic_cache_pairs(tmp_path):
     assert manifest['config_checks']['offline_executability'] == 'NOT_ESTABLISHED'
     assert all(pair['cache']['files'][0]['path'] == 'synthetic-cache.bin'
                for pair in manifest['cache_pairs'].values())
-    # A byte change in one copied cache aborts the entire declaration.
+    # A byte change in one supplied cache aborts the entire declaration.
     (copies[nodes[0]] / 'synthetic-cache.bin').write_bytes(b'changed')
-    with pytest.raises(RecoveryStop, match='source and private cache differ'):
+    with pytest.raises(RecoveryStop, match='source and supplied cache differ'):
         bind_recovered_cases(paper, harness, sources, copies)
 
 

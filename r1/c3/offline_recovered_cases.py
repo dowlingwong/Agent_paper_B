@@ -1,4 +1,4 @@
-"""Read-only binding of recovered replay cases and private cache identities.
+"""Read-only binding of recovered replay cases and supplied cache identities.
 
 This is a planning artifact only. It does not prevent later changes, prove the
 cache is complete, enforce network isolation, or authorize any replay.
@@ -21,8 +21,10 @@ class RecoveryStop(RuntimeError):
 def bind_recovered_cases(paper, harness, cache_sources, cache_copies):
     """Bind frozen recovered cases to six explicitly supplied cache copies.
 
-    The caller creates the private copies separately. This function performs
-    no writes and must not be used as a launch gate or an offline proof.
+    The caller supplies paths to candidate copies. Distinct paths and equal
+    hashes do not establish independent storage: files can be hard-linked.
+    This function performs no writes and is neither a launch gate nor proof
+    of isolation, privacy or offline executability.
     """
     paper, harness = Path(paper), Path(harness)
     try:
@@ -50,7 +52,7 @@ def bind_recovered_cases(paper, harness, cache_sources, cache_copies):
             source = snapshot(harness, node, cache_sources[node])
             copy = snapshot(harness, node, cache_copies[node])
             if source != copy:
-                raise RecoveryStop(f'STOP: source and private cache differ for {node}')
+                raise RecoveryStop(f'STOP: source and supplied cache differ for {node}')
             pairs[node] = source
         checked = check_cases(cases, pairs, harness)
     except (Stop, SnapshotStop, ConfigStop, OSError, ValueError, TypeError, KeyError) as exc:
