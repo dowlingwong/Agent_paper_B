@@ -131,6 +131,10 @@ def test_sidecar_input_readers_refuse_sealed_paths(tmp_path):
             with pytest.raises(RuntimeError,match='r1_sealed'): read(path)
         with pytest.raises(RuntimeError,match='r1_sealed'):
             serve.main(['--pin',str(path),'--fake',str(path)])
+        pin=serve.Pin('fixture','fixture',{k:{'path':'fixture'} for k in ('adapter','head','manifest')},
+                      {'base_path':str(path),'family':'fixture'})
+        with pytest.raises(RuntimeError,match='r1_sealed'):
+            serve.TorchLoraLoader(builder=lambda spec:pytest.fail('model must not be built')).load(pin)
 
 
 def test_only_known_sweep1_and_full_legacy_source_schema_are_exempt(tmp_path,monkeypatch):

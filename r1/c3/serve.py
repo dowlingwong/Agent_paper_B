@@ -148,6 +148,8 @@ class TorchLoraLoader:
         missing = [k for k in self.PIN_KEYS if k not in pin.files]
         if missing or not pin.model:
             raise PinError(f"a model pin needs files {self.PIN_KEYS} and a 'model' spec (missing: {missing or 'model'})")
+        from r1.c3.analysis_guard import refuse_sealed
+        refuse_sealed(pin.model.get('base_path'))
         import torch
         from r1.c3.train.types import DecisionPrompt
         saved = Path(pin.files["manifest"]["path"]).parent
