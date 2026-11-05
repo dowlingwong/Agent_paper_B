@@ -1,5 +1,7 @@
 # Paper B (route R1) — status log
 
+- B1 offline/synthetic complete-batch verifier (5 Nov; AI-assisted, Codex): code `1dd6e88` independently accepted within that scope (`MAC_B1_BATCH_VERIFIER_REVIEW_20261105.md`); unsigned note pin review `06a21b3`. Synthetic parent/child code `19da54e` was separately accepted; real-worker determinism, former Stage A kill/resume coverage, anchor provenance, author decisions and host checks remain open. The earlier entries below are historical snapshots.
+
 - B1 authorization draft (5 Nov; AI-assisted, Codex): draft `83a91e6` independently **accepted as draft only**. It binds the selected nodes, 80 calls and 20 workers, both Stage A digests and a proposed O1 report digest; `approved` remains false. Author format choice, anchor reference and B1 code integration remain open.
 
 - B1 committed-HEAD authorization unit (5 Nov; AI-assisted, Codex): `mac-b1-overnight-20261105` code `f7ecf2c`, review `6d24c21` **accepted**; 23 synthetic targeted tests passed. It checks committed HEAD, clean checkout, strict dated §10 rule row and file hashes. B1 observer/entry STOPs and the author's rule row/note remain open; this unit alone does not authorize B1.
@@ -1685,4 +1687,3 @@ PLAN §7 is revised. The proposed primary is now a ModernBERT-family encoder dec
 - M11 table readers and audit pre-read guards accepted at `44e1475` and `f6bc280`; reviews `MAC_M11_READER_GUARDS_REVIEW_R3_20261105.md` and `MAC_M11_AUDIT_GUARD_REVIEW_20261105.md`. D8 author confirmation remains open; generic protected train/serve readers are outside these units.
 - B1-scoped rule/entry and unsigned note reviews are on `mac-b1-overnight-20261105`; rule SHA `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad`. B1 still requires the author row/note, comparable anchor interval, remaining B1 tests, full B1-scoped combined review and host handover.
 - M3 loader snapshot accepted at `414d8a1` / `MAC_M3_LOADER_SNAPSHOT_REVIEW_20261105.md` (8 synthetic loader tests). Supervisor review reached three rounds on `mac-m3-supervisor-20261105` @ `e3c1473`: only event ordering accepted synthetically; offline replay and 16-case executability remain STOP.
-- B1's CPU-only synthetic parent/child integration accepted on `mac-b1-overnight-20261105` at code `19da54e`, review `MAC_B1_PARENT_E2E_REVIEW_20261105.md`; it is not a real Stage A, real-worker determinism or legacy kill/resume test. The unsigned note is pinned to that reviewed code; author/anchor/test/site gates remain.
