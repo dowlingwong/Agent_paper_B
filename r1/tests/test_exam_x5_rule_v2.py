@@ -492,6 +492,23 @@ def test_runner_v2_b1_skips_always_on_and_runs_off_primary(tmp_path):
     assert m['rule_version'] == 'x5_rule/v2' and m['cache_prompt'] is False and m['harness_commit'] == A3FEDBB
 
 
+def test_v2_b1_synthetic_receipts_run_all_declared_roots(tmp_path):
+    """Receipt and root fixtures verify the B1 matrix without running Stage A or a model."""
+    from r1.scripts.exam_runner import evidence
+    rule,sha=v2();specs=[_spec('sw',SWITCH),_spec('nt',NONTHINK)]
+    cfg=_runner_cfg(tmp_path,specs,['sw','nt'],extra={'instance_seeds':[9001,9002,9003,9004]})
+    runner=FakeRunner(tmp_path,specs,cfg,rule,sha)
+    evidence(runner,'b1',None,False)
+    for cid in ('sw','nt'):
+        off=[(c,m,n) for c,m,n in runner.roots if c==cid and m=='off']
+        assert len(off)==12 and {n for _,_,n in off}==set(cfg['nodes'])
+    on=[(c,m,n) for c,m,n in runner.roots if m=='on']
+    assert len(on)==4 and {c for c,_,_ in on}=={'sw'}
+    assert {n for _,_,n in on}=={'openml_credit_approval'}
+    manifest=json.loads((tmp_path/'sw/b1_manifest.json').read_text())
+    assert manifest['thinking_on_sensitivity']=='descriptive' and manifest['d28_scope']=='thinking_off_roots_only'
+
+
 def test_b1_stops_before_running_when_required_thinking_on_is_unavailable(tmp_path, monkeypatch):
     from r1.scripts import exam_runner
     rule,sha=v2();specs=[_spec('sw',SWITCH)]

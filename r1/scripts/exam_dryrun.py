@@ -17,7 +17,7 @@ import_harness()
 from autoresearch.manager.langgraph_manager import manager_seed
 from r1.exam.guards import digest_file
 from r1.exam.campaign import write_json
-from r1.exam.runtime import DEFAULT_CONFIG, REPO
+from r1.exam.runtime import APPROVED_EXAM_HOSTS, DEFAULT_CONFIG, REPO
 
 SELECTED=['random_valid','scripted','qwen25_coder_7b','qwen38_27b','gemma4_31b']
 
@@ -61,7 +61,8 @@ def prepare(root):
 
 def run(root):
     root=Path(root).resolve()
-    if platform.node().split('.')[0] in ('ucrtasl','TASL-2'): raise RuntimeError('development host only')
+    if platform.node().split('.')[0].casefold() in ({host.casefold() for host in APPROVED_EXAM_HOSTS}|{'ucrtasl'}):
+        raise RuntimeError('development host only')
     config=prepare(root)
     env={**os.environ,'R1_FAKE_OLLAMA_ROOT':str(root),'PYTHONPATH':str(REPO),'PYTHONDONTWRITEBYTECODE':'1'}
     args=[sys.executable,'-m','r1.scripts.exam_runner']

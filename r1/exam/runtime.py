@@ -157,7 +157,8 @@ def read_registry(path):
 def host_check(cfg, out):
     if cfg.get('dryrun'):
         root=Path(cfg['dryrun_root']).resolve();temps={Path(tempfile.gettempdir()).resolve(),Path('/tmp').resolve()}
-        if platform.node().split('.')[0] in ('TASL-2','ucrtasl') or not any(root!=temp and root.is_relative_to(temp) for temp in temps) or not (root/'.dryrun').is_file():
+        forbidden={host.casefold() for host in APPROVED_EXAM_HOSTS}|{'ucrtasl'}
+        if platform.node().split('.')[0].casefold() in forbidden or not any(root!=temp and root.is_relative_to(temp) for temp in temps) or not (root/'.dryrun').is_file():
             raise RuntimeError('STOP: EXAM DRYRUN needs a marked temporary root on a development host')
         if not Path(out).resolve().is_relative_to(root): raise RuntimeError('STOP: DRYRUN output escapes temporary root')
         return

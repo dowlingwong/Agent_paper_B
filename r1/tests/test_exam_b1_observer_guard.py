@@ -33,6 +33,18 @@ def test_marked_dryrun_is_refused_on_exam_hosts(tmp_path,monkeypatch,hostname):
         with observer.authorized_b1_observer(job): pass
 
 
+@pytest.mark.parametrize('hostname',['TASL-7.example','tasl-7.example','TASL-2','tasl-2.example','ucrtasl.example'])
+def test_dryrun_parent_refuses_exam_hosts_before_output(tmp_path,monkeypatch,hostname):
+    from r1.exam.runtime import host_check
+    from r1.scripts import exam_dryrun
+    (tmp_path/'.dryrun').write_text('fixture')
+    monkeypatch.setattr('platform.node',lambda:hostname)
+    monkeypatch.setattr(exam_dryrun,'prepare',lambda *a:pytest.fail('must refuse before preparing'))
+    with pytest.raises(RuntimeError,match='development host'): host_check({'dryrun':True,'dryrun_root':str(tmp_path)},tmp_path/'out')
+    with pytest.raises(RuntimeError,match='development host'): exam_dryrun.run(tmp_path/'out')
+    assert not (tmp_path/'out').exists()
+
+
 def test_reordered_journal_is_refused(tmp_path):
     body=json.dumps({'cache_prompt':False}); raw=b'{"answer":"fixture"}'
     digest=hashlib.sha256(raw).hexdigest(); request_sha=hashlib.sha256(body.encode()).hexdigest()
