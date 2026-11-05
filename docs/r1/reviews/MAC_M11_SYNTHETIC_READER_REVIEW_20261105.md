@@ -1,0 +1,9 @@
+# Independent M11 synthetic exam reader review — 5 November 2026
+
+**Verdict: ACCEPTED for the sealed-path reader diff only.** Independent AI-assisted review (Codex) in `/private/tmp/paper-b-m11-synth-independent-20261105` of candidate `64b384dbdeeca86aff87a1680c07055b66967f46` against `cc3badc`. The complete binary diff SHA-256 is `02418c393a9de5ef9069ea821c4ba92b21e2d7c65acb730f00693235f1007b2a`. No server, model, GPU or experiment was run.
+
+`r1/c3/train/exam_analyze.py:56–63` refuses lexical and resolved `r1_sealed` paths for the rule and its SHA sidecar before reading either; `:273–277` checks the result, rule and optional output before parsing data. `r1/c3/train/exam_synthetic.py:238–242` checks both data and SHA paths before opening. The shared `refuse_sealed` helper also resolves symlink targets. This covers these two identified readers, not all train/serve readers, concurrent filesystem substitution, or sweep-2 provenance classification. The changes do not modify generation, scoring, input schema or the synthetic prototype's scope; this verdict does not claim that arbitrary caller-supplied JSON is independently certified synthetic.
+
+The five author-held M3 paths `r1/c3/train/run.py`, `r1/c3/train/trainer.py`, `r1/c3/env.py`, `r1/c3/control.py`, and `r1/c3/prior_model.py` are byte-identical across the reviewed diff. No author decision or D8 confirmation is supplied by this review.
+
+Independent local CPU test using the harness Python 3.11 venv and `AR_HARNESS_ROOT=/Users/wongdowling/Documents/autoresearch_harness`: `pytest -q r1/tests/test_c3_analysis_guard.py` yielded **16 passed**. Four additional temporary synthetic probes checked a sidecar resolving into `r1_sealed` for both verification modes, an exam rule sidecar symlink to that directory, and an ordinary unsealed synthetic gzip load; all four passed. No real label input was read.
