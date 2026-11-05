@@ -73,13 +73,14 @@ def fake(tmp_path, monkeypatch):
         monkeypatch.setattr(lsi, 'pid_alive', fake_alive)
 
     def start(faults=(), env=None, **kwargs):
+        b1_fd=kwargs.pop('b1_fd',None)
         monkeypatch.setenv("C3_FAKE_FAULTS", json.dumps(list(faults)))
         for key, value in (env or {}).items():
             monkeypatch.setenv(key, value)
         inst = lsi.LlamaServerInstance(tmp_path / "batch", str(binary), model_path=str(model), alias="r1-manager",
                                        label="DRYRUN", start_timeout=20, **kwargs)
         pending.append(inst)
-        inst.start(build=lsi.build_info(str(binary)), model_sha256=lsi.sha256_file(model))
+        inst.start(build=lsi.build_info(str(binary)), model_sha256=lsi.sha256_file(model),b1_lease_fd=b1_fd)
         pending.remove(inst)
         started.append(inst)
         return inst
@@ -134,12 +135,26 @@ def test_start_records_argv_cmdline_pins_and_identity(fake, monkeypatch):
     assert rec["env_removed"] == ["LLAMA_API_KEY", "LLAMA_ARG_N_GPU_LAYERS"]
     serve = [json.loads(l) for l in (fake["root"] / "fake_calls.jsonl").read_text().splitlines()
              if '"serve"' in l][-1]
-    assert serve["env_llama_arg"] == []  # never inherited by the server
+    assert serve["env_llama_arg"] == []
     assert inst.model_ids() == ["r1-manager"] and inst.props()["model_path"] == str(fake["model"])
     assert inst.offload()["full"] and inst.openai_base_url.endswith("/v1")
     assert inst.chat("Reply OK")["choices"][0]["message"]["content"] == "OK"
     inst.stop()
     assert json.loads(inst.record_path.read_text())["returncode"] == -15
+
+
+def test_fake_server_keeps_b1_lease_after_parent_closes_fd(fake,monkeypatch):
+    from r1.exam import b1_lease
+    path=fake['tmp']/'gpu0.lock';fd=b1_lease.acquire(path)
+    # The real Linux /proc FD check is qualified separately; contention below
+    # tests the actual child descriptor inherited by this Mac fake server.
+    monkeypatch.setattr(b1_lease,'verify_server_fd',lambda fd,pid:None)
+    inst=fake['start'](b1_fd=fd)
+    os.close(fd)
+    with pytest.raises(b1_lease.B1LeaseStop,match='held'):
+        b1_lease.acquire(path)
+    inst.stop(timeout=5)
+    fd=b1_lease.acquire(path);os.close(fd)
 
 
 def test_refuses_a_busy_port_and_a_missing_model(fake):
