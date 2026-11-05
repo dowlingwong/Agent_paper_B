@@ -1,5 +1,6 @@
 """Offline guard tests: no real Slurm commands are run."""
 import datetime as dt
+import hashlib
 import io
 import json
 import os
@@ -25,7 +26,7 @@ class ToolsTest(unittest.TestCase):
         self.v["results_root"] = self.tmp.name
         self.v["stop_marker"] = str(Path(self.tmp.name) / "STOP")
         self.plan = Path(self.tmp.name) / "PLAN.md"
-        self.plan.write_text("## 10. Decisions\n### 4 November 2026 — author\n| R1-HOREKA-AGENT-SUBMIT | approved |\n| R1-HOREKA-UNIFIED-SUBMISSION | approved |\n")
+        self.plan.write_text("## 10. Decisions\n### 4 November 2026 — author\n| ID | Author decision |\n|---|---|\n| R1-HOREKA-AGENT-SUBMIT | approved |\n| R1-HOREKA-UNIFIED-SUBMISSION | approved |\n")
         self.now = dt.datetime(2026, 11, 5, tzinfo=dt.timezone.utc)
         self.job = {"schema": "hk2_job/v1", "account": self.v["account"], "partition": "gpu-h100",
                     "time": "01:00:00", "mem": "10G", "cpus": 8, "gpus": 1,
@@ -46,19 +47,33 @@ class ToolsTest(unittest.TestCase):
 
     def test_dated_unique_nonempty_plan_row_only(self):
         row = 'R1-HOREKA-AGENT-SUBMIT'
+        prefix = '## 10. Decisions\n### 4 November 2026 — author\n'
+        table = '| ID | Author decision |\n|---|---|\n'
+        decision = '| ' + row + ' | yes |\n'
         bad = [
-            '## 10. Open decisions\n### Undated\n| ' + row + ' | yes |\n',
-            '## 10. Open decisions\n### 4 November 2026\n| ' + row + ' | |\n',
-            '## 11. Other\n### 4 November 2026\n| ' + row + ' | yes |\n',
-            '## 10. Open decisions\n### 4 November 2026\nThe ' + row + ' is mentioned.\n',
-            '## 10. Open decisions\n### 4 November 2026\n| ' + row + ' | yes |\n| ' + row + ' | yes |\n',
-            '## 10. Open decisions\n### 4 November 2026\n| ' + row + '-FAKE | yes |\n',
+            '## 10. Decisions\n### Undated\n' + table + decision,
+            '## 11. Other\n### 4 November 2026\n' + table + decision,
+            prefix + 'Mention ' + row + ' in prose.\n',
+            prefix + decision,
+            prefix + table + '| ' + row + ' | |\n',
+            prefix + table + decision + decision,
+            prefix + table + '| ' + row + '-FAKE | yes |\n',
+            prefix + '```markdown\n' + table + decision + '```\n',
+            prefix + '~~~\n' + table + decision + '~~~\n',
+            prefix + '<!--\n' + table + decision + '-->\n',
+            prefix + '<div>\n' + table + decision + '</div>\n',
+            prefix + '    ' + table.replace('\n', '\n    ') + decision,
+            prefix + '| ID | Proposed option |\n|---|---|\n' + decision,
+            '## 10. Decisions\n### 31 February 2026 — author\n' + table + decision,
         ]
         for content in bad:
-            self.plan.write_text(content)
-            self.assertFalse(c.plan_has_row(self.plan, row)[0])
-        self.plan.write_text('## 10. Open decisions\n### 4 November 2026 — author\n| ' + row + ' | yes |\n')
+            with self.subTest(content=content):
+                self.plan.write_text(content)
+                self.assertFalse(c.plan_has_row(self.plan, row)[0])
+        self.plan.write_text(prefix + table + decision)
         self.assertTrue(c.plan_has_row(self.plan, row)[0])
+        for row_id in ('R1-HOREKA-AGENT-SUBMIT', 'R1-HOREKA-UNIFIED-SUBMISSION'):
+            self.assertTrue(c.plan_has_row(c.DEFAULT_PLAN, row_id)[0])
 
     def test_invalid_thresholds_and_configuration_roots_fail_closed(self):
         original = json.loads(c.DEFAULT_CONFIG.read_text())
@@ -141,13 +156,13 @@ class ToolsTest(unittest.TestCase):
 
     def test_plan_row_and_dev_continuation(self):
         self.guard(inside={"SLURM_JOB_ID": "9", "SLURM_JOB_PARTITION": "cpu"})
-        self.plan.write_text("## 10. Decisions\n### 4 November 2026 — author\nThe R1-HOREKA-AGENT-SUBMIT is proposed.\n| R1-HOREKA-UNIFIED-SUBMISSION | approved |\n")
+        self.plan.write_text("## 10. Decisions\n### 4 November 2026 — author\nThe R1-HOREKA-AGENT-SUBMIT is proposed.\n| ID | Author decision |\n|---|---|\n| R1-HOREKA-UNIFIED-SUBMISSION | approved |\n")
         with self.assertRaises(c.Hk2Error):
             self.guard()
         self.guard(author=True)
         with self.assertRaises(c.Hk2Error):
             self.guard(author=True, inside={"SLURM_JOB_ID": "9", "SLURM_JOB_PARTITION": "cpu"})
-        self.plan.write_text("## 10. Decisions\n### 4 November 2026 — author\n| R1-HOREKA-AGENT-SUBMIT | approved |\n| R1-HOREKA-UNIFIED-SUBMISSION | approved |\n")
+        self.plan.write_text("## 10. Decisions\n### 4 November 2026 — author\n| ID | Author decision |\n|---|---|\n| R1-HOREKA-AGENT-SUBMIT | approved |\n| R1-HOREKA-UNIFIED-SUBMISSION | approved |\n")
         with self.assertRaises(c.Hk2Error):
             self.guard(inside={"SLURM_JOB_ID": "9", "SLURM_JOB_PARTITION": "dev-cpu"})
 
@@ -222,6 +237,53 @@ class ToolsTest(unittest.TestCase):
         self.assertEqual(rows["25"]["resubmit"], "never")
         self.assertEqual(rows["25"]["expected_end"], "yes")
         self.assertEqual(rows["25"]["allocation_gpu_h"], "1.00000000")
+
+    def test_deadline_blocks_exact_submitted_manifest_and_persists(self):
+        directory = c.records_dir(self.config)
+        directory.mkdir(parents=True)
+        digest = 'a' * 64
+        (directory / 'submissions.jsonl').write_text(json.dumps({
+            'event': 'submit', 'job_id': '25', 'manifest_sha256': digest, 'phase': 'HK1'}) + '\n')
+        deadline = [{'job_id': '25', 'state': 'DEADLINE', 'elapsed_s': 3600, 'gpus': 1}]
+        with self.assertRaisesRegex(c.Hk2Error, 'DEADLINE job'):
+            c.refuse_deadline_resubmission(self.config, digest, deadline)
+        with self.assertRaisesRegex(c.Hk2Error, 'DEADLINE job'):
+            c.refuse_deadline_resubmission(self.config, digest, [])
+        c.refuse_deadline_resubmission(self.config, 'b' * 64, [])
+
+    def test_deadline_guard_refuses_corrupt_or_conflicting_mapping(self):
+        directory = c.records_dir(self.config)
+        directory.mkdir(parents=True)
+        records = directory / 'submissions.jsonl'
+        for content in ('{broken\n', json.dumps({'job_id': '25', 'phase': 'HK1'}) + '\n',
+                        '\n'.join(json.dumps({'job_id': '25', 'manifest_sha256': char * 64})
+                                  for char in ('a', 'b'))):
+            records.write_text(content)
+            with self.assertRaises(c.Hk2Error):
+                c.refuse_deadline_resubmission(self.config, 'a' * 64, [])
+
+    def test_status_remembers_deadline_even_when_later_snapshot_changes(self):
+        record = {'job_id': '25', 'state': 'DEADLINE', 'elapsed_s': 3600, 'gpus': 1}
+        c.record_deadline_jobs(self.config, [record])
+        c.record_deadline_jobs(self.config, [])
+        self.assertEqual(json.loads((c.records_dir(self.config) / 'deadline_jobs.json').read_text()), ['25'])
+
+    def test_enabled_submit_refuses_deadline_before_fake_sbatch(self):
+        manifest = Path(self.tmp.name) / 'job.json'
+        manifest.write_text(json.dumps(self.job))
+        digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
+        directory = c.records_dir(self.config)
+        directory.mkdir(parents=True)
+        (directory / 'submissions.jsonl').write_text(json.dumps({
+            'event': 'submit', 'job_id': '25', 'manifest_sha256': digest, 'phase': 'HK1'}) + '\n')
+        deadline = [{'job_id': '25', 'state': 'DEADLINE', 'elapsed_s': 10, 'gpus': 1}]
+        with patch.object(c, 'load_config', return_value=self.config), \
+             patch.object(c, 'query_snapshot', return_value=([], deadline)), \
+             patch.object(c, 'utc_now', return_value=self.now), \
+             patch.object(submit, 'require_submission_readiness'), \
+             patch.object(submit.subprocess, 'run') as sbatch:
+            self.assertEqual(submit.main([str(manifest), '--plan', str(self.plan), '--submit']), 2)
+            sbatch.assert_not_called()
 
     def test_throttle_before_any_query_on_error(self):
         calls = []

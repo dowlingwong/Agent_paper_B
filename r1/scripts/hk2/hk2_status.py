@@ -59,6 +59,7 @@ def main(argv=None):
         with c.QueryLock(directory / "query.lock"):
             live, accounted = c.query_snapshot(config)
             c.record_observed_jobs(config, live)
+            c.record_deadline_jobs(config, accounted)
             path, rows = update_ledger(config, live, accounted)
             print("ledger=" + str(path))
             print("jobs=" + str(len(rows)))

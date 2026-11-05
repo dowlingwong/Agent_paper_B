@@ -197,7 +197,7 @@ def expand_path(text: str) -> Path:
 # ---------------------------------------------------------------------------
 
 def plan_has_row(plan_path: Path, row_id: str) -> Tuple[bool, str]:
-    """Require one exact, nonempty decision row under a dated §10 subsection."""
+    """Require one exact decision in a real author table under dated §10."""
     try:
         lines = Path(plan_path).read_text(encoding="utf-8").splitlines()
     except OSError as exc:
@@ -206,23 +206,88 @@ def plan_has_row(plan_path: Path, row_id: str) -> Tuple[bool, str]:
     seen_section = False
     dated = False
     found = []
-    for line in lines:
+    fence = None
+    comment = False
+    html = None
+    header = None
+    table = False
+    for raw in lines:
+        if html is not None:
+            if re.search(r'</' + re.escape(html) + r'\s*>', raw, re.I):
+                html = None
+            header, table = None, False
+            continue
+        marker = re.match(r'^ {0,3}(`{3,}|~{3,})', raw)
+        if fence is not None:
+            if re.match(r'^ {0,3}' + re.escape(fence[0]) + r'{' + str(len(fence)) + r',}\s*$', raw):
+                fence = None
+            header, table = None, False
+            continue
+        if marker:
+            fence = marker.group(1)
+            header, table = None, False
+            continue
+        # HTML comments, including multi-line comments, cannot supply decisions.
+        line, rest = '', raw
+        while rest:
+            if comment:
+                pos = rest.find('-->')
+                if pos < 0:
+                    rest = ''
+                    break
+                rest, comment = rest[pos + 3:], False
+            else:
+                pos = rest.find('<!--')
+                if pos < 0:
+                    line += rest
+                    break
+                line += rest[:pos]
+                rest, comment = rest[pos + 4:], True
+        if not line.strip() or line.expandtabs(4).startswith('    '):
+            header, table = None, False
+            continue
+        tag = re.match(r'^ {0,3}<([A-Za-z][\w-]*)\b[^>]*>', line)
+        if tag:
+            if not re.search(r'</' + re.escape(tag.group(1)) + r'\s*>', line, re.I):
+                html = tag.group(1)
+            header, table = None, False
+            continue
         if line.startswith("## "):
             in_section = bool(re.match(r"^## 10\.(\s|$)", line))
             seen_section = seen_section or in_section
             dated = False
+            header, table = None, False
             continue
         if in_section and line.startswith("### "):
-            dated = bool(re.match(r'^###\s+\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b', line))
+            match = re.match(r'^###\s+(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})\b', line)
+            try:
+                if match is None:
+                    raise ValueError('not a date')
+                dt.datetime.strptime(match.group(1), '%d %B %Y')
+                dated = True
+            except ValueError:
+                dated = False
+            header, table = None, False
             continue
-        if not in_section or not dated or not line.lstrip().startswith("|"):
+        if line.startswith('#'):
+            dated = False
+            header, table = None, False
             continue
-        cells = line.strip().split("|")
-        if len(cells) < 3:
+        if not in_section or not dated or not line.lstrip().startswith('|') or r'\|' in line:
+            header, table = None, False
             continue
-        first = cells[1].strip().strip("*`_ ").strip()
-        if first == row_id:
-            found.append(cells[2].strip())
+        parts = line.strip().split('|')
+        cells = parts[1:-1] if parts[-1] == '' else parts[1:]
+        sep = len(cells) >= 2 and all(re.fullmatch(r'\s*:?-{3,}:?\s*', cell) for cell in cells)
+        if sep:
+            table = bool(header and len(header) == len(cells) and re.search(r'\bauthor\b', header[1], re.I))
+            header = None
+            continue
+        if not table:
+            header = cells if len(cells) >= 2 else None
+            continue
+        if len(cells) >= 2 and cells[0].strip() == row_id:
+            found.append(cells[1].strip())
     if not seen_section:
         return False, f"PLAN at {plan_path} has no '## 10.' section"
     if len(found) == 1 and found[0] and found[0] not in ('-', '—'):
@@ -460,6 +525,83 @@ def submission_phases(records_dir: Path) -> Dict[str, str]:
         if rec.get("job_id"):
             out[str(rec["job_id"])] = str(rec.get("phase", ""))
     return out
+
+
+def record_deadline_jobs(config, accounted):
+    """Remember observed DEADLINE ids, including old ledger entries, under query.lock."""
+    directory = records_dir(config)
+    path = directory / 'deadline_jobs.json'
+    try:
+        previous = json.loads(path.read_text(encoding='utf-8'))
+        if not isinstance(previous, list) or any(not isinstance(j, str) or not j.isdigit() for j in previous):
+            raise ValueError('invalid deadline job list')
+        seen = set(previous)
+    except FileNotFoundError:
+        seen = set()
+    except (OSError, ValueError, TypeError) as exc:
+        raise Hk2Error('cannot read deadline history: ' + str(exc)) from exc
+    ledger = expand_path(str(config['values']['results_root'])) / 'engineering' / 'gpu_ledger.csv'
+    for jid, row in read_ledger(ledger).items():
+        if row.get('end_state') == 'DEADLINE' or row.get('resubmit') == 'never':
+            if not jid.isdigit():
+                raise Hk2Error('ambiguous deadline job id in ledger')
+            seen.add(jid)
+    for row in accounted:
+        if (str(row.get('state', '')).split() or [''])[0].rstrip('+') == 'DEADLINE':
+            jid = str(row.get('job_id', ''))
+            if not jid.isdigit():
+                raise Hk2Error('ambiguous deadline job id in accounting')
+            seen.add(jid)
+    if seen:
+        directory.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix('.tmp')
+        with tmp.open('w', encoding='utf-8') as fh:
+            json.dump(sorted(seen), fh)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(str(tmp), str(path))
+        fd = os.open(str(directory), os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    return seen
+
+
+def refuse_deadline_resubmission(config, manifest_sha, accounted):
+    """Refuse the exact manifest bytes of any project submission observed DEADLINE.
+
+    Changed bytes, semantic equivalence and jobs submitted outside this tool
+    cannot be inferred; the project-wide submission process remains necessary.
+    """
+    if not isinstance(manifest_sha, str) or not re.fullmatch(r'[0-9a-f]{64}', manifest_sha):
+        raise Hk2Error('manifest digest missing or invalid')
+    deadlines = record_deadline_jobs(config, accounted)
+    path = records_dir(config) / 'submissions.jsonl'
+    if not path.exists():
+        return
+    mappings = {}
+    for line in path.read_text(encoding='utf-8').splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except ValueError as exc:
+            raise Hk2Error('corrupt submission record: ' + str(exc)) from exc
+        if not isinstance(row, dict):
+            raise Hk2Error('invalid submission record')
+        jid = row.get('job_id')
+        if not jid:
+            continue
+        digest = row.get('manifest_sha256')
+        if not str(jid).isdigit() or not isinstance(digest, str) or not re.fullmatch(r'[0-9a-f]{64}', digest):
+            raise Hk2Error('submission record lacks a valid job id or manifest digest')
+        jid = str(jid)
+        if jid in mappings and mappings[jid] != digest:
+            raise Hk2Error('conflicting manifest digests for submission job id')
+        mappings[jid] = digest
+    if any(mappings.get(jid) == manifest_sha for jid in deadlines):
+        raise Hk2Error('DEADLINE job must not be resubmitted with the same manifest')
 
 
 def budget_state(outstanding: List[Dict[str, object]], accounted: List[Dict[str, object]]) -> Dict[str, float]:

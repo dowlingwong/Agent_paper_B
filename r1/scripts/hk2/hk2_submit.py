@@ -161,6 +161,7 @@ def main(argv=None):
         with c.QueryLock(directory / "query.lock"):
             outstanding, accounted = c.query_snapshot(config)
             budget = check_guards(data, config, args.plan, outstanding, accounted, c.utc_now(), args.author)
+            c.refuse_deadline_resubmission(config, digest, accounted)
             directory.mkdir(parents=True, exist_ok=True)
             script_path = directory / (digest + ".sbatch")
             script_path.write_text(script, encoding="utf-8")
