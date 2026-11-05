@@ -182,6 +182,26 @@ AI-assisted (Codex). Draft only: no row or option below is an author decision or
 
 **Paste-ready answer.** `Track S GPU manager: decide after G.0 and D28.`
 
+## Q18 — HoreKa EVIDENCE note format (open; later phase)
+
+**Context.** The runbook requires a committed author G.5 note after HK5 and the author's decisions on task-node count, K and budget. The present submit tool refuses EVIDENCE and HK6/HK7 unconditionally; the single HK1 switch cannot enable them. A proposed, unsigned per-manifest JSON format is in `docs/r1/proposals/HK2_EVIDENCE_AUTH_NOTE_FORMAT_DRAFT_20261105.md`. Its manifest hash binds exact bytes but does not prove the command's semantic classification.
+
+**Options.** (A) A separate committed note per exact manifest, with phase, manifest SHA and the author's post-HK5 node count, K and budget. (B) A separately reviewed bounded manifest-set format. (C) Another specified format.
+
+**Recommendation.** A for the smallest initial scope; consider B only with unambiguous, independently reviewed membership and limits. Either choice requires implementation, actual-work classification and independent review; it does not authorize a job or decide the post-HK5 values.
+
+**Paste-ready answer.** `For HoreKa EVIDENCE, use <per-manifest / reviewed manifest-set / other specified> committed author-note format; the post-HK5 node count, K and budget still require my decision.`
+
+## Q19 — HoreKa submitted-job limits (open; HK0/HK1)
+
+**Context.** `r1/scripts/hk2/hk2_config.json` labels the following values as proposals, not decisions: freeze F 20 Nov 12:00 CET, cutoff C 20 Nov 20:00 CET, copyback D 21 Nov 18:00 CET; campaign accounting start 4 Nov 00:00 CET; 400 GPU-h ceiling and 300 GPU-h STOP; four-hour `T_max`; and the 1-GPU, 32-CPU, 180-GiB probed shape. The author's statement that 400 GPU-h is acceptable does not itself fix a ceiling or the 300 threshold. `T_max` is decided after HK0; the proposed STOP-marker path also needs a reviewed operational decision.
+
+**Options.** (A) Decide F/C/D, accounting start and budget limits now, and decide `T_max`/shape after HK0. (B) Defer the full set until the queue-probe results and HK0 review. (C) Specify alternatives item by item.
+
+**Recommendation.** B unless the author has the queue-probe results and wants to decide some items earlier. Before HK1 use, review every proposed config value and establish the exact authorized limits and marker handling; no default becomes a decision merely because the tool displays it.
+
+**Paste-ready answer.** `HoreKa limits: decide F/C/D, accounting start, budget ceiling/STOP, T_max, shape and STOP marker after HK0 and review.`
+
 ## Resolved bounded units (not author decisions)
 
 - B1 committed-HEAD verifier: accepted at `f7ecf2c`, review `MAC_B1_AUTHORITY_OVERNIGHT_REVIEW_20261105.md`.
@@ -199,5 +219,6 @@ AI-assisted (Codex). Draft only: no row or option below is an author decision or
 | B1 final checkout and GPU lease | Verify the accepted flock and server descriptor on TASL-7; finish B1-scoped M2 review, confirm Q1 and Q2, publish the author's rule row and approved note, then review the exact resulting committed HEAD and host O2 handover. | Mac implementer and reviewer, author, then operator. | Local review hours plus author response and host preflight. |
 | M3 offline replay | Three-round timebox reached: finish and independently review the Linux supervisor, distinguish normal HUP from monitor failure, bind all 16 cases in the reviewed execution path and prove their offline executability before scheduling; separately qualify the target Linux site under its own authority. | Mac implementer/reviewer, then authorized operator. | Multi-day engineering and site qualification; no host work tonight. |
 | M11 D8 | Review the final gate code and its SHA; author commits R1-BX-D8-CONFIRM. | Mac reviewer, then author. | Gate review hours plus author response. |
-| M10 HK1 | HK1 verifies actual `sacct`/`squeue` visibility, accounting latency, shared-lock behavior and site policy before enabling the one configuration switch. | HoreKa operator under HK1 authority. | Site-specific; a short capability check, elapsed time depends on accounting lag. |
+| M10 HK1 | The authority and DEADLINE fixes were independently accepted at `113eec8`. The author resolves the proposed values in Q19; the authorized HK1 operator verifies the pinned PLAN, actual `sacct`/`squeue` visibility, accounting latency, shared-lock behavior and site policy before enabling the switch within the applicable reviewed phase scope. | Author, then HoreKa operator and reviewer under HK1 authority. | Author response and site-specific elapsed time, including accounting lag. |
+| M10 EVIDENCE | Implement and independently review the HK6/HK7/J5 path, author-note and actual work/manifest binding; author chooses Q18 and signs the G.5 note only after HK5 prerequisites. The default-off switch alone cannot enable these phases. | Mac implementer/reviewer, author, then authorized operator. | Approximately one engineering/review day plus author response and later phase timing. |
 | B2 ranking | Implement and independently review ranking/authority after B1. | Mac implementer/reviewer, then author. | Roughly 1–3 engineering days plus independent review; uncertain and outside B1 path. |

@@ -1,5 +1,7 @@
 # Paper B (route R1) — status log
 
+- M10 engineering guards (5 Nov; AI-assisted, Codex): fenced PLAN examples and repeat submissions of a recorded DEADLINE manifest fixed at `3e43e6c` / `59b08d3`; integration independently accepted at `113eec8` (`MAC_M10_FINAL_INTEGRATION_REVIEW_20261105.md`, 38 fake Python 3.9 tests). Real submission stays OFF; full M10 remains NOT ACCEPTED because EVIDENCE/HK6/HK7 are unimplemented and the author-note/work binding remains open. HK1 must verify site accounting and the reviewed PLAN checkout.
+
 - B1 offline/synthetic complete-batch verifier (5 Nov; AI-assisted, Codex): code `1dd6e88` independently accepted within that scope (`MAC_B1_BATCH_VERIFIER_REVIEW_20261105.md`); unsigned note pin review `06a21b3`. Synthetic parent/child code `19da54e` was separately accepted; real-worker determinism, former Stage A kill/resume coverage, anchor provenance, author decisions and host checks remain open. The earlier entries below are historical snapshots.
 
 - B1 authorization draft (5 Nov; AI-assisted, Codex): draft `83a91e6` independently **accepted as draft only**. It binds the selected nodes, 80 calls and 20 workers, both Stage A digests and a proposed O1 report digest; `approved` remains false. Author format choice, anchor reference and B1 code integration remain open.
