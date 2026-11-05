@@ -1,10 +1,10 @@
 # DRAFT — Authorization: Track X Stage B1 under `x5_rule_v2` (4 November 2026)
 
-**This is a draft prepared by the Mac-local agent (Claude; AI-assisted) at the author's request of 4 Nov 17:54 ("起草 B1 授权说明，绑定 `rule_sha256`、`nodes`、`stage_a_table_sha256`（两张表）、`llm_call_cap`，由我审定后提交"). It authorizes nothing.** The author reviews it, resolves the proposed acceptance-record format, sets `"approved": true`, and commits the final note under `docs/r1/authorizations/` (the path the B1 config's `authorizations.b1` names). The machine-readable block below has the fields `r1.exam.runtime.author_gate` checks for phase `b1` (including selected `workers` in the accepted but not yet integrated verifier `f7ecf2c`; host is recorded for the operator); the gate refuses to run unless the committed bytes match and PLAN carries the R1-EXAM-RULE row with the same rule sha.
+**This is a draft prepared by the Mac-local agent (Claude; AI-assisted) at the author's request of 4 Nov 17:54 ("起草 B1 授权说明，绑定 `rule_sha256`、`nodes`、`stage_a_table_sha256`（两张表）、`llm_call_cap`，由我审定后提交"). It authorizes nothing.** The author reviews it, resolves the proposed acceptance-record format, sets `"approved": true`, and commits the final note under `docs/r1/authorizations/` (the path the B1 config's `authorizations.b1` names). The machine-readable block below has the fields `r1.exam.runtime.author_gate` checks for phase `b1` (including selected `workers` in the accepted and integrated verifier `f7ecf2c`; host is recorded for the operator); the gate refuses to run unless the committed bytes match and PLAN carries the R1-EXAM-RULE row with the same rule sha.
 
 ## Preconditions before the author commits the final note
 
-1. B1-scoped M2 code independently accepted, integrated with the current PLAN and used as the reviewed paper pin. B2 ranking may remain STOP outside B1. The frozen rule and the two specified thinking-mode decisions were independently accepted at `839a7b5`; review `MAC_M2_B1_RULE_REVIEW_20261105.md`.
+1. B1-scoped M2 code independently accepted, integrated with the current PLAN and used as the reviewed paper pin. B2 ranking may remain STOP outside B1. The reviewed candidate rule bytes and the two specified thinking-mode decisions were independently accepted at `839a7b5`; review `MAC_M2_B1_RULE_REVIEW_20261105.md`.
 2. PLAN §10 row **R1-EXAM-RULE-X5V2** committed by the author with the rule sha below.
 3. R1-EXAM-STAGEA-ACCEPT (Stage A accepted; B1 candidates = `t7h8`'s 8 PASS + `t7j10`'s 7 PASS + 3 anchors) is in PLAN; the related row and draft review was accepted within its stated scope. M5 found code defects; its fix does not revalidate the historical measurements.
 4. Host: **TASL-7** (R1-EXAM-HOST-B1B2-TASL7, 18:10): B1 and B2 on TASL-7, the whole exam on one host; P.3a pauses while B1 or B2 runs. M2 makes the exam worker follow the configured host (it was hard-pinned to TASL-2).
@@ -16,7 +16,7 @@
 
 | Field | Value | Source |
 |---|---|---|
-| `rule_sha256` | `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad` (`r1/exam/rules/x5_rule_v2.yaml`) | Frozen rule independently accepted for B1 at `839a7b5`; author row R1-EXAM-RULE-X5V2 remains unsigned. |
+| `rule_sha256` | `53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad` (`r1/exam/rules/x5_rule_v2.yaml`) | Candidate rule independently accepted for B1 at `839a7b5`; author row R1-EXAM-RULE-X5V2 remains unsigned. |
 | `nodes` | `["digits_mlp", "openml_credit_approval", "openml_ionosphere"]` | RUNBOOK X.4: "`digits_mlp` if D28 passes, else `tabular_mlp`"; `digits_mlp` passed the repaired D28 on 27 Oct and is one of sweep 1's eight nodes (`authorizations/c3_sweep1_20261027.md`). The gate accepts only this set or the `tabular_mlp` variant. Author selected the proposed `digits_mlp` variant (PLAN R1-EXAM-B1-DRAFT-VALUES); this does not authorize the run. |
 | `stage_a_table_sha256` | `00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c` (`t7h8`) | R1-EXAM-STAGEA-COMPLETE report; `reports/OPS_O1_20261104.md` |
 | `stage_a_amendment_table_sha256` | `71525124fcf973ef7465fee9b0ff99c27b3f21b68f3a0ca55fcb9f7357992103` (`t7j10`) | `reports/OPS_O1_20261104.md` (Identity and custody) |
