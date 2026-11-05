@@ -1,5 +1,7 @@
 # Paper B (route R1) — status log
 
+- B1 authorization draft (5 Nov; AI-assisted, Codex): draft `83a91e6` independently **accepted as draft only**. It binds the selected nodes, 80 calls and 20 workers, both Stage A digests and a proposed O1 report digest; `approved` remains false. Author format choice, anchor reference and B1 code integration remain open.
+
 - B1 committed-HEAD authorization unit (5 Nov; AI-assisted, Codex): `mac-b1-overnight-20261105` code `f7ecf2c`, review `6d24c21` **accepted**; 23 synthetic targeted tests passed. It checks committed HEAD, clean checkout, strict dated §10 rule row and file hashes. B1 observer/entry STOPs and the author's rule row/note remain open; this unit alone does not authorize B1.
 
 - M10 submit/status unit (5 Nov; AI-assisted, Codex): code `9f7675e` and integration review `MAC_M10_INTEGRATION_REVIEW_20261105.md` **accepted**; Python 3.9 fake Slurm tests 33 passed, and real submission defaults OFF. HK1 must check site Slurm fields, accounting delay, PrivateData and shared-lock coordination before enabling. This accepts no real job.
