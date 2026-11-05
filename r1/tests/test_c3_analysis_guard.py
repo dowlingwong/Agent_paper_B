@@ -11,6 +11,7 @@ from r1.c3 import analysis_guard as g
 from r1.c3 import dataset as d
 from r1.c3 import offline_eval as oe
 from r1.c3 import ni_masking as ni
+from r1.c3 import audit, accounting
 
 
 def repo(tmp_path,monkeypatch,mode='absent'):
@@ -92,6 +93,23 @@ def test_sealed_and_symlink_refused_even_after_confirmation(tmp_path,monkeypatch
     table=tmp_path/'table';table.mkdir();(table/'proposals.jsonl').symlink_to(sealed/'audits.jsonl')
     with pytest.raises(RuntimeError,match='r1_sealed'):
         d.load_table(table)
+
+
+def test_evidence_plan_checks_d8_before_reading_table_bytes(tmp_path,monkeypatch):
+    repo(tmp_path,monkeypatch)
+    table=tmp_path/'table';table.mkdir()
+    (table/'build.json').write_text(json.dumps({'sweep_index':{'path':'synthetic','sha256':'2'*64}}))
+    # No table files or classification exist: neither can be opened before D8.
+    with pytest.raises(RuntimeError,match='R1-BX-D8-CONFIRM'):
+        audit.evidence_plan(table,tmp_path,tmp_path/'missing-index',tmp_path/'missing-classification')
+
+
+def test_direct_audit_and_accounting_readers_refuse_sealed_aliases(tmp_path):
+    sealed=tmp_path/'r1_sealed';sealed.mkdir();(sealed/'data').write_text('{}\n')
+    alias=tmp_path/'alias';alias.symlink_to(sealed,target_is_directory=True)
+    for path in (sealed/'data',alias/'data'):
+        for read in (audit._digest,audit.RunCache,accounting._jsonl):
+            with pytest.raises(RuntimeError,match='r1_sealed'): read(path)
 
 
 def test_only_known_sweep1_and_full_legacy_source_schema_are_exempt(tmp_path,monkeypatch):

@@ -165,6 +165,8 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, sto
 class RunCache:
     def __init__(self, path: Path):
         self.path = Path(path)
+        from r1.c3.analysis_guard import refuse_sealed
+        refuse_sealed(self.path)
         self.rows: dict[tuple, dict] = {}
         if self.path.exists():
             for line in self.path.read_text().splitlines():
@@ -285,6 +287,8 @@ def run_plan(plan: list[dict], configs: dict, out: Path, seeds=DEFAULT_SEEDS, wo
 
 
 def _digest(path: Path) -> str:
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path)
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
@@ -298,6 +302,9 @@ def _local_scratch_mount(parent: Path) -> list[str]:
 
 def _verify_replay(table: Path, paper_root: Path, index: Path, classification: Path) -> None:
     """A table's self-declared digest cannot establish completeness."""
+    from r1.c3.analysis_guard import guard_table, refuse_sealed
+    refuse_sealed(paper_root, index, classification)
+    guard_table(table, Path(table)/'proposals.jsonl', Path(table)/'configs.json')
     from r1.c3.dataset import build_from_sweep
     local = Path('/tmp')
     _local_scratch_mount(local)
@@ -512,6 +519,9 @@ def evidence_resources(plan: list[dict], workers: int, deadline: float, scratch_
 
 def evidence_plan(table: Path, paper_root: Path, index: Path, classification: Path) -> tuple[list[dict], dict]:
     """Build the complete, non-sampled eligible plan and bind it to author provenance."""
+    from r1.c3.analysis_guard import guard_table, refuse_sealed
+    refuse_sealed(paper_root, index, classification)
+    guard_table(table, Path(table)/'proposals.jsonl', Path(table)/'configs.json')
     from r1.c3.arms import is_duplicate, is_noop
     from r1.c3.dataset import evidence_classification, load_table
     evidence_classification(index, paper_root, classification)
@@ -609,6 +619,8 @@ def evidence_blocks(table: Path, results: list[dict]) -> tuple[list[dict], list[
 
 
 def evidence_cache(plan: list[dict], path: Path) -> RunCache:
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path)
     expected = {(p['node'], p[k], seed) for p in plan
                 for k in ('candidate_hash', 'incumbent_hash') for seed in DEFAULT_SEEDS}
     seen = set()
@@ -625,6 +637,8 @@ def evidence_cache(plan: list[dict], path: Path) -> RunCache:
 
 def validate_worker_records(path: Path, environment: dict) -> None:
     """Every worker seed record must identify the approved venv and package snapshot."""
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path)
     expected = {k: environment.get(k) for k in
                 ('worker_python', 'worker_prefix', 'worker_versions', 'package_list_sha256')}
     if not all(expected.values()):
@@ -887,6 +901,8 @@ def main(argv=None) -> int:
                                       sweep_environment=Path(args.sweep_environment), scratch_root=Path(args.scratch_root),
                                       required_scratch_bytes=args.required_scratch_bytes, ceph_reserve_files=args.ceph_reserve_files)))
         return 0
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(args.plan, getattr(args,'configs',None), args.out)
     plan = [json.loads(x) for x in Path(args.plan).read_text().splitlines() if x.strip()]
     if args.cmd == "run":
         configs = json.loads(Path(args.configs).read_text())
