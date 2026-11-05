@@ -14,6 +14,7 @@ from r1.harness import REPO
 
 def test_exam_fake_end_to_end(tmp_path):
     root=tmp_path/'exam';env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1','PYTHONPATH':str(REPO)}
+    env.pop('TRACKX_GPU_LEASE_FD',None)
     result=subprocess.run([sys.executable,'-m','r1.scripts.exam_dryrun','--root',str(root)],cwd=REPO,env=env,
                           capture_output=True,text=True,timeout=360)
     assert result.returncode!=0

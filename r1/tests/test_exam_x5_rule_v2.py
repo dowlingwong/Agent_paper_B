@@ -122,6 +122,7 @@ def _obs(node, mode, value, i):
 
 def _b1_manifest(registry, sha, cid, order, family, observations, primary_mode='off'):
     return {'label': 'EXAM', 'phase': 'b1', 'status': 'COMPLETE', 'candidate': cid, 'family': family, 'role': 'candidate',
+            'execution_label':'DRYRUN',
             'registry_order': order, 'rule_sha256': sha, 'registry_path': str(registry),
             'registry_sha256': digest_file(registry), 'primary_mode': primary_mode, 'stage_a_pass': True,
             'd28_pass': True, 'audited_proposals': observations}
@@ -140,7 +141,7 @@ def test_thinking_on_with_higher_y_never_wins_b1(tmp_path):
     a = [_obs('digits_mlp', 'off', .01, i) for i in range(4)] + [_obs(node, 'on', .9, i) for i in range(4)]
     b = [_obs('digits_mlp', 'off', .02, i) for i in range(4)]
     result = b1_summary([_b1_manifest(reg, sha, 'a', 0, 'fa', a), _b1_manifest(reg, sha, 'b', 1, 'fb', b)],
-                        rule_path=RULE_V2)
+                        rule_path=RULE_V2,synthetic=True)
     rows = {r['candidate']: r for r in result['rows']}
     assert rows['a']['mu_hat'] == pytest.approx(.01) and rows['b']['mu_hat'] == pytest.approx(.02)
     assert rows['a']['b2_thinking_mode'] == 'off'                     # v1 would pick 'on' here
@@ -159,7 +160,7 @@ def test_always_on_model_is_never_a_finalist(tmp_path):
     # skip: an always-on model must not even have a B1 manifest
     with pytest.raises(ValueError, match='always_on_in_b1 is skip'):
         b1_summary([_b1_manifest(reg, sha, 'think', 0, 'ft', [_obs('digits_mlp', 'always_on', 5., i) for i in range(4)],
-                                 primary_mode='always_on')], rule_path=RULE_V2)
+                                 primary_mode='always_on')], rule_path=RULE_V2,synthetic=True)
     # finalist choice: even a forged row with a huge mu_hat is not ranked
     rows = [{'candidate': 'think', 'role': 'candidate', 'family': 'ft', 'stage_a_pass': True, 'd28_pass': True,
              'mu_hat': 100., 'registry_order': 0, 'thinking_off_eligible': False, 'mu_hat_mode': 'off'}]
@@ -177,7 +178,16 @@ def test_v2_b1_refuses_non_off_primary_for_capable_model(tmp_path):
     reg = _registry(tmp_path, [{'id': 'a', 'role': 'candidate', 'family': 'fa', 'thinking_policy': SWITCH}])
     with pytest.raises(ValueError, match='primary mode must be off'):
         b1_summary([_b1_manifest(reg, sha, 'a', 0, 'fa', [_obs('digits_mlp', 'on', .1, 0)], primary_mode='on')],
-                   rule_path=RULE_V2)
+                   rule_path=RULE_V2,synthetic=True)
+
+
+def test_v2_b1_finalist_analysis_stops_on_unverified_batch(tmp_path):
+    _,sha=v2();reg=_registry(tmp_path,[{'id':'a','role':'candidate','family':'fa','thinking_policy':NONTHINK}])
+    m=_b1_manifest(reg,sha,'a',0,'fa',[_obs('digits_mlp','off',.1,0)])
+    with pytest.raises(ValueError,match='verified complete batch'):
+        b1_summary([m],rule_path=RULE_V2)
+    with pytest.raises(ValueError,match='DRYRUN manifests only'):
+        b1_summary([{**m,'execution_label':'EVIDENCE'}],rule_path=RULE_V2,synthetic=True)
 
 
 # ---------------------------------------------------------------- B2 analysis under v2
@@ -490,6 +500,20 @@ def test_runner_v2_b1_skips_always_on_and_runs_off_primary(tmp_path):
     m = json.loads((tmp_path / 'sw/b1_manifest.json').read_text())
     assert m['primary_mode'] == 'off' and m['thinking_on_sensitivity'] == 'descriptive'
     assert m['rule_version'] == 'x5_rule/v2' and m['cache_prompt'] is False and m['harness_commit'] == A3FEDBB
+
+
+def test_production_b1_refuses_partial_candidate_selection_before_output(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    from r1.scripts import exam_runner
+    rule,_=v2()
+    runner=SimpleNamespace(cfg={'dryrun':False},rule=rule)
+    with pytest.raises(PreparationStop,match='full eligible candidate set'):
+        exam_runner.evidence(runner,'b1',['qwen25_coder_7b'],False)
+    monkeypatch.setattr(exam_runner,'load_config',lambda *a,**k:{'dryrun':False})
+    monkeypatch.setattr(exam_runner,'ExamRunner',lambda *a,**k:pytest.fail('runner must not start'))
+    with pytest.raises(PreparationStop,match='full eligible candidate set'):
+        exam_runner.main(['b1','--out',str(tmp_path/'out'),'--candidate','qwen25_coder_7b'])
+    assert not (tmp_path/'out').exists()
 
 
 def test_v2_b1_synthetic_receipts_run_all_declared_roots(tmp_path):

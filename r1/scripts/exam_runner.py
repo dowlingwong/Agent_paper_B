@@ -323,6 +323,8 @@ def check_template_repairs(cfg, specs):
 def evidence(runner, phase, selected, interrupt):
     if phase != 'b1' or not is_v2(getattr(runner,'rule',None)):
         raise PreparationStop('STOP: only x5_rule/v2 B1 evidence is implemented')
+    if selected and not runner.cfg.get('dryrun'):
+        raise PreparationStop('STOP: production B1 requires the full eligible candidate set')
     return _evidence_unreviewed(runner, phase, selected, interrupt)
 
 
@@ -507,6 +509,8 @@ def main(argv=None):
     if a.check_config: print(json.dumps({'valid':True,'unresolved':placeholders(cfg)}));return 0
     if not a.phase or not a.out: p.error('phase and --out required')
     if a.interrupt_root and not cfg.get('dryrun'): p.error('--interrupt-root is DRYRUN only')
+    if a.phase=='b1' and a.candidate and not cfg.get('dryrun'):
+        raise PreparationStop('STOP: production B1 requires the full eligible candidate set')
     if a.phase in ('b1','b2') and (not cfg.get('authorizations',{}).get(a.phase) or
                                   placeholders(cfg['authorizations'][a.phase])):
         raise PreparationStop('STOP: active phase authorization note is unresolved')

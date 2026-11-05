@@ -117,8 +117,13 @@ def forecast_summary(rows, diagnostics):
             'p_no_effect_evaluation':'pending_author_outcome_definition; probabilities retained, no threshold invented'}
 
 
-def b1_summary(manifests, *, rule_path=RULE, expected=None):
+def b1_summary(manifests, *, rule_path=RULE, expected=None, synthetic=False):
     rule,sha=load_rule(rule_path,expected);rows=[]
+    if is_v2(rule):
+        if not synthetic:
+            raise ValueError('STOP: B1 finalist analysis requires a verified complete batch and Stage A eligible set')
+        if not manifests or any(m.get('execution_label')!='DRYRUN' for m in manifests):
+            raise ValueError('STOP: B1 synthetic analysis accepts DRYRUN manifests only')
     for m in manifests:
         if m.get('label')!='EXAM' or m.get('phase')!='b1' or m.get('status')!='COMPLETE':
             raise ValueError('analysis requires complete EXAM B1 manifests')
@@ -165,7 +170,7 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None):
                      'a4_log_score':finite_mean(scores) if scores else None,
                      'a4_brier':finite_mean([(float(r['p_delta_positive'])-(r['delta_audit']>0))**2 for r in forecasts]) if forecasts else None,
                      'diagnostics':m.get('diagnostics',{})})
-    return {'phase':'b1','label':'EXAM','rule_sha256':sha,'rows':rows,'finalists':choose_finalists(rows,rule)}
+    return {'phase':'b1','label':'DRYRUN' if is_v2(rule) else 'EXAM','rule_sha256':sha,'rows':rows,'finalists':choose_finalists(rows,rule)}
 
 
 def _b1_row_v2(m, source, observations, rule):
