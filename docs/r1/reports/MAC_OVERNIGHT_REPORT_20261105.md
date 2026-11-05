@@ -1,6 +1,6 @@
 # Mac overnight report — 5 November 2026
 
-**DRAFT — interim inventory; update and review at the morning handoff.** AI-assisted (Codex). No author decision is recorded by this report. All branches below are feature branches, not `main`, `r1`, or `exam-x-*`.
+**Morning handoff — 07:24 CET, 5 November 2026.** AI-assisted (Codex). No author decision is recorded by this report. All branches below are feature branches, not `main`, `r1`, or `exam-x-*`.
 
 ## Outcome and scope
 
@@ -9,6 +9,8 @@ B1 is **not ready to start from one author signature**. Its rule, committed-HEAD
 No experiment host or real model service was contacted, no experiment or real model was run, no GPU was used, and no author decision cell was supplied. GitHub was used for authorized feature-branch pushes. Synthetic tests and test-owned local fakes are identified as such in their reviews. The original Mac working tree was not modified.
 
 The historical Mac full suite recorded 896 passed, 39 failed and 11 skipped (`MAC_M2_FAILURE_CLASSIFICATION_20261105.md` and its linked log). It was not rerun after these changes under the overnight no-model instruction; the focused synthetic results below do not establish a passing current full suite.
+
+Immediately before this report, the integration checkout was clean at `72a64880640d5153087ea27e231247621f44f40f`; the B1 feature checkout was clean at `4019756e276d24fb6dd29990e84e883194fc5f69`. The final report and review commits follow the integration checkout. The independently reviewed question list contains Q0–Q24; its SHA-256 at this handoff is `5cb61b539e7631c116de8dfac9c618c35cdd472682c808e9c4d8558c03b0cab1`.
 
 ## Reviewed units and publication
 
