@@ -116,7 +116,8 @@ def load_config(path, *, allow_placeholders=False):
     if cfg['minimum_free_bytes']!=100_000_000_000: raise ValueError('author disk floor is 100 GB')
     later={'b2_instances_per_node','b1_analysis','b1_analysis_sha256','stage_a_table','stage_a_table_sha256','anchor_duplicate_reference','llm_call_cap','nodes','prompts','prompts_sha256','d22_pick',
            # x5_rule/v2 B1/B2: the operator-accepted A1 amendment table (t7j10) and its acceptance, bound by sha (R1-TRACKX-HANDOVER-RULING)
-           'stage_a_amendment_table','stage_a_amendment_table_sha256','stage_a_amendment_acceptance','stage_a_amendment_acceptance_sha256'}
+           'stage_a_amendment_table','stage_a_amendment_table_sha256','stage_a_amendment_acceptance','stage_a_amendment_acceptance_sha256',
+           'authorizations'}
     common={k:v for k,v in cfg.items() if k not in later}
     if placeholders(common) and not allow_placeholders: raise ValueError(f'unresolved common placeholders: {placeholders(common)}')
     return cfg
@@ -393,6 +394,13 @@ class ExamRunner:
                 if phase!='stage-a':
                     verify_campaign(entry['path'],self.binding)
                     if digest_file(Path(entry['path']).parent/'post_check.json')!=entry['post_check_sha256']: raise PreparationStop('STOP: receiving certificate changed')
+                    if phase=='b1' and not self.cfg.get('dryrun'):
+                        _verify_b1_root_authority(entry['path'],self.author_head)
+            previous=self.state.get('in_progress') or {}
+            if phase=='b1' and not self.cfg.get('dryrun') and previous.get('path'):
+                root=Path(previous['path'])
+                if root.exists():
+                    _verify_b1_root_authority(root/'campaign_manifest.json',self.author_head)
         else:
             shutil.copyfile(self.registry_path,self.out/'registry_snapshot.yaml')
             self.state={'schema':'exam_batch/v1','label':'EXAM','execution_label':'DRYRUN' if self.cfg.get('dryrun') else ('ENGINEERING_ONLY' if phase=='stage-a' else 'EVIDENCE'),

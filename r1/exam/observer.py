@@ -3,8 +3,10 @@ import hashlib
 import base64
 import os
 import json
+import math
 import re
 import contextvars
+import copy
 from contextlib import contextmanager
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
@@ -13,6 +15,27 @@ from r1.exam.cache_io import read_chunks
 from r1.exam.cache_false import D3EvidenceStop
 
 _B1_OBSERVER_CONTEXT = contextvars.ContextVar('exam_b1_observer_context', default=False)
+
+
+def _authorized_candidate(job, cfg, registry):
+    """Resolve only a registry footprint using the digest-bound Stage A PASS row."""
+    from r1.exam.runtime import placeholders
+    from r1.scripts.exam_runner import stage_a_pass_set
+    candidates=registry['candidates']+registry['software_anchors']+registry.get('sensitivities',[])
+    supplied=job.get('candidate') or {}
+    matching=[row for row in candidates if row.get('id')==supplied.get('id')]
+    if len(matching)!=1: return False
+    expected=copy.deepcopy(matching[0]);runtime=expected.get('runtime') or {}
+    if placeholders(runtime.get('footprint_mib')):
+        eligible=stage_a_pass_set(cfg,{r['id'] for r in registry['candidates'] if r.get('role')=='candidate'},v2=True)
+        accepted=eligible.get(expected['id']) or {}
+        footprint=(accepted.get('qualification') or {}).get('footprint_mib')
+        if (accepted.get('model_sha256')!=(expected.get('quant_source') or {}).get('sha256') or
+                accepted.get('build')!=(cfg.get('server') or {}).get('build') or
+                type(footprint) not in (int,float) or not math.isfinite(footprint) or footprint<=0):
+            return False
+        expected['runtime']['footprint_mib']=footprint
+    return expected==supplied
 
 
 @contextmanager
@@ -45,8 +68,7 @@ def authorized_b1_observer(job):
         if job.get('seed') not in cfg.get('instance_seeds',[]) or job.get('mode') not in ('off','on'):
             raise D3EvidenceStop('STOP: B1 observer seed/mode differs from authorized configuration')
         registry=read_registry(cfg['registry'])
-        candidates=registry['candidates']+registry['software_anchors']+registry.get('sensitivities',[])
-        if not any(row==job.get('candidate') for row in candidates):
+        if not _authorized_candidate(job,cfg,registry):
             raise D3EvidenceStop('STOP: B1 observer candidate differs from registry')
         if job.get('mode')=='on':
             from r1.exam.analyze import load_rule

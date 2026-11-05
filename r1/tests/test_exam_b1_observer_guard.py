@@ -82,3 +82,21 @@ def test_child_rejects_nonfalse_cache_setting(monkeypatch):
          'proposal_schema':'manager_proposal/v1','authority_config':cfg}
     with pytest.raises(observer.D3EvidenceStop,match='schema/cache'):
         with observer.authorized_b1_observer(job): pass
+
+
+def test_child_accepts_only_stage_a_bound_footprint(monkeypatch):
+    import copy
+    from r1.scripts import exam_runner
+    row={'id':'model','role':'candidate','runtime':{'footprint_mib':'TODO_VERIFY_ON_HOST'},
+         'quant_source':{'sha256':'modelsha'},'thinking_policy':{'mode':'off'}}
+    registry={'candidates':[row],'software_anchors':[]}
+    cfg={'server':{'build':'build'}}
+    accepted={'candidate':'model','model_sha256':'modelsha','build':'build',
+              'qualification':{'footprint_mib':1234}}
+    monkeypatch.setattr(exam_runner,'stage_a_pass_set',lambda *a,**k:{'model':accepted})
+    candidate=copy.deepcopy(row);candidate['runtime']['footprint_mib']=1234
+    assert observer._authorized_candidate({'candidate':candidate},cfg,registry)
+    for edit in ({'runtime':{'footprint_mib':1235}},{'quant_source':{'sha256':'other'}}):
+        assert not observer._authorized_candidate({'candidate':{**candidate,**edit}},cfg,registry)
+    accepted['model_sha256']='other'
+    assert not observer._authorized_candidate({'candidate':candidate},cfg,registry)

@@ -237,6 +237,9 @@ def verify_anchor_reference(cfg):
             raise ValueError('invalid digest or interval')
         if not source.is_file() or digest_file(source)!=sha:
             raise ValueError('reference source digest mismatch')
+        documented=json.loads(source.read_text())
+        if not isinstance(documented,dict) or documented.get('lower')!=lower or documented.get('upper')!=upper:
+            raise ValueError('reference interval differs from the source')
     except (KeyError,TypeError,ValueError,OSError) as exc:
         raise PreparationStop('STOP: invalid anchor duplicate reference') from exc
 
@@ -504,6 +507,9 @@ def main(argv=None):
     if a.check_config: print(json.dumps({'valid':True,'unresolved':placeholders(cfg)}));return 0
     if not a.phase or not a.out: p.error('phase and --out required')
     if a.interrupt_root and not cfg.get('dryrun'): p.error('--interrupt-root is DRYRUN only')
+    if a.phase in ('b1','b2') and (not cfg.get('authorizations',{}).get(a.phase) or
+                                  placeholders(cfg['authorizations'][a.phase])):
+        raise PreparationStop('STOP: active phase authorization note is unresolved')
     required=['prompts','prompts_sha256'] if a.phase=='stage-a' else ['stage_a_table','stage_a_table_sha256','nodes','llm_call_cap','anchor_duplicate_reference']
     if a.phase=='b2': required += ['b1_analysis','b1_analysis_sha256','b2_instances_per_node']
     if a.phase in ('b1','b2'):

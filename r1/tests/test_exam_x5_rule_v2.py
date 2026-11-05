@@ -43,6 +43,14 @@ def test_v2_mode_fields_are_strings_and_always_on_skip():
     assert raw['version'] == 'x5_rule/v2' and raw['supersedes'] == 'x5_rule/v1'
 
 
+def test_b1_config_does_not_require_future_b2_note(tmp_path):
+    cfg=json.loads((CONFIGS/'exam_b1_v2.json').read_text())
+    cfg['paper_commit']='a'*40
+    assert cfg['authorizations']['b2'].startswith('TODO_')
+    path=tmp_path/'b1.json';path.write_text(json.dumps(cfg))
+    assert load_config(path)['authorizations']['b1']==cfg['authorizations']['b1']
+
+
 @pytest.mark.parametrize('field,value', [('enabled',False),('mode','off'),('instances',3),('role','eligibility')])
 def test_v2_refuses_changed_sensitivity(tmp_path,field,value):
     raw = yaml.safe_load(RULE_V2.read_text())
@@ -496,11 +504,11 @@ def test_b1_stops_before_running_when_required_thinking_on_is_unavailable(tmp_pa
 
 def test_anchor_reference_requires_matching_source_and_finite_interval(tmp_path):
     from r1.scripts.exam_runner import verify_anchor_reference
-    source=tmp_path/'reference.json';source.write_text('{"pilot":"fixture"}')
+    source=tmp_path/'reference.json';source.write_text('{"lower":0.1,"upper":0.5}')
     ref={'source':str(source),'sha256':digest_file(source),'lower':0.1,'upper':0.5}
     verify_anchor_reference({'anchor_duplicate_reference':ref})
     for changed in ({'sha256':'0'*64},{'lower':float('nan')},{'lower':0.8,'upper':0.2},
-                    {'lower':True},{'source':str(tmp_path/'missing')}):
+                    {'lower':True},{'upper':0.6},{'source':str(tmp_path/'missing')}):
         with pytest.raises(PreparationStop,match='invalid anchor duplicate reference'):
             verify_anchor_reference({'anchor_duplicate_reference':{**ref,**changed}})
 
