@@ -221,6 +221,23 @@ def test_sealed_batch_is_refused_before_authority_or_content(tmp_path,monkeypatc
         analyze.b1_summary_verified(tmp_path/'r1_sealed'/'missing',{},rule_path=analyze.RULE_V2)
 
 
+@pytest.mark.parametrize('name', ['r1_sealed', 'R1_SEALED', 'R1_Sealed'])
+def test_sealed_batch_case_variants_refused_before_authority(tmp_path, monkeypatch, name):
+    monkeypatch.setattr(runtime, 'author_gate', lambda *a: pytest.fail('authority read before sealed refusal'))
+    with pytest.raises(ValueError, match='sealed paths'):
+        analyze.b1_summary_verified(tmp_path / name / 'missing', {}, rule_path=analyze.RULE_V2)
+
+
+def test_sealed_batch_symlink_target_case_variant_refused(tmp_path):
+    from r1.exam.b1_batch import refuse_sealed
+    target = tmp_path / 'R1_SEALED'
+    target.mkdir()
+    link = tmp_path / 'alias'
+    link.symlink_to(target, target_is_directory=True)
+    with pytest.raises(ValueError, match='sealed paths'):
+        refuse_sealed(link / 'missing')
+
+
 def test_real_anchor_gate_checks_paired_discrimination_and_reference(tmp_path):
     from r1.scripts.exam_runner import anchor_gate, verify_anchor_reference
     source=tmp_path/'reference.json';write(source,{'lower':0.1,'upper':0.5})

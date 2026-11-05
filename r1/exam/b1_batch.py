@@ -28,7 +28,7 @@ def refuse_sealed(*paths):
     for raw in paths:
         if raw is None: continue
         path=Path(raw).expanduser()
-        if 'r1_sealed' in path.parts or 'r1_sealed' in path.resolve().parts:
+        if any(part.casefold() == 'r1_sealed' for part in (*path.parts, *path.resolve().parts)):
             _stop('sealed paths cannot be analyzed')
 
 
