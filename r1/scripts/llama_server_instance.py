@@ -319,7 +319,8 @@ class LlamaServerInstance:
         return offload_check(self.log_text(), pid=pid, gpu_uuid=self.gpu_uuid, footprint_mib=footprint_mib, apps=apps)
 
     def start(self, *, build: dict | None = None, model_sha256: str | None = None,
-              preserve_on_failure: bool = False, lease_fd: int | None = None) -> dict:
+              preserve_on_failure: bool = False, lease_fd: int | None = None,
+              b1_lease_fd: int | None = None) -> dict:
         """Start the native server; cooperative Stage A passes the inherited lease FD.
 
         ``lease_fd`` must be the verified lease descriptor of this process.  When
@@ -335,6 +336,8 @@ class LlamaServerInstance:
             raise RuntimeError('STOP: this instance was already started')
         if lease_fd is not None and (type(lease_fd) is not int or lease_fd < 3):
             raise RuntimeError('STOP: explicit lease FD invalid')
+        if b1_lease_fd is not None and (type(b1_lease_fd) is not int or b1_lease_fd < 3 or lease_fd is not None):
+            raise RuntimeError('STOP: B1 lease FD invalid or conflicts with Stage A')
         if not port_is_free(self.port):
             raise RuntimeError(f'STOP: port {self.port} is in use; a dedicated instance never shares a server')
         if not Path(self.model_path).is_file():
@@ -344,12 +347,14 @@ class LlamaServerInstance:
         argv = self.argv
         log = self.log_path.open('ab')
         if lease_fd is None and os.environ.get('TRACKX_GPU_LEASE_FD'):
+            if b1_lease_fd is not None: raise RuntimeError('STOP: conflicting Stage A and B1 lease environments')
             from r1.exam.cache_runtime import verified_lease_fd
             lease_fd = verified_lease_fd()
+        passed_fd=lease_fd if lease_fd is not None else b1_lease_fd
         try:
             self.process = subprocess.Popen(argv, env=env, stdout=log, stderr=subprocess.STDOUT,
                                             stdin=subprocess.DEVNULL, start_new_session=True,
-                                            pass_fds=() if lease_fd is None else (lease_fd,))
+                                            pass_fds=() if passed_fd is None else (passed_fd,))
         finally:
             log.close()
         try:
@@ -414,6 +419,9 @@ class LlamaServerInstance:
             status, body = _get_json(self.url + '/health', 2.0)
             last = {'status': status, 'body': body}
             if status == 200:
+                if b1_lease_fd is not None:
+                    from r1.exam.b1_lease import verify_server_fd
+                    verify_server_fd(b1_lease_fd,self.process.pid)
                 if lease_fd is not None:
                     inheritance = self._verify_lease_inheritance(lease_fd, server_ticks)
                     self.record['lease_inheritance'] = inheritance

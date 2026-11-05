@@ -353,7 +353,7 @@ class ExamRunner:
         self.registry=read_registry(self.registry_path)
         self.rule,self.rule_sha=load_rule(cfg['rule'],cfg['rule_sha256'])
         self.binding=hashlib.sha256(json.dumps({'config':cfg,'registry_sha256':digest_file(self.registry_path),'rule_sha256':self.rule_sha,'value_grids_sha256':digest_file(cfg['value_grids'])},sort_keys=True).encode()).hexdigest()
-        self.service=None;self.child=None;self.state={};self.lock=None;self.author_head=None
+        self.service=None;self.child=None;self.state={};self.lock=None;self.author_head=None;self.b1_lease_fd=None
         if not cfg.get('dryrun'):
             from r1.harness import harness_root
             actual=subprocess.check_output(['git','-C',str(harness_root()),'rev-parse','HEAD'],text=True).strip()
@@ -405,6 +405,9 @@ class ExamRunner:
             shutil.copyfile(self.registry_path,self.out/'registry_snapshot.yaml')
             self.state={'schema':'exam_batch/v1','label':'EXAM','execution_label':'DRYRUN' if self.cfg.get('dryrun') else ('ENGINEERING_ONLY' if phase=='stage-a' else 'EVIDENCE'),
                         'phase':phase,'binding':self.binding,'rule_sha256':self.rule_sha,'completed':{},'interruptions':[],'status':'RUNNING'}
+        if phase=='b1' and not self.cfg.get('dryrun'):
+            from r1.exam.b1_lease import acquire
+            self.b1_lease_fd=acquire(Path.home()/'r1_locks'/'gpu0.lock')
         lock=self.out/'runner.lock'
         if lock.exists():
             old=json.loads(lock.read_text())
@@ -480,6 +483,8 @@ class ExamRunner:
         return build
 
     def _server(self, spec, mode, ctx):
+        if self.state.get('phase')=='b1' and not self.cfg.get('dryrun') and getattr(self,'b1_lease_fd',None) is None:
+            raise PreparationStop('STOP: B1 GPU lease is missing before server start')
         host_check(self.cfg,self.out)
         build=self.validate_spec(spec)
         model=spec['runtime']['model_path'];server=self.cfg['server']
@@ -518,10 +523,14 @@ class ExamRunner:
                     break
         monitor=threading.Thread(target=watch_loading,daemon=True);monitor.start()
         try:
+            from r1.exam.b1_lease import B1LeaseStop
             try: inst.start(build=build,model_sha256=spec['quant_source']['sha256'],
-                            preserve_on_failure=self.state.get('phase')=='stage-a',lease_fd=lease_fd)
+                            preserve_on_failure=self.state.get('phase')=='stage-a',lease_fd=lease_fd,
+                            b1_lease_fd=self.b1_lease_fd if self.state.get('phase')=='b1' and not self.cfg.get('dryrun') else None)
             except LeaseStop as exc:
                 raise PreparationStop(f'STOP: cooperative lease inheritance failed: {exc}') from exc
+            except B1LeaseStop as exc:
+                raise PreparationStop(str(exc)) from exc
             except RuntimeError as exc:
                 if disk_error: raise PreparationStop(disk_error[0]) from exc
                 if 'port' in str(exc) and 'in use' in str(exc): raise PreparationStop(str(exc)) from exc
@@ -552,6 +561,9 @@ class ExamRunner:
         if self.state.get('phase')=='stage-a':
             from r1.exam.cache_runtime import verified_lease_fd
             kwargs['pass_fds']=(verified_lease_fd(),)
+        elif self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+            if self.b1_lease_fd is None: raise PreparationStop('STOP: B1 GPU lease is missing')
+            kwargs['pass_fds']=(self.b1_lease_fd,)
         with (path/'runner.log').open('ab') as log:
             self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
         self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
@@ -564,6 +576,9 @@ class ExamRunner:
                     reject_unverified_lease()
                 self.space()
                 if not self.cfg.get('dryrun') and self.service:
+                    if self.state.get('phase')=='b1':
+                        from r1.exam.b1_lease import verify_server_fd
+                        verify_server_fd(self.b1_lease_fd,self.service.process.pid)
                     apps=lsi.gpu_compute_apps();sample=gpu_sample(self.cfg)
                     if apps is None or any(r['pid']!=self.service.process.pid for r in apps) or sample['free_mib']<1024:
                         raise RuntimeError('STOP: GPU census/margin lost during campaign')
@@ -645,3 +660,5 @@ class ExamRunner:
             return
         self.stop_service()
         if self.lock: self.lock.unlink(missing_ok=True);self.lock=None
+        if getattr(self,'b1_lease_fd',None) is not None:
+            os.close(self.b1_lease_fd);self.b1_lease_fd=None
