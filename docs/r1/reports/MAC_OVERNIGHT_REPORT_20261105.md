@@ -8,6 +8,8 @@ B1 is **not ready to start from one author signature**. Its rule, committed-HEAD
 
 No experiment host or real model service was contacted, no experiment or real model was run, no GPU was used, and no author decision cell was supplied. GitHub was used for authorized feature-branch pushes. Synthetic tests and test-owned local fakes are identified as such in their reviews. The original Mac working tree was not modified.
 
+The historical Mac full suite recorded 896 passed, 39 failed and 11 skipped (`MAC_M2_FAILURE_CLASSIFICATION_20261105.md` and its linked log). It was not rerun after these changes under the overnight no-model instruction; the focused synthetic results below do not establish a passing current full suite.
+
 ## Reviewed units and publication
 
 | Unit | Published branch / code | Independent review and limits |
