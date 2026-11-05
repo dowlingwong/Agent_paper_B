@@ -11,6 +11,12 @@ import sys
 import hk2_common as c
 
 
+def copyback_state(config, now):
+    cutoff = c.parse_iso(str(config["values"]["cutoff_C"]))
+    deadline = c.parse_iso(str(config["values"]["copyback_D"]))
+    return 'overdue' if now >= deadline else ('due' if now >= cutoff else 'not_due')
+
+
 def update_ledger(config, outstanding, accounted):
     directory = c.records_dir(config)
     # This engineering path copies back to results/r1/trackg/hk2/gpu_ledger.csv
@@ -52,9 +58,12 @@ def main(argv=None):
         directory = c.records_dir(config)
         with c.QueryLock(directory / "query.lock"):
             live, accounted = c.query_snapshot(config)
+            c.record_observed_jobs(config, live)
             path, rows = update_ledger(config, live, accounted)
             print("ledger=" + str(path))
             print("jobs=" + str(len(rows)))
+            print("copyback_deadline=" + str(config["values"]["copyback_D"]))
+            print("copyback_state=" + copyback_state(config, c.utc_now()))
             print("proposed_config=" + ",".join(config["proposed"]))
         return 0
     except (c.Hk2Error, OSError, ValueError) as exc:

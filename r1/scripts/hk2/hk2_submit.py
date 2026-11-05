@@ -21,14 +21,10 @@ import hk2_common as c
 SAFE = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 
-def require_submission_readiness():
-    """Fail closed pending a reviewed command identity and account-wide procedure.
-
-    Manifest metadata is self-declared and cannot identify what argv does. Other
-    submitters do not share this lock; accounting may lag. Real submission is
-    therefore disabled until an independently reviewed solution addresses both.
-    """
-    raise c.Hk2Error("real submission disabled: command identity and account-wide accounting/concurrency controls need review")
+def require_submission_readiness(config):
+    """The sole submit switch is off in the shipped configuration; HK1 may enable it."""
+    if config["values"].get("real_submission_enabled") is not True:
+        raise c.Hk2Error("real submission disabled by configuration; enable only at reviewed HK1")
 
 
 def validate_manifest(data, config):
@@ -59,7 +55,7 @@ def validate_manifest(data, config):
     mem = c.parse_mem_mb(data["mem"])
     part = data["partition"]
     dev = part in config["values"]["dev_partitions"]
-    if dev and data["production"]:
+    if dev and (data["production"] or data["phase"] not in ("HK1", "HK2")):
         raise c.Hk2Error("production job on dev partition")
     if dev and seconds > c.parse_slurm_time(str(config["values"]["dev_max_time"])):
         raise c.Hk2Error("dev time exceeds limit")
@@ -86,6 +82,9 @@ def check_guards(data, config, plan, outstanding, accounted, now, author=False, 
         raise c.Hk2Error("job cannot finish before cutoff")
     if len(outstanding) >= int(v["max_outstanding"]):
         raise c.Hk2Error("submission would exceed outstanding-job limit")
+    unified, _ = c.plan_has_row(Path(plan), "R1-HOREKA-UNIFIED-SUBMISSION")
+    if not unified:
+        raise c.Hk2Error("PLAN unified submission ruling absent")
     dev_parts = v["dev_partitions"]
     if data["partition"] in dev_parts and any(j["partition"] in dev_parts or j["qos"] == "dev" for j in outstanding):
         raise c.Hk2Error("dev QoS already has an outstanding job")
@@ -152,7 +151,7 @@ def main(argv=None):
             print("DRY RUN: live queue, budget and submission guards have not been checked")
             print(script, end="")
             return 0
-        require_submission_readiness()
+        require_submission_readiness(config)
         if args.author:
             if not sys.stdin.isatty() or not sys.stdout.isatty():
                 raise c.Hk2Error("--author requires an interactive terminal")
@@ -206,6 +205,9 @@ def main(argv=None):
             os.replace(str(marker), str(archive / ("submitted-" + match.group(1) + "-" + digest + ".json")))
             print("submitted job " + match.group(1))
         return 0
+    except c.AccountingPending as exc:
+        print("WAIT: " + str(exc) + "; retry after at least 60 seconds", file=sys.stderr)
+        return 75
     except (c.Hk2Error, OSError, ValueError, subprocess.SubprocessError) as exc:
         print("STOP: " + str(exc), file=sys.stderr)
         return 2

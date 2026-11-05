@@ -1,5 +1,6 @@
 {
  "schema": "hk2_config/v1",
+ "real_submission_enabled": {"value": false, "status": "ruled: overnight author instruction, enable only at HK1 after review"},
  "comment": "HoreKa 2 tool settings (HOREKA_RUNBOOK_20261104.md rev 3, PLAN R1-HOREKA-RUNBOOK). Every value carries a status: 'ruled: <PLAN row>' (decided), 'measured: <source>' (read from the scan), or 'proposed: <source>' (the runbook's proposed value, an OPEN author item; the tools print and record every proposed key). Change a value only with its status. AI-assisted (Claude, M10, 4 Nov 2026).",
  "account": {"value": "hk-project-p0027888", "status": "measured: HOREKA_RUNBOOK §0.1 (scan 4 Nov), the only account"},
  "freeze_F": {"value": "2026-11-20T12:00:00+01:00", "status": "proposed: HOREKA_RUNBOOK §0.5 F; open author item §7 item 3"},

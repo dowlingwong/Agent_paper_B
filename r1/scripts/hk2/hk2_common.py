@@ -17,6 +17,7 @@ import datetime as dt
 import fcntl
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -28,6 +29,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
 DEFAULT_CONFIG = HERE / "hk2_config.json"
 DEFAULT_PLAN = REPO / "docs" / "r1" / "PLAN.md"
+CANONICAL_RESULTS_ROOT = Path('/hfs2/data/project/hk-project-p0027888/ka_ir7683/r1/results')
 CONFIG_SCHEMA = "hk2_config/v1"
 STATUS_PREFIXES = ("ruled:", "measured:", "proposed:")
 
@@ -39,6 +41,10 @@ EXPECTED_END_STATES = ("COMPLETED", "DEADLINE")
 
 class Hk2Error(RuntimeError):
     """A usage or configuration error (exit 2)."""
+
+
+class AccountingPending(Hk2Error):
+    """Accounting is not reconciled; pause and retry after the polling interval."""
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +130,7 @@ def parse_mem_mb(text: str) -> float:
 # Config
 # ---------------------------------------------------------------------------
 
-REQUIRED_KEYS = ("account", "freeze_F", "cutoff_C", "copyback_D", "campaign_start", "budget_ceiling_gpu_h",
+REQUIRED_KEYS = ("real_submission_enabled", "account", "freeze_F", "cutoff_C", "copyback_D", "campaign_start", "budget_ceiling_gpu_h",
                  "budget_stop_gpu_h", "t_max_hours", "probed_shape", "max_outstanding", "dev_partitions",
                  "dev_max_time", "agent_partitions", "gpu_partition_prefix", "ruling_row_id", "results_root",
                  "stop_marker", "query_min_interval_s")
@@ -150,8 +156,27 @@ def load_config(path: Optional[Path] = None) -> Dict[str, object]:
         statuses[key] = status
     for key in ("freeze_F", "cutoff_C", "copyback_D", "campaign_start"):
         parse_iso(str(values[key]))
-    if not parse_iso(str(values["freeze_F"])) <= parse_iso(str(values["cutoff_C"])):
-        raise Hk2Error("freeze_F must not be after cutoff_C")
+    if type(values["real_submission_enabled"]) is not bool:
+        raise Hk2Error("real_submission_enabled must be a JSON boolean")
+    for key in ("budget_ceiling_gpu_h", "budget_stop_gpu_h", "t_max_hours", "query_min_interval_s"):
+        value = values[key]
+        if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+            raise Hk2Error(f"{key} must be a positive finite JSON number")
+    if values["query_min_interval_s"] < 60:
+        raise Hk2Error("query_min_interval_s must be at least 60 seconds")
+    if type(values["max_outstanding"]) is not int or not 1 <= values["max_outstanding"] <= 90:
+        raise Hk2Error("max_outstanding must be an integer between 1 and 90")
+    shape = values["probed_shape"]
+    if not isinstance(shape, dict) or any(type(shape.get(k)) is not int for k in ("gpus", "cpus_per_task", "mem_mb")):
+        raise Hk2Error("probed_shape must contain integer resources")
+    if not (1 <= shape["gpus"] <= 1 and 1 <= shape["cpus_per_task"] <= 32 and 1 <= shape["mem_mb"] <= 184320):
+        raise Hk2Error("probed_shape exceeds the currently probed shape")
+    if parse_slurm_time(str(values["dev_max_time"])) <= 0:
+        raise Hk2Error("dev_max_time must be positive")
+    if expand_path(str(values["results_root"])).resolve() != CANONICAL_RESULTS_ROOT.resolve():
+        raise Hk2Error("results_root differs from the canonical shared project state root")
+    if not parse_iso(str(values["freeze_F"])) <= parse_iso(str(values["cutoff_C"])) <= parse_iso(str(values["copyback_D"])):
+        raise Hk2Error("freeze_F, cutoff_C and copyback_D must be in order")
     if float(values["budget_stop_gpu_h"]) > float(values["budget_ceiling_gpu_h"]):  # type: ignore[arg-type]
         raise Hk2Error("budget_stop_gpu_h must not exceed budget_ceiling_gpu_h")
     return {"values": values, "statuses": statuses, "path": str(target),
@@ -172,36 +197,37 @@ def expand_path(text: str) -> Path:
 # ---------------------------------------------------------------------------
 
 def plan_has_row(plan_path: Path, row_id: str) -> Tuple[bool, str]:
-    """True when PLAN §10 has a table row whose first cell begins with ``row_id``.
-
-    Only ``|`` table rows inside the section headed ``## 10.`` count; a mention in prose, in another column,
-    in another section, or an id that merely starts with ``row_id`` (``row_id`` + more id characters) does not.
-    A missing or unreadable PLAN counts as "no row" (fail closed). Returns (found, reason).
-    """
+    """Require one exact, nonempty decision row under a dated §10 subsection."""
     try:
         lines = Path(plan_path).read_text(encoding="utf-8").splitlines()
     except OSError as exc:
         return False, f"PLAN not readable at {plan_path}: {exc}"
     in_section = False
     seen_section = False
+    dated = False
+    found = []
     for line in lines:
         if line.startswith("## "):
             in_section = bool(re.match(r"^## 10\.(\s|$)", line))
             seen_section = seen_section or in_section
+            dated = False
             continue
-        if not in_section or not line.lstrip().startswith("|"):
+        if in_section and line.startswith("### "):
+            dated = bool(re.match(r'^###\s+\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b', line))
+            continue
+        if not in_section or not dated or not line.lstrip().startswith("|"):
             continue
         cells = line.strip().split("|")
         if len(cells) < 3:
             continue
         first = cells[1].strip().strip("*`_ ").strip()
-        if first.startswith(row_id):
-            rest = first[len(row_id):]
-            if rest == "" or not re.match(r"[A-Za-z0-9_-]", rest[0]):
-                return True, f"PLAN §10 row {first!r} at {plan_path}"
+        if first == row_id:
+            found.append(cells[2].strip())
     if not seen_section:
         return False, f"PLAN at {plan_path} has no '## 10.' section"
-    return False, f"PLAN §10 at {plan_path} has no row {row_id}"
+    if len(found) == 1 and found[0] and found[0] not in ('-', '—'):
+        return True, f"PLAN §10 row {row_id!r} at {plan_path}"
+    return False, f"PLAN §10 at {plan_path} has no unique nonempty dated row {row_id}"
 
 
 # ---------------------------------------------------------------------------
@@ -275,8 +301,12 @@ def query_snapshot(config, runner=default_runner):
     # Mark before either call, including failed calls, so errors cannot cause rapid polling.
     throttle.mark()
     user = current_user()
-    return (squeue_jobs(runner, user),
-            sacct_jobs(runner, user, parse_iso(str(config["values"]["campaign_start"]))))
+    live = squeue_jobs(runner, user)
+    # Preserve observations even when the subsequent sacct call fails. A job
+    # must not disappear during accounting delay without leaving a WAIT gate.
+    record_observed_jobs(config, live)
+    accounted = sacct_jobs(runner, user, parse_iso(str(config["values"]["campaign_start"])))
+    return live, accounted
 
 
 SQUEUE_FORMAT = "%i|%P|%T|%l|%b|%q|%j"
@@ -439,13 +469,51 @@ def budget_state(outstanding: List[Dict[str, object]], accounted: List[Dict[str,
     return {"used_gpu_h": used, "reserved_gpu_h": reserved}
 
 
+def record_observed_jobs(config, outstanding):
+    """Persist every user job seen by either the status or submit tool."""
+
+    directory = records_dir(config)
+    path = directory / "observed_jobs.json"
+    try:
+        stored = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(stored, list) or any(not isinstance(x, str) or not x.isdigit() for x in stored):
+            raise ValueError("invalid observed jobs")
+        seen = set(stored)
+    except FileNotFoundError:
+        seen = set()
+    except (OSError, ValueError, TypeError) as exc:
+        raise Hk2Error("cannot read observed job ledger: " + str(exc)) from exc
+    live = {str(j["job_id"]) for j in outstanding}
+    seen.update(live)
+    seen.update(submission_phases(directory))
+    if any(not jid.isdigit() for jid in seen):
+        raise Hk2Error("cannot record ambiguous observed job id")
+    directory.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8") as fh:
+        json.dump(sorted(seen), fh)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(str(tmp), str(path))
+    dirfd = os.open(str(directory), os.O_RDONLY)
+    try:
+        os.fsync(dirfd)
+    finally:
+        os.close(dirfd)
+    return seen
+
+
 def require_submission_accounted(config, outstanding, accounted):
-    """Fail closed if a recorded submission is absent from both Slurm sources."""
-    known = set(submission_phases(records_dir(config)))
-    visible = {str(j["job_id"]) for j in outstanding + accounted}
-    missing = known - visible
+    """Pause if an observed user job vanished without terminal accounting."""
+    seen = record_observed_jobs(config, outstanding)
+    live = {str(j["job_id"]) for j in outstanding}
+    terminal = {"BOOT_FAIL", "CANCELLED", "COMPLETED", "DEADLINE", "FAILED", "NODE_FAIL",
+                "OUT_OF_MEMORY", "PREEMPTED", "TIMEOUT", "REVOKED", "SPECIAL_EXIT"}
+    finished = {str(j["job_id"]) for j in accounted
+                if (str(j.get("state", "")).split() or [""])[0].rstrip("+") in terminal}
+    missing = seen - live - finished
     if missing:
-        raise Hk2Error("submitted jobs absent from both queue and accounting: " + ", ".join(sorted(missing)))
+        raise AccountingPending("waiting for terminal accounting of observed jobs: " + ", ".join(sorted(missing)))
 
 
 def records_dir(config: Dict[str, object]) -> Path:
