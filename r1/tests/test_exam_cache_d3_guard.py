@@ -47,29 +47,44 @@ def test_runner_start_stage_a_requires_authorized_d3_context(tmp_path):
         runner.start('stage-a')
     assert not runner.out.exists()
 
-@pytest.mark.parametrize('phase', ['b1', 'b2'])
-def test_evidence_cli_stops_before_config_and_runner(phase, monkeypatch, tmp_path):
+def test_b2_cli_stops_before_config_and_runner(monkeypatch, tmp_path):
     from r1.scripts import exam_runner
     def unexpected(*args, **kwargs):
         raise AssertionError('must stop before config or runner')
     monkeypatch.setattr(exam_runner, 'load_config', unexpected)
     monkeypatch.setattr(exam_runner, 'ExamRunner', unexpected)
-    with pytest.raises(PreparationStop, match='reviewed harness pin'):
-        exam_runner.main([phase, '--out', str(tmp_path / 'never-created')])
+    with pytest.raises(PreparationStop, match='B2 reviewed observer'):
+        exam_runner.main(['b2', '--out', str(tmp_path / 'never-created')])
     assert not (tmp_path / 'never-created').exists()
 
-@pytest.mark.parametrize('phase', ['b1', 'b2'])
-def test_evidence_start_stops_before_output(phase, tmp_path):
+def test_b1_cli_refuses_missing_active_note_before_runner(monkeypatch,tmp_path):
+    from r1.scripts import exam_runner
+    monkeypatch.setattr(exam_runner,'load_config',lambda *a,**k:{'authorizations':{'b1':'TODO_AUTHOR_NOTE'}})
+    monkeypatch.setattr(exam_runner,'ExamRunner',lambda *a,**k:pytest.fail('runner must not start'))
+    with pytest.raises(PreparationStop,match='authorization note is unresolved'):
+        exam_runner.main(['b1','--out',str(tmp_path/'never-created')])
+    assert not (tmp_path/'never-created').exists()
+
+def test_b2_start_stops_before_output(tmp_path):
     from r1.exam.runtime import ExamRunner
     runner = object.__new__(ExamRunner)
     runner.out = tmp_path / 'never-created'
-    with pytest.raises(PreparationStop, match='reviewed harness pin'):
-        runner.start(phase)
+    with pytest.raises(PreparationStop, match='B2 reviewed observer'):
+        runner.start('b2')
+    assert not runner.out.exists()
+
+def test_b1_unauthorized_start_stops_before_output(tmp_path,monkeypatch):
+    from r1.exam import runtime
+    runner=object.__new__(runtime.ExamRunner);runner.out=tmp_path/'never-created'
+    runner.rule={'version':'x5_rule/v2'};runner.rule_sha='synthetic';runner.cfg={}
+    def refused(*args): raise runtime.PreparationStop('STOP: synthetic authorization refused')
+    monkeypatch.setattr(runtime,'author_gate',refused)
+    with pytest.raises(PreparationStop,match='authorization refused'): runner.start('b1')
     assert not runner.out.exists()
 
 def test_campaign_worker_stops_before_job_access():
     from r1.exam.campaign import collect
-    with pytest.raises(RuntimeError, match='reviewed harness pin'):
+    with pytest.raises(RuntimeError, match='B2 observer'):
         collect({})
 
 

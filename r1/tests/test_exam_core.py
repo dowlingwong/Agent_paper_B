@@ -373,12 +373,12 @@ def test_rico_uses_standalone_vendor_template_and_native_thinking_policy():
     assert not s['thinking_policy']['switchable'] and not s['thinking_policy']['off_switch']
 
 
-def test_b1_b2_evidence_entry_remains_hard_stop():
+def test_evidence_entry_refuses_b2_and_unreviewed_b1_rule():
     from types import SimpleNamespace
     from r1.scripts.exam_runner import evidence
     from r1.exam.runtime import PreparationStop
     for phase in ('b1','b2'):
-        with pytest.raises(PreparationStop,match='B1/B2 reviewed harness pin'):
+        with pytest.raises(PreparationStop,match='only x5_rule/v2 B1 evidence'):
             evidence(SimpleNamespace(cfg={}),phase,None,False)
 
 
