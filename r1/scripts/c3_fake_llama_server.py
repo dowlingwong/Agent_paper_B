@@ -47,6 +47,7 @@ import platform
 import signal
 import socket
 import sys
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -277,6 +278,16 @@ def main():
         raise SystemExit('STOP: fake llama-server is forbidden on Ada')
     if not (common.ROOT / '.dryrun').is_file():
         raise SystemExit('STOP: fake llama-server requires a marked DRYRUN directory (R1_FAKE_OLLAMA_ROOT)')
+    if os.environ.get('C3_FAKE_EXIT_IF_ORPHANED')=='1':
+        parent=os.getppid()
+        if parent==1: raise SystemExit('STOP: fake server has no original parent')
+        def parent_watch():
+            while os.getppid()==parent:
+                time.sleep(.05)
+            try: log({'event':'parent_lost_self_exit'})
+            except OSError: pass
+            os._exit(0)
+        threading.Thread(target=parent_watch,daemon=True).start()
     ARGS = parse(argv)
     if not ARGS['-m'] or not Path(ARGS['-m']).is_file():
         raise SystemExit(f'fake llama-server: model file not found: {ARGS["-m"]}')
