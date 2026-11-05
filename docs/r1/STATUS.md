@@ -1,5 +1,7 @@
 # Paper B (route R1) — status log
 
+- B1 committed-HEAD authorization unit (5 Nov; AI-assisted, Codex): `mac-b1-overnight-20261105` code `f7ecf2c`, review `6d24c21` **accepted**; 23 synthetic targeted tests passed. It checks committed HEAD, clean checkout, strict dated §10 rule row and file hashes. B1 observer/entry STOPs and the author's rule row/note remain open; this unit alone does not authorize B1.
+
 - M10 submit/status unit (5 Nov; AI-assisted, Codex): code `9f7675e` and integration review `MAC_M10_INTEGRATION_REVIEW_20261105.md` **accepted**; Python 3.9 fake Slurm tests 33 passed, and real submission defaults OFF. HK1 must check site Slurm fields, accounting delay, PrivateData and shared-lock coordination before enabling. This accepts no real job.
 
 - Overnight M2 failure classification (5 Nov; AI-assisted, Codex): `mac-x5v2-20261104` @ `cd47229` contains independently reviewed classification of all 39 historical Mac failures and an unsigned exception draft. Fifteen are B1-path or B1-related/unresolved and require fixes; an additional unverified dependency diagnosis is excluded from the exception candidates. Review accepts the classification only, not exceptions or B1 readiness. The B1 committed-HEAD authority verifier is in progress and remains NOT ACCEPTED after three review rounds; its concrete parser findings and follow-up are in the overnight question list.
