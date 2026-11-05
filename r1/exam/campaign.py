@@ -121,6 +121,11 @@ def _collect_b1_review(job):
     out=Path(job['out'])
     if not job['dryrun']: require_worker_host(job)
     if job['dryrun'] and not any((p/'.dryrun').is_file() for p in out.resolve().parents): raise RuntimeError('STOP: unmarked DRYRUN child')
+    if not job['dryrun']:
+        from r1.exam.runtime import b1_harness_sources
+        if job.get('harness_commit')!=job.get('authority_config',{}).get('harness_commit') or \
+                job.get('node_source_sha256')!=b1_harness_sources(job['node'],job['harness_commit']):
+            raise RuntimeError('STOP: B1 worker harness or initial node sources differ from parent')
     out.mkdir(parents=True,exist_ok=True)
     node=job['node'];seed=job['seed'];spec=load_registered_node(node,repo_root=HARNESS)
     node_root=out/'node'

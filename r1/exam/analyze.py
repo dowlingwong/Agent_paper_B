@@ -133,7 +133,8 @@ def b1_summary_verified(batch, cfg, *, rule_path=RULE_V2, expected=None):
     if not is_v2(rule): raise ValueError('STOP: complete-batch verification requires x5_rule/v2')
     from r1.exam.b1_batch import verify_batch
     manifests,proof=verify_batch(batch,cfg,sha)
-    result=_b1_summary_rows(manifests,rule,sha,'EVIDENCE')
+    result=_b1_summary_rows(manifests,rule,sha,'EXAM')
+    result['execution_label']='EVIDENCE'
     result['batch_verification']=proof
     return result
 

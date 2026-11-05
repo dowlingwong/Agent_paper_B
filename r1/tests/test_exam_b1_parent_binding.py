@@ -6,10 +6,16 @@ import pytest
 from r1.exam.runtime import ExamRunner, PreparationStop
 
 
+@pytest.fixture(autouse=True)
+def fake_harness_sources(monkeypatch):
+    monkeypatch.setattr('r1.exam.runtime.b1_harness_sources',lambda node,commit:{'train.py':'synthetic-sha'})
+
+
 def runner(tmp_path, *, dryrun=False, head='a'*40):
     r=ExamRunner.__new__(ExamRunner)
     r.cfg={'workers':20,'host':'TASL-7','dryrun':dryrun,'W':20,'llm_call_cap':80,
-           'audit_seeds':[9101,9102,9103,9104],'value_grids':'fixture','rule_sha256':'fixture'}
+           'audit_seeds':[9101,9102,9103,9104],'value_grids':'fixture','rule_sha256':'fixture','harness_commit':'fixture',
+           'nodes':['digits_mlp']}
     r.author_head=head;r.rule={'version':'x5_rule/v2'};r.binding='fixture-binding'
     r.state={'completed':{}};r.out=tmp_path;r.service=None
     r.space=lambda:None;r.save=lambda:None;r.seen=[]
@@ -27,6 +33,7 @@ def test_parent_passes_authorized_configuration_and_head(tmp_path):
     assert r.seen[0]['authority_config']==r.cfg
     assert r.seen[0]['authority_config'] is not r.cfg
     assert r.seen[0]['authorization_checkout_head']=='a'*40
+    assert r.seen[0]['node_source_sha256']=={'train.py':'synthetic-sha'}
 
 
 def test_worker_command_uses_runner_python_environment(tmp_path,monkeypatch):

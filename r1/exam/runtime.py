@@ -127,6 +127,30 @@ def worker_environment(base=None):
     return env
 
 
+def b1_harness_sources(node, expected_commit):
+    """Bind B1's editable starting bytes to a clean pinned harness checkout."""
+    from r1.harness import harness_root
+    from autoresearch.nodes.registry import load_registered_node
+    harness=Path(harness_root()).resolve()
+    try:
+        head=subprocess.check_output(['git','-C',str(harness),'rev-parse','HEAD'],text=True).strip()
+        dirty=subprocess.check_output(['git','-C',str(harness),'status','--porcelain'],text=True).strip()
+    except (OSError,subprocess.SubprocessError) as exc:
+        raise PreparationStop('STOP: B1 harness checkout cannot be verified') from exc
+    if head!=expected_commit or dirty:
+        raise PreparationStop('STOP: B1 harness checkout must be clean and pinned')
+    spec=load_registered_node(node,repo_root=harness)
+    node_dir=(harness/'nodes'/node).resolve()
+    if not node_dir.is_relative_to(harness): raise PreparationStop('STOP: B1 node path escapes harness')
+    result={}
+    for rel in spec.editable_paths:
+        path=(node_dir/rel).resolve()
+        if not path.is_relative_to(node_dir) or not path.is_file(): raise PreparationStop('STOP: B1 editable source escapes node')
+        result[rel]=digest_file(path)
+    if not result: raise PreparationStop('STOP: B1 node editable sources are missing')
+    return result
+
+
 def load_config(path, *, allow_placeholders=False):
     cfg=json.loads(Path(path).read_text())
     if cfg['ctx_size']!=32768 or cfg['cache_type_k']!='q8_0' or cfg['cache_type_v']!='q8_0' or cfg['n_gpu_layers']!=999:
@@ -405,6 +429,8 @@ class ExamRunner:
             raise PreparationStop('STOP: B1 requires the reviewed x5_rule/v2')
         if phase=='b1': self.author_head=author_gate(self.cfg,phase,self.rule_sha)
         if phase=='b1': worker_environment()
+        if phase=='b1' and not self.cfg.get('dryrun'):
+            for node in self.cfg['nodes']: b1_harness_sources(node,self.cfg['harness_commit'])
         if phase=='stage-a':refuse_existing_stage_a_output(self.out)
         self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
@@ -660,6 +686,9 @@ class ExamRunner:
                 raise PreparationStop('STOP: B1 worker needs the authorized checkout HEAD')
             job['authority_config']=copy.deepcopy(self.cfg)
             job['authorization_checkout_head']=self.author_head
+            if not job['dryrun']:
+                job['harness_commit']=self.cfg['harness_commit']
+                job['node_source_sha256']=b1_harness_sources(node,self.cfg['harness_commit'])
         self.run_job(job,'r1.exam.campaign',interrupt=interrupt)
         manifest=path/'campaign_manifest.json'
         check={'binding':self.binding,'manifest_sha256':digest_file(manifest),'passed':True,'software_anchor':self.service is None}
