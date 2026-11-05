@@ -401,7 +401,7 @@ def test_v2_author_gate_fails_closed_even_with_forged_plan(tmp_path, monkeypatch
     note = tmp_path / 'note.json'
     note.write_text(json.dumps({'author': 'Dowling Wong', 'phase': 'b1', 'approved': True, 'rule_sha256': rule_sha}))
     monkeypatch.setattr(runtime.subprocess, 'check_output', lambda *a, **k: note.read_bytes())
-    with pytest.raises(RuntimeError, match='published author authority'):
+    with pytest.raises(RuntimeError, match='configured rule sha256 mismatch'):
         runtime.author_gate({'rule': str(rule_path), 'authorizations': {'b1': str(note)}}, 'b1', rule_sha)
 
 
@@ -463,6 +463,20 @@ def test_runner_v2_b1_skips_always_on_and_runs_off_primary(tmp_path):
     m = json.loads((tmp_path / 'sw/b1_manifest.json').read_text())
     assert m['primary_mode'] == 'off' and m['thinking_on_sensitivity'] == 'descriptive'
     assert m['rule_version'] == 'x5_rule/v2' and m['cache_prompt'] is False and m['harness_commit'] == A3FEDBB
+
+
+def test_b1_manifest_requires_and_records_authorized_head(tmp_path):
+    from r1.scripts.exam_runner import _evidence_unreviewed
+    rule, sha = v2()
+    specs = [_spec('nt', NONTHINK)]
+    cfg = _runner_cfg(tmp_path, specs, ['nt'], extra={'dryrun': False})
+    runner = FakeRunner(tmp_path, specs, cfg, rule, sha)
+    with pytest.raises(PreparationStop, match='authorized checkout HEAD'):
+        _evidence_unreviewed(runner, 'b1', None, False)
+    runner.author_head = 'a' * 40
+    _evidence_unreviewed(runner, 'b1', None, False)
+    manifest = json.loads((tmp_path / 'nt/b1_manifest.json').read_text())
+    assert manifest['authorization_checkout_head'] == runner.author_head
 
 
 def test_runner_v2_b2_off_for_every_finalist_top3_rerun_descriptive(tmp_path):

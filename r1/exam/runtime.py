@@ -1,6 +1,7 @@
 """Exam runner plumbing: pinned dedicated service, whole-root resume, watchdog and disk STOP."""
 from __future__ import annotations
 import copy
+import datetime
 import hashlib
 import json
 import os
@@ -161,6 +162,94 @@ def gpu_sample(cfg):
     return {'used_mib':float(row[1]),'free_mib':float(row[2]),'utilisation_percent':float(row[3]),'device':0}
 
 
+def _x5_author_row(plan, rule_sha):
+    """Require one dated §10 author decision row, not a prose mention."""
+    section=False; dated=False; matches=[]; fence=None; comment=False; table=False; header=None
+    for raw_line in plan.splitlines():
+        # Reject raw HTML blocks in section 10 rather than interpreting their
+        # contents as Markdown; an author can use ordinary Markdown instead.
+        if section and not fence and not comment and re.match(r'^ {0,3}<(?:[A-Za-z][A-Za-z0-9-]*(?:\s|/?>)|\?|![A-Z])',raw_line):
+            return False
+        opening=re.match(r'^ {0,3}(`{3,}|~{3,})',raw_line)
+        if fence:
+            if re.match(r'^ {0,3}'+re.escape(fence[0])+r'{'+str(len(fence))+r',}\s*$',raw_line): fence=None
+            table=False; header=None
+            continue
+        if opening:
+            fence=opening.group(1); table=False; header=None; continue
+        line=''; rest=raw_line
+        while rest:
+            if comment:
+                end=rest.find('-->')
+                if end<0: rest=''; break
+                comment=False; rest=rest[end+3:]; continue
+            start=rest.find('<!--')
+            if start<0: line+=rest; break
+            line+=rest[:start]; rest=rest[start+4:]; comment=True
+        if not line.strip() or line.expandtabs(4).startswith('    '):
+            table=False; header=None; continue
+        if line.startswith('## '):
+            section=bool(re.match(r'^## 10\.(?:\s|$)', line)); dated=False; table=False; header=None
+            continue
+        if not section:
+            continue
+        if line.startswith('### '):
+            dated=False; table=False; header=None
+            date=re.search(r'\b(?:\d{1,2}\s+[A-Za-z]+\s+20\d{2}|20\d{2}-\d{2}-\d{2})\b',line)
+            if date and re.search(r'author',line,re.I):
+                for fmt in ('%d %B %Y','%Y-%m-%d'):
+                    try: datetime.datetime.strptime(date.group(0),fmt); dated=True; break
+                    except ValueError: pass
+            continue
+        if not line.lstrip().startswith('|'):
+            table=False; header=None
+            continue
+        parts=line.strip().split('|')
+        cells=parts[1:-1] if parts[-1]=='' else parts[1:]
+        separator=len(cells)>=2 and all(re.fullmatch(r'\s*:?-{3,}:?\s*',cell) for cell in cells)
+        if separator:
+            table=header==len(cells); header=None; continue
+        if not table:
+            header=len(cells) if len(cells)>=2 else None
+            continue
+        if len(cells)<2 or cells[0].strip()!='R1-EXAM-RULE-X5V2':
+            continue
+        decision=cells[1].strip()
+        matches.append(dated and bool(decision) and bool(re.search(r'(?<![0-9a-fA-F])'+re.escape(rule_sha)+r'(?![0-9a-fA-F])',decision)))
+    return len(matches)==1 and matches[0]
+
+
+def _committed_b1_authority(cfg, note, raw, rule_sha):
+    """Verify the host checkout's committed HEAD and local file bindings.
+
+    Repository writers can still forge an approval; independent review and the
+    author's instruction are the process boundary, not cryptographic identity.
+    """
+    if cfg.get('rule_sha256') != rule_sha:
+        raise RuntimeError('STOP: configured rule sha256 mismatch')
+    head=subprocess.check_output(['git','-C',str(REPO),'rev-parse','--verify','HEAD'],text=True).strip()
+    if not re.fullmatch(r'[0-9a-f]{40}',head): raise RuntimeError('STOP: invalid checkout HEAD')
+    if subprocess.check_output(['git','-C',str(REPO),'status','--porcelain','--untracked-files=all'],text=True).strip():
+        raise RuntimeError('STOP: host checkout must be clean')
+    try:
+        rel=note.resolve(strict=True).relative_to(REPO.resolve())
+        committed=subprocess.check_output(['git','-C',str(REPO),'show',f'{head}:{rel.as_posix()}'])
+        plan_raw=subprocess.check_output(['git','-C',str(REPO),'show',f'{head}:docs/r1/PLAN.md'])
+    except (ValueError, OSError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError('STOP: committed authorization or PLAN not available') from exc
+    if committed!=raw: raise RuntimeError('STOP: authorization bytes differ from committed HEAD')
+    if not _x5_author_row(plan_raw.decode('utf-8'),rule_sha):
+        raise RuntimeError('STOP: dated §10 X5 rule decision and sha required')
+    for path_key,sha_key in (('rule','rule_sha256'),('stage_a_table','stage_a_table_sha256'),
+                             ('stage_a_amendment_table','stage_a_amendment_table_sha256'),
+                             ('stage_a_amendment_acceptance','stage_a_amendment_acceptance_sha256')):
+        path=Path(cfg[path_key]); path=path if path.is_absolute() else REPO/path
+        expected=cfg[sha_key]
+        if not isinstance(expected,str) or not re.fullmatch(r'[0-9a-f]{64}',expected) or digest_file(path)!=expected:
+            raise RuntimeError(f'STOP: {path_key} sha256 mismatch')
+    return head
+
+
 def author_gate(cfg, phase, rule_sha):
     if cfg.get('dryrun') or phase=='stage-a': return
     note=Path(cfg['authorizations'][phase]);raw=note.read_bytes()
@@ -186,9 +275,12 @@ def author_gate(cfg, phase, rule_sha):
         raise RuntimeError('STOP: cannot verify authorization rule version') from exc
     if loaded_sha != rule_sha:
         raise RuntimeError('STOP: authorization rule digest mismatch')
-    if loaded_rule.get('version') == 'x5_rule/v2':
-        raise RuntimeError('STOP: X5 v2 published author authority is not yet bound and verified')
-    if not any(rule_sha in line and 'R1-EXAM-RULE' in line for line in plan.splitlines()):
+    head=None
+    if loaded_rule.get('version') == 'x5_rule/v2' and phase=='b1':
+        head=_committed_b1_authority(cfg,note,raw,rule_sha)
+    elif loaded_rule.get('version') == 'x5_rule/v2':
+        raise RuntimeError('STOP: X5 v2 B2 authority and ranking are not implemented')
+    elif not any(rule_sha in line and 'R1-EXAM-RULE' in line for line in plan.splitlines()):
         raise RuntimeError('STOP: accepted frozen rule sha256 absent from author PLAN row')
     if data.get('nodes')!=cfg['nodes'] or data.get('stage_a_table_sha256')!=cfg['stage_a_table_sha256']: raise RuntimeError('STOP: authorization does not bind nodes and accepted Stage A table')
     if 'stage_a_amendment_table_sha256' in cfg and (data.get('stage_a_amendment_table_sha256')!=cfg['stage_a_amendment_table_sha256'] or
@@ -202,6 +294,9 @@ def author_gate(cfg, phase, rule_sha):
     if phase=='b2' and (not isinstance(cfg['b2_instances_per_node'],int) or isinstance(cfg['b2_instances_per_node'],bool) or not 1<=cfg['b2_instances_per_node']<=89): raise RuntimeError('STOP: B2 instances must fit the fresh 9011–9099 namespace')
     if phase=='b2' and data.get('instances_per_node')!=cfg['b2_instances_per_node']:
         raise RuntimeError('STOP: B2 instance count not author-bound')
+    if phase=='b1' and loaded_rule.get('version')=='x5_rule/v2' and (type(data.get('workers')) is not int or data['workers']!=cfg.get('workers')):
+        raise RuntimeError('STOP: worker count differs from authorization')
+    return head
 
 
 def verify_campaign(path, binding):
@@ -250,7 +345,7 @@ class ExamRunner:
         self.registry=read_registry(self.registry_path)
         self.rule,self.rule_sha=load_rule(cfg['rule'],cfg['rule_sha256'])
         self.binding=hashlib.sha256(json.dumps({'config':cfg,'registry_sha256':digest_file(self.registry_path),'rule_sha256':self.rule_sha,'value_grids_sha256':digest_file(cfg['value_grids'])},sort_keys=True).encode()).hexdigest()
-        self.service=None;self.child=None;self.state={};self.lock=None
+        self.service=None;self.child=None;self.state={};self.lock=None;self.author_head=None
         if not cfg.get('dryrun'):
             from r1.harness import harness_root
             actual=subprocess.check_output(['git','-C',str(harness_root()),'rev-parse','HEAD'],text=True).strip()
@@ -276,6 +371,7 @@ class ExamRunner:
             require_authorized_stagea()
         if phase in ('b1','b2'):
             raise PreparationStop('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
+        if phase=='b1': self.author_head=author_gate(self.cfg,phase,self.rule_sha)
         if phase=='stage-a':refuse_existing_stage_a_output(self.out)
         self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
@@ -318,7 +414,7 @@ class ExamRunner:
             if interval['end'] is None:
                 interval.update(end=time.time(),recovered_after_interruption=True,cost_is_upper_bound=not bool(recovery))
         self.state['status']='RUNNING';self.save()
-        author_gate(self.cfg,phase,self.rule_sha)
+        if phase!='b1': author_gate(self.cfg,phase,self.rule_sha)
         if phase=='stage-a' and not self.cfg.get('dryrun'):
             import importlib.util, importlib.metadata
             if any(importlib.util.find_spec(name) is None for name in ('transformers','jinja2','tokenizers')):

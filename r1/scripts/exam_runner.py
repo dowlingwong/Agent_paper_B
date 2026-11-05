@@ -6,6 +6,7 @@ import copy
 import json
 import os
 import platform
+import re
 import sys
 import time
 from pathlib import Path
@@ -397,7 +398,10 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
                   'gpu_hours_method':'dedicated_server_wall_intervals_including_load_and_audit',
                   'execution_label':'DRYRUN' if cfg.get('dryrun') else 'EVIDENCE','root_manifests':[str(runner.out/f'{spec["id"]}/{phase}/{r["mode"]}/{r["node"]}__s{r["instance_seed"]}/campaign_manifest.json') for r in root_results]}
         if v2:
+            if phase=='b1' and not cfg.get('dryrun') and not re.fullmatch(r'[0-9a-f]{40}',str(getattr(runner,'author_head',''))):
+                raise PreparationStop('STOP: B1 manifest requires the authorized checkout HEAD')
             manifest.update(rule_version='x5_rule/v2',cache_prompt=cfg['cache_prompt'],harness_commit=cfg.get('harness_commit'),
+                            authorization_checkout_head=getattr(runner,'author_head',None),
                             template_repair=template_repair_record(spec),
                             stage_a_pass_source=eligible[spec['id']].get('stage_a_pass_source'),
                             stage_a_amendment_table_sha256=cfg['stage_a_amendment_table_sha256'],
