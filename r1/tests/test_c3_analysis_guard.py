@@ -60,6 +60,49 @@ def test_confirm_row_with_gate_sha_allows_reader(tmp_path,monkeypatch):
     assert d.load_table(table)==[{'proposal_id':'synthetic'}]
 
 
+@pytest.mark.parametrize('header', ['| Artifact | SHA256 |', '| Key | Proposed value |',
+                                    '| ID | Proposed decision |', '| ID | Not a decision |'])
+def test_non_decision_tables_do_not_supply_authority(header):
+    sha='a'*64
+    plan=('## 10. Author decisions\n### 5 November 2026 — author decisions\n'+header+
+          '\n|---|---|\n| R1-BX-D8-CONFIRM | '+sha+' |\n')
+    assert not g._confirm_row(plan,sha)
+
+
+@pytest.mark.parametrize('heading', ['### 40 November 2026 (author)',
+                                     '### 29 February 2025 — author decisions',
+                                     '### 5 November 2026 — not author decisions',
+                                     '### 5 November 2026 — non-author decisions',
+                                     '### 5 November 2026 — no author decision',
+                                     '### 5 November 2026 — without author',
+                                     '### 5 November 2026 — not an author decision'])
+def test_invalid_or_non_author_heading_does_not_supply_authority(heading):
+    sha='a'*64
+    plan=('## 10. Author decisions\n'+heading+'\n| ID | Decision |\n|---|---|\n'
+          '| R1-BX-D8-CONFIRM | '+sha+' |\n')
+    assert not g._confirm_row(plan,sha)
+
+
+@pytest.mark.parametrize('header', ['| ID | Decision |', "| ID | Author's decision |",
+                                    '| Decision | Author decision (4 Nov 2026, 11:29) |',
+                                    '| Row | Decision |'])
+def test_actual_author_table_header_styles_are_accepted(header):
+    sha='a'*64
+    plan=('## 10. Author decisions\n### 4 November 2026 (author; recorded by an agent)\n'+header+
+          '\n|---|---|\n| R1-BX-D8-CONFIRM | '+sha+' |\n')
+    assert g._confirm_row(plan,sha)
+
+
+def test_sealed_components_casefolded_and_case_insensitive_alias(tmp_path):
+    with pytest.raises(RuntimeError,match='r1_sealed'):
+        g.refuse_sealed(tmp_path/'R1_SEALED'/'input')
+    sealed=tmp_path/'r1_sealed';sealed.mkdir()
+    alias=tmp_path/'R1_SEALED'
+    if alias.exists() and alias.samefile(sealed):
+        with pytest.raises(RuntimeError,match='r1_sealed'):
+            g.refuse_sealed(alias/'input')
+
+
 def test_dirty_plan_and_changed_gate_are_rejected(tmp_path,monkeypatch):
     root=repo(tmp_path,monkeypatch,'valid')
     (root/'docs/r1/PLAN.md').write_text((root/'docs/r1/PLAN.md').read_text()+'changed\n')
@@ -110,6 +153,18 @@ def test_direct_audit_and_accounting_readers_refuse_sealed_aliases(tmp_path):
     for path in (sealed/'data',alias/'data'):
         for read in (audit._digest,audit.RunCache,accounting._jsonl):
             with pytest.raises(RuntimeError,match='r1_sealed'): read(path)
+
+
+def test_resolve_seeds_refuses_sealed_directory_and_seed_symlink(tmp_path):
+    sealed=tmp_path/'r1_sealed';sealed.mkdir()
+    (sealed/audit.SEEDS_FILE).write_text('{"seeds":[7001]}')
+    with pytest.raises(RuntimeError,match='r1_sealed'):
+        audit.resolve_seeds(sealed)
+    with pytest.raises(RuntimeError,match='r1_sealed'):
+        audit.resolve_seeds(sealed,[7001])
+    out=tmp_path/'out';out.mkdir();(out/audit.SEEDS_FILE).symlink_to(sealed/audit.SEEDS_FILE)
+    with pytest.raises(RuntimeError,match='r1_sealed'):
+        audit.resolve_seeds(out)
 
 
 def test_synthetic_exam_readers_refuse_sealed_inputs(tmp_path):

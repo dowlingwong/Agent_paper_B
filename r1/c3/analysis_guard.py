@@ -12,6 +12,7 @@ import hashlib
 import json
 import re
 import subprocess
+from datetime import date
 from pathlib import Path
 from r1.harness import REPO
 
@@ -25,8 +26,32 @@ def refuse_sealed(*paths):
         if raw is None:
             continue
         path = Path(raw).expanduser()
-        if 'r1_sealed' in path.parts or 'r1_sealed' in path.resolve().parts:
+        if any(part.casefold() == 'r1_sealed' for part in (*path.parts, *path.resolve().parts)):
             raise RuntimeError('STOP: r1_sealed paths are not analysis inputs')
+
+
+def _author_heading(line):
+    """Require a real calendar date and explicit, affirmative author marker."""
+    match = re.search(r'\b(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})\b', line, re.I)
+    if not match:
+        return False
+    months = ('january', 'february', 'march', 'april', 'may', 'june',
+              'july', 'august', 'september', 'october', 'november', 'december')
+    try:
+        date(int(match.group(3)), months.index(match.group(2).casefold()) + 1, int(match.group(1)))
+    except ValueError:
+        return False
+    if re.search(r'\b(?:not|non|no|without|never)[-\s]+(?:an?\s+|the\s+)?author\b', line, re.I):
+        return False
+    return bool(re.search(r"\bauthor(?:'s)?\s+(?:decisions?|rulings?|adoption)\b|\(\s*author\s*(?:[;,)])|\bauthor\s*$", line, re.I))
+
+
+def _decision_header(cells):
+    if len(cells) < 2:
+        return False
+    first, second = (c.strip().strip('*` ').casefold() for c in cells[:2])
+    return (first in {'id', 'decision', 'row'} and
+            bool(re.fullmatch(r"(?:author(?:'s)?\s+)?decision(?:\s*\([^()]*\))?", second)))
 
 
 def _confirm_row(plan, gate_sha):
@@ -60,7 +85,7 @@ def _confirm_row(plan, gate_sha):
         if line.startswith('## '):
             section=bool(re.match(r'^## 10\.(?:\s|$)',line));dated_author=False;header=None;table=False;continue
         if line.startswith('### '):
-            dated_author=bool(section and re.search(r'\b\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b',line,re.I) and re.search(r'\bauthor\b',line,re.I))
+            dated_author=bool(section and _author_heading(line))
             header=None;table=False;continue
         if line.startswith('#'):
             dated_author=False;header=None;table=False;continue
@@ -69,10 +94,10 @@ def _confirm_row(plan, gate_sha):
         parts=line.strip().split('|');cells=parts[1:-1] if parts[-1]=='' else parts[1:]
         sep=len(cells)>=2 and all(re.fullmatch(r'\s*:?-{3,}:?\s*',c) for c in cells)
         if sep:
-            table=header==len(cells);header=None;continue
+            table=header if header==len(cells) else False;header=None;continue
         if not table:
-            header=len(cells) if len(cells)>=2 else None;continue
-        if len(cells)<2: continue
+            header=len(cells) if _decision_header(cells) else None;continue
+        if len(cells)!=table: continue
         first=cells[0].strip().strip('*` ')
         if first != 'R1-BX-D8-CONFIRM': continue
         decision=cells[1].strip()

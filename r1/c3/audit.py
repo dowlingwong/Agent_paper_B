@@ -216,9 +216,11 @@ def split_audit(a: dict) -> tuple[dict, dict]:
 
 def resolve_seeds(out: Path, seeds=None) -> tuple:
     """Seeds for ``collect``: explicit, else DIR/audit_seeds.json, else the seeds present in the cache."""
+    from r1.c3.analysis_guard import refuse_sealed
+    f = Path(out) / SEEDS_FILE
+    refuse_sealed(out, f)
     if seeds:
         return tuple(seeds)
-    f = Path(out) / SEEDS_FILE
     if f.exists():
         return tuple(json.loads(f.read_text())["seeds"])
     cache = RunCache(Path(out) / "runs.jsonl")
