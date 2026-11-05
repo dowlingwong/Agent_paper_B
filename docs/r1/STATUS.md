@@ -1,5 +1,7 @@
 # Paper B (route R1) — status log
 
+- M11 reader corrections (5 Nov; AI-assisted, Codex): D8 decision-table/date validation, case-insensitive sealed path rejection and audit seed-helper protection corrected at `8645778` / `d9447e1`, independently accepted at `3d0b915` (`MAC_M11_FINAL_READER_INTEGRATION_REVIEW_20261105.md`, 39 synthetic tests). Full D8 gate, author confirmation and protected training-reader coverage remain open.
+
 - M10 proposed EVIDENCE note checker (5 Nov; AI-assisted, Codex): standalone verifier `3ff6de7` independently accepted at `0d6d569` for the proposed format only, review `MAC_M10_EVIDENCE_NOTE_INTEGRATION_REVIEW_20261105.md`; seven Python 3.9 synthetic tests passed. It is not connected to submission and the format is not an author decision. HK6/HK7 EVIDENCE remains STOP pending Q18, actual work binding, phase gates and review.
 
 - M10 engineering guards (5 Nov; AI-assisted, Codex): fenced PLAN examples and repeat submissions of a recorded DEADLINE manifest fixed at `3e43e6c` / `59b08d3`; integration independently accepted at `113eec8` (`MAC_M10_FINAL_INTEGRATION_REVIEW_20261105.md`, 38 fake Python 3.9 tests). Real submission stays OFF; full M10 remains NOT ACCEPTED because EVIDENCE/HK6/HK7 are unimplemented and the author-note/work binding remains open. HK1 must verify site accounting and the reviewed PLAN checkout.
