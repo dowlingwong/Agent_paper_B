@@ -43,7 +43,7 @@ TASL-7 has 24 logical CPUs (AMD Ryzen 9 7900X, 12 cores × 2 threads) and 62 GiB
 
 ## Pins carried from the B1 config (`r1/scripts/configs/exam_b1_v2.json` on `mac-x5v2-20261104`)
 
-- Paper: proposed code pin `1dd6e8877beb61238b66d34474abf7b474261aff` (B1 entry, lease and previous-server preservation reviewed separately; final combined-checkout review pending); harness `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (R1-EXAM-B1-HARNESS-PIN); `cache_prompt: false` on every call.
+- Paper: proposed code pin `bab4b8cb0569b94c23f2828f1a8cdb5ce3782dcf` (B1 entry, lease and previous-server preservation reviewed separately; final combined-checkout review pending); harness `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (R1-EXAM-B1-HARNESS-PIN); `cache_prompt: false` on every call.
 - llama.cpp `version: 0.7.0-dev (build 1, commit 620d222)`, binary sha `b70f488248ba6c77…`; prompt set `70872a7702a36dc1…`; registry `r1/exam/registry.yaml`.
 - Repair templates carried into B1 (R1-EXAM-A1-M1-REQUIREMENTS (1)): `olmo31_32b` `5d275f78…`, `devstral_small2_24b` `a0c0ed8a…`, `ministral3_14b` `2f545122…`.
 - Instance seeds 9001–9004, audit seeds 9101–9104, W = 20, temperature 0.2, `manager_proposal/v1`, schema-sensitivity node `openml_credit_approval` (all as the gate and RUNBOOK X.4 require).
