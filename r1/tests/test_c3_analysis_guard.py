@@ -112,6 +112,16 @@ def test_direct_audit_and_accounting_readers_refuse_sealed_aliases(tmp_path):
             with pytest.raises(RuntimeError,match='r1_sealed'): read(path)
 
 
+def test_synthetic_exam_readers_refuse_sealed_inputs(tmp_path):
+    from r1.c3.train import exam_analyze, exam_synthetic
+    sealed=tmp_path/'r1_sealed';sealed.mkdir()
+    alias=tmp_path/'alias';alias.symlink_to(sealed,target_is_directory=True)
+    for path in (sealed/'input',alias/'input'):
+        with pytest.raises(RuntimeError,match='r1_sealed'): exam_analyze.load_rule(path)
+        with pytest.raises(RuntimeError,match='r1_sealed'): exam_synthetic.load(path,path,verify=False)
+        with pytest.raises(RuntimeError,match='r1_sealed'): exam_analyze.main([str(path)])
+
+
 def test_only_known_sweep1_and_full_legacy_source_schema_are_exempt(tmp_path,monkeypatch):
     root=repo(tmp_path,monkeypatch)
     index=root/'results/r1/pilot/C3_sweep_index_20261028T033315Z.json';index.parent.mkdir(parents=True);index.write_text('{"synthetic":"index"}')

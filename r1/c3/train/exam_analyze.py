@@ -56,6 +56,8 @@ class RuleSuperseded(RuntimeError):
 def load_rule(path: Path | str = RULE_PATH) -> tuple[dict, str]:
     """The rule and its sha256; refuses content that differs from the committed ``.sha256``."""
     path = Path(path)
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path, Path(str(path) + '.sha256'))
     raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     expected = Path(str(path) + ".sha256").read_text().split()[0]
@@ -270,6 +272,8 @@ def main(argv=None) -> int:
     ap.add_argument("--out", type=Path)
     ap.add_argument("--rule", type=Path, default=RULE_PATH)
     a = ap.parse_args(argv)
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(a.results, a.rule, a.out)
     res = analyze(json.loads(a.results.read_text()), a.rule)
     text = json.dumps(res, indent=2, sort_keys=True)
     if a.out:
