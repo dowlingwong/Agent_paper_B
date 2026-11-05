@@ -21,7 +21,8 @@ from autoresearch.worker.local_worker import LocalWorker
 from autoresearch.worker.base import WorkerResult
 from r1.c3.audit import run_config, paired
 from r1.c3.features import apply_edit, files_hash, replay_campaign
-from r1.exam.observer import SelfForecastObserver
+from r1.exam.observer import SelfForecastObserver, B1ObserverAdapter, authorized_b1_observer
+from r1.exam.b1_observer_journal import validate_observer_journal
 from r1.exam.guards import artifact_label, digest_file
 from r1.headroom.scripted_manager import ScriptedRandomManager
 from r1.liveness.check import evaluate_ledger_paths
@@ -110,6 +111,11 @@ def require_worker_host(job, node=None):
 
 def collect(job):
     raise RuntimeError('STOP: B1/B2 reviewed harness pin and observer cache evidence not implemented')
+
+
+def _collect_b1_review(job):
+    """B1-only integration candidate; production entry remains stopped for review."""
+    if job.get('phase') != 'b1': raise RuntimeError('STOP: B1 candidate refuses other phases')
     out=Path(job['out'])
     if not job['dryrun']: require_worker_host(job)
     if job['dryrun'] and not any((p/'.dryrun').is_file() for p in out.resolve().parents): raise RuntimeError('STOP: unmarked DRYRUN child')
@@ -128,13 +134,15 @@ def collect(job):
     elif kind=='scripted': manager=ScriptedRandomManager(node,seed=seed,repetition=0)
     else: manager=exam_manager(candidate,job['proposal_schema'])
     worker=FixtureWorker(node_root,seed) if job['dryrun'] else LocalWorker(node_root=node_root,artifact_dir=out/'art',train_seed=seed,split_seed=seed)
-    observer=observer_for_campaign(job,out)
+    raw_observer=observer_for_campaign(job,out)
+    observer=B1ObserverAdapter(raw_observer) if raw_observer is not None else None
     try:
-        run_real_campaign(node_spec=spec,campaign_id=f'{node}__s{seed}',budget=job['llm_call_cap'] if kind=='llm' else 1_000_000,
-                          manager_mode='baseline_manager',memory_mode='append_only_summary',records_path=out/'root_trials.jsonl',worker=worker,
-                          proposal_backend=manager,compute_budget=ComputeBudget(max_worker_runs=job['W'],max_llm_calls=job['llm_call_cap']),
-                          action_versions=ActionVersions.new_campaign(),verify_split_policy='vary',
-                          event_store=CampaignEventStore(out/'root_events.jsonl'),proposal_observer=observer)
+        with authorized_b1_observer(job):
+            run_real_campaign(node_spec=spec,campaign_id=f'{node}__s{seed}',budget=job['llm_call_cap'] if kind=='llm' else 1_000_000,
+                              manager_mode='baseline_manager',memory_mode='append_only_summary',records_path=out/'root_trials.jsonl',worker=worker,
+                              proposal_backend=manager,compute_budget=ComputeBudget(max_worker_runs=job['W'],max_llm_calls=job['llm_call_cap']),
+                              action_versions=ActionVersions.new_campaign(),verify_split_policy='vary',
+                              event_store=CampaignEventStore(out/'root_events.jsonl'),proposal_observer=observer)
     finally:
         if observer is not None: observer.close()
     records=read_rows(out/'root_trials.jsonl');events=read_rows(out/'root_events.jsonl')
@@ -171,6 +179,7 @@ def collect(job):
                        'audit_seeds':job['audit_seeds'],'candidate_hash':p.candidate_hash,'incumbent_hash':p.incumbent_hash,'candidate_metrics':arrays[0],'incumbent_metrics':arrays[1],
                        **result,**{k:v for k,v in forecasts.get(trial,{}).items() if k in ('p_delta_positive','p_no_effect')}})
     cache_prompt=cache_prompt_evidence(records,events) if kind=='llm' else None
+    observer_evidence=validate_observer_journal(out/'a4_observer_requests.jsonl',events) if kind=='llm' else None
     live=evaluate_ledger_paths([out/'root_trials.jsonl'],manager_kind='scripted' if kind!='llm' else 'langgraph',memory_mode='append_only_summary')
     novelty=[e['payload'] for e in events if e['event_type']=='edit_novelty']
     evaluated=len(novelty)
@@ -193,8 +202,8 @@ def collect(job):
             'proposal_schema':job['proposal_schema'] if kind=='llm' else None,'observer':'exam_self_forecast/v1' if observer else None,
             'compute_budget':budget,'termination':'worker_cap' if budget['worker_runs']>=job['W'] else 'llm_cap_or_reserved_observer_pair',
             'job_binding':job['binding'],'job_sha256':digest_file(out/'job.json'),
-            'evidence_hashes':{name:digest_file(out/name) if (out/name).exists() else None for name in ('root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json')},
-            'cache_prompt':cache_prompt,'diagnostics':diagnostics,'audited_proposals':audits,'replay_checks':checks,'d28':live,'final_audits':final}
+            'evidence_hashes':{name:digest_file(out/name) if (out/name).exists() else None for name in ('root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json','a4_observer_requests.jsonl')},
+            'cache_prompt':cache_prompt,'observer_evidence':observer_evidence,'diagnostics':diagnostics,'audited_proposals':audits,'replay_checks':checks,'d28':live,'final_audits':final}
     write_json(out/'campaign_manifest.json',result)
     return result
 
