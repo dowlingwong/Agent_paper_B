@@ -19,7 +19,7 @@ class CopyStop(RuntimeError):
 def _flags(directory=False):
     if not hasattr(os, 'O_NOFOLLOW') or not hasattr(os, 'O_DIRECTORY'):
         raise CopyStop('STOP: no-follow directory operations unavailable')
-    return os.O_RDONLY | os.O_NOFOLLOW | (os.O_DIRECTORY if directory else 0)
+    return os.O_RDONLY | os.O_NOFOLLOW | (os.O_DIRECTORY if directory else os.O_NONBLOCK)
 
 
 def _open_directory(path):
