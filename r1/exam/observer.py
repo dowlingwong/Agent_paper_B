@@ -4,11 +4,60 @@ import base64
 import os
 import json
 import re
+import contextvars
+from contextlib import contextmanager
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from r1.c3.prior_model import parse_typed_answer
 from r1.exam.cache_io import read_chunks
 from r1.exam.cache_false import D3EvidenceStop
+
+_B1_OBSERVER_CONTEXT = contextvars.ContextVar('exam_b1_observer_context', default=False)
+
+
+@contextmanager
+def authorized_b1_observer(job):
+    """Enter a B1-only worker context after the real job authority checks."""
+    from r1.exam.runtime import author_gate, host_check, read_registry
+    from r1.exam.campaign import require_worker_host
+    if job.get('phase') != 'b1':
+        raise D3EvidenceStop('STOP: B1 observer context requires B1')
+    cfg=job['authority_config']
+    if bool(cfg.get('dryrun')) != bool(job.get('dryrun')):
+        raise D3EvidenceStop('STOP: B1 observer dryrun mismatch')
+    if job.get('dryrun'):
+        import platform
+        from r1.exam.runtime import APPROVED_EXAM_HOSTS
+        if platform.node().split('.')[0].casefold() in {host.casefold() for host in APPROVED_EXAM_HOSTS}:
+            raise D3EvidenceStop('STOP: B1 observer dryrun forbidden on exam hosts')
+        host_check(cfg,job['out'])
+    else:
+        require_worker_host(job)
+        if job.get('host')!=cfg.get('host') or job.get('node') not in cfg.get('nodes',[]):
+            raise D3EvidenceStop('STOP: B1 observer job host/node differs from authorized configuration')
+        if job.get('seed') not in cfg.get('instance_seeds',[]) or job.get('mode') not in ('off','on'):
+            raise D3EvidenceStop('STOP: B1 observer seed/mode differs from authorized configuration')
+        registry=read_registry(cfg['registry'])
+        candidates=registry['candidates']+registry['software_anchors']+registry.get('sensitivities',[])
+        if not any(row==job.get('candidate') for row in candidates):
+            raise D3EvidenceStop('STOP: B1 observer candidate differs from registry')
+        if job.get('mode')=='on':
+            from r1.exam.analyze import load_rule
+            rule,_=load_rule(cfg['rule'],cfg['rule_sha256'])
+            if job.get('node')!=rule['thinking_mode']['b1_sensitivity']['node']:
+                raise D3EvidenceStop('STOP: B1 thinking-on node is not the sensitivity node')
+    head=author_gate(cfg,'b1',cfg['rule_sha256'])
+    if not job.get('dryrun') and head!=job.get('authorization_checkout_head'):
+        raise D3EvidenceStop('STOP: B1 observer checkout changed')
+    token=_B1_OBSERVER_CONTEXT.set(True)
+    try:
+        yield
+    finally:
+        _B1_OBSERVER_CONTEXT.reset(token)
+
+
+class B1ObserverFatal(BaseException):
+    """Bypass the pinned harness's catch-Exception observer fallback."""
 
 
 class SelfForecastObserver:
@@ -27,14 +76,19 @@ class SelfForecastObserver:
         if self._journal is not None:
             self._journal.close();self._journal=None
 
+    def _require_context(self):
+        from r1.exam.stage_a import require_d3_evidence
+        try: require_d3_evidence()
+        except RuntimeError:
+            if not _B1_OBSERVER_CONTEXT.get(): raise
+
     def _append(self,row):
         self._journal.write(json.dumps(row,sort_keys=True,allow_nan=False)+'\n')
         self._journal.flush();os.fsync(self._journal.fileno())
 
     def _request(self, prompt):
         # Direct invocation cannot bypass the still-unreviewed D3 production gate.
-        from r1.exam.stage_a import require_d3_evidence
-        require_d3_evidence()
+        SelfForecastObserver._require_context(self)
         if not self.journal_path:
             raise D3EvidenceStop('STOP: observer durable journal path required')
         if self._journal is None:
@@ -107,8 +161,7 @@ class SelfForecastObserver:
             raise failure from exc
 
     def observe(self, proposal, status, node_spec):
-        from r1.exam.stage_a import require_d3_evidence
-        require_d3_evidence()
+        SelfForecastObserver._require_context(self)
         edit=proposal.extra.get('structured_edit') or {'objective':proposal.objective}
         prompt=('You proposed the edit below. Predict its effect without observing its outcome.\n'
                 f'Node: {node_spec.name}. Edit: {json.dumps(edit,sort_keys=True)}.\n'
@@ -133,3 +186,21 @@ class SelfForecastObserver:
                 'p_positive_given_effect':answer['p_positive'], 'size':answer['size'],
                 'raw_answer':raw, 'prompt_sha256':prompt_sha,
                 'llm_calls':1,'request_evidence':evidence}
+
+
+class B1ObserverAdapter:
+    """Propagate evidence failures past a3fedbb and expose the real cache flag."""
+    version=SelfForecastObserver.version
+    llm_calls_per_observation=1
+
+    def __init__(self, observer): self.observer=observer
+    def close(self): self.observer.close()
+    def observe(self, proposal, status, node_spec):
+        try:
+            answer=self.observer.observe(proposal,status,node_spec)
+            evidence=answer.get('request_evidence') or {}
+            if evidence.get('cache_prompt') is not False or not evidence.get('request_attempted'):
+                raise D3EvidenceStop('STOP: B1 observer request cache evidence absent')
+            return {**answer,'cache_prompt':False}
+        except Exception as exc:
+            raise B1ObserverFatal(f'STOP: B1 observer evidence failed: {exc}') from exc
