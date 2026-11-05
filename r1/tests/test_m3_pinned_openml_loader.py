@@ -131,3 +131,14 @@ def test_snapshot_detects_cache_mutation_and_pinned_source_mismatch(tmp_path,mon
     monkeypatch.setattr(module.subprocess,'check_output',different_commit)
     with pytest.raises(SnapshotStop,match='differs from pinned commit'):
         snapshot(harness,'openml_ionosphere',cache)
+
+
+def test_snapshot_refuses_cache_traversal_error(tmp_path,monkeypatch):
+    cache=tmp_path/'cache';cache.mkdir();(cache/'file').write_text('fixture')
+    real=os.scandir
+    def denied(path):
+        if Path(path)==cache: raise PermissionError('simulated cache inspection failure')
+        return real(path)
+    monkeypatch.setattr(os,'scandir',denied)
+    with pytest.raises(SnapshotStop,match='cannot inspect complete cache tree'):
+        cache_snapshot(cache)
