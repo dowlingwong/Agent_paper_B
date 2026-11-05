@@ -118,12 +118,28 @@ def forecast_summary(rows, diagnostics):
 
 
 def b1_summary(manifests, *, rule_path=RULE, expected=None, synthetic=False):
-    rule,sha=load_rule(rule_path,expected);rows=[]
+    rule,sha=load_rule(rule_path,expected)
     if is_v2(rule):
         if not synthetic:
             raise ValueError('STOP: B1 finalist analysis requires a verified complete batch and Stage A eligible set')
         if not manifests or any(m.get('execution_label')!='DRYRUN' for m in manifests):
             raise ValueError('STOP: B1 synthetic analysis accepts DRYRUN manifests only')
+    return _b1_summary_rows(manifests,rule,sha,'DRYRUN' if is_v2(rule) else 'EXAM')
+
+
+def b1_summary_verified(batch, cfg, *, rule_path=RULE_V2, expected=None):
+    """Produce v2 finalists only from the complete authorized evidence batch."""
+    rule,sha=load_rule(rule_path,expected)
+    if not is_v2(rule): raise ValueError('STOP: complete-batch verification requires x5_rule/v2')
+    from r1.exam.b1_batch import verify_batch
+    manifests,proof=verify_batch(batch,cfg,sha)
+    result=_b1_summary_rows(manifests,rule,sha,'EVIDENCE')
+    result['batch_verification']=proof
+    return result
+
+
+def _b1_summary_rows(manifests,rule,sha,label):
+    rows=[]
     for m in manifests:
         if m.get('label')!='EXAM' or m.get('phase')!='b1' or m.get('status')!='COMPLETE':
             raise ValueError('analysis requires complete EXAM B1 manifests')
@@ -170,7 +186,7 @@ def b1_summary(manifests, *, rule_path=RULE, expected=None, synthetic=False):
                      'a4_log_score':finite_mean(scores) if scores else None,
                      'a4_brier':finite_mean([(float(r['p_delta_positive'])-(r['delta_audit']>0))**2 for r in forecasts]) if forecasts else None,
                      'diagnostics':m.get('diagnostics',{})})
-    return {'phase':'b1','label':'DRYRUN' if is_v2(rule) else 'EXAM','rule_sha256':sha,'rows':rows,'finalists':choose_finalists(rows,rule)}
+    return {'phase':'b1','label':label,'rule_sha256':sha,'rows':rows,'finalists':choose_finalists(rows,rule)}
 
 
 def _b1_row_v2(m, source, observations, rule):
@@ -312,9 +328,16 @@ def _b2_summary_v2(manifests, rule, sha):
 
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('phase',choices=['stage-a','b1','b2'])
-    p.add_argument('manifests',nargs='+');p.add_argument('--rule',default=str(RULE));p.add_argument('--rule-sha256')
+    p.add_argument('manifests',nargs='*');p.add_argument('--rule',default=str(RULE));p.add_argument('--rule-sha256')
+    p.add_argument('--batch');p.add_argument('--config')
     a=p.parse_args(argv);ms=[json.loads(Path(x).read_text()) for x in a.manifests]
-    result=b1_summary(ms,rule_path=a.rule,expected=a.rule_sha256) if a.phase=='b1' else (stage_a_summary(ms) if a.phase=='stage-a' else b2_summary(ms,rule_path=a.rule,expected=a.rule_sha256))
+    if a.phase=='b1' and (a.batch or a.config):
+        if not a.batch or not a.config or ms: p.error('verified B1 needs --batch and --config, without individual manifests')
+        from r1.exam.runtime import load_config
+        result=b1_summary_verified(a.batch,load_config(a.config),rule_path=a.rule,expected=a.rule_sha256)
+    else:
+        if not ms: p.error('individual manifests are required')
+        result=b1_summary(ms,rule_path=a.rule,expected=a.rule_sha256) if a.phase=='b1' else (stage_a_summary(ms) if a.phase=='stage-a' else b2_summary(ms,rule_path=a.rule,expected=a.rule_sha256))
     print(json.dumps(result,indent=2,allow_nan=False))
 
 if __name__=='__main__': main()
