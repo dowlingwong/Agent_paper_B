@@ -51,6 +51,26 @@ def fake(tmp_path, monkeypatch):
     model.parent.mkdir()
     model.write_bytes(b"GGUF fixture")
     started = []
+    pending = []
+    if sys.platform == 'darwin':
+        # These tests use only child fake servers. Mac has no /proc, so the
+        # fixture supplies identity from Popen for those owned children; this
+        # does not test real Linux /proc identity or signal foreign processes.
+        def owned(pid):
+            return next((x for x in started + pending if x.process is not None and x.process.pid == pid), None)
+        def fake_cmdline(pid):
+            instance = owned(pid)
+            if instance is None or instance.process.poll() is not None: raise OSError('not an owned fake server')
+            return [sys.executable, *instance.argv]
+        def fake_uid(pid):
+            if owned(pid) is None: raise OSError('not an owned fake server')
+            return os.getuid()
+        def fake_alive(pid):
+            instance = owned(pid)
+            return instance is not None and instance.process.poll() is None
+        monkeypatch.setattr(lsi, 'proc_cmdline', fake_cmdline)
+        monkeypatch.setattr(lsi, 'proc_uid', fake_uid)
+        monkeypatch.setattr(lsi, 'pid_alive', fake_alive)
 
     def start(faults=(), env=None, **kwargs):
         monkeypatch.setenv("C3_FAKE_FAULTS", json.dumps(list(faults)))
@@ -58,7 +78,9 @@ def fake(tmp_path, monkeypatch):
             monkeypatch.setenv(key, value)
         inst = lsi.LlamaServerInstance(tmp_path / "batch", str(binary), model_path=str(model), alias="r1-manager",
                                        label="DRYRUN", start_timeout=20, **kwargs)
+        pending.append(inst)
         inst.start(build=lsi.build_info(str(binary)), model_sha256=lsi.sha256_file(model))
+        pending.remove(inst)
         started.append(inst)
         return inst
     yield {"start": start, "root": root, "binary": binary, "model": model, "tmp": tmp_path}
