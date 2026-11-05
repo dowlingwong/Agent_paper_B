@@ -143,6 +143,9 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
     existing tables; ``"pooled_node"`` (v2) uses s = sigma_node / sqrt(K_label) and
     records ``soft_version`` on every labelled row.
     """
+    from r1.c3.analysis_guard import guard_table
+    audits_path = audits_path or Path(table_dir) / "audits.jsonl"
+    guard_table(table_dir, audits_path, Path(table_dir) / 'proposals.jsonl')
     meta_path = Path(table_dir) / "build.json"
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     evidence = meta.get("label") == "EVIDENCE"
@@ -150,7 +153,6 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
         raise ValueError("classified table must carry an EVIDENCE label")
     if evidence and not seed_split:
         raise ValueError("EVIDENCE requires the declared label/evaluation seed split")
-    audits_path = audits_path or Path(table_dir) / "audits.jsonl"
     if evidence:
         _verify_evidence_inputs(Path(table_dir), Path(audits_path), meta)
     rows = load_table(table_dir)
@@ -524,6 +526,8 @@ def sensitivity_view(evaluation: dict) -> dict:
 
 def table_noise(table_path: Path):
     """For pinned sweep tables, verify and load the identical noise source; preserve legacy default."""
+    from r1.c3.analysis_guard import guard_table, refuse_sealed
+    guard_table(table_path)
     meta_path = table_path / "build.json"
     meta = json.loads(meta_path.read_text()) if meta_path.is_file() else {}
     source = meta.get("noise_source")
@@ -536,6 +540,7 @@ def table_noise(table_path: Path):
         if rel.is_absolute() or ".." in rel.parts:
             raise ValueError("table noise source must be repository-relative")
         path = (REPO / rel).resolve()
+        refuse_sealed(REPO / rel, path)
         if not path.is_relative_to(REPO.resolve()) or not path.is_file():
             raise ValueError("table noise source missing or outside repository")
         if hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:

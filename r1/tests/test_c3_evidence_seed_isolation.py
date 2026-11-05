@@ -5,9 +5,12 @@ import numpy as np
 import pytest
 
 from r1.c3 import offline_eval as oe
+from r1.c3 import analysis_guard
 
 
 def _fixture(tmp_path, monkeypatch, evaluation_value=1.0):
+    # This synthetic fixture isolates seed handling; gate behavior has its own tests.
+    monkeypatch.setattr(analysis_guard, "guard_table", lambda *_: None)
     (tmp_path / "build.json").write_text(json.dumps({"label": "EVIDENCE"}))
     monkeypatch.setattr(oe, "_verify_evidence_inputs", lambda *_: None)
     row = {"proposal_id": "p", "source": "s", "node": "n", "instance_seed": 1,
@@ -94,6 +97,7 @@ def test_evidence_consumer_uses_completion_verifier(tmp_path, monkeypatch):
 
 def test_evidence_missing_completion_cannot_be_consumed(tmp_path, monkeypatch):
     from r1 import harness
+    monkeypatch.setattr(analysis_guard, "guard_table", lambda *_: None)
     table = tmp_path / "table"
     table.mkdir()
     (table / "build.json").write_text(json.dumps({"label": "EVIDENCE",

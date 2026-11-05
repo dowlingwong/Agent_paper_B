@@ -120,6 +120,8 @@ def files_hash(files: dict[str, str]) -> str:
 
 def read_jsonl(path: Path) -> list[dict]:
     path = Path(path)
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path)
     opener = gzip.open if path.suffix == ".gz" else open
     with opener(path, "rt", encoding="utf-8") as fh:
         return [json.loads(line) for line in fh if line.strip()]

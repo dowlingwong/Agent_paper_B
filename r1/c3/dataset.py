@@ -36,6 +36,7 @@ import subprocess
 from pathlib import Path
 
 import numpy as np
+from r1.c3.analysis_guard import refuse_sealed
 
 from r1.c3.features import (NODE_INFO, Proposal, configuration, files_hash, normalise_files, read_jsonl,
                             replay_campaign)
@@ -86,6 +87,8 @@ def noise_table(summary_path: Path | str = REPO / E1_SUMMARY) -> dict:
     extension before its E1 run) get no entry, so any later use of them fails
     loudly with a KeyError instead of being given invented constants.
     """
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(summary_path)
     s = json.loads(Path(summary_path).read_text())
     out = {}
     for node in (n for n in NODE_INFO if n in s["nodes"]):
@@ -112,6 +115,7 @@ def git_head() -> str:
 
 def _start_files(src_dir: Path, inst: str, node: str, strict: bool = False) -> dict:
     rj = src_dir / "roots" / f"{inst}.json"
+    refuse_sealed(rj)
     if rj.exists():
         return json.loads(rj.read_text())["start_files"]
     if strict:  # sweep outputs always record start files; never fall back to today's node files
@@ -121,6 +125,7 @@ def _start_files(src_dir: Path, inst: str, node: str, strict: bool = False) -> d
     if src_dir.resolve() != (REPO / SOURCES["liveness"]["dir"]).resolve():
         raise ValueError(f"{src_dir}: no authorized historical start-file fallback")
     manifest_path = src_dir / "manifest.json"
+    refuse_sealed(manifest_path)
     if not manifest_path.is_file():
         raise ValueError(f"{src_dir}: missing historical manifest for start files")
     harness = json.loads(manifest_path.read_text()).get("harness") or {}
@@ -139,6 +144,7 @@ def _replay_sources(specs: dict, noise: dict, strict_start_files: bool = False) 
     """Replay every root ledger of ``specs`` ({name: (spec, source dir)}), in order; rows, configs, checks."""
     rows, configs, checks = [], {}, {}
     for name, (src, d) in specs.items():
+        refuse_sealed(d, d / 'manifest.json')
         refuse_exam(src, context=f'C3 source {name}')
         if (d / 'manifest.json').exists():
             refuse_exam(json.loads((d / 'manifest.json').read_text()), context=f'C3 manifest {d}')
@@ -176,6 +182,8 @@ def _write_table(out: Path, rows: list, configs: dict, checks: dict, head: dict,
 def build(out: Path, sources=tuple(SOURCES), e1_summary: Path | str | None = None) -> dict:
     """The historical pilot table.  ``e1_summary`` (default ``E1_SUMMARY``) picks the noise source,
     e.g. the 12 Oct E1 for an exact rebuild of the 19 Oct pilot table."""
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(out,e1_summary)
     noise = noise_table() if e1_summary is None else noise_table(e1_summary)
     out.mkdir(parents=True, exist_ok=True)
     rows, configs, checks = _replay_sources({name: (SOURCES[name], REPO / SOURCES[name]["dir"]) for name in sources},
@@ -195,6 +203,7 @@ SOURCE_NAME = re.compile(r"[A-Za-z0-9_]+")  # no ':' (proposal ids and --quota u
 
 
 def _sha256(path: Path) -> str:
+    refuse_sealed(path)
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
@@ -203,6 +212,7 @@ def _safe_relative(root: Path, value: str) -> Path:
     if rel.is_absolute() or not rel.parts or '..' in rel.parts:
         raise ValueError('classification paths must be repository-relative')
     result = (root / rel).resolve()
+    refuse_sealed(root / rel, result)
     if not result.is_relative_to(root.resolve()):
         raise ValueError('classification path escapes repository')
     return result
@@ -243,6 +253,7 @@ def _verify_original_blobs(root: Path, index: dict, entries: list[dict]) -> None
             raise ValueError('no original sweep blobs found')
         actual = {}
         for path in new.rglob('*'):
+            refuse_sealed(path)
             if path.is_symlink():
                 raise ValueError('symlinks forbidden in classified sweep')
             if path.is_file():
@@ -255,6 +266,7 @@ def _verify_original_blobs(root: Path, index: dict, entries: list[dict]) -> None
 
 def evidence_classification(index_path: Path, paper_root: Path, sidecar_path: Path) -> dict:
     """Resolve the author's exact immutable classification, never rewrite native records."""
+    refuse_sealed(index_path, paper_root, sidecar_path)
     root = Path(paper_root).resolve()
     sidecar = Path(sidecar_path).resolve()
     index_path = Path(index_path).resolve()
@@ -271,6 +283,7 @@ def evidence_classification(index_path: Path, paper_root: Path, sidecar_path: Pa
         raise ValueError('index path or hash mismatch')
     side_rel = str(sidecar.relative_to(root))
     required = ('R1-SWEEP1-CLASSIFY', 'EVIDENCE', auth['path'], source['path'], source['sha256'], side_rel, _sha256(sidecar))
+    refuse_sealed(root / 'docs/r1/PLAN.md')
     rows = (root / 'docs/r1/PLAN.md').read_text().splitlines()
     if not any(line.startswith('| R1-SWEEP1-CLASSIFY ') and all(x in line for x in required) for line in rows):
         raise ValueError('matching author PLAN classification row missing')
@@ -321,9 +334,12 @@ def evidence_classification(index_path: Path, paper_root: Path, sidecar_path: Pa
 
 def resolve_sweep(sweep: Path | str, paper_root: Path | str | None = None) -> tuple[Path, Path]:
     """(index file, paper root) from an index file or a completed sweep batch directory."""
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(sweep,paper_root)
     sweep = Path(sweep)
     if sweep.is_dir():
         state_path = sweep / "batch_state.json"
+        refuse_sealed(state_path)
         if not state_path.exists():
             raise ValueError(f"{sweep}: not a sweep batch directory (no batch_state.json)")
         step = json.loads(state_path.read_text()).get("steps", {}).get("index") or {}
@@ -371,6 +387,7 @@ def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names:
             raise ValueError(f"invalid or duplicate source name {name!r}")
         d = paper_root / sweep["out"]
         manifest_path = paper_root / sweep["manifest"]
+        refuse_sealed(d, manifest_path, paper_root / sweep['ledgers'])
         manifest = json.loads(manifest_path.read_text())
         refuse_exam(manifest, context=f'C3 manifest {manifest_path}')
         if manifest.get("launch_provenance") != index.get("launch_provenance"):
@@ -382,6 +399,7 @@ def sweep_sources(index: dict, index_path: Path, paper_root: Path, source_names:
             if set(manifest.get("noise", {})) != set(manifest["nodes"]):
                 raise ValueError(f"{manifest_path}: noise-node set differs from manifest nodes")
             pinned = (paper_root / noise_source["path"]).resolve()
+            refuse_sealed(paper_root / noise_source['path'], pinned)
             if not pinned.is_relative_to(paper_root.resolve()) or not pinned.is_file() or _sha256(pinned) != noise_source["sha256"]:
                 raise ValueError(f"{manifest_path}: pinned noise source missing or sha256 mismatch")
             from r1.headroom.e1b_collect import node_noise
@@ -428,7 +446,13 @@ def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | N
                      e1_summary: Path | str | None = None, source_names: dict | None = None,
                      classification: Path | str | None = None) -> dict:
     """A completed C3 label sweep -> the C3 proposal table (same files and row format as ``build``)."""
+    from r1.c3.analysis_guard import refuse_sealed, require_d8_confirmation, SWEEP1_INDEX_SHA, SWEEP1_INDEX_PATH
+    refuse_sealed(sweep,out,paper_root,e1_summary,classification)
     index_path, root = resolve_sweep(sweep, paper_root)
+    refuse_sealed(index_path, root)
+    if (Path(index_path).resolve() != (Path(root)/SWEEP1_INDEX_PATH).resolve()
+            or _sha256(Path(index_path)) != SWEEP1_INDEX_SHA):
+        require_d8_confirmation()
     index = json.loads(Path(index_path).read_text())
     decision = evidence_classification(index_path, Path(root), Path(classification)) if classification else None
     specs = sweep_sources(index, Path(index_path), Path(root), source_names, decision)
@@ -440,6 +464,7 @@ def build_from_sweep(sweep: Path | str, out: Path, *, paper_root: Path | str | N
         if rel.is_absolute() or ".." in rel.parts:
             raise ValueError("sweep noise source must be repository-relative")
         pinned = (Path(root) / rel).resolve()
+        refuse_sealed(Path(root) / rel, pinned)
         if not pinned.is_relative_to(Path(root).resolve()) or not pinned.is_file():
             raise ValueError("sweep noise source missing or outside paper root")
         if _sha256(pinned) != source["sha256"]:
@@ -477,6 +502,8 @@ def row_of(p: Proposal, noise: dict) -> dict:
 
 
 def load_table(table_dir: Path) -> list[dict]:
+    from r1.c3.analysis_guard import guard_table
+    guard_table(table_dir, Path(table_dir) / 'proposals.jsonl')
     return [json.loads(x) for x in (Path(table_dir) / "proposals.jsonl").read_text().splitlines() if x.strip()]
 
 
@@ -493,7 +520,10 @@ def di_candidates(rows: list[dict]) -> list[dict]:
             if r["decision"] != want:
                 raise ValueError(f"{pid}: root decision {r['decision']} inconsistent with {direction}")
             snap = sdir / "provenance" / "snapshots" / inst / f"E2_b{b:03d}"
+            refuse_sealed(snap, snap / 'manifest.json')
             man = json.loads((snap / "manifest.json").read_text())
+            for p in man['editable_paths']:
+                refuse_sealed(snap / 'incumbent' / p)
             snap_inc = configuration(normalise_files({p: (snap / "incumbent" / p).read_text() for p in man["editable_paths"]}))
             found.append({**r, "di_direction": direction, "snapshot_incumbent_config": snap_inc})
     return found
@@ -501,6 +531,7 @@ def di_candidates(rows: list[dict]) -> list[dict]:
 
 def plan(table_dir: Path, quota: dict, include_di: bool, seed: int = PLAN_SEED) -> list[dict]:
     rows = load_table(table_dir)
+    refuse_sealed(Path(table_dir) / 'configs.json')
     configs = json.loads((Path(table_dir) / "configs.json").read_text())
     rng = np.random.default_rng(seed)
     chosen: dict[str, dict] = {}
