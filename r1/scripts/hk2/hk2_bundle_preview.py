@@ -3,8 +3,8 @@
 A hash can bind a local comparison to bytes but does not verify who reviewed the
 catalogue, whether its classifications are correct, whether the execution closure
 is immutable, or whether any authorisation/site gate is met.  This module does
-not connect to submission and cannot make a bundle ready for execution.  Real
-submission remains unconditionally disabled in hk2_submit.py.
+not connect to submission and cannot make a bundle ready for execution.  The
+real-submission configuration defaults to off; EVIDENCE submission is refused.
 
 The proposed catalogue schema is deliberately experimental and has not been
 adopted by the author.  An independently established trust root, review evidence,
