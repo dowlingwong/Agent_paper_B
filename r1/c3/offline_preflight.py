@@ -41,7 +41,9 @@ def cache_snapshot(root):
     if not root.is_dir() or root.is_symlink():
         raise SnapshotStop('STOP: cache must be a real directory')
     entries = []
-    for current, dirs, files in os.walk(root, followlinks=False):
+    def onerror(exc):
+        raise SnapshotStop('STOP: cannot inspect complete cache tree') from exc
+    for current, dirs, files in os.walk(root, followlinks=False, onerror=onerror):
         here = Path(current)
         for name in dirs:
             p = here / name
