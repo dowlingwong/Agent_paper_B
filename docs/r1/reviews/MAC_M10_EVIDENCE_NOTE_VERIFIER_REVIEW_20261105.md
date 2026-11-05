@@ -1,0 +1,14 @@
+# Independent M10 EVIDENCE note-verifier review — 5 November 2026
+
+AI-assisted (Codex). **ACCEPTED for the standalone proposed per-manifest format verifier only.** Reviewed clean candidate `707fad2dabf52b98ff6830068566492085c78009`, relative to `f752d09`, in an independent clone. The author has not adopted this format or authorized any EVIDENCE job. The verifier is not connected to `hk2_submit.py`; that tool continues unconditionally to refuse EVIDENCE and HK6/HK7, and the real-submission switch remains false. Full M10 remains NOT ACCEPTED.
+
+## Checks
+
+- `hk2_evidence_note.py` requires the repository top level, clean Git status, a 40-hex HEAD, committed regular non-symlink note/manifest files whose working bytes equal the same HEAD's blobs, and the same clean HEAD again at exit. Duplicate JSON keys and non-finite constants are refused. Exact note schema, author, Boolean approval, phase, manifest kind/phase and SHA are checked, along with typed bounded node count, K in {6, 10}, and finite positive bounded budget. Caller-supplied maxima are not author decisions. Paths through symlinks and `..` are refused. The check is a process boundary; a repository writer can forge a note, and concurrent filesystem/Git changes can race the checks.
+- No code binds actual task/node membership, commands, input/output identity, per-job allocation, the post-HK5 decisions, K=6's required PLAN ruling, phase prerequisites or budget/accounting state. These remain explicit in the candidate report and are prerequisites to any evidence path. A matched hash proves exact manifest bytes only; it does not establish what an executable does or whether the author approved the actual work.
+- Independently ran `/usr/bin/python3` (Python 3.9.6), standard library only, with `PYTHONDONTWRITEBYTECODE=1`: the note-specific synthetic temporary-repository suite had **7 passed**; all hk2 fake/synthetic tests had **45 passed**. Scheduler calls in that suite are fake; no experiment host, real Slurm, model, GPU or experiment was used.
+- Exact SHA-256: `hk2_evidence_note.py` `babcecbb48fa656061c984a01f0ffb26c6bfafd86a26271b62c06028e0e80541`; `test_evidence_note.py` `35df8c441fd316b0005cfd4fa3c1ac21cb7b6fe82596883d52745db07c6d11f2`; candidate report `f92ef0b8dd2fabb3c0da22d46ad17feba20eeff7c266561edd4156aae73ca8c7`.
+
+## Remaining STOP
+
+The author must choose a note format and, after HK5, decide node count, K and budget; the implementer must bind actual reviewed work identity, phase gates and the selected note format into a real EVIDENCE path, with independent review. The authorized HoreKa operator must separately qualify the site. Owner: author, Mac implementer/reviewer, then site operator. Effort: approximately one to several engineering/review days, author response and site-dependent qualification. No synthetic approval, hash equality, elapsed time, or this review is an EVIDENCE authorization.
