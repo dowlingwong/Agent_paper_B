@@ -122,6 +122,17 @@ def test_synthetic_exam_readers_refuse_sealed_inputs(tmp_path):
         with pytest.raises(RuntimeError,match='r1_sealed'): exam_analyze.main([str(path)])
 
 
+def test_sidecar_input_readers_refuse_sealed_paths(tmp_path):
+    from r1.c3 import serve
+    sealed=tmp_path/'r1_sealed';sealed.mkdir()
+    alias=tmp_path/'alias';alias.symlink_to(sealed,target_is_directory=True)
+    for path in (sealed/'input',alias/'input'):
+        for read in (serve.sha256_file,serve.Pin.load):
+            with pytest.raises(RuntimeError,match='r1_sealed'): read(path)
+        with pytest.raises(RuntimeError,match='r1_sealed'):
+            serve.main(['--pin',str(path),'--fake',str(path)])
+
+
 def test_only_known_sweep1_and_full_legacy_source_schema_are_exempt(tmp_path,monkeypatch):
     root=repo(tmp_path,monkeypatch)
     index=root/'results/r1/pilot/C3_sweep_index_20261028T033315Z.json';index.parent.mkdir(parents=True);index.write_text('{"synthetic":"index"}')

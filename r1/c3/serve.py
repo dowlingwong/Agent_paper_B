@@ -56,6 +56,8 @@ class PinError(RuntimeError):
 
 
 def sha256_file(path: Path | str) -> str:
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path)
     h = hashlib.sha256()
     with open(path, "rb") as fh:
         for chunk in iter(lambda: fh.read(1 << 20), b""):
@@ -72,6 +74,8 @@ class Pin:
 
     @classmethod
     def load(cls, path: Path | str) -> "Pin":
+        from r1.c3.analysis_guard import refuse_sealed
+        refuse_sealed(path)
         data = json.loads(Path(path).read_text())
         root = Path(path).resolve().parent
         files = {}
@@ -278,6 +282,8 @@ def main(argv=None) -> int:
     ap.add_argument("--delay-s", type=float, default=0.0)
     ap.add_argument("--ready-file", default=None, help="write the URL here once serving")
     args = ap.parse_args(argv)
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(args.pin, args.fake, args.ready_file)
     try:
         loader = TorchLoraLoader() if args.torch else FakeLoader(json.loads(Path(args.fake).read_text()))
         sidecar = Sidecar(Pin.load(args.pin), loader, delay_s=args.delay_s)
