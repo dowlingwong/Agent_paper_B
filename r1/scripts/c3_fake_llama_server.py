@@ -279,8 +279,9 @@ def main():
     if not (common.ROOT / '.dryrun').is_file():
         raise SystemExit('STOP: fake llama-server requires a marked DRYRUN directory (R1_FAKE_OLLAMA_ROOT)')
     if os.environ.get('C3_FAKE_EXIT_IF_ORPHANED')=='1':
-        parent=os.getppid()
-        if parent==1: raise SystemExit('STOP: fake server has no original parent')
+        try: parent=int(os.environ.get('R1_SYNTHETIC_PARENT_PID',''))
+        except ValueError: raise SystemExit('STOP: fake server original parent is missing')
+        if parent<=1 or os.getppid()!=parent: raise SystemExit('STOP: fake server has no original parent')
         def parent_watch():
             while os.getppid()==parent:
                 time.sleep(.05)

@@ -83,10 +83,11 @@ def test_fake_server_exits_when_its_test_parent_disappears(tmp_path):
     root=tmp_path/'fake_parent_loss';root.mkdir();(root/'.dryrun').write_text('synthetic')
     model=root/'fixture.gguf';model.write_bytes(b'fake, no tensors')
     env={**os.environ,'R1_FAKE_OLLAMA_ROOT':str(root),'C3_FAKE_EXIT_IF_ORPHANED':'1'}
-    controller='''import json, subprocess, sys, time
+    controller='''import json, os, subprocess, sys, time
 from pathlib import Path
 root=Path(sys.argv[1]); fake=sys.argv[2]; model=sys.argv[3]
-p=subprocess.Popen([sys.executable,fake,"-m",model,"--host","127.0.0.1","--port","0","-ngl","0","--alias","fixture"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+env={**os.environ,"R1_SYNTHETIC_PARENT_PID":str(os.getpid())}
+p=subprocess.Popen([sys.executable,fake,"-m",model,"--host","127.0.0.1","--port","0","-ngl","0","--alias","fixture"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=env)
 deadline=time.monotonic()+10
 while time.monotonic()<deadline:
     log=root/"fake_calls.jsonl"
@@ -105,3 +106,40 @@ sys.exit(4)
         if any(x.get('pid')==pid and x.get('event')=='parent_lost_self_exit' for x in events): break
         time.sleep(.05)
     else: pytest.fail(f'STOP: fake server {pid} did not record self-exit; preserve for inspection')
+
+
+def test_synthetic_worker_exits_when_parent_disappears(tmp_path):
+    """The synthetic worker notices its original parent even before PID journaling."""
+    ready=tmp_path/'worker-ready';gone=tmp_path/'worker-self-exit'
+    child='''import os,sys,time
+from pathlib import Path
+from r1.exam.campaign import _start_synthetic_parent_watch
+ready=Path(sys.argv[1]);gone=Path(sys.argv[2]);expected=int(sys.argv[3])
+_start_synthetic_parent_watch(expected,lambda:gone.write_text("self-exit"))
+ready.write_text("started")
+while True: time.sleep(.05)
+'''
+    controller='''import os,subprocess,sys,time
+from pathlib import Path
+ready=Path(sys.argv[1]);gone=Path(sys.argv[2]);child=sys.argv[3]
+p=subprocess.Popen([sys.executable,"-c",child,str(ready),str(gone),str(os.getpid())],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+deadline=time.monotonic()+10
+while time.monotonic()<deadline:
+    if ready.exists(): print(p.pid,flush=True);sys.exit(0)
+    if p.poll() is not None: sys.exit(3)
+    time.sleep(.05)
+sys.exit(4)
+'''
+    parent=subprocess.run([sys.executable,'-c',controller,str(ready),str(gone),child],cwd=ROOT,
+                          env={**os.environ,'PYTHONPATH':str(ROOT)},capture_output=True,text=True,timeout=20)
+    assert parent.returncode==0,parent.stderr
+    deadline=time.monotonic()+10
+    while not gone.exists() and time.monotonic()<deadline: time.sleep(.05)
+    assert gone.read_text()=='self-exit'
+
+
+def test_synthetic_worker_refuses_already_lost_parent(monkeypatch):
+    from r1.exam import campaign
+    monkeypatch.setattr(campaign.os,'getppid',lambda:999)
+    with pytest.raises(RuntimeError,match='lost its original parent'):
+        campaign._start_synthetic_parent_watch(123)

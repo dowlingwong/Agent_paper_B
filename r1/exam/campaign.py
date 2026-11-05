@@ -210,8 +210,29 @@ def _collect_b1_review(job):
     return result
 
 
+def _start_synthetic_parent_watch(expected, on_loss=None):
+    """Let a test-owned DRYRUN worker exit itself if its runner disappears."""
+    import threading
+    import time
+    if type(expected) is not int or expected<=1 or os.getppid()!=expected:
+        raise RuntimeError('STOP: synthetic worker has lost its original parent')
+    def watch():
+        while os.getppid()==expected:
+            time.sleep(.05)
+        if on_loss is not None:
+            try: on_loss()
+            except OSError: pass
+        os._exit(0)
+    threading.Thread(target=watch,daemon=True).start()
+
+
 def main(argv=None):
     p=argparse.ArgumentParser();p.add_argument('--job',required=True);a=p.parse_args(argv)
-    job=json.loads(Path(a.job).read_text());collect(job)
+    job=json.loads(Path(a.job).read_text())
+    if job.get('dryrun') and os.environ.get('C3_FAKE_EXIT_IF_ORPHANED')=='1':
+        try: expected=int(os.environ.get('R1_SYNTHETIC_PARENT_PID',''))
+        except ValueError as exc: raise RuntimeError('STOP: synthetic parent identity missing') from exc
+        _start_synthetic_parent_watch(expected)
+    collect(job)
 
 if __name__=='__main__': main()

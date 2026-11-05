@@ -516,7 +516,8 @@ class ExamRunner:
         inst=lsi.LlamaServerInstance(self.out/'servers'/spec['id'],server['binary'],model_path=model,alias=spec['id'],
                                    ctx_size=ctx,n_gpu_layers=999,gpu_uuid=self.cfg['gpu_uuid'],extra_args=args,
                                    thinking_policy=thinking,generation=len(list((self.out/'servers'/spec['id']).glob('*.json'))),
-                                   label=self.state['execution_label'],start_timeout=server['start_timeout'])
+                                   label=self.state['execution_label'],start_timeout=server['start_timeout'],
+                                   env_extra={'R1_SYNTHETIC_PARENT_PID':str(os.getpid())} if self.cfg.get('dryrun') and os.environ.get('C3_FAKE_EXIT_IF_ORPHANED')=='1' else None)
         lease_fd=None
         if self.state.get('phase')=='stage-a':
             # The native server must inherit the verified lease OFD; the start
@@ -580,6 +581,8 @@ class ExamRunner:
         write_json(path/'job.json',job)
         env=(worker_environment() if self.state.get('phase')=='b1' else
              {**os.environ,'PYTHONPATH':str(REPO),'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','MKL_NUM_THREADS':'1'})
+        if self.cfg.get('dryrun') and env.get('C3_FAKE_EXIT_IF_ORPHANED')=='1':
+            env['R1_SYNTHETIC_PARENT_PID']=str(os.getpid())
         if self.service: env['LLAMACPP_BASE_URL']=self.service.openai_base_url
         kwargs={}
         if self.state.get('phase')=='stage-a':
