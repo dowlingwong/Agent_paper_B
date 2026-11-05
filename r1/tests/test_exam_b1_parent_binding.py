@@ -125,3 +125,14 @@ def test_start_rejects_old_authority_before_resume_side_effects(tmp_path,monkeyp
     monkeypatch.setattr(runtime,'verify_campaign',lambda *a:{'status':'COMPLETE'})
     with pytest.raises(PreparationStop,match='HEAD mismatch'): r.start('b1')
     assert not (tmp_path/'runner.lock').exists()
+
+
+def test_stopped_b1_state_is_preserved_without_resuming(tmp_path,monkeypatch):
+    import r1.exam.runtime as runtime
+    r=runner(tmp_path,dryrun=True);r.rule_sha='rule'
+    state=tmp_path/'batch_state.json';original=b'{"status":"STOPPED","stop_reason":"synthetic interruption"}\n'
+    state.write_bytes(original)
+    monkeypatch.setattr(runtime,'author_gate',lambda *a:None)
+    with pytest.raises(PreparationStop,match='stopped batch must not be resumed'):
+        r.start('b1')
+    assert state.read_bytes()==original and not (tmp_path/'runner.lock').exists()
