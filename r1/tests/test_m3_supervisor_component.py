@@ -54,7 +54,7 @@ def test_durable_record_and_group_population(tmp_path):
     finally:os.close(fd)
 
 
-@pytest.mark.parametrize('listener_error',[False,True])
+@pytest.mark.parametrize('listener_error',['none','error','pending_hup'])
 def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monkeypatch,listener_error):
     # Entire child/cgroup/kernel behavior is simulated; no fork or sockets occur.
     monkeypatch.setattr(sup.platform,'system',lambda:'Linux')
@@ -83,16 +83,20 @@ def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monke
     class Poll:
         def register(self,*args):pass
         def poll(self,*args):
-            return ([(80,sup.select.POLLERR),(81,sup.select.POLLIN)] if listener_error
-                    else [(81,sup.select.POLLIN)])
+            if listener_error=='error':return [(80,sup.select.POLLERR),(81,sup.select.POLLIN)]
+            if listener_error=='pending_hup':return [(80,sup.select.POLLIN|sup.select.POLLHUP),(81,sup.select.POLLIN)]
+            return [(81,sup.select.POLLIN)]
     monkeypatch.setattr(sup.select,'poll',lambda:Poll())
     monkeypatch.setattr(sup.signal,'pidfd_send_signal',lambda *a:events.append(('pidfd_signal',)),raising=False)
+    monkeypatch.setattr(sup.seccomp,'monitor_one',lambda *a:events.append(('durable_violation',)) or {'syscall':42})
     real_close=os.close
     monkeypatch.setattr(sup.os,'close',lambda fd:events.append(('closed_fd',fd)) if fd in (80,81) else real_close(fd))
-    if listener_error:
-        with pytest.raises(sup.SupervisorStop,match='listener error or hangup'):
+    if listener_error!='none':
+        expected='prohibited syscall' if listener_error=='pending_hup' else 'listener error or hangup'
+        with pytest.raises(sup.SupervisorStop,match=expected):
             sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
         assert ('killed',) in events
+        assert (('durable_violation',) in events)==(listener_error=='pending_hup')
     else:
         result=sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
         assert result['status']=='COMPLETE_UNQUALIFIED'
