@@ -190,7 +190,12 @@ class Handler(BaseHTTPRequestHandler):
             finally:
                 os._exit(17)
         prompt = '\n'.join(str(m.get('content', '')) for m in body.get('messages', []))
-        content = 'malformed DRYRUN reply' if os.environ.get('EXAM_FAKE_MALFORMED') == '1' else json.dumps(common.proposal_for(prompt, seed))
+        if os.environ.get('EXAM_FAKE_MALFORMED') == '1':
+            content='malformed DRYRUN reply'
+        elif prompt.startswith('You proposed the edit below.'):
+            content=json.dumps({'p_no_effect':0.2,'p_positive':0.7,'size':'small'})
+        else:
+            content=json.dumps(common.proposal_for(prompt,seed))
         self.reply(self.completion(body, content))
 
     def completion(self, body, content):
