@@ -1,130 +1,160 @@
-# Prompt — Mac-local agent, hands-off continuation (7 Nov 2026, from about 01:00 CET)
+# Prompt — Mac-local agent, overnight run with B1 authorized (7 Nov 2026, from about 01:00 CET)
 
-**Written 7 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 2 (00:55 CET).** The author read the 5 Nov morning report and said: "没有的话让它继续做，我还是回去睡觉 handsoff". At 00:49 he added: "加上顺手回答 Q1， 那个agent可以ssh，可以动GPU跑实验，你update一下prompt". Revision 2 adds his Q1 answer and the host/GPU authorization (§0), and the host tasks that follow from it. Paste everything below the line into the Mac-local agent.
+**Written 7 Nov 2026 by the chat session (Claude) at the author's request; AI-assisted. Revision 3 (01:05 CET).** The author's words, in order:
+- 00:45, after reading the 5 Nov morning report: "没有的话让它继续做，我还是回去睡觉 handsoff";
+- 00:49: "加上顺手回答 Q1， 那个agent可以ssh，可以动GPU跑实验，你update一下prompt";
+- 00:55: "我是想让它今晚直接跑正式实验，你update下prompt".
+
+Revision 3 replaces revision 2's ENGINEERING_ONLY limit: the author authorizes the formal B1 run tonight, under the conditions in §0. Paste everything below the line into the Mac-local agent. The author read this prompt before sending it; sending it is his approval of §0.
 
 ---
 
-The author has read your 5 Nov morning report (`mac-int-20261104` @ `e9641c1`). He is asleep and hands-off until about 09:00 CET and will not answer. **Keep working the whole time; do not stop to wait for him.**
+The author has read your 5 Nov morning report (`mac-int-20261104` @ `e9641c1`). He wants **the formal Track X B1 run started tonight**. He is asleep and hands-off until about 09:00 CET and will not answer. **Keep working the whole time; do not stop to wait for him.** Record every author decision below in PLAN §10 as dated author rows, with his words verbatim and a pointer to this prompt file (`docs/r1/prompts/MAC_OVERNIGHT_PROMPT_20261107.md` on `docs/runbooks-04nov`).
 
-## 0. Author decisions tonight, and the limits
+## 0. Author decisions tonight (7 Nov, 00:45–00:55 CET)
 
-### 0.1 Author answer to Q1 (7 Nov 00:49 CET)
+### 0.1 Q1 — B1 acceptance record
 
-"加上顺手回答 Q1". The author chooses option A:
+Option A:
 
 > B1 acceptance record: use `OPS_O1_20261104.md` sha256 `0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e`.
 
-Record it in PLAN §10 as a dated author row with his words verbatim, then bind it in the B1 note draft. If those report bytes ever change, the binding is void, and the change goes back to the author. Q0 and Q2 remain **open**.
+If those bytes ever change, the binding is void, and the change goes back to the author.
 
-### 0.2 Host access and GPU (author, 7 Nov 00:49 CET)
+### 0.2 Q2 — B1 anchor duplicate reference: the author delegates it to this fixed rule
 
-The author's words are "那个agent可以ssh，可以动GPU跑实验". Record them verbatim in PLAN §10. This replaces the old limit "no server access, no experiment, no model run, no GPU". The scope below is how this prompt reads that authorization; if anything is unclear, take the narrower reading and write the question down.
+The rule is fixed now, before any B1 data. Apply it exactly. Do not tune it after computing anything.
 
-**Allowed tonight:** SSH to TASL-2, TASL-7 and deepthought, and GPU and model runs, **labelled ENGINEERING_ONLY**. This covers:
-- host checks;
-- qualification and determinism tests;
-- test suites on the hosts;
-- latency and memory measurements;
-- site qualification.
+**Source.** Sweep-1 campaigns (frozen under R1-B1-CORPUS-FREEZE; read their proposal ledgers only) that meet all of these:
+- proposer `qwen2.5-coder:7b`;
+- memory `append_only_summary`;
+- one of the three B1 nodes (`digits_mlp`, `openml_credit_approval`, `openml_ionosphere`);
+- W = 20.
 
-**Still not allowed without the author's separately signed note:** any EVIDENCE run. That means B1, B2, sweep 2, Track S phases, Track P stages, HK phases, and anything whose output enters a paper table.
-- B1 in particular stays closed until the author approves Q0 and chooses Q2. The B1 author gate must keep refusing.
-- Do not work around it, and do not start B1 "to save time".
+Never read evaluation audit values (seeds 7006–7010).
 
-**Rules on every host:**
-- **Before acting, read the host's lock and lease directory (`~/r1_locks`) and STATUS.** If another agent or operator holds the host or the GPU, do not touch it; record the conflict and move on.
-- **Host priorities stand.** Track X goes first on TASL-2 and Track P first on TASL-7 (R1-TRACKS-HOST-2). Running jobs are never pre-empted (R1-TRACKS-S01-FOLLOWUP-REV).
-- **Use the existing cooperative lease and marker procedures**, as in the operator runbook. Release every lease, and stop every server you start. Leave each GPU idle and the host as you found it.
-- **Keep your work isolated.** Work only in your own dated directories. Do not modify Track S, Track P or Track X work trees, servers or `$WORK` data. Never delete remote files.
-- **HoreKa stays with the HoreKa agent** (R1-SERVER-AGENTS-TWO). Do not log in there.
-- **Record every host action** — commands, times, GPU UUIDs, outputs and sha256 values — in a dated `reports/` file, and have it independently reviewed like any other unit.
+**Statistic.** duplicates / evaluated, exactly as B1's anchor gate computes it for `qwen25_coder_7b` (`exam_runner.anchor_gate`: `diagnostics.duplicates / diagnostics.evaluated`, pooled over the anchor's campaigns). Use the same code path that produces B1's `diagnostics`. If you use a re-implementation instead, a test must show it is identical on the B1 dry-run fixtures.
 
-### 0.3 Unchanged rules
+**Interval: a 99 % predictive interval, not a confidence interval for the mean.** B1's anchor rate is itself estimated from B1's own few anchor campaigns, so the reference must cover that sampling variation.
+- Draw 10,000 times with a fixed seed recorded in the JSON.
+- In each draw, resample with replacement, per node, the same number of sweep-1 campaigns as B1 runs for the 7B anchor on that node, and compute the pooled rate as B1 does.
+- `lower` and `upper` are the 0.5 % and 99.5 % quantiles.
 
-`MAC_OVERNIGHT_PROMPT_20261105.md` §1 (except the server/model/GPU limit, now replaced by 0.2) and §2 still apply in full:
-- No author decisions beyond 0.1 and 0.2. Silence on the other questions is not a decision.
-- Never push `main`, `r1` or `exam-x-*`; never force-push; never delete anything.
+**Comparability.** Check and record in the JSON:
+- **Blocking mismatches** (sending you to the fallback below): proposer model and quantization, memory mode, nodes, W, and the duplicate definition.
+- **Disclosed differences** (recorded, not blocking): host and GPU, llama.cpp build and flags, `cache_prompt` default vs false, context length, B1's charged A4 side query (it never enters the manager context), and the harness pin.
+
+**Output.**
+- A JSON with `source`, `lower`, `upper`, the derivation, the seed, the script sha256, the campaign list, and the comparability table.
+- Its sha256 bound in the B1 note.
+- One independent review of the computation and the definition match.
+
+**Fallback.** Use it only if a blocking mismatch exists, or if the sweep-1 ledgers for these strata cannot be read.
+- Set the anchor duplicate check to descriptive: `lower` 0, `upper` 1, with the JSON stating the reason.
+- Keep the scripted-vs-random discrimination gate unchanged.
+- Disclose the fallback in the PLAN row and the B1 report.
+- Do not invent another source.
+
+### 0.3 Q0 — rule and note approved, launch authorized
+
+The author approves, verbatim from the morning report's proposed answer:
+
+> I approve x5_rule_v2 SHA256 53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad and the reviewed B1 authorization note for TASL-7, subject to the agreed anchor reference, exact final checkout, and all reviewed handover and phase gates.
+
+Record it as the PLAN §10 row **R1-EXAM-RULE-X5V2**, with the rule sha (the id `runtime.author_gate` requires), and add a dated row with the 00:55 words. The "agreed anchor reference" is the one produced by §0.2.
+
+**Launch conditions. All must hold.** Set `approved: true` in the note, and launch, only when every one of these is true:
+1. **Q2 JSON.** It was produced under §0.2 and its independent review is ACCEPTED.
+2. **Tests.**
+   - Every B1-path or B1-related failure in `MAC_M2_FAILURE_CLASSIFICATION_20261105.md` is either fixed or has a reviewed reason.
+   - The former Stage A kill/resume coverage on the B1 path is restored.
+   - The real-worker determinism test passes on TASL-7 (ENGINEERING_ONLY run).
+3. **Final combined checkout.** All accepted B1 units, the Q1 binding, the Q2 JSON, the PLAN rows and the approved note are integrated into one checkout. Its committed HEAD is independently reviewed and ACCEPTED, and it is clean.
+4. **TASL-7 host checks pass.**
+   - The cooperative flock and the server descriptor.
+   - The worker's Python binding.
+   - The GPU UUID matches the note (`GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1`).
+   - Disk space for the full B1 output.
+5. **The author gate passes on the committed HEAD.** The pre-flight dry run on the host passes.
+6. **The TASL-7 handover sequence is complete.** O2's marker/watcher sequence is adapted to TASL-7, written down, and reviewed. Then:
+   - Create the Track X evidence marker and publish the running STATUS.
+   - Let the Track S watcher on TASL-7 pause its collectors and stop its servers, if one is active.
+   - Bring Track P P.3a to a safe point and pause it (R1-EXAM-HOST-B1B2-TASL7: Track X evidence takes priority over Track P on TASL-7; P.3a pauses while B1 runs).
+   - **Never kill a running job outside the reviewed pause procedure.** If a job cannot reach a safe point, wait. If it cannot reach one before the morning, do not launch: record it.
+
+If any condition fails: **do not launch.** Record exactly which one, what would unblock it, who must act and the effort. Then keep working on everything else. There is no deadline for the launch: it may start at any hour once the conditions hold.
+
+### 0.4 While B1 runs
+
+- **Operate it per the reviewed operator message v3** (`B1_OPERATOR_MESSAGE_V3_DRAFT_20261105.md`). Update it with tonight's verified TASL-7 facts, and have the update reviewed before launch. Its STOPs apply as written.
+- **On any STOP from the runner, guardian, author gate or anchor gate:**
+  - stop at once and preserve everything;
+  - publish the STATUS;
+  - report.
+  - Never re-run, change code, change pins, widen the anchor interval or override a gate to get past a STOP. A STOP waits for the author.
+- **No change to the checkout, pins, config or note after launch.**
+- **Monitor at a fixed cadence** (at least every 30 minutes). Log progress (completed campaigns per candidate, failures, GPU state) to a dated `reports/` file. Keep monitoring after the author is back; his return does not stop B1.
+- **On normal completion:**
+  - release the lease;
+  - restore the Track S and Track P state per the reviewed sequence;
+  - run the complete-batch verifier;
+  - publish the B1 manifest and the verifier result.
+- **B2, X.7 and sweep 2 are not authorized tonight.** B2 needs B1 complete, the accepted B2 ranking and its own note.
+
+### 0.5 Host access and GPU, outside the B1 run
+
+From the 00:49 words, ENGINEERING_ONLY host work on TASL-2, TASL-7 and deepthought is also allowed: host checks, determinism tests, test suites, latency and memory measurements, and site qualification. Rules:
+- Read `~/r1_locks` and STATUS before acting. If another agent or operator holds the host or GPU, do not touch it.
+- Never pre-empt a running job (R1-TRACKS-S01-FOLLOWUP-REV), and nothing on TASL-7's GPU while B1 runs.
+- Release every lease, and stop every server you start.
+- Work in your own dated directories. Do not modify Track S, Track P or Track X work trees, servers or `$WORK` data. Never delete remote files.
+- **HoreKa stays with the HoreKa agent** (R1-SERVER-AGENTS-TWO); do not log in there.
+- Record every host action — commands, times, GPU UUIDs, outputs, sha256 — in a dated `reports/` file, independently reviewed.
+
+### 0.6 Unchanged rules
+
+`MAC_OVERNIGHT_PROMPT_20261105.md` §1 and §2 apply, except that the server/model/GPU limit is replaced by §0.3–§0.5:
+- No author decisions beyond §0.1–§0.5. Silence on the other questions is not a decision.
+- Never push `main`, `r1` or `exam-x-*`. Never force-push. Never delete anything.
 - Every unit is accepted only by a fresh independent reviewer.
 - At most 3 workers.
 - Minimal first.
-- Time-box: 3 review rounds or about 2 hours, then record the blocker and move on.
+- Time-box non-B1 items: 3 review rounds or about 2 hours, then move on.
 - Commit and push each accepted unit at once.
 
 ## 1. Feedback on the report
 
-The report is good. It separates accepted scope from STOP cleanly, and it claims nothing beyond the evidence. Two points:
+The report is good. It separates accepted scope from STOP cleanly and claims nothing beyond the evidence. But the 5 Nov goal ("B1 signable with one line") was not met, and nothing has been pushed since 07:24 on 5 Nov.
 
-1. **The B1 goal was not met, and nothing has been pushed since 07:24 on 5 Nov.** The 5 Nov night's goal was "B1 signable with one line". The critical path is:
-   - B1 → B2 → X.7 → sweep 2;
-   - M3 → M4 in parallel with that;
-   - then audits → D8 → B.7, with a target of about 8 Dec;
-   - the HoreKa submission freeze is 20 Nov 12:00.
-
-   Tonight's goal: close every B1 blocker that does not need the author, and move both parallel critical-path items (B2 ranking; M3/M4).
-2. **Recommendations stay recommendations.** Keep the question list current, but never phrase a recommendation as if it were decided.
+The critical path is B1 → B2 → X.7 → sweep 2, with M3 → M4 in parallel, then audits → D8 → B.7 (≈ 8 Dec). The HoreKa freeze is 20 Nov 12:00. Tonight's goal is **B1 launched**, with B2 ranking and M3/M4 moving in parallel.
 
 ## 2. Work — three workers in parallel
 
-### Worker A — B1 blockers that need no author (priority 1)
+### Worker A — B1 to launch (priority 1)
 
-**(a) Anchor duplicate reference (Q2): build option A for the author.**
-- Inventory the candidate sources:
-  - the sweep-1 campaign ledgers (`qwen2.5-coder:7b`; `append_only_summary` and `none`; frozen under R1-B1-CORPUS-FREEZE; read only);
-  - the Stage A anchor records (`t7h8`, `t7j10`);
-  - `DUPLICATE_RATE_PILOT_20261022.md`.
-- For each source, check whether it matches B1:
-  - the duplicate definition and denominator (`active_config_seen_before` among evaluated novelty events; no-ops counted separately);
-  - node, memory mode, proposer, W and call cap.
-- For the best match:
-  - compute the rate per B1 node with a script, with a campaign-cluster bootstrap 95 % interval;
-  - write the SHA-bound JSON (`lower`, `upper`, source, derivation, script sha);
-  - have it independently reviewed.
-- Present it as option A of Q2. Do **not** bind it into the note as approved.
-- Use proposal ledgers only. Never read evaluation audit values (seeds 7006–7010).
-- If no source matches, say so in one paragraph. Give the closest option, and what a proper reference would cost to produce.
-
-**(b) B1 residual tests.**
-- Restore the former Stage A kill/resume coverage on the B1 path.
-- Fix, or precisely classify, the outer nested rerun-2 test.
-- Target: every B1-path or B1-related failure in `MAC_M2_FAILURE_CLASSIFICATION_20261105.md` is either fixed or has a reviewed reason.
-
-**(c) Current full suite.**
-- Run the full Mac CPU suite on the integrated head.
-- Record pass/fail/skip and the failure-ID diff against the historical 39.
-- Where a failure is Mac-environment-specific, also run the suite, or the failing subset, on TASL-7 under the B1 Python binding. Use ENGINEERING_ONLY and follow §0.2.
-
-**(d) Final combined B1 checkout.**
-- Bind the Q1 answer (§0.1).
-- Integrate the accepted B1 units into one checkout and have it independently reviewed.
-
-**(e) TASL-7 host checks for B1** (ENGINEERING_ONLY; §0.2). On the final combined checkout:
-- Verify the accepted cooperative flock and the server descriptor on the host.
-- Verify the B1 worker's Python binding.
-- Run the real-worker determinism test that the residual-test STOP names: one small model/worker run, ENGINEERING_ONLY, not B1 data.
-- Work out how O2's TASL-2 marker and watcher sequence applies to TASL-7, including whether a Track S watcher is active there, and write the exact sequence down.
-- Run the B1 entry in dry-run mode on the host, and confirm that the author gate refuses because the Q0 row and the approved note are absent.
-
-Target for the morning: B1 needs only the author's Q0 line and Q2 choice, plus the operator message v3 updated with tonight's verified host facts (still held, not sent).
+Work through the §0.3 conditions in order:
+1. Q2 JSON (§0.2) and its review.
+2. Residual tests, kill/resume coverage, and the full Mac CPU suite on the integrated head. Record the failure-ID diff against the historical 39, and run Mac-specific failures on TASL-7.
+3. The PLAN rows and the approved-note candidate.
+4. The final combined checkout and its review.
+5. TASL-7 host checks and the determinism test.
+6. The adapted handover sequence, operator message v3 update, and its review.
+7. The dry run.
+8. Launch and monitoring (§0.4).
 
 ### Worker B — B2 ranking (priority 1, in parallel)
 
-B2 runs right after B1, and X.7 needs its ranking. Implement the minimal v2 ranking exactly as `x5_rule_v2` states:
+B2 follows B1, and X.7 needs its ranking. Implement the minimal v2 ranking exactly as `x5_rule_v2` states:
 - enforce the complete node/instance grid;
 - refuse duplicate primary candidates;
 - rank by thinking-off audited Y;
 - break ties by lower GPU-h.
 
-Add tests and take it to ACCEPTED. Its STOP entry is removed only by acceptance.
+Add tests and take it to ACCEPTED, so that B2 can be authorized as soon as B1 completes.
 
 ### Worker C — the sweep-2 path (priority 2, in parallel)
 
-**(a) M3.** Continue toward a minimal accepted offline replay:
-- the Linux supervisor;
-- distinguishing a normal HUP from a monitor failure;
-- binding all 16 cases in the reviewed execution path;
-- the offline executability proof.
-
-Same time-box as before. The **Linux site qualification** that the M3 STOP names (kernel and HUP behaviour on the target Linux host) may now be run under §0.2, ENGINEERING_ONLY, once the supervisor code is accepted.
+**(a) M3.** Continue toward a minimal accepted offline replay: the Linux supervisor, HUP vs monitor failure, all 16 cases bound in the reviewed execution path, and the offline executability proof. The Linux site qualification may run under §0.5 once the supervisor code is accepted.
 
 **(b) The parts of M4 that do not touch `r1/scripts/c3_label_sweep.py`.** These can proceed now without breaking the shared-file rule:
 - step 1, the harness pin candidate on `r1-local-20261104` (not merged into `r1`);
@@ -133,18 +163,23 @@ Same time-box as before. The **Linux site qualification** that the M3 STOP names
 - step 4, the DTQ tool, with its dry run against a fake server;
 - their tests.
 
-The `c3_label_sweep.py` edits wait for M3's accepted commit and rebase on it. If the DTQ tool is accepted tonight, you may run it once on deepthought's two cards under §0.2, ENGINEERING_ONLY, with the largest Stage A finalist's GGUF as the worst case. The author is waiting for DTQ results (R1-B1B-DIFF-DT-DEFER, "先等 DTQ 结果"). The output is a measurement, not a pass/fail decision: the DTQ pass criterion is still the author's. If you judge that starting these parts conflicts with `MAC_LOCAL_RUNBOOK_20261104` §M4 or the separation rule, do not start them. Add them to the question list as an option instead.
+The `c3_label_sweep.py` edits wait for M3's accepted commit.
+
+If the DTQ tool is accepted, you may run it once on deepthought's two cards under §0.5, with the largest Stage A finalist's GGUF as the worst case. The author is waiting for DTQ results ("先等 DTQ 结果"). The result is a measurement only; the pass criterion is the author's.
+
+If you judge that starting these M4 parts conflicts with `MAC_LOCAL_RUNBOOK_20261104` §M4 or the separation rule, do not start them; add them to the question list.
 
 ### If capacity remains
 
-1. M11 D8 gate to ACCEPTED, so that the author can commit R1-BX-D8-CONFIRM.
+1. M11 D8 gate to ACCEPTED, so the author can commit R1-BX-D8-CONFIRM.
 2. The M10 EVIDENCE/HK6 path.
 
 ## 3. Morning report
 
-At about 08:30 CET on 7 Nov, write the report in the same format, in Chinese for the author.
-- For each blocker: closed, or what remains, who must act, and the effort.
-- List every host action and GPU use, with its report file.
-- Put the Q2 option A, if built, at the top.
-- Update the question list.
+At about 08:30 CET on 7 Nov, in Chinese for the author, in the same format:
+- **First line:** B1 launched or not. If launched: start time, progress, ETA and any STOP. If not: the failing §0.3 condition and what unblocks it.
+- **The Q2 result:** the interval, or the fallback and why.
+- Every host action and GPU use, with its report file.
+- Each other blocker: closed, or what remains, who must act, and the effort.
+- The updated question list.
 - Push everything.
