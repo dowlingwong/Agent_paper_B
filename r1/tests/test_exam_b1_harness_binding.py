@@ -21,7 +21,13 @@ def test_clean_harness_source_hashes_and_dirty_rejection(tmp_path,monkeypatch):
     monkeypatch.setattr(r1.harness,'harness_root',lambda:repo)
     monkeypatch.setattr(nodes,'load_registered_node',lambda *a,**k:SimpleNamespace(editable_paths=['train.py']))
     assert runtime.b1_harness_sources('digits_mlp',head)=={'train.py':runtime.digest_file(source)}
-    source.write_text('changed')
+    # Keep the committed fixture bytes outside the repository so that the
+    # subsequent dirty check is caused by the changed tracked source itself.
+    retired=tmp_path/'_to_delete'
+    retired.mkdir()
+    source.rename(retired/'train.py.original')
+    with source.open('x') as changed:
+        changed.write('changed')
     with pytest.raises(runtime.PreparationStop,match='clean and pinned'):
         runtime.b1_harness_sources('digits_mlp',head)
 
