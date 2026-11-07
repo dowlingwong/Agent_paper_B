@@ -55,11 +55,14 @@ def test_reordered_journal_is_refused(tmp_path):
              {'event':'response_chunk','sequence':1,'chunk_index':1,'chunk_bytes':len(raw),'chunk_sha256':digest,'chunk_b64':base64.b64encode(raw).decode()},
              {'event':'response_complete','sequence':1,'response_body_sha256':digest}]
     path=tmp_path/'journal.jsonl'
-    path.write_text(''.join(json.dumps(x)+'\n' for x in entries))
+    with path.open('x', encoding='utf-8') as handle:
+        handle.write(''.join(json.dumps(x)+'\n' for x in entries))
     assert validate_observer_journal(path,events)['calls']==1
-    path.write_text(''.join(json.dumps(x)+'\n' for x in [entries[3],*entries[:3]]))
+    reordered=tmp_path/'reordered_journal.jsonl'
+    with reordered.open('x', encoding='utf-8') as handle:
+        handle.write(''.join(json.dumps(x)+'\n' for x in [entries[3],*entries[:3]]))
     with pytest.raises(RuntimeError,match='order'):
-        validate_observer_journal(path,events)
+        validate_observer_journal(reordered,events)
 
 
 def test_interleaved_journal_sequences_are_refused(tmp_path):

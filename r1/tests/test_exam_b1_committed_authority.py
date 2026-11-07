@@ -15,6 +15,15 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def replace_fixture_note(tmp_path, note, content):
+    """Preserve the committed fixture outside the synthetic checkout first."""
+    retired = tmp_path / '_to_delete'
+    retired.mkdir(mode=0o700, exist_ok=False)
+    note.rename(retired / 'author.json')
+    with note.open('x', encoding='utf-8') as handle:
+        handle.write(content)
+
+
 def setup_repo(tmp_path, monkeypatch, plan_template):
     root=tmp_path/'repo'; root.mkdir()
     subprocess.run(['git','init','-q',str(root)],check=True)
@@ -39,7 +48,8 @@ def setup_repo(tmp_path, monkeypatch, plan_template):
           'stage_a_table_sha256':sha(table),'stage_a_amendment_table_sha256':sha(amendment),
           'stage_a_amendment_acceptance_sha256':sha(acceptance),'anchor_duplicate_reference_sha256':sha(anchor),
           'host':'TASL-7','gpu_uuid':'GPU-TEST'}
-    note.write_text(json.dumps(data))
+    with note.open('x', encoding='utf-8') as handle:
+        handle.write(json.dumps(data))
     env={**os.environ,'GIT_AUTHOR_NAME':'Fixture','GIT_AUTHOR_EMAIL':'fixture@example.invalid',
          'GIT_COMMITTER_NAME':'Fixture','GIT_COMMITTER_EMAIL':'fixture@example.invalid'}
     subprocess.run(['git','-C',str(root),'add','.'],check=True,env=env)
@@ -98,7 +108,7 @@ def test_missing_approval_field_and_wrong_workers_refused(tmp_path,monkeypatch):
     root,cfg,rule_sha=setup_repo(tmp_path,monkeypatch,VALID)
     data=json.loads((root/'author.json').read_text());data['workers']=19
     # Use a fresh committed note; the author choice must bind actual workers.
-    (root/'author.json').write_text(json.dumps(data))
+    replace_fixture_note(tmp_path, root/'author.json', json.dumps(data))
     env={**os.environ,'GIT_AUTHOR_NAME':'Fixture','GIT_AUTHOR_EMAIL':'fixture@example.invalid',
          'GIT_COMMITTER_NAME':'Fixture','GIT_COMMITTER_EMAIL':'fixture@example.invalid'}
     subprocess.run(['git','-C',str(root),'add','author.json'],check=True,env=env)
@@ -114,7 +124,7 @@ def test_anchor_reference_must_match_note_and_committed_source(tmp_path, monkeyp
         note=root/'author.json'; data=json.loads(note.read_text())
         if mutation=='missing_note_sha': data.pop('anchor_duplicate_reference_sha256')
         else: data['anchor_duplicate_reference_sha256']='0'*64
-        note.write_text(json.dumps(data))
+        replace_fixture_note(tmp_path, note, json.dumps(data))
         env={**os.environ,'GIT_AUTHOR_NAME':'Fixture','GIT_AUTHOR_EMAIL':'fixture@example.invalid',
              'GIT_COMMITTER_NAME':'Fixture','GIT_COMMITTER_EMAIL':'fixture@example.invalid'}
         subprocess.run(['git','-C',str(root),'add','author.json'],check=True,env=env)
