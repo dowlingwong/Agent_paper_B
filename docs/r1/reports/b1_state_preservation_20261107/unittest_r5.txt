@@ -1,0 +1,23 @@
+test_change_before_exchange_preserves_both_names (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_change_before_exchange_preserves_both_names) ... ok
+test_failure_after_exchange_retains_both_inodes (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_failure_after_exchange_retains_both_inodes) ... ok
+test_group_writable_prior_state_is_refused (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_group_writable_prior_state_is_refused) ... ok
+test_initial_collision_does_not_replace_existing_state (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_initial_collision_does_not_replace_existing_state) ... ok
+test_insecure_batch_directory_is_refused (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_insecure_batch_directory_is_refused) ... ok
+test_nonfinite_state_fails_before_filesystem_access (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_nonfinite_state_fails_before_filesystem_access) ... ok
+test_publish_then_exchange_retains_old_inode (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_publish_then_exchange_retains_old_inode) ... ok
+test_runtime_selects_preserving_writer_only_for_production_b1 (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_runtime_selects_preserving_writer_only_for_production_b1) ... ok
+test_symlink_state_is_refused (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_symlink_state_is_refused) ... ok
+test_unexpected_existing_state_stops_before_archive_creation (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_unexpected_existing_state_stops_before_archive_creation) ... ok
+test_unsupported_exchange_preserves_current_and_candidate (r1.tests.test_b1_state_preserve_unittest.StatePreservationTests.test_unsupported_exchange_preserves_current_and_candidate) ... ok
+test_changed_state_refuses_verification (r1.tests.test_b1_exit_receipt_unittest.ReceiptTests.test_changed_state_refuses_verification) ... ok
+test_matching_bytes_allow_receipt_validation (r1.tests.test_b1_exit_receipt_unittest.ReceiptTests.test_matching_bytes_allow_receipt_validation) ... ok
+test_missing_receipt_refuses_verification (r1.tests.test_b1_exit_receipt_unittest.ReceiptTests.test_missing_receipt_refuses_verification) ... ok
+test_nonzero_wait_never_writes_receipt_even_if_state_looks_complete (r1.tests.test_b1_exit_receipt_unittest.ReceiptTests.test_nonzero_wait_never_writes_receipt_even_if_state_looks_complete) ... ok
+test_runner_failure_does_not_create_external_receipt (r1.tests.test_b1_exit_receipt_unittest.ReceiptTests.test_runner_failure_does_not_create_external_receipt) ... ok
+test_success_only_after_wait_and_second_authority_check (r1.tests.test_b1_exit_receipt_unittest.ReceiptTests.test_success_only_after_wait_and_second_authority_check) ... ok
+test_valid_receipt_binds_waited_pid_head_and_exact_bytes (r1.tests.test_b1_exit_receipt_unittest.ReceiptTests.test_valid_receipt_binds_waited_pid_head_and_exact_bytes) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.005s
+
+OK

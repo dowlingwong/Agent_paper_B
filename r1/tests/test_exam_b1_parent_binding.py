@@ -119,6 +119,7 @@ def test_recovered_root_checks_authorized_head(tmp_path,monkeypatch,saved_head,a
 def test_start_rejects_old_authority_before_resume_side_effects(tmp_path,monkeypatch,in_progress):
     import r1.exam.runtime as runtime
     r=runner(tmp_path);r.rule_sha='rule';r.registry_path=tmp_path/'registry';r.registry_path.write_text('{}')
+    r.cfg['work_dir']=str(tmp_path.parent);r.b1_config_head='a'*40;r.registry={}
     old=tmp_path/'old';old.mkdir();manifest=old/'campaign_manifest.json';manifest.write_text('{}')
     (old/'job.json').write_text(json.dumps({'authorization_checkout_head':'b'*40}))
     (old/'post_check.json').write_text('{}')
@@ -129,8 +130,12 @@ def test_start_rejects_old_authority_before_resume_side_effects(tmp_path,monkeyp
                                    'post_check_sha256':runtime.digest_file(old/'post_check.json')}
     (tmp_path/'batch_state.json').write_text(json.dumps(state))
     monkeypatch.setattr(runtime,'author_gate',lambda *a:'a'*40)
+    monkeypatch.setattr(runtime,'require_committed_b1_config',lambda *a:'a'*40)
+    monkeypatch.setattr(runtime,'require_committed_b1_registry',lambda *a,**kw:None)
+    monkeypatch.setattr(runtime,'worker_environment',lambda:{})
     monkeypatch.setattr(runtime,'verify_campaign',lambda *a:{'status':'COMPLETE'})
-    with pytest.raises(PreparationStop,match='HEAD mismatch'): r.start('b1')
+    # Production B1 now refuses any existing batch before considering resume.
+    with pytest.raises(PreparationStop,match='cannot be resumed automatically'): r.start('b1')
     assert not (tmp_path/'runner.lock').exists()
 
 

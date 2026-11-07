@@ -15,6 +15,34 @@ from pathlib import Path
 
 _NOREPLACE = 1
 _EXCHANGE = 2
+ACTIVE = 'B1_ACTIVE.json'
+EXIT_RECEIPT = 'B1_EXIT_RECEIPT.json'
+
+
+def write_exclusive_json(path, value):
+    """Write a new receipt/sentinel without ever replacing an existing file.
+
+    Any partial file remains in place. A failure before this routine returns is
+    not a durable-success signal; callers must not start work or issue a receipt.
+    """
+    path = Path(path)
+    payload = (json.dumps(value, sort_keys=True, allow_nan=False) + '\n').encode()
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW, 0o600)
+    try:
+        pending = memoryview(payload)
+        while pending:
+            count = os.write(fd, pending)
+            if count <= 0:
+                raise OSError(errno.EIO, 'short receipt write')
+            pending = pending[count:]
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
 
 
 def _renameat2(old_fd, old_name, new_fd, new_name, flags):

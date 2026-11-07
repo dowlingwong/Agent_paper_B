@@ -98,6 +98,10 @@ def fixture(tmp_path,monkeypatch):
            'stage_a_amendment_acceptance_sha256':cfg['stage_a_amendment_acceptance_sha256']}
         write(batch/cid/'b1_manifest.json',m);manifests.append(m)
     write(batch/'batch_state.json',state);write(batch/'b1_manifests.json',{'label':'EXAM','manifests':manifests})
+    # These legacy batch-integrity fixtures exercise the verifier downstream of
+    # supervision; the waited-exit contract has separate in-memory tests.
+    monkeypatch.setattr('r1.exam.b1_exit_receipt.verify_waited_success',
+                        lambda root, head: {'batch_state_sha256':digest_file(Path(root)/'batch_state.json')})
     monkeypatch.setattr(runtime,'author_gate',lambda *a:head)
     monkeypatch.setattr(runtime,'read_registry',lambda p:registry)
     monkeypatch.setattr(exam_runner,'anchor_gate',lambda manifests,cfg:{'fixture':True})

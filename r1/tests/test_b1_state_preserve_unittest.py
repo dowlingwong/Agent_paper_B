@@ -1,5 +1,6 @@
 """In-memory tests for preservation logic; no filesystem or kernel operations."""
 import errno
+import io
 import json
 import os
 import stat
@@ -220,6 +221,37 @@ class StatePreservationTests(unittest.TestCase):
             runner.cfg['dryrun'] = True
             runtime.ExamRunner.save(runner)
             legacy.assert_called_once()
+
+    def test_post_exchange_failure_stop_save_failure_has_no_waited_receipt(self):
+        from r1.exam import runtime, b1_exit_receipt
+        for attempted_status in ('RUNNING', 'COMPLETE'):
+            with self.subTest(attempted_status=attempted_status):
+                original = SimpleNamespace(st_mode=stat.S_IFREG | 0o600,
+                                           st_uid=os.getuid(), st_dev=7, st_ino=44)
+                fs = MemoryFS(original)
+                fs.fail_dir_fsync = True
+                runner = SimpleNamespace(out=Path('/synthetic/batch'),
+                                         cfg={'dryrun':False},
+                                         state={'phase':'b1','status':attempted_status},
+                                         b1_state_identity=(7,44))
+                runner.save = lambda: runtime.ExamRunner.save(runner)
+                stderr = io.StringIO()
+                with fs.patches(), mock.patch.object(runtime.sys, 'stderr', stderr), \
+                        mock.patch.object(b1_exit_receipt, 'write_exclusive_json') as write:
+                    with self.assertRaises(OSError):
+                        runner.save()
+                    self.assertNotEqual(fs.current.st_ino, 44)
+                    self.assertEqual(runner.b1_state_identity, (7,44))
+                    runner.state['status'] = 'STOPPED'
+                    runtime.report_b1_stop_and_save(runner, OSError('post-exchange failure'))
+                    self.assertIn('state save failed', stderr.getvalue())
+                    child = SimpleNamespace(pid=99, wait=lambda: 1)
+                    with self.assertRaisesRegex(RuntimeError, 'did not exit successfully'):
+                        b1_exit_receipt.publish_after_wait(child, '/synthetic/batch', 'a'*40)
+                    write.assert_not_called()
+                    with mock.patch.object(b1_exit_receipt, 'read_owned_regular', side_effect=FileNotFoundError):
+                        with self.assertRaises(FileNotFoundError):
+                            b1_exit_receipt.verify_waited_success('/synthetic/batch', 'a'*40)
 
 
 if __name__ == '__main__':

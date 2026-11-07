@@ -64,7 +64,17 @@ def verify_batch(batch, cfg, rule_sha):
     node_sources={node:b1_harness_sources(node,cfg['harness_commit']) for node in nodes}
     batch=Path(batch).resolve(strict=True)
     _inside(batch,batch/'batch_state.json');_inside(batch,batch/'b1_manifests.json')
+    # A canonical COMPLETE state alone is insufficient: its publication may
+    # have succeeded immediately before the runner experienced a STOP.  The
+    # independent cooperative parent must have actually waited for exit 0.
+    from r1.exam.b1_exit_receipt import verify_waited_success
+    try:
+        waited = verify_waited_success(batch, head)
+    except (OSError, RuntimeError, ValueError, TypeError) as exc:
+        raise ValueError(f'STOP: B1 batch waited-exit evidence unavailable: {exc}') from exc
     state=_read(batch/'batch_state.json')
+    if digest_file(batch/'batch_state.json') != waited['batch_state_sha256']:
+        _stop('batch state changed after waited-exit check')
     if state.get('status')!='COMPLETE' or state.get('phase')!='b1' or state.get('execution_label')!='EVIDENCE':
         _stop('is not a completed evidence batch')
     registry_path=batch/'registry_snapshot.yaml'

@@ -491,7 +491,11 @@ def require_server_lease_inheritance(instance):
 
 class ExamRunner:
     def __init__(self, cfg, out, *, registry_path=None, b1_config_head=None):
-        self.cfg=cfg;self.out=Path(out).resolve();host_check(cfg,self.out)
+        raw_out=Path(out).expanduser()
+        if b1_config_head is not None and not cfg.get('dryrun'):
+            if not raw_out.is_absolute() or raw_out.is_symlink() or raw_out.resolve()!=raw_out:
+                raise PreparationStop('STOP: production B1 output path must be absolute and non-aliased')
+        self.cfg=cfg;self.out=raw_out.resolve();host_check(cfg,self.out)
         if b1_config_head is not None and not cfg.get('dryrun'):
             if registry_path is not None:
                 raise PreparationStop('STOP: production B1 does not accept a registry override')
@@ -548,7 +552,20 @@ class ExamRunner:
         if phase=='b1' and not self.cfg.get('dryrun'):
             for node in self.cfg['nodes']: b1_harness_sources(node,self.cfg['harness_commit'])
         if phase=='stage-a':refuse_existing_stage_a_output(self.out)
-        self.out.mkdir(parents=True,exist_ok=True)
+        if phase=='b1' and not self.cfg.get('dryrun'):
+            # An existing production batch could contain an unrecorded STOP.
+            # Do not infer recovery permission from a missing STOP record.
+            if self.out.parent != Path(self.cfg['work_dir']):
+                raise PreparationStop('STOP: B1 batch must be a new direct child of the approved work directory')
+            try:
+                self.out.mkdir(mode=0o700,parents=False,exist_ok=False)
+            except FileExistsError as exc:
+                raise PreparationStop('STOP: production B1 existing batch cannot be resumed automatically') from exc
+            from r1.exam.b1_state_preserve import ACTIVE, write_exclusive_json
+            write_exclusive_json(self.out/ACTIVE,{'version':'b1_active/v1','runner_pid':os.getpid(),
+                                                  'authorization_checkout_head':self.author_head})
+        else:
+            self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
         if phase=='b1' and not self.cfg.get('dryrun'):
             from r1.exam.b1_state_preserve import existing_identity
