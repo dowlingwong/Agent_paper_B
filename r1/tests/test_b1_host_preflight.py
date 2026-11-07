@@ -25,7 +25,7 @@ def test_owned_server_stopped_and_lease_closed(tmp_path, monkeypatch, failure, c
     calls=[]
     class FakeServer:
         def __init__(self,*args,**kwargs):
-            self.record={'start_ticks':7};self.process=None
+            self.record={'start_ticks':7,'pgid':1234};self.process=None
         def start(self,**kwargs):
             calls.append(('start',kwargs['b1_lease_fd']))
             self.process=SimpleNamespace(pid=1234,poll=lambda:None if 'stop' not in calls else 0)
@@ -72,7 +72,7 @@ def test_original_error_survives_server_stop_failure(tmp_path,monkeypatch,capsys
     monkeypatch.setattr(pre,'idle_gpu',lambda *a:{'free_mib':2000})
     monkeypatch.setattr(pre,'template_repair_args',lambda *a:[])
     class FailedServer:
-        def __init__(self,*a,**kw): self.process=SimpleNamespace(pid=1234,poll=lambda:None)
+        def __init__(self,*a,**kw): self.process=SimpleNamespace(pid=1234,poll=lambda:None);self.record={'pgid':1234}
         def start(self,**kw): raise RuntimeError('original start failure')
         def stop(self): raise RuntimeError('stop failure')
     monkeypatch.setattr(pre,'LlamaServerInstance',FailedServer)
@@ -111,3 +111,91 @@ def test_precheck_binds_registry_path_and_gate_to_reviewed_head(tmp_path,monkeyp
     monkeypatch.setattr(pre,'ExamRunner',Runner)
     assert pre.check_inputs(head,tmp_path/'own')==(cfg,anchor,{'build':'reviewed'})
     assert seen==[(head,tmp_path/cfg['registry'],registry)]
+
+
+@pytest.mark.parametrize('point', ['before_record', 'signal_during_spawn'])
+def test_real_owned_server_start_interrupt_stops_only_own_process(tmp_path,monkeypatch,point):
+    import subprocess
+    import sys
+    from unittest.mock import Mock
+    binary=tmp_path/'synthetic-server'
+    binary.write_text(f'#!{sys.executable}\nimport time\ntime.sleep(30)\n')
+    binary.chmod(0o700)
+    model=tmp_path/'synthetic.gguf';model.write_text('fixture')
+    inst=pre.LlamaServerInstance(tmp_path/'server',str(binary),model_path=model,
+                                 alias='fixture',port=12345)
+    monkeypatch.setattr(pre.lsi,'port_is_free',lambda port:True)
+    monkeypatch.setattr(inst,'_save',Mock())
+    other=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)'],start_new_session=True)
+    received=[]
+    old_handler=None
+    if point=='before_record':
+        monkeypatch.setattr(pre.lsi,'process_start_ticks',lambda pid: (_ for _ in ()).throw(InterruptedError('before record')))
+    else:
+        original=subprocess.Popen
+        def interrupted_spawn(*args,**kwargs):
+            child=original(*args,**kwargs)
+            os.kill(os.getpid(),pre.signal.SIGTERM)
+            return child
+        old_handler=pre.signal.signal(pre.signal.SIGTERM,lambda sig,frame:received.append(sig))
+        monkeypatch.setattr(pre.lsi.subprocess,'Popen',interrupted_spawn)
+    try:
+        with pytest.raises(InterruptedError): pre.start_owned_server(inst,received=received)
+        assert inst.process is not None and inst.record == {}
+        pre.stop_owned_server(inst)
+        assert inst.process.poll() is not None
+        assert other.poll() is None
+    finally:
+        if inst.process is not None and inst.process.poll() is None:
+            inst.process.terminate();inst.process.wait(timeout=3)
+        other.terminate();other.wait(timeout=3)
+        if old_handler is not None: pre.signal.signal(pre.signal.SIGTERM,old_handler)
+
+
+def test_missing_record_rejects_nonowned_group_without_signalling(tmp_path,monkeypatch):
+    import subprocess
+    import sys
+    from unittest.mock import Mock
+    child=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)'])
+    inst=SimpleNamespace(process=child,record={},stop=Mock())
+    try:
+        with pytest.raises(RuntimeError,match='group identity mismatch'):
+            pre.stop_owned_server(inst)
+        inst.stop.assert_not_called()
+        assert child.poll() is None
+    finally:
+        child.terminate();child.wait(timeout=3)
+
+
+def test_signals_during_cleanup_are_recorded_without_interrupting_stop(tmp_path,monkeypatch,capsys):
+    home=tmp_path/'home';(home/'r1_locks').mkdir(parents=True);lock=home/'r1_locks/gpu0.lock';lock.touch()
+    monkeypatch.setattr(Path,'home',classmethod(lambda cls:home))
+    cfg={'ctx_size':32768,'n_gpu_layers':999,'gpu_uuid':'gpu','server':{'binary':'x','start_timeout':1}}
+    spec={'id':'qwen25_coder_7b','runtime':{'model_path':'fake','footprint_mib':1},'quant_source':{'sha256':'a'*64},'thinking_policy':{}}
+    monkeypatch.setattr(pre,'check_inputs',lambda *a:(cfg,spec,{}))
+    monkeypatch.setattr(pre,'idle_gpu',lambda *a:{'free_mib':2000})
+    monkeypatch.setattr(pre,'gpu_sample',lambda *a:{'free_mib':2000})
+    monkeypatch.setattr(pre,'gpu_compute_apps',lambda:[{'pid':1234}])
+    monkeypatch.setattr(pre,'template_repair_args',lambda *a:[])
+    monkeypatch.setattr(pre,'verify_server_fd',lambda *a:None)
+    handlers={}
+    def signal_mock(sig,handler):
+        old=handlers.get(sig,pre.signal.SIG_DFL);handlers[sig]=handler;return old
+    monkeypatch.setattr(pre.signal,'signal',signal_mock)
+    stops=[]
+    class Server:
+        def __init__(self,*a,**k):
+            self.done=False;self.record={'pgid':1234,'start_ticks':7}
+            self.process=SimpleNamespace(pid=1234,poll=lambda:0 if self.done else None)
+        def start(self,**k): pass
+        def offload(self,**k): return {'full':True}
+        def model_ids(self): return ['qwen25_coder_7b']
+        def props(self): return {'model_path':'fake'}
+        def stop(self):
+            stops.append('stop');handlers[pre.signal.SIGTERM](pre.signal.SIGTERM,None)
+            handlers[pre.signal.SIGINT](pre.signal.SIGINT,None);self.done=True
+    monkeypatch.setattr(pre,'LlamaServerInstance',Server)
+    with pytest.raises(InterruptedError,match='interrupted'):
+        pre.run('a'*40,tmp_path/'own')
+    assert stops==['stop'] and 'PREFLIGHT_PASS' not in capsys.readouterr().out
+    with lock.open('r+') as contender: fcntl.flock(contender,fcntl.LOCK_EX|fcntl.LOCK_NB)

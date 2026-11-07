@@ -22,6 +22,7 @@ from r1.exam.runtime import (B1_CONFIG_REL, REPO, EXAM_SERVER_ARGS, ExamRunner,
     read_registry, require_committed_b1_config, require_committed_b1_registry,
     template_repair_args, worker_environment)
 from r1.scripts.exam_runner import stage_a_pass_set, verify_anchor_reference
+from r1.scripts import llama_server_instance as lsi
 from r1.scripts.llama_server_instance import LlamaServerInstance, gpu_compute_apps
 
 
@@ -102,6 +103,54 @@ def verify_contender(path, fd):
         os.close(contender)
 
 
+
+_HANDLED_SIGNALS=(signal.SIGTERM,signal.SIGINT,signal.SIGHUP)
+
+
+def start_owned_server(inst, *, spawning=None, received=None, **kwargs):
+    """Bind the child before acting on a signal delivered during Popen.
+
+    The short single-threaded preflight temporarily wraps only its existing
+    server spawn. Signals are deferred in the parent during Popen; no signal
+    mask is inherited by the child and no production module changes on disk.
+    """
+    spawning = spawning if spawning is not None else [False]
+    received = received if received is not None else []
+    original=lsi.subprocess.Popen
+    def tracked_spawn(*args,**spawn_kwargs):
+        if inst.process is not None:
+            raise RuntimeError('STOP: unexpected second preflight server spawn')
+        spawning[0]=True
+        try:
+            child=original(*args,**spawn_kwargs)
+            inst.process=child
+        finally:
+            spawning[0]=False
+        if received:
+            raise InterruptedError(f'STOP: preflight interrupted by signal {received[0]}')
+        return child
+    lsi.subprocess.Popen=tracked_spawn
+    try:
+        return inst.start(**kwargs)
+    finally:
+        lsi.subprocess.Popen=original
+
+
+def stop_owned_server(inst):
+    """Stop an owned live child, including before its server record exists."""
+    if inst is None or inst.process is None or inst.process.poll() is not None:
+        return
+    if inst.record.get('pgid') is None:
+        # Popen remains our unreaped child here: its PID cannot be reused.
+        pid=inst.process.pid
+        if os.getpgid(pid)!=pid:
+            raise RuntimeError('STOP: owned early server group identity mismatch')
+        inst.record['pgid']=pid
+    inst.stop()
+    if inst.process.poll() is None:
+        raise RuntimeError('STOP: owned server did not exit')
+
+
 def run(expected_head, out):
     cfg,spec,build=check_inputs(expected_head,out)
     out=Path(out)
@@ -113,10 +162,15 @@ def run(expected_head, out):
     fd=None
     inst=None
     signal_handlers={}
+    received=[]
+    cleanup_started=[False]
+    spawning=[False]
     def interrupted(signum, frame):
-        raise InterruptedError(f'STOP: preflight interrupted by signal {signum}')
+        received.append(signum)
+        if not cleanup_started[0] and not spawning[0] and len(received)==1:
+            raise InterruptedError(f'STOP: preflight interrupted by signal {signum}')
     try:
-        for sig in (signal.SIGTERM,signal.SIGINT,signal.SIGHUP):
+        for sig in _HANDLED_SIGNALS:
             signal_handlers[sig]=signal.signal(sig,interrupted)
         fd=acquire(lock)
         lock_info=verify_contender(lock,fd)
@@ -127,7 +181,8 @@ def run(expected_head, out):
             thinking_policy={**spec['thinking_policy'],'mode':'off','budget':0},
             label='ENGINEERING_ONLY',start_timeout=cfg['server']['start_timeout'])
         inst.b1_preserve_records=True
-        inst.start(build=build,model_sha256=spec['quant_source']['sha256'],b1_lease_fd=fd)
+        start_owned_server(inst,spawning=spawning,received=received,build=build,
+                           model_sha256=spec['quant_source']['sha256'],b1_lease_fd=fd)
         verify_server_fd(fd,inst.process.pid)
         offload=inst.offload(footprint_mib=spec['runtime']['footprint_mib'])
         if not offload['full'] or spec['id'] not in (inst.model_ids() or []):
@@ -144,12 +199,10 @@ def run(expected_head, out):
               'model':spec['id'],'offload':offload},sort_keys=True),flush=True)
     finally:
         original=sys.exc_info()[1]
+        cleanup_started[0]=True
         cleanup_error=None
         try:
-            if inst is not None and inst.process is not None and inst.process.poll() is None:
-                inst.stop()
-            if inst is not None and inst.process is not None and inst.process.poll() is None:
-                raise RuntimeError('STOP: owned server did not exit')
+            stop_owned_server(inst)
         except BaseException as exc:
             cleanup_error=exc
             print(f'STOP: owned server shutdown failed: {exc}',file=sys.stderr,flush=True)
@@ -164,6 +217,8 @@ def run(expected_head, out):
                 signal.signal(sig,handler)
         if cleanup_error is not None and original is None:
             raise cleanup_error
+        if received and original is None:
+            raise InterruptedError(f'STOP: preflight interrupted by signal {received[0]}')
     print('PREFLIGHT_PASS: owned server exited and own lease descriptor closed',flush=True)
 
 
