@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from r1.exam.campaign import write_json
-from r1.exam.stage_a import prefill_metadata
+from r1.exam.stage_a import prefill_metadata, write_stage_a_result
 from r1.exam.guards import artifact_label, digest_file, paired_instance_bootstrap
 from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders, report_b1_stop_and_save, report_b1_freeze_failure, require_committed_b1_config
 from r1.exam.analyze import is_v2, thinking_off_capable
@@ -149,7 +149,7 @@ def _stage_a_cooperative(runner, selected, only=None, amendment=None, amendment_
         if spec.get('kind') in ('random_valid','scripted'):
             result={'candidate':spec['id'],'label':'EXAM','phase':'stage-a','passed':True,'software_anchor':True,
                     'prompts':0,'failure_classes':[],'mechanical_model_checks':'not_applicable'}
-            path=runner.out/spec['id']/'stage-a'/'stage_a.json';write_json(path,result)
+            path=runner.out/spec['id']/'stage-a'/'stage_a.json';write_stage_a_result(path,result,dryrun=bool(runner.cfg.get('dryrun')))
         else:
             runner.validate_spec(spec,allow_pending_footprint=True)
             candidate_source=copy.deepcopy(spec)
@@ -175,7 +175,7 @@ def _stage_a_cooperative(runner, selected, only=None, amendment=None, amendment_
                                     'template_failure_evidence':qualification.get('template_failure_evidence'),
                                     **prefill_metadata(ctx),
                                     'prefill_not_attempted_reason':'chat template parser generation failed at startup'}
-                            write_json(path,result);completed_normally=True;break
+                            write_stage_a_result(path,result,dryrun=bool(runner.cfg.get('dryrun')));completed_normally=True;break
                         if qualification['status']!='PASS': raise MechanicalFailure('independent exact-path offload qualification failed')
                         spec['runtime']['footprint_mib']=qualification['footprint_mib']
                     else: qualification={'status':'PINNED','footprint_mib':spec['runtime']['footprint_mib']}
@@ -193,7 +193,7 @@ def _stage_a_cooperative(runner, selected, only=None, amendment=None, amendment_
                     result.update(qualification=qualification,proposal_schema='manager_proposal/v1',model_sha256=spec['quant_source']['sha256'],
                                   build=runner.cfg['server']['build'],thinking_policy=spec['thinking_policy'],
                                   server_record=str(inst.record_path),ctx_size=ctx,cpu_pool_only=(ctx==16384),cache_type='q8_0',n_gpu_layers=999)
-                    write_json(path,result)
+                    write_stage_a_result(path,result,dryrun=bool(runner.cfg.get('dryrun')))
                     completed_normally=True
                 except MechanicalFailure as exc:
                     if runner.service:
@@ -201,11 +201,11 @@ def _stage_a_cooperative(runner, selected, only=None, amendment=None, amendment_
                     result={'candidate':spec['id'],'label':'EXAM','phase':'stage-a','passed':False,'failure_classes':['offload'],
                             'error':repr(exc),'prompts':0,'cpu_pool_only':ctx==16384,
                             **prefill_metadata(ctx),'prefill_not_attempted_reason':'qualification/load failure'}
-                    write_json(path,result)
+                    write_stage_a_result(path,result,dryrun=bool(runner.cfg.get('dryrun')))
                 finally:
                     if runner.service and completed_normally: runner.stop_service()
                 if result['passed'] or not set(result['failure_classes']).intersection({'offload','fit_estimate'}): break
-        result['source_label']=artifact_label(spec);write_json(path,result)
+        result['source_label']=artifact_label(spec);write_stage_a_result(path,result,dryrun=bool(runner.cfg.get('dryrun')))
         runner.state['completed'][key]={'path':str(path),'sha256':digest_file(path)};runner.save();out.append(result)
     write_json(runner.out/'stage_a_table.json',{'label':'ENGINEERING_ONLY','rows':out})
 

@@ -60,7 +60,7 @@ def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
     from r1.exam import cache_runtime, stage_a
     from r1.scripts import exam_runner
     from r1.scripts.c3_fake_ollama import proposal_for
-    from r1.exam.campaign import write_json
+    from r1.exam.stage_a import write_stage_a_result
     from autoresearch.llm.providers import manager_response_format
 
     monkeypatch.setattr(stage_a,'require_d3_evidence',lambda:None)
@@ -108,7 +108,7 @@ def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
                 schema_format=manager_response_format(),dryrun=True,template_renderer=render,
                 cache_context={'false_recorder':rec,'non_generation_recorder':nongen})
             assert result['passed'],result
-            write_json(Path(job['out'])/'stage_a.json',result)
+            write_stage_a_result(Path(job['out'])/'stage_a.json',result,dryrun=True)
     runner=Runner();exam_runner.stage_a(runner,list(selected))
     table=json.loads((runner.out/'stage_a_table.json').read_text())
     assert len(table['rows'])==5 and {x['candidate'] for x in table['rows']}==selected

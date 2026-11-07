@@ -114,6 +114,22 @@ def publish_dryrun_state(path, state, expected_identity):
                           rename=_renameat_dryrun)
 
 
+def publish_dryrun_stage_a_result(path, result):
+    """Publish a synthetic Stage A result, retaining every prior version.
+
+    The caller owns a stable test directory and has serialized its writer.
+    An existing result is accepted only under that cooperative assumption.
+    No old bytes are overwritten; an unsupported atomic rename fails closed.
+    """
+    path = Path(path)
+    if not path.is_absolute() or path.name != 'stage_a.json':
+        raise RuntimeError('STOP: invalid DRYRUN Stage A result location')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    expected = existing_identity(path)
+    return _publish_named(path, result, expected, 'stage_a_result',
+                          rename=_renameat_dryrun)
+
+
 def publish_audit_cache(path, cache, expected_identity):
     """Publish B1's canonical audit cache, retaining each earlier version."""
     return _publish_named(path, cache, expected_identity, 'audit_cache')
@@ -134,6 +150,7 @@ def _publish_named(path, state, expected_identity, kind, *, rename=None):
     path = Path(path)
     allowed = ((kind == 'batch_state' and path.name == 'batch_state.json') or
                (kind == 'audit_cache' and path.name == 'audit_cache.json') or
+               (kind == 'stage_a_result' and path.name == 'stage_a.json') or
                (kind == 'server_record' and re.fullmatch(r'llama_server_[0-9]+(?:_r[0-9]+)?\.json', path.name)))
     if not allowed or not path.is_absolute():
         raise RuntimeError('STOP: invalid B1 snapshot location')

@@ -1,0 +1,11 @@
+test_actual_dispatch_preserves_production_call (r1.tests.stagea_recovery_memory.test_dryrun_stagea_result.StageAResultTests.test_actual_dispatch_preserves_production_call) ... ok
+test_bad_target_refuses_before_mkdir (r1.tests.stagea_recovery_memory.test_dryrun_stagea_result.StageAResultTests.test_bad_target_refuses_before_mkdir) ... ok
+test_child_and_two_parent_versions_retain_prior_inodes (r1.tests.stagea_recovery_memory.test_dryrun_stagea_result.StageAResultTests.test_child_and_two_parent_versions_retain_prior_inodes) ... ok
+test_existing_identity_change_and_unsupported_rename_preserve_current (r1.tests.stagea_recovery_memory.test_dryrun_stagea_result.StageAResultTests.test_existing_identity_change_and_unsupported_rename_preserve_current) ... ok
+test_real_call_sites_use_dispatch (r1.tests.stagea_recovery_memory.test_dryrun_stagea_result.StageAResultTests.test_real_call_sites_use_dispatch) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.018s
+
+OK
+PURE_TEST_RESULT tests_run=5 failures=0 errors=0 skipped=0

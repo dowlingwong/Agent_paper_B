@@ -12,6 +12,15 @@ import numpy as np
 from r1.exam.guards import digest_file
 
 
+def write_stage_a_result(path, result, *, dryrun):
+    """Retain synthetic result versions; leave production writing unchanged."""
+    if dryrun:
+        from r1.exam.b1_state_preserve import publish_dryrun_stage_a_result
+        return publish_dryrun_stage_a_result(path, result)
+    from r1.exam.campaign import write_json
+    return write_json(path, result)
+
+
 def post(instance, route, payload, timeout=300):
     require_d3_evidence()
     with urlopen(Request(instance.url+route,data=json.dumps(payload).encode(),headers={'Content-Type':'application/json'}),timeout=timeout) as r:
@@ -378,7 +387,6 @@ def main(argv=None):
     import_harness()
     from autoresearch.llm.providers import manager_response_format
     from r1.exam.runtime import gpu_sample
-    from r1.exam.campaign import write_json
     from r1.scripts.llama_server_instance import LlamaServerInstance
     p=argparse.ArgumentParser();p.add_argument('--job',required=True);a=p.parse_args(argv)
     job=json.loads(Path(a.job).read_text());cfg=job['config'];spec=job['candidate']
@@ -437,6 +445,6 @@ def main(argv=None):
         result['fit_estimate']=estimate(json.loads(source.read_text()),spec['quant_source']['size_bytes'],job['ctx'])
         if not result['fit_estimate']['estimated_admissible']:
             result['failure_classes']=sorted(set(result['failure_classes']+['fit_estimate']));result['passed']=False
-    write_json(Path(job['out'])/'stage_a.json',result)
+    write_stage_a_result(Path(job['out'])/'stage_a.json',result,dryrun=bool(cfg.get('dryrun')))
 
 if __name__=='__main__': main()
