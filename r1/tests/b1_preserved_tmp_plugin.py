@@ -37,7 +37,10 @@ def _open_empty_root(raw):
 
 
 def _create_fixture_dir(raw, fd, expected):
-    if os.path.realpath(raw) != raw or _identity(os.fstat(fd)) != expected or _identity(os.lstat(raw)) != expected:
+    opened = os.fstat(fd)
+    named = os.lstat(raw)
+    if (os.path.realpath(raw) != raw or _identity(opened) != expected or _identity(named) != expected
+            or stat.S_IMODE(opened.st_mode) != 0o700 or stat.S_IMODE(named.st_mode) != 0o700):
         raise RuntimeError('STOP: fixture root identity or pathname changed')
     name = 'test_' + uuid.uuid4().hex
     os.mkdir(name, mode=0o700, dir_fd=fd)
