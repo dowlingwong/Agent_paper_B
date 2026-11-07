@@ -835,6 +835,8 @@ def test_v2_configs_bind_rule_harness_cache_and_repairs(name):
         assert digest_file(reference) == ref['sha256']
         actual = json.loads(reference.read_text())
         assert (ref['lower'], ref['upper']) == (actual['lower'], actual['upper'])
+    else:
+        assert cfg['anchor_duplicate_reference'] == portal['anchor_duplicate_reference']
 
 
 # ---------------------------------------------------------------- harness binding: cache_prompt false on the wire
