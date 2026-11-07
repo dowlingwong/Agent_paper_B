@@ -1,0 +1,10 @@
+test_actual_save_dispatches_three_paths (r1.tests.stagea_recovery_memory.test_dryrun_server_record.DryrunServerRecordTests.test_actual_save_dispatches_three_paths) ... ok
+test_existing_and_unsupported_operations_do_not_replace_old (r1.tests.stagea_recovery_memory.test_dryrun_server_record.DryrunServerRecordTests.test_existing_and_unsupported_operations_do_not_replace_old) ... ok
+test_invalid_name_refuses_before_open (r1.tests.stagea_recovery_memory.test_dryrun_server_record.DryrunServerRecordTests.test_invalid_name_refuses_before_open) ... ok
+test_start_and_stop_records_keep_prior_inode (r1.tests.stagea_recovery_memory.test_dryrun_server_record.DryrunServerRecordTests.test_start_and_stop_records_keep_prior_inode) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.006s
+
+OK
+PURE_TEST_RESULT tests_run=4 failures=0 errors=0 skipped=0

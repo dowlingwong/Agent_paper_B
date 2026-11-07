@@ -140,6 +140,12 @@ def publish_server_record(path, record, expected_identity):
     return _publish_named(path, record, expected_identity, 'server_record')
 
 
+def publish_dryrun_server_record(path, record, expected_identity):
+    """Retain synthetic server record snapshots using the portable DRYRUN rename."""
+    return _publish_named(path, record, expected_identity, 'server_record',
+                          rename=_renameat_dryrun)
+
+
 def _publish_named(path, state, expected_identity, kind, *, rename=None):
     """Atomically publish a narrowly named file under the cooperative B1 model.
 

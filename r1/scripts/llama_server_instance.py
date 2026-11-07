@@ -249,6 +249,7 @@ class LlamaServerInstance:
         self.log_path = self.batch / f'llama_server_{self.port}{suffix}.log'
         self.record: dict = {}
         self.b1_record_identity = None
+        self.dryrun_record_identity = None
 
     @property
     def url(self) -> str:
@@ -282,6 +283,10 @@ class LlamaServerInstance:
                 from r1.exam.b1_state_preserve import publish_server_record
                 self.b1_record_identity = publish_server_record(
                     self.record_path, self.record, self.b1_record_identity)
+            elif getattr(self, 'label', None) == 'DRYRUN':
+                from r1.exam.b1_state_preserve import publish_dryrun_server_record
+                self.dryrun_record_identity = publish_dryrun_server_record(
+                    self.record_path, self.record, getattr(self, 'dryrun_record_identity', None))
             else:
                 self.record_path.write_text(json.dumps(self.record, indent=2) + '\n')
         if getattr(self, 'b1_containment', None) is not None:
