@@ -1,0 +1,5 @@
+# Independent review: B1 STOP reporting cleanup fixture follow-up (7 November 2026)
+
+**Verdict: ACCEPTED for test-fixture fidelity at `d2aade4dfbc514a612e7e504229f5786a3ccf136`.** The two fake `close` methods now accept the production signature `close(*, preserve_running=False, skip_service=False)` (`r1/exam/runtime.py:906`). They record the call, and both entry-point tests assert `skip_service=True`, matching the B1 STOP call in `r1/scripts/exam_runner.py:575`. The stderr-capturing test additionally checks that no cleanup-failure line was emitted, while retaining its assertions about original error and failed state saving. This resolves the false `TypeError` identified in `B1_STOP_REPORT_FIXTURE_REVIEW_20261107.md`.
+
+Independent execution of `r1/tests/test_b1_stop_error_reporting.py` against the pinned harness checkout `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` gave **6 passed**; log `/private/tmp/paper-b-stop-cleanup-review-evidence-20261107/pytest.log`. The tests use fake runners and establish invocation behavior, not that real worker or service processes stop. No model, GPU or remote host was used. This review does not accept the full B1 execution path.
