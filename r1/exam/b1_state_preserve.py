@@ -104,7 +104,8 @@ def _publish_named(path, state, expected_identity, kind):
                (kind == 'server_record' and re.fullmatch(r'llama_server_[0-9]+(?:_r[0-9]+)?\.json', path.name)))
     if not allowed or not path.is_absolute():
         raise RuntimeError('STOP: invalid B1 snapshot location')
-    payload = (json.dumps(state, indent=2, allow_nan=False) + '\n').encode()
+    # The legacy server writer uses json.dumps' default allow_nan=True.
+    payload = (json.dumps(state, indent=2, allow_nan=(kind == 'server_record')) + '\n').encode()
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW
     parent_fd = os.open(path.parent, flags)
     archive_fd = None
