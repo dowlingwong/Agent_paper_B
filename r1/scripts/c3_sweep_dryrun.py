@@ -102,16 +102,10 @@ def executable(path, text):
 
 def build_fixture(root: Path, harness_source: Path) -> dict:
     source = root / 'source'
-    for attempt in range(3):
-        # The source repository is shared with other sessions; a concurrent ref
-        # or pack lock can make one clone fail transiently.
-        done = subprocess.run(['git', 'clone', '-q', '--no-checkout', str(REPO), str(source)],
-                              capture_output=True, text=True)
-        if done.returncode == 0:
-            break
-        shutil.rmtree(source, ignore_errors=True)
-        time.sleep(2)
-    else:
+    # A failed clone may leave evidence in source; keep it and do not retry.
+    done = subprocess.run(['git', 'clone', '-q', '--no-checkout', str(REPO), str(source)],
+                          capture_output=True, text=True)
+    if done.returncode != 0:
         raise RuntimeError(f'STOP: fixture clone failed: {done.stderr.strip()[-500:]}')
     archive = subprocess.check_output(['git', 'archive', 'HEAD'], cwd=REPO)
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
@@ -651,7 +645,7 @@ def main():
     ap.add_argument('--out', type=Path, default=None)
     ap.add_argument('--python', default=sys.executable, help='interpreter with the harness dependencies')
     ap.add_argument('--deadline', type=float, default=150.0, help='seconds per scenario run')
-    ap.add_argument('--keep', action='store_true', help='keep the temporary directories for inspection')
+    ap.add_argument('--keep', action='store_true', help='compatibility flag; temporary directories are always kept')
     ap.add_argument('--base-config', type=Path, default=None,
                     help='start from this launch config (e.g. r1/scripts/configs/c3_sweep_ada.json); a host '
                          'draft with TODO_VERIFY values is accepted, its host values are overridden')
@@ -701,7 +695,7 @@ def main():
             entry['passed'] = False
             entry['error'] = f'{type(exc).__name__}: {exc}'
         finally:
-            if result:
+            if result and entry.get('passed'):
                 entry['stop_reason'] = result['state'].get('stop_reason')
                 entry['batch'] = str(result['batch'])
                 target = out / scenario
@@ -710,11 +704,12 @@ def main():
                     shutil.copy2(path, target / path.name)
                 if (root / 'fake_calls.jsonl').exists():
                     shutil.copy2(root / 'fake_calls.jsonl', target / 'fake_calls.jsonl')
-            subprocess.run([shutil.which('tmux') or 'tmux', '-L', socket_name, 'kill-server'], capture_output=True)
-            if not args.keep:
-                shutil.rmtree(root, ignore_errors=True)  # ~250 MB per scenario
-                entry['temporary_root_removed'] = True
+            if entry.get('passed'):
+                subprocess.run([shutil.which('tmux') or 'tmux', '-L', socket_name, 'kill-server'], capture_output=True)
+            entry['temporary_root_removed'] = False
         summary['scenarios'][scenario] = entry
+        if not entry.get('passed'):
+            break
     summary['elapsed_seconds'] = round(time.monotonic() - start, 1)
     summary['completed'] = all(e.get('passed') for e in summary['scenarios'].values())
     (out / 'summary.json').write_text(json.dumps(summary, indent=2, default=str) + '\n')
