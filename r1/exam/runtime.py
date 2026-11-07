@@ -196,6 +196,11 @@ def require_committed_b1_config(path, cfg):
     """
     expected=REPO/B1_CONFIG_REL
     try:
+        # Other relative B1 inputs (rule, anchor JSON, authorization note,
+        # value grids and the acceptance record) are consumed by older code
+        # relative to cwd; refuse an alternate cwd rather than silently rebase.
+        if Path.cwd().resolve() != REPO:
+            raise ValueError('production B1 must start from the checkout root')
         supplied=Path(path).absolute()
         if supplied != expected or supplied.resolve(strict=True) != expected:
             raise ValueError('B1 requires the checkout config path without aliases')
@@ -205,6 +210,7 @@ def require_committed_b1_config(path, cfg):
         if not re.fullmatch(r'[0-9a-f]{40}',head): raise ValueError('invalid checkout HEAD')
         if subprocess.check_output(['git','-C',str(REPO),'status','--porcelain','--untracked-files=all'],text=True).strip():
             raise ValueError('checkout is not clean')
+        _require_git_regular(head,B1_CONFIG_REL)
         blob=subprocess.check_output(['git','-C',str(REPO),'show',f'{head}:{B1_CONFIG_REL}'])
         if expected.read_bytes()!=blob or json.loads(blob)!=cfg:
             raise ValueError('config or loaded settings differ from committed HEAD')
@@ -213,6 +219,36 @@ def require_committed_b1_config(path, cfg):
         return head
     except (OSError,ValueError,TypeError,subprocess.SubprocessError) as exc:
         raise PreparationStop(f'STOP: B1 committed config verification failed: {exc}') from exc
+
+
+def _require_git_regular(head, rel):
+    """Reject a committed symlink, submodule, or unexpected tree entry."""
+    row=subprocess.check_output(['git','-C',str(REPO),'ls-tree','-z',head,'--',rel])
+    expected_suffix=b'\t'+rel.encode()+b'\0'
+    if not row.endswith(expected_suffix) or not re.fullmatch(rb'100(?:644|755) blob [0-9a-f]{40}\t[^\0]+\0',row):
+        raise ValueError('committed input is not a regular Git blob')
+
+
+def require_committed_b1_registry(cfg, head, *, selected_path=None, selected_registry=None):
+    """Bind the actual B1 registry path, bytes, and optional parsed object to HEAD."""
+    try:
+        rel=cfg['registry']
+        if not isinstance(rel,str) or not rel or Path(rel).is_absolute() or '..' in Path(rel).parts:
+            raise ValueError('invalid relative registry path')
+        path=REPO/rel
+        if path.resolve(strict=True)!=path:
+            raise ValueError('registry path has an alias or symlink')
+        if selected_path is not None and Path(selected_path)!=path:
+            raise ValueError('registry override differs from committed config')
+        _require_git_regular(head,rel)
+        blob=subprocess.check_output(['git','-C',str(REPO),'show',f'{head}:{rel}'])
+        if path.read_bytes()!=blob:
+            raise ValueError('registry bytes differ from committed HEAD')
+        if selected_registry is not None and selected_registry!=yaml.safe_load(blob):
+            raise ValueError('loaded registry differs from committed HEAD')
+        return path
+    except (KeyError,OSError,ValueError,TypeError,subprocess.SubprocessError,yaml.YAMLError) as exc:
+        raise PreparationStop(f'STOP: B1 committed registry verification failed: {exc}') from exc
 
 
 def read_registry(path):
@@ -456,7 +492,12 @@ def require_server_lease_inheritance(instance):
 class ExamRunner:
     def __init__(self, cfg, out, *, registry_path=None, b1_config_head=None):
         self.cfg=cfg;self.out=Path(out).resolve();host_check(cfg,self.out)
-        self.registry_path=Path(registry_path or cfg['registry']).resolve()
+        if b1_config_head is not None and not cfg.get('dryrun'):
+            if registry_path is not None:
+                raise PreparationStop('STOP: production B1 does not accept a registry override')
+            self.registry_path=require_committed_b1_registry(cfg,b1_config_head)
+        else:
+            self.registry_path=Path(registry_path or cfg['registry']).resolve()
         self.registry=read_registry(self.registry_path)
         self.rule,self.rule_sha=load_rule(cfg['rule'],cfg['rule_sha256'])
         self.binding=hashlib.sha256(json.dumps({'config':cfg,'registry_sha256':digest_file(self.registry_path),'rule_sha256':self.rule_sha,'value_grids_sha256':digest_file(cfg['value_grids'])},sort_keys=True).encode()).hexdigest()
@@ -493,6 +534,7 @@ class ExamRunner:
                 checked=require_committed_b1_config(REPO/B1_CONFIG_REL,self.cfg)
                 if not self.b1_config_head or checked!=self.b1_config_head:
                     raise PreparationStop('STOP: B1 config HEAD changed before authorization')
+                require_committed_b1_registry(self.cfg,checked,selected_path=self.registry_path,selected_registry=self.registry)
             self.author_head=author_gate(self.cfg,phase,self.rule_sha)
             if not self.cfg.get('dryrun') and (not self.b1_config_head or self.author_head!=self.b1_config_head):
                 raise PreparationStop('STOP: B1 authorization HEAD differs from committed config HEAD')
