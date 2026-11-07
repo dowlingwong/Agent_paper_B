@@ -25,6 +25,10 @@ overwritten with the configuration's texts: the mechanism of
 Cache: ``runs.jsonl`` rows keyed by (node, config hash, seed); every run is
 written as soon as it finishes, so an interrupted call resumes where it stopped.
 
+Audit working directories remain at their original unique paths on success or
+failure to preserve the scene. Node copies, cached datasets, and worker artifacts
+accumulate; operators must provision and monitor storage before running.
+
 CLI (time-boxed, resumable):
   python -m r1.c3.audit run --plan DIR/plan.jsonl --configs DIR/configs.json --out DIR \
       --workers 4 --deadline 150
@@ -32,14 +36,10 @@ CLI (time-boxed, resumable):
 from __future__ import annotations
 
 import argparse
-import ctypes
 import json
 import os
 import shutil
 import tempfile
-import stat
-import sys
-import uuid
 import time
 from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 from pathlib import Path
@@ -52,51 +52,6 @@ SEEDS_FILE = "audit_seeds.json"
 PILOT_DATA_CACHE = "experiments/r1/pilot/L8_20261009T152916Z/nodes/{node}/data_cache"
 
 
-def _retire_owned_work(work: Path, identity: tuple[int, int]) -> Path:
-    """Retire our own directory without replacing an existing path or deleting data.
-
-    These retained copies consume disk space; operators must monitor storage.
-    A failure is a STOP and leaves the source in place whenever rename fails.
-    The directory hierarchy is assumed not to be mutated by another same-UID
-    process during this operation.
-    """
-    try:
-        st = work.lstat()
-        if not stat.S_ISDIR(st.st_mode) or (st.st_dev, st.st_ino) != identity:
-            raise RuntimeError("owned directory identity changed")
-        retired = work.parent / "_to_delete"
-        try:
-            retired.mkdir(mode=0o700)
-        except FileExistsError:
-            pass
-        rst = retired.lstat()
-        if not stat.S_ISDIR(rst.st_mode) or rst.st_uid != os.getuid():
-            raise RuntimeError("unsafe retirement directory")
-        dest = retired / (work.name + "-" + uuid.uuid4().hex)
-        libc = ctypes.CDLL(None, use_errno=True)
-        if sys.platform == "darwin":
-            rename = libc.renamex_np
-            rename.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint]
-            args = (os.fsencode(work), os.fsencode(dest), 4)  # RENAME_EXCL
-        elif sys.platform.startswith("linux"):
-            rename = libc.renameat2
-            rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
-            args = (-100, os.fsencode(work), -100, os.fsencode(dest), 1)  # RENAME_NOREPLACE
-        else:
-            raise RuntimeError("atomic no-replace rename unavailable")
-        rename.restype = ctypes.c_int
-        if rename(*args) != 0:
-            err = ctypes.get_errno()
-            raise OSError(err, os.strerror(err), str(dest))
-        return dest
-    except (OSError, AttributeError, RuntimeError) as exc:
-        raise RuntimeError(f"STOP: cannot retire owned audit directory {work}: {exc}") from exc
-
-
-def _identity(path: Path) -> tuple[int, int]:
-    st = path.lstat()
-    return st.st_dev, st.st_ino
-
 def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str) -> list[dict]:
     """Run one configuration at the given joint seeds (subprocess-safe)."""
     from r1.harness import import_harness
@@ -107,32 +62,30 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str) -> 
 
     spec = load_registered_node(node, repo_root=harness)
     work = Path(tempfile.mkdtemp(prefix=f"c3a_{node}_", dir=tmp))
-    identity = _identity(work)
+    # Preserve the entire scene in place, including after asynchronous STOP.
+    # Unique work directories and copied artifacts consume increasing storage.
     out = []
-    try:
-        node_dir = work / node
-        shutil.copytree(harness / "nodes" / node, node_dir,
-                        ignore=shutil.ignore_patterns("__pycache__", ".autoresearch_artifacts"))
-        if node.startswith("openml_") and not (node_dir / "data_cache").exists():
-            cache = harness / PILOT_DATA_CACHE.format(node=node)
-            if cache.exists():
-                shutil.copytree(cache, node_dir / "data_cache")
-        for rel, text in files.items():
-            if rel not in spec.editable_paths:
-                raise ValueError(f"{rel} is not editable on {node}")
-            (node_dir / rel).write_text(text, encoding="utf-8")
-        worker = LocalWorker(node_root=node_dir, artifact_dir=work / "art", timeout_seconds=600)
-        noedit = ManagerProposal(manager_mode="c3_audit", proposal_summary="audit", proposal_rationale="",
-                                 target_files=spec.editable_paths, objective="Audit run; no change.")
-        for i, s in enumerate(seeds):
-            t0 = time.perf_counter()
-            res = worker.run_trial_at_seed(noedit, spec, i + 1, train_seed=s, split_seed=s)
-            out.append({"seed": s, "success": bool(res.success), "failure": res.failure_message,
-                        "metric": res.parsed_metrics.get(spec.metric_name) if res.success else None,
-                        "changed_files": bool(res.changed_files),
-                        "wall_seconds": round(time.perf_counter() - t0, 4)})
-    finally:
-        _retire_owned_work(work, identity)
+    node_dir = work / node
+    shutil.copytree(harness / "nodes" / node, node_dir,
+                    ignore=shutil.ignore_patterns("__pycache__", ".autoresearch_artifacts"))
+    if node.startswith("openml_") and not (node_dir / "data_cache").exists():
+        cache = harness / PILOT_DATA_CACHE.format(node=node)
+        if cache.exists():
+            shutil.copytree(cache, node_dir / "data_cache")
+    for rel, text in files.items():
+        if rel not in spec.editable_paths:
+            raise ValueError(f"{rel} is not editable on {node}")
+        (node_dir / rel).write_text(text, encoding="utf-8")
+    worker = LocalWorker(node_root=node_dir, artifact_dir=work / "art", timeout_seconds=600)
+    noedit = ManagerProposal(manager_mode="c3_audit", proposal_summary="audit", proposal_rationale="",
+                             target_files=spec.editable_paths, objective="Audit run; no change.")
+    for i, s in enumerate(seeds):
+        t0 = time.perf_counter()
+        res = worker.run_trial_at_seed(noedit, spec, i + 1, train_seed=s, split_seed=s)
+        out.append({"seed": s, "success": bool(res.success), "failure": res.failure_message,
+                    "metric": res.parsed_metrics.get(spec.metric_name) if res.success else None,
+                    "changed_files": bool(res.changed_files),
+                    "wall_seconds": round(time.perf_counter() - t0, 4)})
     return out
 
 
@@ -226,10 +179,8 @@ def run_plan(plan: list[dict], configs: dict, out: Path, seeds=DEFAULT_SEEDS, wo
                                               "label_seeds": list(seeds[:len(seeds) // 2]),
                                               "evaluation_seeds": list(seeds[len(seeds) // 2:])}) + "\n")
     cache = RunCache(out / "runs.jsonl")
-    owns_tmp = not tmp
     tmp = tmp or tempfile.mkdtemp(prefix="c3_audit_tmp_")
     Path(tmp).mkdir(parents=True, exist_ok=True)
-    tmp_identity = _identity(Path(tmp)) if owns_tmp else None
     jobs, queued = [], set()
     for p in plan:
         for h in (p["candidate_hash"], p["incumbent_hash"]):
@@ -253,8 +204,6 @@ def run_plan(plan: list[dict], configs: dict, out: Path, seeds=DEFAULT_SEEDS, wo
                 rows = [{"node": node, "config_hash": h, **r} for r in fut.result()]
                 cache.add(rows)
                 done += 1
-    if owns_tmp:
-        _retire_owned_work(Path(tmp), tmp_identity)
     results = audit_results(plan, cache, seeds)
     return {"configs_run_this_call": done, "configs_remaining": len(jobs),
             "proposals_complete": len(results), "proposals_planned": len(plan),
