@@ -132,6 +132,15 @@ def refuse_existing_stage_a_output(path):
         raise PreparationStop('STOP: Stage A output cannot be inspected') from exc
 
 
+def copy_dryrun_registry_snapshot(source, destination):
+    """Create one synthetic snapshot without replacing existing evidence.
+
+    A failed copy deliberately leaves any newly created partial file in place.
+    """
+    with source.open('rb') as src, destination.open('xb') as dst:
+        shutil.copyfileobj(src, dst)
+
+
 def placeholders(value, prefix=''):
     if isinstance(value,dict): return [p for k,v in value.items() if k!='comment' for p in placeholders(v,f'{prefix}.{k}')]
     if isinstance(value,list): return [p for i,v in enumerate(value) for p in placeholders(v,f'{prefix}[{i}]')]
@@ -679,7 +688,11 @@ class ExamRunner:
                 if root.exists():
                     _verify_b1_root_authority(root/'campaign_manifest.json',self.author_head)
         else:
-            shutil.copyfile(self.registry_path,self.out/'registry_snapshot.yaml')
+            snapshot=self.out/'registry_snapshot.yaml'
+            if self.cfg.get('dryrun'):
+                copy_dryrun_registry_snapshot(self.registry_path,snapshot)
+            else:
+                shutil.copyfile(self.registry_path,snapshot)
             self.state={'schema':'exam_batch/v1','label':'EXAM','execution_label':'DRYRUN' if self.cfg.get('dryrun') else ('ENGINEERING_ONLY' if phase=='stage-a' else 'EVIDENCE'),
                         'phase':phase,'binding':self.binding,'rule_sha256':self.rule_sha,'completed':{},'interruptions':[],'status':'RUNNING'}
         if phase=='b1' and not self.cfg.get('dryrun'):
