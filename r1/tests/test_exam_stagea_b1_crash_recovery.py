@@ -22,6 +22,18 @@ import yaml
 ROOT=Path(__file__).resolve().parents[2]
 
 
+def _regular_file_contents(root):
+    """Snapshot every regular file in a stopped test-owned synthetic root."""
+    files={}
+    for path in sorted(root.rglob('*')):
+        assert not path.is_symlink(), f'unexpected synthetic symlink: {path}'
+        if path.is_dir(): continue
+        assert path.is_file(), f'unexpected synthetic special file: {path}'
+        files[str(path.relative_to(root))]=path.read_bytes()
+    assert files
+    return files
+
+
 def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
     """Generate five Stage A rows through the real Stage A calculations.
 
@@ -164,7 +176,7 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
     assert all(any(e.get('event')=='parent_lost_self_exit' and e.get('pid')==pid for e in events) for pid in server_pids)
     partial_bytes=(partial/'root_trials.jsonl').read_bytes()
     assert partial_bytes.startswith(partial_prefix) and partial_bytes
-    partial_ledger=digest_file(partial/'root_trials.jsonl')
+    partial_files=_regular_file_contents(partial)
     crashed=json.loads((out/'batch_state.json').read_text())
     assert crashed['status']=='RUNNING' and not crashed.get('stop_reason')
     resumed=subprocess.run(args,cwd=ROOT,env=env,capture_output=True,text=True,timeout=180)
@@ -174,8 +186,9 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
     for key,(path,sha,check_sha) in completed.items():
         assert result['completed'][key]['path']==path and digest_file(path)==sha
         assert result['completed'][key]['post_check_sha256']==check_sha
+        assert digest_file(Path(path).parent/'post_check.json')==check_sha
     archived=list((out/'interrupted').glob('*'))
-    assert len(archived)==1 and digest_file(archived[0]/'root_trials.jsonl')==partial_ledger
+    assert len(archived)==1 and _regular_file_contents(archived[0])==partial_files
     assert all(json.loads(Path(v['path']).read_text())['execution_label']=='DRYRUN' for v in result['completed'].values())
 
 
