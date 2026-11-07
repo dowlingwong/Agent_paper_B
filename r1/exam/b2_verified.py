@@ -152,6 +152,100 @@ def _hours(state, candidate, recorded):
         _stop('candidate GPU hours differ from intervals')
 
 
+def _campaign_budget(records, events, root, cfg, node, seed):
+    """Recompute charged worker/observer and call budgets from the pinned event contract.
+
+    A precondition failure can emit worker_started/finished without charging a
+    worker; a skipped trial has no worker. The pinned harness emits an observer
+    event only when a worker run was charged. Do not count all non-skipped
+    records as worker runs.
+    """
+    if not records or any(not isinstance(r, dict) for r in records) or any(not isinstance(e, dict) for e in events):
+        _stop('campaign trial or event ledger is empty or malformed')
+    campaign = f'{node}__s{seed}'
+    ids = []
+    for index, record in enumerate(records, 1):
+        trial = f'{campaign}-trial-{index:03d}'
+        if record.get('campaign_id') != campaign or record.get('node_id') != node or record.get('trial_id') != trial or record.get('budget_index') != index:
+            _stop('campaign trial identity or ordering differs')
+        ids.append(trial)
+    for event in events:
+        if event.get('campaign_id') != campaign or not isinstance(event.get('payload'), dict):
+            _stop('campaign event identity or payload differs')
+        if event.get('trial_id') is not None and event.get('trial_id') not in ids:
+            _stop('campaign event references an unknown trial')
+    starts = [e for e in events if e.get('event_type') == 'campaign_started']
+    completed = [e for e in events if e.get('event_type') == 'campaign_completed']
+    if len(starts) != 1 or len(completed) != 1 or events[0] is not starts[0] or events[-1] is not completed[0]:
+        _stop('campaign start or completion event is missing, duplicated or unordered')
+    start = starts[0]['payload']
+    if (start.get('node_id') != node or start.get('memory_mode') != 'append_only_summary' or
+        start.get('proposal_schema') != cfg['proposal_schema'] or start.get('proposal_observer') != 'exam_self_forecast/v1' or
+        start.get('budget') != cfg['llm_call_cap']):
+        _stop('campaign start differs from authorized schema, observer or budget')
+    if any(e.get('event_type') == 'campaign_stopped_by_controller' for e in events):
+        _stop('campaign stopped before its fixed budget')
+    completion = completed[0]['payload']
+    budget = completion.get('compute_budget')
+    if (not isinstance(budget, dict) or root.get('compute_budget') != budget or
+        type(completion.get('records_written')) is not int or completion['records_written'] != len(records)):
+        _stop('campaign completion and recorded budget differ')
+    workers, calls = budget.get('worker_runs'), budget.get('llm_calls')
+    if (type(workers) is not int or type(calls) is not int or not 0 <= workers <= cfg['W'] or
+        not 0 <= calls <= cfg['llm_call_cap'] or budget.get('max_worker_runs') != cfg['W'] or
+        budget.get('max_llm_calls') != cfg['llm_call_cap'] or budget.get('worker_runs_used') != workers or
+        budget.get('llm_calls_used') != calls or budget.get('worker_runs_remaining') != cfg['W'] - workers or
+        budget.get('llm_calls_remaining') != cfg['llm_call_cap'] - calls or
+        budget.get('exhausted') is not (workers >= cfg['W'] or calls >= cfg['llm_call_cap'])):
+        _stop('campaign budget counters or caps are inconsistent')
+    forecasts = [e for e in events if e.get('event_type') == 'exam_self_forecast']
+    observer_calls = [e for e in events if e.get('event_type') == 'llm_call' and e['payload'].get('purpose') == 'self_forecast']
+    call_events = [e for e in events if e.get('event_type') in ('llm_call', 'llm_call_failed')]
+    call_count = 0
+    for event in call_events:
+        count = event['payload'].get('llm_calls', 1)
+        if type(count) is not int or count < 1: _stop('invalid charged LLM call count')
+        call_count += count
+    forecast_ids = [e.get('trial_id') for e in forecasts]
+    call_ids = [e.get('trial_id') for e in observer_calls]
+    if (call_count != calls or len(forecasts) != workers or len(set(forecast_ids)) != len(forecast_ids) or
+        len(set(call_ids)) != len(call_ids) or set(forecast_ids) != set(call_ids)):
+        _stop('campaign observer or LLM accounting differs from charged workers')
+    manager_calls = [e for e in events if e.get('event_type') == 'llm_call' and e['payload'].get('purpose') != 'self_forecast']
+    if {e.get('trial_id') for e in manager_calls} != set(ids):
+        _stop('campaign trial lacks a corresponding manager call')
+    by_trial = {r['trial_id']: r for r in records}
+    for trial in forecast_ids:
+        if trial is None or by_trial[trial].get('decision') == 'skipped':
+            _stop('skipped or missing trial has an observer call')
+        forecast_event = next(e for e in forecasts if e.get('trial_id') == trial)
+        call_event = next(e for e in observer_calls if e.get('trial_id') == trial)
+        forecast = forecast_event['payload']; call = call_event['payload']
+        if any(call.get(key) != value for key, value in forecast.items()):
+            _stop('observer forecast and charged call differ')
+        worker_start = [e for e in events if e.get('trial_id') == trial and e.get('event_type') == 'worker_started']
+        worker_end = [e for e in events if e.get('trial_id') == trial and e.get('event_type') == 'worker_finished']
+        if (len(worker_start) != 1 or len(worker_end) != 1 or not
+            events.index(worker_start[0]) < events.index(worker_end[0]) < events.index(forecast_event) < events.index(call_event)):
+            _stop('charged worker lacks its ordered start and completion events')
+    expected_termination = 'worker_cap' if workers == cfg['W'] else 'llm_cap_or_reserved_observer_pair'
+    if root.get('termination') != expected_termination: _stop('campaign termination label differs from budget')
+    if workers < cfg['W']:
+        pair = [e for e in events if e.get('event_type') == 'exam_observer_call_pair_unavailable']
+        pair_valid = len(pair) == 1 and pair[0]['payload'].get('remaining_calls') == cfg['llm_call_cap'] - calls and pair[0]['payload'].get('required_calls') == 2 and cfg['llm_call_cap'] - calls < 2
+        if not (calls == cfg['llm_call_cap'] or len(records) == cfg['llm_call_cap'] or pair_valid):
+            _stop('campaign stopped before worker or LLM cap without pair-exhaustion evidence')
+    novelty = [e['payload'] for e in events if e.get('event_type') == 'edit_novelty']
+    diagnostics = {'trials': len(records), 'evaluated': len(novelty),
+        'invalid': sum(r.get('decision') == 'failed_invalid' for r in records),
+        'duplicates': sum(bool(p.get('active_config_seen_before')) for p in novelty),
+        'noops': sum(bool(p.get('active_config_equals_incumbent')) for p in novelty),
+        'parse_failed': sum(bool(((r.get('extra') or {}).get('manager') or {}).get('parse_failed')) or
+            ((((r.get('extra') or {}).get('manager') or {}).get('llm_call')) or {}).get('parse_ok') is False for r in records),
+        'forecast_queries': len(forecasts), 'forecast_query_failed': sum(e['payload'].get('status') == 'query_failed' for e in forecasts)}
+    if root.get('diagnostics') != diagnostics: _stop('campaign diagnostics differ from ledgers')
+
+
 def b2_summary_verified(batch, config_path, *, rule_path=None, expected=None):
     """Return a v2 ranking only after committed authority and complete receipt checks."""
     from r1.exam.runtime import read_registry, verify_campaign
@@ -276,6 +370,7 @@ def b2_summary_verified(batch, config_path, *, rule_path=None, expected=None):
                 _stop('required root evidence is missing')
             root = verify_campaign(path, binding); job = _read(root_dir / 'job.json')
             records = read_rows(root_dir / 'root_trials.jsonl'); events = read_rows(root_dir / 'root_events.jsonl')
+            _campaign_budget(records, events, root, cfg, node, seed)
             if (root.get('cache_prompt') != cache_prompt_evidence(records, events) or
                 root.get('observer_evidence') != validate_observer_journal(root_dir / 'a4_observer_requests.jsonl', events)):
                 _stop('root lacks cache-false or bound observer evidence')
