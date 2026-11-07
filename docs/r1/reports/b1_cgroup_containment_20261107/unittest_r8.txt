@@ -1,0 +1,24 @@
+test_closed_grant_never_attaches_log_or_executes (r1.tests.test_b1_cgroup_pure.BootstrapTests.test_closed_grant_never_attaches_log_or_executes) ... ok
+test_self_enrollment_precedes_grant_and_exec (r1.tests.test_b1_cgroup_pure.BootstrapTests.test_self_enrollment_precedes_grant_and_exec) ... ok
+test_short_enrollment_does_not_grant_workload (r1.tests.test_b1_cgroup_pure.BootstrapTests.test_short_enrollment_does_not_grant_workload) ... ok
+test_failed_final_save_does_not_finish_guardian (r1.tests.test_b1_cgroup_pure.CompletionTests.test_failed_final_save_does_not_finish_guardian) ... ok
+test_failed_guardian_finish_records_stop_after_complete_write (r1.tests.test_b1_cgroup_pure.CompletionTests.test_failed_guardian_finish_records_stop_after_complete_write) ... ok
+test_lease_guardian_still_held_when_complete_state_is_saved (r1.tests.test_b1_cgroup_pure.CompletionTests.test_lease_guardian_still_held_when_complete_state_is_saved) ... ok
+test_ack_requires_observed_frozen_value (r1.tests.test_b1_cgroup_pure.ControlTests.test_ack_requires_observed_frozen_value) ... ok
+test_frozen_server_record_never_invokes_write_callback (r1.tests.test_b1_cgroup_pure.ControlTests.test_frozen_server_record_never_invokes_write_callback) ... ok
+test_guardian_failure_falls_back_to_parent_freeze (r1.tests.test_b1_cgroup_pure.ControlTests.test_guardian_failure_falls_back_to_parent_freeze) ... ok
+test_server_signal_targets_retained_pidfd_only (r1.tests.test_b1_cgroup_pure.ControlTests.test_server_signal_targets_retained_pidfd_only) ... ok
+test_stop_requested_during_grant_freezes_before_return (r1.tests.test_b1_cgroup_pure.ControlTests.test_stop_requested_during_grant_freezes_before_return) ... ok
+test_batch_verifier_refuses_any_stop_record_including_symlink (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_batch_verifier_refuses_any_stop_record_including_symlink) ... ok
+test_lock_retirement_is_nonreplacing_and_checks_owned_bytes (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_lock_retirement_is_nonreplacing_and_checks_owned_bytes) ... ok
+test_lock_retirement_refuses_changed_inode_before_creating_directory (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_lock_retirement_refuses_changed_inode_before_creating_directory) ... ok
+test_no_stop_record_written_for_unowned_batch (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_no_stop_record_written_for_unowned_batch) ... ok
+test_stop_record_is_exclusive_and_never_rewritten (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_stop_record_is_exclusive_and_never_rewritten) ... ok
+test_freeze_waits_for_kernel_frozen_event (r1.tests.test_b1_cgroup_pure.GuardianTests.test_freeze_waits_for_kernel_frozen_event) ... ok
+test_parent_pidfd_event_freezes_without_waiting_for_socket_eof (r1.tests.test_b1_cgroup_pure.GuardianTests.test_parent_pidfd_event_freezes_without_waiting_for_socket_eof) ... ok
+test_short_freeze_write_cannot_ack_success (r1.tests.test_b1_cgroup_pure.GuardianTests.test_short_freeze_write_cannot_ack_success) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.745s
+
+OK

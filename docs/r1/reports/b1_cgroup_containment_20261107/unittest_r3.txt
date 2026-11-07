@@ -1,0 +1,44 @@
+test_closed_grant_never_attaches_log_or_executes (r1.tests.test_b1_cgroup_pure.BootstrapTests.test_closed_grant_never_attaches_log_or_executes) ... ok
+test_self_enrollment_precedes_grant_and_exec (r1.tests.test_b1_cgroup_pure.BootstrapTests.test_self_enrollment_precedes_grant_and_exec) ... ok
+test_short_enrollment_does_not_grant_workload (r1.tests.test_b1_cgroup_pure.BootstrapTests.test_short_enrollment_does_not_grant_workload) ... ok
+test_ack_requires_observed_frozen_value (r1.tests.test_b1_cgroup_pure.ControlTests.test_ack_requires_observed_frozen_value) ... ok
+test_frozen_server_record_never_invokes_write_callback (r1.tests.test_b1_cgroup_pure.ControlTests.test_frozen_server_record_never_invokes_write_callback) ... ERROR
+test_guardian_failure_falls_back_to_parent_freeze (r1.tests.test_b1_cgroup_pure.ControlTests.test_guardian_failure_falls_back_to_parent_freeze) ... ok
+test_server_signal_targets_retained_pidfd_only (r1.tests.test_b1_cgroup_pure.ControlTests.test_server_signal_targets_retained_pidfd_only) ... ERROR
+test_stop_requested_during_grant_freezes_before_return (r1.tests.test_b1_cgroup_pure.ControlTests.test_stop_requested_during_grant_freezes_before_return) ... ok
+test_lock_retirement_is_nonreplacing_and_checks_owned_bytes (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_lock_retirement_is_nonreplacing_and_checks_owned_bytes) ... ok
+test_lock_retirement_refuses_changed_inode_before_creating_directory (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_lock_retirement_refuses_changed_inode_before_creating_directory) ... ok
+test_no_stop_record_written_for_unowned_batch (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_no_stop_record_written_for_unowned_batch) ... ok
+test_stop_record_is_exclusive_and_never_rewritten (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_stop_record_is_exclusive_and_never_rewritten) ... ok
+test_freeze_waits_for_kernel_frozen_event (r1.tests.test_b1_cgroup_pure.GuardianTests.test_freeze_waits_for_kernel_frozen_event) ... ok
+test_parent_pidfd_event_freezes_without_waiting_for_socket_eof (r1.tests.test_b1_cgroup_pure.GuardianTests.test_parent_pidfd_event_freezes_without_waiting_for_socket_eof) ... ok
+test_short_freeze_write_cannot_ack_success (r1.tests.test_b1_cgroup_pure.GuardianTests.test_short_freeze_write_cannot_ack_success) ... ok
+
+======================================================================
+ERROR: test_frozen_server_record_never_invokes_write_callback (r1.tests.test_b1_cgroup_pure.ControlTests.test_frozen_server_record_never_invokes_write_callback)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/paper-b-b1-selfcontain-20261107/r1/tests/test_b1_cgroup_pure.py", line 128, in test_frozen_server_record_never_invokes_write_callback
+    with self.assertRaises(control.ContainmentStop): instance.write_active(callback)
+                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/paper-b-b1-selfcontain-20261107/r1/exam/b1_cgroup.py", line 256, in write_active
+    self.require_guardian()
+  File "/private/tmp/paper-b-b1-selfcontain-20261107/r1/exam/b1_cgroup.py", line 236, in require_guardian
+    if self.guardian.poll() is not None:
+       ^^^^^^^^^^^^^
+AttributeError: 'B1Containment' object has no attribute 'guardian'
+
+======================================================================
+ERROR: test_server_signal_targets_retained_pidfd_only (r1.tests.test_b1_cgroup_pure.ControlTests.test_server_signal_targets_retained_pidfd_only)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/paper-b-b1-selfcontain-20261107/r1/tests/test_b1_cgroup_pure.py", line 139, in test_server_signal_targets_retained_pidfd_only
+    instance.stop_server(process)
+  File "/private/tmp/paper-b-b1-selfcontain-20261107/r1/exam/b1_cgroup.py", line 348, in stop_server
+    os.close(fd)
+OSError: [Errno 9] Bad file descriptor
+
+----------------------------------------------------------------------
+Ran 15 tests in 1.653s
+
+FAILED (errors=2)

@@ -274,7 +274,12 @@ class LlamaServerInstance:
         return env, sorted(removed)
 
     def _save(self) -> None:
-        self.record_path.write_text(json.dumps(self.record, indent=2) + '\n')
+        def write():
+            self.record_path.write_text(json.dumps(self.record, indent=2) + '\n')
+        if getattr(self, 'b1_containment', None) is not None:
+            self.b1_containment.write_active(write)
+        else:
+            write()
 
     def health(self, timeout: float = 2.0) -> dict | None:
         """``/health`` body when the server is ready (HTTP 200), else None (down, or 503 while loading)."""
@@ -320,7 +325,7 @@ class LlamaServerInstance:
 
     def start(self, *, build: dict | None = None, model_sha256: str | None = None,
               preserve_on_failure: bool = False, lease_fd: int | None = None,
-              b1_lease_fd: int | None = None) -> dict:
+              b1_lease_fd: int | None = None, b1_containment=None, b1_cancelled=None) -> dict:
         """Start the native server; cooperative Stage A passes the inherited lease FD.
 
         ``lease_fd`` must be the verified lease descriptor of this process.  When
@@ -342,19 +347,29 @@ class LlamaServerInstance:
             raise RuntimeError(f'STOP: port {self.port} is in use; a dedicated instance never shares a server')
         if not Path(self.model_path).is_file():
             raise RuntimeError(f'STOP: GGUF file not found: {self.model_path}')
-        self.batch.mkdir(parents=True, exist_ok=True)
+        self.b1_containment = b1_containment
+        def prepare_log():
+            self.batch.mkdir(parents=True, exist_ok=True)
+            return self.log_path.open('ab')
+        log=b1_containment.write_active(prepare_log) if b1_containment is not None else prepare_log()
         env, removed = self.env()
         argv = self.argv
-        log = self.log_path.open('ab')
         if lease_fd is None and os.environ.get('TRACKX_GPU_LEASE_FD'):
             if b1_lease_fd is not None: raise RuntimeError('STOP: conflicting Stage A and B1 lease environments')
             from r1.exam.cache_runtime import verified_lease_fd
             lease_fd = verified_lease_fd()
         passed_fd=lease_fd if lease_fd is not None else b1_lease_fd
         try:
-            self.process = subprocess.Popen(argv, env=env, stdout=log, stderr=subprocess.STDOUT,
-                                            stdin=subprocess.DEVNULL, start_new_session=True,
-                                            pass_fds=() if passed_fd is None else (passed_fd,))
+            if b1_containment is not None:
+                if b1_lease_fd is None or lease_fd is not None:
+                    raise RuntimeError('STOP: contained B1 server requires its B1 lease')
+                self.b1_containment = b1_containment
+                self.process = b1_containment.spawn('server', argv, env=env, stdout=log,
+                                                    lease_fd=b1_lease_fd)
+            else:
+                self.process = subprocess.Popen(argv, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                                stdin=subprocess.DEVNULL, start_new_session=True,
+                                                pass_fds=() if passed_fd is None else (passed_fd,))
         finally:
             log.close()
         try:
@@ -405,6 +420,8 @@ class LlamaServerInstance:
         deadline = time.monotonic() + self.start_timeout
         last = None
         while time.monotonic() < deadline:
+            if b1_cancelled is not None and b1_cancelled():
+                raise RuntimeError('STOP: B1 server startup cancelled by monitor')
             if self.process.poll() is not None:
                 # A server that exited before readiness is over, so its record must be
                 # finalized here (stopped_utc/returncode): lease completion accounting
@@ -422,6 +439,8 @@ class LlamaServerInstance:
                 if b1_lease_fd is not None:
                     from r1.exam.b1_lease import verify_server_fd
                     verify_server_fd(b1_lease_fd,self.process.pid)
+                    if b1_containment is not None:
+                        b1_containment.verify_live_lease(self.process,b1_lease_fd)
                 if lease_fd is not None:
                     inheritance = self._verify_lease_inheritance(lease_fd, server_ticks)
                     self.record['lease_inheritance'] = inheritance
@@ -471,7 +490,9 @@ class LlamaServerInstance:
         """Stop only the process group this instance started; record the outcome."""
         if self.process is None:
             return self.record
-        if self.process.poll() is None:
+        if getattr(self, 'b1_containment', None) is not None:
+            self.b1_containment.stop_server(self.process)
+        elif self.process.poll() is None:
             pgid = self.record.get('pgid')
             if pgid != os.getpgid(self.process.pid):
                 raise RuntimeError('STOP: process group changed; refusing to signal')
