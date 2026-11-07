@@ -22,10 +22,6 @@ for repo in "$HOME/exam-x/work/agent_paper_B" "$HOME/r1_trackp/Agent_paper_B" "$
   [[ $before == "$after" ]] || { printf 'STOP: STATUS changed during read\n' >&2; exit 1; }
   printf 'STATUS END %s sha256=%s\n' "$p" "$after"
 done
-for marker in trackx_evidence.active trackp_evidence.active; do
-  p="$HOME/r1_locks/$marker"
-  if [[ -e $p || -L $p ]]; then printf 'STOP: active or ambiguous marker %s\n' "$p" >&2; exit 1; fi
-done
 printf '%s\n' 'GPU OBSERVATION'
 gpu=$(nvidia-smi --query-gpu=uuid,utilization.gpu --format=csv,noheader,nounits)
 printf '%s\n' "$gpu"
@@ -38,10 +34,6 @@ printf '%s\n' "$gpu" | awk -F, '
 apps=$(nvidia-smi --query-compute-apps=pid --format=csv,noheader,nounits)
 printf 'compute-app-pids: %s\n' "$apps"
 [[ -z ${apps//[[:space:]]/} ]] || { printf 'STOP: GPU compute app present or census ambiguous\n' >&2; exit 1; }
-for marker in trackx_evidence.active trackp_evidence.active; do
-  p="$HOME/r1_locks/$marker"
-  if [[ -e $p || -L $p ]]; then printf 'STOP: marker appeared %s\n' "$p" >&2; exit 1; fi
-done
 printf '%s\n' 'SINGLE-PROCESS LEASE AND CAPABILITY CHECK'
 command -v python3
 python3 -I -S -B - <<'PY'
@@ -53,20 +45,80 @@ import select
 import stat
 import sys
 
-path = '/home/dowling/r1_locks/gpu0.lock'
+def identity(info):
+    return (info.st_dev, info.st_ino, info.st_uid, info.st_nlink, stat.S_IFMT(info.st_mode))
+
+
+def verify_directory_chain(chain):
+    # Bound pathnames back to the same held directory descriptors. This is a
+    # point-in-time cooperative check, not protection against a later writer.
+    if identity(os.stat('/', follow_symlinks=False)) != identity(os.fstat(chain[0][0])):
+        raise RuntimeError('STOP: root directory identity changed')
+    for index in range(1, len(chain)):
+        fd, name, expected_uid = chain[index]
+        named = os.stat(name, dir_fd=chain[index - 1][0], follow_symlinks=False)
+        opened = os.fstat(fd)
+        if (not stat.S_ISDIR(named.st_mode) or named.st_uid != expected_uid
+                or identity(named) != identity(opened)):
+            raise RuntimeError('STOP: lock directory ancestor identity changed: ' + name)
+
+
+def open_trusted_lock_directory():
+    # All opens are relative to already verified directory FDs, without
+    # following a symlink at any component; no directory or file is created.
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+    chain = []
+    try:
+        root = os.open('/', flags)
+        chain.append((root, '/', 0))
+        root_info = os.fstat(root)
+        if not stat.S_ISDIR(root_info.st_mode) or root_info.st_uid != 0:
+            raise RuntimeError('STOP: root directory is not root-owned')
+        for name, owner in (('home', 0), ('dowling', os.getuid()), ('r1_locks', os.getuid())):
+            parent = chain[-1][0]
+            named = os.stat(name, dir_fd=parent, follow_symlinks=False)
+            if not stat.S_ISDIR(named.st_mode) or named.st_uid != owner:
+                raise RuntimeError('STOP: unsafe lock directory component: ' + name)
+            fd = os.open(name, flags, dir_fd=parent)
+            chain.append((fd, name, owner))
+            if identity(named) != identity(os.fstat(fd)):
+                raise RuntimeError('STOP: lock directory component changed: ' + name)
+        verify_directory_chain(chain)
+        return chain
+    except BaseException:
+        for fd, _, _ in reversed(chain):
+            os.close(fd)
+        raise
+
+
+def require_no_markers(dirfd):
+    for name in ('trackx_evidence.active', 'trackp_evidence.active'):
+        try:
+            os.stat(name, dir_fd=dirfd, follow_symlinks=False)
+        except FileNotFoundError:
+            continue
+        raise RuntimeError('STOP: active or ambiguous marker: ' + name)
+
+
 print('system_python:', sys.executable, sys.version.replace('\n', ' '), flush=True)
 if platform.system() != 'Linux' or platform.machine() != 'x86_64':
     raise SystemExit('STOP: kcmp ABI is not Linux x86_64')
-before = os.stat(path, follow_symlinks=False)
-if not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid() or before.st_nlink != 1:
-    raise SystemExit('STOP: existing lock identity is not an owned single-link regular file')
-fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+chain = open_trusted_lock_directory()
+fd = None
 try:
+    lockdir = chain[-1][0]
+    require_no_markers(lockdir)
+    before = os.stat('gpu0.lock', dir_fd=lockdir, follow_symlinks=False)
+    if not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid() or before.st_nlink != 1:
+        raise RuntimeError('STOP: existing lock is not an owned single-link regular file')
+    fd = os.open('gpu0.lock', os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=lockdir)
     actual = os.fstat(fd)
-    named = os.stat(path, follow_symlinks=False)
-    key = lambda info: (info.st_dev, info.st_ino, info.st_uid, info.st_nlink, stat.S_IFMT(info.st_mode))
-    if key(actual) != key(before) or key(actual) != key(named):
+    named = os.stat('gpu0.lock', dir_fd=lockdir, follow_symlinks=False)
+    if identity(actual) != identity(before) or identity(actual) != identity(named):
         raise RuntimeError('STOP: lock descriptor and pathname identity differ')
+    verify_directory_chain(chain)
+    require_no_markers(lockdir)
+    print('lock_directory_identity:', identity(os.fstat(lockdir)), flush=True)
     print('lock_identity:', actual.st_dev, actual.st_ino, actual.st_uid, actual.st_nlink, flush=True)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -74,8 +126,10 @@ try:
         print('flock_acquire: STOP errno=%s' % exc.errno, flush=True)
         raise
     try:
-        named = os.stat(path, follow_symlinks=False)
-        if key(os.fstat(fd)) != key(named):
+        verify_directory_chain(chain)
+        require_no_markers(lockdir)
+        named = os.stat('gpu0.lock', dir_fd=lockdir, follow_symlinks=False)
+        if identity(os.fstat(fd)) != identity(named):
             raise RuntimeError('STOP: lock pathname changed during lease')
         print('flock_acquire: PASS single-process point-in-time', flush=True)
     finally:
@@ -107,6 +161,9 @@ try:
         finally:
             os.close(pidfd)
 finally:
-    os.close(fd)
+    if fd is not None:
+        os.close(fd)
+    for directory_fd, _, _ in reversed(chain):
+        os.close(directory_fd)
 print('probe_complete: descriptors closed; process returning', flush=True)
 PY
