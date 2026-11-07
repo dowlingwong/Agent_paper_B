@@ -1045,8 +1045,12 @@ class ExamRunner:
                     _verify_b1_root_authority(finished,self.author_head)
                 self.state['completed'][key]={'path':str(finished),'sha256':digest_file(finished),'post_check_sha256':digest_file(path/'post_check.json')}
                 self.state.pop('in_progress',None);self.save();return recovered
-            archived=self.out/'interrupted'/f'{time.time_ns()}_{spec["id"]}_{node}_s{seed}'
-            archived.parent.mkdir(exist_ok=True);path.rename(archived)
+            if self.cfg.get('dryrun'):
+                from r1.exam.dryrun_root_preserve import retire_dryrun_root
+                retire_dryrun_root(self.out,path)
+            else:
+                archived=self.out/'interrupted'/f'{time.time_ns()}_{spec["id"]}_{node}_s{seed}'
+                archived.parent.mkdir(exist_ok=True);path.rename(archived)
         job={'out':str(path),'binding':self.binding,'workers':self.cfg['workers'],'host':self.cfg['host'],'phase':phase,'node':node,'seed':seed,'candidate':spec,'mode':mode,
              'dryrun':bool(self.cfg.get('dryrun')),'W':self.cfg['W'],'llm_call_cap':self.cfg['llm_call_cap'],
              'audit_seeds':self.cfg['audit_seeds'] if phase=='b1' else list(range(9201,9211)),

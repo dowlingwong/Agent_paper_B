@@ -1,0 +1,31 @@
+test_actual_root_branch_selects_dryrun_and_legacy_paths (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_actual_root_branch_selects_dryrun_and_legacy_paths) ... ERROR
+test_collision_or_unsupported_rename_keeps_source (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_collision_or_unsupported_rename_keeps_source) ... ok
+test_invalid_paths_refuse_before_open (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_invalid_paths_refuse_before_open) ... ok
+test_moves_exact_root_to_private_archive_with_payload_retained (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_moves_exact_root_to_private_archive_with_payload_retained) ... FAIL
+test_post_rename_fsync_error_leaves_archive (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_post_rename_fsync_error_leaves_archive) ... ok
+test_source_replacement_and_bad_archive_are_refused (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_source_replacement_and_bad_archive_are_refused) ... ok
+test_symlink_and_cross_device_source_are_refused (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_symlink_and_cross_device_source_are_refused) ... ok
+
+======================================================================
+ERROR: test_actual_root_branch_selects_dryrun_and_legacy_paths (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_actual_root_branch_selects_dryrun_and_legacy_paths)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/paper-b-dryrun-root-retire-20261107/r1/tests/stagea_recovery_memory/test_dryrun_root_retire.py", line 165, in test_actual_root_branch_selects_dryrun_and_legacy_paths
+    program = compile(ast.fix_missing_locations(ast.Module(body=[branch], type_ignores=[])), '<actual-root-branch>', 'exec')
+  File "<actual-root-branch>", line 1047
+SyntaxError: 'return' outside function
+
+======================================================================
+FAIL: test_moves_exact_root_to_private_archive_with_payload_retained (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_moves_exact_root_to_private_archive_with_payload_retained)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/paper-b-dryrun-root-retire-20261107/r1/tests/stagea_recovery_memory/test_dryrun_root_retire.py", line 95, in test_moves_exact_root_to_private_archive_with_payload_retained
+    self.assertEqual(len([x for x in fs.operations if x[0] == 'close']), 6)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 5 != 6
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.017s
+
+FAILED (failures=1, errors=1)
+PURE_TEST_RESULT tests_run=7 failures=1 errors=1 skipped=0

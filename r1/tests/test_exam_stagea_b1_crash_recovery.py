@@ -224,7 +224,7 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
         assert result['completed'][key]['path']==path and digest_file(path)==sha
         assert result['completed'][key]['post_check_sha256']==check_sha
         assert digest_file(Path(path).parent/'post_check.json')==check_sha
-    archived=list((out/'interrupted').glob('*'))
+    archived=list((out/'_to_delete').glob('interrupted.*'))
     assert len(archived)==1 and _tree_contents(archived[0])==partial_tree
     assert all(json.loads(Path(v['path']).read_text())['execution_label']=='DRYRUN' for v in result['completed'].values())
 

@@ -1,0 +1,13 @@
+test_actual_root_branch_selects_dryrun_and_legacy_paths (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_actual_root_branch_selects_dryrun_and_legacy_paths) ... ok
+test_collision_or_unsupported_rename_keeps_source (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_collision_or_unsupported_rename_keeps_source) ... ok
+test_invalid_paths_refuse_before_open (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_invalid_paths_refuse_before_open) ... ok
+test_moves_exact_root_to_private_archive_with_payload_retained (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_moves_exact_root_to_private_archive_with_payload_retained) ... ok
+test_post_rename_fsync_error_leaves_archive (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_post_rename_fsync_error_leaves_archive) ... ok
+test_source_replacement_and_bad_archive_are_refused (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_source_replacement_and_bad_archive_are_refused) ... ok
+test_symlink_and_cross_device_source_are_refused (r1.tests.stagea_recovery_memory.test_dryrun_root_retire.DryrunRootRetireTests.test_symlink_and_cross_device_source_are_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.023s
+
+OK
+PURE_TEST_RESULT tests_run=7 failures=0 errors=0 skipped=0
