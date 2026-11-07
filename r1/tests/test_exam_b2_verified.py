@@ -40,7 +40,11 @@ def synthetic_campaign(node, seed, W=20, cap=80, rejected=()):
         events.append(event('llm_call', manager, trial))
         record = {'campaign_id': campaign, 'node_id': node, 'trial_id': trial, 'budget_index': index,
                   'decision': 'skipped' if kind == 'skipped' else ('failed_invalid' if kind == 'invalid' else 'kept'),
-                  'extra': {'manager': {'llm_call': manager}, 'worker': {'worker_skipped': True} if kind == 'skipped' else {}}}
+                  'worker_mode': 'control_plane' if kind == 'skipped' else ('synthetic_precheck' if kind == 'invalid' else 'synthetic'),
+                  'execution_status': 'failed' if kind in ('skipped', 'invalid') else 'success',
+                  'failure_category': 'proposal_precondition_failed' if kind == 'invalid' else None,
+                  'extra': {'control': {'reason': 'inactive_key'}} if kind == 'skipped' else
+                           {'manager': {'llm_call': manager}, 'worker': {'worker_skipped': True} if kind == 'invalid' else {}}}
         records.append(record)
         if kind == 'skipped': continue
         events.append(event('worker_started', {'worker_mode': 'synthetic'}, trial))
@@ -79,6 +83,38 @@ def test_campaign_budget_allows_skips_and_uncharged_precondition_failures():
     root = {'compute_budget': budget, 'termination': 'worker_cap', 'diagnostics': diagnostics}
     verified._campaign_budget(records, events, root, {'W': 20, 'llm_call_cap': 80, 'proposal_schema': 'manager_proposal/v1'}, NODES[0], 9011)
     assert budget['worker_runs'] == 20 and budget['llm_calls'] == 42 and len(records) == 22
+
+
+def test_failed_invalid_after_a_charged_worker_still_has_an_observer():
+    records, events, journal, budget, diagnostics = synthetic_campaign(NODES[0], 9011)
+    records[0].update(decision='failed_invalid', execution_status='failed', failure_category='runtime_error')
+    diagnostics['invalid'] = 1
+    root = {'compute_budget': budget, 'termination': 'worker_cap', 'diagnostics': diagnostics}
+    verified._campaign_budget(records, events, root, {'W': 20, 'llm_call_cap': 80, 'proposal_schema': 'manager_proposal/v1'}, NODES[0], 9011)
+
+
+def test_missing_kept_trial_observer_cannot_be_hidden_by_recounting_budget():
+    records, events, journal, budget, diagnostics = synthetic_campaign(NODES[0], 9011)
+    trial = records[0]['trial_id']
+    events = [e for e in events if not (e['trial_id'] == trial and
+        (e['event_type'] == 'exam_self_forecast' or (e['event_type'] == 'llm_call' and e['payload'].get('purpose') == 'self_forecast')))]
+    for _ in range(41):
+        events.insert(-1, {'campaign_id': f'{NODES[0]}__s9011', 'trial_id': trial,
+                           'event_type': 'llm_call', 'payload': {'cache_prompt': False}})
+    budget.update(worker_runs=19, worker_runs_used=19, worker_runs_remaining=1,
+                  llm_calls=80, llm_calls_used=80, llm_calls_remaining=0, exhausted=True)
+    diagnostics['forecast_queries'] = 19
+    root = {'compute_budget': budget, 'termination': 'llm_cap_or_reserved_observer_pair', 'diagnostics': diagnostics}
+    with pytest.raises(ValueError, match='charged worker records differ from observer calls'):
+        verified._campaign_budget(records, events, root, {'W': 20, 'llm_call_cap': 80, 'proposal_schema': 'manager_proposal/v1'}, NODES[0], 9011)
+
+
+def test_kept_trial_cannot_claim_uncharged_precheck():
+    records, events, journal, budget, diagnostics = synthetic_campaign(NODES[0], 9011)
+    records[0]['extra']['worker']['worker_skipped'] = True
+    root = {'compute_budget': budget, 'termination': 'worker_cap', 'diagnostics': diagnostics}
+    with pytest.raises(ValueError, match='uncharged precondition record is inconsistent'):
+        verified._campaign_budget(records, events, root, {'W': 20, 'llm_call_cap': 80, 'proposal_schema': 'manager_proposal/v1'}, NODES[0], 9011)
 
 
 def test_zero_workers_requires_a_fully_evidenced_llm_cap():

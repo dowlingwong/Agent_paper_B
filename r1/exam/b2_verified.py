@@ -215,6 +215,31 @@ def _campaign_budget(records, events, root, cfg, node, seed):
     if {e.get('trial_id') for e in manager_calls} != set(ids):
         _stop('campaign trial lacks a corresponding manager call')
     by_trial = {r['trial_id']: r for r in records}
+    charged_trials = set()
+    for trial, record in by_trial.items():
+        extra = record.get('extra')
+        if not isinstance(extra, dict): _stop('campaign record lacks structured extras')
+        worker = extra.get('worker')
+        decision = record.get('decision')
+        mode = record.get('worker_mode')
+        if decision == 'skipped':
+            if worker not in (None, {}): _stop('skipped trial has inconsistent worker metadata')
+            continue
+        if not isinstance(worker, dict) or not isinstance(mode, str) or not mode:
+            _stop('campaign record lacks worker metadata')
+        skipped = worker.get('worker_skipped', False)
+        if type(skipped) is not bool: _stop('campaign worker precheck flag is malformed')
+        if skipped:
+            if (decision != 'failed_invalid' or record.get('execution_status') != 'failed' or
+                record.get('failure_category') not in ('proposal_precondition_failed', 'effective_config_unchanged') or
+                not mode.endswith('_precheck')):
+                _stop('uncharged precondition record is inconsistent')
+        else:
+            if decision not in ('kept', 'discarded', 'failed_invalid') or mode.endswith('_precheck'):
+                _stop('charged worker record is inconsistent')
+            charged_trials.add(trial)
+    if charged_trials != set(forecast_ids):
+        _stop('charged worker records differ from observer calls')
     for trial in forecast_ids:
         if trial is None or by_trial[trial].get('decision') == 'skipped':
             _stop('skipped or missing trial has an observer call')
