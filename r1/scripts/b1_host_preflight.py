@@ -215,6 +215,9 @@ def run(expected_head, out):
         finally:
             for sig,handler in signal_handlers.items():
                 signal.signal(sig,handler)
+        if received:
+            try: print(f'STOP: preflight received signals {received}',file=sys.stderr,flush=True)
+            except Exception: pass
         if cleanup_error is not None and original is None:
             raise cleanup_error
         if received and original is None:
