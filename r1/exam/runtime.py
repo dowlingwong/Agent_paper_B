@@ -24,6 +24,7 @@ from r1.scripts import llama_server_instance as lsi
 from r1.scripts.c3_label_sweep import RunnerWatchdog, stop_tree
 
 REPO=Path(__file__).resolve().parents[2]
+B1_CONFIG_REL='r1/scripts/configs/exam_b1_v2.json'
 
 TEMPLATE_REPAIR_SCHEMA='r1.exam.template_repair/v1'
 
@@ -185,6 +186,33 @@ def load_config(path, *, allow_placeholders=False):
     common={k:v for k,v in cfg.items() if k not in later}
     if placeholders(common) and not allow_placeholders: raise ValueError(f'unresolved common placeholders: {placeholders(common)}')
     return cfg
+
+
+def require_committed_b1_config(path, cfg):
+    """Bind production B1's in-memory settings to the reviewed checkout.
+
+    This is a point-in-time check under the existing cooperative checkout
+    assumption; it does not protect against a concurrent repository writer.
+    """
+    expected=REPO/B1_CONFIG_REL
+    try:
+        supplied=Path(path).absolute()
+        if supplied != expected or supplied.resolve(strict=True) != expected:
+            raise ValueError('B1 requires the checkout config path without aliases')
+        for part in (expected, expected.parent, expected.parent.parent, expected.parent.parent.parent):
+            if part.is_symlink(): raise ValueError('B1 config path contains a symlink')
+        head=subprocess.check_output(['git','-C',str(REPO),'rev-parse','--verify','HEAD'],text=True).strip()
+        if not re.fullmatch(r'[0-9a-f]{40}',head): raise ValueError('invalid checkout HEAD')
+        if subprocess.check_output(['git','-C',str(REPO),'status','--porcelain','--untracked-files=all'],text=True).strip():
+            raise ValueError('checkout is not clean')
+        blob=subprocess.check_output(['git','-C',str(REPO),'show',f'{head}:{B1_CONFIG_REL}'])
+        if expected.read_bytes()!=blob or json.loads(blob)!=cfg:
+            raise ValueError('config or loaded settings differ from committed HEAD')
+        if subprocess.check_output(['git','-C',str(REPO),'rev-parse','--verify','HEAD'],text=True).strip()!=head:
+            raise ValueError('checkout HEAD changed during config check')
+        return head
+    except (OSError,ValueError,TypeError,subprocess.SubprocessError) as exc:
+        raise PreparationStop(f'STOP: B1 committed config verification failed: {exc}') from exc
 
 
 def read_registry(path):
@@ -426,13 +454,13 @@ def require_server_lease_inheritance(instance):
 
 
 class ExamRunner:
-    def __init__(self, cfg, out, *, registry_path=None):
+    def __init__(self, cfg, out, *, registry_path=None, b1_config_head=None):
         self.cfg=cfg;self.out=Path(out).resolve();host_check(cfg,self.out)
         self.registry_path=Path(registry_path or cfg['registry']).resolve()
         self.registry=read_registry(self.registry_path)
         self.rule,self.rule_sha=load_rule(cfg['rule'],cfg['rule_sha256'])
         self.binding=hashlib.sha256(json.dumps({'config':cfg,'registry_sha256':digest_file(self.registry_path),'rule_sha256':self.rule_sha,'value_grids_sha256':digest_file(cfg['value_grids'])},sort_keys=True).encode()).hexdigest()
-        self.service=None;self.child=None;self.state={};self.lock=None;self.author_head=None;self.b1_lease_fd=None
+        self.service=None;self.child=None;self.state={};self.lock=None;self.author_head=None;self.b1_lease_fd=None;self.b1_config_head=b1_config_head
         if not cfg.get('dryrun'):
             from r1.harness import harness_root
             actual=subprocess.check_output(['git','-C',str(harness_root()),'rev-parse','HEAD'],text=True).strip()
@@ -460,7 +488,10 @@ class ExamRunner:
             raise PreparationStop('STOP: B2 reviewed observer integration is not implemented')
         if phase=='b1' and self.rule.get('version')!='x5_rule/v2':
             raise PreparationStop('STOP: B1 requires the reviewed x5_rule/v2')
-        if phase=='b1': self.author_head=author_gate(self.cfg,phase,self.rule_sha)
+        if phase=='b1':
+            self.author_head=author_gate(self.cfg,phase,self.rule_sha)
+            if not self.cfg.get('dryrun') and (not self.b1_config_head or self.author_head!=self.b1_config_head):
+                raise PreparationStop('STOP: B1 authorization HEAD differs from committed config HEAD')
         if phase=='b1': worker_environment()
         if phase=='b1' and not self.cfg.get('dryrun'):
             for node in self.cfg['nodes']: b1_harness_sources(node,self.cfg['harness_commit'])

@@ -15,7 +15,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from r1.exam.campaign import write_json
 from r1.exam.stage_a import prefill_metadata
 from r1.exam.guards import artifact_label, digest_file, paired_instance_bootstrap
-from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders, report_b1_stop_and_save
+from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders, report_b1_stop_and_save, require_committed_b1_config
 from r1.exam.analyze import is_v2, thinking_off_capable
 from r1.scripts import llama_server_instance as lsi
 
@@ -499,6 +499,9 @@ def main(argv=None):
         raise PreparationStop('STOP: D3 cold-cache cooperative lease FD absent')
     if a.allow_placeholders and not a.check_config: p.error('--allow-placeholders is only for --check-config')
     cfg=load_config(a.config,allow_placeholders=a.allow_placeholders)
+    b1_config_head=None
+    if a.phase=='b1' and not a.check_config and not cfg.get('dryrun'):
+        b1_config_head=require_committed_b1_config(a.config,cfg)
     if not a.check_config and a.phase=='stage-a':
         from r1.exam.cache_runtime import authorize_cooperative_stagea
         authorize_cooperative_stagea(cfg)
@@ -522,7 +525,7 @@ def main(argv=None):
     unresolved=placeholders({k:cfg[k] for k in required})
     if unresolved: raise RuntimeError(f'STOP: unresolved phase settings: {unresolved}')
     if a.phase=='b1' and not cfg.get('dryrun'): verify_anchor_reference(cfg)
-    runner=ExamRunner(cfg,a.out)
+    runner=ExamRunner(cfg,a.out,b1_config_head=b1_config_head)
     preserve_running=False
     try:
         runner.start(a.phase)
