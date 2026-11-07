@@ -23,3 +23,9 @@ Q1 binds the exact O1 report bytes. Q2 uses the independently reviewed fixed-rul
 ```
 
 The 7 November author instruction does not authorize B2, X.7 or sweep 2. Any runner, guardian, author-gate or anchor-gate STOP is preserved for the author; it is not retried or overridden.
+
+## Runtime disclosure and outstanding loader evidence
+
+The proposed B1 runtime includes the paper-side OpenML bootstrap guard at `f63471bf2d0286e11142bf25841cc0485b6bbade`, subject to final integrated review. It keeps harness `a3fedbb` pinned and uses sklearn private OpenML APIs (site capture reported sklearn 1.8.0); detected missing or corrupt caches cause STOP without retry or cache deletion. The added bootstrap and import can affect work near the existing timeout. Numerical equivalence has not been measured. This is a runtime disclosure, not a new author decision or a change to the draft JSON above.
+
+The retained offline loader site capture reports expected loader output, but its SSH exit record and wrapper summary are missing. Its result remains STOP pending independent examination of contemporaneous command/session evidence; the operator must preserve the capture and site destination without automatically rerunning. The reviewer and operator must resolve that evidence gap before relying on the check; effort depends on the available records. This is separate from the other note, gate and launch conditions.
