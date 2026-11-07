@@ -314,12 +314,12 @@ class SupervisorContractTests(unittest.TestCase):
         from r1.scripts import b1_supervisor
         module=types.ModuleType('r1.exam.b1_exit_receipt')
         module.publish_after_wait=Mock(side_effect=RuntimeError('queued callback'))
-        module.verify_waited_success=Mock()
+        module._verify_waited_success_unlocked=Mock()
         module.UNCERTAIN='B1_COMMIT_UNCERTAIN.json'
         with patch.dict(sys.modules, {'r1.exam.b1_exit_receipt':module}):
             b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
-            module.verify_waited_success.assert_called_once_with('/batch','head')
-            module.verify_waited_success.side_effect=RuntimeError('ACTIVE still present')
+            module._verify_waited_success_unlocked.assert_called_once_with('/batch','head')
+            module._verify_waited_success_unlocked.side_effect=RuntimeError('ACTIVE still present')
             with patch.object(b1_supervisor, '_exclusive_json') as write:
                 with self.assertRaisesRegex(b1_supervisor.PublicationUncertain,'commit uncertain'):
                     b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')

@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import hashlib
+import fcntl
+from contextlib import contextmanager
 import json
 import os
 import re
@@ -14,6 +16,7 @@ from r1.exam.b1_state_preserve import ACTIVE, EXIT_RECEIPT, _NOREPLACE, _renamea
 MAX_BYTES = 16 * 1024 * 1024
 RETIRED_ACTIVE = '_to_delete/B1_ACTIVE.completed.json'
 UNCERTAIN = 'B1_COMMIT_UNCERTAIN.json'
+PUBLICATION_LOCK = 'B1_PUBLICATION.lock'
 
 
 def _mount_for(path, mountinfo):
@@ -225,7 +228,31 @@ def _reject_commit_uncertainty(batch):
     raise RuntimeError('STOP: B1 commit outcome is uncertain; author review required')
 
 
+@contextmanager
+def _reader_publication_lock(batch):
+    """Read only after the cooperative supervisor has released its lock."""
+    path=Path(batch)/PUBLICATION_LOCK
+    fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC)
+    try:
+        opened=os.fstat(fd)
+        named=os.stat(path,follow_symlinks=False)
+        if (not stat.S_ISREG(opened.st_mode) or opened.st_uid!=os.getuid()
+                or opened.st_mode & 0o022
+                or (opened.st_dev,opened.st_ino)!=(named.st_dev,named.st_ino)):
+            raise RuntimeError('STOP: B1 publication lock identity invalid')
+        fcntl.flock(fd,fcntl.LOCK_SH|fcntl.LOCK_NB)
+        yield
+    finally:
+        os.close(fd)
+
+
 def verify_waited_success(batch, head):
+    """Refuse concurrent verification while supervisor owns publication."""
+    with _reader_publication_lock(batch):
+        return _verify_waited_success_unlocked(batch,head)
+
+
+def _verify_waited_success_unlocked(batch, head):
     """Fail closed without the receipt; trusts the cooperative receipt writer."""
     _require_local_filesystem(batch)
     _reject_commit_uncertainty(batch)

@@ -6,6 +6,7 @@ reviewed Track S/P handover. This launcher does not prove those external facts.
 """
 from __future__ import annotations
 import argparse
+import fcntl
 import json
 import os
 from pathlib import Path
@@ -65,35 +66,58 @@ class PublicationUncertain(RuntimeError):
     """Commit may have happened, but its state cannot be verified."""
 
 
-def _publish_or_reconcile(child, out, head):
-    """Return after verified terminal commit; block readers on ambiguity.
+def _handle_possible_publication_error(out, head, publication_error):
+    """Reconcile a possibly completed commit or persist reader-visible doubt.
 
-    Uncertainty is created exclusively inside the batch, before the caller
-    records supervisor STOP. If storage prevents even that creation, the
-    operator is told explicitly and automatic reader exclusion is not assured.
+    Return True only when the actual batch reader confirms terminal success.
+    A False result requires STOP/scene retention; an unwriteable uncertainty
+    marker is explicitly NOT CHECKABLE, not a claim that readers are blocked.
     """
-    from r1.exam.b1_exit_receipt import publish_after_wait, verify_waited_success, UNCERTAIN
+    from r1.exam.b1_exit_receipt import _verify_waited_success_unlocked, UNCERTAIN
+    try:
+        _verify_waited_success_unlocked(out,head)
+    except BaseException as verification_error:
+        try:
+            _exclusive_json(Path(out)/UNCERTAIN, {
+                'status':'COMMIT_UNCERTAIN',
+                'publication_error':f'{type(publication_error).__name__}: {publication_error}',
+                'verification_error':f'{type(verification_error).__name__}: {verification_error}'})
+        except FileExistsError:
+            # The reader blocks on the name even if its contents are partial.
+            pass
+        except BaseException as disposition_error:
+            try:
+                print('STOP: commit uncertainty could not be persisted; '
+                      'batch reader exclusion is NOT CHECKABLE: '
+                      f'{type(disposition_error).__name__}: {disposition_error}',
+                      file=sys.stderr,flush=True)
+            except BaseException:
+                pass
+        return False
+    return True
+
+
+def _publish_or_reconcile(child, out, head):
+    """Return after verified terminal commit; block readers on ambiguity."""
+    from r1.exam.b1_exit_receipt import publish_after_wait
     try:
         publish_after_wait(child,out,head)
     except BaseException as publication_error:
-        try:
-            verify_waited_success(out,head)
-        except BaseException as verification_error:
-            try:
-                _exclusive_json(Path(out)/UNCERTAIN, {
-                    'status':'COMMIT_UNCERTAIN',
-                    'publication_error':f'{type(publication_error).__name__}: {publication_error}',
-                    'verification_error':f'{type(verification_error).__name__}: {verification_error}'})
-            except BaseException as disposition_error:
-                try:
-                    print('STOP: commit uncertainty could not be persisted; '
-                          'batch reader exclusion is NOT CHECKABLE: '
-                          f'{type(disposition_error).__name__}: {disposition_error}',
-                          file=sys.stderr,flush=True)
-                except BaseException:
-                    pass
-                raise PublicationUncertain('STOP: commit uncertainty could not be persisted') from verification_error
-            raise PublicationUncertain('STOP: commit uncertain; batch reader must refuse') from verification_error
+        if not _handle_possible_publication_error(out,head,publication_error):
+            raise PublicationUncertain('STOP: commit uncertain; batch reader must refuse or is NOT CHECKABLE') from publication_error
+
+
+def _hold_publication_lock(out):
+    """Keep an exclusive batch lock until normal process exit or STOP."""
+    from r1.exam.b1_exit_receipt import PUBLICATION_LOCK
+    fd=os.open(Path(out)/PUBLICATION_LOCK,
+               os.O_RDWR|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o600)
+    try:
+        fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    except BaseException:
+        os.close(fd)
+        raise
+    return fd
 
 
 def _release_then_publish(child, out, head, handoff):
@@ -109,6 +133,12 @@ def _release_then_publish(child, out, head, handoff):
     if handoff.recv(64) != b'RELEASED':
         raise RuntimeError('STOP: guardian did not acknowledge release')
     _publish_or_reconcile(child,out,head)
+
+
+def _finish_or_stop(out, head, publication_may_have_started, exc, live_fd, supervisor_dir):
+    if publication_may_have_started and _handle_possible_publication_error(out,head,exc):
+        return 0
+    _retain_on_stop(live_fd,supervisor_dir,exc)
 
 
 def main(argv=None):
@@ -154,6 +184,7 @@ def main(argv=None):
     command=[sys.executable,'-B',str(REPO/'r1/scripts/exam_runner.py'),'b1',
              '--config',str(Path(args.config)),'--out',str(out)]
     child=None
+    publication_may_have_started=False
     try:
         argv=[sys.executable,'-I','-S','-B',str(ENTRY),str(grant_r),str(log.fileno()),str(exec_w),*command]
         child=subprocess.Popen(argv,env=env,cwd=REPO,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,
@@ -179,12 +210,18 @@ def main(argv=None):
         # STOP. Suppress asynchronous Python signal handlers across that point;
         # SIGKILL remains subject to the documented atomic-rename fault model.
         signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals() - {signal.SIGKILL, signal.SIGSTOP})
+        publication_lock_fd=_hold_publication_lock(out)
+        # Kept open through normal exit, or indefinitely on STOP.
+        publication_may_have_started=True
         _release_then_publish(child,out,head,handoff_supervisor)
         # Atomic publication is terminal success; process exit releases the
         # supervisor's lease. No later cleanup failure changes classification.
         return 0
     except BaseException as exc:
-        _retain_on_stop(live_w,supervisor_dir,exc)
+        # Covers callbacks after publisher return as well as publisher errors.
+        # Once the actual reader confirms commit, no contradictory STOP is
+        # written; otherwise create the reader-visible uncertainty first.
+        return _finish_or_stop(out,head,publication_may_have_started,exc,live_w,supervisor_dir)
     finally:
         for fd in (live_r,grant_r,grant_w,exec_r,exec_w,supervisor_pidfd):
             if fd is not None:

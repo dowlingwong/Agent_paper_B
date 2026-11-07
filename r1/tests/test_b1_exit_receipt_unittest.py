@@ -4,6 +4,7 @@ import json
 import os
 import stat
 import unittest
+from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
@@ -26,6 +27,9 @@ class ReceiptTests(unittest.TestCase):
         patcher = mock.patch.object(receipt, '_require_local_filesystem', return_value=MOUNT)
         patcher.start()
         self.addCleanup(patcher.stop)
+        lock_patcher = mock.patch.object(receipt, '_reader_publication_lock', side_effect=lambda batch: nullcontext())
+        lock_patcher.start()
+        self.addCleanup(lock_patcher.stop)
 
     def file_info(self, *, inode=9, size=2):
         return SimpleNamespace(st_mode=stat.S_IFREG | 0o600, st_uid=os.getuid(),
