@@ -9,6 +9,7 @@ import ctypes
 import errno
 import json
 import os
+import re
 import stat
 import uuid
 from pathlib import Path
@@ -76,16 +77,33 @@ def existing_identity(path):
 
 
 def publish_state(path, state, expected_identity):
-    """Publish one state, atomically retiring its predecessor, never removing it.
+    """Publish one B1 batch state and retain its previous inode."""
+    return _publish_named(path, state, expected_identity, 'batch_state')
 
-    Caller must own and serialize the batch and pass the exact last-observed
-    (device, inode), or None only when no state existed. Filesystem capabilities
-    and the cooperative same-UID assumption need independent site validation.
-    Any unpublished candidate is intentionally left under _to_delete on error.
+
+def publish_audit_cache(path, cache, expected_identity):
+    """Publish B1's canonical audit cache, retaining each earlier version."""
+    return _publish_named(path, cache, expected_identity, 'audit_cache')
+
+
+def publish_server_record(path, record, expected_identity):
+    """Publish a B1 server record, retaining each earlier version."""
+    return _publish_named(path, record, expected_identity, 'server_record')
+
+
+def _publish_named(path, state, expected_identity, kind):
+    """Atomically publish a narrowly named file under the cooperative B1 model.
+
+    The caller owns and serializes the directory and passes the exact prior
+    identity (or None only when no file existed). This alone does not establish
+    async STOP synchronization or filesystem/site behavior.
     """
     path = Path(path)
-    if path.name != 'batch_state.json' or not path.is_absolute():
-        raise RuntimeError('STOP: invalid B1 state location')
+    allowed = ((kind == 'batch_state' and path.name == 'batch_state.json') or
+               (kind == 'audit_cache' and path.name == 'audit_cache.json') or
+               (kind == 'server_record' and re.fullmatch(r'llama_server_[0-9]+(?:_r[0-9]+)?\.json', path.name)))
+    if not allowed or not path.is_absolute():
+        raise RuntimeError('STOP: invalid B1 snapshot location')
     payload = (json.dumps(state, indent=2, allow_nan=False) + '\n').encode()
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW
     parent_fd = os.open(path.parent, flags)
@@ -113,7 +131,7 @@ def publish_state(path, state, expected_identity):
         if (not stat.S_ISDIR(archive.st_mode) or archive.st_uid != os.getuid()
                 or archive.st_mode & 0o022 or archive.st_dev != parent.st_dev):
             raise RuntimeError('STOP: B1 state retirement directory is unsafe')
-        name = 'batch_state.' + uuid.uuid4().hex + '.json'
+        name = kind + '.' + uuid.uuid4().hex + '.json'
         file_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW
         candidate_fd = os.open(name, file_flags, 0o600, dir_fd=archive_fd)
         pending = memoryview(payload)

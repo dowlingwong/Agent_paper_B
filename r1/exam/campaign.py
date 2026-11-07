@@ -193,7 +193,14 @@ def _collect_b1_review(job):
     records=read_rows(out/'root_trials.jsonl');events=read_rows(out/'root_events.jsonl')
     props,checks=replay_campaign(records,start,node,f'{node}__s{seed}','EXAM','append_only_summary',job['W'],1.)
     forecasts={e['trial_id']:e['payload'] for e in events if e['event_type']=='exam_self_forecast'}
-    cache={};audits=[];configs={}
+    cache={};audits=[];configs={};cache_identity=None
+    def save_cache():
+        nonlocal cache_identity
+        if job['dryrun']:
+            write_json(out/'audit_cache.json',cache)
+        else:
+            from r1.exam.b1_state_preserve import publish_audit_cache
+            cache_identity=publish_audit_cache(out/'audit_cache.json',cache,cache_identity)
     audited=[p for p in props if not p.features.get('active_equals_incumbent') and not p.features.get('active_seen_before')]
     for p in audited:
         for files in (p.candidate_files,p.incumbent_files): configs[files_hash(files)]={'node':node,'files':files}
@@ -204,7 +211,7 @@ def _collect_b1_review(job):
             futures={pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out)):h for h,value in configs.items()}
             for future in as_completed(futures):
                 h=futures[future];runs=future.result();cache[h]=[r['metric'] if r['success'] else None for r in runs]
-                write_json(out/'audit_cache.json',cache)
+                save_cache()
     for p in props:
         if p.features.get('active_equals_incumbent') or p.features.get('active_seen_before'): continue
         arrays=[]
@@ -215,7 +222,7 @@ def _collect_b1_review(job):
                 else:
                     runs=run_config(node,files,job['audit_seeds'],str(out))
                     cache[h]=[r['metric'] if r['success'] else None for r in runs]
-                write_json(out/'audit_cache.json',cache)
+                save_cache()
             arrays.append(cache[h])
         result=paired(*arrays)
         if result['k']!=len(job['audit_seeds']): raise RuntimeError('STOP: missing/failed paired audit seeds')

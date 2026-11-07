@@ -248,6 +248,7 @@ class LlamaServerInstance:
         self.record_path = self.batch / f'llama_server_{self.port}{suffix}.json'
         self.log_path = self.batch / f'llama_server_{self.port}{suffix}.log'
         self.record: dict = {}
+        self.b1_record_identity = None
 
     @property
     def url(self) -> str:
@@ -277,7 +278,12 @@ class LlamaServerInstance:
 
     def _save(self) -> None:
         def write():
-            self.record_path.write_text(json.dumps(self.record, indent=2) + '\n')
+            if getattr(self, 'b1_containment', None) is not None:
+                from r1.exam.b1_state_preserve import publish_server_record
+                self.b1_record_identity = publish_server_record(
+                    self.record_path, self.record, self.b1_record_identity)
+            else:
+                self.record_path.write_text(json.dumps(self.record, indent=2) + '\n')
         if getattr(self, 'b1_containment', None) is not None:
             self.b1_containment.write_active(write)
         else:
