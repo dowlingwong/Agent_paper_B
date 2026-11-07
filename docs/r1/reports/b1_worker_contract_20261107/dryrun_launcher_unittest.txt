@@ -1,0 +1,18 @@
+test_fresh_root_writes_existing_dryrun_marker_before_other_work (r1.tests.test_exam_dryrun_launcher_unittest.DryrunLauncherTests.test_fresh_root_writes_existing_dryrun_marker_before_other_work) ... ok
+test_nonempty_existing_root_is_preserved (r1.tests.test_exam_dryrun_launcher_unittest.DryrunLauncherTests.test_nonempty_existing_root_is_preserved) ... ok
+test_outside_temp_root_is_refused_before_creation (r1.tests.test_exam_dryrun_launcher_unittest.DryrunLauncherTests.test_outside_temp_root_is_refused_before_creation) ... ok
+test_prepare_and_run_refuse_exam_hosts_before_temp_selection (r1.tests.test_exam_dryrun_launcher_unittest.DryrunLauncherTests.test_prepare_and_run_refuse_exam_hosts_before_temp_selection) ... ok
+test_valid_development_temp_root_reaches_creation_without_temp_probe (r1.tests.test_exam_dryrun_launcher_unittest.DryrunLauncherTests.test_valid_development_temp_root_reaches_creation_without_temp_probe) ... ok
+test_cached_temp_root_used_without_discovery (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_cached_temp_root_used_without_discovery) ... ok
+test_exam_host_refusal_precedes_temp_root_selection (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_exam_host_refusal_precedes_temp_root_selection) ... ok
+test_exam_hosts_refused_before_mkdir_or_copy (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_exam_hosts_refused_before_mkdir_or_copy) ... ok
+test_mac_env_root_used_without_tempfile_probe (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_mac_env_root_used_without_tempfile_probe) ... ok
+test_marked_development_host_reaches_original_copy_path (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_marked_development_host_reaches_original_copy_path) ... ok
+test_missing_marker_and_escape_refused_before_mkdir_or_copy (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_missing_marker_and_escape_refused_before_mkdir_or_copy) ... ok
+test_non_boolean_dryrun_refused_before_mkdir_or_copy (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_non_boolean_dryrun_refused_before_mkdir_or_copy) ... ok
+test_production_false_still_requires_worker_contract (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_production_false_still_requires_worker_contract) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.019s
+
+OK

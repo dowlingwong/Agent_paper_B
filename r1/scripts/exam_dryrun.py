@@ -8,7 +8,6 @@ import os
 import platform
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 import yaml
@@ -17,14 +16,20 @@ import_harness()
 from autoresearch.manager.langgraph_manager import manager_seed
 from r1.exam.guards import digest_file
 from r1.exam.campaign import write_json
-from r1.exam.runtime import APPROVED_EXAM_HOSTS, DEFAULT_CONFIG, REPO
+from r1.exam.runtime import APPROVED_EXAM_HOSTS, DEFAULT_CONFIG, REPO, _dryrun_temp_roots
 
 SELECTED=['random_valid','scripted','qwen25_coder_7b','qwen38_27b','gemma4_31b']
 
 
+def _require_development_host():
+    if platform.node().split('.')[0].casefold() in ({host.casefold() for host in APPROVED_EXAM_HOSTS}|{'ucrtasl'}):
+        raise RuntimeError('development host only')
+
+
 def prepare(root):
+    _require_development_host()
     root=Path(root).resolve()
-    if not any(root!=t and root.is_relative_to(t) for t in {Path(tempfile.gettempdir()).resolve(),Path('/tmp').resolve()}): raise RuntimeError('DRYRUN root must be a temporary child directory')
+    if not any(root!=t and root.is_relative_to(t) for t in _dryrun_temp_roots()): raise RuntimeError('DRYRUN root must be a temporary child directory')
     if root.exists() and any(root.iterdir()): raise RuntimeError('preserve the earlier DRYRUN; use a fresh root')
     root.mkdir(parents=True,exist_ok=True);(root/'.dryrun').write_text('EXAM DRYRUN; no inference\n')
     models=root/'models';models.mkdir(exist_ok=True)
@@ -60,9 +65,8 @@ def prepare(root):
 
 
 def run(root):
+    _require_development_host()
     root=Path(root).resolve()
-    if platform.node().split('.')[0].casefold() in ({host.casefold() for host in APPROVED_EXAM_HOSTS}|{'ucrtasl'}):
-        raise RuntimeError('development host only')
     config=prepare(root)
     env={**os.environ,'R1_FAKE_OLLAMA_ROOT':str(root),'PYTHONPATH':str(REPO),'PYTHONDONTWRITEBYTECODE':'1'}
     args=[sys.executable,'-m','r1.scripts.exam_runner']
