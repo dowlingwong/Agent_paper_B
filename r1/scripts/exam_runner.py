@@ -321,6 +321,14 @@ def check_template_repairs(cfg, specs):
     return actual
 
 
+def _write_candidate_manifest(path, manifest, *, phase, dryrun):
+    """Retain synthetic B1 manifest versions; leave other writes unchanged."""
+    if phase=='b1' and dryrun:
+        from r1.exam.b1_state_preserve import publish_dryrun_b1_manifest
+        return publish_dryrun_b1_manifest(path,manifest)
+    return write_json(path,manifest)
+
+
 def evidence(runner, phase, selected, interrupt):
     if phase != 'b1' or not is_v2(getattr(runner,'rule',None)):
         raise PreparationStop('STOP: only x5_rule/v2 B1 evidence is implemented')
@@ -458,7 +466,9 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
         manifest['gpu_hours_upper_bound']=manifest['gpu_hours']
         manifest['gpu_hours_status']='upper_bound_after_interruption' if uncertain else 'recorded_dedicated_intervals'
         if uncertain: manifest['gpu_hours']=None
-        path=runner.out/spec['id']/f'{phase}_manifest.json';write_json(path,manifest);rows.append(manifest)
+        path=runner.out/spec['id']/f'{phase}_manifest.json'
+        _write_candidate_manifest(path,manifest,phase=phase,dryrun=bool(cfg.get('dryrun')))
+        rows.append(manifest)
     write_json(runner.out/f'{phase}_manifests.json',{'label':'EXAM','manifests':rows})
 
 

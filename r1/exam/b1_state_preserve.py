@@ -147,6 +147,21 @@ def publish_dryrun_stage_a_table(path, table):
                           rename=_renameat_dryrun)
 
 
+def publish_dryrun_b1_manifest(path, manifest):
+    """Retain earlier versions of one synthetic candidate B1 manifest.
+
+    The caller serializes writes in a stable owned test directory. Readers
+    keep using the same canonical path; unsupported operations fail closed.
+    """
+    path = Path(path)
+    if not path.is_absolute() or path.name != 'b1_manifest.json':
+        raise RuntimeError('STOP: invalid DRYRUN B1 candidate manifest location')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    expected = existing_identity(path)
+    return _publish_named(path, manifest, expected, 'b1_manifest',
+                          rename=_renameat_dryrun)
+
+
 def publish_audit_cache(path, cache, expected_identity):
     """Publish B1's canonical audit cache, retaining each earlier version."""
     return _publish_named(path, cache, expected_identity, 'audit_cache')
@@ -213,6 +228,7 @@ def _publish_named(path, state, expected_identity, kind, *, rename=None):
                (kind == 'stage_a_result' and path.name == 'stage_a.json') or
                (kind == 'stage_a_table' and path.name == 'stage_a_table.json') or
                (kind == 'fixture_text' and path.name not in ('', '.', '..', '_to_delete')) or
+               (kind == 'b1_manifest' and path.name == 'b1_manifest.json') or
                (kind == 'server_record' and re.fullmatch(r'llama_server_[0-9]+(?:_r[0-9]+)?\.json', path.name)))
     if not allowed or not path.is_absolute():
         raise RuntimeError('STOP: invalid B1 snapshot location')

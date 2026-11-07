@@ -1,0 +1,11 @@
+test_actual_call_and_row_append_remain_present (r1.tests.stagea_recovery_memory.test_dryrun_b1_manifest_preserve.DryrunB1ManifestTests.test_actual_call_and_row_append_remain_present) ... ok
+test_actual_dispatch_changes_only_dryrun_b1 (r1.tests.stagea_recovery_memory.test_dryrun_b1_manifest_preserve.DryrunB1ManifestTests.test_actual_dispatch_changes_only_dryrun_b1) ... ok
+test_bad_name_or_relative_path_refuses_before_mkdir (r1.tests.stagea_recovery_memory.test_dryrun_b1_manifest_preserve.DryrunB1ManifestTests.test_bad_name_or_relative_path_refuses_before_mkdir) ... ok
+test_identity_race_and_unsupported_rename_keep_old (r1.tests.stagea_recovery_memory.test_dryrun_b1_manifest_preserve.DryrunB1ManifestTests.test_identity_race_and_unsupported_rename_keep_old) ... ok
+test_two_versions_preserve_prior_inode_and_legacy_reader_bytes (r1.tests.stagea_recovery_memory.test_dryrun_b1_manifest_preserve.DryrunB1ManifestTests.test_two_versions_preserve_prior_inode_and_legacy_reader_bytes) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.023s
+
+OK
+PURE_TEST_RESULT tests_run=5 failures=0 errors=0 skipped=0
