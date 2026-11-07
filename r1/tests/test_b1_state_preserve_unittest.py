@@ -249,7 +249,8 @@ class StatePreservationTests(unittest.TestCase):
                     with self.assertRaisesRegex(RuntimeError, 'did not exit successfully'):
                         b1_exit_receipt.publish_after_wait(child, '/synthetic/batch', 'a'*40)
                     write.assert_not_called()
-                    with mock.patch.object(b1_exit_receipt, 'read_owned_regular', side_effect=FileNotFoundError):
+                    with mock.patch.object(b1_exit_receipt, '_require_local_filesystem'), \
+                            mock.patch.object(b1_exit_receipt, 'read_owned_regular', side_effect=FileNotFoundError):
                         with self.assertRaises(FileNotFoundError):
                             b1_exit_receipt.verify_waited_success('/synthetic/batch', 'a'*40)
 

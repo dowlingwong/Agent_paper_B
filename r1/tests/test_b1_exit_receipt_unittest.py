@@ -17,9 +17,15 @@ ACTIVE = json.dumps({'version':'b1_active/v1','runner_pid':PID,
                      'authorization_checkout_head':HEAD}).encode()
 COMPLETE = json.dumps({'status':'COMPLETE','phase':'b1','execution_label':'EVIDENCE'}).encode()
 FINALIZED = b'synthetic reviewed finalization bytes'
+REAL_LOCAL_CHECK = receipt._require_local_filesystem
 
 
 class ReceiptTests(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch.object(receipt, '_require_local_filesystem', return_value='ext4')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def file_info(self, *, inode=9, size=2):
         return SimpleNamespace(st_mode=stat.S_IFREG | 0o600, st_uid=os.getuid(),
                                st_dev=7, st_ino=inode, st_size=size, st_mtime_ns=1, st_ctime_ns=1)
@@ -51,6 +57,35 @@ class ReceiptTests(unittest.TestCase):
                 receipt.read_owned_regular('/synthetic/receipt')
         read.assert_not_called()
 
+    def test_mount_parser_selects_most_specific_and_decodes_space(self):
+        table = ('24 22 8:1 / / rw - ext4 /dev/a rw\n'
+                 '25 24 8:2 / /synthetic\\040space rw - xfs /dev/b rw\n')
+        self.assertEqual(receipt._mount_for('/synthetic space/batch', table)[1:],
+                         ('/synthetic space', '8:2', 'xfs'))
+
+    def test_mount_parser_rejects_equal_specificity(self):
+        table = ('24 22 8:1 / / rw - ext4 /dev/a rw\n'
+                 '25 22 8:2 / / rw - xfs /dev/b rw\n')
+        with self.assertRaisesRegex(RuntimeError, 'ambiguous'):
+            receipt._mount_for('/batch', table)
+
+    def test_local_filesystem_check_refuses_nfs_and_device_mismatch(self):
+        info = SimpleNamespace(st_mode=stat.S_IFDIR | 0o700, st_dev=os.makedev(8,1))
+        for table in ('24 22 8:1 / / rw - nfs server:/ rw\n',
+                      '24 22 8:2 / / rw - ext4 /dev/a rw\n'):
+            with self.subTest(table=table), \
+                    mock.patch.object(receipt.os, 'stat', return_value=info), \
+                    mock.patch.object(Path, 'read_text', return_value=table):
+                with self.assertRaisesRegex(RuntimeError, 'site-qualified ext4/xfs'):
+                    REAL_LOCAL_CHECK('/synthetic/batch')
+
+    def test_local_filesystem_check_accepts_matching_ext4_type_only(self):
+        info = SimpleNamespace(st_mode=stat.S_IFDIR | 0o700, st_dev=os.makedev(8,1))
+        table = '24 22 8:1 / / rw - ext4 /dev/a rw\n'
+        with mock.patch.object(receipt.os, 'stat', return_value=info), \
+                mock.patch.object(Path, 'read_text', return_value=table):
+            self.assertEqual(REAL_LOCAL_CHECK('/synthetic/batch'), 'ext4')
+
     def test_nonzero_wait_never_writes_receipt_even_if_state_looks_complete(self):
         # Models a COMPLETE exchange followed by fsync failure and STOP-save
         # failure: the externally waited runner exit is nonzero.
@@ -62,8 +97,10 @@ class ReceiptTests(unittest.TestCase):
         write.assert_not_called()
 
     def test_valid_receipt_binds_waited_pid_head_and_exact_bytes(self):
-        with mock.patch.object(receipt, 'active_and_state', return_value=(ACTIVE, COMPLETE)), \
+        with mock.patch.object(receipt, '_require_publication_signal_mask'), \
+                mock.patch.object(receipt, 'active_and_state', return_value=(ACTIVE, COMPLETE)), \
                 mock.patch.object(receipt, '_verified_finalization', return_value=FINALIZED), \
+                mock.patch.object(receipt, '_retire_active_last') as retire, \
                 mock.patch.object(receipt, 'write_exclusive_json') as write:
             result = receipt.publish_waited_success('/synthetic/batch', HEAD, PID, 0)
         self.assertEqual(result['runner_pid'], PID)
@@ -71,6 +108,7 @@ class ReceiptTests(unittest.TestCase):
         self.assertEqual(result['active_sha256'], hashlib.sha256(ACTIVE).hexdigest())
         self.assertEqual(result['finalization_sha256'], hashlib.sha256(FINALIZED).hexdigest())
         write.assert_called_once_with(Path('/synthetic/batch') / receipt.EXIT_RECEIPT, result)
+        retire.assert_called_once_with('/synthetic/batch', ACTIVE)
 
     def test_missing_receipt_refuses_verification(self):
         with mock.patch.object(receipt, 'read_owned_regular', side_effect=FileNotFoundError):
@@ -131,12 +169,78 @@ class ReceiptTests(unittest.TestCase):
 
     def test_missing_finalization_refuses_even_after_successful_wait(self):
         child = SimpleNamespace(pid=PID, wait=lambda: 0)
-        with mock.patch.object(receipt, 'active_and_state', return_value=(ACTIVE, COMPLETE)), \
+        with mock.patch.object(receipt, '_require_publication_signal_mask'), \
+                mock.patch.object(receipt, 'active_and_state', return_value=(ACTIVE, COMPLETE)), \
                 mock.patch.object(receipt, '_verified_finalization', side_effect=FileNotFoundError), \
                 mock.patch.object(receipt, 'write_exclusive_json') as write:
             with self.assertRaises(FileNotFoundError):
                 receipt.publish_after_wait(child, '/synthetic/batch', HEAD)
         write.assert_not_called()
+
+    def test_visible_complete_receipt_after_fsync_failure_is_blocked_by_active(self):
+        child = SimpleNamespace(pid=PID, wait=lambda: 0)
+        for failure in ('file fsync', 'directory fsync'):
+            with self.subTest(failure=failure):
+                visible = {'receipt': None, 'active': True}
+                def failed_publish(path, value):
+                    visible['receipt'] = value  # full bytes visible, then fsync failed
+                    raise OSError(failure)
+                def exists(path):
+                    return Path(path).name == receipt.ACTIVE and visible['active']
+                with mock.patch.object(receipt, '_require_publication_signal_mask'), \
+                        mock.patch.object(receipt, 'active_and_state', return_value=(ACTIVE, COMPLETE)), \
+                        mock.patch.object(receipt, '_verified_finalization', return_value=FINALIZED), \
+                        mock.patch.object(receipt, 'write_exclusive_json', side_effect=failed_publish), \
+                        mock.patch.object(receipt, '_retire_active_last') as retire, \
+                        mock.patch.object(receipt.os.path, 'lexists', side_effect=exists):
+                    with self.assertRaises(OSError):
+                        receipt.publish_after_wait(child, '/synthetic/batch', HEAD)
+                    self.assertIsNotNone(visible['receipt'])
+                    retire.assert_not_called()
+                    with self.assertRaisesRegex(RuntimeError, 'active sentinel has not been retired'):
+                        receipt.verify_waited_success('/synthetic/batch', HEAD)
+
+    def test_missing_signal_mask_refuses_before_any_receipt_write(self):
+        with mock.patch.object(receipt.signal, 'valid_signals', return_value={1, 2, receipt.signal.SIGKILL, receipt.signal.SIGSTOP}), \
+                mock.patch.object(receipt.signal, 'pthread_sigmask', return_value={1}), \
+                mock.patch.object(receipt, 'write_exclusive_json') as write:
+            with self.assertRaisesRegex(RuntimeError, 'blocked catchable signals'):
+                receipt.publish_waited_success('/synthetic/batch', HEAD, PID, 0)
+        write.assert_not_called()
+
+    def test_retirement_is_last_fallible_publication_step(self):
+        events = []
+        directory = SimpleNamespace(st_mode=stat.S_IFDIR | 0o700, st_uid=os.getuid(), st_dev=7)
+        def note_fsync(fd):
+            events.append(('fsync',fd))
+        def note_rename(*args):
+            events.append(('rename',args[-1]))
+        def note_close(fd):
+            events.append(('close',fd))
+            raise OSError('synthetic close failure after commit')
+        with mock.patch.object(receipt, 'read_owned_regular', return_value=ACTIVE), \
+                mock.patch.object(receipt.os.path, 'lexists', return_value=False), \
+                mock.patch.object(receipt.os, 'open', side_effect=[101,102]), \
+                mock.patch.object(receipt.os, 'fstat', return_value=directory), \
+                mock.patch.object(receipt.os, 'fsync', side_effect=note_fsync), \
+                mock.patch.object(receipt.os, 'close', side_effect=note_close), \
+                mock.patch.object(receipt, '_renameat2', side_effect=note_rename):
+            receipt._retire_active_last('/synthetic/batch', ACTIVE)
+        self.assertEqual(events[:3], [('fsync',102),('fsync',101),('rename',receipt._NOREPLACE)])
+        self.assertEqual(events[3:], [('close',102),('close',101)])
+
+    def test_retirement_precommit_fsync_failure_does_not_rename(self):
+        directory = SimpleNamespace(st_mode=stat.S_IFDIR | 0o700, st_uid=os.getuid(), st_dev=7)
+        with mock.patch.object(receipt, 'read_owned_regular', return_value=ACTIVE), \
+                mock.patch.object(receipt.os.path, 'lexists', return_value=False), \
+                mock.patch.object(receipt.os, 'open', side_effect=[101,102]), \
+                mock.patch.object(receipt.os, 'fstat', return_value=directory), \
+                mock.patch.object(receipt.os, 'fsync', side_effect=OSError('synthetic fsync failure')), \
+                mock.patch.object(receipt.os, 'close'), \
+                mock.patch.object(receipt, '_renameat2') as rename:
+            with self.assertRaisesRegex(OSError, 'fsync failure'):
+                receipt._retire_active_last('/synthetic/batch', ACTIVE)
+        rename.assert_not_called()
 
     def test_production_existing_batch_is_not_automatically_resumed(self):
         from r1.exam import runtime
