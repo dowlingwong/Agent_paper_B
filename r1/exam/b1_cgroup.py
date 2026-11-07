@@ -136,9 +136,9 @@ class B1Containment:
     newly created subtree may be frozen or killed. A same-UID writer is assumed
     cooperative; kernel cgroup-freeze does not prevent explicit migration.
     """
-    def initialize(self, lease_fd, receipt, supervisor_pidfd, supervisor_live_fd):
-        if (any(type(fd) is not int or fd < 3 for fd in (lease_fd,supervisor_pidfd,supervisor_live_fd))
-                or len({lease_fd,supervisor_pidfd,supervisor_live_fd}) != 3):
+    def initialize(self, lease_fd, receipt, supervisor_pidfd, supervisor_live_fd, handoff_fd):
+        if (any(type(fd) is not int or fd < 3 for fd in (lease_fd,supervisor_pidfd,supervisor_live_fd,handoff_fd))
+                or len({lease_fd,supervisor_pidfd,supervisor_live_fd,handoff_fd}) != 4):
             raise ContainmentStop('STOP: invalid B1 lease or supervisor FD for guardian')
         self.guardian = None
         self.control = None
@@ -178,10 +178,10 @@ class B1Containment:
             self.guardian = subprocess.Popen(
                 [sys.executable, '-I', '-S', '-B', str(GUARDIAN), str(child.fileno()),
                  str(self.parent_pidfd), str(guardian_freeze), str(guardian_events),
-                 str(supervisor_pidfd),str(supervisor_live_fd)],
+                 str(supervisor_pidfd),str(supervisor_live_fd),str(handoff_fd)],
                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 close_fds=True, pass_fds=(child.fileno(), self.parent_pidfd, guardian_freeze,
-                                          guardian_events, lease_fd,supervisor_pidfd,supervisor_live_fd))
+                                          guardian_events, lease_fd,supervisor_pidfd,supervisor_live_fd,handoff_fd))
         finally:
             child.close()
             os.close(guardian_freeze)
@@ -516,8 +516,10 @@ class B1Containment:
             self.control.sendall(b'FINISH')
             if self.control.recv(64) != b'FINISHED':
                 raise ContainmentStop('STOP: guardian refused normal finish')
-            if self.guardian.wait(timeout=10) != 0:
-                raise ContainmentStop('STOP: guardian exited unsuccessfully after finish reply')
+            # Guardian remains alive holding the lease until the supervisor
+            # observes runner completion and explicitly releases it.
+            if self.guardian.poll() is not None:
+                raise ContainmentStop('STOP: guardian exited during handoff')
             self.control.close()
 
     def require_finish_ready(self):

@@ -50,10 +50,11 @@ def _reply(control, payload, freeze_fd, events_fd):
 
 
 def main(argv):
-    if len(argv) != 6:
+    if len(argv) != 7:
         return 2
-    control_fd, parent_pidfd, freeze_fd, events_fd, supervisor_pidfd, supervisor_live_fd = map(int, argv)
+    control_fd, parent_pidfd, freeze_fd, events_fd, supervisor_pidfd, supervisor_live_fd, handoff_fd = map(int, argv)
     control = socket.socket(fileno=control_fd)
+    handoff = socket.socket(fileno=handoff_fd)
     poller = select.poll()
     poller.register(parent_pidfd, select.POLLIN | select.POLLHUP | select.POLLERR)
     poller.register(supervisor_pidfd, select.POLLIN | select.POLLHUP | select.POLLERR)
@@ -71,6 +72,7 @@ def main(argv):
         except Exception: pass
         _retain_lease()
     frozen = False
+    handed_off = False
     while True:
         try:
             events = dict(poller.poll(1000))
@@ -82,7 +84,7 @@ def main(argv):
             _retain_lease()
         # A pidfd is an independent parent-death witness: pipe/socket duplicates
         # in children cannot suppress the death event.
-        dead = bool(events.get(parent_pidfd, 0) or events.get(supervisor_pidfd, 0) or events.get(supervisor_live_fd, 0))
+        dead = bool((not handed_off and events.get(parent_pidfd, 0)) or events.get(supervisor_pidfd, 0) or events.get(supervisor_live_fd, 0))
         control_event = events.get(control_fd, 0)
         if dead or (control_event & (select.POLLHUP | select.POLLERR)):
             try:
@@ -94,6 +96,25 @@ def main(argv):
                 # treat lack of acknowledgement as NOT CHECKABLE.
                 pass
             _retain_lease()
+        if handed_off:
+            handoff_event = events.get(handoff_fd, 0)
+            if handoff_event & (select.POLLHUP | select.POLLERR):
+                try: _freeze(freeze_fd, events_fd)
+                except Exception: pass
+                _retain_lease()
+            if handoff_event & select.POLLIN:
+                try:
+                    msg = handoff.recv(64)
+                    empty = _values(events_fd).get('populated') == 0
+                except Exception:
+                    msg, empty = b'', False
+                if msg != b'RELEASE' or frozen or not empty:
+                    try: _freeze(freeze_fd, events_fd)
+                    except Exception: pass
+                    _retain_lease()
+                _reply(handoff, b'RELEASED', freeze_fd, events_fd)
+                return 0
+            continue
         if not (control_event & select.POLLIN):
             continue
         try:
@@ -120,11 +141,24 @@ def main(argv):
                 _reply(control,('FAILED:' + type(exc).__name__).encode('ascii'),freeze_fd,events_fd)
         elif msg == b'FINISH':
             # Parent promises no further enrollment; verify own subtree is empty.
-            if frozen or _values(events_fd).get('populated') != 0:
+            try: empty = _values(events_fd).get('populated') == 0
+            except Exception: empty = False
+            if frozen or not empty:
                 _reply(control,b'NOT_EMPTY_OR_FROZEN',freeze_fd,events_fd)
             else:
+                # The supervisor is now responsible for observing the
+                # runner's exit and requesting release after publication.
+                # Poll supervisor death independently throughout handoff.
+                try:
+                    poller.unregister(parent_pidfd)
+                    poller.unregister(control_fd)
+                    poller.register(handoff_fd, select.POLLIN | select.POLLHUP | select.POLLERR)
+                except Exception:
+                    try: _freeze(freeze_fd, events_fd)
+                    except Exception: pass
+                    _retain_lease()
+                handed_off = True
                 _reply(control,b'FINISHED',freeze_fd,events_fd)
-                return 0
         else:
             _reply(control,b'BAD_COMMAND',freeze_fd,events_fd)
 

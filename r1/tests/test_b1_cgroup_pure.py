@@ -68,9 +68,57 @@ class GuardianTests(unittest.TestCase):
              patch.object(guardian.select, 'poll', return_value=fake_poller), \
              patch.object(guardian, '_freeze') as freeze, \
              patch.object(guardian.time, 'sleep', side_effect=Done):
-            with self.assertRaises(Done): guardian.main(['3','4','5','6','7','8'])
+            with self.assertRaises(Done): guardian.main(['3','4','5','6','7','8','9'])
         freeze.assert_called_once_with(5, 6)
         fake_socket.recv.assert_not_called()
+
+    def test_finish_handoff_retains_on_supervisor_death(self):
+        control, handoff = Mock(), Mock()
+        control.recv.return_value = b'FINISH'
+        poller = Mock()
+        poller.poll.side_effect = [[], [(3, guardian.select.POLLIN)], [(7, guardian.select.POLLIN)]]
+        class Done(Exception): pass
+        with patch.object(guardian.socket, 'socket', side_effect=[control, handoff]), \
+             patch.object(guardian.select, 'poll', return_value=poller), \
+             patch.object(guardian, '_values', return_value={'populated': 0}), \
+             patch.object(guardian, '_freeze') as freeze, \
+             patch.object(guardian, '_retain_lease', side_effect=Done):
+            with self.assertRaises(Done): guardian.main(['3','4','5','6','7','8','9'])
+        control.sendall.assert_any_call(b'FINISHED')
+        freeze.assert_called_once_with(5, 6)
+        handoff.recv.assert_not_called()
+
+    def test_finish_handoff_releases_only_after_supervisor_message(self):
+        control, handoff = Mock(), Mock()
+        control.recv.return_value = b'FINISH'
+        handoff.recv.return_value = b'RELEASE'
+        poller = Mock()
+        poller.poll.side_effect = [[], [(3, guardian.select.POLLIN)], [(9, guardian.select.POLLIN)]]
+        with patch.object(guardian.socket, 'socket', side_effect=[control, handoff]), \
+             patch.object(guardian.select, 'poll', return_value=poller), \
+             patch.object(guardian, '_values', return_value={'populated': 0}), \
+             patch.object(guardian, '_freeze') as freeze:
+            self.assertEqual(guardian.main(['3','4','5','6','7','8','9']), 0)
+        handoff.sendall.assert_called_once_with(b'RELEASED')
+        freeze.assert_not_called()
+
+    def test_supervisor_death_wins_over_simultaneous_release(self):
+        control, handoff = Mock(), Mock()
+        control.recv.return_value = b'FINISH'
+        handoff.recv.return_value = b'RELEASE'
+        poller = Mock()
+        poller.poll.side_effect = [[], [(3, guardian.select.POLLIN)],
+                                   [(7, guardian.select.POLLIN), (9, guardian.select.POLLIN)]]
+        class Done(Exception): pass
+        with patch.object(guardian.socket, 'socket', side_effect=[control, handoff]), \
+             patch.object(guardian.select, 'poll', return_value=poller), \
+             patch.object(guardian, '_values', return_value={'populated': 0}), \
+             patch.object(guardian, '_freeze') as freeze, \
+             patch.object(guardian, '_retain_lease', side_effect=Done):
+            with self.assertRaises(Done): guardian.main(['3','4','5','6','7','8','9'])
+        freeze.assert_called_once_with(5, 6)
+        handoff.recv.assert_not_called()
+        handoff.sendall.assert_not_called()
 
     def test_disconnected_reply_freezes_and_retains_lease(self):
         fake_socket = Mock(); fake_socket.sendall.side_effect = OSError('peer closed')
@@ -91,7 +139,7 @@ class ControlTests(unittest.TestCase):
         instance._spawn_lock=threading.Lock(); instance._frozen=False
         instance.events_fd=7; instance.control=Mock()
         instance.control.recv.return_value=b'FINISHED'
-        instance.guardian=Mock(); instance.guardian.wait.return_value=1
+        instance.guardian=Mock(); instance.guardian.poll.return_value=1
         with patch.object(control,'_events',return_value={'populated':0}):
             with self.assertRaises(control.ContainmentStop): instance.finish()
         instance.control.close.assert_not_called()
@@ -99,7 +147,7 @@ class ControlTests(unittest.TestCase):
     def test_invalid_guardian_lease_is_refused_before_cgroup_creation(self):
         instance=control.B1Containment.__new__(control.B1Containment)
         with patch.object(control, '_parent_dir') as parent:
-            with self.assertRaises(control.ContainmentStop): instance.initialize(0, Mock(), 8, 9)
+            with self.assertRaises(control.ContainmentStop): instance.initialize(0, Mock(), 8, 9, 10)
         parent.assert_not_called()
 
     def test_failed_monitor_check_publishes_stop_intent(self):
@@ -266,13 +314,16 @@ class SupervisorContractTests(unittest.TestCase):
         from r1.scripts import b1_supervisor
         module=types.ModuleType('r1.exam.b1_exit_receipt')
         module.publish_after_wait=Mock(side_effect=RuntimeError('queued callback'))
-        module.verify_waited_success=Mock()
+        module._verify_waited_success_unlocked=Mock()
+        module.UNCERTAIN='B1_COMMIT_UNCERTAIN.json'
         with patch.dict(sys.modules, {'r1.exam.b1_exit_receipt':module}):
-            b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
-            module.verify_waited_success.assert_called_once_with('/batch','head')
-            module.verify_waited_success.side_effect=RuntimeError('ACTIVE still present')
-            with self.assertRaisesRegex(RuntimeError,'ACTIVE still present'):
-                b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
+            b1_supervisor._publish_or_reconcile(Mock(),'/batch','head','/supervisor')
+            module._verify_waited_success_unlocked.assert_called_once_with('/batch','head')
+            module._verify_waited_success_unlocked.side_effect=RuntimeError('ACTIVE still present')
+            with patch.object(b1_supervisor, '_exclusive_json') as write:
+                with self.assertRaisesRegex(b1_supervisor.PublicationUncertain,'commit uncertain'):
+                    b1_supervisor._publish_or_reconcile(Mock(),'/batch','head','/supervisor')
+            write.assert_called_once()
 
     def test_filesystem_preflight_refuses_before_lease_and_runner(self):
         from r1.scripts import b1_supervisor
@@ -297,7 +348,49 @@ class SupervisorContractTests(unittest.TestCase):
 
     def _env(self):
         return {'R1_B1_SUPERVISOR_PID':'42','R1_B1_SUPERVISOR_TICKS':'99',
-                'R1_B1_SUPERVISOR_PIDFD':'8','R1_B1_SUPERVISOR_LIVE_FD':'9','R1_B1_LEASE_FD':'10'}
+                'R1_B1_SUPERVISOR_PIDFD':'8','R1_B1_SUPERVISOR_LIVE_FD':'9','R1_B1_LEASE_FD':'10',
+                'R1_B1_GUARDIAN_HANDOFF_FD':'11'}
+
+    def test_release_ack_failure_does_not_publish_success(self):
+        from r1.scripts import b1_supervisor
+        handoff=Mock();handoff.recv.side_effect=OSError('lost ack')
+        with patch.object(b1_supervisor,'_publish_or_reconcile') as publish:
+            with self.assertRaises(OSError):
+                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff,'/supervisor')
+        handoff.sendall.assert_called_once_with(b'RELEASE')
+        publish.assert_not_called()
+
+    def test_release_send_failure_even_with_stop_write_failure_never_publishes(self):
+        from r1.scripts import b1_supervisor
+        handoff=Mock();handoff.sendall.side_effect=OSError('send failed')
+        stop_write=Mock(side_effect=OSError('disk full'))
+        with patch.object(b1_supervisor,'_publish_or_reconcile') as publish:
+            try:
+                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff,'/supervisor')
+            except OSError:
+                try: stop_write()
+                except OSError: pass
+        stop_write.assert_called_once()
+        handoff.recv.assert_not_called()
+        publish.assert_not_called()
+
+    def test_success_publication_occurs_after_release_ack(self):
+        from r1.scripts import b1_supervisor
+        calls=[]
+        handoff=Mock()
+        handoff.sendall.side_effect=lambda message: calls.append(('send',message))
+        handoff.recv.side_effect=lambda limit: calls.append(('ack',limit)) or b'RELEASED'
+        with patch.object(b1_supervisor,'_publish_or_reconcile',side_effect=lambda *args: calls.append(('publish',))):
+            b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff,'/supervisor')
+        self.assertEqual(calls,[('send',b'RELEASE'),('ack',64),('publish',)])
+
+    def test_wrong_release_ack_does_not_publish_success(self):
+        from r1.scripts import b1_supervisor
+        handoff=Mock();handoff.recv.return_value=b'FAILED'
+        with patch.object(b1_supervisor,'_publish_or_reconcile') as publish:
+            with self.assertRaises(RuntimeError):
+                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff,'/supervisor')
+        publish.assert_not_called()
 
     def test_contract_refuses_supervisor_stop_before_adopting_lease(self):
         from r1.exam import b1_supervisor_contract as contract

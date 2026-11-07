@@ -704,7 +704,7 @@ class ExamRunner:
                 self.state['b1_containment']=record
                 self.save()
             self.b1_containment.initialize(self.b1_lease_fd,containment_receipt,
-                                           checked_supervisor['pidfd'],checked_supervisor['live_fd'])
+                                           checked_supervisor['pidfd'],checked_supervisor['live_fd'],checked_supervisor['handoff_fd'])
         lock=self.out/'runner.lock'
         if self.cfg.get('dryrun') and os.path.lexists(lock):
             raise RuntimeError('STOP: existing DRYRUN runner lock; preserve and do not resume')
