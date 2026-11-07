@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 8 November 2026 — synthetic Stage A/B1 recovery STOP (AI-assisted)
+
+Three test-owned Stage A worker subprocesses completed with synthetic transport and produced a five-row table. The subsequent synthetic B1 parent stopped with `PreparationStop: [Errno 1] Operation not permitted` before the planned crash/recovery; the failing operation is not established. The scene is retained, no automatic retry was made, and the test does not establish the required full subprocess recovery coverage. See `B1_STAGEA_REAL_CHILD_RECOVERY_ATTEMPT_20261108.md` and its independent review. Formal B1 has not started.
+
 ## 7 November 2026 — B1 preparation; not started (AI-assisted)
 
 The fixed Q2 reference and 7 November author decisions are recorded. The `55b8ca24` code freeze was accepted, followed by the independently reviewed B1 OpenML cache guard; a new combined code pin and final HEAD review remain pending. On TASL-7, the fixed-harness synthetic CPU worker determinism test passed (two equal `0.922225` scores) and Linux owned-process STOP checks passed; see `B1_TASL7_REAL_WORKER_RESULT_REVIEW_20261107.md` and `B1_TASL7_LINUX_STOP_RESULT_REVIEW_20261107.md` for their limited scopes. The Mac suite at `5b4dbfe2` had 1,167 passed, 34 failed and 14 skipped; classification is in `B1_FINAL_CODE_MAC_SUITE_CLASSIFICATION_REVIEW_20261107.md`.
