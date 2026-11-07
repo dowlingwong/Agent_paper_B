@@ -918,20 +918,47 @@ class ExamRunner:
             kwargs['pass_fds']=(self.b1_lease_fd,)
         def open_log(): return (path/'runner.log').open('ab')
         log=self.b1_containment.write_active(open_log) if contained else open_log()
-        with log:
-            argv=[sys.executable,'-m',module,'--job',str(path/'job.json')]
-            if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
-                self.child=self.b1_containment.spawn('worker',argv,env=env,cwd=REPO,stdout=log,
-                                                     lease_fd=self.b1_lease_fd,
-                                                     worker_context={'job':job,'out':path,'server':self.service,
-                                                                     'supervisor':self.b1_supervisor})
-            else:
-                self.child=subprocess.Popen(argv,env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
-        self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
-        watchdog=RunnerWatchdog(self.service,self.cfg['watchdog']) if self.service else None
+        audit_read=audit_write=audit_backup_read=audit_backup_write=None; audit_monitor=None
+        try:
+            if contained:
+                audit_read,audit_write=os.pipe()
+                audit_backup_read,audit_backup_write=os.pipe()
+                os.set_blocking(audit_read,False);os.set_blocking(audit_write,False)
+                os.set_blocking(audit_backup_read,False);os.set_blocking(audit_backup_write,False)
+            with log:
+                argv=[sys.executable,'-m',module,'--job',str(path/'job.json')]
+                if contained:
+                    self.child=self.b1_containment.spawn('worker',argv,env=env,cwd=REPO,stdout=log,
+                                                         lease_fd=self.b1_lease_fd,
+                                                         worker_context={'job':job,'out':path,'server':self.service,
+                                                                         'supervisor':self.b1_supervisor,'audit_stop_fd':audit_write,
+                                                                         'audit_backup_fd':audit_backup_write})
+                else:
+                    self.child=subprocess.Popen(argv,env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
+            if contained:
+                os.close(audit_write);audit_write=None
+                os.close(audit_backup_write);audit_backup_write=None
+                from r1.exam.b1_audit_stop import AuditStopMonitor
+                audit_monitor=AuditStopMonitor((audit_read,audit_backup_read),self.child,self.b1_containment)
+                audit_monitor.start()
+        except BaseException:
+            if contained:
+                try: self.b1_containment.freeze()
+                finally:
+                    for fd in (audit_read,audit_write,audit_backup_read,audit_backup_write):
+                        if fd is not None: os.close(fd)
+            raise
         started=time.monotonic();killed=False
         try:
+            self.state['in_progress']={'path':str(path),'pid':self.child.pid}
+            if contained:
+                audit_monitor.check()
+                self.b1_containment.write_active(self.save)
+            else:
+                self.save()
+            watchdog=RunnerWatchdog(self.service,self.cfg['watchdog']) if self.service else None
             while self.child.poll() is None:
+                if audit_monitor is not None: audit_monitor.check()
                 if self.state.get('phase')=='stage-a':
                     from r1.exam.cache_runtime import reject_unverified_lease
                     reject_unverified_lease()
@@ -956,7 +983,9 @@ class ExamRunner:
                 time.sleep(float(self.cfg['watchdog']['poll_seconds']))
             if self.child.returncode: raise RuntimeError(f'STOP: root worker exit {self.child.returncode}; see {path}/runner.log')
             if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                audit_monitor.finish()
                 self.b1_containment.require_worker_empty(self.child)
+                audit_monitor.check()
         except BaseException as exc:
             if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
                 try:
@@ -971,6 +1000,13 @@ class ExamRunner:
             else:
                 self.save()
             raise
+        finally:
+            if audit_monitor is not None:
+                try: audit_monitor.shutdown()
+                except Exception as monitor_error:
+                    report_b1_freeze_failure(RuntimeError('audit monitor cleanup'),monitor_error)
+                if not audit_monitor.thread.is_alive():
+                    os.close(audit_read);os.close(audit_backup_read)
         self.child=None
 
     def root(self, spec, phase, node, seed, mode, *, interrupt=False):

@@ -137,19 +137,21 @@ def verify_worker_contract(job, environ=None):
         required = {'version','parent_pid','parent_ticks','parent_pidfd',
                     'supervisor_pid','supervisor_ticks','supervisor_pidfd','supervisor_live_fd',
                     'guardian_pid','guardian_ticks','guardian_pidfd','lease_fd',
-                    'root_fd','leaf_fd','output_fd','membership','leaf','out','job_sha256',
+                    'root_fd','leaf_fd','output_fd','membership','leaf','out','job_sha256','audit_stop_fd','audit_backup_fd',
                     'server_pid','server_ticks','server_pidfd','server_leaf_fd','server_url'}
-        if not isinstance(ctx, dict) or set(ctx) != required or ctx['version'] != 'b1_worker_contract/v1':
+        if not isinstance(ctx, dict) or set(ctx) != required or ctx['version'] != 'b1_worker_contract/v3':
             _stop('invalid schema')
         names = ('parent_pid','parent_ticks','parent_pidfd','supervisor_pid','supervisor_ticks',
                  'supervisor_pidfd','supervisor_live_fd','guardian_pid','guardian_ticks','guardian_pidfd',
-                 'lease_fd','root_fd','leaf_fd','output_fd')
+                 'lease_fd','root_fd','leaf_fd','output_fd','audit_stop_fd','audit_backup_fd')
         if any(type(ctx[k]) is not int for k in names) or ctx['parent_pid'] <= 0 or ctx['parent_ticks'] <= 0:
             _stop('invalid descriptor or parent identity')
         fds = [ctx[k] for k in ('parent_pidfd','supervisor_pidfd','supervisor_live_fd','guardian_pidfd',
-                                 'lease_fd','root_fd','leaf_fd','output_fd')]
+                                 'lease_fd','root_fd','leaf_fd','output_fd','audit_stop_fd','audit_backup_fd')]
         if any(fd < 3 for fd in fds) or len(fds) != len(set(fds)):
             _stop('descriptor collision')
+        from r1.exam.b1_audit_stop import require_notify_fds
+        require_notify_fds((ctx['audit_stop_fd'],ctx['audit_backup_fd']))
         from r1.exam.cache_proc import process_start_ticks
         from r1.exam.b1_lease import adopt_inherited, verify_server_fd
         if (os.getppid() != ctx['parent_pid'] or process_start_ticks(ctx['parent_pid']) != ctx['parent_ticks']

@@ -113,7 +113,13 @@ def require_worker_host(job, node=None):
 def collect(job):
     if job.get('phase') != 'b1':
         raise RuntimeError('STOP: B2 observer integration is not implemented')
-    return _collect_b1_review(job)
+    result=_collect_b1_review(job)
+    if not job.get('dryrun'):
+        from r1.exam.b1_audit_stop import send_audit_complete
+        from r1.exam.b1_worker_contract import ENV_KEY
+        ctx=json.loads(os.environ[ENV_KEY])
+        send_audit_complete((ctx['audit_stop_fd'],ctx['audit_backup_fd']))
+    return result
 
 
 def _verify_b1_worker_input(job):
@@ -164,7 +170,7 @@ def _collect_b1_review(job):
     else:
         # No worker output, node copy or manager request precedes this check.
         from r1.exam.b1_worker_contract import verify_worker_contract
-        verify_worker_contract(job)
+        worker_contract=verify_worker_contract(job)
         _verify_b1_worker_input(job)
         # A direct campaign invocation has no parent runner to enforce the
         # approved work-tree boundary. This check does not prove ownership of
@@ -227,11 +233,18 @@ def _collect_b1_review(job):
     write_json(out/'audit_configs.json',configs)
     if not job['dryrun']:
         from concurrent.futures import ProcessPoolExecutor, as_completed
-        with ProcessPoolExecutor(max_workers=job['workers']) as pool:
-            futures={pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out)):h for h,value in configs.items()}
-            for future in as_completed(futures):
-                h=futures[future];runs=future.result();cache[h]=[r['metric'] if r['success'] else None for r in runs]
-                save_cache()
+        from multiprocessing import get_context
+        from r1.exam.b1_audit_stop import run_notifying_audit
+        stop_fds=(worker_contract['audit_stop_fd'],worker_contract['audit_backup_fd'])
+        with ProcessPoolExecutor(max_workers=job['workers'],mp_context=get_context('fork')) as pool:
+            try:
+                futures={pool.submit(run_notifying_audit,stop_fds,run_config,node,value['files'],job['audit_seeds'],str(out)):h for h,value in configs.items()}
+                for future in as_completed(futures):
+                    h=futures[future];runs=future.result();cache[h]=[r['metric'] if r['success'] else None for r in runs]
+                    save_cache()
+            except BaseException as exc:
+                def report_failure(): raise exc
+                run_notifying_audit(stop_fds,report_failure)
     for p in props:
         if p.features.get('active_equals_incumbent') or p.features.get('active_seen_before'): continue
         arrays=[]
@@ -240,7 +253,7 @@ def _collect_b1_review(job):
             if h not in cache:
                 if job['dryrun']: cache[h]=[fixture_metric(files,s) for s in job['audit_seeds']]
                 else:
-                    runs=run_config(node,files,job['audit_seeds'],str(out))
+                    runs=run_notifying_audit(stop_fds,run_config,node,files,job['audit_seeds'],str(out))
                     cache[h]=[r['metric'] if r['success'] else None for r in runs]
                 save_cache()
             arrays.append(cache[h])

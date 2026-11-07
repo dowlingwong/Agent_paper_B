@@ -17,11 +17,11 @@ class ContractTests(unittest.TestCase):
         self.out='/synthetic/work/batch/anchor/b1/off/digits_mlp__s9001'
         self.job={'out':self.out,'candidate':{'id':'random_valid','kind':'random_valid'},'base_url':None,
                   'mode':'off','node':'digits_mlp','seed':9001}
-        self.ctx={'version':'b1_worker_contract/v1','parent_pid':11,'parent_ticks':22,'parent_pidfd':30,
+        self.ctx={'version':'b1_worker_contract/v3','parent_pid':11,'parent_ticks':22,'parent_pidfd':30,
                   'supervisor_pid':13,'supervisor_ticks':22,'supervisor_pidfd':37,'supervisor_live_fd':38,
                   'guardian_pid':14,'guardian_ticks':22,'guardian_pidfd':39,
                   'lease_fd':31,'root_fd':32,'leaf_fd':33,'output_fd':34,'membership':'/user/batch',
-                  'leaf':'worker-'+'a'*32,'out':self.out,'job_sha256':contract._job_sha(self.job),
+                  'leaf':'worker-'+'a'*32,'out':self.out,'job_sha256':contract._job_sha(self.job),'audit_stop_fd':41,'audit_backup_fd':42,
                   'server_pid':None,'server_ticks':None,'server_pidfd':None,'server_leaf_fd':None,'server_url':None}
         self.env={contract.ENV_KEY:json.dumps(self.ctx)}
 
@@ -34,6 +34,7 @@ class ContractTests(unittest.TestCase):
         stack.enter_context(mock.patch('r1.exam.cache_proc.process_start_ticks',return_value=22))
         stack.enter_context(mock.patch('r1.exam.b1_lease.adopt_inherited'))
         stack.enter_context(mock.patch('r1.exam.b1_lease.verify_server_fd'))
+        stack.enter_context(mock.patch('r1.exam.b1_audit_stop.require_notify_fds'))
         stack.enter_context(mock.patch.object(contract,'_pidfd_alive',return_value=True))
         stack.enter_context(mock.patch.object(contract,'_fd_quiet',return_value=True))
         stack.enter_context(mock.patch.object(contract,'_parent_runner',return_value=True))
@@ -135,6 +136,7 @@ class ParentSpawnTests(unittest.TestCase):
              mock.patch.object(control.os,'fstat',return_value=info),mock.patch.object(control.os,'stat',return_value=info), \
              mock.patch.object(control.os,'pidfd_open',side_effect=[26,40],create=True), \
              mock.patch('r1.exam.cache_proc.process_start_ticks',return_value=222), \
+             mock.patch('r1.exam.b1_audit_stop.require_notify_fds'), \
              mock.patch('r1.exam.cooperative_lease.kcmp_file_result',return_value=(0,0)), \
              mock.patch.object(control.subprocess,'Popen',return_value=process) as popen, \
              mock.patch.object(control,'_read_one',side_effect=[b'M',b'']), \
@@ -142,14 +144,16 @@ class ParentSpawnTests(unittest.TestCase):
              mock.patch.object(Path,'read_text',return_value='0::/owned/worker-'+'a'*32+'\n'), \
              mock.patch.object(Path,'read_bytes',return_value=b'/bin/fake\0'):
             instance.spawn('worker',['/bin/fake'],env={'LLAMACPP_BASE_URL':'http://unowned'},stdout=stdout,
-                           lease_fd=22,worker_context={'job':job,'out':Path(job['out']),'server':None,'supervisor':supervisor})
+                           lease_fd=22,worker_context={'job':job,'out':Path(job['out']),'server':None,'supervisor':supervisor,'audit_stop_fd':41,'audit_backup_fd':42})
         kwargs=popen.call_args.kwargs
         ctx=json.loads(kwargs['env'][contract.ENV_KEY])
         self.assertEqual(ctx['job_sha256'],contract._job_sha(job))
         self.assertEqual(ctx['out'],job['out'])
         self.assertEqual(ctx['parent_pid'],111)
+        self.assertEqual(ctx['audit_stop_fd'],41)
+        self.assertEqual(ctx['audit_backup_fd'],42)
         self.assertNotIn('LLAMACPP_BASE_URL',kwargs['env'])
-        self.assertTrue({8,22,23,24,25,26,27,28}.issubset(set(kwargs['pass_fds'])))
+        self.assertTrue({8,22,23,24,25,26,27,28,41,42}.issubset(set(kwargs['pass_fds'])))
 
     def test_real_parent_binds_owned_server_before_worker_grant(self):
         import threading
@@ -177,6 +181,7 @@ class ParentSpawnTests(unittest.TestCase):
              mock.patch.object(control.os,'fstat',return_value=info),mock.patch.object(control.os,'stat',return_value=info), \
              mock.patch.object(control.os,'pidfd_open',side_effect=[26,40],create=True), \
              mock.patch('r1.exam.cache_proc.process_start_ticks',return_value=222), \
+             mock.patch('r1.exam.b1_audit_stop.require_notify_fds'), \
              mock.patch('r1.exam.cooperative_lease.kcmp_file_result',return_value=(0,0)), \
              mock.patch.object(contract,'_server_listener',return_value=True) as listener, \
              mock.patch.object(control.subprocess,'Popen',return_value=process) as popen, \
@@ -185,13 +190,15 @@ class ParentSpawnTests(unittest.TestCase):
              mock.patch.object(Path,'read_text',return_value='0::/owned/worker-'+'a'*32+'\n'), \
              mock.patch.object(Path,'read_bytes',return_value=b'/bin/fake\0'):
             instance.spawn('worker',['/bin/fake'],env={},stdout=stdout,lease_fd=22,
-                           worker_context={'job':job,'out':Path(job['out']),'server':server,'supervisor':supervisor})
+                           worker_context={'job':job,'out':Path(job['out']),'server':server,'supervisor':supervisor,'audit_stop_fd':41,'audit_backup_fd':42})
         ctx=json.loads(popen.call_args.kwargs['env'][contract.ENV_KEY])
         self.assertEqual(ctx['server_pid'],55)
         self.assertEqual(ctx['server_url'],server.openai_base_url)
         self.assertEqual(listener.call_count,2)
         self.assertEqual(instance.verify_live_lease.call_count,3)  # guardian, server, server recheck
-        self.assertTrue({22,23,24,25,26,27,28,35,36}.issubset(set(popen.call_args.kwargs['pass_fds'])))
+        self.assertEqual(ctx['audit_stop_fd'],41)
+        self.assertEqual(ctx['audit_backup_fd'],42)
+        self.assertTrue({22,23,24,25,26,27,28,35,36,41,42}.issubset(set(popen.call_args.kwargs['pass_fds'])))
 
 
 class ParentIdentityTests(unittest.TestCase):
