@@ -16,11 +16,15 @@ exam_runner.write_json=campaign.write_json
 LlamaServerInstance._save=record_save
 original_close=runtime.ExamRunner.close
 
-def retained_close(self,*args,**kwargs):
+def retained_close(self,*,preserve_running=False,skip_service=False):
+    if preserve_running:
+        return original_close(self,preserve_running=True,skip_service=skip_service)
+    if not skip_service:
+        self.stop_service()
     if self.lock is not None:
         retire(self.lock)
         self.lock=None
-    return original_close(self,*args,**kwargs)
+    return original_close(self,preserve_running=False,skip_service=True)
 
 runtime.ExamRunner.close=retained_close
 original_claim=runtime.claim_runner_lock
