@@ -19,7 +19,8 @@ def sha256(path):
 
 
 def git(root, *args):
-    return subprocess.check_output(['git', '--no-optional-locks', '-c', 'core.fsmonitor=false', '-C', str(root), *args], text=True).strip()
+    env = dict(os.environ, GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL='/dev/null', GIT_CONFIG_COUNT='0', GIT_NO_REPLACE_OBJECTS='1', GIT_TERMINAL_PROMPT='0')
+    return subprocess.check_output(['git', '--no-optional-locks', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', '-C', str(root), *args], text=True, env=env).strip()
 
 
 def check(root, head):
@@ -36,9 +37,46 @@ def pack(source, dest, head):
     if not re.fullmatch(r'[0-9a-f]{40}', head): raise ValueError('expected full commit SHA')
     dest.mkdir(mode=0o700)
     root = dest / 'paper'
-    subprocess.run(['git', 'clone', '--no-local', '--no-hardlinks', '--no-checkout', str(source), str(root)], check=True)
-    subprocess.run(['git', '-C', str(root), 'checkout', '--detach', head], check=True)
-    subprocess.run(['git', '-C', str(root), 'remote', 'remove', 'origin'], check=True)
+    dotgit = source / '.git'
+    if dotgit.is_symlink() or not dotgit.is_dir(): raise RuntimeError('source must have a standalone .git directory')
+    if git(source, 'rev-parse', '--is-shallow-repository') != 'false': raise RuntimeError('shallow source')
+    if git(source, 'rev-parse', '--show-object-format') != 'sha1': raise RuntimeError('unsupported object format')
+    if list((dotgit/'objects/pack').glob('*.promisor')): raise RuntimeError('partial clone unsupported')
+    if git(source, 'rev-parse', '--shared-index-path'): raise RuntimeError('split index unsupported')
+    if (dotgit/'objects/info/alternates').exists() or (dotgit/'objects/info/alternates').is_symlink(): raise RuntimeError('alternates unsupported')
+    if (dotgit/'info/grafts').exists() or (dotgit/'info/grafts').is_symlink(): raise RuntimeError('grafts unsupported')
+    root.mkdir(mode=0o700)
+    (root/'.git').mkdir(mode=0o700)
+    (root/'.git/refs/heads').mkdir(parents=True, mode=0o700)
+    (root/'.git/refs/tags').mkdir(mode=0o700)
+    def copyfile(src, dst):
+        if src.is_symlink() or not src.is_file(): raise RuntimeError('unsafe source file: '+str(src))
+        dst.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with src.open('rb') as f, dst.open('xb') as g: shutil.copyfileobj(f, g)
+        os.chmod(dst, src.stat().st_mode & 0o777)
+    copyfile(dotgit/'index', root/'.git/index')
+    objects = dotgit/'objects'
+    if objects.is_symlink() or not objects.is_dir(): raise RuntimeError('unsafe objects directory')
+    for parent, dirs, files in os.walk(objects, followlinks=False, onerror=lambda e: (_ for _ in ()).throw(e)):
+        for name in dirs:
+            p = Path(parent)/name
+            if p.is_symlink(): raise RuntimeError('symlink object directory')
+            (root/'.git/objects'/p.relative_to(objects)).mkdir(parents=True, exist_ok=True, mode=0o700)
+        for name in files:
+            p = Path(parent)/name
+            copyfile(p, root/'.git/objects'/p.relative_to(objects))
+    with (root/'.git/HEAD').open('x') as f: f.write(head+'\n')
+    with (root/'.git/config').open('x') as f: f.write('[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = false\n')
+    env = dict(os.environ, GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL='/dev/null', GIT_CONFIG_COUNT='0', GIT_NO_REPLACE_OBJECTS='1', GIT_TERMINAL_PROMPT='0')
+    tracked = subprocess.check_output(['git', '--no-optional-locks', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', '-C', str(source), 'ls-files', '-z'], env=env).split(b'\0')
+    for raw in tracked:
+        if not raw: continue
+        rel = Path(os.fsdecode(raw))
+        if rel.is_absolute() or '..' in rel.parts or not rel.parts or rel.parts[0] == '.git': raise RuntimeError('unsafe tracked path')
+        src, dst = source/rel, root/rel
+        dst.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        if src.is_symlink(): os.symlink(os.readlink(src), dst)
+        else: copyfile(src, dst)
     check(root, head)
     archive = dest / 'paper.tar'
     with tarfile.open(archive, 'x') as tar:
@@ -86,6 +124,13 @@ def receive(dest, head, expected):
         for member in entries:
             if any(parent.as_posix() in link_paths for parent in PurePosixPath(member.name).parents):
                 raise RuntimeError('archive member under symlink: '+member.name)
+        for member in entries:
+            if not member.issym(): continue
+            parts = list(PurePosixPath(member.name).parent.parts)
+            for part in PurePosixPath(member.linkname).parts:
+                if part == '..': parts.pop()
+                elif part not in ('', '.'): parts.append(part)
+                if '/'.join(parts) in link_paths: raise RuntimeError('symlink target passes through symlink: '+member.name)
         (dest / 'paper').mkdir(mode=0o700)
         # Links are created last, so files are never written through archive symlinks.
         for member in entries:
