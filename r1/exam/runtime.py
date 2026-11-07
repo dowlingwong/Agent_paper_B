@@ -28,7 +28,7 @@ B1_CONFIG_REL='r1/scripts/configs/exam_b1_v2.json'
 
 TEMPLATE_REPAIR_SCHEMA='r1.exam.template_repair/v1'
 
-def report_b1_stop_and_save(runner, original, *, save=True):
+def report_b1_stop_and_save(runner, original, *, save=True, append_only=False):
     """Best effort only: emit the original error before attempting STOP state I/O.
 
     Stderr is not proof of durable publication.  Both output channels may fail;
@@ -40,12 +40,24 @@ def report_b1_stop_and_save(runner, original, *, save=True):
         pass
     if save:
         try:
-            runner.save()
+            if append_only:
+                runner.save_b1_stop(original)
+            else:
+                runner.save()
         except Exception as save_error:
             try:
                 print(f'STOP: state save failed: {type(save_error).__name__}: {save_error}', file=sys.stderr, flush=True)
             except Exception:
                 pass
+
+def report_b1_freeze_failure(original, freeze_error):
+    """Best effort; this does not assert quiescence or durable publication."""
+    try:
+        print(f'STOP: original exception: {type(original).__name__}: {original}; '
+              f'containment freeze unverified: {type(freeze_error).__name__}: {freeze_error}',
+              file=sys.stderr, flush=True)
+    except Exception:
+        pass
 
 def template_repair_args(spec) -> list[str]:
     """Declared per-candidate template repair (A1): serve the pinned repair template.
@@ -283,9 +295,14 @@ def host_check(cfg, out):
     if not Path(out).resolve().is_relative_to(Path(cfg['work_dir'])): raise RuntimeError('STOP: output must be under approved work directory')
 
 
-def gpu_sample(cfg):
+def gpu_sample(cfg, capture=None):
     if cfg.get('dryrun'): return {'used_mib':6000,'free_mib':18000,'compute_pids':[],'device':0}
-    done=subprocess.run(['nvidia-smi','--query-gpu=uuid,memory.used,memory.free,utilization.gpu','--format=csv,noheader,nounits'],capture_output=True,text=True,check=True,timeout=15)
+    argv=['nvidia-smi','--query-gpu=uuid,memory.used,memory.free,utilization.gpu','--format=csv,noheader,nounits']
+    if capture is None:
+        done=subprocess.run(argv,capture_output=True,text=True,check=True,timeout=15)
+    else:
+        done=capture(argv,timeout=15)
+        if done.returncode: raise RuntimeError('STOP: contained GPU census failed')
     rows=[line.split(',') for line in done.stdout.splitlines()]
     row=next((r for r in rows if r[0].strip()==cfg['gpu_uuid']),None)
     if not row: raise RuntimeError('STOP: pinned GPU absent from census')
@@ -490,11 +507,13 @@ def require_server_lease_inheritance(instance):
 
 
 class ExamRunner:
-    def __init__(self, cfg, out, *, registry_path=None, b1_config_head=None):
+    def __init__(self, cfg, out, *, registry_path=None, b1_config_head=None, b1_supervisor=None):
         raw_out=Path(out).expanduser()
         if b1_config_head is not None and not cfg.get('dryrun'):
             if not raw_out.is_absolute() or raw_out.is_symlink() or raw_out.resolve()!=raw_out:
                 raise PreparationStop('STOP: production B1 output path must be absolute and non-aliased')
+            if raw_out.parent != Path(cfg['work_dir']):
+                raise PreparationStop('STOP: production B1 batch must be a direct work-directory child')
         self.cfg=cfg;self.out=raw_out.resolve();host_check(cfg,self.out)
         if b1_config_head is not None and not cfg.get('dryrun'):
             if registry_path is not None:
@@ -505,7 +524,7 @@ class ExamRunner:
         self.registry=read_registry(self.registry_path)
         self.rule,self.rule_sha=load_rule(cfg['rule'],cfg['rule_sha256'])
         self.binding=hashlib.sha256(json.dumps({'config':cfg,'registry_sha256':digest_file(self.registry_path),'rule_sha256':self.rule_sha,'value_grids_sha256':digest_file(cfg['value_grids'])},sort_keys=True).encode()).hexdigest()
-        self.service=None;self.child=None;self.state={};self.lock=None;self.author_head=None;self.b1_lease_fd=None;self.b1_config_head=b1_config_head
+        self.service=None;self.child=None;self.state={};self.lock=None;self.author_head=None;self.b1_lease_fd=None;self.b1_config_head=b1_config_head;self.b1_supervisor=b1_supervisor;self.b1_containment=None;self.b1_batch_owned=False;self.b1_stop_created=False
         self.b1_state_identity=None
         if not cfg.get('dryrun'):
             from r1.harness import harness_root
@@ -517,9 +536,16 @@ class ExamRunner:
 
     def space(self):
         if not self.cfg.get('dryrun'):
+            if self.state.get('phase')=='b1' and self.b1_containment is not None:
+                self.b1_containment.require_guardian()
             try:
                 for key in ('models_dir','work_dir'): space_check(self.cfg[key])
             except (OSError,RuntimeError) as exc: raise PreparationStop(str(exc)) from exc
+
+    def capture_b1_helper(self,argv,*,timeout):
+        if self.b1_containment is None or self.b1_lease_fd is None:
+            raise PreparationStop('STOP: B1 helper containment or lease unavailable')
+        return self.b1_containment.capture_helper(argv,lease_fd=self.b1_lease_fd,timeout=timeout,cwd=REPO,check=self.space)
 
     def save(self):
         if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
@@ -527,6 +553,26 @@ class ExamRunner:
             self.b1_state_identity=publish_state(self.out/'batch_state.json',self.state,self.b1_state_identity)
         else:
             write_json(self.out/'batch_state.json',self.state)
+
+    def save_b1_stop(self, original):
+        """Create one exclusive STOP record without replacing batch evidence."""
+        if not self.b1_batch_owned:
+            raise PreparationStop('STOP: no exclusively owned B1 batch for STOP record')
+        if self.b1_stop_created:
+            return
+        payload=(json.dumps({'status':'STOPPED','error':f'{type(original).__name__}: {original}',
+                             'phase':'b1','state':self.state},sort_keys=True,allow_nan=False)+'\n').encode()
+        fd=os.open(self.out/'STOP.json',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+        try:
+            view=memoryview(payload)
+            while view:
+                written=os.write(fd,view)
+                if written<=0: raise OSError('short STOP record write')
+                view=view[written:]
+            os.fsync(fd)
+            self.b1_stop_created=True
+        finally:
+            os.close(fd)
 
     def start(self, phase):
         if phase=='stage-a':
@@ -551,6 +597,11 @@ class ExamRunner:
         if phase=='b1': worker_environment()
         if phase=='b1' and not self.cfg.get('dryrun'):
             for node in self.cfg['nodes']: b1_harness_sources(node,self.cfg['harness_commit'])
+            from r1.exam.b1_supervisor_contract import require_supervisor
+            checked_supervisor=require_supervisor()
+            if not self.b1_supervisor or checked_supervisor!=self.b1_supervisor:
+                raise PreparationStop('STOP: B1 supervisor contract changed before output')
+            self.b1_lease_fd=checked_supervisor['lease_fd']
         if phase=='stage-a':refuse_existing_stage_a_output(self.out)
         if phase=='b1' and not self.cfg.get('dryrun'):
             # An existing production batch could contain an unrecorded STOP.
@@ -564,6 +615,7 @@ class ExamRunner:
             parent_mount=_require_local_filesystem(self.out.parent)
             try:
                 self.out.mkdir(mode=0o700,parents=False,exist_ok=False)
+                self.b1_batch_owned=True
             except FileExistsError as exc:
                 raise PreparationStop('STOP: production B1 existing batch cannot be resumed automatically') from exc
             child_mount=_require_local_filesystem(self.out)
@@ -602,8 +654,15 @@ class ExamRunner:
             self.state={'schema':'exam_batch/v1','label':'EXAM','execution_label':'DRYRUN' if self.cfg.get('dryrun') else ('ENGINEERING_ONLY' if phase=='stage-a' else 'EVIDENCE'),
                         'phase':phase,'binding':self.binding,'rule_sha256':self.rule_sha,'completed':{},'interruptions':[],'status':'RUNNING'}
         if phase=='b1' and not self.cfg.get('dryrun'):
-            from r1.exam.b1_lease import acquire
-            self.b1_lease_fd=acquire(Path.home()/'r1_locks'/'gpu0.lock')
+            if require_supervisor()!=checked_supervisor:
+                raise PreparationStop('STOP: B1 supervisor contract changed before guardian')
+            from r1.exam.b1_cgroup import B1Containment
+            self.b1_containment=B1Containment.__new__(B1Containment)
+            def containment_receipt(record):
+                self.state['b1_containment']=record
+                self.save()
+            self.b1_containment.initialize(self.b1_lease_fd,containment_receipt,
+                                           checked_supervisor['pidfd'],checked_supervisor['live_fd'])
         lock=self.out/'runner.lock'
         if lock.exists():
             old=json.loads(lock.read_text())
@@ -612,6 +671,10 @@ class ExamRunner:
             else: raise RuntimeError('STOP: previous runner still alive; never share a campaign root')
         with lock.open('x') as f: json.dump({'pid':os.getpid(),'host':platform.node()},f)
         self.lock=lock
+        if phase=='b1' and not self.cfg.get('dryrun'):
+            lock_stat=lock.lstat()
+            self.b1_lock_identity=(lock_stat.st_dev,lock_stat.st_ino,lock_stat.st_uid)
+            self.b1_lock_sha256=hashlib.sha256(lock.read_bytes()).hexdigest()
         previous=self.state.get('in_progress') or {}
         if previous.get('pid'):
             try: os.kill(previous['pid'],0)
@@ -674,7 +737,10 @@ class ExamRunner:
             with Path(server['binary']).open('rb') as f: native=f.read(4)==b'\x7fELF'
             with Path(model).open('rb') as f: gguf=f.read(4)==b'GGUF'
             if not native or not gguf or 'DRYRUN' in server['build']: raise RuntimeError('STOP: native ELF server and real GGUF required outside DRYRUN')
-        build=lsi.build_info(server['binary'])
+        if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+            build=lsi.build_info(server['binary'],capture=self.capture_b1_helper)
+        else:
+            build=lsi.build_info(server['binary'])
         if build['version_line']!=server['build']: raise RuntimeError('STOP: llama.cpp build pin mismatch')
         return build
 
@@ -698,11 +764,19 @@ class ExamRunner:
             from r1.exam.cache_runtime import verified_lease_fd
             lease_fd=verified_lease_fd()
         if not self.cfg.get('dryrun'):
-            help_text=subprocess.check_output([server['binary'],'--help'],text=True,stderr=subprocess.STDOUT,timeout=20)
+            if self.state.get('phase')=='b1':
+                help_result=self.capture_b1_helper([server['binary'],'--help'],timeout=20)
+                if help_result.returncode: raise PreparationStop('STOP: contained server --help failed')
+                help_text=help_result.stdout+help_result.stderr
+            else:
+                help_text=subprocess.check_output([server['binary'],'--help'],text=True,stderr=subprocess.STDOUT,timeout=20)
             required=['--chat-template-kwargs'] if thinking.get('off_switch') else []
             if mode!='off': required+=['--reasoning-budget']
             if any(flag not in help_text for flag in required): raise RuntimeError('STOP: pinned build lacks thinking-control flags')
-            apps=lsi.gpu_compute_apps();sample=gpu_sample(self.cfg)
+            if self.state.get('phase')=='b1':
+                apps=lsi.gpu_compute_apps(capture=self.capture_b1_helper);sample=gpu_sample(self.cfg,capture=self.capture_b1_helper)
+            else:
+                apps=lsi.gpu_compute_apps();sample=gpu_sample(self.cfg)
             write_json(self.out/f'{spec["id"]}_occupancy_before.json',{'compute_apps':apps,'gpu':sample,'graphics_memory_is_part_of_fit_margin':True})
             if sample['free_mib']<1024 or sample['utilisation_percent']>5: raise RuntimeError('STOP: pre-launch GPU memory margin or idle occupancy check failed')
             if apps is None or apps: raise RuntimeError('STOP: unknown or occupied GPU compute census before launch')
@@ -713,20 +787,32 @@ class ExamRunner:
         stopped=threading.Event();disk_error=[]
         def watch_loading():
             while not stopped.wait(.2):
-                try: self.space()
+                try:
+                    if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                        self.b1_containment.observe_check(self.space)
+                    else:
+                        self.space()
                 except Exception as exc:
                     disk_error.append(str(exc))
-                    if self.state.get('phase')!='stage-a' and inst.process is not None and inst.record.get('pgid'): inst.stop()
+                    if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                        self.b1_containment.freeze()
+                    elif self.state.get('phase')!='stage-a' and inst.process is not None and inst.record.get('pgid'): inst.stop()
                     break
         monitor=threading.Thread(target=watch_loading,daemon=True);monitor.start()
         try:
             from r1.exam.b1_lease import B1LeaseStop
+            from r1.exam.b1_cgroup import ContainmentStop
+            contained = self.state.get('phase')=='b1' and not self.cfg.get('dryrun')
+            extra = ({'b1_containment':self.b1_containment, 'b1_cancelled':lambda: bool(disk_error)} if contained else {})
             try: inst.start(build=build,model_sha256=spec['quant_source']['sha256'],
-                            preserve_on_failure=self.state.get('phase')=='stage-a',lease_fd=lease_fd,
-                            b1_lease_fd=self.b1_lease_fd if self.state.get('phase')=='b1' and not self.cfg.get('dryrun') else None)
+                            preserve_on_failure=self.state.get('phase')=='stage-a' or contained,lease_fd=lease_fd,
+                            b1_lease_fd=self.b1_lease_fd if self.state.get('phase')=='b1' and not self.cfg.get('dryrun') else None,
+                            **extra)
             except LeaseStop as exc:
                 raise PreparationStop(f'STOP: cooperative lease inheritance failed: {exc}') from exc
             except B1LeaseStop as exc:
+                raise PreparationStop(str(exc)) from exc
+            except ContainmentStop as exc:
                 raise PreparationStop(str(exc)) from exc
             except RuntimeError as exc:
                 if disk_error: raise PreparationStop(disk_error[0]) from exc
@@ -739,7 +825,9 @@ class ExamRunner:
             # Preserve the proved inheritance row beside the server record: the
             # server JSON record cannot be edited later without invalidating it.
             write_json(inst.batch/'lease_inheritance.json',require_server_lease_inheritance(inst))
-        report=inst.offload(footprint_mib=spec['runtime']['footprint_mib'],apps=[] if self.cfg.get('dryrun') else None)
+        apps=([] if self.cfg.get('dryrun') else
+              lsi.gpu_compute_apps(capture=self.capture_b1_helper) if self.state.get('phase')=='b1' else None)
+        report=inst.offload(footprint_mib=spec['runtime']['footprint_mib'],apps=apps)
         write_json(inst.batch/'exam_offload.json',report)
         if not report['full']: raise MechanicalFailure('full GPU offload not established')
         if spec['id'] not in (inst.model_ids() or []): raise PreparationStop('STOP: served alias identity mismatch')
@@ -750,8 +838,13 @@ class ExamRunner:
         if interrupt and self.state.get('phase')=='stage-a':
             raise PreparationStop('STOP: Stage A workers must not be signalled')
         self.space()
-        path=Path(job['out']);path.mkdir(parents=True,exist_ok=True)
-        write_json(path/'job.json',job)
+        path=Path(job['out'])
+        contained = self.state.get('phase')=='b1' and not self.cfg.get('dryrun')
+        def prepare_output():
+            path.mkdir(parents=True,exist_ok=True)
+            write_json(path/'job.json',job)
+        if contained: self.b1_containment.write_active(prepare_output)
+        else: prepare_output()
         env=(worker_environment() if self.state.get('phase')=='b1' else
              {**os.environ,'PYTHONPATH':str(REPO),'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','MKL_NUM_THREADS':'1'})
         if self.cfg.get('dryrun') and env.get('C3_FAKE_EXIT_IF_ORPHANED')=='1':
@@ -764,8 +857,14 @@ class ExamRunner:
         elif self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
             if self.b1_lease_fd is None: raise PreparationStop('STOP: B1 GPU lease is missing')
             kwargs['pass_fds']=(self.b1_lease_fd,)
-        with (path/'runner.log').open('ab') as log:
-            self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
+        def open_log(): return (path/'runner.log').open('ab')
+        log=self.b1_containment.write_active(open_log) if contained else open_log()
+        with log:
+            argv=[sys.executable,'-m',module,'--job',str(path/'job.json')]
+            if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                self.child=self.b1_containment.spawn('worker',argv,env=env,cwd=REPO,stdout=log,lease_fd=self.b1_lease_fd)
+            else:
+                self.child=subprocess.Popen(argv,env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
         self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
         watchdog=RunnerWatchdog(self.service,self.cfg['watchdog']) if self.service else None
         started=time.monotonic();killed=False
@@ -779,7 +878,11 @@ class ExamRunner:
                     if self.state.get('phase')=='b1':
                         from r1.exam.b1_lease import verify_server_fd
                         verify_server_fd(self.b1_lease_fd,self.service.process.pid)
-                    apps=lsi.gpu_compute_apps();sample=gpu_sample(self.cfg)
+                        self.b1_containment.verify_live_lease(self.service.process,self.b1_lease_fd)
+                    if self.state.get('phase')=='b1':
+                        apps=lsi.gpu_compute_apps(capture=self.capture_b1_helper);sample=gpu_sample(self.cfg,capture=self.capture_b1_helper)
+                    else:
+                        apps=lsi.gpu_compute_apps();sample=gpu_sample(self.cfg)
                     if apps is None or any(r['pid']!=self.service.process.pid for r in apps) or sample['free_mib']<1024:
                         raise RuntimeError('STOP: GPU census/margin lost during campaign')
                 loss=watchdog.check() if watchdog else None
@@ -790,12 +893,19 @@ class ExamRunner:
                     raise InterruptedError('DRYRUN kill-and-resume: root worker killed after first ledger append')
                 time.sleep(float(self.cfg['watchdog']['poll_seconds']))
             if self.child.returncode: raise RuntimeError(f'STOP: root worker exit {self.child.returncode}; see {path}/runner.log')
+            if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                self.b1_containment.require_worker_empty(self.child)
         except BaseException as exc:
-            if self.child.poll() is None and self.state.get('phase')!='stage-a':
+            if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                try:
+                    self.b1_containment.freeze()
+                except Exception as freeze_error:
+                    report_b1_freeze_failure(exc,freeze_error)
+            elif self.child.poll() is None and self.state.get('phase')!='stage-a':
                 stop_tree(self.child.pid);self.child.wait(timeout=30)
             self.state['interruptions'].append({'path':str(path),'error':str(exc),'returncode':self.child.returncode,'killed':killed,'time':time.time()})
             if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
-                report_b1_stop_and_save(self,exc)
+                report_b1_stop_and_save(self,exc,append_only=True)
             else:
                 self.save()
             raise
@@ -844,7 +954,9 @@ class ExamRunner:
         manifest=path/'campaign_manifest.json'
         check={'binding':self.binding,'manifest_sha256':digest_file(manifest),'passed':True,'software_anchor':self.service is None}
         if self.service:
-            report=self.service.offload(footprint_mib=spec['runtime']['footprint_mib'],apps=[] if self.cfg.get('dryrun') else None)
+            apps=([] if self.cfg.get('dryrun') else
+                  lsi.gpu_compute_apps(capture=self.capture_b1_helper) if phase=='b1' else None)
+            report=self.service.offload(footprint_mib=spec['runtime']['footprint_mib'],apps=apps)
             ids=self.service.model_ids();props=self.service.props()
             check.update(offload=report,model_ids=ids,props=props,server_pid=self.service.process.pid)
             check['passed']=bool(report['full'] and spec['id'] in (ids or []) and (props or {}).get('model_path')==spec['runtime']['model_path'])
@@ -861,11 +973,26 @@ class ExamRunner:
                 if entry['end'] is None: entry['end']=time.time();break
             self.save()
 
-    def close(self, *, preserve_running=False):
+    def close(self, *, preserve_running=False, defer_b1_lease=False):
         if preserve_running:
             # Preserve server, worker, and marker after STOP for explicit review.
             return
         self.stop_service()
+        if self.lock and self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+            from r1.exam.b1_cgroup import retire_runner_lock
+            retire_runner_lock(self.lock,self.b1_lock_identity,self.b1_lock_sha256)
+            self.lock=None
+        if getattr(self,'b1_containment',None) is not None and defer_b1_lease:
+            self.b1_containment.require_finish_ready()
+        if getattr(self,'b1_containment',None) is not None and not defer_b1_lease:
+            self.b1_containment.finish()
         if self.lock: self.lock.unlink(missing_ok=True);self.lock=None
-        if getattr(self,'b1_lease_fd',None) is not None:
+        if getattr(self,'b1_lease_fd',None) is not None and not defer_b1_lease:
             os.close(self.b1_lease_fd);self.b1_lease_fd=None
+
+    def finish_b1_lease(self):
+        """Finish only after the final state write; caller retains STOP handling."""
+        if self.b1_containment is None or self.b1_lease_fd is None:
+            raise PreparationStop('STOP: B1 containment or lease absent at finish')
+        self.b1_containment.finish()
+        os.close(self.b1_lease_fd);self.b1_lease_fd=None

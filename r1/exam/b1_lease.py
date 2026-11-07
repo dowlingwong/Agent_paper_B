@@ -30,6 +30,26 @@ def acquire(path):
         raise
 
 
+def adopt_inherited(fd, path):
+    """Check an already-held supervisor lease without opening a second OFD.
+
+    The ancestor supervisor must independently prove SAME via kcmp before it
+    releases the runner. A same-UID malicious caller is outside this cooperative
+    process contract; inode equality alone is not a same-OFD proof.
+    """
+    if type(fd) is not int or fd < 3:
+        raise B1LeaseStop('STOP: inherited B1 lease descriptor invalid')
+    try:
+        info=os.fstat(fd);named=os.stat(path,follow_symlinks=False)
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink!=1 or info.st_uid!=os.getuid() or
+                (info.st_dev,info.st_ino)!=(named.st_dev,named.st_ino)):
+            raise B1LeaseStop('STOP: inherited B1 lease identity invalid')
+        fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    except OSError as exc:
+        raise B1LeaseStop('STOP: inherited B1 lease unavailable') from exc
+    return fd
+
+
 def verify_server_fd(fd, pid, proc_root='/proc'):
     """Require the spawned server still to hold the inherited lock descriptor."""
     try:

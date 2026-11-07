@@ -2,6 +2,7 @@
 from __future__ import annotations
 import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -11,6 +12,11 @@ from r1.exam.guards import digest_file
 
 def _stop(message):
     raise ValueError('STOP: B1 batch '+message)
+
+
+def _reject_stop_record(batch):
+    if os.path.lexists(Path(batch)/'STOP.json'):
+        _stop('STOP record exists; preserve the batch for author review')
 
 
 def _read(path):
@@ -63,6 +69,7 @@ def verify_batch(batch, cfg, rule_sha):
     nodes=set(cfg['nodes'])|{'openml_credit_approval'}
     node_sources={node:b1_harness_sources(node,cfg['harness_commit']) for node in nodes}
     batch=Path(batch).resolve(strict=True)
+    _reject_stop_record(batch)
     _inside(batch,batch/'batch_state.json');_inside(batch,batch/'b1_manifests.json')
     # A canonical COMPLETE state alone is insufficient: its publication may
     # have succeeded immediately before the runner experienced a STOP.  The
@@ -77,6 +84,9 @@ def verify_batch(batch, cfg, rule_sha):
         _stop('batch state changed after waited-exit check')
     if state.get('status')!='COMPLETE' or state.get('phase')!='b1' or state.get('execution_label')!='EVIDENCE':
         _stop('is not a completed evidence batch')
+    from r1.exam.b1_finalization import verify_finalization
+    try: verify_finalization(batch,head)
+    except ValueError as exc: _stop(f'finalization receipt invalid: {exc}')
     registry_path=batch/'registry_snapshot.yaml'
     if registry_path.resolve().parent!=batch or digest_file(registry_path)!=digest_file(cfg['registry']):
         _stop('registry snapshot differs from configured registry')

@@ -15,7 +15,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from r1.exam.campaign import write_json
 from r1.exam.stage_a import prefill_metadata
 from r1.exam.guards import artifact_label, digest_file, paired_instance_bootstrap
-from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders, report_b1_stop_and_save, require_committed_b1_config
+from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders, report_b1_stop_and_save, report_b1_freeze_failure, require_committed_b1_config
 from r1.exam.analyze import is_v2, thinking_off_capable
 from r1.scripts import llama_server_instance as lsi
 
@@ -393,6 +393,7 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
             rank=screen['finalists'].index(spec['id']) if spec['id'] in screen['finalists'] else 99
             if not cfg.get('free_sensitivity') and rank<3 and spec.get('thinking_policy',{}).get('switchable') is True and not eligible[spec['id']].get('thinking_disabled_due_grammar'): modes.append('on')
         root_results=[];began=time.monotonic()
+        candidate_failed=False
         try:
             for mode_index,current_mode in enumerate(modes):
                 sensitivity_node=runner.rule['thinking_mode']['b1_sensitivity']['node'] if v2 else 'openml_credit_approval'
@@ -404,8 +405,17 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
                     for seed in seeds:
                         root_results.append(runner.root(spec,phase,node,seed,current_mode,interrupt=interrupt and len(runner.state['completed'])>=1 and not runner.state.get('interruptions')))
                 if runner.service: runner.stop_service()
+        except BaseException as original:
+            candidate_failed=True
+            if phase=='b1' and not cfg.get('dryrun') and runner.b1_containment is not None:
+                try:
+                    runner.b1_containment.freeze()
+                except Exception as freeze_error:
+                    report_b1_freeze_failure(original,freeze_error)
+            raise
         finally:
-            if runner.service: runner.stop_service()
+            if runner.service and not (candidate_failed and phase=='b1' and not cfg.get('dryrun')):
+                runner.stop_service()
         audits=[r for root in root_results for r in root['audited_proposals']]
         diag={k:sum(r['diagnostics'].get(k,0) for r in root_results) for k in ('trials','evaluated','invalid','duplicates','noops','parse_failed','forecast_queries','forecast_query_failed')}
         def d28_of(roots): return all(all(n['pass'] for n in r['d28']['nodes'].values()) for r in roots)
@@ -499,9 +509,11 @@ def main(argv=None):
         raise PreparationStop('STOP: D3 cold-cache cooperative lease FD absent')
     if a.allow_placeholders and not a.check_config: p.error('--allow-placeholders is only for --check-config')
     cfg=load_config(a.config,allow_placeholders=a.allow_placeholders)
-    b1_config_head=None
+    b1_config_head=None;b1_supervisor=None
     if a.phase=='b1' and not a.check_config and not cfg.get('dryrun'):
         b1_config_head=require_committed_b1_config(a.config,cfg)
+        from r1.exam.b1_supervisor_contract import require_supervisor
+        b1_supervisor=require_supervisor()
     if not a.check_config and a.phase=='stage-a':
         from r1.exam.cache_runtime import authorize_cooperative_stagea
         authorize_cooperative_stagea(cfg)
@@ -525,8 +537,9 @@ def main(argv=None):
     unresolved=placeholders({k:cfg[k] for k in required})
     if unresolved: raise RuntimeError(f'STOP: unresolved phase settings: {unresolved}')
     if a.phase=='b1' and not cfg.get('dryrun'): verify_anchor_reference(cfg)
-    runner=ExamRunner(cfg,a.out,b1_config_head=b1_config_head)
+    runner=ExamRunner(cfg,a.out,b1_config_head=b1_config_head,b1_supervisor=b1_supervisor)
     preserve_running=False
+    closed_normally=False
     try:
         runner.start(a.phase)
         if a.phase=='stage-a':
@@ -538,19 +551,46 @@ def main(argv=None):
             stage_a(runner,a.candidate,only=only,amendment=a.amendment,
                     amendment_reason=a.amendment_reason)
         else: evidence(runner,a.phase,a.candidate,a.interrupt_root)
+        if a.phase=='b1' and not cfg.get('dryrun'):
+            # Do not publish COMPLETE before the server and guardian are
+            # ready for finish and the owned lock has been retired; keep both
+            # guardian and runner lease until the final fallible state write.
+            runner.close(preserve_running=False,defer_b1_lease=True)
         runner.state['status']='COMPLETE';runner.save()
+        if a.phase=='b1' and not cfg.get('dryrun'):
+            runner.finish_b1_lease()
+            from r1.exam.b1_finalization import write_finalization
+            write_finalization(runner.out,runner.author_head)
+            closed_normally=True
     except BaseException as exc:
-        preserve_running=a.phase=='stage-a'
+        preserve_running=a.phase=='stage-a' or (a.phase=='b1' and not cfg.get('dryrun'))
+        if a.phase=='b1' and not cfg.get('dryrun') and runner.b1_containment is not None:
+            try:
+                runner.b1_containment.freeze()
+            except Exception as freeze_error:
+                report_b1_freeze_failure(exc,freeze_error)
         runner.state.update(status='STOPPED',stop_reason=f'{type(exc).__name__}: {exc}')
         if preserve_running:
             runner.state['gpu_lease_after_stop']='NOT_CHECKABLE: runner marker is not evidence of held flock'
         if a.phase=='b1' and not cfg.get('dryrun'):
-            report_b1_stop_and_save(runner,exc,save=runner.lock is not None)
+            report_b1_stop_and_save(runner,exc,save=runner.b1_batch_owned,append_only=True)
         else:
             if runner.lock is not None: runner.save()
             print(runner.state['stop_reason'],file=sys.stderr)
         return 1
-    finally: runner.close(preserve_running=preserve_running)
+    finally:
+        try:
+            if not closed_normally:
+                runner.close(preserve_running=preserve_running)
+        except BaseException as close_error:
+            if a.phase=='b1' and not cfg.get('dryrun'):
+                if runner.b1_containment is not None:
+                    try: runner.b1_containment.freeze()
+                    except Exception as freeze_error: report_b1_freeze_failure(close_error,freeze_error)
+                runner.state.update(status='STOPPED',stop_reason=f'{type(close_error).__name__}: {close_error}')
+                report_b1_stop_and_save(runner,close_error,save=runner.b1_batch_owned,append_only=True)
+                return 1
+            raise
     # Only after close() so no later write can invalidate the batch_state digest
     # the guardian validates before releasing the lock.
     if a.phase=='stage-a' and not cfg.get('dryrun'): _write_lease_completion(runner)
