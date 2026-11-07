@@ -1,0 +1,14 @@
+test_collision_and_write_failure_do_not_cleanup (r1.tests.test_audit_node_copy_unittest.AuditCopyTest.test_collision_and_write_failure_do_not_cleanup) ... ok
+test_nested_copy_excludes_only_selected_and_exclusively_creates (r1.tests.test_audit_node_copy_unittest.AuditCopyTest.test_nested_copy_excludes_only_selected_and_exclusively_creates) ... ok
+test_copy_creates_new_snapshot (r1.tests.test_dryrun_snapshot_preservation_unittest.TestSnapshotPreservation.test_copy_creates_new_snapshot) ... ok
+test_existing_snapshot_is_unchanged (r1.tests.test_dryrun_snapshot_preservation_unittest.TestSnapshotPreservation.test_existing_snapshot_is_unchanged) ... ok
+test_failed_copy_retains_partial (r1.tests.test_dryrun_snapshot_preservation_unittest.TestSnapshotPreservation.test_failed_copy_retains_partial) ... ok
+test_non_b1_paths_keep_legacy_destinations (r1.tests.test_b1_server_diagnostic_preservation_unittest.DiagnosticPreservation.test_non_b1_paths_keep_legacy_destinations) ... ok
+test_two_instances_are_distinct_and_collisions_stop (r1.tests.test_b1_server_diagnostic_preservation_unittest.DiagnosticPreservation.test_two_instances_are_distinct_and_collisions_stop) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.068s
+
+OK
+PASS: forced worker environment, early supervisor guard and scoped argv (7 cases)
+PURE_TEST_RESULT tests_run=7 failures=0 errors=0 skipped=0
