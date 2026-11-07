@@ -21,7 +21,7 @@ What runs (all CPU, no model, no GPU, no SSH):
 * one interruption: after ``--interrupt-after`` completed campaigns, once the next campaign has
   written a ledger record, the runner's process group is SIGKILLed and the services are stopped
   (as after a preemption); the resume starts new services, keeps completed campaigns byte for byte
-  and re-runs the interrupted campaign whole;
+  and archives the interrupted campaign before re-running it whole;
 * ``matching_report`` over the 20 campaigns (identical instances, W, LLM cap, information set).
 
 Stages (each fits in one short shell call): ``--stage start`` (prepare, run until the
@@ -89,6 +89,42 @@ def campaign_name(arm: str, node: str) -> str:
     return f"{arm}__{node}"
 
 
+def archive_existing(work: Path, path: Path) -> None:
+    """Retain a test-owned previous version in an exclusively created directory."""
+    if path.is_symlink():
+        raise SystemExit(f"STOP: refusing symlink {path}")
+    if not path.exists():
+        return
+    archive = work / "_to_delete"
+    if archive.is_symlink():
+        raise SystemExit(f"STOP: refusing symlink {archive}")
+    archive.mkdir(exist_ok=True)
+    holder = Path(tempfile.mkdtemp(prefix="control_dryrun_", dir=archive))
+    path.rename(holder / path.name)
+
+
+def write_versioned(work: Path, path: Path, data: str) -> None:
+    archive_existing(work, path)
+    with path.open("x") as fh:
+        fh.write(data)
+
+
+def prepare_campaign_directory(work: Path, path: Path, name: str) -> bool:
+    """Only a recorded test-controlled SIGKILL can replace an incomplete campaign."""
+    if path.is_symlink():
+        raise SystemExit(f"STOP: refusing symlink {path}")
+    rerun = path.exists()
+    if rerun:
+        state = json.loads((work / "state.json").read_text())
+        intr = state.get("interruption") or {}
+        if (intr.get("signal") != "SIGKILL (runner process group)" or intr.get("in_progress") != name
+                or not state.get("resume_started_utc")):
+            raise SystemExit(f"STOP: existing incomplete campaign {name}; preserve it")
+        archive_existing(work, path)
+    path.mkdir(parents=True)
+    return rerun
+
+
 def check_host(work: Path) -> None:
     if platform.node().split(".")[0] == "ucrtasl":
         raise SystemExit("STOP: DRYRUN is forbidden on Ada")
@@ -104,7 +140,7 @@ def check_host(work: Path) -> None:
 def start_services(work: Path) -> dict:
     from r1.c3.serve import FakeLoader, Pin, Sidecar
     port = free_port()
-    log = open(work / f"llama_server_{int(time.time())}.log", "w")
+    log = open(work / f"llama_server_{time.time_ns()}.log", "x")
     env = {**os.environ, "R1_FAKE_OLLAMA_ROOT": str(work), "C3_FAKE_LLAMA_LOAD_SECONDS": "0.2"}
     proc = subprocess.Popen([sys.executable, str(REPO / "r1/scripts/c3_fake_llama_server.py"), "-m",
                              str(work / "fixture.gguf"), "--host", "127.0.0.1", "--port", str(port), "-ngl", "99",
@@ -129,7 +165,7 @@ def start_services(work: Path) -> dict:
         sidecars.append(sc)
     runtime = {"llama_url": url + "/v1", "llama_pid": proc.pid, "sidecars": urls, "sidecar_digests": digests,
                "started_utc": utc()}
-    (work / "runtime.json").write_text(json.dumps(runtime, indent=1))
+    write_versioned(work, work / "runtime.json", json.dumps(runtime, indent=1))
     return {"proc": proc, "sidecars": sidecars, "runtime": runtime, "log": log}
 
 
@@ -148,7 +184,6 @@ def stop_services(services: dict) -> None:
 
 def prepare(work: Path) -> None:
     from r1.c3.serve import write_fake_pin
-    (work / ".dryrun").write_text("Track H control DRYRUN\n")
     (work / "fixture.gguf").write_bytes(b"DRYRUN GGUF fixture; not a model\n")
     for name in ("A5", "A6"):
         write_fake_pin(work / "sidecar" / name, name=name, base=f"dryrun-base-{name}@0")
@@ -255,10 +290,7 @@ def run_campaigns(work: Path) -> None:
             d = work / "campaigns" / name
             if (d / "DONE.json").exists():
                 continue
-            rerun = d.exists()
-            if rerun:
-                shutil.rmtree(d)  # an interrupted campaign is re-run whole
-            d.mkdir(parents=True)
+            rerun = prepare_campaign_directory(work, d, name)
             seed = _instance_seed(node, 0)
             node_dir = _node_copy(node, d / "node")
             spec = load_registered_node(node, repo_root=harness)
@@ -295,7 +327,7 @@ def run_campaigns(work: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def launch_runner(work: Path) -> subprocess.Popen:
-    log = open(work / f"runner_{int(time.time() * 1000)}.log", "w")
+    log = open(work / f"runner_{time.time_ns()}.log", "x")
     return subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "--runner", "--work", str(work)],
                             stdout=log, stderr=subprocess.STDOUT, start_new_session=True, cwd=REPO,
                             env={**os.environ, "PYTHONPATH": str(REPO)})
@@ -339,14 +371,19 @@ def stage_start(work: Path, interrupt_after: int, deadline_s: float) -> dict:
     state["interruption"] = interruption
     state["sessions"].append({"stage": "start", "started": services["runtime"]["started_utc"], "ended": utc(),
                               "llama_pid": services["runtime"]["llama_pid"]})
-    (work / "state.json").write_text(json.dumps(state, indent=1))
+    write_versioned(work, work / "state.json", json.dumps(state, indent=1))
     return state
 
 
 def stage_resume(work: Path, deadline_s: float) -> dict:
     state = json.loads((work / "state.json").read_text())
-    if not state.get("interruption"):
-        raise SystemExit("STOP: no recorded interruption to resume from")
+    intr = state.get("interruption") or {}
+    if intr.get("signal") != "SIGKILL (runner process group)" or not intr.get("in_progress"):
+        raise SystemExit("STOP: no recorded synthetic interruption to resume from")
+    if state.get("resume_started_utc"):
+        raise SystemExit("STOP: synthetic resume already attempted; preserve the scene")
+    state["resume_started_utc"] = utc()
+    write_versioned(work, work / "state.json", json.dumps(state, indent=1))
     services = start_services(work)
     try:
         proc = launch_runner(work)
@@ -361,7 +398,7 @@ def stage_resume(work: Path, deadline_s: float) -> dict:
         stop_services(services)
     state["sessions"].append({"stage": "resume", "started": services["runtime"]["started_utc"], "ended": utc(),
                               "llama_pid": services["runtime"]["llama_pid"]})
-    (work / "state.json").write_text(json.dumps(state, indent=1))
+    write_versioned(work, work / "state.json", json.dumps(state, indent=1))
     return state
 
 
@@ -499,14 +536,16 @@ def report(work: Path, out: Path) -> dict:
                "state": state, "checks": checks, "problems": problems, "pass": not problems,
                "matching_report": matching, "campaigns": per_campaign}
     out.mkdir(parents=True, exist_ok=True)
-    (out / "summary.json").write_text(json.dumps(summary, indent=1, sort_keys=True, default=str) + "\n")
+    with (out / "summary.json").open("x") as fh:
+        fh.write(json.dumps(summary, indent=1, sort_keys=True, default=str) + "\n")
     for c in order:
         d = work / "campaigns" / c
         for f in ("trials.jsonl", "events.jsonl", "manifest.json"):
             if (d / f).exists():
                 (out / "campaigns" / c).mkdir(parents=True, exist_ok=True)
-                with gzip.GzipFile(out / "campaigns" / c / (f + ".gz"), "wb", mtime=0) as fh:
-                    fh.write((d / f).read_bytes())
+                with (out / "campaigns" / c / (f + ".gz")).open("xb") as raw:
+                    with gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as fh:
+                        fh.write((d / f).read_bytes())
     return summary
 
 
