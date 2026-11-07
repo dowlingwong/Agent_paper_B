@@ -35,22 +35,19 @@ class OtherSnapshotTests(unittest.TestCase):
         self.assertEqual(fs.files[fs.names[-1]].st_ino, first[1])
         self.assertTrue(all(name.startswith('audit_cache.') for name in fs.names))
 
-    def test_contained_server_saves_versions_and_guard_wraps_both(self):
+    def test_b1_server_saves_versions(self):
         fs = VersionFS()
         inst = LlamaServerInstance.__new__(LlamaServerInstance)
         inst.record_path = Path('/synthetic/server/llama_server_8080.json')
         inst.record = {'pid': 123, 'status': 'starting'}
         inst.b1_record_identity = None
-        containment = mock.Mock()
-        containment.write_active.side_effect = lambda callback: callback()
-        inst.b1_containment = containment
+        inst.b1_preserve_records = True
         with fs.patches():
             inst._save()
             first = inst.b1_record_identity
             inst.record['status'] = 'ready'
             inst._save()
             second = inst.b1_record_identity
-        self.assertEqual(containment.write_active.call_count, 2)
         self.assertEqual(json.loads(fs.by_inode[first[1]])['status'], 'starting')
         self.assertEqual(json.loads(fs.by_inode[second[1]])['status'], 'ready')
         self.assertEqual(fs.files[fs.names[-1]].st_ino, first[1])

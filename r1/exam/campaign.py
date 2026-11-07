@@ -37,6 +37,43 @@ def write_json(path, data):
     tmp.replace(path)
 
 
+def run_b1_audits(node, configs, job, out, cache, save_cache):
+    """Bound queued audit work and stop this campaign process group on failure."""
+    from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
+    import signal
+    # The parent creates a fresh session for this campaign; never signal a shared group.
+    if os.getpid() != os.getpgrp():
+        raise RuntimeError('STOP: B1 campaign is not the process-group leader')
+    entries=iter(configs.items())
+    with ProcessPoolExecutor(max_workers=job['workers']) as pool:
+        active={}
+        def submit_one():
+            try: h,value=next(entries)
+            except StopIteration: return False
+            active[pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out))]=h
+            return True
+        try:
+            for _ in range(job['workers']):
+                if not submit_one(): break
+            while active:
+                done,_=wait(active,return_when=FIRST_COMPLETED)
+                # Observe every already-complete result before dispatching more work.
+                done |= {f for f in active if f.done()}
+                for future in done:
+                    h=active.pop(future);runs=future.result()
+                    cache[h]=[r['metric'] if r['success'] else None for r in runs]
+                    save_cache()
+                for _ in done: submit_one()
+        except BaseException:
+            for future in active: future.cancel()
+            # All pool workers and their ordinary descendants share our fresh group.
+            # Ignore SIGTERM only in this leader so it can propagate the original error.
+            old=signal.signal(signal.SIGTERM,signal.SIG_IGN)
+            try: os.killpg(os.getpgrp(),signal.SIGTERM)
+            finally: signal.signal(signal.SIGTERM,old)
+            raise
+
+
 def read_rows(path):
     return [json.loads(s) for s in Path(path).read_text().splitlines() if s.strip()]
 
@@ -206,12 +243,7 @@ def _collect_b1_review(job):
         for files in (p.candidate_files,p.incumbent_files): configs[files_hash(files)]={'node':node,'files':files}
     write_json(out/'audit_configs.json',configs)
     if not job['dryrun']:
-        from concurrent.futures import ProcessPoolExecutor, as_completed
-        with ProcessPoolExecutor(max_workers=job['workers']) as pool:
-            futures={pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out)):h for h,value in configs.items()}
-            for future in as_completed(futures):
-                h=futures[future];runs=future.result();cache[h]=[r['metric'] if r['success'] else None for r in runs]
-                save_cache()
+        run_b1_audits(node,configs,job,out,cache,save_cache)
     for p in props:
         if p.features.get('active_equals_incumbent') or p.features.get('active_seen_before'): continue
         arrays=[]

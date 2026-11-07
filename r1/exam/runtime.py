@@ -36,6 +36,8 @@ def report_b1_stop_and_save(runner, original, *, save=True):
     """
     try:
         print(f'STOP: original exception: {type(original).__name__}: {original}', file=sys.stderr, flush=True)
+        if runner.state.get('shutdown_writes'):
+            print('STOP: '+runner.state['shutdown_writes'],file=sys.stderr,flush=True)
     except Exception:
         pass
     if save:
@@ -548,7 +550,17 @@ class ExamRunner:
         if phase=='b1' and not self.cfg.get('dryrun'):
             for node in self.cfg['nodes']: b1_harness_sources(node,self.cfg['harness_commit'])
         if phase=='stage-a':refuse_existing_stage_a_output(self.out)
-        self.out.mkdir(parents=True,exist_ok=True)
+        if phase=='b1' and not self.cfg.get('dryrun'):
+            # A production STOP is never resumed automatically.  In particular,
+            # a failed STOP save cannot make an existing directory safe to reuse.
+            if self.out.parent != Path(self.cfg['work_dir']):
+                raise PreparationStop('STOP: B1 batch must be a fresh direct child of work_dir')
+            try:
+                self.out.mkdir(mode=0o700, parents=False, exist_ok=False)
+            except FileExistsError as exc:
+                raise PreparationStop('STOP: B1 batch already exists; no automatic resume') from exc
+        else:
+            self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
         if phase=='b1' and not self.cfg.get('dryrun'):
             from r1.exam.b1_state_preserve import existing_identity
@@ -665,6 +677,10 @@ class ExamRunner:
                                    thinking_policy=thinking,generation=len(list((self.out/'servers'/spec['id']).glob('*.json'))),
                                    label=self.state['execution_label'],start_timeout=server['start_timeout'],
                                    env_extra={'R1_SYNTHETIC_PARENT_PID':str(os.getpid())} if self.cfg.get('dryrun') and os.environ.get('C3_FAKE_EXIT_IF_ORPHANED')=='1' else None)
+        if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+            # B1 server records are evidence, so retain their previous versions.
+            inst.b1_preserve_records=True
+            self.b1_shutdown_attempted=False
         lease_fd=None
         if self.state.get('phase')=='stage-a':
             # The native server must inherit the verified lease OFD; the start
@@ -776,8 +792,16 @@ class ExamRunner:
                 time.sleep(float(self.cfg['watchdog']['poll_seconds']))
             if self.child.returncode: raise RuntimeError(f'STOP: root worker exit {self.child.returncode}; see {path}/runner.log')
         except BaseException as exc:
+            if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                self.state['shutdown_writes'] = ('Stopping B1-owned workers and the B1 server may append '
+                    'runner/server logs and publish server and batch-state records; retain and report them.')
             if self.child.poll() is None and self.state.get('phase')!='stage-a':
-                stop_tree(self.child.pid);self.child.wait(timeout=30)
+                try:
+                    stop_tree(self.child.pid);self.child.wait(timeout=30)
+                except Exception as shutdown_error:
+                    self.state['worker_shutdown_error'] = f'{type(shutdown_error).__name__}: {shutdown_error}'
+                    try: print('STOP: B1-owned worker shutdown failed: '+self.state['worker_shutdown_error'],file=sys.stderr,flush=True)
+                    except Exception: pass
             self.state['interruptions'].append({'path':str(path),'error':str(exc),'returncode':self.child.returncode,'killed':killed,'time':time.time()})
             if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
                 report_b1_stop_and_save(self,exc)
@@ -797,6 +821,8 @@ class ExamRunner:
             return result
         path=self.out/key
         if path.exists():
+            if phase=='b1' and not self.cfg.get('dryrun'):
+                raise PreparationStop('STOP: existing B1 root is preserved; no automatic recovery')
             old=self.state.get('in_progress') or {}
             if old.get('path')!=str(path): raise RuntimeError('STOP: existing root is not a recorded interrupted attempt')
             if old.get('path')==str(path) and old.get('pid'):
@@ -841,16 +867,18 @@ class ExamRunner:
 
     def stop_service(self):
         if self.service:
+            if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                self.b1_shutdown_attempted=True
             self.service.stop();self.service=None
             for entry in reversed(self.state.get('server_intervals',[])):
                 if entry['end'] is None: entry['end']=time.time();break
             self.save()
 
-    def close(self, *, preserve_running=False):
+    def close(self, *, preserve_running=False, skip_service=False):
         if preserve_running:
             # Preserve server, worker, and marker after STOP for explicit review.
             return
-        self.stop_service()
+        if not skip_service: self.stop_service()
         if self.lock: self.lock.unlink(missing_ok=True);self.lock=None
         if getattr(self,'b1_lease_fd',None) is not None:
             os.close(self.b1_lease_fd);self.b1_lease_fd=None
