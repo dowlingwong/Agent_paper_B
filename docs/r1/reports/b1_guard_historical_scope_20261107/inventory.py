@@ -6,6 +6,7 @@ an estimate of historical guard failures. It cannot reconstruct missing fields.
 import collections
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -31,7 +32,7 @@ for node, campaigns in sorted(ref['campaigns'].items()):
         counts['verified_ledgers'] += 1
         for line in blob.splitlines():
             # Skip all other event types before JSON decoding; do not parse metrics.
-            if b'proposal_created' not in line:
+            if not re.search(rb'"event_type"\s*:\s*"proposal_created"', line):
                 continue
             row = json.loads(line)
             if row.get('event_type') != 'proposal_created':
