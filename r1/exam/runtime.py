@@ -150,7 +150,7 @@ def placeholders(value, prefix=''):
 def worker_environment(base=None):
     """Run node `python3` commands in the same environment as this runner."""
     env=dict(os.environ if base is None else base)
-    env.update(PYTHONPATH=str(REPO),OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1')
+    env.update(PYTHONPATH=str(REPO),PYTHONDONTWRITEBYTECODE='1',OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1')
     python_dir=Path(sys.executable).parent
     try:
         python3=python_dir/'python3'
@@ -926,7 +926,7 @@ class ExamRunner:
                 os.set_blocking(audit_read,False);os.set_blocking(audit_write,False)
                 os.set_blocking(audit_backup_read,False);os.set_blocking(audit_backup_write,False)
             with log:
-                argv=[sys.executable,'-m',module,'--job',str(path/'job.json')]
+                argv=[sys.executable,*(['-B'] if contained else []),'-m',module,'--job',str(path/'job.json')]
                 if contained:
                     self.child=self.b1_containment.spawn('worker',argv,env=env,cwd=REPO,stdout=log,
                                                          lease_fd=self.b1_lease_fd,

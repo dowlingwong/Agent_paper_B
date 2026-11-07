@@ -5,6 +5,14 @@ Invoke only after the author gate, host ownership, site qualification and the
 reviewed Track S/P handover. This launcher does not prove those external facts.
 """
 from __future__ import annotations
+import sys
+
+# Require suppression before importing project modules or opening a B1 batch.
+# Invoke as `python3 -B ...`; setting the environment before interpreter
+# startup is also accepted. Python's site startup precedes script execution.
+if __name__ == '__main__' and not sys.dont_write_bytecode:
+    raise SystemExit('STOP: B1 supervisor must start with python3 -B')
+
 import argparse
 import fcntl
 import json
@@ -14,7 +22,6 @@ import select
 import socket
 import signal
 import subprocess
-import sys
 import time
 import uuid
 
