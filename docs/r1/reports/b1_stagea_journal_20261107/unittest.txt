@@ -1,0 +1,7 @@
+test_dryrun_uses_actual_expectation (r1.tests.test_stagea_journal_expectation.JournalExpectationTest.test_dryrun_uses_actual_expectation) ... ok
+test_nondryrun_keeps_actual_expectation (r1.tests.test_stagea_journal_expectation.JournalExpectationTest.test_nondryrun_keeps_actual_expectation) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.004s
+
+OK
