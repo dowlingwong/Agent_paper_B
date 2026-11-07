@@ -18,6 +18,14 @@ _NOREPLACE = 1
 _EXCHANGE = 2
 
 
+def write_exclusive_json(path, value):
+    """Create one diagnostic without replacing an existing file."""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'w', encoding='utf-8') as stream:
+        json.dump(value, stream, sort_keys=True, allow_nan=False)
+        stream.write('\n')
+
+
 def _renameat2(old_fd, old_name, new_fd, new_name, flags):
     """Call Linux renameat2; an unsupported filesystem must fail closed."""
     libc = ctypes.CDLL(None, use_errno=True)
