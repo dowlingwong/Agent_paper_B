@@ -25,6 +25,12 @@ def run(args, cwd=None, env=None):
     return subprocess.check_output(args, cwd=cwd, env=env, text=True, stderr=subprocess.STDOUT)
 
 
+def commit_source_fixture(source):
+    """Record the extracted fixture tree, even when it matches its parent."""
+    run(['git', 'add', '-f', '.'], cwd=source)
+    run(['git', 'commit', '--allow-empty', '-qm', 'DRYRUN source fixture'], cwd=source)
+
+
 def executable(path, text):
     path.write_text(text)
     path.chmod(0o755)
@@ -57,8 +63,7 @@ def main():
                         ignore=shutil.ignore_patterns('__pycache__', '.pytest_cache'))
     for key, value in [('user.name', 'DRYRUN fixture'), ('user.email', 'fixture@example.invalid')]:
         run(['git', 'config', key, value], cwd=source)
-    run(['git', 'add', '-f', '.'], cwd=source)
-    run(['git', 'commit', '-qm', 'DRYRUN source fixture'], cwd=source)
+    commit_source_fixture(source)
     paper_remote, harness_remote = root / 'paper.git', root / 'harness.git'
     run(['git', 'clone', '--bare', '-q', str(source), str(paper_remote)])
     run(['git', 'clone', '--bare', '-q', str(harness_source), str(harness_remote)])
