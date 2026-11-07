@@ -1,0 +1,9 @@
+# Independent review: J3 visible GPU selector, round 2
+
+**Verdict: ACCEPTED only as an unintegrated lexical environment helper.** Reviewed candidate `971f4b98060be50397cb5e21234e0df464e455b3` and its changes since `8d2f9c2`, against the findings in `MAC_M10_J3_VISIBLE_GPUS_REVIEW_20261107.md`. This review did not run tests, access a host or Slurm, use a model or GPU, run an experiment, or delete anything.
+
+The implementation now checks `collections.abc.Mapping`, which accepts Python's `os.environ` mapping as well as dicts; the new fake `MappingProxyType` test exercises a non-dict mapping without exposing real environment values. `collections.abc.Mapping`, `types.MappingProxyType` and the other standard-library features used are available in Python 3.9; this is a source-level check, not a Python 3.9 runtime test. The report now accurately describes selector validation as lexical and explicitly disclaims validation of actual CUDA device identity or syntax. The existing tests still cover the synthetic `SLURM_JOB_GPUS=3` / `CUDA_VISIBLE_DEVICES=0` distinction and refusal of exact or numeric duplicate selectors. The reported four unittest passes were not independently rerun and a standalone output log was not supplied.
+
+This helper has no non-test call site. Its selected string and recorded Slurm value are environment claims, not verified physical UUIDs, distinct devices, occupancy, correct child namespace, or site behavior. Integration, runtime identity and slot allocation, author-specified scope, site checks, work identity and other HK6 prerequisites remain open; EVIDENCE/HK6 is not authorized by this review. No judgment is made on arbitrary GPU/MIG syntax or selector aliasing.
+
+SHA-256 reviewed bytes: helper `5d530e9b2cac9eb2dcd304d7b6b32a368f64778b90f17e6014836a17195792b1`; tests `d1eac44b6821975e2e749c8587cf695cfd0cf07bc3b68eb39480b70e48e74361`; report `ee5f382272b04edfe940f7a23d0184d314b1bd21429cfd870b97179269d7862c`.
