@@ -313,7 +313,10 @@ def simulate_gpu_memory():
     apps = common.ROOT / 'gpu_apps'
     apps.mkdir(exist_ok=True)
     uuid = os.environ.get('CUDA_VISIBLE_DEVICES') or 'GPU-DRYRUN'
-    (apps / f'{os.getpid()}.csv').write_text(f'{os.getpid()}, {uuid}, {mib}\n')
+    # A prior synthetic server can have left this PID's census record behind.
+    # Do not truncate that evidence if the operating system later reuses a PID.
+    with (apps / f'{os.getpid()}.csv').open('x', encoding='utf-8') as stream:
+        stream.write(f'{os.getpid()}, {uuid}, {mib}\n')
 
 
 def fake_nvidia_smi(argv):
