@@ -1067,6 +1067,17 @@ The author answered the two questions below in this conversation. Decision cells
 
 Recorder's scope note (not an additional author decision): the first reply clarifies and supersedes the note-setting order in the preceding 00:45–00:55 instruction; it does not waive the other prerequisites, the exact-HEAD independent review, actual gate, preflight or handover. The second reply grants no deletion exception and does not itself authorize changing the fixed harness pin. B2, X.7 and sweep 2 remain separately unauthorized. The earlier paragraph above is retained as the historical wording of the prior instruction.
 
+
+### 7 November 2026 (approximately 09:36 CET) — TASL-7 occupancy instruction (author)
+
+Asked whether the author knew the current TASL-7 operator/host ownership or could provide a handover after a read-only snapshot showed `trks_watch` and other users' agent processes; the question stated that a fresh read-only occupancy check and the other B1 launch conditions still apply. The author replied verbatim:
+
+| ID | Author's decision |
+|---|---|
+| R1-TASL7-AGENT-OCCUPANCY-07NOV | "你继续执行，不用管他。只要能跑就去跑" |
+
+Recorder's scope note (not an additional author decision): continue authorized work and do not treat the mere presence of other users' agent processes as an automatic host-ownership STOP. This answer does not identify who owns those processes, establish that the GPU is free, authorize preempting a running job or modifying another operator's work, waive the no-deletion rule, or establish the remaining B1 phase, handover, site and exact-checkout prerequisites. Conduct a fresh read-only occupancy check before host work; preserve other operators' processes and data.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

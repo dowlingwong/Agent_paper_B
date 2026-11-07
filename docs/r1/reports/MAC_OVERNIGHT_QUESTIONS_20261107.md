@@ -2,7 +2,7 @@
 
 AI-assisted (Codex). This is an open list, not author decisions or an authorization. The original overnight instruction was to continue without waiting for the sleeping author; subsequent replies are recorded below. The user's 7 November prompt records Q1, the fixed Q2 rule, conditional B1 approval and scoped host authority in PLAN §10; those are not re-asked here. The earlier independent question list remains `MAC_OVERNIGHT_QUESTIONS_20261105.md`, except where the 7 November decisions resolve its Q0–Q2.
 
-**7 November approximately 09:31 CET update:** The author answered the note-order question below “允许此顺序” and the no-deletion question “继续严格禁止，先修复”. Both are recorded verbatim in PLAN §10 under `R1-EXAM-B1-NOTE-ORDER-07NOV` and `R1-EXAM-B1-NO-DELETION-07NOV`; their original wording is retained below for context and must not be asked again. The authorization candidate remains false until the other prerequisites are ready. Host ownership and M4 ordering remain open.
+**7 November approximately 09:31 CET update:** The author answered the note-order question below “允许此顺序” and the no-deletion question “继续严格禁止，先修复”. Both are recorded verbatim in PLAN §10 under `R1-EXAM-B1-NOTE-ORDER-07NOV` and `R1-EXAM-B1-NO-DELETION-07NOV`; their original wording is retained below for context and must not be asked again. The authorization candidate remains false until the other prerequisites are ready. The later TASL-7 occupancy reply is recorded below; M4 ordering remains open.
 
 ## B1 approved-note ordering — answered
 
@@ -28,7 +28,9 @@ The options and recommendation in this section are the historical, pre-answer qu
 
 **Paste-ready answer.** `No-deletion and B1 harness: retain both no-deletion rules and the exact a3fedbb harness pin; defer B1 until a reviewed compatible solution is available.`
 
-## TASL-7 host ownership
+**7 November approximately 09:36 CET update:** In response to the TASL-7 ownership question below, the author said “你继续执行，不用管他。只要能跑就去跑”. This is recorded verbatim in PLAN §10 as `R1-TASL7-AGENT-OCCUPANCY-07NOV`. Continue authorized work; the presence of other users' agent processes alone is no longer an automatic ownership STOP. Fresh occupancy checks, non-preemption, protection of other work, no-deletion and all B1 phase and handover conditions remain. The options below are the historical pre-answer question, not a request to repeat the decision.
+
+## TASL-7 host ownership — answered
 
 **Context.** The 7 November read-only census saw no listed GPU compute app, but `trks_watch` and several other-user agent processes were present. Whether any agent/operator holds the host is not established by that snapshot (`TASL7_READONLY_CENSUS_20261107.md`). The author prohibits touching a host held by another agent/operator, and a fresh preflight and reviewed handover remain required even if the host is free.
 
