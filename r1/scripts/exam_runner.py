@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from r1.exam.campaign import write_json
-from r1.exam.stage_a import prefill_metadata, write_stage_a_result
+from r1.exam.stage_a import prefill_metadata, write_stage_a_result, write_stage_a_table
 from r1.exam.guards import artifact_label, digest_file, paired_instance_bootstrap
 from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders, report_b1_stop_and_save, report_b1_freeze_failure, require_committed_b1_config
 from r1.exam.analyze import is_v2, thinking_off_capable
@@ -207,7 +207,8 @@ def _stage_a_cooperative(runner, selected, only=None, amendment=None, amendment_
                 if result['passed'] or not set(result['failure_classes']).intersection({'offload','fit_estimate'}): break
         result['source_label']=artifact_label(spec);write_stage_a_result(path,result,dryrun=bool(runner.cfg.get('dryrun')))
         runner.state['completed'][key]={'path':str(path),'sha256':digest_file(path)};runner.save();out.append(result)
-    write_json(runner.out/'stage_a_table.json',{'label':'ENGINEERING_ONLY','rows':out})
+    write_stage_a_table(runner.out/'stage_a_table.json',{'label':'ENGINEERING_ONLY','rows':out},
+                        dryrun=bool(runner.cfg.get('dryrun')))
 
 
 def anchor_gate(manifests, cfg):

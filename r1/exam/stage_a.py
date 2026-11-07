@@ -21,6 +21,15 @@ def write_stage_a_result(path, result, *, dryrun):
     return write_json(path, result)
 
 
+def write_stage_a_table(path, table, *, dryrun):
+    """Retain synthetic table versions; leave production writing unchanged."""
+    if dryrun:
+        from r1.exam.b1_state_preserve import publish_dryrun_stage_a_table
+        return publish_dryrun_stage_a_table(path, table)
+    from r1.exam.campaign import write_json
+    return write_json(path, table)
+
+
 def post(instance, route, payload, timeout=300):
     require_d3_evidence()
     with urlopen(Request(instance.url+route,data=json.dumps(payload).encode(),headers={'Content-Type':'application/json'}),timeout=timeout) as r:

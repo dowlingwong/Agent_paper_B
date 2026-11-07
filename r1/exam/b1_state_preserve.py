@@ -130,6 +130,22 @@ def publish_dryrun_stage_a_result(path, result):
                           rename=_renameat_dryrun)
 
 
+def publish_dryrun_stage_a_table(path, table):
+    """Publish a synthetic Stage A table while retaining each earlier version.
+
+    The caller must serialize writes in a stable owned test directory. The
+    canonical table name remains unchanged for readers; unsupported atomic
+    operations fail closed and no previously published bytes are discarded.
+    """
+    path = Path(path)
+    if not path.is_absolute() or path.name != 'stage_a_table.json':
+        raise RuntimeError('STOP: invalid DRYRUN Stage A table location')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    expected = existing_identity(path)
+    return _publish_named(path, table, expected, 'stage_a_table',
+                          rename=_renameat_dryrun)
+
+
 def publish_audit_cache(path, cache, expected_identity):
     """Publish B1's canonical audit cache, retaining each earlier version."""
     return _publish_named(path, cache, expected_identity, 'audit_cache')
@@ -157,6 +173,7 @@ def _publish_named(path, state, expected_identity, kind, *, rename=None):
     allowed = ((kind == 'batch_state' and path.name == 'batch_state.json') or
                (kind == 'audit_cache' and path.name == 'audit_cache.json') or
                (kind == 'stage_a_result' and path.name == 'stage_a.json') or
+               (kind == 'stage_a_table' and path.name == 'stage_a_table.json') or
                (kind == 'server_record' and re.fullmatch(r'llama_server_[0-9]+(?:_r[0-9]+)?\.json', path.name)))
     if not allowed or not path.is_absolute():
         raise RuntimeError('STOP: invalid B1 snapshot location')

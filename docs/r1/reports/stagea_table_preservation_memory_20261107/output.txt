@@ -1,0 +1,11 @@
+test_actual_dispatch_keeps_production_writer (r1.tests.stagea_recovery_memory.test_dryrun_stagea_table.StageATableTests.test_actual_dispatch_keeps_production_writer) ... ok
+test_actual_table_call_and_canonical_readers (r1.tests.stagea_recovery_memory.test_dryrun_stagea_table.StageATableTests.test_actual_table_call_and_canonical_readers) ... ok
+test_bad_target_refuses_before_directory_creation (r1.tests.stagea_recovery_memory.test_dryrun_stagea_table.StageATableTests.test_bad_target_refuses_before_directory_creation) ... ok
+test_identity_race_and_unsupported_rename_preserve_old (r1.tests.stagea_recovery_memory.test_dryrun_stagea_table.StageATableTests.test_identity_race_and_unsupported_rename_preserve_old) ... ok
+test_two_tables_preserve_previous_inode_and_reader_bytes (r1.tests.stagea_recovery_memory.test_dryrun_stagea_table.StageATableTests.test_two_tables_preserve_previous_inode_and_reader_bytes) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.018s
+
+OK
+PURE_TEST_RESULT tests_run=5 failures=0 errors=0 skipped=0
