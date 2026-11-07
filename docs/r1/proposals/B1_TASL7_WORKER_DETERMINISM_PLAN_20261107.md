@@ -65,15 +65,12 @@ test "$(readlink -f "$HOST_PYTHON")" = "$(readlink -f "$venv_bin/python3")"
 "$venv_bin/python3" -c 'import sys,pytest,numpy,sklearn; print("worker_python",sys.executable,sys.prefix,pytest.__version__,numpy.__version__,sklearn.__version__)'
 test "$("$HOST_PYTHON" -c 'import sys; print(sys.prefix)')" = "$("$venv_bin/python3" -c 'import sys; print(sys.prefix)')"
 cd "$base/paper"
-# Require GNU timeout: without --foreground it creates its own process group;
-# only this test's owned group is signalled on deadline. A timeout is STOP.
-timeout --version | head -n 1 | grep -F 'GNU coreutils'
 # No other PATH python precedes the reviewed venv's python3.
 env -i HOME="$base/home" TMPDIR="$base/tmp" PATH="$venv_bin:/usr/bin:/bin" \
   PYTHONPATH="$base/paper:$base/harness/src" AR_HARNESS_ROOT="$base/harness" \
   PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 CUDA_VISIBLE_DEVICES='' \
   OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
-  timeout --signal=TERM --kill-after=5s 180s "$HOST_PYTHON" -m pytest -p no:cacheprovider --basetemp="$base/pytest" \
+  "$HOST_PYTHON" r1/scripts/b1_engineering_timeout.py --seconds 180 "$HOST_PYTHON" -m pytest -p no:cacheprovider --basetemp="$base/pytest" \
   -v r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic \
   > "$base/pytest.log" 2>&1
 cat "$base/pytest.log"
@@ -81,7 +78,7 @@ find "$base/pytest" -type f -name run.log -print -exec sha256sum {} \; -exec cat
 REMOTE
 ```
 
-The external GNU timeout is 180 seconds, shorter than the pinned worker subprocess timeout of 600 seconds; it terminates its own process group (including the worker shell and node) on expiry, then KILLs after five seconds, and must not run with `--foreground`. Independently qualify this GNU timeout behavior on TASL-7 with owned synthetic processes before executing. SSH loss is STOP and the operator checks the owned test group, not unrelated processes. A failed pytest exits before the final `cat` and `find`; operator must subsequently perform read-only capture of the same files and exit code without rerunning. The result is a pass only if the test actually runs (not skipped), both worker runs succeed, their reported finite metrics are exactly equal, both retained logs confirm the worker execution, and the independent reviewer checks the identified checkout/pin, test code, all commands, environment, paths and timestamps. Log contents and archive hashes are evidence; do not publish unrelated process command lines or secrets.
+The local test wrapper starts pytest in a new session, observes its root with Linux `waitid(WNOWAIT)` and terminates only that owned process group before reaping the root on normal exit, error, interruption or a 180-second deadline. This covers a pytest root that exits before an owned worker, and the deadline is shorter than the pinned worker's 600-second subprocess timeout. It reports a failed cleanup and never signals a PID whose direct-child identity can no longer be checked. Validate the same waitid/group behavior via the separately reviewed TASL-7 owned-process test; this is an ENGINEERING_ONLY wrapper, not a B1 supervisor. SSH loss is STOP and the operator checks the owned test group, not unrelated processes. A failed pytest exits before the final `cat` and `find`; operator must subsequently perform read-only capture of the same files and exit code without rerunning. The result is a pass only if the test actually runs (not skipped), both worker runs succeed, their reported finite metrics are exactly equal, both retained logs confirm the worker execution, and the independent reviewer checks the identified checkout/pin, test code, all commands, environment, paths and timestamps. Log contents and archive hashes are evidence; do not publish unrelated process command lines or secrets.
 
 ## Separate remaining launch checks
 
