@@ -28,6 +28,34 @@ from r1.c3 import offline_seccomp as seccomp
 SCENARIOS = ('normal_exit', 'blocked_socket_then_exit')
 
 
+class ProbeCleanupError(RuntimeError):
+    """Teardown could not prove test-owned child cleanup; preserve the record."""
+
+
+def _reap_bounded(pid, seconds=2):
+    deadline = time.monotonic() + seconds
+    while True:
+        try:
+            done, status = os.waitpid(pid, os.WNOHANG)
+        except ChildProcessError:
+            return 'not_a_waitable_child', None
+        if done == pid:
+            return 'reaped', status
+        if time.monotonic() >= deadline:
+            return 'not_reaped_before_deadline', None
+        time.sleep(.01)
+
+
+def _verify_waitable_pidfd(pidfd):
+    """Verify kernel child relationship without reaping; pidfd pins identity."""
+    if not hasattr(os, 'P_PIDFD') or not hasattr(os, 'waitid') or not hasattr(os, 'WNOWAIT'):
+        raise RuntimeError('STOP: waitid(P_PIDFD) support required')
+    try:
+        os.waitid(os.P_PIDFD, pidfd, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+    except (OSError, ChildProcessError) as exc:
+        raise RuntimeError('STOP: pidfd is not a verifiable waitable child') from exc
+
+
 def event_names(mask):
     return [name for name in ('POLLIN', 'POLLHUP', 'POLLERR', 'POLLNVAL')
             if mask & getattr(select, name)]
@@ -63,21 +91,35 @@ def observe(scenario, timeout_seconds=10):
         raise ValueError('bounded timeout required')
     if len(list(Path('/proc/self/task').iterdir())) != 1:
         raise RuntimeError('STOP: probe must be single threaded before fork')
+    # A non-default disposition may automatically reap a child or execute an
+    # inherited handler. Never rely on its numeric PID as a signaling identity.
+    if signal.getsignal(signal.SIGCHLD) != signal.SIG_DFL:
+        raise RuntimeError('STOP: default SIGCHLD disposition required')
     parent, child = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
     listener = pidfd = None
-    pid = os.fork()
-    if pid == 0:
-        parent.close()
+    try:
+        pid = os.fork()
+    except BaseException:
         try:
+            parent.close()
+        finally:
+            child.close()
+        raise
+    if pid == 0:
+        try:
+            parent.close()
             _child(child, scenario)
         except BaseException:
             os._exit(124)
-    child.close()
     waited = False
+    pidfd_verified = False
     events = []
     exit_status = None
     try:
+        child.close()
         pidfd = os.pidfd_open(pid, 0)
+        _verify_waitable_pidfd(pidfd)
+        pidfd_verified = True
         parent.settimeout(timeout_seconds)
         listener = seccomp.receive_listener(parent)
         seccomp.verify_listener(listener)
@@ -103,7 +145,9 @@ def observe(scenario, timeout_seconds=10):
                 violation_killed = True
             child_ready = any(fd == pidfd and mask & select.POLLIN for fd, mask in ready)
             if child_ready:
-                _, exit_status = os.waitpid(pid, 0)
+                done, exit_status = os.waitpid(pid, os.WNOHANG)
+                if done != pid:
+                    raise RuntimeError('STOP: pidfd readiness did not yield a waitable child')
                 waited = True
                 # Record one immediate post-exit poll, including a possible
                 # pending notification and HUP in the same event batch.
@@ -131,26 +175,44 @@ def observe(scenario, timeout_seconds=10):
         return {'scenario': scenario, 'events': events, 'child_wait_status': exit_status,
                 'notification_receive_after_exit': 'NOT_ATTEMPTED'}
     finally:
-        parent.close()
+        cleanup_failures = []
+        try:
+            child.close()
+        except BaseException as exc:
+            cleanup_failures.append('child channel close: ' + str(exc))
+        try:
+            parent.close()
+        except BaseException as exc:
+            cleanup_failures.append('control close: ' + str(exc))
         if not waited:
-            # Only a child that we just forked, identified by its pidfd, is
-            # signalled; no site process is enumerated, signalled or modified.
-            if pidfd is not None:
+            # Signal only an independently verified waitable child through a
+            # stable pidfd. Never signal a numeric PID on acquisition failure.
+            if pidfd is not None and pidfd_verified:
                 try:
                     signal.pidfd_send_signal(pidfd, signal.SIGKILL)
-                except OSError as exc:
-                    if exc.errno != errno.ESRCH:
-                        raise
+                except BaseException as exc:
+                    if not isinstance(exc, OSError) or exc.errno != errno.ESRCH:
+                        cleanup_failures.append('pidfd signal: ' + str(exc))
             else:
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-            os.waitpid(pid, 0)
+                cleanup_failures.append('child identity not verified; no signal sent')
+            try:
+                outcome, _ = _reap_bounded(pid)
+                if outcome != 'reaped':
+                    cleanup_failures.append('child ' + outcome)
+            except BaseException as exc:
+                cleanup_failures.append('child reap: ' + str(exc))
         if listener is not None:
-            os.close(listener)
+            try:
+                os.close(listener)
+            except BaseException as exc:
+                cleanup_failures.append('listener close: ' + str(exc))
         if pidfd is not None:
-            os.close(pidfd)
+            try:
+                os.close(pidfd)
+            except BaseException as exc:
+                cleanup_failures.append('pidfd close: ' + str(exc))
+        if cleanup_failures:
+            raise ProbeCleanupError('STOP: test child pid=' + str(pid) + '; ' + '; '.join(cleanup_failures))
 
 
 def main(argv=None):
