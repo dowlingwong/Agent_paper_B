@@ -1,5 +1,6 @@
 """Pure fake-environment tests: no Slurm, process, file, model or GPU work."""
 import unittest
+from types import MappingProxyType
 
 from r1.scripts.hk2.hk2_slurm_allocation import AllocationError, job_visible_gpu
 
@@ -10,6 +11,10 @@ class TestJobVisibleGPU(unittest.TestCase):
         self.assertEqual(got['selected_cuda_visible_device'], '0')
         self.assertEqual(got['slurm_job_gpus'], '3')
         self.assertFalse(got['device_identity_verified'])
+
+    def test_non_dict_environment_mapping_is_supported(self):
+        env = MappingProxyType({'CUDA_VISIBLE_DEVICES': '0', 'SLURM_JOB_GPUS': '3'})
+        self.assertEqual(job_visible_gpu(env, 0)['selected_cuda_visible_device'], '0')
 
     def test_second_visible_selector_is_used_unchanged(self):
         env = {'CUDA_VISIBLE_DEVICES': 'GPU-abc,MIG-def', 'SLURM_JOB_GPUS': '3,7'}

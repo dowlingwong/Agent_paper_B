@@ -3,11 +3,13 @@
 This is an offline environment helper, not device enumeration, occupancy
 checking, a slot-allocation policy, an execution-identity verifier, or an
 EVIDENCE authorization.  In particular SLURM_JOB_GPUS is recorded as supplied
-and never used as an index into CUDA_VISIBLE_DEVICES.
+and never used as an index into CUDA_VISIBLE_DEVICES. Selector checking is
+lexical only; it does not prove device syntax or existence on a given site.
 """
 
 
 import re
+from collections.abc import Mapping
 
 
 class AllocationError(ValueError):
@@ -22,7 +24,7 @@ def job_visible_gpu(environment, local_index):
     chosen here. Physical device identity must be verified separately in the
     actual job; the values returned here are only environment claims.
     """
-    if not isinstance(environment, dict):
+    if not isinstance(environment, Mapping):
         raise AllocationError('environment must be a mapping')
     visible = environment.get('CUDA_VISIBLE_DEVICES')
     slurm = environment.get('SLURM_JOB_GPUS')
