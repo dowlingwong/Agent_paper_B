@@ -32,7 +32,11 @@ PER_NODE = 4
 
 
 class ReferenceUnavailable(Exception):
-    """The specified source cannot be read or has a blocking mismatch."""
+    """Missing or ambiguous metadata: STOP; do not infer a mismatch."""
+
+
+class FallbackEligible(Exception):
+    """A verified blocking mismatch or unreadable required ledger."""
 
 
 def sha(raw):
@@ -86,13 +90,13 @@ def compare_definition(harness):
               '            # Compute cumulative repeated-bad count for this trial'))
     for a,b in markers:
         if source_block(old,a,b)!=source_block(new,a,b):
-            raise ReferenceUnavailable('blocking duplicate-definition mismatch in '+a.strip())
+            raise FallbackEligible('blocking duplicate-definition mismatch in '+a.strip())
     for name in ('_effective_config_at','_project_active_config','_config_sha256'):
         if function_ast(old,name)!=function_ast(new,name):
-            raise ReferenceUnavailable('blocking duplicate-definition mismatch in '+name)
+            raise FallbackEligible('blocking duplicate-definition mismatch in '+name)
     changed=git(harness,'diff','--name-only',OLD_HARNESS,NEW_HARNESS,'--',
                 'src/autoresearch/nodes',*[f'nodes/{n}' for n in NODES]).decode().strip()
-    if changed: raise ReferenceUnavailable('blocking node-definition mismatch: '+changed)
+    if changed: raise ReferenceUnavailable('node-definition change needs semantic review: '+changed)
     return {'result':'match', 'basis':'identical D27 initialization and emission blocks, novelty helper ASTs, and no changes to node/registry paths between pinned harness commits',
             'old_harness':OLD_HARNESS,'new_harness':NEW_HARNESS}
 
@@ -101,10 +105,12 @@ def compute(repo, harness, checkout):
     cfg=json.loads((checkout/'r1/scripts/configs/exam_b1_v2.json').read_text())
     reg=json.loads((checkout/'r1/exam/registry.yaml').read_text())
     anchor=next(x for x in reg['candidates'] if x['id']=='qwen25_coder_7b')
-    if (cfg['nodes']!=list(NODES) or cfg['W']!=W or len(cfg['instance_seeds'])!=PER_NODE or
+    if len(cfg['instance_seeds'])!=PER_NODE:
+        raise ReferenceUnavailable('B1 per-node count changed; pre-fixed script requires review')
+    if (cfg['nodes']!=list(NODES) or cfg['W']!=W or
         anchor['base_repo']!='Qwen/Qwen2.5-Coder-7B-Instruct' or
         anchor['quant_source']['quantization']!='Q4_K_M' or anchor['quant_source']['sha256']!=MODEL_SHA):
-        raise ReferenceUnavailable('blocking B1 model, quantization, node, W or campaign-count mismatch')
+        raise FallbackEligible('blocking B1 model, quantization, node, W or campaign-count mismatch')
     tree=git(repo,'rev-parse',SOURCE_HEAD+':'+BASE).decode().strip()
     if tree!=SOURCE_TREE: raise ReferenceUnavailable('frozen source corpus tree mismatch')
     ib=blob(repo,SOURCE_HEAD,INDEX); mb=blob(repo,SOURCE_HEAD,BASE+'/manifest.json')
@@ -115,7 +121,7 @@ def compute(repo, harness, checkout):
         man['memory_mode']!='append_only_summary' or man['runs']!=W or
         man['harness']['commit']!=OLD_HARNESS or man['harness']['dirty'] is not False or
         any(node not in idx['nodes'] or node not in man['nodes'] for node in NODES)):
-        raise ReferenceUnavailable('blocking source model, memory, nodes or W mismatch')
+        raise FallbackEligible('blocking source model, memory, nodes or W mismatch')
     definition=compare_definition(harness)
     list_path=BASE+'/provenance/ledgers/roots'
     paths=git(repo,'ls-tree','-r','--name-only',SOURCE_HEAD,'--',list_path).decode().splitlines()
@@ -126,25 +132,28 @@ def compute(repo, harness, checkout):
         campaign=parts[-2]
         node=next((n for n in NODES if campaign.startswith(n+'__s')),None)
         if node is None: continue
-        raw=blob(repo,SOURCE_HEAD,path)
+        try:
+            raw=blob(repo,SOURCE_HEAD,path)
+        except ReferenceUnavailable as exc:
+            raise FallbackEligible('unreadable proposal ledger '+path) from exc
         try:
             events=[json.loads(line) for line in raw.splitlines() if line.strip()]
             novelty=[e for e in events if e.get('event_type')=='edit_novelty']
             if (not novelty or any(e.get('campaign_id')!=campaign or not isinstance(e.get('payload'),dict) or
                     type(e['payload'].get('active_config_seen_before')) is not bool or
                     e['payload'].get('seen_before_resume')=='unknown' for e in novelty)):
-                raise ReferenceUnavailable('unreadable or incompatible novelty ledger '+path)
+                raise FallbackEligible('unreadable or incompatible novelty ledger '+path)
             counts=novelty_counts(events)
         except (ValueError,KeyError,TypeError) as exc:
-            raise ReferenceUnavailable('unreadable proposal ledger '+path+': '+repr(exc)) from exc
+            raise FallbackEligible('unreadable proposal ledger '+path+': '+repr(exc)) from exc
         groups[node].append({'campaign':campaign,'path':path,'sha256':sha(raw),**counts})
     if any(len(groups[n])!=idx['instances'] for n in NODES):
-        raise ReferenceUnavailable('unreadable or missing required node-stratum ledgers')
+        raise FallbackEligible('unreadable or missing required node-stratum ledgers')
     generator=random.Random(SEED); samples=[]
     for _ in range(DRAWS):
         selected=[generator.choice(groups[n]) for n in NODES for _ in range(PER_NODE)]
         den=sum(x['evaluated'] for x in selected)
-        if den==0: raise ReferenceUnavailable('empty evaluated count in sampled campaigns')
+        if den==0: raise FallbackEligible('empty evaluated count in sampled campaigns')
         samples.append(sum(x['duplicates'] for x in selected)/den)
     samples.sort()
     return {'schema':'b1_anchor_duplicate_reference/v1','source':BASE,
@@ -175,11 +184,15 @@ def main():
     p.add_argument('--out',type=Path,required=True);a=p.parse_args()
     try:
         result=compute(a.source_repo,a.harness_repo,a.checkout)
-    except (ReferenceUnavailable, OSError, ValueError, KeyError, StopIteration, UnicodeError, TypeError) as exc:
+    except FallbackEligible as exc:
         result={'schema':'b1_anchor_duplicate_reference/v1','source':BASE,'lower':0.0,'upper':1.0,
                 'fallback':True,'fallback_reason':str(exc),'seed':SEED,'draws':DRAWS,
+                'derivation':'author-prescribed descriptive fallback', 'campaigns':[],
+                'comparability':{'status':'not fully established; see fallback_reason'},
                 'script_sha256':sha(Path(__file__).read_bytes()),
                 'interpretation':'descriptive fallback; scripted versus random discrimination remains unchanged'}
+    except (ReferenceUnavailable, OSError, ValueError, KeyError, StopIteration, UnicodeError, TypeError) as exc:
+        raise SystemExit('STOP: reference provenance or implementation not established; no fallback: '+str(exc)) from exc
     if a.out.exists(): raise SystemExit('STOP: preserve existing reference; choose a fresh path')
     a.out.parent.mkdir(parents=True,exist_ok=True)
     a.out.write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
