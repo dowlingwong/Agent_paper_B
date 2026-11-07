@@ -1094,6 +1094,17 @@ The author supplied the following answer in this conversation, described as “7
 
 Recorder's scope note (not an additional author decision): the no-deletion scope row amends the earlier R1-EXAM-B1-NO-DELETION-07NOV reply. The explicit pin confirmation retains `a3fedbb`; the separately returned “先完成验证再决定（建议）” response to the earlier conditional replacement question does not select a replacement or authorize a push. Keep the author-selected Q2 rule, exact checkout review, note/gate order, host preflight, handover and all other launch conditions. B2, X.7 and sweep 2 remain separately unauthorized.
 
+### 7 November 2026 — C3 synthetic temporary roots and B1 STATUS (author)
+
+The replies and the STATUS question's scope are retained verbatim in [`AUTHOR_B1_FOLLOWUP_REPLY_20261107.md`](prompts/AUTHOR_B1_FOLLOWUP_REPLY_20261107.md).
+
+| ID | Author's decision |
+|---|---|
+| R1-C3-SYNTHETIC-TEMP-CLEANUP-07NOV | "允许，但仅限这一类：C3 脚本在本次运行中自己用 mkdtemp 创建的临时根目录，满足以下全部条件：<br>1. 位于测试专用 TMPDIR 之下，前缀是 r1_c3_dryrun_ / r1_c3_smoke_ 这类合成运行前缀，并带有 .dryrun 标记文件；<br>2. 删除前，脚本已把 *.log、*.json* 和 fake_calls.jsonl 复制到输出目录，summary.json 里有记录；<br>3. 删除记录写进你的报告：路径、大小、对应的输出目录。<br>不满足上述任一条件的目录，用 --keep 重跑或保留原样，报告给我。正式实验输出、标签、审计、远端文件、仓库内文件仍禁止删除；仓库内要删的东西照旧移到 _to_delete/。" |
+| R1-EXAM-B1-STATUS-FEATURE-07NOV | "允许此次采用功能分支 STATUS（建议）" |
+
+The second reply addresses this B1's `mac-b1-20261107` STATUS publication and TASL-7 marker; the handover, no-preemption and other launch conditions remain. It does not authorize pushing `main`.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
