@@ -22,16 +22,18 @@ import yaml
 ROOT=Path(__file__).resolve().parents[2]
 
 
-def _regular_file_contents(root):
-    """Snapshot every regular file in a stopped test-owned synthetic root."""
-    files={}
+def _tree_contents(root):
+    """Snapshot directory paths and regular-file bytes in the synthetic root."""
+    files={};directories=[]
     for path in sorted(root.rglob('*')):
         assert not path.is_symlink(), f'unexpected synthetic symlink: {path}'
-        if path.is_dir(): continue
+        if path.is_dir():
+            directories.append(str(path.relative_to(root)))
+            continue
         assert path.is_file(), f'unexpected synthetic special file: {path}'
         files[str(path.relative_to(root))]=path.read_bytes()
     assert files
-    return files
+    return {'directories':directories,'files':files}
 
 
 def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
@@ -156,27 +158,44 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
             completed={k:(v['path'],digest_file(v['path']),v['post_check_sha256']) for k,v in state['completed'].items()}
             partial_prefix=(partial/'root_trials.jsonl').read_bytes()
             child_pid=(state['in_progress'] or {})['pid']
+            job=json.loads((partial/'job.json').read_text())
+            records=list((out/'servers'/'qwen25_coder_7b').glob('llama_server_*.json'))
+            assert len(records)==1
+            server_record=json.loads(records[0].read_text())
+            server_pid=server_record['pid']
+            assert type(server_pid) is int and server_pid>1 and len({server_pid,child_pid,parent.pid})==3
+            assert (server_record['label']=='DRYRUN' and server_record['alias']=='qwen25_coder_7b' and
+                    server_record['binary']==str(root/'fake_llama_server') and
+                    server_record['model_path']==str(root/'models'/'qwen25_coder_7b.gguf') and
+                    server_record.get('stopped_utc') is None and
+                    job['base_url']==server_record['openai_base_url'] and job['candidate']['id']=='qwen25_coder_7b')
+            before_calls=[json.loads(x) for x in (root/'fake_calls.jsonl').read_text().splitlines()]
+            serve=[e for e in before_calls if e.get('event')=='serve' and e.get('pid')==server_pid and
+                   e.get('server')=='llama-server' and e.get('alias')=='qwen25_coder_7b' and
+                   e.get('port')==server_record['port'] and e.get('model')==server_record['model_path']]
+            assert len(serve)==1 and serve[0]['label']=='DRYRUN'
+            os.kill(child_pid,0);os.kill(server_pid,0)  # observation only; no signal
             # Kill only this freshly created, test-owned synthetic parent; no
             # runner STOP is written and no real job or unknown PID is signalled.
             parent.send_signal(signal.SIGKILL);parent.wait(timeout=10)
         finally:
             if parent.poll() is None: parent.kill();parent.wait(timeout=10)
     assert parent.returncode==-signal.SIGKILL
-    # The existing test-only parent-loss watchers must make both fake worker
-    # and fake server exit themselves. No unknown process is ever signalled.
+    # Observe disappearance of this recorded synthetic worker and server. The
+    # server additionally logs its parent-loss self-exit; worker exit cause is
+    # not independently recorded here. No unknown process is ever signalled.
     def alive(pid):
         try: os.kill(pid,0);return True
         except ProcessLookupError: return False
-    calls=root/'fake_calls.jsonl';events=[json.loads(x) for x in calls.read_text().splitlines()]
-    server_pids={e['pid'] for e in events if e.get('event')=='serve' and e.get('server')=='llama-server'}
+    calls=root/'fake_calls.jsonl'
     until=time.monotonic()+20
-    while time.monotonic()<until and (alive(child_pid) or any(alive(pid) for pid in server_pids)): time.sleep(.05)
-    assert not alive(child_pid) and not any(alive(pid) for pid in server_pids), 'STOP: preserve live synthetic child/server for inspection'
+    while time.monotonic()<until and (alive(child_pid) or alive(server_pid)): time.sleep(.05)
+    assert not alive(child_pid) and not alive(server_pid), 'STOP: preserve live synthetic child/server for inspection'
     events=[json.loads(x) for x in calls.read_text().splitlines()]
-    assert all(any(e.get('event')=='parent_lost_self_exit' and e.get('pid')==pid for e in events) for pid in server_pids)
+    assert any(e.get('event')=='parent_lost_self_exit' and e.get('pid')==server_pid for e in events)
     partial_bytes=(partial/'root_trials.jsonl').read_bytes()
     assert partial_bytes.startswith(partial_prefix) and partial_bytes
-    partial_files=_regular_file_contents(partial)
+    partial_tree=_tree_contents(partial)
     crashed=json.loads((out/'batch_state.json').read_text())
     assert crashed['status']=='RUNNING' and not crashed.get('stop_reason')
     resumed=subprocess.run(args,cwd=ROOT,env=env,capture_output=True,text=True,timeout=180)
@@ -188,7 +207,7 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
         assert result['completed'][key]['post_check_sha256']==check_sha
         assert digest_file(Path(path).parent/'post_check.json')==check_sha
     archived=list((out/'interrupted').glob('*'))
-    assert len(archived)==1 and _regular_file_contents(archived[0])==partial_files
+    assert len(archived)==1 and _tree_contents(archived[0])==partial_tree
     assert all(json.loads(Path(v['path']).read_text())['execution_label']=='DRYRUN' for v in result['completed'].values())
 
 
