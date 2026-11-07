@@ -85,10 +85,11 @@ def test_precheck_binds_registry_path_and_gate_to_reviewed_head(tmp_path,monkeyp
     head='a'*40
     cfg={'registry':'r1/exam/registry.yaml','rule':'rule','rule_sha256':'b'*64,
          'nodes':['digits_mlp'],'harness_commit':'c'*40,'work_dir':str(tmp_path),
-         'models_dir':str(tmp_path),'dryrun':False}
+         'models_dir':str(tmp_path),'dryrun':False,'cache_prompt':False,'template_repairs':{}}
     anchor={'id':'qwen25_coder_7b','role':'anchor','thinking_policy':{},'runtime':{'footprint_mib':1}}
     registry={'candidates':[anchor],'software_anchors':[]}
     monkeypatch.setattr(pre,'REPO',tmp_path)
+    monkeypatch.delenv('LLAMACPP_CACHE_PROMPT',raising=False)
     monkeypatch.setattr(pre,'load_config',lambda path:cfg)
     monkeypatch.setattr(pre,'require_committed_b1_config',lambda path,value:head)
     monkeypatch.setattr(pre,'read_registry',lambda path:registry)
@@ -270,3 +271,31 @@ def test_changed_table_stops_at_observer_recheck(tmp_path):
     first.write_text('{"rows": []}')
     with pytest.raises(RuntimeError,match='table digest mismatch'):
         pre.resolve_stage_a_spec(anchor,cfg,registry,eligible)
+
+
+def test_preflight_rejects_cache_override_and_requires_explicit_false(monkeypatch):
+    cfg={'cache_prompt':False,'template_repairs':{}}
+    monkeypatch.setenv('LLAMACPP_CACHE_PROMPT','true')
+    with pytest.raises(RuntimeError,match='LLAMACPP_CACHE_PROMPT'):
+        pre.check_b1_protocol(cfg,[],{})
+    monkeypatch.delenv('LLAMACPP_CACHE_PROMPT')
+    with pytest.raises(RuntimeError,match='explicitly false'):
+        pre.check_b1_protocol({'cache_prompt':None,'template_repairs':{}},[],{})
+
+
+def test_preflight_applies_actual_template_repair_mapping(monkeypatch):
+    monkeypatch.delenv('LLAMACPP_CACHE_PROMPT',raising=False)
+    rows=[{'id':'model','template_repair':{'sha256':'a'*64}}]
+    with pytest.raises(RuntimeError,match='template_repairs'):
+        pre.check_b1_protocol({'cache_prompt':False,'template_repairs':{'model':'b'*64}},rows,{})
+    pre.check_b1_protocol({'cache_prompt':False,'template_repairs':{'model':'a'*64}},rows,{})
+
+
+def test_preflight_stops_batch_for_eligible_switchable_grammar_failure(monkeypatch):
+    monkeypatch.delenv('LLAMACPP_CACHE_PROMPT',raising=False)
+    rows=[{'id':'model','thinking_policy':{'switchable':True}}]
+    cfg={'cache_prompt':False,'template_repairs':{}}
+    with pytest.raises(RuntimeError,match='thinking-on sensitivity disabled'):
+        pre.check_b1_protocol(cfg,rows,{'model':{'thinking_disabled_due_grammar':True}})
+    pre.check_b1_protocol(cfg,rows,{'model':{'thinking_disabled_due_grammar':False}})
+    pre.check_b1_protocol(cfg,rows,{})

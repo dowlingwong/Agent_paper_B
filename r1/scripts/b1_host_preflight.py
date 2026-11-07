@@ -23,7 +23,8 @@ from r1.exam.runtime import (B1_CONFIG_REL, REPO, EXAM_SERVER_ARGS, ExamRunner,
     author_gate, b1_harness_sources, gpu_sample, host_check, load_config,
     read_registry, require_committed_b1_config, require_committed_b1_registry,
     template_repair_args, worker_environment, placeholders)
-from r1.scripts.exam_runner import stage_a_pass_set, verify_anchor_reference
+from r1.scripts.exam_runner import (stage_a_pass_set, verify_anchor_reference,
+    refuse_cache_prompt_override, check_template_repairs)
 from r1.exam.observer import _authorized_candidate
 from r1.scripts import llama_server_instance as lsi
 from r1.scripts.llama_server_instance import LlamaServerInstance, gpu_compute_apps
@@ -46,6 +47,19 @@ def resolve_stage_a_spec(spec, cfg, registry, eligible):
     if not _authorized_candidate({'candidate':result},cfg,registry):
         raise RuntimeError('STOP: Stage A footprint does not match authorized candidate')
     return result
+
+
+def check_b1_protocol(cfg, rows, eligible):
+    """Apply production B1's pre-server cache, template and grammar checks."""
+    if cfg.get('cache_prompt') is not False:
+        raise RuntimeError('STOP: B1 requires cache_prompt explicitly false')
+    refuse_cache_prompt_override()
+    check_template_repairs(cfg,rows)
+    unavailable=[s['id'] for s in rows if s['id'] in eligible and
+                 (s.get('thinking_policy') or {}).get('switchable') is True and
+                 eligible[s['id']].get('thinking_disabled_due_grammar')]
+    if unavailable:
+        raise RuntimeError('STOP: required thinking-on sensitivity disabled by Stage A grammar: '+', '.join(unavailable))
 
 
 def check_inputs(expected_head, out):
@@ -74,8 +88,9 @@ def check_inputs(expected_head, out):
         raise RuntimeError('STOP: preflight directory must be a direct child of work_dir')
     for key in ('models_dir','work_dir'):
         space_check(cfg[key])
-    rows=registry['candidates']+registry['software_anchors']
+    rows=registry['candidates']+registry['software_anchors']+registry.get('sensitivities',[])
     eligible=stage_a_pass_set(cfg,{s['id'] for s in rows if s.get('role')=='candidate'},v2=True)
+    check_b1_protocol(cfg,rows,eligible)
     matches=[s for s in rows if s['id']=='qwen25_coder_7b' and s.get('role')=='anchor']
     if len(matches)!=1 or 'qwen25_coder_7b' not in eligible:
         raise RuntimeError('STOP: Stage A approved model anchor unavailable')
