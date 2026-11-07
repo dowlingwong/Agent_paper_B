@@ -1,6 +1,7 @@
 """C3 audit: pairing, cache, resumable plan runner. ENGINEERING_ONLY; AI-assisted (Claude)."""
 import json
 import os
+import uuid
 from pathlib import Path
 
 import pytest
@@ -66,16 +67,39 @@ def test_run_plan_caches_and_resumes(tmp_path, monkeypatch):
     monkeypatch.setattr(audit, "ProcessPoolExecutor", _InlinePool)
     configs = {"c": {"node": "n", "files": {"train.py": "X = 0.9"}}, "i": {"node": "n", "files": {"train.py": "X = 0.8"}}}
     plan = [{"proposal_id": "p1", "node": "n", "candidate_hash": "c", "incumbent_hash": "i", "reason": "random"}]
-    st = audit.run_plan(plan, configs, tmp_path, seeds=(7001, 7002), workers=1, deadline=100)
+    seed_file = tmp_path / audit.SEEDS_FILE
+    assert not os.path.lexists(seed_file)
+    original_write_text = Path.write_text
+
+    def exclusive_seed_write(path, text, *args, **kwargs):
+        if path != seed_file:
+            return original_write_text(path, text, *args, **kwargs)
+        if args or kwargs:
+            raise RuntimeError("unexpected audit seed write options")
+        with path.open("x", encoding="utf-8") as handle:
+            return handle.write(text)
+
+    monkeypatch.setattr(Path, "write_text", exclusive_seed_write)
+    # These test-owned versions remain outside the cache directory. The
+    # destination is fresh and private; this assumes no concurrent path writer.
+    def preserve_seed_file():
+        retired = tmp_path.parent / "_to_delete" / uuid.uuid4().hex
+        retired.mkdir(parents=True, exist_ok=False)
+        seed_file.rename(retired / audit.SEEDS_FILE)
+
+    work = str(tmp_path / "worker_dirs")
+    st = audit.run_plan(plan, configs, tmp_path, seeds=(7001, 7002), workers=1, deadline=100, tmp=work)
     assert st["configs_run_this_call"] == 2 and st["proposals_complete"] == 1
     assert json.loads((tmp_path / audit.SEEDS_FILE).read_text())["seeds"] == [7001, 7002]
-    st2 = audit.run_plan(plan, configs, tmp_path, seeds=(7001, 7002), workers=1, deadline=100)
+    preserve_seed_file()
+    st2 = audit.run_plan(plan, configs, tmp_path, seeds=(7001, 7002), workers=1, deadline=100, tmp=work)
     assert st2["configs_run_this_call"] == 0
     res = audit.audit_results(plan, audit.RunCache(tmp_path / "runs.jsonl"), (7001, 7002))
     assert res[0]["delta_audit"] == pytest.approx(0.1) and res[0]["se"] == pytest.approx(0.0)
     # deadline 0: nothing submitted, nothing lost
     plan2 = plan + [{"proposal_id": "p2", "node": "n", "candidate_hash": "c", "incumbent_hash": "i", "reason": "x"}]
-    st3 = audit.run_plan(plan2, configs, tmp_path, seeds=(7001, 7002, 7003), workers=1, deadline=0)
+    preserve_seed_file()
+    st3 = audit.run_plan(plan2, configs, tmp_path, seeds=(7001, 7002, 7003), workers=1, deadline=0, tmp=work)
     assert st3["configs_run_this_call"] == 0 and st3["configs_remaining"] == 2
 
 
