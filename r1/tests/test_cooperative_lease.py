@@ -549,8 +549,9 @@ def test_public_start_requires_authorized_d3_context_but_is_enabled():
     # explicit false).  B1/B2 evidence entries remain hard STOP.
     with pytest.raises(RuntimeError, match='D3 cold-cache cooperative Stage A context not authorized'):
         runtime.ExamRunner.start(types.SimpleNamespace(), 'stage-a')
-    with pytest.raises(runtime.PreparationStop, match='reviewed harness pin'):
-        runtime.ExamRunner.start(types.SimpleNamespace(), 'b1')
+    # B1 is separately gated by the reviewed rule before its other checks.
+    with pytest.raises(runtime.PreparationStop, match='reviewed x5_rule/v2'):
+        runtime.ExamRunner.start(types.SimpleNamespace(rule={}), 'b1')
 
 
 # -- llama_server_instance lease passing ---------------------------------------
