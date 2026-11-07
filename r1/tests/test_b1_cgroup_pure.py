@@ -3,6 +3,8 @@ import threading
 import hashlib
 import json
 import stat
+import sys
+import types
 import unittest
 from unittest.mock import Mock, patch
 
@@ -247,6 +249,39 @@ class HelperRoutingTests(unittest.TestCase):
 
 
 class SupervisorContractTests(unittest.TestCase):
+    def test_publication_exception_is_reconciled_only_with_verified_commit(self):
+        from r1.scripts import b1_supervisor
+        module=types.ModuleType('r1.exam.b1_exit_receipt')
+        module.publish_after_wait=Mock(side_effect=RuntimeError('queued callback'))
+        module.verify_waited_success=Mock()
+        with patch.dict(sys.modules, {'r1.exam.b1_exit_receipt':module}):
+            b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
+            module.verify_waited_success.assert_called_once_with('/batch','head')
+            module.verify_waited_success.side_effect=RuntimeError('ACTIVE still present')
+            with self.assertRaisesRegex(RuntimeError,'ACTIVE still present'):
+                b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
+
+    def test_filesystem_preflight_refuses_before_lease_and_runner(self):
+        from r1.scripts import b1_supervisor
+        from r1.exam import runtime, analyze, b1_lease
+        check=Mock(side_effect=RuntimeError('unsupported work filesystem'))
+        module=types.ModuleType('r1.exam.b1_exit_receipt')
+        module._require_local_filesystem=check
+        cfg={'dryrun':False,'rule':'rule','rule_sha256':'sha','work_dir':'/work'}
+        with patch.dict(sys.modules, {'r1.exam.b1_exit_receipt':module}), \
+             patch.object(runtime,'load_config',return_value=cfg), \
+             patch.object(runtime,'require_committed_b1_config',return_value='head'), \
+             patch.object(runtime,'host_check'), patch.object(runtime,'author_gate',return_value='head'), \
+             patch.object(analyze,'load_rule',return_value=({'version':'x5_rule/v2'},'sha')), \
+             patch.object(b1_supervisor.Path,'resolve',lambda p: p), \
+             patch.object(b1_supervisor.os.path,'lexists',return_value=False), \
+             patch.object(b1_lease,'acquire') as acquire, \
+             patch.object(b1_supervisor.subprocess,'Popen') as popen:
+            with self.assertRaisesRegex(RuntimeError,'unsupported work filesystem'):
+                b1_supervisor.main(['--config','cfg','--out','/work/batch'])
+        check.assert_called_once_with(b1_supervisor.Path('/work'))
+        acquire.assert_not_called(); popen.assert_not_called()
+
     def _env(self):
         return {'R1_B1_SUPERVISOR_PID':'42','R1_B1_SUPERVISOR_TICKS':'99',
                 'R1_B1_SUPERVISOR_PIDFD':'8','R1_B1_SUPERVISOR_LIVE_FD':'9','R1_B1_LEASE_FD':'10'}

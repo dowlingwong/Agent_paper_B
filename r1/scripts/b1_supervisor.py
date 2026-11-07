@@ -60,6 +60,20 @@ def _same_inherited_fd(child_pid, fd, label):
     if rc!=0: raise RuntimeError(f'STOP: runner inherited {label} OFD unproved (rc={rc}, errno={err})')
 
 
+def _publish_or_reconcile(child, out, head):
+    """Treat a verified retirement as the completion point after a callback.
+
+    Both readers and this reconciliation require the same committed sentinel
+    and receipt. This is not proof under arbitrary storage or concurrent STOP
+    failures; an independent review must establish the allowed fault model.
+    """
+    from r1.exam.b1_exit_receipt import publish_after_wait, verify_waited_success
+    try:
+        publish_after_wait(child,out,head)
+    except BaseException:
+        verify_waited_success(out,head)
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser()
     parser.add_argument('--config',required=True);parser.add_argument('--out',required=True)
@@ -78,6 +92,11 @@ def main(argv=None):
     if not out.is_absolute() or out!=out.resolve() or out.parent!=Path(cfg['work_dir']) or os.path.lexists(out):
         raise RuntimeError('STOP: B1 output must be a fresh unaliased direct work child')
     host_check(cfg,out)
+    # The requested batch does not exist yet; check its actual containing
+    # work directory before acquiring the GPU lease or starting the runner.
+    # The runner must recheck the new batch itself before starting workload.
+    from r1.exam.b1_exit_receipt import _require_local_filesystem
+    _require_local_filesystem(out.parent)
     # Handover and site qualification are external reviewed prerequisites;
     # this code does not infer them from an output path or a lock.
     supervisor_dir=out.parent/('b1-supervisor-'+time.strftime('%Y%m%d')+'-'+uuid.uuid4().hex)
@@ -115,13 +134,12 @@ def main(argv=None):
         verify_finalization(out,head)
         # This independently supervised receipt is a separate implementation;
         # absence or any failure must STOP before the lease is released.
-        from r1.exam.b1_exit_receipt import publish_after_wait
         # The receipt helper's last operation atomically retires ACTIVE. Once
         # that happens this process must not turn a published success into a
         # STOP. Suppress asynchronous Python signal handlers across that point;
         # SIGKILL remains subject to the documented atomic-rename fault model.
         signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals() - {signal.SIGKILL, signal.SIGSTOP})
-        publish_after_wait(child,out,head)
+        _publish_or_reconcile(child,out,head)
         # No fallible success step follows. Process exit releases the lease.
         return 0
     except BaseException as exc:
