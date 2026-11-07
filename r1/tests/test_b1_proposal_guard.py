@@ -19,7 +19,15 @@ def proposal(mode='langgraph_manager', *, objective='change HIDDEN_UNITS from 64
         extra={'structured_edit': edit} if structured else {})
 
 def fake_worker():
-    return B1IntegrityWorker.__new__(B1IntegrityWorker)
+    worker=B1IntegrityWorker.__new__(B1IntegrityWorker)
+    worker._node_root='/synthetic-not-used'
+    return worker
+
+@pytest.fixture(autouse=True)
+def isolate_artifact_preservation(monkeypatch):
+    # These are proposal-integrity unit tests; real output retention has its
+    # own tests and no filesystem is used by this mock worker.
+    monkeypatch.setattr('r1.exam.b1_node_artifacts.preserve_node_artifacts',lambda root: None)
 
 @pytest.mark.parametrize('mode', ['langgraph_manager', 'scripted_random', 'random_valid'])
 def test_matching_proposals_delegate_unchanged(mode):

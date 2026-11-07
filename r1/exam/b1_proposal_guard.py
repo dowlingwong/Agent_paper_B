@@ -57,7 +57,15 @@ def verify_proposal(proposal, node_spec):
 
 
 class B1IntegrityWorker(LocalWorker):
-    """Run the unmodified pinned worker only after the integrity check."""
+    """Run the pinned worker after integrity checking, with an I/O overlay."""
+    def _locate_target_file(self, param, proposal, node_spec):
+        path=super()._locate_target_file(param,proposal,node_spec)
+        guarded=getattr(self,'_b1_editable_path_type',None)
+        if path is not None and guarded is not None:
+            path=guarded(path)
+            path._check()
+        return path
+
     def run_trial(self, proposal, node_spec, budget_index):
         verify_proposal(proposal, node_spec)
         from r1.exam.b1_node_artifacts import preserve_node_artifacts

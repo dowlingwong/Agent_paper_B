@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import time
+from contextlib import nullcontext
 from pathlib import Path
 import yaml
 from r1.harness import import_harness
@@ -228,8 +229,13 @@ def _collect_b1_review(job):
     worker=FixtureWorker(node_root,seed) if job['dryrun'] else B1IntegrityWorker(node_root=node_root,artifact_dir=out/'art',train_seed=seed,split_seed=seed)
     raw_observer=observer_for_campaign(job,out)
     observer=B1ObserverAdapter(raw_observer) if raw_observer is not None else None
+    if job['dryrun']:
+        preservation=nullcontext()
+    else:
+        from r1.exam.b1_editable_preserve import preserve_pinned_editables
+        preservation=preserve_pinned_editables(worker,spec)
     try:
-        with authorized_b1_observer(job):
+        with authorized_b1_observer(job), preservation:
             run_real_campaign(node_spec=spec,campaign_id=f'{node}__s{seed}',budget=job['llm_call_cap'] if kind=='llm' else 1_000_000,
                               manager_mode='baseline_manager',memory_mode='append_only_summary',records_path=out/'root_trials.jsonl',worker=worker,
                               proposal_backend=manager,compute_budget=ComputeBudget(max_worker_runs=job['W'],max_llm_calls=job['llm_call_cap']),
