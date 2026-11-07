@@ -258,10 +258,32 @@ class ReceiptTests(unittest.TestCase):
                 mock.patch.object(runtime, 'require_committed_b1_registry'), \
                 mock.patch.object(runtime, 'author_gate', return_value=HEAD), \
                 mock.patch.object(runtime, 'worker_environment'), \
+                mock.patch.object(receipt, '_require_local_filesystem'), \
                 mock.patch.object(Path, 'mkdir', side_effect=FileExistsError), \
                 mock.patch('r1.exam.b1_state_preserve.write_exclusive_json') as sentinel:
             with self.assertRaisesRegex(runtime.PreparationStop, 'cannot be resumed automatically'):
                 runner.start('b1')
+        sentinel.assert_not_called()
+
+    def test_unsupported_parent_mount_stops_before_output_or_sentinel(self):
+        from r1.exam import runtime
+        runner = runtime.ExamRunner.__new__(runtime.ExamRunner)
+        runner.out = Path('/synthetic/new')
+        runner.cfg = {'dryrun':False, 'nodes':[], 'harness_commit':'h', 'work_dir':'/synthetic'}
+        runner.rule = {'version':'x5_rule/v2'}
+        runner.rule_sha = 'r'; runner.b1_config_head = HEAD
+        runner.registry_path = Path('/synthetic/registry'); runner.registry = {}
+        runner.state = {}; runner.b1_state_identity = None
+        with mock.patch.object(runtime, 'require_committed_b1_config', return_value=HEAD), \
+                mock.patch.object(runtime, 'require_committed_b1_registry'), \
+                mock.patch.object(runtime, 'author_gate', return_value=HEAD), \
+                mock.patch.object(runtime, 'worker_environment'), \
+                mock.patch.object(receipt, '_require_local_filesystem', side_effect=RuntimeError('unsupported mount')), \
+                mock.patch.object(Path, 'mkdir') as mkdir, \
+                mock.patch('r1.exam.b1_state_preserve.write_exclusive_json') as sentinel:
+            with self.assertRaisesRegex(RuntimeError, 'unsupported mount'):
+                runner.start('b1')
+        mkdir.assert_not_called()
         sentinel.assert_not_called()
 
 
