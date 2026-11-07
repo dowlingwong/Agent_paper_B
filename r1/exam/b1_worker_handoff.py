@@ -10,6 +10,7 @@ import json
 import os
 import select
 import stat
+from contextvars import ContextVar
 from pathlib import Path
 
 from r1.exam.cache_proc import process_start_ticks
@@ -17,7 +18,9 @@ from r1.exam.cache_runtime import _proc_ppid
 
 HANDOFF_FD_ENV = 'R1_B1_HANDOFF_FD'
 LEASE_FD_ENV = 'R1_B1_LEASE_FD'
+LOG_FD_ENV = 'R1_B1_LOG_FD'
 _MAX_RECORD = 4096
+_VERIFIED = ContextVar('b1_worker_handoff_verified',default=None)
 
 
 def _digest_job(job):
@@ -125,6 +128,28 @@ def await_parent(job, *, timeout=30):
                 raise ValueError('server lease descriptor mismatch')
         if os.getppid()!=parent or process_start_ticks(parent)!=record['parent_start_ticks']:
             raise ValueError('parent changed during handoff')
+        _VERIFIED.set(record['job_sha256'])
         return record
     except (KeyError,TypeError,ValueError,OSError,json.JSONDecodeError) as exc:
         raise RuntimeError(f'STOP: invalid B1 worker handoff: {exc}') from exc
+
+
+def consume_verified(job):
+    """Permit exactly one entry by the bootstrap that verified this job."""
+    if _VERIFIED.get()!=_digest_job(job):
+        raise RuntimeError('STOP: B1 worker bootstrap handoff absent')
+    _VERIFIED.set(None)
+
+
+def attach_log(job):
+    """Attach only the parent-opened log after a valid handoff."""
+    raw=os.environ.get(LOG_FD_ENV,'')
+    if not raw.isdecimal() or int(raw)<3:
+        raise RuntimeError('STOP: B1 worker log descriptor absent')
+    fd=int(raw)
+    own=os.fstat(fd)
+    named=os.stat(Path(job['out'])/'runner.log',follow_symlinks=False)
+    if (own.st_dev,own.st_ino,own.st_uid)!=(named.st_dev,named.st_ino,named.st_uid) or \
+       not stat.S_ISREG(named.st_mode) or named.st_nlink!=1 or named.st_uid!=os.getuid():
+        raise RuntimeError('STOP: B1 worker log identity mismatch')
+    os.dup2(fd,1);os.dup2(fd,2);os.close(fd)

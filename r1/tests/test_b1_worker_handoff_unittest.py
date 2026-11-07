@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch, mock_open
 
-from r1.exam import b1_worker_handoff as h, campaign, runtime
+from r1.exam import b1_worker_handoff as h, b1_worker_entry, campaign, runtime
 
 
 def inode(dev=10,ino=20,uid=501,mode=stat.S_IFREG|0o600,nlink=1):
@@ -43,6 +43,9 @@ class HandoffTest(unittest.TestCase):
 
     def test_valid_software_anchor(self):
         self.assertEqual(self.wait(),self.record)
+        h.consume_verified(self.job)
+        with self.assertRaisesRegex(RuntimeError,'bootstrap handoff absent'):
+            h.consume_verified(self.job)
 
     def test_parent_binds_child_lease_and_new_root(self):
         from r1.exam import b1_lease
@@ -92,7 +95,7 @@ class HandoffTest(unittest.TestCase):
 
     def test_child_does_not_mutate_before_handoff(self):
         job={'phase':'b1','dryrun':False,'out':self.job['out']}
-        with patch.object(h,'await_parent',side_effect=RuntimeError('STOP: no handoff')), \
+        with patch.object(h,'consume_verified',side_effect=RuntimeError('STOP: no handoff')), \
              patch.object(campaign,'_verify_b1_worker_input') as auth, \
              patch.object(Path,'mkdir') as mkdir,patch.object(campaign,'B1IntegrityWorker') as worker:
             with self.assertRaisesRegex(RuntimeError,'handoff'): campaign._collect_b1_review(job)
@@ -104,16 +107,72 @@ class HandoffTest(unittest.TestCase):
         runner.b1_lease_fd=7;runner.service=None;runner.space=MagicMock();runner.save=MagicMock(side_effect=OSError('disk'))
         runner.child=None
         job={'out':self.job['out'],'base_url':None}
-        child=SimpleNamespace(pid=102)
+        child=MagicMock();child.pid=102
+        log=mock_open();log.return_value.__enter__.return_value.fileno.return_value=11
+        events=[]
+        child.wait.side_effect=lambda **kw: events.append('wait') or 2
         with patch.object(Path,'resolve',lambda p,**kw:p),patch.object(Path,'mkdir'), \
-             patch.object(Path,'open',mock_open()),patch.object(runtime,'write_json'), \
+             patch.object(Path,'open',log),patch.object(runtime,'write_json'), \
              patch.object(runtime,'worker_environment',return_value={}), \
-             patch.object(runtime.os,'pipe',return_value=(8,9)),patch.object(runtime.os,'close') as close, \
-             patch.object(runtime.subprocess,'Popen',return_value=child), \
+             patch.object(runtime.os,'pipe',return_value=(8,9)), \
+             patch.object(runtime.os,'close',side_effect=lambda fd:events.append(('close',fd))), \
+             patch.object(runtime.subprocess,'Popen',return_value=child) as popen, \
              patch.object(h,'make_record') as record,patch.object(h,'release') as release:
             with self.assertRaisesRegex(OSError,'disk'): runner.run_job(job,'r1.exam.campaign')
             record.assert_not_called();release.assert_not_called()
-            self.assertEqual([x.args[0] for x in close.call_args_list],[8,9])
+            self.assertEqual(events,[('close',8),('close',9),'wait'])
+            self.assertEqual(popen.call_args.kwargs['stdout'],runtime.subprocess.DEVNULL)
+            self.assertEqual(popen.call_args.kwargs['stderr'],runtime.subprocess.DEVNULL)
+            self.assertEqual(popen.call_args.kwargs['env']['PYTHONDONTWRITEBYTECODE'],'1')
+
+    def test_missing_lease_or_wrong_module_stops_before_root_creation(self):
+        runner=runtime.ExamRunner.__new__(runtime.ExamRunner)
+        runner.state={'phase':'b1'};runner.cfg={'dryrun':False};runner.out=Path('/work/batch')
+        runner.b1_lease_fd=None;runner.space=MagicMock();runner.child=None
+        with patch.object(Path,'mkdir') as mkdir,patch.object(runtime,'write_json') as write:
+            with self.assertRaisesRegex(runtime.PreparationStop,'lease is missing'):
+                runner.run_job({'out':self.job['out']},'r1.exam.campaign')
+            runner.b1_lease_fd=7
+            with self.assertRaisesRegex(runtime.PreparationStop,'reviewed campaign'):
+                runner.run_job({'out':self.job['out']},'r1.exam.other')
+            runner.child=MagicMock()
+            with self.assertRaisesRegex(runtime.PreparationStop,'previous B1 child'):
+                runner.run_job({'out':self.job['out']},'r1.exam.campaign')
+            mkdir.assert_not_called();write.assert_not_called()
+
+    def test_release_failure_reaps_child_before_reporting_stop(self):
+        runner=runtime.ExamRunner.__new__(runtime.ExamRunner)
+        runner.state={'phase':'b1'};runner.cfg={'dryrun':False};runner.out=Path('/work/batch')
+        runner.b1_lease_fd=7;runner.service=None;runner.space=MagicMock();runner.save=MagicMock();runner.child=None
+        child=MagicMock();child.pid=102
+        events=[];child.wait.side_effect=lambda **kw: events.append('wait') or 2
+        log=mock_open();log.return_value.__enter__.return_value.fileno.return_value=11
+        with patch.object(Path,'resolve',lambda p,**kw:p),patch.object(Path,'mkdir'), \
+             patch.object(Path,'open',log),patch.object(runtime,'write_json'), \
+             patch.object(runtime,'worker_environment',return_value={}), \
+             patch.object(runtime.os,'pipe',return_value=(8,9)), \
+             patch.object(runtime.os,'close',side_effect=lambda fd:events.append(('close',fd))), \
+             patch.object(runtime.subprocess,'Popen',return_value=child), \
+             patch.object(h,'make_record',return_value={}), \
+             patch.object(h,'release',side_effect=BrokenPipeError('EOF')):
+            with self.assertRaisesRegex(BrokenPipeError,'EOF'): runner.run_job({'out':self.job['out']},'r1.exam.campaign')
+            self.assertEqual(events,[('close',8),('close',9),'wait'])
+            child.kill.assert_not_called();child.terminate.assert_not_called()
+
+    def test_unreaped_child_is_explicit_stop_without_signal(self):
+        runner=runtime.ExamRunner.__new__(runtime.ExamRunner)
+        runner.state={'phase':'b1'};runner.cfg={'dryrun':False};runner.out=Path('/work/batch')
+        runner.b1_lease_fd=7;runner.service=None;runner.space=MagicMock();runner.save=MagicMock(side_effect=OSError('original'));runner.child=None
+        child=MagicMock();child.pid=102;child.wait.side_effect=TimeoutError('wait')
+        log=mock_open();log.return_value.__enter__.return_value.fileno.return_value=11
+        with patch.object(Path,'resolve',lambda p,**kw:p),patch.object(Path,'mkdir'), \
+             patch.object(Path,'open',log),patch.object(runtime,'write_json'), \
+             patch.object(runtime,'worker_environment',return_value={}), \
+             patch.object(runtime.os,'pipe',return_value=(8,9)),patch.object(runtime.os,'close'), \
+             patch.object(runtime.subprocess,'Popen',return_value=child):
+            with self.assertRaisesRegex(runtime.PreparationStop,'not reaped.*original'):
+                runner.run_job({'out':self.job['out']},'r1.exam.campaign')
+            child.kill.assert_not_called();child.terminate.assert_not_called()
 
     def test_existing_batch_stops_before_lease(self):
         from r1.exam import b1_lease
@@ -130,6 +189,42 @@ class HandoffTest(unittest.TestCase):
             with self.assertRaisesRegex(runtime.PreparationStop,'already exists'):
                 runner.start('b1')
             acquire.assert_not_called()
+
+    def test_raw_output_alias_refused_before_host_or_registry(self):
+        cfg={'dryrun':False}
+        def resolve(path,**kwargs):
+            return Path('/work/newbatch') if path==Path('/work/alias') else path
+        with patch.object(Path,'resolve',resolve), \
+             patch.object(runtime,'host_check') as host, \
+             patch.object(runtime,'read_registry') as registry:
+            with self.assertRaisesRegex(runtime.PreparationStop,'alias or symlink'):
+                runtime.ExamRunner(cfg,'/work/alias',b1_config_head='a'*40)
+            host.assert_not_called();registry.assert_not_called()
+
+    def test_unresolvable_output_refused_before_host(self):
+        with patch.object(Path,'resolve',side_effect=RuntimeError('loop')), \
+             patch.object(runtime,'host_check') as host:
+            with self.assertRaisesRegex(runtime.PreparationStop,'cannot be resolved'):
+                runtime.ExamRunner({'dryrun':False},'/work/alias',b1_config_head='a'*40)
+            host.assert_not_called()
+
+    def test_bootstrap_handoff_failure_is_silent_and_does_not_attach(self):
+        job={'phase':'b1','dryrun':False}
+        with patch.object(Path,'read_text',return_value=json.dumps(job)), \
+             patch.object(b1_worker_entry,'await_parent',side_effect=RuntimeError('STOP: EOF')), \
+             patch.object(b1_worker_entry,'attach_log') as attach, \
+             patch.object(campaign,'collect') as collect:
+            self.assertEqual(b1_worker_entry.main(['--job','/fake/job.json']),2)
+            attach.assert_not_called();collect.assert_not_called()
+
+    def test_log_attaches_only_verified_regular_parent_descriptor(self):
+        env={h.LOG_FD_ENV:'11'}
+        with patch.dict(h.os.environ,env,clear=True),patch.object(h.os,'fstat',return_value=self.file), \
+             patch.object(h.os,'stat',return_value=self.file),patch.object(h.os,'getuid',return_value=501), \
+             patch.object(h.os,'dup2') as dup,patch.object(h.os,'close') as close:
+            h.attach_log(self.job)
+            self.assertEqual([x.args for x in dup.call_args_list],[(11,1),(11,2)])
+            close.assert_called_once_with(11)
 
 
 if __name__=='__main__': unittest.main()

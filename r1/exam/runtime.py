@@ -491,7 +491,17 @@ def require_server_lease_inheritance(instance):
 
 class ExamRunner:
     def __init__(self, cfg, out, *, registry_path=None, b1_config_head=None):
-        self.cfg=cfg;self.out=Path(out).resolve();host_check(cfg,self.out)
+        self.cfg=cfg
+        supplied=Path(out).absolute()
+        if b1_config_head is not None and not cfg.get('dryrun'):
+            try: resolved=supplied.resolve()
+            except (OSError,RuntimeError) as exc:
+                raise PreparationStop('STOP: production B1 output path cannot be resolved') from exc
+            if resolved!=supplied:
+                raise PreparationStop('STOP: production B1 output path contains an alias or symlink')
+        else:
+            resolved=Path(out).resolve()
+        self.out=resolved;host_check(cfg,self.out)
         if b1_config_head is not None and not cfg.get('dryrun'):
             if registry_path is not None:
                 raise PreparationStop('STOP: production B1 does not accept a registry override')
@@ -726,6 +736,12 @@ class ExamRunner:
         path=Path(job['out'])
         production_b1=self.state.get('phase')=='b1' and not self.cfg.get('dryrun')
         if production_b1:
+            if self.child is not None:
+                raise PreparationStop('STOP: previous B1 child has not been cleared')
+            if self.b1_lease_fd is None:
+                raise PreparationStop('STOP: B1 GPU lease is missing')
+            if module!='r1.exam.campaign':
+                raise PreparationStop('STOP: B1 handoff needs the reviewed campaign worker')
             if not path.is_absolute() or path.resolve()!=path or not path.is_relative_to(self.out) or path==self.out:
                 raise PreparationStop('STOP: B1 root path is outside the owned batch')
             try:
@@ -746,22 +762,47 @@ class ExamRunner:
             from r1.exam.cache_runtime import verified_lease_fd
             kwargs['pass_fds']=(verified_lease_fd(),)
         elif self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
-            if self.b1_lease_fd is None: raise PreparationStop('STOP: B1 GPU lease is missing')
-            from r1.exam.b1_worker_handoff import HANDOFF_FD_ENV,LEASE_FD_ENV
+            from r1.exam.b1_worker_handoff import HANDOFF_FD_ENV,LEASE_FD_ENV,LOG_FD_ENV
             handoff_read,handoff_write=os.pipe()
             env[HANDOFF_FD_ENV]=str(handoff_read)
             env[LEASE_FD_ENV]=str(self.b1_lease_fd)
+            env['PYTHONDONTWRITEBYTECODE']='1'
             if self.service is None: env.pop('LLAMACPP_BASE_URL',None)
-            kwargs['pass_fds']=(self.b1_lease_fd,handoff_read)
+        released=False
         try:
-            with (path/'runner.log').open('ab') as log:
-                self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
+            with (path/'runner.log').open('xb' if production_b1 else 'ab') as log:
+                if production_b1:
+                    env[LOG_FD_ENV]=str(log.fileno())
+                    kwargs['pass_fds']=(self.b1_lease_fd,handoff_read,log.fileno())
+                    worker_module='r1.exam.b1_worker_entry'
+                    worker_stdout=worker_stderr=subprocess.DEVNULL
+                else:
+                    worker_module=module;worker_stdout=log;worker_stderr=subprocess.STDOUT
+                self.child=subprocess.Popen([sys.executable,'-m',worker_module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=worker_stdout,stderr=worker_stderr,start_new_session=True,**kwargs)
             if handoff_read is not None:
                 os.close(handoff_read);handoff_read=None
             self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
             if handoff_write is not None:
                 from r1.exam.b1_worker_handoff import make_record,release
                 release(handoff_write,make_record(job,self.child.pid,self.b1_lease_fd,path,self.service))
+                released=True
+        except BaseException as original:
+            close_error=None
+            if production_b1 and not released and handoff_write is not None:
+                try: os.close(handoff_write)
+                except OSError as exc: close_error=exc
+                handoff_write=None
+            if production_b1 and not released and self.child is not None:
+                # The unreleased bootstrap has no log attached and no node or
+                # campaign imports. Reap only this Popen child before returning
+                # STOP; no signals or cleanup are issued here.
+                try:
+                    self.child.wait(timeout=30)
+                except Exception as wait_error:
+                    raise PreparationStop(f'STOP: unreleased B1 child not reaped ({wait_error}); original: {type(original).__name__}: {original}') from original
+            if close_error is not None:
+                raise PreparationStop(f'STOP: B1 handoff pipe close failed ({close_error}); original: {type(original).__name__}: {original}') from original
+            raise
         finally:
             # EOF makes a blocked child refuse work if any parent step failed.
             if handoff_read is not None: os.close(handoff_read)

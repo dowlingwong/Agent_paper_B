@@ -150,10 +150,10 @@ def _collect_b1_review(job):
     if job.get('phase') != 'b1': raise RuntimeError('STOP: B1 candidate refuses other phases')
     out=Path(job['out'])
     if not job['dryrun']:
-        # No node copy, manager, journal or worker is created before the
-        # reviewed parent releases this process and it rechecks the snapshot.
-        from r1.exam.b1_worker_handoff import await_parent
-        await_parent(job)
+        # The production bootstrap must have consumed and checked a parent
+        # release before it attaches the log or imports the campaign code.
+        from r1.exam.b1_worker_handoff import consume_verified
+        consume_verified(job)
         _verify_b1_worker_input(job)
         # A direct campaign invocation has no parent runner to enforce the
         # approved work-tree boundary. This check does not prove ownership of
