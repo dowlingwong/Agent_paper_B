@@ -28,6 +28,19 @@ B1_CONFIG_REL='r1/scripts/configs/exam_b1_v2.json'
 
 TEMPLATE_REPAIR_SCHEMA='r1.exam.template_repair/v1'
 
+def claim_runner_lock(out, *, preserve_existing=False):
+    lock=out/'runner.lock'
+    if lock.exists():
+        if preserve_existing:
+            raise PreparationStop('STOP: existing B1 runner lock; no automatic resume')
+        old=json.loads(lock.read_text())
+        try: os.kill(old['pid'],0)
+        except ProcessLookupError: lock.rename(out/f'runner.lock.stale.{time.time_ns()}')
+        else: raise RuntimeError('STOP: previous runner still alive; never share a campaign root')
+    with lock.open('x') as f: json.dump({'pid':os.getpid(),'host':platform.node()},f)
+    return lock
+
+
 def report_b1_stop_and_save(runner, original, *, save=True):
     """Best effort only: emit the original error before attempting STOP state I/O.
 
@@ -590,14 +603,7 @@ class ExamRunner:
         if phase=='b1' and not self.cfg.get('dryrun'):
             from r1.exam.b1_lease import acquire
             self.b1_lease_fd=acquire(Path.home()/'r1_locks'/'gpu0.lock')
-        lock=self.out/'runner.lock'
-        if lock.exists():
-            old=json.loads(lock.read_text())
-            try: os.kill(old['pid'],0)
-            except ProcessLookupError: lock.rename(self.out/f'runner.lock.stale.{time.time_ns()}')
-            else: raise RuntimeError('STOP: previous runner still alive; never share a campaign root')
-        with lock.open('x') as f: json.dump({'pid':os.getpid(),'host':platform.node()},f)
-        self.lock=lock
+        self.lock=claim_runner_lock(self.out, preserve_existing=phase=='b1' and not self.cfg.get('dryrun'))
         previous=self.state.get('in_progress') or {}
         if previous.get('pid'):
             try: os.kill(previous['pid'],0)
@@ -902,6 +908,9 @@ class ExamRunner:
             # Preserve server, worker, and marker after STOP for explicit review.
             return
         if not skip_service: self.stop_service()
-        if self.lock: self.lock.unlink(missing_ok=True);self.lock=None
+        if self.lock:
+            if not (self.state.get('phase')=='b1' and not self.cfg.get('dryrun')):
+                self.lock.unlink(missing_ok=True)
+            self.lock=None
         if getattr(self,'b1_lease_fd',None) is not None:
             os.close(self.b1_lease_fd);self.b1_lease_fd=None

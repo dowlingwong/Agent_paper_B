@@ -179,3 +179,27 @@ def test_b1_output_directories_private_with_group_writable_umask(tmp_path, monke
         os.umask(old)
     assert (tmp_path / 'job').stat().st_mode & 0o077 == 0
     assert (tmp_path / 'servers' / 'example').stat().st_mode & 0o077 == 0
+
+
+@pytest.mark.parametrize('skip_service', [False, True])
+def test_close_keeps_real_b1_runner_lock(tmp_path, skip_service):
+    runner = runtime.ExamRunner.__new__(runtime.ExamRunner)
+    runner.cfg = {'dryrun': False}
+    runner.state = {'phase': 'b1'}
+    runner.lock = tmp_path / 'runner.lock'
+    runner.lock.write_text('evidence')
+    runner.b1_lease_fd = None
+    runner.stop_service = Mock()
+    runner.close(skip_service=skip_service)
+    assert (tmp_path / 'runner.lock').read_text() == 'evidence'
+    assert runner.lock is None
+    assert runner.stop_service.call_count == (0 if skip_service else 1)
+
+
+def test_old_b1_runner_lock_stops_without_renaming(tmp_path):
+    lock = tmp_path / 'runner.lock'
+    lock.write_text('original evidence')
+    with pytest.raises(runtime.PreparationStop, match='no automatic resume'):
+        runtime.claim_runner_lock(tmp_path, preserve_existing=True)
+    assert lock.read_text() == 'original evidence'
+    assert list(tmp_path.iterdir()) == [lock]

@@ -48,7 +48,7 @@ def run_b1_audits(node, configs, job, out, cache, save_cache):
         def submit_one():
             try: h,value=next(entries)
             except StopIteration: return False
-            active[pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out))]=h
+            active[pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out),stop_on_invalid=True)]=h
             return True
         try:
             for _ in range(job['workers']):
@@ -59,6 +59,12 @@ def run_b1_audits(node, configs, job, out, cache, save_cache):
                 done |= {f for f in active if f.done()}
                 for future in done:
                     h=active.pop(future);runs=future.result()
+                    import math
+                    if (len(runs)!=len(job['audit_seeds']) or any(
+                            not r.get('success') or isinstance(r.get('metric'),bool) or
+                            not isinstance(r.get('metric'),(int,float)) or not math.isfinite(r['metric'])
+                            for r in runs)):
+                        raise RuntimeError('STOP: invalid B1 audit results')
                     cache[h]=[r['metric'] if r['success'] else None for r in runs]
                     save_cache()
                 for _ in done: submit_one()
