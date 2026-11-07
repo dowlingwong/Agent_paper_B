@@ -201,7 +201,7 @@ def _collect_b1_review(job):
     if not job['dryrun']:
         from concurrent.futures import ProcessPoolExecutor, as_completed
         with ProcessPoolExecutor(max_workers=job['workers']) as pool:
-            futures={pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out)):h for h,value in configs.items()}
+            futures={pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out),preserve_node_outputs=job['phase']=='b1'):h for h,value in configs.items()}
             for future in as_completed(futures):
                 h=futures[future];runs=future.result();cache[h]=[r['metric'] if r['success'] else None for r in runs]
                 write_json(out/'audit_cache.json',cache)
@@ -213,7 +213,7 @@ def _collect_b1_review(job):
             if h not in cache:
                 if job['dryrun']: cache[h]=[fixture_metric(files,s) for s in job['audit_seeds']]
                 else:
-                    runs=run_config(node,files,job['audit_seeds'],str(out))
+                    runs=run_config(node,files,job['audit_seeds'],str(out),preserve_node_outputs=job['phase']=='b1')
                     cache[h]=[r['metric'] if r['success'] else None for r in runs]
                 write_json(out/'audit_cache.json',cache)
             arrays.append(cache[h])

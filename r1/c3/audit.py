@@ -52,7 +52,7 @@ SEEDS_FILE = "audit_seeds.json"
 PILOT_DATA_CACHE = "experiments/r1/pilot/L8_20261009T152916Z/nodes/{node}/data_cache"
 
 
-def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str) -> list[dict]:
+def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, *, preserve_node_outputs: bool = False) -> list[dict]:
     """Run one configuration at the given joint seeds (subprocess-safe)."""
     from r1.harness import import_harness
     harness = import_harness()
@@ -81,6 +81,9 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str) -> 
                              target_files=spec.editable_paths, objective="Audit run; no change.")
     for i, s in enumerate(seeds):
         t0 = time.perf_counter()
+        if preserve_node_outputs:
+            from r1.exam.b1_node_artifacts import preserve_node_artifacts
+            preserve_node_artifacts(node_dir)
         res = worker.run_trial_at_seed(noedit, spec, i + 1, train_seed=s, split_seed=s)
         out.append({"seed": s, "success": bool(res.success), "failure": res.failure_message,
                     "metric": res.parsed_metrics.get(spec.metric_name) if res.success else None,

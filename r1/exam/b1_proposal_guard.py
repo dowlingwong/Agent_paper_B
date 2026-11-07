@@ -60,4 +60,6 @@ class B1IntegrityWorker(LocalWorker):
     """Run the unmodified pinned worker only after the integrity check."""
     def run_trial(self, proposal, node_spec, budget_index):
         verify_proposal(proposal, node_spec)
+        from r1.exam.b1_node_artifacts import preserve_node_artifacts
+        preserve_node_artifacts(self._node_root)
         return super().run_trial(proposal, node_spec, budget_index)
