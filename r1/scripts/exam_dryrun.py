@@ -78,6 +78,10 @@ def run(root):
     if stage_code: raise RuntimeError(f'Stage A DRYRUN failed; see {root}/stage-a_0.log')
     cfg=json.loads(config.read_text());cfg['stage_a_table_sha256']=digest_file(root/'stage-a/stage_a_table.json');write_json(config,cfg)
     interrupted=command('b1',root/'b1','--interrupt-root')
+    # Historical code below resumed a STOPPED synthetic batch.  The author
+    # prohibits automatic repeat after STOP; retain that code for provenance,
+    # but never read/modify the scene or invoke the second B1 command here.
+    raise RuntimeError('STOP: interrupted B1 DRYRUN preserved; automatic repeat is forbidden')
     before=json.loads((root/'b1/batch_state.json').read_text())
     preserved={key:digest_file(entry['path']) for key,entry in before['completed'].items()}
     resumed=command('b1',root/'b1')
