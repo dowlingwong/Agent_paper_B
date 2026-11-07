@@ -199,3 +199,26 @@ def test_signals_during_cleanup_are_recorded_without_interrupting_stop(tmp_path,
         pre.run('a'*40,tmp_path/'own')
     assert stops==['stop'] and 'PREFLIGHT_PASS' not in capsys.readouterr().out
     with lock.open('r+') as contender: fcntl.flock(contender,fcntl.LOCK_EX|fcntl.LOCK_NB)
+
+
+def test_broken_stderr_does_not_skip_lease_close_or_mask_original(tmp_path,monkeypatch):
+    home=tmp_path/'home';(home/'r1_locks').mkdir(parents=True);lock=home/'r1_locks/gpu0.lock';lock.touch()
+    monkeypatch.setattr(Path,'home',classmethod(lambda cls:home))
+    cfg={'ctx_size':32768,'n_gpu_layers':999,'gpu_uuid':'gpu','server':{'binary':'x','start_timeout':1}}
+    spec={'id':'qwen25_coder_7b','runtime':{'model_path':'fake'},'quant_source':{'sha256':'a'*64},'thinking_policy':{}}
+    monkeypatch.setattr(pre,'check_inputs',lambda *a:(cfg,spec,{}))
+    monkeypatch.setattr(pre,'idle_gpu',lambda *a:{'free_mib':2000})
+    monkeypatch.setattr(pre,'template_repair_args',lambda *a:[])
+    class FailedServer:
+        def __init__(self,*a,**kw): self.process=SimpleNamespace(pid=1234,poll=lambda:None);self.record={'pgid':1234}
+        def start(self,**kw): raise RuntimeError('original start failure')
+        def stop(self): raise RuntimeError('stop failure')
+    class Broken:
+        def write(self,*a): raise OSError('stderr unavailable')
+        def flush(self): raise OSError('stderr unavailable')
+    monkeypatch.setattr(pre,'LlamaServerInstance',FailedServer)
+    with monkeypatch.context() as context:
+        context.setattr(pre.sys,'stderr',Broken())
+        with pytest.raises(RuntimeError,match='original start failure'):
+            pre.run('a'*40,tmp_path/'own')
+    with lock.open('r+') as contender: fcntl.flock(contender,fcntl.LOCK_EX|fcntl.LOCK_NB)

@@ -205,13 +205,15 @@ def run(expected_head, out):
             stop_owned_server(inst)
         except BaseException as exc:
             cleanup_error=exc
-            print(f'STOP: owned server shutdown failed: {exc}',file=sys.stderr,flush=True)
+            try: print(f'STOP: owned server shutdown failed: {exc}',file=sys.stderr,flush=True)
+            except Exception: pass
         try:
             if fd is not None:
                 os.close(fd)
         except BaseException as exc:
             if cleanup_error is None: cleanup_error=exc
-            print(f'STOP: lease close failed: {exc}',file=sys.stderr,flush=True)
+            try: print(f'STOP: lease close failed: {exc}',file=sys.stderr,flush=True)
+            except Exception: pass
         finally:
             for sig,handler in signal_handlers.items():
                 signal.signal(sig,handler)
