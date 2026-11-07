@@ -8,6 +8,8 @@
 
 **09:42 CET 后续：** 按作者指示做了第五次 TASL-7 只读 SSH：实际 work 路径显示 ext4、Linux 6.8 和 cgroup v2 控制器可见；两份 Stage A 表及 `llama-server` 的 SHA-256 均与配置一致。GPU 快照仍为指定 UUID、236/24564 MiB、0% 利用率且 compute-app 列表为空。它没有取得 lease 或验证 cgroup 委派、freezer、`kcmp`、Python binding 与实时文件稳定性。完整本地 capture SHA `1d6ff1ffa3652eba65ecadd5cdb152076e852ee04cd41ac1e46935170e9632ad`；报告和独立审查在 `mac-b1-20261107` 的 `2a3ef82e`。无意启动或停止任何远程工作，工具副作用与并发变化未独立监测。
 
+**09:52 CET 工程探针（第六次 TASL-7 SSH）：** 在独立审查 probe 后，TASL-7 单进程短暂取得并释放现有 GPU flock；同一进程 self-`kcmp` 与 self-`pidfd` 检查报告通过，SSH 返回 0。探测使用系统 Python 3.10.12，没有启动 server、模型、GPU 工作负载或 campaign。这不证明父子共享同一 OFD、server 描述符、worker Python binding、后续 GPU 独占或 B1 readiness；除快照外未独立确认与相关 operator 的协调，短暂 flock 可能影响同时启动的协作任务。原始本地 capture SHA `c539d7cde1f6b38554e75de4711e72fe1bc41546d8fd5a4bdc95d2b2f894acb9`；结果和独立审查推送在 `mac-b1-20261107` 的 `6c42dc26`。
+
 09:21 报告后续：DRYRUN 入口临时根修复、独立 launcher 临时根修复及旧 launcher 禁止自动重跑，分别经限定范围审查并推送到 `mac-b1-direct-worker-20261107`（`9c354de3`）及仍未接受的 `mac-b1-combined-20261107`（`2b7e261e`）。这不恢复 Stage A→B1 kill/resume 覆盖，也不证明 launcher、pytest 或整个测试套件符合不删除规则。该次更新时 B1 分支为 `f6146de4`。下文各提交和状态是补写报告时的快照。
 
 会话中断后于 09:21 CET 恢复，本报告晚于原定 08:30；未在中断期间监控或操作主机。§0.3 的测试、最终 checkout、TASL-7 检查、真实 author gate、dry run 和 handover 均未完成。尤其是 §0.3 字面上要求先满足含已批准 note 的最终 HEAD 和真实 gate，才能将 note 设为 `approved: true`，形成顺序循环；需作者明确顺序后才能建立该候选。即使澄清后，其他阻塞仍须逐项解除。当前授权草稿为 `approved: false`，没有创建实际批准 note。
