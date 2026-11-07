@@ -20,7 +20,7 @@ LIVE_TEST="$HERE/B1_STOP_60EC_LIVE_AUDIT_TEST_20261107.py"
 sha() { shasum -a 256 "$1" | awk '{print $1}'; }
 test "$(sha "$CHECKER")" = 54a381e71b5a394e1b8615e2b8a5987d6bd43909fc857130acb280b22dae5920
 test "$(sha "$ROOT_TEST")" = 6c2389603583c2af2aa6bd151b643d8253d4b85445068d3bf6f4256eaef4b44f
-test "$(sha "$LIVE_TEST")" = 8834922f606b97ddc83cb676754f6923c9f53ce82acba546c43dc951cdcbc2dd
+test "$(sha "$LIVE_TEST")" = 4d852d2a76bd072081ece99063168e598a55243f691f7b81c94c11b12124b650
 printf 'BEGIN_UTC %s\n' "$(date -u +%FT%TZ)" > "$OUT/metadata.txt"
 # Verify bytes at the existing, already extracted 60ec engineering source.
 ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 'python3 -I -B - /home/dowling/r1_b1_engineering/b1_worker_engineering_20261107_2208_a/paper.tar /home/dowling/r1_b1_engineering/b1_worker_engineering_20261107_2208_a/paper f9d2813fa5a1654c7a0785c08738dd7c23d506f7e2a0c2c0cf90401ae9ace842 /home/dowling/r1_b1_engineering/b1_worker_engineering_20261107_2208_a/harness.tar /home/dowling/r1_b1_engineering/b1_worker_engineering_20261107_2208_a/harness 70270971de13dd5c02531bd9c23c90e3179db1862f8e5e8543b23d8c2fb8e2a6' < "$CHECKER" > "$OUT/tree-check.log" 2>&1
@@ -49,7 +49,7 @@ set -C
 base=/home/dowling/r1_b1_engineering/b1_worker_engineering_20261107_2208_a
 work="$base/stop_qualification_20261107"
 for p in "$work/pytest" "$work/live.log" "$work/cache"; do test ! -e "$p" && test ! -L "$p"; done
-test "$(sha256sum "$work/test_live.py" | cut -d ' ' -f 1)" = 8834922f606b97ddc83cb676754f6923c9f53ce82acba546c43dc951cdcbc2dd
+test "$(sha256sum "$work/test_live.py" | cut -d ' ' -f 1)" = 4d852d2a76bd072081ece99063168e598a55243f691f7b81c94c11b12124b650
 cd "$base/paper"
 env -i HOME="$base/home" TMPDIR="$base/tmp" PATH=/home/dowling/exam-x/work/venv/bin:/usr/bin:/bin \
  PYTHONPATH="$base/paper:$base/harness/src" AR_HARNESS_ROOT="$base/harness" \
