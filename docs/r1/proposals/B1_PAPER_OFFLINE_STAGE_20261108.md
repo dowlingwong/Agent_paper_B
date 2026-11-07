@@ -19,6 +19,7 @@ SOURCE=/absolute/path/to/final/clean/committed/paper
 HEAD=REPLACE_WITH_EXACT_REVIEWED_40_HEX_HEAD
 PACK=/private/tmp/paper-b-final-paper-payload-20261108-unique
 [ "$(shasum -a 256 "$SCRIPT" | awk '{print $1}')" = "$EXPECTED_SCRIPT" ] || exit 1
+set -C
 python3 -B "$SCRIPT" pack "$SOURCE" "$PACK" "$HEAD" > "${PACK}.log" 2>&1 || exit 1
 PAYLOAD="$PACK/paper.tar"
 PAYLOAD_SHA=$(shasum -a 256 "$PAYLOAD" | awk '{print $1}') || exit 1
