@@ -696,6 +696,8 @@ class ExamRunner:
         if self.cfg.get('dryrun') and os.path.lexists(lock):
             raise RuntimeError('STOP: existing DRYRUN runner lock; preserve and do not resume')
         if lock.exists():
+            if self.cfg.get('dryrun'):
+                raise RuntimeError('STOP: concurrent DRYRUN runner lock; preserve and do not resume')
             old=json.loads(lock.read_text())
             try: os.kill(old['pid'],0)
             except ProcessLookupError: lock.rename(self.out/f'runner.lock.stale.{time.time_ns()}')
