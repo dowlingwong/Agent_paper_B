@@ -1,0 +1,11 @@
+test_actual_dispatch_changes_only_dryrun_b1 (r1.tests.stagea_recovery_memory.test_dryrun_b1_aggregate_preserve.DryrunB1AggregateTests.test_actual_dispatch_changes_only_dryrun_b1) ... ok
+test_actual_producer_and_batch_reader_contract (r1.tests.stagea_recovery_memory.test_dryrun_b1_aggregate_preserve.DryrunB1AggregateTests.test_actual_producer_and_batch_reader_contract) ... ok
+test_bad_name_or_relative_path_refuses_before_mkdir (r1.tests.stagea_recovery_memory.test_dryrun_b1_aggregate_preserve.DryrunB1AggregateTests.test_bad_name_or_relative_path_refuses_before_mkdir) ... ok
+test_identity_race_and_unsupported_rename_keep_old (r1.tests.stagea_recovery_memory.test_dryrun_b1_aggregate_preserve.DryrunB1AggregateTests.test_identity_race_and_unsupported_rename_keep_old) ... ok
+test_two_versions_preserve_inode_and_candidate_reader_equality (r1.tests.stagea_recovery_memory.test_dryrun_b1_aggregate_preserve.DryrunB1AggregateTests.test_two_versions_preserve_inode_and_candidate_reader_equality) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.025s
+
+OK
+PURE_TEST_RESULT tests_run=5 failures=0 errors=0 skipped=0

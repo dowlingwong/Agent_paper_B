@@ -329,6 +329,14 @@ def _write_candidate_manifest(path, manifest, *, phase, dryrun):
     return write_json(path,manifest)
 
 
+def _write_aggregate_manifest(path, aggregate, *, phase, dryrun):
+    """Retain synthetic B1 aggregate versions; leave other writes unchanged."""
+    if phase=='b1' and dryrun:
+        from r1.exam.b1_state_preserve import publish_dryrun_b1_aggregate
+        return publish_dryrun_b1_aggregate(path,aggregate)
+    return write_json(path,aggregate)
+
+
 def evidence(runner, phase, selected, interrupt):
     if phase != 'b1' or not is_v2(getattr(runner,'rule',None)):
         raise PreparationStop('STOP: only x5_rule/v2 B1 evidence is implemented')
@@ -469,7 +477,8 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
         path=runner.out/spec['id']/f'{phase}_manifest.json'
         _write_candidate_manifest(path,manifest,phase=phase,dryrun=bool(cfg.get('dryrun')))
         rows.append(manifest)
-    write_json(runner.out/f'{phase}_manifests.json',{'label':'EXAM','manifests':rows})
+    _write_aggregate_manifest(runner.out/f'{phase}_manifests.json',{'label':'EXAM','manifests':rows},
+                              phase=phase,dryrun=bool(cfg.get('dryrun')))
 
 
 def _alive(pid):
