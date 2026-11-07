@@ -1037,6 +1037,21 @@ Consequences noted by the recording agent (not part of the decisions):
 - *(proposed)* For v2 finalist eligibility, D28 uses primary thinking-off roots only; record thinking-on D28 separately as descriptive. This is not an authorization to run B1 or B2.
 - *(proposed)* All HoreKa jobs for this project go through one submission tool and shared lock, with submissions paused when accounting is not reconciled. This is a design choice to be implemented and independently reviewed; it does not establish site-enforced exclusivity, accounting completeness, or control over unrelated jobs or submission routes. Those limitations remain open and the current real-submit STOP remains until resolved and reviewed.
 
+### 7 November 2026 (00:45–00:55 CET) — overnight B1 and bounded host work (author)
+
+The author supplied the following instructions in `prompts/MAC_OVERNIGHT_PROMPT_20261107.md`, revision 3, §0. The decision cells quote the supplied wording; the prompt contains the full fixed Q2 rule, launch conditions, monitoring and host limits.
+
+| ID | Author's decision |
+|---|---|
+| R1-OVERNIGHT-07NOV-HANDSOFF | "没有的话让它继续做，我还是回去睡觉 handsoff" |
+| R1-OVERNIGHT-07NOV-HOST | "加上顺手回答 Q1， 那个agent可以ssh，可以动GPU跑实验，你update一下prompt" |
+| R1-OVERNIGHT-07NOV-B1 | "我是想让它今晚直接跑正式实验，你update下prompt" |
+| R1-EXAM-B1-ACCEPTANCE-RECORD-07NOV | "B1 acceptance record: use OPS_O1_20261104.md sha256 0cda82fa83eaa3546f272f7e6f834b052acc31dec28485e2b4447f6364a2053e." |
+| R1-EXAM-B1-ANCHOR-RULE-07NOV | "The rule is fixed now, before any B1 data. Apply it exactly. Do not tune it after computing anything." |
+| R1-EXAM-RULE-X5V2 | "I approve x5_rule_v2 SHA256 53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad and the reviewed B1 authorization note for TASL-7, subject to the agreed anchor reference, exact final checkout, and all reviewed handover and phase gates." |
+
+The author-fixed Q2 procedure, its conditional fallback and all phase/host prerequisites are specified in the cited prompt §0.2–§0.5. The rule row is conditional on the anchor, final checkout and all reviewed gates; this row alone does not establish their satisfaction. `approved: true` and B1 launch remain prohibited until all prompt §0.3 launch conditions hold. The author did not authorize B2, X.7 or sweep 2 in this prompt.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
