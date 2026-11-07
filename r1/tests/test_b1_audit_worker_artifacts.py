@@ -19,7 +19,7 @@ def test_audit_worker_uses_guard_only_for_b1(tmp_path, monkeypatch, preserve):
 
     harness = tmp_path / 'harness'
     (harness / 'nodes' / 'fixture').mkdir(parents=True)
-    spec = SimpleNamespace(editable_paths=(), metric_name='score', run_command='unused')
+    spec = SimpleNamespace(name='fixture', editable_paths=(), metric_name='score', run_command='unused')
     monkeypatch.setattr(r1.harness, 'import_harness', lambda: harness)
     monkeypatch.setattr(registry, 'load_registered_node', lambda *args, **kwargs: spec)
     paths = []

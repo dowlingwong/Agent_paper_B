@@ -36,7 +36,7 @@ def test_partial_run_log_failure_stops_before_harness_exception_rewrite(tmp_path
     monkeypatch.setattr(io, 'open', failing_open)
     result = SimpleNamespace(stdout='partial log content', stderr='', returncode=0)
     with patch('autoresearch.worker.local_worker.subprocess.run', return_value=result), pytest.raises(B1WorkerArtifactStop):
-        worker._run_command(SimpleNamespace(run_command='unused'), trial, 'trial-001')
+        worker._run_command(SimpleNamespace(name='digits_mlp', run_command='unused'), trial, 'trial-001')
     assert (trial / 'run.log').read_text() == 'partial'
     assert len(attempts) == 1
 
@@ -56,7 +56,7 @@ def test_successful_worker_writes_patch_and_log(tmp_path):
     root, worker = make_worker(tmp_path)
     result = SimpleNamespace(stdout='val_score: 0.7', stderr='', returncode=0)
     with patch('autoresearch.worker.local_worker.subprocess.run', return_value=result):
-        out = worker.run_trial(proposal(), SimpleNamespace(**SPEC.__dict__, run_command='unused'), 1)
+        out = worker.run_trial(proposal(), SimpleNamespace(**SPEC.__dict__, name='digits_mlp', run_command='unused'), 1)
     assert out.success
     assert (tmp_path / 'art' / 'trial-001' / 'patch.diff').is_file()
     assert (tmp_path / 'art' / 'trial-001' / 'run.log').read_text().startswith('val_score: 0.7')
