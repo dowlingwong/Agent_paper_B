@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+- M11 committed gate/decision binding (7 Nov; AI-assisted, Codex): candidate `f0274ef` independently accepted for committed binding and the proposed partial-T1 confirmation format (`M11_D8_PARTIAL_T1_BINDING_REVIEW_20261107.md`). The full D8 gate, inference, protected readers and author confirmation remain STOP.
+
+- B1 (7 Nov; AI-assisted, Codex): conditional author approval and fixed Q2 rule recorded; the independently reviewed interval and current B1 engineering work are on `mac-b1-20261107`. B1 has not started; note ordering, STOP preservation, no-deletion, host ownership, tests and final checkout review remain open.
+
 - B1 sealed-path correction (5 Nov; AI-assisted, Codex): case-insensitive `r1_sealed` aliases refused at `bab4b8c`; independent review `MAC_B1_BATCH_ADVERSARIAL_AUDIT_20261105.md` and unsigned-draft repin review at `4019756`. B1 remains not launch-ready pending author/anchor/test/site conditions and final checkout review.
 
 - M11 reader corrections (5 Nov; AI-assisted, Codex): D8 decision-table/date validation, case-insensitive sealed path rejection and audit seed-helper protection corrected at `8645778` / `d9447e1`, independently accepted at `3d0b915` (`MAC_M11_FINAL_READER_INTEGRATION_REVIEW_20261105.md`, 39 synthetic tests). Full D8 gate, author confirmation and protected training-reader coverage remain open.
