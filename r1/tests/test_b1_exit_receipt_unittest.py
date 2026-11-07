@@ -30,6 +30,9 @@ class ReceiptTests(unittest.TestCase):
         lock_patcher = mock.patch.object(receipt, '_reader_publication_lock', side_effect=lambda batch: nullcontext())
         lock_patcher.start()
         self.addCleanup(lock_patcher.stop)
+        binding_patcher = mock.patch.object(receipt, '_supervisor_binding', return_value='b'*64)
+        binding_patcher.start()
+        self.addCleanup(binding_patcher.stop)
 
     def file_info(self, *, inode=9, size=2):
         return SimpleNamespace(st_mode=stat.S_IFREG | 0o600, st_uid=os.getuid(),
@@ -121,7 +124,8 @@ class ReceiptTests(unittest.TestCase):
                 receipt.verify_waited_success('/synthetic/batch', HEAD)
 
     def test_changed_state_refuses_verification(self):
-        data = {'version':'b1_waited_exit/v1','runner_pid':PID,'exit_code':0,
+        data = {'version':'b1_waited_exit/v2','runner_pid':PID,'exit_code':0,
+                'supervisor_dir':'/supervisor','supervisor_sha256':'b'*64,
                 'authorization_checkout_head':HEAD,'active_sha256':hashlib.sha256(ACTIVE).hexdigest(),
                 'batch_state_sha256':hashlib.sha256(COMPLETE).hexdigest(),
                 'finalization_sha256':hashlib.sha256(FINALIZED).hexdigest()}
@@ -132,7 +136,8 @@ class ReceiptTests(unittest.TestCase):
                 receipt.verify_waited_success('/synthetic/batch', HEAD)
 
     def test_matching_bytes_allow_receipt_validation(self):
-        data = {'version':'b1_waited_exit/v1','runner_pid':PID,'exit_code':0,
+        data = {'version':'b1_waited_exit/v2','runner_pid':PID,'exit_code':0,
+                'supervisor_dir':'/supervisor','supervisor_sha256':'b'*64,
                 'authorization_checkout_head':HEAD,'active_sha256':hashlib.sha256(ACTIVE).hexdigest(),
                 'batch_state_sha256':hashlib.sha256(COMPLETE).hexdigest(),
                 'finalization_sha256':hashlib.sha256(FINALIZED).hexdigest()}
@@ -142,7 +147,8 @@ class ReceiptTests(unittest.TestCase):
             self.assertEqual(receipt.verify_waited_success('/synthetic/batch', HEAD), data)
 
     def test_changed_finalization_refuses_verification(self):
-        data = {'version':'b1_waited_exit/v1','runner_pid':PID,'exit_code':0,
+        data = {'version':'b1_waited_exit/v2','runner_pid':PID,'exit_code':0,
+                'supervisor_dir':'/supervisor','supervisor_sha256':'b'*64,
                 'authorization_checkout_head':HEAD,'active_sha256':hashlib.sha256(ACTIVE).hexdigest(),
                 'batch_state_sha256':hashlib.sha256(COMPLETE).hexdigest(),
                 'finalization_sha256':hashlib.sha256(FINALIZED).hexdigest()}

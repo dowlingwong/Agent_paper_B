@@ -97,11 +97,11 @@ def _handle_possible_publication_error(out, head, publication_error):
     return True
 
 
-def _publish_or_reconcile(child, out, head):
+def _publish_or_reconcile(child, out, head, supervisor_dir):
     """Return after verified terminal commit; block readers on ambiguity."""
     from r1.exam.b1_exit_receipt import publish_after_wait
     try:
-        publish_after_wait(child,out,head)
+        publish_after_wait(child,out,head,supervisor_dir)
     except BaseException as publication_error:
         if not _handle_possible_publication_error(out,head,publication_error):
             raise PublicationUncertain('STOP: commit uncertain; batch reader must refuse or is NOT CHECKABLE') from publication_error
@@ -120,7 +120,7 @@ def _hold_publication_lock(out):
     return fd
 
 
-def _release_then_publish(child, out, head, handoff):
+def _release_then_publish(child, out, head, handoff, supervisor_dir):
     """Release an empty guardian before the terminal success publication.
 
     The supervisor keeps its inherited lease through both operations. A
@@ -132,7 +132,7 @@ def _release_then_publish(child, out, head, handoff):
     handoff.sendall(b'RELEASE')
     if handoff.recv(64) != b'RELEASED':
         raise RuntimeError('STOP: guardian did not acknowledge release')
-    _publish_or_reconcile(child,out,head)
+    _publish_or_reconcile(child,out,head,supervisor_dir)
 
 
 def _finish_or_stop(out, head, publication_may_have_started, exc, live_fd, supervisor_dir):
@@ -213,7 +213,7 @@ def main(argv=None):
         publication_lock_fd=_hold_publication_lock(out)
         # Kept open through normal exit, or indefinitely on STOP.
         publication_may_have_started=True
-        _release_then_publish(child,out,head,handoff_supervisor)
+        _release_then_publish(child,out,head,handoff_supervisor,supervisor_dir)
         # Atomic publication is terminal success; process exit releases the
         # supervisor's lease. No later cleanup failure changes classification.
         return 0

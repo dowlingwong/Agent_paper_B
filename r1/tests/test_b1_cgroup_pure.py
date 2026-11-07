@@ -317,12 +317,12 @@ class SupervisorContractTests(unittest.TestCase):
         module._verify_waited_success_unlocked=Mock()
         module.UNCERTAIN='B1_COMMIT_UNCERTAIN.json'
         with patch.dict(sys.modules, {'r1.exam.b1_exit_receipt':module}):
-            b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
+            b1_supervisor._publish_or_reconcile(Mock(),'/batch','head','/supervisor')
             module._verify_waited_success_unlocked.assert_called_once_with('/batch','head')
             module._verify_waited_success_unlocked.side_effect=RuntimeError('ACTIVE still present')
             with patch.object(b1_supervisor, '_exclusive_json') as write:
                 with self.assertRaisesRegex(b1_supervisor.PublicationUncertain,'commit uncertain'):
-                    b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
+                    b1_supervisor._publish_or_reconcile(Mock(),'/batch','head','/supervisor')
             write.assert_called_once()
 
     def test_filesystem_preflight_refuses_before_lease_and_runner(self):
@@ -356,7 +356,7 @@ class SupervisorContractTests(unittest.TestCase):
         handoff=Mock();handoff.recv.side_effect=OSError('lost ack')
         with patch.object(b1_supervisor,'_publish_or_reconcile') as publish:
             with self.assertRaises(OSError):
-                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff)
+                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff,'/supervisor')
         handoff.sendall.assert_called_once_with(b'RELEASE')
         publish.assert_not_called()
 
@@ -366,7 +366,7 @@ class SupervisorContractTests(unittest.TestCase):
         stop_write=Mock(side_effect=OSError('disk full'))
         with patch.object(b1_supervisor,'_publish_or_reconcile') as publish:
             try:
-                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff)
+                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff,'/supervisor')
             except OSError:
                 try: stop_write()
                 except OSError: pass
@@ -381,7 +381,7 @@ class SupervisorContractTests(unittest.TestCase):
         handoff.sendall.side_effect=lambda message: calls.append(('send',message))
         handoff.recv.side_effect=lambda limit: calls.append(('ack',limit)) or b'RELEASED'
         with patch.object(b1_supervisor,'_publish_or_reconcile',side_effect=lambda *args: calls.append(('publish',))):
-            b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff)
+            b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff,'/supervisor')
         self.assertEqual(calls,[('send',b'RELEASE'),('ack',64),('publish',)])
 
     def test_wrong_release_ack_does_not_publish_success(self):
@@ -389,7 +389,7 @@ class SupervisorContractTests(unittest.TestCase):
         handoff=Mock();handoff.recv.return_value=b'FAILED'
         with patch.object(b1_supervisor,'_publish_or_reconcile') as publish:
             with self.assertRaises(RuntimeError):
-                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff)
+                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff,'/supervisor')
         publish.assert_not_called()
 
     def test_contract_refuses_supervisor_stop_before_adopting_lease(self):

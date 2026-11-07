@@ -39,7 +39,9 @@ def classify_supervisor_exit(batch, supervisor_dir, head, observed_exit):
             'requires_handover_restoration':True,'requires_complete_batch_verifier':True}
     if any(_exists_checked(path) for path in stops):
         return {'classification':'STOP_OR_UNCERTAIN',**common}
-    verify_waited_success(batch,head)
+    waited=verify_waited_success(batch,head)
+    if waited.get('supervisor_dir') != str(supervisor_dir):
+        raise ValueError('STOP: exit classifier supervisor differs from waited receipt')
     if any(_exists_checked(path) for path in stops) or read_owned_regular(binding_path)!=binding_raw:
         raise ValueError('STOP: supervisor disposition changed while being checked')
     return {'classification':('COMMITTED_NORMAL_EXIT' if observed_exit==0 else

@@ -194,7 +194,35 @@ def _retire_active_last(batch, expected_active):
                     pass
 
 
-def publish_waited_success(batch, head, pid, wait_result):
+def _supervisor_binding(batch, head, supervisor_dir):
+    """Bind receipt to the owned supervisor sibling and refuse its STOP."""
+    batch, supervisor_dir = Path(batch), Path(supervisor_dir)
+    if (not batch.is_absolute() or not supervisor_dir.is_absolute()
+            or batch.resolve(strict=True)!=batch or supervisor_dir.resolve(strict=True)!=supervisor_dir
+            or batch.parent!=supervisor_dir.parent):
+        raise RuntimeError('STOP: B1 supervisor directory is not a canonical sibling')
+    info=os.lstat(supervisor_dir)
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.getuid() or info.st_mode & 0o022:
+        raise RuntimeError('STOP: B1 supervisor directory is unsafe')
+    stop=supervisor_dir/'SUPERVISOR_STOP.json'
+    def reject_stop():
+        try: os.lstat(stop)
+        except FileNotFoundError: return
+        raise RuntimeError('STOP: B1 supervisor STOP record exists')
+    reject_stop()
+    raw=read_owned_regular(supervisor_dir/'SUPERVISOR.json')
+    try: data=json.loads(raw)
+    except (TypeError,ValueError) as exc:
+        raise RuntimeError('STOP: B1 supervisor binding malformed') from exc
+    if (not isinstance(data,dict) or data.get('head')!=head or data.get('out')!=str(batch)
+            or type(data.get('pid')) is not int or data['pid']<=0
+            or type(data.get('start_ticks')) is not int or data['start_ticks']<=0):
+        raise RuntimeError('STOP: B1 supervisor binding differs')
+    reject_stop()
+    return hashlib.sha256(raw).hexdigest()
+
+
+def publish_waited_success(batch, head, pid, wait_result, supervisor_dir=None):
     """A cooperative supervisor calls this only with its actual child's wait result."""
     if type(wait_result) is not int or wait_result != 0:
         raise RuntimeError('STOP: B1 runner did not exit successfully')
@@ -202,7 +230,9 @@ def publish_waited_success(batch, head, pid, wait_result):
     _require_local_filesystem(batch)
     active, state = active_and_state(batch, head, pid)
     finalized = _verified_finalization(batch, head)
-    receipt = {'version':'b1_waited_exit/v1','runner_pid':pid,'exit_code':0,
+    supervisor_hash = _supervisor_binding(batch, head, supervisor_dir)
+    receipt = {'version':'b1_waited_exit/v2','runner_pid':pid,'exit_code':0,
+               'supervisor_dir':str(supervisor_dir),'supervisor_sha256':supervisor_hash,
                'authorization_checkout_head':head,
                'active_sha256':hashlib.sha256(active).hexdigest(),
                'batch_state_sha256':hashlib.sha256(state).hexdigest(),
@@ -212,10 +242,10 @@ def publish_waited_success(batch, head, pid, wait_result):
     return receipt
 
 
-def publish_after_wait(child, batch, head):
+def publish_after_wait(child, batch, head, supervisor_dir=None):
     """Wait for the actual runner; no success receipt on failure or signal."""
     result = child.wait()
-    return publish_waited_success(batch, head, child.pid, result)
+    return publish_waited_success(batch, head, child.pid, result, supervisor_dir)
 
 
 def _reject_commit_uncertainty(batch):
@@ -262,10 +292,16 @@ def _verify_waited_success_unlocked(batch, head):
     receipt = json.loads(raw)
     if (not isinstance(receipt,dict) or set(receipt) != {
             'version','runner_pid','exit_code','authorization_checkout_head',
-            'active_sha256','batch_state_sha256','finalization_sha256'} or receipt.get('version') != 'b1_waited_exit/v1'
+            'active_sha256','batch_state_sha256','finalization_sha256','supervisor_dir','supervisor_sha256'} or receipt.get('version') != 'b1_waited_exit/v2'
             or type(receipt.get('exit_code')) is not int or receipt['exit_code'] != 0
             or receipt.get('authorization_checkout_head') != head):
         raise RuntimeError('STOP: invalid B1 waited-exit receipt')
+    supervisor_dir = receipt.get('supervisor_dir')
+    if not isinstance(supervisor_dir,str):
+        raise RuntimeError('STOP: B1 supervisor directory binding absent')
+    supervisor_hash = _supervisor_binding(batch,head,supervisor_dir)
+    if receipt.get('supervisor_sha256') != supervisor_hash:
+        raise RuntimeError('STOP: B1 supervisor binding bytes mismatch')
     active, state = active_and_state(batch, head, receipt.get('runner_pid'), retired=True)
     finalized = _verified_finalization(batch, head)
     if (receipt.get('active_sha256') != hashlib.sha256(active).hexdigest()
@@ -276,5 +312,7 @@ def _verify_waited_success_unlocked(batch, head):
         raise RuntimeError('STOP: B1 batch has a STOP record')
     if os.path.lexists(Path(batch) / ACTIVE):
         raise RuntimeError('STOP: B1 active sentinel reappeared')
+    if _supervisor_binding(batch,head,supervisor_dir) != supervisor_hash:
+        raise RuntimeError('STOP: B1 supervisor binding changed during verification')
     _reject_commit_uncertainty(batch)
     return receipt

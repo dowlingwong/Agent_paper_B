@@ -17,7 +17,8 @@ class OperatorExitTests(unittest.TestCase):
         with patch.object(operator.Path,'resolve',lambda path,**kw:path), \
              patch.object(operator,'read_owned_regular',return_value=self.binding if binding is None else binding), \
              patch.object(operator,'_exists_checked',side_effect=lambda p:str(p) in stop_paths), \
-             patch.object(operator,'verify_waited_success',side_effect=verify_error) as verify:
+             patch.object(operator,'verify_waited_success',side_effect=verify_error,
+                          return_value={'supervisor_dir':'/work/supervisor'}) as verify:
             value=operator.classify_supervisor_exit('/work/batch','/work/supervisor',self.head,observed_exit)
         return value,verify
 
