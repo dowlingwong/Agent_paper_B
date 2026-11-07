@@ -1,0 +1,9 @@
+test_fixed_s_and_plugins_precede_selector (__main__.LaunchBoundary.test_fixed_s_and_plugins_precede_selector) ... ok
+test_refuse_cli_option_or_path_injection (__main__.LaunchBoundary.test_refuse_cli_option_or_path_injection) ... ok
+test_reject_empty_duplicate (__main__.LaunchBoundary.test_reject_empty_duplicate) ... ok
+test_reject_external_pytest_inputs (__main__.LaunchBoundary.test_reject_external_pytest_inputs) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK
