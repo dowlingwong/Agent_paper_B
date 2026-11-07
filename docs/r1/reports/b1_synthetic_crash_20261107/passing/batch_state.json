@@ -1,0 +1,42 @@
+{
+  "schema": "exam_batch/v1",
+  "label": "EXAM",
+  "execution_label": "DRYRUN",
+  "phase": "b1",
+  "binding": "59c64ea4ae6108b4b2e5fe468c932286b1207fa3243f1ff87b76e4356de72e36",
+  "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+  "completed": {
+    "qwen25_coder_7b/b1/off/digits_mlp__s9001": {
+      "path": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-537/test_stagea_to_b1_owned_parent0/stagea_b1_synthetic/b1/qwen25_coder_7b/b1/off/digits_mlp__s9001/campaign_manifest.json",
+      "sha256": "61c08eb6f460519f335e2a6449b4dba67236da922072f9fecf42c1ddc744ca30",
+      "post_check_sha256": "1fe286cdb9368ec5640a797d6206fbbd4afa70ce488365b3734cfcb3919cfe44"
+    },
+    "qwen25_coder_7b/b1/off/openml_credit_approval__s9001": {
+      "path": "/private/var/folders/mf/cqjfz_8x7tgbhvl955fzybtr0000gn/T/pytest-of-wongdowling/pytest-537/test_stagea_to_b1_owned_parent0/stagea_b1_synthetic/b1/qwen25_coder_7b/b1/off/openml_credit_approval__s9001/campaign_manifest.json",
+      "sha256": "324ea7b441a716f2d3a96a1fae17baa143660aebed0d52c7d4202094b40d3825",
+      "post_check_sha256": "f21248f9b27a48d6bdbb200465c05e002609016de9c9bc5cd488ed48e422f2c6"
+    }
+  },
+  "interruptions": [],
+  "status": "COMPLETE",
+  "server_intervals": [
+    {
+      "candidate": "qwen25_coder_7b",
+      "phase": "b1",
+      "mode": "off",
+      "context": 32768,
+      "start": 1794010025.81149,
+      "end": 1794010031.946618,
+      "recovered_after_interruption": true,
+      "cost_is_upper_bound": true
+    },
+    {
+      "candidate": "qwen25_coder_7b",
+      "phase": "b1",
+      "mode": "off",
+      "context": 32768,
+      "start": 1794010032.010207,
+      "end": 1794010035.4774709
+    }
+  ]
+}
