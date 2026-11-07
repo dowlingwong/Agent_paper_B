@@ -8,10 +8,10 @@ import sys
 
 
 def main(argv):
-    if len(argv) < 6:
+    if len(argv) < 7:
         return 2
-    procs_fd, ready_fd, grant_fd, log_fd, exec_fd = map(int, argv[:5])
-    command = argv[5:]
+    procs_fd, ready_fd, grant_fd, stdout_fd, stderr_fd, exec_fd = map(int, argv[:6])
+    command = argv[6:]
     if not command or not os.path.isabs(command[0]):
         return 2
     try:
@@ -24,10 +24,11 @@ def main(argv):
         if os.read(grant_fd, 1) != b'G':
             return 2
         os.close(grant_fd)
-        os.dup2(log_fd, 1)
-        os.dup2(log_fd, 2)
-        if log_fd not in (1, 2):
-            os.close(log_fd)
+        os.dup2(stdout_fd, 1)
+        os.dup2(stderr_fd, 2)
+        for fd in {stdout_fd, stderr_fd}:
+            if fd not in (1, 2):
+                os.close(fd)
         # Parent observes this descriptor close only at exec or process exit;
         # it must also verify the live executable and command line.
         os.set_inheritable(exec_fd, False)

@@ -112,14 +112,15 @@ def parse_version(text: str) -> dict:
             'commit': commit.group(1) if commit else inner}
 
 
-def build_info(binary: str, timeout: float = 60.0) -> dict:
+def build_info(binary: str, timeout: float = 60.0, capture=None) -> dict:
     """``<binary> --version``: the raw output, the ``version: <n> (<commit>)`` line and its parts.
 
     llama.cpp prints the version on stderr (CUDA builds may print device lines
     first); both streams are searched.
     """
-    done = subprocess.run([str(binary), '--version'], capture_output=True, text=True, timeout=timeout,
-                          stdin=subprocess.DEVNULL)
+    done = (capture([str(binary), '--version'], timeout=timeout) if capture is not None else
+            subprocess.run([str(binary), '--version'], capture_output=True, text=True, timeout=timeout,
+                           stdin=subprocess.DEVNULL))
     text = (done.stdout or '') + (done.stderr or '')
     return {'binary': str(binary), 'returncode': done.returncode, 'raw': text.strip()[-2000:], **parse_version(text)}
 
@@ -158,11 +159,12 @@ def parse_compute_apps(text: str) -> list[dict]:
     return rows
 
 
-def gpu_compute_apps(timeout: float = 60.0) -> list[dict] | None:
+def gpu_compute_apps(timeout: float = 60.0, capture=None) -> list[dict] | None:
     """The GPU compute processes now (pid, GPU uuid, MiB), or None when ``nvidia-smi`` cannot be read."""
     try:
-        done = subprocess.run(['nvidia-smi', '--query-compute-apps=pid,gpu_uuid,used_memory',
-                               '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=timeout)
+        argv=['nvidia-smi', '--query-compute-apps=pid,gpu_uuid,used_memory','--format=csv,noheader,nounits']
+        done = (capture(argv, timeout=timeout) if capture is not None else
+                subprocess.run(argv, capture_output=True, text=True, timeout=timeout))
     except (OSError, subprocess.TimeoutExpired):
         return None
     return parse_compute_apps(done.stdout) if done.returncode == 0 else None

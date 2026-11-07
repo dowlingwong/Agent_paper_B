@@ -509,9 +509,11 @@ def main(argv=None):
         raise PreparationStop('STOP: D3 cold-cache cooperative lease FD absent')
     if a.allow_placeholders and not a.check_config: p.error('--allow-placeholders is only for --check-config')
     cfg=load_config(a.config,allow_placeholders=a.allow_placeholders)
-    b1_config_head=None
+    b1_config_head=None;b1_supervisor=None
     if a.phase=='b1' and not a.check_config and not cfg.get('dryrun'):
         b1_config_head=require_committed_b1_config(a.config,cfg)
+        from r1.exam.b1_supervisor_contract import require_supervisor
+        b1_supervisor=require_supervisor()
     if not a.check_config and a.phase=='stage-a':
         from r1.exam.cache_runtime import authorize_cooperative_stagea
         authorize_cooperative_stagea(cfg)
@@ -535,7 +537,7 @@ def main(argv=None):
     unresolved=placeholders({k:cfg[k] for k in required})
     if unresolved: raise RuntimeError(f'STOP: unresolved phase settings: {unresolved}')
     if a.phase=='b1' and not cfg.get('dryrun'): verify_anchor_reference(cfg)
-    runner=ExamRunner(cfg,a.out,b1_config_head=b1_config_head)
+    runner=ExamRunner(cfg,a.out,b1_config_head=b1_config_head,b1_supervisor=b1_supervisor)
     preserve_running=False
     closed_normally=False
     try:
@@ -557,6 +559,8 @@ def main(argv=None):
         runner.state['status']='COMPLETE';runner.save()
         if a.phase=='b1' and not cfg.get('dryrun'):
             runner.finish_b1_lease()
+            from r1.exam.b1_finalization import write_finalization
+            write_finalization(runner.out,runner.author_head)
             closed_normally=True
     except BaseException as exc:
         preserve_running=a.phase=='stage-a' or (a.phase=='b1' and not cfg.get('dryrun'))

@@ -74,6 +74,9 @@ def verify_batch(batch, cfg, rule_sha):
     state=_read(batch/'batch_state.json')
     if state.get('status')!='COMPLETE' or state.get('phase')!='b1' or state.get('execution_label')!='EVIDENCE':
         _stop('is not a completed evidence batch')
+    from r1.exam.b1_finalization import verify_finalization
+    try: verify_finalization(batch,head)
+    except ValueError as exc: _stop(f'finalization receipt invalid: {exc}')
     registry_path=batch/'registry_snapshot.yaml'
     if registry_path.resolve().parent!=batch or digest_file(registry_path)!=digest_file(cfg['registry']):
         _stop('registry snapshot differs from configured registry')

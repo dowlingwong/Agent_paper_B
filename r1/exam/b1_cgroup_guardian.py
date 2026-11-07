@@ -50,13 +50,20 @@ def _reply(control, payload, freeze_fd, events_fd):
 
 
 def main(argv):
-    if len(argv) != 4:
+    if len(argv) != 6:
         return 2
-    control_fd, parent_pidfd, freeze_fd, events_fd = map(int, argv)
+    control_fd, parent_pidfd, freeze_fd, events_fd, supervisor_pidfd, supervisor_live_fd = map(int, argv)
     control = socket.socket(fileno=control_fd)
     poller = select.poll()
     poller.register(parent_pidfd, select.POLLIN | select.POLLHUP | select.POLLERR)
+    poller.register(supervisor_pidfd, select.POLLIN | select.POLLHUP | select.POLLERR)
+    poller.register(supervisor_live_fd, select.POLLIN | select.POLLHUP | select.POLLERR)
     poller.register(control_fd, select.POLLIN | select.POLLHUP | select.POLLERR)
+    initial = dict(poller.poll(0))
+    if initial.get(parent_pidfd, 0) or initial.get(supervisor_pidfd, 0) or initial.get(supervisor_live_fd, 0):
+        try: _freeze(freeze_fd, events_fd)
+        except Exception: pass
+        _retain_lease()
     try:
         control.sendall(b'READY')
     except OSError:
@@ -75,7 +82,7 @@ def main(argv):
             _retain_lease()
         # A pidfd is an independent parent-death witness: pipe/socket duplicates
         # in children cannot suppress the death event.
-        dead = bool(events.get(parent_pidfd, 0))
+        dead = bool(events.get(parent_pidfd, 0) or events.get(supervisor_pidfd, 0) or events.get(supervisor_live_fd, 0))
         control_event = events.get(control_fd, 0)
         if dead or (control_event & (select.POLLHUP | select.POLLERR)):
             try:

@@ -31,7 +31,7 @@ class BootstrapTests(unittest.TestCase):
              patch.object(bootstrap.os, 'dup2', side_effect=dup2), \
              patch.object(bootstrap.os, 'set_inheritable'), \
              patch.object(bootstrap.os, 'execve', side_effect=execve):
-            self.assertEqual(bootstrap.main(['10','11','12','13','14','/bin/fake','--arg']), 2)
+            self.assertEqual(bootstrap.main(['10','11','12','13','13','14','/bin/fake','--arg']), 2)
         self.assertLess(operations.index(('write', 10, b'0\n')), operations.index(('read', 12, 1)))
         self.assertLess(operations.index(('read', 12, 1)), operations.index(('dup', 13, 1)))
         self.assertLess(operations.index(('dup', 13, 1)), operations.index(('exec', '/bin/fake', ['/bin/fake','--arg'])))
@@ -40,13 +40,13 @@ class BootstrapTests(unittest.TestCase):
         with patch.object(bootstrap.os, 'write', side_effect=lambda fd, data: len(data)), \
              patch.object(bootstrap.os, 'close'), patch.object(bootstrap.os, 'read', return_value=b''), \
              patch.object(bootstrap.os, 'dup2') as dup, patch.object(bootstrap.os, 'execve') as execute:
-            self.assertEqual(bootstrap.main(['10','11','12','13','14','/bin/fake']), 2)
+            self.assertEqual(bootstrap.main(['10','11','12','13','13','14','/bin/fake']), 2)
         dup.assert_not_called(); execute.assert_not_called()
 
     def test_short_enrollment_does_not_grant_workload(self):
         with patch.object(bootstrap.os, 'write', return_value=0), patch.object(bootstrap.os, 'read') as read, \
              patch.object(bootstrap.os, 'dup2') as dup:
-            self.assertEqual(bootstrap.main(['10','11','12','13','14','/bin/fake']), 2)
+            self.assertEqual(bootstrap.main(['10','11','12','13','13','14','/bin/fake']), 2)
         read.assert_not_called(); dup.assert_not_called()
 
 
@@ -66,7 +66,7 @@ class GuardianTests(unittest.TestCase):
              patch.object(guardian.select, 'poll', return_value=fake_poller), \
              patch.object(guardian, '_freeze') as freeze, \
              patch.object(guardian.time, 'sleep', side_effect=Done):
-            with self.assertRaises(Done): guardian.main(['3','4','5','6'])
+            with self.assertRaises(Done): guardian.main(['3','4','5','6','7','8'])
         freeze.assert_called_once_with(5, 6)
         fake_socket.recv.assert_not_called()
 
@@ -87,7 +87,7 @@ class ControlTests(unittest.TestCase):
     def test_invalid_guardian_lease_is_refused_before_cgroup_creation(self):
         instance=control.B1Containment.__new__(control.B1Containment)
         with patch.object(control, '_parent_dir') as parent:
-            with self.assertRaises(control.ContainmentStop): instance.initialize(0, Mock())
+            with self.assertRaises(control.ContainmentStop): instance.initialize(0, Mock(), 8, 9)
         parent.assert_not_called()
 
     def test_failed_monitor_check_publishes_stop_intent(self):
@@ -224,6 +224,97 @@ class EvidenceTests(unittest.TestCase):
                 b1_batch._reject_stop_record('/owned')
 
 
+class HelperRoutingTests(unittest.TestCase):
+    def test_version_uses_contained_capture_and_keeps_both_streams(self):
+        from r1.scripts import llama_server_instance as lsi
+        result=control.subprocess.CompletedProcess(['/fake','--version'],0,'prefix\n','version: 0.7.0 (build 1, commit abcdef)\n')
+        capture=Mock(return_value=result)
+        with patch.object(lsi.subprocess,'run') as direct:
+            observed=lsi.build_info('/fake',capture=capture)
+        direct.assert_not_called();capture.assert_called_once_with(['/fake','--version'],timeout=60.0)
+        self.assertIn('version: 0.7.0',observed['raw'])
+
+    def test_gpu_queries_use_contained_capture(self):
+        from r1.scripts import llama_server_instance as lsi
+        from r1.exam import runtime
+        apps=control.subprocess.CompletedProcess(['nvidia-smi'],0,'42, GPU-X, 2048\n','')
+        sample=control.subprocess.CompletedProcess(['nvidia-smi'],0,'GPU-X, 100, 200, 3\n','')
+        capture=Mock(side_effect=[apps,sample])
+        with patch.object(lsi.subprocess,'run') as direct:
+            self.assertEqual(lsi.gpu_compute_apps(capture=capture)[0]['pid'],42)
+            self.assertEqual(runtime.gpu_sample({'gpu_uuid':'GPU-X'},capture=capture)['free_mib'],200)
+        direct.assert_not_called()
+
+
+class SupervisorContractTests(unittest.TestCase):
+    def _env(self):
+        return {'R1_B1_SUPERVISOR_PID':'42','R1_B1_SUPERVISOR_TICKS':'99',
+                'R1_B1_SUPERVISOR_PIDFD':'8','R1_B1_SUPERVISOR_LIVE_FD':'9','R1_B1_LEASE_FD':'10'}
+
+    def test_contract_refuses_supervisor_stop_before_adopting_lease(self):
+        from r1.exam import b1_supervisor_contract as contract
+        poller=Mock();poller.poll.return_value=[(9,1)]
+        with patch.object(contract.os,'getppid',return_value=42), \
+             patch.object(contract,'process_start_ticks',return_value=99), \
+             patch.object(contract.Path,'read_text',return_value='Pid:\t42\n'), \
+             patch.object(contract.select,'poll',return_value=poller), \
+             patch.object(contract,'adopt_inherited') as adopt:
+            with self.assertRaises(contract.SupervisorStop): contract.require_supervisor(self._env())
+        adopt.assert_not_called()
+
+    def test_contract_adopts_inherited_fd_only_with_live_matching_parent(self):
+        from r1.exam import b1_supervisor_contract as contract
+        poller=Mock();poller.poll.return_value=[]
+        with patch.object(contract.os,'getppid',return_value=42), \
+             patch.object(contract,'process_start_ticks',return_value=99), \
+             patch.object(contract.Path,'read_text',return_value='Pid:\t42\n'), \
+             patch.object(contract.select,'poll',return_value=poller), \
+             patch.object(contract,'adopt_inherited') as adopt:
+            observed=contract.require_supervisor(self._env())
+        self.assertEqual(observed['lease_fd'],10);adopt.assert_called_once()
+
+    def test_supervisor_checks_same_ofd_not_inode_only(self):
+        from r1.scripts import b1_supervisor
+        identity=Mock(st_dev=1,st_ino=2)
+        with patch.object(b1_supervisor.os,'fstat',return_value=identity), \
+             patch.object(b1_supervisor.os,'stat',return_value=identity), \
+             patch('r1.exam.cooperative_lease.kcmp_file_result',return_value=(None,1)):
+            with self.assertRaises(RuntimeError): b1_supervisor._same_inherited_fd(23,10,'lease')
+
+    def test_inherited_lease_is_not_reopened(self):
+        from r1.exam import b1_lease
+        info=Mock(st_mode=stat.S_IFREG|0o600,st_nlink=1,st_uid=3,st_dev=4,st_ino=5)
+        with patch.object(b1_lease.os,'fstat',return_value=info), \
+             patch.object(b1_lease.os,'stat',return_value=info), \
+             patch.object(b1_lease.os,'getuid',return_value=3), \
+             patch.object(b1_lease.os,'open') as op, patch.object(b1_lease.fcntl,'flock') as flock:
+            self.assertEqual(b1_lease.adopt_inherited(10,'/lock'),10)
+        op.assert_not_called();flock.assert_called_once()
+
+
+class FinalizationTests(unittest.TestCase):
+    def test_receipt_accepts_only_exact_state_head_and_canonical_bytes(self):
+        from r1.exam import b1_finalization as final
+        head='a'*40
+        state=b'{"status":"COMPLETE","phase":"b1"}\n'
+        receipt=final._payload(state,head)
+        raw=(json.dumps(receipt,sort_keys=True,separators=(',', ':'))+'\n').encode()
+        def read(path): return raw if path.name=='FINALIZED.json' else state
+        with patch.object(final.Path,'is_symlink',return_value=False), \
+             patch.object(final.Path,'is_file',return_value=True), \
+             patch.object(final.Path,'read_bytes',autospec=True,side_effect=read):
+            self.assertEqual(final.verify_finalization('/owned',head),receipt)
+            with self.assertRaises(ValueError): final.verify_finalization('/owned','b'*40)
+
+    def test_partial_receipt_is_rejected(self):
+        from r1.exam import b1_finalization as final
+        def read(path): return b'{"version":' if path.name=='FINALIZED.json' else b'{"status":"COMPLETE","phase":"b1"}'
+        with patch.object(final.Path,'is_symlink',return_value=False), \
+             patch.object(final.Path,'is_file',return_value=True), \
+             patch.object(final.Path,'read_bytes',autospec=True,side_effect=read):
+            with self.assertRaises(ValueError): final.verify_finalization('/owned','a'*40)
+
+
 class CompletionTests(unittest.TestCase):
     def _invoke(self, save_error=None, finish_error=None):
         from r1.scripts import exam_runner
@@ -231,7 +322,7 @@ class CompletionTests(unittest.TestCase):
         cfg={'dryrun':False, 'authorizations':{'b1':'note'}, 'rule':'x', 'rule_sha256':'s',
              'stage_a_table':'t', 'stage_a_table_sha256':'h', 'nodes':['n'], 'llm_call_cap':80, 'anchor_duplicate_reference':{}}
         runner=Mock(); runner.state={'status':'RUNNING'}; runner.lock=None
-        runner.b1_containment=Mock(); runner.b1_batch_owned=True
+        runner.b1_containment=Mock(); runner.b1_batch_owned=True; runner.out=control.Path('/owned');runner.author_head='a'*40
         calls=[]
         def close(**kwargs):
             calls.append(('close', dict(kwargs), runner.state['status']))
@@ -245,12 +336,14 @@ class CompletionTests(unittest.TestCase):
         runner.finish_b1_lease.side_effect=finish
         with patch.object(exam_runner, 'load_config', return_value=cfg), \
              patch.object(exam_runner, 'require_committed_b1_config', return_value='h'), \
+             patch('r1.exam.b1_supervisor_contract.require_supervisor', return_value={'lease_fd':7}), \
              patch.object(analyze, 'load_rule', return_value=({}, 's')), \
              patch.object(exam_runner, 'is_v2', return_value=False), \
              patch.object(exam_runner, 'placeholders', return_value=[]), \
              patch.object(exam_runner, 'verify_anchor_reference'), \
              patch.object(exam_runner, 'ExamRunner', return_value=runner), \
              patch.object(exam_runner, 'evidence'), \
+             patch('r1.exam.b1_finalization.write_finalization', side_effect=lambda *args: calls.append(('receipt',))), \
              patch.object(exam_runner, 'report_b1_stop_and_save') as report:
             result=exam_runner.main(['b1','--out','/owned'])
         return result, runner, calls, report
@@ -259,7 +352,7 @@ class CompletionTests(unittest.TestCase):
         result, runner, calls, report=self._invoke()
         self.assertEqual(result, 0)
         self.assertEqual(calls, [('close', {'preserve_running':False,'defer_b1_lease':True}, 'RUNNING'),
-                                 ('save','COMPLETE'), ('finish',)])
+                                 ('save','COMPLETE'), ('finish',), ('receipt',)])
         report.assert_not_called()
 
     def test_failed_final_save_does_not_finish_guardian(self):

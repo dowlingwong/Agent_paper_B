@@ -12,7 +12,9 @@ import json
 import os
 from pathlib import Path
 import select
+import selectors
 import signal
+import shutil
 import socket
 import stat
 import subprocess
@@ -127,9 +129,10 @@ class B1Containment:
     newly created subtree may be frozen or killed. A same-UID writer is assumed
     cooperative; kernel cgroup-freeze does not prevent explicit migration.
     """
-    def initialize(self, lease_fd, receipt):
-        if type(lease_fd) is not int or lease_fd < 3:
-            raise ContainmentStop('STOP: invalid B1 lease FD for guardian')
+    def initialize(self, lease_fd, receipt, supervisor_pidfd, supervisor_live_fd):
+        if (any(type(fd) is not int or fd < 3 for fd in (lease_fd,supervisor_pidfd,supervisor_live_fd))
+                or len({lease_fd,supervisor_pidfd,supervisor_live_fd}) != 3):
+            raise ContainmentStop('STOP: invalid B1 lease or supervisor FD for guardian')
         self.guardian = None
         self.control = None
         self._control_lock = threading.RLock()
@@ -167,10 +170,11 @@ class B1Containment:
         try:
             self.guardian = subprocess.Popen(
                 [sys.executable, '-I', '-S', '-B', str(GUARDIAN), str(child.fileno()),
-                 str(self.parent_pidfd), str(guardian_freeze), str(guardian_events)],
+                 str(self.parent_pidfd), str(guardian_freeze), str(guardian_events),
+                 str(supervisor_pidfd),str(supervisor_live_fd)],
                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 close_fds=True, pass_fds=(child.fileno(), self.parent_pidfd, guardian_freeze,
-                                          guardian_events, lease_fd))
+                                          guardian_events, lease_fd,supervisor_pidfd,supervisor_live_fd))
         finally:
             child.close()
             os.close(guardian_freeze)
@@ -267,7 +271,7 @@ class B1Containment:
                 raise ContainmentStop('STOP: server record write after freeze')
             return callback()
 
-    def spawn(self, kind, argv, *, env, stdout, lease_fd, cwd=None):
+    def spawn(self, kind, argv, *, env, stdout, lease_fd, cwd=None, stderr=None, allow_fast_exit=False):
         """Launch a migrated bootstrap, then exec the intended command in-place."""
         with self._spawn_lock:
             if self._stop_requested.is_set() or self._frozen or self.guardian.poll() is not None:
@@ -278,15 +282,16 @@ class B1Containment:
             exec_r, exec_w = os.pipe()
             process = None
             try:
-                if min(leaf_fd,procs_fd,events_fd,ready_r,ready_w,grant_r,grant_w,exec_r,exec_w,stdout.fileno(),lease_fd) < 3:
+                error_output=stdout if stderr is None else stderr
+                if min(leaf_fd,procs_fd,events_fd,ready_r,ready_w,grant_r,grant_w,exec_r,exec_w,stdout.fileno(),error_output.fileno(),lease_fd) < 3:
                     raise ContainmentStop('STOP: B1 launcher descriptor collides with standard streams')
                 args = [sys.executable, '-I', '-S', '-B', str(BOOTSTRAP), str(procs_fd),
-                        str(ready_w), str(grant_r), str(stdout.fileno()), str(exec_w), *argv]
+                        str(ready_w), str(grant_r), str(stdout.fileno()), str(error_output.fileno()), str(exec_w), *argv]
                 process = subprocess.Popen(args, env=env, cwd=cwd, stdin=subprocess.DEVNULL,
                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                            start_new_session=True, close_fds=True,
-                                           pass_fds=(procs_fd, ready_w, grant_r, stdout.fileno(),
-                                                     exec_w, lease_fd))
+                                           pass_fds=tuple(sorted({procs_fd, ready_w, grant_r, stdout.fileno(),
+                                                                  error_output.fileno(), exec_w, lease_fd})))
                 os.close(ready_w); ready_w = None
                 os.close(grant_r); grant_r = None
                 os.close(exec_w); exec_w = None
@@ -321,11 +326,12 @@ class B1Containment:
                 # before handing its PID to the existing server/worker logic.
                 if _read_one(exec_r, 10) != b'':
                     raise ContainmentStop('STOP: bootstrap exec channel invalid')
-                if process.poll() is not None:
+                if process.poll() is not None and not allow_fast_exit:
                     raise ContainmentStop('STOP: contained process exited before exec check')
-                cmdline = (Path('/proc') / str(process.pid) / 'cmdline').read_bytes().split(b'\0')
-                if cmdline[:len(argv)] != [os.fsencode(a) for a in argv]:
-                    raise ContainmentStop('STOP: contained executable argv mismatch')
+                if process.returncode is None:
+                    cmdline = (Path('/proc') / str(process.pid) / 'cmdline').read_bytes().split(b'\0')
+                    if cmdline[:len(argv)] != [os.fsencode(a) for a in argv]:
+                        raise ContainmentStop('STOP: contained executable argv mismatch')
                 self._leaves[process.pid] = (kind, leaf_fd, events_fd, process_pidfd)
                 return process
             except BaseException:
@@ -362,6 +368,59 @@ class B1Containment:
                     return
                 time.sleep(.01)
             raise ContainmentStop('STOP: server subgroup did not become empty')
+
+    def capture_helper(self, argv, *, lease_fd, timeout, cwd=None, env=None, check=None):
+        """Capture an owned short helper in a fresh leaf; preserve stdout/stderr."""
+        environment=dict(os.environ if env is None else env)
+        executable=argv[0] if os.path.isabs(argv[0]) else shutil.which(argv[0],path=environment.get('PATH'))
+        if not executable:
+            raise ContainmentStop('STOP: helper executable is unavailable')
+        command=[str(executable),*[str(value) for value in argv[1:]]]
+        out_r,out_w=os.pipe();err_r,err_w=os.pipe()
+        out_file=os.fdopen(out_w,'wb',buffering=0);err_file=os.fdopen(err_w,'wb',buffering=0)
+        selector=selectors.DefaultSelector();buffers={out_r:bytearray(),err_r:bytearray()}
+        process=None
+        try:
+            process=self.spawn('worker',command,env=environment,stdout=out_file,stderr=err_file,
+                               lease_fd=lease_fd,cwd=cwd,allow_fast_exit=True)
+            out_file.close();err_file.close()
+            for fd in buffers:
+                os.set_blocking(fd,False);selector.register(fd,selectors.EVENT_READ)
+            deadline=time.monotonic()+timeout
+            while selector.get_map():
+                if check is not None:
+                    check()
+                self.require_guardian()
+                if self._stop_requested.is_set() or time.monotonic()>=deadline:
+                    raise ContainmentStop('STOP: contained helper timed out or was cancelled')
+                for key,_ in selector.select(timeout=.1):
+                    chunk=os.read(key.fd,65536)
+                    if not chunk:
+                        selector.unregister(key.fd)
+                    else:
+                        buffers[key.fd].extend(chunk)
+                        if len(buffers[out_r])+len(buffers[err_r])>16*1024*1024:
+                            raise ContainmentStop('STOP: contained helper output exceeds 16 MiB')
+            remaining=max(.01,deadline-time.monotonic())
+            rc=process.wait(timeout=remaining)
+            self.require_worker_empty(process)
+            import locale
+            encoding=locale.getpreferredencoding(False)
+            return subprocess.CompletedProcess(command,rc,bytes(buffers[out_r]).decode(encoding),
+                                               bytes(buffers[err_r]).decode(encoding))
+        except BaseException:
+            self.freeze()
+            raise
+        finally:
+            try: selector.close()
+            except OSError: pass
+            for handle in (out_file,err_file):
+                if not handle.closed:
+                    try: handle.close()
+                    except OSError: pass
+            for fd in (out_r,err_r):
+                try: os.close(fd)
+                except OSError: pass
 
     def require_worker_empty(self, process):
         leaf = self._leaves.get(process.pid)
