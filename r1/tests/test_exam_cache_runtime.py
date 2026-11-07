@@ -260,8 +260,9 @@ def inheritance_fixture(tmp_path, authorized, *, server_fd='valid'):
         _proc_fd(proc_root, SERVER_PID, fd, str(path))
         extra = tmp_path / 'extra-desc'
         extra.touch()
-        _proc_fd(proc_root, SERVER_PID, 99, str(extra))
-        _proc_fd(proc_root, SERVER_PID, 98, str(path))
+        other_fd, alias_fd = [n for n in (98, 99, 100) if n != fd][:2]
+        _proc_fd(proc_root, SERVER_PID, other_fd, str(extra))
+        _proc_fd(proc_root, SERVER_PID, alias_fd, str(path))
     elif server_fd != 'missing':
         raise AssertionError('invalid synthetic server fd mode')
     os.environ['TRACKX_GPU_LEASE_FD'] = str(fd)
@@ -330,6 +331,28 @@ def test_server_inheritance_rejects_missing_extra_or_wrong_descriptor(tmp_path, 
                 verify_inheritance(fd, proc_root)
         finally:
             os.close(fd)
+
+
+@pytest.mark.parametrize('synthetic_fd', [98, 99])
+def test_inheritance_extra_fd_fixture_avoids_real_fd_collision(tmp_path, authorized, monkeypatch, synthetic_fd):
+    # Keep a real lease, while stubbing the reported FD number so both historic
+    # collision cases are tested without closing or replacing any actual FD.
+    path, real_fd, identity = lease_fixture(tmp_path)
+    real_fstat = os.fstat
+    monkeypatch.setattr(os, 'fstat', lambda n: real_fstat(real_fd if n == synthetic_fd else n))
+    monkeypatch.setattr(__import__(__name__, fromlist=['lease_fixture']), 'lease_fixture',
+                        lambda _root: (path, synthetic_fd, identity))
+    case = tmp_path / 'collision'
+    case.mkdir()
+    try:
+        _, fd, _, proc_root = inheritance_fixture(case, authorized, server_fd='extra')
+        assert fd == synthetic_fd
+        names = set(os.listdir(os.path.join(proc_root, str(SERVER_PID), 'fd')))
+        assert str(fd) in names and len(names) == 3
+        with pytest.raises(LeaseStop, match='FD set'):
+            verify_inheritance(fd, proc_root)
+    finally:
+        os.close(real_fd)
 
 
 def test_server_inheritance_rejects_pid_start_and_parent_mismatch(tmp_path, authorized):
