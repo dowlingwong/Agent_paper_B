@@ -4,7 +4,7 @@
 
 The local checker is `docs/r1/proposals/B1_ENGINEERING_VERIFY_ARCHIVE_TREE_20261107.py`, SHA-256 `54a381e71b5a394e1b8615e2b8a5987d6bd43909fc857130acb280b22dae5920`. It verifies each archive's full SHA-256, rejects unsafe types, paths and duplicates, and compares the bytes of every extracted regular file against the corresponding archive member. It rejects unexpected files/directories and symlinks, except that ordinary regular `.pyc` files directly under `__pycache__` directories whose parents are archive directories are listed as `CACHE`; those cache bytes are not considered part of the verified source. This is a cooperative point-in-time check, not an atomic snapshot or proof against a malicious concurrent same-UID process. It does not verify file modes.
 
-Use the already reviewed `60ec` local checkout containing this checker (or the review workspace below), with the exact single existing remote engineering run. No user-provided text is interpolated into the remote command:
+Use the SHA-bound checker in the review workspace below with the exact single existing remote engineering run; this checker is not part of the older `60ec` source checkout. No user-provided text is interpolated into the remote command:
 
 ```bash
 set -u
