@@ -125,7 +125,16 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, *, 
         cache = harness / PILOT_DATA_CACHE.format(node=node)
         if cache.exists():
             shutil.copytree(cache, node_dir / "data_cache")
-    worker = LocalWorker(node_root=node_dir, artifact_dir=work / "art", timeout_seconds=600)
+    worker_type = LocalWorker
+    if preserve_node_outputs:
+        from r1.exam.b1_worker_artifact_guard import GuardedTrialPath
+
+        class B1AuditWorker(LocalWorker):
+            def _resolve_artifact_dir(self, trial_label):
+                return GuardedTrialPath(super()._resolve_artifact_dir(trial_label))
+
+        worker_type = B1AuditWorker
+    worker = worker_type(node_root=node_dir, artifact_dir=work / "art", timeout_seconds=600)
     noedit = ManagerProposal(manager_mode="c3_audit", proposal_summary="audit", proposal_rationale="",
                              target_files=spec.editable_paths, objective="Audit run; no change.")
     for i, s in enumerate(seeds):
