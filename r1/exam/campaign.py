@@ -149,10 +149,17 @@ def _collect_b1_review(job):
     """Collect a B1 campaign with the authorized observer and cache evidence."""
     if job.get('phase') != 'b1': raise RuntimeError('STOP: B1 candidate refuses other phases')
     out=Path(job['out'])
-    if not job['dryrun']: require_worker_host(job)
-    if job['dryrun'] and not any((p/'.dryrun').is_file() for p in out.resolve().parents): raise RuntimeError('STOP: unmarked DRYRUN child')
     if not job['dryrun']:
         _verify_b1_worker_input(job)
+        # A direct campaign invocation has no parent runner to enforce the
+        # approved work-tree boundary. This check does not prove ownership of
+        # an existing path inside that tree; the reviewed parent procedure is
+        # still required and same-UID processes are cooperative.
+        from r1.exam.runtime import host_check
+        host_check(job.get('authority_config',{}),out)
+        require_worker_host(job)
+    if job['dryrun'] and not any((p/'.dryrun').is_file() for p in out.resolve().parents): raise RuntimeError('STOP: unmarked DRYRUN child')
+    if not job['dryrun']:
         from r1.exam.runtime import b1_harness_sources
         if job.get('harness_commit')!=job.get('authority_config',{}).get('harness_commit') or \
                 job.get('node_source_sha256')!=b1_harness_sources(job['node'],job['harness_commit']):

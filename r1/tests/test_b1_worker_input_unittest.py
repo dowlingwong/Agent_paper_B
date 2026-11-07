@@ -52,11 +52,22 @@ class WorkerInputTest(unittest.TestCase):
     def test_input_check_precedes_output_and_worker(self):
         with patch.object(campaign,'require_worker_host'), \
              patch.object(campaign,'_verify_b1_worker_input',side_effect=RuntimeError('STOP: test')), \
+             patch.object(runtime,'host_check') as host, \
              patch.object(Path,'mkdir') as mkdir, \
              patch.object(campaign,'B1IntegrityWorker') as worker:
             with self.assertRaisesRegex(RuntimeError,'STOP:'):
                 campaign._collect_b1_review(self.job)
-            mkdir.assert_not_called();worker.assert_not_called()
+            host.assert_not_called();mkdir.assert_not_called();worker.assert_not_called()
+
+    def test_outside_work_refusal_precedes_output_and_worker(self):
+        with patch.object(campaign,'_verify_b1_worker_input'), \
+             patch.object(runtime,'host_check',side_effect=RuntimeError('STOP: output escapes work')), \
+             patch.object(campaign,'require_worker_host') as host, \
+             patch.object(Path,'mkdir') as mkdir, \
+             patch.object(campaign,'B1IntegrityWorker') as worker:
+            with self.assertRaisesRegex(RuntimeError,'output escapes'):
+                campaign._collect_b1_review(self.job)
+            host.assert_not_called();mkdir.assert_not_called();worker.assert_not_called()
 
     def test_committed_config_refusal_precedes_other_authority(self):
         with patch.object(runtime,'require_committed_b1_config',side_effect=runtime.PreparationStop('STOP: bad config')), \
