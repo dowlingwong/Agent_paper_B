@@ -693,6 +693,8 @@ class ExamRunner:
             self.b1_containment.initialize(self.b1_lease_fd,containment_receipt,
                                            checked_supervisor['pidfd'],checked_supervisor['live_fd'])
         lock=self.out/'runner.lock'
+        if self.cfg.get('dryrun') and os.path.lexists(lock):
+            raise RuntimeError('STOP: existing DRYRUN runner lock; preserve and do not resume')
         if lock.exists():
             old=json.loads(lock.read_text())
             try: os.kill(old['pid'],0)

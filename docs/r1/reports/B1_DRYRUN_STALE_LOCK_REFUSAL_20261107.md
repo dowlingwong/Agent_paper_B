@@ -1,0 +1,5 @@
+# DRYRUN stale lock refusal — 7 November 2026
+
+AI-assisted (Codex). Candidate only; independent review required. On DRYRUN startup, any existing `runner.lock`, including a dangling symlink, now causes STOP before the legacy stale-PID rename and new lock creation. This retains the prior lock in place and avoids automatically resuming that synthetic root. It does not alter production Stage A or B1 behavior, authorize recovery, or establish that earlier startup operations were mutation-free.
+
+A Python `-B` check extracted the exact `if` branch from the parsed `ExamRunner.start` method and executed it against three mocked cases (DRYRUN with and without an existing entry; non-DRYRUN with an existing entry): all three passed. No filesystem mutation or runner execution was involved. The test does not cover the full `start` path, real host behavior, or non-DRYRUN cleanup. Existing pinned-harness removal/truncation and cross-process STOP ordering still block B1; implementer and independent reviewer must repair and verify them, then the author must resolve any necessary harness pin change. Effort remains dependent on the concrete patch and review.
