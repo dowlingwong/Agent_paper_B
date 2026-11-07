@@ -1,0 +1,5 @@
+# B1 observer close and original failure — 7 November 2026
+
+AI-assisted (Codex). Candidate; independent review required. When the B1 campaign raises, its observer is still closed, but a secondary close failure no longer replaces the campaign's original exception. On a successful campaign, a close failure still propagates. This preserves the original exception classification; it does not independently establish that closing the observer is side-effect-free after a STOP or that the parent correctly records it.
+
+An in-memory AST-extracted check of the actual exception/else cleanup branch, replacing only its campaign body with a mock, passed four combinations of campaign success/failure and close success/failure. The first attempt at that check stopped with `StopIteration` because the test named the wrong function; after correcting the function name, all four cases passed. Neither attempt ran a campaign, used a host or model, or intentionally wrote or deleted files. Broader B1 STOP, no-deletion and integration checks remain open.

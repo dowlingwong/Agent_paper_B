@@ -202,7 +202,13 @@ def _collect_b1_review(job):
                               proposal_backend=manager,compute_budget=ComputeBudget(max_worker_runs=job['W'],max_llm_calls=job['llm_call_cap']),
                               action_versions=ActionVersions.new_campaign(),verify_split_policy='vary',
                               event_store=CampaignEventStore(out/'root_events.jsonl'),proposal_observer=observer)
-    finally:
+    except BaseException:
+        # Cleanup must not replace the campaign's original STOP or failure.
+        if observer is not None:
+            try: observer.close()
+            except BaseException: pass
+        raise
+    else:
         if observer is not None: observer.close()
     records=read_rows(out/'root_trials.jsonl');events=read_rows(out/'root_events.jsonl')
     props,checks=replay_campaign(records,start,node,f'{node}__s{seed}','EXAM','append_only_summary',job['W'],1.)
