@@ -907,30 +907,34 @@ class ExamRunner:
             kwargs['pass_fds']=(self.b1_lease_fd,)
         def open_log(): return (path/'runner.log').open('ab')
         log=self.b1_containment.write_active(open_log) if contained else open_log()
-        audit_read=audit_write=None; audit_monitor=None
+        audit_read=audit_write=audit_backup_read=audit_backup_write=None; audit_monitor=None
         try:
             if contained:
                 audit_read,audit_write=os.pipe()
+                audit_backup_read,audit_backup_write=os.pipe()
                 os.set_blocking(audit_read,False);os.set_blocking(audit_write,False)
+                os.set_blocking(audit_backup_read,False);os.set_blocking(audit_backup_write,False)
             with log:
                 argv=[sys.executable,'-m',module,'--job',str(path/'job.json')]
                 if contained:
                     self.child=self.b1_containment.spawn('worker',argv,env=env,cwd=REPO,stdout=log,
                                                          lease_fd=self.b1_lease_fd,
                                                          worker_context={'job':job,'out':path,'server':self.service,
-                                                                         'supervisor':self.b1_supervisor,'audit_stop_fd':audit_write})
+                                                                         'supervisor':self.b1_supervisor,'audit_stop_fd':audit_write,
+                                                                         'audit_backup_fd':audit_backup_write})
                 else:
                     self.child=subprocess.Popen(argv,env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
             if contained:
                 os.close(audit_write);audit_write=None
+                os.close(audit_backup_write);audit_backup_write=None
                 from r1.exam.b1_audit_stop import AuditStopMonitor
-                audit_monitor=AuditStopMonitor(audit_read,self.child,self.b1_containment)
+                audit_monitor=AuditStopMonitor((audit_read,audit_backup_read),self.child,self.b1_containment)
                 audit_monitor.start()
         except BaseException:
             if contained:
                 try: self.b1_containment.freeze()
                 finally:
-                    for fd in (audit_read,audit_write):
+                    for fd in (audit_read,audit_write,audit_backup_read,audit_backup_write):
                         if fd is not None: os.close(fd)
             raise
         started=time.monotonic();killed=False
@@ -990,7 +994,8 @@ class ExamRunner:
                 try: audit_monitor.shutdown()
                 except Exception as monitor_error:
                     report_b1_freeze_failure(RuntimeError('audit monitor cleanup'),monitor_error)
-                if not audit_monitor.thread.is_alive(): os.close(audit_read)
+                if not audit_monitor.thread.is_alive():
+                    os.close(audit_read);os.close(audit_backup_read)
         self.child=None
 
     def root(self, spec, phase, node, seed, mode, *, interrupt=False):

@@ -31,36 +31,70 @@ def require_notify_fd(fd):
         raise AuditNotificationStop('STOP: audit failure descriptor is not a nonblocking pipe writer')
 
 
-def run_notifying_audit(fd, run_config, *args):
+def require_notify_fds(fds):
+    if not isinstance(fds, tuple) or len(fds) != 2 or fds[0] == fds[1]:
+        raise AuditNotificationStop('STOP: two distinct audit writers required')
+    for fd in fds:
+        require_notify_fd(fd)
+    try:
+        first, second = (os.fstat(fd) for fd in fds)
+    except OSError as exc:
+        raise AuditNotificationStop('STOP: audit channel identity unavailable') from exc
+    if (first.st_dev, first.st_ino) == (second.st_dev, second.st_ino):
+        raise AuditNotificationStop('STOP: audit writers share one pipe inode')
+
+
+def _send_all(fds, token):
+    """Try both channels; return successes and retain first failure."""
+    successes = 0
+    first_error = None
+    for fd in fds:
+        try:
+            if os.write(fd, token) != 1:
+                raise OSError('short audit notification')
+            successes += 1
+        except BaseException as exc:
+            if first_error is None:
+                first_error = exc
+    return successes, first_error
+
+
+def run_notifying_audit(fds, run_config, *args):
     """Notify the owning runner before returning an audit exception to its pool.
 
     ``run_config`` is the real, picklable top-level audit function supplied by
     the future integration. A one-byte write is atomic for a real POSIX pipe.
     The byte means STOP, not proof that the receiver or freeze succeeded.
     """
-    require_notify_fd(fd)
+    try:
+        require_notify_fds(fds)
+    except BaseException:
+        if isinstance(fds, tuple):
+            _send_all(fds, b'S')
+        raise
     try:
         return run_config(*args)
     except BaseException as original:
-        try:
-            written = os.write(fd, b'S')
-            if written != 1:
-                raise OSError('short audit failure notification')
-        except BaseException as notification_error:
+        successes, notification_error = _send_all(fds, b'S')
+        if not successes:
             raise AuditNotificationStop(
                 f'STOP: audit failure notification failed ({type(notification_error).__name__})'
             ) from original
         raise
 
 
-def send_audit_complete(fd):
+def send_audit_complete(fds):
     """Collector announces normal completion; runner still verifies exit and cgroup."""
-    require_notify_fd(fd)
     try:
-        if os.write(fd, b'D') != 1:
-            raise OSError('short audit completion notification')
-    except OSError as exc:
-        raise AuditNotificationStop('STOP: audit completion notification failed') from exc
+        require_notify_fds(fds)
+    except BaseException:
+        if isinstance(fds, tuple):
+            _send_all(fds, b'S')
+        raise
+    successes, error = _send_all(fds, b'D')
+    if successes != 2:
+        _send_all(fds, b'S')
+        raise AuditNotificationStop('STOP: audit completion notification failed') from error
 
 
 def handle_ready_audit_channel(fd, mark_stopping, freeze, expected_alive=lambda: True,
@@ -82,7 +116,7 @@ def handle_ready_audit_channel(fd, mark_stopping, freeze, expected_alive=lambda:
         read_error = exc
     if token == b'D' and read_error is None:
         mark_complete()
-        return False
+        return True
     if token == b'' and read_error is None and (complete_seen() or not expected_alive()):
         return False
     try:
@@ -101,12 +135,12 @@ def handle_ready_audit_channel(fd, mark_stopping, freeze, expected_alive=lambda:
 
 class AuditStopMonitor:
     """Runner-owned monitor; the integration must pass its own containment."""
-    def __init__(self, read_fd, process, containment):
-        self.fd = read_fd
+    def __init__(self, read_fds, process, containment):
+        self.fds = read_fds
         self.process = process
         self.containment = containment
         self.stopping = threading.Event()
-        self.completed = threading.Event()
+        self.completed = [threading.Event(), threading.Event()]
         self.shutdown_requested = threading.Event()
         self.error = None
         self.thread = threading.Thread(target=self._run, daemon=True)
@@ -117,11 +151,21 @@ class AuditStopMonitor:
     def _run(self):
         try:
             while not self.shutdown_requested.is_set():
-                handle_ready_audit_channel(self.fd, self.stopping.set,
-                                           self.containment.freeze,
-                                           lambda: self.process.poll() is None,
-                                           self.completed.is_set, self.completed.set)
+                for index, fd in enumerate(self.fds):
+                    handle_ready_audit_channel(fd, self.stopping.set,
+                                               self.containment.freeze,
+                                               lambda: self.process.poll() is None,
+                                               self.completed[index].is_set, self.completed[index].set)
                 if self.process.poll() is not None:
+                    # Drain bytes committed before observed child exit. A read
+                    # immediately before poll may have seen only EAGAIN.
+                    for index, fd in enumerate(self.fds):
+                        while handle_ready_audit_channel(fd, self.stopping.set,
+                                                         self.containment.freeze,
+                                                         lambda: False,
+                                                         self.completed[index].is_set,
+                                                         self.completed[index].set):
+                            pass
                     return
                 self.shutdown_requested.wait(.05)
         except BaseException as exc:
@@ -144,7 +188,7 @@ class AuditStopMonitor:
         if self.thread.is_alive():
             raise AuditNotificationStop('STOP: audit failure monitor did not finish')
         self.check()
-        if not self.completed.is_set():
+        if not all(event.is_set() for event in self.completed):
             raise AuditNotificationStop('STOP: audit completion notification is missing')
 
     def shutdown(self):
