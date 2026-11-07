@@ -34,7 +34,7 @@ def test_existing_regular_refuses_symlink_and_multilink(tmp_path):
     os.link(target, hard)
     with pytest.raises(launch.LaunchStop, match='stable regular file'):
         launch.existing_regular(str(target), 'GPU lock')
-    hard.unlink()
+    # Keep both test-owned links in the isolated fixture for inspection.
 
 
 def test_pinned_files_are_absolute_and_unique(tmp_path):

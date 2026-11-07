@@ -6,8 +6,9 @@ import pytest
 from r1.exam import hub_download as hub
 
 
-def spec(root):
-    data=b'pinned fixture';target=root/'x/model.gguf';target.parent.mkdir();target.write_bytes(data)
+def spec(root, *, existing=True):
+    data=b'pinned fixture';target=root/'x/model.gguf';target.parent.mkdir()
+    if existing: target.write_bytes(data)
     return {'id':'x','base_repo':'vendor/x','vendor_q4_available':True,'runtime':{'model_path':str(target)},
             'quant_source':{'kind':'vendor','repo':'vendor/x-GGUF','file':'model.gguf','revision':'0'*40,
                             'size_bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'quantization':'Q4_K_M'}}
@@ -23,7 +24,7 @@ def test_hub_receiving_checks_reused_bytes_and_preserves_bad_data(tmp_path,monke
 
 
 def test_hub_disk_stop_signals_only_owned_child_group(tmp_path,monkeypatch):
-    monkeypatch.setattr(hub,'ROOT',tmp_path);s=spec(tmp_path);Path(s['runtime']['model_path']).unlink()
+    monkeypatch.setattr(hub,'ROOT',tmp_path);s=spec(tmp_path,existing=False)
     class Child:
         pid=123456
         def poll(self):return None
@@ -55,7 +56,7 @@ def test_cohort_stop_prevents_queued_artifact_launch(tmp_path,monkeypatch):
 
 def test_shared_cancellation_terminates_active_owned_child(tmp_path,monkeypatch):
     import threading
-    monkeypatch.setattr(hub,'ROOT',tmp_path);s=spec(tmp_path);Path(s['runtime']['model_path']).unlink()
+    monkeypatch.setattr(hub,'ROOT',tmp_path);s=spec(tmp_path,existing=False)
     cancel=threading.Event()
     class Child:
         pid=123456
@@ -83,7 +84,7 @@ def test_prior_transport_stop_cannot_be_silently_replayed(tmp_path,monkeypatch):
 
 def test_https_worker_retains_partial_on_network_failure(tmp_path,monkeypatch):
     monkeypatch.setattr(hub,'ROOT',tmp_path);monkeypatch.setattr(hub.platform,'node',lambda:'TASL-2')
-    s=spec(tmp_path);target=Path(s['runtime']['model_path']);target.unlink()
+    s=spec(tmp_path,existing=False);target=Path(s['runtime']['model_path'])
     from r1.exam.guards import guarded_download
     class Response:
         reads=0
