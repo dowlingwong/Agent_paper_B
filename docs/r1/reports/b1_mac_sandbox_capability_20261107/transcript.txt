@@ -1,0 +1,53 @@
+Commands and tool outputs transcribed from this turn; not an independently captured syscall trace.
+Working directory /private/tmp; local time 7 Nov 2026 approximately 01:44-01:46 CET.
+
+$ /usr/bin/sandbox-exec -p '(version 1) (allow default) (deny file-write-unlink)' /usr/bin/python3 -B -c 'import ctypes,os; l=ctypes.CDLL(None,use_errno=True); f=l.sandbox_check; f.restype=ctypes.c_int; print("operation",f(os.getpid(),b"file-write-unlink",ctypes.c_int(0)),"errno",ctypes.get_errno())'
+sandbox-exec: sandbox_apply: Operation not permitted
+exit 71, managed sandbox; target did not run.
+
+$ /usr/bin/sandbox-exec -p '(version 1) (allow default)' /usr/bin/true
+sandbox-exec: sandbox_apply: Operation not permitted
+exit 71, managed sandbox; target did not run.
+
+$ /usr/bin/sandbox-exec -p '(version 1) (allow default) (deny file-write-unlink)' /usr/bin/python3 -B -c 'import ctypes,os; f=ctypes.CDLL(None,use_errno=True).sandbox_check; f.restype=ctypes.c_int; print("query_result",f(os.getpid(),b"file-write-unlink",ctypes.c_int(0)))'
+query_result 1
+exit 0, auto-approved escalation.
+
+$ /usr/bin/sandbox-exec -p '(version 1) (allow default)' /usr/bin/python3 -B -c 'import ctypes,os; f=ctypes.CDLL(None,use_errno=True).sandbox_check; f.restype=ctypes.c_int; print("query_result",f(os.getpid(),b"file-write-unlink",ctypes.c_int(0)))'
+query_result 0
+exit 0, auto-approved escalation.
+
+$ /usr/bin/sandbox-exec -p '(version 1) (allow default) (deny file-write-unlink)' /usr/bin/python3 -B -c 'import ctypes,os,subprocess,sys; f=ctypes.CDLL(None,use_errno=True).sandbox_check; f.restype=ctypes.c_int; ops=[b"file-write-unlink",b"file-write-create",b"file-write-data",b"file-write-rename"]; print("parent",[(s.decode(),f(os.getpid(),s,ctypes.c_int(0))) for s in ops]); code="import ctypes,os; f=ctypes.CDLL(None).sandbox_check; f.restype=ctypes.c_int; print(f(os.getpid(),b\"file-write-unlink\",ctypes.c_int(0)))"; print("child_unlink",subprocess.check_output([sys.executable,"-B","-c",code],text=True).strip())'
+parent [('file-write-unlink', 1), ('file-write-create', 0), ('file-write-data', 0), ('file-write-rename', -1)]
+child_unlink 1
+exit 0, auto-approved escalation.
+
+$ id -u
+501
+exit 0, auto-approved escalation.
+
+$ /usr/bin/python3 -B -c 'import os,stat; p="/private/tmp/b1-mac-sandbox-capability-20261107-01"; assert os.getuid()==os.geteuid()!=0; os.mkdir(p,0o700); [os.close(os.open(p+"/"+n,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)) for n in ("sentinel","source")]; os.chmod(p,0o500); s=os.stat(p); print("dir",p,"uid",s.st_uid,"mode",oct(stat.S_IMODE(s.st_mode)),"ino",s.st_ino)'
+dir /private/tmp/b1-mac-sandbox-capability-20261107-01 uid 501 mode 0o500 ino 121822313
+exit 0, managed sandbox. The directory and both files are intentionally retained; do not change permissions or remove them.
+
+$ ls -leOdn /private/tmp/b1-mac-sandbox-capability-20261107-01 /private/tmp/b1-mac-sandbox-capability-20261107-01/sentinel /private/tmp/b1-mac-sandbox-capability-20261107-01/source
+dr-x------@ 4 501  0  - 128 Nov  7 01:46 /private/tmp/b1-mac-sandbox-capability-20261107-01
+-rw-------@ 1 501  0  -   0 Nov  7 01:46 /private/tmp/b1-mac-sandbox-capability-20261107-01/sentinel
+-rw-------@ 1 501  0  -   0 Nov  7 01:46 /private/tmp/b1-mac-sandbox-capability-20261107-01/source
+exit 0, managed sandbox.
+
+$ /usr/bin/python3 -B -c 'import os,stat; p="/private/tmp/b1-mac-sandbox-capability-20261107-01"; s=os.stat(p); assert os.geteuid()==s.st_uid==501 and stat.S_IMODE(s.st_mode)==0o500 and s.st_ino==121822313; exec("try:\n os.unlink(p+\"/sentinel\")\n print(\"unlink UNEXPECTED_SUCCESS\")\nexcept OSError as e:\n print(\"unlink errno\",e.errno)\ntry:\n os.replace(p+\"/source\",p+\"/sentinel\")\n print(\"replace UNEXPECTED_SUCCESS\")\nexcept OSError as e:\n print(\"replace errno\",e.errno)")'
+unlink errno 13
+replace errno 13
+exit 0, auto-approved escalation, no sandbox profile; directory DAC denies both.
+
+$ /usr/bin/sandbox-exec -p '(version 1) (allow default) (deny file-write-unlink)' /usr/bin/python3 -B -c 'import os,stat; p="/private/tmp/b1-mac-sandbox-capability-20261107-01"; s=os.stat(p); assert os.geteuid()==s.st_uid==501 and stat.S_IMODE(s.st_mode)==0o500 and s.st_ino==121822313; exec("try:\n os.unlink(p+\"/sentinel\")\n print(\"unlink UNEXPECTED_SUCCESS\")\nexcept OSError as e:\n print(\"unlink errno\",e.errno)\ntry:\n os.replace(p+\"/source\",p+\"/sentinel\")\n print(\"replace UNEXPECTED_SUCCESS\")\nexcept OSError as e:\n print(\"replace errno\",e.errno)")'
+unlink errno 1
+replace errno 1
+exit 0, auto-approved escalation; same directory DAC independently protects both names.
+
+$ /usr/bin/python3 -B -c 'import os,stat,hashlib; p="/private/tmp/b1-mac-sandbox-capability-20261107-01"; s=os.stat(p); print("directory",s.st_ino,oct(stat.S_IMODE(s.st_mode))); [(lambda f:(print(n,"ino",os.stat(f).st_ino,"size",os.stat(f).st_size,"sha256",hashlib.sha256(open(f,"rb").read()).hexdigest())))(p+"/"+n) for n in ("sentinel","source")]'
+directory 121822313 0o500
+sentinel ino 121822314 size 0 sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+source ino 121822315 size 0 sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+exit 0, managed sandbox; pre-request file inodes were not recorded.
