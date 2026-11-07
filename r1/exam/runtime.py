@@ -691,7 +691,7 @@ class ExamRunner:
                 self.state['b1_containment']=record
                 self.save()
             self.b1_containment.initialize(self.b1_lease_fd,containment_receipt,
-                                           checked_supervisor['pidfd'],checked_supervisor['live_fd'])
+                                           checked_supervisor['pidfd'],checked_supervisor['live_fd'],checked_supervisor['handoff_fd'])
         lock=self.out/'runner.lock'
         if lock.exists():
             old=json.loads(lock.read_text())

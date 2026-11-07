@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import select
+import socket
 import signal
 import subprocess
 import sys
@@ -106,12 +107,14 @@ def main(argv=None):
     lease_fd=acquire(Path.home()/'r1_locks'/'gpu0.lock')
     supervisor_pidfd=os.pidfd_open(os.getpid(),0)
     live_r,live_w=os.pipe();grant_r,grant_w=os.pipe();exec_r,exec_w=os.pipe()
+    handoff_supervisor,handoff_guardian=socket.socketpair(socket.AF_UNIX,socket.SOCK_SEQPACKET)
+    handoff_supervisor.settimeout(10)
     log=(supervisor_dir/'runner.log').open('xb',buffering=0)
     env=dict(os.environ)
     env.update(PYTHONDONTWRITEBYTECODE='1',R1_B1_SUPERVISOR_PID=str(os.getpid()),
                R1_B1_SUPERVISOR_TICKS=str(process_start_ticks(os.getpid())),
                R1_B1_SUPERVISOR_PIDFD=str(supervisor_pidfd),R1_B1_SUPERVISOR_LIVE_FD=str(live_r),
-               R1_B1_LEASE_FD=str(lease_fd))
+               R1_B1_LEASE_FD=str(lease_fd),R1_B1_GUARDIAN_HANDOFF_FD=str(handoff_guardian.fileno()))
     command=[sys.executable,'-B',str(REPO/'r1/scripts/exam_runner.py'),'b1',
              '--config',str(Path(args.config)),'--out',str(out)]
     child=None
@@ -119,10 +122,11 @@ def main(argv=None):
         argv=[sys.executable,'-I','-S','-B',str(ENTRY),str(grant_r),str(log.fileno()),str(exec_w),*command]
         child=subprocess.Popen(argv,env=env,cwd=REPO,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL,start_new_session=True,close_fds=True,
-                               pass_fds=(grant_r,log.fileno(),exec_w,lease_fd,supervisor_pidfd,live_r))
+                               pass_fds=(grant_r,log.fileno(),exec_w,lease_fd,supervisor_pidfd,live_r,handoff_guardian.fileno()))
         os.close(grant_r);grant_r=None;os.close(exec_w);exec_w=None
-        for fd,label in ((lease_fd,'lease'),(supervisor_pidfd,'supervisor pidfd'),(live_r,'STOP channel')):
+        for fd,label in ((lease_fd,'lease'),(supervisor_pidfd,'supervisor pidfd'),(live_r,'STOP channel'),(handoff_guardian.fileno(),'guardian handoff')):
             _same_inherited_fd(child.pid,fd,label)
+        handoff_guardian.close()
         _exclusive_json(supervisor_dir/'RUNNER.json',{'pid':child.pid,'start_ticks':process_start_ticks(child.pid),'head':head})
         if os.write(grant_w,b'G')!=1: raise RuntimeError('STOP: supervisor grant incomplete')
         os.close(grant_w);grant_w=None
@@ -140,7 +144,11 @@ def main(argv=None):
         # SIGKILL remains subject to the documented atomic-rename fault model.
         signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals() - {signal.SIGKILL, signal.SIGSTOP})
         _publish_or_reconcile(child,out,head)
-        # No fallible success step follows. Process exit releases the lease.
+        # Publication/release ordering remains separately under review.
+        handoff_supervisor.sendall(b'RELEASE')
+        if handoff_supervisor.recv(64)!=b'RELEASED':
+            raise RuntimeError('STOP: guardian did not acknowledge release')
+        # Process exit releases the supervisor lease.
         return 0
     except BaseException as exc:
         _retain_on_stop(live_w,supervisor_dir,exc)
