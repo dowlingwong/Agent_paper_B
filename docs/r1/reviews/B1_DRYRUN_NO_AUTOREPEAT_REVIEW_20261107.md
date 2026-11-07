@@ -1,0 +1,15 @@
+# Independent review: legacy DRYRUN no automatic repeat — 7 November 2026
+
+**Verdict: NOT ACCEPTED for the requested scope until the launcher description is corrected.** Reviewed candidate `22df7ed0` against its parent `6482343e`, the 7 November author prompt §0.4 and the retained mock-test log. This is a static review: no tests, actual launcher or process, host, model, GPU, experiment, signal or deletion were performed.
+
+## Verified control flow and blocking description
+
+`r1/scripts/exam_dryrun.py:74–80` runs Stage A, binds the resulting table in the synthetic configuration, and starts one B1 command with `--interrupt-root`. After that subprocess returns normally, `:84` unconditionally raises before the historical batch-state read at `:85` and second B1 invocation at `:87`. This applies to both zero and nonzero subprocess return codes. If `subprocess.run` raises, control does not reach either later operation. The old recovery/checking source is retained but unreachable from this `run()` path. This does not prove that the first B1 command itself preserves its scene, and it does not restore Stage A→B1 kill/resume coverage.
+
+However, the script's module docstring at `r1/scripts/exam_dryrun.py:2` still describes the launcher as “one killed root and whole-root resume.” That description now conflicts with the unconditional STOP and can mislead operators or a reviewer into thinking the historical resume runs. **Correct the description to state that automatic repeat is refused and recovery coverage remains unresolved**, without removing historical evidence. This is the only blocking finding for the narrow no-repeat source change; its correction requires an independent recheck.
+
+## Tests and remaining limits
+
+The three new mock tests (`r1/tests/test_exam_dryrun_no_resume_unittest.py:11–51`) inspect zero and nonzero interrupted-command returns and an injected timeout, and check call counts; the first two additionally check no later batch read or log open. They replace `subprocess.run`, file opens and preparation, so they do not exercise a real subprocess, OS timeout or STOP-preserving cleanup. The report correctly keeps the first command, downstream deletion and actual recovery out of scope. In particular, a real `subprocess.run(..., timeout=180)` at `exam_dryrun.py:76` has timeout process-cleanup behavior not established by a mock raising `TimeoutError`; do not infer that it is safe to use after any real or synthetic STOP. Imports execute before the function-level host check, another separate previously reviewed boundary. No real launcher or test was invoked here.
+
+The retained `docs/r1/reports/b1_worker_contract_20261107/dryrun_no_resume_unittest.txt` SHA-256 is `14b5203158130a8ea783e32c13284ef9351ad7b06e80cd54ea95803cf54553da` and records eight worker-reported passes. The review did not rerun them. The title/source correction and an independent recheck are a short local change by the implementer and reviewer. A safe, fresh non-STOP crash/recovery test, subprocess cleanup and no-deletion evidence remain separate B1 work with unestimated effort; the author/host gates remain unchanged.
