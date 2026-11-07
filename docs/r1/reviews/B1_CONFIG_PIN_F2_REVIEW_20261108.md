@@ -1,0 +1,7 @@
+# Independent review: B1 config pin to f2eccd77
+
+**ACCEPTED for the scoped configuration-pin change** at `dcd07e7ad00165596d955047a50a10aba65ff98d`; this does not accept the final checkout, approve an author note, or authorize launch. No host, model or GPU was used.
+
+The `paper_commit` value is `f2eccd7709a89cbdb9468623a02ea9fdabe16bff`, the integrated production code freeze accepted in `B1_CODE_FREEZE_F2_INTEGRATION_REVIEW_20261108.md` at review commit `8d95fb171bdbb1869c068519d90134f09c4a3c8f`. `git merge-base --is-ancestor f2eccd77 dcd07e7a` returns zero. The only configuration value changed relative to f2 is `paper_commit`, from `55b8ca247ce7c437174ca4692b9706909a36e4ff` to f2; the candidate commit's sole file change is that one JSON line.
+
+Comparing f2 to dcd, all paths in the runtime protected-diff check are unchanged: `r1/exam`, `r1/scripts/exam_runner.py`, `r1/scripts/llama_server_instance.py`, `r1/scripts/llamacpp_probe.py`, and `r1/headroom/e1b_collect.py`. Separately, both `r1/c3/audit.py` and `r1/scripts/b1_host_preflight.py` are unchanged; as noted in the integrated review, those two are not included in the runtime protected-diff list, so the eventual exact-HEAD review must still bind them. The configured note `docs/r1/authorizations/trackx_b1_20261105.md` is absent from this checkout and from its committed tree. The draft note remains unapproved. The loader evidence STOP and all other existing final-review, gate, preflight, handover, capacity and launch conditions remain in force.
