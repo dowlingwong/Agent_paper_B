@@ -1,5 +1,6 @@
 """C3 audit: pairing, cache, resumable plan runner. ENGINEERING_ONLY; AI-assisted (Claude)."""
 import json
+import math
 import os
 from pathlib import Path
 
@@ -119,6 +120,8 @@ HARNESS = Path(os.environ.get("AR_HARNESS_ROOT", Path(__file__).resolve().parent
                     reason="harness checkout not available")
 def test_real_worker_run_is_seed_deterministic(tmp_path):
     files = {"train.py": (HARNESS / "nodes" / "tabular_mlp" / "train.py").read_text()}
-    a = audit.run_config("tabular_mlp", files, [7001, 7001], str(tmp_path))
-    assert all(r["success"] for r in a), a
+    a = audit.run_config("tabular_mlp", files, [7001, 7001], str(tmp_path),
+                         preserve_node_outputs=True, stop_on_invalid=True)
+    assert len(a) == 2 and all(r["success"] for r in a), a
+    assert all(math.isfinite(r["metric"]) for r in a), a
     assert a[0]["metric"] == a[1]["metric"]

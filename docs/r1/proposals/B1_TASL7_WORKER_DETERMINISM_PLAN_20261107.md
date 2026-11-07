@@ -1,6 +1,6 @@
 # TASL-7 B1 real-worker seed determinism: execution candidate
 
-AI-assisted (Codex). **Proposed engineering-only procedure; independent review required before execution.** This does not authorize B1 or establish any site observation. It runs `r1/tests/test_b1_real_worker_determinism.py::test_b1_real_worker_run_is_seed_deterministic`: two real pinned `LocalWorker` invocations on the synthetic CPU `tabular_mlp` node, both with joint seed 7001. It uses the same node, seed, real worker and exact metric-equality assertion as the original general test, adding the B1 `preserve_node_outputs=True` and `stop_on_invalid=True` path and finite-metric assertion. The original test remains unchanged; independent review must decide whether this B1-specific version meets the author’s real-worker determinism condition. No LLM server or GPU is needed. It does not read B1 audit values. The current Paper B audit copies the selected node into a unique pytest-owned temporary directory; the harness runs `python3 train.py`, and the pinned `tabular_mlp` benchmark writes its metrics to stdout and does not itself persist model files. Its two separate trial logs and other outputs must remain inspectable. This narrow test does not establish server or lease behavior.
+AI-assisted (Codex). **Proposed engineering-only procedure; independent review required before execution.** This does not authorize B1 or establish any site observation. It runs `r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic`: two real pinned `LocalWorker` invocations on the synthetic CPU `tabular_mlp` node, both with joint seed 7001. It uses the same node, seed, real worker and exact metric-equality assertion as the original general test, adding the B1 `preserve_node_outputs=True` and `stop_on_invalid=True` path and finite-metric assertion. The original test ID and its success and exact metric-equality assertions are retained, with two-result and finite-metric checks added. No LLM server or GPU is needed. It does not read B1 audit values. The current Paper B audit copies the selected node into a unique pytest-owned temporary directory; the harness runs `python3 train.py`, and the pinned `tabular_mlp` benchmark writes its metrics to stdout and does not itself persist model files. Its two separate trial logs and other outputs must remain inspectable. This narrow test does not establish server or lease behavior.
 
 ## Prerequisites and boundary
 
@@ -28,18 +28,25 @@ test -z "$(git -C "$PAPER_DIR" status --porcelain)"
 test "$(git -C "$HARNESS_DIR" rev-parse HEAD)" = "$HARNESS_HEAD"
 test -z "$(git -C "$HARNESS_DIR" status --porcelain --untracked-files=no)"
 mkdir "/private/tmp/$RUN_ID"
-git -C "$PAPER_DIR" archive --format=tar "$PAPER_HEAD" > "/private/tmp/$RUN_ID/paper.tar"
+git -C "$PAPER_DIR" archive --format=tar "$PAPER_HEAD" r1 > "/private/tmp/$RUN_ID/paper.tar"
 git -C "$HARNESS_DIR" archive --format=tar "$HARNESS_HEAD" > "/private/tmp/$RUN_ID/harness.tar"
-shasum -a 256 "/private/tmp/$RUN_ID/paper.tar" "/private/tmp/$RUN_ID/harness.tar"
+cp "$PAPER_DIR/r1/scripts/b1_safe_extract.py" "/private/tmp/$RUN_ID/extract.py"
+PAPER_SHA=$(shasum -a 256 "/private/tmp/$RUN_ID/paper.tar" | awk '{print $1}')
+HARNESS_SHA=$(shasum -a 256 "/private/tmp/$RUN_ID/harness.tar" | awk '{print $1}')
+EXTRACT_SHA=$(shasum -a 256 "/private/tmp/$RUN_ID/extract.py" | awk '{print $1}')
+printf 'paper %s\nharness %s\nextractor %s\n' "$PAPER_SHA" "$HARNESS_SHA" "$EXTRACT_SHA"
 ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "mkdir -p \$HOME/r1_b1_engineering && mkdir \$HOME/r1_b1_engineering/$RUN_ID && mkdir \$HOME/r1_b1_engineering/$RUN_ID/paper \$HOME/r1_b1_engineering/$RUN_ID/harness \$HOME/r1_b1_engineering/$RUN_ID/tmp \$HOME/r1_b1_engineering/$RUN_ID/home"
-ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "cat > \$HOME/r1_b1_engineering/$RUN_ID/paper.tar" < "/private/tmp/$RUN_ID/paper.tar"
-ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "cat > \$HOME/r1_b1_engineering/$RUN_ID/harness.tar" < "/private/tmp/$RUN_ID/harness.tar"
-ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "sha256sum \$HOME/r1_b1_engineering/$RUN_ID/paper.tar \$HOME/r1_b1_engineering/$RUN_ID/harness.tar"
-# STOP unless both printed remote archive hashes equal the local hashes, then:
-ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "tar -xf \$HOME/r1_b1_engineering/$RUN_ID/paper.tar -C \$HOME/r1_b1_engineering/$RUN_ID/paper && tar -xf \$HOME/r1_b1_engineering/$RUN_ID/harness.tar -C \$HOME/r1_b1_engineering/$RUN_ID/harness"
+ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "set -C; cat > \$HOME/r1_b1_engineering/$RUN_ID/paper.tar" < "/private/tmp/$RUN_ID/paper.tar"
+ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "set -C; cat > \$HOME/r1_b1_engineering/$RUN_ID/harness.tar" < "/private/tmp/$RUN_ID/harness.tar"
+ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "set -C; cat > \$HOME/r1_b1_engineering/$RUN_ID/extract.py" < "/private/tmp/$RUN_ID/extract.py"
+case "$PAPER_SHA$HARNESS_SHA$EXTRACT_SHA" in *[!a-f0-9]*|'') exit 1;; esac
+# Verify transferred extractor before running it; it hashes each opened archive
+# against its local digest before validating every member and extracting.
+ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "cd \$HOME/r1_b1_engineering/$RUN_ID && printf '%s  extract.py\n' '$EXTRACT_SHA' | sha256sum -c - && python3 extract.py paper.tar paper '$PAPER_SHA' && python3 extract.py harness.tar harness '$HARNESS_SHA'"
+
 ```
 
-The selected clean Git archives must be inspected for unsafe absolute paths, `..`, symlinks escaping extraction roots and other collisions before the transfer; any finding is STOP. Archive extraction occurs only into newly created empty own directories. The following remote script uses an exclusively created per-run log; it does not launch a server or GPU workload. Substitute only the already validated values and preserve the script itself as part of the reviewed commands. The parent's local shell must retain complete stdout/stderr and SSH exit status independently of the remote log.
+The extractor rejects absolute or parent traversal, all symbolic and hard links, special entries and duplicate names before writing, and uses exclusive creation. The selected Paper archive contains `r1/` only; the harness archive is complete. It hashes each opened archive against its locally recorded digest before extracting into a new empty directory. An extraction failure preserves every partial file and is STOP. The following remote script uses an exclusively created per-run log; it does not launch a server or GPU workload. Substitute only the already validated values and preserve the script itself as part of the reviewed commands. The parent's local shell must retain complete stdout/stderr and SSH exit status independently of the remote log.
 
 ```bash
 ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "RUN_ID=$RUN_ID HOST_PYTHON=$HOST_PYTHON bash -s" <<'REMOTE'
@@ -58,19 +65,23 @@ test "$(readlink -f "$HOST_PYTHON")" = "$(readlink -f "$venv_bin/python3")"
 "$venv_bin/python3" -c 'import sys,pytest,numpy,sklearn; print("worker_python",sys.executable,sys.prefix,pytest.__version__,numpy.__version__,sklearn.__version__)'
 test "$("$HOST_PYTHON" -c 'import sys; print(sys.prefix)')" = "$("$venv_bin/python3" -c 'import sys; print(sys.prefix)')"
 cd "$base/paper"
+# Require GNU timeout: without --foreground it creates its own process group;
+# only this test's owned group is signalled on deadline. A timeout is STOP.
+timeout --version | head -n 1 | grep -F 'GNU coreutils'
 # No other PATH python precedes the reviewed venv's python3.
 env -i HOME="$base/home" TMPDIR="$base/tmp" PATH="$venv_bin:/usr/bin:/bin" \
   PYTHONPATH="$base/paper:$base/harness/src" AR_HARNESS_ROOT="$base/harness" \
   PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 CUDA_VISIBLE_DEVICES='' \
-  "$HOST_PYTHON" -m pytest -p no:cacheprovider --basetemp="$base/pytest" \
-  -v r1/tests/test_b1_real_worker_determinism.py::test_b1_real_worker_run_is_seed_deterministic \
+  OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  timeout --signal=TERM --kill-after=5s 180s "$HOST_PYTHON" -m pytest -p no:cacheprovider --basetemp="$base/pytest" \
+  -v r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic \
   > "$base/pytest.log" 2>&1
 cat "$base/pytest.log"
 find "$base/pytest" -type f -name run.log -print -exec sha256sum {} \; -exec cat {} \;
 REMOTE
 ```
 
-A failed pytest exits before the final `cat` and `find`; operator must subsequently perform read-only capture of the same files and exit code without rerunning. The result is a pass only if the test actually runs (not skipped), both worker runs succeed, their reported finite metrics are exactly equal, both retained logs confirm the worker execution, and the independent reviewer checks the identified checkout/pin, test code, all commands, environment, paths and timestamps. Log contents and archive hashes are evidence; do not publish unrelated process command lines or secrets.
+The external GNU timeout is 180 seconds, shorter than the pinned worker subprocess timeout of 600 seconds; it terminates its own process group (including the worker shell and node) on expiry, then KILLs after five seconds, and must not run with `--foreground`. Independently qualify this GNU timeout behavior on TASL-7 with owned synthetic processes before executing. SSH loss is STOP and the operator checks the owned test group, not unrelated processes. A failed pytest exits before the final `cat` and `find`; operator must subsequently perform read-only capture of the same files and exit code without rerunning. The result is a pass only if the test actually runs (not skipped), both worker runs succeed, their reported finite metrics are exactly equal, both retained logs confirm the worker execution, and the independent reviewer checks the identified checkout/pin, test code, all commands, environment, paths and timestamps. Log contents and archive hashes are evidence; do not publish unrelated process command lines or secrets.
 
 ## Separate remaining launch checks
 
