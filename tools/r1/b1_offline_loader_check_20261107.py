@@ -37,6 +37,17 @@ def safe_file(root,relative):
 def deny(*args,**kwargs):
  raise RuntimeError('network operation denied by offline loader check')
 
+def forbid_retry(*args,**kwargs):
+ def decorate(fn): return fn
+ return decorate
+
+def install_loader_guards(openml):
+ # sklearn otherwise deletes a bad cache and may retry after a failure.
+ openml._retry_with_clean_cache=forbid_retry
+ openml._retry_on_network_error=forbid_retry
+ os.unlink=deny
+ os.remove=deny
+
 def main(root,dest):
  if root.is_symlink() or not root.is_dir(): raise RuntimeError('unsafe harness root')
  dest.mkdir(mode=0o700)
@@ -58,6 +69,8 @@ def main(root,dest):
  socket.getaddrinfo=deny
  from sklearn.datasets import fetch_openml
  import sklearn
+ from sklearn.datasets import _openml
+ install_loader_guards(_openml)
  print('PYTHON',sys.executable,'PREFIX',sys.prefix,'SKLEARN',sklearn.__version__,flush=True)
  if sys.prefix != '/home/dowling/exam-x/work/venv': raise RuntimeError('wrong venv prefix')
  try:
