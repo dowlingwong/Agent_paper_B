@@ -86,6 +86,16 @@ class GuardianTests(unittest.TestCase):
 
 
 class ControlTests(unittest.TestCase):
+    def test_finish_refuses_guardian_nonzero_after_ack(self):
+        instance=control.B1Containment.__new__(control.B1Containment)
+        instance._spawn_lock=threading.Lock(); instance._frozen=False
+        instance.events_fd=7; instance.control=Mock()
+        instance.control.recv.return_value=b'FINISHED'
+        instance.guardian=Mock(); instance.guardian.wait.return_value=1
+        with patch.object(control,'_events',return_value={'populated':0}):
+            with self.assertRaises(control.ContainmentStop): instance.finish()
+        instance.control.close.assert_not_called()
+
     def test_invalid_guardian_lease_is_refused_before_cgroup_creation(self):
         instance=control.B1Containment.__new__(control.B1Containment)
         with patch.object(control, '_parent_dir') as parent:

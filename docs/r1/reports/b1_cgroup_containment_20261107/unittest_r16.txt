@@ -1,0 +1,39 @@
+test_closed_grant_never_attaches_log_or_executes (r1.tests.test_b1_cgroup_pure.BootstrapTests.test_closed_grant_never_attaches_log_or_executes) ... ok
+test_self_enrollment_precedes_grant_and_exec (r1.tests.test_b1_cgroup_pure.BootstrapTests.test_self_enrollment_precedes_grant_and_exec) ... ok
+test_short_enrollment_does_not_grant_workload (r1.tests.test_b1_cgroup_pure.BootstrapTests.test_short_enrollment_does_not_grant_workload) ... ok
+test_failed_final_save_does_not_finish_guardian (r1.tests.test_b1_cgroup_pure.CompletionTests.test_failed_final_save_does_not_finish_guardian) ... ok
+test_failed_guardian_finish_records_stop_after_complete_write (r1.tests.test_b1_cgroup_pure.CompletionTests.test_failed_guardian_finish_records_stop_after_complete_write) ... ok
+test_lease_guardian_still_held_when_complete_state_is_saved (r1.tests.test_b1_cgroup_pure.CompletionTests.test_lease_guardian_still_held_when_complete_state_is_saved) ... ok
+test_ack_requires_observed_frozen_value (r1.tests.test_b1_cgroup_pure.ControlTests.test_ack_requires_observed_frozen_value) ... ok
+test_failed_monitor_check_publishes_stop_intent (r1.tests.test_b1_cgroup_pure.ControlTests.test_failed_monitor_check_publishes_stop_intent) ... ok
+test_finish_refuses_guardian_nonzero_after_ack (r1.tests.test_b1_cgroup_pure.ControlTests.test_finish_refuses_guardian_nonzero_after_ack) ... ok
+test_frozen_server_record_never_invokes_write_callback (r1.tests.test_b1_cgroup_pure.ControlTests.test_frozen_server_record_never_invokes_write_callback) ... ok
+test_guardian_failure_falls_back_to_parent_freeze (r1.tests.test_b1_cgroup_pure.ControlTests.test_guardian_failure_falls_back_to_parent_freeze) ... ok
+test_invalid_guardian_lease_is_refused_before_cgroup_creation (r1.tests.test_b1_cgroup_pure.ControlTests.test_invalid_guardian_lease_is_refused_before_cgroup_creation) ... ok
+test_live_server_requires_same_ofd_not_only_inode (r1.tests.test_b1_cgroup_pure.ControlTests.test_live_server_requires_same_ofd_not_only_inode) ... ok
+test_server_signal_targets_retained_pidfd_only (r1.tests.test_b1_cgroup_pure.ControlTests.test_server_signal_targets_retained_pidfd_only) ... ok
+test_stop_requested_during_grant_freezes_before_return (r1.tests.test_b1_cgroup_pure.ControlTests.test_stop_requested_during_grant_freezes_before_return) ... ok
+test_batch_verifier_refuses_any_stop_record_including_symlink (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_batch_verifier_refuses_any_stop_record_including_symlink) ... ok
+test_lock_retirement_is_nonreplacing_and_checks_owned_bytes (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_lock_retirement_is_nonreplacing_and_checks_owned_bytes) ... ok
+test_lock_retirement_refuses_changed_inode_before_creating_directory (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_lock_retirement_refuses_changed_inode_before_creating_directory) ... ok
+test_no_stop_record_written_for_unowned_batch (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_no_stop_record_written_for_unowned_batch) ... ok
+test_stop_record_is_exclusive_and_never_rewritten (r1.tests.test_b1_cgroup_pure.EvidenceTests.test_stop_record_is_exclusive_and_never_rewritten) ... ok
+test_partial_receipt_is_rejected (r1.tests.test_b1_cgroup_pure.FinalizationTests.test_partial_receipt_is_rejected) ... ok
+test_receipt_accepts_only_exact_state_head_and_canonical_bytes (r1.tests.test_b1_cgroup_pure.FinalizationTests.test_receipt_accepts_only_exact_state_head_and_canonical_bytes) ... ok
+test_disconnected_reply_freezes_and_retains_lease (r1.tests.test_b1_cgroup_pure.GuardianTests.test_disconnected_reply_freezes_and_retains_lease) ... ok
+test_freeze_waits_for_kernel_frozen_event (r1.tests.test_b1_cgroup_pure.GuardianTests.test_freeze_waits_for_kernel_frozen_event) ... ok
+test_parent_pidfd_event_freezes_without_waiting_for_socket_eof (r1.tests.test_b1_cgroup_pure.GuardianTests.test_parent_pidfd_event_freezes_without_waiting_for_socket_eof) ... ok
+test_short_freeze_write_cannot_ack_success (r1.tests.test_b1_cgroup_pure.GuardianTests.test_short_freeze_write_cannot_ack_success) ... ok
+test_gpu_queries_use_contained_capture (r1.tests.test_b1_cgroup_pure.HelperRoutingTests.test_gpu_queries_use_contained_capture) ... ok
+test_version_uses_contained_capture_and_keeps_both_streams (r1.tests.test_b1_cgroup_pure.HelperRoutingTests.test_version_uses_contained_capture_and_keeps_both_streams) ... ok
+test_contract_adopts_inherited_fd_only_with_live_matching_parent (r1.tests.test_b1_cgroup_pure.SupervisorContractTests.test_contract_adopts_inherited_fd_only_with_live_matching_parent) ... ok
+test_contract_refuses_supervisor_stop_before_adopting_lease (r1.tests.test_b1_cgroup_pure.SupervisorContractTests.test_contract_refuses_supervisor_stop_before_adopting_lease) ... ok
+test_filesystem_preflight_refuses_before_lease_and_runner (r1.tests.test_b1_cgroup_pure.SupervisorContractTests.test_filesystem_preflight_refuses_before_lease_and_runner) ... ok
+test_inherited_lease_is_not_reopened (r1.tests.test_b1_cgroup_pure.SupervisorContractTests.test_inherited_lease_is_not_reopened) ... ok
+test_publication_exception_is_reconciled_only_with_verified_commit (r1.tests.test_b1_cgroup_pure.SupervisorContractTests.test_publication_exception_is_reconciled_only_with_verified_commit) ... ok
+test_supervisor_checks_same_ofd_not_inode_only (r1.tests.test_b1_cgroup_pure.SupervisorContractTests.test_supervisor_checks_same_ofd_not_inode_only) ... ok
+
+----------------------------------------------------------------------
+Ran 34 tests in 0.784s
+
+OK

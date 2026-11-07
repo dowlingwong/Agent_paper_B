@@ -447,7 +447,8 @@ class B1Containment:
             self.control.sendall(b'FINISH')
             if self.control.recv(64) != b'FINISHED':
                 raise ContainmentStop('STOP: guardian refused normal finish')
-            self.guardian.wait(timeout=10)
+            if self.guardian.wait(timeout=10) != 0:
+                raise ContainmentStop('STOP: guardian exited unsuccessfully after finish reply')
             self.control.close()
 
     def require_finish_ready(self):
