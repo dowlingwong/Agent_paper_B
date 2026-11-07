@@ -27,24 +27,21 @@ class Pool:
         return future
 
 
-def test_audit_failure_stops_group_and_does_not_submit_remaining(tmp_path):
+def test_audit_failure_notifies_parent_and_does_not_submit_remaining(tmp_path):
     configs = {str(i): {'files': {}} for i in range(5)}
     with patch('concurrent.futures.ProcessPoolExecutor', Pool), \
-         patch.object(campaign.os, 'getpid', return_value=123), \
-         patch.object(campaign.os, 'getpgrp', return_value=123), \
-         patch.object(campaign.os, 'killpg') as kill, \
-         patch('signal.signal'):
+         patch.dict(campaign.os.environ, {'R1_B1_STOP_FD': '12'}), \
+         patch.object(campaign.os, 'write') as notify:
         with pytest.raises(RuntimeError, match='audit failure'):
             campaign.run_b1_audits('digits_mlp', configs,
                 {'workers': 2, 'audit_seeds': [1]}, tmp_path, {}, lambda: None)
     assert len(Pool.current.submitted) == 2
     assert Pool.current.submitted[1].cancelled()
-    kill.assert_called_once()
+    notify.assert_called_once_with(12, b'1')
 
 
-def test_audit_refuses_shared_process_group(tmp_path):
-    with patch.object(campaign.os, 'getpid', return_value=123), \
-         patch.object(campaign.os, 'getpgrp', return_value=456):
-        with pytest.raises(RuntimeError, match='process-group leader'):
-            campaign.run_b1_audits('digits_mlp', {},
-                {'workers': 2, 'audit_seeds': [1]}, tmp_path, {}, lambda: None)
+def test_audit_refuses_missing_stop_channel(tmp_path, monkeypatch):
+    monkeypatch.delenv('R1_B1_STOP_FD', raising=False)
+    with pytest.raises(KeyError, match='R1_B1_STOP_FD'):
+        campaign.run_b1_audits('digits_mlp', {},
+            {'workers': 2, 'audit_seeds': [1]}, tmp_path, {}, lambda: None)

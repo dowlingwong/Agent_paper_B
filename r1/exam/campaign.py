@@ -38,12 +38,10 @@ def write_json(path, data):
 
 
 def run_b1_audits(node, configs, job, out, cache, save_cache):
-    """Bound queued audit work and stop this campaign process group on failure."""
+    """Bound queued work and notify the owning runner on audit failure."""
     from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
-    import signal
-    # The parent creates a fresh session for this campaign; never signal a shared group.
-    if os.getpid() != os.getpgrp():
-        raise RuntimeError('STOP: B1 campaign is not the process-group leader')
+    # A dedicated inherited pipe asks the parent to use its existing stop_tree path.
+    stop_fd=int(os.environ['R1_B1_STOP_FD'])
     entries=iter(configs.items())
     with ProcessPoolExecutor(max_workers=job['workers']) as pool:
         active={}
@@ -64,13 +62,11 @@ def run_b1_audits(node, configs, job, out, cache, save_cache):
                     cache[h]=[r['metric'] if r['success'] else None for r in runs]
                     save_cache()
                 for _ in done: submit_one()
-        except BaseException:
+        except BaseException as exc:
+            import sys
+            print(f'STOP: audit failure: {type(exc).__name__}: {exc}',file=sys.stderr,flush=True)
             for future in active: future.cancel()
-            # All pool workers and their ordinary descendants share our fresh group.
-            # Ignore SIGTERM only in this leader so it can propagate the original error.
-            old=signal.signal(signal.SIGTERM,signal.SIG_IGN)
-            try: os.killpg(os.getpgrp(),signal.SIGTERM)
-            finally: signal.signal(signal.SIGTERM,old)
+            os.write(stop_fd,b'1')
             raise
 
 

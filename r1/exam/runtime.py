@@ -765,13 +765,30 @@ class ExamRunner:
         elif self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
             if self.b1_lease_fd is None: raise PreparationStop('STOP: B1 GPU lease is missing')
             kwargs['pass_fds']=(self.b1_lease_fd,)
-        with (path/'runner.log').open('ab') as log:
-            self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
-        self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
-        watchdog=RunnerWatchdog(self.service,self.cfg['watchdog']) if self.service else None
-        started=time.monotonic();killed=False
+        stop_read=stop_write=None
+        if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+            stop_read,stop_write=os.pipe()
+            os.set_blocking(stop_read,False)
+            env['R1_B1_STOP_FD']=str(stop_write)
+            kwargs['pass_fds']=(*kwargs.get('pass_fds',()),stop_write)
         try:
+            with (path/'runner.log').open('ab') as log:
+                self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
+        except BaseException:
+            if stop_read is not None: os.close(stop_read)
+            if stop_write is not None: os.close(stop_write)
+            raise
+        if stop_write is not None: os.close(stop_write)
+        killed=False
+        try:
+            self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
+            watchdog=RunnerWatchdog(self.service,self.cfg['watchdog']) if self.service else None
+            started=time.monotonic()
             while self.child.poll() is None:
+                if stop_read is not None:
+                    try: audit_stop=os.read(stop_read,1)
+                    except BlockingIOError: audit_stop=b''
+                    if audit_stop: raise RuntimeError('STOP: audit worker failure; see runner.log')
                 if self.state.get('phase')=='stage-a':
                     from r1.exam.cache_runtime import reject_unverified_lease
                     reject_unverified_lease()
@@ -808,6 +825,8 @@ class ExamRunner:
             else:
                 self.save()
             raise
+        finally:
+            if stop_read is not None: os.close(stop_read)
         self.child=None
 
     def root(self, spec, phase, node, seed, mode, *, interrupt=False):
