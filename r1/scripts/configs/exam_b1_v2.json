@@ -16,7 +16,7 @@
   "rule": "r1/exam/rules/x5_rule_v2.yaml",
   "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
   "value_grids": "r1/exam/value_grids.yaml",
-  "paper_commit": "e7d4e806491b058239ff57a98470d11b9dccf6ae",
+  "paper_commit": "3e712c403a80b08c018272ebe6b8e6de9b034bb0",
   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
   "prompts": "/home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl",
   "prompts_sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
