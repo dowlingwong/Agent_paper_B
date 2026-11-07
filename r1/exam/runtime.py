@@ -344,6 +344,8 @@ def author_gate(cfg, phase, rule_sha):
     if phase=='b1' and loaded_rule.get('version')=='x5_rule/v2' and (type(data.get('workers')) is not int or data['workers']!=cfg.get('workers')):
         raise RuntimeError('STOP: worker count differs from authorization')
     if phase=='b1' and loaded_rule.get('version')=='x5_rule/v2':
+        if data.get('host')!=cfg.get('host') or data.get('gpu_uuid')!=cfg.get('gpu_uuid') or not cfg.get('host') or not cfg.get('gpu_uuid'):
+            raise RuntimeError('STOP: B1 host or GPU UUID differs from authorization')
         ref=cfg.get('anchor_duplicate_reference')
         if not isinstance(ref,dict) or not isinstance(ref.get('sha256'),str) or not re.fullmatch(r'[0-9a-f]{64}',ref['sha256']) or data.get('anchor_duplicate_reference_sha256')!=ref['sha256']:
             raise RuntimeError('STOP: anchor reference digest is not author-bound')
