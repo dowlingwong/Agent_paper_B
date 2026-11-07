@@ -56,6 +56,17 @@ class OtherSnapshotTests(unittest.TestCase):
         self.assertEqual(fs.files[fs.names[-1]].st_ino, first[1])
         self.assertTrue(all(name.startswith('server_record.') for name in fs.names))
 
+    def test_server_preserves_legacy_nonfinite_serialization_but_cache_refuses(self):
+        fs = VersionFS()
+        data = {'health': {'reading': float('nan'), 'limit': float('inf')}}
+        with fs.patches():
+            identity = preserve.publish_server_record('/synthetic/server/llama_server_8080.json', data, None)
+        self.assertEqual(fs.by_inode[identity[1]], (json.dumps(data, indent=2) + '\n').encode())
+        with mock.patch.object(preserve.os, 'open') as opened:
+            with self.assertRaises(ValueError):
+                preserve.publish_audit_cache('/synthetic/root/audit_cache.json', data, None)
+        opened.assert_not_called()
+
     def test_unrelated_paths_refused_before_file_operations(self):
         with mock.patch.object(preserve.os, 'open') as opened:
             for function, path in ((preserve.publish_audit_cache, '/synthetic/other.json'),
