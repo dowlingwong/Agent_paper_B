@@ -273,11 +273,40 @@ def read_registry(path):
     return data
 
 
+def _dryrun_temp_roots():
+    """Select known temporary roots without tempfile's create/unlink probe.
+
+    Respect an existing tempfile cache or the first usable POSIX environment
+    candidate.  Directory and access checks are point-in-time only; unlike
+    tempfile we deliberately do not fall back to the current working directory.
+    """
+    roots={Path('/tmp').resolve()}
+    cached=tempfile.tempdir
+    if cached is not None:
+        roots.add(Path(os.fsdecode(cached)).absolute().resolve())
+        return roots
+    candidates=[os.environ.get(k) for k in ('TMPDIR','TEMP','TMP')]
+    candidates.extend(['/tmp','/var/tmp','/usr/tmp'])
+    for candidate in candidates:
+        if not candidate:
+            continue
+        try:
+            path=Path(os.fsdecode(candidate)).absolute()
+            if path.is_dir() and os.access(path,os.W_OK | os.X_OK):
+                roots.add(path.resolve())
+                break
+        except (OSError,TypeError,ValueError):
+            continue
+    return roots
+
+
 def host_check(cfg, out):
     if cfg.get('dryrun'):
-        root=Path(cfg['dryrun_root']).resolve();temps={Path(tempfile.gettempdir()).resolve(),Path('/tmp').resolve()}
         forbidden={host.casefold() for host in APPROVED_EXAM_HOSTS}|{'ucrtasl'}
-        if platform.node().split('.')[0].casefold() in forbidden or not any(root!=temp and root.is_relative_to(temp) for temp in temps) or not (root/'.dryrun').is_file():
+        if platform.node().split('.')[0].casefold() in forbidden:
+            raise RuntimeError('STOP: EXAM DRYRUN needs a marked temporary root on a development host')
+        root=Path(cfg['dryrun_root']).resolve();temps=_dryrun_temp_roots()
+        if not any(root!=temp and root.is_relative_to(temp) for temp in temps) or not (root/'.dryrun').is_file():
             raise RuntimeError('STOP: EXAM DRYRUN needs a marked temporary root on a development host')
         if not Path(out).resolve().is_relative_to(root): raise RuntimeError('STOP: DRYRUN output escapes temporary root')
         return
