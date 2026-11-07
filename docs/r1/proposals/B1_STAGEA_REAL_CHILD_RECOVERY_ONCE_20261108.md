@@ -29,7 +29,10 @@ HEAD=$(git --no-optional-locks -C "$TEST_REPO" rev-parse HEAD) || exit 1
 [ "$HEAD" = "$EXPECTED_HEAD" ] || exit 1
 STATUS=$(git --no-optional-locks -C "$TEST_REPO" status --porcelain --untracked-files=all) || exit 1
 [ -z "$STATUS" ] || exit 1
-[ "$(git --no-optional-locks -C "$HARNESS" rev-parse HEAD)" = a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 ] || exit 1
+HARNESS_HEAD=$(git --no-optional-locks -C "$HARNESS" rev-parse HEAD) || exit 1
+[ "$HARNESS_HEAD" = a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 ] || exit 1
+HARNESS_STATUS=$(git --no-optional-locks -C "$HARNESS" status --porcelain --untracked-files=all) || exit 1
+[ -z "$HARNESS_STATUS" ] || exit 1
 cd "$TEST_REPO" || exit 1
 set -C
 export AR_HARNESS_B1_ROOT="$HARNESS" AR_HARNESS_ROOT="$HARNESS" R1_REQUIRE_B1_HARNESS=1
