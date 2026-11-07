@@ -502,6 +502,7 @@ class ExamRunner:
         self.rule,self.rule_sha=load_rule(cfg['rule'],cfg['rule_sha256'])
         self.binding=hashlib.sha256(json.dumps({'config':cfg,'registry_sha256':digest_file(self.registry_path),'rule_sha256':self.rule_sha,'value_grids_sha256':digest_file(cfg['value_grids'])},sort_keys=True).encode()).hexdigest()
         self.service=None;self.child=None;self.state={};self.lock=None;self.author_head=None;self.b1_lease_fd=None;self.b1_config_head=b1_config_head
+        self.b1_state_identity=None
         if not cfg.get('dryrun'):
             from r1.harness import harness_root
             actual=subprocess.check_output(['git','-C',str(harness_root()),'rev-parse','HEAD'],text=True).strip()
@@ -516,7 +517,12 @@ class ExamRunner:
                 for key in ('models_dir','work_dir'): space_check(self.cfg[key])
             except (OSError,RuntimeError) as exc: raise PreparationStop(str(exc)) from exc
 
-    def save(self): write_json(self.out/'batch_state.json',self.state)
+    def save(self):
+        if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+            from r1.exam.b1_state_preserve import publish_state
+            self.b1_state_identity=publish_state(self.out/'batch_state.json',self.state,self.b1_state_identity)
+        else:
+            write_json(self.out/'batch_state.json',self.state)
 
     def start(self, phase):
         if phase=='stage-a':
@@ -544,8 +550,13 @@ class ExamRunner:
         if phase=='stage-a':refuse_existing_stage_a_output(self.out)
         self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
+        if phase=='b1' and not self.cfg.get('dryrun'):
+            from r1.exam.b1_state_preserve import existing_identity
+            self.b1_state_identity=existing_identity(path)
         if path.exists():
             self.state=json.loads(path.read_text())
+            if phase=='b1' and not self.cfg.get('dryrun') and existing_identity(path)!=self.b1_state_identity:
+                raise PreparationStop('STOP: B1 batch state changed during resume read')
             reject_stopped_batch(self.state)
             if self.state['binding']!=self.binding or self.state['phase']!=phase: raise RuntimeError('STOP: resume identity/config/rule mismatch')
             for key,entry in self.state['completed'].items():
