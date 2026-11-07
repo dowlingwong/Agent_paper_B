@@ -313,9 +313,8 @@ def author_gate(cfg, phase, rule_sha):
     plan_path=REPO/'docs/r1/PLAN.md'
     plan_raw=plan_path.read_bytes()
     plan=plan_raw.decode('utf-8')
-    # The v2 path must never treat prose, comments, dirty files or an arbitrary
-    # local HEAD as author approval. The trusted published authority has not yet
-    # been specified; preserve a STOP until that separate binding is reviewed.
+    # B1 v2 checks a dated decision row and the clean committed host checkout.
+    # Repository-writer forgery remains a process risk handled by independent review.
     try:
         loaded_rule, loaded_sha = load_rule(cfg['rule'], rule_sha)
     except (KeyError, OSError, ValueError, TypeError) as exc:
