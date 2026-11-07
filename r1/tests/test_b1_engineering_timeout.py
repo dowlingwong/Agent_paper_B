@@ -46,3 +46,13 @@ def test_shutdown_failure_is_not_retried(monkeypatch):
     with pytest.raises(TimeoutError, match='shutdown failed'):
         t.run(['synthetic'], 1)
     stop.assert_called_once_with(child)
+
+
+def test_signal_error_survives_secondary_wait_failure(monkeypatch, capsys):
+    child=Mock(pid=1234)
+    child.wait.side_effect=TimeoutError('wait also failed')
+    monkeypatch.setattr(t, 'observed_exit', lambda child: None)
+    monkeypatch.setattr(t.os, 'killpg', Mock(side_effect=PermissionError('signal refused')))
+    with pytest.raises(PermissionError, match='signal refused'):
+        t.stop_owned_group(child)
+    assert 'wait also failed' in capsys.readouterr().err

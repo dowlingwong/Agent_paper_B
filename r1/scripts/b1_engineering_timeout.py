@@ -23,7 +23,14 @@ def stop_owned_group(child):
             try: os.killpg(child.pid, sig)
             except ProcessLookupError: pass
             if sig == signal.SIGTERM: time.sleep(0.2)
-    finally:
+    except BaseException:
+        try:
+            child.wait(timeout=30)
+        except BaseException as wait_error:
+            try: print('STOP: additional owned-root wait failure:', wait_error, file=sys.stderr)
+            except Exception: pass
+        raise
+    else:
         child.wait(timeout=30)
 
 
