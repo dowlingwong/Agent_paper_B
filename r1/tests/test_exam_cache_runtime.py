@@ -43,8 +43,8 @@ def _proc_fd(proc_root, pid, fd, target):
     directory = os.path.join(proc_root, str(pid), 'fd')
     os.makedirs(directory, exist_ok=True)
     link = os.path.join(directory, str(fd))
-    if os.path.lexists(link):
-        os.unlink(link)
+    # Every synthetic proc table starts empty; never remove a prior fixture.
+    assert not os.path.lexists(link)
     os.symlink(target, link)
 
 
@@ -130,10 +130,11 @@ def test_guardian_witness_reports_method_and_rejects_every_ambiguity(tmp_path, m
 
         other = tmp_path / 'other.lock'
         other.touch()
-        _proc_fd(proc_root, PROC_PID, fd, str(other))
+        other_proc = str(tmp_path / 'proc_wrong_fd')
+        _proc_entry(other_proc, PROC_PID, 111)
+        _proc_fd(other_proc, PROC_PID, fd, str(other))
         with pytest.raises(RuntimeError, match='descriptor identity changed'):
-            runtime.guardian_witness(start_ticks=fake_ticks(proc_root), proc_root=proc_root)
-        _proc_fd(proc_root, PROC_PID, fd, str(lease_path))
+            runtime.guardian_witness(start_ticks=fake_ticks(other_proc), proc_root=other_proc)
 
         monkeypatch.setenv('TRACKX_GPU_LEASE_INO', str(identity[1] + 1))
         with pytest.raises(RuntimeError, match='lease not established'):
@@ -243,13 +244,26 @@ def test_boolean_or_absent_witness_is_never_accepted(tmp_path):
 
 # -- runner/worker -> native server inheritance -------------------------------
 
-def inheritance_fixture(tmp_path, authorized):
+def inheritance_fixture(tmp_path, authorized, *, server_fd='valid'):
     """Real lease FD + synthetic /proc for the runner and its native server."""
     path, fd, identity = lease_fixture(tmp_path)
     proc_root = str(tmp_path / 'proc')
     _proc_entry(proc_root, RUNNER_PID, 100, ppid=1)
     _proc_entry(proc_root, SERVER_PID, 200, ppid=RUNNER_PID)
-    _proc_fd(proc_root, SERVER_PID, fd, str(path))
+    if server_fd == 'valid':
+        _proc_fd(proc_root, SERVER_PID, fd, str(path))
+    elif server_fd == 'wrong':
+        other = tmp_path / 'other'
+        other.touch()
+        _proc_fd(proc_root, SERVER_PID, fd, str(other))
+    elif server_fd == 'extra':
+        _proc_fd(proc_root, SERVER_PID, fd, str(path))
+        extra = tmp_path / 'extra-desc'
+        extra.touch()
+        _proc_fd(proc_root, SERVER_PID, 99, str(extra))
+        _proc_fd(proc_root, SERVER_PID, 98, str(path))
+    elif server_fd != 'missing':
+        raise AssertionError('invalid synthetic server fd mode')
     os.environ['TRACKX_GPU_LEASE_FD'] = str(fd)
     os.environ['TRACKX_GPU_LEASE_DEV'] = str(identity[0])
     os.environ['TRACKX_GPU_LEASE_INO'] = str(identity[1])
@@ -305,27 +319,17 @@ def test_server_inheritance_fails_closed_when_kcmp_is_not_same(tmp_path, authori
 
 
 def test_server_inheritance_rejects_missing_extra_or_wrong_descriptor(tmp_path, authorized):
-    path, fd, identity, proc_root = inheritance_fixture(tmp_path, authorized)
-    try:
-        os.unlink(os.path.join(proc_root, str(SERVER_PID), 'fd', str(fd)))
-        with pytest.raises(LeaseStop, match='does not retain'):
-            verify_inheritance(fd, proc_root)
-        _proc_fd(proc_root, SERVER_PID, fd, str(path))
-        extra = tmp_path / 'extra-desc'
-        extra.touch()
-        _proc_fd(proc_root, SERVER_PID, 99, str(extra))
-        _proc_fd(proc_root, SERVER_PID, 98, str(path))
-        with pytest.raises(LeaseStop, match='FD set'):
-            verify_inheritance(fd, proc_root)
-        os.unlink(os.path.join(proc_root, str(SERVER_PID), 'fd', '99'))
-        os.unlink(os.path.join(proc_root, str(SERVER_PID), 'fd', '98'))
-        other = tmp_path / 'other'
-        other.touch()
-        _proc_fd(proc_root, SERVER_PID, fd, str(other))
-        with pytest.raises(LeaseStop, match='identity differs'):
-            verify_inheritance(fd, proc_root)
-    finally:
-        os.close(fd)
+    # Each case starts as the exact malformed FD table; no links are removed.
+    for mode, expected in [('missing', 'does not retain'), ('extra', 'FD set'),
+                           ('wrong', 'identity differs')]:
+        case = tmp_path / mode
+        case.mkdir()
+        path, fd, identity, proc_root = inheritance_fixture(case, authorized, server_fd=mode)
+        try:
+            with pytest.raises(LeaseStop, match=expected):
+                verify_inheritance(fd, proc_root)
+        finally:
+            os.close(fd)
 
 
 def test_server_inheritance_rejects_pid_start_and_parent_mismatch(tmp_path, authorized):
