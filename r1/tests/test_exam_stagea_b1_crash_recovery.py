@@ -22,6 +22,20 @@ import yaml
 ROOT=Path(__file__).resolve().parents[2]
 
 
+def _preserve_prepare_config(config_path, archive_dir, cfg):
+    """Retain prepare's config before installing this test's synthetic config.
+
+    ``archive_dir`` is a fresh private test-owned directory outside the run
+    root. Path.rename does not provide kernel no-replace semantics: this
+    helper assumes the new directory and its parent remain cooperative and
+    stable throughout this operation. Any failure leaves the scene in place.
+    """
+    archive_dir.mkdir(mode=0o700)
+    config_path.rename(archive_dir / config_path.name)
+    with config_path.open('x', encoding='utf-8') as stream:
+        stream.write(json.dumps(cfg))
+
+
 def _tree_contents(root):
     """Snapshot directory paths and regular-file bytes in the synthetic root."""
     files={};directories=[]
@@ -126,12 +140,16 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
                authorizations={'b1':str(root/'SYNTHETIC_UNUSED_NOTE')},
                template_repairs={s['id']:s['template_repair']['sha256'] for s in specs if s.get('template_repair')})
     table=_stage_a_with_fabricated_transport(root,cfg,monkeypatch)
-    amendment=root/'SYNTHETIC_amendment.json';amendment.write_text(json.dumps({'label':'ENGINEERING_ONLY','rows':[]}))
-    acceptance=root/'SYNTHETIC_acceptance.txt';acceptance.write_text('DRYRUN ONLY\n'+digest_file(table)+'\n'+digest_file(amendment)+'\n')
+    amendment=root/'SYNTHETIC_amendment.json'
+    with amendment.open('x',encoding='utf-8') as stream:
+        stream.write(json.dumps({'label':'ENGINEERING_ONLY','rows':[]}))
+    acceptance=root/'SYNTHETIC_acceptance.txt'
+    with acceptance.open('x',encoding='utf-8') as stream:
+        stream.write('DRYRUN ONLY\n'+digest_file(table)+'\n'+digest_file(amendment)+'\n')
     cfg.update(stage_a_table=str(table),stage_a_table_sha256=digest_file(table),
                stage_a_amendment_table=str(amendment),stage_a_amendment_table_sha256=digest_file(amendment),
                stage_a_amendment_acceptance=str(acceptance),stage_a_amendment_acceptance_sha256=digest_file(acceptance))
-    config_path.write_text(json.dumps(cfg))
+    _preserve_prepare_config(config_path,tmp_path/'_to_delete',cfg)
     env={**os.environ,'AR_HARNESS_ROOT':harness,'R1_FAKE_OLLAMA_ROOT':str(root),
          'PYTHONPATH':str(ROOT),'PYTHONDONTWRITEBYTECODE':'1','C3_FAKE_EXIT_IF_ORPHANED':'1'}
     env.pop('LLAMACPP_CACHE_PROMPT',None)
@@ -139,7 +157,7 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
     args=[sys.executable,'-m','r1.scripts.exam_runner','b1','--config',str(config_path),
           '--out',str(out)]+[arg for name in selected for arg in ('--candidate',name)]
     log=root/'SYNTHETIC_parent_first.log'
-    with log.open('w') as output:
+    with log.open('x',encoding='utf-8') as output:
         parent=subprocess.Popen(args,cwd=ROOT,env=env,stdout=output,stderr=subprocess.STDOUT)
         try:
             until=time.monotonic()+90;state=None;partial=None
