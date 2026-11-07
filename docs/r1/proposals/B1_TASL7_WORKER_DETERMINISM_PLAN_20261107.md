@@ -11,21 +11,7 @@ AI-assisted (Codex). **Proposed engineering-only procedure; independent review r
 
 ## Linux wrapper synthetic preflight
 
-Before the real-worker test, execute the actual wrapper's Linux-only synthetic tests from the exact reviewed checkout and verified venv, in an exclusively new B1-owned engineering directory. These tests create their own sessions and synthetic CPU sleep processes, run no model/GPU, and cover an exited root with a still-running child, deadline, interruption, retained root/group/start-ticks logging, and a separate unrelated test-owned session. A failed or skipped test is STOP; preserve its output and do not retry automatically. Do not manually signal an unverified PID. The synthetic processes self-expire if the wrapper fails. Use a unique pytest basetemp and exclusive log after the approved archive verification/extraction below, before running the real-worker command:
-
-```bash
-cd "$base/paper"
-test ! -e "$base/pytest-wrapper"
-env -i HOME="$base/home" TMPDIR="$base/tmp" PATH="$venv_bin:/usr/bin:/bin" \
-  PYTHONPATH="$base/paper:$base/harness/src" AR_HARNESS_ROOT="$base/harness" \
-  PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 CUDA_VISIBLE_DEVICES='' \
-  OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
-  "$HOST_PYTHON" -m pytest -p no:cacheprovider --basetemp="$base/pytest-wrapper" \
-  -v r1/tests/test_b1_engineering_timeout_linux.py > "$base/pytest-wrapper.log" 2>&1
-cat "$base/pytest-wrapper.log"
-```
-
-Require three executed passes, none skipped, and independent review of the retained log and identity evidence before relying on the real-worker procedure. The commands use the same `base`, `venv_bin`, and `HOST_PYTHON` established in the following script; insert them after the interpreter checks and before the real-worker pytest invocation.
+Before the real-worker test, execute the actual wrapper's Linux-only synthetic tests from the exact reviewed checkout and verified venv, in an exclusively new B1-owned engineering directory. These tests create their own sessions and synthetic CPU sleep processes, run no model/GPU, and cover an exited root with a still-running child, deadline, interruption, retained root/group/start-ticks logging, and a separate unrelated test-owned session. A failed or skipped test is STOP; preserve its output and do not retry automatically. Do not manually signal an unverified PID. The synthetic processes self-expire if the wrapper fails. Use a unique pytest basetemp and exclusive log after the approved archive verification/extraction below. The following remote script executes the preflight before the real-worker test. The full three-test result and identities must be independently reviewed before the real-worker invocation; therefore the script below stops after the preflight, and the operator runs the separate real-worker block only after review.
 
 ## Concrete command sequence
 
@@ -82,6 +68,28 @@ test "$(readlink -f "$HOST_PYTHON")" = "$(readlink -f "$venv_bin/python3")"
 "$HOST_PYTHON" -c 'import sys,pytest,numpy,sklearn; print("python",sys.executable,sys.version); print("pytest",pytest.__version__,pytest.__file__); print("numpy",numpy.__version__,numpy.__file__); print("sklearn",sklearn.__version__,sklearn.__file__)'
 "$venv_bin/python3" -c 'import sys,pytest,numpy,sklearn; print("worker_python",sys.executable,sys.prefix,pytest.__version__,numpy.__version__,sklearn.__version__)'
 test "$("$HOST_PYTHON" -c 'import sys; print(sys.prefix)')" = "$("$venv_bin/python3" -c 'import sys; print(sys.prefix)')"
+cd "$base/paper"
+test ! -e "$base/pytest-wrapper"
+env -i HOME="$base/home" TMPDIR="$base/tmp" PATH="$venv_bin:/usr/bin:/bin" \
+  PYTHONPATH="$base/paper:$base/harness/src" AR_HARNESS_ROOT="$base/harness" \
+  PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 CUDA_VISIBLE_DEVICES='' \
+  OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  "$HOST_PYTHON" -m pytest -p no:cacheprovider --basetemp="$base/pytest-wrapper" \
+  -v r1/tests/test_b1_engineering_timeout_linux.py > "$base/pytest-wrapper.log" 2>&1
+cat "$base/pytest-wrapper.log"
+REMOTE
+```
+
+STOP here for independent review of the three executed passing tests and retained identity evidence. After acceptance, execute the following separate remote block with the same validated variables; it performs no automatic retry.
+
+```bash
+ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 "RUN_ID=$RUN_ID HOST_PYTHON=$HOST_PYTHON bash -s" <<'REMOTE'
+set -euo pipefail
+set -o noclobber
+base="$HOME/r1_b1_engineering/$RUN_ID"
+venv_bin="$(dirname "$HOST_PYTHON")"
+test -x "$HOST_PYTHON"
+test ! -e "$base/pytest"
 cd "$base/paper"
 # No other PATH python precedes the reviewed venv's python3.
 env -i HOME="$base/home" TMPDIR="$base/tmp" PATH="$venv_bin:/usr/bin:/bin" \
