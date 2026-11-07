@@ -13,8 +13,9 @@ from r1.exam import b1_exit_receipt as receipt
 
 HEAD = 'a' * 40
 PID = 4321
+MOUNT = ('24','/','8:1','ext4')
 ACTIVE = json.dumps({'version':'b1_active/v1','runner_pid':PID,
-                     'authorization_checkout_head':HEAD}).encode()
+                     'authorization_checkout_head':HEAD,'mount_identity':list(MOUNT)}).encode()
 COMPLETE = json.dumps({'status':'COMPLETE','phase':'b1','execution_label':'EVIDENCE'}).encode()
 FINALIZED = b'synthetic reviewed finalization bytes'
 REAL_LOCAL_CHECK = receipt._require_local_filesystem
@@ -22,7 +23,7 @@ REAL_LOCAL_CHECK = receipt._require_local_filesystem
 
 class ReceiptTests(unittest.TestCase):
     def setUp(self):
-        patcher = mock.patch.object(receipt, '_require_local_filesystem', return_value='ext4')
+        patcher = mock.patch.object(receipt, '_require_local_filesystem', return_value=MOUNT)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -61,7 +62,7 @@ class ReceiptTests(unittest.TestCase):
         table = ('24 22 8:1 / / rw - ext4 /dev/a rw\n'
                  '25 24 8:2 / /synthetic\\040space rw - xfs /dev/b rw\n')
         self.assertEqual(receipt._mount_for('/synthetic space/batch', table)[1:],
-                         ('/synthetic space', '8:2', 'xfs'))
+                         ('/synthetic space', '8:2', 'xfs', '25'))
 
     def test_mount_parser_rejects_equal_specificity(self):
         table = ('24 22 8:1 / / rw - ext4 /dev/a rw\n'
@@ -84,7 +85,7 @@ class ReceiptTests(unittest.TestCase):
         table = '24 22 8:1 / / rw - ext4 /dev/a rw\n'
         with mock.patch.object(receipt.os, 'stat', return_value=info), \
                 mock.patch.object(Path, 'read_text', return_value=table):
-            self.assertEqual(REAL_LOCAL_CHECK('/synthetic/batch'), 'ext4')
+            self.assertEqual(REAL_LOCAL_CHECK('/synthetic/batch'), MOUNT)
 
     def test_nonzero_wait_never_writes_receipt_even_if_state_looks_complete(self):
         # Models a COMPLETE exchange followed by fsync failure and STOP-save
@@ -242,6 +243,16 @@ class ReceiptTests(unittest.TestCase):
                 receipt._retire_active_last('/synthetic/batch', ACTIVE)
         rename.assert_not_called()
 
+    def test_mount_replacement_refuses_retirement_before_open(self):
+        different = ('25','/synthetic/batch','8:1','ext4')
+        with mock.patch.object(receipt, '_require_local_filesystem', return_value=different), \
+                mock.patch.object(receipt.os, 'open') as opened, \
+                mock.patch.object(receipt, '_renameat2') as rename:
+            with self.assertRaisesRegex(RuntimeError, 'mount changed'):
+                receipt._retire_active_last('/synthetic/batch', ACTIVE)
+        opened.assert_not_called()
+        rename.assert_not_called()
+
     def test_production_existing_batch_is_not_automatically_resumed(self):
         from r1.exam import runtime
         runner = runtime.ExamRunner.__new__(runtime.ExamRunner)
@@ -285,6 +296,42 @@ class ReceiptTests(unittest.TestCase):
                 runner.start('b1')
         mkdir.assert_not_called()
         sentinel.assert_not_called()
+
+    def test_same_device_distinct_bind_mount_stops_before_sentinel(self):
+        from r1.exam import runtime
+        runner = runtime.ExamRunner.__new__(runtime.ExamRunner)
+        runner.out = Path('/synthetic/new')
+        runner.cfg = {'dryrun':False, 'nodes':[], 'harness_commit':'h', 'work_dir':'/synthetic'}
+        runner.rule = {'version':'x5_rule/v2'}
+        runner.rule_sha = 'r'; runner.b1_config_head = HEAD
+        runner.registry_path = Path('/synthetic/registry'); runner.registry = {}
+        runner.state = {}; runner.b1_state_identity = None
+        mounted_child = ('25','/synthetic/new','8:1','ext4')
+        with mock.patch.object(runtime, 'require_committed_b1_config', return_value=HEAD), \
+                mock.patch.object(runtime, 'require_committed_b1_registry'), \
+                mock.patch.object(runtime, 'author_gate', return_value=HEAD), \
+                mock.patch.object(runtime, 'worker_environment'), \
+                mock.patch.object(receipt, '_require_local_filesystem', side_effect=[MOUNT, mounted_child]), \
+                mock.patch.object(Path, 'mkdir') as mkdir, \
+                mock.patch('r1.exam.b1_state_preserve.write_exclusive_json') as sentinel:
+            with self.assertRaisesRegex(runtime.PreparationStop, 'mount differs'):
+                runner.start('b1')
+        mkdir.assert_called_once()
+        sentinel.assert_not_called()
+
+    def test_active_sentinel_refuses_changed_mount_identity(self):
+        wrong_mount = ('25','/synthetic/batch','8:1','ext4')
+        with mock.patch.object(receipt.os.path, 'lexists', return_value=False), \
+                mock.patch.object(receipt, 'read_owned_regular', side_effect=[ACTIVE, COMPLETE]), \
+                mock.patch.object(receipt, '_require_local_filesystem', return_value=wrong_mount):
+            with self.assertRaisesRegex(RuntimeError, 'sentinel does not bind'):
+                receipt.active_and_state('/synthetic/batch', HEAD, PID)
+
+    def test_active_sentinel_accepts_matching_mount_identity(self):
+        with mock.patch.object(receipt.os.path, 'lexists', return_value=False), \
+                mock.patch.object(receipt, 'read_owned_regular', side_effect=[ACTIVE, COMPLETE]):
+            self.assertEqual(receipt.active_and_state('/synthetic/batch', HEAD, PID),
+                             (ACTIVE, COMPLETE))
 
 
 if __name__ == '__main__':

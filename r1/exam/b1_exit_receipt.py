@@ -24,7 +24,7 @@ def _mount_for(path, mountinfo):
     for line in mountinfo.splitlines():
         left, separator, right = line.partition(' - ')
         fields, tail = left.split(), right.split()
-        if not separator or len(fields) < 6 or len(tail) < 3:
+        if not separator or len(fields) < 6 or len(tail) < 3 or not fields[0].isdigit() or int(fields[0]) <= 0:
             raise RuntimeError('STOP: Linux mountinfo is malformed')
         # Linux mountinfo escapes space, tab, newline and backslash as octal.
         raw = fields[4]
@@ -34,7 +34,7 @@ def _mount_for(path, mountinfo):
         if not mount.startswith('/') or os.path.normpath(mount) != mount:
             raise RuntimeError('STOP: Linux mountpoint is not canonical')
         if path == mount or path.startswith(mount.rstrip('/') + '/'):
-            matches.append((len(mount), mount, fields[2], tail[0]))
+            matches.append((len(mount), mount, fields[2], tail[0], fields[0]))
     if not matches:
         raise RuntimeError('STOP: B1 mount is not visible')
     longest = max(item[0] for item in matches)
@@ -57,14 +57,14 @@ def _require_local_filesystem(batch):
     try:
         info = os.stat(batch, follow_symlinks=False)
         table = Path('/proc/self/mountinfo').read_text()
-        _, _, dev, filesystem = _mount_for(batch, table)
+        _, mountpoint, dev, filesystem, mount_id = _mount_for(batch, table)
         major, minor = (int(value) for value in dev.split(':'))
     except (OSError, ValueError) as exc:
         raise RuntimeError('STOP: B1 local filesystem identity is unavailable') from exc
     if (not stat.S_ISDIR(info.st_mode) or (os.major(info.st_dev), os.minor(info.st_dev)) != (major, minor)
             or filesystem not in ('ext4', 'xfs')):
         raise RuntimeError('STOP: B1 requires a site-qualified ext4/xfs batch filesystem')
-    return filesystem
+    return (mount_id, mountpoint, dev, filesystem)
 
 
 def read_owned_regular(path):
@@ -104,10 +104,12 @@ def active_and_state(batch, head, pid, *, retired=False):
         raise RuntimeError('STOP: B1 batch has a STOP record')
     active_bytes = read_owned_regular(batch / (RETIRED_ACTIVE if retired else ACTIVE))
     active = json.loads(active_bytes)
-    if (not isinstance(active, dict) or set(active) != {'version','runner_pid','authorization_checkout_head'}
+    mount_identity = _require_local_filesystem(batch)
+    if (not isinstance(active, dict) or set(active) != {'version','runner_pid','authorization_checkout_head','mount_identity'}
             or active.get('version') != 'b1_active/v1' or type(pid) is not int or pid <= 0
             or type(active.get('runner_pid')) is not int
-            or active.get('runner_pid') != pid or active.get('authorization_checkout_head') != head):
+            or active.get('runner_pid') != pid or active.get('authorization_checkout_head') != head
+            or active.get('mount_identity') != list(mount_identity)):
         raise RuntimeError('STOP: B1 active sentinel does not bind the waited runner and authority')
     state_bytes = read_owned_regular(batch / 'batch_state.json')
     state = json.loads(state_bytes)
@@ -150,7 +152,13 @@ def _retire_active_last(batch, expected_active):
     Correctness of local filesystem atomicity/error behavior is a site check.
     """
     batch = Path(batch)
-    _require_local_filesystem(batch)
+    current_mount = _require_local_filesystem(batch)
+    try:
+        active_object = json.loads(expected_active)
+    except (ValueError, TypeError) as exc:
+        raise RuntimeError('STOP: B1 active sentinel is malformed') from exc
+    if not isinstance(active_object, dict) or active_object.get('mount_identity') != list(current_mount):
+        raise RuntimeError('STOP: B1 mount changed before active retirement')
     if read_owned_regular(batch / ACTIVE) != expected_active:
         raise RuntimeError('STOP: B1 active sentinel changed before retirement')
     if os.path.lexists(batch / 'STOP.json'):

@@ -561,15 +561,18 @@ class ExamRunner:
             # Check the existing parent before creating any output; checking
             # the new child also detects a changed/overmounted path.  Type
             # checks do not establish rename error semantics or site approval.
-            _require_local_filesystem(self.out.parent)
+            parent_mount=_require_local_filesystem(self.out.parent)
             try:
                 self.out.mkdir(mode=0o700,parents=False,exist_ok=False)
             except FileExistsError as exc:
                 raise PreparationStop('STOP: production B1 existing batch cannot be resumed automatically') from exc
-            _require_local_filesystem(self.out)
+            child_mount=_require_local_filesystem(self.out)
+            if child_mount != parent_mount:
+                raise PreparationStop('STOP: B1 batch mount differs from the work-directory mount')
             from r1.exam.b1_state_preserve import ACTIVE, write_exclusive_json
             write_exclusive_json(self.out/ACTIVE,{'version':'b1_active/v1','runner_pid':os.getpid(),
-                                                  'authorization_checkout_head':self.author_head})
+                                                  'authorization_checkout_head':self.author_head,
+                                                  'mount_identity':list(child_mount)})
         else:
             self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
