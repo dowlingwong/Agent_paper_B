@@ -841,7 +841,9 @@ class ExamRunner:
         path=Path(job['out'])
         contained = self.state.get('phase')=='b1' and not self.cfg.get('dryrun')
         def prepare_output():
-            path.mkdir(parents=True,exist_ok=True)
+            # A production batch is exclusive and cannot be resumed.  Refuse an
+            # existing campaign root instead of writing into another scene.
+            path.mkdir(parents=True,exist_ok=not contained)
             write_json(path/'job.json',job)
         if contained: self.b1_containment.write_active(prepare_output)
         else: prepare_output()
@@ -862,7 +864,10 @@ class ExamRunner:
         with log:
             argv=[sys.executable,'-m',module,'--job',str(path/'job.json')]
             if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
-                self.child=self.b1_containment.spawn('worker',argv,env=env,cwd=REPO,stdout=log,lease_fd=self.b1_lease_fd)
+                self.child=self.b1_containment.spawn('worker',argv,env=env,cwd=REPO,stdout=log,
+                                                     lease_fd=self.b1_lease_fd,
+                                                     worker_context={'job':job,'out':path,'server':self.service,
+                                                                     'supervisor':self.b1_supervisor})
             else:
                 self.child=subprocess.Popen(argv,env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
         self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()

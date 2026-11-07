@@ -150,6 +150,9 @@ def _collect_b1_review(job):
     if job.get('phase') != 'b1': raise RuntimeError('STOP: B1 candidate refuses other phases')
     out=Path(job['out'])
     if not job['dryrun']:
+        # No worker output, node copy or manager request precedes this check.
+        from r1.exam.b1_worker_contract import verify_worker_contract
+        verify_worker_contract(job)
         _verify_b1_worker_input(job)
         # A direct campaign invocation has no parent runner to enforce the
         # approved work-tree boundary. This check does not prove ownership of

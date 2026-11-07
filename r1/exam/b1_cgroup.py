@@ -278,7 +278,7 @@ class B1Containment:
                 raise ContainmentStop('STOP: server record write after freeze')
             return callback()
 
-    def spawn(self, kind, argv, *, env, stdout, lease_fd, cwd=None, stderr=None, allow_fast_exit=False):
+    def spawn(self, kind, argv, *, env, stdout, lease_fd, cwd=None, stderr=None, allow_fast_exit=False, worker_context=None):
         """Launch a migrated bootstrap, then exec the intended command in-place."""
         with self._spawn_lock:
             if self._stop_requested.is_set() or self._frozen or self.guardian.poll() is not None:
@@ -288,17 +288,73 @@ class B1Containment:
             grant_r, grant_w = os.pipe()
             exec_r, exec_w = os.pipe()
             process = None
+            output_fd = None
+            guardian_pidfd = None
             try:
+                child_env = dict(env)
+                contract_fds = ()
+                if worker_context is not None:
+                    if kind != 'worker' or set(worker_context) != {'job','out','server','supervisor'}:
+                        raise ContainmentStop('STOP: invalid B1 worker context')
+                    from r1.exam.b1_worker_contract import ENV_KEY, _job_sha, _server_listener
+                    from r1.exam.cache_proc import process_start_ticks
+                    job, output, server, supervisor = (worker_context[k] for k in ('job','out','server','supervisor'))
+                    output = Path(output)
+                    if not output.is_absolute() or output.resolve() != output or str(output) != job.get('out'):
+                        raise ContainmentStop('STOP: worker output context is not canonical')
+                    output_fd = os.open(output, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+                    info, named = os.fstat(output_fd), os.stat(output, follow_symlinks=False)
+                    if (not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o022
+                            or (info.st_dev,info.st_ino) != (named.st_dev,named.st_ino)):
+                        raise ContainmentStop('STOP: worker output identity mismatch')
+                    if not isinstance(supervisor,dict) or supervisor.get('lease_fd') != lease_fd:
+                        raise ContainmentStop('STOP: worker supervisor/lease binding absent')
+                    self.require_guardian()
+                    guardian_pidfd = os.pidfd_open(self.guardian.pid,0)
+                    self.verify_live_lease(self.guardian,lease_fd)
+                    context = {'version':'b1_worker_contract/v1','parent_pid':os.getpid(),
+                               'parent_ticks':process_start_ticks(os.getpid()), 'parent_pidfd':self.parent_pidfd,
+                               'supervisor_pid':supervisor['pid'], 'supervisor_ticks':supervisor['start_ticks'],
+                               'supervisor_pidfd':supervisor['pidfd'], 'supervisor_live_fd':supervisor['live_fd'],
+                               'guardian_pid':self.guardian.pid, 'guardian_ticks':process_start_ticks(self.guardian.pid),
+                               'guardian_pidfd':guardian_pidfd,
+                               'lease_fd':lease_fd,'root_fd':self.root_fd,'leaf_fd':leaf_fd,'output_fd':output_fd,
+                               'membership':self.membership,'leaf':name,'out':str(output),'job_sha256':_job_sha(job),
+                               'server_pid':None,'server_ticks':None,'server_pidfd':None,'server_leaf_fd':None,
+                               'server_url':None}
+                    contract_fds = (self.parent_pidfd,self.root_fd,leaf_fd,output_fd,guardian_pidfd,
+                                    supervisor['pidfd'],supervisor['live_fd'])
+                    software = job.get('candidate',{}).get('kind') in ('random_valid','scripted')
+                    if software:
+                        if server is not None or job.get('base_url') is not None:
+                            raise ContainmentStop('STOP: software anchor has a server')
+                        child_env.pop('LLAMACPP_BASE_URL',None)
+                    else:
+                        if server is None or server.process is None or server.process.poll() is not None:
+                            raise ContainmentStop('STOP: worker server unavailable')
+                        record = self._leaves.get(server.process.pid)
+                        if not record or record[0] != 'server' or job.get('base_url') != server.openai_base_url:
+                            raise ContainmentStop('STOP: worker server not owned or URL differs')
+                        self.verify_live_lease(server.process,lease_fd)
+                        if not _server_listener(server.process.pid, server.openai_base_url):
+                            raise ContainmentStop('STOP: worker server listener identity mismatch')
+                        context.update(server_pid=server.process.pid,
+                                       server_ticks=process_start_ticks(server.process.pid),
+                                       server_pidfd=record[3],server_leaf_fd=record[1],
+                                       server_url=server.openai_base_url)
+                        contract_fds += (record[3],record[1])
+                        child_env['LLAMACPP_BASE_URL'] = server.openai_base_url
+                    child_env[ENV_KEY] = json.dumps(context,sort_keys=True,separators=(',',':'))
                 error_output=stdout if stderr is None else stderr
                 if min(leaf_fd,procs_fd,events_fd,ready_r,ready_w,grant_r,grant_w,exec_r,exec_w,stdout.fileno(),error_output.fileno(),lease_fd) < 3:
                     raise ContainmentStop('STOP: B1 launcher descriptor collides with standard streams')
                 args = [sys.executable, '-I', '-S', '-B', str(BOOTSTRAP), str(procs_fd),
                         str(ready_w), str(grant_r), str(stdout.fileno()), str(error_output.fileno()), str(exec_w), *argv]
-                process = subprocess.Popen(args, env=env, cwd=cwd, stdin=subprocess.DEVNULL,
+                process = subprocess.Popen(args, env=child_env, cwd=cwd, stdin=subprocess.DEVNULL,
                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                            start_new_session=True, close_fds=True,
                                            pass_fds=tuple(sorted({procs_fd, ready_w, grant_r, stdout.fileno(),
-                                                                  error_output.fileno(), exec_w, lease_fd})))
+                                                                  error_output.fileno(), exec_w, lease_fd, *contract_fds})))
                 os.close(ready_w); ready_w = None
                 os.close(grant_r); grant_r = None
                 os.close(exec_w); exec_w = None
@@ -321,6 +377,12 @@ class B1Containment:
                 # server termination instead of signalling a recycled PID.
                 process_pidfd = os.pidfd_open(process.pid, 0)
                 self.require_guardian()
+                if worker_context is not None and worker_context['server'] is not None:
+                    # Recheck the exact parent-owned server immediately before grant.
+                    server = worker_context['server']
+                    self.verify_live_lease(server.process,lease_fd)
+                    if server.process.poll() is not None or not _server_listener(server.process.pid, server.openai_base_url):
+                        raise ContainmentStop('STOP: worker server changed before grant')
                 with self._grant_lock:
                     if self._stop_requested.is_set():
                         raise ContainmentStop('STOP: grant cancelled by monitor')
@@ -347,7 +409,7 @@ class B1Containment:
                 self.freeze()
                 raise
             finally:
-                for fd in (procs_fd, ready_r, ready_w, grant_r, grant_w, exec_r, exec_w):
+                for fd in (procs_fd, ready_r, ready_w, grant_r, grant_w, exec_r, exec_w, output_fd, guardian_pidfd):
                     if fd is not None:
                         try: os.close(fd)
                         except OSError: pass
