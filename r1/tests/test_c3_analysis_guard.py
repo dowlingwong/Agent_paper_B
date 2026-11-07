@@ -57,7 +57,8 @@ def test_confirm_row_with_gate_sha_allows_reader(tmp_path,monkeypatch):
     table=tmp_path/'table';table.mkdir()
     (table/'build.json').write_text(json.dumps({'sweep_index':{'path':'synthetic','sha256':'2'*64}}))
     (table/'proposals.jsonl').write_text('{"proposal_id":"synthetic"}\n')
-    assert d.load_table(table)==[{'proposal_id':'synthetic'}]
+    with pytest.raises(RuntimeError,match='D8 decision semantics'):
+        d.load_table(table)
 
 
 @pytest.mark.parametrize('header', ['| Artifact | SHA256 |', '| Key | Proposed value |',

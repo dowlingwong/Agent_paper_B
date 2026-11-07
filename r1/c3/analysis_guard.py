@@ -113,26 +113,46 @@ def _confirm_row(plan, gate_sha):
 def require_d8_confirmation():
     gate=REPO/'r1/c3/gate.py'; plan=REPO/'docs/r1/PLAN.md'
     refuse_sealed(gate, plan)
-    if not gate.is_file() or not plan.is_file():
-        raise RuntimeError('STOP: R1-BX-D8-CONFIRM or gate code absent')
+    root=REPO.resolve()
+    for path in (plan,gate):
+        if path.is_symlink() or path.resolve() != root/path.relative_to(REPO):
+            raise RuntimeError('STOP: D8 authority path is a symlink or alias')
+        if not path.is_file():
+            raise RuntimeError('STOP: R1-BX-D8-CONFIRM or gate code absent')
     try:
         head=subprocess.check_output(['git','-C',str(REPO),'rev-parse','--verify','HEAD'],stderr=subprocess.DEVNULL).decode('ascii').strip()
         if not re.fullmatch(r'(?:[0-9a-f]{40}|[0-9a-f]{64})',head):
             raise ValueError('invalid HEAD object ID')
+        paths=('docs/r1/PLAN.md','r1/c3/gate.py')
+        entries=subprocess.check_output(['git','-C',str(REPO),'ls-tree','-z',head,'--',*paths],stderr=subprocess.DEVNULL)
+        seen={}
+        for entry in entries.split(b'\0'):
+            if not entry: continue
+            meta,name=entry.split(b'\t',1)
+            mode,kind,oid=meta.split(b' ')
+            if name in seen or mode not in (b'100644',b'100755') or kind!=b'blob' or not re.fullmatch(rb'(?:[0-9a-f]{40}|[0-9a-f]{64})',oid):
+                raise ValueError('non-regular or malformed committed authority')
+            seen[name]=True
+        if set(seen)!={p.encode('ascii') for p in paths}:
+            raise ValueError('committed authority entries missing')
         committed_plan=subprocess.check_output(['git','-C',str(REPO),'show',head+':docs/r1/PLAN.md'],stderr=subprocess.DEVNULL)
         committed_gate=subprocess.check_output(['git','-C',str(REPO),'show',head+':r1/c3/gate.py'],stderr=subprocess.DEVNULL)
+        if committed_plan != plan.read_bytes():
+            raise RuntimeError('STOP: PLAN differs from committed HEAD')
+        if committed_gate != gate.read_bytes():
+            raise RuntimeError('STOP: gate SHA source differs from committed HEAD')
+        gate_sha=hashlib.sha256(committed_gate).hexdigest()
+        if not _confirm_row(committed_plan.decode('utf-8'),gate_sha):
+            raise RuntimeError('STOP: R1-BX-D8-CONFIRM with current gate SHA required')
         current_head=subprocess.check_output(['git','-C',str(REPO),'rev-parse','--verify','HEAD'],stderr=subprocess.DEVNULL).decode('ascii').strip()
+        if head != current_head:
+            raise RuntimeError('STOP: checkout HEAD changed during D8 check')
     except (OSError,subprocess.CalledProcessError,UnicodeError,ValueError) as exc:
-        raise RuntimeError('STOP: committed PLAN or gate code unavailable') from exc
-    if head != current_head:
-        raise RuntimeError('STOP: checkout HEAD changed during D8 check')
-    if committed_plan != plan.read_bytes():
-        raise RuntimeError('STOP: PLAN differs from committed HEAD')
-    if committed_gate != gate.read_bytes():
-        raise RuntimeError('STOP: gate SHA source differs from committed HEAD')
-    gate_sha=hashlib.sha256(committed_gate).hexdigest()
-    if not _confirm_row(committed_plan.decode('utf-8'),gate_sha):
-        raise RuntimeError('STOP: R1-BX-D8-CONFIRM with current gate SHA required')
+        raise RuntimeError('STOP: committed PLAN or regular gate code unavailable') from exc
+    # The structural parser accepts any nonempty cell containing the SHA, even
+    # a negative decision. Until an actual author decision and its meaning have
+    # been independently reviewed, matching syntax cannot open this gate.
+    raise RuntimeError('STOP: D8 decision semantics require independent review')
 
 
 def _index_is_frozen_sweep1(meta):

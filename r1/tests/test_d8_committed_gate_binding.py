@@ -16,14 +16,23 @@ PLAN = (f'## 10. Author decisions\n### 5 November 2026 (author)\n'
 
 
 def invoke(*, committed_gate=GATE, work_gate=GATE, committed_plan=PLAN,
-           work_plan=PLAN, missing_gate=False, head_after=HEAD):
+           work_plan=PLAN, missing_gate=False, head_after=HEAD,
+           gate_mode=b'100644', plan_mode=b'100644', symlink=None):
     calls = []
 
     def git(argv, **kwargs):
         action = argv[3:]
         calls.append(action)
         if action == ['rev-parse', '--verify', 'HEAD']:
-            return (HEAD if sum(x[0] == 'rev-parse' for x in calls) == 1 else head_after).encode() + b'\n'
+            if sum(x[0] == 'rev-parse' for x in calls) == 2:
+                assert ['read', '/synthetic/docs/r1/PLAN.md'] in calls
+                assert ['read', '/synthetic/r1/c3/gate.py'] in calls
+                return head_after.encode() + b'\n'
+            return HEAD.encode() + b'\n'
+        if action == ['ls-tree', '-z', HEAD, '--', 'docs/r1/PLAN.md', 'r1/c3/gate.py']:
+            oid = b'c' * 40
+            return (plan_mode+b' blob '+oid+b'\tdocs/r1/PLAN.md\0' +
+                    gate_mode+b' blob '+oid+b'\tr1/c3/gate.py\0')
         if action == ['show', HEAD + ':docs/r1/PLAN.md']:
             return committed_plan
         if action == ['show', HEAD + ':r1/c3/gate.py']:
@@ -33,6 +42,7 @@ def invoke(*, committed_gate=GATE, work_gate=GATE, committed_plan=PLAN,
         raise AssertionError(argv)
 
     def read_bytes(path):
+        calls.append(['read', str(path)])
         if path == Path('/synthetic/r1/c3/gate.py'):
             return work_gate
         if path == Path('/synthetic/docs/r1/PLAN.md'):
@@ -42,17 +52,19 @@ def invoke(*, committed_gate=GATE, work_gate=GATE, committed_plan=PLAN,
     with patch.object(guard, 'REPO', Path('/synthetic')), \
          patch.object(guard, 'refuse_sealed'), \
          patch.object(Path, 'is_file', return_value=True), \
+         patch.object(Path, 'is_symlink', lambda path: str(path) == symlink), \
          patch.object(Path, 'read_bytes', read_bytes), \
          patch.object(guard.subprocess, 'check_output', side_effect=git):
         return guard.require_d8_confirmation()
 
 
-def test_exact_committed_gate_and_plan_succeed():
-    assert invoke() is None
+def test_exact_committed_gate_and_plan_still_stop_without_reviewed_decision_semantics():
+    with pytest.raises(RuntimeError, match='D8 decision semantics'):
+        invoke()
 
 
 def test_untracked_gate_is_rejected_even_if_decision_names_its_hash():
-    with pytest.raises(RuntimeError, match='committed PLAN or gate code unavailable'):
+    with pytest.raises(RuntimeError, match='committed PLAN or regular gate code unavailable'):
         invoke(missing_gate=True)
 
 
@@ -69,3 +81,22 @@ def test_uncommitted_plan_is_rejected():
 def test_head_change_is_rejected():
     with pytest.raises(RuntimeError, match='HEAD changed'):
         invoke(head_after='b'*40)
+
+
+@pytest.mark.parametrize('which', ['gate', 'plan'])
+def test_committed_symlink_mode_is_rejected(which):
+    args = {'gate_mode': b'120000'} if which == 'gate' else {'plan_mode': b'120000'}
+    with pytest.raises(RuntimeError, match='committed PLAN or regular gate code unavailable'):
+        invoke(**args)
+
+
+@pytest.mark.parametrize('path', ['/synthetic/r1/c3/gate.py', '/synthetic/docs/r1/PLAN.md'])
+def test_checkout_symlink_is_rejected(path):
+    with pytest.raises(RuntimeError, match='symlink or alias'):
+        invoke(symlink=path)
+
+
+def test_negative_decision_cannot_open_guard_even_if_hash_matches():
+    negative = PLAN.replace(b'approved gate sha256', b'not approved gate sha256')
+    with pytest.raises(RuntimeError, match='D8 decision semantics'):
+        invoke(committed_plan=negative, work_plan=negative)
