@@ -31,6 +31,7 @@ def test_b1_entry_reports_original_before_state_save_failure(monkeypatch, capsys
     monkeypatch.setattr('r1.exam.analyze.load_rule', lambda *a: ({}, None))
     monkeypatch.setattr(exam_runner, 'is_v2', lambda *a: False)
     monkeypatch.setattr(exam_runner, 'verify_anchor_reference', lambda *a: None)
+    closed = []
     class FakeRunner:
         def __init__(self, *args, **kwargs):
             self.state = {}; self.lock = object(); self.closed = False; self.service = None
@@ -38,13 +39,16 @@ def test_b1_entry_reports_original_before_state_save_failure(monkeypatch, capsys
             raise RuntimeError('original preflight failure')
         def save(self):
             raise OSError(28, 'no space')
-        def close(self, *, preserve_running=False):
+        def close(self, *, preserve_running=False, skip_service=False):
             self.closed = True
+            closed.append(skip_service)
     monkeypatch.setattr(exam_runner, 'ExamRunner', FakeRunner)
     assert exam_runner.main(['b1', '--out', '/synthetic']) == 1
     err = capsys.readouterr().err
     assert 'RuntimeError: original preflight failure' in err
     assert 'state save failed: OSError: [Errno 28] no space' in err
+    assert closed == [True]
+    assert 'cleanup failed' not in err
 
 
 def test_unavailable_stderr_and_state_do_not_escape(monkeypatch):
@@ -77,6 +81,7 @@ def test_b1_entry_with_broken_stderr_still_returns_failure(monkeypatch, has_lock
             raise OSError('stderr unavailable')
         def flush(self):
             raise OSError('stderr unavailable')
+    closed = []
     class FakeRunner:
         def __init__(self, *args, **kwargs):
             self.state = {}; self.lock = object() if has_lock else None; self.service = None
@@ -86,12 +91,13 @@ def test_b1_entry_with_broken_stderr_still_returns_failure(monkeypatch, has_lock
             if not has_lock:
                 raise AssertionError('must not save without a lock')
             raise OSError('state unavailable')
-        def close(self, *, preserve_running=False):
-            pass
+        def close(self, *, preserve_running=False, skip_service=False):
+            closed.append(skip_service)
     monkeypatch.setattr(exam_runner, 'ExamRunner', FakeRunner)
     with monkeypatch.context() as ctx:
         ctx.setattr(runtime.sys, 'stderr', BrokenStderr())
         assert exam_runner.main(['b1', '--out', '/synthetic']) == 1
+    assert closed == [True]
 
 
 def test_base_exception_from_save_is_not_swallowed(capsys):
