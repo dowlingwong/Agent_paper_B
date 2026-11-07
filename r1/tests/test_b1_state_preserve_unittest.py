@@ -208,17 +208,25 @@ class StatePreservationTests(unittest.TestCase):
                 preserve.publish_state(self.path, {'value': float('nan')}, None)
         self.assertFalse(fs.archive_exists)
 
-    def test_runtime_selects_preserving_writer_only_for_production_b1(self):
+    def test_runtime_selects_preserving_writer_for_b1_and_dryrun(self):
         from r1.exam import runtime
         runner = SimpleNamespace(out=Path('/synthetic/batch'), state={'phase': 'b1'},
-                                 cfg={'dryrun': False}, b1_state_identity=(7, 44))
+                                 cfg={'dryrun': False}, b1_state_identity=(7, 44),
+                                 dryrun_state_identity=(7, 55))
         with mock.patch.object(preserve, 'publish_state', return_value=(7, 45)) as writer, \
+                mock.patch.object(preserve, 'publish_dryrun_state', return_value=(7, 56)) as dryrun, \
                 mock.patch.object(runtime, 'write_json') as legacy:
             runtime.ExamRunner.save(runner)
             self.assertEqual(runner.b1_state_identity, (7, 45))
             writer.assert_called_once()
             legacy.assert_not_called()
             runner.cfg['dryrun'] = True
+            runtime.ExamRunner.save(runner)
+            dryrun.assert_called_once_with(runner.out/'batch_state.json',runner.state,(7, 55))
+            self.assertEqual(runner.dryrun_state_identity, (7, 56))
+            legacy.assert_not_called()
+            runner.cfg['dryrun'] = False
+            runner.state['phase'] = 'stage-a'
             runtime.ExamRunner.save(runner)
             legacy.assert_called_once()
 

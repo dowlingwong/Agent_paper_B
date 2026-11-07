@@ -63,6 +63,7 @@ def build(fs, gate):
         return json.loads(fs.files[str(path)])
     scope = {'PreparationStop':PreparationStop, 'Path':fs.path, 'os':fake_os, 'json':json,
              'platform':types.SimpleNamespace(node=lambda:'synthetic'), 'worker_environment':lambda:None,
+             '_dryrun_existing_state_identity':lambda path: str(path) if path.exists() else None,
              'author_gate':gate, 'digest_file':digest, 'verify_campaign':verify}
     exec(compile(ast.fix_missing_locations(copy.deepcopy(MODULE)), '<actual-runtime-methods>', 'exec'), scope)
     return scope['MemoryRunner'], PreparationStop, digest

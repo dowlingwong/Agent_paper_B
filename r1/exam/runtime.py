@@ -116,6 +116,11 @@ def reject_stopped_batch(state):
         raise PreparationStop('STOP: existing stopped batch must not be resumed')
 
 
+def _dryrun_existing_state_identity(path):
+    from r1.exam.b1_state_preserve import existing_identity
+    return existing_identity(path)
+
+
 def refuse_existing_stage_a_output(path):
     """Stage A starts only in an absent or empty output directory.
 
@@ -563,7 +568,7 @@ class ExamRunner:
         self.rule,self.rule_sha=load_rule(cfg['rule'],cfg['rule_sha256'])
         self.binding=hashlib.sha256(json.dumps({'config':cfg,'registry_sha256':digest_file(self.registry_path),'rule_sha256':self.rule_sha,'value_grids_sha256':digest_file(cfg['value_grids'])},sort_keys=True).encode()).hexdigest()
         self.service=None;self.child=None;self.state={};self.lock=None;self.author_head=None;self.b1_lease_fd=None;self.b1_config_head=b1_config_head;self.b1_supervisor=b1_supervisor;self.b1_containment=None;self.b1_batch_owned=False;self.b1_stop_created=False
-        self.b1_state_identity=None
+        self.b1_state_identity=None;self.dryrun_state_identity=None
         if not cfg.get('dryrun'):
             from r1.harness import harness_root
             actual=subprocess.check_output(['git','-C',str(harness_root()),'rev-parse','HEAD'],text=True).strip()
@@ -589,6 +594,9 @@ class ExamRunner:
         if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
             from r1.exam.b1_state_preserve import publish_state
             self.b1_state_identity=publish_state(self.out/'batch_state.json',self.state,self.b1_state_identity)
+        elif self.cfg.get('dryrun'):
+            from r1.exam.b1_state_preserve import publish_dryrun_state
+            self.dryrun_state_identity=publish_dryrun_state(self.out/'batch_state.json',self.state,self.dryrun_state_identity)
         else:
             write_json(self.out/'batch_state.json',self.state)
 
@@ -666,11 +674,15 @@ class ExamRunner:
         else:
             self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
+        if self.cfg.get('dryrun'):
+            self.dryrun_state_identity=_dryrun_existing_state_identity(path)
         if phase=='b1' and not self.cfg.get('dryrun'):
             from r1.exam.b1_state_preserve import existing_identity
             self.b1_state_identity=existing_identity(path)
         if path.exists():
             self.state=json.loads(path.read_text())
+            if self.cfg.get('dryrun') and _dryrun_existing_state_identity(path)!=self.dryrun_state_identity:
+                raise PreparationStop('STOP: DRYRUN batch state changed during read')
             if phase=='b1' and not self.cfg.get('dryrun') and existing_identity(path)!=self.b1_state_identity:
                 raise PreparationStop('STOP: B1 batch state changed during resume read')
             reject_stopped_batch(self.state)

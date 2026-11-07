@@ -11,6 +11,7 @@ import json
 import os
 import re
 import stat
+import sys
 import uuid
 from pathlib import Path
 
@@ -61,6 +62,32 @@ def _renameat2(old_fd, old_name, new_fd, new_name, flags):
         raise OSError(code, os.strerror(code))
 
 
+def _renameat_dryrun(old_fd, old_name, new_fd, new_name, flags):
+    """Fail closed unless the OS supplies atomic no-replace/exchange.
+
+    Darwin's renameatx_np uses a different no-replace flag; Linux uses the
+    production renameat2. A failed/unsupported operation retains both names.
+    This is for synthetic DRYRUN state only, not a production capability claim.
+    """
+    if sys.platform.startswith('linux'):
+        return _renameat2(old_fd, old_name, new_fd, new_name, flags)
+    if sys.platform != 'darwin' or flags not in (_NOREPLACE, _EXCHANGE):
+        raise OSError(errno.ENOSYS, 'atomic DRYRUN rename unavailable')
+    libc = ctypes.CDLL(None, use_errno=True)
+    try:
+        rename = libc.renameatx_np
+    except AttributeError as exc:
+        raise OSError(errno.ENOSYS, 'renameatx_np unavailable') from exc
+    rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int,
+                       ctypes.c_char_p, ctypes.c_uint]
+    rename.restype = ctypes.c_int
+    # Darwin sys/stdio.h: RENAME_EXCL=0x4, RENAME_SWAP=0x2.
+    native_flag = 0x4 if flags == _NOREPLACE else 0x2
+    if rename(old_fd, os.fsencode(old_name), new_fd, os.fsencode(new_name), native_flag):
+        code = ctypes.get_errno()
+        raise OSError(code, os.strerror(code))
+
+
 def _identity(info):
     if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
             or info.st_mode & 0o022):
@@ -81,6 +108,12 @@ def publish_state(path, state, expected_identity):
     return _publish_named(path, state, expected_identity, 'batch_state')
 
 
+def publish_dryrun_state(path, state, expected_identity):
+    """Preserve each synthetic batch snapshot without replacing its bytes."""
+    return _publish_named(path, state, expected_identity, 'batch_state',
+                          rename=_renameat_dryrun)
+
+
 def publish_audit_cache(path, cache, expected_identity):
     """Publish B1's canonical audit cache, retaining each earlier version."""
     return _publish_named(path, cache, expected_identity, 'audit_cache')
@@ -91,7 +124,7 @@ def publish_server_record(path, record, expected_identity):
     return _publish_named(path, record, expected_identity, 'server_record')
 
 
-def _publish_named(path, state, expected_identity, kind):
+def _publish_named(path, state, expected_identity, kind, *, rename=None):
     """Atomically publish a narrowly named file under the cooperative B1 model.
 
     The caller owns and serializes the directory and passes the exact prior
@@ -154,8 +187,8 @@ def _publish_named(path, state, expected_identity, kind):
             before = None
         if before != current:
             raise RuntimeError('STOP: B1 batch state changed before publication')
-        _renameat2(archive_fd, name, parent_fd, path.name,
-                   _NOREPLACE if current is None else _EXCHANGE)
+        (rename or _renameat2)(archive_fd, name, parent_fd, path.name,
+                              _NOREPLACE if current is None else _EXCHANGE)
         if _identity(os.stat(path.name, dir_fd=parent_fd, follow_symlinks=False)) != new_identity:
             raise RuntimeError('STOP: B1 published state identity changed')
         if current is not None and _identity(os.stat(name, dir_fd=archive_fd, follow_symlinks=False)) != current:
