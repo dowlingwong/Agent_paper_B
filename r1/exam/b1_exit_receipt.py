@@ -13,6 +13,7 @@ from r1.exam.b1_state_preserve import ACTIVE, EXIT_RECEIPT, _NOREPLACE, _renamea
 
 MAX_BYTES = 16 * 1024 * 1024
 RETIRED_ACTIVE = '_to_delete/B1_ACTIVE.completed.json'
+UNCERTAIN = 'B1_COMMIT_UNCERTAIN.json'
 
 
 def _mount_for(path, mountinfo):
@@ -214,9 +215,20 @@ def publish_after_wait(child, batch, head):
     return publish_waited_success(batch, head, child.pid, result)
 
 
+def _reject_commit_uncertainty(batch):
+    # Presence alone blocks: partial writes and symlinks are not approval.
+    # Unlike lexists(), lstat preserves permission/I/O errors as refusals.
+    try:
+        os.lstat(Path(batch) / UNCERTAIN)
+    except FileNotFoundError:
+        return
+    raise RuntimeError('STOP: B1 commit outcome is uncertain; author review required')
+
+
 def verify_waited_success(batch, head):
     """Fail closed without the receipt; trusts the cooperative receipt writer."""
     _require_local_filesystem(batch)
+    _reject_commit_uncertainty(batch)
     if os.path.lexists(Path(batch) / ACTIVE):
         raise RuntimeError('STOP: B1 active sentinel has not been retired')
     raw = read_owned_regular(Path(batch) / EXIT_RECEIPT)
@@ -237,4 +249,5 @@ def verify_waited_success(batch, head):
         raise RuntimeError('STOP: B1 batch has a STOP record')
     if os.path.lexists(Path(batch) / ACTIVE):
         raise RuntimeError('STOP: B1 active sentinel reappeared')
+    _reject_commit_uncertainty(batch)
     return receipt

@@ -61,18 +61,39 @@ def _same_inherited_fd(child_pid, fd, label):
     if rc!=0: raise RuntimeError(f'STOP: runner inherited {label} OFD unproved (rc={rc}, errno={err})')
 
 
-def _publish_or_reconcile(child, out, head):
-    """Treat a verified retirement as the completion point after a callback.
+class PublicationUncertain(RuntimeError):
+    """Commit may have happened, but its state cannot be verified."""
 
-    Both readers and this reconciliation require the same committed sentinel
-    and receipt. This is not proof under arbitrary storage or concurrent STOP
-    failures; an independent review must establish the allowed fault model.
+
+def _publish_or_reconcile(child, out, head):
+    """Return after verified terminal commit; block readers on ambiguity.
+
+    Uncertainty is created exclusively inside the batch, before the caller
+    records supervisor STOP. If storage prevents even that creation, the
+    operator is told explicitly and automatic reader exclusion is not assured.
     """
-    from r1.exam.b1_exit_receipt import publish_after_wait, verify_waited_success
+    from r1.exam.b1_exit_receipt import publish_after_wait, verify_waited_success, UNCERTAIN
     try:
         publish_after_wait(child,out,head)
-    except BaseException:
-        verify_waited_success(out,head)
+    except BaseException as publication_error:
+        try:
+            verify_waited_success(out,head)
+        except BaseException as verification_error:
+            try:
+                _exclusive_json(Path(out)/UNCERTAIN, {
+                    'status':'COMMIT_UNCERTAIN',
+                    'publication_error':f'{type(publication_error).__name__}: {publication_error}',
+                    'verification_error':f'{type(verification_error).__name__}: {verification_error}'})
+            except BaseException as disposition_error:
+                try:
+                    print('STOP: commit uncertainty could not be persisted; '
+                          'batch reader exclusion is NOT CHECKABLE: '
+                          f'{type(disposition_error).__name__}: {disposition_error}',
+                          file=sys.stderr,flush=True)
+                except BaseException:
+                    pass
+                raise PublicationUncertain('STOP: commit uncertainty could not be persisted') from verification_error
+            raise PublicationUncertain('STOP: commit uncertain; batch reader must refuse') from verification_error
 
 
 def _release_then_publish(child, out, head, handoff):

@@ -315,12 +315,15 @@ class SupervisorContractTests(unittest.TestCase):
         module=types.ModuleType('r1.exam.b1_exit_receipt')
         module.publish_after_wait=Mock(side_effect=RuntimeError('queued callback'))
         module.verify_waited_success=Mock()
+        module.UNCERTAIN='B1_COMMIT_UNCERTAIN.json'
         with patch.dict(sys.modules, {'r1.exam.b1_exit_receipt':module}):
             b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
             module.verify_waited_success.assert_called_once_with('/batch','head')
             module.verify_waited_success.side_effect=RuntimeError('ACTIVE still present')
-            with self.assertRaisesRegex(RuntimeError,'ACTIVE still present'):
-                b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
+            with patch.object(b1_supervisor, '_exclusive_json') as write:
+                with self.assertRaisesRegex(b1_supervisor.PublicationUncertain,'commit uncertain'):
+                    b1_supervisor._publish_or_reconcile(Mock(),'/batch','head')
+            write.assert_called_once()
 
     def test_filesystem_preflight_refuses_before_lease_and_runner(self):
         from r1.scripts import b1_supervisor
