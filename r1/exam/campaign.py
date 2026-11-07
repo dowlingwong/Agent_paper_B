@@ -20,6 +20,7 @@ from autoresearch.nodes.registry import load_registered_node
 from autoresearch.worker.local_worker import LocalWorker
 from autoresearch.worker.base import WorkerResult
 from r1.c3.audit import run_config, paired
+from r1.exam.b1_proposal_guard import B1IntegrityWorker
 from r1.c3.features import apply_edit, files_hash, replay_campaign
 from r1.exam.observer import SelfForecastObserver, B1ObserverAdapter, authorized_b1_observer
 from r1.exam.b1_observer_journal import validate_observer_journal
@@ -140,7 +141,7 @@ def _collect_b1_review(job):
         manager=RandomValidManager(yaml.safe_load(Path(job['value_grids']).read_text())['nodes'][node])
     elif kind=='scripted': manager=ScriptedRandomManager(node,seed=seed,repetition=0)
     else: manager=exam_manager(candidate,job['proposal_schema'])
-    worker=FixtureWorker(node_root,seed) if job['dryrun'] else LocalWorker(node_root=node_root,artifact_dir=out/'art',train_seed=seed,split_seed=seed)
+    worker=FixtureWorker(node_root,seed) if job['dryrun'] else B1IntegrityWorker(node_root=node_root,artifact_dir=out/'art',train_seed=seed,split_seed=seed)
     raw_observer=observer_for_campaign(job,out)
     observer=B1ObserverAdapter(raw_observer) if raw_observer is not None else None
     try:
