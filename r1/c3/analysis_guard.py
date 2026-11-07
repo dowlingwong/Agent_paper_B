@@ -115,14 +115,23 @@ def require_d8_confirmation():
     refuse_sealed(gate, plan)
     if not gate.is_file() or not plan.is_file():
         raise RuntimeError('STOP: R1-BX-D8-CONFIRM or gate code absent')
-    gate_sha=hashlib.sha256(gate.read_bytes()).hexdigest()
     try:
-        committed=subprocess.check_output(['git','-C',str(REPO),'show','HEAD:docs/r1/PLAN.md'],stderr=subprocess.DEVNULL)
-    except (OSError,subprocess.CalledProcessError) as exc:
-        raise RuntimeError('STOP: committed PLAN unavailable') from exc
-    if committed != plan.read_bytes():
+        head=subprocess.check_output(['git','-C',str(REPO),'rev-parse','--verify','HEAD'],stderr=subprocess.DEVNULL).decode('ascii').strip()
+        if not re.fullmatch(r'(?:[0-9a-f]{40}|[0-9a-f]{64})',head):
+            raise ValueError('invalid HEAD object ID')
+        committed_plan=subprocess.check_output(['git','-C',str(REPO),'show',head+':docs/r1/PLAN.md'],stderr=subprocess.DEVNULL)
+        committed_gate=subprocess.check_output(['git','-C',str(REPO),'show',head+':r1/c3/gate.py'],stderr=subprocess.DEVNULL)
+        current_head=subprocess.check_output(['git','-C',str(REPO),'rev-parse','--verify','HEAD'],stderr=subprocess.DEVNULL).decode('ascii').strip()
+    except (OSError,subprocess.CalledProcessError,UnicodeError,ValueError) as exc:
+        raise RuntimeError('STOP: committed PLAN or gate code unavailable') from exc
+    if head != current_head:
+        raise RuntimeError('STOP: checkout HEAD changed during D8 check')
+    if committed_plan != plan.read_bytes():
         raise RuntimeError('STOP: PLAN differs from committed HEAD')
-    if not _confirm_row(committed.decode('utf-8'),gate_sha):
+    if committed_gate != gate.read_bytes():
+        raise RuntimeError('STOP: gate SHA source differs from committed HEAD')
+    gate_sha=hashlib.sha256(committed_gate).hexdigest()
+    if not _confirm_row(committed_plan.decode('utf-8'),gate_sha):
         raise RuntimeError('STOP: R1-BX-D8-CONFIRM with current gate SHA required')
 
 
