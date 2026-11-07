@@ -40,6 +40,7 @@ def test_shutdown_failure_is_not_retried(monkeypatch):
     monkeypatch.setattr(t.os, 'waitid', Mock(), raising=False)
     monkeypatch.setattr(t.signal, 'signal', Mock(return_value=signal.SIG_DFL))
     monkeypatch.setattr(t.subprocess, 'Popen', Mock(return_value=child))
+    monkeypatch.setattr(t, 'record_identity', Mock())
     monkeypatch.setattr(t, 'observed_exit', Mock(return_value=1))
     stop=Mock(side_effect=TimeoutError('shutdown failed'))
     monkeypatch.setattr(t, 'stop_owned_group', stop)
@@ -56,3 +57,16 @@ def test_signal_error_survives_secondary_wait_failure(monkeypatch, capsys):
     with pytest.raises(PermissionError, match='signal refused'):
         t.stop_owned_group(child)
     assert 'wait also failed' in capsys.readouterr().err
+
+
+def test_identity_failure_stops_owned_group_once_and_propagates(monkeypatch):
+    child=Mock(pid=1234)
+    monkeypatch.setattr(t.sys, 'platform', 'linux')
+    monkeypatch.setattr(t.os, 'waitid', Mock(), raising=False)
+    monkeypatch.setattr(t.signal, 'signal', Mock(return_value=signal.SIG_DFL))
+    monkeypatch.setattr(t.subprocess, 'Popen', Mock(return_value=child))
+    monkeypatch.setattr(t, 'record_identity', Mock(side_effect=RuntimeError('identity unavailable')))
+    stop=Mock(); monkeypatch.setattr(t, 'stop_owned_group', stop)
+    with pytest.raises(RuntimeError, match='identity unavailable'):
+        t.run(['synthetic'], 1)
+    stop.assert_called_once_with(child)

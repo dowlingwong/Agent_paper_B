@@ -34,6 +34,18 @@ def stop_owned_group(child):
         child.wait(timeout=30)
 
 
+def record_identity(child):
+    pgid = os.getpgid(child.pid)
+    if pgid != child.pid:
+        raise RuntimeError('owned test group identity mismatch')
+    with open(f'/proc/{child.pid}/stat', encoding='ascii') as stream:
+        stat_line = stream.read()
+    # Remaining fields begin at proc stat field 3, so field 22 is index 19.
+    ticks = int(stat_line.rsplit(')', 1)[1].split()[19])
+    print(f'ENGINEERING_TEST_ROOT pid={child.pid} pgid={pgid} start_ticks={ticks}',
+          file=sys.stderr, flush=True)
+
+
 def run(command, seconds):
     if not sys.platform.startswith('linux') or not hasattr(os, 'waitid'):
         raise RuntimeError('Linux waitid required')
@@ -47,6 +59,7 @@ def run(command, seconds):
     shutdown_attempted = False
     try:
         child = subprocess.Popen(command, start_new_session=True)
+        record_identity(child)
         deadline = time.monotonic() + seconds
         while True:
             status = observed_exit(child)
