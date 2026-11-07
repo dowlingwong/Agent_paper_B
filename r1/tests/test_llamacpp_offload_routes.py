@@ -32,6 +32,7 @@ from r1.scripts import c3_label_sweep as sweep
 from r1.scripts import llama_server_instance as lsi
 from r1.scripts import llamacpp_probe as probe
 from r1.tests.fake_server_record_preservation import install_preserving_fake_record
+from r1.tests.fake_probe_record_preservation import install_probe_preservation
 from r1.scripts.ollama_instance import free_port
 
 REPO = Path(__file__).resolve().parents[2]
@@ -204,7 +205,9 @@ def _probe(host, *extra, env=None, monkeypatch=None):
     out = host["tmp"] / "logs"
     argv = ["--binary", host["binary"], "--model", host["model"], "--gpu", UUID, "--port", str(free_port()),
             "--out", str(out), "--start-timeout", "20", "--gen-tokens", "16", *extra]
-    rc = probe.main(argv)
+    with monkeypatch.context() as patch:
+        install_probe_preservation(patch, lsi.LlamaServerInstance, host['tmp'], host['binary'])
+        rc = probe.main(argv)
     return rc, json.loads(next(out.glob("probe_*.json")).read_text())
 
 
