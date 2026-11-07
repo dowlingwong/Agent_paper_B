@@ -1,0 +1,5 @@
+# Independent review: TASL-7 Python discovery result (7 November 2026)
+
+**ACCEPTED as a point-in-time discovery result.** The private transcript `/private/tmp/paper-b-tasl7-python-20261107.srIMr3ZJ/discovery.txt` hashes to `aa2cfde2654f9cd4a22604e3b1dd2a303fe8c9ec16d5ac40e70fd80eecbaae71`; `ssh-status.txt` records exit 0. It reports TASL-7 at 22:05:16 UTC, `/usr/bin/python3` as PATH metadata, and `MISSING_OR_UNUSABLE` for all four explicit venv candidates. The reviewed shell emits that label when either `pyvenv.cfg` is not a file or `bin/python` is not executable; this does **not** distinguish which condition failed, prove that every path is absent, check system packages, or establish that no viable environment exists elsewhere. No import was attempted because none met the candidate check.
+
+The reviewed capture establishes neither current host conditions nor a qualified B1 interpreter. This review used only retained local evidence and did not contact TASL-7 or rerun the probe. The next bounded discovery is separately proposed in `TASL7_PYTHON_DISCOVERY_NEXT_20261107.md`; it must be independently reviewed before use and does not authorize a B1 run.
