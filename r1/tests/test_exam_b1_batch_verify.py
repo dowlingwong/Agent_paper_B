@@ -1,6 +1,7 @@
 """B1 complete-batch verifier, synthetic files only, no training or server."""
 import hashlib
 import json
+import uuid
 from pathlib import Path
 import pytest
 from r1.exam import analyze, runtime
@@ -10,6 +11,22 @@ from r1.liveness.check import evaluate_ledger_paths
 
 def write(path,data):
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(data,sort_keys=True))
+
+
+def preserve_tamper_write(path, text, archive):
+    """Retain test-owned prior bytes before installing the tampered fixture."""
+    path=Path(path);archive=Path(archive)
+    if path.is_symlink():
+        raise RuntimeError('refusing to alter a fixture symlink')
+    if path.exists():
+        if not path.is_file():
+            raise RuntimeError('refusing non-regular fixture')
+        archive.mkdir(mode=0o700,parents=True,exist_ok=True)
+        destination=archive/uuid.uuid4().hex
+        destination.mkdir(mode=0o700)
+        path.rename(destination/path.name)
+    with path.open('x',encoding='utf-8') as stream:
+        stream.write(text)
 
 
 def fixture(tmp_path,monkeypatch):
@@ -121,6 +138,8 @@ def test_full_authorized_synthetic_batch_passes(tmp_path,monkeypatch):
 def test_partial_or_tampered_batch_stops(tmp_path,monkeypatch,tamper):
     batch,cfg,sha,state,ms=fixture(tmp_path,monkeypatch)
     selected=next(m for m in ms if m['candidate']=='a')
+    def write(path,data):
+        preserve_tamper_write(path,json.dumps(data,sort_keys=True),tmp_path/'_to_delete')
     def save_candidate():
         write(batch/'a/b1_manifest.json',selected);write(batch/'b1_manifests.json',{'label':'EXAM','manifests':ms})
     def rebind_root(path,root):
@@ -140,7 +159,7 @@ def test_partial_or_tampered_batch_stops(tmp_path,monkeypatch,tamper):
         selected['audited_proposals']=[{'synthetic':'forged'}];write(batch/'a/b1_manifest.json',selected);write(batch/'b1_manifests.json',{'label':'EXAM','manifests':ms})
     elif tamper=='d28':
         selected['d28_pass']=not selected['d28_pass'];write(batch/'a/b1_manifest.json',selected);write(batch/'b1_manifests.json',{'label':'EXAM','manifests':ms})
-    elif tamper=='receipt': Path(cfg['stage_a_amendment_acceptance']).write_text('changed')
+    elif tamper=='receipt': preserve_tamper_write(cfg['stage_a_amendment_acceptance'],'changed',tmp_path/'_to_delete')
     elif tamper=='stage_pass': selected['stage_a_pass']=False;save_candidate()
     elif tamper=='anchor_gate': state['anchor_gate']={'fixture':False};write(batch/'batch_state.json',state)
     elif tamper=='diagnostics': selected['diagnostics']['trials']=99;save_candidate()
@@ -167,7 +186,7 @@ def test_partial_or_tampered_batch_stops(tmp_path,monkeypatch,tamper):
     elif tamper=='cache_event':
         path=Path(selected['root_manifests'][0]);root=json.loads(path.read_text());events=path.parent/'root_events.jsonl'
         event_rows=[json.loads(x) for x in events.read_text().splitlines()]
-        event_rows[0]['payload']['cache_prompt']=True;events.write_text(''.join(json.dumps(x)+'\n' for x in event_rows))
+        event_rows[0]['payload']['cache_prompt']=True;preserve_tamper_write(events,''.join(json.dumps(x)+'\n' for x in event_rows),tmp_path/'_to_delete')
         root['evidence_hashes']['root_events.jsonl']=digest_file(events);write(path,root)
         rebind_root(path,root)
     with pytest.raises((ValueError,RuntimeError,KeyError)):
