@@ -33,7 +33,7 @@ def test_b1_entry_reports_original_before_state_save_failure(monkeypatch, capsys
     monkeypatch.setattr(exam_runner, 'verify_anchor_reference', lambda *a: None)
     class FakeRunner:
         def __init__(self, *args, **kwargs):
-            self.state = {}; self.lock = object(); self.closed = False
+            self.state = {}; self.lock = object(); self.closed = False; self.service = None
         def start(self, phase):
             raise RuntimeError('original preflight failure')
         def save(self):
@@ -79,7 +79,7 @@ def test_b1_entry_with_broken_stderr_still_returns_failure(monkeypatch, has_lock
             raise OSError('stderr unavailable')
     class FakeRunner:
         def __init__(self, *args, **kwargs):
-            self.state = {}; self.lock = object() if has_lock else None
+            self.state = {}; self.lock = object() if has_lock else None; self.service = None
         def start(self, phase):
             raise RuntimeError('original preflight failure')
         def save(self):
