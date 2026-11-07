@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 import pytest
 import yaml
@@ -286,6 +287,26 @@ def test_v2_validator_refuses_run_descriptive(tmp_path):
 
 
 # ---------------------------------------------------------------- runner: Stage A pass set
+def _preserve_fixture(path):
+    """Retain a synthetic fixture before a deliberate same-path tamper.
+
+    The test-owned temporary directory must be private and stable: rename's
+    destination is protected by a freshly created directory, not a kernel
+    no-replace operation.
+    """
+    archive = path.parent / '_to_delete'
+    archive.mkdir(mode=0o700, exist_ok=True)
+    retired = archive / uuid.uuid4().hex
+    retired.mkdir(mode=0o700)
+    path.rename(retired / path.name)
+
+
+def _tamper_fixture_text(path, content):
+    _preserve_fixture(path)
+    with path.open('x', encoding='utf-8') as handle:
+        handle.write(content)
+
+
 def _stage_table(path, rows, label='ENGINEERING_ONLY'):
     write_json(path, {'label': label, 'rows': rows})
     return path
@@ -330,10 +351,13 @@ def test_v2_pass_set_refuses_without_accepted_amendment(tmp_path, key):
 def test_v2_pass_set_refuses_changed_amendment_or_acceptance(tmp_path):
     from r1.scripts.exam_runner import stage_a_pass_set
     cfg = _amend_cfg(tmp_path, [{'candidate': 'qwen38_27b', 'passed': True}], [{'candidate': 'gemma4_31b', 'passed': True}])
-    Path(cfg['stage_a_amendment_acceptance']).write_text('edited\n')
+    _tamper_fixture_text(Path(cfg['stage_a_amendment_acceptance']), 'edited\n')
     with pytest.raises(PreparationStop, match='acceptance'):
         stage_a_pass_set(cfg, {'gemma4_31b'}, v2=True)
-    cfg = _amend_cfg(tmp_path, [{'candidate': 'qwen38_27b', 'passed': True}], [{'candidate': 'gemma4_31b', 'passed': True}])
+    second = tmp_path / 'second_amendment_case'
+    second.mkdir()
+    cfg = _amend_cfg(second, [{'candidate': 'qwen38_27b', 'passed': True}], [{'candidate': 'gemma4_31b', 'passed': True}])
+    _preserve_fixture(Path(cfg['stage_a_amendment_table']))
     _stage_table(Path(cfg['stage_a_amendment_table']), [{'candidate': 'gemma4_31b', 'passed': True}, {'candidate': 'x', 'passed': True}])
     with pytest.raises(PreparationStop, match='amendment table digest'):
         stage_a_pass_set(cfg, {'gemma4_31b'}, v2=True)
@@ -353,7 +377,7 @@ def test_v2_pass_set_acceptance_must_name_both_table_shas(tmp_path):
     from r1.scripts.exam_runner import stage_a_pass_set
     cfg = _amend_cfg(tmp_path, [{'candidate': 'qwen38_27b', 'passed': True}], [{'candidate': 'gemma4_31b', 'passed': True}])
     acc = Path(cfg['stage_a_amendment_acceptance'])
-    acc.write_text('accepted, without naming the tables\n')
+    _tamper_fixture_text(acc, 'accepted, without naming the tables\n')
     cfg['stage_a_amendment_acceptance_sha256'] = digest_file(acc)
     with pytest.raises(PreparationStop, match='does not name'):
         stage_a_pass_set(cfg, {'gemma4_31b'}, v2=True)
@@ -412,7 +436,10 @@ def test_author_gate_binds_amendment_shas(tmp_path, monkeypatch):
             'stage_a_table_sha256': 'a' * 64, 'llm_call_cap': 40}
 
     def gate(data):
-        note.write_text(json.dumps(data))
+        if note.exists():
+            _preserve_fixture(note)
+        with note.open('x', encoding='utf-8') as handle:
+            handle.write(json.dumps(data))
         monkeypatch.setattr(runtime.subprocess, 'check_output', lambda *a, **k: note.read_bytes())
         # Exercise the legacy amendment binding below the v2 STOP in isolation.
         monkeypatch.setattr(runtime, 'load_rule', lambda path, sha: ({'version': 'x5_rule/v1'}, sha))
