@@ -31,6 +31,7 @@ import pytest
 from r1.scripts import c3_label_sweep as sweep
 from r1.scripts import llama_server_instance as lsi
 from r1.scripts import llamacpp_probe as probe
+from r1.tests.fake_server_record_preservation import install_preserving_fake_record
 from r1.scripts.ollama_instance import free_port
 
 REPO = Path(__file__).resolve().parents[2]
@@ -138,6 +139,7 @@ def host(tmp_path, monkeypatch):
             monkeypatch.setenv("C3_FAKE_LLAMA_GPU_MIB", str(gpu_mib))
         inst = lsi.LlamaServerInstance(tmp_path / "batch", str(binary), model_path=str(model), alias="r1-manager",
                                        gpu_uuid=UUID, label="DRYRUN", start_timeout=20, **kwargs)
+        install_preserving_fake_record(monkeypatch, inst, tmp_path)
         inst.start()
         started.append(inst)
         return inst

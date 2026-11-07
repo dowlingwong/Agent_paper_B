@@ -20,6 +20,7 @@ import pytest
 
 from r1.scripts import c3_label_sweep as sweep
 from r1.scripts import llama_server_instance as lsi
+from r1.tests.fake_server_record_preservation import install_preserving_fake_record
 
 REPO = Path(__file__).resolve().parents[2]
 FAKE = REPO / "r1/scripts/c3_fake_llama_server.py"
@@ -79,6 +80,7 @@ def fake(tmp_path, monkeypatch):
             monkeypatch.setenv(key, value)
         inst = lsi.LlamaServerInstance(tmp_path / "batch", str(binary), model_path=str(model), alias="r1-manager",
                                        label="DRYRUN", start_timeout=20, **kwargs)
+        install_preserving_fake_record(monkeypatch, inst, tmp_path)
         pending.append(inst)
         inst.start(build=lsi.build_info(str(binary)), model_sha256=lsi.sha256_file(model),b1_lease_fd=b1_fd)
         pending.remove(inst)
