@@ -14,20 +14,30 @@ from r1.c3 import ni_masking as ni
 from r1.c3 import audit, accounting
 
 
+
+def decision(sha, commit='c'*40):
+    return (f'Gate code `r1/c3/gate.py` @ `{commit}`, sha256 `{sha}`, '
+            'implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8) '
+            'and, if adopted, R1-B7-PARTIAL-T1; T0 and T1 pooled with tier as a stratum. '
+            'Sweep-2 label tables may be analysed from this row on.')
+
 def repo(tmp_path,monkeypatch,mode='absent'):
     root=tmp_path/'repo';(root/'docs/r1').mkdir(parents=True);(root/'r1/c3').mkdir(parents=True)
     subprocess.run(['git','init','-q',str(root)],check=True)
     gate=root/'r1/c3/gate.py';gate.write_text('synthetic gate\n');sha=hashlib.sha256(gate.read_bytes()).hexdigest()
-    row=f'| R1-BX-D8-CONFIRM | gate sha256 {sha} |\n'
+    env={**os.environ,'GIT_AUTHOR_NAME':'Fixture','GIT_AUTHOR_EMAIL':'fixture@example.invalid','GIT_COMMITTER_NAME':'Fixture','GIT_COMMITTER_EMAIL':'fixture@example.invalid'}
+    subprocess.run(['git','-C',str(root),'add','r1/c3/gate.py'],check=True,env=env)
+    subprocess.run(['git','-C',str(root),'commit','-qm','synthetic code'],check=True,env=env)
+    code_commit=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],env=env,text=True).strip()
+    row=f'| R1-BX-D8-CONFIRM | {decision(sha, code_commit)} |\n'
     plan='## 10. Open decisions\n### 5 November 2026 — author decisions\n| ID | Decision |\n|---|---|\n'
     if mode=='valid':plan+=row
     elif mode=='prose':plan+=f'R1-BX-D8-CONFIRM {sha}\n'
     elif mode=='fenced':plan+='```markdown\n'+row+'```\n'
-    elif mode=='wrong_sha':plan+='| R1-BX-D8-CONFIRM | '+('a'*64)+' |\n'
+    elif mode=='wrong_sha':plan+=f'| R1-BX-D8-CONFIRM | {decision("a"*64, code_commit)} |\n'
     (root/'docs/r1/PLAN.md').write_text(plan+'## 11. Other\n')
-    env={**os.environ,'GIT_AUTHOR_NAME':'Fixture','GIT_AUTHOR_EMAIL':'fixture@example.invalid','GIT_COMMITTER_NAME':'Fixture','GIT_COMMITTER_EMAIL':'fixture@example.invalid'}
-    subprocess.run(['git','-C',str(root),'add','.'],check=True,env=env)
-    subprocess.run(['git','-C',str(root),'commit','-qm','synthetic'],check=True,env=env)
+    subprocess.run(['git','-C',str(root),'add','docs/r1/PLAN.md'],check=True,env=env)
+    subprocess.run(['git','-C',str(root),'commit','-qm','synthetic author row'],check=True,env=env)
     monkeypatch.setattr(g,'REPO',root)
     return root
 
@@ -57,8 +67,7 @@ def test_confirm_row_with_gate_sha_allows_reader(tmp_path,monkeypatch):
     table=tmp_path/'table';table.mkdir()
     (table/'build.json').write_text(json.dumps({'sweep_index':{'path':'synthetic','sha256':'2'*64}}))
     (table/'proposals.jsonl').write_text('{"proposal_id":"synthetic"}\n')
-    with pytest.raises(RuntimeError,match='D8 decision semantics'):
-        d.load_table(table)
+    assert d.load_table(table)==[{'proposal_id':'synthetic'}]
 
 
 @pytest.mark.parametrize('header', ['| Artifact | SHA256 |', '| Key | Proposed value |',
@@ -66,7 +75,7 @@ def test_confirm_row_with_gate_sha_allows_reader(tmp_path,monkeypatch):
 def test_non_decision_tables_do_not_supply_authority(header):
     sha='a'*64
     plan=('## 10. Author decisions\n### 5 November 2026 — author decisions\n'+header+
-          '\n|---|---|\n| R1-BX-D8-CONFIRM | '+sha+' |\n')
+          '\n|---|---|\n| R1-BX-D8-CONFIRM | '+decision(sha)+' |\n')
     assert not g._confirm_row(plan,sha)
 
 
@@ -80,7 +89,7 @@ def test_non_decision_tables_do_not_supply_authority(header):
 def test_invalid_or_non_author_heading_does_not_supply_authority(heading):
     sha='a'*64
     plan=('## 10. Author decisions\n'+heading+'\n| ID | Decision |\n|---|---|\n'
-          '| R1-BX-D8-CONFIRM | '+sha+' |\n')
+          '| R1-BX-D8-CONFIRM | '+decision(sha)+' |\n')
     assert not g._confirm_row(plan,sha)
 
 
@@ -90,7 +99,7 @@ def test_invalid_or_non_author_heading_does_not_supply_authority(heading):
 def test_actual_author_table_header_styles_are_accepted(header):
     sha='a'*64
     plan=('## 10. Author decisions\n### 4 November 2026 (author; recorded by an agent)\n'+header+
-          '\n|---|---|\n| R1-BX-D8-CONFIRM | '+sha+' |\n')
+          '\n|---|---|\n| R1-BX-D8-CONFIRM | '+decision(sha)+' |\n')
     assert g._confirm_row(plan,sha)
 
 
@@ -102,7 +111,7 @@ def test_actual_author_table_header_styles_are_accepted(header):
 ])
 def test_actual_dated_headings_with_explicit_author_decision_header(heading):
     sha='a'*64
-    row='| R1-BX-D8-CONFIRM | '+sha+' |\n'
+    row='| R1-BX-D8-CONFIRM | '+decision(sha)+' |\n'
     prefix='## 10. Open decisions\n'+heading+'\n'
     assert g._confirm_row(prefix+"| ID | Author's decision |\n|---|---|\n"+row,sha)
     assert not g._confirm_row(prefix+'| ID | Decision |\n|---|---|\n'+row,sha)
@@ -110,7 +119,7 @@ def test_actual_dated_headings_with_explicit_author_decision_header(heading):
 
 def test_explicit_author_header_cannot_override_negated_or_invalid_heading():
     sha='a'*64
-    row="| ID | Author's decision |\n|---|---|\n| R1-BX-D8-CONFIRM | "+sha+' |\n'
+    row="| ID | Author's decision |\n|---|---|\n| R1-BX-D8-CONFIRM | "+decision(sha)+' |\n'
     for heading in ('### 40 November 2026 — author decisions',
                     '### 5 November 2026 — not author decisions'):
         assert not g._confirm_row('## 10. Open decisions\n'+heading+'\n'+row,sha)
@@ -257,8 +266,8 @@ def test_sealed_index_and_configs_are_refused_before_read(tmp_path, monkeypatch)
 
 
 def test_confirmation_must_be_actual_dated_author_table_and_sha_in_decision():
-    sha='a'*64; table=f'| ID | Decision | Notes |\n|---|---|---|\n| R1-BX-D8-CONFIRM | approved {sha} | |\n'
+    sha='a'*64; table=f'| ID | Decision | Notes |\n|---|---|---|\n| R1-BX-D8-CONFIRM | {decision(sha)} | |\n'
     assert g._confirm_row('## 10. Open decisions\n### 5 November 2026 — author\n'+table,sha)
     assert not g._confirm_row('## 10. Open decisions\n'+table,sha)
     assert not g._confirm_row('## 10. Open decisions\n### 5 November 2026 — author\n<pre>\n'+table+'</pre>\n',sha)
-    assert not g._confirm_row('## 10. Open decisions\n### 5 November 2026 — author\n'+table.replace('approved '+sha,'approved').replace('| |',f'| {sha} |'),sha)
+    assert not g._confirm_row('## 10. Open decisions\n### 5 November 2026 — author\n'+table.replace(decision(sha),'approved').replace('| |',f'| {sha} |'),sha)

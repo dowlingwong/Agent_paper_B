@@ -58,8 +58,9 @@ def _decision_header(cells):
     return 1 if re.fullmatch(r"decision(?:\s*\([^()]*\))?", second) else 0
 
 
-def _confirm_row(plan, gate_sha):
+def _confirmation_commit(plan, gate_sha):
     section=False; dated_author=False; fenced=None; comment=False; html=None; header=None; table=False
+    decisions=[]
     for raw in plan.splitlines():
         if html:
             if re.search(r'</'+re.escape(html)+r'\s*>',raw,re.I): html=None
@@ -106,8 +107,20 @@ def _confirm_row(plan, gate_sha):
         first=cells[0].strip().strip('*` ')
         if first != 'R1-BX-D8-CONFIRM': continue
         decision=cells[1].strip()
-        if decision and re.search(r'(?<![0-9a-fA-F])'+re.escape(gate_sha)+r'(?![0-9a-fA-F])',decision): return True
-    return False
+        # Exact affirmative draft from AUTHOR_DECISIONS_20261104.md §(j) item 1.
+        # No optional or negative prose can turn a mention into a decision.
+        pattern=(r'Gate code `r1/c3/gate\.py` @ `(?P<commit>[0-9a-f]{40}|[0-9a-f]{64})`, '
+                 r'sha256 `'+re.escape(gate_sha)+r'`, implements R1-BX-D8 with the numbers '
+                 r'confirmed in R1-BX-PROPOSED-CONFIRM \(D8\) and, if adopted, '
+                 r'R1-B7-PARTIAL-T1; T0 and T1 pooled with tier as a stratum\. '
+                 r'Sweep-2 label tables may be analysed from this row on\.')
+        match=re.fullmatch(pattern,decision)
+        decisions.append(match.group('commit') if match else None)
+    return decisions[0] if len(decisions)==1 else None
+
+
+def _confirm_row(plan, gate_sha):
+    return _confirmation_commit(plan,gate_sha) is not None
 
 
 def require_d8_confirmation():
@@ -142,17 +155,23 @@ def require_d8_confirmation():
         if committed_gate != gate.read_bytes():
             raise RuntimeError('STOP: gate SHA source differs from committed HEAD')
         gate_sha=hashlib.sha256(committed_gate).hexdigest()
-        if not _confirm_row(committed_plan.decode('utf-8'),gate_sha):
-            raise RuntimeError('STOP: R1-BX-D8-CONFIRM with current gate SHA required')
+        code_commit=_confirmation_commit(committed_plan.decode('utf-8'),gate_sha)
+        if not code_commit:
+            raise RuntimeError('STOP: exact affirmative R1-BX-D8-CONFIRM with current gate SHA required')
+        # The declared code commit must be an ancestor and contain the same
+        # regular-file gate bytes. Independent review remains a process step.
+        subprocess.check_output(['git','-C',str(REPO),'merge-base','--is-ancestor',code_commit,head],stderr=subprocess.DEVNULL)
+        code_entry=subprocess.check_output(['git','-C',str(REPO),'ls-tree','-z',code_commit,'--','r1/c3/gate.py'],stderr=subprocess.DEVNULL)
+        if not re.fullmatch(rb'(?:100644|100755) blob (?:[0-9a-f]{40}|[0-9a-f]{64})\tr1/c3/gate\.py\x00',code_entry):
+            raise ValueError('declared gate commit lacks a regular gate file')
+        declared_gate=subprocess.check_output(['git','-C',str(REPO),'show',code_commit+':r1/c3/gate.py'],stderr=subprocess.DEVNULL)
+        if declared_gate != committed_gate:
+            raise RuntimeError('STOP: declared gate commit does not match committed HEAD')
         current_head=subprocess.check_output(['git','-C',str(REPO),'rev-parse','--verify','HEAD'],stderr=subprocess.DEVNULL).decode('ascii').strip()
         if head != current_head:
             raise RuntimeError('STOP: checkout HEAD changed during D8 check')
     except (OSError,subprocess.CalledProcessError,UnicodeError,ValueError) as exc:
         raise RuntimeError('STOP: committed PLAN or regular gate code unavailable') from exc
-    # The structural parser accepts any nonempty cell containing the SHA, even
-    # a negative decision. Until an actual author decision and its meaning have
-    # been independently reviewed, matching syntax cannot open this gate.
-    raise RuntimeError('STOP: D8 decision semantics require independent review')
 
 
 def _index_is_frozen_sweep1(meta):

@@ -8,16 +8,22 @@ import pytest
 from r1.c3 import analysis_guard as guard
 
 HEAD = 'a' * 40
+CODE = 'c' * 40
 GATE = b'synthetic gate\n'
 SHA = hashlib.sha256(GATE).hexdigest()
+DECISION = (f'Gate code `r1/c3/gate.py` @ `{CODE}`, sha256 `{SHA}`, '
+            'implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8) '
+            'and, if adopted, R1-B7-PARTIAL-T1; T0 and T1 pooled with tier as a stratum. '
+            'Sweep-2 label tables may be analysed from this row on.')
 PLAN = (f'## 10. Author decisions\n### 5 November 2026 (author)\n'
         f'| ID | Decision |\n|---|---|\n'
-        f'| R1-BX-D8-CONFIRM | approved gate sha256 {SHA} |\n').encode()
+        f'| R1-BX-D8-CONFIRM | {DECISION} |\n').encode()
 
 
 def invoke(*, committed_gate=GATE, work_gate=GATE, committed_plan=PLAN,
            work_plan=PLAN, missing_gate=False, head_after=HEAD,
-           gate_mode=b'100644', plan_mode=b'100644', symlink=None):
+           gate_mode=b'100644', plan_mode=b'100644', symlink=None,
+           code_gate=GATE, code_mode=b'100644', ancestor=True):
     calls = []
 
     def git(argv, **kwargs):
@@ -33,6 +39,14 @@ def invoke(*, committed_gate=GATE, work_gate=GATE, committed_plan=PLAN,
             oid = b'c' * 40
             return (plan_mode+b' blob '+oid+b'\tdocs/r1/PLAN.md\0' +
                     gate_mode+b' blob '+oid+b'\tr1/c3/gate.py\0')
+        if action == ['merge-base', '--is-ancestor', CODE, HEAD]:
+            if not ancestor:
+                raise subprocess.CalledProcessError(1, argv)
+            return b''
+        if action == ['ls-tree', '-z', CODE, '--', 'r1/c3/gate.py']:
+            return code_mode+b' blob '+b'c'*40+b'\tr1/c3/gate.py\0'
+        if action == ['show', CODE + ':r1/c3/gate.py']:
+            return code_gate
         if action == ['show', HEAD + ':docs/r1/PLAN.md']:
             return committed_plan
         if action == ['show', HEAD + ':r1/c3/gate.py']:
@@ -58,9 +72,8 @@ def invoke(*, committed_gate=GATE, work_gate=GATE, committed_plan=PLAN,
         return guard.require_d8_confirmation()
 
 
-def test_exact_committed_gate_and_plan_still_stop_without_reviewed_decision_semantics():
-    with pytest.raises(RuntimeError, match='D8 decision semantics'):
-        invoke()
+def test_exact_committed_gate_and_affirmative_plan_succeed():
+    assert invoke() is None
 
 
 def test_untracked_gate_is_rejected_even_if_decision_names_its_hash():
@@ -97,6 +110,34 @@ def test_checkout_symlink_is_rejected(path):
 
 
 def test_negative_decision_cannot_open_guard_even_if_hash_matches():
-    negative = PLAN.replace(b'approved gate sha256', b'not approved gate sha256')
-    with pytest.raises(RuntimeError, match='D8 decision semantics'):
+    negative = PLAN.replace(b'Gate code ', b'NOT APPROVED: Gate code ')
+    with pytest.raises(RuntimeError, match='exact affirmative'):
         invoke(committed_plan=negative, work_plan=negative)
+
+
+@pytest.mark.parametrize('mutation', [
+    lambda value: value + b' not approved',
+    lambda value: value.replace(b'analysed from this row on.', b'not analysed from this row on.'),
+    lambda value: value.replace(SHA.encode(), b'f'*64),
+    lambda value: value.replace(b'r1/c3/gate.py', b'r1/c3/other.py'),
+])
+def test_inexact_negative_extra_prose_or_wrong_hash_cannot_authorize(mutation):
+    altered = PLAN.replace(DECISION.encode(), mutation(DECISION.encode()))
+    with pytest.raises(RuntimeError, match='exact affirmative'):
+        invoke(committed_plan=altered, work_plan=altered)
+
+
+def test_declared_code_commit_must_be_ancestor_and_match():
+    with pytest.raises(RuntimeError, match='committed PLAN or regular gate code unavailable'):
+        invoke(ancestor=False)
+    with pytest.raises(RuntimeError, match='declared gate commit does not match'):
+        invoke(code_gate=b'different gate')
+    with pytest.raises(RuntimeError, match='committed PLAN or regular gate code unavailable'):
+        invoke(code_mode=b'120000')
+
+
+def test_duplicate_decision_rows_refused_including_later_revocation():
+    for extra in (DECISION, 'not approved '+SHA):
+        plan = PLAN + f'| R1-BX-D8-CONFIRM | {extra} |\n'.encode()
+        with pytest.raises(RuntimeError, match='exact affirmative'):
+            invoke(committed_plan=plan, work_plan=plan)
