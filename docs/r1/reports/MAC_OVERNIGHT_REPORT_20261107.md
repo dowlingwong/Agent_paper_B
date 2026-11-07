@@ -2,6 +2,10 @@
 
 # 7 November 2026 上午报告（补写）
 
+**09:31 CET 后更新：** 作者已回答 note 顺序“允许此顺序”，并对不删除规则回答“继续严格禁止，先修复”；两条原文及问题范围已独立审查并记录在 PLAN §10（`R1-EXAM-B1-NOTE-ORDER-07NOV`、`R1-EXAM-B1-NO-DELETION-07NOV`）。因此下文关于 note 顺序“需作者澄清”的表述是答复前快照，不再是当前待决事项。只有其他前提准备好后才能提交 `approved:true` 候选；真实 gate、精确 HEAD 审查、主机 preflight、handover 和其他 STOP 未豁免。现仍未创建批准 note，B1 未启动。当前问题清单已标记这两题为已答。
+
+09:21 报告后续：DRYRUN 入口临时根修复、独立 launcher 临时根修复及旧 launcher 禁止自动重跑，分别经限定范围审查并推送到 `mac-b1-direct-worker-20261107`（`9c354de3`）及仍未接受的 `mac-b1-combined-20261107`（`2b7e261e`）。这不恢复 Stage A→B1 kill/resume 覆盖，也不证明 launcher、pytest 或整个测试套件符合不删除规则。当前 B1 分支为 `f6146de4`。下文各提交和状态是补写报告时的快照。
+
 会话中断后于 09:21 CET 恢复，本报告晚于原定 08:30；未在中断期间监控或操作主机。§0.3 的测试、最终 checkout、TASL-7 检查、真实 author gate、dry run 和 handover 均未完成。尤其是 §0.3 字面上要求先满足含已批准 note 的最终 HEAD 和真实 gate，才能将 note 设为 `approved: true`，形成顺序循环；需作者明确顺序后才能建立该候选。即使澄清后，其他阻塞仍须逐项解除。当前授权草稿为 `approved: false`，没有创建实际批准 note。
 
 ## Q2 固定参考
