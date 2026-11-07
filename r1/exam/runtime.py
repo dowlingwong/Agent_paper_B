@@ -823,7 +823,14 @@ class ExamRunner:
                 apps=lsi.gpu_compute_apps(capture=self.capture_b1_helper);sample=gpu_sample(self.cfg,capture=self.capture_b1_helper)
             else:
                 apps=lsi.gpu_compute_apps();sample=gpu_sample(self.cfg)
-            write_json(self.out/f'{spec["id"]}_occupancy_before.json',{'compute_apps':apps,'gpu':sample,'graphics_memory_is_part_of_fit_margin':True})
+            occupancy={'compute_apps':apps,'gpu':sample,'graphics_memory_is_part_of_fit_margin':True}
+            if self.state.get('phase')=='b1':
+                # One immutable diagnostic per server instance, including a
+                # second thinking mode. Never replace a pre-existing record.
+                from r1.exam.b1_state_preserve import write_exclusive_json
+                write_exclusive_json(self.out/f'{spec["id"]}_occupancy_before_{inst.record_path.stem}.json',occupancy)
+            else:
+                write_json(self.out/f'{spec["id"]}_occupancy_before.json',occupancy)
             if sample['free_mib']<1024 or sample['utilisation_percent']>5: raise RuntimeError('STOP: pre-launch GPU memory margin or idle occupancy check failed')
             if apps is None or apps: raise RuntimeError('STOP: unknown or occupied GPU compute census before launch')
         self.service=inst
@@ -874,7 +881,11 @@ class ExamRunner:
         apps=([] if self.cfg.get('dryrun') else
               lsi.gpu_compute_apps(capture=self.capture_b1_helper) if self.state.get('phase')=='b1' else None)
         report=inst.offload(footprint_mib=spec['runtime']['footprint_mib'],apps=apps)
-        write_json(inst.batch/'exam_offload.json',report)
+        if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+            from r1.exam.b1_state_preserve import write_exclusive_json
+            write_exclusive_json(inst.batch/f'exam_offload_{inst.record_path.stem}.json',report)
+        else:
+            write_json(inst.batch/'exam_offload.json',report)
         if not report['full']: raise MechanicalFailure('full GPU offload not established')
         if spec['id'] not in (inst.model_ids() or []): raise PreparationStop('STOP: served alias identity mismatch')
         if (inst.props() or {}).get('model_path')!=model: raise RuntimeError('STOP: served GGUF path mismatch')
