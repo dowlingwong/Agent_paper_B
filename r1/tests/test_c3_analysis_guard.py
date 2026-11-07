@@ -17,8 +17,12 @@ from r1.c3 import audit, accounting
 
 def decision(sha, commit='c'*40):
     return (f'Gate code `r1/c3/gate.py` @ `{commit}`, sha256 `{sha}`, '
-            'implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8) '
-            'and, if adopted, R1-B7-PARTIAL-T1; T0 and T1 pooled with tier as a stratum. '
+            'implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); '
+            'T0 and T1 pooled with tier as a stratum. '
+            'If only some T1 nodes have labels by B.7, read the gate on T0 plus the available '
+            'labelled T1 nodes and disclose the node count. '
+            'Each suite must have at least one labelled T1 node, otherwise STOP. '
+            'Existing preregistration and analysis gates remain in force. '
             'Sweep-2 label tables may be analysed from this row on.')
 
 def repo(tmp_path,monkeypatch,mode='absent'):

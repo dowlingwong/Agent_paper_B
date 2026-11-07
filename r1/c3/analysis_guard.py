@@ -111,8 +111,10 @@ def _confirmation_commit(plan, gate_sha):
         # No optional or negative prose can turn a mention into a decision.
         pattern=(r'Gate code `r1/c3/gate\.py` @ `(?P<commit>[0-9a-f]{40}|[0-9a-f]{64})`, '
                  r'sha256 `'+re.escape(gate_sha)+r'`, implements R1-BX-D8 with the numbers '
-                 r'confirmed in R1-BX-PROPOSED-CONFIRM \(D8\) and, if adopted, '
-                 r'R1-B7-PARTIAL-T1; T0 and T1 pooled with tier as a stratum\. '
+                 r'confirmed in R1-BX-PROPOSED-CONFIRM \(D8\); T0 and T1 pooled with tier as a stratum\. '
+                 r'If only some T1 nodes have labels by B\.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count\. '
+                 r'Each suite must have at least one labelled T1 node, otherwise STOP\. '
+                 r'Existing preregistration and analysis gates remain in force\. '
                  r'Sweep-2 label tables may be analysed from this row on\.')
         match=re.fullmatch(pattern,decision)
         decisions.append(match.group('commit') if match else None)

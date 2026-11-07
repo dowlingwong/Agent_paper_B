@@ -12,8 +12,12 @@ CODE = 'c' * 40
 GATE = b'synthetic gate\n'
 SHA = hashlib.sha256(GATE).hexdigest()
 DECISION = (f'Gate code `r1/c3/gate.py` @ `{CODE}`, sha256 `{SHA}`, '
-            'implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8) '
-            'and, if adopted, R1-B7-PARTIAL-T1; T0 and T1 pooled with tier as a stratum. '
+            'implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); '
+            'T0 and T1 pooled with tier as a stratum. '
+            'If only some T1 nodes have labels by B.7, read the gate on T0 plus the available '
+            'labelled T1 nodes and disclose the node count. '
+            'Each suite must have at least one labelled T1 node, otherwise STOP. '
+            'Existing preregistration and analysis gates remain in force. '
             'Sweep-2 label tables may be analysed from this row on.')
 PLAN = (f'## 10. Author decisions\n### 5 November 2026 (author)\n'
         f'| ID | Decision |\n|---|---|\n'
@@ -120,6 +124,10 @@ def test_negative_decision_cannot_open_guard_even_if_hash_matches():
     lambda value: value.replace(b'analysed from this row on.', b'not analysed from this row on.'),
     lambda value: value.replace(SHA.encode(), b'f'*64),
     lambda value: value.replace(b'r1/c3/gate.py', b'r1/c3/other.py'),
+    lambda value: value.replace(b' and disclose the node count', b''),
+    lambda value: value.replace(b'Each suite must have at least one labelled T1 node, otherwise STOP. ', b''),
+    lambda value: value.replace(b'Existing preregistration and analysis gates remain in force. ', b''),
+    lambda value: value.replace(b'T0 plus the available labelled T1 nodes', b'T0 only'),
 ])
 def test_inexact_negative_extra_prose_or_wrong_hash_cannot_authorize(mutation):
     altered = PLAN.replace(DECISION.encode(), mutation(DECISION.encode()))
