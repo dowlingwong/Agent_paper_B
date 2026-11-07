@@ -1105,6 +1105,14 @@ The replies and the STATUS question's scope are retained verbatim in [`AUTHOR_B1
 
 The second reply addresses this B1's `mac-b1-20261107` STATUS publication and TASL-7 marker; the handover, no-preemption and other launch conditions remain. It does not authorize pushing `main`.
 
+### 8 November 2026 — one offline loader recheck (author)
+
+The author's full verbatim reply is retained in [`B1_LOADER_ONCE_WITH_SSH_RECEIPT_20261108.md`](proposals/B1_LOADER_ONCE_WITH_SSH_RECEIPT_20261108.md). It directs a read-only check of the eight current hashes, a corrected reusable SSH exit capture, exactly one fresh offline cache check, preservation of the first attempt, and acceptance by the same independent reviewer.
+
+| ID | Author's decision |
+|---|---|
+| R1-B1-OFFLINE-LOADER-ONCE-08NOV | "不追认第一次为 PASS，按以下顺序处理：<br>1. 先做只读确认。 核对这 8 个文件当前的 SHA，和第一次日志里的前后值一致，不改动现场。<br>2. 修包装。 SSH 的退出码要可靠地保存下来，例如 ssh … ; rc=$?; echo &quot;SSH_EXIT=$rc&quot; \| tee -a &lt;log&gt;；如果用了管道，加 set -o pipefail，避免 ssh \| tee 只拿到 tee 的退出码。退出码写进日志，也写进单独的 rc 文件。<br>3. 只读重跑一次同样的离线缓存检查。判定通过需要三条同时满足：SSH_EXIT=0、日志里有 OFFLINE_LOADER_PASS、8 个文件前后 SHA 不变。<br>4. 第一次运行的日志和现场原样保留，报告中标为&quot;incomplete attempt: exit code not captured&quot;，不删除、不覆盖。<br>5. 由同一个独立审查验收重跑。验收前，B1 的其他门槛照旧，不因此放宽。<br>如果重跑结果和第一次不一致（加载失败或 SHA 变了），停下来报告，不要再重试。<br>还有一个顺带的好处：修好的包装可以复用到之后所有的 SSH 检查，后面不会再因为同样的原因卡住。" |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

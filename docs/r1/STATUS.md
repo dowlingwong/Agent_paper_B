@@ -4,7 +4,7 @@
 
 The fixed Q2 reference and 7 November author decisions are recorded. The `55b8ca24` code freeze was accepted, followed by the independently reviewed B1 OpenML cache guard; a new combined code pin and final HEAD review remain pending. On TASL-7, the fixed-harness synthetic CPU worker determinism test passed (two equal `0.922225` scores) and Linux owned-process STOP checks passed; see `B1_TASL7_REAL_WORKER_RESULT_REVIEW_20261107.md` and `B1_TASL7_LINUX_STOP_RESULT_REVIEW_20261107.md` for their limited scopes. The Mac suite at `5b4dbfe2` had 1,167 passed, 34 failed and 14 skipped; classification is in `B1_FINAL_CODE_MAC_SUITE_CLASSIFICATION_REVIEW_20261107.md`.
 
-An independent a3fedbb harness and two caches have been staged on TASL-7. Its offline-loader log shows both datasets loaded and matching hashes, but the SSH exit record is missing and the engineering check is STOP pending author direction; preserve the scene. The approved candidate note, exact final HEAD/gate, host server/lease preflight, full capacity assessment and O2 handover remain open. No formal B1 run has started; B2, X.7 and sweep 2 are not authorized.
+An independent a3fedbb harness and two caches have been staged on TASL-7. The first offline-loader attempt remains **incomplete attempt: exit code not captured** and is preserved. The author's single authorized repeat passed and was accepted by the same independent reviewer (`B1_LOADER_ONCE_RESULT_REVIEW_20261108.md`); the other B1 gates remain unchanged. The approved candidate note, exact final HEAD/gate, host server/lease preflight, full capacity assessment and O2 handover remain open. No formal B1 run has started; B2, X.7 and sweep 2 are not authorized.
 
 ## 7 November 2026 — B1 audit directory preservation (AI-assisted)
 
