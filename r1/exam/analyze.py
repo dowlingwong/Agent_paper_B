@@ -238,7 +238,7 @@ def _v2_sha():
     return Path(str(RULE_V2)+'.sha256').read_text().split()[0]
 
 
-def b2_summary(manifests, *, rule_path=None, expected=None):
+def b2_summary(manifests, *, rule_path=None, expected=None, synthetic_plan=None):
     """B2 summary.
 
     * With a rule (v1 or v2): every manifest's ``rule_sha256`` must equal the loaded rule's sha;
@@ -252,12 +252,20 @@ def b2_summary(manifests, *, rule_path=None, expected=None):
         for m in manifests:
             if m.get('rule_sha256')!=sha:
                 raise ValueError(f'B2 manifest {m.get("candidate")!r} rule hash differs from the given rule ({rule["version"]})')
-        if is_v2(rule): return _b2_summary_v2(manifests,rule,sha)
+        if is_v2(rule):
+            if synthetic_plan is not None:
+                from r1.exam.b2_ranking import synthetic_b2_rank
+                if not isinstance(synthetic_plan,dict) or set(synthetic_plan)!={'finalists','nodes','instances_per_node'}:
+                    raise ValueError('STOP: synthetic B2 plan must specify only finalists, nodes and instance count')
+                return synthetic_b2_rank(manifests,rule_sha256=sha,**synthetic_plan)
+            return _b2_summary_v2(manifests,rule,sha)
     else:
+        if synthetic_plan is not None: raise ValueError('STOP: synthetic B2 plan needs the frozen v2 rule')
         v2sha=_v2_sha()
         for m in manifests:
             if m.get('rule_version')=='x5_rule/v2' or m.get('rule_sha256')==v2sha:
                 raise ValueError('x5_rule/v2 B2 manifest requires the v2 rule (pass --rule x5_rule_v2.yaml with its sha)')
+    if synthetic_plan is not None: raise ValueError('STOP: synthetic B2 plan requires x5_rule/v2')
     rows=[]
     for m in manifests:
         if m.get('label')!='EXAM' or m.get('phase')!='b2' or m.get('status')!='COMPLETE':
