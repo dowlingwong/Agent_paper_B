@@ -82,7 +82,19 @@ def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
         inst=LlamaServerInstance(root/'stage-a'/'servers'/spec['id'],cfg['server']['binary'],
             model_path=spec['runtime']['model_path'],alias=spec['id'],ctx_size=ctx,
             gpu_uuid='GPU-DRYRUN',label='DRYRUN',start_timeout=10)
-        inst.b1_preserve_records=True
+        # The production record publisher is Linux-only; this local fake uses
+        # an exclusive new record after retiring each prior test-owned version.
+        versions=[0]
+        def save_record():
+            path=inst.record_path
+            if path.exists() or path.is_symlink():
+                archive=path.parent/'_to_delete';archive.mkdir(mode=0o700,exist_ok=True)
+                versions[0]+=1
+                dest=archive/f'{path.name}.{versions[0]:06d}'
+                if dest.exists() or dest.is_symlink(): raise RuntimeError('STOP: synthetic record collision')
+                path.rename(dest)
+            with path.open('x') as f: f.write(json.dumps(inst.record,indent=2)+'\n')
+        inst._save=save_record
         runner.service=inst
         inst.start(build={'version_line':'version: 0 (DRYRUN)'},model_sha256=spec['quant_source']['sha256'])
         return inst
