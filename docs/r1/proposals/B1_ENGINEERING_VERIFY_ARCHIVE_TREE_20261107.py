@@ -38,7 +38,7 @@ def verify(archive, root, expected_sha):
                     path=Path(current)/name; rel=path.relative_to(root).as_posix()
                     if not stat.S_ISREG(path.lstat().st_mode): raise SystemExit('STOP: non-regular or symlink '+rel)
                     if rel not in files:
-                        if parent.endswith('/__pycache__') and parent.rsplit('/',1)[0] in dirs and name.endswith('.pyc'):
+                        if PurePosixPath(parent).name == '__pycache__' and PurePosixPath(parent).parent.as_posix() in dirs and name.endswith('.pyc'):
                             caches.append(rel); continue
                         raise SystemExit('STOP: extra file '+rel)
                     fd=os.open(path,os.O_RDONLY | os.O_NOFOLLOW)
