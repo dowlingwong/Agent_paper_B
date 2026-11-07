@@ -1,0 +1,13 @@
+# B1 finalization pure mocked checks — 7 November 2026
+
+AI-assisted (Codex). **ENGINEERING_ONLY; result pending independent review.** On local clean combined source `f17666cc68859ca42778e45f296dd5768fd382e1`, an isolated clone ran only five `unittest.TestCase` classes from `r1/tests/test_b1_publication_uncertainty_unittest.py` and `r1/tests/test_b1_operator_exit_unittest.py`: `UncertaintyTests`, `PublicationLockTests`, `FullBatchEntryTests`, `SupervisorBindingTests`, and `OperatorExitTests`. Result: **21 tests, zero failures, zero errors, zero skips**; process exit 0. No pytest, server, model, GPU, host access, node, real campaign, or experiment was run. These tests use mocks for locks, files, process calls and supervisor behavior; results are not evidence of actual Linux flock, process, durability, STOP quiescence or B1 readiness.
+
+The test source files at this checkout have SHA-256 `fedc49f579de5244f7f28d9ced76f1b582fa8db505d` (incorrect abbreviated placeholder; see the complete corrected SHA below) and `e9949ab7eb9538bddf82dbf00482789ab73a4c0c424ec51e3f2695f91ff23c23`. The complete publication-test SHA-256 is `fedc49f579de5244f7f28d9ced76f1b582fa6fb3d682f9b3ef61b1ca722cb4a7`.
+
+The local script and captured output are retained under `docs/r1/reports/b1_finalization_pure_20261107/`; their SHA-256 values are respectively `84bc61d7b22f7ae341d51e465eb00b9acb04e0b4d3d944deab69ad708ae03f03`, `6261811e476f22e3508d62ff5edf6f0060456e6ccb091061269bb0a226957f98`, and the exit file `9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa`. The captured original files remain `/private/tmp/b1-finalization-pure-20261107-unique.py`, `.out`, and `.exit` (full prefixes). Capture used shell `set -C` and new local paths. Exact command, from the root of the clean isolated checkout:
+
+```bash
+python3 -I -S -B /private/tmp/b1-finalization-pure-20261107-unique.py > /private/tmp/b1-finalization-pure-20261107-unique.out 2>&1
+```
+
+The interpreter was `/opt/homebrew/bin/python3`, Python 3.15.0. `-I -S -B` suppresses site initialization and bytecode caching; the script inserts the checkout path itself. An in-process Python audit hook refuses writable `open`, specified filesystem mutation events, subprocess creation and network connect/bind events after the hook is installed. This is defense in depth, not a kernel sandbox: it does not attest all native or pre-hook effects. The source inspection found no real work or subprocess in the selected test bodies; the checker did not trace every system/library operation. The result does not satisfy the required full Mac suite, Stage A kill/resume, real-worker determinism or site checks. Independent review must validate evidence and scope before acceptance.
