@@ -504,6 +504,51 @@ def require_server_lease_inheritance(instance):
     return inheritance
 
 
+def _b1_child_exit(child):
+    """Observe an owned child without releasing its PID/process-group identity."""
+    if not hasattr(os, 'waitid'):
+        if sys.platform != 'darwin':
+            raise RuntimeError('STOP: waitid is required to retain the B1 worker identity')
+        # macOS Python 3.11 does not expose waitid, although libc does.
+        # B1 production is Linux; this path permits the same owned-child test
+        # on the Mac. The first six fields are Darwin's siginfo_t layout.
+        import ctypes
+        class Siginfo(ctypes.Structure):
+            _fields_ = [(name, ctypes.c_int) for name in
+                        ('signo', 'errno', 'code', 'pid', 'uid', 'status')] + [('rest', ctypes.c_byte * 104)]
+        info = Siginfo()
+        libc = ctypes.CDLL(None, use_errno=True)
+        if libc.waitid(1, child.pid, ctypes.byref(info), 4 | 1 | 32) != 0:
+            code = ctypes.get_errno()
+            raise OSError(code, os.strerror(code))
+        if not info.pid:
+            return None
+        return info.status if info.code == 1 else -info.status
+    info = os.waitid(os.P_PID, child.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+    if info is None:
+        return None
+    return info.si_status if info.si_code == os.CLD_EXITED else -info.si_status
+
+
+def _stop_b1_worker_group(child):
+    """Stop the session started for this child while its PID remains reserved."""
+    # Refuse to signal if the process is no longer our unreaped child.  The
+    # zombie also keeps its session/process-group ID reserved after root exit.
+    _b1_child_exit(child)
+    try:
+        try:
+            os.killpg(child.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        time.sleep(0.2)
+        try:
+            os.killpg(child.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    finally:
+        child.wait(timeout=30)
+
+
 class ExamRunner:
     def __init__(self, cfg, out, *, registry_path=None, b1_config_head=None):
         self.cfg=cfg;self.out=Path(out).resolve();host_check(cfg,self.out)
@@ -790,7 +835,9 @@ class ExamRunner:
             self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
             watchdog=RunnerWatchdog(self.service,self.cfg['watchdog']) if self.service else None
             started=time.monotonic()
-            while self.child.poll() is None:
+            b1_owned = self.state.get('phase')=='b1' and not self.cfg.get('dryrun')
+            exit_status = None
+            while (exit_status := _b1_child_exit(self.child) if b1_owned else self.child.poll()) is None:
                 if stop_read is not None:
                     try: audit_stop=os.read(stop_read,1)
                     except BlockingIOError: audit_stop=b''
@@ -814,14 +861,19 @@ class ExamRunner:
                     os.killpg(self.child.pid,signal.SIGKILL);self.child.wait();killed=True
                     raise InterruptedError('DRYRUN kill-and-resume: root worker killed after first ledger append')
                 time.sleep(float(self.cfg['watchdog']['poll_seconds']))
-            if self.child.returncode: raise RuntimeError(f'STOP: root worker exit {self.child.returncode}; see {path}/runner.log')
+            if exit_status: raise RuntimeError(f'STOP: root worker exit {exit_status}; see {path}/runner.log')
+            if b1_owned:
+                self.child.wait()
         except BaseException as exc:
             if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
                 self.state['shutdown_writes'] = ('Stopping B1-owned workers and the B1 server may append '
                     'runner/server logs and publish server and batch-state records; retain and report them.')
-            if self.child is not None and self.child.poll() is None and self.state.get('phase')!='stage-a':
+            if self.child is not None and self.state.get('phase')!='stage-a':
                 try:
-                    stop_tree(self.child.pid);self.child.wait(timeout=30)
+                    if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                        _stop_b1_worker_group(self.child)
+                    elif self.child.poll() is None:
+                        stop_tree(self.child.pid);self.child.wait(timeout=30)
                 except Exception as shutdown_error:
                     self.state['worker_shutdown_error'] = f'{type(shutdown_error).__name__}: {shutdown_error}'
                     try: print('STOP: B1-owned worker shutdown failed: '+self.state['worker_shutdown_error'],file=sys.stderr,flush=True)

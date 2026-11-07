@@ -70,7 +70,7 @@ def test_post_spawn_save_failure_stops_owned_child(tmp_path, monkeypatch):
     monkeypatch.setattr(runtime, 'write_json', lambda *a: None)
     monkeypatch.setattr(runtime.subprocess, 'Popen', lambda *a, **k: child)
     stop = Mock()
-    monkeypatch.setattr(runtime, 'stop_tree', stop)
+    monkeypatch.setattr(runtime, '_stop_b1_worker_group', lambda child: (stop(child.pid), child.wait(timeout=30)))
     monkeypatch.setattr(runtime, 'report_b1_stop_and_save', Mock())
     with pytest.raises(RuntimeError, match='state save failed'):
         runner.run_job({'out': str(tmp_path / 'job')}, 'r1.exam.campaign')
@@ -82,6 +82,7 @@ def test_post_spawn_save_failure_stops_owned_child(tmp_path, monkeypatch):
 def test_audit_notification_uses_existing_owned_process_stop(tmp_path, monkeypatch):
     child = Mock(pid=1234, returncode=None)
     child.poll.return_value = None
+    monkeypatch.setattr(runtime, '_b1_child_exit', lambda child: None)
     runner = runtime.ExamRunner.__new__(runtime.ExamRunner)
     runner.cfg = {'dryrun': False, 'watchdog': {}}
     runner.state = {'phase': 'b1', 'interruptions': []}
@@ -94,7 +95,7 @@ def test_audit_notification_uses_existing_owned_process_stop(tmp_path, monkeypat
     monkeypatch.setattr(runtime.subprocess, 'Popen', lambda *a, **k: child)
     monkeypatch.setattr(runtime.os, 'read', lambda fd, count: b'1')
     stop = Mock()
-    monkeypatch.setattr(runtime, 'stop_tree', stop)
+    monkeypatch.setattr(runtime, '_stop_b1_worker_group', lambda child: (stop(child.pid), child.wait(timeout=30)))
     monkeypatch.setattr(runtime, 'report_b1_stop_and_save', Mock())
     with pytest.raises(RuntimeError, match='audit worker failure'):
         runner.run_job({'out': str(tmp_path / 'job')}, 'r1.exam.campaign')
@@ -107,6 +108,7 @@ def test_post_spawn_cleanup_failure_stops_owned_child(tmp_path, monkeypatch, fai
     from pathlib import Path
     child = Mock(pid=1234, returncode=None)
     child.poll.return_value = None
+    monkeypatch.setattr(runtime, '_b1_child_exit', lambda child: None)
     runner = runtime.ExamRunner.__new__(runtime.ExamRunner)
     runner.cfg = {'dryrun': False, 'watchdog': {}}
     runner.state = {'phase': 'b1', 'interruptions': []}
@@ -118,7 +120,7 @@ def test_post_spawn_cleanup_failure_stops_owned_child(tmp_path, monkeypatch, fai
     monkeypatch.setattr(runtime, 'write_json', lambda *a: None)
     monkeypatch.setattr(runtime.subprocess, 'Popen', lambda *a, **k: child)
     stop = Mock()
-    monkeypatch.setattr(runtime, 'stop_tree', stop)
+    monkeypatch.setattr(runtime, '_stop_b1_worker_group', lambda child: (stop(child.pid), child.wait(timeout=30)))
     monkeypatch.setattr(runtime, 'report_b1_stop_and_save', Mock())
     if failure == 'log_close':
         real_open = Path.open
@@ -162,8 +164,9 @@ def test_b1_output_directories_private_with_group_writable_umask(tmp_path, monke
     monkeypatch.setattr(runtime, 'write_json', lambda *a: None)
     child = Mock(pid=1234, returncode=None)
     child.poll.return_value = None
+    monkeypatch.setattr(runtime, '_b1_child_exit', lambda child: None)
     monkeypatch.setattr(runtime.subprocess, 'Popen', lambda *a, **k: child)
-    monkeypatch.setattr(runtime, 'stop_tree', Mock())
+    monkeypatch.setattr(runtime, '_stop_b1_worker_group', lambda child: child.wait(timeout=30))
     monkeypatch.setattr(runtime, 'report_b1_stop_and_save', Mock())
     monkeypatch.setattr(runtime, 'host_check', lambda *a: None)
     monkeypatch.setattr(runtime, 'template_repair_args', lambda *a: [])
