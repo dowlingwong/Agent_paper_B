@@ -75,6 +75,21 @@ def _publish_or_reconcile(child, out, head):
         verify_waited_success(out,head)
 
 
+def _release_then_publish(child, out, head, handoff):
+    """Release an empty guardian before the terminal success publication.
+
+    The supervisor keeps its inherited lease through both operations. A
+    release/ack failure propagates before publication and therefore cannot
+    publish a success receipt. The final atomic ACTIVE retirement is the
+    success linearization point under the documented local-filesystem fault
+    model; `_publish_or_reconcile` handles a callback after that point.
+    """
+    handoff.sendall(b'RELEASE')
+    if handoff.recv(64) != b'RELEASED':
+        raise RuntimeError('STOP: guardian did not acknowledge release')
+    _publish_or_reconcile(child,out,head)
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser()
     parser.add_argument('--config',required=True);parser.add_argument('--out',required=True)
@@ -143,12 +158,9 @@ def main(argv=None):
         # STOP. Suppress asynchronous Python signal handlers across that point;
         # SIGKILL remains subject to the documented atomic-rename fault model.
         signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals() - {signal.SIGKILL, signal.SIGSTOP})
-        _publish_or_reconcile(child,out,head)
-        # Publication/release ordering remains separately under review.
-        handoff_supervisor.sendall(b'RELEASE')
-        if handoff_supervisor.recv(64)!=b'RELEASED':
-            raise RuntimeError('STOP: guardian did not acknowledge release')
-        # Process exit releases the supervisor lease.
+        _release_then_publish(child,out,head,handoff_supervisor)
+        # Atomic publication is terminal success; process exit releases the
+        # supervisor's lease. No later cleanup failure changes classification.
         return 0
     except BaseException as exc:
         _retain_on_stop(live_w,supervisor_dir,exc)

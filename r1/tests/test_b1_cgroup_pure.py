@@ -348,6 +348,47 @@ class SupervisorContractTests(unittest.TestCase):
                 'R1_B1_SUPERVISOR_PIDFD':'8','R1_B1_SUPERVISOR_LIVE_FD':'9','R1_B1_LEASE_FD':'10',
                 'R1_B1_GUARDIAN_HANDOFF_FD':'11'}
 
+    def test_release_ack_failure_does_not_publish_success(self):
+        from r1.scripts import b1_supervisor
+        handoff=Mock();handoff.recv.side_effect=OSError('lost ack')
+        with patch.object(b1_supervisor,'_publish_or_reconcile') as publish:
+            with self.assertRaises(OSError):
+                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff)
+        handoff.sendall.assert_called_once_with(b'RELEASE')
+        publish.assert_not_called()
+
+    def test_release_send_failure_even_with_stop_write_failure_never_publishes(self):
+        from r1.scripts import b1_supervisor
+        handoff=Mock();handoff.sendall.side_effect=OSError('send failed')
+        stop_write=Mock(side_effect=OSError('disk full'))
+        with patch.object(b1_supervisor,'_publish_or_reconcile') as publish:
+            try:
+                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff)
+            except OSError:
+                try: stop_write()
+                except OSError: pass
+        stop_write.assert_called_once()
+        handoff.recv.assert_not_called()
+        publish.assert_not_called()
+
+    def test_success_publication_occurs_after_release_ack(self):
+        from r1.scripts import b1_supervisor
+        calls=[]
+        handoff=Mock()
+        handoff.sendall.side_effect=lambda message: calls.append(('send',message))
+        handoff.recv.side_effect=lambda limit: calls.append(('ack',limit)) or b'RELEASED'
+        with patch.object(b1_supervisor,'_publish_or_reconcile',side_effect=lambda *args: calls.append(('publish',))):
+            b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff)
+        self.assertEqual(calls,[('send',b'RELEASE'),('ack',64),('publish',)])
+
+    def test_wrong_release_ack_does_not_publish_success(self):
+        from r1.scripts import b1_supervisor
+        handoff=Mock();handoff.recv.return_value=b'FAILED'
+        with patch.object(b1_supervisor,'_publish_or_reconcile') as publish:
+            with self.assertRaises(RuntimeError):
+                b1_supervisor._release_then_publish(Mock(),'/batch','head',handoff)
+        publish.assert_not_called()
+
     def test_contract_refuses_supervisor_stop_before_adopting_lease(self):
         from r1.exam import b1_supervisor_contract as contract
         poller=Mock();poller.poll.return_value=[(9,1)]
