@@ -294,11 +294,13 @@ class B1Containment:
                 child_env = dict(env)
                 contract_fds = ()
                 if worker_context is not None:
-                    if kind != 'worker' or set(worker_context) != {'job','out','server','supervisor'}:
+                    if kind != 'worker' or set(worker_context) != {'job','out','server','supervisor','audit_stop_fd'}:
                         raise ContainmentStop('STOP: invalid B1 worker context')
                     from r1.exam.b1_worker_contract import ENV_KEY, _job_sha, _server_listener
+                    from r1.exam.b1_audit_stop import require_notify_fd
                     from r1.exam.cache_proc import process_start_ticks
-                    job, output, server, supervisor = (worker_context[k] for k in ('job','out','server','supervisor'))
+                    job, output, server, supervisor, audit_stop_fd = (worker_context[k] for k in ('job','out','server','supervisor','audit_stop_fd'))
+                    require_notify_fd(audit_stop_fd)
                     output = Path(output)
                     if not output.is_absolute() or output.resolve() != output or str(output) != job.get('out'):
                         raise ContainmentStop('STOP: worker output context is not canonical')
@@ -312,7 +314,7 @@ class B1Containment:
                     self.require_guardian()
                     guardian_pidfd = os.pidfd_open(self.guardian.pid,0)
                     self.verify_live_lease(self.guardian,lease_fd)
-                    context = {'version':'b1_worker_contract/v1','parent_pid':os.getpid(),
+                    context = {'version':'b1_worker_contract/v2','parent_pid':os.getpid(),
                                'parent_ticks':process_start_ticks(os.getpid()), 'parent_pidfd':self.parent_pidfd,
                                'supervisor_pid':supervisor['pid'], 'supervisor_ticks':supervisor['start_ticks'],
                                'supervisor_pidfd':supervisor['pidfd'], 'supervisor_live_fd':supervisor['live_fd'],
@@ -320,9 +322,10 @@ class B1Containment:
                                'guardian_pidfd':guardian_pidfd,
                                'lease_fd':lease_fd,'root_fd':self.root_fd,'leaf_fd':leaf_fd,'output_fd':output_fd,
                                'membership':self.membership,'leaf':name,'out':str(output),'job_sha256':_job_sha(job),
+                               'audit_stop_fd':audit_stop_fd,
                                'server_pid':None,'server_ticks':None,'server_pidfd':None,'server_leaf_fd':None,
                                'server_url':None}
-                    contract_fds = (self.parent_pidfd,self.root_fd,leaf_fd,output_fd,guardian_pidfd,
+                    contract_fds = (self.parent_pidfd,self.root_fd,leaf_fd,output_fd,guardian_pidfd,audit_stop_fd,
                                     supervisor['pidfd'],supervisor['live_fd'])
                     software = job.get('candidate',{}).get('kind') in ('random_valid','scripted')
                     if software:

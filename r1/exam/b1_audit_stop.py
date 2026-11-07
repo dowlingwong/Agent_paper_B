@@ -10,6 +10,7 @@ from __future__ import annotations
 import fcntl
 import os
 import stat
+import threading
 
 
 class AuditNotificationStop(RuntimeError):
@@ -52,7 +53,18 @@ def run_notifying_audit(fd, run_config, *args):
         raise
 
 
-def handle_ready_audit_channel(fd, mark_stopping, freeze):
+def send_audit_complete(fd):
+    """Collector announces normal completion; runner still verifies exit and cgroup."""
+    require_notify_fd(fd)
+    try:
+        if os.write(fd, b'D') != 1:
+            raise OSError('short audit completion notification')
+    except OSError as exc:
+        raise AuditNotificationStop('STOP: audit completion notification failed') from exc
+
+
+def handle_ready_audit_channel(fd, mark_stopping, freeze, expected_alive=lambda: True,
+                               complete_seen=lambda: False, mark_complete=lambda: None):
     """Runner-side step; only call while the audited child is expected alive.
 
     The integration must retain the reported exception and never publish
@@ -68,6 +80,11 @@ def handle_ready_audit_channel(fd, mark_stopping, freeze):
     except OSError as exc:
         token = None
         read_error = exc
+    if token == b'D' and read_error is None:
+        mark_complete()
+        return False
+    if token == b'' and read_error is None and (complete_seen() or not expected_alive()):
+        return False
     try:
         try:
             mark_stopping()
@@ -80,3 +97,58 @@ def handle_ready_audit_channel(fd, mark_stopping, freeze):
     if token == b'S':
         raise AuditNotificationStop('STOP: audit worker reported failure')
     raise AuditNotificationStop('STOP: audit failure channel closed or malformed')
+
+
+class AuditStopMonitor:
+    """Runner-owned monitor; the integration must pass its own containment."""
+    def __init__(self, read_fd, process, containment):
+        self.fd = read_fd
+        self.process = process
+        self.containment = containment
+        self.stopping = threading.Event()
+        self.completed = threading.Event()
+        self.shutdown_requested = threading.Event()
+        self.error = None
+        self.thread = threading.Thread(target=self._run, daemon=True)
+
+    def start(self):
+        self.thread.start()
+
+    def _run(self):
+        try:
+            while not self.shutdown_requested.is_set():
+                handle_ready_audit_channel(self.fd, self.stopping.set,
+                                           self.containment.freeze,
+                                           lambda: self.process.poll() is None,
+                                           self.completed.is_set, self.completed.set)
+                if self.process.poll() is not None:
+                    return
+                self.shutdown_requested.wait(.05)
+        except BaseException as exc:
+            self.error = exc
+            self.stopping.set()
+            if not isinstance(exc, AuditNotificationStop):
+                try:
+                    self.containment.freeze()
+                except BaseException as freeze_error:
+                    self.error = AuditNotificationStop(
+                        f'STOP: audit monitor failed and freeze failed ({type(freeze_error).__name__})'
+                    )
+
+    def check(self):
+        if self.stopping.is_set():
+            raise AuditNotificationStop('STOP: owned audit failure or monitor failure') from self.error
+
+    def finish(self):
+        self.thread.join(timeout=15)
+        if self.thread.is_alive():
+            raise AuditNotificationStop('STOP: audit failure monitor did not finish')
+        self.check()
+        if not self.completed.is_set():
+            raise AuditNotificationStop('STOP: audit completion notification is missing')
+
+    def shutdown(self):
+        self.shutdown_requested.set()
+        self.thread.join(timeout=15)
+        if self.thread.is_alive():
+            raise AuditNotificationStop('STOP: audit failure monitor did not shut down')
