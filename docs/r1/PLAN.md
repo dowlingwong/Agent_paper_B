@@ -1078,6 +1078,22 @@ Asked whether the author knew the current TASL-7 operator/host ownership or coul
 
 Recorder's scope note (not an additional author decision): continue authorized work and do not treat the mere presence of other users' agent processes as an automatic host-ownership STOP. This answer does not identify who owns those processes, establish that the GPU is free, authorize preempting a running job or modifying another operator's work, waive the no-deletion rule, or establish the remaining B1 phase, handover, site and exact-checkout prerequisites. Conduct a fresh read-only occupancy check before host work; preserve other operators' processes and data.
 
+### 7 November 2026 — B1 process management, preservation scope and tests (author)
+
+The author supplied the following answer in this conversation, described as “7 Nov evening”; the full verbatim message is retained at [`AUTHOR_B1_EVENING_REPLY_20261107.md`](prompts/AUTHOR_B1_EVENING_REPLY_20261107.md). The decision cells below quote the author's words. Earlier rows remain as history.
+
+| ID | Author's decision |
+|---|---|
+| R1-EXAM-B1-NO-CGROUP-07NOV | "No cgroup requirement for B1. cgroup containment was never a PLAN, runbook or author requirement (your own B1_STOP_ALTERNATIVES_20261107.md says so), and Stage A ran on TASL-7 without it. B1 uses the same process management as Stage A (t7h8/t7j10), plus today's accepted B1 units that do not depend on cgroups. Do not integrate the cgroup, supervisor, freezer or exit-receipt candidates into the B1 path; keep them on their branches." |
+| R1-EXAM-B1-STOP-SHUTDOWN-07NOV | "STOP semantics for B1: stop starting new work; stop the B1-owned worker processes and the B1 llama-server through the existing stop paths; preserve every output file, ledger and log; publish STATUS; never re-run or change anything automatically. Log or record lines written during the shutdown itself are acceptable and must be noted in the STOP report." |
+| R1-EXAM-B1-STOP-NOT-REQUIRED-07NOV | "Not required for B1: kernel freezing, fsync/receipt durability guarantees, protection against a malicious same-UID process, or proof that in-flight GPU work has finished." |
+| R1-EXAM-B1-NO-DELETION-SCOPE-07NOV | "Scope of the no-deletion rule (amends R1-EXAM-B1-NO-DELETION-07NOV). It applies to repository files, experiment outputs and evidence, other tracks' files and processes, and remote files. It does not apply to normal internal temp, lock and pending-guard files that the pinned harness a3fedbb, pytest's tmp directories or Python caches create and clean up themselves." |
+| R1-EXAM-B1-PIN-CONFIRM-07NOV | "The harness pin stays a3fedbb; no harness replacement, and no push of the harness candidate." |
+| R1-EXAM-B1-TESTS-NORMAL-07NOV | "Tests: run the B1-related tests and the full suite with pytest normally, on the Mac and on TASL-7 as needed." |
+| R1-EXAM-B1-OTHER-GATES-07NOV | "Everything else in the 7 Nov prompt stands, including the Q2 rule and the other launch conditions. Goal unchanged: get B1 launched as soon as those conditions hold." |
+
+Recorder's scope note (not an additional author decision): the no-deletion scope row amends the earlier R1-EXAM-B1-NO-DELETION-07NOV reply. The explicit pin confirmation retains `a3fedbb`; the separately returned “先完成验证再决定（建议）” response to the earlier conditional replacement question does not select a replacement or authorize a push. Keep the author-selected Q2 rule, exact checkout review, note/gate order, host preflight, handover and all other launch conditions. B2, X.7 and sweep 2 remain separately unauthorized.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
