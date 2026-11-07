@@ -37,6 +37,53 @@ def write_json(path, data):
     tmp.replace(path)
 
 
+def run_b1_audits(node, configs, job, out, cache, save_cache):
+    """Bound queued work and notify the owning runner on audit failure."""
+    from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
+    # A dedicated inherited pipe asks the parent to use its existing stop_tree path.
+    stop_fd=int(os.environ['R1_B1_STOP_FD'])
+    entries=iter(configs.items())
+    with ProcessPoolExecutor(max_workers=job['workers']) as pool:
+        active={}
+        def submit_one():
+            try: h,value=next(entries)
+            except StopIteration: return False
+            active[pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out),preserve_node_outputs=True,stop_on_invalid=True)]=h
+            return True
+        try:
+            for _ in range(job['workers']):
+                if not submit_one(): break
+            while active:
+                done,_=wait(active,return_when=FIRST_COMPLETED)
+                # Observe every already-complete result before dispatching more work.
+                done |= {f for f in active if f.done()}
+                for future in done:
+                    h=active.pop(future);runs=future.result()
+                    import math
+                    if (len(runs)!=len(job['audit_seeds']) or any(
+                            not r.get('success') or isinstance(r.get('metric'),bool) or
+                            not isinstance(r.get('metric'),(int,float)) or not math.isfinite(r['metric'])
+                            for r in runs)):
+                        raise RuntimeError('STOP: invalid B1 audit results')
+                    cache[h]=[r['metric'] if r['success'] else None for r in runs]
+                    save_cache()
+                for _ in done: submit_one()
+        except BaseException as exc:
+            import sys
+            for future in active: future.cancel()
+            try: print(f'STOP: audit failure: {type(exc).__name__}: {exc}',file=sys.stderr,flush=True)
+            except Exception: pass
+            try: os.write(stop_fd,b'1')
+            except OSError:
+                # A broken notification pipe falls back to an exclusive marker.
+                # If both channels fail, the parent enforces its campaign deadline.
+                try:
+                    with (Path(out)/'audit_stop_notification').open('x') as marker:
+                        marker.write('STOP: audit failure; see runner.log\n')
+                except OSError: pass
+            raise
+
+
 def read_rows(path):
     return [json.loads(s) for s in Path(path).read_text().splitlines() if s.strip()]
 
@@ -193,18 +240,20 @@ def _collect_b1_review(job):
     records=read_rows(out/'root_trials.jsonl');events=read_rows(out/'root_events.jsonl')
     props,checks=replay_campaign(records,start,node,f'{node}__s{seed}','EXAM','append_only_summary',job['W'],1.)
     forecasts={e['trial_id']:e['payload'] for e in events if e['event_type']=='exam_self_forecast'}
-    cache={};audits=[];configs={}
+    cache={};audits=[];configs={};cache_identity=None
+    def save_cache():
+        nonlocal cache_identity
+        if job['dryrun']:
+            write_json(out/'audit_cache.json',cache)
+        else:
+            from r1.exam.b1_state_preserve import publish_audit_cache
+            cache_identity=publish_audit_cache(out/'audit_cache.json',cache,cache_identity)
     audited=[p for p in props if not p.features.get('active_equals_incumbent') and not p.features.get('active_seen_before')]
     for p in audited:
         for files in (p.candidate_files,p.incumbent_files): configs[files_hash(files)]={'node':node,'files':files}
     write_json(out/'audit_configs.json',configs)
     if not job['dryrun']:
-        from concurrent.futures import ProcessPoolExecutor, as_completed
-        with ProcessPoolExecutor(max_workers=job['workers']) as pool:
-            futures={pool.submit(run_config,node,value['files'],job['audit_seeds'],str(out),preserve_node_outputs=job['phase']=='b1'):h for h,value in configs.items()}
-            for future in as_completed(futures):
-                h=futures[future];runs=future.result();cache[h]=[r['metric'] if r['success'] else None for r in runs]
-                write_json(out/'audit_cache.json',cache)
+        run_b1_audits(node,configs,job,out,cache,save_cache)
     for p in props:
         if p.features.get('active_equals_incumbent') or p.features.get('active_seen_before'): continue
         arrays=[]
@@ -213,9 +262,9 @@ def _collect_b1_review(job):
             if h not in cache:
                 if job['dryrun']: cache[h]=[fixture_metric(files,s) for s in job['audit_seeds']]
                 else:
-                    runs=run_config(node,files,job['audit_seeds'],str(out),preserve_node_outputs=job['phase']=='b1')
+                    runs=run_config(node,files,job['audit_seeds'],str(out),preserve_node_outputs=True,stop_on_invalid=True)
                     cache[h]=[r['metric'] if r['success'] else None for r in runs]
-                write_json(out/'audit_cache.json',cache)
+                save_cache()
             arrays.append(cache[h])
         result=paired(*arrays)
         if result['k']!=len(job['audit_seeds']): raise RuntimeError('STOP: missing/failed paired audit seeds')
@@ -237,7 +286,7 @@ def _collect_b1_review(job):
     final=[]
     if job['phase']=='b2':
         files={p:(node_root/p).read_text() for p in spec.editable_paths}
-        vals=[fixture_metric(files,s) for s in job['audit_seeds']] if job['dryrun'] else [r['metric'] for r in run_config(node,files,job['audit_seeds'],str(out))]
+        vals=[fixture_metric(files,s) for s in job['audit_seeds']] if job['dryrun'] else [r['metric'] for r in run_config(node,files,job['audit_seeds'],str(out),preserve_node_outputs=True,stop_on_invalid=True)]
         if any(v is None for v in vals): raise RuntimeError('STOP: incomplete final Y audit')
         final=[{'instance_id':f'{node}__s{seed}','node':node,'seeds':job['audit_seeds'],'metrics':vals,'final_y':sum(vals)/len(vals)}]
     completed=next(e['payload'] for e in reversed(events) if e['event_type']=='campaign_completed')

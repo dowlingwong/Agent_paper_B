@@ -404,8 +404,22 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
                     for seed in seeds:
                         root_results.append(runner.root(spec,phase,node,seed,current_mode,interrupt=interrupt and len(runner.state['completed'])>=1 and not runner.state.get('interruptions')))
                 if runner.service: runner.stop_service()
+        except BaseException:
+            if phase=='b1' and not cfg.get('dryrun'):
+                runner.state['shutdown_writes'] = ('Stopping B1-owned workers and the B1 server may append '
+                    'runner/server logs and publish server and batch-state records; retain and report them.')
+                if runner.service and not getattr(runner,'b1_shutdown_attempted',False):
+                    try: runner.stop_service()
+                    except Exception as shutdown_error:
+                        runner.state['server_shutdown_error']=f'{type(shutdown_error).__name__}: {shutdown_error}'
+                        try: print('STOP: B1-owned server shutdown failed: '+runner.state['server_shutdown_error'],file=sys.stderr,flush=True)
+                        except Exception: pass
+            raise
         finally:
-            if runner.service: runner.stop_service()
+            # On a B1 STOP the except branch has attempted shutdown exactly once.
+            if runner.service and not (phase=='b1' and not cfg.get('dryrun') and
+                                       getattr(runner,'b1_shutdown_attempted',False)):
+                runner.stop_service()
         audits=[r for root in root_results for r in root['audited_proposals']]
         diag={k:sum(r['diagnostics'].get(k,0) for r in root_results) for k in ('trials','evaluated','invalid','duplicates','noops','parse_failed','forecast_queries','forecast_query_failed')}
         def d28_of(roots): return all(all(n['pass'] for n in r['d28']['nodes'].values()) for r in roots)
@@ -526,7 +540,7 @@ def main(argv=None):
     if unresolved: raise RuntimeError(f'STOP: unresolved phase settings: {unresolved}')
     if a.phase=='b1' and not cfg.get('dryrun'): verify_anchor_reference(cfg)
     runner=ExamRunner(cfg,a.out,b1_config_head=b1_config_head)
-    preserve_running=False
+    preserve_running=False;b1_stopped=False
     try:
         runner.start(a.phase)
         if a.phase=='stage-a':
@@ -545,12 +559,26 @@ def main(argv=None):
         if preserve_running:
             runner.state['gpu_lease_after_stop']='NOT_CHECKABLE: runner marker is not evidence of held flock'
         if a.phase=='b1' and not cfg.get('dryrun'):
+            b1_stopped=True
+            runner.state.setdefault('shutdown_writes', 'Stopping B1-owned workers and the B1 server may append runner/server logs and publish server and batch-state records; retain and report them.')
+            if runner.service and not getattr(runner,'b1_shutdown_attempted',False):
+                try: runner.stop_service()
+                except Exception as shutdown_error:
+                    runner.state['server_shutdown_error']=f'{type(shutdown_error).__name__}: {shutdown_error}'
+                    try: print('STOP: B1-owned server shutdown failed: '+runner.state['server_shutdown_error'],file=sys.stderr,flush=True)
+                    except Exception: pass
             report_b1_stop_and_save(runner,exc,save=runner.lock is not None)
         else:
             if runner.lock is not None: runner.save()
             print(runner.state['stop_reason'],file=sys.stderr)
         return 1
-    finally: runner.close(preserve_running=preserve_running)
+    finally:
+        if b1_stopped:
+            try: runner.close(skip_service=True)
+            except Exception as close_error:
+                try: print(f'STOP: B1 cleanup failed: {type(close_error).__name__}: {close_error}',file=sys.stderr,flush=True)
+                except Exception: pass
+        else: runner.close(preserve_running=preserve_running)
     # Only after close() so no later write can invalidate the batch_state digest
     # the guardian validates before releasing the lock.
     if a.phase=='stage-a' and not cfg.get('dryrun'): _write_lease_completion(runner)

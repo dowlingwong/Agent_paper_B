@@ -106,7 +106,7 @@ def _copy_audit_node(source: Path, destination: Path, files: dict[str, str], edi
             handle.write(text)
 
 
-def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, *, preserve_node_outputs: bool = False) -> list[dict]:
+def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, *, preserve_node_outputs: bool = False, stop_on_invalid: bool = False) -> list[dict]:
     """Run one configuration at the given joint seeds (subprocess-safe)."""
     from r1.harness import import_harness
     harness = import_harness()
@@ -138,6 +138,11 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, *, 
                     "metric": res.parsed_metrics.get(spec.metric_name) if res.success else None,
                     "changed_files": bool(res.changed_files),
                     "wall_seconds": round(time.perf_counter() - t0, 4)})
+        if stop_on_invalid:
+            import math
+            metric = out[-1]['metric']
+            if not out[-1]['success'] or isinstance(metric, bool) or not isinstance(metric, (int, float)) or not math.isfinite(metric):
+                raise RuntimeError(f'STOP: invalid B1 audit result at seed {s}')
     return out
 
 

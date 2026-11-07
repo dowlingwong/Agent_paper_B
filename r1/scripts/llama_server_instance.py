@@ -246,6 +246,7 @@ class LlamaServerInstance:
         self.record_path = self.batch / f'llama_server_{self.port}{suffix}.json'
         self.log_path = self.batch / f'llama_server_{self.port}{suffix}.log'
         self.record: dict = {}
+        self.b1_record_identity = None
 
     @property
     def url(self) -> str:
@@ -274,7 +275,12 @@ class LlamaServerInstance:
         return env, sorted(removed)
 
     def _save(self) -> None:
-        self.record_path.write_text(json.dumps(self.record, indent=2) + '\n')
+        if getattr(self, 'b1_preserve_records', False):
+            from r1.exam.b1_state_preserve import publish_server_record
+            self.b1_record_identity = publish_server_record(
+                self.record_path, self.record, self.b1_record_identity)
+        else:
+            self.record_path.write_text(json.dumps(self.record, indent=2) + '\n')
 
     def health(self, timeout: float = 2.0) -> dict | None:
         """``/health`` body when the server is ready (HTTP 200), else None (down, or 503 while loading)."""
