@@ -129,7 +129,9 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, *, 
     if preserve_node_outputs:
         from r1.exam.b1_worker_artifact_guard import GuardedTrialPath
 
-        class B1AuditWorker(LocalWorker):
+        from r1.exam.b1_openml_cache_guard import B1OpenMLWorkerMixin
+
+        class B1AuditWorker(B1OpenMLWorkerMixin, LocalWorker):
             def _resolve_artifact_dir(self, trial_label):
                 return GuardedTrialPath(super()._resolve_artifact_dir(trial_label))
 

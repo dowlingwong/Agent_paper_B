@@ -11,6 +11,7 @@ import ast
 import math
 
 from autoresearch.worker.local_worker import LocalWorker, _parse_change_directive
+from r1.exam.b1_openml_cache_guard import B1OpenMLWorkerMixin
 
 _NO_EDIT = 'Run the restored configuration unchanged; make no edit.'
 
@@ -56,7 +57,7 @@ def verify_proposal(proposal, node_spec):
             raise B1ProposalIntegrityStop('STOP: B1 Python value is not a finite numeric literal')
 
 
-class B1IntegrityWorker(LocalWorker):
+class B1IntegrityWorker(B1OpenMLWorkerMixin, LocalWorker):
     """Run the pinned worker after integrity checking, with an I/O overlay."""
     def _resolve_artifact_dir(self, trial_label):
         from r1.exam.b1_worker_artifact_guard import GuardedTrialPath
