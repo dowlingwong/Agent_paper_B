@@ -1,0 +1,10 @@
+test_changed_completed_root_is_refused_before_copy_lock_creation (r1.tests.stagea_recovery_memory.test_copied_checkpoint.CopiedCheckpointTest.test_changed_completed_root_is_refused_before_copy_lock_creation) ... ok
+test_copied_prior_lock_is_refused_without_replacement (r1.tests.stagea_recovery_memory.test_copied_checkpoint.CopiedCheckpointTest.test_copied_prior_lock_is_refused_without_replacement) ... ok
+test_copied_unrecorded_checkpoint_loads_and_skips_completed_root (r1.tests.stagea_recovery_memory.test_copied_checkpoint.CopiedCheckpointTest.test_copied_unrecorded_checkpoint_loads_and_skips_completed_root) ... ok
+test_stopped_checkpoint_is_refused_before_copy_lock_creation (r1.tests.stagea_recovery_memory.test_copied_checkpoint.CopiedCheckpointTest.test_stopped_checkpoint_is_refused_before_copy_lock_creation) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.039s
+
+OK
+MEMORY_TEST_RESULT tests_run=4 failures=0 errors=0 skipped=0
