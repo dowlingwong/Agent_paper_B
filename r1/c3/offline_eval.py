@@ -14,9 +14,10 @@ the audit seeds).
 Run price g (PLAN §10, "g (22 Oct)", option A): g is declared in units of the
 node's sigma_node. The primary value is ``G_PRIMARY`` = 0.1 sigma_node; the
 declared sensitivity values are ``G_SENSITIVITY`` = (0.05, 0.2) sigma_node. The
-default evaluation computes exactly these three values. The C3 gate is judged
-at the primary g only (``gate_verdict``); the sensitivity values are reported
-under ``sensitivity`` without any pass/fail field. g = 0 appears only inside
+default evaluation computes exactly these three values. The superseded
+per-node C3 gate is unavailable; ``gate_verdict`` reports no pass/fail until
+the independently reviewed D8 aggregate gate is implemented. Sensitivity
+values have no verdict. g = 0 appears only inside
 the theory checks (T4 Proposition 7 threshold gain), labelled as such; it is
 never a gate quantity. g is not tuned on any data.
 
@@ -53,11 +54,9 @@ Splits: ``instance`` = K-fold cross-fitting by instance seed (all nodes
 trained together; every instance is held out once); ``lono`` = leave one node
 out (reported, no gate verdict).
 
-C3 gate (PLAN §10, D18; C3_DESIGN §6), judged once, at g = G_PRIMARY, primary
-run accounting, ``instance`` split: per node, gain = 20 x mean per-proposal
-(r_A3 - r_A2) on held-out proposals; a node meets the criterion iff gain >=
-delta_n and the lower 95 % cluster-bootstrap bound (by instance) > 0; the gate
-passes iff >= 2 nodes meet it.
+C3 gate: PLAN §10 R1-BX-D8 supersedes the older per-node D18 criterion.
+The new aggregate criterion is not implemented here; this module must not
+publish the old criterion as a current B.7 verdict.
 
 Usage:
   python -m r1.c3.offline_eval --table DIR [--audits DIR/audits.jsonl] --out DIR/offline_eval.json
@@ -491,24 +490,13 @@ def evaluate(rows, mode="instance", k=3, g_values=G_EVAL, noise=None, arms=None)
 
 
 def gate_verdict(evaluation: dict) -> dict:
-    """The C3 gate verdict: g = G_PRIMARY, primary run accounting, the evaluation's split only.
+    """Do not apply the superseded D18 per-node gate as a B.7 verdict.
 
-    This is the only function that produces a gate verdict. A node meets the
-    criterion iff its per-20 gain A3 - A2 >= delta_n and the lower 95 % cluster-
-    bootstrap bound > 0; the gate passes iff >= GATE_MIN_NODES nodes meet it.
+    R1-BX-D8 requires a separately reviewed and preregistered aggregate gate.
+    No input is examined and no pass/fail is returned by this placeholder.
     """
-    key = str(G_PRIMARY)
-    if key not in evaluation["values"]:
-        raise ValueError(f"the primary g = {G_PRIMARY} sigma_node was not evaluated")
-    nodes = {}
-    for node, x in evaluation["values"][key]["A3_minus_A2"].items():
-        nodes[node] = {**x, "meets_node_criterion": bool(x["gain_per20"] >= x["delta_n"] and x["ci95"][0] > 0)}
-    n_meet = sum(v["meets_node_criterion"] for v in nodes.values())
-    return {"g_sigma_units": G_PRIMARY, "run_accounting": RUN_ACCOUNTING["primary"]["name"],
-            "split": evaluation["mode"], "rule": f"pass iff >= {GATE_MIN_NODES} nodes have gain_per20 (A3 - A2) "
-            ">= delta_n with lower 95 % instance-cluster bootstrap bound > 0 (PLAN §10, D18; C3_DESIGN §6)",
-            "nodes": nodes, "nodes_meeting_criterion": n_meet, "pass": bool(n_meet >= GATE_MIN_NODES),
-            "verdict": "pass" if n_meet >= GATE_MIN_NODES else "fail"}
+    return {"verdict": "NOT_AVAILABLE",
+            "reason": "STOP: R1-BX-D8 aggregate gate is not implemented and confirmed"}
 
 
 def sensitivity_view(evaluation: dict) -> dict:
@@ -582,11 +570,7 @@ def main(argv=None) -> int:
     out = Path(args.out) if args.out else Path(args.table) / "offline_eval.json"
     out.write_text(json.dumps(result, indent=1))
     gate = result["gate"]
-    print(json.dumps({"gate_verdict": gate["verdict"], "g_sigma_units": gate["g_sigma_units"],
-                      "split": gate["split"], "seed_split": result["seed_split"],
-                      "nodes": {n: {"gain_per20": round(x["gain_per20"], 5), "ci95": [round(c, 5) for c in x["ci95"]],
-                                    "delta_n": x["delta_n"], "meets": x["meets_node_criterion"]}
-                                for n, x in gate["nodes"].items()}}))
+    print(json.dumps({"gate_verdict": gate["verdict"], "reason": gate["reason"]}))
     return 0
 
 
