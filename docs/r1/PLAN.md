@@ -1052,6 +1052,21 @@ The author supplied the following instructions in `prompts/MAC_OVERNIGHT_PROMPT_
 
 The author-fixed Q2 procedure, its conditional fallback and all phase/host prerequisites are specified in the cited prompt §0.2–§0.5. The rule row is conditional on the anchor, final checkout and all reviewed gates; this row alone does not establish their satisfaction. `approved: true` and B1 launch remain prohibited until all prompt §0.3 launch conditions hold. The author did not authorize B2, X.7 or sweep 2 in this prompt.
 
+
+### 7 November 2026 (approximately 09:31 CET) — B1 note order and preservation (author)
+
+The author answered the two questions below in this conversation. Decision cells quote the author's replies verbatim; the question text is retained so each short answer has its exact scope.
+
+1. Asked whether, after the other prerequisites are ready, the agent may first commit an `approved: true` candidate note, then independently review that exact HEAD and perform the real author gate and host preflight, and launch only when every condition and the handover hold. The author replied: **"允许此顺序"**.
+2. Asked whether to retain the strict no-deletion rule despite the fixed harness pending-guard cleanup and test-owned temporary-file deletion, or allow a reviewed limited exception. The author replied: **"继续严格禁止，先修复"**.
+
+| ID | Author's decision |
+|---|---|
+| R1-EXAM-B1-NOTE-ORDER-07NOV | "允许此顺序" |
+| R1-EXAM-B1-NO-DELETION-07NOV | "继续严格禁止，先修复" |
+
+Recorder's scope note (not an additional author decision): the first reply clarifies and supersedes the note-setting order in the preceding 00:45–00:55 instruction; it does not waive the other prerequisites, the exact-HEAD independent review, actual gate, preflight or handover. The second reply grants no deletion exception and does not itself authorize changing the fixed harness pin. B2, X.7 and sweep 2 remain separately unauthorized. The earlier paragraph above is retained as the historical wording of the prior instruction.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
