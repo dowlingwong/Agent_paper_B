@@ -46,17 +46,34 @@ def fixture_metric(files, seed):
     return .5+(h%10000)/100000
 
 
+class DryrunFixturePreservationStop(SystemExit):
+    """Escape the pinned harness's Exception-to-invalid conversion."""
+
+
 class FixtureWorker:
     """Deterministic synthetic CPU fixture only; never a scientific measurement."""
     mode='EXAM_DRYRUN_fixture'
     def __init__(self, root, seed): self.node_root=Path(root);self.seed=seed
     def run_trial(self, proposal, node_spec, budget_index):
         time.sleep(.2)  # give the DRYRUN parent an observable kill point
-        files={p:(self.node_root/p).read_text() for p in node_spec.editable_paths}
+        try:
+            from r1.exam.b1_state_preserve import read_dryrun_fixture_text, publish_dryrun_fixture_text
+            current={p:read_dryrun_fixture_text(self.node_root,p) for p in node_spec.editable_paths}
+        except Exception as exc:
+            raise DryrunFixturePreservationStop('STOP: DRYRUN fixture read/preservation failed') from exc
+        files={p:item[0] for p,item in current.items()}
         edit=proposal.extra.get('structured_edit')
         if edit:
-            files=apply_edit(files,edit)
-            for p,text in files.items(): (self.node_root/p).write_text(text)
+            updated=apply_edit(files,edit)
+            if set(updated)!=set(current):
+                raise DryrunFixturePreservationStop('STOP: DRYRUN fixture edit changed editable paths')
+            try:
+                for p,text in updated.items():
+                    if text!=current[p][0]:
+                        publish_dryrun_fixture_text(self.node_root,p,text,current[p][1])
+            except Exception as exc:
+                raise DryrunFixturePreservationStop('STOP: DRYRUN fixture publication failed') from exc
+            files=updated
         return WorkerResult(self.mode,node_spec.editable_paths,True,{node_spec.metric_name:fixture_metric(files,self.seed)},
                             'DRYRUN.log','DRYRUN.diff','DRYRUN-before','DRYRUN-after')
 

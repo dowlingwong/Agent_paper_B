@@ -8,6 +8,7 @@ from __future__ import annotations
 import ctypes
 import errno
 import json
+import locale
 import os
 import re
 import stat
@@ -162,6 +163,43 @@ def publish_dryrun_server_record(path, record, expected_identity):
                           rename=_renameat_dryrun)
 
 
+def _dryrun_fixture_edit_path(root, relative):
+    """Resolve a registered synthetic editable without following an alias."""
+    root = Path(root)
+    if not isinstance(relative, str) or not relative or '\\' in relative:
+        raise RuntimeError('STOP: invalid DRYRUN fixture editable name')
+    rel = Path(relative)
+    if (rel.is_absolute() or any(p in ('', '.', '..', '_to_delete') for p in rel.parts)
+            or rel.as_posix() != relative or not root.is_absolute()
+            or root.resolve(strict=True) != root):
+        raise RuntimeError('STOP: unsafe DRYRUN fixture editable path')
+    path = root / rel
+    if path.parent.resolve(strict=True) != path.parent or not path.parent.is_relative_to(root):
+        raise RuntimeError('STOP: DRYRUN fixture editable parent aliases outside node')
+    return path
+
+
+def read_dryrun_fixture_text(root, relative):
+    """Read the same text as Path.read_text while binding the current inode."""
+    path = _dryrun_fixture_edit_path(root, relative)
+    identity = existing_identity(path)
+    if identity is None:
+        raise RuntimeError('STOP: DRYRUN fixture editable is missing')
+    text = path.read_text()
+    if existing_identity(path) != identity:
+        raise RuntimeError('STOP: DRYRUN fixture editable changed during read')
+    return text, identity
+
+
+def publish_dryrun_fixture_text(root, relative, text, expected_identity):
+    """Replace one synthetic editable only by retaining its old inode."""
+    if not isinstance(text, str) or expected_identity is None:
+        raise RuntimeError('STOP: invalid DRYRUN fixture editable content or identity')
+    path = _dryrun_fixture_edit_path(root, relative)
+    return _publish_named(path, text, expected_identity, 'fixture_text',
+                          rename=_renameat_dryrun)
+
+
 def _publish_named(path, state, expected_identity, kind, *, rename=None):
     """Atomically publish a narrowly named file under the cooperative B1 model.
 
@@ -174,11 +212,19 @@ def _publish_named(path, state, expected_identity, kind, *, rename=None):
                (kind == 'audit_cache' and path.name == 'audit_cache.json') or
                (kind == 'stage_a_result' and path.name == 'stage_a.json') or
                (kind == 'stage_a_table' and path.name == 'stage_a_table.json') or
+               (kind == 'fixture_text' and path.name not in ('', '.', '..', '_to_delete')) or
                (kind == 'server_record' and re.fullmatch(r'llama_server_[0-9]+(?:_r[0-9]+)?\.json', path.name)))
     if not allowed or not path.is_absolute():
         raise RuntimeError('STOP: invalid B1 snapshot location')
-    # The legacy server writer uses json.dumps' default allow_nan=True.
-    payload = (json.dumps(state, indent=2, allow_nan=(kind == 'server_record')) + '\n').encode()
+    # Path.write_text() uses the interpreter's locale/default text encoding;
+    # keep its DRYRUN fixture bytes rather than JSON-encoding Python source.
+    if kind == 'fixture_text':
+        if not isinstance(state, str):
+            raise RuntimeError('STOP: DRYRUN fixture editable must be text')
+        payload = state.encode(locale.getpreferredencoding(False))
+    else:
+        # The legacy server writer uses json.dumps' default allow_nan=True.
+        payload = (json.dumps(state, indent=2, allow_nan=(kind == 'server_record')) + '\n').encode()
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW
     parent_fd = os.open(path.parent, flags)
     archive_fd = None
@@ -205,7 +251,7 @@ def _publish_named(path, state, expected_identity, kind, *, rename=None):
         if (not stat.S_ISDIR(archive.st_mode) or archive.st_uid != os.getuid()
                 or archive.st_mode & 0o022 or archive.st_dev != parent.st_dev):
             raise RuntimeError('STOP: B1 state retirement directory is unsafe')
-        name = kind + '.' + uuid.uuid4().hex + '.json'
+        name = kind + '.' + uuid.uuid4().hex + ('.txt' if kind == 'fixture_text' else '.json')
         file_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW
         candidate_fd = os.open(name, file_flags, 0o600, dir_fd=archive_fd)
         pending = memoryview(payload)

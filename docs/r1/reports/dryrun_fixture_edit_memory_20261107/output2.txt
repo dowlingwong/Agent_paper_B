@@ -1,0 +1,14 @@
+test_changed_text_keeps_prior_inode_and_plain_text_bytes (r1.tests.stagea_recovery_memory.test_dryrun_fixture_edit.FixtureEditPublisherTests.test_changed_text_keeps_prior_inode_and_plain_text_bytes) ... ok
+test_identity_change_or_unsupported_rename_keeps_old (r1.tests.stagea_recovery_memory.test_dryrun_fixture_edit.FixtureEditPublisherTests.test_identity_change_or_unsupported_rename_keeps_old) ... ok
+test_invalid_or_alias_paths_refuse_before_write (r1.tests.stagea_recovery_memory.test_dryrun_fixture_edit.FixtureEditPublisherTests.test_invalid_or_alias_paths_refuse_before_write) ... ok
+test_read_checks_identity_and_does_not_create (r1.tests.stagea_recovery_memory.test_dryrun_fixture_edit.FixtureEditPublisherTests.test_read_checks_identity_and_does_not_create) ... ok
+test_changed_editable_set_stops_before_publication (r1.tests.stagea_recovery_memory.test_dryrun_fixture_edit.FixtureWorkerDispatchTests.test_changed_editable_set_stops_before_publication) ... ok
+test_read_and_publish_failures_escape_harness_exception_handler (r1.tests.stagea_recovery_memory.test_dryrun_fixture_edit.FixtureWorkerDispatchTests.test_read_and_publish_failures_escape_harness_exception_handler) ... ok
+test_worker_updates_only_changed_path_and_preserves_metrics (r1.tests.stagea_recovery_memory.test_dryrun_fixture_edit.FixtureWorkerDispatchTests.test_worker_updates_only_changed_path_and_preserves_metrics) ... ok
+test_preservation_import_failure_escapes_harness_exception_handler (r1.tests.stagea_recovery_memory.test_dryrun_fixture_import_failure.FixtureImportFailureTests.test_preservation_import_failure_escapes_harness_exception_handler) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.010s
+
+OK
+PURE_TEST_RESULT tests_run=8 failures=0 errors=0 skipped=0
