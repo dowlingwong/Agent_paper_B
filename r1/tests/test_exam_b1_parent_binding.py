@@ -128,6 +128,9 @@ def test_start_rejects_old_authority_before_resume_side_effects(tmp_path,monkeyp
         state['completed']['old']={'path':str(manifest),'sha256':runtime.digest_file(manifest),
                                    'post_check_sha256':runtime.digest_file(old/'post_check.json')}
     (tmp_path/'batch_state.json').write_text(json.dumps(state))
+    r.b1_config_head='a'*40;r.registry={}
+    monkeypatch.setattr(runtime,'require_committed_b1_config',lambda *a:'a'*40)
+    monkeypatch.setattr(runtime,'require_committed_b1_registry',lambda *a,**k:None)
     monkeypatch.setattr(runtime,'author_gate',lambda *a:'a'*40)
     monkeypatch.setattr(runtime,'verify_campaign',lambda *a:{'status':'COMPLETE'})
     with pytest.raises(PreparationStop,match='HEAD mismatch'): r.start('b1')

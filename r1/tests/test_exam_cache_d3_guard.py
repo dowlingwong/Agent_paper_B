@@ -60,6 +60,7 @@ def test_b2_cli_stops_before_config_and_runner(monkeypatch, tmp_path):
 def test_b1_cli_refuses_missing_active_note_before_runner(monkeypatch,tmp_path):
     from r1.scripts import exam_runner
     monkeypatch.setattr(exam_runner,'load_config',lambda *a,**k:{'authorizations':{'b1':'TODO_AUTHOR_NOTE'}})
+    monkeypatch.setattr(exam_runner,'require_committed_b1_config',lambda *a:'a'*40)
     monkeypatch.setattr(exam_runner,'ExamRunner',lambda *a,**k:pytest.fail('runner must not start'))
     with pytest.raises(PreparationStop,match='authorization note is unresolved'):
         exam_runner.main(['b1','--out',str(tmp_path/'never-created')])
@@ -77,6 +78,9 @@ def test_b1_unauthorized_start_stops_before_output(tmp_path,monkeypatch):
     from r1.exam import runtime
     runner=object.__new__(runtime.ExamRunner);runner.out=tmp_path/'never-created'
     runner.rule={'version':'x5_rule/v2'};runner.rule_sha='synthetic';runner.cfg={}
+    runner.b1_config_head='a'*40;runner.registry_path=None;runner.registry=None
+    monkeypatch.setattr(runtime,'require_committed_b1_config',lambda *a:'a'*40)
+    monkeypatch.setattr(runtime,'require_committed_b1_registry',lambda *a,**k:None)
     def refused(*args): raise runtime.PreparationStop('STOP: synthetic authorization refused')
     monkeypatch.setattr(runtime,'author_gate',refused)
     with pytest.raises(PreparationStop,match='authorization refused'): runner.start('b1')

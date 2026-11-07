@@ -25,12 +25,14 @@ def test_b1_entry_reports_original_before_state_save_failure(monkeypatch, capsys
            'stage_a_table_sha256': 'synthetic', 'nodes': ['synthetic'],
            'llm_call_cap': 1, 'anchor_duplicate_reference': 'synthetic'}
     monkeypatch.setattr(exam_runner, 'load_config', lambda *a, **k: cfg)
+    # Exercise STOP reporting after the separately tested committed-config gate.
+    monkeypatch.setattr(exam_runner, 'require_committed_b1_config', lambda *a: 'a'*40)
     monkeypatch.setattr(exam_runner, 'placeholders', lambda *a: False)
     monkeypatch.setattr('r1.exam.analyze.load_rule', lambda *a: ({}, None))
     monkeypatch.setattr(exam_runner, 'is_v2', lambda *a: False)
     monkeypatch.setattr(exam_runner, 'verify_anchor_reference', lambda *a: None)
     class FakeRunner:
-        def __init__(self, *args):
+        def __init__(self, *args, **kwargs):
             self.state = {}; self.lock = object(); self.closed = False
         def start(self, phase):
             raise RuntimeError('original preflight failure')
@@ -64,6 +66,8 @@ def test_b1_entry_with_broken_stderr_still_returns_failure(monkeypatch, has_lock
            'stage_a_table_sha256': 'synthetic', 'nodes': ['synthetic'],
            'llm_call_cap': 1, 'anchor_duplicate_reference': 'synthetic'}
     monkeypatch.setattr(exam_runner, 'load_config', lambda *a, **k: cfg)
+    # Exercise STOP reporting after the separately tested committed-config gate.
+    monkeypatch.setattr(exam_runner, 'require_committed_b1_config', lambda *a: 'a'*40)
     monkeypatch.setattr(exam_runner, 'placeholders', lambda *a: False)
     monkeypatch.setattr('r1.exam.analyze.load_rule', lambda *a: ({}, None))
     monkeypatch.setattr(exam_runner, 'is_v2', lambda *a: False)
@@ -74,7 +78,7 @@ def test_b1_entry_with_broken_stderr_still_returns_failure(monkeypatch, has_lock
         def flush(self):
             raise OSError('stderr unavailable')
     class FakeRunner:
-        def __init__(self, *args):
+        def __init__(self, *args, **kwargs):
             self.state = {}; self.lock = object() if has_lock else None
         def start(self, phase):
             raise RuntimeError('original preflight failure')
