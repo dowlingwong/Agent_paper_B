@@ -1,6 +1,6 @@
 # Mac suite fixture preservation, second unit — 7 November 2026
 
-AI-assisted (Codex). **Candidate for independent review; not permission to run the full suite.** Parent checkout is `a6bbd7a9` (first fixture preservation unit and independent review included). This test-only unit addresses three remaining explicit fixture cleanup sites in two files, without changing production code:
+AI-assisted (Codex). **Candidate for independent review; not permission to run the full suite.** Parent checkout is `a6bbd7a9` (first fixture preservation unit and independent review included). This test-only unit addresses several remaining explicit fixture cleanup calls in two files, without changing production code:
 
 * In the final-root counting test, `_sweep_tree(..., complete_only=True)` creates the same one root record and empty failure directory directly, instead of creating a truncated B record and a failure record and unlinking them. All work-root and interruption event fixtures, the gate call, and the count assertions remain as before.
 * The synthetic `/proc` helper refuses replacing a pre-existing symlink instead of unlinking it. The guardian wrong-descriptor case uses a distinct synthetic proc tree and leaves the valid original tree intact. The native-server missing, extra and wrong descriptor cases use three independent test-owned trees; each retains the original refusal assertion and its old test ID. No real `/proc` process is modified.
