@@ -69,7 +69,7 @@ def linear_quantile(sorted_values, probability):
 
 
 def source_block(text, start, end):
-    if text.count(start) != 1 or text.count(end) != 1:
+    if text.count(start) != 1 or end not in text.split(start,1)[1]:
         raise ReferenceUnavailable('duplicate-definition source markers changed')
     return text.split(start,1)[1].split(end,1)[0]
 
