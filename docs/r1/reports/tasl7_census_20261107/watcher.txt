@@ -1,0 +1,27 @@
+Sat Nov  7 12:15:05 AM UTC 2026
+TASL-7
+cf68843ea8dea38c22094ec86c3e864a3be7b79f3cbf144f224a1807993f8112  /home/dowling/r1_tracks/bin/trks-watch
+#!/usr/bin/env bash
+# run as: tmux new -d -s trks_watch /home/dowling/r1_tracks/bin/trks-watch
+R=/home/dowling/r1_tracks
+log() { echo "$(date -u +%FT%TZ) $*" >> "$R/logs/watch.log"; }
+MARKERS="$HOME/r1_locks/trackx_evidence.active $HOME/r1_locks/trackp_evidence.active $R/trks_drill.active"
+marker() { for f in $MARKERS; do if [ -e "$f" ]; then seen=$f; return 0; fi; done; return 1; }
+ours() { pgrep -u "$(id -u)" -f 'python -m r1\.tracks\.collect .*--stop-file' >/dev/null; }   # LLM collectors only
+log "watch started"
+while sleep 60; do
+  marker || continue
+  log "priority marker seen ($seen): pausing"
+  find "$R/out" -name manifest.json -print0 2>/dev/null | while IFS= read -r -d '' m; do touch "$(dirname "$m")/STOP"; done
+  t=0
+  while ours; do
+    sleep 30; t=$((t + 30))
+    if [ "$t" -ge 3600 ]; then log "FORCED: collectors still running after 1 h; stopping servers anyway"; break; fi
+  done
+  tmux kill-session -t trks_llm 2>/dev/null && log "servers stopped; lease released"
+  while marker; do sleep 60; done
+  log "marker gone: resume by hand (delete STOP files, start servers, re-run launch scripts)"
+done
+USER         PID    PPID     ELAPSED COMMAND
+dowling  1388760 1388759  7-13:07:25 bash
+session=trks_watch pane=%0 pid=1388760 command=bash
