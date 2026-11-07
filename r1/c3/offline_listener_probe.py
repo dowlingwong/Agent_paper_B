@@ -113,6 +113,9 @@ def observe(scenario, timeout_seconds=10):
                 events.append([{'fd': 'listener' if fd == listener else 'child_pidfd',
                                 'mask': mask, 'events': event_names(mask)} for fd, mask in terminal])
                 break
+            if any(fd == pidfd and mask & (select.POLLERR | select.POLLHUP | select.POLLNVAL)
+                   for fd, mask in ready):
+                raise RuntimeError('STOP: child pidfd reported an unexpected error or hangup')
             if listener_registered and any(fd == listener for fd, _ in ready):
                 # Level-triggered HUP/POLLIN can otherwise spin indefinitely
                 # while waiting for our child to exit; observe it again once
