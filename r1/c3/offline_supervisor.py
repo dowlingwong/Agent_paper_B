@@ -18,6 +18,7 @@ import time
 
 from r1.c3 import offline_bootstrap as boot
 from r1.c3 import offline_cgroup as groups
+from r1.c3 import offline_child_identity as identity
 from r1.c3 import offline_seccomp as seccomp
 
 
@@ -113,19 +114,27 @@ def supervise(spec,delegated,out,*,protected_roots,timeout_seconds=300,bootstrap
     log_fd=os.open(out/'bootstrap.log',open_flags,0o600)
     audit_fd=os.open(out/'supervisor.jsonl',open_flags,0o600)
     null_fd=os.open(os.devnull,os.O_RDONLY|os.O_CLOEXEC|os.O_NOFOLLOW)
-    parent=child=None;group=None;pidfd=listener=None;pid=None;waited=False
+    parent=child=None;group=None;pidfd=listener=None;pid=None;waited=False;prior_mask=None
     try:
         group=groups.PrivateCgroup.create(delegated)
         parent,child=socket.socketpair(socket.AF_UNIX,socket.SOCK_STREAM)
+        # Signals must stay blocked through assignment: an inherited handler
+        # could otherwise set SA_NOCLDWAIT between inspection and the numeric
+        # cgroup.procs write. The child restores the caller's mask before any
+        # bootstrap/workload action; the parent restores it after assignment.
+        prior_mask=signal.pthread_sigmask(signal.SIG_BLOCK,identity.blockable_signals())
+        identity.require_assignment_guard()
         supervisor_pid=os.getpid();pid=os.fork()
         if pid==0:
             try:
+                signal.pthread_sigmask(signal.SIG_SETMASK,prior_mask)
                 parent.close()
                 os.dup2(null_fd,0);os.dup2(log_fd,1);os.dup2(log_fd,2)
                 boot.bootstrap_child(spec,child.fileno(),supervisor_pid)
             finally:os._exit(125)
         child.close();child=None
         pidfd=group.add_own_child(pid)
+        signal.pthread_sigmask(signal.SIG_SETMASK,prior_mask);prior_mask=None
         _record(audit_fd,{'event':'group_bound','pid':pid,'cgroup':str(group.path)})
         parent.sendall(b'S');parent.settimeout(bootstrap_seconds)
         listener=seccomp.receive_listener(parent)
@@ -168,8 +177,14 @@ def supervise(spec,delegated,out,*,protected_roots,timeout_seconds=300,bootstrap
         except SupervisorStop as cleanup:raise cleanup from original
         raise
     finally:
+        restore_error=None
+        if prior_mask is not None:
+            try:signal.pthread_sigmask(signal.SIG_SETMASK,prior_mask)
+            except BaseException as exc:restore_error=exc
         for s in (parent,child):
             if s is not None:s.close()
         for fd in (listener,pidfd,null_fd,log_fd,audit_fd):
             if fd is not None:os.close(fd)
         if group is not None:group.close()
+        if restore_error is not None:
+            raise SupervisorStop('STOP: supervisor signal mask restoration failed') from restore_error

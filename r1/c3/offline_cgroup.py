@@ -13,6 +13,8 @@ import select
 import signal
 import uuid
 
+from r1.c3 import offline_child_identity as identity
+
 CGROUP2_SUPER_MAGIC=0x63677270
 
 
@@ -75,6 +77,7 @@ class PrivateCgroup:
         this call and must retain the returned pidfd through teardown. A held
         pidfd retains the process identity; failed verification is STOP.
         """
+        identity.require_assignment_guard()
         if type(pid) is not int or pid<=0: raise CgroupStop('STOP: invalid child pid')
         if (not all(hasattr(os,name) for name in ('pidfd_open','P_PIDFD','waitid','WEXITED','WNOHANG','WNOWAIT'))
                 or not hasattr(signal,'pidfd_send_signal')):
@@ -89,6 +92,10 @@ class PrivateCgroup:
             if exited is not None: raise CgroupStop('STOP: child already exited')
             poller=select.poll();poller.register(pidfd,select.POLLIN)
             if poller.poll(0): raise CgroupStop('STOP: child exited before cgroup assignment')
+            # Child remains waitable (including after death) until this
+            # single-threaded, signal-blocked supervisor explicitly reaps it;
+            # therefore its numeric PID cannot be recycled during the write.
+            identity.require_assignment_guard()
             data=f'{pid}\n'.encode('ascii')
             assignment_attempted=True
             if os.write(self.procs_fd,data)!=len(data): raise CgroupStop('STOP: cgroup assignment failed')

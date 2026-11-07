@@ -29,6 +29,7 @@ def test_create_and_kill_only_new_cgroup(tmp_path,monkeypatch):
 def test_membership_only_own_live_child_and_pidfd_retained(tmp_path,monkeypatch):
     group=cg.PrivateCgroup(tmp_path/'paper-b-m3-fixture',-1,11,12)
     records=[];closed=[]
+    monkeypatch.setattr(cg.identity,'require_assignment_guard',lambda:None)
     monkeypatch.setattr(os,'pidfd_open',lambda pid,flags:13,raising=False)
     monkeypatch.setattr(os,'P_PIDFD',3,raising=False)
     monkeypatch.setattr(os,'waitid',lambda *args:None,raising=False)
@@ -57,6 +58,7 @@ def test_membership_only_own_live_child_and_pidfd_retained(tmp_path,monkeypatch)
 def test_cgroup_refuses_mismatched_membership(tmp_path,monkeypatch):
     group=cg.PrivateCgroup(tmp_path/'paper-b-m3-fixture',-1,11,12)
     closed=[]
+    monkeypatch.setattr(cg.identity,'require_assignment_guard',lambda:None)
     monkeypatch.setattr(os,'pidfd_open',lambda pid,flags:13,raising=False)
     monkeypatch.setattr(os,'P_PIDFD',3,raising=False)
     monkeypatch.setattr(os,'waitid',lambda *args:None,raising=False)
@@ -72,3 +74,27 @@ def test_cgroup_refuses_mismatched_membership(tmp_path,monkeypatch):
     monkeypatch.setattr(cg.select,'poll',lambda:Poll())
     with pytest.raises(cg.CgroupStop,match='membership'):group.add_own_child(123)
     assert closed==[13]
+
+
+def test_assignment_rechecks_guard_immediately_before_numeric_pid_write(tmp_path,monkeypatch):
+    group=cg.PrivateCgroup(tmp_path/'paper-b-m3-fixture',-1,11,12)
+    calls=[]
+    def guard():
+        calls.append('guard')
+        if len(calls)==2:raise cg.identity.ChildIdentityStop('STOP: SIGCHLD changed')
+    monkeypatch.setattr(cg.identity,'require_assignment_guard',guard)
+    monkeypatch.setattr(os,'pidfd_open',lambda *a:13,raising=False)
+    monkeypatch.setattr(os,'P_PIDFD',3,raising=False)
+    monkeypatch.setattr(os,'waitid',lambda *a:None,raising=False)
+    monkeypatch.setattr(os,'WEXITED',4,raising=False)
+    monkeypatch.setattr(os,'WNOWAIT',0x1000000,raising=False)
+    monkeypatch.setattr(cg.signal,'pidfd_send_signal',lambda *a:pytest.fail('no assignment attempted'),raising=False)
+    monkeypatch.setattr(os,'write',lambda *a:pytest.fail('numeric PID must not be written'))
+    closed=[];monkeypatch.setattr(os,'close',lambda fd:closed.append(fd))
+    class Poll:
+        def register(self,*args):pass
+        def poll(self,*args):return []
+    monkeypatch.setattr(cg.select,'poll',lambda:Poll())
+    with pytest.raises(cg.identity.ChildIdentityStop,match='SIGCHLD changed'):
+        group.add_own_child(123)
+    assert calls==['guard','guard'] and closed==[13]

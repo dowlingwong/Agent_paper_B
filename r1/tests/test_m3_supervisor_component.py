@@ -60,10 +60,14 @@ def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monke
     # Entire child/cgroup/kernel behavior is simulated; no fork or sockets occur.
     monkeypatch.setattr(sup.platform,'system',lambda:'Linux')
     monkeypatch.setattr(sup.platform,'machine',lambda:'x86_64')
+    monkeypatch.setattr(sup.identity,'blockable_signals',lambda:{1,2})
+    monkeypatch.setattr(sup.identity,'require_assignment_guard',lambda:None)
     original_iterdir=Path.iterdir
     monkeypatch.setattr(Path,'iterdir',lambda p: iter([Path('/fake/thread')]) if str(p)=='/proc/self/task' else original_iterdir(p))
     protected=tmp_path/'protected';protected.mkdir()
     events=[]
+    monkeypatch.setattr(sup.signal,'pthread_sigmask',
+                        lambda action,mask: events.append(('mask',action,set(mask))) or {2})
     class Group:
         path=tmp_path/'group';kill_fd=91;events_fd=92
         def add_own_child(self,pid):events.append(('bound',pid));return 81
@@ -114,6 +118,8 @@ def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monke
         result=sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
         assert result['status']=='COMPLETE_UNQUALIFIED'
     assert events.index(('bound',55)) < events.index(('send',b'S'))
+    assert events.index(('mask',sup.signal.SIG_BLOCK,{1,2})) < events.index(('bound',55))
+    assert events.index(('bound',55)) < events.index(('mask',sup.signal.SIG_SETMASK,{2})) < events.index(('send',b'S'))
     assert events.index(('verified',80)) < events.index(('send',b'R'))
     assert ('empty',) in events
     assert all(flags==sup.os.WNOHANG for flags in waits)
@@ -141,6 +147,93 @@ def test_teardown_does_not_claim_reap_when_child_identity_is_lost(monkeypatch):
     with pytest.raises(sup.SupervisorStop,match='not a waitable child'):
         sup._kill_and_reap(Group(),55,81,False)
     assert events==['group','pidfd','empty']
+
+
+def test_signal_mask_restored_when_guard_rejects_before_fork(tmp_path,monkeypatch):
+    monkeypatch.setattr(sup.platform,'system',lambda:'Linux')
+    monkeypatch.setattr(sup.platform,'machine',lambda:'x86_64')
+    original=Path.iterdir
+    monkeypatch.setattr(Path,'iterdir',lambda p:iter([Path('/fake/thread')])
+                        if str(p)=='/proc/self/task' else original(p))
+    protected=tmp_path/'protected';protected.mkdir()
+    calls=[]
+    class Group:
+        def close(self):calls.append('group_closed')
+    class Channel:
+        def close(self):calls.append('channel_closed')
+    monkeypatch.setattr(sup.groups.PrivateCgroup,'create',lambda _:Group())
+    monkeypatch.setattr(sup.socket,'socketpair',lambda *a:(Channel(),Channel()))
+    monkeypatch.setattr(sup.identity,'blockable_signals',lambda:{1,2})
+    monkeypatch.setattr(sup.identity,'require_assignment_guard',
+                        lambda:(_ for _ in ()).throw(sup.identity.ChildIdentityStop('guard refused')))
+    monkeypatch.setattr(sup.signal,'pthread_sigmask',lambda op,mask:calls.append((op,set(mask))) or {2})
+    monkeypatch.setattr(sup.os,'fork',lambda:pytest.fail('guard must precede fork'))
+    monkeypatch.setattr(sup,'_kill_and_reap',lambda *a:calls.append('cleanup'))
+    with pytest.raises(sup.identity.ChildIdentityStop,match='guard refused'):
+        sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
+    assert calls.index((sup.signal.SIG_BLOCK,{1,2})) < calls.index('cleanup')
+    assert calls.index('cleanup') < calls.index((sup.signal.SIG_SETMASK,{2}))
+    assert 'group_closed' in calls
+
+
+def test_restore_failure_stops_before_bootstrap_ack_and_closes(tmp_path,monkeypatch):
+    monkeypatch.setattr(sup.platform,'system',lambda:'Linux')
+    monkeypatch.setattr(sup.platform,'machine',lambda:'x86_64')
+    original=Path.iterdir
+    monkeypatch.setattr(Path,'iterdir',lambda p:iter([Path('/fake/thread')])
+                        if str(p)=='/proc/self/task' else original(p))
+    protected=tmp_path/'protected';protected.mkdir();calls=[]
+    class Group:
+        def add_own_child(self,pid):calls.append('assigned');return 81
+        def close(self):calls.append('group_closed')
+    class Channel:
+        def close(self):calls.append('channel_closed')
+        def sendall(self,data):pytest.fail('no bootstrap acknowledgement on restore failure')
+    monkeypatch.setattr(sup.groups.PrivateCgroup,'create',lambda _:Group())
+    monkeypatch.setattr(sup.socket,'socketpair',lambda *a:(Channel(),Channel()))
+    monkeypatch.setattr(sup.identity,'blockable_signals',lambda:{1,2})
+    monkeypatch.setattr(sup.identity,'require_assignment_guard',lambda:None)
+    def mask(op,value):
+        calls.append((op,set(value)))
+        if op==sup.signal.SIG_SETMASK:raise OSError('fixture restore')
+        return {2}
+    monkeypatch.setattr(sup.signal,'pthread_sigmask',mask)
+    monkeypatch.setattr(sup.os,'fork',lambda:55)
+    monkeypatch.setattr(sup,'_kill_and_reap',lambda *a:calls.append('cleanup'))
+    real_close=os.close
+    monkeypatch.setattr(sup.os,'close',lambda fd:calls.append(('closed_fd',fd)) if fd==81 else real_close(fd))
+    with pytest.raises(sup.SupervisorStop,match='mask restoration failed'):
+        sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
+    assert 'assigned' in calls and 'cleanup' in calls and 'group_closed' in calls
+    assert ('closed_fd',81) in calls
+
+
+def test_mocked_child_restores_original_mask_before_bootstrap(tmp_path,monkeypatch):
+    monkeypatch.setattr(sup.platform,'system',lambda:'Linux')
+    monkeypatch.setattr(sup.platform,'machine',lambda:'x86_64')
+    original=Path.iterdir
+    monkeypatch.setattr(Path,'iterdir',lambda p:iter([Path('/fake/thread')])
+                        if str(p)=='/proc/self/task' else original(p))
+    protected=tmp_path/'protected';protected.mkdir();calls=[]
+    class Group:
+        def close(self):calls.append('group_closed')
+    class Channel:
+        def close(self):calls.append('channel_closed')
+        def fileno(self):return 17
+    monkeypatch.setattr(sup.groups.PrivateCgroup,'create',lambda _:Group())
+    monkeypatch.setattr(sup.socket,'socketpair',lambda *a:(Channel(),Channel()))
+    monkeypatch.setattr(sup.identity,'blockable_signals',lambda:{1,2})
+    monkeypatch.setattr(sup.identity,'require_assignment_guard',lambda:None)
+    monkeypatch.setattr(sup.signal,'pthread_sigmask',lambda op,mask:calls.append((op,set(mask))) or {2})
+    monkeypatch.setattr(sup.os,'fork',lambda:0)
+    monkeypatch.setattr(sup.os,'dup2',lambda *a:None)
+    monkeypatch.setattr(sup.boot,'bootstrap_child',lambda *a:calls.append('bootstrap'))
+    class FakeChildExit(BaseException):pass
+    monkeypatch.setattr(sup.os,'_exit',lambda _:(_ for _ in ()).throw(FakeChildExit()))
+    monkeypatch.setattr(sup,'_kill_and_reap',lambda *a:None)
+    with pytest.raises(FakeChildExit):
+        sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
+    assert calls.index((sup.signal.SIG_SETMASK,{2})) < calls.index('bootstrap')
 
 
 def test_pid1_rearms_death_guard_after_capability_drop_before_exec(tmp_path,monkeypatch):
