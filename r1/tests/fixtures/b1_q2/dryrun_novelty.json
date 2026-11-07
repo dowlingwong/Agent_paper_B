@@ -1,0 +1,42 @@
+{
+  "events": [
+    {
+      "campaign_id": "digits_mlp__s9001",
+      "event_id": "ac7c7349a4a84809",
+      "event_type": "edit_novelty",
+      "payload": {
+        "active_config_equals_incumbent": false,
+        "active_config_seen_before": false,
+        "active_config_sha256": "7198f7b3b4d237badb30ced3343d9f70288f32c237c51a2080de6eea59190b8a",
+        "config_equals_incumbent": false,
+        "config_seen_before": false,
+        "effective_config_sha256": "7198f7b3b4d237badb30ced3343d9f70288f32c237c51a2080de6eea59190b8a",
+        "metric_identical_to_incumbent": false
+      },
+      "timestamp": "2026-11-05T01:14:33Z",
+      "trial_id": "digits_mlp__s9001-trial-001"
+    },
+    {
+      "campaign_id": "digits_mlp__s9001",
+      "event_id": "efbfbf87d2e24b1d",
+      "event_type": "edit_novelty",
+      "payload": {
+        "active_config_equals_incumbent": false,
+        "active_config_seen_before": false,
+        "active_config_sha256": "e37c1fd5dd329d05cc96551a1fb3e3c84ca50845e438ff3d5d091c586ca3aa36",
+        "config_equals_incumbent": false,
+        "config_seen_before": false,
+        "effective_config_sha256": "e37c1fd5dd329d05cc96551a1fb3e3c84ca50845e438ff3d5d091c586ca3aa36",
+        "metric_identical_to_incumbent": false
+      },
+      "timestamp": "2026-11-05T01:14:33Z",
+      "trial_id": "digits_mlp__s9001-trial-002"
+    }
+  ],
+  "expected": {
+    "duplicates": 0,
+    "evaluated": 2
+  },
+  "label": "DRYRUN",
+  "source": "B1 v2 test_b1_v2_parent_to_child_synthetic_receipts"
+}
