@@ -6,6 +6,8 @@ no-preemption prerequisites before invoking it. Output is retained on failure.
 from __future__ import annotations
 
 import argparse
+import copy
+import math
 import fcntl
 import json
 import os
@@ -20,10 +22,30 @@ from r1.exam.guards import space_check
 from r1.exam.runtime import (B1_CONFIG_REL, REPO, EXAM_SERVER_ARGS, ExamRunner,
     author_gate, b1_harness_sources, gpu_sample, host_check, load_config,
     read_registry, require_committed_b1_config, require_committed_b1_registry,
-    template_repair_args, worker_environment)
+    template_repair_args, worker_environment, placeholders)
 from r1.scripts.exam_runner import stage_a_pass_set, verify_anchor_reference
+from r1.exam.observer import _authorized_candidate
 from r1.scripts import llama_server_instance as lsi
 from r1.scripts.llama_server_instance import LlamaServerInstance, gpu_compute_apps
+
+
+def resolve_stage_a_spec(spec, cfg, registry, eligible):
+    """Use B1's PASS-row footprint and independently apply its observer binding."""
+    result=copy.deepcopy(spec)
+    runtime=result.get('runtime') or {}
+    if placeholders(runtime.get('footprint_mib')):
+        accepted=eligible.get(result['id']) or {}
+        if (accepted.get('model_sha256')!=(result.get('quant_source') or {}).get('sha256') or
+                accepted.get('build')!=(cfg.get('server') or {}).get('build')):
+            raise RuntimeError('STOP: Stage A model/build mismatch')
+        runtime['footprint_mib']=(accepted.get('qualification') or {}).get('footprint_mib')
+    value=runtime.get('footprint_mib')
+    if type(value) not in (int,float) or not math.isfinite(value) or value<=0:
+        raise RuntimeError('STOP: Stage A footprint is not positive and finite')
+    result['runtime']=runtime
+    if not _authorized_candidate({'candidate':result},cfg,registry):
+        raise RuntimeError('STOP: Stage A footprint does not match authorized candidate')
+    return result
 
 
 def check_inputs(expected_head, out):
@@ -59,7 +81,7 @@ def check_inputs(expected_head, out):
         raise RuntimeError('STOP: Stage A approved model anchor unavailable')
     # Reuse the production constructor checks, including code and harness pins.
     runner=ExamRunner(cfg,out,b1_config_head=head)
-    spec=matches[0]
+    spec=resolve_stage_a_spec(matches[0],cfg,registry,eligible)
     # Match B1's eligible model selection and its declared always-on skip.
     validated=[]
     for item in rows:
@@ -69,8 +91,9 @@ def check_inputs(expected_head, out):
                 rule['thinking_mode']['always_on_in_b1']=='skip' and
                 not thinking_off_capable(item.get('thinking_policy'))):
             continue
-        template_repair_args(item)
-        runner.validate_spec(item)
+        resolved=resolve_stage_a_spec(item,cfg,registry,eligible)
+        template_repair_args(resolved)
+        runner.validate_spec(resolved)
         validated.append(item['id'])
     if spec['id'] not in validated:
         raise RuntimeError('STOP: model anchor was not validated')

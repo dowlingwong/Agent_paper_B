@@ -86,7 +86,7 @@ def test_precheck_binds_registry_path_and_gate_to_reviewed_head(tmp_path,monkeyp
     cfg={'registry':'r1/exam/registry.yaml','rule':'rule','rule_sha256':'b'*64,
          'nodes':['digits_mlp'],'harness_commit':'c'*40,'work_dir':str(tmp_path),
          'models_dir':str(tmp_path),'dryrun':False}
-    anchor={'id':'qwen25_coder_7b','role':'anchor','thinking_policy':{},'runtime':{}}
+    anchor={'id':'qwen25_coder_7b','role':'anchor','thinking_policy':{},'runtime':{'footprint_mib':1}}
     registry={'candidates':[anchor],'software_anchors':[]}
     monkeypatch.setattr(pre,'REPO',tmp_path)
     monkeypatch.setattr(pre,'load_config',lambda path:cfg)
@@ -222,3 +222,51 @@ def test_broken_stderr_does_not_skip_lease_close_or_mask_original(tmp_path,monke
         with pytest.raises(RuntimeError,match='original start failure'):
             pre.run('a'*40,tmp_path/'own')
     with lock.open('r+') as contender: fcntl.flock(contender,fcntl.LOCK_EX|fcntl.LOCK_NB)
+
+
+def footprint_fixture(tmp_path, *, model_sha='c'*64, build='build', footprint=1234):
+    import hashlib
+    import json
+    anchor={'id':'qwen25_coder_7b','role':'anchor','quant_source':{'sha256':'a'*64},
+            'runtime':{'footprint_mib':'TODO_VERIFY_ON_HOST'}}
+    candidate={'id':'candidate','role':'candidate','quant_source':{'sha256':'c'*64},
+               'runtime':{'footprint_mib':'TODO_VERIFY_ON_HOST'}}
+    registry={'candidates':[anchor,candidate],'software_anchors':[]}
+    first=tmp_path/'stagea.json'; amendment=tmp_path/'amendment.json'; acceptance=tmp_path/'acceptance.md'
+    first.write_text(json.dumps({'rows':[{'candidate':anchor['id'],'passed':True,'model_sha256':'a'*64,
+                                         'build':'build','qualification':{'footprint_mib':5678}}]}))
+    amendment.write_text(json.dumps({'label':'ENGINEERING_ONLY','rows':[{'candidate':'candidate','passed':True,
+                  'model_sha256':model_sha,'build':build,'qualification':{'footprint_mib':footprint}}]}))
+    digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+    acceptance.write_text(digest(first)+'\n'+digest(amendment)+'\n')
+    cfg={'stage_a_table':str(first),'stage_a_table_sha256':digest(first),
+         'stage_a_amendment_table':str(amendment),'stage_a_amendment_table_sha256':digest(amendment),
+         'stage_a_amendment_acceptance':str(acceptance),'stage_a_amendment_acceptance_sha256':digest(acceptance),
+         'server':{'build':'build'}}
+    eligible=pre.stage_a_pass_set(cfg,{'candidate'},v2=True)
+    return cfg,registry,eligible,anchor,candidate,first
+
+
+def test_anchor_and_amendment_candidate_use_real_sha_bound_rows(tmp_path):
+    cfg,registry,eligible,anchor,candidate,_=footprint_fixture(tmp_path)
+    assert pre.resolve_stage_a_spec(anchor,cfg,registry,eligible)['runtime']['footprint_mib']==5678
+    assert pre.resolve_stage_a_spec(candidate,cfg,registry,eligible)['runtime']['footprint_mib']==1234
+    assert anchor['runtime']['footprint_mib']=='TODO_VERIFY_ON_HOST'
+    assert candidate['runtime']['footprint_mib']=='TODO_VERIFY_ON_HOST'
+
+
+@pytest.mark.parametrize('changes',[
+    {'model_sha':'d'*64}, {'build':'wrong'}, {'footprint':0}, {'footprint':-1},
+    {'footprint':float('nan')}, {'footprint':True}, {'footprint':None},
+])
+def test_stagea_footprint_rejects_wrong_binding_and_invalid_value(tmp_path,changes):
+    cfg,registry,eligible,_,candidate,_=footprint_fixture(tmp_path,**changes)
+    with pytest.raises(RuntimeError,match='STOP: Stage A'):
+        pre.resolve_stage_a_spec(candidate,cfg,registry,eligible)
+
+
+def test_changed_table_stops_at_observer_recheck(tmp_path):
+    cfg,registry,eligible,anchor,_,first=footprint_fixture(tmp_path)
+    first.write_text('{"rows": []}')
+    with pytest.raises(RuntimeError,match='table digest mismatch'):
+        pre.resolve_stage_a_spec(anchor,cfg,registry,eligible)
