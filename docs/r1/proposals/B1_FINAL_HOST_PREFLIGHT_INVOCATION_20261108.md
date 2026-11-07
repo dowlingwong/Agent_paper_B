@@ -12,11 +12,14 @@
 
 ## Exact one-shot template
 
-The operator and independent reviewer must replace `REPLACE_WITH_FINAL_REVIEWED_40_HEX_HEAD` with the final accepted full SHA, verify the staged checkout and preflight script at that SHA, review all literal paths and choose unused run-specific suffixes, then review the completed command. The following is a **remote bash body**, not permission to run it now. It records separate gate and preflight exits/logs in an exclusively created directory; source and model inputs are never modified by this body. The corresponding SSH invocation and its local capture must also be independently reviewed and preserve SSH completion status; a dropped SSH connection does not establish completion.
+The operator and independent reviewer must replace `REPLACE_WITH_FINAL_REVIEWED_40_HEX_HEAD` with the final accepted full SHA, verify the staged checkout and preflight script at that SHA, review all literal paths and choose unused run-specific suffixes, then review the completed command. The following is a **remote bash body**, not permission to run it now. It records separate gate and preflight exits/logs in an exclusively created directory; source and model inputs are never modified by this body. The filled remote script, its SHA and the local SSH wrapper below must also be independently reviewed; a dropped SSH connection does not establish completion.
 
 ```bash
 set -eu
 umask 077
+unset PYTHONPATH PYTHONHOME PYTHONSTARTUP PYTHONUSERBASE
+unset GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS GIT_CONFIG_GLOBAL GIT_CONFIG_SYSTEM
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null PYTHONNOUSERSITE=1
 HEAD=REPLACE_WITH_FINAL_REVIEWED_40_HEX_HEAD
 case "$HEAD" in *[!0-9a-f]*|'') exit 1;; esac
 [ "${#HEAD}" -eq 40 ] || exit 1
@@ -38,7 +41,7 @@ set -C
 export EXPECTED_HEAD="$HEAD" AR_HARNESS_ROOT="$HARNESS"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX="$CACHE" GIT_OPTIONAL_LOCKS=0
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
-export PATH="/home/dowling/exam-x/work/venv/bin:$PATH"
+export PATH=/home/dowling/exam-x/work/venv/bin:/usr/local/bin:/usr/bin:/bin
 cd "$PAPER"
 if "$PY" -B - > "$CAP/gate.log" 2>&1 <<'PY'
 import os, sys
@@ -72,3 +75,20 @@ exit "$probe_rc"
 ```
 
 PASS needs both exit records 0, the exact `GATE_PASS` HEAD and rule, output of the existing native preflight including held-lock contention refusal, live inherited server descriptor, correct model/offload checks, and `PREFLIGHT_PASS`; independently verify the owned server has exited and its lease is released. Missing logs/exit records, an unavailable dependency, path collision, current occupancy, incomplete cleanup or inconsistent HEAD is STOP, never a retry. This template does not itself establish final scientific readiness or launch authority.
+
+After filling the remote script into a new local file with exclusive creation and obtaining an independent review of its exact SHA and bindings, this is the proposed local transport and capture (replace both placeholders with the reviewed file and full hash). A failed or incomplete session is STOP, and both local and remote partial scenes must be preserved. The local capture directory is fresh; no output file is reused.
+
+```bash
+set -u
+umask 077
+REMOTE_SCRIPT=/absolute/path/to/uniquely-created-reviewed-remote-script.sh
+EXPECTED_SCRIPT_SHA=REPLACE_WITH_REVIEWED_64_HEX_SHA256
+[ "$(shasum -a 256 "$REMOTE_SCRIPT" | awk '{print $1}')" = "$EXPECTED_SCRIPT_SHA" ] || exit 1
+OUT=$(mktemp -d /private/tmp/paper-b-final-host-preflight-capture-20261108.XXXXXXXX) || exit 1
+set -C
+ssh -o BatchMode=yes -o ConnectTimeout=12 tasl7 'bash -s' < "$REMOTE_SCRIPT" > "$OUT/ssh.log" 2>&1
+rc=$?
+printf '%s\n' "$rc" > "$OUT/ssh.exit"
+shasum -a 256 "$REMOTE_SCRIPT" "$OUT/ssh.log" "$OUT/ssh.exit"
+printf 'Private capture=%s; SSH exit=%s\n' "$OUT" "$rc"
+```
