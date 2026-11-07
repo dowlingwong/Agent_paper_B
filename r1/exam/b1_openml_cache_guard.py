@@ -5,6 +5,7 @@ from pathlib import Path
 import runpy
 import shlex
 import sys
+from urllib.parse import urlparse
 
 MARKER = 'B1_OPENML_CACHE_FAILURE_STOP_20261107'
 EXIT = 86
@@ -34,6 +35,15 @@ def install(cache_root):
     from sklearn.datasets import _openml
     _openml._retry_with_clean_cache = _one_attempt
     _openml._retry_on_network_error = _one_attempt
+    open_url = _openml._open_openml_url
+    def cached_only(url, data_home, *args, **kwargs):
+        if data_home is None:
+            raise CacheStop('OpenML cache path unavailable')
+        local = Path(_openml._get_local_path(urlparse(url).path.lstrip('/'), data_home))
+        if not local.is_file():
+            raise CacheStop('OpenML cache file missing')
+        return open_url(url, data_home, *args, **kwargs)
+    _openml._open_openml_url = cached_only
     cache_root = Path(cache_root).resolve()
     def protect(original):
         def checked(path, *args, **kwargs):
@@ -65,7 +75,10 @@ class B1OpenMLWorkerMixin:
 
 def main():
     try:
-        install(Path.cwd() / 'data_cache')
+        try:
+            install(Path.cwd() / 'data_cache')
+        except Exception as exc:
+            raise CacheStop('OpenML guard initialization failed') from exc
         sys.argv = ['train.py', '--config', 'config.yaml']
         sys.path.insert(0, str(Path.cwd()))
         runpy.run_path('train.py', run_name='__main__')
