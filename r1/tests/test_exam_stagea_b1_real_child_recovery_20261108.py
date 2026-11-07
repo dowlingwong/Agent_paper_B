@@ -41,21 +41,15 @@ def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
 
     This deliberately does not exercise the lease, cold-cache identity, native
     server, or independent qualification. A real Stage A worker subprocess is
-    entered with explicitly substituted transport, identity, and telemetry. Those remain site
-    checks and are not represented by the resulting DRYRUN fixture.
+    entered via actual ExamRunner.run_job with substituted lease, recorder journals,
+    identity, and telemetry and a real localhost fake server. Those remain site checks and are not represented by the resulting DRYRUN fixture.
     """
-    from r1.exam import cache_runtime, stage_a
+    from r1.exam import cache_runtime, stage_a, runtime
     from r1.scripts import exam_runner
-    from r1.scripts.c3_fake_ollama import proposal_for
-    from r1.exam.campaign import write_json
-    from autoresearch.llm.providers import manager_response_format
-
     monkeypatch.setattr(stage_a,'require_d3_evidence',lambda:None)
     monkeypatch.setattr(cache_runtime,'reject_unverified_lease',lambda:None)
     monkeypatch.setattr(cache_runtime,'capture_parent_identity',lambda *a,**k:{'scope':'SYNTHETIC'})
     monkeypatch.setattr(cache_runtime,'reject_unverified_cold',lambda *a:None)
-    monkeypatch.setattr('r1.exam.cache_descriptive.true_replay',lambda *a,**k:{'synthetic':True})
-    prompts=stage_a.load_prompts(cfg['prompts'],cfg['prompts_sha256'],dryrun=True)
     registry=yaml.safe_load(Path(cfg['registry']).read_text())
     selected={'random_valid','scripted','qwen25_coder_7b','qwen38_27b','gemma4_31b'}
     specs=registry['software_anchors']+[x for x in registry['candidates'] if x['role']=='anchor']+\
@@ -63,50 +57,67 @@ def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
     specs=[copy.deepcopy(x) for x in specs if x['id'] in selected]
     for spec in specs:
         if spec.get('runtime'): spec['runtime']['footprint_mib']=1
-    class Recorder:
-        def completion(self,payload):
-            return {'tokens_evaluated':len(payload['prompt']),'tokens_predicted':1}
-        def chat(self,prompt,*,seed,**kwargs):
-            text=json.dumps(proposal_for(prompt,seed))
-            return {'choices':[{'message':{'content':text,'reasoning_content':'DRYRUN'}}],
-                    'usage':{'completion_tokens_details':{'reasoning_tokens':1}}}
-    def render(messages):
-        return ''.join(f"{m['role']}: {m['content']}\n" for m in messages)+'assistant: '
-    class NonGeneration:
-        def post(self,route,payload):
-            if route=='/tokenize': return {'tokens':[1]}
-            if route=='/apply-template': return {'prompt':render(payload['messages'])}
-            raise AssertionError(route)
-    class Runner:
-        def __init__(self):
-            self.cfg=cfg;self.out=root/'stage-a';self.state={'completed':{}};self.service=None
-        def spec_order(self,selected=None): return specs
-        def validate_spec(self,*args,**kwargs): return None
-        def save(self): return None
-        def server(self,spec,mode,ctx):
-            self.service=SimpleNamespace(port=1,ctx_size=ctx,record_path=root/'SYNTHETIC_SERVER.json')
-            return self.service
-        def stop_service(self): self.service=None
-        def run_job(self,job,module):
-            assert module=='r1.exam.stage_a'
-            directory=Path(job['out']);directory.mkdir(parents=True,exist_ok=True)
-            job_path=directory/'job.json'
-            with job_path.open('x') as f: json.dump(job,f)
-            env={**os.environ,'PYTHONPATH':str(ROOT),'PYTHONDONTWRITEBYTECODE':'1',
-                 'AR_HARNESS_ROOT':os.environ['AR_HARNESS_ROOT'],
-                 'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','MKL_NUM_THREADS':'1'}
-            with (directory/'synthetic_worker.log').open('x') as log:
-                child=subprocess.Popen([sys.executable,'-m','r1.tests.stagea_fabricated_worker_20261108',
-                                        '--job',str(job_path)],cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT)
-                try: rc=child.wait(timeout=90)
-                except subprocess.TimeoutExpired:
-                    # This is only the owned synthetic worker, not an experiment.
-                    child.terminate();child.wait(timeout=10)
-                    raise
-            assert rc==0,(directory/'synthetic_worker.log').read_text()
-            line=(directory/'synthetic_worker.log').read_text().splitlines()[0]
-            assert line == f'SYNTHETIC_STAGE_A_WORKER pid={child.pid} parent={os.getpid()}'
-    runner=Runner();exam_runner.stage_a(runner,list(selected))
+    # Stage A worker output is rewritten by its real orchestrator; retire each
+    # existing test-owned version before the ordinary write, preserving bytes.
+    original_write=exam_runner.write_json
+    versions=[0]
+    def preserve_then_write(path,data):
+        path=Path(path)
+        if path.exists():
+            archive=path.parent/'_to_delete'
+            archive.mkdir(mode=0o700,exist_ok=True)
+            versions[0]+=1
+            destination=archive/f'{path.name}.{versions[0]:06d}'
+            if destination.exists() or destination.is_symlink(): raise RuntimeError('STOP: synthetic version collision')
+            path.rename(destination)
+        return original_write(path,data)
+    monkeypatch.setattr(exam_runner,'write_json',preserve_then_write)
+    runner=runtime.ExamRunner(cfg,root/'stage-a')
+    runner.state={'phase':'stage-a','completed':{},'interruptions':[],'execution_label':'DRYRUN'}
+    monkeypatch.setattr(runner,'spec_order',lambda selected=None:specs)
+    monkeypatch.setattr(runner,'validate_spec',lambda *a,**k:None)
+    monkeypatch.setattr(runner,'save',lambda:None)
+    from r1.scripts.llama_server_instance import LlamaServerInstance
+    def fake_server(spec,mode,ctx):
+        inst=LlamaServerInstance(root/'stage-a'/'servers'/spec['id'],cfg['server']['binary'],
+            model_path=spec['runtime']['model_path'],alias=spec['id'],ctx_size=ctx,
+            gpu_uuid='GPU-DRYRUN',label='DRYRUN',start_timeout=10)
+        inst.b1_preserve_records=True
+        runner.service=inst
+        inst.start(build={'version_line':'version: 0 (DRYRUN)'},model_sha256=spec['quant_source']['sha256'])
+        return inst
+    def stop_fake_server():
+        if runner.service is not None:
+            runner.service.stop()
+            runner.service=None
+    monkeypatch.setattr(runner,'server',fake_server)
+    monkeypatch.setattr(runner,'stop_service',stop_fake_server)
+    monkeypatch.setenv('R1_FAKE_OLLAMA_ROOT',str(root))
+    read_fd,write_fd=os.pipe()
+    monkeypatch.setattr(cache_runtime,'verified_lease_fd',lambda:read_fd)
+    original_popen=subprocess.Popen
+    spawned=[]
+    def synthetic_stagea_popen(args,*a,**kw):
+        if len(args)>=3 and args[1:3]==['-m','r1.exam.stage_a']:
+            assert kw.get('pass_fds')==(read_fd,)
+            args=list(args);args[2]='r1.tests.stagea_fabricated_worker_20261108'
+            kw['env']={**kw['env'],'SYNTHETIC_LEASE_FD':str(read_fd)}
+            child=original_popen(args,*a,**kw);spawned.append(child.pid);return child
+        return original_popen(args,*a,**kw)
+    monkeypatch.setattr(runtime.subprocess,'Popen',synthetic_stagea_popen)
+    try:
+        exam_runner.stage_a(runner,list(selected))
+    finally:
+        os.close(read_fd);os.close(write_fd)
+    assert len(spawned)==3 and len(set(spawned))==3
+    logs=sorted((root/'stage-a').glob('*/stage-a/32768/runner.log'))
+    assert len(logs)==3
+    recorded=[]
+    for path in logs:
+        first=path.read_text().splitlines()[0]
+        assert 'SYNTHETIC_STAGE_A_WORKER pid=' in first and 'lease_fd_open=True' in first
+        recorded.append(int(first.split('pid=')[1].split()[0]))
+    assert sorted(recorded)==sorted(spawned)
     table=json.loads((runner.out/'stage_a_table.json').read_text())
     assert len(table['rows'])==5 and {x['candidate'] for x in table['rows']}==selected
     assert all(x['passed'] for x in table['rows'])
@@ -147,7 +158,7 @@ def test_stagea_real_worker_to_b1_owned_parent_crash_and_recovery(tmp_path,monke
          'PYTHONPATH':str(ROOT),'PYTHONDONTWRITEBYTECODE':'1','C3_FAKE_EXIT_IF_ORPHANED':'1'}
     env.pop('LLAMACPP_CACHE_PROMPT',None)
     out=root/'b1';selected=['random_valid','scripted','qwen25_coder_7b','qwen38_27b','gemma4_31b']
-    args=[sys.executable,'-m','r1.scripts.exam_runner','b1','--config',str(config_path),
+    args=[sys.executable,'-m','r1.tests.b1_synthetic_trace_runner_20261108','b1','--config',str(config_path),
           '--out',str(out)]+[arg for name in selected for arg in ('--candidate',name)]
     log=root/'SYNTHETIC_parent_first.log'
     with log.open('w') as output:

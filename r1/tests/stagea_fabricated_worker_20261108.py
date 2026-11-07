@@ -7,42 +7,47 @@ import json
 import os
 import sys
 from pathlib import Path
+from urllib.request import Request, urlopen
 
 from r1.exam import cache_descriptive, cache_runtime, cache_order, cache_proc, cache_false, cache_nongen, stage_a, runtime
 from r1.scripts import llama_server_instance
-from r1.scripts.c3_fake_ollama import proposal_for
 
 
 def render(messages):
     return ''.join(f"{m['role']}: {m['content']}\n" for m in messages)+'assistant: '
 
 
+def post(url, route, payload):
+    if not url.startswith('http://127.0.0.1:'): raise RuntimeError('synthetic localhost only')
+    request=Request(url+route, data=json.dumps(payload).encode(),
+                    headers={'Content-Type':'application/json'},method='POST')
+    with urlopen(request,timeout=10) as response: return json.load(response)
+
+
 class Instance:
     def __init__(self, _out, _binary, *, model_path, alias, ctx_size, port):
-        self.url='http://127.0.0.1:1'; self.alias=alias; self.ctx_size=ctx_size
+        self.url=f'http://127.0.0.1:{port}'; self.alias=alias; self.ctx_size=ctx_size
 
 
 class FalseRecorder:
-    def __init__(self, _url, _alias, *, census, identity, journal_path):
+    def __init__(self, url, alias, *, census, identity, journal_path):
+        self.url=url;self.alias=alias
         with Path(journal_path).open('x') as f: f.write('{}\n')
     def close(self): pass
-    def completion(self,payload):
-        return {'tokens_evaluated':len(payload['prompt']),'tokens_predicted':1}
+    def completion(self,payload): return post(self.url,'/completion',payload)
     def chat(self,prompt,*,seed,**kwargs):
-        return {'choices':[{'message':{'content':json.dumps(proposal_for(prompt,seed)),
-                                        'reasoning_content':'DRYRUN'}}],
-                'usage':{'completion_tokens_details':{'reasoning_tokens':1}}}
+        payload={'model':self.alias,'messages':[{'role':'user','content':prompt}],
+                 'seed':seed,'max_tokens':kwargs.get('max_tokens',4096)}
+        payload.update(kwargs.get('extra') or {})
+        return post(self.url,'/v1/chat/completions',payload)
 
 
 class NonGeneration:
-    def __init__(self, _url, *, census, identity, journal_path):
+    def __init__(self, url, *, census, identity, journal_path):
+        self.url=url
         with Path(journal_path).open('x') as f: f.write('{}\n')
     def close(self): pass
-    def post(self,route,payload):
-        if route=='/tokenize': return {'tokens':[1]}
-        if route=='/apply-template': return {'prompt':render(payload['messages'])}
-        raise AssertionError(route)
-
+    def post(self,route,payload): return post(self.url,route,payload)
 
 def fake_true_replay(_instance,_prompts,_schema,**kwargs):
     with Path(kwargs['journal_path']).open('x') as f: f.write('{}\n')
@@ -61,7 +66,9 @@ def main():
     cache_nongen.NonGenerationRecorder=NonGeneration
     runtime.gpu_sample=lambda cfg:{'free_mib':20000,'used_mib':1000}
     llama_server_instance.LlamaServerInstance=Instance
-    print(f'SYNTHETIC_STAGE_A_WORKER pid={os.getpid()} parent={os.getppid()}',flush=True)
+    lease_fd=int(os.environ['SYNTHETIC_LEASE_FD'])
+    os.fstat(lease_fd)
+    print(f'SYNTHETIC_STAGE_A_WORKER pid={os.getpid()} parent={os.getppid()} lease_fd_open=True',flush=True)
     stage_a.main(sys.argv[1:])
 
 
