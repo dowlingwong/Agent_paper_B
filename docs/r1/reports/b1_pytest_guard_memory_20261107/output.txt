@@ -1,0 +1,11 @@
+test_collection_closure_rejects_shadowed_definition (__main__.GuardCases.test_collection_closure_rejects_shadowed_definition) ... ok
+test_configure_requires_disabled_capture_no_basetemp_cache (__main__.GuardCases.test_configure_requires_disabled_capture_no_basetemp_cache) ... ok
+test_pinned_factory_refuses_direct_access (__main__.GuardCases.test_pinned_factory_refuses_direct_access) ... ok
+test_reject_blocked_and_shadowed_fixture (__main__.GuardCases.test_reject_blocked_and_shadowed_fixture) ... ok
+test_sessionfinish_refuses_active_factory (__main__.GuardCases.test_sessionfinish_refuses_active_factory) ... ok
+test_unpinned_factory_is_not_patched (__main__.GuardCases.test_unpinned_factory_is_not_patched) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.000s
+
+OK
