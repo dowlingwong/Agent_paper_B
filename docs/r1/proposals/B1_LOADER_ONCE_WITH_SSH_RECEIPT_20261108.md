@@ -58,7 +58,7 @@ if bash "$WRAP" "$CAP/loader.log" "$CAP/loader.rc" tasl7 "set -eu; unset GIT_DIR
 [ "$(cat "$CAP/loader.rc")" = 0 ] || exit 1
 grep -qx 'SSH_EXIT=0' "$CAP/loader.log" || exit 1
 grep -qx 'OFFLINE_LOADER_PASS' "$CAP/loader.log" || exit 1
-python3 -B - "$LOADER" "$CAP/loader.log" <<'PY' || exit 1
+python3 -B - "$LOADER" "$CAP/loader.log" "$FIRST" <<'PY' || exit 1
 import runpy,sys
 expected={(n,p):h for n,(_,_,fs) in runpy.run_path(sys.argv[1]).get('FILES').items() for p,h in fs.items()}
 rows={'BEFORE':{},'AFTER':{}}
@@ -68,6 +68,11 @@ for line in open(sys.argv[2],encoding='utf-8'):
   if len(parts)!=4 or (parts[1],parts[2]) in rows[parts[0]]: raise SystemExit('STOP: malformed/duplicate loader log')
   rows[parts[0]][(parts[1],parts[2])]=parts[3]
 if len(expected)!=8 or any(rows[k]!=expected for k in rows): raise SystemExit('STOP: repeated loader hashes differ')
+first=open(sys.argv[3],encoding='utf-8').read().splitlines()
+repeated=open(sys.argv[2],encoding='utf-8').read().splitlines()
+for prefix in ('PYTHON ', 'LOADED '):
+ if [x for x in first if x.startswith(prefix)] != [x for x in repeated if x.startswith(prefix)]:
+  raise SystemExit('STOP: interpreter, version or load result differs from first attempt')
 print('REPEAT_EIGHT_BEFORE_AFTER_MATCH')
 PY
 shasum -a 256 "$CAP/source.log" "$CAP/source.rc" "$CAP/loader.log" "$CAP/loader.rc"
