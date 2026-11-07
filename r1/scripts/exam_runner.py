@@ -431,7 +431,7 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
                     report_b1_freeze_failure(original,freeze_error)
             raise
         finally:
-            if runner.service and not (candidate_failed and phase=='b1' and not cfg.get('dryrun')):
+            if runner.service and not (candidate_failed and phase=='b1'):
                 runner.stop_service()
         audits=[r for root in root_results for r in root['audited_proposals']]
         diag={k:sum(r['diagnostics'].get(k,0) for r in root_results) for k in ('trials','evaluated','invalid','duplicates','noops','parse_failed','forecast_queries','forecast_query_failed')}
@@ -583,7 +583,7 @@ def main(argv=None):
             write_finalization(runner.out,runner.author_head)
             closed_normally=True
     except BaseException as exc:
-        preserve_running=a.phase=='stage-a' or (a.phase=='b1' and not cfg.get('dryrun'))
+        preserve_running=a.phase in ('stage-a','b1')
         if a.phase=='b1' and not cfg.get('dryrun') and runner.b1_containment is not None:
             try:
                 runner.b1_containment.freeze()

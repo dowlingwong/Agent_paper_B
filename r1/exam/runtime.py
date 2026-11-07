@@ -861,7 +861,7 @@ class ExamRunner:
                     disk_error.append(str(exc))
                     if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
                         self.b1_containment.freeze()
-                    elif self.state.get('phase')!='stage-a' and inst.process is not None and inst.record.get('pgid'): inst.stop()
+                    elif self.state.get('phase') not in ('stage-a','b1') and inst.process is not None and inst.record.get('pgid'): inst.stop()
                     break
         monitor=threading.Thread(target=watch_loading,daemon=True);monitor.start()
         try:
@@ -870,7 +870,7 @@ class ExamRunner:
             contained = self.state.get('phase')=='b1' and not self.cfg.get('dryrun')
             extra = ({'b1_containment':self.b1_containment, 'b1_cancelled':lambda: bool(disk_error)} if contained else {})
             try: inst.start(build=build,model_sha256=spec['quant_source']['sha256'],
-                            preserve_on_failure=self.state.get('phase')=='stage-a' or contained,lease_fd=lease_fd,
+                            preserve_on_failure=self.state.get('phase') in ('stage-a','b1'),lease_fd=lease_fd,
                             b1_lease_fd=self.b1_lease_fd if self.state.get('phase')=='b1' and not self.cfg.get('dryrun') else None,
                             **extra)
             except LeaseStop as exc:
@@ -1004,7 +1004,7 @@ class ExamRunner:
                     self.b1_containment.freeze()
                 except Exception as freeze_error:
                     report_b1_freeze_failure(exc,freeze_error)
-            elif self.child.poll() is None and self.state.get('phase')!='stage-a':
+            elif self.child.poll() is None and self.state.get('phase') not in ('stage-a','b1'):
                 stop_tree(self.child.pid);self.child.wait(timeout=30)
             self.state['interruptions'].append({'path':str(path),'error':str(exc),'returncode':self.child.returncode,'killed':killed,'time':time.time()})
             if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
