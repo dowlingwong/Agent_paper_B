@@ -1020,6 +1020,11 @@ class ExamRunner:
             self.b1_containment.require_finish_ready()
         if getattr(self,'b1_containment',None) is not None and not defer_b1_lease:
             self.b1_containment.finish()
+        if self.lock and self.cfg.get('dryrun'):
+            # Keep the test-owned lock in place. An existing lock must not be
+            # removed merely because a synthetic runner closes: it remains
+            # evidence, and an attempted same-process restart must refuse it.
+            self.lock=None
         if self.lock: self.lock.unlink(missing_ok=True);self.lock=None
         if getattr(self,'b1_lease_fd',None) is not None and not defer_b1_lease:
             os.close(self.b1_lease_fd);self.b1_lease_fd=None
