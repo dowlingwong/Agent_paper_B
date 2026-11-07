@@ -21,7 +21,7 @@ On Mac with scikit-learn 1.8.0, separate fresh copies of these caches were used 
 
 ## Read-only site locate
 
-After fresh applicable STATUS/lock/process and no-preemption checks, the authorized operator can run the following **once**, following independent command review. It inspects only four explicitly named own-tree candidate roots: the known historical harness, the existing source-only engineering extraction, and two possible Track S/P sibling harness locations. The latter are search candidates, not claims that those checkouts exist. It enumerates only the two selected node-local cache directories and their exact L8 fallback counterparts. It prints Git HEAD/status/object availability with optional locking disabled and hashes cache files; it performs no `git checkout`, fetch, model load, GPU work, host write or deletion. Cache paths may contain operational metadata; retain the full capture privately and publish only reviewed facts. Error or missing access is NOT CHECKABLE, not a global absence claim.
+After fresh applicable STATUS/lock/process and no-preemption checks, the authorized operator can run the following **once**, following independent command review. It inspects only four explicitly named own-tree candidate roots: the known historical harness, the existing source-only engineering extraction, and two possible Track S/P sibling harness locations. The latter are search candidates, not claims that those checkouts exist. It enumerates only the two selected node-local cache directories and their exact L8 fallback counterparts; each relative path and type is recorded in the private capture, and a traversal error is explicitly NOT_CHECKABLE. It prints Git HEAD/status/object availability with optional locking disabled and hashes cache files; it performs no `git checkout`, fetch, model load, GPU work, host write or deletion. Cache paths may contain operational metadata; retain the full capture privately and publish only reviewed facts. Error or missing access is NOT CHECKABLE, not a global absence claim.
 
 ```bash
 set -u
@@ -45,6 +45,8 @@ for root in "$HOME/exam-x/work/autoresearch_harness" \
 import hashlib, os, stat, sys
 from pathlib import Path
 root=Path(sys.argv[1])
+def walk_error(exc):
+    raise exc
 for node,dataid,arff in [('openml_credit_approval',29,'credit-approval.arff.gz'),('openml_ionosphere',59,'ionosphere.arff.gz')]:
     relative=[f'openml/openml.org/api/v1/json/data/{dataid}.gz',
               f'openml/openml.org/api/v1/json/data/features/{dataid}.gz',
@@ -60,13 +62,15 @@ for node,dataid,arff in [('openml_credit_approval',29,'credit-approval.arff.gz')
                 if cur.is_symlink(): raise RuntimeError('symlink in cache path')
             if not cache.is_dir(): print('MISSING_OR_NOT_DIRECTORY'); continue
             entries=[]
-            for parent,dirs,files in os.walk(cache,followlinks=False):
+            for parent,dirs,files in os.walk(cache,followlinks=False,onerror=walk_error):
                 for name in dirs+files:
                     p=Path(parent)/name
                     if p.is_symlink(): raise RuntimeError('symlink in cache tree')
                     if not (p.is_dir() or p.is_file()): raise RuntimeError('special entry in cache tree')
-                    entries.append(p.relative_to(cache).as_posix())
+                    kind='directory' if p.is_dir() else 'file'
+                    entries.append((p.relative_to(cache).as_posix(),kind))
             print('ENTRY_COUNT',len(entries))
+            for rel,kind in sorted(entries): print('ENTRY',kind,rel)
             for rel in relative:
                 p=cache/rel
                 if not p.is_file() or p.is_symlink(): print('MISSING_OR_UNSAFE',rel);continue
