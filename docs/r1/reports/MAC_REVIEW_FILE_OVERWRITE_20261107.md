@@ -1,0 +1,5 @@
+# Review-file overwrite — 7 November 2026
+
+AI-assisted (Codex). A scientific reviewer reported that, while correcting a call-site line reference, they used `Path.write_text` on their newly created review file. That was an in-place overwrite, contrary to the author's strict preservation instruction. The reviewer reports no source-code or experimental-data impact. The prior full review is retained in the isolated harness review repository at commit `924d797`; the corrected version is retained at `7d0cb9f`, both in `/private/tmp/paper-b-harness-scientific-review-20261107`. This record relies on the reviewer's direct report; the coordinator did not independently observe the write. No deletion or cleanup of either version is authorized.
+
+The reviewer concluded the harness candidate was not yet accepted as a scientifically qualified replacement pin. Their review treats Q2's harness-pin difference as disclosed rather than a reason to change the fixed reference interval. Further work must use new files or retain the old file by reviewed non-overwriting retirement before writing corrections; independent review of this record is required.
