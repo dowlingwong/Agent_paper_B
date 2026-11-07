@@ -12,9 +12,12 @@ Run from the checkout carrying the exact reviewed script, using a new local outp
 output=/private/tmp/tasl7-capability-20261107-UNIQUE.txt
 if test -e "$output" || test -L "$output"; then printf 'STOP: capture path exists\n' >&2; exit 1; fi
 set -C
-ssh -T -o BatchMode=yes -o ConnectTimeout=12 tasl7 'bash -s' \
-  < docs/r1/proposals/tasl7_capability_probe_20261107/probe.sh > "$output" 2>&1
-result=$?
+if ssh -T -o BatchMode=yes -o ConnectTimeout=12 tasl7 'bash -s' \
+  < docs/r1/proposals/tasl7_capability_probe_20261107/probe.sh > "$output" 2>&1; then
+  result=0
+else
+  result=$?
+fi
 shasum -a 256 "$output"
 exit "$result"
 ```
