@@ -3,8 +3,6 @@ from __future__ import annotations
 
 import copy
 import shutil
-import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -74,17 +72,15 @@ def test_prompt_lists_only_allowed_actions():
     assert "verify:" in p and "skip:" not in p
 
 
-def test_side_queries_spend_the_campaign_llm_cap():
+def test_side_queries_spend_the_campaign_llm_cap(tmp_path):
     spec = load_registered_node("lr_synthetic", repo_root=HARNESS)
     calls = []
     ctl = LLMSelfController(lambda p: calls.append(1) or '{"action": "continue"}')
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = Path(tmp)
-        shutil.copytree(HARNESS / "nodes" / "lr_synthetic", tmp / "node")
-        run_real_campaign(node_spec=spec, campaign_id="l12", budget=6, manager_mode="baseline_manager",
-                          memory_mode="none", records_path=tmp / "t.jsonl",
-                          worker=LocalWorker(node_root=tmp / "node", artifact_dir=tmp / "art"),
-                          controller=ctl, compute_budget=ComputeBudget(max_llm_calls=4))
-        n_trials = len(TrialAppendStore(tmp / "t.jsonl").read_all())
+    shutil.copytree(HARNESS / "nodes" / "lr_synthetic", tmp_path / "node")
+    run_real_campaign(node_spec=spec, campaign_id="l12", budget=6, manager_mode="baseline_manager",
+                      memory_mode="none", records_path=tmp_path / "t.jsonl",
+                      worker=LocalWorker(node_root=tmp_path / "node", artifact_dir=tmp_path / "art"),
+                      controller=ctl, compute_budget=ComputeBudget(max_llm_calls=4))
+    n_trials = len(TrialAppendStore(tmp_path / "t.jsonl").read_all())
     assert len(calls) <= 4
     assert n_trials < 6

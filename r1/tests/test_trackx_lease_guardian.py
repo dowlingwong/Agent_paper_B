@@ -510,9 +510,10 @@ def test_completion_rejects_record_path_mismatching_its_digest(tmp_path):
 # -- synthetic subprocess lifecycle -------------------------------------------
 
 def launch(tmp_path, scenario, *, stdout=subprocess.DEVNULL, expected_runner=None,
-           manifest_tamper=None):
+           manifest_tamper=None, create_lock=True):
     lock = tmp_path / 'gpu0.lock'
-    lock.touch(mode=0o600)
+    if create_lock:
+        lock.touch(mode=0o600)
     evidence = tmp_path / 'evidence'
     runner = runner_script(tmp_path)
     scenario_path = tmp_path / 'scenario.json'
@@ -789,8 +790,7 @@ def test_existing_evidence_directory_or_manifest_tamper_is_refused_before_lock(t
 
 
 def test_missing_lock_is_refused_without_creating_it(tmp_path):
-    context = launch(tmp_path, {'action': 'exit_zero'})
-    context['lock'].unlink()
+    context = launch(tmp_path, {'action': 'exit_zero'}, create_lock=False)
     try:
         assert context['process'].wait(timeout=20) == 2
         assert 'cannot be acquired' in context['stderr'].read().decode()
