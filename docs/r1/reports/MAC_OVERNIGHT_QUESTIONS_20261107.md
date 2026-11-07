@@ -2,15 +2,25 @@
 
 AI-assisted (Codex). This is an open list, not author decisions or an authorization. The author is asleep; do not wait for an answer. The user's 7 November prompt records Q1, the fixed Q2 rule, conditional B1 approval and scoped host authority in PLAN §10; those are not re-asked here. The earlier independent question list remains `MAC_OVERNIGHT_QUESTIONS_20261105.md`, except where the 7 November decisions resolve its Q0–Q2.
 
-## M4 ordering versus non-shared parallel work
+## B1 approved-note ordering
 
-**Context.** The 7 November prompt asks for M4's non-shared pieces in parallel but says not to start them if they conflict with `MAC_LOCAL_RUNBOOK_20261104.md` §M4. That runbook says M4 starts after M3 is accepted and rebased on its accepted commit; M3 remains not accepted. The non-shared pieces would not edit `r1/scripts/c3_label_sweep.py`, but that does not by itself remove the ordering rule.
+**Context.** The 7 November prompt §0.3 says to set `approved: true` only when every listed condition holds. Condition 3 already requires a committed, independently reviewed HEAD containing the approved note, and condition 5 requires the real author gate to pass on that HEAD. The gate itself refuses a note unless `approved` is true. Thus, read literally, those conditions cannot all precede setting the field. A synthetic gate or precomputed hash does not satisfy the stated committed-HEAD requirements.
 
-**Options.** (A) Keep M4 on hold until M3 is accepted. (B) Explicitly amend the ordering to permit the named non-shared M4 pieces, retaining independent reviews and all phase/host gates. (C) Specify another order.
+**Options.** (A) After Q2, tests, host checks and the handover procedure are ready, permit committing the approved note as a candidate; independently review that exact HEAD and run its real gate/preflight, then launch only after all listed conditions, including handover, hold. (B) Specify a different order. (C) Keep `approved: false` and defer.
 
-**Recommendation.** A until the author chooses an amendment; continue M3 and B1 independently. No DTQ host measurement is inferred by either the draft or silence.
+**Recommendation.** A if the author intends this ordering. Until the author clarifies, keep `approved: false`; no simulated pass or elapsed time substitutes for the real final checkout review and gate.
 
-**Paste-ready answer.** `M4 ordering: keep M4 on hold until M3 is accepted.`
+**Paste-ready answer.** `B1 note order: after the other prerequisites are ready, commit the approved note as a candidate; independently review that exact HEAD and run its real author gate and preflight, then launch only when every listed condition and handover is satisfied.`
+
+## No-deletion rule, tests, and the pinned B1 harness
+
+**Context.** At the historical audited checkout the full Mac suite included deletion of test-created files, and the real-worker determinism test invoked audit cleanup. The audit cleanup removal is now independently accepted on the B1 branch (`5f8b8f93`); the full suite and indirect cleanup remain unresolved. The real B1 path calls the exactly pinned harness `a3fedbb`, whose normal governed-trial path attempts to unlink its pending guard (with a truncation fallback) and can remove editable files when restoring state. The instruction says never delete anything, and separately never delete remote files. The reviewed static audit `docs/r1/reports/MAC_FULL_SUITE_NO_DELETION_AUDIT_20261107.md` and audit-fix review are on feature branch `mac-b1-20261107`; other remediation and review remain in progress. Any change to the author-selected harness pin needs a separate author decision; preserving files in a wrapper must also be reviewed for unchanged scientific and safety behavior.
+
+**Options.** (A) Keep both no-deletion rules and the exact harness pin, and defer B1 unless a reviewed compatible solution is found. (B) Keep the no-deletion rules and authorize a specific reviewed replacement harness pin after its behavior and provenance are available. (C) Specify a narrowly bounded exception for deletion of named newly created temporary or test-owned paths, including whether it applies on remote hosts, while retaining protection of experiment data and STOP scenes. These choices require exact artifacts and independent review; none bypasses the remaining launch conditions.
+
+**Recommendation.** A pending the outcome of the current engineering and independent review. If no compatible solution exists, consider B only after a concrete replacement and its effects are reviewed. Do not infer an exception from permission to test or launch.
+
+**Paste-ready answer.** `No-deletion and B1 harness: retain both no-deletion rules and the exact a3fedbb harness pin; defer B1 until a reviewed compatible solution is available.`
 
 ## TASL-7 host ownership
 
@@ -22,15 +32,15 @@ AI-assisted (Codex). This is an open list, not author decisions or an authorizat
 
 **Paste-ready answer.** `TASL-7: I will provide the current operator/host handover; keep host execution on hold until then.`
 
-## B1 approved-note ordering
+## M4 ordering versus non-shared parallel work
 
-**Context.** The 7 November prompt §0.3 says to set `approved: true` only when every listed condition holds. Condition 3 already requires a committed, independently reviewed HEAD containing the approved note, and condition 5 requires the real author gate to pass on that HEAD. The gate itself refuses a note unless `approved` is true. Thus, read literally, those conditions cannot all precede setting the field. A synthetic gate or precomputed hash does not satisfy the stated committed-HEAD requirements.
+**Context.** The 7 November prompt asks for M4's non-shared pieces in parallel but says not to start them if they conflict with `MAC_LOCAL_RUNBOOK_20261104.md` §M4. That runbook says M4 starts after M3 is accepted and rebased on its accepted commit; M3 remains not accepted. The non-shared pieces would not edit `r1/scripts/c3_label_sweep.py`, but that does not by itself remove the ordering rule.
 
-**Options.** (A) After Q2, tests, host checks and the handover procedure are ready, permit committing the approved note as a candidate; independently review that exact HEAD and run its real gate/preflight, then launch only after all listed conditions, including handover, hold. (B) Specify a different order. (C) Keep `approved: false` and defer.
+**Options.** (A) Keep M4 on hold until M3 is accepted. (B) Explicitly amend the ordering to permit the named non-shared M4 pieces, retaining independent reviews and all phase/host gates. (C) Specify another order.
 
-**Recommendation.** A if the author intends this ordering. Until the author clarifies, keep `approved: false`; no simulated pass or elapsed time substitutes for the real final checkout review and gate.
+**Recommendation.** A until the author chooses an amendment; continue M3 and B1 independently. No DTQ host measurement is inferred by either the draft or silence.
 
-**Paste-ready answer.** `B1 note order: after the other prerequisites are ready, commit the approved note as a candidate; independently review that exact HEAD and run its real author gate and preflight, then launch only when every listed condition and handover is satisfied.`
+**Paste-ready answer.** `M4 ordering: keep M4 on hold until M3 is accepted.`
 
 ## Other open decisions
 
