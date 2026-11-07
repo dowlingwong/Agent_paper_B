@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Two fake model candidates + three anchors, Stage A/B1, one killed root and whole-root resume."""
+"""Legacy Stage A/B1 DRYRUN: automatic repeat is refused; recovery coverage remains unresolved."""
 from __future__ import annotations
 import argparse
 import copy
