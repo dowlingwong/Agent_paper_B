@@ -27,7 +27,7 @@ REPO=Path(__file__).resolve().parents[2]
 
 TEMPLATE_REPAIR_SCHEMA='r1.exam.template_repair/v1'
 
-def report_b1_stop_and_save(runner, original):
+def report_b1_stop_and_save(runner, original, *, save=True):
     """Best effort only: emit the original error before attempting STOP state I/O.
 
     Stderr is not proof of durable publication.  Both output channels may fail;
@@ -37,13 +37,14 @@ def report_b1_stop_and_save(runner, original):
         print(f'STOP: original exception: {type(original).__name__}: {original}', file=sys.stderr, flush=True)
     except Exception:
         pass
-    try:
-        runner.save()
-    except Exception as save_error:
+    if save:
         try:
-            print(f'STOP: state save failed: {type(save_error).__name__}: {save_error}', file=sys.stderr, flush=True)
-        except Exception:
-            pass
+            runner.save()
+        except Exception as save_error:
+            try:
+                print(f'STOP: state save failed: {type(save_error).__name__}: {save_error}', file=sys.stderr, flush=True)
+            except Exception:
+                pass
 
 def template_repair_args(spec) -> list[str]:
     """Declared per-candidate template repair (A1): serve the pinned repair template.

@@ -542,10 +542,7 @@ def main(argv=None):
         if preserve_running:
             runner.state['gpu_lease_after_stop']='NOT_CHECKABLE: runner marker is not evidence of held flock'
         if a.phase=='b1' and not cfg.get('dryrun'):
-            if runner.lock is not None:
-                report_b1_stop_and_save(runner,exc)
-            else:
-                print(runner.state['stop_reason'],file=sys.stderr)
+            report_b1_stop_and_save(runner,exc,save=runner.lock is not None)
         else:
             if runner.lock is not None: runner.save()
             print(runner.state['stop_reason'],file=sys.stderr)
