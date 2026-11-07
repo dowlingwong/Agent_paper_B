@@ -31,8 +31,8 @@ def _audit(row):
     return mean
 
 
-def synthetic_b2_rank(manifests, *, finalists, nodes, instances_per_node, rule_sha256):
-    """Rank DRYRUN fixtures on an explicit complete grid, with no evidence claim."""
+def _rank_grid(manifests, *, finalists, nodes, instances_per_node, rule_sha256, execution_label):
+    """Rank a grid after the caller has established its execution scope."""
     from r1.exam.analyze import RULE_V2, load_rule
     if not isinstance(finalists, list) or not finalists or any(not isinstance(x, str) or not x for x in finalists) or len(set(finalists)) != len(finalists):
         raise ValueError('B2 synthetic finalists must be nonempty and unique')
@@ -52,8 +52,8 @@ def synthetic_b2_rank(manifests, *, finalists, nodes, instances_per_node, rule_s
         raise ValueError('B2 manifests must be a list')
     primary = {}
     for m in manifests:
-        if not isinstance(m, dict) or m.get('label') != 'EXAM' or m.get('execution_label') != 'DRYRUN' or m.get('phase') != 'b2' or m.get('status') != 'COMPLETE':
-            raise ValueError('B2 synthetic ranking requires complete EXAM DRYRUN manifests')
+        if not isinstance(m, dict) or m.get('label') != 'EXAM' or m.get('execution_label') != execution_label or m.get('phase') != 'b2' or m.get('status') != 'COMPLETE':
+            raise ValueError(f'B2 ranking requires complete EXAM {execution_label} manifests')
         if m.get('rule_sha256') != rule_sha256:
             raise ValueError('B2 manifest rule hash mismatch')
         purpose = m.get('purpose', 'primary')
@@ -94,6 +94,13 @@ def synthetic_b2_rank(manifests, *, finalists, nodes, instances_per_node, rule_s
     # The rule does not specify a third tie-break if both numbers are equal.
     ranked = sorted((primary[cid] for cid in finalists), key=lambda row: (-row['final_y'], row['gpu_hours']))
     tied = len(ranked) > 1 and (ranked[0]['final_y'], ranked[0]['gpu_hours']) == (ranked[1]['final_y'], ranked[1]['gpu_hours'])
-    return {'label': 'DRYRUN', 'phase': 'b2', 'rule_sha256': rule_sha256, 'rows': ranked,
-            'rule_top': None if tied else ranked[0]['candidate'], 'unresolved_exact_tie': tied, 'author_decision_pending': True,
-            'provenance': 'synthetic_inputs_not_authority_or_received_evidence'}
+    return {'phase': 'b2', 'rule_sha256': rule_sha256, 'rows': ranked,
+            'rule_top': None if tied else ranked[0]['candidate'], 'unresolved_exact_tie': tied, 'author_decision_pending': True}
+
+
+def synthetic_b2_rank(manifests, *, finalists, nodes, instances_per_node, rule_sha256):
+    """Rank DRYRUN fixtures on an explicit complete grid, with no evidence claim."""
+    result = _rank_grid(manifests, finalists=finalists, nodes=nodes,
+                        instances_per_node=instances_per_node, rule_sha256=rule_sha256,
+                        execution_label='DRYRUN')
+    return {**result, 'label': 'DRYRUN', 'provenance': 'synthetic_inputs_not_authority_or_received_evidence'}

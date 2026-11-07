@@ -293,6 +293,12 @@ def _b2_final_values(m):
     return values
 
 
+def b2_summary_verified(batch, config_path, *, rule_path=RULE_V2, expected=None):
+    """Rank only a completed B2 batch matching committed author authority."""
+    from r1.exam.b2_verified import b2_summary_verified as verify
+    return verify(batch, config_path, rule_path=rule_path, expected=expected)
+
+
 def _b2_summary_v2(manifests, rule, sha):
     """x5_rule/v2: rank only primary thinking-off rows by final audited Y; ties to lower GPU-h.
 
@@ -351,6 +357,9 @@ def main(argv=None):
         if not a.batch or not a.config or ms: p.error('verified B1 needs --batch and --config, without individual manifests')
         from r1.exam.runtime import load_config
         result=b1_summary_verified(a.batch,load_config(a.config),rule_path=a.rule,expected=a.rule_sha256)
+    elif a.phase=='b2' and (a.batch or a.config):
+        if not a.batch or not a.config or ms: p.error('verified B2 needs --batch and --config, without individual manifests')
+        result=b2_summary_verified(a.batch,a.config,rule_path=a.rule,expected=a.rule_sha256)
     else:
         if not ms: p.error('individual manifests are required')
         result=b1_summary(ms,rule_path=a.rule,expected=a.rule_sha256) if a.phase=='b1' else (stage_a_summary(ms) if a.phase=='stage-a' else b2_summary(ms,rule_path=a.rule,expected=a.rule_sha256))
