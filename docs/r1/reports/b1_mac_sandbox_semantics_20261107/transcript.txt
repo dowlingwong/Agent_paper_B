@@ -1,0 +1,35 @@
+Commands and tool outputs transcribed from this turn; not an independently captured syscall trace.
+All work under /private/tmp. Local 7 Nov 2026 approximately 01:49 CET.
+
+$ /usr/bin/python3 -B -c 'import os,stat; p="/private/tmp/b1-mac-sandbox-capability-20261107-02"; assert os.getuid()==os.geteuid()==501; os.mkdir(p,0o700); os.mkdir(p+"/empty",0o700); fd=os.open(p+"/source",os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600); os.write(fd,b"retain-source\n"); os.close(fd); fd=os.open(p+"/protected",os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o400); os.write(fd,b"retain-target\n"); os.close(fd); os.chmod(p,0o500); s=os.stat(p); print("directory",s.st_ino,oct(stat.S_IMODE(s.st_mode))); [(lambda n:print(n,os.stat(p+"/"+n).st_ino,oct(stat.S_IMODE(os.stat(p+"/"+n).st_mode))))(n) for n in ("source","protected","empty")]'
+directory 121848720 0o500
+source 121848722 0o600
+protected 121848723 0o400
+empty 121848721 0o700
+exit 0, managed sandbox; all paths newly created exclusively and intentionally retained.
+
+$ ls -leOdn /private/tmp/b1-mac-sandbox-capability-20261107-02 /private/tmp/b1-mac-sandbox-capability-20261107-02/source /private/tmp/b1-mac-sandbox-capability-20261107-02/protected /private/tmp/b1-mac-sandbox-capability-20261107-02/empty
+dr-x------@ 5 501  0  - 160 Nov  7 01:49 /private/tmp/b1-mac-sandbox-capability-20261107-02
+drwx------@ 2 501  0  -  64 Nov  7 01:49 /private/tmp/b1-mac-sandbox-capability-20261107-02/empty
+-r--------@ 1 501  0  -  14 Nov  7 01:49 /private/tmp/b1-mac-sandbox-capability-20261107-02/protected
+-rw-------@ 1 501  0  -  14 Nov  7 01:49 /private/tmp/b1-mac-sandbox-capability-20261107-02/source
+exit 0, managed sandbox. No ACL entries were displayed.
+
+$ /usr/bin/python3 -B -c 'import os,stat; p="/private/tmp/b1-mac-sandbox-capability-20261107-02"; s=os.stat(p); q=os.stat(p+"/protected"); assert os.geteuid()==s.st_uid==q.st_uid==501 and stat.S_IMODE(s.st_mode)==0o500 and stat.S_IMODE(q.st_mode)==0o400 and s.st_ino==121848720 and q.st_ino==121848723; exec("try:\n os.rename(p+\"/source\",p+\"/absent\")\n print(\"rename_absent UNEXPECTED_SUCCESS\")\nexcept OSError as e:\n print(\"rename_absent errno\",e.errno)\ntry:\n os.rmdir(p+\"/empty\")\n print(\"rmdir UNEXPECTED_SUCCESS\")\nexcept OSError as e:\n print(\"rmdir errno\",e.errno)\ntry:\n fd=os.open(p+\"/protected\",os.O_WRONLY|os.O_TRUNC)\n print(\"truncate UNEXPECTED_SUCCESS\"); os.close(fd)\nexcept OSError as e:\n print(\"truncate errno\",e.errno)")'
+rename_absent errno 13
+rmdir errno 13
+truncate errno 13
+exit 0, auto-approved escalation, no sandbox profile. Owner DAC protects both directory and target file.
+
+$ /usr/bin/sandbox-exec -p '(version 1) (allow default) (deny file-write-unlink)' /usr/bin/python3 -B -c 'import os,stat; p="/private/tmp/b1-mac-sandbox-capability-20261107-02"; s=os.stat(p); q=os.stat(p+"/protected"); assert os.geteuid()==s.st_uid==q.st_uid==501 and stat.S_IMODE(s.st_mode)==0o500 and stat.S_IMODE(q.st_mode)==0o400 and s.st_ino==121848720 and q.st_ino==121848723; exec("try:\n os.rename(p+\"/source\",p+\"/absent\")\n print(\"rename_absent UNEXPECTED_SUCCESS\")\nexcept OSError as e:\n print(\"rename_absent errno\",e.errno)\ntry:\n os.rmdir(p+\"/empty\")\n print(\"rmdir UNEXPECTED_SUCCESS\")\nexcept OSError as e:\n print(\"rmdir errno\",e.errno)\ntry:\n fd=os.open(p+\"/protected\",os.O_WRONLY|os.O_TRUNC)\n print(\"truncate UNEXPECTED_SUCCESS\"); os.close(fd)\nexcept OSError as e:\n print(\"truncate errno\",e.errno)")'
+rename_absent errno 1
+rmdir errno 1
+truncate errno 13
+exit 0, auto-approved escalation. Same DAC protects entries if sandbox enforcement is absent.
+
+$ /usr/bin/python3 -B -c 'import os,stat,hashlib; p="/private/tmp/b1-mac-sandbox-capability-20261107-02"; print("directory",os.stat(p).st_ino,oct(stat.S_IMODE(os.stat(p).st_mode))); [(lambda n:print(n,os.stat(p+"/"+n).st_ino,oct(stat.S_IMODE(os.stat(p+"/"+n).st_mode)),hashlib.sha256(open(p+"/"+n,"rb").read()).hexdigest()))(n) for n in ("source","protected")]; print("empty",os.stat(p+"/empty").st_ino,"absent_exists",os.path.exists(p+"/absent"))'
+directory 121848720 0o500
+source 121848722 0o600 c46b8cfa21562cb34ae7d0a661c6af6c3142975f8bbc52eb40e7966be19dfa0e
+protected 121848723 0o400 9ed383ccfec43eeb5f21e94234067489022ebcfe6afe2b0c2ac67ebcdaef0127
+empty 121848721 absent_exists False
+exit 0, managed sandbox; both content hashes match their exact setup literals.
