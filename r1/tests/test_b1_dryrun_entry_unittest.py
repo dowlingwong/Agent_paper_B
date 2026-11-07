@@ -5,7 +5,7 @@ from contextlib import ExitStack
 from pathlib import Path
 from unittest import mock
 
-from r1.exam import campaign
+from r1.exam import campaign, runtime
 
 
 class DryrunEntryTests(unittest.TestCase):
@@ -17,7 +17,11 @@ class DryrunEntryTests(unittest.TestCase):
     def patches(self, host='devbox', marker=True):
         stack=ExitStack()
         stack.enter_context(mock.patch('platform.node',return_value=host))
-        stack.enter_context(mock.patch('tempfile.gettempdir',return_value='/tmp'))
+        stack.enter_context(mock.patch.object(runtime.tempfile,'gettempdir',side_effect=AssertionError('temp probe forbidden')))
+        stack.enter_context(mock.patch.object(runtime.tempfile,'tempdir',None))
+        stack.enter_context(mock.patch.dict(os.environ,{'TMPDIR':'/tmp'},clear=True))
+        stack.enter_context(mock.patch.object(Path,'is_dir',return_value=True))
+        stack.enter_context(mock.patch.object(os,'access',return_value=True))
         stack.enter_context(mock.patch.object(Path,'resolve',autospec=True,side_effect=lambda p:p))
         stack.enter_context(mock.patch.object(Path,'is_file',return_value=marker))
         return stack
@@ -37,6 +41,29 @@ class DryrunEntryTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError,'development host'):
                     campaign._collect_b1_review(self.job)
                 mkdir.assert_not_called();copy.assert_not_called()
+
+    def test_exam_host_refusal_precedes_temp_root_selection(self):
+        with mock.patch('platform.node',return_value='TASL-7'), \
+             mock.patch.object(runtime,'_dryrun_temp_roots',side_effect=AssertionError('must not inspect temp')) as roots, \
+             mock.patch.object(Path,'mkdir') as mkdir, mock.patch.object(campaign.shutil,'copytree') as copy:
+            with self.assertRaisesRegex(RuntimeError,'development host'): campaign._collect_b1_review(self.job)
+            roots.assert_not_called();mkdir.assert_not_called();copy.assert_not_called()
+
+    def test_mac_env_root_used_without_tempfile_probe(self):
+        root='/private/var/folders/xy/example/T'
+        with mock.patch.object(runtime.tempfile,'tempdir',None), \
+             mock.patch.object(runtime.tempfile,'gettempdir',side_effect=AssertionError('temp probe forbidden')), \
+             mock.patch.dict(os.environ,{'TMPDIR':root},clear=True), \
+             mock.patch.object(Path,'resolve',autospec=True,side_effect=lambda p:p), \
+             mock.patch.object(Path,'is_dir',return_value=True), mock.patch.object(os,'access',return_value=True):
+            self.assertIn(Path(root),runtime._dryrun_temp_roots())
+
+    def test_cached_temp_root_used_without_discovery(self):
+        with mock.patch.object(runtime.tempfile,'tempdir','/cached/tmp'), \
+             mock.patch.object(runtime.tempfile,'gettempdir',side_effect=AssertionError('temp probe forbidden')), \
+             mock.patch.object(Path,'resolve',autospec=True,side_effect=lambda p:p), \
+             mock.patch.object(Path,'is_dir',side_effect=AssertionError('no discovery')):
+            self.assertIn(Path('/cached/tmp'),runtime._dryrun_temp_roots())
 
     def test_missing_marker_and_escape_refused_before_mkdir_or_copy(self):
         for job,marker in ((self.job,False),({**self.job,'out':'/tmp/elsewhere/out'},True),
