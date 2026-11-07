@@ -153,7 +153,8 @@ def test_stagea_real_worker_to_b1_owned_parent_crash_and_recovery(tmp_path,monke
     cfg.update(stage_a_table=str(table),stage_a_table_sha256=digest_file(table),
                stage_a_amendment_table=str(amendment),stage_a_amendment_table_sha256=digest_file(amendment),
                stage_a_amendment_acceptance=str(acceptance),stage_a_amendment_acceptance_sha256=digest_file(acceptance))
-    config_path.write_text(json.dumps(cfg))
+    config_path=root/'config_b1_bound.json'
+    with config_path.open('x') as output: output.write(json.dumps(cfg))
     env={**os.environ,'AR_HARNESS_ROOT':harness,'R1_FAKE_OLLAMA_ROOT':str(root),
          'PYTHONPATH':str(ROOT),'PYTHONDONTWRITEBYTECODE':'1','C3_FAKE_EXIT_IF_ORPHANED':'1'}
     env.pop('LLAMACPP_CACHE_PROMPT',None)
