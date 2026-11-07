@@ -6,7 +6,7 @@ AI-assisted (Codex). **Candidate for independent review before host execution.**
 
 At **21:59:31 UTC on 7 November**, the independently reviewed prior census (`TASL7_CENSUS_RESULT_REVIEW_20261107.md`) saw `trks_watch` in tmux, no listed priority marker, GPU `GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1` with no reported compute process and about 585 GiB free on the B1 work filesystem. `fuser` returned 1 with no output; it did not prove a free flock. The three checkout STATUS files were readable but their latest headings were historical. This is a snapshot, not current evidence of an inactive collector, absent P.3a or a safe point.
 
-The previously read watcher file (`reports/tasl7_census_20261107/watcher.txt`, SHA-256 `cf68843ea8dea38c22094ec86c3e864a3be7b79f3cbf144f224a1807993f8112`) tests Track X/P/drill markers, appends to `r1_tracks/logs/watch.log`, touches `STOP` beside every `manifest.json` it finds under `r1_tracks/out`, waits while same-user commands match its collector pattern, then attempts `tmux kill-session -t trks_llm`; after 3,600 seconds it attempts that even if collectors remain. It waits for markers to disappear and says resume by hand. The file digest and tmux pane do not prove the running shell's loaded contents. Check current files and processes, and do not claim a forced pause is safe.
+The prior capture `reports/tasl7_census_20261107/watcher.txt` has SHA-256 `481195bdb4127f8c74526912b6d520c63a9192f127d988ccf9cddf94b255cf36`; it reports watcher script SHA-256 `cf68843ea8dea38c22094ec86c3e864a3be7b79f3cbf144f224a1807993f8112`. The captured watcher script tests Track X/P/drill markers, appends to `r1_tracks/logs/watch.log`, touches `STOP` beside every `manifest.json` it finds under `r1_tracks/out`, waits while same-user commands match its collector pattern, then attempts `tmux kill-session -t trks_llm`; after 3,600 seconds it attempts that even if collectors remain. It waits for markers to disappear and says resume by hand. The file digest and tmux pane do not prove the running shell's loaded contents. Check current files and processes, and do not claim a forced pause is safe.
 
 ## One read-only refresh
 
@@ -28,6 +28,8 @@ for name in trackx_evidence.active trackp_evidence.active; do
   path="$HOME/r1_locks/$name"
   if test -e "$path" || test -L "$path"; then ls -ld "$path"; else printf 'ABSENT %s\n' "$path"; fi
 done
+drill="$HOME/r1_tracks/trks_drill.active"
+if test -e "$drill" || test -L "$drill"; then ls -ld "$drill"; else printf 'ABSENT %s\n' "$drill"; fi
 printf '%s\n' 'TRACK X / P / S STATUS (private transcript)'
 for repo in "$HOME/exam-x/work/agent_paper_B" "$HOME/r1_trackp/Agent_paper_B" "$HOME/r1_tracks/work/Agent_paper_B"; do
   file="$repo/docs/r1/STATUS.md"; printf 'STATUS %s\n' "$file"
