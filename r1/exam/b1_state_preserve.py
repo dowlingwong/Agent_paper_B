@@ -33,7 +33,8 @@ def _renameat2(old_fd, old_name, new_fd, new_name, flags):
 
 
 def _identity(info):
-    if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+    if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
+            or info.st_mode & 0o022):
         raise RuntimeError('STOP: B1 batch state is not an owned regular file')
     return info.st_dev, info.st_ino
 

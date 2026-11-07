@@ -155,6 +155,14 @@ class StatePreservationTests(unittest.TestCase):
                 preserve.publish_state(self.path, {'status': 'RUNNING'}, (7, 55))
         self.assertFalse(fs.archive_exists)
 
+    def test_group_writable_prior_state_is_refused(self):
+        unsafe = SimpleNamespace(st_mode=stat.S_IFREG | 0o660, st_uid=os.getuid(), st_dev=7, st_ino=55)
+        fs = MemoryFS(unsafe)
+        with fs.patches():
+            with self.assertRaisesRegex(RuntimeError, 'owned regular'):
+                preserve.publish_state(self.path, {'status': 'RUNNING'}, (7, 55))
+        self.assertFalse(fs.archive_exists)
+
     def test_change_before_exchange_preserves_both_names(self):
         original = SimpleNamespace(st_mode=stat.S_IFREG | 0o600, st_uid=os.getuid(), st_dev=7, st_ino=44)
         fs = MemoryFS(original)
