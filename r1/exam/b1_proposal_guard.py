@@ -39,6 +39,11 @@ def verify_proposal(proposal, node_spec):
     if (tuple(node_spec.editable_paths) != (path,) or
             tuple(proposal.target_files) != (path,)):
         raise B1ProposalIntegrityStop('STOP: B1 edit path differs from worker target')
+    # The pinned worker passes new into re.sub's replacement string while
+    # replay inserts it literally. Backslashes can be interpreted as escapes
+    # or group references, so reject rather than rewrite or execute them.
+    if '\\' in new:
+        raise B1ProposalIntegrityStop('STOP: B1 replacement has regex escape syntax')
     if str(path).endswith('.py'):
         # ast.literal_eval never evaluates function calls. Bound work before parsing.
         if len(new) > 256:

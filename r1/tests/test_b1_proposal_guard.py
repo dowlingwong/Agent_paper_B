@@ -81,3 +81,47 @@ def test_actual_random_and_scripted_anchor_proposals_pass_unchanged():
             before = asdict(p)
             assert fake_worker().run_trial(p, spec, 1) == 'ok'
             assert asdict(p) == before
+
+
+@pytest.mark.parametrize('node', ['openml_credit_approval', 'openml_ionosphere'])
+@pytest.mark.parametrize('new', [r'1\n#comment', r'1\g<2>', '1\n#comment'])
+def test_openml_unsafe_replacement_stops_before_delegation(node, new):
+    from pathlib import Path
+    from autoresearch.control_plane import campaign as control
+    from autoresearch.nodes.registry import load_registered_node
+    from r1.harness import import_harness
+    root = import_harness(); spec = load_registered_node(node, repo_root=root)
+    p = ManagerProposal(manager_mode='langgraph_manager', proposal_summary='synthetic',
+        proposal_rationale='synthetic', target_files=('config.yaml',),
+        objective=f'change C from 0.15 to {new}',
+        extra={'structured_edit': {'type': 'config_value', 'path': 'config.yaml',
+                                   'symbol': 'C', 'old': '0.15', 'new': new}})
+    # Read only actual pinned starting config; never apply or execute the edit.
+    assert control._precondition_failure_result(p, spec, SimpleNamespace(node_root=Path(root)/'nodes'/node)) is None
+    with patch.object(LocalWorker, 'run_trial') as delegate:
+        with pytest.raises(B1ProposalIntegrityStop, match='STOP:'):
+            fake_worker().run_trial(p, spec, 1)
+        delegate.assert_not_called()
+
+
+@pytest.mark.parametrize('node', ['openml_credit_approval', 'openml_ionosphere'])
+@pytest.mark.parametrize(('key', 'old', 'new'), [('C', '0.15', '0.25'), ('scaler', 'standard', 'minmax')])
+def test_openml_valid_replacement_matches_replay_bytes(node, key, old, new):
+    from pathlib import Path
+    from autoresearch.control_plane import campaign as control
+    from autoresearch.nodes.registry import load_registered_node
+    from autoresearch.worker.local_worker import _config_key_pattern
+    from r1.c3.features import apply_edit
+    from r1.harness import import_harness
+    root = import_harness(); spec = load_registered_node(node, repo_root=root)
+    path = Path(root)/'nodes'/node/'config.yaml'; source = path.read_text()
+    edit = {'type': 'config_value', 'path': 'config.yaml', 'symbol': key, 'old': old, 'new': new}
+    p = ManagerProposal(manager_mode='langgraph_manager', proposal_summary='synthetic',
+        proposal_rationale='synthetic', target_files=('config.yaml',),
+        objective=f'change {key} from {old} to {new}', extra={'structured_edit': edit})
+    assert control._precondition_failure_result(p, spec, SimpleNamespace(node_root=path.parent)) is None
+    expected = _config_key_pattern(key).sub(r'\g<1>' + new + r'\g<3>', source)
+    assert apply_edit({'config.yaml': source}, edit)['config.yaml'] == expected
+    with patch.object(LocalWorker, 'run_trial', return_value='ok') as delegate:
+        assert fake_worker().run_trial(p, spec, 1) == 'ok'
+        delegate.assert_called_once_with(p, spec, 1)
