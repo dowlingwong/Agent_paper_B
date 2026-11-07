@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 from r1.exam import campaign, runtime
+from r1.exam import b1_worker_handoff
 
 
 class WorkerInputTest(unittest.TestCase):
@@ -51,6 +52,7 @@ class WorkerInputTest(unittest.TestCase):
 
     def test_input_check_precedes_output_and_worker(self):
         with patch.object(campaign,'require_worker_host'), \
+             patch.object(b1_worker_handoff,'await_parent'), \
              patch.object(campaign,'_verify_b1_worker_input',side_effect=RuntimeError('STOP: test')), \
              patch.object(runtime,'host_check') as host, \
              patch.object(Path,'mkdir') as mkdir, \
@@ -60,7 +62,8 @@ class WorkerInputTest(unittest.TestCase):
             host.assert_not_called();mkdir.assert_not_called();worker.assert_not_called()
 
     def test_outside_work_refusal_precedes_output_and_worker(self):
-        with patch.object(campaign,'_verify_b1_worker_input'), \
+        with patch.object(b1_worker_handoff,'await_parent'), \
+             patch.object(campaign,'_verify_b1_worker_input'), \
              patch.object(runtime,'host_check',side_effect=RuntimeError('STOP: output escapes work')), \
              patch.object(campaign,'require_worker_host') as host, \
              patch.object(Path,'mkdir') as mkdir, \

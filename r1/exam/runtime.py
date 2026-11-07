@@ -542,7 +542,17 @@ class ExamRunner:
         if phase=='b1' and not self.cfg.get('dryrun'):
             for node in self.cfg['nodes']: b1_harness_sources(node,self.cfg['harness_commit'])
         if phase=='stage-a':refuse_existing_stage_a_output(self.out)
-        self.out.mkdir(parents=True,exist_ok=True)
+        if phase=='b1' and not self.cfg.get('dryrun'):
+            # A production run starts in an exclusively created, direct child
+            # of its approved work tree. Existing batches remain untouched.
+            if self.out.parent!=Path(self.cfg['work_dir']):
+                raise PreparationStop('STOP: B1 batch must be a new direct child of the work tree')
+            try:
+                self.out.mkdir(exist_ok=False)
+            except FileExistsError as exc:
+                raise PreparationStop('STOP: B1 batch output already exists; preserve it') from exc
+        else:
+            self.out.mkdir(parents=True,exist_ok=True)
         path=self.out/'batch_state.json'
         if path.exists():
             self.state=json.loads(path.read_text())
@@ -713,7 +723,17 @@ class ExamRunner:
         if interrupt and self.state.get('phase')=='stage-a':
             raise PreparationStop('STOP: Stage A workers must not be signalled')
         self.space()
-        path=Path(job['out']);path.mkdir(parents=True,exist_ok=True)
+        path=Path(job['out'])
+        production_b1=self.state.get('phase')=='b1' and not self.cfg.get('dryrun')
+        if production_b1:
+            if not path.is_absolute() or path.resolve()!=path or not path.is_relative_to(self.out) or path==self.out:
+                raise PreparationStop('STOP: B1 root path is outside the owned batch')
+            try:
+                path.mkdir(parents=True,exist_ok=False)
+            except FileExistsError as exc:
+                raise PreparationStop('STOP: B1 root already exists; preserve it') from exc
+        else:
+            path.mkdir(parents=True,exist_ok=True)
         write_json(path/'job.json',job)
         env=(worker_environment() if self.state.get('phase')=='b1' else
              {**os.environ,'PYTHONPATH':str(REPO),'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','MKL_NUM_THREADS':'1'})
@@ -721,15 +741,31 @@ class ExamRunner:
             env['R1_SYNTHETIC_PARENT_PID']=str(os.getpid())
         if self.service: env['LLAMACPP_BASE_URL']=self.service.openai_base_url
         kwargs={}
+        handoff_read=handoff_write=None
         if self.state.get('phase')=='stage-a':
             from r1.exam.cache_runtime import verified_lease_fd
             kwargs['pass_fds']=(verified_lease_fd(),)
         elif self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
             if self.b1_lease_fd is None: raise PreparationStop('STOP: B1 GPU lease is missing')
-            kwargs['pass_fds']=(self.b1_lease_fd,)
-        with (path/'runner.log').open('ab') as log:
-            self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
-        self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
+            from r1.exam.b1_worker_handoff import HANDOFF_FD_ENV,LEASE_FD_ENV
+            handoff_read,handoff_write=os.pipe()
+            env[HANDOFF_FD_ENV]=str(handoff_read)
+            env[LEASE_FD_ENV]=str(self.b1_lease_fd)
+            if self.service is None: env.pop('LLAMACPP_BASE_URL',None)
+            kwargs['pass_fds']=(self.b1_lease_fd,handoff_read)
+        try:
+            with (path/'runner.log').open('ab') as log:
+                self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
+            if handoff_read is not None:
+                os.close(handoff_read);handoff_read=None
+            self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
+            if handoff_write is not None:
+                from r1.exam.b1_worker_handoff import make_record,release
+                release(handoff_write,make_record(job,self.child.pid,self.b1_lease_fd,path,self.service))
+        finally:
+            # EOF makes a blocked child refuse work if any parent step failed.
+            if handoff_read is not None: os.close(handoff_read)
+            if handoff_write is not None: os.close(handoff_write)
         watchdog=RunnerWatchdog(self.service,self.cfg['watchdog']) if self.service else None
         started=time.monotonic();killed=False
         try:
