@@ -1,8 +1,12 @@
 # Overnight questions and STOPs — 7 November 2026
 
-AI-assisted (Codex). This is an open list, not author decisions or an authorization. The author is asleep; do not wait for an answer. The user's 7 November prompt records Q1, the fixed Q2 rule, conditional B1 approval and scoped host authority in PLAN §10; those are not re-asked here. The earlier independent question list remains `MAC_OVERNIGHT_QUESTIONS_20261105.md`, except where the 7 November decisions resolve its Q0–Q2.
+AI-assisted (Codex). This is an open list, not author decisions or an authorization. The original overnight instruction was to continue without waiting for the sleeping author; subsequent replies are recorded below. The user's 7 November prompt records Q1, the fixed Q2 rule, conditional B1 approval and scoped host authority in PLAN §10; those are not re-asked here. The earlier independent question list remains `MAC_OVERNIGHT_QUESTIONS_20261105.md`, except where the 7 November decisions resolve its Q0–Q2.
 
-## B1 approved-note ordering
+**7 November approximately 09:31 CET update:** The author answered the note-order question below “允许此顺序” and the no-deletion question “继续严格禁止，先修复”. Both are recorded verbatim in PLAN §10 under `R1-EXAM-B1-NOTE-ORDER-07NOV` and `R1-EXAM-B1-NO-DELETION-07NOV`; their original wording is retained below for context and must not be asked again. The authorization candidate remains false until the other prerequisites are ready. Host ownership and M4 ordering remain open.
+
+## B1 approved-note ordering — answered
+
+The options and recommendation in this section are the historical, pre-answer question; the author has now chosen the order stated in the update above.
 
 **Context.** The 7 November prompt §0.3 says to set `approved: true` only when every listed condition holds. Condition 3 already requires a committed, independently reviewed HEAD containing the approved note, and condition 5 requires the real author gate to pass on that HEAD. The gate itself refuses a note unless `approved` is true. Thus, read literally, those conditions cannot all precede setting the field. A synthetic gate or precomputed hash does not satisfy the stated committed-HEAD requirements.
 
@@ -12,7 +16,9 @@ AI-assisted (Codex). This is an open list, not author decisions or an authorizat
 
 **Paste-ready answer.** `B1 note order: after the other prerequisites are ready, commit the approved note as a candidate; independently review that exact HEAD and run its real author gate and preflight, then launch only when every listed condition and handover is satisfied.`
 
-## No-deletion rule, tests, and the pinned B1 harness
+## No-deletion rule, tests, and the pinned B1 harness — answered
+
+The options and recommendation in this section are the historical, pre-answer question; the author has now chosen strict no-deletion as stated above.
 
 **Context.** At the historical audited checkout the full Mac suite included deletion of test-created files, and the real-worker determinism test invoked audit cleanup. The audit cleanup removal is now independently accepted on the B1 branch (`5f8b8f93`); the full suite and indirect cleanup remain unresolved. The real B1 path calls the exactly pinned harness `a3fedbb`, whose normal governed-trial path attempts to unlink its pending guard (with a truncation fallback) and can remove editable files when restoring state. The instruction says never delete anything, and separately never delete remote files. The reviewed static audit `docs/r1/reports/MAC_FULL_SUITE_NO_DELETION_AUDIT_20261107.md` and audit-fix review are on feature branch `mac-b1-20261107`; other remediation and review remain in progress. Any change to the author-selected harness pin needs a separate author decision; preserving files in a wrapper must also be reviewed for unchanged scientific and safety behavior.
 
