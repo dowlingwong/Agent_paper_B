@@ -6,20 +6,27 @@ Relative to the first candidate, the fixture now constructs the actual `ExamRunn
 
 The fixture retires the prior synthetic Stage A row into `_to_delete` before each existing orchestrator rewrite and uses a test-only Mac-compatible retire-then-exclusive record writer instead of the Linux-only production record publisher; all output lives under the unique pytest root. The later existing B1 test launches the actual synthetic B1 runner, waits for an owned in-progress root, kills only its owned parent, confirms the test-owned worker/server self-exit and preserves the interrupted tree before exercising DRYRUN crash recovery. This is not production STOP recovery: a recorded STOP must never be resumed. A test-only wrapper prints the chained real `ExamRunner.server` exception traceback before the existing main handler records STOP, so an execution failure should identify the operation if Python captured it; no diagnosis is asserted in advance.
 
-After independent review of the exact candidate/test, the operator may execute **once** in an environment where local loopback bind/connect are permitted. If that requires an execution permission escalation, its review must permit the specific local synthetic test; do not access another host or alter other processes. Use the exact f2-based candidate and fixed harness; check that all three paths below, including symlinks, are absent before pytest starts because pytest can clear an existing `--basetemp`. The operator must ensure the environment does not cause a previously owned fixture to be targeted. Preserve this new root, log and rc regardless of outcome. An output collision, nonzero or missing exit, timeout, STOP, disconnect or unclear result ends the attempt; no rerun, cleanup or state repair.
+After independent review of the exact candidate/test, the operator may execute **once** in an environment where local loopback bind/connect are permitted. If that requires an execution permission escalation, its review must permit the specific local synthetic test; do not access another host or alter other processes. Fill `EXPECTED_HEAD` with the independently accepted test candidate SHA and re-review the resulting command. Use the exact f2-based candidate and fixed harness; check that all three paths below, including symlinks, are absent before pytest starts because pytest can clear an existing `--basetemp`. The operator must ensure the environment does not cause a previously owned fixture to be targeted. Preserve this new root, log and rc regardless of outcome. An output collision, nonzero or missing exit, timeout, STOP, disconnect or unclear result ends the attempt; no rerun, cleanup or state repair.
 
 ```bash
 set -u
 set -o pipefail
 umask 077
 TEST_REPO=/private/tmp/paper-b-b1-real-stagea-child-20261108
+EXPECTED_HEAD=REPLACE_WITH_EXACT_REVIEWED_TEST_HEAD
 HARNESS=/private/tmp/paper-b-b1-tests-harness-20261107
 PY=/Users/wongdowling/Documents/autoresearch_harness/.venv/bin/python
 ROOT=/private/tmp/paper-b-stagea-real-child-test-20261108-b
 LOG=/private/tmp/paper-b-stagea-real-child-test-20261108-b.log
 RC=/private/tmp/paper-b-stagea-real-child-test-20261108-b.rc
 for p in "$ROOT" "$LOG" "$RC"; do [ ! -e "$p" ] && [ ! -L "$p" ] || exit 1; done
-[ "$(git -C "$HARNESS" rev-parse HEAD)" = a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 ] || exit 1
+case "$EXPECTED_HEAD" in *[!0-9a-f]*|'') exit 1;; esac
+[ "${#EXPECTED_HEAD}" -eq 40 ] || exit 1
+HEAD=$(git --no-optional-locks -C "$TEST_REPO" rev-parse HEAD) || exit 1
+[ "$HEAD" = "$EXPECTED_HEAD" ] || exit 1
+STATUS=$(git --no-optional-locks -C "$TEST_REPO" status --porcelain --untracked-files=all) || exit 1
+[ -z "$STATUS" ] || exit 1
+[ "$(git --no-optional-locks -C "$HARNESS" rev-parse HEAD)" = a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 ] || exit 1
 cd "$TEST_REPO" || exit 1
 set -C
 export AR_HARNESS_B1_ROOT="$HARNESS" AR_HARNESS_ROOT="$HARNESS" R1_REQUIRE_B1_HARNESS=1
