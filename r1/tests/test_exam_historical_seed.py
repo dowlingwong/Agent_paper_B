@@ -1,10 +1,27 @@
 import hashlib
 import json
+import uuid
 from types import SimpleNamespace
 
 import pytest
 
 from r1.exam.stage_a import load_prompts, run_stage_a
+
+
+def create_fixture(path, text):
+    with path.open('x', encoding='utf-8') as out:
+        out.write(text)
+
+
+def replace_fixture(path, text):
+    # The exclusive, private directory makes its destination absent under the
+    # cooperative test-fixture assumption; retain every prior version.
+    archive = path.parent / '_to_delete'
+    archive.mkdir(mode=0o700, exist_ok=True)
+    retired = archive / uuid.uuid4().hex
+    retired.mkdir(mode=0o700)
+    path.rename(retired / path.name)
+    create_fixture(path, text)
 
 
 def seed(campaign, budget):
@@ -29,13 +46,13 @@ def fixture(tmp_path, mutate=None):
                                     'llm_call':{'seed':seed(f'c{i%4}',i)}}}}
         records.append(record)
     if mutate: mutate(records)
-    ledger.write_text(''.join(json.dumps(record)+'\n' for record in records))
+    create_fixture(ledger, ''.join(json.dumps(record)+'\n' for record in records))
     digest=hashlib.sha256(ledger.read_bytes()).hexdigest()
     for i in range(50):
         rows.append({'trial_id':f't{i}', 'node':f'n{i%4}', 'prompt':text,
                      'active_keys':['X'], 'ledger_path':str(ledger),
                      'ledger_sha256':digest,'memory_mode':'append_only_summary'})
-    source.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    create_fixture(source, ''.join(json.dumps(row)+'\n' for row in rows))
     return source,hashlib.sha256(source.read_bytes()).hexdigest()
 
 
@@ -64,7 +81,7 @@ def test_missing_invalid_or_ambiguous_historical_seed_stops(tmp_path,mutate):
 def test_source_ledger_change_stops(tmp_path):
     source,digest=fixture(tmp_path)
     row=json.loads(source.read_text().splitlines()[0])
-    with open(row['ledger_path'],'w') as out: out.write('changed')
+    replace_fixture(tmp_path/'ledger.jsonl', 'changed')
     with pytest.raises(ValueError, match='provenance'):
         load_prompts(source,digest,historical_seeds=True)
 
@@ -75,7 +92,7 @@ def test_relative_ledger_resolves_from_bundle_not_runner_cwd(tmp_path,monkeypatc
     source,_=fixture(bundle)
     rows=[json.loads(line) for line in source.read_text().splitlines()]
     for row in rows: row['ledger_path']='ledger.jsonl'
-    source.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    replace_fixture(source, ''.join(json.dumps(row)+'\n' for row in rows))
     digest=hashlib.sha256(source.read_bytes()).hexdigest()
     runner=tmp_path/'runner'
     runner.mkdir()
@@ -90,7 +107,7 @@ def test_ledger_cannot_escape_prompt_bundle(tmp_path,mode):
     bundle.mkdir()
     source,_=fixture(bundle)
     outside=tmp_path/'outside.jsonl'
-    outside.write_bytes((bundle/'ledger.jsonl').read_bytes())
+    with outside.open('xb') as out: out.write((bundle/'ledger.jsonl').read_bytes())
     if mode=='traversal': path='../outside.jsonl'
     elif mode=='outside_absolute': path=str(outside)
     else:
@@ -98,7 +115,7 @@ def test_ledger_cannot_escape_prompt_bundle(tmp_path,mode):
         path='link.jsonl'
     rows=[json.loads(line) for line in source.read_text().splitlines()]
     rows[0]['ledger_path']=path
-    source.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    replace_fixture(source, ''.join(json.dumps(row)+'\n' for row in rows))
     digest=hashlib.sha256(source.read_bytes()).hexdigest()
     with pytest.raises(ValueError,match='traversal|outside'):
         load_prompts(source,digest,historical_seeds=True)
@@ -108,7 +125,7 @@ def test_candidate_cannot_override_historical_seed(tmp_path):
     source,_=fixture(tmp_path)
     rows=[json.loads(line) for line in source.read_text().splitlines()]
     rows[0]['seed']=1
-    source.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    replace_fixture(source, ''.join(json.dumps(row)+'\n' for row in rows))
     digest=hashlib.sha256(source.read_bytes()).hexdigest()
     with pytest.raises(ValueError,match='seed mismatch'):
         load_prompts(source,digest,historical_seeds=True)
