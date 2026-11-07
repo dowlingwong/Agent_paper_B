@@ -65,8 +65,19 @@ class ConfigAuthorityTest(unittest.TestCase):
         runner.rule={'version':'x5_rule/v2'}
         runner.rule_sha='f'*64
         runner.b1_config_head='a'*40
-        with patch.object(runtime,'author_gate',return_value='b'*40):
+        with patch.object(runtime,'require_committed_b1_config',return_value='a'*40), \
+             patch.object(runtime,'author_gate',return_value='b'*40):
             with self.assertRaises(runtime.PreparationStop): runner.start('b1')
+
+    def test_direct_start_rechecks_config_before_author_gate(self):
+        runner=runtime.ExamRunner.__new__(runtime.ExamRunner)
+        runner.cfg={'dryrun':False}
+        runner.rule={'version':'x5_rule/v2'}
+        runner.b1_config_head='a'*40
+        with patch.object(runtime,'require_committed_b1_config',side_effect=runtime.PreparationStop('STOP')), \
+             patch.object(runtime,'author_gate') as gate:
+            with self.assertRaises(runtime.PreparationStop): runner.start('b1')
+            gate.assert_not_called()
 
 
 if __name__=='__main__': unittest.main()

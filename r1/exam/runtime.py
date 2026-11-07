@@ -489,6 +489,10 @@ class ExamRunner:
         if phase=='b1' and self.rule.get('version')!='x5_rule/v2':
             raise PreparationStop('STOP: B1 requires the reviewed x5_rule/v2')
         if phase=='b1':
+            if not self.cfg.get('dryrun'):
+                checked=require_committed_b1_config(REPO/B1_CONFIG_REL,self.cfg)
+                if not self.b1_config_head or checked!=self.b1_config_head:
+                    raise PreparationStop('STOP: B1 config HEAD changed before authorization')
             self.author_head=author_gate(self.cfg,phase,self.rule_sha)
             if not self.cfg.get('dryrun') and (not self.b1_config_head or self.author_head!=self.b1_config_head):
                 raise PreparationStop('STOP: B1 authorization HEAD differs from committed config HEAD')
