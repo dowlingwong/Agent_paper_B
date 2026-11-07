@@ -31,3 +31,13 @@ def test_status_symlink_is_not_followed(tmp_path):
     link = tmp_path / 'link'; link.symlink_to(actual)
     with pytest.raises(OSError): marker.create(locks, link, 'b1-test', 'a' * 40)
     assert actual.read_text() == 'unchanged' and not (locks / marker.NAME).exists()
+
+
+def test_status_parent_symlink_is_not_followed(tmp_path):
+    locks = tmp_path / 'locks'; locks.mkdir()
+    actual = tmp_path / 'actual'; actual.mkdir()
+    status = actual / 'STATUS.md'; status.write_text('unchanged')
+    link = tmp_path / 'link'; link.symlink_to(actual, target_is_directory=True)
+    with pytest.raises(RuntimeError, match='symlink'):
+        marker.create(locks, link / 'STATUS.md', 'b1-test', 'a' * 40)
+    assert status.read_text() == 'unchanged' and not (locks / marker.NAME).exists()

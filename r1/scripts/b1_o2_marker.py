@@ -1,6 +1,7 @@
 """B1 marker publication/retirement primitives; caller must check handover gates."""
 import argparse
 import ctypes
+import datetime
 import hashlib
 import json
 import os
@@ -30,9 +31,12 @@ def create(lock_dir, status_path, run_id, head):
         raise ValueError('invalid checkout HEAD')
     lockfd = directory(lock_dir)
     statusfd = None
+    statusdirfd = None
     markerfd = None
     try:
-        statusfd = os.open(status_path, os.O_WRONLY | os.O_APPEND | os.O_NOFOLLOW)
+        status_path = Path(status_path).absolute()
+        statusdirfd = directory(status_path.parent)
+        statusfd = os.open(status_path.name, os.O_WRONLY | os.O_APPEND | os.O_NOFOLLOW, dir_fd=statusdirfd)
         info = os.fstat(statusfd)
         if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
             raise RuntimeError('STATUS is not an owned regular file')
@@ -41,7 +45,7 @@ def create(lock_dir, status_path, run_id, head):
         info = os.fstat(markerfd)
         with os.fdopen(markerfd, 'wb', closefd=False) as stream:
             stream.write(data)
-        status = f'\n## Track X B1 running — {run_id}\n\nReviewed checkout HEAD: `{head}`.\n'.encode()
+        status = f'\n## {datetime.date.today().isoformat()} — Track X B1 running\n\nRun: `{run_id}`; reviewed checkout HEAD: `{head}`.\n'.encode()
         with os.fdopen(statusfd, 'ab', closefd=False) as stream:
             stream.write(status)
         return {'run_id': run_id, 'head': head, 'dev': info.st_dev, 'ino': info.st_ino,
@@ -49,6 +53,7 @@ def create(lock_dir, status_path, run_id, head):
     finally:
         if markerfd is not None: os.close(markerfd)
         if statusfd is not None: os.close(statusfd)
+        if statusdirfd is not None: os.close(statusdirfd)
         os.close(lockfd)
 
 
