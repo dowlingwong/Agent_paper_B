@@ -1,6 +1,6 @@
 # B1 authorization candidate — 7 November 2026
 
-AI-assisted (Codex). This candidate is **not an authorization**: `approved` is false. The author's conditional rule/note approval and all prerequisites are recorded in PLAN §10 and `prompts/MAC_OVERNIGHT_PROMPT_20261107.md` §0. The final note may be approved and committed at the configured authorization path only after the prompt's conditions are satisfied; exact final checkout review and host preflight remain required.
+AI-assisted (Codex). This candidate is **not an authorization**: `approved` is false. The author's conditional rule/note approval and all prerequisites are recorded in PLAN §10 and `prompts/MAC_OVERNIGHT_PROMPT_20261107.md` §0. After the other independent prerequisites are ready, the author has allowed an `approved: true` candidate to be committed at the configured authorization path. Then obtain independent review of the exact committed HEAD, run the real committed author gate and host preflight, and complete handover; start B1 only when all launch conditions hold.
 
 Q1 binds the exact O1 report bytes. Q2 uses the independently reviewed fixed-rule reference `reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json`: 99% predictive interval `[0.42386590667728663, 0.5800007633587785]`, no fallback. The author-approved rule SHA and both Stage A table SHAs are below. The actual tables, GPU/lease, 20-worker headroom, remaining test coverage, and TASL-7 handover still require verification.
 
