@@ -343,6 +343,19 @@ def author_gate(cfg, phase, rule_sha):
         raise RuntimeError('STOP: B2 instance count not author-bound')
     if phase=='b1' and loaded_rule.get('version')=='x5_rule/v2' and (type(data.get('workers')) is not int or data['workers']!=cfg.get('workers')):
         raise RuntimeError('STOP: worker count differs from authorization')
+    if phase=='b1' and loaded_rule.get('version')=='x5_rule/v2':
+        ref=cfg.get('anchor_duplicate_reference')
+        if not isinstance(ref,dict) or not isinstance(ref.get('sha256'),str) or not re.fullmatch(r'[0-9a-f]{64}',ref['sha256']) or data.get('anchor_duplicate_reference_sha256')!=ref['sha256']:
+            raise RuntimeError('STOP: anchor reference digest is not author-bound')
+        try:
+            source=Path(ref['source']);source=source if source.is_absolute() else REPO/source
+            rel=source.resolve(strict=True).relative_to(REPO.resolve())
+            recorded=subprocess.check_output(['git','-C',str(REPO),'show',f'{head}:{rel.as_posix()}'])
+            actual=source.read_bytes()
+        except (KeyError, TypeError, OSError, ValueError, subprocess.CalledProcessError) as exc:
+            raise RuntimeError('STOP: committed anchor reference unavailable') from exc
+        if recorded!=actual or hashlib.sha256(actual).hexdigest()!=ref['sha256']:
+            raise RuntimeError('STOP: committed anchor reference digest mismatch')
     return head
 
 

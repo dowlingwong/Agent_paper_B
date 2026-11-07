@@ -23,6 +23,7 @@ def setup_repo(tmp_path, monkeypatch, plan_template):
     table=root/'stage.json'; table.write_text('{"rows":[]}')
     amendment=root/'amendment.json'; amendment.write_text('{"rows":[]}')
     acceptance=root/'acceptance.md'; acceptance.write_text('test acceptance')
+    anchor=root/'anchor.json'; anchor.write_text('{"lower":0.2,"upper":0.8}')
     rule_sha=sha(rule)
     (root/'docs/r1/PLAN.md').write_text(plan_template.format(sha=rule_sha))
     note=root/'author.json'
@@ -31,11 +32,12 @@ def setup_repo(tmp_path, monkeypatch, plan_template):
          'stage_a_amendment_table_sha256':sha(amendment),'stage_a_amendment_acceptance':str(acceptance),
          'stage_a_amendment_acceptance_sha256':sha(acceptance),'nodes':['digits_mlp','openml_credit_approval','openml_ionosphere'],
          'llm_call_cap':80,'workers':20,'instance_seeds':[9001,9002,9003,9004],
-         'audit_seeds':[9101,9102,9103,9104], 'authorizations':{'b1':str(note)}}
+         'audit_seeds':[9101,9102,9103,9104], 'authorizations':{'b1':str(note)},
+         'anchor_duplicate_reference':{'source':str(anchor),'sha256':sha(anchor),'lower':0.2,'upper':0.8}}
     data={'author':'Dowling Wong','phase':'b1','approved':True,'rule_sha256':rule_sha,
           'nodes':cfg['nodes'],'llm_call_cap':80,'workers':20,
           'stage_a_table_sha256':sha(table),'stage_a_amendment_table_sha256':sha(amendment),
-          'stage_a_amendment_acceptance_sha256':sha(acceptance)}
+          'stage_a_amendment_acceptance_sha256':sha(acceptance),'anchor_duplicate_reference_sha256':sha(anchor)}
     note.write_text(json.dumps(data))
     env={**os.environ,'GIT_AUTHOR_NAME':'Fixture','GIT_AUTHOR_EMAIL':'fixture@example.invalid',
          'GIT_COMMITTER_NAME':'Fixture','GIT_COMMITTER_EMAIL':'fixture@example.invalid'}
@@ -101,4 +103,24 @@ def test_missing_approval_field_and_wrong_workers_refused(tmp_path,monkeypatch):
     subprocess.run(['git','-C',str(root),'add','author.json'],check=True,env=env)
     subprocess.run(['git','-C',str(root),'commit','-qm','fixture change'],check=True,env=env)
     with pytest.raises(RuntimeError,match='worker count'):
+        runtime.author_gate(cfg,'b1',rule_sha)
+
+
+@pytest.mark.parametrize('mutation', ['missing_note_sha', 'wrong_note_sha', 'wrong_config_sha', 'outside_source'])
+def test_anchor_reference_must_match_note_and_committed_source(tmp_path, monkeypatch, mutation):
+    root,cfg,rule_sha=setup_repo(tmp_path,monkeypatch,VALID)
+    if mutation in ('missing_note_sha','wrong_note_sha'):
+        note=root/'author.json'; data=json.loads(note.read_text())
+        if mutation=='missing_note_sha': data.pop('anchor_duplicate_reference_sha256')
+        else: data['anchor_duplicate_reference_sha256']='0'*64
+        note.write_text(json.dumps(data))
+        env={**os.environ,'GIT_AUTHOR_NAME':'Fixture','GIT_AUTHOR_EMAIL':'fixture@example.invalid',
+             'GIT_COMMITTER_NAME':'Fixture','GIT_COMMITTER_EMAIL':'fixture@example.invalid'}
+        subprocess.run(['git','-C',str(root),'add','author.json'],check=True,env=env)
+        subprocess.run(['git','-C',str(root),'commit','-qm','synthetic change'],check=True,env=env)
+    elif mutation=='wrong_config_sha': cfg['anchor_duplicate_reference']['sha256']='0'*64
+    else:
+        outside=tmp_path/'outside.json';outside.write_bytes((root/'anchor.json').read_bytes())
+        cfg['anchor_duplicate_reference']['source']=str(outside)
+    with pytest.raises(RuntimeError,match='anchor reference'):
         runtime.author_gate(cfg,'b1',rule_sha)
