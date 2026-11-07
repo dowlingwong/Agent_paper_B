@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import uuid
 from pathlib import Path
 import pytest
 import yaml
@@ -11,6 +12,21 @@ from r1.exam.guards import (MIN_FREE_BYTES, licence_blockers, occupancy_blockers
 from r1.exam.namespace import refuse_exam, check_exam_seeds
 from r1.exam.analyze import choose_finalists, load_rule, b1_summary
 from r1.exam.runtime import DEFAULT_CONFIG, load_config, read_registry, host_check
+
+
+def _preserve_and_replace_fixture(path, content):
+    """Retain a test fixture before its intentional same-path tampering.
+
+    The caller must supply a private, stable test directory. Path.rename does
+    not provide atomic no-replace semantics against an uncooperative writer.
+    """
+    retired_root=path.parent/'_to_delete'
+    retired_root.mkdir(mode=0o700,exist_ok=True)
+    retired=retired_root/uuid.uuid4().hex
+    retired.mkdir(mode=0o700)
+    path.rename(retired/path.name)
+    with path.open('x',encoding='utf-8') as handle:
+        handle.write(content)
 
 
 def test_attention_fit_hand_calculation():
@@ -110,7 +126,7 @@ def test_ported_licence_occupancy_and_frozen_digest(tmp_path):
     assert not occupancy_blockers([{**sample,'compute_pids':[123],'memory_used_mib':2000}],owned_pids=[123])
     assert occupancy_blockers([])
     p=tmp_path/'rule';p.write_text('frozen');sha=hashlib.sha256(p.read_bytes()).hexdigest();assert frozen_digest(p,sha)==sha
-    p.write_text('changed')
+    _preserve_and_replace_fixture(p,'changed')
     with pytest.raises(ValueError): frozen_digest(p,sha)
 
 
@@ -187,7 +203,7 @@ def test_prompt_freeze_checks_real_source_and_never_overwrites(tmp_path):
     target=tmp_path/'frozen.jsonl';sha=freeze(source,target)
     assert digest_file(target)==sha
     with pytest.raises(ValueError,match='preserve'): freeze(source,target)
-    ledger.write_text('changed')
+    _preserve_and_replace_fixture(ledger,'changed')
     with pytest.raises(ValueError,match='provenance'): freeze(source,tmp_path/'bad.jsonl')
 
 
@@ -249,7 +265,7 @@ def test_resume_certificate_and_evidence_tamper_refusal(tmp_path):
     with pytest.raises(PreparationStop,match='receiving check'): verify_campaign(manifest,'frozen')
     write_json(tmp_path/'post_check.json',{'binding':'frozen','manifest_sha256':digest_file(manifest),'passed':True})
     assert verify_campaign(manifest,'frozen')==m
-    (tmp_path/'ledger.jsonl').write_text('changed')
+    _preserve_and_replace_fixture(tmp_path/'ledger.jsonl','changed')
     with pytest.raises(PreparationStop,match='evidence changed'): verify_campaign(manifest,'frozen')
 
 
@@ -273,7 +289,7 @@ def test_evidence_refuses_changed_stage_a_and_b1_inputs(tmp_path):
     source=tmp_path/'stage.json';source.write_text('{}')
     cfg={'stage_a_table':str(source),'stage_a_table_sha256':digest_file(source)}
     runner=SimpleNamespace(cfg=cfg)
-    source.write_text('{"changed": true}')
+    _preserve_and_replace_fixture(source,'{"changed": true}')
     with pytest.raises(PreparationStop,match='Stage A table digest'): _evidence_unreviewed(runner,'b1',None,False)
     cfg['stage_a_table_sha256']=digest_file(source)
     cfg.update(b1_analysis=str(source),b1_analysis_sha256='0'*64)
@@ -304,7 +320,7 @@ def test_b2_respects_stage_a_thinking_disable(tmp_path):
                     'd28':{'nodes':{'digits_mlp':{'pass':True}}},'final_audits':[]}
     runner=Fake();_evidence_unreviewed(runner,'b2',None,False)
     assert runner.calls==['off']
-    data=json.loads(screen.read_text());data['rows'][0]['b2_thinking_mode']='on';write_json(screen,data)
+    data=json.loads(screen.read_text());data['rows'][0]['b2_thinking_mode']='on';_preserve_and_replace_fixture(screen,json.dumps(data,indent=2,allow_nan=False)+'\n')
     runner=Fake()
     with pytest.raises(PreparationStop,match='disabled by Stage A'): _evidence_unreviewed(runner,'b2',None,False)
     assert runner.calls==[]
