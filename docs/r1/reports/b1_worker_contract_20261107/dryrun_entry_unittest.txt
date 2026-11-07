@@ -1,0 +1,21 @@
+test_exam_hosts_refused_before_mkdir_or_copy (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_exam_hosts_refused_before_mkdir_or_copy) ... ok
+test_marked_development_host_reaches_original_copy_path (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_marked_development_host_reaches_original_copy_path) ... ok
+test_missing_marker_and_escape_refused_before_mkdir_or_copy (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_missing_marker_and_escape_refused_before_mkdir_or_copy) ... ok
+test_non_boolean_dryrun_refused_before_mkdir_or_copy (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_non_boolean_dryrun_refused_before_mkdir_or_copy) ... ok
+test_production_false_still_requires_worker_contract (r1.tests.test_b1_dryrun_entry_unittest.DryrunEntryTests.test_production_false_still_requires_worker_contract) ... ok
+test_changed_job_or_output_refused (r1.tests.test_b1_worker_contract_unittest.ContractTests.test_changed_job_or_output_refused) ... ok
+test_dead_parent_and_cgroup_mismatch_refused (r1.tests.test_b1_worker_contract_unittest.ContractTests.test_dead_parent_and_cgroup_mismatch_refused) ... ok
+test_descriptor_collision_and_non_owned_output_refused (r1.tests.test_b1_worker_contract_unittest.ContractTests.test_descriptor_collision_and_non_owned_output_refused) ... ok
+test_direct_entry_without_contract_refuses_before_output (r1.tests.test_b1_worker_contract_unittest.ContractTests.test_direct_entry_without_contract_refuses_before_output) ... ok
+test_owned_server_and_socket_checked (r1.tests.test_b1_worker_contract_unittest.ContractTests.test_owned_server_and_socket_checked) ... ok
+test_parent_bound_software_anchor_passes (r1.tests.test_b1_worker_contract_unittest.ContractTests.test_parent_bound_software_anchor_passes) ... ok
+test_software_anchor_rejects_server (r1.tests.test_b1_worker_contract_unittest.ContractTests.test_software_anchor_rejects_server) ... ok
+test_owned_loopback_listener_and_wrong_socket (r1.tests.test_b1_worker_contract_unittest.ListenerTests.test_owned_loopback_listener_and_wrong_socket) ... ok
+test_runner_command_batch_and_supervisor_are_bound (r1.tests.test_b1_worker_contract_unittest.ParentIdentityTests.test_runner_command_batch_and_supervisor_are_bound) ... ok
+test_real_parent_binds_owned_server_before_worker_grant (r1.tests.test_b1_worker_contract_unittest.ParentSpawnTests.test_real_parent_binds_owned_server_before_worker_grant) ... ok
+test_real_parent_spawn_passes_worker_contract_fds_and_job (r1.tests.test_b1_worker_contract_unittest.ParentSpawnTests.test_real_parent_spawn_passes_worker_contract_fds_and_job) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.069s
+
+OK
