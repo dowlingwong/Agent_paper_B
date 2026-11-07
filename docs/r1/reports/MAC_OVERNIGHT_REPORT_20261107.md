@@ -6,7 +6,9 @@
 
 **09:36–09:37 CET 后续：** 作者就 TASL-7 归属问题答复“你继续执行，不用管他。只要能跑就去跑”，已原文记录并独立审查（PLAN §10 `R1-TASL7-AGENT-OCCUPANCY-07NOV`）。继续工作不意味着可抢占任务、修改他人工作或忽略其他 B1 门槛。09:37 的重新只读 census 观察到指定 GPU 236/24564 MiB、0% 利用率且 compute-app 列表为空；这是瞬时观察，不是持有 lease 的证明。此次 census 的完整本地记录 SHA `018fe4fc81bf24495b2834bcfbe8102652b11e29005201e7fa6b8a9c13e87475`，详见 B1 分支 `TASL7_READONLY_REFRESH_20261107_0937.md`；该 census 已由 `TASL7_READONLY_REFRESH_REVIEW_20261107_0937.md` 限定范围独立接受，并推送至 `mac-b1-20261107` 的 `3cf08a17`；完整原始输出因含其他用户进程参数而保留在本机。
 
-09:21 报告后续：DRYRUN 入口临时根修复、独立 launcher 临时根修复及旧 launcher 禁止自动重跑，分别经限定范围审查并推送到 `mac-b1-direct-worker-20261107`（`9c354de3`）及仍未接受的 `mac-b1-combined-20261107`（`2b7e261e`）。这不恢复 Stage A→B1 kill/resume 覆盖，也不证明 launcher、pytest 或整个测试套件符合不删除规则。当前 B1 分支为 `f6146de4`。下文各提交和状态是补写报告时的快照。
+**09:42 CET 后续：** 按作者指示做了第五次 TASL-7 只读 SSH：实际 work 路径显示 ext4、Linux 6.8 和 cgroup v2 控制器可见；两份 Stage A 表及 `llama-server` 的 SHA-256 均与配置一致。GPU 快照仍为指定 UUID、236/24564 MiB、0% 利用率且 compute-app 列表为空。它没有取得 lease 或验证 cgroup 委派、freezer、`kcmp`、Python binding 与实时文件稳定性。完整本地 capture SHA `1d6ff1ffa3652eba65ecadd5cdb152076e852ee04cd41ac1e46935170e9632ad`；报告和独立审查在 `mac-b1-20261107` 的 `2a3ef82e`。无意启动或停止任何远程工作，工具副作用与并发变化未独立监测。
+
+09:21 报告后续：DRYRUN 入口临时根修复、独立 launcher 临时根修复及旧 launcher 禁止自动重跑，分别经限定范围审查并推送到 `mac-b1-direct-worker-20261107`（`9c354de3`）及仍未接受的 `mac-b1-combined-20261107`（`2b7e261e`）。这不恢复 Stage A→B1 kill/resume 覆盖，也不证明 launcher、pytest 或整个测试套件符合不删除规则。该次更新时 B1 分支为 `f6146de4`。下文各提交和状态是补写报告时的快照。
 
 会话中断后于 09:21 CET 恢复，本报告晚于原定 08:30；未在中断期间监控或操作主机。§0.3 的测试、最终 checkout、TASL-7 检查、真实 author gate、dry run 和 handover 均未完成。尤其是 §0.3 字面上要求先满足含已批准 note 的最终 HEAD 和真实 gate，才能将 note 设为 `approved: true`，形成顺序循环；需作者明确顺序后才能建立该候选。即使澄清后，其他阻塞仍须逐项解除。当前授权草稿为 `approved: false`，没有创建实际批准 note。
 
