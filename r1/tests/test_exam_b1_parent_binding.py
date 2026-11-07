@@ -98,43 +98,57 @@ def test_completed_root_same_head_is_reused(tmp_path,monkeypatch):
     assert not r.seen
 
 
-@pytest.mark.parametrize('saved_head,allowed',[('a'*40,True),('b'*40,False)])
-def test_recovered_root_checks_authorized_head(tmp_path,monkeypatch,saved_head,allowed):
+@pytest.mark.parametrize('saved_head',['a'*40,'b'*40])
+def test_existing_production_root_stops_without_recovery_or_mutation(tmp_path,monkeypatch,saved_head):
     import r1.exam.runtime as runtime
     r=runner(tmp_path)
     root=tmp_path/'fixture'/'b1'/'off'/'digits_mlp__s9001';root.mkdir(parents=True)
     manifest=root/'campaign_manifest.json';manifest.write_text('{}')
-    (root/'job.json').write_text(json.dumps({'authorization_checkout_head':saved_head}))
-    (root/'post_check.json').write_text('{}')
+    job=root/'job.json';job.write_text(json.dumps({'authorization_checkout_head':saved_head}))
+    post=root/'post_check.json';post.write_text('{}')
+    before={path:path.read_bytes() for path in (manifest,job,post)}
     r.state['in_progress']={'path':str(root)}
-    monkeypatch.setattr(runtime,'verify_campaign',lambda path,binding:{'status':'COMPLETE'})
-    if allowed:
-        assert r.root({'id':'fixture'},'b1','digits_mlp',9001,'off')['status']=='COMPLETE'
-    else:
-        with pytest.raises(PreparationStop,match='HEAD mismatch'):
-            r.root({'id':'fixture'},'b1','digits_mlp',9001,'off')
+    def fail_verification(*args,**kwargs):
+        pytest.fail('existing production root must not be recovered')
+    monkeypatch.setattr(runtime,'verify_campaign',fail_verification)
+    with pytest.raises(PreparationStop,match='existing B1 root is preserved; no automatic recovery'):
+        r.root({'id':'fixture'},'b1','digits_mlp',9001,'off')
+    assert {path:path.read_bytes() for path in before}==before
+    assert r.state['in_progress']=={'path':str(root)} and not r.state['completed']
+    assert not r.seen and not (tmp_path/'interrupted').exists()
 
 
 @pytest.mark.parametrize('in_progress',[False,True])
-def test_start_rejects_old_authority_before_resume_side_effects(tmp_path,monkeypatch,in_progress):
+def test_start_refuses_existing_batch_before_resume_side_effects(tmp_path,monkeypatch,in_progress):
     import r1.exam.runtime as runtime
-    r=runner(tmp_path);r.rule_sha='rule';r.registry_path=tmp_path/'registry';r.registry_path.write_text('{}')
+    import r1.exam.b1_lease as lease
+    r=runner(tmp_path);r.cfg['work_dir']=str(tmp_path.parent)
+    r.rule_sha='rule';r.registry_path=tmp_path/'registry';r.registry_path.write_text('{}')
     old=tmp_path/'old';old.mkdir();manifest=old/'campaign_manifest.json';manifest.write_text('{}')
-    (old/'job.json').write_text(json.dumps({'authorization_checkout_head':'b'*40}))
-    (old/'post_check.json').write_text('{}')
+    job=old/'job.json';job.write_text(json.dumps({'authorization_checkout_head':'b'*40}))
+    post=old/'post_check.json';post.write_text('{}')
     state={'binding':r.binding,'phase':'b1','completed':{},'status':'RUNNING'}
     if in_progress: state['in_progress']={'path':str(old)}
     else:
         state['completed']['old']={'path':str(manifest),'sha256':runtime.digest_file(manifest),
-                                   'post_check_sha256':runtime.digest_file(old/'post_check.json')}
-    (tmp_path/'batch_state.json').write_text(json.dumps(state))
+                                   'post_check_sha256':runtime.digest_file(post)}
+    state_file=tmp_path/'batch_state.json';state_file.write_text(json.dumps(state))
+    before={path:path.read_bytes() for path in (r.registry_path,manifest,job,post,state_file)}
     r.b1_config_head='a'*40;r.registry={}
     monkeypatch.setattr(runtime,'require_committed_b1_config',lambda *a:'a'*40)
     monkeypatch.setattr(runtime,'require_committed_b1_registry',lambda *a,**k:None)
     monkeypatch.setattr(runtime,'author_gate',lambda *a:'a'*40)
-    monkeypatch.setattr(runtime,'verify_campaign',lambda *a:{'status':'COMPLETE'})
-    with pytest.raises(PreparationStop,match='HEAD mismatch'): r.start('b1')
-    assert not (tmp_path/'runner.lock').exists()
+    monkeypatch.setattr(runtime,'worker_environment',lambda *a:{})
+    def fail_side_effect(*args,**kwargs):
+        pytest.fail('must stop before recovery, lease or runner lock')
+    monkeypatch.setattr(runtime,'verify_campaign',fail_side_effect)
+    monkeypatch.setattr(runtime,'claim_runner_lock',fail_side_effect)
+    monkeypatch.setattr(lease,'acquire',fail_side_effect)
+    with pytest.raises(PreparationStop,match='B1 batch already exists; no automatic resume'):
+        r.start('b1')
+    assert {path:path.read_bytes() for path in before}==before
+    assert not (tmp_path/'runner.lock').exists() and not (tmp_path/'registry_snapshot.yaml').exists()
+    assert not r.seen
 
 
 def test_stopped_b1_state_is_preserved_without_resuming(tmp_path,monkeypatch):
