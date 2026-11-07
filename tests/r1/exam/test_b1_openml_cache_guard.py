@@ -10,13 +10,15 @@ from autoresearch.nodes.registry import load_registered_node
 from autoresearch.manager.base import ManagerProposal
 from autoresearch.worker.local_worker import LocalWorker
 from r1.exam.b1_openml_cache_guard import B1OpenMLWorkerMixin, B1OpenMLCacheStop
+from r1.exam.b1_proposal_guard import B1IntegrityWorker
 
 
 class Worker(B1OpenMLWorkerMixin, LocalWorker):
     pass
 
 @pytest.mark.parametrize('bad', [False, True])
-def test_pinned_worker_real_sklearn_cache_failure_preserves_evidence(tmp_path, monkeypatch, bad):
+@pytest.mark.parametrize('worker_type', [Worker, B1IntegrityWorker])
+def test_pinned_worker_real_sklearn_cache_failure_preserves_evidence(tmp_path, monkeypatch, bad, worker_type):
     node = tmp_path / 'node'; node.mkdir()
     cache = node/'data_cache/openml.org/api/v1/json/data/29.gz'
     cache.parent.mkdir(parents=True)
@@ -27,8 +29,8 @@ def test_pinned_worker_real_sklearn_cache_failure_preserves_evidence(tmp_path, m
     artifacts=tmp_path/'art'; artifacts.mkdir()
     monkeypatch.setenv('PATH',str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'])
     spec=load_registered_node('openml_credit_approval',repo_root=HARNESS)
-    worker=Worker(node_root=node,artifact_dir=artifacts)
-    proposal=ManagerProposal(manager_mode='c3_audit',proposal_summary='audit',proposal_rationale='',target_files=spec.editable_paths,objective='Audit run; no change.')
+    worker=worker_type(node_root=node,artifact_dir=artifacts)
+    proposal=ManagerProposal(manager_mode='c3_audit',proposal_summary='audit',proposal_rationale='',target_files=spec.editable_paths,objective='Run the restored configuration unchanged; make no edit.')
     if bad:
         with pytest.raises(B1OpenMLCacheStop): worker.run_trial_at_seed(proposal,spec,1,train_seed=123,split_seed=123)
     else:
