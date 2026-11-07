@@ -58,6 +58,10 @@ def verify_proposal(proposal, node_spec):
 
 class B1IntegrityWorker(LocalWorker):
     """Run the pinned worker after integrity checking, with an I/O overlay."""
+    def _resolve_artifact_dir(self, trial_label):
+        from r1.exam.b1_worker_artifact_guard import GuardedTrialPath
+        return GuardedTrialPath(super()._resolve_artifact_dir(trial_label))
+
     def _locate_target_file(self, param, proposal, node_spec):
         path=super()._locate_target_file(param,proposal,node_spec)
         guarded=getattr(self,'_b1_editable_path_type',None)
