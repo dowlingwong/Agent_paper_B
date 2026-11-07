@@ -37,6 +37,7 @@ def run(command, seconds):
     for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
         previous[sig] = signal.signal(sig, note_signal)
     child = None
+    shutdown_attempted = False
     try:
         child = subprocess.Popen(command, start_new_session=True)
         deadline = time.monotonic() + seconds
@@ -45,6 +46,7 @@ def run(command, seconds):
             if status is not None or interrupted or time.monotonic() >= deadline:
                 break
             time.sleep(0.05)
+        shutdown_attempted = True
         stop_owned_group(child)
         child = None
         if interrupted:
@@ -55,7 +57,7 @@ def run(command, seconds):
             return 124
         return status if status >= 0 else 128 - status
     finally:
-        if child is not None:
+        if child is not None and not shutdown_attempted:
             try: stop_owned_group(child)
             except (OSError, subprocess.SubprocessError) as exc:
                 print('STOP: owned test group shutdown failed:', exc, file=sys.stderr)

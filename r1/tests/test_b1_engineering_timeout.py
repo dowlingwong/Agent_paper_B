@@ -32,3 +32,17 @@ def test_signal_failure_still_reaps_own_child(monkeypatch):
     monkeypatch.setattr(t.os, 'killpg', Mock(side_effect=PermissionError('refused')))
     with pytest.raises(PermissionError): t.stop_owned_group(child)
     child.wait.assert_called_once_with(timeout=30)
+
+
+def test_shutdown_failure_is_not_retried(monkeypatch):
+    child=Mock(pid=1234)
+    monkeypatch.setattr(t.sys, 'platform', 'linux')
+    monkeypatch.setattr(t.os, 'waitid', Mock(), raising=False)
+    monkeypatch.setattr(t.signal, 'signal', Mock(return_value=signal.SIG_DFL))
+    monkeypatch.setattr(t.subprocess, 'Popen', Mock(return_value=child))
+    monkeypatch.setattr(t, 'observed_exit', Mock(return_value=1))
+    stop=Mock(side_effect=TimeoutError('shutdown failed'))
+    monkeypatch.setattr(t, 'stop_owned_group', stop)
+    with pytest.raises(TimeoutError, match='shutdown failed'):
+        t.run(['synthetic'], 1)
+    stop.assert_called_once_with(child)
