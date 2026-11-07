@@ -1,0 +1,448 @@
+{
+  "campaigns": {
+    "digits_mlp": [
+      {
+        "campaign": "digits_mlp__s104",
+        "duplicates": 7,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s104/root_events.jsonl",
+        "sha256": "8f8980df6a136ca8c6df1b7299d0fa5079f7b2877a7d979d3fecfcb1c2ece523"
+      },
+      {
+        "campaign": "digits_mlp__s114",
+        "duplicates": 17,
+        "evaluated": 33,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s114/root_events.jsonl",
+        "sha256": "f3b4fccac47968f719375ff116625f1ab491aa11ee062836ee30fe00fb182855"
+      },
+      {
+        "campaign": "digits_mlp__s124",
+        "duplicates": 7,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s124/root_events.jsonl",
+        "sha256": "b3724baf3d47b4f5cc64eb1695f5eec7288685c6dd64c89eb7a8c52133524b0b"
+      },
+      {
+        "campaign": "digits_mlp__s134",
+        "duplicates": 8,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s134/root_events.jsonl",
+        "sha256": "3ebd44a68d4f57e5d3f557a5e1663ff18d266bd77a62e0a282e7841da6ba0e95"
+      },
+      {
+        "campaign": "digits_mlp__s144",
+        "duplicates": 5,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s144/root_events.jsonl",
+        "sha256": "d3cb7b9b2e2fd3d1387d6b841edfcfe3e31a2bb18d451b125fafce9979d28aea"
+      },
+      {
+        "campaign": "digits_mlp__s154",
+        "duplicates": 11,
+        "evaluated": 21,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s154/root_events.jsonl",
+        "sha256": "c965e4b6f59f4942901991c8a3f54ef41d432bc3edafd96b37010357efd157bc"
+      },
+      {
+        "campaign": "digits_mlp__s164",
+        "duplicates": 9,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s164/root_events.jsonl",
+        "sha256": "123bfcd1197fa2d7b961903ec9c6068cc8306d26b741b6337b3d6dda1c166dd7"
+      },
+      {
+        "campaign": "digits_mlp__s174",
+        "duplicates": 5,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s174/root_events.jsonl",
+        "sha256": "7ac7c5c980bed43c8f946f0776bd4eb10e95ea3f939c7647c0e1e0c83d62668c"
+      },
+      {
+        "campaign": "digits_mlp__s184",
+        "duplicates": 10,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s184/root_events.jsonl",
+        "sha256": "369a2b5a9f4571e0eba6f042e367dd811ac28341c669c6f97a162ba19bc09a18"
+      },
+      {
+        "campaign": "digits_mlp__s194",
+        "duplicates": 12,
+        "evaluated": 25,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s194/root_events.jsonl",
+        "sha256": "64102b8fd7c00fdc4f1f51469d36188c0325ab6d008df5472c3a98ec4e17f1ca"
+      },
+      {
+        "campaign": "digits_mlp__s204",
+        "duplicates": 10,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s204/root_events.jsonl",
+        "sha256": "6920b04d98a38220dccdda1e965f3923ecdafa37481b0ea4979d9fee73a7c6f2"
+      },
+      {
+        "campaign": "digits_mlp__s214",
+        "duplicates": 7,
+        "evaluated": 21,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s214/root_events.jsonl",
+        "sha256": "3fef5abb550cab48cfc406a4be43f264bc15b93dbb1321e1a7fed2aa9954e819"
+      },
+      {
+        "campaign": "digits_mlp__s224",
+        "duplicates": 16,
+        "evaluated": 29,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s224/root_events.jsonl",
+        "sha256": "cad845e561e467f553e9bde6932f49a81856b252b0859e2767644be135df3191"
+      },
+      {
+        "campaign": "digits_mlp__s234",
+        "duplicates": 7,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s234/root_events.jsonl",
+        "sha256": "4b571ba86de6a597b295fa3418698711740e7d1d43c23e7984d23accbad7d9de"
+      },
+      {
+        "campaign": "digits_mlp__s244",
+        "duplicates": 9,
+        "evaluated": 22,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s244/root_events.jsonl",
+        "sha256": "ecca5a02a907eba970144aa3a661c92f94191b6d12377c76d6a6ad994ff8cdb7"
+      },
+      {
+        "campaign": "digits_mlp__s254",
+        "duplicates": 4,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s254/root_events.jsonl",
+        "sha256": "cdee5113982d411a363152546a3ab79d3ae8175850bc2d1c3a71618f65b47055"
+      },
+      {
+        "campaign": "digits_mlp__s264",
+        "duplicates": 12,
+        "evaluated": 27,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s264/root_events.jsonl",
+        "sha256": "7a63d0a78b9a574f28043023680e6983ea79ce6f1e64adf94adff214191856da"
+      },
+      {
+        "campaign": "digits_mlp__s274",
+        "duplicates": 8,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/digits_mlp__s274/root_events.jsonl",
+        "sha256": "0f750b410ac15b830fdadffb370fa119b03964037d2723671b4bd6e46a9722fb"
+      }
+    ],
+    "openml_credit_approval": [
+      {
+        "campaign": "openml_credit_approval__s100",
+        "duplicates": 15,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s100/root_events.jsonl",
+        "sha256": "5c803250cbdb999497123a780429dabaf2f9017b97b561b6199f82c43f6529d3"
+      },
+      {
+        "campaign": "openml_credit_approval__s110",
+        "duplicates": 12,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s110/root_events.jsonl",
+        "sha256": "cb4f620ee3db65cb897eb136107abae4b0445c19e2d2652b25ad458345a36f44"
+      },
+      {
+        "campaign": "openml_credit_approval__s120",
+        "duplicates": 10,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s120/root_events.jsonl",
+        "sha256": "57d8eb63d1217cf29f677a6ab17a302c7863e342575c59339ee1ebc0b7be6b2b"
+      },
+      {
+        "campaign": "openml_credit_approval__s130",
+        "duplicates": 8,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s130/root_events.jsonl",
+        "sha256": "a078e61a44ac028839fa0c1206bdc6a9d0886cab3eb3eda2c522f120134942b8"
+      },
+      {
+        "campaign": "openml_credit_approval__s140",
+        "duplicates": 8,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s140/root_events.jsonl",
+        "sha256": "76f24bce34f8bca92e6b376828860283eb288bbd0e56db60bfa8c29414d31233"
+      },
+      {
+        "campaign": "openml_credit_approval__s150",
+        "duplicates": 13,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s150/root_events.jsonl",
+        "sha256": "6715dc84d6c9c467484545f92be496dcccc47ef3cf9c95b006272d653f1f7346"
+      },
+      {
+        "campaign": "openml_credit_approval__s160",
+        "duplicates": 13,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s160/root_events.jsonl",
+        "sha256": "31c7b5f92beb8a9937e36cc0c7e302c9e46decdfd359e80b84474c1b2bdcda4f"
+      },
+      {
+        "campaign": "openml_credit_approval__s170",
+        "duplicates": 12,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s170/root_events.jsonl",
+        "sha256": "9d215218ba88ccbaf76e73a7165fced936e1722754d16b2fb25231233addb278"
+      },
+      {
+        "campaign": "openml_credit_approval__s180",
+        "duplicates": 12,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s180/root_events.jsonl",
+        "sha256": "d4e248de33f21956916faaaced26602ba97f2fc8e38e6848b17fdcc559d99729"
+      },
+      {
+        "campaign": "openml_credit_approval__s190",
+        "duplicates": 13,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s190/root_events.jsonl",
+        "sha256": "868e0215b26d5005d7a5f919f8919af2aaf63959fcf941b88cc4a3b930f4eba5"
+      },
+      {
+        "campaign": "openml_credit_approval__s200",
+        "duplicates": 13,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s200/root_events.jsonl",
+        "sha256": "e2e9dc66e22d6a4a5f63aabc6bd995b1ec90f4b819383820053160a156998f02"
+      },
+      {
+        "campaign": "openml_credit_approval__s210",
+        "duplicates": 9,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s210/root_events.jsonl",
+        "sha256": "b2422429af266eafcbac19f053399b0f63dbc8f8818ba96f3b90b6ed758ea791"
+      },
+      {
+        "campaign": "openml_credit_approval__s220",
+        "duplicates": 12,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s220/root_events.jsonl",
+        "sha256": "8be2affaaf3a6f76996c145f4770ba8c26224dba4cfbc00ace3a8544db3b3767"
+      },
+      {
+        "campaign": "openml_credit_approval__s230",
+        "duplicates": 10,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s230/root_events.jsonl",
+        "sha256": "ebe1d16fe2c78e4a92563b7b32a4b652b061be7e6f804a8973fa56c5c25acd5c"
+      },
+      {
+        "campaign": "openml_credit_approval__s240",
+        "duplicates": 10,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s240/root_events.jsonl",
+        "sha256": "205a74f4c4d18c5bfa6e79cac44e6b5b86ebdbadbfa544a2cc79368aaba16033"
+      },
+      {
+        "campaign": "openml_credit_approval__s250",
+        "duplicates": 12,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s250/root_events.jsonl",
+        "sha256": "4d27cb19f306f12719272af3f3405d098799d3cdfd9a02a7c50352f83d0d96f6"
+      },
+      {
+        "campaign": "openml_credit_approval__s260",
+        "duplicates": 8,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s260/root_events.jsonl",
+        "sha256": "3ed9847ca0c15ff9737a15dfa1a35c2ca0232aa65cc1f07b5a5a66028120092f"
+      },
+      {
+        "campaign": "openml_credit_approval__s270",
+        "duplicates": 8,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_credit_approval__s270/root_events.jsonl",
+        "sha256": "9d863f7af7268fdbf23774509d170e1d845b93ec24afc96362ca58159b65db79"
+      }
+    ],
+    "openml_ionosphere": [
+      {
+        "campaign": "openml_ionosphere__s103",
+        "duplicates": 13,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s103/root_events.jsonl",
+        "sha256": "a75b6f10051b22de5562aa821a0b0b7fa3c27a5b5014598ad0ea804e0318f79f"
+      },
+      {
+        "campaign": "openml_ionosphere__s113",
+        "duplicates": 8,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s113/root_events.jsonl",
+        "sha256": "68a230a7758b26e4e5f128b2e388ef90cd1fb40d0b834d34342b83a73ead687c"
+      },
+      {
+        "campaign": "openml_ionosphere__s123",
+        "duplicates": 10,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s123/root_events.jsonl",
+        "sha256": "726499dc1007fc6e9ffb3a848105c53cc4679a433e8d7c8f9d1e202e3333c582"
+      },
+      {
+        "campaign": "openml_ionosphere__s133",
+        "duplicates": 15,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s133/root_events.jsonl",
+        "sha256": "108b27c01da3e1c5e7df59850ce52505e28f6b448e390e85f570825df8ae83a6"
+      },
+      {
+        "campaign": "openml_ionosphere__s143",
+        "duplicates": 16,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s143/root_events.jsonl",
+        "sha256": "a0595c8bdad1aaa757bf44c38bce84b41c128e64360a098ebb1b8cb9439daa9d"
+      },
+      {
+        "campaign": "openml_ionosphere__s153",
+        "duplicates": 11,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s153/root_events.jsonl",
+        "sha256": "6095ea47cb5e140d5a32247636bf4b8c46ce5e1a5c5cf8164b9b68f4ce4c60db"
+      },
+      {
+        "campaign": "openml_ionosphere__s163",
+        "duplicates": 13,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s163/root_events.jsonl",
+        "sha256": "11d3018cd73453526d9bda3183d2eaa56bde14703189a5693a76ec6121568d10"
+      },
+      {
+        "campaign": "openml_ionosphere__s173",
+        "duplicates": 11,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s173/root_events.jsonl",
+        "sha256": "1ef9cfe1a81981c816e96f3f8683e7e50d32e6300602b3aaa2d8e1aace35b239"
+      },
+      {
+        "campaign": "openml_ionosphere__s183",
+        "duplicates": 10,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s183/root_events.jsonl",
+        "sha256": "7ffae97e8e2244e5f5a910717ba3ed018378621c48d6213f6d1e28f028a8fa55"
+      },
+      {
+        "campaign": "openml_ionosphere__s193",
+        "duplicates": 13,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s193/root_events.jsonl",
+        "sha256": "44e0d6a8b77dea8e3ed45290b0763660cb24133eba6986b582067496dd68d8f8"
+      },
+      {
+        "campaign": "openml_ionosphere__s203",
+        "duplicates": 11,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s203/root_events.jsonl",
+        "sha256": "09ca0427b6beb2d2c8739816ed1f2f164a47d9b61333a00dfd915a781ca393f6"
+      },
+      {
+        "campaign": "openml_ionosphere__s213",
+        "duplicates": 9,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s213/root_events.jsonl",
+        "sha256": "51fb53b5c197dc13563f769b7372a50632fb10b2907e8a54ceaa3f8bf7ee085f"
+      },
+      {
+        "campaign": "openml_ionosphere__s223",
+        "duplicates": 11,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s223/root_events.jsonl",
+        "sha256": "275f7180273623c286236571af15aa5decdef1571bc09845846b468e551513fe"
+      },
+      {
+        "campaign": "openml_ionosphere__s233",
+        "duplicates": 12,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s233/root_events.jsonl",
+        "sha256": "02c1c802c28ad14fca4f3bd24ebfd2d046b51348ecc3b31b9d9b0d100b71b00d"
+      },
+      {
+        "campaign": "openml_ionosphere__s243",
+        "duplicates": 13,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s243/root_events.jsonl",
+        "sha256": "b050db6dafda0746bbaed53641fd1e49429d47c8560e001fa58b3bff952d0e2d"
+      },
+      {
+        "campaign": "openml_ionosphere__s253",
+        "duplicates": 7,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s253/root_events.jsonl",
+        "sha256": "f2024096fe95b0378f9d993139ae3af691295e67c102a6d57fa39493d11607d6"
+      },
+      {
+        "campaign": "openml_ionosphere__s263",
+        "duplicates": 9,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s263/root_events.jsonl",
+        "sha256": "c194aad84119839bac2904a089600af61eae93684981a8fc1f04a5c5852262f6"
+      },
+      {
+        "campaign": "openml_ionosphere__s273",
+        "duplicates": 7,
+        "evaluated": 20,
+        "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers/roots/openml_ionosphere__s273/root_events.jsonl",
+        "sha256": "e2ecd2d9ce3d5e9ffe5c0dd537e245fa850126109f71856e3c3e182dd9d1ccfb"
+      }
+    ]
+  },
+  "campaigns_per_node_per_draw": 4,
+  "comparability": {
+    "blocking": {
+      "W": {
+        "result": "match",
+        "value": 20
+      },
+      "duplicate_definition": {
+        "basis": "identical D27 initialization and emission blocks, novelty helper ASTs, and no changes to node/registry paths between pinned harness commits",
+        "new_harness": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+        "old_harness": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+        "result": "match"
+      },
+      "memory_mode": {
+        "result": "match",
+        "value": "append_only_summary"
+      },
+      "nodes": {
+        "result": "match",
+        "value": [
+          "digits_mlp",
+          "openml_credit_approval",
+          "openml_ionosphere"
+        ]
+      },
+      "proposer_and_quantization": {
+        "gguf_sha256": "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
+        "model": "Qwen/Qwen2.5-Coder-7B-Instruct",
+        "quantization": "Q4_K_M",
+        "result": "match"
+      }
+    },
+    "disclosed": {
+      "a4_side_query": "B1 charged side query does not enter manager context",
+      "cache_prompt": "sweep-1 default with actual HTTP bodies not retained; B1 explicit false",
+      "context_length": "sweep-1 8192; B1 32768",
+      "harness_pins": {
+        "b1": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+        "sweep1": "6adf3859de66c4814fcf376eed59880fbd8eeaf7"
+      },
+      "host_gpu": "sweep-1 deepthought TITAN; B1 TASL-7 RTX 4090, subject to host check",
+      "llamacpp": "same recorded commit 620d222; different sm_52/sm_89 build and B1 flags"
+    }
+  },
+  "draws": 10000,
+  "fallback": false,
+  "interpretation": "99% predictive resampling reference, not a confidence interval for the mean",
+  "lower": 0.42386590667728663,
+  "method": "stratified campaign bootstrap predictive reference; pooled duplicate/evaluated rate",
+  "python_version": "3.11.11",
+  "quantile_definition": "linear interpolation at p*(N-1), 0-indexed sorted values",
+  "schema": "b1_anchor_duplicate_reference/v1",
+  "script_sha256": "1a891b356354c145b543c4451ba699428e70db93b7bcc0011f1d3cfb1bb13600",
+  "seed": 20261107,
+  "source": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+  "source_commit": "e9641c1dd0ba6ee0f5a0373b2a6716b53fe64e58",
+  "source_index_sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+  "source_manifest_sha256": "f18f8a8b47ba17dc1da9e875d500831d6d0d03c69aa7d12b216444aeff1af98f",
+  "source_tree": "6b1c0c6154a604c391f8b7684a2d4ce34ccddd1a",
+  "upper": 0.5800007633587785
+}
