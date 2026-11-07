@@ -510,6 +510,9 @@ def test_production_b1_refuses_partial_candidate_selection_before_output(tmp_pat
     with pytest.raises(PreparationStop,match='full eligible candidate set'):
         exam_runner.evidence(runner,'b1',['qwen25_coder_7b'],False)
     monkeypatch.setattr(exam_runner,'load_config',lambda *a,**k:{'dryrun':False})
+    # Isolate the later selection guard; committed-config refusal is covered
+    # separately and otherwise fires before this synthetic partial selection.
+    monkeypatch.setattr(exam_runner,'require_committed_b1_config',lambda *a:'fixture-head')
     monkeypatch.setattr(exam_runner,'ExamRunner',lambda *a,**k:pytest.fail('runner must not start'))
     with pytest.raises(PreparationStop,match='full eligible candidate set'):
         exam_runner.main(['b1','--out',str(tmp_path/'out'),'--candidate','qwen25_coder_7b'])
@@ -824,8 +827,14 @@ def test_v2_configs_bind_rule_harness_cache_and_repairs(name):
     portal = json.loads(DEFAULT_CONFIG.read_text())
     differ = ('comment', 'rule', 'rule_sha256', 'harness_commit', 'paper_commit', 'host', 'authorizations', 'cache_prompt',
               'workers', 'llm_call_cap', 'nodes',
-              'd3_policy', 'gpu_uuid', 'stage_a_table', 'stage_a_table_sha256')
+              'd3_policy', 'gpu_uuid', 'stage_a_table', 'stage_a_table_sha256', 'anchor_duplicate_reference')
     assert {k: v for k, v in cfg.items() if k in portal and k not in differ} == {k: portal[k] for k in cfg if k in portal and k not in differ}
+    if name == 'exam_b1_v2.json':
+        ref = cfg['anchor_duplicate_reference']
+        reference = REPO / ref['source']
+        assert digest_file(reference) == ref['sha256']
+        actual = json.loads(reference.read_text())
+        assert (ref['lower'], ref['upper']) == (actual['lower'], actual['upper'])
 
 
 # ---------------------------------------------------------------- harness binding: cache_prompt false on the wire

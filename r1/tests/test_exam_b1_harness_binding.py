@@ -27,6 +27,9 @@ def test_clean_harness_source_hashes_and_dirty_rejection(tmp_path,monkeypatch):
 
 
 def test_worker_rejects_source_mismatch_before_output(tmp_path,monkeypatch):
+    # Exercise source verification after the separately tested authority gate.
+    monkeypatch.setattr(campaign,'_verify_b1_worker_input',lambda job:None)
+    monkeypatch.setattr(runtime,'host_check',lambda *a:None)
     monkeypatch.setattr(campaign,'require_worker_host',lambda job:None)
     monkeypatch.setattr(runtime,'b1_harness_sources',lambda *a:{'train.py':'actual'})
     job={'phase':'b1','out':str(tmp_path/'out'),'dryrun':False,'node':'digits_mlp',
