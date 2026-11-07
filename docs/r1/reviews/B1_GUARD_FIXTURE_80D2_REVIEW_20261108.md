@@ -1,0 +1,7 @@
+# Independent review: B1 synthetic node fixtures
+
+**Verdict: ACCEPTED for the fixture-only change** at `80d2a4af32de2aac482ba24bcc4f67f7259d82ce` (parent `3ba451d898ba520c6e284014c5b016ec663d53b6`). This does not accept a later integrated HEAD or authorize B1.
+
+The earlier integrated review `3cb2134ac0b65dc3b2257a64509d4a19f3d06fcb` recorded three failures caused by test `SimpleNamespace` objects lacking `name` when the OpenML guard inspects the node. The pinned harness `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` defines `NodeSpec.name` in `src/autoresearch/nodes/spec.py:34`. The candidate adds that field to the three synthetic objects, using `fixture` or `digits_mlp`; the diff changes no production code or original assertions. Existing OpenML-specific tests remain in the run, so the non-OpenML fixture names do not replace coverage of that path.
+
+Independently ran the audit worker artifact, worker artifact guard, and OpenML cache guard test files against that pinned local harness and the local harness venv with `AR_HARNESS_ROOT` and `PYTHONPATH` pointing to the harness and its `src`, plugin autoload disabled, and BLAS/OMP threads capped at one. Result: **18 passed in 18.41s**. This includes the three previously failing cases. The author's first collection failure from a missing harness `PYTHONPATH` is an environment setup error and is not counted as a passing run. No host, model or GPU was used. This focused result is not a full-suite result; final integration and its required review remain separate.
