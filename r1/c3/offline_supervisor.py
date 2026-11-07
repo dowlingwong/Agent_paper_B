@@ -66,7 +66,8 @@ def _kill_and_reap(group,pid,pidfd,waited):
         deadline=time.monotonic()+5
         while True:
             try:done,_=os.waitpid(pid,os.WNOHANG)
-            except ChildProcessError:done=pid
+            except ChildProcessError:
+                failures.append('bootstrap is not a waitable child');done=pid
             if done==pid:break
             if time.monotonic()>=deadline:
                 failures.append('bootstrap did not exit');break
@@ -141,10 +142,15 @@ def supervise(spec,delegated,out,*,protected_roots,timeout_seconds=300,bootstrap
             if any(fd==listener and mask&select.POLLIN for fd,mask in events):
                 observed=seccomp.monitor_one(listener,group.kill_fd,audit_fd)
                 raise SupervisorStop(f"STOP: prohibited syscall {observed['syscall']}")
-            if any(fd==listener and mask&(select.POLLERR|select.POLLHUP) for fd,mask in events):
+            if any(fd==listener and mask&(select.POLLERR|select.POLLHUP|select.POLLNVAL) for fd,mask in events):
                 raise SupervisorStop('STOP: listener error or hangup; monitor health is not established')
-            if any(fd==pidfd for fd,_ in events):
-                _,status=os.waitpid(pid,0);waited=True
+            if any(fd==pidfd and mask&(select.POLLERR|select.POLLHUP|select.POLLNVAL) for fd,mask in events):
+                raise SupervisorStop('STOP: bootstrap pidfd error or hangup')
+            if any(fd==pidfd and mask&select.POLLIN for fd,mask in events):
+                done,status=os.waitpid(pid,os.WNOHANG)
+                if done!=pid:
+                    raise SupervisorStop('STOP: pidfd readiness did not yield the bootstrap child')
+                waited=True
                 _wait_empty(group)
                 if not os.WIFEXITED(status) or os.WEXITSTATUS(status)!=0:
                     raise SupervisorStop('STOP: bootstrap/workload failed')
@@ -153,6 +159,8 @@ def supervise(spec,delegated,out,*,protected_roots,timeout_seconds=300,bootstrap
                         'cgroup':str(group.path),'scope':'candidate_not_replay_authorization'}
             if any(fd==listener for fd,_ in events):
                 raise SupervisorStop('STOP: listener failed before process completion')
+            if any(fd==pidfd for fd,_ in events):
+                raise SupervisorStop('STOP: unexpected bootstrap pidfd event')
     except BaseException as original:
         if parent is not None:
             parent.close();parent=None

@@ -54,7 +54,8 @@ def test_durable_record_and_group_population(tmp_path):
     finally:os.close(fd)
 
 
-@pytest.mark.parametrize('listener_error',['none','error','pending_hup'])
+@pytest.mark.parametrize('listener_error',['none','error','pending_hup','pidfd_error','pidfd_hup',
+                                           'pidfd_invalid','pidfd_premature','listener_invalid'])
 def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monkeypatch,listener_error):
     # Entire child/cgroup/kernel behavior is simulated; no fork or sockets occur.
     monkeypatch.setattr(sup.platform,'system',lambda:'Linux')
@@ -78,13 +79,22 @@ def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monke
     monkeypatch.setattr(sup.os,'fork',lambda:55)
     monkeypatch.setattr(sup.seccomp,'receive_listener',lambda _:events.append(('received',)) or 80)
     monkeypatch.setattr(sup.seccomp,'verify_listener',lambda fd:events.append(('verified',fd)))
-    monkeypatch.setattr(sup.os,'waitpid',lambda pid,flags:(55,0))
+    waits=[]
+    def fake_waitpid(pid,flags):
+        waits.append(flags)
+        if listener_error=='pidfd_premature' and len(waits)==1:return (0,0)
+        return (55,0)
+    monkeypatch.setattr(sup.os,'waitpid',fake_waitpid)
     monkeypatch.setattr(sup,'_wait_empty',lambda _:events.append(('empty',)))
     class Poll:
         def register(self,*args):pass
         def poll(self,*args):
             if listener_error=='error':return [(80,sup.select.POLLERR),(81,sup.select.POLLIN)]
             if listener_error=='pending_hup':return [(80,sup.select.POLLIN|sup.select.POLLHUP),(81,sup.select.POLLIN)]
+            if listener_error=='pidfd_error':return [(81,sup.select.POLLERR|sup.select.POLLIN)]
+            if listener_error=='pidfd_hup':return [(81,sup.select.POLLHUP)]
+            if listener_error=='pidfd_invalid':return [(81,sup.select.POLLNVAL)]
+            if listener_error=='listener_invalid':return [(80,sup.select.POLLNVAL),(81,sup.select.POLLIN)]
             return [(81,sup.select.POLLIN)]
     monkeypatch.setattr(sup.select,'poll',lambda:Poll())
     monkeypatch.setattr(sup.signal,'pidfd_send_signal',lambda *a:events.append(('pidfd_signal',)),raising=False)
@@ -92,7 +102,10 @@ def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monke
     real_close=os.close
     monkeypatch.setattr(sup.os,'close',lambda fd:events.append(('closed_fd',fd)) if fd in (80,81) else real_close(fd))
     if listener_error!='none':
-        expected='prohibited syscall' if listener_error=='pending_hup' else 'listener error or hangup'
+        if listener_error=='pending_hup':expected='prohibited syscall'
+        elif listener_error=='pidfd_premature':expected='pidfd readiness did not yield'
+        elif listener_error.startswith('pidfd_'):expected='pidfd error or hangup'
+        else:expected='listener error or hangup'
         with pytest.raises(sup.SupervisorStop,match=expected):
             sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
         assert ('killed',) in events
@@ -103,6 +116,7 @@ def test_mocked_supervisor_sequences_listener_before_workload_ack(tmp_path,monke
     assert events.index(('bound',55)) < events.index(('send',b'S'))
     assert events.index(('verified',80)) < events.index(('send',b'R'))
     assert ('empty',) in events
+    assert all(flags==sup.os.WNOHANG for flags in waits)
 
 
 def test_teardown_attempts_pidfd_even_if_cgroup_kill_fails(monkeypatch):
@@ -113,6 +127,18 @@ def test_teardown_attempts_pidfd_even_if_cgroup_kill_fails(monkeypatch):
     monkeypatch.setattr(sup.os,'waitpid',lambda *a:(55,0))
     monkeypatch.setattr(sup,'_wait_empty',lambda _:events.append('empty'))
     with pytest.raises(sup.SupervisorStop,match='teardown not verified'):
+        sup._kill_and_reap(Group(),55,81,False)
+    assert events==['group','pidfd','empty']
+
+
+def test_teardown_does_not_claim_reap_when_child_identity_is_lost(monkeypatch):
+    events=[]
+    class Group:
+        def kill(self):events.append('group')
+    monkeypatch.setattr(sup.signal,'pidfd_send_signal',lambda *a:events.append('pidfd'),raising=False)
+    monkeypatch.setattr(sup.os,'waitpid',lambda *a:(_ for _ in ()).throw(ChildProcessError()))
+    monkeypatch.setattr(sup,'_wait_empty',lambda _:events.append('empty'))
+    with pytest.raises(sup.SupervisorStop,match='not a waitable child'):
         sup._kill_and_reap(Group(),55,81,False)
     assert events==['group','pidfd','empty']
 
