@@ -64,8 +64,9 @@ def run_b1_audits(node, configs, job, out, cache, save_cache):
                 for _ in done: submit_one()
         except BaseException as exc:
             import sys
-            print(f'STOP: audit failure: {type(exc).__name__}: {exc}',file=sys.stderr,flush=True)
             for future in active: future.cancel()
+            try: print(f'STOP: audit failure: {type(exc).__name__}: {exc}',file=sys.stderr,flush=True)
+            except Exception: pass
             os.write(stop_fd,b'1')
             raise
 

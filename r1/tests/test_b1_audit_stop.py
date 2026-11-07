@@ -45,3 +45,15 @@ def test_audit_refuses_missing_stop_channel(tmp_path, monkeypatch):
     with pytest.raises(KeyError, match='R1_B1_STOP_FD'):
         campaign.run_b1_audits('digits_mlp', {},
             {'workers': 2, 'audit_seeds': [1]}, tmp_path, {}, lambda: None)
+
+
+def test_audit_broken_log_still_notifies_parent(tmp_path):
+    configs = {'a': {'files': {}}}
+    with patch('concurrent.futures.ProcessPoolExecutor', Pool), \
+         patch.dict(campaign.os.environ, {'R1_B1_STOP_FD': '12'}), \
+         patch.object(campaign.os, 'write') as notify, \
+         patch('builtins.print', side_effect=OSError('disk full')):
+        with pytest.raises(RuntimeError, match='audit failure'):
+            campaign.run_b1_audits('digits_mlp', configs,
+                {'workers': 1, 'audit_seeds': [1]}, tmp_path, {}, lambda: None)
+    notify.assert_called_once_with(12, b'1')

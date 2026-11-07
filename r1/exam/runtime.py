@@ -672,6 +672,8 @@ class ExamRunner:
         model=spec['runtime']['model_path'];server=self.cfg['server']
         thinking={**spec['thinking_policy'],'mode':mode,'budget':2048 if mode!='off' else 0}
         args=list(EXAM_SERVER_ARGS)+template_repair_args(spec)
+        if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+            (self.out/'servers'/spec['id']).mkdir(mode=0o700,parents=True,exist_ok=True)
         inst=lsi.LlamaServerInstance(self.out/'servers'/spec['id'],server['binary'],model_path=model,alias=spec['id'],
                                    ctx_size=ctx,n_gpu_layers=999,gpu_uuid=self.cfg['gpu_uuid'],extra_args=args,
                                    thinking_policy=thinking,generation=len(list((self.out/'servers'/spec['id']).glob('*.json'))),
@@ -751,7 +753,7 @@ class ExamRunner:
         if interrupt and self.state.get('phase')=='stage-a':
             raise PreparationStop('STOP: Stage A workers must not be signalled')
         self.space()
-        path=Path(job['out']);path.mkdir(parents=True,exist_ok=True)
+        path=Path(job['out']);path.mkdir(mode=0o700 if self.state.get('phase')=='b1' and not self.cfg.get('dryrun') else 0o777,parents=True,exist_ok=True)
         write_json(path/'job.json',job)
         env=(worker_environment() if self.state.get('phase')=='b1' else
              {**os.environ,'PYTHONPATH':str(REPO),'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','MKL_NUM_THREADS':'1'})
@@ -771,16 +773,14 @@ class ExamRunner:
             os.set_blocking(stop_read,False)
             env['R1_B1_STOP_FD']=str(stop_write)
             kwargs['pass_fds']=(*kwargs.get('pass_fds',()),stop_write)
+        self.child=None
+        killed=False
         try:
             with (path/'runner.log').open('ab') as log:
                 self.child=subprocess.Popen([sys.executable,'-m',module,'--job',str(path/'job.json')],env=env,cwd=REPO,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,**kwargs)
-        except BaseException:
-            if stop_read is not None: os.close(stop_read)
-            if stop_write is not None: os.close(stop_write)
-            raise
-        if stop_write is not None: os.close(stop_write)
-        killed=False
-        try:
+            if stop_write is not None:
+                os.close(stop_write)
+                stop_write=None
             self.state['in_progress']={'path':str(path),'pid':self.child.pid};self.save()
             watchdog=RunnerWatchdog(self.service,self.cfg['watchdog']) if self.service else None
             started=time.monotonic()
@@ -812,21 +812,24 @@ class ExamRunner:
             if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
                 self.state['shutdown_writes'] = ('Stopping B1-owned workers and the B1 server may append '
                     'runner/server logs and publish server and batch-state records; retain and report them.')
-            if self.child.poll() is None and self.state.get('phase')!='stage-a':
+            if self.child is not None and self.child.poll() is None and self.state.get('phase')!='stage-a':
                 try:
                     stop_tree(self.child.pid);self.child.wait(timeout=30)
                 except Exception as shutdown_error:
                     self.state['worker_shutdown_error'] = f'{type(shutdown_error).__name__}: {shutdown_error}'
                     try: print('STOP: B1-owned worker shutdown failed: '+self.state['worker_shutdown_error'],file=sys.stderr,flush=True)
                     except Exception: pass
-            self.state['interruptions'].append({'path':str(path),'error':str(exc),'returncode':self.child.returncode,'killed':killed,'time':time.time()})
+            self.state['interruptions'].append({'path':str(path),'error':str(exc),'returncode':self.child.returncode if self.child is not None else None,'killed':killed,'time':time.time()})
             if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
                 report_b1_stop_and_save(self,exc)
             else:
                 self.save()
             raise
         finally:
-            if stop_read is not None: os.close(stop_read)
+            for fd in (stop_read,stop_write):
+                if fd is not None:
+                    try: os.close(fd)
+                    except OSError: pass
         self.child=None
 
     def root(self, spec, phase, node, seed, mode, *, interrupt=False):
