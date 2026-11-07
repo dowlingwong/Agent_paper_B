@@ -197,7 +197,10 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
             # runner STOP is written and no real job or unknown PID is signalled.
             parent.send_signal(signal.SIGKILL);parent.wait(timeout=10)
         finally:
-            if parent.poll() is None: parent.kill();parent.wait(timeout=10)
+            # On any unexpected test failure, leave a still-live test-owned
+            # parent and its children for explicit inspection. Only the planned
+            # SIGKILL above is part of this synthetic crash experiment.
+            pass
     assert parent.returncode==-signal.SIGKILL
     # Observe disappearance of this recorded synthetic worker and server. The
     # server additionally logs its parent-loss self-exit; worker exit cause is
@@ -216,8 +219,21 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
     partial_tree=_tree_contents(partial)
     crashed=json.loads((out/'batch_state.json').read_text())
     assert crashed['status']=='RUNNING' and not crashed.get('stop_reason')
-    resumed=subprocess.run(args,cwd=ROOT,env=env,capture_output=True,text=True,timeout=180)
-    assert resumed.returncode==0,resumed.stdout+resumed.stderr
+    # This explicit helper is confined to this test-owned synthetic crash.
+    # It does not alter the runner's automatic refusal of an old lock.
+    from r1.tests.stagea_recovery_memory.synthetic_crash_lock import retire_test_owned_crash_lock
+    old_lock=(out/'runner.lock').read_bytes()
+    retired_lock=retire_test_owned_crash_lock(root,out,partial,records[0],
+        parent_pid=parent.pid,parent_returncode=parent.returncode,worker_pid=child_pid,server_pid=server_pid)
+    assert retired_lock.read_bytes()==old_lock
+    resumed_log=root/'SYNTHETIC_parent_resumed.log'
+    with resumed_log.open('x',encoding='utf-8') as output:
+        resumed=subprocess.Popen(args,cwd=ROOT,env=env,stdout=output,stderr=subprocess.STDOUT)
+        try:
+            resumed.wait(timeout=180)
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError('STOP: preserve still-running synthetic resumed process') from exc
+    assert resumed.returncode==0,resumed_log.read_text()
     result=json.loads((out/'batch_state.json').read_text())
     assert result['status']=='COMPLETE' and len(result['completed'])==11
     for key,(path,sha,check_sha) in completed.items():

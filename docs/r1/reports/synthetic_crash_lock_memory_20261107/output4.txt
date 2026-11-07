@@ -1,0 +1,16 @@
+test_actual_test_calls_helper_after_wait_before_resume (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock.SyntheticCrashLockTests.test_actual_test_calls_helper_after_wait_before_resume) ... ok
+test_collision_and_unsupported_keep_lock (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock.SyntheticCrashLockTests.test_collision_and_unsupported_keep_lock) ... ok
+test_post_rename_fsync_failure_preserves_archived_bytes (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock.SyntheticCrashLockTests.test_post_rename_fsync_failure_preserves_archived_bytes) ... ok
+test_recorded_stop_or_live_process_refused_before_rename (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock.SyntheticCrashLockTests.test_recorded_stop_or_live_process_refused_before_rename) ... ok
+test_state_change_before_retirement_is_refused (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock.SyntheticCrashLockTests.test_state_change_before_retirement_is_refused) ... ok
+test_valid_crash_retains_exact_lock_without_signal (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock.SyntheticCrashLockTests.test_valid_crash_retains_exact_lock_without_signal) ... ok
+test_wrong_pid_status_marker_or_server_is_refused (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock.SyntheticCrashLockTests.test_wrong_pid_status_marker_or_server_is_refused) ... ok
+test_actual_test_has_one_planned_sigkill_and_no_timeout_kill (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock_edges.SyntheticCrashLockEdges.test_actual_test_has_one_planned_sigkill_and_no_timeout_kill) ... ok
+test_lock_inode_change_before_retirement_is_refused (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock_edges.SyntheticCrashLockEdges.test_lock_inode_change_before_retirement_is_refused) ... ok
+test_symlink_record_fails_before_archive (r1.tests.stagea_recovery_memory.test_synthetic_crash_lock_edges.SyntheticCrashLockEdges.test_symlink_record_fails_before_archive) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.030s
+
+OK
+PURE_TEST_RESULT tests_run=10 failures=0 errors=0 skipped=0
