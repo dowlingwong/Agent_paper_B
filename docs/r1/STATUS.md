@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 7 November 2026 — B1 audit directory preservation (AI-assisted)
+
+The in-place preservation of audit work directories was independently accepted in `B1_AUDIT_PRESERVATION_R2_REVIEW_20261107.md` and integrated at `5f8b8f93`. B1 STOP quiescence, the pinned harness cleanup, storage capacity and full-suite execution remain open; `B1_STOP_QUIESCENCE_INVESTIGATION_20261107.md` records the independently reviewed STOP blocker. B1 has not started.
+
+Five synthetic fixture cleanup removals were independently accepted at `bcded1c5` (review `B1_MAC_SUITE_FIXTURE_PRESERVATION_REVIEW_20261107.md`); full-suite and indirect cleanup remain open.
+
 ## 26 October 2026 — approved archival complete; same-source retry active (AI-assisted)
 
 The independently reviewed one-time resolver archived six partials (**77,100,569,825 bytes**, full SHA before/after) and retained 17 history files, including the original STOP/logs. Journal: [https_short_stop_resolution.json](reports/exam_phase2_20261026/https_short_stop_resolution.json). Five verified GGUF files remain unchanged. Author-approved retry started with unchanged six-worker receiver, controller **1615560**, fresh `https_downloads_retry1.log` and PID file under portal `work/phase2/`. Remaining 17 artifacts total 255,100,593,248 bytes; after archival available space was 531,513,647,104 bytes. The 100 GB floor remains enforced. Executed recovery independently **ACCEPTED**: all six archived partials and 17 history files match full hashes; five completed artifact identities remain unchanged; six workers belong to the new controller. STOP 2 remains open (5/22 received). No real Stage A, B1 or B2 has started.
