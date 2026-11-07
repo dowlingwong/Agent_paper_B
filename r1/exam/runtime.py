@@ -788,7 +788,8 @@ class ExamRunner:
                 if stop_read is not None:
                     try: audit_stop=os.read(stop_read,1)
                     except BlockingIOError: audit_stop=b''
-                    if audit_stop: raise RuntimeError('STOP: audit worker failure; see runner.log')
+                    if audit_stop or (path/'audit_stop_notification').exists():
+                        raise RuntimeError('STOP: audit worker failure; see runner.log')
                 if self.state.get('phase')=='stage-a':
                     from r1.exam.cache_runtime import reject_unverified_lease
                     reject_unverified_lease()

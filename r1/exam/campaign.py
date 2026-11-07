@@ -67,7 +67,14 @@ def run_b1_audits(node, configs, job, out, cache, save_cache):
             for future in active: future.cancel()
             try: print(f'STOP: audit failure: {type(exc).__name__}: {exc}',file=sys.stderr,flush=True)
             except Exception: pass
-            os.write(stop_fd,b'1')
+            try: os.write(stop_fd,b'1')
+            except OSError:
+                # A broken notification pipe falls back to an exclusive marker.
+                # If both channels fail, the parent enforces its campaign deadline.
+                try:
+                    with (Path(out)/'audit_stop_notification').open('x') as marker:
+                        marker.write('STOP: audit failure; see runner.log\n')
+                except OSError: pass
             raise
 
 

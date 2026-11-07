@@ -57,3 +57,14 @@ def test_audit_broken_log_still_notifies_parent(tmp_path):
             campaign.run_b1_audits('digits_mlp', configs,
                 {'workers': 1, 'audit_seeds': [1]}, tmp_path, {}, lambda: None)
     notify.assert_called_once_with(12, b'1')
+
+
+def test_failed_pipe_creates_exclusive_parent_stop_marker(tmp_path):
+    configs = {'a': {'files': {}}}
+    with patch('concurrent.futures.ProcessPoolExecutor', Pool), \
+         patch.dict(campaign.os.environ, {'R1_B1_STOP_FD': '12'}), \
+         patch.object(campaign.os, 'write', side_effect=OSError('broken pipe')):
+        with pytest.raises(RuntimeError, match='audit failure'):
+            campaign.run_b1_audits('digits_mlp', configs,
+                {'workers': 1, 'audit_seeds': [1]}, tmp_path, {}, lambda: None)
+    assert (tmp_path / 'audit_stop_notification').read_text().startswith('STOP: audit failure')
