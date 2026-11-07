@@ -15,7 +15,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from r1.exam.campaign import write_json
 from r1.exam.stage_a import prefill_metadata
 from r1.exam.guards import artifact_label, digest_file, paired_instance_bootstrap
-from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders
+from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders, report_b1_stop_and_save
 from r1.exam.analyze import is_v2, thinking_off_capable
 from r1.scripts import llama_server_instance as lsi
 
@@ -541,8 +541,15 @@ def main(argv=None):
         runner.state.update(status='STOPPED',stop_reason=f'{type(exc).__name__}: {exc}')
         if preserve_running:
             runner.state['gpu_lease_after_stop']='NOT_CHECKABLE: runner marker is not evidence of held flock'
-        if runner.lock is not None: runner.save()
-        print(runner.state['stop_reason'],file=sys.stderr);return 1
+        if a.phase=='b1' and not cfg.get('dryrun'):
+            if runner.lock is not None:
+                report_b1_stop_and_save(runner,exc)
+            else:
+                print(runner.state['stop_reason'],file=sys.stderr)
+        else:
+            if runner.lock is not None: runner.save()
+            print(runner.state['stop_reason'],file=sys.stderr)
+        return 1
     finally: runner.close(preserve_running=preserve_running)
     # Only after close() so no later write can invalidate the batch_state digest
     # the guardian validates before releasing the lock.

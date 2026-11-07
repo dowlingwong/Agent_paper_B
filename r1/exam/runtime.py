@@ -27,6 +27,24 @@ REPO=Path(__file__).resolve().parents[2]
 
 TEMPLATE_REPAIR_SCHEMA='r1.exam.template_repair/v1'
 
+def report_b1_stop_and_save(runner, original):
+    """Best effort only: emit the original error before attempting STOP state I/O.
+
+    Stderr is not proof of durable publication.  Both output channels may fail;
+    callers must retain the STOP and must not infer that STATUS was published.
+    """
+    try:
+        print(f'STOP: original exception: {type(original).__name__}: {original}', file=sys.stderr, flush=True)
+    except Exception:
+        pass
+    try:
+        runner.save()
+    except Exception as save_error:
+        try:
+            print(f'STOP: state save failed: {type(save_error).__name__}: {save_error}', file=sys.stderr, flush=True)
+        except Exception:
+            pass
+
 def template_repair_args(spec) -> list[str]:
     """Declared per-candidate template repair (A1): serve the pinned repair template.
 
@@ -661,7 +679,11 @@ class ExamRunner:
             if self.child.poll() is None and self.state.get('phase')!='stage-a':
                 stop_tree(self.child.pid);self.child.wait(timeout=30)
             self.state['interruptions'].append({'path':str(path),'error':str(exc),'returncode':self.child.returncode,'killed':killed,'time':time.time()})
-            self.save();raise
+            if self.state.get('phase')=='b1' and not self.cfg.get('dryrun'):
+                report_b1_stop_and_save(self,exc)
+            else:
+                self.save()
+            raise
         self.child=None
 
     def root(self, spec, phase, node, seed, mode, *, interrupt=False):
