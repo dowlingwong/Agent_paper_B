@@ -110,7 +110,14 @@ def retire_runner_lock(path, identity, expected_sha):
     if hashlib.sha256(data).hexdigest() != expected_sha or json.loads(data).get('pid') != os.getpid():
         raise ContainmentStop('STOP: B1 runner lock contents changed')
     retired = path.parent / '_to_delete'
-    retired.mkdir(mode=0o700, exist_ok=False)
+    retired.mkdir(mode=0o700, exist_ok=True)
+    directory = retired.lstat()
+    parent = path.parent.lstat()
+    if (not stat.S_ISDIR(directory.st_mode) or not stat.S_ISDIR(parent.st_mode)
+            or directory.st_uid != os.getuid() or parent.st_uid != os.getuid()
+            or directory.st_mode & 0o022 or parent.st_mode & 0o022
+            or directory.st_dev != parent.st_dev):
+        raise ContainmentStop('STOP: B1 lock retirement directory is unsafe')
     destination = retired / 'runner.lock'
     libc = ctypes.CDLL(None, use_errno=True)
     rename = getattr(libc, 'renameat2', None)

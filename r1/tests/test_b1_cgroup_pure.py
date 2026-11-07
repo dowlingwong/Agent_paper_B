@@ -189,14 +189,17 @@ class EvidenceTests(unittest.TestCase):
         data = json.dumps({'pid': 55, 'host': 'fake'}).encode()
         info = Mock(st_dev=1, st_ino=2, st_uid=3, st_mode=stat.S_IFREG | 0o600)
         rename = Mock(return_value=0); libc = Mock(renameat2=rename)
-        with patch.object(control.Path, 'lstat', return_value=info), \
+        directory = Mock(st_dev=1, st_uid=3, st_mode=stat.S_IFDIR | 0o700)
+        def lstat(path):
+            return info if path.name == 'runner.lock' else directory
+        with patch.object(control.Path, 'lstat', autospec=True, side_effect=lstat), \
              patch.object(control.Path, 'read_bytes', return_value=data), \
              patch.object(control.Path, 'mkdir') as mkdir, \
              patch.object(control.os, 'getuid', return_value=3), \
              patch.object(control.os, 'getpid', return_value=55), \
              patch.object(control.ctypes, 'CDLL', return_value=libc):
             control.retire_runner_lock('/owned/runner.lock', (1, 2, 3), hashlib.sha256(data).hexdigest())
-        mkdir.assert_called_once_with(mode=0o700, exist_ok=False)
+        mkdir.assert_called_once_with(mode=0o700, exist_ok=True)
         self.assertEqual(rename.call_args.args[-1].value, 1)
 
     def test_lock_retirement_refuses_changed_inode_before_creating_directory(self):
