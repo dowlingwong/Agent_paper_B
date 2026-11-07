@@ -1,6 +1,6 @@
 # TASL-7 B1 real-worker seed determinism: execution candidate
 
-AI-assisted (Codex). **Proposed engineering-only procedure; independent review required before execution.** This does not authorize B1 or establish any site observation. It is for `r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic`: two real pinned `LocalWorker` invocations on the synthetic CPU `tabular_mlp` node, both with joint seed 7001. No LLM server or GPU is needed. It does not read B1 audit values. The current Paper B audit copies the selected node into a unique pytest-owned temporary directory. The test uses `preserve_node_outputs=False`; the harness runs `python3 train.py`, and the pinned `tabular_mlp` benchmark writes its metrics to stdout and does not itself persist model files. Its two separate trial logs and other outputs must remain inspectable. This narrow test is not the production B1 audit overlay, server check, or lease check.
+AI-assisted (Codex). **Proposed engineering-only procedure; independent review required before execution.** This does not authorize B1 or establish any site observation. It runs `r1/tests/test_b1_real_worker_determinism.py::test_b1_real_worker_run_is_seed_deterministic`: two real pinned `LocalWorker` invocations on the synthetic CPU `tabular_mlp` node, both with joint seed 7001. It uses the same node, seed, real worker and exact metric-equality assertion as the original general test, adding the B1 `preserve_node_outputs=True` and `stop_on_invalid=True` path and finite-metric assertion. The original test remains unchanged; independent review must decide whether this B1-specific version meets the author’s real-worker determinism condition. No LLM server or GPU is needed. It does not read B1 audit values. The current Paper B audit copies the selected node into a unique pytest-owned temporary directory; the harness runs `python3 train.py`, and the pinned `tabular_mlp` benchmark writes its metrics to stdout and does not itself persist model files. Its two separate trial logs and other outputs must remain inspectable. This narrow test does not establish server or lease behavior.
 
 ## Prerequisites and boundary
 
@@ -63,7 +63,7 @@ env -i HOME="$base/home" TMPDIR="$base/tmp" PATH="$venv_bin:/usr/bin:/bin" \
   PYTHONPATH="$base/paper:$base/harness/src" AR_HARNESS_ROOT="$base/harness" \
   PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 CUDA_VISIBLE_DEVICES='' \
   "$HOST_PYTHON" -m pytest -p no:cacheprovider --basetemp="$base/pytest" \
-  -v r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic \
+  -v r1/tests/test_b1_real_worker_determinism.py::test_b1_real_worker_run_is_seed_deterministic \
   > "$base/pytest.log" 2>&1
 cat "$base/pytest.log"
 find "$base/pytest" -type f -name run.log -print -exec sha256sum {} \; -exec cat {} \;
