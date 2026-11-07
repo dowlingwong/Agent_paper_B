@@ -16,7 +16,7 @@
   "rule": "r1/exam/rules/x5_rule_v2.yaml",
   "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
   "value_grids": "r1/exam/value_grids.yaml",
-  "paper_commit": "bab4b8cb0569b94c23f2828f1a8cdb5ce3782dcf",
+  "paper_commit": "fde124751be70d96aabbdbbce4ea565ee9735a49",
   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
   "prompts": "/home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl",
   "prompts_sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
@@ -47,10 +47,10 @@
   ],
   "stage_a_table": "/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json",
   "anchor_duplicate_reference": {
-    "source": "TODO_VERIFY_ON_HOST",
-    "sha256": "TODO_VERIFY_ON_HOST",
-    "lower": "TODO_VERIFY_ON_HOST",
-    "upper": "TODO_VERIFY_ON_HOST"
+    "source": "docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json",
+    "sha256": "84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd",
+    "lower": 0.42386590667728663,
+    "upper": 0.5800007633587785
   },
   "authorizations": {
     "b1": "docs/r1/authorizations/trackx_b1_20261105.md",
