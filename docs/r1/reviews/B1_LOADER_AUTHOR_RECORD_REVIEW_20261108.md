@@ -1,0 +1,7 @@
+# Independent review: author loader decision and STATUS
+
+**ACCEPTED for the author-decision record and STATUS update** at `3c2c566682628562375feec86ae89bec823848ec`. No host or loader was accessed or rerun in this review.
+
+Compared the full author response relayed by the coordinating agent with the verbatim quotation in `B1_LOADER_ONCE_WITH_SSH_RECEIPT_20261108.md`: the text matches, including the SSH example and all five numbered conditions. Decoding the PLAN table row's HTML entities, escaped pipes and `<br>` line breaks reproduces that quotation exactly. The row records the one-time recheck, preserves the first attempt as incomplete, requires the same independent reviewer and preserves the other B1 gates; it contains no new author decision.
+
+`B1_LOADER_ONCE_RESULT_REVIEW_20261108.md`, authored in review commit `7b621532100fab7431b617e2789190f9c416a1cc` and integrated as `ab0ef0b5ce2dd22e2cdf12431a3761e3c20a29de`, reports acceptance by the same reviewer of the authorized repeat and expressly retains the first attempt as incomplete. The STATUS wording accurately reports that scoped result, preserves the first attempt label and leaves the other launch gates open. Independently checked the retained first, source and repeat log SHA-256 values against that result review; these local digests alone do not independently prove the remote scene or author identity. The result does not authorize B1, B2, X.7 or sweep 2.
