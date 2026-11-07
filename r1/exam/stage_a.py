@@ -429,7 +429,7 @@ def main(argv=None):
         journal_rows(output/'d3_non_generation_calls.jsonl'),prompts,alias=spec['id'],ctx_size=job['ctx'],
         schema_format=schema_format,expect_grammar=bool(spec['thinking_policy'].get('switchable') is True or spec['thinking_policy']['mode']=='always_on'),
         thinking_enabled=spec['thinking_policy']['mode']!='off',identity=identity,
-        nongen_expected=None if cfg.get('dryrun') else result.get('nongen_expected'))
+        nongen_expected=result.get('nongen_expected'))
     if not cfg.get('dryrun'):
         from r1.exam.fit import estimate
         source=Path(spec['runtime']['model_config_path'])

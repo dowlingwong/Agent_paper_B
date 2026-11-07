@@ -1,8 +1,8 @@
 """Synthetic Stage A -> B1 process-loss recovery, never a lease/host test.
 
 Stage A's Mac-unavailable D3 and process identity are explicitly monkeypatched
-inside this test only; the Stage A orchestrator and probe calculations still
-run over fabricated replies. B1 uses its actual parent/child code and local fake
+inside this test and its test-only worker wrapper; the actual Stage A worker
+subprocess, orchestrator, recorder journals and calculations run over fake replies. B1 uses its actual parent/child code and local fake
 llama-server. The deliberately killed parent and its children are test-owned.
 No STOPPED batch is resumed, no real model or GPU is used.
 """
@@ -40,21 +40,19 @@ def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
     """Generate five Stage A rows through the real Stage A calculations.
 
     This deliberately does not exercise the lease, cold-cache identity, native
-    server, independent qualification, or worker subprocess. Those remain site
+    server, or independent qualification. Those remain site
     checks and are not represented by the resulting DRYRUN fixture.
     """
     from r1.exam import cache_runtime, stage_a
     from r1.scripts import exam_runner
-    from r1.scripts.c3_fake_ollama import proposal_for
     from r1.exam.campaign import write_json
-    from autoresearch.llm.providers import manager_response_format
 
     monkeypatch.setattr(stage_a,'require_d3_evidence',lambda:None)
     monkeypatch.setattr(cache_runtime,'reject_unverified_lease',lambda:None)
-    monkeypatch.setattr(cache_runtime,'capture_parent_identity',lambda *a,**k:{'scope':'SYNTHETIC'})
+    identity={'pid':987654,'process_start_ticks':123,'binary':str(root/'fake_llama_server'),
+              'fresh':True,'cold_verified':False,'scope':'SYNTHETIC author assumption fixture'}
+    monkeypatch.setattr(cache_runtime,'capture_parent_identity',lambda *a,**k:identity)
     monkeypatch.setattr(cache_runtime,'reject_unverified_cold',lambda *a:None)
-    monkeypatch.setattr('r1.exam.cache_descriptive.true_replay',lambda *a,**k:{'synthetic':True})
-    prompts=stage_a.load_prompts(cfg['prompts'],cfg['prompts_sha256'],dryrun=True)
     registry=yaml.safe_load(Path(cfg['registry']).read_text())
     selected={'random_valid','scripted','qwen25_coder_7b','qwen38_27b','gemma4_31b'}
     specs=registry['software_anchors']+[x for x in registry['candidates'] if x['role']=='anchor']+\
@@ -62,20 +60,6 @@ def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
     specs=[copy.deepcopy(x) for x in specs if x['id'] in selected]
     for spec in specs:
         if spec.get('runtime'): spec['runtime']['footprint_mib']=1
-    class Recorder:
-        def completion(self,payload):
-            return {'tokens_evaluated':len(payload['prompt']),'tokens_predicted':1}
-        def chat(self,prompt,*,seed,**kwargs):
-            text=json.dumps(proposal_for(prompt,seed))
-            return {'choices':[{'message':{'content':text,'reasoning_content':'DRYRUN'}}],
-                    'usage':{'completion_tokens_details':{'reasoning_tokens':1}}}
-    def render(messages):
-        return ''.join(f"{m['role']}: {m['content']}\n" for m in messages)+'assistant: '
-    class NonGeneration:
-        def post(self,route,payload):
-            if route=='/tokenize': return {'tokens':[1]}
-            if route=='/apply-template': return {'prompt':render(payload['messages'])}
-            raise AssertionError(route)
     class Runner:
         def __init__(self):
             self.cfg=cfg;self.out=root/'stage-a';self.state={'completed':{}};self.service=None
@@ -88,13 +72,18 @@ def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
         def stop_service(self): self.service=None
         def run_job(self,job,module):
             assert module=='r1.exam.stage_a'
-            rec=Recorder();nongen=NonGeneration()
-            result=stage_a.run_stage_a(self.service,job['candidate'],prompts,
-                gpu_sample=lambda:{'free_mib':20000,'used_mib':1000},
-                schema_format=manager_response_format(),dryrun=True,template_renderer=render,
-                cache_context={'false_recorder':rec,'non_generation_recorder':nongen})
-            assert result['passed'],result
-            write_json(Path(job['out'])/'stage_a.json',result)
+            output=Path(job['out']);output.mkdir(parents=True,exist_ok=False)
+            job_path=output/'SYNTHETIC_stage_a_job.json';write_json(job_path,job)
+            worker=ROOT/'r1/tests/fixtures/b1_stagea_worker_mock.py'
+            env={**os.environ,'PYTHONPATH':str(ROOT),'PYTHONDONTWRITEBYTECODE':'1'}
+            proc=subprocess.Popen([sys.executable,str(worker),str(job_path)],cwd=ROOT,env=env,
+                                  stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            stdout,stderr=proc.communicate(timeout=180)
+            (output/'SYNTHETIC_stage_a_worker.log').write_text(stdout+stderr)
+            assert proc.returncode==0,stdout+stderr
+            receipt=json.loads((output/'SYNTHETIC_stage_a_worker_identity.json').read_text())
+            assert receipt=={'label':'SYNTHETIC_ONLY','pid':proc.pid,'parent_pid':os.getpid(),
+                             'job':str(job_path),'transport':'in-memory fake; no socket'}
     runner=Runner();exam_runner.stage_a(runner,list(selected))
     table=json.loads((runner.out/'stage_a_table.json').read_text())
     assert len(table['rows'])==5 and {x['candidate'] for x in table['rows']}==selected
@@ -104,6 +93,11 @@ def _stage_a_with_fabricated_transport(root, cfg, monkeypatch):
             assert row['prefill_tokens']==32767 and row['prefill_generated_tokens']==1
             assert len(row['template_checks'])==5 and len(row['template_checks_frozen'])==50
             assert row['schema_parse_successes']==50 and row['free_parse_successes']==50
+            order=row['d3_local_journal_order']
+            assert order['true_calls']==200 and order['true_prompts']==50 and order['true_completed_before_recorded_primary'] is True
+            journal=runner.out/row['candidate']/'stage-a'/'32768'/'d3_non_generation_calls.jsonl'
+            requests=[json.loads(line) for line in journal.read_text().splitlines()]
+            assert sum(x.get('event')=='request_attempt' for x in requests)==56
     return runner.out/'stage_a_table.json'
 
 
@@ -118,6 +112,10 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
     from r1.exam.guards import digest_file
     root=tmp_path/'stagea_b1_synthetic';config_path=prepare(root)
     cfg=json.loads(config_path.read_text());registry=yaml.safe_load(Path(cfg['registry']).read_text())
+    prompts=Path(cfg['prompts']);rows=[json.loads(x) for x in prompts.read_text().splitlines()]
+    for i,row in enumerate(rows): row['trial_id']=f'SYNTHETIC-{i:02d}'
+    prompts.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    cfg['prompts_sha256']=digest_file(prompts)
     specs=registry['software_anchors']+registry['candidates']+registry.get('sensitivities',[])
     cfg.update(rule=str(ROOT/'r1/exam/rules/x5_rule_v2.yaml'),
                rule_sha256=digest_file(ROOT/'r1/exam/rules/x5_rule_v2.yaml'),
@@ -215,3 +213,18 @@ def test_stagea_to_b1_owned_parent_crash_and_recovery(tmp_path,monkeypatch):
 def test_recorded_stop_is_never_a_crash_recovery_candidate(state):
     from r1.exam.runtime import PreparationStop,reject_stopped_batch
     with pytest.raises(PreparationStop,match='must not be resumed'): reject_stopped_batch(state)
+
+
+def test_stagea_worker_mock_rejects_non_dryrun_before_any_receipt(tmp_path):
+    from r1.scripts.exam_dryrun import prepare
+    root=tmp_path/'forbidden_stagea_fixture';cfg_path=prepare(root);cfg=json.loads(cfg_path.read_text())
+    cfg['dryrun']=False
+    out=root/'worker';out.mkdir()
+    job=out/'job.json';job.write_text(json.dumps({'config':cfg,'out':str(out)}))
+    worker=ROOT/'r1/tests/fixtures/b1_stagea_worker_mock.py'
+    result=subprocess.run([sys.executable,str(worker),str(job)],cwd=ROOT,
+                          env={**os.environ,'PYTHONPATH':str(ROOT),'PYTHONDONTWRITEBYTECODE':'1'},
+                          capture_output=True,text=True,timeout=10)
+    assert result.returncode!=0 and 'STOP: synthetic Stage A fixture cannot run' in result.stderr
+    assert not (out/'SYNTHETIC_stage_a_worker_identity.json').exists()
+    assert not (out/'stage_a.json').exists()
