@@ -148,8 +148,20 @@ def _verify_b1_worker_input(job):
 def _collect_b1_review(job):
     """Collect a B1 campaign with the authorized observer and cache evidence."""
     if job.get('phase') != 'b1': raise RuntimeError('STOP: B1 candidate refuses other phases')
+    if type(job.get('dryrun')) is not bool:
+        raise RuntimeError('STOP: B1 worker dryrun must be a boolean')
     out=Path(job['out'])
-    if not job['dryrun']:
+    if job['dryrun']:
+        cfg=job.get('authority_config')
+        if not isinstance(cfg,dict) or cfg.get('dryrun') is not True:
+            raise RuntimeError('STOP: B1 DRYRUN worker configuration mismatch')
+        # Reuse the production runner's development-host, marked-root and
+        # output containment rules before making the campaign directory.
+        from r1.exam.runtime import host_check
+        host_check(cfg,out)
+        if not any((p/'.dryrun').is_file() for p in out.resolve().parents):
+            raise RuntimeError('STOP: unmarked DRYRUN child')
+    else:
         # No worker output, node copy or manager request precedes this check.
         from r1.exam.b1_worker_contract import verify_worker_contract
         verify_worker_contract(job)
@@ -161,7 +173,6 @@ def _collect_b1_review(job):
         from r1.exam.runtime import host_check
         host_check(job.get('authority_config',{}),out)
         require_worker_host(job)
-    if job['dryrun'] and not any((p/'.dryrun').is_file() for p in out.resolve().parents): raise RuntimeError('STOP: unmarked DRYRUN child')
     if not job['dryrun']:
         from r1.exam.runtime import b1_harness_sources
         if job.get('harness_commit')!=job.get('authority_config',{}).get('harness_commit') or \
