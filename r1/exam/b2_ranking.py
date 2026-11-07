@@ -67,8 +67,8 @@ def synthetic_b2_rank(manifests, *, finalists, nodes, instances_per_node, rule_s
             raise ValueError('B2 extra primary candidate')
         if cid in primary:
             raise ValueError('B2 duplicate primary candidate')
-        if m.get('mode') != 'off':
-            raise ValueError('B2 primary mode must be thinking-off')
+        if m.get('mode') != 'off' or m.get('primary_mode') != 'off':
+            raise ValueError('B2 primary mode and primary_mode must both be thinking-off')
         rows = m.get('final_audits')
         if not isinstance(rows, list):
             raise ValueError('B2 final audit grid missing')

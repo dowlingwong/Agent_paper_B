@@ -14,7 +14,7 @@ def manifest(candidate, y, gpu):
     audits = [{'node': n, 'instance_id': f'{n}__s{s}', 'seeds': list(range(9201, 9211)),
                'metrics': [y] * 10, 'final_y': y} for n in NODES for s in (9011, 9012)]
     return {'label': 'EXAM', 'execution_label': 'DRYRUN', 'phase': 'b2', 'status': 'COMPLETE',
-            'candidate': candidate, 'source_label': 'fixture', 'rule_sha256': SHA, 'purpose': 'primary', 'mode': 'off',
+            'candidate': candidate, 'source_label': 'fixture', 'rule_sha256': SHA, 'purpose': 'primary', 'mode': 'off', 'primary_mode': 'off',
             'final_audits': audits, 'gpu_hours': gpu}
 
 
@@ -51,7 +51,8 @@ def test_public_api_synthetic_plan_only_and_production_still_stops():
 
 
 @pytest.mark.parametrize('mutation', ['missing', 'duplicate', 'extra', 'wrong_node', 'wrong_seed', 'duplicate_finalist',
-                                      'missing_finalist', 'extra_finalist', 'wrong_mode', 'wrong_sha', 'evidence'])
+                                      'missing_finalist', 'extra_finalist', 'wrong_mode', 'wrong_primary_mode',
+                                      'missing_primary_mode', 'wrong_sha', 'evidence'])
 def test_grid_and_authority_containment_fails_closed(mutation):
     rows = [manifest('a', .6, 4), manifest('b', .7, 3)]
     if mutation == 'missing': rows[0]['final_audits'].pop()
@@ -63,6 +64,8 @@ def test_grid_and_authority_containment_fails_closed(mutation):
     if mutation == 'missing_finalist': rows.pop()
     if mutation == 'extra_finalist': rows.append(manifest('c', .8, 1))
     if mutation == 'wrong_mode': rows[0]['mode'] = 'on'
+    if mutation == 'wrong_primary_mode': rows[0]['primary_mode'] = 'on'
+    if mutation == 'missing_primary_mode': rows[0].pop('primary_mode')
     if mutation == 'wrong_sha': rows[0]['rule_sha256'] = 'b' * 64
     if mutation == 'evidence': rows[0]['execution_label'] = 'EVIDENCE'
     with pytest.raises(ValueError): rank(rows)
