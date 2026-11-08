@@ -1,0 +1,148 @@
+{
+  "label": "EXAM",
+  "execution_label": "DRYRUN",
+  "status": "COMPLETE",
+  "phase": "b1",
+  "candidate": "qwen25_coder_7b",
+  "source_label": "vendor Q4_K_M",
+  "mode": "off",
+  "instance_seed": 9001,
+  "node": "digits_mlp",
+  "proposal_schema": "manager_proposal/v1",
+  "observer": "exam_self_forecast/v1",
+  "compute_budget": {
+    "exhausted": true,
+    "llm_calls": 4,
+    "llm_calls_remaining": 4,
+    "llm_calls_used": 4,
+    "max_llm_calls": 8,
+    "max_worker_runs": 2,
+    "max_worker_seconds": null,
+    "worker_runs": 2,
+    "worker_runs_remaining": 0,
+    "worker_runs_used": 2,
+    "worker_seconds": 0.41549974906956777,
+    "worker_seconds_remaining": null,
+    "worker_seconds_used": 0.41549974906956777
+  },
+  "termination": "worker_cap",
+  "job_binding": "4ff72f218cbe81530c648263c23e120911cfc162fb525fa4c14e95ea7a4cca4d",
+  "job_sha256": "626c89f874dffc073cea117d3ff226a2db60887cec43948d24090d2bd9709c5d",
+  "evidence_hashes": {
+    "root_trials.jsonl": "5f1dc22449f6c397cff63cde34404c62143db86e61c56be889ec4ff2fa2535a9",
+    "root_events.jsonl": "8adc36fca3c373ce89d473dcc17c98a0afe9bd5b7df72bb693bf7a57b8ce0af3",
+    "audit_cache.json": "75eb9e2c98cc99e2189e496a7a1784bf07597c0c1ddbddca919a706e9a1fdc52",
+    "audit_configs.json": "150320688d7fb7aa90a6dbfca2b532602af8679a4112b96e741671cfff118cdd",
+    "a4_observer_requests.jsonl": "ad5eddb754c47988db0b2c0fa90ff2b138bb4cb3ee6e36f16635492bf65ebe35"
+  },
+  "cache_prompt": {
+    "cache_prompt": false,
+    "llm_call_events": 4,
+    "llm_call_failed_events": 0,
+    "trial_llm_call_records": 2,
+    "all_false": true
+  },
+  "observer_evidence": {
+    "calls": 2,
+    "sha256": "ad5eddb754c47988db0b2c0fa90ff2b138bb4cb3ee6e36f16635492bf65ebe35"
+  },
+  "diagnostics": {
+    "trials": 2,
+    "evaluated": 2,
+    "invalid": 0,
+    "duplicates": 0,
+    "noops": 0,
+    "parse_failed": 0,
+    "forecast_queries": 2,
+    "forecast_query_failed": 0
+  },
+  "audited_proposals": [
+    {
+      "proposal_id": "EXAM:digits_mlp__s9001:t002",
+      "instance_id": "digits_mlp__s9001",
+      "node": "digits_mlp",
+      "mode": "off",
+      "audit_seeds": [
+        9101,
+        9102,
+        9103,
+        9104
+      ],
+      "candidate_hash": "3c886bb630e4a3f01359",
+      "incumbent_hash": "ce86c8d4ddb4f66271e5",
+      "candidate_metrics": [
+        0.58919,
+        0.51347,
+        0.5795399999999999,
+        0.59527
+      ],
+      "incumbent_metrics": [
+        0.50837,
+        0.50709,
+        0.57619,
+        0.53847
+      ],
+      "delta_audit": 0.03683749999999997,
+      "se": 0.019109407968764158,
+      "k": 4,
+      "sd": 0.038218815937528315,
+      "p_delta_positive": 0.5599999999999999,
+      "p_no_effect": 0.2
+    }
+  ],
+  "replay_checks": {
+    "rows": 2,
+    "proposals": 1,
+    "zero_delta_violations": 0,
+    "repeat_metric_violations": 0,
+    "skipped_invalid": 0,
+    "no_edit_rows": 0
+  },
+  "d28": {
+    "schema": "r1.liveness/2",
+    "label": "ENGINEERING_ONLY",
+    "generated_utc": "20261105T011433Z",
+    "manager_kind": "langgraph",
+    "memory_mode": "append_only_summary",
+    "criteria": {
+      "keep_after_trial_1": "at least one keep after trial 1",
+      "active_novelty_fraction": ">= 0.5 of evaluated trials; novelty_source events or replayed",
+      "invalid_rate": "< 0.3"
+    },
+    "nodes": {
+      "digits_mlp": {
+        "node": "digits_mlp",
+        "pass": false,
+        "failed_criteria": [
+          "keep_after_trial_1"
+        ],
+        "criteria": {
+          "keep_after_trial_1": {
+            "required": "at least 1 keep with budget_index > 1",
+            "observed": 0
+          },
+          "active_novelty_fraction": {
+            "required": ">= 0.5",
+            "observed": 1.0,
+            "novel_trials": 2,
+            "evaluated_trials": 2,
+            "equals_incumbent_trials": 0,
+            "seen_before_trials": 0,
+            "novelty_source": "replayed"
+          },
+          "invalid_rate": {
+            "required": "< 0.3",
+            "observed": 0.0
+          }
+        },
+        "inactive_key_rejections": 0,
+        "novelty_source": "replayed",
+        "n_trials": 2,
+        "ledgers": [
+          "/private/tmp/b1-batch-synthetic-evidence-20261105/test_b1_v2_parent_to_child_syn0/synthetic_b1/b1/qwen25_coder_7b/b1/off/digits_mlp__s9001/root_trials.jsonl"
+        ]
+      }
+    }
+  },
+  "final_audits": []
+}
