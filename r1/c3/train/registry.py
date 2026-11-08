@@ -23,6 +23,8 @@ from pathlib import Path
 
 import yaml
 
+from r1.c3.analysis_guard import refuse_sealed
+
 FREE_FLOOR_BYTES = 100_000_000_000
 # Phase 0 identities and revisions (PORTAL_TRACKP_HOST_FACTS_20261026.md); Kev at its v1.0 release tag
 PINS = {
@@ -47,6 +49,7 @@ class RegistryError(RuntimeError):
 
 
 def sha256_file(path: Path) -> str:
+    refuse_sealed(path)
     h = hashlib.sha256()
     with open(path, "rb") as fh:
         for chunk in iter(lambda: fh.read(1 << 22), b""):
@@ -55,6 +58,7 @@ def sha256_file(path: Path) -> str:
 
 
 def git_blob_sha1(path: Path) -> str:
+    refuse_sealed(path)
     data = path.read_bytes()
     return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
 
@@ -80,6 +84,7 @@ def check_floor(path: Path) -> None:
 
 
 def download(key: str, models_dir: Path) -> dict:
+    refuse_sealed(models_dir)
     from huggingface_hub import snapshot_download
     repo, rev = PINS[key]
     models_dir.mkdir(parents=True, exist_ok=True)
@@ -91,11 +96,13 @@ def download(key: str, models_dir: Path) -> dict:
 
 
 def verify_dir(key: str, target: Path) -> dict:
+    refuse_sealed(target)
     repo, rev = PINS[key]
     tree = hub_tree(repo, rev)
     files, problems = {}, []
     for rel, meta in sorted(tree.items()):
         p = target / rel
+        refuse_sealed(p)
         if not p.is_file():
             problems.append(f"missing {rel}")
             continue
@@ -109,8 +116,12 @@ def verify_dir(key: str, target: Path) -> dict:
         elif meta["oid"] and git_blob_sha1(p) != meta["oid"]:
             problems.append(f"{rel}: git blob sha1 != hub {meta['oid']}")
         files[rel] = {"size": size, "sha256": sha, "verified_against": "lfs_sha256" if meta["lfs_sha256"] else "git_blob_sha1"}
-    extra = sorted(str(p.relative_to(target)) for p in target.rglob("*")
-                   if p.is_file() and ".cache" not in p.parts and str(p.relative_to(target)) not in tree)
+    extra = []
+    for p in target.rglob("*"):
+        refuse_sealed(p)
+        if p.is_file() and ".cache" not in p.parts and str(p.relative_to(target)) not in tree:
+            extra.append(str(p.relative_to(target)))
+    extra.sort()
     if problems:
         raise RegistryError(f"STOP: {repo}@{rev} failed verification: {problems[:5]}")
     out = {"repo": repo, "revision": rev, "local_path": str(target), "files": files,
@@ -122,11 +133,13 @@ def verify_dir(key: str, target: Path) -> dict:
 
 def reverify(registry_path: Path) -> list[str]:
     """Re-hash every registered file; returns the list of mismatches (empty = all verified)."""
+    refuse_sealed(registry_path)
     reg = yaml.safe_load(Path(registry_path).read_text())
     bad = []
     for key, ent in reg["models"].items():
         for rel, f in ent["files"].items():
             p = Path(ent["local_path"]) / rel
+            refuse_sealed(p)
             if not p.is_file() or sha256_file(p) != f["sha256"]:
                 bad.append(f"{key}:{rel}")
     return bad
@@ -139,6 +152,7 @@ def main(argv=None) -> int:
     ap.add_argument("--only", nargs="*", default=None)
     ap.add_argument("--verify", type=Path, help="re-hash every file of an existing registry")
     args = ap.parse_args(argv)
+    refuse_sealed(args.verify, args.out, args.models_dir)
     if args.verify:
         bad = reverify(args.verify)
         print(json.dumps({"registry": str(args.verify), "mismatches": bad}))
