@@ -1,0 +1,7 @@
+# B1 capacity capture: independent review
+
+**ACCEPTED for the narrowly scoped one-shot read-only capture**, proposal `e617a8abc4b2b56889301920c75546b6f656cd99`, subject to existing site authorization and a current no-preemption check. This is not acceptance of any result or launch. No site access or script execution was performed by this reviewer.
+
+The filled local and remote scripts hash to `334f3134c96867eae049b7beb76f49195f4467e44f2e61c788632ee527666afc` and `843cfae62b5b0aafd0e2bde028ebb72972d16460a5778014c44c470ba69292d1`; both pass `bash -n`. The remote block only queries aggregate filesystem, quota, memory, load, CPU, checker affinity/cgroup and pressure; it does not restart the exited server, read other process arguments, or write remote files. Each informational command emits its own rc or NOT_CHECKABLE marker. The checker cgroup does not prove final B1 resource limits. Actual data, command failures and coverage must be examined individually; the final marker only indicates that the block reached its end.
+
+The local wrapper binds the remote script by SHA, creates a private unique capture directory, uses exclusive files, supplies the script explicitly on SSH stdin, and records actual SSH status separately and in the log. It does not automatically retry. Unavailable quotas, server RSS, and actual 20-worker peak remain unknown; the capture is a non-reserving point observation, not a proof that all B1 output or 20 workers fit.
