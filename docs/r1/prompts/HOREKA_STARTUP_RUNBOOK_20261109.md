@@ -1,8 +1,8 @@
-# HoreKa 2 start-up runbook — HK0 to HK3 before the downtime (9–21 Nov 2026)
+# HoreKa 2 start-up runbook — HK0 to HK3 before the downtime
 
 **Written 9 Nov 2026 by the chat session (Claude); AI-assisted.** Not independently reviewed yet.
 
-**What this is.** A day-by-day sequence for the **HoreKa agent**, from today to the downtime. It covers only the engineering phases, which do not need the main proposer: HK0 (queue facts), HK1 (environment), HK2 (ports and smoke tests), HK3 (census and noise floors). HK4 and later need X.7 (the Track X exam's pick) and are out of scope.
+**What this is.** The ordered steps for the **HoreKa agent**, from today to the downtime. Work through them one after another without waiting for a calendar: start each step as soon as the previous one is done and its gate has passed. It covers only the engineering phases, which do not need the main proposer: HK0 (queue facts), HK1 (environment), HK2 (ports and smoke tests), HK3 (census and noise floors). HK4 and later need X.7 (the Track X exam's pick) and are out of scope.
 
 **Relation to revision 3.** `prompts/HOREKA_RUNBOOK_20261104.md` revision 3 still governs pins, seeds, placement, the GPU-hour ledger, job design (§1), the downtime times and the review loop. **This file replaces its access procedure:** you do not use the `agent`-partition session, the tunnel or the scan prompt's wrappers. You work from the Mac over the author's normal SSH connection, and every job you run is a scripted batch job. Where the two files otherwise conflict, STOP and report.
 
@@ -14,7 +14,7 @@ Report to the author in **Chinese**; write files in **English**.
 
 ### 0.1 How you reach HoreKa
 
-- The author opens one master connection on the Mac: `ssh -fN hk2` (password + OTP). His `~/.ssh/config` keeps it alive for 8 h. Every command of yours goes over it as `ssh -o BatchMode=yes hk2 '<command>'`. Never open, stop or exit the master; if it is gone, ask him to reopen it.
+- The author opens one master connection on the Mac: `ssh -fN hk2` (password + OTP). It stays alive for 10 h. Every command of yours goes over it as `ssh -o BatchMode=yes hk2 '<command>'`. Never open, stop or exit the master; if it is gone, ask him to reopen it.
 - **On the login node, run only light commands:** `git` / `rsync` transfers, `sbatch` through `hk2_submit.py`, `squeue` / `sacct` / `ls` / `cat` / `sha256sum` on small files, `module avail`. The submit and status tools already space their Slurm queries at least 60 s apart.
 - **Everything heavy runs inside a batch job:** building, installing, downloading datasets or models, any training, any test. Never on the login node.
 - Code transfer: create bare repositories under `/hfs2/data/project/hk-project-p0027888/ka_ir7683/r1/git/`, push from the Mac (`git push hk2:/hfs2/…/r1/git/<repo>.git <commit>:refs/heads/<branch>`), check out **detached** at the pinned commits under `…/r1/work/<repo>@<short sha>/`. Gated artefacts are fetched on the Mac and sent with `rsync -e ssh --timeout=300`. No token is ever placed on HoreKa.
@@ -39,19 +39,23 @@ Report to the author in **Chinese**; write files in **English**.
 - **Review loop:** at the end of each phase, a **fresh** reviewer gets the phase goal, this file, revision 3, the pins and your outputs (not your conclusions), writes `docs/r1/reviews/HK2_<PHASE>_REVIEW_<date>.md`, and re-checks until *accepted*. You never accept your own phase.
 - **Reports:** after each phase, `docs/r1/reports/HK2_<PHASE>_<date>.md`, a STATUS entry, and a short Chinese message: what was done, commits, checks, review verdict, decisions needed, and when you next need the master connection.
 
-## 1. Day plan (targets)
+## 1. Order of work
 
-| When | Phase |
-|---|---|
-| 9–10 Nov | **S0** Mac-side preparation |
-| 10 Nov | **HK0** queue facts; **HK1** site checks and code transfer |
-| 10–11 Nov | **HK1** jobs: J0 setup, USR1 test, GPU check |
-| 11–16 Nov | **HK2** ports on the Mac; one smoke job per port |
-| 13–19 Nov | **HK3** census and noise floors, task by task |
-| 20 Nov 12:00 | **F**: no new submissions |
-| 20 Nov 20:00 | **C**: every job has ended |
-| 21 Nov 18:00 | **D**: copy-back done; report |
-| 23 Nov – 4 Dec | Downtime |
+Go straight down this list. A step starts when the previous step's gate has passed; there is no fixed date for any step.
+
+| Step | What | Gate before the next step |
+|---|---|---|
+| 1 | **S0** Mac-side preparation (§2) | S0 report accepted; item A received |
+| 2 | **HK0** queue facts and **HK1** site checks, code transfer (§3) | Reviews accepted; submit switch on; item C received |
+| 3 | **HK1** setup jobs (§4) | HK1 report accepted |
+| 4 | **HK2** ports and smoke tests, task by task (§5) | Each port and its smoke test accepted |
+| 5 | **HK3** census and noise floors, task by task (§6) | Census report accepted |
+
+While a batch job of one task runs, go on with the Mac-side work of the next task. When the master connection has closed, ask the author to reopen it and continue where you stopped.
+
+**One principle for every job: smoke first, review, then submit.** Each new job script runs first as a smoke version: the shortest allowed time on a `dev` partition, the smallest input that exercises the whole script, one GPU at most. A fresh reviewer checks that smoke run's script, log and outputs. Only after *accepted* is the full job submitted. A changed script counts as a new job.
+
+**The only fixed times are the downtime limits** (§7): no new submissions after F (20 Nov 12:00), every job ended by C (20 Nov 20:00), copy-back done by D (21 Nov 18:00). Whatever is not finished by F waits until after the downtime.
 
 ## 2. S0 — Mac-side preparation (no HoreKa access)
 
@@ -62,7 +66,7 @@ Report to the author in **Chinese**; write files in **English**.
 5. **Job scripts and manifests:** J0 setup (revision 3 §1), the 15-minute USR1 test (`dev-cpu`), the GPU check (`dev-gpu-h100`); each with its committed `hk2_submit.py --dry-run` output.
 6. Ask the author for item A and for the master connection.
 
-## 3. HK0 and HK1 — first contact (10 Nov)
+## 3. HK0 and HK1 — first contact
 
 Over `ssh hk2`, light commands only:
 1. `sacct -X -u $USER -S 2026-11-04 -n -P -o JobName,JobID,Partition,State,Submit,Start,End,Elapsed,AllocTRES | grep r1q_`; and `ls -l ~/r1_queue_20261104/; cat ~/r1_queue_20261104/*.out` for any job that ran. Fill in the HK0 table.
@@ -74,9 +78,9 @@ Over `ssh hk2`, light commands only:
 - `HK2_HK0_<date>.md`: the probe table, and a T_max / partition proposal. If no 1-GPU `gpu-h100` or `gpu-h200` job started within 24 h of submission, say so plainly: the author then chooses between accepting long waits, H200, the Ada fallback, or a smaller scope. Review; send to the author (item C).
 - A fresh reviewer checks the site facts of step 2 against what `hk2_submit.py` assumes. After *accepted*, turn on `real_submission_enabled` in a reviewed commit and push that checkout.
 
-## 4. HK1 — setup jobs (10–11 Nov)
+## 4. HK1 — setup jobs
 
-1. Submit **J0** on `cpu` (16 cores, ≤ 2 h): venv from pinned wheels, the tested download URLs, llama.cpp built with `-DGGML_NATIVE=OFF -DCMAKE_CUDA_ARCHITECTURES=90`, hashes of everything installed.
+1. **J0 smoke** on `dev-cpu` (≤ 15 min): the same script in a check mode that loads the modules, resolves the pinned wheels without installing, tests each download URL with a `HEAD` request and configures (not builds) llama.cpp. Review. Then submit **J0** on `cpu` (16 cores, ≤ 2 h): venv from pinned wheels, the tested download URLs, llama.cpp built with `-DGGML_NATIVE=OFF -DCMAKE_CUDA_ARCHITECTURES=90`, hashes of everything installed.
 2. Submit the **USR1 test** on `dev-cpu` (`--time=00:15:00`, `--signal=B:USR1@600`, the background-runner pattern of revision 3 §1): the stand-in runner must move its open unit to `results/_interrupted/<jobid>/` and exit cleanly.
 3. When J0 has finished: the **GPU check** on `dev-gpu-h100` (1 GPU, ≤ 30 min): `nvidia-smi`; the built llama-server starts with a small model the author names; whether `/props` reports the model path (if not, the runner reads `/proc/<pid>/cmdline`).
 4. Read results with `cat` / `sha256sum` on the output files; any failure is a STOP with the log.
@@ -84,7 +88,7 @@ Over `ssh hk2`, light commands only:
 
 **Done when** `HK2_HK1_<date>.md` is accepted.
 
-## 5. HK2 — ports and smoke tests (11–16 Nov)
+## 5. HK2 — ports and smoke tests
 
 **Needs** the Mac agent's port kit and diff support at a reviewed commit (`reports/M10_PORTKIT_HANDOFF_<date>.md`, from the Mac overnight runbook of 9 Nov, Task 2). Until it arrives, do G.0.1 and data-preparation scripts only; do not build your own template.
 
@@ -94,9 +98,9 @@ Per task, in the S0 port order, coding on the Mac on `hk2-trackg-20261109`:
 3. Submit the **J1 smoke** job on `dev-gpu-h100` (≤ 1 h; the dev QoS allows one job at a time, so queue them one after another, or use `gpu-h100` with ≤ 1 h): one fixed-step run with a stub manager, and a frozen-path edit that must be refused. Record wall time and peak VRAM (this is also the raw cost of G.0.2).
 4. Done per task when the frozen-path edit was refused and the smoke manifest is complete.
 
-## 6. HK3 — census and noise floors (13–19 Nov)
+## 6. HK3 — census and noise floors
 
-Per ported task, in this order, as 1-GPU `gpu-h100` jobs within `-c ≤ 32`, `--mem ≤ 180G`, each with `--deadline` = C and `--signal=B:USR1@600`:
+For each kind of census job below, the first one runs as a smoke version on `dev-gpu-h100` (≤ 30 min, two seeds) and is reviewed before the full jobs go out (§1). Then per ported task, in this order, as 1-GPU `gpu-h100` jobs within `-c ≤ 32`, `--mem ≤ 180G`, each with `--deadline` = C and `--signal=B:USR1@600`:
 1. Raw cost at the fixed step budget.
 2. **Determinism:** the same seed in two jobs on two different compute nodes, one under load (k = 4); compare outputs bitwise.
 3. **Concurrency:** k = 1, 2, 4 runs per GPU; throughput, and identity at each k.
@@ -109,7 +113,7 @@ Per ported task, in this order, as 1-GPU `gpu-h100` jobs within `-c ≤ 32`, `--
 
 **Rough cost of HK1–HK3:** about 2 GPU-h for setup and checks; about 0.5 GPU-h per smoke test; about 2–4 GPU-h per task for census and floors. For 10 tasks, roughly 30–50 GPU-h. Keep the ledger `results/r1/trackg/hk2/gpu_ledger.csv` (revision 3 §0.4).
 
-## 7. The freeze (20–21 Nov)
+## 7. The downtime limits
 
 - From F (20 Nov 12:00) the submit tool refuses every submission; do not work around it.
 - Every job carries `--deadline=2026-11-20T20:00:00`; a job that cannot finish by C never starts.
@@ -123,5 +127,5 @@ Per ported task, in this order, as 1-GPU `gpu-h100` jobs within `-c ≤ 32`, `--
 - A foreign process on a GPU allocated to you.
 - A job queued more than 48 h without starting: report it with the `squeue` reason, and ask whether to move to `gpu-h200` or shrink the scope.
 - The ledger passing 100 GPU-h before HK3 ends; the budget guard refusing a job.
-- Any message from NHR@KIT or Slurm about this account, or a blocked job: stop submitting and report to the author.
+- A job refused or ended by Slurm for any reason other than its own time limit: report it with the Slurm message.
 - Anything this file and revision 3 do not cover.
