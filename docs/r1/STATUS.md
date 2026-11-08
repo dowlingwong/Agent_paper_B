@@ -1108,3 +1108,7 @@ PLAN §7 is revised. The proposed primary is now a ModernBERT-family encoder dec
   - D1–D12 and D14–D18 (PLAN §10);
   - the configurator architecture discussion (D16);
   - venue confirmation (D17).
+
+## 2026-11-08 — Track X B1 running
+
+Run: `6835_20261108_a`; reviewed checkout HEAD: `68357d3d8cd0c9f301005e483a49ecfd05f6e5bb`.
