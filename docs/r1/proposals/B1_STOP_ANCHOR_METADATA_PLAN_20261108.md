@@ -8,7 +8,7 @@ Static source at frozen `68357d3d`: `exam_runner.py:213–225` computes `paired_
 
 `B1_STOP_ANCHOR_METADATA_20261108.py` SHA-256 `23da37c3f802da6bdadac36af3e493ea24917e0f9464ebf1fc07d8ff264188fc` enumerates only the fixed STOP root `/home/dowling/exam-x/work/b1_6835_20261108_a`, the three named anchors, three nodes and instance seeds 9001–9004. It opens only directory descriptors (`O_DIRECTORY|O_NOFOLLOW`) and uses `stat(..., follow_symlinks=False)` for the fixed candidate/root filenames. It outputs type, size, owner, dev/inode and mtime only; missing paths, symlinks or permission errors are `NOT_CHECKABLE`. It neither opens a regular file for reading nor performs hashes, JSON parsing, ledger counting, value filtering or computation of comparison statistics. Existing filesystem metadata is non-atomic and file sizes alone are not audit failure counts. Local synthetic tests assert directory descriptors only, no builtins file open, no content output and symlink refusal: **3 passed**. No host was contacted.
 
-The local `/private/tmp/b1-stop-anchor-metadata-20261108.local.sh` SHA-256 `7c935d33a1e17e94536fc08b29a844c8f693b59d31a6f8a6a531f813548441ef` verifies that source SHA, uses clean environment and `/usr/bin/python3 -I -B`, and captures real SSH exit in a new private log and separate rc. It sends no stdin or signal and makes no remote file write. The output and capture hashes are private. On SSH failure, incomplete capture or any unknown site state, preserve all material and STOP; do not rerun automatically. The completion marker and rc 0 only establish the block reached its end, not completeness of all metadata, correctness of the anchor criterion, or current worker absence.
+The local `/private/tmp/b1-stop-anchor-metadata-20261108.local.sh` SHA-256 `fcde9db74de74e1fba5b3fa552bb21454a60f0dbf2943d0ce6af76c012e98833` verifies that source SHA, uses clean environment and `/usr/bin/python3 -I -B`, and captures real SSH exit in a new private log and separate rc. It sends no stdin or signal and makes no remote file write. The output and capture hashes are private. On SSH failure, incomplete capture or any unknown site state, preserve all material and STOP; do not rerun automatically. The completion marker and rc 0 only establish the block reached its end, not completeness of all metadata, correctness of the anchor criterion, or current worker absence.
 
 ```bash
 #!/bin/bash
@@ -26,7 +26,7 @@ printf 'PRIVATE_CAPTURE=%s\n' "$OUT"
 if ssh -n -o BatchMode=yes -o ConnectTimeout=30 -o ServerAliveInterval=20 -o ServerAliveCountMax=3 tasl7 "exec env -i HOME=/home/dowling PATH=/usr/bin:/bin /usr/bin/python3 -I -B -c 'import base64;exec(base64.b64decode(\"$CODE\"))'" >&3 2>&1; then rc=0; else rc=$?; fi
 printf '\nSSH_EXIT=%s\n' "$rc" >&3 || exit 1
 printf '%s\n' "$rc" > "$OUT/ssh.rc" || exit 1
-shasum -a 256 "$SCRIPT" "$OUT/ssh.log" "$OUT/ssh.rc"
+shasum -a 256 "$SCRIPT" "$OUT/ssh.log" "$OUT/ssh.rc" || exit 1
 [ "$rc" -eq 0 ] || exit "$rc"
 grep -qx METADATA_CAPTURE_COMPLETE "$OUT/ssh.log" || exit 1
 printf 'PRELIMINARY_RECEIPT_FOR_INDEPENDENT_REVIEW=%s\n' "$OUT"

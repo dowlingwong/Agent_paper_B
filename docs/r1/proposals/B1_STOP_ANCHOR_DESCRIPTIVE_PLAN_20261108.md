@@ -12,7 +12,7 @@ Full-byte reads cannot first prove the absence of forbidden values in a corrupte
 
 ## Candidate and local tests
 
-Source `B1_STOP_ANCHOR_DESCRIPTIVE_20261108.py` SHA-256 `4605887538f62614ce153365306f01920a65e3e74a28529a4bfa378254b224e9`; local SSH wrapper `/private/tmp/b1-stop-anchor-descriptive-20261108.local.sh` SHA-256 `65a8e4e931358bc6da377ff26a4b095197c8715877a7f0062a6e8c0723a0edc8`. The wrapper verifies the source SHA, streams no stdin, uses clean environment and `/usr/bin/python3 -I -B`, creates a unique private local capture, and records actual SSH exit in log and separate rc. The read-only script uses `O_NOATIME` and refuses if unavailable; there is no fallback that might update file access times. A failure or uncertain SSH result leaves the scene intact and is STOP without automatic retry. Code returns all descriptive output only after validation of all 24 roots; the completion marker/rc alone is not independent acceptance.
+Source `B1_STOP_ANCHOR_DESCRIPTIVE_20261108.py` SHA-256 `4605887538f62614ce153365306f01920a65e3e74a28529a4bfa378254b224e9`; local SSH wrapper `/private/tmp/b1-stop-anchor-descriptive-20261108.local.sh` SHA-256 `c52136dbf63dde108ead0e9f97643f8585d2b21d0460b5aae2ec7e60546d201b`. The wrapper verifies the source SHA, streams no stdin, uses clean environment and `/usr/bin/python3 -I -B`, creates a unique private local capture, and records actual SSH exit in log and separate rc. The read-only script uses `O_NOATIME` and refuses if unavailable; there is no fallback that might update file access times. A failure or uncertain SSH result leaves the scene intact and is STOP without automatic retry. Code returns all descriptive output only after validation of all 24 roots; the completion marker/rc alone is not independent acceptance.
 
 Four local synthetic tests passed in a fresh pytest base: complete 24-root fixture, wrong job audit seeds stop before the corresponding manifest opens, tampered manifest hash and wrong manifest seeds refuse. On Mac, where `O_NOATIME` is unavailable, tests substitute a zero flag **only in the synthetic fixture**; they do not qualify Linux filesystem behavior. No host, real data, model, gate or GPU was accessed. The metadata-only alternative remains available if the above process boundary is not accepted, but it cannot explain numeric direction. An independent reviewer must inspect this exact script, test paths, full-byte-read limitation, and actual retained result before any conclusion.
 
@@ -32,7 +32,7 @@ printf 'PRIVATE_CAPTURE=%s\n' "$OUT"
 if ssh -n -o BatchMode=yes -o ConnectTimeout=30 -o ServerAliveInterval=20 -o ServerAliveCountMax=3 tasl7 "exec env -i HOME=/home/dowling PATH=/usr/bin:/bin /usr/bin/python3 -I -B -c 'import base64;exec(base64.b64decode(\"$CODE\"))'" >&3 2>&1; then rc=0; else rc=$?; fi
 printf '\nSSH_EXIT=%s\n' "$rc" >&3 || exit 1
 printf '%s\n' "$rc" > "$OUT/ssh.rc" || exit 1
-shasum -a 256 "$SCRIPT" "$OUT/ssh.log" "$OUT/ssh.rc"
+shasum -a 256 "$SCRIPT" "$OUT/ssh.log" "$OUT/ssh.rc" || exit 1
 [ "$rc" -eq 0 ] || exit "$rc"
 grep -qx DESCRIPTIVE_CAPTURE_COMPLETE "$OUT/ssh.log" || exit 1
 printf 'PRELIMINARY_RECEIPT_FOR_INDEPENDENT_REVIEW=%s\n' "$OUT"
