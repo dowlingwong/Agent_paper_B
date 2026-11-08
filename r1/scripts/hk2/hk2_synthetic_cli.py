@@ -1,7 +1,8 @@
 """Offline synthetic-only CLI for the reviewed HK6 pure helpers.
 
 JSON via stdin/stdout only. A synthetic label is a caller assertion, not
-proof of provenance. Never submit jobs, access site resources or create files.
+proof of provenance. No user-data file I/O, job submission, or site access is
+performed; normal Python imports and caches may access files.
 This is not the production audit CLI or an authorizing EVIDENCE path.
 """
 import argparse
