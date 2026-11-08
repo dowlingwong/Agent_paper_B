@@ -14,19 +14,21 @@ Report to the author in **Chinese**; write files in **English**.
 
 ### 0.1 How you reach HoreKa
 
+- **KIT VPN first.** HoreKa only accepts SSH from the KIT network, so the Mac must be on the KIT VPN; without it `ssh hk2` fails with `Connection refused`. The VPN may cut the Mac's connections to the other hosts (TASL-2, TASL-7, deepthought) that another agent on this Mac may be using. So do HoreKa work in **windows**: collect everything you need to do on HoreKa, ask the author to switch the VPN on, do it all, then tell him you are done so he can switch it off. Batch jobs keep running when the VPN is off.
 - The author opens one master connection on the Mac: `ssh -fN hk2` (password + OTP). It stays alive for 10 h. Every command of yours goes over it as `ssh -o BatchMode=yes hk2 '<command>'`. Never open, stop or exit the master; if it is gone, ask him to reopen it.
 - **On the login node, run only light commands:** `git` / `rsync` transfers, `sbatch` through `hk2_submit.py`, `squeue` / `sacct` / `ls` / `cat` / `sha256sum` on small files, `module avail`. The submit and status tools already space their Slurm queries at least 60 s apart.
 - **Everything heavy runs inside a batch job:** building, installing, downloading datasets or models, any training, any test. Never on the login node.
 - Code transfer: create bare repositories under `/hfs2/data/project/hk-project-p0027888/ka_ir7683/r1/git/`, push from the Mac (`git push hk2:/hfs2/…/r1/git/<repo>.git <commit>:refs/heads/<branch>`), check out **detached** at the pinned commits under `…/r1/work/<repo>@<short sha>/`. Gated artefacts are fetched on the Mac and sent with `rsync -e ssh --timeout=300`. No token is ever placed on HoreKa.
 
-### 0.2 What you need from the author (STOP if missing)
+### 0.2 What you need from the author
 
 | # | Item |
 |---|---|
-| A | The tool limits confirmed: freeze F, cutoff C, copy-back D; the date GPU-hour accounting starts; the GPU-hour ceiling and STOP threshold; whether he is reachable on 20–21 Nov. Proposed values are in `r1/scripts/hk2/hk2_config.json`; change each key's `status` to the confirmed value in a reviewed commit |
-| B | The master connection open when you need HoreKa |
-| C | After HK0: the maximum job length T_max and the GPU model (H100 or H200) |
-| D | At HK3 step 5: k runs per GPU, the audit placement, and whether campaigns share the GPU with the proposer |
+| A | Tool limits. Use the values in `r1/scripts/hk2/hk2_config.json` as they stand (F 20 Nov 12:00, C 20 Nov 20:00, D 21 Nov 18:00, accounting from 4 Nov, 400 GPU-h ceiling, STOP at 300 GPU-h); the tool prints keys still marked `proposed` and that is fine. Change a value only if the author gives a different one. Not a gate |
+| B | The VPN on and the master connection open for each HoreKa window |
+| C | T_max and the GPU model. Until the author says otherwise: H100, and T_max = 4 h (all HK1–HK3 jobs are much shorter). Send him the HK0 proposal, but do not wait for it |
+| D | At HK3 step 5: k runs per GPU, the audit placement, and whether campaigns share the GPU with the proposer. This is the only real STOP: wait for it for that task, and meanwhile continue the other tasks' earlier steps |
+| E | For the GPU check: a small model to load. Default: the `qwen25_coder_7b` Q4_K_M GGUF already pinned in the Track X registry (same sha256); sent from the Mac with `rsync` |
 
 ### 0.3 Rules
 
@@ -45,13 +47,13 @@ Go straight down this list. A step starts when the previous step's gate has pass
 
 | Step | What | Gate before the next step |
 |---|---|---|
-| 1 | **S0** Mac-side preparation (§2) | S0 report accepted; item A received |
-| 2 | **HK0** queue facts and **HK1** site checks, code transfer (§3) | Reviews accepted; submit switch on; item C received |
+| 1 | **S0** Mac-side preparation (§2) | S0 report accepted |
+| 2 | **HK0** queue facts and **HK1** site checks, code transfer (§3) | Reviews accepted; submit switch on |
 | 3 | **HK1** setup jobs (§4) | HK1 report accepted |
 | 4 | **HK2** ports and smoke tests, task by task (§5) | Each port and its smoke test accepted |
 | 5 | **HK3** census and noise floors, task by task (§6) | Census report accepted |
 
-While a batch job of one task runs, go on with the Mac-side work of the next task. When the master connection has closed, ask the author to reopen it and continue where you stopped.
+While a batch job of one task runs, go on with the Mac-side work of the next task. When you need HoreKa again, ask the author for a window (VPN on, master connection open) and continue where you stopped.
 
 **One principle for every job: smoke first, review, then submit.** Each new job script runs first as a smoke version: the shortest allowed time on a `dev` partition, the smallest input that exercises the whole script, one GPU at most. A fresh reviewer checks that smoke run's script, log and outputs. Only after *accepted* is the full job submitted. A changed script counts as a new job.
 
@@ -64,25 +66,25 @@ While a batch job of one task runs, go on with the Mac-side work of the next tas
 3. **Pins.** List the pins J0 will use (paper commit, harness commit, llama.cpp commit and build flags of revision 3 §1 J0, modules). Any undecided pin goes on the question list.
 4. **Licences and availability (G.0.1)** for the candidates of `TRACK_G_RUNBOOK.md` §1: autoresearch (fixed-step variant); MLGym light tasks (CIFAR-10, Fashion-MNIST, House Price, one MinAtar/MountainCar-type RL task); MLAgentBench light tasks (cifar10, imdb, ogbn-arxiv); the 1GC-7RC public datasets (TinyShakespeare, Forest Cover, ETTh1, AG News, ogbg-molhiv). Repository, licence, dataset licences, download URL and size, container needed or not. Output `reports/HK2_G01_LICENCES_<date>.md` with a proposed port order: cheapest and cleanly licensed first, aiming at 8 or more T1 candidates over at least 3 suites and 5 domains.
 5. **Job scripts and manifests:** J0 setup (revision 3 §1), the 15-minute USR1 test (`dev-cpu`), the GPU check (`dev-gpu-h100`); each with its committed `hk2_submit.py --dry-run` output.
-6. Ask the author for item A and for the master connection.
+6. Ask the author for the first HoreKa window.
 
 ## 3. HK0 and HK1 — first contact
 
 Over `ssh hk2`, light commands only:
 1. `sacct -X -u $USER -S 2026-11-04 -n -P -o JobName,JobID,Partition,State,Submit,Start,End,Elapsed,AllocTRES | grep r1q_`; and `ls -l ~/r1_queue_20261104/; cat ~/r1_queue_20261104/*.out` for any job that ran. Fill in the HK0 table.
 2. `date +%Z`; which `squeue` / `sacct` fields are visible to this account; whether `sacct` reports elapsed time for the probe jobs (the budget guard reads it); where the submit tool's lock file will live under `$PROJECT`.
-3. `module avail` for CUDA 12.9.1 and GCC 14.3.0; record `git --version` and `rsync --version` on the Mac.
+3. `module avail CUDA GCC CMake Python`. The scan of 4 Nov saw `CUDA/13.3.0` (standalone module), `GCC/15.2.0`, `CMake/4.2.1-GCCcore-15.2.0`, `Python/3.14.2-GCCcore-15.2.0`, and system `python3` 3.9.21 (the hk2 tools are tested on Python 3.9). Use the CUDA 12.9.1 + GCC 14.3.0 pair of revision 3 if it exists, otherwise `CUDA/13.3.0` with the newest matching GCC; record the choice as a pin. Record `git --version` and `rsync --version` on the Mac.
 4. Create the bare repositories, push the pins, check out detached (§0.1).
 
 **Then on the Mac:**
-- `HK2_HK0_<date>.md`: the probe table, and a T_max / partition proposal. If no 1-GPU `gpu-h100` or `gpu-h200` job started within 24 h of submission, say so plainly: the author then chooses between accepting long waits, H200, the Ada fallback, or a smaller scope. Review; send to the author (item C).
+- `HK2_HK0_<date>.md`: the probe table, and a T_max / partition proposal. If no 1-GPU `gpu-h100` or `gpu-h200` job started within 24 h of submission, say so plainly and suggest options (accept the waits, H200, the Ada fallback, a smaller scope). Review; send to the author. Continue with item C's defaults meanwhile.
 - A fresh reviewer checks the site facts of step 2 against what `hk2_submit.py` assumes. After *accepted*, turn on `real_submission_enabled` in a reviewed commit and push that checkout.
 
 ## 4. HK1 — setup jobs
 
 1. **J0 smoke** on `dev-cpu` (≤ 15 min): the same script in a check mode that loads the modules, resolves the pinned wheels without installing, tests each download URL with a `HEAD` request and configures (not builds) llama.cpp. Review. Then submit **J0** on `cpu` (16 cores, ≤ 2 h): venv from pinned wheels, the tested download URLs, llama.cpp built with `-DGGML_NATIVE=OFF -DCMAKE_CUDA_ARCHITECTURES=90`, hashes of everything installed.
 2. Submit the **USR1 test** on `dev-cpu` (`--time=00:15:00`, `--signal=B:USR1@600`, the background-runner pattern of revision 3 §1): the stand-in runner must move its open unit to `results/_interrupted/<jobid>/` and exit cleanly.
-3. When J0 has finished: the **GPU check** on `dev-gpu-h100` (1 GPU, ≤ 30 min): `nvidia-smi`; the built llama-server starts with a small model the author names; whether `/props` reports the model path (if not, the runner reads `/proc/<pid>/cmdline`).
+3. When J0 has finished: the **GPU check** on `dev-gpu-h100` (1 GPU, ≤ 30 min): `nvidia-smi`; the built llama-server starts with the item-E model and answers one request; whether `/props` reports the model path (if not, the runner reads `/proc/<pid>/cmdline`).
 4. Read results with `cat` / `sha256sum` on the output files; any failure is a STOP with the log.
 5. A job submitting its own continuation is not tested in this phase.
 
@@ -122,10 +124,10 @@ For each kind of census job below, the first one runs as a smoke version on `dev
 
 ## 8. STOPs
 
-- A missing item of §0.2.
+- A task reaching HK3 step 5 without item D (that task only; continue the others).
 - A pin mismatch, a scope violation, or a frozen-path edit that is not refused.
 - A foreign process on a GPU allocated to you.
-- A job queued more than 48 h without starting: report it with the `squeue` reason, and ask whether to move to `gpu-h200` or shrink the scope.
+- A job queued more than 48 h without starting: report it with the `squeue` reason and suggest moving to `gpu-h200` or shrinking the scope; leave it queued and carry on with other work.
 - The ledger passing 100 GPU-h before HK3 ends; the budget guard refusing a job.
 - A job refused or ended by Slurm for any reason other than its own time limit: report it with the Slurm message.
 - Anything this file and revision 3 do not cover.
