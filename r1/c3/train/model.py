@@ -202,9 +202,11 @@ class _Wrapper(nn.Module):
 
     def load(self, path) -> dict:
         """Verify every recorded sha256, then load adapter and heads into this (identically built) wrapper."""
+        from r1.c3.analysis_guard import refuse_sealed
+        path = Path(path)
+        refuse_sealed(path, path / MANIFEST)
         from peft import get_peft_model_state_dict, set_peft_model_state_dict
         from safetensors.torch import load_file
-        path = Path(path)
         record = json.loads((path / MANIFEST).read_text())
         for key in ("family", "head_form", "action_head"):
             if record.get(key) != self.describe()[key]:
