@@ -53,7 +53,7 @@ The author may paste one or more of these lines into your start message. Act on 
 4. **Restart preparation** (plan §5): exact new checkout committed and clean; independent review of that exact HEAD; the authorization note re-bound to the new HEAD as an `approved: true` candidate, in the order used on 8 Nov; the real author gate passes on it.
 5. **Host steps on TASL-7**, as for run `6835_20261108_a`: fresh read-only occupancy census; the Track P marker and handover procedure; final host preflight; offline loader check reused only if the checkout's loader files are unchanged (else repeat it once, with exit code).
 6. **Launch** run `6835_20261109_b` (or the next free suffix) in a fresh output tree. Never write into `b1_6835_20261108_a`.
-7. **Monitor** read-only at most every 15 minutes, with captured exit codes, exactly as on 8 Nov. On any STOP: preserve the scene, write the STOP report, get it reviewed, do not retry.
+7. **Monitor** read-only at most every 15 minutes, with captured exit codes, exactly as on 8 Nov. On any STOP: preserve the scene, write the STOP report, get it reviewed, do not retry. If TASL-7 is unreachable because the Mac is on the KIT VPN for HoreKa work, wait and try again later; a monitoring gap is not a STOP, and B1 keeps running on the host. Do not launch or stop anything on TASL-7 while you cannot reach it reliably.
 
 **Done when** the diagnosis report is accepted and either B1 is running (or finished) under the new run ID, or the open question is in §3.
 
