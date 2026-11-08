@@ -1,0 +1,7 @@
+# Independent review: B1 6835 receive authorization audit
+
+**ACCEPTED for the bounded external audit** at `0401837d29891e03d35a4b11778fa0dd12792cba`, without changing candidate HEAD `68357d3d8cd0c9f301005e483a49ecfd05f6e5bb`. No host or test was accessed for this review. The author response is correctly identified as reported verbatim in the separate receipt review, not as an independently authenticated new signed record.
+
+I independently rehashed the first transfer log/rc, the authorized one-time receive log/rc and the O2 facts/SSH status: all six match the audit. The original 255 remains STOP and the later `STAGED`/HEAD/clean/no-remote/SSH 0 receipt is accepted only with its reported-invocation and point-in-time limits. The O2 review describes a matching-pattern absence and empty GPU compute list, not a held lease or proven future no-interference. The reported current `author gate and native preflight remain pending` is explicitly qualified as the time of audit preparation; it is not a claim about their later execution. The audit does not assert completed handover, author gate, preflight or B1 launch.
+
+The underlying independent reviews `155686ac`, `a4d488b3` and `0b6be872` support these scopes. Preserve both receive attempts and require the remaining exact-HEAD, gate, preflight, resource and handover evidence as applicable; this review grants no further retry or remote action.
