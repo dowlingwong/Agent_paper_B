@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import sys
 import urllib.request
@@ -83,13 +84,33 @@ def check_floor(path: Path) -> None:
         raise RegistryError(f"STOP: {free} bytes free on the models filesystem, below the 100 GB floor")
 
 
+def _check_existing_download_target(target: Path) -> None:
+    """Reject sealed aliases and directory links before handing a tree to Hub."""
+    refuse_sealed(target)
+    if target.is_symlink():
+        raise RegistryError('STOP: download target is a symlink')
+    if not target.exists():
+        return
+    if not target.is_dir():
+        raise RegistryError('STOP: download target is not a directory')
+    def walk_error(error):
+        raise RegistryError('STOP: cannot inspect existing download target') from error
+    for base, dirs, files in os.walk(target, followlinks=False, onerror=walk_error):
+        for name in dirs + files:
+            child = Path(base) / name
+            refuse_sealed(child)
+            if child.is_symlink() and name in dirs:
+                raise RegistryError('STOP: existing download directory symlink')
+
+
 def download(key: str, models_dir: Path) -> dict:
     refuse_sealed(models_dir)
-    from huggingface_hub import snapshot_download
     repo, rev = PINS[key]
+    target = models_dir / f"{repo.replace('/', '__')}@{rev[:12]}"
+    _check_existing_download_target(target)
+    from huggingface_hub import snapshot_download
     models_dir.mkdir(parents=True, exist_ok=True)
     check_floor(models_dir)
-    target = models_dir / f"{repo.replace('/', '__')}@{rev[:12]}"
     snapshot_download(repo, revision=rev, local_dir=str(target))
     check_floor(models_dir)
     return verify_dir(key, target)

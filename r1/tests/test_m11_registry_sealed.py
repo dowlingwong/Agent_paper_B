@@ -75,3 +75,43 @@ def test_verify_dir_retains_normal_fake_hub_behavior(tmp_path):
     with patch.object(registry, 'hub_tree', return_value=fake_tree):
         result = registry.verify_dir('kev-0.8b', target)
     assert result['files']['weights']['sha256'] == hashlib.sha256(data).hexdigest()
+
+
+def _download_target(base):
+    repo, rev = registry.PINS['kev-0.8b']
+    return base / f"{repo.replace('/', '__')}@{rev[:12]}"
+
+
+def test_download_refuses_existing_sealed_target_before_network(tmp_path):
+    sealed = tmp_path / 'r1_sealed'; sealed.mkdir()
+    models = tmp_path / 'models'; models.mkdir()
+    _download_target(models).symlink_to(sealed, target_is_directory=True)
+    with patch('builtins.__import__', side_effect=AssertionError('network library import must not occur')):
+        with pytest.raises(RuntimeError, match='r1_sealed'): registry.download('kev-0.8b', models)
+
+
+def test_download_refuses_existing_sealed_child_before_network(tmp_path):
+    sealed = tmp_path / 'r1_sealed'; sealed.mkdir(); (sealed / 'weights').write_bytes(b'synthetic')
+    models = tmp_path / 'models'; models.mkdir(); target = _download_target(models); target.mkdir()
+    (target / 'weights').symlink_to(sealed / 'weights')
+    with patch('builtins.__import__', side_effect=AssertionError('network library import must not occur')):
+        with pytest.raises(RuntimeError, match='r1_sealed'): registry.download('kev-0.8b', models)
+
+
+def test_download_refuses_existing_nonsealed_directory_link(tmp_path):
+    models = tmp_path / 'models'; models.mkdir(); target = _download_target(models); target.mkdir()
+    other = tmp_path / 'other'; other.mkdir(); (target / 'alias').symlink_to(other, target_is_directory=True)
+    with pytest.raises(registry.RegistryError, match='directory symlink'):
+        registry.download('kev-0.8b', models)
+
+
+def test_download_new_unsealed_target_uses_fake_hub(tmp_path):
+    import sys
+    import types
+    models = tmp_path / 'models'
+    calls = []
+    fake_hub = types.SimpleNamespace(snapshot_download=lambda *args, **kwargs: calls.append((args, kwargs)))
+    with patch.dict(sys.modules, {'huggingface_hub': fake_hub}), \
+         patch.object(registry, 'check_floor'), patch.object(registry, 'verify_dir', return_value={'ok': True}):
+        assert registry.download('kev-0.8b', models) == {'ok': True}
+    assert len(calls) == 1 and calls[0][1]['local_dir'] == str(_download_target(models))
