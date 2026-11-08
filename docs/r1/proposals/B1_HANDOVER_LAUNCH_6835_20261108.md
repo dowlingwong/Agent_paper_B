@@ -14,7 +14,7 @@ Run: `6835_20261108_a`; reviewed checkout HEAD: `68357d3d8cd0c9f301005e483a49ecf
 
 Publish only the independently reviewed append from the separate clean status checkout after marker creation, commit as author Dowling Wong and committer Codex, push normally to `refs/heads/mac-b1-20261107`, verify the remote SHA equals that commit. If a branch advances, publication fails or state is uncertain, preserve marker and evidence and STOP; no force, overwrite or automatic retry. The exact branch base and resulting commit SHA are site-time facts to verify, not invented in advance.
 
-The following exact local file contents and SHA-256 are conditional. On host, `marker` first creates only its unique B1-owned handover directory and empty status receipt, then uses accepted O2 marker create; it checks clean exact HEAD. The marker receipt and all files persist at failure. Start and receipt are transferred only into that new directory with exclusive creation, their hashes checked against the literals immediately before the one tmux send. Verify transferred bytes and ownership, actual tmux version and socket behavior independently. The operator must use an independently reviewed exclusive transfer method; no transfer occurs here. Run marker once only after the prerequisite checks above; then observe safe pause, publish and verify STATUS, confirm launch conditions, and run tmux block exactly once. No reruns after failure or uncertain SSH status. All commands run in a clean environment with `HOME=/home/dowling` and fixed `PATH=/usr/bin:/bin`; launch sets its approved venv and explicit variables.
+The following exact local file contents and SHA-256 are conditional. On host, `marker` first creates only its unique B1-owned handover directory and empty status receipt, then uses accepted O2 marker create; it checks clean exact HEAD. The marker receipt and all files persist at failure. Start and receipt are transferred only into that new directory with exclusive creation, their hashes checked against the literals immediately before the one tmux send. Verify transferred bytes and ownership, actual tmux version and socket behavior independently. The exact exclusive transfer command below requires independent review; no transfer occurs here. Run marker once only after the prerequisite checks above; immediately publish and verify STATUS, then observe watcher and P.3a safe pause, confirm launch conditions, transfer the scripts, and run the tmux block exactly once. No reruns after failure or uncertain SSH status. All commands run in a clean environment with `HOME=/home/dowling` and fixed `PATH=/usr/bin:/bin`; launch sets its approved venv and explicit variables.
 
 ## start — `/private/tmp/b1-6835-start-20261108.sh`
 
@@ -122,3 +122,62 @@ python3 "$PAPER/r1/scripts/b1_o2_marker.py" create --lock-dir /home/dowling/r1_l
 ```
 
 Monitor every 30 minutes or sooner if needed, appending new B1-owned observations of UTC, HEAD, run, identities, progress, GPU, RAM and disk/inodes; preserve other work. On STOP, stop starting new work, stop owned workers and B1 server via existing paths, preserve all output, logs, ledger, marker and tmux, publish STATUS, and record shutdown writes; do not automatically change or retry. Only after verified normal completion may the exact O2 identity-bound no-replace marker retirement and separately reviewed restoration be performed. The process exit alone is not complete-batch acceptance.
+
+## Exclusive script transfer — conditional
+
+`/private/tmp/b1-6835-transfer-20261108.sh`, SHA-256 `1b2dc5657af38c2090825b0f98f29aeb6ae4c9ba829bf4fed856b5b506aff90f`, uses separate SSH calls and fresh private log and rc for each file. Remote path components are opened without following symlinks; each file is created with `O_EXCL|O_NOFOLLOW`, written once and reread for SHA verification. Partial files and captures remain; the second transfer is not attempted if the first fails, and no transfer is repeated on failure or unknown status. Review and verify the script SHA before a single execution as a local file. This is not launch.
+
+```bash
+#!/bin/bash
+set -u
+set -o pipefail
+umask 077
+OUT=$(mktemp -d /private/tmp/paper-b-6835-launch-transfer-20261108.XXXXXXXX) || exit 1
+set -C
+printf 'PRIVATE_CAPTURE=%s\n' "$OUT"
+transfer() {
+  name=$1
+  file=$2
+  expected=$3
+  [ "$(shasum -a 256 "$file" | awk '{print $1}')" = "$expected" ] || return 1
+  if ssh -o BatchMode=yes -o ConnectTimeout=30 -o ServerAliveInterval=20 -o ServerAliveCountMax=3 tasl7 "exec python3 -I -B -c 'import base64;exec(base64.b64decode(\"aW1wb3J0IHN5cyxvcyxoYXNobGliCm5hbWUsZXhwZWN0ZWQ9c3lzLmFyZ3ZbMTpdCmFzc2VydCBuYW1lIGluICgic3RhcnQuc2giLCAicmVjZWlwdC5zaCIpCmQ9c3lzLnN0ZGluLmJ1ZmZlci5yZWFkKDEwMDAwMSkKYXNzZXJ0IGxlbihkKTw9MTAwMDAwIGFuZCBoYXNobGliLnNoYTI1NihkKS5oZXhkaWdlc3QoKT09ZXhwZWN0ZWQKZmQ9b3Mub3BlbigiLyIsb3MuT19SRE9OTFl8b3MuT19ESVJFQ1RPUlkpCmZvciBwYXJ0IGluICgiaG9tZSIsImRvd2xpbmciLCJyMV9iMV9lbmdpbmVlcmluZyIsImIxX2hhbmRvdmVyXzY4MzVfMjAyNjExMDhfYSIpOgogbmV3PW9zLm9wZW4ocGFydCxvcy5PX1JET05MWXxvcy5PX0RJUkVDVE9SWXxvcy5PX05PRk9MTE9XLGRpcl9mZD1mZCkKIG9zLmNsb3NlKGZkKTsgZmQ9bmV3Cm91dD1vcy5vcGVuKG5hbWUsb3MuT19XUk9OTFl8b3MuT19DUkVBVHxvcy5PX0VYQ0x8b3MuT19OT0ZPTExPVywwbzYwMCxkaXJfZmQ9ZmQpCnZpZXc9bWVtb3J5dmlldyhkKQp3aGlsZSB2aWV3Ogogbj1vcy53cml0ZShvdXQsdmlldykKIGFzc2VydCBuPjAKIHZpZXc9dmlld1tuOl0Kb3MuY2xvc2Uob3V0KQpjaGVjaz1vcy5vcGVuKG5hbWUsb3MuT19SRE9OTFl8b3MuT19OT0ZPTExPVyxkaXJfZmQ9ZmQpCmg9aGFzaGxpYi5zaGEyNTYoKQp3aGlsZSBUcnVlOgogYj1vcy5yZWFkKGNoZWNrLDY1NTM2KQogaWYgbm90IGI6IGJyZWFrCiBoLnVwZGF0ZShiKQpvcy5jbG9zZShjaGVjayk7IG9zLmNsb3NlKGZkKQphc3NlcnQgaC5oZXhkaWdlc3QoKT09ZXhwZWN0ZWQKcHJpbnQoIlRSQU5TRkVSX1BBU1MiLG5hbWUsZXhwZWN0ZWQpCg==\"))' $name $expected" < "$file" > "$OUT/$name.log" 2>&1; then rc=0; else rc=$?; fi
+  printf '\nSSH_EXIT=%s\n' "$rc" >> "$OUT/$name.log" || return 1
+  printf '%s\n' "$rc" > "$OUT/$name.rc" || return 1
+  [ "$rc" -eq 0 ] || return "$rc"
+  grep -Fx "TRANSFER_PASS $name $expected" "$OUT/$name.log" >/dev/null || return 1
+}
+transfer start.sh /private/tmp/b1-6835-start-20261108.sh c5559d5f52238c4fb640dd3c448fc8dfd40e031e80a2f7ce6040a841110437e2 || exit 1
+transfer receipt.sh /private/tmp/b1-6835-receipt-20261108.sh 4c48fc579d97873f4ce7043a83bcd8ca27bdc4fd1c12175533e8fa9993ca119b || exit 1
+shasum -a 256 "$OUT/start.sh.log" "$OUT/start.sh.rc" "$OUT/receipt.sh.log" "$OUT/receipt.sh.rc"
+printf 'TRANSFER_CAPTURE_COMPLETE=%s\n' "$OUT"
+```
+
+The encoded remote Python is exactly the following (`/private/tmp/b1-6835-transfer-remote-20261108.py`, SHA-256 `b8e11af70dad7dd678151f50958e7ecff605ae4d3af1d29f90d090087a30a01c`):
+
+```python
+import sys,os,hashlib
+name,expected=sys.argv[1:]
+assert name in ("start.sh", "receipt.sh")
+d=sys.stdin.buffer.read(100001)
+assert len(d)<=100000 and hashlib.sha256(d).hexdigest()==expected
+fd=os.open("/",os.O_RDONLY|os.O_DIRECTORY)
+for part in ("home","dowling","r1_b1_engineering","b1_handover_6835_20261108_a"):
+ new=os.open(part,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=fd)
+ os.close(fd); fd=new
+out=os.open(name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600,dir_fd=fd)
+view=memoryview(d)
+while view:
+ n=os.write(out,view)
+ assert n>0
+ view=view[n:]
+os.close(out)
+check=os.open(name,os.O_RDONLY|os.O_NOFOLLOW,dir_fd=fd)
+h=hashlib.sha256()
+while True:
+ b=os.read(check,65536)
+ if not b: break
+ h.update(b)
+os.close(check); os.close(fd)
+assert h.hexdigest()==expected
+print("TRANSFER_PASS",name,expected)
+```
