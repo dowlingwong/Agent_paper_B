@@ -1,0 +1,5 @@
+# M11 spike metrics sealed guard: independent review
+
+**ACCEPTED only for the generic spike metrics helper**, candidate `2b59eac6dad586ee945c819282df0495d36cfd11`; this is not universal reader coverage, a D8 gate or permission to read labels. No host, real sealed material, model or network was used.
+
+The actual `_read_metrics` source calls the existing lexical/resolved sealed guard on both the run path and the `metrics.jsonl` path before `read_text`, protecting a direct sealed run and a symlinked metrics file. The normal step-only filter is unchanged. Independently executed synthetic tests returned **3 passed** using an exact extracted source AST and a fresh pytest base. Since torch is absent, the complete spike module and broader trainer/model operations were not imported or tested. The diff modifies only spike.py, synthetic tests and report; the five author-held M3 files and B1 production checkout are unchanged. Hardlink and concurrent replacement limitations of the shared guard remain; this helper is not established as a sweep-2 label reader.
