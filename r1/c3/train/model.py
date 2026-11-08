@@ -81,6 +81,8 @@ class IntegrityError(RuntimeError):
 
 
 def sha256_file(path: Path | str) -> str:
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path)
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):
