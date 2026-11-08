@@ -4,6 +4,8 @@
 
 The low-priority read-only model inventory lost its SSH connection with exit 255 before recording any model result. The private capture is retained; no retry or signal was issued. A subsequent read-only process snapshot did not show a matching user Python process but does not prove complete process visibility or that the scan never started. The author has been asked about a new, independently reviewed one-shot attempt. See `B1_MODEL_INVENTORY_STOP_REVIEW_20261108.md`. Formal B1 has not started.
 
+The author subsequently approved one new read-only attempt. The independently reviewed streamed inventory completed with SSH exit 0, matching the sizes and SHA-256 values of the 16 selected model files and the server binary (`B1_MODEL_INVENTORY_STREAM_RESULT_REVIEW_20261108.md`). The first failed capture remains incomplete and preserved. The result is a point-in-time input observation; the real gate, final host preflight and handover remain.
+
 ## 8 November 2026 — synthetic Stage A/B1 recovery STOP (AI-assisted)
 
 Three test-owned Stage A worker subprocesses completed with synthetic transport and produced a five-row table. The subsequent synthetic B1 parent stopped with `PreparationStop: [Errno 1] Operation not permitted` before the planned crash/recovery; the failing operation is not established. The scene is retained, no automatic retry was made, and the test does not establish the required full subprocess recovery coverage. See `B1_STAGEA_REAL_CHILD_RECOVERY_ATTEMPT_20261108.md` and its independent review. Formal B1 has not started.
