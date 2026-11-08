@@ -100,7 +100,7 @@ tmux -S "$SOCKET" send-keys -t "$SESSION:0.0" "exec env -i HOME=/home/dowling PA
 
 ## marker — `/private/tmp/b1-6835-marker-20261108.sh`
 
-SHA-256 `94f63b2622dd810fd735e2b19a728fbd2a7f84f5396f4a5ffb6e48d42604722c`.
+SHA-256 `1c9a67463825ede1d53d36fea93e55d6f14b7814508279673c4753bf759ef90b`.
 
 ```bash
 set -eu
@@ -118,7 +118,7 @@ STATE=$(git --no-optional-locks -C "$PAPER" status --porcelain --untracked-files
 mkdir -m 700 "$RUN_DIR"
 set -C
 : > "$STATUS"
-python3 "$PAPER/r1/scripts/b1_o2_marker.py" create --lock-dir /home/dowling/r1_locks --status "$STATUS" --run-id "$RUN_ID" --head "$HEAD" > "$RUN_DIR/marker-receipt.json"
+TZ=Europe/Berlin python3 "$PAPER/r1/scripts/b1_o2_marker.py" create --lock-dir /home/dowling/r1_locks --status "$STATUS" --run-id "$RUN_ID" --head "$HEAD" > "$RUN_DIR/marker-receipt.json"
 ```
 
 Monitor every 30 minutes or sooner if needed, appending new B1-owned observations of UTC, HEAD, run, identities, progress, GPU, RAM and disk/inodes; preserve other work. On STOP, stop starting new work, stop owned workers and B1 server via existing paths, preserve all output, logs, ledger, marker and tmux, publish STATUS, and record shutdown writes; do not automatically change or retry. Only after verified normal completion may the exact O2 identity-bound no-replace marker retirement and separately reviewed restoration be performed. The process exit alone is not complete-batch acceptance.
@@ -180,4 +180,31 @@ while True:
 os.close(check); os.close(fd)
 assert h.hexdigest()==expected
 print("TRANSFER_PASS",name,expected)
+```
+
+## Single-action SSH capture wrapper
+
+Use `/private/tmp/b1-6835-action-wrapper-20261108.sh` (SHA-256 `ff8b615346b62a4ebcb15992f99d3cb8ddf3aef8cb6c20c03c6c387589ce6142`) only after this exact filled plan and current prerequisites are independently accepted. Run `bash /private/tmp/b1-6835-action-wrapper-20261108.sh marker` once for marker creation, and only after the required STATUS publication, verified handover and transfer, run `bash /private/tmp/b1-6835-action-wrapper-20261108.sh tmux` once. It reads the reviewed remote block from a file, hashes it, uses clean environment, creates a distinct private capture and records actual SSH exit in log and rc. Marker uses `TZ=Europe/Berlin`; if the date differs from the proposed STATUS date, independently review the corrected STATUS append before marker. Missing capture, nonzero exit or uncertain state is STOP with no retry.
+
+```bash
+#!/bin/bash
+set -u
+set -o pipefail
+umask 077
+case "${1-}" in
+ marker) SCRIPT=/private/tmp/b1-6835-marker-20261108.sh; EXPECTED=1c9a67463825ede1d53d36fea93e55d6f14b7814508279673c4753bf759ef90b ;;
+ tmux) SCRIPT=/private/tmp/b1-6835-tmux-20261108.sh; EXPECTED=ed589c8d742050f9654c0d9ceb494a6fce813b6c035b2001a6521bdc46aa52ce ;;
+ *) printf 'STOP: expected marker or tmux\n' >&2; exit 1 ;;
+esac
+[ "$(shasum -a 256 "$SCRIPT" | awk '{print $1}')" = "$EXPECTED" ] || exit 1
+OUT=$(mktemp -d /private/tmp/paper-b-6835-action-20261108.XXXXXXXX) || exit 1
+set -C
+exec 3> "$OUT/ssh.log"
+printf 'PRIVATE_CAPTURE=%s ACTION=%s\n' "$OUT" "$1"
+if ssh -o BatchMode=yes -o ConnectTimeout=30 -o ServerAliveInterval=20 -o ServerAliveCountMax=3 tasl7 'exec env -i HOME=/home/dowling PATH=/usr/bin:/bin /bin/bash -s' < "$SCRIPT" >&3 2>&1; then rc=0; else rc=$?; fi
+printf '\nSSH_EXIT=%s\n' "$rc" >&3 || exit 1
+printf '%s\n' "$rc" > "$OUT/ssh.rc" || exit 1
+shasum -a 256 "$SCRIPT" "$OUT/ssh.log" "$OUT/ssh.rc"
+printf 'SSH_EXIT=%s PRIVATE_CAPTURE=%s ACTION=%s\n' "$rc" "$OUT" "$1"
+exit "$rc"
 ```
