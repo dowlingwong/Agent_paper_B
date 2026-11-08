@@ -1119,6 +1119,14 @@ Asked whether, after the synthetic Stage A→B1 recovery test recorded `Preparat
 |---|---|
 | R1-B1-SYNTHETIC-RECOVERY-ONCE-08NOV | "允许一次新目录测试（建议）" |
 
+After the first read-only model inventory lost SSH with exit 255 and recorded no model hashes or progress, the author was asked whether to allow one new independently reviewed, low-priority read-only inventory with a fresh capture, after checking the prior process and current workload; it reads approximately 223 GiB and does not load models or use a GPU. The author replied:
+
+| ID | Author's decision |
+|---|---|
+| R1-B1-MODEL-INVENTORY-ONCE-08NOV | "允许一次新盘点（建议）" |
+
+The first capture remains preserved; this authorizes one new inventory, not repeated retries, signals to ambiguous processes, or B1 launch.
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
