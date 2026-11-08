@@ -288,6 +288,8 @@ class PointerWrapper(_Wrapper):
         (calibration is ours — E5 temperature scaling); ``native_temperature=True`` applies the released T in eval
         mode, for the E1 zero-shot rung only. The released and the active T are recorded in the manifest and
         restored by ``load``."""
+        _guard_model_input(base)
+        _guard_model_input(init_from)
         super().__init__(head_form, action_head)
         from kev import model as km
         self.km_mod = km
@@ -399,6 +401,8 @@ class LayaWrapper(HeadWrapper):
 
     def __init__(self, config: dict, tokenizer, *, encoder_config=None, weights: str | None = None,
                  head_form: str = "softmax12", action_head: bool = True, device="cpu"):
+        _guard_model_input(encoder_config)
+        _guard_model_input(weights)
         super().__init__(head_form, action_head)
         from laya import common as lc
         from peft import get_peft_model
