@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 8 November 2026 — Track X B1 STOP (AI-assisted)
+
+B1 run `6835_20261108_a` is STOPPED: `random-valid < scripted cannot be shown; no discriminating power`. At 01:19:49 UTC the retained monitor reported 36 completed roots, exit 1, no current root, the B1 marker retained and no listed GPU compute applications. The B1 log notes that shutdown may append runner/server logs and publish server/batch-state records; preserve those writes and all evidence. No automatic retry, marker retirement or restoration. See `docs/r1/reports/B1_STOP_6835_20261108.md`. B2, X.7 and sweep 2 remain gated.
+
 ## 8 November 2026 — read-only model inventory STOP (AI-assisted)
 
 The low-priority read-only model inventory lost its SSH connection with exit 255 before recording any model result. The private capture is retained; no retry or signal was issued. A subsequent read-only process snapshot did not show a matching user Python process but does not prove complete process visibility or that the scan never started. The author has been asked about a new, independently reviewed one-shot attempt. See `B1_MODEL_INVENTORY_STOP_REVIEW_20261108.md`. Formal B1 has not started.
