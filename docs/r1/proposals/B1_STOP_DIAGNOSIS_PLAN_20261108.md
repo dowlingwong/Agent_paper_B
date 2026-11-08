@@ -1,8 +1,7 @@
 # B1 STOP — diagnosis plan, fix routes and restart conditions (proposal, 8 Nov 2026)
 
-**Status.** AI-assisted proposal (Claude, chat session), written at the author's request on 8 Nov 2026 ("B1stop可以起草诊断，修好之后开始跑"). It is not evidence and changes no pin, rule, threshold or STOP by itself. The STOP report `reports/B1_STOP_6835_20261108.md` stays authoritative for what happened. Read against `mac-b1-20261107` @ `b06f8a91` (run `6835_20261108_a`, frozen checkout `68357d3d`).
+**Status.** AI-assisted proposal (Claude, chat session), 8 Nov 2026. It is not evidence and changes no pin, rule, threshold or STOP by itself. The STOP report `reports/B1_STOP_6835_20261108.md` stays authoritative for what happened. Read against `mac-b1-20261107` @ `b06f8a91` (run `6835_20261108_a`, frozen checkout `68357d3d`).
 
-**Author instruction recorded here (to be copied into PLAN §10 by the integrator, verbatim):** "B1stop可以起草诊断，修好之后开始跑". Section 5 states how this document reads it: a restart is allowed once the fix is independently reviewed; a change to the scientific criterion still needs the author's one-line choice (§4), because R1-EXAM-B1-ANCHOR-RULE-07NOV forbids tuning a rule after computing anything.
 
 ---
 
@@ -51,7 +50,7 @@ The classes are not exclusive; the diagnosis reports each separately.
 
 | Diagnosis outcome | Fix | Needs the author? | Restart scope |
 |---|---|---|---|
-| **E — an engineering defect (H4)** | Fix the code, add a regression test, independent review of the fix and of the exact new checkout | No, if the fix leaves the X.3 criterion unchanged; covered by "修好之后开始跑" | New run ID, fresh output tree; all anchors and candidates from the start. The old run stays preserved |
+| **E — an engineering defect (H4)** | Fix the code, add a regression test, independent review of the fix and of the exact new checkout | No, if the fix leaves the X.3 criterion unchanged | New run ID, fresh output tree; all anchors and candidates from the start. The old run stays preserved |
 | **P — power only (H3 without H1/H2)**: point > 0, consistent across nodes, interval crossing 0 | (a) standardise by σ_node, or (b) add anchor-only instance seeds | **Yes**: either one changes the criterion after seeing data | As E |
 | **D — design or metric (H1 and/or H2)** | Replace the anchor-ordering STOP; options below | **Yes**: one line choosing an option | As E, unless the runner can verifiably reuse the 36 anchor roots |
 | **D7 fails** (7B duplicate rate outside the interval) | Report it separately; do not fold it into the fix above | **Yes** | Decided with the author |
@@ -65,7 +64,7 @@ The classes are not exclusive; the diagnosis reports each separately.
 
 ## 5. Restart conditions
 
-The instruction "修好之后开始跑" is read as: after the fix in §4 is implemented and independently accepted, a new B1 run may start without a further author message, **provided all of the following hold**:
+After the fix in §4 is implemented and independently accepted, a new B1 run may start without a further author message, **provided all of the following hold**:
 
 1. The diagnosis report and the fix are each accepted by a freshly spawned independent agent.
 2. If the fix changes the scientific criterion (P or D), the author's one-line choice is committed as a dated PLAN §10 row first.

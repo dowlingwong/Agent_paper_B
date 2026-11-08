@@ -1,6 +1,6 @@
 # Mac-local overnight runbook — 9/10 November 2026
 
-**Written 9 Nov 2026 by the chat session (Claude) at the author's request ("desktop work你整合成一个runbook，我会让一个mac agent通宵去完成"); AI-assisted.** Not independently reviewed yet. It authorizes only what §0.3 lists. It does not replace `MAC_LOCAL_RUNBOOK_20261104.md`, the PLAN §10 rows or the 7 Nov prompt; where they differ, the dated PLAN rows win and you STOP to report the conflict.
+**Written 9 Nov 2026 by the chat session (Claude); AI-assisted.** Not independently reviewed yet. It authorizes only what §0.3 lists. It does not replace `MAC_LOCAL_RUNBOOK_20261104.md`, the PLAN §10 rows or the 7 Nov prompt; where they differ, the dated PLAN rows win and you STOP to report the conflict.
 
 You are the **Mac-local agent** for Paper B (route R1). The author, Dowling Wong, is asleep and hands-off tonight. Do not wait for answers: when you need a decision, write it into the question list (§3) with options, a recommendation and a paste-ready answer, and go on with the next task. Report to the author in **Chinese**; write files in **English**.
 
@@ -10,8 +10,8 @@ You are the **Mac-local agent** for Paper B (route R1). The author, Dowling Wong
 
 ### 0.1 Standing rules (unchanged)
 
-- **No deletion.** R1-EXAM-B1-NO-DELETION-07NOV ("继续严格禁止，先修复") stands. Never delete or overwrite evidence, STOP scenes, logs or another track's files. In the repo, retire things by moving them into a `_to_delete/` folder next to them and saying so in the report.
-- **Never touch what you did not start.** No signal, cancel or edit of another user's or another agent's process, job or file (R1-TASL7-AGENT-OCCUPANCY-07NOV allows working beside them, not preempting them).
+- **No deletion.** The no-deletion rule stands. Never delete or overwrite evidence, STOP scenes, logs or another track's files. In the repo, retire things by moving them into a `_to_delete/` folder next to them and saying so in the report.
+- **Never touch what you did not start.** No signal, cancel or edit of another user's or another agent's process, job or file (working beside them is fine; preempting them is not).
 - **Independent review at every unit.** For each code or report unit, spawn a **fresh** reviewer with the goal, this runbook, the inputs and the outputs, but not your conclusions. Fix or answer each finding and re-check with the same reviewer until it writes *accepted*. You never accept your own unit.
 - **Git.** Work in your own worktrees; never in `~/Documents/agent_paper_B` itself. Never push `main`, `r1` or `exam-x-*`; never force-push. Commit author `Dowling Wong <wangdowling@gmail.com>` with the attribution lines you were given. One feature branch per task (names below), integrated into `mac-int-20261107` only after its review.
 - **Seeds.** C3 label seeds 7001–7005 and evaluation seeds 7006–7010 are never read for analysis tonight. Exam seeds (9001–9004 instance, 9101–9104 audit) never enter a C3 sweep.
@@ -24,13 +24,13 @@ B2, X.7, sweep 2 (T0 or T1), Track S, Track P, deepthought work, any HoreKa logi
 
 ### 0.3 Authorized tonight
 
-1. The B1 STOP diagnosis on TASL-7, read-only (§1), and a B1 restart under the conditions of `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` §5 (author: "B1stop可以起草诊断，修好之后开始跑").
+1. The B1 STOP diagnosis on TASL-7, read-only (§1), and a B1 restart under the conditions of `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` §5.
 2. Code, tests and documents on the Mac for §2–§4.
 3. Read-only SSH to TASL-7 for §1 only.
 
 ### 0.4 Author answers that may be pasted below this line
 
-The author may paste one or more of these lines into your start message. Treat a line as given **only if it appears verbatim in the start message**; record it as a PLAN §10 row through the normal integration review.
+The author may paste one or more of these lines into your start message. Act on a line **only if it appears in the start message**.
 
 - **A1 (B1 criterion):** `B1 判据：若诊断确认是设计问题（两个随机锚点无法排序），采用 R4：去掉锚点排序这道 STOP，锚点结果作描述性报告，保留 7B 重复率检查，附录披露为事后修订；修好审查后直接重跑。`
 - **A2 (M4 order):** `M4 可以先做不和 M3 共享的部分。`
@@ -50,7 +50,7 @@ The author may paste one or more of these lines into your start message. Treat a
    - **E:** fix the defect with a regression test (synthetic), independent review, then go to step 4.
    - **D with A1 given:** implement R4 in `r1/scripts/exam_runner.py::anchor_gate`. Remove only the ordering STOP; keep computing and recording `scripted_minus_random` as a descriptive field; keep the 7B duplicate-rate STOP unchanged. Add a test that the duplicate-rate STOP still fires and that the ordering no longer stops. Write the appendix disclosure text (original criterion, its numbers from D1, reason, date) into `reports/B1_GATE_AMENDMENT_20261109.md`. Independent review, then step 4.
    - **D without A1, or P, or D7 fails:** STOP Task 1. Put the question in §3 with the plan's options and your recommendation, and go to Task 2.
-4. **Restart preparation** (plan §5): exact new checkout committed and clean; independent review of that exact HEAD; the authorization note re-bound to the new HEAD as an `approved: true` candidate (R1-EXAM-B1-NOTE-ORDER-07NOV); the real author gate passes on it.
+4. **Restart preparation** (plan §5): exact new checkout committed and clean; independent review of that exact HEAD; the authorization note re-bound to the new HEAD as an `approved: true` candidate, in the order used on 8 Nov; the real author gate passes on it.
 5. **Host steps on TASL-7**, as for run `6835_20261108_a`: fresh read-only occupancy census; the Track P marker and handover procedure; final host preflight; offline loader check reused only if the checkout's loader files are unchanged (else repeat it once, with exit code).
 6. **Launch** run `6835_20261109_b` (or the next free suffix) in a fresh output tree. Never write into `b1_6835_20261108_a`.
 7. **Monitor** read-only at most every 15 minutes, with captured exit codes, exactly as on 8 Nov. On any STOP: preserve the scene, write the STOP report, get it reviewed, do not retry.
