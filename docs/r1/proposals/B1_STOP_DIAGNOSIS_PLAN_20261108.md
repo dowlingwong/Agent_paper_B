@@ -28,9 +28,9 @@ The criterion is RUNBOOK X.3 / PORTAL_EXAM_RUNBOOK Phase 5: "random-valid < scri
 
 The classes are not exclusive; the diagnosis reports each separately.
 
-## 3. Diagnosis — read-only steps (½ day, Mac)
+## 3. Diagnosis — read-only steps (½ day)
 
-**Scope and data.** Only the three anchors' existing outputs (36 roots). No candidate has run, so no candidate value can leak. B1 audit seeds are the exam's 9101–9104, not C3's label (7001–7005) or evaluation (7006–7010) seeds, so the C3 seed ban is not touched; confirm this from the run config before reading. Copy the needed files from TASL-7 read-only (rsync pull, SSH exit code captured as in the loader repeat), verify SHA-256 against the host, and work on the copies. Nothing on the host is modified, signalled, rerun or retired.
+**Scope and data.** Only the three anchors' existing outputs (36 roots). No candidate has run, so no candidate value can leak. B1 audit seeds are the exam's 9101–9104, not C3's label (7001–7005) or evaluation (7006–7010) seeds, so the C3 seed ban is not touched; confirm this from the run config before reading. **Who does what.** The Mac-local agent (desktop only) does D5 and D6 from the code and writes the read-only diagnosis script for D0–D4, D7 and D8. The experiment agent runs that script on TASL-7 (exit code captured, as in the loader repeat) and sends the capture back; the Mac-local agent turns it into the report. Nothing on the host is modified, signalled, rerun or retired.
 
 | Step | Computation (descriptive only, nothing changes the recorded STOP) | Addresses |
 |---|---|---|
@@ -75,9 +75,9 @@ After the fix in §4 is implemented and independently accepted, a new B1 run may
 
 B2, X.7 and sweep 2 remain separately gated.
 
-## 6. Paste-ready message for the Mac-local agent
+## 6. Paste-ready message for the experiment agent
 
-> B1 STOP (run `6835_20261108_a`): follow `docs/r1/proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` (branch `docs/b1-stop-diagnosis-08nov`). I authorize the read-only diagnosis in its §3: pull the three anchors' existing outputs read-only from TASL-7 with the SSH exit code captured, verify hashes, and compute D0–D8 on the copies. B1 audit seeds are 9101–9104; confirm this from the run config, then reading the anchors' audit values is allowed. No rerun, no gate change, no modification or retirement of host files. Get the report independently reviewed, then classify it per §4. If it is an engineering defect, fix it, get the fix and the exact new checkout independently reviewed, and restart B1 under the §5 conditions without waiting for me. If it is P or D, or if D7 fails, stop and send me the options with your recommendation and a paste-ready answer.
+> B1 STOP (run `6835_20261108_a`): see `docs/r1/proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` (branch `docs/runbooks-09nov`). (1) When the Mac-local agent's `proposals/B1_DIAGNOSIS_HANDOFF_<date>.md` is pushed, run its read-only diagnosis script on TASL-7 exactly as written, with the exit code captured, and push the capture and its SHA. No rerun, no gate change, no modification or retirement of host files. (2) When `proposals/B1_RESTART_HANDOFF_<date>.md` is pushed and its fix is independently accepted, restart B1 on TASL-7 under the §5 conditions: fresh occupancy check, preflight and handover as on 8 Nov, a new run ID and a fresh output tree, nothing of the old run touched. Any new STOP is preserved and reported, not retried.
 
 ## 7. Timing
 

@@ -2,7 +2,7 @@
 
 **Written 9 Nov 2026 by the chat session (Claude); AI-assisted.** Not independently reviewed yet. It authorizes only what §0.3 lists. It does not replace `MAC_LOCAL_RUNBOOK_20261104.md`, the PLAN §10 rows or the 7 Nov prompt; where they differ, the dated PLAN rows win and you STOP to report the conflict.
 
-You are the **Mac-local agent** for Paper B (route R1). The author, Dowling Wong, is asleep and hands-off tonight. Do not wait for answers: when you need a decision, write it into the question list (§3) with options, a recommendation and a paste-ready answer, and go on with the next task. Report to the author in **Chinese**; write files in **English**.
+You are the **Mac-local agent** for Paper B (route R1). You do **desktop work only**: code, tests, analysis and documents on the Mac. You have no SSH access to any server; everything that runs on a server is done by the experiment agent, to whom you hand scripts and instructions. The author, Dowling Wong, is asleep and hands-off tonight. Do not wait for answers: when you need a decision, write it into the question list (§3) with options, a recommendation and a paste-ready answer, and go on with the next task. Report to the author in **Chinese**; write files in **English**.
 
 ---
 
@@ -16,17 +16,14 @@ You are the **Mac-local agent** for Paper B (route R1). The author, Dowling Wong
 - **Git.** Work in your own worktrees; never in `~/Documents/agent_paper_B` itself. Never push `main`, `r1` or `exam-x-*`; never force-push. Commit author `Dowling Wong <wangdowling@gmail.com>` with the attribution lines you were given. One feature branch per task (names below), integrated into `mac-int-20261107` only after its review.
 - **Seeds.** C3 label seeds 7001–7005 and evaluation seeds 7006–7010 are never read for analysis tonight. Exam seeds (9001–9004 instance, 9101–9104 audit) never enter a C3 sweep.
 - **Secrets.** Never read `~/.config/r1/secrets.env` or any key file.
-- **SSH captures.** Every SSH call records its real exit code (`set -o pipefail`; `rc=$?` into the log and a separate `.rc` file). A capture without a recorded exit code is not evidence.
 
 ### 0.2 Not authorized tonight
 
-B2, X.7, sweep 2 (T0 or T1), Track S, Track P, deepthought work, any HoreKa login, any change to a frozen pin or to an author rule, reading any sweep-2 label table, changing `approved` in an authorization note except as §1 step 1.6 says.
+Any SSH or other server access; B2, X.7, sweep 2 (T0 or T1), Track S, Track P; any change to a frozen pin or to an author rule; reading any sweep-2 label table; setting `approved: true` in an authorization note.
 
 ### 0.3 Authorized tonight
 
-1. The B1 STOP diagnosis on TASL-7, read-only (§1), and a B1 restart under the conditions of `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` §5.
-2. Code, tests and documents on the Mac for §2–§4.
-3. Read-only SSH to TASL-7 for §1 only.
+Code, tests, analysis and documents on the Mac for §1–§5, including the scripts and the hand-off for the experiment agent in §1.
 
 ### 0.4 Author answers that may be pasted below this line
 
@@ -36,7 +33,7 @@ The author may paste one or more of these lines into your start message. Act on 
 - **A2 (M4 order):** `M4 可以先做不和 M3 共享的部分。`
 - **A3 (budget fields):** `采纳 R1-SEQ-BUDGET-FIELDS（W2）。`
 
-## 1. Task 1 — B1 STOP: diagnosis, fix, restart (highest priority)
+## 1. Task 1 — B1 STOP: desktop part of the diagnosis and the fix (highest priority)
 
 **Read first.** `reports/B1_STOP_6835_20261108.md`; `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` (this branch); the accepted descriptive capture and its review on `mac-b1-stop-descriptive-review-20261108` (`reviews/B1_STOP_ANCHOR_DESCRIPTIVE_RESULT_REVIEW_20261108.md`). That capture already shows per-root mean `delta_audit` from about −0.0166 to +0.0148 for `random_valid` and from about −0.0028 to +0.0013 for `scripted`. This is descriptive only, but it points to hypothesis H1/H3 of the plan (two random proposers, one with tiny local edits).
 
@@ -44,24 +41,21 @@ The author may paste one or more of these lines into your start message. Act on 
 
 **Steps.**
 
-1. **Diagnosis D0–D8** (plan §3), extending the accepted descriptive script rather than writing a new reader. Same read-only boundary: fixed paths under `/home/dowling/exam-x/work/b1_6835_20261108_a`, `O_NOATIME`, hash checks before output, exit code captured. The plan's D3 needs σ_node for the three nodes: take it from the committed D21 noise-floor tables, cited by path and SHA. Report `reports/B1_STOP_DIAGNOSIS_20261109.md` plus a JSON with per-instance numbers. Independent review.
-2. **Classify** per plan §4: E (engineering defect), P (power only), D (design or metric), and separately whether D7 (7B duplicate rate inside [0.4239, 0.5800]) passes.
-3. **Route.**
-   - **E:** fix the defect with a regression test (synthetic), independent review, then go to step 4.
-   - **D with A1 given:** implement R4 in `r1/scripts/exam_runner.py::anchor_gate`. Remove only the ordering STOP; keep computing and recording `scripted_minus_random` as a descriptive field; keep the 7B duplicate-rate STOP unchanged. Add a test that the duplicate-rate STOP still fires and that the ordering no longer stops. Write the appendix disclosure text (original criterion, its numbers from D1, reason, date) into `reports/B1_GATE_AMENDMENT_20261109.md`. Independent review, then step 4.
-   - **D without A1, or P, or D7 fails:** STOP Task 1. Put the question in §3 with the plan's options and your recommendation, and go to Task 2.
-4. **Restart preparation** (plan §5): exact new checkout committed and clean; independent review of that exact HEAD; the authorization note re-bound to the new HEAD as an `approved: true` candidate, in the order used on 8 Nov; the real author gate passes on it.
-5. **Host steps on TASL-7**, as for run `6835_20261108_a`: fresh read-only occupancy census; the Track P marker and handover procedure; final host preflight; offline loader check reused only if the checkout's loader files are unchanged (else repeat it once, with exit code).
-6. **Launch** run `6835_20261109_b` (or the next free suffix) in a fresh output tree. Never write into `b1_6835_20261108_a`.
-7. **Monitor** read-only at most every 15 minutes, with captured exit codes, exactly as on 8 Nov. On any STOP: preserve the scene, write the STOP report, get it reviewed, do not retry. If TASL-7 is unreachable because the Mac is on the KIT VPN for HoreKa work, wait and try again later; a monitoring gap is not a STOP, and B1 keeps running on the host. Do not launch or stop anything on TASL-7 while you cannot reach it reliably.
+1. **What the code alone can answer** (no server data): plan §3 D5 (metric orientation per node, from the node configs and `paired()`) and D6 (diff of the anchor path between Stage A's accepted checkout and `68357d3d`: managers, value grids, worker, wrappers, OpenML bootstrap guard; value-grid file hash). Report `reports/B1_STOP_CODE_CHECKS_20261109.md`. Independent review.
+2. **The diagnosis script for the experiment agent:** extend the accepted descriptive script `proposals/B1_STOP_ANCHOR_DESCRIPTIVE_20261108.py` to the server-side steps D0–D4, D7 and D8 (same read-only boundary: fixed paths under `/home/dowling/exam-x/work/b1_6835_20261108_a`, `O_NOATIME`, hash checks before output; JSON output). The σ_node values for D3 come from the committed D21 noise-floor tables, cited by path and SHA and embedded as constants. Synthetic tests in the style of `r1/tests/test_b1_stop_anchor_descriptive_synthetic.py`. Independent review. Then write `proposals/B1_DIAGNOSIS_HANDOFF_20261109.md` for the experiment agent: the script path and SHA, the exact command, what to send back (the capture with its exit code and SHA).
+3. **A small analysis script** that turns that JSON into the report tables of plan §3 and a class verdict per hypothesis, tested on a synthetic JSON. When the experiment agent's capture arrives, run it and write `reports/B1_STOP_DIAGNOSIS_<date>.md`; independent review.
+4. **Fix candidates, prepared now so the restart is not delayed:**
+   - **If A1 was given:** implement R4 in `r1/scripts/exam_runner.py::anchor_gate` on its own branch `mac-b1-r4-20261109`. Remove only the ordering STOP; keep computing and recording `scripted_minus_random` as a descriptive field; keep the 7B duplicate-rate STOP unchanged. Tests: the duplicate-rate STOP still fires; the ordering no longer stops. Draft the appendix disclosure `reports/B1_GATE_AMENDMENT_DRAFT_20261109.md` (original criterion, reason, date; the numbers are filled in from the diagnosis later). Independent review. It is used only if the diagnosis classifies the STOP as D.
+   - **If step 1 finds an engineering defect:** fix it with a regression test on `mac-b1-fix-20261109`; independent review.
+5. **Restart hand-off:** for whichever fix applies, prepare the exact new checkout (committed, clean, independently reviewed) and `proposals/B1_RESTART_HANDOFF_20261109.md` for the experiment agent: the commit, the new run ID suffix, and the restart conditions of plan §5. You do not set `approved: true`, run the author gate on the host, or launch anything.
 
-**Done when** the diagnosis report is accepted and either B1 is running (or finished) under the new run ID, or the open question is in §3.
+**Done when** the code checks, the diagnosis script and both hand-offs are reviewed and pushed, and the fix candidate is ready or the open question is in the question list.
 
 ## 2. Task 2 — HoreKa porting kit and diff support (M10 steps 0–1; unblocks HoreKa HK2)
 
 **Why tonight.** The HoreKa agent can start HK1 without this, but it cannot port any GPU task (HK2) until these shared pieces exist at a reviewed commit (`HOREKA_RUNBOOK_20261104.md` HK2 "Needs"; `MAC_LOCAL_RUNBOOK_20261104.md` M10 steps 0–1; `TRACK_G_RUNBOOK.md` §2, G.2).
 
-**Branches.** Paper `mac-trackg-20261109` from `mac-int-20261107`; harness `r1-local-trackg-20261109` from `origin/r1` in a separate worktree of `autoresearch_harness`. Do not touch the harness pin `a3fedbb` used by B1.
+**Branches.** Paper `mac-trackg-20261109` from `mac-int-20261107`; harness `r1-local-trackg-20261109` from `origin/r1` in a separate worktree of `autoresearch_harness`. Do not change the harness pin `a3fedbb` used by B1.
 
 **Step 0 — shared pieces for ports** (harness side unless noted):
 - a node template: `NodeSpec` YAML with `editable_paths`, `frozen_paths`, run command, metric name and direction, and a **fixed step or token budget field** (a wall-clock budget is refused);
@@ -90,12 +84,12 @@ Finish the D8 gate statistic in `r1/c3/gate.py` (or the existing module): gap cl
 
 ## 6. Order, time and stopping
 
-Order: Task 1 → Task 2 → Task 3 → Task 4 → Task 5. While B1 runs (Task 1 step 7), work on Tasks 2–5 between monitoring checks. If a task STOPs, record it and move to the next. Stop starting new units at 07:30 CET.
+Order: Task 1 → Task 2 → Task 3 → Task 4 → Task 5. If a task STOPs, record it and move to the next. Stop starting new units at 07:30 CET.
 
 ## 7. Morning report (08:30 CET)
 
 `reports/MAC_OVERNIGHT_REPORT_20261110.md` and a STATUS entry, then a short Chinese message to the author with:
-1. B1: diagnosis class, what was fixed, run ID and its state (running / finished / STOP), and anything preserved.
+1. B1: the code checks, the diagnosis script and its hand-off for the experiment agent, the fix candidate and the restart hand-off (commits and review verdicts).
 2. Each task: done / partly done / STOP, branch and commit, review verdict.
 3. The question list `reports/MAC_OVERNIGHT_QUESTIONS_20261110.md`: each question with context, options, recommendation and a paste-ready answer.
 4. For the HoreKa agent: the port-kit commits (Task 2), or why they are not ready.
