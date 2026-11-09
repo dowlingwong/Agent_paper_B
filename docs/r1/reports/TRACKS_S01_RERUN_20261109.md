@@ -210,7 +210,8 @@ and 200/200 cross-server; 2/200 negative control). The author must either
 - **(b)** authorise an instrumented-probe pin / PLAN row so future runs carry replayable raw contents in the
   committed evidence.
 
-The operator did not decide this, did not change the pin, and did not alter the served code.
+The operator did not decide this, did not change the pin, and did not alter the served code. **Answered on
+9 Nov 2026: the author chose (a) — see §9.**
 
 ## 3. Host state after (evidence preserved, lease free)
 
@@ -317,7 +318,7 @@ Both JSON files are well under 20 MB, so nothing was gzipped.
   append-only server-log contents at the recorded offsets (200/200 each tier, cross-server 200/200, 2/200
   negative control). **Author decision at STOP 1:** confirm the row's "identity recomputed from the saved
   contents" is satisfied by that host-log recomputation, or authorise an instrumented-probe pin for future
-  committed replayable contents. Not decided by the operator.
+  committed replayable contents. **Answered: the author chose (a) on 9 Nov 2026 — see §9.**
 - `k = 1` is the Phase 1 procedure output; **Phase 2/3 have not started** and no later phase is authorised
   by this report.
 - TASL-7 was **not** touched tonight; no Track P, no B1.
@@ -343,3 +344,21 @@ Both JSON files are well under 20 MB, so nothing was gzipped.
   evidence); (ii) §1 now says the script guards on existing `serial.json`/`concurrent.json` (it `mkdir -p`s
   the directory); (iii) §0 now says `trks-status` is not a §11 template and matches the committed
   branch-head script (`5bd570ff…`), not the `d10b05b7` checkout (`a217f6b8…`).
+
+## 9. Author decision at STOP 1 (9 November 2026): option (a)
+
+The author answered STOP 1 (relayed by the Lead on 9 Nov 2026), verbatim:
+
+> STOP 1 选 (a)：确认从 append-only server 日志、按记录的偏移量重算出的 identity（reviewer §2.5，含错位对照）满足 R1-TRACKS-S01-RERUN 的 'identity recomputed from saved contents'。继续 Phase 2/3。下次改探针 pin 时，让探针把回答原文和 paper/harness 版本号写进结果文件。
+
+**Interpretation.** Option **(a)** is accepted: the identity recomputed by the independent reviewer from the
+append-only server logs at the recorded offsets (review file §2.5, including the one-call-shift negative
+control; 200/200 serial, 200/200 on each concurrent URL, 200/200 cross-server) **satisfies**
+R1-TRACKS-S01-RERUN's "identity recomputed from the saved contents". Option (b) (an instrumented-probe
+pin) is **not** adopted now. `k = 1` stands for `digits_mlp`, and Phase 2/3 are authorized (Phase 3 ends at
+its own STOP 3).
+
+**Standing instruction for the next probe pin change (forward-looking; NOT implemented tonight).** When the
+probe pin is next changed, the probe must write into its result file (i) the answer text (回答原文) and
+(ii) the paper and harness version identifiers. **No pin/GGUF/flag change was made in this re-run**; the
+pinned probe (`d10b05b7` / `a3fedbb`) is unchanged.

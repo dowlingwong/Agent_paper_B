@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 9 November 2026 — Track S STOP 1: author decision (a) accepted; Phase 2/3 authorized (AI-assisted)
+
+- **Author decision (relayed by the Lead, verbatim):** "STOP 1 选 (a)：确认从 append-only server 日志、按记录的偏移量重算出的 identity（reviewer §2.5，含错位对照）满足 R1-TRACKS-S01-RERUN 的 'identity recomputed from saved contents'。继续 Phase 2/3。下次改探针 pin 时，让探针把回答原文和 paper/harness 版本号写进结果文件。"
+- **Effect.** Decision **(a)** accepted: the independent reviewer's recomputation of identity from the append-only server logs at the recorded offsets (review §2.5, with the one-call-shift negative control; 200/200 serial, 200/200 on each concurrent URL, 200/200 cross-server) **satisfies** R1-TRACKS-S01-RERUN's "identity recomputed from the saved contents". Option (b) — an instrumented-probe pin — is **not** adopted. `k = 1` stands for `digits_mlp`; Phase 2/3 are authorized. Recorded in report `docs/r1/reports/TRACKS_S01_RERUN_20261109.md` §9.
+- **Standing instruction for a future probe pin change (forward-looking; NOT implemented tonight; no pin change made):** the probe must write the answer text (回答原文) and the paper/harness version identifiers into the result file. Pins stay paper `d10b05b7` / harness `a3fedbb` / llama.cpp `620d222` / GGUF `509287f7…`.
+
 ## 9 November 2026 — Track S S0.1 re-run on TASL-2 (`digits_mlp`): both tiers at 100 %, **k = 1** by clause (b); STOP 1 review **accepted** (AI-assisted; ENGINEERING_ONLY)
 
 - **Authority.** O3 (operator runbook, `docs/runbooks-09nov`), PLAN §10 **R1-TRACKS-S01-RERUN**, Track S operator runbook rev 3.3 (`13badb0`, sha `a93fb84b…`), PLAN R1-CACHEPROMPT-FALSE. Author's scope, 9 Nov: S0.1 re-run may use new session names, only append watcher/server logs, run on TASL-2 per O3; TASL-7 runs no Track P tonight.
