@@ -26,7 +26,14 @@ server that nothing else shares:
   GPU uuid with used memory >= the pinned ``footprint_mib`` (refused if unset).
   A CPU-fallback line stops both routes; the route that passed is recorded;
 * ``stop()`` signals only the process group it started, after checking the
-  PID still leads it.
+  PID still leads it;
+* two-GPU serving (M4 2(e), R1-BX-PROPOSED-CONFIRM REVISIONS (f)): with
+  ``gpu_uuids=[u1, u2]`` and ``tensor_split=[a, b]`` the server sees both cards
+  (``CUDA_VISIBLE_DEVICES=u1,u2``) and gets ``--split-mode layer --tensor-split
+  a,b``; ``offload_check_dual`` requires full offload with model buffers on both
+  cards (route (i)) or the server pid on both cards at their pinned per-card
+  footprints (route (ii)). Without ``gpu_uuids`` the single-GPU argv,
+  environment and record are byte-for-byte what they were.
 
 Restarts and orphans (RUNBOOK A.5 / A.8) as for Ollama: ``generation`` > 0
 names the ``_r<g>`` record and log; ``orphan_matches`` / ``stop_orphan`` signal
@@ -47,6 +54,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import signal
@@ -204,6 +212,75 @@ def offload_check(log_text: str, *, pid: int | None, gpu_uuid: str | None, footp
     return check
 
 
+def validate_dual(gpu_uuid, gpu_uuids, tensor_split):
+    """Two-GPU settings: exactly two distinct uuids and two positive finite split weights, and not
+    together with the single ``gpu_uuid``.  Returns ``(None, None)`` for single-GPU serving."""
+    if gpu_uuids is None and tensor_split is None:
+        return None, None
+    if gpu_uuids is None or tensor_split is None:
+        raise ValueError('two-GPU serving needs both gpu_uuids and tensor_split')
+    if gpu_uuid is not None:
+        raise ValueError('use either gpu_uuid (one card) or gpu_uuids (two cards), not both')
+    if (not isinstance(gpu_uuids, (list, tuple)) or len(gpu_uuids) != 2
+            or any(not isinstance(u, str) or not u.strip() or ',' in u for u in gpu_uuids)
+            or gpu_uuids[0] == gpu_uuids[1]):
+        raise ValueError('gpu_uuids must be two distinct GPU uuids')
+    if (not isinstance(tensor_split, (list, tuple)) or len(tensor_split) != 2
+            or any(isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x) or x <= 0
+                   for x in tensor_split)):
+        raise ValueError('tensor_split must be two positive finite numbers')
+    return [str(u) for u in gpu_uuids], [x for x in tensor_split]
+
+
+def dual_args(tensor_split) -> list[str]:
+    """``--split-mode layer --tensor-split a,b`` for two-GPU serving; nothing otherwise."""
+    if not tensor_split:
+        return []
+    return ['--split-mode', 'layer', '--tensor-split', ','.join(format(x, 'g') for x in tensor_split)]
+
+
+def offload_check_dual(log_text: str, *, pid: int | None, gpu_uuids, footprint_mib, apps) -> dict:
+    """Full offload across both cards.  Route (i): an ``offloaded N/N layers`` line, no CPU fallback,
+    and a non-zero model buffer on two CUDA devices.  Route (ii), when the build prints no offload line:
+    the server pid listed by nvidia-smi on **each** uuid with used memory >= that card's pinned
+    footprint (``footprint_mib`` = ``[f1, f2]``).  A partial line or CPU fallback is a STOP.  The
+    per-card nvidia-smi rows are recorded either way (the census of both cards)."""
+    report = offload_report(log_text)
+    rows = [r for r in (apps or []) if r.get('pid') == pid]
+    cards = []
+    for i, uuid in enumerate(gpu_uuids):
+        mine = next((r for r in rows if r.get('gpu_uuid') == uuid), None)
+        cards.append({'gpu_uuid': uuid, 'used_mib': mine.get('used_mib') if mine else None,
+                      'listed': mine is not None})
+    devices = sorted({b['device'] for b in report['gpu_model_buffers'] if b['mib'] > 0})
+    check = {**report, 'route': None, 'cards': cards, 'model_buffer_devices': devices,
+             'compute_apps_read': apps is not None, 'pid': pid}
+    if report['cpu_fallback_lines'] or report['line'] == 'partial':
+        check['full'] = False
+        return check
+    if report['line'] == 'full':
+        if len(devices) >= 2:
+            check.update(full=True, route='log_line')
+            return check
+        check.update(full=False, reasons=[f'offloaded N/N but model buffers on {devices}, not on two cards'])
+        return check
+    reasons = list(report['reasons'])
+    if (not isinstance(footprint_mib, (list, tuple)) or len(footprint_mib) != 2
+            or any(isinstance(f, bool) or not isinstance(f, (int, float)) or f <= 0 for f in footprint_mib)):
+        reasons.append('route (ii) refused: per-card footprint_mib [f1, f2] is not set')
+    elif apps is None:
+        reasons.append('route (ii): nvidia-smi --query-compute-apps could not be read')
+    else:
+        short = [c['gpu_uuid'] for c, f in zip(cards, footprint_mib)
+                 if c['used_mib'] is None or c['used_mib'] < f]
+        if not short:
+            check.update(full=True, route='gpu_memory', reasons=[])
+            return check
+        reasons.append(f'route (ii): server pid {pid} not at its pinned footprint on {short}')
+    check.update(full=False, reasons=reasons)
+    return check
+
+
 def _get_json(url: str, timeout: float) -> tuple[int | None, object]:
     try:
         with urlopen(url, timeout=timeout) as response:
@@ -225,7 +302,9 @@ class LlamaServerInstance:
                  port: int | None = None, n_gpu_layers: int = 999, ctx_size: int = 8192,
                  gpu_uuid: str | None = None, label: str = 'ENGINEERING_ONLY', extra_args=(),
                  env_extra: dict[str, str] | None = None, start_timeout: float = 120.0,
-                 generation: int = 0, thinking_policy: dict | None = None) -> None:
+                 generation: int = 0, thinking_policy: dict | None = None,
+                 gpu_uuids: list[str] | None = None, tensor_split: list[float] | None = None) -> None:
+        self.gpu_uuids, self.tensor_split = validate_dual(gpu_uuid, gpu_uuids, tensor_split)
         self.batch = Path(batch_dir).resolve()
         self.binary = str(binary)
         self.model_path = str(model_path)
@@ -257,7 +336,7 @@ class LlamaServerInstance:
     def argv(self) -> list[str]:
         return [self.binary, '-m', self.model_path, '--host', '127.0.0.1', '--port', str(self.port),
                 '-ngl', str(self.n_gpu_layers), '-c', str(self.ctx_size), '--alias', self.alias, '-np', '1',
-                *self.extra_args, *self.thinking_argv]
+                *dual_args(self.tensor_split), *self.extra_args, *self.thinking_argv]
 
     def env(self) -> tuple[dict[str, str], list[str]]:
         env, removed = {}, []
@@ -268,6 +347,8 @@ class LlamaServerInstance:
                 env[key] = value
         if self.gpu_uuid:
             env['CUDA_VISIBLE_DEVICES'] = self.gpu_uuid
+        elif self.gpu_uuids:
+            env['CUDA_VISIBLE_DEVICES'] = ','.join(self.gpu_uuids)
         env.update(self.env_extra)
         return env, sorted(removed)
 
@@ -314,6 +395,9 @@ class LlamaServerInstance:
         if apps is None:
             apps = gpu_compute_apps()
         pid = (self.record or {}).get('pid') or (self.process.pid if self.process else None)
+        if self.gpu_uuids:
+            return offload_check_dual(self.log_text(), pid=pid, gpu_uuids=self.gpu_uuids,
+                                      footprint_mib=footprint_mib, apps=apps)
         return offload_check(self.log_text(), pid=pid, gpu_uuid=self.gpu_uuid, footprint_mib=footprint_mib, apps=apps)
 
     def start(self, *, build: dict | None = None, model_sha256: str | None = None) -> dict:
@@ -338,6 +422,9 @@ class LlamaServerInstance:
                        'env_removed': removed, 'build': build, 'log': str(self.log_path), 'started_utc': _utc()}
         if self.thinking_policy is not None:
             self.record['thinking_policy'] = self.thinking_policy
+        if self.gpu_uuids:  # only for two-GPU serving: single-GPU records keep their keys
+            self.record.update(gpu_uuids=list(self.gpu_uuids), tensor_split=list(self.tensor_split),
+                               split_mode='layer')
         if self.generation:
             self.record['generation'] = self.generation
         try:
