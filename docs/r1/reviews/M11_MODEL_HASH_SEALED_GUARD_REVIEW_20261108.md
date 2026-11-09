@@ -1,0 +1,5 @@
+# M11 Track P model hash guard: independent review
+
+**ACCEPTED only for the standalone hash-helper guard**, candidate `2ac25aafca30f963490f53b5dabf2bb9a32ee50c`; no claim of full model or sealed-reader coverage, D8 authorization or actual data safety follows. No host, model, GPU, real sealed material or label was accessed.
+
+The actual source adds a lazy import of the existing `analysis_guard.refuse_sealed` and calls it before `open` in `sha256_file`. The guard checks lexical and resolved paths including case variants; the lazy import has no evident cycle through the guard's own imports. The diff modifies only model.py, the synthetic test and report, not the five author-held M3 files or B1 production checkout. Independently run synthetic tests passed **3**, covering direct fail-before-open, case/symlink alias and normal hash. Tests execute the exact extracted function AST because this environment lacks torch: full module import and wrapper manifest/model readers were not tested and remain outside acceptance. Existing guard limitations on hardlinks and concurrent path replacement apply.

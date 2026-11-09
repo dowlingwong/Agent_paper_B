@@ -16,12 +16,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import sys
 import urllib.request
 from pathlib import Path
 
 import yaml
+
+from r1.c3.analysis_guard import refuse_sealed
 
 FREE_FLOOR_BYTES = 100_000_000_000
 # Phase 0 identities and revisions (PORTAL_TRACKP_HOST_FACTS_20261026.md); Kev at its v1.0 release tag
@@ -47,6 +50,7 @@ class RegistryError(RuntimeError):
 
 
 def sha256_file(path: Path) -> str:
+    refuse_sealed(path)
     h = hashlib.sha256()
     with open(path, "rb") as fh:
         for chunk in iter(lambda: fh.read(1 << 22), b""):
@@ -55,6 +59,7 @@ def sha256_file(path: Path) -> str:
 
 
 def git_blob_sha1(path: Path) -> str:
+    refuse_sealed(path)
     data = path.read_bytes()
     return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
 
@@ -79,23 +84,46 @@ def check_floor(path: Path) -> None:
         raise RegistryError(f"STOP: {free} bytes free on the models filesystem, below the 100 GB floor")
 
 
+def _check_existing_download_target(target: Path) -> None:
+    """Reject sealed aliases and directory links before handing a tree to Hub."""
+    refuse_sealed(target)
+    if target.is_symlink():
+        raise RegistryError('STOP: download target is a symlink')
+    if not target.exists():
+        return
+    if not target.is_dir():
+        raise RegistryError('STOP: download target is not a directory')
+    def walk_error(error):
+        raise RegistryError('STOP: cannot inspect existing download target') from error
+    for base, dirs, files in os.walk(target, followlinks=False, onerror=walk_error):
+        for name in dirs + files:
+            child = Path(base) / name
+            refuse_sealed(child)
+            if child.is_symlink() and name in dirs:
+                raise RegistryError('STOP: existing download directory symlink')
+
+
 def download(key: str, models_dir: Path) -> dict:
-    from huggingface_hub import snapshot_download
+    refuse_sealed(models_dir)
     repo, rev = PINS[key]
+    target = models_dir / f"{repo.replace('/', '__')}@{rev[:12]}"
+    _check_existing_download_target(target)
+    from huggingface_hub import snapshot_download
     models_dir.mkdir(parents=True, exist_ok=True)
     check_floor(models_dir)
-    target = models_dir / f"{repo.replace('/', '__')}@{rev[:12]}"
     snapshot_download(repo, revision=rev, local_dir=str(target))
     check_floor(models_dir)
     return verify_dir(key, target)
 
 
 def verify_dir(key: str, target: Path) -> dict:
+    refuse_sealed(target)
     repo, rev = PINS[key]
     tree = hub_tree(repo, rev)
     files, problems = {}, []
     for rel, meta in sorted(tree.items()):
         p = target / rel
+        refuse_sealed(p)
         if not p.is_file():
             problems.append(f"missing {rel}")
             continue
@@ -109,8 +137,12 @@ def verify_dir(key: str, target: Path) -> dict:
         elif meta["oid"] and git_blob_sha1(p) != meta["oid"]:
             problems.append(f"{rel}: git blob sha1 != hub {meta['oid']}")
         files[rel] = {"size": size, "sha256": sha, "verified_against": "lfs_sha256" if meta["lfs_sha256"] else "git_blob_sha1"}
-    extra = sorted(str(p.relative_to(target)) for p in target.rglob("*")
-                   if p.is_file() and ".cache" not in p.parts and str(p.relative_to(target)) not in tree)
+    extra = []
+    for p in target.rglob("*"):
+        refuse_sealed(p)
+        if p.is_file() and ".cache" not in p.parts and str(p.relative_to(target)) not in tree:
+            extra.append(str(p.relative_to(target)))
+    extra.sort()
     if problems:
         raise RegistryError(f"STOP: {repo}@{rev} failed verification: {problems[:5]}")
     out = {"repo": repo, "revision": rev, "local_path": str(target), "files": files,
@@ -122,11 +154,13 @@ def verify_dir(key: str, target: Path) -> dict:
 
 def reverify(registry_path: Path) -> list[str]:
     """Re-hash every registered file; returns the list of mismatches (empty = all verified)."""
+    refuse_sealed(registry_path)
     reg = yaml.safe_load(Path(registry_path).read_text())
     bad = []
     for key, ent in reg["models"].items():
         for rel, f in ent["files"].items():
             p = Path(ent["local_path"]) / rel
+            refuse_sealed(p)
             if not p.is_file() or sha256_file(p) != f["sha256"]:
                 bad.append(f"{key}:{rel}")
     return bad
@@ -139,6 +173,7 @@ def main(argv=None) -> int:
     ap.add_argument("--only", nargs="*", default=None)
     ap.add_argument("--verify", type=Path, help="re-hash every file of an existing registry")
     args = ap.parse_args(argv)
+    refuse_sealed(args.verify, args.out, args.models_dir)
     if args.verify:
         bad = reverify(args.verify)
         print(json.dumps({"registry": str(args.verify), "mismatches": bad}))

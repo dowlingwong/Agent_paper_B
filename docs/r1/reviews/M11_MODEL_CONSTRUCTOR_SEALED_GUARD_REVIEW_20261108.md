@@ -1,0 +1,7 @@
+# M11 direct constructor sealed guards: independent review
+
+**ACCEPTED for the two scoped constructor entrypoints**, candidate `92cfe10a9f7ac2f7346d6014d281064d26a0eaa3`; not complete model reader coverage, D8 authorization or permission to read labels. No host, real model, real sealed data or GPU was used.
+
+The actual `PointerWrapper.__init__` now guards base and `init_from` before superclass and Kev import; `LayaWrapper.__init__` similarly guards encoder and weights before superclass and dependency imports. The existing helper checks lexical/resolved sealed paths and existing nested entries. Factory dispatch and constructor can walk a model tree more than once; existing nonsealed root/directory symlinks are conservatively refused, as disclosed. Built-model/tokenizer objects, direct other constructors, third-party loading/caches, hardlinks and concurrent replacement remain outside this unit's guarantees.
+
+Independent combined constructor/base/manifest/hash synthetic tests passed **16 tests** in a fresh isolated pytest base. Constructor tests execute exact ASTs against a fake superclass boundary because torch is unavailable; full real module, actual Kev/Laya/PEFT load and live model-tree compatibility were not tested. The diff changes only model.py, synthetic tests and report, with the five author-held M3 files and B1 production checkout untouched. Other readers and author gate requirements remain separate.
