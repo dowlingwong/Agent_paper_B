@@ -1,4 +1,4 @@
-# Draft for the author: the `R1-BX-D8-CONFIRM` row — 9 November 2026 (redrafted after review round 1)
+# Draft for the author: the `R1-BX-D8-CONFIRM` row — 9 November 2026 (redrafted after review rounds 1 and 2)
 
 **Draft only; AI-assisted. This is not an author decision and is not in `PLAN.md`.** It exists so that, once the gate code has passed independent review, the author can decide whether to confirm it. Nothing in the repository treats this file as authority: `analysis_guard.require_d8_confirmation` reads only `docs/r1/PLAN.md` §10 at the committed HEAD. Do not paste the row before the gate has an *accepted* independent review of the exact bytes named below; if the gate changes, the SHA changes and the row must be redrafted.
 
@@ -7,11 +7,11 @@
 | Item | Value |
 |---|---|
 | File | `r1/c3/gate.py` |
-| Commit containing these bytes | `fe453fcb463cafb6475cf6bda67caa392128ed64` (branch `mac-m11-d8-20261109`) |
-| SHA-256 of `r1/c3/gate.py` | `007a484ca0852fb663ee4a20df653f830388e5ef193a9d02be3e41b8b3d9693c` |
-| Git blob of `r1/c3/gate.py` | `2859f38e39db4aad93949978506824c03935b8a8` |
+| Commit containing these bytes | `050cb9f0040639a46cbc7de26e8add5ca72e6506` (branch `mac-m11-d8-20261109`) |
+| SHA-256 of `r1/c3/gate.py` | `a078cf1f862d23e6dcf10fd99135f0840afcd243bb66374645c238ab46006acd` |
+| Git blob of `r1/c3/gate.py` | `7ae776eade29fb210c272ba1f4b998c80f1bc6ca` |
 
-The round-1 draft named commit `421a1c38…` and SHA-256 `a75e08d3…280e`; those bytes are superseded and must not be confirmed.
+Earlier drafts named commit `421a1c38…` / SHA-256 `a75e08d3…280e` (round 1) and commit `fe453fcb…` / SHA-256 `007a484c…693c` (round 2, which pinned the wrong eighth T0 node). Both are superseded and must not be confirmed.
 
 `gate.py` now contains the whole statistic: the IQM and PoI are inlined (it no longer imports `d8_point_statistics.py`), and the NumPy version (`NUMPY_VERSION = '2.4.4'`), the eight T0 node ids and the three suite names are constants in it, each a STOP on mismatch. For the record only (the parser does not check it): `r1/c3/analysis_guard.py` SHA-256 `b6ef5c3fb4aba3c2050781726c45369100429659371bc2ec086ae9a93bf8f87b` (the authority mechanism, unchanged).
 
@@ -29,13 +29,13 @@ The row adopts the gate as implemented: the R1-BX-D8 numbers confirmed in R1-BX-
 6. gap closed as a ratio of means over test instances;
 7. the fractional-edge 25–75 % IQM (briefing §1 option A);
 8. PoI ties by exact floating-point equality;
-9. the node layout: T0 = exactly `digits_mlp`, `tabular_mlp`, `openml_breast_w`, `openml_ionosphere`, `openml_wdbc`, `openml_credit_approval`, `openml_sonar`, `openml_blood_transfusion`, with no suite; T1 suites = `autoresearch`, `MLAgentBench`, `MLGym`; any deviation STOPs, including suite-less T1 nodes such as 1GC-7RC dataset tasks; the T1 node list itself is supplied by the caller;
+9. the node layout: T0 = exactly the authorized sweep-1 set `digits_mlp`, `tabular_mlp`, `openml_breast_w`, `openml_ionosphere`, `openml_wdbc`, `openml_credit_approval`, `openml_sonar`, `openml_climate` (climate substitutes for blood_transfusion, which failed D21: R1-DT-PIN-SWEEP1, `authorizations/c3_sweep1_20261027.md`, R1-D28-REPAIR), with no suite; T1 suites = `autoresearch`, `MLAgentBench`, `MLGym`; any deviation STOPs, including suite-less T1 nodes such as 1GC-7RC dataset tasks; the T1 node list itself is supplied by the caller;
 10. **partial T1 as a whole-gate STOP**: a suite without a labelled T1 node STOPs the aggregate gate. The R1-B7-PARTIAL-T1 consequence attaches the condition to leave-one-suite-out; the row text below states it for the gate;
 11. δ_n supplied by the caller in the 20-run-scaled utility units of U (D18), not checked;
-12. strict input (exact node fields, no duplicate JSON keys, no NaN/Infinity, no overflow-sized values);
+12. strict input (exact node fields, no duplicate JSON keys, no NaN/Infinity, no overflow-sized values; an infinite gap closed fails closed with `ValueError`);
 13. the executing gate file must be the checked `r1/c3/gate.py`.
 
-Input provenance (utilities, oracle from the label-seed block only, dev/test split, scaling) remains the caller's and is not frozen by this row. The report lists six questions (Q1–Q6) whose answers should come before the row is pasted. From the row on, sweep-2 label tables may be analysed, subject to all other gates.
+Input provenance (utilities, oracle from the label-seed block only, dev/test split, scaling) remains the caller's and is not frozen by this row. The report lists questions Q1–Q6, with Q1 and Q2 to be answered together; their answers should come before the row is pasted. From the row on, sweep-2 label tables may be analysed, subject to all other gates.
 
 ## Format constraints
 
@@ -50,7 +50,7 @@ The parser accepts the row only if all of these hold:
 ## The row (for the author to paste only after the review is accepted)
 
 ```
-| R1-BX-D8-CONFIRM | Gate code `r1/c3/gate.py` @ `fe453fcb463cafb6475cf6bda67caa392128ed64`, sha256 `007a484ca0852fb663ee4a20df653f830388e5ef193a9d02be3e41b8b3d9693c`, implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. If only some T1 nodes have labels by B.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count. Each suite must have at least one labelled T1 node, otherwise STOP. Existing preregistration and analysis gates remain in force. Sweep-2 label tables may be analysed from this row on. |
+| R1-BX-D8-CONFIRM | Gate code `r1/c3/gate.py` @ `050cb9f0040639a46cbc7de26e8add5ca72e6506`, sha256 `a078cf1f862d23e6dcf10fd99135f0840afcd243bb66374645c238ab46006acd`, implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. If only some T1 nodes have labels by B.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count. Each suite must have at least one labelled T1 node, otherwise STOP. Existing preregistration and analysis gates remain in force. Sweep-2 label tables may be analysed from this row on. |
 ```
 
 The decision text was checked against the accepted parser: `r1/tests/test_d8_confirm_draft_matches_parser.py` extracts the fenced row above, places it in a synthetic `PLAN.md` in a pytest-owned Git repository together with the gate bytes, and runs the real `require_d8_confirmation`. The test passes only while the draft and the committed gate agree.

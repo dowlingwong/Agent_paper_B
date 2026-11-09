@@ -1,4 +1,4 @@
-# M11 D8 — answers to independent review round 1 (9 November 2026)
+# M11 D8 — answers to independent review rounds 1 and 2 (9 November 2026)
 
 **AI-assisted; executing agent's answers, for the same reviewer to re-check.** The review: `REVIEW_M11_D8_round1.md` (reviewer scratch `scratch_rev_d8/`), on commits `421a1c38` (gate, tests, report) and `962acd60` (draft). The fixes are new commits on `mac-m11-d8-20261109`; history is not rewritten. `PLAN.md` is untouched and no author row was created.
 
@@ -7,9 +7,9 @@
 | `fe453fcb463cafb6475cf6bda67caa392128ed64` | `r1/c3/gate.py`, `r1/tests/test_d8_gate_synthetic.py`, `r1/tests/test_d8_sweep2_reader_refusal_matrix.py`, `docs/r1/reports/M11_D8_GATE_20261109.md` |
 | the commit after it (this file) | redrafted `docs/r1/proposals/R1_BX_D8_CONFIRM_DRAFT_20261109.md` and this file |
 
-New gate bytes: SHA-256 `007a484ca0852fb663ee4a20df653f830388e5ef193a9d02be3e41b8b3d9693c`, blob `2859f38e39db4aad93949978506824c03935b8a8`, in commit `fe453fcb`. The draft names these. `test_d8_confirm_draft_matches_parser.py` passes: the real guard accepts the drafted row in a synthetic repository holding these bytes.
+Round-1 gate bytes: SHA-256 `007a484c…693c`, blob `2859f38e…`, in commit `fe453fcb`. These are superseded by round 2; see the round-2 section at the end, which has the current values.
 
-Tests (the unit's command): 366 passed and 4 failed. The 4 failures are the pre-existing ones in `test_c3_evidence_guards.py`, the same 4 as on HEAD~2.
+Tests after round 1 (the unit's command): 366 passed and 4 failed. The 4 failures are the pre-existing ones in `test_c3_evidence_guards.py`, the same 4 as on HEAD~2.
 
 ## Blocking
 
@@ -90,11 +90,41 @@ Tests (the unit's command): 366 passed and 4 failed. The 4 failures are the pre-
 
 ## Open for the author (also in the report, Q1–Q6)
 
-1. **Q1.** The partial-T1 STOP: does it apply to the whole gate (current) or only to leave-one-suite-out?
-2. **Q2.** Are the T0 ids and suite spellings right? Do suite-less 1GC-7RC dataset tasks enter the gate as T1?
-3. **Q3.** Nonpositive-denominator STOP versus an SE-aware dev eligibility rule.
-4. **Q4.** NumPy pin: 2.4.4 (current) or the version of the venv that will actually run the gate.
-5. **Q5.** Minimum n_test per node.
-6. **Q6.** Keep ratio of means, exact-equality ties and the fractional-edge IQM.
+1. **Q1 + Q2 (answer together).** Does the partial-T1 STOP apply to the whole gate (current) or only to leave-one-suite-out? Is the sweep-1 T0 set (with `openml_climate`) also sweep 2's T0 set? Are the suite spellings right? Do suite-less 1GC-7RC dataset tasks enter the gate as T1? If they do, the per-suite rule must change too.
+2. **Q3.** Nonpositive-denominator STOP versus an SE-aware dev eligibility rule.
+3. **Q4.** NumPy pin: 2.4.4 (current) or the version of the venv that will actually run the gate.
+4. **Q5.** Minimum n_test per node.
+5. **Q6.** Keep ratio of means, exact-equality ties and the fractional-edge IQM.
 
 Any answer that changes `gate.py` changes the SHA. The draft must then be redrafted and the gate re-reviewed.
+
+## Round 2 (`REVIEW_M11_D8_round2.md`)
+
+| Commit | Content |
+|---|---|
+| `050cb9f0040639a46cbc7de26e8add5ca72e6506` | `r1/c3/gate.py` (T0 pin), `r1/tests/test_d8_gate_synthetic.py`, `docs/r1/reports/M11_D8_GATE_20261109.md` |
+| the commit after it (this update) | redrafted `docs/r1/proposals/R1_BX_D8_CONFIRM_DRAFT_20261109.md` and this file |
+
+**Current gate bytes:**
+- SHA-256 `a078cf1f862d23e6dcf10fd99135f0840afcd243bb66374645c238ab46006acd`
+- blob `7ae776eade29fb210c272ba1f4b998c80f1bc6ca`
+- commit `050cb9f0`
+
+The draft names these, and `test_d8_confirm_draft_matches_parser.py` passes. The unit's test command gives 367 passed and 4 failed; the 4 failures are the same pre-existing ones in `test_c3_evidence_guards.py`.
+
+**R2-1 (blocking): the wrong eighth T0 node.** *Fixed.*
+- `T0_NODES` now holds the authorized sweep-1 set, with `openml_climate` in place of `openml_blood_transfusion`, which failed D21. This is cited in the code docstring and comment, in report convention 9 and in draft item 9. Sources:
+  - R1-DT-PIN-SWEEP1;
+  - `docs/r1/authorizations/c3_sweep1_20261027.md`;
+  - R1-D28-REPAIR and `DT_SWEEP1_READINESS_20261027.md`.
+- New test `test_t0_nodes_equal_the_classifier_and_the_authorized_sweep_config`. It asserts that `set(T0_NODES)` equals two other lists:
+  - the literal node list in the accepted classifier's `dataset.evidence_classification`, read by AST;
+  - `nodes` in `r1/scripts/configs/c3_sweep_deepthought.json`.
+  It also checks that `nodes_pending` is empty.
+- The extra-T0-node test now adds `openml_blood_transfusion` as the unexpected node.
+- Q2 states the substitution, and asks whether sweep 2's T0 set is the sweep-1 set. Recommended yes, per RUNBOOK B.1b.
+- The stale `D21_NODES` in `r1/scripts/c3_label_sweep.py:119` is named in convention 9 only. That file was not edited.
+
+**R2-2 (note): an infinite gap.** *Disclosed.* Convention 12, and draft item 12, now say that an infinite gap closed makes the IQM raise `ValueError`. This fails closed: an error, not a predeclared STOP.
+
+**R2-3 (note): Q1 and Q2 together.** *Done.* The report presents them as one item, "Q1 + Q2", with the interaction stated: allowing suite-less 1GC T1 nodes changes both the T1 suite check and the per-suite rule. The draft says that Q1 and Q2 are to be answered together.
