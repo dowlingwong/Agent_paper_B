@@ -1,0 +1,7 @@
+# Independent review: M3 withdrawn-notification recheck
+
+**Scoped ACCEPTED** for `a575c2f536d93dc4047d0b68b4e3fcc06d24c2b0`: a source-and-existing-review assessment, not acceptance of the supervisor or an operating mechanism. The candidate supervisor prioritizes readable listener events, STOPs on listener HUP/error, and can return `COMPLETE_UNQUALIFIED` on successful pidfd-only completion after empty-cgroup wait. `monitor_one` records notifications received, not attempts withdrawn before receipt. The referenced upstream source report describes an interruptible wait and removal before receipt; its consequent possible indistinguishability is conditional on interruption and application handling, not an observed target-host event. Reclassifying HUP alone or changing a return branch cannot establish the reviewed all-attempt record/STOP invariant.
+
+The report preserves the separately unresolved original-child identity and 16-case preflight, describes normal pytest temporary cleanup as allowed, and does not impose a new author decision unless a concrete weaker protocol is proposed. Its effort is an uncertain estimate and no specific mechanism or target-kernel behavior is established. A new mechanism needs implementation, independent review with the counterexample, and separately authorized kernel qualification; no numerical replay or M3 acceptance follows.
+
+No host, Linux kernel experiment, model, data or GPU was used in this review; upstream source is cited through the existing reviewed report, not reverified on the target system.
