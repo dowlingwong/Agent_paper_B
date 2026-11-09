@@ -24,14 +24,18 @@
 
 Copy `configs/trackg/node_template.yaml` to `configs/trackg/nodes/<node>.yaml` on the port branch and fill every field. The loader is strict; it must load without error.
 
+*Deviation from `TRACK_G_RUNBOOK.md` §2, stated:* the runbook puts a Track G `NodeSpec` "under `configs/nodes/` … registered in `nodes/registry.py`". The kit uses `configs/trackg/nodes/` and its own loader (`load_trackg_node_spec`), with no registry entry, because `manager_proposal/v2-diff` is not yet wired into the campaign path; the loader's `to_base_node_spec()` gives the harness `NodeSpec` view. How T1 nodes reach the label-sweep path (a registry entry pointing at the Track G loader, or a T1 sweep entry point) is decided when v2-diff is wired in (later M10/M3 work).
+
 - [ ] `name`, `description`, `suite`, `domain` filled; the description says what the fixed budget means for this task.
 - [ ] `editable_paths` lists only what a diff may touch (for example `train.py`, a `model/` directory).
-- [ ] `frozen_paths` lists the evaluator, the data loader, the metric code, the data, `prepare.py`-type scripts **and the fixed-step wrapper itself**. It is not empty, and no path is both editable and frozen.
-- [ ] `run_budget` is `kind: steps` or `kind: tokens` with a positive integer. **No wall-clock budget** anywhere (R1-BX-D5): the loader refuses any wall-clock key, including `default_budget.max_wall_clock_hours`. A task whose own script has a wall-clock budget (autoresearch) gets a fixed-step wrapper.
+- [ ] `frozen_paths` lists the evaluator, the data loader, the metric code, the data, `prepare.py`-type scripts **and the fixed-step wrapper itself**. It is not empty, and no editable entry is covered by a frozen entry (checked after normalisation).
+- [ ] **No frozen script lives in an editable directory**, and no editable directory is on a frozen script's import path other than as intended: a file created there could shadow the frozen script's imports.
+- [ ] `allow_new_files` is `false` unless the task needs new files; even when `true`, a new module named like an importable module (standard library, installed package, `sitecustomize`, `usercustomize`) is refused.
+- [ ] `run_budget` is `kind: steps` or `kind: tokens` with a positive integer. **No wall-clock budget** (R1-BX-D5): the loader refuses any key whose name contains a time word (`time`, `timeout`, `hour`, `minute`, `second`, `duration`, `deadline`, `wall`, `clock`, `runtime`, …) at any depth, including `default_budget.max_wall_clock_hours` and keys under `notes` and `external_benchmark`, and a `run_command` that passes a time budget (`--time-budget`, `--timeout`, `--max-time`, `--time`, `TIME_BUDGET=…`). Free text in string values is not scanned: do not put a time budget in prose either. A task whose own script has a wall-clock budget (autoresearch) gets a fixed-step wrapper.
 - [ ] Label runs take about 1–2 min at the budget on the table's GPU model; closed-loop evaluation runs up to about 5 min (R1-BX-D5). The value is fixed before the census and not changed afterwards without a new review.
 - [ ] `workers.dataloader_workers` and `workers.threads` are fixed integers; the wrapper reads `AR_NUM_WORKERS` (and does not choose its own count).
-- [ ] `metric.metric_regex` matches the **validation** metric line the wrapper prints at the end (one capture group; the last match counts). `metric_direction` is right.
-- [ ] `metric.loss_regex` matches every training-loss line the wrapper prints, so a non-finite loss is caught as `divergent`.
+- [ ] `metric.metric_regex` matches the **validation** metric line the wrapper prints at the end (one capture group; the last match counts) and is **anchored** (`^…`). Recommended: the frozen wrapper prints the metric after the training call returns with a distinctive prefix (for example `AR_METRIC val_accuracy=0.71`), and `metric_regex` anchors on that prefix. The loader refuses a `metric_regex` that matches a typical test-metric line, and at run time a selection match overlapping a test-metric line is `divergent` (`metric_regex_matches_test_line`). `metric_direction` is right.
+- [ ] `metric.loss_regex` (**required**) matches every training-loss line the wrapper prints, so a non-finite loss (also `tensor(nan)`-style tokens) is caught as `divergent`.
 - [ ] `metric.steps_regex` (recommended for step budgets) matches the step counter, so a run that stops before the budget is `divergent` (`budget_not_reached`).
 - [ ] Extra `metric.infrastructure_log_patterns` only for messages that cannot be caused by a proposal (disk, file system, scheduler). Never CUDA OOM or a Python exception: those are the proposal's (divergent).
 - [ ] `selection`: for a test-scored task `test_scored: true`, `selection_split: validation`, `test_metric_name` set and different from `metric_name` (R1-TRACKG-ROLE). The test metric is never printed under the validation metric's name.
@@ -44,6 +48,8 @@ Copy `configs/trackg/node_template.yaml` to `configs/trackg/nodes/<node>.yaml` o
 - [ ] The wrapper runs exactly `run_budget.value` steps (or tokens) and then prints the validation metric; it reads the budget from `{budget}` in the run command or `AR_BUDGET_VALUE`.
 - [ ] It reads the training and split seeds from `seed_env`; seeds never appear in a proposal.
 - [ ] It does **not** set `torch.backends.cudnn.benchmark = True` or turn deterministic algorithms off (that would override the runner's settings).
+- [ ] Environment variables that must be set before `import torch` (for example `PYTORCH_CUDA_ALLOC_CONF`) are set in the run command or the wrapper's environment, not in-script: the runner's determinism shim imports `torch` at interpreter start. That import time is part of the measured run time (the timeout basis).
+- [ ] Known limit to keep in mind: the metric is parsed from stdout, which editable code shares, so a diff could print a forged metric line. The `AR_METRIC` prefix printed by the frozen wrapper after training reduces but does not remove this; the port review checks that the wrapper, not the editable code, prints the metric.
 - [ ] Large data live outside the node directory and are reached through a symlink in a frozen path (the runner copies the node per run and keeps symlinks as symlinks); diffs through symlinks are refused.
 - [ ] Data preparation is a one-off `setup_command` step, not part of the run command.
 
@@ -63,12 +69,13 @@ Copy `configs/trackg/node_template.yaml` to `configs/trackg/nodes/<node>.yaml` o
 ## D. Runner settings per host
 
 - [ ] GPU by **UUID** (`GPU-…` or `MIG-…`, from `nvidia-smi -L`); indices are refused.
-- [ ] CPU list and memory cap set. Under Slurm, use `memory_method: external` (the job's `--mem` cgroup enforces it; the record says so); `rlimit_data` is for hosts without a cgroup cap.
+- [ ] CPU list and memory cap set; the runner refuses limits without them unless an explicit `uncapped_reason` is given (recorded). Under Slurm, use `memory_method: external` with `external_limit` naming the enforcement (for example `"slurm --mem=64G"`); `rlimit_data` is for hosts without a cgroup cap. The CPU list must lie inside the job's CPU set.
 - [ ] Timeout = 3 × the measured run time at the budget (`measured_run_seconds`). Only the first, measuring run may use `provisional_timeout_seconds`, and its record says so.
 - [ ] One GPU model per label table (R1-BX-D5); the placement is recorded with each run.
 
 ## E. Smoke and review (G.1 steps 3–4)
 
 - [ ] Stub-manager smoke on the census host with `run_smoke_campaign` (the declared edits plus one frozen-path diff and one deliberately broken diff as the stub manager's proposals): a frozen-path diff is refused (`refusal: scope_violation`), the baseline run is `ok`, a deliberately broken diff gives `divergent`, and `run_record.json` is complete (outcome, limits, determinism record, code-state hashes, diff provenance).
-- [ ] The run record's `determinism.not_forced` list is empty, or each entry is explained in the port report.
+- [ ] The run record's `determinism.not_forced` list contains only `dataloader_workers` (always: the count is advertised via `AR_NUM_WORKERS`, not enforced), or each further entry is explained in the port report.
+- [ ] After a timeout, `process.killed_with` is recorded; no process of the run survives (the runner SIGKILLs the process group after the grace period).
 - [ ] A fresh reviewer has accepted the port (spec, wrapper, edits manifest, smoke records) before any census measurement.
