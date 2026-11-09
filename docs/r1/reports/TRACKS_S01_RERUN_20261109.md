@@ -20,6 +20,16 @@ R1-TRACKS-S01-FOLLOWUP(-REV), R1-PORTAL-SCHEDULE, R1-COMPUTE. Author's scope, 9 
 ops commit `f5d5c6b0` + this re-run's `87381a6a` on `trackS-ops-20261030`; the **host code checkout stays at
 `d10b05b7`** (the suffix is a launch-script feature, not a code change).
 
+**Pin provenance limitation (reviewer MINOR 2).** The probe JSON's `provenance` block records the GGUF
+sha256/path, the llama.cpp commit and the server command line, but **not** the paper or harness commits;
+`server_props.build_info = b11669-620d2225c` identifies only the llama.cpp build. The paper `d10b05b7` and
+harness `a3fedbb` pins therefore rest on (i) the host checkouts verified clean at those commits, (ii) the
+host's `trks-status` (`PAPER_SHA=d10b05b7`, `HARNESS_SHA=a3fedbb`, `LLAMA_SHA=620d222`, `GGUF_SHA=509287f7`),
+and (iii) the executed code path — `$R/bin/trks` `cd`s into `$R/work/Agent_paper_B` and runs
+`python -m r1.tracks.probes.determinism`, and `determinism.py` is unchanged between `d10b05b7` and the
+review-time head. This is the same probe design as the accepted Oct-30 run; for the next probe pin, record
+the paper and harness SHAs in `provenance` so the committed evidence binds them itself.
+
 ## 0. Pre-checks (all passed; nothing started before them)
 
 Run on TASL-2 at `2026-11-08T23:55Z`, read-only unless noted.
@@ -27,7 +37,7 @@ Run on TASL-2 at `2026-11-08T23:55Z`, read-only unless noted.
 | Check | Result |
 |---|---|
 | `trks-status` pins | paper `d10b05b7` OK, harness `a3fedbb` OK, llama.cpp `620d222` OK, GGUF sha256 OK, **0** tracked-file modifications |
-| installed `bin/` scripts vs rev-3.3 §11 templates | `trks-run`, `trks-servers`, `trks-watch`, `trks-status` byte-identical; `trks` differs only in the two required fill-ins (`HOST_LABEL=TASL-2`, `GPU_ID=GPU-4d623e76-7587-ee15-a633-46f60d220d94`, matching `nvidia-smi`) |
+| installed `bin/` scripts vs templates | `trks-run`, `trks-servers`, `trks-watch` byte-identical to the rev-3.3 §11 templates. `trks-status` is **not** a §11 template; it is byte-identical to the committed `r1/tracks/ops/trks-status` at the branch head (`5bd570ff…`), which is newer than the version in the `d10b05b7` checkout (`a217f6b8…`). `trks` differs only in the two required fill-ins (`HOST_LABEL=TASL-2`, `GPU_ID=GPU-4d623e76-7587-ee15-a633-46f60d220d94`, matching `nvidia-smi`) |
 | host `launch/*.sh` vs repo | all six byte-identical |
 | stale `STOP` files under `$R/out` | none |
 | `$R/trks_drill.active` | absent |
@@ -64,8 +74,9 @@ The script fixes the race that invalidated the 31 Oct attempt: it starts **fresh
 `http://127.0.0.1:18101/v1` and `:18102/v1` answer `/v1/models` with the `r1-manager` alias**, and only then
 starts the serial probe. Probe session names are new (`trks_s01_serial_r2`, `trks_s01_conc_r2`), and the
 output directory is new (`$OUT/digits_mlp/s01_rerun20261109`), so no Oct-30/31 evidence was overwritten.
-The script refuses to start over an existing output dir, an existing session, a priority marker, a GPU
-compute process, or a held lease.
+The script refuses to run if `serial.json`/`concurrent.json` already exist (it creates the new directory
+with `mkdir -p`), if an existing session is present, if a priority/drill marker exists, if a GPU compute
+process is present, or if the lease is held.
 
 Probes used the **exact rev-3.3 Phase 1 arguments**:
 
@@ -87,7 +98,7 @@ $R/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf --alias r1-manager --host 127.0.
 
 | Event | Time | Evidence |
 |---|---|---|
-| fresh servers start (`k = 2`), pids **6315** (:18101), **6316** (:18102), `flock` pid 6310 | `2026-11-08T23:59:57Z` | `host_logs/s01_rerun_20261109_launch.log` |
+| fresh servers start (`k = 2`), server pids **6315** (:18101), **6316** (:18102), lease **HELD** | `2026-11-08T23:59:57Z` | `host_logs/s01_rerun_20261109_launch.log` |
 | **both** `/v1/models` answer (`r1-manager`), `offloaded 29/29 layers to GPU`, `model loaded` | `2026-11-08T23:59:59Z` | launch log; server log segments |
 | readiness wait | **≈2 s** wall clock from server start (the in-script counter reads `0 s` because it starts after the script's own 2 s settle); lease **HELD** before either probe | launch log |
 | serial session `trks_s01_serial_r2` starts | `2026-11-08T23:59:59Z` | `logs/trks_s01_serial_r2.cmd` |
@@ -147,16 +158,38 @@ concurrent before **29.51** → after **28.71** (the value used in the projectio
 The concurrent latency (~4× serial) is the same qualitative effect as 30 Oct (0.64 → 2.52 s), shifted by the
 expected `cache_prompt: false` cost (Oct-30 serial 0.6446 s × 1.06 ≈ 0.683 s here).
 
-### 2.4 Identity verifiability (residual limitation — must be accepted by the reviewer/author)
+### 2.4 Identity verifiability: aggregates in the probe JSON; raw contents recomputed from the append-only server logs
 
 The pinned probe writes **aggregates only**: at paper `d10b05b7`, `r1/tracks/probes/determinism.py:320`
 filters `contents` out of the JSON it writes
-(`"per_url": {u: {k: v for k, v in r.items() if k != "contents"} ...}`). **The identity rates therefore
-cannot be recomputed from raw per-call responses.** This is the same pin limitation already recorded in the
-accepted Oct-30 Phase-1 report §"Evidence limitation (reviewer P3)" and its review
-(`TRACKS_OPS_PHASE1_REVIEW_20261030.md`, P3). I did **not** modify the pinned probe or the pin.
+(`"per_url": {u: {k: v for k, v in r.items() if k != "contents"} ...}`). **The identity rates therefore cannot
+be recomputed from the probe JSON.** This is the same pin limitation recorded in the accepted Oct-30
+Phase-1 report §"Evidence limitation (reviewer P3)" and its review (`TRACKS_OPS_PHASE1_REVIEW_20261030.md`,
+P3; the line was `determinism.py:313` at `9bb64ba`). I did **not** modify the pinned probe or the pin.
 
-What I did verify, from the **new run's own** saved JSON (not by copying earlier numbers):
+**The saved raw contents do exist in the append-only server logs, and they were independently recomputed.**
+With `--verbose`, llama-server logs the rendered prompt of every request (`slot launch_slot_ …
+"Budget index (trial number): N"`) and every assistant response (`Parsed message: {"role":"assistant",…}`).
+The committed launch log records the segment offsets taken immediately before the fresh servers started —
+`llama_18101.log` from byte **97,448,571** and `llama_18102.log` from byte **199,241,358** — and the segments
+this re-run appended are **295,651,542 B** and **194,782,610 B** respectively. From exactly those segments
+the **independent reviewer** recomputed identity (`TRACKS_OPS_S01_RERUN_REVIEW_20261109.md` §2.5):
+
+- serial (:18101, first 600 calls): 600 prompt launches in the recorded schedule order and 600 responses;
+  **200/200** prompts with all 3 repeats identical;
+- concurrent (:18101 next 1200 calls; :18102 1200 calls): **200/200** on each server with 6 identical calls
+  per prompt (the reviewer's exact reconciliation: 199 prompts × 6 and one prompt × 5 in the ordered
+  pairing, because llama-server does not log the last request's prompt line on each server; that unpaired
+  last response is byte-equal to that prompt's group, giving 6/6);
+- cross-server first-content equality: **200/200** (`cross_server_identity = 1.000`);
+- a one-call response shift drops the :18102 identity to **2/200** — a discriminating negative control.
+
+My own corroboration that those saved contents are present at the recorded offsets: **1,799** prompt-launch
+lines and **1,800** assistant responses in the `llama_18101.log` segment, and **1,199** / **1,200** in the
+`llama_18102.log` segment — exactly the documented last-prompt-line-per-server omission (1,799 = 600 serial
++ 1,199 concurrent). The full recomputation is the reviewer's, recorded in the review file §2.5.
+
+What I verified from the **new run's own** saved JSON aggregates (not by copying earlier numbers):
 
 - integer-count consistency: `identity_rate × n_prompts` is an integer for every URL and every per-client
   rate (serial 200/200; concurrent 200/200 per URL, per-client [1.0, 1.0]); `identity_rate_per_client` is
@@ -167,11 +200,17 @@ What I did verify, from the **new run's own** saved JSON (not by copying earlier
   31 Oct runs, the difference being the server-readiness fix, not the schedule);
 - `server_props` non-null on both URLs (build `b11669-620d2225c`, model path the pinned GGUF).
 
-**Flag for the independent reviewer and the author:** "identity recomputed from the saved contents"
-(R1-TRACKS-S01-RERUN) is **not possible** under the pinned probe. If the author wants replayable raw
-responses, that needs an instrumented probe variant under a new pin/PLAN-row decision — not something this
-operator may change tonight. Until then the central identity claim rests on the pinned probe's computation
-plus the consistency checks above.
+**Author decision required at STOP 1 (the operator does not decide it).** Row R1-TRACKS-S01-RERUN requires
+identity "recomputed from the saved contents". The committed probe JSON is aggregate-only, but the saved
+append-only server-log contents were recomputed by the independent reviewer exactly (200/200 on each tier
+and 200/200 cross-server; 2/200 negative control). The author must either
+
+- **(a)** confirm that this host-log recomputation satisfies the row — **the reviewer's recommended
+  reading** — or
+- **(b)** authorise an instrumented-probe pin / PLAN row so future runs carry replayable raw contents in the
+  committed evidence.
+
+The operator did not decide this, did not change the pin, and did not alter the served code.
 
 ## 3. Host state after (evidence preserved, lease free)
 
@@ -263,18 +302,44 @@ Both JSON files are well under 20 MB, so nothing was gzipped.
    contrast.
 4. `cache_prompt: false` at top level **and** in `request_example` for both files; `label: explicit`.
 5. The identity integers (200/200 everywhere; cross-server 200/200), the call counts, and the per-client
-   consistency; and that the **residual P3 limitation** (no per-call contents under the pinned probe) is
-   accepted, or escalated as a pin/procedure change.
+   consistency; the probe-JSON-only limitation (`determinism.py:320`); the reviewer's recomputation from the
+   saved append-only server-log contents at the recorded offsets (200/200 each tier, 2/200 negative
+   control); and the **author decision** on whether that recomputation satisfies R1-TRACKS-S01-RERUN or an
+   instrumented-probe pin is authorised.
 6. The projection arithmetic and the clause-(b) `k = 1` decision — including the 30 Oct reproduction
    (21.90 h / 31.84 h) as the interpretation check.
 7. The end host state: lease free, no compute app, no listener, watcher running, no markers, no STOP.
 
 ## 7. Open items / flags
 
-- **Residual evidence limitation** (§2.4): aggregate-only JSON because of `determinism.py:320`; replayable
-  raw per-call contents would need an instrumented-probe pin/row decision. Flagged, not adopted.
+- **Identity recomputation / residual question (§2.4).** The committed probe JSON is aggregate-only
+  (`determinism.py:320`); the identity rates were independently recomputed by the reviewer from the saved
+  append-only server-log contents at the recorded offsets (200/200 each tier, cross-server 200/200, 2/200
+  negative control). **Author decision at STOP 1:** confirm the row's "identity recomputed from the saved
+  contents" is satisfied by that host-log recomputation, or authorise an instrumented-probe pin for future
+  committed replayable contents. Not decided by the operator.
 - `k = 1` is the Phase 1 procedure output; **Phase 2/3 have not started** and no later phase is authorised
   by this report.
 - TASL-7 was **not** touched tonight; no Track P, no B1.
 - The Oct-30 `s01` evidence and the 31 Oct `s01_rerun_INVALID_...` directory remain preserved and are not
   superseded or deleted; this re-run is a separate tree.
+
+## 8. Review record (STOP 1)
+
+- **Reviewer:** fresh independent reviewer (`track-s-reviewer`), file
+  `docs/r1/reviews/TRACKS_OPS_S01_RERUN_REVIEW_20261109.md` (381 lines, sha256
+  `b72892dd9497ff7cfcc9ed79c79357dc5df771fd36c9fd4225eeb79fd2a7e060`).
+- **Verdict: accepted** — 0 BLOCKING, 0 MAJOR, 3 MINOR. The reviewer re-derived every number, verified the
+  pins / launch script / host state read-only, and recomputed identity from the server-log raw contents.
+- **MINOR 1 (wording / raw contents):** answered in §2.4 and the first §7 item — the limitation is now
+  stated precisely as **probe-JSON-only**, the reviewer's server-log recomputation is recorded (offsets,
+  segment sizes, counts, negative control), and the author decision is put explicitly at STOP 1. (The message
+  of commit `72dccc701` carries the earlier, imprecise wording; it is immutable and already pushed, so this
+  report is the corrected record.)
+- **MINOR 2 (pin provenance):** answered in the "Pin provenance limitation" paragraph — the probe JSON does
+  not carry the paper/harness commits; the pins rest on the clean host checkouts, `trks-status`, and the
+  executed code path; a future probe pin should record them in `provenance`.
+- **MINOR 3 (details):** (i) the §1.1 timeline no longer claims the flock pid (it is not in the committed
+  evidence); (ii) §1 now says the script guards on existing `serial.json`/`concurrent.json` (it `mkdir -p`s
+  the directory); (iii) §0 now says `trks-status` is not a §11 template and matches the committed
+  branch-head script (`5bd570ff…`), not the `d10b05b7` checkout (`a217f6b8…`).
