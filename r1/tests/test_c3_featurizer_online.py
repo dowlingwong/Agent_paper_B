@@ -97,7 +97,8 @@ def _replay_view(rows, i):
 
 def test_node_context_has_only_campaign_constants():
     assert [f.name for f in dataclasses.fields(NodeContext)] == [
-        "node", "start_files", "sigma_node", "runs_total", "memory_mode"]
+        "node", "start_files", "sigma_node", "runs_total", "memory_mode",
+        "trial_budget"]  # W2: the trial (proposal-slot) budget, a campaign constant (None = runs_total)
     with pytest.raises(TypeError):
         NodeContext(node="digits_mlp", start_files={}, sigma_node=1.0, runs_total=20, memory_mode="none",
                     audit={"delta": 1.0})  # type: ignore[call-arg]

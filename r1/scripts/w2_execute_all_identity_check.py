@@ -9,13 +9,16 @@ of each row (no metric, delta, edit or label), refuses sealed paths before
 opening, and prints one JSON summary.
 
 Exit 0: identical on every ledger. Exit 3: a difference (STOP per W2: report it,
-do not adopt the new fields on that table without the author). Exit 2: bad input.
+do not adopt the new fields on that table without the author); the summary names
+the kinds of rows that do not count one run. Exit 2: bad input, including a
+refused sealed path.
 
-    python -m r1.scripts.w2_execute_all_identity_check <root_trials.jsonl> [...] --runs-total W
+    python -m r1.scripts.w2_execute_all_identity_check <root_trials.jsonl[.gz]> [...] --runs-total W
 """
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import sys
 from pathlib import Path
@@ -23,9 +26,27 @@ from pathlib import Path
 FIELDS = ("budget_index", "decision", "worker_mode", "extra")
 
 
+def _text(path: Path) -> str:
+    return gzip.decompress(path.read_bytes()).decode() if path.name.endswith(".gz") else path.read_text()
+
+
+def _kind(row: dict) -> str:
+    mode = str(row.get("worker_mode"))
+    control = row["extra"]["control"]
+    if control.get("verify"):
+        return "verify"
+    if mode == "control_plane":
+        return f"control_plane_skip({control.get('reason') or control.get('arm') or control.get('action')})"
+    if mode.endswith("_precheck"):
+        return "precheck_rejection"
+    if row.get("worker_mode") is None:
+        return "missing_worker_mode"
+    return "worker_run"
+
+
 def _rows(path: Path) -> list[dict]:
     out = []
-    for line in path.read_text().splitlines():
+    for line in _text(path).splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
@@ -38,14 +59,17 @@ def _rows(path: Path) -> list[dict]:
 def check_ledger(path: Path, runs_total: int) -> dict:
     from r1.c3.features import row_worker_runs
     rows = sorted(_rows(path), key=lambda r: int(r["budget_index"]))
-    used, diffs = 0, []
+    used, diffs, kinds = 0, [], {}
     for r in rows:
         b = int(r["budget_index"])
         if used != b - 1:
             diffs.append({"budget_index": b, "trial_indexed_used": b - 1, "worker_runs_used": used})
-        used += row_worker_runs(r)
+        n = row_worker_runs(r)
+        if n != 1:
+            kinds[_kind(r)] = kinds.get(_kind(r), 0) + 1
+        used += n
     return {"ledger": str(path), "rows": len(rows), "runs_total": runs_total, "differences": len(diffs),
-            "first_difference": diffs[0] if diffs else None,
+            "first_difference": diffs[0] if diffs else None, "rows_not_counting_one": kinds,
             "worker_runs_total": used, "worker_runs_over_cap": used > runs_total}
 
 
@@ -59,10 +83,10 @@ def main(argv=None) -> int:
     try:
         refuse_sealed(*paths)
         for p in paths:
-            if p.name != "root_trials.jsonl" or not p.is_file():
+            if p.name not in ("root_trials.jsonl", "root_trials.jsonl.gz") or not p.is_file():
                 raise ValueError(f"not a root_trials.jsonl file: {p}")
         results = [check_ledger(p, args.runs_total) for p in paths]
-    except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
+    except (RuntimeError, ValueError, OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
         print(json.dumps({"status": "BAD_INPUT", "error": str(exc)}))
         return 2
     bad = [r for r in results if r["differences"]]

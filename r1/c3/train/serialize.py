@@ -97,12 +97,14 @@ def node_lines(node: str, sigma_node: float, memory_mode: str) -> list[str]:
             f"Memory: {memory_mode}"]
 
 
-def budget_line(b: int, runs_total: int, worker_runs_used: int | None = None) -> str:
+def budget_line(b: int, runs_total: int, worker_runs_used: int | None = None, trial_budget: int | None = None) -> str:
     """The budget line. W2 (R1-SEQ-BUDGET-FIELDS): the runs left are the true worker runs left, from the
     worker runs the prefix consumed (``features.row_worker_runs``); ``None`` (no ledger, e.g. the synthetic
-    exam) keeps the trial-indexed count, which equals it on execute-all campaigns."""
+    exam) keeps the trial-indexed count, which equals it on execute-all campaigns. ``trial_budget`` is the
+    trial (proposal-slot) budget when it differs from W (skipping arms); ``None`` keeps "trial b of W"."""
     used = (b - 1) if worker_runs_used is None else int(worker_runs_used)
-    return f"Budget: trial {b} of {runs_total} ({max(runs_total - used, 0)} worker runs left before this trial)"
+    trials = runs_total if trial_budget is None else int(trial_budget)
+    return f"Budget: trial {b} of {trials} ({max(runs_total - used, 0)} worker runs left before this trial)"
 
 
 def incumbent_lines(config: Mapping, current_best, first_metric, sigma_node: float) -> list[str]:
@@ -191,7 +193,7 @@ def serialize_view(view, node_ctx: NodeContext, *, tokenizers: Mapping | None = 
         history.append(history_line(int(row["budget_index"]), _row_edit(row), row.get("decision") or "", dz))
     incumbent = json.loads(active_projection(configuration(res.incumbent_files), node_ctx.node))
     used = sum(row_worker_runs(r) for r in rows)
-    head = (node_lines(node_ctx.node, sigma, node_ctx.memory_mode) + [budget_line(b, node_ctx.runs_total, used)]
+    head = (node_lines(node_ctx.node, sigma, node_ctx.memory_mode) + [budget_line(b, node_ctx.runs_total, used, node_ctx.trial_budget)]
             + incumbent_lines(incumbent, view.current_best, first_metric, sigma))
     f = res.features
     flags = [f"Edited key is {'active' if f['active_key'] else 'inactive'} for this node's model; "

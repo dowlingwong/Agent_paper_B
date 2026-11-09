@@ -236,7 +236,12 @@ class FeatureLeakError(ValueError):
 # model feature).  Ledgers without control-plane skips (every table built so far: pilot,
 # label sweeps) give byte-identical features under v1 and v2; the version is not written
 # into tables, only into online decision records.
-FEATURIZER_VERSION = "c3_features/v2"
+# v3 (9 Nov, W2 / R1-SEQ-BUDGET-FIELDS): ``budget_frac_left`` counts worker runs consumed by the
+# prefix (``row_worker_runs``) instead of the trial index.  On execute-all ledgers (every row ran
+# the worker once, no verify) v2 and v3 features are bit-identical; they differ with control-plane
+# skips, precondition rejections or verify.  As for v2, the version is written only into online
+# decision records, not into tables.
+FEATURIZER_VERSION = "c3_features/v3"
 
 
 def _is_control_plane_skip(row: dict) -> bool:
@@ -258,6 +263,7 @@ class NodeContext:
     sigma_node: float          # E1 noise constant of the node (standardises z)
     runs_total: int            # W, the campaign's worker-run budget
     memory_mode: str
+    trial_budget: int | None = None  # trial (proposal-slot) budget if it differs from W (skipping arms); None = W
 
     def __post_init__(self) -> None:
         if self.node not in NODE_INFO:
@@ -297,6 +303,9 @@ class FeatureResult:
     edit: dict
 
 
+HIDDEN_RESULT_ARMS = ("ghost", "ctrl_only")
+
+
 def row_worker_runs(row: dict) -> int:
     """Worker runs one ledger row consumed (W2, PLAN R1-SEQ-BUDGET-FIELDS; harness ``ComputeBudget`` semantics).
 
@@ -305,8 +314,10 @@ def row_worker_runs(row: dict) -> int:
     inactive-key skips) and precondition rejections (``worker_mode`` ending in
     ``_precheck``) count none; a KG verify adds ``2 r`` re-runs. A row without a
     ``worker_mode`` (older fixtures) counts none if it is a skip carrying a
-    control record and one otherwise. On an execute-all table every row counts
-    exactly one, so the derived quantities equal the old trial-indexed ones.
+    control record and one otherwise. Track S ``ghost``/``ctrl_only`` rows (a
+    ``control_plane`` skip record whose ``control.arm`` hides an executed run)
+    count one. On an execute-all table every row counts exactly one, so the
+    derived quantities equal the old trial-indexed ones.
     """
     mode = row.get("worker_mode")
     control = (row.get("extra") or {}).get("control") or {}
@@ -315,6 +326,11 @@ def row_worker_runs(row: dict) -> int:
     else:
         mode = str(mode)
         runs = 0 if (mode == "control_plane" or mode.endswith("_precheck")) else 1
+    if mode == "control_plane" and control.get("arm") in HIDDEN_RESULT_ARMS:
+        # Track S ``ghost`` / ``ctrl_only`` (harness snapshot.py): the worker ran and was debited,
+        # but the ledger holds the skip record.  Exception: a ghost whose proposal failed the
+        # precondition check was debited 0; that is visible only in ``branch_shadow.jsonl``.
+        runs = 1
     verify = control.get("verify")
     if verify:
         runs += 2 * int(verify.get("r", len(verify.get("pairs") or [])))

@@ -45,7 +45,7 @@ def old_line(b: int) -> str:
     return f"Budget: trial {b} of {W} ({max(W - (b - 1), 0)} worker runs left before this trial)"
 
 
-def execute_all(seed: int, n: int = W, worker_mode: str | None = "local", not_kept=()) -> list[dict]:
+def execute_all(seed: int, n: int = W, worker_mode: str | None = "local", not_kept=(), failed=()) -> list[dict]:
     """A consistent execute-all ledger: each edit is applied to the replayed incumbent (rows in ``not_kept`` never keep)."""
     rng = random.Random(seed)
     cfg = {"HIDDEN_UNITS": "32", "ALPHA": "1e-4", "MAX_ITER": "40"}
@@ -56,9 +56,11 @@ def execute_all(seed: int, n: int = W, worker_mode: str | None = "local", not_ke
                "MAX_ITER": ["40", "80", "160"]}[key]
         new = rng.choice([v for v in new if v != cfg[key]])
         metric = round(0.85 + 0.1 * rng.random(), 4)
-        kept = (best is None or metric > best) and (b - 1) not in not_kept
-        row = {"budget_index": b, "decision": "kept" if kept else "discarded", "parsed_metrics": {"val_score": metric},
-               "current_best_before": best, "delta_vs_best": None if best is None else metric - best,
+        fail = (b - 1) in failed and best is not None   # the worker ran and crashed: no metric, no keep
+        kept = (best is None or metric > best) and (b - 1) not in not_kept and not fail
+        row = {"budget_index": b, "decision": "failed_invalid" if fail else "kept" if kept else "discarded",
+               "parsed_metrics": {} if fail else {"val_score": metric},
+               "current_best_before": best, "delta_vs_best": None if (fail or best is None) else metric - best,
                "extra": {"manager": {"structured_edit": {"symbol": key, "old": cfg[key], "new": new, "path": "train.py"}}}}
         if worker_mode is not None:
             row["worker_mode"] = worker_mode
@@ -141,3 +143,58 @@ def test_identity_check_script_passes_execute_all_and_stops_on_difference(tmp_pa
     bad = tmp_path / "b" / "root_trials.jsonl"; bad.parent.mkdir()
     bad.write_text("".join(json.dumps(r) + "\n" for r in bad_rows))
     assert CHECK.main([str(good), str(bad), "--runs-total", str(W)]) == 3
+
+
+def _pre_w2(monkeypatch):
+    """The pre-W2 computation: every prefix row counts one run, i.e. the trial index (v2 semantics)."""
+    monkeypatch.setattr(F, "row_worker_runs", lambda row: 1)
+    monkeypatch.setattr(S, "row_worker_runs", lambda row: 1)
+
+
+@pytest.mark.parametrize("seed", range(4))
+def test_execute_all_full_prompt_bytes_meta_and_features_equal_pre_w2(seed, monkeypatch):
+    rows = execute_all(100 + seed, failed={4, 9, 13})
+    assert any(r["decision"] == "failed_invalid" for r in rows)
+    new = []
+    for i in range(len(rows)):
+        res = featurize_view(view(rows, i), CTX)
+        p = S.serialize_view(view(rows, i), CTX, tokenizers={"fake": _FakeTok()})
+        new.append(None if res is None else (res.features, S.render_text(p), p.meta))
+    _pre_w2(monkeypatch)
+    for i in range(len(rows)):
+        res = featurize_view(view(rows, i), CTX)
+        p = S.serialize_view(view(rows, i), CTX, tokenizers={"fake": _FakeTok()})
+        old = None if res is None else (res.features, S.render_text(p), p.meta)
+        if old is None:
+            assert new[i] is None
+            continue
+        assert F.features_hash(new[i][0]) == F.features_hash(old[0])
+        assert new[i][1] == old[1] and new[i][2] == old[2]
+
+
+def test_ghost_and_ctrl_only_rows_count_their_debited_run():
+    for arm in ("ghost", "ctrl_only"):
+        row = {"decision": "skipped", "worker_mode": "control_plane",
+               "extra": {"control": {"epoch": "E1", "action": "skip", "arm": arm}}}
+        assert row_worker_runs(row) == 1
+    assert row_worker_runs({"decision": "skipped", "worker_mode": "control_plane",
+                            "extra": {"control": {"epoch": "E1", "action": "skip", "arm": "skip"}}}) == 0
+
+
+def test_trial_budget_changes_only_the_trial_denominator():
+    assert S.budget_line(25, W, 16, trial_budget=40) == "Budget: trial 25 of 40 (4 worker runs left before this trial)"
+    assert S.budget_line(5, W, 4, trial_budget=None) == old_line(5)
+    assert F.FEATURIZER_VERSION == "c3_features/v3"
+
+
+def test_identity_check_reports_row_kinds_reads_gz_and_refuses_sealed(tmp_path):
+    import gzip
+    rows = execute_all(5)
+    rows[3] = {**rows[3], "worker_mode": "local_precheck"}
+    p = tmp_path / "x" / "root_trials.jsonl.gz"; p.parent.mkdir()
+    p.write_bytes(gzip.compress("".join(json.dumps(r) + "\n" for r in rows).encode()))
+    res = CHECK.check_ledger(p, W)
+    assert res["differences"] > 0 and res["rows_not_counting_one"] == {"precheck_rejection": 1}
+    sealed = tmp_path / "r1_sealed" / "root_trials.jsonl"; sealed.parent.mkdir()
+    sealed.write_text("")
+    assert CHECK.main([str(sealed), "--runs-total", str(W)]) == 2
