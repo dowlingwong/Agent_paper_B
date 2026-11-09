@@ -81,7 +81,7 @@ Before Phase 5 the author must have (a) adopted the X.2–X.6 protocol (**done 2
 
 ## Phase 5 — B1 screen (RUNBOOK X.3–X.4; evidence; ~3–4 days)
 
-- Anchors first (X.3): random-valid, scripted, `qwen2.5-coder:7b`. If random-valid < scripted on audited mean increment cannot be shown, STOP: the exam has no discriminating power.
+- Anchors first (X.3): random-valid, scripted, `qwen2.5-coder:7b`. If random-valid < scripted on audited mean increment cannot be shown, STOP: the exam has no discriminating power. **Amended 9 Nov (PLAN §10 `R1-EXAM-B1-ANCHOR-R4`, effective only after a qualifying class-D B1 STOP diagnosis):** the ordering is computed and reported descriptively and is no longer a STOP; the `qwen2.5-coder:7b` duplicate-rate check stays a STOP; disclosed in the appendix as a post-hoc amendment (`reports/B1_GATE_AMENDMENT_DRAFT_20261109.md`).
 - Every admissible candidate: three nodes (`digits_mlp` if D28 passes on llama.cpp, else `tabular_mlp`; `openml_credit_approval`; `openml_ionosphere`), instances 9001–9004, W = 20, memory `append_only_summary`, `"vary"` split, temperature 0.2 + D26, schema on, A4 observer on. **Thinking (R1-EXAM-PROTOCOL):** primary mode is thinking off for every model that can switch it off; those models also run thinking on (budget 2,048) on one node (`openml_credit_approval`), and the mode with the higher audited μ̂ is used in B2; always-thinking models run with a 2,048-token budget. Audits: every non-inert, non-duplicate proposal on seeds 9101–9104.
 - One llama-server per candidate; one candidate at a time; resumable; interruptions logged.
 

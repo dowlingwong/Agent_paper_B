@@ -262,6 +262,15 @@ def test_real_anchor_gate_checks_paired_discrimination_and_reference(tmp_path):
         anchor_gate([rows[0],anchor('scripted',-1),{**rows[2],'diagnostics':{'duplicates':0,'evaluated':10}}],cfg)
     with pytest.raises(RuntimeError,match='outside the pinned pilot interval'):
         anchor_gate([rows[0],rows[1],{**rows[2],'diagnostics':{'duplicates':0,'evaluated':0}}],cfg)
+    # Point estimate above zero but interval crossing zero: recorded, no STOP.
+    crossing=[{'candidate':'random_valid','audited_proposals':[{'instance_id':f'digits_mlp__s900{i}','delta_audit':0.0} for i in range(1,5)],'diagnostics':{'duplicates':3,'evaluated':10}},
+              {'candidate':'scripted','audited_proposals':[{'instance_id':f'digits_mlp__s900{i}','delta_audit':v} for i,v in zip(range(1,5),(3.0,-1.0,0.5,-0.5))],'diagnostics':{'duplicates':0,'evaluated':0}},
+              rows[2]]
+    cg=anchor_gate(crossing,cfg)
+    assert cg['scripted_minus_random']['difference_point']>0>=cg['scripted_minus_random']['difference_lower']
+    # DRYRUN still overrides the duplicate-rate STOP, as before the amendment.
+    dg=anchor_gate([rows[0],rows[1],{**rows[2],'diagnostics':{'duplicates':9,'evaluated':10}}],{**cfg,'dryrun':True})
+    assert dg['DRYRUN_gate_override'] is True and dg['anchor_duplicate_rate']==0.9
     # Missing anchors still STOP before any computation.
     with pytest.raises(RuntimeError,match='all anchors must complete first'):
         anchor_gate(rows[:2],cfg)
