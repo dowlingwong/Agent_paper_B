@@ -44,7 +44,13 @@ current pins (`d10b05b7` / harness `a3fedbb`):
   `worker/local_worker.py`, `worker/base.py`, `worker/seeds.py`, `common/logging.py`) and the node assets
   `nodes/digits_mlp` are **unchanged**; `control_plane/campaign.py` is not imported by the CPU-only S1.1 path
   (the 3 added lines are in LLM proposal-error logging, unused by S1.1).
-- Same host (TASL-2) and the same frozen venv.
+- Same host (TASL-2); the venv's **third-party packages are frozen** (Python 3.11.17; numpy 2.4.6,
+  scipy 1.17.1, scikit-learn 1.9.1, pandas 3.1.0, matching the committed Phase 0 `pip_freeze.txt`). But
+  `autoresearch_harness` is an **editable install** (`__editable__.autoresearch_harness-0.2.0.pth` →
+  `$R/work/autoresearch_harness/src`), so the effective harness code follows the checkout (now
+  `a3fedbb`), not a frozen copy. The citation therefore rests on the **verified code-path identity** above
+  (the S1.1-path harness modules and node assets are unchanged between `115df37` and `a3fedbb`), not on a
+  "frozen venv" claim.
 
 Therefore **no re-run was made** and no new `s11` directory was created. Record (30 seeds 37001–37030,
 `vary` split, `n = 30`, ENGINEERING_ONLY):
@@ -66,10 +72,13 @@ Committed launch script `r1/tracks/ops/launch/tasl2_s04_20261109.sh` (commit `bd
 `http://127.0.0.1:18101/v1/models` to answer with `r1-manager`, then launches the collector as its own tmux
 session `trks_s04` via `trks-run`. Re-running the same script after a pause resumes S0.4.
 
-Readiness (all three starts): server start `01:18:37Z` / `01:29:15Z` / `01:41:21Z`; `/v1/models` ready
-`01:18:39Z` / `01:29:17Z` / `01:41:21Z` (≈0–2 s); server pid **689778** (first) and **776276** (resume and retry);
-lease **HELD** before every collector call; server command line recorded in `host_logs/trks_s04.cmd` and the
-manifest provenance. The exact collector command (rev-3.3 Phase 3):
+Readiness across the three S0.4 launches. The first two are **fresh server starts** (`01:18:37Z`,
+`01:29:15Z`); the third (`01:41:21Z`) is a **collector start / readiness check against the still-running
+server** — the launch log says "tmux trks_llm already running (resume path)", pid **776276** was already up
+since `01:29:15Z`, and no new server was started. `/v1/models` was ready at `01:18:39Z` / `01:29:17Z` /
+`01:41:21Z` (≈0–2 s). Server pids: **689778** (first, fresh) and **776276** (started fresh at resume
+`01:29:15Z`, then reused by the retry collector). Lease **HELD** before every collector call; server command
+line recorded in `host_logs/trks_s04.cmd` and the manifest provenance. The exact collector command (rev-3.3 Phase 3):
 
 ```
 trks-run trks_s04 18101 collect --phase S0.4 --node digits_mlp --instances 10 --label ENGINEERING_ONLY \
@@ -97,6 +106,16 @@ Run exactly as rev 3.3 §3.0, on Track S's own drill marker. Timestamps UTC.
 |---|---|---|---|
 | `$R/out/smoke/STOP` | 0 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` | 2026-11-09 01:24:08Z |
 | `$R/out/digits_mlp/s04/STOP` | 0 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` | 2026-11-09 01:24:08Z |
+
+**Record-before-delete confirmation (reviewer MINOR 4).** The STOP-file record above was taken at
+`01:28:19Z`–`01:28:2xZ`, i.e. **before** the `find $R/out -name STOP -delete` at `01:29:09Z`; the table's
+mtimes (`01:24:08Z`, the watcher poll that touched them) and the collector's `done.status = "paused"` are
+consistent with that ordering. The **`01:23:21Z` marker-touch time is operator-noted** — the marker has been
+deleted, so it cannot be recovered from the host; the pause latency **4 m 47 s = 287 s** rests on that noted
+time. The independently observable "priority marker seen → servers stopped; lease released" span is
+`01:24:08Z → 01:28:08Z = **4 m 00 s**`, and the extra 47 s is the marker sitting until the watcher's next
+60 s poll. **Forward instruction for the next drill:** write a small `STOP_FILES.txt` (paths + sha256 + mtime)
+next to `watch.log` **before** deleting the STOP files so the record is durable on the host.
 
 **Resume:** `rm $R/trks_drill.active` at **01:28:19Z**; `watch.log` "marker gone: resume by hand…" at
 **01:29:08Z**; then `find $R/out -name STOP -delete` (0 remaining); servers restarted `k = 1` (pid 776276,
@@ -144,6 +163,17 @@ the whole root unit is logged to `failed_units.jsonl` and retried. The retries a
 attempt fails at the **same trial with the same message** (e.g. s30000 at trial 13 all three times, s30002 at
 trial 11 all three times, s30003 at trial 12 all three times). Per the operator rules, **no code was edited**;
 this needs an author decision (see §5).
+
+**Deterministic under the current pin — the 30 Oct "retries for now" assumption no longer holds.**
+`TRACKS_HOST_FACTS_20261030.md` §5.1 recorded this class as "stochastic … the re-run recovered", and the
+30 Oct decision was to accept retries for now and quantify the rate on S0.4. Under the current pins (explicit
+`cache_prompt: false`) every retry reproduces the failure at the **same trial with the same message**
+(s30000 t13 ×3, s30002 t11 ×3, s30003 t12 ×3, s30005 t12 ×2, s30008 t20 ×2), so **retries do not recover**;
+the S0.4 rate is **5/10 instances affected and 3 units exhausted**. The 30 Oct question is therefore answered:
+the STOP calls for a **pinned-code fix under a new pin/PLAN row** (A2-U to tolerate a live-but-stale proposal,
+e.g. catch `ReplayError`/`ValueError` in the replay/forecast path and fall back) or another author ruling —
+**not another retry round**. No edit is made to the historical host-facts record; this report and the
+author-decision record carry the qualifying sentence.
 
 Attempt counts (`failed_units.jsonl`, `--max-retries 2` ⇒ 3 attempts allowed):
 s30000 **3**, s30002 **3**, s30003 **3** (all exhausted), s30005 **2**, s30008 **2**.
@@ -219,3 +249,34 @@ only pre-existing files appended are the append-only watcher/server logs.
 - Recorded forward instruction from the STOP-1 author decision (a) still stands: a future probe pin change must
   write the answer text and paper/harness version identifiers into the result file (not implemented here; no pin
   change made).
+
+## 10. STOP 3 review record (independent review, accepted) and MINOR answers
+
+- **Reviewer:** fresh independent reviewer (`track-s-reviewer-p3`), file
+  `docs/r1/reviews/TRACKS_OPS_PHASE3_REVIEW_20261109.md` (397 lines, sha256
+  `2a2cfae2d25d5d5fb46e2eb13297e675eb24bd19b25b42248a618bea1525ec2d`). **Verdict: accepted** —
+  0 BLOCKING, 0 MAJOR, 4 MINOR (documentary). The reviewer re-verified the tip and pushes, the pins, the
+  pause drill end to end, the 2 % arithmetic, the deterministic root cause, the deliberate non-run of
+  liveness/fit_prior, the host state and the copy-back.
+- **MINOR 1 (third launch called a "server start") — fixed in §2.** The `01:41:21Z` entry is now stated as a
+  **collector start / readiness check against the already-running server** (pid 776276, started fresh at the
+  resume `01:29:15Z`; launch log "tmux trks_llm already running (resume path)"); no new server was started.
+- **MINOR 2 ("same frozen venv" imprecise for the harness) — fixed in §1.** The venv's third-party packages
+  are frozen (Python 3.11.17; numpy 2.4.6, scipy 1.17.1, scikit-learn 1.9.1, pandas 3.1.0, matching the
+  committed Phase 0 `pip_freeze.txt`), but `autoresearch_harness` is an **editable install** from
+  `$R/work/autoresearch_harness/src` (now `a3fedbb`), so the effective harness follows the checkout. The
+  citation basis is the **verified S1.1-path code identity** between `115df37` and `a3fedbb`, not the venv.
+- **MINOR 3 (stale "stochastic" citation) — answered in §4.2.** Under the current pin the stale-edit failure
+  is **deterministic across retries** (same trial/message), unlike `TRACKS_HOST_FACTS_20261030.md` §5.1's
+  pre-`cache_prompt:false` "stochastic … the re-run recovered" wording. This answers the 30 Oct "accept
+  retries for now, quantify the rate on S0.4" decision: **5/10 instances affected, 3 units exhausted, and
+  retries do not recover**, so the STOP requires a **pinned-code fix under a new pin/PLAN row** (or another
+  author ruling), not another retry round. No edit was made to the historical host-facts record; this report
+  and the author-decision record carry the qualifying sentence.
+- **MINOR 4 (durable STOP-file record) — answered in §3.** The record was taken **before** the `01:29:09Z`
+  deletion (`01:28:19Z`–`01:28:2xZ`; mtimes `01:24:08Z` and the collector's `paused` status are consistent).
+  The `01:23:21Z` marker-touch time is **operator-noted** (the marker was deleted; the 4 m 47 s pause latency
+  rests on it), while the independently observable "seen → lease released" span is `01:24:08Z → 01:28:08Z =
+  4 m 00 s`, the extra 47 s being inside the watcher's 60 s poll. **Forward instruction for future drills:**
+  save a small `STOP_FILES.txt` (paths + sha256 + mtime) next to `watch.log` **before** deleting the STOP
+  files.
