@@ -21,6 +21,7 @@ import errno
 import json
 import os
 import platform
+import signal
 import socket
 import struct
 
@@ -173,6 +174,83 @@ def verify_listener(listener_fd, *, ioctl=None):
         if exc.errno==errno.ENOENT:return
         raise RuntimeError('STOP: listener verification failed') from exc
     raise RuntimeError('STOP: invalid zero seccomp notification ID unexpectedly accepted')
+
+
+class DrainStop(RuntimeError):
+    pass
+
+
+def _libc_recv(listener_fd, buffer):
+    """Raw ioctl(NOTIF_RECV) without CPython EINTR retry; returns (rc, errno)."""
+    libc=ctypes.CDLL(None,use_errno=True)
+    fn=libc.ioctl
+    fn.restype=ctypes.c_int
+    fn.argtypes=[ctypes.c_int,ctypes.c_ulong,ctypes.c_void_p]
+    rc=fn(listener_fd,SECCOMP_IOCTL_NOTIF_RECV,ctypes.addressof(buffer))
+    return rc,(ctypes.get_errno() if rc<0 else 0)
+
+
+def drain_withdrawn(listener_fd, *, recv=None, tick_seconds=0.05, max_iterations=100000):
+    """Count notifications that were queued and then withdrawn before receipt.
+
+    Kernel basis (kernel/seccomp.c; read at v6.18, and the earlier semaphore
+    form): every queued notification increments the listener's request count
+    (``atomic_inc(&notif->requests)``; before v6.6 ``up(&notif->request)``). A
+    notifying task interrupted *before* ``NOTIF_RECV`` removes its list entry
+    but never decrements that count. ``NOTIF_RECV`` consumes one count without
+    sleeping when it is positive and then returns ``ENOENT`` if no un-received
+    entry exists; it sleeps interruptibly only when the count is zero. So,
+    while the filter still has a user that raises no new notifications:
+
+    * ``ENOENT``  -> one withdrawn-before-receipt notification (residue);
+    * success     -> a still-pending notification (also a violation);
+    * ``EINTR``   -> the count was zero: no residue remains.
+
+    PRECONDITION (the caller's protocol; not checkable here): the trusted
+    sentinel (the PID-1 bootstrap) still holds the filter, so ``users > 0``
+    (from v6.6 ``NOTIF_RECV`` returns ``ENOENT`` at once when ``users == 0``,
+    which would make the count unobservable), and every workload task has
+    already been reaped, so the count can no longer grow. A periodic
+    ``SIGALRM`` (handler installed without ``SA_RESTART``) ends the final
+    blocking receive. Soundness does not depend on the tick length: ``EINTR``
+    comes only from the sleeping path, which is reached only with count zero.
+
+    Returns ``{'withdrawn': n, 'pending': [records]}``; the caller STOPs if
+    either is non-empty. Any other error raises :class:`DrainStop`. The
+    residue carries no syscall identity: it proves that an attempt happened,
+    not which call it was. Must run in the main thread (signal handler).
+    """
+    if not hasattr(signal,'setitimer'):
+        raise DrainStop('STOP: interval timer unavailable for drain')
+    if type(listener_fd) is not int or listener_fd<0:
+        raise DrainStop('STOP: invalid listener for drain')
+    recv=recv or _libc_recv
+    withdrawn=0;pending=[]
+    previous=signal.signal(signal.SIGALRM,lambda *_:None)
+    old_timer=None
+    try:
+        signal.siginterrupt(signal.SIGALRM,True)
+        old_timer=signal.setitimer(signal.ITIMER_REAL,tick_seconds,tick_seconds)
+        for _ in range(max_iterations):
+            buffer=ctypes.create_string_buffer(NOTIF_SIZE)
+            rc,err=recv(listener_fd,buffer)
+            if rc==0:
+                ident,pid,flags,nr,arch=struct.unpack_from('=QIIiI',buffer.raw)
+                pending.append({'event':'pending_notification_at_drain','id':ident,'pid':pid,
+                                'syscall':nr,'arch':arch,'decision':'STOP'})
+                continue
+            if err==errno.ENOENT:
+                withdrawn+=1;continue
+            if err==errno.EINTR:
+                return {'withdrawn':withdrawn,'pending':pending}
+            raise DrainStop(f'STOP: listener drain failed: errno {err}')
+        raise DrainStop('STOP: listener drain did not terminate')
+    finally:
+        if old_timer is not None:
+            signal.setitimer(signal.ITIMER_REAL,*old_timer)
+        else:
+            signal.setitimer(signal.ITIMER_REAL,0)
+        signal.signal(signal.SIGALRM,previous)
 
 
 def monitor_one(listener_fd, cgroup_kill_fd, audit_fd, *, ioctl=None, write=None, fsync=None):
