@@ -4,12 +4,14 @@ Two entry points, both read-only and descriptive; neither changes the recorded S
 
 1. Host mode (default, no arguments; run once on TASL-7 through the reviewed
    wrapper): reads the preserved B1 STOP root of run 6835_20261108_a for all
-   three anchors (36 roots). For every root it validates the job binding
+   three anchors (36 roots). It first requires batch_state.json to have the
+   SHA-256 recorded by the accepted descriptive capture (EXPECTED_STATE_SHA),
+   before any job is opened. For every root it validates the job binding
    (exact reviewed HEAD, B1, node, instance seed, audit seeds 9101-9104, rule
-   hash) BEFORE opening the manifest, then checks the manifest against the
-   batch-state SHA and the job SHA, then checks root_trials.jsonl against the
-   manifest's evidence hash. Only after all 36 roots validate does it print
-   anything. It extends the accepted descriptive reader
+   hash, the exact pinned 7B duplicate-rate reference) BEFORE opening the
+   manifest, then checks the manifest against the batch-state SHA and the job
+   SHA, then checks root_trials.jsonl against the manifest's evidence hash.
+   Only after all 36 roots validate does it print anything. It extends the accepted descriptive reader
    (B1_STOP_ANCHOR_DESCRIPTIVE_20261108.py, SHA 46058875...) with the same
    path, O_NOATIME, owner and file-identity checks.
 
@@ -17,6 +19,12 @@ Two entry points, both read-only and descriptive; neither changes the recorded S
    line of the already accepted descriptive capture (24 random_valid/scripted
    rows) and computes D1 and the D3 per-node means and their sigma-standardised
    versions only. It never contacts a host.
+
+D0 (plan: files present, status, execution_label, audit-cache completeness,
+k = 4) is realised as refusal, not as an inventory: a missing file, a manifest
+whose status is not COMPLETE or whose label is not EVIDENCE, or an audited
+proposal without four audit values stops the capture; k != 4, None in a vector
+and a recomputed-delta mismatch are counted per root (D0 counters).
 
 No 7006-7010 file is opened. No raw per-seed metric vector is output; the
 output carries per-proposal (budget index, delta_audit) pairs, counts and
@@ -49,7 +57,22 @@ METRIC = {'digits_mlp': 'val_score', 'openml_credit_approval': 'val_auc', 'openm
 # file SHA-256 9be292b773799d1591e55ea6845551a8fa121b00ec1a0dfe324b2c46de52c01d), Table 1, 30 seeds per condition.
 SIGMA_JOINT = {'digits_mlp': 0.0102, 'openml_credit_approval': 0.0279, 'openml_ionosphere': 0.0410}
 MEDIAN_SD_DELTA = {'digits_mlp': 0.0066, 'openml_credit_approval': 0.0030, 'openml_ionosphere': 0.0160}
-DUP_REF = (0.4239, 0.5800)
+# The 7B duplicate-rate reference exactly as the gate reads it: anchor_gate uses
+# cfg['anchor_duplicate_reference'] (runner.cfg), and every B1 job carries
+# authority_config = deepcopy(runner.cfg) (r1/exam/runtime.py). Values from
+# r1/scripts/configs/exam_b1_v2.json at 68357d3d; the source file's SHA-256 is
+# 84200770... (checked against the committed file). Each job must carry exactly
+# this object; D7 uses these unrounded bounds, as the gate does.
+DUP_REF_PINNED = {'source': 'docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json',
+                  'sha256': '84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd',
+                  'lower': 0.42386590667728663, 'upper': 0.5800007633587785}
+# batch_state.json SHA-256 recorded for this preserved STOP scene by the accepted
+# descriptive capture (observation 8 Nov 2026 10:52:35 UTC): review
+# docs/r1/reviews/B1_STOP_ANCHOR_DESCRIPTIVE_RESULT_REVIEW_20261108.md on branch
+# mac-b1-stop-descriptive-review-20261108 (commit c014bb2e). The state holds the
+# 36 manifest SHAs, so this pin binds the whole chain state -> manifest -> job ->
+# ledger to the reviewed scene; any change since then refuses the capture.
+EXPECTED_STATE_SHA = 'cfe74fafdbbff6f10648f7e015b3df52f0438c435d45caf76e9e8c116d0b5794'
 PID = re.compile(r'^EXAM:(?P<inst>[a-z_]+__s\d{4}):t(?P<b>\d{3})$')
 
 
@@ -154,9 +177,11 @@ def _mean(xs):
 
 def _summary(deltas, node):
     m = _mean(deltas)
-    return {'n': len(deltas), 'mean': m, 'median': _median(deltas),
+    med = _median(deltas)
+    return {'n': len(deltas), 'mean': m, 'median': med,
             'share_harmful': (sum(d < 0 for d in deltas)/len(deltas)) if deltas else None,
             'mean_over_sigma_joint': None if m is None else m/SIGMA_JOINT[node],
+            'median_over_sigma_joint': None if med is None else med/SIGMA_JOINT[node],
             'mean_over_median_sd_delta': None if m is None else m/MEDIAN_SD_DELTA[node]}
 
 
@@ -200,6 +225,10 @@ def inspect_root(root, completed, binding, anchor, node, seed):
             not _audit_seeds_match(cfg.get('audit_seeds')) or cfg.get('instance_seeds') != list(SEEDS) or
             cfg.get('rule_sha256') != RULE or job.get('W') != W):
         raise ValueError('B1 job identity or seed mismatch; manifest not opened')
+    ref = cfg.get('anchor_duplicate_reference')
+    if (not isinstance(ref, dict) or ref != DUP_REF_PINNED or
+            any(type(ref.get(b)) is not float for b in ('lower', 'upper'))):
+        raise ValueError('B1 job duplicate-rate reference differs from the pinned interval; manifest not opened')
     entry = completed[key]
     if not isinstance(entry, dict) or entry.get('path') != root + '/' + key + '/campaign_manifest.json':
         raise ValueError('root state path mismatch; manifest not opened')
@@ -272,11 +301,20 @@ def summarize(rows):
     for anchor in ANCHORS:
         for node in NODES:
             rs = [by[(anchor, node, s)] for s in SEEDS]; k = anchor + '/' + node
+            gains = [r['trials']['gain_after_first_keep'] for r in rs if r['trials']['gain_after_first_keep'] is not None]
+            decisions = {}
+            for r in rs:
+                for name, count in r['trials']['decisions'].items(): decisions[name] = decisions.get(name, 0) + count
             d2[k] = {'roots': len(rs), 'worker_runs': [r['worker_runs'] for r in rs], 'termination': sorted({str(r['termination']) for r in rs}),
                      **{n: sum(r['diagnostics'][n] for r in rs) for n in ('trials', 'evaluated', 'invalid', 'duplicates', 'noops', 'parse_failed')},
                      'audited': sum(len(r['proposals']) for r in rs),
                      'keeps_including_first': sum(r['trials']['keeps_including_first'] for r in rs),
-                     'mean_gain_after_first_keep': _mean([r['trials']['gain_after_first_keep'] for r in rs if r['trials']['gain_after_first_keep'] is not None]),
+                     # Skipped ledger rows (e.g. scripted's inactive categorical draws, rejected by the
+                     # harness before any worker run: no W consumed, never audited).
+                     'skipped': sum(r['trials']['skipped'] for r in rs), 'decisions': dict(sorted(decisions.items())),
+                     # In-run gain of the final kept record over the first valid trial, which the
+                     # harness keeps unconditionally; no unedited start metric exists in the ledger.
+                     'mean_gain_after_first_keep': _mean(gains), 'roots_with_gain_after_first_keep': len(gains),
                      'd0': {n: sum(r['d0'][n] for r in rs) for n in ('k_not_4', 'none_in_vectors', 'delta_mismatch')}}
             deltas = [p['delta_audit'] for r in rs for p in r['proposals']]
             d3[k] = _summary(deltas, node)
@@ -294,15 +332,22 @@ def summarize(rows):
     q = [r for r in rows if r['anchor'] == 'qwen25_coder_7b']
     dup = sum(r['diagnostics']['duplicates'] for r in q); ev = sum(r['diagnostics']['evaluated'] for r in q)
     rate = dup/ev if ev else None
-    out['D7'] = {'duplicates': dup, 'evaluated': ev, 'rate': rate, 'reference': list(DUP_REF),
-                 'inside': None if rate is None else DUP_REF[0] <= rate <= DUP_REF[1]}
+    lo, hi = DUP_REF_PINNED['lower'], DUP_REF_PINNED['upper']
+    # As anchor_gate: rate None (no evaluated 7B proposal) or outside [lower, upper] STOPs.
+    out['D7'] = {'duplicates': dup, 'evaluated': ev, 'rate': rate,
+                 'reference': dict(DUP_REF_PINNED, read_from='job.authority_config.anchor_duplicate_reference (all 36 jobs equal the pinned object)'),
+                 'inside': None if rate is None else lo <= rate <= hi,
+                 'passes_next_gate': rate is not None and lo <= rate <= hi}
     out['D8_information_only'] = {k: v for k, v in d3.items() if k.startswith('qwen25')}
     out['sigma_source'] = 'NOISE_FLOOR_COMMON_20261022.md Table 1 (sha256 9be292b7...c01d), sigma_joint and median sd(delta)'
     return out
 
 
 def inspect(root):
-    state, state_sha = _read(root, ('batch_state.json',))
+    raw_state, state_sha = _read_bytes(root, ('batch_state.json',))
+    if state_sha != EXPECTED_STATE_SHA:
+        raise ValueError('batch_state.json differs from the accepted descriptive capture; no job opened')
+    state = _loads(raw_state)
     if (not isinstance(state, dict) or state.get('phase') != 'b1' or state.get('status') != 'STOPPED' or
             state.get('stop_reason') != EXPECTED_REASON or state.get('in_progress')):
         raise ValueError('STOP state mismatch')
@@ -314,6 +359,7 @@ def inspect(root):
     if not isinstance(binding, str) or not binding: raise ValueError('missing run binding')
     rows = [inspect_root(root, completed, binding, a, n, s) for a in ANCHORS for n in NODES for s in SEEDS]
     return {'source': 'B1-only preserved root manifests and root ledgers, run 6835_20261108_a', 'state_sha256': state_sha,
+            'state_sha256_pinned_to_accepted_descriptive_capture': True,
             'rows': rows, 'summary': summarize(rows), 'stop_changed': False,
             'limitations': 'Descriptive diagnosis; cooperative producer/path provenance; no 7006-7010 file opened; '
                            'no raw per-seed metric vector output. D1 recomputes the gate for diagnosis only.'}
