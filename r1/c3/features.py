@@ -269,6 +269,9 @@ class NodeContext:
         if self.node not in NODE_INFO:
             raise ValueError(f"unknown node {self.node!r}")
         object.__setattr__(self, "start_files", dict(self.start_files))
+        if self.trial_budget is not None and (isinstance(self.trial_budget, bool) or int(self.trial_budget) != self.trial_budget
+                                              or self.trial_budget < 1):
+            raise ValueError(f"trial_budget must be a positive integer or None, got {self.trial_budget!r}")
 
 
 @dataclass(frozen=True)
@@ -309,7 +312,8 @@ HIDDEN_RESULT_ARMS = ("ghost", "ctrl_only")
 def row_worker_runs(row: dict) -> int:
     """Worker runs one ledger row consumed (W2, PLAN R1-SEQ-BUDGET-FIELDS; harness ``ComputeBudget`` semantics).
 
-    The rule of ``r1.c3.accounting.campaign_usage``: a row whose worker ran counts
+    The rule of ``r1.c3.accounting.campaign_usage`` (extended for hidden-result arms
+    and rows without ``worker_mode``, where the two differ): a row whose worker ran counts
     one run; control-plane rows (``worker_mode == "control_plane"``: E1 skips and
     inactive-key skips) and precondition rejections (``worker_mode`` ending in
     ``_precheck``) count none; a KG verify adds ``2 r`` re-runs. A row without a
