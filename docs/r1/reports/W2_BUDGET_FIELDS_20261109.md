@@ -33,4 +33,4 @@ On a campaign where every row ran the worker exactly once (no skips, no precheck
 
 Relevant files (`test_c3_env`, `test_c3_features`, `test_c3_featurizer_online`, `test_c3_control*` except dry-run, `test_trackp_*`, new `test_w2_budget_fields`): failure set unchanged apart from new tests. Two failures exist at the base commit too and are unrelated: `test_trackp_exam_synthetic::test_committed_set_matches_its_hash_and_regenerates_byte_identically` and `test_trackp_soft_label_v2::test_existing_pilot_table_rebuilt_under_v1_is_byte_identical`.
 
-Review: rounds 1–2 changes requested; answers in the follow-up commits; round 3 pending.
+Review: accepted in round 3 at `5db5b67d` (`reviews/W2_BUDGET_FIELDS_REVIEW_20261109.md`). The golden generator is committed as `r1/tests/data/w2_golden_generator.py` (reviewer note).
