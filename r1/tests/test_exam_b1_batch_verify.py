@@ -249,7 +249,19 @@ def test_real_anchor_gate_checks_paired_discrimination_and_reference(tmp_path):
     verify_anchor_reference(cfg)
     gate=anchor_gate(rows,cfg)
     assert gate['scripted_minus_random']['difference_lower']>0 and gate['anchor_duplicate_rate']==0.3
-    with pytest.raises(RuntimeError,match='discriminating power'):
-        anchor_gate([rows[0],anchor('scripted',-1),rows[2]],cfg)
+    assert gate['scripted_minus_random_role'].startswith('descriptive_only')
+    # R1-EXAM-B1-ANCHOR-R4: an ordering that cannot be shown is recorded, not a STOP.
+    reversed_gate=anchor_gate([rows[0],anchor('scripted',-1),rows[2]],cfg)
+    assert reversed_gate['scripted_minus_random']['difference_lower']<=0
+    assert reversed_gate['scripted_minus_random']['difference_point']==-1
+    assert reversed_gate['anchor_duplicate_rate']==0.3 and reversed_gate['DRYRUN_gate_override'] is False
+    # The 7B duplicate-rate STOP is unchanged, with or without a reversed ordering.
     with pytest.raises(RuntimeError,match='outside the pinned pilot interval'):
         anchor_gate([rows[0],rows[1],{**rows[2],'diagnostics':{'duplicates':9,'evaluated':10}}],cfg)
+    with pytest.raises(RuntimeError,match='outside the pinned pilot interval'):
+        anchor_gate([rows[0],anchor('scripted',-1),{**rows[2],'diagnostics':{'duplicates':0,'evaluated':10}}],cfg)
+    with pytest.raises(RuntimeError,match='outside the pinned pilot interval'):
+        anchor_gate([rows[0],rows[1],{**rows[2],'diagnostics':{'duplicates':0,'evaluated':0}}],cfg)
+    # Missing anchors still STOP before any computation.
+    with pytest.raises(RuntimeError,match='all anchors must complete first'):
+        anchor_gate(rows[:2],cfg)

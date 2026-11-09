@@ -210,18 +210,23 @@ def _stage_a_cooperative(runner, selected, only=None, amendment=None, amendment_
     write_json(runner.out/'stage_a_table.json',{'label':'ENGINEERING_ONLY','rows':out})
 
 
+ANCHOR_ORDERING_ROLE='descriptive_only (R1-EXAM-B1-ANCHOR-R4; ordering STOP removed post hoc)'
+
+
 def anchor_gate(manifests, cfg):
     anchors={m['candidate']:m for m in manifests}
     if not {'random_valid','scripted','qwen25_coder_7b'}<=set(anchors): raise RuntimeError('STOP: all anchors must complete first')
     def values(m): return [{'instance_id':r['instance_id'],'value':r['delta_audit']} for r in m['audited_proposals']]
+    # R1-EXAM-B1-ANCHOR-R4 (post-hoc amendment after run 6835_20261108_a; appendix-disclosed):
+    # the scripted-vs-random_valid ordering is computed and recorded as a descriptive field only.
+    # It no longer STOPs B1. The 7B duplicate-rate check below is unchanged.
     comparison=paired_instance_bootstrap(values(anchors['scripted']),values(anchors['random_valid']))
-    if comparison['difference_lower']<=0 and not cfg.get('dryrun'):
-        raise RuntimeError('STOP: random-valid < scripted cannot be shown; no discriminating power')
     reference=cfg['anchor_duplicate_reference'];m=anchors['qwen25_coder_7b'];d=m['diagnostics']
     rate=d['duplicates']/d['evaluated'] if d['evaluated'] else None
     if not cfg.get('dryrun') and (rate is None or not reference['lower']<=rate<=reference['upper']):
         raise RuntimeError('STOP: 7B duplicate rate is outside the pinned pilot interval')
-    return {'scripted_minus_random':comparison,'anchor_duplicate_rate':rate,'reference':reference,
+    return {'scripted_minus_random':comparison,'scripted_minus_random_role':ANCHOR_ORDERING_ROLE,
+            'anchor_duplicate_rate':rate,'reference':reference,
             'DRYRUN_gate_override':bool(cfg.get('dryrun'))}
 
 

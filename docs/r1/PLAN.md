@@ -1127,6 +1127,12 @@ After the first read-only model inventory lost SSH with exit 255 and recorded no
 
 The first capture remains preserved; this authorizes one new inventory, not repeated retries, signals to ambiguous processes, or B1 launch.
 
+With the 9 Nov overnight start message the author chose the B1 anchor-gate fix route R4 of `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` §4, conditional on the diagnosis confirming a design issue (recorded here by the Mac-local overnight agent, 9 Nov 2026; wording paraphrased).
+
+| ID | Decision |
+|---|---|
+| R1-EXAM-B1-ANCHOR-R4 (9 Nov) | **Conditional author decision on the B1 anchor gate** (given with the 9 Nov overnight start message; proposal `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` §4, option R4). **Condition:** it takes effect only if the independently reviewed diagnosis of the B1 STOP of run `6835_20261108_a` classifies it as a design issue (class D: the two random anchors `scripted` and `random_valid` cannot be ordered); otherwise it is void and the plan's other routes apply. **Effect:** the anchor-ordering STOP of RUNBOOK X.3 is removed; `scripted − random_valid` is still computed and recorded as a descriptive field and the anchors are reported descriptively; the 7B duplicate-rate check and its pinned interval [0.4239, 0.5800] stay unchanged as a STOP. **Disclosure:** the appendix reports this as a post-hoc amendment made after seeing the anchor results and before any candidate ran, with the original criterion and its numbers (draft `reports/B1_GATE_AMENDMENT_DRAFT_20261109.md`). **Restart:** once the fix (`mac-b1-r4-20261109`) and the exact new checkout are independently accepted, B1 restarts from scratch under the plan §5 conditions without a further author message; the stopped run stays preserved. A D7 failure (7B duplicate rate outside the interval) is not covered and goes to the author. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
