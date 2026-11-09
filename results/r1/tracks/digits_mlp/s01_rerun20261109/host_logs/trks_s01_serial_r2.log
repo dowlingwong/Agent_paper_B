@@ -1,0 +1,1 @@
+{"http://127.0.0.1:18101/v1": {"latency": {"n": 600, "mean_s": 0.6883090593914191, "p95_s": 0.7199368765577674}, "errors": 0, "identity_rate": 1.0, "clients": 1, "identity_rate_per_client": [1.0], "cross_client_identity": null, "order_head": [[[163, 1], [7, 2], [134, 1], [86, 0], [0, 0]]]}}

@@ -1,0 +1,32 @@
+2026-11-08T23:59:57Z S0.1 re-run start (node digits_mlp, host TASL-2, out /home/dowling/r1_tracks/out/digits_mlp/s01_rerun20261109)
+2026-11-08T23:59:57Z llama_18101.log offset before start: 97448571 bytes; llama_18102.log offset before start: 199241358 bytes
+2026-11-08T23:59:57Z starting fresh servers k=2 in tmux session trks_llm
+2026-11-08T23:59:59Z 18101/v1/models ready after 0s
+2026-11-08T23:59:59Z 18102/v1/models ready after 0s
+2026-11-08T23:59:59Z both endpoints ready; total readiness wait 0s
+2026-11-08T23:59:59Z tmux sessions: trks_llm: 1 windows (created Sun Nov  8 15:59:57 2026);trks_watch: 1 windows (created Sun Nov  8 15:58:08 2026);
+2026-11-08T23:59:59Z GPU compute apps: 6316, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5242 MiB;6315, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5242 MiB;
+2026-11-08T23:59:59Z port 18101 llama-server pid: 6315,
+2026-11-08T23:59:59Z port 18102 llama-server pid: 6316,
+2026-11-08T23:59:59Z lease: HELD
+2026-11-08T23:59:59Z llama_18101.log new segment (load/listen lines): 0.00.272.456 I load_tensors: offloaded 29/29 layers to GPU;0.00.656.717 I load_tensors: offloaded 29/29 layers to GPU;0.01.253.857 I srv  llama_server: model loaded;
+2026-11-08T23:59:59Z llama_18102.log new segment (load/listen lines): 0.00.277.137 I load_tensors: offloaded 29/29 layers to GPU;0.00.659.767 I load_tensors: offloaded 29/29 layers to GPU;0.01.266.530 I srv  llama_server: model loaded;
+2026-11-08T23:59:59Z starting serial probe in tmux session trks_s01_serial_r2
+2026-11-09T00:07:00Z serial rc=0
+serial.json: mode=serial n=200 repeats=3 clients_per_url=1 order_seed=1
+  cache_prompt=False request_example.cache_prompt=False
+  per_url errors={'http://127.0.0.1:18101/v1': 0} total_errors=0
+  per_url identity_rate={'http://127.0.0.1:18101/v1': 1.0}
+  http://127.0.0.1:18101/v1: identity_rate_per_client=[1.0] latency={'n': 600, 'mean_s': 0.6883090593914191, 'p95_s': 0.7199368765577674}
+  cpu_before={'cpus': 32, 'loadavg_1_5_15': [1.162109375, 1.26806640625, 1.2392578125], 'cores_free_est': 30.837890625} cpu_after={'cpus': 32, 'loadavg_1_5_15': [2.61669921875, 2.14599609375, 1.66259765625], 'cores_free_est': 29.38330078125}
+2026-11-09T00:07:00Z starting concurrent probe in tmux session trks_s01_conc_r2
+2026-11-09T00:34:30Z concurrent rc=0
+concurrent.json: mode=concurrent n=200 repeats=3 clients_per_url=2 order_seed=2
+  cache_prompt=False request_example.cache_prompt=False
+  per_url errors={'http://127.0.0.1:18102/v1': 0, 'http://127.0.0.1:18101/v1': 0} total_errors=0
+  per_url identity_rate={'http://127.0.0.1:18102/v1': 1.0, 'http://127.0.0.1:18101/v1': 1.0}
+  cross_server_identity=1.0
+  http://127.0.0.1:18102/v1: identity_rate_per_client=[1.0, 1.0] cross_client_identity=1.0 latency={'n': 1200, 'mean_s': 2.7269037405401466, 'p95_s': 2.852099632844329}
+  http://127.0.0.1:18101/v1: identity_rate_per_client=[1.0, 1.0] cross_client_identity=1.0 latency={'n': 1200, 'mean_s': 2.7299385012717297, 'p95_s': 2.854857158847153}
+  cpu_before={'cpus': 32, 'loadavg_1_5_15': [2.48681640625, 2.126953125, 1.65869140625], 'cores_free_est': 29.51318359375} cpu_after={'cpus': 32, 'loadavg_1_5_15': [3.29248046875, 3.2890625, 3.05126953125], 'cores_free_est': 28.70751953125}
+2026-11-09T00:34:30Z S01 RERUN DONE — servers LEFT RUNNING in trks_llm for post-run inspection/stop
