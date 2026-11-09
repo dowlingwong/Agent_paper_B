@@ -297,6 +297,30 @@ class FeatureResult:
     edit: dict
 
 
+def row_worker_runs(row: dict) -> int:
+    """Worker runs one ledger row consumed (W2, PLAN R1-SEQ-BUDGET-FIELDS; harness ``ComputeBudget`` semantics).
+
+    The rule of ``r1.c3.accounting.campaign_usage``: a row whose worker ran counts
+    one run; control-plane rows (``worker_mode == "control_plane"``: E1 skips and
+    inactive-key skips) and precondition rejections (``worker_mode`` ending in
+    ``_precheck``) count none; a KG verify adds ``2 r`` re-runs. A row without a
+    ``worker_mode`` (older fixtures) counts none if it is a skip carrying a
+    control record and one otherwise. On an execute-all table every row counts
+    exactly one, so the derived quantities equal the old trial-indexed ones.
+    """
+    mode = row.get("worker_mode")
+    control = (row.get("extra") or {}).get("control") or {}
+    if mode is None:
+        runs = 0 if (row.get("decision") == "skipped" and control) else 1
+    else:
+        mode = str(mode)
+        runs = 0 if (mode == "control_plane" or mode.endswith("_precheck")) else 1
+    verify = control.get("verify")
+    if verify:
+        runs += 2 * int(verify.get("r", len(verify.get("pairs") or [])))
+    return runs
+
+
 def _as_row(record) -> dict:
     """A ledger row dict from a ledger row or a harness ``TrialRecord``."""
     if isinstance(record, dict):
@@ -334,6 +358,7 @@ class _LedgerState:
         self.last_edit_by_key: dict[str, tuple] = {}
         self.keeps, self.last_keep_idx, self.invalid = 0, 0, 0
         self.control_skips = 0  # control-plane E1 skips: not invalid trials, not a model feature
+        self.worker_runs_used = 0  # W2: worker runs consumed by the observed rows (row_worker_runs)
         self.first_metric = None
 
     def candidate(self, edit, b: int):
@@ -384,7 +409,7 @@ class _LedgerState:
             "keeps_so_far": float(self.keeps), "trials_since_keep": float(b - self.last_keep_idx),
             "recorded_gain_z": ((current_best_before - self.first_metric) / sigma_node
                                 if self.first_metric is not None else math.nan),
-            "budget_frac_left": 1.0 - (b - 1) / ctx.runs_total, "budget_index": float(b),
+            "budget_frac_left": 1.0 - self.worker_runs_used / ctx.runs_total, "budget_index": float(b),
             "memory_on": float(ctx.memory_mode != "none"), "invalid_so_far": float(self.invalid),
             "same_edit_count": float(self.edit_counts.get(sig, 0)),
             "reverse_of_last_key_edit": float(last is not None and last[1] == str(new_v) and last[2] == str(old_v)),
@@ -404,6 +429,7 @@ class _LedgerState:
     def observe(self, row: dict) -> None:
         """Update the history with one ledger row's outcome (after its features were frozen)."""
         b = int(row["budget_index"])
+        self.worker_runs_used += row_worker_runs(row)
         metric = parsed_metric(row)
         if row["decision"] == "skipped" or metric is None:
             if row["decision"] == "skipped" and _is_control_plane_skip(row):

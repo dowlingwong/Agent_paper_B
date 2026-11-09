@@ -5,7 +5,8 @@
 reads (``view.budget_index``, ``view.ledger_prefix``, ``view.current_best``,
 ``view.proposal``'s structured edit) plus the ``NodeContext`` constants; from a
 prefix row it reads only ``budget_index``, ``decision``, ``parsed_metrics``,
-``delta_vs_best``, ``current_best_before`` and the structured edit
+``delta_vs_best``, ``current_best_before``, the structured edit and, for the
+W2 worker-run count of past rows only, ``worker_mode`` and the verify record
 (``ROW_FIELDS``). No audit, sibling or future field can enter: the featurizer
 refuses prefix rows at or after the current trial (``FeatureLeakError``).
 
@@ -31,11 +32,13 @@ import math
 from functools import lru_cache
 from typing import Mapping, Sequence
 
-from r1.c3.features import NODE_INFO, NodeContext, active_projection, configuration, featurize_view, parsed_metric
+from r1.c3.features import (NODE_INFO, NodeContext, active_projection, configuration, featurize_view, parsed_metric,
+                             row_worker_runs)
 from r1.c3.train.types import BIN_OPTIONS, MAX_TOKENS, PROMPT_VERSION, QUESTION, DecisionPrompt
 
 FRAMING_RESERVE = 128   # tokens left to each family's framing within MAX_TOKENS
-ROW_FIELDS = ("budget_index", "decision", "parsed_metrics", "delta_vs_best", "current_best_before", "extra")
+ROW_FIELDS = ("budget_index", "decision", "parsed_metrics", "delta_vs_best", "current_best_before", "extra",
+              "worker_mode")  # worker_mode: W2 worker-run count of past rows only
 
 # Tokenizers that must accept every prompt (spec §2.2): repo, pinned revision, subfolder. Kev uses its base's tokenizer.
 POOL = {
@@ -94,8 +97,12 @@ def node_lines(node: str, sigma_node: float, memory_mode: str) -> list[str]:
             f"Memory: {memory_mode}"]
 
 
-def budget_line(b: int, runs_total: int) -> str:
-    return f"Budget: trial {b} of {runs_total} ({max(runs_total - (b - 1), 0)} worker runs left before this trial)"
+def budget_line(b: int, runs_total: int, worker_runs_used: int | None = None) -> str:
+    """The budget line. W2 (R1-SEQ-BUDGET-FIELDS): the runs left are the true worker runs left, from the
+    worker runs the prefix consumed (``features.row_worker_runs``); ``None`` (no ledger, e.g. the synthetic
+    exam) keeps the trial-indexed count, which equals it on execute-all campaigns."""
+    used = (b - 1) if worker_runs_used is None else int(worker_runs_used)
+    return f"Budget: trial {b} of {runs_total} ({max(runs_total - used, 0)} worker runs left before this trial)"
 
 
 def incumbent_lines(config: Mapping, current_best, first_metric, sigma_node: float) -> list[str]:
@@ -183,7 +190,8 @@ def serialize_view(view, node_ctx: NodeContext, *, tokenizers: Mapping | None = 
         dz = None if metric is None or row.get("decision") == "skipped" or d is None else float(d) / sigma
         history.append(history_line(int(row["budget_index"]), _row_edit(row), row.get("decision") or "", dz))
     incumbent = json.loads(active_projection(configuration(res.incumbent_files), node_ctx.node))
-    head = (node_lines(node_ctx.node, sigma, node_ctx.memory_mode) + [budget_line(b, node_ctx.runs_total)]
+    used = sum(row_worker_runs(r) for r in rows)
+    head = (node_lines(node_ctx.node, sigma, node_ctx.memory_mode) + [budget_line(b, node_ctx.runs_total, used)]
             + incumbent_lines(incumbent, view.current_best, first_metric, sigma))
     f = res.features
     flags = [f"Edited key is {'active' if f['active_key'] else 'inactive'} for this node's model; "

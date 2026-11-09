@@ -195,7 +195,10 @@ def test_control_plane_skips_do_not_count_as_invalid(control, counted):
     assert f["invalid_so_far"] == (1.0 if counted else 0.0)
     # the online path (harness TrialRecords) agrees
     spec = load_registered_node("digits_mlp", repo_root=HARNESS)
-    full = [_full(r) for r in rows[:3]] + [{**_full({**rows[3], "extra": rows[3]["extra"]}), "parsed_metrics": {}}] + \
+    # W2 (R1-SEQ-BUDGET-FIELDS): the harness writes E1 and inactive-key skips with worker_mode "control_plane"
+    # (campaign._skipped_record); the fixture now does too, so the worker-run count agrees online and offline.
+    full = [_full(r) for r in rows[:3]] + [{**_full({**rows[3], "extra": rows[3]["extra"]}), "parsed_metrics": {},
+                                           "worker_mode": "control_plane"}] + \
         [_full(rows[4])]
     online = features_from_view(_online_view(full, 4, spec), CTX)
     assert features_hash(online) == features_hash(f)
