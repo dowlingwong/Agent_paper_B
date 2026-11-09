@@ -2,7 +2,7 @@
 
 **Review: pending.** AI-assisted (Claude, overnight worker in the cloud container; Linux 6.18.44 x86-64, Python 3.13.18, sklearn 1.9.1). Code and synthetic tests only. No SSH, no server, no host, no real dataset cache, no model, no GPU, no numerical replay. The production replay STOPs in `r1/scripts/c3_env_replay.py` (lines 482–483 and 578–579) are **unchanged**. Nothing here is a target-host qualification or an authorization.
 
-Branch `mac-m3-20261109`. Code commits: `b6d77f73` (supervisor), `e78b81c5` (preflight). This report is the commit after them.
+Branch `mac-m3-20261109`. Code commits: `b6d77f73` (supervisor), `e78b81c5` (preflight), and the commit carrying this revision of the report (bootstrap identity in the audit, §2.1).
 
 ## 1. Base
 
@@ -34,7 +34,7 @@ Branch `mac-m3-20261109`. Code commits: `b6d77f73` (supervisor), `e78b81c5` (pre
 - every later wait and kill is by pidfd (`waitid(P_PIDFD)`, `pidfd_send_signal`); teardown without a pidfd refuses to reap by number;
 - the blocked-signal-mask guard of the fork design is removed (it protected only the numeric write). SIGCHLD `SIG_IGN`/`SA_NOCLDWAIT` is still refused, now only to keep the exit status (a lost status is a fail-closed STOP, never a misattribution).
 
-Between `clone3` and `execve` the child runs only `_child_exec` (three `dup2`, one `execve`); the syscall is made through `ctypes.PyDLL` so the GIL is held, and the supervisor must be single-threaded (checked). The child execs a fresh `python -I -S -B r1/c3/offline_bootstrap_entry.py` with an empty environment; the bootstrap specification is passed as a file in the private output directory together with its SHA-256 (checked by the bootstrap). A latent bug found by the first real run is fixed: the exec'd bootstrap must load its codecs before `chroot` (`codecs.lookup`), which the forked design had inherited.
+Between `clone3` and `execve` the child runs only `_child_exec` (three `dup2`, one `execve`); the syscall is made through `ctypes.PyDLL` so the GIL is held, and the supervisor must be single-threaded (checked). The child execs a fresh `python -I -S -B r1/c3/offline_bootstrap_entry.py` with an empty environment; the bootstrap specification is passed as a file in the private output directory together with its SHA-256 (checked by the bootstrap). The `group_bound` audit record now also carries the bootstrap interpreter's real path and SHA-256 and the SHA-256 of the six bootstrap source files the child execs (`bootstrap_identity`); they are recorded, not yet compared with a pin. A latent bug found by the first real run is fixed: the exec'd bootstrap must load its codecs before `chroot` (`codecs.lookup`), which the forked design had inherited.
 
 ### 2.2 Withdrawn notifications (item 2) and HUP (item 3)
 
@@ -77,7 +77,7 @@ Environment for the comparison: `AR_HARNESS_ROOT=/tmp/pb/wt/harness-pin` (`a3fed
 
 **Failure set unchanged**: the same 7 `test_m3_pinned_openml_loader.py` tests fail before and after, all on `assert sklearn.__version__=='1.8.0'` (local 1.9.1; environment, not code).
 
-Kernel opt-in (`AR_M3_KERNEL_TESTS=1 AR_M3_DELEGATED_CGROUP=<writable cgroup-v2 dir> AR_M3_PINNED_HARNESS=…`): 10 tests in `test_m3_launcher.py` (1), `test_m3_withdrawn_drain.py` (2), `test_m3_supervisor_kernel.py` (5), `test_m3_case_preflight_kernel.py` (2): **10 passed as root**, and **10 passed as an unprivileged user** (`m3user`) whose supervisor ran in a user-owned cgroup subtree (`…/pb-m3-user/super`, delegated dir `…/pb-m3-user/deleg`), emulating systemd delegation. The 59 tests of `test_m3_launcher.py`, `test_m3_withdrawn_drain.py`, `test_m3_supervisor_kernel.py` and `test_m3_monitor_protocol.py` were run three times in a row as root: stable.
+Kernel opt-in (`AR_M3_KERNEL_TESTS=1 AR_M3_DELEGATED_CGROUP=<writable cgroup-v2 dir> AR_M3_PINNED_HARNESS=…`; with them the four files give 46 passed, re-run on the final commit both as root and as the unprivileged user): 10 tests in `test_m3_launcher.py` (1), `test_m3_withdrawn_drain.py` (2), `test_m3_supervisor_kernel.py` (5), `test_m3_case_preflight_kernel.py` (2): **10 passed as root**, and **10 passed as an unprivileged user** (`m3user`) whose supervisor ran in a user-owned cgroup subtree (`…/pb-m3-user/super`, delegated dir `…/pb-m3-user/deleg`), emulating systemd delegation. The 59 tests of `test_m3_launcher.py`, `test_m3_withdrawn_drain.py`, `test_m3_supervisor_kernel.py` and `test_m3_monitor_protocol.py` were run three times in a row as root: stable.
 
 Changed existing tests (all in `test_m3_supervisor_component.py`; the mechanisms they asserted were removed):
 - removed: `test_mocked_supervisor_sequences_listener_before_workload_ack[none|error|pending_hup|pidfd_error|pidfd_hup|pidfd_invalid|pidfd_premature|listener_invalid]` (fork + numeric assignment + mask order) → replaced by `test_mocked_supervisor_clone3_sequence_binds_then_acknowledges`, `test_mocked_supervisor_failure_tears_down_by_pidfd[spawn|membership|monitor]` and the 15 event-loop cases in the new `test_m3_monitor_protocol.py` (listener error/HUP/pending, pidfd error/premature/no-reap, channel EOF, invalid message, residue, timeout, …);
@@ -100,7 +100,7 @@ On the target host, as the operator user, inside a delegated cgroup-v2 subtree, 
 1. kernel version, cgroup-v2 delegation (target and common-ancestor `cgroup.procs` writable), unprivileged user namespaces, `clone3` + `CLONE_INTO_CGROUP` (≥ 5.7), seccomp user notification with `NEW_LISTENER`;
 2. run the 10 kernel opt-in tests; in particular the two drain tests and `test_withdrawn_before_receipt_is_found_by_drain` qualify the request-count accounting on **that** kernel (pre-6.6 semaphore or 6.6+ atomic form);
 3. re-derive `PREFLIGHT_PACKAGES` and the runtime closure from the batch venv (the local list includes `narwhals` for sklearn 1.9.1), then run the 16-case boundary preflight on the real private cache copies — this needs its own authorization note, since it reads the real caches;
-4. record the bootstrap interpreter path and hash (today the supervisor's `sys.executable`, not yet hashed into the audit).
+4. pin the bootstrap interpreter and source hashes now recorded in `group_bound` (today the supervisor's `sys.executable`; recorded, not compared).
 
 ## 5. Open questions (for the author or the reviewer)
 

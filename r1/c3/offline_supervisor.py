@@ -124,6 +124,22 @@ def bootstrap_argv(spec_path,spec_sha,channel_fd,supervisor_pid):
                 '--spec',str(spec_path),'--spec-sha256',spec_sha,'--supervisor-pid',str(supervisor_pid)]
 
 
+def _file_sha(path):
+    h=hashlib.sha256()
+    with open(path,'rb') as f:
+        for chunk in iter(lambda:f.read(1<<20),b''):h.update(chunk)
+    return h.hexdigest()
+
+
+def bootstrap_identity(exe):
+    """Interpreter and trusted bootstrap sources the clone3 child execs (audit only)."""
+    here=Path(__file__).resolve().parent
+    names=('offline_bootstrap_entry.py','offline_bootstrap.py','offline_capabilities.py',
+           'offline_mounts.py','offline_namespaces.py','offline_seccomp.py')
+    return {'interpreter':os.path.realpath(exe),'interpreter_sha256':_file_sha(os.path.realpath(exe)),
+            'sources_sha256':{n:_file_sha(here/n) for n in names}}
+
+
 def _read_exact(sock,n):
     data=b''
     while len(data)<n:
@@ -259,7 +275,8 @@ def supervise(spec,delegated,out,*,protected_roots,timeout_seconds=300,bootstrap
         child.close();child=None
         launcher.verify_membership(pid,pidfd,group.path.name)
         _record(audit_fd,{'event':'group_bound','pid':pid,'cgroup':str(group.path),
-                          'creation':'clone3_pidfd_into_cgroup','spec_sha256':spec_sha})
+                          'creation':'clone3_pidfd_into_cgroup','spec_sha256':spec_sha,
+                          'bootstrap':bootstrap_identity(exe)})
         parent.sendall(b'S');parent.settimeout(bootstrap_seconds)
         listener=seccomp.receive_listener(parent)
         seccomp.verify_listener(listener)

@@ -1,5 +1,6 @@
 """Supervisor validation tests. No fork, clone, mount, cgroup, model, or network."""
 import errno
+import json
 import os
 from pathlib import Path
 import pytest
@@ -106,8 +107,10 @@ def test_mocked_supervisor_clone3_sequence_binds_then_acknowledges(tmp_path,monk
     assert events.index(('send',b'R')) < [i for i,e in enumerate(events) if e[0]=='monitor'][0]
     audit=(tmp_path/'output'/'supervisor.jsonl').read_text()
     assert '"creation": "clone3_pidfd_into_cgroup"' in audit and 'spec_sha256' in audit
+    bound=json.loads(audit.splitlines()[0])
+    assert bound['bootstrap']['interpreter_sha256'] and len(bound['bootstrap']['sources_sha256'])==6
     spec_file=tmp_path/'output'/'bootstrap_spec.json'
-    import hashlib,json
+    import hashlib
     assert hashlib.sha256(spec_file.read_bytes()).hexdigest() in audit
     assert json.loads(spec_file.read_text())['root']==str(tmp_path/'output'/'root')
     assert ('closed_fd',80) in events and ('closed_fd',81) in events and ('group_closed',) in events
