@@ -161,23 +161,31 @@ def _summary(deltas, node):
 
 
 def _trials(raw, node):
+    """In-run ledger counts. The pinned harness keeps the first valid trial
+    unconditionally (decision.py: "First valid metric becomes the current best"),
+    so there is no unedited start metric in the ledger: ``first_valid_metric`` is
+    the in-run metric of the first valid (edited) trial, and
+    ``final_kept_metric`` the in-run metric of the last kept record. Demotions,
+    if any, are not followed (none are expected without a controller)."""
     rows = []
     for line in raw.decode('utf-8').splitlines():
         if line.strip(): rows.append(_loads(line.encode('utf-8')))
-    metric = METRIC[node]; keeps = 0; start = None; best = None; skipped = 0
-    for r in sorted(rows, key=lambda r: r['budget_index']):
+    metric = METRIC[node]; keeps = 0; skipped = 0; first = None; last_kept = None; decisions = {}
+    for r in rows:
         if not isinstance(r, dict) or type(r.get('budget_index')) is not int: raise ValueError('bad trial row')
+    for r in sorted(rows, key=lambda r: r['budget_index']):
         if r.get('node_id') not in (None, node): raise ValueError('trial node mismatch')
         value = (r.get('parsed_metrics') or {}).get(metric)
-        if start is None and _num(value):
-            start = value; best = value
-            continue
-        if r.get('decision') == 'kept':
+        decision = str(r.get('decision'))
+        decisions[decision] = decisions.get(decision, 0) + 1
+        if first is None and _num(value) and decision == 'kept': first = value
+        if decision == 'kept':
             keeps += 1
-            if _num(value): best = value if best is None else max(best, value)
-        if r.get('decision') == 'skipped': skipped += 1
-    return {'records': len(rows), 'keeps': keeps, 'skipped': skipped, 'start_metric': start, 'final_incumbent_metric': best,
-            'incumbent_gain': None if start is None or best is None else best-start}
+            if _num(value): last_kept = value
+        if decision == 'skipped': skipped += 1
+    return {'records': len(rows), 'decisions': decisions, 'keeps_including_first': keeps, 'skipped': skipped,
+            'first_valid_metric': first, 'final_kept_metric': last_kept,
+            'gain_after_first_keep': None if first is None or last_kept is None else last_kept-first}
 
 
 def inspect_root(root, completed, binding, anchor, node, seed):
@@ -266,14 +274,22 @@ def summarize(rows):
             rs = [by[(anchor, node, s)] for s in SEEDS]; k = anchor + '/' + node
             d2[k] = {'roots': len(rs), 'worker_runs': [r['worker_runs'] for r in rs], 'termination': sorted({str(r['termination']) for r in rs}),
                      **{n: sum(r['diagnostics'][n] for r in rs) for n in ('trials', 'evaluated', 'invalid', 'duplicates', 'noops', 'parse_failed')},
-                     'audited': sum(len(r['proposals']) for r in rs), 'keeps': sum(r['trials']['keeps'] for r in rs),
-                     'mean_incumbent_gain': _mean([r['trials']['incumbent_gain'] for r in rs if r['trials']['incumbent_gain'] is not None]),
+                     'audited': sum(len(r['proposals']) for r in rs),
+                     'keeps_including_first': sum(r['trials']['keeps_including_first'] for r in rs),
+                     'mean_gain_after_first_keep': _mean([r['trials']['gain_after_first_keep'] for r in rs if r['trials']['gain_after_first_keep'] is not None]),
                      'd0': {n: sum(r['d0'][n] for r in rs) for n in ('k_not_4', 'none_in_vectors', 'delta_mismatch')}}
             deltas = [p['delta_audit'] for r in rs for p in r['proposals']]
             d3[k] = _summary(deltas, node)
-            first = [p['delta_audit'] for r in rs for p in r['proposals'] if p['budget_index'] <= W//2]
-            second = [p['delta_audit'] for r in rs for p in r['proposals'] if p['budget_index'] > W//2]
-            d4[k] = {'first_half': _summary(first, node), 'second_half': _summary(second, node)}
+            # Halves of each root's audited sequence (budget indices can exceed W when
+            # duplicates/no-ops consume no worker run), plus the budget-index split.
+            first, second = [], []
+            for r in rs:
+                ps = r['proposals']; h = (len(ps)+1)//2
+                first += [p['delta_audit'] for p in ps[:h]]; second += [p['delta_audit'] for p in ps[h:]]
+            early = [p['delta_audit'] for r in rs for p in r['proposals'] if p['budget_index'] <= W//2]
+            late = [p['delta_audit'] for r in rs for p in r['proposals'] if p['budget_index'] > W//2]
+            d4[k] = {'first_half_of_audited': _summary(first, node), 'second_half_of_audited': _summary(second, node),
+                     'budget_index_le_10': _summary(early, node), 'budget_index_gt_10': _summary(late, node)}
     out['D2'] = d2; out['D3'] = {k: v for k, v in d3.items() if not k.startswith('qwen25')}; out['D4'] = d4
     q = [r for r in rows if r['anchor'] == 'qwen25_coder_7b']
     dup = sum(r['diagnostics']['duplicates'] for r in q); ev = sum(r['diagnostics']['evaluated'] for r in q)

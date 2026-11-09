@@ -77,10 +77,12 @@ def test_known_answers_reproduce_stop_and_d2_d7(mod, tmp_path):
     assert s['D1_reproduces_stop'] is False
     assert s['D7'] == {'duplicates': 120, 'evaluated': 240, 'rate': 0.5, 'reference': [0.4239, 0.58], 'inside': True}
     d2 = s['D2']['random_valid/digits_mlp']
-    assert d2['audited'] == 76 and d2['keeps'] == 4 and d2['mean_incumbent_gain'] == pytest.approx(0.02)
+    assert d2['audited'] == 76 and d2['keeps_including_first'] == 8 and d2['mean_gain_after_first_keep'] == pytest.approx(0.02)
     assert d2['d0'] == {'k_not_4': 0, 'none_in_vectors': 0, 'delta_mismatch': 0}
     d4 = s['D4']['random_valid/openml_ionosphere']
-    assert d4['first_half']['mean'] == pytest.approx(0.002) and d4['second_half']['mean'] == pytest.approx(0.0)
+    assert d4['budget_index_le_10']['mean'] == pytest.approx(0.002) and d4['budget_index_gt_10']['mean'] == pytest.approx(0.0)
+    # 19 audited proposals per root (b = 2..20): first half b = 2..11 holds nine 0.002 and one 0.0.
+    assert d4['first_half_of_audited']['mean'] == pytest.approx(0.0018) and d4['second_half_of_audited']['mean'] == pytest.approx(0.0)
     d3 = s['D3']['scripted/openml_ionosphere']
     assert d3['mean_over_sigma_joint'] == pytest.approx(0.001 / 0.0410) and d3['share_harmful'] == 0
     assert 'qwen25_coder_7b/digits_mlp' in s['D8_information_only'] and not any(k.startswith('qwen') for k in s['D3'])
