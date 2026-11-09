@@ -2,9 +2,17 @@
 
 Synthetic only: a pytest-owned Git checkout with a synthetic gate and PLAN, and a
 synthetic table directory whose build metadata has unknown (sweep-2-like)
-provenance. A Python audit hook records every file opened while a reader runs;
-no file inside the table other than ``build.json`` may be opened before the
-reader refuses. No real label, audit value, sealed file or author row is used.
+provenance, plus a synthetic sweep-2 index under ``<paper>/results/r1/pilot/``.
+A Python audit hook records every file opened while a reader runs; no file
+inside the table other than ``build.json``, and not the sweep index, may be
+opened before the reader refuses. Each refusal must name R1-BX-D8-CONFIRM, so
+the cause is the D8 check. No real label, audit value, sealed file or author
+row is used.
+
+Readers: the 8 November inventory (``reports/M11_SWEEP2_READER_INVENTORY_20261108.md``)
+plus ``dataset.build_from_sweep`` (R1-BX-D8's "``dataset`` build of evaluation
+columns") and the gate entry points. The inventory found no Track P loader of
+sweep-2 tables, so R1-BX-D8's "Track P loaders" have no case here.
 """
 import hashlib
 import json
@@ -16,7 +24,7 @@ from pathlib import Path
 import pytest
 
 from r1.c3 import analysis_guard as g
-from r1.c3 import audit, dataset, duplicate_report, gate, ni_masking, offline_eval
+from r1.c3 import audit, dataset, duplicate_report, env, gate, ni_masking, offline_eval
 
 _OPENED = []
 _RECORDING = [False]
@@ -90,11 +98,17 @@ def make_repo(tmp_path, monkeypatch, variant):
     return repo
 
 
+LABEL_FILES = ('proposals.jsonl', 'audits.jsonl', 'configs.json', 'gate_input.json')
+SWEEP2_INDEX = 'paper/results/r1/pilot/C3_sweep_index_sweep2.json'
+
+
 def make_table(tmp_path):
     table = tmp_path / 'sweep2_table'; table.mkdir()
     (table / 'build.json').write_text(json.dumps({'sweep_index': {'path': 'synthetic', 'sha256': '2' * 64}}))
-    for name in ('proposals.jsonl', 'audits.jsonl', 'configs.json', 'gate_input.json'):
+    for name in LABEL_FILES:
         (table / name).write_text('SYNTHETIC LABEL BYTES MUST NOT BE OPENED\n')
+    index = tmp_path / SWEEP2_INDEX; index.parent.mkdir(parents=True)
+    index.write_text('{"SYNTHETIC": "sweep-2 index bytes must not be opened"}\n')
     return table
 
 
@@ -106,6 +120,12 @@ READERS = {
     'duplicate_report.main': lambda t, tmp: duplicate_report.main(DUPLICATE_ARGS(t, tmp)),
     'gate.load_and_evaluate': lambda t, tmp: gate.load_and_evaluate(t / 'gate_input.json'),
     'gate.evaluate': lambda t, tmp: gate.evaluate({'schema': gate.INPUT_SCHEMA}),
+    'env.label_rows': lambda t, tmp: env.label_rows(t),
+    'audit._verify_replay': lambda t, tmp: audit._verify_replay(t, tmp / 'paper', tmp / SWEEP2_INDEX,
+                                                                tmp / 'missing-class'),
+    'audit.evidence_blocks': lambda t, tmp: audit.evidence_blocks(t, []),
+    'dataset.build_from_sweep': lambda t, tmp: dataset.build_from_sweep(tmp / SWEEP2_INDEX, tmp / 'rebuilt',
+                                                                        paper_root=tmp / 'paper'),
 }
 
 
@@ -116,12 +136,12 @@ def DUPLICATE_ARGS(table, tmp):
 def run_reader(name, table, tmp_path):
     _OPENED.clear(); _RECORDING[0] = True
     try:
-        with pytest.raises(RuntimeError, match='STOP'):
+        with pytest.raises(RuntimeError, match=r'^STOP: .*R1-BX-D8-CONFIRM'):
             READERS[name](table, tmp_path)
     finally:
         _RECORDING[0] = False
     opened = {Path(p).resolve() for p in _OPENED}
-    forbidden = {(table / n).resolve() for n in ('proposals.jsonl', 'audits.jsonl', 'configs.json', 'gate_input.json')}
+    forbidden = {(table / n).resolve() for n in LABEL_FILES} | {(tmp_path / SWEEP2_INDEX).resolve()}
     assert not opened & forbidden, f'{name} opened label bytes before refusing'
 
 
