@@ -12,14 +12,15 @@ Review: pending
 |---|---|---|---|
 | harness `autoresearch_harness` | `r1-local-trackg-20261109` | `45ada5ab97cca25421c3c721d249d2c108ad2f4e` | Step 0 shared pieces and step 1 diff support (package `autoresearch.trackg`), T0 identity test |
 | harness | same | `6a82e80860fcffbc1bb9babfb832a97b078a46ae` | Representative-edit manifest (`scripts/trackg_declare_edits.py`) |
-| harness | same | **`b457516211ece3aa1c8e3873a2557a8f77f8ccf7` (HEAD; use this one)** | Stub-manager smoke campaign (`autoresearch.trackg.smoke`) |
+| harness | same | `b457516211ece3aa1c8e3873a2557a8f77f8ccf7` | Stub-manager smoke campaign (`autoresearch.trackg.smoke`) |
+| harness | same | **`c642b6fbf6ab7a276646244b13ea81b8e12d0e8b` (HEAD; use this one)** | T0 identity test fails instead of skipping when the base commit is missing (test-only) |
 | paper `agent_paper_B` | `mac-trackg-20261109` | **`30d93207688d60f665ccb12fadd59b49b4868fa1`** | `docs/r1/prompts/TRACKG_PORT_CHECKLIST.md`, index row in `prompts/README.md` |
 
-**Harness base.** The runbook says "from `origin/r1`". The local copy of `origin/r1` was stale (`897d83c`, 26 Oct), and the B1 harness pin `a3fedbb` descends from it (checked: `897d83c` is an ancestor of `a3fedbb`). The branch was therefore created from **`a3fedbb`**. Nothing at `a3fedbb` was changed and the pin was not moved; the three commits only add files. The paper branch starts at `origin/mac-int-20261107` (`a15300ca`).
+**Harness base.** The runbook says "from `origin/r1`". The local copy of `origin/r1` was stale (`897d83c`, 26 Oct), and the B1 harness pin `a3fedbb` descends from it (checked: `897d83c` is an ancestor of `a3fedbb`). The branch was therefore created from **`a3fedbb`**. Nothing at `a3fedbb` was changed and the pin was not moved; the four commits only add files. The paper branch starts at `origin/mac-int-20261107` (`a15300ca`).
 
 ## 2. What was built
 
-All harness code is additive: **no existing harness file is modified** (`git diff --stat a3fedbb..b457516` lists only new files under `src/autoresearch/trackg/`, `tests/trackg/`, `configs/trackg/` and two new scripts). Nothing in the T0 path imports the new package.
+All harness code is additive: **no existing harness file is modified** (`git diff --name-status a3fedbb..c642b6f` lists 24 files, all `A` under `src/autoresearch/trackg/`, `tests/trackg/`, `configs/trackg/` and two new scripts). Nothing in the T0 path imports the new package.
 
 ### Step 0 — shared pieces for the ports (G.1)
 
@@ -49,7 +50,7 @@ All harness code is additive: **no existing harness file is modified** (`git dif
 `tests/trackg/test_trackg_t0_identity.py` with `scripts/trackg_t0_identity_probe.py`:
 
 - The probe runs one `manager_proposal/v1` campaign (budget 5) on the CPU node `lr_synthetic` with `LangGraphManager(model="llamacpp/fixture", proposal_schema="manager_proposal/v1")`, the `LocalWorker`, an event store and the default controller, against a local fake llama-server that returns four valid proposals and one malformed reply and stores every request body byte for byte.
-- The test exports `src`, `nodes/lr_synthetic` and `configs/nodes/lr_synthetic.yaml` of the **base commit `a3fedbb`** with `git archive` into a temporary directory (no worktree, no change to the repository; override with `TRACKG_T0_BASE_COMMIT`), runs the probe against that tree and then against the current checkout, **in the same working-directory path** (the first run's directory is renamed before the second starts), so absolute paths are identical by construction.
+- The test exports `src`, `nodes/lr_synthetic` and `configs/nodes/lr_synthetic.yaml` of the **base commit `a3fedbb`** with `git archive` into a temporary directory (no worktree, no change to the repository; override with `TRACKG_T0_BASE_COMMIT`; if the commit cannot be exported the test fails unless `TRACKG_T0_ALLOW_SKIP=1`), runs the probe against that tree and then against the current checkout, **in the same working-directory path** (the first run's directory is renamed before the second starts), so absolute paths are identical by construction.
 - Compared **unnormalised, byte for byte**: all 5 request bodies (`requests/000.json` … `004.json`) and the final `train.py`.
 - Compared byte for byte **after textual replacement of the values of exactly these keys**, which differ between two runs of the *same* commit (checked by running the probe twice at HEAD): `timestamp`, `timestamp_start`, `timestamp_end`, `event_id` (random id), `latency_ms`, `wall_clock_seconds`, `elapsed_seconds`. This applies to `trials.jsonl` and `events.jsonl`; key order, spacing and every other byte are compared. A second test pins the normalisation to those keys only.
 - Mutation checks done by hand (then reverted with `git checkout`, not committed): adding one space to a prompt string the manager sends made the test fail on `requests/000.json`; adding a key to the `decision_made` event payload made it fail on `events.jsonl`. (A first mutation of a prompt line that this code path does not send did not fail the test, as expected.)
@@ -72,7 +73,7 @@ cd <paper worktree> && AR_HARNESS_ROOT=<harness worktree> python -m pytest -p no
 
 Results:
 
-| Suite | Base (`a3fedbb`, paper `a15300ca`) | After (harness `b457516`, paper `30d93207`) |
+| Suite | Base (`a3fedbb`, paper `a15300ca`) | After (harness `c642b6f`, paper `30d93207`) |
 |---|---|---|
 | harness `tests/trackg` | — | **102 passed** |
 | harness full | 14 failed (12 + 2 subtests), 476 passed, 1 error | 14 failed (same), **578 passed** (+102 new), 1 error (same) |
@@ -127,7 +128,7 @@ The pre-existing failures are environmental (missing KDD paper and ledger files 
 3. **`torch.use_deterministic_algorithms(True)` can make a baseline crash** (an op without a deterministic kernel → `divergent`): *(a)* strict by default, per-node `deterministic_warn_only: true` only with census evidence and the port review's acceptance (implemented); *(b)* `warn_only` everywhere; *(c)* not forced at all, only recorded. **Recommendation: (a).** Paste-ready: `M10：确定性设置默认严格，个别节点凭 census 证据经审查后可用 warn_only，采纳 (a)。`
 4. **Docstring-only diffs:** *(a)* not inert (implemented; the AST includes docstrings, which code can read); *(b)* inert. **Recommendation: (a).**
 5. **Hunk line numbers that are off** (common in LLM diffs): *(a)* accept only a unique exact context match elsewhere, record the offset (implemented); *(b)* exact line numbers only. **Recommendation: (a)**; the offset is in provenance and D28 liveness will show how often it is used.
-6. **Harness base commit:** the branch is on `a3fedbb` (the B1 pin), not on the stale local `origin/r1` (`897d83c`, an ancestor). **Recommendation:** keep; if the author wants a different base, rebase the three additive commits (no conflicts are possible: only new files).
+6. **Harness base commit:** the branch is on `a3fedbb` (the B1 pin), not on the stale local `origin/r1` (`897d83c`, an ancestor). **Recommendation:** keep; if the author wants a different base, rebase the four additive commits (no conflicts are possible: only new files).
 
 ## 6. Files
 
