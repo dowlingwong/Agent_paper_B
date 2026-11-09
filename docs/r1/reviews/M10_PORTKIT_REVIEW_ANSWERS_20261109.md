@@ -42,6 +42,12 @@
 | 19c | Limits of 12(b) and 17 | **Fixed** (paper) | Hand-off §4. | — |
 | 19d | `TRACKG_T0_BASE_COMMIT` after a rebase | **Fixed** | Hand-off §2 and §5 question 6, and the T0 test's docstring. | — |
 
+**Re-run of your `runner_probe.py`** (copy in `/tmp/trackg_r1probe/`, with `uncapped_reason` added):
+- every outcome row matches the table in your review, and `tensor(nan)` / `nan,` are now `divergent/non_finite_loss`;
+- the loose-regex case is refused at load (`SelectionPolicyError`);
+- the bad-CPU case raises `RunnerError` before a run directory exists, so your probe's directory listing fails;
+- for the SIGTERM-ignoring child, your probe prints "SURVIVOR still alive" because `os.kill(pid, 0)` also succeeds on a zombie. `/proc/<pid>/stat` shows state **`Z`**: the child was killed and is only unreaped, because this container's PID 1 (`process_api`) does not reap orphans. The committed test checks the `/proc` state.
+
 **Further notes in this round.**
 - The fixture `train.py` gained a `writeout` mode (writes a checkpoint and a binary file) and prints `resumed_from_checkpoint` when a checkpoint exists. Line numbers of `MODE` and `LEARNING_RATE` (7 and 8) are unchanged.
 - The node template YAML documents `allow_new_files`, the required `loss_regex`, the wider wall-clock refusal and the `AR_METRIC` prefix.
