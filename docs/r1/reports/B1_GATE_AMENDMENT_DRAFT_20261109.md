@@ -25,7 +25,7 @@ Class ⟨D⟩ with hypotheses ⟨H1 / H2⟩ supported and H3 (power) ⟨supporte
 - **Reported:** the three anchors' increments are shown descriptively next to the candidates in the B1 table.
 - **Not done:** no replacement ordering gate was chosen. Any new ordering criterion chosen after seeing these anchors would not be a test.
 
-**Reason.** The gate was meant to show that the exam can separate proposers. Two random proposers are not a meaningful pair for that purpose, and the diagnosis classified the stop as a design issue (class D, H1) and found no engineering defect ⟨and, if so found: the interval was not narrowed enough by more instances to change this — fill in from the H3 result⟩. The spread among the candidates under the frozen rule shows discriminating power more directly.
+**Reason.** The gate was meant to show that the exam can separate proposers. Two random proposers are not a meaningful pair for that purpose, and the diagnosis classified the stop as a design issue (class D, H1) and found no engineering defect ⟨H3 (power) result from the diagnosis, stated as found⟩. The spread among the candidates under the frozen rule shows discriminating power more directly.
 
 **Decision.** The author chose R4 on 9 Nov 2026, conditional on the diagnosis confirming a design issue (PLAN §10 `R1-EXAM-B1-ANCHOR-R4`). Code: branch `mac-b1-r4-20261109`, gate change @ `fb57c6a4`, configuration re-pin and exact restart checkout @ ⟨commit⟩; independent review ⟨path of the accepted R4 review⟩.
 
