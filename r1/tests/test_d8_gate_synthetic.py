@@ -438,8 +438,8 @@ def test_missing_t0_node_stops(confirmed):
 
 def test_extra_or_renamed_t0_node_stops(confirmed):
     t = layout(t1_nodes(0.5, 0.5))
-    t['nodes'].append(constant_node('openml_climate', 0.5, 0.5, tier='T0', suite=None))
-    with pytest.raises(gate.GateStop, match=r"unexpected \['openml_climate'\]"):
+    t['nodes'].append(constant_node('openml_blood_transfusion', 0.5, 0.5, tier='T0', suite=None))
+    with pytest.raises(gate.GateStop, match=r"unexpected \['openml_blood_transfusion'\]"):
         gate.evaluate(t)
     t = layout(t1_nodes(0.5, 0.5))
     t['nodes'][0]['node'] = 'digits_mlp_v2'
@@ -579,8 +579,29 @@ def test_fixed_protocol_constants():
     assert (gate.N_RESAMPLES, gate.SEED, gate.LEVELS, gate.FAMILY_ALPHA) == (2000, 20261108, (0.975, 0.95), 0.05)
     assert gate.ARMS == ('A3', 'A5') and gate.PRACTICAL_SIZE == 0.1 and gate.CONFIRM_ID == 'R1-BX-D8-CONFIRM'
     assert gate.NUMPY_VERSION == '2.4.4'
-    # D21 pool of 8 (PLAN R1-DT-PIN, 26 Oct) and the three suites (R1-BX-D2, R1-1GC-FALLBACK).
+    # Authorized sweep-1 node set (R1-DT-PIN-SWEEP1) and the three suites (R1-BX-D2, R1-1GC-FALLBACK).
     assert set(gate.T0_NODES) == {'digits_mlp', 'tabular_mlp', 'openml_breast_w', 'openml_ionosphere',
                                   'openml_wdbc', 'openml_credit_approval', 'openml_sonar',
-                                  'openml_blood_transfusion'}
+                                  'openml_climate'}
     assert gate.SUITES == ('autoresearch', 'MLAgentBench', 'MLGym')
+
+
+def _classifier_node_list():
+    """The literal node list required by the accepted evidence classifier."""
+    import ast
+    from r1.c3 import dataset
+    tree = ast.parse(gate.Path(dataset.__file__).read_text())
+    func = next(n for n in ast.walk(tree)
+                if isinstance(n, ast.FunctionDef) and n.name == 'evidence_classification')
+    lists = [ast.literal_eval(a.value) for a in ast.walk(func)
+             if isinstance(a, ast.Assign) and [getattr(t, 'id', None) for t in a.targets] == ['nodes']]
+    assert len(lists) == 1
+    return lists[0]
+
+
+def test_t0_nodes_equal_the_classifier_and_the_authorized_sweep_config():
+    """Drift between the gate's T0 pin and the authorized sweep set breaks this test, not the gate."""
+    config = json.loads((gate.analysis_guard.REPO / 'r1/scripts/configs/c3_sweep_deepthought.json').read_text())
+    assert set(gate.T0_NODES) == set(_classifier_node_list()) == set(config['nodes'])
+    assert len(gate.T0_NODES) == len(set(gate.T0_NODES)) == 8
+    assert config['nodes_pending'] == []

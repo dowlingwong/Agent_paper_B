@@ -28,9 +28,12 @@ What it computes (PLAN R1-BX-D8 and R1-BX-PROPOSED-CONFIRM (D8)):
 
 Node layout (pinned here, so the gate SHA binds it):
 
-* tier T0 is exactly the eight CPU nodes of ``T0_NODES`` (the D21 pool of 8,
-  R1-DT-PIN; R1-BX-D2 "the 8 CPU nodes stay as tier T0"). T0 nodes belong to
-  no suite (``"suite": null``). A missing, extra or renamed T0 node is a STOP;
+* tier T0 is exactly the eight CPU nodes of ``T0_NODES``: the authorized
+  sweep-1 node set (R1-DT-PIN-SWEEP1; docs/r1/authorizations/c3_sweep1_20261027.md),
+  in which openml_climate substitutes for openml_blood_transfusion, which failed
+  D21 (R1-D28-REPAIR; DT_SWEEP1_READINESS_20261027.md). Sweep 2 runs on the same
+  instances (RUNBOOK B.1b). T0 nodes belong to no suite (``"suite": null``). A
+  missing, extra or renamed T0 node is a STOP;
 * tier T1 nodes carry a suite from ``SUITES`` (R1-BX-D2 as amended by
   R1-1GC-FALLBACK). A T1 node without a suite or with another suite is a STOP.
   The T1 node list itself cannot be pinned (partial T1, R1-B7-PARTIAL-T1);
@@ -93,8 +96,11 @@ POI_NULL = 0.5
 ARMS = ('A3', 'A5')             # fixed order; also the tie-break for ranking
 TIERS = ('T0', 'T1')
 SERIES = ('A2', 'oracle', 'A3', 'A5')
-# Tier T0: the D21 pool of 8 CPU nodes (R1-DT-PIN, 26 Oct; R1-BX-D2). No suite.
-T0_NODES = ('digits_mlp', 'openml_blood_transfusion', 'openml_breast_w', 'openml_credit_approval',
+# Tier T0: the 8 CPU nodes of the authorized sweep 1 (R1-DT-PIN-SWEEP1, 27 Oct;
+# docs/r1/authorizations/c3_sweep1_20261027.md; R1-BX-D2 "the 8 CPU nodes stay as
+# tier T0"). openml_climate substitutes for openml_blood_transfusion (failed D21;
+# R1-D28-REPAIR). Same set as the evidence classifier and the deepthought config.
+T0_NODES = ('digits_mlp', 'openml_breast_w', 'openml_climate', 'openml_credit_approval',
             'openml_ionosphere', 'openml_sonar', 'openml_wdbc', 'tabular_mlp')
 # T1 suites: R1-BX-D2 as amended by R1-1GC-FALLBACK (MLAgentBench replaces 1GC-7RC).
 SUITES = ('autoresearch', 'MLAgentBench', 'MLGym')
