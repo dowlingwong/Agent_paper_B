@@ -31,8 +31,10 @@ server that nothing else shares:
   ``gpu_uuids=[u1, u2]`` and ``tensor_split=[a, b]`` the server sees both cards
   (``CUDA_VISIBLE_DEVICES=u1,u2``) and gets ``--split-mode layer --tensor-split
   a,b``; ``offload_check_dual`` requires full offload with model buffers on both
-  cards (route (i)) or the server pid on both cards at their pinned per-card
-  footprints (route (ii)). Without ``gpu_uuids`` the single-GPU argv,
+  cards in the last load of this start's log (route (i)) or the server pid on
+  both cards at their pinned per-card footprints (route (ii)); uuids must be
+  GPU-/MIG- uuids and no extra argument or env may override the split or the
+  devices. Without ``gpu_uuids`` the single-GPU argv,
   environment and record are byte-for-byte what they were.
 
 Restarts and orphans (RUNBOOK A.5 / A.8) as for Ollama: ``generation`` > 0
@@ -212,9 +214,16 @@ def offload_check(log_text: str, *, pid: int | None, gpu_uuid: str | None, footp
     return check
 
 
-def validate_dual(gpu_uuid, gpu_uuids, tensor_split):
-    """Two-GPU settings: exactly two distinct uuids and two positive finite split weights, and not
-    together with the single ``gpu_uuid``.  Returns ``(None, None)`` for single-GPU serving."""
+UUID_RE = re.compile(r'^(GPU|MIG)-[0-9A-Za-z-]+$')
+DUAL_CONFLICTING_FLAGS = ('--tensor-split', '-ts', '--split-mode', '-sm', '--main-gpu', '-mg', '--device', '-dev')
+
+
+def validate_dual(gpu_uuid, gpu_uuids, tensor_split, *, extra_args=(), env_extra=None):
+    """Two-GPU settings: exactly two distinct GPU-/MIG- uuids (exact strings, nothing stripped) and two
+    positive finite split weights, not together with the single ``gpu_uuid``, and no ``extra_args`` or
+    ``env_extra`` that would override the split or the device selection (llama.cpp's last flag wins,
+    and the record would then describe a configuration that is not served).  Returns ``(None, None)``
+    for single-GPU serving, whose inputs are not checked here (unchanged behaviour)."""
     if gpu_uuids is None and tensor_split is None:
         return None, None
     if gpu_uuids is None or tensor_split is None:
@@ -222,30 +231,59 @@ def validate_dual(gpu_uuid, gpu_uuids, tensor_split):
     if gpu_uuid is not None:
         raise ValueError('use either gpu_uuid (one card) or gpu_uuids (two cards), not both')
     if (not isinstance(gpu_uuids, (list, tuple)) or len(gpu_uuids) != 2
-            or any(not isinstance(u, str) or not u.strip() or ',' in u for u in gpu_uuids)
+            or any(not isinstance(u, str) or not UUID_RE.match(u) for u in gpu_uuids)
             or gpu_uuids[0] == gpu_uuids[1]):
-        raise ValueError('gpu_uuids must be two distinct GPU uuids')
+        raise ValueError('gpu_uuids must be two distinct GPU-/MIG- uuids (no index, no whitespace)')
     if (not isinstance(tensor_split, (list, tuple)) or len(tensor_split) != 2
             or any(isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x) or x <= 0
                    for x in tensor_split)):
         raise ValueError('tensor_split must be two positive finite numbers')
-    return [str(u) for u in gpu_uuids], [x for x in tensor_split]
+    for arg in extra_args or ():
+        if str(arg) in DUAL_CONFLICTING_FLAGS or str(arg).split('=', 1)[0] in DUAL_CONFLICTING_FLAGS:
+            raise ValueError(f'extra_args may not override the two-GPU split or devices: {arg!r}')
+    if env_extra and 'CUDA_VISIBLE_DEVICES' in env_extra:
+        raise ValueError('env_extra may not set CUDA_VISIBLE_DEVICES with gpu_uuids')
+    return list(gpu_uuids), list(tensor_split)
+
+
+def tensor_split_arg(tensor_split) -> str:
+    """Exact argv text of the split: ``repr`` for floats (round-trip), ``str`` for ints."""
+    return ','.join(repr(float(x)) if isinstance(x, float) else str(x) for x in tensor_split)
 
 
 def dual_args(tensor_split) -> list[str]:
     """``--split-mode layer --tensor-split a,b`` for two-GPU serving; nothing otherwise."""
     if not tensor_split:
         return []
-    return ['--split-mode', 'layer', '--tensor-split', ','.join(format(x, 'g') for x in tensor_split)]
+    return ['--split-mode', 'layer', '--tensor-split', tensor_split_arg(tensor_split)]
+
+
+LOAD_MARKERS = ('llama_model_loader: loaded meta data', 'load_tensors: offloading')
+
+
+def last_load(log_text: str) -> str:
+    """The part of a log from the last model-load marker on (the whole text if there is none).
+
+    Guards against buffer lines of an earlier load in a reused log.  A later load that prints no
+    marker at all cannot be told apart here, which is why ``offload()`` also reads only from the
+    log size recorded at ``start()``."""
+    meta = log_text.rfind(LOAD_MARKERS[0])
+    offl = log_text.rfind(LOAD_MARKERS[1])
+    if meta < 0 and offl < 0:
+        return log_text
+    cut = meta if meta >= 0 else offl   # a load starts at its 'loaded meta data' line
+    return log_text[log_text.rfind('\n', 0, cut) + 1:]
 
 
 def offload_check_dual(log_text: str, *, pid: int | None, gpu_uuids, footprint_mib, apps) -> dict:
     """Full offload across both cards.  Route (i): an ``offloaded N/N layers`` line, no CPU fallback,
     and a non-zero model buffer on two CUDA devices.  Route (ii), when the build prints no offload line:
     the server pid listed by nvidia-smi on **each** uuid with used memory >= that card's pinned
-    footprint (``footprint_mib`` = ``[f1, f2]``).  A partial line or CPU fallback is a STOP.  The
-    per-card nvidia-smi rows are recorded either way (the census of both cards)."""
-    report = offload_report(log_text)
+    footprint (``footprint_mib`` = ``[f1, f2]``).  A partial line or CPU fallback is a STOP.  Only the
+    last load in ``log_text`` is read (``last_load``).  The server pid's nvidia-smi rows on each card are
+    recorded either way; this is *not* the occupancy census of other processes on the two cards (that
+    belongs to the runner, M4 2(e), and is not done here)."""
+    report = offload_report(last_load(log_text))
     rows = [r for r in (apps or []) if r.get('pid') == pid]
     cards = []
     for i, uuid in enumerate(gpu_uuids):
@@ -304,7 +342,9 @@ class LlamaServerInstance:
                  env_extra: dict[str, str] | None = None, start_timeout: float = 120.0,
                  generation: int = 0, thinking_policy: dict | None = None,
                  gpu_uuids: list[str] | None = None, tensor_split: list[float] | None = None) -> None:
-        self.gpu_uuids, self.tensor_split = validate_dual(gpu_uuid, gpu_uuids, tensor_split)
+        self.gpu_uuids, self.tensor_split = validate_dual(gpu_uuid, gpu_uuids, tensor_split,
+                                                          extra_args=extra_args, env_extra=env_extra)
+        self.log_offset = 0  # size of a reused log before this start (two-GPU offload reads after it)
         self.batch = Path(batch_dir).resolve()
         self.binary = str(binary)
         self.model_path = str(model_path)
@@ -396,8 +436,9 @@ class LlamaServerInstance:
             apps = gpu_compute_apps()
         pid = (self.record or {}).get('pid') or (self.process.pid if self.process else None)
         if self.gpu_uuids:
-            return offload_check_dual(self.log_text(), pid=pid, gpu_uuids=self.gpu_uuids,
-                                      footprint_mib=footprint_mib, apps=apps)
+            raw = self.log_path.read_bytes() if self.log_path.exists() else b''
+            return offload_check_dual(raw[self.log_offset:].decode(errors='replace'), pid=pid,
+                                      gpu_uuids=self.gpu_uuids, footprint_mib=footprint_mib, apps=apps)
         return offload_check(self.log_text(), pid=pid, gpu_uuid=self.gpu_uuid, footprint_mib=footprint_mib, apps=apps)
 
     def start(self, *, build: dict | None = None, model_sha256: str | None = None) -> dict:
@@ -410,6 +451,8 @@ class LlamaServerInstance:
         self.batch.mkdir(parents=True, exist_ok=True)
         env, removed = self.env()
         argv = self.argv
+        if self.gpu_uuids:  # the log is opened for appending: read this start's part only
+            self.log_offset = self.log_path.stat().st_size if self.log_path.exists() else 0
         log = self.log_path.open('ab')
         self.process = subprocess.Popen(argv, env=env, stdout=log, stderr=subprocess.STDOUT,
                                         stdin=subprocess.DEVNULL, start_new_session=True)
@@ -424,7 +467,8 @@ class LlamaServerInstance:
             self.record['thinking_policy'] = self.thinking_policy
         if self.gpu_uuids:  # only for two-GPU serving: single-GPU records keep their keys
             self.record.update(gpu_uuids=list(self.gpu_uuids), tensor_split=list(self.tensor_split),
-                               split_mode='layer')
+                               tensor_split_arg=tensor_split_arg(self.tensor_split), split_mode='layer',
+                               log_offset=self.log_offset)
         if self.generation:
             self.record['generation'] = self.generation
         try:

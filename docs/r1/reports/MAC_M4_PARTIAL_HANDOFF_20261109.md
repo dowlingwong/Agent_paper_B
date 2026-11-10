@@ -1,6 +1,6 @@
 # M4 partial hand-off (non-shared parts) — 9 November 2026
 
-**Review: pending.** AI-assisted (Claude, overnight worker in the cloud container). Started under author line **A2** (`M4 可以先做不和 M3 共享的部分`), which is the author amendment (B) asked for in `MAC_M4_SCOPE_RECHECK_20261108.md`: only M4 parts that touch neither `r1/scripts/c3_label_sweep.py` nor any file M3 edits. No host, GPU, model, DTQ run, push or harness merge into `r1`. ENGINEERING_ONLY.
+**Review: round 1 — changes requested (`/tmp/pb/reviews/REVIEW_M4_round1.md`); fixes in §6–§8 and `docs/r1/reviews/MAC_M4_REVIEW_ANSWERS_20261109.md`; round 2 pending.** AI-assisted (Claude, overnight worker in the cloud container). Started under author line **A2** (`M4 可以先做不和 M3 共享的部分`), which is the author amendment (B) asked for in `MAC_M4_SCOPE_RECHECK_20261108.md`: only M4 parts that touch neither `r1/scripts/c3_label_sweep.py` nor any file M3 edits. No host, GPU, model, DTQ run, push or harness merge into `r1`. ENGINEERING_ONLY.
 
 ## 1. What was done
 
@@ -54,8 +54,32 @@ The commit is only in the local clone; a copy is `docs/r1/reports/M4_HARNESS_PIN
 
 - **Q1 (harness L8 template test vs D28 configs).** Options: (a) a harness test-only fix on the candidate that exempts the D28-predeclared configs (compare against the recorded D28 values instead of the template); (b) accept the two subtests as known failures of the next pin and list them; (c) revisit D28. **Recommend (a)**, as a separate small reviewed harness commit; the D28 values are predeclared and must not move.
 - **Q2 (DTQ tool).** Needs paper `d10b05b7` (Track S probe) in the working clone. Recommend fetching that commit (or the branch that carries it) before starting step 4.
-- **Q3 (2(e) route (ii) footprints).** The per-card footprints `[f1, f2]` must be measured with the probe on deepthought and pinned before O5; until then only route (i) can pass.
+- **Q3 (2(e) offload proof on deepthought).** *Corrected 10 Nov.* Deepthought's llama.cpp build prints no offload line at default verbosity (§2), so route (i) can **never** pass there; until per-card footprints exist, **no** route can pass and O5 cannot be met. O5 on deepthought therefore needs either per-card footprints `[f1, f2]` for the exact configuration (GGUF, split, context 16,384, q8_0 KV), measured by the DTQ tool (step 4) or by a dual-capable extension of the probe that is still to be written (`r1/scripts/llamacpp_probe.py` is single-GPU: one `--gpu`, one floor), or a verbosity/build setting that prints the offload line (checked by the operator against the pinned build). Listed under §5.
 
 ## 5. Not done / next
 
+- Per-card footprints for 2(e) route (ii), or an offload-line setting, for deepthought (Q3); a minimum per-card share criterion (review note 6) to be fixed together with the O5 pass criterion.
+- The harness candidate does **not** include the R1-RESUME-STAMP fix: that row schedules the fix on `r1-local-*` for a new `r1` pin "after sweep 1 and B.2, before C.3"; sweep 2 does not need it (R1-MAIN-PROPOSER (c) names `a3fedbb` plus any R1-HARNESS-NEXT-PIN fixes). Add it in a separate reviewed commit before C.3.
+
 2(a)–(d) wiring in `c3_label_sweep.py`, census of both cards in the runner, configs (step 3), DTQ tool (step 4), the runner fake-server tests, the sweep-2 runbook (step 6). All wait for M3 acceptance (rebase) or are blocked as above.
+
+## 6. B1 / R4 separation (added 10 Nov, review finding 4)
+
+1. `r1/scripts/llama_server_instance.py` is a **B1 protected path**: `r1/exam/runtime.py` requires B1's pinned `paper_commit` (`fb57c6a4` in `exam_b1_v2.json` on `mac-b1-r4-20261109`) to be an ancestor of HEAD and the working-tree diff of this file against it to be empty. `fb57c6a4` is not an ancestor of `a15300ca` or of this branch; the B1 line carries a newer version of the file (blob `c8f8ae8a`, with lease-FD, `start_ticks` and record-preservation code) than mac-int (`466a7348`), on which this change is built.
+2. Merging `mac-m4-20261109` into `mac-int-20261107` does not affect B1 (B1 cannot run from mac-int). This branch, or mac-int after that merge, must **never** be merged or cherry-picked into `mac-b1-r4-20261109` or into the checkout B1 runs from while any config pinned to the B1 line is live, and no uncommitted copy of the file may sit in that checkout: the guard would STOP B1 (and the file would conflict).
+3. B1's harness checkout stays at exactly **`a3fedbb`**. The candidate `561f71f` is test-only but a different HEAD; using `/tmp/m3run/h-cand` (or any checkout of `561f71f`) as B1's `AR_HARNESS_ROOT` would STOP B1. Keep it a separate worktree.
+4. When the lines converge (after B1/B2), the two-GPU change must be re-applied onto the B1-line file, `BASE_COMMIT` of the byte-identity test retargeted to that commit, re-reviewed, and any later exam config re-pinned.
+
+## 7. Round-1 code fixes (10 Nov)
+
+- Route (i) reads only the current start's part of the appended log (`log_offset` recorded at `start()`, stored in the two-GPU record) and, within it, only the last load (`last_load`).
+- Two-GPU uuids must match `^(GPU|MIG)-[0-9A-Za-z-]+$` exactly (no index, no whitespace, nothing stripped); legacy `MIG-GPU-…/x/y` forms with `/` are refused (would need an explicit decision).
+- With `gpu_uuids`, `extra_args` containing `--tensor-split/-ts`, `--split-mode/-sm`, `--main-gpu/-mg`, `--device/-dev` (also `--flag=value`) and `env_extra['CUDA_VISIBLE_DEVICES']` are refused.
+- Notes: the split is written with round-trip precision (`tensor_split_arg`, also recorded); the docstring no longer calls the per-pid rows a census; the git-based single-GPU identity test fails (not skips) if `a15300ca` is missing, and a literal single-GPU argv test was added.
+- Single-GPU path still byte-identical to `a15300ca` (argv, `env()`); single-GPU inputs are not subject to the new checks.
+
+## 8. Corrections to §2–§3 wording
+
+- The commit message of `468282d1` says the git-loaded test compares "argv, environment and record keys"; it compares argv and `env()`. Record keys are covered by the separate fake-server test (no dual keys on single-GPU records).
+- §3: the candidate worktree's untracked `paper/tables/artifact_completeness_report.txt` (written by the first suite run) was removed on 10 Nov; the second-run pass of `test_checked_in_report_contains_all_plan_campaigns` was state-dependent, as stated.
+- Harness test coverage (review note 11): the defaults test uses `MemoryMode.NONE` with no records, so the summarizer's display changes under defaults are covered by inspection only (`skip_display=None` → `shown = records`), not by the byte test. Extending it with `APPEND_ONLY_SUMMARY` records needs a re-capture at `897d83c`; not done.

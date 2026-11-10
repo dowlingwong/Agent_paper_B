@@ -38,7 +38,9 @@ def base_module():
         source = subprocess.run(["git", "-C", str(REPO), "show", f"{BASE_COMMIT}:r1/scripts/llama_server_instance.py"],
                                 capture_output=True, text=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError):
-        pytest.skip("base commit not available")
+        # Fail rather than skip: the single-GPU identity check must not vanish in a shallow clone
+        # (retarget BASE_COMMIT when this change is rebased).
+        pytest.fail(f"base commit {BASE_COMMIT} not available for the single-GPU identity check")
     spec = importlib.util.spec_from_loader("lsi_base", loader=None)
     module = importlib.util.module_from_spec(spec)
     exec(compile(source, "lsi_base.py", "exec"), module.__dict__)
@@ -57,6 +59,53 @@ def test_single_gpu_argv_and_env_equal_the_base_commit(tmp_path, kw, monkeypatch
     assert new.argv == old.argv
     assert new.env() == old.env()
     assert new.gpu_uuids is None and new.tensor_split is None
+
+
+def test_single_gpu_argv_literal(tmp_path):
+    """Independent of git: the single-GPU argv as written down at the base commit."""
+    assert make(tmp_path, gpu_uuid=U1).argv == [
+        "/opt/llama-server", "-m", "/m/x.gguf", "--host", "127.0.0.1", "--port", "8123",
+        "-ngl", "999", "-c", "8192", "--alias", "r1-manager", "-np", "1"]
+    env, _ = make(tmp_path, gpu_uuid=U1).env()
+    assert env["CUDA_VISIBLE_DEVICES"] == U1
+    # the single path does not apply the dual checks (unchanged behaviour)
+    assert make(tmp_path, gpu_uuid="0", extra_args=["--main-gpu", "0"]).argv[-2:] == ["--main-gpu", "0"]
+
+
+@pytest.mark.parametrize("uuids", [["0", "1"], [" GPU-1111", "GPU-2222"], ["GPU-1111 ", "GPU-2222"],
+                                   ["GPU-1111", "gpu-2222"], ["GPU-", "GPU-2222"], ["GPU-1111", "MIG-"],
+                                   ["GPU-11/11", "GPU-2222"], [1, "GPU-2222"]])
+def test_dual_requires_exact_gpu_or_mig_uuids(tmp_path, uuids):
+    with pytest.raises(ValueError, match="GPU-/MIG- uuids"):
+        make(tmp_path, gpu_uuids=uuids, tensor_split=[1, 1])
+
+
+def test_dual_accepts_mig_uuids(tmp_path):
+    inst = make(tmp_path, gpu_uuids=["MIG-6f2a1b3c-0d4e-5f60-7a8b-9c0d1e2f3a4b", U2], tensor_split=[1, 1])
+    assert inst.env()[0]["CUDA_VISIBLE_DEVICES"].startswith("MIG-")
+
+
+@pytest.mark.parametrize("extra", [["--tensor-split", "3,1"], ["-ts", "3,1"], ["--split-mode", "row"],
+                                   ["-sm", "row"], ["--main-gpu", "1"], ["-mg", "1"], ["--device", "CUDA0"],
+                                   ["-dev", "CUDA0"], ["--tensor-split=3,1"], ["--jinja", "--split-mode=row"]])
+def test_dual_refuses_conflicting_extra_args(tmp_path, extra):
+    with pytest.raises(ValueError, match="may not override"):
+        make(tmp_path, gpu_uuids=[U1, U2], tensor_split=[1, 1], extra_args=extra)
+
+
+def test_dual_refuses_env_device_override(tmp_path):
+    with pytest.raises(ValueError, match="CUDA_VISIBLE_DEVICES"):
+        make(tmp_path, gpu_uuids=[U1, U2], tensor_split=[1, 1], env_extra={"CUDA_VISIBLE_DEVICES": "0"})
+    ok = make(tmp_path, gpu_uuids=[U1, U2], tensor_split=[1, 1], env_extra={"GGML_CUDA_X": "1"})
+    assert ok.env()[0]["CUDA_VISIBLE_DEVICES"] == f"{U1},{U2}"
+
+
+def test_tensor_split_text_round_trips():
+    assert lsi.tensor_split_arg([1, 1]) == "1,1"
+    assert lsi.tensor_split_arg([0.6, 0.4]) == "0.6,0.4"
+    text = lsi.tensor_split_arg([1234567, 0.123456789])
+    assert text == "1234567,0.123456789"
+    assert [float(x) for x in text.split(",")] == [1234567, 0.123456789]
 
 
 @pytest.mark.parametrize("kw,msg", [
@@ -107,6 +156,17 @@ def test_dual_partial_or_cpu_fallback_is_stop_whatever_the_memory(log):
     check = lsi.offload_check_dual(log, pid=77, gpu_uuids=[U1, U2], footprint_mib=[1, 1],
                                    apps=rows((U1, 9999), (U2, 9999)))
     assert not check["full"] and check["route"] is None
+
+
+def test_dual_route_i_reads_only_the_last_load_of_a_reused_log():
+    old_load = ("llama_model_loader: loaded meta data with 30 key-value pairs\n" + DUAL_LOG)
+    new_load = ("llama_model_loader: loaded meta data with 30 key-value pairs\n"
+                "load_tensors: offloaded 29/29 layers to GPU\n"
+                "load_tensors:        CUDA0 model buffer size =  4168.09 MiB\n")
+    check = lsi.offload_check_dual(old_load + new_load, pid=77, gpu_uuids=[U1, U2], footprint_mib=None, apps=[])
+    assert not check["full"] and check["model_buffer_devices"] == ["CUDA0"]
+    assert lsi.offload_check_dual(new_load + old_load, pid=77, gpu_uuids=[U1, U2], footprint_mib=None,
+                                  apps=[])["full"]
 
 
 def test_dual_route_ii_requires_each_card_at_its_footprint():
@@ -168,6 +228,7 @@ def test_fake_two_gpu_server_records_and_proves_offload_on_both_cards(fake):
     assert rec["gpu_uuid"] is None and rec["gpu_uuids"] == [U1, U2]
     assert rec["tensor_split"] == [1, 1] and rec["split_mode"] == "layer"
     assert rec["argv"][-4:] == ["--split-mode", "layer", "--tensor-split", "1,1"]
+    assert rec["tensor_split_arg"] == "1,1" and rec["log_offset"] == 0
     apps = lsi.parse_compute_apps((fake["root"] / "gpu_apps" / f"{rec['pid']}.csv").read_text())
     check = inst.offload(apps=apps)
     assert check["full"] and check["route"] == "log_line"
@@ -182,3 +243,25 @@ def test_fake_single_gpu_record_has_no_dual_keys(fake):
     rec = json.loads(inst.record_path.read_text())
     assert not {"gpu_uuids", "tensor_split", "split_mode"} & set(rec)
     assert rec["gpu_uuid"] == U1
+
+
+def test_fake_two_gpu_restart_with_a_reused_log_cannot_pass_on_the_old_load(fake, monkeypatch):
+    """Same port and generation, log opened for appending: a two-card load already in the log must
+    not prove a new load that prints no offload line (the deepthought build's default)."""
+    import socket
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+    batch = fake["tmp"] / "batch"
+    batch.mkdir()
+    (batch / f"llama_server_{port}.log").write_text(
+        "llama_model_loader: loaded meta data with 30 key-value pairs\n" + DUAL_LOG)
+    monkeypatch.setenv("C3_FAKE_LLAMA_OFFLOAD", "silent")
+    inst = lsi.LlamaServerInstance(batch, str(fake["binary"]), model_path=str(fake["model"]),
+                                   alias="r1-manager", label="DRYRUN", start_timeout=20, port=port,
+                                   gpu_uuids=[U1, U2], tensor_split=[1, 1])
+    fake["started"].append(inst)
+    inst.start(build=lsi.build_info(str(fake["binary"])), model_sha256=lsi.sha256_file(fake["model"]))
+    assert inst.log_offset > 0
+    check = inst.offload(apps=[])
+    assert not check["full"] and check["route"] is None and check["model_buffer_devices"] == []
