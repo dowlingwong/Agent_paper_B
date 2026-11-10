@@ -1,6 +1,6 @@
 # M4 partial unit — answers to review round 1
 
-Review: `/tmp/pb/reviews/REVIEW_M4_round1.md` (changes requested: 5 should-fix, 8 notes). Fixes are in one new commit on `mac-m4-20261109` on top of `e62db52d`; no history rewritten. `c3_label_sweep.py` and M3's files untouched. AI-assisted (Claude). **Round 2: pending.**
+Review: `/tmp/pb/reviews/REVIEW_M4_round1.md` (changes requested: 5 should-fix, 8 notes). Fixes are in one new commit on `mac-m4-20261109` on top of `e62db52d`; no history rewritten. `c3_label_sweep.py` and M3's files untouched. AI-assisted (Claude). Round 2: changes requested (1 should-fix); answered below. Round 3: **accepted**.
 
 | # | finding | status | change |
 |---|---|---|---|
@@ -22,7 +22,7 @@ Review: `/tmp/pb/reviews/REVIEW_M4_round1.md` (changes requested: 5 should-fix, 
 
 `AR_HARNESS_ROOT` = harness `a3fedbb`: `r1/tests/test_llama_server_instance.py r1/tests/test_llamacpp_offload_routes.py r1/tests/test_exam_observer.py r1/tests/test_llama_server_dual_gpu.py r1/tests/test_llamacpp_probe.py` → **97 passed** (base files 48 + probe 4 unchanged; dual-GPU file 45, was 21). No existing test changed.
 
-## Round 2 (10 Nov; fixes by the Mac-local agent)
+## Round 2 (10 Nov; fixes by the Mac-local coordinating agent)
 
 | # | Finding | Status | Change |
 |---|---|---|---|

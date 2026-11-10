@@ -1,6 +1,6 @@
 # M4 partial hand-off (non-shared parts) — 9 November 2026
 
-**Review: round 1 — changes requested (`/tmp/pb/reviews/REVIEW_M4_round1.md`); fixes in §6–§8 and `docs/r1/reviews/MAC_M4_REVIEW_ANSWERS_20261109.md`; round 2 pending.** AI-assisted (Claude, overnight worker in the cloud container). Started under author line **A2** (`M4 可以先做不和 M3 共享的部分`), which is the author amendment (B) asked for in `MAC_M4_SCOPE_RECHECK_20261108.md`: only M4 parts that touch neither `r1/scripts/c3_label_sweep.py` nor any file M3 edits. No host, GPU, model, DTQ run, push or harness merge into `r1`. ENGINEERING_ONLY.
+**Review: accepted in round 3 at `00e6cb20` (`reviews/MAC_M4_REVIEW_20261109.md`; answers `reviews/MAC_M4_REVIEW_ANSWERS_20261109.md`). The runner must always go through `offload()` (log text without load markers is read whole by `offload_check_dual`).** AI-assisted (Claude, overnight worker in the cloud container). Started under author line **A2** (`M4 可以先做不和 M3 共享的部分`), which is the author amendment (B) asked for in `MAC_M4_SCOPE_RECHECK_20261108.md`: only M4 parts that touch neither `r1/scripts/c3_label_sweep.py` nor any file M3 edits. No host, GPU, model, DTQ run, push or harness merge into `r1`. ENGINEERING_ONLY.
 
 ## 1. What was done
 
