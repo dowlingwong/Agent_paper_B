@@ -51,3 +51,43 @@
 **Further notes in this round.**
 - The fixture `train.py` gained a `writeout` mode (writes a checkpoint and a binary file) and prints `resumed_from_checkpoint` when a checkpoint exists. Line numbers of `MODE` and `LEARNING_RATE` (7 and 8) are unchanged.
 - The node template YAML documents `allow_new_files`, the required `loss_regex`, the wider wall-clock refusal and the `AR_METRIC` prefix.
+
+---
+
+# Round 2 (10 Nov 2026)
+
+**Written 10 Nov 2026 (about 10:30–11:15 CET) by the same worker agent, AI-assisted.** This round answers `/tmp/pb/reviews/REVIEW_T2_PORTKIT_round2.md` (verdict: changes requested; 1 blocking, 2 should-fix, 6 notes).
+
+**Commits.**
+- Harness `r1-local-trackg-20261109`: fixes in **`76bc49f25258185ae8547f6f04921dd4c5fa036a`**, on top of `aea6405`. `git diff --diff-filter=MDRT a3fedbb 76bc49f` is empty: 26 files, all `A`. `a3fedbb` is untouched.
+- Paper `mac-trackg-20261109`: this section, the hand-off and the checklist, in the commit that adds this section.
+
+**Tests after the fixes.**
+- `tests/trackg`: **161 passed** (145 before; 15 new tests in `tests/trackg/test_trackg_review_round2.py`, plus the working-tree check added to the structural T0 test).
+- Harness full suite: 14 failed, **637 passed** (476 + 161), 1 error. The failure set is identical to the base (`/tmp/trackg_logs/harness_after_r2_failset.txt`).
+- Paper (16 harness-importing files): 5 failed, 152 passed. The failure set is identical to the base (`/tmp/trackg_logs/paper_after_r2_failset.txt`; the round-1 file `paper_after_r1_failset.txt` now exists too).
+
+**Your probes**, re-run from copies in `/tmp/trackg_r2probe/`:
+- `diff_probe.py`: the `-U0` case B and "repeated block, edit 2" are both `applied`, with code states that differ. The same LR diff on another incumbent is `applied`, with `seen_other t1`. `numpy.py`, `sitecustomize.py` and `json/__init__.py` are `shadowing_module`; `helpers.py` and `layers2.py` are `applied`.
+- `declare_probe.py`: `declare: accepted`, and the runner applies the same diff.
+- `kill_probe.py`:
+  - the orphaned worker ends in state `Z`;
+  - the `setsid` escape survives, which is documented;
+  - a graceful child gives `killed_with: SIGTERM`;
+  - both bystanders survive (state `S`).
+
+| # | Finding | Status | What changed (harness unless noted) | Test |
+|---|---|---|---|---|
+| 1 | Duplicate false positives when context does not distinguish places | **Fixed** | `EvaluatedStates.check`: the resulting **code-state hash alone decides** `duplicate` (`duplicate_kind: code_state`). A same-incumbent diff-hash match with a different resulting state is information only: `same_diff_hash_other_state: <trial>`. A diff-hash match on another incumbent is reported as `seen_diff_other_incumbent`. The old round-1 test variant (whitespace / line-number change) is still a duplicate, now by code state. Hand-off §2 updated. | `test_u0_diffs_at_two_places_are_not_duplicates`, `test_edit_to_first_vs_second_copy_of_a_repeated_block_is_not_a_duplicate` (the same diff again is a `code_state` duplicate) |
+| 2 | Shadowing check refuses legitimate files, depending on the cwd | **Fixed** | `shadowing_name(rel, work_dir, import_path=…)` checks only the path components that do not exist yet in the copy, plus the new module's stem. `fixed_import_path()` takes the `sys.path` of `python3` run from `/`, cached, and drops `''`, `/`, the harness's current directory and the copy. If that fails it uses the harness's `sys.path` with the same exclusions. Lookup is `importlib.machinery.PathFinder.find_spec(name, path)`, plus stdlib/builtin names and `sitecustomize`/`usercustomize`. Recorded as `shadow_check: {basis, import_path, …}` in the provenance. | `test_existing_directory_named_like_a_module_does_not_refuse_a_safe_new_file` (`code/zz_trackg_helper.py` accepted; `model/json/…` refused), `test_shadow_check_does_not_depend_on_the_working_directory` (cwd = node, harness root, tmp, `model/`, with `''` on `sys.path`), `test_shadow_check_from_several_directories_in_subprocesses` (4 cwds, identical results) |
+| 3 | `declare_edits` ignores `allow_new_files` | **Fixed** | `declare_edits` passes `allow_new_files=spec.allow_new_files`, registers each edit with its incumbent code state, and records `incumbent_code_state_sha256` per edit and `allow_new_files` in the manifest. | `test_declare_edits_honours_allow_new_files_and_records_the_incumbent` (refused without the flag, accepted with it; the runner agrees) |
+| 4 | Cleanup by group only | **Fixed** (setpgid); **documented** (setsid, PID-reuse race) | `_run_members` scans `/proc/*/stat` for non-zombie processes whose process group **or session** is the run's (both equal the shell's PID under `start_new_session`). `_sigkill_group` also kills session members outside the group. `setsid` escapes and the theoretical PID-reuse race are in hand-off §4. | `test_child_that_leaves_the_group_but_not_the_session_is_killed` (`subprocess.Popen(..., process_group=0)`) |
+| 5 | Wall-clock regexes conservative; env prefixes not caught | **Fixed** (env prefixes, messages); **documented** (false positives) | `run_command` also refuses environment prefixes containing `TIMEOUT`, `SECONDS`, `MINUTES`, `HOURS`, `TIME_LIMIT`, `MAX_TIME` or `WALLCLOCK` followed by `=`. Both errors name the matched word and say what to do: rename the key or move the flag. Checklist A tells porters to rename such keys (`min_lr` → `lr_min`). The false positives are listed in hand-off §4. | `test_time_budget_environment_prefixes_are_refused_with_the_word_named`, `test_key_error_message_names_the_time_word` |
+| 6 | Loose `test_metric_regex` not checked at load | **Fixed** | Mirror check in `check_selection_policy`: `test_metric_regex` must not match `<metric_name>: 0.5`, `<metric_name>=0.5` or `<metric_name> 0.5`. | `test_loose_test_metric_regex_is_refused_at_load` |
+| 7 | Same variable for train and split seed | **Fixed** | Refused at load. Checklist A: two different variables. | `test_identical_train_and_split_seed_variables_are_refused` |
+| 8 | Structural test only against HEAD | **Fixed** | The structural test also runs `git diff --diff-filter=MDRT --name-only <base>` against the working tree (tracked files), so uncommitted edits of base files fail it. | `test_no_base_file_differs_and_no_t0_module_imports_trackg` |
+| 9a | `*_after_r1_failset.txt` cited, paper file missing | **Fixed** | `/tmp/trackg_logs/paper_after_r1_failset.txt` and `paper_after_r2_failset.txt` written; hand-off §3 names the files exactly. | — |
+| 9b | Hand-off §2 duplicate / shadowing text, §4 shadow limit | **Fixed** (paper) | §2 rewritten for findings 1 and 2. §4 now says the shadow check queries `python3`'s path as a stand-in for the run interpreter. | — |
+| 9c | Hand-off line 5 | **Fixed** (paper) | The review line now gives the round-1 and round-2 status, with "round 3 not yet run". | — |
+
+**Remark.** Your probe case "py line-2 comment mentioning coding" (`# encoding: see docs` → `# encoding: see the docs`) is `applied`, not inert. That is intended: Python treats any line-1/2 comment matching PEP 263's `coding[:=]` as an encoding declaration (here an invalid one, so the file would not even compile). Changing it changes how the file is read.
