@@ -2,7 +2,7 @@
 
 **Written 9 Nov 2026 (about 02:15–03:00 CET; revised about 03:10–03:40 CET after review round 1 and on 10 Nov about 10:30–11:15 CET after review round 2) by a Mac-local worker agent (Claude), AI-assisted, for runbook `MAC_OVERNIGHT_RUNBOOK_20261109.md` §2 (Task 2).** Governing text: `MAC_LOCAL_RUNBOOK_20261104.md` §M10 steps 0–1, `TRACK_G_RUNBOOK.md` §§2–4 (G.1, G.2), `HOREKA_RUNBOOK_20261104.md` HK2 "Needs", RUNBOOK Track G rows G.1/G.2, PLAN §10 R1-BX-D2, D4, D5, R1-BX-REVISIONS (c), (g), R1-BX-PROPOSED-CONFIRM (D4 (E3), REVISIONS (c) (E5)).
 
-Review: pending (round 1: changes requested, `/tmp/pb/reviews/REVIEW_T2_PORTKIT_round1.md`; round 2: changes requested, 1 blocking / 2 should-fix / 6 notes, `/tmp/pb/reviews/REVIEW_T2_PORTKIT_round2.md`; both answered in `docs/r1/reviews/M10_PORTKIT_REVIEW_ANSWERS_20261109.md`; round 3 not yet run)
+Review: **accepted** in round 3 (harness `76bc49f`, paper `f4e09f87`); record `reviews/M10_PORTKIT_REVIEW_20261109.md`, answers `reviews/M10_PORTKIT_REVIEW_ANSWERS_20261109.md`. The two optional round-3 notes (SIGTERM to children that left the group; pass the run's real interpreter to the shadowing check when v2-diff is wired in) are open for later M10 work.
 
 **Status.** Code and tests are committed on the two branches below. Nothing is pushed. Not accepted by an independent reviewer yet: the HoreKa agent must not build on these commits until a fresh reviewer has accepted them (HK2 "Needs": "the Mac agent's M10 step 0 (the shared pieces), reviewed"), and G.2 is pinned in the RUNBOOK pin table only after that review. No server was touched; nothing was measured.
 
