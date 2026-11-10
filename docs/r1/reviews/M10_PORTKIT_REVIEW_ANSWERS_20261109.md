@@ -63,7 +63,7 @@
 - Paper `mac-trackg-20261109`: this section, the hand-off and the checklist, in the commit that adds this section.
 
 **Tests after the fixes.**
-- `tests/trackg`: **161 passed** (145 before; 15 new tests in `tests/trackg/test_trackg_review_round2.py`, plus the working-tree check added to the structural T0 test).
+- `tests/trackg`: **161 passed** (145 before; 16 new tests in `tests/trackg/test_trackg_review_round2.py`; the working-tree check was added inside the existing structural T0 test).
 - Harness full suite: 14 failed, **637 passed** (476 + 161), 1 error. The failure set is identical to the base (`/tmp/trackg_logs/harness_after_r2_failset.txt`).
 - Paper (16 harness-importing files): 5 failed, 152 passed. The failure set is identical to the base (`/tmp/trackg_logs/paper_after_r2_failset.txt`; the round-1 file `paper_after_r1_failset.txt` now exists too).
 
