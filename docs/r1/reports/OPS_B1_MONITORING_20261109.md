@@ -42,3 +42,13 @@ Separate workstream under the author's wait-period authorization; details in `do
 - Risk noted to the author at 04:30 and 05:30 CET: the Mac-local agent pushed nothing for ~7.5 h; its session may be blocked on an approval prompt or still working. This operator cannot and did not do Mac-local work.
 
 No STOP occurred on B1 tonight (no run was started). No evidence was modified or deleted.
+
+## 5. Extended wait, 9 November 08:00 – 10 November 10:30 CET
+
+The 30-minute polling continued under the standing instruction. In this window (about 26 further hours):
+
+- origin still shows no Mac-local branch and no `B1_DIAGNOSIS_HANDOFF_*` / `B1_RESTART_HANDOFF_*`; the newest origin ref outside this operator's own `ops-b1-20261109` remains `trackS-ops-20261030` (03:05 CET 9 Nov) and `docs/runbooks-09nov` (00:36 CET 9 Nov). Live `git ls-remote origin` at 10:30 CET 10 Nov confirms the same 96 refs (no hand-off refs).
+- The Mac-local agent has therefore produced no repository output for about 34 hours after its 00:36 CET §6 commit, although the Claude desktop processes remain active; the most plausible states are a session blocked on an interaction/approval prompt or an abandoned overnight session. The experiment agent cannot and did not do Mac-local work.
+- TASL-7 was re-checked read-only at 09:30 UTC 10 Nov: `trks_watch` still the only tmux session, GPU compute-app list empty, `trackx_evidence.active` still SHA-256 `092023e4…` (dev 66306, inode 56261609). No write, signal, rerun or marker change; no Track P.
+- TASL-2 at 09:31 UTC 10 Nov: `trks_watch` running and `gpu0.lock` free; Track S stays at STOP 3 (`e7589ed4`).
+- The polling schedule remains active at the author's requested 30-minute cadence until the hand-off arrives or the author changes the instruction. The pending author items are unchanged: the S0.4 2 % STOP route, and how the B1 desktop hand-off is to be delivered (restarting or reassigning the Mac-local work).
