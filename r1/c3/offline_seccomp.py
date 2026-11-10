@@ -24,6 +24,7 @@ import platform
 import signal
 import socket
 import struct
+import time
 
 AUDIT_ARCH_X86_64 = 0xC000003E
 X32_SYSCALL_BIT = 0x40000000
@@ -55,6 +56,7 @@ SYSCALLS = {
 }
 # clone is permitted for ordinary children/threads; any namespace flag traps.
 CLONE_NR = 56
+PRLIMIT64_NR = 302
 CLONE_NAMESPACE_MASK = 0x7E020080  # NEWCGROUP, NEWUTS, NEWIPC, NEWUSER, NEWPID, NEWNET, NEWNS, NEWTIME
 
 # classic-BPF opcodes
@@ -76,7 +78,13 @@ def compile_filter(handoff_fd):
             (_JMP_JEQ_K,0,6,CLONE_NR), (_LD_W_ABS,0,0,20),
             (_JMP_JEQ_K,1,0,0), (_RET_K,0,0,SECCOMP_RET_USER_NOTIF),
             (_LD_W_ABS,0,0,16), (_JMP_JSET_K,0,1,CLONE_NAMESPACE_MASK),
-            (_RET_K,0,0,SECCOMP_RET_USER_NOTIF), (_LD_W_ABS,0,0,0)]
+            (_RET_K,0,0,SECCOMP_RET_USER_NOTIF), (_LD_W_ABS,0,0,0),
+            # prlimit64 on another process (arg0 != 0) traps: the workload
+            # must not change the PID-1 sentinel's limits. glibc's own
+            # get/setrlimit use pid 0 and stay allowed.
+            (_JMP_JEQ_K,0,4,PRLIMIT64_NR), (_LD_W_ABS,0,0,16),
+            (_JMP_JEQ_K,1,0,0), (_RET_K,0,0,SECCOMP_RET_USER_NOTIF),
+            (_RET_K,0,0,SECCOMP_RET_ALLOW)]
     for name,nr in sorted(SYSCALLS.items(),key=lambda pair:pair[1]):
         if name=='sendmsg': continue
         result.extend([(_JMP_JEQ_K,0,1,nr),(_RET_K,0,0,SECCOMP_RET_USER_NOTIF)])
@@ -190,48 +198,66 @@ def _libc_recv(listener_fd, buffer):
     return rc,(ctypes.get_errno() if rc<0 else 0)
 
 
-def drain_withdrawn(listener_fd, *, recv=None, tick_seconds=0.05, max_iterations=100000):
+def drain_withdrawn(listener_fd, *, recv=None, tick_seconds=0.05, max_iterations=100000,
+                    deadline=None, max_seconds=30.0):
     """Count notifications that were queued and then withdrawn before receipt.
 
-    Kernel basis (kernel/seccomp.c; read at v6.18, and the earlier semaphore
-    form): every queued notification increments the listener's request count
-    (``atomic_inc(&notif->requests)``; before v6.6 ``up(&notif->request)``). A
-    notifying task interrupted *before* ``NOTIF_RECV`` removes its list entry
-    but never decrements that count. ``NOTIF_RECV`` consumes one count without
-    sleeping when it is positive and then returns ``ENOENT`` if no un-received
-    entry exists; it sleeps interruptibly only when the count is zero. So,
-    while the filter still has a user that raises no new notifications:
+    Kernel basis (kernel/seccomp.c, read at v5.15, v6.1, v6.6, v6.10, v6.11
+    and v6.18): every queued notification increments the listener's request
+    count (``up(&notif->request)`` before v6.6, ``atomic_inc(&notif->requests)``
+    from v6.6). A notifying task interrupted *before* ``NOTIF_RECV`` removes
+    its list entry but never decrements that count. ``NOTIF_RECV`` consumes one
+    count without sleeping when it is positive and then returns ``ENOENT`` if
+    no un-received entry exists; it sleeps interruptibly only when the count is
+    zero (the count is re-checked after the wait is prepared, so ``EINTR`` is
+    returned only with count zero, whatever signal caused it). So, while the
+    filter still has a user that raises no new notifications:
 
     * ``ENOENT``  -> one withdrawn-before-receipt notification (residue);
     * success     -> a still-pending notification (also a violation);
     * ``EINTR``   -> the count was zero: no residue remains.
 
     PRECONDITION (the caller's protocol; not checkable here): the trusted
-    sentinel (the PID-1 bootstrap) still holds the filter, so ``users > 0``
-    (from v6.6 ``NOTIF_RECV`` returns ``ENOENT`` at once when ``users == 0``,
-    which would make the count unobservable), and every workload task has
-    already been reaped, so the count can no longer grow. A periodic
-    ``SIGALRM`` (handler installed without ``SA_RESTART``) ends the final
-    blocking receive. Soundness does not depend on the tick length: ``EINTR``
-    comes only from the sleeping path, which is reached only with count zero.
+    sentinel (the PID-1 bootstrap) still holds the filter, so ``users > 0``,
+    and every workload task has already been reaped, so the count can no
+    longer grow. From v6.11 (and any stable backport) ``recv_wait_event``
+    returns at once when ``users == 0``, so after the last user is gone
+    ``NOTIF_RECV`` answers ``ENOENT`` whatever the count; before v6.11 it would
+    sleep with count zero. The sentinel makes the drain valid on every version.
+
+    Bounds: ``SIGALRM`` (handler installed without ``SA_RESTART``) ends the
+    final blocking receive. It is unblocked in this thread for the duration of
+    the drain (the caller's mask is restored afterwards); if it cannot be
+    unblocked the drain STOPs before the first receive. The whole drain is
+    bounded by ``deadline`` (``time.monotonic()`` value) or, without one, by
+    ``max_seconds``, and by ``max_iterations``: exceeding any is a STOP, also
+    on an endless run of ``ENOENT``. Soundness does not depend on the tick.
 
     Returns ``{'withdrawn': n, 'pending': [records]}``; the caller STOPs if
     either is non-empty. Any other error raises :class:`DrainStop`. The
     residue carries no syscall identity: it proves that an attempt happened,
     not which call it was. Must run in the main thread (signal handler).
     """
-    if not hasattr(signal,'setitimer'):
-        raise DrainStop('STOP: interval timer unavailable for drain')
+    if not hasattr(signal,'setitimer') or not hasattr(signal,'pthread_sigmask'):
+        raise DrainStop('STOP: interval timer or signal mask unavailable for drain')
     if type(listener_fd) is not int or listener_fd<0:
         raise DrainStop('STOP: invalid listener for drain')
+    end=deadline if deadline is not None else time.monotonic()+max_seconds
+    if time.monotonic()>=end:
+        raise DrainStop('STOP: no time left for the listener drain')
     recv=recv or _libc_recv
     withdrawn=0;pending=[]
     previous=signal.signal(signal.SIGALRM,lambda *_:None)
-    old_timer=None
+    old_timer=None;prior_mask=None
     try:
         signal.siginterrupt(signal.SIGALRM,True)
+        prior_mask=signal.pthread_sigmask(signal.SIG_UNBLOCK,{signal.SIGALRM})
+        if signal.SIGALRM in signal.pthread_sigmask(signal.SIG_BLOCK,set()):
+            raise DrainStop('STOP: SIGALRM stays blocked; the drain could not be bounded')
         old_timer=signal.setitimer(signal.ITIMER_REAL,tick_seconds,tick_seconds)
         for _ in range(max_iterations):
+            if time.monotonic()>=end:
+                raise DrainStop('STOP: listener drain exceeded its deadline')
             buffer=ctypes.create_string_buffer(NOTIF_SIZE)
             rc,err=recv(listener_fd,buffer)
             if rc==0:
@@ -250,6 +276,8 @@ def drain_withdrawn(listener_fd, *, recv=None, tick_seconds=0.05, max_iterations
             signal.setitimer(signal.ITIMER_REAL,*old_timer)
         else:
             signal.setitimer(signal.ITIMER_REAL,0)
+        if prior_mask is not None:
+            signal.pthread_sigmask(signal.SIG_SETMASK,prior_mask)
         signal.signal(signal.SIGALRM,previous)
 
 

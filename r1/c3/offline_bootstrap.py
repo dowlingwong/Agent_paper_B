@@ -141,9 +141,14 @@ def run_workload_as_sentinel(spec,channel,*,fork=None,waitpid=None,execve=None):
     if pid==0:
         try:
             os.close(channel_fd)
-            # Like subprocess(restore_signals=True): no inherited SIG_IGN.
-            for name in ('SIGPIPE','SIGXFSZ'):
-                if hasattr(signal,name):signal.signal(getattr(signal,name),signal.SIG_DFL)
+            # No inherited SIG_IGN (wider than subprocess's restore_signals,
+            # which resets only SIGPIPE/SIGXFSZ) and an empty mask.
+            for sig in signal.valid_signals():
+                if sig in (signal.SIGKILL,signal.SIGSTOP):continue
+                try:
+                    if signal.getsignal(sig)==signal.SIG_IGN:signal.signal(sig,signal.SIG_DFL)
+                except (OSError,ValueError):pass
+            signal.pthread_sigmask(signal.SIG_SETMASK,set())
             execve(spec['argv'][0],spec['argv'],dict(spec['env']))
         finally:os._exit(127)
     workload=None
@@ -160,6 +165,9 @@ def run_workload_as_sentinel(spec,channel,*,fork=None,waitpid=None,execve=None):
 def main(argv=None):
     """Entry for the interpreter exec'd by the clone3 launcher; never returns."""
     try:
+        # Nothing inherited across the supervisor's execve may stay blocked
+        # (a blocked mask would also reach PID 1 and the workload).
+        signal.pthread_sigmask(signal.SIG_SETMASK,set())
         signal.signal(signal.SIGINT,signal.SIG_DFL)   # interpreter default handler
         # After chroot no stdlib file is reachable: load every codec the
         # bootstrap uses now (the forked design inherited them preloaded).

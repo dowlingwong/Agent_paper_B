@@ -33,10 +33,20 @@ WORKLOAD_C = r'''
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <sys/resource.h>
 static void h(int s){(void)s;}
+static int zero_line(const char*key){
+  FILE*f=fopen("/proc/self/status","r");char l[256];int ok=0;if(!f)return 0;
+  while(fgets(l,sizeof l,f))if(!strncmp(l,key,strlen(key))){
+    char*p=l+strlen(key);while(*p==' '||*p=='\t')p++;ok=1;
+    for(;*p&&*p!='\n';p++)if(*p!='0')ok=0;}
+  fclose(f);return ok;}
 int main(int argc,char**argv){
   const char*m=argc>1?argv[1]:"clean";
   if(!strcmp(m,"exit3"))return 3;
+  if(!strcmp(m,"sigstate"))return (zero_line("SigBlk:")&&zero_line("SigIgn:"))?0:4;
+  if(!strcmp(m,"prlimit1")){struct rlimit r;prlimit(1,RLIMIT_NOFILE,0,&r);return 0;}
   if(!strcmp(m,"direct")){socket(AF_UNIX,SOCK_STREAM,0);return 0;}
   if(!strcmp(m,"withdraw")){
     /* handler without SA_RESTART; every suspended socket() returns EINTR and
@@ -142,3 +152,27 @@ def test_withdrawn_before_receipt_is_found_by_drain(workload, tmp_path, monkeypa
     assert '"event": "withdrawn_drain"' in text
     assert '"event": "prohibited_syscall"' not in text
     assert first == [1]
+
+
+def test_blocked_sigalrm_and_inherited_ignores_neither_hang_nor_reach_the_workload(workload, tmp_path):
+    """Caller blocks SIGALRM (the drain must still end within the bound) and
+    ignores SIGUSR2; the workload must start with an empty mask and no SIG_IGN."""
+    import signal
+    prior = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGALRM, signal.SIGUSR1})
+    previous = signal.signal(signal.SIGUSR2, signal.SIG_IGN)
+    try:
+        out, go = run(workload, 'sigstate', tmp_path)
+        start = time.monotonic()
+        result = go()
+        assert result['status'] == 'COMPLETE_UNQUALIFIED'
+        assert time.monotonic() - start < 30
+        assert signal.pthread_sigmask(signal.SIG_BLOCK, set()) >= {signal.SIGALRM, signal.SIGUSR1}
+    finally:
+        signal.signal(signal.SIGUSR2, previous)
+        signal.pthread_sigmask(signal.SIG_SETMASK, prior)
+
+
+def test_prlimit_on_the_sentinel_is_stopped(workload, tmp_path):
+    out, go = run(workload, 'prlimit1', tmp_path)
+    with pytest.raises(sup.SupervisorStop, match='prohibited syscall'):
+        go()

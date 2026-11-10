@@ -69,7 +69,7 @@ def run(fds, *, drain, wait=None, seconds=5, hup_grace=0.3):
 def test_clean_protocol_completes_only_after_drain_hup_and_exit(fds):
     calls = []
 
-    def drain(listener):
+    def drain(listener, **k):
         calls.append('drain')
         return {'withdrawn': 0, 'pending': []}
 
@@ -106,13 +106,13 @@ def test_clean_protocol_completes_only_after_drain_hup_and_exit(fds):
 def test_hup_before_drain_is_stop(fds):
     fds.listener_hup()
     with pytest.raises(sup.SupervisorStop, match='hangup before sentinel drain'):
-        run(fds, drain=lambda l: pytest.fail('no drain after HUP'))
+        run(fds, drain=lambda l, **k: pytest.fail('no drain after HUP'))
 
 
 def test_pidfd_exit_before_drain_is_stop(fds):
     fds.pid_exit()
     with pytest.raises(sup.SupervisorStop, match='exited before sentinel drain'):
-        run(fds, drain=lambda l: pytest.fail('no drain'))
+        run(fds, drain=lambda l, **k: pytest.fail('no drain'))
 
 
 @pytest.mark.parametrize('result,pattern', [
@@ -122,7 +122,7 @@ def test_pidfd_exit_before_drain_is_stop(fds):
 def test_drain_residue_or_pending_is_stop_without_release(fds, result, pattern):
     fds.child.sendall(b'W\x00')
     with pytest.raises(sup.SupervisorStop, match=pattern):
-        run(fds, drain=lambda l: result)
+        run(fds, drain=lambda l, **k: result)
     fds.child.setblocking(False)
     with pytest.raises(BlockingIOError):
         fds.child.recv(1)          # 'D' was never sent: PID 1 stays and is killed
@@ -134,13 +134,13 @@ def test_received_notification_is_stop_before_anything_else(fds, monkeypatch):
     fds.child.sendall(b'W\x00')
     monkeypatch.setattr(sup.seccomp, 'monitor_one', lambda *a: {'syscall': 42})
     with pytest.raises(sup.SupervisorStop, match='prohibited syscall 42'):
-        run(fds, drain=lambda l: pytest.fail('POLLIN wins over drain'))
+        run(fds, drain=lambda l, **k: pytest.fail('POLLIN wins over drain'))
 
 
 def test_exit_without_hup_after_drain_is_stop(fds):
     fds.child.sendall(b'W\x00')
 
-    def drain(listener):
+    def drain(listener, **k):
         fds.pid_exit()          # bootstrap exits, but the filter still has users
         return {'withdrawn': 0, 'pending': []}
     with pytest.raises(sup.SupervisorStop, match='filter users remain'):
@@ -151,7 +151,7 @@ def test_notification_after_drain_is_stop(fds, monkeypatch):
     fds.child.sendall(b'W\x00')
     monkeypatch.setattr(sup.seccomp, 'monitor_one', lambda *a: {'syscall': 41})
 
-    def drain(listener):
+    def drain(listener, **k):
         fds.listener_pollin()
         return {'withdrawn': 0, 'pending': []}
     with pytest.raises(sup.SupervisorStop, match='prohibited syscall 41'):
@@ -165,7 +165,7 @@ def test_notification_after_drain_is_stop(fds, monkeypatch):
 def test_nonzero_status_is_stop_after_clean_drain(fds, message, status, pattern):
     fds.child.sendall(message)
 
-    def drain(listener):
+    def drain(listener, **k):
         fds.listener_hup()
         fds.pid_exit()
         return {'withdrawn': 0, 'pending': []}
@@ -177,7 +177,7 @@ def test_nonzero_status_is_stop_after_clean_drain(fds, message, status, pattern)
 def test_signalled_bootstrap_is_stop(fds):
     fds.child.sendall(b'W\x00')
 
-    def drain(listener):
+    def drain(listener, **k):
         fds.listener_hup()
         fds.pid_exit()
         return {'withdrawn': 0, 'pending': []}
@@ -188,19 +188,19 @@ def test_signalled_bootstrap_is_stop(fds):
 def test_channel_eof_before_drain_is_stop(fds):
     fds.child.close()
     with pytest.raises(sup.SupervisorStop, match='channel'):
-        run(fds, drain=lambda l: pytest.fail('no drain'))
+        run(fds, drain=lambda l, **k: pytest.fail('no drain'))
 
 
 def test_invalid_sentinel_message_is_stop(fds):
     fds.child.sendall(b'X\x00')
     with pytest.raises(sup.SupervisorStop, match='invalid sentinel message'):
-        run(fds, drain=lambda l: pytest.fail('no drain'))
+        run(fds, drain=lambda l, **k: pytest.fail('no drain'))
 
 
 def test_pidfd_ready_without_reap_is_stop(fds):
     fds.child.sendall(b'W\x00')
 
-    def drain(listener):
+    def drain(listener, **k):
         fds.listener_hup()
         fds.pid_exit()
         return {'withdrawn': 0, 'pending': []}
@@ -210,4 +210,48 @@ def test_pidfd_ready_without_reap_is_stop(fds):
 
 def test_timeout_is_stop(fds):
     with pytest.raises(sup.SupervisorStop, match='workload timeout'):
-        run(fds, drain=lambda l: pytest.fail('no drain'), seconds=0.2)
+        run(fds, drain=lambda l, **k: pytest.fail('no drain'), seconds=0.2)
+
+
+# ---- poll-event branches, with a scripted poller (each was asserted by a removed
+# fork-era parametrization; deleting the branch makes these tests fail)
+
+class ScriptedPoll:
+    def __init__(self, script):
+        self.script = list(script)
+
+    def register(self, *a):
+        pass
+
+    def unregister(self, *a):
+        pass
+
+    def poll(self, *a):
+        return self.script.pop(0) if self.script else []
+
+
+def run_scripted(fds, monkeypatch, batches, **kw):
+    monkeypatch.setattr(sup.select, 'poll', lambda: ScriptedPoll(batches))
+    return run(fds, drain=kw.pop('drain', lambda l, **k: pytest.fail('no drain')), seconds=0.5, **kw)
+
+
+@pytest.mark.parametrize('mask', [sup.select.POLLERR, sup.select.POLLNVAL])
+def test_listener_error_or_invalid_is_stop(fds, monkeypatch, mask):
+    with pytest.raises(sup.SupervisorStop, match='listener error'):
+        run_scripted(fds, monkeypatch, [[(fds.lr, mask)]])
+
+
+@pytest.mark.parametrize('mask', [sup.select.POLLHUP, sup.select.POLLERR, sup.select.POLLNVAL,
+                                  sup.select.POLLERR | sup.select.POLLIN])
+def test_pidfd_error_hangup_or_invalid_is_stop(fds, monkeypatch, mask):
+    with pytest.raises(sup.SupervisorStop, match='pidfd error or hangup'):
+        run_scripted(fds, monkeypatch, [[(fds.pr, mask)]], wait=lambda fd: pytest.fail('no reap'))
+
+
+def test_pending_notification_with_hangup_in_one_batch_goes_through_monitor_one(fds, monkeypatch):
+    seen = []
+    monkeypatch.setattr(sup.seccomp, 'monitor_one', lambda *a: seen.append(a) or {'syscall': 41})
+    with pytest.raises(sup.SupervisorStop, match='prohibited syscall 41'):
+        run_scripted(fds, monkeypatch, [[(fds.lr, sup.select.POLLIN | sup.select.POLLHUP),
+                                         (fds.pr, sup.select.POLLIN)]])
+    assert len(seen) == 1

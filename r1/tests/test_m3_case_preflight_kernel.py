@@ -56,7 +56,7 @@ def run_case(env, case, label, cache=None):
     out = root / 'out'
     result = sup.supervise(spec, os.environ['AR_M3_DELEGATED_CGROUP'], str(out),
                            protected_roots=[str(env['harness'])], timeout_seconds=300)
-    return result, out
+    return result, out, spec
 
 
 def test_all_16_cases_preflight_cleanly_under_the_boundary(env):
@@ -66,9 +66,9 @@ def test_all_16_cases_preflight_cleanly_under_the_boundary(env):
                                     env['closure']['sha256'], source_sha)
     results = {}
     for i, case in enumerate(env['cases']):
-        result, out = run_case(env, case, f'case{i:02d}')
+        result, out, spec = run_case(env, case, f'case{i:02d}')
         record = pf.parse_preflight_log((out / 'bootstrap.log').read_text())
-        results[case['case_id']] = {'supervisor': result, 'record': record}
+        results[case['case_id']] = {'supervisor': result, 'record': record, 'spec': spec}
     verdict = pf.check_preflight_results(binding, results)
     assert verdict['preflight'] == 'ALL_16_PASSED_UNQUALIFIED' and verdict['cases'] == 16
 

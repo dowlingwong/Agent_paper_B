@@ -7,7 +7,8 @@ MAC_M3_WITHDRAWN_RECHECK_REVIEW_20261108.md on the *local* kernel: a workload
 whose prohibited call is interrupted before the supervisor receives it and who
 swallows EINTR. They are not a target-host qualification. No network is used:
 the prohibited call is ``socket(AF_UNIX)``, which the filter suspends before
-the kernel executes it.
+the kernel executes it. The post-HUP negative control accepts ENOENT (v6.11+)
+or EINTR (earlier kernels) and prints which one occurred.
 """
 import ctypes
 import errno
@@ -80,6 +81,45 @@ def test_drain_is_bounded_and_restores_timer_and_handler():
         signal.signal(signal.SIGALRM, previous)
 
 
+def test_drain_unblocks_sigalrm_for_its_duration_and_restores_the_mask():
+    seen = []
+    prior = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGALRM})
+    try:
+        def recv(fd, buffer):
+            seen.append(signal.SIGALRM in signal.pthread_sigmask(signal.SIG_BLOCK, set()))
+            return -1, errno.EINTR
+        assert seccomp.drain_withdrawn(5, recv=recv) == {'withdrawn': 0, 'pending': []}
+        assert seen == [False]
+        assert signal.SIGALRM in signal.pthread_sigmask(signal.SIG_BLOCK, set())
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, prior)
+
+
+def test_drain_stops_up_front_if_sigalrm_cannot_be_unblocked(monkeypatch):
+    real = signal.pthread_sigmask
+
+    def stuck(how, mask):
+        if how == signal.SIG_UNBLOCK:
+            return real(signal.SIG_BLOCK, set())     # pretend the unblock had no effect
+        if how == signal.SIG_BLOCK and not mask:
+            return real(how, mask) | {signal.SIGALRM}
+        return real(how, mask)
+    monkeypatch.setattr(seccomp.signal, 'pthread_sigmask', stuck)
+    with pytest.raises(seccomp.DrainStop, match='stays blocked'):
+        seccomp.drain_withdrawn(5, recv=lambda *a: pytest.fail('no receive before the bound is ensured'))
+
+
+def test_drain_is_bounded_by_its_deadline_even_on_endless_enoent():
+    import time
+    start = time.monotonic()
+    with pytest.raises(seccomp.DrainStop, match='deadline'):
+        seccomp.drain_withdrawn(5, recv=lambda fd, buf: (time.sleep(0.01), (-1, errno.ENOENT))[1],
+                                deadline=time.monotonic() + 0.2)
+    assert time.monotonic() - start < 2
+    with pytest.raises(seccomp.DrainStop, match='no time left'):
+        seccomp.drain_withdrawn(5, recv=lambda *a: pytest.fail('no receive'), deadline=time.monotonic() - 1)
+
+
 def test_drain_refuses_invalid_listener():
     with pytest.raises(seccomp.DrainStop, match='invalid listener'):
         seccomp.drain_withdrawn(-1, recv=lambda *a: pytest.fail('no receive'))
@@ -119,7 +159,16 @@ def _sentinel(channel, mode):
         os._exit(0)
 
 
-def _run(mode):
+def _run(mode, block_sigalrm=False):
+    prior = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGALRM}) if block_sigalrm else None
+    try:
+        return _run_inner(mode)
+    finally:
+        if prior is not None:
+            signal.pthread_sigmask(signal.SIG_SETMASK, prior)
+
+
+def _run_inner(mode):
     parent, child = socket.socketpair()
     pid = os.fork()
     if pid == 0:
@@ -133,7 +182,7 @@ def _run(mode):
         poller = select.poll()
         poller.register(listener, select.POLLIN | select.POLLHUP)
         before = poller.poll(0)
-        drained = seccomp.drain_withdrawn(listener)
+        drained = seccomp.drain_withdrawn(listener, max_seconds=10)
         parent.sendall(b'D')
         os.waitpid(pid, 0)
         after = poller.poll(1000)
@@ -162,11 +211,33 @@ def test_kernel_clean_workload_drains_to_zero():
         assert drained == {'withdrawn': 0, 'pending': []}
         assert any(mask & select.POLLHUP for _, mask in after)
         # Negative control for the sentinel requirement: once the last filter
-        # user is gone (HUP), v6.6+ kernels answer ENOENT at once even with no
-        # residue, so a drain after HUP cannot tell the two histories apart.
-        release = tuple(int(x) for x in platform.release().split('.')[:2])
-        if release >= (6, 6):
+        # user is gone (HUP), v6.11+ kernels (and stable backports) answer
+        # ENOENT at once even with no residue, so a drain after HUP cannot tell
+        # the two histories apart; before v6.11 the receive sleeps (count 0).
+        # No version gate: the receive runs under a timer and either outcome
+        # is accepted and reported.
+        previous = signal.signal(signal.SIGALRM, lambda *_: None)
+        signal.siginterrupt(signal.SIGALRM, True)
+        signal.setitimer(signal.ITIMER_REAL, 0.5)
+        try:
             rc, err = seccomp._libc_recv(listener, ctypes.create_string_buffer(seccomp.NOTIF_SIZE))
-            assert (rc, err) == (-1, errno.ENOENT)
+        finally:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            signal.signal(signal.SIGALRM, previous)
+        assert rc == -1 and err in (errno.ENOENT, errno.EINTR)
+        print(f'post-HUP receive on {platform.release()}: '
+              f'{"ENOENT (v6.11+ behaviour)" if err == errno.ENOENT else "EINTR (pre-v6.11 behaviour)"}')
+    finally:
+        os.close(listener)
+
+
+@kernel_only
+def test_kernel_drain_completes_with_sigalrm_blocked_by_the_caller():
+    import time
+    start = time.monotonic()
+    before, drained, after, listener = _run('clean', block_sigalrm=True)
+    try:
+        assert drained == {'withdrawn': 0, 'pending': []}
+        assert time.monotonic() - start < 10
     finally:
         os.close(listener)

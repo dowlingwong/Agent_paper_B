@@ -186,7 +186,7 @@ def _kill_quiet(pidfd):
         pass
 
 
-def verify_membership(pid, pidfd, cgroup_name):
+def verify_membership(pid, pidfd, cgroup_name, *, full_path=None):
     """Check /proc/<pid>/cgroup, then prove the PID still named the pidfd child.
 
     The child is unreaped (only the supervisor reaps, via its pidfd), so while
@@ -205,6 +205,14 @@ def verify_membership(pid, pidfd, cgroup_name):
     matches = [line.split('::', 1)[1] for line in text.splitlines() if line.startswith('0::')]
     if len(matches) != 1 or Path(matches[0]).name != cgroup_name:
         raise LauncherStop('STOP: bootstrap cgroup membership not verified')
+    # Exact check: the /proc path (relative to the cgroup-v2 mount as seen from
+    # this cgroup namespace) must be a full trailing component path of the
+    # private cgroup's filesystem path.
+    if full_path is not None:
+        rel = matches[0].rstrip('/')
+        if not rel.startswith('/') or not (str(full_path).rstrip('/') == rel
+                                           or str(full_path).rstrip('/').endswith(rel)):
+            raise LauncherStop('STOP: bootstrap cgroup path not verified')
 
 
 def wait_pidfd(pidfd):

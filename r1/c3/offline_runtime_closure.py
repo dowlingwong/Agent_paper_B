@@ -112,6 +112,10 @@ def build_closure(packages, *, extra=(), python=None):
     items = []
     for target, source in sorted(files.items()):
         items.append({'source': source, 'target': target, 'sha256': _sha_file(source)})
-    digest = hashlib.sha256(json.dumps([[i['target'], i['sha256']] for i in items],
-                                       separators=(',', ':')).encode()).hexdigest()
-    return {'items': items, 'sha256': digest, 'python': str(python)}
+    return {'items': items, 'sha256': closure_digest(items), 'python': str(python)}
+
+
+def closure_digest(items):
+    """Digest of a closure: sorted (target, sha256) pairs; host source paths excluded."""
+    pairs = sorted([i['target'], i['sha256']] for i in items)
+    return hashlib.sha256(json.dumps(pairs, separators=(',', ':')).encode()).hexdigest()

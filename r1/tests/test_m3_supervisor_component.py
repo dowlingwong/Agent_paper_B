@@ -85,7 +85,9 @@ def _mock_supervisor(tmp_path,monkeypatch,events,*,spawn=None,monitor=None):
         assert env=={}
         return 55,81
     monkeypatch.setattr(sup.launcher,'spawn_into_cgroup',spawn or fake_spawn)
-    monkeypatch.setattr(sup.launcher,'verify_membership',lambda pid,fd,name:events.append(('membership',pid,fd,name)))
+    monkeypatch.setattr(sup.launcher,'verify_membership',
+                        lambda pid,fd,name,full_path=None:events.append(('membership',pid,fd,name)) or
+                        events.append(('membership_path',full_path)))
     monkeypatch.setattr(sup.seccomp,'receive_listener',lambda _:events.append(('received',)) or 80)
     monkeypatch.setattr(sup.seccomp,'verify_listener',lambda fd:events.append(('verified',fd)))
     monkeypatch.setattr(sup,'monitor',monitor or (lambda *a,**k:events.append(('monitor',)+a[:3]) or {'status':'COMPLETE_UNQUALIFIED'}))
@@ -100,6 +102,11 @@ def test_mocked_supervisor_clone3_sequence_binds_then_acknowledges(tmp_path,monk
     protected=_mock_supervisor(tmp_path,monkeypatch,events)
     result=sup.supervise(valid_spec(),'/delegated',tmp_path/'output',protected_roots=[protected])
     assert result['status']=='COMPLETE_UNQUALIFIED' and result['withdrawn_drain']=='clean'
+    assert ('membership_path',str(tmp_path/'paper-b-m3-fixture')) in events
+    from r1.c3.offline_runtime_closure import closure_digest
+    assert result['runtime_closure_sha256']==closure_digest(valid_spec()['closure'])
+    assert result['spec_content_sha256']==sup.spec_content_digest({**valid_spec(),'root':'/anything'})
+    assert len(result['spec_sha256'])==64
     assert ('spawn',93,(17,)) in events
     order=[events.index(e) for e in [('spawn',93,(17,)),('closed','child'),
            ('membership',55,81,'paper-b-m3-fixture'),('send',b'S'),('received',),('verified',80),('send',b'R')]]
@@ -108,7 +115,8 @@ def test_mocked_supervisor_clone3_sequence_binds_then_acknowledges(tmp_path,monk
     audit=(tmp_path/'output'/'supervisor.jsonl').read_text()
     assert '"creation": "clone3_pidfd_into_cgroup"' in audit and 'spec_sha256' in audit
     bound=json.loads(audit.splitlines()[0])
-    assert bound['bootstrap']['interpreter_sha256'] and len(bound['bootstrap']['sources_sha256'])==6
+    assert bound['bootstrap']['interpreter_sha256'] and len(bound['bootstrap']['sources_sha256'])==8
+    assert {'__init__.py','../__init__.py'} <= set(bound['bootstrap']['sources_sha256'])
     spec_file=tmp_path/'output'/'bootstrap_spec.json'
     import hashlib
     assert hashlib.sha256(spec_file.read_bytes()).hexdigest() in audit

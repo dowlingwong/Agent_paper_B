@@ -142,6 +142,11 @@ def test_membership_check_reads_proc_only_while_pidfd_unready(monkeypatch):
         launcher.verify_membership(55, r, 'paper-b-m3-abc')
         with pytest.raises(launcher.LauncherStop, match='membership not verified'):
             launcher.verify_membership(55, r, 'paper-b-m3-other')
+        launcher.verify_membership(55, r, 'paper-b-m3-abc',
+                                   full_path='/sys/fs/cgroup/delegated/paper-b-m3-abc')
+        with pytest.raises(launcher.LauncherStop, match='path not verified'):
+            launcher.verify_membership(55, r, 'paper-b-m3-abc',
+                                       full_path='/sys/fs/cgroup/other/paper-b-m3-abc')
         os.write(w, b'x')                      # pidfd readable = child exited
         with pytest.raises(launcher.LauncherStop, match='exited before'):
             launcher.verify_membership(55, r, 'paper-b-m3-abc')
@@ -228,6 +233,10 @@ def test_sentinel_child_closes_channel_restores_signals_and_execs(monkeypatch):
                                           execve=lambda *x: calls.append(('execve',) + x))
         assert calls[0] == ('close', a.fileno())
         assert ('signal', signal.SIGPIPE, signal.SIG_DFL) in calls
+        # every inherited SIG_IGN is reset, not only SIGPIPE/SIGXFSZ
+        ignored = {s for s in signal.valid_signals()
+                   if s not in (signal.SIGKILL, signal.SIGSTOP) and signal.getsignal(s) == signal.SIG_IGN}
+        assert ignored <= {c[1] for c in calls if c[0] == 'signal' and c[2] == signal.SIG_DFL}
         assert calls[-1] == ('execve', '/w', ['/w', 'x'], {'HOME': '/work'})
     finally:
         a.close()
@@ -267,6 +276,24 @@ def test_entry_refuses_spec_hash_mismatch(tmp_path, monkeypatch):
     finally:
         signal.signal(signal.SIGINT, previous)
     assert info.value.args == (125,) and b'hash mismatch' in writes[0]
+
+
+def test_entry_clears_an_inherited_signal_mask(tmp_path, monkeypatch):
+    raw = b'{}'
+    spec = tmp_path / 'spec.json'
+    spec.write_bytes(raw)
+    seen = []
+    monkeypatch.setattr(boot, 'bootstrap_child',
+                        lambda *a: seen.append(signal.pthread_sigmask(signal.SIG_BLOCK, set())))
+    prior = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGALRM, signal.SIGUSR1})
+    previous = signal.getsignal(signal.SIGINT)
+    try:
+        boot.main(['--channel-fd', '5', '--spec', str(spec), '--spec-sha256',
+                   hashlib.sha256(raw).hexdigest(), '--supervisor-pid', '2'])
+    finally:
+        signal.signal(signal.SIGINT, previous)
+        signal.pthread_sigmask(signal.SIG_SETMASK, prior)
+    assert seen == [set()]
 
 
 def test_entry_passes_verified_spec(tmp_path, monkeypatch):

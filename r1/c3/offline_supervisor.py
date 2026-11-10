@@ -35,6 +35,7 @@ import sys
 from r1.c3 import offline_bootstrap as boot
 from r1.c3 import offline_cgroup as groups
 from r1.c3 import offline_launcher as launcher
+from r1.c3.offline_runtime_closure import closure_digest
 from r1.c3 import offline_seccomp as seccomp
 
 BOOTSTRAP_ENTRY=Path(__file__).resolve().with_name('offline_bootstrap_entry.py')
@@ -135,9 +136,22 @@ def bootstrap_identity(exe):
     """Interpreter and trusted bootstrap sources the clone3 child execs (audit only)."""
     here=Path(__file__).resolve().parent
     names=('offline_bootstrap_entry.py','offline_bootstrap.py','offline_capabilities.py',
-           'offline_mounts.py','offline_namespaces.py','offline_seccomp.py')
+           'offline_mounts.py','offline_namespaces.py','offline_seccomp.py','__init__.py')
+    sources={n:_file_sha(here/n) for n in names}
+    sources['../__init__.py']=_file_sha(here.parent/'__init__.py')   # r1/__init__.py, run by the entry
     return {'interpreter':os.path.realpath(exe),'interpreter_sha256':_file_sha(os.path.realpath(exe)),
-            'sources_sha256':{n:_file_sha(here/n) for n in names}}
+            'sources_sha256':sources}
+
+
+def spec_content_digest(spec):
+    """Digest of what the boundary run executes, independent of host source paths and of
+    the per-run private root: closure and working-file targets with their hashes, argv,
+    env and tmpfs size."""
+    payload={'closure':sorted([i['target'],i['sha256']] for i in spec['closure']),
+             'work_files':sorted([i['target'],i['sha256']] for i in spec['work_files']),
+             'argv':list(spec['argv']),'env':dict(sorted(spec['env'].items())),
+             'tmpfs_bytes':spec['tmpfs_bytes']}
+    return hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
 
 def _read_exact(sock,n):
@@ -196,7 +210,7 @@ def monitor(listener,pidfd,channel,group,audit_fd,deadline,*,state=None,drain=No
             message=_read_exact(channel,2)
             if message[:1]!=b'W':raise SupervisorStop('STOP: invalid sentinel message')
             workload_status=message[1]
-            drained=drain(listener)
+            drained=drain(listener,deadline=deadline)
             _record(audit_fd,{'event':'withdrawn_drain','withdrawn':drained['withdrawn'],
                               'pending':drained['pending'],'workload_status':workload_status})
             if drained['withdrawn'] or drained['pending']:
@@ -270,13 +284,14 @@ def supervise(spec,delegated,out,*,protected_roots,timeout_seconds=300,bootstrap
         group=groups.PrivateCgroup.create(delegated)
         parent,child=socket.socketpair(socket.AF_UNIX,socket.SOCK_STREAM)
         exe,argv=bootstrap_argv(spec_path,spec_sha,child.fileno(),os.getpid())
+        identity_before=bootstrap_identity(exe)   # hashed before the child can exec them
         pid,pidfd=launcher.spawn_into_cgroup(group.directory_fd,exe,argv,{},
                                              stdio=(null_fd,log_fd,log_fd),pass_fds=(child.fileno(),))
         child.close();child=None
-        launcher.verify_membership(pid,pidfd,group.path.name)
+        launcher.verify_membership(pid,pidfd,group.path.name,full_path=str(group.path))
         _record(audit_fd,{'event':'group_bound','pid':pid,'cgroup':str(group.path),
                           'creation':'clone3_pidfd_into_cgroup','spec_sha256':spec_sha,
-                          'bootstrap':bootstrap_identity(exe)})
+                          'bootstrap':identity_before})
         parent.sendall(b'S');parent.settimeout(bootstrap_seconds)
         listener=seccomp.receive_listener(parent)
         seccomp.verify_listener(listener)
@@ -286,6 +301,8 @@ def supervise(spec,delegated,out,*,protected_roots,timeout_seconds=300,bootstrap
         monitor(listener,pidfd,parent,group,audit_fd,deadline,state=state)
         return {'status':'COMPLETE_UNQUALIFIED','audit':str(out/'supervisor.jsonl'),
                 'cgroup':str(group.path),'withdrawn_drain':'clean',
+                'spec_sha256':spec_sha,'spec_content_sha256':spec_content_digest(spec),
+                'runtime_closure_sha256':closure_digest(spec['closure']),
                 'scope':'candidate_not_replay_authorization'}
     except BaseException as original:
         if parent is not None:

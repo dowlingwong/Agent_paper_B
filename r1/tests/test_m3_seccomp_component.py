@@ -32,6 +32,16 @@ def test_filter_catches_listed_syscalls_and_allows_regular_io():
     assert interpret(program,sc.SYSCALLS['sendmsg'],arg0=8)==sc.SECCOMP_RET_USER_NOTIF
 
 
+def test_filter_traps_prlimit64_on_another_process_only():
+    program=sc.compile_filter(7)
+    assert interpret(program,sc.PRLIMIT64_NR,arg0=0)==sc.SECCOMP_RET_ALLOW
+    for pid in (1,2,12345,-1):
+        assert interpret(program,sc.PRLIMIT64_NR,arg0=pid)==sc.SECCOMP_RET_USER_NOTIF
+    for name,nr in sc.SYSCALLS.items():          # the list after the new block is unchanged
+        assert interpret(program,nr,arg0=8)==sc.SECCOMP_RET_USER_NOTIF,name
+    assert interpret(program,0)==sc.SECCOMP_RET_ALLOW
+
+
 def test_filter_traps_namespace_clone_and_wrong_arch():
     program=sc.compile_filter(7)
     assert interpret(program,sc.CLONE_NR,arg0=0)==sc.SECCOMP_RET_ALLOW

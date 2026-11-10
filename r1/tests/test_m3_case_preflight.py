@@ -182,21 +182,42 @@ def test_case_files_refuse_edited_hash_mismatch(cases):
 
 # ---------------------------------------------------------------- host side
 
+def _closure():
+    items = [{'source': '/usr/bin/python3', 'target': '/usr/bin/python3', 'sha256': 'c' * 64},
+             {'source': 'x', 'target': f'{pf.PAPER_TARGET}/r1/c3/offline_case_preflight.py', 'sha256': 'b' * 64}]
+    from r1.c3.offline_runtime_closure import closure_digest
+    return {'items': items, 'sha256': closure_digest(items), 'python': '/usr/bin/python3'}
+
+
 def _binding(cases):
     harness = _harness()
     fingerprints = {c['node']: hashlib.sha256(c['node'].encode()).hexdigest()
                     for c in cases if c['node'].startswith('openml_')}
-    return pf.build_case_binding(cases, harness, fingerprints, 'a' * 64, 'b' * 64), fingerprints
+    closure = _closure()
+    return pf.build_case_binding(cases, harness, fingerprints, closure['sha256'], 'b' * 64), fingerprints
 
 
-def _records(binding):
+def _records(binding, cases, tmp_path):
+    from r1.c3.offline_supervisor import spec_content_digest
+    harness = _harness()
+    closure = _closure()
+    by_id = {c['case_id']: c for c in cases}
     out = {}
-    for row in binding['cases']:
+    for i, row in enumerate(binding['cases']):
+        case = by_id[row['case_id']]
+        cache = None
+        if row['kind'] == 'openml':
+            cache = tmp_path / f'cache{i}'
+            cache.mkdir()
+            (cache / 'x.gz').write_bytes(b'synthetic')
+        spec = pf.build_preflight_spec(case, harness, tmp_path / f'staging{i}', closure, cache_dir=cache)
         record = {'schema': pf.SCHEMA, 'status': 'ok', 'kind': row['kind'], 'seeds': row['seeds'],
                   'files_sha256': dict(row['files_sha256']), 'cache_fingerprint': row['cache_fingerprint'],
                   'fit_reached': True, 'model_fit_performed': False, 'metric_computed': False}
-        out[row['case_id']] = {'record': record,
-                               'supervisor': {'status': 'COMPLETE_UNQUALIFIED', 'withdrawn_drain': 'clean'}}
+        out[row['case_id']] = {'record': record, 'spec': spec,
+                               'supervisor': {'status': 'COMPLETE_UNQUALIFIED', 'withdrawn_drain': 'clean',
+                                              'spec_content_sha256': spec_content_digest(spec),
+                                              'runtime_closure_sha256': closure['sha256']}}
     return out
 
 
@@ -210,13 +231,22 @@ def test_binding_covers_exactly_the_16_cases(cases):
         pf.build_case_binding(cases, _harness(), {}, 'a' * 64, 'b' * 64)
 
 
-def test_results_accepted_only_when_every_case_matches(cases):
+def test_results_accepted_only_when_every_case_matches(cases, tmp_path):
+    import copy
     binding, _ = _binding(cases)
-    verdict = pf.check_preflight_results(binding, _records(binding))
+    base = _records(binding, cases, tmp_path)
+    verdict = pf.check_preflight_results(binding, base)
     assert verdict['preflight'] == 'ALL_16_PASSED_UNQUALIFIED'
     assert verdict['binding_sha256'] == binding['binding_sha256']
+    assert verdict['runtime_closure_sha256'] == binding['runtime_closure_sha256']
     first = binding['cases'][0]['case_id']
     openml = next(r['case_id'] for r in binding['cases'] if r['kind'] == 'openml')
+    other_closure = [{'source': 'y', 'target': '/usr/bin/python3', 'sha256': 'd' * 64}]
+
+    def respec(r, cid, **change):
+        r[cid]['spec'] = {**r[cid]['spec'], **change}
+        from r1.c3.offline_supervisor import spec_content_digest
+        r[cid]['supervisor']['spec_content_sha256'] = spec_content_digest(r[cid]['spec'])
     mutations = [
         ('missing', lambda r: r.pop(first)),
         ('supervisor', lambda r: r[first]['supervisor'].update(withdrawn_drain='withdrawn')),
@@ -224,14 +254,42 @@ def test_results_accepted_only_when_every_case_matches(cases):
         ('record', lambda r: r[first]['record'].update(status='STOP')),
         ('seeds', lambda r: r[first]['record'].update(seeds={'AR_TRAIN_SEED': '1', 'AR_SPLIT_SEED': '1'})),
         ('files', lambda r: r[first]['record']['files_sha256'].update({'train.py': '0' * 64})),
+        ('extra executed file', lambda r: r[first]['record']['files_sha256'].update({'extra.py': '0' * 64})),
         ('cache', lambda r: r[openml]['record'].update(cache_fingerprint='0' * 64)),
         ('fit', lambda r: r[first]['record'].update(model_fit_performed=True)),
+        ('no spec', lambda r: r[first].pop('spec')),
+        ('supervisor ran another spec', lambda r: r[first]['supervisor'].update(spec_content_sha256='0' * 64)),
+        ('supervisor closure', lambda r: r[first]['supervisor'].update(runtime_closure_sha256='0' * 64)),
+        ('spec closure', lambda r: respec(r, first, closure=other_closure)),
+        ('spec extra work file', lambda r: respec(r, first, work_files=r[first]['spec']['work_files'] + [
+            {'source': 'z', 'target': '/work/node/extra.py', 'sha256': '0' * 64}])),
+        ('spec seeds', lambda r: respec(r, first, env={**r[first]['spec']['env'], 'AR_TRAIN_SEED': '1'})),
+        ('spec command', lambda r: respec(r, first, argv=r[first]['spec']['argv'][:-1] + ['openml'
+                                                                                            if r[first]['spec']['argv'][-1] == 'mlp' else 'mlp'])),
     ]
     for label, mutate in mutations:
-        results = _records(binding)
+        results = copy.deepcopy(base)
         mutate(results)
         with pytest.raises(pf.PreflightStop):
             pf.check_preflight_results(binding, results)
+    # a binding with another preflight source digest refuses the same runs
+    other = {**binding, 'preflight_source_sha256': 'e' * 64}
+    with pytest.raises(pf.PreflightStop, match='preflight source'):
+        pf.check_preflight_results(other, copy.deepcopy(base))
+
+
+def test_mlp_edit_beyond_the_constants_is_refused(cases):
+    harness = _harness()
+    case = dict(next(c for c in cases if c['node'] == 'digits_mlp'))
+    pinned = (harness / 'nodes/digits_mlp/train.py').read_text()
+    assert pf.mlp_edit_is_constants_only(pinned, pinned.replace('MAX_ITER = 40', 'MAX_ITER = 7'))
+    assert not pf.mlp_edit_is_constants_only(pinned, pinned + '\nimport os\n')
+    assert not pf.mlp_edit_is_constants_only(pinned, pinned.replace('MAX_ITER = 40', 'MAX_ITER = int("7")'))
+    edited = pinned + '\nprint("extra")\n'
+    case['files'] = {'train.py': edited}
+    case['configuration_file_sha256'] = {'train.py': hashlib.sha256(edited.encode()).hexdigest()}
+    with pytest.raises(pf.PreflightStop, match='beyond the five constants'):
+        pf.case_files(case, harness)
 
 
 def test_execution_binding_rechecks_exact_inputs(cases):
@@ -240,12 +298,13 @@ def test_execution_binding_rechecks_exact_inputs(cases):
     case = next(c for c in cases if c['node'] == 'openml_sonar')
     files = pf.case_files(case, harness)
     fp = fingerprints['openml_sonar']
-    assert pf.verify_execution_binding(binding, case['case_id'], files, fp, 'a' * 64)
+    rt = binding['runtime_closure_sha256']
+    assert pf.verify_execution_binding(binding, case['case_id'], files, fp, rt)
     with pytest.raises(pf.PreflightStop, match='files differ'):
-        pf.verify_execution_binding(binding, case['case_id'], {**files, 'config.yaml': b'x'}, fp, 'a' * 64)
+        pf.verify_execution_binding(binding, case['case_id'], {**files, 'config.yaml': b'x'}, fp, rt)
     with pytest.raises(pf.PreflightStop, match='cache differs'):
-        pf.verify_execution_binding(binding, case['case_id'], files, '0' * 64, 'a' * 64)
+        pf.verify_execution_binding(binding, case['case_id'], files, '0' * 64, rt)
     with pytest.raises(pf.PreflightStop, match='runtime differs'):
         pf.verify_execution_binding(binding, case['case_id'], files, fp, 'c' * 64)
     with pytest.raises(pf.PreflightStop, match='not preflighted'):
-        pf.verify_execution_binding(binding, 'nope', files, fp, 'a' * 64)
+        pf.verify_execution_binding(binding, 'nope', files, fp, rt)

@@ -270,7 +270,33 @@ def case_files(case, harness):
         if _sha(bytes(data)) != expected:
             raise PreflightStop(f"STOP: case {case.get('case_id')} edited file hash mismatch: {name}")
         files[name] = bytes(data)
+    if node_kind(case['node']) == 'mlp':
+        pinned = (node_dir / 'train.py').read_bytes()
+        if not mlp_edit_is_constants_only(pinned, files['train.py']):
+            raise PreflightStop(f"STOP: case {case.get('case_id')} edits train.py beyond the five constants")
     return files
+
+
+def mlp_edit_is_constants_only(pinned, edited):
+    """The edited MLP train.py equals the pinned one except the five constants' literal values.
+
+    The preflight calls ``run_benchmark`` with those constants instead of
+    executing ``train.py``; this check makes that equivalent to the real path.
+    """
+    import ast
+
+    def normalised(src):
+        tree = ast.parse(src)
+        for node in tree.body:
+            if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                    and isinstance(node.targets[0], ast.Name) and node.targets[0].id in MLP_CONSTANTS):
+                ast.literal_eval(node.value)          # must stay a literal
+                node.value = ast.Constant(None)
+        return ast.dump(tree, include_attributes=False)
+    try:
+        return normalised(pinned) == normalised(edited)
+    except (SyntaxError, ValueError):
+        return False
 
 
 def build_case_binding(cases, harness, cache_fingerprints, runtime_closure_sha256, preflight_source_sha256):
@@ -302,29 +328,65 @@ def build_case_binding(cases, harness, cache_fingerprints, runtime_closure_sha25
     return {**payload, 'binding_sha256': _sha(_canonical(payload))}
 
 
+def _spec_node_files(spec):
+    prefix = '/work/node/'
+    return {i['target'][len(prefix):]: i['sha256'] for i in spec['work_files']
+            if i['target'].startswith(prefix) and not i['target'].startswith(prefix + 'data_cache/')}
+
+
 def check_preflight_results(binding, results):
-    """Accept only if all 16 bound cases preflighted cleanly under the boundary.
+    """Accept only if all 16 bound cases preflighted cleanly under the bound runtime.
 
     ``results`` maps case_id -> {'supervisor': <supervise() return>,
-    'record': <workload JSON>}. Any missing, extra, failed or mismatching case
-    STOPs the whole set.
+    'record': <workload JSON>, 'spec': <the build_preflight_spec() dict run>}.
+    For every case: the supervisor run is clean and ran exactly ``spec``
+    (``spec_content_sha256``) with the bound runtime closure; ``spec`` carries
+    exactly the bound node files, the bound seeds, the preflight argv and the
+    bound preflight source; the record reports exactly the bound files (no
+    extra file), the bound cache fingerprint and a stop at the fit. Any
+    missing, extra, failed or mismatching case STOPs the whole set.
     """
+    from r1.c3.offline_runtime_closure import closure_digest
+    from r1.c3.offline_supervisor import spec_content_digest
     expected = {row['case_id']: row for row in binding['cases']}
     if set(results) != set(expected):
         raise PreflightStop('STOP: preflight results do not cover exactly the bound cases')
+    closure_sha = binding['runtime_closure_sha256']
+    source_target = f'{PAPER_TARGET}/r1/c3/offline_case_preflight.py'
     for case_id, row in sorted(expected.items()):
         sup = results[case_id].get('supervisor') or {}
         rec = results[case_id].get('record') or {}
+        spec = results[case_id].get('spec')
         if sup.get('status') != 'COMPLETE_UNQUALIFIED' or sup.get('withdrawn_drain') != 'clean':
             raise PreflightStop(f'STOP: {case_id} supervisor run not clean')
+        if not isinstance(spec, dict):
+            raise PreflightStop(f'STOP: {case_id} executed specification missing')
+        try:
+            ran = spec_content_digest(spec)
+            spec_closure = closure_digest(spec['closure'])
+        except (KeyError, TypeError) as exc:
+            raise PreflightStop(f'STOP: {case_id} malformed specification') from exc
+        if sup.get('spec_content_sha256') != ran:
+            raise PreflightStop(f'STOP: {case_id} supervisor ran a different specification')
+        if sup.get('runtime_closure_sha256') != closure_sha or spec_closure != closure_sha:
+            raise PreflightStop(f'STOP: {case_id} runtime closure differs from binding')
+        sources = [i['sha256'] for i in spec['closure'] if i['target'] == source_target]
+        if sources != [binding['preflight_source_sha256']]:
+            raise PreflightStop(f'STOP: {case_id} preflight source differs from binding')
+        if _spec_node_files(spec) != row['files_sha256']:
+            raise PreflightStop(f'STOP: {case_id} specification files differ from binding')
+        env = spec.get('env') or {}
+        if {k: env.get(k) for k in ('AR_TRAIN_SEED', 'AR_SPLIT_SEED')} != row['seeds']:
+            raise PreflightStop(f'STOP: {case_id} specification seeds differ from binding')
+        if list(spec.get('argv') or [])[1:] != ['-B', source_target, '--node-dir', '/work/node',
+                                                '--kind', row['kind']]:
+            raise PreflightStop(f'STOP: {case_id} specification command is not the preflight')
         if rec.get('schema') != SCHEMA or rec.get('status') != 'ok':
             raise PreflightStop(f'STOP: {case_id} preflight record not ok')
         if rec.get('kind') != row['kind'] or rec.get('seeds') != row['seeds']:
             raise PreflightStop(f'STOP: {case_id} kind or seeds differ from binding')
-        bound_files = row['files_sha256']
-        seen = {n: h for n, h in rec.get('files_sha256', {}).items() if n in bound_files}
-        if seen != bound_files:
-            raise PreflightStop(f'STOP: {case_id} executed files differ from binding')
+        if rec.get('files_sha256') != row['files_sha256']:
+            raise PreflightStop(f'STOP: {case_id} executed files differ from binding (exact set)')
         if rec.get('cache_fingerprint') != row['cache_fingerprint']:
             raise PreflightStop(f'STOP: {case_id} cache copy differs from binding')
         if rec.get('fit_reached') is not True or rec.get('model_fit_performed') is not False \
@@ -333,6 +395,7 @@ def check_preflight_results(binding, results):
     digest = _sha(_canonical({k: results[k]['record'] for k in sorted(results)}))
     return {'schema': SCHEMA + '+check', 'binding_sha256': binding['binding_sha256'],
             'records_sha256': digest, 'cases': len(expected),
+            'runtime_closure_sha256': closure_sha,
             'preflight': 'ALL_16_PASSED_UNQUALIFIED',
             'offline_executability': 'PREFLIGHT_PASSED_PENDING_SITE_QUALIFICATION'}
 
