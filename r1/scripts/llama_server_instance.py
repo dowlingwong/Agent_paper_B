@@ -215,7 +215,9 @@ def offload_check(log_text: str, *, pid: int | None, gpu_uuid: str | None, footp
 
 
 UUID_RE = re.compile(r'^(GPU|MIG)-[0-9A-Za-z-]+$')
-DUAL_CONFLICTING_FLAGS = ('--tensor-split', '-ts', '--split-mode', '-sm', '--main-gpu', '-mg', '--device', '-dev')
+DUAL_CONFLICTING_FLAGS = ('--tensor-split', '-ts', '--split-mode', '-sm', '--main-gpu', '-mg', '--device', '-dev',
+                          # flags that keep tensors on the CPU (review round 2, note 4)
+                          '--override-tensor', '-ot', '--cpu-moe', '-cmoe', '--n-cpu-moe', '-ncmoe')
 
 
 def validate_dual(gpu_uuid, gpu_uuids, tensor_split, *, extra_args=(), env_extra=None):
@@ -243,6 +245,8 @@ def validate_dual(gpu_uuid, gpu_uuids, tensor_split, *, extra_args=(), env_extra
             raise ValueError(f'extra_args may not override the two-GPU split or devices: {arg!r}')
     if env_extra and 'CUDA_VISIBLE_DEVICES' in env_extra:
         raise ValueError('env_extra may not set CUDA_VISIBLE_DEVICES with gpu_uuids')
+    if env_extra and any(str(k).startswith('LLAMA_ARG_') for k in env_extra):
+        raise ValueError('env_extra may not set LLAMA_ARG_* variables with gpu_uuids (applied after the scrub)')
     return list(gpu_uuids), list(tensor_split)
 
 
@@ -271,7 +275,9 @@ def last_load(log_text: str) -> str:
     offl = log_text.rfind(LOAD_MARKERS[1])
     if meta < 0 and offl < 0:
         return log_text
-    cut = meta if meta >= 0 else offl   # a load starts at its 'loaded meta data' line
+    # Cut at whichever marker comes last, so a later load that printed only an 'offloading' line leaves
+    # no buffer line of an earlier load (review round 2, note 2).
+    cut = max(meta, offl)   # buffer and 'offloaded' lines follow the 'offloading' line within one load
     return log_text[log_text.rfind('\n', 0, cut) + 1:]
 
 
@@ -279,11 +285,19 @@ def offload_check_dual(log_text: str, *, pid: int | None, gpu_uuids, footprint_m
     """Full offload across both cards.  Route (i): an ``offloaded N/N layers`` line, no CPU fallback,
     and a non-zero model buffer on two CUDA devices.  Route (ii), when the build prints no offload line:
     the server pid listed by nvidia-smi on **each** uuid with used memory >= that card's pinned
-    footprint (``footprint_mib`` = ``[f1, f2]``).  A partial line or CPU fallback is a STOP.  Only the
-    last load in ``log_text`` is read (``last_load``).  The server pid's nvidia-smi rows on each card are
+    footprint (``footprint_mib`` = ``[f1, f2]``).  A partial line or CPU fallback is a STOP.  Offload and
+    buffer lines are read from the last load in ``log_text`` only (``last_load``); CPU-fallback lines from
+    all of ``log_text`` (the text logged since this ``start()``).  The server pid's nvidia-smi rows on each card are
     recorded either way; this is *not* the occupancy census of other processes on the two cards (that
     belongs to the runner, M4 2(e), and is not done here)."""
     report = offload_report(last_load(log_text))
+    # CPU-fallback warnings are printed at startup, before the load markers: look for them in the whole
+    # text logged since this start(), not only in the last load (review round 2, finding 1).
+    fallback = offload_report(log_text)['cpu_fallback_lines']
+    if fallback and not report['cpu_fallback_lines']:
+        report['cpu_fallback_lines'] = fallback
+        report['full'] = False
+        report['reasons'] = [*report['reasons'], 'CPU fallback reported']
     rows = [r for r in (apps or []) if r.get('pid') == pid]
     cards = []
     for i, uuid in enumerate(gpu_uuids):

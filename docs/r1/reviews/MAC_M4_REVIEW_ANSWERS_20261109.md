@@ -21,3 +21,14 @@ Review: `/tmp/pb/reviews/REVIEW_M4_round1.md` (changes requested: 5 should-fix, 
 ## Tests after the fixes
 
 `AR_HARNESS_ROOT` = harness `a3fedbb`: `r1/tests/test_llama_server_instance.py r1/tests/test_llamacpp_offload_routes.py r1/tests/test_exam_observer.py r1/tests/test_llama_server_dual_gpu.py r1/tests/test_llamacpp_probe.py` → **97 passed** (base files 48 + probe 4 unchanged; dual-GPU file 45, was 21). No existing test changed.
+
+## Round 2 (10 Nov; fixes by the Mac-local agent)
+
+| # | Finding | Status | Change |
+|---|---|---|---|
+| 1 | Two-GPU check ignores CPU-fallback warnings printed before the load markers | **fixed** | `offload_check_dual` reads offload and buffer lines from `last_load(...)` but CPU-fallback lines from all text logged since this `start()`; a fallback found only there sets `full = False` and adds the reason. Test `test_dual_cpu_fallback_before_the_load_markers_is_still_a_stop` (route (i) and route (ii)); it fails on the round-1 code. |
+| 2 (note) | `last_load` cut at an earlier meta line when the later load printed only an `offloading` line | **fixed** | cut at whichever marker comes last. Test `test_dual_later_load_with_only_an_offloading_line_drops_the_earlier_buffers`; it fails on the round-1 code. |
+| 3 (note) | `log_offset` kept only on the object | **open, for the runner work** | an instance rebuilt from its record must restore `log_offset` from it before calling `offload()`; listed in hand-off §7. |
+| 4 (note) | CPU-placement flags and `LLAMA_ARG_*` env not refused on the dual path | **fixed** | `-ot/--override-tensor`, `--cpu-moe/-cmoe`, `--n-cpu-moe/-ncmoe` added to the refused flags; `env_extra` keys `LLAMA_ARG_*` refused. Tests added. |
+
+Tests: the same command → **104 passed** (dual-GPU file 52 tests). Single-GPU path unchanged (its byte-identity tests pass).

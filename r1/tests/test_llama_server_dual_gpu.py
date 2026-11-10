@@ -169,6 +169,31 @@ def test_dual_route_i_reads_only_the_last_load_of_a_reused_log():
                                   apps=[])["full"]
 
 
+WARN = "ggml_cuda_init: failed to initialize CUDA: no CUDA-capable device is detected\n"
+META = "llama_model_loader: loaded meta data with 30 key-value pairs\n"
+
+
+def test_dual_cpu_fallback_before_the_load_markers_is_still_a_stop():
+    """Review round 2, finding 1: llama.cpp prints fallback warnings at startup, before the meta line."""
+    full_line = lsi.offload_check_dual(WARN + META + DUAL_LOG, pid=77, gpu_uuids=[U1, U2], footprint_mib=None,
+                                       apps=rows((U1, 2600), (U2, 2600)))
+    assert not full_line["full"] and full_line["cpu_fallback_lines"] and "CPU fallback reported" in full_line["reasons"]
+    silent = lsi.offload_check_dual(WARN + META + "llama_server: model loaded\n", pid=77, gpu_uuids=[U1, U2],
+                                    footprint_mib=[1, 1], apps=rows((U1, 2600), (U2, 2600)))
+    assert not silent["full"] and silent["route"] is None
+    assert lsi.offload_check_dual(META + DUAL_LOG, pid=77, gpu_uuids=[U1, U2], footprint_mib=None,
+                                  apps=rows((U1, 2600), (U2, 2600)))["full"]
+
+
+def test_dual_later_load_with_only_an_offloading_line_drops_the_earlier_buffers():
+    """Review round 2, note 2: cut at whichever load marker comes last."""
+    later = ("load_tensors: offloading 29 repeating layers to GPU\n"
+             "load_tensors: offloaded 29/29 layers to GPU\n"
+             "load_tensors:        CUDA0 model buffer size =  4168.09 MiB\n")
+    check = lsi.offload_check_dual(META + DUAL_LOG + later, pid=77, gpu_uuids=[U1, U2], footprint_mib=None, apps=[])
+    assert not check["full"] and check["model_buffer_devices"] == ["CUDA0"]
+
+
 def test_dual_route_ii_requires_each_card_at_its_footprint():
     silent = "llama_server: model loaded\n"
     good = lsi.offload_check_dual(silent, pid=77, gpu_uuids=[U1, U2], footprint_mib=[2500, 2400],
@@ -265,3 +290,14 @@ def test_fake_two_gpu_restart_with_a_reused_log_cannot_pass_on_the_old_load(fake
     assert inst.log_offset > 0
     check = inst.offload(apps=[])
     assert not check["full"] and check["route"] is None and check["model_buffer_devices"] == []
+
+
+@pytest.mark.parametrize("extra", [["-ot", "blk.*=CPU"], ["--override-tensor=exps=CPU"], ["--cpu-moe"], ["--n-cpu-moe", "4"]])
+def test_dual_refuses_cpu_placement_flags(tmp_path, extra):
+    with pytest.raises(ValueError, match="override"):
+        lsi.validate_dual(None, [U1, U2], [1, 1], extra_args=extra)
+
+
+def test_dual_refuses_llama_arg_env(tmp_path):
+    with pytest.raises(ValueError, match="LLAMA_ARG_"):
+        lsi.validate_dual(None, [U1, U2], [1, 1], env_extra={"LLAMA_ARG_N_GPU_LAYERS": "0"})

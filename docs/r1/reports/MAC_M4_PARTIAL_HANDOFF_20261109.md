@@ -73,6 +73,7 @@ The commit is only in the local clone; a copy is `docs/r1/reports/M4_HARNESS_PIN
 ## 7. Round-1 code fixes (10 Nov)
 
 - Route (i) reads only the current start's part of the appended log (`log_offset` recorded at `start()`, stored in the two-GPU record) and, within it, only the last load (`last_load`).
+- Round 2: CPU-fallback lines are read from everything logged since `start()` (they precede the load markers); `last_load` cuts at the last marker of either kind; CPU-placement flags and `LLAMA_ARG_*` env are refused on the dual path. Open for the runner work: an instance rebuilt from its record must restore `log_offset` from it.
 - Two-GPU uuids must match `^(GPU|MIG)-[0-9A-Za-z-]+$` exactly (no index, no whitespace, nothing stripped); legacy `MIG-GPU-…/x/y` forms with `/` are refused (would need an explicit decision).
 - With `gpu_uuids`, `extra_args` containing `--tensor-split/-ts`, `--split-mode/-sm`, `--main-gpu/-mg`, `--device/-dev` (also `--flag=value`) and `env_extra['CUDA_VISIBLE_DEVICES']` are refused.
 - Notes: the split is written with round-trip precision (`tensor_split_arg`, also recorded); the docstring no longer calls the per-pid rows a census; the git-based single-GPU identity test fails (not skips) if `a15300ca` is missing, and a literal single-GPU argv test was added.
