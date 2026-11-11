@@ -1,5 +1,12 @@
 # Paper B (route R1) — status log
 
+## 11 November 2026 — Track S S0.4 rerun at the A2-U pin: pin recorded, launch script added (AI-assisted; ENGINEERING_ONLY)
+
+- **New paper pin.** `8237fd02b09ef2d28016a1c9f6acac3c35bb768b` (`R1-TRACKS-A2U-STALE`; fix commit `324b7fa1`, tests `8237fd02`, PLAN row `f82ff376`, test-(c) record `fe651e58`; review rounds 1–3 **accepted**, `R1_TRACKS_A2U_STALE_REVIEW_20261111.md`). Checked out **detached** on TASL-2 at `/home/dowling/r1_tracks/work/Agent_paper_B`; `git status --porcelain` empty.
+- **Pins rechecked (rev 3.3 §0.2).** Harness `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` clean; llama.cpp `620d2225cc436ab0b001e3200e590e3b286ef9ab` (v0.7.0), `llama-server` version `0.7.0-dev (build …, commit 620d2225c)`; GGUF sha256 `509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c`; server flags per rev 3.3 §0.2; **k = 1** (port 18101).
+- **Precondition test (c) on TASL-2 (read-only on the old run tree).** At the pin, `TRACKS_S04_ROOTS=/home/dowling/r1_tracks/scratch/digits_mlp/s04/roots` with `AR_HARNESS_ROOT` at the harness pin and pytest from a scratch `--target` directory (frozen venv untouched): **5 passed, 0 skipped**; each ledger's printed SHA-256 equals `docs/r1/reports/TRACKS_A2U_STALE_S04_CHECK_20261111.md` (`14d586ee…`, `a8dbbd98…`, `cf384352…`, `8ea9e20b…`, `71c358c6…`); checkout remained clean after the run.
+- **Next.** S0.4 rerun into new `--out $OUT/s04_r2_20261111` and `--work $WORK/s04_r2_20261111`, all ten instances from scratch (session `trks_s04r2`); the old `s04` STOP scene is not read or written; then `liveness` and `fit_prior` (`--sigma-node 0.0066 --obs-inflation 1.0 --prior $OUT/a2u_prior_r2_20261111.json`), copy-back and review. ENGINEERING_ONLY; Phase 4 not authorised by this entry.
+
 ## 11 November 2026 — Track S STOP 3: author decision (a) accepted; S0.4 rerun authorised after the A2-U fix (AI-assisted)
 
 - **Author ruling (relayed by the Lead, verbatim):** "Track S STOP 3：选 (a)。等 Mac agent 的 A2-U 修复审查通过、新 pin 和 PLAN 行提交后，在新目录跑 S0.4，10 个 instance 全部重跑，然后接 liveness 和 fit_prior。旧的 s04 STOP 现场不动。"
