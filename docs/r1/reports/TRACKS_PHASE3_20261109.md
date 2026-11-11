@@ -280,3 +280,28 @@ only pre-existing files appended are the append-only watcher/server logs.
   4 m 00 s`, the extra 47 s being inside the watcher's 60 s poll. **Forward instruction for future drills:**
   save a small `STOP_FILES.txt` (paths + sha256 + mtime) next to `watch.log` **before** deleting the STOP
   files.
+
+## 11. Author ruling at STOP 3 (11 November 2026): option (a)
+
+The author answered STOP 3 (relayed by the Lead on 11 Nov 2026), verbatim:
+
+> Track S STOP 3：选 (a)。等 Mac agent 的 A2-U 修复审查通过、新 pin 和 PLAN 行提交后，在新目录跑 S0.4，10 个 instance 全部重跑，然后接 liveness 和 fit_prior。旧的 s04 STOP 现场不动。
+
+**Interpretation.** Option **(a)** is accepted: once the Mac-local agent's **A2-U fix** has passed its independent
+review and the **new paper pin** and **dated PLAN §10 row** are committed and bind the fix commit, S0.4 is
+re-run on TASL-2 in a **new `--out`/`--work` directory** — **all ten instances re-run from the start** (no
+resume of this stopped scene) — and then `liveness` and `fit_prior` follow. **The existing `s04` STOP scene is
+left untouched** (it is preserved under `results/r1/tracks/digits_mlp/s04/` and must not be overwritten).
+
+**Operator obligations when the fix is relayed (not yet — the fix is not on origin at the time of this
+recording).** Verify the fix branch/tip and that its independent review says accepted; verify the new paper pin
+and the dated PLAN §10 row are committed and bind the fix commit; do not change the pin or code itself. Then:
+fresh `k = 1` server (port 18101) with the readiness poll, the **same Phase-3 S0.4 command with
+`--instances 10`** into new directories (e.g. `s04_r2_20261111`), append-only watcher/server logs, new session
+names; after S0.4 exits 0 with status `complete` **and** the dry run shows `roots_todo = 0` / `leaves_todo = 0`
+/ `exhausted` within the 2 % rule, run `liveness` and then `fit_prior`
+(`--sigma-node 0.0066 --obs-inflation 1.0 --prior $OUT/a2u_prior_r2_20261111.json`), record the prior sha256,
+stop the servers, verify the host state, copy back, write the rerun report + STATUS, and stop for a fresh
+independent review. The 3.0 pause drill is **not repeated** for this rerun unless the Mac agent's material
+changes the server/watcher path (decision to be recorded in the rerun report and flagged for the reviewer).
+Phase 4 is **not** authorised by this ruling.

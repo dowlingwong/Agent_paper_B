@@ -1,5 +1,11 @@
 # Paper B (route R1) — status log
 
+## 11 November 2026 — Track S STOP 3: author decision (a) accepted; S0.4 rerun authorised after the A2-U fix (AI-assisted)
+
+- **Author ruling (relayed by the Lead, verbatim):** "Track S STOP 3：选 (a)。等 Mac agent 的 A2-U 修复审查通过、新 pin 和 PLAN 行提交后，在新目录跑 S0.4，10 个 instance 全部重跑，然后接 liveness 和 fit_prior。旧的 s04 STOP 现场不动。"
+- **Effect.** Decision **(a)** accepted: once the Mac-local agent's **A2-U fix** has passed its independent review and the **new paper pin** and **dated PLAN §10 row** are committed and bind the fix commit, re-run S0.4 on TASL-2 in a **new `--out`/`--work` directory** (all ten instances from the start, no resume of the stopped scene), then `liveness` and `fit_prior` (`--sigma-node 0.0066 --obs-inflation 1.0 --prior $OUT/a2u_prior_r2_20261111.json`). **The existing `s04` STOP scene is left untouched.** The operator verifies the fix branch/review/pin/PLAN row when relayed and does not change pins or code itself. Phase 4 is not authorised. Recorded in report `docs/r1/reports/TRACKS_PHASE3_20261109.md` §11.
+- **Standing.** No run started now: the A2-U fix is not yet on origin. Operator stands by for the Lead's relay, then executes the rerun per §11 and stops for a fresh independent review.
+
 ## 9 November 2026 — Track S Phase 2/3 on TASL-2: S1.1 cited; pause drill passed; **S0.4 STOP at the 2 % rule** (AI-assisted; ENGINEERING_ONLY; STOP 3)
 
 - **Phase 2 (S1.1, CPU, not a gate).** No re-run: the S1.1 code path is identical between `9bb64ba`/harness `115df37` and the current pins `d10b05b7`/`a3fedbb` (probe and its paper/harness dependencies unchanged; only LLM-path files changed in the harness). The existing 30 Oct record is cited as pin-independent node-data analysis — `results/r1/tracks/digits_mlp/s11/digits.json` (sha256 `b4e36481…`), 30 seeds, interactions HIDDEN_UNITS×BATCH_SIZE **+0.005664** [t-CI +0.002967,+0.008361], HIDDEN_UNITS×LEARNING_RATE_INIT **−0.003528** [−0.006133,−0.000924], BATCH_SIZE×LEARNING_RATE_INIT **+0.008171** [+0.005268,+0.011074].
