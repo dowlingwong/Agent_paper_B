@@ -11,7 +11,7 @@ This hand-off is **armed only when all of these hold**; otherwise do nothing and
 3. PLAN §10 row `R1-EXAM-B1-TRUNCATION-INVALID` is committed on the checkout you restart from, next to `R1-EXAM-B1-ANCHOR-R4` and `R1-EXAM-B1-ANCHOR-R4-H2` (all three are on `mac-b1-trunc-20261111`).
 4. Diagnosis §2.3 records that `r1/tests/test_exam_b1_truncation.py` passed (none skipped) in a scratch venv with exactly the frozen venv's versions of `openai`, `langchain_openai`, `langchain_core`, `langgraph`, `pydantic` and `httpx` from the host check. (The capped proposer also refuses to start if the SDK lacks `LengthFinishReasonError` or `ContentFilterFinishReasonError`; that refusal at root start would be a STOP.)
 
-Not covered; go to the author: a cap-check FAIL; a diagnosis §5 observer margin the review calls insufficient; any change to the harness pin, server flags, thinking policy, rule or budgets.
+Not covered; go to the author: a cap-check FAIL; a diagnosis §5 observer margin or §5a per-root deadline margin the review calls insufficient (the deadline bound uses a proposer rate that includes prompt evaluation, so it is slightly conservative); any change to the harness pin, server flags, thinking policy, rule or budgets.
 
 ## 1. The fix and the checkout
 

@@ -13,7 +13,7 @@ Below, `W=/home/dowling/exam-x/work/b1_fffa_20261111_b` and `L=/home/dowling/exa
 
 ## 0a. Read-only census first
 
-`nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv` and `pgrep -af 'llama-server|exam_runner|r1.exam'`, into `census.txt`. Then:
+`ssh <tasl7> "nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv; pgrep -af '[l]lama-server|[e]xam_runner|[r]1\.exam'" > census.txt` (the bracketed pattern keeps `pgrep` from matching its own shell). Classify every listed process by its full command line and owner: the Track S watcher and other users' processes are not B1's. Then:
 - **No B1/exam process** (`exam_runner`, `r1.exam`, or a `llama-server` from `/home/dowling/exam-x/work/llama.cpp/build-exam`) and **no compute application**: go on with everything.
 - **A compute application that is not B1's** (another user's job; R1-TASL7-AGENT-OCCUPANCY-07NOV): go on with steps 1, 2.1 and 2.3–2.5, 3 and 4 (pure reads). **Skip only the two binary calls of step 2.2**, and note this in `llama_check.txt`.
 - **Any B1/exam process or a pinned `llama-server`**: the scene is not as the STOP report left it. STOP, report, do nothing further.
