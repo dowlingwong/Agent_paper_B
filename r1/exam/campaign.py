@@ -121,8 +121,13 @@ def exam_manager(candidate, proposal_schema):
 
     The llamacpp provider of the pinned harness decides the wire value of ``cache_prompt``: at the
     B1/B2 pin ``a3fedbb`` (R1-EXAM-B1-HARNESS-PIN) it is sent explicitly, default false, and recorded
-    in every ``llm_call`` record (R1-EXAM-CACHE-REV)."""
-    return LangGraphManager(model='llamacpp/'+candidate['id'],proposal_schema=proposal_schema,transport_retry=None)
+    in every ``llm_call`` record (R1-EXAM-CACHE-REV).
+
+    R1-EXAM-B1-TRUNCATION-INVALID (11 Nov 2026): the harness proposer is wrapped so every call carries
+    ``max_completion_tokens`` and a truncated reply is an invalid proposal, not a crash
+    (``r1.exam.b1_llm_truncation``)."""
+    from r1.exam.b1_llm_truncation import B1CappedLangGraphManager
+    return B1CappedLangGraphManager(model='llamacpp/'+candidate['id'],proposal_schema=proposal_schema,transport_retry=None)
 
 
 def cache_prompt_evidence(records, events):
