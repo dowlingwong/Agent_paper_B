@@ -100,7 +100,7 @@ The class follows mechanically from the pre-declared rules (analysis script docs
 - **H2 — supported by the rule, on one anchor × node.** `random_valid`'s pooled standardised mean falls by 0.756 σ_joint from the first to the second half of each root's audited sequence (rule: > 0.25). The fall comes from digits_mlp (+0.0072 → −0.0163); without digits_mlp, `random_valid`'s pooled change is about −0.036 σ_joint, far below the threshold. Scripted shows no drop (its pooled second half is slightly higher, +0.030 σ_joint). The pattern is consistent with the plan's mechanism (a proposer whose incumbent improves early faces a better incumbent later), but these data do not establish it: the "in-run gain" column covers the whole run, not its first half, and `random_valid` has an equally large in-run gain on ionosphere (+0.0747) without a drop there. The count-ratio disjunct did not fire (scripted / random_valid audited counts 1.56, 1.18, 1.41; it needs > 1.5 on two nodes). The 7B anchor falls from first to second half on digits_mlp as well (D8, information only).
 - **Class.** H4 neither supported nor undetermined, H2 supported → **D** by the rule order E → REVIEW → D → P → UNCLASSIFIED. Plan §4 defines P as "H3 without H1/H2", so P is excluded here because H2 fired, although H3 is supported. The D rests on the H2 signal above, i.e. on a single anchor × node.
 
-## 5. Additions to plan §4 made by the analysis (declared, not used tonight)
+## 5. Additions to plan §4 (declared; items 1–3 not triggered by this capture)
 
 The accepted analysis (round 2 of `reviews/B1_DIAG_REVIEW_20261109.md`) fixed handling rules that plan §4 does not state. None of the first three was triggered by this capture; they are listed so the appendix can name them.
 
@@ -108,7 +108,7 @@ The accepted analysis (round 2 of `reviews/B1_DIAG_REVIEW_20261109.md`) fixed ha
 2. **Zero audited proposals.** A software-anchor root with no audited proposal is accepted only as a cross-checked null pattern (no D1 recomputation possible, `D1_error` recorded); it makes H4 SUPPORTED, so the class is E.
 3. **Zero evaluated 7B proposals.** D7 is then FAIL, exactly as `anchor_gate` treats a missing rate.
 4. **Class `UNCLASSIFIED`.** No rule fires (H1, H2, H3 and H4 all not supported); goes to the author.
-5. **Class order** E → REVIEW → D → P → UNCLASSIFIED, and R4 under A1 only for class D **with H1 supported** and D7 PASS (PLAN `R1-EXAM-B1-ANCHOR-R4`); a D resting on H2 alone, P, REVIEW, UNCLASSIFIED and any D7 FAIL go to the author.
+5. **Class order** E → REVIEW → D → P → UNCLASSIFIED (analysis). The applicability of R4 under A1 — class D **with H1 supported** and D7 PASS; a D resting on H2 alone, P, REVIEW, UNCLASSIFIED and any D7 FAIL go to the author — comes from PLAN `R1-EXAM-B1-ANCHOR-R4`, which the analysis implements.
 
 ## 6. What the author needs to decide
 
@@ -119,17 +119,19 @@ Line A1 does not cover this outcome, so B1 restarts only after a new author line
 Options of plan §4 for class D:
 
 - **R4.** Drop the anchor-ordering STOP, report the anchors descriptively, keep the 7B duplicate-rate check (which passes), let the frozen rule rank. The code fix and restart checkout exist and are reviewed (`mac-b1-r4-20261109` @ `4ddc820e`). Applying it to this outcome needs a reviewed change in several places on that branch, not one line: the PLAN row's condition, the restart hand-off §0, the RUNBOOK X.3 note ("i.e. H1 supported"), and the appendix draft, whose stated reason ("the two random anchors cannot be ordered") this diagnosis does not support and which would be rewritten around H2 / the design of the check.
-- **R1.** Keep the ordering on σ_node-standardised increments. Plan §4: only sensible if D3 shows a clear standardised gap the raw scale hid. D3's standardised means are small for both anchors (random_valid −0.16 to −0.35, scripted −0.16 to +0.01), and D1's node means of the standardised difference are +0.16 to +0.22, so the gap is not clear.
+- **R1.** Keep the ordering on σ_node-standardised increments. Plan §4: only sensible if D3 shows a clear standardised gap the raw scale hid. D3's standardised means are small for both anchors (random_valid −0.16 to −0.35, scripted −0.16 to +0.01), and D1's node means of the standardised difference are +0.16 to +0.22, so the gap is not clear. More directly: standardising changes no sign here (the raw D1 point is already positive), so it would not reveal a gap the raw scale hid.
 - **R2.** Order `random_valid` against `qwen25_coder_7b`. Post hoc: D8 above shows its answer.
-- **R3.** A campaign-level criterion (final-incumbent audited improvement), matching Paper B's primary outcome. It answers H2 directly, but B1 computes no final Y today (only B2 does): new code, review and a longer restart.
+- **R3.** Replace the anchor-ordering gate by a campaign-level criterion (final-incumbent audited improvement), matching Paper B's primary outcome. Like R4 it changes only the anchor gate, not the candidate ranking; it avoids the H2-suspect quantity in that gate. B1 computes no final Y today (only B2 does): new code, review and a longer restart.
 
 (Plan §4 lists "more anchor-only instance seeds" only for class P, so it is not an option for this D.)
 
-**Recommendation: R4, with the tension disclosed.** Reasons: the H2 signal is one anchor × node and does not show on the other two nodes; the ranking quantity was fixed before the data and changing it now (R3) would be the larger post-hoc change; any new ordering gate chosen after seeing these anchors (R1, R2) would not be a real test. The appendix should state that H2 fired on random_valid / digits_mlp and that the ranking quantity is an incumbent-relative increment. If the author regards H2 as real, **R3** is the consistent choice instead.
+**Recommendation: R4, with the tension disclosed.** Reasons: the H2 signal is one anchor × node and does not show on the other two nodes; any new ordering gate chosen after seeing these anchors (R1, R2, and R3's new criterion) would not be a real test, and R3 also needs new code. The appendix should state that H2 fired on random_valid / digits_mlp and that the ranking quantity is an incumbent-relative increment.
+
+**Outside plan §4.** None of R1–R4 changes the candidate ranking. If the author regards H2 as real, addressing it in the ranking would mean changing `x5_rule_v2` (approved by SHA under R1-EXAM-RULE-X5V2, its ranking quantity already in `x5_rule_v1` of 26 Oct, before Stage A) — a separate author decision, not one of the plan's options; I do not recommend it on this evidence (one anchor × node).
 
 Paste-ready (R4): `B1 诊断为 D（仅 H2，且只在 random_valid/digits_mlp 上；H1 不成立；H3 成立；D7 PASS）：采用 R4，把 R1-EXAM-B1-ANCHOR-R4 的条件放宽为"D 类（H1 或 H2）且 D7 PASS"，同步改重启 hand-off §0、RUNBOOK X.3 注和附录草稿（理由改为检查本身的设计与 H2，并披露排序量是相对 incumbent 的增量）；审查后按重启 hand-off 重跑。`
 
-Paste-ready (R3): `B1 诊断为 D（仅 H2）：采用 R3，改用 campaign 级终点（最终 incumbent 的审计改进）作为锚点判据；先实现并独立审查，再重启。`
+Paste-ready (R3): `B1 诊断为 D（仅 H2）：采用 R3，锚点判据改用 campaign 级终点（最终 incumbent 的审计改进），候选排序规则 x5_rule_v2 不变；先实现并独立审查，再重启。`
 
 ## 7. Not done here
 
