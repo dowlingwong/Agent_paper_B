@@ -1,6 +1,6 @@
 # B1 STOP diagnosis — hand-off for the experiment agent (9 Nov 2026)
 
-**Status.** AI-assisted (Claude, Mac-local overnight agent, `prompts/MAC_OVERNIGHT_RUNBOOK_20261109.md` §1 step 2). Read-only diagnosis of the preserved B1 STOP of run `6835_20261108_a`, plan `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` §3 (D0–D4, D7, D8). Run it **once**, only after its independent review is accepted (`reviews/B1_STOP_DIAGNOSIS_SCRIPTS_REVIEW_20261109.md`). It changes nothing on the host: no rerun, no gate change, no signal, no modification or retirement of any host file. Nothing it prints changes the recorded STOP.
+**Status.** AI-assisted (Claude, Mac-local overnight agent, `prompts/MAC_OVERNIGHT_RUNBOOK_20261109.md` §1 step 2). Read-only diagnosis of the preserved B1 STOP of run `6835_20261108_a`, plan `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` §3 (D0–D4, D7, D8). Run it **once**, only after its independent review is accepted (`reviews/B1_DIAG_REVIEW_20261109.md`). It changes nothing on the host: no rerun, no gate change, no signal, no modification or retirement of any host file. Nothing it prints changes the recorded STOP.
 
 ## What runs
 

@@ -68,6 +68,16 @@ D0_COUNTERS = ('k_not_4', 'none_in_vectors', 'delta_mismatch')
 SUMMARY_FIELDS = ('mean', 'median', 'share_harmful', 'mean_over_sigma_joint', 'median_over_sigma_joint',
                   'mean_over_median_sd_delta')
 TOL = 1e-12
+# Constants of the diagnosis script (B1_STOP_DIAGNOSIS_20261109.py, SHA-256 82140eea...92f93), repeated
+# here so the analysis recomputes rather than trusts the capture (review B1_DIAG_REVIEW_20261109.md
+# round 2, note N1). D21 noise floor: docs/r1/reports/NOISE_FLOOR_COMMON_20261022.md (commit 511c3797,
+# SHA-256 9be292b7...c01d), Table 1. 7B duplicate-rate reference: r1/scripts/configs/exam_b1_v2.json at
+# 68357d3d, source docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json (SHA-256 84200770...85dd).
+SIGMA_JOINT = {'digits_mlp': 0.0102, 'openml_credit_approval': 0.0279, 'openml_ionosphere': 0.0410}
+MEDIAN_SD_DELTA = {'digits_mlp': 0.0066, 'openml_credit_approval': 0.0030, 'openml_ionosphere': 0.0160}
+DUP_REF_PINNED = {'source': 'docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json',
+                  'sha256': '84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd',
+                  'lower': 0.42386590667728663, 'upper': 0.5800007633587785}
 
 
 def load_capture(path):
@@ -109,6 +119,30 @@ def _mean(xs):
     return math.fsum(xs) / len(xs) if xs else None
 
 
+def _median(xs):
+    s = sorted(xs); n = len(s)
+    if not n: return None
+    return s[n//2] if n % 2 else (s[n//2-1]+s[n//2])/2
+
+
+def _summary(deltas, node):
+    """As the diagnosis script's _summary."""
+    m, med = _mean(deltas), _median(deltas)
+    return {'n': len(deltas), 'mean': m, 'median': med,
+            'share_harmful': (sum(d < 0 for d in deltas)/len(deltas)) if deltas else None,
+            'mean_over_sigma_joint': None if m is None else m/SIGMA_JOINT[node],
+            'median_over_sigma_joint': None if med is None else med/SIGMA_JOINT[node],
+            'mean_over_median_sd_delta': None if m is None else m/MEDIAN_SD_DELTA[node]}
+
+
+def _same_summary(got, exp, what):
+    """N1: a D3/D4/D8 summary must equal the one recomputed from the rows (TOL)."""
+    _need(got['n'] == exp['n'], f'{what}.n differs from rows')
+    for f in SUMMARY_FIELDS:
+        a, b = got[f], exp[f]
+        _need((a is None and b is None) or (a is not None and b is not None and abs(a - b) <= TOL), f'{what}.{f} differs from rows')
+
+
 def _check_summary(d, what):
     _need(isinstance(d, dict) and _count(d.get('n')) and all(f in d for f in SUMMARY_FIELDS), what)
     for f in SUMMARY_FIELDS:
@@ -118,7 +152,8 @@ def _check_summary(d, what):
 def validate(doc):
     """Refuse (ValueError) unless every field the tables and verdicts read is present, typed
     and consistent with the 36 rows; recompute D1 per-instance means, D2 audited counts and D7
-    from the rows. Missing values are allowed only where a software root has zero audited
+    from the rows; recompute the standardised D1 values, D3/D4/D8 summaries and check the D7
+    reference against the pinned constant (review note N1). Missing values are allowed only where a software root has zero audited
     proposals (then D1 cannot be recomputed; that is an H4 reason, not a guess)."""
     rows, s = doc['rows'], doc['summary']
     _need(isinstance(rows, list) and len(rows) == 36, 'rows (exactly 36)')
@@ -164,6 +199,9 @@ def validate(doc):
               'D1_per_instance values')
         _need(abs(p['scripted_mean'] - ms) <= TOL and abs(p['random_valid_mean'] - mr) <= TOL and
               abs(p['difference'] - (ms - mr)) <= TOL, 'D1_per_instance differs from rows')
+        # N1 (1): the standardised difference is recomputed with the pinned sigma_joint.
+        _need(abs(p['difference_over_sigma_joint'] - (ms - mr) / SIGMA_JOINT[n]) <= TOL,
+              'D1_per_instance z differs from rows / sigma_joint')
         diffs.append(ms - mr)
     _need(len({p['instance_id'] for p in per}) == 12, 'D1_per_instance unique ids')
     if g is not None:
@@ -187,14 +225,30 @@ def validate(doc):
         _need(all(d['d0'][c] == sum(r['d0'][c] for r in rs) for c in D0_COUNTERS), f'D2 {k} d0 differs from rows')
     for k, d in list(d3.items()) + list(d8.items()):
         _check_summary(d, f'D3/D8 {k}')
+        a, n = k.split('/')
+        # N1 (2): D3 and D8 recomputed from the rows.
+        _same_summary(d, _summary([q['delta_audit'] for sd in SEEDS for q in by[(a, n, sd)]['proposals']], n), f'D3/D8 {k}')
     for k, d in d4.items():
         _need(isinstance(d, dict), f'D4 {k}')
         for h in ('first_half_of_audited', 'second_half_of_audited', 'budget_index_le_10', 'budget_index_gt_10'):
             _check_summary(d.get(h), f'D4 {k}.{h}')
+        # N1 (2): D4 recomputed from the rows (halves of each root's audited sequence; budget split at W/2).
+        a, n = k.split('/')
+        first, second, early, late = [], [], [], []
+        for sd in SEEDS:
+            ps = by[(a, n, sd)]['proposals']; h = (len(ps) + 1) // 2
+            first += [q['delta_audit'] for q in ps[:h]]; second += [q['delta_audit'] for q in ps[h:]]
+            early += [q['delta_audit'] for q in ps if q['budget_index'] <= W // 2]
+            late += [q['delta_audit'] for q in ps if q['budget_index'] > W // 2]
+        for h, xs in (('first_half_of_audited', first), ('second_half_of_audited', second),
+                      ('budget_index_le_10', early), ('budget_index_gt_10', late)):
+            _same_summary(d[h], _summary(xs, n), f'D4 {k}.{h}')
     d7 = s.get('D7')
     _need(isinstance(d7, dict) and _count(d7.get('duplicates')) and _count(d7.get('evaluated')), 'D7 counts')
     ref = d7.get('reference')
     _need(isinstance(ref, dict) and type(ref.get('lower')) is float and type(ref.get('upper')) is float, 'D7 reference bounds')
+    # N1 (3): the reference must be exactly the pinned constant (bounds, source and SHA-256).
+    _need(all(ref.get(k) == v for k, v in DUP_REF_PINNED.items()), 'D7 reference differs from the pinned constant')
     q = [by[('qwen25_coder_7b', n, sd)] for n in NODES for sd in SEEDS]
     _need(d7['duplicates'] == sum(r['diagnostics']['duplicates'] for r in q) and
           d7['evaluated'] == sum(r['diagnostics']['evaluated'] for r in q), 'D7 differs from rows')

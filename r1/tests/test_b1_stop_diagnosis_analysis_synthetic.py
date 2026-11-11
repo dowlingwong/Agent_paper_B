@@ -214,6 +214,14 @@ def _refused(an, path, capsys, match):
     ('d1_point_differs', 'D1 point differs from rows'),
     ('d2_audited_differs', 'audited differs from rows'),
     ('d3_median_missing', 'D3/D8 scripted/digits_mlp'),
+    # Review B1_DIAG_REVIEW_20261109 round 2, note N1: recomputed, not trusted.
+    ('z_differs', 'z differs from rows / sigma_joint'),
+    ('d3_mean_differs', 'D3/D8 scripted/digits_mlp.mean differs from rows'),
+    ('d8_share_differs', 'D3/D8 qwen25_coder_7b/openml_ionosphere.share_harmful differs from rows'),
+    ('d4_median_differs', 'D4 random_valid/openml_credit_approval.second_half_of_audited.median differs from rows'),
+    ('d4_n_differs', 'budget_index_gt_10.n differs from rows'),
+    ('d7_rounded_bound', 'D7 reference differs from the pinned constant'),
+    ('d7_wrong_source_sha', 'D7 reference differs from the pinned constant'),
 ])
 def test_partial_or_inconsistent_capture_is_refused(env, tmp_path, monkeypatch, capsys, case, match):
     diag, fx, an = env
@@ -229,5 +237,15 @@ def test_partial_or_inconsistent_capture_is_refused(env, tmp_path, monkeypatch, 
     elif case == 'd1_point_differs': s['D1_gate_recomputed']['difference_point'] += 1e-6
     elif case == 'd2_audited_differs': s['D2']['scripted/digits_mlp']['audited'] += 1
     elif case == 'd3_median_missing': del s['D3']['scripted/digits_mlp']['median_over_sigma_joint']
+    elif case == 'z_differs': s['D1_per_instance'][5]['difference_over_sigma_joint'] += 1e-6
+    elif case == 'd3_mean_differs': s['D3']['scripted/digits_mlp']['mean'] += 1e-6
+    elif case == 'd8_share_differs':
+        d = s['D8_information_only']['qwen25_coder_7b/openml_ionosphere']; d['share_harmful'] = 1.0 - d['share_harmful'] + 0.01
+    elif case == 'd4_median_differs':
+        s['D4']['random_valid/openml_credit_approval']['second_half_of_audited']['median'] += 1e-6
+    elif case == 'd4_n_differs': s['D4']['scripted/openml_ionosphere']['budget_index_gt_10']['n'] += 1
+    elif case == 'd7_rounded_bound':
+        s['D7']['reference']['lower'] = 0.4239; s['D7']['inside'] = s['D7']['reference']['lower'] <= s['D7']['rate'] <= s['D7']['reference']['upper']
+    elif case == 'd7_wrong_source_sha': s['D7']['reference']['sha256'] = '0' * 64
     path = write(tmp_path, doc, **({'tail': tail} if tail else {}))
     _refused(an, path, capsys, match)
