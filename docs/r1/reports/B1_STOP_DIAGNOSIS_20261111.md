@@ -1,6 +1,6 @@
 # B1 STOP diagnosis — run `6835_20261108_a` (11 Nov 2026)
 
-**Status.** AI-assisted (Claude, Mac-local agent). Diagnosis report of plan `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` §§2–4, from the single read-only capture of `proposals/B1_DIAGNOSIS_HANDOFF_20261109.md`. Review: pending. Nothing here changes the recorded STOP, a criterion or a pin.
+**Status.** AI-assisted (Claude, Mac-local agent). Diagnosis report of plan `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` §§2–4, from the single read-only capture of `proposals/B1_DIAGNOSIS_HANDOFF_20261109.md`. Review: **accepted** in round 3 at `b92fe6f5` (`reviews/B1_STOP_DIAGNOSIS_REPORT_REVIEW_20261111.md`). Nothing here changes the recorded STOP, a criterion or a pin.
 
 ## 1. Result
 
@@ -21,7 +21,7 @@
 - Capture receipt: `reports/OPS_B1_DIAGNOSIS_CAPTURE_20261109.md` on `ops-b1-20261109` @ `d1d30687`. Single run, 2026-11-11 00:07:34–00:07:40 UTC, wrapper exit 0, `DIAGNOSIS_CAPTURE_COMPLETE` and one `SSH_EXIT=0` line present; diagnosis script SHA-256 `82140eea68516d46f26100c2df14e7e83e6b747a9a205a6daf0608ff0ee92f93` (accepted, `reviews/B1_DIAG_REVIEW_20261109.md`).
 - Private copy checked before analysis: `ssh.log` SHA-256 `c6bc8a84ae482a249bccd65303397a66615832be97f82338be17a370c3c46df5`, `ssh.rc` SHA-256 `9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa` (both equal to the receipt). The capture states `batch_state.json` equal to the pinned state of the accepted descriptive capture (`cfe74faf…5794`) and `stop_changed` false; the script would have refused otherwise.
 - Analysis: `proposals/B1_STOP_DIAGNOSIS_ANALYSIS_20261109.py <ssh.log>` at commit `db73a0d0` (SHA-256 `fdbfbeb155e5bbbf0d6ce8c0a1385c90e51a7632764394425bac710b760b970a`), exit 0; the output is identical to that of `6c2a857f`. Commit `6c2a857f` adds the three recomputations of review note N1 to the accepted script (standardised D1 values from the rows and the pinned σ_joint; D3/D4/D8 summaries from the rows; D7 reference equal to the pinned constant, bounds, source and SHA-256), each with a refusal test that fails on the previous version; `db73a0d0` adds a check that each root's proposals are in budget order (the D4 half-split relies on it). The classification rules and thresholds (Z_SMALL 0.10, Z_DROP 0.25, COUNT_RATIO 1.5) are unchanged from the accepted version.
-- **Not committed until this report's review is accepted:** `ssh.log`, `ssh.rc` and every per-proposal `delta_audit` (including the 7B values). This report carries only aggregates over proposals.
+- The private capture (`ssh.log`, `ssh.rc`, with every per-proposal `delta_audit`) was held back until this report's review was accepted and is committed after it, unchanged, under `reports/b1_stop_diagnosis_capture_20261111/` with a `SHA256SUMS` file. This report itself carries only aggregates over proposals.
 
 ## 3. Tables
 
