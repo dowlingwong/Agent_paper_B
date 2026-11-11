@@ -1,5 +1,9 @@
 # Paper B (route R1) — status log
 
+## 11 November 2026 — Track X B1 restart STOP (AI-assisted)
+
+B1 run `fffa_20261111_b` (checkout `fffa45a12b5b43dbdcc6a8c88b509f71309fbbaa`, launched 11:03:48 UTC) is STOPPED: at 13:51:09 UTC the batch recorded `STOP: root worker exit 1` on `qwen36_27b/b1/on/openml_credit_approval__s9001`, whose recorded `llm_call_failed` is a `LengthFinishReasonError` (completion 31,551 tokens, total 32,768, server `truncated = 1`). 64 root keys had completed; the anchor record is descriptive only and the 7B duplicate rate 0.4959 is inside the pinned interval. The B1 marker is retained, the lease is free, and no B1 process or llama-server remains; no retry, marker retirement or configuration change was made. Preserve all evidence. See `docs/r1/reports/B1_STOP_FFFA_20261111.md`. B2, X.7 and sweep 2 remain gated.
+
 ## 8 November 2026 — Track X B1 STOP (AI-assisted)
 
 B1 run `6835_20261108_a` is STOPPED: `random-valid < scripted cannot be shown; no discriminating power`. At 01:19:49 UTC the retained monitor reported 36 completed roots, exit 1, no current root, the B1 marker retained and no listed GPU compute applications. The B1 log notes that shutdown may append runner/server logs and publish server/batch-state records; preserve those writes and all evidence. No automatic retry, marker retirement or restoration. See `docs/r1/reports/B1_STOP_6835_20261108.md`. B2, X.7 and sweep 2 remain gated.
