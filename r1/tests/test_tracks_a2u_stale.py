@@ -96,8 +96,9 @@ def _control(events, epoch):
 
 def test_stale_proposal_of_the_s04_shape_crashed_the_pin_and_now_runs_through(tmp_path):
     old_ctl, _ = _s04_controller(_old_a2u())
-    with pytest.raises(ReplayError, match="stale edit: HIDDEN_UNITS is '2048', edit expects '1024'"):
+    with pytest.raises(ReplayError, match="stale edit: HIDDEN_UNITS is '2048', edit expects '1024'") as exc:
         _campaign(tmp_path / "old", old_ctl, S04_SHAPE)
+    assert "_e2_detail" in [entry.name for entry in exc.traceback]   # the S0.4 frame (E2, not E1)
     ctl, _ = _s04_controller(a2u)
     records, events, rows, worker = _campaign(tmp_path / "new", ctl, S04_SHAPE)
     assert [r["budget_index"] for r in rows] == list(range(1, 7))
@@ -135,6 +136,26 @@ def test_an_inconsistent_ledger_prefix_still_raises(tmp_path):
     with pytest.raises(ReplayError) as exc:
         ctl.forecast(view)
     assert not isinstance(exc.value, a2u.StaleProposalError)
+
+
+def test_numerically_equal_old_value_crashed_the_pin_at_e1_and_now_becomes_an_invalid_trial(tmp_path):
+    """Second crash class (review finding 3): the harness precheck compares values numerically ("0.0001" ==
+    "1e-4") and accepts the proposal, replay and the worker compare strings. The pin crashed at E1; the fix
+    forecasts None (stale_proposal), the worker rejects the edit and the trial is invalid."""
+    steps = [("HIDDEN_UNITS", "64", None), ("ALPHA", "0.001", "0.0001"), ("MAX_ITER", "80", None),
+             ("HIDDEN_UNITS", "128", None)]
+    old_ctl, _ = _s04_controller(_old_a2u())
+    with pytest.raises(ReplayError, match="stale edit: ALPHA is '1e-4', edit expects '0.0001'") as exc:
+        _campaign(tmp_path / "old", old_ctl, steps, budget=4)
+    assert "_decide_e1" in [entry.name for entry in exc.traceback]
+    ctl, _ = _s04_controller(a2u)
+    _, events, rows, _ = _campaign(tmp_path / "new", ctl, steps, budget=4)
+    assert [r["budget_index"] for r in rows] == [1, 2, 3, 4]
+    assert rows[1]["decision"] != "kept" and rows[1]["delta_vs_best"] is None
+    e1, e2 = _control(events, "E1"), _control(events, "E2")
+    assert e1[2]["detail"]["reason"] == a2u.STALE_PROPOSAL and e1[2]["detail"]["eligible"] is False
+    assert e2[2]["detail"]["eligible"] is False
+    assert e1[3]["detail"]["eligible"] is True   # later trials replay normally (invalid rows never apply)
 
 
 # ---- 2. an invalid trial's E2 is not eligible ------------------------------
@@ -182,13 +203,21 @@ def _dump(decision) -> str:
     return json.dumps(dataclasses.asdict(decision), sort_keys=True, default=repr)
 
 
-def assert_identical_on_ledger(rows, *, sigma=S04_SIGMA, W=S04_W):
+def _a2u_with_prior(mod, sigma=S04_SIGMA, W=S04_W):
+    """A2-U with a real prior and a positive g (the later phases' controller), not the S0.4 stand-in."""
+    ctx = node_context(sigma, runs=W, memory_mode="append_only_summary")
+    pr = mod.A2UPrior(node=NODE, sigma_node=sigma, kinds={"local": mod.KindPrior(0.001, 0.004, sigma, 0.002)})
+    return mod.A2UController(pr, ctx, g=0.0004, W=W), ctx
+
+
+def assert_identical_on_ledger(rows, *, sigma=S04_SIGMA, W=S04_W, factory=None):
     """Every trial's E1 and E2 decision of the fixed controller equals the pin's, byte for byte, where the pin
     did not raise; where the pin raised (only possible on a stale proposal), the fix returns "not eligible".
     The controller logs are equal as well. Returns (identical decisions, pin crashes)."""
+    factory = factory or _s04_controller
     old_mod = _old_a2u()
-    old, _ = _s04_controller(old_mod, sigma, W)
-    new, _ = _s04_controller(a2u, sigma, W)
+    old, _ = factory(old_mod, sigma, W)
+    new, _ = factory(a2u, sigma, W)
     same = crashed = 0
     crashed_at: set[int] = set()
     for i in range(len(rows)):
@@ -204,6 +233,8 @@ def assert_identical_on_ledger(rows, *, sigma=S04_SIGMA, W=S04_W):
                 continue
             b = new.decide(view, {"skip": False})
             assert _dump(a) == _dump(b), (rows[i]["budget_index"], view.epoch)
+            if view.epoch == "E2" and rows[i].get("delta_vs_best") is not None:   # the keep prior served at E2
+                assert repr(old.keep_prior(view)) == repr(new.keep_prior(view)), rows[i]["budget_index"]
             same += 1
     # The log: identical except for the entries the fix adds where the pin raised (and logged nothing).
     new_log = [e for e in new.log if e["budget_index"] not in crashed_at]
@@ -225,6 +256,16 @@ def test_valid_trials_identical_to_the_pin_on_generated_campaigns(tmp_path, seed
     assert crashed == 0 and same == 2 * len(rows)
 
 
+@pytest.mark.parametrize("seed", range(2))
+def test_valid_trials_identical_to_the_pin_for_a2u_with_a_prior(tmp_path, seed):
+    keys = [("ALPHA", "0.001", None), ("MAX_ITER", "80", None), ("HIDDEN_UNITS", "64", None),
+            ("ALPHA", "0.0001", None), ("LEARNING_RATE_INIT", "0.01", None), ("HIDDEN_UNITS", "32", None)]
+    ctl, _ = _s04_controller(a2u)
+    _, _, rows, _ = _campaign(tmp_path, ctl, keys[seed:] + keys[:seed], budget=10)
+    same, crashed = assert_identical_on_ledger(rows, factory=_a2u_with_prior)
+    assert crashed == 0 and same == 2 * len(rows)
+
+
 def test_s04_shape_identical_except_where_the_pin_crashed(tmp_path):
     ctl, _ = _s04_controller(a2u)
     _, _, rows, _ = _campaign(tmp_path, ctl, S04_SHAPE)
@@ -237,6 +278,12 @@ S04_COMMITTED = ("tracks_S04_digits_mlp__s30001", "tracks_S04_digits_mlp__s30004
 
 
 def _s04_ledgers():
+    if os.environ.get("TRACKS_S04_ROOTS"):
+        # Set explicitly (the TASL-2 check): missing ledgers are a failure, never a skip (review finding 2).
+        found = [S04_ROOTS / r / "root_trials.jsonl" for r in S04_COMMITTED]
+        missing = [str(p) for p in found if not p.is_file()]
+        assert not missing, f"TRACKS_S04_ROOTS set but ledgers missing: {missing}"
+        return found
     if not S04_ROOTS.is_dir():
         return []
     found = [S04_ROOTS / r / "root_trials.jsonl" for r in S04_COMMITTED if (S04_ROOTS / r / "root_trials.jsonl").is_file()]
@@ -251,3 +298,5 @@ def test_valid_trials_identical_to_the_pin_on_the_s04_committed_roots(path):
     rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
     same, crashed = assert_identical_on_ledger(rows)
     assert crashed == 0 and same == 2 * len(rows)
+    print(f"{path.parent.name}: {len(rows)} trials identical; ledger sha256 "
+          f"{__import__('hashlib').sha256(path.read_bytes()).hexdigest()}")
