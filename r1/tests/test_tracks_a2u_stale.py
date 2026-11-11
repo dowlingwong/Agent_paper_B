@@ -28,7 +28,10 @@ from r1.tracks import a2u
 
 REPO = Path(__file__).resolve().parents[2]
 BASE_PIN = "d10b05b738fc0e0dba54e0e692c248bedf095482"   # Track S paper pin of S0.4 (manifest provenance)
-S04_ROOTS = REPO / "r1" / "tests" / "data" / "tracks_s04_roots"
+# The five S0.4 committed-root ledgers (<root_id>/root_trials.jsonl). Default: a copy under the repo; on TASL-2
+# the operator may point TRACKS_S04_ROOTS read-only at <run.work>/roots instead.
+import os  # noqa: E402
+S04_ROOTS = Path(os.environ.get("TRACKS_S04_ROOTS") or REPO / "r1" / "tests" / "data" / "tracks_s04_roots")
 S04_SIGMA, S04_W = 0.0066, 40                            # results/r1/tracks/digits_mlp/s04/manifest.json
 
 
@@ -229,8 +232,16 @@ def test_s04_shape_identical_except_where_the_pin_crashed(tmp_path):
     assert crashed == 4 and same == 2 * len(rows) - 4   # E1 and E2 of trials 2 and 5
 
 
+S04_COMMITTED = ("tracks_S04_digits_mlp__s30001", "tracks_S04_digits_mlp__s30004", "tracks_S04_digits_mlp__s30006",
+                 "tracks_S04_digits_mlp__s30007", "tracks_S04_digits_mlp__s30009")   # roots.jsonl of the s04 scene
+
+
 def _s04_ledgers():
-    return sorted(S04_ROOTS.glob("*/root_trials.jsonl")) if S04_ROOTS.is_dir() else []
+    if not S04_ROOTS.is_dir():
+        return []
+    found = [S04_ROOTS / r / "root_trials.jsonl" for r in S04_COMMITTED if (S04_ROOTS / r / "root_trials.jsonl").is_file()]
+    assert not found or len(found) == len(S04_COMMITTED), f"only {len(found)} of the 5 committed S0.4 ledgers present"
+    return found
 
 
 @pytest.mark.skipif(not _s04_ledgers(), reason=f"S0.4 committed-root ledgers not present under {S04_ROOTS} "
