@@ -25,7 +25,13 @@ Standing rules stay as they are:
 
 ## 1. Waiting for the Mac-local agent
 
-Two deliveries are expected. Check with `git fetch origin` **every 30 minutes**, also while you are working on the other track, until both have arrived:
+Two deliveries are expected. The Mac-local agent may not be able to push to GitHub, so check **three places every 30 minutes**, also while you are working on the other track, until both have arrived:
+
+1. `git fetch origin`, then the remote branches below;
+2. the local branches of `~/Documents/agent_paper_B` (`git branch --list 'mac-b1-diag-report-*' 'mac-tracks-a2u-*'`; worktrees under `.claude-worktrees/`);
+3. bundles under `~/Documents/agent_paper_B/Claude outputs/handoff_20261111/`: a `*.bundle` with a `READY.txt` next to it. Check the bundle with `git bundle verify`, then fetch its branches into local branches of the same names.
+
+**Pushing a delivery (authorized here).** When a delivery is ready (table below) and is only local or only in a bundle, push that branch to `origin` yourself, under its own name. The push must be a fast-forward or a new branch, never a force-push. This covers only branches named `mac-b1-diag-report-*` and `mac-tracks-a2u-*`. Record the pushed SHA in your report, and from then on use only the `origin` copy. If a local branch and the bundle disagree, do not push; report it.
 
 | Delivery | Branch | Ready when |
 |---|---|---|
