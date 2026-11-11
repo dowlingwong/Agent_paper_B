@@ -169,6 +169,9 @@ def validate(doc):
         ps = r.get('proposals')
         _need(isinstance(ps, list) and all(isinstance(p, dict) and _count(p.get('budget_index')) and _fin(p.get('delta_audit'))
                                            for p in ps), 'row proposals')
+        # The D4 half-split relies on each root's audited sequence being in budget order (review round 1, note 10).
+        _need(all(ps[k]['budget_index'] < ps[k + 1]['budget_index'] for k in range(len(ps) - 1)),
+              'row proposals in budget-index order')
     _need(set(by) == {(a, n, sd) for a in ANCHORS for n in NODES for sd in SEEDS}, 'rows (anchor, node, seed) set')
     _need(isinstance(s, dict), 'summary')
     empty = {(a, n, sd) for (a, n, sd), r in by.items() if a in SOFTWARE and not r['proposals']}

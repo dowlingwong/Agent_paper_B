@@ -222,6 +222,7 @@ def _refused(an, path, capsys, match):
     ('d4_n_differs', 'budget_index_gt_10.n differs from rows'),
     ('d7_rounded_bound', 'D7 reference differs from the pinned constant'),
     ('d7_wrong_source_sha', 'D7 reference differs from the pinned constant'),
+    ('proposals_out_of_order', 'row proposals in budget-index order'),
 ])
 def test_partial_or_inconsistent_capture_is_refused(env, tmp_path, monkeypatch, capsys, case, match):
     diag, fx, an = env
@@ -247,5 +248,7 @@ def test_partial_or_inconsistent_capture_is_refused(env, tmp_path, monkeypatch, 
     elif case == 'd7_rounded_bound':
         s['D7']['reference']['lower'] = 0.4239; s['D7']['inside'] = s['D7']['reference']['lower'] <= s['D7']['rate'] <= s['D7']['reference']['upper']
     elif case == 'd7_wrong_source_sha': s['D7']['reference']['sha256'] = '0' * 64
+    elif case == 'proposals_out_of_order':
+        r = next(r for r in doc['rows'] if len(r['proposals']) >= 2); r['proposals'] = r['proposals'][::-1]
     path = write(tmp_path, doc, **({'tail': tail} if tail else {}))
     _refused(an, path, capsys, match)
