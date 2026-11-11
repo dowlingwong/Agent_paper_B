@@ -8,7 +8,7 @@ every candidate and anchor. It is descriptive: it enters no ranking, no finalist
 changes nothing in r1/exam or the rule.
 
 Definition (as diagnosis D4): for each root of the primary (thinking-off) mode, its audited proposals in the
-order the campaign audited them are split into a first half of ceil(n/2) and a second half; increments are
+order the campaign audited them (checked to be strictly rising budget order, from proposal_id) are split into a first half of ceil(n/2) and a second half; increments are
 standardised by the node's sigma_joint (D21 noise floor, NOISE_FLOOR_COMMON_20261022.md Table 1); pooled means
 over all roots of the candidate, and per node. "change" = second-half mean - first-half mean (sigma_joint units).
 
@@ -23,10 +23,12 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
 SIGMA_JOINT = {'digits_mlp': 0.0102, 'openml_credit_approval': 0.0279, 'openml_ionosphere': 0.0410}
+PID = re.compile(r'^EXAM:(?P<inst>[a-z_]+__s\d{4}):t(?P<b>\d{3})$')   # as the diagnosis script
 ROLE_NOTE = 'descriptive only (R1-EXAM-B1-ANCHOR-R4-H2); not used by x5_rule_v2, finalists or any STOP'
 
 
@@ -68,11 +70,18 @@ def candidate_rows(work: Path) -> list[dict]:
             props = root.get('audited_proposals')
             if not isinstance(props, list):
                 raise ValueError(f'root without audited_proposals: {stored}')
+            last = -1
             for p in props:
                 node = p['instance_id'].rsplit('__s', 1)[0]
                 if node not in SIGMA_JOINT or not isinstance(p.get('delta_audit'), (int, float)) \
                         or not math.isfinite(p['delta_audit']):
                     raise ValueError(f'unusable audited proposal in {stored}')
+                # The half-split relies on audit order = budget order (review round 7): the budget index comes
+                # from proposal_id EXAM:<instance>:tNNN and must rise strictly within the root.
+                match = PID.match(str(p.get('proposal_id')))
+                if not match or match.group('inst') != p['instance_id'] or int(match.group('b')) <= last:
+                    raise ValueError(f'audited proposals not in budget order or bad proposal_id in {stored}')
+                last = int(match.group('b'))
             h = (len(props) + 1) // 2
             for part, bucket in ((props[:h], first), (props[h:], second)):
                 for p in part:

@@ -18,12 +18,15 @@ def build(work: Path, cand: str, role: str, roots: dict, *, host='/home/dowling/
     for (node, seed), deltas in roots.items():
         rel = f'off/{node}__s{seed}/campaign_manifest.json'
         _write(work / cand / 'b1' / rel, {'mode': 'off', 'audited_proposals':
-                                          [{'instance_id': f'{node}__s{seed}', 'delta_audit': d} for d in deltas]})
+                                          [{'instance_id': f'{node}__s{seed}', 'delta_audit': d,
+                                           'proposal_id': f'EXAM:{node}__s{seed}:t{3 * k + 2:03d}'}
+                                          for k, d in enumerate(deltas)]})
         stored.append(f'{host}/{cand}/b1/{rel}')
     if extra_mode:
         rel = f'on/digits_mlp__s9001/campaign_manifest.json'
         _write(work / cand / 'b1' / rel, {'mode': 'on', 'audited_proposals':
-                                          [{'instance_id': 'digits_mlp__s9001', 'delta_audit': 9.0}]})
+                                          [{'instance_id': 'digits_mlp__s9001', 'delta_audit': 9.0,
+                                           'proposal_id': 'EXAM:digits_mlp__s9001:t001'}]})
         stored.append(f'{host}/{cand}/b1/{rel}')
     _write(work / cand / 'b1_manifest.json', {'candidate': cand, 'role': role, 'phase': 'b1', 'primary_mode': 'off',
                                               'root_manifests': stored})
@@ -56,3 +59,18 @@ def test_main_prints_table_and_json_and_refuses_bad_input(tmp_path, capsys):
     bad = tmp_path / 'bad'
     build(bad, 'cand_b', 'candidate', {('tabular_mlp', 9001): [0.01]})   # node without sigma_joint
     assert H.main(['--work', str(bad)]) == 2
+
+
+def test_refuses_audits_out_of_budget_order(tmp_path):
+    build(tmp_path, 'cand_a', 'candidate', {('digits_mlp', 9001): [0.01, 0.02, 0.03]})
+    path = tmp_path / 'cand_a' / 'b1' / 'off' / 'digits_mlp__s9001' / 'campaign_manifest.json'
+    root = json.loads(path.read_text())
+    root['audited_proposals'] = root['audited_proposals'][::-1]
+    path.write_text(json.dumps(root))
+    with pytest.raises(ValueError, match='budget order'):
+        H.candidate_rows(tmp_path)
+    root['audited_proposals'] = root['audited_proposals'][::-1]
+    root['audited_proposals'][0]['proposal_id'] = 'EXAM:digits_mlp__s9002:t002'   # wrong instance
+    path.write_text(json.dumps(root))
+    with pytest.raises(ValueError, match='proposal_id'):
+        H.candidate_rows(tmp_path)
