@@ -1,0 +1,6 @@
+STOP: original exception: RuntimeError: STOP: root worker exit 1; see /home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/runner.log
+STOP: Stopping B1-owned workers and the B1 server may append runner/server logs and publish server and batch-state records; retain and report them.
+STOP: original exception: RuntimeError: STOP: root worker exit 1; see /home/dowling/exam-x/work/b1_fffa_20261111_b/qwen36_27b/b1/on/openml_credit_approval__s9001/runner.log
+STOP: Stopping B1-owned workers and the B1 server may append runner/server logs and publish server and batch-state records; retain and report them.
+
+B1_EXIT=1
