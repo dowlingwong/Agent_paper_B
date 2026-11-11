@@ -25,26 +25,31 @@ Standing rules stay as they are:
 
 ## 1. Waiting for the Mac-local agent
 
-Two deliveries are expected. The Mac-local agent may not be able to push to GitHub, so check **three places every 30 minutes**, also while you are working on the other track, until both have arrived:
+Three deliveries are expected (status on 11 Nov 02:10: D-B1 exists as a bundle; D-B1R waits for the author's route line; D-S waits for its review and test (c)). The Mac-local agent may not be able to push to GitHub, so check **three places every 30 minutes**, also while you are working on the other track, until all three have arrived:
 
 1. `git fetch origin`, then the remote branches below;
-2. the local branches of `~/Documents/agent_paper_B` (`git branch --list 'mac-b1-diag-report-*' 'mac-tracks-a2u-*'`; worktrees under `.claude-worktrees/`);
-3. bundles under `~/Documents/agent_paper_B/Claude outputs/handoff_20261111/`: a `*.bundle` with a `READY.txt` next to it. Check the bundle with `git bundle verify`, then fetch its branches into local branches of the same names.
+2. the local branches of `~/Documents/agent_paper_B` (`git branch --list 'mac-b1-diag-report-*' 'mac-b1-r4*' 'mac-b1-r3-*' 'mac-tracks-a2u-*'`; worktrees under `.claude-worktrees/`);
+3. bundles anywhere under `~/Documents/agent_paper_B/Claude outputs/` (for example `b1_diag_capture_20261111/out/b1_diag_report_20261111.bundle`, or `handoff_20261111/` with a `READY.txt`). Check each with `git bundle verify` (its prerequisite commits must already be in the repository), then fetch its branches into local branches of the same names. A bundle is usable only if the branch tip carries the accepted review (table below); a `READY.txt` or the author's relayed message confirms it.
 
-**Pushing a delivery (authorized here).** When a delivery is ready (table below) and is only local or only in a bundle, push that branch to `origin` yourself, under its own name. The push must be a fast-forward or a new branch, never a force-push. This covers only branches named `mac-b1-diag-report-*` and `mac-tracks-a2u-*`. Record the pushed SHA in your report, and from then on use only the `origin` copy. If a local branch and the bundle disagree, do not push; report it.
+**Pushing a delivery (authorized here).** When a delivery is ready (table below) and is only local or only in a bundle, push that branch to `origin` yourself, under its own name. The push must be a fast-forward or a new branch, never a force-push. This covers only branches named `mac-b1-diag-report-*`, `mac-b1-r4*` (for `mac-b1-r4-20261109` itself a fast-forward only), `mac-b1-r3-*` and `mac-tracks-a2u-*`. Record the pushed SHA in your report, and from then on use only the `origin` copy. If a local branch and the bundle disagree, do not push; report it.
 
 | Delivery | Branch | Ready when |
 |---|---|---|
 | **D-B1**: B1 diagnosis report | `mac-b1-diag-report-20261111` (or a new `mac-b1-diag-report-*`) | `reports/B1_STOP_DIAGNOSIS_<date>.md` is on the branch, and so is its review file, written by a freshly spawned reviewer and ending in *accepted* |
-| **D-S**: A2-U fix | `mac-tracks-a2u-stale-20261111` (or a new `mac-tracks-a2u-*`) | three things are on the branch: the fix commit; its review, ending in *accepted*; and a dated PLAN §10 row that names one commit as the new Track S paper pin, which contains the fix |
+| **D-B1R**: B1 restart material for the author's route | `mac-b1-r4-20261109` (fast-forward beyond `4ddc820e`) or a new `mac-b1-r4*-*` / `mac-b1-r3-*` | the author's route line is committed as a dated PLAN §10 row (or the amended `R1-EXAM-B1-ANCHOR-R4` row) on the branch; the restart hand-off §0, the RUNBOOK X.3 note and the appendix draft match that route (for R3 also the new code and tests); a fresh review ending in *accepted* names the new **reviewed base** commit |
+| **D-S**: A2-U fix | `mac-tracks-a2u-stale-20261111` (or a new `mac-tracks-a2u-*`) | three things are on the branch: the fix commit; its review, ending in *accepted*; and a dated PLAN §10 row that names one commit as the new Track S paper pin, which contains the fix. **Also required:** the replay test on the five committed `s04` ledgers (test (c), env `TRACKS_S04_ROOTS`) has passed and its result is on the branch (the PLAN row makes it a precondition) |
 
-A branch whose review is not yet *accepted* is not ready, so keep checking. If neither has arrived 12 hours after you start, tell the author once and check hourly from then on.
+A branch whose review is not yet *accepted* is not ready, so keep checking. If a delivery that does not wait for the author has not arrived 12 hours after you start, tell the author once and check hourly from then on.
 
 ## 2. Order of work
 
 ### 2.0 First: hand the capture to the Mac-local agent (skip if already done)
 
 Copy `ssh.log` and `ssh.rc` unchanged from `/private/tmp/paper-b-b1-stop-diagnosis-20261109.OSnzb5iI/` to `~/Documents/agent_paper_B/Claude outputs/b1_diag_capture_20261111/` (mode 700). Check their SHA-256 against the receipt: `c6bc8a84ae482a249bccd65303397a66615832be97f82338be17a370c3c46df5` for `ssh.log` and `9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa` for `ssh.rc`. Never `git add` that folder. The originals stay where they are. Tell the author when this is done.
+
+### 2.0b Track S ledgers for test (c) (read-only; do it right after 2.0)
+
+The five committed `s04` roots are listed in `results/r1/tracks/digits_mlp/s04/roots.jsonl` (`root_id`). Copy their raw ledgers read-only from TASL-2, `/home/dowling/r1_tracks/scratch/digits_mlp/s04/roots/<root_id>/root_trials.jsonl` (the S0.4 `--work` directory), with `rsync -a` or `scp -p`, into `~/Documents/agent_paper_B/Claude outputs/tracks_s04_ledgers_20261111/<root_id>/root_trials.jsonl`. Write a `SHA256SUMS` there that also lists the SHA-256 of each file computed **on the host**, and check that they match. Change nothing on TASL-2 (no write, no `touch`, no server). If a path does not exist, list `…/s04/` read-only, report what is there, and copy nothing else. Tell the author when done; the Mac-local agent runs test (c) from that folder.
 
 ### 2.1 Track S on TASL-2 — when D-S is ready
 
@@ -106,16 +111,17 @@ Here `R=/home/dowling/r1_tracks`, `OUT=$R/out/digits_mlp` and `WORK=$R/scratch/d
 
    Expected time: about half a day, not measured.
 
-### 2.2 B1 on TASL-7 — when D-B1 is ready
+### 2.2 B1 on TASL-7 — when D-B1 and D-B1R are ready
 
-1. **Read the report yourself.** Continue only if all three hold:
-   - its class line says **class D**;
-   - its H1 line says **supported**;
-   - its D7 line says **PASS**, and the 7B duplicate rate it gives lies inside the exact interval [0.42386590667728663, 0.5800007633587785] when you check it yourself.
+1. **Check the route yourself.** D-B1 (11 Nov) reports class D via H2 alone, H1 not supported, H3 supported, D7 PASS (120/242 = 0.4959). The original hand-off (§0, H1 required) does **not** cover this, so B1 restarts only through D-B1R. Continue only if all of these hold:
+   - the author's route line is a committed dated PLAN row on the D-B1R branch;
+   - the **updated** restart hand-off §0 on that branch admits exactly this outcome (check its class/H1/H2 and D7 conditions against the report yourself; do not rely on a summary field);
+   - the 7B duplicate rate lies inside [0.42386590667728663, 0.5800007633587785];
+   - the D-B1R review is *accepted* and names the new reviewed base.
 
-   Do not rely on a summary field alone. Anything else is a STOP (§3).
+   Anything else is a STOP (§3).
 2. **Prepare the restart**, following the restart hand-off §§0–2 in its order. Expected time: 2–3 hours, mostly reviews.
-   - Check that the remote tip of `mac-b1-r4-20261109` is `4ddc820e`, the reviewed base.
+   - Check that the remote tip of the D-B1R branch equals the reviewed base its accepted review names, and that nothing after `4ddc820e` is unreviewed.
    - Make the run-HEAD note commit on a new branch `ops-b1-restart-<YYYYMMDD>`, exactly as hand-off §1 says: the prose only; the JSON bindings stay byte-identical. Push it without force.
    - Get a fresh review of that exact HEAD, until *accepted*.
    - Check it out clean and detached in the TASL-7 exam work tree, then run the real author gate on it.
@@ -151,8 +157,8 @@ Then send one closing Chinese summary. It covers: both tracks' state, commits an
 At a STOP: stop that track, preserve everything, report, and get a review. The other track continues.
 
 - **B1:**
-  - the diagnosis report is not class D with H1 supported and D7 PASS;
-  - the restart base is not `4ddc820e`, or a commit after it is not reviewed;
+  - the updated restart hand-off §0 does not admit the reported outcome, or the author's route line is not committed;
+  - the restart base is not the reviewed base named by the accepted D-B1R review, or a commit after it is not reviewed;
   - the author gate fails;
   - another user's process occupies TASL-7's GPU (wait and report; never preempt);
   - the old Track P marker does not match its receipt;
