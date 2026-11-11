@@ -80,8 +80,8 @@ from scipy.stats import norm
 from r1.c3 import rules
 from r1.c3.arms import TAU_FLOOR_Z, RulesPrior
 from r1.c3.control import c3_budgets, edit_kind
-from r1.c3.features import (NodeContext, ReplayProposal, ReplayView, _LedgerState, _as_row, _proposal_edit,
-                            _row_edit, active_projection, parsed_metric)
+from r1.c3.features import (NodeContext, ReplayError, ReplayProposal, ReplayView, _LedgerState, _as_row,
+                            _proposal_edit, _row_edit, active_projection, parsed_metric)
 from r1.c3.labels import moments, soft_label
 from r1.diagnostics.di_test import configuration
 from r1.harness import import_harness
@@ -261,6 +261,17 @@ def posterior_mean(delta_hat: float, mu: float, tau: float, sigma: float) -> flo
     return (tau ** 2 * float(delta_hat) + sigma ** 2 * mu) / (tau ** 2 + sigma ** 2)
 
 
+STALE_PROPOSAL = "stale_proposal"
+
+
+class StaleProposalError(ReplayError):
+    """The view's own proposal does not apply to the replayed incumbent (R1-TRACKS-A2U-STALE).
+
+    The harness rejects such a proposal as ``PROPOSAL_PRECONDITION_FAILED`` (an invalid trial, no worker
+    run) but still calls the controller for that trial; ``replay`` raises this subclass only for the current
+    proposal, so an inconsistent ledger prefix still raises a plain ``ReplayError``."""
+
+
 def _proj_sha(projection: str) -> str:
     return hashlib.sha256(projection.encode()).hexdigest()[:16]
 
@@ -310,7 +321,12 @@ def replay(view, ctx: NodeContext) -> Replay:
             keeps += 1
             last_keep = b
         state.observe(row)
-    current = state.featurize(_proposal_edit(view.proposal), b_now, view.current_best) if view.proposal is not None else None
+    current = None
+    if view.proposal is not None:
+        try:
+            current = state.featurize(_proposal_edit(view.proposal), b_now, view.current_best)
+        except ReplayError as exc:
+            raise StaleProposalError(str(exc)) from exc
     return Replay(deltas=dict(deltas), first_eval=first_eval, keeps=keeps, skips=skips,
                   executed_keys=executed_keys, current=current)
 
@@ -499,6 +515,7 @@ class A2UController:
             tags += [] if getattr(self, name) == 0.0 else [f"{name}={getattr(self, name):g}"]
         self.version = f"{base}[{','.join(tags)}]"
         self.log: list[dict] = []  # record only; never read by a decision
+        self.forecast_reason: str | None = None  # why the last forecast was None (STALE_PROPOSAL or None)
 
     @classmethod
     def static_price(cls, prior: A2UPrior, node_ctx: NodeContext, g_hat: float, *, e2_offset: float = 0.0,
@@ -535,8 +552,16 @@ class A2UController:
 
     # ---- forecasting -----------------------------------------------------
     def forecast(self, view) -> dict | None:
-        """The predictive forecast of the view's proposal from the view alone; ``None`` without features."""
-        rep = replay(view, self.ctx)
+        """The predictive forecast of the view's proposal from the view alone; ``None`` without features.
+
+        A current proposal that does not apply to the replayed incumbent (a stale edit) gives ``None`` with
+        ``self.forecast_reason = STALE_PROPOSAL``; any other replay error still raises."""
+        self.forecast_reason = None
+        try:
+            rep = replay(view, self.ctx)
+        except StaleProposalError:
+            self.forecast_reason = STALE_PROPOSAL
+            return None
         res = rep.current
         if res is None:
             return None
@@ -643,7 +668,7 @@ class A2UController:
         base = {"controller": self.version, "epoch": "E1"}
         fc = self.forecast(view)
         if fc is None:
-            detail = {**base, "reason": "no_features", "eligible": False}
+            detail = {**base, "reason": self.forecast_reason or "no_features", "eligible": False}
             self.log.append({"budget_index": b, "action": "continue", **detail})
             return ControlDecision("continue", {}, self.version, view.input_hash(), detail=detail)
         # r and tau_pred of every decision are recorded (the analysis' decision_centres / threshold_act inputs).
@@ -683,11 +708,15 @@ class A2UController:
     def _e2_detail(self, view) -> dict:
         prov = view.provisional
         delta_hat = getattr(prov, "delta_vs_best", None)
-        fc = self.forecast(view)
         detail: dict = {"controller": self.version, "epoch": "E2",
                         "decision": getattr(getattr(prov, "decision", None), "value", None)}
-        if fc is None or delta_hat is None:
+        # An invalid trial (no comparison) is not eligible whatever its proposal; checked before the forecast,
+        # so a stale proposal the harness rejected cannot reach the replay (R1-TRACKS-A2U-STALE).
+        if delta_hat is None:
             return {**detail, "reason": "no_features_or_no_comparison", "eligible": False}
+        fc = self.forecast(view)
+        if fc is None:
+            return {**detail, "reason": self.forecast_reason or "no_features_or_no_comparison", "eligible": False}
         m_hat = posterior_mean(delta_hat, fc["mu"], fc["tau"], fc["sigma"])
         # The policy's keep threshold on the m_hat scale (0 for the plain Bayes keep, h for static e2off = h, ...);
         # margin = m_hat - h is what the collector's E2 band |m_hat - h| <= b uses (review M1).
