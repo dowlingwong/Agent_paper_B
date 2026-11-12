@@ -1,0 +1,52 @@
+=== qwen36_27b ls ===
+total 3828
+-rw------- 1 dowling dowling     518 Nov 11 04:58 exam_offload_llama_server_36991.json
+-rw------- 1 dowling dowling     518 Nov 11 05:22 exam_offload_llama_server_56851_r2.json
+-rw------- 1 dowling dowling    2484 Nov 11 05:21 llama_server_36991.json
+-rw------- 1 dowling dowling 3660167 Nov 11 05:21 llama_server_36991.log
+-rw------- 1 dowling dowling    2582 Nov 11 05:51 llama_server_56851_r2.json
+-rw------- 1 dowling dowling  228623 Nov 11 05:51 llama_server_56851_r2.log
+drwx------ 2 dowling dowling    4096 Nov 11 05:51 _to_delete
+=== qwen36_27b chat template ===
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_36991.log:231:0.03.051.310 I srv          init: init: chat template, example_format: '<|im_start|>system
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_36991.log:249:0.03.051.594 I srv          init: init: chat template, thinking = 1
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.log:231:0.03.092.341 I srv          init: init: chat template, example_format: '<|im_start|>system
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.log:246:0.03.092.640 I srv          init: init: chat template, thinking = 1
+grep: /home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/_to_delete: Is a directory
+=== qwen36_27b reasoning ===
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_36991.log:1:0.00.023.610 W Setting 'enable_thinking' via --chat-template-kwargs is deprecated. Use --reasoning on / --reasoning off instead.
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_36991.log:250:0.03.051.601 I srv          init: preserve_reasoning kwarg: true
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_36991.log:251:0.03.051.601 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.json:30:    "--reasoning-budget",
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.json:91:    "--reasoning-budget",
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.log:1:0.00.023.589 W Setting 'enable_thinking' via --chat-template-kwargs is deprecated. Use --reasoning on / --reasoning off instead.
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.log:247:0.03.092.646 I srv          init: preserve_reasoning kwarg: true
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/llama_server_56851_r2.log:248:0.03.092.647 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+grep: /home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen36_27b/_to_delete: Is a directory
+=== qwen38_27b ls ===
+total 4904
+-rw------- 1 dowling dowling     518 Nov 11 03:21 exam_offload_llama_server_45203.json
+-rw------- 1 dowling dowling     518 Nov 11 03:45 exam_offload_llama_server_49077_r2.json
+-rw------- 1 dowling dowling    2469 Nov 11 03:45 llama_server_45203.json
+-rw------- 1 dowling dowling 3723763 Nov 11 03:45 llama_server_45203.log
+-rw------- 1 dowling dowling    2567 Nov 11 04:58 llama_server_49077_r2.json
+-rw------- 1 dowling dowling 1264602 Nov 11 04:58 llama_server_49077_r2.log
+drwx------ 2 dowling dowling    4096 Nov 11 04:58 _to_delete
+=== qwen38_27b chat template ===
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_45203.log:232:0.03.037.310 I srv          init: init: chat template, example_format: '<|im_start|>system
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_45203.log:250:0.03.037.661 I srv          init: init: chat template, thinking = 1
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_49077_r2.log:232:0.03.031.662 I srv          init: init: chat template, example_format: '<|im_start|>system
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_49077_r2.log:249:0.03.031.995 I srv          init: init: chat template, thinking = 1
+grep: /home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/_to_delete: Is a directory
+=== qwen38_27b reasoning ===
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_45203.log:1:0.00.023.347 W Setting 'enable_thinking' via --chat-template-kwargs is deprecated. Use --reasoning on / --reasoning off instead.
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_45203.log:251:0.03.037.668 I srv          init: preserve_reasoning kwarg: true
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_45203.log:252:0.03.037.669 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_49077_r2.json:30:    "--reasoning-budget",
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_49077_r2.json:91:    "--reasoning-budget",
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_49077_r2.log:1:0.00.023.201 W Setting 'enable_thinking' via --chat-template-kwargs is deprecated. Use --reasoning on / --reasoning off instead.
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_49077_r2.log:233:Reasoning effort is set to xhigh. Please think carefully through the task, validate key assumptions, consider plausible alternatives, and prioritize correctness, consistency, and clarity in the final answer.
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_49077_r2.log:250:0.03.032.002 I srv          init: preserve_reasoning kwarg: true
+/home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/llama_server_49077_r2.log:251:0.03.032.002 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+grep: /home/dowling/exam-x/work/b1_fffa_20261111_b/servers/qwen38_27b/_to_delete: Is a directory
+SERVER_GREP_DONE

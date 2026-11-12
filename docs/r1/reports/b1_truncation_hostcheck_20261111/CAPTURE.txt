@@ -1,0 +1,13 @@
+B1 truncation STOP — read-only host check capture (TASL-7), 11/12 Nov 2026
+handoff: Claude outputs/B1_TRUNCATION_HOST_CHECK_HANDOFF_20261111.md (SHA-256 14e8039ecf61f092189f568030153950443e46bf05314df73d098b20e8303d8a)
+private capture directory: /private/tmp/paper-b-b1-trunc-hostcheck-20261111.moWsY6i6
+started_utc: 2026-11-11T23:57:46Z ; finished_utc: 2026-11-11T23:59:50Z
+ssh.log SHA-256: 3bf87cc7d8c7d05d9176f30dbbbe90407bab34a3d87eede583ef3f8be654c767
+ssh.exit SHA-256: 9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa ; ssh.exit: 0
+census: b1_process=0 compute_app=0 (empty nvidia-smi compute-app list; no exam_runner/r1.exam/llama-server)
+marker SHA-256: 23fa767be7346809d087d0a2352241e6042abdd04df2f198e476b8f39eab4c9a (expected 23fa767be7346809d087d0a2352241e6042abdd04df2f198e476b8f39eab4c9a)
+batch_state SHA-256: 0e0926dafee940b84d19d9d4d793b2d23933dd4ba6e02bf8ac3f9f444e370e85 (expected 0e0926dafee940b84d19d9d4d793b2d23933dd4ba6e02bf8ac3f9f444e370e85)
+roots.tar entries: 301 ; host_sha256 lines: 301 ; verify ok: 301 ; verify not-ok: 0
+llama.cpp: build-exam binary SHA-256 b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b (expected), --version '0.7.0-dev (build 1, commit 620d222)' (expected), --help lists '--reasoning-budget N ... N>0 for token budget' (yes).
+DEVIATION: the hand-off's source path /home/dowling/exam-x/work/llama.cpp has no source tree/.git on TASL-7 (only build-exam/). Steps 2.3-2.5 were run read-only against the pinned source tree /home/dowling/r1_tracks/opt/llama.cpp (same user, clean); HEAD = 620d2225... and all five expected file SHA-256s match the hand-off literals exactly. This is disclosed for the Mac-local agent's analysis.
+all steps: read-only; no host write, no signal, no restart, no gate change, no marker/lease touch.

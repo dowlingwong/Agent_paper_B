@@ -102,8 +102,12 @@ def test_truncated_replies_are_invalid_trials_and_the_campaign_continues(tmp_pat
             assert call['finish_reason'] == ('content_filter' if q['kind'] == 'content_filter' else 'length')
             assert call['truncation_error_type'] == ('ContentFilterFinishReasonError' if q['kind'] == 'content_filter'
                                                      else 'LengthFinishReasonError')
-            assert call['completion_tokens'] == (9 if q['kind'] == 'content_filter' else CAP)
-            assert call['prompt_tokens'] == 7 and call['response_chars'] == 0
+            if q['kind'] == 'content_filter':
+                # openai 2.x's ContentFilterFinishReasonError carries no completion (3.x does), so no usage
+                assert (call['completion_tokens'], call['prompt_tokens']) in ((9, 7), (None, None))
+            else:
+                assert call['completion_tokens'] == CAP and call['prompt_tokens'] == 7
+            assert call['response_chars'] == 0
             assert ((rec.get('extra') or {}).get('worker') or {}).get('worker_skipped') is True   # no worker run
         else:
             assert rec['decision'] != 'failed_invalid'
