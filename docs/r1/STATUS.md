@@ -1,11 +1,5 @@
 # Paper B (route R1) — status log
 
-## 12 November 2026 — Track S S0.4 rerun complete at the A2-U pin (ENGINEERING_ONLY; STOP 3 rerun)
-
-- **Pins.** Paper pin `8237fd02…` (detached, clean), harness `a3fedbb…`, llama `620d2225…`, GGUF `509287f7…`, k = 1; launch script `3899b8ac` (host sha `9ac5d584…`). D-S review accepted (`fe651e58`; branch tip `c8b13b5d`). Precondition test (c) on the old S0.4 roots at the pin: **5 passed / 0 skipped** (scratch pytest), ledger hashes match.
-- **Run.** `2026-11-11T23:14:13Z` → `23:58:32Z`, rc 0; `done`: roots 10, failed 0, **exhausted 0**, deadline false, status `complete`; dry run roots_todo=0 / leaves_todo=0; 2 % rule satisfied. `liveness` PASS; `fit_prior` prior sha256 `5c849d15…`. No STOP; old `s04` scene untouched.
-- **Record.** Copy-back `results/r1/tracks/digits_mlp/s04_r2_20261111/` (with `SHA256SUMS` and `host_logs/`) and report `docs/r1/reports/TRACKS_S04_RERUN_20261111.md`. Close-out server note: `trks_llm`/llama-server were already absent (lease free); cause not established, campaign not truncated (all roots 40 LLM calls). Next: fresh independent review of this rerun; Phase 4 (S0.5/S0.5b) only after it is accepted.
-
 ## 12 November 2026 — Track S S0.4 rerun at the A2-U pin: **10/10 roots, 0 failed**; liveness PASS; prior recorded (STOP 3 rerun submitted for review) (AI-assisted; ENGINEERING_ONLY)
 
 - **Authority.** Author STOP-3 ruling **option (a)** (report `docs/r1/reports/TRACKS_PHASE3_20261109.md` §11) and PLAN §10 **R1-TRACKS-A2U-STALE** (11 Nov), which moves the Track S paper pin.
