@@ -238,9 +238,10 @@ hashes (host and Mac identical):
   `docs/r1/reviews/TRACKS_S04_RERUN_REVIEW_20261111.md` (359 lines). **Verdict: accepted** — 0 BLOCKING,
   0 MAJOR, 5 MINOR (documentation/evidence hygiene). The file as committed has sha256
   **`5f0cda1cc9afb6cee50b9c1bb999d582744ee53f1d036790670ccdfc30d43565`** (29,665 bytes, ends
-  "Verdict: accepted"). **Flag:** the reviewer's and Lead's messages state `e62aee2a…`; that value does not
-  match the file present in the worktree at commit time. The file was committed as-is; the reviewer should
-  confirm the hash (it may be a pre-final-save value).
+  "Verdict: accepted"). **Hash discrepancy resolved (reviewer re-check at `a53dd647`):** the reviewer confirmed this is the intended
+  final file and that the committed copy is byte-identical; the `e62aee2a…` in the earlier messages was a
+  **pre-final-save** value (a last one-line wording edit was made after that hash was computed). No
+  review-file change is needed.
 - **MINOR 1 (diff arithmetic / round wording) — fixed in §1.** `a2u.py` is **+37/−8 = 45 changed lines**
   (`git diff --numstat d10b05b7 8237fd02` → `37 8`), test +302; the review is described as "round 1 changes
   requested; accepted at round 2 (`8237fd02`) and round 3 (`fe651e58`)", tip docs-only.
