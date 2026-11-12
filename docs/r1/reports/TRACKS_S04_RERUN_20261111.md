@@ -23,21 +23,27 @@ STOP 现场不动。" (recorded in `docs/r1/reports/TRACKS_PHASE3_20261109.md` �
 
 - Branch `origin/mac-tracks-a2u-stale-20261111` tip **`c8b13b5d63d3d30f5afa642928f1458e863e8935`**; accepted
   fix commit **`fe651e589c2d6bafafc3a27e8eb7d8599845a7df`**; independent review
-  `docs/r1/reviews/R1_TRACKS_A2U_STALE_REVIEW_20261111.md` — **rounds 1–3 accepted** ("VERDICT: accepted",
-  "Verdict: accepted").
+  `docs/r1/reviews/R1_TRACKS_A2U_STALE_REVIEW_20261111.md` — reviewed over three rounds: **round 1 changes
+  requested; accepted at round 2 (`8237fd02`) and round 3 (`fe651e58`)**; tip `c8b13b5d` is docs-only.
 - **PLAN §10 row `R1-TRACKS-A2U-STALE` (11 Nov)** names the new pin `8237fd02…`; the pin is an **ancestor** of
-  the branch tip; the fix diff from `d10b05b7` is **only** `r1/tracks/a2u.py` (+45/−8) and the new
+  the branch tip; the fix diff from `d10b05b7` is **only** `r1/tracks/a2u.py` (**+37/−8**, i.e. 45 changed lines) and the new
   `r1/tests/test_tracks_a2u_stale.py` (+302). Harness pin `a3fedbb`, GGUF, llama build and flags are unchanged
   by the row.
 - The branch was pushed to the **TASL-2 bare repo** (`$R/remotes/Agent_paper_B.git`), which now has
   `mac-tracks-a2u-stale-20261111 = c8b13b5d` and the pin object `8237fd02` (verified on the host). The push
   reported "Everything up-to-date": the branch had already been delivered to the bare repo by the preceding
   phase — no change was needed.
-- The **S0.4 rerun was launched at `2026-11-11T23:14:11Z` by the immediately preceding operator phase of this
-  same task** (commit `3899b8ac`, launch script `tasl2_s04r2_20261111.sh`), before this completion phase, and
-  the collector completed at `23:58:32Z`. This phase independently re-verified the precondition, the pin
-  checkout, then ran the dry run, `liveness`, `fit_prior`, stopped the server, and copied back. No second
-  S0.4 run was started.
+- **Observable chain for the S0.4 rerun.** The launch script was committed at `2026-11-11T23:12:54Z` (commit
+  `3899b8ac`, `tasl2_s04r2_20261111.sh`, blob `9ac5d584…`); the host launch log starts the fresh server and
+  collector at `23:14:11Z`; the collector ends `23:58:32Z`; this completion phase's dry run / `liveness` /
+  `fit_prior` are at `00:04:49Z`–`00:04:59Z`; the manifest has exactly one session and there is no duplicate run.
+  So the rerun was launched by a **prior operator phase of the same branch/worktree** — an attribution the
+  artifacts support by ordering only (the launcher's agent-session id is not recorded in any committed
+  artifact). This phase independently re-verified the precondition and the pin checkout, then ran the dry run,
+  `liveness`, `fit_prior`, stopped the server, and copied back. No second S0.4 run was started.
+- **PLAN row location.** `R1-TRACKS-A2U-STALE` is commit `f82ff376` on the fix branch
+  `mac-tracks-a2u-stale-20261111` (also present at the branch tip `c8b13b5d` and in `origin` / the TASL-2 bare
+  repo); it is **not** in the operator branch's `docs/r1/PLAN.md`. The canonical PLAN was not edited here.
 
 ## 2. Precondition test (c) on TASL-2 — **PASS (5 passed, 0 skipped)**
 
@@ -73,6 +79,21 @@ r1/tests/test_tracks_a2u_stale.py tracks_S04_digits_mlp__s30001: 40 trials ident
 ======================= 5 passed, 12 deselected in 1.92s =======================
 ```
 
+**Environment, exactly (reviewer MINOR 3).** The invocation above is exact: `PYTHON=/home/dowling/r1_tracks/venv/bin/python`
+(Python 3.11.17), `PYTHONPATH=/tmp/trks_pytest_20261111.FI7Fdoi8`,
+`AR_HARNESS_ROOT=/home/dowling/r1_tracks/work/autoresearch_harness`,
+`TRACKS_S04_ROOTS=/home/dowling/r1_tracks/scratch/digits_mlp/s04/roots`, `PYTHONDONTWRITEBYTECODE=1`,
+`-p no:cacheprovider`. With that `PYTHONPATH` the frozen interpreter imports **pytest 9.2.0 from
+`/tmp/trks_pytest_20261111.FI7Fdoi8/pytest/__init__.py`** (and pluggy 1.7.0 from `/tmp/…/pluggy/__init__.py`), i.e.
+the **scratch `--target` environment**, not the frozen venv. A re-capture with the environment printed is in
+`host_logs/trks_a2u_precondition_header_20261112.log` (sha256
+`3322b55f706ae4a5b1e257676e37881c08ac6946b54d1141fe948bbb24c99438`): it shows
+`pytest_under_env=9.2.0 /tmp/trks_pytest_20261111.FI7Fdoi8/pytest/__init__.py`, `checkout_before=[]`,
+`PRECOND_EXIT=0`, `checkout_after=[]`. The earlier phase's header line printed the frozen-venv pytest path
+because that header's `python -c` was evaluated **without** `PYTHONPATH`; it is not the environment of the test
+invocation. The frozen venv is provably unmodified (`site-packages/pytest/__init__.py` mtime 2026-10-29; no
+install was run into it).
+
 All five SHA-256 values **match exactly** the list in the PLAN row / the preceding phase's record
 (`14d586ee…`, `a8dbbd98…`, `cf384352…`, `8ea9e20b…`, `71c358c6…`). The preceding phase's own run
 (`host_logs/trks_a2u_precondition_20261111.log`, sha256 `22775d9b…`, run at 22:25Z before the rerun) shows
@@ -91,8 +112,10 @@ skip, collection error or hash difference; the old scene was read-only throughou
 
 ## 4. S0.4 rerun (new directories, all ten instances from the start)
 
-- New output/work directories: `$OUT/digits_mlp/s04_r2_20261111`, `$WORK/digits_mlp/s04_r2_20261111`. The old
-  `$OUT/digits_mlp/s04` and `$WORK/digits_mlp/s04` were neither read nor written (§7).
+- New output/work directories: `$OUT/digits_mlp/s04_r2_20261111`, `$WORK/digits_mlp/s04_r2_20261111`. The
+  **rerun collector** read/wrote only the new dirs; the **precondition test (c) deliberately read the old
+  `$WORK/digits_mlp/s04/roots` read-only** (hashes and 2026-11-08 mtimes unchanged; nothing written or
+  deleted), and the old `$OUT/digits_mlp/s04` was not touched (§7).
 - Committed launch script `r1/tracks/ops/launch/tasl2_s04r2_20261111.sh` (`3899b8ac`; new session
   `trks_s04r2`, new STOP/log names, resume-only guard), run as
   `ssh portal_zhixu bash $R/launch/tasl2_s04r2_20261111.sh`. Fresh `k = 1` server in `tmux trks_llm` (pid
@@ -112,7 +135,11 @@ trks-run trks_s04r2 18101 collect --phase S0.4 --node digits_mlp --instances 10 
   `s30000, s30001, s30002, s30003, s30004, s30005, s30006, s30007, s30008, s30009`;
   `roots.jsonl` 10 lines, `s04_rows.jsonl` **165 rows**, **0** duplicate `(instance, budget_index)`.
 - **Completion check (dry run, new session `trks_s04r2_dry`, `00:04:49Z` rc=0):**
-  `{"roots_todo": 0, "forks_known": 0, "leaves_todo": 0, "exhausted": 0}` — phase finished true.
+  `{"roots_todo": 0, "forks_known": 0, "leaves_todo": 0, "exhausted": 0}` — phase finished true. A **second dry
+  run at `00:15:51Z`** (after this phase's copy-back; its origin process is not recorded in the artifacts)
+  appended an identical second line to `$R/logs/trks_s04r2_dry.exit` (now `aa3b55ab…`: `…00:04:49Z rc=0` +
+  `…00:15:51Z rc=0`) and a byte-identical second JSON line to `trks_s04r2_dry.log` (`4fc0d6b5…`), so the
+  completion check stands; the copy-back and `SHA256SUMS` were refreshed to the host's two-line files.
 - **2 % rule:** `exhausted / (committed roots + leaves + exhausted) = 0 / (10 + 0 + 0) = 0.0 % ≤ 2 %` — passes
   (contrast with the 9 Nov STOP scene: 3/8 = 37.5 %).
 
@@ -149,11 +176,14 @@ Host `$R/out/digits_mlp/s04/` and `$R/scratch/digits_mlp/s04/` have **unchanged 
 ## 8. 3.0 pause drill — **not repeated** (decision recorded; flag for the reviewer)
 
 The A2-U fix changes **only `r1/tracks/a2u.py`** (and adds a test); it does not touch the server, the watcher,
-the launch scripts' server block, or the pause path. The drill's purpose (exercise the watcher's pause path)
-was satisfied on TASL-2 on 9 Nov (`docs/r1/reports/TRACKS_PHASE3_20261109.md` §3). Since the server/watcher code
-is unchanged, the drill was **not repeated** for this rerun, as authorised by the Lead's instruction. **Flagged
-for the reviewer:** if the reviewer wants the drill re-exercised against the rerun's session naming
-(`trks_s04r2`), it can be scheduled; the removal of the drill here rests on the unchanged server/watcher path.
+the launch scripts' server block, or the pause path. Basis: runbook **§3.0** says to exercise the pause drill **once per host** ("before any multi-day phase"); it
+passed on TASL-2 on 9 Nov (`docs/r1/reports/TRACKS_PHASE3_20261109.md` §3); the watcher/server path is
+byte-unchanged — `bin/trks-watch` `cf68843e…`, `bin/trks-servers` `124316b5…`, `bin/trks-run` `b53bc811…`
+(identical in the repo and on the host), and `bin/trks-status` differs only in its `PAPER_SHA` string; the
+A2-U fix changes only `r1/tracks/a2u.py`. Re-exercising the drill now would also touch a `STOP` into the
+preserved old `$R/out/digits_mlp/s04` scene. The Lead's instruction not to repeat it is **relayed
+corroboration**, not the primary basis. **Flagged for the reviewer:** if a re-exercise against the `trks_s04r2`
+naming is wanted, it can be scheduled.
 
 ## 9. Evidence and hashes
 
@@ -161,7 +191,10 @@ Copied back: host `$OUT/digits_mlp/s04_r2_20261111/` → **`results/r1/tracks/di
 (the Mac directory name follows the Lead's instruction; the host tree keeps the committed script's name
 `s04_r2_20261111`), including `liveness/`, plus `a2u_prior_r2_20261111.json` and `host_logs/` (launch log,
 `trks_s04r2.*`, `trks_s04r2_dry.*`, `watch.log`, both precondition logs, `liveness`/`fit_prior` capture logs).
-`SHA256SUMS` verifies (21 files). Key hashes (host and Mac identical):
+`SHA256SUMS` verifies (**22 files**, refreshed after the second dry run; the two dry-run logs now match the
+host's two-line files, `trks_s04r2_dry.exit` `aa3b55ab…` / `trks_s04r2_dry.log` `4fc0d6b5…`, and the
+environment-header precondition capture `trks_a2u_precondition_header_20261112.log` `3322b55f…` was added). Key
+hashes (host and Mac identical):
 
 | file | sha256 |
 |---|---|
@@ -198,3 +231,33 @@ Copied back: host `$OUT/digits_mlp/s04_r2_20261111/` → **`results/r1/tracks/di
 - The 9 Nov `s04` STOP scene is preserved untouched; the 9 Nov STOP-3 report remains the STOP record, and this
   report is the rerun record.
 - **Phase 4 (and anything later) is not authorised** by this report or by the STOP-3 ruling.
+
+## 12. Review record (STOP 3 rerun, accepted) and MINOR answers
+
+- **Reviewer:** fresh independent reviewer (`track-s-reviewer-s04r2`), file
+  `docs/r1/reviews/TRACKS_S04_RERUN_REVIEW_20261111.md` (359 lines). **Verdict: accepted** — 0 BLOCKING,
+  0 MAJOR, 5 MINOR (documentation/evidence hygiene). The file as committed has sha256
+  **`5f0cda1cc9afb6cee50b9c1bb999d582744ee53f1d036790670ccdfc30d43565`** (29,665 bytes, ends
+  "Verdict: accepted"). **Flag:** the reviewer's and Lead's messages state `e62aee2a…`; that value does not
+  match the file present in the worktree at commit time. The file was committed as-is; the reviewer should
+  confirm the hash (it may be a pre-final-save value).
+- **MINOR 1 (diff arithmetic / round wording) — fixed in §1.** `a2u.py` is **+37/−8 = 45 changed lines**
+  (`git diff --numstat d10b05b7 8237fd02` → `37 8`), test +302; the review is described as "round 1 changes
+  requested; accepted at round 2 (`8237fd02`) and round 3 (`fe651e58`)", tip docs-only.
+- **MINOR 2 (old-scene "neither read nor written") — fixed in §4.** The rerun collector used only the new
+  dirs; the **precondition deliberately read the old `$WORK/s04/roots` read-only** (hashes/mtimes unchanged;
+  nothing written or deleted); the old `$OUT/s04` was not touched.
+- **MINOR 3 (scratch-pytest capture) — answered in §2.** Exact invocation/environment given; with
+  `PYTHONPATH=/tmp/trks_pytest_20261111.FI7Fdoi8` the frozen interpreter imports pytest 9.2.0 from the
+  **scratch target** (evidence: `host_logs/trks_a2u_precondition_header_20261112.log`, sha256 `3322b55f…`).
+  The earlier header's venv path came from a `python -c` run **without** `PYTHONPATH`; the frozen venv is
+  unmodified.
+- **MINOR 4 (copy-back one dry run behind) — fixed.** A second dry run at `00:15:51Z` (origin process not
+  recorded) appended an identical line; the copy-back and `SHA256SUMS` were refreshed to the host's current
+  two-line `trks_s04r2_dry.exit` (`aa3b55ab…`) / `trks_s04r2_dry.log` (`4fc0d6b5…`), now 22 files, and the
+  second run is recorded in §4/§9. The completion check is unchanged.
+- **MINOR 5 (provenance/drill wording) — fixed in §1/§8.** The launcher attribution is stated as the
+  **observable chain** (times/commits/blob; the session id is not in any artifact); the drill non-repetition
+  now rests on **runbook §3.0 ("once per host")**, the unchanged `trks-watch`/`trks-servers`/`trks-run` shas
+  and the 9 Nov pass, with the Lead's instruction as relayed corroboration; the PLAN row location
+  (`f82ff376` on the fix branch / remotes, not in the operator branch's `docs/r1/PLAN.md`) is recorded.
