@@ -1,4 +1,4 @@
-# B1 `_c` post-run marker retirement and completion record — candidate for review (12 November 2026, rev 2)
+# B1 `_c` post-run marker retirement and completion record — candidate for review (12 November 2026, rev 4)
 
 **Candidate for independent review; not an execution and not an authorization.** This is the post-run unit for run
 `4b31_20261112_c` only, to be executed **after** a verified normal completion of that run on **TASL-7** and **before**
@@ -9,7 +9,10 @@ cooperative lock, not evidence, and can be renamed (not deleted) with its receip
 `R1-EXAM-B1-TRUNCATION-INVALID` rationale). Rev 2 fixes the round-1 review: the verifier/usage interpreter must be
 the frozen venv used by the runner (bare `python3` on TASL-7 is 3.10.12 and cannot import the chain), and the import
 preflight must precede the marker retirement; it also fixes the missing `set -eu`/rc gates, `$CHECKOUT` definition,
-watcher-line scoping, the report extras and the flock probe.
+watcher-line scoping, the report extras and the flock probe. **Rev 3** makes the retire rc gate reachable under
+`set -e` with a tmp-then-mv and no zero-length final receipt, records the pre-retire watch.log line count, defines
+the step-6 paths, checks the three artifacts and fixes the report citations. **Rev 4** is title/changelog and the
+leftover wording only, plus `umask 077` and removal of the success-path `.tmp.err`.
 
 ## 0. Bindings and scope
 
@@ -63,6 +66,7 @@ watcher-line scoping, the report extras and the flock probe.
 3. **Retire the marker with its creation receipt** (only this run's marker; renames, deletes nothing):
    ```
    set -euo pipefail
+   umask 077
    CHECKOUT=/home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper
    RUN_DIR=/home/dowling/r1_b1_engineering/b1_handover_4b31_20261112_c
    PY=/home/dowling/exam-x/work/venv/bin/python
@@ -79,6 +83,7 @@ watcher-line scoping, the report extras and the flock probe.
      echo "STOP: retire failed rc=$rc; partial output kept as $TMP"; exit 1
    fi
    mv "$TMP" "$RUN_DIR/marker-retirement_after_run.json"
+   rm -f "$TMP.err"   # success path only; nothing else removed
    printf 'source_receipt=%s\nsource_receipt_sha256=%s\n' \
      "$RUN_DIR/marker-receipt.json" "$(sha256sum "$RUN_DIR/marker-receipt.json" | cut -d' ' -f1)" \
      > "$RUN_DIR/marker-retirement_after_run.note"
