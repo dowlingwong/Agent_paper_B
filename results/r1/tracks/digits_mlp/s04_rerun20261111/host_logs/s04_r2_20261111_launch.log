@@ -1,0 +1,8 @@
+2026-11-11T23:14:11Z Phase 3 S0.4 rerun start (node digits_mlp, host TASL-2, k=1, pin 8237fd02, out /home/dowling/r1_tracks/out/digits_mlp/s04_r2_20261111)
+2026-11-11T23:14:11Z starting fresh server k=1 in tmux session trks_llm
+2026-11-11T23:14:13Z 18101/v1/models ready after 0s
+2026-11-11T23:14:13Z server pid: 3284858,
+2026-11-11T23:14:13Z GPU compute apps: 3284858, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5242 MiB;
+2026-11-11T23:14:13Z lease: HELD
+2026-11-11T23:14:13Z starting S0.4 rerun collector in tmux session trks_s04r2
+2026-11-11T23:14:13Z S0.4 rerun collector started; monitor logs/trks_s04r2.log / .exit and trks-status
