@@ -57,18 +57,28 @@ watcher-line scoping, the report extras and the flock probe.
    'exam_runner|llama-server|r1\.tracks\.collect'`; `nvidia-smi --query-compute-apps=pid,process_name,used_memory
    --format=csv,noheader`; `flock -n "$HOME/r1_locks/gpu0.lock" true && echo LEASE-FREE || echo LEASE-HELD`;
    `git -C "$CHECKOUT" rev-parse HEAD` and `status --porcelain`; marker `stat`/`sha256sum`/`cat`; Track P marker;
-   `tail -5 "$HOME/r1_tracks/logs/watch.log"`. Save `ssh.log`/`ssh.exit`/`SHA256SUMS`; record the capture path.
+   `wc -l < "$HOME/r1_tracks/logs/watch.log"` and its last line (recorded as the pre-retire line count for
+   step 4). Save `ssh.log`/`ssh.exit`/`SHA256SUMS`; record the capture path.
 2. **Import preflight (precondition 5).** If it fails: STOP, marker untouched.
 3. **Retire the marker with its creation receipt** (only this run's marker; renames, deletes nothing):
    ```
    set -euo pipefail
-   set -C
-   python3 "$CHECKOUT/r1/scripts/b1_o2_marker.py" retire \
-     --lock-dir "$HOME/r1_locks" --receipt "$RUN_DIR/marker-receipt.json" \
-     > "$RUN_DIR/marker-retirement_after_run.json"
-   rc=$?; printf '%s\n' "$rc" > "$RUN_DIR/marker-retirement_after_run.rc"
-   [ "$rc" -eq 0 ] || { echo "STOP: retire failed rc=$rc"; exit 1; }
-   [ -s "$RUN_DIR/marker-retirement_after_run.json" ] || { echo "STOP: empty retirement receipt"; exit 1; }
+   CHECKOUT=/home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper
+   RUN_DIR=/home/dowling/r1_b1_engineering/b1_handover_4b31_20261112_c
+   PY=/home/dowling/exam-x/work/venv/bin/python
+   TMP="$RUN_DIR/marker-retirement_after_run.json.tmp"
+   rm -f "$TMP"   # TASL-7 only; no pre-existing tmp is expected
+   if "$PY" "$CHECKOUT/r1/scripts/b1_o2_marker.py" retire \
+        --lock-dir "$HOME/r1_locks" --receipt "$RUN_DIR/marker-receipt.json" > "$TMP" 2> "$TMP.err"; then
+     rc=0
+   else
+     rc=$?
+   fi
+   printf '%s\n' "$rc" > "$RUN_DIR/marker-retirement_after_run.rc"
+   if [ "$rc" -ne 0 ] || [ ! -s "$TMP" ]; then
+     echo "STOP: retire failed rc=$rc; partial output kept as $TMP"; exit 1
+   fi
+   mv "$TMP" "$RUN_DIR/marker-retirement_after_run.json"
    printf 'source_receipt=%s\nsource_receipt_sha256=%s\n' \
      "$RUN_DIR/marker-receipt.json" "$(sha256sum "$RUN_DIR/marker-receipt.json" | cut -d' ' -f1)" \
      > "$RUN_DIR/marker-retirement_after_run.note"
@@ -83,11 +93,16 @@ watcher-line scoping, the report extras and the flock probe.
    pre-existing paused line) and say so. Record any STOP file the watcher touched (expected: beside its manifests;
    pre-existing STOP files are preserved).
 5. **Post-state read-only check**: no compute apps/llm processes, lease free, marker absent, both
-   `marker-retirement_after_run.*` files present, `_to_delete/` contains the retired name, `$BATCH` tree intact, all
+   the three `marker-retirement_after_run.json` / `.rc` / `.note` artifacts present, `_to_delete/` contains the retired
+   name, `$BATCH` tree intact, all
    other scenes (6835, `_b`, `_c` handover) intact.
 6. **Complete-batch verifier + completion usage** (read-only; after completion and marker retirement, no restoration):
    ```
    set -uo pipefail
+   CHECKOUT=/home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper
+   RUN_DIR=/home/dowling/r1_b1_engineering/b1_handover_4b31_20261112_c
+   BATCH=/home/dowling/exam-x/work/b1_4b31_20261112_c
+   PY=/home/dowling/exam-x/work/venv/bin/python
    export AR_HARNESS_ROOT=/home/dowling/r1_b1_engineering/b1_harness_offline_stage_20261107_a/harness
    export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
    export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
@@ -106,10 +121,11 @@ watcher-line scoping, the report extras and the flock probe.
    the cap) and is not a STOP; exit 2 (inconsistent input) is reported.
 7. **Report + STATUS + review**: write `docs/r1/reports/B1_C_RUN_20261112.md` on `mac-b1-20261107` with: completion
    and normal-end evidence; the complete-batch verifier result; the completion-usage tables; `scripted_minus_random`
-   read from `batch_state.json` (descriptive); the first-vs-second-half table from
+   read from `batch_state.json` `anchor_gate.scripted_minus_random` (descriptive); the first-vs-second-half table from
    `"$PY" -B -m r1.scripts.b1_candidate_halves --work "$BATCH"` (read-only; not used by x5_rule_v2/finalists/STOPs);
    the marker retirement receipt/note and capture paths+SHA256; the order deviation (no S/P restoration); limits. Add
-   a STATUS entry, commit with author+committer Dowling Wong, push to `mac-b1-20261107`, verify the remote tip, and
+   a STATUS entry, cite this procedure commit, commit with author+committer Dowling Wong, push to `mac-b1-20261107`,
+   verify the remote tip, and
    submit the record for a fresh independent review; only then publish the B1 manifests/verifier result.
 8. **Post-run restoration**: none is performed by this unit for Track S/P; Track P remains paused; the TASL-7 Track S
    digits run follows its separately reviewed host-move plan; the TASL-2 scene stays preserved. Any later restoration
