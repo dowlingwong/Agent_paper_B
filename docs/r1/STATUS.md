@@ -1,5 +1,12 @@
 # Paper B (route R1) — status log
 
+## 12 November 2026 — Track S digits_mlp host move to TASL-7 authorised; TASL-2 outage STOP (AI-assisted; ENGINEERING_ONLY)
+
+- **Event.** TASL-2 became unreachable on 12 Nov 2026 (TCP/ICMP to 100.120.160.70 failed; Tailscale peer rx 0; TASL-7 reachable). The Phase 4 S0.5 attempt started on TASL-2 at 2026-11-12T19:55:59Z and was last seen running with 4 committed roots (20:02Z); it cannot be censused or resumed while the host is down. Per runbook §10, a TASL-2 outage is "anything not covered → STOP and ask".
+- **Author decision (relayed).** The author chose to **move `digits_mlp` to TASL-7 and run it after B1 `_c` ends** (author's chat message of 12 Nov 2026). Recorded in `docs/r1/reports/TRACKS_DIGITS_HOSTMOVE_20261112.md`, with a paste-ready PLAN §10 row draft (the operator does not add author decisions to PLAN unilaterally).
+- **Preconditions before the moved run** (see the proposal): B1 `_c` normal end + reviewed marker retirement; `digits_mlp` host facts and S0.1 determinism/latency re-established on TASL-7 after the GPU frees; paper pin `8237fd02` checked out clean on TASL-7; prior `5c849d15…` copied with the TASL-7 worker-venv difference disclosed; new TASL-7 launch scripts committed and independently reviewed; Track X/Track P and the TASL-2 scenes untouched. The TASL-2 `s05` scene is preserved, never resumed.
+- **Current.** B1 `_c` continues on TASL-7 (`4b31_20261112_c`); TASL-2 remains down; no Track S run is started now.
+
 ## 12 November 2026 — Track S S0.4 rerun at the A2-U pin: **10/10 roots, 0 failed**; liveness PASS; prior recorded (STOP 3 rerun submitted for review) (AI-assisted; ENGINEERING_ONLY)
 
 - **Authority.** Author STOP-3 ruling **option (a)** (report `docs/r1/reports/TRACKS_PHASE3_20261109.md` §11) and PLAN §10 **R1-TRACKS-A2U-STALE** (11 Nov), which moves the Track S paper pin.
