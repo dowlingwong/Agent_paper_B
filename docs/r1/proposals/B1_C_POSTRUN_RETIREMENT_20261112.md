@@ -97,8 +97,7 @@ leftover wording only, plus `umask 077` and removal of the success-path `.tmp.er
    no new line appears, re-establish the known paused state (watcher PID alive, marker absent, last line is the
    pre-existing paused line) and say so. Record any STOP file the watcher touched (expected: beside its manifests;
    pre-existing STOP files are preserved).
-5. **Post-state read-only check**: no compute apps/llm processes, lease free, marker absent, both
-   the three `marker-retirement_after_run.json` / `.rc` / `.note` artifacts present, `_to_delete/` contains the retired
+5. **Post-state read-only check**: no compute apps/llm processes, lease free, marker absent, the three `marker-retirement_after_run.json` / `.rc` / `.note` artifacts present, `_to_delete/` contains the retired
    name, `$BATCH` tree intact, all
    other scenes (6835, `_b`, `_c` handover) intact.
 6. **Complete-batch verifier + completion usage** (read-only; after completion and marker retirement, no restoration):
