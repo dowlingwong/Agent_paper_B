@@ -113,6 +113,8 @@ Without its structured edit, the harness's D25 check would read the key from the
 
 Because of steps 1–3, a proposal that did not STOP under `_c` is recorded exactly as under `_c`. Only formerly-STOPping proposals are affected. The worker guard (`b1_proposal_guard.py`) is unchanged in code; only a docstring paragraph is added. `check_model_output` reproduces its conditions in the same order with the same messages, and a test asserts both agree on every case. A proposal failing the guard at the worker has bypassed the manager check, which is an internal inconsistency, so it keeps its STOP.
 
+When reading a rejected trial in a ledger: the harness's failure message for it is its generic precondition text ("proposal selector could not find a non-no-op structured edit"); the actual reason is in `extra.manager.b1_model_output_rejected` and in the journal.
+
 One case stays on the old path on purpose: a `.py` value for which `ast.literal_eval` raises `TypeError` (e.g. `{[]: 1}`, an unhashable dict key). The guard catches only `ValueError`/`SyntaxError`/`MemoryError`/`RecursionError`, so under `_c` the `TypeError` propagated out of the worker and the harness recorded an invalid trial after the worker started. The pre-check returns no rejection for it, so this case is recorded exactly as under `_c` (`test_typeerror_value_stays_on_the_worker_path_as_before`).
 
 ### 4.2 Context overflow (M19)
@@ -124,6 +126,8 @@ Overflow is in practice absorbing: the memory summary only grows, so once a root
 ### 4.2a Unencodable reply (M20)
 
 A reply whose text, or a string in its JSON, contains a lone surrogate code point (U+D800–DFFF; e.g. the JSON escape `\ud800`) parses, but its summary would enter every later prompt, and the HTTP client cannot encode that request. Under `_c` this raised `UnicodeEncodeError` at the next proposer call (also with the host's package versions). The wrapper now discards such a reply (`unencodable_reply`, charged, its completion tokens kept), so the trial is invalid and the text never reaches the memory summary.
+
+The check covers the whole reply, not only the fields known to enter later prompts (summary, best strategy), because the memory context draws on several record fields. This makes one narrow exception to the identity of §4.1: under `_c`, a surrogate only in the edit value of a YAML node (not in the summary) gave an `EDIT_FAILED` invalid trial with a worker run and an observer call; now it is an invalid trial without them. Both are invalid trials; only the worker-run and observer counts differ. No surrogate is known in `_c` (ledger and events are written with `ensure_ascii`, so it would appear as a `\ud800`–`\udfff` escape; none occurs in the committed STOP capture, and the other 88 roots would need the same scan).
 
 ### 4.3 Proposal journal before execution
 
@@ -167,7 +171,7 @@ The 18 failures are the same 18 test IDs in both trees: 16 namespace-fixture tes
 ## 6. Can the 89 completed `_c` roots be reused? (assessment only)
 
 - **What completed.** 89 roots: the two software anchors (12 each), `qwen25_coder_7b`, `qwen38_27b`, `qwen36_27b` and `gemma4_31b` (12 off each; 4 on each for the three switchable models), and 5 of `olmo31_32b`'s off roots. Their server intervals took about 6.1 h of the 6.3 h run.
-- **Scientific identity.** The fix changes only proposals that previously stopped (§4.1 steps 1–3) and context overflows, which also previously stopped. The journal is evidence only, not decision input. No completed root contains either kind, or it would not have completed. So under the fix each completed root's ledger, events and decisions are what the new code would have produced from the same replies. Seeds, prompts and requests are unchanged; the new request path differs only in the journal write. The replay would not even be needed: the records exist.
+- **Scientific identity.** The fix changes only proposals that previously stopped (§4.1 steps 1–3), context overflows and unencodable replies, which also previously stopped. The one exception, a lone surrogate in a YAML edit value (§4.2a), changes only worker-run and observer counts of an already invalid trial; a reuse procedure would have to scan the `_c` ledgers for it. The journal is evidence only, not decision input. No completed root contains either kind, or it would not have completed. So under the fix each completed root's ledger, events and decisions are what the new code would have produced from the same replies. Seeds, prompts and requests are unchanged; the new request path differs only in the journal write. The replay would not even be needed: the records exist.
 - **What blocks reuse in the current code:**
   1. The new `b1_batch` verification requires `b1_proposals.jsonl` and a `proposal_journal` manifest field in every LLM root; `_c` roots have neither.
   2. Every root is bound to the `_c` authorization: `job.authorization_checkout_head` = `4b312844`, the job binding, and the post-check certificate. `b1_batch` refuses roots from another authorization head, and the `_d` run HEAD differs by construction.
