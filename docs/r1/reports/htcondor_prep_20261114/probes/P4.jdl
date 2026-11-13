@@ -1,0 +1,18 @@
+universe = docker
+docker_image = cverstege/alma9-gridjob
+executable = probe.sh
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = probe.sh
++RequestWalltime = 1800
+arguments = P4
+output = P4.out
+error = P4.err
+log = P4.log
+RequestCPUs = 2
+RequestMemory = 4000
+request_disk = 5000000
+request_GPUs = 1
++RemoteJob = True
+requirements = TARGET.GPUs_DeviceName =?= "NVIDIA A100-PCIE-40GB"
+queue 1

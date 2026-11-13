@@ -1,0 +1,84 @@
+== condor_version ==
+$CondorVersion: 25.0.12 2026-07-07 BuildID: 930047 PackageID: 25.0.12-1 $
+$CondorPlatform: x86_64_AlmaLinux8 $
+== condor_status -total ==
+
+               Total Owner Claimed Unclaimed Matched Preempting  Drain Backfill BkIdle
+
+  X86_64/LINUX  1105     1    1051        22       0          0     31        0      0
+
+         Total  1105     1    1051        22       0          0     31        0      0
+== userprio full ==
+Last Priority Update: 11/13 23:44
+Group                                            Config     Use    Effective   Priority  Wghted Total Usage  Time Since  Weighted  Submitter Submitter
+  User Name                                       Quota   Surplus   Priority    Factor   In Use (wghted-hrs) Last Usage Requested    Floor    Ceiling 
+----------------------------------------------- --------- ------- ------------ --------- ------ ------------ ---------- ---------- --------- ---------
+beamdump                                             0.05 Regroup                             0         0.00 20770+22:4          0                    
+cms.jet                                              0.25 Regroup                             0     52034.46    0+09:10         92                    
+  tkoerdt@etp.kit.edu                                                   500.00   1000.00      0         0.00 20770+22:4                               
+  jkleck@etp.kit.edu                                                    500.00   1000.00      0         0.00 20770+22:4                               
+  jgaessler@etp.kit.edu                                                 500.00   1000.00      0      1901.69   39+10:37                               
+  jmoell@etp.kit.edu                                                    500.00   1000.00      0      9484.53   63+02:44                               
+  rabbertz@etp.kit.edu                                                  500.00   1000.00      0        21.38    0+09:10                               
+  kschaeuble@etp.kit.edu                                                500.00   1000.00      0         0.00 20770+22:4                               
+  abrusamolino@etp.kit.edu                                              500.00   1000.00      0         0.00 20770+22:4                               
+  cverstege.cverstege@etp.kit.edu                                       500.00   1000.00      0      2316.96   77+21:39                               
+  dsteinmetz@etp.kit.edu                                                500.00   1000.00      0         0.00 20770+22:4                               
+  cjo@etp.kit.edu                                                       500.00   1000.00      0         0.00 20770+22:4                               
+  xzuo@etp.kit.edu                                                      500.00   1000.00      0         0.00 20770+22:4                               
+  mgais@etp.kit.edu                                                     500.00   1000.00      0       848.08   79+06:04                               
+  cverstege@etp.kit.edu                                               16423.80   1000.00      0     37461.81    3+08:51                               
+cms.top                                              0.25 Regroup                             0       369.69    4+06:41          0                    
+  tmohr.tmohr@etp.kit.edu                                               500.00   1000.00      0        69.30   84+11:00                               
+  tmohr@etp.kit.edu                                                     500.00   1000.00      0       300.39    4+06:41                               
+spark                                               96.00 Regroup                   1.00      0         0.00 20770+22:4          0                    
+belle                                                0.25 Regroup                            35    618374.97      <now>        435                    
+  creisner@etp.kit.edu                                                  500.00   1000.00      0       443.53   99+03:25                               
+  aheidelbach@etp.kit.edu                                               500.00   1000.00      0       167.31    2+12:13                               
+  dgrossmann@etp.kit.edu                                                500.00   1000.00      0       493.12  102+09:10                               
+  jeppelt@etp.kit.edu                                                   500.00   1000.00      0      1050.75   66+02:59                               
+  pecker@etp.kit.edu                                                    500.00   1000.00      0    137726.44   15+01:21                               
+  sjaeger@etp.kit.edu                                                   500.00   1000.00      0       218.55   13+17:31                               
+  mschnepf@etp.kit.edu                                                  500.00   1000.00      0         0.29   98+09:58                               
+  tbrandes@etp.kit.edu                                                  500.00   1000.00      0     71926.20   17+09:56                               
+  mmartini@etp.kit.edu                                                12029.48   1000.00      0     25036.27    1+21:22                               
+  fherdtweck@etp.kit.edu                                              14651.35   1000.00      0    205205.43    1+02:39                               
+  ldamer@etp.kit.edu                                                  20317.67   1000.00      0    162692.39    2+10:36                               
+  kkroehnert@etp.kit.edu                                              53539.71   1000.00     35     13414.66      <now>                               
+cms                                                  0.70 Regroup                           155     93444.35      <now>       3910                    
+  rchakraborty.rchakraborty@etp.kit.edu                                 500.00   1000.00      0       247.39    5+04:57                               
+  rchakraborty@etp.kit.edu                                              500.00   1000.00      0        81.62   10+09:08                               
+  creisner@etp.kit.edu@etp.kit.edu                                      500.00   1000.00      0         0.00 20770+22:4                               
+== author own line ==
+  dwong@etp.kit.edu                                                     500.00   1000.00      0         0.00 20770+22:4                               
+== TOpAS collector c03 free GPU slots ==
+slot1@c03-001-159.gridka.de	14	112006	434453283	7
+slot2@c03-001-159.gridka.de	14	112006	434453283	7
+slot3@c03-001-159.gridka.de	14	112006	434453283	7
+slot4@c03-001-159.gridka.de	14	112006	434453283	7
+slot5@c03-001-159.gridka.de	14	112006	434453283	7
+slot6@c03-001-159.gridka.de	8	96646	308595840	7
+slot7@c03-001-159.gridka.de	8	96646	308595840	7
+slot1@c03-001-167.gridka.de	0	445614	2509185867	0
+slot1@c03-001-175.gridka.de	16	900144	5093331011	0
+slot1@c03-001-179.gridka.de	0	456238	2544674813	0
+== ETP collector f03 GPU slots all ==
+slot1@deepthought.etp.kit.edu Unclaimed 2 NVIDIA GeForce GTX TITAN X 12.0
+slot1@deepthought2.etp.kit.edu Unclaimed 1 NVIDIA L40S 12.8
+slot1@nemo2_gpu-0859ced445@g3606.nemo.privat Unclaimed 1 NVIDIA L40S 13.4
+slot1@nemo2_gpu-9bd794a4ff@g3606.nemo.privat Unclaimed 1 NVIDIA L40S 13.4
+slot1@nemo2_gpu-f3b4e0915b@g3606.nemo.privat Unclaimed 1 NVIDIA L40S 13.4
+== default collector GPU slots ==
+slot1@deepthought.etp.kit.edu Unclaimed 2 NVIDIA GeForce GTX TITAN X
+slot1@deepthought2.etp.kit.edu Unclaimed 1 NVIDIA L40S
+slot1@nemo2_gpu-0859ced445@g3606.nemo.privat Unclaimed 1 NVIDIA L40S
+slot1@nemo2_gpu-9bd794a4ff@g3606.nemo.privat Unclaimed 1 NVIDIA L40S
+slot1@nemo2_gpu-f3b4e0915b@g3606.nemo.privat Unclaimed 1 NVIDIA L40S
+== author acct groups seen ==
+759618 cms cms.dwong
+== scratch ==
+SCRATCH=unset TMPDIR=unset
+df: /scratch: No such file or directory
+Filesystem                         Size  Used Avail Use% Mounted on
+/dev/mapper/rhel_deepthought-root  442G  316G  127G  72% /
+== done ==
