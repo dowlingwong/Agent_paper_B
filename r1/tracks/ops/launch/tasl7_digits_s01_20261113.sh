@@ -6,7 +6,9 @@
 # Run as: ssh tasl7 bash $R/launch/tasl7_digits_s01_20261113.sh
 set -euo pipefail
 R=/home/dowling/r1_tracks; OUT=$R/out/digits_mlp; WORK=$R/scratch/digits_mlp; IN=$OUT/inputs; PATH=$R/bin:$PATH
-S01=s01_t7_20261113
+# S01_SUFFIX keeps an operator-error re-run (for example b) from overwriting earlier Phase 1 evidence;
+# the reviewed default is the unsuffixed directory.
+S01=s01_t7_20261113${S01_SUFFIX:-}
 LOG=$R/logs/${S01}_launch.log
 log(){ echo "$(date -u +%FT%TZ) $*" | tee -a "$LOG"; }
 log "S0.1 start (node digits_mlp, host TASL-7, k=2 probe period)"
