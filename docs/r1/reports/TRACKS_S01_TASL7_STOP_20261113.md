@@ -33,6 +33,12 @@ at pin `8237fd02b09ef2d28016a1c9f6acac3c35bb768b` (clean, non-shallow), prior `a
   `/private/tmp/b1-c-stop-retirement-capture-*` for the retirement.
 - The `_c` STOP scene (batch, unit logs, root_events/trials, node, `b1.log`, `b1.exit`, handover, staged checkout) is
   untouched (hash-equal to the accepted STOP capture); B1 is not retried; the Track S move is now STOPPED at S0.1.
+  Retirement artifacts (recorded in the STOP-case unit's execution): `_to_delete/trackx_evidence.active.040ffbe17da643a28264bbf90ccd88fe`
+  (content sha256 `f8c8624f…`), `marker-retirement_stop.json` sha256 `2bfc6542…`, `.note` sha256 `4b86ba34…`, `.rc` = 0,
+  `.err` retained; commit `a4e01d2` was the unit, execution record in this repo's commit `03319b6`.
+- The empty `$OUT/digits_mlp/s01_t7_20261113/` directory is preserved; the reviewed S0.1 script refuses an existing
+  output dir, so any re-run needs a reviewed handling (new dir name in a new reviewed unit), never an unreviewed
+  delete/move.
 - The TASL-7 paper checkout remains at pin `8237fd02` detached/clean; harness `a3fedbb`; prior file present with its
   sha; the k=2 server tmux session was stopped cleanly; no Track S session remains.
 

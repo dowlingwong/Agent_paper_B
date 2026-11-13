@@ -84,7 +84,11 @@ the node to TASL-7. **The TASL-2 `s05` scene is preserved, never modified or del
 
 ## 4. PLAN §10 row draft (for the author/coordinating session; target branch `trackS-ops-20261030`)
 
-`| R1-TRACKS-DIGITS-HOSTMOVE (12 Nov) | In the chat of 12 Nov 2026 the author chose to move Track S's digits_mlp node from TASL-2 to TASL-7 after B1 run _c ends, because TASL-2 became unreachable on 12 Nov. The TASL-2 s05 partial scene is preserved and never resumed; the move runs only under reports/TRACKS_DIGITS_HOSTMOVE_20261112.md: B1 _c normal end + separately reviewed post-run marker retirement by the B1 operator, a new digits_mlp S0.1 on TASL-7 (new launch script; result independently reviewed) before S0.5, paper pin 8237fd02 detached/clean, prior 5c849d15 reused with the host/Python-patch disclosure, new reviewed TASL-7 S0.5/S0.5b launch scripts with directories s05_t7_20261113, Track P paused and Track X untouched, and the Phase 4 calibration/2 %/exit-3/5-day gates. The run is self-consistent on TASL-7; cross-host comparability with TASL-2 numbers is not claimed. If TASL-2 returns after the TASL-7 run starts, the TASL-2 scene is censused and preserved only. B2, X.7 and sweep 2 remain gated. |`
+**Superseded draft — do not use.** The row that previously stood here (12 Nov, "B1 `_c` normal end + post-run
+retirement only") is replaced by the 13 Nov revision in
+`proposals/PLAN_ROW_R1-TRACKS-DIGITS-HOSTMOVE_REV_20261113.md` (STOP ending also allows the move via the accepted
+STOP-case retirement unit; B1 `_d` priority; TASL-2 census-only). The revised row remains a draft for the
+author/coordinating session; the operator does not commit it to `PLAN.md` unilaterally.
 
 **Operator note.** The operator does not add author decisions to PLAN unilaterally; the row above is paste-ready for
 the author/coordinating session or can be committed on the author's explicit relay instruction. Note that
@@ -94,13 +98,15 @@ the coordinating session uses.
 
 ## 5. Post-run B1 `_c` marker retirement (separate unit; not Track S work)
 
-The B1 `_c` handover created the marker with receipt `f8c8624f…`; the hand-off defines the `_b`→`_c` transition, not
-the `_c` post-run retirement. Before Track S can use the GPU, a **separate** procedure must be written, independently
-reviewed by a fresh reviewer, and executed by the **B1/Track X operator** (this experiment agent acting on the B1
-line, not the Track S operator role): retire the `_c` marker with its creation receipt (rename into
-`~/r1_locks/_to_delete/`, receipts kept; nothing deleted), record the retirement receipt in the `_c` handover
-directory, and verify the Track S watcher observed the marker gone before any Track S start. This proposal only
-names that dependency; it does not perform it.
+The `_c` marker is `f8c8624f903b36e99e835f14fa0892e63b5e5a25d1e6ff41f6b1a3b5542a73fe` (dev 66306, ino
+56261618); its creation receipt is `$RUN_DIR/marker-receipt.json` (sha256
+`e0da112f3fdfe3e14a14e0dc1470f2c6b66f5ff1e73e8acc243847037a3762c6`), not `f8c8624f…`. The hand-off defines the
+`_b`→`_c` transition, not the `_c` retirement. For the STOP ending the author's 13 Nov exception is implemented by
+`proposals/B1_C_STOP_MARKER_RETIREMENT_20261113.md` (accepted, executed 2026-11-13T10:49:31Z): the marker was renamed
+into `~/r1_locks/_to_delete/trackx_evidence.active.040ffbe17da643a28264bbf90ccd88fe`, the creation receipt was kept,
+retirement files `marker-retirement_stop.{json,rc,note,err}` were written, the `_c` STOP scene stayed byte-equal to
+the accepted capture, and a fresh reviewer later confirmed the execution is safe and must not be unwound. Track S must
+still wait for its own S0.1 gate (see §3).
 
 ## 6. Open items
 

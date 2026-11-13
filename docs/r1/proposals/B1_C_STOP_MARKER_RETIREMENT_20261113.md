@@ -5,7 +5,9 @@ the author's chat message of 13 Nov 2026 (relayed by the operator, decision reco
 `proposals/PLAN_ROW_R1-TRACKS-DIGITS-HOSTMOVE_REV_20261113.md` draft): B1 `_c` ending in a STOP still allows the Track S
 `digits_mlp` host move to TASL-7, and **first** the `_c` Track X marker may be retired in the STOP state, renaming it
 (`_to_delete/`), keeping the creation receipt and a retirement receipt, **without touching the `_c` STOP scene at all**.
-It does not retry B1, does not start Track S by itself, and does not change any pin.
+It does not retry B1, does not start Track S by itself, and does not change any pin. **This is an explicit, dated
+author exception to the O2/hand-off rule that a STOP never retires the marker**; it is limited to the cooperative
+Track X marker (renamed, not deleted) and does not license any other STOP-scene change.
 
 ## 0. Bindings
 
@@ -37,7 +39,15 @@ It does not retry B1, does not start Track S by itself, and does not change any 
 
 1. **Capture** (read-only): `b1.exit`; batch `status/completed/interruptions`; marker stat/sha256/content; `_to_delete`
    listing; `tmux ls`; `pgrep -af 'exam_runner|llama-server'`; `nvidia-smi --query-compute-apps`; `flock -n
-   "$HOME/r1_locks/gpu0.lock" true`; `wc -l < watch.log` (pre-retire line count). Save `ssh.log`, `ssh.exit`,
+   "$HOME/r1_locks/gpu0.lock" true`; `wc -l < /home/dowling/r1_tracks/logs/watch.log` (pre-retire line count).
+   Define the bindings used below:
+   `RUN_DIR=/home/dowling/r1_b1_engineering/b1_handover_4b31_20261112_c`;
+   `BATCH=/home/dowling/exam-x/work/b1_4b31_20261112_c`;
+   `CHECKOUT=/home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper`;
+   `PY=/home/dowling/exam-x/work/venv/bin/python`. Also write a **baseline** file list with hashes for §2.4:
+   `find "$BATCH" -type f ! -path '*/_to_delete/*' -print0 | sort -z | xargs -0 sha256sum > capture/batch-baseline.sha256`
+   plus `sha256sum "$RUN_DIR"/b1.log "$RUN_DIR"/b1.exit` and the pre-existing handover files
+   (`marker-receipt.json`, `marker-retirement.json`, `marker-retirement.note`). Save `ssh.log`, `ssh.exit`,
    `SHA256SUMS`; record the capture path.
 2. **Retire the marker with its creation receipt** (renames; deletes nothing; the STOP scene is not touched):
    ```
@@ -69,14 +79,18 @@ It does not retry B1, does not start Track S by itself, and does not change any 
    a STOP (never removed), and the success-path `$TMP.err` is **renamed** to
    `$RUN_DIR/marker-retirement_stop.err` and retained (never removed).
 3. **Verify and observe**: the retired name appears in `~/r1_locks/_to_delete/`; the marker is absent; read the
-   watcher transition using only lines after the pre-retire line count (a new `marker gone: resume by hand` line, or
-   the documented already-paused state; a new `FORCED` line is a STOP); record any STOP file the watcher touched
-   (expected: beside its manifests; pre-existing STOP files are preserved).
+   watcher transition using only lines after the pre-retire line count, waiting up to 90 s for a new line (a new
+   `marker gone: resume by hand` line, or the documented already-paused state after that wait; a new `FORCED` line is
+   a STOP); record any STOP file the watcher touched (expected: beside its manifests; pre-existing STOP files are
+   preserved) and re-check the marker/marker-receipt identity after the observation.
 4. **Post-state check (read-only)**: marker absent; retirement `.json`/`.rc`/`.note` present and the retained
    `.err` file present; creation receipt still
    present unchanged; `_to_delete` contains the retired name; the entire `_c` STOP scene (batch dir, unit logs,
    `root_events/trials`, `node/`, `b1.log`, `b1.exit`, `_c` handover, staging checkout) is byte-untouched (compare the
-   capture's file list/hashes; no writes into the batch or unit dirs); no processes; lease free.
+   capture's file list/hashes; no writes into the batch or unit dirs). The **pre-existing `_c` handover files must be
+   unchanged**; the only additions to `$RUN_DIR` are the four `*_stop.*` files. No processes; lease free. Compare the
+   §2.1 baseline (`batch-baseline.sha256`) to a fresh run of the same `find`/`sha256sum` after the retirement; any
+   difference outside the four new `*_stop.*` files is a STOP.
 5. **Record**: append a short section to the `_c` STOP report or a new `reports/B1_C_STOP_MARKER_RETIREMENT_20261113.md`
    with the capture path, retirement receipt/note hashes, watcher observation, post-state verification and the
    explicit statement that the `_c` STOP scene was not modified; publish a STATUS entry; submit for a fresh
