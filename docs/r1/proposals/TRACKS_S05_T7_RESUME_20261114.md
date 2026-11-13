@@ -1,4 +1,4 @@
-# Track S `digits_mlp` S0.5 resume on TASL-7 — candidate for review (14 November 2026, rev 3)
+# Track S `digits_mlp` S0.5 resume on TASL-7 — candidate for review (14 November 2026, rev 4)
 
 **Candidate for independent review; not an execution.** Resumes the paused S0.5 run after B1 `_d` ends normally and its
 Track X marker is retired by the reviewed post-run unit. Authority: `reports/TRACKS_DIGITS_HOSTMOVE_20261112.md`
@@ -12,8 +12,9 @@ into the run `_to_delete`, not removed as the runbook's illustrative `find -dele
    marker absent; drill marker absent.
 2. The paused scene is intact, checked against a **pause baseline**: `$RUN=out/digits_mlp/s05_t7_20261113` (manifest,
    ledgers, STOP; `done` holds the counts 22 roots / 6 forks / 0 leaves / 0 failed / 0 exhausted and `done.status` is
-   asserted `paused`) and `$WORK=scratch/digits_mlp/s05_t7_20261113` (snapshots and `roots/<id>/root_trials.jsonl`;
-   the leaves/S0.5b inputs live under `$WORK`, not `$RUN`). A pause
+   asserted `paused`; `len(manifest['sessions']) == 1`) and `$WORK=scratch/digits_mlp/s05_t7_20261113`
+   (`roots/<id>/root_trials.jsonl` and `roots/<id>/snapshots`; the leaves/S0.5b inputs live under `$WORK`, not
+   `$RUN`). A pause
    capture exists (taken at pause time or reconstructed as: files under `$RUN`/`$WORK` have mtime <= the pause
    `2026-11-13T13:03:00Z`; `$RUN/STOP` inode 57048847, 0 bytes, sha `e3b0c442…`); no new/removed paths; no truncated
    last line of any JSONL. `b1_proposals.jsonl` is a B1 artifact and is not part of the Track S scene.
@@ -59,7 +60,8 @@ into the run `_to_delete`, not removed as the runbook's illustrative `find -dele
 ## 2. Copy-back / report / review / pause
 Copy the S0.5 outputs `$RUN/s05_calibration.jsonl` and `$RUN/s05b_truncated.jsonl` (both must exist; the old
 `sp05*` glob matched nothing), the other run `*.jsonl` ledgers (`roots`/`forks`/`leaves`/`failed_units`/`audit_runs` as
-present), the manifest, **the run's logs** (collector `.log`/`.cmd`/`.exit`, launcher log/rc) and `SHA256SUMS` to
+present), the manifest, **the run's logs** (collector `.log`/`.cmd`/`.exit`; S0.5b `s05b_t7_20261113_launch.log` and
+`trks_s05b_t7.{log,cmd,exit}` as present; the launcher stdout/rc under `$R/logs/`) and `SHA256SUMS` to
 `results/r1/tracks/digits_mlp/s05_t7_20261113/` (never the TASL-2 scene); assert each named file exists before copy; write
 the report + STATUS on `trackS-ops-20261030`; independent review; then pause and report per L1 (S0.5 summary/STOP 4
 still wait for `tabular_mlp`). No B2/X.7/sweep 2. If TASL-2 returns meanwhile, it is censused read-only and preserved,
