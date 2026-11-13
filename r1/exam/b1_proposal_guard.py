@@ -4,6 +4,13 @@ The guard does not classify a proposal as invalid or rewrite it. It terminates
 this B1 campaign before the worker changes any files if the advertised edit
 and the objective actually parsed by the pinned worker do not agree. STOP is
 not a completed trial and must never be automatically resumed.
+
+R1-EXAM-B1-MODEL-OUTPUT-INVALID (13 Nov 2026): this file is unchanged in
+behaviour. The same model-output conditions are now checked on the proposal
+before the control plane calls the worker (``r1.exam.b1_proposal_precheck``),
+where a failing proposal becomes an invalid trial. A proposal that still fails
+here has bypassed that check, which is an internal inconsistency, so the STOP
+stays.
 """
 from __future__ import annotations
 

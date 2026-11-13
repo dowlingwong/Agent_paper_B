@@ -157,3 +157,26 @@ def test_default_cap_matches_the_proposer_constant():
         pytest.skip('harness not importable; set AR_HARNESS_ROOT')
     from r1.exam.b1_llm_truncation import B1_MAX_COMPLETION_TOKENS
     assert u.DEFAULT_CAP == B1_MAX_COMPLETION_TOKENS
+
+
+def test_context_overflow_calls_have_no_usage_and_are_counted(tmp_path, capsys):
+    """R1-EXAM-B1-MODEL-OUTPUT-INVALID: an overflow call records no completion_tokens; it is counted, not refused."""
+    tree = tmp_path / 'roots'
+    rel = 'olmo31_32b/b1/off/openml_credit_approval__s9002'
+    d = _root(tree, rel, [{'calls': [120]}, {'calls': [130]}])
+    p = d / 'root_events.jsonl'
+    rows = [json.loads(s) for s in p.read_text().splitlines()]
+    overflow = {'completion_tokens': None, 'prompt_tokens': None, 'latency_ms': 5.0, 'cache_prompt': False,
+                'context_overflow': True, 'truncated': False}
+    rows.append({'event_type': 'llm_call', 'trial_id': f'{rel.split("/")[-1]}-trial-003', 'payload': overflow})
+    p.write_text(''.join(json.dumps(r) + '\n' for r in rows))
+    trials = d / 'root_trials.jsonl'
+    trials.write_text(trials.read_text() + json.dumps({'trial_id': f'{rel.split("/")[-1]}-trial-003', 'budget_index': 3,
+                                                        'decision': 'failed_invalid',
+                                                        'extra': {'manager': {'llm_call': overflow}}}) + '\n')
+    (tree / 'batch_state.json').write_text(json.dumps({'completed': {'k': {
+        'path': f'{HOST}/{rel}/campaign_manifest.json',
+        'sha256': hashlib.sha256((d / 'campaign_manifest.json').read_bytes()).hexdigest()}}}))
+    assert u.main(['--roots', str(tree)]) == 0
+    row = json.loads(capsys.readouterr().out.splitlines()[-1])['roots'][0]
+    assert row['context_overflow'] == 1 and row['llm_calls'] == 3 and row['llm_calls_without_usage'] == 0

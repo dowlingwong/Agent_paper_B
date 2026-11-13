@@ -116,7 +116,7 @@ def observer_for_campaign(job, out):
     return SelfForecastObserver(job['base_url'],candidate['id'],journal_path=Path(out)/'a4_observer_requests.jsonl')
 
 
-def exam_manager(candidate, proposal_schema):
+def exam_manager(candidate, proposal_schema, journal_path=None):
     """The LLM proposer of an exam campaign, exactly as ``collect`` builds it.
 
     The llamacpp provider of the pinned harness decides the wire value of ``cache_prompt``: at the
@@ -125,9 +125,14 @@ def exam_manager(candidate, proposal_schema):
 
     R1-EXAM-B1-TRUNCATION-INVALID (11 Nov 2026): the harness proposer is wrapped so every call carries
     ``max_completion_tokens`` and a truncated reply is an invalid proposal, not a crash
-    (``r1.exam.b1_llm_truncation``)."""
+    (``r1.exam.b1_llm_truncation``).
+
+    R1-EXAM-B1-MODEL-OUTPUT-INVALID (13 Nov 2026): the same wrapper checks the model output before
+    execution (a failing proposal is an invalid trial, not a STOP) and journals every proposal to
+    ``journal_path`` before it is returned. The caller sets ``b1_worker`` to the campaign's worker."""
     from r1.exam.b1_llm_truncation import B1CappedLangGraphManager
-    return B1CappedLangGraphManager(model='llamacpp/'+candidate['id'],proposal_schema=proposal_schema,transport_retry=None)
+    return B1CappedLangGraphManager(model='llamacpp/'+candidate['id'],proposal_schema=proposal_schema,transport_retry=None,
+                                    journal_path=journal_path)
 
 
 def cache_prompt_evidence(records, events):
@@ -230,8 +235,9 @@ def _collect_b1_review(job):
     if kind=='random_valid':
         manager=RandomValidManager(yaml.safe_load(Path(job['value_grids']).read_text())['nodes'][node])
     elif kind=='scripted': manager=ScriptedRandomManager(node,seed=seed,repetition=0)
-    else: manager=exam_manager(candidate,job['proposal_schema'])
+    else: manager=exam_manager(candidate,job['proposal_schema'],journal_path=out/'b1_proposals.jsonl')
     worker=FixtureWorker(node_root,seed) if job['dryrun'] else B1IntegrityWorker(node_root=node_root,artifact_dir=out/'art',train_seed=seed,split_seed=seed)
+    if kind=='llm': manager.b1_worker=worker
     raw_observer=observer_for_campaign(job,out)
     observer=B1ObserverAdapter(raw_observer) if raw_observer is not None else None
     if job['dryrun']:
@@ -285,6 +291,8 @@ def _collect_b1_review(job):
                        **result,**{k:v for k,v in forecasts.get(trial,{}).items() if k in ('p_delta_positive','p_no_effect')}})
     cache_prompt=cache_prompt_evidence(records,events) if kind=='llm' else None
     observer_evidence=validate_observer_journal(out/'a4_observer_requests.jsonl',events) if kind=='llm' else None
+    from r1.exam.b1_proposal_journal import validate_proposal_journal
+    proposal_journal=validate_proposal_journal(out/'b1_proposals.jsonl',records,events) if kind=='llm' else None
     live=evaluate_ledger_paths([out/'root_trials.jsonl'],manager_kind='scripted' if kind!='llm' else 'langgraph',memory_mode='append_only_summary')
     novelty=[e['payload'] for e in events if e['event_type']=='edit_novelty']
     evaluated=len(novelty)
@@ -307,8 +315,8 @@ def _collect_b1_review(job):
             'proposal_schema':job['proposal_schema'] if kind=='llm' else None,'observer':'exam_self_forecast/v1' if observer else None,
             'compute_budget':budget,'termination':'worker_cap' if budget['worker_runs']>=job['W'] else 'llm_cap_or_reserved_observer_pair',
             'job_binding':job['binding'],'job_sha256':digest_file(out/'job.json'),
-            'evidence_hashes':{name:digest_file(out/name) if (out/name).exists() else None for name in ('root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json','a4_observer_requests.jsonl')},
-            'cache_prompt':cache_prompt,'observer_evidence':observer_evidence,'diagnostics':diagnostics,'audited_proposals':audits,'replay_checks':checks,'d28':live,'final_audits':final}
+            'evidence_hashes':{name:digest_file(out/name) if (out/name).exists() else None for name in ('root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json','a4_observer_requests.jsonl','b1_proposals.jsonl')},
+            'cache_prompt':cache_prompt,'observer_evidence':observer_evidence,'proposal_journal':proposal_journal,'diagnostics':diagnostics,'audited_proposals':audits,'replay_checks':checks,'d28':live,'final_audits':final}
     write_json(out/'campaign_manifest.json',result)
     return result
 

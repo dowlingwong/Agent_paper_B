@@ -27,6 +27,13 @@ What this module changes, on the paper side only (the harness pin stays ``a3fedb
   ``finish_reason`` and ``truncated`` on every call. A truncated call also gains ``truncation_policy``,
   the SDK error type (if any), and the discarded character counts.
 
+R1-EXAM-B1-MODEL-OUTPUT-INVALID (13 Nov 2026) extends this to a prompt that has outgrown the context:
+llama-server answers HTTP 400 ``exceed_context_size_error`` and no reply exists. Past trial 1 that can only
+come from model text the memory summary repeats, so the call becomes an empty reply and an invalid trial,
+charged, like a truncation (``context_overflow`` in its record). At trial 1 it stays a STOP: a
+configuration fault. The model-output pre-check and the proposal journal are described on
+``B1CappedLangGraphManager``.
+
 Unchanged: the harness pin, the prompt, the schema, the seed, ``cache_prompt``, the observer (which has its
 own ``max_tokens`` and its own non-fatal ``query_failed`` path), every other exception (still a STOP), and the
 root manifest and its diagnostics. A truncated trial counts under ``invalid`` and ``parse_failed`` there,
@@ -50,6 +57,56 @@ def _truncation_errors() -> tuple[type[BaseException], ...]:
     if len(found) != len(names):
         raise RuntimeError('STOP: the installed openai SDK lacks the finish-reason error classes')
     return found
+
+
+CONTEXT_OVERFLOW_TYPE = 'exceed_context_size_error'
+
+
+def _context_overflow(exc) -> dict | None:
+    """llama-server's HTTP 400 for a prompt longer than the context (llama.cpp 620d222 ``server-context.cpp``).
+
+    Returns ``{'prompt_tokens': n | None, 'message': ...}`` for that error and None for any other."""
+    import re
+    import openai
+    if not isinstance(exc, openai.BadRequestError):
+        return None
+    body = getattr(exc, 'body', None)
+    err = body.get('error', body) if isinstance(body, dict) else None
+    if not isinstance(err, dict) or err.get('type') != CONTEXT_OVERFLOW_TYPE:
+        return None
+    message = str(err.get('message') or '')
+    tokens = err.get('n_prompt_tokens')
+    if type(tokens) is not int:
+        found = re.search(r'request \((\d+) tokens\)', message)
+        tokens = int(found.group(1)) if found else None
+    return {'prompt_tokens': tokens, 'message': message[:300]}
+
+
+def _has_lone_surrogate(value) -> bool:
+    """True if a string in ``value`` holds a UTF-16 surrogate code point, which cannot be encoded as UTF-8."""
+    if isinstance(value, str):
+        return any('\ud800' <= ch <= '\udfff' for ch in value)
+    if isinstance(value, dict):
+        return any(_has_lone_surrogate(k) or _has_lone_surrogate(v) for k, v in value.items())
+    if isinstance(value, list):
+        return any(_has_lone_surrogate(v) for v in value)
+    return False
+
+
+def _unencodable(content) -> bool:
+    """A reply whose text, or a JSON string in it, carries a lone surrogate (e.g. the escape ``\\ud800``).
+
+    The harness would put such a field into every later prompt (the memory summary), and the HTTP client
+    cannot encode that request: the next proposer call would raise ``UnicodeEncodeError`` and stop the root."""
+    import json
+    if not isinstance(content, str):
+        return False
+    if _has_lone_surrogate(content):
+        return True
+    try:
+        return _has_lone_surrogate(json.loads(content))
+    except (ValueError, RecursionError):
+        return False
 
 
 def _sdk_usage(completion) -> tuple[int | None, int | None]:
@@ -89,10 +146,12 @@ class TruncationGuard:
         self.cap = cap
         self.calls = 0
         self.outcome: dict | None = None
+        self.raw_content: str | None = None
 
     def invoke(self, messages, *args, **kwargs):
         self.calls += 1
         self.outcome = None
+        self.raw_content = None
         try:
             response = self.model.invoke(messages, *args, **kwargs)
         except _truncation_errors() as exc:
@@ -103,6 +162,16 @@ class TruncationGuard:
             self.outcome = {'finish_reason': finish, 'truncated': True, 'truncation_error_type': type(exc).__name__,
                             'discarded_content_chars': content_chars, 'discarded_reasoning_chars': reasoning_chars}
             return _empty_reply(prompt_tokens, completion_tokens, finish)
+        except Exception as exc:
+            overflow = _context_overflow(exc)
+            if overflow is None:
+                raise
+            # R1-EXAM-B1-MODEL-OUTPUT-INVALID: the prompt outgrew the context (the memory summary repeats
+            # earlier model text); no reply exists, so the proposal is invalid like a truncated one.
+            self.outcome = {'finish_reason': None, 'truncated': False, 'context_overflow': True,
+                            'context_overflow_prompt_tokens': overflow['prompt_tokens'],
+                            'context_overflow_message': overflow['message']}
+            return _empty_reply(None, None, 'context_overflow')
         meta = getattr(response, 'response_metadata', None) or {}
         finish = meta.get('finish_reason')
         if finish in TRUNCATING_FINISH_REASONS:
@@ -113,20 +182,46 @@ class TruncationGuard:
                             'discarded_content_chars': len(content) if isinstance(content, str) else 0,
                             'discarded_reasoning_chars': len(reasoning) if isinstance(reasoning, str) else 0}
             return _empty_reply(usage.get('input_tokens'), usage.get('output_tokens'), finish)
+        content = getattr(response, 'content', None)
+        if _unencodable(content):
+            # R1-EXAM-B1-MODEL-OUTPUT-INVALID (M20): unusable model text; an invalid proposal like a truncation.
+            usage = getattr(response, 'usage_metadata', None) or {}
+            self.outcome = {'finish_reason': finish, 'truncated': False, 'unencodable_reply': True,
+                            'discarded_content_chars': len(content)}
+            return _empty_reply(usage.get('input_tokens'), usage.get('output_tokens'), finish or 'stop')
         self.outcome = {'finish_reason': finish, 'truncated': False}
+        self.raw_content = content if isinstance(content, str) else None
         return response
 
 
 class B1CappedLangGraphManager(LangGraphManager):
-    """The pinned harness proposer, with the completion cap and the truncation rule of this module."""
+    """The pinned harness proposer, with the completion cap and the truncation rule of this module.
 
-    def __init__(self, *args, max_completion_tokens: int = B1_MAX_COMPLETION_TOKENS, **kwargs):
+    R1-EXAM-B1-MODEL-OUTPUT-INVALID (13 Nov 2026) adds two things here, both before the control plane can
+    call the worker:
+
+    * the model-output checks of ``r1.exam.b1_proposal_precheck``. A proposal that fails them, and that the
+      harness itself would neither revise (D25 inactive key) nor reject (its precondition checks), loses its
+      structured edit and is marked ``proposal_precondition_failed``. The harness then records it as an
+      invalid trial without a worker run. The rejected edit and the reason are kept in
+      ``extra['b1_model_output_rejected']``. Proposals the harness revises or rejects by itself are left
+      exactly as before, so every trial that did not STOP before is recorded exactly as before;
+    * a durable proposal journal (``journal_path``, one fsynced JSON line per proposer call, first proposals
+      and D25 revisions): the objective, the structured edit, the directive the worker would parse, the raw
+      reply and the check outcome. It is written before ``propose_next_trial`` returns, so before any
+      execution.
+
+    ``b1_worker`` must be set to the campaign's worker (the harness precondition reads its node root)."""
+
+    def __init__(self, *args, max_completion_tokens: int = B1_MAX_COMPLETION_TOKENS, journal_path=None, **kwargs):
         if type(max_completion_tokens) is not int or max_completion_tokens < 1:
             raise ValueError('max_completion_tokens must be a positive int')
         _truncation_errors()   # fail at construction, not mid-campaign, if the SDK lacks the error classes
         super().__init__(*args, **kwargs)
         self.b1_max_completion_tokens = max_completion_tokens
         self._b1_guards: list[TruncationGuard] = []
+        self.b1_journal_path = journal_path
+        self.b1_worker = None
 
     def _resolve_llm(self, seed: int | None = None):
         model = super()._resolve_llm(seed=seed)
@@ -137,9 +232,10 @@ class B1CappedLangGraphManager(LangGraphManager):
         self._b1_guards.append(guard)
         return guard
 
-    def propose_next_trial(self, *args, **kwargs):
+    def propose_next_trial(self, status, memory_context, node_spec, *, revision_feedback=None, revision_attempt=None):
         self._b1_guards = []
-        proposal = super().propose_next_trial(*args, **kwargs)
+        proposal = super().propose_next_trial(status, memory_context, node_spec, revision_feedback=revision_feedback,
+                                              revision_attempt=revision_attempt)
         used = [g for g in self._b1_guards if g.calls]
         call = (proposal.extra or {}).get('llm_call')
         if len(used) != 1 or used[0].calls != 1 or used[0].outcome is None or not isinstance(call, dict):
@@ -147,9 +243,87 @@ class B1CappedLangGraphManager(LangGraphManager):
         outcome = used[0].outcome
         call['max_completion_tokens'] = self.b1_max_completion_tokens
         call.update(outcome)
-        if outcome['truncated']:
-            call['truncation_policy'] = TRUNCATION_POLICY
+        if outcome['truncated'] or outcome.get('context_overflow') or outcome.get('unencodable_reply'):
+            if outcome['truncated']:
+                call['truncation_policy'] = TRUNCATION_POLICY
+            elif outcome.get('unencodable_reply'):
+                from r1.exam.b1_proposal_precheck import POLICY
+                call['unencodable_reply_policy'] = POLICY
+            else:
+                from r1.exam.b1_proposal_precheck import POLICY
+                call['context_overflow_policy'] = POLICY
+                if status.budget_index <= 1:
+                    # nothing the model wrote is in the first prompt: a configuration fault, not model output
+                    raise RuntimeError('STOP: B1 first proposer prompt exceeds the context')
             if call.get('parse_ok') is not False or proposal.extra.get('parse_failed') is not True \
                     or proposal.extra.get('structured_edit'):
                 raise RuntimeError('STOP: a truncated B1 proposal was not rejected by the harness validator')
+        edit = proposal.extra.get('structured_edit')
+        outcome_kind, rejection = self._b1_model_output_check(proposal, status, node_spec)
+        if rejection is not None:
+            from autoresearch.nodes.active_keys import inactive_key_in_proposal
+            from r1.exam.b1_proposal_precheck import POLICY
+            proposal.extra.pop('structured_edit', None)
+            proposal.extra.pop('deterministic_patch', None)
+            proposal.extra['proposal_precondition_failed'] = True
+            proposal.extra['b1_model_output_rejected'] = {'policy': POLICY, **rejection, 'structured_edit': edit}
+            # Without its structured edit, the harness's D25 check would read the key from the objective and could
+            # ask for a revision of a rejected proposal. Name the (active) edit key so the rejection is final.
+            proposal.extra['named_param'] = edit['symbol']
+            if inactive_key_in_proposal(proposal, node_spec, status.current_constants) is not None:
+                raise RuntimeError('STOP: a rejected B1 proposal would still be revised by the D25 loop')
+        self._b1_journal(status, proposal, edit, used[0].raw_content, revision_attempt, outcome_kind, rejection)
         return proposal
+
+    def _b1_model_output_check(self, proposal, status, node_spec):
+        """Return (outcome kind, rejection or None). Only proposals headed for the worker are checked."""
+        from autoresearch.control_plane.campaign import _precondition_failure_result
+        from autoresearch.nodes.active_keys import inactive_key_in_proposal
+        from r1.exam.b1_proposal_precheck import check_model_output
+        edit = proposal.extra.get('structured_edit')
+        if proposal.extra.get('parse_failed') or not isinstance(edit, dict):
+            return 'not_applicable', None          # the harness rejects it (parse or precondition)
+        if inactive_key_in_proposal(proposal, node_spec, status.current_constants) is not None:
+            return 'd25_inactive_key', None        # the harness revises or skips it; never executed as is
+        if self.b1_worker is None:
+            raise RuntimeError('STOP: B1 proposer has no worker for the precondition check')
+        if _precondition_failure_result(proposal, node_spec, self.b1_worker) is not None:
+            return 'harness_precondition', None    # the harness rejects it exactly as before
+        rejection = check_model_output(proposal.objective, edit, node_spec)
+        return ('rejected' if rejection else 'passed'), rejection
+
+    def _b1_journal(self, status, proposal, edit, raw, revision_attempt, outcome_kind, rejection):
+        if self.b1_journal_path is None:
+            return
+        import hashlib
+        import json
+        import os
+        from autoresearch.worker.local_worker import _parse_change_directive
+        directive = _parse_change_directive(proposal.objective or '')
+        row = {'schema': 'b1_proposal_journal/v1', 'campaign_id': status.campaign_id,
+               'trial_id': f'{status.campaign_id}-trial-{status.budget_index:03d}',
+               'budget_index': status.budget_index, 'revision_attempt': int(revision_attempt or 0),
+               'summary': proposal.proposal_summary, 'rationale': proposal.proposal_rationale,
+               'objective': proposal.objective, 'structured_edit': edit,
+               'final_structured_edit': proposal.extra.get('structured_edit'),
+               'directive': list(directive) if directive else None,
+               'parse_failed': bool(proposal.extra.get('parse_failed')),
+               'truncated': bool(proposal.extra['llm_call'].get('truncated')),
+               'context_overflow': bool(proposal.extra['llm_call'].get('context_overflow')),
+               'unencodable_reply': bool(proposal.extra['llm_call'].get('unencodable_reply')),
+               'raw_proposal_sha256': proposal.extra.get('raw_proposal_sha256'),
+               'raw_reply': raw,
+               'raw_reply_sha256': hashlib.sha256(raw.encode('utf-8')).hexdigest() if isinstance(raw, str) else None,
+               'check': outcome_kind, 'rejection': rejection}
+        data = (json.dumps(row, sort_keys=True, allow_nan=False) + '\n').encode('utf-8')
+        fd = os.open(self.b1_journal_path, os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
+        try:
+            view = memoryview(data)
+            while view:
+                written = os.write(fd, view)
+                if written <= 0:
+                    raise OSError('short B1 proposal journal write')
+                view = view[written:]
+            os.fsync(fd)
+        finally:
+            os.close(fd)

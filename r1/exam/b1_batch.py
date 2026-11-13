@@ -127,12 +127,12 @@ def verify_batch(batch, cfg, rule_sha):
             root_dir=Path(path).parent
             _inside(batch,root_dir)
             for name in ('job.json','post_check.json','root_trials.jsonl','root_events.jsonl',
-                         'audit_cache.json','audit_configs.json','a4_observer_requests.jsonl'):
+                         'audit_cache.json','audit_configs.json','a4_observer_requests.jsonl','b1_proposals.jsonl'):
                 _inside(root_dir,root_dir/name)
             if not isinstance(entry,dict) or entry.get('path')!=path or digest_file(path)!=entry.get('sha256'):
                 _stop('root missing or changed')
             preliminary=_read(path)
-            names={'root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json','a4_observer_requests.jsonl'}
+            names={'root_trials.jsonl','root_events.jsonl','audit_cache.json','audit_configs.json','a4_observer_requests.jsonl','b1_proposals.jsonl'}
             hashes=preliminary.get('evidence_hashes') if isinstance(preliminary,dict) else None
             if not isinstance(hashes,dict) or set(hashes)!=names or any(hashes[k] is None for k in ('root_trials.jsonl','root_events.jsonl','audit_configs.json')):
                 _stop('root evidence index incomplete')
@@ -183,6 +183,11 @@ def verify_batch(batch, cfg, rule_sha):
                 if root.get('cache_prompt')!=cache_prompt_evidence(records,events): _stop('cache evidence differs from events')
                 if root.get('observer_evidence')!=validate_observer_journal(Path(path).parent/'a4_observer_requests.jsonl',events):
                     _stop('observer evidence differs from journal')
+                from r1.exam.b1_proposal_journal import validate_proposal_journal
+                if root.get('proposal_journal')!=validate_proposal_journal(Path(path).parent/'b1_proposals.jsonl',records,events):
+                    _stop('proposal journal evidence differs from journal')
+            elif root.get('proposal_journal') is not None or root['evidence_hashes'].get('b1_proposals.jsonl') is not None:
+                _stop('software anchor root has a proposal journal')
             if digest_file(Path(path).parent/'post_check.json')!=entry.get('post_check_sha256'):
                 _stop('root receiving certificate changed')
             recorded=root.get('d28') or {}

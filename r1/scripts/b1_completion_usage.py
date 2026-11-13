@@ -114,8 +114,12 @@ def root_usage(root: Path, rel: str, completed: dict) -> dict:
     return {'root': rel, 'candidate': m['cand'], 'mode': m['mode'], 'node': m['node'], 'seed': int(m['seed']),
             'completed': entry is not None, 'manifest_sha256_matches_batch_state': manifest_ok,
             'software_anchor': m['cand'] in SOFTWARE, 'trials': len(records),
-            'llm_calls': len(calls), 'llm_calls_without_usage': sum(c is None for c in comp),
+            'llm_calls': len(calls),
+            # a context-overflow call (R1-EXAM-B1-MODEL-OUTPUT-INVALID) has no reply and so no completion count
+            'llm_calls_without_usage': sum(c is None and not call.get('context_overflow') for c, call in zip(comp, calls)),
             'truncated': sum(bool(c.get('truncated')) for c in calls),
+            'context_overflow': sum(bool(c.get('context_overflow')) for c in calls),
+            'unencodable_reply': sum(bool(c.get('unencodable_reply')) for c in calls),
             'max_completion_tokens': max(known) if known else None,
             'sum_completion_tokens': sum(c for c, _ in timed), 'sum_latency_s': sum(l for _, l in timed) / 1000.0,
             'max_prompt_tokens': max([x for x in (_int(c.get('prompt_tokens')) for c in calls) if x is not None], default=None),

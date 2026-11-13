@@ -66,10 +66,12 @@ def main(out):
     spec = load_registered_node(node, repo_root=c.HARNESS)
     root = out / 'node'
     shutil.copytree(c.HARNESS / 'nodes' / node, root, ignore=shutil.ignore_patterns('__pycache__', '.autoresearch_artifacts'))
-    manager = c.exam_manager({'id': 'standin_candidate'}, 'manager_proposal/v1')
+    manager = c.exam_manager({'id': 'standin_candidate'}, 'manager_proposal/v1', journal_path=out / 'b1_proposals.jsonl')
+    worker = c.FixtureWorker(root, seed)
+    manager.b1_worker = worker   # as collect sets it (R1-EXAM-B1-MODEL-OUTPUT-INVALID)
     run_real_campaign(node_spec=spec, campaign_id=f'{node}__s{seed}', budget=cap, manager_mode='baseline_manager',
                       memory_mode='append_only_summary', records_path=out / 'root_trials.jsonl',
-                      worker=c.FixtureWorker(root, seed), proposal_backend=manager,
+                      worker=worker, proposal_backend=manager,
                       compute_budget=ComputeBudget(max_worker_runs=W, max_llm_calls=cap),
                       action_versions=ActionVersions.new_campaign(), verify_split_policy='vary',
                       event_store=CampaignEventStore(out / 'root_events.jsonl'), proposal_observer=None)

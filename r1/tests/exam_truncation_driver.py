@@ -14,6 +14,13 @@ Environment:
                  "length_empty"    empty content, finish_reason "length" (cut during thinking)
                  "content_filter"  a complete valid proposal, finish_reason "content_filter"
                  "http500"         HTTP 500 (any other failure must still stop the root)
+                 Model-output kinds (R1-EXAM-B1-MODEL-OUTPUT-INVALID; finish_reason "stop"; fields valid, objective or
+                 value altered): "no_directive", "sym_not_editable", "sym_differs", "old_differs", "new_differs",
+                 "backslash", "py_long", "py_nonliteral", "py_nonfinite", "py_bool", "stale_and_mismatch"
+                 (the harness precondition rejects it first), "inactive_and_mismatch" (openml: a D25 inactive key),
+                 "unknown_param" (the param names no editable constant), "ctx_overflow" (llama-server's HTTP 400 for
+                 a prompt longer than the context), "mismatch_inactive_objective" (openml: structured edit on the active C,
+                 objective naming the D25-inactive max_depth), "surrogate" (a lone surrogate escape in a reply field)
   TRUNC_MANAGER  "fix" (default): ``exam_manager``; "pin": the plain harness ``LangGraphManager`` built exactly
                  as ``exam_manager`` built it before R1-EXAM-B1-TRUNCATION-INVALID.
   TRUNC_NODE     node (default digits_mlp; openml_credit_approval has D25 active keys, and the stand-in names an
@@ -37,6 +44,49 @@ sys.path.insert(0, str(REPO / 'r1/scripts'))
 
 REQUESTS: list = []
 PLAN: list = json.loads(os.environ.get('TRUNC_PLAN', '[]'))
+def _directive(p):
+    return f"Change {p['param']} from {p['old_value']} to {p['new_value']}"
+
+
+def mutate(kind, p, prompt):
+    """Alter a valid stand-in proposal into one model-output fault (see the module docstring)."""
+    import re
+    openml = 'Node: openml_' in prompt
+    other = 'max_iter' if openml else 'BATCH_SIZE'
+    if kind == 'no_directive':
+        p['objective'] = f"Increase {p['param']} a little to improve the metric."
+    elif kind == 'sym_not_editable':
+        p['objective'] = f"Change {'alpha' if openml else 'momentum'} from {p['old_value']} to {p['new_value']}"
+    elif kind == 'sym_differs':
+        p['objective'] = f"Change {other} from {p['old_value']} to {p['new_value']}"
+    elif kind == 'old_differs':
+        p['objective'] = f"Change {p['param']} from {p['old_value']}0 to {p['new_value']}"
+    elif kind == 'new_differs':
+        p['objective'] = f"Change {p['param']} from {p['old_value']} to {p['new_value']}5"
+    elif kind == 'backslash':
+        p['new_value'] = p['new_value'] + '\\1'
+        p['objective'] = _directive(p)
+    elif kind in ('py_long', 'py_nonliteral', 'py_nonfinite', 'py_bool'):
+        p['new_value'] = {'py_long': '1' * 300, 'py_nonliteral': '2*16', 'py_nonfinite': '1e999', 'py_bool': 'True'}[kind]
+        p['objective'] = _directive(p)
+    elif kind == 'stale_and_mismatch':
+        p['old_value'] = p['old_value'] + '9'
+        p['objective'] = f"Change {other} from 1 to 2"
+    elif kind == 'inactive_and_mismatch':
+        found = re.search(r'^  max_depth = (.+)$', prompt, re.M)
+        p['param'], p['old_value'], p['new_value'] = 'max_depth', found.group(1) if found else '5', '9'
+        p['objective'] = f"Change C from 1 to 2"
+    elif kind == 'mismatch_inactive_objective':   # openml: edit on the active C, objective names the inactive max_depth
+        p['objective'] = f"Change max_depth from 5 to 9"
+    elif kind == 'surrogate':                     # a lone surrogate in a reply field (JSON escape \\ud800)
+        p['summary'] = p['summary'] + '\ud800'
+    elif kind == 'unknown_param':
+        p['param'] = 'momentum'
+        p['objective'] = _directive(p)
+    elif kind not in ('stop', 'length_partial', 'length_full', 'length_empty', 'content_filter', 'http500', 'ctx_overflow'):  # noqa
+        raise ValueError(f'unknown stand-in kind {kind}')
+
+
 COMPLETION_TOKENS = {'stop': 5, 'length_partial': 16384, 'length_full': 16384, 'length_empty': 16384,
                      'content_filter': 9}
 
@@ -53,6 +103,16 @@ class StandIn(BaseHTTPRequestHandler):
         index = len(REQUESTS)
         kind = PLAN[index] if index < len(PLAN) else 'stop'
         REQUESTS.append({'path': self.path, 'body': body, 'kind': kind})
+        if kind == 'ctx_overflow':   # llama.cpp 620d222's reply to a prompt longer than the context
+            data = json.dumps({'error': {'code': 400, 'type': 'exceed_context_size_error', 'n_prompt_tokens': 40000, 'n_ctx': 32768,
+                                         'message': 'request (40000 tokens) exceeds the available context size '
+                                                    '(32768 tokens), try increasing it'}}).encode()
+            self.send_response(400)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
         if kind == 'http500':
             data = b'{"error": "stand-in failure"}'
             self.send_response(500)
@@ -62,7 +122,9 @@ class StandIn(BaseHTTPRequestHandler):
             self.wfile.write(data)
             return
         prompt = body['messages'][-1]['content']
-        content = json.dumps(fake.proposal_for(prompt, body.get('seed')))
+        proposal = fake.proposal_for(prompt, body.get('seed'))
+        mutate(kind, proposal, prompt)
+        content = json.dumps(proposal)
         finish = 'stop'
         if kind == 'length_partial':
             content, finish = content[:40], 'length'
@@ -75,7 +137,7 @@ class StandIn(BaseHTTPRequestHandler):
         message = {'role': 'assistant', 'content': content}
         if kind.startswith('length'):
             message['reasoning_content'] = 'r' * 123
-        completion = COMPLETION_TOKENS[kind]
+        completion = COMPLETION_TOKENS.get(kind, 5)
         data = json.dumps({'id': 'x', 'object': 'chat.completion', 'created': 1, 'model': body.get('model'),
                            'choices': [{'index': 0, 'finish_reason': finish, 'message': message}],
                            'usage': {'prompt_tokens': 7, 'completion_tokens': completion,
@@ -121,12 +183,26 @@ def main(out):
         manager = LangGraphManager(model='llamacpp/standin_candidate', proposal_schema='manager_proposal/v1',
                                    transport_retry=None)
     else:
-        manager = c.exam_manager({'id': 'standin_candidate'}, 'manager_proposal/v1')
+        manager = c.exam_manager({'id': 'standin_candidate'}, 'manager_proposal/v1', journal_path=out / 'b1_proposals.jsonl')
+    worker = c.FixtureWorker(root, seed)
+    if os.environ.get('TRUNC_ASSERT_JOURNAL') == '1':
+        inner = worker.run_trial
+
+        def run_trial(proposal, node_spec, budget_index):
+            # The journal row of this proposal must be on disk before anything executes.
+            rows = c.read_rows(out / 'b1_proposals.jsonl') if (out / 'b1_proposals.jsonl').exists() else []
+            if (not rows or rows[-1]['budget_index'] != budget_index or rows[-1]['objective'] != proposal.objective
+                    or rows[-1]['final_structured_edit'] != proposal.extra.get('structured_edit')):
+                raise SystemExit('journal row missing before execution')
+            return inner(proposal, node_spec, budget_index)
+        worker.run_trial = run_trial
+    if os.environ.get('TRUNC_MANAGER', 'fix') != 'pin':
+        manager.b1_worker = worker
     error = None
     try:
         run_real_campaign(node_spec=spec, campaign_id=f'{node}__s{seed}', budget=trials, manager_mode='baseline_manager',
                           memory_mode='append_only_summary', records_path=out / 'root_trials.jsonl',
-                          worker=c.FixtureWorker(root, seed), proposal_backend=manager,
+                          worker=worker, proposal_backend=manager,
                           compute_budget=ComputeBudget(max_worker_runs=W, max_llm_calls=cap),
                           action_versions=ActionVersions.new_campaign(), verify_split_policy='vary',
                           event_store=CampaignEventStore(out / 'root_events.jsonl'),
@@ -140,8 +216,16 @@ def main(out):
         manifest_field, stop = c.cache_prompt_evidence(records, events), None
     except RuntimeError as exc:
         manifest_field, stop = None, str(exc)
+    journal = None
+    if (out / 'b1_proposals.jsonl').exists():
+        from r1.exam.b1_proposal_journal import validate_proposal_journal
+        try:
+            journal = validate_proposal_journal(out / 'b1_proposals.jsonl', records, events)
+        except RuntimeError as exc:
+            journal = {'stop': str(exc)}
     from r1.harness import harness_commit
-    result = {'harness': harness_commit(), 'requests': REQUESTS, 'records': records, 'events': events,
+    result = {'journal_evidence': journal,
+              'journal': c.read_rows(out / 'b1_proposals.jsonl') if (out / 'b1_proposals.jsonl').exists() else [],'harness': harness_commit(), 'requests': REQUESTS, 'records': records, 'events': events,
               'error': error, 'manifest_cache_prompt': manifest_field, 'cache_stop': stop}
     (out / 'result.json').write_text(json.dumps(result, indent=2, default=str))
 

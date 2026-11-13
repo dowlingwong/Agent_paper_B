@@ -69,14 +69,21 @@ def fixture(tmp_path,monkeypatch):
             event_rows.append({'event_type':'campaign_completed','payload':{} if software else {'compute_budget':budget}})
             events=root/'root_events.jsonl';events.write_text(''.join(json.dumps(x)+'\n' for x in event_rows))
             configs=root/'audit_configs.json';configs.write_text('{}')
+            journal_path=root/'b1_proposals.jsonl'
+            if not software:   # R1-EXAM-B1-MODEL-OUTPUT-INVALID: one journal row per proposer call
+                journal_path.write_text(json.dumps({'schema':'b1_proposal_journal/v1','trial_id':None,'truncated':False,
+                                                    'check':'not_applicable','rejection':None})+'\n')
+            from r1.exam.b1_proposal_journal import validate_proposal_journal
+            journal=None if software else validate_proposal_journal(journal_path,records,event_rows)
             cache=None if software else {'cache_prompt':False,'llm_call_events':1,'llm_call_failed_events':0,'trial_llm_call_records':0,'all_false':True}
             hashes={'root_trials.jsonl':digest_file(trials),'root_events.jsonl':digest_file(events),
-                    'audit_cache.json':None,'audit_configs.json':digest_file(configs),'a4_observer_requests.jsonl':None}
+                    'audit_cache.json':None,'audit_configs.json':digest_file(configs),'a4_observer_requests.jsonl':None,
+                    'b1_proposals.jsonl':None if software else digest_file(journal_path)}
             data={'status':'COMPLETE','label':'EXAM','execution_label':'EVIDENCE',
                 'phase':'b1','candidate':cid,'mode':mode,'node':node,'instance_seed':seed,'job_binding':binding,
                 'job_sha256':digest_file(job),'evidence_hashes':hashes,'audited_proposals':[],
                 'd28':evaluate_ledger_paths([trials],generated_utc='synthetic',manager_kind='scripted' if software else 'langgraph',memory_mode='append_only_summary'),
-                'cache_prompt':cache,'observer_evidence':None if software else {'calls':0,'sha256':None},
+                'cache_prompt':cache,'observer_evidence':None if software else {'calls':0,'sha256':None},'proposal_journal':journal,
                 'replay_checks':checks,'compute_budget':budget,'termination':'worker_cap',
                 'diagnostics':{'trials':2,'evaluated':0,'invalid':0,'duplicates':0,'noops':0,'parse_failed':0,'forecast_queries':0,'forecast_query_failed':0}}
             path=root/'campaign_manifest.json';write(path,data)
@@ -171,7 +178,7 @@ def test_partial_or_tampered_batch_stops(tmp_path,monkeypatch,tamper):
 
 
 @pytest.mark.parametrize('name',['batch_state.json','b1_manifests.json','job.json','post_check.json',
-                                'root_events.jsonl','a4_observer_requests.jsonl'])
+                                'root_events.jsonl','a4_observer_requests.jsonl','b1_proposals.jsonl'])
 def test_batch_constituents_cannot_escape_via_symlink(tmp_path,monkeypatch,name):
     batch,cfg,sha,_,ms=fixture(tmp_path,monkeypatch)
     selected=next(m for m in ms if m['candidate']=='a')
@@ -274,3 +281,34 @@ def test_real_anchor_gate_checks_paired_discrimination_and_reference(tmp_path):
     # Missing anchors still STOP before any computation.
     with pytest.raises(RuntimeError,match='all anchors must complete first'):
         anchor_gate(rows[:2],cfg)
+
+
+
+
+def _rebind(batch, state, path, root):
+    write(path, root); cert = path.parent / 'post_check.json'
+    write(cert, {'binding': state['binding'], 'manifest_sha256': digest_file(path), 'passed': True})
+    key = next(k for k, v in state['completed'].items() if v['path'] == str(path))
+    state['completed'][key].update(sha256=digest_file(path), post_check_sha256=digest_file(cert))
+    write(batch / 'batch_state.json', state)
+
+
+def test_proposal_journal_must_match_the_manifest(tmp_path, monkeypatch):
+    """R1-EXAM-B1-MODEL-OUTPUT-INVALID: b1_batch re-validates the proposal journal of every LLM root."""
+    batch, cfg, sha, state, ms = fixture(tmp_path, monkeypatch)
+    selected = next(m for m in ms if m['candidate'] == 'a')
+    path = Path(selected['root_manifests'][0]); root = json.loads(path.read_text())
+    root['proposal_journal'] = dict(root['proposal_journal'], rows=99)
+    _rebind(batch, state, path, root)
+    with pytest.raises(ValueError, match='proposal journal evidence differs'):
+        analyze.b1_summary_verified(batch, cfg, rule_path=analyze.RULE_V2, expected=sha)
+
+
+def test_software_anchor_root_must_not_carry_a_proposal_journal(tmp_path, monkeypatch):
+    batch, cfg, sha, state, ms = fixture(tmp_path, monkeypatch)
+    selected = next(m for m in ms if m['candidate'] in ('random_valid', 'scripted'))
+    path = Path(selected['root_manifests'][0]); root = json.loads(path.read_text())
+    root['proposal_journal'] = {'rows': 0}
+    _rebind(batch, state, path, root)
+    with pytest.raises(ValueError, match='software anchor root has a proposal journal'):
+        analyze.b1_summary_verified(batch, cfg, rule_path=analyze.RULE_V2, expected=sha)
