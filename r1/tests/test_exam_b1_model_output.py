@@ -108,6 +108,42 @@ def test_unencodable_reply_is_an_invalid_trial_and_later_prompts_still_work(tmp_
     assert len(r['requests']) >= 3                                                      # later requests were sent
 
 
+def test_unencodable_summary_after_an_inline_think_block_is_caught(tmp_path):
+    """Round 2, finding B: the harness strips <think>...</think> before parsing; the check does the same."""
+    r = _drive(tmp_path, ['stop', 'surrogate_think', 'stop', 'stop'], TRUNC_NODE='digits_mlp')
+    assert r['error'] is None and sum(e['event_type'] == 'campaign_completed' for e in r['events']) == 1
+    bad = _trial(r, 2)
+    assert bad['decision'] == 'failed_invalid' and _manager(bad)['llm_call']['unencodable_reply'] is True
+
+
+def test_surrogate_outside_the_summary_is_left_to_the_harness_as_before(tmp_path):
+    """Round 2, finding A: a surrogate in a field that reaches no later prompt (here the rationale) did not stop
+    the root under _c; the trial is recorded as before (executed, not marked unencodable)."""
+    r = _drive(tmp_path, ['stop', 'surrogate_rationale', 'stop', 'stop'], TRUNC_NODE='digits_mlp')
+    assert r['error'] is None and sum(e['event_type'] == 'campaign_completed' for e in r['events']) == 1
+    t2 = _trial(r, 2)
+    call = _manager(t2)['llm_call']
+    assert not call.get('unencodable_reply') and 'b1_model_output_rejected' not in _manager(t2)
+    assert not ((t2['extra'].get('worker') or {}).get('worker_skipped'))
+    assert t2['decision'] in ('kept', 'discarded')
+    plain = _drive(tmp_path, ['stop', 'surrogate_rationale', 'stop', 'stop'], manager='pin', name='pin',
+                   TRUNC_NODE='digits_mlp')
+    assert plain['error'] is None and _trial(plain, 2)['decision'] == t2['decision']
+
+
+@pytest.mark.parametrize('content, expected', [
+    ('{"rationale":"r","summary":"s\\ud800","objective":"o","param":"p","old_value":"1","new_value":"2"}', True),
+    ('<think>x</think>\n{"rationale":"r","summary":"s\\ud800","objective":"o","param":"p","old_value":"1","new_value":"2"}', True),
+    ('{"rationale":"r\\ud800","summary":"s","objective":"o","param":"p","old_value":"1","new_value":"2"}', False),
+    ('{"rationale":"r","summary":"s","objective":"o\\udfff","param":"p","old_value":"1","new_value":"2"}', False),
+    ('{"summary":"s\\ud800"}', False),                      # not the six-field schema: harness parse failure
+    ('not json \ud800', False),                              # parse failure: harness uses its default summary
+])
+def test_unencodable_check_mirrors_the_harness_parse(content, expected):
+    from r1.exam.b1_llm_truncation import _unencodable
+    assert _unencodable(content) is expected
+
+
 def test_rejected_proposal_makes_no_observer_call(tmp_path):
     """With an A4-shaped observer: the rejected trial has no observer query and the budget balances."""
     r = _drive(tmp_path, ['stop', 'sym_differs', 'stop', 'stop', 'stop'], TRUNC_NODE='digits_mlp', TRUNC_OBSERVER=1)
@@ -188,11 +224,25 @@ def test_other_llm_failures_still_stop(tmp_path):
 
 
 # ------------------------------------------------------------------ unit level
+_PINNED_MODULES = ('autoresearch.nodes.registry', 'autoresearch.nodes.active_keys', 'autoresearch.nodes.spec',
+                   'autoresearch.worker.local_worker')
+
+
 def _harness():
-    """The pinned harness a3fedbb; skips without it unless R1_REQUIRE_B1_HARNESS=1 (then fails)."""
-    _pinned_harness()
+    """The pinned harness a3fedbb (skips without it unless R1_REQUIRE_B1_HARNESS=1, then fails).
+
+    The in-process unit tests import harness modules from AR_HARNESS_ROOT (the first harness this pytest process
+    put on sys.path). They require the modules they use to be byte-identical to a3fedbb's, so a run with
+    another harness checkout on AR_HARNESS_ROOT still tests the pinned code."""
+    import importlib
+    pinned = _pinned_harness()
     from r1.harness import import_harness
-    return import_harness()
+    import_harness()
+    for name in _PINNED_MODULES:
+        loaded = Path(importlib.import_module(name).__file__)
+        rel = Path(*name.split('.')).with_suffix('.py')
+        assert loaded.read_bytes() == (pinned / 'src' / rel).read_bytes(), f'{name} differs from a3fedbb ({loaded})'
+    return pinned
 
 
 def _proposal(objective, edit, spec):

@@ -20,7 +20,8 @@ Environment:
                  (the harness precondition rejects it first), "inactive_and_mismatch" (openml: a D25 inactive key),
                  "unknown_param" (the param names no editable constant), "ctx_overflow" (llama-server's HTTP 400 for
                  a prompt longer than the context), "mismatch_inactive_objective" (openml: structured edit on the active C,
-                 objective naming the D25-inactive max_depth), "surrogate" (a lone surrogate escape in a reply field)
+                 objective naming the D25-inactive max_depth), "surrogate" / "surrogate_think" (a lone surrogate escape in the summary, the latter
+                 after an inline <think> block), "surrogate_rationale" (the same in the rationale only)
   TRUNC_MANAGER  "fix" (default): ``exam_manager``; "pin": the plain harness ``LangGraphManager`` built exactly
                  as ``exam_manager`` built it before R1-EXAM-B1-TRUNCATION-INVALID.
   TRUNC_NODE     node (default digits_mlp; openml_credit_approval has D25 active keys, and the stand-in names an
@@ -78,8 +79,10 @@ def mutate(kind, p, prompt):
         p['objective'] = f"Change C from 1 to 2"
     elif kind == 'mismatch_inactive_objective':   # openml: edit on the active C, objective names the inactive max_depth
         p['objective'] = f"Change max_depth from 5 to 9"
-    elif kind == 'surrogate':                     # a lone surrogate in a reply field (JSON escape \\ud800)
+    elif kind in ('surrogate', 'surrogate_think'):  # a lone surrogate in the summary (JSON escape \\ud800)
         p['summary'] = p['summary'] + '\ud800'
+    elif kind == 'surrogate_rationale':           # ... in the rationale only, which reaches no later prompt
+        p['rationale'] = p['rationale'] + '\ud800'
     elif kind == 'unknown_param':
         p['param'] = 'momentum'
         p['objective'] = _directive(p)
@@ -125,6 +128,8 @@ class StandIn(BaseHTTPRequestHandler):
         proposal = fake.proposal_for(prompt, body.get('seed'))
         mutate(kind, proposal, prompt)
         content = json.dumps(proposal)
+        if kind == 'surrogate_think':             # inline reasoning before the JSON (server without --reasoning-format)
+            content = '<think>weigh the options</think>\n' + content
         finish = 'stop'
         if kind == 'length_partial':
             content, finish = content[:40], 'length'

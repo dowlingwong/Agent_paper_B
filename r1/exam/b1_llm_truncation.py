@@ -82,31 +82,37 @@ def _context_overflow(exc) -> dict | None:
     return {'prompt_tokens': tokens, 'message': message[:300]}
 
 
-def _has_lone_surrogate(value) -> bool:
-    """True if a string in ``value`` holds a UTF-16 surrogate code point, which cannot be encoded as UTF-8."""
-    if isinstance(value, str):
-        return any('\ud800' <= ch <= '\udfff' for ch in value)
-    if isinstance(value, dict):
-        return any(_has_lone_surrogate(k) or _has_lone_surrogate(v) for k, v in value.items())
-    if isinstance(value, list):
-        return any(_has_lone_surrogate(v) for v in value)
-    return False
+_REPLY_FIELDS = frozenset({'rationale', 'summary', 'objective', 'param', 'old_value', 'new_value'})  # manager_proposal/v1
+
+
+def _has_lone_surrogate(text: str) -> bool:
+    """True if ``text`` holds a UTF-16 surrogate code point, which cannot be encoded as UTF-8."""
+    return any('\ud800' <= ch <= '\udfff' for ch in text)
 
 
 def _unencodable(content) -> bool:
-    """A reply whose text, or a JSON string in it, carries a lone surrogate (e.g. the escape ``\\ud800``).
+    """A reply whose ``summary`` field, as the harness will parse it, carries a lone surrogate (e.g. the JSON
+    escape ``\\ud800``).
 
-    The harness would put such a field into every later prompt (the memory summary), and the HTTP client
-    cannot encode that request: the next proposer call would raise ``UnicodeEncodeError`` and stop the root."""
+    In B1's memory mode the summary is the only reply field the harness copies into later prompts (the trial's
+    summary line and the best-strategy line). The HTTP client cannot encode such a prompt, so the next proposer
+    call would raise ``UnicodeEncodeError`` and stop the root. Only this case is caught; a surrogate in any other
+    field reaches no later prompt and is left to the harness exactly as before. The parse mirrors the harness's
+    schema path (``langgraph_manager`` l. 562-566 and 288-295 at a3fedbb): inline ``<think>`` blocks are removed,
+    the rest must be a JSON object of exactly the six string fields, otherwise the harness records a parse
+    failure with its default summary and no surrogate can reach memory."""
     import json
+    import re
     if not isinstance(content, str):
         return False
-    if _has_lone_surrogate(content):
-        return True
+    content = re.sub(r"<think>.*?</think>\s*", "", content, flags=re.DOTALL).strip()
     try:
-        return _has_lone_surrogate(json.loads(content))
+        parsed = json.loads(content)
     except (ValueError, RecursionError):
         return False
+    if not isinstance(parsed, dict) or set(parsed) != _REPLY_FIELDS or any(not isinstance(v, str) for v in parsed.values()):
+        return False
+    return _has_lone_surrogate(parsed['summary'].strip())
 
 
 def _sdk_usage(completion) -> tuple[int | None, int | None]:
