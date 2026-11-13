@@ -11,7 +11,8 @@ rev 1 of this file, which wrongly reported `identity_rate 0.87`.
   two lines: `S0.1 start (node digits_mlp, host TASL-7, k=2 probe period)` and `both endpoints ready`; the serial probe
   started in `trks_s01_serial` (pid 4123514).
 - 2026-11-13T10:51:25Z: the operator stopped `trks_s01_launch`, `trks_s01_serial` and `trks_llm`, and killed the two
-  own llama-server processes — **73 s into a run whose first repeat needs ~395 s at the measured ~0.658 s/call**.
+  own llama-server processes — **73 s into a run whose full 600-call probe needs ~395 s at the measured ~0.658 s/call
+  (the first 200-call pass ≈132 s)**.
   The probe therefore wrote no `serial.json`, no result JSON and no today-dated rc line.
 - The lines `identity_rate 0.87` and `errors: 600` quoted in rev 1 belong to
   `$R/logs/trks_s01_serial.log` **mtime/ctime 2026-10-31 04:20:50 -0700** (the Oct-30/31 `tabular_mlp` S0.1 runs);

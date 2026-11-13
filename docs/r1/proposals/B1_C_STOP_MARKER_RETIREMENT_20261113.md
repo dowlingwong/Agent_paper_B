@@ -31,7 +31,8 @@ Track X marker (renamed, not deleted) and does not license any other STOP-scene 
    content run_id `4b31_20261112_c`/head `4b312844…`); `b1_o2_marker.py retire` will check this again.
 3. Track P marker is absent and P.3a is stopped/absent; no other priority marker or unrelated Track S collector is
    running; the Track S watcher `trks_watch` is alive.
-4. A read-only capture of the STOP state exists (the accepted STOP report's capture
+4. A read-only capture of the STOP state exists (the accepted STOP report `reports/B1_STOP_4B31_20261112.md` (accepted; review
+   `reviews/B1_STOP_4B31_REVIEW_R3_20261112.md`) and its capture
    `docs/r1/reports/b1_stop_4b31_20261112/` on `mac-b1-20261107` @ `3b7d570` plus a fresh `capture-stop-retirement-*.txt` with the current marker stat,
    `b1.exit`, batch state, `_to_delete` listing and watcher log line count). Nothing in the STOP scene is modified.
 
@@ -45,7 +46,8 @@ Track X marker (renamed, not deleted) and does not license any other STOP-scene 
    `BATCH=/home/dowling/exam-x/work/b1_4b31_20261112_c`;
    `CHECKOUT=/home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper`;
    `PY=/home/dowling/exam-x/work/venv/bin/python`. Create `CAPTURE=/private/tmp/b1-c-stop-retirement-capture-<UTC>`
-   (mkdir) and write a **baseline** for §2.4 there: (a) every pre-existing file directly in `$RUN_DIR`
+   (mkdir) and write a **baseline** for §2.4 there (the commands run on TASL-7 and their output is streamed into the
+   Mac-local capture dir, since `/private/tmp` exists only on the Mac): (a) every pre-existing file directly in `$RUN_DIR`
    (`find "$RUN_DIR" -maxdepth 1 -type f -print0 | sort -z | xargs -0 sha256sum > "$CAPTURE/run-dir-baseline.sha256"`);
    (b) every file under `$BATCH` except `$BATCH/_to_delete/` (explicitly excluded from the comparison, stating that
    exclusion), `find "$BATCH" -type f ! -path '*/_to_delete/*' -print0 | sort -z | xargs -0 sha256sum >
