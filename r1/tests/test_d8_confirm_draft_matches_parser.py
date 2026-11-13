@@ -15,7 +15,7 @@ import pytest
 from r1.c3 import analysis_guard as g
 from r1.harness import REPO
 
-DRAFT = REPO / 'docs/r1/proposals/R1_BX_D8_CONFIRM_DRAFT_20261109.md'
+DRAFT = REPO / 'docs/r1/proposals/R1_BX_D8_CONFIRM_DRAFT_20261114.md'
 GATE = REPO / 'r1/c3/gate.py'
 
 

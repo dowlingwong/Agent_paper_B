@@ -418,15 +418,94 @@ def test_real_layout_t0_without_suite_plus_three_t1_suites_runs(confirmed):
 
 
 @pytest.mark.parametrize('suite', [AR, MLAB, MLGYM])
-def test_suite_without_t1_node_stops(confirmed, suite):
+def test_suite_without_t1_node_is_reported_not_a_stop(confirmed, suite):
+    """Q1 (b): the per-suite partial-T1 rule belongs to leave-one-suite-out, not to the gate."""
     t = noisy_table(t1_per_suite=tuple(0 if s == suite else 2 for s in gate.SUITES))
-    with pytest.raises(gate.GateStop, match=rf"suites without a labelled T1 node: \['{suite}'\]"):
+    r = gate.evaluate(t)
+    assert r['t1_suites_without_labelled_node'] == [suite]
+    assert r['node_counts']['t1_by_suite'][suite] == 0
+    assert r['verdict'] in ('PASS', 'FAIL')
+
+
+def test_t0_only_runs_and_reports_every_suite_missing(confirmed):
+    r = gate.evaluate(layout([]))
+    assert r['t1_suites_without_labelled_node'] == list(gate.SUITES)
+    assert r['node_counts']['by_tier'] == {'T0': 8, 'T1': 0}
+
+
+def test_full_layout_reports_no_missing_suite(confirmed):
+    assert gate.evaluate(layout(t1_nodes(0.5, 0.5)))['t1_suites_without_labelled_node'] == []
+
+
+# ------------------------------------------------------- dev z eligibility (Q2)
+
+def _z(d):
+    d = np.asarray(d, dtype=float)
+    return d.mean() / (d.std(ddof=1) / math.sqrt(len(d)))
+
+
+def test_dev_z_known_answer_and_threshold_boundary(confirmed):
+    """dev_z = mean(d) / (sd(d, ddof=1)/sqrt(n)), d = oracle - A2 on the dev split; z = 6 is eligible."""
+    # d = (1, 2, 3, 4): mean 2.5, sd 1.29099, n 4 -> z = 3.873 < 6 (ineligible on dev_z only).
+    low = constant_node('mlgym_low', 0.3, 0.3, dev_a2=[0.0] * 4, dev_oracle=[1.0, 2.0, 3.0, 4.0])
+    # d = (6 - e, 6 + e) chosen so that z is exactly 6: mean 6, sd = e*sqrt(2), z = 6 / (e*sqrt(2)/sqrt(2)) = 6 / e.
+    edge = constant_node('mlgym_edge', 0.3, 0.3, dev_a2=[0.0, 0.0], dev_oracle=[5.0, 7.0])
+    assert _z([1, 2, 3, 4]) == pytest.approx(3.872983346207417)
+    assert _z([5.0, 7.0]) == 6.0
+    r = gate.evaluate(layout([constant_node('ar1', 0.1, 0.1, suite=AR),
+                              constant_node('mlab1', 0.1, 0.1, suite=MLAB), low, edge]))
+    assert r['nodes']['mlgym_low']['dev_z'] == pytest.approx(3.872983346207417)
+    assert r['nodes']['mlgym_low']['included_in_iqm'] is False
+    assert r['ineligible_nodes'] == {'mlgym_low': ['dev_z']}
+    assert r['nodes']['mlgym_edge']['dev_z'] == 6.0 and r['nodes']['mlgym_edge']['included_in_iqm'] is True
+    assert r['protocol']['dev_z_min'] == 6.0
+
+
+def test_dev_z_and_delta_n_are_both_required_and_both_reported(confirmed):
+    # High z but denominator 0.01 < delta 0.05: ineligible on delta_n only.
+    small = constant_node('mlgym_small', 0.3, 0.3, dev_a2=[0.0] * 4, dev_oracle=[0.0099, 0.01, 0.01, 0.0101])
+    # Large denominator, z < 6: ineligible on dev_z only.
+    noisy = constant_node('mlgym_noisy', 0.3, 0.3, dev_a2=[0.0] * 4, dev_oracle=[-2.0, 1.0, 3.0, 6.0])
+    # Both fail.
+    both = constant_node('mlgym_both', 0.3, 0.3, dev_a2=[0.0] * 4, dev_oracle=[-0.02, 0.0, 0.02, 0.04])
+    r = gate.evaluate(layout([constant_node('ar1', 0.1, 0.1, suite=AR),
+                              constant_node('mlab1', 0.1, 0.1, suite=MLAB), small, noisy, both]))
+    assert r['ineligible_nodes'] == {'mlgym_both': ['delta_n', 'dev_z'], 'mlgym_noisy': ['dev_z'],
+                                     'mlgym_small': ['delta_n']}
+    assert sorted(r['excluded_from_iqm']) == ['mlgym_both', 'mlgym_noisy', 'mlgym_small']
+    for k in ('mlgym_small', 'mlgym_noisy', 'mlgym_both'):
+        assert r['nodes'][k]['gap_closed_A3'] is None and r['nodes'][k]['poi_A3'] == 1.0   # kept in PoI
+
+
+def test_dev_n_below_two_is_ineligible(confirmed):
+    one = constant_node('mlgym_one', 0.3, 0.3, dev_a2=[0.0], dev_oracle=[1.0])
+    r = gate.evaluate(layout([constant_node('ar1', 0.1, 0.1, suite=AR),
+                              constant_node('mlab1', 0.1, 0.1, suite=MLAB), one]))
+    assert r['ineligible_nodes'] == {'mlgym_one': ['dev_n']} and r['nodes']['mlgym_one']['dev_z'] is None
+
+
+def test_dev_sd_zero_follows_the_sign_of_the_mean(confirmed):
+    pos = constant_node('mlgym_pos', 0.3, 0.3, dev_a2=[0.0] * 3, dev_oracle=[1.0] * 3)
+    zero = constant_node('mlgym_zero', 0.3, 0.3, dev_a2=[1.0] * 3, dev_oracle=[1.0] * 3, delta=0.05)
+    r = gate.evaluate(layout([constant_node('ar1', 0.1, 0.1, suite=AR),
+                              constant_node('mlab1', 0.1, 0.1, suite=MLAB), pos, zero]))
+    assert r['nodes']['mlgym_pos']['dev_sd_zero'] is True and r['nodes']['mlgym_pos']['included_in_iqm'] is True
+    assert r['nodes']['mlgym_pos']['dev_z'] is None
+    assert r['ineligible_nodes'] == {'mlgym_zero': ['delta_n', 'dev_z']}
+
+
+def test_resampled_denominator_stop_is_avoided_when_the_dev_rule_excludes_the_node(confirmed):
+    """A node whose resampled test denominator can be nonpositive no longer STOPs the gate if its dev z < 6."""
+    risky = risky_node(dev_a2=[0.0] * 4, dev_oracle=[-2.0, 1.0, 3.0, 6.0])
+    r = gate.evaluate(layout(t1_nodes(0.5, 0.5) + [risky]))
+    assert r['ineligible_nodes'] == {'mlgym_r': ['dev_z']}
+
+
+def test_no_eligible_node_stop_names_the_reasons(confirmed):
+    noisy = dict(dev_a2=[0.0] * 4, dev_oracle=[-2.0, 1.0, 3.0, 6.0])
+    t = layout(t1_nodes(0.5, 0.5, **noisy), t0={i: t0_node(i, 0.5, 0.5, **noisy) for i in range(8)})
+    with pytest.raises(gate.GateStop, match=r"dev z >= 6\.0.*IQM is undefined.*'dev_z'"):
         gate.evaluate(t)
-
-
-def test_t0_only_stops(confirmed):
-    with pytest.raises(gate.GateStop, match='suites without a labelled T1 node'):
-        gate.evaluate(layout([]))
 
 
 def test_missing_t0_node_stops(confirmed):
@@ -578,7 +657,8 @@ def test_json_duplicate_keys_and_constants_refused(confirmed, tmp_path, monkeypa
 def test_fixed_protocol_constants():
     assert (gate.N_RESAMPLES, gate.SEED, gate.LEVELS, gate.FAMILY_ALPHA) == (2000, 20261108, (0.975, 0.95), 0.05)
     assert gate.ARMS == ('A3', 'A5') and gate.PRACTICAL_SIZE == 0.1 and gate.CONFIRM_ID == 'R1-BX-D8-CONFIRM'
-    assert gate.NUMPY_VERSION == '2.4.4'
+    assert gate.NUMPY_VERSION == '2.4.4' and gate.DEV_Z_MIN == 6.0
+    assert gate.ENVIRONMENT == 'harness uv.lock environment at a3fedbb (Python 3.13, NumPy 2.4.4)'
     # Authorized sweep-1 node set (R1-DT-PIN-SWEEP1) and the three suites (R1-BX-D2, R1-1GC-FALLBACK).
     assert set(gate.T0_NODES) == {'digits_mlp', 'tabular_mlp', 'openml_breast_w', 'openml_ionosphere',
                                   'openml_wdbc', 'openml_credit_approval', 'openml_sonar',

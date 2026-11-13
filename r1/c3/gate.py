@@ -8,9 +8,11 @@ What it computes (PLAN R1-BX-D8 and R1-BX-PROPOSED-CONFIRM (D8)):
 * per node, gap closed = (mean U_arm - mean U_A2) / (mean U_oracle - mean U_A2)
   on the node's test instances, where U_oracle is the noisy-oracle ceiling
   (ratio of means: a convention, the row writes the ratio without "mean");
-* nodes whose dev-split denominator mean U_oracle - mean U_A2 is below
-  ``delta_n`` are excluded from the IQM, listed, and kept in the probability
-  of improvement (PoI);
+* a node is IQM-eligible only if, on the dev split, its denominator
+  mean U_oracle - mean U_A2 is at least ``delta_n`` (PLAN R1-BX-D8) **and** its
+  paired dev z statistic is at least ``DEV_Z_MIN`` = 6 (author's answer to the
+  10 Nov question Q2, option (b)). Ineligible nodes are excluded from the IQM,
+  listed with their reason, and kept in the probability of improvement (PoI);
 * IQM of gap closed across the eligible nodes: the 25%-75% empirical trimmed
   mean with fractional boundary weights (``_node_iqm``, inlined here so that
   the gate SHA binds it; identical to the accepted
@@ -37,15 +39,19 @@ Node layout (pinned here, so the gate SHA binds it):
 * tier T1 nodes carry a suite from ``SUITES`` (R1-BX-D2 as amended by
   R1-1GC-FALLBACK). A T1 node without a suite or with another suite is a STOP.
   The T1 node list itself cannot be pinned (partial T1, R1-B7-PARTIAL-T1);
-* partial T1: each suite in ``SUITES`` needs at least one labelled T1 node,
-  otherwise the whole gate STOPs. The R1-B7-PARTIAL-T1 consequence ties this
-  condition to leave-one-suite-out; the CONFIRM row text the parser requires
-  states it without that qualifier. The whole-gate STOP is the conservative
-  reading (a preregistration candidate).
+* partial T1 (R1-B7-PARTIAL-T1): the condition "each suite in ``SUITES`` has at
+  least one labelled T1 node" is a precondition of each leave-one-suite-out
+  fold and is applied where leave-one-suite-out is computed (not in this
+  module). The aggregate gate does **not** STOP on it (author's answer to the
+  10 Nov question Q1, option (b)); it reports ``t1_by_suite`` and the suites
+  without a labelled T1 node.
 
 Implementation conventions that the PLAN rows do not fix (preregistration
 candidates; see docs/r1/reports/M11_D8_GATE_20261109.md):
 
+* environment: the harness ``uv.lock`` environment at ``a3fedbb`` (Python 3.13,
+  NumPy 2.4.4) is the named environment for running the gate (author's answer
+  to Q3). Only the NumPy version is checked;
 * seed 20261108, ``numpy.random.Generator(PCG64)``; NumPy must be exactly
   ``NUMPY_VERSION`` (STOP otherwise); nodes in sorted node-id order, instances
   in sorted instance-id order; for each node in that order one
@@ -58,6 +64,13 @@ candidates; see docs/r1/reports/M11_D8_GATE_20261109.md):
 * a resampled test denominator <= 0 on an IQM-eligible node, a nonpositive
   point test denominator on such a node, or no eligible node is a STOP: no
   resample or node is dropped; every offending node is listed;
+* dev z (with the Q2 eligibility rule): d = oracle - A2 paired per dev
+  instance, dev_z = mean(d) / (sd(d, ddof=1) / sqrt(n_dev)). A node with
+  n_dev < 2 is ineligible (reason ``dev_n``). If sd(d) = 0, dev_z is +inf when
+  mean(d) > 0 (eligible on this criterion) and the node is ineligible otherwise;
+  dev_z is then reported as null with ``dev_sd_zero`` true. A dev_z exactly 6
+  is eligible. The reasons ``delta_n``, ``dev_z`` and ``dev_n`` are listed for
+  every ineligible node (several may apply);
 * T0 and T1 are pooled with tier as a stratum: every node lies in one tier and
   resampling is within node; per-tier node counts and descriptive point
   statistics are reported.
@@ -85,6 +98,8 @@ CONFIRM_ID = 'R1-BX-D8-CONFIRM'
 INPUT_SCHEMA = 'r1_d8_gate_input/v2'
 OUTPUT_SCHEMA = 'r1_d8_gate_result/v2'
 NUMPY_VERSION = '2.4.4'         # harness uv.lock pin; STOP on any other version
+ENVIRONMENT = 'harness uv.lock environment at a3fedbb (Python 3.13, NumPy 2.4.4)'   # recorded, not checked
+DEV_Z_MIN = 6.0                 # dev-split eligibility (Q2 option (b)); with delta_n
 N_RESAMPLES = 2000
 SEED = 20261108
 RNG = 'numpy.random.Generator(PCG64)'
@@ -242,6 +257,7 @@ def _validate(gate_input):
         dev_denominator = float(dev_or.mean() - dev_a2.mean())
         if not math.isfinite(dev_denominator):
             raise ValueError(f'node {name} dev denominator is not finite')
+        dev_z, dev_sd_zero, z_ok, n_ok = _dev_z(dev_a2, dev_or)
         test = raw.get('test')
         if not isinstance(test, dict) or set(test) != {'instance_ids', *SERIES}:
             raise ValueError(f'node {name} test must have instance_ids, A2, oracle, A3, A5')
@@ -258,6 +274,10 @@ def _validate(gate_input):
         nodes[name] = {
             'suite': suite, 'tier': tier, 'delta_n': float(delta),
             'dev_denominator': dev_denominator,
+            'dev_z': dev_z, 'dev_sd_zero': dev_sd_zero,
+            'ineligible_reasons': ([] if dev_denominator >= float(delta) else ['delta_n'])
+                                  + ([] if n_ok else ['dev_n'])
+                                  + ([] if z_ok or not n_ok else ['dev_z']),
             'n_test': len(ids), 'n_dev': len(dev_a2),
             'test': {k: v[order] for k, v in series.items()},
         }
@@ -278,9 +298,26 @@ def _check_layout(nodes):
     bad = sorted(k for k in t1 if nodes[k]['suite'] not in SUITES)
     if bad:
         raise GateStop(f'STOP: T1 nodes without a suite in {list(SUITES)}: {bad}')
-    no_t1 = [s for s in SUITES if not any(nodes[k]['suite'] == s for k in t1)]
-    if no_t1:
-        raise GateStop(f'STOP: suites without a labelled T1 node: {no_t1} (R1-B7-PARTIAL-T1)')
+    # A suite without a labelled T1 node is reported, not a STOP: the per-suite rule of
+    # R1-B7-PARTIAL-T1 belongs to leave-one-suite-out (Q1 option (b)).
+
+
+def _dev_z(dev_a2, dev_oracle):
+    """Paired dev z of oracle - A2; returns (z or None, sd_zero, eligible_on_z, n_ok)."""
+    d = dev_oracle - dev_a2
+    n = len(d)
+    if n < 2:
+        return None, False, False, False
+    mean = float(d.mean())
+    sd = float(d.std(ddof=1))
+    if not math.isfinite(mean) or not math.isfinite(sd):
+        raise ValueError('dev z is not finite')
+    if sd == 0.0:
+        return None, True, mean > 0.0, True
+    z = mean / (sd / math.sqrt(n))
+    if not math.isfinite(z):
+        raise ValueError('dev z is not finite')
+    return z, False, z >= DEV_Z_MIN, True
 
 
 # ---------------------------------------------------------------- statistics
@@ -290,9 +327,11 @@ def _wins(arm, a2):
 
 
 def _point(nodes):
-    eligible = [k for k, n in nodes.items() if n['dev_denominator'] >= n['delta_n']]
+    eligible = [k for k, n in nodes.items() if not n['ineligible_reasons']]
     if not eligible:
-        raise GateStop('STOP: no node has a dev denominator at or above delta_n; the IQM is undefined')
+        reasons = {k: n['ineligible_reasons'] for k, n in nodes.items()}
+        raise GateStop(f'STOP: no node is IQM-eligible (dev denominator >= delta_n and dev z >= {DEV_Z_MIN}); '
+                       f'the IQM is undefined; reasons {reasons}')
     table = {}
     nonpositive = []
     for name, n in nodes.items():
@@ -300,6 +339,8 @@ def _point(nodes):
         denom = float(t['oracle'].mean() - t['A2'].mean())
         row = {'suite': n['suite'], 'tier': n['tier'], 'n_test': n['n_test'], 'n_dev': n['n_dev'],
                'delta_n': n['delta_n'], 'dev_denominator': n['dev_denominator'],
+               'dev_z': n['dev_z'], 'dev_sd_zero': n['dev_sd_zero'],
+               'ineligible_reasons': list(n['ineligible_reasons']),
                'included_in_iqm': name in eligible, 'test_denominator': denom}
         if name in eligible and not denom > 0:
             nonpositive.append(name)
@@ -428,6 +469,9 @@ def _evaluate(gate_input):
         'arms': arms,
         'nodes': table,
         'excluded_from_iqm': [k for k in nodes if k not in eligible],
+        'ineligible_nodes': {k: list(nodes[k]['ineligible_reasons']) for k in nodes if k not in eligible},
+        't1_suites_without_labelled_node': [s for s in SUITES if not any(
+            n['tier'] == 'T1' and n['suite'] == s for n in nodes.values())],
         'node_counts': {'total': len(nodes),
                         'by_tier': {t: sum(n['tier'] == t for n in nodes.values()) for t in TIERS},
                         't1_by_suite': {s: sum(n['tier'] == 'T1' and n['suite'] == s
@@ -435,6 +479,7 @@ def _evaluate(gate_input):
         'tier_descriptive': _tier_descriptive(nodes, table, eligible),
         'protocol': {'resamples': N_RESAMPLES, 'seed': SEED, 'rng': RNG,
                      'numpy_version': np.__version__, 'numpy_pin': NUMPY_VERSION,
+                     'environment': ENVIRONMENT, 'dev_z_min': DEV_Z_MIN,
                      'quantile_method': QUANTILE_METHOD,
                      't0_nodes': list(T0_NODES), 'suites': list(SUITES),
                      'family_alpha': FAMILY_ALPHA, 'levels': list(LEVELS),
