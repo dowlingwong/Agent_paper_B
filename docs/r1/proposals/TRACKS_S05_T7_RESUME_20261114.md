@@ -1,59 +1,64 @@
-# Track S `digits_mlp` S0.5 resume on TASL-7 — candidate for review (13/14 November 2026)
+# Track S `digits_mlp` S0.5 resume on TASL-7 — candidate for review (14 November 2026, rev 2)
 
-**Candidate for independent review; not an execution.** Resumes the paused S0.5 run
-`out/digits_mlp/s05_t7_20261113` after B1 `_d` ends normally and its Track X marker has been retired by the reviewed
-post-run unit. Follows `reports/TRACKS_DIGITS_HOSTMOVE_20261112.md` (host move), the review of the S0.5 k=2 unit, and
-the Track S operator runbook rev 3.3. ENGINEERING_ONLY.
+**Candidate for independent review; not an execution.** Resumes the paused S0.5 run after B1 `_d` ends normally and its
+Track X marker is retired by the reviewed post-run unit. Authority: `reports/TRACKS_DIGITS_HOSTMOVE_20261112.md`
+(rev 4), the accepted TASL-7 S0.1 result (k=2, `reports/TRACKS_S01_TASL7_RESULT_20261113.md`), the reviewed k=2 S0.5
+unit, the Track S operator runbook rev 3.3 Phase 4, and the author's no-deletion rule (the paused STOP is **renamed**
+into the run `_to_delete`, not removed as the runbook's illustrative `find -delete` would do). ENGINEERING_ONLY.
 
 ## 0. Preconditions (all fail-closed; any failure = STOP, preserve, report)
 1. B1 `_d` ended normally and the reviewed `_d` post-run unit was accepted and executed: `~/r1_locks/trackx_evidence.active`
-   is **absent**; its retirement receipt is recorded; no B1/track process is running; `gpu0.lock` free; only
-   `trks_watch` in default tmux; Track P marker absent; drill marker absent.
-2. The paused S0.5 scene is intact: `$RUN=/home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113` has `manifest.json`
-   with `sessions[-1].done = {"roots":22,"forks":6,"leaves":0,"failed":0,"exhausted":0,"deadline_hit":false,
-   "status":"paused"}` (or the same values with a later count if a short resume already ran), `$RUN/STOP` exists
-   (0 bytes), and `root_trials`/`audit_runs`/`b1_proposals` (if any) are unchanged since the pause.
-3. Paper pin `8237fd02b09ef2d28016a1c9f6acac3c35bb768b` checked out detached and clean in
-   `/home/dowling/r1_tracks/work/Agent_paper_B`; harness `a3fedbb…` clean; `trks` wrapper pins unchanged
-   (TASL-7 HOST_LABEL, GGUF `509287f7…`, llama `620d2225…`); prior
-   `$OUT/digits_mlp/a2u_prior_r2_20261111.json` sha256 `5c849d15…` present.
-4. k = 2 remains the Phase-1 decision (TASL-7 S0.1 accepted): both endpoints 18101/18102, servers started with
-   `trks-servers 2`.
-5. The reviewed CACHE/launch scripts are the deployed bytes (`tasl7_digits_s05_20261113.sh` sha
-   `3e9574643a6736a14ce28f00dd0717a57de3987cc84242b7dc255139f7615151`, `tasl7_digits_s05b_20261113.sh`
-   sha `3685dfe6874f3dbbd7cdf07fd1d2ec45913f4e41b60c54c82ba3d79594fe920a`), `bash -n` OK.
+   absent; retirement receipt recorded; no B1/track process; `gpu0.lock` free; only `trks_watch` in default tmux; Track P
+   marker absent; drill marker absent.
+2. The paused scene is intact, checked against a **pause baseline**: `$RUN=out/digits_mlp/s05_t7_20261113` (manifest,
+   ledgers, STOP; 22 root ids and 6 fork ids in the manifest `done`) and `$WORK=scratch/digits_mlp/s05_t7_20261113`
+   (snapshots and `roots/<id>/root_trials.jsonl`; the leaves/S0.5b inputs live under `$WORK`, not `$RUN`). A pause
+   capture exists (taken at pause time or reconstructed as: files under `$RUN`/`$WORK` have mtime <= the pause
+   `2026-11-13T13:03:00Z`; `$RUN/STOP` inode 57048847, 0 bytes, sha `e3b0c442…`); no new/removed paths; no truncated
+   last line of any JSONL. `b1_proposals.jsonl` is a B1 artifact and is not part of the Track S scene.
+3. Paper pin `8237fd02…` detached/clean in `/home/dowling/r1_tracks/work/Agent_paper_B`; harness `a3fedbb…` clean;
+   `trks` wrapper pins unchanged; prior `$OUT/digits_mlp/a2u_prior_r2_20261111.json` sha `5c849d15…`.
+4. k = 2 (Phase-1 decision). Deployed reviewed scripts: `tasl7_digits_s05_20261113.sh` sha `3e957464…` (takes `K`,
+   starts `trks-servers $K` itself if `trks_llm` is absent), `tasl7_digits_s05b_20261113.sh` sha `3685dfe6…`; `bash -n`.
+5. **No separate server start**: the launcher starts the k=2 servers after its own guards; starting servers first would
+   orphan them if the launcher refuses (exit 2). Any launcher refusal is a STOP: if it did start `trks_llm` before
+   failing, kill only that session (`tmux kill-session -t trks_llm`), verify no own `llama-server` remains and the
+   lease is free, and report.
 
-## 1. Resume steps (TASL-7; `set -euo pipefail`, `umask 077`, `set -C`)
-1. **Capture** a read-only pre-resume state (tmux, `$RUN/manifest.json` done, `$RUN/STOP` stat/sha (empty), listings,
-   GPU/lease, `trks_s05_t7.exit` and launch rc history, paper/harness HEADs, marker absence). Save in a new
-   `/private/tmp` capture with `SHA256SUMS`.
-2. **Retire the pause STOP without deleting it**: `mv -n "$RUN/STOP" "$RUN/_to_delete/STOP.retired.<UTC>"` (create
-   `$RUN/_to_delete` with mode 700 if absent; `-n` refuses overwrite; verify target absent first; record the source and
-   target sha256 (both `e3b0c442…`) and the inode). If the target exists or the rename fails: STOP, preserve.
-3. **Start k=2 servers**: if `trks_llm` is absent and no foreign GPU job and `gpu0.lock` free:
-   `tmux new -d -s trks_llm "$R/bin/trks-servers 2"`, then bounded wait for `http://127.0.0.1:18101/v1/models` and
-   `18102`; a timeout is a STOP.
-4. **Resume the collector with the same command** (no parameter changes) by re-running the reviewed launch script
-   `K=2 bash $R/launch/tasl7_digits_s05_20261113.sh` in tmux (session name not prefixed by `trks_s05_t7`, e.g.
-   `trks_s05t7resume`). The script's resume path accepts the existing `$RUN` with a manifest and reuses `trks_llm`; it
-   starts `trks-run trks_s05_t7 18101 collect --phase S0.5 --node digits_mlp --prior … --prior-sha256 5c849d15…
-   --obs-inflation 1.0 --W 40 --instances 20 --policy static:0.00198,0 --rep 0 --rep 1 --rep-instances 10 --forks 1.5
-   --aa-fraction 0.1 --label ENGINEERING_ONLY --deadline 28800 --stop-file $RUN/STOP --out $RUN --work $WORK/...`.
-   Verify the new `trks_s05_t7.cmd` is byte-identical to the paused run's command except no changes; any difference is
-   a STOP.
-5. Monitor read-only to completion (30-min polling; no early stop): collector log/exit, manifest done counts,
-   `failed_units.jsonl`, STOP presence, GPU/lease.
-6. On rc=0 and `done.status=complete`: stop servers (kill `trks_llm`, pkill own `llama-server .*--port 1810[12]`,
-   verify lease free) → run `tasl7_digits_s05b_20261113.sh` (CPU-only; requires manifest complete and no servers) →
-   wait for `s05b_truncated.jsonl`/`s05_calibration.jsonl` → report + copy back.
+## 1. Resume steps (TASL-7 via `ssh tasl7 'bash -s'`; each block self-contained; Mac-local capture dir)
+1. **Capture** (read-only): tmux; manifest `done`; `$RUN` and `$WORK` listings with sizes/mtimes/ino; STOP stat/sha
+   (0 B, inode 57048847, sha `e3b0c442…`); GPU/lease; the **current** `$R/logs/trks_s05_t7.cmd` and its sha256 (trks-run
+   overwrites `.cmd` on the next run, so it must be captured here); `trks_s05_t7.exit` and launch rc history; paper/harness
+   HEADs; marker absence. Store the capture under `/private/tmp/...` **on the Mac** with `SHA256SUMS`; host-side copies
+   are read-only listings only.
+2. **Retire the pause STOP without deleting it**: verify `$RUN/_to_delete` absent→create mode 700; verify
+   `$RUN/STOP` exists, 0 B, sha `e3b0c442…`, inode 57048847; verify target
+   `$RUN/_to_delete/STOP.retired.<UTC>` absent; `mv -n "$RUN/STOP" <target>`; then **verify the move happened**
+   (source absent, target present, 0 B, same sha/inode); if `mv -n` no-ops or the target exists: STOP, preserve.
+3. **Resume with the reviewed launcher** (it starts `trks-servers 2`, waits for both endpoints and starts the collector
+   in a tmux session whose name is **not** prefixed by `trks_s05_t7`, e.g. `trks_s05t7resume`):
+   `K=2 bash $R/launch/tasl7_digits_s05_20261113.sh` run inside tmux. It reuses `$RUN` (manifest present → resume path),
+   reuses `trks_llm` if present, refuses a server count != K, and writes `$R/logs/trks_s05_t7.cmd` again.
+4. **Command identity**: after the collector starts, compare the **new** `$R/logs/trks_s05_t7.cmd` with the step-1 copy
+   (the `--out`/`--work`/flags/prior sha must be identical; only a new `grks-run` timestamp/session line may differ).
+   Keep both files; any substantive difference or launcher refusal (exit 2) = STOP, stop only our `trks_llm` and report.
+5. Monitor read-only to completion (30-min polling; no early stop): collector log/exit, manifest done counts
+   (roots/forks/leaves/failed/exhausted), `failed_units`, STOP presence, GPU/lease. A `status=deadline` end is reported
+   as a deadline stop and resumed only with the same command under a renewed decision (not silently).
+6. On rc=0 and `done.status=complete`: stop the servers (`tmux kill-session -t trks_llm`; pkill only own
+   `llama-server .*--port 1810[12]`; verify lease free, no own process) → run `tasl7_digits_s05b_20261113.sh` (CPU;
+   requires manifest complete and no servers) → wait for `s05b_truncated.jsonl` / `s05_calibration.jsonl`.
 
 ## 2. Copy-back / report / review / pause
-Copy `$RUN` (calibration/truncation JSONL, manifest, SHA256SUMS; never the TASL-2 scene) to
-`results/r1/tracks/digits_mlp/s05_t7_20261113/`; write the report + STATUS on `trackS-ops`; independent review; then pause
-and report per L1 (S0.5 summary/STOP 4 still wait for `tabular_mlp`). No B2/X.7/sweep 2.
+Copy `$RUN/sp05*` calibration/truncation JSONL, the manifest, **the run's logs** (collector `.log`/`.cmd`/`.exit`,
+launcher log/rc) and `SHA256SUMS` to `results/r1/tracks/digits_mlp/s05_t7_20261113/` (never the TASL-2 scene); write
+the report + STATUS on `trackS-ops-20261030`; independent review; then pause and report per L1 (S0.5 summary/STOP 4
+still wait for `tabular_mlp`). No B2/X.7/sweep 2. If TASL-2 returns meanwhile, it is censused read-only and preserved,
+not resumed or switched to.
 
 ## 3. STOP conditions
-Any precondition failure; STOP rename failure/leftover; marker/lease/GPU anomaly; a priority marker appearing (watcher
-pauses; resume later, not a failure); collector exit 3 twice; >2 % failed units; calibration gate failure twice; A/A or
-fork-rebuild mismatch; verifier/report inconsistency; any difference from the reviewed bytes — preserve the scene and
-report, no retry/delete/pin change.
+Any precondition failure; STOP rename failure/leftover; launcher refusal; command difference; marker/lease/GPU anomaly;
+a priority marker appearing (watcher pauses; resume later, not a failure); collector exit 3 twice **in a row** (the
+known forced-pause exception is recorded, not auto-retried); >2 % failed units; calibration gate failure twice; A/A or
+fork-rebuild mismatch; 5-day GPU cap; verifier/report inconsistency; any difference from reviewed bytes — preserve the
+scene and report; no retry/delete/pin change.
