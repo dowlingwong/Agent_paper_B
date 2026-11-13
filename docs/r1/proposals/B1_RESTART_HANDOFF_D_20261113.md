@@ -27,11 +27,14 @@ Not covered; go to the author:
   - the replay script `r1/scripts/b1_proposal_replay.py`; `r1/scripts/b1_completion_usage.py` (counts overflow calls);
   - tests: `r1/tests/test_exam_b1_model_output.py`, `r1/tests/test_b1_proposal_replay.py` and additions to `test_b1_completion_usage.py` and `test_exam_b1_batch_verify.py`. They need `AR_HARNESS_B1_ROOT` at `a3fedbb`; set `R1_REQUIRE_B1_HARNESS=1` so they cannot skip.
 - **`2eda52e7`** — `paper_commit` moves from `1334c616` to `3458b672` (one line).
-- **Later commits:** documentation only (PLAN row, diagnosis, replay hand-off, this hand-off, appendix draft, review records).
+- **`afdd6e9c`, `fe8f90a5`** — documentation (PLAN row, diagnosis, replay hand-off, this hand-off, appendix draft).
+- **`02a91494`** — review round 2: the unencodable-reply check looks only at the summary, parsed as the harness parses it; tests.
+- **`c5bf524b`** — `paper_commit` moves from `3458b672` to `02a91494` (one line). This is the final pin: `paper_commit` in `r1/scripts/configs/exam_b1_v2.json` at the reviewed base must be `02a914944cc546fc33a6428b1eb92a8993542bef`.
+- **Later commits:** documentation only (SHA updates, review records).
 - **Reviewed base:** the commit on the `Accepted commit:` line of the last accepted round in `reviews/B1_MODEL_OUTPUT_REVIEW_20261113.md`.
   - The `Reviewed base:` line at the top of that file and `Claude outputs/READY.txt` (item D-B1R, model output) must name the same SHA. If the three disagree, STOP.
   - Commits after the base may only add review records to that file. Check that `git diff --name-only <base> <remote tip>` lists nothing but `docs/r1/reviews/B1_MODEL_OUTPUT_REVIEW_20261113.md`.
-  - Check that `git diff --name-only 3458b672 <base> -- r1/exam r1/scripts/exam_runner.py r1/scripts/llama_server_instance.py r1/scripts/llamacpp_probe.py r1/headroom/e1b_collect.py` is empty.
+  - Check that `git diff --name-only 02a91494 <base> -- r1/exam r1/scripts/exam_runner.py r1/scripts/llama_server_instance.py r1/scripts/llamacpp_probe.py r1/headroom/e1b_collect.py` is empty.
 - **Run HEAD:** one new commit on top of the reviewed base, on a new branch `ops-b1-restart-d-<YYYYMMDD>`. Push it without force.
   - It changes **only the prose** of `docs/r1/authorizations/trackx_b1_20261105.md`: name this restart, the stopped run `4b31_20261112_c`, the reviewed base and this hand-off. The JSON bindings stay byte-identical. The note inherited from `4b312844` describes the `_c` restart and must not be used as is.
   - That commit gets the exact-HEAD review and the real author gate.
@@ -72,7 +75,7 @@ Not covered; go to the author:
 6. Any further STOP in the new run is preserved and reported, not retried. The following no longer stop the run; each becomes an invalid trial:
    - a model-output fault of diagnosis §3 M5–M9;
    - a prompt beyond the context after trial 1 (M19);
-   - a reply with a lone surrogate, which would make the next request unencodable (M20);
+   - a reply whose summary holds a lone surrogate, which would make the next request unencodable (M20);
    - a truncated proposal.
 
    Everything else in §3 still stops, as before.
