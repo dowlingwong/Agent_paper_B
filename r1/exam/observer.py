@@ -16,6 +16,12 @@ from r1.exam.cache_false import D3EvidenceStop
 
 _B1_OBSERVER_CONTEXT = contextvars.ContextVar('exam_b1_observer_context', default=False)
 
+# R1-EXAM-B1-OBSERVER-TIMEOUT (standby, 13 Nov 2026): socket timeout of the observer request, previously 60 s.
+# llama-server sends nothing before the whole (non-streamed) reply is generated, so this bounds the generation
+# time of one observer answer. 180 s covers the full max_tokens 4096 at >= 23 tokens/s (slowest B1 server
+# measured: about 33 tokens/s). A timeout is still a STOP (B1ObserverFatal); only the threshold changes.
+OBSERVER_TIMEOUT_S = 180.0
+
 
 def _authorized_candidate(job, cfg, registry):
     """Resolve only a registry footprint using the digest-bound Stage A PASS row."""
@@ -145,7 +151,7 @@ class SelfForecastObserver:
             self._append({'event':'request_attempt','sequence':sequence,'request_body':raw_request.decode(),
                           'request_body_sha256':hashlib.sha256(raw_request).hexdigest(),'delivery':'unknown'})
             evidence['request_attempted'] = True
-            with urlopen(request, timeout=60.0) as response:
+            with urlopen(request, timeout=OBSERVER_TIMEOUT_S) as response:
                 evidence['response_received'] = True
                 evidence['http_status'] = response.status
                 evidence['response_chunks']=[]

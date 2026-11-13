@@ -98,7 +98,7 @@ def test_table_and_cap_check(tmp_path, capsys):
     q = modes[('qwen38_27b', 'on')]
     assert abs(q['tokens_per_s'] - 440.0) < 1e-6                        # 100 ms per 44 tokens in the fixture
     assert abs(q['all_capped_root_hours_at_80_calls'] - 80 * 16384 / 440.0 / 3600) < 1e-9
-    assert abs(q['observer_timeout_tokens'] - 60 * 440.0) < 1e-6
+    assert abs(q['observer_timeout_tokens'] - u.OBSERVER_TIMEOUT_S * 440.0) < 1e-6 and u.OBSERVER_TIMEOUT_S == 180.0
     assert ('scripted', 'off') not in modes
 
 

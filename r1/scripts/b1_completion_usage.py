@@ -39,7 +39,7 @@ USAGE_RE = re.compile(r'completion_tokens=(\d+), prompt_tokens=(\d+), total_toke
 THINKING_BUDGET = 2048
 SOFTWARE = ('random_valid', 'scripted')
 LLM_CALL_CAP = 80           # exam_b1_v2.json llm_call_cap
-OBSERVER_TIMEOUT_S = 60.0   # r1/exam/observer.py urlopen timeout
+OBSERVER_TIMEOUT_S = 180.0  # r1/exam/observer.py OBSERVER_TIMEOUT_S (R1-EXAM-B1-OBSERVER-TIMEOUT; was 60 s)
 ROOT_DEADLINE_H = 12.0      # exam_b1_v2.json root_timeout_seconds 43200
 DEFAULT_CAP = 16384   # equals r1.exam.b1_llm_truncation.B1_MAX_COMPLETION_TOKENS (checked by the test)
 

@@ -115,3 +115,38 @@ def test_campaign_binds_observer_journal_without_opening_it(tmp_path):
     assert obs.journal_path==tmp_path/'a4_observer_requests.jsonl'
     assert not obs.journal_path.exists()
     assert observer_for_campaign({'candidate':{'id':'anchor','kind':'scripted'}},tmp_path) is None
+
+
+def test_observer_request_timeout_is_180_seconds(tmp_path, monkeypatch):
+    """R1-EXAM-B1-OBSERVER-TIMEOUT: the observer request is sent with the 180 s socket timeout (was 60 s)."""
+    import json
+    from r1.exam import observer as observer_module
+    assert observer_module.OBSERVER_TIMEOUT_S == 180.0
+    raw=json.dumps({'choices':[{'message':{'content':'{"p_no_effect":0.2,"p_positive":0.75,"size":"small"}'}}]}).encode()
+    seen=[]
+    class Response:
+        status = 200
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def read(self,size):
+            if getattr(self,'read_done',False):return b''
+            self.read_done=True;return raw
+    def fake_urlopen(request, timeout=None):
+        seen.append(timeout);return Response()
+    monkeypatch.setattr('r1.exam.stage_a.require_d3_evidence',lambda:None)
+    monkeypatch.setattr(observer_module, 'urlopen', fake_urlopen)
+    observer=SelfForecastObserver('http://fixture/v1','fixture',journal_path=tmp_path/'observer.jsonl')
+    observer._request('prompt')
+    observer.close()
+    assert seen == [180.0]
+
+
+def test_usage_report_uses_the_observer_timeout():
+    """b1_completion_usage.py reports margins against the observer's actual timeout."""
+    import importlib.util
+    from pathlib import Path
+    from r1.exam.observer import OBSERVER_TIMEOUT_S
+    path=Path(__file__).resolve().parents[2]/'r1/scripts/b1_completion_usage.py'
+    spec=importlib.util.spec_from_file_location('b1_completion_usage_for_test',path)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    assert module.OBSERVER_TIMEOUT_S == OBSERVER_TIMEOUT_S

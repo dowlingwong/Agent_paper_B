@@ -10,6 +10,8 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'r1/scripts'))
 requests=[]
 fail_observer=sys.argv[2]=='fail'
+# 'slow': the observer answer is delayed by OBS_DELAY_S; OBS_TIMEOUT_S, if set, replaces the observer timeout
+slow_observer=sys.argv[2]=='slow'
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
@@ -19,6 +21,9 @@ class Handler(BaseHTTPRequestHandler):
         prompt=body['messages'][-1]['content']
         observer=prompt.startswith('You proposed the edit below.')
         requests.append({'observer':observer,'body':body})
+        if observer and slow_observer:
+            import time
+            time.sleep(float(os.environ['OBS_DELAY_S']))
         if observer and fail_observer:
             self.send_response(503);self.send_header('Content-Length','0');self.end_headers();return
         answer={'p_no_effect':0.2,'p_positive':0.7,'size':'small'} if observer else fake.proposal_for(prompt,body.get('seed'))
@@ -37,6 +42,9 @@ for key in ('LLAMACPP_CACHE_PROMPT','OPENAI_API_KEY','OPENAI_BASE_URL'):
     os.environ.pop(key,None)
 from r1.exam.campaign import collect
 from r1.exam.observer import B1ObserverFatal
+if os.environ.get('OBS_TIMEOUT_S'):
+    import r1.exam.observer as _observer_module
+    _observer_module.OBSERVER_TIMEOUT_S=float(os.environ['OBS_TIMEOUT_S'])
 job={'out':str(out),'binding':'fixture','workers':1,'host':'fixture','phase':'b1','node':'digits_mlp','seed':9001,
      'candidate':{'id':'standin_candidate'},'mode':'off','dryrun':True,'W':2,'llm_call_cap':8,
      'audit_seeds':[9101,9102,9103,9104],'base_url':url,'value_grids':str(ROOT/'r1/exam/value_grids.yaml'),
