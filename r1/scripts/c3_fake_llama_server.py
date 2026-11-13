@@ -76,7 +76,7 @@ def parse(argv):
         if item == '--jinja':
             args[item] = True
         elif item in args or item in ('--cache-type-k', '--cache-type-v', '--chat-template-kwargs', '--reasoning-budget',
-                                      '--split-mode', '--tensor-split'):
+                                      '--split-mode', '--tensor-split', '-lv'):
             args[item] = next(it)
         else:
             raise SystemExit(f'fake llama-server: unsupported argument {item!r}')
