@@ -17,7 +17,7 @@ For every root it reports:
   the largest ``completion_tokens`` and the longest server ``predicted_ms`` from the recorded response bodies.
 Per candidate and mode it adds the proposer rate (completion tokens / latency) and two bounds at that rate: hours
 for a root whose 80 LLM calls all end at the cap (per-root deadline 12 h), and the observer reply length that
-reaches the observer's 60 s timeout.
+reaches the observer's timeout (``OBSERVER_TIMEOUT_S``).
 
 The cap check is: the largest proposer completion over the **completed** roots < ``--cap``.
 Output: Markdown on stdout, then one JSON line. Exit 0 if the check passes, 1 if it fails, 2 on bad input.
@@ -145,7 +145,7 @@ def candidate_modes(rows: list[dict], cap: int) -> list[dict]:
                     'tokens_per_s': rate,
                     # every one of the LLM-call cap's 80 calls truncated at the cap (the per-root deadline is 12 h)
                     'all_capped_root_hours_at_80_calls': (LLM_CALL_CAP * cap / rate / 3600.0) if rate else None,
-                    # observer replies that would reach its 60 s timeout at this rate
+                    # observer replies that would reach its timeout (OBSERVER_TIMEOUT_S) at this rate
                     'observer_timeout_tokens': (OBSERVER_TIMEOUT_S * rate) if rate else None,
                     'observer_max_predicted_s': max(obs) if obs else None})
     return out
@@ -216,7 +216,7 @@ def markdown(res: dict) -> str:
                      f"{r['calls_over_thinking_budget']} | {failed} | {r['observer_calls']} | "
                      f"{_f(r['observer_max_completion_tokens'])} | {_f(r['observer_max_predicted_s'])} |")
     lines += ['', f'Per candidate and mode (all roots in the copy; time bounds at the measured proposer rate; per-root deadline {ROOT_DEADLINE_H:.0f} h, observer timeout {OBSERVER_TIMEOUT_S:.0f} s):', '',
-              '| candidate / mode | roots (completed) | proposer calls | truncated | max completion | tokens/s | h if all 80 calls hit the cap | observer reply tokens at 60 s | observer max predicted s |',
+              f'| candidate / mode | roots (completed) | proposer calls | truncated | max completion | tokens/s | h if all 80 calls hit the cap | observer reply tokens at {OBSERVER_TIMEOUT_S:.0f} s | observer max predicted s |',
               '|---|---|---|---|---|---|---|---|---|']
     for c in res['candidate_modes']:
         lines.append(f"| `{c['candidate']}` / {c['mode']} | {c['roots']} ({c['completed_roots']}) | {c['llm_calls']} | {c['truncated']} | "

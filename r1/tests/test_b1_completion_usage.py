@@ -180,3 +180,16 @@ def test_context_overflow_calls_have_no_usage_and_are_counted(tmp_path, capsys):
     assert u.main(['--roots', str(tree)]) == 0
     row = json.loads(capsys.readouterr().out.splitlines()[-1])['roots'][0]
     assert row['context_overflow'] == 1 and row['llm_calls'] == 3 and row['llm_calls_without_usage'] == 0
+
+
+def test_report_header_names_the_observer_timeout(tmp_path, capsys):
+    """R1-EXAM-B1-OBSERVER-TIMEOUT review S1: the per-candidate table names the timeout it is computed for."""
+    tree = tmp_path / 'roots'
+    rel = 'qwen38_27b/b1/on/digits_mlp__s9001'
+    d = _root(tree, rel, [{'calls': [120]}])
+    (tree / 'batch_state.json').write_text(json.dumps({'completed': {'k': {
+        'path': f'{HOST}/{rel}/campaign_manifest.json',
+        'sha256': hashlib.sha256((d / 'campaign_manifest.json').read_bytes()).hexdigest()}}}))
+    assert u.main(['--roots', str(tree)]) == 0
+    text = capsys.readouterr().out
+    assert 'observer reply tokens at 180 s' in text and 'at 60 s' not in text
