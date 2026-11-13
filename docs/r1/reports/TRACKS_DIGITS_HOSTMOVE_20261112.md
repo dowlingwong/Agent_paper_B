@@ -1,6 +1,6 @@
 # Track S `digits_mlp` host move to TASL-7 — proposal (13 November 2026, rev 4)
 
-**Author decision recorded here; partly executed (13 Nov: `_c` STOP-case marker retirement accepted and executed; S0.1 pending a reviewed operator-error re-run).** In the chat of 12 Nov 2026 the author chose the option
+**Author decision recorded here; partly executed (13 Nov: `_c` STOP-case marker retirement accepted and executed; S0.1 PASS on TASL-7 (k=2, result reviewed); S0.5 started).** In the chat of 12 Nov 2026 the author chose the option
 "migrate `digits_mlp` to TASL-7 and run it after the B1 `_c` run ends" (recorded by the Lead; the author's selection
 is the decision, no sentence is quoted as verbatim). This is an ENGINEERING_ONLY Track S change; it starts nothing by
 itself.

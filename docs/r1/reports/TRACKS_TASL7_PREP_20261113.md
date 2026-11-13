@@ -8,7 +8,7 @@ will run; they are executed only after B1 `_c` ends normally and the accepted po
 
 ## Shared preconditions (all fail-closed)
 
-1. B1 `_c` normal end + post-run unit executed/accepted; `~/r1_locks/trackx_evidence.active` absent; Track P marker
+1. the `_c` marker retired by the accepted STOP-case unit (the actual STOP path taken); `~/r1_locks/trackx_evidence.active` absent; Track P marker
    absent; `$R/trks_drill.active` absent; no foreign GPU job; lease `~/r1_locks/gpu0.lock` free.
 2. TASL-7 paper checkout `$R/work/Agent_paper_B` fetched from the TASL-7 bare repo (branch
    `mac-tracks-a2u-stale-20261111`, which contains `8237fd02`) and checked out **detached at pin
