@@ -699,8 +699,25 @@ class BinTokenWrapper(_Wrapper):
             action = a[:, 0] - a[:, 1]
         extra = {}
         if analyses is not None:
-            extra["analysis_logprob"] = self._span_logprob(h, ids, [s[3] for s in segs])
+            spans = [s[3] for s in segs]
+            extra["analysis_logprob"] = self._span_logprob(h, ids, spans)
+            # Per-token log-probabilities of the same spans (Stage R-B's per-token PPO ratio, spec §6.4); padded with
+            # zeros and masked. Their row sums equal ``analysis_logprob``.
+            extra["analysis_token_logprob"], extra["analysis_token_mask"] = self._span_token_logprobs(h, ids, spans)
         return self._out(belief, action, hb if return_state else None, **extra)
+
+    def _span_token_logprobs(self, h, ids, spans) -> tuple[torch.Tensor, torch.Tensor]:
+        head = self.lm.get_output_embeddings()
+        rows = []
+        for i, (a, b) in enumerate(spans):
+            logits = head(h[i, a - 1:b - 1].to(head.weight.dtype)).float()
+            rows.append(torch.log_softmax(logits, -1).gather(-1, ids[i, a:b, None])[:, 0])
+        width = max((len(r) for r in rows), default=0)
+        out = torch.zeros(len(rows), width, device=h.device)
+        mask = torch.zeros(len(rows), width, device=h.device)
+        for i, r in enumerate(rows):
+            out[i, :len(r)], mask[i, :len(r)] = r, 1.0
+        return out, mask
 
     def _span_logprob(self, h, ids, spans) -> torch.Tensor:
         """Sum of log p(token) over each analysis span (closing tag included), teacher-forced."""
