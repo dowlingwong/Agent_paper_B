@@ -27,7 +27,7 @@ will run; they are executed only after B1 `_c` ends normally and the accepted po
 c1deee130d8d67b495c4dcf2ad2b46b37153a6ae33224754e7b0e4f1be99c0f8  r1/tracks/ops/launch/tasl7_digits_s01_20261113.sh
 # revised 13 Nov (reviewed): accepts S01_SUFFIX so the operator-error re-run uses s01_t7_20261113b and leaves the
 # preserved empty s01_t7_20261113/ untouched; the other two digests are unchanged.
-87c05587daed193dd127512c4c76f59abbdd3c10d4b0b64f47a0e5f2673b9067  r1/tracks/ops/launch/tasl7_digits_s05_20261113.sh
+3e9574643a6736a14ce28f00dd0717a57de3987cc84242b7dc255139f7615151  r1/tracks/ops/launch/tasl7_digits_s05_20261113.sh
 3685dfe6874f3dbbd7cdf07fd1d2ec45913f4e41b60c54c82ba3d79594fe920a  r1/tracks/ops/launch/tasl7_digits_s05b_20261113.sh
 ```
 
@@ -38,8 +38,8 @@ c1deee130d8d67b495c4dcf2ad2b46b37153a6ae33224754e7b0e4f1be99c0f8  r1/tracks/ops/
   concurrent probes in their own `trks-run` sessions (`s01_t7_20261113/serial.json`, `concurrent.json`), and checks
   both rcs. k decision: 2 if within-server identity is 100 % on both URLs and cross-server identity 100 %; else 1 if
   the serial run is 100 %; else STOP.
-- `tasl7_digits_s05_20261113.sh`: k = 1 server on 18101 (fresh `trks_llm` via `$R/bin/trks-servers 1` unless one is
-  already running); `$OUT/digits_mlp/s05_t7_20261113` and `$WORK/digits_mlp/s05_t7_20261113`; session `trks_s05_t7`;
+- `tasl7_digits_s05_20261113.sh`: `K` servers (default **2**, the TASL-7 S0.1 decision) in `trks_llm`
+  (`trks-servers $K`); waits for endpoints 18101..1810K; refuses a running `trks_llm` whose live server count != K; `$OUT/digits_mlp/s05_t7_20261113` and `$WORK/digits_mlp/s05_t7_20261113`; session `trks_s05_t7`;
   the same rev-3.3 Phase-4 command (W 40, 20 instances, `--policy static:0.00198,0`, `--obs-inflation 1.0`,
   `--prior-sha256 5c849d15…`, `--deadline 28800`, `--stop-file $RUN/STOP`, `--label ENGINEERING_ONLY`); a
   manifest-less existing `$RUN` refuses (not resumable), a manifest-bearing one is a resume of that directory.

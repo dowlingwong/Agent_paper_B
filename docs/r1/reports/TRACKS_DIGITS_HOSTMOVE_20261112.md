@@ -63,7 +63,8 @@ the node to TASL-7. **The TASL-2 `s05` scene is preserved, never modified or del
    reviewed before use: new directories `$OUT/digits_mlp/s05_t7_20261113` and
    `$WORK/digits_mlp/s05_t7_20261113` (so the preserved TASL-2 `$OUT/digits_mlp/s05` is not overwritten), sessions
    `trks_s05_t7` / `trks_s05b_t7`, the same rev-3.3 Phase 4 command (W 40, 20 instances, policy
-   `static:0.00198,0`, obs-inflation 1.0, prior sha above, 8 h deadline, ENGINEERING_ONLY), k = 1, port 18101.
+   `static:0.00198,0`, obs-inflation 1.0, prior sha above, 8 h deadline, ENGINEERING_ONLY), `K` servers as decided by the TASL-7
+   S0.1 result (the accepted result decided **k = 2**; the collector runs on port 18101, both endpoints ready),
 6. **Track X and Track P untouched**: no Track X change other than the separately reviewed STOP-case marker
    retirement in condition 1, performed under the B1 procedure; Track P stays paused as during B1/B2, and no
    Track P marker is created or retired by this move. The TASL-2 scenes are preserved.
