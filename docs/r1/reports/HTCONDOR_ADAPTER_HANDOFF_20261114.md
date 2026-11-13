@@ -24,11 +24,11 @@ Refused:
 - transfer inputs that are missing, symlinks, or over 100 MB (10^6 bytes) in total, the executable included unless it lives in the image (use `/ceph` or xrootd for larger data);
 - `$` in arguments (HTCondor expands `$(...)` macros) and control characters;
 - a `track_g` manifest whose walltime does not exceed `runs_per_job` × `runner_timeout_s` plus the margin (600 s, `proposed:`; it must also cover setup such as image start and model load), so every run's own runner timeout fires before an HTCondor walltime hold. `runner_timeout_s` must be the value the runner will use (factor × measured run time, or the provisional value);
-- a `track_g` GPU table without a pinned device name. CUDA OOM counts as `divergent` only with one GPU model per table (author's answer to Q8). `--table-pins FILE` (required for `track_g`) records each table's device name on first use and refuses a later manifest of the same table with another one.
+- a `track_g` GPU table without a pinned device name. CUDA OOM counts as `divergent` only with one GPU model per table (author's answer to Q8). `--table-pins FILE` (required for `track_g`) records each table's device name on first use, a `--dry-run` included (a mistaken first dry run means editing the pins file by hand), and refuses a later manifest of the same table with another one.
 
 Not checked (operator's care): site and device consistency, e.g. `etp_ceph` together with NEMO2's `cloud_site` (NEMO2 has no `/ceph/srv`) would never match.
 
-Rendering: `universe = docker`, `docker_image`, the resource requests, `+RequestWalltime`, `request_GPUs` and `+RemoteJob = True` for remote jobs, `requirements` from the placement, device name, cloud site and `ProvidesEtpCeph`, an optional `accounting_group`, file transfer `YES` / `ON_EXIT`. Arguments use HTCondor's quoted "new syntax".
+Rendering: `universe = docker`, `docker_image`, the resource requests, `+RequestWalltime`, `request_GPUs` and `+RemoteJob = True` for remote jobs, `requirements` from the placement, device name, cloud site and `ProvidesEtpCeph`, an optional `accounting_group`, file transfer `YES` / `ON_EXIT` (`ON_EXIT_OR_EVICT` with `resume_dir`; `transfer_executable = False` with `executable_in_image`). Arguments use HTCondor's quoted "new syntax".
 
 ## 3. Queue-time rows and outcomes
 
@@ -53,14 +53,14 @@ M10 outcome of an HTCondor-level event (`infrastructure_outcome`) — each case 
 | hold after 6 starts | `infrastructure_failure` | `htcondor_restart_limit` |
 | hold code 34 subcode 104 (disk), any other code, or unrecognised text | `unclassified` | a human decides; never mapped silently |
 
-`infrastructure_outcome` returns `{"final", "attempts"}`. `attempts` lists every eviction and hold with its reason. `final` is None when the job ended with a normal termination (005 with a return value): the run's own outcome then comes from the runner and its log, and earlier evictions or holds are history. Otherwise `final` is `unclassified` if any hold is unrecognised (all hold texts listed), else the first recognised hold, else the last eviction. An explicit time-zone suffix in the log (`Z`, `+01:00`) is applied; with one, `--utc-offset-minutes` must be 0.
+`infrastructure_outcome` returns `{"final", "attempts"}`. When the runner also wrote its own record for the run (for example `killed`), that record decides the run's outcome; `final` describes the job. `attempts` lists every eviction and hold with its reason. `final` is None when the job ended with a normal termination (005 with a return value): the run's own outcome then comes from the runner and its log, and earlier evictions or holds are history. Otherwise `final` is `unclassified` if any hold is unrecognised (all hold texts listed), else the first recognised hold, else the last eviction. An explicit time-zone suffix in the log (`Z`, `+01:00`) is applied; with one, `--utc-offset-minutes` must be 0.
 
 The repeated-timeout cap (Unit 3) counts only the runner's `timeout` reason. Whether walltime holds should count toward it is an open author question.
 
 ## 4. Resume-safe units
 
 `run_units(root, units, work)` skips every unit whose `UNIT_COMPLETE.json` exists and whose listed outputs still match (size and SHA-256).
-- **Where `root` must live.** With `when_to_transfer_output = ON_EXIT` (the default rendering), a job restarted after an eviction starts with only its inputs (HTCondor manual), so markers in the sandbox are lost. Either put `root` on persistent storage (`/work`, local jobs only), or set the manifest's `resume_dir` and use it as `root`: it is then rendered as input and output with `ON_EXIT_OR_EVICT`, so it comes back on restart. Remote GPU jobs have no `/work`, so they need `resume_dir`; check that the pool's HTCondor supports `ON_EXIT_OR_EVICT`.
+- **Where `root` must live.** With `when_to_transfer_output = ON_EXIT` (the default rendering), a job restarted after an eviction starts with only its inputs (HTCondor manual), so markers in the sandbox are lost. Either put `root` on persistent storage (`/work`, local jobs only), or set the manifest's `resume_dir` (an existing directory, counted toward the transfer limit) and use it as `root`: it is then rendered as input and output with `ON_EXIT_OR_EVICT`, so it comes back on restart. Remote GPU jobs have no `/work`, so they need `resume_dir`; check that the pool's HTCondor supports `ON_EXIT_OR_EVICT`.
 - **Writing the manifest.** The manifest is written atomically after the outputs: temporary file, fsync, `os.replace`, then fsync of the directory.
 - **Interrupted unit.** If a unit was interrupted (for example by an eviction), its partial files are moved into `<unit>/_to_delete/attempt-<n>/`. Nothing is deleted, and the unit then runs again.
 - **Mismatch.** A manifest whose outputs no longer match is a STOP (`UnitError`). The unit is not redone silently.
@@ -82,7 +82,7 @@ The repeated-timeout cap (Unit 3) counts only the runner's `timeout` reason. Whe
 4. What `NVIDIA_VISIBLE_DEVICES`, `CUDA_VISIBLE_DEVICES` and `_CONDOR_AssignedGPUs` contain inside a docker-universe GPU job (probe P4–P7 print them).
 5. The real hold-reason texts, codes and subcodes seen for memory, disk and walltime holds on this pool.
 6. Whether event-log times carry a time-zone suffix.
-7. Whether `when_to_transfer_output = ON_EXIT_OR_EVICT` works on the pool (for `resume_dir`).
+7. Whether `when_to_transfer_output = ON_EXIT_OR_EVICT` works on the pool (for `resume_dir`), and whether a restarted job gets its original inputs back as well as the spooled files (the manual says the saved files are transferred "instead of the input files"): test one eviction before relying on `resume_dir`.
 
 Each confirmed value moves from `proposed:` to `measured: <report>`, in a reviewed change.
 

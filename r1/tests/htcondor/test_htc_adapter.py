@@ -161,9 +161,25 @@ def test_executable_is_counted_unless_it_lives_in_the_image(tmp_path):
         hs.validate_manifest(m2, CONFIG, base_dir=tmp_path)
 
 
-def test_resume_dir_survives_eviction():
+def test_resume_dir_must_exist_and_counts_toward_the_limit(tmp_path):
+    with pytest.raises(hs.HtcError, match="existing directory"):
+        hs.validate_manifest(manifest(resume_dir="units"), CONFIG, base_dir=tmp_path)
+    with pytest.raises(hs.HtcError, match="'.' or '..'"):
+        hs.validate_manifest(manifest(resume_dir="."), CONFIG, base_dir=tmp_path)
+    (tmp_path / "units").mkdir()
+    with open(tmp_path / "units" / "big.bin", "wb") as fh:
+        fh.truncate(100 * 1000 * 1000 + 1)
+    with pytest.raises(hs.HtcError, match="over 100 MB"):
+        hs.validate_manifest(manifest(resume_dir="units"), CONFIG, base_dir=tmp_path)
+    (tmp_path / "u2").mkdir(); (tmp_path / "u2" / "l").symlink_to(tmp_path / "units" / "big.bin")
+    with pytest.raises(hs.HtcError, match="symlink"):
+        hs.validate_manifest(manifest(resume_dir="u2"), CONFIG, base_dir=tmp_path)
+
+
+def test_resume_dir_survives_eviction(tmp_path):
+    (tmp_path / "units").mkdir()
     m = manifest(resume_dir="units", transfer_output_files=["out.json"])
-    hs.validate_manifest(m, CONFIG)
+    hs.validate_manifest(m, CONFIG, base_dir=tmp_path)
     jdl = hs.render_jdl(m, "1" * 64)
     assert "when_to_transfer_output = ON_EXIT_OR_EVICT\n" in jdl
     assert "transfer_input_files = units\n" in jdl and "transfer_output_files = out.json,units\n" in jdl

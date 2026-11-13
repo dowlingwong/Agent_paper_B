@@ -181,10 +181,20 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
     resume = data.get("resume_dir")
     if resume is not None:
         if not isinstance(resume, str) or not PATH_TEXT.fullmatch(resume) or os.path.isabs(resume) \
-                or ".." in Path(resume).parts or resume in files_out:
-            raise HtcError("resume_dir must be a relative path in the sandbox, not also an output file")
+                or any(part in (".", "..") for part in resume.split("/")) or resume in files_out:
+            raise HtcError("resume_dir must be a relative path in the sandbox (no '.' or '..' parts), "
+                           "not also an output file")
     base = Path(base_dir) if base_dir else Path.cwd()
     total = 0
+    if resume is not None:
+        rdir = base / resume
+        if not rdir.is_dir() or rdir.is_symlink():
+            raise HtcError(f"resume_dir {resume!r} must be an existing directory (create it empty before the first start)")
+        for sub in rdir.rglob("*"):
+            if sub.is_symlink():
+                raise HtcError(f"resume_dir contains a symlink: {sub}")
+            if sub.is_file():
+                total += sub.stat().st_size
     if not data.get("executable_in_image"):
         # HTCondor transfers the executable by default: it counts toward the limit and must exist here
         exe_path = Path(exe) if os.path.isabs(exe) else base / exe
