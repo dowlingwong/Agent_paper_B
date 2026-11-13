@@ -1,5 +1,13 @@
 # Paper B (route R1) — status log
 
+## 13 November 2026 — Track X B1 `_c` STOP at the proposal-integrity guard (not retried; awaiting author decision)
+
+- **Event.** Run `4b31_20261112_c` (HEAD `4b312844962e1106db04d5a60bf996fad0e3e514`, `_c` truncation-fix restart) stopped on 2026-11-13T03:01:55Z in the worker of `olmo31_32b/b1/off/openml_credit_approval__s9002`, trial `…-trial-020`: `STOP: B1 worker directive and structured edit differ` from `b1_proposal_guard` (the objective parsed by the pinned worker and `extra.structured_edit` disagreed). `b1.exit` 1, batch `STOPPED`, 89 completed, one interruption; no failed units; servers/workers exited and the lease was released.
+- **Not the truncation class.** The manager call ended with `finish_reason` `stop`, 100 completion tokens (cap 16,384), `truncated` false. The guard docstring says such a STOP is never automatically resumed.
+- **Record.** `reports/B1_STOP_4B31_20261112.md` (rev 3, accepted: `reviews/B1_STOP_4B31_REVIEW_R3_20261112.md`; round-1/2 reviews committed too) with committed evidence capture `reports/b1_stop_4b31_20261112/`.
+- **State.** Scene preserved (no deletion, no retry, no new run); the Track X marker `~/r1_locks/trackx_evidence.active` is kept (`4b31_20261112_c`, marker sha `f8c8624f…`, receipt `e0da112f…`); no processes, `gpu0.lock` free. The normal-completion post-run retirement unit does not apply.
+- **Consequences.** Track S `digits_mlp` host move to TASL-7 waits for the author (its condition requires a normal end; a STOP explicitly waits for the author). TASL-2 remains unreachable; its S0.5 scene is preserved. The B1 restart/diagnosis route is the author's decision (flow of `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` and `reports/B1_STOP_DIAGNOSIS_20261111.md`).
+
 ## 11 November 2026 — Track X B1 restart STOP (AI-assisted)
 
 B1 run `fffa_20261111_b` (checkout `fffa45a12b5b43dbdcc6a8c88b509f71309fbbaa`, launched 11:03:48 UTC) is STOPPED: at 13:51:09 UTC the batch recorded `STOP: root worker exit 1` on `qwen36_27b/b1/on/openml_credit_approval__s9001`, whose recorded `llm_call_failed` is a `LengthFinishReasonError` (completion 31,551 tokens, total 32,768, server `truncated = 1`). 64 root keys had completed; the anchor record is descriptive only and the 7B duplicate rate 0.4959 is inside the pinned interval. The B1 marker is retained, the lease is free, and no B1 process or llama-server remains; no retry, marker retirement or configuration change was made. Preserve all evidence. See `docs/r1/reports/B1_STOP_FFFA_20261111.md`. B2, X.7 and sweep 2 remain gated.
