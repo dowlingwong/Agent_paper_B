@@ -1,0 +1,14 @@
+B1 _c STOP evidence capture, 2026-11-13 (read-only; operator DSH session)
+run 4b31_20261112_c HEAD 4b312844962e1106db04d5a60bf996fad0e3e514
+stopped 2026-11-13T03:01:55Z
+host paths:
+  /home/dowling/r1_b1_engineering/b1_handover_4b31_20261112_c/b1.log
+  /home/dowling/r1_b1_engineering/b1_handover_4b31_20261112_c/b1.exit
+  /home/dowling/exam-x/work/b1_4b31_20261112_c/batch_state.json
+  /home/dowling/exam-x/work/b1_4b31_20261112_c/olmo31_32b/b1/off/openml_credit_approval__s9002/runner.log
+  /home/dowling/exam-x/work/b1_4b31_20261112_c/olmo31_32b/b1/off/openml_credit_approval__s9002/root_events.jsonl
+  /home/dowling/exam-x/work/b1_4b31_20261112_c/olmo31_32b/b1/off/openml_credit_approval__s9002/root_trials.jsonl
+  /home/dowling/exam-x/work/b1_4b31_20261112_c/olmo31_32b/b1/off/openml_credit_approval__s9002/root_pending.json
+b1.exit content: 1
+stale in_progress in batch_state.json: {"path": "/home/dowling/exam-x/work/b1_4b31_20261112_c/olmo31_32b/b1/off/openml_credit_approval__s9002", "pid": 4014323} (process not alive at capture time)
+TASL-2 probe at capture: 2026-11-13T03:44:43Z CLOSED
