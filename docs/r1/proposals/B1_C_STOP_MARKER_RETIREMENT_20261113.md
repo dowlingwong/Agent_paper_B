@@ -1,6 +1,6 @@
-# B1 `_c` STOP-case Track X marker retirement — candidate for review (13 November 2026)
+# B1 `_c` STOP-case Track X marker retirement — reviewed (a4e01d2) and executed 2026-11-13T10:49:31Z (rev 4)
 
-**Candidate for independent review; not an execution and not an authorization.** This is a **new** unit authorized by
+**Record of a reviewed and executed unit; the execution and its verification are described in the Track S S0.1 record and the acceptance reviews.** This unit was authorized by
 the author's chat message of 13 Nov 2026 (relayed by the operator, decision recorded in
 `proposals/PLAN_ROW_R1-TRACKS-DIGITS-HOSTMOVE_REV_20261113.md` draft): B1 `_c` ending in a STOP still allows the Track S
 `digits_mlp` host move to TASL-7, and **first** the `_c` Track X marker may be retired in the STOP state, renaming it
@@ -32,7 +32,7 @@ Track X marker (renamed, not deleted) and does not license any other STOP-scene 
 3. Track P marker is absent and P.3a is stopped/absent; no other priority marker or unrelated Track S collector is
    running; the Track S watcher `trks_watch` is alive.
 4. A read-only capture of the STOP state exists (the accepted STOP report's capture
-   `docs/r1/reports/b1_stop_4b31_20261112/` plus a fresh `capture-stop-retirement-*.txt` with the current marker stat,
+   `docs/r1/reports/b1_stop_4b31_20261112/` on `mac-b1-20261107` @ `3b7d570` plus a fresh `capture-stop-retirement-*.txt` with the current marker stat,
    `b1.exit`, batch state, `_to_delete` listing and watcher log line count). Nothing in the STOP scene is modified.
 
 ## 2. Steps (exact; TASL-7, via `ssh tasl7 'bash -s'`; `set -euo pipefail`, `umask 077`, `set -C`)
@@ -44,11 +44,15 @@ Track X marker (renamed, not deleted) and does not license any other STOP-scene 
    `RUN_DIR=/home/dowling/r1_b1_engineering/b1_handover_4b31_20261112_c`;
    `BATCH=/home/dowling/exam-x/work/b1_4b31_20261112_c`;
    `CHECKOUT=/home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper`;
-   `PY=/home/dowling/exam-x/work/venv/bin/python`. Also write a **baseline** file list with hashes for §2.4:
-   `find "$BATCH" -type f ! -path '*/_to_delete/*' -print0 | sort -z | xargs -0 sha256sum > capture/batch-baseline.sha256`
-   plus `sha256sum "$RUN_DIR"/b1.log "$RUN_DIR"/b1.exit` and the pre-existing handover files
-   (`marker-receipt.json`, `marker-retirement.json`, `marker-retirement.note`). Save `ssh.log`, `ssh.exit`,
-   `SHA256SUMS`; record the capture path.
+   `PY=/home/dowling/exam-x/work/venv/bin/python`. Create `CAPTURE=/private/tmp/b1-c-stop-retirement-capture-<UTC>`
+   (mkdir) and write a **baseline** for §2.4 there: (a) every pre-existing file directly in `$RUN_DIR`
+   (`find "$RUN_DIR" -maxdepth 1 -type f -print0 | sort -z | xargs -0 sha256sum > "$CAPTURE/run-dir-baseline.sha256"`);
+   (b) every file under `$BATCH` except `$BATCH/_to_delete/` (explicitly excluded from the comparison, stating that
+   exclusion), `find "$BATCH" -type f ! -path '*/_to_delete/*' -print0 | sort -z | xargs -0 sha256sum >
+   "$CAPTURE/batch-baseline.sha256"`; (c) `git -C "$CHECKOUT" rev-parse HEAD` and a clean-worktree check. The
+   `$RUN_DIR` baseline has 15 pre-existing files (marker receipt + `_b`→`_c` transition files + launch/start/receipt
+   scripts etc.); the **only** permitted additions afterwards are the four `*_stop.*` files. Save `ssh.log`,
+   `ssh.exit`, `SHA256SUMS`; record the capture path.
 2. **Retire the marker with its creation receipt** (renames; deletes nothing; the STOP scene is not touched):
    ```
    set -euo pipefail; umask 077; set -C
@@ -89,8 +93,9 @@ Track X marker (renamed, not deleted) and does not license any other STOP-scene 
    `root_events/trials`, `node/`, `b1.log`, `b1.exit`, `_c` handover, staging checkout) is byte-untouched (compare the
    capture's file list/hashes; no writes into the batch or unit dirs). The **pre-existing `_c` handover files must be
    unchanged**; the only additions to `$RUN_DIR` are the four `*_stop.*` files. No processes; lease free. Compare the
-   §2.1 baseline (`batch-baseline.sha256`) to a fresh run of the same `find`/`sha256sum` after the retirement; any
-   difference outside the four new `*_stop.*` files is a STOP.
+   §2.1 baselines (`run-dir-baseline.sha256`, `batch-baseline.sha256`) to a fresh run of the same
+   `find`/`sha256sum` after the retirement; a difference in `$RUN_DIR` outside the four new `*_stop.*` files, or in
+   `$BATCH`, is a STOP to report (it would mean the STOP scene was touched).
 5. **Record**: append a short section to the `_c` STOP report or a new `reports/B1_C_STOP_MARKER_RETIREMENT_20261113.md`
    with the capture path, retirement receipt/note hashes, watcher observation, post-state verification and the
    explicit statement that the `_c` STOP scene was not modified; publish a STATUS entry; submit for a fresh

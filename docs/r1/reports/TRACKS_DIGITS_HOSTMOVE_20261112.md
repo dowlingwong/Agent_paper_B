@@ -1,4 +1,4 @@
-# Track S `digits_mlp` host move to TASL-7 — proposal (13 November 2026, rev 3)
+# Track S `digits_mlp` host move to TASL-7 — proposal (13 November 2026, rev 4)
 
 **Author decision recorded here; not yet executed.** In the chat of 12 Nov 2026 the author chose the option
 "migrate `digits_mlp` to TASL-7 and run it after the B1 `_c` run ends" (recorded by the Lead; the author's selection
@@ -41,7 +41,7 @@ the node to TASL-7. **The TASL-2 `s05` scene is preserved, never modified or del
    both outcomes.** For a normal end, the post-run unit `proposals/B1_C_POSTRUN_RETIREMENT_20261112.md` (rev
    78c6fd7d, accepted) applies. For the actual STOP ending, the author's 13 Nov 2026 decision (relayed; PLAN §10 row
    draft `proposals/PLAN_ROW_R1-TRACKS-DIGITS-HOSTMOVE_REV_20261113.md`) explicitly allows the move, but **first** the
-   STOP-case unit `proposals/B1_C_STOP_MARKER_RETIREMENT_20261113.md` must be independently reviewed and executed: the
+   STOP-case unit `proposals/B1_C_STOP_MARKER_RETIREMENT_20261113.md` must be accepted and executed: the
    marker is renamed into `~/r1_locks/_to_delete/`, the creation receipt is kept and a retirement receipt/note is
    written, and the `_c` STOP scene is left completely untouched; B1 `_c` is never retried. Performed by the B1/Track X
    operator under that unit, not by Track S (see §5). The marker `trackx_evidence.active` with
@@ -64,7 +64,7 @@ the node to TASL-7. **The TASL-2 `s05` scene is preserved, never modified or del
    `$WORK/digits_mlp/s05_t7_20261113` (so the preserved TASL-2 `$OUT/digits_mlp/s05` is not overwritten), sessions
    `trks_s05_t7` / `trks_s05b_t7`, the same rev-3.3 Phase 4 command (W 40, 20 instances, policy
    `static:0.00198,0`, obs-inflation 1.0, prior sha above, 8 h deadline, ENGINEERING_ONLY), k = 1, port 18101.
-6. **Track X and Track P untouched**: no Track X change other than the separately reviewed post-run marker
+6. **Track X and Track P untouched**: no Track X change other than the separately reviewed STOP-case marker
    retirement in condition 1, performed under the B1 procedure; Track P stays paused as during B1/B2, and no
    Track P marker is created or retired by this move. The TASL-2 scenes are preserved.
 7. **Phase 4 gates apply on TASL-7**: after S0.5, run S0.5b (CPU, no servers); check the calibration gate and the
@@ -90,13 +90,14 @@ retirement only") is replaced by the 13 Nov revision in
 STOP-case retirement unit; B1 `_d` priority; TASL-2 census-only). The revised row remains a draft for the
 author/coordinating session; the operator does not commit it to `PLAN.md` unilaterally.
 
-**Operator note.** The operator does not add author decisions to PLAN unilaterally; the row above is paste-ready for
-the author/coordinating session or can be committed on the author's explicit relay instruction. Note that
+**Operator note.** The operator does not add author decisions to PLAN unilaterally; the revised row in
+`proposals/PLAN_ROW_R1-TRACKS-DIGITS-HOSTMOVE_REV_20261113.md` is a paste-ready draft for the author/coordinating
+session or can be committed on the author's explicit relay instruction. Note that
 `R1-TRACKS-A2U-STALE` lives on `mac-tracks-a2u-stale-20261111` (`f82ff376`, line 615) and
 `R1-EXAM-HOST-B1B2-TASL7` on `docs/runbooks-11nov`; this row should be added next to the Track S rows on the branch
 the coordinating session uses.
 
-## 5. Post-run B1 `_c` marker retirement (separate unit; not Track S work)
+## 5. B1 `_c` marker retirement (separate unit; not Track S work)
 
 The `_c` marker is `f8c8624f903b36e99e835f14fa0892e63b5e5a25d1e6ff41f6b1a3b5542a73fe` (dev 66306, ino
 56261618); its creation receipt is `$RUN_DIR/marker-receipt.json` (sha256

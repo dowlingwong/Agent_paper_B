@@ -1,17 +1,19 @@
 # Paper B (route R1) — status log
 
-## 13 November 2026 — Track S digits_mlp S0.1 on TASL-7 STOPPED at the identity gate (author decision pending)
+## 13 November 2026 — Track S digits_mlp: `_c` marker retired; TASL-7 S0.1 operator-stopped before completion (correction)
 
 - Under the author's 13 Nov revision (B1 `_c` STOP allows the host move), the `_c` Track X marker was retired by the
-  accepted STOP-case unit (renamed into `_to_delete/`, creation/retirement receipts kept, `_c` STOP scene byte-equal to
-  the accepted capture). TASL-7 was prepared (detached pin `8237fd02`, prior `5c849d15…`, k=2 servers) and the S0.1
-  probe started at 2026-11-13T10:50:12Z.
-- **S0.1 failed:** serial probe repeat 1 had `identity_rate` 0.87 (< 100 %), repeats 2–3 had 600 errors each; the
-  server log tail shows task decline/queueing. The runbook's §10 S0.1 gate is "identity < 100 % → STOP (author)".
+  accepted STOP-case unit (renamed into `_to_delete/…040ffbe1…`, creation/retirement receipts kept, `_c` STOP scene
+  byte-equal to the accepted capture). TASL-7 was prepared (detached pin `8237fd02`, prior `5c849d15…`, k=2 servers)
+  and the S0.1 probe started at 2026-11-13T10:50:12Z.
+- **Correction (same day):** the S0.1 probe was **stopped by the operator at 10:51:25Z, 73 s in**, because the
+  operator misread the *Oct-31 `tabular_mlp`* probe log as this run's result (that log's mtime/ctime is
+  2026-10-31). **No S0.1 result exists for TASL-7; this was an operator error, not an identity-gate failure.** The
+  earlier wording of this entry ("S0.1 failed, identity 0.87") was wrong and is corrected here; no TASL-7
+  determinism conclusion can be drawn. Report: `reports/TRACKS_S01_TASL7_STOP_20261113.md` rev 2.
 - Our own S0.1 sessions/servers were stopped and preserved (logs, empty result dir, captures); lease free; only
-  `trks_watch`. No retry, no S0.5, no pin/parameter change. Report:
-  `reports/TRACKS_S01_TASL7_STOP_20261113.md` (this stop is not reviewed by a third party yet; the author decision is
-  pending).
+  `trks_watch`. The reviewed S0.1 script now supports `S01_SUFFIX` for a re-run with a new directory
+  (`s01_t7_20261113b`), to be independently reviewed before use; the empty preserved dir is never deleted.
 - B1 `_c` remains STOPPED with its scene untouched; its marker is retired. B1 `_d` (when its D-B1R arrives) still has
   priority; READY.txt/origin polling continues. TASL-2 remains unreachable (census-only if it returns).
 
