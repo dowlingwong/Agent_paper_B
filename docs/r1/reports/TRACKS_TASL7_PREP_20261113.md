@@ -24,7 +24,9 @@ will run; they are executed only after B1 `_c` ends normally and the accepted po
 ## Unit digests
 
 ```
-f86ce11e948186c195a687c88d39862dfde3d78695f8d9c2f9ea09658fd740f2  r1/tracks/ops/launch/tasl7_digits_s01_20261113.sh
+c1deee130d8d67b495c4dcf2ad2b46b37153a6ae33224754e7b0e4f1be99c0f8  r1/tracks/ops/launch/tasl7_digits_s01_20261113.sh
+# revised 13 Nov (reviewed): accepts S01_SUFFIX so the operator-error re-run uses s01_t7_20261113b and leaves the
+# preserved empty s01_t7_20261113/ untouched; the other two digests are unchanged.
 87c05587daed193dd127512c4c76f59abbdd3c10d4b0b64f47a0e5f2673b9067  r1/tracks/ops/launch/tasl7_digits_s05_20261113.sh
 3685dfe6874f3dbbd7cdf07fd1d2ec45913f4e41b60c54c82ba3d79594fe920a  r1/tracks/ops/launch/tasl7_digits_s05b_20261113.sh
 ```

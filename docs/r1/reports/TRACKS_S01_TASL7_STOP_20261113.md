@@ -21,6 +21,11 @@ rev 1 of this file, which wrongly reported `identity_rate 0.87`.
 - Today's activity is visible in the launch log (mtime 2026-11-13 02:50:12 -0800) and the llama logs' mtime
   (2026-11-13 02:50:12/02:51:20 -0800); the result dir `$OUT/digits_mlp/s01_t7_20261113/` exists but is empty.
 
+**Authoritative re-run outputs:** for the reviewed operator-error re-run the authoritative files are
+`$OUT/digits_mlp/s01_t7_20261113b/serial.json` and `concurrent.json` (plus the suffixed
+`$R/logs/s01_t7_20261113b_launch.log`); the shared `$R/logs/trks_s01_serial.log` and `.exit` are append-only across
+runs and must not be read as this run's result without their timestamps.
+
 ## 2. Preserved evidence (nothing deleted or overwritten)
 
 - `$R/logs/s01_t7_20261113_launch.log` (2 lines, today); `$R/logs/trks_s01_serial.{cmd,log,exit}` (cmd is the new
