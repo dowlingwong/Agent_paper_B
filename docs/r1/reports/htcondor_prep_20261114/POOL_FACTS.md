@@ -79,3 +79,10 @@ Additional measured facts:
 - **NEMO2 has no Docker**: GPU slots there advertise `HasDocker=undefined`, `HasSingularity=true`; a docker-universe job cannot match (P6/P7 measured). This is a design blocker for the current image-based probe, not a queue effect.
 - **ETP worker `CloudSite` is `schnepf`** (P1/P3 ran on `ms02.etp.kit.edu`), while `deepthought`/`deepthought2` slots report `portal`. The runbook's "portal" assumption holds only for the portal machines.
 - **Job 759618** (another session's, `/work/dwong/r2_batch/tiny`) remained IDLE throughout; it is not ours and was never touched.
+
+## 7. Author guidance received 14 Nov ~00:35 CET (adjusts the night, not the measurements)
+
+- **Do not withdraw P4/P5:** GPU jobs are routed to the TOpAS pool; a 0-match in the local schedd view can be normal. Re-analysis with the tutorial form (`condor_q -better-analyze -pool f03-001-140-e.gridka.de <id>`) was run and is recorded in `raw/pool_analyze_p4_20261114.txt`: against the **c03/TOpAS** pool the A100 condition matches 3 drained slots, `Cpus` 14, `GPUs` 7, `[10]&&[11]` **0**, "2 would match if drained" — so P4 stays queued (capacity), as the author instructed, until the hard stop.
+- **NEMO2 is Singularity-only.** `HasDocker=undefined`, `HasSingularity=true` on its GPU slots; the current docker-universe design cannot match (P6/P7). The author's recommendation: build the image, convert to an Apptainer SIF under `/work`/`/ceph`, so no docker registry is needed; the per-site docker-vs-Singularity decision and the NEMO2 SIF JDL attribute are questions (Q10). **No new job type tonight.**
+- **Local CPU container capacity:** `HasDocker=true` 315 slots (all ETP), `ProvidesETPResources` 323, unclaimed docker 5 / ETP 13 at 00:35; `HasSingularity` 1094. Recorded for tomorrow's decision (Q11).
+- **Hard stop moved to 09:30 CET** (was 05:30); the +3 h resubmission still runs ~02:50, and the +6 h wave (~05:50) becomes possible again only if the report and review are on schedule — the report/review still get priority.

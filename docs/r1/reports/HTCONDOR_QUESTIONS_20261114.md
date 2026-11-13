@@ -85,3 +85,28 @@
 **What.** TOpAS **is** reachable by flocking (P5 V100S ran on `c03-001-159`, 212 s wait, exit 0). P4 (A100) does not match because the A100 partitionable parent `slot1@c03-001-167` advertises `TotalSlotGPUs=8` but `GPUs=0` and `Cpus=0`, all children Claimed/Preempting — the A100 node was fully allocated at 23:52–00:10. It may free later; the probe stays queued and is recorded as a capacity wait, not a design failure.
 **Also measured:** all four ETP login hosts (`portal1`, `bms1`, `bms2`, `bms3`) are reachable from the Mac and mount `/ceph/dwong` (so `bms2` is **verified**, contrary to the wiki-derived note in §0.3).
 **Paste-ready answer:** `Q9 已知，A100 等容量；bms2 可登录已确认。`
+
+---
+
+## Q10 (author request, 14 Nov ~00:35 CET) — docker vs Singularity per site; how to select a SIF on NEMO2
+
+**Context.** The author's instruction: NEMO2 only supports **Singularity**; add the question "which sites run docker vs Singularity, and with which JDL attribute a SIF is selected on NEMO2"; recommendation: after the image is built, convert it to an **Apptainer SIF** and put it on `/work` or `/ceph`, so no docker registry is needed. **No new job type is submitted tonight** — this is a design question for the next window.
+**Measured tonight (read-only):** `HasDocker=true` on 315 slots (all also `ProvidesETPResources`), `HasSingularity=true` on 1094 slots; NEMO2 GPU slots (5 visible) advertise `HasDocker=undefined`, `HasSingularity=true`, so the current `Universe=docker` probe cannot match them (P6/P7).
+**Options.** (a) keep docker on the ETP worker fleet and TOpAS (both measured docker-capable), use Singularity only on NEMO2; (b) standardise on Singularity everywhere via a SIF on `/work`/`/ceph`; (c) ask the site for docker on NEMO2.
+**Recommendation:** (a) for now + (b) as the portable route if the NEMO2 GPUs are wanted; the SIF would live under `/work/dwong/htcondor_prep_20261114/images/` and be referenced by the NEMO2 JDL attribute the wiki names (unverified: `container_image`/`executable` conventions for the site; needs the wiki or a site answer).
+**Paste-ready answer:** `Q10：<a|b|c>；NEMO2 的 SIF 属性 = <wiki 属性名>；今晚不提交新任务类型。`
+
+## Q11 (author request, 14 Nov ~00:35 CET) — local CPU container capacity
+
+**Measured (14 Nov 00:35 CET, read-only):** `HasDocker=true` **315 slots** (all also ETP, i.e. docker∧ETP = 315); `ProvidesETPResources=true` **323 slots**; **unclaimed** at that moment: **5 docker slots**, **13 ETP slots**; `HasSingularity=true` 1094 slots. P2 (8 CPU / 16 GB docker) was queued on capacity (0 willing, 5 would match if drained) and P1/P3 (1 CPU) ran in 7–73 s.
+**So:** the local ETP worker fleet is docker-capable but small (315 slots against 1105 pool-wide), and at 00:35 only 5 docker slots were free; an 8-core docker slot needs a drain window. This is the number the author asked for to decide the local-CPU container route tomorrow (docker vs Singularity vs plain venv).
+**Paste-ready answer:** `Q11 已知：docker∧ETP=315，unclaimed docker=5；明天决定本地 CPU 容器方式。`
+
+---
+
+## Q12 (new, measured at 00:57 CET) — `work` cannot move to `/work`: POSIX ACLs unsupported
+
+**What.** `/ceph/dwong/work` carries POSIX ACLs (`drwxr-xr-x+`); `/work` does not support ACLs, so `rsync -aHAX` fails with `set_acl: xacl_set(., ACL_TYPE_ACCESS): Operation not supported (95)` (rc 23). Per the move protocol the copy was not renamed; the partial `/work` copy was retired to `/work/dwong/_to_delete/work.failed_20261113T235407Z` (a move, no deletion) and the original stays untouched at `/ceph/dwong/work`.
+**Options.** (a) leave `work` on `/ceph` (it is 7.38 GB for 140 files — the reviewer's own caution said to drop it first if the clock is tight); (b) move it with `rsync -aHAX --no-acls` and record that ACLs are not preserved (the author's verification set is mode+path, not ACLs); (c) copy ACLs after the fact via `getfacl`/`setfacl` where the target supports them.
+**Recommendation:** (a) now; decide (b)/(c) with the author, since ACL semantics may matter for the other sessions sharing `/ceph/dwong`.
+**Paste-ready answer:** `Q12：work <a|b|c>；ACL 是否需要保留 <是|否>。`

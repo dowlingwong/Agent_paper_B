@@ -398,4 +398,49 @@ is not a full re-review (the unchanged sections are covered by round 1).
 with the caution stated. No further independent review round is required for these two one-line
 execution-time edits.
 
+## Author-requested confirmation (verification metric + extra checks)
+
+**Reviewed (worktree, read-only; no SSH):** `moves/move_entry.sh` v2 (SHA-256
+`dc6bf23223238454bae18e7bc3a4e5b229cd880e5be1b8ac1faf2f838acf2abb`), `moves/verify_pair.sh`
+(SHA-256 `8f98db03dbbafe7ab605653492d06ab3a9c5feade98a3548373a50200fb9b96d`), `MOVE_PLAN.md`
+revision 2 with R1/R2 applied (SHA-256 `76a8329698785a3277e6bdd228f1e0c9f9876c765a9437b8279ad0db55343aa4`),
+and the disclosed deviation in `docs/r1/reports/HTCONDOR_PREP_20261114.md` §2. `MOVE_LOG.tsv` /
+`MOVE_BACKFILL.tsv` live on the cluster under `/work/dwong/htcondor_prep_20261114/moves/`; I cannot
+read them without SSH, so the v1 rows for the 4 completed moves are checked through the script and
+the report's disclosure, not from the live TSV.
+
+**Confirmation (one sentence):**
+> I confirm that changing the verification byte metric from `du -sb` to the sum of file-content bytes
+> (`find -type f -printf '%s'`), together with file count and the path-normalised per-file SHA-256
+> manifest and the added directory count, symlink-list SHA-256 (path → target) and permission-list
+> SHA-256 (mode + path), is correct and safe: content identity is still fully checked by the manifest
+> and count (the `du -sb` mismatch was a CephFS directory-`st_size` artefact, not a content
+> difference), the false negative could not have hidden a real content difference, and the
+> no-deletion rule (retire by move, never `rm`) is unchanged.
+
+**Backfill method:** comparing `/ceph/dwong/_to_delete/<X>.moved_20261114` with `/work/dwong/<X>` is
+methodologically equivalent to the pre-rename comparison provided the retired original has not been
+written to since the rename; nothing writes there (the old path is now a symlink to the `/work` copy,
+and step 1/5b guard against a pre-existing user), and any process that had held the original inode
+before the rename would appear as a backfill mismatch — it exposes that residual risk rather than
+hiding it.
+
+**Remaining MINOR (does not block):** M1 — on the "in-use appeared after verify" path
+(`move_entry.sh` L82–86) the script exits without a `MOVE_LOG.tsv` row (the accepted R1 text says
+record `skipped_in_use`) and leaves the `/work/dwong/<X>` copy in place; a later retry then hits the
+destination-exists guard (L48) unless `RESUME=1` is used. Fix: append the `skipped_in_use` row and
+either keep the copy deliberately for `RESUME=1` or retire it to
+`/work/dwong/_to_delete/<X>.inuse_<UTC>` with the usual collision guard (a move, no deletion).
+
+**NITs (next pass):** (a) `MOVE_PLAN.md` steps 5/8 still say "total bytes" and the old 16-column
+MOVE_LOG list — update to "file-content bytes" and the v2 20-column schema so the accepted plan text
+matches `move_entry.sh` v2; (b) the `.failed_<TS>` retirement move (L78) has no `test -e` collision
+guard and `|| true` can hide a failed retirement; (c) when `inuse_hosts.txt` is absent the fallback
+string is used as a filename in `tr < "$HOSTS"` (L36/L79/L91), so `inuse_hosts` records empty instead
+of "(no host transcript)". None of these changes content identity or the no-deletion rule.
+
+**Scope note:** content identity is complete (file count + per-file SHA-256 + content bytes); ACLs,
+xattrs, hardlink identity and mtimes are copied by `rsync -aHAX` but not compared — metadata, not
+content; add `getfacl`/`getfattr` hashes only if full metadata identity is wanted.
+
 VERDICT: ACCEPTED
