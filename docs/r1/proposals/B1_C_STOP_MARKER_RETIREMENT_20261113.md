@@ -46,7 +46,7 @@ It does not retry B1, does not start Track S by itself, and does not change any 
    CHECKOUT=/home/dowling/r1_b1_engineering/b1_paper_final_4b312844962e1106db04d5a60bf996fad0e3e514/paper
    PY=/home/dowling/exam-x/work/venv/bin/python
    TMP="$RUN_DIR/marker-retirement_stop.json.tmp"
-   rm -f "$TMP"
+   test ! -e "$TMP" || { echo "STOP: leftover $TMP"; exit 1; }
    if "$PY" "$CHECKOUT/r1/scripts/b1_o2_marker.py" retire \
         --lock-dir "$HOME/r1_locks" --receipt "$RUN_DIR/marker-receipt.json" > "$TMP" 2> "$TMP.err"; then
      rc=0
@@ -58,19 +58,22 @@ It does not retry B1, does not start Track S by itself, and does not change any 
      echo "STOP: retire failed rc=$rc; partial output kept as $TMP"; exit 1
    fi
    mv "$TMP" "$RUN_DIR/marker-retirement_stop.json"
-   rm -f "$TMP.err"
+   mv "$TMP.err" "$RUN_DIR/marker-retirement_stop.err"   # retained (no deletion)
    printf 'source_receipt=%s\nsource_receipt_sha256=%s\n' \
      "$RUN_DIR/marker-receipt.json" "$(sha256sum "$RUN_DIR/marker-receipt.json" | cut -d' ' -f1)" \
      > "$RUN_DIR/marker-retirement_stop.note"
    test ! -e "$HOME/r1_locks/trackx_evidence.active" || { echo 'STOP: marker still present'; exit 1; }
    ```
    A receipt mismatch or retirement failure is a STOP: preserve everything (including any partial `.tmp`), report;
-   no force, no delete, no retry.
+   no force, no delete, no retry. The author's 13 Nov correction to this unit: a leftover `$TMP` at the start is
+   a STOP (never removed), and the success-path `$TMP.err` is **renamed** to
+   `$RUN_DIR/marker-retirement_stop.err` and retained (never removed).
 3. **Verify and observe**: the retired name appears in `~/r1_locks/_to_delete/`; the marker is absent; read the
    watcher transition using only lines after the pre-retire line count (a new `marker gone: resume by hand` line, or
    the documented already-paused state; a new `FORCED` line is a STOP); record any STOP file the watcher touched
    (expected: beside its manifests; pre-existing STOP files are preserved).
-4. **Post-state check (read-only)**: marker absent; retirement `.json`/`.rc`/`.note` present; creation receipt still
+4. **Post-state check (read-only)**: marker absent; retirement `.json`/`.rc`/`.note` present and the retained
+   `.err` file present; creation receipt still
    present unchanged; `_to_delete` contains the retired name; the entire `_c` STOP scene (batch dir, unit logs,
    `root_events/trials`, `node/`, `b1.log`, `b1.exit`, `_c` handover, staging checkout) is byte-untouched (compare the
    capture's file list/hashes; no writes into the batch or unit dirs); no processes; lease free.
