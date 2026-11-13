@@ -50,7 +50,11 @@ From `02a91494` to `239dcd76`, the protected exam paths differ only in `r1/exam/
   - a 2.5 s answer stops the batch (`observer_stop`), with a journal `stop` row ("timed out") and no manifest.
 - `test_b1_completion_usage.py::test_table_and_cap_check` — updated to use the 180 s value.
 
-Full-suite numbers are in the review record.
+Full suite (`pytest -k "exam or b1" r1/tests`, `/tmp/trackg_venv`, `AR_HARNESS_ROOT` = Track G harness checkout, `AR_HARNESS_B1_ROOT` = `a3fedbb`, `R1_REQUIRE_B1_HARNESS=1`):
+- this branch: 762 passed / 18 failed / 0 skipped;
+- the `_d` run HEAD `7912b7ff`: 758 / 18 / 0. Its code is identical to the model-output review's tip, which was measured there.
+
+The 18 failures are the same test IDs. The observer, observer-integration and usage tests (19) also pass in `/tmp/hostver_venv`, which has the host's package versions.
 
 ## 5. If `_d` stops at M15: delivery checklist
 
