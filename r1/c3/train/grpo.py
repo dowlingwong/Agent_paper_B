@@ -211,6 +211,24 @@ def ppo_update(logp_fn: Callable[[Any, Any], Any], params, optimizer, batch: Sam
 
 # ------------------------------------------------------------------ R-B on the reasoning wrapper (§6.4)
 
+def sampled_analysis_mask(out: dict, closed) -> Any:
+    """Mask over ``out['analysis_token_logprob']`` of the tokens the policy sampled: the analysis text, plus the closing
+    tag when ``closed`` (the policy sampled ``</analysis>``). Needs ``analysis_text_tokens`` and
+    ``analysis_close_tokens`` from the wrapper's ``forward``."""
+    import torch
+    for key in ("analysis_text_tokens", "analysis_close_tokens"):
+        if key not in out:
+            raise ValueError(f"the policy's forward must return {key} (sampled-token mask of the PPO sequence)")
+    base = out["analysis_token_mask"]
+    n_tok = out["analysis_text_tokens"].long() + torch.as_tensor(
+        [bool(c) for c in closed], device=base.device).long() * out["analysis_close_tokens"].long()
+    cols = torch.arange(base.shape[1], device=base.device)[None, :]
+    mask = (cols < n_tok[:, None]).to(base.dtype) * base
+    if not torch.equal(mask.sum(dim=1), n_tok.to(base.dtype).clamp(max=base.shape[1])):
+        raise ValueError("sampled analysis tokens exceed the scored span")
+    return mask
+
+
 def rb_group_step(policy, ref_policy, prompts, y_train, u, optimizer, *, u_max: float, lambda_a: float, beta: float,
                   group: int = GROUP_SIZE, seed: int = 0, epochs: int = UPDATE_EPOCHS, advantage: str = "loo",
                   temperature: float = 1.0) -> dict[str, Any]:
@@ -218,26 +236,40 @@ def rb_group_step(policy, ref_policy, prompts, y_train, u, optimizer, *, u_max: 
 
     For each prompt: G analyses are sampled (``policy.generate``), each completion's action is sampled from
     sigmoid(action_logit) (the ``<exec>``/``<skip>`` token), and the reward is ``rb_reward`` with the belief read
-    (not sampled) at the read-out position. A completion that hit the 256-token analysis cap without closing the
-    span is a format violation (``policy.last_generated_tokens``). The PPO sequence of a completion is its analysis
-    tokens plus its action token; the belief logits additionally get the exact RPS gradient (mean over completions).
-    pi_old and the reference log-probabilities are fixed at the batch's start; ``epochs`` updates follow.
+    (not sampled) at the read-out position. A completion whose analysis the policy did not close itself (EOS or the
+    256-token cap before ``</analysis>``; ``policy.last_generated_closed``) is a format violation. The PPO sequence of a
+    completion is its **sampled** tokens only: the analysis text, plus the closing tag when the policy sampled it
+    (never the tag that ``segments`` appends to an unclosed span, nor the trailing newline), plus its action token. The
+    belief logits additionally get the exact RPS gradient (mean over completions). pi_old and the reference
+    log-probabilities are fixed at the batch's start; ``epochs`` updates follow. The policy runs in eval mode for the
+    whole step (dropout, e.g. LoRA dropout, off), so sampling, pi_old and pi_theta use the same deterministic network;
+    the previous train/eval mode is restored at the end.
+
+    Known approximation: the analysis is decoded to text and re-encoded by ``forward``; where the tokenizer does not
+    round-trip, the scored tokens differ from the sampled ids.
     ``y_train`` [N, 12] and ``u`` [N] come from the label distribution (never one seed draw).
     """
     import torch
     from r1.c3.train.losses import rps, softmax_probs
     n = len(prompts)
     batch = [p for p in prompts for _ in range(group)]
-    analyses, lengths = [], []
+    was_training = bool(getattr(policy, "training", False))
+    if hasattr(policy, "eval"):
+        policy.eval()
+    analyses, closed = [], []
     for j in range(group):
         analyses.append(policy.generate(list(prompts), temperature=temperature, seed=seed * 1000 + j))
         counts = getattr(policy, "last_generated_tokens", None)
         if counts is None or len(counts) != n:
             raise ValueError("the policy must record last_generated_tokens for every generated analysis")
-        lengths.append(list(counts))
+        shut = getattr(policy, "last_generated_closed", None)
+        if shut is None or len(shut) != n:
+            raise ValueError("the policy must record last_generated_closed for every generated analysis")
+        closed.append([bool(c) for c in shut])
     analyses = [analyses[j][i] for i in range(n) for j in range(group)]
-    # format violation: the analysis used the whole 256-token cap, i.e. the closing tag never came
-    violation = np.array([lengths[j][i] >= ANALYSIS_MAX_TOKENS for i in range(n) for j in range(group)])
+    closed_flat = [closed[j][i] for i in range(n) for j in range(group)]
+    # format violation: the policy did not close the span itself (EOS or the 256-token cap came first)
+    violation = ~np.array(closed_flat)
     y = torch.as_tensor(np.repeat(np.asarray(y_train, dtype=float), group, axis=0), dtype=torch.float32)
     uu = np.repeat(np.asarray(u, dtype=float), group)
     gen = torch.Generator().manual_seed(seed)
@@ -249,8 +281,9 @@ def rb_group_step(policy, ref_policy, prompts, y_train, u, optimizer, *, u_max: 
             actions = torch.bernoulli(torch.sigmoid(a_logit.detach()), generator=gen)
         a_lp = torch.where(actions > 0, torch.nn.functional.logsigmoid(a_logit),
                            torch.nn.functional.logsigmoid(-a_logit))
+        sampled = sampled_analysis_mask(out, closed_flat)
         lp = torch.cat([out["analysis_token_logprob"], a_lp[:, None]], dim=1)
-        mask = torch.cat([out["analysis_token_mask"], torch.ones_like(a_lp)[:, None]], dim=1)
+        mask = torch.cat([sampled, torch.ones_like(a_lp)[:, None]], dim=1)
         return out, actions, lp, mask
 
     with torch.no_grad():
@@ -271,5 +304,7 @@ def rb_group_step(policy, ref_policy, prompts, y_train, u, optimizer, *, u_max: 
         loss.backward()
         optimizer.step()
         history.append({"epoch": epoch, "loss": float(loss), "belief_rps": float(loss_belief), **mon})
+    if was_training and hasattr(policy, "train"):
+        policy.train()
     return {"rewards": rewards, "zero_advantage_share": zero_advantage_share(rewards),
             "format_violations": int(violation.sum()), "updates": history}

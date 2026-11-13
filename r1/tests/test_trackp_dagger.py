@@ -112,3 +112,18 @@ def test_offline_rollout_on_the_offline_bandit_env():
     data = D.AggregatedDataset()
     assert data.add(states, lambda s: s["info"]["proposal_id"], 1) == 12
     assert data.add(D.offline_rollout(env, lambda m, s: 0, None, range(12)), lambda s: None, 2) == 0   # one-step env
+
+
+def test_expert_is_called_once_per_new_state_and_never_on_known_states():
+    """The expert may be a costly audit: each new state is labelled once; revisited states reuse their label."""
+    calls = []
+
+    def expert(s):
+        calls.append(s["key"])
+        return SyntheticCampaign.expert_action(s)
+
+    initial = [{"key": f"a{i}", "obs": (0.5 - i / 10, 1.0)} for i in range(6)]
+    revisit = initial[:3] + [{"key": "new1", "obs": (0.9, 0.5)}, {"key": "new2", "obs": (-0.9, 0.5)}]
+    D.run_dagger(initial, expert=expert, fit=fit, rollout=lambda m, r: list(revisit), act=act,
+                 expert_action=SyntheticCampaign.expert_action, rounds=2)
+    assert sorted(calls) == sorted([s["key"] for s in initial] + ["new1", "new2"])

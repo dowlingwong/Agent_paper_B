@@ -63,9 +63,9 @@ def test_estimator_check_meets_the_spec_threshold():
     res = G.estimator_check(logits, u, group=8, resamples=64, seed=1)
     assert res["passes"] and res["cosine"] >= 0.95
     assert res["prompts"] == 256 and res["group"] == 8 and res["resamples"] == 64
-    # the check detects a wrong-sign estimator: the negated estimate has cosine <= -0.95 with the exact gradient
-    wrong = G.estimator_check(logits, u, group=8, resamples=64, seed=1)
-    assert -wrong["cosine"] <= -0.95
+    # the threshold is not met trivially: with too little sampling (G = 2, one resample) the estimate is too noisy
+    weak = G.estimator_check(logits, u, group=2, resamples=1, seed=1)
+    assert not weak["passes"] and weak["cosine"] < 0.9
     assert G.estimator_check(logits, u, advantage="std", seed=1)["advantage"] == "std"
 
 

@@ -76,8 +76,11 @@ def run_dagger(initial_states: Sequence[dict[str, Any]], *, expert: Callable[[di
     history = [{"round": 0, "visited": 0, "new": len(data), "aggregate": len(data), "disagreement": None}]
     for r in range(1, rounds + 1):
         visited = rollout(model, r)
-        disagree = float(np.mean([act(model, s) != expert_action(s, expert(s)) for s in visited])) if visited else None
+        # each new state is labelled once (the expert may be a costly audit); a state already in the aggregate
+        # keeps its stored label, which the disagreement then uses
         new = data.add(visited, expert, r)
+        disagree = (float(np.mean([act(model, s) != expert_action(s, data.rows[s["key"]]["label"]) for s in visited]))
+                    if visited else None)
         model = fit(data.items())                     # retrain from the recipe on the aggregate
         history.append({"round": r, "visited": len(visited), "new": new, "aggregate": len(data),
                         "disagreement": disagree})

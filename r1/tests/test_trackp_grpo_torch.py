@@ -102,11 +102,11 @@ class FakeReasoner(torch.nn.Module):
         self.action = torch.nn.Parameter(torch.zeros(1))
         self.word = torch.nn.Parameter(torch.zeros(len(self.WORDS)))
         self.cap_every = cap_every
-        self.last_generated_tokens = []
+        self.last_generated_tokens, self.last_generated_closed = [], []
 
     def generate(self, batch, *, temperature=1.0, seed=0):
         g = torch.Generator().manual_seed(seed)
-        out, self.last_generated_tokens = [], []
+        out, self.last_generated_tokens, self.last_generated_closed = [], [], []
         p = torch.softmax(self.word.detach() / temperature, 0)
         for i, _ in enumerate(batch):
             n = 3
@@ -114,18 +114,23 @@ class FakeReasoner(torch.nn.Module):
             out.append(" ".join(self.WORDS[j] for j in idx))
             capped = self.cap_every is not None and (seed + i) % self.cap_every == 0
             self.last_generated_tokens.append(G.ANALYSIS_MAX_TOKENS if capped else n)
+            self.last_generated_closed.append(not capped)     # an unclosed span (cap or EOS) is a format violation
         return out
 
     def forward(self, batch, analyses):
         lp_words = torch.log_softmax(self.word, 0)
-        rows = [torch.stack([lp_words[self.WORDS.index(w)] for w in a.split()]) for a in analyses]
+        # each analysis is its word tokens plus one appended closing-tag token (log-prob log 0.5), as ``segments``
+        rows = [torch.cat([torch.stack([lp_words[self.WORDS.index(w)] for w in a.split()]),
+                           torch.tensor([math.log(0.5)])]) for a in analyses]
         width = max(len(r) for r in rows)
         lp = torch.zeros(len(rows), width); mask = torch.zeros(len(rows), width)
         for i, r in enumerate(rows):
             lp[i, :len(r)] = r; mask[i, :len(r)] = 1.0
         n = len(batch)
         return {"belief_logits": self.belief.expand(n, 12), "action_logit": self.action.expand(n),
-                "analysis_token_logprob": lp, "analysis_token_mask": mask}
+                "analysis_token_logprob": lp, "analysis_token_mask": mask,
+                "analysis_text_tokens": torch.tensor([len(a.split()) for a in analyses]),
+                "analysis_close_tokens": torch.ones(len(analyses), dtype=torch.long)}
 
 
 def test_rb_group_step_on_the_wrapper_interface():
@@ -146,10 +151,10 @@ def test_rb_group_step_on_the_wrapper_interface():
         first = out["updates"][0]["belief_rps"] if first is None else first
     assert out["updates"][-1]["belief_rps"] < first             # the exact RPS gradient reaches the belief
     assert float(torch.sigmoid(policy.action)) > 0.5            # the decision reward pushes towards executing
-    with pytest.raises(ValueError, match="last_generated_tokens"):
+    with pytest.raises(ValueError, match="last_generated_closed"):
         class NoCounts(FakeReasoner):
             def generate(self, batch, **kw):
-                out = super().generate(batch, **kw); self.last_generated_tokens = []; return out
+                out = super().generate(batch, **kw); self.last_generated_closed = []; return out
         G.rb_group_step(NoCounts(), ref, prompts, y, u, opt, u_max=2.0, lambda_a=0.5, beta=0.0)
 
 
@@ -167,3 +172,64 @@ def test_span_token_logprobs_sum_to_the_span_logprob():
     per_token, mask = BinTokenWrapper._span_token_logprobs(fake, h, ids, spans)
     assert mask.sum(dim=1).tolist() == [4.0, 6.0]
     assert torch.allclose((per_token * mask).sum(dim=1), total, atol=1e-6)
+
+
+def test_sampled_mask_scores_the_closing_tag_only_when_the_policy_sampled_it():
+    out = {"analysis_token_logprob": torch.zeros(3, 5),
+           "analysis_token_mask": torch.tensor([[1., 1, 1, 1, 0], [1, 1, 1, 1, 1], [1, 1, 0, 0, 0]]),
+           "analysis_text_tokens": torch.tensor([2, 3, 1]), "analysis_close_tokens": torch.tensor([1, 2, 0])}
+    m = G.sampled_analysis_mask(out, [True, False, True])
+    assert m.tolist() == [[1, 1, 1, 0, 0], [1, 1, 1, 0, 0], [1, 0, 0, 0, 0]]
+    with pytest.raises(ValueError, match="analysis_text_tokens"):
+        G.sampled_analysis_mask({"analysis_token_mask": out["analysis_token_mask"]}, [True] * 3)
+
+
+def test_unclosed_analysis_is_a_violation_and_its_forced_tag_is_not_scored():
+    """EOS before ``</analysis>`` (short, not capped) is a format violation, like the cap; the PPO mask never includes
+    the closing tag ``segments`` appends to an unclosed span."""
+    import copy
+    from r1.c3.train.types import DecisionPrompt
+
+    class EOSEarly(FakeReasoner):
+        def generate(self, batch, **kw):
+            out = super().generate(batch, **kw)
+            self.last_generated_closed = [False] * len(batch)   # stopped at EOS, 3 tokens, never closed
+            return out
+
+    policy = EOSEarly()
+    seen = []
+    orig = G.grpo_loss
+
+    def spy(lp_new, lp_old, lp_ref, adv, mask, **kw):
+        seen.append(mask.clone())
+        return orig(lp_new, lp_old, lp_ref, adv, mask, **kw)
+
+    G.grpo_loss = spy
+    try:
+        prompts = [DecisionPrompt(state="s", proposal="p", meta={"proposal_id": "p"})]
+        y = np.zeros((1, 12)); y[0, 2] = 1.0
+        out = G.rb_group_step(policy, copy.deepcopy(policy), prompts, y, np.array([1.0]),
+                              torch.optim.SGD(policy.parameters(), lr=0.0), u_max=1.0, lambda_a=0.0, beta=0.0)
+    finally:
+        G.grpo_loss = orig
+    assert out["format_violations"] == G.GROUP_SIZE
+    assert np.allclose(out["rewards"], out["rewards"][0, 0])    # all penalised alike
+    # 3 word tokens scored, the appended tag (column 3) not, then the action token
+    assert seen[0][:, :4].tolist() == [[1.0, 1.0, 1.0, 0.0]] * G.GROUP_SIZE and bool((seen[0][:, -1] == 1).all())
+
+
+def test_rb_group_step_runs_in_eval_mode_and_restores_train_mode():
+    import copy
+    from r1.c3.train.types import DecisionPrompt
+    modes = []
+
+    class Watch(FakeReasoner):
+        def generate(self, batch, **kw):
+            modes.append(self.training)
+            return super().generate(batch, **kw)
+
+    policy = Watch(); policy.train()
+    prompts = [DecisionPrompt(state="s", proposal="p", meta={"proposal_id": "p"})]
+    G.rb_group_step(policy, copy.deepcopy(policy), prompts, np.eye(12)[:1], np.array([0.5]),
+                    torch.optim.SGD(policy.parameters(), lr=0.0), u_max=1.0, lambda_a=0.5, beta=0.0)
+    assert modes and not any(modes) and policy.training
