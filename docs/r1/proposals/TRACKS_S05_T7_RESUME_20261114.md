@@ -12,9 +12,8 @@ into the run `_to_delete`, not removed as the runbook's illustrative `find -dele
    marker absent; drill marker absent.
 2. The paused scene is intact, checked against a **pause baseline**: `$RUN=out/digits_mlp/s05_t7_20261113` (manifest,
    ledgers, STOP; `done` holds the counts 22 roots / 6 forks / 0 leaves / 0 failed / 0 exhausted and `done.status` is
-   asserted `paused`; the per-root snapshots live under `$WORK/roots/<id>/snapshots`) ( `done` holds the counts 22 roots / 6 forks / 0 leaves / 0 failed / 0 exhausted and
-   `done.status` is asserted `paused`) and `$WORK=scratch/digits_mlp/s05_t7_20261113`
-   (snapshots and `roots/<id>/root_trials.jsonl`; the leaves/S0.5b inputs live under `$WORK`, not `$RUN`). A pause
+   asserted `paused`) and `$WORK=scratch/digits_mlp/s05_t7_20261113` (snapshots and `roots/<id>/root_trials.jsonl`;
+   the leaves/S0.5b inputs live under `$WORK`, not `$RUN`). A pause
    capture exists (taken at pause time or reconstructed as: files under `$RUN`/`$WORK` have mtime <= the pause
    `2026-11-13T13:03:00Z`; `$RUN/STOP` inode 57048847, 0 bytes, sha `e3b0c442…`); no new/removed paths; no truncated
    last line of any JSONL. `b1_proposals.jsonl` is a B1 artifact and is not part of the Track S scene.
@@ -44,7 +43,10 @@ into the run `_to_delete`, not removed as the runbook's illustrative `find -dele
    `K=2 bash $R/launch/tasl7_digits_s05_20261113.sh` run inside tmux. It reuses `$RUN` (manifest present → resume path),
    reuses `trks_llm` if present, refuses a server count != K, and writes `$R/logs/trks_s05_t7.cmd` again.
 4. **Command identity**: after the collector starts, compare the **new** `$R/logs/trks_s05_t7.cmd` with the step-1 copy
-   (trks-run's `.cmd` is deterministic: require **byte-identical**; any difference is a STOP). Keep both files; any substantive difference or launcher refusal (exit 2) = STOP, stop only our `trks_llm` and report.
+   (trks-run's `.cmd` is deterministic: require **byte-identical**; any difference is a STOP). Keep both files;
+   any launcher nonzero/refusal (exit 2 guards, exit 3 server timeout, or any other): STOP; if our `trks_llm` was
+   started, `tmux kill-session -t trks_llm`, pkill only own `llama-server .*--port 1810[12]`, verify lease free and no
+   own process, and report.
 5. Monitor read-only to completion (30-min polling; no early stop): collector log/exit, manifest done counts
    (roots/forks/leaves/failed/exhausted), `failed_units`, STOP presence, GPU/lease. A `status=deadline` end is reported
    as a deadline stop and resumed only with the same command under a renewed decision (not silently).
