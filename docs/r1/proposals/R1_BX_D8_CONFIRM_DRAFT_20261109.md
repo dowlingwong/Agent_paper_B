@@ -1,3 +1,5 @@
+> **SUPERSEDED (14 Nov 2026) by `R1_BX_D8_CONFIRM_DRAFT_20261114.md`.** The gate changed after the author's answers to Q1–Q5; the row below names the 9 Nov gate and would be refused by the changed parser. Do not paste it. Kept as a record.
+
 # Draft for the author: the `R1-BX-D8-CONFIRM` row — 9 November 2026 (redrafted after review rounds 1 and 2)
 
 **Draft only; AI-assisted. This is not an author decision and is not in `PLAN.md`.** It exists so that, once the gate code has passed independent review, the author can decide whether to confirm it. Nothing in the repository treats this file as authority: `analysis_guard.require_d8_confirmation` reads only `docs/r1/PLAN.md` §10 at the committed HEAD. Do not paste the row before the gate has an *accepted* independent review of the exact bytes named below; if the gate changes, the SHA changes and the row must be redrafted.
