@@ -1,5 +1,20 @@
 # Paper B (route R1) — status log
 
+## 13 November 2026 — Track S digits_mlp S0.1 on TASL-7 STOPPED at the identity gate (author decision pending)
+
+- Under the author's 13 Nov revision (B1 `_c` STOP allows the host move), the `_c` Track X marker was retired by the
+  accepted STOP-case unit (renamed into `_to_delete/`, creation/retirement receipts kept, `_c` STOP scene byte-equal to
+  the accepted capture). TASL-7 was prepared (detached pin `8237fd02`, prior `5c849d15…`, k=2 servers) and the S0.1
+  probe started at 2026-11-13T10:50:12Z.
+- **S0.1 failed:** serial probe repeat 1 had `identity_rate` 0.87 (< 100 %), repeats 2–3 had 600 errors each; the
+  server log tail shows task decline/queueing. The runbook's §10 S0.1 gate is "identity < 100 % → STOP (author)".
+- Our own S0.1 sessions/servers were stopped and preserved (logs, empty result dir, captures); lease free; only
+  `trks_watch`. No retry, no S0.5, no pin/parameter change. Report:
+  `reports/TRACKS_S01_TASL7_STOP_20261113.md` (this stop is not reviewed by a third party yet; the author decision is
+  pending).
+- B1 `_c` remains STOPPED with its scene untouched; its marker is retired. B1 `_d` (when its D-B1R arrives) still has
+  priority; READY.txt/origin polling continues. TASL-2 remains unreachable (census-only if it returns).
+
 ## 12 November 2026 — Track S digits_mlp host move to TASL-7 chosen; TASL-2 outage STOP (AI-assisted; ENGINEERING_ONLY)
 
 - **Event.** TASL-2 became unreachable on 12 Nov 2026 (TCP/ICMP to 100.120.160.70 failed; Tailscale peer rx 0; TASL-7 reachable). The Phase 4 S0.5 attempt started on TASL-2 at 2026-11-12T19:55:59Z and was last seen running with 4 committed roots (20:02Z); it cannot be censused or resumed while the host is down. Per runbook §10, a TASL-2 outage is "anything not covered → STOP and ask".
