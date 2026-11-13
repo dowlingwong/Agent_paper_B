@@ -212,3 +212,90 @@ folded in while fixing):
 
 Execution of the runbook (including the W2 read-only run) may begin only after the lead/author accepts
 this review and the BLOCKING/MAJOR fixes above are applied or explicitly waived in the start message.
+
+---
+
+## Post-errata re-check
+
+**Re-checked at:** commit **`067fc385`** (on top of the reviewed `69b3576b`), 13 November 2026
+≈23:50 CET, by the same reviewer. `git diff 69b3576b..067fc385` touches only this review file and the
+new `docs/r1/prompts/HTCONDOR_PREP_RUNBOOK_ERRATA_20261114.md`; the runbook text is unchanged for
+provenance, as stated. Operative procedure = runbook + errata. This re-check is scoped to my 26
+findings and to the standing rules; it is not a fresh full review. No SSH/cluster access was used.
+
+**Result: all findings are addressed in the errata as written.** The errata maps in order onto my
+verdict list (F1→A1, F2→A2, F3/F21→A3, F4/F23→A4, F5/F9→A5, F6/F8→A6, F7/F10–F16/F18/F19/F22/F24–F26
+→A7+§B; F17/F20→A1.3/A1.7), and the claimed facts that were checkable from the repo are correct:
+
+| Claim in the errata | Check | Result |
+|---|---|---|
+| W2 checkout `origin/mac-w2-budget-20261109` @ `0b62fb03df5480faf558cddd8f715cbb5310416e` | `git rev-parse` | ✓ matches the branch tip |
+| `W = 20` from `r1/scripts/configs/c3_sweep_deepthought.json`, SHA-256 `2fa891f4…` | `git show` + `shasum` | ✓ top-level `"runs": 20`; SHA-256 exactly `2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b` (the same value as in `authorizations/c3_sweep1_20261027.md`) |
+| Input glob `**/provenance/ledgers/roots/*/root_trials.jsonl[.gz]` | repo evidence layout | ✓ matches tracked sweep evidence (e.g. `results/r1/evidence/C3_sweep_none_20261027T224356Z/provenance/ledgers/roots/<node>__s<seed>/root_trials.jsonl`) |
+| W2 module invocation and exit codes 0/2/3 | script source (`main`, `check_ledger`) | ✓ `python -m r1.scripts.w2_execute_all_identity_check <ledgers…> --runs-total W`; 0 `IDENTICAL`, 3 `STOP_DIFFERENCE`, 2 `BAD_INPUT`; imports `r1.c3.features`/`r1.c3.analysis_guard` at call time, so the module form from the repo root is required |
+| I2 commits paper `60ecf1dae299…` + harness `a3fedbbd4430…`; command SHA-256 `1be4ae33…`; `e5dc8c67` dropped | `git cat-file` (paper commit present in the clone), GitHub API (harness commit and its `uv.lock` exist), `shasum` on the reviewed `.sh` | ✓ all match; `e5dc8c67` is no longer used; presence check + skip-to-questions fallback present |
+| Base image `nvidia/cuda:12.4.1-cudnn-devel-rockylinux9` exists; fallback `12.2.2-cudnn8-devel-rockylinux9` exists | Docker Hub registry API | ✓ both tags exist (the fallback tag in the errata corrects the 404 tag from the runbook) |
+| `origin/dt-sweep1-20261026` for the extended pinned-path grep | `git ls-remote origin` | ✓ exists |
+| GGUF SHA-256 `509287f78cb4…` for I3 | `authorizations/c3_sweep1_20261027.md`, `docs/r1/PLAN.md` R1-DT-PIN-SWEEP1 | ✓ matches |
+| `tailscale`, `condor_userprio -allusers`, `belle` fallback, torch freeze pin, exit-code sources, P3 best-effort | my §0.3 ledger and F13/F14/F16/F22 | ✓ consistent as written |
+
+**Standing rules re-checked against the errata (no new contradiction found):**
+
+- **No deletion:** A5 moves a failed `/work` copy into `/work/dwong/_to_delete/…failed_<UTC>` and says
+  "never a delete"; §C.5 repeats it. ✓
+- **Own jobs only:** A6 limits `condor_rm` to tonight's own job IDs and only own idle duplicates. ✓
+- **No Paper B data:** A1.7 is the single explicit, field-limited W2 carve-out; §C.4 says no
+  experiment/label/sweep/exam/model work. I2 (A2) would run only if the image path existed; A3.4 says
+  I1–I4 are not submitted tonight. ✓
+- **No secrets:** A3 forbids credential reads/`docker login`; A7-F26 allows only non-secret
+  `Host`/`HostName`/`User`/`Port` lines. ✓
+- **15 % disk STOP:** A5 wires the per-entry floor `max(15 % of the /work quota, bytes + 5 GiB)` into
+  `MOVE_LOG.tsv` and stops the move programme on breach. ✓
+- **10-job cap:** A6 requires ≤6 own active jobs before a 4-job resubmission (=10). ✓
+- **6 GPU-hour cap:** A6 counts restarts/evictions and stops at 5.0 GPU-h, with droppable resubmissions
+  and I4. ✓
+- **05:30 VPN stop:** A4 ends at 05:30 with the report/review/push cut-offs counted backwards; the
+  +6 h wave is dropped explicitly. ✓
+
+**Residual risk I would carry into execution (none of it blocks):**
+
+1. **Unverified pool facts remain** (as in §3/§6 above): `ProvidesETPResources`/`ProvidesEtpCeph`
+   ClassAd names, `request_GPUs` "up to 8", `GPUs_DeviceName` strings, NEMO2 `CloudSite`/L40S/H200,
+   `NVIDIA_VISIBLE_DEVICES`, `+RequestGPUMemoryMB`, the 6-start hold, the 100 MB limit — plus the
+   XRootD endpoint (`ceph-node-a` vs `ceph-node-j`), the V100S count and `cms.higgs`/`belle`. The
+   dry-run + review + failure-recording design contains this; mismatches must become numbered
+   questions, never silently adopted.
+2. **No pullable image tonight** → I1–I4 are not submitted (A3.4) and "pinned image on the batch
+   system" is deferred with the registry/namespace question (Q3). The batch-probe goal is still met by
+   the official-image probes P1–P7. Docker-daemon availability on deepthought is itself unverified
+   (the repo records an older precheck saying it was unreachable); A3.1's gate handles that.
+3. **W2 execution details** (apply inline, no re-review needed): take the **top-level** `"runs": 20`
+   from `c3_sweep_deepthought.json`, not `liveness.runs: 10`; probe the interpreter with the exact
+   imports (`"$PY" -c "import r1.c3.features, r1.c3.analysis_guard"` from the checkout root) rather
+   than `numpy, sklearn`; treat any exit code other than 0/2/3 as STOP-and-report (an uncaught
+   import/IO error exits 1); make sure the clone source actually advertises
+   `mac-w2-budget-20261109` (a bare mirror or the GitHub origin — a non-bare local clone exposes it
+   only as a remote-tracking ref, which does not fetch by that name), falling back to
+   `git fetch <existing clone>`.
+4. **Timetable nits:** A4's wave-2 slot 02:50–03:10 is ≈2 h after wave 1 (submitted 00:50–01:15), not
+   the "+3 h sample" label — relabel it or move it to ≥03:50 (it may then collide with the report
+   draft; the queue-time goal is unaffected either way). The A4 clock starts at 00:00 while execution
+   may start earlier; §D's "clock shifted" should be applied explicitly (shift all A4 times earlier by
+   the elapsed time, keep 05:30 as the only anchor). The 00:50–01:10 window assumes P1 completes
+   promptly; the runbook's §0.2 "scale up only after that job's result is reviewed" outranks the
+   timetable if P1 is slow.
+5. **GPU register:** fill one row per **GPU** job only (P4–P7, P4/P6 resubmissions, I3/I4); adding CPU
+   probes would consume the 5.0 GPU-h margin
+   spuriously. `RemoteWallClockTime` is cumulative per job, so it does count restarts as A6 intends.
+6. **Report review slot (04:40–05:10) is tight**; if it slips, write the report before the review and
+   record the verdict / remaining fixes in the question list rather than trade the 05:30 stop.
+7. **Cluster state was not verified by this re-check** (no SSH, by rule): drivers, CUDA versions,
+   quotas, `/ceph/dwong` inventory, `/ceph/srv`, accounting groups and docker/registry state all remain
+   as the operator finds them.
+
+**Go/no-go:** the review's BLOCKING/MAJOR findings (F1–F6, F8, F21) and the MINOR/NIT corrections
+(F7, F9–F20, F22–F26) are applied as written; no new contradiction with the standing rules was found.
+The inline points in residual risk 3 and 4 are one-line edits the operator can make while executing,
+and they do not need another review round.
+
+VERDICT: ACCEPTED
