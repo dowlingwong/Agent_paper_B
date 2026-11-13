@@ -1,4 +1,4 @@
-# Track S `digits_mlp` S0.5 resume on TASL-7 — candidate for review (14 November 2026, rev 2)
+# Track S `digits_mlp` S0.5 resume on TASL-7 — candidate for review (14 November 2026, rev 3)
 
 **Candidate for independent review; not an execution.** Resumes the paused S0.5 run after B1 `_d` ends normally and its
 Track X marker is retired by the reviewed post-run unit. Authority: `reports/TRACKS_DIGITS_HOSTMOVE_20261112.md`
@@ -11,14 +11,17 @@ into the run `_to_delete`, not removed as the runbook's illustrative `find -dele
    absent; retirement receipt recorded; no B1/track process; `gpu0.lock` free; only `trks_watch` in default tmux; Track P
    marker absent; drill marker absent.
 2. The paused scene is intact, checked against a **pause baseline**: `$RUN=out/digits_mlp/s05_t7_20261113` (manifest,
-   ledgers, STOP; 22 root ids and 6 fork ids in the manifest `done`) and `$WORK=scratch/digits_mlp/s05_t7_20261113`
+   ledgers, STOP; `done` holds the counts 22 roots / 6 forks / 0 leaves / 0 failed / 0 exhausted and `done.status` is
+   asserted `paused`; the per-root snapshots live under `$WORK/roots/<id>/snapshots`) ( `done` holds the counts 22 roots / 6 forks / 0 leaves / 0 failed / 0 exhausted and
+   `done.status` is asserted `paused`) and `$WORK=scratch/digits_mlp/s05_t7_20261113`
    (snapshots and `roots/<id>/root_trials.jsonl`; the leaves/S0.5b inputs live under `$WORK`, not `$RUN`). A pause
    capture exists (taken at pause time or reconstructed as: files under `$RUN`/`$WORK` have mtime <= the pause
    `2026-11-13T13:03:00Z`; `$RUN/STOP` inode 57048847, 0 bytes, sha `e3b0c442…`); no new/removed paths; no truncated
    last line of any JSONL. `b1_proposals.jsonl` is a B1 artifact and is not part of the Track S scene.
 3. Paper pin `8237fd02…` detached/clean in `/home/dowling/r1_tracks/work/Agent_paper_B`; harness `a3fedbb…` clean;
    `trks` wrapper pins unchanged; prior `$OUT/digits_mlp/a2u_prior_r2_20261111.json` sha `5c849d15…`.
-4. k = 2 (Phase-1 decision). Deployed reviewed scripts: `tasl7_digits_s05_20261113.sh` sha `3e957464…` (takes `K`,
+4. k = 2 (Phase-1 decision; `obs-inflation 1.0` and the λ₂ decision rule are fixed by the reviewed launcher/Phase 4
+   analysis and are not changed by the resume). Deployed reviewed scripts: `tasl7_digits_s05_20261113.sh` sha `3e957464…` (takes `K`,
    starts `trks-servers $K` itself if `trks_llm` is absent), `tasl7_digits_s05b_20261113.sh` sha `3685dfe6…`; `bash -n`.
 5. **No separate server start**: the launcher starts the k=2 servers after its own guards; starting servers first would
    orphan them if the launcher refuses (exit 2). Any launcher refusal is a STOP: if it did start `trks_llm` before
@@ -36,22 +39,26 @@ into the run `_to_delete`, not removed as the runbook's illustrative `find -dele
    `$RUN/_to_delete/STOP.retired.<UTC>` absent; `mv -n "$RUN/STOP" <target>`; then **verify the move happened**
    (source absent, target present, 0 B, same sha/inode); if `mv -n` no-ops or the target exists: STOP, preserve.
 3. **Resume with the reviewed launcher** (it starts `trks-servers 2`, waits for both endpoints and starts the collector
-   in a tmux session whose name is **not** prefixed by `trks_s05_t7`, e.g. `trks_s05t7resume`):
+   in an **outer launcher** tmux session named `trks_s05t7resume` (not prefixed by the collector name `trks_s05_t7`,
+   which the launcher hardcodes for the collector):
    `K=2 bash $R/launch/tasl7_digits_s05_20261113.sh` run inside tmux. It reuses `$RUN` (manifest present → resume path),
    reuses `trks_llm` if present, refuses a server count != K, and writes `$R/logs/trks_s05_t7.cmd` again.
 4. **Command identity**: after the collector starts, compare the **new** `$R/logs/trks_s05_t7.cmd` with the step-1 copy
-   (the `--out`/`--work`/flags/prior sha must be identical; only a new `grks-run` timestamp/session line may differ).
-   Keep both files; any substantive difference or launcher refusal (exit 2) = STOP, stop only our `trks_llm` and report.
+   (trks-run's `.cmd` is deterministic: require **byte-identical**; any difference is a STOP). Keep both files; any substantive difference or launcher refusal (exit 2) = STOP, stop only our `trks_llm` and report.
 5. Monitor read-only to completion (30-min polling; no early stop): collector log/exit, manifest done counts
    (roots/forks/leaves/failed/exhausted), `failed_units`, STOP presence, GPU/lease. A `status=deadline` end is reported
    as a deadline stop and resumed only with the same command under a renewed decision (not silently).
-6. On rc=0 and `done.status=complete`: stop the servers (`tmux kill-session -t trks_llm`; pkill only own
+6. If rc=0 but `done.status` is not `complete` (e.g. `paused` or `deadline`): report and wait for the author; do not
+   run S0.5b and do not silently restart.
+7. On rc=0 and `done.status=complete`: stop the servers (`tmux kill-session -t trks_llm`; pkill only own
    `llama-server .*--port 1810[12]`; verify lease free, no own process) → run `tasl7_digits_s05b_20261113.sh` (CPU;
    requires manifest complete and no servers) → wait for `s05b_truncated.jsonl` / `s05_calibration.jsonl`.
 
 ## 2. Copy-back / report / review / pause
-Copy `$RUN/sp05*` calibration/truncation JSONL, the manifest, **the run's logs** (collector `.log`/`.cmd`/`.exit`,
-launcher log/rc) and `SHA256SUMS` to `results/r1/tracks/digits_mlp/s05_t7_20261113/` (never the TASL-2 scene); write
+Copy the S0.5 outputs `$RUN/s05_calibration.jsonl` and `$RUN/s05b_truncated.jsonl` (both must exist; the old
+`sp05*` glob matched nothing), the other run `*.jsonl` ledgers (`roots`/`forks`/`leaves`/`failed_units`/`audit_runs` as
+present), the manifest, **the run's logs** (collector `.log`/`.cmd`/`.exit`, launcher log/rc) and `SHA256SUMS` to
+`results/r1/tracks/digits_mlp/s05_t7_20261113/` (never the TASL-2 scene); assert each named file exists before copy; write
 the report + STATUS on `trackS-ops-20261030`; independent review; then pause and report per L1 (S0.5 summary/STOP 4
 still wait for `tabular_mlp`). No B2/X.7/sweep 2. If TASL-2 returns meanwhile, it is censused read-only and preserved,
 not resumed or switched to.
