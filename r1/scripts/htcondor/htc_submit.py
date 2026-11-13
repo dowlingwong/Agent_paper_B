@@ -20,10 +20,21 @@ Manifest schema ``htc_job/v1`` (all keys required unless marked optional; no oth
 * ``executable`` and ``arguments`` (list of single-line strings);
 * ``transfer_input_files`` and ``transfer_output_files`` (lists of relative or absolute paths,
   no commas); the input files must exist and total at most max_transfer_input_mb;
-* for kind "track_g" also ``table_id`` (the run table), ``runner_timeout_s`` (the M10 runner's own
-  timeout; walltime must exceed it by the config margin) and, when gpus > 0, the pinned device name
-  above, because a CUDA OOM is classified ``divergent`` only on a table with one pinned GPU model
-  (author's answer to Q8). A Track G GPU table without a device name is refused.
+* optional ``executable_in_image`` (bool): the executable lives in the image (``transfer_executable = False``);
+  otherwise it must exist here and counts toward the transfer limit;
+* optional ``resume_dir``: a relative sandbox directory for ``htc_units`` completion markers; it is rendered
+  as input and output with ``when_to_transfer_output = ON_EXIT_OR_EVICT`` so it survives an eviction.
+  Without it a restarted job starts with only its inputs (HTCondor manual), so resume works only when the
+  unit root is on persistent storage (``/work`` on local jobs);
+* for kind "track_g" also ``table_id`` (the run table), ``runner_timeout_s`` (the timeout the M10 runner will
+  use: factor x measured run time, or the provisional value), ``runs_per_job`` (runs executed one after another
+  in the job; walltime must exceed runs_per_job x runner_timeout_s + the config margin, setup time included in
+  the margin) and, when gpus > 0, the pinned device name above, because a CUDA OOM is classified ``divergent``
+  only on a table with one pinned GPU model (author's answer to Q8). A Track G GPU table without a device
+  name is refused, and ``--table-pins`` keeps one device name per table across manifests.
+
+Arguments may not contain ``$`` (condor_submit and the starter expand ``$(...)``) or control characters.
+The transfer limit is in decimal megabytes (10^6 bytes).
 
 ``--dry-run`` renders the JDL and, if ``condor_submit`` is on PATH, runs ``condor_submit -dry-run``
 on it. ``--submit`` is refused while ``real_submission_enabled`` is false (the shipped value).
@@ -51,8 +62,9 @@ MANIFEST_SCHEMA = "htc_job/v1"
 BASE_KEYS = {"schema", "name", "kind", "image", "cpus", "memory_mb", "disk_kb", "walltime_s", "gpus",
              "gpu_device_name", "placement", "executable", "arguments", "transfer_input_files",
              "transfer_output_files"}
-OPTIONAL_KEYS = {"cloud_site", "etp_ceph", "accounting_group"}
-TRACK_G_KEYS = {"table_id", "runner_timeout_s"}
+OPTIONAL_KEYS = {"cloud_site", "etp_ceph", "accounting_group", "executable_in_image", "resume_dir"}
+TRACK_G_KEYS = {"table_id", "runner_timeout_s", "runs_per_job"}
+CONTROL = re.compile(r"[\x00-\x1f\x7f\u2028\u2029]")
 SAFE = re.compile(r"^[A-Za-z0-9_.-]+$")
 IMAGE = re.compile(r"^[a-z0-9][a-z0-9._/-]*(:[A-Za-z0-9_.-]+)?(@sha256:[0-9a-f]{64})?$")
 DEVICE = re.compile(r"^[A-Za-z0-9 ._()-]+$")
@@ -104,8 +116,8 @@ def _lines(data, key, allow_empty=True):
     if not isinstance(v, list) or (not allow_empty and not v):
         raise HtcError(f"{key} must be a list")
     for x in v:
-        if not isinstance(x, str) or not x or any(c in x for c in "\x00\n\r"):
-            raise HtcError(f"{key} entries must be nonempty single-line strings")
+        if not isinstance(x, str) or not x or CONTROL.search(x):
+            raise HtcError(f"{key} entries must be nonempty single-line strings without control characters")
     return v
 
 
@@ -125,7 +137,7 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
     if missing or extra:
         raise HtcError(f"manifest keys: missing {sorted(missing)}, unknown {sorted(extra)}")
     name = data["name"]
-    if not isinstance(name, str) or not SAFE.fullmatch(name):
+    if not isinstance(name, str) or not SAFE.fullmatch(name) or set(name) == {"."}:
         raise HtcError("invalid name")
     if not isinstance(data["image"], str) or not IMAGE.fullmatch(data["image"]):
         raise HtcError("invalid image reference")
@@ -156,20 +168,35 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
     exe = data["executable"]
     if not isinstance(exe, str) or not PATH_TEXT.fullmatch(exe):
         raise HtcError("invalid executable path")
-    _lines(data, "arguments")
+    for arg in _lines(data, "arguments"):
+        if "$" in arg:
+            raise HtcError("'$' in arguments is refused: condor_submit and the starter expand $(...) macros")
     files_in = _lines(data, "transfer_input_files")
     files_out = _lines(data, "transfer_output_files")
     for f in files_in + files_out:
         if not PATH_TEXT.fullmatch(f):
             raise HtcError(f"transfer path {f!r} has characters outside [A-Za-z0-9_./+-]")
+    if "executable_in_image" in data and type(data["executable_in_image"]) is not bool:
+        raise HtcError("executable_in_image must be a boolean")
+    resume = data.get("resume_dir")
+    if resume is not None:
+        if not isinstance(resume, str) or not PATH_TEXT.fullmatch(resume) or os.path.isabs(resume) \
+                or ".." in Path(resume).parts or resume in files_out:
+            raise HtcError("resume_dir must be a relative path in the sandbox, not also an output file")
     base = Path(base_dir) if base_dir else Path.cwd()
     total = 0
+    if not data.get("executable_in_image"):
+        # HTCondor transfers the executable by default: it counts toward the limit and must exist here
+        exe_path = Path(exe) if os.path.isabs(exe) else base / exe
+        if not exe_path.is_file() or exe_path.is_symlink():
+            raise HtcError(f"executable {exe!r} is not a regular file (set executable_in_image for one in the image)")
+        total += exe_path.stat().st_size
     for f in files_in:
         p = Path(f) if os.path.isabs(f) else base / f
         if not p.is_file() or p.is_symlink():
             raise HtcError(f"transfer input {f!r} is not a regular file")
         total += p.stat().st_size
-    if total > float(v["max_transfer_input_mb"]) * 1024 * 1024:
+    if total > float(v["max_transfer_input_mb"]) * 1_000_000:
         raise HtcError(f"transfer input totals {total} bytes, over {v['max_transfer_input_mb']} MB: use /ceph or xrootd")
     if kind == "track_g":
         table = data["table_id"]
@@ -178,9 +205,12 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
         rt = data["runner_timeout_s"]
         if type(rt) not in (int, float) or not math.isfinite(rt) or rt <= 0:
             raise HtcError("runner_timeout_s must be a positive number")
-        if walltime <= rt + float(v["runner_timeout_margin_s"]):
-            raise HtcError("walltime must exceed the runner timeout plus the margin, so the runner times out "
-                           "before an HTCondor walltime hold")
+        runs = data["runs_per_job"]
+        if type(runs) is not int or runs < 1:
+            raise HtcError("runs_per_job must be a positive integer")
+        if walltime <= runs * rt + float(v["runner_timeout_margin_s"]):
+            raise HtcError("walltime must exceed runs_per_job x the runner timeout plus the margin, so every run "
+                           "times out by the runner before an HTCondor walltime hold")
     return {"total_input_bytes": total, "cpus": cpus, "gpus": gpus}
 
 
@@ -225,11 +255,19 @@ def render_jdl(data, digest: str) -> str:
         lines.append(f"requirements = {req}")
     if data.get("accounting_group"):
         lines.append(f"accounting_group = {data['accounting_group']}")
-    lines += ["should_transfer_files = YES", "when_to_transfer_output = ON_EXIT"]
-    if data["transfer_input_files"]:
-        lines.append("transfer_input_files = " + ",".join(data["transfer_input_files"]))
-    if data["transfer_output_files"]:
-        lines.append("transfer_output_files = " + ",".join(data["transfer_output_files"]))
+    if data.get("executable_in_image"):
+        lines.append("transfer_executable = False")
+    resume = data.get("resume_dir")
+    # With ON_EXIT a restarted job starts with only its inputs; ON_EXIT_OR_EVICT brings the resume directory back
+    # (the pool's HTCondor version must support it: cluster report).
+    lines += ["should_transfer_files = YES",
+              "when_to_transfer_output = " + ("ON_EXIT_OR_EVICT" if resume else "ON_EXIT")]
+    inputs = list(data["transfer_input_files"]) + ([resume] if resume else [])
+    outputs = list(data["transfer_output_files"]) + ([resume] if resume else [])
+    if inputs:
+        lines.append("transfer_input_files = " + ",".join(inputs))
+    if outputs:
+        lines.append("transfer_output_files = " + ",".join(outputs))
     lines.append("queue 1")
     text = "\n".join(lines) + "\n"
     if re.search(r"(?i)RequestGPUMemory", text):
@@ -239,14 +277,35 @@ def render_jdl(data, digest: str) -> str:
     return text
 
 
-def dry_run(jdl_path: Path, runner=subprocess.run) -> dict:
+def dry_run(jdl_path: Path, cwd: Path, runner=subprocess.run) -> dict:
+    """``condor_submit -dry-run`` in ``cwd`` (the manifest's directory, where relative paths were validated)."""
     exe = shutil.which("condor_submit")
     if not exe:
         return {"condor_submit": None, "note": "condor_submit not on PATH; JDL rendered only"}
-    out = jdl_path.with_suffix(".dryrun.txt")
-    res = runner([exe, "-dry-run", str(out), str(jdl_path)], capture_output=True, text=True, timeout=120)
+    out = jdl_path.resolve().with_suffix(".dryrun.txt")
+    res = runner([exe, "-dry-run", str(out), str(jdl_path.resolve())], capture_output=True, text=True, timeout=120,
+                 cwd=str(cwd))
     return {"condor_submit": exe, "rc": res.returncode, "stdout": res.stdout, "stderr": res.stderr,
             "dry_run_file": str(out)}
+
+
+def check_table_pin(path: Path, data: dict) -> dict:
+    """One GPU model per Track G table (author's answer to Q8): the first manifest of a table pins its device name
+    in ``path`` (JSON table_id -> device); later manifests of the table must match. Entries are only added."""
+    if data.get("kind") != "track_g":
+        return {}
+    pins = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    if not isinstance(pins, dict):
+        raise HtcError(f"{path}: table pins must be a JSON object")
+    table, device = data["table_id"], data["gpu_device_name"]
+    if table in pins and pins[table] != device:
+        raise HtcError(f"table {table!r} is pinned to {pins[table]!r}; this manifest asks for {device!r}")
+    if table not in pins:
+        pins[table] = device
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text(json.dumps(pins, indent=1, sort_keys=True), encoding="utf-8")
+        os.replace(tmp, path)
+    return pins
 
 
 def main(argv=None) -> int:
@@ -254,6 +313,8 @@ def main(argv=None) -> int:
     p.add_argument("manifest", type=Path)
     p.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     p.add_argument("--out", type=Path, default=None, help="directory for the rendered JDL (default: next to the manifest)")
+    p.add_argument("--table-pins", type=Path, default=None,
+                   help="JSON file table_id -> GPU device name; required for track_g manifests")
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument("--submit", action="store_true")
@@ -264,19 +325,23 @@ def main(argv=None) -> int:
         data = json.loads(raw.decode("utf-8"))
         config = load_config(a.config)
         validate_manifest(data, config, base_dir=a.manifest.parent)
+        if a.submit and config["values"]["real_submission_enabled"] is not True:
+            raise HtcError("real submission disabled by configuration (real_submission_enabled is false)")
+        if data["kind"] == "track_g":
+            if a.table_pins is None:
+                raise HtcError("track_g manifests need --table-pins (one GPU model per table)")
+            check_table_pin(a.table_pins, data)
         jdl = render_jdl(data, digest)
         out_dir = a.out or a.manifest.parent
         out_dir.mkdir(parents=True, exist_ok=True)
         jdl_path = out_dir / f"{data['name']}.jdl"
         jdl_path.write_text(jdl, encoding="utf-8")
         if a.submit:
-            if config["values"]["real_submission_enabled"] is not True:
-                raise HtcError("real submission disabled by configuration (real_submission_enabled is false)")
             raise HtcError("real submission is not implemented in this draft; use the reviewed JDL by hand")
         print(f"manifest_sha256={digest}")
         print("proposed_config=" + ",".join(config["proposed"]))
         print(jdl, end="")
-        print(json.dumps(dry_run(jdl_path), sort_keys=True))
+        print(json.dumps(dry_run(jdl_path, a.manifest.parent.resolve()), sort_keys=True))
         return 0
     except (HtcError, OSError, ValueError, subprocess.SubprocessError) as exc:
         print("STOP: " + str(exc), file=sys.stderr)

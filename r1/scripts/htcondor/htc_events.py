@@ -5,8 +5,9 @@ Events read (HTCondor user log, the ``log =`` file): 000 submit, 001 execute, 00
 005 terminated, 009 aborted, 012 held, 013 released. Each event starts with
 ``NNN (cluster.proc.subproc) <date> <time> <text>`` and ends with a line ``...``. Dates are either
 ISO (``2026-11-14 01:02:03``, HTCondor >= 8.8 default) or ``MM/DD HH:MM:SS`` (older format; the year
-must then be given). Times are taken as UTC unless ``utc_offset_minutes`` says otherwise; the pool's
-log time zone is a measured fact the cluster report should confirm.
+must then be given). A time-zone suffix (``Z``, ``+01:00``) is applied when present (and then
+``utc_offset_minutes`` must be 0); zone-less times are taken as UTC unless ``utc_offset_minutes`` says
+otherwise. The pool's log time zone is a measured fact the cluster report should confirm.
 
 Queue-time row (cluster runbook HTCONDOR_PREP_RUNBOOK_20261114 §4.2):
 ``probe, cluster.proc, submit_utc, execute_utc, end_utc, wait_s, run_s, site, host, gpu_name,
@@ -22,8 +23,9 @@ preemption, a hold for memory or walltime and a container image pull failure are
 ``infrastructure_failure``. Each gets its own reason (``htcondor_eviction``, ``htcondor_preemption``,
 ``htcondor_memory_hold``, ``htcondor_walltime_hold``, ``htcondor_image_pull``, ``htcondor_restart_limit``),
 none of which is the runner's own ``timeout`` reason, so the repeated-timeout cap does not count them
-(whether walltime holds should count is an open question). A hold whose reason is not recognised is
-``unclassified`` and needs a human: it is never silently mapped.
+(whether walltime holds should count is an open question). A disk hold (code 34 subcode 104) and any hold
+whose reason is not recognised are ``unclassified`` and need a human: they are never silently mapped. See
+``infrastructure_outcome`` for how this combines with a job that later finished normally.
 """
 from __future__ import annotations
 
@@ -35,7 +37,7 @@ import re
 import sys
 from pathlib import Path
 
-HEAD = re.compile(r"^(\d{3}) \((\d+)\.(\d+)\.(\d+)\) (\S+) (\d{2}:\d{2}:\d{2})(?:[.,]\d+)?(?:[+-]\d{2}:?\d{2}|Z)? ?(.*)$")
+HEAD = re.compile(r"^(\d{3}) \((\d+)\.(\d+)\.(\d+)\) (\S+) (\d{2}:\d{2}:\d{2})(?:[.,]\d+)?([+-]\d{2}:?\d{2}|Z)? ?(.*)$")
 NORMAL = re.compile(r"\(1\) Normal termination \(return value (-?\d+)\)")
 SIGNAL = re.compile(r"\(0\) Abnormal termination \(signal (\d+)\)")
 HOLD_CODE = re.compile(r"Code (\d+) Subcode (-?\d+)")
@@ -47,7 +49,15 @@ class EventLogError(ValueError):
     pass
 
 
-def _when(date: str, time: str, year: int | None, offset: int) -> dt.datetime:
+def _zone_minutes(zone: str) -> int:
+    if zone == "Z":
+        return 0
+    sign = 1 if zone[0] == "+" else -1
+    digits = zone[1:].replace(":", "")
+    return sign * (int(digits[:2]) * 60 + int(digits[2:]))
+
+
+def _when(date: str, time: str, year: int | None, offset: int, zone: str | None = None) -> dt.datetime:
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
         t = dt.datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M:%S")
     elif re.fullmatch(r"\d{2}/\d{2}", date):
@@ -56,6 +66,10 @@ def _when(date: str, time: str, year: int | None, offset: int) -> dt.datetime:
         t = dt.datetime.strptime(f"{year}/{date} {time}", "%Y/%m/%d %H:%M:%S")
     else:
         raise EventLogError(f"unrecognised event date {date!r}")
+    if zone is not None:
+        if offset:
+            raise EventLogError("the log carries a time-zone suffix; do not also pass utc_offset_minutes")
+        offset = _zone_minutes(zone)
     return (t - dt.timedelta(minutes=offset)).replace(tzinfo=dt.timezone.utc)
 
 
@@ -63,10 +77,12 @@ def parse_events(text: str, *, year: int | None = None, utc_offset_minutes: int 
     events, cur = [], None
     for line in text.splitlines():
         m = HEAD.match(line)
-        if m and cur is None:
-            code, cl, proc, _sub, date, time, rest = m.groups()
+        if m and cur is not None:
+            raise EventLogError(f"event header inside an open event (missing '...'): {line[:60]!r}")
+        if m:
+            code, cl, proc, _sub, date, time, zone, rest = m.groups()
             cur = {"code": code, "job": f"{int(cl)}.{int(proc)}",
-                   "time": _when(date, time, year, utc_offset_minutes), "text": [rest]}
+                   "time": _when(date, time, year, utc_offset_minutes, zone), "text": [rest]}
         elif line.strip() == "...":
             if cur is None:
                 raise EventLogError("event terminator without an event")
@@ -81,20 +97,37 @@ def parse_events(text: str, *, year: int | None = None, utc_offset_minutes: int 
     return events
 
 
+HOLD_CODES = {(34, 102): "htcondor_memory_hold",      # JobOutOfResources, memory (HTCondor hold-reason table)
+              (34, 104): "unclassified",              # JobOutOfResources, disk: not in the author's list -> a human
+              35: "htcondor_image_pull",              # InvalidDockerImage
+              46: "htcondor_walltime_hold",           # JobDurationExceeded
+              47: "htcondor_walltime_hold"}           # JobExecuteExceeded
+
+
 def classify_hold(text: str) -> str:
-    """Map a hold reason to an infrastructure reason, or 'unclassified'."""
+    """Map a hold reason to an infrastructure reason, or 'unclassified'.
+
+    The code and subcode decide first (HOLD_CODES). Text decides only when there is no code, or the code is a policy
+    code (3 JobPolicy, 26 SystemPolicy, where a site's walltime or memory policy lands), or code 34 with another
+    subcode (older releases write ``code 34,0`` for "Job has gone over memory limit"). Text order: walltime before
+    memory (a walltime policy message may also mention memory usage); image pull only on pull or manifest wording."""
     t = text.lower()
     m = HOLD_CODE.search(text)
-    code = int(m.group(1)) if m else None
-    # Code 34 with "Job has gone over memory limit" is the stock memory hold; newer releases word it
-    # "gone over cgroup memory limit" (HTCondor manual, troubleshooting); site policies say "exceeded".
-    if re.search(r"over (cgroup )?memory limit", t) or ("memory" in t and "exceed" in t) or code == 34:
-        return "htcondor_memory_hold"
+    code, sub = (int(m.group(1)), int(m.group(2))) if m else (None, None)
+    if (code, sub) in HOLD_CODES:
+        return HOLD_CODES[(code, sub)]
+    if code in HOLD_CODES:
+        return HOLD_CODES[code]
+    if code is not None and code not in (3, 26, 34):
+        return "unclassified"
     if "walltime" in t or "wall time" in t or "maxjobretirementtime" in t or "runtime exceeded" in t \
-            or ("time limit" in t and "exceed" in t):
+            or ("time limit" in t and "exceed" in t) or "duration exceeded" in t:
         return "htcondor_walltime_hold"
+    # "Job has gone over memory limit" / "gone over cgroup memory limit" (HTCondor manual); site policies "exceeded".
+    if re.search(r"over (cgroup )?memory limit", t) or ("memory" in t and "exceed" in t):
+        return "htcondor_memory_hold"
     if ("pull" in t and ("image" in t or "docker" in t or "singularity" in t or "apptainer" in t)) \
-            or "manifest unknown" in t or "error response from daemon" in t:
+            or "manifest unknown" in t or "pull access denied" in t:
         return "htcondor_image_pull"
     if "started 6 times" in t or "numjobstarts" in t or "too many starts" in t or "job restarts" in t:
         return "htcondor_restart_limit"
@@ -121,36 +154,44 @@ def job_summary(events: list[dict], job: str) -> dict:
         exit_ = "aborted"
     elif len(holds) > len(released):
         exit_ = "held"
-    elif not executes:
-        exit_ = "idle"
     else:
-        exit_ = "running"
+        state = [e["code"] for e in ev if e["code"] in ("001", "004")]
+        exit_ = "running" if state and state[-1] == "001" else "idle"
     iso = lambda e: e["time"].strftime("%Y-%m-%dT%H:%M:%SZ") if e else ""
     wait = int((execute["time"] - submit["time"]).total_seconds()) if submit and execute else ""
     run = int((term["time"] - executes[-1]["time"]).total_seconds()) if term and executes and term["code"] == "005" else ""
     hold_reasons = [" ".join(e["text"]) for e in holds]
-    return {"cluster.proc": job, "submit_utc": iso(submit), "execute_utc": iso(execute),
+    normal = bool(term and term["code"] == "005" and NORMAL.search("\n".join(term["text"])))
+    return {"cluster.proc": job, "normal_termination": normal, "submit_utc": iso(submit), "execute_utc": iso(execute),
             "end_utc": iso(term), "wait_s": wait, "run_s": run, "evictions": len(evictions),
             "holds": len(holds), "exit": exit_, "hold_reasons": hold_reasons,
             "eviction_texts": [" ".join(e["text"]) for e in evictions]}
 
 
-def infrastructure_outcome(summary: dict) -> dict | None:
-    """The M10 infrastructure reason an HTCondor-level event implies, or None.
+def infrastructure_outcome(summary: dict) -> dict:
+    """HTCondor-level events of one job as M10 outcome input: ``{"final": ..., "attempts": [...]}``.
 
-    Precedence: an unrecognised hold is 'unclassified' (fail closed); otherwise the first recognised
-    hold, then an eviction (a 'preempt' wording maps to htcondor_preemption). A job that terminated
-    normally after an eviction and a restart still records the eviction, for the resume logic."""
-    for reason in summary["hold_reasons"]:
-        cls = classify_hold(reason)
-        return {"kind": "infrastructure_failure" if cls != "unclassified" else "unclassified",
-                "reason": cls, "detail": reason}
-    if summary["evictions"]:
-        text = " ".join(summary["eviction_texts"]).lower()
-        return {"kind": "infrastructure_failure",
-                "reason": "htcondor_preemption" if "preempt" in text else "htcondor_eviction",
-                "detail": summary["eviction_texts"][0] if summary["eviction_texts"] else ""}
-    return None
+    ``attempts`` lists every eviction and hold with its reason. ``final`` is None if the job ended with a normal
+    termination (005 with a return value): the run's own outcome then comes from the runner and its log, and earlier
+    evictions or holds are history for the resume logic, not the outcome. Otherwise ``final`` is the job's
+    infrastructure outcome: ``unclassified`` (a human decides) if any hold is unrecognised, listing every hold;
+    else the first recognised hold; else the last eviction (``htcondor_preemption`` if its text says "preempt").
+    A job still idle or running with no hold or eviction has ``final`` None as well."""
+    holds = [{"event": "hold", "reason": classify_hold(r), "detail": r} for r in summary["hold_reasons"]]
+    evictions = [{"event": "eviction", "reason": "htcondor_preemption" if "preempt" in x.lower() else "htcondor_eviction",
+                  "detail": x} for x in summary["eviction_texts"]]
+    attempts = holds + evictions
+    final = None
+    if not summary.get("normal_termination"):
+        if any(h["reason"] == "unclassified" for h in holds):
+            final = {"kind": "unclassified", "reason": "unclassified",
+                     "detail": [h["detail"] for h in holds]}
+        elif holds:
+            final = {"kind": "infrastructure_failure", "reason": holds[0]["reason"], "detail": holds[0]["detail"]}
+        elif evictions:
+            final = {"kind": "infrastructure_failure", "reason": evictions[-1]["reason"],
+                     "detail": evictions[-1]["detail"]}
+    return {"final": final, "attempts": attempts}
 
 
 def queue_rows(events: list[dict], probe_by_job: dict[str, str], history: dict[str, dict] | None = None) -> list[dict]:
@@ -184,7 +225,11 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
     try:
         events = parse_events(a.log.read_text(encoding="utf-8"), year=a.year, utc_offset_minutes=a.utc_offset_minutes)
-        probes = dict(x.split("=", 1) for x in a.probe)
+        probes = {}
+        for x in a.probe:
+            job, name = x.split("=", 1)
+            cl, _, proc = job.partition(".")
+            probes[f"{int(cl)}.{int(proc or 0)}"] = name
         history = json.loads(a.history.read_text()) if a.history else None
         write_tsv(queue_rows(events, probes, history), a.tsv)
         return 0
