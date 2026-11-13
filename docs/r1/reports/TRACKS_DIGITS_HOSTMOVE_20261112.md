@@ -1,4 +1,4 @@
-# Track S `digits_mlp` host move to TASL-7 — proposal (12 November 2026, rev 2)
+# Track S `digits_mlp` host move to TASL-7 — proposal (13 November 2026, rev 3)
 
 **Author decision recorded here; not yet executed.** In the chat of 12 Nov 2026 the author chose the option
 "migrate `digits_mlp` to TASL-7 and run it after the B1 `_c` run ends" (recorded by the Lead; the author's selection
@@ -37,12 +37,16 @@ the node to TASL-7. **The TASL-2 `s05` scene is preserved, never modified or del
 
 ## 3. Conditions before a `digits_mlp` run on TASL-7 (all mandatory)
 
-1. **B1 `_c` ended normally and its marker was retired by a separately reviewed post-run procedure** performed by
-   the B1/Track X operator (not by Track S; see §5). That procedure (marker retirement with the creation receipt
-   kept, evidence preserved) must be written, independently reviewed and executed before this move; until then
-   Track S waits. The marker `trackx_evidence.active` with `{"run_id":"4b31_20261112_c"}` must be gone and its
-   retirement documented; the GPU lease must be free and no other track's llm/compute process present. If B1 `_c`
-   ends in a STOP, the move waits for the author.
+1. **The `_c` Track X marker has been retired by a separately reviewed unit, and the author's 13 Nov revision allows
+   both outcomes.** For a normal end, the post-run unit `proposals/B1_C_POSTRUN_RETIREMENT_20261112.md` (rev
+   78c6fd7d, accepted) applies. For the actual STOP ending, the author's 13 Nov 2026 decision (relayed; PLAN §10 row
+   draft `proposals/PLAN_ROW_R1-TRACKS-DIGITS-HOSTMOVE_REV_20261113.md`) explicitly allows the move, but **first** the
+   STOP-case unit `proposals/B1_C_STOP_MARKER_RETIREMENT_20261113.md` must be independently reviewed and executed: the
+   marker is renamed into `~/r1_locks/_to_delete/`, the creation receipt is kept and a retirement receipt/note is
+   written, and the `_c` STOP scene is left completely untouched; B1 `_c` is never retried. Performed by the B1/Track X
+   operator under that unit, not by Track S (see §5). The marker `trackx_evidence.active` with
+   `{"run_id":"4b31_20261112_c"}` must be gone and its retirement documented; the GPU lease must be free and no other
+   track's llm/compute process present.
 2. **New `digits_mlp` S0.1 launch script for TASL-7** (the existing `launch/tasl7_s01.sh` is hardcoded to
    `tabular_mlp`; sha `226dbfa2…`), committed before use and reproduced from the rev-3.3 Phase 1 command with
    `--node digits_mlp` and `--out $OUT/digits_mlp/s01_t7_20261113`; after it runs (GPU free, <1 GPU-h), the host
@@ -71,7 +75,12 @@ the node to TASL-7. **The TASL-2 `s05` scene is preserved, never modified or del
    a fresh independent review, then pause and report (L1). The S0.5 summary and STOP 4 still wait for `tabular_mlp`.
 8. **If TASL-2 returns after the TASL-7 S0.5 starts**, do not switch host or resume the TASL-2 scene: perform a
    read-only census of TASL-2, keep both scenes, report, and let the author decide any change. The TASL-2 `s05`
-   scene is never resumed or deleted by this move.
+   scene is never resumed or deleted by this move. If TASL-2 returns while the TASL-7 S0.1/S0.5 has not started, it is
+   still only censused read-only and preserved.
+9. **B1 `_d` has priority.** When the D-B1R for `_d` arrives (READY.txt item + origin branch), B1 takes precedence:
+   build the new marker per its hand-off; Track S yields through the watcher (the watcher pauses on the new Track X
+   marker) and resumes only under its own reviewed procedure after B1. The operator polls `Claude outputs/READY.txt`
+   and origin every 30 minutes.
 
 ## 4. PLAN §10 row draft (for the author/coordinating session; target branch `trackS-ops-20261030`)
 

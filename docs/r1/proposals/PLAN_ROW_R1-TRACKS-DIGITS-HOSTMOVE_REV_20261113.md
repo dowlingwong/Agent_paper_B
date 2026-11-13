@@ -1,0 +1,9 @@
+# PLAN §10 row draft — revision of `R1-TRACKS-DIGITS-HOSTMOVE` (author decision, 13 November 2026)
+
+**Draft for the author/coordinating session; the operator records the author's relayed decision here, it is not
+committed to `PLAN.md` unilaterally.** Replaces condition 1 of
+`reports/TRACKS_DIGITS_HOSTMOVE_20261112.md` rev 2 and adds the B1 `_d` priority rule.
+
+## Row
+
+`| R1-TRACKS-DIGITS-HOSTMOVE (rev 2, 13 Nov) | The author's chat message of 13 Nov 2026 (relayed by the operator) revises the earlier host-move decision: **B1 `_c` ending in a STOP also allows Track S's digits_mlp to move to TASL-7 now.** Before the move: a separately reviewed STOP-case `_c` Track X marker-retirement unit (`proposals/B1_C_STOP_MARKER_RETIREMENT_20261113.md`) must be accepted and executed — marker renamed into `~/r1_locks/_to_delete/`, creation receipt kept and retirement receipt/note written, with the `_c` STOP scene left completely untouched; B1 `_c` is not retried. Then the move follows the remaining conditions of `reports/TRACKS_DIGITS_HOSTMOVE_20261112.md` (rev 3): a new digits_mlp S0.1 on TASL-7 with its own independently reviewed result before S0.5; paper pin 8237fd02 detached/clean on TASL-7; prior 5c849d15 reused with the host/Python-patch disclosure; the reviewed TASL-7 S0.5/S0.5b launch units; Track P paused and Track X otherwise untouched; Phase 4 calibration/2 %/exit-3/5-day gates; copy-back to results/r1/tracks/digits_mlp/s05_t7_20261113/ with report/STATUS/fresh review, then pause. **B1 `_d` has priority:** when the D-B1R for `_d` arrives (READY.txt + origin), B1 takes precedence — build its new marker per the hand-off, and Track S yields through the watcher (the watcher pauses on the new Track X marker; Track S resumes only under its own reviewed procedure after B1). TASL-2, if it returns, is censused read-only and preserved, not resumed. The operator polls READY.txt and origin every 30 minutes. B2, X.7 and sweep 2 remain gated. |`
