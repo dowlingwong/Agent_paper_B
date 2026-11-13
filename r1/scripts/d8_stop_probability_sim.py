@@ -89,7 +89,7 @@ def run(n_test, n_devs, z_grid, dists, ms, reps_e, reps_s, seed=SEED):
         for m in ms:
             scenarios = [(f'all nodes z = {z:g}', [z] * m) for z in z_grid if z >= 3]
             mixed = [z for z in z_grid if 3 <= z <= 8]
-            scenarios.append((f'z spread evenly over {mixed[0]:g}..{mixed[-1]:g}',
+            scenarios.append((f'z spread over the grid points {mixed[0]:g}..{mixed[-1]:g}',
                               [mixed[round(i * (len(mixed) - 1) / (m - 1))] for i in range(m)]))
             for label, zs in scenarios:
                 old = combine(None, None, [(1.0, per_node[(dist, z, 'test_stop')]) for z in zs])

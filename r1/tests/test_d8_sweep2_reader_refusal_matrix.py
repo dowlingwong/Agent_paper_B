@@ -68,6 +68,11 @@ VARIANTS = {
     'wrong_sha': lambda row, d: HEAD + row.replace(d.split('sha256 `')[1][:64], 'a' * 64),
     'negated': lambda row, d: HEAD + row.replace('may be analysed', 'may not be analysed'),
     'duplicate_rows': lambda row, d: HEAD + row + row,
+    # the 9 Nov row wording (whole-gate partial-T1 STOP) is refused after the author's Q1 answer
+    'nov9_partial_t1_wording': lambda row, d: HEAD + row.replace(
+        'For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out '
+        'STOPs; the aggregate gate does not STOP on it. ',
+        'Each suite must have at least one labelled T1 node, otherwise STOP. '),
 }
 
 

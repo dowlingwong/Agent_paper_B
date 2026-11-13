@@ -24,7 +24,7 @@ The row adopts the gate as implemented: the R1-BX-D8 numbers confirmed in R1-BX-
 1. seed 20261108 with `numpy.random.Generator(PCG64)`, the documented draw order, and **NumPy pinned to 2.4.4** (any other version STOPs); the named environment is the harness `uv.lock` environment at `a3fedbb` (Python 3.13, NumPy 2.4.4), recorded but not checked beyond NumPy;
 2. linear-interpolation percentile lower bounds;
 3. Holm ranking: an arm passing at 97.5 % ranks first, then the composite tail share, then A3 before A5 (the verdict cannot depend on arm labels);
-4. **STOP on any nonpositive resampled or point test denominator** on an IQM-eligible node, or when no node is eligible. With the dev-z rule (item 14) the probability changes but stays material in several scenarios, and the no-eligible-node STOP grows when the dev split is small (v2 report, "Whole-gate STOP probability with the dev-z rule");
+4. **STOP on any nonpositive resampled or point test denominator** on an IQM-eligible node, or when no node is eligible. With the dev-z rule (item 14) and split sizes the plans allow (2–6 dev, 2–6 test instances), it falls to about 0.2 for 10 nodes at 5 test SE, mainly because about half the nodes are excluded almost regardless of their signal (v2 report §3);
 5. a dev denominator exactly equal to δ_n is eligible (on that criterion);
 6. gap closed as a ratio of means over test instances;
 7. the fractional-edge 25–75 % IQM (briefing §1 option A);
@@ -34,8 +34,10 @@ The row adopts the gate as implemented: the R1-BX-D8 numbers confirmed in R1-BX-
 11. δ_n supplied by the caller in the 20-run-scaled utility units of U (D18), not checked;
 12. strict input (exact node fields, no duplicate JSON keys, no NaN/Infinity, no overflow-sized values; an infinite gap closed fails closed with `ValueError`);
 13. the executing gate file must be the checked `r1/c3/gate.py`;
-14. **dev-z eligibility**: a node is IQM-eligible only if its dev denominator ≥ δ_n **and** its paired dev z ≥ 6, with d = oracle − A2 per dev instance and dev_z = mean(d) / (sd(d, ddof = 1) / √n_dev); n_dev < 2 is ineligible; sd(d) = 0 is eligible on this criterion only if mean(d) > 0; dev_z = 6 is eligible. Ineligible nodes are excluded from the IQM, kept in the PoI, and listed with their reasons (`delta_n`, `dev_z`, `dev_n`);
-15. **no minimum number of test instances per node** (the Q4 STOP is not implemented: the planned counts could not be established from the plan documents; open question).
+14. **dev-z eligibility**: a node is IQM-eligible only if its dev denominator ≥ δ_n **and** its paired dev z ≥ 6, with d = oracle − A2 per dev instance and dev_z = mean(d) / (sd(d, ddof = 1) / √n_dev), with dev A2 and dev oracle paired by position (the caller's order; the dev split has no instance ids); n_dev < 2 is ineligible; sd(d) = 0 is eligible on this criterion only if mean(d) > 0; dev_z = 6 is eligible. Ineligible nodes are excluded from the IQM, kept in the PoI, and listed with their reasons (`delta_n`, `dev_z`, `dev_n`);
+15. **no minimum number of test instances per node** (the Q4 STOP is not implemented: the plans give T1 nodes about 12 instances or fewer, so no node can reach 10 test instances; open question).
+
+The row text names neither the dev-z rule nor the absence of a test minimum: both are bound only through the gate SHA (question list, D8-ROW).
 
 Input provenance (utilities, oracle from the label-seed block only, dev/test split, scaling) remains the caller's and is not frozen by this row. Before pasting, the author should settle the open Q4 question (minimum test instances per node) in the v2 report; if it leads to a code change, this row is redrafted. From the row on, sweep-2 label tables may be analysed, subject to all other gates.
 
