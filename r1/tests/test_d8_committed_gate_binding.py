@@ -16,7 +16,8 @@ DECISION = (f'Gate code `r1/c3/gate.py` @ `{CODE}`, sha256 `{SHA}`, '
             'T0 and T1 pooled with tier as a stratum. '
             'If only some T1 nodes have labels by B.7, read the gate on T0 plus the available '
             'labelled T1 nodes and disclose the node count. '
-            'Each suite must have at least one labelled T1 node, otherwise STOP. '
+            'For leave-one-suite-out, each suite must have at least one labelled T1 node, '
+            'otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. '
             'Existing preregistration and analysis gates remain in force. '
             'Sweep-2 label tables may be analysed from this row on.')
 PLAN = (f'## 10. Author decisions\n### 5 November 2026 (author)\n'
@@ -125,9 +126,13 @@ def test_negative_decision_cannot_open_guard_even_if_hash_matches():
     lambda value: value.replace(SHA.encode(), b'f'*64),
     lambda value: value.replace(b'r1/c3/gate.py', b'r1/c3/other.py'),
     lambda value: value.replace(b' and disclose the node count', b''),
-    lambda value: value.replace(b'Each suite must have at least one labelled T1 node, otherwise STOP. ', b''),
+    lambda value: value.replace(b'For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. ', b''),
     lambda value: value.replace(b'Existing preregistration and analysis gates remain in force. ', b''),
     lambda value: value.replace(b'T0 plus the available labelled T1 nodes', b'T0 only'),
+    # the 9 Nov wording (before the author's Q1 answer) no longer authorizes
+    lambda value: value.replace(b'For leave-one-suite-out, each suite must have at least one labelled T1 node, '
+                                b'otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. ',
+                                b'Each suite must have at least one labelled T1 node, otherwise STOP. '),
 ])
 def test_inexact_negative_extra_prose_or_wrong_hash_cannot_authorize(mutation):
     altered = PLAN.replace(DECISION.encode(), mutation(DECISION.encode()))

@@ -211,5 +211,7 @@ def spike(model, run_dir: Path | str, *, tok=None, toy_examples: int = 100, step
 
 
 def _read_metrics(run: Path) -> list[dict]:
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(run, run / "metrics.jsonl")
     import json
     return [json.loads(l) for l in (run / "metrics.jsonl").read_text().splitlines() if '"kind": "step"' in l]
