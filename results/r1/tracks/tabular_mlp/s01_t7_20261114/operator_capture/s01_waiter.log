@@ -1,0 +1,37 @@
+WAITER START 2026-11-14T23:11:30Z
+PROGRESS 2026-11-14T23:11:30Z serial_exit=[] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_s01t_serial: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:13:30Z serial_exit=[] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_s01t_serial: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:15:30Z serial_exit=[] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_s01t_serial: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:17:30Z serial_exit=[] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_s01t_serial: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:19:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:21:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:23:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:25:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:27:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:29:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:31:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:33:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:35:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:37:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:39:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:41:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:43:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+PROGRESS 2026-11-14T23:45:30Z serial_exit=[2026-11-14T23:18:18Z rc=0] conc_exit=[] tmux=trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_s01t_conc: 1 windows (created Sat Nov 14 15:18:18 2026);trks_s01t_launch: 1 windows (created Sat Nov 14 15:11:18 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+S01_DONE 2026-11-14T23:47:30Z
+=== FINAL ===
+LAUNCH LOG:
+OFFSET_START 2026-11-14T23:11:05Z llama_18101=1013600752 llama_18102=398591403
+2026-11-14T23:11:18Z S0.1 start (node tabular_mlp, host TASL-7, k=2 probe period, pin 8237fd02)
+2026-11-14T23:11:18Z llama_18101.log size at start: 1014105122 bytes; llama_18102.log size at start: 399095773 bytes
+2026-11-14T23:11:18Z both endpoints ready
+2026-11-14T23:11:18Z server pids: 817988,817989, ; lease: HELD
+2026-11-14T23:18:18Z serial rc=0
+2026-11-14T23:46:34Z concurrent rc=0
+2026-11-14T23:46:34Z S01 DONE (results: /home/dowling/r1_tracks/out/tabular_mlp/s01_t7_20261114/serial.json, /home/dowling/r1_tracks/out/tabular_mlp/s01_t7_20261114/concurrent.json)
+trks_s01t_serial.exit: 2026-11-14T23:18:18Z rc=0;
+trks_s01t_conc.exit: 2026-11-14T23:46:26Z rc=0;
+OUT: total 40;drwxrwxr-x  2 dowling dowling  4096 Nov 14 15:46 .;drwxrwxr-x 11 dowling dowling  4096 Nov 14 15:11 ..;-rw-rw-r--  1 dowling dowling 17499 Nov 14 15:46 concurrent.json;-rw-rw-r--  1 dowling dowling 10511 Nov 14 15:18 serial.json;
+TMUX: trks_llm: 1 windows (created Sat Nov 14 15:11:05 2026);trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026);
+LEASE: HELD
+GPU: 0 %, 10706 MiB
+PROCS: 2

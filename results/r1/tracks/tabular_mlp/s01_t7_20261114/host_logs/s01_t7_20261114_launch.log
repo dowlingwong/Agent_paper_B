@@ -1,0 +1,9 @@
+OFFSET_START 2026-11-14T23:11:05Z llama_18101=1013600752 llama_18102=398591403
+2026-11-14T23:11:18Z S0.1 start (node tabular_mlp, host TASL-7, k=2 probe period, pin 8237fd02)
+2026-11-14T23:11:18Z llama_18101.log size at start: 1014105122 bytes; llama_18102.log size at start: 399095773 bytes
+2026-11-14T23:11:18Z both endpoints ready
+2026-11-14T23:11:18Z server pids: 817988,817989, ; lease: HELD
+2026-11-14T23:18:18Z serial rc=0
+2026-11-14T23:46:34Z concurrent rc=0
+2026-11-14T23:46:34Z S01 DONE (results: /home/dowling/r1_tracks/out/tabular_mlp/s01_t7_20261114/serial.json, /home/dowling/r1_tracks/out/tabular_mlp/s01_t7_20261114/concurrent.json)
+OFFSET_END 2026-11-14T23:47:41Z llama_18101=1316952707 llama_18102=598535821
