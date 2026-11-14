@@ -120,9 +120,17 @@ B2/X.7/sweep 2.
 `host_logs/` (collector `trks_s05_t7.log/.cmd/.exit`, `s05_t7_20261113_launch.log`, `s05_t7_launch.rc/.stdout`,
 `s05_t7_resume_launch.rc/.stdout`, `s05_t7_resume_launch2.rc/.stdout`, `s05b_t7_20261113_launch.log`,
 `trks_s05b_t7.log/.cmd/.exit`, `s05b_t7_launch.rc/.stdout`, `watch.log`) and `operator_capture/` (preflight,
-monitor and anomaly captures + `capture_notes.md`). **`SHA256SUMS` verifies (39 files: the 37 run-tree/host_logs/operator_capture files plus the two launcher scripts); host==copy verified
-for all 25 run-tree/log files.** `failed_units.jsonl` absent (recorded). Never the TASL-2 scene.
+monitor and anomaly captures + `capture_notes.md`). **`SHA256SUMS` verifies 40/40 locally** (run-tree ledgers, `_to_delete/STOP.retired…`, `host_logs/`, `operator_capture/`
+including its nested `SHA256SUMS`, and the two launcher scripts); the run-tree/log files were copied read-only from
+TASL-7 and byte-match their recorded hashes. `failed_units.jsonl` absent (recorded). Never the TASL-2 scene.
 
+
+**Record provenance and host-down gap.** This report merges the parallel-phase result record with the
+operator/governance record; the operator capture evidence is under
+`results/r1/tracks/digits_mlp/s05_t7_20261113/operator_capture/` (`capture_notes.md`, preflight/monitor/anomaly
+captures). **The TASL-2 bare-repo push is deferred:** TASL-2 (`portal_zhixu`, 100.120.160.70) was **unreachable
+(TCP timeout)** at 14:10Z, so the TASL-2 bare-repo copy of this record could not be pushed; it will be retried
+when TASL-2 returns. Origin carries the record; TASL-2 was not touched.
 
 ## 9b. Descriptive numbers (calibration and truncation; added by the Lead phase)
 
