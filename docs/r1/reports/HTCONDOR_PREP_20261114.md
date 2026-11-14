@@ -113,3 +113,17 @@ Committed on `htcondor-prep-20261114` (from `origin/docs/runbooks-14nov` @ `69b3
 - Probe JDL unit: **ACCEPTED** (0 BLOCKING/MAJOR; M1/M2 pre-submission checks run and recorded).
 - Move plan: NOT ACCEPTED (5 MAJOR) -> revision 2 -> **ACCEPTED**; R1/R2 applied; the author's verification-metric change confirmed in one sentence by the same reviewer.
 - This report: submitted to a **fresh reviewer** before the end of the window (runbook §6); its verdict and any fixes are recorded in `docs/r1/reviews/HTCONDOR_PREP_REPORT_REVIEW_20261114.md`.
+
+---
+
+## 10. Handover summary (what is left for tomorrow)
+
+1. **W2 decision (Q1):** the sweep-1 tables split cleanly: 274 ledgers are pure exec-all (`IDENTICAL`), 14 campaigns contain `precheck_rejection` rows and differ under the worker-run definition. Nothing was adopted tonight. Author decides (a) split the tables by definition, (b) restrict W2 to the synthetic/golden evidence, or (c) a new rule.
+2. **Image (Q2/Q10):** build it when the deepthought docker daemon is reachable (or have the author name a registry/namespace); convert the result to an Apptainer SIF under `/work`/`/ceph` for NEMO2, and define the per-site docker-vs-Singularity rule. Until then I1–I4 stay unexecuted.
+3. **GPU measurements:** TOpAS works by flocking (V100S measured 212 s; A100 blocked by node occupancy). NEMO2 is Singularity-only. P4/P7 remain queued; P6 is structurally unable to match. The next window should either use a Singularity JDL for NEMO2 (new reviewed unit) or drop NEMO2 from the probe set.
+4. **Local CPU:** docker+ETP = 315 slots, unclaimed 5 at 00:35; the 8-core class waits for a drain window; P2's wait is the measurement. Local CPU work (C3 audits) is viable without an image.
+5. **Moves (Q12):** 8 entries moved and backfilled (12.2 GB); `work` stayed on `/ceph` because `/work` cannot hold POSIX ACLs. The author decides whether to retry `work` with `--no-acls` and whether ACL preservation matters for the other sessions.
+6. **`/ceph/srv/dwong`** does not exist; if the model path on TOpAS is wanted, place the pinned GGUF there or confirm the xrootd endpoint (Q4). Its sha256 on `/ceph/dwong/models` was verified tonight (`509287f7…4d3c`).
+7. **Nothing was deleted anywhere.** Retired originals live in `/ceph/dwong/_to_delete/*.moved_20261114` and the two failed copies in `/work/dwong/_to_delete/`; the old paths are symlinks into `/work`.
+
+**Final probe state at this report:** P1/P3/P5/P1w2/P3w2 completed with exit 0; P2/P4/P6/P7 still queued (P4/P5 are not withdrawn, per the author); no `condor_rm`/`condor_hold` was issued by this agent; the only job-level commands used were `condor_submit`, `condor_q`, `condor_history` on the account.
