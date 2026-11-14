@@ -1,0 +1,27 @@
+===== root://ceph-node-j.etp.kit.edu
+--- ls /
+rc=124 out= err=
+--- ls /dwong
+rc=124 out= err=
+--- ls /srv/dwong
+rc=124 out= err=
+--- ls /dwong/paperb
+rc=124 out= err=
+--- stat test file
+
+--- xrdcp readback
+rc=124 stdout= stderr=
+===== root://ceph-node-a.etp.kit.edu
+--- ls /
+rc=124 out= err=
+--- ls /dwong
+rc=124 out= err=
+--- ls /srv/dwong
+rc=124 out= err=
+--- ls /dwong/paperb
+rc=124 out= err=
+--- stat test file
+
+--- xrdcp readback
+rc=124 stdout= stderr=
+== done ==
