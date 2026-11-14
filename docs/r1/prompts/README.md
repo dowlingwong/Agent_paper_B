@@ -12,6 +12,7 @@ Since R1-HANDOVER-04NOV and R1-SERVER-AGENTS-TWO (4 Nov), three agent threads do
 | `OPERATOR_RUNBOOK_20261104.md` | operator | Phases O0–O11 on TASL-2, TASL-7, deepthought and Ada; T1 belongs to the HoreKa thread (O8) |
 | `HOREKA_SCAN_PROMPT_20261104.md` | HoreKa scan agent | Read-only HoreKa 2 scan, rev 5.6 (review `../reviews/HOREKA_SCAN_PROMPT_REV54_REVIEW_20261104.md`, round 3 PASS). The HoreKa execution runbook follows the scan report |
 | `TRACK_G_RUNBOOK.md` | HoreKa agent (with Mac-agent code, M10) | Track G: T1 census, ports, fixed budgets, sweep |
+| `TRACKG_PORT_CHECKLIST.md` | HoreKa agent (G.1 ports), port reviewers | Per-port checklist on the M10 step 0 shared pieces: node spec, fixed-step wrapper, 3–5 representative edits declared and hashed before measurement, runner settings, smoke (added 9 Nov; pending independent review, `../reports/M10_PORTKIT_HANDOFF_20261109.md`) |
 | `PORTAL_EXAM_RUNBOOK.md` | operator (O1, O2) | Track X exam procedures: Stage A, B1, B2 |
 | `TRACK_S_OPERATOR_RUNBOOK_20261030.md` | operator (O3) | Track S on TASL-2 |
 | `PORTAL_TRACK_P_RUNBOOK.md` | operator (O7) | Track P (host is TASL-7 since R1-TASL7-TRACKP) |
