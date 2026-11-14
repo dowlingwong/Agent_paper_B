@@ -22,3 +22,12 @@ Each item: context, options, recommendation, paste-ready answer. Nothing here bl
 **Options.** (a) accept the fleet as-is and record which node ran; (b) pin S4 to a node class with 1.5.x; (c) build the SIF with a lower `--apptainer-version` if needed.
 **Recommendation:** (a) first, with the node's SingularityVersion recorded in the I1 output; escalate only if the SIF fails on 1.2.5/1.3.4.
 **Paste-ready answer:** `Q-S4：<a 先接受并记录 | b 限定 1.5.x 节点 | c 降版本重建>。`
+
+---
+
+## Q-BUILD (BLOCKING for S3/S4/S5) — no rootless fakeroot and no setuid apptainer on any reachable login host
+
+**Context.** The reviewed S3 build was started with the reviewer's exact command at 11:23 CET and stopped in the capability gate. Read-only diagnostics (raw: `htcondor_chain_20261114/raw/s3_build_stop_diagnostics.txt`) show on `deepthought`, `bms1`, `bms2`, `bms3`, `portal1`: `/usr/bin/apptainer` is `0755` (no setuid bit, no file capabilities) and `/etc/subuid` + `/etc/subgid` contain **no `dwong` line** (0 lines). `--fakeroot` fails with `/.singularity.d/libs/faked: not found`; a plain build runs `%post` unprivileged and fails the same way. Per the author's rule ("if `--fakeroot` is needed and unavailable, record it and stop at S3") the build stopped; nothing was started/restarted, no SIF was produced, nothing deleted.
+**Options.** (a) admin (Kylian) adds `dwong:1000000:65536` to `/etc/subuid` and `/etc/subgid` — enables `--fakeroot` with no setuid change; (b) admin installs apptainer setuid (`chmod u+s /usr/bin/apptainer` or the site setuid RPM); (c) build the SIF on a host where one of those is true and copy it to `/work/dwong/paperb/images/`; (d) the Docker route once the deepthought Docker daemon is started (Dockerfile + `apptainer build docker-daemon://…`), which is also the author's registry/I3 plan.
+**Recommendation.** (a) — smallest change, no setuid/security policy change, unblocks S3/S4/S5 today.
+**Paste-ready answer:** `Q-BUILD：<a 加 subuid/subgid | b setuid apptainer | c 换主机构建 | d 等 docker>。`
