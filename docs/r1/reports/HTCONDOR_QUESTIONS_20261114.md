@@ -117,7 +117,7 @@
 
 **Q4 (XRootD endpoint / transfer rule).** Options: (a) `root://ceph-node-a.etp.kit.edu` (2022 public tutorial), (b) `root://ceph-node-j.etp.kit.edu` (runbook), (c) ask the site. Recommendation: (c) with (a) as the fallback; treat ">2 GB input per 30 min runtime = data-intensive → `ProvidesIO`" as the transfer rule until the wiki says otherwise. Paste-ready: `Q4：xrootd 端点 = <a|b|c 结果>；传输规则 = <wiki 原文>。`
 
-**Q5 (pool facts discrepancies).** Options: (a) accept the measured values as authoritative for tonight (device strings confirmed, V100S count unresolved), (b) ask the site about the V100S total, (c) leave both recorded as a discrepancy. Recommendation: (a)+(c). Paste-ready: `Q5：以实测为准；V100S 总数 <待确认>。`
+**Q5 (pool facts discrepancies).** Options: (a) accept the measured values as authoritative for tonight (device strings confirmed, V100S count unresolved), (b) ask the site about the V100S total, (c) leave both recorded as a discrepancy. Recommendation: (a)+(c). Paste-ready: `Q5：以实测为准：V100S 为 8-GPU 分区槽（c03-001-159 等）、A100 仅 c03-001-167（当时全 drain）、g4401 的 H200 为 Drained、bms2 可登录且挂载 /ceph/dwong；V100S 站点总数待确认。`
 
 **Q6 (`/ceph/srv/dwong` absent).** Options: (a) create `/ceph/srv/dwong` and place the pinned GGUF there, (b) use the xrootd route from `/ceph/dwong/models`, (c) skip the TOpAS model-load check. Recommendation: (a) if the TOpAS model path is wanted; otherwise (c) until Q4 is answered. Paste-ready: `Q6：<a|b|c>。`
 

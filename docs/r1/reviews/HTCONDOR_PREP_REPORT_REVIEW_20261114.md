@@ -412,3 +412,108 @@ single-observer record of a busy pool; the P2/P4/P6/P7 classes would remain cens
 conclusion would still need the site's confirmation (Q8/Q10), and the GPU-hour register would be a
 post-hoc reconstruction unless the event logs are committed. None of these blocks a corrected report,
 but they should be stated in it.
+
+---
+
+## Re-check round — report fixes at 207b2a7f (final go/no-go)
+
+**Reviewed:** `docs/r1/reports/HTCONDOR_PREP_20261114.md` at commit **`207b2a7f`** (HEAD of
+`htcondor-prep-20261114`; `git ls-remote --heads origin htcondor-prep-20261114` returns the same
+`207b2a7ffb0d49886d00737b2e54f50bc6edbb68`, so the round-1 M9 push question is settled), report SHA-256
+`6bdca60d1cf8e703556103304da711f61e68ab67015230849f1c37c694683bc1`; question list SHA-256
+`3d00f03064b13065ff15afe323d917c180d5e83a1dc02b8219e840348eafc9a6`. Same worktree, working tree clean
+at the reviewed commit. **Date/time:** 14 November 2026, 03:33–03:40 CET. Read-only, as required: no SSH,
+no cluster command, no job, no move, no git commit; only this review file was written (it is untracked).
+
+**Scope.** Re-check of the round-1 findings B1–B2, M1–M12, m1–m17, n1–n6 against the committed evidence,
+plus the honesty/standing-rule check. This is not a fresh full review; the unchanged parts are covered by
+round 1.
+
+### R.1 Round-1 findings — status
+
+| ID | Round-1 subject | Status | Evidence in the reviewed commit |
+|---|---|---|---|
+| B1 | §1 stale "plan only" | **fixed** | §1 row 1 records 8/9 moved (12.3 GB), `work` ACL-skipped, "No deletion anywhere"; title has no "(draft)"; "second review round" gone; §1's review sentence names the report's own NOT ACCEPTED → fixes. |
+| B2 | inventory totals | **fixed** | independent sum of the 70 `raw/inventory.tsv` rows = **634,100,228,441 B = 634.10 GB / 385,937 files** — exactly what §2 now says. |
+| M1 | per-class median/range | **fixed** | `raw/queue_times_current.tsv`: local 1-core P1/P3/P1w2/P3w2 = 73, 7, 21, 21 s → n=4, median **21**, range **7–73**; the report's class table has exactly that and marks the censored classes. |
+| M2 | NEMO2/P6 claims | **fixed except R2** | `raw/nemo2_attrs.txt`, `raw/p6_analyze.txt` and `raw/evidence_capture_0331.txt` committed: 6 L40S (4 Unclaimed, 2 Drained), `HasDocker=undefined`, `HasSingularity=true`, `CloudSite=BwForCluster-Nemo2`, P6 analyze `[2]`=6, `[5]`=6, `[6]`=0. H200 count is off (R2). |
+| M3 | `HasDocker` 324→315 | **fixed (number) / R3 (citations)** | 315 docker / 323 ETP / 1094 singularity / 5 and 13 unclaimed are in `raw/pool_analyze_p4_20261114.txt`; report/POOL_FACTS now use 315 and "all also ETP". The file/time attribution is wrong (R3). |
+| M4 | P4 reason | **fixed** | `raw/p4_analyze_local.txt` (0 local-schedd match) and `raw/pool_analyze_p4_20261114.txt` (3 matched / 3 drained, `[10]&&[11]`=0, 2 would match if drained): the report's P4 reason now says exactly that, records the A100 parent `TotalSlotGPUs=8` vs `GPUs=0`/`Cpus=0` ambiguity and the author's keep-queued instruction. |
+| M5 | +6 h wave | **NOT fixed — R1** | Report L95 and POOL_FACTS L88 say planned at ~05:52 CET under the 09:30 extension; report L66 and POOL_FACTS L51 still say "cannot fit before the 05:30 stop (errata A4) and is dropped". Same contradiction as round 1. |
+| M6 | gpu_register.tsv | **fixed (file) / R6 (citation)** | `gpu_register.tsv` committed: P4 0, **P5 2 s = 0.000556 GPU-h**, P6/P7 0, total 0.000556, under the 5.0/6 GPU-h caps. Not cited in §7/§8 (R6). |
+| M7 | question shape | **fixed except R7** | the "Completing the runbook §7 shape" section adds Options / Recommendation / Paste-ready for Q4, Q5, Q6, Q7, Q9, Q11; Q5's answer line is still generic (R7). |
+| M8 | probe stdout committed | **fixed (files) / R8 (list)** | `git ls-files` shows `probes/out/P1.out`, `P3.out`, `P5.out`, `P1w2.out`, `P3w2.out` committed. Not in §8's delivery list (R8). |
+| M9 | push statement | **fixed** | `origin/htcondor-prep-20261114` = HEAD `207b2a7f` (verified by `git ls-remote`); §8 now states the pushed branch. |
+| M10 | GGUF sha transcript | **fixed** | `raw/gguf_sha256.txt` committed: `509287f7…4d3c  /ceph/dwong/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf`. |
+| M11 | Track P "fine" | **fixed** | §7 says Track P training is **not measured** (8-core class never ran; P2 queued). |
+| M12 | M1/M2 timing | **mostly fixed — R4** | §1/§5 now say the checks were measured **after** submission; §9 L124 still says "M1/M2 pre-submission checks run and recorded". |
+| m1–m4, m6, m7, m10–m17 | minors | **fixed** | wave-2 slower-for-P3 wording; 12.3 GB; P2 ~3 h 40 min at 03:31; queue pointer to `raw/queue_times_current.tsv`; `MOVE_BACKFILL.tsv.first_attempt_20261113T235210Z` committed; H200 Idle→Drained note; `raw/login_hosts_mounts.txt` + Q9 bms2 verified; -c3 ≈5.3 MB/s derivation; W2 report exists on `origin/mac-w2-budget-20261109`; A4 deviation labelled; `raw/p2_analyze.txt`; `w2/w2_run.txt` (interpreter/checkout/exit 3); POOL_FACTS P1 run 1 s. |
+| m5 | failed-copy paths | **fixed** | `raw/failed_copies.txt` committed: `work.failed_20261113T235407Z` and `zc_host.failed_20261113T234708Z`; report §2 names both. |
+| m8 | docker runs | **NOT fixed — R9** | report §4 says "twice, 23:39 and 23:41 CET"; committed transcripts are both `2026-11-14T02:30:10Z` (03:30 CET). |
+| m9 | 759618 fate | **NOT fixed — R10** | report asserts "REMOVED (status 3)" and clusters 759626–759636; `raw/foreign_jobs.txt` contains neither 759618 nor its status, and only 759636. |
+| n1, n3, n6 | nits | **fixed** | +2 h 52 m; no "draft" in the title; §2 states the four malformed `entry_stats.tsv` rows. |
+| n2, n4, n5 | nits | **NOT fixed — R11–R13** | header still says "P4/P5 stay queued", still omits P1w2/P3w2, and the 09:30 hard-stop change still has no committed author line. |
+
+**Other things re-verified in this round (round-1 positives hold):** 8 moved entries = **12,298,122,900 B
+= 12.30 GB** (sum of the moved rows in `MOVE_LOG.tsv.v1` + `MOVE_LOG.tsv`); `MOVE_BACKFILL.tsv` 8/8
+`verdict=ok` on all six checks; v2 20-column `MOVE_LOG.tsv` with the reviewer's metric confirmation row
+recorded verbatim (plus `MOVE_LOG_NOTES.md`); the v2.2 `*/.git/index` manifest exclusion is implemented in
+both `move_entry.sh` and `verify_pair.sh` and disclosed; `zc_host` first-copy false negative and `work`
+ACL failure are disclosed with retired copies, and **no `rm` appears anywhere**; W2 re-parsed from
+`w2/w2_check_rerun2.json`: **288 ledgers, 14 with differences** (`import` gives 20, 9, 15 …), **53
+precheck_rejection rows**, max `worker_runs_total` 20, `worker_runs_over_cap=false`, status
+`STOP_DIFFERENCE`, `w2_run.txt` records `exit_code=3`, interpreter and checkout `0b62fb03`; the 15 %
+disk floor and the 10-job/GPU caps are respected (move log floors 212 GiB; gpu register 0.000556 GPU-h);
+I1–I4 not run and P3-not-remote are stated.
+
+### R.2 Remaining findings (exact fixes)
+
+| ID | Sev | Finding and evidence | Exact fix |
+|---|---|---|---|
+| R1 | **MAJOR** (the pending +6 h item) | Report L66: "the +6 h wave cannot fit before the 05:30 stop (errata A4) and is dropped"; POOL_FACTS L51: "the +6 h wave is dropped (errata A4)". Report L95/POOL_FACTS L88: "planned at ~05:52 CET … possible only because the author moved the hard stop to 09:30". The same self-contradiction round-1 M5 flagged is still present; the 05:30 rationale is false under the 09:30 extension. | Replace the L66 clause with "the +6 h sample is planned at ~05:52 CET under the author's 09:30 extension; its outcome is recorded when it runs (or recorded as not run)"; make POOL_FACTS L51 the same. |
+| R2 | MINOR | §5 L61 and POOL_FACTS L64/L93 say the 03:30 NEMO2 view had **3 H200** slots; `raw/evidence_capture_0331.txt` (`2026-11-14T02:30:10Z` = 03:30 CET) and `raw/nemo2_attrs.txt` list **4 H200** slots (1 Unclaimed, 3 Drained). The 03:32 CloudSite check (`raw/m1_m2_checks.txt`) lists a different 3-slot set. | "6 L40S (4 Unclaimed, 2 Drained) + 4 H200 (1 Unclaimed, 3 Drained) at 03:30; the 03:32 CloudSite check lists 3 H200 slots". |
+| R3 | MINOR | §3 L38 attributes 315/323/1094 to `raw/evidence_capture_0331.txt` and says "315/323 at 03:30 CET, 318/326 at 03:38 — raw/m1_m2_checks.txt". The counts are in `raw/pool_analyze_p4_20261114.txt` (last failed match 00:34:42Z = 00:35 CET); `raw/m1_m2_checks.txt` is timestamped `02:32:02Z` (03:32 CET) and shows "326 318"; there is no 03:38 evidence. Same mis-attribution in POOL_FACTS L69/L93. | Cite `raw/pool_analyze_p4_20261114.txt` (00:35 CET) for 315/323/1094/5/13 and `raw/m1_m2_checks.txt` (03:32 CET) for 326/318; drop "03:38". |
+| R4 | MINOR | §9 L124 still says "M1/M2 pre-submission checks run and recorded"; the committed checks were run after submission (`raw/m1_m2_checks.txt` 02:32:02Z; `raw/evidence_capture_0331.txt` 02:30:10Z), and §1/§5 now say so; the probe review's M1/M2 were pre-submission *conditions*, not a record. | "M1/M2 conditions measured after submission (03:30/03:32 CET) and recorded; they support the JDLs." |
+| R5 | MINOR | §5 P7 (L62/L93) says the H200 slots "all were Drained at analysis"/"only H200 slot Drained at submit"; `raw/evidence_capture_0331.txt` has **1 Unclaimed H200 at 03:30**, and `host_facts_A` A6 shows it Unclaimed Idle at 23:38. The no-match is primarily structural (`HasDocker=undefined`, as P6), with the H200 state varying. | "P7: no match because NEMO2 slots have `HasDocker=undefined` (structural, same as P6); H200 state was Unclaimed Idle at 23:38, Drained at 23:40, and 1 Unclaimed at 03:30 — all ineligible for a docker-universe job." |
+| R6 | NIT | `gpu_register.tsv` is committed (P4–P7; 0.000556 GPU-h total) but is not cited in the report or POOL_FACTS, so §7's "far below the 6 GPU-h cap" reads as prose. | Cite `gpu_register.tsv` in §7 (and list it in §8). |
+| R7 | NIT | Q5's "paste-ready" line is still generic (`V100S 总数 <待确认>`), and does not name the measured V100S nodes (8 GPUs each, site total unresolved), the g4401 Drained transition or bms2 reachability, as round-1 M7 required. | One concrete Q5 line: "以实测为准；V100S 按 8-GPU 节点（站点总数待确认）；g4401 于 23:40 Drained；bms2 可登录并挂载 /ceph/dwong（Q9）。" |
+| R8 | NIT | The five `probes/out/*.out` files are committed (verified with `git ls-files`) but §8's delivery list only says "probe JDLs/probe.sh/dry-runs". | Add `probes/out/` to §8. |
+| R9 | MINOR | §4 L44: "`docker info` … (twice, 23:39 and 23:41 CET)". The committed transcripts (`raw/docker_info.txt`, `raw/evidence_capture_0331.txt`) are both `2026-11-14T02:30:10Z` (03:30 CET), and the second run's capture shows only the client banner, not the daemon error. | "Two runs at 03:30 CET (raw/docker_info.txt); the first shows the daemon error, the second capture is truncated after the client banner — one confirmed failure; the original 23:38 failure is `host_facts_A` A9." Or commit the full second output. |
+| R10 | MINOR | §3 L39 asserts 759618 "later left the queue as REMOVED (status 3, never executed)" and "clusters 759626–759636"; `raw/foreign_jobs.txt` (titled 759618/759636) contains neither 759618 nor its status, and lists only 759636 besides our own idle probes 759620/759622/759624/759625. | Commit the query showing 759618's final state (ClusterId/JobStatus) and correct the cluster range to the clusters actually observed; otherwise delete the fate claim. |
+| R11 | NIT | Header L4 still says "P4/P5 stay queued at least until 05:30"; P5 completed at 22:56:08Z (`raw/queue_times_current.tsv`). (L66 has the correct "P5 had already completed".) | "P4 stays queued (P5 completed)". |
+| R12 | NIT | Header L4 status still lists only "P1/P3/P5 completed, P2/P4/P6/P7 queued"; wave 2 (P1w2/P3w2) is missing from the header (it is present in §1/§5). | Include P1w2/P3w2 in the header status. |
+| R13 | NIT | The 09:30 hard-stop change supersedes the runbook's 05:30 safety rule but still has no committed author line (round-1 n5). | Add `raw/author_guidance.txt` with the author's message and time. |
+| R14 | NIT | §2 L26 cites `raw/evidence_capture_0331.txt` for the `work` ACL failure, but that file has only the failed-copy `ls`; the "Operation not supported" text is prose (Q12/MOVE_LOG_NOTES) and the log row has `copy_failed(rc=23)`. | Cite the `MOVE_LOG.tsv` row + a committed rsync transcript (or say the rc is the record). |
+
+### R.3 Honesty and standing-rule check (round-1's central question)
+
+- **Deviations disclosed:** `du -sb` CephFS `st_size` false negative (report L27 + `MOVE_LOG_NOTES.md` + the
+  v1 log rows) ✓; `zc_host` `.git/index` false negative and the retired first copy ✓; `work` ACL failure
+  and the retired partial copy ✓; I1–I4 not run (docker gate) ✓; P3 did not run remotely ✓; +6 h wave
+  pending (R1); bms2 now **verified** reachable and mounting `/ceph/dwong` (`raw/login_hosts_mounts.txt`,
+  Q9) ✓; the author's 09:30 extension is stated (traceability R13).
+- **No deletion:** every move log row and backfill row is consistent with retire-by-move + symlink; no `rm`
+  in the scripts, logs or report; the two failed copies are under `/work/dwong/_to_delete/` with an `ls`
+  transcript ✓.
+- **10-job / 6 GPU-h / 15 % disk:** gpu register 0.000556 GPU-h (caps untouched) ✓; move floors 212 GiB
+  recorded, post-plan free ~1.08 T ✓; no `condor_rm`/`condor_hold` (report L140) and the probe jobs are
+  own jobs only ✓.
+- **Paper B data / secrets / W2 carve-out:** W2 read is field-limited (budget_index/decision/worker_mode/
+  extra.control), nothing adopted; no labels/metrics; no credential reads or `docker login` ✓.
+- **Review trail:** runbook rejected→accepted; probe unit accepted; move plan rejected→accepted (+R1/R2,
+  metric confirmation); this report rejected→fixed — the report now states this correctly (§9) ✓.
+- **Fresh-review scope of this round:** the numbers above were re-derived from the committed evidence, not
+  read from the prose. The only evidence I could not verify directly is the live pool after 03:08 CET, the
+  host-side `/work`/`_to_delete` state, and the W2/rsync event logs (no SSH) — same limits as round 1.
+
+**Result.** All round-1 BLOCKING and 11 of 12 MAJOR findings are fixed and evidence-backed; M5 is the only
+MAJOR-level item still open, and it is exactly the pending +6 h item (its one-line stale clause is R1).
+The remaining R2–R14 are MINOR/NIT precision/citation corrections. The report is **acceptable subject to**
+(a) the R1 one-line correction (remove the "cannot fit before 05:30 … dropped" clause in the report and
+POOL_FACTS), (b) the +6 h outcome recorded after ~05:52 CET, and (c) the R2–R14 one-line corrections in
+the same final pass — none of them changes the report's substance, and **no new review round is needed**;
+I will re-check the final diff if asked. Residual risk carried: the report remains a single-observer,
+single-snapshot record; P2/P4/P6/P7 waits stay censored; NEMO2 Docker remains a site question (Q8/Q10);
+`work` stays on `/ceph` (ACL) and `_to_delete` keeps the originals until the author retires them.
+
+VERDICT: ACCEPTED
