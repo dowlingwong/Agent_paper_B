@@ -390,9 +390,12 @@ def fit_awr_direct(rows, g_units: float = G_PRIMARY, *, value_key: str = "delta_
     caller filters them explicitly.
     """
     import math
+    from r1.c3.evidence_boundary import refuse_unverified_sweep_rows
     from r1.baselines.policies import AWRMLP
-    if value_key == "delta_true":
-        raise ValueError("delta_true is the evaluation half of the audit seeds; train on delta_label")
+    rows = list(rows)
+    refuse_unverified_sweep_rows(rows, 'fit_awr_direct')
+    if value_key in {"delta_true", "delta_audit_all", "se_audit", "candidate_metrics", "incumbent_metrics"}:
+        raise ValueError(f"{value_key} may contain the evaluation half or evaluation-seed outcomes; train on delta_label")
     bad = [r.get("proposal_id", i) for i, r in enumerate(rows)
            if r.get(value_key) is None or not math.isfinite(float(r[value_key]))]
     if bad:

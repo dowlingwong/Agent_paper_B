@@ -1,0 +1,7 @@
+# Independent review: M3 16-case path recheck
+
+**Scoped ACCEPTED** for `bd99c2f2121eb6bc41c16c3697c12712cc71540d`, following correction of the real-run STOP source lines to 578–579. The actual replay selects and checks 16 cases, rejects any OpenML case before scheduling the real run, and independently rejects OpenML at `execute_case`. The separate recovered-case component is a static binding and is not the connected qualifying execution preflight. These refusals are not evidence that offline replay works.
+
+Independently inspected the clean local pinned harness checkout at `6adf3859de66c4814fcf376eed59880fbd8eeaf7`: the ionosphere `train.py` invokes the benchmark, which loads configuration and data and then builds, fits and predicts with the configuration-dependent pipeline. The existing loader snapshot describes a synthetic `_load_frame` test, not the complete actual recovered case path. Neither static binding nor fake/synthetic loader establishes offline executability of all configurations under the required monitored boundary. This review did not execute the loader or numerical work.
+
+The report accurately identifies the independent boundary/notification/child-identity and 16-case binding gaps and leaves STOP intact; its effort is an estimate rather than an established completion time. No host, dataset, model, GPU or scientific output was accessed. A possible author decision arises only if a concrete protocol alternative is proposed; the report does not itself alter the protocol or authorize replay.

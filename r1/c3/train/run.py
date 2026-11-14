@@ -34,7 +34,7 @@ PLACEHOLDER = "TODO_VERIFY"
 EVIDENCE_LABELS = ("ENGINEERING_ONLY", "DRYRUN", "EVIDENCE")
 TRAIN_SEEDS = (7001, 7002, 7003, 7004, 7005)
 EVAL_SEEDS = (7006, 7007, 7008, 7009, 7010)
-EVAL_COLUMNS = re.compile(r"(^|_)eval($|_)|^y_eval|^z_eval|^u_eval|^mu_eval|(^|\D)70(0[6-9]|10)(\D|$)")
+EVAL_COLUMNS = re.compile(r"(^|_)eval($|_)|^y_eval|^z_eval|^u_eval|^mu_eval|(^|\D)70(0[6-9]|10)(\D|$)|^(delta_true|delta_audit_all|se_audit|candidate_metrics|incumbent_metrics)$")
 LOCK_PATH = Path.home() / "r1_locks" / "gpu0.lock"
 TRACKX_MARKER = Path.home() / "r1_locks" / "trackx_evidence.active"   # exists while Track X B1 or B2 runs
 LEASE_LOG = Path.home() / "r1_trackp" / "runs" / "gpu_lease_log.jsonl"
@@ -101,6 +101,9 @@ def _keys(obj, depth: int = 0) -> Iterator[str]:
         for k, v in obj.items():
             yield str(k)
             yield from _keys(v, depth + 1)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            yield from _keys(v, depth + 1)
     elif hasattr(obj, "meta") and isinstance(getattr(obj, "meta"), dict):
         yield from _keys(obj.meta, depth + 1)
 
@@ -108,6 +111,12 @@ def _keys(obj, depth: int = 0) -> Iterator[str]:
 def guard_rows(rows: Iterable[dict], *, purpose: str) -> list[dict]:
     """Refuse evaluation-seed columns unless ``purpose == "p4_final_eval"`` with its authorization note present."""
     rows = list(rows)
+    from r1.c3.evidence_boundary import is_identifiable_sweep_evidence
+    if any(is_identifiable_sweep_evidence(row) for row in rows):
+        if purpose != 'p4_final_eval':
+            raise TrackPStop('identifiable C3 sweep EVIDENCE rows require a verified label-only training boundary')
+        if authorization_note('p4') is None:
+            raise TrackPStop('P.4 final evaluation needs docs/r1/authorizations/trackp_p4_<date>.md')
     eval_cols = sorted({k for r in rows for k in _keys(r) if EVAL_COLUMNS.search(k)})
     if not eval_cols:
         return rows

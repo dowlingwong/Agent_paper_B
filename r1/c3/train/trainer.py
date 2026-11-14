@@ -115,7 +115,9 @@ class Trainer:
                  head_params: Sequence[torch.nn.Parameter] = (), token_params: Sequence[torch.nn.Parameter] = (),
                  evaluate: Callable | None = None,
                  log: Callable[[str], None] = print, purpose: str = "train") -> None:
-        from r1.c3.train.run import guard_rows
+        from r1.c3.train.run import TrackPStop, guard_rows
+        if purpose == 'p4_final_eval':
+            raise TrackPStop('Trainer is a training interface; P.4 final evaluation must use an evaluator')
         # evaluation-seed columns (7006-7010) never reach training (RUNBOOK Track P §0)
         self.model, self.rows, self.loss_fn, self.cfg = model, guard_rows(rows, purpose=purpose), loss_fn, cfg
         self.run_dir = Path(run_dir)

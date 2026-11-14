@@ -142,9 +142,6 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
     existing tables; ``"pooled_node"`` (v2) uses s = sigma_node / sqrt(K_label) and
     records ``soft_version`` on every labelled row.
     """
-    from r1.c3.analysis_guard import guard_table
-    audits_path = audits_path or Path(table_dir) / "audits.jsonl"
-    guard_table(table_dir, audits_path, Path(table_dir) / 'proposals.jsonl')
     meta_path = Path(table_dir) / "build.json"
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     evidence = meta.get("label") == "EVIDENCE"
@@ -152,6 +149,9 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
         raise ValueError("classified table must carry an EVIDENCE label")
     if evidence and not seed_split:
         raise ValueError("EVIDENCE requires the declared label/evaluation seed split")
+    audits_path = audits_path or Path(table_dir) / "audits.jsonl"
+    from r1.c3.analysis_guard import guard_table
+    guard_table(table_dir, audits_path, Path(table_dir) / 'proposals.jsonl')
     if evidence:
         _verify_evidence_inputs(Path(table_dir), Path(audits_path), meta)
     rows = load_table(table_dir)

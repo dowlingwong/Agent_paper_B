@@ -73,6 +73,9 @@ def test_local_work_archive_refuses_missing_or_external_references(tmp_path):
 
 def test_manifest_mismatch_or_missing_is_a_stop(tmp_path):
     runner = object.__new__(sweep.SweepRunner)
+    # SweepRunner.__init__ always sets ``label``; the EVIDENCE classification
+    # check in check_launch_manifest (codex/b2-repair-20261031) reads it.
+    runner.label = 'ENGINEERING_ONLY'
     runner.state = {'launch_provenance': {'paper_commit': 'a' * 40}}
     with pytest.raises(sweep.Stop, match='missing or invalid'):
         runner.check_launch_manifest(tmp_path)
@@ -139,7 +142,8 @@ def test_each_sweep_passes_the_original_launch_provenance(tmp_path, mode, monkey
                         'out': 'live'}, f'sweep_{mode}': {}})
     runner.state['ollama'] = {}
     runner.verify_resumed_provenance = lambda: None
-    runner.check_launch_manifest = lambda out: None
+    manifest_checks = []
+    runner.check_launch_manifest = lambda out, *, engineering_liveness=False: manifest_checks.append(engineering_liveness)
     runner.require_liveness = lambda *a: None
     runner.save = lambda: None
     runner.manager_model_args = lambda: []
@@ -151,6 +155,8 @@ def test_each_sweep_passes_the_original_launch_provenance(tmp_path, mode, monkey
     with pytest.raises(Captured): runner.sweep(mode)
     # The pin is the saved launch SHA even if the checkout has acquired result commits.
     assert seen['launch_provenance'] == pin
+    # The resumed liveness manifest is checked as engineering liveness, never as an EVIDENCE sweep manifest.
+    assert manifest_checks == [True]
 
 
 def test_watchdog_refuses_manifest_mismatch_before_restart_or_move(tmp_path):

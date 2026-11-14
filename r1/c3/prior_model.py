@@ -123,6 +123,9 @@ class TableArmPrior:
 
     @classmethod
     def fit(cls, name: str, rows) -> "TableArmPrior":
+        from r1.c3.evidence_boundary import refuse_unverified_sweep_rows
+        rows = list(rows)
+        refuse_unverified_sweep_rows(rows, 'TableArmPrior.fit')
         return cls(ARM_CLASSES[name]().fit(rows), name)
 
     def forecast(self, row: Mapping[str, Any]) -> Forecast:
