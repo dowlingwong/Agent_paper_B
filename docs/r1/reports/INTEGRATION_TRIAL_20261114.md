@@ -11,7 +11,8 @@ review N4). The B1 exam branches (`mac-b1-*`, `ops-b1-*`) and the branches built
 ## 1. Order, merges and test results
 
 Full paper suite (`r1/tests`) after each merge: `AR_HARNESS_ROOT` = harness `a3fedbb`, venv `/tmp/trackg_venv`
-(Python 3.13, NumPy 2.5.3, no torch, no network). The failure set is compared by test id with the base.
+(Python 3.13, NumPy 2.5.3, no torch, no network). The failure set is compared by test id with the base; the
+per-step failure lists and summary lines are in `reports/integration_trial_20261114/` (`NN_<step>.fail`, `.summary`).
 
 | # | Merged branch @ commit (review record) | Conflicts | Suite: failed / passed / skipped | New failures vs base | Base failures fixed |
 |---|---|---|---|---|---|
