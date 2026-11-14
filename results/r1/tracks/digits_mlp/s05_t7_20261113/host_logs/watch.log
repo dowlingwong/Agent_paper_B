@@ -1,0 +1,6 @@
+2026-10-30T01:13:43Z watch started
+2026-10-30T11:07:39Z watch started
+2026-11-08T00:46:56Z priority marker seen (/home/dowling/r1_locks/trackx_evidence.active): pausing
+2026-11-13T10:49:34Z marker gone: resume by hand (delete STOP files, start servers, re-run launch scripts)
+2026-11-13T13:47:35Z priority marker seen (/home/dowling/r1_locks/trackx_evidence.active): pausing
+2026-11-14T10:16:36Z marker gone: resume by hand (delete STOP files, start servers, re-run launch scripts)

@@ -1,0 +1,172 @@
+=== launcher s05 (content) ===
+#!/usr/bin/env bash
+# Track S Phase 4 — S0.5 pilot on TASL-7 (node digits_mlp), 13 Nov 2026.
+# Authority: Track S operator runbook rev 3.3 Phase 4; reports/TRACKS_DIGITS_HOSTMOVE_20261112.md
+# (host move, accepted; new dirs s05_t7_20261113); paper pin 8237fd02; prior a2u_prior_r2_20261111.json.
+# k is the Phase-1 decision; the TASL-7 S0.1 result (13 Nov) decided k = 2. ENGINEERING_ONLY.
+# Run as: ssh tasl7 bash $R/launch/tasl7_digits_s05_20261113.sh
+# Resumes the same directory only when it already contains a manifest; never touches the preserved
+# TASL-2 $OUT/digits_mlp/s05 scene (different host; this script never contacts TASL-2).
+set -euo pipefail
+R=/home/dowling/r1_tracks; OUT=$R/out/digits_mlp; WORK=$R/scratch/digits_mlp; IN=$OUT/inputs; PATH=$R/bin:$PATH
+# K is the Phase-1 decision: the TASL-7 S0.1 result (13 Nov) decided k = 2 (both URLs 100% and cross 100%).
+K=${K:-2}
+RUN=$OUT/s05_t7_20261113; WRUN=$WORK/s05_t7_20261113; SESSION=trks_s05_t7
+LOG=$R/logs/s05_t7_20261113_launch.log
+log(){ echo "$(date -u +%FT%TZ) $*" | tee -a "$LOG"; }
+
+for f in "$HOME/r1_locks/trackx_evidence.active" "$HOME/r1_locks/trackp_evidence.active" "$R/trks_drill.active"; do
+  [ ! -e "$f" ] || { echo "REFUSE: priority marker $f" >&2; exit 2; }
+done
+tmux has-session -t "$SESSION" 2>/dev/null && { echo "REFUSE: $SESSION session already exists" >&2; exit 2; }
+if [ -e "$RUN" ] && [ ! -e "$RUN/manifest.json" ]; then
+  echo "REFUSE: $RUN exists without a manifest (not a resumable run)" >&2; exit 2
+fi
+if [ -e "$RUN" ] && [ -d "$RUN" ] && [ ! -s "$RUN/manifest.json" ]; then
+  echo "REFUSE: $RUN/manifest.json is empty" >&2; exit 2
+fi
+P=8237fd02b09ef2d28016a1c9f6acac3c35bb768b
+[ "$(git -C "$R/work/Agent_paper_B" rev-parse HEAD)" = "$P" ] || { echo "REFUSE: paper is not at pin $P" >&2; exit 2; }
+[ -z "$(git -C "$R/work/Agent_paper_B" status --porcelain --untracked-files=all)" ] || { echo "REFUSE: paper worktree dirty" >&2; exit 2; }
+PRIOR=$OUT/a2u_prior_r2_20261111.json
+[ -f "$PRIOR" ] || { echo "REFUSE: prior file $PRIOR missing (copy it from the Mac with sha256 5c849d15…)" >&2; exit 2; }
+[ "$(sha256sum "$PRIOR" | cut -d' ' -f1)" = "5c849d151d939a183ecf6c21113cc46aee6a457142e1c7ed9704b48d77eed607" ] || { echo "REFUSE: prior sha256 mismatch" >&2; exit 2; }
+
+LIVE=$(pgrep -u dowling -f 'llama-server .*--port 1810[12]' | wc -l | tr -d ' ')
+if tmux has-session -t trks_llm 2>/dev/null; then
+  [ "$LIVE" -eq "$K" ] || { echo "REFUSE: trks_llm has $LIVE servers but K=$K" >&2; exit 2; }
+else
+  if nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader | grep -q .; then
+    echo "REFUSE: a GPU compute process is present and no trks_llm session of ours is running" >&2
+    nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv >&2; exit 2
+  fi
+  flock -n "$HOME/r1_locks/gpu0.lock" true || { echo "REFUSE: gpu0.lock is held" >&2; exit 2; }
+fi
+
+mkdir -p "$RUN" "$WRUN" "$IN"
+log "Phase 4 S0.5 start (node digits_mlp, host TASL-7, k=$K, pin 8237fd02, out $RUN)"
+
+if tmux has-session -t trks_llm 2>/dev/null; then
+  log "tmux trks_llm already running (resume path); not starting a second server"
+else
+  log "starting fresh servers k=$K in tmux session trks_llm"
+  tmux new -d -s trks_llm "$R/bin/trks-servers $K"
+  sleep 2
+  if ! tmux has-session -t trks_llm 2>/dev/null; then
+    log "ERROR: trks_llm exited immediately (lease held or marker) — see server log"
+    tail -n 20 "$R/logs/llama_18101.log" 2>/dev/null || true; exit 3
+  fi
+fi
+
+T0=$(date +%s); READY=0; DEADLINE=$((T0 + 900))
+while :; do
+  NOW=$(date +%s); ok=1
+  for p in $(seq 18101 $((18100 + K))); do
+    curl -sf --max-time 5 "http://127.0.0.1:$p/v1/models" 2>/dev/null | grep -q r1-manager || ok=0
+  done
+  if [ "$ok" -eq 1 ]; then READY=1; log "endpoints 18101..1810$K ready after $((NOW - T0))s"; break; fi
+  if [ "$NOW" -ge "$DEADLINE" ]; then
+    log "ERROR: readiness timeout after 900s"; tail -n 20 "$R/logs/llama_18101.log" 2>/dev/null || true; exit 3
+  fi
+  sleep 5
+done
+log "server pid: $(pgrep -f 'llama-server .*--port 18101' | tr '\n' ',')"
+log "GPU compute apps: $(nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader | tr '\n' ';')"
+log "lease: $(flock -n "$HOME/r1_locks/gpu0.lock" true && echo FREE || echo HELD)"
+
+log "starting S0.5 collector in tmux session $SESSION"
+trks-run "$SESSION" 18101 collect --phase S0.5 --node digits_mlp --prior "$PRIOR" --prior-sha256 5c849d151d939a183ecf6c21113cc46aee6a457142e1c7ed9704b48d77eed607 --obs-inflation 1.0 --W 40 --instances 20 --policy static:0.00198,0 --rep 0 --rep 1 --rep-instances 10 --forks 1.5 --aa-fraction 0.1 --label ENGINEERING_ONLY \
+  --deadline 28800 --stop-file "$RUN/STOP" --out "$RUN" --work "$WRUN"
+log "S0.5 collector started; monitor logs/trks_s05_t7.log / .exit and trks-status"
+=== bash -n host launchers ===
+s05 bash -n OK
+s05b bash -n OK
+=== launch log/rc/stdout ===
+-- s05_t7_20261113_launch.log --
+2026-11-13T12:25:51Z Phase 4 S0.5 start (node digits_mlp, host TASL-7, k=2, pin 8237fd02, out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113)
+2026-11-13T12:25:51Z tmux trks_llm already running (resume path); not starting a second server
+2026-11-13T12:25:51Z endpoints 18101..18102 ready after 0s
+2026-11-13T12:25:51Z server pid: 4129633,
+2026-11-13T12:25:51Z GPU compute apps: 4129634, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;4129633, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;
+2026-11-13T12:25:51Z lease: HELD
+2026-11-13T12:25:51Z starting S0.5 collector in tmux session trks_s05_t7
+2026-11-13T12:25:51Z S0.5 collector started; monitor logs/trks_s05_t7.log / .exit and trks-status
+-- s05_t7_launch.rc --
+rc=2
+rc=2
+rc=0
+-- s05_t7_launch.stdout --
+2026-11-13T12:25:51Z Phase 4 S0.5 start (node digits_mlp, host TASL-7, k=2, pin 8237fd02, out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113)
+2026-11-13T12:25:51Z tmux trks_llm already running (resume path); not starting a second server
+2026-11-13T12:25:51Z endpoints 18101..18102 ready after 0s
+2026-11-13T12:25:51Z server pid: 4129633,
+2026-11-13T12:25:51Z GPU compute apps: 4129634, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;4129633, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;
+2026-11-13T12:25:51Z lease: HELD
+2026-11-13T12:25:51Z starting S0.5 collector in tmux session trks_s05_t7
+started trks_s05_t7 (/home/dowling/r1_tracks/logs/trks_s05_t7.cmd)
+2026-11-13T12:25:51Z S0.5 collector started; monitor logs/trks_s05_t7.log / .exit and trks-status
+=== bins shas (host) ===
+26a240fa350b217c6c8fc6400f9da8e8c3163675719a96402dd9a96d1a577506  /home/dowling/r1_tracks/bin/trks
+b53bc811dc177000c27d33dc43f5f964954c15d7981c5705ad7fcadb851064c4  /home/dowling/r1_tracks/bin/trks-run
+124316b5ce46d13129ff347b92356bb9904b56b025377f16917759f9d38ff22d  /home/dowling/r1_tracks/bin/trks-servers
+cf68843ea8dea38c22094ec86c3e864a3be7b79f3cbf144f224a1807993f8112  /home/dowling/r1_tracks/bin/trks-watch
+5bd570ff12b461e1d8cb67f348c6c56569a48cf4c57dbe15f6a5b23420c30869  /home/dowling/r1_tracks/bin/trks-status
+=== trks wrapper pins ===
+/home/dowling/r1_tracks/bin/trks:4:export AR_HARNESS_ROOT=$R/work/autoresearch_harness OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+/home/dowling/r1_tracks/bin/trks:7:GGUF_SHA=509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c
+/home/dowling/r1_tracks/bin/trks:8:LLAMA_BUILD=620d2225cc436ab0b001e3200e590e3b286ef9ab
+/home/dowling/r1_tracks/bin/trks:10:HOST_LABEL=TASL-7                       # TASL-7 on TASL-7
+/home/dowling/r1_tracks/bin/trks:11:GPU_ID=GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1   # nvidia-smi --query-gpu=uuid --format=csv,noheader
+/home/dowling/r1_tracks/bin/trks-status:7:GGUF_SHA=509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c
+/home/dowling/r1_tracks/bin/trks-status:9:PAPER_SHA=d10b05b738fc0e0dba54e0e692c248bedf095482
+/home/dowling/r1_tracks/bin/trks-status:10:HARNESS_SHA=a3fedbbd44309b3fdf99d853ad841b9ec2c299e2
+/home/dowling/r1_tracks/bin/trks-status:16:for pair in "paper:$R/work/Agent_paper_B:$PAPER_SHA" "harness:$R/work/autoresearch_harness:$HARNESS_SHA" \
+=== watch.log (priority/pause around pause) ===
+6 /home/dowling/r1_tracks/logs/watch.log
+2026-10-30T01:13:43Z watch started
+2026-10-30T11:07:39Z watch started
+2026-11-08T00:46:56Z priority marker seen (/home/dowling/r1_locks/trackx_evidence.active): pausing
+2026-11-13T10:49:34Z marker gone: resume by hand (delete STOP files, start servers, re-run launch scripts)
+2026-11-13T13:47:35Z priority marker seen (/home/dowling/r1_locks/trackx_evidence.active): pausing
+2026-11-14T10:16:36Z marker gone: resume by hand (delete STOP files, start servers, re-run launch scripts)
+=== gpu uuid ===
+NVIDIA GeForce RTX 4090, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1
+=== s05b launcher content head ===
+#!/usr/bin/env bash
+# Track S Phase 4 — S0.5b calibration/truncation sweep on TASL-7 (node digits_mlp), CPU-only, no servers.
+# Authority: Track S operator runbook rev 3.3 Phase 4; reports/TRACKS_DIGITS_HOSTMOVE_20261112.md
+# (host move, accepted; new dirs s05_t7_20261113). ENGINEERING_ONLY.
+# Run after S0.5 has completed AND its servers are stopped.
+# Run as: ssh tasl7 bash $R/launch/tasl7_digits_s05b_20261113.sh
+set -euo pipefail
+R=/home/dowling/r1_tracks; OUT=$R/out/digits_mlp; WORK=$R/scratch/digits_mlp; PATH=$R/bin:$PATH
+RUN=$OUT/s05_t7_20261113; WRUN=$WORK/s05_t7_20261113; SESSION=trks_s05b_t7
+LOG=$R/logs/s05b_t7_20261113_launch.log
+log(){ echo "$(date -u +%FT%TZ) $*" | tee -a "$LOG"; }
+
+for f in "$HOME/r1_locks/trackx_evidence.active" "$HOME/r1_locks/trackp_evidence.active" "$R/trks_drill.active"; do
+  [ ! -e "$f" ] || { echo "REFUSE: priority marker $f" >&2; exit 2; }
+done
+tmux has-session -t "$SESSION" 2>/dev/null && { echo "REFUSE: $SESSION session already exists" >&2; exit 2; }
+tmux has-session -t trks_llm 2>/dev/null && { echo "REFUSE: trks_llm still running; stop the S0.5 servers first" >&2; exit 2; }
+pgrep -f 'llama-server .*--port 1810[12]' >/dev/null 2>&1 && { echo "REFUSE: an S0.5 llama-server is still running" >&2; exit 2; }
+[ -s "$RUN/manifest.json" ] || { echo "REFUSE: $RUN/manifest.json missing; S0.5 not complete" >&2; exit 2; }
+"$R/venv/bin/python" - "$RUN/manifest.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+sessions = d.get("sessions") or []
+done = (sessions[-1].get("done") if sessions else None) or {}
+status = done.get("status")
+if status != "complete":
+    raise SystemExit("REFUSE: S0.5 done.status=%r (need complete)" % (status,))
+print("S0.5 manifest complete")
+PY
+
+mkdir -p "$RUN" "$WRUN"
+log "Phase 4 S0.5b start (node digits_mlp, host TASL-7, CPU, out $RUN)"
+trks-run "$SESSION" - collect --phase S0.5b --node digits_mlp --truncate-W 8,10,12,20 --out "$RUN" --work "$WRUN"
+while tmux has-session -t "$SESSION" 2>/dev/null; do sleep 15; done
+rc=$(sed -n 's/.*rc=//p' "$R/logs/$SESSION.exit" 2>/dev/null | tail -1)
+log "S0.5b collector rc=${rc:-unknown}"
+[ "${rc:-}" = 0 ] || { echo "S0.5b collector failed rc=${rc:-unknown}" >&2; exit 1; }
+log "S0.5b DONE"

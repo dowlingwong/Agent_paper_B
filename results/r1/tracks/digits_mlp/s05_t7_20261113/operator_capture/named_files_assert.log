@@ -1,0 +1,27 @@
+OK   s05_calibration.jsonl  bytes=142754
+OK   s05b_truncated.jsonl  bytes=74267
+OK   roots.jsonl  bytes=613201
+OK   forks.jsonl  bytes=21000
+OK   leaves.jsonl  bytes=158430
+OK   audit_runs.jsonl  bytes=193838
+OK   manifest.json  bytes=5655
+OK   log:trks_s05_t7.log
+OK   log:trks_s05_t7.cmd
+OK   log:trks_s05_t7.exit
+OK   log:s05_t7_20261113_launch.log
+OK   log:s05_t7_launch.rc
+OK   log:s05_t7_launch.stdout
+OK   log:s05_t7_resume_launch.rc
+OK   log:s05_t7_resume_launch.stdout
+OK   log:s05_t7_resume_launch2.rc
+OK   log:s05_t7_resume_launch2.stdout
+OK   log:s05b_t7_20261113_launch.log
+OK   log:trks_s05b_t7.log
+OK   log:trks_s05b_t7.cmd
+OK   log:trks_s05b_t7.exit
+OK   log:s05b_t7_launch.rc
+OK   log:s05b_t7_launch.stdout
+OK   log:watch.log
+failed_units absent (recorded)
+OK   _to_delete/STOP.retired.20261114T103527Z
+ASSERT_OK=1

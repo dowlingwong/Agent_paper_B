@@ -1,0 +1,82 @@
+=== ACTIVE RUN EVIDENCE @ 2026-11-14T10:44:35Z ===
+--- tmux (created times) ---
+trks_llm: 1 windows (created Sat Nov 14 02:43:33 2026)
+trks_s05_t7: 1 windows (created Sat Nov 14 02:43:35 2026)
+trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026)
+--- launch log tail ---
+2026-11-13T12:25:51Z Phase 4 S0.5 start (node digits_mlp, host TASL-7, k=2, pin 8237fd02, out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113)
+2026-11-13T12:25:51Z tmux trks_llm already running (resume path); not starting a second server
+2026-11-13T12:25:51Z endpoints 18101..18102 ready after 0s
+2026-11-13T12:25:51Z server pid: 4129633,
+2026-11-13T12:25:51Z GPU compute apps: 4129634, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;4129633, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;
+2026-11-13T12:25:51Z lease: HELD
+2026-11-13T12:25:51Z starting S0.5 collector in tmux session trks_s05_t7
+2026-11-13T12:25:51Z S0.5 collector started; monitor logs/trks_s05_t7.log / .exit and trks-status
+2026-11-14T10:43:33Z Phase 4 S0.5 start (node digits_mlp, host TASL-7, k=2, pin 8237fd02, out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113)
+2026-11-14T10:43:33Z starting fresh servers k=2 in tmux session trks_llm
+2026-11-14T10:43:35Z endpoints 18101..18102 ready after 0s
+2026-11-14T10:43:35Z server pid: 666767,
+2026-11-14T10:43:35Z GPU compute apps: 666767, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5202 MiB;666768, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5202 MiB;
+2026-11-14T10:43:35Z lease: HELD
+2026-11-14T10:43:35Z starting S0.5 collector in tmux session trks_s05_t7
+2026-11-14T10:43:35Z S0.5 collector started; monitor logs/trks_s05_t7.log / .exit and trks-status
+--- launch stdout/rc ---
+-- rc file --
+rc=2
+rc=2
+rc=0
+-- stdout tail --
+2026-11-13T12:25:51Z Phase 4 S0.5 start (node digits_mlp, host TASL-7, k=2, pin 8237fd02, out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113)
+2026-11-13T12:25:51Z tmux trks_llm already running (resume path); not starting a second server
+2026-11-13T12:25:51Z endpoints 18101..18102 ready after 0s
+2026-11-13T12:25:51Z server pid: 4129633,
+2026-11-13T12:25:51Z GPU compute apps: 4129634, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;4129633, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5226 MiB;
+2026-11-13T12:25:51Z lease: HELD
+2026-11-13T12:25:51Z starting S0.5 collector in tmux session trks_s05_t7
+started trks_s05_t7 (/home/dowling/r1_tracks/logs/trks_s05_t7.cmd)
+2026-11-13T12:25:51Z S0.5 collector started; monitor logs/trks_s05_t7.log / .exit and trks-status
+--- .cmd stat + sha (was fe9fae36, mtime 2026-11-13 04:25:51 PST) ---
+-rw-rw-r-- 1 dowling dowling 786 2026-11-14 02:43:35.256391045 -0800 /home/dowling/r1_tracks/logs/trks_s05_t7.cmd
+fe9fae36311875470f6682539479ec2496e8be9bfe7bd56c5a32837dbd84054b  /home/dowling/r1_tracks/logs/trks_s05_t7.cmd
+--- .exit history ---
+2026-11-13T13:03:00Z rc=0
+--- collector log stat + tail ---
+-rw-rw-r-- 1 dowling dowling 517364 2026-11-14 02:44:35.311161789 -0800 /home/dowling/r1_tracks/logs/trks_s05_t7.log
+2026-11-14T02:44:33 [INFO] autoresearch.worker.local_worker: trial-004: applied edit BATCH_SIZE: 64 → 128
+2026-11-14T02:44:33 [INFO] autoresearch.worker.local_worker: trial-004: running: python3 train.py
+2026-11-14T02:44:34 [INFO] autoresearch.worker.local_worker: trial-004: run_command finished in 0.7s; success=True metrics={'val_score': 0.824513, 'train_loss': 0.809862}
+2026-11-14T02:44:35 [INFO] httpx2: HTTP Request: POST http://127.0.0.1:18101/v1/chat/completions "HTTP/1.1 200 OK"
+2026-11-14T02:44:35 [INFO] autoresearch.worker.local_worker: trial-005: applied edit HIDDEN_UNITS: 128 → 256
+2026-11-14T02:44:35 [INFO] autoresearch.worker.local_worker: trial-005: running: python3 train.py
+--- collector process start ---
+    PID                  STARTED     ELAPSED CMD
+ 666901 Sat Nov 14 02:43:35 2026       01:00 python -m r1.tracks.collect --phase S0.5 --node digits_mlp --prior /home/dowling/r1_tracks/out/digits_mlp/a2u_prior_r2_20261111.json --prior-sha256 5c849d151d939a183ecf6c21113cc46aee6a457142e1c7ed9704b48d77eed607 --obs-inflation 1.0 --W 40 --instances 20 --policy static:0.00198,0 --rep 0 --rep 1 --rep-instances 10 --forks 1.5 --aa-fraction 0.1 --label ENGINEERING_ONLY --deadline 28800 --stop-file /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/STOP --out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113 --work /home/dowling/r1_tracks/scratch/digits_mlp/s05_t7_20261113 --manager llamacpp --manager-model llamacpp/r1-manager --proposal-schema manager_proposal/v1 --gguf /home/dowling/r1_tracks/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf --gguf-sha256 509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c --llama-build 620d2225cc436ab0b001e3200e590e3b286ef9ab --llama-server-bin /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server --host-label TASL-7 --gpu GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1
+
+    PID                  STARTED     ELAPSED CMD
+ 666767 Sat Nov 14 02:43:33 2026       01:02 /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server -m /home/dowling/r1_tracks/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf --alias r1-manager --host 127.0.0.1 --port 18101 -ngl 999 -c 8192 --parallel 1 --verbose
+--- manifest done now ---
+sessions 1
+ session 0 {"start_utc": "20261113T122552Z", "end_utc": "20261113T130300Z"} done= {"roots": 22, "forks": 6, "leaves": 0, "failed": 0, "exhausted": 0, "deadline_hit": false, "status": "paused"}
+--- RUN listing ---
+total 456
+drwxrwxr-x 3 dowling dowling   4096 2026-11-14 02:35:27.858713837 -0800 .
+drwxrwxr-x 6 dowling dowling   4096 2026-11-13 04:25:51.720270526 -0800 ..
+-rw-rw-r-- 1 dowling dowling  76238 2026-11-13 05:03:00.402081392 -0800 audit_runs.jsonl
+-rw-rw-r-- 1 dowling dowling   5261 2026-11-13 05:03:00.442082318 -0800 forks.jsonl
+-rw-rw-r-- 1 dowling dowling   4180 2026-11-14 02:43:35.848398869 -0800 manifest.json
+-rw-rw-r-- 1 dowling dowling 286259 2026-11-14 02:44:29.083083936 -0800 roots.jsonl
+-rw-rw-r-- 1 dowling dowling  58348 2026-11-13 05:03:00.430082040 -0800 s05_calibration.jsonl
+drwx------ 2 dowling dowling   4096 2026-11-14 02:35:27.858713837 -0800 _to_delete
+-- new files? --
+/home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/manifest.json
+/home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113/roots.jsonl
+--- host launcher mtime/sha ---
+-rwx------ 1 dowling dowling 4828 2026-11-14 02:43:28.501301436 -0800 /home/dowling/r1_tracks/launch/tasl7_digits_s05_20261113.sh
+f823b86a85272ef6246ceb3ce9f5142057eb1b5f297a1d5ddd20394ebaba3dd3  /home/dowling/r1_tracks/launch/tasl7_digits_s05_20261113.sh
+--- GPU/lease ---
+97 %, 10684 MiB
+HELD
+--- watch.log tail ---
+2026-11-13T10:49:34Z marker gone: resume by hand (delete STOP files, start servers, re-run launch scripts)
+2026-11-13T13:47:35Z priority marker seen (/home/dowling/r1_locks/trackx_evidence.active): pausing
+2026-11-14T10:16:36Z marker gone: resume by hand (delete STOP files, start servers, re-run launch scripts)
