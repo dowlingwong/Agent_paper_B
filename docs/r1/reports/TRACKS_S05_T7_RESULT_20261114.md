@@ -27,7 +27,7 @@ and `tasl7_digits_s05b_20261113.sh` sha `3685dfe6…` (repo==host, `bash -n` OK)
 
 | Time (UTC) | Event |
 |---|---|
-| 2026-11-13T12:25:52Z–13:03:00Z | S0.5 first session (#1) on TASL-7, `status=paused` on a Track X priority marker; done `22 roots / 6 forks / 0 leaves / 0 failed / 0 exhausted`. `$RUN/STOP` created (inode **57048847**, 0 B, sha `e3b0c442…`). |
+| 2026-11-13T12:25:52Z–13:03:00Z | S0.5 first session (#1) on TASL-7, `status=paused`; done `22 roots / 6 forks / 0 leaves / 0 failed / 0 exhausted`. `$RUN/STOP` present (inode **57048847**, 0 B, sha `e3b0c442…`). **Pause cause: not directly evidenced** — `watch.log`'s only 13 Nov marker event is **13:47:35Z**, *after* this exit, and re-touched the STOP; the STOP creation at ~13:00:52Z is unattributed in the committed capture, so "a Track X priority-marker pause" is a disclosed inference only. |
 | 2026-11-14T10:35:27Z | **Failed first resume attempt**: the pre-fix launcher `3e957464…` aborted **rc=1 before starting any server or collector** (`LIVE=$(pgrep … | wc -l)` tripped `set -euo pipefail` with zero servers). The pause STOP had already been **renamed once** into `$RUN/_to_delete/STOP.retired.20261114T103527Z` (0 B, inode 57048847, sha `e3b0c442…`; no deletion); `s05_t7_resume_launch.rc = rc=1`. |
 | 2026-11-14T10:43:28–10:43:35Z | Fixed launcher `f823b86a…` deployed (host sha verified); **S0.5 resume** launched by a parallel operator phase: fresh `k=2` servers (pids 666767/666768), collector `trks_s05_t7` pid 666901, endpoints ready 10:43:35Z; `.cmd` rewritten **byte-identically** (sha `fe9fae36…`); `s05_t7_resume_launch2.rc = rc=0`. |
 | 2026-11-14T12:34:02–12:34:03Z | S0.5 session #2 ends **`status=complete`**, `done 28 roots / 18 forks / 71 leaves / 0 failed / 0 exhausted`, `deadline_hit=false`; `trks_s05_t7.exit` `12:34:03Z rc=0`. |
@@ -64,7 +64,7 @@ the ENGINEERING_ONLY label, the 8 h deadline, and the same `--out`/`--work` dirs
 | #2 (14 Nov, resume) | 10:43:35–12:34:02 | **28 / 18 / 71 / 0 / 0** | **`complete`** |
 
 Totals in `$RUN`: `roots.jsonl` **50** lines (sha `039b6955…`), `forks.jsonl` **24** (`bf638fa6…`),
-`leaves.jsonl` **71** (`427faff6…`), `audit_runs.jsonl` **1780** (`93939187…`),
+`leaves.jsonl` **71** (`427faff6…`), `audit_runs.jsonl` **1780** (`93939187…`; the two manifest session records sum to 1,770, the extra 10 lines consistent with S0.5b appending audits after session #2 closed),
 `s05_calibration.jsonl` **298** rows (`2e4c9a8c…`, last line valid), `manifest.json` sha `68a0d6e0…`;
 **no `failed_units.jsonl`**; **no STOP**; `exhausted = 0`. `.cmd` unchanged `fe9fae36…`.
 
@@ -101,7 +101,9 @@ repeated (no second start/restart was made).
 - **Deferred tooling fix now applied** (safe point, no run active): TASL-7 `bin/trks-status` `PAPER_SHA`
   `d10b05b7… → 8237fd02…`; script sha **old `5bd570ff…` → new `70fbe8bd312fd7aad3a9020b80dcf9284453a8319dbb2cb523e9f6c06f16cc5f`**
   (= committed repo file); `trks-status` now prints `OK paper 8237fd02`, `OK harness a3fedbb`,
-  `OK llama.cpp 620d2225`, GGUF OK, no STOP line. Tooling only — the launcher already enforced the pin
+  `OK llama.cpp 620d2225`, GGUF OK. There is no `STOP:` in the pinned-HEAD checks; the manifests section still prints
+a legacy `STOP-file present` line for the old Oct-30 `smoke` manifest (**pre-existing, not this S0.5 run**).
+Tooling only — the launcher already enforced the pin
   (`git rev-parse == 8237fd02`, clean).
 - **Historical `s05_t7_launch.rc` = `rc=2, rc=2, rc=0`** (pre-run setup refusals on 13 Nov); the resume used
   its own wrappers: `s05_t7_resume_launch.rc = rc=1` (failed first attempt) and `s05_t7_resume_launch2.rc =
@@ -129,8 +131,10 @@ TASL-7 and byte-match their recorded hashes. `failed_units.jsonl` absent (record
 operator/governance record; the operator capture evidence is under
 `results/r1/tracks/digits_mlp/s05_t7_20261113/operator_capture/` (`capture_notes.md`, preflight/monitor/anomaly
 captures). **The TASL-2 bare-repo push is deferred:** TASL-2 (`portal_zhixu`, 100.120.160.70) was **unreachable
-(TCP timeout)** at 14:10Z, so the TASL-2 bare-repo copy of this record could not be pushed; it will be retried
-when TASL-2 returns. Origin carries the record; TASL-2 was not touched.
+(TCP timeout)** at 13:10Z, so the TASL-2 bare-repo copy of this record could not be pushed; it will be retried
+when TASL-2 returns. Origin carries the record; TASL-2 was not touched. **TASL-7 bare repo:** it was at
+`d8ac944c` (15 commits behind) at review time and is **fast-forwarded to this submission's tip** after the commit
+(no force); see the STATUS entry.
 
 ## 9b. Descriptive numbers (calibration and truncation; added by the Lead phase)
 
@@ -138,11 +142,17 @@ when TASL-2 returns. Origin carries the record; TASL-2 was not touched.
   **231/298 = 0.7752**. Stratum detail (covered/total): `HIDDEN_UNITS +, stratum 0` **0/20**;
   `BATCH_SIZE +, stratum 1-2` 20/40; `HIDDEN_UNITS +, stratum 1-2` 31/40; `HIDDEN_UNITS +, stratum >=3` 75/75;
   `LEARNING_RATE_INIT -, stratum 0` 5/11. `delta_audit` mean **−0.0074** (min −0.4123, max 0.1922).
-  Descriptive only; the aggregate gate is a Phase-4 decision with `tabular_mlp`, not inferred here.
-- **Truncation** (`s05b_truncated.jsonl`, 200 rows): W in {8, 10, 12, 20}; `runs_used / trials` =
-  8/8 (W8, 50/50 rows binding), 10/12 (W10, 50/50), 12/22 (W12, 47/50), 16/40 (W20, 2/50); mean `y_terminal`
-  per W = 0.963097 / 0.968334 / 0.970830 / 0.972802. The cap binds at the **low** W values; at W20 most rows
-  are non-binding (16/40 is the non-binding runs_used/trials count).
+  Descriptive only. The calibration gate is **per node, not aggregate**: on these digits rows the code's
+  `calibration_gate` computes **`fail`** — stratum 0 35/65 = **0.5385**, stratum 1-2 60/89 = **0.6742**, stratum
+  >=3 136/144 = **0.9444**, all outside [0.70, 0.90]. Per Phase 4 a failing stratum 0 / over-coverage is a
+  **STOP for the author**, and the deferred Mac-side S0.5 summary must report the per-node status. This
+  digits-half acceptance is **not** a calibration-gate pass, **not** STOP-4 completion and **not** a
+  Phase-4/S3 authorization.
+- **Truncation** (`s05b_truncated.jsonl`, 200 rows, 50 rows per W over {8,10,12,20}): the cap binds at the **low**
+  W values — binding **row counts** 50/50 (W8), 50/50 (W10), 47/50 (W12), 2/50 (W20), i.e. W20 is mostly
+  non-binding (48/50). The ratios `8/8, 10/12, 12/22, 16/40` are **one illustrative campaign's**
+  `runs_used / trials` cells (the `a2u` rep-0 root `…s30500` and its fork), **not per-W aggregates**.
+  Mean `y_terminal` per W = 0.963097 / 0.968334 / 0.970830 / 0.972802.
 
 ## 10. Scope / next
 
