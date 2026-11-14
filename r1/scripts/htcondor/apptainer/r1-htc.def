@@ -9,6 +9,21 @@ From: nvidia/cuda:12.4.1-cudnn-devel-rockylinux9
 # docs/r1/overnight/trackp_code_20261026/pip_freeze_trackp-cpu.txt (env 3).
 # No network access is needed at job time: every environment is built at image-build time.
 # No code checkouts, models, data or credentials are in the image.
+#
+# Deliberate properties recorded after the pre-build review:
+# - env 1 installs the harness project's `dev` extra so pytest is present (the lock's pytest is
+#   an optional extra, not a default dependency); UV_PROJECT_ENVIRONMENT avoids a non-relocatable
+#   `.venv` move.
+# - env 2 drops the freeze's `-e file:///home/dowling/r1_tracks/work/autoresearch_harness` line
+#   (that path cannot exist in the image); harness code is supplied at job time from /work and
+#   PYTHONPATH instead.
+# - env 3 is Python 3.12 (the Track P freeze provenance) and installs the pinned set with
+#   `--no-deps` (the freeze is a complete pin set), the three VCS requirements at their pinned
+#   commits with `--no-deps` (as the Track P hand-off did), and torch last, pinned to the
+#   documented Track P GPU value 2.6.0+cu124 (proposed: no committed file pins a cu124 wheel).
+# - Driver scope: CUDA 12.4 needs driver >= 550.54.14. In-scope classes measured in POOL_FACTS
+#   are L40S 12.8/13.4, A100 13.3, V100S 13.0 and H200 13.4 -> compatible. The TITAN X
+#   (12.0 / 525.147.05) is out of scope and also outside the CUDA arch list (sm_52).
 
 %files
     uv.lock.a3fedbb /opt/r1/harness/uv.lock
@@ -18,44 +33,42 @@ From: nvidia/cuda:12.4.1-cudnn-devel-rockylinux9
 
 %post
     set -eux
-    # Basic tools (runbook §3): git, rsync, jq, xrootd-client; build tooling for llama.cpp.
+    # EPEL first: xrootd-client is EPEL-only on Rocky 9 (review S3-F3).
+    dnf install -y --setopt=install_weak_deps=False epel-release
     dnf install -y --setopt=install_weak_deps=False \
-        git rsync jq xrootd-client gcc gcc-c++ make cmake tar gzip curl findutils which procps-ng
+        git rsync jq xrootd-client gcc gcc-c++ make cmake tar gzip curl findutils which procps-ng gawk grep
     dnf clean all
 
-    # uv pinned to 0.13.6 (TRACKS_HOST_FACTS_20261030 §0.5).
+    # uv pinned to 0.13.6 (TRACKS_HOST_FACTS_20261030 §0.5), no cache in the image.
     export UV_INSTALL_DIR=/opt/uv
     curl -LsSf https://astral.sh/uv/0.13.6/install.sh | sh
     export PATH=/opt/uv:$PATH
     export UV_PYTHON_INSTALL_DIR=/opt/r1/pythons
+    export UV_NO_CACHE=1
     mkdir -p /opt/r1/envs /opt/r1/pythons /opt/r1/harness /opt/r1/locks
-    uv python install 3.13 3.11
+    uv python install 3.13 3.12 3.11
 
-    # Env 1 — harness: uv.lock at harness a3fedbb (Python 3.13; NumPy 2.4.4 per the lock).
+    # Env 1 — harness: uv.lock at harness a3fedbb (Python 3.13), plus the `dev` extra for pytest.
     cd /opt/r1/harness
-    uv sync --frozen --no-dev --python 3.13
-    mv /opt/r1/harness/.venv /opt/r1/envs/harness
+    UV_PROJECT_ENVIRONMENT=/opt/r1/envs/harness uv sync --frozen --extra dev --python 3.13
 
     # Env 2 — Track S/Track P: the 65-package freeze (Python 3.11; sha256 f1c818e5…).
+    # Drop the editable line that points at the author's /home path.
+    grep -vE '^(-e|--editable)([[:space:]]|$)' /opt/r1/locks/tracks_freeze_65.txt > /tmp/tracks_install.txt
     uv venv --python 3.11 /opt/r1/envs/tracks
-    uv pip install --python /opt/r1/envs/tracks/bin/python -r /opt/r1/locks/tracks_freeze_65.txt
+    uv pip install --python /opt/r1/envs/tracks/bin/python -r /tmp/tracks_install.txt
 
-    # Env 3 — Track P training: pip_freeze_trackp-cpu.txt (Python 3.13) with the matching CUDA
-    # torch build instead of its CPU wheel. No cu124 wheel version is pinned anywhere, so the
-    # choice is recorded as proposed: torch 2.14.1 from the cu124 index, falling back to the
-    # newest cu124 wheel if that exact build is not published; the fallback is written to
-    # /opt/r1/VERSIONS.txt and must be replaced by an author ruling before production use.
-    uv venv --python 3.13 /opt/r1/envs/trackp
-    grep -viE '^torch(==|@| )' /opt/r1/locks/pip_freeze_trackp-cpu.txt > /tmp/trackp_no_torch.txt
-    uv pip install --python /opt/r1/envs/trackp/bin/python -r /tmp/trackp_no_torch.txt
-    if uv pip install --python /opt/r1/envs/trackp/bin/python \
-            --index-url https://download.pytorch.org/whl/cu124 'torch==2.14.1'; then
-        TORCH_PIN="torch==2.14.1 (cu124, proposed)"
-    else
-        uv pip install --python /opt/r1/envs/trackp/bin/python \
-            --index-url https://download.pytorch.org/whl/cu124 torch
-        TORCH_PIN="$(/opt/r1/envs/trackp/bin/python -c 'import torch; print("torch=="+torch.__version__+" (cu124 index, fallback, proposed)")')"
-    fi
+    # Env 3 — Track P training: Python 3.12 (freeze provenance), pinned set --no-deps, VCS deps
+    # --no-deps at their pinned commits, then the CUDA torch build (2.6.0+cu124, proposed).
+    uv venv --python 3.12 /opt/r1/envs/trackp
+    TP=/opt/r1/envs/trackp/bin/python
+    grep -viE '^(torch==|kev[[:space:]]|laya[[:space:]]|startlux-decide[[:space:]])' /opt/r1/locks/pip_freeze_trackp-cpu.txt > /tmp/trackp_pinned.txt
+    uv pip install --python "$TP" --no-deps -r /tmp/trackp_pinned.txt
+    uv pip install --python "$TP" --no-deps 'kev @ git+https://github.com/jaredpalmer/kev@2074cc44256200bb37540103fa4572901faa10f3'
+    uv pip install --python "$TP" --no-deps 'laya @ git+https://github.com/NandhaKishorM/laya@a478221bcad24d1a9c47b361c79328ebd2b100c6'
+    uv pip install --python "$TP" --no-deps 'startlux-decide @ git+https://github.com/StartLuxLabs/StartLux-Decision@a99977d9332decc9fb27a2488b4a83b533b6cd5f'
+    uv pip install --python "$TP" --index-url https://download.pytorch.org/whl/cu124 'torch==2.6.0+cu124'
+    uv pip check --python "$TP" || true   # recorded, not fatal: the VCS pins are installed --no-deps by design
 
     # llama.cpp at the pinned commit, CUDA build for V100, A100, L40S/4090, H200.
     git clone https://github.com/ggml-org/llama.cpp /opt/r1/llama.cpp
@@ -67,21 +80,29 @@ From: nvidia/cuda:12.4.1-cudnn-devel-rockylinux9
     sha256sum /opt/r1/llama.cpp/build/bin/llama-server > /opt/r1/LLAMA_SERVER_SHA256
     git -C /opt/r1/llama.cpp rev-parse HEAD > /opt/r1/LLAMA_CPP_COMMIT
 
+    # Post-install smoke: every environment must import its core stack.
+    /opt/r1/envs/harness/bin/python -c "import numpy, sklearn, pandas, pytest; print('env1 ok', numpy.__version__, sklearn.__version__, pandas.__version__, pytest.__version__)"
+    /opt/r1/envs/tracks/bin/python -c "import numpy, sklearn, pandas; print('env2 ok', numpy.__version__, sklearn.__version__, pandas.__version__)"
+    /opt/r1/envs/trackp/bin/python -c "import torch, numpy, sklearn; print('env3 ok', torch.__version__, numpy.__version__, sklearn.__version__)"
+
     # Version record, so a job can print everything in one go.
     {
+        echo "build_utc=$(date -u +%FT%TZ)"
         echo "base=nvidia/cuda:12.4.1-cudnn-devel-rockylinux9"
         echo "uv=$(uv --version)"
         echo "python_313=$(/opt/r1/envs/harness/bin/python -VV 2>&1)"
         echo "python_311=$(/opt/r1/envs/tracks/bin/python -VV 2>&1)"
         echo "python_trackp=$(/opt/r1/envs/trackp/bin/python -VV 2>&1)"
-        echo "torch_pin=$TORCH_PIN"
+        echo "torch_pin=torch==2.6.0+cu124 (proposed)"
         echo "torch_actual=$(/opt/r1/envs/trackp/bin/python -c 'import torch; print(torch.__version__)')"
         echo "llama_cpp_commit=$(cat /opt/r1/LLAMA_CPP_COMMIT)"
         echo "llama_server_sha256=$(awk '{print $1}' /opt/r1/LLAMA_SERVER_SHA256)"
+        echo "llama_server_version=$(/opt/r1/llama.cpp/build/bin/llama-server --version 2>&1 | head -3 | tr '\n' ' ')"
         echo "harness_lock_sha256=$(sha256sum /opt/r1/harness/uv.lock | awk '{print $1}')"
         echo "tracks_freeze_sha256=$(sha256sum /opt/r1/locks/tracks_freeze_65.txt | awk '{print $1}')"
         echo "trackp_freeze_sha256=$(sha256sum /opt/r1/locks/pip_freeze_trackp-cpu.txt | awk '{print $1}')"
     } > /opt/r1/VERSIONS.txt
+    cat /opt/r1/VERSIONS.txt
 
 %environment
     export PATH=/opt/uv:/opt/r1/llama.cpp/build/bin:$PATH
@@ -95,9 +116,9 @@ From: nvidia/cuda:12.4.1-cudnn-devel-rockylinux9
 
 %help
     Paper B R1 HTCondor image (Apptainer route). Contains:
-      /opt/r1/envs/harness  Python 3.13, harness uv.lock @ a3fedbb
-      /opt/r1/envs/tracks   Python 3.11, 65-package freeze (sha f1c818e5…)
-      /opt/r1/envs/trackp   Python 3.13, Track P freeze + CUDA torch (proposed)
+      /opt/r1/envs/harness  Python 3.13, harness uv.lock @ a3fedbb (+ dev extra/pytest)
+      /opt/r1/envs/tracks   Python 3.11, 65-package freeze (sha f1c818e5…; editable line dropped)
+      /opt/r1/envs/trackp   Python 3.12, Track P freeze + torch 2.6.0+cu124 (proposed)
       /opt/r1/llama.cpp     llama.cpp @ 620d2225, CUDA arch 70;80;89;90
       /opt/r1/VERSIONS.txt  all version/sha records
-    Build: apptainer build r1-htc-20261114.sif r1-htc.def
+    Build only through build_sif.sh (capability gate, no deletion, records).
