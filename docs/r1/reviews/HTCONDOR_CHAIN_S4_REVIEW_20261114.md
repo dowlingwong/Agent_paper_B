@@ -387,3 +387,131 @@ account-wide job cap is already above 10 from other jobs (`raw/s2_precheck.txt`)
 cause of cap pressure.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round — fixes at commit `2af0b663` (supersedes the round-1 verdict above)
+
+**Re-reviewer:** same reviewer; **date/time:** 14 November 2026, 11:20–11:35 CET. **Worktree HEAD
+`2af0b663`** ("fix(r1): S3 def/build/README + S4 unit — address pre-build and pre-submission reviews"). The S4
+unit is the only S4-relevant change in that commit (the same commit also carries the S3 def/build/README fixes and
+both review files; S3 is out of this unit's scope). **New unit hashes verified and identical to the Lead's
+message:** `s4_run.sh` **`a29631cbb7ea1e4e219dd2436f2e80f61152930ed5b0d5a01f0c5f1f115ee093`** (114 lines),
+`s4_local_cpu_sif.jdl` **`f5f64a2661e2451a9056f107cdf618830ed687010b70b0f5c2f8a7c8229aecc9`** (17 lines).
+Read-only re-review; no SSH, no submission, no git write. Nothing of this unit has been submitted and the SIF has
+not yet been built, so the checks that need a dry-run ad or the SIF are marked as **mandatory pre-submission
+gates** below, as in round 1.
+
+### 1. Disposition of the round-1 findings
+
+| Round-1 finding | Fix in `2af0b663` | Re-review result |
+|---|---|---|
+| **B1** job held at exit (`transfer_output_files` named files not in the sandbox) | `transfer_output_files` removed from the JDL; all evidence stays under `/work/dwong/paperb/work/s4_<job>_<UTC>/`; only `output`/`error`/`log` are transferred | **Fixed.** The script writes nothing into the sandbox, so the auto-transfer of sandbox-created files has nothing to transfer and there is no missing-listed-file error path left. No hold trigger remains in the JDL. |
+| **B2** no `output`/`error`/`log` | JDL L9–11: `output = s4.out`, `error = s4.err`, `log = s4.log` | **Fixed.** Event log exists per job; stdout (including `S4_DONE out=$OUT fail=$FAIL`, L112) and stderr are captured; the recorder call is now possible (§2). |
+| **B3** I2 comparison read the pytest stdout | Script L83–90 finds the preserved worker `run.log` files under `$B/work/s4_pytest_$i`, records each `sha256` and greps `val_score`/`train_loss` into `i2_summary.txt`; L94–110 (run with the trackp python) requires 4 val_score values, all equal and equal to `0.922225`, train_loss all equal and `0.314016` unless absent, writes `I2_PASS`/`I2_FAIL` and exits nonzero on FAIL | **Fixed.** Matches the B1 evidence format (`val_score: 0.922225`, `train_loss: 0.314016`, one line per run.log, 2 run.logs per invocation). |
+| **B4** container-image transfer could hold the job | JDL L3: `should_transfer_container = no` (image pre-staged on shared `/work`) | **Mitigated in the unit; one gate remains** — the key name must be accepted by the site's 25.0.12 and `ContainerImageSource` must read `local` in the dry-run ad (see gates). |
+| **m1** no dry-run ad; SIF gate unmeasured | Lead commits to dry-run + `ContainerImageSource`/`HasSIF` measurement once the SIF exists | **Gates below.** |
+| **m2** trackp choice unjustified | identity block L65–69 states the 0.922225 stack (trackp: numpy 2.4.4/sklearn 1.8.0/pytest 9.0.3) and that tracks would be 2.4.6/1.9.1/9.2.0 | **Fixed.** |
+| **m3** no pytest version in I1 | I1 import line now includes `pytest` and prints its version for all three envs (L38) | **Fixed with an artefact:** the harness env is installed `--no-dev` (`r1-htc.def` L34–37), so its line will print `ModuleNotFoundError: No module named 'pytest'`; that is expected, not an env failure — read the numpy/sklearn/pandas part of that line. |
+| **m4** silent skip on missing checkout | Preflight asserts both pinned heads (L24–29), trackp python and llama-server (L30–31); `paper` missing → `exit 3`; a skipped test yields no run.log → `NO_RUN_LOG_FOUND` → `I2_FAIL` → nonzero exit; skip/pass lines are recorded (L82) | **Fixed.** |
+| **m5** no bound on pytest | `timeout 600` around the pytest invocation (L77) | **Fixed.** |
+| **m6** always `exit 0` | `FAIL` accumulator; `I2_PASS`/`I2_FAIL`, `S4_FAIL`, `S4_DONE … fail=$FAIL`, `exit "$FAIL"` (L91, L103–114) | **Fixed.** Nonzero exit on preflight/I2 failure; the job completes with that exit code (no hold). |
+| **m7** S6 sha not compared / one namespace root | `EXPECTED_XRD_SHA=90e6b637…d8a7` (L46), per-endpoint readback sha + `match=yes/no` (L55–60); `ls` tried on `/dwong`, `/srv/dwong`, `/dwong/paperb` (L50–52) | **Fixed** for sha and namespace discovery. NIT: `xrdcp` itself still uses only `/dwong/paperb/…`; the expected-sha check makes a wrong root visible. |
+| **m8** HOME/TMPDIR reused across jobs | `H="$OUT/home_$i"`, `T="$OUT/tmp_$i"` (L72) | **Fixed.** Basetemp deliberately stays at `$B/work/s4_pytest_$i` (pytest clears it at session start; run1/run2 use distinct dirs) — acceptable. |
+| **m9** `JOB` from `_CONDOR_ClusterId` (not set) | JDL L5 `arguments = "$(ClusterId).$(ProcId)"`; script `JOB="${1:-local.0}"` (L8) | **Fixed.** |
+| **m10** SIF identity incomplete / wrong line | identity block now records identity-file `sif_sha256`, the SIF's actual sha256 and bytes, `/opt/r1/VERSIONS.txt` sha, and the job-ad placement/runtime lines (L14–22) | **Fixed** (job-ad placement fields are best-effort at job start — record them from history after the run; gate below). |
+| **m11** account-wide cap snapshot | not in the unit; Lead says the submit wrapper records it | **Operational gate:** attach the `condor_q dwong` snapshot; the pre-S2 reading was `own_active=18` (`raw/s2_precheck.txt`). |
+| **m12** EP `SingularityVersion` for Q-S4 | identity greps the job ad for `MachineAttrSingularityVersion0`/`MachineAttrCloudSite0` | **Partially by design:** these machine attributes may only be present after a run; record them post-run from `condor_history`/`condor_status` (gate below). |
+| `rm` removal | grep over the script finds no `rm` (and no `rm`-like deletion); no `/ceph` writes, no secrets, no credentials; every write target is under `$OUT`/`$B/work` (`/work/dwong/paperb/`) | **Confirmed.** |
+
+### 2. Checks performed on the new unit
+
+- Read both files in full at the pinned hashes; diff `43b0ba8c..2af0b663` confirms the S4 changes are confined to
+  the two files (plus the S3 files/reviews, out of scope). JDL is 17 lines: `universe=container` L1,
+  `container_image=/work/dwong/paperb/images/r1-htc-20261114.sif` L2, `should_transfer_container = no` L3,
+  `executable=s4_run.sh` L4, `arguments` L5, transfer files YES/ON_EXIT L6–8, `output/error/log` L9–11,
+  `+RequestWalltime=3600` L12, CPUs 2 / Mem 8000 / disk 30 000 000 L13–15, `requirements=TARGET.ProvidesETPResources`
+  L16, `queue 1` L17. No `transfer_output_files`, no GPU request, no `+RemoteJob`, no `docker_image` key.
+- Script: `set -uo pipefail` (no `-e`; by design, evidence collection), `JOB=$1`, `OUT=/work/dwong/paperb/work/s4_<job>_<UTC>`,
+  preflight of the two pinned heads + env + llama-server, I1 (VERSIONS, three envs with numpy/sklearn/pandas/pytest,
+  trackp torch/CUDA, llama-server, uv), S6 (two endpoints × three namespace roots with timeouts, rc via pipefail,
+  expected-sha comparison), I2 (twice, `env -i`, HOME/TMPDIR under `$OUT`, PYTHONPATH paper+harness/src,
+  `AR_HARNESS_ROOT`, `PYTHONDONTWRITEBYTECODE`, `PYTEST_DISABLE_PLUGIN_AUTOLOAD`, `CUDA_VISIBLE_DEVICES=''`,
+  OMP/OPENBLAS/MKL=1, `timeout 600`, `--basetemp`, run.log extraction + sha, comparison, `I2_PASS`/`I2_FAIL`),
+  final `exit "$FAIL"`.
+- The metric source, the run.log count (2 per invocation), the expected values (0.922225/0.314016), and the expected
+  S6 sha (`90e6b637…d8a7`) all match the committed B1/S6 evidence; the reference-stack rationale is stated in
+  `identity.txt`; the trackp env is the 0.922225 stack (numpy 2.4.4/sklearn 1.8.0/pytest 9.0.3 vs tracks
+  2.4.6/1.9.1/9.2.0).
+- Safety: no credentials, no SSH/docker/registry, no `condor_rm`/`condor_hold`, no deletion, no other users' files;
+  writes only under `/work/dwong/paperb/` (OUT, HOME, TMPDIR, basetemp, S6 readbacks); reads only `/opt/r1/*`,
+  `/work/dwong/paperb/*` and the xrootd endpoints. 1 job, CPU-only, 8 GB, 30 GB disk, 3600 s walltime — within the
+  author's caps (the account-wide concurrent count is a separate snapshot gate).
+
+### 3. Mandatory pre-submission gates (cannot be done without the cluster/SIF; the unit is accepted conditionally)
+
+1. **Dry-run once the SIF exists** — `condor_submit -dry-run s4_local_cpu_sif.jdl`, require rc 0, and check in the
+   ad: `should_transfer_container` is accepted (if 25.0.12 rejects this key name — newer docs use
+   `transfer_container = false` — use the accepted name and re-review that one line); `ContainerImageSource` is
+   **`local`** (if it is `cedar`, the SIF would be transferred: stop and fix); `WantContainer=true`;
+   `ContainerImage=/work/dwong/paperb/images/r1-htc-20261114.sif`; the appended SIF gate
+   (`TARGET.HasContainer && TARGET.HasSIF`, not `HasDockerURL`); `TransferInput="s4_run.sh"`;
+   `Args`/`Arguments="<cluster>.<proc>"`; `Iwd`/`Cmd` in the submit directory; output/error/log. Commit the ad as
+   `dryrun/s4_local_cpu_sif.dry` + `.dry.log` in the S4 unit.
+2. **Measure the SIF gate read-only** — `condor_status -constraint 'ProvidesETPResources' -af Name HasSIF
+   HasSandboxImage HasContainer` (and for the chosen collector) and record the counts. If `HasSIF` is false on the
+   local fleet the job will idle: that is a match failure to record, not an image failure.
+3. **Submit from a writable directory under the allowed scope** containing the two pinned files (e.g.
+   `/work/dwong/paperb/work/s4_submit/`), hashes verified against §re-review. Exact commands:
+   ```
+   condor_submit -dry-run s4_local_cpu_sif.jdl        # must be rc 0; commit the ad
+   condor_submit s4_local_cpu_sif.jdl                 # record cluster id + submit UTC
+   # after the job reaches a terminal state (in the same directory):
+   python3 htc_events.py s4.log --probe <cluster>.0=S4 --utc-offset-minutes 60 --tsv s4_queue_times.tsv
+   ```
+   (`htc_events.py` is the S2-reviewed recorder from `origin/mac-htcondor-20261114`; `--utc-offset-minutes 60`
+   because the event log is zone-less CET.)
+4. **Before submitting**, attach the account-wide snapshot (`condor_q dwong -af ClusterId ProcId JobStatus`); the
+   pre-S2 reading was `own_active=18` (`raw/s2_precheck.txt`), so state the cap situation rather than adding S4
+   silently.
+
+### 4. What to record after the run
+
+- `s4.out` must contain `S4_DONE out=/work/dwong/paperb/work/s4_<cluster>.<proc>_<UTC>/ fail=0`; record that path,
+  the `s4.out`/`s4.err`/`s4.log` files and the cluster id.
+- From `$OUT/`: `i1_envs.txt` (VERSIONS, three env `python -VV` + imports + pytest versions, torch/CUDA,
+  llama-server, uv), `i2_run1.log`, `i2_run2.log`, `i2_summary.txt` (per-run pytest rc, run.log sha256, val_score
+  and train_loss lines), `i2_compare.txt` (`val_scores=[…]`, `train_losses=[…]`, `I2_PASS`), `s6_xrootd.txt`
+  (per-endpoint ls rc, xrdcp rc, readback sha + `match=`), `identity.txt` (SIF sha/bytes from the build identity
+  and actual sha, VERSIONS sha, job-ad placement lines, checkout heads). Record sha256 of each evidence file.
+- From the event log/history: submit/execute/end UTC, wait/run seconds, `ExitCode`, `LastRemoteHost`,
+  `MachineAttrCloudSite0`, and the host's `SingularityVersion` (Q-S4; `condor_status -af Name SingularityVersion`
+  for the reported host — the in-job-ad grep is best-effort only).
+- Note: the harness env's I1 line will legitimately show `ModuleNotFoundError: pytest` (installed `--no-dev`);
+  do not read it as an environment failure. A nonzero exit (1) means I2/preflight FAIL — read `i2_compare.txt` and
+  `i2_summary.txt` before any decision (a last-digit val_score difference is a stack note — the image's trackp
+  Python is 3.13.x-latest, the reference was 3.13.4, numpy/sklearn/pytest are pinned); exit 3 means a missing
+  paper checkout. If the job is **held** (it should not be now), capture `HoldReason`/`HoldReasonCode` and stop.
+- S6 is expected to test reachability from a worker; rc 124/reachability failure is an environment finding, not a
+  JDL defect — record it and do not retry blindly.
+
+### 5. Residual risk carried
+
+1. `should_transfer_container` name and `ContainerImageSource` are unverified until the dry-run gate above.
+2. Apptainer version mix on the ETP-local fleet (SIF built with 1.5.5; part of the fleet is 1.2.5/1.3.4, Q-S4) —
+   a failure there is an environment finding; record the node and its `SingularityVersion`.
+3. Python patch level: trackp env is whatever 3.13.x the build used (reference 3.13.4); numpy/sklearn/pytest are
+   pinned, so a last-digit val_score difference must be reported as a stack note, not silently accepted/failed.
+4. The comparison requires exactly four `val_score` lines (`len(vs) == 4`); the committed run.log evidence shows
+   one line per run and two runs per invocation, so this should hold — if a run.log ever repeats the display line,
+   the run would be a false `I2_FAIL` (inspect `i2_summary.txt` before concluding).
+5. `_CONDOR_JOB_AD` placement attributes (`RemoteHost`, `MachineAttrSingularityVersion0`, `MachineAttrCloudSite0`)
+   are typically absent at job start; use the history/`condor_status` record. NIT: quoting `${_CONDOR_JOB_AD:-/dev/null}`
+   would remove a `set -u` abort risk if the variable were ever unset.
+6. Account-wide job count and the S6 endpoint reachability are external conditions, not unit defects.
+
+**Round-1 verdict superseded: the two files at commit `2af0b663` fix every blocking/major finding of round 1, and
+the remaining items are the listed pre-submission gates and residual risks. The unit may be submitted after gates
+1–4 above are recorded.**
+
+VERDICT: ACCEPTED

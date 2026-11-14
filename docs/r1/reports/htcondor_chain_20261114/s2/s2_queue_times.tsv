@@ -2,4 +2,4 @@ probe	cluster.proc	submit_utc	execute_utc	end_utc	wait_s	run_s	site	host	gpu_nam
 S2L	759670.0	2026-11-14T10:01:38Z	2026-11-14T10:02:05Z	2026-11-14T10:02:07Z	27	2	mdm	slot1_44@mdm1.etp.kit.edu		0	0	0
 S2N1	759671.0	2026-11-14T10:02:25Z	2026-11-14T10:02:33Z	2026-11-14T10:04:20Z	8	107	BwForCluster-Nemo2	slot1_1@nemo2_gpu-bb8342a9e6@g3606.nemo.privat		0	0	0
 S2N2	759672.0	2026-11-14T10:02:25Z	2026-11-14T10:02:33Z	2026-11-14T10:04:48Z	8	135	BwForCluster-Nemo2	slot1_1@nemo2_gpu-ef18e06ac2@g4401.nemo.privat		0	0	0
-S2T	759673.0	2026-11-14T10:02:25Z								0	0	idle
+S2T	759673.0	2026-11-14T10:02:25Z	2026-11-14T10:11:50Z	2026-11-14T10:11:52Z	565	2	topas	slot1_12@c03-001-159.gridka.de		0	0	0
