@@ -80,9 +80,11 @@ test-side changes M3 carries. So "M3 fixes them" holds only if those held diffs 
 ## 5. Base failures that remain
 
 24 of the base's 40 failures remain through every step, unchanged. Their causes in this run's tracebacks:
-- **14 STOP on mac-int's own D8 guard** (`STOP: exact affirmative R1-BX-D8-CONFIRM with current gate SHA required`, or a
-  file missing because a guarded fixture step stopped): `test_c3_sweep_table.py` (9), `test_d28_noise_binding.py` (3),
-  `test_c3_evidence_guards.py` (2). Same mechanism as §3: these fixtures predate the guard and do not satisfy it.
+- **14 tied to mac-int's own D8 guard**: `test_c3_sweep_table.py` (9), `test_d28_noise_binding.py` (3),
+  `test_c3_evidence_guards.py` (2). In the step-9 log every one of their failure sections contains `STOP: exact affirmative
+  R1-BX-D8-CONFIRM with current gate SHA required` (for `test_replay_detects_deleted_rows_despite_self_signed_table`
+  the last error is a missing `build.json` in its fixture, raised after that STOP). Same mechanism as §3: these fixtures
+  predate the guard and do not satisfy it.
 - **6 STOP on D28 liveness** (`STOP: only 1 nodes passed D28 liveness (< 2); the author decides`):
   `test_c3_sweep_dryrun.py` (6).
 - **4 single causes:** `test_trackp_exam_synthetic.py` (`lightgbm` not installed); `test_rerun2_batch4c.py` (a
