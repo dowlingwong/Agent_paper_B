@@ -28,7 +28,7 @@ Refused:
 
 Not checked (operator's care): site and device consistency, e.g. `etp_ceph` together with NEMO2's `cloud_site` (NEMO2 has no `/ceph/srv`) would never match.
 
-Rendering: `universe = docker`, `docker_image`, the resource requests, `+RequestWalltime`, `request_GPUs` and `+RemoteJob = True` for remote jobs, `requirements` from the placement, device name, cloud site and `ProvidesEtpCeph`, an optional `accounting_group`, file transfer `YES` / `ON_EXIT` (`ON_EXIT_OR_EVICT` with `resume_dir`; `transfer_executable = False` with `executable_in_image`). Arguments use HTCondor's quoted "new syntax".
+Rendering: `universe = docker`, `docker_image` (or, with `runtime: "container"`, `universe = container` and `container_image`: see `reports/HTCONDOR_CONTAINER_20261114.md`), the resource requests, `+RequestWalltime`, `request_GPUs` and `+RemoteJob = True` for remote jobs, `requirements` from the placement, device name, cloud site and `ProvidesEtpCeph`, an optional `accounting_group`, file transfer `YES` / `ON_EXIT` (`ON_EXIT_OR_EVICT` with `resume_dir`; `transfer_executable = False` with `executable_in_image`). Arguments use HTCondor's quoted "new syntax".
 
 ## 3. Queue-time rows and outcomes
 

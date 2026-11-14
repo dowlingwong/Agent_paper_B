@@ -19,7 +19,9 @@ A SIF image is handled apart from the ordinary transfer inputs:
 - **On a shared file system, local job:** a SIF under `/work/` or `/ceph/` for a local-placement job (which sees
   `/work`, `/home`, `/ceph`) is read in place and not transferred; the JDL says `transfer_container = false`.
 - **Transferred (remote job, e.g. NEMO2):** only with `container_transfer: true` written in the manifest. The SIF must
-  then exist here as a regular file (no symlink) and be at most `max_container_transfer_mb`, a cap of its own in
+  then exist here as a regular file (no symlink in the last path component), not be listed again in
+  `transfer_input_files`, fit in `request_disk` (`disk_kb` × 1024 ≥ its size), and be at most
+  `max_container_transfer_mb`, a cap of its own in
   `htc_config.json` (value 8000, status `proposed:` until the cluster agent's S5 measurement). HTCondor transfers it
   (no `transfer_container` line).
 - **Refused:** a remote job with a SIF and no `container_transfer: true` (remote nodes do not see `/work` or
@@ -34,7 +36,9 @@ A SIF image is handled apart from the ordinary transfer inputs:
 `htc_events.job_summary` and the queue-time rows gain `input_transfer_s`: the seconds between each event 040
 "Started transferring input files" and the next "Finished transferring input files", summed over attempts (an
 eviction and restart transfers again), empty when no complete pair was logged. Output transfer is not counted. A
-transferred SIF is part of the input transfer, so S5's measured image transfer time is this column for the S5 job.
+transferred SIF is expected to fall inside the input-transfer window, so for the S5 job this column should give the image
+transfer time; S5 has to confirm that on HTCondor 25.0. The queue-time row now has 14 columns, one more than the
+cluster runbook §4.2 lists.
 `htc_submit --dry-run` also prints `container={...}` (kind, transfer, bytes) for runtime container.
 
 ## 3. Reference test against the cluster agent's JDLs
@@ -52,9 +56,14 @@ and are added to the equivalence test.
 
 ## 4. Tests
 
-`r1/tests/htcondor`: 91 passed (79 before; 12 new in `test_htc_container.py`), `/tmp/trackg_venv`.
+`r1/tests/htcondor`: 91 passed (79 before; 12 new tests in `test_htc_container.py`, with more cases after review round 1), `/tmp/trackg_venv`.
 
 ## 5. For the author / cluster agent
+
+- Conservative choices to confirm: `/home` is not treated as shared for a SIF (only `/work` and `/ceph`); transfer is
+  refused for local jobs; a remote job with a SIF on `/ceph/srv` is refused (see below).
+- The reference test covers only `docker://` images (the four S2 files); the SIF and `transfer_container` lines have no
+  outside reference until the reviewed S4/S5 files exist. Accepting this unit does not review the S2 files themselves.
 
 - `max_container_transfer_mb`: set from S5 (image size and measured `input_transfer_s`).
 - Is a SIF under `/ceph/srv` readable by remote jobs with `etp_ceph: true` (`ProvidesEtpCeph`)? If so, those jobs

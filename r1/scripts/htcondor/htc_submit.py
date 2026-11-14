@@ -259,6 +259,8 @@ def container_plan(data, v, base: Path) -> dict:
     The SIF never counts toward ``max_transfer_input_mb``."""
     img = data["container_image"]
     flag = data.get("container_transfer")
+    if isinstance(img, str) and img in data["transfer_input_files"]:
+        raise HtcError("the SIF image must not also be listed in transfer_input_files (it would be transferred twice)")
     if flag is not None and type(flag) is not bool:
         raise HtcError("container_transfer must be a boolean")
     if not isinstance(img, str) or CONTROL.search(img):
@@ -284,6 +286,9 @@ def container_plan(data, v, base: Path) -> dict:
         if size > float(v["max_container_transfer_mb"]) * 1_000_000:
             raise HtcError(f"container image is {size} bytes, over max_container_transfer_mb "
                            f"{v['max_container_transfer_mb']} MB")
+        if data["disk_kb"] * 1024 < size:
+            raise HtcError(f"request_disk ({data['disk_kb']} KiB) is smaller than the transferred SIF ({size} bytes): "
+                           "the job would be held for disk")
         return {"kind": "sif", "transfer": True, "bytes": size, "shared_fs": shared}
     if data["placement"] == "remote":
         raise HtcError("a remote job with a SIF image needs container_transfer: true (remote nodes do not see "

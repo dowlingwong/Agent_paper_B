@@ -156,6 +156,10 @@ def test_remote_sif_needs_explicit_transfer_and_its_own_cap(tmp_path):
     link.symlink_to(sif)
     with pytest.raises(hs.HtcError, match="not a regular file"):
         hs.validate_manifest(remote(container_image=str(link), container_transfer=True), config())
+    with pytest.raises(hs.HtcError, match="smaller than the transferred SIF"):
+        hs.validate_manifest({**m, "disk_kb": 2000}, config(max_container_transfer_mb=4))   # 2,048,000 B < 3,000,000 B
+    with pytest.raises(hs.HtcError, match="transferred twice"):
+        hs.validate_manifest({**m, "transfer_input_files": [str(sif)]}, config(max_container_transfer_mb=4))
     with pytest.raises(hs.HtcError, match="SIF image only"):
         hs.validate_manifest(remote(container_image="docker://cverstege/alma9-gridjob", container_transfer=True),
                              config())
