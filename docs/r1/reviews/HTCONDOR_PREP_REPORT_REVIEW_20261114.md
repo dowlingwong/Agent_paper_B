@@ -575,3 +575,37 @@ final diff. Residual risk unchanged: single-observer/single-snapshot record, cen
 NEMO2 Docker as a site question, `work` on `/ceph` and the originals in `_to_delete` until retired.
 
 VERDICT: NOT ACCEPTED (remaining)
+
+---
+
+## Final diff check — N1–N9 at 7af377ec (last gate)
+
+**Checked:** HEAD `7af377ec60356eb4c7fde28e523d684dd9550100` (= `origin/htcondor-prep-20261114`
+by `git ls-remote`), diff `2b8becbb..7af377ec` (9 files: report, POOL_FACTS,
+`probes/out/P1w3.out`/`P3w3.out`, `raw/P1w3.out`/`P3w3.out`, `raw/queue_4h_notes.txt`,
+`raw/rsync_work_failed.log`, this review file), report SHA-256 `ce32ff2e…`, POOL_FACTS `4bea4e6e…`;
+06:06–06:08 CET, read-only (no SSH, no git), only this file written.
+
+**Confirmation.** The diff is clean for N2/N3/N4/N5/N6/N7/N8/N9 and matches the committed evidence:
+POOL_FACTS §8 now says "6 L40S: 4 Unclaimed/2 Drained; 4 H200: 1 Unclaimed/3 Drained" and cites the
+315/323/1094/5/13 counts to `raw/pool_analyze_p4_20261114.txt` (00:35 CET); the report §3 stray
+`(raw/evidence_capture_0331.txt)` is gone; POOL_FACTS P7 now gives the structural `HasDocker=undefined`
+reason with the H200 23:38→23:40→03:30 variation; §4 docker timing is "first failure 23:39
+(`raw/host_facts_A.txt`); two further runs at 03:30 (`raw/docker_info.txt`)" with no 23:41 claim; §5 P2 is
+now "~6 h 8 min" with the 04:00 analysis (1 matching/willing, 4 would match if drained) and the
+`raw/queue_4h_notes.txt` header is fixed to "22:52 UTC = 23:52 CET"; §2 cites `raw/rsync_work_failed.log`
+(force-added) + the `MOVE_LOG.tsv` `work` row `copy_failed(rc=23)`; §5 L66 says the +6 h sample **ran** at
+05:50:32 CET; `probes/out/` now has seven tracked stdout files (P1w3/P3w3 force-added, both real
+`probe=P1w3`/`P3w3` output on ms04/ms03) and §8 says seven; wave-3 numbers still match
+`raw/queue_times_current.tsv` (18 s, ms04/ms03, exit 0; n=6 median 19.5, range 7–73). Two NIT residuals
+only, neither affecting any number, conclusion or the move/W2/pool record: (i) **N1 is not actually in
+POOL_FACTS** — §4/§7 still say the +6 h sample "is planned at ~05:52 … its outcome is recorded when it
+runs (or recorded as not run)" although it ran; the report carries the outcome, so add the one-line
+"ran: P1w3/P3w3 at 05:50:32 CET, 18 s, ms04/ms03, exit 0" to POOL_FACTS for consistency; (ii) report §5 P2
+still says "earlier analyses (00:35/03:30) showed 0 willing / 5 drained" — there is no committed P2
+analysis at 00:35 (cite 03:30 only) and "5 drained" should read "5 would match if drained". Both are
+one-line copyedits; fix them in the close-out commit if convenient — I do not require another gate.
+Residual risk is unchanged (single-observer/single-snapshot record, censored P2/P4/P6/P7 waits, NEMO2
+Docker as a site question, `work` on `/ceph` with originals in `_to_delete` until retired).
+
+VERDICT: ACCEPTED (final)

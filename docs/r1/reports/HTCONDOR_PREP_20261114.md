@@ -85,7 +85,7 @@ The six local-1-core samples come from waves 1-3; the 8-core, A100, L40S and H20
 | local CPU 1 core, docker | P1 | **73 s** | completed (host `ms02`, `CloudSite=schnepf`) |
 | local CPU 1 core, docker, **wave 2** | P1w2 | **21 s** | completed on `mdm1.etp.kit.edu` (`CloudSite=mdm`), run 2 s |
 | remote CPU (best effort), **wave 2** | P3w2 | **21 s** | completed on `ms04.etp.kit.edu` (`schnepf`), run 1 s |
-| local CPU 8 cores, docker | P2 | **still idle at 06:00 CET (~6 h 8 min after its 23:52 CET submit; >4 h note captured 04:00 in `raw/queue_4h_notes.txt`)** | capacity: the 04:00 CET analysis shows 1 slot matching and willing, 4 would match if drained; earlier analyses (00:35/03:30) showed 0 willing / 5 drained |
+| local CPU 8 cores, docker | P2 | **still idle at 06:00 CET (~6 h 8 min after its 23:52 CET submit; >4 h note captured 04:00 in `raw/queue_4h_notes.txt`)** | capacity: the 04:00 CET analysis shows 1 slot matching and willing, 4 would match if drained; the 03:30 CET analysis showed 0 match and 5 would match if drained |
 | remote CPU (best effort) | P3 | **7 s** | completed **locally**; remote-CPU class not measured |
 | TOpAS A100 | P4 | **idle** | A100 node fully allocated; kept queued per author (re-analysis with `-pool` recorded) |
 | TOpAS V100S | P5 | **212 s** | completed; TOpAS flocking works |
