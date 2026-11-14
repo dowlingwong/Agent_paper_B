@@ -59,7 +59,11 @@ Queue times are recorded with the reviewed adapter's `htc_events.py` (exact call
 
 The local path works: `/ceph/srv/dwong/paperb/` exists (author's new directory) and a test file was written there (`chain_20261114_xrootd_test.txt`, 51 B, sha256 `90e6b637…d8a7`). The xrootd endpoints are **not reachable from the deepthought login node**: both `root://ceph-node-j.etp.kit.edu` and `root://ceph-node-a.etp.kit.edu` resolve to IPv6 only and return no response (`xrdfs` timed out, rc 124) or refuse port 1094; the client (`xrdfs`/`xrdcp`, xrootd 5.7.0) is installed. This is recorded as a question: the endpoints may be reachable only from the worker nodes, so the round trip must be tested inside a job (candidate: the S4 local-CPU job, which can run `xrdcp` against `/ceph/srv`). Raw: `raw/s6_xrootd_attempt2.txt`.
 
-## S3–S5
+## S3 — building the SIF (in progress)
 
-S3 def/README/build plan committed and in review; S4/S5 follow after the SIF exists.
+Def/README/build plan committed (`r1/scripts/htcondor/apptainer/`), pre-build review pending. Committed inputs: harness `uv.lock` at `a3fedbb` (sha256 `dd42d018…`, 536,392 B), `pyproject.toml` at `a3fedbb` (sha `72c43589…`), the 65-package freeze (sha256 `f1c818e5…`, 65 lines), the Track P freeze (sha256 `17da9a3a…`, 101 lines). Build is capability-gated (plain `apptainer build`, then `--fakeroot`, STOP if neither), writes `r1-htc-20261114.sif` under `/work/dwong/paperb/images/` with SHA-256/bytes/inspect/VERSIONS records and copies it to `/ceph/srv/dwong/paperb/images/`. **No Dockerfile route today:** the daemon is inactive (Q-D1); the author's supplement says not to start it.
+
+## S4/S5 — prepared, awaiting the SIF
+
+S4 (local CPU, `container_image = /work/dwong/paperb/images/r1-htc-20261114.sif`, `requirements = TARGET.ProvidesETPResources`): I1 environment/version checks in all three envs, I2 the `60ecf1da`/`a3fedbb` CPU worker determinism test twice with all thread settings 1 against the recorded `0.922225`, and the xrootd round-trip attempt from a worker. S5 (NEMO2 L40S, same SIF transferred by HTCondor): I4 CUDA/torch/llama-server plus the SIF-transfer method/size/time record the author asked for. Checkouts are already in place: paper `60ecf1da` and harness `a3fedbb` under `/work/dwong/paperb/src/` (both verified by `git rev-parse HEAD`, clean). S4 review is running in parallel with the build; S5 review follows the S4 result.
 

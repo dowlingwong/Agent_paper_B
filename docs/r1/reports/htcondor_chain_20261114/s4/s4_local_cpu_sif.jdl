@@ -1,0 +1,13 @@
+universe = container
+container_image = /work/dwong/paperb/images/r1-htc-20261114.sif
+executable = s4_run.sh
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = s4_run.sh
+transfer_output_files = i1_envs.txt, i2_run1.log, i2_run2.log, i2_summary.txt, i2_compare.txt, s6_xrootd.txt, identity.txt
++RequestWalltime = 3600
+RequestCPUs = 2
+RequestMemory = 8000
+request_disk = 30000000
+requirements = TARGET.ProvidesETPResources
+queue 1
