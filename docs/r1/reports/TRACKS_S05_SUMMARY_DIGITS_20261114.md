@@ -123,15 +123,16 @@ so the margins differ by exactly 0.00132 (the E1 margins 0.0172 vs 0.0159 above)
   non-duplicate proposal looks worth executing under either price.
 - **Which hypothesis.** It is not that A2-U's implicit threshold coincides with 0.00198; the two thresholds differ, but
   both lie far below every V\*. It is also not that the proposals are clearly good or bad; the forecast does not
-  separate them, since V\* is almost the same for all. The worker budget is slack (no root used more than 27 of 40
-  runs) and the binding limit is the 40-proposal LLM cap, so budget pressure never enters. The direct cause is the
+  separate them, since V\* is almost the same for all. The worker budget is slack in this W = 40 pilot (no root used more than
+  27 of 40 runs) and the binding limit is the 40-proposal LLM cap, so budget pressure never enters here (it may at the
+  truncated W). The direct cause is the
   size of τ_w relative to g: with V\* ≫ g for every proposal, the only skips are rule duplicates, which both policies
   share.
 
 ### 5.2 Calibration: where the miscalibration sits, and an offline two-parameter recalibration
 
 **Decomposition at the run's prior** (S0.5 rows). The predicted variance is τ_n² + τ_w² + se². The S0.5 group sums are
-recovered exactly from (μ, n_group) and the prior; the reconstructed sd matches the recorded sd to 7e-18.
+recovered from (μ, n_group) and the prior; the reconstructed sd matches the recorded sd to 7e-18, and the recovered sums are exactly 0 where n_group = 0 (checked by the round-2 reviewer).
 
 | Stratum | n | mean residual (δ − μ) | MS residual / predicted var | share τ_n² | share τ_w² | share se² | bias² share of MS |
 |---|---|---|---|---|---|---|---|
@@ -140,34 +141,44 @@ recovered exactly from (μ, n_group) and the prior; the reconstructed sd matches
 | ≥ 3 | 144 | −0.0106 | **0.42** | 0.0004 | 0.994 | 0.005 | 0.11 |
 
 - **The prior/posterior variance of the group mean (τ_n²) is negligible** (0.04 %). **The observation-noise terms are
-  small too:** the audit se² is 0.5–5 %, and λ acts only on τ_n through the update. **Almost all predicted variance is
+  small too:** the audit se² is 0.5–5 %, and λ acts only through the group update (τ_n and the posterior mean), which barely moves at the run's τ0. **Almost all predicted variance is
   the within-key spread τ_w², which is the same in every stratum.**
-- The realised spread is not the same. It is 3–4 × the prediction for proposals with 0–2 earlier observations in their
-  group, and 0.4 × for later ones. The bias is a small part of the error (4–11 %). So the miscalibration is a
+- The realised spread is not the same. The mean squared residual is 3–4 × the predicted variance for proposals with 0–2
+  earlier observations in their group, and 0.4 × for later ones. The bias is a small part of the error (4–11 %). So the miscalibration is a
   **spread that shrinks with n_group**, which a constant τ_w cannot represent.
 
-**Two-parameter recalibration, offline (not implemented).** The model has a prior scale c and λ.
-- c multiplies τ0 and τ_w; the variant `tau0_only` multiplies τ0 alone.
-- λ multiplies the update's observation variance, as `obs_inflation` does.
-- (c, λ) were fitted on the 165 S0.4 rows the prior came from, by sequential replay per instance and (key, sign)
-  group. Two criteria were used: maximum Gaussian predictive log-likelihood, and the smallest worst-stratum coverage
-  error.
-- The fit was then tested on the 298 S0.5 calibration rows, over a log grid c ∈ [0.1, 10] × λ ∈ [0.1, 30]
-  (81 × 81 points). The grid includes λ < 1, which the runbook's λ₂ rule does not allow.
+**Two-parameter recalibration, offline (not implemented).** The parameters are:
+- prior scale c, which multiplies τ0 and τ_w; the variant `tau0_only` multiplies τ0 alone;
+- λ, which multiplies the update's observation variance, as `obs_inflation` does.
 
-| Variant, criterion | c | λ | S0.5 coverage 0 / 1-2 / ≥ 3 | gate |
+Method:
+- (c, λ) were fitted on the 165 S0.4 rows the prior came from. The fit replays each instance and (key, sign) group in budget order, with the executed Δ̂ as observations. The round-2 reviewer confirmed that this reproduces the controller's observation lists.
+- Two criteria were used: maximum Gaussian predictive log-likelihood, and smallest worst-stratum coverage error.
+- The fit was then tested on the 298 S0.5 calibration rows. The S0.5 group sums are recovered from (μ, n_group) and the prior. The reviewer checked them separately: they are exactly 0 where n_group = 0.
+- Grid: log grid c ∈ [0.01, 1000] × λ ∈ [1e-4, 1000], 121 × 121 points. Note that both the runbook's λ₂ rule and the code (A2UController refuses obs_inflation < 1, per the round-2 reviewer) allow only λ ≥ 1.
+
+| Variant, criterion (fitted on S0.4) | c | λ | S0.5 coverage 0 / 1-2 / ≥ 3 | gate |
 |---|---|---|---|---|
-| run prior (c = 1, λ = 1) | 1 | 1 | 0.538 / 0.674 / 0.944 | fail |
-| both, max log-lik on S0.4 | 1.12 | 0.10 (grid edge) | 0.600 / 0.730 / 0.958 | fail |
-| both, min worst-stratum error on S0.4 | 0.94 | 0.10 (grid edge) | 0.492 / 0.629 / 0.938 | fail |
-| tau0_only, max log-lik on S0.4 | 10.0 (grid edge) | 0.15 | 0.569 / 0.809 / 0.972 | fail |
-| tau0_only, min worst-stratum error | 0.10 (edge) | 0.10 (edge) | 0.538 / 0.674 / 0.944 | fail |
+| run prior | 1 | 1 | 0.538 / 0.674 / 0.944 | fail |
+| both, max log-lik | 1.00 | 0.0015 | 0.538 / 0.809 / 0.972 | fail |
+| both, min worst-stratum error | 1.00 | 0.0001 (grid edge) | 0.538 / 0.652 / 0.840 | fail |
+| tau0_only, max log-lik | 34.8 | 1.39 | 0.600 / 0.854 / 0.972 | fail |
+| tau0_only, min worst-stratum error | 51.1 | 0.18 | 0.600 / 0.640 / 0.840 | fail |
 
-**No (c, λ) on the grid puts all three strata in [0.70, 0.90] on S0.5, even when chosen on S0.5 itself** (0 of
-6,561 points, in both variants). The reason follows from the decomposition: c moves every stratum's interval in the
-same direction, and λ acts only on the negligible τ_n². So **as an option, the two-parameter recalibration does not
-achieve the gate on digits**. A remedy would need a spread that depends on n_group (for example a τ_w that shrinks with
-the group's observations); that is a model change for the author and is not evaluated here.
+- **Out of sample, the recalibration fails.** No (c, λ) fitted on S0.4 puts all three strata in [0.70, 0.90] on S0.5.
+- **In sample** (points chosen on S0.5 itself, so only an upper bound on what is reachable):
+  - in the `both` variant no grid point passes;
+  - in `tau0_only`, 8 of 14,641 points pass. All have τ0 ≈ 91–110 × the run's value (≈ 0.09–0.11) and λ between 0.62 and 0.93, so every one has λ < 1 and the code and the runbook would refuse it;
+  - the best allowed point (λ ≥ 1) is c ≈ 110, λ ≈ 1.06, with coverage 0.831 / 0.820 / 0.903. That is just outside the band in stratum ≥ 3.
+- **So, as an option, the two-parameter recalibration does not reach the gate on digits** within the allowed λ ≥ 1.
+
+**Why.** (Corrected after round 2.)
+- The prior fit set τ0 to its floor (0.15 σ_node = 0.00099), because the A2 prior sd τ_A2 (0.019) is smaller than τ_w (0.049).
+- With τ0 that small the posterior mean barely moves with the group's history, and the predictive spread is almost all τ_w. That spread does not depend on n_group. The same cause makes V\* nearly constant (§5.1).
+- λ is not confined to τ_n²: it also sets how far the posterior mean follows the observations.
+- With a much larger τ0, which the S0.4 data favour (log-likelihood 251.0 at c ≈ 35 vs 235.1 at c = 1, from the round-2 reviewer), the existing model's spread does shrink with n_group. It comes close to the band in sample, but passes only with λ < 1.
+
+So the direction is a **prior change (a larger τ0)**, possibly together with a model change for the within-key spread. Either way it is for the author, and no point allowed by the current rules reaches the gate.
 
 ## 6. When this goes to the author
 
