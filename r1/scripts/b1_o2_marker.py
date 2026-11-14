@@ -1,4 +1,7 @@
-"""B1 marker publication/retirement primitives; caller must check handover gates."""
+"""B1/B2 marker publication/retirement primitives; caller must check handover gates.
+
+B2 code unit (14 Nov 2026): ``create`` takes ``phase`` (default ``b1``, unchanged); ``b2`` writes the STATUS heading
+``Track X B2 running``.  The marker file, its content and the retirement are the same for both phases."""
 import argparse
 import ctypes
 import datetime
@@ -24,7 +27,12 @@ def directory(path):
     return fd
 
 
-def create(lock_dir, status_path, run_id, head):
+PHASE_HEADINGS = {'b1': 'Track X B1 running', 'b2': 'Track X B2 running'}
+
+
+def create(lock_dir, status_path, run_id, head, phase='b1'):
+    if phase not in PHASE_HEADINGS:
+        raise ValueError('invalid phase')
     if not run_id or not all(c.isalnum() or c in '-_' for c in run_id):
         raise ValueError('invalid run id')
     if len(head) != 40 or any(c not in '0123456789abcdef' for c in head):
@@ -45,7 +53,7 @@ def create(lock_dir, status_path, run_id, head):
         info = os.fstat(markerfd)
         with os.fdopen(markerfd, 'wb', closefd=False) as stream:
             stream.write(data)
-        status = f'\n## {datetime.date.today().isoformat()} — Track X B1 running\n\nRun: `{run_id}`; reviewed checkout HEAD: `{head}`.\n'.encode()
+        status = f'\n## {datetime.date.today().isoformat()} — {PHASE_HEADINGS[phase]}\n\nRun: `{run_id}`; reviewed checkout HEAD: `{head}`.\n'.encode()
         with os.fdopen(statusfd, 'ab', closefd=False) as stream:
             stream.write(status)
         return {'run_id': run_id, 'head': head, 'dev': info.st_dev, 'ino': info.st_ino,
@@ -104,10 +112,11 @@ def main():
     parser.add_argument('--run-id')
     parser.add_argument('--head')
     parser.add_argument('--receipt')
+    parser.add_argument('--phase', choices=sorted(PHASE_HEADINGS), default='b1')
     args = parser.parse_args()
     if args.operation == 'create':
         if not all((args.status, args.run_id, args.head)): parser.error('create needs --status --run-id --head')
-        result = create(args.lock_dir, args.status, args.run_id, args.head)
+        result = create(args.lock_dir, args.status, args.run_id, args.head, args.phase)
     else:
         if not args.receipt: parser.error('retire needs --receipt')
         result = retire(args.lock_dir, json.loads(Path(args.receipt).read_text()))

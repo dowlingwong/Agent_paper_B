@@ -41,16 +41,22 @@ def _authorized_candidate(job, cfg, registry):
 @contextmanager
 def authorized_b1_observer(job):
     """Enter a B1-only worker context after the real job authority checks."""
-    from r1.exam.runtime import author_gate, host_check, read_registry
+    from r1.exam.runtime import author_gate, host_check, read_registry, phase_seeds
     from r1.exam.campaign import require_worker_host
-    if job.get('phase') != 'b1':
-        raise D3EvidenceStop('STOP: B1 observer context requires B1')
+    phase=job.get('phase')
+    if phase not in ('b1','b2'):
+        raise D3EvidenceStop('STOP: B1 observer context requires B1 or B2')
     cfg=job['authority_config']
     if bool(cfg.get('dryrun')) != bool(job.get('dryrun')):
         raise D3EvidenceStop('STOP: B1 observer dryrun mismatch')
     if not job.get('dryrun'):
+        if phase=='b1':
+            instance_seeds,audit_seeds=cfg.get('instance_seeds',[]),cfg.get('audit_seeds')
+        else:
+            instance_seeds,audit_seeds=phase_seeds(cfg,phase)
         for key in ('workers','W','llm_call_cap','audit_seeds'):
-            if job.get(key)!=cfg.get(key):
+            expected=audit_seeds if key=='audit_seeds' else cfg.get(key)
+            if job.get(key)!=expected:
                 raise D3EvidenceStop(f'STOP: B1 observer job {key} differs from authorized configuration')
         expected_schema=None if cfg.get('free_sensitivity') else cfg.get('proposal_schema')
         if job.get('proposal_schema')!=expected_schema or cfg.get('cache_prompt') is not False:
@@ -65,17 +71,19 @@ def authorized_b1_observer(job):
         require_worker_host(job)
         if job.get('host')!=cfg.get('host') or job.get('node') not in cfg.get('nodes',[]):
             raise D3EvidenceStop('STOP: B1 observer job host/node differs from authorized configuration')
-        if job.get('seed') not in cfg.get('instance_seeds',[]) or job.get('mode') not in ('off','on'):
+        if job.get('seed') not in instance_seeds or job.get('mode') not in ('off','on'):
             raise D3EvidenceStop('STOP: B1 observer seed/mode differs from authorized configuration')
         registry=read_registry(cfg['registry'])
         if not _authorized_candidate(job,cfg,registry):
             raise D3EvidenceStop('STOP: B1 observer candidate differs from registry')
-        if job.get('mode')=='on':
+        if job.get('mode')=='on' and phase=='b1':
+            # B2's top-3 thinking-on rerun is descriptive on every B2 node (x5_rule/v2); only B1's
+            # sensitivity is restricted to the sensitivity node.
             from r1.exam.analyze import load_rule
             rule,_=load_rule(cfg['rule'],cfg['rule_sha256'])
             if job.get('node')!=rule['thinking_mode']['b1_sensitivity']['node']:
                 raise D3EvidenceStop('STOP: B1 thinking-on node is not the sensitivity node')
-    head=author_gate(cfg,'b1',cfg['rule_sha256'])
+    head=author_gate(cfg,phase,cfg['rule_sha256'])
     if not job.get('dryrun') and head!=job.get('authorization_checkout_head'):
         raise D3EvidenceStop('STOP: B1 observer checkout changed')
     token=_B1_OBSERVER_CONTEXT.set(True)

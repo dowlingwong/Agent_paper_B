@@ -169,8 +169,10 @@ def require_worker_host(job, node=None):
 
 
 def collect(job):
-    if job.get('phase') != 'b1':
-        raise RuntimeError('STOP: B2 observer integration is not implemented')
+    # B2 code unit (14 Nov 2026): B2 runs through the reviewed B1 collector, with every B1 protection
+    # (worker authority, observer and proposal journals, pre-check, cache evidence) and the final-Y audit.
+    if job.get('phase') not in ('b1','b2'):
+        raise RuntimeError('STOP: only the reviewed B1/B2 collector is implemented')
     return _collect_b1_review(job)
 
 
@@ -180,32 +182,43 @@ def _verify_b1_worker_input(job):
     This is a cooperative point-in-time check; it does not lock the checkout
     or establish that a direct caller is the reviewed runner process.
     """
-    from r1.exam.runtime import (REPO, B1_CONFIG_REL, require_committed_b1_config,
-                                 require_committed_b1_registry, author_gate)
+    from r1.exam.runtime import (REPO, B1_CONFIG_REL, B2_CONFIG_REL, PHASE_CONFIG_REL, require_committed_b1_config,
+                                 require_committed_b1_registry, author_gate, phase_seeds)
+    phase=job.get('phase')
+    if phase not in PHASE_CONFIG_REL:
+        raise RuntimeError('STOP: protected worker requires phase b1 or b2')
+    label=phase.upper()
     cfg=job.get('authority_config')
     if not isinstance(cfg,dict) or cfg.get('dryrun'):
-        raise RuntimeError('STOP: production B1 worker requires production authority configuration')
-    head=require_committed_b1_config(REPO/B1_CONFIG_REL,cfg)
+        raise RuntimeError(f'STOP: production {label} worker requires production authority configuration')
+    head=(require_committed_b1_config(REPO/B1_CONFIG_REL,cfg) if phase=='b1' else
+          require_committed_b1_config(REPO/B2_CONFIG_REL,cfg,rel=B2_CONFIG_REL))
     if head!=job.get('authorization_checkout_head'):
-        raise RuntimeError('STOP: B1 worker configuration HEAD differs from job')
+        raise RuntimeError(f'STOP: {label} worker configuration HEAD differs from job')
     require_committed_b1_registry(cfg,head)
-    if author_gate(cfg,'b1',cfg['rule_sha256'])!=head:
-        raise RuntimeError('STOP: B1 worker author HEAD differs from configuration HEAD')
+    if author_gate(cfg,phase,cfg['rule_sha256'])!=head:
+        raise RuntimeError(f'STOP: {label} worker author HEAD differs from configuration HEAD')
+    # B1: exactly the reviewed comparisons (configured seeds); B2: the fresh instance seeds and 9201–9210.
+    if phase=='b1':
+        instance_seeds,audit_seeds=cfg.get('instance_seeds',[]),cfg.get('audit_seeds')
+    else:
+        instance_seeds,audit_seeds=phase_seeds(cfg,phase)
     for key in ('workers','W','llm_call_cap','audit_seeds','value_grids'):
-        if job.get(key)!=cfg.get(key):
-            raise RuntimeError(f'STOP: B1 worker job {key} differs from committed configuration')
+        expected=audit_seeds if key=='audit_seeds' else cfg.get(key)
+        if job.get(key)!=expected:
+            raise RuntimeError(f'STOP: {label} worker job {key} differs from committed configuration')
     if job.get('host')!=cfg.get('host') or job.get('node') not in cfg.get('nodes',[]):
-        raise RuntimeError('STOP: B1 worker host/node differs from committed configuration')
-    if job.get('seed') not in cfg.get('instance_seeds',[]) or job.get('mode') not in ('off','on'):
-        raise RuntimeError('STOP: B1 worker seed/mode differs from committed configuration')
+        raise RuntimeError(f'STOP: {label} worker host/node differs from committed configuration')
+    if job.get('seed') not in instance_seeds or job.get('mode') not in ('off','on'):
+        raise RuntimeError(f'STOP: {label} worker seed/mode differs from committed configuration')
     if job.get('proposal_schema')!=cfg.get('proposal_schema'):
-        raise RuntimeError('STOP: B1 worker proposal schema differs from committed configuration')
+        raise RuntimeError(f'STOP: {label} worker proposal schema differs from committed configuration')
     return head
 
 
 def _collect_b1_review(job):
     """Collect a B1 campaign with the authorized observer and cache evidence."""
-    if job.get('phase') != 'b1': raise RuntimeError('STOP: B1 candidate refuses other phases')
+    if job.get('phase') not in ('b1','b2'): raise RuntimeError('STOP: B1/B2 collector refuses other phases')
     out=Path(job['out'])
     if not job['dryrun']:
         _verify_b1_worker_input(job)

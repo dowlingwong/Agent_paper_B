@@ -15,7 +15,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from r1.exam.campaign import write_json
 from r1.exam.stage_a import prefill_metadata
 from r1.exam.guards import artifact_label, digest_file, paired_instance_bootstrap
-from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders, report_b1_stop_and_save, require_committed_b1_config
+from r1.exam.runtime import DEFAULT_CONFIG, ExamRunner, MechanicalFailure, PreparationStop, gpu_sample, load_config, placeholders, report_b1_stop_and_save, require_committed_b1_config, PROTECTED_PHASES, B2_CONFIG_REL
 from r1.exam.analyze import is_v2, thinking_off_capable
 from r1.scripts import llama_server_instance as lsi
 
@@ -326,10 +326,13 @@ def check_template_repairs(cfg, specs):
 
 
 def evidence(runner, phase, selected, interrupt):
-    if phase != 'b1' or not is_v2(getattr(runner,'rule',None)):
-        raise PreparationStop('STOP: only x5_rule/v2 B1 evidence is implemented')
+    if phase not in PROTECTED_PHASES or not is_v2(getattr(runner,'rule',None)):
+        raise PreparationStop('STOP: only x5_rule/v2 B1/B2 evidence is implemented')
     if selected and not runner.cfg.get('dryrun'):
-        raise PreparationStop('STOP: production B1 requires the full eligible candidate set')
+        raise PreparationStop('STOP: production B1 requires the full eligible candidate set' if phase=='b1' else
+                              'STOP: production B2 requires the full frozen finalist set')
+    if phase=='b2' and runner.cfg.get('free_sensitivity') and not runner.cfg.get('dryrun'):
+        raise PreparationStop('STOP: the B2 schema-free sensitivity is separately gated (after X.7 (a)); not part of the B2 code unit')
     return _evidence_unreviewed(runner, phase, selected, interrupt)
 
 
@@ -356,12 +359,22 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
     if phase=='b2':
         screen=json.loads(Path(cfg['b1_analysis']).read_text())
         if screen['rule_sha256']!=runner.rule_sha: raise RuntimeError('STOP: B1 rule identity mismatch')
+        if v2 and not cfg.get('dryrun') and (screen.get('phase')!='b1' or screen.get('execution_label')!='EVIDENCE' or
+                                             not isinstance(screen.get('batch_verification'),dict)):
+            raise PreparationStop('STOP: B2 needs the verified complete-batch B1 analysis')
+        if v2 and (not isinstance(screen.get('finalists'),list) or not screen['finalists'] or
+                   len(set(screen['finalists']))!=len(screen['finalists'])):
+            raise PreparationStop('STOP: B2 needs a non-empty, duplicate-free frozen finalist list')
         final={cfg['d22_pick'],'qwen25_coder_7b'} if cfg.get('free_sensitivity') else set(screen['finalists'])
         specs=[s for s in runner.spec_order() if s['id'] in final]
         if cfg.get('free_sensitivity'):
             plan=(Path(__file__).resolve().parents[2]/'docs/r1/PLAN.md').read_text()
             if not any('D22' in line and cfg['d22_pick'] in line for line in plan.splitlines()): raise RuntimeError('STOP: D22 pick must be author-recorded before its free sensitivity')
         if not specs: raise RuntimeError('STOP: B2 needs frozen B1 finalists')
+        if v2 and not cfg.get('free_sensitivity'):
+            # A finalist absent from the registry or from the Stage A pass set would otherwise be skipped silently.
+            missing=sorted(set(screen['finalists'])-{s['id'] for s in specs if s['id'] in eligible})
+            if missing: raise PreparationStop('STOP: B2 finalists absent from the registry or Stage A pass set: '+', '.join(missing))
     for spec in specs:
         if spec['id'] not in eligible: continue
         if (v2 and phase=='b1' and spec.get('role') in ('candidate','sensitivity') and runner.rule['thinking_mode']['always_on_in_b1']=='skip'
@@ -410,7 +423,7 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
                         root_results.append(runner.root(spec,phase,node,seed,current_mode,interrupt=interrupt and len(runner.state['completed'])>=1 and not runner.state.get('interruptions')))
                 if runner.service: runner.stop_service()
         except BaseException:
-            if phase=='b1' and not cfg.get('dryrun'):
+            if phase in PROTECTED_PHASES and not cfg.get('dryrun'):
                 runner.state['shutdown_writes'] = ('Stopping B1-owned workers and the B1 server may append '
                     'runner/server logs and publish server and batch-state records; retain and report them.')
                 if runner.service and not getattr(runner,'b1_shutdown_attempted',False):
@@ -422,7 +435,7 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
             raise
         finally:
             # On a B1 STOP the except branch has attempted shutdown exactly once.
-            if runner.service and not (phase=='b1' and not cfg.get('dryrun') and
+            if runner.service and not (phase in PROTECTED_PHASES and not cfg.get('dryrun') and
                                        getattr(runner,'b1_shutdown_attempted',False)):
                 runner.stop_service()
         audits=[r for root in root_results for r in root['audited_proposals']]
@@ -447,8 +460,8 @@ def _evidence_unreviewed(runner, phase, selected, interrupt):
                   'gpu_hours_method':'dedicated_server_wall_intervals_including_load_and_audit',
                   'execution_label':'DRYRUN' if cfg.get('dryrun') else 'EVIDENCE','root_manifests':[str(runner.out/f'{spec["id"]}/{phase}/{r["mode"]}/{r["node"]}__s{r["instance_seed"]}/campaign_manifest.json') for r in root_results]}
         if v2:
-            if phase=='b1' and not cfg.get('dryrun') and not re.fullmatch(r'[0-9a-f]{40}',str(getattr(runner,'author_head',''))):
-                raise PreparationStop('STOP: B1 manifest requires the authorized checkout HEAD')
+            if phase in PROTECTED_PHASES and not cfg.get('dryrun') and not re.fullmatch(r'[0-9a-f]{40}',str(getattr(runner,'author_head',''))):
+                raise PreparationStop(f'STOP: {phase.upper()} manifest requires the authorized checkout HEAD')
             manifest.update(rule_version='x5_rule/v2',cache_prompt=cfg['cache_prompt'],harness_commit=cfg.get('harness_commit'),
                             authorization_checkout_head=getattr(runner,'author_head',None),
                             template_repair=template_repair_record(spec),
@@ -512,8 +525,6 @@ def main(argv=None):
     p.add_argument('--amendment',choices=['A1'],help='declared template-check amendment for a measurement run')
     p.add_argument('--amendment-reason',help='declared reason for the amendment measurement')
     a=p.parse_args(argv)
-    if not a.check_config and a.phase=='b2':
-        raise PreparationStop('STOP: B2 reviewed observer integration is not implemented')
     if not a.check_config and a.phase=='stage-a' and not os.environ.get('TRACKX_GPU_LEASE_FD'):
         raise PreparationStop('STOP: D3 cold-cache cooperative lease FD absent')
     if a.allow_placeholders and not a.check_config: p.error('--allow-placeholders is only for --check-config')
@@ -521,6 +532,8 @@ def main(argv=None):
     b1_config_head=None
     if a.phase=='b1' and not a.check_config and not cfg.get('dryrun'):
         b1_config_head=require_committed_b1_config(a.config,cfg)
+    if a.phase=='b2' and not a.check_config and not cfg.get('dryrun'):
+        b1_config_head=require_committed_b1_config(a.config,cfg,rel=B2_CONFIG_REL)
     if not a.check_config and a.phase=='stage-a':
         from r1.exam.cache_runtime import authorize_cooperative_stagea
         authorize_cooperative_stagea(cfg)
@@ -533,6 +546,10 @@ def main(argv=None):
     if a.interrupt_root and not cfg.get('dryrun'): p.error('--interrupt-root is DRYRUN only')
     if a.phase=='b1' and a.candidate and not cfg.get('dryrun'):
         raise PreparationStop('STOP: production B1 requires the full eligible candidate set')
+    if a.phase=='b2' and a.candidate and not cfg.get('dryrun'):
+        raise PreparationStop('STOP: production B2 requires the full frozen finalist set')
+    if a.phase=='b2' and a.free_sensitivity and not cfg.get('dryrun'):
+        raise PreparationStop('STOP: the B2 schema-free sensitivity is separately gated (after X.7 (a)); not part of the B2 code unit')
     if a.phase in ('b1','b2') and (not cfg.get('authorizations',{}).get(a.phase) or
                                   placeholders(cfg['authorizations'][a.phase])):
         raise PreparationStop('STOP: active phase authorization note is unresolved')
@@ -543,7 +560,7 @@ def main(argv=None):
         if is_v2(load_rule(cfg['rule'],cfg['rule_sha256'])[0]): required += list(STAGE_A_AMENDMENT_KEYS)
     unresolved=placeholders({k:cfg[k] for k in required})
     if unresolved: raise RuntimeError(f'STOP: unresolved phase settings: {unresolved}')
-    if a.phase=='b1' and not cfg.get('dryrun'): verify_anchor_reference(cfg)
+    if a.phase in PROTECTED_PHASES and not cfg.get('dryrun'): verify_anchor_reference(cfg)
     runner=ExamRunner(cfg,a.out,b1_config_head=b1_config_head)
     preserve_running=False;b1_stopped=False
     try:
@@ -563,7 +580,7 @@ def main(argv=None):
         runner.state.update(status='STOPPED',stop_reason=f'{type(exc).__name__}: {exc}')
         if preserve_running:
             runner.state['gpu_lease_after_stop']='NOT_CHECKABLE: runner marker is not evidence of held flock'
-        if a.phase=='b1' and not cfg.get('dryrun'):
+        if a.phase in PROTECTED_PHASES and not cfg.get('dryrun'):
             b1_stopped=True
             runner.state.setdefault('shutdown_writes', 'Stopping B1-owned workers and the B1 server may append runner/server logs and publish server and batch-state records; retain and report them.')
             if runner.service and not getattr(runner,'b1_shutdown_attempted',False):

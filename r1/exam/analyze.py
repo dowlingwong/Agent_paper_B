@@ -285,7 +285,22 @@ def _b2_final_values(m):
     return values
 
 
-def _b2_summary_v2(manifests, rule, sha):
+def b2_summary_verified(batch, cfg, *, rule_path=RULE_V2, expected=None):
+    """x5_rule/v2 B2 ranking only from the complete authorized evidence batch and its verified grid
+    (``r1.exam.b2_batch.verify_b2_batch``; B2 code unit, 14 Nov 2026)."""
+    from r1.exam.b1_batch import refuse_sealed
+    refuse_sealed(batch,rule_path)
+    rule,sha=load_rule(rule_path,expected)
+    if not is_v2(rule): raise ValueError('STOP: complete-batch B2 verification requires x5_rule/v2')
+    from r1.exam.b2_batch import verify_b2_batch
+    manifests,proof=verify_b2_batch(batch,cfg,sha)
+    result=_b2_summary_v2(manifests,rule,sha,grid=proof['grid'])
+    result['execution_label']='EVIDENCE'
+    result['batch_verification']=proof
+    return result
+
+
+def _b2_summary_v2(manifests, rule, sha, grid=None):
     """x5_rule/v2: rank only primary thinking-off rows by final audited Y; ties to lower GPU-h.
 
     A primary manifest in any other mode is refused.  The top-3 thinking-on reruns (the manifest's
@@ -320,9 +335,14 @@ def _b2_summary_v2(manifests, rule, sha):
             ys=[float(r['final_y']) for r in rerun]
             descriptive.append({'candidate':m['candidate'],'mode':'on','final_y':finite_mean(ys),'instances':len(ys),
                                 'source':'top3_thinking_on_rerun','label':m.get('thinking_on_rerun','descriptive')})
-    # Until an independently reviewed, author-bound B2 power plan validates the
-    # complete unique node/instance grid, no v2 ranking is safe to publish.
-    raise ValueError('STOP: B2 node/instance grid has not been verified against the author-bound power plan')
+    # Only a grid verified against the author-bound power plan (``b2_summary_verified``) may be ranked.
+    if not isinstance(grid,dict) or grid.get('verified') is not True:
+        raise ValueError('STOP: B2 node/instance grid has not been verified against the author-bound power plan')
+    if sorted(r['candidate'] for r in primary)!=sorted(grid.get('finalists') or []) or schema:
+        raise ValueError('STOP: B2 primary candidates differ from the verified finalist grid')
+    cells=len(grid['nodes'])*int(grid['instances_per_node'])
+    if any(r['instances']!=cells for r in primary):
+        raise ValueError('STOP: B2 primary row does not cover the verified grid')
     ranked=sorted(primary,key=lambda r:(-r['final_y'],r['gpu_hours'] if r['gpu_hours'] is not None else math.inf))
     return {'phase':'b2','label':'EXAM','rule_version':'x5_rule/v2','rule_sha256':sha,'rows':ranked,
             'selection':{'quantity':rule['selection']['quantity'],'mode':'off','ties':'lower_gpu_hours',
@@ -339,6 +359,11 @@ def main(argv=None):
     from r1.exam.b1_batch import refuse_sealed
     refuse_sealed(a.batch,a.config,a.rule,*a.manifests)
     ms=[json.loads(Path(x).read_text()) for x in a.manifests]
+    if a.phase=='b2' and (a.batch or a.config):
+        if not a.batch or not a.config or ms: p.error('verified B2 needs --batch and --config, without individual manifests')
+        from r1.exam.runtime import load_config
+        result=b2_summary_verified(a.batch,load_config(a.config),rule_path=a.rule,expected=a.rule_sha256)
+        print(json.dumps(result,indent=2,allow_nan=False));return
     if a.phase=='b1' and (a.batch or a.config):
         if not a.batch or not a.config or ms: p.error('verified B1 needs --batch and --config, without individual manifests')
         from r1.exam.runtime import load_config
