@@ -31,7 +31,7 @@ PRIOR=$OUT/a2u_prior_r2_20261111.json
 [ -f "$PRIOR" ] || { echo "REFUSE: prior file $PRIOR missing (copy it from the Mac with sha256 5c849d15…)" >&2; exit 2; }
 [ "$(sha256sum "$PRIOR" | cut -d' ' -f1)" = "5c849d151d939a183ecf6c21113cc46aee6a457142e1c7ed9704b48d77eed607" ] || { echo "REFUSE: prior sha256 mismatch" >&2; exit 2; }
 
-LIVE=$(pgrep -u dowling -f 'llama-server .*--port 1810[12]' | wc -l | tr -d ' ')
+LIVE=$( (pgrep -u dowling -f 'llama-server .*--port 1810[12]' || true) | wc -l | tr -d ' ' )
 if tmux has-session -t trks_llm 2>/dev/null; then
   [ "$LIVE" -eq "$K" ] || { echo "REFUSE: trks_llm has $LIVE servers but K=$K" >&2; exit 2; }
 else

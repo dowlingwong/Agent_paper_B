@@ -24,7 +24,10 @@ into the run `_to_delete`, not removed as the runbook's illustrative `find -dele
    analysis and are not changed by the resume). Deployed reviewed scripts: `tasl7_digits_s05_20261113.sh` sha `3e957464…` (takes `K`,
    starts `trks-servers $K` itself if `trks_llm` is absent), `tasl7_digits_s05b_20261113.sh` sha `3685dfe6…`; `bash -n`.
 5. **No separate server start**: the launcher starts the k=2 servers after its own guards; starting servers first would
-   orphan them if the launcher refuses (exit 2). Any launcher refusal is a STOP: if it did start `trks_llm` before
+   orphan them if the launcher refuses (exit 2). First-resume note: an earlier attempt with the previous script revision
+   `3e957464…` aborted rc=1 before starting anything because its `LIVE=$(pgrep … | wc -l)` guard tripped
+   `set -euo pipefail` with zero servers; the STOP had already been renamed into `_to_delete` (verified, no deletion) and
+   no server/collector started. The fixed revision is the sha above. Any launcher refusal is a STOP: if it did start `trks_llm` before
    failing, kill only that session (`tmux kill-session -t trks_llm`), verify no own `llama-server` remains and the
    lease is free, and report.
 
