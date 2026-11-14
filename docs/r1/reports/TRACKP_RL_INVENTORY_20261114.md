@@ -39,11 +39,11 @@ close the span itself (EOS or the 256-token cap before `</analysis>`; `generate`
 refused if absent); the action sampled from the action logit; the PPO sequence = the **sampled** analysis tokens (the
 text, plus the closing tag only when the policy sampled it; never the tag appended to an unclosed span or the trailing
 newline) + the action token; the exact RPS gradient added for the belief. The policy runs in eval mode for the step
-(LoRA dropout off during sampling, pi_old and pi_theta), and its mode is restored. Known approximation: analyses are
-decoded and re-encoded, so where the tokenizer does not round-trip the scored tokens differ from the sampled ids. Constants
+(LoRA dropout off during sampling, pi_old, pi_theta and the reference), and their modes are restored. Known approximation: analyses are
+decoded and re-encoded, so where the tokenizer does not round-trip the scored tokens differ from the sampled ids (134 sampled ids re-encoded to 218 tokens in the reviewer's tiny-Llama probe; the sampled ids must be carried into `forward` before any real R-B run). Constants
 LORA_RANK 16, LR_RANGE 1e-6–5e-6, MAX_STEPS 500 are recorded for the run config; nothing here launches a run.
 
-**`r1/c3/train/ra.py`** — R-A1 `DetachedActionHead` (Linear on `state.detach()`, trained with `action_loss` via
+**`r1/c3/train/ra.py`** — R-A1 `DetachedActionHead` (LayerNorm + Linear on `state.detach()` at the belief position, R1-HEADS-LN; trained with `action_loss` via
 `ra1_loss` on a wrapper output with `return_state=True`; no gradient reaches the belief or adapters) and `stop_rule`
 (§6.4 rollback conditions: ECE rise > 0.02, RPS worse by > 1 s.e. without a utility gain, width ratio < 0.8, entropy
 > 20 % below Stage S within 100 steps; the caller supplies the validation metrics and restores the checkpoint).

@@ -22,6 +22,10 @@ def test_detached_head_learns_without_touching_the_shared_state():
         opt.step()
     assert trunk.weight.grad is None            # stop-gradient: no gradient reaches the shared state
     assert float(loss) < first
+    # a LayerNorm precedes the linear layer (R1-HEADS-LN): the output does not change when the state is rescaled
+    s = torch.randn(5, 6)
+    assert isinstance(head.norm, torch.nn.LayerNorm)
+    assert torch.allclose(head(s), head(7.5 * s), atol=1e-4)
     with pytest.raises(ValueError, match="return_state"):
         ra.ra1_loss(head, {"state": None}, u)
 

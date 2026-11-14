@@ -2,9 +2,10 @@
 
 AI-assisted (Claude). No label table, audit or seed is read here.
 
-* ``DetachedActionHead`` — R-A1 (§6.3 table): a linear action head on the **stop-gradient** hidden state, so the
-  action loss never reaches the belief, the adapters or the base (the Stage S belief stays frozen). It reads
-  ``out["state"]`` of a wrapper called with ``return_state=True`` and is trained with ``losses.action_loss``
+* ``DetachedActionHead`` — R-A1 (§6.3 table): LayerNorm + Linear (hidden -> 1) on the **stop-gradient** hidden state
+  (a LayerNorm before every new head, spec §2.2 and PLAN R1-HEADS-LN), so the action loss never reaches the belief, the
+  adapters or the base (the Stage S belief stays frozen). It reads ``out["state"]`` of a wrapper called with
+  ``return_state=True`` — the hidden state at the **belief** read-out position — and is trained with ``losses.action_loss``
   (``ra1_loss``). R-A2 (shared) is the wrappers' existing action head, whose loss updates the shared LoRA.
 * ``stop_rule`` — the rollback rule for R-A2, R-A3 and R-B (§6.4 "Stop rule"): roll back to the best checkpoint if
   val all-bins ECE rises > 0.02 above Stage S; val RPS worsens by > 1 s.e. while val decision utility has not improved;
@@ -27,14 +28,15 @@ ENTROPY_WINDOW_STEPS = 100
 
 
 class DetachedActionHead(nn.Module):
-    """R-A1: Linear(hidden -> 1) on ``state.detach()``."""
+    """R-A1: LayerNorm(hidden) -> Linear(hidden -> 1) on ``state.detach()``."""
 
     def __init__(self, hidden: int):
         super().__init__()
+        self.norm = nn.LayerNorm(hidden)
         self.linear = nn.Linear(hidden, 1)
 
     def forward(self, state: torch.Tensor) -> torch.Tensor:
-        return self.linear(state.detach().float())[:, 0]
+        return self.linear(self.norm(state.detach().float()))[:, 0]
 
 
 def ra1_loss(head: DetachedActionHead, out: dict, u: torch.Tensor) -> torch.Tensor:

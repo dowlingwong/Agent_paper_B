@@ -241,21 +241,33 @@ def rb_group_step(policy, ref_policy, prompts, y_train, u, optimizer, *, u_max: 
     completion is its **sampled** tokens only: the analysis text, plus the closing tag when the policy sampled it
     (never the tag that ``segments`` appends to an unclosed span, nor the trailing newline), plus its action token. The
     belief logits additionally get the exact RPS gradient (mean over completions). pi_old and the reference
-    log-probabilities are fixed at the batch's start; ``epochs`` updates follow. The policy runs in eval mode for the
-    whole step (dropout, e.g. LoRA dropout, off), so sampling, pi_old and pi_theta use the same deterministic network;
-    the previous train/eval mode is restored at the end.
+    log-probabilities are fixed at the batch's start; ``epochs`` updates follow. The policy and the reference run in
+    eval mode for the whole step (dropout, e.g. LoRA dropout, off), so sampling, pi_old, pi_theta and pi_ref use
+    deterministic networks; their previous train/eval modes are restored at the end, also on an exception.
 
     Known approximation: the analysis is decoded to text and re-encoded by ``forward``; where the tokenizer does not
-    round-trip, the scored tokens differ from the sampled ids.
+    round-trip, the scored tokens differ from the sampled ids (the reviewer saw 134 sampled ids re-encode to 218 tokens
+    on a tiny Llama). Carry the sampled ids into ``forward`` before any real R-B run.
     ``y_train`` [N, 12] and ``u`` [N] come from the label distribution (never one seed draw).
     """
+    modes = [(m, bool(getattr(m, "training", False))) for m in (policy, ref_policy) if hasattr(m, "eval")]
+    for m, _ in modes:          # dropout off for the policy and the reference throughout the step
+        m.eval()
+    try:
+        return _rb_group_step(policy, ref_policy, prompts, y_train, u, optimizer, u_max=u_max, lambda_a=lambda_a,
+                              beta=beta, group=group, seed=seed, epochs=epochs, advantage=advantage,
+                              temperature=temperature)
+    finally:
+        for m, was in modes:
+            m.train(was)
+
+
+def _rb_group_step(policy, ref_policy, prompts, y_train, u, optimizer, *, u_max, lambda_a, beta, group, seed, epochs,
+                   advantage, temperature) -> dict[str, Any]:
     import torch
     from r1.c3.train.losses import rps, softmax_probs
     n = len(prompts)
     batch = [p for p in prompts for _ in range(group)]
-    was_training = bool(getattr(policy, "training", False))
-    if hasattr(policy, "eval"):
-        policy.eval()
     analyses, closed = [], []
     for j in range(group):
         analyses.append(policy.generate(list(prompts), temperature=temperature, seed=seed * 1000 + j))
@@ -304,7 +316,5 @@ def rb_group_step(policy, ref_policy, prompts, y_train, u, optimizer, *, u_max: 
         loss.backward()
         optimizer.step()
         history.append({"epoch": epoch, "loss": float(loss), "belief_rps": float(loss_belief), **mon})
-    if was_training and hasattr(policy, "train"):
-        policy.train()
     return {"rewards": rewards, "zero_advantage_share": zero_advantage_share(rewards),
             "format_violations": int(violation.sum()), "updates": history}
