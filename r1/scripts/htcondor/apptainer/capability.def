@@ -1,0 +1,3 @@
+Bootstrap: scratch
+%post
+    echo capability-ok > /capability.txt
