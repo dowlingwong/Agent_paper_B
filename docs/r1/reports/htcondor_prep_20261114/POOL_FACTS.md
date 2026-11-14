@@ -48,7 +48,7 @@
 
 ## 4. What tonight's probes are trying to measure (so the numbers are interpretable)
 
-The pool is at 1051/1105 claimed. The probe wave is the only measurement of **queue wait per resource class**; expectations are therefore explicitly not guessed. Queue waits are recorded from the job event log (000/001/005/004/012) as in §4.2, with the +3 h resubmission sample if the window allows; the +6 h wave is dropped (errata A4).
+The pool is at 1051/1105 claimed. The probe wave is the only measurement of **queue wait per resource class**; expectations are therefore explicitly not guessed. Queue waits are recorded from the job event log (000/001/005/004/012) as in §4.2, with the +3 h resample (P1w2/P3w2) already run at 02:43 CET; the +6 h sample (P1w3/P3w3) is planned at ~05:52 CET under the author's 09:30 extension and its outcome is recorded when it runs (or recorded as not run).
 
 ## 5. Matching facts measured by the real probe submissions (23:51–00:05 CET)
 

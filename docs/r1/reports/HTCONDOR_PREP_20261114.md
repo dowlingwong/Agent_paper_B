@@ -63,7 +63,7 @@ All seven JDLs were reviewed and accepted before submission; M1/M2 were then mea
 
 `queue_times.tsv` (snapshots: `raw/queue_times_snapshot1.tsv` for wave 1, `raw/queue_times_current.tsv` for waves 1–2) carries submit/execute/end, wait, run, site, host, GPU, evictions, holds and exit per probe.
 
-**Author guidance received at ~00:35 CET and followed:** P4/P5 are **not** withdrawn; GPU jobs are matched through the TOpAS pool, so a 0-match in the local schedd view can be normal — the tutorial-form re-analysis (`condor_q -better-analyze -pool f03-001-140-e.gridka.de`) was run and recorded (`raw/pool_analyze_p4_20261114.txt`; against `c03` the A100 condition matched 3 drained slots, `[10]&&[11]` 0, "2 would match if drained"), and the jobs stay queued (P5 had already completed; P4 is the one still queued). NEMO2 is Singularity-only and the image→SIF-on-`/work` route is question Q10; **no new job types were submitted**. Local docker/ETP slot counts (docker∧ETP=315, unclaimed docker 5 / ETP 13 at 00:35) are recorded for tomorrow's local-CPU container decision (Q11). The +3 h sample (P1, P3, P4, P6 unchanged) is planned around 02:50 CET; the +6 h wave cannot fit before the 05:30 stop (errata A4) and is dropped.
+**Author guidance received at ~00:35 CET and followed:** P4/P5 are **not** withdrawn; GPU jobs are matched through the TOpAS pool, so a 0-match in the local schedd view can be normal — the tutorial-form re-analysis (`condor_q -better-analyze -pool f03-001-140-e.gridka.de`) was run and recorded (`raw/pool_analyze_p4_20261114.txt`; against `c03` the A100 condition matched 3 drained slots, `[10]&&[11]` 0, "2 would match if drained"), and the jobs stay queued (P5 had already completed; P4 is the one still queued). NEMO2 is Singularity-only and the image→SIF-on-`/work` route is question Q10; **no new job types were submitted**. Local docker/ETP slot counts (docker∧ETP=315, unclaimed docker 5 / ETP 13 at 00:35) are recorded for tomorrow's local-CPU container decision (Q11). The +3 h sample (P1, P3 unchanged as P1w2/P3w2) ran at 02:43 CET; the +6 h sample (P1w3/P3w3) is planned at ~05:52 CET under the author's 09:30 extension, and its outcome is recorded when it runs (or recorded as not run).
 
 **Per-class queue-time statistics (samples to date; single-night probe, not a benchmark):**
 
@@ -121,7 +121,7 @@ Committed on `htcondor-prep-20261114` (from `origin/docs/runbooks-14nov` @ `69b3
 ## 9. Review status
 
 - Runbook review: red first (NOT ACCEPTED: 2 BLOCKING + 5 MAJOR + 17 MINOR/NIT), errata applied, **ACCEPTED** by the same reviewer after re-check.
-- Probe JDL unit: **ACCEPTED** (0 BLOCKING/MAJOR; M1/M2 pre-submission checks run and recorded).
+- Probe JDL unit: **ACCEPTED** (0 BLOCKING/MAJOR; the reviewer's M1/M2 conditions were measured **after** submission at 03:30/03:32 CET and recorded — `raw/evidence_capture_0331.txt`, `raw/m1_m2_checks.txt`; they support the JDLs).
 - Move plan: NOT ACCEPTED (5 MAJOR) -> revision 2 -> **ACCEPTED**; R1/R2 applied; the author's verification-metric change confirmed in one sentence by the same reviewer.
 - This report: submitted to a **fresh reviewer** before the end of the window (runbook §6); its verdict and any fixes are recorded in `docs/r1/reviews/HTCONDOR_PREP_REPORT_REVIEW_20261114.md`.
 
