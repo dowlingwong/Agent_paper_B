@@ -72,6 +72,8 @@ All seven JDLs were reviewed and accepted before submission; M1/M2 were then mea
 | class | probe | wait | outcome |
 |---|---|---:|---|
 | local CPU 1 core, docker | P1 | **73 s** | completed (host `ms02`, `CloudSite=schnepf`) |
+| local CPU 1 core, docker, **wave 2** | P1w2 | **21 s** | completed on `mdm1.etp.kit.edu` (`CloudSite=mdm`), run 2 s |
+| remote CPU (best effort), **wave 2** | P3w2 | **21 s** | completed on `ms04.etp.kit.edu` (`schnepf`), run 1 s |
 | local CPU 8 cores, docker | P2 | **> 45 min (idle at this draft)** | 0 willing, 5 would match if drained — capacity wait |
 | remote CPU (best effort) | P3 | **7 s** | completed **locally**; remote-CPU class not measured |
 | TOpAS A100 | P4 | **idle** | A100 node fully allocated; kept queued per author (re-analysis with `-pool` recorded) |
@@ -79,7 +81,7 @@ All seven JDLs were reviewed and accepted before submission; M1/M2 were then mea
 | NEMO2 L40S | P6 | **no match** | `HasDocker=undefined` on NEMO2 slots (Singularity only) — design blocker, Q10 |
 | NEMO2 H200 | P7 | **no match** | only H200 slot Drained at submit/analysis time |
 
-Wave 2 (+3 h) resubmits **P1 and P3** as `P1w2`/`P3w2` (same JDLs, distinct output/log names) to sample the local-CPU wait over the night; P4/P6 are **not** resubmitted as duplicates because the author instructed that P4/P5 stay queued and the originals are continuous queue samples. There is no +6 h wave under the original 05:30 stop; with the hard stop moved to 09:30 a third sample is possible only if the report/review are on schedule (they get priority).
+Wave 2 (+2h51m) ran `P1`/`P3` unchanged as `P1w2`/`P3w2` (distinct output/log names): both completed with **21 s** submit→execute, on `mdm1` and `ms04` — faster than wave 1's 73 s / 7 s. P4/P6 were **not** resubmitted as duplicates because the author instructed that P4/P5 stay queued and the originals are continuous queue samples; they remain idle (capacity/no-match reasons above). A +6 h sample is prepared as `P1w3`/`P3w3` if the report/review stay on schedule (they get priority).
 
 ---
 
