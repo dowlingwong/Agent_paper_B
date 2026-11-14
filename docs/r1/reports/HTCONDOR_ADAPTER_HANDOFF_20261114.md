@@ -49,7 +49,7 @@ M10 outcome of an HTCondor-level event (`infrastructure_outcome`) — each case 
 | eviction (004) | `infrastructure_failure` | `htcondor_eviction`; `htcondor_preemption` if the text says "preempt" |
 | hold code 34 subcode 102 (memory); or code 34 with another subcode, 3 or 26 or none and text "gone over (cgroup) memory limit" / "memory … exceed" | `infrastructure_failure` | `htcondor_memory_hold` |
 | hold code 46 or 47 (duration or execute time exceeded); or a policy hold whose text names walltime (checked before memory) | `infrastructure_failure` | `htcondor_walltime_hold` |
-| hold code 34 subcode 104 (disk); or code 34 with another subcode, 3 or 26 or none and text naming disk with "exceed", "over … disk", "limit" or "quota" (checked after memory) — author HTC-Q2 (b), 14 Nov | `infrastructure_failure` | `htcondor_disk_hold` |
+| hold code 34 subcode 104 (disk) only — author HTC-Q2 (b), 14 Nov; a text that merely mentions disk stays `unclassified` | `infrastructure_failure` | `htcondor_disk_hold` |
 | hold code 35 (invalid Docker image); or pull / manifest wording | `infrastructure_failure` | `htcondor_image_pull` |
 | hold after 6 starts | `infrastructure_failure` | `htcondor_restart_limit` |
 | any other code, or unrecognised text | `unclassified` | a human decides; never mapped silently |
@@ -92,4 +92,4 @@ Each confirmed value moves from `proposed:` to `measured: <report>`, in a review
 - Paper: `pytest r1/tests/htcondor`.
 - Harness: `PYTHONPATH=src pytest tests/trackg`. This includes the unchanged byte-for-byte `manager_proposal/v1` probe and the structural test; no base file changed.
 
-Results (Mac VM, `/tmp/trackg_venv`): paper `r1/tests/htcondor` 67 passed; harness `tests/trackg` 177 passed (161 at `76bc49f2` plus 16 new, counting parametrized cases).
+Results (Mac VM, `/tmp/trackg_venv`): paper `r1/tests/htcondor` 67 passed at the accepted adapter, 79 after the 14 Nov HTC-Q1/Q2 change; harness `tests/trackg` 177 passed (161 at `76bc49f2` plus 16 new, counting parametrized cases).

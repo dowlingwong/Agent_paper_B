@@ -111,8 +111,9 @@ def classify_hold(text: str) -> str:
     The code and subcode decide first (HOLD_CODES). Text decides only when there is no code, or the code is a policy
     code (3 JobPolicy, 26 SystemPolicy, where a site's walltime or memory policy lands), or code 34 with another
     subcode (older releases write ``code 34,0`` for "Job has gone over memory limit"). Text order: walltime before
-    memory (a walltime policy message may also mention memory usage), memory before disk; image pull only on pull or
-    manifest wording."""
+    memory (a walltime policy message may also mention memory usage); image pull only on pull or manifest wording. A
+    disk hold is recognised only by code 34 subcode 104 (author HTC-Q2 (b)); a text that merely mentions disk (for
+    example a filesystem "Disk quota exceeded" or a disk I/O error) stays ``unclassified``."""
     t = text.lower()
     m = HOLD_CODE.search(text)
     code, sub = (int(m.group(1)), int(m.group(2))) if m else (None, None)
@@ -128,10 +129,6 @@ def classify_hold(text: str) -> str:
     # "Job has gone over memory limit" / "gone over cgroup memory limit" (HTCondor manual); site policies "exceeded".
     if re.search(r"over (cgroup )?memory limit", t) or ("memory" in t and "exceed" in t):
         return "htcondor_memory_hold"
-    # disk: "exceeded its allocated disk", site policies "disk usage exceeded", "over disk limit/quota"
-    if re.search(r"\bdisk\b", t) and ("exceed" in t or re.search(r"over (its |the )?(allocated )?disk", t)
-                                      or ("disk" in t and ("limit" in t or "quota" in t))):
-        return "htcondor_disk_hold"
     if ("pull" in t and ("image" in t or "docker" in t or "singularity" in t or "apptainer" in t)) \
             or "manifest unknown" in t or "pull access denied" in t:
         return "htcondor_image_pull"
