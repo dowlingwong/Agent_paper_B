@@ -44,40 +44,69 @@ added a guard call where M3 changed nothing, or M3 refactored code mac-int had g
 | `docs/r1/PLAN.md` | 2 | mac-int's 28–30 Oct author-decision blocks (R1-C3-POOL … R1-T4-DI-FIX; R1-TRACKS-HOST … R1-REPO-ACCESS) are absent on the M3 line; kept |
 | `r1/c3/dataset.py` | 4 | mac-int's `refuse_sealed` calls kept |
 | `r1/c3/audit.py` | 7 | M3's `partition_population` + `evidence_plan` refactor, with mac-int's `refuse_sealed` and `guard_table` at the top of the new `evidence_plan` and at the five other guarded readers |
-| `r1/c3/offline_eval.py` | 1 | M3's order, with mac-int's `guard_table` call after `audits_path` is set |
+| `r1/c3/offline_eval.py` | 1 | mac-int's order: `guard_table` first, then `build.json` is read, then M3's EVIDENCE checks. The first trial resolution read `build.json` before the guard (a sealed table then stopped on its contents, not on the guard); corrected in a later commit on this branch, with a regression test `test_c3_offline_eval_guard_order.py` (review round 1, B1) |
 | `r1/tests/test_c3_evidence_guards.py` | 3 | M3's version (it hides already-imported harness modules; mac-int's version is the older form of the same test) |
 | `r1/tests/test_c3_evidence_seed_isolation.py` | 3 | mac-int's `guard_table` stub kept, plus M3's new expectations (task-native runtime attestation, split label block, completion record) |
 
 These resolutions are the trial's; the real integration should have them reviewed as code.
 
+**Author-held diffs come in with M3.** Step 1 also brings in, without conflict, the five changes of `9bab3d6f` that
+were held outside the B.2-repair scope: `r1/c3/train/run.py`, `r1/c3/train/trainer.py`, `r1/c3/env.py`,
+`r1/c3/control.py`, `r1/c3/prior_model.py`. Decision row R1-B2-REPAIR-SCOPE-ACK (`proposals/AUTHOR_DECISIONS_20261104.md`)
+says they are reviewed with M3 and "until then they are not merged"; the author acknowledges them, or not, with M3's
+accepted commit, and question Q24 (`reports/MAC_OVERNIGHT_QUESTIONS_20261105.md`) is still open. Merging M3 as a whole
+therefore needs that acknowledgement first. Several of the base failures that M3 fixes (§4) depend on these diffs.
+
 ## 3. The one new failure
 
 `test_c3_audit_dryrun.py::test_dryrun_on_the_frozen_corpus_partitions_the_whole_population` (an M3 test) passes on
-M3 alone and fails after the merge with `RuntimeError: STOP: R1-BX-D8-CONFIRM or gate code absent`: M3's dry run on the
-frozen corpus now passes through mac-int's D8 authority guard, which STOPs because no D8 confirmation row is committed.
-The guard behaves as designed; the test predates it. It persists unchanged through steps 2–8. Options are in the
-question list (IT-1): stub the guard in that test as the seed-isolation test does, keep it failing until R1-BX-D8-CONFIRM
-is committed, or exempt DRYRUN tables from the D8 guard.
+M3 alone and fails after the merge, from step 1 through step 9. Cause: mac-int's analysis guard exempts the frozen
+sweep-1 tables only when a table's `build.json` records `sweep_index.path`; M3's `r1/scripts/c3_audit_dryrun.py`
+(`build_table`, l. 94) records only the index's SHA, so the guard treats the dry-run table as of unknown provenance and
+asks for the D8 confirmation (at step 1 `STOP: R1-BX-D8-CONFIRM or gate code absent`; from step 3, with the D8 v2 gate,
+`STOP: exact affirmative R1-BX-D8-CONFIRM with current gate SHA required`). The M3 dry-run tool itself STOPs the same
+way, not only its test. The reviewer checked that recording the path makes the guard pass. Options (question IT-1):
+(a) record `sweep_index.path` in `build_table` (no guard change, no author row; recommended); (b) leave it failing
+until R1-BX-D8-CONFIRM is committed. Exempting DRYRUN tables from the guard would weaken it and is not proposed.
 
-## 4. The 16 base failures that M3 fixes
+## 4. The 16 base failures that the M3 merge fixes
 
-M3 carries the guard and provenance work that 16 failing mac-int tests expect: 10 in
-`test_c3_evidence_other_boundaries.py` (including the 8 Track P leak-guard tests that the Track P RL review traced to
-`EVAL_COLUMNS` in `r1/c3/train/run.py`), 2 in `test_c3_evidence_guards.py`, 1 in `test_c3_evidence_seed_isolation.py`
-and 3 in `test_c3_launch_provenance.py`.
+16 failing mac-int tests pass after step 1: 10 in `test_c3_evidence_other_boundaries.py` (including the 8 Track P
+leak-guard tests that the Track P RL review traced to `EVAL_COLUMNS` in `r1/c3/train/run.py`), 2 in
+`test_c3_evidence_guards.py`, 1 in `test_c3_evidence_seed_isolation.py` and 3 in `test_c3_launch_provenance.py`. Most
+come from M3's code, including the five author-held diffs of §2 (`run.py` among them); about six come mainly from
+test-side changes M3 carries. So "M3 fixes them" holds only if those held diffs are acknowledged.
 
 ## 5. Base failures that remain
 
-24 of the base's 40 failures remain through every step, unchanged: `test_c3_sweep_table.py` (9),
-`test_c3_sweep_dryrun.py` (6), `test_d28_noise_binding.py` (3), `test_c3_evidence_guards.py` (2: the evidence-plan
-and replay-deletion tests), and `test_c3_control_dryrun.py`, `test_rerun2_batch4c.py`, `test_trackp_exam_synthetic.py`,
-`test_trackp_soft_label_v2.py` (1 each). They fail on the base in this environment
-(no network to OpenML, no committed sweep data here, a Python 3.13 venv rather than the pinned hosts); they were not
-investigated tonight.
+24 of the base's 40 failures remain through every step, unchanged. Their causes in this run's tracebacks:
+- **14 STOP on mac-int's own D8 guard** (`STOP: exact affirmative R1-BX-D8-CONFIRM with current gate SHA required`, or a
+  file missing because a guarded fixture step stopped): `test_c3_sweep_table.py` (9), `test_d28_noise_binding.py` (3),
+  `test_c3_evidence_guards.py` (2). Same mechanism as §3: these fixtures predate the guard and do not satisfy it.
+- **6 STOP on D28 liveness** (`STOP: only 1 nodes passed D28 liveness (< 2); the author decides`):
+  `test_c3_sweep_dryrun.py` (6).
+- **4 single causes:** `test_trackp_exam_synthetic.py` (`lightgbm` not installed); `test_rerun2_batch4c.py` (a
+  `git commit` inside the test's fixture fails); `test_trackp_soft_label_v2.py` (a gzip byte mismatch);
+  `test_c3_control_dryrun.py` (the dry-run runner exits with rc 1 before the interruption).
+
+None of them is investigated or fixed here.
+
+## 5a. Not guarded, for the real integration
+
+M3 adds two scripts that read the frozen corpus without sealed-path checks, `r1/scripts/c3_audit_dryrun.py` and
+`r1/scripts/c3_env_replay.py`. The base's own scripts of that kind are unguarded too, so this is not a regression, but
+the real integration should decide whether they get mac-int's guard pattern.
+
+## 5b. Process note
+
+The suite runs for steps 7–9 were each started more than once (a cloud-environment restart killed one run; a
+duplicate run of step 9 was stopped and restarted). The recorded step-8 run overlapped the step-9 merge by about
+23 s. The reviewer's own rerun at the tip reproduced the step-9 result exactly.
 
 ## 6. Proposed order for the real integration
 
 The runbook's order works without further conflicts after step 1: M3 → M4 → M11 D8 v2 → W2 (stop-rule branch, which
 contains the 9 Nov W2 budget branch) → M10 kit → M10 v2 → Track P RL; HTCondor and DTQ can follow in any order.
-M3 should go first: it carries the guard fixes the Track P leak-guard tests need, and its six conflicts are the only
-ones. Before the real merge: review the step-1 resolutions as code and settle IT-1.
+M3 should go first, **after the author has acknowledged (or not) the five held `9bab3d6f` diffs** (R1-B2-REPAIR-SCOPE-ACK,
+Q24): it carries the guard fixes the Track P leak-guard tests need, and its six conflicts are the only ones. Before the
+real merge: review the step-1 resolutions as code, and settle IT-1 (record `sweep_index.path` in M3's dry-run table).
