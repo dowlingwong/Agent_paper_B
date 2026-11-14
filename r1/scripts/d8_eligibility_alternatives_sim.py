@@ -42,7 +42,7 @@ RULES = ("R0 dev z>=6", "R1 trdev z>=6", "R1 trdev z>=3", "R2-dev c=3 r=1", "R2-
 
 
 def split_sizes(n: int, prop) -> tuple[int, int, int]:
-    """Largest-remainder split of n instances in proportion ``prop`` (train, dev, test); test rounded first."""
+    """Split n instances in proportion ``prop`` (train, dev, test): test and dev are rounded, train takes the rest."""
     tot = sum(prop)
     test = round(n * prop[2] / tot)
     dev = round(n * prop[1] / tot)
