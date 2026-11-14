@@ -26,9 +26,10 @@ For one GGUF the tool
 A server that cannot start (for example an out-of-memory exit) or does not offload fully is a **recorded result**
 (``status`` ``server_start_failed`` / ``offload_not_full``), not a tool failure (O5: "an OOM is a recorded result").
 
-Prompts: ``--prompts`` is a JSONL file, one ``{"prompt", "seed", "source", "ledger_sha256", "trial_id"}`` per line,
-drawn by the operator from sweep-1 contexts (``ledger_sha256`` / ``trial_id``: the ledger and trial the context comes
-from). Every ``--exclude-prompts`` file (the exam's frozen prompt sets, whose rows carry ``prompt``, ``ledger_sha256``
+Prompts: ``--prompts`` is a JSONL file, one ``{"prompt", "seed", "source", "ledger_sha256", "trial_id",
+"instance_seed"}`` per line, drawn by the operator from sweep-1 contexts (``ledger_sha256`` / ``trial_id`` /
+``instance_seed``: the ledger, trial and campaign instance the context comes from). No integer field whose name
+contains ``seed`` may lie in the exam range 9001-9210 (author, 14 Nov). Every ``--exclude-prompts`` file (the exam's frozen prompt sets, whose rows carry ``prompt``, ``ledger_sha256``
 and ``trial_id``) is read; any prompt text in common, and any replay prompt drawn from a ledger an exam prompt was
 drawn from (the same campaign instance), is refused, so the replay set is disjoint from the exam's prompts and
 instances as far as the ledger identity shows (O5). An exclude file with no prompt text or no ledger identity is a
@@ -67,6 +68,7 @@ THINKING_OFF = {'mode': 'off', 'budget': 0, 'off_switch': True}
 PROPOSAL_SCHEMA = 'manager_proposal/v1'
 N_PROMPTS, REPEATS = 50, 3
 PASS_IDENTITY, PASS_PROJECTION_DAYS = 1.0, 4.0
+EXAM_SEEDS = range(9001, 9211)   # Track X instances 9001-9099, audits 9101-9104 and 9201-9210 (author, 14 Nov)
 DEFAULT_CAMPAIGNS = 288   # sweep-1 shape reused by sweep 2 (R1-MAIN-PROPOSER (b)): 8 nodes x 18 instances x 2 memory modes
 
 
@@ -98,6 +100,13 @@ def load_prompts(path: str, n: int, exclude: list[str]) -> tuple[list[dict], dic
             raise SystemExit(f'STOP: prompt row {i} has no source (the sweep-1 context it was drawn from)')
         if not isinstance(r.get('ledger_sha256'), str) or len(r['ledger_sha256']) != 64 or r.get('trial_id') in (None, ''):
             raise SystemExit(f'STOP: prompt row {i} needs ledger_sha256 and trial_id (its sweep-1 ledger and trial)')
+        inst = r.get('instance_seed')
+        if isinstance(inst, bool) or not isinstance(inst, int):
+            raise SystemExit(f'STOP: prompt row {i} needs an integer instance_seed (its sweep-1 campaign instance)')
+        exam = sorted({k for k, v in r.items() if 'seed' in k.lower() and not isinstance(v, bool)
+                       and isinstance(v, int) and v in EXAM_SEEDS})
+        if exam:
+            raise SystemExit(f'STOP: prompt row {i} has {exam} in the exam seed range 9001-9210')
     keys = [_norm(r['prompt']) for r in rows]
     if len(set(keys)) != len(keys):
         raise SystemExit('STOP: duplicate prompts in the replay set')

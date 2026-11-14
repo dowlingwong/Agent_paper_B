@@ -33,7 +33,7 @@ def _harness_or_skip():
 def write_prompts(path: Path, n: int, start: int = 0) -> Path:
     rows = [{"prompt": f"Node: digits_mlp\nBudget index (trial number): {i + 2}\nEditable constants:\n"
                        f"  MAX_ITER = {200 + i}\n", "seed": 1000 + i, "source": f"sweep1/fixture/{i}",
-             "ledger_sha256": f"{i % 3:064x}", "trial_id": f"t{i}"}
+             "ledger_sha256": f"{i % 3:064x}", "trial_id": f"t{i}", "instance_seed": 100 + i}
             for i in range(start, start + n)]
     path.write_text("".join(json.dumps(r) + "\n" for r in rows))
     return path
@@ -123,7 +123,9 @@ def test_overlap_with_an_exam_prompt_set_is_refused(host):
 
 @pytest.mark.parametrize("bad,msg", [({"prompt": "x", "seed": 1}, "no source"), ({"prompt": "x", "source": "s"}, "seed"),
                                      ({"prompt": "", "seed": 1, "source": "s"}, "no prompt text"),
-                                     ({"prompt": "x", "seed": 1, "source": "s", "trial_id": "t"}, "ledger_sha256")])
+                                     ({"prompt": "x", "seed": 1, "source": "s", "trial_id": "t"}, "ledger_sha256"),
+                                     ({"prompt": "x", "seed": 1, "source": "s", "trial_id": "t",
+                                       "ledger_sha256": "a" * 64}, "instance_seed")])
 def test_prompt_rows_need_text_seed_and_source(tmp_path, bad, msg):
     p = tmp_path / "p.jsonl"
     p.write_text(json.dumps(bad) + "\n")
@@ -283,3 +285,23 @@ def test_probe_file_is_byte_identical_to_d10b05b7():
     except (OSError, subprocess.CalledProcessError):
         pytest.fail("d10b05b7 not available for the byte-identity check")
     assert here == blob
+
+
+@pytest.mark.parametrize("field,value", [("seed", 9001), ("seed", 9210), ("instance_seed", 9104), ("audit_seed", 9205)])
+def test_seeds_in_the_exam_range_are_refused(tmp_path, field, value):
+    p = write_prompts(tmp_path / "p.jsonl", 3)
+    rows = [json.loads(l) for l in p.read_text().splitlines()]
+    rows[1][field] = value
+    p.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    with pytest.raises(SystemExit, match=r"prompt row 1 has .*exam seed range 9001-9210"):
+        dtq.load_prompts(str(p), 3, [])
+
+
+@pytest.mark.parametrize("value", [9000, 9211])
+def test_seeds_just_outside_the_exam_range_pass(tmp_path, value):
+    p = write_prompts(tmp_path / "p.jsonl", 2)
+    rows = [json.loads(l) for l in p.read_text().splitlines()]
+    rows[0]["seed"] = value
+    rows[1]["instance_seed"] = value
+    p.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    assert len(dtq.load_prompts(str(p), 2, [])[0]) == 2
