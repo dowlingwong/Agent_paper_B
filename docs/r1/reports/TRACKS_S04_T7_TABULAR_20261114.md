@@ -17,7 +17,7 @@ reviewed `tasl2_s04r2_20261111.sh`.
 **Pins.** paper **`8237fd02b09ef2d28016a1c9f6acac3c35bb768b`** (clean, 0 tracked modifications), harness
 `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (clean), llama.cpp `620d2225cc436ab0b001e3200e590e3b286ef9ab`
 (`v0.7.0-dev` build 11669), GGUF sha256 `509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c`;
-`trks-status` OK on all four. **k = 1** for this S0.4 (single 18101 server) — see the **k caveat §8**.
+`trks-status` OK on all four. **k = 1** for this S0.4 (single 18101 server) — see the **k caveat §9**.
 
 ## 1. Preconditions (all fail-closed, verified read-only at 22:14Z)
 
@@ -43,7 +43,7 @@ Lease **FREE**; tmux only `trks_watch`; no `trks_llm`/collector; no llama-server
 | `out/smoke/failed_units.jsonl` | 217 | 2026-10-30T01:17:18Z | `a1d3548853bf97bd92518e8594b631a98c003367d24b148cfeb7f6a9625db9bb` |
 | `out/smoke/failures/root__…s30000.json` | 3058 | 2026-10-30T01:17:18Z | `ff12d2238188ba16d502e56e7065cf0fb56dd73637b0fb1bd2e850aee2a6b797` |
 | `out/tabular_mlp/inputs` | empty dir | 2026-10-30T10:13:46Z | — |
-| `scratch/tabular_mlp/smoke/` | 30 files | 2026-10-30T00:56–01:20Z | byte-identical to committed copies (e.g. `root_trials.jsonl` `a161a3e7…`, `root_events.jsonl` `90006403…`, `node/train.py` `b29adf67…`) |
+| `scratch/tabular_mlp/smoke/` | 56 files (55 excl. `__pycache__`) | files 2026-10-30T00:56:21Z–01:24:38Z; dir 2026-10-30T01:24:38Z | **observed on the host, unchanged since 30 Oct** (no later mtime); `$WORK` is **host-only by runbook §0.8** (never copied back); e.g. `roots/…s30000/root_trials.jsonl` `a161a3e7…`, `…/root_events.jsonl` `90006403…`, `…/node/train.py` `b29adf67…` (recorded as observed; not committed-copy hashes) |
 
 The **transient watcher STOP** was created and deleted in `out/tabular_mlp/s04_t7_20261114/`,
 `out/digits_mlp/s05_t7_20261113/` and `out/smoke/` (all 0 B, sha `e3b0c442…`; recorded in
