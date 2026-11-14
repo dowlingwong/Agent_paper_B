@@ -3,8 +3,10 @@
 Decomposes the 80 % predictive intervals of s05_calibration.jsonl into prior/posterior variance (tau_n^2), the
 within-key spread (tau_w^2) and the audit noise (se^2), and evaluates a two-parameter recalibration offline:
 prior scale c (multiplies the prior sds tau0 and tau_w; variant 'tau0_only' multiplies tau0 alone) and the
-observation-noise inflation lam (log grid c in [0.01, 1000] x lam in [1e-4, 1000], 121 x 121; the code and the
-runbook allow only lam >= 1, so the in-sample search also reports the best point with lam >= 1) (multiplies the update's observation variance, as obs_inflation does).
+observation-noise inflation lam (multiplies the update's observation variance, as obs_inflation does).
+Grid: log grid c in [0.01, 1000] x lam in [1e-4, 1000], 121 x 121.  The code and the runbook allow only lam >= 1, so
+the in-sample search also reports the best grid point with lam >= 1; lam = 1 itself is not a grid point, so
+``diag2_lambda1.py`` scans lam = 1 exactly.
 (c, lam) are fitted on the S0.4 rows the prior was fitted from (sequential replay per instance and (key, sign)
 group, executed Delta_hat as the observations), by maximum Gaussian predictive log-likelihood and, separately, by
 the smallest worst-stratum coverage error; then tested on the S0.5 calibration rows, whose group sums are

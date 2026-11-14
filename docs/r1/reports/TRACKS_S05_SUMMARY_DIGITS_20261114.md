@@ -145,7 +145,7 @@ recovered from (μ, n_group) and the prior; the reconstructed sd matches the rec
   the within-key spread τ_w², which is the same in every stratum.**
 - The realised spread is not the same. The mean squared residual is 3–4 × the predicted variance for proposals with 0–2
   earlier observations in their group, and 0.4 × for later ones. The bias is a small part of the error (4–11 %). So the miscalibration is a
-  **spread that shrinks with n_group**, which a constant τ_w cannot represent.
+  **spread that shrinks with n_group**, which a constant τ_w cannot represent at the floor τ0 (see "Why" below).
 
 **Two-parameter recalibration, offline (not implemented).** The parameters are:
 - prior scale c, which multiplies τ0 and τ_w; the variant `tau0_only` multiplies τ0 alone;
@@ -165,20 +165,23 @@ Method:
 | tau0_only, max log-lik | 34.8 | 1.39 | 0.600 / 0.854 / 0.972 | fail |
 | tau0_only, min worst-stratum error | 51.1 | 0.18 | 0.600 / 0.640 / 0.840 | fail |
 
+The min-worst-stratum criterion ties on the grid: 18 `tau0_only` points share the minimum S0.4 error (c 51.1–110.1, λ 0.185–0.473), and 15 `both` points do (c 1.0–1.1, λ 1e-4 to 3e-4). The table shows the first in grid order. Per the round-3 reviewer, none of the tied points passes on S0.5.
+
 - **Out of sample, the recalibration fails.** No (c, λ) fitted on S0.4 puts all three strata in [0.70, 0.90] on S0.5.
-- **In sample** (points chosen on S0.5 itself, so only an upper bound on what is reachable):
-  - in the `both` variant no grid point passes;
-  - in `tau0_only`, 8 of 14,641 points pass. All have τ0 ≈ 91–110 × the run's value (≈ 0.09–0.11) and λ between 0.62 and 0.93, so every one has λ < 1 and the code and the runbook would refuse it;
-  - the best allowed point (λ ≥ 1) is c ≈ 110, λ ≈ 1.06, with coverage 0.831 / 0.820 / 0.903. That is just outside the band in stratum ≥ 3.
-- **So, as an option, the two-parameter recalibration does not reach the gate on digits** within the allowed λ ≥ 1.
+- **In sample** (points chosen on S0.5 itself, so an upper bound on what is reachable):
+  - in the `both` variant no point passes, neither on the grid nor in a fine scan at λ = 1;
+  - in `tau0_only`, 8 of the 14,641 grid points pass. All of them have τ0 ≈ 91–110 × the run's value and λ between 0.62 and 0.93 (λ = 1 is not a grid point);
+  - a fine scan at **λ = 1 exactly** (`diag2_lambda1.py`, c ∈ [1, 1000], 700 points) finds `tau0_only` passes for c ≈ 112.6–114.8 only. That is τ0 ≈ 0.11, about 17 σ_node. For example, c = 114.8 gives 0.892 / 0.764 / 0.896. The round-2/3 reviewer found the same window (c ∈ [112.6, 115.6]) independently;
+  - so **at the run's own λ = 1, changing τ0 alone reaches the gate in sample**, but only in a narrow window, and with S0.5 itself as the fitting set.
+- **As an option:** a recalibration fitted on S0.4, the honest test, does not reach the gate on S0.5 in either variant. An in-sample τ0 near 0.11 does, at λ = 1, in a window about 2 % wide in c.
 
 **Why.** (Corrected after round 2.)
 - The prior fit set τ0 to its floor (0.15 σ_node = 0.00099), because the A2 prior sd τ_A2 (0.019) is smaller than τ_w (0.049).
 - With τ0 that small the posterior mean barely moves with the group's history, and the predictive spread is almost all τ_w. That spread does not depend on n_group. The same cause makes V\* nearly constant (§5.1).
 - λ is not confined to τ_n²: it also sets how far the posterior mean follows the observations.
-- With a much larger τ0, which the S0.4 data favour (log-likelihood 251.0 at c ≈ 35 vs 235.1 at c = 1, from the round-2 reviewer), the existing model's spread does shrink with n_group. It comes close to the band in sample, but passes only with λ < 1.
+- With a much larger τ0, the existing model's spread does shrink with n_group. The S0.4 data favour a larger τ0: the best log-likelihood on the report's grid is at c 34.8, λ 1.39 (the round-2 reviewer found log-likelihood 251.0 vs 235.1 at c = 1, on their own grid). In sample this reaches the band at λ = 1 in the narrow window above.
 
-So the direction is a **prior change (a larger τ0)**, possibly together with a model change for the within-key spread. Either way it is for the author, and no point allowed by the current rules reaches the gate.
+So the direction is a **prior change (a larger τ0)**, possibly together with a model change for the within-key spread. It is supported in sample only; out of sample (fitted on S0.4) it does not reach the gate. Either way it is for the author.
 
 ## 6. When this goes to the author
 
@@ -196,4 +199,4 @@ author for a decision after the `tabular_mlp` half is complete.
 - `results/r1/tracks/s05_summary/s05_summary_digits_20261114.json`: `tracks_s05_summary/v2`, the full
   `s05-summary` output; `out_dir` is repo-relative.
 - `results/r1/tracks/s05_summary/lambda2_digits_20261114.json`: the §11.6 line.
-- `results/r1/tracks/s05_summary/diag/`: the §5 scripts and their outputs.
+- `results/r1/tracks/s05_summary/diag/`: the §5 scripts and their outputs (`diag1`, `diag2`, `diag2_lambda1`).
