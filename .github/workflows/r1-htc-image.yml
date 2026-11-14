@@ -1,0 +1,102 @@
+# Paper B R1: build the HTCondor container images and push them to ghcr.io.
+# Dockerfile: r1/scripts/htcondor/docker/Dockerfile (Docker translation of the reviewed
+# Apptainer def r1/scripts/htcondor/apptainer/r1-htc.def). Build context: the apptainer dir
+# with the committed lock and freeze files. Jobs must reference the images by digest.
+name: r1-htc-image
+
+on:
+  push:
+    branches: [htc-image-20261114]
+    paths:
+      - r1/scripts/htcondor/docker/**
+      - r1/scripts/htcondor/apptainer/**
+      - .github/workflows/r1-htc-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: r1-htc-image
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - name: Free disk space on the runner
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/.ghcup || true
+          sudo docker image prune --all --force || true
+          df -h /
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Tag
+        id: tag
+        run: |
+          echo "tag=20261114-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
+          echo "dockerfile_sha256=$(sha256sum r1/scripts/htcondor/docker/Dockerfile | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Log in to ghcr.io (workflow token; no personal credentials)
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push r1-htc-cpu
+        id: cpu
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: r1/scripts/htcondor/apptainer
+          file: r1/scripts/htcondor/docker/Dockerfile
+          target: cpu
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: ghcr.io/dowlingwong/r1-htc-cpu:${{ steps.tag.outputs.tag }}
+
+      - name: Disk after cpu target
+        run: df -h /
+
+      - name: Build and push r1-htc-gpu
+        id: gpu
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: r1/scripts/htcondor/apptainer
+          file: r1/scripts/htcondor/docker/Dockerfile
+          target: gpu
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: ghcr.io/dowlingwong/r1-htc-gpu:${{ steps.tag.outputs.tag }}
+
+      - name: Record digests
+        run: |
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "dockerfile_sha256=${{ steps.tag.outputs.dockerfile_sha256 }}"
+            echo "cpu=ghcr.io/dowlingwong/r1-htc-cpu@${{ steps.cpu.outputs.digest }}"
+            echo "gpu=ghcr.io/dowlingwong/r1-htc-gpu@${{ steps.gpu.outputs.digest }}"
+            echo "tag=${{ steps.tag.outputs.tag }}"
+          } | tee r1-htc-image-digests.txt
+          {
+            echo "### r1-htc images"
+            echo '```'
+            cat r1-htc-image-digests.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload digest record
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: r1-htc-image-digests
+          path: r1-htc-image-digests.txt
