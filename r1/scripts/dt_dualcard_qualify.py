@@ -2,10 +2,12 @@
 """DTQ — dual-card qualification of one GGUF on two named GPUs (MAC_LOCAL_RUNBOOK M4 step 4; OPERATOR O5).
 
 ENGINEERING_ONLY. AI-assisted (Claude). The result is informational: it never feeds the Track X selection
-(R1-EXAM-RULE-X5V2 is frozen before any DTQ number exists) and it authorizes nothing.
+(O5 requires R1-EXAM-RULE-X5V2 to be committed before any DTQ number exists; the operator checks that, the tool
+does not) and it authorizes nothing.
 
 For one GGUF the tool
-1. checks that neither card has another process on it (a co-tenant at the start or during the run is a STOP);
+1. checks that neither card has another process on it (a co-tenant at the start or during the run is a STOP; during
+   the run the replay is aborted at the first intruder or the first unreadable nvidia-smi sample);
 2. serves the GGUF with one dedicated ``llama-server`` across the two cards (``LlamaServerInstance`` with
    ``gpu_uuids`` and ``tensor_split``; ``--split-mode layer``) at the B.1b settings: context 16,384, q8_0 KV cache,
    ``--jinja``, thinking off through the registry-style policy (``--chat-template-kwargs {"enable_thinking":false}``),
@@ -19,19 +21,25 @@ For one GGUF the tool
 5. reports within-server identity, latency mean and p95, completion tokens per call, peak memory per card of the
    server process, and the sweep-2 projection; and evaluates the DTQ pass criterion of PLAN R1-BX-PROPOSED-CONFIRM:
    full offload to both cards, within-server identity 1.000 at ``cache_prompt: false``, sweep-2 T0 projection
-   <= 4 days.
+   <= 4 days. A STOP or a recorded failure never reports a pass.
 
 A server that cannot start (for example an out-of-memory exit) or does not offload fully is a **recorded result**
 (``status`` ``server_start_failed`` / ``offload_not_full``), not a tool failure (O5: "an OOM is a recorded result").
 
-Prompts: ``--prompts`` is a JSONL file, one ``{"prompt", "seed", "source"}`` per line, drawn by the operator from
-sweep-1 contexts. Every ``--exclude-prompts`` file (the exam's frozen prompt sets) is read and any prompt text in
-common is refused, so the replay set is disjoint from the exam (O5). ``--dry-run`` runs against the fake server
+Prompts: ``--prompts`` is a JSONL file, one ``{"prompt", "seed", "source", "ledger_sha256", "trial_id"}`` per line,
+drawn by the operator from sweep-1 contexts (``ledger_sha256`` / ``trial_id``: the ledger and trial the context comes
+from). Every ``--exclude-prompts`` file (the exam's frozen prompt sets, whose rows carry ``prompt``, ``ledger_sha256``
+and ``trial_id``) is read; any prompt text in common, and any replay prompt drawn from a ledger an exam prompt was
+drawn from (the same campaign instance), is refused, so the replay set is disjoint from the exam's prompts and
+instances as far as the ledger identity shows (O5). An exclude file with no prompt text or no ledger identity is a
+STOP (the check would be empty). ``--dry-run`` runs against the fake server
 (``r1/scripts/c3_fake_llama_server.py``) and labels everything DRYRUN.
 
-Projection (LLM time only, a lower bound): ``campaigns x calls_per_campaign x mean latency`` with one server
-serving one call at a time. Worker time between calls is not included; ``--calls-per-campaign`` has no default
-because it is a property of the sweep-2 design that the operator states.
+Projection (RUNBOOK B.1b prerequisite 6): ``calls x latency + runs x CPU time / workers``, i.e.
+``campaigns x calls_per_campaign x mean latency + campaigns x runs_per_campaign x cpu_seconds_per_run / workers``.
+``--calls-per-campaign`` is required; the CPU term needs ``--runs-per-campaign``, ``--cpu-seconds-per-run`` and
+``--workers``. Without all three the CPU term, the projection and the pass criterion are left unevaluated (``None``);
+the LLM term alone is reported as a lower bound and is never judged against 4 days.
 """
 from __future__ import annotations
 
@@ -88,24 +96,43 @@ def load_prompts(path: str, n: int, exclude: list[str]) -> tuple[list[dict], dic
             raise SystemExit(f'STOP: prompt row {i} has no integer D26 seed')
         if not isinstance(r.get('source'), str) or not r['source'].strip():
             raise SystemExit(f'STOP: prompt row {i} has no source (the sweep-1 context it was drawn from)')
+        if not isinstance(r.get('ledger_sha256'), str) or len(r['ledger_sha256']) != 64 or r.get('trial_id') in (None, ''):
+            raise SystemExit(f'STOP: prompt row {i} needs ledger_sha256 and trial_id (its sweep-1 ledger and trial)')
     keys = [_norm(r['prompt']) for r in rows]
     if len(set(keys)) != len(keys):
         raise SystemExit('STOP: duplicate prompts in the replay set')
     excluded: set[str] = set()
+    ledgers: set[str] = set()
     files = []
     for ex in exclude:
         raw = Path(ex).read_bytes()
-        n_rows = 0
+        n_rows = n_text = n_ledger = 0
         for line in raw.decode().splitlines():
             if line.strip():
                 n_rows += 1
-                excluded.update(_norm(t) for t in _texts(json.loads(line)))
-        files.append({'path': str(ex), 'sha256': hashlib.sha256(raw).hexdigest(), 'rows': n_rows})
+                row = json.loads(line)
+                texts = [_norm(t) for t in _texts(row) if str(t).strip()]
+                n_text += bool(texts)
+                excluded.update(texts)
+                if isinstance(row.get('ledger_sha256'), str) and row['ledger_sha256']:
+                    n_ledger += 1
+                    ledgers.add(row['ledger_sha256'])
+        if not n_text:
+            raise SystemExit(f'STOP: exclude file {ex} has no prompt text; the disjointness check would be empty')
+        if not n_ledger:
+            raise SystemExit(f'STOP: exclude file {ex} has no ledger_sha256; instance disjointness cannot be checked')
+        files.append({'path': str(ex), 'sha256': hashlib.sha256(raw).hexdigest(), 'rows': n_rows,
+                      'rows_with_text': n_text, 'rows_with_ledger': n_ledger})
     overlap = [i for i, k in enumerate(keys) if k in excluded]
     if overlap:
         raise SystemExit(f'STOP: replay prompts {overlap} occur in an excluded (exam) prompt set')
+    shared = [i for i, r in enumerate(rows) if r['ledger_sha256'] in ledgers]
+    if shared:
+        raise SystemExit(f'STOP: replay prompts {shared} come from a ledger (instance) used by an excluded exam prompt')
     return rows, {'prompts_file': str(path), 'prompts_sha256': hashlib.sha256(Path(path).read_bytes()).hexdigest(),
-                  'n': n, 'excluded_files': files, 'excluded_texts': len(excluded), 'overlap': 0}
+                  'n': n, 'excluded_files': files, 'excluded_texts': len(excluded), 'excluded_ledgers': len(ledgers),
+                  'overlap': 0, 'shared_ledgers': 0,
+                  'instance_check': 'by ledger_sha256 (same ledger = same campaign instance)'}
 
 
 def co_tenants(apps: list[dict] | None, uuids: list[str], own_pid: int | None) -> list[dict] | None:
@@ -125,19 +152,24 @@ class MemorySampler(threading.Thread):
         self.samples = 0
         self.unread = 0
         self.intruders: list[dict] = []
+        self.abort = threading.Event()   # set at the first intruder or unreadable sample: the replay stops
         self._halt = threading.Event()
 
     def sample(self) -> None:
         apps = self.apps_fn()
         if apps is None:
             self.unread += 1
+            self.abort.set()
             return
         self.samples += 1
         for r in apps:
             if r.get('pid') == self.pid and r.get('gpu_uuid') in self.peak and r.get('used_mib') is not None:
                 old = self.peak[r['gpu_uuid']]
                 self.peak[r['gpu_uuid']] = r['used_mib'] if old is None else max(old, r['used_mib'])
-        self.intruders.extend(co_tenants(apps, self.uuids, self.pid) or [])
+        found = co_tenants(apps, self.uuids, self.pid) or []
+        if found:
+            self.intruders.extend(found)
+            self.abort.set()
 
     def run(self) -> None:
         while not self._halt.is_set():
@@ -162,7 +194,8 @@ def post(url: str, payload: dict, timeout: float) -> tuple[str, float, int | Non
     return body['choices'][0]['message']['content'], dt, tokens if isinstance(tokens, int) else None
 
 
-def replay(url: str, model: str, prompts: list[dict], repeats: int, order_seed: int, timeout: float) -> dict:
+def replay(url: str, model: str, prompts: list[dict], repeats: int, order_seed: int, timeout: float,
+           abort: threading.Event | None = None) -> dict:
     """One serial client: every (prompt, repeat) once in the probe's interleaved order; failures counted, never
     retried (an errored repeat makes its prompt not identical)."""
     payloads = [probe.chat_payload(p['prompt'], p['seed'], model, proposal_schema=PROPOSAL_SCHEMA) for p in prompts]
@@ -174,7 +207,11 @@ def replay(url: str, model: str, prompts: list[dict], repeats: int, order_seed: 
     lat: list[float] = []
     tokens: list[int] = []
     errors = 0
-    for i, _r in order:
+    aborted_at = None
+    for k, (i, _r) in enumerate(order):
+        if abort is not None and abort.is_set():
+            aborted_at = k
+            break
         try:
             text, dt, n = post(url, payloads[i], timeout)
         except Exception:  # noqa: BLE001 - counted, not retried
@@ -186,7 +223,8 @@ def replay(url: str, model: str, prompts: list[dict], repeats: int, order_seed: 
         if n is not None:
             tokens.append(n)
     tok = probe.latency_stats([float(t) for t in tokens])
-    return {'calls': len(order), 'errors': errors, 'identity_rate': probe.identity_rate(contents, repeats),
+    return {'calls': len(order) if aborted_at is None else aborted_at, 'planned_calls': len(order),
+            'aborted_at_call': aborted_at, 'errors': errors, 'identity_rate': probe.identity_rate(contents, repeats),
             'non_identical_prompts': [i for i, v in contents.items() if len(v) != repeats or None in v
                                       or len(set(v)) != 1],
             'latency': probe.latency_stats(lat),
@@ -195,20 +233,29 @@ def replay(url: str, model: str, prompts: list[dict], repeats: int, order_seed: 
             'request_example': payloads[0] if payloads else None}
 
 
-def projection_days(mean_latency_s: float | None, campaigns: int, calls_per_campaign: int) -> float | None:
-    if mean_latency_s is None or not math.isfinite(mean_latency_s):
-        return None
-    return campaigns * calls_per_campaign * mean_latency_s / 86400.0
+def projection(mean_latency_s: float | None, campaigns: int, calls_per_campaign: int, runs_per_campaign: int | None,
+               cpu_seconds_per_run: float | None, workers: int | None) -> dict:
+    """RUNBOOK B.1b prerequisite 6: calls x latency + runs x CPU time / workers, in days. The total is None unless
+    the LLM latency and all three CPU-term inputs are known."""
+    llm = (campaigns * calls_per_campaign * mean_latency_s / 86400.0
+           if mean_latency_s is not None and math.isfinite(mean_latency_s) else None)
+    cpu = (campaigns * runs_per_campaign * cpu_seconds_per_run / workers / 86400.0
+           if None not in (runs_per_campaign, cpu_seconds_per_run, workers) else None)
+    return {'llm_days': llm, 'cpu_days': cpu, 'days': None if llm is None or cpu is None else llm + cpu,
+            'formula': 'campaigns*calls_per_campaign*mean_latency + campaigns*runs_per_campaign*cpu_s_per_run/workers'}
 
 
-def evaluate(offload: dict | None, identity: float | None, days: float | None) -> dict:
+def evaluate(offload: dict | None, identity: float | None, days: float | None, *, stop: bool = False) -> dict:
+    """``pass`` is True only when all three hold; None when the projection is unevaluated and nothing else failed;
+    False on any failure or STOP."""
     full = bool(offload and offload.get('full'))
     ident = identity is not None and identity >= PASS_IDENTITY
-    proj = days is not None and days <= PASS_PROJECTION_DAYS
+    proj = None if days is None else days <= PASS_PROJECTION_DAYS
+    verdict = False if (stop or not full or not ident or proj is False) else (True if proj else None)
     return {'criterion': 'R1-BX-PROPOSED-CONFIRM: full offload to both cards; within-server identity 1.000 at '
                          'cache_prompt false; sweep-2 T0 projection <= 4 days',
             'full_offload_both_cards': full, 'identity_1': ident, 'projection_le_4_days': proj,
-            'pass': full and ident and proj, 'applied_by': 'tool (informational); the host decision is the author\'s'}
+            'stop': stop, 'pass': verdict, 'applied_by': 'tool (informational); the host decision is the author\'s'}
 
 
 def main(argv=None) -> int:
@@ -229,6 +276,9 @@ def main(argv=None) -> int:
     ap.add_argument('--order-seed', type=int, default=20261104)
     ap.add_argument('--campaigns', type=int, default=DEFAULT_CAMPAIGNS)
     ap.add_argument('--calls-per-campaign', type=int, required=True)
+    ap.add_argument('--runs-per-campaign', type=int, default=None, help='worker runs per campaign (CPU term)')
+    ap.add_argument('--cpu-seconds-per-run', type=float, default=None, help='CPU time per worker run (CPU term)')
+    ap.add_argument('--workers', type=int, default=None, help='parallel CPU workers (CPU term)')
     ap.add_argument('--timeout', type=float, default=600.0)
     ap.add_argument('--start-timeout', type=float, default=900.0)
     ap.add_argument('--sample-seconds', type=float, default=1.0)
@@ -238,6 +288,11 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if len(a.gpu_uuid) != 2:
         ap.error('exactly two --gpu-uuid')
+    cpu_term = (a.runs_per_campaign, a.cpu_seconds_per_run, a.workers)
+    if any(v is not None and v <= 0 for v in cpu_term):
+        ap.error('--runs-per-campaign, --cpu-seconds-per-run and --workers must be positive')
+    if not a.dry_run and (a.n != N_PROMPTS or a.repeats != REPEATS):
+        ap.error(f'outside --dry-run the qualification uses --n {N_PROMPTS} and --repeats {REPEATS} (O5)')
     if a.n < 1 or a.repeats < 2 or a.campaigns < 1 or a.calls_per_campaign < 1:
         ap.error('--n >= 1, --repeats >= 2, --campaigns >= 1 and --calls-per-campaign >= 1')
     if not a.dry_run and not a.exclude_prompts:
@@ -261,7 +316,9 @@ def main(argv=None) -> int:
                     'probe': {'module': 'r1.tracks.probes.determinism', 'schema': probe.PROBE_SCHEMA,
                               'source_commit': 'd10b05b7'},
                     'projection_inputs': {'campaigns': a.campaigns, 'calls_per_campaign': a.calls_per_campaign,
-                                          'basis': 'LLM time only, one call at a time (lower bound)'}}
+                                          'runs_per_campaign': a.runs_per_campaign,
+                                          'cpu_seconds_per_run': a.cpu_seconds_per_run, 'workers': a.workers,
+                                          'basis': 'RUNBOOK B.1b prerequisite 6'}}
 
     inst = None
 
@@ -279,9 +336,11 @@ def main(argv=None) -> int:
     report['census_before'] = before
     others = co_tenants(before, a.gpu_uuid, None)
     if others is None and not a.dry_run:
+        report['dtq'] = evaluate(None, None, None, stop=True)
         return finish('STOP_nvidia_smi_unreadable', 2)
     if others:
         report['co_tenants'] = others
+        report['dtq'] = evaluate(None, None, None, stop=True)
         return finish('STOP_co_tenant_at_start', 2)
     report['build'] = lsi.build_info(a.llama_server_bin)
     extra = ['--jinja', *KV_ARGS, *([] if a.no_verbose_load else ['-lv', '4'])]
@@ -304,21 +363,26 @@ def main(argv=None) -> int:
             return finish('offload_not_full')
         report['server_props'] = inst.props()
         sampler = MemorySampler(a.gpu_uuid, inst.record['pid'], a.sample_seconds)
+        sampler.sample()          # one sample before the first call
         sampler.start()
         try:
-            result = replay(inst.openai_base_url, a.model, prompts, a.repeats, a.order_seed, a.timeout)
+            result = replay(inst.openai_base_url, a.model, prompts, a.repeats, a.order_seed, a.timeout,
+                            abort=sampler.abort)
         finally:
             sampler.stop()
         report['replay'] = result
         report['peak_mib_per_card'] = sampler.peak
         report['memory_samples'] = {'read': sampler.samples, 'unreadable': sampler.unread}
-        days = projection_days(result['latency']['mean_s'], a.campaigns, a.calls_per_campaign)
-        report['projection_days'] = days
         report['cache_prompt'] = (result.get('request_example') or {}).get('cache_prompt')
-        report['dtq'] = evaluate(offload, result['identity_rate'], days)
-        if sampler.intruders:
+        if sampler.intruders or sampler.unread:
             report['co_tenants'] = sampler.intruders
-            return finish('STOP_co_tenant_during_run', 2)
+            report['dtq'] = evaluate(offload, None, None, stop=True)
+            return finish('STOP_co_tenant_during_run' if sampler.intruders else 'STOP_nvidia_smi_unreadable_during_run', 2)
+        proj = projection(result['latency']['mean_s'], a.campaigns, a.calls_per_campaign, a.runs_per_campaign,
+                          a.cpu_seconds_per_run, a.workers)
+        report['projection'] = proj
+        report['projection_days'] = proj['days']
+        report['dtq'] = evaluate(offload, result['identity_rate'], proj['days'])
         return finish('complete')
     finally:  # an unexpected exception: never leave the dedicated server running
         if inst.alive():
