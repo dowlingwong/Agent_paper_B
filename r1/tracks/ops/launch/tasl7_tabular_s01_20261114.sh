@@ -12,8 +12,10 @@
 # Servers must already be running with k = 2 (runbook):
 #   tmux new -d -s trks_llm $R/bin/trks-servers 2
 # Run as: ssh tasl7 bash $R/launch/tasl7_tabular_s01_20261114.sh
-# Record the llama_1810{1,2}.log byte offsets immediately before starting the k=2 servers (and in this
-# script's log) so identity can be recomputed from the saved raw responses in the append-only server logs.
+# The operator records the llama_1810{1,2}.log byte offsets immediately BEFORE starting the k=2 servers; this
+# script logs the sizes again at launcher start (i.e. after the servers are up, before the first probe) so identity
+# can be recomputed from the saved raw responses in the append-only server logs. This script does NOT start the
+# servers (the reviewed digits S0.1 discipline): the operator starts them with `tmux new -d -s trks_llm $R/bin/trks-servers 2`.
 set -euo pipefail
 R=/home/dowling/r1_tracks; OUT=$R/out/tabular_mlp; WORK=$R/scratch/tabular_mlp; IN=$OUT/inputs; PATH=$R/bin:$PATH
 S01=s01_t7_20261114
@@ -33,6 +35,9 @@ P=8237fd02b09ef2d28016a1c9f6acac3c35bb768b
 [ "$(git -C "$R/work/Agent_paper_B" rev-parse HEAD)" = "$P" ] || { echo "REFUSE: paper is not at pin $P" >&2; exit 2; }
 [ -z "$(git -C "$R/work/Agent_paper_B" status --porcelain --untracked-files=all)" ] || { echo "REFUSE: paper worktree dirty" >&2; exit 2; }
 tmux has-session -t trks_llm 2>/dev/null || { echo "REFUSE: trks_llm (k=2 servers) not running; start: tmux new -d -s trks_llm $R/bin/trks-servers 2" >&2; exit 2; }
+# verify exactly two llama-server processes on 18101/18102 (k = 2) before probing
+NS=$(pgrep -f 'llama-server .*--port 1810[12]' | wc -l | tr -d ' ')
+[ "$NS" = 2 ] || { echo "REFUSE: expected 2 llama-server processes (k=2 on 18101/18102), found $NS" >&2; exit 2; }
 
 BASE="$R/opt/llama.cpp/build/bin/llama-server -m $R/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf --alias r1-manager --host 127.0.0.1"
 S1="$BASE --port 18101 -ngl 999 -c 8192 --parallel 1 --verbose"
