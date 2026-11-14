@@ -685,14 +685,18 @@ class BinTokenWrapper(_Wrapper):
         return "\n".join(lines) + "\n"
 
     def segments(self, p: DecisionPrompt, analysis: str | None = None) -> tuple[list[int], int, int, tuple]:
-        """Token ids, belief position, action position, analysis token span (start, end) or ()."""
+        """Token ids, belief position, action position, and the analysis span or (): (start, end, text tokens,
+        closing-tag tokens a sampled ``</analysis>`` accounts for)."""
         enc = lambda s: self.tok.encode(s, add_special_tokens=False)  # noqa: E731
         ids = enc(self.prefix(p))
         span = ()
         if analysis is not None:
             ids += enc("<analysis>")
-            a = enc(analysis)[:ANALYSIS_MAX_TOKENS] + enc("</analysis>\n")
-            span = (len(ids), len(ids) + len(a))
+            text = enc(analysis)[:ANALYSIS_MAX_TOKENS]
+            close, tag = enc("</analysis>\n"), enc("</analysis>")
+            a = text + close
+            # (start, end, text tokens, closing-tag tokens that a sampled ``</analysis>`` accounts for)
+            span = (len(ids), len(ids) + len(a), len(text), len(tag) if close[:len(tag)] == tag else 0)
             ids += a
         ids += enc("Belief:")
         belief_pos = len(ids) - 1
@@ -737,8 +741,29 @@ class BinTokenWrapper(_Wrapper):
             action = a[:, 0] - a[:, 1]
         extra = {}
         if analyses is not None:
-            extra["analysis_logprob"] = self._span_logprob(h, ids, [s[3] for s in segs])
+            spans = [s[3][:2] for s in segs]
+            extra["analysis_logprob"] = self._span_logprob(h, ids, spans)
+            # Stage R-B's PPO sequence scores only sampled tokens: the text, plus the closing tag only when the policy
+            # sampled it (``generate``'s ``last_generated_closed``); never the trailing newline (``grpo.rb_group_step``)
+            extra["analysis_text_tokens"] = torch.tensor([s[3][2] for s in segs], device=h.device)
+            extra["analysis_close_tokens"] = torch.tensor([s[3][3] for s in segs], device=h.device)
+            # Per-token log-probabilities of the same spans (Stage R-B's per-token PPO ratio, spec §6.4); padded with
+            # zeros and masked. Their row sums equal ``analysis_logprob``.
+            extra["analysis_token_logprob"], extra["analysis_token_mask"] = self._span_token_logprobs(h, ids, spans)
         return self._out(belief, action, hb if return_state else None, **extra)
+
+    def _span_token_logprobs(self, h, ids, spans) -> tuple[torch.Tensor, torch.Tensor]:
+        head = self.lm.get_output_embeddings()
+        rows = []
+        for i, (a, b) in enumerate(spans):
+            logits = head(h[i, a - 1:b - 1].to(head.weight.dtype)).float()
+            rows.append(torch.log_softmax(logits, -1).gather(-1, ids[i, a:b, None])[:, 0])
+        width = max((len(r) for r in rows), default=0)
+        out = torch.zeros(len(rows), width, device=h.device)
+        mask = torch.zeros(len(rows), width, device=h.device)
+        for i, r in enumerate(rows):
+            out[i, :len(r)], mask[i, :len(r)] = r, 1.0
+        return out, mask
 
     def _span_logprob(self, h, ids, spans) -> torch.Tensor:
         """Sum of log p(token) over each analysis span (closing tag included), teacher-forced."""
@@ -759,7 +784,7 @@ class ReasonThenBinWrapper(BinTokenWrapper):
     def generate(self, batch: Sequence[DecisionPrompt], *, temperature: float = 1.0, top_p: float = 1.0,
                  seed: int = 0) -> list[str]:
         torch.manual_seed(seed)
-        out, self.last_generated_tokens = [], []
+        out, self.last_generated_tokens, self.last_generated_closed = [], [], []
         stop = self.tok.encode("</analysis>", add_special_tokens=False)
         for p in batch:
             ids = torch.tensor([self.tok.encode(self.prefix(p) + "<analysis>", add_special_tokens=False)],
@@ -768,10 +793,14 @@ class ReasonThenBinWrapper(BinTokenWrapper):
                                    temperature=temperature, top_p=top_p, max_new_tokens=ANALYSIS_MAX_TOKENS,
                                    pad_token_id=self.tok.pad_token_id or 0)
             new = gen[0, ids.shape[1]:].tolist()
+            closed = False
             for j in range(len(new) - len(stop) + 1):
                 if new[j:j + len(stop)] == stop:
-                    new = new[:j]
+                    new, closed = new[:j], True
                     break
+            # closed: the policy itself sampled ``</analysis>``; otherwise (EOS or the 256-token cap first) the span is
+            # a format violation (spec §6.4) and the closing tag that ``segments`` appends was never sampled
+            self.last_generated_closed.append(closed)
             self.last_generated_tokens.append(len(new))
             out.append(self.tok.decode(new, skip_special_tokens=False))
         return out
