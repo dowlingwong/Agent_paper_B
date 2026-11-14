@@ -31,3 +31,10 @@ Each item: context, options, recommendation, paste-ready answer. Nothing here bl
 **Options.** (a) admin (Kylian) adds `dwong:1000000:65536` to `/etc/subuid` and `/etc/subgid` — enables `--fakeroot` with no setuid change; (b) admin installs apptainer setuid (`chmod u+s /usr/bin/apptainer` or the site setuid RPM); (c) build the SIF on a host where one of those is true and copy it to `/work/dwong/paperb/images/`; (d) the Docker route once the deepthought Docker daemon is started (Dockerfile + `apptainer build docker-daemon://…`), which is also the author's registry/I3 plan.
 **Recommendation.** (a) — smallest change, no setuid/security policy change, unblocks S3/S4/S5 today.
 **Paste-ready answer:** `Q-BUILD：<a 加 subuid/subgid | b setuid apptainer | c 换主机构建 | d 等 docker>。`
+
+## Q-TORCH (recorded per author, needed before Track P training) — GPU torch version is proposed, not ruled
+
+**Context.** The image (def and Dockerfile) installs env 3 (Track P training) with **`torch==2.6.0+cu124`**, marked `proposed:` because no committed file pins a cu124 wheel; the Track P CPU freeze records **`torch==2.14.1+cpu`**. The build fails loudly if the proposed wheel is unavailable (no silent fallback). C3 CPU jobs and I1/I2 do **not** use env 3, so they are unaffected.
+**Options.** (a) author rules a specific CUDA torch version (e.g. keep 2.6.0+cu124, or pin another); (b) keep the proposed pin and record it as a stack note; (c) install both (CPU env unchanged + GPU env pinned) — already the case.
+**Recommendation.** (a) before any Track P GPU training; record the ruling in the image README/def and rebuild (one-line workflow dispatch).
+**Paste-ready answer:** `Q-TORCH：<a 指定版本 | b 接受 proposed 2.6.0+cu124 | c 其它>。`

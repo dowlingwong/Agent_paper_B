@@ -28,18 +28,24 @@ for repo in "$B/src/paper:60ecf1dae299ee424aa1bdfe078eab02a881b87e" "$B/src/auto
   if [ "$have" != "$want" ]; then echo "PREFLIGHT_FAIL checkout $dir head=$have want=$want" >> "$OUT/identity.txt"; FAIL=1; fi
 done
 [ -x /opt/r1/envs/harness/bin/python ] || { echo "PREFLIGHT_FAIL no harness env" >> "$OUT/identity.txt"; FAIL=1; }
-[ -s /opt/r1/llama.cpp/build/bin/llama-server ] || { echo "PREFLIGHT_FAIL no llama-server" >> "$OUT/identity.txt"; FAIL=1; }
+# cpu image has no llama-server/trackp (by design); do not fail preflight on them
 # ---- I1: environment import and version check ---------------------------------
 {
   echo "== /opt/r1/VERSIONS.txt =="; cat /opt/r1/VERSIONS.txt 2>&1
   for env in harness tracks trackp; do
     echo "== env $env =="
-    /opt/r1/envs/$env/bin/python -VV 2>&1
-    /opt/r1/envs/$env/bin/python -c "import numpy, sklearn, pandas, pytest; print('numpy', numpy.__version__, 'sklearn', sklearn.__version__, 'pandas', pandas.__version__, 'pytest', pytest.__version__)" 2>&1 | tail -2
+    if [ -x "/opt/r1/envs/$env/bin/python" ]; then
+      /opt/r1/envs/$env/bin/python -VV 2>&1
+      /opt/r1/envs/$env/bin/python -c "import numpy, sklearn, pandas, pytest; print('numpy', numpy.__version__, 'sklearn', sklearn.__version__, 'pandas', pandas.__version__, 'pytest', pytest.__version__)" 2>&1 | tail -2
+    else
+      echo "ABSENT in this image (cpu target carries envs 1+2 only, by design)"
+    fi
   done
-  echo "== trackp torch/cuda =="
-  /opt/r1/envs/trackp/bin/python -c "import torch; print('torch', torch.__version__, 'cuda_available', torch.cuda.is_available(), 'cuda_version', torch.version.cuda)" 2>&1
-  echo "== llama-server =="; llama-server --version 2>&1 | head -3
+  if [ -x /opt/r1/envs/trackp/bin/python ]; then
+    echo "== trackp torch/cuda =="
+    /opt/r1/envs/trackp/bin/python -c "import torch; print('torch', torch.__version__, 'cuda_available', torch.cuda.is_available(), 'cuda_version', torch.version.cuda)" 2>&1
+  fi
+  echo "== llama-server =="; command -v llama-server >/dev/null 2>&1 && { llama-server --version 2>&1 | head -3; } || echo "ABSENT in this image (cpu target has no llama-server, by design)"
   echo "== uv =="; uv --version 2>&1
 } > "$OUT/i1_envs.txt" 2>&1
 # ---- S6: xrootd from a worker --------------------------------------------------------------
