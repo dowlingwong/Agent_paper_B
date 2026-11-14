@@ -1,0 +1,10 @@
+timestamp_cet	timestamp_utc	site	model	total_slots	idle_slots	drained_slots	other_busy	container	note
+2026-11-14T11:21:10CET	2026-11-14T10:21:10Z	ETP-local	(none)	241	11	0	230	HasDocker=true;HasSingularity=true	snapshot-1 (before any GPU submission today)
+2026-11-14T11:21:10CET	2026-11-14T10:21:10Z	ETP-local	NVIDIA GeForce GTX TITAN X	1	1	0	0	HasSingularity=true	snapshot-1 (before any GPU submission today)
+2026-11-14T11:21:10CET	2026-11-14T10:21:10Z	ETP-local	NVIDIA L40S	1	1	0	0	HasSingularity=true	snapshot-1 (before any GPU submission today)
+2026-11-14T11:21:10CET	2026-11-14T10:21:10Z	NEMO2	(none)	2399	55	36	2308	HasSingularity=true	snapshot-1 (before any GPU submission today)
+2026-11-14T11:21:10CET	2026-11-14T10:21:10Z	NEMO2	NVIDIA H200	8	4	3	1	HasSingularity=true	snapshot-1 (before any GPU submission today)
+2026-11-14T11:21:10CET	2026-11-14T10:21:10Z	NEMO2	NVIDIA L40S	4	3	1	0	HasSingularity=true	snapshot-1 (before any GPU submission today)
+2026-11-14T11:21:10CET	2026-11-14T10:21:10Z	TOpAS	(none)	223	5	0	218	HasDocker=true;HasSingularity=true	snapshot-1 (before any GPU submission today)
+2026-11-14T11:21:10CET	2026-11-14T10:21:10Z	TOpAS	NVIDIA A100-PCIE-40GB	17	3	0	14	HasDocker=true;HasSingularity=true	snapshot-1 (before any GPU submission today)
+2026-11-14T11:21:10CET	2026-11-14T10:21:10Z	TOpAS	Tesla V100S-PCIE-32GB	14	7	0	7	HasDocker=true;HasSingularity=true	snapshot-1 (before any GPU submission today)

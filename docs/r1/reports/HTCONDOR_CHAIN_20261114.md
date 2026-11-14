@@ -59,11 +59,33 @@ Queue times are recorded with the reviewed adapter's `htc_events.py` (exact call
 
 The local path works: `/ceph/srv/dwong/paperb/` exists (author's new directory) and a test file was written there (`chain_20261114_xrootd_test.txt`, 51 B, sha256 `90e6b637…d8a7`). The xrootd endpoints are **not reachable from the deepthought login node**: both `root://ceph-node-j.etp.kit.edu` and `root://ceph-node-a.etp.kit.edu` resolve to IPv6 only and return no response (`xrdfs` timed out, rc 124) or refuse port 1094; the client (`xrdfs`/`xrdcp`, xrootd 5.7.0) is installed. This is recorded as a question: the endpoints may be reachable only from the worker nodes, so the round trip must be tested inside a job (candidate: the S4 local-CPU job, which can run `xrdcp` against `/ceph/srv`). Raw: `raw/s6_xrootd_attempt2.txt`.
 
+## GPU availability ledger (author supplement 2, 14 Nov)
+
+`gpu_availability.tsv` (`gpu_availability.sh`, read-only `condor_status`; TOpAS via `-pool c03-001-140.gridka.de`) records per site/model: total slots, idle, drained, other busy, and the advertised container type. The author requires a snapshot before every GPU job submission and at least three per day; the chosen model and the reason go into the submission note beside `queue_times.tsv`.
+
+**Snapshot 1 — 11:21 CET (before the first GPU submission of the chain):**
+
+| site | model | total | idle | drained | other busy | container |
+|---|---|---:|---:|---:|---:|---|
+| TOpAS | Tesla V100S-PCIE-32GB | 14 | **7** | 0 | 7 | HasDocker+HasSingularity |
+| TOpAS | NVIDIA A100-PCIE-40GB | 17 | 3 | 0 | 14 | HasDocker+HasSingularity |
+| NEMO2 | NVIDIA H200 | 8 | 4 | 3 | 1 | HasSingularity only |
+| NEMO2 | NVIDIA L40S | 4 | 3 | 1 | 0 | HasSingularity only |
+| ETP-local | L40S / TITAN X | 1 / 1 | 1 / 1 | 0 | 0 | HasSingularity only |
+
+(The counts move during the day; every later snapshot is appended, never edited, and the file keeps a `note` column.)
+
+## Author supplement 2 — Docker Hub registry and I3 (recorded, not started)
+
+The author will create a public Docker Hub repository and log in on deepthought themselves; the repository name comes later. Until then only S1–S4 proceed (the SIF route does not need the repository). After the name arrives: build the Docker image, push `<repo>:20261114-<Dockerfile sha short>`, then run **I3** with `universe = docker` on TOpAS V100S and A100, pulling the GGUF from `/ceph/srv/dwong/paperb/models/` through the S6-confirmed xrootd endpoint, recording the first-pull time. **I do not log in, do not read credential files, and have not done either.** Q-REG records the wait. Q9 (A100 capacity chase), Q11 (local CPU via S4 SIF) and Q12 (`work` stays on `/ceph`) are settled as the author ruled.
+
 ## S3 — building the SIF (in progress)
 
-Def/README/build plan committed (`r1/scripts/htcondor/apptainer/`), pre-build review pending. Committed inputs: harness `uv.lock` at `a3fedbb` (sha256 `dd42d018…`, 536,392 B), `pyproject.toml` at `a3fedbb` (sha `72c43589…`), the 65-package freeze (sha256 `f1c818e5…`, 65 lines), the Track P freeze (sha256 `17da9a3a…`, 101 lines). Build is capability-gated (plain `apptainer build`, then `--fakeroot`, STOP if neither), writes `r1-htc-20261114.sif` under `/work/dwong/paperb/images/` with SHA-256/bytes/inspect/VERSIONS records and copies it to `/ceph/srv/dwong/paperb/images/`. **No Dockerfile route today:** the daemon is inactive (Q-D1); the author's supplement says not to start it.
+Def/README/build plan committed (`r1/scripts/htcondor/apptainer/`). First pre-build review: **NOT ACCEPTED** (3 BLOCKING: the env-2 freeze's `/home` editable line, env-3 VCS/numpy resolution conflict, `xrootd-client` being EPEL-only; 11 MAJOR: capability test not testing uid 0, a `rm` and an overwriting `mv`, driver scope, `torch==2.14.1+cu124` not existing (pinned 2.6.0+cu124 instead), missing pytest in env 1, non-relocatable `.venv` move, env-3 Python version, missing cache controls, missing records/smoke, README errors). All fixed in `r1-htc.def` (new SHA `a5a0c9da…`), `build_sif.sh` (new SHA `d63c2a8e…`), `README.md` and `capability.def`; re-review requested, **build not started**. Committed inputs: harness `uv.lock` at `a3fedbb` (sha256 `dd42d018…`, 536,392 B), `pyproject.toml` at `a3fedbb` (sha `72c43589…`), the 65-package freeze (sha256 `f1c818e5…`, 65 lines), the Track P freeze (sha256 `17da9a3a…`, 101 lines). Build is capability-gated (plain `apptainer build`, then `--fakeroot`, STOP if neither), writes `r1-htc-20261114.sif` under `/work/dwong/paperb/images/` with SHA-256/bytes/inspect/VERSIONS records and copies it to `/ceph/srv/dwong/paperb/images/`. **No Dockerfile route today:** the daemon is inactive (Q-D1); the author's supplement says not to start it.
 
 ## S4/S5 — prepared, awaiting the SIF
+
+**S4 review (round 1): NOT ACCEPTED** — B1 the JDL's `transfer_output_files` listed files written on `/work` (job would be HELD at exit), B2 no `output`/`error`/`log`, B3 the I2 comparison grepped pytest stdout instead of the preserved worker `run.log` files, B4 container-image transfer not verified (multi-GB SIF) — plus 12 MINORs. All fixed: transfer list dropped, output/error/log added, `arguments = $(ClusterId).$(ProcId)`, `should_transfer_container = no`, run.log parsing + explicit `I2_PASS/FAIL` + non-zero exit, timeouts, preflight pinned heads, S6 readback sha compare, identity/placement records. Re-review requested.
 
 S4 (local CPU, `container_image = /work/dwong/paperb/images/r1-htc-20261114.sif`, `requirements = TARGET.ProvidesETPResources`): I1 environment/version checks in all three envs, I2 the `60ecf1da`/`a3fedbb` CPU worker determinism test twice with all thread settings 1 against the recorded `0.922225`, and the xrootd round-trip attempt from a worker. S5 (NEMO2 L40S, same SIF transferred by HTCondor): I4 CUDA/torch/llama-server plus the SIF-transfer method/size/time record the author asked for. Checkouts are already in place: paper `60ecf1da` and harness `a3fedbb` under `/work/dwong/paperb/src/` (both verified by `git rev-parse HEAD`, clean). S4 review is running in parallel with the build; S5 review follows the S4 result.
 
