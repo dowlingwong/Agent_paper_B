@@ -26,6 +26,7 @@ per-step failure lists and summary lines are in `reports/integration_trial_20261
 | 7 | `mac-trackp-rl-20261114` @ `c9d29ba9` (Track P RL) | none (auto-merged `r1/c3/train/model.py`) | 25 / 1348 / 83 | same 1 | 16 |
 | 8 | `mac-htcondor-20261114` @ `68057612` (HTCondor adapter, not in the runbook list) | none | 25 / 1416 / 83 | same 1 | 16 |
 | 9 | `mac-m4-dtq-20261114` @ `f20e7ccb` (DTQ tool, not in the runbook list) | none | 25 / 1434 / 83 | same 1 | 16 |
+| — | tip after the review fix `d3ce0d52` (offline_eval guard order + regression test), reviewer's rerun | — | 25 / 1435 / 83 | same 1 | 16 |
 
 Steps 8 and 9 go beyond the runbook's list; they were accepted tonight and are on top so that the list's own
 order (steps 1–7) can be taken without them. Track P's torch tests skip in this venv (no torch); they were run on
@@ -36,8 +37,9 @@ the branch itself in a torch venv (its review record).
 M3 (`mac-m3-20261109`) grew on a different line (from `30303d87`, with 71 commits not on mac-int), and mac-int
 meanwhile added sealed-path and D8-authority guards to the same C3 readers. Every conflict is one of two kinds: mac-int
 added a guard call where M3 changed nothing, or M3 refactored code mac-int had guarded. The trial resolution keeps
-**both**: M3's code plus every mac-int guard call. `git diff ec6e30a9 <merge> -- r1/c3/audit.py` shows only added
-`refuse_sealed` / `guard_table` lines.
+**both**: M3's code plus every mac-int guard call (for `offline_eval.py` only after the round-1 correction below).
+`git diff ec6e30a9 <merge> -- r1/c3/audit.py` shows the added `refuse_sealed` / `guard_table` lines and one existing
+line moved below a guard call (`f = Path(out) / SEEDS_FILE`); nothing else.
 
 | File | Hunks | Resolution |
 |---|---|---|
@@ -53,9 +55,12 @@ These resolutions are the trial's; the real integration should have them reviewe
 **Author-held diffs come in with M3.** Step 1 also brings in, without conflict, the five changes of `9bab3d6f` that
 were held outside the B.2-repair scope: `r1/c3/train/run.py`, `r1/c3/train/trainer.py`, `r1/c3/env.py`,
 `r1/c3/control.py`, `r1/c3/prior_model.py`. Decision row R1-B2-REPAIR-SCOPE-ACK (`proposals/AUTHOR_DECISIONS_20261104.md`)
-says they are reviewed with M3 and "until then they are not merged"; the author acknowledges them, or not, with M3's
-accepted commit, and question Q24 (`reports/MAC_OVERNIGHT_QUESTIONS_20261105.md`) is still open. Merging M3 as a whole
-therefore needs that acknowledgement first. Several of the base failures that M3 fixes (§4) depend on these diffs.
+says they are taken into M3's scope **and reviewed with it**, and "until then they are not merged"; the author
+acknowledges them, or not, with M3's accepted commit; question Q24 (`reports/MAC_OVERNIGHT_QUESTIONS_20261105.md`) is
+still open. **No accepted review covers them yet:** the accepted 9 Nov M3 review does not mention the five files, the
+4 Nov M3 review says it is "not acceptance" of them, and the only substantive review of `9bab3d6f`
+(`reviews/C3_EVIDENCE_GUARDS_REVIEW_20261028.md`, 28 Oct) says BLOCK for B.2 launch. Merging M3 as a whole therefore
+needs, first, an independent review of the five exact diffs and, then, the author's acknowledgement. Several of the base failures that M3 fixes (§4) depend on these diffs.
 
 ## 3. The one new failure
 
@@ -87,8 +92,8 @@ test-side changes M3 carries. So "M3 fixes them" holds only if those held diffs 
   predate the guard and do not satisfy it.
 - **6 STOP on D28 liveness** (`STOP: only 1 nodes passed D28 liveness (< 2); the author decides`):
   `test_c3_sweep_dryrun.py` (6).
-- **4 single causes:** `test_trackp_exam_synthetic.py` (`lightgbm` not installed); `test_rerun2_batch4c.py` (a
-  `git commit` inside the test's fixture fails); `test_trackp_soft_label_v2.py` (a gzip byte mismatch);
+- **4 single causes:** `test_trackp_soft_label_v2.py` (`lightgbm` not installed); `test_rerun2_batch4c.py` (a
+  `git commit` inside the test's fixture fails); `test_trackp_exam_synthetic.py` (a gzip byte mismatch);
   `test_c3_control_dryrun.py` (the dry-run runner exits with rc 1 before the interruption).
 
 None of them is investigated or fixed here.
@@ -109,6 +114,6 @@ duplicate run of step 9 was stopped and restarted). The recorded step-8 run over
 
 The runbook's order works without further conflicts after step 1: M3 → M4 → M11 D8 v2 → W2 (stop-rule branch, which
 contains the 9 Nov W2 budget branch) → M10 kit → M10 v2 → Track P RL; HTCondor and DTQ can follow in any order.
-M3 should go first, **after the author has acknowledged (or not) the five held `9bab3d6f` diffs** (R1-B2-REPAIR-SCOPE-ACK,
-Q24): it carries the guard fixes the Track P leak-guard tests need, and its six conflicts are the only ones. Before the
+M3 should go first, **after an independent review of the five held `9bab3d6f` diffs and then the author's
+acknowledgement (or not)** (R1-B2-REPAIR-SCOPE-ACK, Q24); if they are not acknowledged, M3 has to be split: it carries the guard fixes the Track P leak-guard tests need, and its six conflicts are the only ones. Before the
 real merge: review the step-1 resolutions as code, and settle IT-1 (record `sweep_index.path` in M3's dry-run table).
