@@ -1,0 +1,11 @@
+== NEMO2 attrs ==
+slot1@nemo2_gpu-470d996a96@g3526.nemo.privat Unclaimed 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-e532c1d458@g3606.nemo.privat Unclaimed 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-f45219d4e2@g3606.nemo.privat Unclaimed 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-f3da12a6bc@g3607.nemo.privat Drained 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-237e9e5f82@g3610.nemo.privat Unclaimed 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-823a759d35@g3612.nemo.privat Drained 4 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-6f2cf5eece@g4401.nemo.privat Unclaimed 1 NVIDIA H200 undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-39ff2982a0@g4401.nemo.privat Drained 1 NVIDIA H200 undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-99d4ca41f2@g4401.nemo.privat Drained 1 NVIDIA H200 undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-14ca9f1995@g4402.nemo.privat Drained 1 NVIDIA H200 undefined true BwForCluster-Nemo2

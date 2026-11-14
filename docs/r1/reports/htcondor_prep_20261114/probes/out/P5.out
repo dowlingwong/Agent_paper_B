@@ -1,0 +1,46 @@
+probe=P5
+hostname=dwong-759623.0-c03-001-159.gridka.de
+date_utc=2026-11-13T22:56:07Z
+nproc=2
+cpu_model=AMD EPYC 7702 64-Core Processor
+== free -g ==
+               total        used        free      shared  buff/cache   available
+Mem:            1007          22         873           0         118         984
+Swap:              0           0           0
+df[/work]=MISSING
+df[/ceph]=MISSING
+df[/ceph/srv]=MISSING
+df[/cvmfs]=size=0 avail=0 use=- on=/cvmfs
+df[/scratch]=MISSING
+df[/tmp]=size=5.2T avail=4.7T use=7% on=/
+df[/var/lib/condor/execute/dir_1416774]=size=5.2T avail=4.7T use=7% on=/var/lib/condor/execute/dir_1416774
+== env NVIDIA|CUDA ==
+NVIDIA_VISIBLE_DEVICES=void
+CUDA_VISIBLE_DEVICES=GPU-918aeb0c-c0f0-371f-efef-d4ae691d912f
+NVIDIA_CTK_LIBCUDA_DIR=/usr/lib64
+== env _CONDOR (first 40) ==
+_CONDOR_CHIRP_CONFIG=/var/lib/condor/execute/dir_1416774/.chirp.config
+_CONDOR_JOB_IWD=/var/lib/condor/execute/dir_1416774
+_CONDOR_WRAPPER_ERROR_FILE=/var/lib/condor/execute/dir_1416774/.job_wrapper_failure
+_CONDOR_MACHINE_AD=/var/lib/condor/execute/dir_1416774/.machine.ad
+_CONDOR_JOB_AD=/var/lib/condor/execute/dir_1416774/.job.ad
+_CONDOR_BIN=/usr/bin
+_CONDOR_SCRATCH_DIR=/var/lib/condor/execute/dir_1416774
+_CONDOR_JOB_PIDS=-1
+_CONDOR_AssignedGPUs=GPU-918aeb0c
+_CONDOR_SLOT=slot4_1
+== gpu ==
+GPU 0: Tesla V100S-PCIE-32GB (UUID: GPU-17fc2977-eee9-80df-4da2-e5bdff8571f4)
+GPU 1: Tesla V100S-PCIE-32GB (UUID: GPU-177b1254-ad2e-e702-02f0-e38bfe8ddefe)
+GPU 2: Tesla V100S-PCIE-32GB (UUID: GPU-5279e94a-562f-d37c-d45b-dbe3dfd4b0fe)
+GPU 3: Tesla V100S-PCIE-32GB (UUID: GPU-918aeb0c-c0f0-371f-efef-d4ae691d912f)
+GPU 4: Tesla V100S-PCIE-32GB (UUID: GPU-d253f763-fe7e-c5a3-6bec-786eedfe5730)
+GPU 5: Tesla V100S-PCIE-32GB (UUID: GPU-a0d57069-ea24-faba-80a3-3f793a9d6584)
+GPU 6: Tesla V100S-PCIE-32GB (UUID: GPU-9e8955cd-5946-14e3-0bfe-63bda461f0d7)
+Tesla V100S-PCIE-32GB, GPU-17fc2977-eee9-80df-4da2-e5bdff8571f4, 32768 MiB, 580.173.02, 7.0
+Tesla V100S-PCIE-32GB, GPU-177b1254-ad2e-e702-02f0-e38bfe8ddefe, 32768 MiB, 580.173.02, 7.0
+Tesla V100S-PCIE-32GB, GPU-5279e94a-562f-d37c-d45b-dbe3dfd4b0fe, 32768 MiB, 580.173.02, 7.0
+Tesla V100S-PCIE-32GB, GPU-918aeb0c-c0f0-371f-efef-d4ae691d912f, 32768 MiB, 580.173.02, 7.0
+Tesla V100S-PCIE-32GB, GPU-d253f763-fe7e-c5a3-6bec-786eedfe5730, 32768 MiB, 580.173.02, 7.0
+Tesla V100S-PCIE-32GB, GPU-a0d57069-ea24-faba-80a3-3f793a9d6584, 32768 MiB, 580.173.02, 7.0
+Tesla V100S-PCIE-32GB, GPU-9e8955cd-5946-14e3-0bfe-63bda461f0d7, 32768 MiB, 580.173.02, 7.0

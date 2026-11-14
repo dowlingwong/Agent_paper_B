@@ -1,0 +1,13 @@
+== P2 analyze ==
+[8]           1         5  [3] && [7]
+
+
+759620.000:  Run analysis summary ignoring user priority.  Of 65 slots on 58 machines,
+     59 slots are rejected by your job's requirements
+      1 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+      5 slots would match if drained
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:30:08 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found

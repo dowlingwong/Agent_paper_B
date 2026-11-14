@@ -1,0 +1,6 @@
+job	probe	gpu_class	requested_walltime_s	gpus	elapsed_s	gpu_hours	state	note
+759622	P4	TOpAS A100	1800	1	0	0.000000	queued (no match: A100 capacity)	not run; 0 GPU-h consumed
+759623	P5	TOpAS V100S	1800	1	2	0.000556	completed exit 0	the only GPU time used tonight (2 s on 1 GPU)
+759624	P6	NEMO2 L40S	1800	1	0	0.000000	queued (no match: HasDocker undefined)	not run; 0 GPU-h consumed
+759625	P7	NEMO2 H200	1800	1	0	0.000000	queued (no match: all H200 slots drained)	not run; 0 GPU-h consumed
+TOTAL	-	-	-	-	2	0.000556	-	under the author's 6 GPU-h cap and the errata 5.0 GPU-h stop; no restarts/evictions

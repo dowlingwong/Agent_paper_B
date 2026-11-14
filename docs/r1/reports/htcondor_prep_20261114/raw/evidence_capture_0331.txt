@@ -1,0 +1,92 @@
+== docker info transcript ==
+2026-11-14T02:30:10Z
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+
+---second---
+2026-11-14T02:30:10Z
+Client: Docker Engine - Community
+ Version:    26.1.3
+ Context:    default
+== NEMO2 attrs ==
+slot1@nemo2_gpu-470d996a96@g3526.nemo.privat Unclaimed 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-e532c1d458@g3606.nemo.privat Unclaimed 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-f45219d4e2@g3606.nemo.privat Unclaimed 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-f3da12a6bc@g3607.nemo.privat Drained 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-237e9e5f82@g3610.nemo.privat Unclaimed 1 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-823a759d35@g3612.nemo.privat Drained 4 NVIDIA L40S undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-6f2cf5eece@g4401.nemo.privat Unclaimed 1 NVIDIA H200 undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-39ff2982a0@g4401.nemo.privat Drained 1 NVIDIA H200 undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-99d4ca41f2@g4401.nemo.privat Drained 1 NVIDIA H200 undefined true BwForCluster-Nemo2
+slot1@nemo2_gpu-14ca9f1995@g4402.nemo.privat Drained 1 NVIDIA H200 undefined true BwForCluster-Nemo2
+== NEMO2 all slots ==
+852
+== P6 analyze ==
+Step   Matched  Condition
+----- --------- ---------
+[0]          51  TARGET.CloudSite is "BwForCluster-Nemo2"
+[1]           7  TARGET.GPUs_DeviceName is "NVIDIA L40S"
+[2]           6  [0] && [1]
+[5]           6  TARGET.HasDocker
+[6]           0  [2] && [5]
+
+
+759624.000:  Run analysis summary ignoring user priority.  Of 65 slots on 58 machines,
+     65 slots are rejected by your job's requirements
+      0 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+
+WARNING:  Be advised:
+   No machines matched the job's constraints
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:30:08 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found
+== P2 analyze ==
+[8]           1         5  [3] && [7]
+
+
+759620.000:  Run analysis summary ignoring user priority.  Of 65 slots on 58 machines,
+     59 slots are rejected by your job's requirements
+      1 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+      5 slots would match if drained
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:30:08 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found
+== P4 analyze local ==
+
+759622.000:  Run analysis summary ignoring user priority.  Of 65 slots on 58 machines,
+     65 slots are rejected by your job's requirements
+      0 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+
+WARNING:  Be advised:
+   No machines matched the job's constraints
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:30:08 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found
+== foreign jobs 759618/759636 ==
+759620 0 1 /work/dwong/htcondor_prep_20261114/probes /work/dwong/htcondor_prep_20261114/probes/probe.sh
+759622 0 1 /work/dwong/htcondor_prep_20261114/probes /work/dwong/htcondor_prep_20261114/probes/probe.sh
+759624 0 1 /work/dwong/htcondor_prep_20261114/probes /work/dwong/htcondor_prep_20261114/probes/probe.sh
+759625 0 1 /work/dwong/htcondor_prep_20261114/probes /work/dwong/htcondor_prep_20261114/probes/probe.sh
+759636 0 1 /work/dwong/r2_batch/jobs/r2_batch_a100_wcte_regression/20261114T013020Z /work/dwong/r2_batch/jobs/r2_batch_a100_wcte_regression/20261114T013020Z/job.sh
+== gguf sha transcript ==
+509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c  /ceph/dwong/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf
+== failed copies ==
+drwxr-xr-x  4 dwong cms  4 Jun 11 03:34 /work/dwong/_to_delete/work.failed_20261113T235407Z
+drwxr-xr-x 25 dwong cms 33 Oct 13 12:03 /work/dwong/_to_delete/zc_host.failed_20261113T234708Z
+== backfill first attempt ==
+-rw-r--r-- 1 dwong cms 1711 Nov 14 00:53 /work/dwong/htcondor_prep_20261114/moves/MOVE_BACKFILL.tsv
+-rw-r--r-- 1 dwong cms 1816 Nov 14 00:50 /work/dwong/htcondor_prep_20261114/moves/MOVE_BACKFILL.tsv.first_attempt_20261113T235210Z
+== W2 rerun with exit code ==
+interpreter=/ceph/dwong/r1_prepare_20261025/venv/bin/python
+Python 3.13.15 (main, Aug 14 2026, 15:34:59) [Clang 22.1.3 ]
+checkout=0b62fb03df5480faf558cddd8f715cbb5310416e
+w2_exit=3
+{
+ "status": "STOP_DIFFERENCE",
+ "ledgers": 288,
+== done ==

@@ -56,17 +56,17 @@ These were measured by submitting P1–P7 (accepted unit, `reviews/HTCONDOR_PROB
 
 | Probe | Class | Result | Measured reason |
 |---|---|---|---|
-| P1 | local CPU, docker, 1 CPU / 2 GB | **COMPLETED, exit 0**, host `ms02.etp.kit.edu`, run 3 s, wait ≈ 73 s | 1 matching slot willing; the ETP worker nodes (`ms*`, `mdm*`) are docker-capable (`HasDocker=true`) and mount /work and /ceph |
+| P1 | local CPU, docker, 1 CPU / 2 GB | **COMPLETED, exit 0**, host `ms02.etp.kit.edu`, run 1 s, wait 73 s | 1 matching slot willing; the ETP worker nodes (`ms*`, `mdm*`) are docker-capable (`HasDocker=true`) and mount /work and /ceph |
 | P2 | local CPU, docker, 8 CPU / 16 GB | **IDLE (capacity)** | 0 slots match now, 5 would match if drained — the pool is at 1051/1105 claimed; this is a queue measurement, not a defect |
 | P3 | "remote" CPU, docker, 1 CPU | **COMPLETED, exit 0**, also on `ms02.etp.kit.edu`, wait 7 s, run 1 s | `+RemoteJob=True` did **not** force a remote site; it matched a local ETP worker. Best-effort class (errata A7-F12): the remote-CPU queue class is **not measured** tonight; site recorded as `schnepf` (the `MachineAttrCloudSite0` of `ms02`) |
 | P4 | TOpAS A100 | **IDLE, no match (capacity)** | P5 proves TOpAS IS reachable, so P4's failure is not the pool route: the A100 slot `slot1@c03-001-167.gridka.de` advertises `TotalSlotGPUs=8` but `GPUs=0`, `Cpus=0` with all children Claimed/Preempting — the A100 node is fully allocated and the partitionable parent has no free GPUs/CPUs to provision. It becomes runnable only when the node frees resources |
 | P5 | TOpAS V100S | **COMPLETED, exit 0**, host `dwong-759623.0-c03-001-159.gridka.de` (site `topas`, slot4_1@c03-001-159), wait 212 s, run 2 s | TOpAS **is reachable by flocking**: the pool match found a free V100S slot on `c03-001-159` (GridKa). Job ran in docker (`NVIDIA_VISIBLE_DEVICES=void`, `CUDA_VISIBLE_DEVICES=GPU-918aeb0c-…` UUID); `/work`, `/ceph`, `/ceph/srv` are MISSING remotely (expected for `+RemoteJob`), `/tmp` 5.2 T |
-| P6 | NEMO2 L40S | **IDLE, no match** | CloudSite and device terms matched 6 L40S slots (CloudSite measured = `BwForCluster-Nemo2`), but **`TARGET.HasDocker` matched 0**: the NEMO2 slots advertise `HasDocker=undefined`, `HasSingularity=true`. A docker-universe job cannot run there; the runbook's container design assumes docker |
+| P6 | NEMO2 L40S | **IDLE, no match** | measured at 03:30 CET: 6 L40S slots (4 Unclaimed, 2 Drained) + 3 H200 slots, all `HasDocker=undefined`, `HasSingularity=true`, `CloudSite=BwForCluster-Nemo2`. P6 analysis (`raw/p6_analyze.txt`): `[2]` 6, `[5]` 6, `[6]=[2]&&[5]` **0** — a docker-universe job cannot run there |
 | P7 | NEMO2 H200 | **IDLE, no match** | no H200 slot in the negotiating view (the only visible H200 slot, `g4401`, is **Drained**) |
 
 Additional measured facts:
 
-- `TARGET.ProvidesETPResources` **exists and is true** on the local ETP slots (`bms1/2/3`, `deepthought`, `deepthought2`, `mdm*`, `ms*`), and `HasDocker=true` on 324 slots (all of them also ETP). The JDL requirement is valid — M2 is resolved in its favour.
+- `TARGET.ProvidesETPResources` **exists and is true** on the local ETP slots (`bms1/2/3`, `deepthought`, `deepthought2`, `mdm*`, `ms*`), and `HasDocker=true` on **315** slots (all of them also ETP; `ProvidesETPResources` on 323, `HasSingularity` on 1094, measured 03:30 CET in `raw/evidence_capture_0331.txt`). The JDL requirement is valid — M2 is resolved in its favour.
 - `CloudSite` **exists**: local ETP = `portal`, NEMO2 = `BwForCluster-Nemo2`. The JDL term is valid — M1 is resolved in its favour; no JDL edit was needed.
 - A100 parent slot `slot1@c03-001-167.gridka.de`: `TotalSlotGPUs=8`, `GPUs=0` (unprovisioned partitionable parent), `Cpus=0`, all children Claimed/Preempting. So even inside the TOpAS pool the A100 node was fully allocated; the `GPUs` attribute is 0 on the parent.
 - The author's schedd is `deepthought.etp.kit.edu`; `condor_q -better-analyze` negotiates a small view ("52 slots on 50 machines") that includes NEMO2 slots and local ETP workers but **not** the c03/TOpAS slots — the "Last failed match" line names `etprain.etp.kit.edu` for P4/P5 and `c03-001-140.gridka.de` earlier, i.e. the pool-federation attempt does not resolve to TOpAS.
@@ -86,3 +86,14 @@ Additional measured facts:
 - **NEMO2 is Singularity-only.** `HasDocker=undefined`, `HasSingularity=true` on its GPU slots; the current docker-universe design cannot match (P6/P7). The author's recommendation: build the image, convert to an Apptainer SIF under `/work`/`/ceph`, so no docker registry is needed; the per-site docker-vs-Singularity decision and the NEMO2 SIF JDL attribute are questions (Q10). **No new job type tonight.**
 - **Local CPU container capacity:** `HasDocker=true` 315 slots (all ETP), `ProvidesETPResources` 323, unclaimed docker 5 / ETP 13 at 00:35; `HasSingularity` 1094. Recorded for tomorrow's decision (Q11).
 - **Hard stop moved to 09:30 CET** (was 05:30); the +3 h resubmission still runs ~02:50, and the +6 h wave (~05:50) becomes possible again only if the report and review are on schedule — the report/review still get priority.
+
+
+## 8. Evidence for the checks whose transcript was missing from the first report draft
+
+- `raw/evidence_capture_0331.txt` — 03:30 CET capture: two timestamped `docker info` runs (daemon unreachable), `HasDocker`/`ProvidesETPResources`/`HasSingularity` counts (315/323/1094), NEMO2 slot attributes (6 L40S + 3 H200, all `HasDocker=undefined`), P2/P4/P6 analyses, the foreign `r2_batch` jobs, the GGUF sha256, the failed-copy paths.
+- `raw/p6_analyze.txt`, `raw/p2_analyze.txt` — full analyses for P6 and P2 (the local P4 analysis is in `raw/pool_analyze_p4_20261114.txt`).
+- `raw/gguf_sha256.txt` — the pinned GGUF hash on `/ceph/dwong/models`.
+- `raw/login_hosts_mounts.txt` — all four ETP login hosts reachable and mounting `/ceph/dwong` and `/work/dwong`.
+- `raw/m1_m2_checks.txt` — the M1/M2 `CloudSite` / `ProvidesETPResources` / `HasDocker` checks, re-run and recorded at 03:30 CET (they were first inspected at 23:44 and are the reason the report says "measured after submission").
+- `w2/w2_check_rerun.json` — the W2 check re-run with exit code (3 = STOP_DIFFERENCE) and interpreter recorded in `w2/w2_run.txt`.
+- `moves/from_host/MOVE_BACKFILL.tsv.first_attempt_20261113T235210Z` — the first backfill attempt, kept before the git-index exclusion was actually in the script.

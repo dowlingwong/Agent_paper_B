@@ -110,3 +110,19 @@
 **Options.** (a) leave `work` on `/ceph` (it is 7.38 GB for 140 files — the reviewer's own caution said to drop it first if the clock is tight); (b) move it with `rsync -aHAX --no-acls` and record that ACLs are not preserved (the author's verification set is mode+path, not ACLs); (c) copy ACLs after the fact via `getfacl`/`setfacl` where the target supports them.
 **Recommendation:** (a) now; decide (b)/(c) with the author, since ACL semantics may matter for the other sessions sharing `/ceph/dwong`.
 **Paste-ready answer:** `Q12：work <a|b|c>；ACL 是否需要保留 <是|否>。`
+
+---
+
+## Completing the runbook §7 shape (context / options / recommendation / paste-ready) for the questions that lacked a full shape
+
+**Q4 (XRootD endpoint / transfer rule).** Options: (a) `root://ceph-node-a.etp.kit.edu` (2022 public tutorial), (b) `root://ceph-node-j.etp.kit.edu` (runbook), (c) ask the site. Recommendation: (c) with (a) as the fallback; treat ">2 GB input per 30 min runtime = data-intensive → `ProvidesIO`" as the transfer rule until the wiki says otherwise. Paste-ready: `Q4：xrootd 端点 = <a|b|c 结果>；传输规则 = <wiki 原文>。`
+
+**Q5 (pool facts discrepancies).** Options: (a) accept the measured values as authoritative for tonight (device strings confirmed, V100S count unresolved), (b) ask the site about the V100S total, (c) leave both recorded as a discrepancy. Recommendation: (a)+(c). Paste-ready: `Q5：以实测为准；V100S 总数 <待确认>。`
+
+**Q6 (`/ceph/srv/dwong` absent).** Options: (a) create `/ceph/srv/dwong` and place the pinned GGUF there, (b) use the xrootd route from `/ceph/dwong/models`, (c) skip the TOpAS model-load check. Recommendation: (a) if the TOpAS model path is wanted; otherwise (c) until Q4 is answered. Paste-ready: `Q6：<a|b|c>。`
+
+**Q7 (queue/cut-offs).** Options: (a) keep the cut-off discipline as executed (report/review priority), (b) extend to the 09:30 hard stop with a third wave, (c) stop at 05:30. Recommendation: (a), with the +6 h sample at ~05:52 only if the report is already with its reviewer. Paste-ready: `Q7：<a|b|c>。`
+
+**Q9 (A100 capacity / TOpAS routing).** Options: (a) leave P4 queued and use the next window's A100 window, (b) request the A100 node via a different accounting group, (c) drop the A100 class and use V100S only. Recommendation: (a) — TOpAS flocking is proven by P5; A100 is an occupancy issue, not a design issue. Paste-ready: `Q9：<a|b|c>。`
+
+**Q11 (local CPU container capacity).** Options: (a) docker on the ETP fleet (315 slots measured, 5 unclaimed), (b) Singularity for local CPU jobs, (c) plain venv (no container) for the C3 audits. Recommendation: (c) for the audits' first production runs (P1/P3 ran fine without container overhead), with (a) as the container fallback. Paste-ready: `Q11：<a|b|c>。`
