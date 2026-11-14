@@ -18,7 +18,7 @@ the round texts unchanged and carries a `Reviewed base:` line equal to the last 
 | 4 Track P RL | `mac-trackp-rl-20261114` (paper) | `2f36614a` (round 3) | `reviews/TRACKP_RL_REVIEW_20261114.md` @ `c9d29ba9` | accepted |
 | 5 B2 hand-off draft (**not armed**) | `mac-b2-handoff-20261114` (paper, from `mac-b1-20261107` @ `1e5728f9`) | `d19c9072` (round 2) | `reviews/B2_HANDOFF_DRAFT_REVIEW_20261114.md` @ `2120956c` | accepted |
 | 6 Appendix disclosure drafts | `mac-appendix-20261114` (paper, from `1e5728f9`) | `3fec3c50` (round 2) | `reviews/B1_APPENDIX_DISCLOSURES_REVIEW_20261114.md` @ `4a5811d1` | accepted |
-| 7 Integration trial | `mac-int-trial-20261114` (paper) | ⟨U7⟩ | ⟨U7r⟩ | ⟨U7s⟩ |
+| 7 Integration trial | `mac-int-trial-20261114` (paper; 9 accepted branches merged `--no-ff`) | `7c9c9cff` (round 3) | `reviews/INTEGRATION_TRIAL_REVIEW_20261114.md` @ `5d8c0274` | accepted (a trial; the author decides the real integration) |
 | 8.1 M15 standby (observer 60 → 180 s) | `mac-b1-obs180-20261113` (paper, from `_d` HEAD `7912b7ff`); alias `mac-b1-m15-standby-20261114` | `dd0aa0da` (round 2) | `reviews/B1_OBSERVER_TIMEOUT_REVIEW_20261113.md` @ `8eae3e02` | accepted; **standby**, delivered only if `_d` STOPs on M15 |
 | 8.2 M4 step 4, DTQ tool (Q10) | `mac-m4-dtq-20261114` (paper, from `5cd32efc`) | `0aa4bc00` (round 2) | `reviews/M4_DTQ_TOOL_REVIEW_20261114.md` @ `f20e7ccb` | accepted |
 | 8.3 L8 test vs D28 configs (Q9.5) | `r1-local-l8-d28-20261114` (harness, from `a3fedbb`) | `a56c3a2` (round 1) | `reviews/HARNESS_L8_D28_TEST_REVIEW_20261114.md` on this branch | accepted |
