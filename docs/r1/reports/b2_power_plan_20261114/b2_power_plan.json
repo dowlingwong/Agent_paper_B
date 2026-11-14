@@ -1,0 +1,57 @@
+{
+ "alpha": 0.05,
+ "b2_instances_per_node": 4,
+ "cap": 10,
+ "cap_status": "within_cap",
+ "e1_summary_sha256": "eabc2f5c05b08cf900ab988838e41dc7f8db35a4131f4b57e72514e0e5513793",
+ "finalists": [
+  "gemma4_31b"
+ ],
+ "h_in_sigma_node": 1.0,
+ "k": 1,
+ "label": "ENGINEERING_ONLY",
+ "manifests_sha256": "dc5cd04dfc31758b26bb9ed5ebdec38e80ef06730b304d491c433da18b510e62",
+ "n": 4,
+ "nodes": {
+  "digits_mlp": {
+   "V_hat": 7.977461654166685e-06,
+   "V_ucl": 9.732724630877867e-06,
+   "dof": 45,
+   "excluded_roots_without_audit": 0,
+   "h": 0.006613322803772441,
+   "n_j": 4,
+   "roots": 60,
+   "sd_hat": 0.00282444006028924,
+   "sd_ucl": 0.0031197314998053704,
+   "sigma_node": 0.006613322803772441
+  },
+  "openml_credit_approval": {
+   "V_hat": 2.424278703124998e-05,
+   "V_ucl": 2.957687303165358e-05,
+   "dof": 45,
+   "excluded_roots_without_audit": 0,
+   "h": 0.014616679475904568,
+   "n_j": 3,
+   "roots": 60,
+   "sd_hat": 0.00492369648041489,
+   "sd_ucl": 0.005438462377515687,
+   "sigma_node": 0.014616679475904568
+  },
+  "openml_ionosphere": {
+   "V_hat": 0.0001257893421260416,
+   "V_ucl": 0.00015346648865088576,
+   "dof": 45,
+   "excluded_roots_without_audit": 0,
+   "h": 0.042374963971105996,
+   "n_j": 3,
+   "roots": 60,
+   "sd_hat": 0.011215584787519623,
+   "sd_ucl": 0.012388159211557049,
+   "sigma_node": 0.042374963971105996
+  }
+ },
+ "note": null,
+ "rule": "docs/r1/proposals/B2_POWER_PLAN_RULE_20261114.md",
+ "script_sha256": "c74a4252ed952a7ad4fb69d32fbe69ccc0a58626a3fce9ad12b480025e24a59f",
+ "ucl_level": 0.8
+}
