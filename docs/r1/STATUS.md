@@ -1,5 +1,13 @@
 # Paper B (route R1) — status log
 
+## 14 November 2026 — Track X B1 `_d` completed normally (run 7912_20261113_d); marker retired; Track S resume pending review
+
+- Run `7912_20261113_d` (HEAD `7912b7ff…`, model-output fix) completed normally: `b1.exit=0`, batch `COMPLETE`, 260 roots, interruptions 0, no failed units; the 13–14 Nov host network outages did not interrupt it.
+- Post-run unit executed: creation receipt matched (sha `a28f0f78…`, marker `60cd40fb…`); marker renamed into `~/r1_locks/_to_delete/trackx_evidence.active.230b602a…` with no deletion; retirement record/rc 0/empty err/note written; watcher logged `marker gone`; `$RUN_DIR` changed only by the four `*_after_run.*` files; `$BATCH` byte-identical; Track S/smoke STOPs unchanged.
+- Complete-batch verifier rc 0 (18 rows); completion usage rc 1 = **cap check FAIL by design** (`largest proposer completion 16384`, margin 0; 9 truncated proposals, 0 unencodable, 0 context overflow); candidate halves rc 0 (descriptive). Report: `reports/B1_D_RUN_20261113.md` (this entry; independent review requested before publishing the manifests/verifier per the unit).
+- New `_d` rule caught 14 directive/edit mismatches (7 `directive_symbol_differs` + 7 `directive_new_differs`; 11 on olmo31_32b, the class that STOPped `_c`) plus 9 truncated proposals, as invalid proposals/trials — no run STOP.
+- Track S S0.5 remains paused; its reviewed resume unit waits for this report's review and then resumes `s05_t7_20261113`. B2 not started.
+
 ## 13 November 2026 — Track X B1 `_c` STOP at the proposal-integrity guard (not retried; awaiting author decision)
 
 - **Event.** Run `4b31_20261112_c` (HEAD `4b312844962e1106db04d5a60bf996fad0e3e514`, `_c` truncation-fix restart) stopped on 2026-11-13T03:01:55Z in the worker of `olmo31_32b/b1/off/openml_credit_approval__s9002`, trial `…-trial-020`: `STOP: B1 worker directive and structured edit differ` from `b1_proposal_guard` (the objective parsed by the pinned worker and `extra.structured_edit` disagreed). `b1.exit` 1, batch `STOPPED`, 89 completed, one interruption; no failed units; servers/workers exited and the lease was released.
