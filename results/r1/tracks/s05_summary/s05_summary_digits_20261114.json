@@ -1,0 +1,222 @@
+{
+  "schema": "tracks_s05_summary/v2",
+  "label": "ENGINEERING_ONLY",
+  "W_candidates": [
+    8,
+    10,
+    12,
+    20
+  ],
+  "W_chosen": 12,
+  "budget_binds": true,
+  "primary_nodes": [
+    "digits_mlp"
+  ],
+  "budget_member": "kept",
+  "values": {
+    "W": 12,
+    "budget_binds": true,
+    "nodes": {
+      "digits_mlp": {
+        "sigma_cmp_vary": 0.00835616667156985,
+        "sigma_D_ucl_s05b": 0.0,
+        "sigma_D_ucl_between_repetitions": 0.008839185341909648,
+        "between_policy_sd_at_cap": 0.0,
+        "near_band_b": 0.008587444606044154,
+        "calibration_status": "fail",
+        "obs_inflation": 1.0
+      }
+    }
+  },
+  "nodes": {
+    "digits_mlp": {
+      "out_dir": "results/r1/tracks/digits_mlp/s05_t7_20261113",
+      "label": "ENGINEERING_ONLY",
+      "host": "TASL-7",
+      "W_pilot": 40,
+      "n_roots": 50,
+      "binding_shares": {
+        "8": 1.0,
+        "10": 1.0,
+        "12": 0.94,
+        "20": 0.04
+      },
+      "sigma_cmp_vary": 0.00835616667156985,
+      "sigma_cmp_vary_n": 298,
+      "sigma_D_by_W": {
+        "8": {
+          "W": 8,
+          "between_policies": {
+            "policies": [
+              "a2u",
+              "static:0.00198,0"
+            ],
+            "m": 20,
+            "mean": 0.0,
+            "sigma_hat": 0.0,
+            "ucl": 0.0,
+            "conf": 0.8
+          },
+          "between_repetitions": {
+            "static:0.00198,0": {
+              "m": 10,
+              "mean": 0.0008913800000000194,
+              "sigma_hat": 0.0061094600361152164,
+              "ucl": 0.00790188668430062,
+              "conf": 0.8
+            }
+          }
+        },
+        "10": {
+          "W": 10,
+          "between_policies": {
+            "policies": [
+              "a2u",
+              "static:0.00198,0"
+            ],
+            "m": 20,
+            "mean": 0.0,
+            "sigma_hat": 0.0,
+            "ucl": 0.0,
+            "conf": 0.8
+          },
+          "between_repetitions": {
+            "static:0.00198,0": {
+              "m": 10,
+              "mean": -0.0026740599999999894,
+              "sigma_hat": 0.006157843878104613,
+              "ucl": 0.007964465641277384,
+              "conf": 0.8
+            }
+          }
+        },
+        "12": {
+          "W": 12,
+          "between_policies": {
+            "policies": [
+              "a2u",
+              "static:0.00198,0"
+            ],
+            "m": 20,
+            "mean": 0.0,
+            "sigma_hat": 0.0,
+            "ucl": 0.0,
+            "conf": 0.8
+          },
+          "between_repetitions": {
+            "static:0.00198,0": {
+              "m": 10,
+              "mean": 0.0007799200000000117,
+              "sigma_hat": 0.006834146293885013,
+              "ucl": 0.008839185341909648,
+              "conf": 0.8
+            }
+          }
+        },
+        "20": {
+          "W": 20,
+          "between_policies": {
+            "policies": [
+              "a2u",
+              "static:0.00198,0"
+            ],
+            "m": 20,
+            "mean": 0.0,
+            "sigma_hat": 0.0,
+            "ucl": 0.0,
+            "conf": 0.8
+          },
+          "between_repetitions": {
+            "static:0.00198,0": {
+              "m": 10,
+              "mean": 0.00016716000000001064,
+              "sigma_hat": 0.005356722047255687,
+              "ucl": 0.00692830632600786,
+              "conf": 0.8
+            }
+          }
+        }
+      },
+      "sigma_D_at_W": {
+        "W": 12,
+        "between_policies": {
+          "policies": [
+            "a2u",
+            "static:0.00198,0"
+          ],
+          "m": 20,
+          "mean": 0.0,
+          "sigma_hat": 0.0,
+          "ucl": 0.0,
+          "conf": 0.8
+        },
+        "between_repetitions": {
+          "static:0.00198,0": {
+            "m": 10,
+            "mean": 0.0007799200000000117,
+            "sigma_hat": 0.006834146293885013,
+            "ucl": 0.008839185341909648,
+            "conf": 0.8
+          }
+        }
+      },
+      "calibration": {
+        "n": 298,
+        "coverage": 0.7751677852348994,
+        "by_stratum": {
+          "0": {
+            "n": 65,
+            "coverage": 0.5384615384615384,
+            "gated": true,
+            "in_band": false
+          },
+          "1-2": {
+            "n": 89,
+            "coverage": 0.6741573033707865,
+            "gated": true,
+            "in_band": false
+          },
+          ">=3": {
+            "n": 144,
+            "coverage": 0.9444444444444444,
+            "gated": true,
+            "in_band": false
+          }
+        },
+        "band": [
+          0.7,
+          0.9
+        ],
+        "min_n": 100,
+        "stratum_min": 20,
+        "status": "fail",
+        "rule": "fail -> revise the inflation factor once and re-check; a second fail is a STOP"
+      },
+      "between_policy_sd_at_cap": 0.0,
+      "between_policy_at_cap": {
+        "policies": [
+          "a2u",
+          "static:0.00198,0"
+        ],
+        "W": 40,
+        "m": 20,
+        "mean": 0.0,
+        "sigma_hat": 0.0,
+        "ucl": 0.0,
+        "conf": 0.8
+      },
+      "near_band": {
+        "b": 0.008587444606044154,
+        "factor": 0.5,
+        "rule": "b = 0.5 x median |margin| over eligible E1 and E2 decisions of the pilot's primary roots",
+        "n": 596,
+        "median_abs_margin_E1": 0.017174212108682436,
+        "median_abs_margin_E2": 0.02208428084854945
+      },
+      "obs_inflation": 1.0,
+      "root_policy": "a2u",
+      "llm_calls_per_campaign": 40.0,
+      "audit_runs_per_campaign": 35.4
+    }
+  }
+}
