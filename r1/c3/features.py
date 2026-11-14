@@ -263,7 +263,8 @@ class NodeContext:
     sigma_node: float          # E1 noise constant of the node (standardises z)
     runs_total: int            # W, the campaign's worker-run budget
     memory_mode: str
-    trial_budget: int | None = None  # trial (proposal-slot) budget if it differs from W (skipping arms); None = W
+    trial_budget: int | None = None  # trial (proposal-slot) budget if it differs from W (skipping arms); None = W.
+    # Not rendered in trackp_prompt/v2 (the budget line states worker runs only); kept, validated, for callers.
 
     def __post_init__(self) -> None:
         if self.node not in NODE_INFO:
