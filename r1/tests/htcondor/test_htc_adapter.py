@@ -322,7 +322,12 @@ def test_truncated_or_garbled_logs_are_refused():
 @pytest.mark.parametrize("reason, cls", [
     ("Job has gone over memory limit of 2048 megabytes. Code 34 Subcode 0", "htcondor_memory_hold"),
     ("out of resources. Code 34 Subcode 102", "htcondor_memory_hold"),
-    ("exceeded its allocated disk. Code 34 Subcode 104", "unclassified"),
+    ("exceeded its allocated disk. Code 34 Subcode 104", "htcondor_disk_hold"),
+    ("out of resources. Code 34 Subcode 104", "htcondor_disk_hold"),
+    ("periodic hold: disk usage exceeded the request. Code 3 Subcode 0", "htcondor_disk_hold"),
+    ("Job went over disk quota", "htcondor_disk_hold"),
+    ("periodic hold: walltime 3600 exceeded; disk 2 GB. Code 26 Subcode 0", "htcondor_walltime_hold"),
+    ("Job has gone over memory limit; disk ok. Code 34 Subcode 0", "htcondor_memory_hold"),
     ("invalid image. Code 35 Subcode 0", "htcondor_image_pull"),
     ("duration exceeded. Code 46 Subcode 0", "htcondor_walltime_hold"),
     ("execute time exceeded. Code 47 Subcode 0", "htcondor_walltime_hold"),
@@ -434,3 +439,17 @@ def test_mark_complete_requires_real_outputs(tmp_path):
         hu.mark_complete(tmp_path / "u", ["missing.txt"])
     with pytest.raises(hu.UnitError, match="invalid unit name"):
         hu.run_units(tmp_path, ["../x"], lambda u, d: [])
+
+
+def test_disk_hold_is_an_infrastructure_failure_and_walltime_is_not_a_timeout():
+    """Author 14 Nov: HTC-Q2 (b) a disk hold is infrastructure_failure/htcondor_disk_hold; HTC-Q1 (a) a walltime hold is
+    infrastructure_failure/htcondor_walltime_hold and never the runner's 'timeout' reason (the repeated-timeout cap
+    counts only 'timeout')."""
+    for text, reason in (("exceeded its allocated disk. Code 34 Subcode 104", "htcondor_disk_hold"),
+                         ("duration exceeded. Code 46 Subcode 0", "htcondor_walltime_hold")):
+        log = ("000 (7.000.000) 2026-11-14 01:00:00 x\n...\n012 (7.000.000) 2026-11-14 01:01:00 Job was held.\n"
+               f"\t{text}\n...\n")
+        out = ev.infrastructure_outcome(ev.job_summary(ev.parse_events(log), "7.0"))
+        assert out["final"]["kind"] == "infrastructure_failure" and out["final"]["reason"] == reason
+        assert text in out["final"]["detail"]
+        assert out["final"]["reason"] != "timeout"

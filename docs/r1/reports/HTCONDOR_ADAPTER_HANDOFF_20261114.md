@@ -49,13 +49,14 @@ M10 outcome of an HTCondor-level event (`infrastructure_outcome`) — each case 
 | eviction (004) | `infrastructure_failure` | `htcondor_eviction`; `htcondor_preemption` if the text says "preempt" |
 | hold code 34 subcode 102 (memory); or code 34 with another subcode, 3 or 26 or none and text "gone over (cgroup) memory limit" / "memory … exceed" | `infrastructure_failure` | `htcondor_memory_hold` |
 | hold code 46 or 47 (duration or execute time exceeded); or a policy hold whose text names walltime (checked before memory) | `infrastructure_failure` | `htcondor_walltime_hold` |
+| hold code 34 subcode 104 (disk); or code 34 with another subcode, 3 or 26 or none and text naming disk with "exceed", "over … disk", "limit" or "quota" (checked after memory) — author HTC-Q2 (b), 14 Nov | `infrastructure_failure` | `htcondor_disk_hold` |
 | hold code 35 (invalid Docker image); or pull / manifest wording | `infrastructure_failure` | `htcondor_image_pull` |
 | hold after 6 starts | `infrastructure_failure` | `htcondor_restart_limit` |
-| hold code 34 subcode 104 (disk), any other code, or unrecognised text | `unclassified` | a human decides; never mapped silently |
+| any other code, or unrecognised text | `unclassified` | a human decides; never mapped silently |
 
 `infrastructure_outcome` returns `{"final", "attempts"}`. When the runner also wrote its own record for the run (for example `killed`), that record decides the run's outcome; `final` describes the job. `attempts` lists every eviction and hold with its reason. `final` is None when the job ended with a normal termination (005 with a return value): the run's own outcome then comes from the runner and its log, and earlier evictions or holds are history. Otherwise `final` is `unclassified` if any hold is unrecognised (all hold texts listed), else the first recognised hold, else the last eviction. An explicit time-zone suffix in the log (`Z`, `+01:00`) is applied; with one, `--utc-offset-minutes` must be 0.
 
-The repeated-timeout cap (Unit 3) counts only the runner's `timeout` reason. Whether walltime holds should count toward it is an open author question.
+The repeated-timeout cap (Unit 3) counts only the runner's `timeout` reason. Walltime holds do not count toward it; they are recorded separately as `infrastructure_failure` (author HTC-Q1 (a), 14 Nov).
 
 ## 4. Resume-safe units
 

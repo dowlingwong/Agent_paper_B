@@ -18,13 +18,14 @@ evictions, holds, exit`` with
 * ``exit``: ``0``/``N`` (normal termination with return value), ``signal N``, ``aborted``, ``held``,
   ``idle`` (no 001 yet) or ``running``.
 
-Outcome mapping for the M10 classifier (author's answer to Q8): on HTCondor an eviction, a
-preemption, a hold for memory or walltime and a container image pull failure are
+Outcome mapping for the M10 classifier (author's answer to Q8, extended by HTC-Q2 (b) on 14 Nov): on HTCondor an
+eviction, a preemption, a hold for memory, disk or walltime and a container image pull failure are
 ``infrastructure_failure``. Each gets its own reason (``htcondor_eviction``, ``htcondor_preemption``,
-``htcondor_memory_hold``, ``htcondor_walltime_hold``, ``htcondor_image_pull``, ``htcondor_restart_limit``),
-none of which is the runner's own ``timeout`` reason, so the repeated-timeout cap does not count them
-(whether walltime holds should count is an open question). A disk hold (code 34 subcode 104) and any hold
-whose reason is not recognised are ``unclassified`` and need a human: they are never silently mapped. See
+``htcondor_memory_hold``, ``htcondor_disk_hold``, ``htcondor_walltime_hold``, ``htcondor_image_pull``,
+``htcondor_restart_limit``), none of which is the runner's own ``timeout`` reason, so the repeated-timeout cap does
+not count them; for walltime holds that is the author's answer HTC-Q1 (a) of 14 Nov (not counted, recorded
+separately as infrastructure_failure). Any hold whose reason is not recognised is ``unclassified`` and needs a human:
+it is never silently mapped. See
 ``infrastructure_outcome`` for how this combines with a job that later finished normally.
 """
 from __future__ import annotations
@@ -98,7 +99,7 @@ def parse_events(text: str, *, year: int | None = None, utc_offset_minutes: int 
 
 
 HOLD_CODES = {(34, 102): "htcondor_memory_hold",      # JobOutOfResources, memory (HTCondor hold-reason table)
-              (34, 104): "unclassified",              # JobOutOfResources, disk: not in the author's list -> a human
+              (34, 104): "htcondor_disk_hold",        # JobOutOfResources, disk (author HTC-Q2 (b), 14 Nov)
               35: "htcondor_image_pull",              # InvalidDockerImage
               46: "htcondor_walltime_hold",           # JobDurationExceeded
               47: "htcondor_walltime_hold"}           # JobExecuteExceeded
@@ -110,7 +111,8 @@ def classify_hold(text: str) -> str:
     The code and subcode decide first (HOLD_CODES). Text decides only when there is no code, or the code is a policy
     code (3 JobPolicy, 26 SystemPolicy, where a site's walltime or memory policy lands), or code 34 with another
     subcode (older releases write ``code 34,0`` for "Job has gone over memory limit"). Text order: walltime before
-    memory (a walltime policy message may also mention memory usage); image pull only on pull or manifest wording."""
+    memory (a walltime policy message may also mention memory usage), memory before disk; image pull only on pull or
+    manifest wording."""
     t = text.lower()
     m = HOLD_CODE.search(text)
     code, sub = (int(m.group(1)), int(m.group(2))) if m else (None, None)
@@ -126,6 +128,10 @@ def classify_hold(text: str) -> str:
     # "Job has gone over memory limit" / "gone over cgroup memory limit" (HTCondor manual); site policies "exceeded".
     if re.search(r"over (cgroup )?memory limit", t) or ("memory" in t and "exceed" in t):
         return "htcondor_memory_hold"
+    # disk: "exceeded its allocated disk", site policies "disk usage exceeded", "over disk limit/quota"
+    if re.search(r"\bdisk\b", t) and ("exceed" in t or re.search(r"over (its |the )?(allocated )?disk", t)
+                                      or ("disk" in t and ("limit" in t or "quota" in t))):
+        return "htcondor_disk_hold"
     if ("pull" in t and ("image" in t or "docker" in t or "singularity" in t or "apptainer" in t)) \
             or "manifest unknown" in t or "pull access denied" in t:
         return "htcondor_image_pull"
