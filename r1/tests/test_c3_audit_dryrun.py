@@ -34,6 +34,14 @@ def test_dryrun_on_the_frozen_corpus_partitions_the_whole_population(tmp_path):
     assert json.loads((tmp_path / 'report/audit_dryrun.json').read_text())['label'] == 'DRYRUN'
 
 
+
+def test_dryrun_table_records_the_sweep_index_path_and_sha(tmp_path):
+    """IT-1 (a), author 14 Nov: the dry-run table's build.json names the frozen sweep-1 index by path and SHA, as
+    dataset.build_from_sweep does, so the integrated analysis guard can recognise the frozen corpus."""
+    D.build_table(REPO, tmp_path / 'table', verify_git=(REPO / '.git').exists())
+    idx = json.loads((tmp_path / 'table' / 'build.json').read_text())['sweep_index']
+    assert idx == {'path': str((REPO / D.INDEX).resolve()), 'sha256': D._sha(REPO / D.INDEX)}
+
 def _rows():
     base = {'source': 's', 'memory_mode': 'none', 'instance_seed': 100, 'sigma_node': 0.01, 'features': {}}
     return [

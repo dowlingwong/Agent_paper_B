@@ -91,7 +91,7 @@ def build_table(paper: Path, out: Path, *, verify_git: bool = True) -> dict:
     rows, configs, checks = dataset._replay_sources(specs, noise, strict_start_files=True)
     out.mkdir(parents=True, exist_ok=False)
     head = {'label': 'DRYRUN', 'classification': {'sha256': _sha(paper / SIDECAR)},
-            'sweep_index': {'sha256': _sha(index_path)}}
+            'sweep_index': {'path': str(index_path), 'sha256': _sha(index_path)}}
     meta = dataset._write_table(out, rows, configs, checks, head, noise)
     return {'index': index, 'meta': meta, 'original_blobs_verified': verify_git}
 
