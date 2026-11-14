@@ -1,4 +1,4 @@
-# Track S `digits_mlp` S0.5 resume on TASL-7 — candidate for review (14 November 2026, rev 4)
+# Track S `digits_mlp` S0.5 resume on TASL-7 — candidate for review (14 November 2026, rev 5)
 
 **Candidate for independent review; not an execution.** Resumes the paused S0.5 run after B1 `_d` ends normally and its
 Track X marker is retired by the reviewed post-run unit. Authority: `reports/TRACKS_DIGITS_HOSTMOVE_20261112.md`
@@ -20,14 +20,15 @@ into the run `_to_delete`, not removed as the runbook's illustrative `find -dele
    last line of any JSONL. `b1_proposals.jsonl` is a B1 artifact and is not part of the Track S scene.
 3. Paper pin `8237fd02…` detached/clean in `/home/dowling/r1_tracks/work/Agent_paper_B`; harness `a3fedbb…` clean;
    `trks` wrapper pins unchanged; prior `$OUT/digits_mlp/a2u_prior_r2_20261111.json` sha `5c849d15…`.
-4. k = 2 (Phase-1 decision; `obs-inflation 1.0` and the λ₂ decision rule are fixed by the reviewed launcher/Phase 4
-   analysis and are not changed by the resume). Deployed reviewed scripts: `tasl7_digits_s05_20261113.sh` sha `3e957464…` (takes `K`,
+4. k = 2 (Phase-1 decision; the launcher's `K` is the server count 2, distinct from the manifest's audit `K`=5, which is
+   `--k-audit` seeds and is not changed by the resume; `obs-inflation 1.0` and the λ₂ decision rule are fixed by the reviewed launcher/Phase 4
+   analysis and are not changed by the resume). Deployed reviewed scripts: `tasl7_digits_s05_20261113.sh` sha `f823b86a85272ef6246ceb3ce9f5142057eb1b5f297a1d5ddd20394ebaba3dd3` (takes `K`,
    starts `trks-servers $K` itself if `trks_llm` is absent), `tasl7_digits_s05b_20261113.sh` sha `3685dfe6…`; `bash -n`.
 5. **No separate server start**: the launcher starts the k=2 servers after its own guards; starting servers first would
    orphan them if the launcher refuses (exit 2). First-resume note: an earlier attempt with the previous script revision
    `3e957464…` aborted rc=1 before starting anything because its `LIVE=$(pgrep … | wc -l)` guard tripped
    `set -euo pipefail` with zero servers; the STOP had already been renamed into `_to_delete` (verified, no deletion) and
-   no server/collector started. The fixed revision is the sha above. Any launcher refusal is a STOP: if it did start `trks_llm` before
+   no server/collector started. The fixed revision is `f823b86a…` (see §0.5; the new unit script sha). Any launcher refusal is a STOP: if it did start `trks_llm` before
    failing, kill only that session (`tmux kill-session -t trks_llm`), verify no own `llama-server` remains and the
    lease is free, and report.
 
@@ -37,7 +38,9 @@ into the run `_to_delete`, not removed as the runbook's illustrative `find -dele
    overwrites `.cmd` on the next run, so it must be captured here); `trks_s05_t7.exit` and launch rc history; paper/harness
    HEADs; marker absence. Store the capture under `/private/tmp/...` **on the Mac** with `SHA256SUMS`; host-side copies
    are read-only listings only.
-2. **Retire the pause STOP without deleting it**: verify `$RUN/_to_delete` absent→create mode 700; verify
+2. **Retire the pause STOP without deleting it** (if `$RUN/STOP` is already absent and a single
+   `$RUN/_to_delete/STOP.retired.*` exists with 0 B, inode 57048847 and sha `e3b0c442…`, skip the rename and record
+   that verification; do not create a second one): verify `$RUN/_to_delete` absent→create mode 700; verify
    `$RUN/STOP` exists, 0 B, sha `e3b0c442…`, inode 57048847; verify target
    `$RUN/_to_delete/STOP.retired.<UTC>` absent; `mv -n "$RUN/STOP" <target>`; then **verify the move happened**
    (source absent, target present, 0 B, same sha/inode); if `mv -n` no-ops or the target exists: STOP, preserve.
