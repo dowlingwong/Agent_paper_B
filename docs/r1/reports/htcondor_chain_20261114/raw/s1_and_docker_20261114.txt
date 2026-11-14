@@ -1,0 +1,61 @@
+== S1.0 host/time ==
+deepthought.etp.kit.edu
+2026-11-14T10:51:25CET
+2026-11-14T09:51:25Z
+== S1.1 condor version ==
+$CondorVersion: 25.0.12 2026-07-07 BuildID: 930047 PackageID: 25.0.12-1 $
+$CondorPlatform: x86_64_AlmaLinux8 $
+== S1.2 container universe availability ==
+25.0.12
+/usr/bin/apptainer
+/usr/bin/singularity
+apptainer_version=apptainer version 1.5.5-1.el8
+== S1.3 slot counts by site ==
+-- attr=HasSingularity
+etp_local_slots=245
+    244 true
+      1 undefined
+nemo2_slots=2422
+   2422 true
+topas_slots=253
+    253 true
+-- attr=HasDocker
+etp_local_slots=245
+    237 true
+      8 undefined
+nemo2_slots=2422
+   2422 undefined
+topas_slots=253
+    253 true
+-- attr=SingularityVersion
+etp_local_slots=245
+     88 apptainer version 1.2.5
+     42 apptainer version 1.3.4
+      1 apptainer version 1.5.1-1.el9
+      2 apptainer version 1.5.2-1.el9
+      1 apptainer version 1.5.3-3.el8
+      3 apptainer version 1.5.4-1.el9
+nemo2_slots=2422
+   2422 apptainer version 1.5.4-1.el9
+topas_slots=253
+      3 apptainer version 1.5.3-1.el9
+    250 apptainer version 1.5.5-1.el9
+== S1.4 GPU device strings by site ==
+      5 NVIDIA H200
+      6 NVIDIA L40S
+     17 NVIDIA A100-PCIE-40GB
+     14 Tesla V100S-PCIE-32GB
+== S1.5 universe=container dry-run acceptance (no submission) ==
+Dry-Run job(s).
+1 job(s) dry-run to cluster 1.
+container_dryrun_rc=0
+== S1.6 docker diagnostics (read-only; do not start/restart) ==
+ls: cannot access '/var/run/docker.sock': No such file or directory
+DOCKER_HOST=unset
+NAME        DESCRIPTION                               DOCKER ENDPOINT               ERROR
+default *   Current DOCKER_HOST based configuration   unix:///var/run/docker.sock   
+inactive
+systemctl_rc=3
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+
+== done ==
