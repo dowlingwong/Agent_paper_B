@@ -1,12 +1,15 @@
-Reviewed base: 0aa4bc00a744099b9a27362c5b779862eed26d8a
+Reviewed base: 0396f1bd0b3ecf4fd97c120b7ff068bf7f61704e
 
 # M4 step 4 DTQ tool — independent review record (14 November 2026)
 
 MAC_OVERNIGHT_RUNBOOK_20261113 Unit 8.2. Branch `mac-m4-dtq-20261114` from `mac-m4-20261109` @ `5cd32efc`; the Track S probe copied byte-identically from `d10b05b7` (no merge, no rebase). Two rounds by one freshly spawned independent reviewer agent (AI-assisted, Claude).
 - Round 1: changes requested (three blocking: a mid-run co-tenant did not stop the run and a pass was still printed; the projection omitted the CPU term of RUNBOOK B.1b prerequisite 6; instance disjointness from the exam was neither checked nor disclosed).
 - Round 2: **accepted** at `0aa4bc00`.
+- Round 3 (author's DTQ-2 answer of 14 Nov: no seed in 9001–9210, `instance_seed` required): **accepted** at `0396f1bd`.
 
-Accepted commit (round 2, last): 0aa4bc00a744099b9a27362c5b779862eed26d8a
+Accepted commit (round 3, last): 0396f1bd0b3ecf4fd97c120b7ff068bf7f61704e
+
+Round-3 notes, not blocking: the seed check is narrower than `r1/exam/namespace.py` (which reserves 9101–9299 and also refuses seeds as strings, in lists, nested, or as `__s<seed>` tags); the 50 × 3 test still exits through the text-overlap STOP; earlier test gaps remain open.
 
 Round-2 notes, not blocking (follow-ups): the 50 × 3 test exits through the text-overlap STOP and does not isolate the guard; the unreadable-nvidia-smi-during-run STOP has no test (the code was checked by the reviewer's scratch test); a STOP reports `identity_1: false` for an unmeasured identity; the ledger match is exact-case and one exam row with a ledger suffices; giving only some CPU-term flags is accepted silently; one transient unreadable sample aborts a run; an in-flight call (up to 600 s) finishes before the server stops; the report's §4 omits the `--dry-run` guard, full probe source commit/blob in the JSON and the co-tenant gap during model load.
 
@@ -196,3 +199,77 @@ None.
 
 Verdict: accepted
 Accepted commit: 0aa4bc00a744099b9a27362c5b779862eed26d8a
+
+---
+
+# Independent review — M4 step 4 (DTQ tool), round 3: author answer DTQ-2
+
+Reviewed commit: 0396f1bd0b3ecf4fd97c120b7ff068bf7f61704e
+
+The commit sits on branch `mac-m4-dtq-20261114`. Its single parent is `f20e7ccb1b9728228cd29b9d99486fd8ecb33fc6`, which adds only `docs/r1/reviews/M4_DTQ_TOOL_REVIEW_20261114.md` (the review record) on top of `0aa4bc00`, accepted in round 2. This review was read-only. Scratch files under `/tmp/rev_u82` have been removed.
+
+**Source of the author's answer.** I took it from the coordinator's relay: "keep the ledger rule, and also check that no seed lies in 9001–9210". The verbatim answer is not on disk. The question (`MAC_OVERNIGHT_QUESTIONS_20261114.md`, DTQ-2) named 9001–9004; the answer widens that to 9001–9210.
+
+## Does the commit match the answer?
+
+Yes.
+- **Ledger rule.** Kept unchanged. The `ledger_sha256`/`trial_id` requirement and the shared-ledger STOP are untouched.
+- **Seed check.** Prompt rows now need an integer `instance_seed`. Any integer, non-bool field whose name contains `seed` with a value in `EXAM_SEEDS = range(9001, 9211)` is a STOP (`r1/scripts/dt_dualcard_qualify.py`, `load_prompts`).
+- **Scope of the check.** It covers the required `seed` (D26) and `instance_seed`, and any extra `*seed*` field. It runs on the n rows used.
+- **Range.** 9001–9210 covers every seed the exam code uses:
+  - B1 instances 9001–9004;
+  - B2 fresh instances 9011–9099 (`r1/exam/runtime.py:116-117`);
+  - B1 audits 9101–9104 (`r1/exam/analyze.py:88`);
+  - B2 audits 9201–9210 (`analyze.py:137`).
+- **Report.** §2 and the new §5 describe the change accurately.
+
+## Not vacuous
+
+`pytest r1/tests/test_dt_dualcard_qualify.py` gives **25 passed**, as expected. I mutated the tool in a scratch worktree, one change at a time:
+
+| Mutation | Result |
+|---|---|
+| seed STOP disabled | 4 failed |
+| range starts at 9002 | 1 failed (the 9001 case) |
+| range ends at 9209 | 1 failed (the 9210 case) |
+| range widened to 9000–9211 | 2 failed (the 9000/9211 pass cases) |
+| only the key `seed` checked | 2 failed (`instance_seed`, `audit_seed`) |
+| `instance_seed` not required | 1 failed |
+
+The new boundary tests are meaningful.
+
+## Regressions
+
+None found.
+- The probe files are still byte-identical to `d10b05b7` (blobs 9ce553f4, ab8f105b, f2c1bb79).
+- Since the base `5cd32efc`, the branch changes only the probe copy, the one-token change to the fake server, the DTQ tool, its test, and docs.
+- The 104 existing focused tests pass (`test_llama_server_dual_gpu`, `test_llama_server_instance`, `test_llamacpp_offload_routes`, `test_llamacpp_probe`, `test_exam_observer`).
+- I did not re-run the broad suite this round: no file it covers changed since round 2, where the failure sets were identical by test id.
+- The worktree was clean before and after.
+
+## BLOCKING
+
+None.
+
+## NON-BLOCKING
+
+- **R3-N1. The seed check is narrower than the repo's own fail-closed exam separation (`r1/exam/namespace.py`).**
+  - That module reserves 9001–9099 and 9101–9299. It also refuses seeds given as digit strings, seeds inside lists or nested dicts, and `__s<seed>` tags in strings.
+  - The tool accepts each of these (probed directly on `load_prompts`):
+    - `{"train_seed": "9050"}`
+    - `{"seeds": [9050]}`
+    - `{"extra": {"seed": 9050}}`
+    - `{"audit_seed": 9250}` (inside 9211–9299, reserved by `namespace.py` but outside the author's range)
+    - `"source": "ledger__s9050"`
+  - The required fields `seed` and `instance_seed` are type-checked as int, so the primary path is covered. That is why this is non-blocking.
+  - *Fix:* also call `r1.exam.namespace.refuse_exam(row, context='DTQ replay row')` on each row, turning its `ValueError` into a STOP. Or at least extend the check to digit strings, lists and nested dicts.
+  - Whether 9211–9299 should also be refused is the author's choice. The stricter module would refuse it, and the answer as relayed does not require it.
+- **R3-N2. Round-2 R2-N1 is still open: `test_real_run_holds_n_and_repeats_at_50_and_3` is still vacuous.**
+  - Deleting the 50 × 3 guard leaves 25 passed. The test still passes the replay file as its own `--exclude-prompts`, so the text-overlap STOP raises `SystemExit` anyway.
+  - The guard itself works; I checked it in round 2.
+  - *Fix (unchanged):* use an unrelated exclude file that carries a `ledger_sha256`, and assert exit code 2 and the "--n 50 and --repeats 3" message.
+- **R3-N3. Other round-2 notes are still open:** R2-N2 to R2-N9 (the untested unreadable-during-run path, `server_stop` not asserted, among others). They are unchanged and non-blocking.
+- **R3-N4. Cosmetic.** The edited docstring line in the `Prompts:` paragraph is about 190 characters long; rewrap it.
+
+Verdict: accepted
+Accepted commit: 0396f1bd0b3ecf4fd97c120b7ff068bf7f61704e
