@@ -41,6 +41,7 @@ def fixture(tmp_path, monkeypatch, finalists=('a',)):
     amendment = tmp_path / 'amendment.json'; write(amendment, {'label': 'ENGINEERING_ONLY', 'rows': []})
     receipt = tmp_path / 'receipt'; receipt.write_text(digest_file(stage) + '\n' + digest_file(amendment))
     values = tmp_path / 'grids'; values.write_text('synthetic')
+    reference = tmp_path / 'reference.json'; write(reference, {'lower': 0.1, 'upper': 0.5})
     b1 = tmp_path / 'b1_analysis.json'
     write(b1, {'phase': 'b1', 'label': 'EXAM', 'rule_sha256': rule_sha, 'finalists': list(finalists), 'rows': [],
                'execution_label': 'EVIDENCE', 'batch_verification': {'synthetic': True}})
@@ -48,6 +49,7 @@ def fixture(tmp_path, monkeypatch, finalists=('a',)):
            'host': 'TASL-7', 'W': 2, 'llm_call_cap': 8, 'audit_seeds': [9101, 9102, 9103, 9104],
            'instance_seeds': [9001, 9002, 9003, 9004], 'b2_instances_per_node': len(SEEDS),
            'proposal_schema': 'manager_proposal/v1', 'harness_commit': harness_sha, 'authorizations': {'b2': 'note.md'},
+           'anchor_duplicate_reference': {'source': str(reference), 'sha256': digest_file(reference), 'lower': 0.1, 'upper': 0.5},
            'b1_analysis': str(b1), 'b1_analysis_sha256': digest_file(b1),
            'stage_a_table': str(stage), 'stage_a_table_sha256': digest_file(stage),
            'stage_a_amendment_table': str(amendment), 'stage_a_amendment_table_sha256': digest_file(amendment),
@@ -56,7 +58,7 @@ def fixture(tmp_path, monkeypatch, finalists=('a',)):
     binding = hashlib.sha256(json.dumps({'config': cfg, 'registry_sha256': digest_file(reg), 'rule_sha256': rule_sha,
                                          'value_grids_sha256': digest_file(values)}, sort_keys=True).encode()).hexdigest()
     state = {'status': 'COMPLETE', 'phase': 'b2', 'execution_label': 'EVIDENCE', 'binding': binding, 'rule_sha256': rule_sha,
-             'completed': {}}
+             'completed': {}, 'server_intervals': []}
     order = [s['id'] for s in specs]
     manifests = []
     for cid in [c for c in order if c in finalists]:
@@ -111,7 +113,16 @@ def fixture(tmp_path, monkeypatch, finalists=('a',)):
             state['completed'][f'{cid}/b2/{mode}/{node}__s{seed}'] = {'path': str(path), 'sha256': digest_file(path),
                                                                        'post_check_sha256': digest_file(cert)}
             roots.append(data); paths.append(str(path))
+        state['server_intervals'] += [{'candidate': cid, 'phase': 'b2', 'mode': 'off', 'context': 32768, 'start': 1000.0, 'end': 4600.0},
+                                      {'candidate': cid, 'phase': 'b2', 'mode': 'off', 'context': 32768, 'start': 5000.0, 'end': 6800.0}]
+        if len(modes) > 1:
+            state['server_intervals'].append({'candidate': cid, 'phase': 'b2', 'mode': 'on', 'context': 32768, 'start': 7000.0, 'end': 9000.0})
+        d28 = lambda rs: all(all(n['pass'] for n in r['d28']['nodes'].values()) for r in rs)
+        primary_roots = [r for r in roots if r['mode'] == 'off']; rerun_roots = [r for r in roots if r['mode'] != 'off']
         m = {'label': 'EXAM', 'phase': 'b2', 'status': 'COMPLETE', 'execution_label': 'EVIDENCE', 'candidate': cid,
+             'stage_a_pass_source': 'stage_a_table', 'd28_scope': 'thinking_off_roots_only', 'd28_pass': d28(primary_roots),
+             'thinking_on_d28': {'pass': d28(rerun_roots), 'roots': len(rerun_roots), 'role': 'descriptive_never_changes_eligibility'} if rerun_roots else None,
+             'gpu_hours_status': 'recorded_dedicated_intervals',
              'family': spec['family'], 'role': spec['role'], 'registry_order': order.index(cid),
              'registry_path': str(batch / 'registry_snapshot.yaml'), 'registry_sha256': digest_file(reg), 'rule_sha256': rule_sha,
              'rule_version': 'x5_rule/v2', 'primary_mode': 'off', 'mode': 'off', 'purpose': 'primary', 'stage_a_pass': True,
@@ -121,7 +132,7 @@ def fixture(tmp_path, monkeypatch, finalists=('a',)):
              'audited_proposals': [], 'root_manifests': paths, 'cache_prompt_by_root': [x['cache_prompt'] for x in roots],
              'final_audits': [r['final_audits'][0] for r in roots if r['mode'] == 'off'],
              'sensitivity_final_audits': [r['final_audits'][0] for r in roots if r['mode'] != 'off'],
-             'gpu_hours': 1.0, 'source_label': 'fixture', 'authorization_checkout_head': head,
+             'gpu_hours': 1.5, 'source_label': 'fixture', 'authorization_checkout_head': head,
              'stage_a_table_sha256': cfg['stage_a_table_sha256'], 'stage_a_amendment_table_sha256': cfg['stage_a_amendment_table_sha256'],
              'stage_a_amendment_acceptance_sha256': cfg['stage_a_amendment_acceptance_sha256']}
         if len(modes) > 1: m['thinking_on_rerun'] = 'descriptive'
@@ -150,24 +161,53 @@ def _rebind(batch, state, path, root):
     write(batch / 'batch_state.json', state)
 
 
-@pytest.mark.parametrize('tamper', ['batch_phase', 'missing_root', 'extra_root', 'dropped_rerun_root', 'final_y', 'final_seed',
-                                    'final_instance', 'manifest_finals', 'manifest_rerun_finals', 'rerun_label', 'count',
-                                    'nodes', 'b1_sha', 'finalists', 'wrong_head', 'job_audit_seeds', 'job_seed',
-                                    'mode', 'extra_candidate', 'cache_event'])
+TAMPER = {
+    'batch_phase': 'not a completed evidence batch', 'missing_root': 'root missing or changed',
+    'extra_root': 'extra or missing completed roots', 'dropped_rerun_root': 'root grid differs',
+    'final_y': 'final_y differs from the mean', 'final_y_tolerance': 'final_y differs from the mean',
+    'final_seed': 'seeds are not exactly 9201', 'final_instance': 'another node or instance',
+    'manifest_finals': 'final-Y audits differ from its verified primary roots',
+    'manifest_rerun_finals': 'rerun final-Y audits differ', 'rerun_label': 'rerun label differs',
+    'count': 'configuration binding mismatch', 'nodes': 'configuration binding mismatch',
+    'b1_sha': 'configuration binding mismatch', 'finalists': 'configuration binding mismatch',
+    'wrong_head': 'authorization HEAD mismatch', 'job_audit_seeds': 'audit seeds are not 9201',
+    'job_seed': 'job authority, candidate or source binding', 'mode': 'job authority, candidate or source binding',
+    'extra_candidate': 'candidate set or registry order', 'cache_event': 'cache_prompt not explicitly false',
+    'manifest_b1_sha': 'candidate identity, authority or inputs differ', 'registry_snapshot': 'registry snapshot differs',
+    'post_check': 'receiving certificate changed', 'root_d28': 'D28 differs from verified ledger',
+    'candidate_d28': 'candidate D28 differs', 'rerun_d28': 'descriptive D28 differs',
+    'stage_pass_source': 'Stage A pass provenance', 'diagnostics': 'candidate diagnostics differ',
+    'root_diagnostics': 'root diagnostics differ', 'candidate_audits': 'candidate audits differ',
+    'replay': 'replay checks differ', 'budget': 'budget differs from completion event',
+    'journal': 'proposal journal evidence differs', 'observer': 'observer evidence differs',
+    'all_false': 'cache evidence differs from events', 'screen': 'B1 analysis is not the verified',
+    'gpu_hours': 'GPU-h of', 'gpu_upper_bound': 'only an upper bound', 'gpu_open': 'no closed server intervals',
+    'gpu_status': 'GPU-h of', 'anchor': 'invalid anchor duplicate reference', 'cap': 'author cap of 10',
+}
+
+
+@pytest.mark.parametrize('tamper', sorted(TAMPER))
 def test_partial_or_tampered_b2_batch_stops(tmp_path, monkeypatch, tamper):
     batch, cfg, sha, state, ms = fixture(tmp_path, monkeypatch)
     m = ms[0]
     def save():
         write(batch / 'a/b2_manifest.json', m); write(batch / 'b2_manifests.json', {'label': 'EXAM', 'manifests': ms})
     first = Path(m['root_manifests'][0]); root = json.loads(first.read_text())
+    def root_and_candidate(change):
+        change(root); _rebind(batch, state, first, root)
     if tamper == 'batch_phase': state['phase'] = 'b1'; write(batch / 'batch_state.json', state)
     elif tamper == 'missing_root': state['completed'].pop(next(iter(state['completed']))); write(batch / 'batch_state.json', state)
     elif tamper == 'extra_root': state['completed']['a/b2/off/digits_mlp__s9013'] = {}; write(batch / 'batch_state.json', state)
     elif tamper == 'dropped_rerun_root':
         m['root_manifests'] = [p for p in m['root_manifests'] if '/b2/on/' not in p]; save()
-    elif tamper == 'final_y': root['final_audits'][0]['final_y'] += 1e-6; _rebind(batch, state, first, root)
-    elif tamper == 'final_seed': root['final_audits'][0]['seeds'][0] = 9101; _rebind(batch, state, first, root)
-    elif tamper == 'final_instance': root['final_audits'][0]['instance_id'] = 'digits_mlp__s9012'; _rebind(batch, state, first, root)
+    elif tamper in ('final_y', 'final_y_tolerance', 'final_seed', 'final_instance'):
+        # the root and the candidate aggregate both carry the tampered record, so only the final-Y check can catch it
+        rec = root['final_audits'][0]
+        if tamper == 'final_y': rec['final_y'] += 1e-6
+        elif tamper == 'final_y_tolerance': rec['final_y'] += 1e-11       # inside any relative tolerance, outside abs 1e-12
+        elif tamper == 'final_seed': rec['seeds'][0] = 9101
+        else: rec['instance_id'] = 'digits_mlp__s9012'
+        _rebind(batch, state, first, root); m['final_audits'][0] = rec; save()
     elif tamper == 'manifest_finals': m['final_audits'] = m['final_audits'][:-1]; save()
     elif tamper == 'manifest_rerun_finals': m['sensitivity_final_audits'] = []; save()
     elif tamper == 'rerun_label': m.pop('thinking_on_rerun'); save()
@@ -186,12 +226,66 @@ def test_partial_or_tampered_b2_batch_stops(tmp_path, monkeypatch, tamper):
         write(job, data); root['job_sha256'] = digest_file(job); _rebind(batch, state, first, root)
     elif tamper == 'extra_candidate':
         ms.append({**m, 'candidate': 'b'}); write(batch / 'b2_manifests.json', {'label': 'EXAM', 'manifests': ms})
+    elif tamper == 'all_false':
+        root['cache_prompt'] = {**root['cache_prompt'], 'all_false': False}; _rebind(batch, state, first, root)
     elif tamper == 'cache_event':
         events = first.parent / 'root_events.jsonl'; rows = [json.loads(x) for x in events.read_text().splitlines()]
-        rows[0]['payload']['cache_prompt'] = True; events.write_text(''.join(json.dumps(x) + '\n' for x in rows))
+        rows[0]['payload']['cache_prompt'] = True
+        events.write_text(''.join(json.dumps(x) + '\n' for x in rows))
         root['evidence_hashes']['root_events.jsonl'] = digest_file(events); _rebind(batch, state, first, root)
-    with pytest.raises((ValueError, RuntimeError, KeyError)):
+    elif tamper == 'manifest_b1_sha': m['b1_analysis_sha256'] = '0' * 64; save()
+    elif tamper == 'registry_snapshot': write(batch / 'registry_snapshot.yaml', {'software_anchors': [], 'candidates': []})
+    elif tamper == 'post_check':
+        cert = first.parent / 'post_check.json'; data = json.loads(cert.read_text()); data['note'] = 'x'; write(cert, data)
+    elif tamper == 'root_d28':
+        root['d28']['nodes']['digits_mlp']['pass'] = not root['d28']['nodes']['digits_mlp']['pass']; _rebind(batch, state, first, root)
+    elif tamper == 'candidate_d28': m['d28_pass'] = not m['d28_pass']; save()
+    elif tamper == 'rerun_d28': m['thinking_on_d28']['pass'] = not m['thinking_on_d28']['pass']; save()
+    elif tamper == 'stage_pass_source': m['stage_a_pass_source'] = 'a1_amendment_measurement'; save()
+    elif tamper == 'diagnostics': m['diagnostics']['trials'] = 99; save()
+    elif tamper == 'root_diagnostics':
+        root['diagnostics']['trials'] = 99; m['diagnostics']['trials'] += 97; save(); _rebind(batch, state, first, root)
+    elif tamper == 'candidate_audits': m['audited_proposals'] = [{'forged': True}]; save()
+    elif tamper == 'replay': root['replay_checks'] = {'forged': True}; _rebind(batch, state, first, root)
+    elif tamper == 'budget': root['compute_budget'] = {**root['compute_budget'], 'llm_calls': 7}; _rebind(batch, state, first, root)
+    elif tamper == 'journal': root['proposal_journal'] = {**root['proposal_journal'], 'rows': 9}; _rebind(batch, state, first, root)
+    elif tamper == 'observer': root['observer_evidence'] = {'calls': 3}; _rebind(batch, state, first, root)
+    elif tamper == 'screen':
+        b1 = Path(cfg['b1_analysis']); data = json.loads(b1.read_text()); data['execution_label'] = 'DRYRUN'
+        b1.write_text(json.dumps(data))
+        monkeypatch.setattr('r1.exam.b2_batch.digest_file', lambda p, _d=digest_file: cfg['b1_analysis_sha256'] if str(p) == str(b1) else _d(p))
+    elif tamper == 'gpu_hours': m['gpu_hours'] = 1.6; save()
+    elif tamper == 'gpu_status': m['gpu_hours_status'] = 'upper_bound_after_interruption'; save()
+    elif tamper == 'gpu_upper_bound':
+        state['server_intervals'][0]['cost_is_upper_bound'] = True; write(batch / 'batch_state.json', state)
+    elif tamper == 'gpu_open':
+        for x in state['server_intervals']:
+            if x['mode'] == 'off': x['end'] = None
+        write(batch / 'batch_state.json', state)
+    elif tamper == 'anchor': Path(cfg['anchor_duplicate_reference']['source']).write_text('{"lower":0.1,"upper":0.6}')
+    elif tamper == 'cap': pass
+    if tamper == 'cap':
+        from r1.exam.b2_batch import expected_grid
+        with pytest.raises(ValueError, match=TAMPER[tamper]):
+            expected_grid({'b2_instances_per_node': 11, 'nodes': list(NODES)}, ['a'],
+                          {'a': {'id': 'a', 'role': 'candidate', 'thinking_policy': {'mode': 'off', 'switchable': False}}}, {'a': {}})
+        return
+    with pytest.raises((ValueError, RuntimeError, KeyError), match=TAMPER[tamper]):
         analyze.b2_summary_verified(batch, cfg, rule_path=analyze.RULE_V2, expected=sha)
+
+
+def test_ranking_uses_only_the_verified_gpu_hours(tmp_path, monkeypatch):
+    from r1.exam.analyze import _b2_summary_v2, load_rule
+    rule, sha = load_rule(analyze.RULE_V2, digest_file(analyze.RULE_V2))
+    batch, cfg, _, _, ms = fixture(tmp_path, monkeypatch)
+    m = {**ms[0], 'rule_sha256': sha}
+    grid = {'verified': True, 'finalists': ['a'], 'nodes': list(NODES), 'instances_per_node': 2, 'gpu_hours': {'a': 1.5}}
+    assert _b2_summary_v2([m], rule, sha, grid=grid)['rows'][0]['gpu_hours'] == 1.5
+    for bad in ({'a': 1.4}, {}, {'a': None}):
+        with pytest.raises(ValueError, match='GPU-h tie-break input'):
+            _b2_summary_v2([m], rule, sha, grid={**grid, 'gpu_hours': bad})
+    with pytest.raises(ValueError, match='GPU-h tie-break input'):
+        _b2_summary_v2([{**m, 'gpu_hours': None}], rule, sha, grid=grid)
 
 
 def test_b2_cli_verified_mode_requires_batch_and_config(capsys):

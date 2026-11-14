@@ -420,6 +420,7 @@ def _committed_b1_authority(cfg, note, raw, rule_sha):
     return head
 
 
+B2_AUTHOR_CAP=10   # the author's signed cap on b2_instances_per_node (14 Nov 2026); above it is a STOP for the author
 B2_POWER_PLAN_ROW='R1-EXAM-B2-POWER-PLAN'
 B2_INVALID_TRIALS_ROW='R1-EXAM-B2-INVALID-TRIALS'
 
@@ -567,6 +568,8 @@ def author_gate(cfg, phase, rule_sha):
     if data.get('llm_call_cap')!=cfg['llm_call_cap']: raise RuntimeError('STOP: LLM-call cap is not author-bound')
     if phase=='b1' and (cfg['instance_seeds']!=[9001,9002,9003,9004] or cfg['audit_seeds']!=[9101,9102,9103,9104]): raise RuntimeError('STOP: B1 seeds differ from protocol')
     if phase=='b2' and (not isinstance(cfg['b2_instances_per_node'],int) or isinstance(cfg['b2_instances_per_node'],bool) or not 1<=cfg['b2_instances_per_node']<=89): raise RuntimeError('STOP: B2 instances must fit the fresh 9011–9099 namespace')
+    if phase=='b2' and loaded_rule.get('version')=='x5_rule/v2' and cfg['b2_instances_per_node']>B2_AUTHOR_CAP:
+        raise RuntimeError(f'STOP: B2 instance count above the author cap of {B2_AUTHOR_CAP} per node (author, 14 Nov 2026)')
     if phase=='b2' and data.get('instances_per_node')!=cfg['b2_instances_per_node']:
         raise RuntimeError('STOP: B2 instance count not author-bound')
     if phase in PROTECTED_PHASES and loaded_rule.get('version')=='x5_rule/v2' and (type(data.get('workers')) is not int or data['workers']!=cfg.get('workers')):

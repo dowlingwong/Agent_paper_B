@@ -17,6 +17,9 @@ What is verified, fail closed:
 * every root as the B1 verifier checks it (receiving check, job authority and parameters, ledger diagnostics,
   budget, cache-false, observer and proposal journals, D28 record, replay, paired audits from the cache), with the
   B2 audit seeds 9201–9210;
+* each primary candidate's GPU-h (the X.7 (a) tie-break) is recomputed from the batch's closed, non-upper-bound
+  server intervals for (candidate, b2, off) and must equal the manifest's ``gpu_hours`` (status
+  ``recorded_dedicated_intervals``); the verified values go into the proof and the ranking uses only them;
 * every root has exactly one final-Y audit for its own (node, instance) with the ordered seeds 9201–9210, ten finite
   numeric metrics and ``final_y`` equal to their mean (absolute tolerance 1e-12); the candidate manifest's
   ``final_audits`` / ``sensitivity_final_audits`` are exactly those of its verified primary / rerun roots.
@@ -33,6 +36,7 @@ from r1.exam.b1_batch import refuse_sealed
 from r1.exam.guards import digest_file
 
 B2_SEED_BASE = 9011
+B2_AUTHOR_CAP = 10
 B2_AUDIT_SEEDS = list(range(9201, 9211))
 PROTOCOL_NODE_SETS = ({'digits_mlp', 'openml_credit_approval', 'openml_ionosphere'},
                       {'tabular_mlp', 'openml_credit_approval', 'openml_ionosphere'})
@@ -62,6 +66,8 @@ def expected_grid(cfg, finalists, specs_by_id, eligible):
     n = cfg.get('b2_instances_per_node')
     if type(n) is not int or not 1 <= n <= 89:
         _stop('instance count is not an author-bound integer in 1..89')
+    if n > B2_AUTHOR_CAP:
+        _stop(f'instance count above the author cap of {B2_AUTHOR_CAP}')
     nodes = cfg.get('nodes')
     if not isinstance(nodes, list) or len(nodes) != 3 or len(set(nodes)) != 3 or set(nodes) not in PROTOCOL_NODE_SETS:
         _stop('node list is not the three protocol nodes')
@@ -105,10 +111,27 @@ def check_final_audit(root, node, seed):
     return record
 
 
+def verified_gpu_hours(state, cid, manifest):
+    """Recompute a primary candidate's B2 thinking-off GPU-h from the batch state's server intervals."""
+    intervals = state.get('server_intervals')
+    if not isinstance(intervals, list): _stop('server intervals missing')
+    mine = [x for x in intervals if isinstance(x, dict) and x.get('candidate') == cid and x.get('phase') == 'b2']
+    if any(x.get('cost_is_upper_bound') or x.get('recovered_after_interruption') for x in mine):
+        _stop(f'GPU-h of {cid!r} is only an upper bound')
+    primary = [x for x in mine if x.get('mode') == 'off']
+    if not primary or any(not _number(x.get('start')) or not _number(x.get('end')) or x['end'] < x['start'] for x in primary):
+        _stop(f'GPU-h of {cid!r} has no closed server intervals')
+    hours = sum((x['end'] - x['start']) / 3600 for x in primary)
+    if (manifest.get('gpu_hours_status') != 'recorded_dedicated_intervals' or not _number(manifest.get('gpu_hours')) or
+            not math.isclose(manifest['gpu_hours'], hours, rel_tol=0.0, abs_tol=1e-9)):
+        _stop(f'GPU-h of {cid!r} differs from its server intervals')
+    return hours
+
+
 def verify_b2_batch(batch, cfg, rule_sha):
     """Return (verified candidate manifests, proof with the verified grid); no inference, server, or mutation."""
     from r1.exam.runtime import author_gate, read_registry, verify_campaign, _verify_b1_root_authority, b1_harness_sources
-    from r1.scripts.exam_runner import stage_a_pass_set
+    from r1.scripts.exam_runner import stage_a_pass_set, verify_anchor_reference
     from r1.exam.campaign import cache_prompt_evidence, read_rows
     from r1.exam.b1_observer_journal import validate_observer_journal
     from r1.exam.b1_proposal_journal import validate_proposal_journal
@@ -120,7 +143,7 @@ def verify_b2_batch(batch, cfg, rule_sha):
     from r1.exam.observer import _authorized_candidate
     refuse_sealed(batch, cfg.get('registry'), cfg.get('rule'), cfg.get('value_grids'), cfg.get('b1_analysis'),
                   cfg.get('stage_a_table'), cfg.get('stage_a_amendment_table'), cfg.get('stage_a_amendment_acceptance'),
-                  (cfg.get('authorizations') or {}).get('b2'))
+                  (cfg.get('authorizations') or {}).get('b2'), (cfg.get('anchor_duplicate_reference') or {}).get('source'))
     if cfg.get('dryrun'): _stop('production verification refuses DRYRUN')
     head = author_gate(cfg, 'b2', rule_sha)
     if not isinstance(head, str) or len(head) != 40: _stop('authorized HEAD absent')
@@ -163,7 +186,7 @@ def verify_b2_batch(batch, cfg, rule_sha):
         _stop('candidate set or registry order differs from the frozen finalists')
     state_roots = state.get('completed')
     if not isinstance(state_roots, dict): _stop('completed root index missing')
-    expected_keys = set()
+    expected_keys = set(); gpu = {}
     for m in manifests:
         cid = m['candidate']; spec = specs_by_id[cid]
         candidate_path = batch / cid / 'b2_manifest.json'
@@ -180,6 +203,8 @@ def verify_b2_batch(batch, cfg, rule_sha):
                 m.get('stage_a_amendment_acceptance_sha256') != cfg['stage_a_amendment_acceptance_sha256'] or
                 m.get('cache_prompt') is not False or m.get('harness_commit') != cfg['harness_commit']):
             _stop('candidate identity, authority or inputs differ')
+        if m.get('stage_a_pass') is not True or m.get('stage_a_pass_source') != eligible[cid].get('stage_a_pass_source'):
+            _stop('candidate Stage A pass provenance differs')
         if (Path(str(m.get('registry_path') or '')).resolve() != registry_path.resolve() or
                 m.get('registry_sha256') != digest_file(registry_path)):
             _stop('candidate registry does not bind the verified batch snapshot')
@@ -298,13 +323,20 @@ def verify_b2_batch(batch, cfg, rule_sha):
             _stop('primary final-Y audits do not cover exactly the author-bound grid')
         if m.get('cache_prompt_by_root') != [r.get('cache_prompt') for r in roots]:
             _stop('candidate cache evidence differs from roots')
+        d28 = lambda rs: all(all(n['pass'] for n in r['d28']['nodes'].values()) for r in rs)
+        if m.get('d28_pass') != d28(primary) or m.get('d28_scope') != 'thinking_off_roots_only':
+            _stop('candidate D28 differs from verified primary roots')
+        expected_on = {'pass': d28(rerun), 'roots': len(rerun), 'role': 'descriptive_never_changes_eligibility'} if rerun else None
+        if m.get('thinking_on_d28') != expected_on: _stop('descriptive D28 differs from verified rerun roots')
+        gpu[cid] = verified_gpu_hours(state, cid, m)
         diagnostic_keys = ('trials', 'evaluated', 'invalid', 'duplicates', 'noops', 'parse_failed', 'forecast_queries', 'forecast_query_failed')
         if m.get('diagnostics') != {k: sum(r['diagnostics'].get(k, 0) for r in roots) for k in diagnostic_keys}:
             _stop('candidate diagnostics differ from verified roots')
     if set(state_roots) != expected_keys: _stop('batch has extra or missing completed roots')
+    verify_anchor_reference(cfg)
     return manifests, {'batch_state_sha256': digest_file(batch / 'batch_state.json'),
                        'batch_manifests_sha256': digest_file(batch / 'b2_manifests.json'),
                        'authorization_checkout_head': head, 'b1_analysis_sha256': cfg['b1_analysis_sha256'],
                        'grid': {'verified': True, 'finalists': ids, 'nodes': list(cfg['nodes']), 'seeds': seeds,
                                 'instances_per_node': len(seeds), 'audit_seeds': B2_AUDIT_SEEDS,
-                                'modes': {cid: modes_of[cid] for cid in ids}}}
+                                'modes': {cid: modes_of[cid] for cid in ids}, 'gpu_hours': gpu}}

@@ -327,7 +327,8 @@ def check_template_repairs(cfg, specs):
 
 def evidence(runner, phase, selected, interrupt):
     if phase not in PROTECTED_PHASES or not is_v2(getattr(runner,'rule',None)):
-        raise PreparationStop('STOP: only x5_rule/v2 B1/B2 evidence is implemented')
+        raise PreparationStop('STOP: only x5_rule/v2 B1 evidence is implemented' if phase=='b1' else
+                              'STOP: only x5_rule/v2 B1/B2 evidence is implemented')
     if selected and not runner.cfg.get('dryrun'):
         raise PreparationStop('STOP: production B1 requires the full eligible candidate set' if phase=='b1' else
                               'STOP: production B2 requires the full frozen finalist set')

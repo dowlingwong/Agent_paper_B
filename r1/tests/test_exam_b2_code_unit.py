@@ -167,6 +167,12 @@ def test_b2_config_host_and_gpu_must_match_the_note(tmp_path, monkeypatch):
         runtime.author_gate(cfg, 'b2', rule_sha)
 
 
+def test_b2_count_above_the_author_cap_stops(tmp_path, monkeypatch):
+    root, cfg, rule_sha = setup_b2_repo(tmp_path, monkeypatch, n=11)
+    with pytest.raises(RuntimeError, match='author cap of 10'):
+        runtime.author_gate(cfg, 'b2', rule_sha)
+
+
 @pytest.mark.parametrize('n', [0, 90, True, '4'])
 def test_b2_count_must_fit_the_fresh_namespace(tmp_path, monkeypatch, n):
     root, cfg, rule_sha = setup_b2_repo(tmp_path, monkeypatch)
@@ -539,14 +545,15 @@ def test_b2_ranking_needs_a_verified_grid_and_matches_it():
         _b2_summary_v2(one, rule, sha_)
     with pytest.raises(ValueError, match='grid has not been verified'):
         _b2_summary_v2(one, rule, sha_, grid={'verified': False})
-    grid = {'verified': True, 'finalists': ['gemma4_31b'], 'nodes': list(NODES), 'instances_per_node': 4}
+    grid = {'verified': True, 'finalists': ['gemma4_31b'], 'nodes': list(NODES), 'instances_per_node': 4,
+            'gpu_hours': {'gemma4_31b': 1.0}}
     out = _b2_summary_v2(one, rule, sha_, grid=grid)
     assert out['selection']['rule_top'] == 'gemma4_31b' and out['rows'][0]['instances'] == 12
     with pytest.raises(ValueError, match='differ from the verified finalist grid'):
         _b2_summary_v2(one + [_b2_manifest(sha_, 'other', [0.8] * 12)], rule, sha_, grid=grid)
     with pytest.raises(ValueError, match='does not cover the verified grid'):
         _b2_summary_v2([{**one[0], 'final_audits': one[0]['final_audits'][:11]}], rule, sha_, grid=grid)
-    two = {**grid, 'finalists': ['a', 'b']}
+    two = {**grid, 'finalists': ['a', 'b'], 'gpu_hours': {'a': 2.0, 'b': 1.0}}
     ranked = _b2_summary_v2([_b2_manifest(sha_, 'a', [0.7] * 12, gpu=2.0), _b2_manifest(sha_, 'b', [0.7] * 12, gpu=1.0)],
                             rule, sha_, grid=two)
     assert [r['candidate'] for r in ranked['rows']] == ['b', 'a']        # tie -> lower GPU-h
@@ -556,7 +563,8 @@ def test_b2_verified_summary_uses_the_batch_verifier(monkeypatch):
     from r1.exam import analyze
     import r1.exam.b2_batch as b2b
     sha_ = hashlib.sha256(RULE_V2.read_bytes()).hexdigest()
-    grid = {'verified': True, 'finalists': ['gemma4_31b'], 'nodes': list(NODES), 'instances_per_node': 4}
+    grid = {'verified': True, 'finalists': ['gemma4_31b'], 'nodes': list(NODES), 'instances_per_node': 4,
+            'gpu_hours': {'gemma4_31b': 1.0}}
     monkeypatch.setattr(b2b, 'verify_b2_batch', lambda batch, cfg, rule_sha: ([_b2_manifest(rule_sha, 'gemma4_31b', [0.6] * 12)],
                                                                              {'grid': grid, 'synthetic': True}))
     out = analyze.b2_summary_verified('/tmp/synthetic-b2-batch', {}, rule_path=RULE_V2, expected=sha_)
@@ -572,3 +580,49 @@ def test_b2_batch_verifier_refuses_dryrun_and_unauthorized(monkeypatch, tmp_path
     monkeypatch.setattr(runtime, 'author_gate', refused)
     with pytest.raises(RuntimeError, match='authorization refused'):
         verify_b2_batch(tmp_path, {'authorizations': {'b2': 'n.md'}}, 's')
+
+
+# ------------------------------------------------------------------------------------------- runner-level B2 STOPs
+def _b2_runner(tmp_path, screen_data, dryrun=False, finalists_in_registry=('nt',)):
+    from r1.tests.test_exam_x5_rule_v2 import FakeRunner, _runner_cfg, _spec, NONTHINK, v2
+    from r1.exam.campaign import write_json
+    from r1.exam.guards import digest_file
+    rule, sha = v2()
+    specs = [_spec(c, NONTHINK) for c in finalists_in_registry]
+    screen = tmp_path / 'b1.json'
+    write_json(screen, {'rule_sha256': sha, **screen_data})
+    cfg = _runner_cfg(tmp_path, specs, list(finalists_in_registry),
+                      extra={'b1_analysis': str(screen), 'b1_analysis_sha256': digest_file(screen), 'dryrun': dryrun})
+    runner = FakeRunner(tmp_path, specs, cfg, rule, sha); runner.author_head = 'a' * 40
+    return runner
+
+
+@pytest.mark.parametrize('screen,match', [
+    ({'finalists': ['nt'], 'rows': [{'candidate': 'nt', 'b2_thinking_mode': 'off'}]}, 'verified complete-batch B1 analysis'),
+    ({'phase': 'b1', 'execution_label': 'DRYRUN', 'batch_verification': {}, 'finalists': ['nt'],
+      'rows': [{'candidate': 'nt', 'b2_thinking_mode': 'off'}]}, 'verified complete-batch B1 analysis'),
+    ({'phase': 'b1', 'execution_label': 'EVIDENCE', 'batch_verification': {}, 'finalists': [], 'rows': []}, 'non-empty, duplicate-free'),
+    ({'phase': 'b1', 'execution_label': 'EVIDENCE', 'batch_verification': {}, 'finalists': ['nt', 'nt'], 'rows': []}, 'non-empty, duplicate-free'),
+    ({'phase': 'b1', 'execution_label': 'EVIDENCE', 'batch_verification': {}, 'finalists': ['nt', 'gone'],
+      'rows': [{'candidate': 'nt', 'b2_thinking_mode': 'off'}]}, 'absent from the registry or Stage A pass set'),
+])
+def test_b2_runner_level_stops(tmp_path, screen, match):
+    from r1.scripts.exam_runner import _evidence_unreviewed
+    runner = _b2_runner(tmp_path, screen)
+    with pytest.raises(runtime.PreparationStop, match=match):
+        _evidence_unreviewed(runner, 'b2', None, False)
+    assert not runner.served and not runner.roots
+
+
+def test_b2_production_manifest_records_the_authorized_head(tmp_path):
+    import json as _json
+    from r1.scripts.exam_runner import _evidence_unreviewed
+    runner = _b2_runner(tmp_path, {'phase': 'b1', 'execution_label': 'EVIDENCE', 'batch_verification': {}, 'finalists': ['nt'],
+                                   'rows': [{'candidate': 'nt', 'b2_thinking_mode': 'off'}]})
+    runner.author_head = None
+    with pytest.raises(runtime.PreparationStop, match='B2 manifest requires the authorized checkout HEAD'):
+        _evidence_unreviewed(runner, 'b2', None, False)
+    runner.author_head = 'a' * 40; runner.state = {'completed': {}}
+    _evidence_unreviewed(runner, 'b2', None, False)
+    m = _json.loads((tmp_path / 'nt/b2_manifest.json').read_text())
+    assert m['authorization_checkout_head'] == 'a' * 40 and m['phase'] == 'b2' and m['mode'] == 'off'

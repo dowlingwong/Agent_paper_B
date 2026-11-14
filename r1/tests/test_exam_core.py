@@ -373,12 +373,15 @@ def test_rico_uses_standalone_vendor_template_and_native_thinking_policy():
     assert not s['thinking_policy']['switchable'] and not s['thinking_policy']['off_switch']
 
 
-def test_evidence_entry_refuses_unreviewed_rule_for_b1_and_b2():
-    # B2 code unit (14 Nov 2026): B2 evidence is implemented under x5_rule/v2 only, like B1.
+def test_evidence_entry_refuses_b2_and_unreviewed_b1_rule():
     from types import SimpleNamespace
     from r1.scripts.exam_runner import evidence
     from r1.exam.runtime import PreparationStop
-    for phase in ('b1','b2','stage-a'):
+    with pytest.raises(PreparationStop,match='only x5_rule/v2 B1 evidence'):
+        evidence(SimpleNamespace(cfg={}),'b1',None,False)
+    # B2 code unit (14 Nov 2026): B2 evidence is implemented under x5_rule/v2 only; the base asserted that b2 was
+    # refused outright.  The b1 assertion above is the base one, unchanged.
+    for phase in ('b2','stage-a'):
         with pytest.raises(PreparationStop,match='only x5_rule/v2 B1/B2 evidence'):
             evidence(SimpleNamespace(cfg={}),phase,None,False)
 

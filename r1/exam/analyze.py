@@ -343,6 +343,12 @@ def _b2_summary_v2(manifests, rule, sha, grid=None):
     cells=len(grid['nodes'])*int(grid['instances_per_node'])
     if any(r['instances']!=cells for r in primary):
         raise ValueError('STOP: B2 primary row does not cover the verified grid')
+    verified_gpu=grid.get('gpu_hours') or {}
+    for r in primary:
+        g=verified_gpu.get(r['candidate'])
+        if (type(g) not in (int,float) or type(r['gpu_hours']) not in (int,float) or not math.isfinite(g)
+                or not math.isclose(r['gpu_hours'],g,rel_tol=0.0,abs_tol=1e-9)):
+            raise ValueError('STOP: B2 GPU-h tie-break input is not the verified server-interval value')
     ranked=sorted(primary,key=lambda r:(-r['final_y'],r['gpu_hours'] if r['gpu_hours'] is not None else math.inf))
     return {'phase':'b2','label':'EXAM','rule_version':'x5_rule/v2','rule_sha256':sha,'rows':ranked,
             'selection':{'quantity':rule['selection']['quantity'],'mode':'off','ties':'lower_gpu_hours',
