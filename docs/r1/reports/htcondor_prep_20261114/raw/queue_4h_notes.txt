@@ -1,5 +1,5 @@
 capture_utc=2026-11-14T03:00:04Z  capture_cet=2026-11-14T04:00:04CET
-== own queue (P2/P4/P6/P7 submitted 2026-11-13T22:52 CET; now > 4 h idle) ==
+== own queue (P2/P4/P6/P7 submitted 2026-11-13T22:52 UTC = 23:52 CET; now > 4 h idle) ==
 759620 0 1 1794610347 undefined
 759622 0 1 1794610352 undefined
 759624 0 1 1794610356 undefined

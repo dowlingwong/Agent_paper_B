@@ -62,7 +62,7 @@ These were measured by submitting P1–P7 (accepted unit, `reviews/HTCONDOR_PROB
 | P4 | TOpAS A100 | **IDLE, no match (capacity)** | P5 proves TOpAS IS reachable, so P4's failure is not the pool route: the A100 slot `slot1@c03-001-167.gridka.de` advertises `TotalSlotGPUs=8` but `GPUs=0`, `Cpus=0` with all children Claimed/Preempting — the A100 node is fully allocated and the partitionable parent has no free GPUs/CPUs to provision. It becomes runnable only when the node frees resources |
 | P5 | TOpAS V100S | **COMPLETED, exit 0**, host `dwong-759623.0-c03-001-159.gridka.de` (site `topas`, slot4_1@c03-001-159), wait 212 s, run 2 s | TOpAS **is reachable by flocking**: the pool match found a free V100S slot on `c03-001-159` (GridKa). Job ran in docker (`NVIDIA_VISIBLE_DEVICES=void`, `CUDA_VISIBLE_DEVICES=GPU-918aeb0c-…` UUID); `/work`, `/ceph`, `/ceph/srv` are MISSING remotely (expected for `+RemoteJob`), `/tmp` 5.2 T |
 | P6 | NEMO2 L40S | **IDLE, no match** | measured at 03:30 CET: 6 L40S slots (4 Unclaimed, 2 Drained) + **4 H200 slots (1 Unclaimed, 3 Drained)**, all `HasDocker=undefined`, `HasSingularity=true`, `CloudSite=BwForCluster-Nemo2`. P6 analysis (`raw/p6_analyze.txt`): `[2]` 6, `[5]` 6, `[6]=[2]&&[5]` **0** — a docker-universe job cannot run there |
-| P7 | NEMO2 H200 | **IDLE, no match** | no H200 slot in the negotiating view (the only visible H200 slot, `g4401`, is **Drained**) |
+| P7 | NEMO2 H200 | **IDLE, no match (structural: no Docker)** | same structural blocker as P6 (`HasDocker=undefined`, `HasSingularity=true`); H200 state varied: 1 Unclaimed Idle 23:38 → Drained 23:40 → 4 slots (1 Unclaimed, 3 Drained) at 03:30 — none eligible for a docker-universe job |
 
 Additional measured facts:
 
@@ -90,7 +90,7 @@ Additional measured facts:
 
 ## 8. Evidence for the checks whose transcript was missing from the first report draft
 
-- `raw/evidence_capture_0331.txt` — 03:30 CET capture: two timestamped `docker info` runs (daemon unreachable), `HasDocker`/`ProvidesETPResources`/`HasSingularity` counts (315/323/1094), NEMO2 slot attributes (6 L40S + 3 H200, all `HasDocker=undefined`), P2/P4/P6 analyses, the foreign `r2_batch` jobs, the GGUF sha256, the failed-copy paths.
+- `raw/evidence_capture_0331.txt` — 03:30 CET capture: two timestamped `docker info` runs (daemon unreachable), NEMO2 slot attributes (6 L40S: 4 Unclaimed/2 Drained; **4 H200: 1 Unclaimed/3 Drained**, all `HasDocker=undefined`), P2/P4/P6 analyses, the foreign `r2_batch` jobs, the GGUF sha256, the failed-copy paths. The 315/323/1094/5/13 counts are from `raw/pool_analyze_p4_20261114.txt` (00:35 CET).
 - `raw/p6_analyze.txt`, `raw/p2_analyze.txt` — full analyses for P6 and P2 (the local P4 analysis is in `raw/pool_analyze_p4_20261114.txt`).
 - `raw/gguf_sha256.txt` — the pinned GGUF hash on `/ceph/dwong/models`.
 - `raw/login_hosts_mounts.txt` — all four ETP login hosts reachable and mounting `/ceph/dwong` and `/work/dwong`.

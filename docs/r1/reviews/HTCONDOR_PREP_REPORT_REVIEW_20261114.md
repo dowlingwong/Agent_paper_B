@@ -517,3 +517,61 @@ single-snapshot record; P2/P4/P6/P7 waits stay censored; NEMO2 Docker remains a 
 `work` stays on `/ceph` (ACL) and `_to_delete` keeps the originals until the author retires them.
 
 VERDICT: ACCEPTED
+
+---
+
+## Final verification (post-R1–R14 + wave 3)
+
+**Reviewed:** HEAD **`2b8becbb`** (`git ls-remote --heads origin htcondor-prep-20261114` =
+`2b8becbb8a5a37991ab5dee967a9d14e6ac72800`), diff `207b2a7f..2b8becbb` (10 files, +273/−26).
+Report SHA-256 `83658398…e7f`; POOL_FACTS `c9ba8336…8ed`; questions `31d470ff…26e`. Worktree clean;
+**06:01–06:05 CET**, read-only: no SSH, no job, no move, no git commit; only this review file was written.
+This is a diff check, not a new review round.
+
+### V.1 What the diff verified (Lead claims checked one by one)
+
+| R | Claim | Result |
+|---|---|---|
+| R1 | both "+6 h dropped / cannot fit before 05:30" sentences gone; outcome recorded | **mostly ✓ / N1** — report L66 and POOL_FACTS §4/§7 now say "planned at ~05:52 under the author's 09:30 extension"; report §5 L95 records "submitted at 05:50:32 CET … both completed within 18 s (ms04/ms03, exit 0)"; header lists wave 3. `raw/queue_times_current.tsv` P1w3/P3w3: `submit 2026-11-14T04:50:32Z`, wait **18 s**, run 1 s, exit 0, `slot1_24@ms04` / `slot1_21@ms03` ✓. POOL_FACTS itself does **not** record the outcome (N1). |
+| R2 | 4 H200 (1 Unclaimed, 3 Drained) in report and POOL_FACTS | **mostly ✓ / N2** — report P6/P7 rows and POOL_FACTS §5 P6 row now say 4 H200; POOL_FACTS §8 evidence list still says "6 L40S + 3 H200" (N2). |
+| R3 | counts cited to pool_analyze (00:35) and m1_m2_checks (03:32, 326/318); no 03:38 | **mostly ✓ / N3** — report §3 and POOL_FACTS §5 L69 now cite the right files/times, no "03:38" anywhere; report §3 keeps a stray `(raw/evidence_capture_0331.txt)` after the 315 clause and POOL_FACTS §8 L93 still attributes the counts to evidence_capture (N3). (The raw 326/318 pair is unlabeled; 326 ETP > 318 docker is a sound inference but should be labelled.) |
+| R4 | §9 "measured after submission" | **✓** — §9 bullet now says 03:30/03:32 CET, recorded in evidence_capture/m1_m2_checks. |
+| R5 | P7 reason structural + H200 variation | **mostly ✓ / N4** — report P7 row fixed; POOL_FACTS §5 P7 row still says "the only visible H200 slot, g4401, is Drained" (N4). |
+| R6 | gpu_register cited in §7 | **✓** — §7 says "`gpu_register.tsv`: 0.000556 GPU-h used, 5.0 GPU-h stop not approached". |
+| R7 | Q5 concrete paste-ready | **✓** — names the 8-GPU V100S partitionable slots, c03-001-167 A100, g4401 Drained, bms2 login+mounts, site total unresolved. |
+| R8 | probes/out in §8 | **✓ (five committed files) / N5** — §8 now lists "probe JDLs/probe.sh/dry-runs and the five probe stdout files (`probes/out/`)". P1w3.out/P3w3.out are **not** committed (git-ignored `*.out`, N5); the report does not cite them, so no report claim depends on them. |
+| R9 | docker timing corrected | **partial / N6** — §1 row 2 fixed ("first failure 23:39 in host_facts_A; two runs at 03:30 in raw/docker_info.txt"); §4 L44 still says "twice, 23:39 and 23:41 CET" (N6). |
+| R10 | foreign_jobs with 759618 REMOVED + clusters | **✓** — `raw/foreign_jobs.txt`/`raw/r10_r14_evidence.txt` show `759618 0 3 undefined 1794609657 …` (JobStatus 3 = REMOVED, ExitCode undefined = never executed) and clusters 759626–759636; report L39 backed. |
+| R11/R12 | header P4/P5 + waves 1–3 | **✓ header / N7 P2 row** — header says "P4 stays queued (author asked P4/P5 not withdrawn; P5 completed at 22:56)" and lists waves 1–3; the new P2 row has wrong numbers (N7). |
+| R13 | 09:30 as chat-level provenance | **✓** — header quotes the author's words `其余按 errata 继续，09:30 硬停` and marks them chat-level, not a committed author note. |
+| R14 | ACL failure cited + rc=23 | **partial / N8** — the transcript IS committed in `raw/r10_r14_evidence.txt` ("rsync: set_acl … Operation not supported (95) … code 23") and the MOVE_LOG `work` row has `copy_failed(rc=23)`; but report §2 L26 still cites evidence_capture, and `raw/rsync_work_failed.log` itself is git-ignored/uncommitted (N8). |
+| wave 3 / table | 18 s ms04/ms03; n=6 median 19.5 range 7–73 | **✓** — queue rows match; class table `73,7,21,21,18,18 → n=6, median 19.5, range 7–73`; remote best-effort `7,21,18 → n=3, median 18`; header "+5 h 58 m" is consistent with wave 1 at ~23:52 CET. |
+
+**No BLOCKING or MAJOR finding.** The move log/backfill, W2 numbers, pool facts, wave 1–3 queue
+numbers, the +6 h outcome, the docker gate, the 09:30 provenance and the no-deletion record all check out
+against committed evidence.
+
+### V.2 Remaining findings (all one-line MINOR/NIT)
+
+| ID | Sev | Finding | Exact fix |
+|---|---|---|---|
+| N1 | NIT | POOL_FACTS does not record the +6 h outcome (only "planned … outcome recorded when it runs"), although it ran. | Add to POOL_FACTS §4 (or §7): "Outcome: P1w3/P3w3 ran at 05:50:32 CET, 18 s waits, exit 0 (`raw/queue_times_current.tsv`)." |
+| N2 | MINOR | POOL_FACTS §8 evidence list still says the 03:30 capture has "6 L40S + 3 H200" (evidence_capture/nemo2_attrs show 4 H200). | "… NEMO2 slot attributes (6 L40S: 4 Unclaimed/2 Drained; 4 H200: 1 Unclaimed/3 Drained), all `HasDocker=undefined` …" |
+| N3 | MINOR | Report §3 L38 keeps `(raw/evidence_capture_0331.txt)` right after "HasDocker is true on 315"; POOL_FACTS §8 L93 attributes the counts to evidence_capture. | Drop the stray parenthetical in §3 (the next sentence already cites pool_analyze); in POOL_FACTS L93 change "counts (315/323/1094)" to "counts (315/323/1094; `raw/pool_analyze_p4_20261114.txt`, 00:35 CET)". Optionally label the two numbers in `raw/m1_m2_checks.txt` as ETP/docker. |
+| N4 | MINOR | POOL_FACTS §5 P7 row contradicts the report and the P6 row: "no H200 slot … the only visible H200 slot, g4401, is Drained". | Use the report's P7 wording: structural `HasDocker=undefined`; H200 state 1 Unclaimed Idle 23:38 → Drained 23:40 → 4 slots (1 Unclaimed, 3 Drained) at 03:30. |
+| N5 | MINOR | `raw/P1w3.out`, `raw/P3w3.out`, `probes/out/P1w3.out`, `probes/out/P3w3.out` and `raw/rsync_work_failed.log` are git-ignored (`*.out`, `*.log`) and **not in the pushed commit** — the Lead's "committed" claim for the wave-3 stdout is not true. | Either `git add -f` the two wave-3 stdout files (as was done for the first five; §8 then says seven) or state that only `raw/queue_times_current.tsv` carries the wave-3 record. The rsync transcript is already committed inside `raw/r10_r14_evidence.txt`, so the `.log` itself is optional. |
+| N6 | MINOR | Report §4 L44 still says `docker info` failed "twice, 23:39 and 23:41 CET"; the committed evidence is one failure at 23:39 (`raw/host_facts_A.txt` A9) and two runs at 03:30 CET (`raw/docker_info.txt`). | "… cannot connect (failure at 23:39 in `raw/host_facts_A.txt`; two runs again at 03:30 CET in `raw/docker_info.txt`) …" — or say "once at 23:39; re-checked twice at 03:30". |
+| N7 | MINOR | Report §5 P2 row has three wrong numbers: "~7 h 5 min" (correct elapsed from 23:52:27 CET to 06:00 CET is **~6 h 8 min**); "0 willing at 00:35/03:30 analyses" (no P2 analyze exists at 00:35); "(2 willing / 4 drained at 04:00)" (the 04:00 analyze summary says **1** slot match and willing, **4 would match if drained**). Root: `raw/queue_4h_notes.txt` header says "submitted 2026-11-13T22:52 CET" but 22:52 is **UTC** (= 23:52 CET). | P2 row → "**still idle at 06:00 CET (~6 h 8 min; >4 h note captured 04:00 in `raw/queue_4h_notes.txt`)** | capacity: 0 match / 5 would match if drained at 03:30; 1 match / 4 would match if drained at 04:00"; fix the `queue_4h_notes.txt` header to "submitted 2026-11-13T22:52 UTC = 23:52 CET". |
+| N8 | NIT | Report §2 L26 cites `raw/evidence_capture_0331.txt` for the `work` ACL failure; that file has only the failed-copy `ls`. The transcript is in `raw/r10_r14_evidence.txt`; `raw/rsync_work_failed.log` is uncommitted. | Cite `raw/r10_r14_evidence.txt` (and the MOVE_LOG `work` row `copy_failed(rc=23)`), or force-add the `.log`. |
+| N9 | NIT | Report L66 still reads "planned at ~05:52 … outcome is recorded when it runs" although it ran; only §5 L95 records the run. | Append "it ran at 05:50:32 CET (see §5)" to L66. |
+
+### V.3 Result
+
+The material record is verified and consistent with the committed evidence; nothing changes a headline
+number, the move/W2 record, the pool facts or any recommendation. The remaining items are the five
+partially-applied R2/R3/R5/R9/R14 corrections (N1–N4, N6, N8) plus three evidence/arithmetic nits
+(N5, N7), all one-line edits. After they are applied, no new review round is needed — I can confirm the
+final diff. Residual risk unchanged: single-observer/single-snapshot record, censored P2/P4/P6/P7 waits,
+NEMO2 Docker as a site question, `work` on `/ceph` and the originals in `_to_delete` until retired.
+
+VERDICT: NOT ACCEPTED (remaining)
