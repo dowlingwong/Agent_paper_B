@@ -59,11 +59,20 @@ from scipy.stats import norm
 from r1.c3.features import NODE_INFO
 from r1.c3.labels import EDGES, N_BINS, moments
 from r1.c3.train.metrics import rps  # the one RPS definition of Track P (metrics.py)
-from r1.c3.train.serialize import (budget_line, count_tokens, edit_text, history_line, incumbent_lines, node_lines,
+from r1.c3.train.serialize import (count_tokens, edit_text, history_line, incumbent_lines, node_lines,
                                    state_text)
 from r1.c3.train.types import BIN_OPTIONS, QUESTION, DecisionPrompt
 
 E0_VERSION = "trackp_e0/v1"
+
+
+def exam_budget_line_v1(b: int, runs_total: int) -> str:
+    """The budget line of the frozen exam template ``trackp_e0/v1`` (and of the E6 probes built on it): the
+    ``trackp_prompt/v1`` line with no ledger, kept here so that ``e0_v1`` regenerates in content. Track P training
+    prompts use ``serialize.budget_line`` (``trackp_prompt/v2``, 14 Nov W2-1); moving the exam to the v2 line would be a
+    new E0 version (``trackp_e0/v2``) and needs the author's approval."""
+    return f"Budget: trial {b} of {runs_total} ({max(runs_total - (b - 1), 0)} worker runs left before this trial)"
+
 SEED = 20261026
 M_RANGE, S_RANGE = (-2.5, 2.5), (0.1, 1.5)
 M_CELLS, S_CELLS = 10, 7
@@ -164,7 +173,7 @@ def _context(rng) -> dict:
     vals = keys[k]
     edit = {"symbol": k, "old": _value(config[k]), "new": _value(vals[int(rng.integers(len(vals)))]),
             "path": "train.py" if NODE_INFO[node]["family"] == "mlp" else "config.yaml"}
-    head = (node_lines(node, sigma, str(rng.choice(["none", "append_only_summary"]))) + [budget_line(b, W)]
+    head = (node_lines(node, sigma, str(rng.choice(["none", "append_only_summary"]))) + [exam_budget_line_v1(b, W)]
             + incumbent_lines(config, best, best - float(rng.uniform(0, 0.02)), sigma))
     flags = [f"Edited key is active for this node's model; {'structural' if k in ('class_weight', 'scaler') else 'numeric'} key",
              f"Active configuration equals the incumbent: no; evaluated before in this campaign: "

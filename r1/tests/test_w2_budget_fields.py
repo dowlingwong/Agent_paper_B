@@ -123,6 +123,11 @@ def test_skips_prechecks_and_verify_follow_true_worker_runs():
         used = sum(row_worker_runs(r) for r in rows[:i])
         assert used == expected_used[i]
         assert S.budget_line(row["budget_index"], W, used) == new_line(row["budget_index"], used)
+    for i in (5, 7):   # the serialized prompt carries the same line (prefix-only count; verify row adds 1 + 2r)
+        prompt = S.serialize_view(view(rows, i), CTX, tokenizers={"fake": _FakeTok()})
+        if prompt is not None:
+            assert new_line(rows[i]["budget_index"], expected_used[i]) in prompt.state.splitlines()
+            assert prompt.meta["prompt_version"] == "trackp_prompt/v2"
     res = featurize_view(view(rows, 7), CTX)
     assert res is not None and res.features["budget_frac_left"] == 1.0 - 9 / W != old_frac(8)
 
