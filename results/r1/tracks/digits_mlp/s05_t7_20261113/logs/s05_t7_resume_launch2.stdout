@@ -1,0 +1,9 @@
+2026-11-14T10:43:33Z Phase 4 S0.5 start (node digits_mlp, host TASL-7, k=2, pin 8237fd02, out /home/dowling/r1_tracks/out/digits_mlp/s05_t7_20261113)
+2026-11-14T10:43:33Z starting fresh servers k=2 in tmux session trks_llm
+2026-11-14T10:43:35Z endpoints 18101..18102 ready after 0s
+2026-11-14T10:43:35Z server pid: 666767,
+2026-11-14T10:43:35Z GPU compute apps: 666767, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5202 MiB;666768, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 5202 MiB;
+2026-11-14T10:43:35Z lease: HELD
+2026-11-14T10:43:35Z starting S0.5 collector in tmux session trks_s05_t7
+started trks_s05_t7 (/home/dowling/r1_tracks/logs/trks_s05_t7.cmd)
+2026-11-14T10:43:35Z S0.5 collector started; monitor logs/trks_s05_t7.log / .exit and trks-status

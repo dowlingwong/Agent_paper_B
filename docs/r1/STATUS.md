@@ -1,5 +1,12 @@
 # Paper B (route R1) — status log
 
+## 14 November 2026 — Track S S0.5 pilot resumed and complete on TASL-7 (S0.5b done); L1 pause
+
+- S0.5 resumed 2026-11-14T10:43:33Z under the reviewed rev-5 unit (fixed launcher `f823b86a…`; first attempt aborted by the old `pgrep|pipefail` guard and started nothing; STOP renamed, not deleted, to `_to_delete/STOP.retired.20261114T103527Z`; `.cmd` byte-identical `fe9fae36…`). Exit `12:34:03Z rc=0`; session done 28/18/71/0/0 complete.
+- S0.5b CPU run 13:00:39–13:00:54Z rc=0; servers stopped, lease free. Ledger totals: 50 roots (all ok), 24 forks (5 A/A), 71 leaves (all ok), 0 failed/exhausted, deadline not hit.
+- Calibration 298 rows coverage 231/298 = 0.775 at level 0.8 (HIDDEN_UNITS stratum 0 0/20; delta_audit mean −0.0074); truncation 200 rows (W 8/10/12/20; cap binding 8/8, 10/12, 12/22, 16/40; y_terminal means 0.963–0.973). Descriptive only.
+- Result copied back to `results/r1/tracks/digits_mlp/s05_t7_20261113/` with SHA256SUMS/logs/scripts and the retired STOP; report `reports/TRACKS_S05_T7_RESULT_20261114.md`. L1 pause: S0.5 summary/STOP 4 wait for `tabular_mlp`; B2 not started; TASL-2 down and preserved.
+
 ## 13 November 2026 — Track S digits_mlp: `_c` marker retired; TASL-7 S0.1 operator-stopped before completion (correction)
 
 - Under the author's 13 Nov revision (B1 `_c` STOP allows the host move), the `_c` Track X marker was retired by the
