@@ -1,0 +1,89 @@
+capture_utc=2026-11-14T03:00:04Z  capture_cet=2026-11-14T04:00:04CET
+== own queue (P2/P4/P6/P7 submitted 2026-11-13T22:52 CET; now > 4 h idle) ==
+759620 0 1 1794610347 undefined
+759622 0 1 1794610352 undefined
+759624 0 1 1794610356 undefined
+759625 0 1 1794610358 undefined
+759639 0 1 1794623931 undefined
+== better-analyze (P2, P4, P6, P7), note >4h still idle ==
+―― 759620
+[8]           2         4  [3] && [7]
+
+
+759620.000:  Run analysis summary ignoring user priority.  Of 64 slots on 58 machines,
+     58 slots are rejected by your job's requirements
+      1 slots reject your job because of their own requirements
+      1 slots match and are willing to run your job
+      4 slots would match if drained
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:59:42 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found
+―― 759622
+
+759622.000:  Run analysis summary ignoring user priority.  Of 64 slots on 58 machines,
+     64 slots are rejected by your job's requirements
+      0 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+
+WARNING:  Be advised:
+   No machines matched the job's constraints
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:59:42 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found
+―― 759624
+
+759624.000:  Run analysis summary ignoring user priority.  Of 64 slots on 58 machines,
+     64 slots are rejected by your job's requirements
+      0 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+
+WARNING:  Be advised:
+   No machines matched the job's constraints
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:59:42 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found
+―― 759625
+
+759625.000:  Run analysis summary ignoring user priority.  Of 64 slots on 58 machines,
+     64 slots are rejected by your job's requirements
+      0 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+
+WARNING:  Be advised:
+   No machines matched the job's constraints
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:59:42 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found
+== P4 with -pool f03 (tutorial form, author instruction) ==
+
+759622.000:  Run analysis summary ignoring user priority.  Of 64 slots on 58 machines,
+     64 slots are rejected by your job's requirements
+      0 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+
+WARNING:  Be advised:
+   No machines matched the job's constraints
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:59:42 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found
+== P4 with -pool c03 ==
+[10]          1         3  [0] && [9]
+[11]          7        10  TARGET.GPUs >= RequestGPUs
+[12]          0         3  [10] && [11]
+
+
+759622.000:  Run analysis summary ignoring user priority.  Of 19 slots on 13 machines,
+     16 slots are rejected by your job's requirements
+      1 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+      2 slots would match if drained
+
+No successful match recorded.
+Last failed match: Sat Nov 14 03:59:42 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found
+== done ==

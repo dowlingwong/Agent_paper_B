@@ -1,7 +1,7 @@
 # ETP HTCondor preparation — night of 13/14 Nov 2026
 
 **Phase:** HTCondor preparation (runbook `docs/r1/prompts/HTCONDOR_PREP_RUNBOOK_20261114.md` + errata `docs/r1/prompts/HTCONDOR_PREP_RUNBOOK_ERRATA_20261114.md`). **AI-assisted** (DeepSeek Harness agent, "cluster agent" role). **Reported to the author in Chinese.**
-**Window:** started 23:37 CET 13 Nov; the author moved the hard stop to **09:30 CET** 14 Nov (the runbook's 05:30 figure is superseded for this session; the 09:30 extension is the author's chat instruction "其余按 errata 继续，09:30 硬停" (chat-level provenance, recorded here; not a committed author note). Wave status: wave 1 = P1–P7, wave 2 = P1w2/P3w2, wave 3 = P1w3/P3w3 planned at ~05:52 CET. **P4 stays queued** (the author asked P4/P5 not to be withdrawn; P5 completed at 22:56 CET). **Status:** probe wave submitted and monitored (P1/P3/P5 completed, P2/P4/P6/P7 queued); W2 STOPPED on a difference; image build impossible (docker gate); **8 of 9 moves done and backfilled, `work` skipped (ACL)**; report under the runbook's §6 review loop.
+**Window:** started 23:37 CET 13 Nov; the author moved the hard stop to **09:30 CET** 14 Nov (the runbook's 05:30 figure is superseded for this session; the 09:30 extension is the author's chat instruction "其余按 errata 继续，09:30 硬停" (chat-level provenance, recorded here; not a committed author note). Wave status: wave 1 = P1–P7 (23:52 CET), wave 2 = P1w2/P3w2 (02:43 CET), **wave 3 = P1w3/P3w3 run at 05:50 CET (+5 h 58 m; both completed, 18 s waits)**. **P4 stays queued** (the author asked P4/P5 not to be withdrawn; P5 completed at 22:56 CET). **Status:** probe waves 1–3 submitted and monitored (P1/P3/P5/P1w2/P3w2/P1w3/P3w3 completed; P2/P4/P6/P7 still queued at 06:00 CET); W2 STOPPED on a difference; image build impossible (docker gate); **8 of 9 moves done and backfilled, `work` skipped (ACL)**; report under the runbook's §6 review loop.
 **Evidence:** `docs/r1/reports/htcondor_prep_20261114/` (raw host facts, inventory, stats, pool facts, move plan, probe outputs, W2 summary); reviews in `docs/r1/reviews/HTCONDOR_*_20261114.md`.
 
 ---
@@ -69,14 +69,14 @@ All seven JDLs were reviewed and accepted before submission; M1/M2 were then mea
 
 | resource class | samples | waits (s) | n | median (s) | range (s) |
 |---|---|---:|---:|---:|---|
-| local CPU 1 core, docker (ETP workers) | P1, P3, P1w2, P3w2 | 73, 7, 21, 21 | 4 | **21** | **7–73** |
+| local CPU 1 core, docker (ETP workers) | P1, P3, P1w2, P3w2, P1w3, P3w3 | 73, 7, 21, 21, 18, 18 | 6 | **19.5** | **7–73** |
 | local CPU 8 cores, docker | P2 | still queued | 0 | — | — |
-| remote CPU (best effort) | P3, P3w2 | 7, 21 (both matched local ETP) | 2 | 14 | 7–21 |
+| remote CPU (best effort) | P3, P3w2, P3w3 | 7, 21, 18 (all matched local ETP) | 3 | 18 | 7–21 |
 | TOpAS V100S | P5 | 212 | 1 | 212 | — |
 | TOpAS A100 | P4 | queued (capacity) | 0 | — | — |
 | NEMO2 L40S / H200 | P6, P7 | no match (no Docker / drained) | 0 | — | — |
 
-The four local-1-core samples come from waves 1 and 2; the 8-core, A100, L40S and H200 classes have no measured wait.
+The six local-1-core samples come from waves 1-3; the 8-core, A100, L40S and H200 classes have no measured wait.
 
 **Queue-time summary (wave 1, single samples):**
 
@@ -85,14 +85,14 @@ The four local-1-core samples come from waves 1 and 2; the 8-core, A100, L40S an
 | local CPU 1 core, docker | P1 | **73 s** | completed (host `ms02`, `CloudSite=schnepf`) |
 | local CPU 1 core, docker, **wave 2** | P1w2 | **21 s** | completed on `mdm1.etp.kit.edu` (`CloudSite=mdm`), run 2 s |
 | remote CPU (best effort), **wave 2** | P3w2 | **21 s** | completed on `ms04.etp.kit.edu` (`schnepf`), run 1 s |
-| local CPU 8 cores, docker | P2 | **still idle after ~3 h 40 min at 03:31 CET** | `raw/p2_analyze.txt`: 0 willing, 5 would match if drained — capacity wait |
+| local CPU 8 cores, docker | P2 | **still idle at 06:00 CET (~7 h 5 min; >4 h note captured 04:00 in `raw/queue_4h_notes.txt`)** | capacity: 0 willing at 00:35/03:30 analyses, 5 would match if drained (2 willing / 4 drained at 04:00) |
 | remote CPU (best effort) | P3 | **7 s** | completed **locally**; remote-CPU class not measured |
 | TOpAS A100 | P4 | **idle** | A100 node fully allocated; kept queued per author (re-analysis with `-pool` recorded) |
 | TOpAS V100S | P5 | **212 s** | completed; TOpAS flocking works |
 | NEMO2 L40S | P6 | **no match** | `HasDocker=undefined` on NEMO2 slots (Singularity only) — design blocker, Q10 |
 | NEMO2 H200 | P7 | **no match** | only H200 slot Drained at submit/analysis time |
 
-Wave 2 (**+2 h 52 m** after wave 1) ran `P1`/`P3` unchanged as `P1w2`/`P3w2` (distinct output/log names): both completed with **21 s** submit→execute on `mdm1` and `ms04` (P3's wave-2 wait is 21 s vs 7 s in wave 1 — slower, within a low-load night sample anyway). P4/P6 were **not** resubmitted as duplicates: the author instructed that P4/P5 stay queued, so the original P4/P6 entries are the continuous queue samples (this is a deliberate deviation from runbook §4.3's "resubmit P1,P3,P4,P6", labelled here). **The +6 h sample (`P1w3`/`P3w3`) is planned at ~05:52 CET under the author's 09:30 extension; its outcome is recorded when it runs (or recorded as not run).**
+Wave 2 (**+2 h 52 m** after wave 1) ran `P1`/`P3` unchanged as `P1w2`/`P3w2` (distinct output/log names): both completed with **21 s** submit→execute on `mdm1` and `ms04` (P3's wave-2 wait is 21 s vs 7 s in wave 1 — slower, within a low-load night sample anyway). P4/P6 were **not** resubmitted as duplicates: the author instructed that P4/P5 stay queued, so the original P4/P6 entries are the continuous queue samples (this is a deliberate deviation from runbook §4.3's "resubmit P1,P3,P4,P6", labelled here). **The +6 h sample ran: `P1w3`/`P3w3` were submitted at 05:50:32 CET and both completed within 18 s (ms04/ms03, exit 0).**
 
 ---
 
