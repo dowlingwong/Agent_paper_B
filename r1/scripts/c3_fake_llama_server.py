@@ -24,7 +24,8 @@ prints ``offloaded k/29`` (partial offload).
 
 Simulated GPU memory (offload route (ii)): unless ``cpu``, the server writes
 ``$R1_FAKE_OLLAMA_ROOT/gpu_apps/<pid>.csv`` = ``<pid>, <CUDA_VISIBLE_DEVICES or
-GPU-DRYRUN>, <MiB>`` with ``$C3_FAKE_LLAMA_GPU_MIB`` (default 5560; 0 = none;
+GPU-DRYRUN>, <MiB>`` (one row per uuid of a comma-separated two-GPU
+``CUDA_VISIBLE_DEVICES``; ``--tensor-split`` also adds ``CUDA1`` buffer lines) with ``$C3_FAKE_LLAMA_GPU_MIB`` (default 5560; 0 = none;
 300 with ``-ngl 0``).  Run as ``run_name="fake_nvidia_smi"`` this file is a fake
 ``nvidia-smi`` whose ``--query-compute-apps`` lists those rows for live pids.
 Completions carry llama-server's ``timings`` (``predicted_per_second`` =
@@ -74,7 +75,8 @@ def parse(argv):
     for item in it:
         if item == '--jinja':
             args[item] = True
-        elif item in args or item in ('--cache-type-k', '--cache-type-v', '--chat-template-kwargs', '--reasoning-budget'):
+        elif item in args or item in ('--cache-type-k', '--cache-type-v', '--chat-template-kwargs', '--reasoning-budget',
+                                      '--split-mode', '--tensor-split'):
             args[item] = next(it)
         else:
             raise SystemExit(f'fake llama-server: unsupported argument {item!r}')
@@ -244,7 +246,12 @@ def load_log():
     print(f'llama_model_loader: loaded meta data from {ARGS["-m"]} (DRYRUN fixture; no tensors)', flush=True)
     print(f'load_tensors: offloading {max(k - 1, 0)} repeating layers to GPU', flush=True)
     print(f'load_tensors: offloaded {k}/{N_LAYERS} layers to GPU', flush=True)
-    if k:
+    if k and '--tensor-split' in ARGS:  # two-GPU serving (M4 2(e)): layers and KV on both cards
+        print('load_tensors:        CUDA0 model buffer size =  2084.05 MiB', flush=True)
+        print('load_tensors:        CUDA1 model buffer size =  2084.04 MiB', flush=True)
+        print('llama_kv_cache_unified:      CUDA0 KV buffer size =   224.00 MiB', flush=True)
+        print('llama_kv_cache_unified:      CUDA1 KV buffer size =   224.00 MiB', flush=True)
+    elif k:
         print('load_tensors:        CUDA0 model buffer size =  4168.09 MiB', flush=True)
         print('llama_kv_cache_unified:      CUDA0 KV buffer size =   448.00 MiB', flush=True)
     print('load_tensors:   CPU_Mapped model buffer size =   292.36 MiB', flush=True)
@@ -284,8 +291,8 @@ def simulate_gpu_memory():
         return
     apps = common.ROOT / 'gpu_apps'
     apps.mkdir(exist_ok=True)
-    uuid = os.environ.get('CUDA_VISIBLE_DEVICES') or 'GPU-DRYRUN'
-    (apps / f'{os.getpid()}.csv').write_text(f'{os.getpid()}, {uuid}, {mib}\n')
+    uuids = (os.environ.get('CUDA_VISIBLE_DEVICES') or 'GPU-DRYRUN').split(',')
+    (apps / f'{os.getpid()}.csv').write_text(''.join(f'{os.getpid()}, {uuid}, {mib}\n' for uuid in uuids))
 
 
 def fake_nvidia_smi(argv):

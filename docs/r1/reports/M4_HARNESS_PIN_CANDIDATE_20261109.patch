@@ -1,0 +1,200 @@
+From 561f71f04d90b44e03c724417d391e388b1f6cf1 Mon Sep 17 00:00:00 2001
+From: Dowling Wong <wangdowling@gmail.com>
+Date: Mon, 9 Nov 2026 03:07:45 +0100
+Subject: [PATCH] R1 M4 step 1: request bodies with new settings unset vs
+ origin/r1
+
+Golden request bodies captured at origin/r1 897d83c against a stand-in
+server; the test re-captures with the current code. ollama manager and
+side-query bodies are byte-identical; llamacpp manager, manager with the
+manager_proposal/v1 schema and side-query bodies differ only by the
+explicit ,"cache_prompt":false that PLAN R1-CACHEPROMPT-FALSE requires.
+Not for merge into r1 (R1-HARNESS-NEXT-PIN).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01GRrwsENkCbv1g4aZuxYGQR
+---
+ .../fixtures/r1_defaults_bodies_897d83c.json  |  37 +++++
+ tests/stage2/test_r1_defaults_unchanged.py    | 126 ++++++++++++++++++
+ 2 files changed, 163 insertions(+)
+ create mode 100644 tests/stage2/fixtures/r1_defaults_bodies_897d83c.json
+ create mode 100644 tests/stage2/test_r1_defaults_unchanged.py
+
+diff --git a/tests/stage2/fixtures/r1_defaults_bodies_897d83c.json b/tests/stage2/fixtures/r1_defaults_bodies_897d83c.json
+new file mode 100644
+index 0000000..1c6de25
+--- /dev/null
++++ b/tests/stage2/fixtures/r1_defaults_bodies_897d83c.json
+@@ -0,0 +1,37 @@
++{
++ "captured_at_commit": "897d83c (origin/r1)",
++ "cases": {
++  "llamacpp_manager": [
++   {
++    "path": "/v1/chat/completions",
++    "raw": "{\"messages\":[{\"content\":\"You are a research manager proposing one bounded hyperparameter change.\\n\\nNode: lr_synthetic\\nDescription: Synthetic binary-classification node (NumPy logistic regression). Provides a second experiment surface for governance-protocol validation independent of the ResNet-trigger node. Editable training hyperparameters: LEARNING_RATE, REGULARIZATION, N_EPOCHS, and BATCH_SIZE.\\nMetric to optimize: val_score (direction: maximize)\\nFiles you may instruct the worker to edit: train.py\\nBudget index (trial number): 3\\nCurrent best val_score: 0.5\\n\\nPrior trial memory:\\nnode=lr_synthetic\\nbudget_index=3\\nmetric=val_score direction=maximize\\neditable_paths=train.py\\n\\nAVOIDANCE RULE (mandatory): Study the trial history above carefully.\\nIdentify every hyperparameter that was already tried in the same direction (e.g. increasing BATCH_SIZE, reducing LEARNING_RATE) and produced no improvement or a failure. You MUST NOT propose the same parameter change in the same direction again.\\nChoose a DIFFERENT hyperparameter or a DIFFERENT direction than what has already been tried. If every direction for a parameter has been explored, switch to a completely different parameter.\\n\\nPropose exactly one bounded experiment. Respond with ONLY a JSON object (no markdown fences, no extra text) with these six string fields:\\n  \\\"summary\\\"    \u2014 short slug (e.g. \\\"reduce-lr-2e-4\\\")\\n  \\\"rationale\\\"  \u2014 one sentence on why this might improve the metric\\n  \\\"objective\\\"  \u2014 complete worker instruction: \\\"In train.py, change PARAM from OLD to NEW. Edit only train.py.\\\"\\n  \\\"param\\\"      \u2014 exact editable value name from the list above (e.g. \\\"LEARNING_RATE\\\")\\n  \\\"old_value\\\"  \u2014 current value as shown above (e.g. \\\"5e-4\\\")\\n  \\\"new_value\\\"  \u2014 proposed replacement value (e.g. \\\"2e-4\\\")\\n\\nConstraints:\\n  - edit only: train.py\\n  - change exactly one listed value\\n  - param must be one of the editable values listed above\\n  - do not run the experiment; the harness runs it after your edit\\n\\nExample: {\\\"summary\\\": \\\"reduce-lr-2e-4\\\", \\\"rationale\\\": \\\"smaller lr often improves convergence on noisy signals\\\", \\\"objective\\\": \\\"In train.py, change LEARNING_RATE from 5e-4 to 2e-4. Edit only train.py.\\\", \\\"param\\\": \\\"LEARNING_RATE\\\", \\\"old_value\\\": \\\"5e-4\\\", \\\"new_value\\\": \\\"2e-4\\\"}\",\"role\":\"user\"}],\"model\":\"qwen-manager\",\"seed\":2371956663,\"stream\":false,\"temperature\":0.2}"
++   }
++  ],
++  "llamacpp_manager_schema_v1": [
++   {
++    "path": "/v1/chat/completions",
++    "raw": "{\"messages\":[{\"content\":\"You are a research manager proposing one bounded hyperparameter change.\\n\\nNode: lr_synthetic\\nDescription: Synthetic binary-classification node (NumPy logistic regression). Provides a second experiment surface for governance-protocol validation independent of the ResNet-trigger node. Editable training hyperparameters: LEARNING_RATE, REGULARIZATION, N_EPOCHS, and BATCH_SIZE.\\nMetric to optimize: val_score (direction: maximize)\\nFiles you may instruct the worker to edit: train.py\\nBudget index (trial number): 3\\nCurrent best val_score: 0.5\\n\\nPrior trial memory:\\nnode=lr_synthetic\\nbudget_index=3\\nmetric=val_score direction=maximize\\neditable_paths=train.py\\n\\nAVOIDANCE RULE (mandatory): Study the trial history above carefully.\\nIdentify every hyperparameter that was already tried in the same direction (e.g. increasing BATCH_SIZE, reducing LEARNING_RATE) and produced no improvement or a failure. You MUST NOT propose the same parameter change in the same direction again.\\nChoose a DIFFERENT hyperparameter or a DIFFERENT direction than what has already been tried. If every direction for a parameter has been explored, switch to a completely different parameter.\\n\\nPropose exactly one bounded experiment. Respond with ONLY a JSON object (no markdown fences, no extra text) with these six string fields:\\n  \\\"summary\\\"    \u2014 short slug (e.g. \\\"reduce-lr-2e-4\\\")\\n  \\\"rationale\\\"  \u2014 one sentence on why this might improve the metric\\n  \\\"objective\\\"  \u2014 complete worker instruction: \\\"In train.py, change PARAM from OLD to NEW. Edit only train.py.\\\"\\n  \\\"param\\\"      \u2014 exact editable value name from the list above (e.g. \\\"LEARNING_RATE\\\")\\n  \\\"old_value\\\"  \u2014 current value as shown above (e.g. \\\"5e-4\\\")\\n  \\\"new_value\\\"  \u2014 proposed replacement value (e.g. \\\"2e-4\\\")\\n\\nConstraints:\\n  - edit only: train.py\\n  - change exactly one listed value\\n  - param must be one of the editable values listed above\\n  - do not run the experiment; the harness runs it after your edit\\n\\nExample: {\\\"summary\\\": \\\"reduce-lr-2e-4\\\", \\\"rationale\\\": \\\"smaller lr often improves convergence on noisy signals\\\", \\\"objective\\\": \\\"In train.py, change LEARNING_RATE from 5e-4 to 2e-4. Edit only train.py.\\\", \\\"param\\\": \\\"LEARNING_RATE\\\", \\\"old_value\\\": \\\"5e-4\\\", \\\"new_value\\\": \\\"2e-4\\\"}\",\"role\":\"user\"}],\"model\":\"qwen-manager\",\"response_format\":{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"manager_proposal_v1\",\"strict\":true,\"schema\":{\"type\":\"object\",\"properties\":{\"rationale\":{\"type\":\"string\"},\"summary\":{\"type\":\"string\"},\"objective\":{\"type\":\"string\"},\"param\":{\"type\":\"string\"},\"old_value\":{\"type\":\"string\"},\"new_value\":{\"type\":\"string\"}},\"required\":[\"rationale\",\"summary\",\"objective\",\"param\",\"old_value\",\"new_value\"],\"additionalProperties\":false}}},\"seed\":2371956663,\"stream\":false,\"temperature\":0.2}"
++   }
++  ],
++  "llamacpp_side_query": [
++   {
++    "path": "/v1/chat/completions",
++    "raw": "{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}],\"model\":\"qwen\",\"stream\":false,\"temperature\":0.2}"
++   }
++  ],
++  "ollama_manager": [
++   {
++    "path": "/api/chat",
++    "raw": "{\"model\":\"qwen2.5-coder:7b\",\"stream\":true,\"options\":{\"temperature\":0.2,\"seed\":2371956663},\"messages\":[{\"role\":\"user\",\"content\":\"You are a research manager proposing one bounded hyperparameter change.\\n\\nNode: lr_synthetic\\nDescription: Synthetic binary-classification node (NumPy logistic regression). Provides a second experiment surface for governance-protocol validation independent of the ResNet-trigger node. Editable training hyperparameters: LEARNING_RATE, REGULARIZATION, N_EPOCHS, and BATCH_SIZE.\\nMetric to optimize: val_score (direction: maximize)\\nFiles you may instruct the worker to edit: train.py\\nBudget index (trial number): 3\\nCurrent best val_score: 0.5\\n\\nPrior trial memory:\\nnode=lr_synthetic\\nbudget_index=3\\nmetric=val_score direction=maximize\\neditable_paths=train.py\\n\\nAVOIDANCE RULE (mandatory): Study the trial history above carefully.\\nIdentify every hyperparameter that was already tried in the same direction (e.g. increasing BATCH_SIZE, reducing LEARNING_RATE) and produced no improvement or a failure. You MUST NOT propose the same parameter change in the same direction again.\\nChoose a DIFFERENT hyperparameter or a DIFFERENT direction than what has already been tried. If every direction for a parameter has been explored, switch to a completely different parameter.\\n\\nPropose exactly one bounded experiment. Respond with ONLY a JSON object (no markdown fences, no extra text) with these six string fields:\\n  \\\"summary\\\"    \u2014 short slug (e.g. \\\"reduce-lr-2e-4\\\")\\n  \\\"rationale\\\"  \u2014 one sentence on why this might improve the metric\\n  \\\"objective\\\"  \u2014 complete worker instruction: \\\"In train.py, change PARAM from OLD to NEW. Edit only train.py.\\\"\\n  \\\"param\\\"      \u2014 exact editable value name from the list above (e.g. \\\"LEARNING_RATE\\\")\\n  \\\"old_value\\\"  \u2014 current value as shown above (e.g. \\\"5e-4\\\")\\n  \\\"new_value\\\"  \u2014 proposed replacement value (e.g. \\\"2e-4\\\")\\n\\nConstraints:\\n  - edit only: train.py\\n  - change exactly one listed value\\n  - param must be one of the editable values listed above\\n  - do not run the experiment; the harness runs it after your edit\\n\\nExample: {\\\"summary\\\": \\\"reduce-lr-2e-4\\\", \\\"rationale\\\": \\\"smaller lr often improves convergence on noisy signals\\\", \\\"objective\\\": \\\"In train.py, change LEARNING_RATE from 5e-4 to 2e-4. Edit only train.py.\\\", \\\"param\\\": \\\"LEARNING_RATE\\\", \\\"old_value\\\": \\\"5e-4\\\", \\\"new_value\\\": \\\"2e-4\\\"}\"}],\"tools\":[]}"
++   }
++  ],
++  "ollama_side_query": [
++   {
++    "path": "/api/chat",
++    "raw": "{\"model\":\"qwen2.5-coder:7b\",\"stream\":true,\"options\":{\"temperature\":0.2},\"messages\":[{\"role\":\"user\",\"content\":\"hello\"}],\"tools\":[]}"
++   }
++  ]
++ },
++ "note": "Request bodies of the harness LLM paths with every new Track S / cache_prompt setting unset, captured against a stand-in server at origin/r1 897d83c by the capture in test_r1_defaults_unchanged.py. ENGINEERING_ONLY; AI-assisted (Claude).",
++ "schema": "r1_defaults_request_bodies/v1"
++}
+diff --git a/tests/stage2/test_r1_defaults_unchanged.py b/tests/stage2/test_r1_defaults_unchanged.py
+new file mode 100644
+index 0000000..b622651
+--- /dev/null
++++ b/tests/stage2/test_r1_defaults_unchanged.py
+@@ -0,0 +1,126 @@
++"""M4 step 1 (Mac runbook 4 Nov): request bodies with the new settings unset, against origin/r1.
++
++The harness pin candidate (``origin/r1`` + ``cacheprompt-20261031`` @ ``a3fedbb``, i.e. the Track S
++commits since ``6adf385``) must not change what the LLM paths send when none of the new settings is
++used, except for the change PLAN R1-CACHEPROMPT-FALSE (31 Oct 2026) requires: every ``llamacpp``
++request now carries ``"cache_prompt": false`` explicitly. The golden bodies were captured at
++``origin/r1`` 897d83c with the same capture code against the same kind of stand-in server
++(``fixtures/r1_defaults_bodies_897d83c.json``). This test asserts, byte for byte:
++
++* ``ollama`` (manager and side-query paths): the body equals the golden body;
++* ``llamacpp`` (manager, manager with the ``manager_proposal/v1`` schema, side query): the body
++  equals the golden body with exactly ``,"cache_prompt":false`` appended before the closing brace,
++  and nothing else differs.
++
++No inference. ENGINEERING_ONLY; AI-assisted (Claude).
++"""
++from __future__ import annotations
++
++import json
++import os
++import threading
++import unittest
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++from pathlib import Path
++from unittest import mock
++
++from autoresearch.llm.langchain_client import LangChainProposalBackend
++from autoresearch.llm.transport_retry import TransportRetryPolicy
++from autoresearch.manager.base import ManagerStatus
++from autoresearch.manager.langgraph_manager import LangGraphManager
++from autoresearch.memory.summarizer import MemoryMode, build_memory_context
++from autoresearch.nodes.registry import load_registered_node
++
++ROOT = Path(__file__).resolve().parents[2]
++GOLDEN = Path(__file__).resolve().parent / "fixtures" / "r1_defaults_bodies_897d83c.json"
++GOOD = json.dumps({"summary": "s", "rationale": "r", "objective": "o", "param": "x", "new_value": "1"})
++CACHE_PROMPT_SUFFIX = ',"cache_prompt":false}'
++
++
++class _StandIn(BaseHTTPRequestHandler):
++    protocol_version = "HTTP/1.1"
++    captured: list = []
++
++    def log_message(self, *args):
++        pass
++
++    def do_POST(self):
++        raw = self.rfile.read(int(self.headers["Content-Length"]))
++        type(self).captured.append({"path": self.path, "raw": raw.decode()})
++        body = json.loads(raw or b"{}")
++        if self.path.endswith("/api/chat"):
++            data = {"model": body.get("model"), "created_at": "2026-01-01T00:00:00Z",
++                    "message": {"role": "assistant", "content": GOOD}, "done": True, "done_reason": "stop"}
++        else:
++            data = {"id": "x", "object": "chat.completion", "created": 1, "model": body.get("model"),
++                    "choices": [{"index": 0, "finish_reason": "stop",
++                                 "message": {"role": "assistant", "content": GOOD}}],
++                    "usage": {"prompt_tokens": 7, "completion_tokens": 5, "total_tokens": 12}}
++        encoded = json.dumps(data).encode()
++        self.send_response(200)
++        self.send_header("Content-Type", "application/json")
++        self.send_header("Content-Length", str(len(encoded)))
++        self.end_headers()
++        self.wfile.write(encoded)
++
++
++def capture() -> dict:
++    server = ThreadingHTTPServer(("127.0.0.1", 0), _StandIn)
++    threading.Thread(target=server.serve_forever, daemon=True).start()
++    url = f"http://127.0.0.1:{server.server_address[1]}"
++    clean = {k: v for k, v in os.environ.items()
++             if not k.endswith(("_API_KEY", "_BASE_URL")) and k != "LLAMACPP_CACHE_PROMPT"}
++    spec = load_registered_node("lr_synthetic", repo_root=ROOT)
++    status = ManagerStatus(campaign_id="defaults", budget_index=3, current_best_metric=0.5,
++                           metric_name=spec.metric_name, metric_direction=spec.metric_direction)
++    ctx = build_memory_context([], MemoryMode.NONE, spec, 3)
++    fast = TransportRetryPolicy(max_attempts=1, backoff_seconds=())
++    cases = {}
++    try:
++        for label, model, env, kw in [
++            ("llamacpp_manager", "llamacpp/qwen-manager", {"LLAMACPP_BASE_URL": url}, {}),
++            ("llamacpp_manager_schema_v1", "llamacpp/qwen-manager", {"LLAMACPP_BASE_URL": url},
++             {"proposal_schema": "manager_proposal/v1"}),
++            ("ollama_manager", "ollama/qwen2.5-coder:7b", {"OLLAMA_BASE_URL": url}, {}),
++        ]:
++            _StandIn.captured = []
++            with mock.patch.dict(os.environ, dict(clean, **env), clear=True):
++                LangGraphManager(model=model, transport_retry=fast, **kw).propose_next_trial(status, ctx, spec)
++            cases[label] = list(_StandIn.captured)
++        for label, model, env in [("llamacpp_side_query", "llamacpp/qwen", {"LLAMACPP_BASE_URL": url}),
++                                  ("ollama_side_query", "ollama/qwen2.5-coder:7b", {"OLLAMA_BASE_URL": url})]:
++            _StandIn.captured = []
++            with mock.patch.dict(os.environ, dict(clean, **env), clear=True):
++                LangChainProposalBackend(model, temperature=0.2)._invoke("hello")
++            cases[label] = list(_StandIn.captured)
++    finally:
++        server.shutdown()
++        server.server_close()
++    return cases
++
++
++class TestDefaultsUnchanged(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.golden = json.loads(GOLDEN.read_text())["cases"]
++        cls.now = capture()
++
++    def test_same_paths_and_call_counts(self):
++        self.assertEqual(sorted(self.now), sorted(self.golden))
++        for label in self.golden:
++            self.assertEqual([r["path"] for r in self.now[label]], [r["path"] for r in self.golden[label]], label)
++
++    def test_ollama_bodies_are_byte_identical(self):
++        for label in ("ollama_manager", "ollama_side_query"):
++            for now, old in zip(self.now[label], self.golden[label]):
++                self.assertEqual(now["raw"], old["raw"], label)
++
++    def test_llamacpp_bodies_differ_only_by_explicit_cache_prompt_false(self):
++        for label in ("llamacpp_manager", "llamacpp_manager_schema_v1", "llamacpp_side_query"):
++            for now, old in zip(self.now[label], self.golden[label]):
++                self.assertTrue(old["raw"].endswith("}") and "cache_prompt" not in old["raw"], label)
++                self.assertEqual(now["raw"], old["raw"][:-1] + CACHE_PROMPT_SUFFIX, label)
++
++
++if __name__ == "__main__":
++    unittest.main()
+-- 
+2.43.0
+
