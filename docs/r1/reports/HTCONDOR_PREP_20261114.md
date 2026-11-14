@@ -1,7 +1,7 @@
 # ETP HTCondor preparation — night of 13/14 Nov 2026 (report, draft)
 
 **Phase:** HTCondor preparation (runbook `docs/r1/prompts/HTCONDOR_PREP_RUNBOOK_20261114.md` + errata `docs/r1/prompts/HTCONDOR_PREP_RUNBOOK_ERRATA_20261114.md`). **AI-assisted** (DeepSeek Harness agent, "cluster agent" role). **Reported to the author in Chinese.**
-**Window:** started 23:37 CET 13 Nov; VPN-dependent work must stop by **05:30 CET** 14 Nov (runbook §6). **Status at this draft:** probes submitted and being monitored; W2 STOPPED on a difference; image build impossible (docker gate); moves pending the reviewed plan.
+**Window:** started 23:37 CET 13 Nov; the author moved the hard stop to **09:30 CET** 14 Nov (the runbook's 05:30 figure is superseded for this session; P4/P5 stay queued at least until 05:30 as instructed). **Status:** probe wave submitted and monitored (P1/P3/P5 completed, P2/P4/P6/P7 queued); W2 STOPPED on a difference; image build impossible (docker gate); **8 of 9 moves done and backfilled, `work` skipped (ACL)**; report under the runbook's §6 review loop.
 **Evidence:** `docs/r1/reports/htcondor_prep_20261114/` (raw host facts, inventory, stats, pool facts, move plan, probe outputs, W2 summary); reviews in `docs/r1/reviews/HTCONDOR_*_20261114.md`.
 
 ---
@@ -53,11 +53,11 @@ All seven JDLs were reviewed and accepted before submission; M1/M2 were then mea
 
 | Probe | Class | Cluster | State | Wait | Run | Site / host | Notes |
 |---|---|---|---|---|---|---|---|
-| P1 | local CPU, docker, 1 CPU / 2 GB | 759619 | **COMPLETED exit 0** | 73 s | 1–3 s | `schnepf` / `ms02.etp.kit.edu` (slot1_21) | /work and /ceph mounted; `/ceph/srv` also present; `/cvmfs` empty; no `/scratch`; `nproc=1`; Xeon Silver 4214 |
+| P1 | local CPU, docker, 1 CPU / 2 GB | 759619 | **COMPLETED exit 0** | 73 s | 1 s | `schnepf` / `slot1_21@ms02.etp.kit.edu` | /work and /ceph mounted; `/ceph/srv` also present; `/cvmfs` empty; no `/scratch`; `nproc=1`; Xeon Silver 4214 |
 | P2 | local CPU, docker, 8 CPU / 16 GB | 759620 | **IDLE (capacity)** | — | — | — | 0 willing now, **5 slots would match if drained**; pool at 1051/1105 claimed |
-| P3 | "remote" CPU, docker, 1 CPU | 759621 | **COMPLETED exit 0** | 7 s | 1 s | `schnepf` / `ms02.etp.kit.edu` | `+RemoteJob=True` still matched local ETP; remote-CPU class NOT measured (best effort, recorded) |
+| P3 | "remote" CPU, docker, 1 CPU | 759621 | **COMPLETED exit 0** | 7 s | 1 s | `schnepf` / `slot1_21@ms02.etp.kit.edu` | `+RemoteJob=True` still matched local ETP; remote-CPU class NOT measured (best effort, recorded) |
 | P4 | TOpAS A100 | 759622 | **IDLE (A100 node fully allocated)** | — | — | — | A100 parent slot `TotalSlotGPUs=8` but `GPUs=0`, `Cpus=0`, all children Claimed/Preempting; becomes runnable when the node frees |
-| P5 | TOpAS V100S | 759623 | **COMPLETED exit 0** | **212 s** | 2 s | `topas` / `c03-001-159.gridka.de` (slot4_1) | TOpAS reachable by flocking; remote: `/work`,`/ceph`,`/ceph/srv` MISSING (expected), `/tmp` 5.2 T; `CUDA_VISIBLE_DEVICES=GPU-…` UUID, `NVIDIA_VISIBLE_DEVICES=void` |
+| P5 | TOpAS V100S | 759623 | **COMPLETED exit 0** | **212 s** | 2 s | `topas` / `slot4_1@c03-001-159.gridka.de` | TOpAS reachable by flocking; remote: `/work`,`/ceph`,`/ceph/srv` MISSING (expected), `/tmp` 5.2 T; `CUDA_VISIBLE_DEVICES=GPU-…` UUID, `NVIDIA_VISIBLE_DEVICES=void` |
 | P6 | NEMO2 L40S | 759624 | **IDLE (structural no-match)** | — | — | — | CloudSite+device matched 6 L40S slots, but `TARGET.HasDocker` matched **0**: NEMO2 slots have `HasDocker=undefined`, `HasSingularity=true`. The runbook's docker-universe design cannot run there |
 | P7 | NEMO2 H200 | 759625 | **IDLE (no eligible slot)** | — | — | — | the only visible H200 slot `g4401` is Drained; no match |
 
@@ -67,23 +67,47 @@ All seven JDLs were reviewed and accepted before submission; M1/M2 were then mea
 
 **Resource-class medians so far:** local CPU 1-core wait **73 s** (P1; P3 7 s for the same class at a better moment); TOpAS V100S **212 s**; 8-core local ≥ (still queued); A100, NEMO2 L40S, H200 not measured. Single samples only — this is a queue-time probe, not a benchmark.
 
+**Queue-time summary (wave 1, single samples):**
+
+| class | probe | wait | outcome |
+|---|---|---:|---|
+| local CPU 1 core, docker | P1 | **73 s** | completed (host `ms02`, `CloudSite=schnepf`) |
+| local CPU 8 cores, docker | P2 | **> 45 min (idle at this draft)** | 0 willing, 5 would match if drained — capacity wait |
+| remote CPU (best effort) | P3 | **7 s** | completed **locally**; remote-CPU class not measured |
+| TOpAS A100 | P4 | **idle** | A100 node fully allocated; kept queued per author (re-analysis with `-pool` recorded) |
+| TOpAS V100S | P5 | **212 s** | completed; TOpAS flocking works |
+| NEMO2 L40S | P6 | **no match** | `HasDocker=undefined` on NEMO2 slots (Singularity only) — design blocker, Q10 |
+| NEMO2 H200 | P7 | **no match** | only H200 slot Drained at submit/analysis time |
+
+Wave 2 (+3 h) resubmits **P1 and P3** as `P1w2`/`P3w2` (same JDLs, distinct output/log names) to sample the local-CPU wait over the night; P4/P6 are **not** resubmitted as duplicates because the author instructed that P4/P5 stay queued and the originals are continuous queue samples. There is no +6 h wave under the original 05:30 stop; with the hard stop moved to 09:30 a third sample is possible only if the report/review are on schedule (they get priority).
+
+---
+
 ## 6. W2 side task (§5) — STOP, difference found
 
-The start-message line W2 was in scope. Read-only run from a clean detached checkout of `origin/mac-w2-budget-20261109` (`0b62fb03`) with the sweep's Python env (3.13.15), `--runs-total 20` (sweep config SHA `2fa891f4…`), over the 288 sweep-1 ledgers (144 append-only + 144 none).
+The start-message line W2 was in scope. Read-only run from a clean detached checkout of `origin/mac-w2-budget-20261109` (`0b62fb03df5480faf558cddd8f715cbb5310416e`), with the sweep's Python environment (`/ceph/dwong/r1_prepare_20261025/venv`, Python 3.13.15, `import r1.c3.features` + `r1.c3.analysis_guard` OK), `--runs-total 20` (top-level `"runs": 20` of `r1/scripts/configs/c3_sweep_deepthought.json`, SHA-256 `2fa891f4…`), over the **288** sweep-1 ledgers (`C3_sweep_append_only_summary_20261027T154834Z`: 144; `C3_sweep_none_20261027T224356Z`: 144).
 
-**Result: `STOP_DIFFERENCE`, exit 3 — 14 of 288 ledgers differ, all because of `precheck_rejection` rows (53 rows total).** The 274 pure exec-all ledgers are `IDENTICAL`; no `worker_runs_total` exceeds the 20-run cap. This is the difference `reports/W2_BUDGET_FIELDS_20261109.md` predicted for tables with precheck rejections. **Per the start message: STOPPED; nothing adopted, recomputed, edited or resubmitted; handed to the author.** Full JSON: `raw/w2/w2_check.json`. Question Q1.
+**Result: `STOP_DIFFERENCE`, exit 3 — 14 of 288 ledgers differ**, all on `precheck_rejection` rows (53 rows total): e.g. `digits_mlp__s114` 20 differing rows / 13 precheck rejections, `digits_mlp__s224` 17/9, `digits_mlp__s194` and `digits_mlp__s264` 15 each. The other 274 ledgers are `IDENTICAL`; no ledger exceeds the 20-run cap. This is exactly the difference `reports/W2_BUDGET_FIELDS_20261109.md` predicted for sweep tables containing precheck rejections — a real difference between the trial-index and worker-run definitions, **not a bug**. **Per the start message: STOPPED; nothing adopted, recomputed, edited or resubmitted; handed to the author (Q1).** Summary: `raw/w2/w2_check.json`; ledger list: `raw/w2/ledgers.txt`.
 
 ## 7. What works, what does not
 
-**Works tonight:** ETP schedd submission; docker universe on the ETP worker fleet (`ms*`, `mdm*`); `+RemoteJob` flocking to TOpAS (V100S ran); ETP workers have `/work`, `/ceph`, `/ceph/srv`, `/cvmfs` (empty) and 718 G `/tmp`; TOpAS has 4.7 T job `/tmp` but no ETP mounts; the HTCondor event log gives clean wait/run times.
-**Does not work / blocked:** docker on deepthought (daemon); NEMO2 GPU execution for docker-universe jobs (Singularity only); A100 node fully allocated (capacity); H200 slot drained; 8-core local capacity waits; `/ceph/srv/dwong` absent; the image/registry path (Q2).
+**Works tonight:** HTCondor submission from `deepthought.etp.kit.edu` (condor 25.0.12); docker universe on the **ETP worker fleet** (`ms*`, `mdm*`; 315 docker slots, all ETP); flocking to **TOpAS** (`P5` ran on `c03-001-159`, wait 212 s, exit 0); ETP workers have `/work`, `/ceph`, `/ceph/srv`, `/cvmfs` (empty) and 718 G `/tmp`; TOpAS has 4.7 T job `/tmp` but no ETP mounts; the event log gives clean submit/execute/terminate times; the move protocol ran end-to-end (8 entries, backfill 8/8 green) with **no deletion**.
+**Does not work / blocked:** docker daemon on deepthought (no image build; I1–I4 deferred); **NEMO2 GPU execution for docker-universe jobs** (Singularity only — measured design blocker, not queue); A100 capacity (node fully allocated); H200 slot drained; 8-core local docker capacity (P2 queued); `/ceph/srv/dwong` absent; `/work` cannot preserve POSIX ACLs (Q12).
+**Not measured:** remote-CPU queue class (P3 matched locally), 8-core/A100/L40S/H200 queue waits, image runtime behaviour, and the +6 h sample.
 
-**Recommendation per Paper B workload (as asked in §6):**
-- **C3 T0 audits (CPU):** viable in the *local ETP worker* class (P1/P3 ran in seconds) and the 8-core class needs a capacity window (P2 queued); `/ceph` and `/work` are mounted there, so the data path works. No image is needed for a plain-venv port.
-- **Track P training:** unknown tonight — no GPU training probe ran (P4/P6 blocked, no image). The 8-core CPU + 187 GB RAM worker class is fine for data prep; track training needs either a TOpAS A100 window or the NEMO2 route, and the latter requires a non-docker (Singularity) job design.
-- **T1 GPU labels:** TOpAS V100S is reachable and ran in ~3.5 min from submit to end; A100 only when the node frees. NEMO2 L40S/H200 cannot be used with the current docker design — a measured blocker, not a queue effect.
-- **X.7 (main proposer):** the GGUF is on `/ceph/dwong/models` (pinned, sha verified in the repo) but **not** on `/ceph/srv/dwong`; loading it on TOpAS would need a transfer route (xrootd endpoint unverified, Q4).
+**Recommendation per Paper B workload:**
+- **C3 T0 audits (CPU):** viable on the ETP worker class (P1/P3 ran in seconds) with `/ceph`+`/work` mounted; the 8-core class needs a capacity window; no image needed for a plain-venv port.
+- **Track P training:** not measured (no GPU training probe; no image). Data prep is fine on the 8-core/187 GB workers; training needs a TOpAS A100 window or the NEMO2 route, and NEMO2 requires a Singularity/SIF job design (Q10).
+- **T1 GPU labels:** TOpAS V100S is reachable and ran ~3.5 min submit→end; A100 only when the node frees. NEMO2 L40S/H200 are unusable with the current docker design. GPU use stayed far below the 6 GPU-h cap (P5 used 2 s of GPU time).
+- **X.7 (main proposer):** the pinned GGUF is on `/ceph/dwong/models` and its SHA-256 was verified tonight as `509287f7…4d3c` (matches the pin); it is **not** on `/ceph/srv/dwong`, so loading it on TOpAS needs a transfer route (xrootd endpoint unverified, Q4) or a SIF/`/work` path (Q10).
 
 ## 8. Delivery
 
-Committed on `htcondor-prep-20261114` (from `origin/docs/runbooks-14nov` @ `69b3576b`): runbook reviews, errata, `POOL_FACTS.md`, `MOVE_PLAN.md`, `pinned_paths.txt`, raw inventory/stats/host facts, probe JDLs/`probe.sh`/dry-runs, W2 summary, this report and the question list. If a push is impossible, a bundle and `READY.txt` go under `~/Documents/agent_paper_B/Claude outputs/`.
+Committed on `htcondor-prep-20261114` (from `origin/docs/runbooks-14nov` @ `69b3576b`): the runbook review + errata + the accepted post-errata re-check; `POOL_FACTS.md`, `MOVE_PLAN.md` (revision 2 + R1/R2 + the author's metric change), `pinned_paths.txt`; `raw/` inventory, per-entry stats, host facts, pool analysis, queue-times snapshots; probe JDLs/probe.sh/dry-runs; W2 summary; move scripts + `MOVE_LOG.tsv` + `MOVE_LOG_NOTES.md` + `MOVE_BACKFILL.tsv`; this report; the question list. The branch is pushed to `origin` (the dry-run confirmed the push is possible; the final push is done at the end of the window).
+
+## 9. Review status
+
+- Runbook review: red first (NOT ACCEPTED: 2 BLOCKING + 5 MAJOR + 17 MINOR/NIT), errata applied, **ACCEPTED** by the same reviewer after re-check.
+- Probe JDL unit: **ACCEPTED** (0 BLOCKING/MAJOR; M1/M2 pre-submission checks run and recorded).
+- Move plan: NOT ACCEPTED (5 MAJOR) -> revision 2 -> **ACCEPTED**; R1/R2 applied; the author's verification-metric change confirmed in one sentence by the same reviewer.
+- This report: submitted to a **fresh reviewer** before the end of the window (runbook §6); its verdict and any fixes are recorded in `docs/r1/reviews/HTCONDOR_PREP_REPORT_REVIEW_20261114.md`.
