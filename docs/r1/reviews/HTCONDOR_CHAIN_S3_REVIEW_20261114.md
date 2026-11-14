@@ -183,3 +183,99 @@ folded in the same edit and the def SHA re-recorded):
 After those edits the def/build plan should be re-submitted to this reviewer (the def SHA changes), and
 only then may `build_sif.sh --build` start. No build was performed and no cluster command was issued by
 this review.
+
+---
+
+## Re-review round
+
+**Re-reviewed at commit `2af0b663`** (branch `htcondor-chain-20261114`, worktree HEAD), 14 November 2026,
+11:35–11:55 CET, by the same reviewer, before any build. Scope: the S3 unit only —
+`r1/scripts/htcondor/apptainer/{r1-htc.def, build_sif.sh, capability.def, README.md}`. The other paths in
+the commit (S4/S5 files, report, S2 raw data) belong to other units and are not re-reviewed here, except
+where the S3 README refers to them (noted below).
+
+**Reviewed-now SHAs (must be the values a build is held to):**
+
+| File | SHA-256 | Matches the author's claim? |
+|---|---|---|
+| `r1-htc.def` | `a5a0c9da4e969548bd4aa902f6ed96191a20d4af4556b653c9582204a6690c25` | Yes |
+| `build_sif.sh` | `d63c2a8ebd2294a2fd2341770ecbb5233d6f3f1c151f9cfe2bc471d123aedad5` | Yes (`d63c2a8e…`) |
+| `README.md` | `1d6e476b54ebd403adbfae541147da77650174ede98374b88db433e4d71bc4fa` | Yes (`1d6e476b…`) |
+| `capability.def` | `97038dd346161ce2dc7dd0d1e351374127576c9501a8962f4b5aefc009620eef` | Yes (`97038dd3…`) |
+
+The four committed inputs are unchanged and still match their provenance exactly (`uv.lock.a3fedbb`
+`dd42d018…`, `pyproject.toml.a3fedbb` `72c43589…`, `tracks_freeze_65.txt` `f1c818e5…`,
+`pip_freeze_trackp-cpu.txt` `17da9a3a…`).
+
+**Fix verification (my findings → the commit):**
+
+| Finding | What the commit does | Verdict |
+|---|---|---|
+| F1 env2 editable line | def L57 filters `^(-e\|--editable)([[:space:]]\|$)` lines from the committed freeze into `/tmp/tracks_install.txt`; the committed file stays as provenance; README says the harness package comes from `/work` via PYTHONPATH (S4 does that). | **Fixed** |
+| F2 env3 dependency conflict | def L61–71: Python 3.12; pinned set installed with `--no-deps` (complete pin set); the three VCS repos installed individually with `--no-deps` at `kev@2074cc4`, `laya@a478221`, `startlux-decide@a99977d`; `uv pip check` recorded non-fatally (the deliberate `--no-deps` deviations such as kev's `numpy>=2.5.3` are expected and logged). | **Fixed** |
+| F3 xrootd-client / EPEL | def L37–39: `dnf install epel-release` first, then `xrootd-client`; `gawk grep` added (F15). | **Fixed** |
+| F4 capability gate | `capability.def` `%post` now does `test "$(id -u)" = 0`; `build_sif.sh` tries `--fakeroot` first, then plain, and `say …` + `exit 2` if neither yields a root `%post`. A plain unprivileged build now fails the gate instead of silently passing. | **Fixed** |
+| F5 no deletion | No `rm` anywhere in the S3 unit (verified by grep). Capability SIF is `_capability_<UTC>.sif`; the product is built to `*.tmp.<UTC>`; a previous product is retired to `*.retired_<UTC>` before the temp is renamed; a failed build leaves its temp in place. | **Fixed** |
+| F6 driver/scope | def comment L24–26 and README "Driver scope": CUDA 12.4 needs ≥ 550.54.14; in-scope L40S 12.8/13.4, A100 13.3, V100S 13.0, H200 13.4 are compatible; TITAN X (12.0 / 525.147.05, sm_52) is out of scope; the S3 "lowest driver" wording is recorded as the question. | **Fixed** |
+| F7 torch proposal | def L70: pinned `torch==2.6.0+cu124` (proposed), **no silent fallback** — build fails if unavailable; VERSIONS records `torch_pin` and `torch_actual`; README says 2.6.0+cu124 is the documented Track P GPU value (STATUS L607) and needs an author ruling before production. | **Fixed** |
+| F8 env1 pytest | def L53: `uv sync --frozen --extra dev --python 3.13`; post-install smoke imports `pytest` (L84). | **Fixed** |
+| F9 venv relocation | def L53: `UV_PROJECT_ENVIRONMENT=/opt/r1/envs/harness` — venv created at its final path; no `.venv` move. | **Fixed** |
+| F10 env3 Python | def L49/L63: `uv python install 3.13 3.12 3.11`, env 3 `--python 3.12` (freeze provenance). | **Fixed** |
+| F11 caches | def L47 `UV_NO_CACHE=1`; `build_sif.sh` L33–35 `APPTAINER_CACHEDIR`/`APPTAINER_TMPDIR` under `/work/dwong/paperb/.apptainer`. | **Fixed** |
+| F12 records | def L83–86 post-install smoke for all three envs; L98–100 VERSIONS adds `llama_server_version`; `build_sif.sh` L75–95 records `apptainer --version`, base tag, def/sif SHA, bytes, `start_utc`, `end_utc`; L77–80 post-build smoke of all envs and `llama-server --version`. | **Fixed** (base recorded by tag, not digest — see R3) |
+| F13 fatal records | `build_sif.sh` L7 `set -euo pipefail`; inspect/VERSIONS/smoke/identity writes and the SIF mirror copy + SHA comparison (L75–99) are fatal; only the extra metadata copies to the mirror are best-effort (R6). | **Fixed** (one NIT remains) |
+| F14 README | Rewritten: gate usage, fakeroot prerequisite/STOP, driver scope, size/time estimate, job-time examples, the author's S3 instruction quoted. | **Fixed** (wording NITs R4/R5) |
+| F16 plan creates nothing | `build_sif.sh` L20–25: plan mode prints and exits before any `mkdir`. | **Fixed** |
+| F17 mirror path | Mirror `mkdir`/copy only in `--build` mode; `mkdir` failure is fatal (L32); mirror SIF SHA is compared (L99). | **Fixed** |
+| F18 `set -e` | `set -euo pipefail` (L7). | **Fixed** |
+| F19 `%files` cwd | README L26 states the build must run from the apptainer directory; `build_sif.sh` computes `HERE` but does **not** `cd` to it (R1) — see below. | **Mostly fixed** (must run from the directory, or add `cd "$HERE"`) |
+| F20 reviewed def SHA | `REVIEWED_DEF_SHA` is compared with the built def and the script exits 4 on mismatch (L28–31). | **Fixed** for the prescribed invocation; opt-in when the variable is unset (R2) |
+| F21 instruction text | README L3 quotes the author's S3 instruction for traceability. | **Fixed** |
+
+**Remaining/new items (none of them blocks the build when the exact command below is used):**
+
+- **R1 (build-cwd regression, must be respected or fixed).** Apptainer's `%files` sources are resolved
+  **relative to the invoking working directory** (`CopyFromHost` source comment: "src is a path relative
+  to CWD on the host"). `build_sif.sh` computes `HERE` but never `cd`s to it, and the README's usage
+  block shows `bash r1/scripts/htcondor/apptainer/build_sif.sh` from the repo root — that invocation
+  would fail at the `%files` copy. The reviewed original script had `cd "$HERE"`. Fix is one line
+  (`cd "$HERE"` after L8, so any cwd works) or use the exact command below, which runs from the def's
+  directory. This does not change the def SHA.
+- **R2 (minor).** The `REVIEWED_DEF_SHA` gate is skipped when the variable is empty; the exact command
+  sets it. For fail-closed behaviour, add `[ -z "$REVIEWED_DEF_SHA" ] && { echo "STOP: …"; exit 4; }`
+  before the SHA comparison.
+- **R3 (NIT).** The base image is recorded by tag (as the author instructed), not by digest; the def SHA
+  and the SIF SHA are exact. Record the base digest in `.identity` if the author wants it later.
+- **R4 (minor, outside the image but in this README).** The README job-time example tells S4 to use the
+  **trackp** env and calls it a match for the `0.922225` reference stack "(… Python 3.13.4 provenance)",
+  but env 3 is now **Python 3.12** (the freeze provenance). The exact reference stack (Python 3.13,
+  NumPy 2.4.4, scikit-learn 1.8.0, pytest 9.0.3) is **env 1** (harness). The S4 unit and its review are
+  outside this re-check; correct this sentence, or run the I2 comparison in env 1.
+- **R5 (NIT).** README L55 still says "the recipe is reproducible"; inputs and def are pinned but the
+  base tag is mutable and the SIF is not bit-reproducible. Prefer "inputs pinned; base tag recorded".
+- **R6 (NIT).** `build_sif.sh` L100 copies identity+VERSIONS to the mirror with `2>/dev/null || true`, and
+  L101 copies identity again; the required SIF mirror copy is fatal/SHA-checked (L96–99) and the required
+  records are local, so this is cosmetic.
+- **R7 (residual unverified, no action now).** EPEL activation through `epel-release` on the nvidia base
+  image (the Rocky 9 `extras` repo config) cannot be checked from here; the torch/nvidia/triton versions
+  for `torch==2.6.0+cu124` on the PyTorch cu124 index are expected but not individually verified (a
+  failure is loud — no silent fallback); `--index-url` is a deprecated uv alias and could be renamed in
+  uv 0.13.6 (loud failure; use `--default-index` if so); the post-build `llama-server --version` smoke
+  runs on deepthought, whose driver is CUDA 12.0 — if the CUDA build refuses to print the version
+  without a compatible driver, the script stops **after** the SIF is in place (re-run the record steps;
+  nothing is lost).
+
+**Build command (run from the repository's apptainer directory; nothing else changes):**
+
+```bash
+cd <repo>/r1/scripts/htcondor/apptainer
+REVIEWED_DEF_SHA=a5a0c9da4e969548bd4aa902f6ed96191a20d4af4556b653c9582204a6690c25 \
+  bash build_sif.sh --build
+```
+
+The capability gate runs first (`--fakeroot`, then plain, uid-0 asserted); if neither gives a root
+`%post`, the script stops at S3 with a question and no product. On success it writes the SIF, build log,
+identity, VERSIONS, inspect and smoke files under `/work/dwong/paperb/images/`, copies the SIF (SHA
+compared) to `/ceph/srv/dwong/paperb/images/`, and records all SHAs/sizes/dates.
+
+VERDICT: ACCEPTED

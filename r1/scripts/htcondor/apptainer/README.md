@@ -2,7 +2,7 @@
 
 **Authority (committed here for traceability, review S3-F21).** The author's 14 Nov 2026 instruction S3, verbatim intent: *"构建 SIF：写 `r1/scripts/htcondor/apptainer/r1-htc.def`，以 `docker://nvidia/cuda:12.4.1-cudnn-devel-rockylinux9` 为底（CUDA 版本按 POOL_FACTS 里的最低驱动定）；内容同原 runbook §3：用 uv 建三套固定环境，加上 llama.cpp `620d2225`（CUDA arch 70;80;89;90）。def 文件先审查，再执行 `apptainer build`（如需 `--fakeroot` 而不可用，记入问题清单并停在这一步）。产物放 `/work/dwong/paperb/images/r1-htc-20261114.sif`，记录 SHA-256 和大小；再复制一份到 `/ceph/srv/dwong/paperb/images/`。"* The deepthought Docker daemon is inactive (Q-D1; author's supplement says do not start it), so this is the `apptainer build` route. The Dockerfile + `docker-daemon://` route and the Docker Hub push are the author's later step (I3), not this one.
 
-**Build gate.** The def must be reviewed by an independent reviewer **before** the build; `build_sif.sh --build` refuses to run when `REVIEWED_DEF_SHA` is set and differs from the current def SHA-256. The script's first action is a capability test whose `%post` asserts uid 0 (so a plain setuid build that cannot install packages is caught, not silently accepted); it tries `--fakeroot` first, then the plain setuid build, and **stops** (exit 2, question recorded) if neither works. This satisfies the author's "if `--fakeroot` is needed and unavailable, record and stop at S3".
+**Build gate.** The def must be reviewed by an independent reviewer **before** the build; `build_sif.sh --build` refuses to run when `REVIEWED_DEF_SHA` is unset or differs from the current def SHA-256 (review S3-R2; the `--build` command always sets it). The script's first action is a capability test whose `%post` asserts uid 0 (so a plain setuid build that cannot install packages is caught, not silently accepted); it tries `--fakeroot` first, then the plain setuid build, and **stops** (exit 2, question recorded) if neither works. This satisfies the author's "if `--fakeroot` is needed and unavailable, record and stop at S3".
 
 **Usage.**
 ```bash
@@ -44,12 +44,12 @@ container_image = /work/dwong/paperb/images/r1-htc-20261114.sif
 ```bash
 # I1-style smoke inside a job:
 /opt/r1/envs/harness/bin/python -VV; cat /opt/r1/VERSIONS.txt
-# I2-style CPU worker (S4): use the trackp env, which matches the 0.922225 reference stack
-# (numpy 2.4.4 / sklearn 1.8.0 / pytest 9.0.3, Python 3.13.4 provenance), not the tracks env
-# (numpy 2.4.6 / sklearn 1.9.1 / pytest 9.2.0).
+# I2-style CPU worker (S4): use env 1 (harness), which is the 0.922225 reference stack
+# (Python 3.13, numpy 2.4.4, scikit-learn 1.8.0, pytest 9.0.3). env 2 (tracks) is
+# numpy 2.4.6/sklearn 1.9.1/pytest 9.2.0 and env 3 (trackp) is Python 3.12; neither is the reference stack.
 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 CUDA_VISIBLE_DEVICES='' \
 PYTHONPATH=<paper>:/<harness>/src AR_HARNESS_ROOT=<harness> \
-/opt/r1/envs/trackp/bin/python -m pytest -v paper/r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic
+/opt/r1/envs/harness/bin/python -m pytest -v paper/r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic
 ```
 
-**Not in the image:** code checkouts, models, data, credentials. The build inputs are committed here, so the recipe is reproducible; apptainer version, base tag, def SHA and all post-build records are written beside the SIF (review S3-F12/F13/F14).
+**Not in the image:** code checkouts, models, data, credentials. The build inputs are committed here, so the build **inputs are pinned** (the base image is recorded by tag, not digest, and a SIF is not bit-reproducible); apptainer version, base tag, def SHA and all post-build records are written beside the SIF (review S3-F12/F13/F14/R5).

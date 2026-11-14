@@ -27,7 +27,7 @@ for repo in "$B/src/paper:60ecf1dae299ee424aa1bdfe078eab02a881b87e" "$B/src/auto
   echo "checkout $dir head=$have want=$want" >> "$OUT/identity.txt"
   if [ "$have" != "$want" ]; then echo "PREFLIGHT_FAIL checkout $dir head=$have want=$want" >> "$OUT/identity.txt"; FAIL=1; fi
 done
-[ -x /opt/r1/envs/trackp/bin/python ] || { echo "PREFLIGHT_FAIL no trackp env" >> "$OUT/identity.txt"; FAIL=1; }
+[ -x /opt/r1/envs/harness/bin/python ] || { echo "PREFLIGHT_FAIL no harness env" >> "$OUT/identity.txt"; FAIL=1; }
 [ -s /opt/r1/llama.cpp/build/bin/llama-server ] || { echo "PREFLIGHT_FAIL no llama-server" >> "$OUT/identity.txt"; FAIL=1; }
 # ---- I1: environment import and version check ---------------------------------
 {
@@ -65,16 +65,16 @@ cd "$B/src/paper" || { echo "PREFLIGHT_FAIL paper checkout missing" >> "$OUT/ide
 {
   echo "paper_head=$(git rev-parse HEAD) harness_head=$(git -C "$B/src/autoresearch_harness" rev-parse HEAD)"
   echo "reference: val_score 0.922225 / train_loss 0.314016 (TASL-7, Python 3.13.4, numpy 2.4.4, sklearn 1.8.0, pytest 9.0.3)"
-  echo "env choice: trackp (that is the 0.922225 stack); tracks would be numpy 2.4.6/sklearn 1.9.1/pytest 9.2.0"
+  echo "env choice: harness env1 = the 0.922225 reference stack (Python 3.13, numpy 2.4.4, sklearn 1.8.0, pytest 9.0.3); env2 tracks = numpy 2.4.6/sklearn 1.9.1/pytest 9.2.0; env3 trackp = Python 3.12"
 } >> "$OUT/identity.txt"
 : > "$OUT/i2_summary.txt"
 for i in 1 2; do
   H="$OUT/home_$i"; T="$OUT/tmp_$i"; mkdir -p "$H" "$T"
-  env -i HOME="$H" TMPDIR="$T" PATH="/opt/r1/envs/trackp/bin:/usr/bin:/bin" \
+  env -i HOME="$H" TMPDIR="$T" PATH="/opt/r1/envs/harness/bin:/usr/bin:/bin" \
     PYTHONPATH="$B/src/paper:$B/src/autoresearch_harness/src" AR_HARNESS_ROOT="$B/src/autoresearch_harness" \
     PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 CUDA_VISIBLE_DEVICES='' \
     OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
-    timeout 600 /opt/r1/envs/trackp/bin/python -m pytest -p no:cacheprovider -v \
+    timeout 600 /opt/r1/envs/harness/bin/python -m pytest -p no:cacheprovider -v \
       --basetemp="$B/work/s4_pytest_$i" \
       r1/tests/test_c3_audit.py::test_real_worker_run_is_seed_deterministic > "$OUT/i2_run$i.log" 2>&1
   rc=$?
@@ -91,7 +91,7 @@ for i in 1 2; do
   [ "$rc" -ne 0 ] && FAIL=1
 done
 # ---- verdict --------------------------------------------------------------------------------
-/opt/r1/envs/trackp/bin/python - "$OUT" <<'PY' || FAIL=1
+/opt/r1/envs/harness/bin/python - "$OUT" <<'PY' || FAIL=1
 import pathlib, re, sys
 out = pathlib.Path(sys.argv[1])
 vs, tl = [], []
