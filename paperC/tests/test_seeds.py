@@ -42,12 +42,16 @@ def test_known_values_from_code():
     assert (by["e1b_instances"].lo, by["e1b_instances"].hi) == (100, 997)
     assert (by["tracks_s11_factorial"].lo, by["tracks_s11_factorial"].hi) == (37001, 37031)
     assert (by["tracks_oracle_select"].lo, by["tracks_oracle_eval"].hi) == (1_000_000, 3_000_000)
+    assert by["node_default_seed"].lo == 42 and by["e2e_worker_seed_999"].lo == 999
+    assert (by["tracks_audits_legacy"].lo, by["tracks_audits_legacy"].hi) == (33001, 35000)
+    for key in (20261012, 20261019, 20261026, 20261029, 20261107):
+        assert f"rng_key_{key}" in by
 
 
 @needs_pins
 def test_paper_b_has_no_internal_overlap_and_paper_c_is_disjoint():
     pb = seeds.paper_b_blocks(REPO)
-    assert seeds.paper_b_overlaps(pb) == []
+    assert seeds.paper_b_overlaps(pb, worker_only=True) == []
     assert seeds.check_disjoint(pb) == []
 
 
@@ -64,9 +68,14 @@ def test_registry_flags_paper_b_seed_in_check_campaign():
     assert reg.paper_b_block("digits_mlp", 30510) == "tracks_instances_S0.5"
     assert reg.paper_b_block("digits_mlp", 50001) is None
     assert reg.paper_c_block(50001) == "paperc_instances"
-    viol = S.check_campaign(valid_campaign(seed=7005), registry=reg)
+    viol = S.check_campaign(valid_campaign(campaign="pc-c1", seed=7005), registry=reg)
     assert {v.check for v in viol} == {"seed"}
-    assert S.check_campaign(valid_campaign(seed=50001), registry=reg) == []
+    assert S.check_campaign(valid_campaign(campaign="pc-c1", seed=50001), registry=reg) == []
+    # Paper C membership: a seed in no block at all, and a campaign id without the pc- prefix
+    viol = S.check_campaign(valid_campaign(campaign="pc-c1", seed=45000), registry=reg)
+    assert {v.check for v in viol} == {"seed"} and any("outside paperc_instances" in v.message for v in viol)
+    viol = S.check_campaign(valid_campaign(campaign="c1", seed=50001), registry=reg)
+    assert {v.check for v in viol} == {"seed"} and any("prefix" in v.message for v in viol)
 
 
 def test_constants_reader_does_not_import():
@@ -83,7 +92,25 @@ def test_every_seed_constant_in_code_is_accounted_for():
     assert seeds.unaccounted(REPO, pb) == []
 
 
-def test_unaccounted_detects_a_new_constant(monkeypatch):
-    fake = [{"ref": "x" * 40, "path": "r1/new.py", "name": "NEW_SEEDS", "ints": [45000, 45009]}]
-    monkeypatch.setattr(seeds, "scan_constants", lambda repo: fake)
-    assert seeds.unaccounted(REPO, []) == ["r1/new.py:NEW_SEEDS at xxxxxxxx: values [45000, 45009] outside every block"]
+def test_unaccounted_detects_new_constants_and_range_gaps():
+    blocks = [seeds.Block("a", 100, 200, "literal", None, None, None), seeds.Block("b", 300, 400, "literal", None,
+                                                                                  None, None)]
+    fake = [{"ref": "x" * 40, "path": "r1/new.py", "name": "SEED", "value": 45000},
+            {"ref": "x" * 40, "path": "r1/new.py", "name": "RANGE_SEEDS", "value": range(150, 350)},
+            {"ref": "x" * 40, "path": "r1/new.py", "name": "OK_SEEDS", "value": range(120, 180)},
+            {"ref": "x" * 40, "path": "r1/new.py", "name": "SEEDS_FILE", "value": "audit_seeds.json"}]
+    out = seeds.unaccounted(REPO, blocks, fake)
+    assert out == ["r1/new.py:RANGE_SEEDS at xxxxxxxx: [(200, 299)] outside every block",
+                   "r1/new.py:SEED at xxxxxxxx: [(45000, 45000)] outside every block"]
+    assert seeds.skipped_textual(fake) == ["r1/new.py:SEEDS_FILE"]
+
+
+def test_scan_name_matches_bare_seed():
+    for n in ("SEED", "PLAN_SEED", "AUDIT_SEED_BASE", "SEED_BASE", "S11_SEEDS", "ORACLE_EVAL_BASE"):
+        assert seeds.SCAN_NAME.match(n), n
+
+
+def test_function_compiles_in_isolation():
+    src = "import os\n@decorator_that_does_not_exist\ndef f(node: Foo, k: int = os.getpid()) -> Bar:\n    return 100 + 10 * k + (sum(map(ord, node)) % 7)\n"
+    f = seeds.function(src, "f")
+    assert f("abc", 3) == 100 + 30 + (sum(map(ord, "abc")) % 7)

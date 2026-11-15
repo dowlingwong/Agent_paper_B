@@ -2,25 +2,106 @@
   "domains": {
     "COUNT_DOMAIN": 1000,
     "K_DOMAIN": 90,
-    "MARGIN": 1000
+    "MARGIN": 1000,
+    "note": "declared bounds; the code puts no upper bound on the run-time counts"
   },
   "paper_b": [
+    {
+      "hi": 12,
+      "kind": "rng_key",
+      "lo": 11,
+      "name": "rng_key_11",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
+    {
+      "hi": 43,
+      "kind": "external",
+      "lo": 42,
+      "name": "node_default_seed",
+      "note": "the harness nodes' default train/split seed: noise-floor 'default' runs and the fixed partner seed of train-only / split-only runs (r1/noise/e1_noise_floor.py plan_runs passes None; STATUS.md records 42)",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
+      "hi": 78,
+      "kind": "rng_key",
+      "lo": 77,
+      "name": "rng_key_77",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
+    {
+      "hi": 79,
+      "kind": "rng_key",
+      "lo": 78,
+      "name": "rng_key_78",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
     {
       "hi": 997,
       "kind": "formula",
       "lo": 100,
       "name": "e1b_instances",
-      "note": "k < 90 over all node-name residues mod 7 (bounded by the next block at 1001); sweeps use k < 18 (seeds 100..276)",
+      "note": "k < 90 over all node-name residues mod 7 (declared; bounded by the next block at 1001); sweeps use k < 18 (seeds 100..276)",
       "path": "r1/headroom/e1b_collect.py",
       "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
       "symbol": "_instance_seed"
+    },
+    {
+      "hi": 778,
+      "kind": "rng_key",
+      "lo": 777,
+      "name": "rng_key_777",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:kw:seed@fab88fce"
+    },
+    {
+      "hi": 1000,
+      "kind": "literal",
+      "lo": 999,
+      "name": "e2e_worker_seed_999",
+      "note": "LocalWorker(train_seed=999, split_seed=999) in the end-to-end check",
+      "path": "r1/e2e.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "train_seed"
+    },
+    {
+      "hi": 1000,
+      "kind": "rng_key",
+      "lo": 999,
+      "name": "rng_key_999",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/e2e.py:kw:seed@d4ea56c1"
+    },
+    {
+      "hi": 1001,
+      "kind": "rng_key",
+      "lo": 1000,
+      "name": "rng_key_1000",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed0@fab88fce"
     },
     {
       "hi": 2001,
       "kind": "base_count",
       "lo": 1001,
       "name": "noise_floor_train",
-      "note": "SEED_BASE + s, s < n_seeds (run-time; C1 uses 30)",
+      "note": "SEED_BASE + s, s < n_seeds (run-time; declared domain 1000); C1 uses 30",
       "path": "r1/noise/e1_noise_floor.py",
       "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
       "symbol": "SEED_BASE['train']"
@@ -30,7 +111,7 @@
       "kind": "base_count",
       "lo": 2001,
       "name": "noise_floor_split",
-      "note": "SEED_BASE + s, s < n_seeds (run-time; C1 uses 30)",
+      "note": "SEED_BASE + s, s < n_seeds (run-time; declared domain 1000); C1 uses 30",
       "path": "r1/noise/e1_noise_floor.py",
       "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
       "symbol": "SEED_BASE['split']"
@@ -40,7 +121,7 @@
       "kind": "base_count",
       "lo": 3001,
       "name": "noise_floor_joint",
-      "note": "SEED_BASE + s, s < n_seeds (run-time; C1 uses 30)",
+      "note": "SEED_BASE + s, s < n_seeds (run-time; declared domain 1000); C1 uses 30",
       "path": "r1/noise/e1_noise_floor.py",
       "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
       "symbol": "SEED_BASE['joint']"
@@ -50,7 +131,7 @@
       "kind": "base_count",
       "lo": 5001,
       "name": "e1b_leaf_audits",
-      "note": "AUDIT_SEED_BASE + i, i < k_audit (run-time); E1b used 5001..5006",
+      "note": "AUDIT_SEED_BASE + i, i < k_audit (run-time; declared domain 1000); E1b used 5001..5006",
       "path": "r1/headroom/e1b_collect.py",
       "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
       "symbol": "AUDIT_SEED_BASE"
@@ -70,10 +151,20 @@
       "kind": "prose_only",
       "lo": 8001,
       "name": "trackg_g1b_audits",
-      "note": "plan \u00a711.1 'G.1b 8001\u20138010'; not found in code at the pins; reserved conservatively",
+      "note": "plan \u00a711.1 'G.1b 8001\u20138010'; no code defines it on the canonical, Track S or Track G branches",
       "path": null,
       "ref": null,
       "symbol": null
+    },
+    {
+      "hi": 9001,
+      "kind": "rng_key",
+      "lo": 9000,
+      "name": "rng_key_9000",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
     },
     {
       "hi": 9100,
@@ -86,6 +177,16 @@
       "symbol": "INSTANCE_SEEDS"
     },
     {
+      "hi": 9101,
+      "kind": "rng_key",
+      "lo": 9100,
+      "name": "rng_key_9100",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
+    {
       "hi": 9300,
       "kind": "literal",
       "lo": 9101,
@@ -94,6 +195,16 @@
       "path": "r1/exam/namespace.py",
       "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
       "symbol": "AUDIT_SEEDS"
+    },
+    {
+      "hi": 20001,
+      "kind": "rng_key",
+      "lo": 20000,
+      "name": "rng_key_20000",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed0@fab88fce"
     },
     {
       "hi": 30250,
@@ -146,11 +257,21 @@
       "symbol": "INSTANCE_SEED_BLOCKS"
     },
     {
+      "hi": 35000,
+      "kind": "prose_only",
+      "lo": 33001,
+      "name": "tracks_audits_legacy",
+      "note": "Track S's earlier audit layout (dev audits 33001\u201333005, audits 34001+, phase-keyed 33001+ \u2026 33601+), superseded by AUDIT_SEED_BASES; reserved because early runs may have used it",
+      "path": "r1/tracks/IMPLEMENTATION_NOTES.md",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": null
+    },
+    {
       "hi": 35002,
-      "kind": "literal",
+      "kind": "rng_key",
       "lo": 35001,
       "name": "tracks_selection_key",
-      "note": "RNG key for fork selection, not a worker seed; reserved anyway",
+      "note": "RNG key for fork selection, not a worker seed",
       "path": "r1/tracks/collect.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
       "symbol": "SELECTION_SEED"
@@ -193,7 +314,7 @@
       "note": "",
       "path": "r1/tracks/collect.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
     },
     {
       "hi": 300000,
@@ -203,7 +324,7 @@
       "note": "",
       "path": "r1/tracks/collect.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
     },
     {
       "hi": 400000,
@@ -213,7 +334,7 @@
       "note": "",
       "path": "r1/tracks/collect.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
     },
     {
       "hi": 500000,
@@ -223,7 +344,7 @@
       "note": "",
       "path": "r1/tracks/collect.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
     },
     {
       "hi": 600000,
@@ -233,7 +354,7 @@
       "note": "",
       "path": "r1/tracks/collect.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
     },
     {
       "hi": 700000,
@@ -243,7 +364,7 @@
       "note": "",
       "path": "r1/tracks/collect.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
     },
     {
       "hi": 800000,
@@ -253,7 +374,7 @@
       "note": "",
       "path": "r1/tracks/collect.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
     },
     {
       "hi": 2000000,
@@ -263,7 +384,7 @@
       "note": "synthetic-world campaign seeds (in memory)",
       "path": "r1/tracks/oracle.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "ORACLE_SELECT_BASE + ORACLE_BLOCK_SIZE"
+      "symbol": "ORACLE_SELECT_BASE, ORACLE_EVAL_BASE, ORACLE_BLOCK_SIZE"
     },
     {
       "hi": 3000000,
@@ -273,37 +394,71 @@
       "note": "synthetic-world campaign seeds (in memory)",
       "path": "r1/tracks/oracle.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "ORACLE_EVAL_BASE + ORACLE_BLOCK_SIZE"
+      "symbol": "ORACLE_SELECT_BASE, ORACLE_EVAL_BASE, ORACLE_BLOCK_SIZE"
+    },
+    {
+      "hi": 20261013,
+      "kind": "rng_key",
+      "lo": 20261012,
+      "name": "rng_key_20261012",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/headroom/e1b_compare.py:SEED@d4ea56c1; r1/baselines/evaluate.py:def:seed@d4ea56c1; r1/branch/bootstrap.py:def:seed@d4ea56c1"
     },
     {
       "hi": 20261020,
-      "kind": "literal",
+      "kind": "rng_key",
       "lo": 20261019,
       "name": "rng_key_20261019",
-      "note": "RNG key, not a worker seed",
+      "note": "RNG root, not a worker seed",
       "path": null,
-      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
-      "symbol": "r1/c3/dataset.py:PLAN_SEED, r1/theory/t5_report.py:BASE_SEED"
+      "ref": null,
+      "symbol": "r1/c3/dataset.py:PLAN_SEED@d4ea56c1; r1/theory/t5_report.py:BASE_SEED@d4ea56c1; r1/c3/offline_eval.py:SEED@d4ea56c1; r1/diagnostics/di_test.py:SEED@d4ea56c1"
+    },
+    {
+      "hi": 20261027,
+      "kind": "rng_key",
+      "lo": 20261026,
+      "name": "rng_key_20261026",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/c3/train/exam_synthetic.py:SEED@fab88fce; r1/exam/guards.py:def:seed@d4ea56c1"
     },
     {
       "hi": 20261030,
-      "kind": "literal",
+      "kind": "rng_key",
       "lo": 20261029,
-      "name": "tracks_s11_boot_key",
-      "note": "bootstrap RNG key, not a worker seed",
-      "path": "r1/tracks/probes/s1_factorial.py",
-      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
-      "symbol": "BOOT_SEED"
+      "name": "rng_key_20261029",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/probes/s1_factorial.py:BOOT_SEED@fab88fce; r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
+    {
+      "hi": 20261108,
+      "kind": "rng_key",
+      "lo": 20261107,
+      "name": "rng_key_20261107",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/scripts/b1_q2_reference.py:SEED@d4ea56c1"
     }
   ],
-  "paper_b_internal_overlaps": [],
+  "paper_b_internal_overlaps": [
+    "e1b_instances [100,997) overlaps rng_key_777 [777,778)",
+    "e2e_worker_seed_999 [999,1000) overlaps rng_key_999 [999,1000)"
+  ],
+  "paper_b_internal_overlaps_worker_seeds": [],
   "paper_c": [
     {
       "hi": 60000,
       "kind": "proposal",
       "lo": 50000,
       "name": "paperc_instances",
-      "note": "campaign instance seeds; splits (train/dev/test) are sub-blocks fixed in SPT-0",
+      "note": "campaign instance seeds (also worker seeds); train/dev/test sub-blocks fixed in SPT-0",
       "path": null,
       "ref": null,
       "symbol": null
@@ -319,20 +474,42 @@
       "symbol": null
     },
     {
+      "hi": 62000,
+      "kind": "proposal",
+      "lo": 61000,
+      "name": "paperc_train_seeds",
+      "note": "seeds of Paper C's own model training (SPT-5): optimisers and samplers, not node runs",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
       "hi": 11000000,
       "kind": "proposal",
       "lo": 10000000,
       "name": "paperc_audits",
-      "note": "fresh audit seeds; per-instance stride as in Track S (above Track S's oracle blocks, below the date-valued RNG keys)",
+      "note": "fresh audit seeds; per-instance stride as in Track S (above Track S's oracle blocks 1e6-3e6, below the date-valued RNG keys)",
       "path": null,
       "ref": null,
       "symbol": null
     }
   ],
   "paper_c_campaign_prefix": "pc-",
+  "paper_c_roles": {
+    "audit": "paperc_audits",
+    "eps": "paperc_rng_keys",
+    "instance": "paperc_instances",
+    "train": "paperc_train_seeds",
+    "worker": "paperc_instances"
+  },
   "pins": {
     "canonical": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
     "tracks": "fab88fced839c5fb794ed62a0742b4646cb76ea2"
   },
+  "scan_skipped_textual": [
+    "r1/c3/audit.py:SEEDS_FILE",
+    "r1/exam/namespace.py:_SEED_KEYS",
+    "r1/tracks/probes/determinism.py:SEED_KEY"
+  ],
   "schema": "paperc_seed_registry/v1"
 }

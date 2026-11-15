@@ -907,4 +907,19 @@ def check_campaign(rows: Sequence, *, registry: SeedRegistry | None = None,
                     hit = registry.paper_b_block(t.identity.node, val)
                     if hit is not None:
                         V("seed", key, st, f"{name} {val} lies in Paper B block {hit}")
+                # Paper C membership (when the registry offers it): every seed inside its own Paper C block
+                pc = getattr(registry, "paper_c_check", None)
+                if pc is not None:
+                    roles = [("instance", t.seeds.instance_seed, None), ("worker", t.seeds.worker_seed, None),
+                             ("eps", t.policy.eps_seed, None)]
+                    if len(t.seeds.audit_seed_block) == 2:
+                        roles.append(("audit", *t.seeds.audit_seed_block))
+                    for role, lo, hi in roles:
+                        if lo is not None:
+                            msg = pc(role, lo, hi)
+                            if msg:
+                                V("seed", key, st, msg)
+                prefix = getattr(registry, "campaign_prefix", None)
+                if prefix and not t.identity.campaign_id.startswith(prefix):
+                    V("seed", key, st, f"campaign_id {t.identity.campaign_id!r} lacks the Paper C prefix {prefix!r}")
     return out
