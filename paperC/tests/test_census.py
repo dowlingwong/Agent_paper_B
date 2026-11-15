@@ -45,6 +45,7 @@ def test_reproduces_track_s_s05_summary(result):
     assert d["e1"]["near_price_share"] == 0.0 and tb["e1"]["near_price_share"] == 0.0
     assert d["e1"]["skip_reasons"] == {"rule_duplicate": 429} and tb["e1"]["skip_reasons"] == {"rule_duplicate": 399}
     assert round(46 / 298, 3) == d["e2"]["near_zero_share"] and round(38 / 330, 3) == tb["e2"]["near_zero_share"]
+    assert d["keep_quality"]["logged_action_mismatches"] == 0 == tb["keep_quality"]["logged_action_mismatches"]
     assert d["e2"]["actions"] == {"keep": 148, "discard": 170, "failed_invalid": 53}
     assert tb["e2"]["actions"] == {"keep": 158, "discard": 192, "failed_invalid": 51}
     assert d["budget"]["binding_share_by_W"] == {"8": 1.0, "10": 1.0, "12": 0.94, "20": 0.04}
@@ -73,3 +74,52 @@ def test_v_star_formula():
 def test_robust_sd():
     x = np.random.default_rng(0).normal(0, 2.0, 20000)
     assert abs(C.robust_sd(x) - 2.0) < 0.05
+
+
+# ---------------------------------------------------------------- adapter fixtures (always run)
+
+def _trial(i, *, patch, valid=True, decision="discarded", before=None, delta=None):
+    return {"budget_index": i, "patch_hash": patch, "validity_status": "valid" if valid else "invalid",
+            "decision": decision, "current_best_before": before, "delta_vs_best": delta}
+
+
+def test_parse_sweep_campaign():
+    trials = [_trial(1, patch="a", decision="kept"),                                  # trial 1: kept, no delta
+              _trial(2, patch="b", before=0.90, delta=-0.01),
+              _trial(3, patch="b", before=0.90, delta=-0.01),                          # duplicate patch
+              _trial(4, patch="c", valid=False),                                       # invalid
+              _trial(5, patch="d", decision="kept", before=0.90, delta=0.02),
+              _trial(6, patch="e", before=0.92, delta=0.0)]
+    cp = C.parse_sweep_campaign(trials)
+    assert cp["duplicates"] == 1 and cp["invalid"] == 1
+    assert cp["comparisons"] == [-0.01, 0.02, 0.0] and cp["kept"] == [0.02] and cp["keeps_after_trial1"] == 1
+    assert cp["trial1_metric"] == 0.90 and math.isclose(cp["final_best"], 0.92)
+
+
+def test_join_keeps_and_logged_actions():
+    roots = [{"status": "ok", "instance_id": "n__s1", "y_terminal": 1.0, "y_after_trial1": 0.5,
+              "decisions": [{"epoch": "E2", "action": "keep", "index": 1},
+                            {"epoch": "E2", "action": "keep", "index": 2},
+                            {"epoch": "E2", "action": "discard", "index": 3},
+                            {"epoch": "E2", "action": "keep", "index": 4}]}]
+    rows = [{"instance": "tracks_n__s1", "budget_index": 2, "delta_hat": 0.3, "delta_audit": 0.2},
+            {"instance": "tracks_n__s1", "budget_index": 3, "delta_hat": 0.1, "delta_audit": -0.1}]
+    j = C.join_keeps(roots, rows)
+    assert j == [{"instance": "n__s1", "keeps": [(0.3, 0.2)], "missing": 1, "audited_gain": 0.5}]
+    assert C.logged_action_mismatches(roots, rows) == 1     # index 3 discarded although delta_hat > 0
+
+
+def test_c1_paired_and_node_level_v_star():
+    rec = {"default_metric": 0.9, "edits": [
+        {"sd_joint": 0.01, "rho_joint": 0.995, "flip_emp": 0.2, "campaign_wrong": True, "decision_regret": 0.001,
+         "material": False},
+        {"sd_joint": 0.02, "rho_joint": 0.98, "flip_emp": 0.4, "campaign_wrong": False, "decision_regret": 0.003,
+         "material": True}]}
+    p = C.c1_paired(rec)
+    assert math.isclose(p["paired_sd"], np.median([0.01 * math.sqrt(0.01), 0.02 * math.sqrt(0.04)]))
+    assert math.isclose(p["flip_emp_mean"], 0.3) and p["campaign_wrong_share"] == 0.5
+    small = np.random.default_rng(1).normal(0, 0.5, 200)
+    assert C.node_level_v_star(small, 1.0)["status"].startswith("misspecified")
+    ok = C.node_level_v_star(small, 0.1)
+    assert ok["status"] == "ok" and ok["price_over_v_star"] != "inf"
+    assert C._r(float("inf")) == "inf" and C._r(float("nan")) is None
