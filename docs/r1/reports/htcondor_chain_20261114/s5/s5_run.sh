@@ -50,7 +50,12 @@ else:
   echo "== root filesystem (image) top level =="; ls -la / 2>&1 | head -20
   echo "== image identity markers =="; ls -la /.singularity.d 2>/dev/null | head -5; cat /opt/r1/VERSIONS.txt 2>/dev/null | head -3
 } > s5_pull.txt 2>&1
-grep -qi "GPU" s5_nvidia.txt && grep -q "matmul_ok" s5_torch.txt && grep -q "llama-server" s5_llama.txt || FAIL=1
+# D1-tight gate: nvidia-smi must show a GPU, torch must actually run a CUDA matmul, and the
+# llama-server --version must exit 0 (the header echo alone is not enough).
+grep -qiE "GPU [0-9]" s5_nvidia.txt || FAIL=1
+grep -q "cuda_available True" s5_torch.txt || FAIL=1
+grep -q "matmul_ok" s5_torch.txt || FAIL=1
+grep -q "llama_version_rc=0" s5_llama.txt || FAIL=1
 echo "S5_$([ "$FAIL" -eq 0 ] && echo PASS || echo FAIL)" > s5_PASSFAIL.txt
 cat s5_PASSFAIL.txt; echo "S5_DONE fail=$FAIL"
 exit "$FAIL"
