@@ -1,6 +1,6 @@
 # Paper C — what to do after Track S STOP 4 (proposal, 15 Nov 2026)
 
-**AI-assisted (Claude, chat session), written at the author's request. Proposal only; it becomes binding through an author row.** Sources:
+**AI-assisted (Claude, chat session), written at the author's request. Adopted 15 Nov as PLAN §10 R1-PAPERC-REFRAME (R-C1) and R1-PAPERC-CENSUS-FIRST (R-C2); R1-PAPERC-CORE follows the census report (R-C3).** Sources:
 - Track S two-node S0.5 summary, `docs/r1/reports/TRACKS_S05_SUMMARY_20261115.md` on `mac-tracks-stop4-end-20261115` @ `795e518b`, §2–§5;
 - PLAN §10 R1-TRACKS-STOP4-END and R1-TRACKS-STOP4-CONSEQUENCES.
 

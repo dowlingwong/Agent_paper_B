@@ -3,7 +3,7 @@
 **Status (15 Nov 2026).**
 - Working plan, not adopted by PLAN rows.
 - Infrastructure build started on 15 Nov. Paper C no longer waits for Paper B's submission (author, 15 Nov). No data yet.
-- **Open:** the response to Track S STOP 4 (`docs/proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md`). Proposed: acceptance and evaluation control as the core, broadening to expensive GPU runs, a headroom census first.
+- **Reframed after Track S STOP 4** (R1-PAPERC-REFRAME, 15 Nov): a map of where sequential control pays (frame), acceptance and evaluation control as the confirmatory core, expensive GPU runs as the broadening tier, proposer steering as an extension. A headroom census on existing logs comes first (R1-PAPERC-CENSUS-FIRST).
 
 AI-assisted (Claude, chat session).
 
@@ -82,7 +82,8 @@ The questions are where non-myopic control is worth anything, through which of t
 | No waiting for Paper B's submission; real-node phases need their own runbook, review and authorization | author, 15 Nov (addendum §C) |
 | PLAN rows R1-PAPERC-PROPOSER, -DELTA, -OPD, -NOWAIT, -HOME | recorded in `docs/r1/PLAN.md` §10, 15 Nov |
 | Track S ended at STOP 4 without evidence; consequences for Paper C | addendum §B |
-| Reframing after STOP 4 (R-C1), census first (R-C2), then R1-PAPERC-CORE (R-C3) | open, `docs/proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md` |
+| Reframing after STOP 4 (R-C1) and census first (R-C2) | author, 15 Nov: R1-PAPERC-REFRAME, R1-PAPERC-CENSUS-FIRST |
+| R1-PAPERC-CORE (nodes and channels of the core version) | after the census report (R-C3) |
 | P1–P9 of plan §17; P10 (M4a in the core version) | open |
 
 ## Layout

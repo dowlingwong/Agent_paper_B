@@ -2,7 +2,7 @@
 
 **AI-assisted (Claude, chat session).** Executes `BUILD_LIST.md`. Read with the plan (`proposals/PAPER_C_SEQUENTIAL_POLICY_PLAN_20261104.md`, rev 2) and its addendum (`PLAN_ADDENDUM_20261115.md`). Label for everything produced: **ENGINEERING_ONLY**. Nothing here is evidence.
 
-**Executor.** One Claude on the Mac: the chat session through the device shell, or the Mac-local agent. **Reviewer.** A freshly spawned independent agent per phase. It has not written the code under review.
+**Executor.** The chat-session Claude (author, 15 Nov), working in its cloud clone of the repository and pushing new branches only. Mac files are read through the device shell, read-only. **Reviewer.** A freshly spawned independent agent per phase. It has not written the code under review.
 
 **Tonight:** P0–P2, then PH (headroom census) if time allows. Order after that: P3 → P4 → P5 … P10.
 
@@ -25,7 +25,7 @@ Paper C does not wait for Paper B's submission. Real-node phases are not part of
 
 ### 0.2 Branch and checkout
 
-- Work in a git worktree on branch `paperc-build-20261115`, created from `paperc-scaffold-20261115`. The main checkout (currently on `exam-x-20261026`) and the other agents' worktrees are not touched.
+- Work on branch `paperc-build-20261115`, created from `paperc-scaffold-20261115`, in the executor's own checkout (the chat session's cloud clone). The Mac main checkout (currently on `exam-x-20261026`) and the other agents' worktrees are not touched.
 - One commit per phase step, plus one commit per review round.
 - Commit messages start with `paperC:`.
 
@@ -64,8 +64,8 @@ PYTHONPATH=paperC/src paperC/.venv/bin/python -m pytest -q -p no:cacheprovider p
 
 ### 0.7 Delivery
 
-- Push the branch if the executor can push.
-- Otherwise write a git bundle and `READY.txt` (branch, head SHA, base SHA, review file) under `Claude outputs/`.
+- Push the branch (new branches only; the author allowed this on 15 Nov).
+- If a push is not possible, write a git bundle and `READY.txt` (branch, head SHA, base SHA, review file) under `Claude outputs/`.
 
 ### 0.8 STOP — write `paperC/docs/STOP_<phase>_<date>.md` and wait for the author
 
@@ -80,8 +80,8 @@ Stop when any of these happens:
 
 ## P0 — Setup (≈ 20 min)
 
-1. Apply the scaffold branch: `git fetch <bundle> paperc-scaffold-20261115:paperc-scaffold-20261115`.
-2. Create the worktree: `git worktree add .claude-worktrees/paperc-build-20261115 -b paperc-build-20261115 paperc-scaffold-20261115`.
+1. Fetch `origin/paperc-scaffold-20261115` and create `paperc-build-20261115` from it.
+2. (Mac-local executors only: do this in a worktree under `.claude-worktrees/`.)
 3. Create `paperC/.venv`, install the P0 packages and record `pip freeze`.
 4. Run the test command (§0.4). The scaffold smoke test must pass.
 5. Create `paperC/docs/BUILD_STATUS.md` with a header and the P0 line.

@@ -1187,8 +1187,10 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-PAPERC-OPD | **单教师 on-policy distillation 属于 Paper C，不进 Paper B。** 它是 Paper C 的 LM 路线 M4：M4a 在决策层，等于带软目标的 DAgger；M4b 在 token 层，只用于生成文字的控制器，要求老师和学生同一 tokenizer。定义、对照、门槛和风险见 `paperC/docs/PLAN_ADDENDUM_20261115.md` §A。M4a 是否进入核心版是开放项 P10。 |
 | R1-PAPERC-NOWAIT | **取消 Paper C 计划 rev 2 中“Paper B 投稿（2027-01-10）之前不跑 Paper C”的规定。** Paper C 的工作，包括真实节点上的运行，现在就可以开始。每个真实节点阶段仍须有自己的 runbook、独立审查和作者授权。主机按 PLAN 主机行分配：TASL-2 / TASL-7 只有在作者行分配时才用于 Paper C。 |
 | R1-PAPERC-HOME | **Paper C 的文档与代码放在仓库顶层 `paperC/`**：README、计划 rev 2 及其审查、addendum、构建清单与 runbook、Python 包 `paperC/src/paperc/`。Paper C 的决定继续以 R1-PAPERC-* 行记在本 PLAN §10。 |
+| R1-PAPERC-REFRAME | **采纳 Paper C 在 Track S STOP 4 之后的重新定位**（`paperC/docs/proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md`，R-C1）：(D) 以“序贯控制何时有用”的空间图为论文框架；(A) 接受与评估控制为确认性核心，动作为 keep/discard、对临近阈值的候选重测、incumbent 重新审计、收尾时的最终选择，E1 只在通过决策相关性检查的节点上加入；(B) 拓宽到运行昂贵的 GPU 任务，用能区分提案并处理长尾的 belief；(C) proposer 引导作为扩展。Q3 的对照组加入序贯检验、racing、KG/OCBA 重测、预算感知阈值。M4（R1-PAPERC-OPD）不变。 |
+| R1-PAPERC-CENSUS-FIRST | **先做空间普查**（R-C2；构建清单 B16，runbook 阶段 PH）：纯 CPU、只读，用现有日志（Track S S0.4/S0.5、sweep 1 及其标签、C1 噪声表、B1/B2 campaign）逐节点计算 E1/E2 决策相关性、误保留率与漏保留率、incumbent 赢家诅咒、预算卡住程度、长尾占比，并把节点放上空间图。哪些节点、哪些通道进入 SPT 收集，在普查报告之后由作者决定。执行者为对话会话 Claude，从 P0 起按 `paperC/docs/BUILD_RUNBOOK.md` 执行。 |
 
-R1-PAPERC-CORE（11 月 5 日草稿）暂不写入。它的内容（E-T0 上 round B 的 Q1 确认性检验）正是 Track S STOP 4 削弱的部分（R1-TRACKS-STOP4-END：E1 筛选在两个 E-T0 节点上不起作用）。待 Paper C 的重新定位决定后再改写写入，见 `paperC/docs/proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md`（R-C1、R-C2）。
+R1-PAPERC-CORE（11 月 5 日草稿）暂不写入。它的内容（E-T0 上 round B 的 Q1 确认性检验）正是 Track S STOP 4 削弱的部分（R1-TRACKS-STOP4-END：E1 筛选在两个 E-T0 节点上不起作用）。重新定位已采纳（R1-PAPERC-REFRAME）；核心版的节点与通道由普查结果决定，因此 R1-PAPERC-CORE 在普查报告之后改写写入。
 
 ## 11. Relation to Paper A
 
