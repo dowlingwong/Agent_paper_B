@@ -1,0 +1,48 @@
+job=759707.0 host=g3606.nemo.privat start_utc=2026-11-15T09:45:34Z iwd=/srv
+== image VERSIONS ==
+image=r1-htc-gpu
+build_utc=2026-11-14T23:10:24Z
+base=nvidia/cuda:12.4.1-cudnn-runtime-rockylinux9
+uv=uv 0.13.6 (x86_64-unknown-linux-gnu)
+python_313=Python 3.13.18 (main, Oct 26 2026, 14:08:20) [Clang 23.1.3 ]
+python_311=Python 3.11.18 (main, Oct 26 2026, 14:05:07) [Clang 23.1.3 ]
+python_trackp=Python 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]
+torch_pin=torch==2.6.0+cu124 (proposed)
+torch_actual=2.6.0+cu124
+llama_cpp_commit=620d2225cc436ab0b001e3200e590e3b286ef9ab
+llama_server_sha256=f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0
+harness_lock_sha256=dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090
+tracks_freeze_sha256=f1c818e560b32cc554656c23e1273ae80c0fd770bd1e3df0b5a68bafc0d3a687
+trackp_freeze_sha256=17da9a3a441919829f2bb5cd1cd0a752725274bfa69cc2b0ca6a8c4fd4388524
+== driver ==
+NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  615.71.10  Release Build  (root@localhost.localdomain)  Mon Nov  2 06:10:53 CET 2026
+GCC version:  gcc version 11.5.0 20240719 (Red Hat 11.5.0-5) (GCC) 
+== nvidia devices ==
+crw-rw-rw- 1 nobody nobody 503,   0 Nov  3 23:12 /dev/nvidia-fs0
+crw-rw-rw- 1 nobody nobody 503,   1 Nov  3 23:12 /dev/nvidia-fs1
+crw-rw-rw- 1 nobody nobody 503,  10 Nov  3 23:12 /dev/nvidia-fs10
+crw-rw-rw- 1 nobody nobody 503,  11 Nov  3 23:12 /dev/nvidia-fs11
+crw-rw-rw- 1 nobody nobody 503,  12 Nov  3 23:12 /dev/nvidia-fs12
+crw-rw-rw- 1 nobody nobody 503,  13 Nov  3 23:12 /dev/nvidia-fs13
+== job ad container/gpu ==
+ContainerImage = "docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296"
+ContainerImageSource = "docker"
+DiskUsage = 10
+DiskUsage_RAW = 10
+ImageSize = 5
+ImageSize_RAW = 5
+RemoteJob = true
+RequestDisk = 25000000
+RequestDisk_RAW = 25000000
+RequestGPUs = 1
+WantContainer = true
+== torch ==
+torch 2.6.0+cu124 cuda True 12.4 NVIDIA L40S
+== disk/env ==
+/dev/mapper/tmp  3.4T   38G  3.3T   2% /srv
+avail_kb=3521719532
+APPTAINER_CACHEDIR=/srv
+APPTAINER_CONTAINER=/var/lib/condor/execute/dir_3176390/cache/oci-tmp/c28da6eebd56d820e3747bc3d5c25e1f1f1079d30f0e1ea372bb7c73e60abf9d
+CUDA_VISIBLE_DEVICES=GPU-7f5cae01-78d4-d3d9-8840-deb65fbf2bd2
+NVIDIA_VISIBLE_DEVICES=GPU-7f5cae01-78d4-d3d9-8840-deb65fbf2bd2
+script_end_utc=2026-11-15T09:46:23Z

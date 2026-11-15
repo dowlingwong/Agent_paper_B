@@ -1,0 +1,25 @@
+server_ready=1 ready_s=4
+health_models={"models":[{"name":"model.gguf","model":"model.gguf","modified_at":"","size":"","digest":"","type":"model","description":"","tags":[""],"capabilities":["completion"],"parameters":"","details":{"parent_model":"","format":"gguf","family":"","families":[""],"parameter_size":"","quantization_level":""}}],"object":"list","data":[{"id":"model.gguf","aliases":["model.gguf"],"tags":[],"object":"model","ar
+== llama-server.log (first 40) ==
+0.00.152.896 I srv  llama_server: initializing ...
+0.00.152.923 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.168.954 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.193.069 I srv    load_model: loading model 'model.gguf'
+0.00.902.980 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.614.727 I cmn          init: llama threadpool init, n_threads = 64
+0.02.172.986 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 2048, kv_unified = 'true'
+0.02.197.190 I srv  llama_server: model loaded
+0.02.197.203 I srv  llama_server: listening on http://127.0.0.1:8091
+0.02.688.132 I srv    operator(): operator(): cleaning up before exit...
+== server.log tail ==
+0.00.152.896 I srv  llama_server: initializing ...
+0.00.152.923 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.168.954 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.193.069 I srv    load_model: loading model 'model.gguf'
+0.00.902.980 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.614.727 I cmn          init: llama threadpool init, n_threads = 64
+0.02.172.986 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 2048, kv_unified = 'true'
+0.02.197.190 I srv  llama_server: model loaded
+0.02.197.203 I srv  llama_server: listening on http://127.0.0.1:8091
+0.02.688.132 I srv    operator(): operator(): cleaning up before exit...
+== CUDA lines ==

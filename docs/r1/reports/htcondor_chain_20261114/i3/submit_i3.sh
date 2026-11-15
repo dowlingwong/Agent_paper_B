@@ -10,7 +10,6 @@ case "$WHICH" in
 esac
 D=/work/dwong/paperb/work/i3_${WHICH}_submit
 mkdir -p "$D"
-cp -f "$JDL" i3_run.sh submit_i3.sh "$D"/
 cd "$D"
 echo "== digest =="; grep -nE "container_image|docker_image" "$JDL"
 grep -q "sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296" "$JDL" || { echo "STOP: gpu digest missing"; exit 2; }
@@ -30,7 +29,6 @@ echo "active_i3_jobs=$ACTIVE"
 [ "$ACTIVE" -eq 0 ] || { echo "STOP: an i3_run job is already active"; exit 3; }
 echo "== dry-run =="
 condor_submit -dry-run "/tmp/${JDL}.dry" "$JDL" | tee dryrun.log
-cp -f "/tmp/${JDL}.dry" dryrun.ad
 grep -E "^(JobUniverse|ContainerImage|ContainerImageSource|DockerImage|WantContainer|WantDocker|Requirements|RequestCpus|RequestMemory|RequestDisk|RequestGPUs|RemoteJob|Cmd|TransferInput)=" dryrun.ad | head -22 || true
 echo "== queue snapshot =="; condor_q dwong -af ClusterId ProcId JobStatus Cmd > queue_before.txt; wc -l < queue_before.txt
 echo "== submit =="; condor_submit "$JDL" | tee submit.txt
