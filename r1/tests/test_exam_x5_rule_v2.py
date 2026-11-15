@@ -828,8 +828,11 @@ def test_v2_configs_bind_rule_harness_cache_and_repairs(name):
     differ = ('comment', 'rule', 'rule_sha256', 'harness_commit', 'paper_commit', 'host', 'authorizations', 'cache_prompt',
               'workers', 'llm_call_cap', 'nodes',
               'd3_policy', 'gpu_uuid', 'stage_a_table', 'stage_a_table_sha256', 'anchor_duplicate_reference')
+    if name == 'exam_b2_v2.json':
+        # Executable B2 hand-off (15 Nov 2026): the B2-only keys are filled from accepted work (STOP 5, power plan).
+        differ += ('b1_analysis', 'b1_analysis_sha256', 'b2_instances_per_node')
     assert {k: v for k, v in cfg.items() if k in portal and k not in differ} == {k: portal[k] for k in cfg if k in portal and k not in differ}
-    if name == 'exam_b1_v2.json':
+    if name in ('exam_b1_v2.json', 'exam_b2_v2.json'):     # B2 filled with B1's reference (executable hand-off)
         ref = cfg['anchor_duplicate_reference']
         reference = REPO / ref['source']
         assert digest_file(reference) == ref['sha256']

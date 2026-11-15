@@ -16,7 +16,7 @@
   "rule": "r1/exam/rules/x5_rule_v2.yaml",
   "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
   "value_grids": "r1/exam/value_grids.yaml",
-  "paper_commit": "TODO_REVIEWED_M2_COMMIT",
+  "paper_commit": "37282ec37a715feaaea48dd621ae08678424accc",
   "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
   "prompts": "/home/dowling/exam-x/frozen_inputs/trackx_stagea_promptset_20261031/prompts.jsonl",
   "prompts_sha256": "70872a7702a36dc13b5612abd7a8580414f01c43bb8e19179942ca70a2ed510a",
@@ -39,25 +39,25 @@
     9104
   ],
   "W": 20,
-  "llm_call_cap": "TODO_AUTHOR_LLM_CALL_CAP",
+  "llm_call_cap": 80,
   "nodes": [
-    "TODO_VERIFY_D28_DIGITS_OR_TABULAR",
+    "digits_mlp",
     "openml_credit_approval",
     "openml_ionosphere"
   ],
   "stage_a_table": "/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json",
   "anchor_duplicate_reference": {
-    "source": "TODO_VERIFY_ON_HOST",
-    "sha256": "TODO_VERIFY_ON_HOST",
-    "lower": "TODO_VERIFY_ON_HOST",
-    "upper": "TODO_VERIFY_ON_HOST"
+    "source": "docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_20261107.json",
+    "sha256": "84200770e9b63fdd8593085ac171d5893f214c8911f65582a030749507fc85dd",
+    "lower": 0.42386590667728663,
+    "upper": 0.5800007633587785
   },
   "authorizations": {
     "b1": "TODO_AUTHOR_B1_V2_AUTHORIZATION_NOTE",
-    "b2": "TODO_AUTHOR_B2_V2_AUTHORIZATION_NOTE"
+    "b2": "docs/r1/authorizations/trackx_b2_20261115.md"
   },
-  "b1_analysis": "TODO_VERIFY_ON_HOST",
-  "b2_instances_per_node": "TODO_AUTHOR_B2_POWER_PLAN",
+  "b1_analysis": "docs/r1/reports/b1_d_20261113_evidence/complete_batch_verifier.json",
+  "b2_instances_per_node": 4,
   "watchdog": {
     "enabled": true,
     "poll_seconds": 0.5,
@@ -69,9 +69,9 @@
   "root_timeout_seconds": 43200,
   "schema_sensitivity_node": "openml_credit_approval",
   "d22_pick": "TODO_AUTHOR_D22_PICK",
-  "workers": 4,
+  "workers": 20,
   "stage_a_table_sha256": "00ab143dc0742b24034e653bfa15acff5183538f85a1179cdbc7802cac22975c",
-  "b1_analysis_sha256": "TODO_VERIFY_ON_HOST",
+  "b1_analysis_sha256": "07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc",
   "cache_prompt": false,
   "template_repairs": {
     "olmo31_32b": "5d275f78a64ad01740b8b65ff5554e624062229348b4f95c930c45a7db820466",
