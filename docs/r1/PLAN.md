@@ -1188,6 +1188,12 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-W2-3-STOP | **采纳 W2-3 为 Track P 数据重建（`c3_features/v3`、`trackp_prompt/v2`）的 STOP：每个源 ledger 必须恰好用满 W = 20 次 worker run。** 检查脚本 `r1/scripts/w2_runs_total_check.py`（`mac-w2-v3-rebuild-20261115` @ `d8aa9561`，审查 `reviews/W2_V3_REBUILD_REVIEW_20261115.md`，接受），退出码 3 即 STOP；sweep 1 用 `--expect-ledgers 288` 运行，ledger 数不符为坏输入、不得通过。STOP 时保留现场、报告，不重试。 |
 
+### 16 November 2026 — Track X role decisions X.7 (author)
+
+| ID | Decision |
+|---|---|
+| R1-EXAM-X7 | **X.7：(a) 按 x5_rule_v2 与 R1-MAIN-PROPOSER，pick = gemma4_31b（thinking off），为 Paper B 主 proposer 与 D22 strong proposer；B1 中其 μ̂ 低于 scripted 锚点（95% CI 重叠）如实披露，不称强于 scripted。(b) B.6 second manager 由 sweep 1 替代，不另选。(c) 附录 C3 premises vs proposer strength 由 Mac 用 B1/B2 现有数据计算，无超出 CI 的差异则报 null。thinking-on 结果仅描述性。** 依据：B2 run `8709_20261115_b2`（run HEAD `8709dce7`，EVIDENCE，grid verified，24/24，`b2.exit` 0）；报告 `reports/b2_exec_20261115/B2_REPORT_20261115.md`，STOP 6 独立审查 ACCEPTED（`reviews/B2_REPORT_REVIEW_20261115.md`，`ops-b2-exec-20261115` @ `936da564`）。主表 thinking off final_y = 0.9402810083333333；thinking-on 描述性 0.9552304833333333（D28 未过，不影响资格）；B1 μ̂ −0.000891 vs scripted −0.000587。本行不授权 sweep 2；sweep 2 需另行的授权文件与主机决定（R1-SWEEP-HOST）。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
