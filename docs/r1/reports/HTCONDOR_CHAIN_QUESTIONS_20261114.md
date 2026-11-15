@@ -38,3 +38,10 @@ Each item: context, options, recommendation, paste-ready answer. Nothing here bl
 **Options.** (a) author rules a specific CUDA torch version (e.g. keep 2.6.0+cu124, or pin another); (b) keep the proposed pin and record it as a stack note; (c) install both (CPU env unchanged + GPU env pinned) — already the case.
 **Recommendation.** (a) before any Track P GPU training; record the ruling in the image README/def and rebuild (one-line workflow dispatch).
 **Paste-ready answer:** `Q-TORCH：<a 指定版本 | b 接受 proposed 2.6.0+cu124 | c 其它>。`
+
+## Q-XRD (recorded) — xrootd endpoints unreachable from the login node AND from an ETP worker
+
+**Context.** S6 read-only: `root://ceph-node-j.etp.kit.edu` and `root://ceph-node-a.etp.kit.edu` (xrootd 5.7.0 client) return no response from deepthought (IPv6-only, `xrdfs` rc 124) and also from an ETP worker inside the S4 job (same rc 124 for `ls` and `xrdcp`, no readback). `/ceph/srv/dwong/paperb/` itself is readable/writable as a POSIX path and the 51 B test file is there (sha256 90e6b637…d8a7). The endpoints may need a different port/hostname, an ACL, or KIT-internal routing; Q4 (xrootd endpoint) is therefore still open, and the I3 "GGUF via xrootd" plan cannot rely on these two endpoints as tested.
+**Options.** (a) author/site gives the correct xrootd endpoint/port for ceph; (b) use the POSIX `/ceph/srv/dwong/paperb/models/` path inside the job instead of xrootd; (c) test from a specific node class (e.g. TOpAS/NEMO2) if the endpoints are routed there only.
+**Recommendation.** (b) for tonight's I3 (the image job can read `/ceph/srv` on ETP local; NEMO2 has no `/ceph/srv`), with (a) pursued in parallel.
+**Paste-ready answer:** `Q-XRD：<a 正确端点 | b 用 /ceph/srv 直读 | c 指定节点类测试>。`

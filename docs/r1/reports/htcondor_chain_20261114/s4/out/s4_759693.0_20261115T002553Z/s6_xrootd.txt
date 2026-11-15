@@ -1,0 +1,12 @@
+== root://ceph-node-j.etp.kit.edu ==
+ls /dwong ->  rc=124
+ls /srv/dwong ->  rc=124
+ls /dwong/paperb ->  rc=124
+xrdcp rc=124
+readback file absent
+== root://ceph-node-a.etp.kit.edu ==
+ls /dwong ->  rc=124
+ls /srv/dwong ->  rc=124
+ls /dwong/paperb ->  rc=124
+xrdcp rc=124
+readback file absent

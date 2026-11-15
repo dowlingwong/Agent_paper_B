@@ -3,7 +3,6 @@
 set -euo pipefail
 D=/work/dwong/paperb/work/s5_submit
 mkdir -p "$D"
-cp -f s5_nemo2_gpu_ghcr.jdl s5_run.sh "$D"/
 cd "$D"
 grep -n "container_image" s5_nemo2_gpu_ghcr.jdl
 grep -q "sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296" s5_nemo2_gpu_ghcr.jdl || { echo "STOP: gpu digest missing"; exit 2; }

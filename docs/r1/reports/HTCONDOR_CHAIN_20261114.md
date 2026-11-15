@@ -89,6 +89,20 @@ Def/README/build plan committed (`r1/scripts/htcondor/apptainer/`). First pre-bu
 
 **Build STOP (S3) at 11:23 CET — cannot build a SIF on any reachable ETP login host.** The capability gate failed, and the definitive read-only diagnostic shows why: `/usr/bin/apptainer` is mode `0755` (no setuid bit, no file capabilities) on `deepthought`, `bms1`, `bms2`, `bms3` and `portal1`, and `/etc/subuid`/`/etc/subgid` have **no `dwong` mapping** (0 lines) — so `--fakeroot` cannot start its faked daemon and a plain build runs `%post` unprivileged (`/.singularity.d/libs/faked: not found`, exit 1). Nothing was started or restarted; **no product SIF exists**; the failed attempt left only the build log (no deletion). Raw: `htcondor_chain_20261114/raw/s3_build_stop_diagnostics.txt`. **Question Q-BUILD** put to the author: (a) admin adds `dwong:1000000:65536` to `/etc/subuid` + `/etc/subgid` (enables `--fakeroot`), or (b) apptainer installed setuid, or (c) build on a host where one is true, or (d) the Docker route once the deepthought daemon is started. S4/S5 depend on the SIF and are therefore blocked behind Q-BUILD; their units are already reviewed (S4 ACCEPTED). Committed inputs: harness `uv.lock` at `a3fedbb` (sha256 `dd42d018…`, 536,392 B), `pyproject.toml` at `a3fedbb` (sha `72c43589…`), the 65-package freeze (sha256 `f1c818e5…`, 65 lines), the Track P freeze (sha256 `17da9a3a…`, 101 lines). Build is capability-gated (plain `apptainer build`, then `--fakeroot`, STOP if neither), writes `r1-htc-20261114.sif` under `/work/dwong/paperb/images/` with SHA-256/bytes/inspect/VERSIONS records and copies it to `/ceph/srv/dwong/paperb/images/`. **No Dockerfile route today:** the daemon is inactive (Q-D1); the author's supplement says not to start it.
 
+## S4 — DONE (local CPU, ghcr cpu image by digest)
+
+**Submitted** from `/work/dwong/paperb/work/s4_submit/` (cluster **759693**), after: digest substitution (cpu `221ca459…`), `condor_submit -dry-run` rc 0 with `ContainerImage=docker://…@sha256:221ca459…`, `ContainerImageSource=docker`, `WantContainer=true`, requirements `HasContainer && HasDockerURL` appended, requests/Cmd/Iwd in the submit dir, queue snapshot (17 own entries before submit).
+
+| item | value |
+|---|---|
+| queue | submit **00:25:07Z**, execute **00:25:31Z** → **wait 24 s** |
+| run | **233 s**, end 00:29:24Z, exit 0, host `slot1_65@mdm1.etp.kit.edu` (site `mdm`), 0 evictions, 0 holds |
+| I1 | cpu image `/opt/r1/VERSIONS.txt` (build 2026-11-14T23:06:52Z): harness Python **3.13.18** numpy 2.4.4 sklearn 1.8.0 pandas 3.0.3 pytest 9.0.3; tracks Python 3.11.18 numpy 2.4.6 sklearn 1.9.1 pytest 9.2.0; trackp/llama **absent by design**; uv 0.13.6 |
+| I2 | two pytest invocations (each runs the worker twice) with OMP/OPENBLAS/MKL=1, CUDA_VISIBLE_DEVICES='': 4/4 `val_score 0.922225`, 4/4 `train_loss 0.314016`, all four worker `run.log` sha256 **0f4419b6…** (identical) — **I2_PASS**; reference match despite Python 3.13.18 vs 3.13.4 |
+| S6 | xrootd from the worker: **both endpoints unreachable** (`xrdfs` rc 124, `xrdcp` rc 124, no readback) — so the endpoints are not reachable from ETP worker nodes either; recorded as Q-XRD (the `/ceph/srv/dwong/paperb/` file itself exists) |
+
+Evidence: `htcondor_chain_20261114/s4/out/` (s4.out/err/log, dryrun.log, queue_before.txt, submit.txt, s4_queue_times.tsv, the job's evidence directory). S4 unit had been ACCEPTED; the ghcr JDL change was confirmed as a one-line diff by the same reviewer.
+
 ## S4/S5 — units updated for the ghcr images (digest placeholders)
 
 S4 now uses `container_image = docker://ghcr.io/dowlingwong/r1-htc-cpu@<digest>` (cpu target: envs 1+2 only, so the script records env 3 and llama-server as **absent by design** instead of failing); S5 uses `docker://ghcr.io/dowlingwong/r1-htc-gpu@<digest>` with the S5-review fixes M1–M3 (output/error/log, disk sized to the image, EP-side pull/sandbox evidence, PASS/FAIL, driver and `/dev/nvidia*` diagnostics). The S5 review round 1 was **NOT ACCEPTED** (3 MAJOR, all fixed in the updated unit); the digest substitution is a one-line JDL change to be re-checked by the same reviewer after the digest is known.

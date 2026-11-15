@@ -3,7 +3,6 @@
 set -euo pipefail
 D=/work/dwong/paperb/work/s4_submit
 mkdir -p "$D"
-cp -f s4_local_cpu_ghcr.jdl s4_run.sh "$D"/
 cd "$D"
 echo "== digest in JDL =="; grep -n "container_image" s4_local_cpu_ghcr.jdl
 grep -q "sha256:221ca459d62723ec58219c37c71e1664846b135ff919ec59cf37ce57158f75aa" s4_local_cpu_ghcr.jdl || { echo "STOP: cpu digest missing"; exit 2; }
