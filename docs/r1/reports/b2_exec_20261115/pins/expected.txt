@@ -1,0 +1,7 @@
+HEAD=8709dce792d45bbb5c05d9f7d239e19454efbb15
+RULE_SHA=53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad
+PAPER_COMMIT=37282ec37a715feaaea48dd621ae08678424accc
+HARNESS=/home/dowling/r1_b1_engineering/b1_harness_offline_stage_20261107_a/harness
+HARNESS_HEAD=a3fedbbd44309b3fdf99d853ad841b9ec2c299e2
+PY=/home/dowling/exam-x/work/venv/bin/python
+VENV_PREFIX=/home/dowling/exam-x/work/venv
