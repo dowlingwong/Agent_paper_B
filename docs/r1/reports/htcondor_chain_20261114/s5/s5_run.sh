@@ -9,8 +9,9 @@ JOB="${1:-local.0}"
 PRE="s5_identity.txt s5_env.txt s5_nvidia.txt s5_torch.txt s5_llama.txt s5_pull.txt s5_PASSFAIL.txt"
 for f in $PRE; do printf 'not written\n' > "$f"; done
 FAIL=0
+SCRIPT_START_UTC=$(date -u +%FT%TZ)
 {
-  echo "job=$JOB host=$(hostname -f) date_utc=$(date -u +%FT%TZ) iwd=$(pwd)"
+  echo "job=$JOB host=$(hostname -f) script_start_utc=$SCRIPT_START_UTC iwd=$(pwd)"
   echo "== /opt/r1/VERSIONS.txt =="; cat /opt/r1/VERSIONS.txt 2>&1
   echo "== job ad container fields =="
   if [ -r "${_CONDOR_JOB_AD:-}" ]; then
@@ -18,11 +19,10 @@ FAIL=0
   else
     echo "job ad not readable"
   fi
-  echo "== container runtime env =="
-  env | grep -aiE "APPTAINER|SINGULARITY|CONTAINER" | sort
   echo "== scratch dirs =="
   echo "_CONDOR_SCRATCH_DIR=${_CONDOR_SCRATCH_DIR:-unset}"
 } > s5_identity.txt 2>&1
+{ echo "== container runtime env =="; env | grep -aiE "APPTAINER|SINGULARITY|CONTAINER" | sort; } > s5_env.txt 2>&1
 { echo "== nvidia-smi -L =="; nvidia-smi -L 2>&1; echo "rc=$?"
   echo "== nvidia-smi query =="; nvidia-smi --query-gpu=name,uuid,memory.total,driver_version,compute_cap --format=csv,noheader 2>&1; echo "rc=$?"
   echo "== /proc/driver/nvidia/version =="; cat /proc/driver/nvidia/version 2>&1 | head -3
@@ -40,11 +40,14 @@ else:
     print('no_cuda')
 "
   echo "rc=$?"; } > s5_torch.txt 2>&1
-{ echo "== llama-server =="; command -v llama-server; llama-server --version 2>&1 | head -4; echo "rc=$?"
+{ echo "== llama-server =="; command -v llama-server
+  /opt/r1/llama/bin/llama-server --version > /tmp/llama.version.txt 2>&1; LRC=$?
+  head -8 /tmp/llama.version.txt; echo "llama_version_rc=$LRC"
   echo "== llama binary sha =="; sha256sum /opt/r1/llama/bin/llama-server 2>&1; } > s5_llama.txt 2>&1
 { echo "== EP-side image/sandbox evidence (what the pull left in the job dir) =="
   pwd; df -h . 2>&1 | tail -1; du -sh . 2>&1 | tail -1
   ls -la . 2>&1 | head -10
+  echo "== note: for docker:// images the Singularity cache lives on the EP, outside the container =="
   echo "== any image/sif artefacts visible =="
   find / -xdev -maxdepth 3 \( -name '*.sif' -o -name 'r1-htc*' \) -printf '%p %s\n' 2>/dev/null | head -10
   echo "== root filesystem (image) top level =="; ls -la / 2>&1 | head -20
@@ -56,6 +59,7 @@ grep -qiE "GPU [0-9]" s5_nvidia.txt || FAIL=1
 grep -q "cuda_available True" s5_torch.txt || FAIL=1
 grep -q "matmul_ok" s5_torch.txt || FAIL=1
 grep -q "llama_version_rc=0" s5_llama.txt || FAIL=1
+echo "script_end_utc=$(date -u +%FT%TZ)" >> s5_identity.txt
 echo "S5_$([ "$FAIL" -eq 0 ] && echo PASS || echo FAIL)" > s5_PASSFAIL.txt
 cat s5_PASSFAIL.txt; echo "S5_DONE fail=$FAIL"
 exit "$FAIL"

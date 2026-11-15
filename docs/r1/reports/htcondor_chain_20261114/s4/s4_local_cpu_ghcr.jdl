@@ -1,5 +1,5 @@
 universe = container
-container_image = docker://ghcr.io/dowlingwong/r1-htc-cpu@DIGEST_CPU_PLACEHOLDER
+container_image = docker://ghcr.io/dowlingwong/r1-htc-cpu@sha256:221ca459d62723ec58219c37c71e1664846b135ff919ec59cf37ce57158f75aa
 executable = s4_run.sh
 arguments = "$(ClusterId).$(ProcId)"
 should_transfer_files = YES

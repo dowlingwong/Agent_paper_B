@@ -1,5 +1,5 @@
 universe = container
-container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@DIGEST_GPU_PLACEHOLDER
+container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296
 executable = s5_run.sh
 arguments = "$(ClusterId).$(ProcId)"
 should_transfer_files = YES

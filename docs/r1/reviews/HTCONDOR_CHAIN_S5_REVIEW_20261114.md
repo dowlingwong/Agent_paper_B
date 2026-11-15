@@ -350,3 +350,162 @@ transfer_evidence row (§2.4). The dry-run/HasSIF/SIF-identity gates remain pre-
 the fixes.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round — ghcr.io images at HEAD `f2b95c91` (supersedes the round-1 verdict above)
+
+**Re-reviewer:** same reviewer. **Date/time:** 15 November 2026, 01:05–01:30 CET (Europe/Berlin). **Worktree
+HEAD:** `f2b95c91` ("ghcr digests confirmed, Docker route review ACCEPTED (D1 condition), S5 PASS gate
+tightened"). **Scope:** the S5 unit has been reworked for the ghcr-image route (`s5/s5_nemo2_gpu_ghcr.jdl`,
+`s5/s5_run.sh`), and the S4 one-line change (`s4/s4_local_cpu_ghcr.jdl` + the adapted `s4/s4_run.sh`) is
+confirmed here as requested. The reviewed files are committed at `f2b95c91`; the worktree is **not** clean at
+review time — `verify_images.sh` is modified (the operator's read-only ghcr verification run) and **no ghcr
+verification raw files are committed yet**. No SSH, no registry access, no submission, no git write; the only
+file written is this appendix.
+
+**Pinned files (SHA-256):**
+
+| File | SHA-256 |
+|---|---|
+| `s5/s5_nemo2_gpu_ghcr.jdl` (19 lines) | `b53088b6f5cbdcd4114235311bf4c81834063e8a77fd332ecb4dd0300ba9a35d` |
+| `s5/s5_run.sh` (61 lines) | `f31b16d6fd1774d84e5fa7cb1f6f93171265ffa97a77c4d8fb38e4d3a35b70f0` |
+| `s4/s4_local_cpu_ghcr.jdl` (16 lines) | `56b23d66783e39b69f6d3df541905d047a457a3116b660b85f49da529f5c59de` |
+| `s4/s4_run.sh` (120 lines) | `835de3ef97e7609a95c093653707d89fe1737569bcf1d6f2f67286da5b77ff91` |
+
+Digests supplied by the Lead and stated as registry-verified (tag `20261114-74820315`, Actions run
+`43644472626`): cpu `sha256:221ca459d62723ec58219c37c71e1664846b135ff919ec59cf37ce57158f75aa`, gpu
+`sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296`.
+
+### 1. S4 — confirmation of the one-line JDL change (the Lead's request a)
+
+**Confirmed acceptable.** `diff s4_local_cpu_sif.jdl s4_local_cpu_ghcr.jdl` changes exactly two lines: line 2
+(`container_image = /work/dwong/paperb/images/r1-htc-20261114.sif` → `docker://ghcr.io/dowlingwong/r1-htc-cpu@
+DIGEST_CPU_PLACEHOLDER`) and line 3 (`should_transfer_container = no` removed, correctly: a docker:// URL is
+pulled by the container runtime, never transferred). Every other line is identical to the accepted S4 unit
+(`arguments`, transfer fields, `output`/`error`/`log`, `+RequestWalltime = 3600`, CPUs 2 / Mem 8000 / disk
+30 GB, `requirements = TARGET.ProvidesETPResources`, `queue 1`).
+
+The `s4_run.sh` by-design adaptation is also acceptable: preflight requires only the harness env (the cpu target
+carries envs 1+2 by design), I1 records `trackp` and `llama-server` as "ABSENT in this image … by design" instead
+of failing, and I2 runs in the **harness env**. The harness env is the right reference stack: the uv.lock at
+`a3fedbb` pins **numpy 2.4.4, scikit-learn 1.8.0, pytest 9.0.3** — exactly the 0.922225 reference packages
+(`pandas 3.0.3`, `scipy 1.17.1` also locked) — and the image's Python is 3.13.18 vs the reference's 3.13.4, the
+difference the author said to record as a stack difference. I2 in the harness env is therefore closer to the
+reference than the previous trackp/Python-3.12 choice.
+
+**One literal substitution is still required before submission:** the committed JDL still contains
+`DIGEST_CPU_PLACEHOLDER`; replace it with exactly the verified cpu digest above and record the tag→digest check.
+That is the only S4 change; no new review round is needed for it alone.
+
+Non-blocking S4 notes for the report (no action required before submission): (i) the identity block still probes
+`$B/images/r1-htc-20261114.identity`/`.sif`, which no longer exist, so those fields will be empty — record the
+image identity from the job ad's `ContainerImage` (already grepped) and `/opt/r1/VERSIONS.txt` instead; (ii)
+`"$_CONDOR_JOB_AD"` at L21 is unguarded under `set -u` (it is set in practice; use `${_CONDOR_JOB_AD:-}` like
+S5 for the same robustness); (iii) the header still says "using our SIF" (cosmetic); (iv) I2 hard-gates on
+`0.922225`: a deterministic-but-different result on Python 3.13.18 exits 1 — the report must present
+"two runs equal" and "matches recorded reference" separately and record the stack difference (the author's
+instruction), not read exit 1 as a unit failure; (v) the ghcr pull from the ETP local WNs is the one unproven
+step (S2L proved the same mechanism against Docker Hub): record success/failure of the pull, don't retry blindly.
+
+### 2. S5 — disposition of the round-1 findings
+
+| Round-1 finding | Status at `f2b95c91` |
+|---|---|
+| M1 no `output`/`error`/`log` | **Fixed** — JDL L9–11; recorder plan unchanged (`htc_events.py s5.log --utc-offset-minutes 60`). |
+| M2 `request_disk` not sized | **Not yet fixed** — `request_disk = 50,000,000` kB is a placeholder; the Lead commits to set it from the measured gpu image size before submission and record the dry-run `DiskUsage` (gate R3). |
+| M3 no EP-side pull/sandbox evidence | **Fixed with a caveat** — `s5_pull.txt` records `pwd`/`df`/`du`/`ls`, a bounded `find / -xdev -maxdepth 3`, the root listing and `/.singularity.d`, and the identity block records the job-ad container fields, runtime env and `_CONDOR_SCRATCH_DIR`. For a docker:// URL the image is pulled by the runtime to a cache **outside** the container's view, so the in-container `find` will normally show nothing: record "pulled, not observable in container" and take the size from the registry/cache measurement (gate R4), not from the job. |
+| m1 arguments/cluster id | **Fixed** — JDL L4 `arguments = "$(ClusterId).$(ProcId)"`, script `JOB="${1:-local.0}"`. |
+| m2 `set -u` job-ad guard / pre-created outputs | **Fixed** — `${_CONDOR_JOB_AD:-}` guard (L16) and all seven files pre-created (L9–10), so an early abort cannot become a missing-output hold. |
+| m3 request_memory 4000 | **Fixed** — 8000 MB. |
+| m4 PASS/FAIL summary, nonzero exit | **Fixed in form, but see R1**: the summary is written and `exit "$FAIL"` is used; the llama gate string is wrong, so the gate never passes. |
+| m5 libcuda/`/dev/nvidia*`/driver diagnostics | **Fixed** — `s5_nvidia.txt` records `/proc/driver/nvidia/version`, `/dev/nvidia*`, libcuda paths. |
+| m6 "too slow" threshold | Not in the unit; still to be declared in the submission note (gate §4). |
+| m7 image/transfer evidence binding | **Partly**: job-ad `ContainerImage`/`ImageSize`/`DiskUsage` + VERSIONS are recorded; the image size and tag→digest come from the verification (gate R4). |
+| m8 submit placement/records | Operator step; submit dir under `/work/dwong/paperb/`, record command/cluster id (gate §4). |
+| m9/m10/m11/m12 | L40S + fresh snapshot/fallback plan kept; runtime env, root markers and the image root listing now recorded; the round-1 note on the pre-ghcr trackp stack is superseded by the ghcr images. |
+| Requirements gate | **Correction, not a defect**: for the docker:// URL the appended requirement is `TARGET.HasContainer && TARGET.HasDockerURL` (the SIF round's `HasSIF` gate no longer applies); NEMO2 measured both true on 2380/2380 slots (S2's M1 fix, `raw/raw_container_attrs_nemo2.txt`). Confirm it in the dry-run ad. |
+
+### 3. New findings
+
+**R1 — MAJOR (the only required code fix): the S5 PASS/FAIL gate can never pass the llama check.**
+`s5_llama.txt` writes `rc=$?` after `llama-server --version` (script L43), but the gate greps
+`llama_version_rc=0` (L58) — that string is never written, so the grep always fails, `FAIL=1`,
+`s5_PASSFAIL.txt` is `S5_FAIL` and the script exits 1 **even when llama-server is fine**. This defeats the
+D1-tight gate the Lead intended (and mirrors the `verify_images.sh` label `llama_version_rc=$?`).
+*Exact fix:* change L43 to `echo "llama_version_rc=$?"` (keep the gate as is; optionally also record
+`command -v` rc). The other gates are correct against the script's output: `grep -qiE "GPU [0-9]"` matches
+`nvidia-smi -L`'s `GPU 0: …`, `grep -q "cuda_available True"` matches the torch line, `grep -q "matmul_ok"`
+matches the matmul line.
+
+**R2 — required literal substitution: both JDLs still carry digest placeholders.** `s5_nemo2_gpu_ghcr.jdl` L2
+has `DIGEST_GPU_PLACEHOLDER`, `s4_local_cpu_ghcr.jdl` L2 has `DIGEST_CPU_PLACEHOLDER`. Substitute exactly the
+verified digests above and record the tag→digest equality (tag `20261114-74820315`). As committed, a
+`docker://…@DIGEST_…_PLACEHOLDER` reference is not pullable — do not submit before this substitution; after it,
+record the final JDL sha256. (A literal substitution of the confirmed digest is not a new review round.)
+
+**R3 — gate: size `request_disk` from the measured gpu image.** `50,000,000` kB (≈47.7 GiB) is a placeholder;
+set it from the measured gpu image size (registry manifest / apptainer-cache measurement in the verification) plus
+a margin, and record the dry-run ad's `DiskUsage`; a disk hold must be recorded, not retried.
+
+**R4 — gate: commit the ghcr verification and the D1 smoke before any submission.** No verification raw files are
+committed and `verify_images.sh` is modified-uncommitted. Record, in `raw/`: run `43644472626`, commit
+`74820315`, tag `20261114-74820315`, both digests, both image sizes, the three base digests (Docker-review D5/D8),
+`apptainer inspect` + `exec cat /opt/r1/VERSIONS.txt` for both images, the three env imports, and — mandatory
+before S5 — the gpu **D1** smoke `/opt/r1/llama/bin/llama-server --version` rc=0 (Docker-review MAJOR D1: llama.cpp
+links libgomp, the runtime base may lack it). If the D1 smoke fails, the gpu image must be rebuilt before S5/I3;
+the cpu image is unaffected.
+
+**R5 — MINOR: pull-time attribution is stated wrongly in the script comment.** For a docker:// URL there is no
+HTCondor image transfer; Singularity pulls at container start, and the S2 evidence placed the first NEMO2 pull in
+the **run** time (S2N1: 8 s wait, 107 s run including the pull; S2N2 135 s run), not in the submit→execute wait.
+Record `wait_s` **and** `run_s`, and estimate pull+startup as the script's first timestamp minus the execute time
+(add an end timestamp to `s5_identity.txt` for the script's own duration); state in the report where the pull
+landed rather than assuming the wait.
+
+**R6 — MINOR: `s5_env.txt` is pre-created but never written** (the env output goes into `s5_identity.txt`).
+Either write the env there or drop `s5_env.txt` from `$PRE` and `transfer_output_files` (7→6 files).
+
+**R7 — NIT: the in-container `find / -xdev -maxdepth 3`** will not see the pulled image (cache outside the
+container); record "not observable in container" and use the verification's cache/manifest size. The
+`/.singularity.d`, root listing and runtime-env records remain useful runtime evidence.
+
+### 4. Pre-submission gates (S4 and S5)
+
+1. **Digest substitution (R2)** in both JDLs; record the final JDL hashes and the tag→digest verification.
+2. **Verification record (R4)**: ghcr inspect/VERSIONS/env imports + sizes + base digests committed; **gpu D1
+   llama smoke rc=0** before S5.
+3. **S5 request_disk from the measured image size (R3)**; both dry-run ads committed
+   (`s4/dryrun/s4_local_cpu_ghcr.dry`, `s5/dryrun/s5_nemo2_gpu_ghcr.dry`): rc 0; `ContainerImage`/
+   `ContainerImageSource="docker"`; `WantContainer`; appended `TARGET.HasContainer && TARGET.HasDockerURL`;
+   `TransferInput="…run.sh"`; `DiskUsage`; the requests; `Iwd`/`Cmd` in the submit dir; S5 `arguments`.
+4. **GPU snapshot 2 immediately before S5** (`gpu_availability.sh`, append-only) with the chosen model and reason
+   in the submission note: L40S (3 idle/4 at 11:21) as committed; H200 fallback (4 idle/8) only if L40S idle=0, a
+   one-line device-string substitution recorded with the reason. Queue snapshot before submitting.
+5. **Submit placement/records**: unit copied to a writable dir under `/work/dwong/paperb/`; record
+   `condor_submit` output, cluster id and submit UTC; S4's evidence stays under `/work/dwong/paperb/work/`
+   (output/error/log transferred), S5's seven files are transferred back to the submit dir.
+6. **After the runs**: S4 — `i1_envs.txt`, the two `i2_run*.log` + `run.log` values/shas, `i2_compare.txt`
+   (distinguish two-runs-equal vs reference-match; record the Python 3.13.18 stack difference), `s6_xrootd.txt`,
+   `identity.txt`, the `/work` output dir and exit code. S5 — event log via `htc_events.py s5.log --probe
+   <cluster>.0=S5 --utc-offset-minutes 60 --tsv s5_queue_times.tsv`; wait/run and the pull attribution (R5);
+   the job-ad `ContainerImage`/`ImageSize`/`DiskUsage`; the SIF/image size from the verification; nvidia/devices/
+   driver; torch; llama; `s5_pull.txt` (record "not observable" if empty); `s5_PASSFAIL.txt`; store under `s5/`
+   and in the chain report.
+
+### 5. Residual risk carried into submission
+
+The ghcr pull from the ETP local WNs (S4) and NEMO2 (S5) is the one unproven network step (S2L/S2N1 proved the
+same mechanism against Docker Hub; ghcr is a new registry — record any pull failure, don't retry blindly); the D1
+libgomp risk on the gpu image until the smoke passes; the S4/I2 Python 3.13.18-vs-3.13.4 stack difference; the
+pull cache is not observable in-container (the size/timing evidence comes from the verification and the event
+log); the images' base tags are mutable and the digest verification files are not committed yet (Docker-review
+D5/D8); `torch==2.6.0+cu124` remains the proposed value; model availability moves during the day (fresh
+snapshot required).
+
+**Round-1 verdict superseded.** M1/M3 and all but one of the minors are fixed; the unit is one line away from
+submittable, but **R1 makes the PASS/FAIL summary wrong by construction**, and R2–R4 are uncompleted
+pre-submission gates. Fix R1 (one line), apply the two literal digest substitutions, commit the verification and
+size the disk from it, then S4/S5 may be submitted; I will re-check the one-line gate fix on request.
+
+VERDICT: NOT ACCEPTED
