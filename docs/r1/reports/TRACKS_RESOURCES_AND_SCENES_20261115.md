@@ -67,7 +67,7 @@ the host move).
 | `venv/` | Python 3.11.18, frozen after Phase 0 (the same 65-package freeze as TASL-2, which has 3.11.17; digits host-move note) |
 | `opt/llama.cpp/` | v0.7.0 @ `620d2225`, built for sm_89 |
 | `models/` | manager GGUF `qwen2.5-coder-7b-instruct-q4_k_m.gguf`, sha256 `509287f7…` |
-| `remotes/Agent_paper_B.git` | bare repo, fast-forwarded to `110b01a8` on 15 Nov |
+| `remotes/Agent_paper_B.git` | bare repo; STATUS records a fast-forward to `110b01a8` on 15 Nov, the tabular review's round 2 saw `9b2fba9a`, and the Mac's `tasl7/trackS-ops-20261030` ref is `fab88fce` (§3) |
 | `work/Agent_paper_B` | paper checkout, detached at `8237fd02`, clean |
 | `work/autoresearch_harness` | harness checkout, detached at `a3fedbb` |
 | `launch/` | the launch scripts deployed from `r1/tracks/ops/launch/` (`tasl7_*.sh`) |
@@ -102,7 +102,7 @@ bare repo, `work/` detached at `8237fd02` / `a3fedbb` since 11 Nov.
 - `s05`: the 12 Nov partial pilot, never censused or copied back;
 - the `scratch/` counterparts of all of these.
 
-**Bare repo.** Behind; the push of the 14–15 Nov commits was deferred while the host was down.
+**Bare repo.** Behind: the Mac's `tasl2/trackS-ops-20261030` ref is `78a1b65e` (12 Nov), 54 commits behind `fab88fce`; pushes were deferred while the host was down.
 
 **Outside the work directory.** The scratch pytest environment `/tmp/trks_pytest_20261111.FI7Fdoi8` from the 11 Nov
 precondition test.
@@ -124,8 +124,8 @@ Disk: 187 G free (12 Nov).
      records the watcher and the existing `STOP` files).
    - Stopping the watcher would itself change the scene. Under the draft row, Track S processes are left as they are,
      so stopping it needs an author decision.
-2. **TASL-2.** The S0.5 collector of 12 Nov is bounded by its 8 h deadline (`--deadline 28800`), so it cannot still
-   be running unless the host froze. If the outage was network-only, the Track S servers (`trks_llm`), the watcher
+2. **TASL-2.** The S0.5 collector of 12 Nov ran with `--deadline 28800`: after 8 h it schedules no new unit and exits
+   once its current unit ends, so it should not still be running unless the host froze. If the outage was network-only, the Track S servers (`trks_llm`), the watcher
    and the TASL-2 GPU lease `~/r1_locks/gpu0.lock` may still be held. The outage report's rule applies on return:
    read-only census only, the scene preserved, and the author decides.
 3. **The lease file `~/r1_locks/gpu0.lock`** is a shared cooperative lock, not Track S property. Other tracks on

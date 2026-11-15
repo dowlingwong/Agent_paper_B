@@ -60,10 +60,10 @@ Proposition 8′ (index theorem; no independence condition) has two parts at eve
   at that history is (g − V\*_n)⁺.
 
 Call the run price **low** when g lies below V\*_n at every history whose proposal is not a rule-detectable no-op
-or duplicate. (On a bit-exact node, as both pilot nodes are, those have V\*_n = 0 and are skipped by rule; T4
+or duplicate. (On a bit-exact node, as both pilot nodes are (PLAN §3, l. 93 at `8709dce7`: restore is bit-exact on the CPU nodes; STATUS, L7), those have V\*_n = 0 and are skipped by rule; T4
 Corollary 8a.) Then:
 - the E1 rule executes every proposal that is not a rule-detectable no-op or duplicate;
-- the screening gain (g − V\*_n)⁺ is 0 throughout;
+- the screening gain (g − V\*_n)⁺ is 0 at every such history (at a no-op or duplicate it is g, earned by the rule's skip);
 - the only decision left that carries value is the E2 keep.
 
 In this regime no E1 rule, whether driven by a forecaster or by a dynamic threshold, can improve on executing every
@@ -115,7 +115,7 @@ In the pilot, **A2-U's index** (not the Bayes V\*_n) exceeded g at every eligibl
 
 ### A.x.4 A2-U failed its calibration gate; no claim is made about A2-U
 
-The pre-declared gate required the 80 % intervals to cover between 70 % and 90 % of audited increments, overall and in
+The gate fixed in the design before the pilot (design S0.5 (iii)) required the 80 % intervals to cover between 70 % and 90 % of audited increments, overall and in
 every stratum of the group's history length n_group with at least 20 predictions. A2-U failed it on both nodes:
 
 | n_group stratum | `digits_mlp` (n) | coverage | `tabular_mlp` (n) | coverage |
