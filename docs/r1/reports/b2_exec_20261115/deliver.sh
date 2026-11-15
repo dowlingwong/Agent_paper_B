@@ -4,7 +4,7 @@
 set -eu
 umask 077
 RUN_DIR=/home/dowling/r1_b1_engineering/b2_handover_8709_20261115_b2
-FILES="prechecks.sh inventory_after.sh create_marker.sh postwatch_check.sh preflight.sh start.sh receipt.sh publish_status.sh pins/expected.txt pins/venv_pins.txt"
+FILES="prechecks.sh inventory_after.sh create_marker.sh postwatch_check.sh preflight.sh start.sh receipt.sh publish_status.sh monitor.sh pins/expected.txt pins/venv_pins.txt"
 for f in $FILES; do
   [ -f "$f" ] || { echo "STOP: local file missing $f" >&2; exit 1; }
   b=$(basename "$f")
