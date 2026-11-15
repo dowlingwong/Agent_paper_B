@@ -9,9 +9,9 @@ set -o pipefail
 umask 077
 export PYTHONDONTWRITEBYTECODE=1
 CODE_COMMIT=d8aa956193ba1b24ae0b568a724b841beaa1651e
+PAPER_ROOT=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B
 SWEEP_INDEX="$PAPER_ROOT/results/r1/pilot/C3_sweep_index_20261028T033315Z.json"
 SWEEP_INDEX_SHA=812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab
-PAPER_ROOT=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B
 CHECKOUT=/work/dwong/htcondor_prep_20261114/w2_v3
 CLASSIFICATION="$PAPER_ROOT/results/r1/evidence/C3_sweep_classification_20261028.json"  # R1-SWEEP1-CLASSIFY (must be inside the paper root)
 CLASSIFICATION_SHA=bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc
