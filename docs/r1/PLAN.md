@@ -1170,6 +1170,12 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-TRACKS-STOP4-CONSEQUENCES | **作者对 R1-TRACKS-STOP4-END 后果清单（`proposals/PLAN_ROW_R1-TRACKS-STOP4-END_DRAFT_20261115.md` 末节，`mac-tracks-stop4-end-20261115` @ `795e518b`）的裁定。** (1) R1-TRACKS-FRAMING：结束于 EVIDENCE 之前不属于其任何预设结果；论文定位明确采用其最后一档的表述——“noise-aware DAC 以及它何时退化为一步决策”，由定理与合成对照支撑，绝不声称循环本身是一步的；RL 臂不作为必需。 (2) R1-BX-D10：“到约 2026-12-15 无 campaign 级结果”的 fallback 条件提前满足并生效——DAC 退化论证依靠定理加合成对照，论文明确写出；其 GPU 节点扩展（autoresearch、RL 类任务）及 GPU 节点 manager 的开放问题取消。 (3) R1-TRACKS-PICK-REPEAT-DEFER：无结果可等，失效。 (4) R1-TRACKS-HOST / R1-TRACKS-HOST-2：TASL-7 对 Track S 的分配结束；TASL-2 同样从 Track S 释放，但须在其恢复联网后先由实验 agent 只读清点（Track S 服务器、GPU lease、进程），清点经审查后才可另作他用；两台主机上的 Track S 现场保持不动。 (5) R1-T4-DI-FIX：附录草稿依赖 Proposition 8′，在作者完成并在 PLAN 记录证明检查之前，该节不进入稿件。 (6) R1-BX-D14：“Track S fallback ≈ 15 Dec 2026”目标不再约束任何事项。 (7) TASL-7 上的 `trks_watch`：B2 运行结束之前保持运行（B2 执行计划依赖其暂停行为并已清点其写入）；B2 结束后由实验 agent 按独立审查过的单元停止，不删除任何文件。 (8) R1-TRACKS-ADOPT 中“将会运行”的部分由 R1-TRACKS-STOP4-END 取代。 (9) RUNBOOK §1：pilot 数字只作为说明 Track S 为何停止的披露，不作为结果引用。 |
 
+### 15 November 2026 — Track P GPU environment on HTCondor (author)
+
+| ID | Decision |
+|---|---|
+| R1-HTC-QTORCH | **Q-TORCH：A — env3 按 R1-ENV-PIN 已提交的 GPU freeze 原样安装，causal-conv1d 按 8.0/8.9/9.0 编译；L40S/H200 smoke + E0 等价性通过前，集群上不跑 Track P 训练；V100S 不用于 Track P。** 依据：Q-TORCH（`reports/HTCONDOR_CHAIN_QUESTIONS_20261114.md`，`htcondor-chain-20261114` @ `13050d14`）称"没有已提交文件固定 cu124 wheel"，但 R1-ENV-PIN（26 Oct）与已提交 freeze `docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt`（121 行，TASL-7 逐行一致）已固定该环境。现镜像 `20261114-74820315` 的 env3（CPU freeze 换装 torch 2.6.0+cu124）不是该环境：缺 flash-linear-attention / fla-core 0.5.2、causal-conv1d 1.7.0、einops、ninja、wheel，filelock / setuptools 版本不同。现镜像 digest 不变，直到作者批准 v2；v2 的 env3 freeze 与已提交文件排序后 diff 为空；smoke 与 E0 等价性各自独立审查。V100S 无 bf16。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
