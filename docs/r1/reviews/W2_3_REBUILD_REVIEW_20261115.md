@@ -330,3 +330,53 @@ made (execution is held until then, per the plan). Run today, it STOPs cleanly a
 without creating an output directory or producing the defect label.
 
 VERDICT: ACCEPTED
+
+---
+
+## Post-run note — execution record of 2026-11-15T23:20:07Z (branch @ `c8cb547a`; 16 Nov 2026, 00:30 CET)
+
+**Scope.** Confirmation of the two post-acceptance unit fixes and of the run evidence: report
+`docs/r1/reports/W2_3_REBUILD_RUN_20261115.md`; copies
+`docs/r1/reports/w2_3_rebuild_20261115/run_20261115T232007Z/`. Read-only; nothing executed; no host access.
+
+**The two fixes are correct.** (1) `9bdc7c35` — the current script defines `PAPER_ROOT` before
+`SWEEP_INDEX="$PAPER_ROOT/…"`, so the `set -u` "PAPER_ROOT: unbound variable" abort cannot recur (and all
+paper-root paths now derive from that one assignment); (2) `e2544f24` — the verification block now treats
+`replay_checks_total` as the per-kind totals dict: `isinstance(rc, dict)`, `rows ∈ [288×20, 288×40]`,
+`rc["proposals"] == n_proposals`, plus the evidence `ledgers=288`, `runs_total=20`, `ledgers_differing=0`; the
+EVIDENCE-only `table_sha256` assertion is now unconditional and the manifest records it. **Honest note:** the
+round-3 accepted script contained the integer-5760 assumption — my acceptance missed that `_write_table` records
+`replay_checks_total` as a per-kind dict; the first deepthought run caught it before `REBUILD_OK`, the failing
+attempt was preserved (never deleted) and its table was byte-identical to the final one (same file SHAs), and the
+fix is correct — no data was affected.
+
+**Run evidence verified and internally consistent.** `manifest.json` `661f0fd8…`, `build.json` `7f56619c…`,
+`build.stdout` `945bfa77…`, `build.stderr` empty (`e3b0c442…`); manifest label **EVIDENCE**, featurizer
+`c3_features/v3`, prompt `trackp_prompt/v2`, `n_proposals 4999`, `n_configs 302`, `replay_checks_total
+{rows 5813, proposals 4999, zero_delta_violations 0, repeat_metric_violations 0, skipped_invalid 526,
+no_edit_rows 0}` (consistent with `build.stdout`), `files` hashes `proposals d0048567… / configs b585b727… /
+build 7f56619c…` equal to `build.json`'s `table_sha256` and to the manifest's `table.table_sha256`, sweep-index
+sha `812468e2…`, classification path+sha `bb6d891c…` (row R1-SWEEP1-CLASSIFY), W2-3 evidence PASS 288/20/0,
+environment python 3.12.2 / numpy 1.26.4 / df 147,423,232 kB, `code_commit d8aa9561…`, exact command with the
+author-directed `/work` paper root. The report documents the authority correctly: `main = 60ec768e` (fast-forward
+`36b89773 → 60ec768e`, no force; the `--no-ff` merge carrying the 90d9b7fe evidence moves, the
+`R1-SWEEP1-CLASSIFY` row and the sidecar), the paper root as a clean worktree whose `HEAD` equals
+`ls-remote origin refs/heads/main` (the code's `_verify_published`/`_verify_original_blobs` passed), the harness
+`6adf3859…` = the index pin, the code checkout clean before/after, no v1 write, no deletion, and the preserved
+attempt dirs.
+
+**Record adequacy: adequate, with two non-blocking improvements.** (i) the repo run copy contains
+`manifest.json`/`build.json`/`SHA256SUMS`/`build.stdout`/`build.stderr` but **not** `proposals.jsonl`/
+`configs.json`, which its `SHA256SUMS` references — so `sha256sum -c SHA256SUMS` in the repo copy reports the two
+data files as missing (they live in the host output dir `/work/…/tables/c3_features_v3_20261115T232007Z`, 842 KiB,
+documented in §2; their hashes are already bound by the manifest `files`/`table.table_sha256` and
+`build.json`). For a self-contained record, copy those two files (842 KiB) into the run dir, or add a one-line note
+that they remain on the host and the `SHA256SUMS` verifies there. (ii) the executed unit copy (`dfbfddfd…`, the
+committed script with the author-directed `PAPER_ROOT=` line) and the preserved attempt dirs are on the host only;
+the report records their names/SHAs, but committing the executed copy (or its one-line diff) into the run dir
+would make the provenance complete.
+
+**Verdict:** the two fixes are correct, the run evidence is consistent and adequate, and the execution record is
+accepted; the two record improvements above are non-blocking.
+
+VERDICT: ACCEPTED

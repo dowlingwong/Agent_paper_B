@@ -87,5 +87,8 @@ moved aside with a suffix; the `r1_sealed` refusal and the code's sealed-path gu
   approval) and the other standing gates. The synthetic exam `trackp_e0/v1` keeps the v1 budget line (W2-4 open).
 - The table manifest and `build.json` record the versions and provenance needed for the rebuild disclosure
   (feature version v3, prompt version v2, budget-line change, no v1/v2 mixing in the Track P table).
-- Evidence copies in the repository: `reports/w2_3_rebuild_20261115/run_20261115T232007Z/` (`manifest.json`,
-  `build.json`, `SHA256SUMS`, `build.stdout`, `build.stderr`).
+- Evidence copies in the repository: `reports/w2_3_rebuild_20261115/run_20261115T232007Z/` — **self-contained**
+  (`manifest.json`, `build.json`, `proposals.jsonl`, `configs.json`, `SHA256SUMS` (verifies all four with
+  `sha256sum -c`), `build.stdout`, empty `build.stderr`, the executed script copy `run_rebuild.executed.sh`
+  (SHA-256 `dfbfddfd…`) and its one-line diff `run_rebuild.executed.diff` against the reviewed copy). The executed
+  copy differs from the reviewed script only in the author-directed `PAPER_ROOT=` line.
