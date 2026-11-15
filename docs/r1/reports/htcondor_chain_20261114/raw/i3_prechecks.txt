@@ -1,0 +1,8 @@
+I3 pre-checks (read-only), 15 Nov 2026, deepthought
+- gpu image SIF: /work/dwong/htcondor_prep_20261114/chain_20261114/verify/gpu_20261115T001024Z.sif
+- curl in image: /usr/bin/curl, curl 7.76.1 (x86_64-redhat-linux-gnu) libcurl/7.76.1 OpenSSL/3.5.8
+- HF URL from inside the image:
+    HTTP/2 302 (redirect to us.aws.cdn.hf.co, x-linked-size: 4683073536)
+    HTTP/2 200 content-length: 4683073536
+  => the pinned revision URL is reachable from the image and the size matches EXPECT_BYTES.
+- TOpAS GPU slots: all ProvidesEtpCeph=true and HasDocker=true (18 A100, 13 V100S) -> docker universe gate HasDocker satisfied; POSIX /ceph/srv reads possible there (fallback, not used for I3).

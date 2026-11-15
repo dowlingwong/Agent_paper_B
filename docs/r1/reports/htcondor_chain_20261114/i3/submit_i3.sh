@@ -24,9 +24,14 @@ grep -E "pre-I3-$WHICH" /work/dwong/htcondor_prep_20261114/chain_20261114/gpu_av
   echo "model sha256 expected=509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c size=4683073536"
   echo "model choice reason: $WHICH (author order: NEMO2 L40S first, then TOpAS V100S once)"
 } > submission_note.txt
+echo "== one-at-a-time guard =="
+ACTIVE=$(condor_q dwong -af Cmd 2>/dev/null | grep -c "i3_run.sh" || true)
+echo "active_i3_jobs=$ACTIVE"
+[ "$ACTIVE" -eq 0 ] || { echo "STOP: an i3_run job is already active"; exit 3; }
 echo "== dry-run =="
 condor_submit -dry-run "/tmp/${JDL}.dry" "$JDL" | tee dryrun.log
-grep -E "^(JobUniverse|ContainerImage|ContainerImageSource|DockerImage|WantContainer|WantDocker|Requirements|RequestCpus|RequestMemory|RequestDisk|RequestGPUs|RemoteJob|Cmd|TransferInput)=" "/tmp/${JDL}.dry" | head -22 || true
+cp -f "/tmp/${JDL}.dry" dryrun.ad
+grep -E "^(JobUniverse|ContainerImage|ContainerImageSource|DockerImage|WantContainer|WantDocker|Requirements|RequestCpus|RequestMemory|RequestDisk|RequestGPUs|RemoteJob|Cmd|TransferInput)=" dryrun.ad | head -22 || true
 echo "== queue snapshot =="; condor_q dwong -af ClusterId ProcId JobStatus Cmd > queue_before.txt; wc -l < queue_before.txt
 echo "== submit =="; condor_submit "$JDL" | tee submit.txt
 echo "== queue after =="; condor_q dwong -af ClusterId ProcId JobStatus Cmd | grep i3_run.sh || true

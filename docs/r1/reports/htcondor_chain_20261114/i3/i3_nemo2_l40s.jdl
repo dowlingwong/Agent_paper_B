@@ -9,10 +9,10 @@ transfer_output_files = i3_identity.txt, i3_download.txt, i3_download.log, i3_sh
 output = i3.out
 error = i3.err
 log = i3.log
-+RequestWalltime = 2400
++RequestWalltime = 3600
 RequestCPUs = 4
 RequestMemory = 16000
-request_disk = 12000000
+request_disk = 25000000
 request_GPUs = 1
 +RemoteJob = True
 requirements = (TARGET.CloudSite =?= "BwForCluster-Nemo2") && (TARGET.GPUs_DeviceName =?= "NVIDIA L40S")
