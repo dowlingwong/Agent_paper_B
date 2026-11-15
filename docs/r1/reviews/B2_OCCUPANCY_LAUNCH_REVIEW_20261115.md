@@ -563,3 +563,71 @@ small PLAN residuals), re-run a static/`bash -u` smoke, and re-submit at a singl
 suffice.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 6 (targeted)
+
+**Re-checked at** the single pinned exec commit `ops-b2-exec-20261115` @
+**`4742a39a9e83f0cfc675e91136a34bb639e55b88`** (`origin/ops-b2-exec-20261115` = same; run HEAD
+unchanged at `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈18:40–18:55 CET. The
+shared worktree is clean at that commit. `git diff 797a6249..4742a39a` is exactly: `PLAN.md` (one-line
+re-run/conservative/expected.txt policy expansion), `prechecks.sh` (two lines: `cp … >&9` → `cat … >&9`,
+and `pane_pid=$pane_pid` → `pane_pid=$WATCHER_PANE_PID`), and the round-5 review record (committed
+review file); **every other exec file is byte-identical to the round-5 reviewed set** (bootstrap
+`432b278e`, deliver `97fcdbc4`, inventory_after `01e87cf5`, create_marker `2041094a`, postwatch
+`a24fa9a8`, preflight `a202f632`, start `3b0a3517`, receipt `ef2b244a`, publish_status `c3da9b38`,
+monitor `4079243b`, expected `711e8d7a`, venv_pins `3dddb9b2`, watcher_expected `7dff402b`; prechecks
+`ac577645`, PLAN `c8ffa7b9`). The prepared Mac status checkout was re-verified: branch
+`mac-b1-20261107`, HEAD `fcf52c09` = origin, clean. No SSH, no host command, no marker/STATUS touched by
+this review.
+
+### B-6 verified fixed
+
+- `prechecks.sh` L95 now reads `echo "WATCHER_IDENTITY_OK pane_pid=$WATCHER_PANE_PID sha=$wsha" >&9`;
+  `grep -n pane_pid` shows only the two tmux `-F` format strings and this pinned-variable echo — the
+  unassigned `pane_pid` expansion is gone. The line executes only after the pinned variable is sourced
+  (`. "$RUN_DIR/watcher_expected.txt"`, L90), `wsha` is assigned at L93, and `bash -n` passes; the
+  `set -u` abort before `PRECHECKS_PASS`/`prechecks.ok` is therefore removed. The `cp … >&9` noise is
+  fixed with `cat … >&9`. No other logic changed; the round-5 verified content of the rest of
+  `prechecks.sh` (fail-closed checks, watcher regex, venv/harness pins, nullglob, exclusive `.ok`) is
+  intact, and the two-line diff re-confirms it.
+
+### P-27 verified fixed
+
+- PLAN line 33 now carries the exact `mkdir -m 700 "$RUN_DIR/prechecks"` re-create command after the
+  `mv … prechecks.attempt-<UTC>` move, states the deliberately conservative policy (any running Track S
+  collector/`trks_llm`/P.3a or a held lease is a pre-marker STOP, while tonight's census is quiet and
+  passes), and marks `pins/expected.txt` as documentation-only (byte pinning is done with `git show`).
+  The rest of the PLAN is unchanged from round 5 (accepted-exec-commit pin, four subdirs, eleven files,
+  host receipt, exact invocations, STOP conditions, three-way base).
+
+### Smoke evidence (operator-reported, not independently verified)
+
+The Lead reports two host end-to-end runs of the reviewed `prechecks.sh` in throwaway directories
+(`/home/dowling/r1_b1_engineering/b2_smoke_prechecks.*`, real RUN_DIR and marker untouched): rc=0,
+`PRECHECKS_PASS`, watcher identity `pane_pid=1388760 sha=cf6884…`, `VENV_PINS_OK HARNESS_OK`, and the
+expected GPU/lease/collector/P.3a results, with no `cp` error in the second run. This review cannot
+re-run it (no SSH); it is supplemental operator evidence, consistent with the static fix, and the smoke
+directories should be preserved with the run record (no deletion).
+
+### Residual notes (not blocking)
+
+- **Delivery pin/process.** The reviewed script bytes are `4742a39a` (the commit also contains the
+  round-5 review). When this round-6 review is committed as a review-record-only follow-up (the usual
+  pattern), delivery may pin that follow-up commit or `4742a39a` (same script SHAs); `REVIEWED_EXEC_SHA`
+  must equal local HEAD and origin, the worktree must be clean, and the pin must be recorded in the
+  delivery receipt. Do not deliver from the dirty review worktree.
+- The two smoke directories and the prechecks `tmux_panes.txt` should be kept with the attempt record;
+  no deletion/retry is implied.
+
+### Verdict
+
+The round-5 B-6 regression and the PLAN residuals are fixed; the diff is minimal and limited to the two
+intended files; no new BLOCKING/MAJOR issue was found and the previously reviewed controls remain
+byte-identical. **The marker-first handover may start** under the monitored order
+`bootstrap → deliver → prechecks → marker → STATUS → watcher → postwatch → preflight → launch`, with the
+delivery pinned to a clean commit containing these script SHAs (recorded in the delivery receipt) and
+with the prechecks STOP conditions/evidence preserved.
+
+VERDICT: ACCEPTED
