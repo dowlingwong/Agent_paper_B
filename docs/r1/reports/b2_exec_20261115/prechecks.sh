@@ -104,5 +104,5 @@ for repo in /home/dowling/exam-x/work/agent_paper_B /home/dowling/r1_trackp/Agen
 done >&9 2>&1
 echo "=== done $(date -u +%FT%TZ) ===" >&9
 printf 'PRECHECKS_PASS\n' >> "$OUT"
-set -C; : > "$OK" || { echo "cannot write prechecks.ok exclusively" >&2; exit 1; }
+set -C; printf 'PRECHECKS_PASS\n' > "$OK" || { echo "cannot write prechecks.ok exclusively" >&2; exit 1; }
 echo "PRECHECKS_PASS $OUT"

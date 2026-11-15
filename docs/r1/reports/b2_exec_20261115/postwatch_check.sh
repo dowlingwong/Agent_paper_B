@@ -56,5 +56,5 @@ pgrep -a -f "P\.3a|p3a" > "$PW/p3a_after.txt" 2>&1 && stop "P.3a running"
 pgrep -a -f "python -m r1\.tracks\.collect .*--stop-file" >/dev/null 2>&1 && stop "collector still running"
 [ -e /home/dowling/r1_locks/trackx_evidence.active ] || stop "marker disappeared"
 echo "POSTWATCH_PASS" >> "$PW/postwatch.log"
-set -C; : > "$PW/postwatch.ok" || { echo "cannot write postwatch.ok exclusively" >&2; exit 1; }
+set -C; printf 'POSTWATCH_PASS\n' > "$PW/postwatch.ok" || { echo "cannot write postwatch.ok exclusively" >&2; exit 1; }
 echo "POSTWATCH_PASS"
