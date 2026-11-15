@@ -55,13 +55,14 @@ cd "$PAPER" || stop "cannot enter checkout"
 set -C
 : > "$CAP/preflight.log" || stop "cannot create preflight.log exclusively"
 : > "$CAP/preflight.exit" || { echo "cannot create preflight.exit" >&2; exit 1; }
-if "$PY" -B -m r1.scripts.b1_host_preflight --head "$HEAD" --out "$OUT" > "$CAP/preflight.log" 2>&1; then rc=0; else rc=$?; fi
+set +C   # the header files exist now; noclobber must not block the run/record redirections
+if PYTHONPATH="$PAPER" "$PY" -B "$RUN_DIR/b2_host_preflight.py" --head "$HEAD" --out "$OUT" > "$CAP/preflight.log" 2>&1; then rc=0; else rc=$?; fi
 printf '%s\n' "$rc" > "$CAP/preflight.exit"
 grep -Fq "PREFLIGHT_PASS" "$CAP/preflight.log" || stop "PREFLIGHT_PASS line missing"
 [ "$rc" -eq 0 ] || { echo "STOP: preflight rc=$rc" >&2; exit "$rc"; }
 nvidia-smi --query-compute-apps=pid,process_name,used_gpu_memory --format=csv,noheader | grep -q . && stop "GPU compute app present after preflight"
 flock -n /home/dowling/r1_locks/gpu0.lock true || stop "gpu0.lock busy after preflight"
 [ ! -e "$RUN_DIR/preflight.ok" ] || stop "preflight.ok exists"
-set -C; printf 'PREFLIGHT_OK\n' > "$RUN_DIR/preflight.ok" || stop "cannot write preflight.ok exclusively"
+printf 'PREFLIGHT_OK\n' > "$RUN_DIR/preflight.ok" || stop "cannot write preflight.ok"
 echo "PREFLIGHT_OK rc=0"; tail -5 "$CAP/preflight.log"
 exit 0
