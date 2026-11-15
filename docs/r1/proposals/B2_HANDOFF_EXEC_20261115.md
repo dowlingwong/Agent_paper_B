@@ -14,7 +14,8 @@ launches anything.
 | STOP 5 finalists (x5_rule_v2, rule sha `53018aa7…16ad`) | **`[gemma4_31b]`**: the only eligible candidate with D28 pass. With one finalist, gemma4_31b is the pick whatever its B2 score; there is no second proposer | `reports/B1_STOP5_FINALISTS_20261114.md`; review `reviews/B1_STOP5_FINALISTS_REVIEW_20261114.md`, accepted at `7bdce776` (`mac-b2-plan-20261114`) |
 | `b1_analysis`, `b1_analysis_sha256` | `docs/r1/reports/b1_d_20261113_evidence/complete_batch_verifier.json`, `07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc` (the run's verified complete-batch analysis; byte-copied onto this branch from `fcf52c09`) | as above |
 | `b2_instances_per_node` | **4** (seeds 9011–9014), by the pre-declared precision rule; n_j = 4 / 3 / 3; under the author's cap of 10 | `proposals/B2_POWER_PLAN_RULE_20261114.md`; review `reviews/B2_POWER_PLAN_REVIEW_20261114.md`, accepted at `5a317b14` |
-| Invalid-trial rules for B2 | R1-EXAM-B1-TRUNCATION-INVALID and -MODEL-OUTPUT-INVALID extended unchanged | `proposals/PLAN_ROW_R1-EXAM-B2-INVALID-TRIALS_DRAFT_20261114.md`; review accepted at `d1ac6678` |
+| Invalid-trial rules for B2 | R1-EXAM-B1-TRUNCATION-INVALID and -MODEL-OUTPUT-INVALID extended unchanged | `proposals/PLAN_ROW_R1-EXAM-B2-INVALID-TRIALS_DRAFT_20261114.md`; review `reviews/B2_INVALID_TRIALS_ROW_REVIEW_20261114.md`, accepted at `d1ac6678` |
+| PLAN-row drafts to paste | `proposals/PLAN_ROW_R1-EXAM-B2-POWER-PLAN_DRAFT_20261114.md` (rev 2, `5a317b14`) and `proposals/PLAN_ROW_R1-EXAM-B2-INVALID-TRIALS_DRAFT_20261114.md` (rev 2, `d1ac6678`) | both on `mac-b2-plan-20261114` @ `3533b545` (not on this branch) |
 | B2 code (reviewed base) | `37282ec37a715feaaea48dd621ae08678424accc` | `reviews/B2_CODE_UNIT_REVIEW_20261114.md` (`mac-b2-code-20261114`), `Accepted commit: 37282ec37a715feaaea48dd621ae08678424accc`; report `reports/B2_CODE_UNIT_20261114.md` |
 
 ## 1. What the author commits on the run HEAD (three items)
@@ -86,34 +87,57 @@ Host-only checks (the Stage A files on TASL-7, the clean committed run HEAD, the
 
 - **Primary.** gemma4_31b, thinking off, on 3 nodes × 4 instances = **12 roots**, W = 20, LLM cap 80. At the end of each root the incumbent's editable files are audited on 9201–9210, and `final_y` is the mean of the ten metrics.
 - **Descriptive top-3 rerun.** gemma4_31b is switchable and ranked first, so the runner also reruns it thinking-on, descriptive only, on the same grid: another **12 roots**. It never changes the pick. gemma4_31b's B1 thinking-on D28 failed; the rerun is still run by the code as reviewed.
-- **Total: 24 roots.** For scale, B1 ran 260 roots in about 20 h. The per-proposal audits use 10 seeds, as B1's used 4 (code unit report §6).
-- **Analysis after the run.** `python -m r1.exam.analyze b2 --batch <batch> --config r1/scripts/configs/exam_b2_v2.json --rule r1/exam/rules/x5_rule_v2.yaml --rule-sha256 53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad`. It ranks only after the grid verifier passes. With one finalist the "rule top" is gemma4_31b; the B2 report gives its per-node final audited Y and the descriptive rerun.
+- **Total: 24 roots.** For scale, B1 `_d` ran 260 roots with about 13.6 h of dedicated server time; launch to marker retirement was about 20 h. B2's per-proposal audits use 10 seeds where B1's used 4 (code unit report §6).
+- **Analysis after the run,** from the clean staged checkout: `python -m r1.exam.analyze b2 --batch <batch> --config r1/scripts/configs/exam_b2_v2.json --rule r1/exam/rules/x5_rule_v2.yaml --rule-sha256 53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad`. It ranks only after the grid verifier passes. With one finalist the "rule top" is gemma4_31b; the B2 report gives its per-node final audited Y and the descriptive rerun.
 
 ## 5. Start order — the marker first
 
-The author asked that B2 create its marker first, so that the Track S watcher pauses automatically. The watcher (`trks-watch`, runbook §11.4) polls every 60 s for `~/r1_locks/trackx_evidence.active`. When it sees the marker it does three things:
-- touches `STOP` in every Track S phase directory;
-- waits for the LLM collectors to stop (up to 1 h, then logs `FORCED`);
+The author asked that B2 create its marker first, so that the Track S watcher pauses automatically. The watcher (`trks-watch`, Track S runbook §11.4) polls every 60 s for `~/r1_locks/trackx_evidence.active`. When it sees the marker it does three things:
+- touches `STOP` beside every `manifest.json` under `~/r1_tracks/out`;
+- waits for the LLM collectors (`--stop-file`) to stop, for up to 1 h, then logs `FORCED` and continues anyway;
 - kills `trks_llm` ("servers stopped; lease released").
 
-1. **Before the marker:**
-   - the run HEAD has been reviewed and the author gate passed on it;
-   - the read-only TASL-7 occupancy check, the host preflight (B1 pattern, new absent `--out` and capture directory) and the handover check have been re-reviewed for this HEAD and run ID;
-   - no B1, B2 or Track P job is running, and the Track P marker is absent;
-   - no other user's job would be preempted (R1-TASL7-AGENT-OCCUPANCY-07NOV).
-2. **Create the marker** with the reviewed tool:
-   `python r1/scripts/b1_o2_marker.py create --phase b2 --lock-dir ~/r1_locks --status <STATUS.md of the checkout> --run-id <run ID> --head <run HEAD>`.
-   Keep its receipt in the B2 handover directory. It writes the STATUS heading "Track X B2 running".
-3. **Wait for the watcher**, as recorded in `~/r1_tracks/logs/watch.log`:
-   - `priority marker seen (…/trackx_evidence.active): pausing`;
-   - then either `servers stopped; lease released`, or no Track S collector or server running at all (at present Track S `digits_mlp` is paused and TASL-2 is unreachable);
-   - if `FORCED` appears, STOP and report.
+The procedure follows the reviewed B1 hand-over pattern (`proposals/B1_TASL7_O2_EXECUTABLE_DRAFT_20261107.md`, "Marker and STATUS operation").
 
-   Then confirm on the host: `nvidia-smi` lists no compute app, `flock -n ~/r1_locks/gpu0.lock true` succeeds, and P.3a is at its safe pause.
-4. **Start B2** from the staged checkout root:
-   `python -m r1.scripts.exam_runner b2 --config r1/scripts/configs/exam_b2_v2.json --out /home/dowling/exam-x/work/b2_<run ID>`, under the same lease guardian and environment as B1 `_d` (`AR_HARNESS_ROOT` = the staged harness; `LLAMACPP_CACHE_PROMPT` unset). The runner acquires `~/r1_locks/gpu0.lock` itself.
-5. **During B2**, Track S and Track P stay paused. Any STOP is preserved and reported, never retried. The invalid-trial classes do not stop the run; everything else in hand-off draft §6 does. An existing production root is never resumed.
-6. **After the last B2 job**, or when B2 is stopped for good, retire the B2 marker with `b1_o2_marker.py retire` and its receipt, under its own reviewed post-run unit. Track S resumes by hand ("marker gone: resume by hand …"). If a marker does not match its receipt, STOP.
+1. **Gates before anything on the host.**
+   - The run HEAD has been reviewed and the author gate passed on it.
+   - The three-way base check holds: the `Reviewed base:` line of `reviews/B2_CODE_UNIT_REVIEW_20261114.md`, its last `Accepted commit:` and the READY.txt entry all name `37282ec37a715feaaea48dd621ae08678424accc`. If they disagree, STOP.
+   - The read-only TASL-7 occupancy check has been re-reviewed for this HEAD and run ID.
+2. **Read-only site inventory, before the marker.** Re-check every item at B2 start; earlier observations are snapshots: for example, Track S `digits_mlp` was paused and TASL-2 unreachable on 14 Nov.
+   - `~/r1_locks` holds no `trackx_evidence.active` (the `_d` marker was retired on 14 Nov; the tool would refuse to overwrite one anyway) and no Track P marker.
+   - `trks_watch` is running. Record which collectors (`pgrep -a -f 'python -m r1\.tracks\.collect .*--stop-file'`), which `trks_llm` servers, and which manifest parents and existing STOP entries the watcher will touch.
+   - Record P.3a as absent, stopped or running. If it is running, wait for its owner's safe pause; never signal it.
+   - If a Track S collector is running and cannot be expected to stop at a unit boundary within the watcher's 1 h, do not create the marker; wait and report. A `FORCED` line means the servers were already killed, so it must be prevented, not only reported.
+   - No B1, B2 or other GPU job of another user runs (R1-TASL7-AGENT-OCCUPANCY-07NOV).
+3. **Create the marker.** Use a new B2 handover directory (`RUN_DIR`, absent, under the operator's own handover area) and a separate owned local receipt STATUS file. **Do not use the run checkout's tracked `docs/r1/STATUS.md`**: the tool appends to `--status`, and a dirty run checkout makes the runner STOP ("committed config verification failed: checkout is not clean") after Track S has already been paused.
+   ```bash
+   set -eu; umask 077
+   mkdir "$RUN_DIR"
+   HEAD=$(git -C "$CHECKOUT" rev-parse HEAD)
+   test -z "$(git -C "$CHECKOUT" status --porcelain)"
+   set -C
+   python3 "$CHECKOUT/r1/scripts/b1_o2_marker.py" create --phase b2 \
+     --lock-dir "$HOME/r1_locks" --status "$LOCAL_STATUS" --run-id "$RUN_ID" --head "$HEAD" \
+     > "$RUN_DIR/marker-receipt.json"
+   ```
+   A failed write or an empty receipt is a STOP; preserve everything.
+4. **Publish the running STATUS** from a clean, separate checkout of `mac-b1-20261107`, or the branch the author names (R1-EXAM-B1-STATUS-FEATURE-07NOV pattern). Append `## <date> — Track X B2 running` with the run ID and the run HEAD, commit as Dowling Wong, push without force, and verify the remote. Never use the run checkout for this.
+5. **Observe the watcher.** In `~/r1_tracks/logs/watch.log`, look for `priority marker seen (…/trackx_evidence.active): pausing`, then `servers stopped; lease released`, or confirm that no Track S collector or server was running.
+   - Inventory the STOP files it touched.
+   - `FORCED`, an unexpected touched path or a lost identity is a STOP.
+   - Then confirm that `nvidia-smi` lists no compute app, that `flock -n ~/r1_locks/gpu0.lock true` succeeds, and that P.3a is safely paused or absent.
+6. **Host preflight and handover check, now.** These need an idle GPU and take `gpu0.lock`, so they run only after step 5. Follow the B1 pattern (`proposals/B1_FINAL_HOST_PREFLIGHT_INVOCATION_20261108.md`, with a new absent `--out` and capture directory; `proposals/B1_TASL7_O2_EXECUTABLE_DRAFT_20261107.md` with `reports/B1_TASL7_HANDOVER_COMMAND_BOUNDARY_20261107.md`), re-reviewed for this HEAD and run ID. If either fails, STOP with the marker preserved and report. Track S stays paused, and nothing is retried.
+7. **Start B2** from the clean staged checkout root:
+   `python -m r1.scripts.exam_runner b2 --config r1/scripts/configs/exam_b2_v2.json --out /home/dowling/exam-x/work/b2_<run ID>`.
+   - Use the environment of B1 `_d`: `AR_HARNESS_ROOT` = the staged harness, `LLAMACPP_CACHE_PROMPT` unset, the frozen venv.
+   - The runner acquires `~/r1_locks/gpu0.lock` itself and passes it to its servers and workers.
+8. **During B2,** Track S and Track P stay paused.
+   - Any STOP is preserved and reported, never retried.
+   - The invalid-trial classes do not stop the run; everything else in hand-off draft §6 does.
+   - An existing production root is never resumed.
+   - Nothing of B1's runs (`_a`, `_b`, `_c`, `_d`) is moved, overwritten or deleted.
+   - Monitor at least every 30 min.
+9. **After the last B2 job,** or when B2 is stopped for good: retire the B2 marker with `b1_o2_marker.py retire` and its receipt (`> "$RUN_DIR/marker-retirement.json"`), under its own reviewed post-run unit. Publish `B2 done` or `B2 stopped` on the STATUS branch. Track S resumes only under its own reviewed procedure. A marker that does not match its receipt is a STOP.
 
 ## 6. What to send back
 
