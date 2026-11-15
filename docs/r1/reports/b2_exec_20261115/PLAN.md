@@ -15,14 +15,14 @@
 | venv (B1 `_d`) | `/home/dowling/exam-x/work/venv` (Python 3.13.4) |
 | RUN_DIR | `/home/dowling/r1_b1_engineering/b2_handover_8709_20261115_b2` (new, absent) |
 | local receipt STATUS | `$RUN_DIR/status-receipt.md` (**not** the run checkout's tracked STATUS) |
-| gate+preflight capture | `/home/dowling/r1_b1_engineering/b2_final_gate_preflight_8709_20261115_a` (new) |
+| gate+preflight capture | `/home/dowling/r1_b1_engineering/b2_final_gate_preflight_8709_20261115_b` (post-review; `_a` kept as the pre-review dry run) |
 | preflight output | `/home/dowling/exam-x/work/b2_host_preflight_8709_20261115_a` (new, direct child of `work_dir`, created by the preflight) |
 | marker | `~/r1_locks/trackx_evidence.active` (must be absent now) |
 | published STATUS branch | `mac-b1-20261107` (`docs/r1/STATUS.md`), clean separate checkout |
 
 ## Order (hand-off §5)
 
-1. **Gates.** HEAD review accepted (independent reviewer, exact HEAD); author gate on that HEAD returns the HEAD (done: `GATE_PASS 8709dce7… 53018aa7… phase b2`, capture `b2_final_gate_preflight_…/gate.log`); three-way base check (`Reviewed base:`, last `Accepted commit:`, READY.txt) — see OPEN QUESTION about READY.txt; occupancy check + this plan re-reviewed for this HEAD and run ID.
+1. **Gates.** HEAD review accepted (independent reviewer, exact HEAD); author gate on that HEAD returns the HEAD (post-review re-run: `GATE_PASS 8709dce7… 53018aa7… phase b2`, capture `b2_final_gate_preflight_8709_20261115_b/gate.log`; the earlier `_a` run is the pre-review dry run); three-way base check (`Reviewed base:`, last `Accepted commit:`, READY.txt) — see OPEN QUESTION about READY.txt; occupancy check + this plan re-reviewed for this HEAD and run ID.
 2. **Read-only site inventory → `$RUN_DIR/prechecks.log`** (`prechecks.sh`): GPU UUID/compute apps, `gpu0.lock` free, disk, `~/r1_locks` markers (Track X/P absent), watcher pane/PID/log position, collectors (`--stop-file`), `trks_llm`, P.3a, all `manifest.json` parents + sibling `STOP` state and hashes, predecessor `_d` retirement verified. A running collector that cannot stop within 1 h, a `FORCED` risk, P.3a running, or any ambiguity is a STOP (no marker).
 3. **Create the marker first** (`create_marker.sh`, `b1_o2_marker.py create --phase b2`) into a new `$RUN_DIR`, with the local receipt STATUS. Empty/failed receipt = STOP.
 4. **Publish the running STATUS** from a clean separate checkout of `mac-b1-20261107` (Mac side), commit as Dowling Wong, push without force, verify remote.

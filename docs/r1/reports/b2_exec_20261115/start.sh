@@ -17,7 +17,7 @@ die() { printf 'STOP: %s\n' "$*" >&2; exit 1; }
 [ -d "$RUN_DIR" ] && [ ! -L "$RUN_DIR" ] || die 'run directory missing or symlink'
 [ -x "$PY" ] || die 'Python unavailable'
 [ -e /home/dowling/r1_locks/trackx_evidence.active ] || die 'marker absent'
-[ "$(cat /home/dowling/r1_b1_engineering/b2_final_gate_preflight_8709_20261115_a/preflight.exit 2>/dev/null)" = 0 ] || die 'preflight not passed'
+[ "$(cat /home/dowling/r1_b1_engineering/b2_final_gate_preflight_8709_20261115_b/preflight.exit 2>/dev/null)" = 0 ] || die 'preflight not passed'
 cd "$PAPER" || die 'cannot enter checkout'
 export GIT_OPTIONAL_LOCKS=0 GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
 export AR_HARNESS_ROOT="$HARNESS" PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1
