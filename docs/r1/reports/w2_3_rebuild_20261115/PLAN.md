@@ -18,12 +18,17 @@ branch, which also carries `FEATURIZER_VERSION = c3_features/v3` and `PROMPT_VER
 **Command (the only data-producing step).**
 
 ```
-cd <checkout> && PYTHONPATH=. python3 -m r1.c3.dataset build-sweep \
-  --index <pinned sweep index> --paper-root <paper root> --out <NEW versioned dir>
+cd <checkout> && PYTHONPATH=. python3 -B -m r1.c3.dataset build-sweep \
+  --index <pinned sweep index> --paper-root <paper root> \
+  --classification <results/r1/evidence/C3_sweep_classification_20261028.json> --out <NEW versioned dir>
 ```
 
-`build_from_sweep` performs the replay checks, the D8 authority guard on the pinned index, and writes
-`proposals.jsonl`, `configs.json`, `build.json`. If it refuses, the unit STOPs and reports why.
+`--classification` implements the author's **R1-SWEEP1-CLASSIFY** row (the sweep-1 batch is the EVIDENCE batch;
+the index's PILOT/ENGINEERING_ONLY strings are a runner defect), so the table label is `EVIDENCE` and the
+EVIDENCE-only `table_sha256` provenance is produced; the sidecar is pinned at SHA-256 `bb6d891c…`. In this mode
+the reviewed code creates the output directory itself (`mkdir(exist_ok=False)`), so the unit creates only the
+parent (`tables/`) and writes the build stdout/stderr to a **separate** `logs/rebuild_<UTC>/` directory (outside
+`OUT`); if the code refuses, the unit STOPs and reports why, preserving `OUT`/logs.
 
 **Output (never overwrite).** A new directory `…/w2_3_rebuild_20261115/tables/c3_features_v3_<UTC>/` (the unit
 creates it 0700 and refuses if it exists). It adds `manifest.json` with: `code_commit`, `featurizer_version`,
@@ -32,6 +37,17 @@ the table label/row/config/replay-check counts and the `build.json` sweep-index 
 `proposals.jsonl`/`configs.json`/`build.json`, the v1-never-overwritten policy, and the version disclosure.
 Then `SHA256SUMS` and an exclusive `REBUILD_OK`. v1 tables/outputs are never written; a new versioned dir is
 the only destination.
+
+**Review round 1 (W2_3_REBUILD_REVIEW_20261115.md) answers.** R1: classification mode with the pinned sidecar and
+logs outside `OUT`; R2: `paper_root` is a recorded input parameter (with the output parent as a separate key);
+R3: `PYTHONDONTWRITEBYTECODE=1` + `python3 -B` on every invocation (no `__pycache__` writes into the checkout);
+R4: the mixing statement is scoped to the Track P table build path and the manifest discloses the budget-line
+change and the synthetic exam's retained v1 budget line (W2-4 open); R5: `replay_checks_total == 288 × 20 = 5760`
+is asserted and the evidence ledgers/runs/differing counts are recorded; R6: python/numpy versions, a ≥2 GiB
+`df` preflight and the exact build command are recorded. NITs: `SHA256SUMS` is self-checked before `REBUILD_OK`,
+the no-v1-token scan covers only the table files (the manifest disclosure names v1 legitimately), the unit-level
+`r1_sealed` check is a lexical path check (the reviewed code's `refuse_sealed` covers inputs), and the repo W2-3
+evidence path/SHA is recorded next to the `/work` copy.
 
 **Version discipline.** The script reads `FEATURIZER_VERSION` and `PROMPT_VERSION` from the reviewed code and
 refuses unless they are exactly `c3_features/v3` and `trackp_prompt/v2`; it also refuses if the code defines
