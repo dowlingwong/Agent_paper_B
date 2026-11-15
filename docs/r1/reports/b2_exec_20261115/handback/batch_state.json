@@ -1,0 +1,150 @@
+{
+  "schema": "exam_batch/v1",
+  "label": "EXAM",
+  "execution_label": "EVIDENCE",
+  "phase": "b2",
+  "binding": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b",
+  "rule_sha256": "53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad",
+  "completed": {
+    "gemma4_31b/b2/off/digits_mlp__s9011": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/digits_mlp__s9011/campaign_manifest.json",
+      "sha256": "4e67766f08d2f3c640e10a36a6bf445f9cbc2bb049b3ee55a5705d921295a611",
+      "post_check_sha256": "693c7162b5ee1269c90b799f84fe496651dfafbcdf0d31b22d41114d83445ec5"
+    },
+    "gemma4_31b/b2/off/digits_mlp__s9012": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/digits_mlp__s9012/campaign_manifest.json",
+      "sha256": "4d105201e2d1146986fd21b6b52a3c247007870171f2933c66afa727ab191df6",
+      "post_check_sha256": "eeb8a673d7a8c154cc056ce8cdb8dee662cf3c6a1c77468c443fa030d55cd82c"
+    },
+    "gemma4_31b/b2/off/digits_mlp__s9013": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/digits_mlp__s9013/campaign_manifest.json",
+      "sha256": "498c374645ecccdc715b4f1286195b1c396944e3ba264107b68d3a8b0b2e17ca",
+      "post_check_sha256": "ae73b6e012c5d78d861577f19b56197030b3144319f02833f9be449a85f7ad09"
+    },
+    "gemma4_31b/b2/off/digits_mlp__s9014": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/digits_mlp__s9014/campaign_manifest.json",
+      "sha256": "505d2e1183a5cabf57151958106b1d9948ec80c90871aee366d7411e7148434c",
+      "post_check_sha256": "9b3bd712124077dfef1368f4f599d0011023776f830bb066587e47a03f55313e"
+    },
+    "gemma4_31b/b2/off/openml_credit_approval__s9011": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/openml_credit_approval__s9011/campaign_manifest.json",
+      "sha256": "8b322cdf6937566722c4708abbc22abc00469f89c3514b6d9914519ceec8cabd",
+      "post_check_sha256": "36bdcb453b89dc144a4863c222cd7221ab5a5682d06172e53b96d8751f57c0cb"
+    },
+    "gemma4_31b/b2/off/openml_credit_approval__s9012": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/openml_credit_approval__s9012/campaign_manifest.json",
+      "sha256": "dda651357279cfd49f15523b771ae26758894aa27d0616be43fc708b2767a044",
+      "post_check_sha256": "7e813a24312d4a4fb3b8a749f943e74119ab7de8cc252e12e33e28044c7a8da8"
+    },
+    "gemma4_31b/b2/off/openml_credit_approval__s9013": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/openml_credit_approval__s9013/campaign_manifest.json",
+      "sha256": "6b310edd71d9497a220dc8e10b8aff87b4a68c5d76503e1eb137f7f46cc27069",
+      "post_check_sha256": "0e2f526c0056cf1fefabcb5b2054d6fa6094bbbbdfbd75c2285371f8ed0c619f"
+    },
+    "gemma4_31b/b2/off/openml_credit_approval__s9014": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/openml_credit_approval__s9014/campaign_manifest.json",
+      "sha256": "5cd3ee902318776eeaf2358418c13c38c97fd7237b89109265edcc38aaa3b326",
+      "post_check_sha256": "f2e64bdbcc82776d61b669e636ff40f02683ed44a8ea72ca02dab10f43e23b3a"
+    },
+    "gemma4_31b/b2/off/openml_ionosphere__s9011": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/openml_ionosphere__s9011/campaign_manifest.json",
+      "sha256": "803358c8c26a29c29f873bb68eba31e12c28004472a4b855209ffff00a1d7642",
+      "post_check_sha256": "31a67d16a56f0b8a191ae4ed1c394adcff37236d03050bd0bc8aa91f7c69e7e1"
+    },
+    "gemma4_31b/b2/off/openml_ionosphere__s9012": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/openml_ionosphere__s9012/campaign_manifest.json",
+      "sha256": "f73d86f854adebbcdd62675e74d14f8c0a84cf883ac103c0cd3337d32a9ea446",
+      "post_check_sha256": "8e1ac2d25120daa123086546d3c6cb7ee899d5669fd49979b34e9b87dc214434"
+    },
+    "gemma4_31b/b2/off/openml_ionosphere__s9013": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/openml_ionosphere__s9013/campaign_manifest.json",
+      "sha256": "3e78dd613f397adeb36bef2fa680a3f0b9641081a66337bdd3c65a4acd79463e",
+      "post_check_sha256": "c1c0462aab14d9e053011384bf3cc83545db77c16ff6252979bdc7c7d1eb4f19"
+    },
+    "gemma4_31b/b2/off/openml_ionosphere__s9014": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/off/openml_ionosphere__s9014/campaign_manifest.json",
+      "sha256": "f2f59df3a6150fad6c86144e068cf7ea29341f8efe113d7e51b0d0b751a93cb9",
+      "post_check_sha256": "17ce23536f643a0e1455196894014066c946962009f451c6a2f8bdb0b357b553"
+    },
+    "gemma4_31b/b2/on/digits_mlp__s9011": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/digits_mlp__s9011/campaign_manifest.json",
+      "sha256": "83e525a6a2281fc9c89f89b5bb22307236d5425ee8a76b8e56fe379a02c6f183",
+      "post_check_sha256": "cfb1ba05aae0c19568d35bcf7d3ffd2e812d46273c32adb2bb012114854ed5ea"
+    },
+    "gemma4_31b/b2/on/digits_mlp__s9012": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/digits_mlp__s9012/campaign_manifest.json",
+      "sha256": "de794b058fff7926bee5fc3b7c7d209af6b4f1a0c8d82d2fc5f6c674c4339f47",
+      "post_check_sha256": "abb8735cf0e974be601c9dbccfa7d7926fe442b66cb9d44040ce91434760b0fd"
+    },
+    "gemma4_31b/b2/on/digits_mlp__s9013": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/digits_mlp__s9013/campaign_manifest.json",
+      "sha256": "d720bf14149ccb557a453eb96a44168a4cf498befc80c75811c4d74fd36a9ecc",
+      "post_check_sha256": "231175411294f4f050f6b7f70a2123d085212e99cccae11c8608ce548f535236"
+    },
+    "gemma4_31b/b2/on/digits_mlp__s9014": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/digits_mlp__s9014/campaign_manifest.json",
+      "sha256": "4ba5f53fe14923f737685d10597aed6fd55751589b30967935861a75f2694a9f",
+      "post_check_sha256": "daad38f0538da7b6e841b13cf4751d4203c56696d46d44433d634ec02a1b91cb"
+    },
+    "gemma4_31b/b2/on/openml_credit_approval__s9011": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/openml_credit_approval__s9011/campaign_manifest.json",
+      "sha256": "68e86a58d9fb257d8b9246e3d8a606d86013338abf665af058415f7be5624eb6",
+      "post_check_sha256": "a120cc543419f77b4a7ad90a9969cbc750f889967ca1c26c7cc27a001ca61980"
+    },
+    "gemma4_31b/b2/on/openml_credit_approval__s9012": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/openml_credit_approval__s9012/campaign_manifest.json",
+      "sha256": "10c1bbbbf2a66705706455af1d0b9bbbbd4f266edfb42db390edbe4c00d8231b",
+      "post_check_sha256": "5486a27bfe1227d9ad5511279f8bb369273780981968831291a245cee8a8a03f"
+    },
+    "gemma4_31b/b2/on/openml_credit_approval__s9013": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/openml_credit_approval__s9013/campaign_manifest.json",
+      "sha256": "07a177afe2fbeeca4d73676d981615ee7d2d6be5c43d041739b0f64568c61d53",
+      "post_check_sha256": "568d8bb25fa34cdcd367cee6e9f72ee21f9944fabc48ccedfe6941ebd5d6f681"
+    },
+    "gemma4_31b/b2/on/openml_credit_approval__s9014": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/openml_credit_approval__s9014/campaign_manifest.json",
+      "sha256": "0f093be6a7c48674b009f9da3665184066b32bc60742c8509a499692c246d116",
+      "post_check_sha256": "6968b0ee356c2911bf5d3f01127207344f60850f729bb68b3f97069e30c11264"
+    },
+    "gemma4_31b/b2/on/openml_ionosphere__s9011": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/openml_ionosphere__s9011/campaign_manifest.json",
+      "sha256": "627f5315606bc5014a7cb7035dfece1ae232d0636e9f559208e6dabe30f31622",
+      "post_check_sha256": "1c5e866c70781ba282b2cdacc4d8906a5b34495f04fdd0e2b89290ea17070588"
+    },
+    "gemma4_31b/b2/on/openml_ionosphere__s9012": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/openml_ionosphere__s9012/campaign_manifest.json",
+      "sha256": "c2dd8721feeb3a84295d75a45c109d4299a7a1fba01c38b6d1febb2356ad79f7",
+      "post_check_sha256": "203adbf6a4e1ca7679d858bd8add9d19a19cd52d63237a7a46f967f9ac228824"
+    },
+    "gemma4_31b/b2/on/openml_ionosphere__s9013": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/openml_ionosphere__s9013/campaign_manifest.json",
+      "sha256": "49fa9f41e57d34f6929e7df0e2f59c4ce77bd1bbed5e8108e55fa68acfbbbab9",
+      "post_check_sha256": "0871fd72185d1b9d951589c77b12f861b978651411f9b679c32d9c1eaa1b5414"
+    },
+    "gemma4_31b/b2/on/openml_ionosphere__s9014": {
+      "path": "/home/dowling/exam-x/work/b2_8709_20261115_b2/gemma4_31b/b2/on/openml_ionosphere__s9014/campaign_manifest.json",
+      "sha256": "7902b300d85ec620362c93b44603d883351548fc126f687446a513cf41a0d610",
+      "post_check_sha256": "1f884728e14f09812857d33b132fe6c29ec83aa5899005d6d6224c4ad1302db1"
+    }
+  },
+  "interruptions": [],
+  "status": "COMPLETE",
+  "server_intervals": [
+    {
+      "candidate": "gemma4_31b",
+      "phase": "b2",
+      "mode": "off",
+      "context": 32768,
+      "start": 1794761128.7878058,
+      "end": 1794762946.4890168
+    },
+    {
+      "candidate": "gemma4_31b",
+      "phase": "b2",
+      "mode": "on",
+      "context": 32768,
+      "start": 1794762956.02987,
+      "end": 1794777736.5161114
+    }
+  ]
+}

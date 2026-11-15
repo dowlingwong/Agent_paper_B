@@ -1,0 +1,3 @@
+2026-11-14T22:23:37Z marker gone: resume by hand (delete STOP files, start servers, re-run launch scripts)
+2026-11-15T16:28:39Z priority marker seen (/home/dowling/r1_locks/trackx_evidence.active): pausing
+2026-11-15T21:24:39Z marker gone: resume by hand (delete STOP files, start servers, re-run launch scripts)
