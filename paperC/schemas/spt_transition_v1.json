@@ -1,0 +1,768 @@
+{
+  "$defs": {
+    "Action": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "execute",
+            "skip",
+            "keep",
+            "discard",
+            "verify",
+            "no_verify",
+            "reaudit",
+            "no_reaudit",
+            "select"
+          ]
+        },
+        "forced": {
+          "type": "boolean"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "selected": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "action",
+        "forced",
+        "rule"
+      ],
+      "type": "object"
+    },
+    "EnvContext": {
+      "additionalProperties": false,
+      "properties": {
+        "W": {
+          "type": "integer"
+        },
+        "constants": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "type": "object"
+        },
+        "edit_schema": {
+          "type": "string"
+        },
+        "llm_cap": {
+          "type": "integer"
+        },
+        "memory_mode": {
+          "type": "string"
+        },
+        "proposer_gguf_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "proposer_model": {
+          "type": "string"
+        },
+        "run_budget": {
+          "type": "string"
+        },
+        "skip_display": {
+          "type": "string"
+        },
+        "thinking": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "W",
+        "edit_schema",
+        "llm_cap",
+        "memory_mode",
+        "proposer_gguf_sha256",
+        "proposer_model",
+        "run_budget",
+        "skip_display",
+        "thinking"
+      ],
+      "type": "object"
+    },
+    "EpisodeEnd": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "terminated",
+            "truncated"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "Forecast": {
+      "additionalProperties": false,
+      "properties": {
+        "m_hat": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pi": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sigma": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tau": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "v_star": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "m_hat",
+        "mu",
+        "pi",
+        "sigma",
+        "tau",
+        "v_star"
+      ],
+      "type": "object"
+    },
+    "ForkDesign": {
+      "additionalProperties": false,
+      "properties": {
+        "channel_arms": {
+          "type": "boolean"
+        },
+        "in_oversample": {
+          "type": "boolean"
+        },
+        "in_uniform": {
+          "type": "boolean"
+        },
+        "near_threshold": {
+          "type": "boolean"
+        },
+        "p_select": {
+          "type": "number"
+        },
+        "q_oversample": {
+          "type": "number"
+        },
+        "q_uniform": {
+          "type": "number"
+        },
+        "replicate": {
+          "type": "integer"
+        },
+        "selection_rule": {
+          "enum": [
+            "uniform",
+            "oversample",
+            "both"
+          ]
+        }
+      },
+      "required": [
+        "channel_arms",
+        "in_oversample",
+        "in_uniform",
+        "near_threshold",
+        "p_select",
+        "q_oversample",
+        "q_uniform",
+        "replicate",
+        "selection_rule"
+      ],
+      "type": "object"
+    },
+    "Identity": {
+      "additionalProperties": false,
+      "properties": {
+        "branch_path": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "campaign_id": {
+          "type": "string"
+        },
+        "epoch": {
+          "enum": [
+            "E1",
+            "E2",
+            "verify",
+            "reaudit",
+            "final"
+          ]
+        },
+        "fork_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "instance_id": {
+          "type": "string"
+        },
+        "node": {
+          "type": "string"
+        },
+        "root_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "step_index": {
+          "type": "integer"
+        },
+        "suite": {
+          "type": "string"
+        },
+        "tier": {
+          "enum": [
+            "E-SYN",
+            "E-T0",
+            "E-INT",
+            "E-HELD",
+            "E-SIM"
+          ]
+        }
+      },
+      "required": [
+        "campaign_id",
+        "epoch",
+        "instance_id",
+        "node",
+        "step_index",
+        "suite",
+        "tier"
+      ],
+      "type": "object"
+    },
+    "Outcome": {
+      "additionalProperties": false,
+      "properties": {
+        "calls_consumed": {
+          "type": "integer"
+        },
+        "delta_hat": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "divergent": {
+          "type": "boolean"
+        },
+        "immediate_measured": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kept": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "next_incumbent_hash": {
+          "type": "string"
+        },
+        "runs_consumed": {
+          "type": "integer"
+        },
+        "wall_time_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "calls_consumed",
+        "next_incumbent_hash",
+        "runs_consumed"
+      ],
+      "type": "object"
+    },
+    "PolicyInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "action_prob": {
+          "type": "number"
+        },
+        "behaviour_component": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "continuation_policy_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eps": {
+          "type": "number"
+        },
+        "eps_seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "policy": {
+          "type": "string"
+        },
+        "policy_sha": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "action_prob",
+        "policy",
+        "policy_sha"
+      ],
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "cache_prompt": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gpu": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "harness_commit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "host": {
+          "type": "string"
+        },
+        "label": {
+          "enum": [
+            "ENGINEERING_ONLY",
+            "PILOT",
+            "EVIDENCE",
+            "FIXTURE"
+          ]
+        },
+        "llama_build": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "paper_commit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phase": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "cache_prompt",
+        "gpu",
+        "harness_commit",
+        "host",
+        "label",
+        "llama_build",
+        "paper_commit",
+        "phase"
+      ],
+      "type": "object"
+    },
+    "Seeds": {
+      "additionalProperties": false,
+      "properties": {
+        "audit_seed_block": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "instance_seed": {
+          "type": "integer"
+        },
+        "manager_rep": {
+          "type": "integer"
+        },
+        "worker_seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "audit_seed_block",
+        "instance_seed",
+        "manager_rep",
+        "worker_seed"
+      ],
+      "type": "object"
+    },
+    "State": {
+      "additionalProperties": false,
+      "properties": {
+        "calls_left": {
+          "type": "integer"
+        },
+        "calls_used": {
+          "type": "integer"
+        },
+        "duplicate": {
+          "type": "boolean"
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "forecasts": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Forecast"
+          },
+          "type": "object"
+        },
+        "history_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "incumbent_hash": {
+          "type": "string"
+        },
+        "keeps_so_far": {
+          "type": "integer"
+        },
+        "noise_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "noop": {
+          "type": "boolean"
+        },
+        "proposal_hash": {
+          "type": "string"
+        },
+        "proposal_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rule_forced": {
+          "type": "boolean"
+        },
+        "runs_left": {
+          "type": "integer"
+        },
+        "runs_used": {
+          "type": "integer"
+        },
+        "sigma_node": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "skips_so_far": {
+          "type": "integer"
+        },
+        "slots_left": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "calls_left",
+        "calls_used",
+        "duplicate",
+        "eligible",
+        "history_ref",
+        "incumbent_hash",
+        "keeps_so_far",
+        "noise_source",
+        "noop",
+        "proposal_hash",
+        "proposal_ref",
+        "rule_forced",
+        "runs_left",
+        "runs_used",
+        "sigma_node",
+        "skips_so_far",
+        "slots_left"
+      ],
+      "type": "object"
+    },
+    "Terminal": {
+      "additionalProperties": false,
+      "properties": {
+        "audit_seeds": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "y_start": {
+          "type": "number"
+        },
+        "y_terminal": {
+          "type": "number"
+        },
+        "y_terminal_per_seed": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "audit_seeds",
+        "y_start",
+        "y_terminal",
+        "y_terminal_per_seed"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "spt_transition/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "$ref": "#/$defs/Action"
+    },
+    "env": {
+      "$ref": "#/$defs/EnvContext"
+    },
+    "episode_end": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EpisodeEnd"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fork": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ForkDesign"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "identity": {
+      "$ref": "#/$defs/Identity"
+    },
+    "outcome": {
+      "$ref": "#/$defs/Outcome"
+    },
+    "policy": {
+      "$ref": "#/$defs/PolicyInfo"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "seeds": {
+      "$ref": "#/$defs/Seeds"
+    },
+    "state": {
+      "$ref": "#/$defs/State"
+    },
+    "terminal": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Terminal"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "action",
+    "env",
+    "identity",
+    "outcome",
+    "policy",
+    "provenance",
+    "schema",
+    "seeds",
+    "state"
+  ],
+  "title": "SPT transition record",
+  "type": "object"
+}
