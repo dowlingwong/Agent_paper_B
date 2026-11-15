@@ -63,6 +63,35 @@ while IFS= read -r m; do
   d=$(dirname "$m"); [ -e "$d/STOP" ] && echo "STOP_PRESENT $d/STOP" || echo "STOP_ABSENT $d/STOP"
 done < <(awk '{print $8}' "$PD/manifest_inventory_before.txt") > "$PD/stop_absence_before.txt"
 cp "$PD/manifest_inventory_before.txt" >&9; cat "$PD/stop_inventory_before.txt" >&9
+# --- frozen venv / harness pins (pre-marker, read-only) ------------------------------------
+[ -r "$RUN_DIR/venv_pins.txt" ] || stop "venv_pins.txt missing"
+/home/dowling/exam-x/work/venv/bin/python - "$RUN_DIR" <<'PYV' >> "$PD/pins.log" 2>&1
+import importlib.metadata as md, platform, sys
+pins = {}
+for line in open(sys.argv[1] + '/venv_pins.txt'):
+    line = line.strip()
+    if not line or line.startswith('#'): continue
+    k, v = line.split('=', 1); pins[k] = v
+assert platform.python_version() == pins['python'], 'python version'
+assert sys.prefix == pins['prefix'], 'prefix'
+for k in ('openai','langchain_openai','langchain_core','langgraph','pydantic','pydantic_core','httpx','pytest','numpy','scikit-learn'):
+    got = md.version(k); assert got == pins[k], f'{k} {got} != {pins[k]}'
+print('VENV_PINS_OK')
+PYV
+grep -q VENV_PINS_OK "$PD/pins.log" || stop "venv pins mismatch (see prechecks/pins.log)"
+HARNESS=/home/dowling/r1_b1_engineering/b1_harness_offline_stage_20261107_a/harness
+[ "$(git -C "$HARNESS" rev-parse HEAD)" = a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 ] || stop "harness pin mismatch"
+[ -z "$(git -C "$HARNESS" status --porcelain --untracked-files=no)" ] || stop "harness dirty"
+echo "VENV_PINS_OK HARNESS_OK" >&9
+# --- watcher identity compare (pane/bash pid + script sha; a restart is a STOP) ------------
+[ -r "$RUN_DIR/watcher_expected.txt" ] || stop "watcher_expected.txt missing"
+. "$RUN_DIR/watcher_expected.txt"
+pane_pid=$(tmux list-panes -a -F '#{pane_pid}' 2>/dev/null | head -1)
+[ "$pane_pid" = "$WATCHER_PANE_PID" ] || stop "watcher pane pid changed ($pane_pid != $WATCHER_PANE_PID)"
+wsha=$(sha256sum /home/dowling/r1_tracks/bin/trks-watch | awk '{print $1}')
+[ "$wsha" = "$WATCHER_SCRIPT_SHA256" ] || stop "watcher script changed ($wsha)"
+echo "WATCHER_IDENTITY_OK pane_pid=$pane_pid sha=$wsha" >&9
+echo "NOTE: tmux list-panes uses the tmux client socket (B1 boundary report caveat); census only." >&9
 # --- predecessor _d retirement -------------------------------------------------------------
 [ -s /home/dowling/r1_b1_engineering/b1_handover_7912_20261113_d/marker-retirement_after_run.json ] || stop "predecessor _d retirement record missing"
 cat /home/dowling/r1_b1_engineering/b1_handover_7912_20261113_d/marker-retirement_after_run.json >&9 2>&1
@@ -73,5 +102,5 @@ for repo in /home/dowling/exam-x/work/agent_paper_B /home/dowling/r1_trackp/Agen
 done >&9 2>&1
 echo "=== done $(date -u +%FT%TZ) ===" >&9
 printf 'PRECHECKS_PASS\n' >> "$OUT"
-: > "$OK" || { echo "cannot write prechecks.ok" >&2; exit 1; }
+set -C; : > "$OK" || { echo "cannot write prechecks.ok exclusively" >&2; exit 1; }
 echo "PRECHECKS_PASS $OUT"

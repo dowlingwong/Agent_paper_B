@@ -10,7 +10,7 @@ STATUS="$RUN_DIR/status-receipt.md"
 [ "$HOME" = /home/dowling ] || { echo "STOP: HOME mismatch" >&2; exit 1; }
 [ ! -e "$RUN_DIR" ] && [ ! -L "$RUN_DIR" ] || { echo "STOP: RUN_DIR exists" >&2; exit 1; }
 mkdir -m 700 "$RUN_DIR"
-mkdir -m 700 "$RUN_DIR/prechecks" "$RUN_DIR/postmarker" "$RUN_DIR/monitor"
+mkdir -m 700 "$RUN_DIR/prechecks" "$RUN_DIR/postmarker" "$RUN_DIR/postwatch" "$RUN_DIR/monitor"
 set -C
 # exclusive creation of the empty receipt STATUS (owned regular file, no symlink)
 : > "$STATUS" || { echo "STOP: cannot create status-receipt" >&2; exit 1; }

@@ -13,10 +13,18 @@ case "$HEAD" in *[!0-9a-f]*|'') stop "bad head";; esac
 [ -z "$(git -C "$SC" status --porcelain)" ] || stop "status checkout dirty"
 [ "$(git -C "$SC" rev-parse --abbrev-ref HEAD)" = "$BRANCH" ] || stop "status checkout branch mismatch"
 [ -s "$SC/docs/r1/STATUS.md" ] || stop "STATUS.md missing"
-ssh -o BatchMode=yes tasl7 "test -s '$RUN_DIR/marker-receipt.json'" || stop "marker receipt absent on host"
 LOCAL=$(git -C "$SC" rev-parse HEAD)
-REMOTE=$(git ls-remote origin "refs/heads/$BRANCH" | awk '{print $1}')
+REMOTE=$(git -C "$SC" ls-remote origin "refs/heads/$BRANCH" | awk '{print $1}')
 [ "$LOCAL" = "$REMOTE" ] || stop "status branch advanced since checkout (local $LOCAL remote $REMOTE)"
+RECEIPT=/tmp/b2_marker_receipt.json
+ssh -o BatchMode=yes tasl7 "cat '$RUN_DIR/marker-receipt.json'" > "$RECEIPT" || stop "cannot read host marker receipt"
+python3 - "$RECEIPT" "$RUN_ID" "$HEAD" <<'PY' || stop "marker receipt does not bind run_id/head"
+import json, sys
+r = json.load(open(sys.argv[1])); assert r.get('run_id') == sys.argv[2] and r.get('head') == sys.argv[3]
+assert isinstance(r.get('ino'), int) and isinstance(r.get('dev'), int) and len(r.get('sha256','')) == 64
+print('MARKER_RECEIPT_OK', r['run_id'], r['head'])
+PY
+RCPT_SHA=$(sha256sum "$RECEIPT" | awk '{print $1}')
 python3 - "$SC/docs/r1/STATUS.md" "$RUN_ID" "$HEAD" <<'PY'
 import sys, pathlib
 p = pathlib.Path(sys.argv[1]); run_id, head = sys.argv[2], sys.argv[3]
@@ -27,12 +35,13 @@ p.write_text(text + new)
 print('STATUS_APPENDED')
 PY
 git -C "$SC" add docs/r1/STATUS.md
-git -C "$SC" -c user.name="Dowling Wong" -c user.email="dowling@users.noreply.github.com" \
+git -C "$SC" -c user.name="Dowling Wong" -c user.email="wangdowling@gmail.com" \
   commit -m "STATUS: Track X B2 running ($RUN_ID, HEAD $HEAD)" || stop "commit failed"
 COMMIT=$(git -C "$SC" rev-parse HEAD)
 git -C "$SC" push origin "HEAD:refs/heads/$BRANCH" || stop "push failed (marker preserved; no force, no retry)"
-REMOTE2=$(git ls-remote origin "refs/heads/$BRANCH" | awk '{print $1}')
+REMOTE2=$(git -C "$SC" ls-remote origin "refs/heads/$BRANCH" | awk '{print $1}')
 [ "$REMOTE2" = "$COMMIT" ] || stop "remote verification failed ($REMOTE2 != $COMMIT)"
-{ echo "status_branch=$BRANCH"; echo "commit=$COMMIT"; echo "head=$HEAD"; echo "run_id=$RUN_ID";
-  echo "published_utc=$(date -u +%FT%TZ)"; } > "$SC/../b2_status_receipt.txt" 2>/dev/null || true
-echo "STATUS_PUBLISHED $BRANCH $COMMIT"
+OUT="${B2_STATUS_RECEIPT:-/tmp/b2_status_receipt.txt}"
+printf 'status_branch=%s\ncommit=%s\nhead=%s\nrun_id=%s\nmarker_receipt_sha256=%s\npublished_utc=%s\n' \
+  "$BRANCH" "$COMMIT" "$HEAD" "$RUN_ID" "$RCPT_SHA" "$(date -u +%FT%TZ)" > "$OUT" || stop "cannot write status receipt"
+echo "STATUS_PUBLISHED $BRANCH $COMMIT receipt=$OUT"

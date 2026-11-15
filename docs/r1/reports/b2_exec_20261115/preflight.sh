@@ -61,6 +61,7 @@ grep -Fq "PREFLIGHT_PASS" "$CAP/preflight.log" || stop "PREFLIGHT_PASS line miss
 [ "$rc" -eq 0 ] || { echo "STOP: preflight rc=$rc" >&2; exit "$rc"; }
 nvidia-smi --query-compute-apps=pid,process_name,used_gpu_memory --format=csv,noheader | grep -q . && stop "GPU compute app present after preflight"
 flock -n /home/dowling/r1_locks/gpu0.lock true || stop "gpu0.lock busy after preflight"
-: > "$RUN_DIR/preflight.ok"
+[ ! -e "$RUN_DIR/preflight.ok" ] || stop "preflight.ok exists"
+set -C; : > "$RUN_DIR/preflight.ok" || stop "cannot write preflight.ok exclusively"
 echo "PREFLIGHT_OK rc=0"; tail -5 "$CAP/preflight.log"
 exit 0
