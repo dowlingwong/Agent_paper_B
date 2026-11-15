@@ -2,10 +2,9 @@
 
 **AI-assisted (Claude, chat session).** What has to exist before the Sequential Policy Track (SPT) can collect data. Derived from the plan (`proposals/PAPER_C_SEQUENTIAL_POLICY_PLAN_20261104.md`, rev 2) and its addendum (`PLAN_ADDENDUM_20261115.md`). Execution order and acceptance criteria are in `BUILD_RUNBOOK.md`.
 
-**Scope until an author row says otherwise (addendum §C):**
-- **Allowed:** code, tests, documentation, and synthetic (E-SYN) computation on the Mac CPU, all inside `paperC/`.
-- **Not allowed:** proposer calls, worker runs on real nodes, shared hosts, GPU jobs, or edits outside `paperC/`.
-- Items marked *blocked* below wait for that row or for Paper B.
+**Scope (addendum §C).** Paper C no longer waits for Paper B's submission.
+- The build phases P0–P10 and PH are CPU-only and change nothing outside `paperC/`.
+- Real-node items (B11, B13, B14) each need their own runbook, independent review and author authorization.
 
 | ID | Item | Plan § | Depends on | Where | Runbook phase | Status |
 |---|---|---|---|---|---|---|
@@ -21,9 +20,13 @@
 | B9 | **Statistics**: paired campaign estimands, Holm, the two-part superiority + TOST decision at δ, whole-pipeline power simulator | §11 | B4, B7 | Mac CPU | P9 | todo |
 | B12 | **Distillation on E-SYN**: M1 (offline distillation on behaviour states) and M4a (on-policy distillation on student states) with a small MLP student/teacher, matched teacher queries and campaigns | §9.3; addendum §A | B7 | Mac CPU | P10 | todo |
 | B5 | **Logged-transition loader and exporters** from Paper B archives (sweep 2, T1, D.3, Track S roots/leaves) into B1 records, with gap lists | §4.3, §16 | B1; Paper B revision W1 (archive contract) — **not in PLAN as of 15 Nov** | Mac CPU | later | blocked (W1) |
-| B11 | **SPT runner on the real loop**: port the Track S arm-override hook, fork collector and forced E2 keep/discard into an SPT runner against the pinned harness | §6 SPT-0 | B1, B8; harness pin | Mac (code), hosts (tests) | later | blocked (addendum §C) |
-| B13 | **E-T0 campaign collection** (SPT-1 … SPT-3) with the pick | §6 | B11; pick's latency; R1-PAPERC-* rows | TASL-2/7 | later | blocked (Paper B submission, author rows) |
+| B11 | **SPT runner on the real loop**: port the Track S arm-override hook, fork collector and forced E2 keep/discard into an SPT runner against the pinned harness; add verify, re-audit and final selection (B17) | §6 SPT-0 | B1, B8, B17; harness pin | Mac (code), hosts (tests) | later | todo, own runbook |
+| B13 | **Real-node campaign collection** (SPT-1 … SPT-3) with the pick, on the nodes and channels chosen after the census (B16) | §6 | B11, B16; pick's latency; R1-PAPERC-CORE | HoreKa 2 / HTCondor; TASL only by row | later | needs R-C1/R-C2 and an authorization |
 | B14 | **LM routes on GPU** (M1, M4a LM variant, M2, M3) via Track P's loop `r1/c3/train/` | §9; addendum §A | B7, B12; Track P frozen finalists | TASL-7 / HTCondor | later | blocked (Paper B Track P first) |
+| B16 | **Headroom census on existing logs** (reframe proposal §4): E1 relevance (g/V\*, sd(V\*)), E2 margin mass, false/missed-keep rates, incumbent winner's curse, budget binding, heavy-tail mass, per node; first placement on the headroom map | reframe §4 | B10; read-only access to Track S S0.4/S0.5, sweep 1 + labels, C1 table, B1/B2 campaigns | Mac CPU | PH | todo (proposed, R-C2) |
+| B17 | **Evaluation-allocation actions** (verify with extra seeds, re-audit the incumbent, final selection among top candidates) in E-SYN worlds with known value | reframe §2 A | B3 | Mac CPU | P3 (extended) | todo (proposed, R-C1) |
+| B18 | **Sequential-testing comparators**: SPRT-style acceptance, racing, KG/OCBA verify, budget-aware margins | reframe §3 | B4, B17 | Mac CPU | P4 (extended) | todo (proposed, R-C1) |
+| B19 | **Heavy-tail-aware forecaster** (hurdle: P(break/degrade) then the conditional increment) for the GPU tier | reframe §2 B | Paper B C3 belief | Mac CPU → GPU | later | todo (proposed, R-C1) |
 | B15 | **Theory items** T-C1 (budget-policy gap), T-C2 (value-of-information bound), T-C3 (one-step-improvement gap) | §3.5 | — | desk | parallel | todo (author) |
 
-**Tonight (15 Nov):** P0–P3 (B0–B3), P4 (B4) if time allows.
+**Order:** P0 → P1 → P2 → **PH (census, B16)** → P3 (with B17) → P4 (with B18) → P5 … P10. Tonight: P0–P2, then PH if time allows. If R-C1 is not yet decided, P3/P4 build the plan's ladder first and add B17/B18 once it is.

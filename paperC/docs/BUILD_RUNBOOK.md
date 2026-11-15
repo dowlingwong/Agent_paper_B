@@ -4,13 +4,15 @@
 
 **Executor.** One Claude on the Mac: the chat session through the device shell, or the Mac-local agent. **Reviewer.** A freshly spawned independent agent per phase. It has not written the code under review.
 
-**Tonight:** P0–P3, and P4 if time allows.
+**Tonight:** P0–P2, then PH (headroom census) if time allows. Order after that: P3 → P4 → P5 … P10.
 
 ---
 
 ## 0. Rules for every phase
 
 ### 0.1 Scope (addendum §C)
+
+Paper C does not wait for Paper B's submission. Real-node phases are not part of this build runbook: each gets its own runbook, review and authorization. This build runbook is CPU-only:
 
 - **Allowed:** files under `paperC/`, run on the Mac CPU.
 - **Not allowed:**
@@ -145,6 +147,28 @@ Stop when any of these happens:
 
 ---
 
+## PH — Headroom census on existing logs (B16; reframe proposal §4) (≈ 2–3 h)
+
+Read-only on existing data; CPU only; outputs only under `paperC/`.
+
+1. **Inputs.** List every input with its path, branch or host location, and sha256. Copy only what is on the Mac; data that live only on a host are listed as "not read" rather than fetched.
+   - Track S S0.4/S0.5 (`results/r1/tracks/{digits_mlp,tabular_mlp}/…` on the Track S branches);
+   - Paper B sweep 1 and its audited labels;
+   - the C1 30-seed table;
+   - the B1/B2 exam campaigns.
+2. **Per-node quantities.**
+   - **E1:** g/V\* and sd(V\*)/g under A2-U and under the best available per-proposal forecaster; the share of E1 decisions within ±0.5 σ_node of the price.
+   - **E2:** the keep-margin distribution and its mass within ±0.5 σ_node; false-keep and missed-keep rates against fresh-seed audits where they exist.
+   - **Incumbent:** recorded vs re-audited incumbent value (winner's curse) as a function of the number of keeps.
+   - **Budget:** binding share at the planned W, and the implied shadow price.
+   - **Tails:** failed_invalid / degraded share and tail mass beyond ±4 σ_node.
+3. **Code.** `paperc/census.py`, built on P1 records via small adapters per source, plus P5's relevance functions. Tests on fixtures, including the Track S STOP 4 numbers (S0.5 summary §4) as a known-answer case.
+4. **Report.** `paperC/docs/reports/HEADROOM_CENSUS_<date>.md`: one table per node and a first placement on the headroom map. It ends with a proposal for which nodes and channels enter SPT collection; the choice itself is the author's (R-C2).
+
+**Done when:** the report reproduces the S0.5 summary's E1/E2 numbers on the Track S inputs, all available sources are covered or listed as missing, and the reviewer ACCEPTs.
+
+---
+
 ## P3 — E-SYN worlds and oracles (B3; plan §5, §3.5) (≈ 2–3 h; may continue tomorrow)
 
 **Package:** `paperC/src/paperc/esyn/`, with modules `worlds.py`, `dp.py`, `oracle.py`.
@@ -156,7 +180,8 @@ Stop when any of these happens:
 3. **New worlds:**
    - **incumbent interaction**: the increment of an edit depends on which earlier edits are in the incumbent, through a declared pairwise interaction matrix;
    - **shared incumbent error**: the recorded incumbent value carries a persistent error e shared by later comparisons until re-audit, as in the T4 revision's shared-latent case;
-   - **strict null**: every channel off.
+   - **strict null**: every channel off;
+   - **evaluation-allocation worlds** (B17, if R-C1 adopts the reframe): verify, re-audit and final selection have a known value under a declared noise and shared-incumbent-error model.
 
    Each world declares which channel is on, as data.
 4. **Exact DP** (`dp.py`):
@@ -288,4 +313,4 @@ Paired campaign estimands, Holm across nodes, the two-part decision (one-sided s
 
 ## After P10
 
-B5 (loader and exporters), B11 (real-loop SPT runner), B13 (E-T0 collection) and B14 (LM routes on GPU) are blocked by addendum §C, Paper B revision W1, and Paper B's host use. The executor stops after P10, or earlier at any STOP, and reports in `BUILD_STATUS.md`.
+B5 (loader and exporters; needs Paper B revision W1), B11 (real-loop SPT runner), B13 (real-node collection) and B14 (LM routes on GPU) each get their own runbook, independent review and author authorization. They are not part of this build runbook. The executor stops after P10, or earlier at any STOP, and reports in `BUILD_STATUS.md`.

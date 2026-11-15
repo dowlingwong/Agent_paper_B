@@ -1,11 +1,12 @@
 # Paper C plan — addendum of 15 Nov 2026 (to revision 2 of 5 Nov)
 
-**AI-assisted (Claude, chat session), written 15 Nov 2026 at the author's request.** It amends `proposals/PAPER_C_SEQUENTIAL_POLICY_PLAN_20261104.md` (rev 2, "the plan") and is read together with it. Where they conflict, this addendum controls. Like the plan, it is a working plan: it authorizes no run on a real node and allocates no shared host.
+**AI-assisted (Claude, chat session), written 15 Nov 2026 at the author's request.** It amends `proposals/PAPER_C_SEQUENTIAL_POLICY_PLAN_20261104.md` (rev 2, "the plan") and is read together with it. Where they conflict, this addendum controls. Like the plan, it is a working plan. Real-node runs need their own runbook, review and authorization (§C).
 
-Three changes:
+Changes:
 - **A.** Single-teacher on-policy distillation (OPD) is added to Paper C as LM route M4. The author decided on 15 Nov that it belongs in Paper C, not Paper B.
 - **B.** The plan is adjusted to Track S ending at STOP 4 before EVIDENCE (PLAN §10 R1-TRACKS-STOP4-END, R1-TRACKS-STOP4-CONSEQUENCES, 15 Nov).
-- **C.** The infrastructure build starts before Paper B's submission (author, 15 Nov), with the scope stated in §C.
+- **C.** Paper C no longer waits for Paper B's submission (author, 15 Nov); see §C.
+- **E.** The response to Track S STOP 4 is proposed in `proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md`: acceptance and evaluation control as the core, broadening to expensive GPU runs, and a headroom census first. It needs author rows R-C1 and R-C2.
 
 ---
 
@@ -84,16 +85,18 @@ On E-SYN first (BUILD_LIST item B12, runbook phase P10): an MLP student and teac
 
 ---
 
-## C. Building before Paper B's submission
+## C. No waiting for Paper B's submission
 
-The plan said no Paper C run starts before Paper B's submission (10 Jan 2027). The author started the build on 15 Nov. Until an author row says otherwise, the build is limited to:
-- **allowed:** code, tests, documentation, and synthetic (E-SYN) computation on the Mac CPU, all inside `paperC/`;
-- **not allowed:** proposer calls, worker runs on real nodes, any shared host (TASL-2, TASL-7, deepthought, HoreKa, ETP HTCondor), GPU jobs, or changes outside `paperC/`.
-
-Paper B keeps priority for every host and every review slot.
+**The author removed the plan's rule "no Paper C run before Paper B's submission (10 Jan 2027)" on 15 Nov.** This replaces the plan's Status paragraph and the "Nov 2026 – 10 Jan 2027" row of plan §14. Paper C work, including runs on real nodes, may start now. It follows the same practice as Paper B:
+- every real-node phase gets its own runbook, an independent review, and an author authorization before it runs;
+- seeds come from the Paper C registry (BUILD_LIST B2);
+- hosts follow the PLAN host rows. HoreKa 2 and the ETP HTCondor GPUs are the natural Paper C hosts. Paper C uses TASL-2 and TASL-7 only where an author row allocates them;
+- the build phases P0–P10 themselves are CPU-only and change nothing outside `paperC/`.
 
 ## D. Status of the 5 Nov positions
 
-The author's positions of 5 Nov were: proposer of record = the exam winner, a core version for the first submission, and δ as in plan §11.3. Their draft PLAN rows (R1-PAPERC-PROPOSER, R1-PAPERC-CORE, R1-PAPERC-DELTA; plan §17) are **not committed** in `docs/r1/PLAN.md` as of 15 Nov. Committing them is the author's step. R1-PAPERC-DELTA must be committed before any Paper C data exist.
+The author's positions of 5 Nov were: proposer of record = the exam winner, a core version for the first submission, and δ as in plan §11.3.
+- On 15 Nov the author asked for them to be written into PLAN. R1-PAPERC-PROPOSER and R1-PAPERC-DELTA are recorded in `docs/r1/PLAN.md` §10 (15 Nov section), together with R1-PAPERC-OPD, R1-PAPERC-NOWAIT and R1-PAPERC-HOME.
+- **R1-PAPERC-CORE is held back.** Its 5 Nov content (Q1 confirmatory on E-T0 in round B) is what Track S STOP 4 undercuts, so it is rewritten after the reframing decision (R-C1).
 
 New open item **P10:** promote M4a into the core version as a conditional item (gate A.4)? Recommendation: yes, because it is the cheapest on-policy method and answers a clear question, and its gate keeps it from consuming budget when there is no headroom.

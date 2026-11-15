@@ -2,7 +2,8 @@
 
 **Status (15 Nov 2026).**
 - Working plan, not adopted by PLAN rows.
-- Infrastructure build started on 15 Nov, limited to code and synthetic experiments on the Mac CPU (see "Rules while Paper B is open" below). No data, and no run on a real node.
+- Infrastructure build started on 15 Nov. Paper C no longer waits for Paper B's submission (author, 15 Nov). No data yet.
+- **Open:** the response to Track S STOP 4 (`docs/proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md`). Proposed: acceptance and evaluation control as the core, broadening to expensive GPU runs, a headroom census first.
 
 AI-assisted (Claude, chat session).
 
@@ -78,8 +79,10 @@ The questions are where non-myopic control is worth anything, through which of t
 | Multi-step claims, Sequential Policy Track and multi-step RL moved out of Paper B into a follow-up paper | author, 4 Nov (sequential-policy comment) |
 | Proposer of record = the exam winner; core version first; δ as in plan §11.3 | author positions, 5 Nov. Draft rows R1-PAPERC-PROPOSER / -CORE / -DELTA are **not yet committed** in PLAN |
 | Single-teacher OPD goes into Paper C | author, 15 Nov (addendum §A) |
-| Build starts before Paper B's submission, CPU-only and inside `paperC/` | author, 15 Nov (addendum §C) |
+| No waiting for Paper B's submission; real-node phases need their own runbook, review and authorization | author, 15 Nov (addendum §C) |
+| PLAN rows R1-PAPERC-PROPOSER, -DELTA, -OPD, -NOWAIT, -HOME | recorded in `docs/r1/PLAN.md` §10, 15 Nov |
 | Track S ended at STOP 4 without evidence; consequences for Paper C | addendum §B |
+| Reframing after STOP 4 (R-C1), census first (R-C2), then R1-PAPERC-CORE (R-C3) | open, `docs/proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md` |
 | P1–P9 of plan §17; P10 (M4a in the core version) | open |
 
 ## Layout
@@ -89,7 +92,8 @@ paperC/
   README.md                         this file
   docs/
     proposals/PAPER_C_SEQUENTIAL_POLICY_PLAN_20261104.md   the plan, rev 2 (5 Nov)
-    PLAN_ADDENDUM_20261115.md       OPD route M4, Track S STOP 4 consequences, build scope
+    PLAN_ADDENDUM_20261115.md       OPD route M4, Track S STOP 4 consequences, no waiting for Paper B
+    proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md  options after STOP 4 and the recommendation
     BUILD_LIST.md                   what has to be built (B0–B15)
     BUILD_RUNBOOK.md                phases P0–P10, done-when, review, STOP rules
     reviews/PAPER_C_PLAN_REVIEW_20261104.md                independent review of plan rev 1
@@ -118,6 +122,10 @@ Paths inside these files still point to `docs/r1/...`. Neither file existed in t
 - the Paper B side of the same revision (`SEQUENTIAL_POLICY_REVISION_20261104.md`, work items W1–W5, on `docs/seq-revision-04nov`);
 - the Track S code (`r1/tracks/`, on `trackS-ops-20261030`) that the SPT ports from.
 
-## Rules while Paper B is open
+## Working rules
 
-Paper B (ICML 2027, manuscript target 10 Jan 2027) has priority for every host and review slot. Until an author row says otherwise, Paper C work is limited to code, tests, documents and E-SYN computation on the Mac CPU, all inside `paperC/`. It makes no proposer calls, runs no worker on a real node, uses no shared host or GPU, and changes nothing outside `paperC/`.
+- Paper C runs alongside Paper B. It does not wait for Paper B's submission (R1-PAPERC-NOWAIT).
+- Every real-node phase gets its own runbook, an independent review and an author authorization before it runs.
+- Seeds come from the Paper C registry.
+- Hosts follow the PLAN host rows. HoreKa 2 and the ETP HTCondor GPUs are the natural Paper C hosts; TASL-2 and TASL-7 are used only where a row allocates them.
+- The build phases P0–P10 are CPU-only and change nothing outside `paperC/`.
