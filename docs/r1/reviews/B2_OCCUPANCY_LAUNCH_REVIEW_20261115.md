@@ -1048,3 +1048,85 @@ collection always STOP before `POSTRUN_COLLECT_OK`, blocking retirement and the 
 unit yet; the stopped unit may be used only on a genuine stopped run and with the stopped scripts.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 11 (post-run B-10 fix + hardening, pre-execution)
+
+**Re-checked at** the pinned exec commit `ops-b2-exec-20261115` @ **`b8e2e0ee`** (origin = same; the
+Lead's correction; run HEAD unchanged `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026
+≈21:10–21:35 CET, **before execution** (runner still running, ~15/24 roots). `git diff 5ee45bef..b8e2e0ee`
+is exactly four postrun files plus the round-10 review record: `postrun_collect.sh` `7c44dfeb`,
+`publish_status_done.sh` `8293635c`, `stopped/stopped_run_collect.sh` `57990206`, `README.md` `02987e92`;
+`retire_marker.sh` `4cfbded2` and the stopped `publish_status_stopped.sh` `ffc5d18c` /
+`retire_marker_stopped.sh` `6c1a14fe` are unchanged; every other exec file is byte-identical to the
+accepted set. All scripts pass `bash -n`; the Mac status checkout is clean at `524f0a8a` = origin
+`mac-b1-20261107`. No SSH, no host command, no marker/STATUS touched.
+
+### B-10 fixed
+
+`postrun_collect.sh` L55 is now `rows += int(pj.get('rows') or 0)   # manifest proposal_journal['rows']
+is a COUNT`. The manifest's `rows` is the validator's integer count (`{'rows': len(rows), …}`), so the
+aggregation no longer calls `len()` on an int; `journal_rows` is an integer and the summary
+(`roots_scanned`/`journals`/`journal_rows`/`rejected_by_check`/`checks_seen`) is produced. The rest of
+the authoritative aggregation (walk `campaign_manifest.json`, key by the manifest's `candidate`/`mode`,
+sum `proposal_journal.rejected_by_check`) is unchanged and still runs after the verified analysis.
+
+### P-38/P-39/P-37/P-40 verified
+
+- **P-38.** `publish_status_done.sh` now runs, before the STATUS append,
+  `ssh tasl7 "cd '$RUN_DIR/postrun' && sha256sum -c SHA256SUMS >/dev/null"` and STOPs on failure. The
+  `SHA256SUMS` is the collect's `sha256sum "$PO"/*` (absolute paths; the `cd` is redundant but harmless);
+  it covers `CREATED.txt`, `batch_state.json`, `analysis.json`, `analysis.err`, `analysis.rc`,
+  `b2_manifests.json`, `invalid_trials.json`, so a post-collection corruption fails closed. The
+  `POSTRUN_COLLECT_OK` set/`analysis_rc=0` and the four artifact `test -s` checks remain.
+- **P-39.** `stopped_run_collect.sh` L19/L20 now wrap the `find … | sort > …` pipelines in `if …; then :;
+  else echo …; exit 2; fi` (pipefail is on), and writes `manifests.empty.txt`/`journals.empty.txt`
+  diagnostics when the lists are empty; the summary still counts from the files and the stopped
+  `STOPPED_COLLECT_OK` is only written after the collection. The normal/stopped distinctions are intact.
+- **P-37/P-40.** README removed the `absent.txt` claim (the collect and verified analysis fail closed; there
+  is no absence record) and now documents that the collect creates `postrun` itself, that a pre-created
+  dir is still recorded via `CREATED.txt`, and that recovery is move-aside + re-run (no deletion, no
+  automatic retry). The §6 hand-back list and the separate B2 report/STOP 6 are still stated.
+
+### Executability of the two chains
+
+- **Normal completion:** `postrun_collect → retire_marker → publish_status_done` is executable: the
+  collect creates `$RUN_DIR/postrun` fresh (B-8), gates on `b2.exit`=0 and `batch_state.json`, runs the
+  verified `b2_summary_verified`/`verify_b2_batch` analysis with stdout/stderr/rc captured and STOPs on
+  non-zero, copies `b2_manifests.json`, writes the authoritative `invalid_trials.json` (B-10 fixed),
+  `SHA256SUMS`, and the exclusive `POSTRUN_COLLECT_OK` (SHA-256s + `analysis_rc=0`); the retire requires
+  that receipt and `analysis_rc=0`, checks the marker/no existing receipt/no runner, retires with the
+  create receipt and verifies the marker is gone; the done publication checks clean/branch/LOCAL==REMOTE,
+  `b2.exit`=0, the marker retirement, the complete postrun artifact set + `analysis_rc=0` + the
+  `sha256sum -c SHA256SUMS` re-verification, appends the exact `## 2026-11-15 — Track X B2 done`
+  heading/line, commits as Dowling Wong <wangdowling@gmail.com>, pushes without force, verifies the
+  remote and writes a no-clobber receipt.
+- **Stopped run:** `stopped_run_collect → retire_marker_stopped → publish_status_stopped` is executable:
+  the collect requires `b2.exit` present and ≠0, creates `postrun_stopped` fresh, preserves
+  `b2.log`/`batch_state` (absence recorded)/manifest+journal path lists/`STOPPED_STATE.json`, checks the
+  find/sort pipelines and records empty-list diagnostics, writes `STOPPED_COLLECT_OK`; the stopped retire
+  requires that receipt, the marker present, no existing retirement and no runner, retires with the create
+  receipt and verifies the marker is gone; the stopped publish checks the same status checkout guards,
+  the stopped collection OK and the stopped retirement, appends `## 2026-11-15 — Track X B2 stopped` with
+  the same identity/no-force/remote-verification/no-clobber-receipt behavior.
+
+### Residual NITs (not blocking)
+
+- The publish's `sha256sum -c SHA256SUMS` inherits the collect's absolute-path lines; the `cd` is
+  redundant (harmless). The `POSTRUN_COLLECT_OK` basename lines are informational; the SHA256SUMS is the
+  verification source.
+- The stopped collect's `manifests.empty.txt`/`journals.empty.txt` diagnostics are not mentioned in the
+  README's stopped section (add a line if desired).
+- The hand-back package and the separate report/STOP 6 remain as in round 10; the runner is still
+  running, so this is a pre-execution acceptance of the tooling only.
+
+### Verdict
+
+The one-line B-10 fix and the P-37/P-38/P-39/P-40 hardening are correct and complete; no BLOCKING/MAJOR
+issue remains in the post-run unit. **Both the normal-completion chain and the stopped-run unit are
+executable as written**, under the STOP/no-retry/no-deletion rules and with the evidence preserved;
+they are to be run only after the runner exits (normal) or on a genuine stopped run (stopped unit), and
+the B2 report/STOP 6 remains a separate unit after collection.
+
+VERDICT: ACCEPTED
