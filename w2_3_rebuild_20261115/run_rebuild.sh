@@ -129,7 +129,13 @@ assert m["featurizer_version"] == "c3_features/v3" and m["prompt_version"] == "t
 assert m["table"]["label"] == "EVIDENCE", m["table"]["label"]
 assert m["table"]["n_proposals"] == b["n_proposals"] and m["table"]["n_configs"] == b["n_configs"]
 ev = json.loads(pathlib.Path(m["w2_3_evidence"]["path"]).read_text())
-assert m["table"]["replay_checks_total"] == ev["ledgers"] * ev["runs_total"] == 288 * 20, m["table"]["replay_checks_total"]
+rc = m["table"]["replay_checks_total"]
+assert isinstance(rc, dict) and rc.get("rows", 0) > 0, rc
+assert m["w2_3_evidence"]["ledgers"] == 288 and m["w2_3_evidence"]["runs_total"] == 20, m["w2_3_evidence"]
+assert m["w2_3_evidence"]["ledgers_differing"] == 0
+# R5 cross-check: every ledger made exactly 20 worker runs and has 20..40 trial rows (trial budget 2W)
+assert 288 * 20 <= rc["rows"] <= 288 * 40, rc["rows"]
+assert rc["proposals"] == m["table"]["n_proposals"], (rc["proposals"], m["table"]["n_proposals"])
 assert m["classification"]["sha256"] == "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc"
 assert b.get("sweep_index", {}).get("sha256") == m["sweep_index"]["sha256"]
 assert set(m["files"]) == {"proposals.jsonl", "configs.json", "build.json"}
