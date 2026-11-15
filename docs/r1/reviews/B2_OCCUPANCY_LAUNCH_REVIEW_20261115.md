@@ -705,3 +705,125 @@ and every other reviewed control are otherwise clean. No marker/STATUS/GPU job w
 attempt, and the attempt evidence is preserved.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 8 (B2 host-preflight invocation, post-marker)
+
+**Re-checked at** the single pinned exec commit `ops-b2-exec-20261115` @
+**`246e8e3e4258d8466ba856e54256e3c34ef22272`** (`origin/ops-b2-exec-20261115` = same; run HEAD
+unchanged at `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈19:10–19:35 CET. The
+shared worktree is clean at that commit. The commit adds the new `b2_host_preflight.py` (`9b7c5ccf…`)
+and the changed `preflight.sh` (`8513aa8c…`); the other exec files are byte-identical to the accepted
+set (PLAN `c8ffa7b9`, bootstrap `432b278e`, deliver `97fcdbc4`, inventory_after `01e87cf5`,
+create_marker `2041094a`, postwatch `7031cfe3`, prechecks `40b4266d`, start `3b0a3517`, receipt `ef2b244a`,
+publish_status `c3da9b38`, monitor `4079243b`, expected `711e8d7a`, venv_pins `3dddb9b2`,
+watcher_expected `7dff402b`). The commit also carries the round-7 review record, the moved historical
+`delivered-receipt.local.attempt-20261115T162312Z.txt`, and the handover's own
+`delivered-receipt.local.txt` (pinned `78cec9ee`; record, not an exec script). The prepared Mac status
+checkout is still `mac-b1-20261107` at `fcf52c09` = origin, clean. No SSH, no host command, no
+marker/STATUS touched by this review.
+
+**State at review time (operator-reported):** the marker was created and validated, Track S is paused
+(no B2 root started), the running STATUS was published on `mac-b1-20261107` @ `524f0a8a` (remote
+verified), the watcher pause was observed, and postwatch passed; the host preflight then failed in the
+B1-only `r1/scripts/b1_host_preflight.py` (it loads the B1 config, gate and paper pin, so it correctly
+STOPs on the B2 HEAD). The failed preflight evidence is preserved (`preflight.log.attempt-…` /
+`preflight.exit.attempt-…`, old `preflight.sh.delivered-a202f632`, `b2_host_preflight.py.v1-unvalidated`);
+no deletion. The fix is the reviewed B2 invocation below.
+
+### (a) The wrapper's B2 `check_inputs` is the faithful B2 twin of the reviewed B1 function
+
+I compared `b2_host_preflight.b2_check_inputs` line by line with the reviewed
+`r1/scripts/b1_host_preflight.check_inputs` at run HEAD `8709dce7`: every check is present and none is
+weakened, only the config/phase/rel switch to B2:
+
+- `load_config(REPO/B2_CONFIG_REL)`, `dryrun` refusal, `require_committed_b1_config(REPO/B2_CONFIG_REL,
+  cfg, rel=B2_CONFIG_REL)` (the function's B2 branch checks cwd == checkout root, no symlink, clean
+  checkout, committed blob == in-memory config, HEAD unchanged), `head != expected_head` refusal.
+- `read_registry` + `require_committed_b1_registry`; `load_rule(cfg['rule'], cfg['rule_sha256'])`;
+  `rule.version == 'x5_rule/v2'` and `author_gate(cfg, 'b2', rule_sha) == head` (the B2 note
+  `docs/r1/authorizations/trackx_b2_20261115.md` at HEAD binds author Dowling Wong, phase b2, approved,
+  rule sha `53018aa7…`, the three nodes, the stage-A shas, anchor reference, b1_analysis, 4 instances,
+  call cap 80, host TASL-7, GPU UUID, workers 20 — verified); `verify_anchor_reference(cfg)`.
+- `worker_environment()` + the same numpy/sklearn/threads JSON (the wrapper adds `phase: b2`, additive);
+  `b1_harness_sources(node, cfg['harness_commit'])` for the B2 nodes; `host_check(cfg, out)`; the
+  `out` direct-child-of-`work_dir` check; `space_check(models_dir/work_dir)`.
+- `rows = candidates + software_anchors + sensitivities`; `eligible = stage_a_pass_set(cfg, {candidate
+  ids}, v2=True)`; `check_b1_protocol(cfg, rows, eligible)` via the B1 module (cache_prompt false,
+  cache-prompt env override refusal, template-repair byte equality, thinking-on grammar check).
+- The `qwen25_coder_7b` anchor unique/eligible check; `ExamRunner(cfg, out, b1_config_head=head)` (the
+  production constructor checks, including code/harness pins and the `paper_commit` ancestor check —
+  `37282ec3…` is an ancestor of the B2 HEAD); `resolve_stage_a_spec` for the anchor; the validated-model
+  loop with the same `always_on_in_b1 == 'skip'`/`thinking_off_capable` skip, `template_repair_args`,
+  `validate_spec`, the anchor-in-validated refusal, the validated list print, and
+  `build = runner.validate_spec(spec)`.
+- Nothing in the B1 function is dropped or relaxed; the only additions are the `phase: b2` key in the
+  first JSON line and the B2 rel/phase arguments. The B2 config (`exam_b2_v2.json` at run HEAD) supplies
+  the B2 paper commit, rule sha, stage-A tables/acceptance, template repairs, harness pin and server
+  build; the B1 preflight failure was the B1 config's paper pin, not a probe problem.
+
+### (b) Reusing `b1_host_preflight.run` unchanged is sound for B2
+
+`main` sets `bp.check_inputs = b2_check_inputs` and calls `bp.run(head, out)`; the B1 `run` looks up
+`check_inputs` as a module global at call time, so the patched B2 inputs/gate feed the unchanged probe:
+`idle_gpu(cfg)`, `out.mkdir(exist_ok=False)`, the shared `~/r1_locks/gpu0.lock` acquisition,
+`verify_contender`, the second idle-GPU check, `LlamaServerInstance` from `cfg['server']`/`spec` (the B2
+binary, ctx, layers, GPU UUID, `EXAM_SERVER_ARGS`, template-repair args, thinking off, ENGINEERING_ONLY
+label), the owned-server start wrapper, `verify_server_fd`, full-offload/model-alias/model-path checks,
+GPU occupancy re-check, the owned server stop and the lease-descriptor close, then the
+`PREFLIGHT_PASS: owned server exited and own lease descriptor closed` line. The probe is entirely
+config/spec-driven; the B1 labels/`b1_preserve_records` are naming/record only and do not change the
+STOP checks. No B2-specific weakening of the owned-server probe or STOP conditions.
+
+### (c) `preflight.sh` change is the invocation plus the necessary .ok/no-clobber adjustment
+
+The diff is the reviewed B2 invocation (`PYTHONPATH="$PAPER" "$PY" -B
+"$RUN_DIR/b2_host_preflight.py" --head "$HEAD" --out "$OUT"` in place of the B1 module), plus
+`set +C` after the no-clobber header creation (the header files exist; the run's log/exit redirections
+must overwrite them) and the `.ok` write `printf 'PREFLIGHT_OK\n' > "$RUN_DIR/preflight.ok"` with the
+`[ ! -e "$RUN_DIR/preflight.ok" ] || stop` guard retained (the round-7 non-empty `.ok` fix is preserved;
+the prechecks/postwatch `.ok` files are unchanged and non-empty). All other preflight gates are
+unchanged: CAP/OUT/CACHE/PAPER/HARNESS/PY checks, `prechecks.ok` + `postwatch.ok` + marker, exact
+`GATE_PASS <HEAD> <rule-sha>` + `gate.exit` 0, harness pin/clean and venv pins, no compute app + lease
+free before/after, `PREFLIGHT_PASS` + rc 0, `preflight.ok`, `exit 0` on success. The change is confined
+to the invocation and the no-clobber mechanics.
+
+### Residual notes (not blocking)
+
+- The wrapper re-states the B1 `check_inputs` body rather than factorizing it; it is faithful now, but a
+  future shared/parameterized helper would reduce drift risk. Not a defect at this commit.
+- `preflight.sh`'s env hygiene unsets `PYTHON*`/`GIT_*` but not `LLAMACPP_CACHE_PROMPT`; the B1
+  `check_b1_protocol` → `refuse_cache_prompt_override()` fails closed if it is set to a non-false value
+  (the launch `start.sh` unsets it). Consider adding it to the preflight unsets for parity. Not a
+  weakening.
+- `b1_host_preflight.run` still emits its B1 labels (`phase: ENGINEERING_ONLY`, `b1_preserve_records`);
+  the probe behavior is config-driven and the B2 phase is recorded by the wrapper's own JSON. Record it
+  as-is; no code change needed.
+- The wrapper's read-only validation evidence (`phase=b2`, anchor `qwen25_coder_7b`, `cfg_paper=37282ec3`,
+  `build=llama-server 620d222`, 16 validated models) is operator-reported; the preflight run is the real
+  test.
+
+### Install / preflight / launch confirmation
+
+The two reviewed files may be installed into `$RUN_DIR` and the preflight run:
+- install `b2_host_preflight.py` (`9b7c5ccf…`) as `$RUN_DIR/b2_host_preflight.py`, and `preflight.sh`
+  (`8513aa8c…`) as `$RUN_DIR/preflight.sh`, preserving the old `preflight.sh.delivered-a202f632` and
+  `b2_host_preflight.py.v1-unvalidated` (no deletion); record the new/old SHA-256s, the exec commit
+  `246e8e3e…` and the install UTC in `$RUN_DIR/patched-preflight.txt`;
+- run `bash "$RUN_DIR/preflight.sh"`; require `PREFLIGHT_PASS` in `$CAP/preflight.log`, rc 0,
+  `preflight.exit` 0, the post-preflight no-compute-app + `flock -n gpu0.lock` checks, and the non-empty
+  `preflight.ok`; then launch via `nohup bash "$RUN_DIR/receipt.sh" >/dev/null 2>&1 &` (the unchanged
+  `receipt.sh`/`start.sh` re-check prechecks/postwatch/preflight/marker/gate/P.3a/GPU/HEAD/harness);
+- if the preflight STOPs again, preserve the evidence, do not retry, keep the marker (Track S stays
+  paused) and report; no marker/STATUS deletion.
+
+### Verdict
+
+The B2 `check_inputs` is the faithful B2 twin of the reviewed B1 function (config/head/gate/pins/
+protocol/validated models/build; nothing weakened), reusing the unchanged B1 owned-server probe is sound,
+and `preflight.sh` changes only the invocation plus the necessary `.ok`/no-clobber mechanics. **The two
+files may be installed into RUN_DIR, the preflight run, and `exam_runner b2` launched** from the current
+post-marker state, with the STOP/no-retry/no-deletion rules and the evidence preserved.
+
+VERDICT: ACCEPTED
