@@ -296,8 +296,8 @@ downstream has started: S0.6, S0.7, the pre-declaration and S3 are all not begun
   question, whether a tuned dynamic threshold beats the tuned static one. Track S's "no gain found" already bounds π\*
   only; under (c-i) it would bound an E2-only π\*.
 
-**Recommendation (for the author to decide): (a), with fallbacks declared in advance: (c-ii) if digits fails, (c-iii)
-if tabular fails.**
+**Recommendation (for the author to decide): (a), with fallbacks declared in advance: (c-ii) if one node fails, (c-iii)
+if both fail.**
 - (b) alone cannot make execution a real decision while V\* is constant.
 - (c) gives up the question Track S exists to answer, and does not remove the calibration failure.
 - (a) addresses the common cause. It is cheap in host time (about 5 h of S0.5 for both nodes) and has
@@ -307,9 +307,10 @@ if tabular fails.**
      chance.
   2. Re-run S0.5/S0.5b on both nodes with fresh pilot seeds.
   3. Declare beforehand what a second fail means, so that no further revision is started after the data are seen:
-     if digits fails, Track S continues on tabular alone (c-ii); if tabular fails (alone or with digits), Track S ends
-     before EVIDENCE with the S0.5 findings kept as the engineering record (c-iii). The tabular support is fragile
-     (§6), so the second case is a real possibility.
+     a node that passes continues alone (c-ii); if both fail, Track S ends before EVIDENCE with the S0.5 findings
+     kept as the engineering record (c-iii). On present evidence the likely single-node case is tabular alone, but
+     the rule is symmetric: a digits pass would be unexpected, not excluded. The tabular support is fragile (§6), so
+     the both-fail case is a real possibility.
   4. After the re-run, re-check the S0.7 grid against the new V\* distribution (the useful part of (b)).
 
 ## 8. Not done here
