@@ -9,6 +9,13 @@ grep -q "sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296
 # fresh GPU availability snapshot + reason (author supplement 2)
 bash /work/dwong/htcondor_prep_20261114/chain_20261114/gpu_availability.sh /work/dwong/htcondor_prep_20261114/chain_20261114/gpu_availability.tsv "pre-S5" >/dev/null 2>&1 || true
 tail -4 /work/dwong/htcondor_prep_20261114/chain_20261114/gpu_availability.tsv
+{
+  echo "pre-S5 gpu availability snapshot (last rows of gpu_availability.tsv):"
+  tail -6 /work/dwong/htcondor_prep_20261114/chain_20261114/gpu_availability.tsv
+  echo "model choice: NVIDIA L40S (JDL device string); reason: idle L40S slots were present in the snapshot;"
+  echo "fallback H200 only if the fresh snapshot shows L40S idle=0 (would be a one-line device change, recorded)."
+  echo "image: docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296 (SIF 5226487808 B, sha256 f88382fd...)"
+} > submission_note.txt
 echo "== dry-run =="
 condor_submit -dry-run /tmp/s5_nemo2_gpu_ghcr.dry s5_nemo2_gpu_ghcr.jdl | tee dryrun.log
 grep -E "^(ContainerImage|ContainerImageSource|WantContainer|Requirements|RequestCpus|RequestMemory|RequestDisk|RequestWalltime|RequestGPUs|RemoteJob|Cmd|TransferInput)=" /tmp/s5_nemo2_gpu_ghcr.dry | head -22
