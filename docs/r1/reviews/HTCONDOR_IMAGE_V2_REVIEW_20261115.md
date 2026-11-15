@@ -205,3 +205,15 @@ unverified until the first build/gpu run; the freeze-based env reproducibility i
 training on HTCondor remains gated on the smoke + E0 evidence and the author's approval.
 
 VERDICT: ACCEPTED
+
+---
+
+## Delta re-check — pre-build conditions (branch @ `3c3a2261` + `c5213bd7`; 15 Nov 2026, 21:40 CET)
+
+**Delta verdict: the pre-build conditions are adequately handled; the proposal stays accepted, with the build and the gated re-runs still the required evidence.**
+
+Verified on the branch (HEAD `c5213bd7`, fix `3c3a2261`): the cu124 torch install is now `uv pip install --no-deps --index-url https://download.pytorch.org/whl/cu124 'torch==2.6.0+cu124'` (the freeze pins its closure); VERSIONS now also records `env3_causal_conv1d_arch=8.0;8.9;9.0` (alongside the freeze sha, `env3_sorted_diff=empty`, `torch_pin`, `nvidia_smi`, `libgomp`); the TASL-7 raw capture is committed under `docs/r1/reports/htcondor_image_20261115/` (`tasl7_trackp_gpu_uv_pip_freeze.txt`, 121 lines, SHA-256 `50238e5a…` — byte-identical to the committed freeze — and `tasl7_vs_committed_freeze.sorted.diff`, 0 bytes, SHA-256 the empty-file digest); the proposal states which image each re-run uses (I2's tiny-llama probe on the **cpu** image, I3/smoke/E0 on the **gpu** image), the temporary v2-pinned manifest that leaves the in-use digests untouched, the rollback line (v1 digests/tags remain valid and published until the switch), and the Track P device guard; and the `c5213bd7` addendum records that the ETP login node has a docker **client** but no daemon socket, so the devel-base nvidia-smi pre-check cannot run there — the first v2 build is the pre-check (the `COPY --from=build /usr/bin/nvidia-smi` fails the build visibly if the file is absent), with documented fallbacks (install driver-utils in the gpu target, or a torch-based GPU gate) and no hard `nvidia-smi` runtime gate until the v2 I2/I3 re-run proves it; this is the correct, fail-visible handling of the environment limitation.
+
+The remaining conditions from the review are therefore either satisfied (torch `--no-deps`, arch recorded, TASL-7 raw capture committed, proposal mappings/rollback/Track P guard) or explicitly converted into the first build's check (nvidia-smi presence) with a fallback plan — no blockers. The build log/digests/VERSIONS review, the gated I2/I3 re-run, the L40S/H200 smoke parity, the E0 equivalence and the author approval remain the required pre-switch evidence; the v1 digests stay in use until then. Minor record nits: the empty sorted-diff file would be stronger with a one-line command/date header, and the proposal's pre-build paragraph should keep the no-daemon statement (as in `c5213bd7`) rather than any earlier "probe pending" wording.
+
+VERDICT: ACCEPTED
