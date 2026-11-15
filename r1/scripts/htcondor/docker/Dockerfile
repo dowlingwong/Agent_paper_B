@@ -49,7 +49,7 @@ ARG PY311
 # EPEL first: xrootd-client is EPEL-only on Rocky 9.
 RUN dnf install -y --setopt=install_weak_deps=False epel-release \
  && dnf install -y --setopt=install_weak_deps=False \
-        git rsync jq xrootd-client gcc gcc-c++ make cmake tar gzip findutils which procps-ng gawk grep libgomp \
+        git rsync jq xrootd-client gcc gcc-c++ make cmake tar gzip findutils which procps-ng gawk grep libgomp diffutils \
  && dnf clean all
 
 # uv pinned to 0.13.6; no cache in the image.
@@ -117,7 +117,7 @@ LABEL org.opencontainers.image.source="https://github.com/dowlingwong/agent_pape
       org.opencontainers.image.description="Paper B R1 HTCondor CPU image: harness env (Py3.13) + Track S env (Py3.11). No code, models, data or credentials." \
       r1.def_route="r1/scripts/htcondor/apptainer/r1-htc.def (a5a0c9da)"
 RUN dnf install -y --setopt=install_weak_deps=False epel-release \
- && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep libgomp \
+ && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep libgomp diffutils \
  && dnf clean all
 COPY --from=build /opt/uv /opt/uv
 COPY --from=build /opt/r1/pythons /opt/r1/pythons
@@ -143,7 +143,7 @@ LABEL org.opencontainers.image.source="https://github.com/dowlingwong/agent_pape
       org.opencontainers.image.description="Paper B R1 HTCondor GPU image: three pinned envs + llama-server 620d2225 (CUDA 70;80;89;90). No code, models, data or credentials." \
       r1.def_route="r1/scripts/htcondor/apptainer/r1-htc.def (a5a0c9da)"
 RUN dnf install -y --setopt=install_weak_deps=False epel-release \
- && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep libgomp \
+ && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep libgomp diffutils \
  && dnf clean all
 COPY --from=build /opt/uv /opt/uv
 COPY --from=build /opt/r1/pythons /opt/r1/pythons
