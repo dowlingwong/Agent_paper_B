@@ -1176,6 +1176,18 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-HTC-QTORCH | **Q-TORCH：A — env3 按 R1-ENV-PIN 已提交的 GPU freeze 原样安装，causal-conv1d 按 8.0/8.9/9.0 编译；L40S/H200 smoke + E0 等价性通过前，集群上不跑 Track P 训练；V100S 不用于 Track P。** 依据：Q-TORCH（`reports/HTCONDOR_CHAIN_QUESTIONS_20261114.md`，`htcondor-chain-20261114` @ `13050d14`）称"没有已提交文件固定 cu124 wheel"，但 R1-ENV-PIN（26 Oct）与已提交 freeze `docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt`（121 行，TASL-7 逐行一致）已固定该环境。现镜像 `20261114-74820315` 的 env3（CPU freeze 换装 torch 2.6.0+cu124）不是该环境：缺 flash-linear-attention / fla-core 0.5.2、causal-conv1d 1.7.0、einops、ninja、wheel，filelock / setuptools 版本不同。现镜像 digest 不变，直到作者批准 v2；v2 的 env3 freeze 与已提交文件排序后 diff 为空；smoke 与 E0 等价性各自独立审查。V100S 无 bf16。 |
 
+### 15 November 2026 — 9bab3d6f scope acknowledgement (author)
+
+| ID | Decision |
+|---|---|
+| R1-B2-REPAIR-SCOPE-ACK | **确认 — `9bab3d6f` 五个文件（`r1/c3/train/run.py`、`r1/c3/train/trainer.py`、`r1/c3/env.py`、`r1/c3/control.py`、`r1/c3/prior_model.py`）按 IT-2 独立审查纳入 M3 范围；本行对 Track P 读真实表的禁令解除。** 依据：`proposals/AUTHOR_DECISIONS_20261104.md` 中的同名行（4 Nov）；审查 `reviews/IT2_9BAB3D6F_FIVE_FILES_REVIEW_20261114.md`（M3 接受提交 `ec6e30a9` 中这五个文件的 diff，接受；`mac-answers-20261114` @ `e7f89096`）。范围只限这五个文件，不是 M3 整体或 B.2 启动的审查；其他 gate 不变。 |
+
+### 15 November 2026 — W2-3 STOP (author)
+
+| ID | Decision |
+|---|---|
+| R1-W2-3-STOP | **采纳 W2-3 为 Track P 数据重建（`c3_features/v3`、`trackp_prompt/v2`）的 STOP：每个源 ledger 必须恰好用满 W = 20 次 worker run。** 检查脚本 `r1/scripts/w2_runs_total_check.py`（`mac-w2-v3-rebuild-20261115` @ `d8aa9561`，审查 `reviews/W2_V3_REBUILD_REVIEW_20261115.md`，接受），退出码 3 即 STOP；sweep 1 用 `--expect-ledgers 288` 运行，ledger 数不符为坏输入、不得通过。STOP 时保留现场、报告，不重试。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
