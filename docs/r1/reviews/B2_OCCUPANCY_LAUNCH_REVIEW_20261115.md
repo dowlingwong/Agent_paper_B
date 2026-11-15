@@ -631,3 +631,77 @@ delivery pinned to a clean commit containing these script SHAs (recorded in the 
 with the prechecks STOP conditions/evidence preserved.
 
 VERDICT: ACCEPTED
+
+---
+
+## Re-review round 7 (targeted, pre-marker bug fixed during the real handover)
+
+**Re-checked at** the single pinned exec commit `ops-b2-exec-20261115` @
+**`90bb9638ed2fdf54dda00ddc94d9ba6a545ed6a0`** (`origin/ops-b2-exec-20261115` = same; run HEAD
+unchanged at `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈18:55–19:10 CET. The
+shared worktree is clean at that commit. `git diff 4742a39a..90bb9638` for the exec files is exactly the
+three intended `.ok` writes (below); the commit also contains the round-6 review record and, importantly,
+a committed attempt artifact (B-7). All other exec files are byte-identical to the accepted set (PLAN
+`c8ffa7b9`, bootstrap `432b278e`, deliver `97fcdbc4`, inventory_after `01e87cf5`, create_marker
+`2041094a`, start `3b0a3517`, receipt `ef2b244a`, publish_status `c3da9b38`, monitor `4079243b`, expected
+`711e8d7a`, venv_pins `3dddb9b2`, watcher_expected `7dff402b`); changed: prechecks `40b4266d`, postwatch
+`7031cfe3`, preflight `0649a9ea`. The prepared Mac status checkout was re-verified: branch
+`mac-b1-20261107`, HEAD `fcf52c09` = origin, clean. No SSH, no host command, no marker/STATUS touched by
+this review.
+
+### The round-7 `.ok` fix is correct
+
+- `prechecks.sh` L107: `set -C; printf 'PRECHECKS_PASS\n' > "$OK" || { …; exit 1; }`
+- `postwatch_check.sh` L59: `set -C; printf 'POSTWATCH_PASS\n' > "$PW/postwatch.ok" || { …; exit 1; }`
+- `preflight.sh` L65: `set -C; printf 'PREFLIGHT_OK\n' > "$RUN_DIR/preflight.ok" || stop …`
+  (the L64 `[ ! -e … ] || stop "preflight.ok exists"` no-clobber guard is retained).
+- The diff for each script is exactly the one `.ok` line; no other logic changed, and the exclusive
+  `set -C` no-clobber behaviour is retained. The unchanged `create_marker.sh` L13 (`-s
+  prechecks/prechecks.ok`) and `start.sh` L26/L28/L29 (`-s prechecks.ok`, `-s postwatch.ok`, `-s
+  preflight.ok`) are now satisfied by the non-empty receipts. The empty-`.ok` vs `-s` inconsistency that
+  stopped the real handover is fixed.
+- The Lead's report of the failed attempt (bootstrap OK, deliver OK with pinned commit `f23f4a2c` and
+  all 11 SHAs, prechecks rc=0/PRECHECKS_PASS, then `create_marker.sh` STOP "prechecks not passed";
+  no marker, no STATUS, no GPU job; marker/locks verified absent; attempt directory moved to
+  `/home/dowling/r1_b1_engineering/b2_handover_8709_20261115_b2.attempt-20261115T162312Z`, not deleted) is
+  consistent with the static diff and with the recovered state. Re-running from a fresh RUN_DIR with the
+  old attempt preserved is the right recovery; keep the attempt directory (bootstrap/delivered receipts
+  and the passing prechecks log).
+
+### BLOCKING for the requested re-run — B-7: the committed attempt receipt blocks `deliver.sh`
+
+The commit `90bb9638` contains a tracked `docs/r1/reports/b2_exec_20261115/delivered-receipt.local.txt`
+(blob `8c43db90…`, 14 lines: the previous attempt's `exec_commit=f23f4a2c…`, `delivered_utc=
+2026-11-15T16:19:50Z` and the 11 delivered SHAs). `deliver.sh` L21 sets
+`LOCALREC="$HERE/docs/r1/reports/b2_exec_20261115/delivered-receipt.local.txt"` and L23 refuses with
+`STOP: local delivered-receipt exists (no retry)` when it exists. Because the file is committed, the
+deliver's L15 clean-worktree check passes and the deliver then fails at L23 **before installing any
+file** — the re-run with delivery pinned to `90bb9638` cannot start as requested. Fix (minimal, preserves
+evidence): move the historical receipt to a unique attempt name in a new commit (e.g. `git mv
+docs/r1/reports/b2_exec_20261115/delivered-receipt.local.txt
+docs/r1/reports/b2_exec_20261115/delivered-receipt.local.attempt-20261115T162312Z.txt`), push, and pin the
+new commit (the three fixed scripts and all other exec files are unchanged); the canonical local receipt
+path is then absent, and the new attempt's deliver writes its own receipt. Do not delete the historical
+receipt. Alternatively, change `deliver.sh` to use a per-attempt local receipt name and not treat a
+committed historical one as a retry — that is a script change and would need its own review; the move
+commit is smaller and keeps the evidence. Record the new pin in the host `delivered-receipt.txt`.
+
+### Residual notes (not blocking)
+
+- The `.ok` fix is compatible with the marker/start `-s` checks; no other pre-marker gate changes.
+- The previous attempt's host RUN_DIR is preserved as the `.attempt-…` directory; the fresh RUN_DIR is
+  the original path (bootstrap refuses if it exists, so the original must remain absent until bootstrap).
+- Delivery pin/process: after the move commit, pin `REVIEWED_EXEC_SHA` to that commit (or a later
+  review-record-only commit with the same script SHAs), ensure local HEAD = origin and a clean worktree,
+  and record the pin in the delivery receipt.
+
+### Verdict
+
+The round-7 `.ok` fix is correct and the failed-attempt recovery is sound, but the requested re-run is
+blocked by the committed `delivered-receipt.local.txt`: `deliver.sh` stops before installing anything
+when it exists. **Do not create the marker or publish the STATUS.** Apply the one move/rename commit
+(preserve the historical receipt), re-pin delivery to the new commit, and re-check; the three-script fix
+and every other reviewed control are otherwise clean. No marker/STATUS/GPU job was created by the failed
+attempt, and the attempt evidence is preserved.
+
+VERDICT: NOT ACCEPTED
