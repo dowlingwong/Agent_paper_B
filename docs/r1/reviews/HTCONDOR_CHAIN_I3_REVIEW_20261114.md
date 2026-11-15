@@ -315,3 +315,65 @@ CUDA/offload lines), exit code and the event-log wait/run split (the pull is ins
 once**, recording the docker pull result (or its hold) and the same fields; total 2 GPU-h ≤ 10.
 
 VERDICT: ACCEPTED
+
+
+---
+
+## Quick re-check 2 — llama CUDA diagnostics (15 Nov 2026, 16:05–16:20 CET; no full round)
+
+**Scope.** Confirmation of the diagnostic-only change after the first NEMO2 run. Worktree HEAD
+**`0bafd4ad`** ("I3 unit — add llama CUDA diagnostics…"), clean. Unit hashes verified: `i3_run.sh`
+`073af73d202db8feee852a4368d6c615345592396a2382bc5d9971b8239302aa`, NEMO2 JDL
+`2df4f99969e2bb8b9ae6d19fb9134aa607ea1a37a56ffc7330ae07ec80f27377`, TOpAS JDL
+`f7b6f4b9c0827dce531273c5a2356dad3098b7f6f753e8fc2791ae7f8f6db619`; the wrapper is unchanged in this commit.
+The first run's evidence (759707) is committed under `i3/out_nemo2/` and was read here.
+
+**The open point is real and well-diagnosed.** The committed `i3_server.txt` shows the server log at
+`verbosity = 3 (adjust with the `-lv N` CLI arg)` with **no CUDA/offload lines**, while the identity shows
+`torch cuda True 12.4 NVIDIA L40S` and the event log's 001 event shows the slot's GPU assigned
+(`AvailableGPUs = { GPUs_GPU_7f5cae01 }`, `Capability 8.9`, `NvidiaDriver 615.71.10`, `Disk 25004330`). So the GPU
+was allocated and torch sees it; the missing lines are a llama backend/library-path/verbosity question — the
+diagnostic is the right next step (and the log itself confirms this build supports `-lv N`).
+
+**Change verified acceptable (diagnostic-only):** `-lv 4` added to the same llama-server invocation (no other
+serving-flag change); a pre-start block records `LD_LIBRARY_PATH`, `ldconfig -p` for libcuda/libcudart, a bounded
+`find / -xdev -maxdepth 4` for `libcuda.so*`/`libnvidia*`, `/usr/local/nvidia/lib64`,
+`/opt/r1/llama/bin/libggml-cuda.so*` and `ldd libggml-cuda.so | grep cuda/not found` into `i3_cudalibs.txt`; after
+serving, `llama_cuda_log_lines=<n>` and `llama_gpu_evidence=<…|none>` are appended to `i3_server.txt`; PASS/FAIL is
+unchanged (download/byte/sha + readiness only). `i3_cudalibs.txt` is in the `pre=` list and in both JDLs'
+`transfer_output_files` (7 outputs). No functional change to the model/serve path; no regression.
+
+**Answer on gating: keep `gpu_offload` recorded-only — do not make it a hard gate.** Reasons: (i) PASS/FAIL
+should stay semantic (pinned download verified + server serves); (ii) a gate parsed from log lines is brittle
+across llama.cpp builds/verbosity and could fail a working serving path on a log-format change; (iii) a CPU fallback
+is an environment/library-path issue — the right response is to record it and then fix (export the EP driver lib
+path or rebuild with the right rpath) in a *new* reviewed unit, not to fail this evidence run; (iv) if the author
+later requires GPU serving for I3 acceptance, add that as a separate reviewed gate once the cause is known. A soft
+`gpu_offload=yes|no` line in `i3_PASSFAIL.txt` (not affecting the exit code) is a useful middle ground and I would
+accept it.
+
+**Minor notes (record-only, none blocking):**
+1. `CUDA_LINES=$(grep -aicE … || echo 0)` double-prints when grep finds nothing (grep prints `0` and exits 1, then
+   `echo 0` prints another), so `llama_cuda_log_lines` can be followed by a stray `0` line; use `|| true` (cosmetic).
+2. The committed wrapper no longer copies the dry-run ad to `dryrun.ad` (the round-2 m5 record step); `out_nemo2/`
+   has `dryrun.log` but not the ad, and `/tmp/${JDL}.dry` on the submit host is ephemeral. Restore the copy (or put
+   the ad in the repo) for the re-run and the TOpAS run.
+3. The first run's final `Image size of job updated` is **28,107,500** kB (≈26.8 GiB), above the requested
+   25,000,000 kB and the slot's `Disk 25,004,330`: NEMO2 did not enforce and the job passed, but for the re-run
+   either raise `request_disk` to 30,000,000 (one line, no cap impact) or record the overage; the diagnostic run
+   will have similar usage.
+4. NIT: also record `ldd /opt/r1/llama/bin/llama-server | grep -iE 'cuda|not found'` in case the CUDA backend is
+   statically linked (the current `ls`/`ldd` of `libggml-cuda.so` is correct if it is shared).
+
+**Record defects from quick re-check 1 are fixed:** `raw/i3_prechecks.txt` (curl 7.76.1 inside the image; HF
+302→200 `content-length: 4683073536`) and `raw/topas_etpceph_gpu_slots.txt` (18×A100, 14/13×V100S, all
+`ProvidesEtpCeph=true HasDocker=true`) are committed with real content. The chain report records the 759707 run,
+the open point, this diagnostic follow-up and the 759708 removal (own idle job, never ran; no files/other jobs
+touched — acceptable).
+
+**Plan confirmed:** re-run **NEMO2 L40S** with this unit (fresh snapshot, dry-run ad, queue check, one job), inspect
+`i3_cudalibs.txt` + `llama_cuda_log_lines`/`llama_gpu_evidence`, then **TOpAS V100S once** with the same unit as
+soon as c03's V100S slots appear in the ETP view (idling is a pool state, like S2T's 9.4 min wait — record the wait
+or the >4h note).
+
+VERDICT: ACCEPTED

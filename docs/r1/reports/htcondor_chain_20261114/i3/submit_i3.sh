@@ -8,7 +8,8 @@ case "$WHICH" in
   topas) JDL=i3_topas_v100s.jdl ;;
   *) echo "unknown target $WHICH"; exit 2 ;;
 esac
-D=/work/dwong/paperb/work/i3_${WHICH}_submit
+D="$(pwd)"
+case "$D" in /work/dwong/paperb/work/i3_*) ;; *) echo "STOP: run from /work/dwong/paperb/work/i3_*"; exit 2;; esac
 mkdir -p "$D"
 cd "$D"
 echo "== digest =="; grep -nE "container_image|docker_image" "$JDL"
@@ -28,7 +29,9 @@ ACTIVE=$(condor_q dwong -af Cmd 2>/dev/null | grep -c "i3_run.sh" || true)
 echo "active_i3_jobs=$ACTIVE"
 [ "$ACTIVE" -eq 0 ] || { echo "STOP: an i3_run job is already active"; exit 3; }
 echo "== dry-run =="
-condor_submit -dry-run "/tmp/${JDL}.dry" "$JDL" | tee dryrun.log
+AD="/tmp/${JDL}.dry"
+condor_submit -dry-run "$AD" "$JDL" | tee dryrun.log
+if [ -f "$AD" ]; then install -m 644 "$AD" dryrun.ad; else echo "WARN: dry-run ad $AD not found"; fi
 grep -E "^(JobUniverse|ContainerImage|ContainerImageSource|DockerImage|WantContainer|WantDocker|Requirements|RequestCpus|RequestMemory|RequestDisk|RequestGPUs|RemoteJob|Cmd|TransferInput)=" dryrun.ad | head -22 || true
 echo "== queue snapshot =="; condor_q dwong -af ClusterId ProcId JobStatus Cmd > queue_before.txt; wc -l < queue_before.txt
 echo "== submit =="; condor_submit "$JDL" | tee submit.txt

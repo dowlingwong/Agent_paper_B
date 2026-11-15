@@ -48,6 +48,7 @@ GOT_SHA=$(sha256sum model.gguf 2>/dev/null | awk '{print $1}')
   find / -xdev -maxdepth 4 \( -name 'libcuda.so*' -o -name 'libnvidia*' \) -printf '%p %s\n' 2>/dev/null | head -10
   ls -la /usr/local/nvidia/lib64 2>/dev/null | head -6
   echo "== llama backend libs =="; ls /opt/r1/llama/bin/libggml-cuda.so* 2>/dev/null
+  echo "== llama-server ldd (cuda/not found) =="; ldd /opt/r1/llama/bin/llama-server 2>&1 | grep -iE "cuda|not found" | head -8
   ldd /opt/r1/llama/bin/libggml-cuda.so 2>&1 | grep -iE "cuda|not found" | head -6
 } > i3_cudalibs.txt 2>&1
 if [ "$FAIL" -eq 0 ]; then
@@ -71,13 +72,15 @@ if [ "$FAIL" -eq 0 ]; then
     echo "== CUDA lines =="; grep -aiE "cuda|gpu|device|offload|load time" llama-server.log 2>/dev/null | head -12
   } > i3_server.txt 2>&1
   [ "$READY" -eq 1 ] || FAIL=1
-  CUDA_LINES=$(grep -aicE "cuda|offload|ggml_cuda|device" llama-server.log 2>/dev/null || echo 0)
+  CUDA_LINES=$(grep -aicE "cuda|offload|ggml_cuda|device" llama-server.log 2>/dev/null || true)
+CUDA_LINES=${CUDA_LINES:-0}
   GPU_USED=$(grep -aiE "offloading|ggml_cuda_init|CUDA0" llama-server.log 2>/dev/null | head -3)
   { echo "llama_cuda_log_lines=$CUDA_LINES"; echo "llama_gpu_evidence=${GPU_USED:-none}"; } >> i3_server.txt
 else
   echo "skipped (download/sha failed)" > i3_server.txt
 fi
 echo "script_end_utc=$(date -u +%FT%TZ)" >> i3_identity.txt
+echo "gpu_offload=$([ -n "${GPU_USED:-}" ] && echo yes || echo no)" >> i3_server.txt
 echo "I3_$([ "$FAIL" -eq 0 ] && echo PASS || echo FAIL)" > i3_PASSFAIL.txt
 cat i3_PASSFAIL.txt; cat i3_download.txt; cat i3_sha.txt
 echo "I3_DONE fail=$FAIL"
