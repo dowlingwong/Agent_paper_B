@@ -10,7 +10,7 @@ START_UTC=$(date -u +%FT%TZ)
 URL="https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/13fb94bfda8c8cf22497dc57b78f391a9acb426a/qwen2.5-coder-7b-instruct-q4_k_m.gguf"
 EXPECT_SHA=509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c
 EXPECT_BYTES=4683073536
-pre="i3_identity.txt i3_download.txt i3_download.log i3_sha.txt i3_server.txt i3_PASSFAIL.txt"
+pre="i3_identity.txt i3_download.txt i3_download.log i3_sha.txt i3_cudalibs.txt i3_server.txt i3_PASSFAIL.txt"
 for f in $pre; do printf 'not written\n' > "$f"; done
 {
   echo "job=$JOB host=$(hostname -f) start_utc=$START_UTC iwd=$(pwd)"
@@ -41,9 +41,18 @@ GOT_SHA=$(sha256sum model.gguf 2>/dev/null | awk '{print $1}')
 { echo "sha256=$GOT_SHA"; echo "expected=$EXPECT_SHA"; echo "match=$([ "$GOT_SHA" = "$EXPECT_SHA" ] && echo yes || echo no)"; } > i3_sha.txt 2>&1
 [ "$GOT_SHA" = "$EXPECT_SHA" ] || FAIL=1
 # ---- llama-server: start, health, stop --------------------------------------
+{
+  echo "== driver libs (llama needs libcuda.so.1; torch finds it) =="
+  echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-unset}"
+  ldconfig -p 2>/dev/null | grep -iE "libcuda\.so|libcudart" | head -6
+  find / -xdev -maxdepth 4 \( -name 'libcuda.so*' -o -name 'libnvidia*' \) -printf '%p %s\n' 2>/dev/null | head -10
+  ls -la /usr/local/nvidia/lib64 2>/dev/null | head -6
+  echo "== llama backend libs =="; ls /opt/r1/llama/bin/libggml-cuda.so* 2>/dev/null
+  ldd /opt/r1/llama/bin/libggml-cuda.so 2>&1 | grep -iE "cuda|not found" | head -6
+} > i3_cudalibs.txt 2>&1
 if [ "$FAIL" -eq 0 ]; then
   SRV_START=$(date +%s)
-  /opt/r1/llama/bin/llama-server -m model.gguf --host 127.0.0.1 --port 8091 -ngl 99 -c 2048 > llama-server.log 2>&1 &
+  /opt/r1/llama/bin/llama-server -m model.gguf --host 127.0.0.1 --port 8091 -ngl 99 -c 2048 -lv 4 > llama-server.log 2>&1 &
   SRV_PID=$!
   READY=0
   for _ in $(seq 1 120); do
@@ -62,6 +71,9 @@ if [ "$FAIL" -eq 0 ]; then
     echo "== CUDA lines =="; grep -aiE "cuda|gpu|device|offload|load time" llama-server.log 2>/dev/null | head -12
   } > i3_server.txt 2>&1
   [ "$READY" -eq 1 ] || FAIL=1
+  CUDA_LINES=$(grep -aicE "cuda|offload|ggml_cuda|device" llama-server.log 2>/dev/null || echo 0)
+  GPU_USED=$(grep -aiE "offloading|ggml_cuda_init|CUDA0" llama-server.log 2>/dev/null | head -3)
+  { echo "llama_cuda_log_lines=$CUDA_LINES"; echo "llama_gpu_evidence=${GPU_USED:-none}"; } >> i3_server.txt
 else
   echo "skipped (download/sha failed)" > i3_server.txt
 fi
