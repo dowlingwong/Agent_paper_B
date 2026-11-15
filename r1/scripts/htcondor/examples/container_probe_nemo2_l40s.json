@@ -4,7 +4,7 @@
   "kind": "probe",
   "runtime": "container",
   "image": "docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
-  "image_disk_kb": 5104000,
+  "image_disk_kb": 11000000,
   "cpus": 2,
   "memory_mb": 8000,
   "disk_kb": 25000000,

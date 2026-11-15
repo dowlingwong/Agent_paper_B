@@ -104,15 +104,21 @@ image-transfer disk cap measured in S5, plus reviewed dry-run JDLs for both site
   `universe = container` and `container_image = <image>` instead of `universe = docker`/`docker_image`.
 - `image` for `"container"` must be a `docker://` URI **pinned by a sha256 digest** (no tags), e.g.
   `docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35…`.
-- `image_disk_kb` (required with `"container"`, refused with `"docker"`): the image-transfer disk cap. The
-  manifest is refused unless `disk_kb >= image_disk_kb + image_disk_margin_kb` (config default
-  2,000,000 kB) and `image_disk_kb <= max_image_disk_kb` (config default 40,000,000 kB). S5 measured the
-  reviewed gpu image at 5,226,487,808 B (5,104,000 kB) plus the sandbox; the review of this unit checks
-  the new config values as `proposed:`.
+- `image_disk_kb` (required with `"container"`, refused with `"docker"`): the **measured EP-side
+  footprint** of the pulled image (v1 gpu image: S5 measured ≈11 GB in the container-universe cache; the
+  downloaded SIF is 5,104,000 kB). The manifest is refused unless
+  `disk_kb >= 2 * image_disk_kb + image_disk_margin_kb` (config default 2,000,000 kB; the cache can hold
+  both the pulled image and the job's copy) and `image_disk_kb <= max_image_disk_kb` (config default
+  40,000,000 kB). The examples use `image_disk_kb = 11,000,000` with `disk_kb = 25,000,000`.
+- Track P training device guard (author Q-TORCH ruling): for `kind: "track_g"` with `gpus > 0`,
+  `gpu_device_name` must be in the new config list `trackp_gpu_device_names` = `["NVIDIA L40S",
+  "NVIDIA H200"]` (`ruled:`); the V100S is refused for Track P training.
 
-**Tests:** `r1/tests/htcondor/test_htc_adapter.py` gains ten container-runtime tests (default docker
-unchanged; container universe/`container_image` render; docker:// digest requirement; required/refused
-`image_disk_kb`; cap and margin; remote GPU semantics). The suite is 77 passed (67 before).
+**Tests:** `r1/tests/htcondor/test_htc_adapter.py` gains ten tests (default docker unchanged; container
+universe/`container_image` render; docker:// digest requirement; required/refused `image_disk_kb`; cap and
+2x-footprint margin; remote GPU semantics; Track P device guard). The suite is **78 passed** (68 before).
+The root `uv.lock` that `uv run` created during local testing was moved to `_to_delete/` and is not part of
+this unit.
 
 **Reviewed dry-run JDLs (both sites, deepthought, 15 Nov 2026, no submission):**
 - `examples/container_probe_nemo2_l40s.json` → `universe = container`, `container_image = …gpu@sha256:69b06b35…`,

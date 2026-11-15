@@ -11,10 +11,11 @@ Manifest schema ``htc_job/v1`` (all keys required unless marked optional; no oth
 * optional ``runtime``: "docker" (default) or "container". With "container" the image must be a
   ``docker://`` URI pinned by a sha256 digest (a registry image such as a ghcr.io digest; the
   Singularity/Apptainer route), and ``image_disk_kb`` is required;
-* optional ``image_disk_kb`` (container runtime only): the image-transfer disk cap in kB that
-  ``request_disk`` must cover in addition to the job's own disk, with ``image_disk_margin_kb``
-  headroom and ``max_image_disk_kb`` as the adapter's cap (S5 measured the 4.87 GiB image plus the
-  sandbox); refused for the docker runtime;
+* optional ``image_disk_kb`` (container runtime only): the measured EP-side image footprint in kB
+  (v1 image: S5 measured ~11 GB in the container-universe cache; the downloaded SIF is 5,104,000 kB);
+  ``request_disk`` must cover ``2 * image_disk_kb + image_disk_margin_kb`` (the EP cache can hold the
+  pulled image and the job's copy), and ``image_disk_kb`` may not exceed ``max_image_disk_kb``;
+  refused for the docker runtime;
 * ``cpus`` (int >= 1), ``memory_mb`` (int >= 1), ``disk_kb`` (int >= 1), ``walltime_s`` (int >= 1);
 * ``gpus``: int 0..max_gpus, whole GPUs only (``RequestGPUMemoryMB`` is never rendered and the
   key ``gpu_memory_mb`` is refused);
@@ -66,6 +67,7 @@ CONFIG_SCHEMA = "htc_config/v1"
 STATUS_PREFIXES = ("ruled:", "measured:", "proposed:")
 REQUIRED_CONFIG = ("real_submission_enabled", "max_transfer_input_mb", "max_gpus", "max_walltime_s",
                    "gpu_device_names", "cloud_sites", "accounting_groups", "runner_timeout_margin_s")
+OPTIONAL_CONFIG = ("max_image_disk_kb", "image_disk_margin_kb", "trackp_gpu_device_names")
 MANIFEST_SCHEMA = "htc_job/v1"
 BASE_KEYS = {"schema", "name", "kind", "image", "cpus", "memory_mb", "disk_kb", "walltime_s", "gpus",
              "gpu_device_name", "placement", "executable", "arguments", "transfer_input_files",
@@ -100,6 +102,23 @@ def load_config(path: Path | None = None) -> dict:
         if not status.startswith(STATUS_PREFIXES):
             raise HtcError(f"{target}: status of {key!r} must start with one of {STATUS_PREFIXES}")
         values[key], statuses[key] = entry["value"], status
+    for key in OPTIONAL_CONFIG:
+        entry = payload.get(key)
+        if entry is None:
+            continue
+        if not isinstance(entry, dict) or set(entry) != {"value", "status"}:
+            raise HtcError(f"{target}: optional key {key!r} must be {{'value': ..., 'status': ...}}")
+        status = str(entry["status"])
+        if not status.startswith(STATUS_PREFIXES):
+            raise HtcError(f"{target}: status of {key!r} must start with one of {STATUS_PREFIXES}")
+        values[key], statuses[key] = entry["value"], status
+    for key in ("max_image_disk_kb", "image_disk_margin_kb"):
+        if key in values and (type(values[key]) is not int or values[key] < 0):
+            raise HtcError(f"{key} must be a nonnegative integer")
+    if "trackp_gpu_device_names" in values:
+        t = values["trackp_gpu_device_names"]
+        if not isinstance(t, list) or not all(isinstance(d, str) for d in t):
+            raise HtcError("trackp_gpu_device_names must be a list of strings")
     if type(values["real_submission_enabled"]) is not bool:
         raise HtcError("real_submission_enabled must be a JSON boolean")
     for key in ("max_transfer_input_mb", "max_gpus", "max_walltime_s", "runner_timeout_margin_s"):
@@ -169,8 +188,9 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
         margin = _int({"image_disk_margin_kb": v.get("image_disk_margin_kb", 2000000)}, "image_disk_margin_kb", 0)
         if cap > max_cap:
             raise HtcError(f"image_disk_kb {cap} exceeds the adapter cap {max_cap}")
-        if _int(data, "disk_kb", 1) < cap + margin:
-            raise HtcError("request_disk must cover image_disk_kb plus image_disk_margin_kb headroom")
+        if _int(data, "disk_kb", 1) < 2 * cap + margin:
+            raise HtcError("request_disk must cover 2 x the measured image footprint plus "
+                           "image_disk_margin_kb headroom")
     cpus = _int(data, "cpus", 1)
     _int(data, "memory_mb", 1)
     _int(data, "disk_kb", 1)
@@ -239,6 +259,11 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
     if total > float(v["max_transfer_input_mb"]) * 1_000_000:
         raise HtcError(f"transfer input totals {total} bytes, over {v['max_transfer_input_mb']} MB: use /ceph or xrootd")
     if kind == "track_g":
+        if gpus > 0:
+            allowed = v.get("trackp_gpu_device_names") or []
+            if device not in allowed:
+                raise HtcError(f"Track P training needs a Track P device ({', '.join(allowed)}); "
+                               "the V100S is not allowed for Track P")
         table = data["table_id"]
         if not isinstance(table, str) or not SAFE.fullmatch(table):
             raise HtcError("invalid table_id")

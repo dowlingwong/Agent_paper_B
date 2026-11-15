@@ -187,15 +187,15 @@ def test_resume_dir_survives_eviction(tmp_path):
 
 def test_track_g_needs_table_and_runner_timeout_below_walltime():
     base = dict(kind="track_g", table_id="t0_digits", runner_timeout_s=1200, runs_per_job=1)
-    hs.validate_manifest(gpu(**base, walltime_s=1801), CONFIG)
+    hs.validate_manifest(tg_gpu(**base, walltime_s=1801), CONFIG)
     with pytest.raises(hs.HtcError, match="runner timeout plus the margin"):
-        hs.validate_manifest(gpu(**base, walltime_s=1800), CONFIG)
+        hs.validate_manifest(tg_gpu(**base, walltime_s=1800), CONFIG)
     three = dict(base, runs_per_job=3)
     with pytest.raises(hs.HtcError, match="runs_per_job"):
-        hs.validate_manifest(gpu(**three, walltime_s=4000), CONFIG)
-    hs.validate_manifest(gpu(**three, walltime_s=4201), CONFIG)
+        hs.validate_manifest(tg_gpu(**three, walltime_s=4000), CONFIG)
+    hs.validate_manifest(tg_gpu(**three, walltime_s=4201), CONFIG)
     with pytest.raises(hs.HtcError, match="missing"):
-        hs.validate_manifest(gpu(kind="track_g", walltime_s=3600), CONFIG)
+        hs.validate_manifest(tg_gpu(kind="track_g", walltime_s=3600), CONFIG)
     bad = gpu(**base, walltime_s=3600); bad["gpu_device_name"] = None
     with pytest.raises(hs.HtcError, match="exact GPUs_DeviceName"):          # CUDA OOM needs a pinned model
         hs.validate_manifest(bad, CONFIG)
@@ -243,7 +243,7 @@ def test_cli_dry_run_calls_condor_submit_dry_run_in_the_manifest_directory(tmp_p
 
 
 def test_cli_track_g_needs_table_pins(tmp_path):
-    m = gpu(kind="track_g", table_id="t1", runner_timeout_s=100, runs_per_job=1, walltime_s=3600)
+    m = tg_gpu(kind="track_g", table_id="t1", runner_timeout_s=100, runs_per_job=1, walltime_s=3600)
     p = tmp_path / "m.json"; p.write_text(json.dumps(m))
     out = subprocess.run([sys.executable, str(hs.HERE / "htc_submit.py"), str(p), "--dry-run"],
                          capture_output=True, text=True, env={"PATH": str(tmp_path)})
@@ -438,7 +438,7 @@ def test_mark_complete_requires_real_outputs(tmp_path):
 # ------------------------------------------------- container runtime (15 Nov 2026 unit)
 
 DIGEST_IMAGE = "docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:" + "a" * 64
-IMAGE_CAP_KB = 5_104_000          # the reviewed 4.87 GiB SIF in kB
+IMAGE_CAP_KB = 11_000_000         # S5-measured EP-side footprint of the pulled image (kB)
 
 
 def container(**over):
@@ -479,9 +479,11 @@ def test_container_requires_image_disk_kb():
         hs.validate_manifest(m, CONFIG)
 
 
-def test_container_disk_must_cover_cap_plus_margin():
-    with pytest.raises(hs.HtcError, match="request_disk must cover image_disk_kb"):
-        hs.validate_manifest(container(disk_kb=IMAGE_CAP_KB), CONFIG)
+def test_container_disk_must_cover_twice_the_footprint_plus_margin():
+    with pytest.raises(hs.HtcError, match="request_disk must cover 2 x the measured image footprint"):
+        hs.validate_manifest(container(disk_kb=2 * IMAGE_CAP_KB), CONFIG)
+    with pytest.raises(hs.HtcError, match="request_disk must cover 2 x the measured image footprint"):
+        hs.validate_manifest(container(disk_kb=20_000_000), CONFIG)
 
 
 def test_container_image_cap_is_bounded():
@@ -509,3 +511,17 @@ def test_container_remote_gpu_job_renders_remote_semantics():
     assert "request_GPUs = 1" in jdl
     assert "ProvidesETPResources" not in jdl
     assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in jdl
+
+
+def tg_gpu(**over):
+    m = gpu(**{k: v for k, v in over.items() if k != "gpu_device_name"})
+    m["gpu_device_name"] = over.get("gpu_device_name", "NVIDIA L40S")
+    return m
+
+
+def test_trackp_training_device_guard():
+    tg = tg_gpu(kind="track_g", table_id="t1", runner_timeout_s=60, runs_per_job=1, walltime_s=3600)
+    hs.validate_manifest(tg, CONFIG)                      # L40S default device from the helper
+    with pytest.raises(hs.HtcError, match="V100S is not allowed for Track P"):
+        hs.validate_manifest(tg_gpu(kind="track_g", table_id="t1", runner_timeout_s=60, runs_per_job=1,
+                                 walltime_s=3600, gpu_device_name="Tesla V100S-PCIE-32GB"), CONFIG)
