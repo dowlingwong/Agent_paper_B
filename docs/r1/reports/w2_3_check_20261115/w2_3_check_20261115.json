@@ -1,0 +1,11 @@
+{
+ "status": "PASS",
+ "stop_rule": "proposed (adoption is a separate author decision)",
+ "check": "W2-3 worker_runs_total == runs_total",
+ "runs_total": 20,
+ "trial_budget": 40,
+ "ledgers": 288,
+ "ledgers_differing": 0,
+ "by_kind": {},
+ "differing": []
+}
