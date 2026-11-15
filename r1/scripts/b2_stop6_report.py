@@ -398,9 +398,11 @@ def render(analysis, manifests, invalid, b1, *, sources):
         ci = b1_rows[c].get('cluster_interval') or {}
         overlap = all(_num(x) for x in (ci.get('lower'), ci.get('upper'), sci.get('lower'), sci.get('upper'))) and \
             ci['lower'] <= sci['upper'] and sci['lower'] <= ci['upper']
+        tail = ('the two 95 % intervals overlap, so no difference is claimed.' if overlap else
+                'the two 95 % intervals do not overlap; the comparison is still unpaired and untested, so it is '
+                'descriptive only.')
         w(f"- `{c}` μ̂ − scripted μ̂ (B1): {f(d)}, a point estimate {'below' if d < 0 else 'at or above'} the anchor's. "
-          f"Unpaired and descriptive, not a rule quantity; the two 95 % intervals "
-          f"{'overlap' if overlap else 'do not overlap'}, so no difference is claimed.")
+          f"Unpaired and descriptive, not a rule quantity; {tail}")
     w('')
     w('**B2 (this batch; finalists only; thinking off).** Mean `delta_audit` of the audited proposals (seeds 9201–9210), '
       'with the same node-instance cluster bootstrap as B1 μ̂ (`analyze.bootstrap_mean`, the frozen rule\'s seed and '

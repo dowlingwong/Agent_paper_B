@@ -73,7 +73,7 @@ Each check refuses with `STOP: …`.
 - The analysis's descriptive rows are the manifests' rerun means.
 
 **Invalid trials**
-- The file is bound to this batch: its `batch_manifests_sha256` and `batch_state_sha256` equal the analysis's.
+- The file declares this batch: its `batch_manifests_sha256` and `batch_state_sha256` equal the analysis's. `render` cannot see the roots, so this checks the declaration, not the per-row content (§6).
 - The rows cover the grid exactly once.
 - Each row's classes add up to its `invalid`.
 - The per-candidate totals equal the manifest's `diagnostics.invalid` and `trials`.
@@ -142,6 +142,10 @@ Command: `/tmp/trackg_venv/bin/python -m pytest -q r1/tests/test_b2_stop6_report
 - **`derive-invalid` does not re-verify roots in full.** It checks only the sha256 chain from the verified batch
   state to the files it reads, and cross-checks counts against each root's own manifest. The full verification is
   `verify_b2_batch`, which the analysis attests.
+- **`render` cannot detect an edit of `invalid_trials.json` made after `derive-invalid`** that keeps the
+  per-candidate totals, such as moving trials between modes or nodes. `derive-invalid` is deterministic, and §0
+  prints the file's sha256. The STOP 6 reviewer therefore re-runs `derive-invalid` on the roots and compares the
+  sha256.
 - **No precision-against-plan line.** The template does not compare the achieved per-node CI half-width with the
   power plan's target (1 · σ_node,j). σ_node is not among the inputs. The reviewer can add the line from
   `b2_power_plan.json`.
