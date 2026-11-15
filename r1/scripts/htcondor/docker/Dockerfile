@@ -38,6 +38,19 @@ ARG PY312=3.12.15
 ARG PY311=3.11.18
 
 ########################################################################################
+# nvidia-smi sidecar: the CUDA Rocky 9 bases (devel and runtime) and the Ubuntu CUDA bases ship no
+# NVIDIA driver utilities, and the cuda-repo driver packages need dkms/kmod (no kernel in a container).
+# Take the user-space nvidia-smi from Ubuntu 20.04's nvidia-utils (glibc 2.31, forward-compatible with
+# Rocky 9's glibc 2.34); at run time the batch system injects libnvidia-ml, as for any container job.
+# License note: this redistributes the NVIDIA user-space driver utility inside the image; the author
+# approved shipping nvidia-smi in v2 — record the package version in VERSIONS.
+FROM ubuntu:20.04 AS nvutils
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends nvidia-utils-535 \
+ && rm -rf /var/lib/apt/lists/*
+
+########################################################################################
 FROM ${CUDA_DEVEL} AS build
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 # Global ARGs are only available in FROM lines; re-declare them inside the stage so the pinned Python
@@ -154,7 +167,7 @@ COPY --from=build /opt/r1/llama /opt/r1/llama
 COPY --from=build /opt/r1/LLAMA_SERVER_SHA256 /opt/r1/LLAMA_CPP_COMMIT /opt/r1/
 # nvidia-smi for the in-container S5-style GPU gate (the runtime base does not ship it); the CUDA
 # driver libraries are injected by the batch system at run time, as for the v1 image.
-COPY --from=build /usr/bin/nvidia-smi /usr/bin/nvidia-smi
+COPY --from=nvutils /usr/bin/nvidia-smi /usr/bin/nvidia-smi
 RUN test -x /usr/bin/nvidia-smi
 ENV PATH=/opt/uv:/opt/r1/llama/bin:$PATH UV_PYTHON_INSTALL_DIR=/opt/r1/pythons \
     LD_LIBRARY_PATH=/opt/r1/llama/bin:${LD_LIBRARY_PATH}
@@ -177,6 +190,7 @@ RUN /opt/r1/envs/harness/bin/python -c "import numpy, sklearn, pandas, pytest; p
       echo "env3_sorted_diff=empty"; \
       echo "env3_causal_conv1d_arch=8.0;8.9;9.0"; \
       echo "nvidia_smi=/usr/bin/nvidia-smi"; \
+      echo "nvidia_utils_package=ubuntu20.04 nvidia-utils-535 (user-space, host libnvidia-ml injected at runtime)"; \
       echo "libgomp=$(rpm -q libgomp)"; \
       echo "llama_cpp_commit=$(cat /opt/r1/LLAMA_CPP_COMMIT)"; \
       echo "llama_server_sha256=$(awk '{print $1}' /opt/r1/LLAMA_SERVER_SHA256)"; \
