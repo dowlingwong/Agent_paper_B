@@ -21,7 +21,12 @@ stop() { echo "STOP: $*" >&2; exit 2; }
 [ -s "$BATCH/batch_state.json" ] || stop "batch_state.json missing"
 [ ! -e "$PO/analysis.json" ] || stop "analysis.json already exists (no retry; move the postrun dir aside and re-create)"
 [ ! -e "$PO/POSTRUN_COLLECT_OK" ] || stop "POSTRUN_COLLECT_OK already exists"
-if [ -e "$PO" ]; then [ -d "$PO" ] && [ ! -L "$PO" ] || stop "postrun path exists and is not a plain dir"; else mkdir -m 700 "$PO" || stop "cannot create postrun dir"; fi
+if [ -e "$PO" ]; then
+  [ -d "$PO" ] && [ ! -L "$PO" ] || stop "postrun path exists and is not a plain dir"
+  [ -z "$(ls -A "$PO")" ] || stop "pre-created postrun dir is not empty (fresh dir required)"
+else
+  mkdir -m 700 "$PO" || stop "cannot create postrun dir"
+fi
 # postrun dir created by us (B-8); record it exclusively
 [ ! -e "$PO/CREATED.txt" ] || stop "postrun dir already initialised"
 set -C; printf 'postrun_dir_created_utc=%s\n' "$(date -u +%FT%TZ)" > "$PO/CREATED.txt" || stop "cannot write CREATED.txt"
@@ -62,12 +67,23 @@ summary = {'roots_scanned': roots, 'journals': journals, 'journal_rows': rows,
 out.write_text(json.dumps(summary, indent=1) + '\n')
 print(json.dumps(summary, indent=1))
 PY
-sha256sum "$PO"/* > "$PO/SHA256SUMS" 2>/dev/null || true
-# collect-ok receipt: only after every artifact above succeeded
-set -C
+# deterministic artifact set: every required artifact must exist; no silenced hashing
+for a in "$PO/analysis.json" "$PO/batch_state.json" "$PO/b2_manifests.json" "$PO/invalid_trials.json"; do
+  [ -s "$a" ] || stop "missing artifact $a"
+done
+( cd "$PO" && sha256sum analysis.json batch_state.json b2_manifests.json invalid_trials.json > SHA256SUMS ) || stop "cannot write SHA256SUMS"
+( cd "$PO" && sha256sum -c SHA256SUMS >/dev/null ) || stop "postrun artifact SHA-256 verification failed"
+# collect-ok receipt: built completely in a temp file, validated, then renamed atomically.
+# A failure anywhere above leaves no POSTRUN_COLLECT_OK, so retire_marker.sh cannot accept a partial run.
+OK="$PO/POSTRUN_COLLECT_OK"; TMP="$PO/POSTRUN_COLLECT_OK.tmp"
+[ ! -e "$OK" ] || stop "POSTRUN_COLLECT_OK already exists"
+[ ! -e "$TMP" ] || stop "POSTRUN_COLLECT_OK.tmp already exists"
 {
   echo "postrun_collect_ok_utc=$(date -u +%FT%TZ)"
   echo "analysis_rc=$arc"
-  sha256sum "$PO/analysis.json" "$PO/batch_state.json" "$PO/b2_manifests.json" "$PO/invalid_trials.json" | sed 's# .*/# #'
-} > "$PO/POSTRUN_COLLECT_OK" || stop "cannot write POSTRUN_COLLECT_OK"
+  ( cd "$PO" && sha256sum analysis.json batch_state.json b2_manifests.json invalid_trials.json ) | sed 's# .*/# #'
+} > "$TMP" || stop "cannot write POSTRUN_COLLECT_OK.tmp"
+[ "$(grep -c '^[0-9a-f]\{64\}  ' "$TMP")" -eq 4 ] || stop "POSTRUN_COLLECT_OK artifact hash lines incomplete"
+grep -q '^analysis_rc=0$' "$TMP" || stop "collected analysis rc is not 0"
+mv "$TMP" "$OK" || stop "cannot finalise POSTRUN_COLLECT_OK"
 echo "POSTRUN_COLLECT_OK $PO"

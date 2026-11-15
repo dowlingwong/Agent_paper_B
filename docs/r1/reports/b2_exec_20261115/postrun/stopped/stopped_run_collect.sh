@@ -34,6 +34,19 @@ summary = {'exit': (rd / 'b2.exit').read_text().strip(), 'batch_status': st.get(
 (so / 'STOPPED_STATE.json').write_text(json.dumps(summary, indent=1) + '\n')
 print(json.dumps(summary, indent=1))
 PY
-sha256sum "$SO"/* > "$SO/SHA256SUMS" 2>/dev/null || true
-set -C; printf 'STOPPED_COLLECT_OK\n' > "$SO/STOPPED_COLLECT_OK" || stop "cannot write ok receipt"
+# deterministic artifact set: the batch state may legitimately be absent; nothing is silenced
+ARTS="STOPPED.txt STOPPED_STATE.json"
+if [ -s "$SO/batch_state.json" ]; then ARTS="$ARTS batch_state.json"; else [ -e "$SO/batch_state.absent.txt" ] || stop "batch_state neither copied nor marked absent"; ARTS="$ARTS batch_state.absent.txt"; fi
+( cd "$SO" && sha256sum $ARTS > SHA256SUMS ) || stop "cannot write SHA256SUMS"
+( cd "$SO" && sha256sum -c SHA256SUMS >/dev/null ) || stop "stopped artifact SHA-256 verification failed"
+# collection-ok receipt: built completely in a temp file, validated, then renamed atomically
+OK="$SO/STOPPED_COLLECT_OK"; TMP="$SO/STOPPED_COLLECT_OK.tmp"
+[ ! -e "$OK" ] || stop "STOPPED_COLLECT_OK already exists"
+[ ! -e "$TMP" ] || stop "STOPPED_COLLECT_OK.tmp already exists"
+{
+  echo "stopped_collect_ok_utc=$(date -u +%FT%TZ)"
+  ( cd "$SO" && sha256sum $ARTS ) | sed 's# .*/# #'
+} > "$TMP" || stop "cannot write STOPPED_COLLECT_OK.tmp"
+[ "$(grep -c '^[0-9a-f]\{64\}  ' "$TMP")" -ge 2 ] || stop "STOPPED_COLLECT_OK artifact hash lines incomplete"
+mv "$TMP" "$OK" || stop "cannot finalise STOPPED_COLLECT_OK"
 echo "STOPPED_COLLECT_OK $SO"
