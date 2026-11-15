@@ -84,3 +84,22 @@ re-run launch scripts)` and returns to polling; it does not delete STOP files, d
 servers, and does not touch locks or evidence. The author's risky case therefore does not apply, and the
 normal order `postrun → retire B2 marker → stop_trks_watch` is safe; `stop_trks_watch.sh` is the unit that
 stops the watcher, with the scene inventory compared against the post-watch baseline.
+
+## TASL-2 read-only census and deferred bare-repo push (executed)
+
+- **Census (21:11Z, accepted review).** The accepted `tasl2_readonly_inventory.sh` (sha `0f7149c5…`) was run
+  from the Mac after a read-only pre-check confirmed `~/r1_locks/gpu0.lock` exists (the m-10 guard). Capture:
+  `tasl2_census_20261115/` (inventory `b5c737c5…`, SHA256SUMS 4/4, reachability/inventory rc 0). TASL-2 had
+  rebooted shortly before (uptime 19 min): no tmux server/session, GPU idle with no compute apps,
+  `gpu0.lock` 0 B and lease FREE, no Track S/exam/llama processes, no 18101/18102 listeners, `out/` =
+  `digits_mlp` + `smoke` preserved, disk/memory recorded. Independent review
+  `docs/r1/reviews/TASL2_READONLY_CENSUS_REVIEW_20261115.md` (sha `a00cf7a2…`, accepted; 11 MINOR, no
+  BLOCKING/MAJOR). Ruling (4) gate satisfied: census reviewed before any other use; scene untouched, no
+  resume, no lock release.
+- **Read-only caveat (reviewer m-4).** The census SSH login itself triggered the host's systemd user
+  session/wireplumber, which wrote `~/.local/state/wireplumber/restore-stream` (205 B) outside the Track S
+  scene; no command of the census wrote to the host and no process/lock/ref was touched.
+- **Deferred push (21:19:18Z).** After the accepted census review, `refs/heads/trackS-ops-20261030` was
+  fast-forwarded **`25907343 → fab88fce`** (52 commits, no force) on the TASL-2 bare repo; live ref verified.
+  Receipt: `tasl2_bare_push_receipt.txt`. The Mac's remote-tracking ref (`78a1b65e`) and the resources doc's
+  "54 behind" were stale; the live delta was 52. Nothing else was done on TASL-2.
