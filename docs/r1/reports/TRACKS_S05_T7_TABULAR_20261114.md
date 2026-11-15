@@ -72,21 +72,31 @@ After stopping the phase's own `trks_llm`: lease **FREE**, 0 llama-server, no `t
 `audit_runs.jsonl`, `s05_calibration.jsonl`, `s05b_truncated.jsonl`, `manifest.json`), `host_logs/`
 (`s05_t7_tabular_20261114_launch.log`, `trks_s05t_t7.{cmd,log,exit}`, `s05b_t7_tabular_20261114_launch.log`,
 `trks_s05bt_t7.{cmd,log,exit}`, `watch.log`) and `operator_capture/` (`s05_waiter.log`). **`SHA256SUMS` verifies
-17/17; host==copy verified for all 16 run-tree/log files.** TASL-2 is **down** (TCP timeout) and was not
-touched; the TASL-2 bare-repo push remains deferred.
+17/17; host==copy verified for all 16 run-tree/log files.** The **TASL-7 bare repo was fast-forwarded
+`e33e1f6b → 110b01a8`** (verified `git ls-remote tasl7` = `110b01a8`). TASL-2 is **down** (TCP timeout) and was
+not touched; the TASL-2 bare-repo push remains deferred. **`operator_capture/s05_waiter.log` is a partial
+monitor capture** (stops at 2026-11-15T01:29:12Z at roots=46/forks=30; it contains `No such file` lines for the
+not-yet-created leaves ledger) and is **not completion evidence**; completion is evidenced by
+`trks_s05t_t7.exit` (`02:38:52Z rc=0`) and the manifest.
 
 ## 6. Governance / scope
 
 - **Lead-relayed author amendment** (no separate author artifact): disclosed above; the S0.4-then-S0.1-then-S0.5
   order deviates from the runbook Phase 1→3 order as instructed. `k` was fixed by the S0.1 measurement (k=2).
+- **Calibration gate (per node) — tabular `fail`.** The pinned `calibration_gate` (`r1/tracks/analyze.py`; band
+  [0.70, 0.90], `min_n` 100, `stratum_min` 20) on the 330 committed `s05_calibration.jsonl` rows returns
+  **`status: "fail"`**: n = 330, overall coverage **231/330 = 0.700**; **stratum 0 21/57 = 0.3684** (gated, out
+  of band), **stratum 1-2 62/95 = 0.6526** (gated, out of band), **stratum >=3 148/178 = 0.8315** (gated, in
+  band). Per Track S runbook rev 3.3 Phase 4 a failing **stratum 0** is a **STOP for the author** (λ₂ cannot
+  fix stratum 0; the code's generic "revise once" rule is not the runbook rule). No data re-run was made.
 - **§3.0b Track P integration check: OPEN** (not performed; Track P not ready/paused; no helper invocation; no
   author permission requested). Does not block STOP 4; gates Phase 6 / Phase 0.3(c) on TASL-7.
 - B2 hand-off draft is **NOT ARMED**; no `trackx_evidence.active`. No B2/X.7/sweep 2. TASL-2 down/deferred.
 - **Not self-accepted:** STOP-4 submission (tabular half) submitted for the fresh independent review. **STOP 4
   remains open for the Mac-side S0.5 summary** (W, σ_cmp,vary, σ_D UCL, between-rep UCL,
-  `between_policy_sd_at_cap`, near band b, calibration status, λ), which must report the **digits per-node
-  calibration `fail`** (strata outside [0.70, 0.90]) as well as the tabular rows; the digits-half acceptance was
-  **not** a calibration-gate pass. This is **not** an S0.5-close/STOP-4-complete authorization and does not start
+  `between_policy_sd_at_cap`, near band b, calibration status, λ), which must report **both nodes' per-node calibration status** —
+  digits `fail` (strata outside [0.70, 0.90]) **and tabular `fail`** (above); neither the digits-half nor the
+  tabular-half acceptance is a calibration-gate pass. This is **not** an S0.5-close/STOP-4-complete authorization and does not start
   Phase 4/S3.
 
 ## 7. Reviewer checklist
@@ -101,4 +111,6 @@ touched; the TASL-2 bare-repo push remains deferred.
 5. Copy-back `SHA256SUMS` 17/17, host==copy 16/16; old scenes/digits logs untouched; host end state; TASL-2
    untouched.
 6. Governance disclosures (§6): Lead-relayed amendment, §3.0b OPEN, B2 not armed, TASL-2 down, not self-accepted,
-   STOP 4 still open for the Mac-side summary incl. the digits per-node calibration `fail`.
+   STOP 4 still open for the Mac-side summary, which must report **both nodes'** per-node calibration status
+   (digits `fail` and tabular `fail`); TASL-7 bare repo fast-forwarded `e33e1f6b→110b01a8`; `s05_waiter.log`
+   labelled a partial monitor capture (not completion evidence).
