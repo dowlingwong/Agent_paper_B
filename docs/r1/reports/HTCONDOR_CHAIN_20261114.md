@@ -103,6 +103,19 @@ Def/README/build plan committed (`r1/scripts/htcondor/apptainer/`). First pre-bu
 
 Evidence: `htcondor_chain_20261114/s4/out/` (s4.out/err/log, dryrun.log, queue_before.txt, submit.txt, s4_queue_times.tsv, the job's evidence directory). S4 unit had been ACCEPTED; the ghcr JDL change was confirmed as a one-line diff by the same reviewer.
 
+## S5 — DONE (NEMO2 L40S GPU, ghcr gpu image by digest): I4 passes
+
+**Submitted** from `/work/dwong/paperb/work/s5_submit/` (cluster **759694**) after: digest substitution (gpu `69b06b35…`), fresh GPU snapshot (L40S **10 slots / 7 idle / 3 drained**, H200 3/1/1 → **L40S chosen**, reason recorded), `condor_submit -dry-run` rc 0 (`ContainerImageSource=docker`, `WantContainer=true`, `HasContainer && HasDockerURL`, `RequestGPUs=1`, `RemoteJob=true`, `RequestDisk=25,000,000` kB sized from the 4.87 GiB image), queue snapshot (17 own entries), submission note.
+
+| item | value |
+|---|---|
+| queue | submit **00:41:33Z**, execute **00:42:21Z** → **wait 48 s** |
+| run | **830 s**, end 00:56:11Z, exit **1** (our PASS gate — see below), host `slot1_1@nemo2_gpu-fc1a2cae5e@g3606.nemo.privat`, site `BwForCluster-Nemo2`, 0 evictions, 0 holds |
+| pull | the **4.87 GiB docker:// image pull happens inside `run_s`** (there is no HTCondor SIF transfer for a registry image); EP-side sandbox shows the OCI cache mounted at `APPTAINER_CONTAINER=/var/lib/condor/execute/dir_…/cache/oci-tmp/…`, `APPTAINER_CACHEDIR=/srv`, job dir `/srv` ≈ 11 GB during the run |
+| I4 CUDA | **PASS** — `/proc/driver/nvidia/version` = **615.71.10**; `/dev/nvidia-fs*` and `nvidia-cap*` present; `torch 2.6.0+cu124`, `cuda_available True`, `device_count 1`, `device0 NVIDIA L40S`, **CUDA matmul ok (127.71)** |
+| I4 llama | **PASS** — `/opt/r1/llama/bin/llama-server --version` → `version: 0.7.0-dev (build 11669, commit 620d2225c)` **rc 0**; binary sha256 `f8d35fd3…` matches the image VERSIONS record |
+| why exit 1 | our PASS/FAIL gate required an `nvidia-smi` GPU line, but **the runtime image does not contain the `nvidia-smi` binary** (the `cudnn-runtime` base has no driver tools; the host provides the driver). This is a gate artefact, **not** a GPU failure: torch CUDA and llama-server both worked on the L40S. The reviewer's D1 condition (libgomp) is resolved — libgomp is present and llama-server runs on a real GPU node; the earlier login-node failure was only the absent `libcuda` (no driver on the login node). |
+
 ## S4/S5 — units updated for the ghcr images (digest placeholders)
 
 S4 now uses `container_image = docker://ghcr.io/dowlingwong/r1-htc-cpu@<digest>` (cpu target: envs 1+2 only, so the script records env 3 and llama-server as **absent by design** instead of failing); S5 uses `docker://ghcr.io/dowlingwong/r1-htc-gpu@<digest>` with the S5-review fixes M1–M3 (output/error/log, disk sized to the image, EP-side pull/sandbox evidence, PASS/FAIL, driver and `/dev/nvidia*` diagnostics). The S5 review round 1 was **NOT ACCEPTED** (3 MAJOR, all fixed in the updated unit); the digest substitution is a one-line JDL change to be re-checked by the same reviewer after the digest is known.

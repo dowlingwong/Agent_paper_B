@@ -1,0 +1,17 @@
+== container runtime env ==
+APPTAINER_APPNAME=
+APPTAINER_BIND=
+APPTAINER_BINDPATH=
+APPTAINER_CACHEDIR=/srv
+APPTAINER_COMMAND=exec
+APPTAINER_CONTAINER=/var/lib/condor/execute/dir_3050756/cache/oci-tmp/c28da6eebd56d820e3747bc3d5c25e1f1f1079d30f0e1ea372bb7c73e60abf9d
+APPTAINER_ENVIRONMENT=/.singularity.d/env/91-environment.sh
+APPTAINER_NAME=c28da6eebd56d820e3747bc3d5c25e1f1f1079d30f0e1ea372bb7c73e60abf9d
+APPTAINER_TMPDIR=/var/lib/condor/execute/dir_3050756
+LD_LIBRARY_PATH=/opt/r1/llama/bin:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/.singularity.d/libs
+SINGULARITY_BIND=
+SINGULARITY_CACHEDIR=/srv
+SINGULARITY_CONTAINER=/var/lib/condor/execute/dir_3050756/cache/oci-tmp/c28da6eebd56d820e3747bc3d5c25e1f1f1079d30f0e1ea372bb7c73e60abf9d
+SINGULARITY_ENVIRONMENT=/.singularity.d/env/91-environment.sh
+SINGULARITY_NAME=c28da6eebd56d820e3747bc3d5c25e1f1f1079d30f0e1ea372bb7c73e60abf9d
+_CONDOR_SCRATCH_DIR_OUTSIDE_CONTAINER=/var/lib/condor/execute/dir_3050756

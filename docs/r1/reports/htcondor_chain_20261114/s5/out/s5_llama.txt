@@ -1,0 +1,7 @@
+== llama-server ==
+/opt/r1/llama/bin/llama-server
+version: 0.7.0-dev (build 11669, commit 620d2225c)
+built with GNU 11.5.0 for Linux x86_64
+llama_version_rc=0
+== llama binary sha ==
+f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0  /opt/r1/llama/bin/llama-server

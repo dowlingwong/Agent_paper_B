@@ -509,3 +509,52 @@ pre-submission gates. Fix R1 (one line), apply the two literal digest substituti
 size the disk from it, then S4/S5 may be submitted; I will re-check the one-line gate fix on request.
 
 VERDICT: NOT ACCEPTED
+
+
+---
+
+## Quick re-check (R1–R4) — 15 Nov 2026, 01:55–02:05 CET
+
+**Scope:** quick confirmation only, no full round. Worktree HEAD **`befbaf64`** ("GPU image verified … S5 disk
+sized …"). S5 had already been **submitted** (cluster 759694, NEMO2 L40S, `g3606`, started 01:42 CET) and is
+executing, so this is a post-submission confirmation of the unit and the gates; S4 has run. Unit hashes:
+`s5/s5_nemo2_gpu_ghcr.jdl` `8c0f1db2c4043913b553dca9d7cd04ce2a31df21d84120fa0a0e92a91dcff3ec` (only the digest and
+the disk value differ from the reviewed unit), `s5/s5_run.sh`
+`588f35d26ee0bee9c97d9d7a3eea96dfc0c53a10ce213c0efc65d76c1f710e4b`, `s5/submit_s5.sh`
+`a371ea748718c25b2ebfd3fea5e24ec190f1583dccb40ed14f64b8ebe2b6df94`; S4 JDL `72b2793f…` with the cpu digest.
+
+- **R1 — fixed.** `s5_run.sh` L43–46 now runs `/opt/r1/llama/bin/llama-server --version > /tmp/llama.version.txt
+  2>&1; LRC=$?`, prints the head and writes `llama_version_rc=$LRC`; the gate (L61) greps exactly
+  `llama_version_rc=0`; the other gates (nvidia `GPU [0-9]`, torch `cuda_available True`, `matmul_ok`) match the
+  script's output. The host-side verification script's old head-rc bug was tooling, as the Lead says.
+- **R2 — fixed.** Both JDLs carry the literal verified digests (cpu `sha256:221ca459…75aa` in the S4 JDL, gpu
+  `sha256:69b06b35…5296` in the S5 JDL); no placeholder remains. S4 already ran with the cpu digest.
+- **R3 — fixed.** S5 `request_disk = 25,000,000` kB, from the measured gpu SIF 5,226,487,808 B (4.87 GiB) + sandbox
+  + margin; the recorded dry-run ad shows `RequestDisk=25000000`, requirements `HasContainer && HasDockerURL`,
+  `ContainerImageSource=docker`. Ample margin.
+- **R4 — fixed as recorded.** The chain report now records the verification: CPU SIF 366,702,592 B /
+  `7be8796e…`; GPU SIF 5,226,487,808 B / `f88382fd…`, pull 1259 s; inspect rc 0 and VERSIONS rc 0 for both; the
+  three envs and torch 2.6.0+cu124; **D1: `libgomp.so.1` present**, and the login-node `llama-server --version`
+  fails only on `libcuda.so.1` (no driver) — so the real GPU test is the S5 job, which captures llama rc +
+  `/dev/nvidia*` + driver + libcuda. Remaining record-keeping (not unit defects): the raw verification logs live on
+  the cluster and should be committed under `raw/`; the pre-S5 snapshot (L40S 7 idle/10, H200 3 idle/9) must be
+  **appended** to `gpu_availability.tsv` — the repo copy still has snapshot-1 only.
+- **R5/R6/R7 — addressed.** Script start/end UTC are recorded (`script_start_utc`/`script_end_utc`),
+  `s5_env.txt` is written, and the in-container find limitation is stated. Cosmetic only: the L4 comment still says
+  "pull time split from submit->execute wait"; the S2 evidence (and the Lead's plan) puts the first pull in
+  **run_s** — read the run_s, not the wait, for the pull.
+- **S4 validation (read from the committed evidence, not the summary):** cluster 759693 COMPLETED exit 0, wait
+  24 s / run 233 s, host `slot1_65@mdm1.etp.kit.edu`; I2_PASS with 4/4 `val_score 0.922225`, 4/4
+  `train_loss 0.314016`, identical worker `run.log` sha256; both checkouts at the pinned commits; S6 xrootd
+  rc 124 on both endpoints from the worker (Q-XRD). Matches the Lead's report; no numeric stack effect from
+  Python 3.13.18 vs 3.13.4.
+- **S5 time-critical watch:** `+RequestWalltime = 1800` from 01:42 CET gives a hard cap near 02:12 CET; the
+  login-node pull took 1259 s, so a materially slower EP pull can hit a walltime hold (codes 46/47) — record it
+  and do not retry blindly (the pull cache is per-EP/per-job, so a re-run repeats the pull). The outcome must be
+  read from `s5_PASSFAIL.txt` + `s5_llama.txt` + `s5_nvidia.txt`/`s5_torch.txt`/`s5_pull.txt`, and the recorder
+  (`htc_events.py s5.log --utc-offset-minutes 60`) gives the wait/run split with the pull in run_s.
+- **Remaining records when S5 finishes:** `s5_submit` dry-run ad, `submission_note.txt`, queue snapshot, the
+  pre-S5 snapshot rows, the verification raw logs, and the outcome (wait/run, llama rc, PASS/FAIL, pull evidence)
+  — commit them with the S5 report section.
+
+VERDICT: ACCEPTED

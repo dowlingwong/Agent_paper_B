@@ -1,0 +1,46 @@
+== EP-side image/sandbox evidence (what the pull left in the job dir) ==
+/srv
+/dev/mapper/tmp  3.4T   38G  3.3T   2% /srv
+11G	.
+total 72
+drwx------ 6 ka_jg9936 ka_ekp  4096 Nov 15 01:56 .
+drwxr-xr-x 1 ka_jg9936 ka_ekp   140 Nov 15 01:55 ..
+-rwx------ 1 ka_jg9936 ka_ekp    48 Nov 15 01:42 .chirp.config
+srwxr-xr-x 1 ka_jg9936 ka_ekp     0 Nov 15 01:42 .docker_sock
+-rw-r--r-- 1 ka_jg9936 ka_ekp  4718 Nov 15 01:42 .job.ad
+-rw-r--r-- 1 ka_jg9936 ka_ekp 10354 Nov 15 01:42 .machine.ad
+drwx------ 3 ka_jg9936 ka_ekp    34 Nov 15 01:56 .nv
+-rw-r--r-- 1 ka_jg9936 ka_ekp  9405 Nov 15 01:54 .update.ad
+-rw-r--r-- 1 ka_jg9936 ka_ekp     0 Nov 15 01:42 _condor_stderr
+== note: for docker:// images the Singularity cache lives on the EP, outside the container ==
+== any image/sif artefacts visible ==
+== root filesystem (image) top level ==
+total 21
+drwxr-xr-x   1 ka_jg9936 ka_ekp   140 Nov 15 01:55 .
+drwxr-xr-x   1 ka_jg9936 ka_ekp   140 Nov 15 01:55 ..
+lrwxrwxrwx   1 ka_jg9936 ka_ekp    27 Nov 15 01:51 .exec -> .singularity.d/actions/exec
+lrwxrwxrwx   1 ka_jg9936 ka_ekp    26 Nov 15 01:51 .run -> .singularity.d/actions/run
+lrwxrwxrwx   1 ka_jg9936 ka_ekp    28 Nov 15 01:51 .shell -> .singularity.d/actions/shell
+drwxr-xr-x   5 ka_jg9936 ka_ekp     0 Nov 15 01:51 .singularity.d
+lrwxrwxrwx   1 ka_jg9936 ka_ekp    27 Nov 15 01:51 .test -> .singularity.d/actions/test
+-rw-r--r--   1 ka_jg9936 ka_ekp 17294 Apr  8  2024 NGC-DL-CONTAINER-LICENSE
+dr-xr-xr-x   2 ka_jg9936 ka_ekp     0 May 16  2022 afs
+lrwxrwxrwx   1 ka_jg9936 ka_ekp     7 May 16  2022 bin -> usr/bin
+drwxr-xr-x   4 nobody    nobody     0 Nov 15 01:46 cvmfs
+drwxr-xr-x   6 ka_jg9936 ka_ekp   800 Nov 15 01:55 dev
+lrwxrwxrwx   1 ka_jg9936 ka_ekp    36 Nov 15 01:51 environment -> .singularity.d/env/90-environment.sh
+drwxr-xr-x   1 ka_jg9936 ka_ekp    60 Nov 15 01:55 etc
+drwxr-xr-x   2 ka_jg9936 ka_ekp     0 May 16  2022 home
+lrwxrwxrwx   1 ka_jg9936 ka_ekp     7 May 16  2022 lib -> usr/lib
+lrwxrwxrwx   1 ka_jg9936 ka_ekp     9 May 16  2022 lib64 -> usr/lib64
+drwx------   2 ka_jg9936 ka_ekp     0 Nov 19  2023 lost+found
+drwxr-xr-x   2 ka_jg9936 ka_ekp     0 May 16  2022 media
+== image identity markers ==
+total 4
+drwxr-xr-x 5 ka_jg9936 ka_ekp    0 Nov 15 01:51 .
+drwxr-xr-x 1 ka_jg9936 ka_ekp  140 Nov 15 01:55 ..
+-rw-r--r-- 1 ka_jg9936 ka_ekp  128 Nov 15 01:51 Singularity
+drwxr-xr-x 2 ka_jg9936 ka_ekp    0 Nov 15 01:51 actions
+image=r1-htc-gpu
+build_utc=2026-11-14T23:10:24Z
+base=nvidia/cuda:12.4.1-cudnn-runtime-rockylinux9
