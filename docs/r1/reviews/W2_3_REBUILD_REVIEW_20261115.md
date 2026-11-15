@@ -280,3 +280,53 @@ written: fix the classification path (paper-root sidecar + pre-check) and the fa
 and decide the paper-root availability question; then a quick re-check is enough.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Round 3 delta re-check (branch @ `7c85ff4e`; 16 Nov 2026, 00:45 CET)
+
+**Scope.** Round 3 at HEAD `7c85ff4e` (worktree clean): `run_rebuild.sh` SHA-256
+`304700d6d93b80ad3bbb8e500c1e6b271146bfdd10d18b571f6cb99787ec5a41` (150 lines), PLAN.md
+`d7da6427c280fb073dff5ecbdeeb796c5f121ede043d0845b6cf22a09bc9170f` (75 lines). Read-only; nothing executed.
+
+**(a) The two path fixes are correct.** `CLASSIFICATION` and the `--index` argument are now the paper-root copies
+(`$PAPER_ROOT/results/r1/evidence/C3_sweep_classification_20261028.json`, `$PAPER_ROOT/results/r1/pilot/
+C3_sweep_index_20261028T033315Z.json`), both pre-checked for existence and SHA (`bb6d891c…`, `812468e2…`), and
+the checkout copies are no longer used. This satisfies the reviewed `evidence_classification()`'s
+`sidecar.is_relative_to(paper_root)` / `index_path.is_relative_to(paper_root)` gate (the round-2 STOP), and the
+index path equals the pinned `SWEEP1_INDEX_PATH` with the pinned SHA, so `build_from_sweep` does not divert to
+`require_d8_confirmation()`. The `BUILD_CMD` string records the paper-root paths, the pre-checks run **before**
+any output/log directory is created, and the round-2 false-STOP (repo evidence in the `d8aa9561` checkout) is gone
+— the pinned `/work` copy remains the input and the repo path/SHA is recorded in the manifest. ✓
+
+**(b) The paper-root availability pre-check + documented "author decision needed" STOP is the right behaviour for
+the current state.** The unit now checks, read-only and before creating anything: paper-root `docs/r1/PLAN.md`
+exists and carries the `R1-SWEEP1-CLASSIFY` row naming the sidecar, the sweep-1 authorization exists, the
+paper-root index has SHA `812468e2…`, and the paper-root sidecar exists with SHA `bb6d891c…`; when they are absent
+(today's deepthought paper root is the older sweep clone, and — per the host check — its HEAD and `origin/main`
+lack the 28-Oct artifacts) it STOPs with "author main-merge decision needed" instead of producing the
+runner-defect label. That is honest, actionable and side-effect-free, and the unit becomes executable the moment
+the author provides an authoritative paper root — which is exactly the right gate. **Caveat (not a blocker):** the
+pre-check is necessary but not sufficient — the reviewed code additionally runs `_verify_published()`, which
+requires the paper root's `origin` remote, a fresh `refs/remotes/origin/main` equal to `origin main`, and the
+working-tree PLAN/authorization/index/sidecar bytes to equal `origin/main:<path>` (and the evidence trees later);
+so the "authoritative paper root" must be a clone whose `origin/main` carries the 28-Oct classification artifacts
+and the evidence trees and is freshly fetched — the code verifies this with fail-visible STOPs, so no silent
+bypass. Optional improvement: add a paper-root git/`origin`-freshness pre-check (and name the origin/main
+requirement in the STOP message) for a clearer early refusal.
+
+**Minors folded:** the round-2 minors are handled as described (PLAN command paths; R5 reading `ledgers`/
+`runs_total` from the evidence with the 288×20 cross-check; the post-build `git status --porcelain` STOP; the
+`df` pre-flight kept and the run will record the actual output size). Two small items remain: (i) the PLAN
+"Output" paragraph still says "the unit creates it 0700 and refuses if it exists", contradicting the updated
+Command paragraph (the reviewed code creates `OUT` with `exist_ok=False`; the unit creates only the parents/logs)
+— fix the sentence; (ii) `build.json`'s EVIDENCE-only `table_sha256` is only conditionally asserted (L137) and is
+not recorded in the manifest — the label is already asserted `EVIDENCE`, so make the assertion unconditional and
+add `"table_sha256": build.get("table_sha256")` to the manifest; the absolute `SWEEP_INDEX` pre-check duplicates
+the paper-root index check (same file — harmless, may be dropped).
+
+**Verdict: accepted.** The unit is correct and ready; it may be executed once the author's paper-root decision is
+made (execution is held until then, per the plan). Run today, it STOPs cleanly at the availability pre-check
+without creating an output directory or producing the defect label.
+
+VERDICT: ACCEPTED

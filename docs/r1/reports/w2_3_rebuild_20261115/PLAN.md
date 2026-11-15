@@ -32,8 +32,9 @@ the reviewed code creates the output directory itself (`mkdir(exist_ok=False)`),
 parent (`tables/`) and writes the build stdout/stderr to a **separate** `logs/rebuild_<UTC>/` directory (outside
 `OUT`); if the code refuses, the unit STOPs and reports why, preserving `OUT`/logs.
 
-**Output (never overwrite).** A new directory `…/w2_3_rebuild_20261115/tables/c3_features_v3_<UTC>/` (the unit
-creates it 0700 and refuses if it exists). It adds `manifest.json` with: `code_commit`, `featurizer_version`,
+**Output (never overwrite).** A new directory `…/w2_3_rebuild_20261115/tables/c3_features_v3_<UTC>/`; in classification
+mode the reviewed code creates it (`exist_ok=False`, 0700 under the unit's `umask 077`), the unit creates only
+`tables/`/`logs/` and refuses if the output directory already exists. It adds `manifest.json` with: `code_commit`, `featurizer_version`,
 `prompt_version`, `prompt_version_mixing` statement, sweep-index path+sha, the W2-3 PASS evidence path+sha+status,
 the table label/row/config/replay-check counts and the `build.json` sweep-index hash, the SHA-256 of
 `proposals.jsonl`/`configs.json`/`build.json`, the v1-never-overwritten policy, and the version disclosure.

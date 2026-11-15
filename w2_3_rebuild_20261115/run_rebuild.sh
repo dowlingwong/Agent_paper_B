@@ -9,7 +9,7 @@ set -o pipefail
 umask 077
 export PYTHONDONTWRITEBYTECODE=1
 CODE_COMMIT=d8aa956193ba1b24ae0b568a724b841beaa1651e
-SWEEP_INDEX=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B/results/r1/pilot/C3_sweep_index_20261028T033315Z.json
+SWEEP_INDEX="$PAPER_ROOT/results/r1/pilot/C3_sweep_index_20261028T033315Z.json"
 SWEEP_INDEX_SHA=812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab
 PAPER_ROOT=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B
 CHECKOUT=/work/dwong/htcondor_prep_20261114/w2_v3
@@ -30,8 +30,8 @@ stop() { echo "STOP: $*" >&2; exit 2; }
 [ -d "$CHECKOUT/.git" ] || stop "clean checkout missing: $CHECKOUT"
 [ "$(git -C "$CHECKOUT" rev-parse HEAD)" = "$CODE_COMMIT" ] || stop "checkout HEAD is not the reviewed code commit $CODE_COMMIT"
 [ -z "$(git -C "$CHECKOUT" status --porcelain)" ] || stop "checkout is dirty"
-[ -f "$SWEEP_INDEX" ] || stop "sweep index missing"
-[ "$(sha256sum "$SWEEP_INDEX" | awk '{print $1}')" = "$SWEEP_INDEX_SHA" ] || stop "sweep index sha256 mismatch"
+[ -f "$SWEEP_INDEX" ] || stop "paper-root pinned sweep index missing"
+[ "$(sha256sum "$SWEEP_INDEX" | awk '{print $1}')" = "$SWEEP_INDEX_SHA" ] || stop "paper-root sweep index sha256 mismatch"
 [ -d "$PAPER_ROOT" ] || stop "paper root missing"
 [ -f "$PAPER_ROOT/docs/r1/PLAN.md" ] || stop "paper-root PLAN.md missing"
 grep -q '^| R1-SWEEP1-CLASSIFY ' "$PAPER_ROOT/docs/r1/PLAN.md" || stop "paper-root PLAN has no R1-SWEEP1-CLASSIFY row (author main-merge decision needed)"
@@ -107,7 +107,7 @@ m = {
                     "stop_rule_note": "the author adopted W2-3 as a STOP (R1-W2-3-STOP); the JSON's own stop_rule string predates the adoption"},
   "table": {"label": build.get("label"), "n_proposals": build.get("n_proposals"), "n_configs": build.get("n_configs"),
             "replay_checks_total": build.get("replay_checks_total"), "sweep_index": build.get("sweep_index"),
-            "sources": build.get("sources")},
+            "sources": build.get("sources"), "table_sha256": build.get("table_sha256")},
   "environment": {"python": pyv, "numpy": npv, "df_free_kb": int(df_free)},
   "exact_build_command": build_cmd,
   "files": files,
@@ -134,7 +134,7 @@ assert m["classification"]["sha256"] == "bb6d891c499f0fc187726ed7c8c1e1bce107a02
 assert b.get("sweep_index", {}).get("sha256") == m["sweep_index"]["sha256"]
 assert set(m["files"]) == {"proposals.jsonl", "configs.json", "build.json"}
 assert (out / "build.json").stat().st_size > 0
-if b.get("table_sha256") is not None: assert set(b["table_sha256"]) == {"proposals.jsonl", "configs.json"}
+assert set(b.get("table_sha256") or {}) == {"proposals.jsonl", "configs.json"}, "EVIDENCE table_sha256 missing"
 print("MANIFEST_VERIFY_OK", b["n_proposals"], b["replay_checks_total"])
 PY
 ( cd "$OUT" && sha256sum proposals.jsonl configs.json build.json manifest.json > SHA256SUMS ) || stop "cannot write SHA256SUMS"
