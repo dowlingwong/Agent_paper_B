@@ -42,6 +42,8 @@ git -C "$SC" push origin "HEAD:refs/heads/$BRANCH" || stop "push failed (marker 
 REMOTE2=$(git -C "$SC" ls-remote origin "refs/heads/$BRANCH" | awk '{print $1}')
 [ "$REMOTE2" = "$COMMIT" ] || stop "remote verification failed ($REMOTE2 != $COMMIT)"
 OUT="${B2_STATUS_RECEIPT:-/tmp/b2_status_receipt.txt}"
+[ ! -e "$OUT" ] || stop "status receipt exists (no clobber)"
+set -C
 printf 'status_branch=%s\ncommit=%s\nhead=%s\nrun_id=%s\nmarker_receipt_sha256=%s\npublished_utc=%s\n' \
   "$BRANCH" "$COMMIT" "$HEAD" "$RUN_ID" "$RCPT_SHA" "$(date -u +%FT%TZ)" > "$OUT" || stop "cannot write status receipt"
 echo "STATUS_PUBLISHED $BRANCH $COMMIT receipt=$OUT"

@@ -331,3 +331,141 @@ marker-first handover may start under the monitored order `bootstrap → deliver
 STATUS → watcher → postwatch → preflight → launch`; not before.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 4
+
+**Re-reviewed at** the Lead's single pinned exec commit `ops-b2-exec-20261115` @
+**`61b2deb373740c6401a4014c20c06901a9ed924f`** (`origin/ops-b2-exec-20261115` = same; the run HEAD remains
+`8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈17:40–18:05 CET, before any marker/STATUS.
+The shared worktree is at that commit and clean (no local advance this round); all 15 file SHAs match the
+Lead's list: PLAN `ea9ceda1`, bootstrap `432b278e`, deliver `b7a89e70`, prechecks `19f94acc`,
+inventory_after `01e87cf5`, create_marker `2041094a`, postwatch `42b579b5`, preflight `683d2450`,
+start `3b0a3517`, receipt `ef2b244a`, publish_status `e6c88070`, monitor `4079243b`, pins/expected
+`711e8d7a`, pins/venv_pins `e67e2ab9`, pins/watcher_expected `932acd39`. The prepared Mac status checkout
+was verified independently: `.claude-worktrees/b1-status-20261115` is on branch **`mac-b1-20261107`**
+tracking `origin/mac-b1-20261107`, HEAD `fcf52c09` = origin, clean. No SSH, no host command, no
+marker/STATUS touched; the only writes are this review file and throw-away `/private/tmp` marker tests
+from round 2.
+
+### Fixes verified as correct
+
+- **B-3 fixed.** `bootstrap.sh` creates `$RUN_DIR/prechecks`, `postmarker`, `postwatch`, `monitor` (four
+  subdirs), the fresh 0700 RUN_DIR and the empty owned receipt STATUS; PLAN step 0/1 says four subdirs.
+- **B-4 fixed.** The status checkout is now on branch `mac-b1-20261107` (verified clean, HEAD = origin
+  `fcf52c09`); `publish_status.sh` keeps its clean/branch/HEAD==origin guard; PLAN step 3 carries the exact
+  `bash publish_status.sh /Users/wongdowling/.../b1-status-20261115 8709_20261115_b2 <HEAD>` invocation.
+- **P-12/P-14 largely fixed.** `deliver.sh` requires `REVIEWED_EXEC_SHA`, local HEAD = that commit, a clean
+  worktree, `origin/ops-b2-exec-20261115` = that commit, remote hostname `TASL-7` and a non-symlink
+  RUN_DIR; it installs the 11 reviewed files (8 host scripts + 3 pins; `publish_status.sh` stays on the
+  Mac, `bootstrap.sh` is transported via `ssh 'bash -s'`) with no-clobber `set -C`, compares each local
+  byte to `git show <commit>:docs/r1/reports/b2_exec_20261115/<path>`, re-verifies the remote SHA, and
+  intends a receipt with the commit, all SHAs and UTC. **The receipt write is broken (B-5).**
+- **P-13 largely fixed.** `postwatch_check.sh` takes a **fresh** manifest/STOP inventory after the pause,
+  requires the manifest inventory unchanged, requires every new STOP to be a sibling of a known
+  `manifest.json`, and STOPs on a disappeared STOP (no-deletion). Two gaps remain (P-22, P-23).
+- **P-15 fixed.** `publish_status.sh` commits as `Dowling Wong <wangdowling@gmail.com>`, reads the host
+  `marker-receipt.json` and validates run_id/head/dev/ino/64-hex sha, records the receipt SHA-256, writes
+  the status receipt fatally, pushes without force and verifies the remote SHA.
+- **P-16/P-17 fixed.** `prechecks.sh` now verifies the frozen-venv pins (Python 3.13.4, prefix, seven
+  B1 §4 packages + three with a source note for the B1 harness-lock docs) and the harness pin/clean
+  **before** the marker; `preflight.sh` repeats both as a second gate.
+- **P-18/P-19/P-20/P-21/N-5…N-8 fixed.** PLAN has the exact bootstrap/deliver/publish invocations, four
+  subdirs, eleven files, and the prechecks re-run policy (move the stopped attempt aside, re-create
+  `prechecks/`, record the reason); `.ok`/logs are exclusive (`set -C`); `prechecks.sh` compares the
+  watcher pane pid and script SHA-256 with `pins/watcher_expected.txt` and STOPs on a restart; the
+  tmux-client caveat is recorded; `deliver.sh` checks the TASL-7 hostname and RUN_DIR; the status
+  receipt is explicit/fatal.
+
+### Findings — round 4
+
+**BLOCKING**
+
+- **B-5 — `deliver.sh` cannot write its delivery receipt: it uses the host `$RUN_DIR` path locally on the
+  Mac.** `RUN_DIR=/home/dowling/r1_b1_engineering/b2_handover_8709_20261115_b2` is a host path, but
+  `REC="$RUN_DIR/delivered-receipt.txt"` (L20), `[ ! -e "$REC" ]` (L21) and `: > "$REC"` (L22) run on the
+  Mac; `set -e` is in force. On this Mac `/home` is a symlink to `/System/Volumes/Data/home` and
+  `/home/dowling` does not exist (verified), so `: > "$REC"` fails with "No such file or directory" and
+  the deliver aborts at L22 **before any file is delivered**; even if it could create the path, the
+  receipt would be local, not the host `$RUN_DIR/delivered-receipt.txt` the plan/Lead expect, and the
+  per-file lines (L35) would append locally too. Fix: check for and write the receipt on the host over
+  ssh (e.g. `ssh ... "test -e '$RUN_DIR/delivered-receipt.txt'"` and append the header/per-file lines via
+  ssh), and/or write a local receipt under the exec worktree and copy it to the host; record exec commit +
+  every SHA + UTC in the host receipt. Keep the local-vs-reviewed per-file comparison as is.
+
+**MAJOR**
+
+- **P-22 — the postwatch "touched STOP" check cannot see mtime-only touches.** The comparison keys
+  (`awk '{print $1" "$2" "$3" "$4" "$5" "$6" "$8}'`) intentionally drop `%T@` (mtime), so a process that
+  only `touch`es an existing STOP — or rewrites it with the same inode/size/owner/type — produces no
+  "new/changed" entry; the hand-off's "no unexpected touched path" is then not enforced for existing
+  STOPs. Fix: compare full STOP lines **including mtime** (and optionally a content sha256) against the
+  before inventory; every changed STOP must be a sibling of a known `manifest.json`; detect disappearance
+  separately by path/inode so a mtime change is not misread as a deletion.
+- **P-23 — the postwatch manifest-inventory diff is on unsorted `find` output.** `prechecks.sh` writes
+  `manifest_inventory_before.txt` and `postwatch_check.sh` writes `manifest_inventory_after_watch.txt`
+  in raw `find` order; the `diff` can report "manifest inventory changed" merely because the traversal
+  order shifted after the watcher added STOP files, a spurious post-marker STOP. Fix: sort both
+  inventories (or compare sorted copies) before `diff`; the STOP keys are already sorted.
+
+**MINOR / NIT**
+
+- **P-24 — watcher identity pins need host confirmation.** `pins/watcher_expected.txt` has
+  `WATCHER_PANE_PID=1388760`, `WATCHER_BASH_PID=1388759`, script sha `cf6884…`; the earlier census wrote
+  "pane pid 1388759/1388760", and `prechecks.sh` compares the **first** `tmux list-panes -F
+  '#{pane_pid}'` value to `WATCHER_PANE_PID` (and stops on mismatch). Confirm on the host which pid is the
+  tmux `pane_pid` (the shell) vs the watcher process, and whether `head -1` picks the watcher pane if any
+  other pane exists; a swapped pin is a pre-marker STOP (safe but blocking).
+- **P-25 — the three extra venv pins are sourced from the Mac B1 harness-lock docs, not the exam venv.**
+  `venv_pins.txt` now documents pytest 9.0.3 / numpy 2.4.4 / scikit-learn 1.8.0 from
+  `BATCH_A_24OCT_HANDOFF.md` (a Mac `/tmp` venv, Python 3.13.16); the exam venv is Python 3.13.4. The
+  prechecks fail-closed if they differ, but verify on the host before the marker (the seven B1 §4
+  packages are confirmed; the extra three are the risk).
+- **P-26 — prechecks remains stricter than the marker-first design** on any running collector/`trks_llm`/
+  P.3a or held lease (the hand-off expects the watcher to stop Track S; the census is quiet tonight, so
+  it passes). Keep as a documented conservative policy (it fails closed pre-marker).
+- **P-27 — PLAN detail.** Step 0 keeps the `<reviewed commit>` placeholder; name `61b2deb3…` explicitly.
+  The prechecks re-run policy gives the `mv …` but not the re-create command (`mkdir -m 700
+  "$RUN_DIR/prechecks"`); add it. The deliver's `pins/expected.txt` is delivered but not read by any
+  script (the pinning now uses `git show`, so this is cosmetic) — either use it or note it is
+  documentation-only.
+- **P-28 — harness cleanliness uses `--untracked-files=no`** in prechecks and preflight (untracked files
+  ignored). The B1 pattern/“clean harness” intent may require no untracked files at all; confirm the
+  harness stage has no untracked caches (or document the relaxation; the runner's harness-source check
+  may still catch changes).
+- **P-29 — minor records/robustness.** `deliver.sh` hard-codes this Mac worktree path (intentional; note
+  it). `publish_status.sh` writes `/tmp/b2_status_receipt.txt` with `>` (a re-run overwrites it; the
+  branch/heading guards stop a second publication, but a no-clobber path is safer). `prechecks.sh`
+  `ls …/*.active` leaves stderr noise when no `.active` exists. The postmarker inventory (immediate
+  post-marker) is still written but no longer used by postwatch; fine as a record.
+
+### What was not checked
+
+No SSH: the live watcher pane/bash pids and script SHA, the actual exam-venv package versions, the `_b`
+gate capture, host staging, and the TASL-7 census are the operator's/Lead's records, re-collected by the
+reviewed scripts. The Mac status checkout and both worktree/ref states were verified locally; the run
+HEAD is unchanged and the exec commit is pushed at exactly `61b2deb3…`.
+
+### Verdict
+
+The round-3 BLOCKING items are fixed (four subdirs; status checkout on `mac-b1-20261107`), and the
+pinning/identity/binding/exclusivity work is otherwise correct. However the **deliver step cannot run as
+written** (B-5: its receipt path is a host path used locally, so the deliver aborts before delivering),
+and the postwatch touched-path verification still has two real gaps (P-22 mtime touches, P-23 unsorted
+diff). **Do not create the marker or publish the STATUS yet.** Minimal fixes before re-review:
+
+1. B-5: write the delivery receipt on the host (ssh) and/or locally, record exec commit + all 11 SHAs +
+   UTC; check host receipt absence with ssh.
+2. P-22: include mtime (and optionally content sha256) in the postwatch touched-STOP comparison; keep a
+   separate path/inode disappearance check.
+3. P-23: sort the manifest inventories before the postwatch `diff`.
+4. P-24/P-25: confirm the watcher pane/bash pids + script SHA and the three extra venv pins on the host
+   before the marker (both are fail-closed pre-marker STOPs if wrong).
+5. P-27/P-28/P-29: plan/record nit fixes.
+
+After the fixes are committed and pushed at a single pinned SHA (run HEAD `8709dce7…` unchanged), the
+marker-first handover may start under `bootstrap → deliver → prechecks → marker → STATUS → watcher →
+postwatch → preflight → launch`; not before.
+
+VERDICT: NOT ACCEPTED

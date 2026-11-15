@@ -1,4 +1,6 @@
 # TASL-7 Track S watcher identity as censused on 15 Nov 2026 (pre-marker); a changed pid/script is a STOP
+# Host-confirmed 15 Nov: the only tmux pane is trks_watch pane_pid=1388760 (cmd bash);
+# 1388759 is the `tmux new -d` process, not the pane pid.
 WATCHER_PANE_PID=1388760
 WATCHER_BASH_PID=1388759
 WATCHER_SCRIPT_SHA256=cf68843ea8dea38c22094ec86c3e864a3be7b79f3cbf144f224a1807993f8112

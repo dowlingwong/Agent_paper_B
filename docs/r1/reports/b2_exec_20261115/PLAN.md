@@ -2,7 +2,7 @@
 
 **Run HEAD:** `8709dce792d45bbb5c05d9f7d239e19454efbb15` (branch `ops-b2-20261115`). **Run ID:** `8709_20261115_b2`. **Output tree:** `/home/dowling/exam-x/work/b2_8709_20261115_b2`. **Operator:** DeepSeek Harness agent (AI-assisted). **Nothing of B1's `_a`/`_b`/`_c`/`_d` is moved, overwritten or deleted; Track S stays paused until B2 ends; the marker is created only after the HEAD review, the three-way base check, the post-review author gate and the re-reviewed occupancy/launch plan hold. All host commands below run as `dowling@TASL-7`.**
 
-**Exec record pinning.** These scripts live on branch `ops-b2-exec-20261115` of the Paper B repo. Delivery is pinned to the **reviewed exec commit** (`REVIEWED_EXEC_SHA`, the commit this plan and scripts were accepted at); `deliver.sh` refuses a dirty worktree, a local HEAD different from that commit, or an `origin/ops-b2-exec-20261115` that differs from it.
+**Exec record pinning.** These scripts live on branch `ops-b2-exec-20261115` of the Paper B repo. Delivery is pinned to the **accepted exec commit** — `REVIEWED_EXEC_SHA` must equal the commit named in the reviewer's final verdict for this plan (the current accepted commit is recorded there and in `origin/ops-b2-exec-20261115`); `deliver.sh` refuses a dirty worktree, a local HEAD different from that commit, or an `origin/ops-b2-exec-20261115` that differs from it. `deliver.sh` intentionally checks the Mac worktree path and installs `publish_status.sh` nowhere (it runs on the Mac only).
 
 ## Bindings
 
@@ -21,13 +21,14 @@
 | preflight output | `/home/dowling/exam-x/work/b2_host_preflight_8709_20261115_a` (new direct child of `work_dir`) |
 | marker | `~/r1_locks/trackx_evidence.active` |
 | published STATUS | branch `mac-b1-20261107`; clean separate checkout `.claude-worktrees/b1-status-20261115` on that branch, HEAD = origin `fcf52c09` |
+| host-side confirmations (15 Nov, read-only) | watcher pane pid `1388760` (cmd `bash`), script sha `cf6884…`; harness has 0 untracked files; exam-venv extra pins pytest 9.0.3 / numpy 2.4.4 / scikit-learn 1.8.0 match |
 
 ## Order
 
 0. **Prepare (Mac).** Be on the exec worktree at the reviewed exec commit, clean. Bootstrap transport:
    `ssh -o BatchMode=yes tasl7 'bash -s' < bootstrap.sh` (creates `$RUN_DIR`, the four subdirs and the empty owned receipt STATUS; records `bootstrap-receipt.txt`; **no marker**).
    Deliver (from `docs/r1/reports/b2_exec_20261115/`):
-   `REVIEWED_EXEC_SHA=<reviewed commit> bash deliver.sh` — checks local HEAD == that commit, clean worktree, origin exec branch == it, remote hostname `TASL-7`, `$RUN_DIR` a non-symlink dir; installs the 11 files with no-clobber `set -C`, per-file SHA-256 against `git show <commit>:<path>`, and writes `delivered-receipt.txt` (commit + every SHA + UTC).
+   `REVIEWED_EXEC_SHA=<accepted exec commit> bash deliver.sh` — checks local HEAD == that commit, clean worktree, origin exec branch == it, remote hostname `TASL-7`, `$RUN_DIR` a non-symlink dir; installs the 11 files with no-clobber `set -C`, per-file SHA-256 against `git show <commit>:<path>`, and writes the **host** `delivered-receipt.txt` over ssh (commit + every SHA + UTC; checked absent first) and a local `delivered-receipt.local.txt` in the exec worktree.
 1. **Prechecks (host, fail-closed; pre-marker).** `bash "$RUN_DIR/prechecks.sh"`. Checks: expected GPU UUID, disk ≥100 GB, lease (`flock -n gpu0.lock` — labelled a transient lease check), locks and `*.active` markers absent, watcher identity compared to `watcher_expected.txt` (pane pid, script SHA-256) with the tmux-client caveat noted, `watch.log` position, no Track S collect/`trks_llm`/P.3a, no GPU compute app, full `ps` census, manifest/STOP inventories with `find` traversal errors as STOP, explicit sibling STOP presence/absence, `_d` predecessor retirement record, STATUS-source hashes, **pre-marker frozen-venv pins** and harness pin/clean. On success writes `PRECHECKS_PASS` + `prechecks/prechecks.ok` (exclusive).
    *Prechecks re-run policy:* a STOP leaves no `.ok`; do not delete. Move the stopped attempt aside (`mv "$RUN_DIR/prechecks" "$RUN_DIR/prechecks.attempt-$(date -u +%Y%m%dT%H%M%SZ)"`, a move) and re-create `prechecks/` before a fresh run; record the reason.
 2. **Marker first.** `bash "$RUN_DIR/create_marker.sh"` — requires `prechecks.ok`, empty owned regular receipt STATUS, absent marker, clean exact HEAD; `b1_o2_marker.py create --phase b2`; validates receipt (`run_id`/`head`/dev/ino/64-hex sha); runs `inventory_after.sh` (post-marker inventory).

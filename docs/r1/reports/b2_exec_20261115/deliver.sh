@@ -18,9 +18,13 @@ REMOTE=$(git -C "$HERE" ls-remote origin refs/heads/ops-b2-exec-20261115 | awk '
 [ "$(ssh -o BatchMode=yes tasl7 hostname)" = TASL-7 ] || { echo "STOP: remote host is not TASL-7" >&2; exit 6; }
 ssh -o BatchMode=yes tasl7 "[ -d '$RUN_DIR' ] && [ ! -L '$RUN_DIR' ]" || { echo "STOP: RUN_DIR missing/symlink" >&2; exit 7; }
 REC="$RUN_DIR/delivered-receipt.txt"
-[ ! -e "$REC" ] || { echo "STOP: delivered-receipt exists (no retry)" >&2; exit 8; }
-: > "$REC"
-{ echo "exec_commit=$EXEC"; echo "delivered_utc=$(date -u +%FT%TZ)"; echo "files:"; } >> "$REC"
+LOCALREC="$HERE/docs/r1/reports/b2_exec_20261115/delivered-receipt.local.txt"
+ssh -o BatchMode=yes tasl7 "test ! -e '$REC'" || { echo "STOP: host delivered-receipt exists (no retry)" >&2; exit 8; }
+[ ! -e "$LOCALREC" ] || { echo "STOP: local delivered-receipt exists (no retry)" >&2; exit 8; }
+set -C
+: > "$LOCALREC" || { echo "STOP: cannot create local receipt" >&2; exit 8; }
+ssh -o BatchMode=yes tasl7 "set -C; { echo 'exec_commit=$EXEC'; echo 'delivered_utc=$(date -u +%FT%TZ)'; echo 'files:'; } > '$REC'" || { echo "STOP: cannot create host receipt" >&2; exit 8; }
+{ echo "exec_commit=$EXEC"; echo "delivered_utc=$(date -u +%FT%TZ)"; echo "files:"; } >> "$LOCALREC"
 for f in $FILES; do
   b=$(basename "$f")
   [ -f "$f" ] || { echo "STOP: local file missing $f" >&2; exit 9; }
@@ -32,6 +36,8 @@ for f in $FILES; do
   ssh -o BatchMode=yes tasl7 "chmod 700 '$RUN_DIR/$b'"
   remote_sha=$(ssh -o BatchMode=yes tasl7 "sha256sum '$RUN_DIR/$b'" | awk '{print $1}')
   [ "$remote_sha" = "$reviewed" ] || { echo "STOP: delivered sha mismatch $b ($remote_sha != $reviewed)" >&2; exit 12; }
-  echo "  $b sha256=$reviewed" >> "$REC"
+  echo "  $b sha256=$reviewed" >> "$LOCALREC"
+  ssh -o BatchMode=yes tasl7 "printf '  %s sha256=%s\\n' '$b' '$reviewed' >> '$REC'" || { echo "STOP: cannot append host receipt" >&2; exit 12; }
 done
-echo "DELIVER_OK $EXEC"
+ssh -o BatchMode=yes tasl7 "cat '$REC'" >/dev/null || { echo "STOP: host receipt unreadable" >&2; exit 12; }
+echo "DELIVER_OK $EXEC (host receipt $REC, local $LOCALREC)"

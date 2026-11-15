@@ -1,7 +1,8 @@
 # B1 _d frozen venv identity. Seven packages: B1_RUN_HEAD_D_REVIEW_20261113 §4 (truncation
 # diagnosis §2.3). The three extra pins are from the B1 harness-lock documentation
 # (BATCH_A_24OCT_HANDOFF.md: numpy 2.4.4, scikit-learn 1.8.0, pytest 9.0.3) and are checked
-# read-only before the marker; a mismatch is a fail-closed STOP.
+# read-only before the marker; a mismatch is a fail-closed STOP. Host-confirmed 15 Nov: pytest 9.0.3,
+# numpy 2.4.4, scikit-learn 1.8.0 in /home/dowling/exam-x/work/venv.
 python=3.13.4
 prefix=/home/dowling/exam-x/work/venv
 openai=2.36.0

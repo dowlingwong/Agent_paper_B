@@ -29,7 +29,7 @@ for p in "$OUT" "$CACHE"; do [ ! -L "$p" ] && [ ! -e "$p" ] || stop "path exists
 [ -s "$CAP/gate.exit" ] && [ "$(cat "$CAP/gate.exit")" = 0 ] || stop "gate exit not 0"
 grep -Fq "GATE_PASS $HEAD $RULE_SHA" "$CAP/gate.log" || stop "exact GATE_PASS line missing"
 [ "$(git -C "$HARNESS" rev-parse HEAD)" = a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 ] || stop "harness pin mismatch"
-[ -z "$(git -C "$HARNESS" status --porcelain --untracked-files=no)" ] || stop "harness dirty"
+[ -z "$(git -C "$HARNESS" status --porcelain --untracked-files=all)" ] || stop "harness dirty (incl. untracked)"
 "$PY" - "$RUN_DIR" <<'PYCHK' || stop "venv pins mismatch"
 import importlib.metadata as md, sys
 run_dir = sys.argv[1]

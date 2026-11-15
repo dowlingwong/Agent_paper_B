@@ -27,12 +27,15 @@ grep -Fq "servers stopped; lease released" "$PW/watch_new_lines.txt" || pgrep -f
 find /home/dowling/r1_tracks/out -name manifest.json -printf '%D %i %s %u %g %y %T@ %p\n' 2>> "$PW/find.err" > "$PW/manifest_inventory_after_watch.txt" || stop "manifest find failed"
 find /home/dowling/r1_tracks/out -name STOP -printf '%D %i %s %u %g %y %T@ %p\n' 2>> "$PW/find.err" > "$PW/stop_inventory_after_watch.txt" || stop "STOP find failed"
 [ -s "$PW/find.err" ] && stop "find traversal error after watch"
-# manifests must not have changed at all
-diff "$PD/manifest_inventory_before.txt" "$PW/manifest_inventory_after_watch.txt" >/dev/null 2>&1 || stop "manifest inventory changed during the pause"
+# manifests must not have changed at all (sort both: find order can shift)
+sort "$PD/manifest_inventory_before.txt" > "$PW/man_before.sorted"
+sort "$PW/manifest_inventory_after_watch.txt" > "$PW/man_after.sorted"
+diff "$PW/man_before.sorted" "$PW/man_after.sorted" >/dev/null 2>&1 || stop "manifest inventory changed during the pause"
 # STOP files: any new/changed entry must be a sibling of a known manifest
-awk '{print $1" "$2" "$3" "$4" "$5" "$6" "$8}' "$PD/stop_inventory_before.txt" | sort > "$PW/stop_keys_before.txt"
-awk '{print $1" "$2" "$3" "$4" "$5" "$6" "$8}' "$PW/stop_inventory_after_watch.txt" | sort > "$PW/stop_keys_after.txt"
-comm -13 "$PW/stop_keys_before.txt" "$PW/stop_keys_after.txt" > "$PW/stop_touched_new_or_changed.txt"
+# full stop lines INCLUDING mtime (field 7) so a mtime-only touch is visible
+sort "$PD/stop_inventory_before.txt" > "$PW/stop_full_before.sorted"
+sort "$PW/stop_inventory_after_watch.txt" > "$PW/stop_full_after.sorted"
+comm -13 "$PW/stop_full_before.sorted" "$PW/stop_full_after.sorted" > "$PW/stop_touched_new_or_changed.txt"
 while read -r line; do
   [ -n "$line" ] || continue
   p=${line##* }
@@ -40,8 +43,10 @@ while read -r line; do
   d=$(dirname "$p")
   grep -Fq " $d/manifest.json" "$PD/manifest_inventory_before.txt" || stop "STOP touched outside a known manifest parent: $p"
 done < "$PW/stop_touched_new_or_changed.txt"
-# none other path may change: comm -23 (removed) must be empty
-comm -23 "$PW/stop_keys_before.txt" "$PW/stop_keys_after.txt" > "$PW/stop_disappeared.txt"
+# disappearance: path+inode in before but not in after (a mtime-only change is not a disappearance)
+awk '{print $1" "$2" "$8}' "$PD/stop_inventory_before.txt" | sort > "$PW/stop_id_before.txt"
+awk '{print $1" "$2" "$8}' "$PW/stop_inventory_after_watch.txt" | sort > "$PW/stop_id_after.txt"
+comm -23 "$PW/stop_id_before.txt" "$PW/stop_id_after.txt" > "$PW/stop_disappeared.txt"
 [ -s "$PW/stop_disappeared.txt" ] && stop "a STOP file disappeared (no-deletion rule)"
 # GPU/lease/P.3a after the pause
 nvidia-smi --query-compute-apps=pid,process_name,used_gpu_memory --format=csv,noheader > "$PW/gpu_apps_after.txt" 2>&1

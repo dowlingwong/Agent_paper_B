@@ -33,7 +33,9 @@ if flock -n /home/dowling/r1_locks/gpu0.lock true; then echo "LEASE-FREE" >&9; e
 ls -la /home/dowling/r1_locks >&9 2>&1
 [ -e /home/dowling/r1_locks/trackx_evidence.active ] && stop "trackx marker present"
 echo "TRACKX_MARKER_ABSENT" >&9
-ls /home/dowling/r1_locks/*.active >/dev/null 2>&1 && stop "another *.active marker present" || echo "NO_OTHER_ACTIVE_MARKERS" >&9
+shopt -s nullglob; set -- /home/dowling/r1_locks/*.active; shopt -u nullglob
+[ "$#" -eq 0 ] || stop "another *.active marker present: $*"
+echo "NO_OTHER_ACTIVE_MARKERS" >&9
 echo "=== _to_delete (read-only listing) ===" >&9; ls -la /home/dowling/r1_locks/_to_delete >&9 2>&1 || true
 # --- watcher identity ----------------------------------------------------------------------
 command -v tmux >/dev/null 2>&1 || stop "tmux unavailable (cannot census watcher)"
@@ -81,13 +83,13 @@ PYV
 grep -q VENV_PINS_OK "$PD/pins.log" || stop "venv pins mismatch (see prechecks/pins.log)"
 HARNESS=/home/dowling/r1_b1_engineering/b1_harness_offline_stage_20261107_a/harness
 [ "$(git -C "$HARNESS" rev-parse HEAD)" = a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 ] || stop "harness pin mismatch"
-[ -z "$(git -C "$HARNESS" status --porcelain --untracked-files=no)" ] || stop "harness dirty"
+[ -z "$(git -C "$HARNESS" status --porcelain --untracked-files=all)" ] || stop "harness dirty (incl. untracked)"
 echo "VENV_PINS_OK HARNESS_OK" >&9
 # --- watcher identity compare (pane/bash pid + script sha; a restart is a STOP) ------------
 [ -r "$RUN_DIR/watcher_expected.txt" ] || stop "watcher_expected.txt missing"
 . "$RUN_DIR/watcher_expected.txt"
-pane_pid=$(tmux list-panes -a -F '#{pane_pid}' 2>/dev/null | head -1)
-[ "$pane_pid" = "$WATCHER_PANE_PID" ] || stop "watcher pane pid changed ($pane_pid != $WATCHER_PANE_PID)"
+tmux list-panes -a -F '#{session_name} #{pane_pid} #{pane_current_command}' > "$PD/tmux_panes.txt" 2>&1 || stop "tmux list-panes failed"
+grep -Eq "^[^ ]+ ${WATCHER_PANE_PID} bash$" "$PD/tmux_panes.txt" || stop "watcher pane pid ${WATCHER_PANE_PID} not found in tmux panes"
 wsha=$(sha256sum /home/dowling/r1_tracks/bin/trks-watch | awk '{print $1}')
 [ "$wsha" = "$WATCHER_SCRIPT_SHA256" ] || stop "watcher script changed ($wsha)"
 echo "WATCHER_IDENTITY_OK pane_pid=$pane_pid sha=$wsha" >&9
