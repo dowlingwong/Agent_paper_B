@@ -1,0 +1,559 @@
+{
+  "constants": {
+    "near_band_sigma": 0.5,
+    "price_sigma": 0.1,
+    "tail_sigma": 4.0
+  },
+  "pins": {
+    "sweep": "10742f85f3450eb93650ac645182460a755ab89e",
+    "tracks": "fab88fced839c5fb794ed62a0742b4646cb76ea2"
+  },
+  "schema": "paperc_census/v1",
+  "sweep": [
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed)",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_v_star_robust_sigma": 1.609,
+        "node_level_v_star_sigma": 4.505,
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_over_v_star": 0.022,
+        "price_over_v_star_robust": 0.062,
+        "price_sigma": 0.1
+      },
+      "e2": {
+        "exact_zero_share": 0.074,
+        "increment_mean_sigma": 0.105,
+        "increment_robust_sd_sigma": 3.747,
+        "increment_sd_sigma": 11.248,
+        "keep_share": 0.502,
+        "keeps_within_1sigma_share": 0.244,
+        "n_comparisons": 269,
+        "near_zero_share": 0.182,
+        "near_zero_share_nonzero": 0.116
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "note": "no fresh audits for sweep 1 (B.2 not run)"
+      },
+      "n_campaigns": 36,
+      "node": "digits_mlp",
+      "notes": [
+        "modes: ['append_only_summary', 'none']; campaigns per mode: {'none': 18, 'append_only_summary': 18}"
+      ],
+      "sigma": 0.006613322803772441,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 table)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs, memory none + summary)",
+      "tails": {
+        "duplicate_share": 0.588,
+        "failed_invalid_share": 0.05,
+        "failure_categories": {
+          "proposal_precondition_failed": 38
+        },
+        "negative_tail_share": 0.216,
+        "positive_tail_share": 0.175,
+        "tail_share": 0.39
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed)",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_v_star_robust_sigma": 0.0,
+        "node_level_v_star_sigma": 0.0,
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_over_v_star": null,
+        "price_over_v_star_robust": null,
+        "price_sigma": 0.1
+      },
+      "e2": {
+        "exact_zero_share": 0.743,
+        "increment_mean_sigma": -0.002,
+        "increment_robust_sd_sigma": 0.0,
+        "increment_sd_sigma": 0.245,
+        "keep_share": 0.117,
+        "keeps_within_1sigma_share": 0.923,
+        "n_comparisons": 222,
+        "near_zero_share": 0.986,
+        "near_zero_share_nonzero": 0.947
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "note": "no fresh audits for sweep 1 (B.2 not run)"
+      },
+      "n_campaigns": 36,
+      "node": "openml_breast_w",
+      "notes": [
+        "modes: ['append_only_summary', 'none']; campaigns per mode: {'none': 18, 'append_only_summary': 18}"
+      ],
+      "sigma": 0.006242116126275927,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 table)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs, memory none + summary)",
+      "tails": {
+        "duplicate_share": 0.621,
+        "failed_invalid_share": 0.058,
+        "failure_categories": {
+          "invalid_config": 42
+        },
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed)",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_v_star_robust_sigma": 0.0,
+        "node_level_v_star_sigma": 0.169,
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_over_v_star": 0.593,
+        "price_over_v_star_robust": null,
+        "price_sigma": 0.1
+      },
+      "e2": {
+        "exact_zero_share": 0.331,
+        "increment_mean_sigma": -0.494,
+        "increment_robust_sd_sigma": 0.523,
+        "increment_sd_sigma": 1.554,
+        "keep_share": 0.138,
+        "keeps_within_1sigma_share": 0.5,
+        "n_comparisons": 160,
+        "near_zero_share": 0.512,
+        "near_zero_share_nonzero": 0.271
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "note": "no fresh audits for sweep 1 (B.2 not run)"
+      },
+      "n_campaigns": 36,
+      "node": "openml_climate",
+      "notes": [
+        "modes: ['append_only_summary', 'none']; campaigns per mode: {'none': 18, 'append_only_summary': 18}"
+      ],
+      "sigma": 0.005471612522515804,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 table)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs, memory none + summary)",
+      "tails": {
+        "duplicate_share": 0.629,
+        "failed_invalid_share": 0.207,
+        "failure_categories": {
+          "invalid_config": 149
+        },
+        "negative_tail_share": 0.006,
+        "positive_tail_share": 0.025,
+        "tail_share": 0.031
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed)",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_v_star_robust_sigma": 0.0,
+        "node_level_v_star_sigma": 0.0,
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_over_v_star": null,
+        "price_over_v_star_robust": null,
+        "price_sigma": 0.1
+      },
+      "e2": {
+        "exact_zero_share": 0.35,
+        "increment_mean_sigma": -0.064,
+        "increment_robust_sd_sigma": 0.076,
+        "increment_sd_sigma": 0.174,
+        "keep_share": 0.204,
+        "keeps_within_1sigma_share": 1.0,
+        "n_comparisons": 157,
+        "near_zero_share": 0.975,
+        "near_zero_share_nonzero": 0.961
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "note": "no fresh audits for sweep 1 (B.2 not run)"
+      },
+      "n_campaigns": 36,
+      "node": "openml_credit_approval",
+      "notes": [
+        "modes: ['append_only_summary', 'none']; campaigns per mode: {'none': 18, 'append_only_summary': 18}"
+      ],
+      "sigma": 0.014616679475904568,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 table)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs, memory none + summary)",
+      "tails": {
+        "duplicate_share": 0.688,
+        "failed_invalid_share": 0.067,
+        "failure_categories": {
+          "invalid_config": 48
+        },
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed)",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_v_star_robust_sigma": 0.0,
+        "node_level_v_star_sigma": 0.0,
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_over_v_star": null,
+        "price_over_v_star_robust": null,
+        "price_sigma": 0.1
+      },
+      "e2": {
+        "exact_zero_share": 0.379,
+        "increment_mean_sigma": -0.165,
+        "increment_robust_sd_sigma": 0.162,
+        "increment_sd_sigma": 0.336,
+        "keep_share": 0.149,
+        "keeps_within_1sigma_share": 1.0,
+        "n_comparisons": 161,
+        "near_zero_share": 0.87,
+        "near_zero_share_nonzero": 0.79
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "note": "no fresh audits for sweep 1 (B.2 not run)"
+      },
+      "n_campaigns": 36,
+      "node": "openml_ionosphere",
+      "notes": [
+        "modes: ['append_only_summary', 'none']; campaigns per mode: {'none': 18, 'append_only_summary': 18}"
+      ],
+      "sigma": 0.042374963971105996,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 table)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs, memory none + summary)",
+      "tails": {
+        "duplicate_share": 0.613,
+        "failed_invalid_share": 0.236,
+        "failure_categories": {
+          "invalid_config": 170
+        },
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed)",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_v_star_robust_sigma": 0.0,
+        "node_level_v_star_sigma": 0.0,
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_over_v_star": null,
+        "price_over_v_star_robust": null,
+        "price_sigma": 0.1
+      },
+      "e2": {
+        "exact_zero_share": 0.526,
+        "increment_mean_sigma": -0.178,
+        "increment_robust_sd_sigma": 0.0,
+        "increment_sd_sigma": 0.658,
+        "keep_share": 0.153,
+        "keeps_within_1sigma_share": 0.879,
+        "n_comparisons": 215,
+        "near_zero_share": 0.795,
+        "near_zero_share_nonzero": 0.569
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "note": "no fresh audits for sweep 1 (B.2 not run)"
+      },
+      "n_campaigns": 36,
+      "node": "openml_sonar",
+      "notes": [
+        "modes: ['append_only_summary', 'none']; campaigns per mode: {'none': 18, 'append_only_summary': 18}"
+      ],
+      "sigma": 0.046392368714306215,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 table)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs, memory none + summary)",
+      "tails": {
+        "duplicate_share": 0.635,
+        "failed_invalid_share": 0.046,
+        "failure_categories": {
+          "invalid_config": 33
+        },
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed)",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_v_star_robust_sigma": 0.0,
+        "node_level_v_star_sigma": 0.0,
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_over_v_star": null,
+        "price_over_v_star_robust": null,
+        "price_sigma": 0.1
+      },
+      "e2": {
+        "exact_zero_share": 0.707,
+        "increment_mean_sigma": -0.086,
+        "increment_robust_sd_sigma": 0.0,
+        "increment_sd_sigma": 0.377,
+        "keep_share": 0.075,
+        "keeps_within_1sigma_share": 1.0,
+        "n_comparisons": 239,
+        "near_zero_share": 0.946,
+        "near_zero_share_nonzero": 0.814
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "note": "no fresh audits for sweep 1 (B.2 not run)"
+      },
+      "n_campaigns": 36,
+      "node": "openml_wdbc",
+      "notes": [
+        "modes: ['append_only_summary', 'none']; campaigns per mode: {'none': 18, 'append_only_summary': 18}"
+      ],
+      "sigma": 0.016710257267967522,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 table)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs, memory none + summary)",
+      "tails": {
+        "duplicate_share": 0.59,
+        "failed_invalid_share": 0.048,
+        "failure_categories": {
+          "invalid_config": 31,
+          "proposal_precondition_failed": 4
+        },
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed)",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_v_star_robust_sigma": 1.601,
+        "node_level_v_star_sigma": 3.333,
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_over_v_star": 0.03,
+        "price_over_v_star_robust": 0.062,
+        "price_sigma": 0.1
+      },
+      "e2": {
+        "exact_zero_share": 0.0,
+        "increment_mean_sigma": -1.939,
+        "increment_robust_sd_sigma": 4.803,
+        "increment_sd_sigma": 10.701,
+        "keep_share": 0.45,
+        "keeps_within_1sigma_share": 0.345,
+        "n_comparisons": 258,
+        "near_zero_share": 0.12,
+        "near_zero_share_nonzero": 0.12
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "note": "no fresh audits for sweep 1 (B.2 not run)"
+      },
+      "n_campaigns": 36,
+      "node": "tabular_mlp",
+      "notes": [
+        "modes: ['append_only_summary', 'none']; campaigns per mode: {'none': 18, 'append_only_summary': 18}"
+      ],
+      "sigma": 0.0035613789827285583,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 table)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs, memory none + summary)",
+      "tails": {
+        "duplicate_share": 0.59,
+        "failed_invalid_share": 0.015,
+        "failure_categories": {
+          "proposal_precondition_failed": 11
+        },
+        "negative_tail_share": 0.31,
+        "positive_tail_share": 0.14,
+        "tail_share": 0.45
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "budget": {
+        "binding_share_by_W": {
+          "8": 1.0,
+          "10": 1.0,
+          "12": 0.94,
+          "20": 0.04
+        },
+        "llm_cap_reached_share_at_W40": 1.0,
+        "runs_used_at_W40": [
+          11,
+          27
+        ]
+      },
+      "e1": {
+        "margin_max_sigma": 2.612,
+        "margin_min_sigma": 2.576,
+        "n_eligible": 298,
+        "near_price_share": 0.0,
+        "price_over_v_star": 0.037,
+        "price_sigma": 0.1,
+        "rule_skip_share": 0.574,
+        "skip_reasons": {
+          "rule_duplicate": 429
+        },
+        "v_star_median_sigma": 2.702,
+        "v_star_range_sigma": 0.036
+      },
+      "e2": {
+        "actions": {
+          "discard": 170,
+          "failed_invalid": 53,
+          "keep": 148
+        },
+        "keep_share": 0.399,
+        "margin_p05_sigma": -16.329,
+        "margin_p95_sigma": 17.337,
+        "n_with_margin": 298,
+        "near_zero_share": 0.154
+      },
+      "incumbent": {
+        "keeps_without_row": 0,
+        "n_campaigns": 10,
+        "recorded_minus_audited_gain_mean_sigma": -1.224,
+        "recorded_minus_audited_gain_sd_sigma": 6.169,
+        "share_recorded_above_audited": 0.2
+      },
+      "keep_quality": {
+        "audit_k": 5,
+        "audited_near_zero_share": 0.2,
+        "corr_delta_hat_audit": 0.944,
+        "false_keep": 0.0,
+        "false_keep_clear": 0.0,
+        "keep_rule": "harness default/v1: keep iff delta_hat > 0",
+        "missed_keep": 0.167,
+        "missed_keep_clear": 0.083,
+        "n_audited": 165,
+        "n_clear": 133,
+        "sd_delta_hat_minus_audit_sigma": 3.038
+      },
+      "n_campaigns": 20,
+      "node": "digits_mlp",
+      "notes": [
+        "A2-U V* is nearly constant across proposals (S0.5 summary \u00a74): E1 has no decision-relevant state."
+      ],
+      "sigma": 0.0066,
+      "sigma_source": "run manifest sigma_node",
+      "source": "Track S S0.4/S0.5 (A2-U, qwen2.5-coder:7b)",
+      "tails": {
+        "audit_robust_sd_sigma": 3.754,
+        "audit_sd_sigma": 9.04,
+        "audit_tail_share": 0.364,
+        "failed_invalid_share_E2": 0.143
+      }
+    },
+    {
+      "budget": {
+        "binding_share_by_W": {
+          "8": 1.0,
+          "10": 1.0,
+          "12": 1.0,
+          "20": 0.16
+        },
+        "llm_cap_reached_share_at_W40": 1.0,
+        "runs_used_at_W40": [
+          14,
+          22
+        ]
+      },
+      "e1": {
+        "margin_max_sigma": 4.056,
+        "margin_min_sigma": 4.038,
+        "n_eligible": 330,
+        "near_price_share": 0.0,
+        "price_over_v_star": 0.024,
+        "price_sigma": 0.1,
+        "rule_skip_share": 0.533,
+        "skip_reasons": {
+          "rule_duplicate": 399
+        },
+        "v_star_median_sigma": 4.149,
+        "v_star_range_sigma": 0.018
+      },
+      "e2": {
+        "actions": {
+          "discard": 192,
+          "failed_invalid": 51,
+          "keep": 158
+        },
+        "keep_share": 0.394,
+        "margin_p05_sigma": -28.697,
+        "margin_p95_sigma": 18.009,
+        "n_with_margin": 330,
+        "near_zero_share": 0.115
+      },
+      "incumbent": {
+        "keeps_without_row": 0,
+        "n_campaigns": 10,
+        "recorded_minus_audited_gain_mean_sigma": -0.847,
+        "recorded_minus_audited_gain_sd_sigma": 20.886,
+        "share_recorded_above_audited": 0.3
+      },
+      "keep_quality": {
+        "audit_k": 5,
+        "audited_near_zero_share": 0.078,
+        "corr_delta_hat_audit": 0.898,
+        "false_keep": 0.015,
+        "false_keep_clear": 0.0,
+        "keep_rule": "harness default/v1: keep iff delta_hat > 0",
+        "missed_keep": 0.081,
+        "missed_keep_clear": 0.052,
+        "n_audited": 154,
+        "n_clear": 132,
+        "sd_delta_hat_minus_audit_sigma": 9.794
+      },
+      "n_campaigns": 20,
+      "node": "tabular_mlp",
+      "notes": [
+        "A2-U V* is nearly constant across proposals (S0.5 summary \u00a74): E1 has no decision-relevant state."
+      ],
+      "sigma": 0.0019,
+      "sigma_source": "run manifest sigma_node",
+      "source": "Track S S0.4/S0.5 (A2-U, qwen2.5-coder:7b)",
+      "tails": {
+        "audit_robust_sd_sigma": 13.357,
+        "audit_sd_sigma": 22.122,
+        "audit_tail_share": 0.649,
+        "failed_invalid_share_E2": 0.127
+      }
+    }
+  ]
+}

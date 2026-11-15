@@ -98,8 +98,10 @@ Label = Literal["ENGINEERING_ONLY", "PILOT", "EVIDENCE", "FIXTURE"]
 Tier = Literal["E-SYN", "E-T0", "E-INT", "E-HELD", "E-SIM"]
 SelectionRule = Literal["uniform", "oversample", "both"]
 EndKind = Literal["terminated", "truncated"]
-FailureCategory = Literal["syntax_error", "runtime_error", "metric_missing", "invalid_edit_scope"]
-# harness FailureCategory minus "degraded_metric", which is a valid result (a worse metric), not a failure
+FailureCategory = Literal["syntax_error", "runtime_error", "metric_missing", "invalid_edit_scope", "invalid_config",
+                          "proposal_precondition_failed"]
+# harness failure categories (the last two appear in Paper B sweep 1, harness 6adf385) minus "degraded_metric",
+# which is a valid result (a worse metric), not a failure
 EndReason = Literal["W", "llm_cap", "policy_stop", "infrastructure", "protocol_stop", "parse", "host"]
 END_REASONS = {"terminated": ("W", "llm_cap"), "truncated": ("infrastructure", "protocol_stop", "parse", "host")}
 

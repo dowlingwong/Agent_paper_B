@@ -375,7 +375,9 @@
                 "syntax_error",
                 "runtime_error",
                 "metric_missing",
-                "invalid_edit_scope"
+                "invalid_edit_scope",
+                "invalid_config",
+                "proposal_precondition_failed"
               ]
             },
             {
