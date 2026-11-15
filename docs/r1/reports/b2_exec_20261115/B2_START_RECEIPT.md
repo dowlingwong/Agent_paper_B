@@ -33,3 +33,15 @@
 - smoke dirs `/home/dowling/r1_b1_engineering/b2_smoke_prechecks.s8cf4W5M` and `…prechecks2.1dMwtvLo` (prechecks end-to-end smoke, rc=0)
 
 **First monitor capture:** `$RUN_DIR/monitor/…/capture.txt`; `batch_state.json` status `RUNNING`, `server_intervals` has the `gemma4_31b/b2/off` interval open.
+
+
+## Completion (same run)
+
+B2 ended **normally at 21:22 UTC**: 24/24 roots, `b2.exit` = 0, batch_state `COMPLETE`, 0 interruptions,
+`b2_manifests.json` written. Post-run collect PASS (verified analysis rc 0, `POSTRUN_COLLECT_OK`), the marker
+was retired (`marker-retirement.json`; marker absent), `## 2026-11-15 — Track X B2 done` was published on
+`mac-b1-20261107` @ `78afa073` (remote verified), and the reviewed `stop_trks_watch` unit stopped only the
+watcher with the Track S scene unchanged. Result (primary, mode off): `gemma4_31b` final_y **0.9402810083**
+(12 instances); thinking-on descriptive **0.9552304833** (12 instances); GPU-hours **0.5049**; **0 invalid
+trials** (480 rows); grid verified. See `B2_REPORT_20261115.md` and `handback/` for the full report and the §6
+artifacts; the report goes to independent review (STOP 6) before the author's X.7 decisions.
