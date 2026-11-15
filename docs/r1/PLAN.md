@@ -1158,6 +1158,18 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-EXAM-B2-INVALID-TRIALS | **R1-EXAM-B1-TRUNCATION-INVALID 与 R1-EXAM-B1-MODEL-OUTPUT-INVALID 中关于无效试验和 STOP 的规则原样延伸到 Stage B2。** 记为无效试验并计入 LLM 预算的情形：截断的提议回复（finish reason 为 `length` 或 `content_filter`）；执行前预检查发现的模型输出问题 M5–M9（不执行，也不调用 observer）；第 1 次试验之后的 M19；M20。每次提议调用设 `max_completion_tokens = 16384`；A4 observer 调用不受此上限约束（仍为 `max_tokens` 4096）。每次提议调用都在提议返回之前（即执行之前）写入 journal（`b1_proposals.jsonl`），并与 ledger 和事件核对。以下情形仍然 STOP：任何到达 worker guard 并未通过的提议（内部不一致，即代码 bug）；M10、M15、M16、M18、M21；第 1 次试验的 M19；M17（B2 包括最终 Y 的十个种子 9201–9210）以及不完整的最终 Y 审计；缺少 `cache_prompt` 证据；重启时发现已有生产根；所有基础设施、授权及其他检查。M14 照 B1 执行。两条 B1 行中只适用于 B1 运行的条款（已停止运行的事实、对 `fffa_20261111_b` 的上限条件、re-pin、重启交接、复用评估、marker 退役，以及 B1 的种子、节点、预算和实例数）不延伸；B2 的种子、预算、节点和实例数由各自的绑定确定。B2 报告按候选模型、模式和检查项列出各类无效试验的计数。本行记录作者 11 月 14 日的指示。 |
 
+### 15 November 2026 — Track S ends at STOP 4 (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKS-STOP4-END | **Track S 在 STOP 4 结束，不进入 EVIDENCE：不修改 A2-U，不重跑任何阶段；TASL-7 不再分配给 Track S。** 依据是两节点合并的 S0.5 摘要 `reports/TRACKS_S05_SUMMARY_20261115.md`（独立审查接受于 `74808c0a`）中的两项发现。(1) **校准门两节点都未通过**（design S0.5 (iii)：80 % 区间的覆盖率须在 [0.70, 0.90] 内，总体及每个 ≥ 20 条预测的分层都要满足）。digits_mlp（n = 298）：分层 0 为 0.538，1-2 为 0.674，≥ 3 为 0.944，总体 0.775。tabular_mlp（n = 330）：分层 0 为 0.368，1-2 为 0.653，≥ 3 为 0.831，总体 0.700。两节点的分层 0 都过低；按 runbook rev 3.3 Phase 4，这是交作者决定的 STOP，λ₂ 修正无法改变分层 0。(2) **E1 筛选不起作用。** 两节点拟合的先验中 τ0 都落在下限（0.15 σ_node），因为 τ_A2 < τ_w。因此 A2-U 对每个提议算出的 V\* 几乎相同（在全部合格的非重复 E1 决定上的极差：digits 0.036 σ_node，tabular 0.018 σ_node），并且远高于运行价格 g = 0.1 σ_node：V\* − g 在 digits 上为 2.58–2.61 σ_node，在 tabular 上为 4.04–4.06 σ_node。没有任何决定落在 g 或静态阈值（0.3 σ_node）以下或其 ±0.5 σ_node 之内；所有 E1 跳过都是规则判定的重复提议。两条 pilot 策略（a2u 与 static:0.3 σ_node,0）在两节点各 20 个实例上的动作序列逐条相同，截断到 W = 8/10/12/20 时结果也相同；S0.5b 中两条策略之间的 σ_D 及其 UCL 为 0，W = 40 时的 between_policy_sd_at_cap 也为 0。只有 E2 的 keep 是真实的决定。作者从摘要的三个选项中选 (c-iii)：不改 A2-U 的先验或方差结构，不调运行价格或预算，也不缩小为只比较 E2。此后的阶段均不进行，包括 S0.6、S0.7、S0.8 预声明、S0.9 授权、S3 和 S4，不产生 EVIDENCE。Track S 的全部数据（Phase 0–4，含 smoke、S0.1、S1.1、S0.4、S0.5 和 S0.5b）保持 ENGINEERING_ONLY，只在附录中作为说明 Track S 为何停止的 pilot 发现披露，不作为结果引用（RUNBOOK §1：ENGINEERING_ONLY/PILOT 运行不作为结果引用；草稿 `reports/TRACKS_PILOT_FINDINGS_APPENDIX_DRAFT_20261115.md`）：附录如实报告 A2-U 校准失败，不对 A2-U 本身作任何主张。Track S 在两台主机及 Mac 上留下的目录、进程、分支和数据原样保留，不移动、不修改、不删除（清单见 `reports/TRACKS_RESOURCES_AND_SCENES_20261115.md`）；如需清理，另由作者决定。本行记录作者 11 月 15 日的决定。 |
+
+### 15 November 2026 — Track S STOP 4 consequences (author)
+
+| ID | Decision |
+|---|---|
+| R1-TRACKS-STOP4-CONSEQUENCES | **作者对 R1-TRACKS-STOP4-END 后果清单（`proposals/PLAN_ROW_R1-TRACKS-STOP4-END_DRAFT_20261115.md` 末节，`mac-tracks-stop4-end-20261115` @ `795e518b`）的裁定。** (1) R1-TRACKS-FRAMING：结束于 EVIDENCE 之前不属于其任何预设结果；论文定位明确采用其最后一档的表述——“noise-aware DAC 以及它何时退化为一步决策”，由定理与合成对照支撑，绝不声称循环本身是一步的；RL 臂不作为必需。 (2) R1-BX-D10：“到约 2026-12-15 无 campaign 级结果”的 fallback 条件提前满足并生效——DAC 退化论证依靠定理加合成对照，论文明确写出；其 GPU 节点扩展（autoresearch、RL 类任务）及 GPU 节点 manager 的开放问题取消。 (3) R1-TRACKS-PICK-REPEAT-DEFER：无结果可等，失效。 (4) R1-TRACKS-HOST / R1-TRACKS-HOST-2：TASL-7 对 Track S 的分配结束；TASL-2 同样从 Track S 释放，但须在其恢复联网后先由实验 agent 只读清点（Track S 服务器、GPU lease、进程），清点经审查后才可另作他用；两台主机上的 Track S 现场保持不动。 (5) R1-T4-DI-FIX：附录草稿依赖 Proposition 8′，在作者完成并在 PLAN 记录证明检查之前，该节不进入稿件。 (6) R1-BX-D14：“Track S fallback ≈ 15 Dec 2026”目标不再约束任何事项。 (7) TASL-7 上的 `trks_watch`：B2 运行结束之前保持运行（B2 执行计划依赖其暂停行为并已清点其写入）；B2 结束后由实验 agent 按独立审查过的单元停止，不删除任何文件。 (8) R1-TRACKS-ADOPT 中“将会运行”的部分由 R1-TRACKS-STOP4-END 取代。 (9) RUNBOOK §1：pilot 数字只作为说明 Track S 为何停止的披露，不作为结果引用。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
