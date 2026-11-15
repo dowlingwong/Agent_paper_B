@@ -103,3 +103,11 @@ stops the watcher, with the scene inventory compared against the post-watch base
   fast-forwarded **`25907343 → fab88fce`** (52 commits, no force) on the TASL-2 bare repo; live ref verified.
   Receipt: `tasl2_bare_push_receipt.txt`. The Mac's remote-tracking ref (`78a1b65e`) and the resources doc's
   "54 behind" were stale; the live delta was 52. Nothing else was done on TASL-2.
+
+## Attribution correction (author request, 15 Nov 2026)
+
+The trks-unit round fixes and the TASL-2 census / deferred bare-repo fast-forward recorded above were
+produced by a **concurrent second operator session** (identity Dowling Wong, commit footer "DeepSeek Harness
+agent"), not by the coordination chat; the chat pushed only bundle branches and `author-*` branches that
+night and never touched TASL hosts. Going forward: one operator per branch and per host. The evidence, gates
+and results in this NOTE are unchanged.
