@@ -1,0 +1,37 @@
+WAITER START 2026-11-15T00:09:11Z
+PROGRESS 2026-11-15T00:09:11Z roots=0 forks=0 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/roots.jsonl: No such file or directory
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/forks.jsonl: No such file or directory
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T00:14:11Z roots=3 forks=1 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T00:19:11Z roots=6 forks=1 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T00:24:11Z roots=9 forks=5 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T00:29:11Z roots=12 forks=7 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T00:34:11Z roots=16 forks=9 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T00:39:11Z roots=19 forks=12 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T00:44:11Z roots=22 forks=13 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T00:49:11Z roots=25 forks=13 leaves=0 lease=HELD markers=none
+PROGRESS 2026-11-15T00:54:12Z roots=29 forks=15 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T00:59:12Z roots=32 forks=15 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T01:04:12Z roots=34 forks=19 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T01:09:12Z roots=36 forks=20 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T01:14:12Z roots=39 forks=25 leaves=0 lease=HELD markers=none
+PROGRESS 2026-11-15T01:19:12Z roots=41 forks=26 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
+PROGRESS 2026-11-15T01:24:12Z roots=44 forks=29 leaves=0 lease=HELD markers=none
+PROGRESS 2026-11-15T01:29:12Z roots=46 forks=30 leaves=0 lease=HELD markers=none
+bash: line 6: /home/dowling/r1_tracks/out/tabular_mlp/s05_t7_20261114/leaves.jsonl: No such file or directory
