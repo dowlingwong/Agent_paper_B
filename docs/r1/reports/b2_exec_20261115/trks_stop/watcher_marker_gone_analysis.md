@@ -40,3 +40,5 @@ to a human, not an action in the script. Therefore the author's risky case does 
 unit that stops the watcher. Observed corroboration in `watch.log`: after the earlier `_d` marker retirement
 (2026-11-14T10:16:36Z) and the drill session (2026-11-14T22:23:37Z), the log shows only the marker-gone line, no
 STOP removals or server starts; the STOP files from that session remained in place (the pre-B2 census listed them).
+
+**Note (review nit):** the quoted script above trims two comment lines for brevity; the exact bytes are pinned by SHA-256 `cf68843e…` (and the reviewed `tasl7_census_20261107/watcher.txt`), which is the authoritative record.
