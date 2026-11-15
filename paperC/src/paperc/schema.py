@@ -919,6 +919,9 @@ def check_campaign(rows: Sequence, *, registry: SeedRegistry | None = None,
                             msg = pc(role, lo, hi)
                             if msg:
                                 V("seed", key, st, msg)
+                    if t.identity.tier != "E-SYN" and t.seeds.worker_seed is None:
+                        V("seed", key, st, "worker_seed must be explicit on real-node rows (None means the node's "
+                                           "default seed 42, a Paper B seed)")
                 prefix = getattr(registry, "campaign_prefix", None)
                 if prefix and not t.identity.campaign_id.startswith(prefix):
                     V("seed", key, st, f"campaign_id {t.identity.campaign_id!r} lacks the Paper C prefix {prefix!r}")

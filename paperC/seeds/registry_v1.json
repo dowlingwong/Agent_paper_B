@@ -107,6 +107,16 @@
       "symbol": "SEED_BASE['train']"
     },
     {
+      "hi": 1235,
+      "kind": "rng_key",
+      "lo": 1234,
+      "name": "rng_key_1234",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/c3/train/model.py:rngcall:@fab88fce"
+    },
+    {
       "hi": 3001,
       "kind": "base_count",
       "lo": 2001,
@@ -434,7 +444,7 @@
       "note": "RNG root, not a worker seed",
       "path": null,
       "ref": null,
-      "symbol": "r1/tracks/probes/s1_factorial.py:BOOT_SEED@fab88fce; r1/tracks/simulate_controls.py:def:seed@fab88fce"
+      "symbol": "r1/tracks/probes/s1_factorial.py:BOOT_SEED@fab88fce; r1/tracks/simulate_controls.py:def:seed@fab88fce; r1/tracks/probes/determinism.py:argparse:@fab88fce"
     },
     {
       "hi": 20261108,
@@ -449,7 +459,8 @@
   ],
   "paper_b_internal_overlaps": [
     "e1b_instances [100,997) overlaps rng_key_777 [777,778)",
-    "e2e_worker_seed_999 [999,1000) overlaps rng_key_999 [999,1000)"
+    "e2e_worker_seed_999 [999,1000) overlaps rng_key_999 [999,1000)",
+    "noise_floor_train [1001,2001) overlaps rng_key_1234 [1234,1235)"
   ],
   "paper_b_internal_overlaps_worker_seeds": [],
   "paper_c": [

@@ -114,3 +114,26 @@ def test_function_compiles_in_isolation():
     src = "import os\n@decorator_that_does_not_exist\ndef f(node: Foo, k: int = os.getpid()) -> Bar:\n    return 100 + 10 * k + (sum(map(ord, node)) % 7)\n"
     f = seeds.function(src, "f")
     assert f("abc", 3) == 100 + 30 + (sum(map(ord, "abc")) % 7)
+
+
+def test_real_node_rows_need_an_explicit_worker_seed():
+    from test_schema import valid_campaign
+    reg = seeds.Registry.load()
+    rows = valid_campaign(campaign="pc-c1", seed=50001)
+    for r in rows:
+        r["identity"]["tier"] = "E-T0"
+    viol = S.check_campaign(rows, registry=reg)
+    assert {v.check for v in viol} == {"seed"} and any("worker_seed must be explicit" in v.message for v in viol)
+    for r in rows:
+        r["seeds"]["worker_seed"] = 50001
+    assert S.check_campaign(rows, registry=reg) == []
+
+
+def test_scan_finds_argparse_and_rng_constructor_seeds():
+    src = ("import argparse, numpy as np, torch\np = argparse.ArgumentParser()\n"
+           "p.add_argument('--order-seed', type=int, default=20261029)\n"
+           "torch.manual_seed(1234)\nrng = np.random.default_rng(4242)\n"
+           "def f(base_seed=777, n=3):\n    return base_seed\n")
+    assert seeds._seed_literals(src, "argparse:") == [20261029]
+    assert seeds._seed_literals(src, "rngcall:") == [1234, 4242]
+    assert seeds._seed_literals(src, "anydef:") == [777]

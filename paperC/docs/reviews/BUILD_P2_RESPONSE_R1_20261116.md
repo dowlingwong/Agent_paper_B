@@ -13,3 +13,12 @@ ENGINEERING_ONLY. Executor: chat-session Claude. Review: `BUILD_P2_REVIEW_202611
 | 7 | `pc-` wording; not enforced | report says the prefix makes hash *inputs* distinct; enforced by `check_campaign`; the runner port must build `pc-` ids (noted in the report) |
 | 8 | namespace exclusions unnamed; no Paper C training block | docstring names D26 seeds and ML/RNG seeds as out of scope; `paperc_train_seeds` 61000–62000 added |
 | 9 | sources inline | declared tables `SOURCES`, `RNG_KEYS`, `EXTRA_BLOCKS`; `paper_b_blocks` reads exactly those |
+
+## Round 2 (ACCEPT) — minor findings addressed after acceptance
+
+| # | Change |
+|---|---|
+| 1 | `check_campaign` (with the registry) requires an explicit worker seed on rows whose tier is not E-SYN (`test_real_node_rows_need_an_explicit_worker_seed`). |
+| 2 | The scan reads every seed-named parameter default and keyword, argparse `--*seed*` defaults and the first integer of RNG constructors; `torch.manual_seed(1234)` (`c3/train/model.py`) and the `--order-seed` default 20261029 are registered through `RNG_KEYS`; `--seeds default=10` (a count) is on `IGNORED` (`test_scan_finds_argparse_and_rng_constructor_seeds`). |
+| 3 | Report: `IGNORED` count corrected (now six) and the new RNG roots listed. |
+| 4 | Noted; `function()` stays as accepted. |

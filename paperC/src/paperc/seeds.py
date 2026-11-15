@@ -30,7 +30,8 @@ bound on ``--instances``, ``--seeds`` or ``--audit-seeds``:
 **Completeness.** ``scan_constants`` reads, in every non-test ``r1/**/*.py`` at both pins, (a) every module-level
 constant whose name contains ``SEED`` or ends in ``_BASE(S)``, (b) every integer passed as a worker-seed keyword
 (``train_seed``, ``split_seed``, ``instance_seed``, ``worker_seed``, ``audit_seed(s)``), and (c) every integer >= 10
-used as a ``seed`` / ``seed0`` default or keyword. ``unaccounted`` requires every such integer (every *range* in full,
+used as the default or keyword of any seed-named parameter, as an argparse ``--*seed*`` default, or as the first
+argument of an RNG constructor. ``unaccounted`` requires every such integer (every *range* in full,
 not only its ends) to lie in a registry block or to be on ``IGNORED`` with a reason; string-valued constants (file
 names, key sets) are listed as skipped. The test requires ``unaccounted`` to be empty.
 
@@ -146,6 +147,8 @@ RNG_KEYS = (
     (TRACKS, "r1/tracks/simulate_controls.py", "def:seed"),
     (TRACKS, "r1/tracks/simulate_controls.py", "def:seed0"),
     (TRACKS, "r1/tracks/simulate_controls.py", "kw:seed"),
+    (TRACKS, "r1/c3/train/model.py", "rngcall:"),
+    (TRACKS, "r1/tracks/probes/determinism.py", "argparse:"),
 )
 
 # Constants the scan finds that are not seed values, each with the reason.
@@ -155,6 +158,7 @@ IGNORED = {
     ("r1/tracks/collect.py", "AUDIT_SEED_BLOCKS"): "derived from AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY (registered)",
     ("r1/exam/namespace.py", "EXAM_SEEDS"): "union of INSTANCE_SEEDS and AUDIT_SEEDS (registered)",
     ("r1/scripts/trackx_lease_guardian.py", "PYTHON_BASENAME"): "a regular expression, not a seed",
+    ("r1/noise/e1_noise_floor.py", "argparse:"): "--seeds default=10 is a count of seeds per condition, not a seed",
 }
 
 
@@ -240,11 +244,38 @@ def _is_int(x) -> bool:
     return isinstance(x, ast.Constant) and isinstance(x.value, int) and not isinstance(x.value, bool)
 
 
+RNG_CALLS = ("default_rng", "RandomState", "manual_seed", "seed", "Random", "SeedSequence", "PRNGKey")
+
+
+def _call_name(f) -> str | None:
+    return f.attr if isinstance(f, ast.Attribute) else f.id if isinstance(f, ast.Name) else None
+
+
 def _seed_literals(src: str, which: str) -> list[int]:
-    """Integer seeds in a file: ``def:<param>`` defaults, ``kw:<name>`` call keywords."""
+    """Integer seeds in a file.
+
+    ``def:<param>`` defaults and ``kw:<name>`` call keywords (exact name); ``anydef:`` / ``anykw:`` for every
+    parameter or keyword whose name contains "seed"; ``argparse:`` for ``add_argument("--...seed...", default=N)``;
+    ``rngcall:`` for the first positional integer of an RNG constructor (``default_rng``, ``RandomState``,
+    ``manual_seed``, ``seed``, ``Random``, ``SeedSequence``, ``PRNGKey``).
+    """
     kind, name = which.split(":")
     out = []
     for n in ast.walk(ast.parse(src)):
+        if kind == "anykw" and isinstance(n, ast.keyword) and n.arg and "seed" in n.arg.lower() and _is_int(n.value):
+            out.append(n.value.value)
+        if kind == "anydef" and isinstance(n, ast.FunctionDef):
+            a = n.args
+            pairs = list(zip([x.arg for x in a.args][len(a.args) - len(a.defaults):], a.defaults))
+            pairs += [(x.arg, d) for x, d in zip(a.kwonlyargs, a.kw_defaults) if d is not None]
+            out += [d.value for p, d in pairs if "seed" in p.lower() and _is_int(d)]
+        if kind == "argparse" and isinstance(n, ast.Call) and _call_name(n.func) == "add_argument":
+            flags = [a.value for a in n.args if isinstance(a, ast.Constant) and isinstance(a.value, str)]
+            if any("seed" in f.lower() for f in flags):
+                out += [k.value.value for k in n.keywords if k.arg == "default" and _is_int(k.value)]
+        if kind == "rngcall" and isinstance(n, ast.Call) and _call_name(n.func) in RNG_CALLS and n.args \
+                and _is_int(n.args[0]):
+            out.append(n.args[0].value)
         if kind == "kw" and isinstance(n, ast.keyword) and n.arg == name and _is_int(n.value):
             out.append(n.value.value)
         if kind == "def" and isinstance(n, ast.FunctionDef):
@@ -374,7 +405,7 @@ def scan_constants(repo: Path) -> list[dict]:
                 if isinstance(n, ast.keyword) and n.arg in WORKER_KEYWORDS and _is_int(n.value):
                     found.append({"ref": ref, "path": path, "name": f"kw:{n.arg}", "value": n.value.value,
                                   "how": "worker_keyword"})
-            for which in ("def:seed", "def:seed0", "kw:seed"):
+            for which in ("anydef:", "anykw:", "argparse:", "rngcall:"):
                 for v in _seed_literals(src, which):
                     if v >= 10:
                         found.append({"ref": ref, "path": path, "name": which, "value": v, "how": "rng_literal"})

@@ -16,9 +16,9 @@ The sources are declared in `paperc/seeds.py`:
 A completeness scan reads, in every non-test `r1/**/*.py` at both pins:
 - (a) every module-level constant whose name contains `SEED` or ends in `_BASE(S)`, bare `SEED` included;
 - (b) every integer passed as a worker-seed keyword (`train_seed`, `split_seed`, …);
-- (c) every integer ≥ 10 used as a `seed` / `seed0` default or keyword.
+- (c) every integer ≥ 10 used as the default or keyword of any seed-named parameter, as an argparse `--*seed*` default, or as the first argument of an RNG constructor (`default_rng`, `RandomState`, `manual_seed`, …).
 
-Every such integer must lie in a block, and a range must lie in blocks *in full*. The only exceptions are the four items on `IGNORED`, each with a reason. The test fails otherwise. String-valued constants (`SEEDS_FILE`, `_SEED_KEYS`, `SEED_KEY`) are listed as skipped in the registry.
+Every such integer must lie in a block, and a range must lie in blocks *in full*. The only exceptions are the six items on `IGNORED`, each with a reason. The test fails otherwise. String-valued constants (`SEEDS_FILE`, `_SEED_KEYS`, `SEED_KEY`) are listed as skipped in the registry.
 
 ## Paper B worker-seed blocks
 
@@ -43,12 +43,13 @@ Every such integer must lie in a block, and a range must lie in blocks *in full*
 | Values | Sources |
 |---|---|
 | 11, 77, 78, 777, 1000, 9000, 9100, 20000 | `tracks/simulate_controls.py` defaults and keywords |
+| 1234 | `c3/train/model.py` `torch.manual_seed(1234)` (Track S pin); it lies inside the noise-floor block but seeds a generator, not a node run |
 | 999 | `r1/e2e.py`: the manager's `seed=999`, also the worker seed above |
 | 35001 | `collect.SELECTION_SEED` |
 | 20261012 | `headroom/e1b_compare.SEED`, `baselines/evaluate`, `branch/bootstrap` |
 | 20261019 | `c3/dataset.PLAN_SEED`, `theory/t5_report.BASE_SEED`, `c3/offline_eval.SEED`, `diagnostics/di_test.SEED` |
 | 20261026 | `c3/train/exam_synthetic.SEED` (Track S pin), `exam/guards` |
-| 20261029 | `probes/s1_factorial.BOOT_SEED`, `simulate_controls` |
+| 20261029 | `probes/s1_factorial.BOOT_SEED`, `simulate_controls`, `probes/determinism` `--order-seed` default |
 | 20261107 | `scripts/b1_q2_reference.SEED` |
 
 ## Differences from the plan's prose
@@ -81,7 +82,7 @@ Every such integer must lie in a block, and a range must lie in blocks *in full*
 
 **Checks:**
 - All Paper C blocks are at least 1000 away from every Paper B block, including the RNG roots (`check_disjoint`, tested).
-- When `check_campaign` is given this registry, it now also requires each seed to lie inside its own Paper C block (instance and worker seeds in `paperc_instances`, ε seeds in `paperc_rng_keys`, the audit block in `paperc_audits`) and every campaign id to start with `pc-`.
+- When `check_campaign` is given this registry, it now also requires each seed to lie inside its own Paper C block (instance and worker seeds in `paperc_instances`, ε seeds in `paperc_rng_keys`, the audit block in `paperc_audits`), every campaign id to start with `pc-`, and an explicit worker seed on real-node rows (a null worker seed would mean the node default 42).
 
 **Outside the registry, by design:**
 - D26 manager seeds (hash outputs);

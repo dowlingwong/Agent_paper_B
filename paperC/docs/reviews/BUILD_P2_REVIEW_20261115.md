@@ -142,3 +142,77 @@ The code reads the pins with `git show` and `ast`, the registry regenerates byte
 - the most-used Paper B worker seed, 42, is not registered, while the P1 check is negative-only (finding 3).
 
 Verdict: NOT ACCEPTED
+
+---
+
+## Round 2 (16 Nov 2026)
+
+Reviewed HEAD `6cf968e` against the response table `BUILD_P2_RESPONSE_R1_20261116.md`. Census and P3 files were not reviewed.
+
+### What I checked
+
+- **Commands:**
+  - pytest gave **84 passed** (10 in `test_seeds.py`).
+  - `python -m paperc.seeds`, then `git diff --stat`: empty, so the registry is still reproducible.
+- **Registry:**
+  - 44 Paper B blocks (21 literal, 15 rng_key, 4 base_count, 2 prose_only, 1 external, 1 formula);
+  - 4 Paper C blocks;
+  - `check_disjoint` is empty;
+  - the worker-seed overlap list is empty. The two listed overlaps are RNG roots: 777 inside the e1b range, and 999.
+- **Re-read:** `seeds.py` in full, the `check_campaign` diff in `schema.py`, the test diff, the rewritten report, and `BUILD_STATUS.md:9`.
+- **Probe of the new checks:**
+  - These are flagged: a worker seed of 42, a worker seed in `paperc_train_seeds`, an ε seed in `paperc_instances`, an audit block that straddles 11,000,000, and the campaign id `PC-c1`.
+  - `check_campaign` with a registry has no other caller in `paperC/src`, so the stricter check breaks nothing.
+- **Round-1 probes re-run:**
+  - `range(100, 5500)` is now flagged (gaps 997–998 and 4001–5000).
+  - A def-time default is no longer evaluated.
+  - The pinned `_instance_seed` compiles with `dont_inherit=True`.
+- **A broader AST probe at both pins.** It covers every integer literal in:
+  - function defaults and call keywords whose name contains `seed`;
+  - argparse `--*seed*` defaults;
+  - local assignments to `*seed*` names;
+  - positional arguments of `default_rng`, `RandomState`, `seed`, `manual_seed` and `Random`.
+
+  Every value ≥ 10 lies in a block. The values outside every block are below 10 (0, 1, 7; out of scope by design) or are counts (`--seeds 10`, `--audit-seeds 6`, `AUDIT_SEEDS = 6`).
+- **Results scans re-run:** 1935 / 2314 JSON and 528 / 1215 JSONL files at the two pins. No recorded value lies in any Paper C block, `paperc_train_seeds` included.
+
+### Round-1 findings
+
+| # | Status |
+|---|---|
+| 1 | Resolved. The report shows 10,000,000–11,000,000 and lists every added block as a difference; `BUILD_STATUS.md:9` is updated. |
+| 2 | Resolved. `SCAN_NAME` matches `SEED` (tested). The three date keys are registered through `RNG_KEYS`. |
+| 3 | Resolved, with one remaining gap (R2-1): blocks 42, 999 and 33001–34999 are added, and `check_campaign` now requires Paper C membership and the `pc-` prefix (tested). |
+| 4 | Resolved. The bounds are stated as declarations in the docstring, `domains.note` and the report. Observed use lies inside them (round-1 scan). |
+| 5 | Resolved. Coverage is now checked over whole intervals (tested). |
+| 6 | Resolved, with a note (R2-4). Decorators, annotations and defaults are stripped, and the code is compiled with `dont_inherit` and an explicit flag. |
+| 7 | Resolved. The wording is now "distinct inputs", and the prefix is enforced. |
+| 8 | Resolved. The exclusions are named in the docstring and report; `paperc_train_seeds` 61000–62000 is added. |
+| 9 | Resolved. `SOURCES`, `RNG_KEYS` and `EXTRA_BLOCKS` are declared, and `paper_b_blocks` reads exactly those. |
+
+### Round-2 findings
+
+1. **MINOR: `worker_seed=None` still passes on non-synthetic rows.**
+   - `schema.py` (the new membership block) skips a role whose value is `None`.
+   - I checked that an E-T0 `digits_mlp` row with `worker_seed=None`, which means the node default 42, gives no violation.
+   - *Fix:* when a registry is passed and `identity.tier != "E-SYN"`, require an explicit worker seed (or record the default explicitly so that the check sees 42).
+
+2. **MINOR: completeness scan (c) reads only parameters and keywords named exactly `seed` / `seed0`.**
+   - It does not read argparse defaults (`default=`), other `*seed*` names (`order_seed`), or positional RNG-constructor literals.
+   - At the pins, every such literal ≥ 10 lies in a block, but two only by coincidence:
+     - `torch.Generator().manual_seed(1234)` (`r1/c3/train/model.py:495` at `fab88fc`) lies inside `noise_floor_train`, and it is missing from the report's RNG-root table;
+     - `probes/determinism.py`'s `--order-seed` default 20261029 is registered only through other sources.
+   - *Fix:*
+     - widen (c) to any name containing `seed`, plus argparse `--*seed*` defaults and positional RNG-constructor arguments;
+     - add `r1/c3/train/model.py` 1234 to `RNG_KEYS`.
+
+3. **MINOR: a count in the report is wrong.** Report line 21 says "the four items on `IGNORED`"; there are five (`seeds.py:152–158`). *Fix:* say five, or name them.
+
+4. **MINOR (note; no action required for acceptance): `function()` still `exec`s the function body without validating it.**
+   - Only `sum`, `map` and `ord` are available, but I checked that a body using `().__class__` runs.
+   - With def-time evaluation removed and the pins fixed, this is acceptable under the "do not import" rule.
+   - An AST whitelist of the body (a single `Return` built from BinOp, Constant, Name and Call(sum|map|ord)) stays optional.
+
+No BLOCKING or MAJOR findings remain. The registry is generated from code at the pins, it regenerates reproducibly, it is disjoint from every Paper B block by at least 1000, and nothing in code or recorded results lies in a Paper C block.
+
+Verdict: ACCEPT
