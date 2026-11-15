@@ -34,18 +34,22 @@ Author ruling Q-TORCH (A; `author-qtorch-20261115` @ `d4ea56c1`) plus the earlie
 
 ## Verification plan (each step reviewed before the next; no digest switch before the author approves)
 
+0. **Pre-build checks (done or listed):** the devel/runtime CUDA bases were probed with docker on deepthought to confirm `/usr/bin/nvidia-smi` (result recorded below when the probe completes); the TASL-7 raw freeze capture and the empty sorted diff are committed under `docs/r1/reports/htcondor_image_20261115/` (`tasl7_trackp_gpu_uv_pip_freeze.txt` SHA-256 `50238e5a…`, 121 lines; `tasl7_vs_committed_freeze.sorted.diff` = 0 lines). The torch install uses `--no-deps` (the freeze pins its closure), and VERSIONS records the causal-conv1d arch list `8.0;8.9;9.0`.
 1. **Build** the branch (Actions) → `20261115-v2-<sha8>` tags; record both digests and the VERSIONS files.
    Review: Dockerfile diff, build log, VERSIONS (empty env3 sorted diff, pinned patches, libgomp, nvidia-smi).
-2. **I2/I3 re-run on v2** on NEMO2 (container universe) and TOpAS (docker/container) with the new gpu digest:
+2. **I2/I3 re-run on v2** on NEMO2 (container universe) and TOpAS (docker/container) with the new **gpu** digest (I2's tiny-llama probe runs the **cpu** image; I3 the gpu image), through a temporary manifest pinned to the v2 tags (the in-use manifests and digests stay untouched):
    I2 = tiny-llama CUDA probe; I3 = HF fixed-URL download + sha256 + llama-server ready + GPU offload log
    (the v1 evidence: I3 NEMO2 L40S 18 s download/833 s run; TOpAS V100S 19 s/213 s). Compare and review.
 3. **`r1/scripts/trackp_gpu_smoke.py` parity** on L40S (NEMO2) and H200 (NEMO2) against the TASL-7 values
    (bf16 matmul rel. error 2.874e-3; fp32 DeltaNet max |Δlogit| 0.02935/tol 0.0403; bf16 0.2361/tol 0.530/99.51 %;
    peak 3,345/2,096 MiB). Review the JSON.
-4. **One E0 equivalence job** (the 25-minute E0 run, same config as the TASL-7 equivalence) on the H200 or L40S;
-   compare with the TASL-7 equivalence record. Review.
+4. **One E0 equivalence job** (the 25-minute E0 run, same config as the TASL-7 equivalence) on the H200 or L40S
+   with the v2 **gpu** image; compare with the TASL-7 equivalence record (GPU time and walltime recorded). Review.
 5. Only then: author approval → update the job manifests/adapters to the v2 digests, keep the v1 digests in
-   the record, and re-run the full I-chain before any Track P training on HTCondor.
+   the record, and re-run the full I-chain before any Track P training on HTCondor. **Rollback:** the v1
+   digests/tags remain valid and published; until the switch, every job manifest keeps using them.
+   Track P training is additionally guarded by the adapter (`trackp_gpu_device_names = ["NVIDIA L40S",
+   "NVIDIA H200"]`, V100S refused).
 
 **Constraints honoured:** no force push; no change to `main`/`r1/exam-x-*`; nothing deleted (a failed
 attempt moves aside to `_to_delete`); no Track P training on HTCondor before gates 3–4 pass; no V100S for
@@ -54,6 +58,7 @@ Track P; digests in use unchanged until the author approves.
 ## Evidence
 
 - freeze: `r1/scripts/htcondor/apptainer/pip_freeze_trackp-gpu.txt` (121 lines; sorted diff empty against the
-  TASL-7 venv `uv pip freeze`, verified read-only on TASL-7 on 15 Nov 2026).
+  TASL-7 venv `uv pip freeze`, verified read-only on TASL-7 on 15 Nov 2026, capture committed as
+  `docs/r1/reports/htcondor_image_20261115/tasl7_trackp_gpu_uv_pip_freeze.txt`, SHA-256 `50238e5a…`).
 - TASL-7 env values: `docs/r1/reports/TRACKP_PHASE2_ENV_PINS_TASL7_20261026.md`.
 - v1 digests/images: Actions run 43644472626, report `reports/HTCONDOR_CHAIN_20261114.md`.

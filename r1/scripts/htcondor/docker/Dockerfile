@@ -86,7 +86,7 @@ RUN uv venv --python ${PY312} /opt/r1/envs/trackp \
  && uv pip install --python "$TP" --no-deps 'kev @ git+https://github.com/jaredpalmer/kev@2074cc44256200bb37540103fa4572901faa10f3' \
  && uv pip install --python "$TP" --no-deps 'laya @ git+https://github.com/NandhaKishorM/laya@a478221bcad24d1a9c47b361c79328ebd2b100c6' \
  && uv pip install --python "$TP" --no-deps 'startlux-decide @ git+https://github.com/StartLuxLabs/StartLux-Decision@a99977d9332decc9fb27a2488b4a83b533b6cd5f' \
- && uv pip install --python "$TP" --index-url https://download.pytorch.org/whl/cu124 'torch==2.6.0+cu124' \
+ && uv pip install --python "$TP" --no-deps --index-url https://download.pytorch.org/whl/cu124 'torch==2.6.0+cu124' \
  && TORCH_CUDA_ARCH_LIST="8.0;8.9;9.0" MAX_JOBS="$(nproc)" uv pip install --python "$TP" --no-deps --no-binary causal-conv1d --no-build-isolation 'causal-conv1d==1.7.0' \
  && uv pip freeze --python "$TP" | sort > /tmp/env3_built.sorted \
  && sort /opt/r1/locks/pip_freeze_trackp-gpu.txt > /tmp/env3_pinned.sorted \
@@ -170,6 +170,7 @@ RUN /opt/r1/envs/harness/bin/python -c "import numpy, sklearn, pandas, pytest; p
       echo "torch_actual=$(/opt/r1/envs/trackp/bin/python -c 'import torch; print(torch.__version__)')"; \
       echo "trackp_gpu_freeze_sha256=$(sha256sum /opt/r1/locks/pip_freeze_trackp-gpu.txt | awk '{print $1}')"; \
       echo "env3_sorted_diff=empty"; \
+      echo "env3_causal_conv1d_arch=8.0;8.9;9.0"; \
       echo "nvidia_smi=/usr/bin/nvidia-smi"; \
       echo "libgomp=$(rpm -q libgomp)"; \
       echo "llama_cpp_commit=$(cat /opt/r1/LLAMA_CPP_COMMIT)"; \
