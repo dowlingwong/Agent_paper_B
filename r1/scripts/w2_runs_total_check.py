@@ -111,6 +111,8 @@ def main(argv=None) -> int:
         if args.runs_total < 1 or args.expect_ledgers < 1:
             raise ValueError("runs_total and expect_ledgers must be positive")
         trial_budget = args.trial_budget if args.trial_budget is not None else 2 * args.runs_total
+        if trial_budget < args.runs_total:
+            raise ValueError("trial_budget must be at least runs_total")
         if not args.ledgers and not args.summary:
             raise ValueError("give --summary and/or ledgers")
         from r1.c3.analysis_guard import refuse_sealed

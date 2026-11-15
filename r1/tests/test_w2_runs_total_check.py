@@ -182,3 +182,11 @@ def test_rows_after_cap_and_verify_over_cap_and_rows_over_budget(tmp_path, capsy
                      "--expect-ledgers", "3"], capsys)
     assert code == 3
     assert out["by_kind"] == {"rows_after_cap": 1, "over_cap": 1, "rows_over_trial_budget": 1}
+
+
+def test_trial_budget_override_and_validation(tmp_path, capsys):
+    a = ledger(tmp_path, "a", 20, precheck_rows=5)        # 25 rows
+    code, out = run([str(a), "--runs-total", "20", "--expect-ledgers", "1", "--trial-budget", "24"], capsys)
+    assert code == 3 and out["by_kind"] == {"rows_over_trial_budget": 1} and out["trial_budget"] == 24
+    code, out = run([str(a), "--runs-total", "20", "--expect-ledgers", "1", "--trial-budget", "19"], capsys)
+    assert code == 2 and "at least runs_total" in out["error"]
