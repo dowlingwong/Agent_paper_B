@@ -74,3 +74,13 @@ else is done on TASL-2.
   write, no file deletion).
 - **M-7 (commit content)**: `5c3ff87a` also carried an updated B2 occupancy review that is not part of
   these Track S units; this follow-up commit is the record for the units themselves.
+
+## Watcher marker-gone behaviour (author requirement, read-only)
+
+Before retiring the B2 marker the author asked to show, read-only, what `trks_watch` does when the marker
+disappears. `watcher_marker_gone_analysis.md` records the full script (SHA `cf6884…`) and the finding: on
+marker-gone it **only appends the log line** `marker gone: resume by hand (delete STOP files, start servers,
+re-run launch scripts)` and returns to polling; it does not delete STOP files, does not start collectors or
+servers, and does not touch locks or evidence. The author's risky case therefore does not apply, and the
+normal order `postrun → retire B2 marker → stop_trks_watch` is safe; `stop_trks_watch.sh` is the unit that
+stops the watcher, with the scene inventory compared against the post-watch baseline.
