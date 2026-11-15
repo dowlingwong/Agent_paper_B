@@ -31,9 +31,10 @@ are a **separate unit** after this collection.
 
 - **Analysis or collection STOP:** the `postrun` dir keeps the partial evidence. Move it aside
   (`mv "$RUN_DIR/postrun" "$RUN_DIR/postrun.attempt-$(date -u +%Y%m%dT%H%M%SZ)"` — a move, not a delete),
-  re-create nothing by hand (the collect script creates a fresh `postrun`), record the reason in the new
-  attempt, and re-run the same reviewed script. A missing `b2_manifests.json` is not a pass: the verified
-  analysis fails closed, so the absence record (`b2_manifests.absent.txt`) is only diagnostic.
+  then re-run the same reviewed script; it creates a fresh `postrun` itself (if the operator pre-creates
+  the dir, `CREATED.txt` still records the initialisation) and records the reason in the new attempt. A
+  missing `b2_manifests.json` is not a pass: the collect and the verified analysis fail closed (there is
+  no `absent.txt` record any more).
 - **Stopped run:** use the stopped unit; do not run the normal-completion scripts (they require exit 0).
 - **Marker retirement mismatch:** STOP; the marker and receipts are preserved; no retry and no manual
   cleanup.

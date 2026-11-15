@@ -17,8 +17,10 @@ set -C
 printf 'stopped_collect_utc=%s\nb2_exit=%s\n' "$(date -u +%FT%TZ)" "$(cat "$RUN_DIR/b2.exit")" > "$SO/STOPPED.txt"
 cp -p "$RUN_DIR/b2.log" "$SO/b2.log" 2>/dev/null || stop "cannot copy b2.log"
 cp -p "$BATCH/batch_state.json" "$SO/batch_state.json" 2>/dev/null || echo "batch_state absent" > "$SO/batch_state.absent.txt"
-find "$BATCH" -name campaign_manifest.json -printf '%p\n' 2>/dev/null | sort > "$SO/manifests.txt"
-find "$BATCH" -name b1_proposals.jsonl -printf '%p\n' 2>/dev/null | sort > "$SO/journals.txt"
+if find "$BATCH" -name campaign_manifest.json -printf '%p\n' 2>/dev/null | sort > "$SO/manifests.txt"; then :; else echo "manifest list failed" >&2; exit 2; fi
+if find "$BATCH" -name b1_proposals.jsonl -printf '%p\n' 2>/dev/null | sort > "$SO/journals.txt"; then :; else echo "journal list failed" >&2; exit 2; fi
+[ -s "$SO/manifests.txt" ] || echo "EMPTY_MANIFEST_LIST" > "$SO/manifests.empty.txt"
+[ -s "$SO/journals.txt" ] || echo "EMPTY_JOURNAL_LIST" > "$SO/journals.empty.txt"
 python3 - "$SO" "$RUN_DIR" <<'PY' || stop "state summary failed"
 import json, sys
 from pathlib import Path

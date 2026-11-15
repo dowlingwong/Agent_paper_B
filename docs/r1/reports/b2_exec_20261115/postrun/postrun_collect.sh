@@ -52,7 +52,7 @@ for m in sorted(batch.rglob('campaign_manifest.json')):
     mode = d.get('mode') or (m.relative_to(batch).parts[2] if len(m.relative_to(batch).parts) > 2 else '?')
     roots += 1
     journals += 1 if pj else 0
-    rows += len(pj.get('rows') or [])
+    rows += int(pj.get('rows') or 0)   # manifest proposal_journal['rows'] is a COUNT
     for check, n in (pj.get('rejected_by_check') or {}).items():
         agg[f"{cand}/{mode}/{check}"] += int(n)
         checks_seen.add(check)

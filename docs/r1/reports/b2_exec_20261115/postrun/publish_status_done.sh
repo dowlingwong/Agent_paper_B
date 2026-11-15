@@ -15,6 +15,7 @@ LOCAL=$(git -C "$SC" rev-parse HEAD); REMOTE=$(git -C "$SC" ls-remote origin "re
 [ -s "$RUN_DIR/marker-retirement.json" ] || stop "marker not retired"
 ssh -o BatchMode=yes tasl7 "test -s '$RUN_DIR/postrun/POSTRUN_COLLECT_OK' && test -s '$RUN_DIR/postrun/analysis.json' && test -s '$RUN_DIR/postrun/invalid_trials.json' && test -s '$RUN_DIR/postrun/b2_manifests.json' && test -s '$RUN_DIR/postrun/batch_state.json'" || stop "incomplete POSTRUN_COLLECT_OK set"
 ssh -o BatchMode=yes tasl7 "grep -q 'analysis_rc=0' '$RUN_DIR/postrun/POSTRUN_COLLECT_OK'" || stop "collected analysis rc is not 0"
+ssh -o BatchMode=yes tasl7 "cd '$RUN_DIR/postrun' && sha256sum -c SHA256SUMS >/dev/null" || stop "postrun artifact SHA-256 verification failed"
 python3 - "$SC/docs/r1/STATUS.md" "$RUN_ID" "$HEAD" <<'PY' || stop "STATUS append refused"
 import sys, pathlib
 p = pathlib.Path(sys.argv[1]); run_id, head = sys.argv[2], sys.argv[3]

@@ -949,3 +949,102 @@ pinned SHA (run HEAD `8709dce7…` unchanged), and re-review before the runner f
 (STOP 6) and the stopped-run path should be separate reviewed units after collection.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 10 (post-run unit fixes, pre-execution)
+
+**Re-checked at** the pinned exec commit `ops-b2-exec-20261115` @ **`5ee45bef`** (origin = same; run HEAD
+unchanged `8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈20:30–21:05 CET, **before
+execution** (runner still running, ~15/24 roots). `git diff 55641da7..5ee45bef` is exactly the post-run
+unit changes: README `25acac13`, postrun_collect `c74659e1`, retire_marker `4cfbded2`, publish_status_done
+`ab54a27e`, and the stopped unit `stopped_run_collect` `fe9c2757`, `retire_marker_stopped` `6c1a14fe`,
+`publish_status_stopped` `ffc5d18c`, plus the round-9 review record; every other exec file is
+byte-identical to the round-9/8 accepted set. All scripts pass `bash -n`; the Mac status checkout is
+clean at `524f0a8a` = origin `mac-b1-20261107`. No SSH, no host command, no marker/STATUS touched.
+
+### Fixes verified
+
+- **B-8 fixed.** `postrun_collect.sh` creates `$RUN_DIR/postrun` itself when absent (`mkdir -m 700`,
+  plain-dir/non-symlink check, `CREATED.txt` exclusive) and refuses if `analysis.json` or
+  `POSTRUN_COLLECT_OK` already exists (no retry); `retire_marker.sh`/`publish_status_done.sh` require
+  the collected `POSTRUN_COLLECT_OK`, so no bootstrap change is needed.
+- **B-9 intent fixed, but with a new runtime bug (B-10).** The aggregation now walks every
+  `campaign_manifest.json` and sums the **manifest's** `proposal_journal.rejected_by_check` by the
+  manifest's `candidate`/`mode`, recording `roots_scanned`/`journals`/`journal_rows`/`checks_seen` — the
+  authoritative per-root field the hand-off asks for, not the journal outcomes. `verify_b2_batch` still
+  runs first in the verified analysis and fails closed on the journals/manifests. **But the
+  `journal_rows` line is wrong (below).**
+- **P-30 fixed.** The separate stopped-run unit exists and is gated apart: `stopped_run_collect.sh`
+  requires `b2.exit` present and ≠0, creates `postrun_stopped` fresh, preserves `b2.log`, `batch_state`
+  (absence recorded), the manifest/journal path lists, and `STOPPED_STATE.json`, and writes
+  `STOPPED_COLLECT_OK`; `retire_marker_stopped.sh` retires only after that collection (no analysis is
+  required); `publish_status_stopped.sh` appends `## 2026-11-15 — Track X B2 stopped` with the same
+  identity/no-force/remote-verification guards. The normal unit requires `b2.exit`=0. The stopped unit's
+  Python summary uses only `len()` on dicts/lists (no integer-length bug) and is executable as written.
+- **P-31 fixed.** `POSTRUN_COLLECT_OK` is written only after every artifact succeeds and carries the
+  artifact SHA-256s plus `analysis_rc=0`; `retire_marker.sh` and `publish_status_done.sh` require it,
+  and the done publication additionally requires `analysis.json`, `invalid_trials.json`,
+  `b2_manifests.json`, `batch_state.json` and the `analysis_rc=0` line on the host.
+- **P-32…P-36 addressed.** README documents the move-aside/re-create recovery (move, never delete; no
+  automatic retry) and the §6 hand-back list, and states the B2 report/STOP 6 is a separate unit; the
+  retire scripts use the anchored runner pattern; the status guard is clean/branch/HEAD==origin without
+  force; the `b2_manifests` absence is fail-closed in the verified analysis (the `b2_manifests.absent.txt`
+  note is documented as diagnostic).
+
+### BLOCKING
+
+- **B-10 — the invalid-trial aggregation raises `TypeError` and the normal unit cannot complete.**
+  In `postrun_collect.sh` L55: `rows += len(pj.get('rows') or [])`. The manifest's
+  `proposal_journal['rows']` is an **integer** (`validate_proposal_journal` returns
+  `{'rows': len(rows), ...}`, and the manifest stores exactly that dict), so for every LLM root with
+  rows > 0 this is `len(<int>)` → `TypeError: object of type 'int' has no len()`; the Python here-doc
+  exits non-zero and the L42 `|| stop "invalid-trial aggregation failed"` STOPs. The batch's LLM roots
+  all have rows > 0, so the collection always fails after the verified analysis and never writes
+  `POSTRUN_COLLECT_OK`; the retirement and the done publication are then blocked. Fix (one line):
+  `rows += int(pj.get('rows') or 0)` (the field is a count, not a list). The stopped unit is unaffected.
+
+### MINOR / NIT
+
+- **P-37 — README P-33 wording.** The README says a missing `b2_manifests.json` leaves an
+  `b2_manifests.absent.txt` record that "is only diagnostic"; the new collect STOPs at L39 when
+  `b2_manifests.json` is missing after a successful verified analysis (and no longer writes that record).
+  Keep the fail-closed STOP and fix the README sentence.
+- **P-38 — done publication does not re-verify the artifact SHA-256s.** `publish_status_done.sh` checks
+  the `POSTRUN_COLLECT_OK` set exists and `analysis_rc=0`, but not that the four artifacts still match the
+  SHA-256s recorded in `POSTRUN_COLLECT_OK`/`SHA256SUMS`; a corrupted artifact after collection would
+  pass. Consider re-running `sha256sum` on the host and comparing (fail closed).
+- **P-39 — stopped collection path listing under pipefail.** `stopped_run_collect.sh` L20/L21
+  `find … | sort > …` are not checked; a find failure would leave empty lists while the summary still
+  succeeds. Check the pipeline or record the failure in `STOPPED_STATE.json`.
+- **P-40 — postrun dir initialisation.** The L24 `mkdir -m 700` only runs when `$RUN_DIR/postrun` is
+  absent; if the operator pre-creates the dir, `CREATED.txt` still records initialisation, which is fine,
+  but the README's "creates it itself" and the recovery move-aside should mention the operator-created
+  case explicitly (no functional change).
+- **P-41 — `publish_status_done`'s host gate** uses `test -s` on five files and one grep; it does not
+  require the `batch_state.json`/`b2_manifests.json` SHA entries in `POSTRUN_COLLECT_OK` to be present
+  (they are generated, so this is a consistency check only).
+
+### Executability answer
+
+- **Stopped-run unit: executable as written** (gated, preserves evidence, no analysis, no-deletion,
+  no-retry; only P-39 minor).
+- **Normal-completion unit: NOT executable until B-10 is fixed** (one-line change). With B-10 fixed, the
+  collect/retire/done chain is executable: the dir creation (B-8), the authoritative manifest
+  aggregation (B-9), the `POSTRUN_COLLECT_OK` gating (P-31), the retirement primitive and the done
+  publication's heading/identity/no-force/remote-verify/receipt all check out; the earlier P-32…P-36
+  records are addressed.
+- The §6 hand-back list (b2_manifests.json, batch_state.json, verified analysis JSON, invalid-trial
+  counts + the earlier receipts) is correctly stated in the README; the B2 report/STOP 6 remains a
+  separate unit after collection; the stopped path is now a separate reviewed unit.
+
+### Verdict
+
+The B-8/B-9-intent/P-30/P-31 fixes are in place and the stopped-run unit is executable, but the normal
+completion unit has a one-line runtime bug (B-10: integer `len()` in `journal_rows`) that makes the
+collection always STOP before `POSTRUN_COLLECT_OK`, blocking retirement and the done publication.
+**Fix B-10 (and the P-37 README sentence; P-38/P-39 are hardening), re-submit at a single pinned SHA
+(run HEAD `8709dce7…` unchanged), and re-review before the runner finishes.** Do not execute the normal
+unit yet; the stopped unit may be used only on a genuine stopped run and with the stopped scripts.
+
+VERDICT: NOT ACCEPTED
