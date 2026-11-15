@@ -44,7 +44,7 @@ options for the author (§7). Branch `mac-tracks-s05-summary-both-20261115`:
 | σ_D between repetitions, static, m 10, UCL (80 %) at W 12 | **0.008839** (sd 0.006834) | **0.000799** (sd 0.000618) |
 | … at the other candidates (for reference) | W 8 0.007902 · W 10 0.007964 · W 20 0.006928 | W 8 0.009841 · W 10 0.004118 · W 20 0.001374 |
 | `between_policy_sd_at_cap` (W 40) | **0.0** | **0.0** |
-| Near band b (0.5 × median \|margin\|) | 0.008587 (n 596; median E1 0.01717, E2 0.02208) | 0.003847 (n 660; median E1 0.00769, E2 0.01015) |
+| Near band b (0.5 × median \|margin\|) | 0.008587 (n 596; median E1 0.01717, E2 0.02208); degenerate for E1 (§5) | 0.003847 (n 660; median E1 0.00769, E2 0.01015); degenerate for E1 (§5) |
 | λ (`obs_inflation`; manifest = prior metadata) | 1.0 | 1.0 |
 | λ₂ (§11.6; for the record, see §3) | 3.463 (q₉₀ 2.385, n 298) | 3.640 (q₉₀ 2.445, n 330, 0 null) |
 | LLM calls / audit runs per campaign | 40.0 / 35.4 | 40.0 / 38.6 |
@@ -62,7 +62,8 @@ Notes:
   - L is the mean concurrent latency of each node's TASL-7 S0.1: digits 2.715981 s (review of the digits S0.1,
     `TRKS_S01_RESULT_AND_S05_K2_REVIEW_20261113.md`), tabular mean(2.812054, 2.806924) = 2.809489 s.
   - t_run is the Phase 0 smoke value: digits 0.9091 s, tabular 1.9135 s (successful campaign only, per the Phase 0
-    review m7).
+    review m7). The digits value was measured on TASL-2 and has not been re-measured on TASL-7 (the accepted S0.1
+    review says so); the measured-throughput cross-check below partly covers this.
   - The formula covers all remaining node work, so it bounds S0.7 + S3e from above. Both nodes are far below 96 h.
   - Cross-check from the measured S0.5 throughput (one collector, one URL): 3,769 LLM calls in 2.46 h (digits) and
     4,594 calls in 2.50 h (tabular). At those rates 80 000 calls take about 52 h and 44 h, still below 4 days
@@ -127,22 +128,31 @@ compares the full action sequences and the S0.5b truncations.
 
 **Same mechanism as on digits** (digits report §5.1).
 - Both policies execute iff V\* ≥ their threshold and keep iff m̂ > 0.
-- On both nodes the fitted prior has τ0 at its floor (0.15 σ_node), because τ_A2 < τ_w:
+- On both nodes the fitted prior has τ0 at its floor (0.15 σ_node), because τ_A2 < τ_w (`fit_prior`:
+  τ0² = max(τ_A2² − τ_w², floor²)):
   - digits: τ0 0.00099, τ_w 0.0493, σ_cmp 0.0186, τ_A2 0.0190;
   - tabular: τ0 0.000285, τ_w 0.0253 (13 σ_node), σ_cmp 0.0168, τ_A2 0.00646.
+  - This is structural, not a fluke of these runs. τ_A2 is the sd of A2's binned soft-label distribution
+    (`c3.labels.moments`: 12 bins in σ_node units, tails at ±4), so it is capped at a few σ_node: 2.9 σ_node on digits
+    and 3.4 σ_node on tabular. The S0.4 Δ_audit sd is about 9 σ_node (digits) and 22 σ_node (tabular). So τ_A2 < τ_w
+    is close to guaranteed on any node like these, and τ0 lands on the floor.
 - With τ0 that small, the posterior mean stays at μ0 and the predictive sd is about τ_w. So
   V\* = μΦ(−z) + (τ²/s)φ(z) (`c3.rules.proposal_value`, z at t\* = −μσ²/τ²) is nearly the same for every proposal.
   At μ = 0 it is 0.399·τ_w²/√(τ_w² + σ_cmp²) = 2.8 σ_node (digits) and 4.4 σ_node (tabular). The observed values are
   2.7 and 4.1 σ_node, because μ0 is slightly negative. Both prices, 0.1 and 0.3 σ_node, lie far below that, so every
   non-duplicate proposal is executed.
-- The E2 decision is real on both nodes: m̂ varies widely and many keeps are close to 0. E1 screening is inert.
+- The E2 decision is real on both nodes: m̂ varies widely and many E2 decisions are close to 0. E1 screening is inert.
 
 ## 5. What the policy coincidence does downstream (read from the pin; nothing was run)
 
 - **S0.6 (first run).** `simulate_controls.match_noise` gives `--between-policy-sd` precedence over `--sigma-D`.
   0.0 is not `None`, so on both nodes the simulator's campaign noise would be matched to a between-policy sd of 0.
   The N0 route-A check (Phase 5) would then run at that matched noise. Separately, the runbook's `--sigma-D <σ_D UCL>`
-  does not say which of the two UCLs to pass, and with one of them at 0 the choice now matters.
+  does not say which of the two UCLs to pass. If the between-policy UCL (0.0) were passed, `Plan.n_planned` →
+  `analyze.campaign_n` would raise `ValueError` ("sigma_D and delta_Y must be positive"), so S0.6 would not run at all.
+- **Near band b (S3a).** Every eligible E1 \|margin\| exceeds b on both nodes (digits min 0.01700 vs b 0.00859;
+  tabular min 0.00767 vs b 0.00385). Under the current prior, S3a's near-threshold oversampling would therefore select
+  no E1 decision; only E2 decisions can be "near". (The digits report noted that b inherits this degeneracy.)
 - **S0.7 static stage.** The grid is g ∈ {0, 0.05, 0.1, 0.2, 0.4} × σ_cmp,vary (plus 0.8 in the extension) ×
   h ∈ {−0.25, 0, 0.25} × σ_cmp,vary (`collect.TUNE_G`, `TUNE_H`).
   - The largest g is 0.00334 (extension 0.00669) for digits and 0.00223 (0.00446) for tabular. All of these lie below
@@ -153,8 +163,10 @@ compares the full action sequences and the S0.5b truncations.
   - `info×0.5` adds 0.5·(τ_pred − τ̄). τ_pred is about τ_w for every proposal, so the term is about 0.
   - `budget×1` moves the E1 threshold by −σ_cmp,vary·(r − r̄₁), where r = runs_left/W − proposals_left/N_cap ∈ [−1, 1].
     To flip any E1 decision it needs r̄₁ − r ≥ (min V\* − g\*)/σ_cmp,vary. With g\* ≤ 0.4 σ_cmp,vary that is ≥ 1.71 for
-    digits and ≥ 1.01 for tabular (≥ 0.61 for tabular if the 0.8 extension wins).
-  - In the W = 40 pilot, r̄ − r never exceeded 0.09. At W = 12, r falls lower, which this report does not test.
+    digits and ≥ 1.01 for tabular (≥ 1.31 and ≥ 0.61 if the 0.8 extension wins).
+  - In the W = 40 pilot, r̄ − r was at most 0.082 (digits) and 0.093 (tabular), over a2u's eligible E1 decisions. At
+    W = 12, r falls lower; this report does not replay that. (The reviewer's approximate prefix replay at W = 12 gave
+    r̄₁ − r ≤ 0.32 on both nodes, still below every bound.)
   - `keep±×0.5` act on E2, which is a real decision.
 - In short: with the current prior, Track S's π\* versus m\* comparison would test the E2 (keep) channel, plus at
   most a budget effect at the edge. It would not test the screening (E1) channel that A2-U is built for.
@@ -175,8 +187,8 @@ Scripts are in `results/r1/tracks/s05_summary/diag_2node/`:
 | 1-2 | 95 | −0.0143 | **3.21** | 0.0001 | 0.905 | 0.095 | 0.090 |
 | ≥ 3 | 178 | −0.0113 | 1.01 | 0.0001 | 0.986 | 0.014 | 0.197 |
 
-The pattern matches digits: the realised spread is about 3.5 × the predicted spread for the first proposals of a
-group, and drops with n_group. A constant τ_w cannot represent that. Digits also over-covers at n_group ≥ 3 (ratio
+The pattern matches digits: for the first proposals of a group the mean squared residual is about 3.5 × the
+predicted variance (about 1.9 × in sd), and the ratio drops with n_group. A constant τ_w cannot represent that. Digits also over-covers at n_group ≥ 3 (ratio
 0.42); tabular sits at 1.01 there.
 
 **Recalibration (c multiplies τ0, or τ0 and τ_w; λ multiplies the update's observation variance).** "In sample"
@@ -185,13 +197,19 @@ means the point was chosen on S0.5 itself. "Out of sample" means the point was f
 | | `digits_mlp` | `tabular_mlp` |
 |---|---|---|
 | `tau0_only`, S0.4 max log-lik → S0.5 | c 34.8, λ 1.39 → 0.600 / 0.854 / 0.972: **fail** | c 133.4, λ 1.58 → **0.702 / 0.811 / 0.854**, overall 0.815: **pass** (stratum 0 just in band) |
-| `tau0_only`, S0.4 points within 2 log-lik units of the max → S0.5 | **0 of 102** pass (c 14.7–46.4; stratum 0 stays 0.57–0.60, ≥ 3 0.95–0.99) | **26 of 44** pass, all with λ ≥ 1 (c 100–178) |
+| `tau0_only`, S0.4 points within 2 log-lik units of the max → S0.5 | **0 of 102** pass (c 14.7–46.4; stratum 0 stays 0.57–0.60, ≥ 3 0.95–0.99) | **26 of 44** pass, all with λ ≥ 1 (region c 100–178; passing points c 133–178, λ 1.06–2.71) |
 | `tau0_only`, S0.4 min worst-stratum ties → S0.5 | 0 of 18 pass | 0 of 17 pass |
 | `both` variant (scales τ_w too), any S0.4 fit | fails | fails (0 of 27 in the region, 0 of 98 ties) |
 | `tau0_only` at λ = 1, in sample (fine scan, 700 points) | passes only for c 112.6–114.8 (τ0 ≈ 17 σ_node) | passes for c 133.2–211.9 (48 points; τ0 ≈ 20–32 σ_node) |
 
-- **Tabular.** A larger τ0, fitted on S0.4 alone, reaches the gate on S0.5 in more than half of the S0.4 likelihood
-  region. This is the honest test. It passes there, though stratum 0 is near the edge at the maximum.
+- **Tabular.** A larger τ0 fitted on S0.4 alone reaches the gate on S0.5 at the S0.4 maximum and in 26 of the 44
+  grid points of the S0.4 likelihood region. The support is fragile:
+  - at the maximum, stratum 0 is 40/57 = 0.702; one fewer covered prediction (39/57) fails the gate;
+  - all 18 failing region points fail on stratum 0, whose coverage across the region is 0.63–0.82 (with n = 57 its
+    sampling sd is about 0.05);
+  - the 2-log-likelihood region is a criterion chosen in this report, after the tabular S0.5 data were seen, and
+    "26 of 44" counts log-grid points, not probability mass.
+  So it is encouraging, not a demonstration; a fresh S0.5 could fail on stratum 0.
 - **Digits.** The τ0 that S0.4 favours (c ≈ 15–46) is several times smaller than what S0.5 needs (c ≈ 113). No
   S0.4-fitted point passes, and over-coverage at n_group ≥ 3 persists across the whole region. One possible
   contributor is that the digits S0.4 rows come from TASL-2 while S0.5 ran on TASL-7. That is untested here. A
@@ -199,20 +217,20 @@ means the point was chosen on S0.5 itself. "Out of sample" means the point was f
   points to a within-key spread that depends on n_group, which is a model change.
 
 **Would a larger τ0 make execution a real decision?** `vstar_counterfactual.py` recomputes V\* for the S0.5 eligible
-E1 decisions with τ0 = c × the run's value, on the observed group histories. It does not replay the campaigns: a
+E1 decisions with τ0 = c × the run's value and **λ held at 1**, on the observed group histories. It does not replay the campaigns: a
 different prior would have executed different proposals. So it indicates direction only.
 
 | c (τ0 in σ_node) | V\* p05–p95 (σ_node) | V\* < g | within ±0.5 σ_node of g | V\* < g by stratum 0 / 1-2 / ≥ 3 |
 |---|---|---|---|---|
 | digits 1 (0.15, run) | 2.69–2.71 | 0 / 298 | 0 | 0 / 0 / 0 |
-| digits 34.8 (5.2, S0.4 ML) | 0.45–8.61 | 5 | 22 | 0 / 0 / 5 |
-| digits 114.8 (17.2, S0.5 in-sample) | 0.15–16.85 | 10 | 44 | 0 / 2 / 8 |
+| digits 34.8 (5.2; the S0.4 ML c, but at λ 1 instead of its 1.39) | 0.45–8.61 | 5 | 22 | 0 / 0 / 5 |
+| digits 114.8 (17.2; top of the λ = 1 in-sample window) | 0.15–16.85 | 10 | 44 | 0 / 2 / 8 |
 | tabular 1 (0.15, run) | 4.14–4.15 | 0 / 330 | 0 | 0 / 0 / 0 |
-| tabular 133.2 (20.0) | 0.02–26.2 | 32 | 60 | 0 / 6 / 26 |
-| tabular 170 (25.5) | 0.01–29.4 | 36 | 65 | 0 / 7 / 29 |
+| tabular 133.2 (20.0; bottom of the λ = 1 in-sample window, ≈ the S0.4 ML c) | 0.02–26.2 | 32 | 60 | 0 / 6 / 26 |
+| tabular 170 (25.5; middle of that window) | 0.01–29.4 | 36 | 65 | 0 / 7 / 29 |
 
-With a larger τ0, V\* follows the group's history. Some repeat-key proposals fall below g: 3 % on digits and 10–11 %
-on tabular, with many more inside the band. First proposals of a group (n_group = 0) are still always executed. This
+With a larger τ0, V\* follows the group's history. Some repeat-key proposals fall below g: 1.7 % (S0.4 c) to 3.4 % (in-sample c) on
+digits and 10–11 % on tabular, with many more inside the band. First proposals of a group (n_group = 0) are still always executed. This
 is the condition under which the static grid's g and the screening channel would matter.
 
 ## 7. Options for the author (each with cost; recommendation at the end)
@@ -226,8 +244,11 @@ downstream has started: S0.6, S0.7, the pre-declaration and S3 are all not begun
 - Two levels:
   - **(a-i) Prior estimator only.** Replace the τ0 floor rule by a declared S0.4 fit of τ0, for example the replay
     maximum likelihood with λ ≥ 1.
-    - Evidence: out of sample it passes on tabular (26 of 44 region points) and fails on digits (0 of 102).
+    - Evidence: out of sample it passes on tabular, fragilely (§6: stratum 0 at 0.702), and fails on digits (0 of 102).
     - The existing S0.4 rows can be reused, since this is a fit only.
+    - It is more than an estimator tweak. τ0 is defined as A2's prior spread minus τ_w (§4); a τ0 of about 20 σ_node
+      on tabular is about 6 × τ_A2 (about 1.8 × on digits). That cuts the "A2's prior, updated" link that defines
+      A2-U, which is a design-level change the author should take as such.
   - **(a-ii) Model change.** A within-key spread that shrinks with n_group, or is estimated separately for first
     and repeat proposals. This targets digits' pattern. There is no offline evidence for it yet.
 - Cost:
@@ -235,21 +256,23 @@ downstream has started: S0.6, S0.7, the pre-declaration and S3 are all not begun
   - A new paper pin and a runbook revision for the Phase 3/4 commands and pins.
   - Host time on TASL-7, run one node after the other:
     - S0.5 + S0.5b about 2.5 h per node (measured), so about 5 h for both;
-    - plus S0.4 about 0.5 h per node if new rows are wanted (tabular S0.4 took 0.45 h).
+    - plus S0.4 if new rows are wanted: tabular S0.4 took 0.45 h on TASL-7, digits 0.74 h on TASL-2.
   - Each step goes through the review loop. Rough total: 2–4 days.
   - Risk: the new S0.5 is the test, and a fail is a second STOP. On present evidence, digits is likely to fail
-    under (a-i) alone.
+    under (a-i) alone, and tabular could fail too (its stratum-0 margin is one prediction).
 - Decisions it needs from the author:
   - which level, (a-i) or (a-ii);
   - whether the new S0.5 uses fresh pilot seeds inside the Track S block. The current S0.5 has informed this
     analysis, so reusing it would make the test in-sample.
-  - which pass criterion is declared before the re-run.
+  - which pass criterion is declared before the re-run;
+  - whether digits is refitted on new TASL-7 S0.4 rows: the digits S0.4 rows are from TASL-2, and a host effect is
+    untested (§6).
 
 **(b) Change the price g or the budget so that executing becomes a real decision.**
 - What it can do under the current prior: little.
   - V\* varies across proposals by only 0.036 σ_node (digits) and 0.018 σ_node (tabular). Any g below
     min V\* executes everything; any g above max V\* skips every non-duplicate proposal. A g inside that window decides
-    on differences of about 1e-5, which is a knife edge.
+    on differences of 1e-5 to 1e-4 (the whole V\* range is 2.3e-4 on digits, 3.5e-5 on tabular), which is a knife edge.
   - Moving the declared pilot g or the S0.7 grid (code constants `TUNE_G`, so a pin change) does not create
     variation in V\*.
   - The static policies ignore the budget. Changing W or the LLM cap moves where campaigns stop (§4), not what they
@@ -273,17 +296,20 @@ downstream has started: S0.6, S0.7, the pre-declaration and S3 are all not begun
   question, whether a tuned dynamic threshold beats the tuned static one. Track S's "no gain found" already bounds π\*
   only; under (c-i) it would bound an E2-only π\*.
 
-**Recommendation (for the author to decide): (a), with (c-ii) declared in advance as the fallback for digits.**
+**Recommendation (for the author to decide): (a), with fallbacks declared in advance: (c-ii) if digits fails, (c-iii)
+if tabular fails.**
 - (b) alone cannot make execution a real decision while V\* is constant.
 - (c) gives up the question Track S exists to answer, and does not remove the calibration failure.
 - (a) addresses the common cause. It is cheap in host time (about 5 h of S0.5 for both nodes) and has
-  out-of-sample support on tabular.
+  out-of-sample support on tabular, though only at the margin.
 - Concretely:
   1. Declare the prior change and fit it on S0.4 only: (a-i), or (a-ii) if the author wants to give digits a
      chance.
   2. Re-run S0.5/S0.5b on both nodes with fresh pilot seeds.
-  3. Declare beforehand that if digits fails again, Track S continues on tabular alone (c-ii) rather than starting
-     another revision.
+  3. Declare beforehand what a second fail means, so that no further revision is started after the data are seen:
+     if digits fails, Track S continues on tabular alone (c-ii); if tabular fails (alone or with digits), Track S ends
+     before EVIDENCE with the S0.5 findings kept as the engineering record (c-iii). The tabular support is fragile
+     (§6), so the second case is a real possibility.
   4. After the re-run, re-check the S0.7 grid against the new V\* distribution (the useful part of (b)).
 
 ## 8. Not done here
