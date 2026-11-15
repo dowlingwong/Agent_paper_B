@@ -827,3 +827,125 @@ files may be installed into RUN_DIR, the preflight run, and `exam_runner b2` lau
 post-marker state, with the STOP/no-retry/no-deletion rules and the evidence preserved.
 
 VERDICT: ACCEPTED
+
+---
+
+## Re-review round 9 (post-run unit, pre-execution)
+
+**Re-checked at** the pinned exec commit `ops-b2-exec-20261115` @
+**`55641da7`** (`origin/ops-b2-exec-20261115` = same; run HEAD unchanged
+`8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈19:55–20:30 CET, **before execution** (the
+B2 runner is still running, ~13–14/24 roots). `git diff 34da83f1..55641da7` is exactly the three new
+post-run scripts — `postrun/postrun_collect.sh` (`fc20b674…`), `postrun/retire_marker.sh` (`ee31867d…`),
+`postrun/publish_status_done.sh` (`2fd7e888…`) — plus the round-8 review record; every other exec file
+is byte-identical to the round-8 accepted set (PLAN `c8ffa7b9`, bootstrap `432b278e`, deliver `97fcdbc4`,
+inventory_after `01e87cf5`, create_marker `2041094a`, postwatch `7031cfe3`, prechecks `40b4266d`,
+start `3b0a3517`, receipt `ef2b244a`, publish_status `c3da9b38`, monitor `4079243b`, preflight
+`8513aa8c`, b2_host_preflight `9b7c5ccf`, pins `711e8d7a`/`3dddb9b2`/`7dff402b`; the `B2_START_RECEIPT.md`
+is the earlier start record `34da83f1`). The Mac status checkout is clean at `524f0a8a` = origin
+`mac-b1-20261107` (the running-STATUS commit), so the done script's clean/branch/LOCAL==REMOTE guards
+pass as-is. Scripts pass `bash -n`; no SSH, no host command, no marker/STATUS touched.
+
+**What is correct.** The verified-analysis invocation matches the hand-off §5.9 and the code: the script
+runs `r1.exam.analyze b2 --batch <tree> --config <PAPER>/r1/scripts/configs/exam_b2_v2.json --rule
+r1/exam/rules/x5_rule_v2.yaml --rule-sha256 53018aa7…`; the CLI's `b2` path with `--batch`/`--config`
+calls `b2_summary_verified` → `verify_b2_batch` (the grid verifier) **before** the summary, prints the
+verified JSON and exits non-zero on failure; the script captures stdout to `postrun/analysis.json`,
+stderr to `postrun/analysis.err`, records `analysis.rc`, and STOPs unless 0. The retirement is the
+reviewed primitive: `b1_o2_marker.py retire --lock-dir "$HOME/r1_locks" --receipt
+"$RUN_DIR/marker-receipt.json" > "$RUN_DIR/marker-retirement.json"`; the tool re-reads the create receipt,
+verifies the marker's dev/ino/sha256, moves it into `_to_delete` (a move, not a deletion) and prints the
+retirement record; the script gates on `b2.exit`=0, `analysis.rc`=0, marker present, no existing
+retirement receipt, no `exam_runner b2`, and verifies the marker is gone. The done-STATUS script has the
+exact heading `## 2026-11-15 — Track X B2 done`, the clean/branch/LOCAL==REMOTE guards, commit identity
+`Dowling Wong <wangdowling@gmail.com>`, no-force push, remote verification, a no-clobber receipt, and
+gates on `b2.exit`=0 + `marker-retirement.json` + host `analysis.rc`=0. No `rm`/unlink/truncate; failed
+attempts would be preserved; the batch is read-only.
+
+### BLOCKING
+
+- **B-8 — `$RUN_DIR/postrun` is never created.** `bootstrap.sh` creates only `prechecks/`, `postmarker/`,
+  `postwatch/`, `monitor/`; none of the three post-run scripts creates `$RUN_DIR/postrun` (grep: no
+  `mkdir` of it), yet `postrun_collect.sh` L18 requires `[ -d "$PO" ]` and `retire_marker.sh` L13 /
+  `publish_status_done.sh` L17 require `$RUN_DIR/postrun/analysis.rc`. The first post-run command
+  therefore STOPs "missing postrun dir". Fix: create it (fresh, `mkdir -m 700 "$RUN_DIR/postrun"`,
+  absent/non-symlink check) as an explicit reviewed pre-step (or at the top of `postrun_collect.sh`), and
+  record it in the post-run receipt; do not reuse a stale directory.
+- **B-9 — the invalid-trial table is wrong.** The hand-off §6 requires, per candidate/mode/check, the
+  counts from the manifest field `proposal_journal.rejected_by_check`; `b1_proposal_journal.py` computes
+  it as `Counter(r['rejection']['check'] for r in rows if r['check'] == 'rejected')`, where the journal
+  row's `check` is the **outcome** (`not_applicable`/`d25_inactive_key`/`harness_precondition`/`passed`/
+  `rejected`) and the invalid class is `row['rejection']['check']` (e.g. `directive_missing`,
+  `directive_symbol_differs`, `replacement_escape`, `python_value_too_long`). The script instead uses
+  `row.get('check') or row.get('outcome')` and skips only `ok/pass/accepted/executed/none/''` — the
+  actual outcome is `passed`, not `pass`, so every passed proposal is counted as an invalid trial, and
+  the rejection classes are never counted. It also takes `mode = parts[1]` of the journal path, but the
+  B2 root path is `<batch>/<candidate>/b2/<mode>/<node>__s<seed>/`, so parts[1] is always `b2` and the
+  mode is parts[2]. The table is therefore wrong in both dimension and counts. Fix: aggregate the
+  authoritative per-manifest field — read each root's `campaign_manifest.json` (the `b2_manifests.json`
+  `root_manifests` index gives the paths), take `proposal_journal.rejected_by_check`, and aggregate by
+  the manifest's `candidate` and `mode`; if parsing journals directly, count only `check == 'rejected'`
+  rows under `rejection.check` and take the mode from the manifest/parts[2] — then cross-check the total
+  against the manifests. The output must be the hand-off's `proposal_journal.rejected_by_check` table.
+
+### MAJOR
+
+- **P-30 — the stopped-run path is not covered.** Hand-off §5.9 requires, "after the last B2 job **or
+  when B2 is stopped for good**", marker retirement and `B2 done`/`B2 stopped`; all three scripts
+  require `b2.exit` = 0 / `analysis.rc` = 0 (and `postrun_collect` refuses anything else), so a stopped
+  run cannot be retired or published by this unit. `publish_status_done.sh` mentions "publish B2 stopped
+  instead" but there is no tooling. This is safe but incomplete: prepare a separate reviewed
+  stopped-run unit (retire the marker with the receipt; publish `B2 stopped`; collect the stopped-run
+  evidence) before any stopped-run use — the current unit must remain the normal-completion path only.
+- **P-31 — the done publication is not gated on the collected hand-back artifacts.** The done script
+  checks `analysis.rc` but not the collection's `postrun/batch_state.json`, `b2_manifests.json`,
+  `analysis.json`, `invalid_trials.json`/`SHA256SUMS` (and no `POSTRUN_COLLECT_OK` receipt), so a done
+  STATUS could be published with an incomplete collection (and, before B-9 is fixed, with a wrong
+  invalid-trial table). Fix: have `postrun_collect.sh` write a completion receipt
+  (`POSTRUN_COLLECT_OK` with the artifact SHA256s) only after all copies/analysis/aggregation succeed,
+  and require it (plus the corrected `invalid_trials.json`) in `publish_status_done.sh`'s host gate.
+
+### MINOR / NIT
+
+- **P-32 — failed-attempt handling.** `postrun_collect.sh` L19 refuses when `analysis.json` exists; a
+  failed analysis leaves `analysis.json`/`analysis.err`/`analysis.rc`, so a re-run requires moving the
+  failed attempt aside (preserve, no deletion) and re-creating `postrun/`; document the exact move/record
+  step in the post-run unit (as the pre-run plan does for `prechecks`). The `analysis.json` stdout
+  capture means a failed analysis also leaves a partial/empty JSON — record that in the receipt.
+- **P-33 — b2_manifests absence.** The L28 `b2_manifests.absent.txt` record is fine as a record, but the
+  verified analysis (`verify_b2_batch` L28 `_inside(batch, batch/'b2_manifests.json')`) fails closed if
+  it is missing, so the analysis STOP catches it; note that the absence record alone must not be read as
+  a pass.
+- **P-34 — retire `pgrep`.** `pgrep -af "exam_runner b2"` can match a concurrent operator/monitor
+  command line containing that string and STOP a legitimate retirement; keep it fail-closed, but prefer
+  a pid/pgid or a `pgrep -f '^[^ ]*python -B -m r1\.scripts\.exam_runner b2 '` anchored check.
+- **P-35 — status checkout.** The prepared checkout is currently at `524f0a8a` = origin, clean, so the
+  done script's LOCAL==REMOTE guard passes; record that the running publication commit is the base, and
+  keep the guard (a stale checkout should STOP, not force-push).
+- **P-36 — hand-back package.** §6's end-artifact list is exactly `b2_manifests.json`, `batch_state.json`,
+  the verified analysis output and the invalid-trial counts; the unit collects all four (after B-9/P-31
+  fixes). The hand-back still needs the earlier §6 items (run ID/HEAD, HEAD review, author-gate receipt,
+  preflight/handover receipts, marker receipt, watcher log lines, first monitor capture), which are
+  already in the handover; the report is separate (below).
+
+### Hand-back list and the B2 report
+
+The end-artifact list is complete as stated (b2_manifests.json, batch_state.json, verified analysis JSON,
+invalid-trial counts), and it should ship with the earlier §6 receipts already on file. **The B2 report
+itself (STOP 6) should be a separate unit after collection:** the post-run unit collects and verifies,
+then the reviewer recomputes every table from the manifests (STOP 6), the author sees the report and
+takes the X.7 role decisions; the report and its independent review are not part of the post-run
+tooling, and the stopped-run path (P-30) is another separate reviewed unit.
+
+### Verdict
+
+The verified-analysis invocation, the marker retirement and the done-STATUS publication are otherwise
+correct, read-only on the batch and non-destructive. Two BLOCKING defects prevent execution: the
+`$RUN_DIR/postrun` directory is never created, and the invalid-trial table is computed from the wrong
+journal fields and mode path (passing proposals counted, rejection classes not counted, mode always
+`b2`). Plus the stopped-run path and the collection-completion gating are missing. **Do not execute the
+post-run unit yet.** Fix B-8, B-9, P-30, P-31 (and the small P-32…P-36 records), re-submit at a single
+pinned SHA (run HEAD `8709dce7…` unchanged), and re-review before the runner finishes; the B2 report
+(STOP 6) and the stopped-run path should be separate reviewed units after collection.
+
+VERDICT: NOT ACCEPTED
