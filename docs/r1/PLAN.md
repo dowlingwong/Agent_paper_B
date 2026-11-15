@@ -1176,6 +1176,20 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-HTC-QTORCH | **Q-TORCH：A — env3 按 R1-ENV-PIN 已提交的 GPU freeze 原样安装，causal-conv1d 按 8.0/8.9/9.0 编译；L40S/H200 smoke + E0 等价性通过前，集群上不跑 Track P 训练；V100S 不用于 Track P。** 依据：Q-TORCH（`reports/HTCONDOR_CHAIN_QUESTIONS_20261114.md`，`htcondor-chain-20261114` @ `13050d14`）称"没有已提交文件固定 cu124 wheel"，但 R1-ENV-PIN（26 Oct）与已提交 freeze `docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt`（121 行，TASL-7 逐行一致）已固定该环境。现镜像 `20261114-74820315` 的 env3（CPU freeze 换装 torch 2.6.0+cu124）不是该环境：缺 flash-linear-attention / fla-core 0.5.2、causal-conv1d 1.7.0、einops、ninja、wheel，filelock / setuptools 版本不同。现镜像 digest 不变，直到作者批准 v2；v2 的 env3 freeze 与已提交文件排序后 diff 为空；smoke 与 E0 等价性各自独立审查。V100S 无 bf16。 |
 
+### 15 November 2026 — Paper C (author)
+
+作者 11 月 5 日的立场与 11 月 15 日的决定，作者 11 月 15 日在对话中要求写入 PLAN（未引述；由对话会话 Claude 记录）。
+
+| ID | Decision |
+|---|---|
+| R1-PAPERC-PROPOSER | **Paper C（后续论文）的 proposer of record 是考试胜出者（Track X pick，thinking off），与 Paper B 主 proposer 相同（R1-MAIN-PROPOSER）。** 所有确认性收集与检验都用它。其他 proposer 的日志（Track S 的 `qwen2.5-coder:7b`）是独立的环境语境：只用于预训练或辅助数据，且语境要进入状态。成本按 proposer 调用数计划，小时数用 pick 在 campaign 内实测的延迟换算。 |
+| R1-PAPERC-DELTA | **Paper C 的等价规则。** Q3 由单侧优越性检验和边际 δ 下的 TOST 共同判定，两者各 α = 0.025（跨节点 Holm）。E-T0 上 δ_n = max(0.002, 0.25·s̃_n)，作用于配对的终端原始 Y 差，s̃_n 取 Paper B 冻结值；敏感性分析用 0.5·δ_n。E-SYN 上 δ 取每个世界 DP oracle 与最佳近视规则之差的 10 %。在计划的 n 下（由 SPT-1 做整条流水线模拟），TOST 在真实差为 0 时功效须 ≥ 0.80，否则该节点的等价部分事先宣布为不可检验。任何检验结果出来后都不改 δ 和 n。Q1 的阴性结论用同一规则措辞。其他层（例如 GPU 层）的 δ 在该层进入确认性检验之前另立行。本行在任何 Paper C 数据产生之前生效。 |
+| R1-PAPERC-OPD | **单教师 on-policy distillation 属于 Paper C，不进 Paper B。** 它是 Paper C 的 LM 路线 M4：M4a 在决策层，等于带软目标的 DAgger；M4b 在 token 层，只用于生成文字的控制器，要求老师和学生同一 tokenizer。定义、对照、门槛和风险见 `paperC/docs/PLAN_ADDENDUM_20261115.md` §A。M4a 是否进入核心版是开放项 P10。 |
+| R1-PAPERC-NOWAIT | **取消 Paper C 计划 rev 2 中“Paper B 投稿（2027-01-10）之前不跑 Paper C”的规定。** Paper C 的工作，包括真实节点上的运行，现在就可以开始。每个真实节点阶段仍须有自己的 runbook、独立审查和作者授权。主机按 PLAN 主机行分配：TASL-2 / TASL-7 只有在作者行分配时才用于 Paper C。 |
+| R1-PAPERC-HOME | **Paper C 的文档与代码放在仓库顶层 `paperC/`**：README、计划 rev 2 及其审查、addendum、构建清单与 runbook、Python 包 `paperC/src/paperc/`。Paper C 的决定继续以 R1-PAPERC-* 行记在本 PLAN §10。 |
+
+R1-PAPERC-CORE（11 月 5 日草稿）暂不写入。它的内容（E-T0 上 round B 的 Q1 确认性检验）正是 Track S STOP 4 削弱的部分（R1-TRACKS-STOP4-END：E1 筛选在两个 E-T0 节点上不起作用）。待 Paper C 的重新定位决定后再改写写入，见 `paperC/docs/proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md`（R-C1、R-C2）。
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
