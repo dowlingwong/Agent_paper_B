@@ -64,7 +64,7 @@ find /home/dowling/r1_tracks/out -name STOP -printf '%D %i %s %u %g %y %T@ %p\n'
 while IFS= read -r m; do
   d=$(dirname "$m"); [ -e "$d/STOP" ] && echo "STOP_PRESENT $d/STOP" || echo "STOP_ABSENT $d/STOP"
 done < <(awk '{print $8}' "$PD/manifest_inventory_before.txt") > "$PD/stop_absence_before.txt"
-cp "$PD/manifest_inventory_before.txt" >&9; cat "$PD/stop_inventory_before.txt" >&9
+cat "$PD/manifest_inventory_before.txt" >&9; cat "$PD/stop_inventory_before.txt" >&9
 # --- frozen venv / harness pins (pre-marker, read-only) ------------------------------------
 [ -r "$RUN_DIR/venv_pins.txt" ] || stop "venv_pins.txt missing"
 /home/dowling/exam-x/work/venv/bin/python - "$RUN_DIR" <<'PYV' >> "$PD/pins.log" 2>&1
@@ -92,7 +92,7 @@ tmux list-panes -a -F '#{session_name} #{pane_pid} #{pane_current_command}' > "$
 grep -Eq "^[^ ]+ ${WATCHER_PANE_PID} bash$" "$PD/tmux_panes.txt" || stop "watcher pane pid ${WATCHER_PANE_PID} not found in tmux panes"
 wsha=$(sha256sum /home/dowling/r1_tracks/bin/trks-watch | awk '{print $1}')
 [ "$wsha" = "$WATCHER_SCRIPT_SHA256" ] || stop "watcher script changed ($wsha)"
-echo "WATCHER_IDENTITY_OK pane_pid=$pane_pid sha=$wsha" >&9
+echo "WATCHER_IDENTITY_OK pane_pid=$WATCHER_PANE_PID sha=$wsha" >&9
 echo "NOTE: tmux list-panes uses the tmux client socket (B1 boundary report caveat); census only." >&9
 # --- predecessor _d retirement -------------------------------------------------------------
 [ -s /home/dowling/r1_b1_engineering/b1_handover_7912_20261113_d/marker-retirement_after_run.json ] || stop "predecessor _d retirement record missing"

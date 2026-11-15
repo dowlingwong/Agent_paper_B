@@ -469,3 +469,97 @@ marker-first handover may start under `bootstrap → deliver → prechecks → m
 postwatch → preflight → launch`; not before.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Re-review round 5
+
+**Re-reviewed at** the single pinned exec commit `ops-b2-exec-20261115` @
+**`797a624974d1d2f2c58d191be46b33bdc5d14909`** (`origin/ops-b2-exec-20261115` = same; run HEAD unchanged at
+`8709dce792d45bbb5c05d9f7d239e19454efbb15`), 15 November 2026 ≈18:10–18:35 CET, before any marker/STATUS.
+The shared worktree is clean at that commit; all 15 file SHAs match the Lead's list (PLAN `1de193de`,
+bootstrap `432b278e`, deliver `97fcdbc4`, prechecks `0fa334d9`, inventory_after `01e87cf5`, create_marker
+`2041094a`, postwatch `a24fa9a8`, preflight `a202f632`, start `3b0a3517`, receipt `ef2b244a`,
+publish_status `c3da9b38`, monitor `4079243b`, pins/expected `711e8d7a`, venv_pins `3dddb9b2`,
+watcher_expected `7dff402b`). The prepared Mac status checkout was re-verified: branch
+`mac-b1-20261107`, HEAD `fcf52c09` = origin, clean. No SSH, no host command, no marker/STATUS touched.
+
+### Fixes verified as correct
+
+- **B-5 fixed.** `deliver.sh` no longer uses the host `$RUN_DIR` path locally: it checks the host
+  receipt's absence over ssh (`ssh tasl7 "test ! -e '$REC'"`), creates the host receipt over ssh
+  (`set -C; { exec_commit, delivered_utc, 'files:' } > '$REC'`), appends every per-file SHA on the host
+  over ssh, writes a separate local `delivered-receipt.local.txt` in the exec worktree (no-clobber,
+  `set -C`), and finishes with a read-only `cat` of the host receipt. The per-file local-vs-
+  `git show <commit>:<path>` comparison and remote SHA re-verification are unchanged and correct.
+- **P-22 fixed.** `postwatch_check.sh` now compares full STOP inventory lines including `%T@` mtime
+  (`sort` + `comm -13` → `stop_touched_new_or_changed.txt`); every new/changed STOP must still be a
+  sibling of a known `manifest.json`; disappearance is detected separately by `dev inode path`
+  (`comm -23` → `stop_disappeared.txt`), so a mtime-only touch can no longer be misread as a deletion.
+- **P-23 fixed.** Both manifest inventories are `sort`ed before the `diff` (`man_before.sorted` /
+  `man_after.sorted`), so a shifted `find` order cannot produce a spurious post-marker STOP.
+- **P-24 pins confirmed / partially fixed.** `pins/watcher_expected.txt` records the host confirmation
+  (only pane `trks_watch` pid `1388760` cmd `bash`; `1388759` is the `tmux new -d` launcher), and
+  `prechecks.sh` now requires a pane line `^[^ ]+ 1388760 bash$` instead of `head -1`. **The following
+  line in the same block is broken (B-6).**
+- **P-25 fixed.** `pins/venv_pins.txt` records the host confirmation: pytest 9.0.3, numpy 2.4.4,
+  scikit-learn 1.8.0 match the exam venv; the seven B1 §4 packages are unchanged.
+- **P-27/P-28/P-29 mostly fixed.** PLAN records the host confirmations, the accepted-exec-commit pin
+  wording, the re-run policy and the conservative precheck policy; harness cleanliness uses
+  `--untracked-files=all` in prechecks and preflight; `publish_status.sh` status receipt is no-clobber
+  (`[ ! -e "$OUT" ]` + `set -C` + `>`); `prechecks.sh` `*.active` listing uses nullglob (no stderr
+  noise); the deliver's hard-coded Mac worktree path is documented as intentional. Minor residuals in
+  P-27/P-29 below.
+
+### Findings — round 5
+
+**BLOCKING**
+
+- **B-6 — `prechecks.sh` exits with an unbound variable before writing `PRECHECKS_PASS`/`prechecks.ok`.**
+  The P-24 rewrite removed the old `pane_pid=$(…)` assignment but the identity line still reads
+  `echo "WATCHER_IDENTITY_OK pane_pid=$pane_pid sha=$wsha" >&9` (L95); `pane_pid` is never assigned
+  anywhere in the script (grep: only L44's log format, L91's tmux dump, L95 itself; `watcher_expected.txt`
+  defines only `WATCHER_PANE_PID`, `WATCHER_BASH_PID`, `WATCHER_SCRIPT_SHA256`). The script runs under
+  `set -u`, so when the (expected) watcher-pane match passes L92, the L95 expansion raises
+  `pane_pid: unbound variable` and the shell exits — before L105–107 write `PRECHECKS_PASS` and the
+  exclusive `prechecks.ok`. The marker therefore can never be created. Verified: `bash -n` passes (it is
+  a runtime error), and a `set -u` reproduction of the exact line exits 127. Fix (one line): replace the
+  echo with `echo "WATCHER_IDENTITY_OK pane_pid=$WATCHER_PANE_PID sha=$wsha" >&9`, or capture the
+  matched pid first (e.g. `pane_pid=$(awk -v p="$WATCHER_PANE_PID" '$2==p && $3=="bash"{print $2; exit}' "$PD/tmux_panes.txt")`
+  then echo it). Add a `bash -u`/smoke run of the watcher block to the pre-delivery checks.
+
+**MINOR / NIT**
+
+- **P-27 residual.** The PLAN re-run policy still says only "re-create `prechecks/`"; the Lead's note
+  says it includes `mkdir -m 700 "$RUN_DIR/prechecks"` — it does not. Add the exact command. The PLAN
+  also does not explicitly mark `pins/expected.txt` as documentation-only, nor spell out the
+  conservative precheck policy (any collector/`trks_llm`/P.3a/lease-busy is a pre-marker STOP); add a
+  sentence if the record is meant to be complete.
+- **Delivery pin/process.** The reviewed script bytes are `797a6249`; the deliver refuses a dirty
+  worktree, and this review file will be committed as a review-record-only follow-up. When that follow-up
+  is pushed, pin delivery to that commit (same script SHAs; `REVIEWED_EXEC_SHA` must equal local HEAD and
+  origin) or to `797a6249` if delivery is run from a clean checkout of it before the review commit; record
+  the exact pin in the delivery receipt. Do not deliver from the dirty review worktree.
+- **P-29 residual.** `pins/expected.txt` remains delivered but unused (cosmetic, as above);
+  `publish_status.sh`'s `/tmp` receipt is no-clobber now but re-running after a failed publication still
+  requires moving the old receipt aside (no deletion); `prechecks.sh`'s `$PD/tmux_panes.txt` is a useful
+  record — consider keeping it in the final run log index.
+
+### What was not checked
+
+No SSH: the live watcher/pane and venv confirmations are the Lead's host census, now pinned in the
+reviewed pin files and re-checked by the reviewed scripts; the `_b` gate capture and host staging are
+likewise operator records. Everything else in this round is a static read of the pinned commit; B-6 is a
+static/runtime fact (`set -u` + unassigned `pane_pid`) and does not need the host.
+
+### Verdict
+
+B-5, P-22, P-23, P-25 and the P-27/P-28/P-29 records are fixed and verified, and the deliver/postwatch
+logic now matches the hand-off requirements. However the P-24 rewrite introduced a one-line regression
+that is fatal: `prechecks.sh` dies on the unbound `pane_pid` before it can pass, so the marker-first
+handover cannot start. **Do not create the marker or publish the STATUS.** Fix B-6 (one line, plus the
+small PLAN residuals), re-run a static/`bash -u` smoke, and re-submit at a single pinned SHA (run HEAD
+`8709dce7…` unchanged); a targeted re-check of `prechecks.sh` plus the unchanged round-5 items will
+suffice.
+
+VERDICT: NOT ACCEPTED
