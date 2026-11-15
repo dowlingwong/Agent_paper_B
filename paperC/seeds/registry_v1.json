@@ -1,0 +1,288 @@
+{
+  "domains": {
+    "COUNT_DOMAIN": 1000,
+    "K_DOMAIN": 90,
+    "MARGIN": 1000
+  },
+  "paper_b": [
+    {
+      "hi": 997,
+      "kind": "formula",
+      "lo": 100,
+      "name": "e1b_instances",
+      "note": "k < 90 over all node-name residues mod 7 (bounded by the next block at 1001); sweeps use k < 18 (seeds 100..276)",
+      "path": "r1/headroom/e1b_collect.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "_instance_seed"
+    },
+    {
+      "hi": 2001,
+      "kind": "base_count",
+      "lo": 1001,
+      "name": "noise_floor_train",
+      "note": "SEED_BASE + s, s < n_seeds (run-time; C1 uses 30)",
+      "path": "r1/noise/e1_noise_floor.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "SEED_BASE['train']"
+    },
+    {
+      "hi": 3001,
+      "kind": "base_count",
+      "lo": 2001,
+      "name": "noise_floor_split",
+      "note": "SEED_BASE + s, s < n_seeds (run-time; C1 uses 30)",
+      "path": "r1/noise/e1_noise_floor.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "SEED_BASE['split']"
+    },
+    {
+      "hi": 4001,
+      "kind": "base_count",
+      "lo": 3001,
+      "name": "noise_floor_joint",
+      "note": "SEED_BASE + s, s < n_seeds (run-time; C1 uses 30)",
+      "path": "r1/noise/e1_noise_floor.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "SEED_BASE['joint']"
+    },
+    {
+      "hi": 6001,
+      "kind": "base_count",
+      "lo": 5001,
+      "name": "e1b_leaf_audits",
+      "note": "AUDIT_SEED_BASE + i, i < k_audit (run-time); E1b used 5001..5006",
+      "path": "r1/headroom/e1b_collect.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "AUDIT_SEED_BASE"
+    },
+    {
+      "hi": 7011,
+      "kind": "literal",
+      "lo": 7001,
+      "name": "c3_audits",
+      "note": "",
+      "path": "r1/c3/audit.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "DEFAULT_SEEDS"
+    },
+    {
+      "hi": 8011,
+      "kind": "prose_only",
+      "lo": 8001,
+      "name": "trackg_g1b_audits",
+      "note": "plan \u00a711.1 'G.1b 8001\u20138010'; not found in code at the pins; reserved conservatively",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
+      "hi": 9100,
+      "kind": "literal",
+      "lo": 9001,
+      "name": "exam_instances",
+      "note": "",
+      "path": "r1/exam/namespace.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "INSTANCE_SEEDS"
+    },
+    {
+      "hi": 9300,
+      "kind": "literal",
+      "lo": 9101,
+      "name": "exam_audits",
+      "note": "",
+      "path": "r1/exam/namespace.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "AUDIT_SEEDS"
+    },
+    {
+      "hi": 30250,
+      "kind": "literal",
+      "lo": 30000,
+      "name": "tracks_instances_S0.4",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 30500,
+      "kind": "literal",
+      "lo": 30250,
+      "name": "tracks_instances_tune",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 31000,
+      "kind": "literal",
+      "lo": 30500,
+      "name": "tracks_instances_S0.5",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 32000,
+      "kind": "literal",
+      "lo": 31000,
+      "name": "tracks_instances_S3",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 33000,
+      "kind": "literal",
+      "lo": 32000,
+      "name": "tracks_instances_campaign",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 35002,
+      "kind": "literal",
+      "lo": 35001,
+      "name": "tracks_selection_key",
+      "note": "RNG key for fork selection, not a worker seed; reserved anyway",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "SELECTION_SEED"
+    },
+    {
+      "hi": 37000,
+      "kind": "literal",
+      "lo": 36000,
+      "name": "tracks_instances_synthetic",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 40000,
+      "kind": "literal",
+      "lo": 39000,
+      "name": "tracks_instances_fixture",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 200000,
+      "kind": "literal",
+      "lo": 100000,
+      "name": "tracks_audits_S0.4",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 300000,
+      "kind": "literal",
+      "lo": 200000,
+      "name": "tracks_audits_S0.5",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 400000,
+      "kind": "literal",
+      "lo": 300000,
+      "name": "tracks_audits_tune",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 500000,
+      "kind": "literal",
+      "lo": 400000,
+      "name": "tracks_audits_S3",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 600000,
+      "kind": "literal",
+      "lo": 500000,
+      "name": "tracks_audits_campaign",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 700000,
+      "kind": "literal",
+      "lo": 600000,
+      "name": "tracks_audits_synthetic",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 800000,
+      "kind": "literal",
+      "lo": 700000,
+      "name": "tracks_audits_fixture",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+    }
+  ],
+  "paper_b_internal_overlaps": [],
+  "paper_c": [
+    {
+      "hi": 60000,
+      "kind": "proposal",
+      "lo": 50000,
+      "name": "paperc_instances",
+      "note": "campaign instance seeds; splits (train/dev/test) are sub-blocks fixed in SPT-0",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
+      "hi": 61000,
+      "kind": "proposal",
+      "lo": 60000,
+      "name": "paperc_rng_keys",
+      "note": "keys for fork selection, epsilon draws and other design randomness (not worker seeds)",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
+      "hi": 2000000,
+      "kind": "proposal",
+      "lo": 1000000,
+      "name": "paperc_audits",
+      "note": "fresh audit seeds; per-instance stride as in Track S",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    }
+  ],
+  "paper_c_campaign_prefix": "pc-",
+  "pins": {
+    "canonical": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+    "tracks": "fab88fced839c5fb794ed62a0742b4646cb76ea2"
+  },
+  "schema": "paperc_seed_registry/v1"
+}

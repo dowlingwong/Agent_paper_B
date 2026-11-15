@@ -24,7 +24,7 @@ def _row(step, *, epoch, action, runs_used, calls_used, inc, next_inc, W=4, cap=
                 "llm_cap": cap, "memory_mode": "none", "skip_display": "one_line", "edit_schema": "synthetic",
                 "run_budget": "synthetic", "constants": {"g": 0.1}},
         "policy": {"policy": "static:0.1,0", "policy_sha": None, "action_prob": 1.0},
-        "seeds": {"instance_seed": seed, "manager_rep": 0, "worker_seed": None, "audit_seed_block": [800000, 800004]},
+        "seeds": {"instance_seed": seed, "manager_rep": 0, "worker_seed": None, "audit_seed_block": [1000000, 1000004]},
         "state": {"proposal_hash": f"p{step}", "proposal_ref": None, "duplicate": rule_forced, "noop": False,
                   "eligible": not rule_forced, "rule_forced": rule_forced, "incumbent_hash": inc,
                   "runs_used": runs_used, "runs_left": W - runs_used, "calls_used": calls_used,
@@ -46,7 +46,7 @@ def _row(step, *, epoch, action, runs_used, calls_used, inc, next_inc, W=4, cap=
 
 def valid_campaign(campaign="c1", seed=50001):
     """Root trajectory: E1 execute -> E2 keep -> E1 skip (rule duplicate) -> E1 execute -> E2 discard (end at W)."""
-    term = {"y_terminal": 0.52, "y_terminal_per_seed": [0.51, 0.53], "audit_seeds": [800000, 800001],
+    term = {"y_terminal": 0.52, "y_terminal_per_seed": [0.51, 0.53], "audit_seeds": [1000000, 1000001],
             "y_start": 0.50}
     k = dict(campaign=campaign, seed=seed)
     return [
@@ -272,7 +272,7 @@ def test_terminal_mean_and_audit_block():
     r["terminal"]["y_terminal"] = 0.6
     assert any("mean over audit seeds" in e for e in S.validate(r))
     r = valid_campaign()[-1]
-    r["terminal"]["audit_seeds"] = [800000, 900000]
+    r["terminal"]["audit_seeds"] = [1000000, 900000]
     assert any("audit block" in e for e in S.validate(r))
 
 
