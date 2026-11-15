@@ -116,6 +116,17 @@ Evidence: `htcondor_chain_20261114/s4/out/` (s4.out/err/log, dryrun.log, queue_b
 | I4 llama | **PASS** — `/opt/r1/llama/bin/llama-server --version` → `version: 0.7.0-dev (build 11669, commit 620d2225c)` **rc 0**; binary sha256 `f8d35fd3…` matches the image VERSIONS record |
 | why exit 1 | our PASS/FAIL gate required an `nvidia-smi` GPU line, but **the runtime image does not contain the `nvidia-smi` binary** (the `cudnn-runtime` base has no driver tools; the host provides the driver). This is a gate artefact, **not** a GPU failure: torch CUDA and llama-server both worked on the L40S. The reviewer's D1 condition (libgomp) is resolved — libgomp is present and llama-server runs on a real GPU node; the earlier login-node failure was only the absent `libcuda` (no driver on the login node). |
 
+## I3 — planned (author option e, 15 Nov): HF-download the pinned GGUF, then llama-server
+
+Author decision (15 Nov): I3 downloads the GGUF **inside the job** from a fixed HuggingFace URL, verifies sha256 `509287f7…4d3c` (4,683,073,536 B), then starts `llama-server`; first on **NEMO2 L40S**, then once on **TOpAS V100S**; record the download time. JDL changes go back to the original reviewer before submission.
+
+Read-only facts gathered for this step:
+- **HuggingFace revision full sha = `13fb94bfda8c8cf22497dc57b78f391a9acb426a`** (matches the author's `13fb94bf…` prefix; repo `Qwen/Qwen2.5-Coder-7B-Instruct-GGUF`, file `qwen2.5-coder-7b-instruct-q4_k_m.gguf`, size 4,683,073,536 B).
+- **TOpAS GPU slots all have `ProvidesEtpCeph = true`** (18× A100, 13× V100S, all `HasDocker=true`) → a future TOpAS job can read `/ceph/srv` by POSIX with `etp_ceph = true`; for I3 the author chose the HF route, so this is recorded as a fallback, not used.
+- `/ceph/srv/dwong/paperb/models/` still does not exist; the HF route makes it unnecessary for I3.
+
+Unit: `i3/i3_run.sh` (timed download with retries; bytes + sha256 verification; llama-server start on `-ngl 99`, `/health` + `/v1/models` check, CUDA lines captured, server stopped afterwards; PASS/FAIL + non-zero exit) and two JDLs: `i3/i3_nemo2_l40s.jdl` (container universe, ghcr gpu digest) and `i3/i3_topas_v100s.jdl` (**docker universe** with `docker_image`, per the author's original I3 spec). Submission wrapper `i3/submit_i3.sh <nemo2|topas>` takes a fresh GPU snapshot, dry-run ad, queue snapshot and a submission note. **Reviewer re-check pending; no I3 job submitted yet.**
+
 ## S4/S5 — units updated for the ghcr images (digest placeholders)
 
 S4 now uses `container_image = docker://ghcr.io/dowlingwong/r1-htc-cpu@<digest>` (cpu target: envs 1+2 only, so the script records env 3 and llama-server as **absent by design** instead of failing); S5 uses `docker://ghcr.io/dowlingwong/r1-htc-gpu@<digest>` with the S5-review fixes M1–M3 (output/error/log, disk sized to the image, EP-side pull/sandbox evidence, PASS/FAIL, driver and `/dev/nvidia*` diagnostics). The S5 review round 1 was **NOT ACCEPTED** (3 MAJOR, all fixed in the updated unit); the digest substitution is a one-line JDL change to be re-checked by the same reviewer after the digest is known.
