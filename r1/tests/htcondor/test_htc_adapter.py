@@ -434,3 +434,78 @@ def test_mark_complete_requires_real_outputs(tmp_path):
         hu.mark_complete(tmp_path / "u", ["missing.txt"])
     with pytest.raises(hu.UnitError, match="invalid unit name"):
         hu.run_units(tmp_path, ["../x"], lambda u, d: [])
+
+# ------------------------------------------------- container runtime (15 Nov 2026 unit)
+
+DIGEST_IMAGE = "docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:" + "a" * 64
+IMAGE_CAP_KB = 5_104_000          # the reviewed 4.87 GiB SIF in kB
+
+
+def container(**over):
+    m = manifest(runtime="container", image=DIGEST_IMAGE, image_disk_kb=IMAGE_CAP_KB,
+                 disk_kb=25_000_000)
+    m.update(over)
+    return m
+
+
+def test_docker_runtime_is_the_default_and_unchanged():
+    m = manifest()
+    hs.validate_manifest(m, CONFIG)
+    jdl = hs.render_jdl(m, "d" * 64)
+    assert "universe = docker" in jdl and "docker_image = cverstege/alma9-gridjob" in jdl
+    assert "container_image" not in jdl
+
+
+def test_container_runtime_renders_container_universe():
+    m = container()
+    hs.validate_manifest(m, CONFIG)
+    jdl = hs.render_jdl(m, "d" * 64)
+    assert "universe = container" in jdl
+    assert f"container_image = {DIGEST_IMAGE}" in jdl
+    assert "docker_image" not in jdl
+
+
+def test_container_image_must_be_a_docker_uri():
+    for bad in ("ghcr.io/dowlingwong/r1-htc-gpu:20261114-74820315",
+                "docker://ghcr.io/dowlingwong/r1-htc-gpu:latest",
+                "docker://ghcr.io/dowlingwong/r1-htc-gpu"):
+        with pytest.raises(hs.HtcError, match="container runtime needs a docker:// image pinned"):
+            hs.validate_manifest(container(image=bad), CONFIG)
+
+
+def test_container_requires_image_disk_kb():
+    m = container(); del m["image_disk_kb"]
+    with pytest.raises(hs.HtcError, match="image_disk_kb"):
+        hs.validate_manifest(m, CONFIG)
+
+
+def test_container_disk_must_cover_cap_plus_margin():
+    with pytest.raises(hs.HtcError, match="request_disk must cover image_disk_kb"):
+        hs.validate_manifest(container(disk_kb=IMAGE_CAP_KB), CONFIG)
+
+
+def test_container_image_cap_is_bounded():
+    with pytest.raises(hs.HtcError, match="exceeds the adapter cap"):
+        hs.validate_manifest(container(image_disk_kb=40_000_001), CONFIG)
+
+
+def test_image_disk_kb_is_refused_for_docker_runtime():
+    with pytest.raises(hs.HtcError, match="image_disk_kb applies to the container runtime only"):
+        hs.validate_manifest(manifest(image_disk_kb=1000), CONFIG)
+
+
+def test_unknown_runtime_is_refused():
+    with pytest.raises(hs.HtcError, match="runtime must be docker or container"):
+        hs.validate_manifest(manifest(runtime="singularity"), CONFIG)
+
+
+def test_container_remote_gpu_job_renders_remote_semantics():
+    m = gpu(runtime="container", image=DIGEST_IMAGE, image_disk_kb=IMAGE_CAP_KB,
+            disk_kb=25_000_000, cloud_site="BwForCluster-Nemo2")
+    hs.validate_manifest(m, CONFIG)
+    jdl = hs.render_jdl(m, "d" * 64)
+    assert "universe = container" in jdl
+    assert "+RemoteJob = True" in jdl
+    assert "request_GPUs = 1" in jdl
+    assert "ProvidesETPResources" not in jdl
+    assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in jdl

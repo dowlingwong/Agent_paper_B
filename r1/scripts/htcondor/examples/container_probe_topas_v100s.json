@@ -1,0 +1,19 @@
+{
+  "schema": "htc_job/v1",
+  "name": "cprobe_topas_v100s",
+  "kind": "probe",
+  "runtime": "container",
+  "image": "docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "image_disk_kb": 5104000,
+  "cpus": 2,
+  "memory_mb": 8000,
+  "disk_kb": 25000000,
+  "walltime_s": 1800,
+  "gpus": 1,
+  "gpu_device_name": "Tesla V100S-PCIE-32GB",
+  "placement": "remote",
+  "executable": "container_probe.sh",
+  "arguments": ["CPROBE_TOPAS_V100S"],
+  "transfer_input_files": ["container_probe.sh"],
+  "transfer_output_files": []
+}

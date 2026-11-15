@@ -1,0 +1,20 @@
+{
+  "schema": "htc_job/v1",
+  "name": "cprobe_nemo2_l40s",
+  "kind": "probe",
+  "runtime": "container",
+  "image": "docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "image_disk_kb": 5104000,
+  "cpus": 2,
+  "memory_mb": 8000,
+  "disk_kb": 25000000,
+  "walltime_s": 1800,
+  "gpus": 1,
+  "gpu_device_name": "NVIDIA L40S",
+  "placement": "remote",
+  "cloud_site": "BwForCluster-Nemo2",
+  "executable": "container_probe.sh",
+  "arguments": ["CPROBE_NEMO2_L40S"],
+  "transfer_input_files": ["container_probe.sh"],
+  "transfer_output_files": []
+}

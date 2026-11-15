@@ -6,7 +6,15 @@ Manifest schema ``htc_job/v1`` (all keys required unless marked optional; no oth
 * ``schema``: "htc_job/v1";
 * ``name``: job label, ``[A-Za-z0-9_.-]+`` (log, output and error file stem);
 * ``kind``: "probe" (a pool probe) or "track_g" (a Track G run table, see below);
-* ``image``: container image reference (``Universe = docker``);
+* ``image``: container image reference (``Universe = docker`` by default, or
+  ``Universe = container`` with ``runtime: "container"``);
+* optional ``runtime``: "docker" (default) or "container". With "container" the image must be a
+  ``docker://`` URI pinned by a sha256 digest (a registry image such as a ghcr.io digest; the
+  Singularity/Apptainer route), and ``image_disk_kb`` is required;
+* optional ``image_disk_kb`` (container runtime only): the image-transfer disk cap in kB that
+  ``request_disk`` must cover in addition to the job's own disk, with ``image_disk_margin_kb``
+  headroom and ``max_image_disk_kb`` as the adapter's cap (S5 measured the 4.87 GiB image plus the
+  sandbox); refused for the docker runtime;
 * ``cpus`` (int >= 1), ``memory_mb`` (int >= 1), ``disk_kb`` (int >= 1), ``walltime_s`` (int >= 1);
 * ``gpus``: int 0..max_gpus, whole GPUs only (``RequestGPUMemoryMB`` is never rendered and the
   key ``gpu_memory_mb`` is refused);
@@ -62,12 +70,14 @@ MANIFEST_SCHEMA = "htc_job/v1"
 BASE_KEYS = {"schema", "name", "kind", "image", "cpus", "memory_mb", "disk_kb", "walltime_s", "gpus",
              "gpu_device_name", "placement", "executable", "arguments", "transfer_input_files",
              "transfer_output_files"}
-OPTIONAL_KEYS = {"cloud_site", "etp_ceph", "accounting_group", "executable_in_image", "resume_dir"}
+OPTIONAL_KEYS = {"cloud_site", "etp_ceph", "accounting_group", "executable_in_image", "resume_dir",
+                 "runtime", "image_disk_kb"}
 TRACK_G_KEYS = {"table_id", "runner_timeout_s", "runs_per_job"}
 CONTROL = re.compile(r"[\x00-\x1f\x7f\u2028\u2029]")
 SAFE = re.compile(r"^[A-Za-z0-9_.-]+$")
 IMAGE = re.compile(r"^[a-z0-9][a-z0-9._/-]*(:[A-Za-z0-9_.-]+)?(@sha256:[0-9a-f]{64})?$")
 DEVICE = re.compile(r"^[A-Za-z0-9 ._()-]+$")
+CONTAINER_IMAGE = re.compile(r"^docker://[a-z0-9][a-z0-9._/-]*(:[A-Za-z0-9_.-]+)?@sha256:[0-9a-f]{64}$")
 PATH_TEXT = re.compile(r"^[A-Za-z0-9_./+-]+$")
 
 
@@ -139,8 +149,28 @@ def validate_manifest(data, config, base_dir: Path | None = None) -> dict:
     name = data["name"]
     if not isinstance(name, str) or not SAFE.fullmatch(name) or set(name) == {"."}:
         raise HtcError("invalid name")
-    if not isinstance(data["image"], str) or not IMAGE.fullmatch(data["image"]):
+    runtime = data.get("runtime", "docker")
+    if runtime not in ("docker", "container"):
+        raise HtcError("runtime must be docker or container")
+    if not isinstance(data["image"], str):
         raise HtcError("invalid image reference")
+    if runtime == "docker":
+        if not IMAGE.fullmatch(data["image"]):
+            raise HtcError("invalid image reference")
+        if "image_disk_kb" in data:
+            raise HtcError("image_disk_kb applies to the container runtime only")
+    else:
+        if not CONTAINER_IMAGE.fullmatch(data["image"]):
+            raise HtcError("container runtime needs a docker:// image pinned by a sha256 digest (no tags)")
+        if "image_disk_kb" not in data:
+            raise HtcError("container runtime requires image_disk_kb (the image-transfer disk cap)")
+        cap = _int(data, "image_disk_kb", 1)
+        max_cap = _int({"max_image_disk_kb": v.get("max_image_disk_kb", 40000000)}, "max_image_disk_kb", 1)
+        margin = _int({"image_disk_margin_kb": v.get("image_disk_margin_kb", 2000000)}, "image_disk_margin_kb", 0)
+        if cap > max_cap:
+            raise HtcError(f"image_disk_kb {cap} exceeds the adapter cap {max_cap}")
+        if _int(data, "disk_kb", 1) < cap + margin:
+            raise HtcError("request_disk must cover image_disk_kb plus image_disk_margin_kb headroom")
     cpus = _int(data, "cpus", 1)
     _int(data, "memory_mb", 1)
     _int(data, "disk_kb", 1)
@@ -251,7 +281,9 @@ def requirements(data) -> str:
 
 def render_jdl(data, digest: str) -> str:
     n = data["name"]
-    lines = [f"# manifest_sha256 = {digest}", "universe = docker", f"docker_image = {data['image']}",
+    universe = "container" if data.get("runtime") == "container" else "docker"
+    image_key = "container_image" if universe == "container" else "docker_image"
+    lines = [f"# manifest_sha256 = {digest}", f"universe = {universe}", f"{image_key} = {data['image']}",
              f"executable = {data['executable']}", f"arguments = {condor_arguments(data['arguments'])}",
              f"log = {n}.log", f"output = {n}.out", f"error = {n}.err",
              f"request_cpus = {data['cpus']}", f"request_memory = {data['memory_mb']}",

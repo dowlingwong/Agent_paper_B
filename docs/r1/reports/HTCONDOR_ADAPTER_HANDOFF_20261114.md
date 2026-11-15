@@ -92,3 +92,36 @@ Each confirmed value moves from `proposed:` to `measured: <report>`, in a review
 - Harness: `PYTHONPATH=src pytest tests/trackg`. This includes the unchanged byte-for-byte `manager_proposal/v1` probe and the structural test; no base file changed.
 
 Results (Mac VM, `/tmp/trackg_venv`): paper `r1/tests/htcondor` 67 passed; harness `tests/trackg` 177 passed (161 at `76bc49f2` plus 16 new, counting parametrized cases).
+
+## 9. Container-universe unit (15 November 2026, cluster agent; for review)
+
+The author asked for an adapter unit that can generate `universe = container` jobs for the
+Apptainer/Singularity route (the reviewed ghcr digest images, S2/S5/I3 evidence), with a separate
+image-transfer disk cap measured in S5, plus reviewed dry-run JDLs for both sites.
+
+**Manifest additions** (all optional, docker behaviour unchanged):
+- `runtime`: `"docker"` (default) or `"container"`. With `"container"` the renderer emits
+  `universe = container` and `container_image = <image>` instead of `universe = docker`/`docker_image`.
+- `image` for `"container"` must be a `docker://` URI **pinned by a sha256 digest** (no tags), e.g.
+  `docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35…`.
+- `image_disk_kb` (required with `"container"`, refused with `"docker"`): the image-transfer disk cap. The
+  manifest is refused unless `disk_kb >= image_disk_kb + image_disk_margin_kb` (config default
+  2,000,000 kB) and `image_disk_kb <= max_image_disk_kb` (config default 40,000,000 kB). S5 measured the
+  reviewed gpu image at 5,226,487,808 B (5,104,000 kB) plus the sandbox; the review of this unit checks
+  the new config values as `proposed:`.
+
+**Tests:** `r1/tests/htcondor/test_htc_adapter.py` gains ten container-runtime tests (default docker
+unchanged; container universe/`container_image` render; docker:// digest requirement; required/refused
+`image_disk_kb`; cap and margin; remote GPU semantics). The suite is 77 passed (67 before).
+
+**Reviewed dry-run JDLs (both sites, deepthought, 15 Nov 2026, no submission):**
+- `examples/container_probe_nemo2_l40s.json` → `universe = container`, `container_image = …gpu@sha256:69b06b35…`,
+  `requirements = (TARGET.GPUs_DeviceName =?= "NVIDIA L40S") && (TARGET.CloudSite =?= "BwForCluster-Nemo2")`,
+  `request_GPUs = 1`, `+RemoteJob = True`; dry-run rc 0, `JobUniverse=5`, `WantContainer=true`,
+  `ContainerImageSource=docker`, ads add `TARGET.HasContainer && TARGET.HasDockerURL`.
+- `examples/container_probe_topas_v100s.json` → same with `TARGET.GPUs_DeviceName =?= "Tesla V100S-PCIE-32GB"`;
+  dry-run rc 0 with the same container ads.
+Raw JDLs and dry-run ads are in `reports/htcondor_container_20261115/dryrun/`.
+
+**Not changed:** `real_submission_enabled` stays false; no job was submitted for this unit; the docker
+runtime path is byte-for-byte unchanged except the shared renderer's `universe`/image-key selection.
