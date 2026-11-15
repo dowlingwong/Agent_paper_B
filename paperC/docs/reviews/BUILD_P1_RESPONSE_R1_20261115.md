@@ -23,3 +23,18 @@ ENGINEERING_ONLY. Executor: chat-session Claude. Review: `BUILD_P1_REVIEW_202611
 | 17 | robustness | non-object rows give errors; all ints ≥ 0; trajectory key kept when `identity` parses | `test_non_object_rows_do_not_raise`, `test_negative_and_wrong_types` |
 | 18 | Track S names | `uniform` / `oversample`, `prior_skips`, `manager_gguf_sha256`, `Forecast.g`, `controller_version` / `prior_sha256` | — |
 | 19 | commit prefix | later commits use `paperC:` | — |
+
+## Round 2 (ACCEPT) — minor findings addressed after acceptance
+
+Tests: 73 passed.
+
+| # | Change |
+|---|---|
+| 20 | Row rule: an E2 row whose state says divergent or invalid must be a discard, so the first row of an E2 fork is covered too (`test_m1_*`). |
+| 21 | `candidate_divergent` / `candidate_invalid` / `candidate_delta_hat` describe the latest measurement; verify rows update it; `candidate_obs` must equal the number of measurements (`test_r2_verify_updates_the_latest_measurement`). |
+| 22 | W termination means fewer than `env.constants["run_cost"]` (default 1) runs remain (`test_r2_w_termination_respects_run_cost`). |
+| 23 | A final selection must name a configuration seen in the campaign, parents included (`test_r2_final_selection_must_be_seen`). |
+| 24 | `incumbent_recorded` / `incumbent_obs` change only after keep, reaudit or selection; root counters start at 0 with all slots; `behaviour_action` must belong to the epoch; `replicate` must match `rN` in `branch_path` (`test_r2_*`). |
+| 25 | Registry `paper_b_range(lo, hi)`; `audit_seed_block` is checked as a range when the registry offers it (`test_r2_audit_range_inside`). |
+| 26 | Tests added for the seven untested rules (`test_r2_runs_consumed_beyond_left`, `_llm_cap_ledger`, `_slots_left_counter`, `_final_only_last`, `_executed_without_e2_at_terminated_end`, `_candidate_hash_required_and_rule_prob`). |
+| 27 | `Outcome.failure_category` (harness categories minus `degraded_metric`, which is a valid worse result) as a third exclusive result of an executing action; `State.candidate_invalid`; invalid candidates must be discarded (`test_r2_failed_invalid_*`). |

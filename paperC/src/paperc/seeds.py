@@ -362,6 +362,13 @@ class Registry:
                 return b.name
         return None
 
+    def paper_b_range(self, lo: int, hi: int) -> str | None:
+        """Name of a Paper B block intersecting the inclusive range [lo, hi], or None."""
+        for b in self.paper_b:
+            if b.lo <= hi and lo < b.hi:
+                return b.name
+        return None
+
     def paper_c_block(self, seed: int) -> str | None:
         for b in self.paper_c:
             if seed in b:

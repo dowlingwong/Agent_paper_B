@@ -220,3 +220,120 @@ The gaps are in the rules and checks, not in the field list. Finding 13 lists de
 All six MAJOR findings are small, local changes to `_row_rules` / `check_campaign` / `PolicyInfo`, each with one new test.
 
 Verdict: NOT ACCEPTED
+
+---
+
+## Round 2 (re-check of `2f0f804`)
+
+### What I checked
+
+- **Commit and scope.**
+  - Reviewed commit `2f0f804`: `schema.py`, `tests/test_schema.py` and `schemas/spt_transition_v1.json`, plus `BUILD_P1_RESPONSE_R1_20261115.md`.
+  - The P2 files in the same commit are outside this review.
+- **Tests:** 59 passed (runbook §0.4 command), 50 of them in `test_schema.py`.
+- **JSON schema:** the committed file equals the export byte for byte.
+- **Probes:** the round-1 probes, rewritten for the new field names and fixtures, are in `/tmp/p1review/r2_*.py`, outside the repo.
+- **Mutation test:** 22 single-rule deletions applied to a copy under `/tmp` (`mutate.py`); see finding 26.
+- **Fuzz test:** 4,000 random field corruptions of the valid fixtures (`r2_fuzz.py`) gave no exception from `validate` or `check_campaign`.
+
+### Round-1 findings
+
+| # | Status | Evidence |
+|---|---|---|
+| 1 | fixed | divergent execute → E2 keep fires `epoch_sequence`. A fork variant remains; see finding 20 |
+| 2 | fixed | `m_hat` or a candidate result at E1 fires `no_future` only |
+| 3 | fixed | over-consumption, a root not starting at 0, and a fork not starting from its parent's counters all fire `budget` |
+| 4 | fixed | each per-action incumbent rule and the fork's start incumbent fire `next_state` |
+| 5 | fixed | reason must match its kind; `W` / `llm_cap` are checked against the ledger; `policy_stop` and `divergence` are rejected. One possible false positive; see finding 22 |
+| 6 | fixed | `action_prob` is null on forced rows; `behaviour_action` / `behaviour_prob` added |
+| 7 | fixed | A/A listed as deferred to B11, with the reason |
+| 8 | fixed | each forbidden name fires `no_future` only |
+| 9 | fixed | `outcome` and `epoch_sequence` rules |
+| 10 | fixed | `constant` check; `fork_id` and `replicate >= 1` required. Residual in finding 24 |
+| 11 | fixed | `counters` check; fixture corrected. Residual in finding 24 |
+| 12 | fixed | `eligible == not rule_forced`; `rule_*` ⇔ rule-forced; duplicate/no-op ⇒ rule-forced; rule-forced and forced are exclusive |
+| 13 | fixed | candidate and incumbent fields and `key_seen` added; the candidate set is deferred to B17 |
+| 14 | fixed | replay runs on `DecisionView` (no action, outcome, terminal or audits); NaN, `None` and string probabilities are reported |
+| 15 | partly fixed | every seed field is checked, but only the endpoints of the audit block; see finding 25 |
+| 16 | fixed | `const`, ranges, `minimum: 0`, `minItems`/`maxItems`, defaults, `urn:` `$id`; the description names `validate` as authoritative |
+| 17 | fixed | rows that are not objects give errors; negative ints are rejected; the fuzz test gave no exception |
+| 18 | fixed | Track S names restored |
+| 19 | fixed | prefix is `paperC:` |
+
+**Legitimate data, no false positives:**
+- an E2 fork (forced discard arm), with or without the root in the batch;
+- `rule_first_trial` execute and keep;
+- execute → verify → E2;
+- a reaudit between decisions;
+- termination by `llm_cap`;
+- truncation between an execute and its E2;
+- ε rows with replay;
+- interleaved campaigns;
+- a forced intervention on the root;
+- a fork continuation with its own E2;
+- a final `select` row.
+
+### Round-2 findings (numbering continues from round 1)
+
+**20. MINOR — a divergent candidate can still be kept on the first row of an E2 fork.**
+- *Where:* `schema.py:769-790`, `:719-729`.
+- *What is wrong:* the divergent ⇒ discard rule lives only in the epoch-sequence walk. That walk starts with no pending execute on a fork continuation. Nothing requires the parent row at the fork step to be eligible.
+- *Probe:* a forced `keep` with `candidate_divergent=True` as the fork's first row passes.
+- *Why MINOR:* forks are drawn only from eligible decisions, and a divergent E2 is rule-forced, so this needs a second collector bug.
+- *Fix:*
+  - Add a row rule: E2 ∧ `candidate_divergent` ⇒ `discard`, rule-forced, `rule_divergent`.
+  - When the parent is in the batch, require the parent row at the fork step to be eligible.
+
+**21. MINOR — `candidate_divergent` is ambiguous once a verify has run.**
+- *Where:* `schema.py:196`, `:782-783`.
+- *What is wrong:* the field is documented as "the candidate's run diverged", but it is checked as equal to the execute row's flag. So after a valid execute and a divergent verify, an E2 state that reports the divergence is flagged, and the E2 policy cannot be told about it.
+- *Fix:*
+  - Define it as "any measurement of the candidate so far diverged" (an OR over the execute and verify rows) and check that, or rename it to `execute_divergent`.
+  - State whether a divergent verify forces a discard.
+
+**22. MINOR — the W-termination check assumes the last run can always be spent.**
+- *Where:* `schema.py:812-813`; fixture `test_schema.py:82`.
+- *What is wrong:* "terminated at W but runs remain" fires when the runs left are fewer than the cost of any executing action. The valid fixture itself has an execute that consumes 3 runs. With W = 5 that campaign can only be logged as truncated.
+- *Fix:* either declare run costs per action (execute = 1, verify = 2r) in `env.constants` and check them, or accept W termination when the runs left are below the cheapest executing cost.
+
+**23. MINOR — the final selection is not tied to the trajectory.**
+- *Where:* `schema.py:736-737`.
+- *What is wrong:* `action.selected` may be any hash, including one never seen in the campaign.
+- *Fix:* `selected` ∈ {the incumbent} ∪ {`candidate_hash` of the executed, non-divergent rows of this trajectory and its parent prefix}. The rest stays deferred to B17.
+
+**24. MINOR — new fields that are still unchecked.**
+- `incumbent_recorded` / `incumbent_obs` can change on rows with no keep and no reaudit (`:193-194`).
+- `keeps_so_far` / `prior_skips` are not anchored at 0 on a root, the counterpart of the runs/calls anchor.
+- `behaviour_action` is not restricted to the epoch's actions; `keep` on a forced E1 row passes (`:444-448`).
+- `fork.replicate` is not compared with the `rN` in `branch_path`.
+- *Fix:* add rules next to the existing counter and flag rules.
+
+**25. MINOR — only the endpoints of the audit block are seed-checked.**
+- *Where:* `schema.py:841`.
+- *Probe:* a block `[7000, 7020]` that contains a Paper B block `7001–7010` passes.
+- *Fix:* iterate the block (at most `AUDIT_STRIDE` seeds in Track S's rule), or add a range query to `SeedRegistry`.
+
+**26. MINOR — seven new rules have no test.**
+- These deletions all survived the mutation run:
+  - `runs_consumed <= runs_left` (`:713`);
+  - the `llm_cap` ledger check (`:814`);
+  - the `slots_left` counter (`:757`);
+  - `final` only as the last row (`:772`);
+  - an executed candidate with no E2 at a terminated end (`:797`);
+  - `candidate_hash` required (`:430`);
+  - `action_prob == 1.0` on rule-forced rows (`:452`).
+- Each rule behaves correctly in my probes.
+- *Fix:* one corruption test each.
+
+**27. MINOR (missed in round 1) — `failed_invalid` cannot be represented.**
+- *Where:* `schema.py:220-229`.
+- *What is missing:*
+  - Track S counts `failed_invalid` as its own outcome class (keep / discard / `failed_invalid` 148 / 170 / 53 and 158 / 192 / 51 in the S0.5 summary).
+  - Paper B has a `FailureCategory` enum.
+  - Runbook PH needs the `failed_invalid` / degraded share from P1 records.
+  - `Outcome` has only `delta_hat` / `divergent`.
+- *Fix:* before PH, add `Outcome.failure_category` (Paper B values, null when valid), with a rule that such a candidate is discarded as a divergent one is. Alternatively, state the mapping PH's adapters will use.
+
+All findings above are MINOR. I recommend fixing 20, 26 and 27 before P3/PH; the others can follow when B17 or P3 touches the same code.
+
+Verdict: ACCEPT

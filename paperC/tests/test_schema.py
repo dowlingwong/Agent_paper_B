@@ -20,7 +20,8 @@ def _row(step, *, epoch, action, st, out, W=4, cap=6, branch=(), fork=None, camp
     state = {"proposal_hash": f"p{step}", "proposal_ref": None, "candidate_hash": None, "duplicate": False,
              "noop": False, "eligible": not rule_forced, "rule_forced": rule_forced, "key_seen": False,
              "incumbent_hash": "i0", "incumbent_recorded": 0.50, "incumbent_obs": 1,
-             "candidate_delta_hat": None, "candidate_divergent": False, "candidate_obs": 0,
+             "candidate_delta_hat": None, "candidate_divergent": False, "candidate_invalid": False,
+             "candidate_obs": 0,
              "runs_used": 0, "runs_left": W, "calls_used": 0, "calls_left": cap, "slots_left": cap,
              "keeps_so_far": 0, "prior_skips": 0, "sigma_node": 0.01, "noise_source": "C1", "history_ref": None,
              "forecasts": {"a3": {"pi": 0.0, "mu": 0.0, "tau": 0.02, "sigma": 0.01, "v_star": 0.008,
@@ -149,7 +150,15 @@ def test_m1_divergent_candidate_cannot_be_kept():
     rows = valid_campaign()
     rows[0]["outcome"].update(delta_hat=None, divergent=True)
     rows[1]["state"].update(candidate_delta_hat=None, candidate_divergent=True)
-    _only(S.check_campaign(rows), "epoch_sequence")
+    assert checks_of(S.check_campaign(rows)) == ["epoch_sequence", "outcome"]
+    # the row rule alone catches it on the first row of an E2 fork (no execute in the trajectory)
+    rows[1]["identity"].update(branch_path=["f1:keep:r1"], fork_id="f1")
+    rows[1]["fork"] = copy.deepcopy(FORK)
+    rows[1]["action"]["forced"] = True
+    rows[1]["action"]["rule"] = "fork_arm"
+    rows[1]["policy"].update(action_prob=None, behaviour_action="discard", behaviour_prob=1.0)
+    rows[1]["episode_end"] = {"kind": "truncated", "reason": "host"}
+    assert "outcome" in checks_of(S.check_campaign([rows[1]]))
     # discarding it (rule_divergent) is valid; the incumbent then stays i0
     rows = valid_campaign()[:2]
     rows[0]["outcome"].update(delta_hat=None, divergent=True)
@@ -474,3 +483,155 @@ def test_json_schema_validates():
         mut(bad)
         assert list(v.iter_errors(bad))
     assert js["$id"].startswith("urn:")
+
+
+# ---------------------------------------------------------------- review round 2 (minor findings 20-27)
+
+def test_r2_failed_invalid_is_an_outcome_and_must_be_discarded():
+    rows = valid_campaign()
+    rows[3]["outcome"].update(delta_hat=None, failure_category="runtime_error")
+    rows[4]["state"].update(candidate_delta_hat=None, candidate_invalid=True)
+    assert S.check_campaign(rows) == []                 # a discarded invalid candidate is valid
+    rows[0]["outcome"].update(delta_hat=None, failure_category="syntax_error")
+    rows[1]["state"].update(candidate_delta_hat=None, candidate_invalid=True)
+    assert "outcome" in checks_of(S.check_campaign(rows))      # ... and cannot be kept
+    r = valid_campaign()[0]
+    r["outcome"]["failure_category"] = "degraded_metric"       # a worse metric is not a failure
+    assert S.validate(r)
+
+
+def _with_verify(div=False):
+    rows = valid_campaign()[:2]
+    ver = _row(1, epoch="verify", action="verify",
+               st={"candidate_hash": "c0", "runs_used": 1, "calls_used": 1, "slots_left": 5,
+                   "candidate_delta_hat": 0.02, "candidate_obs": 1},
+               out={"runs_consumed": 1, **({"divergent": True} if div else {"delta_hat": 0.01})})
+    rows[1]["identity"]["step_index"] = 2
+    rows[1]["state"].update(runs_used=2, runs_left=2, candidate_obs=2, candidate_delta_hat=None if div else 0.015,
+                            candidate_divergent=div)
+    rows[1]["episode_end"] = {"kind": "truncated", "reason": "host"}
+    return [rows[0], ver, rows[1]]
+
+
+def test_r2_verify_updates_the_latest_measurement():
+    rows = _with_verify()
+    assert S.check_campaign(rows) == []
+    rows = _with_verify(div=True)
+    assert "epoch_sequence" in checks_of(S.check_campaign(rows))   # divergent verify, then keep: not allowed
+    rows[2]["action"]["action"] = "discard"
+    rows[2]["outcome"].update(kept=False, next_incumbent_hash="i0")
+    assert S.check_campaign(rows) == []
+    rows = _with_verify()
+    rows[2]["state"]["candidate_obs"] = 1
+    _only(S.check_campaign(rows), "epoch_sequence")
+
+
+def test_r2_w_termination_respects_run_cost():
+    rows = valid_campaign()
+    for r in rows:
+        r["env"]["constants"]["run_cost"] = 3
+    rows[3]["outcome"]["runs_consumed"] = 2              # one run left, an execute costs 3: W is effectively spent
+    for r in rows[4:]:
+        r["state"]["runs_used"] = 3
+        r["state"]["runs_left"] = 1
+    assert S.check_campaign(rows) == []
+
+
+def test_r2_final_selection_must_be_seen():
+    rows = valid_campaign()
+    rows[-1]["episode_end"] = rows[-1]["terminal"] = None
+    fin = _row(5, epoch="final", action="select",
+               st={"candidate_hash": None, "incumbent_hash": "c0", "incumbent_recorded": 0.52, "runs_used": 4,
+                   "calls_used": 3, "slots_left": 3, "keeps_so_far": 1, "prior_skips": 1},
+               out={"next_incumbent_hash": "zz"}, end={"kind": "terminated", "reason": "W"},
+               terminal=copy.deepcopy(TERM))
+    fin["action"]["selected"] = "zz"
+    _only(S.check_campaign(rows + [fin]), "epoch_sequence")
+
+
+def test_r2_incumbent_record_changes_only_on_keep():
+    rows = valid_campaign()
+    rows[4]["state"]["incumbent_recorded"] = 0.6
+    _only(S.check_campaign(rows), "counters")
+
+
+def test_r2_root_counters_start_at_zero():
+    rows = valid_campaign()
+    for r in rows:
+        r["state"]["prior_skips"] += 1
+    _only(S.check_campaign(rows), "counters")
+
+
+def test_r2_behaviour_action_and_replicate():
+    rows = valid_campaign() + fork_continuation()
+    rows[5]["policy"]["behaviour_action"] = "keep"
+    _only(S.check_campaign(rows), "propensity")
+    rows = fork_continuation()
+    for r in rows:
+        r["fork"]["replicate"] = 2
+    _only(S.check_campaign(rows), "constant")
+
+
+def test_r2_audit_range_inside():
+    from paperc.seeds import Registry
+    reg = Registry.load()
+    rows = valid_campaign()
+    for r in rows:
+        r["seeds"]["audit_seed_block"] = [6000, 8000]      # both ends outside Paper B blocks? 6000 is in e1b audits
+        if r["terminal"]:
+            r["terminal"]["audit_seeds"] = [6500, 6501]
+    assert "seed" in checks_of(S.check_campaign(rows, registry=reg))
+    rows = valid_campaign()
+    for r in rows:
+        r["seeds"]["audit_seed_block"] = [6001, 8000]      # ends at 6001 (free) and 8000 (free), c3 audits inside
+        if r["terminal"]:
+            r["terminal"]["audit_seeds"] = [6500, 6501]
+    _only(S.check_campaign(rows, registry=reg), "seed")
+
+
+# finding 26: rules without a test in round 2
+
+def test_r2_runs_consumed_beyond_left():
+    rows = valid_campaign()
+    rows[3]["outcome"]["runs_consumed"] = 4
+    assert "budget" in checks_of(S.check_campaign(rows))
+
+
+def test_r2_llm_cap_ledger():
+    rows = valid_campaign()
+    rows[-1]["episode_end"]["reason"] = "llm_cap"
+    _only(S.check_campaign(rows), "terminal")
+
+
+def test_r2_slots_left_counter():
+    rows = valid_campaign()
+    for r in rows[3:]:
+        r["state"]["slots_left"] += 1
+    _only(S.check_campaign(rows), "counters")
+
+
+def test_r2_final_only_last():
+    rows = valid_campaign()
+    mid = copy.deepcopy(rows[2])
+    rows[2]["identity"]["epoch"] = "final"
+    rows[2]["action"].update(action="select", selected="c0", rule="policy")
+    rows[2]["state"].update(rule_forced=False, eligible=True, duplicate=False)
+    rows[2]["outcome"]["calls_consumed"] = 0
+    assert "epoch_sequence" in checks_of(S.check_campaign(rows))
+    del mid
+
+
+def test_r2_executed_without_e2_at_terminated_end():
+    rows = valid_campaign()[:4]
+    rows[-1]["episode_end"] = {"kind": "terminated", "reason": "W"}
+    rows[-1]["terminal"] = copy.deepcopy(TERM)
+    assert "epoch_sequence" in checks_of(S.check_campaign(rows))
+
+
+def test_r2_candidate_hash_required_and_rule_prob():
+    r = valid_campaign()[0]
+    r["state"]["candidate_hash"] = None
+    assert any("candidate_hash" in e for e in S.validate(r))
+    r = valid_campaign()[2]
+    r["policy"]["action_prob"] = 0.5
+    assert any("1.0 on rule-forced" in e for e in S.validate(r))

@@ -26,8 +26,14 @@ Row conventions:
 
 * every E1 row consumes one LLM call and one proposal slot (``slots_left``), rule-forced rows included;
 * executing actions (``execute``, ``verify``, ``reaudit``) consume >= 1 run and carry exactly one of
-  ``delta_hat`` / ``divergent``; non-executing actions consume 0 runs and carry neither;
-* a divergent candidate is not kept: its E2 row is a ``discard`` (plan §3.1);
+  ``delta_hat`` / ``divergent`` / ``failure_category`` (Track S's ``failed_invalid`` class); non-executing actions
+  consume 0 runs and carry none;
+* a divergent or invalid candidate is not kept: its E2 row is a ``discard`` (plan §3.1), including the first row of
+  an E2 fork (row rule);
+* ``candidate_obs`` counts the candidate's measurements (its execute plus verify rows); ``candidate_divergent`` /
+  ``candidate_delta_hat`` describe its latest measurement;
+* ``incumbent_recorded`` / ``incumbent_obs`` change only after a keep, a reaudit or a final selection;
+* a W termination means fewer than ``env.constants["run_cost"]`` (default 1) runs remain;
 * the incumbent changes only by an E2 ``keep`` (to ``State.candidate_hash``) or a ``final`` ``select``
   (to ``Action.selected``);
 * ``immediate_measured`` (Track S) lives on the E2 row of a kept candidate when an audit exists, else null;
@@ -92,6 +98,8 @@ Label = Literal["ENGINEERING_ONLY", "PILOT", "EVIDENCE", "FIXTURE"]
 Tier = Literal["E-SYN", "E-T0", "E-INT", "E-HELD", "E-SIM"]
 SelectionRule = Literal["uniform", "oversample", "both"]
 EndKind = Literal["terminated", "truncated"]
+FailureCategory = Literal["syntax_error", "runtime_error", "metric_missing", "invalid_edit_scope"]
+# harness FailureCategory minus "degraded_metric", which is a valid result (a worse metric), not a failure
 EndReason = Literal["W", "llm_cap", "policy_stop", "infrastructure", "protocol_stop", "parse", "host"]
 END_REASONS = {"terminated": ("W", "llm_cap"), "truncated": ("infrastructure", "protocol_stop", "parse", "host")}
 
@@ -193,7 +201,8 @@ class State:
     incumbent_recorded: float | None   # the incumbent's recorded metric (what the loop compares against)
     incumbent_obs: int            # number of measurements behind incumbent_recorded
     candidate_delta_hat: float | None  # E2 / verify: the candidate's observed increment so far (null at E1)
-    candidate_divergent: bool     # E2 / verify: the candidate's run diverged (False at E1)
+    candidate_divergent: bool     # E2 / verify: the candidate's latest measurement diverged (False at E1)
+    candidate_invalid: bool       # E2 / verify: the candidate's run failed as invalid (False at E1)
     candidate_obs: int            # E2 / verify: measurements of the candidate so far (0 at E1)
     runs_used: int
     runs_left: int
@@ -224,6 +233,7 @@ class Outcome:
     next_incumbent_hash: str
     delta_hat: float | None = None           # executing actions: observed increment (null if divergent)
     divergent: bool = False                  # executing actions: no metric at the fixed budget
+    failure_category: FailureCategory | None = None   # executing actions: the run failed as invalid
     kept: bool | None = None                 # E2 only
     immediate_measured: float | None = None  # E2 keep with an audit: audited increment of the kept edit
     wall_time_s: float | None = None
@@ -409,16 +419,19 @@ def _row_rules(t: Transition) -> list[tuple[str, str]]:
         add("outcome", f"action.action: {act!r} not allowed in epoch {ep!r}")
     if (ep == "final") != (t.action.selected is not None):
         add("outcome", "action.selected: set exactly in the final epoch")
+    n_results = (o.delta_hat is not None) + o.divergent + (o.failure_category is not None)
     if act in EXECUTING:
         if o.runs_consumed < 1:
             add("outcome", f"outcome.runs_consumed: {act} consumes >= 1 run")
-        if (o.delta_hat is not None) == o.divergent:
-            add("outcome", f"outcome: {act} carries exactly one of delta_hat / divergent")
+        if n_results != 1:
+            add("outcome", f"outcome: {act} carries exactly one of delta_hat / divergent / failure_category")
     else:
         if o.runs_consumed != 0:
             add("outcome", f"outcome.runs_consumed: {act} consumes no run")
-        if o.delta_hat is not None or o.divergent:
-            add("outcome", f"outcome: {act} carries no delta_hat / divergent")
+        if n_results:
+            add("outcome", f"outcome: {act} carries no delta_hat / divergent / failure_category")
+    if ep == "E2" and (s.candidate_divergent or s.candidate_invalid) and act != "discard":
+        add("outcome", "a divergent or invalid candidate must be discarded")
     if (ep == "E2") != (o.kept is not None):
         add("outcome", "outcome.kept: set exactly in the E2 epoch")
     elif ep == "E2" and o.kept != (act == "keep"):
@@ -446,6 +459,8 @@ def _row_rules(t: Transition) -> list[tuple[str, str]]:
             add("propensity", "policy.action_prob: null on forced rows (no defined propensity)")
         if pol.behaviour_action is None:
             add("propensity", "policy.behaviour_action: required on forced rows")
+        elif pol.behaviour_action not in EPOCH_ACTIONS[ep]:
+            add("propensity", f"policy.behaviour_action: {pol.behaviour_action!r} not an action of epoch {ep!r}")
     else:
         if pol.action_prob is None or not (0.0 < pol.action_prob <= 1.0):
             add("propensity", "policy.action_prob: must lie in (0, 1] on non-forced rows")
@@ -464,7 +479,7 @@ def _row_rules(t: Transition) -> list[tuple[str, str]]:
     if ep == "E1":
         if any(f.m_hat is not None for f in s.forecasts.values()):
             add("no_future", "state.forecasts[*].m_hat: the result-conditional mean does not exist at E1")
-        if s.candidate_delta_hat is not None or s.candidate_divergent or s.candidate_obs != 0:
+        if s.candidate_delta_hat is not None or s.candidate_divergent or s.candidate_invalid or s.candidate_obs != 0:
             add("no_future", "state.candidate_*: no candidate result exists at E1")
 
     # identity / fork
@@ -475,6 +490,10 @@ def _row_rules(t: Transition) -> list[tuple[str, str]]:
             add("constant", "identity.fork_id: required on fork rows and must match branch_path[0]")
         if t.fork is not None and t.fork.replicate < 1:
             add("constant", "fork.replicate: must be >= 1")
+        last_part = t.identity.branch_path[-1].split(":")[-1]
+        if t.fork is not None and last_part.startswith("r") and last_part[1:].isdigit() \
+                and int(last_part[1:]) != t.fork.replicate:
+            add("constant", "fork.replicate: disagrees with the r<N> of branch_path")
     else:
         if t.fork is not None or t.identity.fork_id is not None:
             add("constant", "fork / fork_id: only on fork continuations")
@@ -621,6 +640,9 @@ class SeedRegistry(Protocol):
     def paper_b_block(self, node: str, instance_seed: int) -> str | None:
         """Name of the Paper B block containing the seed, or None."""
 
+    # Optional: ``paper_b_range(lo, hi) -> str | None`` names a Paper B block intersecting [lo, hi]; when present it
+    # is used for ``audit_seed_block`` (otherwise both ends are checked).
+
 
 Behaviour = Callable[[DecisionView], tuple[str, float]]
 
@@ -759,6 +781,16 @@ def check_campaign(rows: Sequence, *, registry: SeedRegistry | None = None,
         for t in traj:
             if t.state.slots_left > t.env.llm_cap:
                 V("counters", key, t.identity.step_index, "slots_left exceeds llm_cap")
+        if is_root and steps[0] == 0 and (first.state.keeps_so_far or first.state.prior_skips
+                                          or first.state.slots_left != first.env.llm_cap):
+            V("counters", key, 0, "a root starts with keeps_so_far == prior_skips == 0 and all slots")
+        for a_, b_ in zip(traj, traj[1:]):
+            changes = (a_.identity.epoch == "E2" and a_.action.action == "keep") or \
+                      a_.action.action in ("reaudit", "select")
+            if not changes and (b_.state.incumbent_recorded, b_.state.incumbent_obs) != \
+                    (a_.state.incumbent_recorded, a_.state.incumbent_obs):
+                V("counters", key, b_.identity.step_index,
+                  "incumbent_recorded / incumbent_obs change without a keep, reaudit or selection")
 
         # epoch sequence
         last = traj[-1]
@@ -766,6 +798,7 @@ def check_campaign(rows: Sequence, *, registry: SeedRegistry | None = None,
         if is_root and first.identity.epoch != "E1":
             V("epoch_sequence", key, first.identity.step_index, "a root starts at E1")
         pending = None          # the execute row awaiting its E2
+        meas = []               # the candidate's measurements so far (execute, then verify rows)
         for i, t in enumerate(traj):
             ep, act = t.identity.epoch, t.action.action
             st = t.identity.step_index
@@ -775,27 +808,45 @@ def check_campaign(rows: Sequence, *, registry: SeedRegistry | None = None,
                 if pending is None and i > 0:
                     V("epoch_sequence", key, st, f"{ep} row without a preceding execute")
                 if pending is not None:
+                    latest = meas[-1].outcome
                     if t.state.candidate_hash != pending.state.candidate_hash:
                         V("epoch_sequence", key, st, f"{ep} row is about another candidate than its execute")
-                    if ep == "E2" and pending.outcome.divergent and act != "discard":
-                        V("epoch_sequence", key, st, "a divergent candidate must be discarded")
-                    if t.state.candidate_divergent != pending.outcome.divergent:
-                        V("epoch_sequence", key, st, "state.candidate_divergent disagrees with the execute")
-                    if t.state.candidate_obs < 1:
-                        V("epoch_sequence", key, st, "state.candidate_obs must count the execute")
-                    if ep == "E2" and pending.outcome.divergent is False and t.state.candidate_obs == 1 \
-                            and t.state.candidate_delta_hat != pending.outcome.delta_hat:
+                    bad = latest.divergent or latest.failure_category is not None
+                    if ep == "E2" and bad and act != "discard":
+                        V("epoch_sequence", key, st, "a divergent or invalid candidate must be discarded")
+                    if t.state.candidate_divergent != latest.divergent:
+                        V("epoch_sequence", key, st, "state.candidate_divergent disagrees with the latest measurement")
+                    if t.state.candidate_invalid != (latest.failure_category is not None):
+                        V("epoch_sequence", key, st, "state.candidate_invalid disagrees with the latest measurement")
+                    if t.state.candidate_obs != len(meas):
+                        V("epoch_sequence", key, st, f"state.candidate_obs should be {len(meas)}")
+                    if not bad and len(meas) == 1 and t.state.candidate_delta_hat != latest.delta_hat:
                         V("epoch_sequence", key, st, "state.candidate_delta_hat disagrees with the execute")
+                if ep == "verify" and act == "verify" and pending is not None:
+                    meas.append(t)
                 if ep == "E2":
-                    pending = None
+                    pending, meas = None, []
             elif ep == "E1":
                 if pending is not None:
                     V("epoch_sequence", key, st, "an executed candidate has no E2 row")
                 pending = t if act == "execute" else None
+                meas = [t] if act == "execute" else []
             elif ep in ("reaudit", "final") and pending is not None:
                 V("epoch_sequence", key, st, f"{ep} row between an execute and its E2")
         if pending is not None and terminated:     # a missing episode_end is reported by the terminal check
             V("epoch_sequence", key, pending.identity.step_index, "an executed candidate has no E2 row")
+
+        if last.identity.epoch == "final" and last.action.selected is not None:
+            seen, k = set(), key
+            while k in groups:
+                for t in groups[k]:
+                    seen.update(h for h in (t.state.incumbent_hash, t.state.candidate_hash) if h)
+                if not k[1]:
+                    break
+                k = (k[0], k[1][:-1])
+            if last.action.selected not in seen:
+                V("epoch_sequence", key, last.identity.step_index, "final selection names a configuration never "
+                                                                   "seen in the campaign")
 
         # terminal
         for t in traj[:-1]:
@@ -809,8 +860,9 @@ def check_campaign(rows: Sequence, *, registry: SeedRegistry | None = None,
         elif last.episode_end.kind == "terminated":
             if last.terminal is None:
                 V("terminal", key, last.identity.step_index, "terminated trajectory has no terminal")
-            if last.episode_end.reason == "W" and ls.runs_used + lo_.runs_consumed != last.env.W:
-                V("terminal", key, last.identity.step_index, "terminated at W but runs remain")
+            run_cost = int(last.env.constants.get("run_cost", 1))
+            if last.episode_end.reason == "W" and last.env.W - (ls.runs_used + lo_.runs_consumed) >= run_cost:
+                V("terminal", key, last.identity.step_index, "terminated at W but a run can still be paid")
             if last.episode_end.reason == "llm_cap" and ls.calls_used + lo_.calls_consumed != last.env.llm_cap:
                 V("terminal", key, last.identity.step_index, "terminated at llm_cap but calls remain")
         elif last.terminal is not None:
@@ -838,7 +890,13 @@ def check_campaign(rows: Sequence, *, registry: SeedRegistry | None = None,
             if registry is not None:
                 seeds_to_check = [("instance_seed", t.seeds.instance_seed), ("worker_seed", t.seeds.worker_seed),
                                   ("eps_seed", t.policy.eps_seed)]
-                seeds_to_check += [("audit_seed_block", x) for x in t.seeds.audit_seed_block]
+                if hasattr(registry, "paper_b_range") and len(t.seeds.audit_seed_block) == 2:
+                    hit = registry.paper_b_range(*t.seeds.audit_seed_block)
+                    if hit is not None:
+                        V("seed", key, st, f"audit_seed_block {t.seeds.audit_seed_block} intersects Paper B "
+                                           f"block {hit}")
+                else:
+                    seeds_to_check += [("audit_seed_block", x) for x in t.seeds.audit_seed_block]
                 if t.terminal is not None:
                     seeds_to_check += [("terminal.audit_seeds", x) for x in t.terminal.audit_seeds]
                 for name, val in seeds_to_check:
