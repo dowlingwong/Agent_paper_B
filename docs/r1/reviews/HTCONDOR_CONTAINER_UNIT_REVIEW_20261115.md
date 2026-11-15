@@ -144,3 +144,17 @@ SIF-path variants are out of scope by design); the `image_disk_kb` semantics is 
 the author should confirm before real submissions.
 
 VERDICT: ACCEPTED
+
+---
+
+## Delta re-check — M1 fix and delta round (branch @ `320e1b22`; 15 Nov 2026, 21:40 CET)
+
+**Delta verdict: M1 is adequately addressed; the unit stays accepted for dry-run use; no blockers remain for dry-run, and the only real-use residual is administrative.**
+
+The new commit implements the fix exactly on the S5 evidence: `image_disk_kb` is now defined as the **measured EP-side footprint** of the pulled image (documented as ~11 GB for the v1 gpu image, with the 5,104,000 kB SIF explicitly recorded as the *download* size, not the cache need), the guard is `disk_kb >= 2 * image_disk_kb + image_disk_margin_kb` (the EP cache holds the pulled image plus the job's copy), the examples are updated to `image_disk_kb = 11,000,000` with `disk_kb = 25,000,000` (guard minimum 24,000,000, so they pass), the docstring explains the new semantics, and the test was replaced by a 2×-footprint test (`disk_kb = 2*IMAGE_CAP_KB` and `20,000,000` are both refused). The restart also adds the author's Track P guard (`kind: track_g` + `gpus > 0` ⇒ `gpu_device_name` ∈ `trackp_gpu_device_names = ["NVIDIA L40S","NVIDIA H200"]`, V100S refused with a clear message) with a passing test, parses the new config keys as optional status-bearing entries (type-validated), moves the stray root `uv.lock` to the git-ignored `_to_delete/` (it is no longer in the commit; no tracked root `uv.lock`), fixes the handoff count (78 passed = 68 before, verified: I re-ran the suite in `/tmp/p2venv` — **78 passed in 1.05 s**), and commits this review record.
+
+Verified on the branch: HEAD `320e1b22`; `htc_submit.py 87323355…`, `htc_config.json a1473191…`, `test_htc_adapter.py 6cf45bd5…`, both examples `image_disk_kb=11,000,000`/`disk_kb=25,000,000`; the guard, Track P guard, config parsing, `_to_delete/` move and handoff edits are exactly as reported; the docker path and the dry-run classads are unchanged.
+
+Remaining (minor, record-only, not blockers): (i) the committed dry-run raw JDLs/ads still carry the old `# manifest_sha256` header because the example manifests changed (`image_disk_kb` only; the **JDL body is byte-identical** — I re-rendered both and only the header differs, and the ads' rendered fields are unchanged). Regenerate the `dryrun/*.jdl` + ads with the updated examples (or add a one-line note that only the header changed) so the manifest-sha → JDL provenance chain is current before real submissions; (ii) the `max_image_disk_kb`/`image_disk_margin_kb` config status texts still describe the old SIF-based sizing — refresh them to the "measured EP footprint + 2× + margin" semantics when the values are next touched. Neither affects the M1 fix or the reviewed dry-run evidence, and the adapter stays dry-run-only until real submissions are enabled.
+
+VERDICT: ACCEPTED

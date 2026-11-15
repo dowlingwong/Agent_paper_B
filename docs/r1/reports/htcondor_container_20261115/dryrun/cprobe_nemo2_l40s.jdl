@@ -1,4 +1,4 @@
-# manifest_sha256 = 29c2d3583793451648e156eeb3076c400ef53d718180a66d4ebb57445661a3e8
+# manifest_sha256 = 1ac809fe2c78a55ef4d0f5cd18bd6b6d540da32713fe59991da5e020ab6f0cc5
 universe = container
 container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296
 executable = container_probe.sh
