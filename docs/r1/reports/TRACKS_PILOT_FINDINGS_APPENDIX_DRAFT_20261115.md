@@ -25,8 +25,10 @@ Everything from the next heading down is the draft text.
 
 ## A.x Track S pilot findings
 
-**What was planned.** Track S was a pre-registered screen (`R1-TRACKS-ADOPT`). It would compare a tuned dynamic
-execution threshold with the best tuned static threshold, on two CPU nodes (`digits_mlp`, `tabular_mlp`) with a
+**What was planned.** Track S was a screen whose design, settings and outcome framing were fixed in advance
+(`R1-TRACKS-ADOPT`, `R1-TRACKS-S02`, `R1-TRACKS-FRAMING`). Its formal pre-declaration (S0.8) was to follow the pilot
+and was never made. It would compare a tuned state-dependent (dynamic) threshold policy, with members acting on
+E1 and on the E2 keep, against the best tuned static threshold, on two CPU nodes (`digits_mlp`, `tabular_mlp`) with a
 pinned local manager. The base forecaster was A2-U, a hierarchical normal model per (key, sign) with a predictive
 variance, gated by a calibration check before any evidence run (`R1-TRACKS-S02`).
 
@@ -57,45 +59,49 @@ Proposition 8′ (index theorem; no independence condition) has two parts at eve
 - **E1.** Executing pays V\*_n − g and skipping pays 0. So execute iff V\*_n > g. Relative to always executing, the gain
   at that history is (g − V\*_n)⁺.
 
-Call the run price **low** when g lies below V\*_n at every history. Then:
-- the E1 rule executes every proposal except those whose V\*_n is 0, namely rule-detectable no-ops and duplicates
-  (T4 Corollary 8a);
+Call the run price **low** when g lies below V\*_n at every history whose proposal is not a rule-detectable no-op
+or duplicate. (On a bit-exact node, as both pilot nodes are, those have V\*_n = 0 and are skipped by rule; T4
+Corollary 8a.) Then:
+- the E1 rule executes every proposal that is not a rule-detectable no-op or duplicate;
 - the screening gain (g − V\*_n)⁺ is 0 throughout;
 - the only decision left that carries value is the E2 keep.
 
-In this regime a forecaster's E1 index cannot change what is executed, however it is built, as long as it stays above
-g. A dynamic threshold that moves within that range cannot change it either.
+In this regime no E1 rule, whether driven by a forecaster or by a dynamic threshold, can improve on executing every
+such proposal at that step; skipping one gives up V\*_n − g > 0 in expectation. Any one-step value a dynamic policy
+adds must come from E2, or from budget or information effects that Proposition 8′ does not cover.
 
 Two limits apply:
 - The statement is about one step at a time. A campaign-level statement needs Proposition 10(a′) and its conditions.
 - Proposition 8′ uses a fixed price with both actions always feasible. It does not cover a binding hard budget, whose
-  shadow price depends on the remaining runs (proposal §5, R2).
+  opportunity cost depends on the remaining budget and the incumbent (proposal §5, R2).
 
 ### A.x.3 What the pilot shows
 
-In the pilot, the run price was low in the sense above **for A2-U's own index**, on both nodes:
+In the pilot, **A2-U's index** (not the Bayes V\*_n) exceeded g at every eligible E1 decision, on both nodes:
 
 | | `digits_mlp` | `tabular_mlp` |
 |---|---|---|
 | A2-U's V\* − g over eligible E1 decisions | 2.58–2.61 σ_node | 4.04–4.06 σ_node |
-| Range of V\* across all proposals | 0.036 σ_node | 0.018 σ_node |
+| Range of A2-U's V\* over all eligible (non-duplicate) E1 decisions | 0.036 σ_node | 0.018 σ_node |
 | Decisions below, or within ±0.5 σ_node of, g or the static threshold | 0 of 298 | 0 of 330 |
 | E1 skips per policy, all rule-detected duplicates | 429 | 399 |
 | Instances on which the two policies took identical action sequences | 20 of 20 | 20 of 20 |
 | … and identical results at each truncation W = 8/10/12/20 | 20 of 20 | 20 of 20 |
 | Between-policy sd of the campaign outcome (S0.5b at W = 12; at the cap) | 0; 0 | 0; 0 |
-| E2 keep / discard (each policy) | 148 / 170 | 158 / 192 |
+| E2 keep / discard / invalid proposal (each policy) | 148 / 170 / 53 | 158 / 192 / 51 |
 | E2 margins m̂ (5th–95th percentile); within ±0.5 σ_node of 0 | −0.108 to 0.114; 46 | −0.055 to 0.034; 38 |
 
-**Interpretation.**
-- E1 was trivial: every proposal that was not a duplicate was executed, by both policies.
+**Interpretation, under A2-U's index and its m̂.**
+- E1 was trivial: every valid proposal that was not a duplicate was executed, by both policies. (Per policy, 53 and 51
+  proposals were invalid and never reached E1; each campaign's 40 calls are accounted for.)
 - E2 was not trivial: m̂ spread widely around 0, and many keep decisions were close to it.
 - The two policies differ only on E1, so they produced the same campaigns.
 
 **Budgets.**
 - At W = 40, every campaign ended at the 40-call LLM cap. The worker budget was never exhausted (at most 27 of 40
   runs).
-- At W = 12, the worker budget bound in 94 % (digits) and 100 % (tabular) of the campaigns.
+- At W = 12, the worker budget bound in 94 % (digits) and 100 % (tabular) of the 50 S0.5b roots per node (both
+  policies, including the 10 second repetitions).
 - Neither pilot policy used the budget state, so the binding budget changed where campaigns stopped, not what they
   decided.
 
@@ -119,19 +125,23 @@ every stratum of the group's history length n_group with at least 20 predictions
 | ≥ 3 | 144 | 0.944 | 178 | 0.831 |
 | overall | 298 | 0.775 | 330 | 0.700 |
 
-- For a group's first proposals, the intervals were too narrow on both nodes. On `digits_mlp` they were too wide for
-  groups with three or more earlier results.
+- For a group's first proposals, and for groups with one or two earlier results, the intervals were too narrow on
+  both nodes. On `digits_mlp` they were too wide for groups with three or more earlier results.
 - A2-U's V\* values are therefore not validated estimates of the Bayes quantity V\*_n in Proposition 8′.
 
 So we do not claim:
 - that E1 screening is trivial for these nodes in truth;
-- anything about A2-U as a forecaster or controller beyond the gate failure itself;
+- anything about A2-U as a forecaster or controller beyond the gate failure and the descriptive account of its pilot
+  behaviour in §A.x.3; in particular nothing about its accuracy, about the true V\*_n, or about how it would behave on
+  other nodes or with other priors;
 - any comparison between dynamic and static thresholds, or any of the outcomes Track S was designed to decide.
 
 What the pilot shows is narrower:
 - with this forecaster at this price, the E1 rule did not discriminate between proposals, and so the two policies
   coincided;
-- that is the pattern Proposition 8′ predicts whenever the index used for E1 exceeds g at every history.
+- with A2-U's index in place of V\*_n, the pilot policies were in the configuration that Proposition 8′ describes for
+  a low price: every valid non-duplicate proposal executed, and only the E2 keep left as a decision. Whether the price
+  is low for the true V\*_n is not established.
 
 Offline recalibrations were explored after the pilot (summary §6). They were not pre-declared, are exploratory and
 support no statement here.
@@ -139,13 +149,18 @@ support no statement here.
 ### A.x.5 Disclosures
 
 - **The stop was decided after seeing the data.** The author chose to end Track S after the pilot data, and its
-  summary, had been seen. The alternatives were to revise A2-U and repeat the pilot, or to narrow the comparison to
-  E2. No evidence run had started.
+  summary, had been seen. The summary set out three options: revise A2-U's prior or variance structure and repeat
+  S0.4/S0.5; change the run price or budgets; or narrow Track S (an E2-only comparison, dropping a node, or ending
+  before evidence). It recommended the first, with fallbacks declared in advance. The author chose to end Track S. No
+  evidence run had started.
 - **Host.** `digits_mlp` was planned for TASL-2 and moved to TASL-7 after TASL-2 became unreachable on 12 November
   2026. Its S0.4 rows, which A2-U's prior was fitted from, come from TASL-2. Its S0.5 pilot ran on TASL-7. A
   partial S0.5 attempt on TASL-2 (last seen with 4 committed roots) was preserved and not used.
-- **Order.** On the author's instruction, `tabular_mlp`'s determinism check (S0.1) was run after its S0.4 and
-  before S0.5.
+- **Order.** On the author's instruction (relayed by the coordinating agent; no PLAN row), `tabular_mlp`'s
+  determinism check (S0.1) was run after its S0.4 and before S0.5.
+- **Pause.** The `digits_mlp` S0.5 ran in two sessions. It paused on 13 November after 22 roots, on a STOP file whose
+  origin is not evidenced. After one failed resume attempt that ended before any server started, it resumed on
+  14 November with a byte-identical command.
 - **Concurrency.** The number of concurrent manager servers was fixed by measurement at k = 2 on both nodes.
 - **Inspection.** All pilot data and their independent reviews are in the repository (see Sources). No pilot
   unit failed, none was recorded as exhausted, and no unit was dropped.
