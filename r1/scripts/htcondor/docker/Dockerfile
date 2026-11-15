@@ -40,6 +40,11 @@ ARG PY311=3.11.18
 ########################################################################################
 FROM ${CUDA_DEVEL} AS build
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+# Global ARGs are only available in FROM lines; re-declare them inside the stage so the pinned Python
+# patches are visible to RUN (the v2 first CI build failed here with "PY313: unbound variable").
+ARG PY313
+ARG PY312
+ARG PY311
 
 # EPEL first: xrootd-client is EPEL-only on Rocky 9.
 RUN dnf install -y --setopt=install_weak_deps=False epel-release \
