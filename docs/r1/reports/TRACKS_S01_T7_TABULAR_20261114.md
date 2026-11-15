@@ -21,7 +21,9 @@ digits S0.1's `trks_s01_serial`/`trks_s01_conc`, whose log files are digits evid
 ## 1. Run
 
 - Servers: k = 2 in tmux `trks_llm` via `trks-servers 2`; started **2026-11-14T23:11:05Z**; exactly **2 live
-  llama-server procs** (pids **817988** [18102], **817989** [18101]); both `/v1/models` ready at 23:11:18Z.
+  llama-server procs** (pids **817988**, **817989**; `trks-servers` starts 18101 first, so the natural mapping is
+  817988=18101 / 817989=18102 — stated as **inferred from start order**; no saved `ps` capture was kept, so the
+  mapping is not claimed as measured); both `/v1/models` ready at 23:11:18Z.
 - **Server-log offsets recorded for identity recomputation** (append-only `logs/llama_1810{1,2}.log`):
   `OFFSET_START 2026-11-14T23:11:05Z llama_18101=1013600752 llama_18102=398591403`; launcher start
   23:11:18Z (`1014105122` / `399095773`); `OFFSET_END 23:47:41Z llama_18101=1316952707 llama_18102=598535821`.
@@ -55,7 +57,9 @@ digits S0.1's `trks_s01_serial`/`trks_s01_conc`, whose log files are digits evid
 Runbook rev 3.3 Phase 1: **k = 2**, because **within-server identity is 100 % on both URLs** (concurrent 18101
 and 18102 = 1.0; serial 18101 = 1.0) **and `cross_server_identity` is 100 %** (1.0). This fixes k = 2 for
 `tabular_mlp` on TASL-7; it overrides the earlier k = 1 assumption (which came from the TASL-2 digits S0.1 /
-the STOP-1 decision (a) reading). **No k = 1 fallback is used.** All later tabular phases on TASL-7 must run
+the STOP-1 decision (a) reading). **No k = 1 fallback is used.** The author's rule is explicit: **any identity <100 % in any
+required cell is a STOP for the author** (recorded in the earlier S0.4 STATUS entry and the S0.1 launcher header); whether
+another k attempt or host is chosen is the author's decision. All later tabular phases on TASL-7 must run
 **k = 2 servers**.
 
 ## 4. Host end state
@@ -73,7 +77,7 @@ bare-repo push remains deferred.
 
 ## 6. Scope / next
 
-- New `out/tabular_mlp/s01_t7_20261114` / `scratch/tabular_mlp/s01_t7_20261114`; the Oct-30 `s01`/INVALID scenes
+- New `out/tabular_mlp/s01_t7_20261114` (S0.1 writes only `--out`; **no scratch dir was created**); the Oct-30 `s01`/INVALID scenes
   and the digits S0.1 logs were not touched. The reviewed STOP-3 record (`fbf0a874…`) remains accepted; this
   S0.1 submission awaits its own fresh independent review.
 - **§3.0b Track P integration check: OPEN** (not performed; gates Phase 6 / 0.3(c), not this S0.1).
