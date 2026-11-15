@@ -1,0 +1,153 @@
+{
+ "schema": "w2_v3_rebuild_manifest/1",
+ "unit": "W2 v3 Track P data rebuild (author rows R1-W2-3-STOP, R1-B2-REPAIR-SCOPE-ACK, R1-SWEEP1-CLASSIFY)",
+ "created_utc": "2026-11-15T23:20:24Z",
+ "code_commit": "d8aa956193ba1b24ae0b568a724b841beaa1651e",
+ "featurizer_version": "c3_features/v3",
+ "prompt_version": "trackp_prompt/v2",
+ "prompt_version_mixing": "none in this Track P feature-table build path: the reviewed code defines one trackp_prompt/v2 version there; this table records c3_features/v3 + trackp_prompt/v2. r1/c3/train/exam_synthetic.py intentionally keeps the trackp_prompt/v1 budget line (synthetic exam; W2-4 open) and is not part of this table build.",
+ "budget_line_change": "W2-1: the Track P prompt budget line changed from trackp_prompt/v1 (trial number and trial total) to trackp_prompt/v2 (worker runs used k of W=20, no trial total); the synthetic exam trackp_e0/v1 keeps the v1 line (W2-4 open).",
+ "sweep_index": {
+  "path": "/work/dwong/htcondor_prep_20261114/w2_paper_main_60ec768e/results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+  "sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab"
+ },
+ "paper_root": "/work/dwong/htcondor_prep_20261114/w2_paper_main_60ec768e",
+ "output_parent": "/work/dwong/htcondor_prep_20261114/w2_3_rebuild_20261115/tables",
+ "classification": {
+  "path": "/work/dwong/htcondor_prep_20261114/w2_paper_main_60ec768e/results/r1/evidence/C3_sweep_classification_20261028.json",
+  "sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc",
+  "row": "R1-SWEEP1-CLASSIFY (sweep-1 is the EVIDENCE batch)"
+ },
+ "w2_3_evidence": {
+  "path": "/work/dwong/htcondor_prep_20261114/w2/w2_3_check_20261115.json",
+  "sha256": "b11217d041728389cd5b83de0c9685294d312fb77f6246efc99a0945e6ec396e",
+  "repo_path": "docs/r1/reports/w2_3_check_20261115/w2_3_check_20261115.json",
+  "status": "PASS",
+  "ledgers": 288,
+  "runs_total": 20,
+  "ledgers_differing": 0,
+  "stop_rule_note": "the author adopted W2-3 as a STOP (R1-W2-3-STOP); the JSON's own stop_rule string predates the adoption"
+ },
+ "table": {
+  "label": "EVIDENCE",
+  "n_proposals": 4999,
+  "n_configs": 302,
+  "replay_checks_total": {
+   "rows": 5813,
+   "proposals": 4999,
+   "zero_delta_violations": 0,
+   "repeat_metric_violations": 0,
+   "skipped_invalid": 526,
+   "no_edit_rows": 0
+  },
+  "sweep_index": {
+   "path": "/work/dwong/htcondor_prep_20261114/w2_paper_main_60ec768e/results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+   "sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab",
+   "label": "ENGINEERING_ONLY",
+   "nodes": [
+    "digits_mlp",
+    "tabular_mlp",
+    "openml_breast_w",
+    "openml_ionosphere",
+    "openml_wdbc",
+    "openml_credit_approval",
+    "openml_sonar",
+    "openml_climate"
+   ],
+   "excluded_nodes": [],
+   "instances": 18,
+   "runs": 20,
+   "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+   "audit": {
+    "status": "pending",
+    "seeds": [
+     7001,
+     7002,
+     7003,
+     7004,
+     7005,
+     7006,
+     7007,
+     7008,
+     7009,
+     7010
+    ],
+    "label_seeds": [
+     7001,
+     7002,
+     7003,
+     7004,
+     7005
+    ],
+    "evaluation_seeds": [
+     7006,
+     7007,
+     7008,
+     7009,
+     7010
+    ],
+    "stage": "r1/c3/audit.py (separate stage; C3_DESIGN \u00a74: K = 10 common fresh joint seeds per non-inert evaluated proposal; first half label, second half evaluation)"
+   }
+  },
+  "sources": {
+   "c3_20261028T033315Z_append_only_summary": {
+    "dir": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z",
+    "ledgers": "provenance/ledgers/roots/*/root_trials.jsonl*",
+    "runs": 20,
+    "memory_mode": "append_only_summary",
+    "manifest": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/manifest.json",
+    "manifest_sha256": "f18f8a8b47ba17dc1da9e875d500831d6d0d03c69aa7d12b216444aeff1af98f",
+    "commit": "224c2483b09d5e8798b36075785446ac06a87cf6",
+    "label": "PILOT",
+    "noise_source_at_collection": {
+     "digits_mlp": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "tabular_mlp": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_breast_w": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_ionosphere": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_wdbc": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_credit_approval": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_sonar": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_climate": "results/r1/noise/D28_REPAIR_20261027/summary.json"
+    }
+   },
+   "c3_20261028T033315Z_none": {
+    "dir": "results/r1/evidence/C3_sweep_none_20261027T224356Z",
+    "ledgers": "provenance/ledgers/roots/*/root_trials.jsonl*",
+    "runs": 20,
+    "memory_mode": "none",
+    "manifest": "results/r1/evidence/C3_sweep_none_20261027T224356Z/manifest.json",
+    "manifest_sha256": "5053067331676e1aaefb0c757cac47ec82200ad124ff81f3d2ae074cf197d440",
+    "commit": "259722cfe4d12b7025f9818299d70c45634e0586",
+    "label": "PILOT",
+    "noise_source_at_collection": {
+     "digits_mlp": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "tabular_mlp": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_breast_w": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_ionosphere": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_wdbc": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_credit_approval": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_sonar": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+     "openml_climate": "results/r1/noise/D28_REPAIR_20261027/summary.json"
+    }
+   }
+  },
+  "table_sha256": {
+   "proposals.jsonl": "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5",
+   "configs.json": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df"
+  }
+ },
+ "environment": {
+  "python": "3.12.2",
+  "numpy": "1.26.4",
+  "df_free_kb": 147423232
+ },
+ "exact_build_command": "python3 -B -m r1.c3.dataset build-sweep --index /work/dwong/htcondor_prep_20261114/w2_paper_main_60ec768e/results/r1/pilot/C3_sweep_index_20261028T033315Z.json --paper-root /work/dwong/htcondor_prep_20261114/w2_paper_main_60ec768e --classification /work/dwong/htcondor_prep_20261114/w2_paper_main_60ec768e/results/r1/evidence/C3_sweep_classification_20261028.json --out /work/dwong/htcondor_prep_20261114/w2_3_rebuild_20261115/tables/c3_features_v3_20261115T232007Z",
+ "files": {
+  "proposals.jsonl": "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5",
+  "configs.json": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+  "build.json": "7f56619c2cc5ef2145ace44350baac3bc7906433e279a284e9627a2452e1b643"
+ },
+ "v1_policy": "new versioned directory; v1 tables are never overwritten (this manifest is the v3 record)",
+ "disclosure": "sweep-1 ledgers were produced by the historical v1 code; this rebuild re-derives the feature table with c3_features/v3 from those read-only ledgers under the R1-SWEEP1-CLASSIFY sidecar and records trackp_prompt/v2 for downstream Track P prompt sets. No v1/v2 prompt mixing in this table; the synthetic exam's retained v1 budget line (W2-4) is disclosed.",
+ "logs": "/work/dwong/htcondor_prep_20261114/w2_3_rebuild_20261115/logs/rebuild_20261115T232007Z"
+}

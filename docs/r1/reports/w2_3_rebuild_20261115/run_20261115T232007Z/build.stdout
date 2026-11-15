@@ -1,0 +1,1 @@
+{"n_proposals": 4999, "sources": ["c3_20261028T033315Z_append_only_summary", "c3_20261028T033315Z_none"], "checks": {"rows": 5813, "proposals": 4999, "zero_delta_violations": 0, "repeat_metric_violations": 0, "skipped_invalid": 526, "no_edit_rows": 0}}
