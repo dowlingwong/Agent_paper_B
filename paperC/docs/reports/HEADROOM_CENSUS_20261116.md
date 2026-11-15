@@ -1,4 +1,4 @@
-# Headroom census on existing logs (runbook PH; revised 16 Nov 2026 after review round 1)
+# Headroom census on existing logs (runbook PH; revised 16 Nov 2026 after review rounds 1 and 2)
 
 **AI-assisted (Claude, chat session). ENGINEERING_ONLY. Not evidence, not an author decision.** This is phase PH of `paperC/docs/BUILD_RUNBOOK.md` (BUILD_LIST B16; PLAN §10 R1-PAPERC-CENSUS-FIRST).
 - **Data:** `paperC/census/census_v1.json` (schema `paperc_census/v2`), produced by `python -m paperc.census`.
@@ -10,6 +10,7 @@
   - stakes.
 
   The conclusions below changed accordingly. §4 replaces the round-1 reading.
+- **Revision 2:** round 2 found that the C1 "paired sd" of revision 1 applied the pairing twice (C1's `sd_joint` already is the sd of a paired difference). Every paired-unit number and the E1 and E2 readings for the OpenML nodes were redone (§3.2, §4.3, §4.4, §5).
 
 ## 1. Inputs
 
@@ -19,11 +20,13 @@ Every file read, with its git object id, is in §7. In summary:
 |---|---|---|---|---|
 | Track S | `trackS-ops-20261030` @ `fab88fce` | <ul><li>S0.5 roots (A2-U, rep 0)</li><li>S0.5b truncations</li><li>S0.4 rows (campaign Δ̂ and 5-seed fresh audit per executed proposal)</li><li>S0.4 roots</li><li>all S0.4 + S0.5 roots for the trial-1 drop</li><li>S1.1 factorials</li></ul> | digits, tabular (S1.1 also breast_w) | read |
 | Paper B sweep 1 | `codex/coordinator-20261031` @ `10742f85` | C3 label sweep ledgers: 7B proposer, 20 runs, 18 instances per node and memory mode | 8 CPU nodes | read, reported per mode |
-| C1 noise floor | same | the D28 composite: per-edit `sd_joint`, `rho_joint`, `flip_emp`, `campaign_wrong`, `decision_regret` | 8 CPU nodes | read |
+| C1 noise floor | same | the D28 composite: per edit `sd_joint` (sd over 30 joint seeds of the paired difference candidate − start), `flip_emp`, `campaign_wrong`, `decision_regret`; per node the start configuration's own seed sd | 8 CPU nodes | read |
 | C3 audit pilot | same | LLM proposals audited on 6 fresh seeds (random-selection rows) | digits, tabular, breast_w | read; older harness, tiny sample |
 | E1b pilots | same | verify vs continue contrasts, naive oracle headroom | digits, ionosphere | read; PILOT, 6 instances |
 | B1/B2 exam campaigns | TASL-7 `~/exam-x/work` | — | — | not in the repository, not read |
 | sweep 2, T1 (GPU), fresh audits of sweep 1 | — | — | — | do not exist |
+
+**Units:** the sweep's σ_d is itself a paired unit. It equals the median `sd_joint` over the node's *material* C1 edits on all 8 nodes, and a test asserts this. Track S's σ_node is the median over all five edits, so tabular's σ_d is 1.87 σ_node; on digits the two agree.
 
 **Hosts:** the digits S0.4 rows come from TASL-2; every other Track S run is from TASL-7. A host effect is not tested.
 
@@ -33,7 +36,7 @@ Every file read, with its git object id, is in §7. In summary:
 - The keep-quality numbers come from S0.4; the E2 margins come from S0.5.
 - The review computed that S0.5's rule applied to the S0.4 rows flips 0 (digits) and 4 (tabular) decisions, which does not change the reading. The census does not recompute this.
 
-**Reproduction:** the census reproduces every E1, E2 and budget number of the Track S S0.5 summary, and `test_census.py` asserts them. The suite has 89 tests, all passing.
+**Reproduction:** the census reproduces every E1, E2 and budget number of the Track S S0.5 summary, and `test_census.py` asserts them. The suite has 90 tests, all passing.
 
 ## 2. The trial-1 artefact (read first)
 
@@ -41,10 +44,15 @@ Every campaign executes and keeps trial 1 unconditionally, because there is no i
 
 | | digits_mlp | tabular_mlp | OpenML nodes |
 |---|---|---|---|
-| Track S: audited y_after_trial1 − y_start | median −41 σ (−47 … −35), 60 campaigns | −63 σ (−84 … −44), 60 campaigns | — |
+| Track S: audited y_after_trial1 − y_start | median −41 σ (−47 … −35); 60 campaigns listed, 35 distinct outcomes | −63 σ (−84 … −44); 60 listed, 33 distinct | — |
 | Track S: audited y_terminal − y_start | median +1.7 σ | +0.8 σ | — |
 | Sweep 1: trial-1 metric − C1 default metric | median −9.9 σ_d | −11.9 σ_d | −1.4 … +2.4 σ_d |
+| Sweep 1: the start configuration's own seed sd | 1.5 σ_d | 3.4 σ_d | 0.55 … 7.3 σ_d (climate 7.3) |
 | Sweep 1: recorded gain after trial 1 | median 13.5 σ_d | 9.4 σ_d | 0 |
+
+**Caveats on the table:**
+- **Independence.** The 20 S0.5 static roots per node repeat the a2u roots' actions and terminal values (S0.5 summary §4). So at most 40 campaigns per node are distinct, and the census counts 35 and 33 distinct (start, after-trial-1, terminal) outcomes. The medians are unaffected.
+- **Seeds.** The sweep row compares the trial-1 metric at instance seeds with the C1 default at the C1 seed. Measured against the start configuration's own seed sd, the digits and tabular drops are still clear. The OpenML row is within seed variation and shows no trial-1 effect either way.
 
 **What this means:**
 - On digits and tabular, the gains recorded after trial 1 are mostly recovery from a bad first edit. The net gain over the start configuration is about 1–2 σ_node.
@@ -81,21 +89,22 @@ Every campaign executes and keeps trial 1 unconditionally, because there is no i
 - **Selection-bias measure.** It is Σ over keeps of (Δ̂ − Δ_audit) on the S0.4 audit seeds. It cancels any shared offset of the recorded trial-1 value, so it is not the incumbent-value curse itself.
 - **Shadow price.** It is undefined, because V\* is constant across proposals. A binding W changes where a campaign stops, not any decision (S0.5 summary §4). W matters here only as the price of verify runs.
 
-### 3.2 Sweep 1 with C1 (σ = σ_d; "paired" = C1's median paired sd of a fixed-seed difference)
+### 3.2 Sweep 1 with C1 (σ = σ_d, the material-edit median of C1's paired sd; "all-edit" = the median over all five C1 edits)
 
-| Node | σ_d | paired sd (σ_d) | C1 sign-flip rate (single seed) | C1 decision regret (median, σ_d) | near 0: in σ_d / in paired units | exact 0 | kept increment, median: σ_d / paired | price / V\*: noise 1 σ_d / paired noise | failed_invalid |
+| Node | σ_d | all-edit paired sd in σ_d (range over edits) | C1 sign-flip rate (single seed) | C1 decision regret (median, σ_d) | near 0: σ_d / all-edit | exact 0 | kept increment, median: σ_d / all-edit | price / V\*: noise σ_d / all-edit | failed_invalid |
 |---|---|---|---|---|---|---|---|---|---|
-| digits_mlp | 0.0066 | 0.68 | 0.14 | 0.14 | 18 % / 7 % | 7 % | 2.1 / 3.1 | 0.02 / 0.02 | 5 % |
-| tabular_mlp | 0.0036 | 0.087 | 0.11 | 0.02 | 12 % / 1 % | 0 % | 1.9 / 21 | 0.03 / 0.03 | 2 % |
-| openml_climate | 0.0055 | 1.94 | 0.38 | 0.16 | 51 % / 64 % | 33 % | 0.88 / 0.45 | 0.59 / misspecified | 21 % |
-| openml_ionosphere | 0.0424 | 0.15 | 0.20 | 0.04 | 87 % / 48 % | 38 % | 0.11 / 0.75 | misspecified / 2.2 | 24 % |
-| openml_sonar | 0.0464 | 0.059 | 0.24 | 0.05 | 80 % / 53 % | 53 % | 0.18 / 3.1 | misspecified / 0.55 | 5 % |
-| openml_wdbc | 0.0167 | 0.012 | 0.25 | 0.01 | 95 % / 71 % | 71 % | 0.11 / 8.9 | misspecified / 0.90 | 5 % |
-| openml_credit_approval | 0.0146 | 0.021 | 0.27 | 0.03 | 98 % / 35 % | 35 % | 0.08 / 3.7 | misspecified / 2.4 | 7 % |
-| openml_breast_w | 0.0062 | 0.002 | 0.60 | 0.006 | 99 % / 74 % | 74 % | 0.13 / 65 | misspecified / 1.0 | 6 % |
+| digits_mlp | 0.0066 | 1.00 (0.80–1.67) | 0.14 | 0.14 | 18 % / 18 % | 7 % | 2.1 / 2.1 | 0.02 / 0.02 | 5 % |
+| tabular_mlp | 0.0036 | 0.54 (0.01–1.75) | 0.11 | 0.02 | 12 % / 7 % | 0 % | 1.9 / 3.4 | 0.03 / 0.03 | 2 % |
+| openml_climate | 0.0055 | 3.72 (0.97–14.5) | 0.38 | 0.16 | 51 % / 83 % | 33 % | 0.88 / 0.24 | 0.59 / misspecified | 21 % |
+| openml_ionosphere | 0.0424 | 0.38 (0.13–1.06) | 0.20 | 0.04 | 87 % / 61 % | 38 % | 0.11 / 0.29 | misspecified / misspecified | 24 % |
+| openml_sonar | 0.0464 | 0.29 (0.07–2.16) | 0.24 | 0.05 | 80 % / 65 % | 53 % | 0.18 / 0.62 | misspecified / 0.75 | 5 % |
+| openml_wdbc | 0.0167 | 0.09 (0.04–1.45) | 0.25 | 0.01 | 95 % / 80 % | 71 % | 0.11 / 1.2 | misspecified / 0.97 | 5 % |
+| openml_credit_approval | 0.0146 | 0.20 (0.06–1.11) | 0.27 | 0.03 | 98 % / 58 % | 35 % | 0.08 / 0.38 | misspecified / misspecified | 7 % |
+| openml_breast_w | 0.0062 | 0.037 (0.02–1.16) | 0.60 | 0.006 | 99 % / 74 % | 74 % | 0.13 / 3.5 | misspecified / 1.06 | 6 % |
 
 **Notes on the table:**
 - **Misspecified** means the assumed noise sd is at least the observed increment sd, so a node-level forecaster has no prior variance to work with. No value is reported in that case.
+- **Edit-dependent noise.** The noise of one paired comparison varies across a node's five standard edits by a factor of 2 on digits and 8–125 on the other nodes (range column). The review attributes the low end to small `C` and `class_weight` edits and the high end to `model_type` edits. One node-level unit therefore brackets the noise rather than measuring it, and the increments are a zero-inflated mixture.
 - **Robust sd.** It is degenerate (MAD = 0) on the nodes with more than 50 % exact zeros.
 - **Failure categories.** `invalid_config` on the OpenML nodes; `proposal_precondition_failed` on digits, tabular and wdbc (4).
 
@@ -128,60 +137,68 @@ Every campaign executes and keeps trial 1 unconditionally, because there is no i
 
 ## 4. What the census shows (revised)
 
-1. **Stakes on the CPU nodes are small once the trial-1 artefact is set aside.**
-   - The OpenML nodes keep increments of a median 0.08–0.18 σ_d. C1's decision regret is 0.006–0.16 σ_d, and E1b's naive oracle headroom is at most 0.16 σ_d.
-   - Under memory `none`, 89–100 % of OpenML campaigns keep nothing after trial 1.
-   - On digits/tabular, the campaigns' net audited gain over the start is about 1–2 σ_node; the rest is recovery.
+1. **Stakes.**
+   - **OpenML nodes other than climate:** small. Kept increments are a median 0.08–0.18 σ_d; C1's decision regret is 0.006–0.05 σ_d; E1b's naive oracle headroom on ionosphere is at most 0.02 σ_d (on digits 0.16 σ_d). Under memory `none`, 89–100 % of OpenML campaigns keep nothing after trial 1.
+   - **openml_climate:** kept increments 0.88 σ_d, but 21 % failed_invalid and the noisiest edits (up to 14.5 σ_d).
+   - **digits/tabular:** confounded. The net audited gain over the start (1.7 and 0.8 σ_node) comes from campaigns that spent their budget recovering from trial 1. It is a lower bound for a guarded loop, not a stakes measurement.
 2. **The largest observable effects are loop-design artefacts, not sequential control:**
    - the unconditional trial-1 keep: a drop of 35–84 σ_node, then recovery;
    - duplicate proposals: 80–85 % under `none`, 33–55 % under `append_only_summary`.
 
    Both are first-order. Paper B's rule layer already skips duplicates at no run cost; the cost is in LLM calls and proposal slots.
 3. **E1 (screening).**
-   - **digits/tabular:** inert. Price / V\* is 0.02–0.03 under every noise assumption.
-   - **OpenML nodes:** the round-1 "∞" was an artefact of assuming 1 σ_d of noise.
-     - With C1's paired noise, price / V\* is 0.55–2.4 on five nodes, inside a two-sided band (0.3–3) where screening can matter. Climate is misspecified under paired noise.
-     - So E1 is formally decision-relevant there, but at Track S's arbitrary price of 0.1 σ_d and with tiny stakes.
-     - Per-proposal discrimination is still not measurable without Paper B's C3 belief.
+   - **digits/tabular:** inert. Price / V\* is 0.02–0.04 under every noise assumption, including A2-U's (0.037 / 0.024).
+   - **OpenML nodes: not determinable from node-level fits.**
+     - With the material-edit unit (σ_d), five of the six nodes are misspecified. With the all-edit unit, three are (credit_approval, ionosphere, climate) and the other three give 0.75–1.06.
+     - The answer depends on the unit. The noise depends on the edit, and the increments are zero-inflated, so a normal node-level forecaster does not describe them.
+     - Settling E1 there needs a per-proposal forecaster (Paper B's C3 belief) and a declared real run price. Track S's 0.1 σ is arbitrary.
+     - Revision 1's "inside the band on five nodes" is withdrawn.
 4. **E2 (acceptance).**
-   - **digits/tabular:** with Track S audits, false keeps are 0–1.5 % and missed keeps 8–17 %. Most digits misses are ties worth about 0.4 σ. The C3 pilot disagrees (18–33 % false keeps), and both carry caveats. In comparison-noise units, 20–25 % of keep decisions are near the margin.
-   - **OpenML:** in paired units, 35–74 % of comparisons are within ±0.5 of the noise; single-seed sign flips are 20–60 % on C1's standard edits. But the stakes are 0.1 σ_d per keep, and campaigns rarely keep anything.
-   - The round-1 claim that "acceptance is largely a draw on noise" is withdrawn as stated. Decisions there are often wrong, but cheap to get wrong.
+   - **digits/tabular:**
+     - With Track S audits, false keeps are 0–1.5 % and missed keeps 8–17 %. Most digits misses are ties worth about 0.4 σ.
+     - The C3 pilot disagrees (18–33 % false keeps), and both carry caveats.
+     - In comparison-noise units, 20–25 % of keep decisions are near the margin.
+   - **OpenML:**
+     - 58–83 % of comparisons lie within ±0.5 of the all-edit paired noise, and single-seed sign flips are 20–60 % on C1's standard edits.
+     - On climate, ionosphere, credit_approval and sonar, the median kept increment is 0.24–0.62 of the all-edit paired noise, i.e. **inside the noise**. On wdbc (1.2) and breast_w (3.5) it is above that median, but those nodes have 71–74 % exact zeros and edit-dependent noise.
+     - Revision 1's withdrawal of "keeps inside the noise" is reversed for those four nodes.
+     - The stakes reading stands: each keep is worth about 0.1 σ_d, and campaigns rarely keep anything. Acceptance there is often wrong, but cheap to get wrong.
 5. **Incumbent interaction.**
-   - On digits and tabular, the S1.1 factorials find pairwise interactions of 0.5–2.6 σ_node, all with CIs excluding 0. This is the one non-myopic channel the census measures directly.
+   - On digits and tabular, the S1.1 factorials find 2×2 interactions among standard edits of 0.5–1.4 σ_d (digits 0.86, −0.54, 1.24 σ_d; tabular 0.74, −0.75, 1.37 σ_d). All CIs exclude 0, and the sizes are comparable to main effects.
+   - This shows that the mechanism exists at main-effect scale. Its value to a controller over a campaign is unmeasured.
    - On breast_w, `max_iter` has no effect at all, which explains its exact zeros.
 6. **Budget.** It binds at W ≤ 12 on the Track S nodes. Its shadow price is undefined while proposals are indistinguishable. Budget is a price for verify, not a channel by itself.
 7. **Selection caveat.** The OpenML nodes entered Paper B's pool through D21's "P(wrong) ≥ 0.10" rule, so the noisy-regime finding is partly true by construction.
 
-## 5. Placement on the headroom map
+## 5. Placement on the headroom map (one unit per row: σ_d, except the Track S comparison-noise share)
 
-| Node | E1: price / V\* (paired noise) | E2: near-margin share (noise unit) | Stakes: kept increment, median | Measured interaction | Main caveat |
+| Node | E1: price / V\* | E2: near-margin share | Stakes: kept increment, median | Interaction (S1.1) | Main caveat |
 |---|---|---|---|---|---|
-| digits_mlp | 0.02 (inert) | 20 % (comparison noise) | 2.1 σ_d; net campaign gain ≈ 1.7 σ_node | yes, 0.5–1.2 σ | trial-1 artefact; keep quality disputed (Track S vs C3 pilot) |
-| tabular_mlp | 0.03 (inert) | 25 % (comparison noise) | 1.9 σ_d; net ≈ 0.8 σ_node | yes, 1.4–2.6 σ | same |
-| openml_ionosphere | 2.2 (in band) | 48 % (paired) | 0.11 σ_d | not measured | low stakes; 24 % invalid |
-| openml_credit_approval | 2.4 (in band) | 35 % (paired) | 0.08 σ_d | not measured | low stakes |
-| openml_sonar | 0.55 (in band) | 53 % | 0.18 σ_d | not measured | low stakes; 53 % exact zeros |
-| openml_wdbc | 0.90 (in band) | 71 % | 0.11 σ_d | not measured | 71 % exact zeros |
-| openml_breast_w | 1.0 (in band) | 74 % | 0.13 σ_d | none (max_iter inert) | 74 % exact zeros |
-| openml_climate | misspecified | 64 % | 0.88 σ_d | not measured | 21 % invalid; paired noise above observed spread |
+| digits_mlp | 0.02–0.04 (inert) | 20 % (Track S comparison noise) | 2.1 σ_d; net campaign gain ≈ 1.7 σ_d | exists, 0.5–1.2 σ_d | trial-1 artefact; keep quality disputed (Track S vs C3 pilot) |
+| tabular_mlp | 0.02–0.04 (inert) | 25 % (Track S comparison noise) | 1.9 σ_d; net ≈ 0.4 σ_d | exists, 0.7–1.4 σ_d | same |
+| openml_ionosphere | not determinable (misspecified in both units) | 61 % (all-edit) | 0.11 σ_d (0.29 of all-edit noise) | not measured | low stakes; 24 % invalid |
+| openml_credit_approval | not determinable (misspecified in both units) | 58 % | 0.08 σ_d (0.38) | not measured | low stakes |
+| openml_sonar | not determinable (σ_d misspecified; all-edit 0.75) | 65 % | 0.18 σ_d (0.62) | not measured | low stakes; 53 % exact zeros |
+| openml_wdbc | not determinable (σ_d misspecified; all-edit 0.97) | 80 % | 0.11 σ_d (1.2) | not measured | 71 % exact zeros |
+| openml_breast_w | not determinable (σ_d misspecified; all-edit 1.06) | 74 % | 0.13 σ_d (3.5) | none (`max_iter` inert) | 74 % exact zeros |
+| openml_climate | not determinable (σ_d 0.59; all-edit misspecified) | 83 % | 0.88 σ_d (0.24) | not measured | 21 % invalid; edit noise up to 14.5 σ_d |
 
 ## 6. Proposal for the author (revised; the choice is the author's)
 
 1. **No confirmatory node choice yet.** The census cannot rank the nodes for sequential headroom. The two regimes fail in opposite ways:
-   - digits/tabular have stakes, but those are confounded by the trial-1 artefact and keep quality is disputed;
-   - the OpenML nodes have hard decisions with almost no stakes.
-2. **Measure before collecting**, on CPU, cheaply, on a Paper C seed block. Both steps can share the audit runs; part 1 overlaps with Paper B's B.2.
+   - digits/tabular may have stakes, but they are confounded by the trial-1 artefact and keep quality is disputed;
+   - the OpenML nodes have hard decisions, with kept increments inside the noise and almost no stakes.
+2. **Measure before collecting**, on CPU, cheaply, on a Paper C seed block. Both steps can share the audit runs; part (a) overlaps with Paper B's B.2.
    - **(a)** Fresh-seed audits of sweep-1 keeps and final incumbents on digits, tabular, credit_approval and ionosphere. This turns the inferred keep quality into measured false-keep and missed-keep rates and a measured winner's curse.
    - **(b)** A small run with a **guarded first acceptance**, comparing trial 1 with the start configuration, on digits and tabular, to remove the trial-1 artefact before judging E2 there.
-3. **Channel priority for the core (A):**
-   - **incumbent interaction:** measured on digits/tabular; E-SYN gets the interaction world first;
+3. **Channel candidates for the core (A); the order is a proposal:**
+   - **incumbent interaction:** the mechanism exists on digits/tabular, but its control value is unmeasured. E-SYN gets the interaction world first, so the control value can be bounded in simulation before any collection;
    - **acceptance under noise** with verify / re-audit, judged with stakes, not only near-margin mass;
    - **E1 on OpenML** only with a per-proposal forecaster and a declared real run price.
-4. **Raise the priority of the GPU tier (B).** The CPU stakes are small. A T1 census (HoreKa / HTCondor) is the next source that can show headroom.
+4. **Raise the priority of the GPU tier (B).** On the OpenML nodes the stakes are small, and on digits/tabular they are confounded. A T1 census (HoreKa / HTCondor) is the next source that can show headroom.
 5. **Thresholds, proposed:**
-   - E1 relevance is a two-sided band, 0.3 ≤ price / V\* ≤ 3, under the deployed forecaster and a declared real price;
-   - E2 relevance needs both near-margin share ≥ 0.10 in the node's own noise unit **and** a stakes floor, for example a median kept increment ≥ 0.5 σ_d or decision regret ≥ 0.1 σ_d.
+   - E1 relevance is a two-sided band, 0.3 ≤ price / V\* ≤ 3, under the deployed per-proposal forecaster and a declared real price; node-level fits do not qualify;
+   - E2 relevance needs both near-margin share ≥ 0.10 in the node's own paired-noise unit, stated per edit class where the noise is edit-dependent, **and** a stakes floor, for example a median kept increment ≥ 0.5 σ_d or decision regret ≥ 0.1 σ_d.
 6. **Steering (C) and loop design:**
    - duplicate load is 80 % without memory and about 40 % with summary memory;
    - the trial-1 keep is first-order;

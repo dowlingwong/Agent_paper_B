@@ -140,7 +140,11 @@
         "flip_emp_mean": 0.14,
         "material_share": 1.0,
         "n_edits": 5,
-        "paired_sd": 0.0045
+        "paired_sd": 0.00661,
+        "paired_sd_material": 0.00661,
+        "paired_sd_max": 0.01102,
+        "paired_sd_min": 0.00531,
+        "start_seed_sd": 0.01022
       },
       "openml_breast_w": {
         "campaign_wrong_share": 0.6,
@@ -149,7 +153,11 @@
         "flip_emp_mean": 0.6,
         "material_share": 0.4,
         "n_edits": 5,
-        "paired_sd": 1e-05
+        "paired_sd": 0.00023,
+        "paired_sd_material": 0.00624,
+        "paired_sd_max": 0.00725,
+        "paired_sd_min": 0.00014,
+        "start_seed_sd": 0.00394
       },
       "openml_climate": {
         "campaign_wrong_share": 0.2,
@@ -158,7 +166,11 @@
         "flip_emp_mean": 0.37778,
         "material_share": 0.6,
         "n_edits": 5,
-        "paired_sd": 0.01062
+        "paired_sd": 0.02036,
+        "paired_sd_material": 0.00547,
+        "paired_sd_max": 0.07937,
+        "paired_sd_min": 0.00529,
+        "start_seed_sd": 0.03994
       },
       "openml_credit_approval": {
         "campaign_wrong_share": 0.2,
@@ -167,7 +179,11 @@
         "flip_emp_mean": 0.26667,
         "material_share": 0.4,
         "n_edits": 5,
-        "paired_sd": 0.0003
+        "paired_sd": 0.00297,
+        "paired_sd_material": 0.01462,
+        "paired_sd_max": 0.0162,
+        "paired_sd_min": 0.00084,
+        "start_seed_sd": 0.02789
       },
       "openml_ionosphere": {
         "campaign_wrong_share": 0.2,
@@ -176,7 +192,11 @@
         "flip_emp_mean": 0.2,
         "material_share": 0.4,
         "n_edits": 5,
-        "paired_sd": 0.00621
+        "paired_sd": 0.01596,
+        "paired_sd_material": 0.04237,
+        "paired_sd_max": 0.04486,
+        "paired_sd_min": 0.00569,
+        "start_seed_sd": 0.041
       },
       "openml_sonar": {
         "campaign_wrong_share": 0.0,
@@ -185,7 +205,11 @@
         "flip_emp_mean": 0.24444,
         "material_share": 0.6,
         "n_edits": 5,
-        "paired_sd": 0.00272
+        "paired_sd": 0.01366,
+        "paired_sd_material": 0.04639,
+        "paired_sd_max": 0.10023,
+        "paired_sd_min": 0.0034,
+        "start_seed_sd": 0.06136
       },
       "openml_wdbc": {
         "campaign_wrong_share": 0.0,
@@ -194,7 +218,11 @@
         "flip_emp_mean": 0.25,
         "material_share": 0.4,
         "n_edits": 5,
-        "paired_sd": 0.0002
+        "paired_sd": 0.0015,
+        "paired_sd_material": 0.01671,
+        "paired_sd_max": 0.02428,
+        "paired_sd_min": 0.00061,
+        "start_seed_sd": 0.00921
       },
       "tabular_mlp": {
         "campaign_wrong_share": 0.0,
@@ -203,7 +231,11 @@
         "flip_emp_mean": 0.11111,
         "material_share": 0.6,
         "n_edits": 5,
-        "paired_sd": 0.00031
+        "paired_sd": 0.00193,
+        "paired_sd_material": 0.00356,
+        "paired_sd_max": 0.00625,
+        "paired_sd_min": 5e-05,
+        "start_seed_sd": 0.01209
       }
     },
     "c3_audit_pilot": {
@@ -350,25 +382,26 @@
           "status": "ok",
           "v_star": 4.5045
         },
-        "node_level_noise_paired": {
-          "noise_sd": 0.6799,
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 1.0,
           "observed_sd": 11.248,
           "price_over_v_star": 0.022,
           "status": "ok",
-          "v_star": 4.5236
+          "v_star": 4.5045
         },
         "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
-        "price_sigma": 0.1
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
       },
       "e2": {
         "exact_zero_share": 0.074,
         "increment_robust_sd_sigma_d": 3.747,
         "increment_sd_sigma_d": 11.248,
         "keep_share": 0.502,
-        "kept_increment_median_paired": 3.098,
+        "kept_increment_median_paired_all_edits": 2.106,
         "kept_increment_median_sigma_d": 2.106,
         "n_comparisons": 269,
-        "near_zero_share_paired": 0.074,
+        "near_zero_share_paired_all_edits": 0.182,
         "near_zero_share_sigma_d": 0.182
       },
       "incumbent": {
@@ -378,7 +411,12 @@
         "c1_campaign_wrong_share": 0.0,
         "c1_decision_regret_median_sigma_d": 0.137,
         "c1_flip_emp_mean": 0.14,
-        "c1_paired_sd_sigma_d": 0.6799,
+        "c1_paired_sd_all_edits_sigma_d": 1.0,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.803,
+          1.667
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
         "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
       },
       "n_campaigns": 36,
@@ -410,7 +448,9 @@
         "tail_share": 0.39
       },
       "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
         "recorded_gain_after_trial1_median_sigma_d": 13.478,
+        "start_config_seed_sd_sigma_d": 1.546,
         "trial1_minus_c1_default_median_sigma_d": -9.898
       }
     },
@@ -425,25 +465,26 @@
           "observed_sd": 0.245,
           "status": "misspecified (observed sd <= noise sd)"
         },
-        "node_level_noise_paired": {
-          "noise_sd": 0.002,
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.0367,
           "observed_sd": 0.245,
-          "price_over_v_star": 1.035,
+          "price_over_v_star": 1.059,
           "status": "ok",
-          "v_star": 0.0966
+          "v_star": 0.0944
         },
         "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
-        "price_sigma": 0.1
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
       },
       "e2": {
         "exact_zero_share": 0.743,
         "increment_robust_sd_sigma_d": "degenerate (MAD = 0)",
         "increment_sd_sigma_d": 0.245,
         "keep_share": 0.117,
-        "kept_increment_median_paired": 65.413,
+        "kept_increment_median_paired_all_edits": 3.517,
         "kept_increment_median_sigma_d": 0.129,
         "n_comparisons": 222,
-        "near_zero_share_paired": 0.743,
+        "near_zero_share_paired_all_edits": 0.743,
         "near_zero_share_sigma_d": 0.986
       },
       "incumbent": {
@@ -453,7 +494,12 @@
         "c1_campaign_wrong_share": 0.6,
         "c1_decision_regret_median_sigma_d": 0.006,
         "c1_flip_emp_mean": 0.6,
-        "c1_paired_sd_sigma_d": 0.002,
+        "c1_paired_sd_all_edits_sigma_d": 0.0367,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.022,
+          1.161
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
         "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
       },
       "n_campaigns": 36,
@@ -485,7 +531,9 @@
         "tail_share": 0.0
       },
       "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
         "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 0.632,
         "trial1_minus_c1_default_median_sigma_d": 0.452
       }
     },
@@ -502,23 +550,24 @@
           "status": "ok",
           "v_star": 0.1687
         },
-        "node_level_noise_paired": {
-          "noise_sd": 1.9416,
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 3.7209,
           "observed_sd": 1.554,
           "status": "misspecified (observed sd <= noise sd)"
         },
         "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
-        "price_sigma": 0.1
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
       },
       "e2": {
         "exact_zero_share": 0.331,
         "increment_robust_sd_sigma_d": 0.523,
         "increment_sd_sigma_d": 1.554,
         "keep_share": 0.138,
-        "kept_increment_median_paired": 0.454,
+        "kept_increment_median_paired_all_edits": 0.237,
         "kept_increment_median_sigma_d": 0.882,
         "n_comparisons": 160,
-        "near_zero_share_paired": 0.637,
+        "near_zero_share_paired_all_edits": 0.825,
         "near_zero_share_sigma_d": 0.512
       },
       "incumbent": {
@@ -528,7 +577,12 @@
         "c1_campaign_wrong_share": 0.2,
         "c1_decision_regret_median_sigma_d": 0.156,
         "c1_flip_emp_mean": 0.378,
-        "c1_paired_sd_sigma_d": 1.9416,
+        "c1_paired_sd_all_edits_sigma_d": 3.7209,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.966,
+          14.506
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
         "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
       },
       "n_campaigns": 36,
@@ -560,7 +614,9 @@
         "tail_share": 0.031
       },
       "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
         "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 7.299,
         "trial1_minus_c1_default_median_sigma_d": -0.706
       }
     },
@@ -575,25 +631,24 @@
           "observed_sd": 0.174,
           "status": "misspecified (observed sd <= noise sd)"
         },
-        "node_level_noise_paired": {
-          "noise_sd": 0.0208,
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.203,
           "observed_sd": 0.174,
-          "price_over_v_star": 2.434,
-          "status": "ok",
-          "v_star": 0.0411
+          "status": "misspecified (observed sd <= noise sd)"
         },
         "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
-        "price_sigma": 0.1
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
       },
       "e2": {
         "exact_zero_share": 0.35,
         "increment_robust_sd_sigma_d": 0.076,
         "increment_sd_sigma_d": 0.174,
         "keep_share": 0.204,
-        "kept_increment_median_paired": 3.69,
+        "kept_increment_median_paired_all_edits": 0.379,
         "kept_increment_median_sigma_d": 0.077,
         "n_comparisons": 157,
-        "near_zero_share_paired": 0.35,
+        "near_zero_share_paired_all_edits": 0.58,
         "near_zero_share_sigma_d": 0.975
       },
       "incumbent": {
@@ -603,7 +658,12 @@
         "c1_campaign_wrong_share": 0.2,
         "c1_decision_regret_median_sigma_d": 0.032,
         "c1_flip_emp_mean": 0.267,
-        "c1_paired_sd_sigma_d": 0.0208,
+        "c1_paired_sd_all_edits_sigma_d": 0.203,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.058,
+          1.109
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
         "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
       },
       "n_campaigns": 36,
@@ -635,7 +695,9 @@
         "tail_share": 0.0
       },
       "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
         "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 1.908,
         "trial1_minus_c1_default_median_sigma_d": 1.513
       }
     },
@@ -650,25 +712,24 @@
           "observed_sd": 0.336,
           "status": "misspecified (observed sd <= noise sd)"
         },
-        "node_level_noise_paired": {
-          "noise_sd": 0.1465,
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.3767,
           "observed_sd": 0.336,
-          "price_over_v_star": 2.203,
-          "status": "ok",
-          "v_star": 0.0454
+          "status": "misspecified (observed sd <= noise sd)"
         },
         "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
-        "price_sigma": 0.1
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
       },
       "e2": {
         "exact_zero_share": 0.379,
         "increment_robust_sd_sigma_d": 0.162,
         "increment_sd_sigma_d": 0.336,
         "keep_share": 0.149,
-        "kept_increment_median_paired": 0.748,
+        "kept_increment_median_paired_all_edits": 0.291,
         "kept_increment_median_sigma_d": 0.11,
         "n_comparisons": 161,
-        "near_zero_share_paired": 0.478,
+        "near_zero_share_paired_all_edits": 0.609,
         "near_zero_share_sigma_d": 0.87
       },
       "incumbent": {
@@ -678,7 +739,12 @@
         "c1_campaign_wrong_share": 0.2,
         "c1_decision_regret_median_sigma_d": 0.037,
         "c1_flip_emp_mean": 0.2,
-        "c1_paired_sd_sigma_d": 0.1465,
+        "c1_paired_sd_all_edits_sigma_d": 0.3767,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.134,
+          1.059
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
         "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
       },
       "n_campaigns": 36,
@@ -710,7 +776,9 @@
         "tail_share": 0.0
       },
       "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
         "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 0.968,
         "trial1_minus_c1_default_median_sigma_d": -1.425
       }
     },
@@ -725,25 +793,26 @@
           "observed_sd": 0.658,
           "status": "misspecified (observed sd <= noise sd)"
         },
-        "node_level_noise_paired": {
-          "noise_sd": 0.0585,
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.2945,
           "observed_sd": 0.658,
-          "price_over_v_star": 0.552,
+          "price_over_v_star": 0.752,
           "status": "ok",
-          "v_star": 0.1811
+          "v_star": 0.1329
         },
         "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
-        "price_sigma": 0.1
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
       },
       "e2": {
         "exact_zero_share": 0.526,
         "increment_robust_sd_sigma_d": "degenerate (MAD = 0)",
         "increment_sd_sigma_d": 0.658,
         "keep_share": 0.153,
-        "kept_increment_median_paired": 3.095,
+        "kept_increment_median_paired_all_edits": 0.615,
         "kept_increment_median_sigma_d": 0.181,
         "n_comparisons": 215,
-        "near_zero_share_paired": 0.526,
+        "near_zero_share_paired_all_edits": 0.647,
         "near_zero_share_sigma_d": 0.795
       },
       "incumbent": {
@@ -753,7 +822,12 @@
         "c1_campaign_wrong_share": 0.0,
         "c1_decision_regret_median_sigma_d": 0.046,
         "c1_flip_emp_mean": 0.244,
-        "c1_paired_sd_sigma_d": 0.0585,
+        "c1_paired_sd_all_edits_sigma_d": 0.2945,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.073,
+          2.16
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
         "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
       },
       "n_campaigns": 36,
@@ -785,7 +859,9 @@
         "tail_share": 0.0
       },
       "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
         "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 1.323,
         "trial1_minus_c1_default_median_sigma_d": 2.355
       }
     },
@@ -800,25 +876,26 @@
           "observed_sd": 0.377,
           "status": "misspecified (observed sd <= noise sd)"
         },
-        "node_level_noise_paired": {
-          "noise_sd": 0.0119,
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.09,
           "observed_sd": 0.377,
-          "price_over_v_star": 0.901,
+          "price_over_v_star": 0.973,
           "status": "ok",
-          "v_star": 0.111
+          "v_star": 0.1028
         },
         "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
-        "price_sigma": 0.1
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
       },
       "e2": {
         "exact_zero_share": 0.707,
         "increment_robust_sd_sigma_d": "degenerate (MAD = 0)",
         "increment_sd_sigma_d": 0.377,
         "keep_share": 0.075,
-        "kept_increment_median_paired": 8.891,
+        "kept_increment_median_paired_all_edits": 1.176,
         "kept_increment_median_sigma_d": 0.106,
         "n_comparisons": 239,
-        "near_zero_share_paired": 0.707,
+        "near_zero_share_paired_all_edits": 0.795,
         "near_zero_share_sigma_d": 0.946
       },
       "incumbent": {
@@ -828,7 +905,12 @@
         "c1_campaign_wrong_share": 0.0,
         "c1_decision_regret_median_sigma_d": 0.014,
         "c1_flip_emp_mean": 0.25,
-        "c1_paired_sd_sigma_d": 0.0119,
+        "c1_paired_sd_all_edits_sigma_d": 0.09,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.037,
+          1.453
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
         "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
       },
       "n_campaigns": 36,
@@ -860,7 +942,9 @@
         "tail_share": 0.0
       },
       "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
         "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 0.551,
         "trial1_minus_c1_default_median_sigma_d": -0.053
       }
     },
@@ -877,25 +961,26 @@
           "status": "ok",
           "v_star": 3.3328
         },
-        "node_level_noise_paired": {
-          "noise_sd": 0.0868,
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.5428,
           "observed_sd": 10.701,
           "price_over_v_star": 0.03,
           "status": "ok",
-          "v_star": 3.3692
+          "v_star": 3.3587
         },
         "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
-        "price_sigma": 0.1
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
       },
       "e2": {
         "exact_zero_share": 0.0,
         "increment_robust_sd_sigma_d": 4.803,
         "increment_sd_sigma_d": 10.701,
         "keep_share": 0.45,
-        "kept_increment_median_paired": 21.421,
+        "kept_increment_median_paired_all_edits": 3.427,
         "kept_increment_median_sigma_d": 1.86,
         "n_comparisons": 258,
-        "near_zero_share_paired": 0.008,
+        "near_zero_share_paired_all_edits": 0.066,
         "near_zero_share_sigma_d": 0.12
       },
       "incumbent": {
@@ -905,7 +990,12 @@
         "c1_campaign_wrong_share": 0.0,
         "c1_decision_regret_median_sigma_d": 0.017,
         "c1_flip_emp_mean": 0.111,
-        "c1_paired_sd_sigma_d": 0.0868,
+        "c1_paired_sd_all_edits_sigma_d": 0.5428,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.014,
+          1.754
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
         "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
       },
       "n_campaigns": 36,
@@ -937,7 +1027,9 @@
         "tail_share": 0.45
       },
       "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
         "recorded_gain_after_trial1_median_sigma_d": 9.382,
+        "start_config_seed_sd_sigma_d": 3.396,
         "trial1_minus_c1_default_median_sigma_d": -11.895
       }
     }
@@ -1041,7 +1133,9 @@
           -46.763,
           -34.861
         ],
+        "independence_note": "S0.5 static roots repeat the a2u roots' actions and y_terminal (S0.5 summary section 4), so fewer campaigns are distinct than listed",
         "n_campaigns": 60,
+        "n_distinct_outcomes": 35,
         "net_terminal_minus_start_median_sigma": 1.688,
         "note": "recorded gains after trial 1 are mostly recoveries of the trial-1 drop"
       }
@@ -1144,7 +1238,9 @@
           -83.953,
           -43.847
         ],
+        "independence_note": "S0.5 static roots repeat the a2u roots' actions and y_terminal (S0.5 summary section 4), so fewer campaigns are distinct than listed",
         "n_campaigns": 60,
+        "n_distinct_outcomes": 33,
         "net_terminal_minus_start_median_sigma": 0.813,
         "note": "recorded gains after trial 1 are mostly recoveries of the trial-1 drop"
       }

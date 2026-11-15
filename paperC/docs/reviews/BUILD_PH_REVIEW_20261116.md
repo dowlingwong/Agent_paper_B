@@ -223,3 +223,146 @@ undefined.
   measurement sd of 1 σ_d is the wrong unit for fixed-seed paired differences (findings 3 and 4).
 
 Verdict: NOT ACCEPTED
+
+---
+
+# Round 2 (16 Nov 2026)
+
+Reviewed `41a9205`: the response table `BUILD_PH_RESPONSE_R1_20261116.md`, `census.py` (schema `paperc_census/v2`),
+`test_census.py`, `census_v1.json`, and the rewritten report.
+
+## What I checked
+
+**Commands:**
+- The full test suite: 89 passed.
+- `python -m paperc.census` then `git diff --stat`: no diff.
+
+**Re-runs.** I re-ran my round-1 scripts on the pinned data. These outputs all equal the v2 JSON:
+- `join2` and `s05rule`: 0 logged-action mismatches; false and missed keeps; S0.5-rule flips 0 / 4;
+- `curse` and `perkeep`;
+- `trial1`: pooled over 60 roots per node, drop medians −41.3 / −63.0 σ and net +1.69 / +0.81 σ;
+- `tails`;
+- `bymode` and `quant`: per-mode duplicates, comparisons, keeps per campaign and campaigns without keeps; kept-increment
+  medians.
+
+**Other sources.** C3 pilot counts, E1b contrasts (`always_verify − rho`, `oracle_naive − rho`, divided by σ_d) and
+S1.1 interactions all match the JSON.
+
+**Report vs JSON.** I checked every number in report §1–§5 against `census_v1.json`. All match up to rounding: the
+§2 trial-1 table, the §3.1 Track S table, the §3.2 sweep/C1 table, the per-mode table, §3.3, §4 and §5.
+
+**Inputs.** The §7 object ids agree with `git rev-parse` on the files I sampled: digits S0.4 rows, tabular S0.5
+roots, tabular S1.1, the C1 composite, the `none` ledger tree, the E1b vary analysis and the C3 pilot audits.
+
+**C1 field definitions.** I read `r1/noise/e1_report.py` @ `10742f8`. I also recomputed ionosphere's five edits from
+the C1 common run's `runs.jsonl`: sd(d) equals the logged `sd_joint` (0.01399 for the first edit) while the c0 seed
+sd is 0.0410.
+
+**Status of the round-1 findings:**
+- **Resolved:** 2, 5, 6, 7, 8, 9, 10, 11 and 12.
+- **Resolved in structure:** 1 and 3. The sources are now read, and the band, the misspecified flag and `"inf"` are
+  in place. But the C1 numbers are computed in the wrong unit (R2-1).
+- **Finding 4:** the stakes part is resolved. The units part rested on my misreading of C1 (R2-1).
+
+**Corrections to my round 1:**
+- Finding 6: there are 11 ties among the digits missed keeps, not 10. The census is right.
+- Finding 4(a) and my suggested formula sd_joint·√(2(1 − ρ_joint)) were wrong; see R2-1.
+
+## Findings
+
+**R2-1. MAJOR — The C1 "paired sd" double-counts the pairing, so every "paired" number in v2 is in a wrong unit.**
+`census.py:18–21, 30–31, 245–256, 378–399`; `test_census.py` (`test_c1_paired_and_node_level_v_star`); report §3.2
+(paired columns), §4.3, §4.4, §5 columns 2–3.
+
+*Why it is wrong.*
+- In C1, the per-edit `sd_joint` already is the sd of the paired difference d_s = m(c_k, s) − m(c0, s) over 30 joint
+  seeds. Its docstring calls it "the noise of one paired comparison" (`e1_report.py`). `rho_joint` is the
+  correlation of the two configurations' metrics.
+- Multiplying `sd_joint` by √(2(1 − ρ)) therefore applies the pairing a second time. The result has no meaning. For
+  ionosphere edit 1 it gives 0.0041, against the true paired sd of 0.0140.
+- The executor took this formula from my round 1. The error is mine.
+- **σ_d is itself a paired unit.** On all 8 nodes, the sweep's σ_d equals exactly the median `sd_joint` over the
+  node's *material* edits. Track S's σ_node equals the median over *all* five edits; this is why tabular has σ_d =
+  1.87 σ_node. So the round-1 caveat, that σ_d is a configuration's seed sd, was also wrong.
+
+*What changes.* Taking instead the median `sd_joint` over all five C1 edits, the paired sd in σ_d units is:
+
+| Node | paired sd (σ_d) |
+|---|---|
+| digits_mlp | 1.00 |
+| tabular_mlp | 0.54 |
+| openml_climate | 3.72 |
+| openml_ionosphere | 0.38 |
+| openml_sonar | 0.29 |
+| openml_wdbc | 0.09 |
+| openml_credit_approval | 0.20 |
+| openml_breast_w | 0.037 |
+
+With that unit:
+- **Near-0 in paired units** becomes 0.58–0.82 on the OpenML nodes. In v2 it is 0.35–0.74, numerically just the
+  exact-zero share on four of them.
+- **Kept increment in paired units** becomes 0.38 on credit_approval, 0.29 on ionosphere, 0.62 on sonar, 0.24 on
+  climate, 1.2 on wdbc and 3.5 on breast_w. In v2 it is 0.45–65.
+- **Node-level price/V\*** becomes "misspecified" on credit_approval, ionosphere and climate, and 0.75 / 0.97 / 1.06
+  on sonar / wdbc / breast_w.
+- In σ_d, the material-edit unit, five OpenML nodes are misspecified.
+- So "inside the band on five nodes" (§4.3, §5) does not hold.
+- §4.4's withdrawal of "keeps inside the noise" is reversed on the two nodes round 1 proposed: there, kept increments
+  are below the paired noise. The low-stakes reading stands.
+
+*The noise is strongly edit-dependent.* On the OpenML nodes other than climate, `sd_joint` / σ_d is about 0.02–0.4
+for small C and `class_weight` edits, and about 0.55–2.2 for `model_type` edits. On climate the figures are 1.0–3.7
+and 9–15. The observed increments are a zero-inflated
+mixture. A single node-level unit, or a normal node-level forecaster, therefore cannot settle E1 there.
+
+*Fix:*
+- Use `sd_joint` directly.
+- State that σ_d is the median paired sd of material edits, and report the all-edit median as a bracket.
+- Regenerate the JSON and the §3.2 and §5 columns.
+- Rewrite §4.3 as "E1 on OpenML is not determinable from node-level fits (unit-dependent; zero-inflated
+  increments)", and §4.4 accordingly.
+- Correct the docstring and the fixture test.
+- Add a test that σ_d equals the median material-edit `sd_joint`.
+
+**R2-2. MINOR — "Stakes on the CPU nodes are small" over-generalises to digits and tabular.** Report §4.1 (line 131),
+§6.4 (line 181).
+- There, the net campaign gain (0.8–1.7 σ_node) is measured on campaigns that spent their budget recovering from
+  trial 1. It is confounded, a lower bound for a guarded loop, not a stakes measurement. §6.1 says this correctly.
+- "OpenML kept increments 0.08–0.18 σ_d" leaves out climate, at 0.88.
+
+*Fix:* limit "small stakes" to the OpenML nodes other than climate, and call the digits/tabular stakes confounded.
+
+**R2-3. MINOR — The incumbent-interaction priority rests on factorials of standard edits.** Report §4.5 (line 151),
+§6.3, §5 interaction column.
+- S1.1 shows that 2×2 interactions among standard edits exist (30 seeds) and are comparable to main effects.
+- It does not measure campaign-level headroom from exploiting them, so "the one non-myopic channel the census
+  measures directly" overstates it.
+- Units are mixed in §5. Tabular's interactions are in σ_node (0.0019) but its stakes are in σ_d (0.0036): 2.57 σ_node
+  is 1.37 σ_d.
+
+*Fix:* say that "the mechanism exists at main-effect scale; its control value is unmeasured", and use one unit per
+row.
+
+**R2-4. MINOR — Caveats missing from the trial-1 table.** Report §2.
+- **Independence.** "60 campaigns" per node includes 20 S0.5 static roots. Their action sequences and y_terminal are
+  identical to the a2u roots (S0.5 summary §4), so there are at most 40 distinct campaigns per node. The medians are
+  unaffected.
+- **Seeds.** The sweep row compares the trial-1 metric at instance seeds with the C1 default at the C1 default seed.
+  The start configuration's own seed sd is 1.55 σ_d on digits, 3.40 on tabular, and 0.55–7.3 on the OpenML nodes
+  (climate 7.3). The digits/tabular drop is still clear. The OpenML row (−1.4 … +2.4 σ_d) is within seed variation
+  and cannot show a trial-1 effect either way.
+
+*Fix:* add both caveats.
+
+**R2-5. MINOR — Small number mismatch.** §4.3 gives "0.02–0.03 under every noise assumption" for digits/tabular, but
+the A2-U price/V\* on digits is 0.037.
+
+*Fix:* write 0.02–0.04.
+
+## Verdict
+
+Everything else is now sound: the trial-1 artefact, keep-rule consistency, missed-keep magnitudes, the selection-bias
+measure, per-mode statistics, budget, inputs, adapters and tests. A round 3 can be narrow: R2-1, plus wording for
+R2-2 to R2-5.
+
+Verdict: NOT ACCEPTED

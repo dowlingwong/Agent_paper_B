@@ -16,9 +16,13 @@ Sources:
   instances x 20 runs, memory ``none`` and ``append_only_summary`` (reported per mode). Increments are fixed-seed
   ``delta_vs_best`` at the node default seed; no fresh audits exist (Paper B's B.2 has not run).
 * **C1 noise floor**: the D28 composite (``results/r1/noise/D28_REPAIR_20261027/summary.json`` @ ``10742f8``, the file
-  the sweep cites for sigma_d). Per edit: ``sd_joint``, ``rho_joint`` (seed correlation of candidate and baseline),
-  ``flip_emp`` (single-seed sign-flip rate), ``campaign_wrong``, ``decision_regret``. The **paired sd** of a fixed-seed
-  difference is ``sd_joint * sqrt(2 (1 - rho_joint))``, median over a node's edits.
+  the sweep cites for sigma_d). Per edit: ``sd_joint`` (sd over 30 joint seeds of the *paired* difference
+  m(c_k, s) - m(c0, s); ``r1/noise/e1_report.py``), ``rho_joint`` (seed correlation of the two configurations),
+  ``flip_emp`` (single-seed sign-flip rate), ``campaign_wrong``, ``decision_regret``; per node ``sigma_joint`` (the
+  start configuration's own seed sd). The sweep's **sigma_d is itself a paired unit**: it equals the median
+  ``sd_joint`` over the node's *material* edits (asserted by a test). The census also reports the median over *all*
+  edits as a bracket (the "paired" columns) and the per-edit range, because the noise depends strongly on the edit.
+  Track S's sigma_node is the median over all five edits.
 * **C3 audit pilot** (``results/r1/engineering/c3_audit_pilot_20261019T001338Z`` @ ``10742f8``): LLM proposals
   audited on 6 fresh seeds; random-selection rows give false / missed keep counts. Older harness, tiny sample.
 * **E1b pilots** (``results/r1/pilot/E1b_*/analysis.json`` @ ``10742f8``): verify vs continue contrasts and the naive
@@ -27,8 +31,8 @@ Sources:
 Not read: the B1/B2 exam campaigns (on TASL-7, not in the repository), sweep 2 and T1 data (do not exist), fresh
 audits of sweep 1 (do not exist).
 
-Units. Increments are reported in sigma_d (sweep) or sigma_node (Track S), **and** in a paired-noise unit: C1's paired
-sd for sweep 1, the robust sd of delta_hat - delta_audit for Track S. "Near" is within 0.5 of the unit.
+Units. Increments are reported in sigma_d (sweep) or sigma_node (Track S), **and** in a second noise unit: the median
+``sd_joint`` over all C1 edits for sweep 1 ("paired, all edits"), the robust sd of delta_hat - delta_audit for Track S. "Near" is within 0.5 of the unit.
 ``float('inf')`` is written as the string ``"inf"``; a node-level forecaster whose assumed noise is at least the
 observed increment sd is flagged ``misspecified`` instead of reporting a value; robust statistics with MAD = 0 are
 flagged ``degenerate``.
@@ -243,12 +247,17 @@ def parse_sweep_campaign(trials: list[dict]) -> dict:
 
 
 def c1_paired(node_rec: dict) -> dict:
+    """C1 per-node noise summary. ``sd_joint`` already is the sd of a paired difference; it is used as is."""
     eds = node_rec["edits"]
-    paired = [e["sd_joint"] * math.sqrt(max(2.0 * (1.0 - e["rho_joint"]), 0.0)) for e in eds
-              if e.get("rho_joint") is not None and e.get("sd_joint") is not None]
+    sds = [e["sd_joint"] for e in eds if e.get("sd_joint") is not None]
+    mat = [e["sd_joint"] for e in eds if e.get("sd_joint") is not None and e.get("material")]
     regrets = [e["decision_regret"] for e in eds if e.get("decision_regret") is not None]
     flips = [e["flip_emp"] for e in eds if e.get("flip_emp") is not None]
-    return {"paired_sd": float(np.median(paired)) if paired else float("nan"),
+    return {"paired_sd": float(np.median(sds)) if sds else float("nan"),
+            "paired_sd_material": float(np.median(mat)) if mat else float("nan"),
+            "paired_sd_min": float(min(sds)) if sds else float("nan"),
+            "paired_sd_max": float(max(sds)) if sds else float("nan"),
+            "start_seed_sd": node_rec.get("sigma_joint"),
             "flip_emp_mean": float(np.mean(flips)) if flips else float("nan"),
             "campaign_wrong_share": share([bool(e.get("campaign_wrong")) for e in eds]),
             "decision_regret_median": float(np.median(regrets)) if regrets else float("nan"),
@@ -350,7 +359,12 @@ def census_tracks(blobs: Blobs, node: str) -> NodeCensus:
     allr = [r for r in all5 + roots4 if r.get("y_after_trial1") is not None and r.get("y_start") is not None]
     drop = np.array([(r["y_after_trial1"] - r["y_start"]) / sig for r in allr])
     net = np.array([(r["y_terminal"] - r["y_start"]) / sig for r in allr if r.get("y_terminal") is not None])
-    c.trial1 = {"n_campaigns": len(allr), "drop_median_sigma": _r(np.median(drop)),
+    distinct = {(round(r["y_start"], 9), round(r["y_after_trial1"], 9), round(r.get("y_terminal") or 0.0, 9))
+                for r in allr}
+    c.trial1 = {"n_campaigns": len(allr), "n_distinct_outcomes": len(distinct),
+                "independence_note": "S0.5 static roots repeat the a2u roots' actions and y_terminal (S0.5 summary "
+                                     "section 4), so fewer campaigns are distinct than listed",
+                "drop_median_sigma": _r(np.median(drop)),
                 "drop_range_sigma": [_r(drop.min()), _r(drop.max())],
                 "net_terminal_minus_start_median_sigma": _r(np.median(net)),
                 "note": "recorded gains after trial 1 are mostly recoveries of the trial-1 drop"}
@@ -386,18 +400,26 @@ def census_sweep(blobs: Blobs, c1: dict) -> list[NodeCensus]:
                        "sweep manifest noise.sigma_d (D28 composite)", len(camps))
         c.e1 = {"price_sigma": PRICE_SIGMA,
                 "node_level_noise_1_sigma_d": node_level_v_star(comps, 1.0),
-                "node_level_noise_paired": node_level_v_star(comps, psd) if math.isfinite(psd) else None,
-                "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)"}
+                "node_level_noise_paired_all_edits": node_level_v_star(comps, psd) if math.isfinite(psd) else None,
+                "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+                "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 "
+                           "relevance is not determinable from them"}
         c.e2 = {"n_comparisons": len(comps),
                 "near_zero_share_sigma_d": _r(share(np.abs(comps) <= NEAR_BAND)),
-                "near_zero_share_paired": _r(share(np.abs(comps) <= NEAR_BAND * psd)) if math.isfinite(psd) else None,
+                "near_zero_share_paired_all_edits": _r(share(np.abs(comps) <= NEAR_BAND * psd)) if math.isfinite(psd) else None,
                 "exact_zero_share": _r(share(~nz)),
                 "keep_share": _r(len(kept) / len(comps) if len(comps) else float("nan")),
                 "kept_increment_median_sigma_d": _r(np.median(kept)) if len(kept) else None,
-                "kept_increment_median_paired": _r(np.median(kept) / psd) if len(kept) and psd > 0 else None,
+                "kept_increment_median_paired_all_edits": _r(np.median(kept) / psd) if len(kept) and psd > 0 else None,
                 "increment_sd_sigma_d": _r(np.std(comps, ddof=1)),
                 "increment_robust_sd_sigma_d": _r(rsd) if rsd > 0 else "degenerate (MAD = 0)"}
-        c.keep_quality = {"c1_paired_sd_sigma_d": _r(psd, 4), "c1_flip_emp_mean": _r(pnode.get("flip_emp_mean")),
+        c.keep_quality = {"c1_paired_sd_all_edits_sigma_d": _r(psd, 4),
+                          "c1_paired_sd_material_edits_sigma_d":
+                              _r(pnode.get("paired_sd_material", float("nan")) / sig, 4),
+                          "c1_paired_sd_edit_range_sigma_d":
+                              [_r(pnode.get("paired_sd_min", float("nan")) / sig, 3),
+                               _r(pnode.get("paired_sd_max", float("nan")) / sig, 3)],
+                          "c1_flip_emp_mean": _r(pnode.get("flip_emp_mean")),
                           "c1_campaign_wrong_share": _r(pnode.get("campaign_wrong_share")),
                           "c1_decision_regret_median_sigma_d":
                               _r(pnode.get("decision_regret_median", float("nan")) / sig),
@@ -407,7 +429,11 @@ def census_sweep(blobs: Blobs, c1: dict) -> list[NodeCensus]:
         t1 = np.array([(cp["trial1_metric"] - dm) / sig for cp in camps if cp["trial1_metric"] is not None and dm])
         gain = np.array([(cp["final_best"] - cp["trial1_metric"]) / sig for cp in camps
                          if cp["final_best"] is not None and cp["trial1_metric"] is not None])
+        ssd = pnode.get("start_seed_sd")
         c.trial1 = {"trial1_minus_c1_default_median_sigma_d": _r(np.median(t1)) if len(t1) else None,
+                    "start_config_seed_sd_sigma_d": _r(ssd / sig) if ssd else None,
+                    "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start "
+                            "configuration's own seed sd",
                     "recorded_gain_after_trial1_median_sigma_d": _r(np.median(gain)) if len(gain) else None}
         c.tails = {"failed_invalid_share": _r(sum(cp["invalid"] for cp in camps) / n_trials),
                    "tail_share": _r(share(np.abs(comps) > TAIL)),

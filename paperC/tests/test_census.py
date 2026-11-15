@@ -110,16 +110,25 @@ def test_join_keeps_and_logged_actions():
 
 
 def test_c1_paired_and_node_level_v_star():
-    rec = {"default_metric": 0.9, "edits": [
+    rec = {"default_metric": 0.9, "sigma_joint": 0.05, "edits": [
         {"sd_joint": 0.01, "rho_joint": 0.995, "flip_emp": 0.2, "campaign_wrong": True, "decision_regret": 0.001,
          "material": False},
         {"sd_joint": 0.02, "rho_joint": 0.98, "flip_emp": 0.4, "campaign_wrong": False, "decision_regret": 0.003,
          "material": True}]}
     p = C.c1_paired(rec)
-    assert math.isclose(p["paired_sd"], np.median([0.01 * math.sqrt(0.01), 0.02 * math.sqrt(0.04)]))
+    # sd_joint already is the sd of the paired difference: used as is, never rescaled by rho_joint
+    assert math.isclose(p["paired_sd"], 0.015) and math.isclose(p["paired_sd_material"], 0.02)
+    assert (p["paired_sd_min"], p["paired_sd_max"], p["start_seed_sd"]) == (0.01, 0.02, 0.05)
     assert math.isclose(p["flip_emp_mean"], 0.3) and p["campaign_wrong_share"] == 0.5
     small = np.random.default_rng(1).normal(0, 0.5, 200)
     assert C.node_level_v_star(small, 1.0)["status"].startswith("misspecified")
     ok = C.node_level_v_star(small, 0.1)
     assert ok["status"] == "ok" and ok["price_over_v_star"] != "inf"
     assert C._r(float("inf")) == "inf" and C._r(float("nan")) is None
+
+
+@needs_pins
+def test_sigma_d_is_the_material_edit_median_of_sd_joint(result):
+    """The sweep's sigma_d is C1's median paired sd over material edits (review PH R2-1)."""
+    for c in result["sweep"]:
+        assert math.isclose(c["keep_quality"]["c1_paired_sd_material_edits_sigma_d"], 1.0, abs_tol=1e-4), c["node"]
