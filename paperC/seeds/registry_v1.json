@@ -166,6 +166,16 @@
       "symbol": "INSTANCE_SEED_BLOCKS"
     },
     {
+      "hi": 37031,
+      "kind": "literal",
+      "lo": 37001,
+      "name": "tracks_s11_factorial",
+      "note": "",
+      "path": "r1/tracks/probes/s1_factorial.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "S11_SEEDS"
+    },
+    {
       "hi": 40000,
       "kind": "literal",
       "lo": 39000,
@@ -244,6 +254,46 @@
       "path": "r1/tracks/collect.py",
       "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
       "symbol": "AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 2000000,
+      "kind": "literal",
+      "lo": 1000000,
+      "name": "tracks_oracle_select",
+      "note": "synthetic-world campaign seeds (in memory)",
+      "path": "r1/tracks/oracle.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "ORACLE_SELECT_BASE + ORACLE_BLOCK_SIZE"
+    },
+    {
+      "hi": 3000000,
+      "kind": "literal",
+      "lo": 2000000,
+      "name": "tracks_oracle_eval",
+      "note": "synthetic-world campaign seeds (in memory)",
+      "path": "r1/tracks/oracle.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "ORACLE_EVAL_BASE + ORACLE_BLOCK_SIZE"
+    },
+    {
+      "hi": 20261020,
+      "kind": "literal",
+      "lo": 20261019,
+      "name": "rng_key_20261019",
+      "note": "RNG key, not a worker seed",
+      "path": null,
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "r1/c3/dataset.py:PLAN_SEED, r1/theory/t5_report.py:BASE_SEED"
+    },
+    {
+      "hi": 20261030,
+      "kind": "literal",
+      "lo": 20261029,
+      "name": "tracks_s11_boot_key",
+      "note": "bootstrap RNG key, not a worker seed",
+      "path": "r1/tracks/probes/s1_factorial.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "BOOT_SEED"
     }
   ],
   "paper_b_internal_overlaps": [],
@@ -269,11 +319,11 @@
       "symbol": null
     },
     {
-      "hi": 2000000,
+      "hi": 11000000,
       "kind": "proposal",
-      "lo": 1000000,
+      "lo": 10000000,
       "name": "paperc_audits",
-      "note": "fresh audit seeds; per-instance stride as in Track S",
+      "note": "fresh audit seeds; per-instance stride as in Track S (above Track S's oracle blocks, below the date-valued RNG keys)",
       "path": null,
       "ref": null,
       "symbol": null

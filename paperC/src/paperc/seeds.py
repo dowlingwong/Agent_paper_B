@@ -22,12 +22,18 @@ reserved conservatively; ``SEED_REGISTRY_CHECK_20261115.md`` lists them.
 Paper C's own blocks (``PAPER_C_BLOCKS``) are a proposal for the author; ``check_disjoint`` asserts that they
 intersect no Paper B block, with a margin.
 
+Completeness: ``scan_constants`` reads every module-level constant whose name contains SEED/SEEDS/_BASE(S) in every
+non-test ``r1/**/*.py`` file at both pins. ``unaccounted`` lists any such constant whose integer values are neither
+inside a registry block nor on ``IGNORED`` with a reason; the test requires it to be empty, so a new seed constant in
+Paper B's code cannot be missed silently.
+
 Run ``python -m paperc.seeds`` from the repository root to regenerate ``paperC/seeds/registry_v1.json``.
 """
 from __future__ import annotations
 
 import ast
 import json
+import re
 import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -66,8 +72,9 @@ PAPER_C_BLOCKS = (
           "campaign instance seeds; splits (train/dev/test) are sub-blocks fixed in SPT-0"),
     Block("paperc_rng_keys", 60_000, 61_000, "proposal", None, None, None,
           "keys for fork selection, epsilon draws and other design randomness (not worker seeds)"),
-    Block("paperc_audits", 1_000_000, 2_000_000, "proposal", None, None, None,
-          "fresh audit seeds; per-instance stride as in Track S"),
+    Block("paperc_audits", 10_000_000, 11_000_000, "proposal", None, None, None,
+          "fresh audit seeds; per-instance stride as in Track S (above Track S's oracle blocks, below the "
+          "date-valued RNG keys)"),
 )
 PAPER_C_CAMPAIGN_PREFIX = "pc-"   # D26 manager seeds hash the campaign id; this prefix keeps them disjoint
 
@@ -97,7 +104,9 @@ def _eval(expr: ast.expr, env: dict):
         if expr.id in env:
             return env[expr.id]
         raise ValueError(f"unbound name {expr.id}")
-    if isinstance(expr, (ast.Tuple, ast.List)):
+    if isinstance(expr, ast.Tuple):
+        return tuple(_eval(e, env) for e in expr.elts)
+    if isinstance(expr, ast.List):
         return [_eval(e, env) for e in expr.elts]
     if isinstance(expr, ast.Dict):
         return {_eval(k, env): _eval(v, env) for k, v in zip(expr.keys, expr.values)}
@@ -117,7 +126,7 @@ def constants(src: str, names: Iterable[str]) -> dict:
     for n, e in assigns.items():         # evaluate in file order, keeping what can be evaluated
         try:
             env[n] = _eval(e, env)
-        except ValueError:
+        except (ValueError, TypeError, KeyError):
             pass
     missing = [n for n in names if n not in env]
     if missing:
@@ -188,6 +197,28 @@ def paper_b_blocks(repo: Path) -> list[Block]:
     blocks.append(Block("exam_audits", c["AUDIT_SEEDS"].start, c["AUDIT_SEEDS"].stop, "literal", CANONICAL, p,
                         "AUDIT_SEEDS"))
 
+    # Track S probes and oracle (Track S pin)
+    p = "r1/tracks/probes/s1_factorial.py"
+    c = constants(git_show(repo, TRACKS, p), ["S11_SEEDS", "BOOT_SEED"])
+    blocks.append(Block("tracks_s11_factorial", min(c["S11_SEEDS"]), max(c["S11_SEEDS"]) + 1, "literal", TRACKS, p,
+                        "S11_SEEDS"))
+    blocks.append(Block("tracks_s11_boot_key", c["BOOT_SEED"], c["BOOT_SEED"] + 1, "literal", TRACKS, p,
+                        "BOOT_SEED", "bootstrap RNG key, not a worker seed"))
+    p = "r1/tracks/oracle.py"
+    c = constants(git_show(repo, TRACKS, p), ["ORACLE_SELECT_BASE", "ORACLE_EVAL_BASE", "ORACLE_BLOCK_SIZE"])
+    for nm in ("SELECT", "EVAL"):
+        b0 = c[f"ORACLE_{nm}_BASE"]
+        blocks.append(Block(f"tracks_oracle_{nm.lower()}", b0, b0 + c["ORACLE_BLOCK_SIZE"], "literal", TRACKS, p,
+                            f"ORACLE_{nm}_BASE + ORACLE_BLOCK_SIZE", "synthetic-world campaign seeds (in memory)"))
+
+    # Date-valued RNG keys (canonical pin): dataset planning and the T5 report
+    keys: dict[int, list[str]] = {}
+    for p, nm in (("r1/c3/dataset.py", "PLAN_SEED"), ("r1/theory/t5_report.py", "BASE_SEED")):
+        keys.setdefault(constants(git_show(repo, CANONICAL, p), [nm])[nm], []).append(f"{p}:{nm}")
+    for v, where in sorted(keys.items()):
+        blocks.append(Block(f"rng_key_{v}", v, v + 1, "literal", CANONICAL, None, ", ".join(where),
+                            "RNG key, not a worker seed"))
+
     # Named in the plan's prose (§11.1) but not defined in code at these pins
     blocks.append(Block("trackg_g1b_audits", 8001, 8011, "prose_only", None, None, None,
                         "plan §11.1 'G.1b 8001–8010'; not found in code at the pins; reserved conservatively"))
@@ -213,9 +244,88 @@ def paper_b_overlaps(paper_b: Iterable[Block]) -> list[str]:
             for i, a in enumerate(bs) for b in bs[i + 1:] if b.lo < a.hi]
 
 
+SCAN_NAME = re.compile(r"^[A-Z][A-Z0-9_]*(SEED|SEEDS|_BASE|_BASES)[A-Z0-9_]*$")
+
+# Constants the scan finds that are not seed values, each with the reason.
+IGNORED = {
+    ("r1/scripts/ada_e1b_rerun2.py", "AUDIT_SEEDS"): "a count (6 audit seeds of the E1b rerun), not a seed value",
+    ("r1/tracks/collect.py", "REP_BASE"): "a D26 repetition index (100 + r), not a worker seed; namespaced by campaign id",
+    ("r1/tracks/collect.py", "AUDIT_SEED_BLOCKS"): "derived from AUDIT_SEED_BASES + AUDIT_BLOCK_CAPACITY (registered)",
+    ("r1/scripts/trackx_lease_guardian.py", "PYTHON_BASENAME"): "a regex, not a seed",
+    ("r1/exam/namespace.py", "EXAM_SEEDS"): "union of INSTANCE_SEEDS and AUDIT_SEEDS (registered)",
+}
+
+
+def _ints(v) -> list[int] | None:
+    if isinstance(v, bool):
+        return None
+    if isinstance(v, int):
+        return [v]
+    if isinstance(v, range):
+        return [v.start, v.stop - 1] if len(v) else []
+    if isinstance(v, (list, tuple, set)):
+        out = []
+        for x in v:
+            xs = _ints(x)
+            if xs is None:
+                return None
+            out += xs
+        return out
+    if isinstance(v, dict):
+        return _ints(list(v.values()))
+    return None
+
+
+def scan_constants(repo: Path) -> list[dict]:
+    """Every module-level SEED/_BASE-named constant in non-test r1/**/*.py at both pins."""
+    found = []
+    for ref in (CANONICAL, TRACKS):
+        files = subprocess.run(["git", "-C", str(repo), "ls-tree", "-r", "--name-only", ref, "r1"], check=True,
+                               capture_output=True, text=True).stdout.split()
+        for path in files:
+            if not path.endswith(".py") or "/tests/" in path:
+                continue
+            src = git_show(repo, ref, path)
+            try:
+                assigns = _assignments(src)
+            except SyntaxError:
+                continue
+            env = {}
+            for name, expr in assigns.items():
+                try:
+                    env[name] = _eval(expr, env)
+                except (ValueError, TypeError, KeyError):
+                    env[name] = None
+                if SCAN_NAME.match(name):
+                    found.append({"ref": ref, "path": path, "name": name, "ints": _ints(env[name])})
+    return found
+
+
+# Constants whose tuples are half-open (lo, hi) pairs, as their own code uses them.
+HALF_OPEN = {("r1/tracks/collect.py", "INSTANCE_SEED_BLOCKS")}
+
+
+def unaccounted(repo: Path, blocks: Iterable[Block]) -> list[str]:
+    blocks = list(blocks)
+    out = []
+    for c in scan_constants(repo):
+        if (c["path"], c["name"]) in IGNORED:
+            continue
+        ints = c["ints"]
+        if ints is not None and (c["path"], c["name"]) in HALF_OPEN:
+            ints = [v - (i % 2) for i, v in enumerate(ints)]      # (lo, hi) -> (lo, hi - 1)
+        if ints is None:
+            out.append(f"{c['path']}:{c['name']} at {c['ref'][:8]}: value not evaluable")
+            continue
+        miss = [v for v in ints if not any(v in b for b in blocks)]
+        if miss:
+            out.append(f"{c['path']}:{c['name']} at {c['ref'][:8]}: values {miss[:4]} outside every block")
+    return sorted(set(out))
+
+
 def build_registry(repo: Path) -> dict:
     pb = paper_b_blocks(repo)
-    errs = check_disjoint(pb)
+    errs = check_disjoint(pb) + [f"unaccounted constant: {u}" for u in unaccounted(repo, pb)]
     if errs:
         raise RuntimeError("STOP: Paper C blocks collide with Paper B: " + "; ".join(errs))
     return {

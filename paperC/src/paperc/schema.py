@@ -1,48 +1,68 @@
 """SPT transition record ``spt_transition/v1`` and its mechanical checks (build runbook P1; plan §4.1–§4.2).
 
-AI-assisted (Claude, chat session, 15 Nov 2026). ENGINEERING_ONLY.
+AI-assisted (Claude, chat session, 15 Nov 2026; revised after review round 1). ENGINEERING_ONLY.
 
 One row per decision point of one trajectory. A trajectory is a root campaign (``branch_path == []``) or one
-continuation of a fork (``branch_path`` names the fork arms taken from the root, e.g. ``["f3:execute:r1"]``).
-Field names follow Track S ``r1/tracks/schema.py`` (branch ``trackS-ops-20261030`` @ ``fab88fc``) where the meaning is
-the same: ``immediate_measured``, ``p_select``, ``channel_arms``, the ``Forecast`` tuple (pi, mu, tau, sigma, v_star,
-m_hat), ``y_start``, ``y_terminal``, ``y_terminal_per_seed``, ``audit_seeds``, ``Provenance``. This module is a port of
-those definitions, not an import.
+continuation of a fork (``branch_path`` names the fork arms taken from the root, e.g. ``["f3:skip:r1"]``).
 
-Units: metric quantities are in the node's raw declared metric units, as in Track S. ``sigma_node`` is recorded so
-that analyses can standardise.
+Track S names (``r1/tracks/schema.py`` on ``trackS-ops-20261030`` @ ``fab88fc``) are reused where the meaning is the
+same: ``uniform``, ``oversample``, ``p_select``, ``channel_arms``, ``prior_skips``, ``key_seen``,
+``manager_gguf_sha256``, the ``Forecast`` tuple (pi, mu, tau, sigma, v_star, m_hat, g), ``immediate_measured``,
+``y_start``, ``y_terminal``, ``y_terminal_per_seed``, ``audit_seeds``, ``myopic_action`` (here
+``behaviour_action``, the action the behaviour policy itself would have taken, logged on forced rows), and the
+``Provenance`` fields ``controller_version`` / ``prior_sha256``. This module is a port, not an import. Units are the
+node's raw metric units; ``sigma_node`` is recorded for standardising.
 
 Epochs and actions (plan §3.3, extended by R1-PAPERC-REFRAME for evaluation control):
 
-* ``E1``: ``execute`` / ``skip``;
-* ``E2``: ``keep`` / ``discard``;
-* ``verify``: ``verify`` (re-measure the candidate with extra seeds) / ``no_verify``;
-* ``reaudit``: ``reaudit`` (re-measure the incumbent) / ``no_reaudit``;
-* ``final``: ``select`` (the final incumbent choice at campaign end; ``Action.selected`` names the configuration).
+* ``E1``: ``execute`` / ``skip``;      ``E2``: ``keep`` / ``discard``;
+* ``verify``: ``verify`` (re-measure the candidate) / ``no_verify``, between an execute and its E2;
+* ``reaudit``: ``reaudit`` (re-measure the incumbent) / ``no_reaudit``, anywhere between decisions;
+* ``final``: ``select`` — at most once, as the last row; ``Action.selected`` names the chosen configuration.
 
-Deliberately deferred fields of plan §4.1 (none): every group of the plan's table is present. ``State.history_ref``
-and ``State.proposal_ref`` are pointers (paths or content hashes) to the history summary and to the diff/edit text,
-which are stored outside the row.
+There is no stop action yet, so ``EpisodeEnd.reason = "policy_stop"`` is rejected (plan §3.3 round C).
 
-Checks (``check_campaign``), one per plan §4.2 bullet:
+Row conventions:
 
-* ``budget``: runs_used + runs_left == W and calls_used + calls_left == llm_cap on every row, both >= 0, and the
-  next row's counters equal this row's plus ``Outcome.runs_consumed`` / ``calls_consumed``;
-* ``contiguous``: step indices of a trajectory are contiguous; a root trajectory starts at 0;
-* ``terminal``: a trajectory whose last row ends with ``terminated`` has exactly one ``Terminal``, on its last
-  row; a ``truncated`` trajectory has none; every trajectory ends with an ``EpisodeEnd`` on its last row and on no
-  other row;
-* ``next_state``: the next row's ``incumbent_hash`` equals this row's ``Outcome.next_incumbent_hash``;
-* ``propensity``: with a ``behaviour`` callable, re-running it on a non-forced row reproduces the logged action and
-  ``action_prob``;
-* ``design_weight``: ``ForkDesign.p_select`` is recomputable from its design fields and lies in (0, 1];
-* ``no_future``: a ``State`` carries no field whose name is on ``FORBIDDEN_STATE_NAMES`` (checked by ``validate``
-  on dict rows and statically on the dataclass);
-* ``seed``: with a ``registry``, no (node, instance seed) key lies in a Paper B block.
+* every E1 row consumes one LLM call and one proposal slot (``slots_left``), rule-forced rows included;
+* executing actions (``execute``, ``verify``, ``reaudit``) consume >= 1 run and carry exactly one of
+  ``delta_hat`` / ``divergent``; non-executing actions consume 0 runs and carry neither;
+* a divergent candidate is not kept: its E2 row is a ``discard`` (plan §3.1);
+* the incumbent changes only by an E2 ``keep`` (to ``State.candidate_hash``) or a ``final`` ``select``
+  (to ``Action.selected``);
+* ``immediate_measured`` (Track S) lives on the E2 row of a kept candidate when an audit exists, else null;
+* ``rule_forced`` rows (duplicate / no-op skips, the first trial's execute-and-keep) are not eligible, carry an
+  ``Action.rule`` starting with ``rule_`` and ``action_prob = 1.0``; forced rows (fork arms, interventions) carry
+  ``action_prob = null`` (no defined propensity, plan §6.1) and log ``behaviour_action`` / ``behaviour_prob``.
 
-``validate`` additionally enforces field types, closed vocabularies, and the row-level rules of plan §3.1 and §4.1
-(a divergent run has no ``delta_hat`` and is not kept; a rule-forced row is not eligible; actions belong to their
-epoch).
+Checks (``check_campaign``) — the plan §4.2 bullets, plus consistency checks the review asked for:
+
+* ``budget``: used + left == cap per row, consumed <= left, the chain across rows, a root starts at 0, a fork's first
+  row has its parent's counters at the same step (when the parent is in the batch);
+* ``contiguous``: step indices of a trajectory are contiguous; a root starts at step 0;
+* ``terminal``: exactly one ``Terminal`` on the last row of a terminated trajectory, none on a truncated one, an
+  ``EpisodeEnd`` on the last row only, a reason that matches its kind, and the ledger agreeing with W / llm_cap;
+* ``next_state``: the incumbent changes only by keep / select, and the next row (or the fork's first row) starts
+  from this row's ``next_incumbent_hash``;
+* ``propensity``: ``behaviour`` replayed on a decision-time view (no action, outcome or terminal) reproduces the
+  logged action and probability on non-forced, non-rule rows;
+* ``design_weight``: ``p_select`` is recomputable from the design fields;
+* ``no_future``: no future or audit value in a state (field names; E1 states carry no ``m_hat`` and no candidate
+  result);
+* ``seed``: no seed field (instance, worker, epsilon, audit block, terminal audit seeds) lies in a Paper B block;
+* ``outcome`` (row level): actions fit their epoch; consumption, ``delta_hat`` / ``divergent`` and ``kept`` fit
+  the action;
+* ``epoch_sequence``: an E2 row follows its execute (verify rows between them only), carries that execute's result,
+  and discards a divergent candidate; a root starts at E1; ``final`` only last;
+* ``constant``: node, suite, tier, instance, campaign identity, env, seeds and fork design are constant within a
+  trajectory; fork rows have ``fork_id`` and ``replicate >= 1``;
+* ``counters``: ``keeps_so_far``, ``prior_skips`` and ``slots_left`` follow the rows.
+
+**Deferred:** the candidate set of a final selection is recorded only as ``Action.selected`` plus the
+counts ``candidate_obs`` / ``incumbent_obs``; a list of candidates with their measurements belongs to the
+evaluation-allocation actions (BUILD_LIST B17) and is added there. Also deferred: the A/A replay bullet of plan §4.2 (a continuation whose forced action equals the root's action
+reproduces the root's later rows). It needs A/A fork leaves and the runner's restore path, so it is implemented
+with the SPT runner (BUILD_LIST B11; Track S's ``aa_reproduced``), not on logged rows alone.
 """
 from __future__ import annotations
 
@@ -51,9 +71,10 @@ import math
 import types
 import typing
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
-from typing import Any, Callable, Literal, Mapping, Protocol, Sequence, Union
+from typing import Any, Callable, Literal, Mapping, NamedTuple, Protocol, Sequence, Union
 
 SCHEMA = "spt_transition/v1"
+SCHEMA_ID = "urn:paperc:spt_transition:v1"
 
 Epoch = Literal["E1", "E2", "verify", "reaudit", "final"]
 ActionName = Literal[
@@ -66,12 +87,14 @@ EPOCH_ACTIONS: dict[str, tuple[str, ...]] = {
     "reaudit": ("reaudit", "no_reaudit"),
     "final": ("select",),
 }
+EXECUTING = frozenset({"execute", "verify", "reaudit"})
 Label = Literal["ENGINEERING_ONLY", "PILOT", "EVIDENCE", "FIXTURE"]
 Tier = Literal["E-SYN", "E-T0", "E-INT", "E-HELD", "E-SIM"]
 SelectionRule = Literal["uniform", "oversample", "both"]
 EndKind = Literal["terminated", "truncated"]
+EndReason = Literal["W", "llm_cap", "policy_stop", "infrastructure", "protocol_stop", "parse", "host"]
+END_REASONS = {"terminated": ("W", "llm_cap"), "truncated": ("infrastructure", "protocol_stop", "parse", "host")}
 
-# Names that must never appear in a State: outcomes of this or later steps, and audit values (plan §4.2).
 FORBIDDEN_STATE_NAMES = frozenset({
     "y_terminal", "y_terminal_per_seed", "y_start", "audit_seeds", "immediate_measured", "delta_hat", "kept",
     "next_incumbent_hash", "divergent", "runs_consumed", "calls_consumed", "terminal", "episode_end", "outcome",
@@ -94,13 +117,13 @@ class Identity:
     epoch: Epoch
     branch_path: list[str] = field(default_factory=list)   # [] for the root trajectory
     root_id: str | None = None
-    fork_id: str | None = None
+    fork_id: str | None = None    # required on fork rows; equals the first element of branch_path up to ':'
 
 
 @dataclass
 class EnvContext:
     proposer_model: str           # e.g. the Track X pick's registry name, or "scripted" on E-SYN
-    proposer_gguf_sha256: str | None
+    manager_gguf_sha256: str | None
     thinking: str                 # "off" | "on" | "n/a"
     W: int                        # worker-run cap
     llm_cap: int                  # LLM-call cap N
@@ -108,18 +131,20 @@ class EnvContext:
     skip_display: str
     edit_schema: str              # "v1" | "v2-diff" | "synthetic"
     run_budget: str               # e.g. "steps:200", "minutes:2", "synthetic"
-    constants: dict[str, float] = field(default_factory=dict)   # declared environment constants (g, prices, ...)
+    constants: dict[str, float] = field(default_factory=dict)   # declared environment constants
 
 
 @dataclass
 class PolicyInfo:
     policy: str                   # policy string, e.g. "static:g,h", "a2u:g0", "n6:<sha>"
     policy_sha: str | None
-    action_prob: float            # probability of the logged action under the behaviour policy (1.0 if deterministic)
+    action_prob: float | None     # P(logged action | behaviour); 1.0 deterministic/rule; null on forced rows
     eps: float = 0.0              # epsilon of the logged randomisation (0 = none)
-    eps_seed: int | None = None   # RNG seed of the epsilon draw (required when eps > 0)
-    behaviour_component: str | None = None   # mixture component name (SPT-2)
+    eps_seed: int | None = None   # RNG key of the epsilon draw (required when eps > 0)
+    behaviour_component: str | None = None    # mixture component name (SPT-2)
     continuation_policy_id: str | None = None  # policy that runs a fork continuation
+    behaviour_action: ActionName | None = None   # forced rows: what the behaviour policy would have done
+    behaviour_prob: float | None = None          # forced rows: its probability under the behaviour policy
 
 
 @dataclass
@@ -128,11 +153,11 @@ class ForkDesign:
     q_uniform: float              # inclusion rate of the uniform sample
     q_oversample: float           # inclusion rate of the near-threshold oversample
     near_threshold: bool          # the fork point lies in the declared near band
-    in_uniform: bool
-    in_oversample: bool
+    uniform: bool                 # drawn in the uniform sample (Track S name)
+    oversample: bool              # drawn in the oversample (Track S name)
     p_select: float               # = 1 - (1 - q_uniform) * (1 - q_oversample * near_threshold)
     channel_arms: bool            # E1 fork in the third that gets the instrument arms
-    replicate: int                # continuation replicate index (1-based)
+    replicate: int                # continuation replicate index (>= 1)
 
 
 @dataclass
@@ -150,25 +175,33 @@ class Forecast:
     tau: float | None
     sigma: float | None
     v_star: float | None          # E1 one-step value (no price subtracted)
-    m_hat: float | None           # E2 posterior mean of the increment given the result
+    m_hat: float | None           # posterior mean of the increment given the result (E2 and later only)
+    g: float | None = None        # declared run price used by this forecaster's rule
 
 
 @dataclass
 class State:
     proposal_hash: str
     proposal_ref: str | None      # pointer to the diff / edit text
+    candidate_hash: str | None    # configuration hash after applying the proposal (null for reaudit / final)
     duplicate: bool
     noop: bool
-    eligible: bool                # a policy decision (False for rule-forced rows)
-    rule_forced: bool             # forced by a rule (duplicate / no-op); consumes a call and a slot
+    eligible: bool                # a policy decision (== not rule_forced)
+    rule_forced: bool             # forced by a rule; consumes a call and a slot at E1
+    key_seen: bool                # the edited key was executed before in this campaign (Track S)
     incumbent_hash: str
+    incumbent_recorded: float | None   # the incumbent's recorded metric (what the loop compares against)
+    incumbent_obs: int            # number of measurements behind incumbent_recorded
+    candidate_delta_hat: float | None  # E2 / verify: the candidate's observed increment so far (null at E1)
+    candidate_divergent: bool     # E2 / verify: the candidate's run diverged (False at E1)
+    candidate_obs: int            # E2 / verify: measurements of the candidate so far (0 at E1)
     runs_used: int
     runs_left: int
     calls_used: int
     calls_left: int
     slots_left: int
     keeps_so_far: int
-    skips_so_far: int
+    prior_skips: int              # E1 skips before this row (rule-forced skips included)
     sigma_node: float | None
     noise_source: str | None
     history_ref: str | None       # pointer to the fixed-length history summary
@@ -179,7 +212,8 @@ class State:
 class Action:
     action: ActionName
     forced: bool                  # forced by a fork arm or an intervention
-    rule: str                     # what produced it: "policy", "rule_duplicate", "rule_noop", "fork_arm", ...
+    rule: str                     # "policy", "rule_duplicate", "rule_noop", "rule_first_trial", "rule_divergent",
+                                  # "fork_arm", "intervention"
     selected: str | None = None   # final epoch only: hash of the selected configuration
 
 
@@ -188,17 +222,17 @@ class Outcome:
     runs_consumed: int
     calls_consumed: int
     next_incumbent_hash: str
-    delta_hat: float | None = None          # observed increment if executed and not divergent
-    divergent: bool = False                 # executed, but no metric at the fixed budget
-    kept: bool | None = None                # E2 only
-    immediate_measured: float | None = None  # audited increment of this trial's edit if kept here (Track S)
+    delta_hat: float | None = None           # executing actions: observed increment (null if divergent)
+    divergent: bool = False                  # executing actions: no metric at the fixed budget
+    kept: bool | None = None                 # E2 only
+    immediate_measured: float | None = None  # E2 keep with an audit: audited increment of the kept edit
     wall_time_s: float | None = None
 
 
 @dataclass
 class EpisodeEnd:
     kind: EndKind
-    reason: str                   # "W", "llm_cap", "policy_stop", "infrastructure", "protocol_stop", "parse", "host"
+    reason: EndReason
 
 
 @dataclass
@@ -219,6 +253,8 @@ class Provenance:
     cache_prompt: bool | None
     phase: str
     label: Label
+    controller_version: str | None = None   # behaviour controller / belief model version (Track S)
+    prior_sha256: str | None = None         # belief model file (Track S: A2-U prior)
 
 
 @dataclass
@@ -235,6 +271,19 @@ class Transition:
     fork: ForkDesign | None = None
     episode_end: EpisodeEnd | None = None
     terminal: Terminal | None = None
+
+
+class DecisionView(NamedTuple):
+    """What a behaviour policy may see when its decision is replayed (no action, outcome, terminal, audits)."""
+    identity: Identity
+    env: EnvContext
+    instance_seed: int
+    manager_rep: int
+    state: State
+    policy: str
+    behaviour_component: str | None
+    eps: float
+    eps_seed: int | None
 
 
 # ---------------------------------------------------------------- typing helpers
@@ -263,7 +312,6 @@ def state_field_violations(names) -> list[str]:
                   if n in FORBIDDEN_STATE_NAMES or any(n.startswith(p) for p in FORBIDDEN_STATE_PREFIXES))
 
 
-# The dataclass itself must be clean; this runs at import time.
 assert not state_field_violations(f.name for f in fields(State)), "State declares a forbidden field"
 
 
@@ -298,7 +346,7 @@ def _coerce(tp, value, path: str, errors: list[str]):
             return None
         return [_coerce(item_tp, v, f"{path}[{i}]", errors) for i, v in enumerate(value)]
     if origin is dict:
-        key_tp, val_tp = typing.get_args(tp)
+        _, val_tp = typing.get_args(tp)
         if not isinstance(value, Mapping):
             errors.append(f"{path}: expected object")
             return None
@@ -310,6 +358,8 @@ def _coerce(tp, value, path: str, errors: list[str]):
     if tp is int:
         if isinstance(value, bool) or not isinstance(value, int):
             errors.append(f"{path}: expected int")
+        elif value < 0:
+            errors.append(f"{path}: must be >= 0")
         return value
     if tp is float:
         if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -345,64 +395,127 @@ def _build(cls, data: Mapping, path: str, errors: list[str]):
         return None
 
 
-def _row_rules(t: Transition) -> list[str]:
-    errs = []
+# Row rules return (check, message).
+
+def _row_rules(t: Transition) -> list[tuple[str, str]]:
+    errs: list[tuple[str, str]] = []
+    add = lambda check, msg: errs.append((check, msg))   # noqa: E731
     if t.schema != SCHEMA:
-        errs.append(f"schema: {t.schema!r} != {SCHEMA!r}")
-    ep, act = t.identity.epoch, t.action.action
+        add("schema", f"schema: {t.schema!r} != {SCHEMA!r}")
+    ep, act, s, o, pol = t.identity.epoch, t.action.action, t.state, t.outcome, t.policy
+
+    # outcome: actions fit epochs; consumption and results fit actions
     if act not in EPOCH_ACTIONS[ep]:
-        errs.append(f"action.action: {act!r} not allowed in epoch {ep!r}")
-    if ep == "final" and not t.action.selected:
-        errs.append("action.selected: required in the final epoch")
-    if ep != "final" and t.action.selected is not None:
-        errs.append("action.selected: only in the final epoch")
-    o, s = t.outcome, t.state
-    if o.divergent:
-        if o.delta_hat is not None:
-            errs.append("outcome.delta_hat: must be null for a divergent run")
-        if o.kept:
-            errs.append("outcome.kept: a divergent run is not kept")
+        add("outcome", f"action.action: {act!r} not allowed in epoch {ep!r}")
+    if (ep == "final") != (t.action.selected is not None):
+        add("outcome", "action.selected: set exactly in the final epoch")
+    if act in EXECUTING:
+        if o.runs_consumed < 1:
+            add("outcome", f"outcome.runs_consumed: {act} consumes >= 1 run")
+        if (o.delta_hat is not None) == o.divergent:
+            add("outcome", f"outcome: {act} carries exactly one of delta_hat / divergent")
+    else:
+        if o.runs_consumed != 0:
+            add("outcome", f"outcome.runs_consumed: {act} consumes no run")
+        if o.delta_hat is not None or o.divergent:
+            add("outcome", f"outcome: {act} carries no delta_hat / divergent")
     if (ep == "E2") != (o.kept is not None):
-        errs.append("outcome.kept: set exactly in the E2 epoch")
-    if ep == "E2" and o.kept != (act == "keep"):
-        errs.append("outcome.kept: disagrees with the action")
-    if s.rule_forced and s.eligible:
-        errs.append("state: a rule-forced row is not eligible")
-    if s.rule_forced and t.action.rule == "policy":
-        errs.append("action.rule: a rule-forced row is not a policy decision")
-    if not (0.0 < t.policy.action_prob <= 1.0):
-        errs.append("policy.action_prob: must lie in (0, 1]")
-    if t.policy.eps < 0 or t.policy.eps >= 1:
-        errs.append("policy.eps: must lie in [0, 1)")
-    if t.policy.eps > 0 and t.policy.eps_seed is None:
-        errs.append("policy.eps_seed: required when eps > 0")
-    if (t.identity.branch_path == []) != (t.fork is None):
-        errs.append("fork: present exactly on fork continuations (non-empty branch_path)")
+        add("outcome", "outcome.kept: set exactly in the E2 epoch")
+    elif ep == "E2" and o.kept != (act == "keep"):
+        add("outcome", "outcome.kept: disagrees with the action")
+    if o.immediate_measured is not None and not (ep == "E2" and act == "keep"):
+        add("outcome", "outcome.immediate_measured: only on an E2 keep")
+    if ep == "E1" and o.calls_consumed < 1:
+        add("outcome", "outcome.calls_consumed: an E1 row consumes the proposal's LLM call")
+    if ep in ("E1", "E2", "verify") and s.candidate_hash is None:
+        add("outcome", "state.candidate_hash: required in E1, E2 and verify rows")
+
+    # flags
+    if s.eligible == s.rule_forced:
+        add("outcome", "state: eligible must equal not rule_forced")
+    if s.rule_forced != t.action.rule.startswith("rule_"):
+        add("outcome", "action.rule: rule_* exactly on rule-forced rows")
+    if ep == "E1" and (s.duplicate or s.noop) and not s.rule_forced:
+        add("outcome", "state: a duplicate / no-op proposal is rule-forced at E1")
+    if s.rule_forced and t.action.forced:
+        add("outcome", "action: a row is rule-forced or forced, not both")
+
+    # propensity fields
+    if t.action.forced:
+        if pol.action_prob is not None:
+            add("propensity", "policy.action_prob: null on forced rows (no defined propensity)")
+        if pol.behaviour_action is None:
+            add("propensity", "policy.behaviour_action: required on forced rows")
+    else:
+        if pol.action_prob is None or not (0.0 < pol.action_prob <= 1.0):
+            add("propensity", "policy.action_prob: must lie in (0, 1] on non-forced rows")
+        if s.rule_forced and pol.action_prob != 1.0:
+            add("propensity", "policy.action_prob: 1.0 on rule-forced rows")
+        if pol.behaviour_action is not None or pol.behaviour_prob is not None:
+            add("propensity", "policy.behaviour_*: only on forced rows")
+    if pol.behaviour_prob is not None and not (0.0 <= pol.behaviour_prob <= 1.0):
+        add("propensity", "policy.behaviour_prob: must lie in [0, 1]")
+    if not (0.0 <= pol.eps < 1.0):
+        add("propensity", "policy.eps: must lie in [0, 1)")
+    if pol.eps > 0 and pol.eps_seed is None:
+        add("propensity", "policy.eps_seed: required when eps > 0")
+
+    # no future values at decision time
+    if ep == "E1":
+        if any(f.m_hat is not None for f in s.forecasts.values()):
+            add("no_future", "state.forecasts[*].m_hat: the result-conditional mean does not exist at E1")
+        if s.candidate_delta_hat is not None or s.candidate_divergent or s.candidate_obs != 0:
+            add("no_future", "state.candidate_*: no candidate result exists at E1")
+
+    # identity / fork
+    if t.identity.branch_path:
+        if t.fork is None:
+            add("constant", "fork: required on fork continuations (non-empty branch_path)")
+        if not t.identity.fork_id or t.identity.branch_path[0].split(":")[0] != t.identity.fork_id:
+            add("constant", "identity.fork_id: required on fork rows and must match branch_path[0]")
+        if t.fork is not None and t.fork.replicate < 1:
+            add("constant", "fork.replicate: must be >= 1")
+    else:
+        if t.fork is not None or t.identity.fork_id is not None:
+            add("constant", "fork / fork_id: only on fork continuations")
+
+    # seeds and terminal
     if len(t.seeds.audit_seed_block) != 2 or t.seeds.audit_seed_block[0] > t.seeds.audit_seed_block[1]:
-        errs.append("seeds.audit_seed_block: must be [first, last] with first <= last")
+        add("schema", "seeds.audit_seed_block: must be [first, last] with first <= last")
+    if t.episode_end is not None and t.episode_end.reason not in END_REASONS[t.episode_end.kind]:
+        add("terminal", f"episode_end: reason {t.episode_end.reason!r} is not a {t.episode_end.kind} reason")
     if t.terminal is not None:
         tm = t.terminal
-        if len(tm.y_terminal_per_seed) != len(tm.audit_seeds):
-            errs.append("terminal: one value per audit seed")
-        elif tm.y_terminal_per_seed and abs(sum(tm.y_terminal_per_seed) / len(tm.y_terminal_per_seed)
-                                            - tm.y_terminal) > 1e-9 * max(1.0, abs(tm.y_terminal)):
-            errs.append("terminal.y_terminal: must equal the mean over audit seeds")
-        lo, hi = t.seeds.audit_seed_block
-        if any(not (lo <= a <= hi) for a in tm.audit_seeds):
-            errs.append("terminal.audit_seeds: outside the campaign's audit block")
+        if len(tm.y_terminal_per_seed) != len(tm.audit_seeds) or not tm.audit_seeds:
+            add("terminal", "terminal: one value per audit seed, at least one")
+        elif abs(sum(tm.y_terminal_per_seed) / len(tm.y_terminal_per_seed) - tm.y_terminal) \
+                > 1e-9 * max(1.0, abs(tm.y_terminal)):
+            add("terminal", "terminal.y_terminal: must equal the mean over audit seeds")
+        if len(t.seeds.audit_seed_block) == 2:
+            lo, hi = t.seeds.audit_seed_block
+            if any(not (lo <= a <= hi) for a in tm.audit_seeds):
+                add("terminal", "terminal.audit_seeds: outside the campaign's audit block")
     return errs
 
 
-def parse(row: Mapping) -> tuple[Transition | None, list[str]]:
-    """Build a Transition from a JSON row; return (transition or None, errors)."""
+def parse_checked(row) -> tuple[Transition | None, list[tuple[str, str]]]:
+    """Build a Transition from a JSON row; return (transition or None, [(check, message)])."""
+    if not isinstance(row, Mapping):
+        return None, [("schema", "row: expected an object")]
     errors: list[str] = []
     t = _build(Transition, row, "row", errors)
+    tagged = [("no_future" if "forbidden in a state" in e else "schema", e) for e in errors]
     if t is not None and not errors:
-        errors.extend(_row_rules(t))
-    return (t if not errors else None), errors
+        tagged += _row_rules(t)
+    return (t if not tagged else None), tagged
 
 
-def validate(row: Mapping | Transition) -> list[str]:
+def parse(row) -> tuple[Transition | None, list[str]]:
+    t, tagged = parse_checked(row)
+    return t, [m for _, m in tagged]
+
+
+def validate(row) -> list[str]:
     """Field-level and row-level errors of one row ([] if valid)."""
     if isinstance(row, Transition):
         row = to_dict(row)
@@ -422,10 +535,21 @@ def from_dict(row: Mapping) -> Transition:
 
 # ---------------------------------------------------------------- JSON schema export
 
-def _json_type(tp) -> dict:
+_RANGES = {
+    ("PolicyInfo", "action_prob"): {"exclusiveMinimum": 0, "maximum": 1},
+    ("PolicyInfo", "behaviour_prob"): {"minimum": 0, "maximum": 1},
+    ("PolicyInfo", "eps"): {"minimum": 0, "exclusiveMaximum": 1},
+    ("ForkDesign", "p_select"): {"exclusiveMinimum": 0, "maximum": 1},
+    ("ForkDesign", "q_uniform"): {"minimum": 0, "maximum": 1},
+    ("ForkDesign", "q_oversample"): {"minimum": 0, "maximum": 1},
+    ("ForkDesign", "replicate"): {"minimum": 1},
+}
+
+
+def _json_type(tp, extra: dict | None = None) -> dict:
     optional, inner = _is_optional(tp)
     if optional:
-        return {"anyOf": [_json_type(inner), {"type": "null"}]}
+        return {"anyOf": [_json_type(inner, extra), {"type": "null"}]}
     origin = typing.get_origin(tp)
     if origin is Literal:
         return {"enum": list(typing.get_args(tp))}
@@ -435,18 +559,27 @@ def _json_type(tp) -> dict:
         return {"type": "array", "items": _json_type(typing.get_args(tp)[0])}
     if origin is dict:
         return {"type": "object", "additionalProperties": _json_type(typing.get_args(tp)[1])}
-    return {bool: {"type": "boolean"}, int: {"type": "integer"}, float: {"type": "number"},
+    base = {bool: {"type": "boolean"}, int: {"type": "integer", "minimum": 0}, float: {"type": "number"},
             str: {"type": "string"}}[tp]
+    return {**base, **(extra or {})}
 
 
 def _object_schema(cls) -> dict:
     hints = _hints(cls)
-    return {
-        "type": "object",
-        "properties": {f.name: _json_type(hints[f.name]) for f in fields(cls)},
-        "required": sorted(_required(cls)),
-        "additionalProperties": False,
-    }
+    props = {}
+    for f in fields(cls):
+        js = _json_type(hints[f.name], _RANGES.get((cls.__name__, f.name)))
+        if f.default is not dataclasses.MISSING:
+            js = {**js, "default": f.default}
+        elif f.default_factory is not dataclasses.MISSING:
+            js = {**js, "default": f.default_factory()}
+        props[f.name] = js
+    if cls is Seeds:
+        props["audit_seed_block"] = {**props["audit_seed_block"], "minItems": 2, "maxItems": 2}
+    if cls is Transition:
+        props["schema"] = {"const": SCHEMA}
+    return {"type": "object", "properties": props, "required": sorted(_required(cls)),
+            "additionalProperties": False}
 
 
 def to_json_schema() -> dict:
@@ -464,12 +597,17 @@ def to_json_schema() -> dict:
                     todo.append(x)
                 stack.extend(typing.get_args(x))
     root = dict(defs.pop("Transition"))
-    root.update({"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": SCHEMA,
-                 "title": "SPT transition record", "$defs": dict(sorted(defs.items()))})
+    root.update({
+        "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": SCHEMA_ID,
+        "title": "SPT transition record (spt_transition/v1)",
+        "description": "Field shapes only. Row and campaign rules (and integer vs float, NaN) are enforced by "
+                       "paperc.schema.validate / check_campaign, which are authoritative.",
+        "$defs": dict(sorted(defs.items())),
+    })
     return root
 
 
-# ---------------------------------------------------------------- campaign checks (plan §4.2)
+# ---------------------------------------------------------------- campaign checks
 
 @dataclass(frozen=True)
 class Violation:
@@ -481,10 +619,10 @@ class Violation:
 
 class SeedRegistry(Protocol):
     def paper_b_block(self, node: str, instance_seed: int) -> str | None:
-        """Name of the Paper B block containing (node, instance_seed), or None."""
+        """Name of the Paper B block containing the seed, or None."""
 
 
-Behaviour = Callable[[Transition], tuple[str, float]]
+Behaviour = Callable[[DecisionView], tuple[str, float]]
 
 
 def trajectory_key(t: Transition) -> tuple:
@@ -495,92 +633,218 @@ def _p_select(d: ForkDesign) -> float:
     return 1.0 - (1.0 - d.q_uniform) * (1.0 - d.q_oversample * (1.0 if d.near_threshold else 0.0))
 
 
-def check_campaign(rows: Sequence[Mapping | Transition], *, registry: SeedRegistry | None = None,
+def _view(t: Transition) -> DecisionView:
+    return DecisionView(t.identity, t.env, t.seeds.instance_seed, t.seeds.manager_rep, t.state, t.policy.policy,
+                        t.policy.behaviour_component, t.policy.eps, t.policy.eps_seed)
+
+
+def _key_of(row) -> tuple:
+    try:
+        idn = row["identity"]
+        return (idn["campaign_id"], tuple(idn.get("branch_path") or ()))
+    except (TypeError, KeyError):
+        return ("?",)
+
+
+def _step_of(row):
+    try:
+        return row["identity"]["step_index"]
+    except (TypeError, KeyError):
+        return None
+
+
+def check_campaign(rows: Sequence, *, registry: SeedRegistry | None = None,
                    behaviour: Behaviour | None = None) -> list[Violation]:
-    """All plan §4.2 violations in a batch of rows (any number of trajectories)."""
+    """All violations in a batch of rows (any number of trajectories)."""
     out: list[Violation] = []
+    V = lambda check, key, step, msg: out.append(Violation(check, key, step, msg))   # noqa: E731
     parsed: list[Transition] = []
-    for i, r in enumerate(rows):
+    for r in rows:
         if isinstance(r, Transition):
             r = to_dict(r)
-        t, errs = parse(r)
-        if errs:
-            names = [e for e in errs if "forbidden in a state" in e]
-            for e in names:
-                out.append(Violation("no_future", ("?",), r.get("identity", {}).get("step_index"), e))
-            for e in errs:
-                if e not in names:
-                    out.append(Violation("schema", ("?",), r.get("identity", {}).get("step_index"), e))
-            continue
+        t, tagged = parse_checked(r)
+        if t is None:
+            hard = [x for x in tagged if x[0] == "schema"]
+            for check, msg in tagged:
+                V(check, _key_of(r), _step_of(r), msg)
+            if hard:
+                continue
+            # row-rule violations only: keep the row for the campaign checks
+            errors: list[str] = []
+            t = _build(Transition, r, "row", errors)
         parsed.append(t)
 
     groups: dict[tuple, list[Transition]] = {}
     for t in parsed:
         groups.setdefault(trajectory_key(t), []).append(t)
+    by_step = {k: {t.identity.step_index: t for t in v} for k, v in groups.items()}
 
     for key, traj in groups.items():
         traj.sort(key=lambda t: t.identity.step_index)
         steps = [t.identity.step_index for t in traj]
+        is_root = key[1] == ()
         if len(set(steps)) != len(steps):
-            out.append(Violation("contiguous", key, None, "duplicate step indices"))
+            V("contiguous", key, None, "duplicate step indices")
         if steps != list(range(steps[0], steps[0] + len(steps))):
-            out.append(Violation("contiguous", key, None, f"steps not contiguous: {steps}"))
-        if key[1] == () and steps[0] != 0:
-            out.append(Violation("contiguous", key, steps[0], "root trajectory must start at step 0"))
+            V("contiguous", key, None, f"steps not contiguous: {steps}")
+        if is_root and steps[0] != 0:
+            V("contiguous", key, steps[0], "root trajectory must start at step 0")
 
+        # constant within trajectory
+        first = traj[0]
+        for t in traj[1:]:
+            for what, a, b in (("identity", (first.identity.node, first.identity.suite, first.identity.tier,
+                                             first.identity.instance_id, first.identity.root_id,
+                                             first.identity.fork_id),
+                                (t.identity.node, t.identity.suite, t.identity.tier, t.identity.instance_id,
+                                 t.identity.root_id, t.identity.fork_id)),
+                               ("env", first.env, t.env), ("seeds", first.seeds, t.seeds),
+                               ("fork", first.fork, t.fork)):
+                if a != b:
+                    V("constant", key, t.identity.step_index, f"{what} changes within the trajectory")
+
+        # budget per row
         for t in traj:
-            s, env = t.state, t.env
-            if s.runs_used + s.runs_left != env.W or s.runs_left < 0 or s.runs_used < 0:
-                out.append(Violation("budget", key, t.identity.step_index,
-                                     f"runs_used {s.runs_used} + runs_left {s.runs_left} != W {env.W}"))
-            if s.calls_used + s.calls_left != env.llm_cap or s.calls_left < 0 or s.calls_used < 0:
-                out.append(Violation("budget", key, t.identity.step_index,
-                                     f"calls_used {s.calls_used} + calls_left {s.calls_left} != cap {env.llm_cap}"))
-        for a, b in zip(traj, traj[1:]):
-            if b.state.runs_used != a.state.runs_used + a.outcome.runs_consumed:
-                out.append(Violation("budget", key, b.identity.step_index,
-                                     "runs_used does not follow from the previous row's runs_consumed"))
-            if b.state.calls_used != a.state.calls_used + a.outcome.calls_consumed:
-                out.append(Violation("budget", key, b.identity.step_index,
-                                     "calls_used does not follow from the previous row's calls_consumed"))
-            if b.state.incumbent_hash != a.outcome.next_incumbent_hash:
-                out.append(Violation("next_state", key, b.identity.step_index,
-                                     "incumbent_hash != previous row's next_incumbent_hash"))
+            s, o, env, st = t.state, t.outcome, t.env, t.identity.step_index
+            if s.runs_used + s.runs_left != env.W:
+                V("budget", key, st, f"runs_used {s.runs_used} + runs_left {s.runs_left} != W {env.W}")
+            if s.calls_used + s.calls_left != env.llm_cap:
+                V("budget", key, st, f"calls_used {s.calls_used} + calls_left {s.calls_left} != cap {env.llm_cap}")
+            if o.runs_consumed > s.runs_left:
+                V("budget", key, st, f"runs_consumed {o.runs_consumed} > runs_left {s.runs_left}")
+            if o.calls_consumed > s.calls_left:
+                V("budget", key, st, f"calls_consumed {o.calls_consumed} > calls_left {s.calls_left}")
+        if is_root and steps[0] == 0 and (first.state.runs_used or first.state.calls_used):
+            V("budget", key, 0, "a root starts with runs_used == calls_used == 0")
+        if not is_root:
+            parent = by_step.get((key[0], key[1][:-1]), {}).get(first.identity.step_index)
+            if parent is not None:
+                ps, fs = parent.state, first.state
+                if (ps.runs_used, ps.calls_used, ps.slots_left, ps.keeps_so_far, ps.prior_skips) != \
+                        (fs.runs_used, fs.calls_used, fs.slots_left, fs.keeps_so_far, fs.prior_skips):
+                    V("budget", key, first.identity.step_index, "fork's first row does not start from its "
+                                                                "parent's counters at the same step")
+                if ps.incumbent_hash != fs.incumbent_hash:
+                    V("next_state", key, first.identity.step_index,
+                      "fork's first row does not start from its parent's incumbent")
 
+        # next state per row and across rows
+        for t in traj:
+            s, o, a = t.state, t.outcome, t.action
+            if t.identity.epoch == "E2" and a.action == "keep":
+                expected = s.candidate_hash
+            elif t.identity.epoch == "final":
+                expected = a.selected
+            else:
+                expected = s.incumbent_hash
+            if o.next_incumbent_hash != expected:
+                V("next_state", key, t.identity.step_index,
+                  f"next_incumbent_hash should be {expected!r} after {t.identity.epoch} {a.action}")
+        for a_, b_ in zip(traj, traj[1:]):
+            if b_.state.incumbent_hash != a_.outcome.next_incumbent_hash:
+                V("next_state", key, b_.identity.step_index,
+                  "incumbent_hash != previous row's next_incumbent_hash")
+            if b_.state.runs_used != a_.state.runs_used + a_.outcome.runs_consumed:
+                V("budget", key, b_.identity.step_index, "runs_used does not follow from runs_consumed")
+            if b_.state.calls_used != a_.state.calls_used + a_.outcome.calls_consumed:
+                V("budget", key, b_.identity.step_index, "calls_used does not follow from calls_consumed")
+            # counters
+            ea, aa = a_.identity.epoch, a_.action.action
+            if b_.state.keeps_so_far != a_.state.keeps_so_far + int(ea == "E2" and aa == "keep"):
+                V("counters", key, b_.identity.step_index, "keeps_so_far does not follow the rows")
+            if b_.state.prior_skips != a_.state.prior_skips + int(ea == "E1" and aa == "skip"):
+                V("counters", key, b_.identity.step_index, "prior_skips does not follow the rows")
+            if b_.state.slots_left != a_.state.slots_left - int(ea == "E1"):
+                V("counters", key, b_.identity.step_index, "slots_left does not follow the rows")
+        for t in traj:
+            if t.state.slots_left > t.env.llm_cap:
+                V("counters", key, t.identity.step_index, "slots_left exceeds llm_cap")
+
+        # epoch sequence
         last = traj[-1]
+        terminated = last.episode_end is not None and last.episode_end.kind == "terminated"
+        if is_root and first.identity.epoch != "E1":
+            V("epoch_sequence", key, first.identity.step_index, "a root starts at E1")
+        pending = None          # the execute row awaiting its E2
+        for i, t in enumerate(traj):
+            ep, act = t.identity.epoch, t.action.action
+            st = t.identity.step_index
+            if ep == "final" and t is not last:
+                V("epoch_sequence", key, st, "final appears only as the last row")
+            if ep in ("verify", "E2"):
+                if pending is None and i > 0:
+                    V("epoch_sequence", key, st, f"{ep} row without a preceding execute")
+                if pending is not None:
+                    if t.state.candidate_hash != pending.state.candidate_hash:
+                        V("epoch_sequence", key, st, f"{ep} row is about another candidate than its execute")
+                    if ep == "E2" and pending.outcome.divergent and act != "discard":
+                        V("epoch_sequence", key, st, "a divergent candidate must be discarded")
+                    if t.state.candidate_divergent != pending.outcome.divergent:
+                        V("epoch_sequence", key, st, "state.candidate_divergent disagrees with the execute")
+                    if t.state.candidate_obs < 1:
+                        V("epoch_sequence", key, st, "state.candidate_obs must count the execute")
+                    if ep == "E2" and pending.outcome.divergent is False and t.state.candidate_obs == 1 \
+                            and t.state.candidate_delta_hat != pending.outcome.delta_hat:
+                        V("epoch_sequence", key, st, "state.candidate_delta_hat disagrees with the execute")
+                if ep == "E2":
+                    pending = None
+            elif ep == "E1":
+                if pending is not None:
+                    V("epoch_sequence", key, st, "an executed candidate has no E2 row")
+                pending = t if act == "execute" else None
+            elif ep in ("reaudit", "final") and pending is not None:
+                V("epoch_sequence", key, st, f"{ep} row between an execute and its E2")
+        if pending is not None and terminated:     # a missing episode_end is reported by the terminal check
+            V("epoch_sequence", key, pending.identity.step_index, "an executed candidate has no E2 row")
+
+        # terminal
         for t in traj[:-1]:
             if t.episode_end is not None:
-                out.append(Violation("terminal", key, t.identity.step_index, "episode_end before the last row"))
+                V("terminal", key, t.identity.step_index, "episode_end before the last row")
             if t.terminal is not None:
-                out.append(Violation("terminal", key, t.identity.step_index, "terminal before the last row"))
+                V("terminal", key, t.identity.step_index, "terminal before the last row")
+        ls, lo_ = last.state, last.outcome
         if last.episode_end is None:
-            out.append(Violation("terminal", key, last.identity.step_index, "last row has no episode_end"))
-        elif last.episode_end.kind == "terminated" and last.terminal is None:
-            out.append(Violation("terminal", key, last.identity.step_index, "terminated trajectory has no terminal"))
-        elif last.episode_end.kind == "truncated" and last.terminal is not None:
-            out.append(Violation("terminal", key, last.identity.step_index, "truncated trajectory has a terminal"))
+            V("terminal", key, last.identity.step_index, "last row has no episode_end")
+        elif last.episode_end.kind == "terminated":
+            if last.terminal is None:
+                V("terminal", key, last.identity.step_index, "terminated trajectory has no terminal")
+            if last.episode_end.reason == "W" and ls.runs_used + lo_.runs_consumed != last.env.W:
+                V("terminal", key, last.identity.step_index, "terminated at W but runs remain")
+            if last.episode_end.reason == "llm_cap" and ls.calls_used + lo_.calls_consumed != last.env.llm_cap:
+                V("terminal", key, last.identity.step_index, "terminated at llm_cap but calls remain")
+        elif last.terminal is not None:
+            V("terminal", key, last.identity.step_index, "truncated trajectory has a terminal")
 
         for t in traj:
+            st = t.identity.step_index
             if t.fork is not None:
                 d = t.fork
-                ok_rule = {"uniform": d.in_uniform and not d.in_oversample,
-                           "oversample": d.in_oversample and not d.in_uniform,
-                           "both": d.in_uniform and d.in_oversample}[d.selection_rule]
+                ok_rule = {"uniform": d.uniform and not d.oversample,
+                           "oversample": d.oversample and not d.uniform,
+                           "both": d.uniform and d.oversample}[d.selection_rule]
                 if not (0.0 < d.p_select <= 1.0) or abs(d.p_select - _p_select(d)) > FLOAT_TOL:
-                    out.append(Violation("design_weight", key, t.identity.step_index,
-                                         f"p_select {d.p_select} != recomputed {_p_select(d):.12g}"))
-                if not ok_rule or (d.in_oversample and not d.near_threshold):
-                    out.append(Violation("design_weight", key, t.identity.step_index,
-                                         "selection flags inconsistent with selection_rule / near_threshold"))
+                    V("design_weight", key, st, f"p_select {d.p_select} != recomputed {_p_select(d):.12g}")
+                if not ok_rule or (d.oversample and not d.near_threshold):
+                    V("design_weight", key, st, "selection flags inconsistent with selection_rule / near_threshold")
             if behaviour is not None and not t.action.forced and not t.state.rule_forced:
-                act, prob = behaviour(t)
-                if act != t.action.action or abs(prob - t.policy.action_prob) > FLOAT_TOL:
-                    out.append(Violation("propensity", key, t.identity.step_index,
-                                         f"replay gave ({act}, {prob}) vs logged "
-                                         f"({t.action.action}, {t.policy.action_prob})"))
+                res = behaviour(_view(t))
+                act, prob = res if isinstance(res, tuple) and len(res) == 2 else (None, None)
+                if not isinstance(prob, (int, float)) or isinstance(prob, bool) or not math.isfinite(prob):
+                    V("propensity", key, st, f"replay returned an invalid probability {prob!r}")
+                elif act != t.action.action or abs(prob - (t.policy.action_prob or 0.0)) > FLOAT_TOL:
+                    V("propensity", key, st, f"replay gave ({act}, {prob}) vs logged "
+                                             f"({t.action.action}, {t.policy.action_prob})")
             if registry is not None:
-                hit = registry.paper_b_block(t.identity.node, t.seeds.instance_seed)
-                if hit is not None:
-                    out.append(Violation("seed", key, t.identity.step_index,
-                                         f"instance seed {t.seeds.instance_seed} lies in Paper B block {hit}"))
+                seeds_to_check = [("instance_seed", t.seeds.instance_seed), ("worker_seed", t.seeds.worker_seed),
+                                  ("eps_seed", t.policy.eps_seed)]
+                seeds_to_check += [("audit_seed_block", x) for x in t.seeds.audit_seed_block]
+                if t.terminal is not None:
+                    seeds_to_check += [("terminal.audit_seeds", x) for x in t.terminal.audit_seeds]
+                for name, val in seeds_to_check:
+                    if val is None:
+                        continue
+                    hit = registry.paper_b_block(t.identity.node, val)
+                    if hit is not None:
+                        V("seed", key, st, f"{name} {val} lies in Paper B block {hit}")
     return out

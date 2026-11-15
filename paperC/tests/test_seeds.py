@@ -40,6 +40,8 @@ def test_known_values_from_code():
     assert by["e1b_leaf_audits"].lo == 5001
     # e1b formula: 100 + 10k + residue, k < 90 -> [100, 997)
     assert (by["e1b_instances"].lo, by["e1b_instances"].hi) == (100, 997)
+    assert (by["tracks_s11_factorial"].lo, by["tracks_s11_factorial"].hi) == (37001, 37031)
+    assert (by["tracks_oracle_select"].lo, by["tracks_oracle_eval"].hi) == (1_000_000, 3_000_000)
 
 
 @needs_pins
@@ -70,6 +72,18 @@ def test_registry_flags_paper_b_seed_in_check_campaign():
 def test_constants_reader_does_not_import():
     src = "import os\nos.system('false')\nA = 3\nB = range(A, A + 2)\nC = {'x': (1, 2)}\nD = os.getcwd()\n"
     c = seeds.constants(src, ["A", "B", "C"])
-    assert c["B"] == range(3, 5) and c["C"] == {"x": [1, 2]}
+    assert c["B"] == range(3, 5) and c["C"] == {"x": (1, 2)}
     with pytest.raises(KeyError):
         seeds.constants(src, ["D"])
+
+
+@needs_pins
+def test_every_seed_constant_in_code_is_accounted_for():
+    pb = seeds.paper_b_blocks(REPO)
+    assert seeds.unaccounted(REPO, pb) == []
+
+
+def test_unaccounted_detects_a_new_constant(monkeypatch):
+    fake = [{"ref": "x" * 40, "path": "r1/new.py", "name": "NEW_SEEDS", "ints": [45000, 45009]}]
+    monkeypatch.setattr(seeds, "scan_constants", lambda repo: fake)
+    assert seeds.unaccounted(REPO, []) == ["r1/new.py:NEW_SEEDS at xxxxxxxx: values [45000, 45009] outside every block"]
