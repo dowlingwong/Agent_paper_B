@@ -16,3 +16,10 @@
   runner already finished, the review gates still require a normal-exit path or the stopped-run unit; no retry
   and no marker/STATUS deletion.
 - **TASL-2:** unchanged, tailnet shows `tasl-2… offline, last seen 3d ago`.
+
+
+**Update 21:50 CET — host reachable again.** The 21:47 monitor cycle succeeded (`ssh` works; `tailscale status`
+shows the node answering again). B2 was **RUNNING, 22/24 roots**, on `gemma4_31b/b2/on/openml_ionosphere__s9013`;
+`b2.exit` not yet written, runner pid alive, GPU lock held by the runner. The outage lasted ~13 min (last good
+capture 21:22, first good after 21:47); the runner continued independently throughout. Monitoring resumed at the
+normal ≤30-min cadence; the post-run chain will start only after the runner ends with a normal exit.
