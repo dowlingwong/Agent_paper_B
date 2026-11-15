@@ -1,4 +1,8 @@
 # Paper B R1: build the HTCondor container images and push them to ghcr.io.
+# v2 proposal workflow (15 Nov 2026): builds from the htc-image-v2-20261115 branch and tags
+# 20261115-v2-<sha8>; the v1 workflow on htc-image-20261114 is untouched and the digests in use
+# stay until the author approves v2. Do not point any job at these tags before the reviewed
+# I2/I3 re-run, the trackp_gpu_smoke.py parity on L40S/H200 and one E0 equivalence job pass.
 # Dockerfile: r1/scripts/htcondor/docker/Dockerfile (Docker translation of the reviewed
 # Apptainer def r1/scripts/htcondor/apptainer/r1-htc.def). Build context: the apptainer dir
 # with the committed lock and freeze files. Jobs must reference the images by digest.
@@ -6,7 +10,7 @@ name: r1-htc-image
 
 on:
   push:
-    branches: [htc-image-20261114]
+    branches: [htc-image-v2-20261115]
     paths:
       - r1/scripts/htcondor/docker/**
       - r1/scripts/htcondor/apptainer/**
@@ -39,7 +43,7 @@ jobs:
       - name: Tag
         id: tag
         run: |
-          echo "tag=20261114-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
+          echo "tag=20261115-v2-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
           echo "dockerfile_sha256=$(sha256sum r1/scripts/htcondor/docker/Dockerfile | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Buildx

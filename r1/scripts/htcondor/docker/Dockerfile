@@ -1,3 +1,17 @@
+# Paper B R1 HTCondor images, v2 proposal (15 Nov 2026): Docker route via GitHub Actions -> ghcr.io.
+#
+# v2 scope (author Q-TORCH ruling + image-v2 items; proposal only, the v1 digests in use stay):
+# - Python patch versions are pinned (3.13.4 / 3.12.15 / 3.11.18: the patches of the validated
+#   TASL-7 exam, Track P GPU and Track S venvs) instead of "latest 3.x" at build time;
+# - libgomp is installed explicitly in every stage (llama.cpp / torch OpenMP runtime, D1);
+# - the gpu target carries nvidia-smi (copied from the CUDA devel base) so the S5 GPU gate can run
+#   inside the container;
+# - env 3 (Track P training) is rebuilt from the committed Track P GPU freeze
+#   (r1/scripts/htcondor/apptainer/pip_freeze_trackp-gpu.txt, the TASL-7-validated 121-line freeze):
+#   Python 3.12.15, --no-deps pinned set, torch==2.6.0+cu124 from the cu124 index,
+#   causal-conv1d==1.7.0 built from source with TORCH_CUDA_ARCH_LIST="8.0;8.9;9.0"; the build
+#   fails unless `uv pip freeze` (sorted) is identical to the committed freeze. VERSIONS records it.
+#
 # Paper B R1 HTCondor images: Docker route via GitHub Actions -> ghcr.io (14 Nov 2026).
 #
 # This is the Docker translation of the reviewed Apptainer definition
@@ -19,6 +33,9 @@
 ARG CUDA_DEVEL=nvidia/cuda:12.4.1-cudnn-devel-rockylinux9
 ARG CUDA_RUNTIME=nvidia/cuda:12.4.1-cudnn-runtime-rockylinux9
 ARG CPU_BASE=rockylinux:9
+ARG PY313=3.13.4
+ARG PY312=3.12.15
+ARG PY311=3.11.18
 
 ########################################################################################
 FROM ${CUDA_DEVEL} AS build
@@ -27,7 +44,7 @@ SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 # EPEL first: xrootd-client is EPEL-only on Rocky 9.
 RUN dnf install -y --setopt=install_weak_deps=False epel-release \
  && dnf install -y --setopt=install_weak_deps=False \
-        git rsync jq xrootd-client gcc gcc-c++ make cmake tar gzip findutils which procps-ng gawk grep \
+        git rsync jq xrootd-client gcc gcc-c++ make cmake tar gzip findutils which procps-ng gawk grep libgomp \
  && dnf clean all
 
 # uv pinned to 0.13.6; no cache in the image.
@@ -37,37 +54,44 @@ ENV UV_INSTALL_DIR=/opt/uv \
     PATH=/opt/uv:$PATH
 RUN curl -LsSf https://astral.sh/uv/0.13.6/install.sh | sh \
  && mkdir -p /opt/r1/envs /opt/r1/pythons /opt/r1/harness /opt/r1/locks \
- && uv python install 3.13 3.12 3.11
+ && uv python install ${PY313} ${PY312} ${PY311}
 
 COPY uv.lock.a3fedbb          /opt/r1/harness/uv.lock
 COPY pyproject.toml.a3fedbb   /opt/r1/harness/pyproject.toml
 COPY tracks_freeze_65.txt     /opt/r1/locks/tracks_freeze_65.txt
 COPY pip_freeze_trackp-cpu.txt /opt/r1/locks/pip_freeze_trackp-cpu.txt
+COPY pip_freeze_trackp-gpu.txt /opt/r1/locks/pip_freeze_trackp-gpu.txt
 
 # Env 1 - harness: uv.lock at harness a3fedbb (Python 3.13), plus the dev extra for pytest.
 # The harness pyproject has no [build-system], so uv treats it as a virtual project: only the
 # locked dependencies are installed, no harness code.
 RUN cd /opt/r1/harness \
- && UV_PROJECT_ENVIRONMENT=/opt/r1/envs/harness uv sync --frozen --extra dev --python 3.13
+ && UV_PROJECT_ENVIRONMENT=/opt/r1/envs/harness uv sync --frozen --extra dev --python ${PY313}
 
 # Env 2 - Track S/Track P: the 65-package freeze (Python 3.11); drop the editable line that
 # points at the author's /home path.
 RUN grep -vE '^(-e|--editable)([[:space:]]|$)' /opt/r1/locks/tracks_freeze_65.txt > /tmp/tracks_install.txt \
- && uv venv --python 3.11 /opt/r1/envs/tracks \
+ && uv venv --python ${PY311} /opt/r1/envs/tracks \
  && uv pip install --python /opt/r1/envs/tracks/bin/python -r /tmp/tracks_install.txt
 
-# Env 3 - Track P training: Python 3.12; pinned set --no-deps, VCS deps --no-deps at their
-# pinned commits, then the CUDA torch build. torch==2.6.0+cu124 is "proposed:" in the def
-# (the CPU freeze says torch==2.14.1+cpu); it needs an author ruling before production use.
-RUN uv venv --python 3.12 /opt/r1/envs/trackp \
+# Env 3 - Track P training (v2, author Q-TORCH ruling 15 Nov 2026): rebuilt from the committed
+# Track P GPU freeze exactly. Python 3.12.15; the pinned set is installed --no-deps; the three VCS
+# dependencies are installed --no-deps at their pinned commits; torch comes from the cu124 index;
+# causal-conv1d is built from source for sm_80/sm_89/sm_90. The final check fails the build unless
+# `uv pip freeze` (sorted) equals the committed freeze (sorted).
+RUN uv venv --python ${PY312} /opt/r1/envs/trackp \
  && TP=/opt/r1/envs/trackp/bin/python \
- && grep -viE '^(torch==|kev[[:space:]]|laya[[:space:]]|startlux-decide[[:space:]])' /opt/r1/locks/pip_freeze_trackp-cpu.txt > /tmp/trackp_pinned.txt \
+ && grep -viE '^(torch==|causal-conv1d==|kev[[:space:]]|laya[[:space:]]|startlux-decide[[:space:]])' /opt/r1/locks/pip_freeze_trackp-gpu.txt > /tmp/trackp_pinned.txt \
  && uv pip install --python "$TP" --no-deps -r /tmp/trackp_pinned.txt \
  && uv pip install --python "$TP" --no-deps 'kev @ git+https://github.com/jaredpalmer/kev@2074cc44256200bb37540103fa4572901faa10f3' \
  && uv pip install --python "$TP" --no-deps 'laya @ git+https://github.com/NandhaKishorM/laya@a478221bcad24d1a9c47b361c79328ebd2b100c6' \
  && uv pip install --python "$TP" --no-deps 'startlux-decide @ git+https://github.com/StartLuxLabs/StartLux-Decision@a99977d9332decc9fb27a2488b4a83b533b6cd5f' \
  && uv pip install --python "$TP" --index-url https://download.pytorch.org/whl/cu124 'torch==2.6.0+cu124' \
- && (uv pip check --python "$TP" || true)
+ && TORCH_CUDA_ARCH_LIST="8.0;8.9;9.0" MAX_JOBS="$(nproc)" uv pip install --python "$TP" --no-deps --no-binary causal-conv1d --no-build-isolation 'causal-conv1d==1.7.0' \
+ && uv pip freeze --python "$TP" | sort > /tmp/env3_built.sorted \
+ && sort /opt/r1/locks/pip_freeze_trackp-gpu.txt > /tmp/env3_pinned.sorted \
+ && diff -u /tmp/env3_pinned.sorted /tmp/env3_built.sorted \
+ && echo "env3 sorted diff: empty"
 
 # llama.cpp at the pinned commit, CUDA build for V100, A100, L40S/4090, H200.
 RUN git clone https://github.com/ggml-org/llama.cpp /opt/r1/llama.cpp \
@@ -88,7 +112,7 @@ LABEL org.opencontainers.image.source="https://github.com/dowlingwong/agent_pape
       org.opencontainers.image.description="Paper B R1 HTCondor CPU image: harness env (Py3.13) + Track S env (Py3.11). No code, models, data or credentials." \
       r1.def_route="r1/scripts/htcondor/apptainer/r1-htc.def (a5a0c9da)"
 RUN dnf install -y --setopt=install_weak_deps=False epel-release \
- && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep \
+ && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep libgomp \
  && dnf clean all
 COPY --from=build /opt/uv /opt/uv
 COPY --from=build /opt/r1/pythons /opt/r1/pythons
@@ -114,7 +138,7 @@ LABEL org.opencontainers.image.source="https://github.com/dowlingwong/agent_pape
       org.opencontainers.image.description="Paper B R1 HTCondor GPU image: three pinned envs + llama-server 620d2225 (CUDA 70;80;89;90). No code, models, data or credentials." \
       r1.def_route="r1/scripts/htcondor/apptainer/r1-htc.def (a5a0c9da)"
 RUN dnf install -y --setopt=install_weak_deps=False epel-release \
- && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep \
+ && dnf install -y --setopt=install_weak_deps=False git rsync jq xrootd-client tar gzip findutils which procps-ng gawk grep libgomp \
  && dnf clean all
 COPY --from=build /opt/uv /opt/uv
 COPY --from=build /opt/r1/pythons /opt/r1/pythons
@@ -123,19 +147,31 @@ COPY --from=build /opt/r1/harness /opt/r1/harness
 COPY --from=build /opt/r1/locks /opt/r1/locks
 COPY --from=build /opt/r1/llama /opt/r1/llama
 COPY --from=build /opt/r1/LLAMA_SERVER_SHA256 /opt/r1/LLAMA_CPP_COMMIT /opt/r1/
+# nvidia-smi for the in-container S5-style GPU gate (the runtime base does not ship it); the CUDA
+# driver libraries are injected by the batch system at run time, as for the v1 image.
+COPY --from=build /usr/bin/nvidia-smi /usr/bin/nvidia-smi
+RUN test -x /usr/bin/nvidia-smi
 ENV PATH=/opt/uv:/opt/r1/llama/bin:$PATH UV_PYTHON_INSTALL_DIR=/opt/r1/pythons \
     LD_LIBRARY_PATH=/opt/r1/llama/bin:${LD_LIBRARY_PATH}
 # No GPU on the build runner: import checks only (torch.cuda is not exercised here).
 RUN /opt/r1/envs/harness/bin/python -c "import numpy, sklearn, pandas, pytest; print('env1 ok', numpy.__version__, sklearn.__version__)" \
  && /opt/r1/envs/tracks/bin/python -c "import numpy, sklearn, pandas; print('env2 ok', numpy.__version__, sklearn.__version__)" \
  && /opt/r1/envs/trackp/bin/python -c "import torch, numpy, sklearn; print('env3 ok', torch.__version__, numpy.__version__, sklearn.__version__)" \
+ && uv pip freeze --python /opt/r1/envs/trackp/bin/python | sort > /tmp/env3_image.sorted \
+ && sort /opt/r1/locks/pip_freeze_trackp-gpu.txt > /tmp/env3_pinned_image.sorted \
+ && diff -u /tmp/env3_pinned_image.sorted /tmp/env3_image.sorted \
+ && echo "env3 sorted diff: empty" \
  && { echo "image=r1-htc-gpu"; echo "build_utc=$(date -u +%FT%TZ)"; echo "base=nvidia/cuda:12.4.1-cudnn-runtime-rockylinux9"; \
       echo "uv=$(uv --version)"; \
       echo "python_313=$(/opt/r1/envs/harness/bin/python -VV 2>&1)"; \
       echo "python_311=$(/opt/r1/envs/tracks/bin/python -VV 2>&1)"; \
       echo "python_trackp=$(/opt/r1/envs/trackp/bin/python -VV 2>&1)"; \
-      echo "torch_pin=torch==2.6.0+cu124 (proposed)"; \
+      echo "torch_pin=torch==2.6.0+cu124 (Q-TORCH ruling: install from the cu124 index)"; \
       echo "torch_actual=$(/opt/r1/envs/trackp/bin/python -c 'import torch; print(torch.__version__)')"; \
+      echo "trackp_gpu_freeze_sha256=$(sha256sum /opt/r1/locks/pip_freeze_trackp-gpu.txt | awk '{print $1}')"; \
+      echo "env3_sorted_diff=empty"; \
+      echo "nvidia_smi=/usr/bin/nvidia-smi"; \
+      echo "libgomp=$(rpm -q libgomp)"; \
       echo "llama_cpp_commit=$(cat /opt/r1/LLAMA_CPP_COMMIT)"; \
       echo "llama_server_sha256=$(awk '{print $1}' /opt/r1/LLAMA_SERVER_SHA256)"; \
       echo "harness_lock_sha256=$(sha256sum /opt/r1/harness/uv.lock | awk '{print $1}')"; \
