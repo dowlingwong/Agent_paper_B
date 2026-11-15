@@ -19,8 +19,10 @@ branch, which also carries `FEATURIZER_VERSION = c3_features/v3` and `PROMPT_VER
 
 ```
 cd <checkout> && PYTHONPATH=. python3 -B -m r1.c3.dataset build-sweep \
-  --index <pinned sweep index> --paper-root <paper root> \
-  --classification <results/r1/evidence/C3_sweep_classification_20261028.json> --out <NEW versioned dir>
+  --index <paper root>/results/r1/pilot/C3_sweep_index_20261028T033315Z.json \
+  --paper-root <paper root> \
+  --classification <paper root>/results/r1/evidence/C3_sweep_classification_20261028.json \
+  --out <NEW versioned dir>
 ```
 
 `--classification` implements the author's **R1-SWEEP1-CLASSIFY** row (the sweep-1 batch is the EVIDENCE batch;

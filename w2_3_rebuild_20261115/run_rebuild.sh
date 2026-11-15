@@ -13,7 +13,7 @@ SWEEP_INDEX=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_2026102
 SWEEP_INDEX_SHA=812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab
 PAPER_ROOT=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/agent_paper_B
 CHECKOUT=/work/dwong/htcondor_prep_20261114/w2_v3
-CLASSIFICATION="$CHECKOUT/results/r1/evidence/C3_sweep_classification_20261028.json"   # R1-SWEEP1-CLASSIFY
+CLASSIFICATION="$PAPER_ROOT/results/r1/evidence/C3_sweep_classification_20261028.json"  # R1-SWEEP1-CLASSIFY (must be inside the paper root)
 CLASSIFICATION_SHA=bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc
 BASE=/work/dwong/htcondor_prep_20261114/w2_3_rebuild_20261115
 PY=python3
@@ -24,7 +24,7 @@ MANIFEST="$OUT/manifest.json"
 EVIDENCE_JSON=/work/dwong/htcondor_prep_20261114/w2/w2_3_check_20261115.json
 EVIDENCE_SHA=b11217d041728389cd5b83de0c9685294d312fb77f6246efc99a0945e6ec396e
 EVIDENCE_REPO=docs/r1/reports/w2_3_check_20261115/w2_3_check_20261115.json
-BUILD_CMD="python3 -B -m r1.c3.dataset build-sweep --index $SWEEP_INDEX --paper-root $PAPER_ROOT --classification $CLASSIFICATION --out $OUT"
+BUILD_CMD="python3 -B -m r1.c3.dataset build-sweep --index $PAPER_ROOT/results/r1/pilot/C3_sweep_index_20261028T033315Z.json --paper-root $PAPER_ROOT --classification $CLASSIFICATION --out $OUT"
 stop() { echo "STOP: $*" >&2; exit 2; }
 
 [ -d "$CHECKOUT/.git" ] || stop "clean checkout missing: $CHECKOUT"
@@ -33,11 +33,17 @@ stop() { echo "STOP: $*" >&2; exit 2; }
 [ -f "$SWEEP_INDEX" ] || stop "sweep index missing"
 [ "$(sha256sum "$SWEEP_INDEX" | awk '{print $1}')" = "$SWEEP_INDEX_SHA" ] || stop "sweep index sha256 mismatch"
 [ -d "$PAPER_ROOT" ] || stop "paper root missing"
-[ -f "$CLASSIFICATION" ] || stop "classification sidecar missing (R1-SWEEP1-CLASSIFY)"
+[ -f "$PAPER_ROOT/docs/r1/PLAN.md" ] || stop "paper-root PLAN.md missing"
+grep -q '^| R1-SWEEP1-CLASSIFY ' "$PAPER_ROOT/docs/r1/PLAN.md" || stop "paper-root PLAN has no R1-SWEEP1-CLASSIFY row (author main-merge decision needed)"
+grep -q 'C3_sweep_classification_20261028.json' "$PAPER_ROOT/docs/r1/PLAN.md" || stop "paper-root PLAN row does not name the classification sidecar (author main-merge decision needed)"
+[ -f "$PAPER_ROOT/docs/r1/authorizations/c3_sweep1_20261027.md" ] || stop "paper-root sweep-1 authorization missing"
+[ "$(sha256sum "$PAPER_ROOT/results/r1/pilot/C3_sweep_index_20261028T033315Z.json" 2>/dev/null | awk '{print $1}')" = "$SWEEP_INDEX_SHA" ] || stop "paper-root pinned index missing/mismatched"
+[ -f "$CLASSIFICATION" ] || stop "paper-root classification sidecar missing (R1-SWEEP1-CLASSIFY; author main-merge decision needed)"
 [ "$(sha256sum "$CLASSIFICATION" | awk '{print $1}')" = "$CLASSIFICATION_SHA" ] || stop "classification sidecar sha256 mismatch"
 [ -s "$EVIDENCE_JSON" ] || stop "W2-3 evidence JSON missing"
 [ "$(sha256sum "$EVIDENCE_JSON" | awk '{print $1}')" = "$EVIDENCE_SHA" ] || stop "W2-3 evidence sha256 mismatch"
-[ "$(git -C "$CHECKOUT" ls-files --error-unmatch "$EVIDENCE_REPO" >/dev/null 2>&1 && sha256sum "$CHECKOUT/$EVIDENCE_REPO" | awk '{print $1}')" = "$EVIDENCE_SHA" ] || stop "repo W2-3 evidence copy missing/mismatched"
+# the W2-3 evidence input is the pinned /work copy; the repo path is recorded in the manifest for provenance
+# (the code checkout is pinned to d8aa9561, which predates the evidence commit 03d742cf)
 case "$OUT" in *r1_sealed*) stop "refusing r1_sealed output path";; esac
 [ ! -e "$OUT" ] || stop "output directory already exists (never overwrite; new versioned dir required)"
 # classification mode: the reviewed code creates OUT itself (mkdir exist_ok=False) -> logs go outside OUT
@@ -58,7 +64,7 @@ PCOUNT=$(cd "$CHECKOUT" && grep -rhoE "trackp_prompt/v[0-9]+" r1/c3/train/types.
 
 # the single data-producing step (read-only on the ledgers; the code's D8 guard + refuse_sealed apply)
 ( cd "$CHECKOUT" && PYTHONPATH=. "$PY" -B -m r1.c3.dataset build-sweep \
-    --index "$SWEEP_INDEX" --paper-root "$PAPER_ROOT" --classification "$CLASSIFICATION" --out "$OUT" ) \
+    --index "$PAPER_ROOT/results/r1/pilot/C3_sweep_index_20261028T033315Z.json" --paper-root "$PAPER_ROOT" --classification "$CLASSIFICATION" --out "$OUT" ) \
     > "$LOGS/build.stdout" 2> "$LOGS/build.stderr"
 RC=$?
 [ "$RC" -eq 0 ] || stop "build-sweep failed rc=$RC (logs preserved in $LOGS)"
@@ -122,13 +128,18 @@ out = pathlib.Path(sys.argv[1]); m = json.loads((out/"manifest.json").read_text(
 assert m["featurizer_version"] == "c3_features/v3" and m["prompt_version"] == "trackp_prompt/v2"
 assert m["table"]["label"] == "EVIDENCE", m["table"]["label"]
 assert m["table"]["n_proposals"] == b["n_proposals"] and m["table"]["n_configs"] == b["n_configs"]
-assert m["table"]["replay_checks_total"] == 288 * 20, m["table"]["replay_checks_total"]  # R5 cross-check
+ev = json.loads(pathlib.Path(m["w2_3_evidence"]["path"]).read_text())
+assert m["table"]["replay_checks_total"] == ev["ledgers"] * ev["runs_total"] == 288 * 20, m["table"]["replay_checks_total"]
 assert m["classification"]["sha256"] == "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc"
 assert b.get("sweep_index", {}).get("sha256") == m["sweep_index"]["sha256"]
 assert set(m["files"]) == {"proposals.jsonl", "configs.json", "build.json"}
+assert (out / "build.json").stat().st_size > 0
+if b.get("table_sha256") is not None: assert set(b["table_sha256"]) == {"proposals.jsonl", "configs.json"}
 print("MANIFEST_VERIFY_OK", b["n_proposals"], b["replay_checks_total"])
 PY
 ( cd "$OUT" && sha256sum proposals.jsonl configs.json build.json manifest.json > SHA256SUMS ) || stop "cannot write SHA256SUMS"
+# R3 substantiation: the build must not have changed any tracked file in the code checkout
+[ -z "$(git -C "$CHECKOUT" status --porcelain)" ] || stop "the build changed tracked files in the code checkout"
 ( cd "$OUT" && sha256sum -c SHA256SUMS >/dev/null ) || stop "SHA256SUMS self-check failed"
 # post-build no-mixing scan: only the table files (the manifest disclosure legitimately names v1)
 if grep -l "trackp_prompt/v1" "$OUT/proposals.jsonl" "$OUT/configs.json" "$OUT/build.json" >/dev/null 2>&1; then

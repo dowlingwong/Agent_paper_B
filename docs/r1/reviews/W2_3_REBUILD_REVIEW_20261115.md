@@ -211,3 +211,72 @@ from here, so the pins are checked against the repo evidence and the reviewed co
 files); no git commit; the only file written is this review.
 
 VERDICT: NOT ACCEPTED
+
+---
+
+## Round 2 delta re-check (branch @ `c83d6620`; 16 Nov 2026, 00:15 CET)
+
+**Scope.** Re-check of round 2 at HEAD `c83d6620` (worktree clean; my round-1 review is committed there):
+`run_rebuild.sh` SHA-256 `f9a01dd2a46b6a3eaa6cf2a186c095dfcc306ad3f1b6a144ad281d939ff16aee` (139 lines),
+PLAN.md `3491b5fcbec991562cb1550819799b2ad616b0517b0674f60d67a2928769934a` (73 lines). Read-only; no host access;
+nothing executed.
+
+**Verified fixed:** R2 (`paper_root` is an explicit argv; `output_parent` a separate key) ✓; R3
+(`PYTHONDONTWRITEBYTECODE=1` exported and `python3 -B` on every invocation) ✓; R4 (mixing statement scoped to the
+Track P table build path, `budget_line_change` disclosure with the W2-1 v1→v2 line, the synthetic exam's retained
+v1 line (W2-4) disclosed, and the post-build v1-token scan restricted to the three table files) ✓; R5
+(`replay_checks_total == 288*20 == 5760` asserted; the evidence JSON's status/ledgers/runs_total/
+ledgers_differing recorded) ✓; R6 (python/numpy versions, a `df -Pk` free-space preflight ≥2 GiB, and the exact
+build command recorded) ✓; NITs (`SHA256SUMS` `|| stop` + `sha256sum -c` self-check before `REBUILD_OK`; the
+unit-level `r1_sealed` check is now lexical; the repo W2-3 evidence path/SHA is recorded beside the `/work`
+copy; the manifest notes the evidence JSON's stale stop_rule string) ✓. The CLI genuinely supports
+`--classification` (verified in `dataset.py`'s argparse) and the EVIDENCE-only `table_sha256` is produced by
+`_write_table`; logs are outside `OUT`, `OUT` is not pre-created (the code creates it with `exist_ok=False` under
+`umask 077`), and a STOP preserves `OUT`/logs. Good round.
+
+**But the unit still cannot run as written — two guaranteed STOPs, plus one availability risk:**
+
+1. **BLOCKING — the classification sidecar path is on the wrong tree.** `CLASSIFICATION` is
+   `$CHECKOUT/results/r1/evidence/C3_sweep_classification_20261028.json` (L16; the PLAN's command block likewise
+   shows the repo-relative path under the checkout), but the reviewed `evidence_classification()` does
+   `root = Path(paper_root).resolve(); sidecar = Path(sidecar_path).resolve(); if not sidecar.is_relative_to(root)
+   or not index_path.is_relative_to(root): raise ValueError('classification and index must be inside repository')`.
+   The checkout (`/work/.../w2_v3`) is not under the paper root (`/ceph/.../agent_paper_B`), so `build-sweep`
+   exits non-zero immediately → the unit STOPs. *Fix:* point `--classification` at
+   `$PAPER_ROOT/results/r1/evidence/C3_sweep_classification_20261028.json` (same sidecar, sha still
+   `bb6d891c…`) and check **that** copy (exists + sha) before the build; keep the checkout copy only as a
+   provenance record if wanted.
+2. **BLOCKING — the repo-evidence check (L40) false-STOPs the unit before the build.** The unit verifies
+   `git -C "$CHECKOUT" ls-files --error-unmatch docs/r1/reports/w2_3_check_20261115/w2_3_check_20261115.json`,
+   but the checkout HEAD is pinned to the reviewed code commit `d8aa9561`, and the W2-3 evidence JSON was added
+   later, at `03d742cf` (which is a **descendant** of `d8aa9561`: the evidence JSON is absent from the
+   `d8aa9561` tree — verified with `git ls-tree`). The `ls-files` failure leaves the command substitution empty,
+   so the unit STOPs with "repo W2-3 evidence copy missing/mismatched" before anything runs. *Fix:* drop the
+   checkout-copy requirement — record the repo path/SHA in the manifest (it already does) and use the pinned
+   `/work` copy (sha `b11217d0…`) as the input; if a repo copy must be verified, verify the copy from the
+   branch that actually has it, not the code checkout.
+3. **MAJOR risk — the paper-root clone may not contain the classification sidecar/PLAN row.** The paper root is
+   the sweep-run clone (25 Oct era) while the `R1-SWEEP1-CLASSIFY` sidecar/PLAN row are 28 Oct artifacts; the
+   code additionally verifies the closure over `docs/r1/PLAN.md` (the row must contain the sidecar's
+   repo-relative path and sha) and `_verify_published` (PLAN/authorization/index/sidecar committed in the paper
+   root's git). This is probably why round 2 used the checkout copy — but the code forbids that. *Fix:* before
+   the build, pre-check `$PAPER_ROOT/results/r1/evidence/C3_sweep_classification_20261028.json` (exists + sha)
+   and the `R1-SWEEP1-CLASSIFY` row in `$PAPER_ROOT/docs/r1/PLAN.md`; if the paper-root clone predates them, the
+   EVIDENCE-label route needs a reviewed decision (writing the four classification artifacts into `/ceph` would
+   break this unit's read-only promise; running without `--classification` would record the known runner-defect
+   label — the author's row says that is not acceptable). This must be resolved before running.
+
+**Minor (fold in with the above):** (i) the PLAN command block should show the classification path as the
+paper-root copy, and its "Output" paragraph ("the unit creates it 0700") should say the reviewed code creates
+`OUT` in classification mode while the unit creates only the parents and the logs dir; (ii) the R5 assertion
+hardcodes 288/20 — read them from the pinned evidence JSON instead (and keep the hardcoded values as a cross-
+check); (iii) add a post-build `git -C "$CHECKOUT" status --porcelain` check (STOP if the build changed any
+tracked file) to substantiate the read-only claim; (iv) record `build.json`'s `table_sha256` (the EVIDENCE-only
+provenance) in the manifest too; (v) the 2 GiB `df` threshold is a guess — record the actual output size after
+the run.
+
+**Verdict:** the round-1 findings are substantially addressed, but the unit may **not** run on deepthought as
+written: fix the classification path (paper-root sidecar + pre-check) and the false-STOP repo-evidence check,
+and decide the paper-root availability question; then a quick re-check is enough.
+
+VERDICT: NOT ACCEPTED
