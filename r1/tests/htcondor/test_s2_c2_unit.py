@@ -132,7 +132,7 @@ def test_layout_fields_are_validated():
         with pytest.raises(lib.Stop, match=key):
             lib.validate_spec(s)
     s = spec(); s["server"]["extra_args"][s["server"]["extra_args"].index("--chat-template-kwargs") + 1] = \
-        '{"enable_thinking": false, "add_generation_prompt": true}'
+        '{"enable_thinking":false, "add_generation_prompt":true}'
     with pytest.raises(lib.Stop, match="byte-identical"):
         lib.validate_spec(s)
 
@@ -142,7 +142,7 @@ def test_settings_are_fail_closed():
     with pytest.raises(lib.Stop, match="not part of the exam setting"):
         lib.validate_spec(s)
     s = spec(); k = s["server"]["extra_args"].index("--chat-template-kwargs")
-    s["server"]["extra_args"][k + 1] = '{"enable_thinking": true}'
+    s["server"]["extra_args"][k + 1] = '{"enable_thinking":true}'
     with pytest.raises(lib.Stop, match="enable_thinking"):
         lib.validate_spec(s)
     s = spec(); k = s["server"]["extra_args"].index("--chat-template-kwargs")
@@ -274,9 +274,10 @@ def test_renderer_pins_class_and_transfers_outputs(tmp_path):
     assert "universe = container" in jdl
     assert "container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35" in jdl
     assert 'TARGET.GPUs_DeviceName =?= "NVIDIA L40S"' in jdl
-    assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in jdl
+    assert "TARGET.CloudSite" not in jdl  # R1-SWEEP-HOST-L40S-SITES: GPU model, not site
     assert f"Cpus >= {lib.MIN_CPUS}" in jdl and 'Arch == "X86_64"' in jdl and 'OpSys == "LINUX"' in jdl
-    assert f"TARGET.CpuFamily =?= {lib.CPU_FAMILY}" in jdl and f"TARGET.CpuModelNumber =?= {lib.CPU_MODEL_NUMBER}" in jdl
+    assert "TARGET.CpuFamily" not in jdl and "TARGET.CpuModelNumber" not in jdl
+    assert "periodic_hold = (NumJobStarts > 1)" in jdl
     assert "regexp(" not in jdl
     assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
     assert "request_disk = 42460977" in jdl and "request_memory = 32000" in jdl
@@ -339,8 +340,8 @@ def test_cpu_identity_checks_the_s2_c4_cpu_class(monkeypatch, tmp_path):
     info = lib.cpu_identity()
     assert info["cpu_family"] == 6 and info["cpu_model_number"] == 207 and info["logical_cpus"] == 2
     fake.write_text("processor\t: 0\ncpu family\t: 25\nmodel\t\t: 1\nmodel name\t: AMD EPYC 9004\n")
-    with pytest.raises(lib.Stop, match="CPU class mismatch"):
-        lib.cpu_identity()
+    other = lib.cpu_identity()
+    assert other["cpu_family"] == 25 and other["model"].startswith("AMD EPYC")
 
 
 def test_driver_regex_reads_the_version(monkeypatch, tmp_path):
@@ -349,27 +350,6 @@ def test_driver_regex_reads_the_version(monkeypatch, tmp_path):
     real = __import__("pathlib").Path
     monkeypatch.setattr(lib, "Path", lambda x: p if str(x) == "/proc/driver/nvidia/version" else real(x))
     assert lib._driver_version() == "615.71.10"
-
-
-def test_resume_pin_mismatch_is_a_stop(tmp_path):
-    s = lib.validate_spec(spec())["spec"]
-    record = tmp_path / "job_record.json"
-    record.write_text(json.dumps({"label": "ENGINEERING_ONLY", "image_digest": "ghcr.io/other@sha256:" + "0" * 64,
-                                  "model_sha256": s["model"]["sha256"], "paper_commit": s["paper"]["commit"],
-                                  "harness_commit": s["harness"]["commit"]}))
-    with pytest.raises(lib.Stop, match="resume pin mismatch"):
-        lib._check_resume_record(s, record, "ENGINEERING_ONLY")
-
-
-def test_empty_placeholder_job_record_is_a_fresh_run(tmp_path):
-    out = tmp_path / "out"; out.mkdir()
-    rec = tmp_path / "job_record.json"; rec.write_text("")
-    assert lib._resume_state(out, rec) is False
-    rec.write_text(json.dumps({"schema": "s2_c2_job_record/1"}))
-    assert lib._resume_state(out, rec) is True
-    rec.write_text("not json")
-    with pytest.raises(lib.Stop, match="unreadable"):
-        lib._resume_state(out, rec)
 
 
 def test_job_entry_precreates_the_transferred_outputs():

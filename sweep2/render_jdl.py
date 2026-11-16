@@ -22,13 +22,10 @@ OUTPUTS = "out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log"
 
 def requirements() -> str:
     return " && ".join(f"({c})" for c in (
-        f'TARGET.CloudSite =?= "{lib.CLOUD_SITE}"',
         f'TARGET.GPUs_DeviceName =?= "{lib.GPU_MODEL}"',
         'TARGET.Arch == "X86_64"',
         'TARGET.OpSys == "LINUX"',
         f"TARGET.Cpus >= {lib.MIN_CPUS}",
-        f"TARGET.CpuFamily =?= {lib.CPU_FAMILY}",
-        f"TARGET.CpuModelNumber =?= {lib.CPU_MODEL_NUMBER}",
     ))
 
 
@@ -46,6 +43,9 @@ def render(spec: dict, name: str, inputs: list[str]) -> str:
         "request_GPUs = 1",
         f"+RequestWalltime = {spec['walltime_s']}",
         "+RemoteJob = True",
+        "periodic_hold = (NumJobStarts > 1)",
+        "periodic_hold_reason = \"no resume: NumJobStarts > 1 must be rerun as a fresh submission into a new dir\"",
+        "periodic_hold_subcode = 42",
         f"requirements = {requirements()}",
         "should_transfer_files = YES",
         "when_to_transfer_output = ON_EXIT",

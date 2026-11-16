@@ -72,7 +72,7 @@ WORKER_FAILURE_MARGIN = 0.05
 WORKER_BINOMIAL_ALPHA = 0.01
 NON_NUMERIC_DIFFERENCES = ["--no-webui (UI only, not numeric)", "-lv 4 (log verbosity, not numeric)"]
 B2_HARNESS = "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2"
-EXAM_THINKING_KWARGS = '{"enable_thinking": false}'  # byte-identical to the exam invocation
+EXAM_THINKING_KWARGS = '{"enable_thinking":false}'  # byte-identical to the exam invocation (no extra spaces)
 SHA = re.compile(r"^[0-9a-f]{64}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 SAFE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -217,19 +217,17 @@ def validate_spec(spec: dict) -> dict:
         raise Stop("STOP: verify_split_policy must be vary")
 
     req = _get(spec, "requirements")
-    if _get(req, "cloud_site") != CLOUD_SITE:
-        raise Stop(f"STOP: sweep-2 GPU jobs run on {CLOUD_SITE} only")
     if _get(req, "gpu_device_name") != GPU_MODEL:
         raise Stop(f"STOP: requirements pin the GPU model to {GPU_MODEL}")
     if _get(req, "arch") != "X86_64" or _get(req, "opsys") != "LINUX":
         raise Stop("STOP: requirements pin Arch=X86_64 and OpSys=LINUX")
     if _get(req, "min_cpus") != MIN_CPUS:
         raise Stop(f"STOP: min_cpus must equal {MIN_CPUS} (pinned CPU class)")
-    if _get(req, "cpu_family") != CPU_FAMILY or _get(req, "cpu_model_number") != CPU_MODEL_NUMBER:
-        raise Stop(f"STOP: CPU model class must be family {CPU_FAMILY} model {CPU_MODEL_NUMBER} "
-                   "(the S2-C4 L40S class: Intel Xeon Platinum 8562Y+)")
-    if _get(req, "cpu_model_contains") != CPU_MODEL_CONTAINS:
-        raise Stop(f"STOP: cpu_model_contains must be {CPU_MODEL_CONTAINS!r}")
+    # R1-SWEEP-HOST-L40S-SITES: requirements pin the GPU model (L40S), not the site; both CPU models are allowed
+    # and recorded/disclosed at run time. A site/CPU pin here would be a stale requirement.
+    for key in ("cloud_site", "cpu_family", "cpu_model_number", "cpu_model_contains", "machine_regex"):
+        if key in req:
+            raise Stop(f"STOP: requirements.{key} is no longer pinned (GPU model only; sites/CPU disclosed at run time)")
     if "requires_etp_ceph" in req:
         raise Stop("STOP: NEMO2 slots do not advertise ProvidesEtpCeph; outputs transfer to the submit host and are sealed there")
     if kind == "chunk":
@@ -301,6 +299,18 @@ def resolve_label(spec: dict) -> str:
 
 
 # ------------------------------------------------------------------ image / host / GPU / CPU
+def site_identity(host: dict) -> dict:
+    """R1-SWEEP-HOST-L40S-SITES: record the site/node; requirements no longer pin the site."""
+    fqdn = str(host.get("fqdn") or host.get("hostname") or "")
+    if fqdn.endswith(".nemo.privat"):
+        site = "BwForCluster-Nemo2"
+    elif fqdn.endswith("etp.kit.edu"):
+        site = "portal"
+    else:
+        site = "unknown"
+    return {"site": site, "fqdn": fqdn}
+
+
 def image_identity(spec: dict) -> dict:
     versions = Path("/opt/r1/VERSIONS.txt")
     if not versions.is_file():
@@ -389,10 +399,8 @@ def cpu_identity(_unused: str | None = None) -> dict:
     family = int(fam.group(1)) if fam else None
     number = int(num.group(1)) if num else None
     cores = len(re.findall(r"^processor\s*:", text, re.M))
-    if (family, number) != (CPU_FAMILY, CPU_MODEL_NUMBER) or CPU_MODEL_CONTAINS not in model:
-        raise Stop(f"STOP: CPU class mismatch: family/model {family}/{number}, model {model!r} "
-                   f"(pinned {CPU_FAMILY}/{CPU_MODEL_NUMBER} {CPU_MODEL_CONTAINS!r})")
-    return {"model": model, "cpu_family": family, "cpu_model_number": number, "logical_cpus": cores}
+    return {"model": model, "cpu_family": family, "cpu_model_number": number, "logical_cpus": cores,
+            "recorded_only": True}
 
 
 # ------------------------------------------------------------------ model / server / collector
@@ -563,8 +571,7 @@ def collector_argv(spec: dict, label: str, resume: bool, paper_dir: Path | None 
                                          "reserved and untouched)",
                                 "b2_audits": "none"}}
     argv = ["/opt/r1/envs/harness/bin/python", "-B", "-m", "r1.headroom.e1b_collect"]
-    if resume:
-        raise Stop("STOP: no resume path for sweep 2; a non-clean chunk is rerun whole in a new directory")
+
     deadline = max(600, int(spec["walltime_s"]) - 600)
     e1 = (Path(paper_dir) if paper_dir else Path("paper")) / spec["noise_source"]["path"]
     argv += ["--deadline", str(deadline), "--e1-summary", str(e1.resolve()),
@@ -580,31 +587,6 @@ def collector_argv(spec: dict, label: str, resume: bool, paper_dir: Path | None 
 
 
 # ------------------------------------------------------------------ job / seal
-def _check_resume_record(spec: dict, record_path: Path, label: str) -> None:
-    old = json.loads(record_path.read_text())
-    for key, new in (("label", label), ("image_digest", spec["image"]["digest"]),
-                     ("model_sha256", spec["model"]["sha256"]), ("paper_commit", spec["paper"]["commit"]),
-                     ("harness_commit", spec["harness"]["commit"])):
-        if old.get(key) != new:
-            raise Stop(f"STOP: resume pin mismatch for {key}: {old.get(key)!r} != {new!r}")
-
-
-def _resume_state(out: Path, record_path: Path) -> bool:
-    """A collector manifest means resume; a valid non-empty job record means resume; an empty placeholder
-    (pre-created by the job entry) is a fresh run; a corrupt record is a STOP."""
-    if (out / "manifest.json").is_file():
-        return True
-    if not record_path.is_file() or record_path.stat().st_size == 0:
-        return False
-    try:
-        old = json.loads(record_path.read_text())
-    except json.JSONDecodeError:
-        raise Stop("STOP: existing job_record.json is unreadable; preserve the attempt (no overwrite)") from None
-    if not isinstance(old, dict) or old.get("schema") != "s2_c2_job_record/1":
-        raise Stop("STOP: existing job_record.json is not an S2-C2 record; preserve the attempt")
-    return True
-
-
 def _persist(record: dict, record_path: Path) -> None:
     record_path.write_text(json.dumps(record, indent=1) + "\n")
     _tar_dir(Path("out"), Path("out.tar"))
@@ -805,6 +787,8 @@ def run_liveness(spec_path: Path) -> dict:
     return record
 
 
+
+
 def run_job(spec_path: Path) -> dict:
     spec = validate_spec(load_spec(spec_path))
     label = spec["label"]; s = spec["spec"]
@@ -824,8 +808,9 @@ def run_job(spec_path: Path) -> dict:
               "image_digest": s["image"]["digest"], "model_sha256": s["model"]["sha256"],
               "paper_commit": s["paper"]["commit"], "harness_commit": s["harness"]["commit"],
               "b2_audits": "none (no B.2 audits; audit seeds 7001-7010 untouched)",
-              "output_use": "ENGINEERING: never enters a label table, training or selection; disclose in the "
-                            "sweep-2 report as an engineering run (like the 19 Oct pilot)",
+              **({"output_use": "ENGINEERING: never enters a label table, training or selection; disclose in the "
+                                "sweep-2 report as an engineering run (like the 19 Oct pilot)"}
+                 if label == "ENGINEERING_ONLY" else {}),
               "manager_settings": {"temperature": "0.2 (D26 seed; manager-side config)",
                                    "cache_prompt": "false (harness default; LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)",
                                    "thinking": "off (server chat-template-kwargs)",
@@ -836,8 +821,12 @@ def run_job(spec_path: Path) -> dict:
               "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     record["image"] = image_identity(s)
     record["host"] = host_identity()
+    record["site"] = site_identity(record["host"])
     record["gpu"] = gpu_identity(s["requirements"]["gpu_device_name"])
-    record["cpu"] = cpu_identity(s["requirements"].get("cpu_model_contains"))
+    record["cpu"] = cpu_identity()
+    record["site_disclosure"] = ("requirements pin the L40S GPU model, not the site (R1-SWEEP-HOST-L40S-SITES); "
+                                 "site/node/GPU name/UUID/driver/CPU model recorded per campaign; both CPU models "
+                                 "are allowed and disclosed")
     paper_dir, harness_dir = Path("paper"), Path("harness")
     clone_at(s["paper"]["repo"], s["paper"]["commit"], paper_dir)
     clone_at(s["harness"]["repo"], s["harness"]["commit"], harness_dir)

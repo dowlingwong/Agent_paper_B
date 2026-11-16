@@ -53,7 +53,7 @@ def test_layout_extrapolates_to_full_sweep():
     assert lay["estimated_full_chunk_wall_s"] == 660.0 * 9
     assert lay["chunks"] == 16
     assert lay["estimated_total_gpu_hours"] == round(660.0 * 9 * 16 / 3600.0, 2)
-    assert lay["proposed_request_walltime_s"] == int(round(660.0 * 9 * 1.3))
+    assert lay["proposed_request_walltime_s"] == int(__import__("math").ceil(660.0 * 9 * 1.5))
     assert lay["chunk_split_required"] is False
 
 
