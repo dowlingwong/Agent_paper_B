@@ -120,9 +120,16 @@ phase: c3_sweep2
     The smoke ran these values (job records `manager_settings`; 61/61 layers offloaded).
   - One owned `llama-server` per job, bound to `127.0.0.1`, with log level `-lv 4` and alias `gemma4_31b`.
   - Temperature 0.2 with the D26 seed (`manager_seed(campaign_id, budget_index, repetition, revision_attempt)`).
-  - **Disclosed non-numeric differences from the exam** (R1-SWEEP2-SETTINGS (1)): the port and model path, the order
-    of the arguments, and `--no-webui`. The round-5 wrapper writes the thinking switch exactly as the exam does
-    (round 5.1, m12) and records `--no-webui` and `-lv 4` under `non_numeric_differences` in every job record.
+  - **Disclosed non-numeric differences from the exam** (R1-SWEEP2-SETTINGS (1)):
+    - the port and the model path;
+    - the order of the arguments;
+    - `--no-webui`;
+    - the JSON spacing of the thinking switch. The exam writes `{"enable_thinking":false}`
+      (`llama_server_instance.py`, `json.dumps` with compact separators). The cluster's spec carries
+      `{"enable_thinking": false}`, and the wrapper passes it through as written. Round 5.1's m12 checks only that the
+      parsed JSON is exactly `{"enable_thinking": false}`, not its bytes.
+  - The round-5 job records list only `--no-webui` and `-lv 4` under `non_numeric_differences`. Either the spacing is
+    added to that record, or the spec is made byte-identical to the exam: precondition 2a′.
 - **Design: the same as sweep 1** (R1-MAIN-PROPOSER (b); config `r1/scripts/configs/c3_sweep_deepthought.json` as on
   `main` / `ccb4712`, SHA-256 `2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b`, for the design
   values only).
@@ -135,7 +142,8 @@ phase: c3_sweep2
 - **Noise source.** `results/r1/noise/D28_REPAIR_20261027/summary.json`, SHA-256
   `3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310`, as in sweep 1. The round-5 wrapper checks the
   file's SHA-256 before the collector starts (a mismatch is a STOP), passes it as `--e1-summary`, and records it as
-  `noise_source` in the job record and in each campaign manifest's `c3_label_sweep` block.
+  `noise_source` in the job record and in the `c3_label_sweep` block of the collector's run manifest
+  (`out/manifest.json`, one per chunk job).
 - **Gates, restored from sweep 1** (R1-SWEEP2-SETTINGS (4)). Liveness before collection, with `min_live_nodes` 8;
   after collection, `max_parse_failure_rate` 0.2 and `collection_gates`. Not waived. The round-5 wrapper implements
   both: liveness as its own job kind, and the collection gates in each chunk job.
@@ -153,15 +161,19 @@ phase: c3_sweep2
   - One job is one (node, memory mode) chunk of root campaigns: **16 jobs**. No chunk split
     (`chunk_split_required: false`).
   - `request_gpus 1`, `request_cpus 16`, workers 16.
-  - `+RequestWalltime` **12,203 s**; `request_disk` **42,460,977 kB**; `request_memory` **32,000 MB**. The wrapper
-    computed these from measured peaks × 1.4, above explicit floors. The peaks were disk 30,329,269 kB and memory
-    10,951 MB.
+  - `+RequestWalltime` **12,203 s**; `request_disk` **42,460,977 kB**; `request_memory` **32,000 MB**
+    (`sweep2/s2_c4_pilot.py`, `layout`):
+    - walltime = 1.3 × the estimated full-chunk wall, 9,387 s, with a 3,600 s floor. The margin is 30 %.
+    - disk = 1.4 × the peak of 30,329,269 kB.
+    - memory = the 32,000 MB floor, since 1.4 × the 10,951 MB peak is 15,331 MB.
   - These are the values in the cluster's `sweep2/spec.example.json` at `f172d299`, and `render_jdl.py` writes them
     from the spec. The smoke jobs themselves ran with the earlier 16k requests (10,776 s, 42,439,718 kB); the spec was
     updated after them.
   - GPU memory at 32,768 with `-np 1` (job records, `server.cuda_lines`): model buffer 18,675.55 MiB, KV buffers
-    1,360.00 and 637.50 MiB, compute buffer 396.80 MiB; 21,069.85 MiB in all. The KV cache doubled from the 16k pilot
-    (680 MiB). The smoke results file lists only the first KV buffer.
+    1,360.00 and 637.50 MiB, compute buffer 396.80 MiB; 21,069.85 MiB in all. Against the 16k pilot (run without
+    `-np 1`), the first KV buffer doubled (680.00 → 1,360.00 MiB) and the second fell (1,912.50 → 637.50 MiB). Total KV
+    went from 2,592.50 to 1,997.50 MiB, and the total from 21,523.85 to 21,069.85 MiB. The smoke results file lists
+    only the first KV buffer.
   - The GGUF is fetched once per chunk: 16 × 19.6 GB ≈ 314 GB of HF egress (disclosed; an image-side model cache is a
     later author decision).
   - **Resumption.** `<author>`. The S2-M3 hand-off review found that a resubmitted HTCondor job starts in a fresh
@@ -172,38 +184,52 @@ phase: c3_sweep2
     chunk of 18 instances, and **41.72 GPU-h** for the 16 chunks. That is below R1-SWEEP2-SETTINGS (5)'s 60 GPU-h.
   - The scaling multiplies the whole wall by 9, fixed per-job costs included (`timing.json`, `assumptions`: "a
     conservative upper bound"). Only one node was measured.
-  - Derived here (wall): the ad snapshot shows three matching L40S slots. Sixteen jobs on three slots run in six waves,
-    so about 6 × 9,387 s ≈ 15.6 h plus queue waits (23 s in the smoke). If all 16 ran at once, the wall would be about
+  - Derived here (wall): the ad snapshot (09:53Z on 16 Nov, before the smoke) shows three matching L40S ads. It does
+    not show claimed state or other users. If all three are free to this user, sixteen jobs run in six waves, so about
+    6 × 9,387 s ≈ 15.6 h plus queue waits (23 s in the smoke). If all 16 ran at once, the wall would be about
     one chunk; one job at a time would take about 41.7 h. All three are within 48 h.
   - **Caveat (note 1).** The smoke's worker runs all failed, so these numbers may contain no training time. A full
     chunk with successful worker runs may take longer than 9,387 s.
   - **STOP for the author** if a projection of this kind exceeds **60 GPU-h** or **48 h wall** (R1-SWEEP2-SETTINGS (5)).
-    Also a STOP: a re-measured chunk wall above the signed 12,203 s walltime. An over-walltime job is killed and
-    cannot be resumed, so R1-SWEEP2-LAYOUT would need revising first.
+  - **Proposed by the agent, not decided** (`<author: adopt | strike>`): a further STOP when a re-measured chunk wall
+    (precondition 5) exceeds the signed 12,203 s walltime. An over-walltime job is killed and cannot be resumed, so
+    R1-SWEEP2-LAYOUT would need revising first.
+  - The collector's own `--deadline` is the walltime minus 600 s, counted from the collector's start. The smoke spent
+    about 830 s outside the collector. So HTCondor's walltime kill comes before the collector's deadline can stop it
+    cleanly (item 2h).
 
 ## Preconditions before launch
 
 1. **S2-M2 integration on `main`.** Done: `9ae6d877`, an ancestor of `025bfc16`.
 2. **S2-C2 wrapper on `main`**, accepted by independent review, with S2-C5.
-   - Round 5 (`sweep2-main-20261116` @ `8a8ea832`, minors at `d9a17b86`) covers redraft items 2a–2d and most of 2e:
-     the 32,768 exam arguments, the noise-source binding, the restored gates, the CPU class in requirements and at run
+   - Round 5 (`sweep2-main-20261116` @ `8a8ea832`, minors at `d9a17b86`) covers redraft items 2b–2d and most of 2a
+     and 2e: the 32,768 exam arguments (except the thinking-switch bytes, 2a′), the noise-source binding, the restored gates, the CPU class in requirements and at run
      time, and requests written from the spec. It is not yet on `main`: `<integration commit>`.
    - Still open, each to be accepted by review:
-     - **f. Worker runs.** In-campaign worker runs fail in both 32k smoke jobs (note 1). This needs a diagnosis and a
-       fix, then a re-run showing successful runs.
-     - **g. Record text.** The chunk and liveness job records still hard-code
-       `output_use: "ENGINEERING: never enters a label table…"` whatever the label. An EVIDENCE record must not carry
-       it: `<fix>`.
-     - **h. Resumption**, per the author's choice above.
+     - **a′. Thinking-switch bytes.** Make the spec byte-identical to the exam's `{"enable_thinking":false}`, or record
+       the spacing under `non_numeric_differences` (above).
+     - **f. Worker runs.** In-campaign worker runs fail in both 32k smoke jobs (note 1). This needs a diagnosis, a fix,
+       and a fail-closed check in the job, because no gate checks worker-run success today. Proposed: sweep 1's
+       `package_environment` check before the collector, and a worker-success gate with a threshold the author sets
+       (`<threshold>`). Then a re-run showing successful runs.
+     - **g. Record text.** The chunk record hard-codes `output_use: "ENGINEERING: … disclose in the sweep-2 report as an
+       engineering run"` whatever the label. An EVIDENCE chunk record must not carry it. The liveness record's content
+       is right, since liveness output never enters a label table, but its `ENGINEERING:` prefix sits under the run's
+       label. `<fix>`.
+     - **h. Resumption and walltime**, per the author's choice above. This includes the collector deadline: it
+       should leave room for the post-collector steps before the HTCondor walltime.
 3. **The (g)4 liveness unit (S2-C3b)** (R1-SWEEP2-SETTINGS (4), R1-S2C3B-SEEDS). D28 liveness of the pick on all eight
    nodes on NEMO2 L40S, seeds per `sweep1_d28_reuse`, with prompt lengths re-measured with the pick's tokenizer.
    Passed: `<report, review>`. D28's criterion "keep after trial 1 ≥ 1" cannot pass if every worker run fails, so this
-   unit also tests item 2f.
+   unit also tests item 2f. Whether this unit's pass meets the pre-collection liveness gate, or a liveness job is
+   re-run under the EVIDENCE `run_id` at launch: `<author>`.
 4. **S2-C3 L40S deployment check** (R1-S2C3-DRIVER). Run with the declared-input, TASL-independent ENGINEERING replay
-   driver, under the pre-declared criteria (including the corrected criterion 3: invalid 20 / duplicates 33 / no-ops 20
-   of 240, ± 10 %; parse failures 0/240). Passed: `<report, review>`.
-5. **Re-measurement with successful worker runs.** At least the smoke layout (one node × 2 instances × both modes),
-   preferably a full chunk. It must show worker runs succeeding and the gates passing. It yields the chunk wall to
+   driver, under the pre-declared criteria (`reports/sweep2_20261116/S2_C3_CRITERIA.md`). They include criterion 2,
+   parse-failure rate ≤ 0.02 against B2's 0/240, and the corrected criterion 3: invalid 20 / duplicates 33 / no-ops 20
+   of 240, ± 10 %. Passed: `<report, review>`.
+5. **Re-measurement with successful worker runs.** *Proposed by the agent, not decided* (`<author: adopt | strike>`).
+   R1-SWEEP2-LAYOUT bases the note on the smoke measurement as it stands. At least the smoke layout (one node × 2
+   instances × both modes), preferably a full chunk. It must show worker runs succeeding and the gates passing. It yields the chunk wall to
    check against the signed 12,203 s and the projection: `<report, review>`.
 6. **S2-C5 real-submission switch** accepted. It includes the seal step comparing image digest and host with the
    values authorized here: `<review>`.
@@ -215,7 +241,8 @@ phase: c3_sweep2
      for the author (R1-E1-OPENML).
    - An exception is discussed only if (g)2 becomes sweep 2's only blocker. Status at launch:
      `<sweep-1 B.2 complete | exception row>`.
-8. **Projection** within 60 GPU-h and 48 h wall, from item 5.
+8. **Projection** within 60 GPU-h and 48 h wall: the R1-SWEEP2-LAYOUT figure (41.72 GPU-h), or the item-5 figure if
+   the author adopts item 5.
 9. **Harness-defaults check** (R1-MAIN-PROPOSER (c)): `<report>`.
 
 ## Sealing and the analysis lock (R1-BX-D8)
@@ -289,9 +316,11 @@ The liveness seeds (`sweep1_d28_reuse`) are the same as sweep 1's and do not dif
 - incomplete offload or OOM;
 - a liveness or collection gate failing;
 - in-campaign worker runs failing systematically (item 2f);
-- a job that does not finish cleanly or exceeds its walltime (see "Resumption");
+- a job that does not finish cleanly, exceeds its walltime, or is restarted by HTCondor (`NumJobStarts` > 1) (see
+  "Resumption");
 - a label string not matching this note;
-- a projection above 60 GPU-h or 48 h wall, or a measured chunk wall above 12,203 s;
+- a projection above 60 GPU-h or 48 h wall;
+- if the author adopts it, a re-measured chunk wall above 12,203 s;
 - any code path reading sweep-2 labels before R1-BX-D8-CONFIRM;
 - pushing `main` without the author's explicit instruction.
 
@@ -316,17 +345,19 @@ Preserve completed outputs and every attempt (never delete, never overwrite), an
        contain no training time.
      - The scaling is conservative on fixed costs, so the signed values may still hold. But this cannot be known until
        a run with successful worker runs is measured (precondition 5).
-     - If the re-measured chunk exceeds 12,203 s, the walltime and the GPU-h figure in R1-SWEEP2-LAYOUT need
-       revising before launch.
+     - If a re-measured chunk exceeded 12,203 s (walltime margin 30 %), the walltime and the GPU-h figure in
+       R1-SWEEP2-LAYOUT would need revising before launch. Precondition 5 is the agent's proposal for checking this.
    - **What catches it before EVIDENCE.** The (g)4 liveness and S2-C3 would both fail on failing worker runs. The
      cluster side has not reported the failures, and neither the S2-C4 review nor the smoke results mention them.
 2. **Placeholders and the unit that fills each one.**
-   - The author: image digest (proposed v1 `69b06b35…`), resumption rule, launch commit, (g)2 status.
-   - Cluster S2-C2 fix units 2f–2h and the integration of round 5 into `main`.
+   - The author: the opening paragraph; the `run_id` in the key block; image digest (proposed v1 `69b06b35…`);
+     resumption rule; whether to adopt precondition 5 and its walltime STOP; the worker-success threshold (2f); how the
+     liveness gate is met (precondition 3); launch commit; (g)2 status.
+   - Cluster S2-C2 fix units 2a′ and 2f–2h, and the integration of round 5 into `main` (`<integration commit>`).
    - S2-C3b ((g)4 liveness): liveness report.
    - S2-C3 (R1-S2C3-DRIVER): deployment check report.
    - Re-measurement (precondition 5): chunk wall and projection.
-   - S2-C5: seal check and run id.
+   - S2-C5: seal check.
    - Harness-defaults check.
 3. **What changed from the accepted redraft.**
    - Authority: `main` @ `025bfc16`.
@@ -334,8 +365,9 @@ Preserve completed outputs and every attempt (never delete, never overwrite), an
      replacing S2-C4's 16k values. The GPU memory figures are now from the 32k smoke.
    - CPU class: family 6 / model 207 in the requirements and at run time, replacing the "value missing" item.
    - Liveness seed policy `sweep1_d28_reuse` and its disclosure.
-   - Preconditions: round 5 covers redraft items 2a–2d and most of 2e. New items: 2f worker runs, 2g record text,
-     2h resumption, and 5 (the re-measurement). S2-C3 cites R1-S2C3-DRIVER, and (g)2 cites R1-E1-OPENML.
+   - Preconditions: round 5 covers redraft items 2b–2d, most of 2a (all but the thinking-switch bytes, now 2a′) and most
+     of 2e. New items: 2a′, 2f worker runs, 2g record text, 2h resumption and walltime, and 5 (the re-measurement,
+     proposed). S2-C3 cites R1-S2C3-DRIVER, and (g)2 cites R1-E1-OPENML.
    - The redraft's "resumable only by the collector's A.5 resume" line is replaced by the resumption item.
    - Derived wall for three matching slots.
    - Image: still the author's, with v1 proposed. No B.2 audits.
