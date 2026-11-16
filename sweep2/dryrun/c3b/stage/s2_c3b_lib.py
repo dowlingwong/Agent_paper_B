@@ -11,8 +11,12 @@ One job == one owned llama-server at the exam setting (ctx 32,768, `-ngl 999`, `
 `python -m r1.liveness` on all eight sweep-1 nodes (2 instances, W = 10, memory `append_only_summary`) and requires
 all eight nodes to pass (`min_live_nodes 8`; a shortfall STOPs with the evidence persisted), then (2) re-measures the
 sweep-2 manager prompt lengths with the **pick's tokenizer** through the server's `/apply-template` + `/tokenize`
-endpoints and compares them with the sweep-1 prompt-length record that is pinned in the paper checkout (the sweep-1
-D28 liveness ledgers' per-call `usage.prompt_tokens` and the recorded 1,345-token pilot maximum).
+endpoints for the three prompt classes (trial-1, declared 11-record memory-on, and the **W = 20 / 19-record longest
+class**) and compares them with the sweep-1 prompt-length record that is pinned in the paper checkout (the sweep-1
+D28 liveness ledgers' per-call `usage.prompt_tokens`, the recorded budget-12 1,345-token figure and the **true
+recorded W = 20 maximum 1,886 tokens** over the 54 rerun-2 root ledgers).  The 1,345 figure belongs to the 14 Oct
+rerun-2 prompt set and is explicitly *not* claimed to be the sweep-2 prompt text (openml_breast_w's trial-1 text
+differs: rerun-2 `d31c77a3…`/483 tokens vs the 27 Oct liveness/sweep-2 text `61aa9226…`/482 tokens).
 
 Pins/image/host/GPU/CPU/model/server/tar/seal are reused from the reviewed S2-C2 wrapper (`s2_c2_lib.py`); this
 module imports it rather than re-implementing them. The paper commit is the reviewed main `9ae6d877` (the sweep-1
@@ -22,6 +26,7 @@ seed 7001-7010 is touched, no label is read, and nothing here is evidence.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import os
@@ -64,6 +69,7 @@ LIVENESS_INSTANCES = 2
 LIVENESS_RUNS = 10
 LIVENESS_MEMORY_MODE = "append_only_summary"
 TRANSPORT_MAX_ATTEMPTS = 3  # sweep-1 D28 liveness manifest (results/r1/engineering/liveness_c3_20261027T152425Z)
+LIVENESS_REPORT_SCHEMA = "r1.liveness/2"  # pinned `r1/liveness/check.py` output schema
 
 # --- seeds --------------------------------------------------------------------------------------------------
 # The sweep-1/2 instance seed law is pinned twice: in the paper repo (`r1/headroom/e1b_collect._instance_seed`) and,
@@ -73,7 +79,10 @@ TRANSPORT_MAX_ATTEMPTS = 3  # sweep-1 D28 liveness manifest (results/r1/engineer
 SWEEP_INSTANCE_K = 18  # 18 instances per node (sweep 1 and sweep 2)
 RESERVED_AUDIT_SEEDS = tuple(range(7001, 7011))  # B.2 audit label+evaluation seeds; never touched here
 G1B_SEED_BLOCK = (8001, 8010)  # RUNBOOK G.1b training-seed block (also kept clear)
-EXAM_SEED_BLOCK = (9001, 9303)  # exam Stage A/B seeds 9001+, B1 9101+, B2 9201+ (kept clear)
+# The exam seed block is 9001-9303 (Stage A/B 9001+, B1 9101+, B2 9201+); it is an interval, not "9001+" as an
+# unbounded claim.  The collision guard below is nevertheless open-ended (any declared seed >= 9001 STOPs), so a
+# future exam-block extension is covered even though the recorded block ends at 9303.
+EXAM_SEED_BLOCK = (9001, 9303)
 PROMPT_MEASUREMENT_SEEDS = {node: 6100 + i + 1 for i, node in enumerate(LIVENESS_NODES)}
 LIVENESS_SEED_POLICY = "sweep1_d28_reuse"
 SWEEP2_INSTANCE_SEED_UNIVERSE_SHA256 = \
@@ -116,22 +125,62 @@ SWEEP1_LEDGERS = {
                        "ledger_sha256": "b3663eee9e91e0bcc79ef4573e295be38da4ecc35b597d17d00abcdb38a733f5",
                        "trial1_prompt_tokens": 513, "max_prompt_tokens": 1077, "n_trials": 10},
 }
-# The recorded sweep-1 prompt-length figure the RUNBOOK carries ("manager prompts ... at most 1,345 tokens (memory on,
-# W = 20, rerun-2)", counted with the 7B tokenizer).  The number lives in this pilot snapshot's per-call record.
-SWEEP1_PROMPT_MAX_PATH = ("results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/"
-                          "tabular_mlp__s142/E2_b012/manifest.json")
-SWEEP1_PROMPT_MAX_SHA256 = "5e269d4cee24e263ee36f25cd087df6f489bbec5b8a5db51f5236b438310e605"
-SWEEP1_PROMPT_MAX_TOKENS = 1345
+# --- the 1,345-token figure: the 14 OCT rerun-2 prompt set, budget 12, NOT a maximum and NOT the sweep-2 text -----
+# The RUNBOOK's "manager prompts ... at most 1,345 tokens (memory on, W = 20, rerun-2)" sentence is the value of the
+# BUDGET-12 proposal of the 14 Oct rerun-2 pilot (the snapshot below); the same pilot's W = 20 calls are longer (see
+# the W = 20 root ledgers below).  The 14 Oct prompt set also differs from the 27 Oct liveness/sweep-2 text for at
+# least openml_breast_w (rerun-2 `d31c77a3…` / 483 tokens vs sweep-2 `61aa9226…` / 482 tokens), so 1,345 is a b012
+# scale reference, never "the recorded maximum" and never the sweep-2 text.
+SWEEP1_PROMPT_B012_PATH = ("results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/"
+                           "tabular_mlp__s142/E2_b012/manifest.json")
+SWEEP1_PROMPT_B012_SHA256 = "5e269d4cee24e263ee36f25cd087df6f489bbec5b8a5db51f5236b438310e605"
+SWEEP1_PROMPT_B012_TOKENS = 1345
+RERUN2_PROMPT_SET = "E1b rerun-2 A PARTIAL memory-on, 14 Oct 2026 prompt set"
+RERUN2_BREAST_W_TRIAL1_SHA256 = "d31c77a387b4a100b58ac5c755b2ed760cdbe4b839d5956af75d4e08df9802b8"
+RERUN2_BREAST_W_TRIAL1_TOKENS = 483
+SWEEP1_LIVENESS_BREAST_W_TRIAL1_SHA256 = "61aa9226834f39beb862581b321cbfb068712cb2cb6d78d9e52b6d3ef2045134"
+SWEEP1_LIVENESS_BREAST_W_TRIAL1_TOKENS = 482
+
+# --- the true recorded W = 20 maximum, from the 54 rerun-2 ROOT ledgers (7B tokenizer) -------------------------
+# `tabular_mlp__s142` records the 7B `usage.prompt_tokens` growth on that root: budget 12 -> 1,345, budget 20 ->
+# 1,878.  Across all 54 rerun-2 root ledgers the maximum is 1,886 (`tabular_mlp__s112`, budget 20), which is the
+# pinned W = 20 baseline this unit reports.  The aggregate SHA-256 pins the whole 54-ledger (instance, .gz sha256)
+# list (sorted compact JSON), so the maximum cannot drift silently.
+SWEEP1_W20_ROOTS_PATH = ("results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots")
+SWEEP1_W20_ROOT_COUNT = 54
+SWEEP1_W20_ROOTS_SHA256 = "04d4ccd9d2a0be3d531240451b4871763356c85589ad16c1f0ebcc9b8b96720d"
+SWEEP1_W20_LEDGER_PATH = SWEEP1_W20_ROOTS_PATH + "/tabular_mlp__s142/root_trials.jsonl.gz"
+SWEEP1_W20_LEDGER_SHA256 = "bd0408a0df8dd47cf629fcbb4439e59072f54858f497097d0ad38a80266860a7"
+SWEEP1_W20_LEDGER_BUDGET12_TOKENS = 1345
+SWEEP1_W20_LEDGER_BUDGET20_TOKENS = 1878
+SWEEP1_W20_MAX_TOKENS = 1886
+SWEEP1_W20_MAX_INSTANCE = "tabular_mlp__s112"
+SWEEP1_W20_MAX_BUDGET_INDEX = 20
+
+# --- accepted 32k measured layout (R1-SWEEP2-LAYOUT @ author-decisions-20261116b 025bfc16; replaces S2-C4 16k) ---
+# Measured by the accepted S2-C2 32k smoke (clusters 759728/759729, sweep2-main f172d299): 16 chunks, 9,387 s/chunk,
+# 41.72 GPU-h, request_walltime 12,203 s, request_disk 42,460,977 kB, request_memory 32,000 MB.
+ACCEPTED_LEVEL_LAYOUT = {"request_walltime_s": 12203, "request_disk_kb": 42460977, "request_memory_mb": 32000}
 
 # --- prompt set ---------------------------------------------------------------------------------------------
-PROMPT_VARIANTS = ("trial_1", "memory_on_declared_12")
+# Three prompt classes: the trial-1 call, the 11-record memory-on class (budget 12) and the LONGEST class
+# (W = 20, budget 20, 19 prior records).  The 11-record fixture is a middle class, not the longest.
+PROMPT_VARIANTS = ("trial_1", "memory_on_declared_12", "memory_on_budget_20")
 PROMPT_BUILDER_SOURCE = "src/autoresearch/manager/langgraph_manager.py:_prepare_context"
 DECLARED_MEMORY_ON_BUDGET_INDEX = 12  # trial 12 in the W = 20 campaign: 11 prior trial lines in the memory block
 DECLARED_MEMORY_ON_RECORDS = 11
+W20_BUDGET_INDEX = 20  # the longest sweep-2 prompt class (W = 20 campaign): 19 prior trial lines in the memory
+W20_RECORDS = 19
 DECLARED_PRIOR_SUMMARIES = ("reduce-lr-1e-4", "increase-max-iter", "increase-C-0.5", "decrease-batch-32",
                             "increase-hidden-units", "reduce-alpha-1e-5", "decrease-max-iter",
                             "increase-batch-128", "reduce-hidden-units", "increase-alpha-1e-3",
                             "reduce-learning-rate-5e-4")
+# variant -> (budget_index, declared memory records, declared current-best metric)
+PROMPT_VARIANT_PLAN = {
+    "trial_1": (1, 0, None),
+    "memory_on_declared_12": (DECLARED_MEMORY_ON_BUDGET_INDEX, DECLARED_MEMORY_ON_RECORDS, 0.744),
+    "memory_on_budget_20": (W20_BUDGET_INDEX, W20_RECORDS, 0.744),
+}
 TRANSFER_OUTPUTS = ("out.tar", "work.tar", "job_record.json", "SHA256SUMS", "llama-server.log")
 PROMPT_OUTPUTS = ("s2_c3b_prompt_lengths.json", "s2_c3b_sweep1_comparison.json", "S2_C3B_PROMPT_REPORT.md")
 
@@ -208,13 +257,16 @@ def check_seed_disjointness(spec: dict, sweep1_manifest: dict | None = None) -> 
             raise Stop(f"STOP: prompt-measurement seed for {node} must be {PROMPT_MEASUREMENT_SEEDS[node]}")
 
     prompt_values = sorted(int(v) for v in declared_prompt.values())
+    exam_floor_collisions = sorted(value for value in prompt_values if value >= EXAM_SEED_BLOCK[0])
     blocked = set(universe) | set(RESERVED_AUDIT_SEEDS) | set(range(EXAM_SEED_BLOCK[0], EXAM_SEED_BLOCK[1] + 1)) \
         | set(range(G1B_SEED_BLOCK[0], G1B_SEED_BLOCK[1] + 1))
     if len(set(prompt_values)) != len(prompt_values):
         raise Stop("STOP: prompt-measurement seeds must be distinct")
     collisions = sorted(set(prompt_values) & blocked)
-    if collisions:
-        raise Stop(f"STOP: prompt-measurement seeds collide with reserved seeds: {collisions}")
+    if collisions or exam_floor_collisions:
+        raise Stop(f"STOP: prompt-measurement seeds collide with reserved seeds: "
+                   f"{sorted(set(collisions) | set(exam_floor_collisions))}; the exam block is "
+                   f"{EXAM_SEED_BLOCK[0]}-{EXAM_SEED_BLOCK[1]} and the guard is open-ended (>= {EXAM_SEED_BLOCK[0]})")
     all_declared = set(_flat(live)) | set(prompt_values)
     audit_collisions = sorted(all_declared & set(RESERVED_AUDIT_SEEDS))
     if audit_collisions:
@@ -241,7 +293,8 @@ def check_seed_disjointness(spec: dict, sweep1_manifest: dict | None = None) -> 
         "policy": policy,
         "note": ("D28 liveness reuses the first two sweep instance seeds by construction (pinned r1.liveness k=0,1), "
                  "exactly as sweep 1 did; it is ENGINEERING_ONLY and never enters a label table. The prompt-"
-                 "measurement seeds are disjoint from the sweep instance, audit, exam and G.1b seed blocks."),
+                 "measurement seeds are disjoint from the sweep instance seeds, the audit block 7001-7010, the exam "
+                 "block 9001-9303 and the G.1b block 8001-8010."),
         "liveness_disjoint_from_sweep2_instance_seeds": False,
         "liveness_overlap_with_sweep2_instance_seeds": overlap,
         "liveness_overlap_is_the_frozen_d28_reuse": True,
@@ -267,6 +320,8 @@ def check_seed_disjointness(spec: dict, sweep1_manifest: dict | None = None) -> 
         "prompt_measurement_seed_values": prompt_values,
         "reserved_audit_seeds": list(RESERVED_AUDIT_SEEDS),
         "exam_seed_block": list(EXAM_SEED_BLOCK),
+        "exam_seed_guard": (f"the exam seed block is {EXAM_SEED_BLOCK[0]}-{EXAM_SEED_BLOCK[1]} (not an unbounded "
+                            f"'9001+' claim); the collision guard is open-ended: any seed >= {EXAM_SEED_BLOCK[0]} STOPs"),
         "g1b_seed_block": list(G1B_SEED_BLOCK),
         "sweep1_liveness_manifest_matches": manifest_status,
     }
@@ -353,9 +408,24 @@ def validate_spec(spec: dict) -> dict:
     for key, value in (("liveness_path", SWEEP1_LIVENESS_PATH),
                        ("liveness_sha256", SWEEP1_LIVENESS_SHA256),
                        ("manifest_sha256", SWEEP1_MANIFEST_SHA256),
-                       ("prompt_max_path", SWEEP1_PROMPT_MAX_PATH),
-                       ("prompt_max_sha256", SWEEP1_PROMPT_MAX_SHA256),
-                       ("prompt_max_tokens", SWEEP1_PROMPT_MAX_TOKENS)):
+                       ("b012_path", SWEEP1_PROMPT_B012_PATH),
+                       ("b012_sha256", SWEEP1_PROMPT_B012_SHA256),
+                       ("b012_tokens", SWEEP1_PROMPT_B012_TOKENS),
+                       ("rerun2_prompt_set", RERUN2_PROMPT_SET),
+                       ("rerun2_breast_w_trial1_sha256", RERUN2_BREAST_W_TRIAL1_SHA256),
+                       ("rerun2_breast_w_trial1_tokens", RERUN2_BREAST_W_TRIAL1_TOKENS),
+                       ("sweep2_breast_w_trial1_sha256", SWEEP1_LIVENESS_BREAST_W_TRIAL1_SHA256),
+                       ("sweep2_breast_w_trial1_tokens", SWEEP1_LIVENESS_BREAST_W_TRIAL1_TOKENS),
+                       ("w20_roots_path", SWEEP1_W20_ROOTS_PATH),
+                       ("w20_roots_count", SWEEP1_W20_ROOT_COUNT),
+                       ("w20_roots_sha256", SWEEP1_W20_ROOTS_SHA256),
+                       ("w20_ledger_path", SWEEP1_W20_LEDGER_PATH),
+                       ("w20_ledger_sha256", SWEEP1_W20_LEDGER_SHA256),
+                       ("w20_ledger_budget12_tokens", SWEEP1_W20_LEDGER_BUDGET12_TOKENS),
+                       ("w20_ledger_budget20_tokens", SWEEP1_W20_LEDGER_BUDGET20_TOKENS),
+                       ("w20_max_tokens", SWEEP1_W20_MAX_TOKENS),
+                       ("w20_max_instance", SWEEP1_W20_MAX_INSTANCE),
+                       ("w20_max_budget_index", SWEEP1_W20_MAX_BUDGET_INDEX)):
         if sweep1.get(key) != value:
             raise Stop(f"STOP: prompt_measurement.sweep1.{key} must be the pinned sweep-1 record value")
 
@@ -363,10 +433,22 @@ def validate_spec(spec: dict) -> dict:
         value = spec.get(key)
         if type(value) is not int or value <= 0:
             raise Stop(f"STOP: {key} must be a positive integer")
+    # M1 (review round 2): the only accepted layout is R1-SWEEP2-LAYOUT's measured 32k layout.  The C2 validator
+    # above already rejects anything below the measured S2-C4 floors and non-exact `--chat-template-kwargs`; this
+    # check pins the C3b spec to the accepted 32k values (the superseded S2-C4 16k values are refused).
+    if level_layout(spec) != ACCEPTED_LEVEL_LAYOUT:
+        raise Stop(f"STOP: layout must be the accepted R1-SWEEP2-LAYOUT 32k layout {ACCEPTED_LEVEL_LAYOUT}; "
+                   f"got {level_layout(spec)} (the S2-C4 16k layout is superseded)")
     if spec.get("transfer_outputs") != list(TRANSFER_OUTPUTS):
         raise Stop(f"STOP: transfer_outputs must be {list(TRANSFER_OUTPUTS)}")
     return {"run_id": run_id, "chunk_id": chunk_id, "kind": "liveness", "label": "ENGINEERING_ONLY",
-            "seed_check": seed_check, "spec": spec}
+            "seed_check": seed_check, "level_layout": level_layout(spec), "spec": spec}
+
+
+def level_layout(spec: dict) -> dict:
+    """The layout the spec requests, in the same shape as the accepted layout (and the C2 chunk record's)."""
+    return {"request_walltime_s": spec.get("walltime_s"), "request_disk_kb": spec.get("request_disk_kb"),
+            "request_memory_mb": spec.get("request_memory_mb")}
 
 
 # ------------------------------------------------------------------ liveness
@@ -387,6 +469,8 @@ def evaluate_liveness(report: dict, min_live_nodes: int = MIN_LIVE_NODES,
     """Read the D28 verdict.  Malformed/foreign reports are a STOP; a node shortfall is returned, not hidden."""
     if not isinstance(report, dict):
         raise Stop("STOP: liveness.json is not an object")
+    if report.get("schema") != LIVENESS_REPORT_SCHEMA:
+        raise Stop(f"STOP: liveness report schema {report.get('schema')!r} is not {LIVENESS_REPORT_SCHEMA!r}")
     if report.get("label") != "ENGINEERING_ONLY":
         raise Stop(f"STOP: liveness report label {report.get('label')!r} is not ENGINEERING_ONLY")
     if report.get("manager_kind") != "langgraph":
@@ -399,6 +483,9 @@ def evaluate_liveness(report: dict, min_live_nodes: int = MIN_LIVE_NODES,
     missing = [node for node in nodes if node not in nodes_map]
     if missing:
         raise Stop(f"STOP: liveness report is missing nodes: {missing}")
+    unexpected = sorted(set(nodes_map) - set(nodes))
+    if unexpected:
+        raise Stop(f"STOP: liveness report contains unexpected nodes not in the pinned eight: {unexpected}")
     verdicts = {}
     for node in nodes:
         entry = nodes_map[node]
@@ -504,9 +591,8 @@ def build_prompt_texts(harness_dir: Path, spec: dict) -> dict:
         config_path = harness_root / "configs" / "nodes" / f"{node}.yaml"
         config_sha = hashlib.sha256(config_path.read_bytes()).hexdigest() if config_path.is_file() else None
         for variant in PROMPT_VARIANTS:
-            budget_index = 1 if variant == "trial_1" else DECLARED_MEMORY_ON_BUDGET_INDEX
-            best = None if variant == "trial_1" else 0.744
-            records = [] if variant == "trial_1" else _declared_prior_records(node, harness)
+            budget_index, record_count, best = PROMPT_VARIANT_PLAN[variant]
+            records = [] if record_count == 0 else _declared_prior_records(node, harness, count=record_count)
             memory_context = harness["build_memory_context"](
                 records, LIVENESS_MEMORY_MODE, node_spec, budget_index)
             status = harness["ManagerStatus"](
@@ -591,8 +677,14 @@ def measure_prompts(base: str, spec: dict, prompt_set: dict) -> dict:
         rendered = apply_template(base, text)
         rendered_tokens = tokenize_text(base, rendered, add_special=True)
         position = rendered.find(text)
-        prefix = rendered[:position] if position >= 0 else ""
-        suffix = rendered[position + len(text):] if position >= 0 else ""
+        if position < 0:
+            # M2 (review round 2): a template that mangles/normalises the user text would otherwise still produce a
+            # "measurement" that is not the sweep-2 prompt.  That is a STOP, not a recorded flag.
+            raise Stop(f"STOP: the rendered prompt for {prompt['node']}/{prompt['variant']} does not contain the "
+                       "user text verbatim; the server chat template mangled or whitespace-normalised it, so the "
+                       "tokenizer count is not a measurement of the sweep-2 prompt")
+        prefix = rendered[:position]
+        suffix = rendered[position + len(text):]
         prefix_tokens = tokenize_text(base, prefix, add_special=True) if prefix else []
         row = {
             "node": prompt["node"], "variant": prompt["variant"], "budget_index": prompt["budget_index"],
@@ -605,8 +697,9 @@ def measure_prompts(base: str, spec: dict, prompt_set: dict) -> dict:
             "rendered_prompt_tokens": len(rendered_tokens),
             "rendered_prompt_chars": len(rendered),
             "template_prefix": prefix, "template_prefix_tokens": len(prefix_tokens),
+            "template_prefix_empty": not bool(prefix),
             "template_suffix_chars": len(suffix),
-            "user_text_present_in_rendered": position >= 0,
+            "user_text_present_in_rendered": True,
             "fits_ctx": len(rendered_tokens) < CTX,
         }
         rows.append(row)
@@ -653,28 +746,171 @@ def verify_sweep1_record(paper_dir: Path) -> dict:
             "manifest_sha256": SWEEP1_MANIFEST_SHA256, "liveness": liveness, "manifest": manifest}
 
 
-def verify_sweep1_prompt_record(paper_dir: Path) -> dict:
-    """Load and pin the recorded sweep-1 prompt-length maximum (memory on, W = 20, rerun-2; 7B tokenizer)."""
-    data = _read_json_pinned(Path(paper_dir) / SWEEP1_PROMPT_MAX_PATH, SWEEP1_PROMPT_MAX_SHA256,
-                             "sweep-1 prompt-length record")
+def _read_gzip_jsonl_pinned(path: Path, sha256: str | None, what: str) -> list[dict]:
+    """Read a pinned `.jsonl.gz` record; a missing file / changed sha / bad JSON is a STOP."""
+    if not path.is_file():
+        raise Stop(f"STOP: {what} missing: {path} (expected in the pinned paper checkout)")
+    raw = path.read_bytes()
+    if sha256 is not None:
+        got = hashlib.sha256(raw).hexdigest()
+        if got != sha256:
+            raise Stop(f"STOP: {what} sha256 mismatch: {got} != pinned {sha256} ({path})")
     try:
-        value = data["proposal"]["extra"]["llm_call"]["prompt_tokens"]
-        provisional = data["provisional"]["extra"]["manager"]["llm_call"]["prompt_tokens"]
+        lines = gzip.decompress(raw).decode().splitlines()
+        return [json.loads(line) for line in lines if line.strip()]
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise Stop(f"STOP: {what} is not a readable .jsonl.gz record: {type(exc).__name__}: {exc}") from None
+
+
+def _manager_call(trial: dict) -> dict:
+    return ((trial.get("extra") or {}).get("manager", {}) or {}).get("llm_call", {}) or {}
+
+
+def _verify_w20_root_ledgers(roots: Path) -> dict:
+    """Verify the 54 rerun-2 ROOT ledgers and return the true recorded W = 20 maximum (7B tokenizer).
+
+    The 14 Oct rerun-2 pilot roots each record 20 trials of `usage.prompt_tokens`, growing with the memory block:
+    `tabular_mlp__s142` is 1,345 at budget 12 and 1,878 at budget 20; the maximum over all 54 roots is 1,886
+    (`tabular_mlp__s112`, budget 20).  Both the per-file .gz sha256 list and the maximum are pinned.
+    """
+    if not roots.is_dir():
+        raise Stop(f"STOP: rerun-2 root-ledger directory missing: {roots}")
+    files = sorted(roots.glob("*/root_trials.jsonl.gz"))
+    if len(files) != SWEEP1_W20_ROOT_COUNT:
+        raise Stop(f"STOP: expected {SWEEP1_W20_ROOT_COUNT} rerun-2 root ledgers, found {len(files)} ({roots})")
+    entries, maxima = [], []
+    ledger_b012 = ledger_b020 = None
+    for path in files:
+        instance = path.parent.name
+        raw_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+        entries.append({"instance": instance, "sha256": raw_sha})
+        trials = _read_gzip_jsonl_pinned(path, None, f"rerun-2 root ledger {instance}")
+        for trial in trials:
+            tokens = _manager_call(trial).get("prompt_tokens")
+            if isinstance(tokens, int):
+                maxima.append((tokens, instance, trial.get("budget_index")))
+        if instance == "tabular_mlp__s142":
+            if raw_sha != SWEEP1_W20_LEDGER_SHA256:
+                raise Stop(f"STOP: rerun-2 root ledger {instance} sha256 {raw_sha} != pinned "
+                           f"{SWEEP1_W20_LEDGER_SHA256} ({path})")
+            by_budget = {trial.get("budget_index"): _manager_call(trial).get("prompt_tokens") for trial in trials}
+            ledger_b012, ledger_b020 = by_budget.get(12), by_budget.get(20)
+    aggregate = hashlib.sha256(json.dumps(entries, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    if aggregate != SWEEP1_W20_ROOTS_SHA256:
+        raise Stop(f"STOP: rerun-2 root-ledger set sha256 {aggregate} != pinned {SWEEP1_W20_ROOTS_SHA256} "
+                   "(a rerun-2 root ledger changed)")
+    if ledger_b012 != SWEEP1_W20_LEDGER_BUDGET12_TOKENS or ledger_b020 != SWEEP1_W20_LEDGER_BUDGET20_TOKENS:
+        raise Stop(f"STOP: tabular_mlp__s142 rerun-2 budget 12/20 prompt_tokens {ledger_b012}/{ledger_b020} != "
+                   f"the pinned {SWEEP1_W20_LEDGER_BUDGET12_TOKENS}/{SWEEP1_W20_LEDGER_BUDGET20_TOKENS}")
+    tokens, instance, budget_index = max(maxima)
+    if tokens != SWEEP1_W20_MAX_TOKENS or instance != SWEEP1_W20_MAX_INSTANCE \
+            or budget_index != SWEEP1_W20_MAX_BUDGET_INDEX:
+        raise Stop(f"STOP: the rerun-2 W=20 maximum is {tokens} ({instance}, budget {budget_index}) != the pinned "
+                   f"{SWEEP1_W20_MAX_TOKENS} ({SWEEP1_W20_MAX_INSTANCE}, budget {SWEEP1_W20_MAX_BUDGET_INDEX})")
+    return {
+        "roots_path": SWEEP1_W20_ROOTS_PATH,
+        "root_count": len(entries),
+        "roots_sha256": aggregate,
+        "ledger_path": SWEEP1_W20_LEDGER_PATH,
+        "ledger_sha256": SWEEP1_W20_LEDGER_SHA256,
+        "ledger_budget12_tokens": ledger_b012,
+        "ledger_budget20_tokens": ledger_b020,
+        "max_tokens": tokens,
+        "max_instance": instance,
+        "max_budget_index": budget_index,
+        "tokenizer_note": "7B sweep-1 manager tokenizer, recorded as usage.prompt_tokens in the pinned rerun-2 roots",
+    }
+
+
+def verify_sweep1_prompt_record(paper_dir: Path) -> dict:
+    """Pin the 14 Oct rerun-2 prompt-length record: the b012 1,345 figure and the true W = 20 maximum 1,886.
+
+    Three records are verified together, all SHA-256 pinned:
+    (1) the b012 snapshot manifest (`tabular_mlp__s142/E2_b012`, 1,345) - the RUNBOOK figure.  It is the **budget-12**
+        value of the **14 Oct** rerun-2 prompt set: it is *not* a maximum and *not* the 27 Oct liveness/sweep-2 text.
+    (2) the 54 rerun-2 root ledgers, whose maximum is 1,886 (`tabular_mlp__s112`, budget 20) - the true recorded
+        W = 20 baseline (`tabular_mlp__s142`: budget 12 = 1,345, budget 20 = 1,878).
+    (3) the corrected comparison: openml_breast_w's trial-1 rerun-2 text (`d31c77a3…`, 483 tokens) differs from the
+        27 Oct liveness/sweep-2 text (`61aa9226…`, 482 tokens), so the two prompt sets cannot be treated as identical.
+    """
+    paper = Path(paper_dir)
+    b012 = _read_json_pinned(paper / SWEEP1_PROMPT_B012_PATH, SWEEP1_PROMPT_B012_SHA256,
+                             "sweep-1 prompt-length b012 snapshot")
+    try:
+        value = b012["proposal"]["extra"]["llm_call"]["prompt_tokens"]
+        provisional = b012["provisional"]["extra"]["manager"]["llm_call"]["prompt_tokens"]
     except (KeyError, TypeError):
-        raise Stop("STOP: sweep-1 prompt-length record has no proposal/provisional prompt_tokens") from None
-    if int(value) != SWEEP1_PROMPT_MAX_TOKENS or int(provisional) != SWEEP1_PROMPT_MAX_TOKENS:
-        raise Stop(f"STOP: sweep-1 prompt-length record {value}/{provisional} != {SWEEP1_PROMPT_MAX_TOKENS}")
-    return {"path": SWEEP1_PROMPT_MAX_PATH, "sha256": SWEEP1_PROMPT_MAX_SHA256,
-            "prompt_tokens": SWEEP1_PROMPT_MAX_TOKENS,
-            "campaign_id": data.get("campaign_id"), "node": data.get("node_name"),
-            "budget_index": data.get("budget_index"), "memory_mode": data.get("memory_mode"),
-            "tokenizer_note": "counted with the sweep-1 manager (7B) tokenizer (RUNBOOK Context note)"}
+        raise Stop("STOP: sweep-1 prompt-length b012 snapshot has no proposal/provisional prompt_tokens") from None
+    if int(value) != SWEEP1_PROMPT_B012_TOKENS or int(provisional) != SWEEP1_PROMPT_B012_TOKENS:
+        raise Stop(f"STOP: sweep-1 prompt-length b012 snapshot {value}/{provisional} != {SWEEP1_PROMPT_B012_TOKENS}")
+    w20 = _verify_w20_root_ledgers(paper / SWEEP1_W20_ROOTS_PATH)
+    if w20["ledger_budget12_tokens"] != SWEEP1_PROMPT_B012_TOKENS:
+        raise Stop(f"STOP: the rerun-2 root ledger's budget-12 prompt_tokens {w20['ledger_budget12_tokens']} != "
+                   f"the b012 snapshot {SWEEP1_PROMPT_B012_TOKENS}; the 1,345 figure is a budget-12 value")
+    rerun2_breast = None
+    rerun2_path = paper / SWEEP1_W20_ROOTS_PATH / "openml_breast_w__s105/root_trials.jsonl.gz"
+    for trial in _read_gzip_jsonl_pinned(rerun2_path, None, "rerun-2 openml_breast_w root ledger"):
+        if trial.get("budget_index") == 1:
+            rerun2_breast = {
+                "context_sha256": ((trial.get("extra") or {}).get("manager", {}) or {}).get("context_sha256"),
+                "prompt_tokens": _manager_call(trial).get("prompt_tokens"),
+            }
+    if not isinstance(rerun2_breast, dict) or rerun2_breast["context_sha256"] is None:
+        raise Stop("STOP: the rerun-2 openml_breast_w root ledger has no trial-1 context_sha256")
+    liveness_breast_path = (paper / SWEEP1_LIVENESS_PATH / "ledgers"
+                            / SWEEP1_LEDGERS["openml_breast_w"]["instance"] / "root_trials.jsonl")
+    liveness_breast = None
+    for line in liveness_breast_path.read_text().splitlines():
+        if not line.strip():
+            continue
+        trial = json.loads(line)
+        if trial.get("budget_index") == 1:
+            liveness_breast = {
+                "context_sha256": ((trial.get("extra") or {}).get("manager", {}) or {}).get("context_sha256"),
+                "prompt_tokens": _manager_call(trial).get("prompt_tokens"),
+            }
+    if liveness_breast is None:
+        raise Stop("STOP: the sweep-1 liveness openml_breast_w ledger has no trial-1 record")
+    if (rerun2_breast["context_sha256"] != RERUN2_BREAST_W_TRIAL1_SHA256
+            or rerun2_breast["prompt_tokens"] != RERUN2_BREAST_W_TRIAL1_TOKENS):
+        raise Stop(f"STOP: rerun-2 openml_breast_w trial-1 {rerun2_breast} != pinned "
+                   f"{RERUN2_BREAST_W_TRIAL1_SHA256}/{RERUN2_BREAST_W_TRIAL1_TOKENS}")
+    if (liveness_breast["context_sha256"] != SWEEP1_LIVENESS_BREAST_W_TRIAL1_SHA256
+            or liveness_breast["prompt_tokens"] != SWEEP1_LIVENESS_BREAST_W_TRIAL1_TOKENS):
+        raise Stop(f"STOP: sweep-1 liveness openml_breast_w trial-1 {liveness_breast} != pinned "
+                   f"{SWEEP1_LIVENESS_BREAST_W_TRIAL1_SHA256}/{SWEEP1_LIVENESS_BREAST_W_TRIAL1_TOKENS}")
+    if rerun2_breast["context_sha256"] == liveness_breast["context_sha256"]:
+        raise Stop("STOP: the rerun-2 and sweep-1 liveness openml_breast_w trial-1 prompt texts are identical; the "
+                   "unit's premise that the 14 Oct prompt set is not the sweep-2 text does not hold")
+    return {
+        "b012": {
+            "path": SWEEP1_PROMPT_B012_PATH, "sha256": SWEEP1_PROMPT_B012_SHA256,
+            "prompt_tokens": SWEEP1_PROMPT_B012_TOKENS,
+            "campaign_id": b012.get("campaign_id"), "node": b012.get("node_name"),
+            "budget_index": b012.get("budget_index"), "memory_mode": b012.get("memory_mode"),
+            "prompt_set": RERUN2_PROMPT_SET,
+            "meaning": ("the RUNBOOK's 1,345 is the 14 Oct rerun-2 prompt set's budget-12 value; it is explicitly "
+                       "NOT a maximum (the same pilot reaches 1,878 at budget 20 on that root) and NOT the "
+                       "27 Oct liveness/sweep-2 prompt text"),
+            "tokenizer_note": "counted with the sweep-1 manager (7B) tokenizer (RUNBOOK Context note)",
+        },
+        "w20": w20,
+        "rerun2_breast_w_trial1": {"path": str(rerun2_path.relative_to(paper)), **rerun2_breast},
+        "sweep2_breast_w_trial1": {"path": str(liveness_breast_path.relative_to(paper)), **liveness_breast},
+        "prompt_set_note": (f"{RERUN2_PROMPT_SET} is not the 27 Oct liveness/sweep-2 prompt set: openml_breast_w "
+                            f"trial-1 differs ({rerun2_breast['context_sha256'][:8]}/"
+                            f"{rerun2_breast['prompt_tokens']} vs {liveness_breast['context_sha256'][:8]}/"
+                            f"{liveness_breast['prompt_tokens']}); the per-node trial-1 text identity check in this "
+                            "unit is made against the pinned 27 Oct liveness ledgers only"),
+    }
 
 
-def compare_with_sweep1(paper_dir: Path, measured: dict) -> dict:
+def compare_with_sweep1(paper_dir: Path, measured: dict, cross_check: dict | None = None) -> dict:
     """Compare the pick-tokenizer prompt lengths with the pinned sweep-1 records.  Missing/mismatched records STOP."""
     record = verify_sweep1_record(paper_dir)
     prompt_record = verify_sweep1_prompt_record(paper_dir)
+    b012_tokens = prompt_record["b012"]["prompt_tokens"]
+    w20_max = prompt_record["w20"]["max_tokens"]
     base = Path(paper_dir) / SWEEP1_LIVENESS_PATH
     by_node = {}
     for row in measured["prompts"]:
@@ -682,6 +918,10 @@ def compare_with_sweep1(paper_dir: Path, measured: dict) -> dict:
     rows, ratios = [], []
     for node in LIVENESS_NODES:
         pinned = SWEEP1_LEDGERS[node]
+        for variant in PROMPT_VARIANTS:
+            if variant not in by_node.get(node, {}):
+                raise Stop(f"STOP: the measurement has no {variant} prompt for {node} "
+                           "(the W=20 / 19-record longest class must be measured, not only the 11-record fixture)")
         ledger_path = base / "ledgers" / pinned["instance"] / "root_trials.jsonl"
         if not ledger_path.is_file():
             raise Stop(f"STOP: sweep-1 liveness ledger missing: {ledger_path}")
@@ -700,7 +940,8 @@ def compare_with_sweep1(paper_dir: Path, measured: dict) -> dict:
         if not maxima or max(maxima) != pinned["max_prompt_tokens"]:
             raise Stop(f"STOP: sweep-1 liveness max prompt_tokens for {node} != {pinned['max_prompt_tokens']}")
         trial1_row = by_node[node]["trial_1"]
-        memory_row = by_node[node]["memory_on_declared_12"]
+        middle_row = by_node[node]["memory_on_declared_12"]
+        longest_row = by_node[node]["memory_on_budget_20"]
         # The trial-1 manager prompt text must be byte-identical to the text the sweep-1 liveness run actually sent:
         # the ledger records its SHA-256 (`extra.manager.context_sha256`), so the tokenizer comparison below is on
         # identical text (not on a re-derived approximation).
@@ -725,69 +966,162 @@ def compare_with_sweep1(paper_dir: Path, measured: dict) -> dict:
             "trial1_delta_tokens": trial1_row["rendered_prompt_tokens"] - pinned["trial1_prompt_tokens"],
             "trial1_tokenizer_ratio": round(ratio, 4),
             "sweep1_max_prompt_tokens": pinned["max_prompt_tokens"],
-            "pick_memory_on_rendered_prompt_tokens": memory_row["rendered_prompt_tokens"],
-            "memory_on_delta_tokens": memory_row["rendered_prompt_tokens"] - pinned["max_prompt_tokens"],
-            "pick_memory_on_vs_sweep1_max_ratio": round(memory_row["rendered_prompt_tokens"]
-                                                        / pinned["max_prompt_tokens"], 4),
-            "pick_fits_ctx": trial1_row["fits_ctx"] and memory_row["fits_ctx"],
+            "pick_memory_on_declared_12_tokens": middle_row["rendered_prompt_tokens"],
+            "memory_on_declared_12_delta_vs_b012": middle_row["rendered_prompt_tokens"] - b012_tokens,
+            "pick_memory_on_budget_20_tokens": longest_row["rendered_prompt_tokens"],
+            "pick_memory_on_budget_20_vs_w20_max_ratio": round(longest_row["rendered_prompt_tokens"] / w20_max, 4),
+            "memory_on_budget_20_delta_vs_sweep1_recorded_max": longest_row["rendered_prompt_tokens"] - w20_max,
+            "pick_fits_ctx": trial1_row["fits_ctx"] and middle_row["fits_ctx"] and longest_row["fits_ctx"],
         })
     max_pick = max(row["rendered_prompt_tokens"] for row in measured["prompts"])
     max_trial1 = max(by_node[node]["trial_1"]["rendered_prompt_tokens"] for node in LIVENESS_NODES)
-    max_memory = max(by_node[node]["memory_on_declared_12"]["rendered_prompt_tokens"] for node in LIVENESS_NODES)
-    return {
+    max_middle = max(by_node[node]["memory_on_declared_12"]["rendered_prompt_tokens"] for node in LIVENESS_NODES)
+    max_longest = max(by_node[node]["memory_on_budget_20"]["rendered_prompt_tokens"] for node in LIVENESS_NODES)
+    summary = {
+        "max_pick_prompt_tokens": max_pick,
+        "max_pick_trial1_tokens": max_trial1,
+        "max_pick_memory_on_declared_12_tokens": max_middle,
+        "max_pick_memory_on_budget_20_tokens": max_longest,
+        "max_pick_memory_on_tokens": max_longest,
+        "trial1_tokenizer_ratio_mean": round(sum(ratios) / len(ratios), 4),
+        "trial1_tokenizer_ratio_min": round(min(ratios), 4),
+        "trial1_tokenizer_ratio_max": round(max(ratios), 4),
+        "sweep1_b012_tokens": b012_tokens,
+        "ratio_vs_sweep1_b012": round(max_middle / b012_tokens, 4),
+        "sweep1_w20_max_tokens": w20_max,
+        "sweep1_w20_max_instance": prompt_record["w20"]["max_instance"],
+        "ratio_vs_sweep1_w20_max": round(max_longest / w20_max, 4),
+        "ctx_headroom_tokens": CTX - max_pick,
+        "ctx_headroom_ratio": round(CTX / max_pick, 2) if max_pick else None,
+        "all_pick_prompts_fit_ctx": measured["all_fit_ctx"],
+        "prompt_texts_identical_to_sweep1": all(row["prompt_texts_identical"] for row in rows),
+        "longest_prompt_class_measured": "memory_on_budget_20" in PROMPT_VARIANTS,
+        "interpretation": (
+            "the trial-1 pick/prompt comparison is on identical prompt text (SHA-256-equal, 27 Oct liveness ledgers); "
+            "the memory-on classes are this unit's declared fixtures (11 records = budget 12, a middle class; 19 "
+            "records = budget 20 = the longest W=20 class). The 1,345 figure is the 14 Oct rerun-2 budget-12 value, "
+            "not a maximum; the true recorded W=20 maximum is 1,886. The W=20 fit conclusion is the headroom line, "
+            "not a claim that the fixture text equals the 14 Oct rerun-2 text."),
+    }
+    result = {
         "schema": "s2_c3b_sweep1_comparison/1",
         "compared_utc": _utc(),
         "method": ("the trial-1 manager prompt text is rebuilt from the pinned harness and must be byte-identical to "
-                   "the sweep-1 liveness record (the ledger's `extra.manager.context_sha256` is compared); the "
-                   "pick-tokenizer counts come from the owned server's /apply-template + /tokenize; the sweep-1 "
-                   "counts are the recorded per-call usage.prompt_tokens of the pinned sweep-1 D28 liveness ledgers "
-                   "(r1-manager tokenizer). The memory-on prompt is this unit's declared 11-record fixture."),
+                   "the sweep-1 liveness record (the ledger's `extra.manager.context_sha256` is compared, 27 Oct "
+                   "prompt set); the pick-tokenizer counts come from the owned server's /apply-template + /tokenize; "
+                   "the sweep-1 counts are the recorded per-call usage.prompt_tokens of the pinned sweep-1 D28 "
+                   "liveness ledgers (r1-manager tokenizer). The memory-on prompts are this unit's declared fixtures: "
+                   "the 11-record (budget 12) middle class and the 19-record (budget 20) longest W=20 class. The "
+                   "recorded 1,345 is the 14 Oct rerun-2 budget-12 value, not a maximum; the true W=20 maximum is "
+                   "1,886 over the pinned 54 rerun-2 root ledgers."),
         "sweep1_record": {"liveness_path": record["path"], "liveness_sha256": record["liveness_sha256"],
                           "manifest_sha256": record["manifest_sha256"],
-                          "prompt_max": {key: prompt_record[key] for key in
-                                         ("path", "sha256", "prompt_tokens", "campaign_id", "node",
-                                          "budget_index", "memory_mode", "tokenizer_note")}},
+                          "b012": prompt_record["b012"], "w20": prompt_record["w20"],
+                          "prompt_set_note": prompt_record["prompt_set_note"]},
         "ctx": CTX,
+        "prompt_variants": list(PROMPT_VARIANTS),
         "per_node": rows,
-        "summary": {
-            "max_pick_prompt_tokens": max_pick,
-            "max_pick_trial1_tokens": max_trial1,
-            "max_pick_memory_on_tokens": max_memory,
-            "trial1_tokenizer_ratio_mean": round(sum(ratios) / len(ratios), 4),
-            "trial1_tokenizer_ratio_min": round(min(ratios), 4),
-            "trial1_tokenizer_ratio_max": round(max(ratios), 4),
-            "sweep1_recorded_max_tokens": SWEEP1_PROMPT_MAX_TOKENS,
-            "ratio_vs_sweep1_recorded_max": round(max_memory / SWEEP1_PROMPT_MAX_TOKENS, 4),
-            "ctx_headroom_tokens": CTX - max_pick,
-            "all_pick_prompts_fit_ctx": measured["all_fit_ctx"],
-            "prompt_texts_identical_to_sweep1": all(row["prompt_texts_identical"] for row in rows),
-            "interpretation": ("the trial-1 pick/prompt comparison is on identical prompt text (SHA-256-equal); the "
-                               "memory-on pick prompt is this unit's declared 11-record fixture, so the comparison "
-                               "against the recorded 1,345-token maximum is a scale check, not a per-text identity"),
-        },
+        "summary": summary,
+    }
+    if cross_check is not None:
+        result["liveness_usage_cross_check"] = cross_check
+    return result
+
+
+def cross_check_liveness_usage(out_dir: Path, measured: dict) -> dict:
+    """Cross-check `/tokenize(add_special=True)` against the job's own liveness-ledger `usage.prompt_tokens`.
+
+    The liveness run that precedes the prompt measurement sends the same trial-1 manager prompt text, and its
+    `out/ledgers/<instance>/root_trials.jsonl` records the server's own `usage.prompt_tokens` for that call.  Both
+    numbers are recorded so the BOS / add_special question is settled by the run itself instead of being guessed.
+    (m3 of review round 2.)
+    """
+    ledger_dir = Path(out_dir) / "ledgers"
+    paths = sorted(ledger_dir.glob("*/root_trials.jsonl")) if ledger_dir.is_dir() else []
+    trial1 = {row["node"]: row["rendered_prompt_tokens"] for row in measured["prompts"]
+              if row["variant"] == "trial_1"}
+    per_node: dict[str, dict] = {}
+    for path in paths:
+        instance = path.parent.name
+        for line in path.read_text().splitlines():
+            if not line.strip():
+                continue
+            try:
+                trial = json.loads(line)
+            except json.JSONDecodeError:
+                raise Stop(f"STOP: liveness ledger {path} is not valid JSONL") from None
+            if trial.get("budget_index") != 1:
+                continue
+            node = str(trial.get("campaign_id") or instance).split("__")[0]
+            usage = _manager_call(trial).get("prompt_tokens")
+            if node in trial1 and isinstance(usage, int):
+                entry = per_node.setdefault(node, {"node": node, "liveness_usage_prompt_tokens": usage,
+                                                   "pick_rendered_prompt_tokens": trial1[node],
+                                                   "instances": []})
+                entry["instances"].append(instance)
+                entry["liveness_usage_prompt_tokens"] = usage
+    for entry in per_node.values():
+        entry["delta_tokens"] = entry["pick_rendered_prompt_tokens"] - entry["liveness_usage_prompt_tokens"]
+        entry["abs_delta_tokens"] = abs(entry["delta_tokens"])
+        entry["bos_consistent"] = entry["abs_delta_tokens"] <= 1
+    deltas = [entry["abs_delta_tokens"] for entry in per_node.values()]
+    return {
+        "schema": "s2_c3b_liveness_usage_cross_check/1",
+        "available": bool(per_node),
+        "source": "out/ledgers/*/root_trials.jsonl -> extra.manager.llm_call.prompt_tokens (the job's own liveness run)",
+        "per_node": {node: per_node[node] for node in LIVENESS_NODES if node in per_node},
+        "nodes_checked": len(per_node),
+        "max_abs_delta_tokens": max(deltas) if deltas else None,
+        "all_bos_consistent_within_1_token": all(entry["bos_consistent"] for entry in per_node.values()) if per_node
+                                              else None,
+        "note": ("`/tokenize(add_special=True)` should match the server's own `usage.prompt_tokens` for the same "
+                 "trial-1 text (delta 0, or 1 if add_special double-counts a BOS that the chat template already "
+                 "emitted); both numbers are recorded and the flag is REPORTED, not used to invent a pass"),
     }
 
 
-def _prompt_report(measured: dict, comparison: dict) -> str:
+def _prompt_report(measured: dict, comparison: dict, cross_check: dict | None = None) -> str:
     lines = ["# S2-C3b prompt-length re-measurement (ENGINEERING_ONLY)", "",
              f"Generated {_utc()}. Pick tokenizer via the owned llama-server `/apply-template` + `/tokenize`; "
              f"context {CTX}.", "",
-             "| node | sweep-1 trial-1 tokens | pick trial-1 tokens | ratio | sweep-1 max (memory on) | "
-             "pick memory-on tokens |", "|---|---|---|---|---|---|"]
+             "| node | sweep-1 trial-1 tokens | pick trial-1 tokens | ratio | sweep-1 liveness max (memory on) | "
+             "pick 11-record (b012) | pick W=20 19-record (longest) |", "|---|---|---|---|---|---|---|"]
     for row in comparison["per_node"]:
         lines.append(f"| {row['node']} | {row['sweep1_trial1_prompt_tokens']} | "
                      f"{row['pick_trial1_rendered_prompt_tokens']} | {row['trial1_tokenizer_ratio']} | "
-                     f"{row['sweep1_max_prompt_tokens']} | {row['pick_memory_on_rendered_prompt_tokens']} |")
+                     f"{row['sweep1_max_prompt_tokens']} | {row['pick_memory_on_declared_12_tokens']} | "
+                     f"{row['pick_memory_on_budget_20_tokens']} |")
     summary = comparison["summary"]
     lines += ["", f"- max pick prompt: **{summary['max_pick_prompt_tokens']}** tokens "
-                  f"(headroom {summary['ctx_headroom_tokens']} of {CTX}); fits: {summary['all_pick_prompts_fit_ctx']}",
+                  f"(headroom {summary['ctx_headroom_tokens']} of {CTX}, x{summary['ctx_headroom_ratio']}); "
+                  f"fits: {summary['all_pick_prompts_fit_ctx']}",
               f"- trial-1 tokenizer ratio (pick/sweep-1): mean {summary['trial1_tokenizer_ratio_mean']}, "
               f"range {summary['trial1_tokenizer_ratio_min']}-{summary['trial1_tokenizer_ratio_max']}",
-              f"- recorded sweep-1 maximum (memory on, W=20, rerun-2, 7B tokenizer): "
-              f"{summary['sweep1_recorded_max_tokens']}; pick memory-on fixture "
-              f"{summary['max_pick_memory_on_tokens']} (ratio {summary['ratio_vs_sweep1_recorded_max']})",
-              "", f"Sweep-1 record: `{comparison['sweep1_record']['liveness_path']}` "
-                  f"(liveness.json {comparison['sweep1_record']['liveness_sha256'][:12]}...).", ""]
+              f"- pick W=20 19-record class (longest): {summary['max_pick_memory_on_budget_20_tokens']} tokens "
+              f"(x{summary['ratio_vs_sweep1_w20_max']} of the pinned 1,886 W=20 maximum)",
+              f"- pick 11-record class (b012, middle): {summary['max_pick_memory_on_declared_12_tokens']} tokens "
+              f"(x{summary['ratio_vs_sweep1_b012']} of the 1,345 b012 value)",
+              "- pinned sweep-1 prompt-length record (7B tokenizer): the recorded **1,345** figure is the **14 Oct** "
+              "rerun-2 prompt set's **budget-12** value, NOT a maximum and NOT the 27 Oct/sweep-2 text; the true "
+              "recorded **W=20 maximum is 1,886** (`tabular_mlp__s112`, budget 20; that root family grows 1,345 at "
+              "budget 12 to 1,878 at budget 20, e.g. `tabular_mlp__s142`, over the pinned 54 rerun-2 root ledgers)",
+              "- corrected comparison: `openml_breast_w` trial-1 differs between the 14 Oct rerun-2 set "
+              "(`d31c77a3…`, 483 tokens) and the 27 Oct liveness/sweep-2 text (`61aa9226…`, 482 tokens); the "
+              "byte-identity check above is against the 27 Oct liveness ledgers only"]
+    if cross_check is not None:
+        if cross_check.get("available"):
+            lines.append(f"- in-run cross-check: `/tokenize(add_special=True)` vs the job's own liveness-ledger "
+                         f"`usage.prompt_tokens` over {cross_check['nodes_checked']} nodes: max |delta| = "
+                         f"{cross_check['max_abs_delta_tokens']} token(s); BOS-consistent (<=1): "
+                         f"{cross_check['all_bos_consistent_within_1_token']}")
+        else:
+            lines.append("- in-run cross-check: no liveness ledgers were available to compare "
+                         "`/tokenize(add_special=True)` against `usage.prompt_tokens`")
+    lines += ["", f"Sweep-1 record: `{comparison['sweep1_record']['liveness_path']}` "
+                  f"(liveness.json {comparison['sweep1_record']['liveness_sha256'][:12]}...); rerun-2 prompt record "
+                  f"`{comparison['sweep1_record']['w20']['roots_path']}` "
+                  f"({comparison['sweep1_record']['w20']['root_count']} root ledgers, "
+                  f"sha {comparison['sweep1_record']['w20']['roots_sha256'][:12]}...).", ""]
     return "\n".join(lines)
 
 
@@ -811,13 +1145,14 @@ def _stop_with_evidence(record: dict, record_path: Path, message: str) -> None:
     raise Stop(message)
 
 
-def _write_prompt_outputs(measured: dict, comparison: dict | None) -> None:
+def _write_prompt_outputs(measured: dict, comparison: dict | None,
+                         cross_check: dict | None = None) -> None:
     out = Path("out")
     out.mkdir(parents=True, exist_ok=True)
     (out / "s2_c3b_prompt_lengths.json").write_text(json.dumps(measured, indent=1) + "\n")
     if comparison:
         (out / "s2_c3b_sweep1_comparison.json").write_text(json.dumps(comparison, indent=1) + "\n")
-        (out / "S2_C3B_PROMPT_REPORT.md").write_text(_prompt_report(measured, comparison))
+        (out / "S2_C3B_PROMPT_REPORT.md").write_text(_prompt_report(measured, comparison, cross_check))
 
 
 def run_liveness_job(spec_path: Path) -> dict:
@@ -839,6 +1174,7 @@ def run_liveness_job(spec_path: Path) -> dict:
                              "cache_prompt": "false (LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)",
                              "temperature": "0.2 (D26 manager seed)"},
         "non_numeric_differences": c2.non_numeric_differences(s["server"]["extra_args"]),
+        "level_layout": validated["level_layout"],
         "seed_plan": validated["seed_check"],
         "spec_liveness": s["liveness"],
         "spec_prompt_measurement": {"variants": list(PROMPT_VARIANTS),
@@ -869,6 +1205,18 @@ def run_liveness_job(spec_path: Path) -> dict:
 
     record["model"] = c2.fetch_model(s["model"], Path("model.gguf"))
     server = c2.start_server(s, Path("model.gguf"), Path("llama-server.log"))
+
+    def stop(message: str) -> None:
+        """M4 (review round 2): kill the owned server (None-guarded) BEFORE `_persist` writes `SHA256SUMS`.
+
+        Otherwise `llama-server.log` (a summed transfer output) could still be written by the live server after it
+        was hashed, and `seal` would refuse the transferred sums on exactly the shortfall/failure path that promises
+        "evidence persists and can be sealed".  The `_kill` guard tolerates an already-cleared handle.
+        """
+        c2._kill(server["proc"])
+        server["proc"] = None
+        _stop_with_evidence(record, record_path, message)
+
     try:
         record["server"] = {key: server[key] for key in
                             ("pid", "base_url", "build", "offloaded_layers", "total_layers", "cuda_lines", "log")}
@@ -885,28 +1233,26 @@ def run_liveness_job(spec_path: Path) -> dict:
                                   "seconds": round(time.time() - started, 1),
                                   "stdout_tail": result.stdout[-4000:], "stderr_tail": result.stderr[-4000:]}
         if result.returncode != 0:
-            _stop_with_evidence(record, record_path,
-                                f"STOP: r1.liveness rc={result.returncode}; outputs kept")
+            stop(f"STOP: r1.liveness rc={result.returncode}; outputs kept")
         try:
             report = json.loads((out / "liveness.json").read_text())
         except (OSError, json.JSONDecodeError) as exc:
-            _stop_with_evidence(record, record_path, f"STOP: cannot read out/liveness.json: {exc}")
+            stop(f"STOP: cannot read out/liveness.json: {exc}")
         try:
             verdict = evaluate_liveness(report)
         except Stop as exc:
-            _stop_with_evidence(record, record_path, str(exc))
+            stop(str(exc))
         record["liveness_results"] = verdict
         if not verdict["pass"]:
-            _stop_with_evidence(record, record_path,
-                                f"STOP: only {verdict['live_nodes']}/{len(LIVENESS_NODES)} nodes passed D28 "
-                                f"liveness (< {verdict['min_live_nodes']}): {verdict['failed_nodes']}; "
-                                "the author decides, no node is dropped silently")
+            stop(f"STOP: only {verdict['live_nodes']}/{len(LIVENESS_NODES)} nodes passed D28 liveness "
+                 f"(< {verdict['min_live_nodes']}): {verdict['failed_nodes']}; the author decides, "
+                 "no node is dropped silently")
 
         try:
             prompt_set = build_prompt_texts(harness_dir, s)
             measured = measure_prompts(server["base_url"], s, prompt_set)
         except Stop as exc:
-            _stop_with_evidence(record, record_path, str(exc))
+            stop(str(exc))
         record["prompt_measurement"] = {"prompt_set_sha256": prompt_set["prompt_set_sha256"],
                                         "builder": prompt_set["builder"],
                                         "builder_file_sha256": prompt_set["builder_file_sha256"],
@@ -919,15 +1265,19 @@ def run_liveness_job(spec_path: Path) -> dict:
                                                       "fits_ctx")} for row in measured["prompts"]]}
         if not measured["all_fit_ctx"]:
             _write_prompt_outputs(measured, None)
-            _stop_with_evidence(record, record_path,
-                                f"STOP: a re-measured prompt does not fit ctx {CTX} "
-                                f"(max {measured['max_tokens']} tokens)")
+            stop(f"STOP: a re-measured prompt does not fit ctx {CTX} (max {measured['max_tokens']} tokens)")
         try:
-            comparison = compare_with_sweep1(paper_dir, measured)
+            # m3 (review round 2): settle the BOS/add_special question with the job's own liveness ledgers.
+            cross_check = cross_check_liveness_usage(out, measured)
+            record["liveness_prompt_token_cross_check"] = cross_check
         except Stop as exc:
-            _stop_with_evidence(record, record_path, str(exc))
+            stop(str(exc))
+        try:
+            comparison = compare_with_sweep1(paper_dir, measured, cross_check=cross_check)
+        except Stop as exc:
+            stop(str(exc))
         record["sweep1_comparison"] = comparison
-        _write_prompt_outputs(measured, comparison)
+        _write_prompt_outputs(measured, comparison, record.get("liveness_prompt_token_cross_check"))
     finally:
         c2._kill(server["proc"])
     record["finished_utc"] = _utc()

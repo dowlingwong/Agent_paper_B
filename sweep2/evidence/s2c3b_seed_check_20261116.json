@@ -1,7 +1,7 @@
 {
  "schema": "s2_c3b_seed_check/1",
  "policy": "sweep1_d28_reuse",
- "note": "D28 liveness reuses the first two sweep instance seeds by construction (pinned r1.liveness k=0,1), exactly as sweep 1 did; it is ENGINEERING_ONLY and never enters a label table. The prompt-measurement seeds are disjoint from the sweep instance, audit, exam and G.1b seed blocks.",
+ "note": "D28 liveness reuses the first two sweep instance seeds by construction (pinned r1.liveness k=0,1), exactly as sweep 1 did; it is ENGINEERING_ONLY and never enters a label table. The prompt-measurement seeds are disjoint from the sweep instance seeds, the audit block 7001-7010, the exam block 9001-9303 and the G.1b block 8001-8010.",
  "liveness_disjoint_from_sweep2_instance_seeds": false,
  "liveness_overlap_with_sweep2_instance_seeds": [
   100,
@@ -251,6 +251,7 @@
   9001,
   9303
  ],
+ "exam_seed_guard": "the exam seed block is 9001-9303 (not an unbounded '9001+' claim); the collision guard is open-ended: any seed >= 9001 STOPs",
  "g1b_seed_block": [
   8001,
   8010

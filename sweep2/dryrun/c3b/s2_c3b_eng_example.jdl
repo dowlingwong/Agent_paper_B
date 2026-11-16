@@ -8,9 +8,9 @@ output = s2_c3b_job.out
 error = s2_c3b_job.err
 request_cpus = 16
 request_memory = 32000
-request_disk = 42439718
+request_disk = 42460977
 request_GPUs = 1
-+RequestWalltime = 10776
++RequestWalltime = 12203
 +RemoteJob = True
 requirements = (TARGET.CloudSite =?= "BwForCluster-Nemo2") && (TARGET.GPUs_DeviceName =?= "NVIDIA L40S") && (TARGET.Arch == "X86_64") && (TARGET.OpSys == "LINUX") && (TARGET.Cpus >= 16) && (TARGET.CpuFamily =?= 6) && (TARGET.CpuModelNumber =?= 207)
 should_transfer_files = YES
