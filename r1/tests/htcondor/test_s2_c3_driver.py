@@ -618,3 +618,23 @@ def test_seal_refuses_a_record_without_the_shim_and_declared_bindings(tmp_path, 
     (chunk / "job_record.json").write_text(json.dumps(record))
     with pytest.raises(replay.Stop, match="did not verify every item"):
         replay.seal_replay(chunk, "r", "digits_mlp")
+
+
+def test_worker_audit_stops_on_no_logs_and_all_crashed(tmp_path):
+    out = tmp_path / "out" / "digits_mlp__s9011" / "art" / "trial-001"
+    with pytest.raises(replay.Stop, match="no worker run.log"):
+        replay.worker_audit(tmp_path, ["digits_mlp__s9011"])
+    out.mkdir(parents=True)
+    (out / "run.log").write_text("Traceback (most recent call last):\nModuleNotFoundError: No module named 'numpy'\n")
+    with pytest.raises(replay.Stop, match="all 1 worker runs crashed"):
+        replay.worker_audit(tmp_path, ["digits_mlp__s9011"])
+    (out / "run.log").write_text("val_score 0.91\n")
+    audit = replay.worker_audit(tmp_path, ["digits_mlp__s9011"])
+    assert audit["total_run_logs"] == 1 and audit["crashed"] == 0
+
+
+def test_worker_path_stops_without_the_venv(monkeypatch):
+    real = __import__("pathlib").Path
+    monkeypatch.setattr(replay, "Path", lambda x: real("/nonexistent-venv") if str(x) == "/opt/r1/envs/harness/bin" else real(x))
+    with pytest.raises(replay.Stop, match="harness venv bin missing"):
+        replay._worker_path()
