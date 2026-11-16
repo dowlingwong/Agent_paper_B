@@ -1219,11 +1219,20 @@ def replay_env(cwd: Path) -> dict:
             REPLAY_SANDBOX_ENV: str(cwd)}
 
 
+def _worker_path() -> str:
+    """The harness venv must be first on PATH: the B2 worker runs the node's `python3 train.py`; without this the
+    container system Python is used and every worker run fails (32k-smoke failure mode)."""
+    venv_bin = Path("/opt/r1/envs/harness/bin")
+    if not (venv_bin / "python3").is_file() and not (venv_bin / "python").is_file():
+        raise Stop(f"STOP: harness venv bin missing at {venv_bin} (worker python would be the system python)")
+    return f"{venv_bin}:{os.environ.get('PATH', '')}"
+
+
 def campaign_env(paper_dir: Path, harness_dir: Path, base_url: str, stop_fd: int | None = None,
                  cwd: Path | None = None) -> dict:
     env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()), AR_HARNESS_ROOT=str(harness_dir.resolve()),
                LLAMACPP_BASE_URL=base_url, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1",
-               PYTHONDONTWRITEBYTECODE="1")
+               PYTHONDONTWRITEBYTECODE="1", PATH=_worker_path())
     env.pop("LLAMACPP_CACHE_PROMPT", None)
     env.pop("LLAMACACHE_PROMPT", None)
     for key in (REPLAY_DECLARED_ENV, REPLAY_ROOT_ENV, REPLAY_SANDBOX_ENV):
