@@ -6,7 +6,7 @@ below starts by checking that the rows it depends on exist on the author branch 
 
 ## 0. What this plan is for
 
-- **Host gate:** PLAN §10 row **R1-SWEEP-HOST-HTC** (to be signed). Until it exists, nothing here may launch an
+- **Host gate:** PLAN §10 row **R1-SWEEP-HOST-HTC** (signed 16 Nov; see also R1-SWEEP2-SETTINGS on `author-decisions-20261116`). Until it exists, nothing here may launch an
   EVIDENCE job; engineering units (marked ENGINEERING) may proceed.
 - **Scope:** C3 label sweeps from sweep 2 on — T0 sweep 2 (main C3 data with the pick, R1-MAIN-PROPOSER (b)),
   their B.2 audits, and later T1 label sweeps (R1-BX-D1/D5) — run as HTCondor jobs. LLM-backed label runs run on
@@ -15,7 +15,9 @@ below starts by checking that the rows it depends on exist on the author branch 
 - **Fixed by existing rows (do not change):** pick `gemma4_31b`, thinking off (R1-EXAM-X7, R1-MAIN-PROPOSER);
   sweep-1 nodes, 18 instances, W = 20, memory `{append_only_summary, none}`, `vary` split, `manager_proposal/v1`,
   temperature 0.2 with the D26 seed, sweep-1 instance seeds; server flags exactly as in the exam
-  (`--chat-template-kwargs {"enable_thinking":false}`, `--jinja`, q8_0 KV cache, context 16,384); `cache_prompt:
+  (`-ngl 999 -np 1`, `--chat-template-kwargs {"enable_thinking":false}`, `--jinja`, q8_0 KV cache, **context 32,768**
+  — corrected 16 Nov: this file first said 16,384 and called it the exam setting, which was wrong; the exam ran at
+  32,768, and R1-SWEEP2-SETTINGS (1) fixes 32,768 for sweep 2); `cache_prompt:
   false` on every call; audits K = 10 with seeds 7001–7005 (labels) / 7006–7010 (evaluation), never mixed, unless
   R1-BX-D3's K = 6 check has passed and is recorded; one GPU model per table (R1-SWEEP-HOST, R1-BX-D5).
 - **Analysis lock:** R1-BX-D8 — no sweep-2 (T0 or T1) label table is copied back *for analysis* or read by any
