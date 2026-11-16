@@ -1,0 +1,184 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "$id": "g1b_spec.schema.json",
+ "title": "G.1b T1 GPU-node noise-floor chunk spec (schema v1)",
+ "description": "Machine shape of a G.1b chunk spec. This JSON Schema checks structure only; the authoritative gate is sweep2/g1b/g1b_lib.validate_spec, which also refuses placeholders, a non-complete G.0 census, off-class host requirements, raised caps and any chunk outside the pre-declared chunk plan. A spec that validates here can still be refused by the runtime validator.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": ["schema", "kind", "label", "run_id", "chunk", "g0_census", "plan", "image", "paper", "harness", "env", "proposer_environment", "measurement", "caps", "requirements"],
+ "properties": {
+  "schema": {"const": "g1b_job/v1"},
+  "kind": {"const": "noise_floor_chunk"},
+  "label": {"const": "ENGINEERING_ONLY"},
+  "run_id": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$"},
+  "chunk": {
+   "type": "object", "additionalProperties": false,
+   "required": ["chunk_id", "node", "condition", "seed_start", "seed_count"],
+   "properties": {
+    "chunk_id": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$"},
+    "node": {"type": "string"},
+    "condition": {"type": "string"},
+    "seed_start": {"type": "integer", "minimum": 0, "maximum": 29},
+    "seed_count": {"type": "integer", "minimum": 0, "maximum": 30}
+   }
+  },
+  "g0_census": {
+   "type": "object", "additionalProperties": false,
+   "required": ["status", "report_path", "report_sha256", "host_platform", "nodes"],
+   "properties": {
+    "status": {"type": "string", "enum": ["pending", "complete"]},
+    "report_path": {"type": "string"},
+    "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "host_platform": {"type": "string"},
+    "nodes": {"type": "array", "minItems": 0, "items": {"type": "string"}}
+   }
+  },
+  "plan": {
+   "type": "object", "additionalProperties": false,
+   "required": ["seeds_per_condition", "conditions", "split_policy", "configs", "default_runs_per_config", "candidate_nodes"],
+   "properties": {
+    "seeds_per_condition": {"const": 30},
+    "conditions": {"type": "array", "items": {"enum": ["train", "split", "joint"]}, "minItems": 3, "maxItems": 3},
+    "split_policy": {"const": "vary"},
+    "configs": {"const": 6},
+    "default_runs_per_config": {"const": 2},
+    "candidate_nodes": {
+     "type": "array", "minItems": 0,
+     "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_id", "run_seconds", "metric", "direction", "request_memory_mb", "request_disk_kb", "edit_set", "runner"],
+      "properties": {
+       "node_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+       "run_seconds": {"type": ["number", "null"], "exclusiveMinimum": 0},
+       "metric": {"type": "string"},
+       "direction": {"enum": ["higher", "lower"]},
+       "request_memory_mb": {"type": "integer", "minimum": 0},
+       "request_disk_kb": {"type": "integer", "minimum": 0},
+       "edit_set": {
+        "type": "array", "minItems": 5, "maxItems": 5,
+        "items": {
+         "type": "object", "additionalProperties": false,
+         "required": ["edit_id", "kind", "patch_sha256"],
+         "properties": {
+          "edit_id": {"type": "string"},
+          "kind": {"enum": ["code_diff", "hyperparameter"]},
+          "patch_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "description": {"type": "string"}
+         }
+        }
+       },
+       "runner": {
+        "type": "object", "additionalProperties": false,
+        "required": ["module", "entrypoint", "module_sha256"],
+        "properties": {
+         "module": {"type": "string"},
+         "entrypoint": {"type": "string"},
+         "module_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "image": {
+   "type": "object", "additionalProperties": false,
+   "required": ["digest", "versions_markers"],
+   "properties": {
+    "digest": {"type": "string", "pattern": "^ghcr\\.io/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$"},
+    "versions_markers": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string"}}
+   }
+  },
+  "paper": {
+   "type": "object", "additionalProperties": false,
+   "required": ["repo", "commit"],
+   "properties": {
+    "repo": {"const": "https://github.com/dowlingwong/Agent_paper_B.git"},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+   }
+  },
+  "harness": {
+   "type": "object", "additionalProperties": false,
+   "required": ["repo", "commit", "pin_evidence"],
+   "properties": {
+    "repo": {"const": "https://github.com/dowlingwong/autoresearch_harness.git"},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "pin_evidence": {"type": "string"}
+   }
+  },
+  "env": {
+   "type": "object", "additionalProperties": false,
+   "required": ["python", "libraries"],
+   "properties": {
+    "python": {"const": "/opt/r1/envs/trackp/bin/python"},
+    "libraries": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string"}}
+   }
+  },
+  "proposer_environment": {
+   "type": "object", "additionalProperties": false,
+   "required": ["server", "model"],
+   "properties": {
+    "server": {
+     "type": "object", "additionalProperties": false,
+     "required": ["binary", "ctx", "n_gpu_layers", "n_parallel", "cache_prompt", "expected_build", "extra_args"],
+     "properties": {
+      "binary": {"const": "/opt/r1/llama/bin/llama-server"},
+      "ctx": {"const": 32768},
+      "n_gpu_layers": {"const": 999},
+      "n_parallel": {"const": 1},
+      "cache_prompt": {"const": false},
+      "expected_build": {"type": "string"},
+      "extra_args": {"type": "array", "items": {"type": "string"}}
+     }
+    },
+    "model": {
+     "type": "object",
+     "required": ["url", "sha256", "size", "alias", "provenance", "use"],
+     "properties": {
+      "sha256": {"const": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75"},
+      "size": {"const": 19598489952},
+      "alias": {"const": "gemma4_31b"},
+      "use": {"const": "declared-only-no-download"}
+     }
+    }
+   }
+  },
+  "measurement": {
+   "type": "object", "additionalProperties": false,
+   "required": ["workers", "seed_bases", "chunk_overhead_factor", "reserved_seconds"],
+   "properties": {
+    "workers": {"const": 1},
+    "seed_bases": {
+     "type": "object", "additionalProperties": false,
+     "required": ["train", "split", "joint"],
+     "properties": {"train": {"const": 1001}, "split": {"const": 2001}, "joint": {"const": 3001}}
+    },
+    "chunk_overhead_factor": {"const": 1.35},
+    "reserved_seconds": {"const": 900}
+   }
+  },
+  "caps": {
+   "type": "object", "additionalProperties": false,
+   "required": ["max_total_gpu_hours", "max_chunk_wall_hours", "max_chunk_wall_seconds"],
+   "properties": {
+    "max_total_gpu_hours": {"type": "number", "minimum": 1, "maximum": 60},
+    "max_chunk_wall_hours": {"type": "number", "minimum": 1, "maximum": 48},
+    "max_chunk_wall_seconds": {"type": "integer", "minimum": 1, "maximum": 10776}
+   }
+  },
+  "requirements": {
+   "type": "object", "additionalProperties": false,
+   "required": ["cloud_site", "gpu_device_name", "arch", "opsys", "min_cpus", "cpu_family", "cpu_model_number", "cpu_model_contains"],
+   "properties": {
+    "cloud_site": {"const": "BwForCluster-Nemo2"},
+    "gpu_device_name": {"const": "NVIDIA L40S"},
+    "arch": {"const": "X86_64"},
+    "opsys": {"const": "LINUX"},
+    "min_cpus": {"const": 16},
+    "cpu_family": {"const": 6},
+    "cpu_model_number": {"const": 207},
+    "cpu_model_contains": {"const": "INTEL(R) XEON(R) PLATINUM 8562Y+"}
+   }
+  }
+ }
+}
