@@ -356,14 +356,19 @@ def census_tracks(blobs: Blobs, node: str) -> NodeCensus:
         "reading": "no winner's curse detected (per-keep mean within 2 se of 0)"
         if abs(per_keep.mean()) <= 2 * _se(per_keep) else "per-keep mean differs from 0 by more than 2 se",
     }
-    allr = [r for r in all5 + roots4 if r.get("y_after_trial1") is not None and r.get("y_start") is not None]
-    drop = np.array([(r["y_after_trial1"] - r["y_start"]) / sig for r in allr])
-    net = np.array([(r["y_terminal"] - r["y_start"]) / sig for r in allr if r.get("y_terminal") is not None])
-    distinct = {(round(r["y_start"], 9), round(r["y_after_trial1"], 9), round(r.get("y_terminal") or 0.0, 9))
-                for r in allr}
-    c.trial1 = {"n_campaigns": len(allr), "n_distinct_outcomes": len(distinct),
-                "independence_note": "S0.5 static roots repeat the a2u roots' actions and y_terminal (S0.5 summary "
-                                     "section 4), so fewer campaigns are distinct than listed",
+    ok = lambda r: r.get("y_after_trial1") is not None and r.get("y_start") is not None   # noqa: E731
+    # distinct campaigns: the S0.5 static rep-0 roots repeat the a2u rep-0 roots' actions and y_terminal (S0.5
+    # summary section 4); distinct trial-1 outcomes: one per instance (rep 1 shares trial 1 with rep 0)
+    camps_d = [r for r in all5 if not (r["policy"] != "a2u" and r["rep"] == 0) and ok(r)] + [r for r in roots4 if ok(r)]
+    t1_d = {("s05", r["instance_id"]): r for r in all5 if r["rep"] == 0 and r["policy"] == "a2u" and ok(r)}
+    t1_d.update({("s04", r["instance_id"]): r for r in roots4 if ok(r)})
+    drop = np.array([(r["y_after_trial1"] - r["y_start"]) / sig for r in t1_d.values()])
+    net = np.array([(r["y_terminal"] - r["y_start"]) / sig for r in camps_d if r.get("y_terminal") is not None])
+    c.trial1 = {"n_rows": len([r for r in all5 + roots4 if ok(r)]), "n_distinct_campaigns": len(camps_d),
+                "n_distinct_trial1": len(t1_d),
+                "independence_note": "S0.5 static rep-0 roots repeat the a2u rep-0 roots; rep 1 shares trial 1 with "
+                                     "rep 0; medians are over distinct trial-1 outcomes (drop) and distinct "
+                                     "campaigns (net)",
                 "drop_median_sigma": _r(np.median(drop)),
                 "drop_range_sigma": [_r(drop.min()), _r(drop.max())],
                 "net_terminal_minus_start_median_sigma": _r(np.median(net)),
@@ -490,14 +495,18 @@ def e1b_pilots(blobs: Blobs, sigmas: dict) -> list[dict]:
     return out
 
 
-def s11_interactions(blobs: Blobs, sigmas: dict) -> list[dict]:
+def s11_interactions(blobs: Blobs, sigmas: dict, sigma_d: dict | None = None) -> list[dict]:
+    """S1.1 factorial effects in the Track S unit (sigma_node where Track S ran the node, else sigma_d) and, where
+    the sweep has the node, also in sigma_d."""
     out = []
     for node, f in S11_FILES.items():
         d = blobs.json(TRACKS_PIN, f)
         s = sigmas.get(node)
+        sd = (sigma_d or {}).get(node)
         for r in d["results"]:
             lo, hi = r["ci95_t"]
             out.append({"node": node, "pair": "x".join(r["pair"]), "interaction_sigma": _r(r["interaction"] / s),
+                        "interaction_sigma_d": _r(r["interaction"] / sd) if sd else None,
                         "ci95_excludes_0": bool(lo > 0 or hi < 0), "main_A_sigma": _r(r["main_A"] / s),
                         "main_B_sigma": _r(r["main_B"] / s)})
     return out
@@ -514,7 +523,8 @@ def run(repo: Path) -> dict:
         sig_s11 = {**sig_sweep, **{c.node: c.sigma for c in tracks}}
         extra = {"c1": {n: {k: (_r(v, 5) if isinstance(v, float) else v) for k, v in d.items()} for n, d in c1.items()},
                  "c3_audit_pilot": c3_pilot(blobs), "e1b_pilots": e1b_pilots(blobs, sig_sweep),
-                 "s11_interactions": s11_interactions(blobs, sig_s11)}
+                 "s11_interactions": s11_interactions(blobs, sig_s11, sig_sweep),
+                 "tracks_net_gain_sigma_d": {c.node: _r(c.trial1["net_terminal_minus_start_median_sigma"] * c.sigma / sig_sweep[c.node]) for c in tracks if c.node in sig_sweep}}
         inputs = sorted({(ref, path, oid) for (ref, path), oid in blobs.read_log.items()
                          if "/provenance/ledgers/" not in path})
         trees = [(SWEEP_PIN, r + "/provenance/ledgers", blobs.tree_id(SWEEP_PIN, r + "/provenance/ledgers"))

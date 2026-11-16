@@ -308,6 +308,7 @@
       {
         "ci95_excludes_0": true,
         "interaction_sigma": 0.858,
+        "interaction_sigma_d": 0.856,
         "main_A_sigma": 2.033,
         "main_B_sigma": -1.245,
         "node": "digits_mlp",
@@ -316,6 +317,7 @@
       {
         "ci95_excludes_0": true,
         "interaction_sigma": -0.535,
+        "interaction_sigma_d": -0.534,
         "main_A_sigma": 1.336,
         "main_B_sigma": 0.717,
         "node": "digits_mlp",
@@ -324,6 +326,7 @@
       {
         "ci95_excludes_0": true,
         "interaction_sigma": 1.238,
+        "interaction_sigma_d": 1.236,
         "main_A_sigma": -1.055,
         "main_B_sigma": 1.604,
         "node": "digits_mlp",
@@ -332,6 +335,7 @@
       {
         "ci95_excludes_0": true,
         "interaction_sigma": 1.393,
+        "interaction_sigma_d": 0.743,
         "main_A_sigma": 1.27,
         "main_B_sigma": -2.121,
         "node": "tabular_mlp",
@@ -340,6 +344,7 @@
       {
         "ci95_excludes_0": true,
         "interaction_sigma": -1.4,
+        "interaction_sigma_d": -0.747,
         "main_A_sigma": -0.127,
         "main_B_sigma": -0.08,
         "node": "tabular_mlp",
@@ -348,6 +353,7 @@
       {
         "ci95_excludes_0": true,
         "interaction_sigma": 2.573,
+        "interaction_sigma_d": 1.373,
         "main_A_sigma": -1.53,
         "main_B_sigma": 1.907,
         "node": "tabular_mlp",
@@ -356,12 +362,17 @@
       {
         "ci95_excludes_0": false,
         "interaction_sigma": 0.0,
+        "interaction_sigma_d": 0.0,
         "main_A_sigma": 0.0,
         "main_B_sigma": 0.013,
         "node": "openml_breast_w",
         "pair": "max_iterxC"
       }
-    ]
+    ],
+    "tracks_net_gain_sigma_d": {
+      "digits_mlp": 1.685,
+      "tabular_mlp": 0.359
+    }
   },
   "pins": {
     "sweep": "10742f85f3450eb93650ac645182460a755ab89e",
@@ -1128,14 +1139,15 @@
         "failed_invalid_share_E2": 0.143
       },
       "trial1": {
-        "drop_median_sigma": -41.276,
+        "drop_median_sigma": -41.234,
         "drop_range_sigma": [
           -46.763,
           -34.861
         ],
-        "independence_note": "S0.5 static roots repeat the a2u roots' actions and y_terminal (S0.5 summary section 4), so fewer campaigns are distinct than listed",
-        "n_campaigns": 60,
-        "n_distinct_outcomes": 35,
+        "independence_note": "S0.5 static rep-0 roots repeat the a2u rep-0 roots; rep 1 shares trial 1 with rep 0; medians are over distinct trial-1 outcomes (drop) and distinct campaigns (net)",
+        "n_distinct_campaigns": 40,
+        "n_distinct_trial1": 30,
+        "n_rows": 60,
         "net_terminal_minus_start_median_sigma": 1.688,
         "note": "recorded gains after trial 1 are mostly recoveries of the trial-1 drop"
       }
@@ -1233,15 +1245,16 @@
         "failed_invalid_share_E2": 0.127
       },
       "trial1": {
-        "drop_median_sigma": -63.016,
+        "drop_median_sigma": -62.83,
         "drop_range_sigma": [
           -83.953,
           -43.847
         ],
-        "independence_note": "S0.5 static roots repeat the a2u roots' actions and y_terminal (S0.5 summary section 4), so fewer campaigns are distinct than listed",
-        "n_campaigns": 60,
-        "n_distinct_outcomes": 33,
-        "net_terminal_minus_start_median_sigma": 0.813,
+        "independence_note": "S0.5 static rep-0 roots repeat the a2u rep-0 roots; rep 1 shares trial 1 with rep 0; medians are over distinct trial-1 outcomes (drop) and distinct campaigns (net)",
+        "n_distinct_campaigns": 40,
+        "n_distinct_trial1": 30,
+        "n_rows": 60,
+        "net_terminal_minus_start_median_sigma": 0.672,
         "note": "recorded gains after trial 1 are mostly recoveries of the trial-1 drop"
       }
     }

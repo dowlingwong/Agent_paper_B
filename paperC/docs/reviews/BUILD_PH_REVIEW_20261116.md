@@ -366,3 +366,114 @@ measure, per-mode statistics, budget, inputs, adapters and tests. A round 3 can 
 R2-2 to R2-5.
 
 Verdict: NOT ACCEPTED
+
+---
+
+# Round 3 (16 Nov 2026)
+
+Reviewed `8e4946b`: the response table `BUILD_PH_RESPONSE_R2_20261116.md`, the `census.py` and `test_census.py`
+diffs, `census_v1.json`, and the report diff.
+
+## What I checked
+
+**Commands:**
+- The full test suite: 90 passed, including the new `test_sigma_d_is_the_material_edit_median_of_sd_joint`.
+- `python -m paperc.census` then `git diff --stat`: no diff.
+
+**R2-1.**
+- `c1_paired` now uses `sd_joint` as is: all-edit median, material-edit median, per-edit min / max, and the start
+  configuration's seed sd (`sigma_joint`).
+- The docstring states what `sd_joint` and σ_d are, and the fixture test no longer rescales by ρ.
+- My own recomputation from the C1 composite (`/tmp/phrev/recalc_paired.py`, `c1edits.py`) agrees with the JSON:
+  - all-edit paired sd: 1.00, 0.54, 3.72, 0.38, 0.29, 0.09, 0.20, 0.037 σ_d;
+  - the per-edit ranges in the §3.2 column;
+  - near-0 shares in all-edit units of 0.18 / 0.07 / 0.82–0.83 / 0.61 / 0.65 / 0.79–0.80 / 0.58 / 0.74;
+  - kept increment in all-edit units of 2.1 / 3.4 / 0.24 / 0.29 / 0.62 / 1.2 / 0.38 / 3.5;
+  - price/V\*: σ_d gives 0.022 / 0.03 / 0.59 / misspecified ×5; all-edit gives 0.022 / 0.03 / misspecified ×3 /
+    0.75 / 0.97 / 1.06.
+- **Resolved.**
+
+**R2-2 and R2-3.** §4.1, §4.5, §6.1, §6.3 and §6.4 are reworded as asked. The §5 tabular interactions (0.74, −0.75,
+1.37 σ_d) and the net gain (0.4 σ_d) equal the JSON's σ_node values × 0.0019 / 0.003561. **Resolved**; see R3-4 for
+a residual.
+
+**R2-4.**
+- The start-configuration seed-sd row reproduces: 1.55 / 3.40 σ_d, and 0.55–7.30 on the OpenML nodes.
+- Both caveats are present. The count is refined in R3-1.
+- **Resolved.**
+
+**R2-5.** 0.02–0.04, with A2-U's 0.037 / 0.024 cited. **Resolved.**
+
+**Changed report numbers vs JSON.** All match:
+- §1: the 1.87 ratio;
+- §2: the seed-sd row and 35 / 33;
+- §3.2: every cell;
+- §4.1: kept 0.08–0.18 σ_d; regret 0.006–0.05 σ_d; E1b oracle ≤ 0.02 σ_d (ionosphere) and 0.16 σ_d (digits); climate
+  0.88 σ_d and 14.5 σ_d;
+- §4.3: 5 / 6 and 3 / 6 misspecified, and 0.75–1.06;
+- §4.4: 58–83 % and 0.24–0.62;
+- §5: every cell.
+
+**The "factor of 2 on digits and 8–125" sentence.** The ratios are max / min `sd_joint` per node: digits 2.1,
+ionosphere 7.9, climate 15, credit_approval 19, sonar 30, wdbc 39, breast_w 52, tabular 125. The arithmetic is right;
+its wording is R3-2.
+
+## Findings
+
+**R3-1. MINOR — "35 / 33 distinct outcomes" is a correct count of triples, but it is not the count that fits either
+row.** Report §2 caveat; `census.py` (`trial1.n_distinct_outcomes`).
+- **Campaigns.** Per node there are exactly 40 distinct campaigns: distinct (instance, action sequence). The 10 rep-1
+  roots differ from rep 0 in all 10 cases.
+- **Trial-1 outcomes.** There are only 30: one per instance, because the rep-1 roots share trial 1 with rep 0.
+- **The triples.** The 35 / 33 (start, after-trial-1, terminal) triples fall between the two: some rep-1 campaigns
+  end at the same terminal value by a different path.
+- **Medians over distinct units.**
+  - Drop: −41.2 / −62.8 σ_node over the 30 distinct trial-1 outcomes. Unchanged.
+  - Net gain: +1.69 / +0.67 σ_node over the 40 distinct campaigns. Tabular moves from 0.81 to 0.67.
+
+*Fix:* write "30 distinct trial-1 outcomes and 40 distinct campaigns per node", and qualify "medians are unaffected"
+for tabular's net gain.
+
+**R3-2. MINOR — The "factor 8–125" sentence is driven by near-inert edits, and the attribution fits only the OpenML
+nodes.** Report §3.2, note "Edit-dependent noise".
+- **The ratios.** The large values come from edits that barely change the model, so their paired sd is about 0:
+  - tabular `ALPHA`: `sd_joint` 5e-5, |Δ_J| ≈ 0;
+  - `class_weight` on wdbc, sonar and breast_w: |Δ_J| ≤ 0.01 σ_d.
+- **The attribution.** "Small C and class_weight low, model_type high" holds on the OpenML nodes other than climate.
+  - On tabular, the low end is `ALPHA` and the high end `HIDDEN_UNITS`.
+  - On climate, the C edits (≈ 1 σ_d) are the low end and `class_weight` (3.7) is in the middle.
+
+*Fix:* drop the ratio, or say the low end is near-inert edits. Keep the σ_d range column, which carries the
+information. Restrict the attribution to the OpenML nodes.
+
+**R3-3. MINOR (optional) — The §4.4 "inside the noise" claim holds, but its basis should be shown.**
+- **Supporting evidence.**
+  - I classified kept edits on climate, credit_approval, ionosphere and sonar by their `proposal_summary`. They are
+    almost all C changes: 20/22, 29/32, 24/25 and 33/33.
+  - C1's C-edit paired sd on these nodes is 0.97–1.0, 0.19–0.20, 0.33–0.38 and 0.26–0.29 σ_d.
+  - So the median kept increments are about 0.3–0.9 of the noise of the very edit class that was kept, not only of
+    the all-edit median.
+  - The LLM's C steps are often larger than C1's ×0.5 / ×2. If noise grows with step size, the margin is wider still.
+- **The inference.** "Acceptance there is often wrong" rests on C1's standard edits; there are no audits of sweep-1
+  keeps. Say so, as revision 0 did.
+
+*Fix:* cite this check in §4.4, and mark "often wrong" as inferred.
+
+**R3-4. MINOR — §5's unit statement and two hand conversions.**
+- **Header.** The §5 header says "one unit per row: σ_d, except the Track S comparison-noise share". But the OpenML
+  E2 shares are in the all-edit unit; in σ_d they would be 51–99 %.
+- **Hand conversions.** Two report numbers are not in `census_v1.json`. The JSON holds tabular's S1.1 interactions
+  as 1.393, −1.4 and 2.573 σ_node, and its net gain as 0.813 σ_node. The report's σ_d values are correct conversions
+  of these.
+- **Leftover wording.** The §2 bullet still says "net gain … about 1–2 σ_node", but tabular's is 0.8 (or 0.67 over
+  distinct campaigns).
+
+*Fix:* correct the header, emit the σ_d values in the JSON or footnote the conversion, and fix the §2 bullet.
+
+## Verdict
+
+No BLOCKING or MAJOR findings remain. R2-1 to R2-5 are resolved, and every changed number matches the JSON and my
+own recomputation. R3-1 to R3-4 are wording and count refinements that the executor can fix without another review
+round.
+
+Verdict: ACCEPT

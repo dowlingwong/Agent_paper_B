@@ -10,6 +10,7 @@
   - stakes.
 
   The conclusions below changed accordingly. §4 replaces the round-1 reading.
+- **Revision 3:** round 3 ACCEPTED; its four minor findings (distinct-campaign counts, edit-noise wording, per-edit-class keeps, unit labels) are fixed in place.
 - **Revision 2:** round 2 found that the C1 "paired sd" of revision 1 applied the pairing twice (C1's `sd_joint` already is the sd of a paired difference). Every paired-unit number and the E1 and E2 readings for the OpenML nodes were redone (§3.2, §4.3, §4.4, §5).
 
 ## 1. Inputs
@@ -44,18 +45,18 @@ Every campaign executes and keeps trial 1 unconditionally, because there is no i
 
 | | digits_mlp | tabular_mlp | OpenML nodes |
 |---|---|---|---|
-| Track S: audited y_after_trial1 − y_start | median −41 σ (−47 … −35); 60 campaigns listed, 35 distinct outcomes | −63 σ (−84 … −44); 60 listed, 33 distinct | — |
-| Track S: audited y_terminal − y_start | median +1.7 σ | +0.8 σ | — |
+| Track S: audited y_after_trial1 − y_start (over 30 distinct trial-1 outcomes) | median −41 σ (−47 … −35) | −63 σ (−84 … −44) | — |
+| Track S: audited y_terminal − y_start (over 40 distinct campaigns) | median +1.7 σ | +0.7 σ | — |
 | Sweep 1: trial-1 metric − C1 default metric | median −9.9 σ_d | −11.9 σ_d | −1.4 … +2.4 σ_d |
 | Sweep 1: the start configuration's own seed sd | 1.5 σ_d | 3.4 σ_d | 0.55 … 7.3 σ_d (climate 7.3) |
 | Sweep 1: recorded gain after trial 1 | median 13.5 σ_d | 9.4 σ_d | 0 |
 
 **Caveats on the table:**
-- **Independence.** The 20 S0.5 static roots per node repeat the a2u roots' actions and terminal values (S0.5 summary §4). So at most 40 campaigns per node are distinct, and the census counts 35 and 33 distinct (start, after-trial-1, terminal) outcomes. The medians are unaffected.
+- **Independence.** Each node has 60 root rows. The 20 S0.5 static rep-0 roots repeat the a2u roots' actions and terminal values (S0.5 summary §4), so 40 campaigns are distinct. Rep 1 shares trial 1 with rep 0, so there are 30 distinct trial-1 outcomes, one per instance. The medians above are over these distinct sets. Counting all 60 rows gives the same drop medians, but tabular's net gain would read 0.8 σ instead of 0.7 σ.
 - **Seeds.** The sweep row compares the trial-1 metric at instance seeds with the C1 default at the C1 seed. Measured against the start configuration's own seed sd, the digits and tabular drops are still clear. The OpenML row is within seed variation and shows no trial-1 effect either way.
 
 **What this means:**
-- On digits and tabular, the gains recorded after trial 1 are mostly recovery from a bad first edit. The net gain over the start configuration is about 1–2 σ_node.
+- On digits and tabular, the gains recorded after trial 1 are mostly recovery from a bad first edit. The net gain over the start configuration is 1.7 σ_node on digits and 0.7 σ_node on tabular.
 - **The keep-quality numbers below (§3) are conditional on this artefact.** The large, easy recovery increments make keep decisions look reliable.
 - Paper B lists the trial-1 unconditional keep as an open item.
 - A guarded first acceptance (compare trial 1 with the start configuration) is a channel candidate in its own right, and a confound for any digits/tabular comparison.
@@ -104,7 +105,7 @@ Every campaign executes and keeps trial 1 unconditionally, because there is no i
 
 **Notes on the table:**
 - **Misspecified** means the assumed noise sd is at least the observed increment sd, so a node-level forecaster has no prior variance to work with. No value is reported in that case.
-- **Edit-dependent noise.** The noise of one paired comparison varies across a node's five standard edits by a factor of 2 on digits and 8–125 on the other nodes (range column). The review attributes the low end to small `C` and `class_weight` edits and the high end to `model_type` edits. One node-level unit therefore brackets the noise rather than measuring it, and the increments are a zero-inflated mixture.
+- **Edit-dependent noise.** The noise of one paired comparison varies widely across a node's five standard edits (range column). The low end comes from edits that barely change the model, so their paired noise is near zero (tabular `ALPHA`; `class_weight` on wdbc, sonar and breast_w). On the OpenML nodes other than climate, the review places the high end at `model_type` edits. One node-level unit therefore brackets the noise rather than measuring it, and the increments are a zero-inflated mixture.
 - **Robust sd.** It is degenerate (MAD = 0) on the nodes with more than 50 % exact zeros.
 - **Failure categories.** `invalid_config` on the OpenML nodes; `proposal_precondition_failed` on digits, tabular and wdbc (4).
 
@@ -140,7 +141,7 @@ Every campaign executes and keeps trial 1 unconditionally, because there is no i
 1. **Stakes.**
    - **OpenML nodes other than climate:** small. Kept increments are a median 0.08–0.18 σ_d; C1's decision regret is 0.006–0.05 σ_d; E1b's naive oracle headroom on ionosphere is at most 0.02 σ_d (on digits 0.16 σ_d). Under memory `none`, 89–100 % of OpenML campaigns keep nothing after trial 1.
    - **openml_climate:** kept increments 0.88 σ_d, but 21 % failed_invalid and the noisiest edits (up to 14.5 σ_d).
-   - **digits/tabular:** confounded. The net audited gain over the start (1.7 and 0.8 σ_node) comes from campaigns that spent their budget recovering from trial 1. It is a lower bound for a guarded loop, not a stakes measurement.
+   - **digits/tabular:** confounded. The net audited gain over the start (1.7 and 0.7 σ_node) comes from campaigns that spent their budget recovering from trial 1. It is a lower bound for a guarded loop, not a stakes measurement.
 2. **The largest observable effects are loop-design artefacts, not sequential control:**
    - the unconditional trial-1 keep: a drop of 35–84 σ_node, then recovery;
    - duplicate proposals: 80–85 % under `none`, 33–55 % under `append_only_summary`.
@@ -160,9 +161,11 @@ Every campaign executes and keeps trial 1 unconditionally, because there is no i
      - In comparison-noise units, 20–25 % of keep decisions are near the margin.
    - **OpenML:**
      - 58–83 % of comparisons lie within ±0.5 of the all-edit paired noise, and single-seed sign flips are 20–60 % on C1's standard edits.
-     - On climate, ionosphere, credit_approval and sonar, the median kept increment is 0.24–0.62 of the all-edit paired noise, i.e. **inside the noise**. On wdbc (1.2) and breast_w (3.5) it is above that median, but those nodes have 71–74 % exact zeros and edit-dependent noise.
+     - On climate, ionosphere, credit_approval and sonar, the median kept increment is 0.24–0.62 of the all-edit paired noise, i.e. **inside the noise**.
+     - The review checked this per edit class. On those four nodes, almost all kept edits change `C` (20/22, 29/32, 24/25, 33/33), and the median kept increment is about 0.3–0.9 of C1's noise for `C` edits. The census does not recompute this split.
+     - On wdbc (1.2) and breast_w (3.5), the median kept increment is above the all-edit noise, but those nodes have 71–74 % exact zeros and edit-dependent noise.
      - Revision 1's withdrawal of "keeps inside the noise" is reversed for those four nodes.
-     - The stakes reading stands: each keep is worth about 0.1 σ_d, and campaigns rarely keep anything. Acceptance there is often wrong, but cheap to get wrong.
+     - The stakes reading stands: each keep is worth about 0.1 σ_d, and campaigns rarely keep anything. Acceptance there is often wrong, but cheap to get wrong. "Often wrong" is inferred from C1's standard edits; sweep-1 keeps were never audited (§6.2a).
 5. **Incumbent interaction.**
    - On digits and tabular, the S1.1 factorials find 2×2 interactions among standard edits of 0.5–1.4 σ_d (digits 0.86, −0.54, 1.24 σ_d; tabular 0.74, −0.75, 1.37 σ_d). All CIs exclude 0, and the sizes are comparable to main effects.
    - This shows that the mechanism exists at main-effect scale. Its value to a controller over a campaign is unmeasured.
@@ -170,13 +173,13 @@ Every campaign executes and keeps trial 1 unconditionally, because there is no i
 6. **Budget.** It binds at W ≤ 12 on the Track S nodes. Its shadow price is undefined while proposals are indistinguishable. Budget is a price for verify, not a channel by itself.
 7. **Selection caveat.** The OpenML nodes entered Paper B's pool through D21's "P(wrong) ≥ 0.10" rule, so the noisy-regime finding is partly true by construction.
 
-## 5. Placement on the headroom map (one unit per row: σ_d, except the Track S comparison-noise share)
+## 5. Placement on the headroom map (stakes and interactions in σ_d; E2 shares in Track S comparison noise for digits/tabular, in all-edit paired noise for OpenML)
 
 | Node | E1: price / V\* | E2: near-margin share | Stakes: kept increment, median | Interaction (S1.1) | Main caveat |
 |---|---|---|---|---|---|
-| digits_mlp | 0.02–0.04 (inert) | 20 % (Track S comparison noise) | 2.1 σ_d; net campaign gain ≈ 1.7 σ_d | exists, 0.5–1.2 σ_d | trial-1 artefact; keep quality disputed (Track S vs C3 pilot) |
-| tabular_mlp | 0.02–0.04 (inert) | 25 % (Track S comparison noise) | 1.9 σ_d; net ≈ 0.4 σ_d | exists, 0.7–1.4 σ_d | same |
-| openml_ionosphere | not determinable (misspecified in both units) | 61 % (all-edit) | 0.11 σ_d (0.29 of all-edit noise) | not measured | low stakes; 24 % invalid |
+| digits_mlp | 0.02–0.04 (inert) | 20 % (Track S comparison noise) | 2.1 σ_d; net campaign gain 1.7 σ_d | exists, 0.5–1.2 σ_d | trial-1 artefact; keep quality disputed (Track S vs C3 pilot) |
+| tabular_mlp | 0.02–0.04 (inert) | 25 % (Track S comparison noise) | 1.9 σ_d; net 0.36 σ_d | exists, 0.7–1.4 σ_d | same |
+| openml_ionosphere | not determinable (misspecified in both units) | 61 % | 0.11 σ_d (0.29 of all-edit noise) | not measured | low stakes; 24 % invalid |
 | openml_credit_approval | not determinable (misspecified in both units) | 58 % | 0.08 σ_d (0.38) | not measured | low stakes |
 | openml_sonar | not determinable (σ_d misspecified; all-edit 0.75) | 65 % | 0.18 σ_d (0.62) | not measured | low stakes; 53 % exact zeros |
 | openml_wdbc | not determinable (σ_d misspecified; all-edit 0.97) | 80 % | 0.11 σ_d (1.2) | not measured | 71 % exact zeros |
