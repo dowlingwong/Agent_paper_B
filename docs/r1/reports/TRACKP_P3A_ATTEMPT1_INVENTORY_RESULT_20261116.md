@@ -56,6 +56,24 @@ accepted for Unit A only; Unit B not authorized). No host write (only reads); no
 - **A6:** not implemented in `exam_run.py`; the author/coordinator disposition is still required (separate
   reviewed A6 unit, or recorded deferral with disclosure). No A6 work is started here.
 
+## 3b. M13 order/version record — COMPLETE (accepted)
+
+The independent M13 record is committed as `reviews/TRACKP_P3A_M13_ORDER_RECORD_20261116.md` (573 lines,
+sha256 `351611c55516ca2aa2134b1efa0ca9d43bbec9b880a047ad1485baf16c94bce1`, verdict accepted). It
+confirms: the exported pinned source is byte-identical to `b9ad6f8f` (11/11 blobs); all 39 run manifests
+record paper `b9ad6f8f`, harness `897d83c8`, one config sha, boot `2c9bb104…`, Kev `2074cc44`; the only
+two wrapper families that ran are PointerWrapper (Kev) and BinTokenWrapper (Qwen), both render
+**history-before-proposal** (state → proposal → question → options/bins; Qwen has no `<decide>` token);
+attempt 1 recorded **no** prompt/template version (0 of 168 JSON artifacts, 0 journal/lease lines) and its
+probes manifests have `model_files_sha256 {}`; `PROMPT_VERSION = "trackp_prompt/v1"` is not read by the
+wrappers. Attempt-2 mechanism specified: a per-unit `runner_manifest.json` (`trackp_p3a_unit_manifest/v1`)
+with a `template` block (version/order/readout/encoder/wrapper + composite `template_id`) and an
+`attempt1_provenance` block (root, journal/lease hashes, paper commit, loaded `final/saved` file hashes,
+derived order/version, `label: derived`), plus journal fields at campaign/start/complete/STOP; attempt-1
+results are retro-tagged by provenance, never re-labelled. A6 remains unimplemented; the record recommends
+recorded deferral + disclosure for attempt 2 and a separate reviewed A6 unit before any P.3b order change
+(author/coordinator decision, not decided here).
+
 ## 4. What remains for Unit A
 
 - An **independent reviewer** inspects this inventory (pinned source + Kev encoder + manifests) and writes
