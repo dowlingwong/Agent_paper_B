@@ -19,13 +19,18 @@ the cross-proposer tables of the manuscript or its appendix: R1-MAIN-PROPOSER (c
 > sweep nodes, run on one 4090 stack, and B2 for the pick only. Within B1 every candidate ran on the same stack, so
 > those comparisons isolate the proposer.
 >
-> Between the sweeps the contrast is proposer plus stack (R1-MAIN-PROPOSER (c)):
-> - deepthought TITAN X against NEMO2 L40S;
+> Between the sweeps the contrast is proposer plus stack (R1-MAIN-PROPOSER (c)). As planned for sweep 2, which is
+> not yet authorized:
+> - deepthought TITAN X (sm_52) against NEMO2 L40S (sm_89);
+> - the CPU host of the in-campaign worker runs;
 > - context 8,192 against 32,768;
-> - q8_0 KV cache, `--jinja` and the thinking switch;
-> - an explicit `cache_prompt: false`;
-> - harness `6adf385` against `a3fedbb`;
-> - the paper commit and the container image.
+> - the default KV cache against q8_0, plus `--jinja` and the thinking switch;
+> - `cache_prompt` at the default against an explicit `false`;
+> - harness `6adf385` against the planned `a3fedbb`;
+> - the paper commit and the container image (digest still proposed).
+>
+> The pick was selected on a direct llama-server on a 4090 and will run in an HTCondor container on an L40S
+> (R1-SWEEP-HOST-HTC).
 >
 > The pick was selected on the B1/B2 data, so these comparisons carry a winner's-curse caveat and say nothing about
 > proposer strength. The exam's instance and audit seeds (9001+, 9101+, 9201+) are disjoint from the sweeps' instance
@@ -67,13 +72,16 @@ the cross-proposer tables of the manuscript or its appendix: R1-MAIN-PROPOSER (c
 > 以下数值来自选拔考试，而不是 sweep 本身：B1 的 thinking-off root，在八个 sweep 节点中的三个上，同一套 4090 环境；B2 只有
 > pick。B1 内所有候选在同一环境下运行，因此 B1 内的比较只反映 proposer。
 >
-> 两次 sweep 之间的对比是 proposer 加环境（R1-MAIN-PROPOSER (c)）：
-> - deepthought TITAN X 对 NEMO2 L40S；
+> 两次 sweep 之间的对比是 proposer 加环境（R1-MAIN-PROPOSER (c)）。以下是 sweep 2 的计划值，sweep 2 尚未授权：
+> - deepthought TITAN X（sm_52）对 NEMO2 L40S（sm_89）；
+> - 运行 campaign 内 worker 的 CPU 主机；
 > - context 8,192 对 32,768；
-> - q8_0 KV、`--jinja` 与 thinking 开关；
-> - 显式 `cache_prompt: false`；
-> - harness `6adf385` 对 `a3fedbb`；
-> - paper commit 与容器镜像。
+> - 默认 KV cache 对 q8_0，以及 `--jinja` 与 thinking 开关；
+> - 默认 `cache_prompt` 对显式 `false`；
+> - harness `6adf385` 对计划的 `a3fedbb`；
+> - paper commit 与容器镜像（digest 仍为提议）。
+>
+> pick 是在 4090 上用直接运行的 llama-server 选出的，将在 L40S 上的 HTCondor 容器中运行（R1-SWEEP-HOST-HTC）。
 >
 > pick 是在 B1/B2 数据上选出的，以下比较带有赢家诅咒的保留，不说明 proposer 强弱。考试的实例与审计种子（9001+、9101+、9201+）
 > 与 sweep 的实例种子及审计种子（7001–7010）不相交（R1-MAIN-PROPOSER (i)）。
