@@ -281,11 +281,13 @@ def sim_table(seed, dist='normal', mu=1.0, g=(0.3, 0.0), t1_per_suite=(4, 3, 3),
     return table(*rows)
 
 
-@pytest.mark.parametrize('seed,dist,mu', [(1, 'normal', 1.0), (3, 'left_skewed', 1.0), (3, 't3', 1.5),
-                                          (4, 'left_skewed', 0.5), (2, 'normal', 2.0), (1, 't3', 0.5),
-                                          (6, 'left_skewed', 0.5)])
-def test_b2_bound_equals_the_simulation_code(confirmed, seed, dist, mu):
-    t = sim_table(seed, dist, mu)
+@pytest.mark.parametrize('seed,dist,mu,g', [(1, 'normal', 1.0, (0.3, 0.0)), (3, 'left_skewed', 1.0, (0.3, 0.0)),
+                                            (3, 't3', 1.5, (0.3, 0.0)), (4, 'left_skewed', 0.5, (0.3, 0.0)),
+                                            (2, 'normal', 2.0, (0.3, 0.0)), (1, 't3', 0.5, (0.3, 0.0)),
+                                            (6, 'left_skewed', 0.5, (0.3, 0.0)),
+                                            (21, 'normal', 6.0, (0.8, 0.5)), (22, 'normal', 6.0, (0.8, 0.5))])
+def test_b2_bound_equals_the_simulation_code(confirmed, seed, dist, mu, g):
+    t = sim_table(seed, dist, mu, g)
     nodes = gate._validate(t)
     eligible, _, summary = gate._point(nodes)
     boot, _ = gate._bootstrap(nodes, eligible, summary)
@@ -299,6 +301,9 @@ def test_b2_bound_equals_the_simulation_code(confirmed, seed, dist, mu):
             np.testing.assert_allclose(tstar, tstar_ref, rtol=1e-9, atol=1e-9)
             assert got == pytest.approx(want, rel=1e-9, abs=1e-9)
             assert (got > 0) == (want > 0)
+            if seed in (21, 22):
+                # high-signal tables: a positive bound not dominated by the 1e12 sentinel
+                assert 0 < got < boot[arm]['theta'] and boot[arm]['infinite_tstar'] == 0
 
 
 def test_point_se_matches_the_declared_formula(confirmed):
@@ -703,8 +708,23 @@ def test_counts_and_design_size_are_reported_not_enforced(confirmed):
     assert r['off_design_size'][T0[0]] == {'n_total': 15, 'design': 18}
     assert r['off_design_size']['mlgym_t1'] == {'n_total': 15, 'design': 12}
     sim = gate.evaluate(sim_table(12))
-    assert sim['off_design_size'] == {}
+    assert sim['off_design_size'] == {} and sim['off_split'] == {}
+    assert r['off_split'] == {}                       # off-size nodes are listed under off_design_size only
     assert r['protocol']['split'] == gate.SPLIT and r['protocol']['design_instances'] == {'T0': 18, 'T1': 12}
+    assert gate.DESIGN_SPLIT == {'T0': (6, 3, 9), 'T1': (4, 2, 6)}
+
+
+def test_a_p2_split_labelled_p3_is_reported_as_off_split(confirmed):
+    t = sim_table(12)
+    tt = next(n for n in t['nodes'] if n['tier'] == 'T1')
+    # move two test instances (6 -> 4) to train (4 -> 6): the P2 counts 6 : 2 : 4 at the design size 12
+    for k in ('instance_ids', 'A2', 'oracle'):
+        tt['train'][k] = tt['train'][k] + tt['test'][k][:2]
+    for k in ('instance_ids', *gate.SERIES):
+        tt['test'][k] = tt['test'][k][2:]
+    r = gate.evaluate(t)
+    assert r['off_split'] == {tt['node']: {'counts': [6, 2, 4], 'p3': [4, 2, 6]}}
+    assert r['off_design_size'] == {}
 
 
 # ------------------------------------------------------- layout STOPs

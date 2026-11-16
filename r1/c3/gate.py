@@ -59,8 +59,9 @@ Node layout (pinned here, so the gate SHA binds it):
 Split (V3-A item 3): the caller supplies each node's train, dev and test instances under the split P3 = 1/3 : 1/6 :
 1/2 per tier, fixed in the analysis preregistration. The input must declare ``"split"`` exactly as ``SPLIT``, and a
 node's three instance-id lists must be pairwise disjoint. The gate reports each node's counts and its total against
-the design size (T0 18, T1 12 instances per node; R1-BX-D8-V3-B fixes T1 at 12). It does not STOP on counts: a
-short node is handled by the test floor.
+the design size (T0 18, T1 12 instances per node; R1-BX-D8-V3-B fixes T1 at 12), and lists under ``off_split`` every
+node at the design size whose train : dev : test counts are not exactly P3 (T0 6 : 3 : 9, T1 4 : 2 : 6). It does not
+STOP on counts: a short node is handled by the test floor.
 
 Implementation conventions that the PLAN rows do not fix (preregistration candidates; see
 docs/r1/reports/M11_D8_GATE_V3_20261116.md):
@@ -76,7 +77,8 @@ docs/r1/reports/M11_D8_GATE_V3_20261116.md):
   (1 - L) of screened resamples drives the bound far below 0, as +inf would; only when se_hat(IQM) is of order 1e-12
   of the bound (e.g. rounding noise on constant data) does the sentinel differ from a literal +inf;
 * ties in G: nodes are put in ascending G order with a stable sort over sorted node ids, so tied nodes keep node-id
-  order when the weights are paired with their se (the simulation's ``np.argsort`` default);
+  order when the weights are paired with their se. The simulation used NumPy's default ``np.argsort``, which is not
+  stable on every platform, so with exactly tied G its se can differ from the gate's; without ties the two agree;
 * arm ranking for Holm: an arm that passes at the first level (97.5%) ranks before one that does not; then ascending
   composite tail share max(P*(t* >= IQM_hat / se_hat), P*(PoI* <= 0.5)) (for se_hat = 0 the first term is 0 if
   IQM_hat > 0 and 1 otherwise); then the fixed order A3, A5. The first key is the pass test itself, so the verdict
@@ -117,6 +119,8 @@ ELIG_Z_MIN = 3.0                # V3-A item 2: paired z of oracle - A2 on train 
 TEST_FLOOR = {'T0': 9, 'T1': 3}         # V3-B item 5: test instances per node, per tier
 SPLIT = {'name': 'P3', 'train': '1/3', 'dev': '1/6', 'test': '1/2'}   # V3-A item 3 (caller supplies it)
 DESIGN_INSTANCES = {'T0': 18, 'T1': 12}  # reported only; V3-B fixes T1 at 12 per node
+# P3 counts at the design size (exact: 18 and 12 are divisible by 6); reported only, as ``off_split``.
+DESIGN_SPLIT = {t: tuple(n * num // den for num, den in ((1, 3), (1, 6), (1, 2))) for t, n in DESIGN_INSTANCES.items()}
 INTERVAL = 'studentized node-stratified bootstrap (b2), delta-method se'   # V3-B item 4
 TSTAR_INF = 1e12                # the value standing for t* = +inf, as in d8_skew_sim.py (BIG)
 N_RESAMPLES = 2000
@@ -581,6 +585,10 @@ def _evaluate(gate_input):
         'below_test_floor': [k for k in nodes if 'test_floor' in nodes[k]['ineligible_reasons']],
         'off_design_size': {k: {'n_total': nodes[k]['n_total'], 'design': DESIGN_INSTANCES[nodes[k]['tier']]}
                             for k in nodes if nodes[k]['n_total'] != DESIGN_INSTANCES[nodes[k]['tier']]},
+        'off_split': {k: {'counts': [nodes[k]['n_train'], nodes[k]['n_dev'], nodes[k]['n_test']],
+                          'p3': list(DESIGN_SPLIT[nodes[k]['tier']])}
+                      for k in nodes if nodes[k]['n_total'] == DESIGN_INSTANCES[nodes[k]['tier']]
+                      and (nodes[k]['n_train'], nodes[k]['n_dev'], nodes[k]['n_test']) != DESIGN_SPLIT[nodes[k]['tier']]},
         't1_suites_without_labelled_node': [s for s in SUITES if not any(
             n['tier'] == 'T1' and n['suite'] == s for n in nodes.values())],
         'node_counts': {'total': len(nodes),
@@ -594,6 +602,7 @@ def _evaluate(gate_input):
                      'environment': ENVIRONMENT, 'elig_z_min': ELIG_Z_MIN,
                      'test_floor': dict(TEST_FLOOR), 'split': dict(SPLIT),
                      'design_instances': dict(DESIGN_INSTANCES),
+                     'design_split': {t: list(v) for t, v in DESIGN_SPLIT.items()},
                      'quantile_method': QUANTILE_METHOD, 'tstar_inf': TSTAR_INF,
                      't0_nodes': list(T0_NODES), 'suites': list(SUITES),
                      'family_alpha': FAMILY_ALPHA, 'levels': list(LEVELS),
