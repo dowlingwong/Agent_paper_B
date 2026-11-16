@@ -1225,6 +1225,7 @@ def run_liveness_job(spec_path: Path) -> dict:
         argv = liveness_argv(s)
         env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()),
                    AR_HARNESS_ROOT=str(harness_dir.resolve()),
+                   PATH="/opt/r1/envs/harness/bin:" + os.environ.get("PATH", ""),
                    LLAMACPP_BASE_URL=server["base_url"], OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
                    MKL_NUM_THREADS="1", PYTHONDONTWRITEBYTECODE="1")
         env.pop("LLAMACPP_CACHE_PROMPT", None)
