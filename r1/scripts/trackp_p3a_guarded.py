@@ -43,7 +43,7 @@ PAPER_CHILD_SCRIPT = "r1/scripts/trackp.py"
 CODE_UNITS_RECORD = "docs/r1/reports/TRACKP_P3A_CODE_UNITS_20261116.md"
 # MAJOR-2: the paper HEAD must be exactly the reviewed probes-only runner commit, its docs-only child (r1/ tree
 # identical), or the mechanical delivery-pin child that writes only EXPECTED_PAPER_HEAD + CODE_UNITS_RECORD.
-EXPECTED_PAPER_HEAD = "7ae4d2ea5f55772a5f64507a4af5f042d5b0b061"          # reviewed probes-only runner commit
+EXPECTED_PAPER_HEAD = "7c9e8b0829450a70c462f2513873a56abcb8efdf"          # reviewed probes-only runner commit
 EXPECTED_PAPER_HEAD_DOCS_CHILD = "8a3d3eaf048c7dd0a109719175dace72333bbd04"  # docs-only child, r1/ unchanged
 EXPECTED_PAPER_BRANCH = "trackp-p3a-code-20261116"        # or a detached HEAD at the pinned commit ("HEAD")
 EXECUTING_RUNNER = Path(__file__).resolve()               # the runner actually executing (its sha256 is recorded)
