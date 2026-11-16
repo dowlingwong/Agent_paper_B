@@ -263,3 +263,14 @@ def test_job_entry_precreates_the_transferred_outputs():
     for name in ("out", "work", "job_record.json", "SHA256SUMS", "llama-server.log"):
         assert name in text
     assert "--scratch" not in text  # the rewritten lib takes a spec only
+
+
+def test_empty_placeholder_job_record_is_a_fresh_run(tmp_path):
+    out = tmp_path / "out"; out.mkdir()
+    rec = tmp_path / "job_record.json"; rec.write_text("")
+    assert lib._resume_state(out, rec) is False
+    rec.write_text(json.dumps({"schema": "s2_c2_job_record/1"}))
+    assert lib._resume_state(out, rec) is True
+    rec.write_text("not json")
+    with pytest.raises(lib.Stop, match="unreadable"):
+        lib._resume_state(out, rec)

@@ -437,15 +437,29 @@ def _check_resume_record(spec: dict, record_path: Path, label: str) -> None:
             raise Stop(f"STOP: resume pin mismatch for {key}: {old.get(key)!r} != {new!r}")
 
 
+def _resume_state(out: Path, record_path: Path) -> bool:
+    """A collector manifest means resume; a valid non-empty job record means resume; an empty placeholder
+    (pre-created by the job entry) is a fresh run; a corrupt record is a STOP."""
+    if (out / "manifest.json").is_file():
+        return True
+    if not record_path.is_file() or record_path.stat().st_size == 0:
+        return False
+    try:
+        old = json.loads(record_path.read_text())
+    except json.JSONDecodeError:
+        raise Stop("STOP: existing job_record.json is unreadable; preserve the attempt (no overwrite)") from None
+    if not isinstance(old, dict) or old.get("schema") != "s2_c2_job_record/1":
+        raise Stop("STOP: existing job_record.json is not an S2-C2 record; preserve the attempt")
+    return True
+
+
 def run_job(spec_path: Path) -> dict:
     spec = validate_spec(load_spec(spec_path))
     label = spec["label"]; s = spec["spec"]
     out, work = Path("out"), Path("work")
     record_path = Path("job_record.json")
-    resume = (out / "manifest.json").is_file() or record_path.is_file()
+    resume = _resume_state(out, record_path)
     if resume:
-        if not record_path.is_file():
-            raise Stop("STOP: resume without job_record.json; keep the previous attempt")
         _check_resume_record(s, record_path, label)
     record = {"schema": "s2_c2_job_record/1", "run_id": spec["run_id"], "chunk_id": s["chunk_id"], "label": label,
               "resume": resume, "label_rule": "authorization note only; index labels refused",
