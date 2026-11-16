@@ -47,7 +47,7 @@ CODE_UNITS_RECORD = "docs/r1/reports/TRACKP_P3A_CODE_UNITS_20261116.md"
 # accepts exactly: C; a docs-only child of C whose ``r1/`` tree is byte-identical; and D, byte-for-byte C's runner
 # blob with that one canonical assignment substituted (D^ == C, single parent, no other ``r1/`` change; docs files
 # outside ``r1/`` may change). Nothing else is accepted, including any arbitrary descendant.
-EXPECTED_PAPER_HEAD = "7c9e8b0829450a70c462f2513873a56abcb8efdf"          # reviewed probes-only runner commit
+EXPECTED_PAPER_HEAD = "5b7ad0cb7fedd083bad457968dc3dd3e920ac154"          # reviewed probes-only runner commit
 EXPECTED_PAPER_BRANCH = "trackp-p3a-code-20261116"        # or a detached HEAD at the pinned commit ("HEAD")
 EXECUTING_RUNNER = Path(__file__).resolve()               # the runner actually executing (its sha256 is recorded)
 PIN_LINE_TEMPLATE = 'EXPECTED_PAPER_HEAD = "{}"          # reviewed probes-only runner commit'
