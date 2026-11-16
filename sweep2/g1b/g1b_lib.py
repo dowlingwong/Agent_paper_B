@@ -934,11 +934,12 @@ def summarise(run_dir: Path, plan: dict, paper_dir: Path | None = None) -> dict:
             raise Stop(f"STOP: D21 rule drift on node {node}: pinned report says "
                        f"{info.get('proposal', {}).get('qualifies_D21')}, the declared rule says "
                        f"{ours['qualifies_D21']}")
-        verdicts[node] = dict(ours, split_policy=info.get("proposal", {}).get("split_policy"),
+        verdicts[node] = dict(ours, e1_report_proposed_split=info.get("proposal", {}).get("split_policy"),
                               n_edits=info.get("summary", {}).get("n_edits"),
                               n_resolved=info.get("summary", {}).get("n_resolved"),
                               median_wall_seconds=info.get("median_wall_seconds"))
     summary = {"schema": "g1b_summary/1", "label": ENGINEERING_ONLY, "run_dir": str(run_dir),
+               "run_id": None, "split_policy": SPLIT_POLICY,
                "rule": d21_qualify([], 0.0, seeds)["rule"], "determinism": det, "verdicts": verdicts,
                "screening_funnel": {"measured": len(nodes),
                                     "qualified": sum(1 for v in verdicts.values() if v["qualifies_D21"]),
