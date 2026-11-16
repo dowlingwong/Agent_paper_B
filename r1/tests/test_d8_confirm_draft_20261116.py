@@ -34,9 +34,10 @@ def test_path_b_template_is_accepted_once_filled():
     commit = 'a' * 40
     row = template.replace('<commit>', commit).replace('<sha256 of gate.py>', sha)
     assert g._confirmation_commit(PLAN_HEAD + row + '\n', sha) == commit
-    # The filled template differs from path A only in the two values.
+    # The filled template differs from path A only in the two values (gate v3 changed the SHA, so both differ).
     path_a = _rows(DRAFT)[0]
-    assert re.sub(r'@ `[0-9a-f]{40}`', f'@ `{commit}`', path_a) == row
+    path_a_filled = re.sub(r'sha256 `[0-9a-f]{64}`', f'sha256 `{sha}`', re.sub(r'@ `[0-9a-f]{40}`', f'@ `{commit}`', path_a))
+    assert path_a_filled == row
 
 
 def test_template_with_placeholders_is_refused():
@@ -51,10 +52,10 @@ def _fenced_blocks(text):
 
 def test_fences_are_what_keep_the_draft_rows_inert():
     text = DRAFT.read_text(encoding='utf-8')
-    sha = hashlib.sha256(GATE.read_bytes()).hexdigest()
     blocks = [b for b in _fenced_blocks(text) if b.startswith('| R1-BX-D8-CONFIRM | ')]
     assert len(blocks) == 2
     path_a = blocks[0]
+    sha = re.search(r'sha256 `([0-9a-f]{64})`', path_a).group(1)      # path A's own (gate v2) SHA
     commit = re.search(r'@ `([0-9a-f]{40})`', path_a).group(1)
     # Fenced exactly as in the draft, directly under a valid author table header: refused.
     assert g._confirmation_commit(PLAN_HEAD + '```\n' + path_a + '\n```\n', sha) is None
