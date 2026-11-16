@@ -1198,7 +1198,7 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 
 | ID | Decision |
 |---|---|
-| R1-SWEEP-HOST-HTC | **从 sweep 2 起，所有 C3 label sweep（T0 sweep 2、其 B.2 审计、以后的 T1 sweep）都以 HTCondor job 运行。带 LLM 的 label run 只在 NEMO2 L40S 上跑（job requirements 固定 GPU 型号与 CPU 型号）；纯 CPU 审计在一种固定的 HTCondor CPU 节点类型上跑；一张表只用一种主机。修订 R1-SWEEP-HOST（deepthought 为主）与 R1-MAIN-PROPOSER (c) 的主机描述（4090 → L40S）。sweep 1 保持冻结不重跑。选拔主机（4090）与部署主机（L40S）不同，如实披露，并要求 EVIDENCE 前通过 L40S 部署检查。** 作者于 16 Nov 00:26 在 chat 中选定方案 B（L40S）并要求所有 sweep 走 job submission，01:40 确认本行。工作计划（非决定）：`prompts/SWEEP2_HTCONDOR_RUNBOOK_20261116.md`（`docs/runbooks-16nov` @ `a2789ea6`）。本行不授权 sweep 2 启动：EVIDENCE 仍需作者提交的授权文件 `authorizations/c3_sweep2_<date>.md`，且 R1-BX-D8 的分析锁不变。 |
+| R1-SWEEP-HOST-HTC | **从 sweep 2 起，所有 C3 label sweep（T0 sweep 2、其 B.2 审计、以后的 T1 sweep）都以 HTCondor job 运行。带 LLM 的 label run 只在 NEMO2 L40S 上跑（job requirements 固定 GPU 型号与 CPU 型号）；纯 CPU 审计在一种固定的 HTCondor CPU 节点类型上跑；一张表只用一种主机。修订 R1-SWEEP-HOST（deepthought 为主）与 R1-MAIN-PROPOSER (c) 的主机描述（4090 → L40S）。sweep 1 保持冻结不重跑。选拔主机（4090）与部署主机（L40S）不同，如实披露，并要求 EVIDENCE 前通过 L40S 部署检查。** 作者于 16 Nov 00:26 在 chat 中选定方案 B（L40S）并要求所有 sweep 走 job submission，01:40 确认、01:43 签署本行。工作计划（非决定）：`prompts/SWEEP2_HTCONDOR_RUNBOOK_20261116.md`（`docs/runbooks-16nov` @ `a2789ea6`）。本行不授权 sweep 2 启动：EVIDENCE 仍需作者提交的授权文件 `authorizations/c3_sweep2_<date>.md`，且 R1-BX-D8 的分析锁不变。 |
 
 ## 11. Relation to Paper A
 
