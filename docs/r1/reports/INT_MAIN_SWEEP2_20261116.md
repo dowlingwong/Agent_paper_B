@@ -19,7 +19,7 @@ merged with each other or with `main`.
 | Need (work plan §2 S2-M2, PLAN) | Source | In this branch via |
 |---|---|---|
 | R1-SWEEP1-CLASSIFY runner and audit classification fix (labels from the authorization, not the index) | `9bab3d6f` line (`c3_label_sweep.py`, `audit.py`), in mac-int; M3's EVIDENCE audit path | merge 1 (mac-int), merge 2 (M3) |
-| B.2 rules R1-SWEEP1-CLASSIFY / R1-B2-DECOUPLE: seed-block isolation, split label blocks, evidence plan | M3 `mac-m3-20261109` @ `ec6e30a9` (accepted, 2 rounds). Its five held `9bab3d6f` diffs were acknowledged by R1-B2-REPAIR-SCOPE-ACK (IT-2 review accepted) | merge 2 |
+| B.2 rules R1-SWEEP1-CLASSIFY / R1-B2-DECOUPLE: seed-block isolation, split label blocks, evidence plan (**sweep-1 code**: the sweep-2 binding and the runtime attestation are still missing, §4) | M3 `mac-m3-20261109` @ `ec6e30a9` (accepted, 2 rounds). Its five held `9bab3d6f` diffs were acknowledged by R1-B2-REPAIR-SCOPE-ACK (IT-2 review accepted) | merge 2 |
 | IT-1 (a): M3 dry run records `sweep_index.path` | `mac-m3-dryrun-path-20261114` @ `129317d1` (accepted) | merge 2 (it contains M3) |
 | R1-BX-D8 sealed readers and analysis lock (`refuse_sealed`, `guard_table`, `analysis_guard`), D8 gate v2 (`gate.py` @ `da264a40`, SHA `02fdbdd2…`) | mac-int line; `mac-m11-d8-v2-20261114` @ `e3c0921e` (accepted) | merges 1 and 3 |
 | `offline_eval` guard order (guard before `build.json` is read) | integration trial's accepted fix `d3ce0d52` (code part) | new commit `84471430` (files taken unchanged) |
