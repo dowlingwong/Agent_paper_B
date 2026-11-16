@@ -200,8 +200,8 @@ phase: c3_sweep2
     - disclosed in the sweep-2 report, with the reason and both directories.
   - **Walltime STOP.** A chunk that exceeds its walltime is a STOP, not a rerun.
   - **What a killed attempt leaves.** The job transfers its outputs only on exit (`when_to_transfer_output = ON_EXIT`
-    in `render_jdl.py`), so an evicted or over-walltime attempt returns no outputs. What is kept of it is the
-    submit-side HTCondor log, `out`, `err` and the job ad: `<item 2h>`.
+    in `render_jdl.py`), so an evicted or over-walltime attempt returns no outputs. Certain to be kept are the HTCondor
+    user log and the job ad (`condor_history`); `out` and `err` only if they are streamed: `<item 2h>`.
 - **Estimate.**
   - GPU-h = the number of chunks × the re-measured chunk time: `<GPU-h>`.
   - Wall: with s matching L40S slots free to this user, about ⌈chunks / s⌉ × the chunk time, plus queue waits:
@@ -236,9 +236,10 @@ phase: c3_sweep2
          `periodic_hold = NumJobStarts > 1`; `render_jdl.py` at `f172d299` sets no such policy) and rerun as a fresh
          submission into a new directory, with the old one moved aside and the rerun disclosed.
        - The wrapper's resume branch (`_resume_state`, `_check_resume_record`, `--resume`) is removed or turned into a
-         STOP: an existing manifest or job record in the job's directory means STOP, not resume.
-       - What is preserved from a killed or over-walltime attempt (the HTCondor log, `out`, `err`, the job ad), given
-         ON_EXIT transfer.
+         STOP: an existing `out/manifest.json` or a non-empty `job_record.json` means STOP, not resume (the job script
+         pre-creates an empty `job_record.json` at every start).
+       - What is preserved from a killed or over-walltime attempt (at least the user log and the job ad; `out` / `err`
+         only if streamed), given ON_EXIT transfer.
        - A job over its walltime is reported as a STOP. The collector deadline does not stop running roots, so the
          HTCondor walltime is the limit that applies.
        - The walltime factor in `s2_c4_pilot.py` changes from 1.3 to 1.5, and the spec's layout values are replaced
@@ -250,7 +251,8 @@ phase: c3_sweep2
    harness pin and server settings are the launch's (R1-SWEEP2-LAYOUT-AMEND).
    - The paper commit is `main` HEAD at launch, and committing anything to `main` after S2-C3b (this note included)
      changes it. So S2-C3b counts only if the launch runs at the commit S2-C3b ran at, for example with this note
-     committed before S2-C3b; otherwise liveness is run again at the launch commit:
+     committed before S2-C3b (it then cannot record S2-C3b's result itself, which goes into the launch record);
+     otherwise liveness is run again at the launch commit:
      `<author: launch at the S2-C3b commit | re-run liveness at the launch commit>`.
 4. **S2-C3 L40S deployment check** (R1-S2C3-DRIVER). Run with the declared-input, TASL-independent ENGINEERING replay
    driver, under the pre-declared criteria (`reports/sweep2_20261116/S2_C3_CRITERIA.md`). They include criterion 2,
