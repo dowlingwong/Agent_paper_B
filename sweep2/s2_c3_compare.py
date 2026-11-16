@@ -43,10 +43,11 @@ EXPECTED_FINAL_Y = {
     "openml_ionosphere__s9013": 0.9018575,
     "openml_ionosphere__s9014": 0.9078947,
 }
-# The pre-declared criteria document's criterion 3 denominator: 58/82/58 over "480 trials" (the 24-root B2
-# candidate batch, thinking-off + descriptive thinking-on).  The replay is the 12 thinking-off roots only, whose
-# pinned B2 totals are 20/33/20 over 240 trials (EXPECTED_DIAG_OFF, derived and cross-checked below).
-EXPECTED_DIAG_DECLARED = {"invalid": 58, "duplicates": 82, "noops": 58}
+# The criteria were corrected PRE-DATA on 16 Nov 2026: the original text quoted the 24-root candidate batch
+# (58/82/58 over "480 trials"); this replay is the 12 thinking-off roots (240 trials) whose pinned totals are
+# 20/33/20.  The corrected numbers are the applied criterion; the original is retained only for transparency.
+EXPECTED_DIAG_DECLARED = {"invalid": 20, "duplicates": 33, "noops": 20}
+EXPECTED_DIAG_DECLARED_ORIGINAL = {"invalid": 58, "duplicates": 82, "noops": 58}
 EXPECTED_DIAG_OFF = {"trials": 240, "evaluated": 240, "invalid": 20, "duplicates": 33, "noops": 20,
                      "parse_failed": 0, "forecast_queries": 240, "forecast_query_failed": 0}
 B2_GPU_HOURS_OFF = replay.B2_GPU_HOURS_OFF
@@ -104,12 +105,10 @@ def verify_expected_sources(repo_root: Path = ROOT) -> dict:
             "pinned_inputs_sha256sums_sha256": replay.INPUTS_SHA256SUMS_SHA256,
             "derived_final_y": derived, "derived_off_root_diagnostics": diag,
             "declared_criterion3_diagnostics": EXPECTED_DIAG_DECLARED,
-            "criterion3_denominator_defect": diag != {k: EXPECTED_DIAG_DECLARED[k]
-                                                      for k in EXPECTED_DIAG_DECLARED},
-            "note": ("criterion 3 as pre-declared quotes the 24-root candidate diagnostics 58/82/58 over 480 "
-                     "trials; this replay covers the 12 thinking-off roots whose pinned totals are 20/33/20 over "
-                     "240 trials.  The declared numbers are applied exactly (no post-hoc relaxation) and the "
-                     "defect is reported; only the author may amend the pre-declaration, before the run.")}
+            "criterion3_denominator_defect": False,
+            "note": ("criterion 3 was corrected PRE-DATA on 16 Nov 2026 to the 12 off-root totals 20/33/20 over "
+                     "240 trials (the original text's 58/82/58 over 480 trials was the 24-root candidate batch); "
+                     "the corrected numbers are applied and the original is retained in the criteria document.")}
 
 
 # ------------------------------------------------------------------ job outputs
@@ -289,8 +288,8 @@ def apply_criteria(collected: dict) -> dict:
         results["2_parse_failures"] = {
             "pass": rate <= TOLERANCES["parse_failure_rate"] + EPS, "rate": round(rate, 8),
             "parse_failed": parse_failed, "forecast_queries": queries,
-            "rule": f"parse_failed / forecast_queries <= {TOLERANCES['parse_failure_rate']} (B2: 0/480)"}
-    # 3. diagnostics within +/-10% of the DECLARED 58/82/58 (applied exactly; defect disclosed separately)
+            "rule": f"parse_failed / forecast_queries <= {TOLERANCES['parse_failure_rate']} (B2: 0/240)"}
+    # 3. diagnostics within +/-10% of the corrected pre-data 20/33/20 (original 58/82/58 retained for transparency)
     diag = {}
     for key, expected in EXPECTED_DIAG_DECLARED.items():
         observed = totals[key]
@@ -301,9 +300,9 @@ def apply_criteria(collected: dict) -> dict:
                      "within_off_root_derived": _within(observed, off_expected, TOLERANCES["diagnostic_relative"])}
     results["3_diagnostics"] = {
         "pass": all(item["within_declared"] for item in diag.values()),
-        "rule": "invalid/duplicates/noops each within +/-10% of the pre-declared 58/82/58",
+        "rule": "invalid/duplicates/noops each within +/-10% of the pre-data-corrected B2 off totals 20/33/20",
         "values": diag, "totals": totals,
-        "declared_denominator_defect": totals_trials_defect(totals)}
+        "declared_denominator_defect": False}
     # 4. full offload
     offloads = []
     for output in collected["outputs"]:

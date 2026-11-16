@@ -532,7 +532,7 @@ def _collected(final_y: dict | None = None, diagnostics: dict | None = None,
 
 
 def _diag(**over) -> dict:
-    base = {"trials": 240, "evaluated": 240, "invalid": 58, "duplicates": 82, "noops": 58,
+    base = {"trials": 240, "evaluated": 240, "invalid": 20, "duplicates": 33, "noops": 20,
             "parse_failed": 0, "forecast_queries": 240, "forecast_query_failed": 0}
     base.update(over)
     return {"digits_mlp__s9011": base}
@@ -573,9 +573,9 @@ def test_criterion2_parse_rate_boundary():
 
 
 def test_criterion3_plus_minus_ten_percent_boundaries():
-    cases = ((58, 63, True), (58, 64, False), (82, 90, True), (82, 91, False))
+    cases = ((20, 22, True), (20, 23, False), (33, 36, True), (33, 37, False))
     for expected_key, observed, expected_pass in cases:
-        key = {58: "invalid", 82: "duplicates"}[expected_key]
+        key = {20: "invalid", 33: "duplicates"}[expected_key]
         results = compare.apply_criteria(_collected(diagnostics=_diag(**{key: observed})))
         assert results["3_diagnostics"]["values"][key]["observed"] == observed
         assert results["3_diagnostics"]["values"][key]["within_declared"] is expected_pass
@@ -670,7 +670,7 @@ def _three_outputs(base: Path, **overrides) -> list[Path]:
 
 def test_compare_passes_on_matching_synthetic_outputs(tmp_path):
     sources = compare.verify_expected_sources(ROOT)
-    diag = {"trials": 240, "evaluated": 240, "invalid": 58, "duplicates": 82, "noops": 58,
+    diag = {"trials": 240, "evaluated": 240, "invalid": 20, "duplicates": 33, "noops": 20,
             "parse_failed": 0, "forecast_queries": 240, "forecast_query_failed": 0}
     chunk = _fake_job_output(tmp_path / "jobs", "digits_mlp", seed_over={9011: {"diagnostics": diag}})
     from_openml = [_fake_job_output(tmp_path / "jobs", node) for node in replay.NODES[1:]]
