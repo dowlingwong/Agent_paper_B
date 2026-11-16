@@ -316,3 +316,30 @@ Verdict: NOT ACCEPTED
 The remaining acceptance blocker is Finding 1. The author retains the SPT-1 choices of `q` or `d`, epoch pooling, the N6 estimand and units, and the floors. B11 remains open for the logged-record loader. The E-SYN results carry the ENGINEERING_ONLY label.
 
 Verdict: NOT ACCEPTED
+
+---
+
+## Round 3 — independent receiving review (16 Nov 2026)
+
+**Reviewer** Independent Codex reviewer. **Label** ENGINEERING_ONLY.
+
+I reviewed `32675f5f..e7b700cb` on branch `paperc-build-20261115` at `e7b700cb2d7facda5140d70d259efd1789813f7e`, matching its local origin-tracking ref. I read both prior reviews, the round-2 response, build runbook §§0 and P6 including the amendment, plan §§6, 6.1 and 7.1, and addendum §§B–D.
+
+### Verification
+
+- **Tests.** The full Paper C suite passed all 208 tests in 153.30 s on the Mac CPU, with no skips. The environment matched `pip_freeze_P6.txt`. I used the isolated `paperC/.venv`, one thread per numerical backend, and pytest's cache provider disabled.
+- **Report and inputs.** In a separate detached checkout, pure `markdown(res)` reproduced all 15,709 bytes of the committed report (SHA-256 `b3f51ac650f8a0a31101eaf99ce87304eb91d74ca37f2edb0e9d5668a7de952c`). The JSON fingerprint matches the current sources and ladder input. I checked the pre/post-edit Mac table pairs against one another after dropping timing and fingerprint fields. Both pairs match field by field. The committed tables match the accepted baseline values at `9341938` and `32675f5f` under the same comparison, with current source fingerprints and the ladder's oracle fingerprint link verified. Some accepted cloud numerical values differ from the Mac rebuild values. I also reproduced the hashes of all 550 recorded root campaigns on each simulator revision and obtained identical fingerprints. The full validation and the table builds were taken from the recorded runs.
+- **R2-1.** The per-campaign point path uses the full roster in `ForkTable.n_eligible` for its denominator and fold shares. Both bootstrap paths resample that roster. Empty draws contribute zero to the per-campaign interval and are excluded from per-decision ratios. In a constant-gain check with ten selected roots among 100, the point estimate was 1.0 and both bootstrap intervals were [0.4, 1.6] against the exact resampling quantiles [0.5, 1.6]. The fitted-rule reference uses the full fold shares, including folds with roots but no selected rows. An independent perturbation on a draw with duplicate and zero-fork roots confirmed that copies share the original root ID's fold and that changing its outcomes leaves all of its own held-out actions unchanged. Interval output requires at least two roots with selected forks.
+- **R2-1, sparse validation.** The 5% uniform-inclusion `keep_feedback` check has 40 collections of 40 roots, with 7–20 zero-fork roots per collection (mean 12.20). I regenerated the sparse intervals using the recorded design and seeds. All stored per-campaign refit endpoints reproduced, and a separate point check reproduced the values and stored endpoints for collection 0. Against P's shared reference, the refit interval covers the fitted rule and procedure mean in 40/40 collections each. The fixed interval covers the fitted rule in 32/40. Across the default-design worlds, per-campaign refit coverage is 0.925–1.000 for both references and fixed fitted-rule coverage is 0.775–0.900.
+- **R2-2.** The E1/E2 total-`q` estimates and intervals are in the raw data. I recalculated the epoch detection, zero coverage and finite-reference coverage from those rows. Sections A, P and C give the corresponding summaries. In strict null, the finite-reference τ² values are 9.988 × 10⁻⁶ at E1 and 32.435 × 10⁻⁶ at E2. The fresh positive-lower-bound rates are 0.790 and 1.000. The P6 null condition applies to `d` under N1/N0, for which pooled 95% coverage of zero is 0.935 over 200 collections.
+- **R2-3.** I checked 196 forced E2 arms for both privilege directions. The forced row preserves the root state, behaviour policy name and SHA, and logged behaviour action and propensity. It also gives the continuation ID separately. Subsequent rows identify the continuation as the acting policy. The full suite tests downstream privilege in both directions.
+- **R2-4.** The constructor rejects `q_uniform=0` even when the near-threshold oversample is positive. Both rates are bounded, and positive uniform selection covers the eligible population used by HT. The regression passes and the E-SYN HT absolute z maxima are 1.74 for the same-replicate design check and 1.32 for the independent-replicate check.
+- **R2-5 and R2-6.** The report identifies the shared finite reference and presents both tails. Recalculation from the raw intervals reproduces the per-decision and per-campaign refit coverage and tail summaries and per-decision fixed-decision coverage. In `keep_feedback`, the per-decision fitted and procedure references fall above the upper endpoint in 4/40 and 3/40 collections. The per-decision positive lower-bound count is 0/40 in each channel world, with an exact 95% upper limit of 0.088 in each. Section B labels its leakage z as descriptive and identifies the omitted cross-fold covariance. The original-root perturbation checks address leakage directly.
+
+### Findings
+
+1. **MINOR — interval-width summary needs its pooling scope.** The Limitations section reports a maximum shortfall of 21% for total `q` based on the pooled 40-root estimates. The new epoch results have bootstrap standard-error-to-empirical-SD ratios as low as 0.610 (E1, `shared_error`) and 0.659 (E2, `interaction`). Label the quoted summary ranges as pooled and identify the epoch shortfalls when summarizing precision. Section C and the JSON already report the per-epoch validation. This reporting issue does not prevent P6 acceptance.
+
+The runbook's engineering checks support acceptance. The coverage results use synthetic continuations and finite reference draws. The B11 logged-record loader and the author's SPT-1 choices of statistic, epoch pooling, N6 estimand, units and floors remain open.
+
+Verdict: ACCEPT
