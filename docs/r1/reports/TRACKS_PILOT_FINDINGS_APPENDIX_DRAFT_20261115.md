@@ -29,8 +29,8 @@ No number changes. Whether and where the section enters the manuscript is the au
 - **Which revision.** The errata change §1 of the proposal, the statement preamble and part 4 of the proposition, and
   10(a′)/10(c). They do not change parts 1–3. The section uses part 4 only for the detectable no-op (π_n = 1), a
   bullet the errata left unchanged. Duplicates are covered by T4 Corollary 8a, not by part 4.
-- **Dependency.** The theory text quoted is revision 3 of the proposal (`mac-t4-errata-20261116`, under independent
-  review, not on `main`). If that review changes the quoted parts, §A.x.2 follows it.
+- **Dependency.** The theory text quoted is revision 3 of the proposal (`mac-t4-errata-20261116` @ `fba64218`, review
+  accepted; not yet on `main`). If the version merged to `main` changes the quoted parts, §A.x.2 follows it.
 
 **Sources.**
 - Two-node S0.5 summary `reports/TRACKS_S05_SUMMARY_20261115.md` (accepted at `74808c0a`), with its scripts and JSON in
@@ -38,7 +38,7 @@ No number changes. Whether and where the section enters the manuscript is the au
 - Per-node run records `reports/TRACKS_S05_T7_RESULT_20261114.md` and `reports/TRACKS_S05_T7_TABULAR_20261114.md`.
 - Operator runbook rev 3.3 (`prompts/TRACK_S_OPERATOR_RUNBOOK_20261030.md`, `13badb0d`).
 - T4 (`theory/T4_FEEDBACK_PROPOSER.md`, Proposition 8 and Corollary 8a) and the Proposition 8′ proposal, revision 3
-  (errata applied; `mac-t4-errata-20261116`; first reviewed at `77f49584`).
+  (errata applied; `mac-t4-errata-20261116` @ `fba64218`; review accepted, `reviews/T4_PROP10_REVISION3_REVIEW_20261116.md`).
 - Track S design: `proposals/TRACK_S_SEQUENTIALITY_RUNBOOK_20261029.md` (A2-U's declared model).
 - PLAN §10 `R1-T4-PROOF-CHECK`, `R1-TRACKS-STOP4-END`, `R1-TRACKS-STOP4-CONSEQUENCES`.
 
@@ -57,8 +57,8 @@ variance, gated by a calibration check before any evidence run (`R1-TRACKS-S02`)
 
 **What happened.** Track S stopped after its pilot (S0.5), before any evidence run, by the author's decision
 (`R1-TRACKS-STOP4-END`). It produced no campaign-level result, and the planned evidence phases did not run. This
-section therefore makes no campaign-level claim of any kind. The decision to stop was taken after the pilot data had been seen. It is not one of the outcomes declared in advance
-(`R1-TRACKS-FRAMING`).
+section therefore makes no campaign-level claim of any kind. The decision to stop was taken after the pilot data had
+been seen. It is not one of the outcomes declared in advance (`R1-TRACKS-FRAMING`).
 
 ### A.x.1 Pilot set-up
 
@@ -71,8 +71,9 @@ section therefore makes no campaign-level claim of any kind. The decision to sto
   read at W ∈ {8, 10, 12, 20}.
 - **Calibration audits.** Every eligible E1 decision of A2-U received a calibration audit. Its 80 % predictive
   interval was checked against the audited increment: 298 predictions on `digits_mlp`, 330 on `tabular_mlp`.
-  "Eligible" is the summary's term for these audited decisions. They are fewer than the non-duplicate executions per
-  policy (keep + discard: 318 and 350).
+  "Eligible" is a per-decision flag in the pilot ledger, read by the summary's scripts (`policy_diag.py`,
+  `diag1.py`). The eligible decisions are fewer than the non-duplicate executions per policy (keep + discard: 318 and
+  350).
 - **Pins and hosts.** σ_node is the node's noise constant (`R1-C1-FLOOR`): 0.0066 (digits) and 0.0019 (tabular).
   The manager, llama.cpp build, harness and paper code were pinned. Both pilots ran on one host (TASL-7).
 
@@ -147,9 +148,8 @@ In the pilot, **A2-U's index** (not the Bayes V\*_n) exceeded g at every eligibl
   proposals were invalid and never reached E1; each campaign's 40 calls are accounted for.)
 - E2 was not trivial: m̂ spread widely around 0, and many keep decisions were close to it.
 - The two policies differ only in their E1 rules, and the two rules took the same action as each other at every E1
-  decision. So their
-  action sequences coincided (the table above). This is a description of the pilot records, not a statement about the
-  value of either policy over a campaign.
+  decision. So their action sequences coincided (the table above). This is a description of the pilot records, not
+  a statement about the value of either policy over a campaign.
 
 **Budgets.**
 - At W = 40, every campaign ended at the 40-call LLM cap. The worker budget was never exhausted (at most 27 of 40
