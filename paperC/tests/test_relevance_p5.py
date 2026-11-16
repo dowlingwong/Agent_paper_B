@@ -1,4 +1,4 @@
-"""Runbook P5: decision-relevance check (revised after review round 1)."""
+"""Runbook P5: decision-relevance check (revised after review rounds 1 and 2)."""
 import json
 import math
 
@@ -13,11 +13,11 @@ _step = iter(range(10**9))
 
 
 def _r(node, epoch, *, v=None, m=None, g=None, sigma=0.01, rule=None, action=None, camp="c1", forced=False,
-       branch=(), p_select=None, invalid=False, divergent=False, dhat=None):
+       branch=(), p_select=None, invalid=False, divergent=False, dhat=None, inst=None):
     action = action or {"E1": "execute", "E2": "keep", "verify": "verify", "reaudit": "reaudit",
                         "final": "select"}[epoch]
-    return {"identity": {"node": node, "epoch": epoch, "campaign_id": camp, "step_index": next(_step),
-                         "branch_path": list(branch)},
+    return {"identity": {"node": node, "epoch": epoch, "campaign_id": camp, "instance_id": inst or camp,
+                         "step_index": next(_step), "branch_path": list(branch)},
             "state": {"rule_forced": rule is not None, "sigma_node": sigma, "candidate_invalid": invalid,
                       "candidate_divergent": divergent, "candidate_delta_hat": dhat,
                       "forecasts": {"a2u": {"v_star": v, "m_hat": m, "g": g}}},
@@ -42,7 +42,7 @@ def test_known_shares_and_counts():
     s = rel(rows)["n"]
     e1 = s.e1["g"]
     assert e1.n_eligible == 8 and e1.counts == {0.25: 2, 0.5: 4, 1.0: 6}
-    assert e1.shares[1.0] == pytest.approx(6 / 8) and e1.half_widths[1.0] > 0
+    assert e1.shares[1.0] == pytest.approx(6 / 8) and 0 < e1.intervals[1.0][0] < 6 / 8 < e1.intervals[1.0][1]
     assert e1.quantiles[0.0] == pytest.approx(-2) and e1.quantiles[1.0] == pytest.approx(1.5)
     assert s.e2.counts == {0.25: 1, 0.5: 1, 1.0: 2}
     assert s.n_e1_rows == 10 and s.rule_skip_share == pytest.approx(0.2)
@@ -179,3 +179,98 @@ def test_esyn_records_transitions_and_cli(tmp_path, capsys):
     empty = tmp_path / "empty.jsonl"
     empty.write_text("")
     assert RV.main([str(empty), "--out", str(md), "--g", "0.001"]) == 2
+
+
+def test_round2_interval_quantiles_and_clusters():
+    # hand-computed: 3 clusters, rows in / out of the band c0 [1, 0], c1 [1, 1], c2 [0, 0, 0, 1]; p = 0.5,
+    # cluster residuals 0, 1, -1, se = sqrt(2 * 3/2) / 8 = 0.2165064, n_eff = 0.25 / se^2 = 5.333,
+    # t(0.975, 2) = 4.302653, Wilson interval 0.5 -+ 0.440554
+    rows = []
+    for c, ins in (("c0", (1, 0)), ("c1", (1, 1)), ("c2", (0, 0, 0, 1))):
+        rows += [_r("n", "E1", v=0.001 + (0.0 if i else 0.05), g=0.001, camp=c) for i in ins]
+    e1 = rel(rows)["n"].e1["g"]
+    assert e1.shares[1.0] == 0.5 and e1.se[1.0] == pytest.approx(0.21650635, abs=1e-7)
+    assert e1.intervals[1.0] == pytest.approx((0.5 - 0.440554, 0.5 + 0.440554), abs=1e-5)
+    assert RV.wilson_cluster(0.3, 0.05, 100, 1) is None                      # one cluster: no interval
+    lo, hi = RV.wilson_cluster(0.0, 0.0, 300, 10)                             # boundary: n_eff = k, not degenerate
+    assert lo == 0.0 and 0.2 < hi < 0.5
+    one = rel([_r("n", "E1", v=0.001, g=0.001), _r("n", "E1", v=0.06, g=0.001)])["n"]
+    assert one.e1["g"].intervals[1.0] is None and "[—]" in RV.markdown({"n": one})
+    # weighted quantile = numpy inverted-CDF quantile on the integer-weight expansion
+    rng = np.random.default_rng(3)
+    z, w = rng.normal(size=40), rng.integers(1, 5, 40).astype(float)
+    for q in RV.QUANTILES:
+        assert RV._wquantile(z, w, q) == pytest.approx(np.quantile(np.repeat(z, w.astype(int)), q,
+                                                                   method="inverted_cdf"))
+    # cluster key: two policies' campaigns on the same three instances
+    shared = [_r("n", "E1", v=0.001 + 0.003 * k, g=0.001, camp=f"{pol}{i}", inst=f"i{i}")
+              for pol in ("A", "B") for i in range(3) for k in range(4)]
+    assert rel(shared)["n"].e1["g"].clusters == 3 and rel(shared, cluster="campaign_id")["n"].e1["g"].clusters == 6
+    assert rel(shared)["n"].cluster == "instance_id"
+    no_inst = _r("n", "E1", v=0.001, g=0.001)
+    del no_inst["identity"]["instance_id"]
+    with pytest.raises(RV.RelevanceInputError, match="instance_id"):
+        rel([no_inst])
+
+
+def test_round2_forks_h_thresholds_and_not_assessed():
+    root = [_r("n", "E1", v=0.0, g=0.0)]
+    with pytest.raises(RV.RelevanceInputError, match="single-level"):
+        rel(root + [_r("n", "E1", v=0.0, g=0.0, branch=("f1:skip:r1", "f2:execute:r1"), p_select=0.5)],
+            forks="weighted")
+    for bad in (-0.5, 2.0):
+        with pytest.raises(RV.RelevanceInputError, match=r"outside \(0, 1\]"):
+            rel(root + [_r("n", "E1", v=0.0, g=0.0, branch=("f1:skip:r1",), p_select=bad)], forks="weighted")
+    zero = _r("n", "E1", v=0.0, g=0.0, branch=("f1:skip:r1",))
+    zero["fork"] = {"p_select": 0.0}
+    with pytest.raises(RV.RelevanceInputError, match="outside"):
+        rel(root + [zero], forks="weighted")
+    e2 = [_r("a", "E2", m=0.001), _r("b", "E1", v=0.0, g=0.0)]
+    for h in (float("nan"), float("inf"), {"a": float("nan")}, True):
+        with pytest.raises(RV.RelevanceInputError, match="finite"):
+            rel(e2, h=h)
+    out = rel(e2, h={"a": 0.0})                         # b has no eligible E2 rows: its missing h is harmless
+    assert (out["a"].h, out["a"].h_source) == (0.0, "mapping") and (out["b"].h, out["b"].h_source) == (None, "missing")
+    assert rel(e2)["a"].h_source == "default" and rel(e2, h=0.0)["a"].h_source == "argument"
+    with pytest.raises(RV.RelevanceInputError, match="h mapping"):
+        rel(e2, h={"b": 0.0})
+    two = [_r("a", "E1", v=0.002, g=0.001), _r("b", "E1", v=0.002, g=0.001)]
+    with pytest.raises(RV.RelevanceInputError, match="only g falls back"):
+        rel(two, thresholds={"static": {"a": 0.002}})    # an extra threshold never falls back to the price
+    with pytest.raises(RV.RelevanceInputError, match="give it once"):
+        rel(two, g=0.001, thresholds={"g": 0.002})
+    assert set(rel(two, g=0.001, thresholds={"static": 0.002})["a"].e1) == {"g", "static"}
+    na = rel([_r("n", "E1", v=0.031, g=0.001)])["n"].to_dict()["E2"]
+    assert na["shares"] == {"0.25": None, "0.5": None, "1.0": None} and na["intervals"]["1.0"] is None
+    line = next(ln for ln in RV.markdown(rel([_r("n", "E1", v=0.031, g=0.001)])).splitlines() if "E2: m_hat" in ln)
+    assert "0.0%" not in line and "| — | — | — |" in line
+    bad = _r("n", "E1", v=0.0, g=0.0)
+    bad["action"] = "execute"
+    with pytest.raises(RV.RelevanceInputError, match="malformed"):
+        rel([bad])
+
+
+def test_round2_cli_errors(tmp_path, capsys):
+    w = X.WORLDS["budget"]
+    rows = [row for i in range(5) for row in sim.run_campaign(w, EP.Static(0.001, 0.0), i, record=True).rows]
+    f = tmp_path / "rows.jsonl"
+    f.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    md = tmp_path / "rel.md"
+    with pytest.raises(SystemExit):
+        RV.main([str(f), "--out", str(md), "--g", "0.001", "--threshold", "g=0.5"])
+    hj = tmp_path / "h.json"
+    hj.write_text('{"esyn_budget": NaN}')
+    assert RV.main([str(f), "--out", str(md), "--g", "0.001", "--h-json", str(hj)]) == 2 and not md.exists()
+    assert RV.main([str(f), "--out", str(md), "--g", "0.001", "--h", "nan", "--json", str(tmp_path / "x.json")]) == 2
+    assert not md.exists()
+    gj = tmp_path / "g.json"
+    gj.write_text("{oops")
+    assert RV.main([str(f), "--out", str(md), "--g-json", str(gj)]) == 2
+    assert "--g-json" in capsys.readouterr().err
+    binary = tmp_path / "bin.jsonl"
+    binary.write_bytes(b"\xff\xfe\x00garbage")
+    assert RV.main([str(binary), "--out", str(md), "--g", "0.001"]) == 2
+    assert "not UTF-8" in capsys.readouterr().err
+    assert RV.main([str(f), "--out", str(tmp_path), "--g", "0.001"]) == 2      # --out names a directory
+    assert RV.main([str(f), "--out", str(md), "--g", "0.001", "--cluster", "campaign_id"]) == 0
+    assert "clustered by `campaign_id`" in md.read_text()

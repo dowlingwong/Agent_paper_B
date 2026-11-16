@@ -313,3 +313,197 @@ The arithmetic, the price precedence and the rule-forced exclusion are correct, 
 Each has a small, concrete fix and a test to add. The minor findings mostly concern reporting: policy skips, the E2 threshold, price sources, provenance, NaN handling and the CLI.
 
 Verdict: NOT ACCEPTED
+
+---
+
+## Round 2
+
+- **Reviewer:** the same independent reviewer as round 1.
+- **Commit:** `440cb20` on branch `paperc-build-20261115`. Diff read against `0c77ffc`.
+- **Date:** 16 Nov 2026
+- **Label:** ENGINEERING_ONLY
+
+### Scope read
+
+- the response table, `BUILD_P5_RESPONSE_R1_20261116.md`;
+- the rewritten `paperc/relevance.py` (all of it);
+- `paperc/relevance_demo.py`;
+- `tests/test_relevance_p5.py` (9 tests);
+- the regenerated `docs/reports/RELEVANCE_ESYN_20261116.md`;
+- the P5 row of `BUILD_STATUS.md`.
+
+### What I ran
+
+Scratch work is in `/tmp/p5rev/`: round 1's scripts, plus `probe3.py`, `probe4.py`, `probe5.py` and `probe5b.py`, and CLI probes run inline.
+
+1. **Tests:** the full suite gave 184 passed in 80 s; the P5 tests gave 9 passed in 6 s.
+2. **Demo:** `python -m paperc.relevance_demo` left `git status` clean, so the committed report reproduces byte for byte. I checked the note against the table:
+   - the 95th percentiles of five worlds are ≤ 0.44;
+   - information: 95th percentile 3.41, maximum 19.12, strength-16 follow-ups (`extra.py:139`);
+   - interaction: maximum 3.71;
+   - one policy skip in interaction.
+
+   These numbers agree with round 1's `vscale.py`, e.g. keep_feedback E2 within 0.25 σ of N1's h is 11.4 %.
+3. **Schema-valid inputs, with validation on** (`probe5.py`, `probe5b.py`):
+   - the P1 invalid-candidate campaign is accepted, with 1 invalid discard counted and excluded;
+   - `valid_campaign() + fork_continuation()`:
+     - in root mode, 2 fork rows are excluded;
+     - in weighted mode, the forced fork arm is excluded, and the continuation's execute row gets weight 1/0.6.
+4. **Weighted forks and quantiles** (`probe3.py`):
+   - the test's weighted share, (2+2+4)/(4+2+4), is reproduced;
+   - a depth-2 fork;
+   - p_select ∈ {0, −0.5, 2} with validation off;
+   - counts in weighted mode;
+   - `_wquantile` against `np.quantile(method="inverted_cdf")` on an integer-weight expansion: all 7 quantiles agree exactly;
+   - one campaign only.
+5. **Clustered interval** (`probe4.py`):
+   - Monte Carlo coverage of the 95 % interval for a ratio share with campaign random effects, unequal rows per campaign, and optional 1/p weights, 2,000 replications per cell;
+   - campaign_id against instance_id clustering, with 3 policies × 30 shared instances in the budget world.
+6. **h, thresholds and the CLI** (`probe3.py`, inline):
+   - NaN h through the API, `--h nan` and `--h-json`;
+   - an h mapping that misses a node;
+   - an extra-threshold mapping that misses a node;
+   - `--threshold g=…` given together with `--g`;
+   - a bad `--g-json`;
+   - binary input;
+   - `--out` naming a directory;
+   - a missing input file;
+   - a row subset;
+   - an empty `--bands` element;
+   - belief auto-detection;
+   - how a not-assessed epoch is rendered.
+
+### Round-1 findings, re-checked
+
+| # | Round 1 | Round 2 status |
+|---|---|---|
+| 1 | MAJOR: forks counted unweighted | **Resolved.** Root-only is the default. Forced rows are excluded and counted, so the duplicated fork-arm row is gone in both modes. Fork rows are counted as excluded. Verified on a schema-valid fork campaign. The weighted mode has new MINOR issues (R2-2). |
+| 2 | MAJOR: empty epoch labelled as the gate outcome; STOP 4 fixture without E2; vacuous assertion | **Resolved.** There are three statuses. The fixture now has E2 rows (45 of 300 within 0.5 σ, Track S-like). The STOP 4 test checks each node's markdown line for E1 "no decision-relevant states" and for an E2 verdict other than "no". The mutation now flips E1. A cosmetic residue remains (R2-6). |
+| 3 | MAJOR: invalid / divergent E2 rows | **Resolved.** They are excluded whatever their rule label, counted (`n_invalid_discards`) and need no m̂. Verified on the P1 invalid-candidate campaign with validation on. |
+| 4 | policy skips | **Resolved.** Policy skips and executes are reported per node, and the STOP 4 test asserts 0 policy skips. |
+| 5 | h scalar; Δ̂ | **Resolved:** h as a number or a mapping; `e2_stat="delta_hat"`; the demo uses N1's own h; tests with h ≠ 0. Residue: h is not finite-checked, and a missing node defaults silently (R2-1). |
+| 6 | NaN; validate default | **Resolved for record fields:** finite checks name the row, `validate=True` is the API default, and `allow_nan=False` is set. **Not resolved for h** (R2-1). |
+| 7 | bare KeyError / TypeError | **Mostly resolved.** A non-dict sub-object still raises `AttributeError` with validation off, e.g. `action = "execute"` fails on `act.get` (R2-5). |
+| 8 | silent price sources | **Resolved:** a source is recorded per node and threshold, and `--g` / `--g-json` are mutually exclusive. New threshold-fallback issues (R2-4). |
+| 9 | verdict rule unstated | **Resolved:** the rule is in the report header and the docstring, and the JSON field is `any_within_widest_band` with a `status`. |
+| 10 | demo wording | **Resolved;** checked against the table. |
+| 11 | pooling; intervals | **Resolved in form:** campaigns, policies and W are listed, and the intervals are clustered. The cluster unit and small-K behaviour are open (R2-3). |
+| 12 | provenance; empty input | **Resolved:** inputs with sha256, the validation flag, and exit 2 on empty input. |
+| 13 | CLI tracebacks | **Mostly resolved:** bands are validated, output directories are created, and errors carry `file:line`. Some paths still end in tracebacks (R2-5). |
+| 14 | weak tests | **Resolved for the listed gaps.** New gaps are in R2-7. |
+| 15 | readiness | **Resolved:** the belief must be named or unique, the B5 requirements are in the docstring, and several E1 thresholds are supported. |
+
+### New findings
+
+**R2-1. MINOR — h is not finite-checked; an h mapping that misses a node silently uses 0**
+
+**Location:** `relevance.py:233` and line 295; CLI `--h` and `--h-json`.
+
+**Why it matters:**
+- A NaN h gives z = NaN on every E2 row. The epoch is then reported as "no decision-relevant states (0 of n …)". This is round-1 finding 6's silent wrong answer, again pointing toward "do not run", now through the new h path.
+- `--h-json` containing `{"esyn_budget": NaN}` (which `json.loads` accepts) exits 0 with that verdict.
+- `--h nan --json …` first writes the markdown with the wrong verdict, then crashes in `json.dumps(allow_nan=False)`.
+- An h mapping that lacks a node silently uses 0, and unlike g, no source is reported.
+
+**Fix:**
+- Check h with `_finite` (scalar and mapping values), once per node, before computing anything.
+- Report the h source per node (argument / mapping / default 0). Alternatively, refuse a mapping that misses a node with eligible E2 rows.
+
+**R2-2. MINOR — weighted fork mode: undocumented estimand, depth-2 weights, unguarded p_select, unweighted counts**
+
+**Location:** `relevance.py:247–252`, and the counters at lines 259–264 and 275–276.
+
+**Why it matters:**
+- **Estimand.** With weights 1/p_select, the weighted share is a ratio of Horvitz–Thompson totals over the root states **plus** every counterfactual continuation state that would exist had every root step been forked. Each fork contributes arms × replicates × continuation policies (8 in plan §6 SPT-3) whole continuations, so these counterfactual states dominate. That is a well-defined population, but it is not the share among the behaviour policy's states. The docstring presents the weighting as a correction of the oversample, so a reader may take the weighted share as the root share de-biased. Root mode, the default, is correct.
+- **Depth-2 forks.** They are weighted by their own p_select only (`probe3.py`: 0.25, against 0.40 with the product along the path). Depth-2 forks are extension-only in the plan, but nothing refuses them.
+- **Unguarded p_select with validation off.** p_select = 0 raises a raw `ZeroDivisionError`. p_select = −0.5 gives a share of −1.0 silently, and p_select = 2 is accepted.
+- **Unweighted counts.** In weighted mode, `n_e1_rows`, the rule-skip share and the policy skips and executes are unweighted and include continuation rows, while the shares are weighted.
+
+**Fix:**
+- State the weighted estimand in the docstring and the report header.
+- Multiply p_select along `branch_path` (one fork design per level), or refuse `len(branch_path) > 1`.
+- Require 0 < p_select ≤ 1 and raise `RelevanceInputError` otherwise.
+- Either weight the skip counts, or label them as unweighted row counts.
+
+**R2-3. MINOR — the clustered interval uses the wrong cluster when policies share instances, and is too narrow with few campaigns**
+
+**Location:** `_summarise`, lines 139–145; cluster variable at line 265.
+
+**Why it matters:**
+- **The formula is the standard linearised (CR1) variance of a weighted ratio, and it is right.** Simulated coverage at nominal 95 % is 0.94 (unweighted) / 0.93 (weighted) with 50 campaigns, 0.89 / 0.90 with 10, and 0.82 / 0.83 with 5.
+- **Wrong cluster.** The module clusters by `campaign_id`, but the schema declares `identity.instance_id` as "cluster id: one per campaign instance". Paper C runs several policies on the same instance seeds, and Track S's S0.5 static rep-0 roots duplicate the a2u roots. Rows from the same instance under different policies are then correlated. With 3 policies × 30 shared budget-world instances, the half-width is 0.020 clustered by campaign against 0.035 clustered by instance (E2: 0.060 against 0.106).
+- **Degenerate cases.** One cluster gives a half-width of 6e-17, printed "± 0.0%". At shares of 0 or 1 the Wald half-width is 0, which is visible throughout the demo ("100.0% ± 0.0%").
+
+**Fix:**
+- Cluster by `instance_id`, or make the cluster key an argument with `instance_id` as the default, and say which in the header.
+- Use a t quantile with k − 1 degrees of freedom.
+- Print "—" when there are fewer than 2 clusters.
+- State the boundary behaviour, or use a clustered Wilson or bootstrap interval. This matters once the author puts a gate on a bound.
+
+**R2-4. MINOR — threshold fallbacks and overrides are silent**
+
+**Location:** `relevance.py:224` and lines 277–285; CLI line 408.
+
+**Why it matters:**
+- An extra threshold, e.g. `static={"a": 0.002}`, that misses node b falls back to b's forecast g, i.e. **the run price**. The result is reported as "static = 0.001 (forecast)": a static-threshold row that silently measures the price.
+- `--threshold g=0.5` silently overrides `--g 0.001` (price used: 0.5).
+- In the API, `g=` is silently ignored when `thresholds=` is given.
+
+**Fix:**
+- Apply the forecast / env fallback to the `g` label only, and raise an error for other labels with no value.
+- Reject the label `g` in `--threshold`.
+- Raise an error when both `g` and `thresholds` are passed, unless `thresholds` lacks `g`.
+
+**R2-5. MINOR — remaining tracebacks**
+
+**Location:** `main()`, `relevance()`.
+
+**Why it matters:** these cases still end in tracebacks instead of exit 2 and a message:
+- an invalid `--g-json` or `--h-json` (`JSONDecodeError`);
+- a non-UTF-8 input file (`UnicodeDecodeError`);
+- `--out` naming a directory (`IsADirectoryError`: the write is outside the try);
+- the JSON NaN crash of R2-1, which comes after the markdown has been written;
+- with validation off, a non-dict `action`, `identity` or `state` (`AttributeError`).
+
+**Fix:**
+- Catch `ValueError`, which covers JSON and Unicode errors, and `AttributeError`.
+- Build both outputs before writing either, and do the writing inside the try.
+
+**R2-6. MINOR — not-assessed epochs render as 0 %**
+
+**Location:** `_summarise`, line 147; the markdown table; `to_dict`.
+
+**Why it matters:** an epoch with no eligible rows shows "0.0% ± 0.0% (0)" in every band column, and JSON `shares` of 0.0. The verdict says "not assessed", but a reader of the share table (or of the JSON `shares`) sees 0 %.
+
+**Fix:** use `None` in the JSON and "—" in the table when `n_eligible == 0`.
+
+**R2-7. MINOR — test gaps for the new code**
+
+**Location:** `tests/test_relevance_p5.py`.
+
+**Missing tests:**
+- the clustered half-width against a hand-computed value (only `> 0` is asserted);
+- weighted quantiles (`_wquantile`) against a reference;
+- depth-2 forks and p_select outside (0, 1];
+- non-finite h;
+- the extra-threshold fallback;
+- `--threshold g=`.
+
+**Fix:** add these alongside R2-1 to R2-5.
+
+### Summary
+
+All three round-1 MAJOR findings are resolved and verified on schema-valid P1 campaigns:
+
+- root-only forks and excluded forced rows;
+- the three-way verdict, with a STOP 4 fixture that now has E2 rows like Track S's;
+- invalid and divergent E2 discards excluded and counted.
+
+The twelve round-1 MINOR findings are resolved or reduced to the residues above. Two of the new MINOR findings should be fixed before the module is used on real records, but they block nothing at this engineering stage:
+
+- **R2-1:** a non-finite h still produces a silent "no decision-relevant states";
+- **R2-3:** the intervals are clustered by campaign rather than by the schema's instance cluster.
+
+The default root mode, the arithmetic, the weighted quantile and the ratio-variance formula are correct. No BLOCKER or MAJOR finding remains.
+
+Verdict: ACCEPT
