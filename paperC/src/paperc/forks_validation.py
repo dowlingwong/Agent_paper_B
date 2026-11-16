@@ -22,6 +22,7 @@ C2 2000+, population P 8000-9599, oracle roots B 9600-9659.
   the value of the same cross-fitted decisions on the same forks under replicates 3-R; the redraws share one
   realisation of the replicate noise, so the mean is tested with that noise's standard error, sqrt(sum_j c_j^2 v_j),
   c_j the average signed weight of state j and v_j = sum_c s_jc^2 (1 / (2 C^2) + 1 / (C^2 (R - 2))).
+  The resulting plug-in z is descriptive because the learned weights can induce cross-fold covariance.
 * **P. Population** (``N_POP`` roots, every eligible decision forked, r = 2): tau^2 of ``d`` (pooled and per epoch)
   and of ``q``, the truth for coverage; tau^2_d of four disjoint 400-root blocks (precision); and the evaluation
   states for the N6 truth: the population value of each collection's fitted rules (``forks.rule_gain``).
@@ -30,7 +31,8 @@ C2 2000+, population P 8000-9599, oracle roots B 9600-9659.
   collections; roots for 80 % power; the N6 value with coverage of (i) the fixed-decision interval for the population
   value of the collection's own fitted rules and (ii) the refitting interval for the expected value of the procedure
   (the mean of (i)'s truths over collections). **C2**: tau^2 with ``N_ROOTS_BIG`` roots per collection in the worlds
-  where 40 roots rarely detect.
+  where 40 roots rarely detect. **C3** uses uniform 0.05 inclusion on separate keep_feedback roots to exercise
+  per-root N6 coverage when many roots have no selected forks.
 """
 from __future__ import annotations
 
@@ -39,10 +41,12 @@ import json
 import math
 import sys
 import time
+from dataclasses import replace
 from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
+from scipy.stats import binomtest
 
 from paperc import forks as F
 from paperc import policies as P
@@ -60,13 +64,16 @@ N_DESIGN, N_LEAK = 500, 100
 N_POP, POP_BASE = 1600, 8000
 N_ROOTS_BIG, N_C2, C2_BASE = 160, 20, 2000
 C2_WORLDS = ("budget", "shared_error", "eval_allocation", "information")
+SPARSE_WORLD, SPARSE_BASE, SPARSE_RATE = "keep_feedback", 6000, 0.05
 B_TAU, B_N6 = 300, 200
 Q_UNIFORM, Q_OVERSAMPLE, BAND = 0.15, 0.5, 0.1
 WORLD_ORDER = ("strict_null", "budget", "interaction", "shared_error", "eval_allocation", "information",
                "keep_feedback")
 SOURCES = (PKG / "forks.py", PKG / "forks_validation.py", PKG / "policies.py", PKG / "esyn" / "sim.py",
            PKG / "esyn" / "worlds.py", PKG / "esyn" / "extra.py", PKG / "esyn" / "policies.py", LADDER)
-TAU_KEYS = ("tau2_d", "tau2_d_c0", "tau2_d_c1", "tau2_d_E1", "tau2_d_E2", "tau2_q")
+TAU_KEYS = ("tau2_d", "tau2_d_c0", "tau2_d_c1", "tau2_d_E1", "tau2_d_E2", "tau2_q", "tau2_q_E1", "tau2_q_E2")
+POP_STATS = (("q", "q", None), ("d", "d", None), ("d_E1", "d", "E1"), ("d_E2", "d", "E2"),
+             ("q_E1", "q", "E1"), ("q_E2", "q", "E2"))
 
 
 def code_sha256() -> str:
@@ -106,8 +113,9 @@ def _tau_set(ft, s: int) -> dict:
         out[f"tau2_{tg}"] = F.tau2(ft, tg, B=B_TAU, seed=(s, 0))
     for c in (0, 1):
         out[f"tau2_d_c{c}"] = F.tau2(ft, "d", cont=c, B=B_TAU, seed=(s, 1 + c))
-    for ep in ("E1", "E2"):
-        out[f"tau2_d_{ep}"] = F.tau2(ft, "d", epoch=ep, B=B_TAU, seed=(s, 5 + (ep == "E2")))
+    for ep, seed_offset in (("E1", 5), ("E2", 6)):
+        for tg in ("d", "q"):
+            out[f"tau2_{tg}_{ep}"] = F.tau2(ft, tg, epoch=ep, B=B_TAU, seed=(s, seed_offset))
     return out
 
 
@@ -120,7 +128,7 @@ def population(world: str) -> dict:
     out = {"world": world, "n_roots": N_POP, "n_states": len(full),
            "n_states_epoch": {ep: int(len(full.epoch_rows(ep))) for ep in ("E1", "E2")}}
     k = WORLD_ORDER.index(world)
-    for j, (key, tg, ep) in enumerate((("q", "q", None), ("d", "d", None), ("d_E1", "d", "E1"), ("d_E2", "d", "E2"))):
+    for j, (key, tg, ep) in enumerate(POP_STATS):
         t = F.tau2(full, tg, epoch=ep, B=B_TAU, seed=(k, 8, j))
         out[key] = {"tau2": t["tau2"], "ci": t["ci"], "between": t["between"], "mean_se2": t["mean_se2"]}
     blocks = []
@@ -154,14 +162,27 @@ def one_collection(args) -> dict:
     out = {"sim": s, "n_roots": n_roots, "n_forks": len(ft), "n_eligible": ft.eligible(),
            "near_share": float(ft.near.mean()) if len(ft) else None, **_tau_set(ft, s)}
     if with_n6:
-        v = F.n6_value(ft, B=B_N6, seed=(s, 9))
-        pa = _POP[world]
-        truth_dec, truth_camp = F.rule_gain(v["fit"], {ep: pa[ep][0] for ep in ("E1", "E2")},
-                                            {ep: pa[ep][1] for ep in ("E1", "E2")},
-                                            {**{ep: pa[ep][2] for ep in ("E1", "E2")}, "roots": pa["roots"]})
-        v["truth_per_decision"], v["truth_per_campaign"] = truth_dec, truth_camp
-        out["n6"] = v
+        out["n6"] = _validate_n6(ft, world, s)
     return _clean(out)
+
+
+def _validate_n6(ft, world: str, s: int) -> dict:
+    v = F.n6_value(ft, B=B_N6, seed=(s, 9))
+    pa = _POP[world]
+    truth_dec, truth_camp = F.rule_gain(v["fit"], {ep: pa[ep][0] for ep in ("E1", "E2")},
+                                        {ep: pa[ep][1] for ep in ("E1", "E2")},
+                                        {**{ep: pa[ep][2] for ep in ("E1", "E2")}, "roots": pa["roots"]})
+    v["truth_per_decision"], v["truth_per_campaign"] = truth_dec, truth_camp
+    v["zero_fork_roots"] = ft.n_roots - len(np.unique(ft.instance))
+    return v
+
+
+def sparse_collection(s: int) -> dict:
+    world, beh, conts, design = setup(SPARSE_WORLD)
+    design = replace(design, q_uniform=SPARSE_RATE, q_oversample=0.0)
+    start = SPARSE_BASE + s * N_ROOTS
+    ft = F.collect(world, beh, range(start, start + N_ROOTS), design, conts, reps=2)
+    return _clean({"sim": s, "n_roots": N_ROOTS, "n_forks": len(ft), "n6": _validate_n6(ft, SPARSE_WORLD, s)})
 
 
 # ---------------------------------------------------------------- oracle roots (B)
@@ -199,7 +220,8 @@ def oracle(world: str) -> dict:
             sub = full.subset(sel)
             sub.p_select, sub.q, sub.d, sub.reps = np.asarray(ps), sub.q[:, :, :2], sub.d[:, :, :2], 2
             e = F.n6_point(sub, np.arange(len(sub)), sub.instance, folds=5, alpha=1.0, min_train=10,
-                           rng=np.random.default_rng([F.ANALYSIS_KEY, 3, rep]), qbar=sub.q.mean(axis=(1, 2)))
+                           rng=np.random.default_rng([F.ANALYSIS_KEY, 3, rep]), qbar=sub.q.mean(axis=(1, 2)),
+                           root_draw=np.asarray(list(inst)))
             sign = (e["act"] != sub.b_act) * np.where(e["act"], 1.0, -1.0)
             leak.append(e["per_decision"] - float((wt * sign * m3r["q"][sel]).sum() / wt.sum()))
             np.add.at(cj, sel, sign * wt / wt.sum() / N_LEAK)
@@ -235,16 +257,35 @@ def _prop(x) -> dict:
     return {"p": p, "n": n, "mc_se": float(math.sqrt(max(p * (1 - p), 1e-12) / n))}
 
 
+def _interval_coverage(intervals, truth) -> dict:
+    lo, hi = np.asarray(intervals).T
+    return {"covers": _prop((lo <= truth) & (truth <= hi)),
+            "truth_below": _prop(truth < lo), "truth_above": _prop(truth > hi)}
+
+
+def _campaign_coverage(sims: list[dict]) -> dict:
+    n6 = [sim["n6"] for sim in sims]
+    truth = np.array([v["truth_per_campaign"] for v in n6])
+    refit = [v["ci_refit_per_campaign"] for v in n6]
+    fixed = [v["ci_fixed_per_campaign"] for v in n6]
+    return {"fitted_refit": _interval_coverage(refit, truth),
+            "procedure_refit": _interval_coverage(refit, float(truth.mean())),
+            "fitted_fixed": _interval_coverage(fixed, truth),
+            "mean_zero_fork_roots": float(np.mean([v["zero_fork_roots"] for v in n6]))}
+
+
 def _raw(x: dict) -> dict:
     """Compact per-collection record: [estimate, lower, upper] per tau^2 statistic; N6 estimates, intervals, truths."""
     out = {"sim": x["sim"], "n_roots": x["n_roots"], "n_forks": x["n_forks"]}
     for k in TAU_KEYS:
-        out[k] = [x[k]["tau2"], *(x[k]["ci"] or (None, None))]
+        if k in x:
+            out[k] = [x[k]["tau2"], *(x[k]["ci"] or (None, None))]
     if "n6" in x:
         v = x["n6"]
         out["n6"] = {"est": v["per_decision"], "ci_refit": v.get("ci_refit_per_decision"),
                      "ci_fixed": v.get("ci_fixed_per_decision"),
                      "truth": v["truth_per_decision"], "est_campaign": v["per_campaign"],
+                     "zero_fork_roots": v["zero_fork_roots"],
                      "ci_refit_campaign": v.get("ci_refit_per_campaign"), "truth_campaign": v["truth_per_campaign"],
                      "flip_rate": v["flip_rate"]}
     return out
@@ -281,14 +322,20 @@ def summarise(world: str, sims: list[dict], pop: dict) -> dict:
     cir = [v["ci_refit_per_decision"] for v in n6]
     cif = [v["ci_fixed_per_decision"] for v in n6]
     diff = est - truth
+    fitted_coverage = _interval_coverage(cir, truth)
+    procedure_coverage = _interval_coverage(cir, proc)
+    out["n6_campaign"] = _campaign_coverage(sims)
     out["n6"] = {"per_decision_mean": float(est.mean()), "per_decision_sd": float(est.std(ddof=1)),
                  "truth_mean": proc, "truth_sd": float(truth.std(ddof=1)),
                  "bias_z": float(diff.mean() / (diff.std(ddof=1) / np.sqrt(len(diff)))),
                  "per_campaign_mean": float(np.mean([v["per_campaign"] for v in n6])),
                  "truth_campaign_mean": float(np.mean([v["truth_per_campaign"] for v in n6])),
                  "flip_rate_mean": float(np.mean([v["flip_rate"] for v in n6])),
-                 "cover_refit_truth": _prop([lo <= t <= hi for (lo, hi), t in zip(cir, truth)]),
-                 "cover_refit_procedure": _prop([lo <= proc <= hi for lo, hi in cir]),
+                 "cover_refit_truth": fitted_coverage["covers"],
+                 "cover_refit_procedure": procedure_coverage["covers"],
+                 "fitted_refit_tails": {"below": fitted_coverage["truth_below"], "above": fitted_coverage["truth_above"]},
+                 "procedure_refit_tails": {"below": procedure_coverage["truth_below"],
+                                           "above": procedure_coverage["truth_above"]},
                  "cover_fixed_truth": _prop([lo <= t <= hi for (lo, hi), t in zip(cif, truth)]),
                  "sd_err": float(diff.std(ddof=1)),
                  "fixed_se_over_sd_err": float(np.mean([(hi - lo) / 3.92 for lo, hi in cif]) / diff.std(ddof=1)),
@@ -306,6 +353,12 @@ def _f(x, d=2) -> str:
 
 def _pc(pr) -> str:
     return f"{pr['p']:.3f} ± {1.96 * pr['mc_se']:.3f}"
+
+
+def _binomial_interval(pr) -> str:
+    count = round(pr["p"] * pr["n"])
+    ci = binomtest(count, pr["n"]).proportion_ci()
+    return f"{count}/{pr['n']} [{ci.low:.3f}, {ci.high:.3f}]"
 
 
 def _r80(x) -> str:
@@ -337,7 +390,8 @@ def markdown(res: dict) -> str:
           "| Statistic | Mean tau^2_hat (× 1e-6) | MC s.e. (× 1e-6) | Coverage of 0 | Lower bound > 0 | "
           "bootstrap s.e. / sd |", "|---|---|---|---|---|---|"]
     for k, lab in (("tau2_d", "d, pooled"), ("tau2_d_E1", "d, E1 forks"), ("tau2_d_E2", "d, E2 forks"),
-                   ("tau2_d_c0", "d, continuation N1"), ("tau2_d_c1", "d, continuation N0"), ("tau2_q", "q, pooled")):
+                   ("tau2_d_c0", "d, continuation N1"), ("tau2_d_c1", "d, continuation N0"), ("tau2_q", "q, pooled"),
+                   ("tau2_q_E1", "q, E1 forks"), ("tau2_q_E2", "q, E2 forks")):
         v = a[k]
         L.append(f"| {lab} | {v['mean'] * 1e6:.3f} | {v['mc_se'] * 1e6:.3f} | {_pc(v['cover_0'])} | "
                  f"{_pc(v['detect'])} | {_f(v['boot_se_ratio'])} |")
@@ -347,9 +401,10 @@ def markdown(res: dict) -> str:
           "against the population mean of the same differences (selection error only: the design-unbiasedness "
           "check), and of HT against the mean of replicates 3-R (independent replicates: a check that replicates are "
           "seeded alike). N6: estimate minus the value of the same cross-fitted decisions on the same forks under "
-          f"replicates 3-{R_OR}, mean over {N_LEAK} redraws, z with the standard error of the shared replicate noise.", "",
+          f"replicates 3-{R_OR}, mean over {N_LEAK} redraws. The descriptive plug-in z holds fitted weights fixed and "
+          "omits covariance induced by fitting rules across folds. The original-root fold test checks for self-leakage.", "",
           "| World | States | HT z (q) | Hajek z (q) | unweighted z (q) | HT vs reps 3-R z (q) | HT z (d) | "
-          "Hajek z (d) | unweighted z (d) | HT vs reps 3-R z (d) | N6 estimate − value (× 1e-5) | z |",
+          "Hajek z (d) | unweighted z (d) | HT vs reps 3-R z (d) | N6 estimate − value (× 1e-5) | plug-in z |",
           "|" + "---|" * 12]
     for wname in WORLD_ORDER:
         o = res["oracle"][wname]
@@ -363,13 +418,14 @@ def markdown(res: dict) -> str:
           f"{N_POP} roots per world (instances {POP_BASE}+), every eligible decision forked, r = 2. The last column "
           "gives tau^2_d for disjoint 400-root blocks to show how the population estimate varies across root samples.", "",
           "| World | States | tau_d / sigma | tau^2_d (× 1e-6) [95 % CI] | tau^2_d E1 | tau^2_d E2 | tau_q / sigma | "
-          "tau^2_q (× 1e-6) [95 % CI] | tau^2_d of 400-root blocks |", "|" + "---|" * 9]
+          "tau^2_q (× 1e-6) [95 % CI] | tau^2_q E1 | tau^2_q E2 | tau^2_d of 400-root blocks |", "|" + "---|" * 11]
     for wname in WORLD_ORDER:
         pp, sg = pops[wname], WORLDS[wname].base.sigma_cmp
         cell = lambda t: f"{t['tau2'] * 1e6:.3f} [{t['ci'][0] * 1e6:.3f}, {t['ci'][1] * 1e6:.3f}]"   # noqa: E731
         L.append(f"| {wname} | {pp['n_states']} | {math.sqrt(max(pp['d']['tau2'], 0)) / sg:.3f} | {cell(pp['d'])} | "
                  f"{pp['d_E1']['tau2'] * 1e6:.3f} | {pp['d_E2']['tau2'] * 1e6:.3f} | "
                  f"{math.sqrt(max(pp['q']['tau2'], 0)) / sg:.3f} | {cell(pp['q'])} | "
+                 f"{pp['q_E1']['tau2'] * 1e6:.3f} | {pp['q_E2']['tau2'] * 1e6:.3f} | "
                  f"{', '.join(f'{x * 1e6:.2f}' for x in pp['d']['blocks_400'])} |")
     L += ["", "## C. Fresh roots: tau^2 detection and coverage", "",
           f"{N_C} independent collections of {N_ROOTS} roots per channel world (null: the {a['n_sims']} collections of "
@@ -388,6 +444,14 @@ def markdown(res: dict) -> str:
                  f"{_f(c['tau2_d']['boot_se_ratio'])} | "
                  f"{_r80(c['tau2_d']['roots_80'])} | {_pc(c['tau2_d_E1']['detect'])} | {_pc(c['tau2_d_E2']['detect'])} | "
                  f"{_pc(c['tau2_q']['detect'])} | {_pc(c['tau2_q']['cover_pop'])} | {_f(c['tau2_q']['boot_se_ratio'])} |")
+    L += ["", "### C. Total q by epoch", "",
+          "| World | E1: detect | E1: covers pop. | E2: detect | E2: covers pop. |",
+          "|---|---|---|---|---|"]
+    for wname in WORLD_ORDER:
+        c = res["fresh"][wname]
+        e1, e2 = c["tau2_q_E1"], c["tau2_q_E2"]
+        L.append(f"| {wname} | {_pc(e1['detect'])} | {_pc(e1['cover_pop'])} | "
+                 f"{_pc(e2['detect'])} | {_pc(e2['cover_pop'])} |")
     L += ["", f"### C2. Sample size: {N_ROOTS_BIG} roots per collection", "", f"{N_C2} collections per world, tau^2 only.",
           "", "| World | Forks | d: detect | d: covers pop. | d: bias z | d: bias z (block s.e.) | d: boot s.e. / sd | "
           "d: roots for 80 % |", "|---|---|---|---|---|---|---|---|"]
@@ -398,12 +462,14 @@ def markdown(res: dict) -> str:
                  f"{_f(c['tau2_d']['boot_se_ratio'])} | {_r80(c['tau2_d']['roots_80'])} |")
     L += ["", "## C (N6). The cross-fitted value of the N6 improvement step", "",
           "Per eligible decision: the gain of deviating from the behaviour at one decision as pi' says and then "
-          "following the continuation policies (per campaign: the HT total of these one-decision gains per root, not "
-          "the value of running pi' for a whole campaign). *Truth*: the population value (P's states) of each "
-          "collection's own fitted rules; *procedure*: the mean truth over collections. *Refit* (primary): refitting "
-          "bootstrap, copies of a root share its fold. *Fixed*: cross-fitted decisions held fixed. *s.e. / sd(err)*: "
-          "mean bootstrap s.e. over the sd of (estimate − truth) across collections. CI > 0 / < 0 refer to the primary "
-          "interval.", "",
+          "following the continuation policies (per campaign: the HT total of these one-decision gains per root). "
+          "*Truth* is the value of each collection's fitted rules on P's shared finite reference. *Procedure* is the "
+          "mean truth over collections. The primary refit bootstrap samples the full root roster and keeps all copies "
+          "of a root in its fold. A zero-fork root contributes zero to per-campaign totals and is counted in its fold's "
+          "share of roots for the per-campaign reference. The fixed interval holds cross-fitted rules fixed. "
+          "*s.e. / sd(err)* is mean bootstrap s.e. over the sd of (estimate − truth) across collections. "
+          "CI > 0 gives the number of positive lower bounds and an exact 95 % binomial interval. "
+          "CI < 0 gives the share of negative upper bounds. Both use the refit interval.", "",
           "| World | Estimate (× 1e-4) | Truth (× 1e-4) | Bias z | Refit: covers truth | Refit: covers procedure | "
           "Refit s.e. / sd(err) | Fixed: covers truth | Fixed s.e. / sd(err) | CI > 0 | CI < 0 | Truth > 0 | flip rate |",
           "|" + "---|" * 13]
@@ -412,8 +478,33 @@ def markdown(res: dict) -> str:
         L.append(f"| {wname} | {v['per_decision_mean'] * 1e4:+.3f} | {v['truth_mean'] * 1e4:+.3f} | {v['bias_z']:+.2f} | "
                  f"{_pc(v['cover_refit_truth'])} | {_pc(v['cover_refit_procedure'])} | {v['refit_se_over_sd_err']:.2f} | "
                  f"{_pc(v['cover_fixed_truth'])} | {v['fixed_se_over_sd_err']:.2f} | "
-                 f"{_pc(v['ci_above_0'])} | {_pc(v['ci_below_0'])} | {_pc(v['truth_above_0'])} | "
+                 f"{_binomial_interval(v['ci_above_0'])} | {_pc(v['ci_below_0'])} | {_pc(v['truth_above_0'])} | "
                  f"{v['flip_rate_mean']:.3f} |")
+    L += ["", "### N6 refit tail misses per decision", "",
+          "Below and above give the respective rates for the reference relative to the interval endpoints.", "",
+          "| World | Fitted truth below | Fitted truth above | Procedure below | Procedure above |",
+          "|---|---|---|---|---|"]
+    for wname in WORLD_ORDER:
+        v = res["fresh"][wname]["n6"]
+        fitted, proc = v["fitted_refit_tails"], v["procedure_refit_tails"]
+        L.append(f"| {wname} | {fitted['below']['p']:.3f} | {fitted['above']['p']:.3f} | "
+                 f"{proc['below']['p']:.3f} | {proc['above']['p']:.3f} |")
+    L += ["", "### N6 per-campaign coverage", "",
+          f"The sparse check draws {N_C} collections of {N_ROOTS} new {SPARSE_WORLD} roots at uniform "
+          f"inclusion probability {SPARSE_RATE:.2f} (instances {SPARSE_BASE}–{SPARSE_BASE + N_C * N_ROOTS - 1}). "
+          "All rows use the population reference in P. The sparse row exercises the per-root interval with many "
+          "zero-fork roots.", "",
+          "| World | Mean zero-fork roots | Refit: covers fitted truth | Refit: fitted below | Refit: fitted above | "
+          "Refit: covers procedure | Refit: procedure below | Refit: procedure above | Fixed: covers fitted truth |",
+          "|---|---|---|---|---|---|---|---|---|"]
+    campaign_rows = [(w, res["fresh"][w]["n6_campaign"]) for w in WORLD_ORDER]
+    campaign_rows.append((f"{SPARSE_WORLD} (sparse)", res["sparse"]["n6_campaign"]))
+    for wname, v in campaign_rows:
+        fitted, proc, fixed = v["fitted_refit"], v["procedure_refit"], v["fitted_fixed"]
+        L.append(f"| {wname} | {v['mean_zero_fork_roots']:.2f} | {_pc(fitted['covers'])} | "
+                 f"{fitted['truth_below']['p']:.3f} | {fitted['truth_above']['p']:.3f} | "
+                 f"{_pc(proc['covers'])} | {proc['truth_below']['p']:.3f} | {proc['truth_above']['p']:.3f} | "
+                 f"{_pc(fixed['covers'])} |")
     L += ["", "## Limitations", ""] + limitations(res) + [""]
     return "\n".join(L) + "\n"
 
@@ -480,16 +571,20 @@ def main(argv=None) -> Path:
                  for w in WORLD_ORDER}
         big = {w: pool.map(one_collection, [(w, s, N_ROOTS_BIG, C2_BASE, False) for s in range(N_C2)])
                for w in C2_WORLDS}
+        sparse = pool.map(sparse_collection, range(N_C))
     res = {"schema": "paperc_fork_validation/v2", "label": "ENGINEERING_ONLY", "code_sha256": code_sha256(),
            "constants": {"N_ROOTS": N_ROOTS, "N_A": N_A, "N_C": N_C, "N_OR": N_OR, "R_OR": R_OR, "OR_BASE": OR_BASE,
                          "N_DESIGN": N_DESIGN, "N_LEAK": N_LEAK, "N_POP": N_POP, "POP_BASE": POP_BASE,
                          "N_ROOTS_BIG": N_ROOTS_BIG, "N_C2": N_C2, "C2_BASE": C2_BASE, "B_TAU": B_TAU, "B_N6": B_N6,
-                         "Q_UNIFORM": Q_UNIFORM, "Q_OVERSAMPLE": Q_OVERSAMPLE, "BAND": BAND},
+                         "Q_UNIFORM": Q_UNIFORM, "Q_OVERSAMPLE": Q_OVERSAMPLE, "BAND": BAND,
+                         "SPARSE_WORLD": SPARSE_WORLD, "SPARSE_BASE": SPARSE_BASE, "SPARSE_RATE": SPARSE_RATE},
            "oracle": orc, "population": pops,
            "fresh": {k: summarise(k, v, pops[k]) for k, v in fresh.items()},
            "fresh_big": {k: summarise(k, v, pops[k]) for k, v in big.items()},
+           "sparse": {"n6_campaign": _campaign_coverage(sparse)},
            "raw": {"fresh": {k: [_raw(x) for x in v] for k, v in fresh.items()},
-                   "fresh_big": {k: [_raw(x) for x in v] for k, v in big.items()}},
+                   "fresh_big": {k: [_raw(x) for x in v] for k, v in big.items()},
+                   "sparse": [_raw(x) for x in sparse]},
            "seconds": round(time.time() - t0, 1)}
     OUT.write_text(json.dumps(_clean(res), indent=1, allow_nan=False) + "\n")
     REPORT.write_text(markdown(res))

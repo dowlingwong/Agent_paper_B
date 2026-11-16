@@ -364,7 +364,8 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
         nonlocal step
         decisions.append((epoch, action))
         if record and (fork is None or forked):
-            pol = cur
+            # The forced row carries the replayed behaviour state. The continuation acts after it.
+            pol = policy if forced else cur
             rows.append(S.Transition(
                 schema=S.SCHEMA,
                 identity=S.Identity(node=node, suite="E-SYN", tier="E-SYN", instance_id=f"{node}:{inst_seed}",
@@ -374,7 +375,7 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
                 env=env, policy=S.PolicyInfo(policy=pol.name, policy_sha=getattr(pol, "sha", None),
                                              action_prob=None if forced else prob,
                                              eps_seed=EPS_KEY if stochastic and fork is None else None,
-                                             continuation_policy_id=pol.name if fork is not None else None,
+                                             continuation_policy_id=fork.continuation.name if fork is not None else None,
                                              behaviour_action=b_act, behaviour_prob=b_prob),
                 seeds=seeds, state=st, action=S.Action(action=action, forced=forced, rule=rule, selected=selected),
                 outcome=outcome, provenance=prov, fork=fork.design if fork is not None else None))

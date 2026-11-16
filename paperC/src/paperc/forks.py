@@ -112,10 +112,10 @@ class Design:
     design_rep: int = 0          # redraws the selection uniforms (validation only)
 
     def __post_init__(self) -> None:
-        if not (0.0 <= self.q_uniform <= 1.0 and 0.0 <= self.q_oversample <= 1.0):
-            raise ForkError("inclusion rates must lie in [0, 1]")
-        if self.q_uniform == 0.0 and self.q_oversample == 0.0:
-            raise ForkError("at least one inclusion rate must be positive")
+        if not 0.0 < self.q_uniform <= 1.0:
+            raise ForkError("q_uniform must lie in (0, 1] for positive inclusion of every eligible decision")
+        if not 0.0 <= self.q_oversample <= 1.0:
+            raise ForkError("q_oversample must lie in [0, 1]")
         if self.band_e1 < 0 or self.band_e2 < 0:
             raise ForkError("bands must be non-negative")
 
@@ -350,15 +350,14 @@ def tau2_point(dbar: np.ndarray, se2: np.ndarray, w: np.ndarray) -> dict:
     return {"tau2": between - mse2, "between": between, "mean_se2": mse2, "mean": m, "n": n, "kish": k}
 
 
-def _boot_index(instances: np.ndarray, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
-    """One cluster-bootstrap draw: row indices and a copy id per row. N6 folds use the original root id instead
-    (``ft.instance[idx]``), so that every copy of a root lies in the root's fold."""
-    uniq = np.unique(instances)
-    pos = {u: np.flatnonzero(instances == u) for u in uniq}
-    draw = rng.choice(uniq, size=len(uniq), replace=True)
-    idx = np.concatenate([pos[u] for u in draw])
-    cl = np.concatenate([np.full(len(pos[u]), j) for j, u in enumerate(draw)])
-    return idx, cl
+def _boot_index(instances: np.ndarray, rng: np.random.Generator, *,
+                roots: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
+    """One cluster-bootstrap draw. Return the selected row indices and the sampled original root IDs."""
+    if roots is None:
+        roots = np.unique(instances)
+    pos = {u: np.flatnonzero(instances == u) for u in roots}
+    draw = rng.choice(roots, size=len(roots), replace=True)
+    return np.concatenate([pos[u] for u in draw]), draw
 
 
 def tau2(ft: ForkTable, target: str = "d", cont: int | None = None, *, epoch: str | None = None, B: int = 500,
@@ -428,17 +427,21 @@ def _assign_folds(instances: np.ndarray, folds: int, rng: np.random.Generator) -
 
 
 def n6_point(ft: ForkTable, rows: np.ndarray, clusters: np.ndarray, *, folds: int, alpha: float, min_train: int,
-             rng: np.random.Generator, qbar: np.ndarray) -> dict:
-    """Cross-fitted pi' on the forks ``rows``; its gain over the behaviour. ``clusters`` assigns folds: pass the
-    original root instance for every row (in the bootstrap, all copies of a root then share its fold)."""
-    fold_row = _assign_folds(clusters, folds, rng)
+             rng: np.random.Generator, qbar: np.ndarray, root_draw: np.ndarray | None = None) -> dict:
+    """Cross-fitted pi' on the forks ``rows``; its gain over the behaviour. Pass original root IDs in
+    ``clusters`` and the complete roster (including zero-fork roots and any bootstrap copies) in ``root_draw``.
+    Each root and all of its copies share one fold. With no roster, use the roots represented in the rows."""
+    if root_draw is None:
+        root_draw = np.unique(clusters)
+    root_folds = _assign_folds(root_draw, folds, rng)
+    fold_of = dict(zip(root_draw, root_folds))
+    fold_row = np.fromiter((fold_of[u] for u in clusters), dtype=int, count=len(rows))
+    fold_counts = np.bincount(root_folds, minlength=folds)
     act = np.zeros(len(rows), dtype=bool)
     fallback = 0
     models = {}
-    for k in range(folds):
+    for k in np.flatnonzero(fold_counts):
         te = fold_row == k
-        if not te.any():
-            continue
         tr = ~te
         for ep, is_e1 in (("E1", True), ("E2", False)):
             te_e = te & (ft.e1[rows] == is_e1)
@@ -458,7 +461,7 @@ def n6_point(ft: ForkTable, rows: np.ndarray, clusters: np.ndarray, *, folds: in
     gain = (act != b) * np.where(act, 1.0, -1.0) * qbar[rows]
     w = ft.w[rows]
     fold_w = {k: float(w[fold_row == k].sum()) for k in range(folds)}
-    fold_roots = {k: len(np.unique(clusters[fold_row == k])) for k in range(folds)}
+    fold_roots = {k: int(fold_counts[k]) for k in range(folds)}
     return {"per_decision": float((w * gain).sum() / w.sum()), "flip_rate": float((w * (act != b)).sum() / w.sum()),
             "gain_total": float((w * gain).sum()), "fallback": fallback, "act": act, "gain": gain,
             "fold_row": fold_row, "models": models, "fold_weight": fold_w, "fold_roots": fold_roots}
@@ -467,7 +470,8 @@ def n6_point(ft: ForkTable, rows: np.ndarray, clusters: np.ndarray, *, folds: in
 def rule_gain(fit: dict, features_by_epoch: dict, b_act_by_epoch: dict, q_by_epoch: dict) -> tuple[float, float]:
     """Population value of fitted cross-fitted rules (``fit`` from ``n6_point``) on evaluation states that none of
     them was trained on: (per eligible decision, weighting fold k by its held-out design weight W_k / W;
-    per root, weighting fold k by its share of roots, divided by the evaluation roots ``q_by_epoch['roots']``).
+    per root, weighting fold k by its share of the complete training roster, including roots without forks,
+    and dividing by the number of evaluation roots ``q_by_epoch['roots']``).
     ``features_by_epoch[ep]``: (n_ep, len(FEATURES[ep])) matrix; ``b_act_by_epoch[ep]``: behaviour acted;
     ``q_by_epoch[ep]``: the states' (oracle) total fork differences. A fold model that is None keeps the behaviour."""
     W = sum(fit["fold_weight"].values())
@@ -493,14 +497,18 @@ def n6_value(ft: ForkTable, *, folds: int = 5, alpha: float = 1.0, min_train: in
     """Cross-fitted value of the N6 improvement step over the behaviour policy (see the module docstring). Returns
     the point estimates, the refitting interval (``ci_refit_*``; primary, as ``ci_per_*``, when ``refit``), the
     fixed-decision interval (``ci_fixed_*``; ``ci_per_*`` only when ``refit`` is false, with ``ci_kind``) and the
-    fitted rules (``fit``) for population evaluation with ``rule_gain``."""
+    fitted rules (``fit``) for population evaluation with ``rule_gain``. Bootstrap draws sample all collected
+    roots. A draw with no selected forks contributes zero to the HT per-campaign interval. The per-decision
+    ratio is defined only for nonempty draws."""
     if len(ft) == 0:
         raise ForkError("no forks")
     qbar = ft.q.mean(axis=(1, 2))
     rng = np.random.default_rng([ANALYSIS_KEY, 2, *np.atleast_1d(seed)])
     rows = np.arange(len(ft))
-    est = n6_point(ft, rows, ft.instance, folds=folds, alpha=alpha, min_train=min_train, rng=rng, qbar=qbar)
-    n_roots = ft.n_roots
+    roots = np.array(sorted(ft.n_eligible))
+    est = n6_point(ft, rows, ft.instance, folds=folds, alpha=alpha, min_train=min_train, rng=rng, qbar=qbar,
+                   root_draw=roots)
+    n_roots = len(roots)
     out = {"per_decision": est["per_decision"], "per_campaign": est["gain_total"] / n_roots,
            "flip_rate": est["flip_rate"], "fallback_forks": est["fallback"], "n_forks": len(ft), "n_roots": n_roots,
            "folds": folds, "alpha": alpha, "fit": est}
@@ -508,19 +516,32 @@ def n6_value(ft: ForkTable, *, folds: int = 5, alpha: float = 1.0, min_train: in
         w, gain = ft.w, est["gain"]
         fd, fc, rd, rc = [], [], [], []
         for _ in range(B):
-            idx, _ = _boot_index(ft.instance, rng)
-            fd.append(float((w[idx] * gain[idx]).sum() / w[idx].sum()))
-            fc.append(float((w[idx] * gain[idx]).sum() / n_roots))
+            idx, draw = _boot_index(ft.instance, rng, roots=roots)
+            fixed_total = float((w[idx] * gain[idx]).sum())
+            fc.append(fixed_total / n_roots)
+            if not len(idx):
+                if refit:
+                    rc.append(0.0)
+                continue
+            fd.append(fixed_total / float(w[idx].sum()))
             if refit:
                 e = n6_point(ft, idx, ft.instance[idx], folds=folds, alpha=alpha, min_train=min_train, rng=rng,
-                             qbar=qbar)
+                             qbar=qbar, root_draw=draw)
                 rd.append(e["per_decision"])
                 rc.append(e["gain_total"] / n_roots)
-        q = lambda x: (float(np.quantile(x, 0.025)), float(np.quantile(x, 0.975)))     # noqa: E731
-        out["ci_fixed_per_decision"], out["ci_fixed_per_campaign"] = q(fd), q(fc)
+
+        def interval(draws):
+            if not draws:
+                return None
+            lo, hi = np.quantile(draws, [0.025, 0.975])
+            return float(lo), float(hi)
+
+        out["ci_fixed_per_decision"], out["ci_fixed_per_campaign"] = interval(fd), interval(fc)
         if refit:
-            out["ci_refit_per_decision"], out["ci_refit_per_campaign"] = q(rd), q(rc)
-            out["ci_per_decision"], out["ci_per_campaign"], out["ci_kind"] = q(rd), q(rc), "refit"
+            out["ci_refit_per_decision"], out["ci_refit_per_campaign"] = interval(rd), interval(rc)
+            out["ci_kind"] = "refit"
         else:
-            out["ci_per_decision"], out["ci_per_campaign"], out["ci_kind"] = q(fd), q(fc), "fixed"
+            out["ci_kind"] = "fixed"
+        out["ci_per_decision"] = out[f"ci_{out['ci_kind']}_per_decision"]
+        out["ci_per_campaign"] = out[f"ci_{out['ci_kind']}_per_campaign"]
     return out

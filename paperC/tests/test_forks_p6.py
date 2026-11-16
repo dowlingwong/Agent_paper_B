@@ -88,6 +88,8 @@ def test_fork_errors():
 # ---------------------------------------------------------------- design
 
 def test_selection_rule_and_design_weights():
+    with pytest.raises(F.ForkError, match="q_uniform"):
+        design("budget", q_uniform=0.0, q_oversample=0.5)
     w, beh = WORLDS["keep_feedback"], n1("keep_feedback")
     d = design("keep_feedback")
     root = sim.run_campaign(w, beh, 4, record=True)
@@ -226,6 +228,30 @@ def test_n6_fixed_decision_interval_covers_the_value_of_the_fitted_rules():
     assert cover / n >= 0.80                                         # anti-conservative by design (module docstring)
 
 
+
+def test_n6_per_campaign_bootstrap_includes_every_root():
+    full, _ = synthetic(n_roots=100, per_root=1)
+    ft = full.subset(np.arange(len(full)) < 10)
+    ft.p_select[:] = 0.1
+    ft.b_act[:] = False
+    ft.q[:] = 1.0
+
+    v = F.n6_value(ft, B=800, seed=4, min_train=1)
+    assert v["per_campaign"] == pytest.approx(1.0)
+    assert sum(v["fit"]["fold_roots"].values()) == 100
+    assert list(v["fit"]["fold_roots"].values()) == [20] * 5
+    for kind in ("fixed", "refit"):
+        lo, hi = v[f"ci_{kind}_per_campaign"]
+        assert 0.3 <= lo <= 0.7 and 1.4 <= hi <= 1.8
+
+    # With two selected roots out of 100, some complete draws have zero selected forks.
+    # Per-decision ratios condition on nonempty draws, while per-campaign totals include the zeros.
+    very_sparse = ft.subset(np.arange(len(ft)) < 2)
+    v = F.n6_value(very_sparse, B=800, seed=4, min_train=1, folds=2, refit=False)
+    assert v["ci_fixed_per_campaign"][0] == 0.0
+    assert v["ci_fixed_per_decision"] == (1.0, 1.0)
+
+
 # ---------------------------------------------------------------- epochs and HT denominators
 
 def test_per_epoch_statistics_and_subset_denominators():
@@ -307,8 +333,7 @@ def test_e2_fork_measurement_split():
 
 
 def test_privileged_forecasts_follow_the_acting_policy():
-    """Review P6 finding 6: a privileged continuation gets its bonus after the fork; a non-privileged continuation
-    under a privileged root writes no privileged forecast."""
+    """A forced E2 row retains behaviour provenance, then privilege follows the continuation policy."""
     w = WORLDS["interaction"]
     plain, oracle_m = n1("interaction"), EP.InteractionAware(n1("interaction").g, n1("interaction").h, 50.0)
     des = S.ForkDesign(selection_rule="uniform", q_uniform=1.0, q_oversample=0.0, near_threshold=False, uniform=True,
@@ -317,12 +342,17 @@ def test_privileged_forecasts_follow_the_acting_policy():
     for i in range(6):
         for root_pol, cont in ((plain, oracle_m), (oracle_m, plain)):
             root = sim.run_campaign(w, root_pol, i, record=True)
-            pts = [p for p in F.select_forks(w, i, root.rows, design("interaction"), select_all=True) if p.epoch == "E1"]
+            pts = [p for p in F.select_forks(w, i, root.rows, design("interaction"), select_all=True) if p.epoch == "E2"]
             if not pts:
                 continue
             res = sim.run_campaign(w, root_pol, i, record=True, fork=sim.ForkSpec(
-                trial=pts[0].trial, epoch="E1", arm="execute", continuation=cont, fork_id="fx", design=des))
-            has = [any(k.startswith(sim.PRIVILEGED_PREFIX) for k in r["state"]["forecasts"]) for r in res.rows
+                trial=pts[0].trial, epoch="E2", arm="keep", continuation=cont, fork_id="fx", design=des))
+            fork_row = res.rows[0]
+            assert fork_row["identity"]["epoch"] == "E2" and fork_row["action"]["forced"]
+            assert fork_row["state"] == root.rows[pts[0].step]["state"]
+            assert fork_row["policy"]["policy"] == root_pol.name
+            assert fork_row["policy"]["continuation_policy_id"] == cont.name
+            has = [any(k.startswith(sim.PRIVILEGED_PREFIX) for k in r["state"]["forecasts"]) for r in res.rows[1:]
                    if r["identity"]["epoch"] == "E2"]
             if cont is oracle_m:
                 seen_priv += sum(has)
