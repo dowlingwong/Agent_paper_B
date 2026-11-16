@@ -84,6 +84,10 @@ class OfflineBanditEnv(_Base):
     def __init__(self, rows: list[dict], *, split: str = "label", g_units: float = OE.G_PRIMARY,
                  rule_layer: bool = True, plugin: str = "greedy", tau_node: Mapping[str, float] | None = None,
                  order: str = "sequential", seed: int | None = None) -> None:
+        # Interactive rewards can be consumed by a learner or selector; this
+        # interface has no authenticated purpose separation for sweep evidence.
+        from r1.c3.evidence_boundary import refuse_unverified_sweep_rows
+        refuse_unverified_sweep_rows(rows, 'OfflineBanditEnv')
         if split not in SPLITS or plugin not in PLUGINS or order not in ("sequential", "random"):
             raise ValueError(f"split in {SPLITS}, plugin in {PLUGINS}, order sequential|random")
         if plugin == "greedy" and not tau_node:
