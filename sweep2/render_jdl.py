@@ -77,12 +77,16 @@ def main(argv=None) -> int:
     src = spec.get("label_source") or {}
     auth = src.get("authorization")
     if auth is not None:
+        if Path(auth).name != auth or "/" in auth or "\\" in auth:
+            raise lib.Stop("STOP: label_source.authorization must be a bare basename")
         if a.auth_note is None:
             raise lib.Stop("STOP: spec pins an authorization note; --auth-note is required to stage it")
         note = Path(a.auth_note)
         if not note.is_file():
             raise lib.Stop(f"STOP: authorization note {note} missing")
         shutil.copy2(note, stage / Path(auth).name)
+        src["authorization"] = Path(auth).name
+        spec["label_source"] = src
     (stage / "s2_c2_spec.json").write_text(json_dumps(spec))
     cwd = os.getcwd()
     try:

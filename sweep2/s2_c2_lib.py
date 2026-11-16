@@ -170,6 +170,8 @@ def validate_spec(spec: dict) -> dict:
     label = resolve_label(spec)
     if label == "EVIDENCE" and paper["evidence_ready"] is not True:
         raise Stop("STOP: EVIDENCE requires paper.evidence_ready = true (the S2-M2 integration commit on main)")
+    if label == "EVIDENCE" and not isinstance(req.get("cpu_model_contains"), str):
+        raise Stop("STOP: EVIDENCE requires requirements.cpu_model_contains (the CPU model measured by S2-C4)")
     return {"run_id": run_id, "label": label, "spec": spec}
 
 
@@ -412,7 +414,8 @@ def collector_argv(spec: dict, label: str, resume: bool) -> list[str]:
     argv = ["/opt/r1/envs/harness/bin/python", "-B", "-m", "r1.headroom.e1b_collect"]
     if resume:
         argv += ["--resume", str(Path("out").resolve())]
-    argv += ["--manager", "langgraph", "--roots-only", "--points", "--reps", "0", "--audit-seeds", "0",
+    deadline = max(600, int(spec["walltime_s"]) - 600)
+    argv += ["--deadline", str(deadline), "--manager", "langgraph", "--roots-only", "--points", "--reps", "0", "--audit-seeds", "0",
              "--nodes", c["node"], "--instances", str(c["instances"]), "--runs", "20",
              "--verify-split-policy", c["verify_split_policy"], "--new-campaign-versions",
              "--memory-mode", c["memory_mode"], "--transport-max-attempts", str(c["transport_max_attempts"]),
@@ -448,7 +451,7 @@ def run_job(spec_path: Path) -> dict:
               "image_digest": s["image"]["digest"], "model_sha256": s["model"]["sha256"],
               "paper_commit": s["paper"]["commit"], "harness_commit": s["harness"]["commit"],
               "manager_settings": {"temperature": "0.2 (D26 seed; manager-side config)",
-                                   "cache_prompt": "false (harness default; LLAMACACHE_PROMPT unset)",
+                                   "cache_prompt": "false (harness default; LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)",
                                    "thinking": "off (server chat-template-kwargs)",
                                    "kv_cache": "q8_0", "ctx": 16384},
               "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
@@ -468,6 +471,7 @@ def run_job(spec_path: Path) -> dict:
         env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()), AR_HARNESS_ROOT=str(harness_dir.resolve()),
                    LLAMACPP_BASE_URL=server["base_url"], OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
                    MKL_NUM_THREADS="1", PYTHONDONTWRITEBYTECODE="1")
+        env.pop("LLAMACPP_CACHE_PROMPT", None)
         env.pop("LLAMACACHE_PROMPT", None)
         started = time.time()
         res = subprocess.run(argv, cwd=str(paper_dir.resolve()), env=env, capture_output=True, text=True)
@@ -532,6 +536,12 @@ def seal(job_output: Path, run_id: str, chunk_id: str) -> dict:
         raise Stop("STOP: job record has no pinned image digest")
     if not isinstance(record.get("host"), dict) or not record["host"].get("fqdn"):
         raise Stop("STOP: job record has no host identity")
+    sums = src / "SHA256SUMS"
+    if not sums.is_file():
+        raise Stop("STOP: job output has no SHA256SUMS")
+    check = subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=str(src), capture_output=True, text=True)
+    if check.returncode != 0:
+        raise Stop(f"STOP: transferred SHA256SUMS verification failed: {check.stdout[-2000:]}{check.stderr[-2000:]}")
     target = _sealed_target(run_id, chunk_id)
     if target.exists():
         raise Stop(f"STOP: sealed target exists; no overwrite ({target})")

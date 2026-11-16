@@ -48,6 +48,7 @@ def test_evidence_requires_authorization_and_evidence_ready(tmp_path, monkeypatc
     with pytest.raises(lib.Stop, match="evidence_ready"):
         lib.validate_spec(s)
     s["paper"]["evidence_ready"] = True
+    s["requirements"]["cpu_model_contains"] = "Test CPU"
     assert lib.validate_spec(s)["label"] == "EVIDENCE"
 
 
@@ -110,7 +111,7 @@ def test_renderer_pins_container_l40s_cpu_class_and_transfers_outputs(tmp_path):
     assert 'TARGET.GPUs_DeviceName =?= "NVIDIA L40S"' in jdl
     assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in jdl
     assert f"Cpus >= {lib.MIN_CPUS}" in jdl and 'Arch == "X86_64"' in jdl and 'OpSys == "LINUX"' in jdl
-    assert 'regexp("^g36[0-9]{2}\ .nemo\ .privat$", TARGET.Machine)'.replace("\\ ", "\\") in jdl
+    assert 'regexp("^g36[0-9]{2}\\.nemo\\.privat$", TARGET.Machine)' in jdl
     assert "transfer_output_files = out,work,job_record.json,SHA256SUMS,llama-server.log" in jdl
     assert "request_disk = 50000000" in jdl and "request_memory = 128000" in jdl
     assert "ProvidesEtpCeph" not in jdl and "docker_image" not in jdl
@@ -121,6 +122,7 @@ def test_renderer_stages_authorization_note_for_evidence(tmp_path, monkeypatch):
     note = tmp_path / "c3_sweep2_20261116.md"
     note.write_text("run: s2eng-20261116-a\napproved: true\nlabel: EVIDENCE\n")
     s = spec(); s["paper"]["evidence_ready"] = True
+    s["requirements"]["cpu_model_contains"] = "Test CPU"
     s["label_source"] = {"authorization": "c3_sweep2_20261116.md",
                          "authorization_sha256": hashlib.sha256(note.read_bytes()).hexdigest()}
     spec_path = tmp_path / "spec.json"; spec_path.write_text(json.dumps(s))
@@ -211,3 +213,52 @@ def test_resume_pin_mismatch_is_a_stop(tmp_path):
                                   "harness_commit": s["harness"]["commit"]}))
     with pytest.raises(lib.Stop, match="resume pin mismatch"):
         lib._check_resume_record(s, record, "ENGINEERING_ONLY")
+
+
+def test_evidence_requires_the_cpu_model_pin(tmp_path, monkeypatch):
+    note = tmp_path / "a.md"
+    note.write_text("run: s2eng-20261116-a\napproved: true\nlabel: EVIDENCE\n")
+    monkeypatch.chdir(tmp_path)
+    s = spec(); s["paper"]["evidence_ready"] = True
+    s["requirements"]["cpu_model_contains"] = None
+    s["label_source"] = {"authorization": "a.md",
+                         "authorization_sha256": hashlib.sha256(note.read_bytes()).hexdigest()}
+    with pytest.raises(lib.Stop, match="cpu_model_contains"):
+        lib.validate_spec(s)
+    s["requirements"]["cpu_model_contains"] = "AMD EPYC"
+    assert lib.validate_spec(s)["label"] == "EVIDENCE"
+
+
+def test_collector_passes_the_walltime_deadline():
+    s = lib.validate_spec(spec())["spec"]
+    argv = lib.collector_argv(s, "ENGINEERING_ONLY", False)
+    assert "--deadline" in argv
+    assert int(argv[argv.index("--deadline") + 1]) == s["walltime_s"] - 600
+
+
+def test_renderer_refuses_absolute_authorization_path(tmp_path):
+    note = tmp_path / "a.md"; note.write_text("approved: true\nlabel: EVIDENCE\n")
+    s = spec(); s["label_source"] = {"authorization": str(note),
+                                     "authorization_sha256": hashlib.sha256(note.read_bytes()).hexdigest()}
+    sp = tmp_path / "spec.json"; sp.write_text(json.dumps(s))
+    with pytest.raises(lib.Stop, match="bare basename"):
+        render_jdl.main([str(sp), "--out", str(tmp_path / "x.jdl"),
+                         "--stage-dir", str(tmp_path / "stage"), "--auth-note", str(note)])
+
+
+def test_seal_verifies_transferred_sums_before_copy(tmp_path, monkeypatch):
+    src = tmp_path / "jobout"; (src / "out").mkdir(parents=True)
+    (src / "out" / "x.txt").write_text("hello")
+    (src / "job_record.json").write_text(json.dumps({"run_id": "r1", "chunk_id": "c1", "label": "ENGINEERING_ONLY",
+                                                     "image_digest": "ghcr.io/x@sha256:" + "0" * 64,
+                                                     "model_sha256": "1" * 64, "host": {"fqdn": "g3612.nemo.privat"}}))
+    (src / "SHA256SUMS").write_text("0" * 64 + "  out/x.txt\n")
+    monkeypatch.setattr(lib, "SEALED_ROOT", tmp_path / "sealed")
+    with pytest.raises(lib.Stop, match="SHA256SUMS verification failed"):
+        lib.seal(src, "r1", "c1")
+
+
+def test_job_entry_precreates_the_transferred_outputs():
+    text = (ROOT / "sweep2" / "s2_c2_job.sh").read_text()
+    for name in ("out", "work", "job_record.json", "SHA256SUMS", "llama-server.log"):
+        assert name in text
