@@ -29,6 +29,7 @@ It refuses the note otherwise, and it also refuses a note whose sha256 differs f
   S2-M2 integration. PLAN §10 rows take precedence over this note wherever they differ.
 - The rows used are:
   - R1-SWEEP2-SETTINGS (1)–(5) and R1-SWEEP-HOST-HTC;
+  - R1-SWEEP1-CLASSIFY (label from the authorization only);
   - R1-EXAM-X7;
   - R1-MAIN-PROPOSER (b), (c), (e), (g), as amended by R1-SWEEP2-SETTINGS;
   - R1-BX-D8, R1-BX-PROPOSED-CONFIRM and R1-BX-D8-V3-A;
@@ -67,9 +68,9 @@ phase: c3_sweep2
     constants).
   - CPU model: `INTEL(R) XEON(R) PLATINUM 8562Y+`, as measured on both S2-C4 hosts (`g3605`, `g3608`; job records
     `cpu.model`).
-  - The pilot did not require this model (`cpu.required_contains: null`). R1-SWEEP-HOST-HTC says the job requirements
-    fix the CPU model, so the S2-C2 fix units must add it to the requirements or to the in-job check:
-    `<accepted fix>`.
+  - **Enforcing it.** The wrapper's in-job check exists; its validator requires `cpu_model_contains` for EVIDENCE. What
+    is missing is the value in the job spec (the pilot had `null`) and, if the author wants it, a CPU term in the
+    HTCondor requirements (R1-SWEEP-HOST-HTC: "job requirements"): `<accepted fix>`.
   - One GPU model and one CPU class for the whole sweep-2 table. A job that lands elsewhere is a STOP.
   - Selection ran on a 4090 (B1/B2 on TASL-7) and deployment runs on the L40S. This is disclosed, and it is why the
     S2-C3 deployment check must pass first.
@@ -78,6 +79,8 @@ phase: c3_sweep2
 - **Harness.** `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` (`cacheprompt-20261031`, the B2 stack): an explicit
   `cache_prompt: false` on every request.
   - `r1/scripts/HARNESS_PIN_C3` on `main` @ `9ae6d877` carries this value.
+  - No PLAN row names `a3fedbb` as the sweep-2 pin. The value comes from the S2-C2 validator and from the author's
+    S2-M2 answer of 16 Nov, which put it into `HARNESS_PIN_C3`.
   - R1-MAIN-PROPOSER (c) requires a check that the harness defaults used by the sweep are unchanged:
     `<check, report, review>`.
 - **Image (S2-C1).**
@@ -95,15 +98,18 @@ phase: c3_sweep2
     `a04a0346ca887c27998b5f46f4e3d67fa05126ff3af9e0c20fe78d030c1fdc61`.
   - The job checks the GGUF SHA-256 after fetching it.
 - **Server: the selection exam's arguments** (R1-SWEEP2-SETTINGS (1)).
-  - The arguments are those of the exam launcher (`r1/exam/runtime.py` `EXAM_SERVER_ARGS` and the 32,768 / 999 check;
-    `r1/scripts/llama_server_instance.py` `argv` and `thinking_args`). They are `-ngl 999`, `-c 32768`, `-np 1`,
-    `--jinja`, `--cache-type-k q8_0`, `--cache-type-v q8_0`, and `--chat-template-kwargs {"enable_thinking":false}`.
-  - One owned `llama-server` per job, on `127.0.0.1` with its own port and alias.
+  - **The exam's argv.** From `r1/scripts/llama_server_instance.py` `argv` and `thinking_args`, and from
+    `r1/exam/runtime.py` `EXAM_SERVER_ARGS` and its 32,768 / 999 check:
+    `-m <model> --host 127.0.0.1 --port <p> -ngl 999 -c 32768 --alias <id> -np 1 --jinja --cache-type-k q8_0
+    --cache-type-v q8_0 -lv 4 --chat-template-kwargs {"enable_thinking":false}`.
+  - **Numeric values for sweep 2:** context 32,768, `-ngl 999`, `-np 1` (one slot), q8_0 K and V cache, `--jinja`,
+    thinking off, and `cache_prompt: false` on every call (`LLAMACPP_CACHE_PROMPT` and `LLAMACACHE_PROMPT` unset).
+  - One owned `llama-server` per job, bound to `127.0.0.1`, with log level `-lv 4` and alias `gemma4_31b`. The S2-C2
+    wrapper already passes these three as the exam does.
   - Temperature 0.2 with the D26 seed (`manager_seed(campaign_id, budget_index, repetition, revision_attempt)`).
-  - `cache_prompt: false` on every call; `LLAMACPP_CACHE_PROMPT` and `LLAMACACHE_PROMPT` unset.
-  - Non-numeric differences from the exam are disclosed (R1-SWEEP2-SETTINGS (1)). They are the log level (the exam
-    used `-lv 4`), `--no-webui` if the wrapper keeps it, and the port, alias and host binding:
-    `<list from the accepted S2-C2 fix>`.
+  - **Disclosed non-numeric differences from the exam** (R1-SWEEP2-SETTINGS (1)): the port and model path; the order
+    of the arguments; the JSON spacing of the thinking switch (S2-C2 `{"enable_thinking": false}` against the exam's
+    `{"enable_thinking":false}`); and `--no-webui`, if kept. Final list: `<from the accepted fix A>`.
 - **Design: the same as sweep 1** (R1-MAIN-PROPOSER (b); config `r1/scripts/configs/c3_sweep_deepthought.json` as on
   `main` / `ccb4712`, SHA-256 `2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b`, for the design
   values only).
@@ -124,17 +130,25 @@ phase: c3_sweep2
   - Not waived. This needs an S2-C2 fix (precondition 2c).
 - **Job layout** (S2-C4, measured at context 16,384).
   - One job is one (node, memory mode) chunk of root campaigns: **16 jobs**.
-  - `request_gpus 1`, `request_cpus 16`, workers 16; `request_memory 32,000` MB (peak about 10.9 GB);
-    `request_disk 42,439,718` kB (peak 30,314,084 kB × 1.4); `+RequestWalltime 10,776` s.
-  - `footprint_mib` = model buffer 18,675.55 + KV buffer `<re-measured at 32,768; 680.0 MiB at 16,384>`.
+  - `request_gpus 1`, `request_cpus 16`, workers 16; `request_memory 32,000` MB (measured peaks 10,781 and 10,853 MB);
+    `request_disk 42,439,718` kB (peak 30,314,084 kB × 1.4); `+RequestWalltime 10,776` s. These are the S2-C4
+    proposals. `render_jdl.py` currently writes `request_memory = 128000` and `request_disk = 50000000` (precondition
+    2e).
+  - `footprint_mib` = model buffer 18,675.55 MiB + KV buffers + compute buffer, `<re-measured at 32,768 with -np 1>`.
+    At 16,384 without `-np 1`, the job records show two KV buffers, 680.00 and 1,912.50 MiB, and a 255.80 MiB compute
+    buffer. S2-C4's results file lists only the first KV buffer (its parser keeps the first match).
   - The GGUF is fetched once per chunk: 16 × 19.6 GB ≈ 314 GB of HF egress (disclosed; an image-side model cache is a
     later author decision).
   - Resumable only by the collector's A.5 resume and the wrapper's resume pin check. No ad-hoc retries.
-- **Provisional estimate** (S2-C4, at 16,384).
-  - Pilot wall at most 921 s for 2 instances, so a full chunk of 18 instances is estimated at 8,289 s.
-  - 16 chunks come to **36.84 GPU-h**. With all 16 jobs running at once the wall is about one chunk plus queue wait
-    (16 s in the pilot); serial worst case about 36.8 h.
-  - `<re-check at 32,768 in S2-C3>`.
+- **Provisional estimate** (S2-C4, at 16,384). **Not yet usable** (note 1).
+  - Measured: pilot wall at most 921 s for 2 instances. S2-C4 estimates a full chunk of 18 instances at 8,289 s, and
+    36.84 GPU-h for the 16 chunks.
+  - Derived here: with all 16 jobs running at once the wall is about one chunk plus queue wait (16 s in the pilot);
+    the serial worst case is about 36.8 h.
+  - In both pilot job records every visible in-campaign worker run ended in ≤ 0.1 s with `success=False metrics={}`.
+    The collector took only 121–137 s of the 867–921 s wall. The estimate may therefore contain no real training time.
+  - The estimate must come from a re-measurement at the sweep-2 settings (32,768, `-np 1`), in which worker runs
+    succeed and the gates pass: `<report, review>`.
   - **STOP for the author** if a projection of this kind exceeds **60 GPU-h** or **48 h wall** (R1-SWEEP2-SETTINGS (5),
     replacing (h)'s "4 days on one 4090").
 
@@ -145,10 +159,13 @@ phase: c3_sweep2
    - a. the exam's server arguments at 32,768 (above), replacing the validator's 16,384 / `-ngl 99`;
    - b. the noise-source binding (`--e1-summary` and `noise_source`);
    - c. the restored liveness and collection gates;
-   - d. the CPU-model requirement.
+   - d. the CPU-model value in the spec (and, if wanted, in the HTCondor requirements);
+   - e. the remaining hard-coded pilot values: `render_jdl.py`'s requests, and the job record's `ctx` 16384 and
+     `output_use: ENGINEERING…`.
 3. **The (g)4 liveness unit** (R1-SWEEP2-SETTINGS (4)). D28 liveness of the pick on all eight nodes on NEMO2 L40S, with
    prompt lengths re-measured with the pick's tokenizer. Passed: `<report, review>`.
-4. **S2-C3 L40S deployment check** at the settings above (32,768), passed: `<report, review>`.
+4. **S2-C3 L40S deployment check** at the settings above (32,768, `-np 1`), passed, with in-campaign worker runs
+   succeeding: `<report, review>`. It also gives the re-measured footprint and estimate (note 1).
 5. **S2-C5 real-submission switch** accepted. It includes the seal step comparing image digest and host with the
    values authorized here: `<review>`.
 6. **R1-MAIN-PROPOSER (g)2** (R1-SWEEP2-SETTINGS (3)). No exception for now. The order is e1 environment replay
@@ -164,7 +181,8 @@ phase: c3_sweep2
   `SHA256SUMS`, `llama-server.log`). The seal step (`sweep2/s2_c2_lib.py seal`) copies them into
   `/ceph/srv/dwong/paperb/sweep2/<run_id>/<chunk_id>/`.
   - It refuses `..`, symlinks and overwrites, and writes `SHA256SUMS` and `SEAL_RECEIPT.json`.
-  - It compares the image digest and host with this note (precondition 5).
+  - With S2-C5 (precondition 5) it will also compare the image digest and host with this note. The accepted S2-C2
+    seal checks only that they are recorded.
 - No sweep-2 label table is copied back for analysis, or read by any analysis code, before the author row
   **R1-BX-D8-CONFIRM** exists. R1-BX-D8-V3-A keeps this lock.
   - The lock is the PLAN-line guard of the analysis readers (`analysis_guard.guard_table` /
@@ -185,8 +203,8 @@ R1-SWEEP2-SETTINGS (1)):
 - the harness pin `6adf385` against `a3fedbb`;
 - the paper commit;
 - the image;
-- the C3 premises that differ by proposer (X.7(c) appendix, `mac-s2-m5-x7c-20261116`): the duplicate / no-op skip
-  bound and the B1 μ̂ ordering, as in the cross-proposer disclosure paragraph.
+- the C3 premises that differ by proposer, Q1 (duplicate / no-op skip bound) and Q2 (increment dispersion), from the
+  X.7(c) appendix (`mac-s2-m5-x7c-20261116`).
 
 **From the selection exam** (B1/B2 on TASL-7):
 - GPU 4090 against L40S;
@@ -194,13 +212,15 @@ R1-SWEEP2-SETTINGS (1)):
 - the llama-server binary: the same llama.cpp commit `620d222`, but the exam binary `b70f4882…` ("build 1") against
   the image's `f8d35fd3…` ("build 11669");
 - the non-numeric server arguments listed above;
-- instances and audit seeds: exam 9001+/9101+/9201+ against the sweep-1 instance seeds;
+- instance seeds: exam 9001+ (B1) and 9011+ (B2) against the sweep-1 instance seeds; exam audit seeds 9101+ (B1)
+  and 9201+ (B2), whereas this note runs no audits;
 - paper commit `37282ec3…` against the launch commit;
 - harness: identical (`a3fedbb`).
 
 ## Boundaries and STOPs
 
-**Scope.** This authorization covers the sweep-2 label collection (B.1b) only. It does not cover:
+**Scope.** This authorization covers the sweep-2 label collection (B.1b) only. The collector runs with
+`--audit-seeds 0`, and seeds 7001–7010 stay reserved for the B.2 addendum. It does not cover:
 - B.2 audits: sweep-2 B.2 is authorized later by an addendum (R1-SWEEP2-SETTINGS (2)), and R1-B2-DECOUPLE and
   R1-B2-REPLAY-GO stand;
 - sweep-1 B.2;
@@ -215,7 +235,8 @@ R1-SWEEP2-SETTINGS (1)):
 - a required PLAN row, precondition or authorization missing or different;
 - a job on a GPU other than L40S, or on a CPU other than the pinned model;
 - a GGUF SHA-256 mismatch;
-- server arguments or `cache_prompt` differing from the values above;
+- server arguments or `cache_prompt` differing from the values above, other than the disclosed non-numeric
+  differences;
 - an image identity mismatch;
 - a resume pin mismatch;
 - incomplete offload or OOM;
@@ -231,19 +252,24 @@ Preserve completed outputs and every attempt (never delete, never overwrite), an
 
 ## Notes for the author (not part of the note)
 
-1. **Values measured at 16,384.** The S2-C4 values were measured at context 16,384:
-   - the KV buffer was 680.0 MiB;
-   - the wall per chunk was estimated at 8,289 s;
-   - the total at 36.84 GPU-h.
-
-   At 32,768 the KV buffer grows, roughly doubling for q8_0. The per-request time may change with longer contexts.
-   S2-C3 or a short re-pilot at 32,768 should confirm the footprint and the estimate before they are written into the
-   note.
+1. **The S2-C4 measurements are not yet a basis for the note.**
+   - **Worker runs.** In both pilot job records, every visible in-campaign worker run (`python3 train.py`) ended in
+     ≤ 0.1 s with `success=False metrics={}`. The collector took 121–137 s of an 867–921 s wall.
+     - Only the log tails are in the repo; the sealed outputs were not read.
+     - If all worker runs failed, the 8,289 s and 36.84 GPU-h contain no training time. This may point to a wrapper
+       or container defect.
+     - The cluster side should check this before any further use of the numbers. The accepted S2-C4 review does not
+       mention it.
+   - **Settings.** The pilot ran at 16,384 without `-np 1`, so the KV layout differs from the sweep-2 settings. The
+     records show two KV buffers (680.00 and 1,912.50 MiB) and a 255.80 MiB compute buffer.
+   - **One slot.** With `-np 1` the 16 workers' requests are served by one slot, which can lengthen the wall.
+   - **Re-measure.** Footprint, walltime and estimate should be re-measured at 32,768 with `-np 1`, with successful
+     worker runs.
 2. **Placeholders and the unit that fills each one.**
    - S2-C1: image digest approval.
-   - S2-C2 fix units 2a–2d: non-numeric argument list; CPU requirement.
+   - S2-C2 fix units 2a–2e: non-numeric argument list; CPU value and requirement; requests.
    - (g)4 unit: liveness report.
-   - S2-C3: deployment check and the 32,768 re-measurement.
+   - S2-C3 (or a re-pilot): deployment check and the re-measurement at 32,768 with `-np 1` and successful worker runs.
    - S2-C5: seal check and run id.
    - The author: the launch commit, (g)2 status and the harness-defaults check.
 3. **What changed from the first draft.**
