@@ -7,7 +7,7 @@ deepthought2 portal L40S do not match the pinned `CloudSite=Nemo2, GPUs_DeviceNa
 Cpus>=16, CpuFamily=6, CpuModelNumber=207` requirements). When the nodes return the jobs run themselves; the
 operator then:
 
-## S2-C3 (3 jobs; driver `s2c3-driver-fix-20261116` @ `e96ff11b`)
+## S2-C3 (3 jobs; driver `s2c3-driver-fix-20261116` @ `52e023e6`)
 
 1. Check each job ended rc 0 and its output dir has `out.tar`, `work.tar`, `job_record.json`, `SHA256SUMS`,
    `llama-server.log` (the pre-created placeholders are overwritten on success; a STOP keeps a `stop` record and
