@@ -45,9 +45,29 @@ def test_template_with_placeholders_is_refused():
     assert g._confirmation_commit(PLAN_HEAD + template + '\n', sha) is None
 
 
-def test_decision_row_draft_is_not_a_confirmation():
+def _fenced_blocks(text):
+    return re.findall(r'^```\n(.*?)\n```$', text, re.M | re.S)
+
+
+def test_fences_are_what_keep_the_draft_rows_inert():
     text = DRAFT.read_text(encoding='utf-8')
-    assert re.search(r'^\| R1-BX-D8-V3 \| ', text, re.M)
     sha = hashlib.sha256(GATE.read_bytes()).hexdigest()
-    # Every candidate row in the draft is inside a fenced block, so the draft text itself confirms nothing.
-    assert g._confirmation_commit('## 10. Author decisions\n### 16 November 2026 (author)\n' + text, sha) is None
+    blocks = [b for b in _fenced_blocks(text) if b.startswith('| R1-BX-D8-CONFIRM | ')]
+    assert len(blocks) == 2
+    path_a = blocks[0]
+    commit = re.search(r'@ `([0-9a-f]{40})`', path_a).group(1)
+    # Fenced exactly as in the draft, directly under a valid author table header: refused.
+    assert g._confirmation_commit(PLAN_HEAD + '```\n' + path_a + '\n```\n', sha) is None
+    # The same block without its fence: accepted, so the fence (not a wording slip) is what keeps it inert.
+    assert g._confirmation_commit(PLAN_HEAD + path_a + '\n', sha) == commit
+    # The whole draft under the header, with its own headings stripped so that it stays in section 10: refused.
+    body = '\n'.join(line for line in text.splitlines() if not line.startswith('#'))
+    assert g._confirmation_commit(PLAN_HEAD + body + '\n', sha) is None
+
+
+def test_decision_row_draft_is_present_and_not_a_confirmation_row():
+    text = DRAFT.read_text(encoding='utf-8')
+    rows = re.findall(r'^\| R1-BX-D8-V3 \| .* \|$', text, re.M)
+    assert len(rows) == 1
+    sha = hashlib.sha256(GATE.read_bytes()).hexdigest()
+    assert g._confirmation_commit(PLAN_HEAD + rows[0] + '\n', sha) is None
