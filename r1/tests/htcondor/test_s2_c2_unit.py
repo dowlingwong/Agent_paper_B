@@ -279,3 +279,12 @@ def test_empty_placeholder_job_record_is_a_fresh_run(tmp_path):
 def test_server_build_line_parse():
     assert lib._parse_build("version: 0.7.0-dev (build 11669, commit 620d2225c)") == "0.7.0-dev (build 11669, commit 620d2225c)"
     assert lib._parse_build("no version here") == ""
+
+
+def test_engineering_run_declares_no_b2_audits():
+    s = lib.validate_spec(spec())["spec"]
+    argv = lib.collector_argv(s, "ENGINEERING_ONLY", False)
+    assert "--audit-seeds 0" in " ".join(argv)
+    joined = " ".join(argv)
+    assert "b2_audits" in joined and "audit_seeds" not in joined
+    assert "no B.2 audits" in joined and "reserved and untouched" in joined

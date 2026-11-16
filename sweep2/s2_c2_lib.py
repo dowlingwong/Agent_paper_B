@@ -441,8 +441,9 @@ def collector_argv(spec: dict, label: str, resume: bool) -> list[str]:
     extra = {"c3_label_sweep": {"schema": "r1.c3_label_sweep/1", "memory_mode": c["memory_mode"],
                                 "arm_role": "contrast" if c["memory_mode"] == "none" else "primary",
                                 "label": label, "s2_c2": True, "backend": "llamacpp",
-                                "audit": "pending (r1/c3/audit.py)", "audit_seeds": [7001, 7002, 7003, 7004,
-                                7005, 7006, 7007, 7008, 7009, 7010]}}
+                                "audit": "none (ENGINEERING run: no B.2 audits; audit seeds 7001-7010 are "
+                                         "reserved and untouched)",
+                                "b2_audits": "none"}}
     argv = ["/opt/r1/envs/harness/bin/python", "-B", "-m", "r1.headroom.e1b_collect"]
     if resume:
         argv += ["--resume", str(Path("out").resolve())]
@@ -496,6 +497,9 @@ def run_job(spec_path: Path) -> dict:
               "resume": resume, "label_rule": "authorization note only; index labels refused",
               "image_digest": s["image"]["digest"], "model_sha256": s["model"]["sha256"],
               "paper_commit": s["paper"]["commit"], "harness_commit": s["harness"]["commit"],
+              "b2_audits": "none (no B.2 audits; audit seeds 7001-7010 untouched)",
+              "output_use": "ENGINEERING: never enters a label table, training or selection; disclose in the "
+                            "sweep-2 report as an engineering run (like the 19 Oct pilot)",
               "manager_settings": {"temperature": "0.2 (D26 seed; manager-side config)",
                                    "cache_prompt": "false (harness default; LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)",
                                    "thinking": "off (server chat-template-kwargs)",
