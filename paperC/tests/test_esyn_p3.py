@@ -132,7 +132,7 @@ def _replay(w, pol, inst):
         if ep == "E1" and act == "execute":
             t = int(st["candidate_hash"][1:])
             p = props[t]
-            size = sim._size(w, p, d)
+            size = sim._size(w, p, d.stream)
             delta = size * (WD.theta(b, w.regime, d.tab, p.key, t, []) - p.off) + b.sigma_eta * d.stream.eta[t]
             kidx = p.key - (w.llm_cap + 2) if b.n_keys > 0 else None
             if M and kidx not in kept:

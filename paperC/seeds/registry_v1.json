@@ -546,6 +546,20 @@
       "phase": "P4",
       "use": "per-decision uniforms of stochastic E-SYN policies: SeedSequence([60002, world code, i, step]); logged as eps_seed so that check_campaign replays the policy.",
       "value": 60002
+    },
+    {
+      "block": "paperc_rng_keys",
+      "name": "esyn_fork_design",
+      "phase": "P6",
+      "use": "E-SYN fork design: SeedSequence([60003, 0, world code, i, trial, epoch code, design_rep]) selection uniforms; [60003, 1, ..., continuation index, replicate] continuation proposals (shared by the arms); [60003, 2, ..., continuation index, replicate, arm code] continuation measurements.",
+      "value": 60003
+    },
+    {
+      "block": "paperc_train_seeds",
+      "name": "analysis_resampling",
+      "phase": "P6",
+      "use": "analysis randomness: numpy default_rng([61001, purpose, ...]) for cluster bootstraps (purpose 1: tau^2, 2: N6) and cross-fitting folds; not a node or worker seed.",
+      "value": 61001
     }
   ],
   "paper_c_roles": {

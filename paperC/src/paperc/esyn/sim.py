@@ -36,6 +36,29 @@ the true matrix M (sum of M[j][k] over keys k not yet in the incumbent; 0 once j
 non-oracle baselines must exclude ``privileged:*`` forecasts (``PRIVILEGED_PREFIX``); a test checks that no
 non-privileged policy's rows carry one.
 
+**Fork continuations** (build runbook P6; plan §6 SPT-3; ``ForkSpec``). ``run_campaign(..., fork=ForkSpec(...))``
+replays the root campaign under its behaviour policy up to the fork point (trial t_f, epoch E1 or E2), forces the
+arm there (a ``forced`` row, ``rule = "fork_arm"``, no propensity, ``behaviour_action`` / ``behaviour_prob`` logged),
+and runs the rest under the declared continuation policy (deterministic policies only). Randomness after the fork
+follows Track S's convention (``worlds.proposal_sequence``: the root stream up to the fork trial, then the
+continuation's own stream; ``r1/tracks/collect.py`` ``run_leaf``: the proposer seed depends on the replicate, not on
+the arm):
+
+* proposals, sizes and proposal effects (eta) of trials t > t_f come from a continuation stream keyed by
+  (fork point, continuation policy, replicate) and **shared by the arms** (common random numbers, as Track S's
+  per-replicate manager seed);
+* every measurement made after the fork decision (the E1 execute arm's measurement and verifies at t_f, re-audits
+  from t_f on, every later measurement, the terminal audits) comes from a stream keyed additionally by the arm
+  (independent worker noise per arm);
+* everything up to the fork decision is the root's, so the fork's first row reproduces the root's state.
+
+Keys: ``SeedSequence([60003, 1, world code, i, t_f, epoch code, continuation index, replicate])`` (proposals) and
+``[60003, 2, ..., arm code]`` (measurements); sub-key 0 is the fork selection (``paperc.forks``); key 60003 is claimed
+in the seed registry. Recorded fork rows (from the forced row on) carry ``branch_path =
+["<fork_id>:<arm>:c<continuation index>:r<replicate>"]``, the root's campaign id, ``fork_id``, the fork design and
+``policy.continuation_policy_id``. ``CampaignResult.immediate`` is the true increment of the forked candidate if it is
+kept at t_f (the E1 execute arm's own E2, or the E2 keep arm), else 0: Track S's ``immediate`` without audit noise.
+
 Campaign value: Y = true value of the final configuration minus y0 (no audit noise), as Track S's ``y_true``. The
 recorded ``Terminal`` adds audit noise sigma_audit per audit seed.
 
@@ -71,6 +94,10 @@ DECOMP_BASE = 3_000_000
 MAX_RECORDED = 10_000
 PRIVILEGED_PREFIX = "privileged:"
 EPS_KEY = 60_002            # stochastic policies: per-decision uniforms (claimed in the seed registry)
+FORK_KEY = 60_003           # fork design: selection (sub-key 0), continuation proposals (1), measurements (2)
+EPOCH_CODE = {"E1": 1, "E2": 2}
+ARM_CODE = {"execute": 1, "skip": 2, "keep": 3, "discard": 4}
+FORK_ARMS = {"E1": ("execute", "skip"), "E2": ("keep", "discard")}
 _PHI_INV = NormalDist().inv_cdf
 _PHI = NormalDist().cdf
 
@@ -147,10 +174,56 @@ class Draws:
         self.z_start = rng.standard_normal(world.n_audit)
 
 
-def _size(world: ESynWorld, p: WD.Proposal, draws: Draws) -> float:
+@dataclass(frozen=True)
+class ForkSpec:
+    """One fork continuation: force ``arm`` at the ``epoch`` decision of trial ``trial`` and continue under
+    ``continuation`` (replicate ``replicate`` of continuation policy number ``cont_index``)."""
+    trial: int
+    epoch: str
+    arm: str
+    continuation: object
+    cont_index: int = 0
+    replicate: int = 1
+    fork_id: str | None = None
+    design: S.ForkDesign | None = None
+
+    def __post_init__(self) -> None:
+        if self.epoch not in FORK_ARMS or self.arm not in FORK_ARMS[self.epoch]:
+            raise ValueError(f"fork arm {self.arm!r} not allowed at {self.epoch!r}")
+        if self.replicate < 1 or self.cont_index < 0 or self.trial < 2:
+            raise ValueError("fork: replicate >= 1, cont_index >= 0, trial >= 2 (trial 1 is rule-forced)")
+        if getattr(self.continuation, "stochastic", False):
+            raise ValueError("fork continuations use deterministic policies")
+
+    @property
+    def branch(self) -> str:
+        return f"{self.fork_id}:{self.arm}:c{self.cont_index}:r{self.replicate}"
+
+
+def fork_seed(world: ESynWorld, instance: int, trial: int, epoch: str, sub: int, *rest: int) -> np.random.SeedSequence:
+    return np.random.SeedSequence([FORK_KEY, int(sub), world.code, int(instance), int(trial), EPOCH_CODE[epoch],
+                                   *(int(x) for x in rest)])
+
+
+class ForkDraws:
+    """Randomness after a fork decision (see the module docstring)."""
+
+    def __init__(self, world: ESynWorld, instance: int, f: ForkSpec):
+        n = world.llm_cap
+        ss = fork_seed(world, instance, f.trial, f.epoch, 1, f.cont_index, f.replicate)
+        self.stream = WD.Stream(int.from_bytes(ss.generate_state(4, dtype=np.uint32).tobytes(), "little"), n)
+        rng = np.random.default_rng(fork_seed(world, instance, f.trial, f.epoch, 2, f.cont_index, f.replicate,
+                                              ARM_CODE[f.arm]))
+        self.eps = rng.standard_normal(n + 2)
+        self.eps_v = rng.standard_normal((n + 2, world.max_obs))
+        self.eps_r = rng.standard_normal((n + 2, world.max_obs))
+        self.z_audit = rng.standard_normal(world.n_audit)
+
+
+def _size(world: ESynWorld, p: WD.Proposal, stream: WD.Stream) -> float:
     if not world.sizes or p.kind != "filler":
         return p.size
-    u = _PHI(float(draws.stream.z_size[p.t]))
+    u = _PHI(float(stream.z_size[p.t]))
     acc = 0.0
     for s, q in zip(world.sizes, world.size_probs):
         acc += q
@@ -175,20 +248,41 @@ class CampaignResult:
     end_reason: str
     decisions: list = field(default_factory=list)
     rows: list = field(default_factory=list)
+    immediate: float | None = None      # fork continuations: the forked candidate's true increment if kept, else 0
+    fork_step: int | None = None        # fork continuations: step index of the forced row
 
 
 # ---------------------------------------------------------------- the campaign
 
 def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: bool = False,
-                 label: str = "ENGINEERING_ONLY", phase: str = "P3", trace: list | None = None) -> CampaignResult:
-    """One campaign. ``trace`` (tests): receives one dict per executed proposal with the true quantities."""
+                 label: str = "ENGINEERING_ONLY", phase: str = "P3", trace: list | None = None,
+                 fork: ForkSpec | None = None) -> CampaignResult:
+    """One campaign, or one fork continuation of it (``fork``; ``policy`` is then the root's behaviour policy).
+    ``trace`` (tests): receives one dict per executed proposal with the true quantities."""
     w, base = world, world.base
     if record and not 0 <= int(instance) < MAX_RECORDED:
         raise ValueError(f"recorded campaigns use instances 0 .. {MAX_RECORDED - 1} (seed blocks)")
+    if fork is not None and record and (fork.design is None or not fork.fork_id or ":" in fork.fork_id):
+        raise ValueError("recorded fork continuations need a design and a fork_id without ':'")
     privileged = bool(getattr(policy, "privileged", False))
     stochastic = bool(getattr(policy, "stochastic", False))
+    cur = policy
+    forked = False
+    immediate = 0.0 if fork is not None else None
+    fork_step = None
     d = Draws(w, instance)
-    props = WD.proposal_sequence(base, w.regime, d.tab, d.stream)
+    fd = ForkDraws(w, instance, fork) if fork is not None else None
+    tf = fork.trial if fork is not None else None
+    props = WD.proposal_sequence(base, w.regime, d.tab, d.stream if fd is None else [(1, d.stream), (tf + 1, fd.stream)])
+
+    def pstream(t: int) -> WD.Stream:          # proposal-side draws of trial t
+        return fd.stream if fd is not None and t > tf else d.stream
+
+    def after_e1(t: int) -> bool:              # a measurement of trial t before its E2 comes after the fork decision
+        return fd is not None and (t > tf or (t == tf and fork.epoch == "E1"))
+
+    def after_e2(t: int) -> bool:              # a measurement of trial t after its E2 comes after the fork decision
+        return fd is not None and t >= tf
     cap, W = w.llm_cap, w.W
     sig_m = w.sigma_meas
     config = w.comparison == "config"
@@ -247,24 +341,38 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
         if forced_rule is not None:
             return forced_action, 1.0, None, forced_rule
         ob = obs_from_state(epoch, st, env) if record else ob
-        if stochastic:
+        if stochastic and not forked:
             ob["u"] = decision_uniform(w.code, instance, step)
-        a, p, sel = policy.act(ob)
+        a, p, sel = cur.act(ob)
         return a, p, sel, "policy"
 
-    def emit(epoch, st, action, prob, rule, outcome, selected=None):
+    def fork_here(epoch, t, st, ob, rule_forced):
+        """At the fork point: the behaviour's own decision (logged), then the forced arm; switch policies."""
+        nonlocal forked, cur, fork_step
+        if rule_forced:
+            raise ValueError(f"fork point trial {t} {epoch} is rule-forced, not eligible")
+        b_act, b_prob, _, _ = decide(epoch, st, ob)
+        forked, cur, fork_step = True, fork.continuation, step
+        return b_act, b_prob
+
+    def emit(epoch, st, action, prob, rule, outcome, selected=None, forced=False, b_act=None, b_prob=None):
         nonlocal step
         decisions.append((epoch, action))
-        if record:
+        if record and (fork is None or forked):
+            pol = cur
             rows.append(S.Transition(
                 schema=S.SCHEMA,
                 identity=S.Identity(node=node, suite="E-SYN", tier="E-SYN", instance_id=f"{node}:{inst_seed}",
-                                    campaign_id=camp_id, step_index=step, epoch=epoch, branch_path=[],
-                                    root_id=camp_id, fork_id=None),
-                env=env, policy=S.PolicyInfo(policy=policy.name, policy_sha=getattr(policy, "sha", None),
-                                             action_prob=prob, eps_seed=EPS_KEY if stochastic else None),
-                seeds=seeds, state=st, action=S.Action(action=action, forced=False, rule=rule, selected=selected),
-                outcome=outcome, provenance=prov))
+                                    campaign_id=camp_id, step_index=step, epoch=epoch,
+                                    branch_path=[fork.branch] if fork is not None else [],
+                                    root_id=camp_id, fork_id=fork.fork_id if fork is not None else None),
+                env=env, policy=S.PolicyInfo(policy=pol.name, policy_sha=getattr(pol, "sha", None),
+                                             action_prob=None if forced else prob,
+                                             eps_seed=EPS_KEY if stochastic and fork is None else None,
+                                             continuation_policy_id=pol.name if fork is not None else None,
+                                             behaviour_action=b_act, behaviour_prob=b_prob),
+                seeds=seeds, state=st, action=S.Action(action=action, forced=forced, rule=rule, selected=selected),
+                outcome=outcome, provenance=prov, fork=fork.design if fork is not None else None))
         step += 1
 
     def comparison_sd(n_c: int, n_i: int, kind: str) -> float:
@@ -278,6 +386,8 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
             end_reason = "W"
             break
         ph, ch = f"p{t}", f"c{t}"
+        if p.rule and fork is not None and not forked and t == tf:
+            raise ValueError(f"fork point trial {t} {fork.epoch} is rule-forced, not eligible")
         if p.rule:
             st = state(prop_hash=ph, cand_hash=ch, rule_forced=True, noop=True) if record else None
             emit("E1", st, "skip", 1.0, "rule_noop",
@@ -286,7 +396,7 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
             slots_left -= 1
             skips += 1
             continue
-        size = _size(w, p, d)
+        size = _size(w, p, pstream(t))
         kidx = _key_index(w, p.key)
         post = posts.get(p.key, prior)
         a, A_ = WD.key_forecast(post, size, p.off, base.sigma_eta)
@@ -296,19 +406,23 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
         key_seen = p.key in posts
         st = state(prop_hash=ph, cand_hash=ch, rule_forced=first, key_seen=key_seen,
                    forecasts={"a2u": fc}) if record else None
-        act, prob, _, rule = decide("E1", st, obs_direct("E1", fc=fc, key_seen=key_seen),
-                                    *(("rule_first_trial", "execute")
-                                                                         if first else ()))
+        ob1 = obs_direct("E1", fc=fc, key_seen=key_seen)
+        fx = {}
+        if fork is not None and not forked and t == tf and fork.epoch == "E1":
+            b_act, b_prob = fork_here("E1", t, st, ob1, first)
+            act, prob, rule, fx = fork.arm, None, "fork_arm", {"forced": True, "b_act": b_act, "b_prob": b_prob}
+        else:
+            act, prob, _, rule = decide("E1", st, ob1, *(("rule_first_trial", "execute") if first else ()))
         if act == "skip":
             emit("E1", st, "skip", prob, rule,
-                 S.Outcome(runs_consumed=0, calls_consumed=1, next_incumbent_hash=inc_hash) if record else None)
+                 S.Outcome(runs_consumed=0, calls_consumed=1, next_incumbent_hash=inc_hash) if record else None, **fx)
             calls += 1
             slots_left -= 1
             skips += 1
             continue
         # execute: the true increment given the incumbent's keep log and kept keys
         th = WD.theta(base, w.regime, d.tab, p.key, t, keep_log)
-        delta = size * (th - p.off) + base.sigma_eta * float(d.stream.eta[t])
+        delta = size * (th - p.off) + base.sigma_eta * float(pstream(t).eta[t])
         inter = 0.0
         if M and kidx is not None and kidx not in kept_keys:
             inter = float(sum(M[i][kidx] for i in kept_keys))
@@ -317,16 +431,17 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
         if trace is not None:
             trace.append({"t": t, "key": p.key, "kidx": kidx, "size": size, "theta": th, "interaction": inter,
                           "delta": delta, "kept_keys": sorted(kept_keys), "inc_true": inc_true})
+        e_meas = float(fd.eps[t] if after_e1(t) else d.stream.eps[t])
         if config:
-            cand_meas = [sig_m * float(d.stream.eps[t])]
+            cand_meas = [sig_m * e_meas]
             dhat_single = cand_true + cand_meas[0] - inc_rec
         else:
             cand_meas = []
-            dhat_single = delta + base.sig(p.kind) * float(d.stream.eps[t])
+            dhat_single = delta + base.sig(p.kind) * e_meas
         dhat = dhat_single
         emit("E1", st, "execute", prob, rule,
              S.Outcome(runs_consumed=1, calls_consumed=1, next_incumbent_hash=inc_hash, delta_hat=dhat_single)
-             if record else None)
+             if record else None, **fx)
         runs += 1
         calls += 1
         slots_left -= 1
@@ -349,7 +464,7 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
                 emit("verify", st, "no_verify", prob, rule,
                      S.Outcome(runs_consumed=0, calls_consumed=0, next_incumbent_hash=inc_hash) if record else None)
                 break
-            e = sig_m * float(d.eps_v[t, n_c - 1])
+            e = sig_m * float((fd.eps_v if after_e1(t) else d.eps_v)[t, n_c - 1])
             single = cand_true + e - inc_rec
             emit("verify", st, "verify", prob, rule,
                  S.Outcome(runs_consumed=1, calls_consumed=0, next_incumbent_hash=inc_hash, delta_hat=single)
@@ -370,17 +485,23 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
                                                                m_hat=None)}
         st = state(prop_hash=ph, cand_hash=ch, rule_forced=first, key_seen=key_seen, cand_dhat=dhat, cand_obs=n_c,
                    forecasts={"a2u": fc2, **oi}) if record else None
-        act, prob, _, rule = decide("E2", st, obs_direct("E2", fc=fc2, oi_mu=bonus, cand_dhat=dhat, cand_obs=n_c,
-                                                       key_seen=key_seen),
-                                    *(("rule_first_trial", "keep") if first else ()))
+        ob2 = obs_direct("E2", fc=fc2, oi_mu=bonus, cand_dhat=dhat, cand_obs=n_c, key_seen=key_seen)
+        fx = {}
+        if fork is not None and not forked and t == tf and fork.epoch == "E2":
+            b_act, b_prob = fork_here("E2", t, st, ob2, first)
+            act, prob, rule, fx = fork.arm, None, "fork_arm", {"forced": True, "b_act": b_act, "b_prob": b_prob}
+        else:
+            act, prob, _, rule = decide("E2", st, ob2, *(("rule_first_trial", "keep") if first else ()))
         keep = act == "keep"
+        if fork is not None and t == tf and keep:
+            immediate = cand_true - inc_true
         if trace is not None:
             trace[-1].update({"a": a, "A": A_, "v_star": fc.v_star, "tau": fc.tau, "sigma1": fc.sigma,
                               "m_hat": fc2.m_hat, "sigma": sc, "dhat": dhat, "kept": keep, "first": first,
                               "runs_left_e1": W - runs + (n_c), "slots_left_e1": slots_left + 1})
         emit("E2", st, act, prob, rule,
              S.Outcome(runs_consumed=0, calls_consumed=0, next_incumbent_hash=ch if keep else inc_hash, kept=keep)
-             if record else None)
+             if record else None, **fx)
         posts[p.key] = WD.key_update(post, size, dhat, p.off, base.sigma_eta, sc)
         if not keep:
             continue
@@ -408,7 +529,7 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
                 emit("reaudit", st, "no_reaudit", prob, rule,
                      S.Outcome(runs_consumed=0, calls_consumed=0, next_incumbent_hash=inc_hash) if record else None)
                 break
-            e = sig_m * float(d.eps_r[t, k])
+            e = sig_m * float((fd.eps_r if after_e2(t) else d.eps_r)[t, k])
             single = inc_true + e - inc_rec
             emit("reaudit", st, "reaudit", prob, rule,
                  S.Outcome(runs_consumed=1, calls_consumed=0, next_incumbent_hash=inc_hash, delta_hat=single)
@@ -421,6 +542,8 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
     else:
         end_reason = "W" if W - runs < w.run_cost else "llm_cap"
 
+    if fork is not None and not forked:
+        raise ValueError(f"fork point trial {tf} {fork.epoch} was not reached (the root skipped it or ended)")
     y_final = inc_true
     if "final" in w.epochs:
         cands = [(h, v + float(np.mean(m)) if m else None, len(m)) for h, (v, m) in chain.items()]
@@ -436,13 +559,14 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
     if record and rows:
         last = rows[-1]
         aud = [audit_lo + i for i in range(w.n_audit)]
-        per = [y_final + w.regime.sigma_audit * float(z) for z in d.z_audit]
+        per = [y_final + w.regime.sigma_audit * float(z) for z in (fd.z_audit if fd is not None else d.z_audit)]
         start = [base.y0 + w.regime.sigma_audit * float(z) for z in d.z_start]
         last.episode_end = S.EpisodeEnd(kind="terminated", reason=end_reason)
         last.terminal = S.Terminal(y_terminal=float(sum(per) / len(per)), y_terminal_per_seed=per, audit_seeds=aud,
                                    y_start=float(sum(start) / len(start)))
     return CampaignResult(Y=Y, runs_used=runs, calls_used=calls, end_reason=end_reason, decisions=decisions,
-                          rows=[S.to_dict(r) for r in rows] if record else [])
+                          rows=[S.to_dict(r) for r in rows] if record else [], immediate=immediate,
+                          fork_step=fork_step)
 
 
 def campaign_values(world: ESynWorld, policy: Policy, instances) -> np.ndarray:

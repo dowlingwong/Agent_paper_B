@@ -251,6 +251,7 @@ Add a CLI that writes a markdown report.
 
 1. Fork selection: uniform, plus a near-threshold oversample, with `p_select` logged. Implement design weights 1/p_select.
 2. τ̂² = (between-fork variance of fork Q differences) − (mean within-fork s.e.²), from r = 2 continuations per arm under 2 continuation policies.
+   - *amendment of 16 Nov 2026 (P6 build): τ̂² is computed for two fork differences, the total Q difference `q` (plan §6) and the continuation difference `d` (`q` minus the forked candidate's own increment if kept, Track S's C = y_terminal − immediate). The null-world property of step 4 holds for `d` only: in `strict_null`, `q` still varies with the one-step value that the myopic rule already uses. Which difference carries the go/no-go floor is left to the author's pre-declaration;*
 3. Cross-fitted N6 improvement value on held-out forks.
 4. **Validation on E-SYN:**
    - the null world gives τ̂² ≈ 0 with correct interval coverage over repeated simulations;

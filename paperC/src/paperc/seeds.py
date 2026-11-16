@@ -104,6 +104,13 @@ PAPER_C_CLAIMS = (
     {"name": "esyn_decision_uniforms", "block": "paperc_rng_keys", "value": 60_002, "phase": "P4",
      "use": "per-decision uniforms of stochastic E-SYN policies: SeedSequence([60002, world code, i, step]); logged as "
             "eps_seed so that check_campaign replays the policy."},
+    {"name": "esyn_fork_design", "block": "paperc_rng_keys", "value": 60_003, "phase": "P6",
+     "use": "E-SYN fork design: SeedSequence([60003, 0, world code, i, trial, epoch code, design_rep]) selection "
+            "uniforms; [60003, 1, ..., continuation index, replicate] continuation proposals (shared by the arms); "
+            "[60003, 2, ..., continuation index, replicate, arm code] continuation measurements."},
+    {"name": "analysis_resampling", "block": "paperc_train_seeds", "value": 61_001, "phase": "P6",
+     "use": "analysis randomness: numpy default_rng([61001, purpose, ...]) for cluster bootstraps (purpose 1: tau^2, "
+            "2: N6) and cross-fitting folds; not a node or worker seed."},
 )
 
 
