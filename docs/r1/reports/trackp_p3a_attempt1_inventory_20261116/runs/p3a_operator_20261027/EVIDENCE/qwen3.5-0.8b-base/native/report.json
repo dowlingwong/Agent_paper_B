@@ -1,0 +1,88 @@
+{
+  "batch_size": 8,
+  "budget_override": null,
+  "eval_every": 100,
+  "frozen_token_rows": false,
+  "head_lr": 0.001,
+  "lora": {
+    "best_step": 5500,
+    "best_value": 9.789288014872e-06,
+    "checkpoint": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/native/lora/ckpt/step_0006000",
+    "completed": true,
+    "early_stopped": false,
+    "stopped_at": 6000,
+    "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 1.020248478710843,
+      "mean_slope_vs_label": 0.9911088072808778,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.00010779761485355579,
+      "rps_extrap": 0.0002520763021191891,
+      "rps_interp": 1.6711396302495306e-05,
+      "width_ratio": 1.0677922806980766,
+      "width_slope": 0.8419549679936402,
+      "width_slope_vs_label": 0.9001107289292234,
+      "width_slope_vs_label_lb95": 0.885732995316375,
+      "width_slope_vs_label_ub95": 0.9142869059886871
+    }
+  },
+  "lr": 0.0001,
+  "max_steps": 6000,
+  "n_test": 1000,
+  "n_train": 2714,
+  "n_val": 286,
+  "pass": null,
+  "patience": 10,
+  "protocol": "trackp_e0/v2",
+  "stage": "final",
+  "target": "y_soft",
+  "token_lr": 0.0001,
+  "val_cells": [
+    [
+      1,
+      3
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      9,
+      3
+    ]
+  ],
+  "variant": "native",
+  "zero_shot": {
+    "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.0,
+      "mean_slope_vs_label": 0.0,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.058526890036597105,
+      "rps_extrap": 0.0907022293172423,
+      "rps_interp": 0.03821391075175259,
+      "width_ratio": 2.6334879356705967,
+      "width_slope": -1.3438411157110482e-16,
+      "width_slope_vs_label": -2.963064619416784e-16,
+      "width_slope_vs_label_lb95": -3.175542861724441e-31,
+      "width_slope_vs_label_ub95": 2.9070806713851316e-31
+    },
+    "val_rps": 0.06550553441047668
+  }
+}

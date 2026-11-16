@@ -1,0 +1,69 @@
+{
+  "criterion": "lowest best val RPS (R1-LR-GRID)",
+  "runs": [
+    {
+      "base": {
+        "adapter_repo": "jaredpalmer/kev-0.8b",
+        "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "kev"
+      },
+      "best_step": 1800,
+      "best_val_rps": 0.00014728216046933085,
+      "git": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+      "lr": 1e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/screen_lr1e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+    },
+    {
+      "base": {
+        "adapter_repo": "jaredpalmer/kev-0.8b",
+        "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "kev"
+      },
+      "best_step": 2000,
+      "best_val_rps": 5.989295823383145e-05,
+      "git": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+      "lr": 3e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/screen_lr3e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+    },
+    {
+      "base": {
+        "adapter_repo": "jaredpalmer/kev-0.8b",
+        "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "kev"
+      },
+      "best_step": 1800,
+      "best_val_rps": 2.4316965209436603e-05,
+      "git": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+      "lr": 0.0001,
+      "run_dir": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/screen_lr0.0001",
+      "target": "y_soft",
+      "variant": "fresh"
+    }
+  ],
+  "selected": {
+    "base": {
+      "adapter_repo": "jaredpalmer/kev-0.8b",
+      "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+      "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+      "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+      "family": "kev"
+    },
+    "best_step": 1800,
+    "best_val_rps": 2.4316965209436603e-05,
+    "git": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+    "lr": 0.0001,
+    "run_dir": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/screen_lr0.0001",
+    "target": "y_soft",
+    "variant": "fresh"
+  }
+}

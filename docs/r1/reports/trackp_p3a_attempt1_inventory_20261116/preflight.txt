@@ -1,0 +1,33 @@
+capture_utc=2026-11-16T10:13:36Z host=TASL-7 user=dowling boot=2c9bb104-cc3c-4c60-be67-c1c8f0287fe4 uptime=2026-10-01 13:07:41
+== git ==
+b9ad6f8fe2e771732100f704accd7f2ce7cf20f0
+trackp-20261026
+== harness ==
+897d83c8efa364ec2fdd37288241cc42e01d7274
+== gpu ==
+NVIDIA GeForce RTX 4090, 580.178.04, 236 MiB, 24564 MiB, 0 %
+== lease ==
+LEASE_FREE
+total 16
+drwxrwxr-x  4 dowling dowling 4096 Nov 15 13:24 .
+drwxr-xr-x 17 dowling dowling 4096 Nov  7 14:08 ..
+drwxrwxr-x  2 dowling dowling 4096 Nov  4 08:55 bin
+-rw-rw-r--  1 dowling dowling    0 Oct 26 15:50 gpu0.lock
+drwx------  2 dowling dowling 4096 Nov 15 13:24 _to_delete
+== markers ==
+NO_MARKERS
+== tmux/users ==
+tianyu   pts/0        2026-10-18 14:39 (tmux(934891).%0)
+tianyu   pts/2        2026-10-19 15:00 (tmux(934891).%1)
+tianyu   pts/3        2026-10-22 13:20 (tmux(934891).%2)
+tianyu    934891 28-12:34:32 tmux new-session -t paper
+dowling  1570627  8-09:13:59 tmux -S /home/dowling/r1_b1_engineering/b1_handover_6835_20261108_a/tmux.sock new-session -d -s b1_6835_20261108_a /bin/bash --noprofile --norc -i
+no server running on /tmp/tmux-1011/default
+== disk ==
+/dev/nvme0n1p2  1.9T  1.3T  524G  71% /
+== helper ==
+f457a04ef1bbaba1750d9c04aa9211d51df1692ac36139bb720318f2d2533cec  /home/dowling/r1_locks/bin/trackp-evidence
+755 dowling 3949 2026-11-04 08:55:15.949983698 -0800
+== attempt1 root ==
+12G	/home/dowling/r1_trackp/runs/p3a_operator_20261027
+{"error": "unit failed rc=1: /home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/probes; see /home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/probes.stdout.log", "event": "STOP", "gpu_seconds_total": 130745.3789889291, "unobserved_lease_upper_s": 0.0, "utc": "2026-10-29T01:25:17Z"}

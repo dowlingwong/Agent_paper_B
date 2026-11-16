@@ -1,0 +1,69 @@
+{
+  "batch_size": 8,
+  "budget_override": null,
+  "eval_every": 100,
+  "frozen_token_rows": true,
+  "head_lr": 0.001,
+  "lora": {
+    "best_step": 2000,
+    "best_value": 3.62095124728512e-05,
+    "checkpoint": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/screen_lr0.0001/lora/ckpt/step_0002000",
+    "completed": true,
+    "early_stopped": false,
+    "stopped_at": 2000,
+    "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 1.0174021923554262,
+      "mean_slope_vs_label": 0.9881824417464555,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.00019653260646112114,
+      "rps_extrap": 0.00043113040425527785,
+      "rps_interp": 4.8426003286017326e-05,
+      "width_ratio": 1.0980803735656282,
+      "width_slope": 0.8231816060089322,
+      "width_slope_vs_label": 0.8800253783101313,
+      "width_slope_vs_label_lb95": 0.8665262192371238,
+      "width_slope_vs_label_ub95": 0.8935325849661161
+    }
+  },
+  "lr": 0.0001,
+  "max_steps": 2000,
+  "n_test": 1000,
+  "n_train": 2714,
+  "n_val": 286,
+  "pass": null,
+  "patience": 5,
+  "protocol": "trackp_e0/v2",
+  "stage": "screen",
+  "target": "y_soft",
+  "token_lr": 0.0001,
+  "val_cells": [
+    [
+      1,
+      3
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      9,
+      3
+    ]
+  ],
+  "variant": "fresh"
+}

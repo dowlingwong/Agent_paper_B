@@ -1,0 +1,15 @@
+{
+  "action_head": true,
+  "family": "kev",
+  "files": {
+    "adapter/README.md": "d1502e5cd5c5e0ac18f6f6f3180abad275ec3793470213c4c1f0760b0c6dbe17",
+    "adapter/adapter_config.json": "0d3d2adf561f825f0bfa44fecd7231d203f1be4bdff377b44076e99ce725b81a",
+    "adapter/adapter_model.safetensors": "ed1ed4d2d36eeca37024411ea20cb98925e1044d526a57239ca0e68221255a0b",
+    "heads.safetensors": "dbe48784e269565e8284d98166978bd536022832ed2c5a30f5901ba9da037b3e"
+  },
+  "head_form": "linear12",
+  "kev_hybrid": true,
+  "model_version": "trackp_model/v1",
+  "pointer_temperature": 1.0,
+  "released_temperature": 2.406050072164233
+}

@@ -1,0 +1,147 @@
+{
+  "argv": [
+    "e0",
+    "--base",
+    "qwen3.5-0.8b-base",
+    "--stage",
+    "screen",
+    "--variant",
+    "fresh",
+    "--lr",
+    "3e-05",
+    "--evidence",
+    "EVIDENCE",
+    "--run-dir",
+    "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/screen_lr3e-05"
+  ],
+  "base": {
+    "adapter_repo": null,
+    "adapter_revision": null,
+    "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+    "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+    "family": "qwen_control"
+  },
+  "config_sha256": "64073ceaa2660b5b8d783146a406135146a01c2f07e9c0d84f5a17431986f00c",
+  "created_utc": "2026-10-28T06:36:15Z",
+  "data_manifest_sha256": "b963be2dd378241e0b0689907d4051bfa62922a8e4968aa40061ed7ef275bfef",
+  "environment": {
+    "packages": {
+      "kev": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/kev",
+        "pip_commit": "2074cc44256200bb37540103fa4572901faa10f3"
+      },
+      "laya": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/laya",
+        "pip_commit": "a478221bcad24d1a9c47b361c79328ebd2b100c6"
+      },
+      "startlux_decide": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/startlux_decide",
+        "pip_commit": "a99977d9332decc9fb27a2488b4a83b533b6cd5f"
+      }
+    },
+    "peft": "0.21.2",
+    "torch": "2.6.0+cu124",
+    "transformers": "5.19.0"
+  },
+  "evidence_label": "EVIDENCE",
+  "git": {
+    "harness": {
+      "branch": "trackp-20261026",
+      "commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+      "dirty": false,
+      "dirty_files": [],
+      "path": "/home/dowling/r1_trackp/autoresearch_harness"
+    },
+    "paper": {
+      "branch": "trackp-20261026",
+      "commit": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+      "dirty": false,
+      "dirty_files": [],
+      "path": "/home/dowling/r1_trackp/Agent_paper_B"
+    }
+  },
+  "gpu_lease": [
+    {
+      "event": "start",
+      "job": "trackp e0 qwen3.5-0.8b-base",
+      "monotonic_s": 2282680.772729218,
+      "pid": 677616,
+      "tasl7_driver": {
+        "boot_id": "2c9bb104-cc3c-4c60-be67-c1c8f0287fe4",
+        "nvidia_kernel_module": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  580.178.04  Tue Jul  7 12:38:21 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+        "nvidia_packages": [
+          "libnvidia-compute-580 580.178.04-0ubuntu0.22.04.1",
+          "libnvidia-compute-580 580.178.04-0ubuntu0.22.04.1",
+          "nvidia-utils-580 580.178.04-0ubuntu0.22.04.1"
+        ],
+        "nvidia_smi_driver": [
+          "580.178.04"
+        ],
+        "uptime": "23:12:21 up 26 days, 10:04,  7 users,  load average: 1.05, 1.04, 1.00"
+      },
+      "trackx_marker": "not applicable on TASL-7",
+      "utc": "2026-10-28T06:12:21Z"
+    },
+    {
+      "event": "end",
+      "job": "trackp e0 qwen3.5-0.8b-base",
+      "monotonic_s": 2284114.740588882,
+      "pid": 677616,
+      "tasl7_driver": {
+        "boot_id": "2c9bb104-cc3c-4c60-be67-c1c8f0287fe4",
+        "nvidia_kernel_module": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  580.178.04  Tue Jul  7 12:38:21 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+        "nvidia_packages": [
+          "libnvidia-compute-580 580.178.04-0ubuntu0.22.04.1",
+          "libnvidia-compute-580 580.178.04-0ubuntu0.22.04.1",
+          "nvidia-utils-580 580.178.04-0ubuntu0.22.04.1"
+        ],
+        "nvidia_smi_driver": [
+          "580.178.04"
+        ],
+        "uptime": "23:36:15 up 26 days, 10:28,  7 users,  load average: 1.11, 1.08, 1.03"
+      },
+      "utc": "2026-10-28T06:36:15Z"
+    }
+  ],
+  "head_form": "linear12",
+  "host": {
+    "cuda_device_order": null,
+    "cuda_visible_devices": null,
+    "device": {
+      "compute_capability": "8.9",
+      "name": "NVIDIA GeForce RTX 4090",
+      "uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+    },
+    "gpus": [
+      {
+        "compute_capability": "8.9",
+        "driver": "580.178.04",
+        "name": "NVIDIA GeForce RTX 4090",
+        "uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+      }
+    ],
+    "hostname": "TASL-7"
+  },
+  "model_files_sha256": {
+    "adapter/README.md": "56a276a30ac9e74bb5d0409be1e00857c5f5e535bbe3c334f6e1a9061ecbce6f",
+    "adapter/adapter_config.json": "0939d5f6b6fd0e43a4d4f1f4e3e1bdc46a9c50bc5136507c58993f29ed9d2e49",
+    "adapter/adapter_model.safetensors": "6dea5874dd210edd71e26540e546e51c799f30de7220323b966ced0ef680b42b",
+    "heads.safetensors": "e3034df4a2466cd59908d7f25027577c44922a070c85cab31915d2c2d3ddc9fe"
+  },
+  "schema": "trackp_run_manifest/v1",
+  "seed": 0,
+  "subcommand": "e0",
+  "tasl7_driver": {
+    "boot_id": "2c9bb104-cc3c-4c60-be67-c1c8f0287fe4",
+    "nvidia_kernel_module": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  580.178.04  Tue Jul  7 12:38:21 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+    "nvidia_packages": [
+      "libnvidia-compute-580 580.178.04-0ubuntu0.22.04.1",
+      "libnvidia-compute-580 580.178.04-0ubuntu0.22.04.1",
+      "nvidia-utils-580 580.178.04-0ubuntu0.22.04.1"
+    ],
+    "nvidia_smi_driver": [
+      "580.178.04"
+    ],
+    "uptime": "23:36:15 up 26 days, 10:28,  7 users,  load average: 1.11, 1.08, 1.03"
+  }
+}

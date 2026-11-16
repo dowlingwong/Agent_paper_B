@@ -1,0 +1,69 @@
+{
+  "criterion": "lowest best val RPS (R1-LR-GRID)",
+  "runs": [
+    {
+      "base": {
+        "adapter_repo": null,
+        "adapter_revision": null,
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "qwen_control"
+      },
+      "best_step": 2000,
+      "best_val_rps": 0.00021986986394040287,
+      "git": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+      "lr": 1e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/screen_lr1e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+    },
+    {
+      "base": {
+        "adapter_repo": null,
+        "adapter_revision": null,
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "qwen_control"
+      },
+      "best_step": 2000,
+      "best_val_rps": 7.115121115930378e-05,
+      "git": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+      "lr": 3e-05,
+      "run_dir": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/screen_lr3e-05",
+      "target": "y_soft",
+      "variant": "fresh"
+    },
+    {
+      "base": {
+        "adapter_repo": null,
+        "adapter_revision": null,
+        "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+        "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "family": "qwen_control"
+      },
+      "best_step": 2000,
+      "best_val_rps": 3.62095124728512e-05,
+      "git": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+      "lr": 0.0001,
+      "run_dir": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/screen_lr0.0001",
+      "target": "y_soft",
+      "variant": "fresh"
+    }
+  ],
+  "selected": {
+    "base": {
+      "adapter_repo": null,
+      "adapter_revision": null,
+      "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+      "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+      "family": "qwen_control"
+    },
+    "best_step": 2000,
+    "best_val_rps": 3.62095124728512e-05,
+    "git": "b9ad6f8fe2e771732100f704accd7f2ce7cf20f0",
+    "lr": 0.0001,
+    "run_dir": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/screen_lr0.0001",
+    "target": "y_soft",
+    "variant": "fresh"
+  }
+}

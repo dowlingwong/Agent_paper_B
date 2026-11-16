@@ -1,0 +1,27 @@
+{
+  "action_head": true,
+  "bin_order": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "family": "qwen_control",
+  "files": {
+    "adapter/README.md": "56a276a30ac9e74bb5d0409be1e00857c5f5e535bbe3c334f6e1a9061ecbce6f",
+    "adapter/adapter_config.json": "0939d5f6b6fd0e43a4d4f1f4e3e1bdc46a9c50bc5136507c58993f29ed9d2e49",
+    "adapter/adapter_model.safetensors": "6dea5874dd210edd71e26540e546e51c799f30de7220323b966ced0ef680b42b",
+    "heads.safetensors": "e3034df4a2466cd59908d7f25027577c44922a070c85cab31915d2c2d3ddc9fe"
+  },
+  "head_form": "linear12",
+  "list_bins": true,
+  "model_version": "trackp_model/v1"
+}

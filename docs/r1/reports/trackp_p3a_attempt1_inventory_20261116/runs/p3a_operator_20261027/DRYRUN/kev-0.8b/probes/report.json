@@ -1,0 +1,101 @@
+{
+  "A1": {
+    "pass": null,
+    "reason": "model does not pack (spec \u00a75.6: packed models only)"
+  },
+  "A2": {
+    "pass": null,
+    "reason": "model does not pack (spec \u00a75.6: packed models only)"
+  },
+  "A3": {
+    "budget_fraction_reached_min_mean": {
+      "0.0": [
+        0.0,
+        0.0
+      ],
+      "0.25": [
+        0.2290909090909091,
+        0.2412722744688019
+      ],
+      "0.5": [
+        0.4782608695652174,
+        0.49392625745058527
+      ],
+      "1.0": [
+        0.9766536964980544,
+        0.9966256573691556
+      ]
+    },
+    "budget_min_mean_max": [
+      198,
+      378.75,
+      496
+    ],
+    "families": [
+      "kev",
+      "laya",
+      "qwen_control",
+      "startlux"
+    ],
+    "limit": 1024,
+    "max_tokens_by_level": {
+      "0.0": {
+        "kev": 767,
+        "laya": 693,
+        "qwen_control": 782,
+        "startlux": 826
+      },
+      "0.25": {
+        "kev": 815,
+        "laya": 728,
+        "qwen_control": 830,
+        "startlux": 874
+      },
+      "0.5": {
+        "kev": 863,
+        "laya": 766,
+        "qwen_control": 878,
+        "startlux": 922
+      },
+      "1.0": {
+        "kev": 965,
+        "laya": 858,
+        "qwen_control": 980,
+        "startlux": 1024
+      }
+    },
+    "mean_abs_drps": {
+      "0.25": 8.274265974250739e-05,
+      "0.5": 0.00012769039449267439,
+      "1.0": 0.00010306234571544337
+    },
+    "pass": true,
+    "protocol": "v2_budget"
+  },
+  "A3_descriptive": {
+    "pass": null,
+    "ran": [
+      0
+    ]
+  },
+  "A3_errors": {
+    "descriptive_2000": "ContextOverflow: state exceeds 1024 tokens: 2383",
+    "descriptive_8000": "ContextOverflow: state exceeds 1024 tokens: 8400"
+  },
+  "A4": {
+    "frac_monotone_raw": 0.6875,
+    "frac_monotone_vs_label": 0.6875,
+    "label_ceiling_frac": 1.0,
+    "median_slope_vs_label": 0.06428751465074681,
+    "pass": false
+  },
+  "A4_v1_raw": {
+    "criterion_met": false,
+    "descriptive": true,
+    "frac_monotone": 0.6875
+  },
+  "A5": {
+    "pass": null,
+    "reason": "A5 applies to BinTokenWrapper only (spec \u00a75.6)"
+  }
+}
