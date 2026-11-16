@@ -6,7 +6,11 @@ delivers, what it still needs from the G.0 census, the pre-declared caps, the co
 
 **Branch:** `g1b-noise-20261116`, based on `origin/main` `9ae6d87783f53f9da27200869085c9ed0e7697e2`.
 **Unit commit:** `1280219c025ee53224f8d9567a3eef1c3f3797f7` (`prepare(r1): G.1b T1 GPU-node noise-floor job for NEMO2
-L40S (spec/JDL/docs/tests only; NOT RUN)`); this report is committed on top of it.
+L40S (spec/JDL/docs/tests only; NOT RUN)`). This report follows it (`1bd478bd`), with two follow-ups on the branch:
+`3df54893` (the offline summary now records the authority-fixed `vary` split separately from `e1_report`'s
+descriptive split proposal) and `1b67274c` (the committed layout preview and `condor_submit -dry-run` ad were
+regenerated from the final wrapper so they reproduce from the committed files). Branch tip at hand-off:
+`1b67274c33b886e308ac90afdd429abb671063b1`; `origin/main` is untouched at `9ae6d877` and no force push occurred.
 
 **Authority.** PLAN row `R1-TRACKG-G1B-HOST` (`author-decisions-20261116` @ `4da73306`): the G.0 census stays on Ada
 (`R1-ADA-CENSUS`); the G.1b T1 GPU-node noise floor moves to **NEMO2 L40S (HTCondor)**, the same GPU model as the T1
