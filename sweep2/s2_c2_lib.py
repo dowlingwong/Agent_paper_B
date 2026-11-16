@@ -152,8 +152,8 @@ def validate_spec(spec: dict) -> dict:
         kwargs = json.loads(extra[extra.index("--chat-template-kwargs") + 1])
     except json.JSONDecodeError:
         raise Stop("STOP: --chat-template-kwargs value must be JSON") from None
-    if not isinstance(kwargs, dict) or kwargs.get("enable_thinking") is not False:
-        raise Stop('STOP: --chat-template-kwargs must set {"enable_thinking": false}')
+    if kwargs != {"enable_thinking": False}:
+        raise Stop('STOP: --chat-template-kwargs must be exactly {"enable_thinking": false}')
     if server["ctx"] != CTX:
         raise Stop(f"STOP: ctx must be {CTX} (R1-SWEEP2-SETTINGS; the exam setting is 32,768)")
     if server["n_gpu_layers"] != NGL:
@@ -223,6 +223,10 @@ def validate_spec(spec: dict) -> dict:
     wall = spec.get("walltime_s")
     if type(wall) is not int or not 3600 <= wall <= 86400:
         raise Stop("STOP: walltime_s must be an integer in [3600, 86400]")
+    for key, floor in (("request_disk_kb", 30314084), ("request_memory_mb", 10853)):
+        v = spec.get(key)
+        if type(v) is not int or v < floor or v > 100000000:
+            raise Stop(f"STOP: {key} must be an integer >= {floor} (measured S2-C4 peak) and <= 1e8")
 
     label = resolve_label(spec)
     if label == "EVIDENCE" and paper["evidence_ready"] is not True:
@@ -658,12 +662,14 @@ def run_liveness(spec_path: Path) -> dict:
                                   "seconds": round(time.time() - started, 1),
                                   "stdout_tail": res.stdout[-4000:], "stderr_tail": res.stderr[-4000:]}
         if res.returncode != 0:
+            _kill(server["proc"]); server["proc"] = None
             _stop_with_evidence(record, record_path, f"STOP: r1.liveness rc={res.returncode}; outputs kept")
         report = json.loads((out / "liveness.json").read_text())
         nodes = {n: bool((report.get("nodes", {}).get(n, {}) or {}).get("pass")) for n in LIVENESS_NODES}
         passes = [n for n in LIVENESS_NODES if nodes[n]]
         record["liveness_results"] = {"nodes": nodes, "live_nodes": len(passes), "min_live_nodes": MIN_LIVE_NODES}
         if len(passes) < MIN_LIVE_NODES:
+            _kill(server["proc"]); server["proc"] = None
             _stop_with_evidence(record, record_path,
                                 f"STOP: only {len(passes)} nodes passed D28 liveness (< {MIN_LIVE_NODES}); author decides")
     finally:
@@ -740,6 +746,7 @@ def run_job(spec_path: Path) -> dict:
         record["gates"] = collection_gates(Path("out"), Path("work"), s["collector"]["node"],
                                            int(s["collector"]["instances"]))
     except Stop as exc:
+        record["gates"] = {"status": "FAIL", "error": str(exc)}
         _stop_with_evidence(record, record_path, str(exc))
     record["spec_liveness"] = s["liveness"]
     record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())

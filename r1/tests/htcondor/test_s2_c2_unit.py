@@ -121,6 +121,22 @@ def test_settings_validators():
             lib.validate_spec(s)
 
 
+def test_layout_fields_are_validated():
+    for key, bad in (("request_disk_kb", None), ("request_disk_kb", -5), ("request_disk_kb", "lots"),
+                     ("request_memory_mb", 1), ("request_memory_mb", "x")):
+        s = spec()
+        if bad is None:
+            del s[key]
+        else:
+            s[key] = bad
+        with pytest.raises(lib.Stop, match=key):
+            lib.validate_spec(s)
+    s = spec(); s["server"]["extra_args"][s["server"]["extra_args"].index("--chat-template-kwargs") + 1] = \
+        '{"enable_thinking": false, "add_generation_prompt": true}'
+    with pytest.raises(lib.Stop, match="exactly"):
+        lib.validate_spec(s)
+
+
 def test_settings_are_fail_closed():
     s = spec(); s["server"]["extra_args"] = s["server"]["extra_args"] + ["--threads", "8"]
     with pytest.raises(lib.Stop, match="not part of the exam setting"):
@@ -172,6 +188,7 @@ def test_liveness_argv_uses_all_eight_nodes_and_sweep1_dimensions():
     assert argv[argv.index("--nodes") + 1:argv.index("--nodes") + 9] == list(lib.LIVENESS_NODES)
     assert "--instances 2" in joined and "--runs 10" in joined
     assert "--manager-model llamacpp/gemma4_31b" in joined and "--proposal-schema manager_proposal/v1" in joined
+    assert "--deadline" not in argv
 
 
 def test_liveness_kind_validates():
