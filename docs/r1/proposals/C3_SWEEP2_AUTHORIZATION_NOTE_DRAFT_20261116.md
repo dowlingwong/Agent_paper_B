@@ -27,7 +27,8 @@ wherever they differ. The rows used are:
 - R1-SWEEP1-CLASSIFY and R1-B2-DECOUPLE;
 - R1-BX-D8 and R1-BX-PROPOSED-CONFIRM;
 - R1-CACHEPROMPT-FALSE, R1-EXAM-CACHE-REV and R1-EXAM-B1-HARNESS-PIN;
-- R1-B1-CORPUS-FREEZE.
+- R1-B1-CORPUS-FREEZE;
+- R1-B2-REPLAY-GO and R1-HARNESS-NEXT-PIN (notes 3 and 4).
 
 Each value below cites its source.
 
@@ -93,12 +94,13 @@ phase: c3_sweep2
     `a04a0346ca887c27998b5f46f4e3d67fa05126ff3af9e0c20fe78d030c1fdc61`.
   - The job checks the GGUF SHA-256 after fetching it.
 - **Server arguments of the sweep-2 job** (S2-C2 `spec.example.json` and validator).
-  - Flags: `-ngl 99`, `-c 16384`, `--jinja`, `--chat-template-kwargs {"enable_thinking": false}`,
+  - Flags: `-ngl 99`, `-c <16384 | 32768 — author, note 2>`, `--jinja`, `--chat-template-kwargs {"enable_thinking": false}`,
     `--cache-type-k q8_0`, `--cache-type-v q8_0`, `--no-webui`.
   - One owned `llama-server` per job, with its own port and alias.
   - Temperature 0.2 with the D26 seed (`manager_seed(campaign_id, budget_index, repetition, revision_attempt)`).
   - `cache_prompt: false` on every call; `LLAMACPP_CACHE_PROMPT` and `LLAMACACHE_PROMPT` unset.
-  - **These are not exactly the exam's arguments** (note 2): the selection exam ran at context `<16,384 | 32,768>`.
+  - **These are not exactly the exam's arguments** (note 2): the selection exam ran at context 32,768; sweep 2 runs
+    at the context above. Choosing 32,768 also needs the S2-C2 validator changed (it requires 16,384).
 - **Design: the same as sweep 1** (R1-MAIN-PROPOSER (b); config `r1/scripts/configs/c3_sweep_deepthought.json`,
   SHA-256 `2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b`, for the design values only).
   - The eight nodes: `digits_mlp`, `tabular_mlp`, `openml_breast_w`, `openml_ionosphere`, `openml_wdbc`,
@@ -147,7 +149,7 @@ R1-MAIN-PROPOSER (c), with the host updated by R1-SWEEP-HOST-HTC. Every cross-pr
 - the manager;
 - the host: deepthought TITAN X (sm_52) against NEMO2 L40S (sm_89), and HTCondor container jobs;
 - the CPU host of the in-campaign worker runs;
-- context 8,192 against 16,384 (and against the exam's 32,768, note 2);
+- context 8,192 against `<16,384 | 32,768>` (the exam ran at 32,768, note 2);
 - default KV cache against q8_0;
 - `--jinja` and the thinking flag;
 - `cache_prompt` at the default against an explicit false;
@@ -194,7 +196,8 @@ does neither, and its job spec has no `noise_source` field.
 - This is a precondition for EVIDENCE: S2-C2 must pass and record the pin, with a test and a review.
 
 **2. Context: 16,384 in the plan, 32,768 in the exam.**
-- R1-MAIN-PROPOSER (b)/(c), the work plan §0 and the S2-C2 validator all say "16,384, as in the exam".
+- R1-MAIN-PROPOSER (c) lists context 16,384 for sweep 2; the work plan §0 and the S2-C2 validator call 16,384 the
+  exam setting.
 - But the selection exam ran the pick at **32,768**:
   - `r1/scripts/configs/exam_b2_v2.json` sets `ctx_size` 32768;
   - `r1/exam/runtime.py` `load_config` refuses any other value;
@@ -209,7 +212,11 @@ does neither, and its job spec has no `noise_source` field.
 - launch: a direct server against an HTCondor container;
 - image: none against the frozen image;
 - offload and server flags as above;
-- instances and audit seeds: exam 9001+/9101+/9201+ against the sweep-1 instance seeds and 7001–7010.
+- instances and audit seeds: exam 9001+/9101+/9201+ against the sweep-1 instance seeds and 7001–7010;
+- paper commit: `37282ec3…` (the B2 run's reviewed code base) against the S2-M2 `main` commit;
+- llama-server binary: same llama.cpp commit `620d222`, but the exam binary `b70f4882…` ("build 1") against the
+  image's `f8d35fd3…` ("build 11669");
+- harness: identical (`a3fedbb`).
 
 **3. The B.2 audits have PLAN preconditions of their own.**
 - R1-MAIN-PROPOSER (b) runs the sweep-2 audits under the R1-SWEEP1-CLASSIFY and R1-B2-DECOUPLE rules.
