@@ -1,0 +1,388 @@
+"""E-SYN campaign simulator writing ``spt_transition/v1`` rows (build runbook P3, steps 3 and 6).
+
+AI-assisted (Claude, chat session, 16 Nov 2026). ENGINEERING_ONLY.
+
+One campaign of an ``ESynWorld`` under a policy. The loop follows Paper B's governed loop as Track S runs it:
+
+* slot t = 1 .. llm_cap: one proposal per slot (one LLM call, one slot), drawn from the Track S proposal law
+  (``worlds.proposal_sequence``, decision-independent given the stream); a rule-detectable proposal is a
+  rule-forced E1 ``skip`` (``rule_noop``); slot 1 is never rule-detectable, and its proposal is executed and kept
+  (``rule_first_trial``), because there is no incumbent metric before it;
+* E1 ``execute`` / ``skip``; an execute costs one run; when fewer than ``run_cost`` runs remain the campaign ends
+  (reason ``W``), else after the last slot (reason ``llm_cap``);
+* ``verify`` (config worlds): after an execute, while the candidate has fewer than ``max_obs`` measurements and a
+  run remains, ``verify`` re-measures it or ``no_verify`` moves on to E2;
+* E2 ``keep`` / ``discard``;
+* ``reaudit`` (config worlds): after a keep, while the incumbent has fewer than ``max_obs`` measurements and a run
+  remains, ``reaudit`` re-measures the incumbent or ``no_reaudit`` moves on;
+* ``final`` (config worlds): one ``select`` row among the kept configurations (``State.candidates``).
+
+Belief model ``a2u`` (Track S A2-U, keyed mode): per key a conjugate normal posterior on theta from N(mu0, tau0^2),
+updated after every executed proposal (``worlds.key_update``); E1 forecast (a, A) and V* = E[max(m_hat, 0)]; E2
+m_hat = a + A / (A + s^2) (delta_hat - a), where s is the comparison sd (increment worlds: sig(kind); config worlds:
+sigma_meas sqrt(1 / n_cand + 1 / n_inc), with n_inc = 0 for the exactly known start). The interaction world adds
+belief ``oracle_int``, whose ``mu`` is the declared complement value of keeping this key now (sum of M[j][k] over
+keys k not yet in the incumbent; 0 once j is in it). Policies decide from these state fields only
+(``obs_from_state``), so ``check_campaign`` can replay them.
+
+Campaign value: Y = true value of the final configuration minus y0 (no audit noise), as Track S's ``y_true``. The
+recorded ``Terminal`` adds audit noise sigma_audit per audit seed.
+
+Randomness: one ``numpy`` generator per campaign, keyed ``[60001, world.code, instance]`` (key 60001 lies in the
+Paper C block ``paperc_rng_keys``). Recorded campaigns use instance seeds 50000 + i (``paperc_instances``) and
+audit seeds 10,000,000 + n_audit i ... (``paperc_audits``); the oracle's selection and evaluation blocks use
+instances 1,000,000 + i and 2,000,000 + i, which only ever enter the RNG key.
+"""
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass, field
+from statistics import NormalDist
+from typing import Callable, Protocol
+
+import numpy as np
+
+from paperc import schema as S
+from paperc.esyn import worlds as WD
+from paperc.esyn.extra import ESynWorld
+
+RNG_KEY = 60_001
+INSTANCE_BASE = 50_000
+AUDIT_BASE = 10_000_000
+SELECT_BASE = 1_000_000
+EVAL_BASE = 2_000_000
+_PHI_INV = NormalDist().inv_cdf
+_PHI = NormalDist().cdf
+
+
+# ---------------------------------------------------------------- policy interface
+
+class Policy(Protocol):
+    name: str
+
+    def act(self, obs: dict) -> tuple[str, float, str | None]:
+        """(action, probability of that action, selected hash for final rows)."""
+
+
+def obs_from_state(epoch: str, state: S.State, env: S.EnvContext) -> dict:
+    """What a policy may read: decision-time state fields only (the same view ``check_campaign`` replays)."""
+    f = state.forecasts.get("a2u")
+    oi = state.forecasts.get("oracle_int")
+    return {"epoch": epoch, "W": env.W, "llm_cap": env.llm_cap,
+            "v_star": f.v_star if f else None, "m_hat": f.m_hat if f else None,
+            "tau": f.tau if f else None, "sigma": f.sigma if f else None,
+            "bonus": oi.mu if oi is not None and oi.mu is not None else 0.0,
+            "runs_left": state.runs_left, "slots_left": state.slots_left, "calls_left": state.calls_left,
+            "incumbent_obs": state.incumbent_obs, "candidate_obs": state.candidate_obs,
+            "candidate_delta_hat": state.candidate_delta_hat, "keeps_so_far": state.keeps_so_far,
+            "incumbent_hash": state.incumbent_hash, "key_seen": state.key_seen,
+            "candidates": [(c.hash, c.recorded, c.obs) for c in state.candidates]}
+
+
+def behaviour_for(policy: Policy) -> Callable[[S.DecisionView], tuple[str, float]]:
+    """The replay hook for ``check_campaign(behaviour=...)``."""
+    def replay(view: S.DecisionView) -> tuple[str, float]:
+        a, p, _ = policy.act(obs_from_state(view.identity.epoch, view.state, view.env))
+        return a, p
+    return replay
+
+
+# ---------------------------------------------------------------- randomness
+
+class Draws:
+    def __init__(self, world: ESynWorld, instance: int):
+        ss = np.random.SeedSequence([RNG_KEY, world.code, int(instance)])
+        seed = int(ss.generate_state(1)[0])
+        n = world.llm_cap
+        self.stream = WD.Stream(seed, n)
+        self.tab = WD.theta_table(world.base, world.regime, seed, int(instance))
+        rng = np.random.default_rng(ss.spawn(1)[0])
+        self.eps_v = rng.standard_normal((n + 2, world.max_obs))     # verify measurements
+        self.eps_r = rng.standard_normal((n + 2, world.max_obs))     # re-audit measurements
+        self.z_audit = rng.standard_normal(world.n_audit)
+        self.z_start = rng.standard_normal(world.n_audit)
+
+
+def _size(world: ESynWorld, p: WD.Proposal, draws: Draws) -> float:
+    if not world.sizes or p.kind != "filler":
+        return p.size
+    u = _PHI(float(draws.stream.z_size[p.t]))
+    acc = 0.0
+    for s, q in zip(world.sizes, world.size_probs):
+        acc += q
+        if u < acc:
+            return float(s)
+    return float(world.sizes[-1])
+
+
+def _key_index(world: ESynWorld, key: int) -> int | None:
+    """Recurring key -> 0 .. n_keys - 1 (interaction matrix index); None for fresh keys."""
+    if world.base.n_keys <= 0:
+        return None
+    return key - (world.llm_cap + 2)
+
+
+# ---------------------------------------------------------------- results
+
+@dataclass
+class CampaignResult:
+    Y: float
+    runs_used: int
+    calls_used: int
+    end_reason: str
+    decisions: list = field(default_factory=list)
+    rows: list = field(default_factory=list)
+
+
+# ---------------------------------------------------------------- the campaign
+
+def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: bool = False,
+                 label: str = "ENGINEERING_ONLY", phase: str = "P3") -> CampaignResult:
+    w, base = world, world.base
+    d = Draws(w, instance)
+    props = WD.proposal_sequence(base, w.regime, d.tab, d.stream)
+    cap, W = w.llm_cap, w.W
+    sig_m = w.sigma_meas
+    config = w.comparison == "config"
+    M = w.interaction
+
+    runs = calls = keeps = skips = 0
+    slots_left = cap
+    inc_hash, inc_true = "c0", base.y0
+    inc_meas: list[float] = []            # config: measurement errors of the incumbent
+    inc_rec, inc_obs = base.y0, 0         # the start's value is known exactly (Track S meta y0)
+    kept_keys: set[int] = set()
+    keep_log: list = []                   # P2 feedback records
+    posts: dict[int, tuple[float, float]] = {}
+    prior = (base.mu0, base.tau0 ** 2)
+    chain: dict[str, list] = {}           # kept configurations: hash -> [true value, measurement errors]
+    rows: list[dict] = []
+    decisions: list = []
+    step = 0
+    end_reason = "llm_cap"
+
+    env = S.EnvContext(proposer_model="scripted", manager_gguf_sha256=None, thinking="n/a", W=W, llm_cap=cap,
+                       memory_mode="none", skip_display="n/a", edit_schema="synthetic", run_budget="synthetic",
+                       constants={"run_cost": float(w.run_cost), "mu0": base.mu0, "tau0": base.tau0,
+                                  "sigma_eta": base.sigma_eta, "sigma_cmp": base.sigma_cmp, "y0": base.y0,
+                                  "p_rule": w.regime.p_rule, "sigma_audit": w.regime.sigma_audit})
+    node = f"esyn_{w.name}"
+    inst_seed = INSTANCE_BASE + int(instance) if record else int(instance)
+    camp_id = f"pc-esyn-{w.name}-{policy.name}-{inst_seed}"
+    audit_lo = AUDIT_BASE + w.n_audit * int(instance)
+    seeds = S.Seeds(instance_seed=inst_seed, manager_rep=0, worker_seed=None,
+                    audit_seed_block=[audit_lo, audit_lo + w.n_audit - 1])
+    prov = S.Provenance(host="esyn", gpu=None, harness_commit=None, paper_commit=None, llama_build=None,
+                        cache_prompt=None, phase=phase, label=label, controller_version="paperc.esyn.sim/v1")
+
+    def state(*, prop_hash, cand_hash, rule_forced, noop=False, key_seen=False, cand_dhat=None, cand_obs=0,
+              forecasts=None, candidates=()):
+        return S.State(proposal_hash=prop_hash, proposal_ref=None, candidate_hash=cand_hash, duplicate=False,
+                       noop=noop, eligible=not rule_forced, rule_forced=rule_forced, key_seen=key_seen,
+                       incumbent_hash=inc_hash, incumbent_recorded=inc_rec, incumbent_obs=inc_obs,
+                       candidate_delta_hat=cand_dhat, candidate_divergent=False, candidate_invalid=False,
+                       candidate_obs=cand_obs, runs_used=runs, runs_left=W - runs, calls_used=calls,
+                       calls_left=cap - calls, slots_left=slots_left, keeps_so_far=keeps, prior_skips=skips,
+                       sigma_node=base.sigma_cmp, noise_source="esyn", history_ref=None,
+                       forecasts=forecasts or {}, candidates=[S.Candidate(*c) for c in candidates])
+
+    def obs_direct(epoch, *, fc=None, oi_mu=0.0, cand_dhat=None, cand_obs=0, candidates=(), key_seen=False):
+        return {"epoch": epoch, "W": W, "llm_cap": cap,
+                "v_star": fc.v_star if fc else None, "m_hat": fc.m_hat if fc else None,
+                "tau": fc.tau if fc else None, "sigma": fc.sigma if fc else None, "bonus": oi_mu,
+                "runs_left": W - runs, "slots_left": slots_left, "calls_left": cap - calls,
+                "incumbent_obs": inc_obs, "candidate_obs": cand_obs, "candidate_delta_hat": cand_dhat,
+                "keeps_so_far": keeps, "incumbent_hash": inc_hash, "key_seen": key_seen,
+                "candidates": list(candidates)}
+
+    def decide(epoch, st, ob, forced_rule=None, forced_action=None):
+        if forced_rule is not None:
+            return forced_action, 1.0, None, forced_rule
+        ob = obs_from_state(epoch, st, env) if record else ob
+        a, p, sel = policy.act(ob)
+        return a, p, sel, "policy"
+
+    def emit(epoch, st, action, prob, rule, outcome, selected=None):
+        nonlocal step
+        decisions.append((epoch, action))
+        if record:
+            rows.append(S.Transition(
+                schema=S.SCHEMA,
+                identity=S.Identity(node=node, suite="E-SYN", tier="E-SYN", instance_id=f"{node}:{inst_seed}",
+                                    campaign_id=camp_id, step_index=step, epoch=epoch, branch_path=[],
+                                    root_id=camp_id, fork_id=None),
+                env=env, policy=S.PolicyInfo(policy=policy.name, policy_sha=None, action_prob=prob),
+                seeds=seeds, state=st, action=S.Action(action=action, forced=False, rule=rule, selected=selected),
+                outcome=outcome, provenance=prov))
+        step += 1
+
+    def comparison_sd(n_c: int, n_i: int, kind: str) -> float:
+        if not config:
+            return base.sig(kind)
+        return sig_m * math.sqrt(1.0 / n_c + (1.0 / n_i if n_i > 0 else 0.0))
+
+    for p in props:
+        t = p.t
+        if W - runs < w.run_cost:
+            end_reason = "W"
+            break
+        ph, ch = f"p{t}", f"c{t}"
+        if p.rule:
+            st = state(prop_hash=ph, cand_hash=ch, rule_forced=True, noop=True) if record else None
+            emit("E1", st, "skip", 1.0, "rule_noop",
+                 S.Outcome(runs_consumed=0, calls_consumed=1, next_incumbent_hash=inc_hash) if record else None)
+            calls += 1
+            slots_left -= 1
+            skips += 1
+            continue
+        size = _size(w, p, d)
+        kidx = _key_index(w, p.key)
+        post = posts.get(p.key, prior)
+        a, A_ = WD.key_forecast(post, size, p.off, base.sigma_eta)
+        s1 = comparison_sd(1, inc_obs, p.kind)
+        fc = S.Forecast(pi=None, mu=a, tau=math.sqrt(A_), sigma=s1, v_star=WD.v_star(a, A_, s1), m_hat=None)
+        first = t == 1
+        key_seen = p.key in posts
+        st = state(prop_hash=ph, cand_hash=ch, rule_forced=first, key_seen=key_seen,
+                   forecasts={"a2u": fc}) if record else None
+        act, prob, _, rule = decide("E1", st, obs_direct("E1", fc=fc, key_seen=key_seen),
+                                    *(("rule_first_trial", "execute")
+                                                                         if first else ()))
+        if act == "skip":
+            emit("E1", st, "skip", prob, rule,
+                 S.Outcome(runs_consumed=0, calls_consumed=1, next_incumbent_hash=inc_hash) if record else None)
+            calls += 1
+            slots_left -= 1
+            skips += 1
+            continue
+        # execute: the true increment given the incumbent's keep log and kept keys
+        th = WD.theta(base, w.regime, d.tab, p.key, t, keep_log)
+        delta = size * (th - p.off) + base.sigma_eta * float(d.stream.eta[t])
+        if M and kidx is not None and kidx not in kept_keys:
+            delta += sum(M[i][kidx] for i in kept_keys)
+        cand_true = inc_true + delta
+        if config:
+            cand_meas = [sig_m * float(d.stream.eps[t])]
+            dhat_single = cand_true + cand_meas[0] - inc_rec
+        else:
+            cand_meas = []
+            dhat_single = delta + base.sig(p.kind) * float(d.stream.eps[t])
+        dhat = dhat_single
+        emit("E1", st, "execute", prob, rule,
+             S.Outcome(runs_consumed=1, calls_consumed=1, next_incumbent_hash=inc_hash, delta_hat=dhat_single)
+             if record else None)
+        runs += 1
+        calls += 1
+        slots_left -= 1
+        n_c = 1
+
+        def e2_forecast():
+            sc = comparison_sd(n_c, inc_obs, p.kind)
+            m_hat = a + A_ / (A_ + sc * sc) * (dhat - a)
+            return S.Forecast(pi=None, mu=a, tau=math.sqrt(A_), sigma=sc,
+                              v_star=WD.v_star(a, A_, sc), m_hat=m_hat), sc
+
+        # verify loop
+        while "verify" in w.epochs and not first and n_c < w.max_obs and W - runs >= w.run_cost:
+            fc2, _ = e2_forecast()
+            st = state(prop_hash=ph, cand_hash=ch, rule_forced=False, key_seen=key_seen, cand_dhat=dhat,
+                       cand_obs=n_c, forecasts={"a2u": fc2}) if record else None
+            act, prob, _, rule = decide("verify", st, obs_direct("verify", fc=fc2, cand_dhat=dhat, cand_obs=n_c,
+                                                                 key_seen=key_seen))
+            if act == "no_verify":
+                emit("verify", st, "no_verify", prob, rule,
+                     S.Outcome(runs_consumed=0, calls_consumed=0, next_incumbent_hash=inc_hash) if record else None)
+                break
+            e = sig_m * float(d.eps_v[t, n_c - 1])
+            single = cand_true + e - inc_rec
+            emit("verify", st, "verify", prob, rule,
+                 S.Outcome(runs_consumed=1, calls_consumed=0, next_incumbent_hash=inc_hash, delta_hat=single)
+                 if record else None)
+            runs += 1
+            cand_meas.append(e)
+            n_c += 1
+            dhat = cand_true + float(np.mean(cand_meas)) - inc_rec
+
+        # E2
+        fc2, sc = e2_forecast()
+        oi = {}
+        bonus = 0.0
+        if M and kidx is not None:
+            bonus = 0.0 if kidx in kept_keys else float(sum(M[kidx][k] for k in range(len(M))
+                                                            if k not in kept_keys and k != kidx))
+            oi = {"oracle_int": S.Forecast(pi=None, mu=bonus, tau=None, sigma=None, v_star=None, m_hat=None)}
+        st = state(prop_hash=ph, cand_hash=ch, rule_forced=first, key_seen=key_seen, cand_dhat=dhat, cand_obs=n_c,
+                   forecasts={"a2u": fc2, **oi}) if record else None
+        act, prob, _, rule = decide("E2", st, obs_direct("E2", fc=fc2, oi_mu=bonus, cand_dhat=dhat, cand_obs=n_c,
+                                                       key_seen=key_seen),
+                                    *(("rule_first_trial", "keep") if first else ()))
+        keep = act == "keep"
+        emit("E2", st, act, prob, rule,
+             S.Outcome(runs_consumed=0, calls_consumed=0, next_incumbent_hash=ch if keep else inc_hash, kept=keep)
+             if record else None)
+        posts[p.key] = WD.key_update(post, size, dhat, p.off, base.sigma_eta, sc)
+        if not keep:
+            continue
+        # keep: the incumbent becomes the candidate
+        entry = WD.keep_log_entry(base, t, runs, W)
+        if entry is not None:
+            keep_log.append(entry)
+        if kidx is not None:
+            kept_keys.add(kidx)
+        keeps += 1
+        inc_hash, inc_true = ch, cand_true
+        if config:
+            inc_meas = list(cand_meas)
+            inc_rec, inc_obs = inc_true + float(np.mean(inc_meas)), len(inc_meas)
+        else:
+            inc_rec, inc_obs = inc_rec + dhat, 1
+        chain[ch] = [inc_true, inc_meas]
+
+        # re-audit loop
+        k = 0
+        while "reaudit" in w.epochs and inc_obs < w.max_obs and W - runs >= w.run_cost:
+            st = state(prop_hash=f"r{t}.{k}", cand_hash=None, rule_forced=False) if record else None
+            act, prob, _, rule = decide("reaudit", st, obs_direct("reaudit"))
+            if act == "no_reaudit":
+                emit("reaudit", st, "no_reaudit", prob, rule,
+                     S.Outcome(runs_consumed=0, calls_consumed=0, next_incumbent_hash=inc_hash) if record else None)
+                break
+            e = sig_m * float(d.eps_r[t, k])
+            single = inc_true + e - inc_rec
+            emit("reaudit", st, "reaudit", prob, rule,
+                 S.Outcome(runs_consumed=1, calls_consumed=0, next_incumbent_hash=inc_hash, delta_hat=single)
+                 if record else None)
+            runs += 1
+            inc_meas.append(e)
+            inc_rec, inc_obs = inc_true + float(np.mean(inc_meas)), len(inc_meas)
+            chain[inc_hash] = [inc_true, list(inc_meas)]
+            k += 1
+    else:
+        end_reason = "W" if W - runs < w.run_cost else "llm_cap"
+
+    y_final = inc_true
+    if "final" in w.epochs:
+        cands = [(h, v + float(np.mean(m)) if m else None, len(m)) for h, (v, m) in chain.items()]
+        st = state(prop_hash="final", cand_hash=None, rule_forced=False, candidates=cands) if record else None
+        act, prob, sel, rule = decide("final", st, obs_direct("final", candidates=cands))
+        sel = sel or inc_hash
+        emit("final", st, "select", prob, rule,
+             S.Outcome(runs_consumed=0, calls_consumed=0, next_incumbent_hash=sel) if record else None,
+             selected=sel)
+        y_final = chain[sel][0] if sel in chain else base.y0
+    Y = y_final - base.y0
+
+    if record and rows:
+        last = rows[-1]
+        aud = [audit_lo + i for i in range(w.n_audit)]
+        per = [y_final + w.regime.sigma_audit * float(z) for z in d.z_audit]
+        start = [base.y0 + w.regime.sigma_audit * float(z) for z in d.z_start]
+        last.episode_end = S.EpisodeEnd(kind="terminated", reason=end_reason)
+        last.terminal = S.Terminal(y_terminal=float(sum(per) / len(per)), y_terminal_per_seed=per, audit_seeds=aud,
+                                   y_start=float(sum(start) / len(start)))
+    return CampaignResult(Y=Y, runs_used=runs, calls_used=calls, end_reason=end_reason, decisions=decisions,
+                          rows=[S.to_dict(r) for r in rows] if record else [])
+
+
+def campaign_values(world: ESynWorld, policy: Policy, instances) -> np.ndarray:
+    return np.array([run_campaign(world, policy, i).Y for i in instances])

@@ -41,6 +41,34 @@
       ],
       "type": "object"
     },
+    "Candidate": {
+      "additionalProperties": false,
+      "properties": {
+        "hash": {
+          "type": "string"
+        },
+        "obs": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "recorded": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "hash",
+        "obs",
+        "recorded"
+      ],
+      "type": "object"
+    },
     "EnvContext": {
       "additionalProperties": false,
       "properties": {
@@ -726,6 +754,13 @@
         "candidate_obs": {
           "minimum": 0,
           "type": "integer"
+        },
+        "candidates": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Candidate"
+          },
+          "type": "array"
         },
         "duplicate": {
           "type": "boolean"

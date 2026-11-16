@@ -635,3 +635,26 @@ def test_r2_candidate_hash_required_and_rule_prob():
     r = valid_campaign()[2]
     r["policy"]["action_prob"] = 0.5
     assert any("1.0 on rule-forced" in e for e in S.validate(r))
+
+
+def test_p3_final_candidates():
+    """B17 (runbook P3): optional State.candidates on final rows; the selection must be one of them."""
+    rows = valid_campaign()
+    rows[-1]["episode_end"] = rows[-1]["terminal"] = None
+    fin = _row(5, epoch="final", action="select",
+               st={"candidate_hash": None, "incumbent_hash": "c0", "incumbent_recorded": 0.52, "runs_used": 4,
+                   "calls_used": 3, "slots_left": 3, "keeps_so_far": 1, "prior_skips": 1,
+                   "candidates": [{"hash": "c0", "recorded": 0.52, "obs": 1}]},
+               out={"next_incumbent_hash": "c0"}, end={"kind": "terminated", "reason": "W"},
+               terminal=copy.deepcopy(TERM))
+    fin["action"]["selected"] = "c0"
+    assert S.check_campaign(rows + [fin]) == []
+    bad = copy.deepcopy(fin)
+    bad["state"]["candidates"] = [{"hash": "c2", "recorded": 0.51, "obs": 1}]
+    assert any("not among state.candidates" in m for m in S.validate(bad))
+    early = copy.deepcopy(rows[0])
+    early["state"]["candidates"] = [{"hash": "c0", "recorded": 0.5, "obs": 1}]
+    assert any("only on final rows" in m for m in S.validate(early))
+    old = copy.deepcopy(rows[0])
+    old["state"].pop("candidates", None)          # rows written before the field remain valid
+    assert S.validate(old) == []

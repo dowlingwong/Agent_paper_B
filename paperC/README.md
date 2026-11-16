@@ -95,11 +95,23 @@ paperC/
     proposals/PAPER_C_SEQUENTIAL_POLICY_PLAN_20261104.md   the plan, rev 2 (5 Nov)
     PLAN_ADDENDUM_20261115.md       OPD route M4, Track S STOP 4 consequences, no waiting for Paper B
     proposals/PAPER_C_REFRAME_AFTER_TRACKS_STOP4_20261115.md  options after STOP 4 and the recommendation
-    BUILD_LIST.md                   what has to be built (B0–B15)
-    BUILD_RUNBOOK.md                phases P0–P10, done-when, review, STOP rules
-    reviews/PAPER_C_PLAN_REVIEW_20261104.md                independent review of plan rev 1
+    BUILD_LIST.md                   what has to be built (B0–B19)
+    BUILD_RUNBOOK.md                phases P0–P10 and PH, done-when, review, STOP rules
+    BUILD_STATUS.md                 per-phase commit, tests, review verdict
+    reports/                        seed registry check, headroom census, E-SYN oracle table
+    reviews/                        plan review, per-phase build reviews and executor responses
     inputs/REVIEW_COMMENT_SEQUENTIAL_POLICY_20261104.md    the comment that started Paper C
-  src/paperc/                       Python package (code from P1 on)
+  src/paperc/                       Python package
+    schema.py, schema_export.py     spt_transition/v1 record and its checks (P1)
+    seeds.py                        seed registry, Paper B blocks and Paper C blocks (P2)
+    census.py                       headroom census on existing logs (PH)
+    esyn/                           E-SYN (P3): worlds.py (pinned Track S port), extra.py (Paper C worlds),
+                                    sim.py (campaign simulator writing P1 rows), policies.py, families.py,
+                                    dp.py (exact budget DP), oracle.py (certified oracle), table.py
+  schemas/spt_transition_v1.json    JSON schema export
+  seeds/registry_v1.json            seed registry
+  census/census_v1.json             census output
+  esyn/oracle_table_v1.json         E-SYN oracle table
   tests/                            pytest suite for paperC only
 ```
 

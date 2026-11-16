@@ -64,9 +64,10 @@ Checks (``check_campaign``) — the plan §4.2 bullets, plus consistency checks 
   trajectory; fork rows have ``fork_id`` and ``replicate >= 1``;
 * ``counters``: ``keeps_so_far``, ``prior_skips`` and ``slots_left`` follow the rows.
 
-**Deferred:** the candidate set of a final selection is recorded only as ``Action.selected`` plus the
-counts ``candidate_obs`` / ``incumbent_obs``; a list of candidates with their measurements belongs to the
-evaluation-allocation actions (BUILD_LIST B17) and is added there. Also deferred: the A/A replay bullet of plan §4.2 (a continuation whose forced action equals the root's action
+**Final-selection candidates** (added with the evaluation-allocation actions, BUILD_LIST B17, build runbook P3):
+``State.candidates`` lists the configurations a ``final`` row chooses among, each with its recorded value and number
+of measurements; it is empty on every other row, and ``Action.selected`` must name one of them when the list is
+non-empty. The field is optional with an empty default, so rows written before it remain valid. Deferred: the A/A replay bullet of plan §4.2 (a continuation whose forced action equals the root's action
 reproduces the root's later rows). It needs A/A fork leaves and the runner's restore path, so it is implemented
 with the SPT runner (BUILD_LIST B11; Track S's ``aa_reproduced``), not on logged rows alone.
 """
@@ -190,6 +191,14 @@ class Forecast:
 
 
 @dataclass
+class Candidate:
+    """One configuration a final selection can choose (B17): its recorded value and number of measurements."""
+    hash: str
+    recorded: float | None
+    obs: int
+
+
+@dataclass
 class State:
     proposal_hash: str
     proposal_ref: str | None      # pointer to the diff / edit text
@@ -217,6 +226,7 @@ class State:
     noise_source: str | None
     history_ref: str | None       # pointer to the fixed-length history summary
     forecasts: dict[str, Forecast] = field(default_factory=dict)   # belief model name -> forecast
+    candidates: list[Candidate] = field(default_factory=list)      # final rows only: the selectable configurations
 
 
 @dataclass
@@ -421,6 +431,10 @@ def _row_rules(t: Transition) -> list[tuple[str, str]]:
         add("outcome", f"action.action: {act!r} not allowed in epoch {ep!r}")
     if (ep == "final") != (t.action.selected is not None):
         add("outcome", "action.selected: set exactly in the final epoch")
+    if s.candidates and ep != "final":
+        add("outcome", "state.candidates: only on final rows")
+    if s.candidates and t.action.selected is not None and t.action.selected not in {c.hash for c in s.candidates}:
+        add("outcome", "action.selected: not among state.candidates")
     n_results = (o.delta_hat is not None) + o.divergent + (o.failure_category is not None)
     if act in EXECUTING:
         if o.runs_consumed < 1:
