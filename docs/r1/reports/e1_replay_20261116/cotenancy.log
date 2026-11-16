@@ -1,0 +1,15 @@
+=== Co-tenancy checks (operator runbook O4; R1-COMPUTE): leave >= 10 of 40 cores free ===
+[1] Before the dry run (host capture, saved in logs/env_observations.log), 2026-11-16T09:44:44Z:
+    10:44:54 up 89 days,  4:04,  4 users,  load average: 1.75, 1.46, 1.29
+    CPU % by user (all processes): friemer 105.3, cvmfs 5.3, root 2.1, tmohr 0.3,
+      sweber 0.1, node-exp 0.1, mmolch 0.1, dwong 0.1, others 0.0
+    total_cpu_percent = 113.4  ->  used_cores = 1.13  ->  free_of_40 = 38.87
+    Other users' load: ~1.1 cores total; no dwong workload running
+    (only systemd --user, an idle codex app-server, and the operator ssh session).
+
+[2] Immediately before the real replay (operator session capture), 2026-11-16T09:45:44Z:
+    10:45:44 up 89 days,  4:05,  4 users,  load average: 1.54, 1.45, 1.30
+    total_cpu_percent = 113.5  ->  used_cores = 1.13  ->  free_of_40 = 38.87
+
+Verdict: co-tenancy gate PASSED (>= 10 cores free at both checks; no co-tenant
+appeared during the run). Host: deepthought (nproc = 40).

@@ -1,0 +1,139 @@
+{
+  "label": "ENGINEERING_ONLY",
+  "authorization": {
+    "file": "docs/r1/authorizations/c3_env_replay_20261116.md",
+    "commit": "4da73306b8e10455fb124cf13d367e49b37247fe",
+    "basis": ["R1-E1-AUTH", "R1-B2-REPLAY-GO (4 Nov 11:29)"],
+    "reviewed_mechanism": [
+      "docs/r1/reviews/MAC_M3_REVIEW_20261104.md (M3 accepted commit ec6e30a98811fd6502d168361371a084387c135d)",
+      "docs/r1/reviews/MAC_M3_REVIEW_20261109.md",
+      "docs/r1/reviews/M3_DRYRUN_PATH_REVIEW_20261114.md (accepted commit 5ef9db16faf0d43843a5e8110b9181173b49175c, IT-1 (a))"
+    ],
+    "protocol": "docs/r1/proposals/C3_ENV_RECONSTRUCTION_REPLAY_DRAFT_20261028.md, 'Predeclared replay protocol'",
+    "case_list": "docs/r1/reports/MAC_M3_DRYRUNS_20261104.md section 1"
+  },
+  "paper_code": {
+    "pinned_commit": "5ef9db16faf0d43843a5e8110b9181173b49175c",
+    "deployed_from": "origin/main lineage: fresh clone of git@github.com:dowlingwong/Agent_paper_B.git at default branch main -> 9ae6d87783f53f9da27200869085c9ed0e7697e2, then 'git checkout --detach 5ef9db16faf0d43843a5e8110b9181173b49175c'",
+    "checked_out_head": "5ef9db16faf0d43843a5e8110b9181173b49175c",
+    "ancestry_verified": "5ef9db16 is an ancestor of origin/main (and of origin branch tip mac-m3-dryrun-path-20261114 = 129317d1f3a7505bedbb6285401a148189ef531a)",
+    "deployment_path": "/ceph/dwong/r1_e1_20261116/agent_paper_B",
+    "why_exact_commit": "the authorization pins paper code 5ef9db16 (M3 ec6e30a9 + IT-1 (a)); main @ 9ae6d877 contains it but also later commits, so the reviewed hash itself was checked out; the driver file is byte-identical at 5ef9db16 and 9ae6d877",
+    "driver_file": {
+      "path": "r1/scripts/c3_env_replay.py",
+      "sha256": "a9cad4d544bdf061c42ecb4b4c2d3d10d8bc94342574d9a37489bd4b179aa7d8"
+    },
+    "checkout_after_run": "clean for all tracked files; only untracked results/r1/engineering/C3_env_replay_20261116T094408Z_dryrun/ (the retained dry-run output)"
+  },
+  "harness": {
+    "path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness",
+    "commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+    "tracked_clean": true,
+    "uv_lock_sha256": "dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090",
+    "pre_existing_untracked": [
+      "nodes/openml_breast_w/data_cache/",
+      "nodes/openml_credit_approval/data_cache/",
+      "nodes/openml_ionosphere/data_cache/",
+      "nodes/openml_wdbc/data_cache/",
+      "paper/tables/artifact_completeness_report.txt"
+    ],
+    "untracked_note": "the driver's tracked-clean test uses git status --untracked-files=no; the untracked data_cache dirs are exactly the presence-only 'evidence' the M3 Major 1 review found insufficient"
+  },
+  "interpreter": {
+    "batch_wrappers": {
+      "python": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin/python",
+      "python3": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin/python3"
+    },
+    "wrapper_target": "/ceph/dwong/r1_prepare_20261025/venv/bin/python",
+    "realpath": "/ceph/dwong/r1_prepare_20261025/python/cpython-3.13.15-linux-x86_64-gnu/bin/python3.13",
+    "prefix": "/ceph/dwong/r1_prepare_20261025/venv",
+    "python_version": "3.13.15",
+    "library_versions": {
+      "scikit-learn": "1.8.0",
+      "numpy": "2.4.4",
+      "pandas": "3.0.3",
+      "scipy": "1.17.1"
+    },
+    "package_count": 59,
+    "package_list_sha256": "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f",
+    "package_list_sha256_28oct_observation": "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f",
+    "newest_dist_info_mtime_utc": "2026-10-26T22:09:12.359336Z",
+    "launch_utc": "2026-10-27T15:48:00Z",
+    "allowed_addition": {
+      "narwhals": "2.27.1"
+    },
+    "worker_python3_on_batch_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness/.venv/bin/python3",
+    "source": "operator read-only recheck using the driver's probe code (see logs/env_observations.log); these are observations, not the driver's check_environment verdict, because the driver STOPped before check_environment"
+  },
+  "package_baseline": {
+    "freeze_path": "/ceph/dwong/r1_prepare_20261025/freeze_with_lightgbm.txt",
+    "freeze_sha256": "c760b28f2d03cfd31ae491b13b13ec6a348caee603b051349d9f85f9af282406"
+  },
+  "sources": {
+    "index": {
+      "path": "results/r1/pilot/C3_sweep_index_20261028T033315Z.json",
+      "sha256": "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab"
+    },
+    "sidecar": {
+      "path": "results/r1/evidence/C3_sweep_classification_20261028.json",
+      "sha256": "bb6d891c499f0fc187726ed7c8c1e1bce107a029b9106ccb95115989c0c0f1dc"
+    },
+    "frozen_trees": {
+      "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z": "6b1c0c6154a604c391f8b7684a2d4ce34ccddd1a",
+      "results/r1/evidence/C3_sweep_none_20261027T224356Z": "468e57ce4871d0d33f08932c6fe13c2cb0d431ce"
+    },
+    "collector": {
+      "commit": "ccb47128aad82e331f79df4a893dbc1ee7e42f51",
+      "path": "r1/headroom/e1b_collect.py",
+      "blob_sha256": "0001260442f9647461fd867a53fb74867a2b0e65810d9547eeb093a39e4b3271"
+    }
+  },
+  "preserved_batch": {
+    "path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw",
+    "sha256": {
+      "env.sh": "bb8f36c5495654eb91e3126ae7ec693980bd1aa50433e97e38d8d27b73fcb45c",
+      "c3_config.json": "2fa891f43bf26e6ed2ac6c794696428a43568a69a850d6029e3bc8233616974b",
+      "c3_sweep_summary.json": "4daeedd5245f49df2e08a6291f08a38b124ccf20f5bdc75e2d117eafa3398967",
+      "batch_state.json": "c8d8301234a7e7d39611a29fcf38f87b721a655ac0703bc13345655cf38f41d5",
+      "uv_sync.log": "335bf9b432edaf7199a937e02ab094ed5a7cd97f54b2a0fa10b7862f2c18682e",
+      "prepare.json": "bb47dd267a93329c7aa120b86f7cb47b053dfe17ea0f23cb97e7339af24d30d3"
+    },
+    "note": "the batch was only read; nothing under it was written"
+  },
+  "host": {
+    "node": "deepthought.etp.kit.edu",
+    "hostname_short": "deepthought",
+    "kernel": "Linux 4.18.0-553.156.1.el8_10.x86_64",
+    "cpus": 40,
+    "workers": 1,
+    "cuda_visible_devices": "",
+    "thread_env": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    },
+    "co_tenancy": "PASSED: ~1.13 cores used by other work, ~38.9 of 40 free at both checks (>= 10 required)"
+  },
+  "git_worktree_host": {
+    "deployed_by": "fresh clone of git@github.com:dowlingwong/Agent_paper_B.git under /ceph/dwong/r1_e1_20261116",
+    "origin_main": "9ae6d87783f53f9da27200869085c9ed0e7697e2",
+    "branch_mac_m3_dryrun_path_20261114_tip": "129317d1f3a7505bedbb6285401a148189ef531a"
+  },
+  "run": {
+    "stamp": "20261116T094408Z",
+    "scratch": "/tmp/r1_c3_env_replay_20261116T094408Z (never created)",
+    "min_free_bytes": 2147483648,
+    "dry_run_out": "/ceph/dwong/r1_e1_20261116/agent_paper_B/results/r1/engineering/C3_env_replay_20261116T094408Z_dryrun",
+    "real_out": "/ceph/dwong/r1_e1_20261116/agent_paper_B/results/r1/engineering/C3_env_replay_20261116T094408Z_real (never created)",
+    "dry_run_exit": 0,
+    "real_exit": 2,
+    "real_verdict": "STOP",
+    "real_reason": "STOP: OpenML offline dataset availability and worker network denial are not verified; no replay scheduled",
+    "timestamps_utc": {
+      "dry_run_started": "2026-11-16T09:44:52Z (approx)",
+      "dry_run_plan_written": "2026-11-16T09:45:29Z",
+      "real_run_started": "2026-11-16T09:45:45Z (approx)",
+      "co_tenancy_before_real": "2026-11-16T09:45:44Z"
+    }
+  }
+}

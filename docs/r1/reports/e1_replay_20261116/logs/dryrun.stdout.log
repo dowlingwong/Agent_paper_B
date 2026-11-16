@@ -1,0 +1,1 @@
+{"label": "DRYRUN", "cases": 16, "out": "/ceph/dwong/r1_e1_20261116/agent_paper_B/results/r1/engineering/C3_env_replay_20261116T094408Z_dryrun", "nodes": ["digits_mlp", "openml_breast_w", "openml_climate", "openml_credit_approval", "openml_ionosphere", "openml_sonar", "openml_wdbc", "tabular_mlp"]}

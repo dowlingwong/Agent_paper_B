@@ -1,0 +1,52 @@
+# C3 B.1 e1 environment replay - exact commands (ENGINEERING_ONLY)
+# Authorization: docs/r1/authorizations/c3_env_replay_20261116.md @ 4da73306
+# Operator session host (Mac) -> deepthought.etp.kit.edu, 2026-11-16.
+
+## Deployment (from origin/main lineage; exact reviewed commit checked out)
+ssh deepthought.etp.kit.edu
+DEP=/ceph/dwong/r1_e1_20261116
+B=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw
+mkdir -p "$DEP" && cd "$DEP"
+git clone git@github.com:dowlingwong/Agent_paper_B.git agent_paper_B   # default branch main -> 9ae6d877
+cd agent_paper_B
+git checkout --detach 5ef9db16faf0d43843a5e8110b9181173b49175c          # reviewed paper code pin
+git rev-parse HEAD                # 5ef9db16faf0d43843a5e8110b9181173b49175c
+sha256sum r1/scripts/c3_env_replay.py
+#   a9cad4d544bdf061c42ecb4b4c2d3d10d8bc94342574d9a37489bd4b179aa7d8
+
+## Dry run (first; retained) - 2026-11-16T09:45:29Z
+STAMP=20261116T094408Z
+PAPER=$DEP/agent_paper_B
+cd "$PAPER"
+. "$B/env.sh"
+export AR_HARNESS_ROOT="$B/autoresearch_harness"
+export PYTHONDONTWRITEBYTECODE=1
+python -B -m r1.scripts.c3_env_replay \
+  --paper-root "$PAPER" \
+  --harness "$B/autoresearch_harness" --batch "$B" \
+  --scratch /tmp/r1_c3_env_replay_${STAMP} \
+  --out "$PAPER/results/r1/engineering/C3_env_replay_${STAMP}_dryrun" \
+  --min-free-bytes 2147483648 --dry-run
+# exit 0; {"label":"DRYRUN","cases":16,...}; replay_plan.json SHA256
+#   a5f04ef271ba5eab57543f238c2c2b82481a303fb19e5a454ad2accb5f055ba6
+
+## Real replay (second; different new out dir) - 2026-11-16T09:45:45Z
+python -B -m r1.scripts.c3_env_replay \
+  --paper-root "$PAPER" \
+  --harness "$B/autoresearch_harness" --batch "$B" \
+  --scratch /tmp/r1_c3_env_replay_${STAMP} \
+  --out "$PAPER/results/r1/engineering/C3_env_replay_${STAMP}_real" \
+  --min-free-bytes 2147483648
+# exit 2
+# stdout: {"verdict": "STOP", "reason": "STOP: OpenML offline dataset availability and
+#          worker network denial are not verified; no replay scheduled"}
+# The driver raised before out.mkdir() and before check_environment/check_harness/
+# check_resources: the real out dir and the /tmp scratch were NOT created.
+# No cases.jsonl, summary.json or STOP.json was emitted by the driver.
+
+# --min-free-bytes = 2147483648 (2 GiB) is the operator's local-headroom estimate:
+# the replay writes ~20 files; the Ceph 50 GiB floor and file-count floor are
+# enforced separately by the driver when --out is under /ceph.
+
+# Post-run: no lingering jobs; nothing deleted; dry-run out dir, logs and the
+# deployment checkout are retained; /tmp scratch was never created.

@@ -1,0 +1,69 @@
+{
+  "schema": "r1.c3_env_replay.stop/1",
+  "artifact_author": "operator (deepthought), not the driver",
+  "label": "ENGINEERING_ONLY",
+  "authorization": {
+    "path": "docs/r1/authorizations/c3_env_replay_20261116.md",
+    "commit": "4da73306b8e10455fb124cf13d367e49b37247fe"
+  },
+  "verdict": "STOP",
+  "stop_rule": [
+    "Authorization, 'Open execution STOP': the driver refuses any actual replay containing an OpenML case until an independently reviewed mechanism proves the exact datasets are available offline and enforces no network download in worker subprocesses; do not bypass.",
+    "Authorization, STOPs: 'An OpenML node would download data.'"
+  ],
+  "stop_stage": "c3_env_replay.run(), hard OpenML gate, after source/corpus/collector/case-selection checks and before any case is scheduled and before check_environment / check_harness / check_resources",
+  "reason": "STOP: OpenML offline dataset availability and worker network denial are not verified; no replay scheduled",
+  "driver": {
+    "path": "r1/scripts/c3_env_replay.py",
+    "sha256": "a9cad4d544bdf061c42ecb4b4c2d3d10d8bc94342574d9a37489bd4b179aa7d8",
+    "git_commit": "5ef9db16faf0d43843a5e8110b9181173b49175c",
+    "stop_site": "run(): lines 578-579, 'if any(case[\"node\"].startswith(\"openml_\") for case in cases): raise Stop(...)'",
+    "second_stop_site": "execute_case(): lines 482-483, same refusal for an individual OpenML case"
+  },
+  "cases_planned": 16,
+  "cases_scheduled": 0,
+  "cases_run": 0,
+  "cases_passed": 0,
+  "tolerance": 0,
+  "comparison": "emitted metric token, exact; no re-rounding (never applied: no case ran)",
+  "missing_mechanism": {
+    "requirement": "An independently reviewed mechanism that (a) proves the exact OpenML datasets for the six OpenML nodes (breast_w, ionosphere, wdbc, credit_approval, sonar, climate) are available offline, bound to the exact task/data identity, and (b) enforces no network download in worker subprocesses while preserving the frozen worker's numerical semantics.",
+    "what_the_driver_checks": "For a real run it refuses the whole case set when any case's node starts with 'openml_' (lines 578-579), before scheduling anything. Per case, execute_case independently refuses an OpenML case (lines 482-483); the only offline evidence it would accept is has_cache_files() (lines 434-436), i.e. the presence of any non-placeholder file under the node's data_cache, copied from the collector's PILOT_DATA_CACHE if absent (lines 495-501).",
+    "why_that_is_insufficient": "M3 independent review of 4 November 2026 (Major 1) found that this presence-only test is not proof: a data_cache containing only an unrelated file returns has_cache_files() == True, the pinned harness 6adf385 node benchmark.py calls fetch_openml(..., data_home=...) without download_if_missing=False or another demonstrated network denial, so a partial or unrelated cache could pass preflight and start an attempted download in the worker. The same review's re-check states the hard STOP 'does not prove offline availability or implement the 16-case replay'; gate A1 is OPEN/partial and A4 (offline) is OPEN, and the offline mechanism and its independent review remain required. The 9 November review of the accepted M3 overnight unit states: 'Wiring into c3_env_replay.run is correctly left out; the production OpenML STOPs are unchanged.'",
+    "authorization_effect": "The authorization retains this hard STOP and forbids bypass. Consequently no actual replay of the 16 fixed cases was possible, and the zero-tolerance PASS rule could not be evaluated."
+  },
+  "checks_reached_and_passed_before_the_stop": {
+    "output-and-scratch-must-be-new": "passed (real out dir and scratch did not exist)",
+    "no_llm_modules_loaded": "passed",
+    "verify_corpus": "passed: index SHA256 812468e2..., sidecar SHA256 bb6d891c..., both manifests, frozen git trees 6b1c0c61.../468e57ce..., original blobs verified",
+    "verify_collector_binding": "passed: ccb4712 r1/headroom/e1b_collect.py blob SHA256 0001260442f9..., both seed bindings found",
+    "select_cases": "passed: 16 fixed cases recovered (seeds 104/102/105/103/100/100/105/104, budget indices 1 and 2), every recovered patch equal to the recorded patch, every archived log carries the recorded metric token, trial 1 kept, trial 2 continues from the trial-1 incumbent, pinned NodeSpecs match metric name and editable files",
+    "count-16-cases": "passed (16 cases selected)"
+  },
+  "environment_checks": {
+    "driver_state": "NOT RUN by the driver: the STOP at lines 578-579 precedes check_environment, check_harness and check_resources (lines 588-590), so no environment verdict exists from this run.",
+    "operator_read_only_recheck": "The authorization's pre-run protocol requires the operator to independently re-verify the host environment. Read-only observations were taken (logs/env_observations.log): wrappers exec the shared venv; Python 3.13.15; scikit-learn 1.8.0, NumPy 2.4.4, pandas 3.0.3, SciPy 1.17.1; 59 packages with normalized list SHA256 c09242ac...; newest dist-info mtime 2026-10-26T22:09:12Z (before the 2026-10-27T15:48Z launch); narwhals 2.27.1 as the only addition to the 25 October freeze; uv.lock dd42d018...; freeze c760b28f...; harness HEAD 6adf3859... tracked-clean. These are operator observations, not the driver's checks, and cannot supply a PASS.",
+    "note": "A passing environment recheck cannot change this STOP; only the missing OpenML mechanism can."
+  },
+  "artifacts": {
+    "dry_run_out_dir_retained": "/ceph/dwong/r1_e1_20261116/agent_paper_B/results/r1/engineering/C3_env_replay_20261116T094408Z_dryrun",
+    "replay_plan_sha256": "a5f04ef271ba5eab57543f238c2c2b82481a303fb19e5a454ad2accb5f055ba6",
+    "real_out_dir": "not created (driver raised before out.mkdir())",
+    "scratch": "not created (/tmp/r1_c3_env_replay_20261116T094408Z never created)",
+    "cases_jsonl": "not emitted by the driver; this directory carries an explicitly empty cases.jsonl (0 cases run)",
+    "summary_json": "not emitted (no PASS possible)",
+    "raw_logs": ["logs/dryrun.stdout.log", "logs/dryrun.stderr.log", "logs/real.stdout.log", "logs/real.stderr.log", "logs/env_observations.log"],
+    "co_tenancy": "cotenancy.log"
+  },
+  "host": {
+    "name": "deepthought",
+    "node": "deepthought.etp.kit.edu",
+    "kernel": "Linux 4.18.0-553.156.1.el8_10.x86_64",
+    "cpus": 40,
+    "workers": 1,
+    "gpu": "none touched (CUDA_VISIBLE_DEVICES='' by driver; no case ran)",
+    "manager_model": "none"
+  },
+  "no_retry": true,
+  "retained": true
+}
