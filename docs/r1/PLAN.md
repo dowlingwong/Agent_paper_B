@@ -1200,6 +1200,16 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 |---|---|
 | R1-SWEEP-HOST-HTC | **从 sweep 2 起，所有 C3 label sweep（T0 sweep 2、其 B.2 审计、以后的 T1 sweep）都以 HTCondor job 运行。带 LLM 的 label run 只在 NEMO2 L40S 上跑（job requirements 固定 GPU 型号与 CPU 型号）；纯 CPU 审计在一种固定的 HTCondor CPU 节点类型上跑；一张表只用一种主机。修订 R1-SWEEP-HOST（deepthought 为主）与 R1-MAIN-PROPOSER (c) 的主机描述（4090 → L40S）。sweep 1 保持冻结不重跑。选拔主机（4090）与部署主机（L40S）不同，如实披露，并要求 EVIDENCE 前通过 L40S 部署检查。** 作者于 16 Nov 00:26 在 chat 中选定方案 B（L40S）并要求所有 sweep 走 job submission，01:40 确认、01:43 签署本行。工作计划（非决定）：`prompts/SWEEP2_HTCONDOR_RUNBOOK_20261116.md`（`docs/runbooks-16nov` @ `a2789ea6`）。本行不授权 sweep 2 启动：EVIDENCE 仍需作者提交的授权文件 `authorizations/c3_sweep2_<date>.md`，且 R1-BX-D8 的分析锁不变。 |
 
+### 16 November 2026 — sweep-2 settings, D8 v3 (items 1–3), Track G G.1b host, e1 (author)
+
+| ID | Decision |
+|---|---|
+| R1-SWEEP2-SETTINGS | **(1) context：** sweep 2 用 **32,768**，server 参数与选拔考试相同（`-ngl 999 -np 1`、`--jinja`、`enable_thinking` false、q8_0 KV、每次请求 `cache_prompt` false）；修订 R1-MAIN-PROPOSER (c) 的 16,384 与 S2-C2 validator；S2-C3 按此设置 replay；不影响数值的参数（如 `--no-webui`、日志级别）若有差异须披露。**(2)** sweep 2 的授权文件不含 B.2 审计；sweep-2 B.2 以后另行补充授权，R1-B2-DECOUPLE 与 R1-B2-REPLAY-GO 不变。**(3) R1-MAIN-PROPOSER (g)2：** 暂不给例外；先 e1 环境重放 → 作者 e2 → sweep-1 B.2（HTCondor 固定 CPU 类），与 sweep 2 的准备并行；仅当它成为 sweep 2 唯一的阻塞时再议例外。**(4) (g)4：** 新增单元：pick 在 NEMO2 L40S 上对八个节点做 D28 liveness，并用 pick 的 tokenizer 重测 prompt 长度；S2-C2 wrapper 恢复 sweep 1 的 liveness 与收集门槛（`min_live_nodes` 8、`max_parse_failure_rate` 0.2、`collection_gates`）；不豁免。**(5) 投影上限：** S2-C4 式投影超过 60 GPU-h 或 48 小时墙钟为作者 STOP（在 HTCondor 下取代 (h) 的"一张 4090 上 4 天"）。依据：S2-M1 授权草稿注 1–4（`mac-s2-m1-auth-20261116` @ `56b5b76e`，审查接受）。 |
+| R1-BX-D8-V3-A | **C3 gate 约定（R1-BX-D8-CONFIRM 之前），本行只定第 1–3 项：(1) 测试侧 V1n — 只在 IQM-eligible 节点的点估计测试分母非正时 STOP；重抽样中某节点分母非正时，该节点 gap closed 记为 −∞ 后再取 IQM。(2) 资格：train + dev 上 oracle − A2 的配对 z ≥ 3，且 dev 分母 ≥ δ_n，取代 dev z ≥ 6（14 Nov 未采纳）。(3) split：每个 tier P3 = 1/3 : 1/6 : 1/2，由调用方提供并写入分析预注册。** 第 4 项（D8-SKEW 下的 pass rule）与第 5 项（每 tier 测试下限）待定：先做一个预声明单元，寻找在 D8-SKEW 各情形下校准（每臂误通过率 ≤ 0.035，运行前声明）且功效最高的 pass rule；若无合格者，默认提案为 (c) 并披露，由作者另行定第 4、5 项。gate v3 等第 4、5 项定后一并实现、独立审查，再由 R1-BX-D8-CONFIRM 绑定其 SHA。R1-BX-D8 的分析锁不变。依据：`mac-s2-m4-d8confirm-20261116` @ `e9f00371`，D8-TEST（`1d34de18`），D8-SKEW（`mac-m11-d8-skew-20261115` @ `cb36a30f`）。 |
+| R1-TRACKG-G1B-HOST | **Track G：G.0 census 仍在 Ada（R1-ADA-CENSUS）；G.1b T1 GPU 节点噪声底改在 NEMO2 L40S（HTCondor）上测，与 T1 label 同一 GPU 型号（R1-SWEEP-HOST-HTC、R1-BX-D5）。** 修订 R1-ADA-CENSUS 中 G.1b 部分。 |
+| R1-TASL2-LOCK | **同意用一个独立审查过的单元处理 TASL-2 遗留的 `gpu0.lock`：记录持有者与时间，仅在无属主进程时释放，不删除任何文件（移到 `_to_delete/`）。** 之后 TASL-2 可作 Track P 的第二张卡，只跑不进 evidence 表的工作（R1-TASL7-TRACKP：evidence 表只在 TASL-7 产出）。 |
+| R1-E1-AUTH | **e1 环境重放已授权：** `authorizations/c3_env_replay_20261116.md`（R1-B2-REPLAY-GO (C1)）。先 `--dry-run`，驱动的离线数据 STOP 不得绕过。本行不是 e2，不启动 B.2。 |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
