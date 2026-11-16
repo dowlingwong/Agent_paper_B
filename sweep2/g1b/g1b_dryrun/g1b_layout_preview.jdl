@@ -1,0 +1,23 @@
+# G.1b T1 GPU-node noise-floor chunk (ENGINEERING_ONLY; prepared, NOT RUN) — g1b-20261116-a/G0_PENDING_NODE_01-train-s00-10
+# LAYOUT PREVIEW ONLY — the G.0 census has not named the candidate nodes yet. NOT FOR SUBMISSION:
+# the staged spec is the placeholder template and the container entry STOPs at spec validation.
+universe = container
+container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296
+executable = g1b_job.sh
+arguments = g1b_spec.json
+log = g1b_job.log
+output = g1b_job.out
+error = g1b_job.err
+request_cpus = 16
+request_memory = 32000
+request_disk = 42439718
+request_GPUs = 1
++RequestWalltime = 10620
++RemoteJob = True
++G1BPreview = True
+requirements = (TARGET.CloudSite =?= "BwForCluster-Nemo2") && (TARGET.GPUs_DeviceName =?= "NVIDIA L40S") && (TARGET.Arch == "X86_64") && (TARGET.OpSys == "LINUX") && (TARGET.Cpus >= 16) && (TARGET.CpuFamily =?= 6) && (TARGET.CpuModelNumber =?= 207)
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = g1b_job.sh,g1b_lib.py,g1b_spec.json
+transfer_output_files = out.tar,job_record.json,SHA256SUMS,g1b_run.log
+queue 1

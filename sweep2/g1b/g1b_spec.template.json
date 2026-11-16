@@ -1,0 +1,271 @@
+{
+ "schema": "g1b_job/v1",
+ "kind": "noise_floor_chunk",
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g1b-20261116-a",
+ "chunk": {
+  "chunk_id": "G0_PENDING_CHUNK",
+  "node": "G0_PENDING_NODE_01",
+  "condition": "G0_PENDING_CONDITION",
+  "seed_start": 0,
+  "seed_count": 0
+ },
+ "g0_census": {
+  "status": "pending",
+  "report_path": "G0_CENSUS_PENDING",
+  "report_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "host_platform": "G0_PENDING_HOST_PLATFORM",
+  "nodes": [
+   "G0_PENDING_NODE_01",
+   "G0_PENDING_NODE_02",
+   "G0_PENDING_NODE_03",
+   "G0_PENDING_NODE_04",
+   "G0_PENDING_NODE_05",
+   "G0_PENDING_NODE_06",
+   "G0_PENDING_NODE_07",
+   "G0_PENDING_NODE_08"
+  ]
+ },
+ "plan": {
+  "seeds_per_condition": 30,
+  "conditions": ["train", "split", "joint"],
+  "split_policy": "vary",
+  "configs": 6,
+  "default_runs_per_config": 2,
+  "candidate_nodes": [
+   {
+    "node_id": "G0_PENDING_NODE_01",
+    "run_seconds": null,
+    "metric": "G0_PENDING_METRIC",
+    "direction": "G0_PENDING_DIRECTION",
+    "request_memory_mb": 0,
+    "request_disk_kb": 0,
+    "edit_set": [
+     {"edit_id": "G0_PENDING_EDIT_01", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_01"},
+     {"edit_id": "G0_PENDING_EDIT_02", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_02"},
+     {"edit_id": "G0_PENDING_EDIT_03", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_03"},
+     {"edit_id": "G0_PENDING_EDIT_04", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_04"},
+     {"edit_id": "G0_PENDING_EDIT_05", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_05"}
+    ],
+    "runner": {
+     "module": "G0_PENDING_RUNNER_MODULE",
+     "entrypoint": "G0_PENDING_ENTRYPOINT",
+     "module_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   {
+    "node_id": "G0_PENDING_NODE_02",
+    "run_seconds": null,
+    "metric": "G0_PENDING_METRIC",
+    "direction": "G0_PENDING_DIRECTION",
+    "request_memory_mb": 0,
+    "request_disk_kb": 0,
+    "edit_set": [
+     {"edit_id": "G0_PENDING_EDIT_01", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_01"},
+     {"edit_id": "G0_PENDING_EDIT_02", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_02"},
+     {"edit_id": "G0_PENDING_EDIT_03", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_03"},
+     {"edit_id": "G0_PENDING_EDIT_04", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_04"},
+     {"edit_id": "G0_PENDING_EDIT_05", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_05"}
+    ],
+    "runner": {
+     "module": "G0_PENDING_RUNNER_MODULE",
+     "entrypoint": "G0_PENDING_ENTRYPOINT",
+     "module_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   {
+    "node_id": "G0_PENDING_NODE_03",
+    "run_seconds": null,
+    "metric": "G0_PENDING_METRIC",
+    "direction": "G0_PENDING_DIRECTION",
+    "request_memory_mb": 0,
+    "request_disk_kb": 0,
+    "edit_set": [
+     {"edit_id": "G0_PENDING_EDIT_01", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_01"},
+     {"edit_id": "G0_PENDING_EDIT_02", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_02"},
+     {"edit_id": "G0_PENDING_EDIT_03", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_03"},
+     {"edit_id": "G0_PENDING_EDIT_04", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_04"},
+     {"edit_id": "G0_PENDING_EDIT_05", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_05"}
+    ],
+    "runner": {
+     "module": "G0_PENDING_RUNNER_MODULE",
+     "entrypoint": "G0_PENDING_ENTRYPOINT",
+     "module_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   {
+    "node_id": "G0_PENDING_NODE_04",
+    "run_seconds": null,
+    "metric": "G0_PENDING_METRIC",
+    "direction": "G0_PENDING_DIRECTION",
+    "request_memory_mb": 0,
+    "request_disk_kb": 0,
+    "edit_set": [
+     {"edit_id": "G0_PENDING_EDIT_01", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_01"},
+     {"edit_id": "G0_PENDING_EDIT_02", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_02"},
+     {"edit_id": "G0_PENDING_EDIT_03", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_03"},
+     {"edit_id": "G0_PENDING_EDIT_04", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_04"},
+     {"edit_id": "G0_PENDING_EDIT_05", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_05"}
+    ],
+    "runner": {
+     "module": "G0_PENDING_RUNNER_MODULE",
+     "entrypoint": "G0_PENDING_ENTRYPOINT",
+     "module_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   {
+    "node_id": "G0_PENDING_NODE_05",
+    "run_seconds": null,
+    "metric": "G0_PENDING_METRIC",
+    "direction": "G0_PENDING_DIRECTION",
+    "request_memory_mb": 0,
+    "request_disk_kb": 0,
+    "edit_set": [
+     {"edit_id": "G0_PENDING_EDIT_01", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_01"},
+     {"edit_id": "G0_PENDING_EDIT_02", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_02"},
+     {"edit_id": "G0_PENDING_EDIT_03", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_03"},
+     {"edit_id": "G0_PENDING_EDIT_04", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_04"},
+     {"edit_id": "G0_PENDING_EDIT_05", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_05"}
+    ],
+    "runner": {
+     "module": "G0_PENDING_RUNNER_MODULE",
+     "entrypoint": "G0_PENDING_ENTRYPOINT",
+     "module_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   {
+    "node_id": "G0_PENDING_NODE_06",
+    "run_seconds": null,
+    "metric": "G0_PENDING_METRIC",
+    "direction": "G0_PENDING_DIRECTION",
+    "request_memory_mb": 0,
+    "request_disk_kb": 0,
+    "edit_set": [
+     {"edit_id": "G0_PENDING_EDIT_01", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_01"},
+     {"edit_id": "G0_PENDING_EDIT_02", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_02"},
+     {"edit_id": "G0_PENDING_EDIT_03", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_03"},
+     {"edit_id": "G0_PENDING_EDIT_04", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_04"},
+     {"edit_id": "G0_PENDING_EDIT_05", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_05"}
+    ],
+    "runner": {
+     "module": "G0_PENDING_RUNNER_MODULE",
+     "entrypoint": "G0_PENDING_ENTRYPOINT",
+     "module_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   {
+    "node_id": "G0_PENDING_NODE_07",
+    "run_seconds": null,
+    "metric": "G0_PENDING_METRIC",
+    "direction": "G0_PENDING_DIRECTION",
+    "request_memory_mb": 0,
+    "request_disk_kb": 0,
+    "edit_set": [
+     {"edit_id": "G0_PENDING_EDIT_01", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_01"},
+     {"edit_id": "G0_PENDING_EDIT_02", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_02"},
+     {"edit_id": "G0_PENDING_EDIT_03", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_03"},
+     {"edit_id": "G0_PENDING_EDIT_04", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_04"},
+     {"edit_id": "G0_PENDING_EDIT_05", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_05"}
+    ],
+    "runner": {
+     "module": "G0_PENDING_RUNNER_MODULE",
+     "entrypoint": "G0_PENDING_ENTRYPOINT",
+     "module_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   {
+    "node_id": "G0_PENDING_NODE_08",
+    "run_seconds": null,
+    "metric": "G0_PENDING_METRIC",
+    "direction": "G0_PENDING_DIRECTION",
+    "request_memory_mb": 0,
+    "request_disk_kb": 0,
+    "edit_set": [
+     {"edit_id": "G0_PENDING_EDIT_01", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_01"},
+     {"edit_id": "G0_PENDING_EDIT_02", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_02"},
+     {"edit_id": "G0_PENDING_EDIT_03", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_03"},
+     {"edit_id": "G0_PENDING_EDIT_04", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_04"},
+     {"edit_id": "G0_PENDING_EDIT_05", "kind": "code_diff", "patch_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "description": "G0_PENDING_EDIT_05"}
+    ],
+    "runner": {
+     "module": "G0_PENDING_RUNNER_MODULE",
+     "entrypoint": "G0_PENDING_ENTRYPOINT",
+     "module_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   }
+  ]
+ },
+ "image": {
+  "digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "versions_markers": {
+   "image": "r1-htc-gpu",
+   "build_utc": "2026-11-14T23:10:24Z",
+   "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+   "llama_cpp_commit": "620d2225cc436ab0b001e3200e590e3b286ef9ab"
+  }
+ },
+ "paper": {
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+  "commit": "PENDING_G1B_BRANCH_COMMIT"
+ },
+ "harness": {
+  "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
+  "commit": "PENDING_T1_HARNESS_PIN",
+  "pin_evidence": "G0_PENDING_HARNESS_PIN_EVIDENCE"
+ },
+ "env": {
+  "python": "/opt/r1/envs/trackp/bin/python",
+  "libraries": {
+   "python": "PENDING",
+   "numpy": "PENDING",
+   "scikit-learn": "PENDING",
+   "torch": "PENDING"
+  }
+ },
+ "proposer_environment": {
+  "server": {
+   "binary": "/opt/r1/llama/bin/llama-server",
+   "ctx": 32768,
+   "n_gpu_layers": 999,
+   "n_parallel": 1,
+   "cache_prompt": false,
+   "expected_build": "0.7.0-dev (build 11669, commit 620d2225c)",
+   "extra_args": ["--jinja", "--chat-template-kwargs", "{\"enable_thinking\": false}", "--cache-type-k", "q8_0", "--cache-type-v", "q8_0", "--no-webui"]
+  },
+  "model": {
+   "url": "https://huggingface.co/bartowski/google_gemma-4-31B-it-GGUF/resolve/619aca7589c72be65dd968de8602ad23d68b5c14/google_gemma-4-31B-it-Q4_K_M.gguf",
+   "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+   "size": 19598489952,
+   "alias": "gemma4_31b",
+   "provenance": {
+    "registry_doc": "docs/r1/reports/exam_phase2_20261026/gemma4_31b.json",
+    "registry_sha256": "a04a0346ca887c27998b5f46f4e3d67fa05126ff3af9e0c20fe78d030c1fdc61",
+    "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
+    "file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+    "source_label": "bartowski imatrix Q4_K_M"
+   },
+   "use": "declared-only-no-download"
+  }
+ },
+ "measurement": {
+  "workers": 1,
+  "seed_bases": {"train": 1001, "split": 2001, "joint": 3001},
+  "chunk_overhead_factor": 1.35,
+  "reserved_seconds": 900
+ },
+ "caps": {
+  "max_total_gpu_hours": 60.0,
+  "max_chunk_wall_hours": 48.0,
+  "max_chunk_wall_seconds": 10776
+ },
+ "requirements": {
+  "cloud_site": "BwForCluster-Nemo2",
+  "gpu_device_name": "NVIDIA L40S",
+  "arch": "X86_64",
+  "opsys": "LINUX",
+  "min_cpus": 16,
+  "cpu_family": 6,
+  "cpu_model_number": 207,
+  "cpu_model_contains": "INTEL(R) XEON(R) PLATINUM 8562Y+"
+ }
+}
