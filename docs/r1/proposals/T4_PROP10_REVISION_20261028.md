@@ -43,7 +43,7 @@ Trials n = 1, …, N, where N is fixed (the LLM-call cap).
 - Δ_n is the true increment;
 - η_n is the comparison noise.
 
-An execution reveals H_n = Δ_n + η_n on I_nᶜ. On a bit-exact node (T4 §1) H_n = 0 on I_n; on other nodes H_n = η_n there. On a bit-exact node, {H_n = 0} identifies I_n almost surely only if, in addition, the comparison value on I_nᶜ has no probability mass at zero: P(Δ_n + η_n = 0, I_nᶜ | O_n) = 0. **Execution reveals only H_n.** Any other run output that predicts later increments (absolute metric, learning curves, wall time, crashes) must be included in H_n, and hence in Y_n, for §3 to apply.
+An execution reveals H_n = Δ_n + η_n on I_nᶜ. On a bit-exact node (T4 §1) H_n = 0 on I_n; on other nodes H_n = η_n there. On a bit-exact node with 0 < π_n < 1, {H_n = 0} identifies I_n almost surely if and only if, in addition, the comparison value on I_nᶜ has no probability mass at zero: P(Δ_n + η_n = 0, I_nᶜ | O_n) = 0. **Execution reveals only H_n.** Any other run output that predicts later increments (absolute metric, learning curves, wall time, crashes) must be included in H_n, and hence in Y_n, for §3 to apply.
 
 **Duplicates and no-ops.** In T4, duplicate status D_n and no-op status I_n are defined relative to earlier *evaluated* configurations and to the current incumbent. Both therefore depend on past decisions. §3 adds an assumption (NF-c) that removes this dependence; §2 needs none.
 
@@ -77,13 +77,14 @@ E|Δ_n| < ∞ gives E m_n⁺ < ∞.
 4. **Edge cases.**
    - If π_n = 1 (a detectable no-op), V*_n = 0, and skipping is optimal for g > 0 (a tie at g = 0).
    - If τ_n = 0 on I_nᶜ (known increment μ_n), keep iff m_n > 0 after execution, and V*_n = (1 − π_n) μ_n⁺.
-     - On a bit-exact node, H_n separates I_n from I_nᶜ (so the rule keeps exactly when μ_n > 0 and the proposal is not a no-op) only if the comparison value μ_n + η_n has no probability mass at zero given O_n and I_nᶜ. μ_n ≠ 0 alone is not enough.
+     - On a bit-exact node with 0 < π_n < 1, H_n separates I_n from I_nᶜ if and only if the comparison value μ_n + η_n has no probability mass at zero given O_n and I_nᶜ; μ_n ≠ 0 alone is not enough. With separation, the rule keeps exactly when μ_n > 0 and the proposal is not a no-op. Without it, the m_n-rule may also keep some no-ops when μ_n > 0. V*_n and every value are the same either way, because keeping a no-op gains 0.
+     - Revision 2 wrote "keep iff μ_n > 0". Both rules attain V*_n, since they differ only on detected no-ops, where Δ_n = 0.
      - If μ_n = 0, then Δ_n = 0 almost surely and V*_n = 0. Keep and discard are equivalent after an execution. But execute and skip tie only at g = 0: for g > 0, skipping is strictly better, because executing pays −g.
 
 **Proof.**
 - *Part 1.* Since a_n is O_n-measurable and k_n = a_n k_n is (O_n ∨ σ(H_n))-measurable, the tower property gives E[Δ_n k_n | O_n] = E[k_n m_n | O_n] ≤ a_n E[m_n⁺ | O_n] = a_n V*_n, with equality for k_n = a_n 1{m_n > 0}.
 - *Parts 2 and 3.* Compare V*_n − g with 0, and use max(V*_n − g, 0) − (V*_n − g) = (g − V*_n)⁺.
-- *Part 4.* π_n = 1 gives Δ_n = 0 a.s. τ_n = 0 makes Δ_n = μ_n known on I_nᶜ. So Δ_n ∈ {0, μ_n} has the sign of μ_n, and V*_n = E[m_n⁺ | O_n] = (1 − π_n) μ_n⁺. μ_n = 0 gives Δ_n = 0 a.s., so V*_n = 0, and part 2 gives "skip" strictly for g > 0. ∎
+- *Part 4.* π_n = 1 gives Δ_n = 0 a.s. τ_n = 0 makes Δ_n = μ_n known on I_nᶜ. So Δ_n ∈ {0, μ_n} has the sign of μ_n. Since μ_n is O_n-measurable, m_n has that sign too, so m_n⁺ = 1{μ_n > 0} m_n, and V*_n = E[m_n⁺ | O_n] = 1{μ_n > 0} E[Δ_n | O_n] = 1{μ_n > 0}(1 − π_n) μ_n = (1 − π_n) μ_n⁺. μ_n = 0 gives Δ_n = 0 a.s., so V*_n = 0, and part 2 gives "skip" strictly for g > 0. ∎
 
 The proof uses only the tower property and the measurability of a_n and k_n. It does not use U ⊥ W_{1:N}.
 
@@ -119,7 +120,7 @@ Hence O_n ⊆ G_n := σ(x_{1:n}, Y_{<n}, U).
 - (NI) gives Y_n ⊥ Y_{<n} | x_{1:n}.
 - Together (contraction), Y_n ⊥ (Y_{<n}, U) | x_{1:n}, that is, Y_n ⊥ G_n | x_{1:n}.
 
-Since σ(x_{1:n}) ⊆ O_n ⊆ G_n, the tower property gives, for every bounded f, E[f(Y_n) | O_n] = E[E[f(Y_n) | G_n] | O_n] = E[E[f(Y_n) | x_{1:n}] | O_n] = E[f(Y_n) | x_{1:n}]. So (Δ_n, H_n) ⊥ O_n | x_{1:n}, which is part 1. (Revision 2 called this step weak union; it is the tower property.) The functions m_n(x_{1:n}, h) and V*_n(x_{1:n}) exist by the Doob–Dynkin lemma. Their versions are unique up to null sets of the law of (x_{1:n}, H_n), and (NF) makes that law the same for every policy.
+Since σ(x_{1:n}) ⊆ O_n ⊆ G_n, the tower property gives, for every bounded f, E[f(Y_n) | O_n] = E[E[f(Y_n) | G_n] | O_n] = E[E[f(Y_n) | x_{1:n}] | O_n] = E[f(Y_n) | x_{1:n}]. So (Δ_n, H_n) ⊥ O_n | x_{1:n}, and weak union gives Δ_n ⊥ O_n | (x_{1:n}, H_n), so m_n = E[Δ_n | x_{1:n}, H_n] and V*_n = E[m_n⁺ | x_{1:n}]. This is part 1. (Revision 2 called the reduction from G_n to O_n weak union; it is the tower property.) The functions m_n(x_{1:n}, h) and V*_n(x_{1:n}) exist by the Doob–Dynkin lemma. Their versions are unique up to null sets of the law of (x_{1:n}, H_n), and (NF) makes that law the same for every policy.
 
 *Step 2 (per-trial bound for an arbitrary policy).* This is Proposition 8′.1 and 8′.2 with V*_n now a function of x_{1:n}: E[Δ_n k_n − g a_n | O_n] ≤ a_n (V*_n − g) ≤ (V*_n − g)⁺.
 
@@ -167,7 +168,7 @@ Since σ(x_{1:n}) ⊆ O_n ⊆ G_n, the tower property gives, for every bounded f
 | 100 | 27.7095 (27.7320 ± 0.0459) | 39.5437 (39.5753 ± 0.0416) | 11.8342 (11.8433 ± 0.0197) |
 | 1000 | 281.5948 (281.8200 ± 0.4586) | 398.5913 (398.9061 ± 0.4133) | 116.9965 (117.0861 ± 0.1967) |
 
-Script and output: `docs/r1/proposals/t4_prop10_revision_20261028/ex10c.py`, `ex10c_output.txt`. The author's proof check re-ran the script, and its output matched the repository file byte for byte. This unit re-ran it too (Python 3.13, NumPy 2.4.4, SciPy 1.17.1), with the same result. The script is unchanged in revision 3; the β = 0.1 value above comes from its `closed_form` function, with the Monte Carlo part not run.
+Script and output: `docs/r1/proposals/t4_prop10_revision_20261028/ex10c.py`, `ex10c_output.txt`. The author's proof check re-ran the script, and its output matched the repository file byte for byte. This unit re-ran it too (Python 3.13, NumPy 2.4.4, SciPy 1.17.1), with the same result. The script is unchanged in revision 3 (its output still labels the signed difference "loss"); the β = 0.1 value above comes from its `closed_form` function, with the Monte Carlo part not run.
 
 *Reading.* The myopic rule prices a run only by its immediate keep value, never by the information it reveals. Here trial 1 is worth running only because it tells the loop whether trial 2 is good.
 
@@ -194,7 +195,7 @@ A Bayes-updating myopic rule does not fix this. It would use H₁ if it had it, 
   Separately, on bit-exact nodes at fixed seeds, η_n is deterministic per configuration and seed, so similar configurations probably have correlated noise. (NI) may then fail generically, beyond the shared-e mechanism.
 
   **Author decision (R1-T4-PROOF-CHECK): option (ii).**
-  - The incumbent error e is treated as a shared latent variable, and the values of Proposition 8′ are computed conditional on the posterior of e. Proposition 8′ applies as stated, because m_n and V*_n condition on O_n, which carries the information about e.
+  - The incumbent error e is treated as a shared latent variable, and the values of Proposition 8′ are computed conditional on the posterior of e. Parts 1–4 of 8′ need no distributional assumption and hold as stated. The Gaussian closed form of §1 (Proposition 6's threshold) does not apply directly: given O_n, η_n has mean (ϱ_n − 1)E[e | O_n] ≠ 0. It needs the comparison corrected by (1 − ϱ_n)E[e | O_n], and the posterior variance of e added to the noise variance.
   - The actual loop lies outside the scope of Proposition 10(a′).
   - Campaign gains are reported as measured, not derived (R3).
 - **R2. Hard budget.** All statements are for a fixed price g with both actions always feasible. Under the hard budget E[Σ a_n] ≤ W, or with freed runs re-spent, the opportunity cost of a run depends on the remaining budget and the incumbent. T4 §1's weak-duality remark is then the only statement. This is the third channel (budget coupling). It stays a declared sensitivity, not a theorem.
@@ -204,9 +205,9 @@ A Bayes-updating myopic rule does not fix this. It would use H₁ if it had it, 
     - the formula with the myopic V*'s gives +0.1011.
   - **Corollary 7a** holds under (NF) alone if the execution rule does not depend on past keeps (so both compared policies have the same O_n), and if (A1)–(A2) hold relative to O_n.
   - **Without (NF) and (NI),** report campaign gains as measured, not derived.
-- **R4. C3 gate.** The gate scales the offline one-step gain to a 20-run campaign. That scaling is a declared definition and stays unchanged. Under (NF) and (NI) it matches Proposition 10(a′).3 if the 20 decisions have a common per-decision mean. Otherwise it has **no guaranteed sign relation** to the campaign gain (R3), and the manuscript says so. 10(a′).3 sums over proposals, not runs, and the two differ under skipping.
+- **R4. C3 gate.** The gate scales the offline one-step gain to a 20-run campaign. That scaling is a declared definition and stays unchanged. Under (NF) and (NI) it matches Proposition 10(a′).3 if the 20 decisions have a common per-decision mean. Otherwise it has **no guaranteed sign relation** to the campaign gain (R3), and the manuscript says so. Under R1 (ii) the actual loop is in this "otherwise" case. 10(a′).3 sums over proposals, not runs, and the two differ under skipping; it is stated for a horizon of N proposals, so the match needs N = 20.
 
-  **Author decision (R1-T4-PROOF-CHECK): 20 counts proposals.** The gate's scaling is 20 × the weighted mean utility per recorded proposal. This matches the 22 Oct main analysis (PLAN "Run accounting in the 20-run scaling", option A) and `r1/c3/offline_eval.py` (`CAMPAIGN_RUNS = 20`; the primary accounting is 20 × Σ w·r / Σ w over recorded proposals). The paper also notes that the actual sweep sets its budget as 20 worker runs.
+  **Author decision (R1-T4-PROOF-CHECK): 20 counts proposals.** The gate's scaling is 20 × the weighted mean utility per recorded proposal. This matches the 22 Oct main analysis (PLAN "Run accounting in the 20-run scaling", option A) and the scaling in `r1/c3/offline_eval.py` (`CAMPAIGN_RUNS = 20`; the primary accounting is 20 × Σ w·r / Σ w over recorded proposals). The aggregate gate verdict itself is not yet implemented there (`gate_verdict` is a placeholder pending R1-BX-D8). The paper also notes that the actual sweep sets its budget as 20 worker runs.
 - **R5. T4 §6 "Reading."** Replace three claims, which the audit found do not follow from the theorem or the example, with the corrected contrapositive in §3:
   - "Statement (b) is the precise scope of RL";
   - the RL-necessity reading;
@@ -215,6 +216,7 @@ A Bayes-updating myopic rule does not fix this. It would use H₁ if it had it, 
   - For a **Bayes** myopic controller under (NF), Jensen's inequality applied twice gives E[(V*_n^off − g)⁺] ≥ E[(V*_n^on − g)⁺]: offline evaluation of skipping is optimistic. The bias is zero under (NI), by Proposition 10(a′).1.
   - For a learned, non-Bayes forecaster the sign is not determined, even under (NI).
   - Arms whose forecasts use proposals only (A1, A1-ctx) are unaffected under (NF), provided their E1 decisions do not use past results through the budget line, the incumbent or the display.
+  - Under R1 (ii), (NF) fails for the actual loop, so these signed statements do not apply to it, and the sign of the offline bias is not determined.
 
 ## 6. Empirical counterparts
 
@@ -225,13 +227,12 @@ A Bayes-updating myopic rule does not fix this. It would use H₁ if it had it, 
 4. the residual test within an incumbent spell and after keeps (the R1 mechanism);
 5. the (NF-b) interaction test on pairs the sweeps already provide.
 
-The C4 forced-branch test is deferred. This file does not start any check; each is carried out as its own unit. The table keeps its revision-2 content, with a status column added.
-
+The C4 forced-branch test is deferred. This file does not start any check. The table keeps its revision-2 content, with a status column added.
 
 | Condition | Observable consequence | Test | Status |
 |---|---|---|---|
 | (NF-a), keep channel | the proposal law after a forced keep equals the law after a forced discard, at matched histories | C4 decision-independence test on forced-decision branch pairs (E2). This tests only the keep channel: it does not test execute vs skip, or what is displayed | **deferred** (C4) |
-| (NF-a), display | under memory `none` the manager is shown nothing that depends on past decisions | **check item:** verify what the harness displays under `none`. If it still shows the incumbent configuration, (NF-a) fails there too. Then compare memory `none` vs `append_only_summary` (D24) | **in the plan** (check 1) |
+| (NF-a), display | under memory `none` the manager is shown nothing that depends on past decisions | **check item:** verify what the harness displays under `none`. If it still shows the incumbent configuration, (NF-a) fails there too. Then compare memory `none` vs `append_only_summary` (D24) | **in the plan** (check 1: the display audit only; the D24 comparison is not decided) |
 | (NF-b), increments | an edit's audited increment does not depend on which earlier edits were kept | interaction check on audited pairs of edits, applied over different incumbents, where the sweep provides them | **in the plan** (check 5) |
 | (NF-c) | duplicate and no-op status do not depend on the policy | count, in sweep campaigns, re-proposals of configurations that a skip would have left unevaluated | **in the plan** (check 2) |
 | (NI) | showing past results to a Bayes-style forecaster given x_{1:n} does not improve it (Proposition 10(a′).1) | masking test: the C3 forecaster with vs without executed results in its history, both given the same proposal history, compared out of sample on RPS and decision utility. Offline; no new labels. An improvement beyond estimation error is evidence against (NI); its absence does not establish (NI) | **in the plan** (check 3) |
@@ -277,7 +278,7 @@ All four items were decided in R1-T4-PROOF-CHECK (16 Nov 2026):
 | 6d testable-implication scope | §3 notes; §6 (NI) row |
 | 6e branch pairs test only the keep channel; memory display | §6 first two rows |
 
-**Re-review of revision 2:** ACCEPTED for the author's proof check (same review file, section "Re-review of revision 2"). Its non-blocking wording points N1–N4 are applied in this version: "(NF) and (NI)" in §1, (NF) components as sufficient, joint noise law in (NF-b), "under every policy" in (NF-c). N5 (paths) is resolved by committing the review and the script at the repository paths cited above.
+**Re-review of revision 2:** ACCEPTED for the author's proof check (same review file, section "Re-review of revision 2"). Its non-blocking wording points N1–N4 are applied in revision 2: "(NF) and (NI)" in §1, (NF) components as sufficient, joint noise law in (NF-b), "under every policy" in (NF-c). N5 (paths) is resolved by committing the review and the script at the repository paths cited above.
 
 ## 9. Revision 3: the errata and decisions of R1-T4-PROOF-CHECK, and where they are applied
 
@@ -298,3 +299,9 @@ All four items were decided in R1-T4-PROOF-CHECK (16 Nov 2026):
 - §2 part 4's proof writes out why V*_n = (1 − π_n) μ_n⁺ when τ_n = 0: Δ_n ∈ {0, μ_n} has the sign of μ_n;
 - §4 states the β → ∞ limit as the difference, which equals the gap once it is positive;
 - §4 records that this unit re-ran `ex10c.py` with the same output.
+- §2 part 4 writes the τ_n = 0 keep rule as "keep iff m_n > 0" (revision 2: "keep iff μ_n > 0"); both attain V*_n;
+- §1 and §2 part 4 state the identification condition as "if and only if" for 0 < π_n < 1;
+- §3 Step 1 adds the weak-union clause that gives m_n = E[Δ_n | x_{1:n}, H_n];
+- §5 R1 says which parts of 8′ hold unchanged under option (ii), and what the Gaussian closed form needs;
+- §5 R4 and R6 note that under R1 (ii) the actual loop is in their "otherwise" case; R4 ties 10(a′).3 to N = 20 and notes that `gate_verdict` is not yet implemented;
+- §6: check 1 is the display audit only.
