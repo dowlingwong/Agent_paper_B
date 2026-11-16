@@ -507,3 +507,71 @@ The twelve round-1 MINOR findings are resolved or reduced to the residues above.
 The default root mode, the arithmetic, the weighted quantile and the ratio-variance formula are correct. No BLOCKER or MAJOR finding remains.
 
 Verdict: ACCEPT
+
+---
+
+## Post-acceptance check
+
+- **Reviewer:** the same independent reviewer.
+- **Commit:** `4af6f81`. Diff read against `440cb20`; response table `BUILD_P5_RESPONSE_R2_20261116.md`.
+- **Date:** 16 Nov 2026
+- **Label:** ENGINEERING_ONLY
+
+### What I ran
+
+Scratch work is in `/tmp/p5rev/`: `probe6.py` and `cov_low.py`, plus CLI probes run inline.
+
+- **Tests:** 187 passed, including 12 P5 tests.
+- **Demo:** it regenerates the committed report byte for byte (`git status` clean).
+- **New tests:** I read them and checked the hand-computed interval independently: p = 0.5, se = √3/8 = 0.21651, n_eff = 5.333, t(0.975, 2) = 4.3027, Wilson half-width 0.44057.
+- **Round-2 probes** rerun on the new code.
+- **Coverage:** the executor's `/tmp/p5fix/cov.py` reproduces its numbers exactly (e.g. 0.952 / 0.942 / 0.944 at share 0.15, K = 5 / 10 / 50). I added low-prevalence cells and probed the boundary rule.
+
+### R2 findings, re-checked
+
+- **R2-1, resolved.** NaN, inf and boolean h are refused, as scalar or mapping values. A mapping that misses a node with eligible E2 rows is an error, and the h source is reported. `--h nan --json` and `--h-json` with NaN both exit 2 and write nothing.
+- **R2-2, resolved.** The weighted estimand is stated in the docstring and the report header. Nested forks are refused. p_select ∈ {0, −0.5, 2} is refused. Counts are labelled as unweighted.
+- **R2-3, resolved.** `instance_id` is the default cluster, and the header names the key. The interval is Wilson with n_eff and a t(k − 1) quantile, and there is no interval with fewer than 2 clusters. See PA-1 for the boundary rule.
+- **R2-4, resolved.** An extra threshold that misses a node is an error; `--threshold g=` and `static=nan` are rejected; g given twice raises.
+- **R2-5, resolved.** A bad `--g-json`, binary input, `--out` naming a directory, a missing input and an empty input all exit 2 with a message. A non-dict `action` raises `RelevanceInputError`.
+- **R2-6, resolved.** In JSON, not-assessed shares, standard errors and intervals are null; in the table they show as "—".
+- **R2-7, resolved.** The listed tests exist and assert real values.
+
+### The Wilson / n_eff choice
+
+**The interior rule is sound.** n_eff = p(1 − p)/se², capped at the row count, with a t(k − 1) quantile, is the usual design-effect Wilson interval. It fixes the small-K under-coverage of round 2: at share 0.15, coverage is 0.95 at K = 5 against 0.85 for the old Wald interval.
+
+**PA-1. MINOR — the boundary rule n_eff = k is conservative, but it does not join up with the interior rule at sparse counts.**
+
+*Non-monotone bound.* The upper bound is not monotone in the evidence (`probe6.py`; 50 clusters × 20 rows):
+
+| hits in the band | upper bound |
+|---|---|
+| 0 | 7.47 % |
+| 1 | 0.58 % |
+| 2 | 1.17 % |
+| 5 (all in one cluster) | 2.9 % |
+
+Observing one near-threshold row lowers the upper bound thirteen-fold. The cause: with one hit, the CR1 se comes from a single cluster and gives n_eff ≈ n, while with zero hits n_eff = k.
+
+*Under-coverage when hits are sparse.* In the same regime the interval under-covers (`cov_low.py`: K = 50, share 0.003, strong clustering, 1,000 replications):
+- the upper bound lies at or above the truth in 92.2 % of samples, against 97.5 % nominal;
+- two-sided coverage is 0.887;
+- by contrast, at K = 10 most samples have 0 hits, so the conservative boundary rule dominates and coverage is 0.97.
+
+The executor's 0.92–0.93 at share 0.03 (K = 10 and 50) is the same effect in milder form.
+
+*Unequal cluster sizes.* At p ∈ {0, 1}, n_eff = k ignores them. One cluster of 191 rows plus nine of 1 row gives the same bound (33.9 %) as ten clusters of 20, although Kish's effective cluster count is 1.1 against 10.
+
+*Why it matters.* The "no decision-relevant states" status now prints this upper bound, and a future gate may use a bound on a small share. Under such a gate, few hits would read as more certain than none.
+
+*Fix* (before any gate uses a bound; not needed for engineering acceptance):
+- Use Kish's effective number of clusters, (Σ m_c)² / Σ m_c² with m_c the cluster weight totals, in place of k.
+- Use the same convention whenever the hits (or the misses) fall in fewer than a declared number of clusters, so that the bound is monotone across the boundary. A cluster bootstrap for sparse counts is an alternative.
+- At minimum, state in the docstring and the report header that bounds from sparse counts are anti-conservative.
+
+**Nit.** If the `--json` write fails, e.g. because the path is a directory, the markdown has already been written; the run still exits 2. Write both outputs to temporary files and rename them, or check both targets first.
+
+No BLOCKER or MAJOR finding.
+
+Verdict: ACCEPT

@@ -183,17 +183,31 @@ def test_esyn_records_transitions_and_cli(tmp_path, capsys):
 
 def test_round2_interval_quantiles_and_clusters():
     # hand-computed: 3 clusters, rows in / out of the band c0 [1, 0], c1 [1, 1], c2 [0, 0, 0, 1]; p = 0.5,
-    # cluster residuals 0, 1, -1, se = sqrt(2 * 3/2) / 8 = 0.2165064, n_eff = 0.25 / se^2 = 5.333,
-    # t(0.975, 2) = 4.302653, Wilson interval 0.5 -+ 0.440554
+    # cluster residuals 0, 1, -1, se = sqrt(2 * 3/2) / 8 = 0.2165064; in-band rows lie in 2 < 5 clusters, so the sparse
+    # rule applies: n_eff = Kish 8^2 / (2^2 + 2^2 + 4^2) = 2.667 (< 0.25 / se^2 = 5.333), t(0.975, 2) = 4.302653,
+    # Wilson 0.5 -+ 0.467469; with the interior rule (>= 5 minority clusters) n_eff = 5.333 gives 0.5 -+ 0.440554
     rows = []
     for c, ins in (("c0", (1, 0)), ("c1", (1, 1)), ("c2", (0, 0, 0, 1))):
         rows += [_r("n", "E1", v=0.001 + (0.0 if i else 0.05), g=0.001, camp=c) for i in ins]
     e1 = rel(rows)["n"].e1["g"]
     assert e1.shares[1.0] == 0.5 and e1.se[1.0] == pytest.approx(0.21650635, abs=1e-7)
-    assert e1.intervals[1.0] == pytest.approx((0.5 - 0.440554, 0.5 + 0.440554), abs=1e-5)
+    assert e1.intervals[1.0] == pytest.approx((0.5 - 0.467469, 0.5 + 0.467469), abs=1e-5)
+    assert RV.wilson_cluster(0.5, 0.21650635, 8, 3, k_eff=8 ** 2 / 24, k_minor=5) == \
+        pytest.approx((0.5 - 0.440554, 0.5 + 0.440554), abs=1e-5)
     assert RV.wilson_cluster(0.3, 0.05, 100, 1) is None                      # one cluster: no interval
     lo, hi = RV.wilson_cluster(0.0, 0.0, 300, 10)                             # boundary: n_eff = k, not degenerate
     assert lo == 0.0 and 0.2 < hi < 0.5
+    # post-acceptance PA-1: sparse counts use Kish's effective clusters; the bound rises with the count up to the
+    # sparse threshold (50 clusters x 20 rows, one in-band row in each of the first `hits` clusters)
+    uppers = []
+    for hits in range(RV.SPARSE_CLUSTERS):
+        zz = [0.0 if (k < hits and j == 0) else 5.0 for k in range(50) for j in range(20)]
+        uppers.append(RV._summarise(zz, np.ones(1000), [k for k in range(50) for _ in range(20)],
+                                    (1.0,)).intervals[1.0][1])
+    assert uppers == sorted(uppers) and uppers[0] == pytest.approx(0.0747, abs=1e-4)
+    skew = RV._summarise([5.0] * 200, np.ones(200), [0] * 191 + list(range(1, 10)), (1.0,))
+    even = RV._summarise([5.0] * 200, np.ones(200), [k for k in range(10) for _ in range(20)], (1.0,))
+    assert skew.intervals[1.0][1] > 0.5 > even.intervals[1.0][1]               # Kish: 1.1 vs 10 effective clusters
     one = rel([_r("n", "E1", v=0.001, g=0.001), _r("n", "E1", v=0.06, g=0.001)])["n"]
     assert one.e1["g"].intervals[1.0] is None and "[—]" in RV.markdown({"n": one})
     # weighted quantile = numpy inverted-CDF quantile on the integer-weight expansion
@@ -272,5 +286,6 @@ def test_round2_cli_errors(tmp_path, capsys):
     assert RV.main([str(binary), "--out", str(md), "--g", "0.001"]) == 2
     assert "not UTF-8" in capsys.readouterr().err
     assert RV.main([str(f), "--out", str(tmp_path), "--g", "0.001"]) == 2      # --out names a directory
+    assert RV.main([str(f), "--out", str(md), "--g", "0.001", "--json", str(tmp_path)]) == 2 and not md.exists()
     assert RV.main([str(f), "--out", str(md), "--g", "0.001", "--cluster", "campaign_id"]) == 0
     assert "clustered by `campaign_id`" in md.read_text()
