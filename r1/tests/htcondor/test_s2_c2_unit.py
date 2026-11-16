@@ -206,7 +206,8 @@ def test_collection_gates_mirror_sweep1(tmp_path, monkeypatch):
     (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
         {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
     (work / "roots" / "x" / "root_trials.jsonl").write_text(json.dumps(
-        {"proposal_summary": "raise lr 0.1 -> 0.3"}) + "\n")
+        {"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "success",
+         "parsed_metrics": {"val_score": 0.9}}) + "\n")
     with pytest.raises(lib.Stop, match="root failures"):
         lib.collection_gates(out, work, "digits_mlp", 2)
     assert (out / "collection_checks.json").is_file() and (out / "collection_failures.json").is_file()
@@ -218,8 +219,27 @@ def test_collection_gates_mirror_sweep1(tmp_path, monkeypatch):
     assert (out / "parse_failure_examples.json").is_file()
     (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
         {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
+    (work / "roots" / "x" / "root_trials.jsonl").write_text("".join(
+        json.dumps({"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "failed",
+                    "failure_category": "runtime_error", "parsed_metrics": {}}) + "\n" for _ in range(2)))
+    with pytest.raises(lib.Stop, match="zero successful worker runs"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    assert (out / "worker_failure.json").is_file()
+    (work / "roots" / "x" / "root_trials.jsonl").write_text("".join(
+        json.dumps({"proposal_summary": "raise lr 0.1 -> 0.3",
+                    "execution_status": "failed" if i < 9 else "success",
+                    "failure_category": "runtime_error", "parsed_metrics": {"val_score": 0.9} if i >= 9 else {}})
+        + "\n" for i in range(10)))
+    with pytest.raises(lib.Stop, match="worker failure rate"):
+        lib.collection_gates(out, work, "digits_mlp", 2)
+    (work / "roots" / "x" / "root_trials.jsonl").write_text(json.dumps(
+        {"proposal_summary": "raise lr 0.1 -> 0.3", "execution_status": "success",
+         "parsed_metrics": {"val_score": 0.9}}) + "\n")
+    (work / "roots" / "x" / "root_events.jsonl").write_text(json.dumps(
+        {"event_type": "llm_call", "payload": {"parse_ok": True}}) + "\n")
     check = lib.collection_gates(out, work, "digits_mlp", 2)
     assert check["roots"] == 2 and check["llm_calls"] == 1 and check["manager_kind"] == "langgraph"
+    assert check["worker"]["successful_with_metrics"] == 1 and check["worker"]["success_rate"] == 1.0
 
 
 def test_stop_with_evidence_persists_record_and_tars(tmp_path, monkeypatch):
@@ -344,3 +364,19 @@ def test_job_entry_precreates_the_transferred_outputs():
     for name in ("out.tar", "work.tar", "job_record.json", "SHA256SUMS", "llama-server.log"):
         assert name in text
     assert "--scratch" not in text
+
+
+def test_worker_env_prepends_the_harness_venv(tmp_path, monkeypatch):
+    class FakePath(type(__import__("pathlib").Path())):
+        pass
+    real = __import__("pathlib").Path
+    def fake(x):
+        p = real(x)
+        if str(p) == "/opt/r1/envs/harness/bin":
+            return tmp_path / "venvbin"
+        return p
+    (tmp_path / "venvbin").mkdir()
+    (tmp_path / "venvbin" / "python3").write_text("#!/bin/sh\n")
+    monkeypatch.setattr(lib, "Path", fake)
+    env = lib._worker_env(tmp_path / "paper", tmp_path / "harness")
+    assert env["PATH"].startswith(str(tmp_path / "venvbin")) and "LLAMACACHE_PROMPT" not in env

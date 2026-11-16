@@ -45,6 +45,13 @@ LIVENESS_NODES = ("digits_mlp", "tabular_mlp", "openml_breast_w", "openml_ionosp
                   "openml_wdbc", "openml_credit_approval", "openml_sonar", "openml_climate")
 MIN_LIVE_NODES = 8
 MAX_PARSE_FAILURE_RATE = 0.2
+# Sweep-1 worker-success baseline, computed from the frozen sweep-1 corpus on main
+# (results/r1/evidence/C3_sweep_{append_only_summary_20261027T154834Z,none_20261027T224356Z}/
+# provenance/ledgers/roots/*/root_trials.jsonl): 5,287 successful worker runs of 5,813 trials.
+SWEEP1_WORKER_SUCCESSES = 5287
+SWEEP1_WORKER_TRIALS = 5813
+SWEEP1_WORKER_SUCCESS_RATE = SWEEP1_WORKER_SUCCESSES / SWEEP1_WORKER_TRIALS
+WORKER_FAILURE_MARGIN = 0.05
 NON_NUMERIC_DIFFERENCES = ["--no-webui (UI only, not numeric)", "-lv 4 (log verbosity, not numeric)"]
 B2_HARNESS = "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2"
 SHA = re.compile(r"^[0-9a-f]{64}$")
@@ -499,6 +506,24 @@ def clone_at(repo: str, commit: str, dest: Path) -> None:
         raise Stop(f"STOP: retrieved commit {got} != pinned {commit}")
 
 
+def _worker_env(paper_dir: Path, harness_dir: Path) -> dict:
+    """Environment for the collector and its worker subprocesses: the harness venv's python3 must be first on
+    PATH, otherwise node run_command 'python3 train.py' resolves to the container system Python (no numpy):
+    that is exactly the 32k-smoke failure mode (worker success=False, metrics={}, 0.0 s)."""
+    env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()), AR_HARNESS_ROOT=str(harness_dir.resolve()),
+               OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1",
+               PYTHONDONTWRITEBYTECODE="1")
+    venv_bin = Path("/opt/r1/envs/harness/bin")
+    if (venv_bin / "python3").is_file() or (venv_bin / "python").is_file():
+        env["PATH"] = f"{venv_bin}:{env.get('PATH', '')}"
+    elif (venv_bin / "python").is_file():
+        env["PATH"] = f"{venv_bin}:{env.get('PATH', '')}"
+    else:
+        raise Stop(f"STOP: harness venv bin missing at {venv_bin} (worker python would be the system python)")
+    env.pop("LLAMACPP_CACHE_PROMPT", None); env.pop("LLAMACACHE_PROMPT", None)
+    return env
+
+
 def collector_argv(spec: dict, label: str, resume: bool, paper_dir: Path | None = None) -> list[str]:
     c = spec["collector"]
     extra = {"c3_label_sweep": {"schema": "r1.c3_label_sweep/1", "memory_mode": c["memory_mode"],
@@ -592,15 +617,35 @@ def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
                     retried.append({"trial_id": item.get("trial_id")})
             elif item.get("event_type") == "llm_call_failed":
                 failed_calls.append({"trial_id": item.get("trial_id")})
+    worker = {"roots": {}, "trials": 0, "successful": 0, "successful_with_metrics": 0,
+              "failures_by_category": {}}
     for path in sorted((work / "roots").rglob("root_trials.jsonl")):
+        root_name = path.parent.name
+        root_trials = root_success = root_metrics = 0
         for line in path.read_text(errors="replace").splitlines():
-            if line.strip():
-                summaries.append(json.loads(line).get("proposal_summary") or "")
+            if not line.strip():
+                continue
+            trial = json.loads(line)
+            summaries.append(trial.get("proposal_summary") or "")
+            root_trials += 1; worker["trials"] += 1
+            if trial.get("execution_status") == "success":
+                root_success += 1; worker["successful"] += 1
+                if trial.get("parsed_metrics"):
+                    root_metrics += 1; worker["successful_with_metrics"] += 1
+            else:
+                cat = str(trial.get("failure_category") or "unknown")
+                worker["failures_by_category"][cat] = worker["failures_by_category"].get(cat, 0) + 1
+        worker["roots"][root_name] = {"trials": root_trials, "successful": root_success,
+                                      "successful_with_metrics": root_metrics}
+    worker["success_rate"] = round(worker["successful"] / worker["trials"], 6) if worker["trials"] else 0.0
+    worker["failure_rate"] = round(1 - worker["success_rate"], 6) if worker["trials"] else 1.0
+    worker["sweep1_success_rate"] = round(SWEEP1_WORKER_SUCCESS_RATE, 6)
+    worker["max_failure_rate"] = round(1 - SWEEP1_WORKER_SUCCESS_RATE + WORKER_FAILURE_MARGIN, 6)
     check = {"label": manifest.get("label"), "memory_mode": (manifest.get("c3_label_sweep") or {}).get("memory_mode"),
              "node": node, "expected_roots": expected, "roots": len(roots), "root_failures": len(failures),
              "llm_calls": len(calls), "llm_calls_failed": len(failed_calls), "llm_calls_retried": len(retried),
              "parse_failures": len(parse_failures), "manager_kind": (manifest.get("manager") or {}).get("kind"),
-             "written_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+             "worker": worker, "written_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     (out / "collection_checks.json").write_text(json.dumps(check, indent=2) + "\n")
     if failures or len(roots) != expected:
         (out / "collection_failures.json").write_text(json.dumps(
@@ -609,6 +654,18 @@ def collection_gates(out: Path, work: Path, node: str, instances: int) -> dict:
         raise Stop(f"STOP: {len(failures)} root failures, {len(roots)}/{expected} roots complete")
     if (manifest.get("manager") or {}).get("kind") != "langgraph":
         raise Stop("STOP: sweep manifest is not LLM-backed")
+    zero_success = [name for name, stats in worker["roots"].items() if stats["successful"] == 0]
+    if zero_success:
+        (out / "worker_failure.json").write_text(json.dumps(worker, indent=2) + "\n")
+        raise Stop(f"STOP: {len(zero_success)} campaign(s) had zero successful worker runs "
+                   f"(e.g. {zero_success[0]}); see out/worker_failure.json")
+    if worker["successful_with_metrics"] == 0:
+        (out / "worker_failure.json").write_text(json.dumps(worker, indent=2) + "\n")
+        raise Stop("STOP: no successful worker run produced metrics (workers ran but training failed)")
+    if worker["trials"] and worker["failure_rate"] > worker["max_failure_rate"]:
+        (out / "worker_failure.json").write_text(json.dumps(worker, indent=2) + "\n")
+        raise Stop(f"STOP: worker failure rate {worker['failure_rate']:.3f} exceeds sweep-1 {1-SWEEP1_WORKER_SUCCESS_RATE:.3f} "
+                   f"+ {WORKER_FAILURE_MARGIN} (max {worker['max_failure_rate']:.3f})")
     if not calls or not any(not re.fullmatch(r"\w+\s+\S+\s+->\s+\S+", str(x)) for x in summaries):
         raise Stop("STOP: no demonstrated LLM proposals in the root ledgers")
     if len(parse_failures) / len(calls) > MAX_PARSE_FAILURE_RATE:
@@ -654,10 +711,8 @@ def run_liveness(spec_path: Path) -> dict:
         record["server"] = {k: server[k] for k in ("pid", "base_url", "build", "offloaded_layers",
                                                    "total_layers", "cuda_lines", "log")}
         argv = _liveness_argv(s)
-        env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()), AR_HARNESS_ROOT=str(harness_dir.resolve()),
-                   LLAMACPP_BASE_URL=server["base_url"], OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
-                   MKL_NUM_THREADS="1", PYTHONDONTWRITEBYTECODE="1")
-        env.pop("LLAMACPP_CACHE_PROMPT", None); env.pop("LLAMACACHE_PROMPT", None)
+        env = _worker_env(paper_dir, harness_dir)
+        env["LLAMACPP_BASE_URL"] = server["base_url"]
         started = time.time()
         res = subprocess.run(argv, cwd=str(paper_dir.resolve()), env=env, capture_output=True, text=True)
         record["liveness_run"] = {"argv": argv, "returncode": res.returncode,
@@ -723,10 +778,8 @@ def run_job(spec_path: Path) -> dict:
         record["server"] = {k: server[k] for k in ("pid", "base_url", "build", "offloaded_layers",
                                                    "total_layers", "cuda_lines", "log")}
         argv = collector_argv(s, label, resume, paper_dir)
-        env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()), AR_HARNESS_ROOT=str(harness_dir.resolve()),
-                   LLAMACPP_BASE_URL=server["base_url"], OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
-                   MKL_NUM_THREADS="1", PYTHONDONTWRITEBYTECODE="1")
-        env.pop("LLAMACPP_CACHE_PROMPT", None); env.pop("LLAMACACHE_PROMPT", None)
+        env = _worker_env(paper_dir, harness_dir)
+        env["LLAMACPP_BASE_URL"] = server["base_url"]
         started = time.time()
         res = subprocess.run(argv, cwd=str(paper_dir.resolve()), env=env, capture_output=True, text=True)
         record["collector"] = {"argv": argv, "returncode": res.returncode,
