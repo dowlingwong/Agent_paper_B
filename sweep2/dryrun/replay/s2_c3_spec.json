@@ -1,0 +1,122 @@
+{
+ "schema": "s2_c3_replay/v1",
+ "kind": "replay",
+ "run_id": "s2c3-20261116-a",
+ "chunk_id": "digits_mlp",
+ "node": "digits_mlp",
+ "image": {
+  "digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "versions_markers": {
+   "image": "r1-htc-gpu",
+   "build_utc": "2026-11-14T23:10:24Z",
+   "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0",
+   "llama_cpp_commit": "620d2225cc436ab0b001e3200e590e3b286ef9ab"
+  },
+  "llama_server_sha256": "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0"
+ },
+ "paper": {
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+  "commit": "8709dce792d45bbb5c05d9f7d239e19454efbb15",
+  "b2_authorization_note": "docs/r1/authorizations/trackx_b2_20261115.md"
+ },
+ "harness": {
+  "repo": "https://github.com/dowlingwong/autoresearch_harness.git",
+  "commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2"
+ },
+ "model": {
+  "url": "https://huggingface.co/bartowski/google_gemma-4-31B-it-GGUF/resolve/619aca7589c72be65dd968de8602ad23d68b5c14/google_gemma-4-31B-it-Q4_K_M.gguf",
+  "sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "size": 19598489952,
+  "alias": "gemma4_31b",
+  "provenance": {
+   "registry_doc": "docs/r1/reports/exam_phase2_20261026/gemma4_31b.json",
+   "registry_sha256": "a04a0346ca887c27998b5f46f4e3d67fa05126ff3af9e0c20fe78d030c1fdc61",
+   "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
+   "file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+   "source_label": "bartowski imatrix Q4_K_M"
+  }
+ },
+ "server": {
+  "binary": "/opt/r1/llama/bin/llama-server",
+  "ctx": 32768,
+  "n_gpu_layers": 999,
+  "port": 18130,
+  "expected_build": "0.7.0-dev (build 11669, commit 620d2225c)",
+  "extra_args": [
+   "--jinja",
+   "--chat-template-kwargs",
+   "{\"enable_thinking\": false}",
+   "--cache-type-k",
+   "q8_0",
+   "--cache-type-v",
+   "q8_0",
+   "--no-webui"
+  ]
+ },
+ "replay_inputs": {
+  "dir": "docs/r1/reports/sweep2_20261116/c3_replay_inputs",
+  "sha256sums_sha256": "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6",
+  "nodes": [
+   "digits_mlp",
+   "openml_credit_approval",
+   "openml_ionosphere"
+  ],
+  "roots": [
+   "digits_mlp__s9011",
+   "digits_mlp__s9012",
+   "digits_mlp__s9013",
+   "digits_mlp__s9014",
+   "openml_credit_approval__s9011",
+   "openml_credit_approval__s9012",
+   "openml_credit_approval__s9013",
+   "openml_credit_approval__s9014",
+   "openml_ionosphere__s9011",
+   "openml_ionosphere__s9012",
+   "openml_ionosphere__s9013",
+   "openml_ionosphere__s9014"
+  ],
+  "seeds": [
+   9011,
+   9012,
+   9013,
+   9014
+  ],
+  "audit_seeds": [
+   9201,
+   9202,
+   9203,
+   9204,
+   9205,
+   9206,
+   9207,
+   9208,
+   9209,
+   9210
+  ],
+  "binding": "c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b"
+ },
+ "label": {
+  "execution_label": "ENGINEERING_ONLY",
+  "replay_marker": "s2_c3_replay/v1"
+ },
+ "label_patch": {
+  "path": "sweep2/s2_c3_label_patch.diff",
+  "sha256": "fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741",
+  "target": "r1/exam/campaign.py"
+ },
+ "criteria": {
+  "path": "docs/r1/reports/sweep2_20261116/S2_C3_CRITERIA.md",
+  "sha256": "20870b16d8259982351571e832a7d3f2990d34d042c3aec2d841467f895ae85e"
+ },
+ "requirements": {
+  "cloud_site": "BwForCluster-Nemo2",
+  "gpu_device_name": "NVIDIA L40S",
+  "arch": "X86_64",
+  "opsys": "LINUX",
+  "min_cpus": 16,
+  "cpu_family": 6,
+  "cpu_model_number": 207,
+  "cpu_model_contains": "INTEL(R) XEON(R) PLATINUM 8562Y+"
+ },
+ "walltime_s": 7200
+}

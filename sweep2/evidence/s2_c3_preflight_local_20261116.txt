@@ -1,0 +1,50 @@
+# S2-C3 local preflight capture — 2026-11-16 (ENGINEERING unit, NOT a job run)
+# python: Python 3.11.11 (local dev env; the job uses /opt/r1/envs/harness/bin/python)
+# no GPU, no llama-server, no HTCondor submission, no labels read, no /ceph write
+
+S2-C3 local preflight capture (ENGINEERING unit evidence; NOT a job run)
+host: Dowlings-MacBook-Pro-2.local  UTC: 2026-11-16T09:58:54Z
+purpose: prove the label/binding/input machinery and enumerate the exact B2 authorization gates the
+unmodified `r1.exam.campaign` driver at 8709dce7 would run.  No GPU, no llama-server, no HTCondor, no labels read.
+
+== pinned inputs ==
+SHA256SUMS sha256: 6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6 (spec pin 6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6)
+files verified: 24 -> 4 job.json copies prepared per node
+
+== configuration binding (the B2 ExamRunner.__init__ method) ==
+  recorded: c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b
+  recomputed: c502a9aa5e23cb190e712505b8900253fb417cdb1c143b525b3b4b1b8b45290b
+  unchanged_by_rewrite: True
+  registry_sha256: 2c6ef6b329694536df6a23345e4313d0cb2dcbf447113023e18f60fcb608e723
+  rule_sha256: 53018aa78357c8ae18aed6b165fa22db7572815694d10f052da4aa186e8816ad
+  value_grids_sha256: 7ab60c161433bf54d7392f7b3278b656a0e49ba1c28df05db81b410824b1ea14
+  config_equals_committed: True
+
+== authorization checkout ==
+  path: /tmp/s2c3-e2e/paper
+  commit: 8709dce792d45bbb5c05d9f7d239e19454efbb15  clean: True
+  B2 authorization note sha256: ef92521c34a6794eb31c65d50fa762a58d7980821c1227729ec26e7f0daea0f3
+
+== reviewed label patch ==
+  patch sha256: fd0234c9579b293cdb7db259303e1ef86dffdd6a7e8ed3360f04227badddf741
+  original campaign.py sha256: 014b1a8af1b7b4426b9db6ebec3125dcc6938afebcc6ada4a27b5052c3f27756
+  patched  campaign.py sha256: 33feb3204f2f7866ab5fab8c3126c297f37a1a4b15c4c623a1560c8f8578814c
+  applies cleanly: True  authorization checkout clean: True
+  scope: {"files": ["r1/exam/campaign.py"], "removed_lines": 1, "added_lines": 2, "execution_label_only": true}
+
+== exact B2 authorization gate preflight (the same functions the campaign calls) ==
+  verify_b1_worker_input: REFUSED FileNotFoundError: [Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'
+  host_check: REFUSED RuntimeError: STOP: the exam runs only on an approved portal host (TASL-2/TASL-7) and cfg.host must equal the node; never infer on the Mac
+  require_worker_host: REFUSED RuntimeError: STOP: EXAM worker on 'Dowlings-MacBook-Pro-2' but the configured exam host is 'TASL-7'
+  harness_binding: OK
+
+== blockers the unmodified B2 campaign driver would raise (no bypass implemented) ==
+  1. verify_b1_worker_input [FileNotFoundError]: [Errno 2] No such file or directory: '/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json'
+  2. host_check [RuntimeError]: STOP: the exam runs only on an approved portal host (TASL-2/TASL-7) and cfg.host must equal the node; never infer on the Mac
+  3. require_worker_host [RuntimeError]: STOP: EXAM worker on 'Dowlings-MacBook-Pro-2' but the configured exam host is 'TASL-7'
+  4. out_under_work_dir [RuntimeError]: rewritten out /private/tmp/s2c3-e2e/out/digits_mlp__s9011 is not under the B2 authorised work_dir '/home/dowling/exam-x/work'; B2 host_check requires it (the pre-declared protocol's out rewrite cannot satisfy this)
+  5. authorization_input:stage_a_table [FileNotFoundError]: B2 author_gate input stage_a_table=/home/dowling/exam-x/work/r1_stagea_20261103_t7h8/stage_a_table.json is absent from the job sandbox
+  6. authorization_input:stage_a_amendment_table [FileNotFoundError]: B2 author_gate input stage_a_amendment_table=/home/dowling/exam-x/work/r1_stagea_20261104_t7j10/stage_a_table.json is absent from the job sandbox
+
+STOP: the replay cannot execute on NEMO2 until the author decides how to resolve these gates
+(the pre-declared protocol allows only a label patch).  No server was started.

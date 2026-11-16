@@ -1,23 +1,35 @@
 #!/usr/bin/env python3
-"""Stage the S2-C2 job files and render its HTCondor JDL (fixed requirements template; ENGINEERING).
+"""Stage the sweep-2 job files and render the fixed HTCondor JDL (ENGINEERING).
 
-The container job writes only into its HTCondor sandbox; the listed output files are transferred back to the
-submit host and the reviewed `seal` step copies them into the sealed /ceph path (NEMO2 slots do not advertise
-ProvidesEtpCeph). The authorization note, when the spec pins one, is staged and added to transfer_input_files.
+Two reviewed spec schemas are supported:
+
+* ``s2_c2_job/v1``     - the sweep-2 chunk/liveness job (S2-C2): executable ``s2_c2_job.sh``;
+* ``s2_c3_replay/v1``  - the B2 root replay deployment check (S2-C3): executable ``s2_c3_replay_job.sh``, with the
+  12 pinned B2 replay inputs (flattened) and the reviewed label patch staged as transfer inputs.
+
+The container job writes only into its HTCondor sandbox; the listed output files are transferred back to the submit
+host and the reviewed `seal` step copies them into the sealed /ceph path (NEMO2 slots do not advertise
+ProvidesEtpCeph).  The authorization note, when the C2 spec pins one, is staged and added to transfer_input_files.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
 import s2_c2_lib as lib  # noqa: E402
+import s2_c3_replay as replay  # noqa: E402
 
-OUTPUTS = "out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log"
+C2_OUTPUTS = "out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log"
+C3_OUTPUTS = C2_OUTPUTS
+C3_EXECUTABLE = "s2_c3_replay_job.sh"
+CRITERIA_STAGED = "S2_C3_CRITERIA.md"
 
 
 def requirements() -> str:
@@ -32,13 +44,15 @@ def requirements() -> str:
     ))
 
 
-def render(spec: dict, name: str, inputs: list[str]) -> str:
+def render(spec: dict, name: str, inputs: list[str], *, executable: str = "s2_c2_job.sh",
+           arguments: str = "s2_c2_spec.json", outputs: str = C2_OUTPUTS,
+           banner: str = "S2-C2 sweep-2 chunk job (ENGINEERING; reviewed dry-run)") -> str:
     lines = [
-        f"# S2-C2 sweep-2 chunk job (ENGINEERING; reviewed dry-run) — {spec['run_id']}/{spec['chunk_id']}",
+        f"# {banner} — {spec['run_id']}/{spec['chunk_id']}",
         "universe = container",
         f"container_image = docker://{spec['image']['digest']}",
-        "executable = s2_c2_job.sh",
-        "arguments = s2_c2_spec.json",
+        f"executable = {executable}",
+        f"arguments = {arguments}",
         f"log = {name}.log", f"output = {name}.out", f"error = {name}.err",
         f"request_cpus = {lib.MIN_CPUS}",
         "request_memory = 128000",
@@ -50,7 +64,7 @@ def render(spec: dict, name: str, inputs: list[str]) -> str:
         "should_transfer_files = YES",
         "when_to_transfer_output = ON_EXIT",
         "transfer_input_files = " + ",".join(inputs),
-        "transfer_output_files = " + OUTPUTS,
+        "transfer_output_files = " + outputs,
         "queue 1",
     ]
     text = "\n".join(lines) + "\n"
@@ -59,20 +73,11 @@ def render(spec: dict, name: str, inputs: list[str]) -> str:
     return text
 
 
-def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("spec")
-    ap.add_argument("--out", required=True)
-    ap.add_argument("--stage-dir", required=True)
-    ap.add_argument("--name", default="s2_c2_job")
-    ap.add_argument("--auth-note", default=None, help="source authorization note to stage (required for EVIDENCE)")
-    a = ap.parse_args(argv)
-    spec = lib.load_spec(Path(a.spec))
-    stage = Path(a.stage_dir).resolve()
-    out_path = Path(a.out).resolve()
-    if stage.exists():
-        raise lib.Stop(f"STOP: stage dir {stage} already exists (fresh staging required)")
-    stage.mkdir(parents=True, mode=0o700)
+def _write_spec(stage: Path, spec: dict) -> None:
+    (stage / "s2_c2_spec.json").write_text(json.dumps(spec, indent=1) + "\n")
+
+
+def stage_c2(spec: dict, stage: Path, a) -> str:
     for name in ("s2_c2_job.sh", "s2_c2_lib.py"):
         shutil.copy2(HERE / name, stage / name)
     src = spec.get("label_source") or {}
@@ -88,25 +93,95 @@ def main(argv=None) -> int:
         shutil.copy2(note, stage / Path(auth).name)
         src["authorization"] = Path(auth).name
         spec["label_source"] = src
-    (stage / "s2_c2_spec.json").write_text(json_dumps(spec))
+    _write_spec(stage, spec)
     cwd = os.getcwd()
     try:
         os.chdir(stage)
         lib.validate_spec(lib.load_spec(stage / "s2_c2_spec.json"))
     finally:
         os.chdir(cwd)
+    return json.dumps(spec, indent=1) + "\n"
+
+
+def stage_c3(spec: dict, stage: Path) -> None:
+    """Stage the replay job and the 25 pinned B2 inputs (flattened), then verify them against the spec pins."""
+    for name in ("s2_c3_replay.py", "s2_c2_lib.py", "s2_c3_replay_job.sh"):
+        shutil.copy2(HERE / name, stage / name)
+    patch = HERE / Path(replay.PATCH_PATH).name
+    if not patch.is_file():
+        raise replay.Stop(f"STOP: label patch {patch} missing")
+    if replay._sha_file(patch) != replay.PATCH_SHA256:
+        raise replay.Stop("STOP: label patch sha256 does not match the reviewed pin")
+    shutil.copy2(patch, stage / patch.name)
+    criteria = ROOT / replay.CRITERIA_PATH
+    if not criteria.is_file() or replay._sha_file(criteria) != replay.CRITERIA_SHA256:
+        raise replay.Stop("STOP: criteria file missing or its sha256 does not match the pre-declared pin")
+    shutil.copy2(criteria, stage / CRITERIA_STAGED)
+    inputs_dir = ROOT / spec["replay_inputs"]["dir"]
+    if not inputs_dir.is_dir():
+        raise replay.Stop(f"STOP: pinned replay inputs directory {inputs_dir} missing")
+    shutil.copy2(inputs_dir / "SHA256SUMS", stage / replay.STAGED_SHA256SUMS)
+    for root in replay.ROOTS:
+        for kind, staged in (("job.json", replay.STAGED_JOB.format(root=root)),
+                             ("campaign_manifest.json", replay.STAGED_MANIFEST.format(root=root))):
+            source = inputs_dir / root / kind
+            if not source.is_file():
+                raise replay.Stop(f"STOP: pinned replay input {root}/{kind} missing")
+            shutil.copy2(source, stage / staged)
+    (stage / "s2_c3_spec.json").write_text(json.dumps(spec, indent=1) + "\n")
+    cwd = os.getcwd()
+    try:
+        os.chdir(stage)
+        replay.validate_spec(replay.load_spec(stage / "s2_c3_spec.json"))
+        replay.verify_pinned_inputs(stage, spec)
+    finally:
+        os.chdir(cwd)
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("spec")
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--stage-dir", required=True)
+    ap.add_argument("--name", default=None)
+    ap.add_argument("--auth-note", default=None, help="C2 only: source authorization note to stage (EVIDENCE)")
+    a = ap.parse_args(argv)
+    raw = json.loads(Path(a.spec).read_text())
+    schema = raw.get("schema") if isinstance(raw, dict) else None
+    stage = Path(a.stage_dir).resolve()
+    if stage.exists():
+        raise lib.Stop(f"STOP: stage dir {stage} already exists (fresh staging required)")
+    stage.mkdir(parents=True, mode=0o700)
+    if schema == replay.SCHEMA:
+        validated = replay.validate_spec(raw)
+        spec = validated["spec"]
+        stage_c3(spec, stage)
+        inputs = sorted(p.name for p in stage.iterdir() if p.is_file())
+        if "s2_c3_spec.json" not in inputs or "s2_c3_replay_job.sh" not in inputs:
+            raise lib.Stop("STOP: staged replay inputs incomplete")
+        out_path = Path(a.out).resolve()
+        out_path.write_text(render(spec, a.name or "s2_c3_replay_job", inputs, executable=C3_EXECUTABLE,
+                                   arguments="s2_c3_spec.json", outputs=C3_OUTPUTS,
+                                   banner="S2-C3 B2-root replay / L40S deployment check (ENGINEERING; reviewed dry-run)"))
+        print(out_path)
+        return 0
+    if schema != lib.SCHEMA:
+        raise lib.Stop(f"STOP: unsupported spec schema {schema!r}")
+    spec = lib.load_spec(Path(a.spec))
+    imported = stage_c2(spec, stage, a)
+    spec = json.loads(imported)
     inputs = sorted(p.name for p in stage.iterdir() if p.is_file())
     if "s2_c2_spec.json" not in inputs or "s2_c2_job.sh" not in inputs:
         raise lib.Stop("STOP: staged inputs incomplete")
-    out_path.write_text(render(spec, a.name, inputs))
+    out_path = Path(a.out).resolve()
+    out_path.write_text(render(spec, a.name or "s2_c2_job", inputs))
     print(out_path)
     return 0
 
 
-def json_dumps(obj) -> str:
-    import json
-    return json.dumps(obj, indent=1) + "\n"
-
-
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (lib.Stop, replay.Stop) as exc:
+        print(str(exc), file=sys.stderr)
+        raise SystemExit(2) from None
