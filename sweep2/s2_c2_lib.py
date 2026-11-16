@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import math
 import json
 import os
 import re
@@ -71,6 +72,7 @@ WORKER_FAILURE_MARGIN = 0.05
 WORKER_BINOMIAL_ALPHA = 0.01
 NON_NUMERIC_DIFFERENCES = ["--no-webui (UI only, not numeric)", "-lv 4 (log verbosity, not numeric)"]
 B2_HARNESS = "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2"
+EXAM_THINKING_KWARGS = '{"enable_thinking": false}'  # byte-identical to the exam invocation
 SHA = re.compile(r"^[0-9a-f]{64}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 SAFE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -172,12 +174,14 @@ def validate_spec(spec: dict) -> dict:
             raise Stop(f"STOP: exam server flags require {flag} in server.extra_args")
         if value is not None and extra[extra.index(flag) + 1] != value:
             raise Stop(f"STOP: {flag} must be {value}")
+    raw_kwargs = extra[extra.index("--chat-template-kwargs") + 1]
+    if raw_kwargs != EXAM_THINKING_KWARGS:
+        raise Stop(f"STOP: --chat-template-kwargs must be byte-identical to the exam invocation "
+                   f"{EXAM_THINKING_KWARGS!r} (got {raw_kwargs!r}; disclosure is not a substitute)")
     try:
-        kwargs = json.loads(extra[extra.index("--chat-template-kwargs") + 1])
+        json.loads(raw_kwargs)
     except json.JSONDecodeError:
         raise Stop("STOP: --chat-template-kwargs value must be JSON") from None
-    if kwargs != {"enable_thinking": False}:
-        raise Stop('STOP: --chat-template-kwargs must be exactly {"enable_thinking": false}')
     if server["ctx"] != CTX:
         raise Stop(f"STOP: ctx must be {CTX} (R1-SWEEP2-SETTINGS; the exam setting is 32,768)")
     if server["n_gpu_layers"] != NGL:
@@ -247,6 +251,13 @@ def validate_spec(spec: dict) -> dict:
     wall = spec.get("walltime_s")
     if type(wall) is not int or not 3600 <= wall <= 86400:
         raise Stop("STOP: walltime_s must be an integer in [3600, 86400]")
+    measured = spec.get("layout_measured_chunk_s")
+    if measured is not None:
+        if type(measured) not in (int, float) or measured <= 0:
+            raise Stop("STOP: layout_measured_chunk_s must be positive")
+        want = math.ceil(1.5 * measured)
+        if wall != want:
+            raise Stop(f"STOP: walltime_s must be 1.5x the re-measured chunk ({measured} s -> {want} s); got {wall}")
     for key, floor in (("request_disk_kb", 30314084), ("request_memory_mb", 10853)):
         v = spec.get(key)
         if type(v) is not int or v < floor or v > 100000000:
@@ -553,7 +564,7 @@ def collector_argv(spec: dict, label: str, resume: bool, paper_dir: Path | None 
                                 "b2_audits": "none"}}
     argv = ["/opt/r1/envs/harness/bin/python", "-B", "-m", "r1.headroom.e1b_collect"]
     if resume:
-        argv += ["--resume", str(Path("out").resolve())]
+        raise Stop("STOP: no resume path for sweep 2; a non-clean chunk is rerun whole in a new directory")
     deadline = max(600, int(spec["walltime_s"]) - 600)
     e1 = (Path(paper_dir) if paper_dir else Path("paper")) / spec["noise_source"]["path"]
     argv += ["--deadline", str(deadline), "--e1-summary", str(e1.resolve()),
@@ -799,11 +810,17 @@ def run_job(spec_path: Path) -> dict:
     label = spec["label"]; s = spec["spec"]
     out, work = Path("out"), Path("work")
     record_path = Path("job_record.json")
-    resume = _resume_state(out, record_path)
-    if resume:
-        _check_resume_record(s, record_path, label)
+    resume = False
+    prior = ((out / "manifest.json").exists()
+             or (record_path.is_file() and record_path.stat().st_size > 0)
+             or (out.is_dir() and any(out.iterdir()))
+             or (work.is_dir() and any(work.iterdir())))
+    if prior:
+        raise Stop("STOP: no resume path: a prior chunk exists in this sandbox; rerun the whole chunk in a new "
+                   "directory (move the old one aside, do not delete) and disclose the rerun")
     record = {"schema": "s2_c2_job_record/1", "run_id": spec["run_id"], "chunk_id": s["chunk_id"], "label": label,
-              "resume": resume, "label_rule": "authorization note only; index labels refused",
+              "resume": False, "rerun_policy": "no resume; killed/non-clean chunk rerun whole in a new dir, old moved aside, disclosed",
+              "label_rule": "authorization note only; index labels refused",
               "image_digest": s["image"]["digest"], "model_sha256": s["model"]["sha256"],
               "paper_commit": s["paper"]["commit"], "harness_commit": s["harness"]["commit"],
               "b2_audits": "none (no B.2 audits; audit seeds 7001-7010 untouched)",
@@ -847,6 +864,10 @@ def run_job(spec_path: Path) -> dict:
         _kill(server["proc"])
     if record["collector"]["returncode"] != 0:
         _stop_with_evidence(record, record_path, f"STOP: collector rc={record['collector']['returncode']}; outputs kept")
+    record["chunk_wall_s"] = record["collector"]["seconds"]
+    if record["chunk_wall_s"] > int(s["walltime_s"]):
+        _stop_with_evidence(record, record_path,
+                            f"STOP: chunk wall {record['chunk_wall_s']:.1f} s exceeds walltime {s['walltime_s']} s")
     manifest = json.loads((Path("out") / "manifest.json").read_text())
     recorded = (manifest.get("c3_label_sweep") or {}).get("noise_source")
     if recorded != {"path": s["noise_source"]["path"], "sha256": NOISE_SHA}:

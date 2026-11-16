@@ -133,7 +133,7 @@ def test_layout_fields_are_validated():
             lib.validate_spec(s)
     s = spec(); s["server"]["extra_args"][s["server"]["extra_args"].index("--chat-template-kwargs") + 1] = \
         '{"enable_thinking": false, "add_generation_prompt": true}'
-    with pytest.raises(lib.Stop, match="exactly"):
+    with pytest.raises(lib.Stop, match="byte-identical"):
         lib.validate_spec(s)
 
 
@@ -147,7 +147,7 @@ def test_settings_are_fail_closed():
         lib.validate_spec(s)
     s = spec(); k = s["server"]["extra_args"].index("--chat-template-kwargs")
     s["server"]["extra_args"][k + 1] = "not-json"
-    with pytest.raises(lib.Stop, match="must be JSON"):
+    with pytest.raises(lib.Stop, match="byte-identical"):
         lib.validate_spec(s)
 
 
@@ -415,3 +415,25 @@ def test_worker_skipped_nested_schema_is_excluded_from_the_gate(tmp_path, monkey
     check = lib.collection_gates(out, work, "digits_mlp", 2)
     assert check["worker"]["skipped"] == 2 and check["worker"]["trials"] == 8
     assert check["worker"]["failure_rate"] == 0.0
+
+
+def test_no_resume_path_refuses_a_prior_chunk(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "manifest.json").write_text("{}")
+    (tmp_path / "job_record.json").write_text('{"schema": "s2_c2_job_record/1"}')
+    sp = tmp_path / "spec.json"; sp.write_text(json.dumps(spec()))
+    with pytest.raises(lib.Stop, match="no resume path"):
+        lib.run_job(sp)
+    assert not (tmp_path / "out.tar").exists()
+
+
+def test_walltime_must_be_one_and_a_half_the_measured_chunk():
+    s = spec(); s["layout_measured_chunk_s"] = 8000; s["walltime_s"] = 12000
+    assert lib.validate_spec(s)["label"] == "ENGINEERING_ONLY"
+    s["walltime_s"] = 12203
+    with pytest.raises(lib.Stop, match="1.5x"):
+        lib.validate_spec(s)
+    s = spec(); s["layout_measured_chunk_s"] = -1
+    with pytest.raises(lib.Stop, match="positive"):
+        lib.validate_spec(s)
