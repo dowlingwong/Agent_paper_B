@@ -187,5 +187,11 @@
   "job_record.json",
   "SHA256SUMS",
   "llama-server.log"
- ]
+ ],
+ "launch_binding": {
+  "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35f093b4064525efa6fbd8bda48253f56f3b81baab6f21b7c93cc05296",
+  "paper_commit": "9ae6d87783f53f9da27200869085c9ed0e7697e2",
+  "harness_commit": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2",
+  "server_settings_sha256": "d355e5e7595e4bfa3d7bd989b5306e5bec06f5c13c1f3ac12eee9869fad01ac0"
+ }
 }

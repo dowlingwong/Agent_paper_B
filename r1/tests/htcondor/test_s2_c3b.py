@@ -773,3 +773,17 @@ def test_worker_audit_helper_scans_work_and_out(tmp_path, monkeypatch):
     other.write_text("val_score 0.91\n")
     audit = c3b.audit_worker_logs()
     assert audit["total_run_logs"] == 2 and audit["crashed"] == 1
+
+
+def test_launch_binding_must_match_the_launch_spec(tmp_path):
+    import json as _json
+    import s2_c3b_lib as c3b
+    spec = _json.loads((__import__("pathlib").Path(__file__).resolve().parents[3] / "sweep2" / "spec.c3b.example.json").read_text())
+    v = c3b.validate_spec(spec)
+    assert v["launch_binding"]["server_settings_sha256"] == c3b.server_settings_sha256(spec)
+    bad = _json.loads(_json.dumps(spec)); bad["launch_binding"]["server_settings_sha256"] = "0" * 64
+    with pytest.raises(c3b.Stop, match="launch_binding.server_settings_sha256"):
+        c3b.validate_spec(bad)
+    bad = _json.loads(_json.dumps(spec)); del bad["launch_binding"]
+    with pytest.raises(c3b.Stop, match="launch_binding is required"):
+        c3b.validate_spec(bad)

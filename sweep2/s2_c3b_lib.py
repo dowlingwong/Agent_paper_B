@@ -354,6 +354,29 @@ def _c2_view(spec: dict) -> dict:
     return view
 
 
+def server_settings_sha256(spec: dict) -> str:
+    srv = spec["server"]
+    payload = {key: srv[key] for key in ("ctx", "n_gpu_layers", "extra_args")}
+    payload["np"] = 1  # the wrapper's managed -np 1 (R1-SWEEP2-SETTINGS)
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def validate_launch_binding(spec: dict) -> dict:
+    """R1-SWEEP2-LAYOUT-AMEND: an S2-C3b liveness pass counts as the pre-launch gate only if its image digest,
+    paper commit, harness pin and server settings are the launch's. The binding is recorded and re-checked by the
+    launch checklist / S2-C5."""
+    binding = spec.get("launch_binding")
+    if not isinstance(binding, dict):
+        raise Stop("STOP: launch_binding is required (image digest, paper commit, harness pin, server settings)")
+    image = spec["image"]; paper = spec["paper"]; harness = spec["harness"]
+    expected = {"image_digest": image["digest"], "paper_commit": paper["commit"],
+                "harness_commit": harness["commit"], "server_settings_sha256": server_settings_sha256(spec)}
+    for key, value in expected.items():
+        if binding.get(key) != value:
+            raise Stop(f"STOP: launch_binding.{key} does not match the launch specification ({binding.get(key)!r} != {value!r})")
+    return expected
+
+
 def validate_spec(spec: dict) -> dict:
     if spec.get("kind") != "liveness":
         raise Stop("STOP: kind must be liveness (S2-C3b runs the D28 liveness job)")
@@ -397,6 +420,7 @@ def validate_spec(spec: dict) -> dict:
     if c2._get(live, "transport_max_attempts") != TRANSPORT_MAX_ATTEMPTS:
         raise Stop(f"STOP: liveness transport_max_attempts must be {TRANSPORT_MAX_ATTEMPTS} (sweep-1 D28)")
 
+    launch_binding = validate_launch_binding(spec)
     seed_check = check_seed_disjointness(spec)
 
     pm = c2._get(spec, "prompt_measurement")
@@ -442,7 +466,8 @@ def validate_spec(spec: dict) -> dict:
     if spec.get("transfer_outputs") != list(TRANSFER_OUTPUTS):
         raise Stop(f"STOP: transfer_outputs must be {list(TRANSFER_OUTPUTS)}")
     return {"run_id": run_id, "chunk_id": chunk_id, "kind": "liveness", "label": "ENGINEERING_ONLY",
-            "seed_check": seed_check, "level_layout": level_layout(spec), "spec": spec}
+            "seed_check": seed_check, "launch_binding": launch_binding, "level_layout": level_layout(spec),
+            "spec": spec}
 
 
 def level_layout(spec: dict) -> dict:
