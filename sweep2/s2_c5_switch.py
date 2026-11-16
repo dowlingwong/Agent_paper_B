@@ -48,9 +48,9 @@ def _authorized_note(rel: str, raw: bytes) -> bool:
                            "refs/remotes/origin/main", "refs/remotes/origin/author-*"],
                           capture_output=True, text=True, check=False)
     for ref in refs.stdout.split():
-        blob = subprocess.run(["git", "-C", str(REPO_ROOT), "show", f"{ref}:{rel}"],
-                              capture_output=True, text=True, check=False)
-        if blob.returncode == 0 and blob.stdout.encode() == raw:
+        blob = subprocess.run(["git", "-C", str(REPO_ROOT), "cat-file", "blob", f"{ref}:{rel}"],
+                              capture_output=True, check=False)
+        if blob.returncode == 0 and blob.stdout == raw:
             return True
     return False
 
@@ -75,7 +75,7 @@ def parse_note(text: str) -> dict:
     for key in P_FIELDS:
         if key not in fields or not fields[key]:
             raise Stop(f"STOP: authorization note lacks required prerequisite {key!r}")
-        if "PASS" not in fields[key].upper():
+        if not fields[key].upper().startswith("PASS"):
             raise Stop(f"STOP: authorization prerequisite {key} is not recorded as PASS")
     if fields["approved"].lower() != "true":
         raise Stop("STOP: authorization note is not approved (approved: true required)")
@@ -83,7 +83,7 @@ def parse_note(text: str) -> dict:
         raise Stop("STOP: authorization note label must be EVIDENCE")
     if fields["image"] != FROZEN_IMAGE:
         raise Stop("STOP: authorization note must freeze the v1 gpu digest")
-    if not fields["b2_audits"].lower().startswith(("none", "n/a", "not-authorized")):
+    if fields["b2_audits"].strip().lower().split(" ")[0] not in ("none", "n/a", "not-authorized"):
         raise Stop("STOP: the sweep-2 authorization carries no B.2 audits; note must say none")
     if fields["d8_lock"].lower() != "true":
         raise Stop("STOP: R1-BX-D8 analysis lock must be recorded as true")
@@ -174,7 +174,8 @@ def submit(spec_path: Path, note_path: Path, jdl: Path, *, enable: bool = False)
     if res.returncode != 0:
         raise Stop(f"STOP: condor_submit rc={res.returncode}: {res.stderr.strip()[:500]}")
     out = {"schema": "s2_c5_submission/v1", "run_id": checked["run_id"], "image": checked["image"],
-           "note_sha256": checked["note_sha256"], "jdl": str(jdl), "condor_submit": res.stdout[-2000:],
+           "note_sha256": checked["note_sha256"], "jdl_sha256": checked["jdl_sha256"], "jdl": str(jdl),
+           "condor_submit": res.stdout[-2000:],
            "submitted_utc": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime())}
     with (jdl.parent / "S2C5_SUBMISSIONS.jsonl").open("a") as fh:
         fh.write(json.dumps(out) + "\n")
@@ -185,13 +186,14 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("check"); c.add_argument("--spec", required=True); c.add_argument("--note", required=True)
+    c.add_argument("--jdl", default=None)
     s = sub.add_parser("submit")
     s.add_argument("--spec", required=True); s.add_argument("--note", required=True); s.add_argument("--jdl", required=True)
     s.add_argument("--enable", action="store_true")
     a = ap.parse_args(argv)
     try:
         if a.cmd == "check":
-            print(json.dumps(check(Path(a.spec), Path(a.note)), indent=1)); return 0
+            print(json.dumps(check(Path(a.spec), Path(a.note), Path(a.jdl) if a.jdl else None), indent=1)); return 0
         print(json.dumps(submit(Path(a.spec), Path(a.note), Path(a.jdl), enable=a.enable), indent=1)); return 0
     except Stop as exc:
         print(str(exc), file=sys.stderr); return 2

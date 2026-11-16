@@ -66,6 +66,9 @@ def test_check_refuses_mismatches(tmp_path, monkeypatch):
     bad["request_disk_kb"] = 42460977; bad["reviewed_jdl_sha256"] = "0" * 64; sp.write_text(json.dumps(bad))
     with pytest.raises(sw.Stop, match="reviewed JDL"):
         sw.check(sp, note, jdl)
+    note.write_text(NOTE.replace("P1: PASS", "P1: NOT PASS"))
+    with pytest.raises(sw.Stop, match="PASS"):
+        sw.check(sp, note, jdl)
     note.write_text(NOTE.replace("approved: true", "approved: false"))
     with pytest.raises(sw.Stop, match="not approved"):
         sw.check(sp, note, jdl)
@@ -85,5 +88,11 @@ def test_submit_is_disabled_without_both_keys(tmp_path, monkeypatch):
     monkeypatch.setenv("S2C5_ENABLE_REAL", "1")
     with pytest.raises(sw.Stop, match="disabled"):
         sw.submit(sp, note, jdl, enable=False)
-    with pytest.raises(sw.Stop, match="condor_submit|disabled"):
-        sw.submit(sp, note, jdl, enable=True)
+    calls = []
+    class Fake:
+        returncode = 0; stdout = "1 job(s) submitted to cluster 1."; stderr = ""
+    monkeypatch.setattr(sw.subprocess, "run", lambda argv, **kw: calls.append(argv) or Fake())
+    out = sw.submit(sp, note, jdl, enable=True)
+    assert calls and calls[0][0] == "condor_submit" and out["jdl_sha256"]
+    record = (jdl.parent / "S2C5_SUBMISSIONS.jsonl").read_text()
+    assert "s2sweep-20261117-a" in record and out["jdl_sha256"] in record
