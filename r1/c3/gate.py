@@ -1,86 +1,101 @@
-"""R1-BX-D8 aggregate C3 gate (M11): statistic on already computed utilities.
+"""R1-BX-D8 aggregate C3 gate (M11), version 3: statistic on already computed utilities.
 
-Synthetic-tested implementation candidate; AI-assisted. It is not an author
-decision and it opens nothing before the D8 confirmation check passes.
+Synthetic-tested implementation; AI-assisted. It is not an author decision and it opens nothing before the D8
+confirmation check passes.
 
-What it computes (PLAN R1-BX-D8 and R1-BX-PROPOSED-CONFIRM (D8)):
+Version 3 implements the author rows R1-BX-D8-V3-A (items 1-3) and R1-BX-D8-V3-B (items 4-5), on top of R1-BX-D8 and
+R1-BX-PROPOSED-CONFIRM (D8). What it computes:
 
-* per node, gap closed = (mean U_arm - mean U_A2) / (mean U_oracle - mean U_A2)
-  on the node's test instances, where U_oracle is the noisy-oracle ceiling
-  (ratio of means: a convention, the row writes the ratio without "mean");
-* a node is IQM-eligible only if, on the dev split, its denominator
-  mean U_oracle - mean U_A2 is at least ``delta_n`` (PLAN R1-BX-D8) **and** its
-  paired dev z statistic is at least ``DEV_Z_MIN`` = 6 (author's answer to the
-  10 Nov question Q2, option (b)). Ineligible nodes are excluded from the IQM,
-  listed with their reason, and kept in the probability of improvement (PoI);
-* IQM of gap closed across the eligible nodes: the 25%-75% empirical trimmed
-  mean with fractional boundary weights (``_node_iqm``, inlined here so that
-  the gate SHA binds it; identical to the accepted
+* per node, gap closed G = mean(a) / mean(d) on the node's test instances, with a = U_arm - U_A2 and
+  d = U_oracle - U_A2 per test instance, where U_oracle is the noisy-oracle ceiling. This is the ratio of means
+  (mean U_arm - mean U_A2) / (mean U_oracle - mean U_A2) of gate v2;
+* IQM-eligibility (V3-A item 2, V3-B item 5). A node is IQM-eligible only if all of:
+  - the paired z of oracle - A2 over its train + dev instances is at least ``ELIG_Z_MIN`` = 3 (replacing v2's
+    dev z >= 6, not adopted on 14 Nov);
+  - its dev denominator mean U_oracle - mean U_A2 on the dev split is at least ``delta_n`` (R1-BX-D8);
+  - it has at least ``TEST_FLOOR[tier]`` test instances (T0 >= 9, T1 >= 3; V3-B item 5).
+  An ineligible node is excluded from the IQM, listed with every reason that applies, and kept in the probability
+  of improvement (PoI);
+* IQM of gap closed across the eligible nodes: the 25%-75% empirical trimmed mean with fractional boundary weights
+  (``_node_iqm``, inlined so that the gate SHA binds it; identical to the accepted
   ``d8_point_statistics.node_iqm``);
-* PoI: per node the share of test instances with U_arm > U_A2, ties (exact
-  floating-point equality) one half, then the plain mean over all nodes;
-* node-stratified bootstrap: 2,000 resamples of test instances within each
-  node, one shared index draw per node and resample for A2, oracle, A3 and A5;
-  nodes are fixed, so the bounds cover instance noise for these nodes only;
-* decision: Holm over A3 and A5 at family-wise one-sided alpha = 0.05; the
-  first-ranked arm is tested with one-sided 97.5% lower bounds, the second
-  (only if the first passes) with 95%. An arm passes if the IQM lower bound is
-  > 0 and the PoI lower bound is > 0.5 (both strict). The gate passes if the
-  first-ranked arm passes. The point IQM is reported against 0.1.
+* PoI: per node the share of test instances with U_arm > U_A2, ties (exact floating-point equality) one half, then
+  the plain mean over all nodes, eligible or not;
+* node-stratified bootstrap: 2,000 resamples of test instances within each node, one shared index draw per node and
+  resample for A2, oracle, A3 and A5; nodes are fixed, so the bounds cover instance noise for these nodes only;
+* test side (V3-A item 1, "V1n"): a nonpositive point test denominator mean(d) on an IQM-eligible node is a STOP. A
+  resample in which an eligible node's denominator is nonpositive sets that node's gap closed to -inf before the
+  IQM; it is counted and reported, never dropped;
+* pass rule (V3-B item 4, "(b2)"): the studentized node-stratified bootstrap lower bound of the IQM, as declared in
+  ``M11_D8_SKEW_DECLARATION_20261115.md`` section 2 (b2) and implemented in ``r1/scripts/d8_skew_sim.py`` @
+  ``dc899aad``:
+  - per node, the delta-method se of the ratio,
+    se_j^2 = [var(a) + G_j^2 var(d) - 2 G_j cov(a, d)]^+ / (n_j mean(d)^2), with ddof 1;
+  - se(IQM) = sqrt(sum_i w_i^2 se_(i)^2), the IQM weights applied in the sorted order of G;
+  - t* = (IQM* - IQM_hat) / se*(IQM), with se* computed the same way inside each resample; a resample with a
+    nonpositive eligible-node denominator, se* = 0 or a non-finite t* counts as t* = +inf (so item 1's -inf has no
+    further effect on the bound);
+  - lower bound at level L = IQM_hat - q_L(t*) se_hat(IQM), with q_L the linear quantile of t*; if
+    se_hat(IQM) = 0 the bound is IQM_hat;
+  an arm passes at level L if this bound is > 0 **and** the percentile lower bound of the PoI is > 0.5 (both
+  strict);
+* decision: Holm over A3 and A5 at family-wise one-sided alpha = 0.05; the first-ranked arm is tested at L = 97.5%,
+  the second (only if the first passes) at L = 95%. The gate passes if the first-ranked arm passes. The point IQM is
+  reported against 0.1.
 
 Node layout (pinned here, so the gate SHA binds it):
 
-* tier T0 is exactly the eight CPU nodes of ``T0_NODES``: the authorized
-  sweep-1 node set (R1-DT-PIN-SWEEP1; docs/r1/authorizations/c3_sweep1_20261027.md),
-  in which openml_climate substitutes for openml_blood_transfusion, which failed
-  D21 (R1-D28-REPAIR; DT_SWEEP1_READINESS_20261027.md). Sweep 2 runs on the same
-  instances (RUNBOOK B.1b). T0 nodes belong to no suite (``"suite": null``). A
-  missing, extra or renamed T0 node is a STOP;
-* tier T1 nodes carry a suite from ``SUITES`` (R1-BX-D2 as amended by
-  R1-1GC-FALLBACK). A T1 node without a suite or with another suite is a STOP.
-  The T1 node list itself cannot be pinned (partial T1, R1-B7-PARTIAL-T1);
-* partial T1 (R1-B7-PARTIAL-T1): the condition "each suite in ``SUITES`` has at
-  least one labelled T1 node" is a precondition of each leave-one-suite-out
-  fold and is applied where leave-one-suite-out is computed (not in this
-  module). The aggregate gate does **not** STOP on it (author's answer to the
-  10 Nov question Q1, option (b)); it reports ``t1_by_suite`` and the suites
-  without a labelled T1 node.
+* tier T0 is exactly the eight CPU nodes of ``T0_NODES``: the authorized sweep-1 node set (R1-DT-PIN-SWEEP1;
+  docs/r1/authorizations/c3_sweep1_20261027.md), in which openml_climate substitutes for openml_blood_transfusion,
+  which failed D21 (R1-D28-REPAIR). T0 nodes belong to no suite (``"suite": null``). A missing, extra or renamed T0
+  node is a STOP;
+* tier T1 nodes carry a suite from ``SUITES`` (R1-BX-D2 as amended by R1-1GC-FALLBACK). A T1 node without a suite or
+  with another suite is a STOP. The T1 node list itself cannot be pinned (partial T1, R1-B7-PARTIAL-T1);
+* partial T1 (R1-B7-PARTIAL-T1): the condition "each suite in ``SUITES`` has at least one labelled T1 node" is a
+  precondition of each leave-one-suite-out fold and is applied where leave-one-suite-out is computed (not in this
+  module). The aggregate gate does **not** STOP on it; it reports ``t1_by_suite`` and the suites without a labelled
+  T1 node.
 
-Implementation conventions that the PLAN rows do not fix (preregistration
-candidates; see docs/r1/reports/M11_D8_GATE_20261109.md):
+Split (V3-A item 3): the caller supplies each node's train, dev and test instances under the split P3 = 1/3 : 1/6 :
+1/2 per tier, fixed in the analysis preregistration. The input must declare ``"split"`` exactly as ``SPLIT``, and a
+node's three instance-id lists must be pairwise disjoint. The gate reports each node's counts and its total against
+the design size (T0 18, T1 12 instances per node; R1-BX-D8-V3-B fixes T1 at 12), and lists under ``off_split`` every
+node at the design size whose train : dev : test counts are not exactly P3 (T0 6 : 3 : 9, T1 4 : 2 : 6). It does not
+STOP on counts: a short node is handled by the test floor.
 
-* environment: the harness ``uv.lock`` environment at ``a3fedbb`` (Python 3.13,
-  NumPy 2.4.4) is the named environment for running the gate (author's answer
-  to Q3). Only the NumPy version is checked;
-* seed 20261108, ``numpy.random.Generator(PCG64)``; NumPy must be exactly
-  ``NUMPY_VERSION`` (STOP otherwise); nodes in sorted node-id order, instances
-  in sorted instance-id order; for each node in that order one
-  ``integers(0, n, size=(2000, n))`` draw;
-* lower bound at level L = ``numpy.quantile(boot, 1 - L, method='linear')``;
-* arm ranking for Holm: an arm that passes at the first level (97.5%) ranks
-  before one that does not; then ascending composite percentile p-value
-  max(P*(IQM <= 0), P*(PoI <= 0.5)); then the fixed order A3, A5. The first key
-  is the pass test itself, so the verdict does not depend on arm labels;
-* a resampled test denominator <= 0 on an IQM-eligible node, a nonpositive
-  point test denominator on such a node, or no eligible node is a STOP: no
-  resample or node is dropped; every offending node is listed;
-* dev z (with the Q2 eligibility rule): d = oracle - A2 paired per dev
-  instance, dev_z = mean(d) / (sd(d, ddof=1) / sqrt(n_dev)). A node with
-  n_dev < 2 is ineligible (reason ``dev_n``). If sd(d) = 0, dev_z is +inf when
-  mean(d) > 0 (eligible on this criterion) and the node is ineligible otherwise;
-  dev_z is then reported as null with ``dev_sd_zero`` true. A dev_z exactly 6
-  is eligible. The reasons ``delta_n``, ``dev_z`` and ``dev_n`` are listed for
-  every ineligible node (several may apply);
-* T0 and T1 are pooled with tier as a stratum: every node lies in one tier and
-  resampling is within node; per-tier node counts and descriptive point
-  statistics are reported.
+Implementation conventions that the PLAN rows do not fix (preregistration candidates; see
+docs/r1/reports/M11_D8_GATE_V3_20261116.md):
 
-Inputs are the caller's responsibility: U is the one-step utility scaled to a
-20-run campaign; ``delta_n`` is the node's D18 delta_n in the same 20-run-scaled
-utility units as U (D18: "also the unit of the C3 gate, scaled to a 20-run
-campaign"); the oracle utility comes from the label-seed block only, test
-utilities from the evaluation block, and the dev arrays from the dev split.
-This module does not compute or verify those provenance properties or units.
+* environment: the harness ``uv.lock`` environment at ``a3fedbb`` (Python 3.13, NumPy 2.4.4). Only the NumPy version
+  is checked;
+* seed 20261108, ``numpy.random.Generator(PCG64)``; NumPy must be exactly ``NUMPY_VERSION`` (STOP otherwise); nodes in
+  sorted node-id order, test instances in sorted instance-id order; for each node in that order one
+  ``integers(0, n, size=(2000, n))`` draw (unchanged from v2);
+* PoI lower bound at level L = ``numpy.quantile(poi*, 1 - L, method='linear')`` (unchanged from v2); the t* quantile
+  q_L = ``numpy.quantile(t*, L, method='linear')`` over the 2,000 resamples. As in the simulation, t* = +inf is held
+  as ``TSTAR_INF`` = 1e12, so the bound equals the simulation's bound. With a nonnegligible se_hat(IQM), more than
+  (1 - L) of screened resamples drives the bound far below 0, as +inf would; only when se_hat(IQM) is of order 1e-12
+  of the bound (e.g. rounding noise on constant data) does the sentinel differ from a literal +inf;
+* ties in G: nodes are put in ascending G order with a stable sort over sorted node ids, so tied nodes keep node-id
+  order when the weights are paired with their se. The simulation used NumPy's default ``np.argsort``, which is not
+  stable on every platform, so with exactly tied G its se can differ from the gate's; without ties the two agree;
+* arm ranking for Holm: an arm that passes at the first level (97.5%) ranks before one that does not; then ascending
+  composite tail share max(P*(t* >= IQM_hat / se_hat), P*(PoI* <= 0.5)) (for se_hat = 0 the first term is 0 if
+  IQM_hat > 0 and 1 otherwise); then the fixed order A3, A5. The first key is the pass test itself, so the verdict
+  does not depend on arm labels;
+* train + dev z: d = oracle - A2 paired per instance over the train and dev instances together,
+  z = mean(d) / (sd(d, ddof=1) / sqrt(n)); train and dev are each nonempty, so n >= 2. If sd(d) = 0, z is +inf when mean(d) > 0 (eligible on this criterion) and the node is ineligible
+  otherwise; z is then reported as null with ``z_sd_zero`` true. A z of exactly 3 is eligible. The reasons
+  ``delta_n``, ``z`` and ``test_floor`` are listed for every ineligible node (several may apply);
+* no IQM-eligible node is a STOP (the IQM is undefined);
+* T0 and T1 are pooled with tier as a stratum: every node lies in one tier and resampling is within node; per-tier
+  node counts and descriptive point statistics are reported.
+
+Inputs are the caller's responsibility: U is the one-step utility scaled to a 20-run campaign (20 proposals,
+R1-T4-PROOF-CHECK R4); ``delta_n`` is the node's D18 delta_n in the same units as U; the oracle utility comes from the
+label-seed block only, test utilities from the evaluation block, and the train and dev arrays from their splits.
+This module does not compute or verify those provenance properties or units. The gate's power is not computed here;
+R1-BX-D8-V3-B asks that it be reported in the paper (D8-PASS: mean two-arm power 0.36 at g = 0.3 on T1 x 12).
 """
 from __future__ import annotations
 
@@ -95,11 +110,19 @@ import numpy as np
 from r1.c3 import analysis_guard
 
 CONFIRM_ID = 'R1-BX-D8-CONFIRM'
-INPUT_SCHEMA = 'r1_d8_gate_input/v2'
-OUTPUT_SCHEMA = 'r1_d8_gate_result/v2'
+GATE_VERSION = 3
+INPUT_SCHEMA = 'r1_d8_gate_input/v3'
+OUTPUT_SCHEMA = 'r1_d8_gate_result/v3'
 NUMPY_VERSION = '2.4.4'         # harness uv.lock pin; STOP on any other version
 ENVIRONMENT = 'harness uv.lock environment at a3fedbb (Python 3.13, NumPy 2.4.4)'   # recorded, not checked
-DEV_Z_MIN = 6.0                 # dev-split eligibility (Q2 option (b)); with delta_n
+ELIG_Z_MIN = 3.0                # V3-A item 2: paired z of oracle - A2 on train + dev, with delta_n on dev
+TEST_FLOOR = {'T0': 9, 'T1': 3}         # V3-B item 5: test instances per node, per tier
+SPLIT = {'name': 'P3', 'train': '1/3', 'dev': '1/6', 'test': '1/2'}   # V3-A item 3 (caller supplies it)
+DESIGN_INSTANCES = {'T0': 18, 'T1': 12}  # reported only; V3-B fixes T1 at 12 per node
+# P3 counts at the design size (exact: 18 and 12 are divisible by 6); reported only, as ``off_split``.
+DESIGN_SPLIT = {t: tuple(n * num // den for num, den in ((1, 3), (1, 6), (1, 2))) for t, n in DESIGN_INSTANCES.items()}
+INTERVAL = 'studentized node-stratified bootstrap (b2), delta-method se'   # V3-B item 4
+TSTAR_INF = 1e12                # the value standing for t* = +inf, as in d8_skew_sim.py (BIG)
 N_RESAMPLES = 2000
 SEED = 20261108
 RNG = 'numpy.random.Generator(PCG64)'
@@ -111,6 +134,7 @@ POI_NULL = 0.5
 ARMS = ('A3', 'A5')             # fixed order; also the tie-break for ranking
 TIERS = ('T0', 'T1')
 SERIES = ('A2', 'oracle', 'A3', 'A5')
+SPLITS = ('train', 'dev', 'test')
 # Tier T0: the 8 CPU nodes of the authorized sweep 1 (R1-DT-PIN-SWEEP1, 27 Oct;
 # docs/r1/authorizations/c3_sweep1_20261027.md; R1-BX-D2 "the 8 CPU nodes stay as
 # tier T0"). openml_climate substitutes for openml_blood_transfusion (failed D21;
@@ -219,12 +243,36 @@ def _text(value, label):
     return value
 
 
+def _ids(raw, label):
+    if not isinstance(raw, list) or not raw:
+        raise ValueError(f'{label} instance_ids must be a nonempty list')
+    ids = [_text(i, f'{label} instance id') for i in raw]
+    if len(set(ids)) != len(ids):
+        raise ValueError(f'{label} has duplicate instance ids')
+    return ids
+
+
+def _paired_block(raw, keys, label):
+    """Validate one split block: instance_ids plus the paired series in ``keys``."""
+    if not isinstance(raw, dict) or set(raw) != {'instance_ids', *keys}:
+        raise ValueError(f'{label} must have exactly instance_ids, {", ".join(keys)}')
+    ids = _ids(raw['instance_ids'], label)
+    series = {k: _finite_vector(raw[k], f'{label} {k}') for k in keys}
+    if any(len(v) != len(ids) for v in series.values()):
+        raise ValueError(f'{label} vectors are not paired with instance_ids')
+    order = sorted(range(len(ids)), key=ids.__getitem__)
+    return [ids[i] for i in order], {k: v[order] for k, v in series.items()}
+
+
 def _validate(gate_input):
     if not isinstance(gate_input, dict) or gate_input.get('schema') != INPUT_SCHEMA:
         raise ValueError(f'gate input must be a dict with schema {INPUT_SCHEMA}')
-    extra = set(gate_input) - {'schema', 'nodes'}
+    extra = set(gate_input) - {'schema', 'split', 'nodes'}
     if extra:
         raise ValueError(f'unknown gate input fields: {sorted(extra)}')
+    if gate_input.get('split') != SPLIT:
+        raise GateStop(f'STOP: the declared split must be exactly {SPLIT} (R1-BX-D8-V3-A item 3); '
+                       f'got {gate_input.get("split")!r}')
     raw_nodes = gate_input.get('nodes')
     if not isinstance(raw_nodes, list) or not raw_nodes:
         raise ValueError('nodes must be a nonempty list')
@@ -232,8 +280,8 @@ def _validate(gate_input):
     for raw in raw_nodes:
         if not isinstance(raw, dict):
             raise ValueError('each node must be a dict')
-        if set(raw) != {'node', 'suite', 'tier', 'delta_n', 'dev', 'test'}:
-            raise ValueError(f'node fields must be exactly node, suite, tier, delta_n, dev, test; '
+        if set(raw) != {'node', 'suite', 'tier', 'delta_n', 'train', 'dev', 'test'}:
+            raise ValueError(f'node fields must be exactly node, suite, tier, delta_n, train, dev, test; '
                              f'got {sorted(raw)}')
         name = _text(raw.get('node'), 'node id')
         if name in nodes:
@@ -247,39 +295,30 @@ def _validate(gate_input):
         delta = raw.get('delta_n')
         if type(delta) not in (int, float) or not math.isfinite(delta) or delta <= 0:
             raise ValueError(f'node {name} delta_n must be a positive finite number')
-        dev = raw.get('dev')
-        if not isinstance(dev, dict) or set(dev) != {'A2', 'oracle'}:
-            raise ValueError(f'node {name} dev must have exactly A2 and oracle')
-        dev_a2 = _finite_vector(dev['A2'], f'{name} dev A2')
-        dev_or = _finite_vector(dev['oracle'], f'{name} dev oracle')
-        if len(dev_a2) != len(dev_or):
-            raise ValueError(f'node {name} dev vectors differ in length')
-        dev_denominator = float(dev_or.mean() - dev_a2.mean())
+        train_ids, train = _paired_block(raw.get('train'), ('A2', 'oracle'), f'node {name} train')
+        dev_ids, dev = _paired_block(raw.get('dev'), ('A2', 'oracle'), f'node {name} dev')
+        test_ids, test = _paired_block(raw.get('test'), SERIES, f'node {name} test')
+        overlap = sorted((set(train_ids) & set(dev_ids)) | (set(train_ids) & set(test_ids))
+                         | (set(dev_ids) & set(test_ids)))
+        if overlap:
+            raise ValueError(f'node {name}: train, dev and test instance ids must be disjoint; shared {overlap}')
+        dev_denominator = float(dev['oracle'].mean() - dev['A2'].mean())
         if not math.isfinite(dev_denominator):
             raise ValueError(f'node {name} dev denominator is not finite')
-        dev_z, dev_sd_zero, z_ok, n_ok = _dev_z(dev_a2, dev_or)
-        test = raw.get('test')
-        if not isinstance(test, dict) or set(test) != {'instance_ids', *SERIES}:
-            raise ValueError(f'node {name} test must have instance_ids, A2, oracle, A3, A5')
-        ids = test['instance_ids']
-        if not isinstance(ids, list) or not ids:
-            raise ValueError(f'node {name} instance_ids must be a nonempty list')
-        ids = [_text(i, 'instance id') for i in ids]
-        if len(set(ids)) != len(ids):
-            raise ValueError(f'node {name} has duplicate instance ids')
-        series = {k: _finite_vector(test[k], f'{name} test {k}') for k in SERIES}
-        if any(len(v) != len(ids) for v in series.values()):
-            raise ValueError(f'node {name} test vectors are not paired with instance_ids')
-        order = sorted(range(len(ids)), key=ids.__getitem__)
+        z, z_sd_zero, z_ok = _train_dev_z(np.concatenate([train['A2'], dev['A2']]),
+                                               np.concatenate([train['oracle'], dev['oracle']]))
+        n_test = len(test_ids)
+        reasons = (([] if dev_denominator >= float(delta) else ['delta_n'])
+                   + ([] if z_ok else ['z'])
+                   + ([] if n_test >= TEST_FLOOR[tier] else ['test_floor']))
+        n_total = len(train_ids) + len(dev_ids) + n_test
         nodes[name] = {
             'suite': suite, 'tier': tier, 'delta_n': float(delta),
             'dev_denominator': dev_denominator,
-            'dev_z': dev_z, 'dev_sd_zero': dev_sd_zero,
-            'ineligible_reasons': ([] if dev_denominator >= float(delta) else ['delta_n'])
-                                  + ([] if n_ok else ['dev_n'])
-                                  + ([] if z_ok or not n_ok else ['dev_z']),
-            'n_test': len(ids), 'n_dev': len(dev_a2),
-            'test': {k: v[order] for k, v in series.items()},
+            'train_dev_z': z, 'z_sd_zero': z_sd_zero,
+            'ineligible_reasons': reasons,
+            'n_train': len(train_ids), 'n_dev': len(dev_ids), 'n_test': n_test, 'n_total': n_total,
+            'test': test,
         }
     _check_layout(nodes)
     return dict(sorted(nodes.items()))
@@ -302,22 +341,23 @@ def _check_layout(nodes):
     # R1-B7-PARTIAL-T1 belongs to leave-one-suite-out (Q1 option (b)).
 
 
-def _dev_z(dev_a2, dev_oracle):
-    """Paired dev z of oracle - A2; returns (z or None, sd_zero, eligible_on_z, n_ok)."""
-    d = dev_oracle - dev_a2
+def _train_dev_z(a2, oracle):
+    """Paired z of oracle - A2 over train + dev; returns (z or None, sd_zero, eligible_on_z).
+
+    Train and dev are each nonempty (validated), so n >= 2.
+    """
+    d = oracle - a2
     n = len(d)
-    if n < 2:
-        return None, False, False, False
     mean = float(d.mean())
     sd = float(d.std(ddof=1))
     if not math.isfinite(mean) or not math.isfinite(sd):
-        raise ValueError('dev z is not finite')
+        raise ValueError('train + dev z is not finite')
     if sd == 0.0:
-        return None, True, mean > 0.0, True
+        return None, True, mean > 0.0
     z = mean / (sd / math.sqrt(n))
     if not math.isfinite(z):
-        raise ValueError('dev z is not finite')
-    return z, False, z >= DEV_Z_MIN, True
+        raise ValueError('train + dev z is not finite')
+    return z, False, z >= ELIG_Z_MIN
 
 
 # ---------------------------------------------------------------- statistics
@@ -326,105 +366,172 @@ def _wins(arm, a2):
     return (arm > a2).astype(float) + 0.5 * (arm == a2)
 
 
+def _iqm_weights(k):
+    """The IQM weights of ``_node_iqm`` on the sorted order, as an array (sum 1)."""
+    return np.array([max(0, min(4 * (i + 1), 3 * k) - max(4 * i, k)) for i in range(k)], dtype=float) / (2 * k)
+
+
+def _node_se(a, d, g):
+    """Delta-method se of the ratio mean(a)/mean(d) along the last axis (d8_skew_sim ``node_se``, ddof 1)."""
+    n = a.shape[-1]
+    va = a.var(axis=-1, ddof=1)
+    vd = d.var(axis=-1, ddof=1)
+    cv = ((a - a.mean(axis=-1, keepdims=True)) * (d - d.mean(axis=-1, keepdims=True))).sum(axis=-1) / (n - 1)
+    num = np.maximum(va + g ** 2 * vd - 2 * g * cv, 0.0)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        return np.sqrt(num / (n * d.mean(axis=-1) ** 2))
+
+
 def _point(nodes):
     eligible = [k for k, n in nodes.items() if not n['ineligible_reasons']]
     if not eligible:
         reasons = {k: n['ineligible_reasons'] for k, n in nodes.items()}
-        raise GateStop(f'STOP: no node is IQM-eligible (dev denominator >= delta_n and dev z >= {DEV_Z_MIN}); '
-                       f'the IQM is undefined; reasons {reasons}')
+        raise GateStop(f'STOP: no node is IQM-eligible (train + dev z >= {ELIG_Z_MIN}, dev denominator >= delta_n, '
+                       f'test floor {TEST_FLOOR}); the IQM is undefined; reasons {reasons}')
     table = {}
     nonpositive = []
     for name, n in nodes.items():
         t = n['test']
-        denom = float(t['oracle'].mean() - t['A2'].mean())
-        row = {'suite': n['suite'], 'tier': n['tier'], 'n_test': n['n_test'], 'n_dev': n['n_dev'],
-               'delta_n': n['delta_n'], 'dev_denominator': n['dev_denominator'],
-               'dev_z': n['dev_z'], 'dev_sd_zero': n['dev_sd_zero'],
+        d = t['oracle'] - t['A2']
+        denom = float(d.mean())
+        row = {'suite': n['suite'], 'tier': n['tier'], 'delta_n': n['delta_n'],
+               'n_train': n['n_train'], 'n_dev': n['n_dev'], 'n_test': n['n_test'], 'n_total': n['n_total'],
+               'design_instances': DESIGN_INSTANCES[n['tier']], 'test_floor': TEST_FLOOR[n['tier']],
+               'dev_denominator': n['dev_denominator'],
+               'train_dev_z': n['train_dev_z'], 'z_sd_zero': n['z_sd_zero'],
                'ineligible_reasons': list(n['ineligible_reasons']),
                'included_in_iqm': name in eligible, 'test_denominator': denom}
         if name in eligible and not denom > 0:
             nonpositive.append(name)
             continue
         for arm in ARMS:
-            row[f'gap_closed_{arm}'] = (float(t[arm].mean() - t['A2'].mean()) / denom
-                                        if name in eligible else None)
+            if name in eligible:
+                a = t[arm] - t['A2']
+                g = float(a.mean()) / denom
+                row[f'gap_closed_{arm}'] = g
+                row[f'se_gap_closed_{arm}'] = float(_node_se(a, d, g))
+            else:
+                row[f'gap_closed_{arm}'] = None
+                row[f'se_gap_closed_{arm}'] = None
             row[f'poi_{arm}'] = float(_wins(t[arm], t['A2']).mean())
         table[name] = row
     if nonpositive:
         raise GateStop(f'STOP: nonpositive test oracle-A2 denominator on IQM nodes {nonpositive}')
     summary = {}
+    w = _iqm_weights(len(eligible))
     for arm in ARMS:
+        g = np.array([table[k][f'gap_closed_{arm}'] for k in eligible])
+        se = np.array([table[k][f'se_gap_closed_{arm}'] for k in eligible])
+        order = np.argsort(g, kind='stable')
         summary[arm] = {
-            'iqm_gap_closed': _node_iqm([table[k][f'gap_closed_{arm}'] for k in eligible]),
+            'iqm_gap_closed': _node_iqm(g.tolist()),
+            'se_iqm_gap_closed': float(np.sqrt(np.sum((w * se[order]) ** 2))),
             'probability_of_improvement': _node_poi(
                 [(nodes[k]['test'][arm].tolist(), nodes[k]['test']['A2'].tolist()) for k in nodes]),
         }
     return eligible, table, summary
 
 
-def _bootstrap(nodes, eligible):
-    """Return {arm: (iqm[B], poi[B])} from shared within-node index draws."""
+def _bootstrap(nodes, eligible, summary):
+    """Per arm: t* (with +inf for screened resamples) and the PoI resamples, from shared within-node draws.
+
+    Also returns, per eligible node, the number of resamples with a nonpositive denominator (V1n: gap closed -inf).
+    """
     rng = np.random.Generator(np.random.PCG64(SEED))
-    gaps = {arm: [] for arm in ARMS}
+    k = len(eligible)
+    col = {name: j for j, name in enumerate(eligible)}
+    g_b = {arm: np.empty((N_RESAMPLES, k)) for arm in ARMS}
+    se_b = {arm: np.empty((N_RESAMPLES, k)) for arm in ARMS}
+    bad = np.zeros((N_RESAMPLES, k), dtype=bool)
     poi = {arm: np.zeros(N_RESAMPLES) for arm in ARMS}
-    nonpositive = {}
     for name, n in nodes.items():          # sorted node-id order
         t = n['test']; size = n['n_test']
         idx = rng.integers(0, size, size=(N_RESAMPLES, size))
-        a2 = t['A2'][idx].mean(axis=1)
         for arm in ARMS:
             poi[arm] += _wins(t[arm], t['A2'])[idx].mean(axis=1)
-        if name in eligible:
-            denom = t['oracle'][idx].mean(axis=1) - a2
-            bad = int(np.count_nonzero(~(denom > 0)))
-            if bad:
-                nonpositive[name] = bad
-                continue
+        if name in col:
+            j = col[name]
+            db = (t['oracle'] - t['A2'])[idx]
+            dm = db.mean(axis=1)
+            bad[:, j] = ~(dm > 0)
             for arm in ARMS:
-                gaps[arm].append((t[arm][idx].mean(axis=1) - a2) / denom)
-    if nonpositive:
-        raise GateStop(f'STOP: nonpositive resampled oracle-A2 denominators (of {N_RESAMPLES}) on IQM '
-                       f'nodes {nonpositive}; no resample or node is dropped')
+                ab = (t[arm] - t['A2'])[idx]
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    gb = np.where(dm > 0, ab.mean(axis=1) / dm, 0.0)
+                g_b[arm][:, j] = np.where(dm > 0, gb, -np.inf)
+                se_b[arm][:, j] = _node_se(ab, db, gb)
+    w = _iqm_weights(k)
     out = {}
     for arm in ARMS:
-        matrix = np.stack(gaps[arm], axis=1)           # (B, eligible nodes)
-        iqm = np.array([_node_iqm(row) for row in matrix.tolist()])
-        out[arm] = (iqm, poi[arm] / len(nodes))
-    return out
+        theta = summary[arm]['iqm_gap_closed']
+        gm = g_b[arm]
+        ordb = np.argsort(gm, axis=1, kind='stable')
+        g_sorted = np.take_along_axis(gm, ordb, axis=1)
+        se_sorted = np.take_along_axis(se_b[arm], ordb, axis=1)
+        ok = ~bad.any(axis=1)
+        iqm = np.full(N_RESAMPLES, -np.inf)
+        iqm[ok] = g_sorted[ok] @ w
+        se_iqm = np.full(N_RESAMPLES, np.nan)
+        se_iqm[ok] = np.sqrt(np.sum((w * se_sorted[ok]) ** 2, axis=1))
+        with np.errstate(divide='ignore', invalid='ignore'):
+            tstar = (iqm - theta) / se_iqm
+        screened = ~ok | ~(se_iqm > 0) | ~np.isfinite(tstar)
+        tstar = np.where(screened, TSTAR_INF, tstar)
+        out[arm] = {'theta': theta, 'se_hat': summary[arm]['se_iqm_gap_closed'], 'tstar': tstar,
+                    'poi': poi[arm] / len(nodes), 'infinite_tstar': int(np.count_nonzero(screened))}
+    nonpositive = {name: int(np.count_nonzero(bad[:, col[name]])) for name in eligible}
+    return out, nonpositive
 
 
-def _lower(boot, level):
-    return float(np.quantile(boot, 1.0 - level, method=QUANTILE_METHOD))
+def _upper_quantile(t, level):
+    """numpy's linear quantile of t* at ``level`` (screened resamples hold ``TSTAR_INF``)."""
+    return float(np.quantile(t, level, method=QUANTILE_METHOD))
 
 
-def _passes(boot_arm, level):
-    """The PLAN's pass test for one arm at one level (both bounds, strict)."""
-    iqm, poi = boot_arm
-    return _lower(iqm, level) > 0.0 and _lower(poi, level) > POI_NULL
+def _lower_poi(poi, level):
+    return float(np.quantile(poi, 1.0 - level, method=QUANTILE_METHOD))
+
+
+def _lower_iqm(b, level):
+    """Studentized lower bound IQM_hat - q_L(t*) se_hat; IQM_hat itself when se_hat = 0 (as in the simulation)."""
+    if not b['se_hat'] > 0:
+        return b['theta']
+    return b['theta'] - _upper_quantile(b['tstar'], level) * b['se_hat']
+
+
+def _passes(b, level):
+    """The pass test for one arm at one level (both bounds, strict)."""
+    return _lower_iqm(b, level) > 0.0 and _lower_poi(b['poi'], level) > POI_NULL
+
+
+def _tail_iqm(b):
+    """Share of resamples at which the studentized bound would reach 0 (ranking only)."""
+    if not b['se_hat'] > 0:
+        return 0.0 if b['theta'] > 0 else 1.0
+    return float(np.mean(b['tstar'] >= b['theta'] / b['se_hat']))
 
 
 def _holm_decision(boot):
-    """Holm step-down over the two arms with the PLAN's lower-bound criterion.
+    """Holm step-down over the two arms with the studentized IQM bound and the PoI bound.
 
-    ``boot`` maps each arm to (bootstrap IQM array, bootstrap PoI array). The
-    ranking key starts with the first-level pass test itself, so an arm that
-    passes at 97.5% always ranks first: the verdict is "some arm passes at
-    97.5%" and cannot depend on arm labels. The composite tail share and the
-    fixed order only order arms that agree on that test.
+    ``boot`` maps each arm to its bootstrap summary (theta, se_hat, t*, PoI*). The ranking key starts with the
+    first-level pass test itself, so an arm that passes at 97.5% always ranks first: the verdict is "some arm passes
+    at 97.5%" and cannot depend on arm labels. The composite tail share and the fixed order only order arms that
+    agree on that test.
     """
     ranking = []
     for arm in ARMS:
-        iqm, poi = boot[arm]
-        p_iqm = float(np.mean(iqm <= 0.0)); p_poi = float(np.mean(poi <= POI_NULL))
-        first_level_pass = _passes(boot[arm], LEVELS[0])
+        b = boot[arm]
+        p_iqm = _tail_iqm(b); p_poi = float(np.mean(b['poi'] <= POI_NULL))
+        first_level_pass = _passes(b, LEVELS[0])
         ranking.append((not first_level_pass, max(p_iqm, p_poi), ARMS.index(arm), arm, p_iqm, p_poi))
     ranking.sort()
     arms = {}
     still_testing = True
     for rank, (_, p_comp, _, arm, p_iqm, p_poi) in enumerate(ranking):
         level = LEVELS[rank]
-        iqm, poi = boot[arm]
-        lb_iqm, lb_poi = _lower(iqm, level), _lower(poi, level)
+        b = boot[arm]
+        lb_iqm, lb_poi = _lower_iqm(b, level), _lower_poi(b['poi'], level)
         if still_testing:
             passed = lb_iqm > 0.0 and lb_poi > POI_NULL
             tested = True
@@ -432,6 +539,8 @@ def _holm_decision(boot):
             passed, tested = False, False
         arms[arm] = {'rank': rank + 1, 'level': level, 'tested': tested, 'passed': passed,
                      'lower_iqm_gap_closed': lb_iqm, 'lower_probability_of_improvement': lb_poi,
+                     'tstar_quantile': (_upper_quantile(b['tstar'], level) if b['se_hat'] > 0 else None),
+                     'resamples_with_infinite_tstar': b['infinite_tstar'],
                      'ranking_p_iqm': p_iqm, 'ranking_p_poi': p_poi, 'ranking_p_composite': p_comp}
         still_testing = still_testing and passed
     first = ranking[0][3]
@@ -457,19 +566,29 @@ def _evaluate(gate_input):
     _require_pins()
     nodes = _validate(gate_input)
     eligible, table, summary = _point(nodes)
-    boot = _bootstrap(nodes, eligible)
+    boot, nonpositive = _bootstrap(nodes, eligible, summary)
     arms, first, passed = _holm_decision(boot)
     for arm in ARMS:
         arms[arm].update(summary[arm])
         arms[arm]['meets_practical_size'] = summary[arm]['iqm_gap_closed'] >= PRACTICAL_SIZE
+    for name in eligible:
+        table[name]['resamples_nonpositive_denominator'] = nonpositive[name]
     return {
         'schema': OUTPUT_SCHEMA,
+        'gate_version': GATE_VERSION,
         'verdict': 'PASS' if passed else 'FAIL',
         'first_ranked_arm': first,
         'arms': arms,
         'nodes': table,
         'excluded_from_iqm': [k for k in nodes if k not in eligible],
         'ineligible_nodes': {k: list(nodes[k]['ineligible_reasons']) for k in nodes if k not in eligible},
+        'below_test_floor': [k for k in nodes if 'test_floor' in nodes[k]['ineligible_reasons']],
+        'off_design_size': {k: {'n_total': nodes[k]['n_total'], 'design': DESIGN_INSTANCES[nodes[k]['tier']]}
+                            for k in nodes if nodes[k]['n_total'] != DESIGN_INSTANCES[nodes[k]['tier']]},
+        'off_split': {k: {'counts': [nodes[k]['n_train'], nodes[k]['n_dev'], nodes[k]['n_test']],
+                          'p3': list(DESIGN_SPLIT[nodes[k]['tier']])}
+                      for k in nodes if nodes[k]['n_total'] == DESIGN_INSTANCES[nodes[k]['tier']]
+                      and (nodes[k]['n_train'], nodes[k]['n_dev'], nodes[k]['n_test']) != DESIGN_SPLIT[nodes[k]['tier']]},
         't1_suites_without_labelled_node': [s for s in SUITES if not any(
             n['tier'] == 'T1' and n['suite'] == s for n in nodes.values())],
         'node_counts': {'total': len(nodes),
@@ -477,10 +596,14 @@ def _evaluate(gate_input):
                         't1_by_suite': {s: sum(n['tier'] == 'T1' and n['suite'] == s
                                                for n in nodes.values()) for s in SUITES}},
         'tier_descriptive': _tier_descriptive(nodes, table, eligible),
-        'protocol': {'resamples': N_RESAMPLES, 'seed': SEED, 'rng': RNG,
+        'protocol': {'gate_version': GATE_VERSION, 'interval': INTERVAL,
+                     'resamples': N_RESAMPLES, 'seed': SEED, 'rng': RNG,
                      'numpy_version': np.__version__, 'numpy_pin': NUMPY_VERSION,
-                     'environment': ENVIRONMENT, 'dev_z_min': DEV_Z_MIN,
-                     'quantile_method': QUANTILE_METHOD,
+                     'environment': ENVIRONMENT, 'elig_z_min': ELIG_Z_MIN,
+                     'test_floor': dict(TEST_FLOOR), 'split': dict(SPLIT),
+                     'design_instances': dict(DESIGN_INSTANCES),
+                     'design_split': {t: list(v) for t, v in DESIGN_SPLIT.items()},
+                     'quantile_method': QUANTILE_METHOD, 'tstar_inf': TSTAR_INF,
                      't0_nodes': list(T0_NODES), 'suites': list(SUITES),
                      'family_alpha': FAMILY_ALPHA, 'levels': list(LEVELS),
                      'practical_size': PRACTICAL_SIZE, 'arms': list(ARMS),
