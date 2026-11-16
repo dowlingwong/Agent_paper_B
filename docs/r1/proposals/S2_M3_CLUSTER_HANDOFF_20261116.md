@@ -14,7 +14,8 @@ It is not an author decision and not an authorization.
 - every gating item in §0 is accepted;
 - the author has given the instruction to launch.
 
-The values below follow the S2-M1 redraft. Where the two differ, the authorization note wins.
+The values below follow the S2-M1 redraft (`mac-s2-m1-redraft-20261116` @ `11db0f65`, review record `e43faa29`).
+Where the two differ, the authorization note wins.
 
 ## 0. Inputs and gating items
 
@@ -25,7 +26,7 @@ The values below follow the S2-M1 redraft. Where the two differ, the authorizati
 | S2-C2 wrapper | accepted for ENGINEERING at `70e3a116` / `235c9e5f`. The six S2-C4 hotfixes (`f4a85da1` … `c8d07994`) and the disclosure change `acae9fde` are **not yet reviewed** | everything |
 | S2-C4 timing pilot | ran (16 Nov 03:46): 16 chunks, about 8,289 s each, about 36.84 GPU-h, at 16,384. **Provisional, results not yet reviewed:** in both job records every visible in-campaign worker run (`python3 train.py`) ended in ≤ 0.1 s with `success=False metrics={}` | layout, estimate |
 | **Fix E, worker environment** | `<accepted fix unit>`. Put the harness env on `PATH` and restore sweep 1's `package_environment` / `evidence_node_commands` checks; a failing or mismatched worker environment is a STOP | wrapper |
-| **Fix F, label-dependent record text** | `<accepted fix unit>`. Job records and manifests must stop writing `output_use: ENGINEERING…`, `audit: none (ENGINEERING run …)` and `ctx: 16384` regardless of the label and settings | wrapper |
+| **Fix F, label-dependent record text** | `<accepted fix unit>`. Job records and manifests must stop writing `output_use: ENGINEERING…`, `audit: none (ENGINEERING run …)` and `ctx: 16384` regardless of the label and settings (overlaps S2-M1 precondition 2e). Fix C or F should also write into the record the counts that the redacted projection needs: worker runs ok/failed, LLM calls, parse failures. The projection should be a field allowlist, so no sealed ledger has to be read | wrapper |
 | **Fix G, requests** | `<accepted fix unit>`. `render_jdl.py` writes the note's requests, not the fixed 128000 / 50000000 (S2-M1 precondition 2e) | JDL |
 | Re-measurement at the sweep-2 settings (S2-C3 or a re-pilot): 32,768, `-np 1`, a full 18-instance chunk, worker runs succeeding | `<report, review>` | layout, requests, estimate |
 | **Fix A, server at the exam's settings** (R1-SWEEP2-SETTINGS (1)) | `<accepted fix unit>` | spec `server` |
@@ -81,7 +82,7 @@ The schema is `s2_c2_job/v1` (`sweep2/spec.example.json`). Fields that the fix u
                           "registry_sha256": "a04a0346ca887c27998b5f46f4e3d67fa05126ff3af9e0c20fe78d030c1fdc61",
                           "revision": "619aca7589c72be65dd968de8602ad23d68b5c14",
                           "file": "google_gemma-4-31B-it-Q4_K_M.gguf", "source_label": "bartowski imatrix Q4_K_M"}},
- "server": {"binary": "/opt/r1/llama/bin/llama-server", "ctx": 32768, "n_gpu_layers": 999, "port": <18110 + chunk number>,
+ "server": {"binary": "/opt/r1/llama/bin/llama-server", "ctx": 32768, "n_gpu_layers": 999, "port": "<18110 + chunk number, i.e. 18111…18126>",
             "expected_build": "0.7.0-dev (build 11669, commit 620d2225c)",
             "extra_args": ["-np", "1", "--jinja", "--cache-type-k", "q8_0", "--cache-type-v", "q8_0",
                            "--chat-template-kwargs", "{\"enable_thinking\":false}"]},
@@ -193,7 +194,8 @@ runs failed, so the timing probably contains little or no training. It must be r
    - GPU L40S, the pinned CPU model, image identity;
    - GGUF sha256 verified, `server.build` as expected, offload 61/61;
    - liveness and the collection gates passed (fix C);
-   - worker runs: counts succeeded and failed (fix E). Any failing worker environment is a STOP;
+   - worker runs: counts succeeded and failed (fix E). A worker-environment failure, zero successful runs, or a failure
+     share above the pre-declared bound is a STOP (§8);
    - label EVIDENCE, `NumJobStarts == 1`, rc 0;
    - `DiskUsage` and `MemoryUsage` within the requests.
 3. **Projection check.** Recompute from the canaries' measured wall:
@@ -221,6 +223,11 @@ here.
   - so is any automatic restart (`NumJobStarts > 1`, for example after eviction under `ON_EXIT`);
   - preserve everything, report it, and the author decides;
   - no `condor_release`, `condor_rm`, resubmission or edit of a job without the author's instruction.
+- **The authorization note's line does not create a resume path.** The S2-M1 redraft says the run is "resumable only
+  by the collector's A.5 resume and the wrapper's resume pin check". That line authorizes nothing beyond what exists;
+  with the current wrapper it means no resume. The author may want to amend it when committing the note.
+- **During a STOP,** jobs already running continue and are sealed when they finish. No new job is submitted until the
+  author decides.
 - If the author wants resumes, a reviewed fix H must come first: staging `out.tar` / `work.tar` / `job_record.json` back
   in; not truncating an existing record; and attempts in the seal path.
 
@@ -263,7 +270,9 @@ here.
 - Label string not equal to the note's.
 - Any B.2 audit or use of audit seeds 7001–7010: this note authorizes collection only (R1-SWEEP2-SETTINGS (2)), and the
   collector runs with `--audit-seeds 0`.
-- Failing or mismatched worker runs or worker environment (fix E).
+- A worker-environment failure or mismatch (fix E), zero successful worker runs in a chunk, or a worker-run failure
+  share above a pre-declared bound. Some trials fail legitimately (`invalid_config`; D28 liveness allows an invalid
+  rate below 30 %), so the bound is set in fix C or E, before launch.
 - `NumJobStarts > 1`; a job not finishing rc 0 with a complete record; any `condor_release`, `condor_rm` or
   resubmission without the author's instruction.
 - A request exceeded (disk or memory), or a walltime hit.
@@ -291,7 +300,7 @@ statement: no label, metric or table was read; sealed outputs untouched since se
 ## 10. What to send back
 
 - the report;
-- the sweep index;
+- the operational index;
 - the redacted projection of every job record (§7), and every seal receipt. Not the full records or logs, unlike
   `s2c4_run_20261116/`;
 - the rendered JDLs and dry-run outputs;
