@@ -84,10 +84,11 @@ class Policy(Protocol):
         """(action, probability of that action, selected hash for final rows)."""
 
 
-def decision_uniform(world_code: int, instance: int, step: int) -> float:
-    """The uniform a stochastic policy uses at a decision: SeedSequence([EPS_KEY, world code, i, step]); it is
-    recomputed from a record (eps_seed, node, instance_seed - INSTANCE_BASE, step_index) by ``behaviour_for``."""
-    ss = np.random.SeedSequence([EPS_KEY, int(world_code), int(instance), int(step)])
+def decision_uniform(world_code: int, instance: int, step: int, key: int = EPS_KEY) -> float:
+    """The uniform a stochastic policy uses at a decision: SeedSequence([key, world code, i, step]) with the logged
+    ``eps_seed`` as key; ``behaviour_for`` recomputes it from a record (eps_seed, node, instance_seed -
+    INSTANCE_BASE, step_index)."""
+    ss = np.random.SeedSequence([int(key), int(world_code), int(instance), int(step)])
     return float(np.random.default_rng(ss).random())
 
 
@@ -116,8 +117,10 @@ def behaviour_for(policy: Policy) -> Callable[[S.DecisionView], tuple[str, float
     def replay(view: S.DecisionView) -> tuple[str, float]:
         ob = obs_from_state(view.identity.epoch, view.state, view.env)
         if getattr(policy, "stochastic", False):
+            if view.eps_seed is None:                    # a stochastic row must name its randomisation key
+                return "<missing eps_seed>", float("nan")
             ob["u"] = decision_uniform(_code_of_node(view.identity.node), view.instance_seed - INSTANCE_BASE,
-                                       view.identity.step_index)
+                                       view.identity.step_index, view.eps_seed)
         a, p, _ = policy.act(ob)
         return a, p
     return replay
@@ -258,8 +261,8 @@ def run_campaign(world: ESynWorld, policy: Policy, instance: int, *, record: boo
                 identity=S.Identity(node=node, suite="E-SYN", tier="E-SYN", instance_id=f"{node}:{inst_seed}",
                                     campaign_id=camp_id, step_index=step, epoch=epoch, branch_path=[],
                                     root_id=camp_id, fork_id=None),
-                env=env, policy=S.PolicyInfo(policy=policy.name, policy_sha=None, action_prob=prob,
-                                             eps_seed=EPS_KEY if stochastic else None),
+                env=env, policy=S.PolicyInfo(policy=policy.name, policy_sha=getattr(policy, "sha", None),
+                                             action_prob=prob, eps_seed=EPS_KEY if stochastic else None),
                 seeds=seeds, state=st, action=S.Action(action=action, forced=False, rule=rule, selected=selected),
                 outcome=outcome, provenance=prov))
         step += 1

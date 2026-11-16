@@ -509,9 +509,35 @@
   "paper_c_claims": [
     {
       "block": "paperc_rng_keys",
+      "index_ranges": {
+        "p3_decomposition": [
+          3000000,
+          4000000
+        ],
+        "p3_evaluation": [
+          2000000,
+          3000000
+        ],
+        "p3_selection": [
+          1000000,
+          2000000
+        ],
+        "p4_dev": [
+          4000000,
+          5000000
+        ],
+        "p4_test": [
+          5000000,
+          6000000
+        ],
+        "recorded": [
+          0,
+          10000
+        ]
+      },
       "name": "esyn_rng_root",
       "phase": "P3",
-      "use": "E-SYN campaign generator: SeedSequence([60001, world code, i]). Recorded campaigns i = 0 .. 9999 (instance_seed 50000 + i; audit seeds 10,000,000 + n_audit i are nominal labels). Oracle blocks i = 1,000,000 + j (selection), 2,000,000 + j (evaluation), 3,000,000 + j (decomposition): numerically inside Paper B's tracks_oracle_* ranges, but they enter only this Paper C root key, so their streams are disjoint from Track S's.",
+      "use": "E-SYN campaign generator: SeedSequence([60001, world code, i]). Recorded campaigns: instance_seed 50000 + i (audit seeds 10,000,000 + n_audit i are nominal labels). The index ranges below are numerically inside Paper B's tracks_oracle_* ranges, but they enter only this Paper C root key, so their streams are disjoint from Track S's.",
       "value": 60001
     },
     {
@@ -520,13 +546,6 @@
       "phase": "P4",
       "use": "per-decision uniforms of stochastic E-SYN policies: SeedSequence([60002, world code, i, step]); logged as eps_seed so that check_campaign replays the policy.",
       "value": 60002
-    },
-    {
-      "block": "paperc_rng_keys",
-      "name": "esyn_ladder_blocks",
-      "phase": "P4",
-      "use": "P4 ladder: tuning (dev) campaigns i = 4,000,000 + j and test campaigns i = 5,000,000 + j under the E-SYN root key 60001; disjoint from P3's oracle blocks and from each other.",
-      "value": 60001
     }
   ],
   "paper_c_roles": {

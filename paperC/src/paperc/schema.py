@@ -494,6 +494,8 @@ def _row_rules(t: Transition) -> list[tuple[str, str]]:
         add("propensity", "policy.eps: must lie in [0, 1)")
     if pol.eps > 0 and pol.eps_seed is None:
         add("propensity", "policy.eps_seed: required when eps > 0")
+    if pol.action_prob is not None and 0.0 < pol.action_prob < 1.0 and pol.eps_seed is None:
+        add("propensity", "policy.eps_seed: required on a randomised row (0 < action_prob < 1)")
 
     # no future values at decision time
     if ep == "E1":

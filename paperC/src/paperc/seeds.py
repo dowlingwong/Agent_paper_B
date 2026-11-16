@@ -94,17 +94,16 @@ PAPER_C_ROLES = {"instance": "paperc_instances", "worker": "paperc_instances", "
 # that draws from the same block takes a different key.
 PAPER_C_CLAIMS = (
     {"name": "esyn_rng_root", "block": "paperc_rng_keys", "value": 60_001, "phase": "P3",
-     "use": "E-SYN campaign generator: SeedSequence([60001, world code, i]). Recorded campaigns i = 0 .. 9999 "
-            "(instance_seed 50000 + i; audit seeds 10,000,000 + n_audit i are nominal labels). Oracle blocks "
-            "i = 1,000,000 + j (selection), 2,000,000 + j (evaluation), 3,000,000 + j (decomposition): numerically "
-            "inside Paper B's tracks_oracle_* ranges, but they enter only this Paper C root key, so their streams "
-            "are disjoint from Track S's."},
+     "use": "E-SYN campaign generator: SeedSequence([60001, world code, i]). Recorded campaigns: instance_seed "
+            "50000 + i (audit seeds 10,000,000 + n_audit i are nominal labels). The index ranges below are "
+            "numerically inside Paper B's tracks_oracle_* ranges, but they enter only this Paper C root key, so "
+            "their streams are disjoint from Track S's.",
+     "index_ranges": {"recorded": [0, 10_000], "p3_selection": [1_000_000, 2_000_000],
+                      "p3_evaluation": [2_000_000, 3_000_000], "p3_decomposition": [3_000_000, 4_000_000],
+                      "p4_dev": [4_000_000, 5_000_000], "p4_test": [5_000_000, 6_000_000]}},
     {"name": "esyn_decision_uniforms", "block": "paperc_rng_keys", "value": 60_002, "phase": "P4",
      "use": "per-decision uniforms of stochastic E-SYN policies: SeedSequence([60002, world code, i, step]); logged as "
             "eps_seed so that check_campaign replays the policy."},
-    {"name": "esyn_ladder_blocks", "block": "paperc_rng_keys", "value": 60_001, "phase": "P4",
-     "use": "P4 ladder: tuning (dev) campaigns i = 4,000,000 + j and test campaigns i = 5,000,000 + j under the "
-            "E-SYN root key 60001; disjoint from P3's oracle blocks and from each other."},
 )
 
 

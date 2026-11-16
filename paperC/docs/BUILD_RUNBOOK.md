@@ -206,6 +206,7 @@ Read-only on existing data; CPU only; outputs only under `paperC/`.
 
 1. `paperc/policies.py`:
    - a `Policy` protocol: `act(state, rng) -> (action, prob)`, plus `name` and `version`;
+     - *amendment of 16 Nov 2026 (P4 review): the implemented signature is `act(obs) -> (action, prob, selected)`, where `obs` is the decision-time view of the state and `selected` names the configuration on `final` rows; instead of an `rng` object, a stochastic policy reads a uniform keyed by the row's logged `eps_seed`, so that `check_campaign` replays it from the record;*
    - N0 (execute-all);
    - N1 (static thresholds (g, h), tuned by grid on dev seeds with a declared tuning budget);
    - N2 (myopic one-step rule with g tuned on dev);

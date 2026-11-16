@@ -202,6 +202,16 @@ beats the static rule.
 - **Not yet in E-SYN.** Track S P0 and P2− (Track S found no gain ≥ 1 δ_Y there). Pairs of channels. Fork designs
   (P6).
 
+## 6a. Note added after P4 (16 Nov 2026)
+
+P4's ladder (`reports/LADDER_TABLE_20261116.md`) found policies that reach or exceed two of these oracle members.
+Track S's dynamic family with Track S's centring (N3):
+- in keep_feedback, beats the member by 0.00032 ± 0.00022 on P4's test block;
+- in information, beat the member by 0.0024 ± 0.0006 in P4's review, when tuned from N1's point.
+
+In both worlds the certified gains above are weak lower bounds. Adding a centred dynamic family to `families.py` is
+an open item. The table itself is unchanged.
+
 ## 7. Next
 
 - P4: the policy interface and the non-RL ladder on these worlds, with B18's sequential-testing comparators. The
