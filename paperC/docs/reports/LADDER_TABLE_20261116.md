@@ -189,7 +189,7 @@ are in the JSON.
    - N2b, single-step in target and form, does not: +0.00009 ± 0.00005. Its round-2 version, with a budget feature in
      the E1 head and a cut tuned on terminal value, reached +0.0020. The review showed that this came from the dev
      draw: refitted on six dev blocks, the feature's sign flipped, and the gain appeared in only three of them.
-   - N2 and the margin tie N1.
+   - N2 (+0.00008 ± 0.00005) and the margin (+0.00005 ± 0.00002) gain negligibly over N1; their intervals exclude 0.
 3. **Interaction.**
    - No rung gains over N1: N2b −0.00003 ± 0.00006, N3 +0.00004 ± 0.00007.
    - The shrinkage-refit reference gains +0.00044 ± 0.00008 (λ = 1.5), about 40 % of the privileged oracle's +0.00110.
@@ -213,7 +213,7 @@ are in the JSON.
    - N3 gains +0.00010 ± 0.00007.
 6. **Winner's-curse compensation in the config worlds.** N1 lowers its keep threshold (h ≈ −0.001). Rows fixed at the
    Bayes threshold (N2, N4) lose about 0.0023 against it. N2b's learned E2 head finds only part of the lowered
-   threshold, and loses 0.0009–0.0011.
+   threshold, and loses 0.0008–0.0011.
 7. **Information.**
    - N3 with Track S's centring gains +0.00463 ± 0.00091 (round 1, uncentred: +0.00199). Its gap to the oracle
      schedule is +0.00126 ± 0.00069.
@@ -229,10 +229,10 @@ are in the JSON.
    - The Bayes-threshold rows lose about 0.011, because this world rewards keeping liberally (N1: h = −0.0046).
 9. **Belief refit** (the better of `ShrinkRefit` and `RawKeep` per world). It helps in three worlds:
    - interaction +0.00044 (partial refit);
-   - shared_error +0.00058 and eval_allocation +0.00052 (raw keep, where the shared incumbent error makes m̂'s
-     shrinkage too strong).
+   - shared_error +0.00058 and eval_allocation +0.00052 (raw keep; consistent with m̂'s shrinkage being too strong
+     under the shared incumbent error, and equally with the winner's-curse bias of the incumbent record).
 
-   It gives nothing elsewhere: the refit rows tie N1 or lose. These gains belong to the belief, not to control.
+   Elsewhere the refit rows gain at most 0.00003 (budget) or lose. These gains belong to the belief, not to control.
 10. **Floors.**
     - N0 is below N1 in every world.
     - Random execution, matched to N1's realised budget and keeping with N1's threshold:

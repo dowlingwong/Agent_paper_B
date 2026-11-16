@@ -9,3 +9,7 @@ ENGINEERING_ONLY. Review: `BUILD_P4_REVIEW_20261116.md`, Round 2 (NOT ACCEPTED, 
 | R2-3 | the one-se move rule lets noise moves through | stated in `policies.py` and the report (null: N1 and N3 move off the Bayes rule; N3 −0.00007 ± 0.00004 on test); the rule is kept; a stricter rule or split-dev confirmation is noted as an option for SPT-5 |
 | R2-4 | "no rung reads the raw increment" too strong; response error | wording: no rung's **keep decision** reads Δ̂; SPRT and racing read the mean increment at the verify epoch as their test statistic; the test is renamed and documented accordingly; correction to response R1: N2b's cut is not charged the coarse grid (only N1, N2, N3, margin, B18, RawKeep and ShrinkRefit are) |
 | R2-5 | §3.10 random_N1 "worst" | reworded with the rows that are worse |
+
+## After round 3 (ACCEPT)
+
+R3-1 (wording): the budget-world "ties" are now stated as negligible gains whose intervals exclude 0; §3.6 reads 0.0008–0.0011; §3.9 says the raw-keep gain is consistent with over-strong shrinkage under the shared incumbent error and equally with the winner's-curse bias of the incumbent record.

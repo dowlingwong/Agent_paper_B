@@ -467,3 +467,62 @@ All fourteen round-1 findings are resolved; four leave MINOR residuals (R2-2 to 
 One new MAJOR finding remains, R2-1. N2b's +0.00200 in the budget world comes from tuning a cut on terminal value over a budget feature whose sign is noise. It appears in 3 of 6 dev draws and disappears without the budget feature. N2b as built therefore does not serve as the plan's single-step control, and §3.2 misreads the result. The fix is one design choice in `fit_n2b` (or the reclassification plus dev-redraw spread), a rebuild and a rewrite of §3.2.
 
 Verdict: NOT ACCEPTED
+
+---
+
+## Round 3 (narrow)
+
+- **Reviewer:** the same independent reviewer (Claude subagent, AI-assisted).
+- **Commit:** `e4b69ef` on branch `paperc-build-20261115`. Diffs read against `c31384f`.
+- **Date:** 16 Nov 2026
+- **Label:** ENGINEERING_ONLY
+
+**Scope:** R2-1 to R2-5, the changed numbers, and any new over-claims. **Read:** `BUILD_P4_RESPONSE_R2_20261116.md`, the correction in `BUILD_P4_RESPONSE_R1_20261116.md`, the diffs of `policies.py`, `runner.py` and `test_ladder_p4.py`, the report diff, and `BUILD_STATUS.md`.
+
+### What I ran (round 3)
+
+Scratch copy: `/tmp/p4rev/repo3`. New script: `/tmp/p4rev/scripts/n2b_budget_r3.py`.
+
+1. **Test suite:** 175 passed in 74 s.
+2. **Ladder rebuild** in the copy (16 min 9 s): identical to the committed `ladder_table_v1.json` once `seconds` is ignored.
+3. **Oracle table:** no E-SYN source changed between `c31384f` and `e4b69ef`. The oracle table and the ladder's `oracle_table_sha256` are unchanged, and the test checks the latter. Every world's stamp equals the top-level fingerprint.
+4. **Report against the JSON:**
+   - all §2 tables: 664 cells, 0 mismatches;
+   - every JSON row appears in the report;
+   - the changed §3 numbers were checked by hand.
+5. **N2b on dev redraws, budget world.** I refitted the committed belief-only N2b on the five alternative dev blocks of round 2 (4,001,000 … 4,005,000) and evaluated each fit on the test block.
+
+### Status of the round-2 findings
+
+| # | Round 2 | Status |
+|---|---|---|
+| R2-1 | N2b's budget gain is an artefact | **Resolved.**<ul><li>N2b's heads read belief outputs only: E1 [1, V\*/s, τ/s], E2 [1, m̂/s]. With no budget-state feature, a cut tuned on terminal value can only set a static level. That is the same form as N2's tuned price, so N2b is single-step in target and form.</li><li>Budget world: +0.00009 ± 0.00005, at 4.47 runs (N1: 4.47).</li><li>On the five other dev blocks, the refit lands on one of two static outcomes: +0.00009 (4.45 runs) or −0.00030 (7.98 runs; the cut admits the middle size class at every budget). None reaches a budget rule.</li><li>Report §3.2 is rewritten correctly, citing the round-2 redraw result.</li></ul> |
+| R2-2 | RawKeep is one corner | **Resolved.**<ul><li>The `ShrinkRefit` reference row (keep on a + min(λk, 1)(Δ̂ − a), λ tuned from 1) is charged like the other rows. `test_shrink_refit_corners` checks that λ = 1 reproduces the keep on m̂ and that a large λ reproduces RawKeep.</li><li>Interaction: λ = 1.5, +0.00044 ± 0.00008, consistent with my round-2 grid (+0.00053 at h = −0.00025).</li><li>Shared_error: the search stopped at λ = 1.14 (+0.00006). Reaching the raw corner needs λ and h to move together (h ≈ −0.003), which a coordinate search under the one-se rule does not do. The report states this, and §3.9 uses the better of the two refit rows per world.</li></ul> |
+| R2-3 | One-se rule | **Resolved** as disclosure: the caveat is in the `policies.py` docstring, report §1 and §3.1. The rule itself is kept, with stricter alternatives noted for SPT-5 |
+| R2-4 | Wording and test | **Resolved.**<ul><li>"No rung's keep decision reads Δ̂; SPRT and racing read the mean at the verify epoch."</li><li>The test is renamed, and its docstring states the verify-epoch exception. It still perturbs Δ̂ at E2 only, which matches the claim as now worded.</li><li>The response-R1 correction about N2b's charge is in place.</li></ul> |
+| R2-5 | §3.10 | **Resolved:** "worst in information and budget; in keep feedback N0, N4 and N2 are worse" matches the JSON |
+
+### New findings
+
+#### R3-1. MINOR — Wording: "tie" for intervals that exclude zero, one rounding, and one mechanism stated as fact
+
+**Location:** report §3.2, §3.6 and §3.9.
+
+- **"Tie" in the budget world.** §3.2 says "N2 and the margin tie N1", and §3.9 says the refit rows "tie N1 or lose" elsewhere. In the budget world, N2 gains +0.00008 ± 0.00005, the margin +0.00005 ± 0.00002 and ShrinkRefit +0.00003 ± 0.00001, and all three intervals exclude zero. These gains are negligible, at most 4 % of the DP gain, but they are not ties. Write "within 0.0001 of N1 (negligible)".
+- **Rounding.** §3.6 says "loses 0.0009–0.0011". N2b's shared_error loss is 0.00085, so write 0.0008–0.0011.
+- **Mechanism.** §3.9 attributes the raw-keep gain in the config worlds to the shared incumbent error making "m̂'s shrinkage too strong". The best refit there is the raw corner with a low threshold (h ≈ −0.003). That is equally consistent with a constant downward bias of Δ̂ from the selected (winner's-curse) incumbent record. Write "consistent with", or name both.
+
+None of this changes a number or a conclusion.
+
+### Summary (round 3)
+
+All five round-2 findings are resolved:
+- the table reproduces exactly from the committed code;
+- all 175 tests pass;
+- the report matches the JSON;
+- N2b is now single-step in target and form, and its budget-world artefact is gone on every dev redraw tried;
+- the belief-refit effect is measured by a tuned row that nests both corners, with its search limitation stated.
+
+The only new finding, R3-1, is MINOR wording. No BLOCKER or MAJOR finding remains.
+
+Verdict: ACCEPT
