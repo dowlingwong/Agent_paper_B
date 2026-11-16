@@ -1,0 +1,12 @@
+759618 0 3 undefined 1794609657 /work/dwong/r2_batch/tiny/./exe.sh
+--- foreign r2_batch clusters observed in condor_history (14 Nov 02:33Z) ---
+759626 0 4 1 /work/dwong/r2_batch/variants/./exe.sh
+759627 0 3 1 /work/dwong/r2_batch/variants/./exe.sh
+759628 0 3 undefined /work/dwong/r2_batch/variants/./exe.sh
+759629 0 4 1 /work/dwong/r2_batch/variants/./exe.sh
+759630 0 4 1 /work/dwong/r2_batch/variants/./exe.sh
+759631 0 4 0 /work/dwong/r2_batch/variants/./diag.sh
+759633 0 4 3 /work/dwong/r2_batch/jobs/r2_batch_a100_wcte_regression/20261114T004243Z/job.sh
+759634 0 4 3 /work/dwong/r2_batch/jobs/r2_batch_a100_wcte_regression/20261114T005726Z/job.sh
+759635 0 4 3 /work/dwong/r2_batch/jobs/r2_batch_a100_wcte_regression/20261114T010824Z/job.sh
+759636 0 4 0 /work/dwong/r2_batch/jobs/r2_batch_a100_wcte_regression/20261114T013020Z/job.sh

@@ -1,0 +1,115 @@
+== B1 condor_q own ==
+
+
+-- Schedd: deepthought.etp.kit.edu : <129.13.101.137:9618?... @ 11/13/26 23:39:53
+OWNER BATCH_NAME      SUBMITTED   DONE   RUN    IDLE   HOLD  TOTAL JOB_IDS
+
+Total for query: 0 jobs; 0 completed, 0 removed, 0 idle, 0 running, 0 held, 0 suspended 
+Total for all users: 1 jobs; 0 completed, 0 removed, 0 idle, 0 running, 1 held, 0 suspended
+
+--history--
+== B2 TOpAS device names ==
+slot1@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 8 Unclaimed
+slot1_1@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 1 Claimed
+slot2@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 8 Unclaimed
+slot2_1@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 1 Claimed
+slot3@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 8 Unclaimed
+slot3_1@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 1 Claimed
+slot4@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 8 Unclaimed
+slot4_1@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 1 Claimed
+slot5@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 8 Unclaimed
+slot5_1@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 1 Claimed
+slot6@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 8 Unclaimed
+slot6_12@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 1 Claimed
+slot7@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 8 Unclaimed
+slot7_12@c03-001-159.gridka.de Tesla V100S-PCIE-32GB 13.0 undefined 1 Claimed
+slot1@c03-001-167.gridka.de NVIDIA A100-PCIE-40GB 13.3 undefined 8 Unclaimed
+== B3 local GPU detail ==
+slot1@deepthought.etp.kit.edu NVIDIA GeForce GTX TITAN X 12.0 undefined 2 Unclaimed
+slot1@deepthought2.etp.kit.edu NVIDIA L40S 12.8 undefined 1 Unclaimed
+slot1@nemo2_gpu-9bd794a4ff@g3606.nemo.privat NVIDIA L40S 13.4 undefined 1 Unclaimed
+slot1@nemo2_gpu-f3b4e0915b@g3606.nemo.privat NVIDIA L40S 13.4 undefined 1 Unclaimed
+slot1@nemo2_gpu-8ce7a8e051@g3610.nemo.privat NVIDIA L40S 13.4 undefined 1 Unclaimed
+slot1@nemo2_gpu-71f4f514cf@g4401.nemo.privat NVIDIA H200 13.4 undefined 1 Drained
+== B4 paper clone git ==
+drwxr-xr-x 9 dwong cms 13 Oct 27 13:56 /ceph/dwong/agent_paper_B
+true
+* dt-sweep1-20261026
+  main
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/codex/b2-repair-20261031
+  remotes/origin/codex/coordinator-20261031
+  remotes/origin/codex/trackx-seed-20261031
+  remotes/origin/codex/trackx-stagea-cooperative-20261031
+  remotes/origin/docs/b1-stop-diagnosis-08nov
+  remotes/origin/docs/main-proposer-03nov
+  remotes/origin/docs/repo-tidy-20261104
+  remotes/origin/docs/runbooks-04nov
+  remotes/origin/docs/runbooks-09nov
+  remotes/origin/docs/runbooks-11nov
+  remotes/origin/docs/runbooks-14nov
+  remotes/origin/docs/seq-revision-04nov
+--w2ref--
+0b62fb03df5480faf558cddd8f715cbb5310416e
+--status--
+?? docs/r1/reviews/DT_D28_REPAIR_REVIEW_20261027.md
+origin	git@github.com:dowlingwong/Agent_paper_B.git (fetch)
+origin	git@github.com:dowlingwong/Agent_paper_B.git (push)
+== B5 sweep output dirs ==
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_18wc1y
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_LkGdPo
+/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_QCMMIn
+--root_trials--
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_gates_count_final_roots_o0/batch/c3_none_work/roots/C/root_trials.jsonl
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_gates_count_final_roots_o0/batch/c3_none_work/roots/B/root_trials.jsonl
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_gates_count_final_roots_o0/batch/c3_none_work/roots/A/root_trials.jsonl
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_gates_count_final_roots_o0/batch/c3_none_work/roots/E/root_trials.jsonl
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_gates_count_final_roots_o0/batch/c3_none_work/roots/D/root_trials.jsonl
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_parse_failure_rate_gate0/work/roots/digits_mlp__s0/root_trials.jsonl
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_parse_failure_rate_gate0/work/roots/digits_mlp__s1/root_trials.jsonl
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_events_are_preferred_and_0/ledgers/openml_ionosphere__s103/root_trials.jsonl
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_missing_memory_mode_means0/work/roots/lr_synthetic__s102/root_trials.jsonl
+/ceph/dwong/r1_prepare_20261025/tmp/pytest-of-dwong/pytest-0/test_compressed_committed_ledg0/run/root_trials.jsonl.gz
+== B6 /work/dwong ==
+total 4089818
+drwxr-x---  33 dwong cms          36 Nov 13 23:28 .
+drwxr-xr-x 234 root  root        239 Nov 13 15:48 ..
+drwxr-xr-x   3 dwong cms           3 Jun 23 15:34 DELight_mtr_offload
+-rw-r--r--   1 dwong cms  4190988839 Jun 23 15:36 DELight_mtr_pre_filter_repo_backup_2026-06-23.bundle
+-rw-r--r--   1 dwong cms          12 Oct 22 14:17 ceph_delete_done.txt
+-rwxr-xr-x   1 dwong cms        2323 Oct 22 14:07 ceph_maint_20261022.sh
+drwxr-xr-x   2 dwong cms           4 Oct 22 14:32 ceph_maintenance_20261022
+drwxr-xr-x   6 dwong cms           6 Oct 22 14:28 datasets
+drwxr-xr-x   4 dwong cms           4 Dec  3  2025 dev_software
+drwxr-xr-x  19 dwong cms          30 Oct 24 02:23 jepa_a10
+drwxr-xr-x  16 dwong cms          37 Oct 24 02:24 jepa_a10_work
+drwxr-xr-x   2 dwong cms          12 Nov  7 09:55 jepa_archive_20261107
+drwxr-xr-x   2 dwong cms           9 Nov  8 00:50 jepa_archive_20261108
+drwxr-xr-x  72 dwong cms          78 Nov  8 20:08 jepa_tmp_20261107
+drwxr-xr-x   6 dwong cms          12 Nov  8 22:37 kdd_evidence_search_20261108
+drwxr-xr-x   4 dwong cms          37 Nov 11 04:35 p2_20261109
+drwxr-xr-x   2 dwong cms           4 Nov 12 02:06 p2a_20261112
+drwxr-xr-x   4 dwong cms           7 Nov 12 04:31 p2a_equiv_ext
+drwxr-xr-x  14 dwong cms          25 Nov 12 00:59 p2a_review_0b2edde
+37G	/work/dwong
+== B7 quota tool ==
+/usr/bin/quota
+--
+== B8 submit tool ==
+/usr/bin/condor_submit
+/usr/bin/condor_q
+/usr/bin/condor_status
+/usr/bin/condor_history
+
+ERROR: No submit filename was provided, and '/dev/null'
+  was given as the output filename for -dump or -dry-run. Was this intended?
+== B9 agent processes ==
+    PID     ELAPSED CMD
+1100480 17-10:26:30 codex -c features.code_mode_host=true app-server --listen unix://
+1792163       06:12 /bin/sh
+1792249       06:09 /bin/sh
+1802542       00:14 sleep 180
+1802622       00:00 ps -u dwong -o pid,etime,cmd
+1802624       00:00 head -10
+== B10 done ==

@@ -1,0 +1,16 @@
+2026-11-14T02:32:02Z
+== M1 CloudSite ==
+slot1@deepthought.etp.kit.edu portal NVIDIA GeForce GTX TITAN X
+slot1@deepthought2.etp.kit.edu portal NVIDIA L40S
+slot1@nemo2_gpu-470d996a96@g3526.nemo.privat BwForCluster-Nemo2 NVIDIA L40S
+slot1@nemo2_gpu-e532c1d458@g3606.nemo.privat BwForCluster-Nemo2 NVIDIA L40S
+slot1@nemo2_gpu-f45219d4e2@g3606.nemo.privat BwForCluster-Nemo2 NVIDIA L40S
+slot1@nemo2_gpu-c703ab631c@g3607.nemo.privat BwForCluster-Nemo2 NVIDIA L40S
+slot1@nemo2_gpu-237e9e5f82@g3610.nemo.privat BwForCluster-Nemo2 NVIDIA L40S
+slot1@nemo2_gpu-823a759d35@g3612.nemo.privat BwForCluster-Nemo2 NVIDIA L40S
+slot1@nemo2_gpu-6f2cf5eece@g4401.nemo.privat BwForCluster-Nemo2 NVIDIA H200
+slot1@nemo2_gpu-66f1c36639@g4402.nemo.privat BwForCluster-Nemo2 NVIDIA H200
+slot1@nemo2_gpu-ca526ab09d@g4402.nemo.privat BwForCluster-Nemo2 NVIDIA H200
+== M2 via count ==
+326
+318

@@ -1,0 +1,9 @@
+== docker info transcript ==
+2026-11-14T02:30:10Z
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+
+---second---
+2026-11-14T02:30:10Z
+Client: Docker Engine - Community
+ Version:    26.1.3
+ Context:    default

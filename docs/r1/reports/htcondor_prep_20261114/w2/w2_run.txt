@@ -1,0 +1,8 @@
+date_utc=2026-11-14T02:32:14Z
+interpreter=/ceph/dwong/r1_prepare_20261025/venv/bin/python
+Python 3.13.15 (main, Aug 14 2026, 15:34:59) [Clang 22.1.3 ]
+checkout=0b62fb03df5480faf558cddd8f715cbb5310416e
+command=/ceph/dwong/r1_prepare_20261025/venv/bin/python -m r1.scripts.w2_execute_all_identity_check $(cat ../ledgers.txt) --runs-total 20
+exit_code=3
+ledgers=288
+status_line={ "status": "STOP_DIFFERENCE",

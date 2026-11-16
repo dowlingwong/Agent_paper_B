@@ -1,0 +1,31 @@
+probe=P1w3
+hostname=dwong-759662.0-ms04.etp.kit.edu
+date_utc=2026-11-14T04:50:50Z
+nproc=1
+cpu_model=Intel(R) Xeon(R) Silver 4214 CPU @ 2.20GHz
+== free -g ==
+               total        used        free      shared  buff/cache   available
+Mem:             187          24          64           0          99         162
+Swap:              7           0           7
+df[/work]=size=1.4T avail=1.1T use=28% on=/work
+df[/ceph]=size=1.4P avail=346T use=75% on=/ceph
+df[/ceph/srv]=size=1.4P avail=346T use=75% on=/ceph
+df[/cvmfs]=size=0 avail=0 use=- on=/cvmfs
+df[/scratch]=MISSING
+df[/tmp]=size=938G avail=654G use=28% on=/
+df[/var/lib/condor/execute/dir_530761]=size=938G avail=654G use=28% on=/var/lib/condor/execute/dir_530761
+== env NVIDIA|CUDA ==
+NVIDIA_VISIBLE_DEVICES=none
+CUDA_VISIBLE_DEVICES=10000
+== env _CONDOR (first 40) ==
+_CONDOR_CHIRP_CONFIG=/var/lib/condor/execute/dir_530761/.chirp.config
+_CONDOR_JOB_IWD=/var/lib/condor/execute/dir_530761
+_CONDOR_MACHINE_AD=/var/lib/condor/execute/dir_530761/.machine.ad
+_CONDOR_JOB_AD=/var/lib/condor/execute/dir_530761/.job.ad
+_CONDOR_BIN=/usr/bin
+_CONDOR_SCRATCH_DIR=/var/lib/condor/execute/dir_530761
+_CONDOR_JOB_PIDS=-1
+_CONDOR_AssignedGPUs=10000
+_CONDOR_SLOT=slot1_24
+== gpu ==
+nvidia-smi MISSING

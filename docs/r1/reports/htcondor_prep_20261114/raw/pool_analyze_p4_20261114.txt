@@ -1,0 +1,66 @@
+== P4 analyze -pool f03 (tutorial style) ==
+    [12]   : [10] && [11]
+    [13]   : TARGET.HasFileTransfer
+    [14]   : [12] && [13]
+
+Job 759622.000 defines the following attributes:
+
+    RequestCpus = 2
+    RequestDisk = 5000000 (kb)
+    RequestGPUs = 1
+    RequestMemory = 4000 (mb)
+
+The Requirements expression for job 759622.000 reduces to these conditions:
+
+        Slots
+Step   Matched  Condition
+----- --------- ---------
+[0]           0  TARGET.GPUs_DeviceName is "NVIDIA A100-PCIE-40GB"
+
+
+759622.000:  Run analysis summary ignoring user priority.  Of 57 slots on 48 machines,
+     57 slots are rejected by your job's requirements
+      0 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+
+WARNING:  Be advised:
+   No machines matched the job's constraints
+
+No successful match recorded.
+Last failed match: Sat Nov 14 00:34:42 2026 from c03-001-140.gridka.de
+Reason for last match failure: no match found
+== P4 analyze -pool c03 (TOpAS collector) ==
+
+         Slots      If    
+Step   Matched   Drained  Condition
+----- --------- --------- ---------
+[0]           3         3  TARGET.GPUs_DeviceName is "NVIDIA A100-PCIE-40GB"
+[9]          14         9  TARGET.Cpus >= RequestCpus
+[10]          1         3  [0] && [9]
+[11]          7         9  TARGET.GPUs >= RequestGPUs
+[12]          0         3  [10] && [11]
+
+
+759622.000:  Run analysis summary ignoring user priority.  Of 19 slots on 13 machines,
+     16 slots are rejected by your job's requirements
+      1 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+      2 slots would match if drained
+
+No successful match recorded.
+Last failed match: Sat Nov 14 00:34:42 2026 from c03-001-140.gridka.de
+Reason for last match failure: no match found
+== P5 already done: P4/P5 keep queued ==
+759620 0 1
+759622 0 1
+759624 0 1
+759625 0 1
+== slot counts ==
+docker_slots=315
+etp_slots=323
+docker_and_etp=315
+docker_unclaimed=5
+etp_unclaimed=13
+singularity_slots=1094
+nemo2_gpu_slots=5
+== done ==

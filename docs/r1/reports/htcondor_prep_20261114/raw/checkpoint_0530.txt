@@ -1,0 +1,10 @@
+checkpoint_cet=2026-11-14T05:30:16CET  utc=2026-11-14T04:30:16Z
+== own probes still queued at the 05:30 checkpoint (author: P4/P5 keep queued until 05:30) ==
+759620 0 1 1794610347 /work/dwong/htcondor_prep_20261114/probes/probe.sh
+759622 0 1 1794610352 /work/dwong/htcondor_prep_20261114/probes/probe.sh
+759624 0 1 1794610356 /work/dwong/htcondor_prep_20261114/probes/probe.sh
+759625 0 1 1794610358 /work/dwong/htcondor_prep_20261114/probes/probe.sh
+== full own count ==
+12
+== gpu register (0 GPU-h still) ==
+== done ==
