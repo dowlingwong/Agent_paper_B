@@ -1,0 +1,1004 @@
+#!/usr/bin/env python3
+"""S2-C3b — (g)4 D28 liveness of the pick on NEMO2 L40S + prompt-length re-measurement.
+
+ENGINEERING_ONLY. Authority: PLAN `R1-SWEEP2-SETTINGS` (4) on `author-decisions-20261116` @ `4da73306`
+("pick on NEMO2 L40S, D28 liveness on the eight nodes, re-measure prompt lengths with the pick's tokenizer;
+the sweep-2 wrapper restores `min_live_nodes 8`; no exemption"), `R1-SWEEP-HOST-HTC`, and
+`R1-MAIN-PROPOSER` (g)4. Run plan: `docs/runbooks-16nov` @ `b3289232` §3 S2-C3b, context 32,768 (R1-SWEEP2-SETTINGS (1)).
+
+One job == one owned llama-server at the exam setting (ctx 32,768, `-ngl 999`, `-np 1`, `--jinja`,
+`{"enable_thinking":false}`, q8_0 K/V, `cache_prompt` false) that (1) runs the sweep-1 D28 liveness protocol through
+`python -m r1.liveness` on all eight sweep-1 nodes (2 instances, W = 10, memory `append_only_summary`) and requires
+all eight nodes to pass (`min_live_nodes 8`; a shortfall STOPs with the evidence persisted), then (2) re-measures the
+sweep-2 manager prompt lengths with the **pick's tokenizer** through the server's `/apply-template` + `/tokenize`
+endpoints and compares them with the sweep-1 prompt-length record that is pinned in the paper checkout (the sweep-1
+D28 liveness ledgers' per-call `usage.prompt_tokens` and the recorded 1,345-token pilot maximum).
+
+Pins/image/host/GPU/CPU/model/server/tar/seal are reused from the reviewed S2-C2 wrapper (`s2_c2_lib.py`); this
+module imports it rather than re-implementing them. The paper commit is the reviewed main `9ae6d877` (the sweep-1
+records and the `r1.liveness` path are unchanged between it and the unit branch — checked). No B.2 audit runs, no
+seed 7001-7010 is touched, no label is read, and nothing here is evidence.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+import urllib.request
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+import s2_c2_lib as c2  # noqa: E402
+
+SCHEMA = "s2_c3b/v1"
+RECORD_SCHEMA = "s2_c3b_job_record/1"
+SEAL_RECEIPT_SCHEMA = "s2_c3b_seal_receipt/1"
+CHUNK_ID = "liveness-prompt"
+
+# --- frozen deployment pins (S2-C1 v1 gpu image; R1-SWEEP2-SETTINGS (1); R1-MAIN-PROPOSER (b)/(g)4) -----------
+V1_GPU_DIGEST_PREFIX = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:69b06b35"
+FROZEN_LLAMA_SERVER_SHA256 = "f8d35fd33e866808bc76457cf52cf1f8b1baafde9c2c8eebae51abf428843cc0"
+HARNESS_COMMIT = c2.B2_HARNESS  # a3fedbbd44309b3fdf99d853ad841b9ec2c299e2 (B2 harness, cache_prompt false)
+PAPER_COMMIT = "9ae6d87783f53f9da27200869085c9ed0e7697e2"  # reviewed main (S2-M2); r1.liveness unchanged
+ALLOWED_PAPER_COMMITS = (PAPER_COMMIT,)
+PICK_GGUF_SHA256_PREFIX = "2959c1b0"
+PICK_GGUF_SHA256 = "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75"
+PICK_ALIAS = "gemma4_31b"
+
+# --- exam server setting (R1-SWEEP2-SETTINGS (1); validated by the S2-C2 validator via _c2_view) --------------
+CTX = c2.CTX  # 32,768
+NGL = c2.NGL  # 999
+NP = c2.NP  # 1
+
+# --- D28 liveness protocol (sweep 1 frozen; R1-SWEEP2-SETTINGS (4)) ------------------------------------------
+LIVENESS_NODES = c2.LIVENESS_NODES
+MIN_LIVE_NODES = c2.MIN_LIVE_NODES  # 8 - all eight sweep-1 nodes, no exemption
+MAX_PARSE_FAILURE_RATE = c2.MAX_PARSE_FAILURE_RATE
+LIVENESS_INSTANCES = 2
+LIVENESS_RUNS = 10
+LIVENESS_MEMORY_MODE = "append_only_summary"
+TRANSPORT_MAX_ATTEMPTS = 3  # sweep-1 D28 liveness manifest (results/r1/engineering/liveness_c3_20261027T152425Z)
+
+# --- seeds --------------------------------------------------------------------------------------------------
+# The sweep-1/2 instance seed law is pinned twice: in the paper repo (`r1/headroom/e1b_collect._instance_seed`) and,
+# for the offline checks here, mirrored in `instance_seed`.  R1-MAIN-PROPOSER (b) fixes sweep-2's instance seeds to
+# sweep 1's ("the same instance seeds as sweep 1 ... fixed per (node, k)"), so the sweep-2 universe is derived, not
+# stored as a list; its SHA-256 is pinned in the spec and recomputed here.
+SWEEP_INSTANCE_K = 18  # 18 instances per node (sweep 1 and sweep 2)
+RESERVED_AUDIT_SEEDS = tuple(range(7001, 7011))  # B.2 audit label+evaluation seeds; never touched here
+G1B_SEED_BLOCK = (8001, 8010)  # RUNBOOK G.1b training-seed block (also kept clear)
+EXAM_SEED_BLOCK = (9001, 9303)  # exam Stage A/B seeds 9001+, B1 9101+, B2 9201+ (kept clear)
+PROMPT_MEASUREMENT_SEEDS = {node: 6100 + i + 1 for i, node in enumerate(LIVENESS_NODES)}
+LIVENESS_SEED_POLICY = "sweep1_d28_reuse"
+SWEEP2_INSTANCE_SEED_UNIVERSE_SHA256 = \
+    "0d7f0e599ecc88f1da6c3724067e319f5714df4d2b0f415833a2b8fafaa7843d"
+SWEEP1_INDEX_PATH = "results/r1/pilot/C3_sweep_index_20261028T033315Z.json"
+SWEEP1_INDEX_SHA256 = "812468e26c0901a6cb5b3241f44a46fd4d1d2e498d172b76d63b1e91f6d835ab"
+SWEEP1_INSTANCE_SEED_SOURCE_PATH = "r1/headroom/e1b_collect.py"
+SWEEP1_INSTANCE_SEED_SOURCE_SHA256 = "0001260442f9647461fd867a53fb74867a2b0e65810d9547eeb093a39e4b3271"
+
+# --- sweep-1 records the re-measurement compares against (pinned paths + SHA-256, all in the paper checkout) --
+SWEEP1_LIVENESS_PATH = "results/r1/engineering/liveness_c3_20261027T152425Z"
+SWEEP1_LIVENESS_SHA256 = "3f64604e925082e8d639c0f95a9955ebf825cbd7be2f70fbb2aebbf4ab14b6f5"
+SWEEP1_MANIFEST_SHA256 = "154f5f4832eaf2b673f475baa931f62b03ef37e330b0707013666d50ab76bd15"
+# Per node: the k = 0 liveness campaign ledger, its SHA-256, the recorded trial-1 `usage.prompt_tokens` (the exact
+# manager prompt text every campaign of that node sends at trial 1; both liveness instances of a node recorded the
+# same value) and the recorded maximum over that instance's 10 memory-on calls.
+SWEEP1_LEDGERS = {
+    "digits_mlp": {"instance": "digits_mlp__s104", "seed": 104,
+                   "ledger_sha256": "ed3b55eee0a24130526651feedbef2069322452ad009cb37cfba0f08eca5d61d",
+                   "trial1_prompt_tokens": 514, "max_prompt_tokens": 1162, "n_trials": 10},
+    "tabular_mlp": {"instance": "tabular_mlp__s102", "seed": 102,
+                    "ledger_sha256": "62679bbb0bd122ce33cab9738945b77c30381caa14ad6e9c254bbaa07a43b80f",
+                    "trial1_prompt_tokens": 520, "max_prompt_tokens": 1179, "n_trials": 10},
+    "openml_breast_w": {"instance": "openml_breast_w__s105", "seed": 105,
+                        "ledger_sha256": "89f266477bc90c06773a246ea37a4b8439c9f1951aad34d78951b952f4c95d28",
+                        "trial1_prompt_tokens": 482, "max_prompt_tokens": 1052, "n_trials": 10},
+    "openml_ionosphere": {"instance": "openml_ionosphere__s103", "seed": 103,
+                          "ledger_sha256": "4beba65a99d7e568e00985f7066b280900bbd2cc657d5454d8d6f2db0447dd8b",
+                          "trial1_prompt_tokens": 481, "max_prompt_tokens": 1029, "n_trials": 10},
+    "openml_wdbc": {"instance": "openml_wdbc__s100", "seed": 100,
+                    "ledger_sha256": "635c0d11dc5be18e48ea9ba83645ba7a7d28baf5d712d4ff1050d585eb6edac3",
+                    "trial1_prompt_tokens": 484, "max_prompt_tokens": 1083, "n_trials": 10},
+    "openml_credit_approval": {"instance": "openml_credit_approval__s100", "seed": 100,
+                               "ledger_sha256": "10a6db2df964d3f81deb736733dc2e8dcaeba5a88b30d83f35be9098b8ef1b9b",
+                               "trial1_prompt_tokens": 489, "max_prompt_tokens": 1064, "n_trials": 10},
+    "openml_sonar": {"instance": "openml_sonar__s105", "seed": 105,
+                     "ledger_sha256": "5857abe356256f54a013aa0f0ea7aa941bdd3639c139a85aa5cd50b87a002d67",
+                     "trial1_prompt_tokens": 497, "max_prompt_tokens": 1079, "n_trials": 10},
+    "openml_climate": {"instance": "openml_climate__s104", "seed": 104,
+                       "ledger_sha256": "b3663eee9e91e0bcc79ef4573e295be38da4ecc35b597d17d00abcdb38a733f5",
+                       "trial1_prompt_tokens": 513, "max_prompt_tokens": 1077, "n_trials": 10},
+}
+# The recorded sweep-1 prompt-length figure the RUNBOOK carries ("manager prompts ... at most 1,345 tokens (memory on,
+# W = 20, rerun-2)", counted with the 7B tokenizer).  The number lives in this pilot snapshot's per-call record.
+SWEEP1_PROMPT_MAX_PATH = ("results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/"
+                          "tabular_mlp__s142/E2_b012/manifest.json")
+SWEEP1_PROMPT_MAX_SHA256 = "5e269d4cee24e263ee36f25cd087df6f489bbec5b8a5db51f5236b438310e605"
+SWEEP1_PROMPT_MAX_TOKENS = 1345
+
+# --- prompt set ---------------------------------------------------------------------------------------------
+PROMPT_VARIANTS = ("trial_1", "memory_on_declared_12")
+PROMPT_BUILDER_SOURCE = "src/autoresearch/manager/langgraph_manager.py:_prepare_context"
+DECLARED_MEMORY_ON_BUDGET_INDEX = 12  # trial 12 in the W = 20 campaign: 11 prior trial lines in the memory block
+DECLARED_MEMORY_ON_RECORDS = 11
+DECLARED_PRIOR_SUMMARIES = ("reduce-lr-1e-4", "increase-max-iter", "increase-C-0.5", "decrease-batch-32",
+                            "increase-hidden-units", "reduce-alpha-1e-5", "decrease-max-iter",
+                            "increase-batch-128", "reduce-hidden-units", "increase-alpha-1e-3",
+                            "reduce-learning-rate-5e-4")
+TRANSFER_OUTPUTS = ("out.tar", "work.tar", "job_record.json", "SHA256SUMS", "llama-server.log")
+PROMPT_OUTPUTS = ("s2_c3b_prompt_lengths.json", "s2_c3b_sweep1_comparison.json", "S2_C3B_PROMPT_REPORT.md")
+
+
+class Stop(c2.Stop):
+    """S2-C3b STOP: subclasses the S2-C2 STOP so the shared wrapper helpers raise the same catchable type."""
+
+
+# ------------------------------------------------------------------ seeds
+def instance_seed(node: str, k: int) -> int:
+    """Mirror of `r1/headroom/e1b_collect._instance_seed` (pinned paper commit): 100 + 10k + len-sum(node) % 7."""
+    return 100 + 10 * int(k) + (sum(map(ord, node)) % 7)
+
+
+def sweep2_instance_seed_universe() -> list[int]:
+    return sorted({instance_seed(node, k) for node in LIVENESS_NODES for k in range(SWEEP_INSTANCE_K)})
+
+
+def liveness_instance_seeds() -> dict[str, list[int]]:
+    """The per-node instance seeds `r1.liveness --instances 2` derives (k = 0, 1) - the sweep-1 D28 seeds."""
+    return {node: [instance_seed(node, 0), instance_seed(node, 1)] for node in LIVENESS_NODES}
+
+
+def _json_list_sha256(values: list[int]) -> str:
+    return hashlib.sha256(json.dumps(values, separators=(",", ":")).encode()).hexdigest()
+
+
+def _flat(mapping: dict[str, list[int]]) -> list[int]:
+    return sorted({int(seed) for seeds in mapping.values() for seed in seeds})
+
+
+def check_seed_disjointness(spec: dict, sweep1_manifest: dict | None = None) -> dict:
+    """Verify the declared seed plan.  Raises Stop for a false claim; returns the full, auditable check.
+
+    The pinned `r1.liveness` CLI has no seed argument: it calls `e1b_collect.run_root(node, k)` for k = 0 .. 1, so the
+    liveness instance seeds ARE the first two sweep instance seeds, exactly as in sweep 1's D28 run.  A
+    "disjoint from the sweep-2 instance seeds" liveness seed set is therefore not implementable without changing the
+    pinned harness.  This unit refuses to pretend otherwise: the spec must declare the D28 reuse, and the check
+    proves that (a) the reuse equals the sweep-1 D28 record, (b) no audit seed (7001-7010) or exam/G.1b seed is used,
+    and (c) the prompt-measurement seeds, which the template text does not depend on at trial 1, are disjoint.
+    """
+    seeds = c2._get(spec, "seeds")
+    policy = seeds.get("liveness_seed_policy")
+    if policy == "strict_disjoint":
+        raise Stop("STOP: a disjoint liveness instance-seed set is not implementable with the pinned r1.liveness "
+                   "CLI (it derives k = 0,1 = the first two sweep instance seeds); declare "
+                   f"{LIVENESS_SEED_POLICY!r} and disclose the reuse")
+    if policy != LIVENESS_SEED_POLICY:
+        raise Stop(f"STOP: seeds.liveness_seed_policy must be {LIVENESS_SEED_POLICY!r} (D28 reuse; see docstring)")
+
+    universe = sweep2_instance_seed_universe()
+    if seeds.get("sweep2_instance_seed_count") != len(universe):
+        raise Stop(f"STOP: sweep-2 instance seed universe must have {len(universe)} seeds "
+                   "(8 nodes x 18 instances; R1-MAIN-PROPOSER (b))")
+    if seeds.get("sweep2_instance_seed_universe_sha256") != _json_list_sha256(universe):
+        raise Stop("STOP: sweep-2 instance seed universe sha256 mismatch (the pinned seed law changed)")
+
+    live = liveness_instance_seeds()
+    declared_live = c2._get(seeds, "liveness_instance_seeds")
+    if not isinstance(declared_live, dict) or set(declared_live) != set(LIVENESS_NODES):
+        raise Stop("STOP: seeds.liveness_instance_seeds must map exactly the eight sweep-1 nodes")
+    for node in LIVENESS_NODES:
+        got = [int(x) for x in declared_live[node]]
+        if got != live[node]:
+            raise Stop(f"STOP: declared liveness instance seeds for {node} {got} != the pinned D28 seeds {live[node]}")
+
+    if c2._get(seeds, "reserved_audit_seeds") != list(RESERVED_AUDIT_SEEDS):
+        raise Stop(f"STOP: seeds.reserved_audit_seeds must be exactly {list(RESERVED_AUDIT_SEEDS)}")
+    declared_prompt = c2._get(seeds, "prompt_measurement_seeds")
+    if not isinstance(declared_prompt, dict) or set(declared_prompt) != set(LIVENESS_NODES):
+        raise Stop("STOP: seeds.prompt_measurement_seeds must map exactly the eight sweep-1 nodes")
+    for node in LIVENESS_NODES:
+        if int(declared_prompt[node]) != PROMPT_MEASUREMENT_SEEDS[node]:
+            raise Stop(f"STOP: prompt-measurement seed for {node} must be {PROMPT_MEASUREMENT_SEEDS[node]}")
+
+    prompt_values = sorted(int(v) for v in declared_prompt.values())
+    blocked = set(universe) | set(RESERVED_AUDIT_SEEDS) | set(range(EXAM_SEED_BLOCK[0], EXAM_SEED_BLOCK[1] + 1)) \
+        | set(range(G1B_SEED_BLOCK[0], G1B_SEED_BLOCK[1] + 1))
+    if len(set(prompt_values)) != len(prompt_values):
+        raise Stop("STOP: prompt-measurement seeds must be distinct")
+    collisions = sorted(set(prompt_values) & blocked)
+    if collisions:
+        raise Stop(f"STOP: prompt-measurement seeds collide with reserved seeds: {collisions}")
+    all_declared = set(_flat(live)) | set(prompt_values)
+    audit_collisions = sorted(all_declared & set(RESERVED_AUDIT_SEEDS))
+    if audit_collisions:
+        raise Stop(f"STOP: a declared seed touches the B.2 audit seed block: {audit_collisions}")
+
+    overlap = sorted(set(_flat(live)) & set(universe))
+    expected_overlap = sorted({instance_seed(node, 0) for node in LIVENESS_NODES}
+                              | {instance_seed(node, 1) for node in LIVENESS_NODES})
+    if overlap != expected_overlap:
+        raise Stop(f"STOP: unexpected liveness/sweep seed overlap {overlap} != {expected_overlap}")
+    manifest_status = None
+    if sweep1_manifest is not None:
+        campaigns = sweep1_manifest.get("campaigns") or []
+        by_node: dict[str, list[int]] = {}
+        for campaign in campaigns:
+            by_node.setdefault(str(campaign.get("node")), []).append(int(campaign.get("seed")))
+        for node in LIVENESS_NODES:
+            if sorted(by_node.get(node) or []) != live[node]:
+                raise Stop(f"STOP: sweep-1 D28 liveness manifest seeds for {node} "
+                           f"{sorted(by_node.get(node) or [])} != the pinned seeds {live[node]}")
+        manifest_status = True
+    return {
+        "schema": "s2_c3b_seed_check/1",
+        "policy": policy,
+        "note": ("D28 liveness reuses the first two sweep instance seeds by construction (pinned r1.liveness k=0,1), "
+                 "exactly as sweep 1 did; it is ENGINEERING_ONLY and never enters a label table. The prompt-"
+                 "measurement seeds are disjoint from the sweep instance, audit, exam and G.1b seed blocks."),
+        "liveness_disjoint_from_sweep2_instance_seeds": False,
+        "liveness_overlap_with_sweep2_instance_seeds": overlap,
+        "liveness_overlap_is_the_frozen_d28_reuse": True,
+        "liveness_disjoint_from_audit_seeds": not audit_collisions,
+        "prompt_measurement_disjoint": True,
+        "sweep2_instance_seed_source": {
+            "paper_path": SWEEP1_INSTANCE_SEED_SOURCE_PATH,
+            "paper_sha256": SWEEP1_INSTANCE_SEED_SOURCE_SHA256,
+            "function": "_instance_seed(node, k) = 100 + 10*k + sum(ord(node)) % 7",
+            "instances_per_node": SWEEP_INSTANCE_K,
+            "sweep1_index_path": SWEEP1_INDEX_PATH,
+            "sweep1_index_sha256": SWEEP1_INDEX_SHA256,
+            "sweep1_liveness_path": SWEEP1_LIVENESS_PATH,
+            "sweep1_liveness_sha256": SWEEP1_LIVENESS_SHA256,
+            "sweep1_manifest_sha256": SWEEP1_MANIFEST_SHA256,
+        },
+        "sweep2_instance_seed_count": len(universe),
+        "sweep2_instance_seed_universe_sha256": _json_list_sha256(universe),
+        "sweep2_instance_seeds": universe,
+        "liveness_instance_seeds": live,
+        "liveness_instance_seed_pairs": [[node, live[node]] for node in LIVENESS_NODES],
+        "prompt_measurement_seeds": {node: PROMPT_MEASUREMENT_SEEDS[node] for node in LIVENESS_NODES},
+        "prompt_measurement_seed_values": prompt_values,
+        "reserved_audit_seeds": list(RESERVED_AUDIT_SEEDS),
+        "exam_seed_block": list(EXAM_SEED_BLOCK),
+        "g1b_seed_block": list(G1B_SEED_BLOCK),
+        "sweep1_liveness_manifest_matches": manifest_status,
+    }
+
+
+# ------------------------------------------------------------------ spec
+def load_spec(path: Path) -> dict:
+    data = json.loads(Path(path).read_text())
+    if not isinstance(data, dict) or data.get("schema") != SCHEMA:
+        raise Stop(f"STOP: spec schema must be {SCHEMA}")
+    return data
+
+
+def _c2_view(spec: dict) -> dict:
+    """A C2-shaped copy used only to run the accepted S2-C2 validator (single source for image/model/server pins).
+
+    The C2 validator is applied to a `liveness`-kind view: the collector block below is required by its schema but is
+    not used by S2-C3b (this unit runs `r1.liveness`, never a chunk collector).  The C2 liveness block and every
+    image/model/server/requirements pin are the spec's own values, so the exam-setting checks are reused verbatim.
+    """
+    view = json.loads(json.dumps(spec))
+    view["schema"] = c2.SCHEMA
+    view["kind"] = "liveness"
+    view["collector"] = {
+        "node": "digits_mlp", "memory_mode": LIVENESS_MEMORY_MODE, "instances": 18, "runs": 20,
+        "workers": c2.MIN_CPUS, "transport_max_attempts": TRANSPORT_MAX_ATTEMPTS,
+        "proposal_schema": "manager_proposal/v1", "verify_split_policy": "vary", "split": "c3_labels",
+    }
+    view.setdefault("pilot", False)
+    return view
+
+
+def validate_spec(spec: dict) -> dict:
+    if spec.get("kind") != "liveness":
+        raise Stop("STOP: kind must be liveness (S2-C3b runs the D28 liveness job)")
+    if spec.get("label") != "ENGINEERING_ONLY":
+        raise Stop("STOP: S2-C3b is ENGINEERING_ONLY (no EVIDENCE path in this unit)")
+    if spec.get("b2_audits") != "none":
+        raise Stop("STOP: b2_audits must be 'none' (R1-SWEEP2-SETTINGS (2): no B.2 audit in this unit)")
+    try:
+        validated_c2 = c2.validate_spec(_c2_view(spec))  # all image/model/server/requirements/liveness pins
+    except c2.Stop as exc:
+        raise Stop(str(exc)) from None
+    if validated_c2["label"] != "ENGINEERING_ONLY":
+        raise Stop("STOP: S2-C3b must not resolve an EVIDENCE label")
+
+    run_id = c2._text(c2._get(spec, "run_id"), "run_id", c2.SAFE)
+    chunk_id = c2._text(c2._get(spec, "chunk_id"), "chunk_id", c2.SAFE)
+    if chunk_id != CHUNK_ID:
+        raise Stop(f"STOP: chunk_id must be {CHUNK_ID!r} (one sealed S2-C3b attempt)")
+
+    image = c2._get(spec, "image")
+    if not str(image["digest"]).startswith(V1_GPU_DIGEST_PREFIX):
+        raise Stop(f"STOP: S2-C3b runs the frozen v1 gpu image {V1_GPU_DIGEST_PREFIX}...; got {image['digest']}")
+    if image["llama_server_sha256"] != FROZEN_LLAMA_SERVER_SHA256:
+        raise Stop("STOP: llama-server sha256 differs from the frozen v1 image pin")
+
+    model = c2._get(spec, "model")
+    if not str(model["sha256"]).startswith(PICK_GGUF_SHA256_PREFIX):
+        raise Stop(f"STOP: model must be the pick GGUF {PICK_GGUF_SHA256_PREFIX}...; got {model['sha256']}")
+    if model["alias"] != PICK_ALIAS:
+        raise Stop(f"STOP: model.alias must be {PICK_ALIAS!r} (R1-EXAM-X7 pick)")
+
+    paper = c2._get(spec, "paper")
+    if paper["commit"] not in ALLOWED_PAPER_COMMITS:
+        raise Stop(f"STOP: paper.commit must be the reviewed main {PAPER_COMMIT} (the unit documents this pin)")
+    if paper["evidence_ready"] is not False:
+        raise Stop("STOP: paper.evidence_ready must be false (ENGINEERING_ONLY; not the EVIDENCE path)")
+
+    live = c2._get(spec, "liveness")
+    if c2._get(live, "memory_mode") != LIVENESS_MEMORY_MODE:
+        raise Stop(f"STOP: liveness memory_mode must be {LIVENESS_MEMORY_MODE}")
+    if c2._get(live, "transport_max_attempts") != TRANSPORT_MAX_ATTEMPTS:
+        raise Stop(f"STOP: liveness transport_max_attempts must be {TRANSPORT_MAX_ATTEMPTS} (sweep-1 D28)")
+
+    seed_check = check_seed_disjointness(spec)
+
+    pm = c2._get(spec, "prompt_measurement")
+    if list(pm.get("variants") or []) != list(PROMPT_VARIANTS):
+        raise Stop(f"STOP: prompt_measurement.variants must be {list(PROMPT_VARIANTS)}")
+    if pm.get("max_prompt_tokens_stop") != CTX:
+        raise Stop(f"STOP: prompt_measurement.max_prompt_tokens_stop must be ctx {CTX}")
+    sweep1 = c2._get(pm, "sweep1")
+    for key, value in (("liveness_path", SWEEP1_LIVENESS_PATH),
+                       ("liveness_sha256", SWEEP1_LIVENESS_SHA256),
+                       ("manifest_sha256", SWEEP1_MANIFEST_SHA256),
+                       ("prompt_max_path", SWEEP1_PROMPT_MAX_PATH),
+                       ("prompt_max_sha256", SWEEP1_PROMPT_MAX_SHA256),
+                       ("prompt_max_tokens", SWEEP1_PROMPT_MAX_TOKENS)):
+        if sweep1.get(key) != value:
+            raise Stop(f"STOP: prompt_measurement.sweep1.{key} must be the pinned sweep-1 record value")
+
+    for key in ("walltime_s", "request_disk_kb", "request_memory_mb"):
+        value = spec.get(key)
+        if type(value) is not int or value <= 0:
+            raise Stop(f"STOP: {key} must be a positive integer")
+    if spec.get("transfer_outputs") != list(TRANSFER_OUTPUTS):
+        raise Stop(f"STOP: transfer_outputs must be {list(TRANSFER_OUTPUTS)}")
+    return {"run_id": run_id, "chunk_id": chunk_id, "kind": "liveness", "label": "ENGINEERING_ONLY",
+            "seed_check": seed_check, "spec": spec}
+
+
+# ------------------------------------------------------------------ liveness
+def liveness_argv(spec: dict) -> list[str]:
+    """The exact `r1.liveness` invocation (no `--deadline`: the CLI has no such flag)."""
+    c = spec["liveness"]
+    return ["/opt/r1/envs/harness/bin/python", "-B", "-m", "r1.liveness", "--run", "--manager", "langgraph",
+            "--memory-mode", c["memory_mode"], "--nodes", *LIVENESS_NODES,
+            "--instances", str(c["instances"]), "--runs", str(c["runs"]),
+            "--transport-max-attempts", str(c["transport_max_attempts"]),
+            "--manager-model", "llamacpp/" + spec["model"]["alias"],
+            "--proposal-schema", "manager_proposal/v1",
+            "--out", str(Path("out").resolve()), "--work", str(Path("work").resolve())]
+
+
+def evaluate_liveness(report: dict, min_live_nodes: int = MIN_LIVE_NODES,
+                      nodes: tuple[str, ...] = LIVENESS_NODES) -> dict:
+    """Read the D28 verdict.  Malformed/foreign reports are a STOP; a node shortfall is returned, not hidden."""
+    if not isinstance(report, dict):
+        raise Stop("STOP: liveness.json is not an object")
+    if report.get("label") != "ENGINEERING_ONLY":
+        raise Stop(f"STOP: liveness report label {report.get('label')!r} is not ENGINEERING_ONLY")
+    if report.get("manager_kind") != "langgraph":
+        raise Stop("STOP: liveness report is not LLM-backed (manager_kind != langgraph)")
+    if report.get("memory_mode") != LIVENESS_MEMORY_MODE:
+        raise Stop(f"STOP: liveness report memory_mode {report.get('memory_mode')!r} is not {LIVENESS_MEMORY_MODE}")
+    nodes_map = report.get("nodes")
+    if not isinstance(nodes_map, dict):
+        raise Stop("STOP: liveness.json has no nodes object")
+    missing = [node for node in nodes if node not in nodes_map]
+    if missing:
+        raise Stop(f"STOP: liveness report is missing nodes: {missing}")
+    verdicts = {}
+    for node in nodes:
+        entry = nodes_map[node]
+        if not isinstance(entry, dict) or not isinstance(entry.get("pass"), bool):
+            raise Stop(f"STOP: liveness report node {node} has no boolean pass verdict")
+        verdicts[node] = {"pass": bool(entry["pass"]), "failed_criteria": list(entry.get("failed_criteria") or []),
+                          "n_trials": entry.get("n_trials"),
+                          "criteria": entry.get("criteria")}
+    passed = [node for node in nodes if verdicts[node]["pass"]]
+    failed = [node for node in nodes if not verdicts[node]["pass"]]
+    return {"nodes": verdicts, "live_nodes": len(passed), "failed_nodes": failed,
+            "min_live_nodes": min_live_nodes, "pass": len(passed) >= min_live_nodes,
+            "report_schema": report.get("schema"), "generated_utc": report.get("generated_utc")}
+
+
+# ------------------------------------------------------------------ prompt measurement
+def _harness_import(harness_dir: Path):
+    src = Path(harness_dir) / "src"
+    if not src.is_dir():
+        raise Stop(f"STOP: harness src missing at {src}")
+    if str(src) not in sys.path:
+        sys.path.insert(0, str(src))
+    try:
+        from autoresearch.manager.hyperparam_edits import parse_train_constants  # noqa: F401
+        from autoresearch.manager.langgraph_manager import _prepare_context
+        from autoresearch.manager.base import ManagerStatus
+        from autoresearch.memory.schemas import (TrialDecision, TrialProvenance, TrialRecord, ExecutionStatus,
+                                                  ValidityStatus)
+        from autoresearch.memory.summarizer import build_memory_context
+        from autoresearch.nodes.registry import load_registered_node
+    except Exception as exc:  # noqa: BLE001 - the pinned harness must be importable
+        raise Stop(f"STOP: cannot import the pinned harness prompt builder from {harness_dir}: "
+                   f"{type(exc).__name__}: {exc}") from None
+    return {"parse_train_constants": parse_train_constants, "_prepare_context": _prepare_context,
+            "ManagerStatus": ManagerStatus, "build_memory_context": build_memory_context,
+            "load_registered_node": load_registered_node, "TrialRecord": TrialRecord,
+            "ExecutionStatus": ExecutionStatus, "ValidityStatus": ValidityStatus,
+            "TrialDecision": TrialDecision, "TrialProvenance": TrialProvenance}
+
+
+def _declared_prior_records(node: str, harness, count: int = DECLARED_MEMORY_ON_RECORDS) -> list:
+    """A declared, deterministic memory-on history (11 prior trials) for the longest-prompt class.
+
+    Only the harness's own `build_memory_context` and `TrialRecord` types are used; the values are this unit's
+    declared fixture, so the resulting prompt text is exact for the declared state and reproducible.
+    """
+    records = []
+    for j in range(1, count + 1):
+        summary = DECLARED_PRIOR_SUMMARIES[(j - 1) % len(DECLARED_PRIOR_SUMMARIES)]
+        provenance = harness["TrialProvenance"](proposal_id=f"declared-{j}", patch_id=f"declared-{j}",
+                                                run_id=f"declared-{j}", metric_id=f"declared-{j}",
+                                                decision_id=f"declared-{j}")
+        records.append(harness["TrialRecord"](
+            trial_id=f"{node}__s{PROMPT_MEASUREMENT_SEEDS[node]}-trial-{j:03d}",
+            campaign_id=f"{node}__s{PROMPT_MEASUREMENT_SEEDS[node]}", node_id=node, budget_index=j,
+            timestamp_start="2026-11-16T00:00:00Z", timestamp_end="2026-11-16T00:00:02Z",
+            manager_mode="langgraph_manager", worker_mode="local", memory_mode=LIVENESS_MEMORY_MODE,
+            proposal_summary=summary, proposal_rationale="declared fixture for the prompt-length re-measurement",
+            targeted_files=("train.py",), patch_ref=f"declared/trial-{j:03d}/patch.diff",
+            git_commit_before="declared-before", git_commit_after="declared-after",
+            execution_status=harness["ExecutionStatus"].SUCCESS,
+            validity_status=harness["ValidityStatus"].VALID, failure_category=None,
+            raw_log_ref=f"declared/trial-{j:03d}/run.log",
+            parsed_metrics={"train_loss": 1.2 - 0.01 * j, "val_score": 0.70 + 0.004 * j},
+            current_best_before=(0.70 + 0.004 * (j - 1)) if j > 1 else None,
+            delta_vs_best=(0.004 if j > 1 and j % 2 == 0 else None),
+            decision=(harness["TrialDecision"].KEPT if j % 2 == 0 else harness["TrialDecision"].DISCARDED),
+            decision_rationale="declared fixture", wall_clock_seconds=2.0, cumulative_budget_consumed=j,
+            provenance=provenance, repeated_bad_count=0))
+    return records
+
+
+def build_prompt_texts(harness_dir: Path, spec: dict) -> dict:
+    """Exact sweep-2 manager prompt texts from the pinned harness (`_prepare_context`), plus their SHA-256.
+
+    The manager sends one user message (`context_text`) per call; there is no separate system message in this stack -
+    the server chat template renders the system/user scaffolding around it (`/apply-template`, measured later).
+    """
+    harness = _harness_import(Path(harness_dir))
+    harness_root = Path(harness_dir)
+    manager_py = harness_root / "src/autoresearch/manager/langgraph_manager.py"
+    prompts = []
+    for node in LIVENESS_NODES:
+        try:
+            node_spec = harness["load_registered_node"](node, repo_root=harness_root)
+        except Exception as exc:  # noqa: BLE001
+            raise Stop(f"STOP: cannot load the pinned harness node spec for {node}: "
+                       f"{type(exc).__name__}: {exc}") from None
+        constants: dict[str, str] = {}
+        node_files = {}
+        for rel_path in node_spec.editable_paths:
+            path = harness_root / "nodes" / node / rel_path
+            if not path.is_file():
+                raise Stop(f"STOP: pinned harness node file missing: nodes/{node}/{rel_path}")
+            node_files[rel_path] = hashlib.sha256(path.read_bytes()).hexdigest()
+            constants.update(harness["parse_train_constants"](path))
+        editable = tuple(getattr(node_spec, "editable_symbols", ()) or ())
+        if editable:
+            allowed = set(editable)
+            constants = {key: value for key, value in constants.items() if key in allowed}
+        if not constants:
+            raise Stop(f"STOP: no editable constants parsed for {node} at the pinned harness commit")
+        config_path = harness_root / "configs" / "nodes" / f"{node}.yaml"
+        config_sha = hashlib.sha256(config_path.read_bytes()).hexdigest() if config_path.is_file() else None
+        for variant in PROMPT_VARIANTS:
+            budget_index = 1 if variant == "trial_1" else DECLARED_MEMORY_ON_BUDGET_INDEX
+            best = None if variant == "trial_1" else 0.744
+            records = [] if variant == "trial_1" else _declared_prior_records(node, harness)
+            memory_context = harness["build_memory_context"](
+                records, LIVENESS_MEMORY_MODE, node_spec, budget_index)
+            status = harness["ManagerStatus"](
+                campaign_id=f"{node}__s{PROMPT_MEASUREMENT_SEEDS[node]}", budget_index=budget_index,
+                current_best_metric=best, metric_name=node_spec.metric_name,
+                metric_direction=node_spec.metric_direction, current_constants=dict(constants),
+                effective_config={})
+            state = {"status": status, "memory_context": memory_context, "node_spec": node_spec,
+                     "revision_feedback": None, "proposal_schema": None, "llm_meta": None, "llm_seed": None,
+                     "llm": None, "llm_seed_as_kwarg": False, "transport_retry": None}
+            try:
+                text = harness["_prepare_context"](state)["context_text"]
+            except Exception as exc:  # noqa: BLE001
+                raise Stop(f"STOP: pinned harness prompt builder failed for {node}/{variant}: "
+                           f"{type(exc).__name__}: {exc}") from None
+            if not isinstance(text, str) or len(text) < 100:
+                raise Stop(f"STOP: pinned harness produced an empty/short prompt for {node}/{variant}")
+            prompts.append({
+                "node": node, "variant": variant, "budget_index": budget_index,
+                "prompt_seed": PROMPT_MEASUREMENT_SEEDS[node],
+                "campaign_id": f"{node}__s{PROMPT_MEASUREMENT_SEEDS[node]}",
+                "memory_mode": LIVENESS_MEMORY_MODE, "memory_records": len(records),
+                "current_best_metric": best, "editable_constants": dict(constants),
+                "node_file_sha256": node_files, "node_config_sha256": config_sha,
+                "text": text, "text_sha256": hashlib.sha256(text.encode()).hexdigest(), "chars": len(text),
+            })
+    set_sha = hashlib.sha256(json.dumps(
+        [{"node": p["node"], "variant": p["variant"], "text_sha256": p["text_sha256"]} for p in prompts],
+        sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return {"schema": "s2_c3b_prompt_texts/1", "builder": PROMPT_BUILDER_SOURCE,
+            "harness_commit": spec["harness"]["commit"],
+            "builder_file_sha256": hashlib.sha256(manager_py.read_bytes()).hexdigest(),
+            "prompt_set_sha256": set_sha, "prompts": prompts}
+
+
+def _post_json(url: str, payload: dict, timeout: float = 120.0) -> dict:
+    data = json.dumps(payload).encode()
+    request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            body = json.loads(response.read().decode())
+    except Exception as exc:  # noqa: BLE001 - a missing endpoint is a STOP, never a guess
+        raise Stop(f"STOP: POST {url} failed: {type(exc).__name__}: {exc}") from None
+    if not isinstance(body, dict):
+        raise Stop(f"STOP: POST {url} returned no JSON object")
+    return body
+
+
+def root_url(server_base_url: str) -> str:
+    """`http://127.0.0.1:<port>/v1` -> `http://127.0.0.1:<port>` (the tokenizer routes are root-level)."""
+    base = str(server_base_url)
+    return base[:-3] if base.endswith("/v1") else base
+
+
+def apply_template(base: str, text: str) -> str:
+    body = _post_json(root_url(base) + "/apply-template",
+                      {"messages": [{"role": "user", "content": text}], "add_generation_prompt": True,
+                       "chat_template_kwargs": {"enable_thinking": False}})
+    prompt = body.get("prompt")
+    if not isinstance(prompt, str) or not prompt:
+        raise Stop("STOP: /apply-template returned no prompt string")
+    return prompt
+
+
+def tokenize_text(base: str, text: str, add_special: bool) -> list[int]:
+    body = _post_json(root_url(base) + "/tokenize", {"content": text, "add_special": bool(add_special)})
+    tokens = body.get("tokens")
+    if not isinstance(tokens, list) or not tokens:
+        raise Stop("STOP: /tokenize returned no tokens")
+    try:
+        return [int(token) for token in tokens]
+    except (TypeError, ValueError):
+        raise Stop("STOP: /tokenize returned non-integer tokens") from None
+
+
+def measure_prompts(base: str, spec: dict, prompt_set: dict) -> dict:
+    """Tokenize the exact prompt texts with the pick's tokenizer (server `/apply-template` + `/tokenize`)."""
+    rows = []
+    for prompt in prompt_set["prompts"]:
+        text = prompt["text"]
+        user_tokens = tokenize_text(base, text, add_special=False)
+        rendered = apply_template(base, text)
+        rendered_tokens = tokenize_text(base, rendered, add_special=True)
+        position = rendered.find(text)
+        prefix = rendered[:position] if position >= 0 else ""
+        suffix = rendered[position + len(text):] if position >= 0 else ""
+        prefix_tokens = tokenize_text(base, prefix, add_special=True) if prefix else []
+        row = {
+            "node": prompt["node"], "variant": prompt["variant"], "budget_index": prompt["budget_index"],
+            "prompt_seed": prompt["prompt_seed"], "campaign_id": prompt["campaign_id"],
+            "memory_mode": prompt["memory_mode"], "memory_records": prompt["memory_records"],
+            "user_text": text, "user_text_sha256": prompt["text_sha256"], "user_text_chars": prompt["chars"],
+            "user_text_tokens": len(user_tokens),
+            "rendered_prompt": rendered,
+            "rendered_prompt_sha256": hashlib.sha256(rendered.encode()).hexdigest(),
+            "rendered_prompt_tokens": len(rendered_tokens),
+            "rendered_prompt_chars": len(rendered),
+            "template_prefix": prefix, "template_prefix_tokens": len(prefix_tokens),
+            "template_suffix_chars": len(suffix),
+            "user_text_present_in_rendered": position >= 0,
+            "fits_ctx": len(rendered_tokens) < CTX,
+        }
+        rows.append(row)
+    return {"schema": "s2_c3b_prompt_measurement/1", "ctx": CTX,
+            "tokenizer": "pick GGUF tokenizer via the owned llama-server /apply-template + /tokenize",
+            "prompt_set_sha256": prompt_set["prompt_set_sha256"],
+            "builder_file_sha256": prompt_set["builder_file_sha256"],
+            "measured_utc": _utc(), "prompts": rows,
+            "max_tokens": max((row["rendered_prompt_tokens"] for row in rows), default=0),
+            "all_fit_ctx": all(row["fits_ctx"] for row in rows)}
+
+
+def _read_json_pinned(path: Path, sha256: str, what: str) -> dict:
+    if not path.is_file():
+        raise Stop(f"STOP: {what} missing: {path} (expected in the pinned paper checkout)")
+    data = path.read_bytes()
+    got = hashlib.sha256(data).hexdigest()
+    if got != sha256:
+        raise Stop(f"STOP: {what} sha256 mismatch: {got} != pinned {sha256} ({path})")
+    try:
+        return json.loads(data.decode())
+    except json.JSONDecodeError:
+        raise Stop(f"STOP: {what} is not valid JSON: {path}") from None
+
+
+def verify_sweep1_record(paper_dir: Path) -> dict:
+    """Load and pin the sweep-1 D28 liveness record (all eight nodes passed; ENGINEERING_ONLY)."""
+    base = Path(paper_dir) / SWEEP1_LIVENESS_PATH
+    liveness = _read_json_pinned(base / "liveness.json", SWEEP1_LIVENESS_SHA256, "sweep-1 liveness.json")
+    manifest = _read_json_pinned(base / "manifest.json", SWEEP1_MANIFEST_SHA256, "sweep-1 liveness manifest")
+    if liveness.get("label") != "ENGINEERING_ONLY":
+        raise Stop("STOP: sweep-1 liveness record label is not ENGINEERING_ONLY")
+    if liveness.get("memory_mode") != LIVENESS_MEMORY_MODE:
+        raise Stop("STOP: sweep-1 liveness record memory_mode differs")
+    if liveness.get("manager_kind") != "langgraph":
+        raise Stop("STOP: sweep-1 liveness record is not LLM-backed")
+    nodes = liveness.get("nodes") or {}
+    failed = [node for node in LIVENESS_NODES if not (nodes.get(node) or {}).get("pass")]
+    if failed:
+        raise Stop(f"STOP: the pinned sweep-1 liveness record did not pass these nodes: {failed}")
+    if manifest.get("harness", {}).get("commit") is None:
+        raise Stop("STOP: sweep-1 liveness manifest has no harness commit")
+    return {"path": SWEEP1_LIVENESS_PATH, "liveness_sha256": SWEEP1_LIVENESS_SHA256,
+            "manifest_sha256": SWEEP1_MANIFEST_SHA256, "liveness": liveness, "manifest": manifest}
+
+
+def verify_sweep1_prompt_record(paper_dir: Path) -> dict:
+    """Load and pin the recorded sweep-1 prompt-length maximum (memory on, W = 20, rerun-2; 7B tokenizer)."""
+    data = _read_json_pinned(Path(paper_dir) / SWEEP1_PROMPT_MAX_PATH, SWEEP1_PROMPT_MAX_SHA256,
+                             "sweep-1 prompt-length record")
+    try:
+        value = data["proposal"]["extra"]["llm_call"]["prompt_tokens"]
+        provisional = data["provisional"]["extra"]["manager"]["llm_call"]["prompt_tokens"]
+    except (KeyError, TypeError):
+        raise Stop("STOP: sweep-1 prompt-length record has no proposal/provisional prompt_tokens") from None
+    if int(value) != SWEEP1_PROMPT_MAX_TOKENS or int(provisional) != SWEEP1_PROMPT_MAX_TOKENS:
+        raise Stop(f"STOP: sweep-1 prompt-length record {value}/{provisional} != {SWEEP1_PROMPT_MAX_TOKENS}")
+    return {"path": SWEEP1_PROMPT_MAX_PATH, "sha256": SWEEP1_PROMPT_MAX_SHA256,
+            "prompt_tokens": SWEEP1_PROMPT_MAX_TOKENS,
+            "campaign_id": data.get("campaign_id"), "node": data.get("node_name"),
+            "budget_index": data.get("budget_index"), "memory_mode": data.get("memory_mode"),
+            "tokenizer_note": "counted with the sweep-1 manager (7B) tokenizer (RUNBOOK Context note)"}
+
+
+def compare_with_sweep1(paper_dir: Path, measured: dict) -> dict:
+    """Compare the pick-tokenizer prompt lengths with the pinned sweep-1 records.  Missing/mismatched records STOP."""
+    record = verify_sweep1_record(paper_dir)
+    prompt_record = verify_sweep1_prompt_record(paper_dir)
+    base = Path(paper_dir) / SWEEP1_LIVENESS_PATH
+    by_node = {}
+    for row in measured["prompts"]:
+        by_node.setdefault(row["node"], {})[row["variant"]] = row
+    rows, ratios = [], []
+    for node in LIVENESS_NODES:
+        pinned = SWEEP1_LEDGERS[node]
+        ledger_path = base / "ledgers" / pinned["instance"] / "root_trials.jsonl"
+        if not ledger_path.is_file():
+            raise Stop(f"STOP: sweep-1 liveness ledger missing: {ledger_path}")
+        got_sha = hashlib.sha256(ledger_path.read_bytes()).hexdigest()
+        if got_sha != pinned["ledger_sha256"]:
+            raise Stop(f"STOP: sweep-1 liveness ledger sha256 mismatch for {node}")
+        trials = [json.loads(line) for line in ledger_path.read_text().splitlines() if line.strip()]
+        if not trials:
+            raise Stop(f"STOP: sweep-1 liveness ledger for {node} is empty")
+        recorded = [(trial.get("extra") or {}).get("manager", {}).get("llm_call", {}) or {} for trial in trials]
+        trial1 = [call.get("prompt_tokens") for call, trial in zip(recorded, trials)
+                  if trial.get("budget_index") == 1]
+        if len(trial1) != 1 or trial1[0] != pinned["trial1_prompt_tokens"]:
+            raise Stop(f"STOP: sweep-1 liveness trial-1 prompt_tokens for {node} != {pinned['trial1_prompt_tokens']}")
+        maxima = [call.get("prompt_tokens") for call in recorded if isinstance(call.get("prompt_tokens"), int)]
+        if not maxima or max(maxima) != pinned["max_prompt_tokens"]:
+            raise Stop(f"STOP: sweep-1 liveness max prompt_tokens for {node} != {pinned['max_prompt_tokens']}")
+        trial1_row = by_node[node]["trial_1"]
+        memory_row = by_node[node]["memory_on_declared_12"]
+        # The trial-1 manager prompt text must be byte-identical to the text the sweep-1 liveness run actually sent:
+        # the ledger records its SHA-256 (`extra.manager.context_sha256`), so the tokenizer comparison below is on
+        # identical text (not on a re-derived approximation).
+        sweep1_context_sha = [((trial.get("extra") or {}).get("manager", {}) or {}).get("context_sha256")
+                              for trial in trials if trial.get("budget_index") == 1]
+        if len(sweep1_context_sha) != 1 or not isinstance(sweep1_context_sha[0], str):
+            raise Stop(f"STOP: sweep-1 liveness ledger for {node} has no trial-1 context_sha256")
+        if sweep1_context_sha[0] != trial1_row["user_text_sha256"]:
+            raise Stop(f"STOP: the pinned prompt builder does not reproduce the sweep-1 liveness trial-1 prompt "
+                       f"text for {node} ({trial1_row['user_text_sha256']} != {sweep1_context_sha[0]}); the "
+                       "prompt template/node files changed and the tokenizer comparison cannot be made")
+        ratio = trial1_row["rendered_prompt_tokens"] / pinned["trial1_prompt_tokens"]
+        ratios.append(ratio)
+        rows.append({
+            "node": node, "sweep1_instance": pinned["instance"],
+            "sweep1_trial1_prompt_tokens": pinned["trial1_prompt_tokens"],
+            "pick_trial1_rendered_prompt_tokens": trial1_row["rendered_prompt_tokens"],
+            "pick_trial1_user_text_tokens": trial1_row["user_text_tokens"],
+            "sweep1_trial1_prompt_sha256": sweep1_context_sha[0],
+            "pick_trial1_prompt_sha256": trial1_row["user_text_sha256"],
+            "prompt_texts_identical": True,
+            "trial1_delta_tokens": trial1_row["rendered_prompt_tokens"] - pinned["trial1_prompt_tokens"],
+            "trial1_tokenizer_ratio": round(ratio, 4),
+            "sweep1_max_prompt_tokens": pinned["max_prompt_tokens"],
+            "pick_memory_on_rendered_prompt_tokens": memory_row["rendered_prompt_tokens"],
+            "memory_on_delta_tokens": memory_row["rendered_prompt_tokens"] - pinned["max_prompt_tokens"],
+            "pick_memory_on_vs_sweep1_max_ratio": round(memory_row["rendered_prompt_tokens"]
+                                                        / pinned["max_prompt_tokens"], 4),
+            "pick_fits_ctx": trial1_row["fits_ctx"] and memory_row["fits_ctx"],
+        })
+    max_pick = max(row["rendered_prompt_tokens"] for row in measured["prompts"])
+    max_trial1 = max(by_node[node]["trial_1"]["rendered_prompt_tokens"] for node in LIVENESS_NODES)
+    max_memory = max(by_node[node]["memory_on_declared_12"]["rendered_prompt_tokens"] for node in LIVENESS_NODES)
+    return {
+        "schema": "s2_c3b_sweep1_comparison/1",
+        "compared_utc": _utc(),
+        "method": ("the trial-1 manager prompt text is rebuilt from the pinned harness and must be byte-identical to "
+                   "the sweep-1 liveness record (the ledger's `extra.manager.context_sha256` is compared); the "
+                   "pick-tokenizer counts come from the owned server's /apply-template + /tokenize; the sweep-1 "
+                   "counts are the recorded per-call usage.prompt_tokens of the pinned sweep-1 D28 liveness ledgers "
+                   "(r1-manager tokenizer). The memory-on prompt is this unit's declared 11-record fixture."),
+        "sweep1_record": {"liveness_path": record["path"], "liveness_sha256": record["liveness_sha256"],
+                          "manifest_sha256": record["manifest_sha256"],
+                          "prompt_max": {key: prompt_record[key] for key in
+                                         ("path", "sha256", "prompt_tokens", "campaign_id", "node",
+                                          "budget_index", "memory_mode", "tokenizer_note")}},
+        "ctx": CTX,
+        "per_node": rows,
+        "summary": {
+            "max_pick_prompt_tokens": max_pick,
+            "max_pick_trial1_tokens": max_trial1,
+            "max_pick_memory_on_tokens": max_memory,
+            "trial1_tokenizer_ratio_mean": round(sum(ratios) / len(ratios), 4),
+            "trial1_tokenizer_ratio_min": round(min(ratios), 4),
+            "trial1_tokenizer_ratio_max": round(max(ratios), 4),
+            "sweep1_recorded_max_tokens": SWEEP1_PROMPT_MAX_TOKENS,
+            "ratio_vs_sweep1_recorded_max": round(max_memory / SWEEP1_PROMPT_MAX_TOKENS, 4),
+            "ctx_headroom_tokens": CTX - max_pick,
+            "all_pick_prompts_fit_ctx": measured["all_fit_ctx"],
+            "prompt_texts_identical_to_sweep1": all(row["prompt_texts_identical"] for row in rows),
+            "interpretation": ("the trial-1 pick/prompt comparison is on identical prompt text (SHA-256-equal); the "
+                               "memory-on pick prompt is this unit's declared 11-record fixture, so the comparison "
+                               "against the recorded 1,345-token maximum is a scale check, not a per-text identity"),
+        },
+    }
+
+
+def _prompt_report(measured: dict, comparison: dict) -> str:
+    lines = ["# S2-C3b prompt-length re-measurement (ENGINEERING_ONLY)", "",
+             f"Generated {_utc()}. Pick tokenizer via the owned llama-server `/apply-template` + `/tokenize`; "
+             f"context {CTX}.", "",
+             "| node | sweep-1 trial-1 tokens | pick trial-1 tokens | ratio | sweep-1 max (memory on) | "
+             "pick memory-on tokens |", "|---|---|---|---|---|---|"]
+    for row in comparison["per_node"]:
+        lines.append(f"| {row['node']} | {row['sweep1_trial1_prompt_tokens']} | "
+                     f"{row['pick_trial1_rendered_prompt_tokens']} | {row['trial1_tokenizer_ratio']} | "
+                     f"{row['sweep1_max_prompt_tokens']} | {row['pick_memory_on_rendered_prompt_tokens']} |")
+    summary = comparison["summary"]
+    lines += ["", f"- max pick prompt: **{summary['max_pick_prompt_tokens']}** tokens "
+                  f"(headroom {summary['ctx_headroom_tokens']} of {CTX}); fits: {summary['all_pick_prompts_fit_ctx']}",
+              f"- trial-1 tokenizer ratio (pick/sweep-1): mean {summary['trial1_tokenizer_ratio_mean']}, "
+              f"range {summary['trial1_tokenizer_ratio_min']}-{summary['trial1_tokenizer_ratio_max']}",
+              f"- recorded sweep-1 maximum (memory on, W=20, rerun-2, 7B tokenizer): "
+              f"{summary['sweep1_recorded_max_tokens']}; pick memory-on fixture "
+              f"{summary['max_pick_memory_on_tokens']} (ratio {summary['ratio_vs_sweep1_recorded_max']})",
+              "", f"Sweep-1 record: `{comparison['sweep1_record']['liveness_path']}` "
+                  f"(liveness.json {comparison['sweep1_record']['liveness_sha256'][:12]}...).", ""]
+    return "\n".join(lines)
+
+
+# ------------------------------------------------------------------ job persistence / seal
+def _utc() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _persist(record: dict, record_path: Path) -> None:
+    record_path.write_text(json.dumps(record, indent=1) + "\n")
+    c2._tar_dir(Path("out"), Path("out.tar"))
+    c2._tar_dir(Path("work"), Path("work.tar"))
+    c2._write_sums(Path("."))
+
+
+def _stop_with_evidence(record: dict, record_path: Path, message: str) -> None:
+    """Persist the record + out/work tars + SHA256SUMS before raising (S2-C2 round-5 pattern)."""
+    record["stop"] = message
+    record["finished_utc"] = _utc()
+    _persist(record, record_path)
+    raise Stop(message)
+
+
+def _write_prompt_outputs(measured: dict, comparison: dict | None) -> None:
+    out = Path("out")
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "s2_c3b_prompt_lengths.json").write_text(json.dumps(measured, indent=1) + "\n")
+    if comparison:
+        (out / "s2_c3b_sweep1_comparison.json").write_text(json.dumps(comparison, indent=1) + "\n")
+        (out / "S2_C3B_PROMPT_REPORT.md").write_text(_prompt_report(measured, comparison))
+
+
+def run_liveness_job(spec_path: Path) -> dict:
+    validated = validate_spec(load_spec(Path(spec_path)))
+    s = validated["spec"]
+    out, work = Path("out"), Path("work")
+    out.mkdir(parents=True, exist_ok=True)
+    work.mkdir(parents=True, exist_ok=True)
+    record_path = Path("job_record.json")
+    record = {
+        "schema": RECORD_SCHEMA, "kind": "liveness", "run_id": validated["run_id"],
+        "chunk_id": validated["chunk_id"], "label": validated["label"],
+        "image_digest": s["image"]["digest"], "model_sha256": s["model"]["sha256"],
+        "paper_commit": s["paper"]["commit"], "harness_commit": s["harness"]["commit"],
+        "b2_audits": "none (no B.2 audits; audit seeds 7001-7010 untouched)",
+        "audit_seeds_touched": [],
+        "output_use": "ENGINEERING: never enters a label table, training or selection; not evidence",
+        "manager_settings": {"ctx": CTX, "np": NP, "ngl": NGL, "thinking": "off", "kv_cache": "q8_0",
+                             "cache_prompt": "false (LLAMACPP_CACHE_PROMPT/LLAMACACHE_PROMPT unset)",
+                             "temperature": "0.2 (D26 manager seed)"},
+        "non_numeric_differences": c2.non_numeric_differences(s["server"]["extra_args"]),
+        "seed_plan": validated["seed_check"],
+        "spec_liveness": s["liveness"],
+        "spec_prompt_measurement": {"variants": list(PROMPT_VARIANTS),
+                                    "sweep1": s["prompt_measurement"]["sweep1"],
+                                    "max_prompt_tokens_stop": s["prompt_measurement"]["max_prompt_tokens_stop"]},
+        "started_utc": _utc(),
+    }
+    record["image"] = c2.image_identity(s)
+    record["host"] = c2.host_identity()
+    record["gpu"] = c2.gpu_identity(s["requirements"]["gpu_device_name"])
+    record["cpu"] = c2.cpu_identity()
+
+    paper_dir, harness_dir = Path("paper"), Path("harness")
+    c2.clone_at(s["paper"]["repo"], s["paper"]["commit"], paper_dir)
+    c2.clone_at(s["harness"]["repo"], s["harness"]["commit"], harness_dir)
+    try:
+        sweep1 = verify_sweep1_record(paper_dir)
+    except Stop as exc:
+        _stop_with_evidence(record, record_path, str(exc))
+    record["sweep1_record"] = {"path": sweep1["path"], "liveness_sha256": sweep1["liveness_sha256"],
+                               "manifest_sha256": sweep1["manifest_sha256"]}
+    try:
+        seed_check = check_seed_disjointness(s, sweep1_manifest=sweep1["manifest"])
+        verify_sweep1_prompt_record(paper_dir)
+    except Stop as exc:
+        _stop_with_evidence(record, record_path, str(exc))
+    record["seed_plan"] = seed_check
+
+    record["model"] = c2.fetch_model(s["model"], Path("model.gguf"))
+    server = c2.start_server(s, Path("model.gguf"), Path("llama-server.log"))
+    try:
+        record["server"] = {key: server[key] for key in
+                            ("pid", "base_url", "build", "offloaded_layers", "total_layers", "cuda_lines", "log")}
+        argv = liveness_argv(s)
+        env = dict(os.environ, PYTHONPATH=str(paper_dir.resolve()),
+                   AR_HARNESS_ROOT=str(harness_dir.resolve()),
+                   LLAMACPP_BASE_URL=server["base_url"], OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
+                   MKL_NUM_THREADS="1", PYTHONDONTWRITEBYTECODE="1")
+        env.pop("LLAMACPP_CACHE_PROMPT", None)
+        env.pop("LLAMACACHE_PROMPT", None)
+        started = time.time()
+        result = subprocess.run(argv, cwd=str(paper_dir.resolve()), env=env, capture_output=True, text=True)
+        record["liveness_run"] = {"argv": argv, "returncode": result.returncode,
+                                  "seconds": round(time.time() - started, 1),
+                                  "stdout_tail": result.stdout[-4000:], "stderr_tail": result.stderr[-4000:]}
+        if result.returncode != 0:
+            _stop_with_evidence(record, record_path,
+                                f"STOP: r1.liveness rc={result.returncode}; outputs kept")
+        try:
+            report = json.loads((out / "liveness.json").read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            _stop_with_evidence(record, record_path, f"STOP: cannot read out/liveness.json: {exc}")
+        try:
+            verdict = evaluate_liveness(report)
+        except Stop as exc:
+            _stop_with_evidence(record, record_path, str(exc))
+        record["liveness_results"] = verdict
+        if not verdict["pass"]:
+            _stop_with_evidence(record, record_path,
+                                f"STOP: only {verdict['live_nodes']}/{len(LIVENESS_NODES)} nodes passed D28 "
+                                f"liveness (< {verdict['min_live_nodes']}): {verdict['failed_nodes']}; "
+                                "the author decides, no node is dropped silently")
+
+        try:
+            prompt_set = build_prompt_texts(harness_dir, s)
+            measured = measure_prompts(server["base_url"], s, prompt_set)
+        except Stop as exc:
+            _stop_with_evidence(record, record_path, str(exc))
+        record["prompt_measurement"] = {"prompt_set_sha256": prompt_set["prompt_set_sha256"],
+                                        "builder": prompt_set["builder"],
+                                        "builder_file_sha256": prompt_set["builder_file_sha256"],
+                                        "max_tokens": measured["max_tokens"],
+                                        "all_fit_ctx": measured["all_fit_ctx"],
+                                        "prompts": [{key: row[key] for key in
+                                                     ("node", "variant", "prompt_seed", "user_text_sha256",
+                                                      "user_text_tokens", "rendered_prompt_sha256",
+                                                      "rendered_prompt_tokens", "template_prefix_tokens",
+                                                      "fits_ctx")} for row in measured["prompts"]]}
+        if not measured["all_fit_ctx"]:
+            _write_prompt_outputs(measured, None)
+            _stop_with_evidence(record, record_path,
+                                f"STOP: a re-measured prompt does not fit ctx {CTX} "
+                                f"(max {measured['max_tokens']} tokens)")
+        try:
+            comparison = compare_with_sweep1(paper_dir, measured)
+        except Stop as exc:
+            _stop_with_evidence(record, record_path, str(exc))
+        record["sweep1_comparison"] = comparison
+        _write_prompt_outputs(measured, comparison)
+    finally:
+        c2._kill(server["proc"])
+    record["finished_utc"] = _utc()
+    _persist(record, record_path)
+    return record
+
+
+# ------------------------------------------------------------------ seal
+def seal(job_output: Path, run_id: str, chunk_id: str) -> dict:
+    """Operator-side sealing: C3b record guards, then the reviewed S2-C2 seal step (no overwrite)."""
+    src = Path(job_output).resolve()
+    record_file = src / "job_record.json"
+    if not record_file.is_file():
+        raise Stop("STOP: job output has no job_record.json")
+    record = json.loads(record_file.read_text())
+    if record.get("schema") != RECORD_SCHEMA:
+        raise Stop(f"STOP: job record schema must be {RECORD_SCHEMA}")
+    if record.get("kind") != "liveness":
+        raise Stop("STOP: job record kind must be liveness")
+    if record.get("label") != "ENGINEERING_ONLY":
+        raise Stop("STOP: S2-C3b seals ENGINEERING_ONLY records only")
+    if record.get("audit_seeds_touched"):
+        raise Stop("STOP: job record claims touched audit seeds")
+    receipt = c2.seal(job_output, run_id, chunk_id)
+    receipt.update({"schema": SEAL_RECEIPT_SCHEMA, "unit": "S2-C3b", "record_schema": RECORD_SCHEMA})
+    target = Path(receipt["sealed_path"])
+    (target / "SEAL_RECEIPT.json").write_text(json.dumps(receipt, indent=1) + "\n")
+    return receipt
+
+
+# ------------------------------------------------------------------ CLI
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    validate = sub.add_parser("validate", help="validate a spec (fail-closed)")
+    validate.add_argument("spec")
+    seeds = sub.add_parser("seeds", help="print the seed-disjointness check for a spec")
+    seeds.add_argument("spec")
+    run = sub.add_parser("run", help="run the D28 liveness job + prompt re-measurement (in the HTCondor sandbox)")
+    run.add_argument("spec")
+    seal_parser = sub.add_parser("seal", help="seal a transferred job output (operator side, /ceph)")
+    seal_parser.add_argument("job_output")
+    seal_parser.add_argument("--run-id", required=True)
+    seal_parser.add_argument("--chunk-id", required=True)
+    args = parser.parse_args(argv)
+    if args.cmd == "validate":
+        validated = validate_spec(load_spec(Path(args.spec)))
+        print(json.dumps({"ok": True, "run_id": validated["run_id"], "chunk_id": validated["chunk_id"],
+                          "label": validated["label"],
+                          "prompt_measurement_disjoint":
+                              validated["seed_check"]["prompt_measurement_disjoint"],
+                          "liveness_disjoint_from_sweep2_instance_seeds":
+                              validated["seed_check"]["liveness_disjoint_from_sweep2_instance_seeds"]}))
+        return 0
+    if args.cmd == "seeds":
+        validated = validate_spec(load_spec(Path(args.spec)))
+        print(json.dumps(validated["seed_check"], indent=1))
+        return 0
+    if args.cmd == "run":
+        record = run_liveness_job(Path(args.spec))
+        print(json.dumps({"ok": True, "label": record["label"], "host": record["host"]["fqdn"],
+                          "gpu": record["gpu"]["name"], "live_nodes": record["liveness_results"]["live_nodes"],
+                          "max_prompt_tokens": record["prompt_measurement"]["max_tokens"]}))
+        return 0
+    print(json.dumps(seal(Path(args.job_output), args.run_id, args.chunk_id), indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except (Stop, c2.Stop) as exc:
+        print(str(exc), file=sys.stderr)
+        raise SystemExit(2) from None
