@@ -10,7 +10,13 @@ AI-assisted, read-only: no host write, no run, no process signalled; nothing del
 
 - Host `TASL-7`; RTX 4090 24,564 MiB, **driver 580.178.04**, 236 MiB used, 0 %; no GPU compute app.
 - `~/r1_locks/gpu0.lock` **FREE**; no `trackx_evidence.active`, no `trackp_evidence.active`,
-  no `trks_drill.active`, no tmux server; no experiment/Track S/Track P process.
+  no `trks_drill.active`; no experiment/Track S/Track P process and no GPU compute app.
+  **Tmux is not empty host-wide:** the operator's default socket has no server, but there are other
+  users' tmux servers/sessions (user `tianyu`, pid 934891 since 18 Oct, three panes) and the preserved
+  `dowling` B1 handover session on its own socket
+  (`/home/dowling/r1_b1_engineering/b1_handover_6835_20261108_a/tmux.sock`, `b1_6835_20261108_a`, pid
+  1570627); these are not ours and were not touched. The Track P run only needs the GPU lease and the
+  process/GPU census below.
 - Disk `/home/dowling`: 1.9 T, **524 G free** (71 % used) — above the Track P runbook's ≥150 GB.
 - Track P tree `/home/dowling/r1_trackp`: `Agent_paper_B` @ `b9ad6f8f` on branch `trackp-20261026`, clean;
   `autoresearch_harness` @ `897d83c8efa364ec2fdd37288241cc42e01d7274`, clean; `venvs/trackp-gpu`
@@ -77,9 +83,10 @@ R1-E0-PROTOCOL two-model DRYRUN and not a cluster/Q-TORCH gate.
 | Lease + empty compute census + Track P evidence marker | Pass now (lease free, no compute, no marker); marker must be set for the run via `~/r1_locks/bin/trackp-evidence` |
 | Authorization notes | 27 Oct note + 4 Nov amendment present; pins, STOPs, 60 GPU-h cap (incl. attempt 1), 45-h lease STOP (8.68 h left) |
 | Code pin `trackp-20261026` @ `b9ad6f8f`, clean; harness `897d83c8` clean | PASS |
-| **Code delta for option 3** | **OPEN**: `exam_run.probes()` always runs the descriptive long A3 levels when `--budget` is used (`r1/c3/train/exam_run.py:274–280`); a reviewed switch is needed to skip the 2k/8k rows, and the amendment then requires a DRYRUN-first if code changed |
+| **Code delta for option 3** | **OPEN**: at the pinned code `b9ad6f8f`, `r1/c3/train/exam_run.py:290–295` runs the descriptive long A3 levels after the budget rows when `--budget` is used (the line numbers in the earlier draft were from a different branch HEAD, not the pin); a reviewed flag/tests-only delta with parent `b9ad6f8f` is needed, and the amendment then requires a DRYRUN-first if code changed |
 | **M13 template-version inventory** | **OPEN**: attempt-1 per-run manifests must be inspected/provided so every result can record its serialisation template version (`reports/MAC_M13_TEMPLATE_INVENTORY_20261105.md`; template pin is still `TODO_VERIFY`) |
 | **A6 probe (`exam_run.py`)** | **OPEN/ambiguous**: option 3 says A6 quantifies the template difference; A6 is only "(proposed)" in the spec and not implemented — needs its own reviewed unit or an author decision |
+| Amendment delivery | **OPEN**: the host checkout at `b9ad6f8f` contains only the 27 Oct note (`docs/r1/authorizations/trackp_p3a_20261027.md`); the 4 Nov amendment lives on `main` (`4da73306`). The plan must record the amendment sha in the run journal and have the run gate refuse unless that sha is supplied explicitly |
 | Independent review of the unit/code | **Required before execution**; then STOP 5 review recomputes slopes/rule hash and the report `TRACKP_P3A_<date>.md` is submitted |
 
 ## 6. Track P data inputs (v3/v2) — status and scope

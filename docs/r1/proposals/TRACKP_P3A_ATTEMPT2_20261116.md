@@ -1,92 +1,131 @@
-# Proposed unit — Track P P.3a attempt 2 (probes-only completion) on TASL-7 (16 November 2026)
+# Proposed units — Track P P.3a attempt 2 on TASL-7 (16 November 2026, revision 2)
 
-**Status: proposal for independent review; not executed.** Authority: `author-decisions-20261116` @
-`4da73306`; PLAN `R1-TASL7-TRACKP`, `R1-P3A-READY`, `R1-P3A-OOM-OPTION3`, `R1-P3A-BUDGET-CLOCK`,
-`R1-E0-*`, `R1-TRACKP-CHOICES`; Track P runbook Phase 5; authorizations
-`docs/r1/authorizations/trackp_p3a_20261027.md` and `trackp_p3a_amend_20261104.md`. Readiness report:
-`reports/TRACKP_TASL7_READINESS_20261116.md`.
+**Status: proposal for independent review; nothing executed.** This revision answers the round-1 review
+(`reviews/TRACKP_P3A_ATTEMPT2_REVIEW_20261116.md`, sha `5f579cdc…`, verdict NOT ACCEPTED) and splits the
+work into a **preparation unit (Unit A, no GPU)** — proposed here as the first unit for review — and a
+**run unit (Unit B)** that may start only after Unit A and the code units are accepted and the M13/A6
+dispositions exist. Authority: `author-decisions-20261116` @ `4da73306`; PLAN `R1-TASL7-TRACKP`,
+`R1-P3A-READY`, `R1-P3A-OOM-OPTION3`, `R1-P3A-BUDGET-CLOCK`, `R1-E0-*`, `R1-TRACKP-CHOICES`,
+`R1-C3-POOL`, `R1-C3-POOL-EXAM` (four-base pool), `R1-W2-3-STOP`, `R1-B2-REPAIR-SCOPE-ACK`, `R1-BX-D8`;
+authorizations `trackp_p3a_20261027.md` + `trackp_p3a_amend_20261104.md`; Track P runbook Phase 5;
+attempt-1 OOM diagnosis `reviews/TRACKP_P3A_OOM_DIAGNOSIS_20261031.md` (**UNCLEAR — STOP**, options 1–3;
+option 3 is a **frozen-execution change**, not the environmental-only rerun); M13 inventory
+`reports/MAC_M13_TEMPLATE_INVENTORY_20261105.md`.
 
-## 1. Why this is the next unit
+## 0. Attempt-1 facts (read-only; independently re-verified)
 
-P.3a attempt 1 (EVIDENCE, 27–29 Oct) is preserved at
-`/home/dowling/r1_trackp/runs/p3a_operator_20261027` (journal 81 lines). It completed the short
-Kev-0.8B DRYRUN, and E0 screen/select/final/hard/native for all four bases; it completed E6 probes for
-`kev-0.8b`, `kev-4b` and `qwen3.5-0.8b-base` (report.json shas `f04df4e1…`, `fae7c9cb…`, `73894af6…`)
-and **STOPped** on the `qwen3.5-4b-base` probes unit at 2026-10-29T01:25:17Z with a CUDA OOM in the
-descriptive A3 2k/8k history-length loop; total `gpu_seconds_total = 130745.3789889291` = **36.318 GPU-h**
-of the 45-h lease STOP and the 60-h cap (attempt 1 included).
+- Root `/home/dowling/r1_trackp/runs/p3a_operator_20261027`; journal 81 lines; E0
+  screen/select/final/hard/native completed for all four bases (the four-base pool is `R1-C3-POOL` /
+  `R1-C3-POOL-EXAM`); E6 probes completed for `kev-0.8b` (`report.json` `f04df4e1…`), `kev-4b`
+  (`fae7c9cb…`), `qwen3.5-0.8b-base` (`73894af6…`).
+- The `qwen3.5-4b-base` **probes unit is the interrupted unit**: CUDA OOM in the descriptive A3 2k/8k
+  loop (`exam_run.py:290–295` at the pin; 1.49 GiB request, 21.94 GiB in use), STOP at
+  2026-10-29T01:25:17Z; `gpu_seconds_total = 130745.3789889291` = **36.318161 h**; **8.681839 h** remain
+  of the 45-h lease STOP, and the 60-h cap includes attempt 1. Attempt 1 is preserved and is not
+  overwritten or reused.
+- **Completed attempt-1 units are not re-run** (E0/final/hard/native for all four bases; probes for the
+  other three bases). Only the **interrupted 4b probes unit** is re-run, in a **new root**.
 
-The author's **option 3** (`R1-P3A-OOM-OPTION3`, amended authorization) preserves attempt 1, omits the
-descriptive 2k/8k A3 rows on any host, and authorizes the **remaining P.3a evidence runs**. The only
-remaining P.3a evidence is the **`qwen3.5-4b-base` E6 probes** from the retained attempt-1 `final/saved`.
-No P.3b/P.4/P.5/P.6 authorization exists.
+## 1. Unit A (first for review; no GPU) — preparation, M13/order, amendment delivery, code units
 
-## 2. Two reviewed parts
+### 1a. Attempt-1 inventory + M13 template/order determination (read-only local artifact export)
 
-### 2a. Code delta (separate code review required before the run)
+Export to a repo evidence directory (hashes in a `SHA256SUMS`; read-only on TASL-7): every attempt-1
+per-run `manifest.json` (all bases/units, including the three probes manifests and the final/native/hard
+manifests), the attempt-1 journal/lease log, and the pinned source files that define the rendering:
+`b9ad6f8f:r1/c3/train/{types.py,serialize.py,model.py,exam_run.py}`, `r1/scripts/trackp.py`,
+`r1/scripts/trackp_p3a_guarded.py`. A **local reviewer** (not the operator) inspects them and records:
+(i) the exact attempt-1 paper commit and model family; (ii) whether attempt 1 was history-first or
+proposal-first per family wrapper (M13's actual question); (iii) a concrete **template-version recording
+mechanism** for attempt 2 (a manifest field with the version string, sourced from the pinned
+`PROMPT_VERSION`/wrapper order, plus the attempt-1 order; results are recorded with the attempt-1
+version, never re-labelled); (iv) the A6 question (A6 is only "(proposed)" in the spec and is **not
+implemented** in `exam_run.py`; option 3 says A6 quantifies the difference — the author/coordinator must
+either authorize A6 as a separate reviewed unit or record that it is deferred and the limitation
+disclosed). Unit A is complete only when this record exists; the run cannot start before it.
 
-`r1/c3/train/exam_run.py:274–280` always executes the descriptive long A3 levels when `--budget` is used.
-Option 3 needs a switch that, for this run only, executes **only** the A3 specified rows
-(0 / 25 / 50 / 100 % of the remaining token budget at the 1,024-token limit) and omits the 2k/8k
-descriptive rows. Proposed minimal change: a new explicit CLI/config flag (e.g. `--a3-short-rows`) that
-is refused unless the amendment is cited; tests covering (i) the flag produces only the four specified
-rows, (ii) without the flag behaviour is byte-identical to the current code, (iii) the 2k/8k rows are
-never attempted when the flag is set. The delta, tests and pinned commit are submitted to an independent
-code review; the amendment's **DRYRUN first if the code changed** rule then requires a short Kev-0.8B
-DRYRUN in the new attempt root before the probes run.
+### 1b. Amendment delivery/record (no host checkout change)
 
-### 2b. Run plan (this unit)
+The host checkout at `b9ad6f8f` has only the 27 Oct note; the 4 Nov amendment is on `main` at
+`4da73306`. The run gate must not depend on a file that is absent. Unit A records the amendment bytes'
+sha256 (from `main:docs/r1/authorizations/trackp_p3a_amend_20261104.md`) and specifies that the runner
+takes `--authorization-amend-sha256 <sha>` and refuses unless it matches; the journal records it. The host
+checkout stays clean at `b9ad6f8f`; no merge of `main`, no code change for this.
 
-- **Host:** TASL-7 only, user `dowling`; `flock ~/r1_locks/gpu0.lock`; empty compute census; TASL-7
-  host-equivalence PASS (`reports/TRACKP_TASL7_EQUIVALENCE_20261026.md`); driver 580.178.04; no marker.
-- **Pins:** paper `trackp-20261026` @ `b9ad6f8f` clean (or the reviewed code-delta commit on top of it,
-  recorded); harness `897d83c8` clean; venv freeze matches
-  `docs/r1/reports/tasl7_phase2_20261026/pip_freeze_trackp-gpu_tasl7.txt`; `e0_v1` sha `4f4db29b…`;
-  rule `p3_rule_v2.yaml` sha `8c0ef908…`; attempt-1 inputs read-only.
-- **New root:** `~/r1_trackp/runs/p3a_attempt2_<UTC>/` (must not exist). Attempt 1 is read-only; nothing
-  in it is overwritten.
-- **Marker:** `~/r1_locks/bin/trackp-evidence begin …` before the run; `end` after; the marker helper
-  (sha `f457a04e…`) is installed and matches the committed script.
-- **DRYRUN:** short Kev-0.8B DRYRUN under the reviewed code delta, in the new root, before the probes.
-- **Probes:** one GPU-producing command:
-  `python r1/scripts/trackp.py probes --base qwen3.5-4b-base --head-form linear12 --budget --n-probe 100
-  --load <attempt-1-root>/EVIDENCE/qwen3.5-4b-base/final/saved --evidence EVIDENCE
-  --run-dir <new-root>/EVIDENCE/qwen3.5-4b-base/probes` (with the A3-short flag), plus the DRYRUN in the
-  same new root.
-- **Budget:** lease accounting includes attempt 1: **36.318 h used, 8.682 h left** of the 45-h STOP; the
-  60-h cap includes attempt 1. Projected probes are <1 GPU-h (prior probe leases 68–148 s); if the
-  projection would cross 45 h, STOP before starting (R1-P3A-BUDGET-CLOCK).
-- **Outputs:** `journal.jsonl`, `gpu_lease_log.jsonl`, per-unit `manifest.json`/`report.json`, the
-  attempt-2 probes report; the P.3a report `docs/r1/reports/TRACKP_P3A_<date>.md` + appendix figure data;
-  every result records its serialisation/template version (amendment condition).
-- **STOPs:** any pin/hash/freeze mismatch; hostname/reboot/driver mismatch; an owner process, marker or
-  foreign GPU job; OOM/CPU fallback persists; non-finite metric; budget rule; any change to the protocol,
-  rule, e0 set or A3 specification; attempts to run 2k/8k rows; attempts to re-run attempt-1 units or
-  another base's probes. STOP = preserve, report, no retry/recovery.
+### 1c. Two code units (each separately reviewed before Unit B)
 
-## 3. Gates still open before execution
+1. **A3-short execution delta** on a new branch with parent **`b9ad6f8f`**, flag/tests-only diff in `r1/`:
+   a flag that makes the budget branch of `exam_run.probes()` run only A3's specified rows (0/25/50/100 %
+   of the remaining budget at 1,024 tokens) and **not** the descriptive 2k/8k levels at
+   `exam_run.py:290–295`; tests: flag-on produces exactly the four specified rows; flag-off is
+   byte-identical to the current code; no 2k/8k attempt with the flag. **No other change** (no removal of
+   the pinned non-finite STOPs, no W2-3/v3/v2/M13/order changes, no other file changes). The delta's
+   reviewed commit sha is recorded.
+2. **Probes-only runner/preflight/journal/budget unit** (the round-1 BLOCKING-1): a reviewed script
+   derived from the attempt-1 guarded supervisor (`trackp_p3a_guarded.py`), not the bare
+   `trackp.py probes` command, with at least:
+   - `verify_live_pins`: paper `b9ad6f8f` (or the reviewed A3-short commit on top), clean; harness
+     `897d83c8`, clean; `e0_v1` sha `4f4db29b…`, `p3_rule_v2.yaml` sha `8c0ef908…`, `trackp_portal.json`
+     unchanged from the approved config; run venv freeze vs the TASL-7 pin; model registry reverified;
+     hostname TASL-7; boot id; driver 580.178.04; disk; boot/uptime snapshot;
+   - lease acquire (`flock ~/r1_locks/gpu0.lock`) and an **empty GPU-compute census**; the Track P
+     evidence marker (`~/r1_locks/bin/trackp-evidence`, sha `f457a04e…`) begin/end; no other experiment
+     process;
+   - a **new root** `~/r1_trackp/runs/p3a_attempt2_<UTC>/` (must not exist), per-unit directories,
+     `journal.jsonl` + `gpu_lease_log.jsonl` + per-unit `manifest.json` (with the attempt-1 input
+     `model_files_sha256` binding for the loaded `final/saved`, template version, code pin, config/e0/rule
+     hashes, host/driver/boot, authorization note + amendment sha, argv);
+   - the **budget guard**: reads attempt 1's 130745.3789889291 s and the 45-h lease STOP, computes the
+     projection before each GPU unit, refuses if the projection crosses 45 h, and accounts the total
+     toward the 60-h cap;
+   - a **DRYRUN-first** (short Kev-0.8B) that exercises the **changed** `probes()` A3 path (not merely
+     e0), with its cost recorded, before the 4b probes;
+   - fail-closed STOPs for every mismatch; no retry; preserve outputs.
+   The runner's preflight is also used by the run; no bare `trackp.py probes` command is used.
 
-| Gate | Owner / record | Status |
-|---|---|---|
-| Host-equivalence | `TRACKP_TASL7_EQUIVALENCE_20261026.md` + review | PASS |
-| Env freeze/driver/disk/lease | readiness report §1–2 | PASS at check |
-| Authorization notes | 27 Oct + 4 Nov amend | present |
-| Code pin clean; harness clean | `b9ad6f8f` / `897d83c8` | PASS |
-| **A3-short code delta** | new code unit + independent review | **OPEN** |
-| **M13 template-version inventory** | `MAC_M13_TEMPLATE_INVENTORY_20261105.md` | **OPEN** — attempt-1 per-run manifests must be inspected/provided; template pin still `TODO_VERIFY` |
-| **A6 probe** | spec `§5.6` / `exam_run.py` | **OPEN/ambiguous** — option 3 says A6 quantifies the difference; A6 is only "(proposed)" and unimplemented; needs a reviewed unit or author decision |
-| Independent review of this plan | this document | required before execution |
-| STOP 5 review of the P.3a report | after run | required |
+### 1d. A6 disposition request
 
-## 4. Must not
+State the request to the author/coordinator: A6 is unimplemented; option 3 expects it. Either (i) authorize
+a separate reviewed A6 unit (scope/time) as part of the attempt-2 record, or (ii) record that A6 is
+deferred, the long-context rows are omitted under `R1-P3A-OOM-OPTION3`, and the P.3a report discloses both
+limitations. Unit B cannot start until this disposition exists.
 
-- No P.3b/P.4/P.5/P.6, no labels/seeds 7006–7010, no real tables, no sweep-2 tables (D8 lock); no change
-  to `p3_rule_v2`, `e0_v1`, thresholds, A3 spec or protocol; no re-run of attempt-1 screen/select/final/
-  hard/native/probes or another base; no 2k/8k rows; no other host; no Jev/DeepSeek/API; no file deletion
-  (move aside only); no claim of acceptance; no merge/push to `main`.
+### 1e. Preflight checklist recorded (no run)
 
-## 5. Review and execution record
+TASL-7: hostname/user; GPU idle (236 MiB/0 %, no compute app); driver 580.178.04; disk 524 G; lease free
+(no `/proc/locks` entry); no `*.active` marker; operator default tmux socket has no server, **but other
+users' tmux servers/sessions exist** (`tianyu` pid 934891 with three panes; the preserved `dowling`
+`b1_6835_20261108_a` session on its own socket, pid 1570627) — recorded, never touched; P.3a attempt-1
+inputs read-only and hash-verified. No GPU job in Unit A.
 
-An independent reviewer checks these exact bytes, the code delta, the command, the budget accounting and
-the STOP list; on acceptance the unit is executed under the operator runbook, the outputs are preserved,
-the P.3a report is written, and STOP 5 review follows. No execution before acceptance.
+## 2. Unit B (run unit; starts only after Unit A accepted + both code units accepted + M13/A6 dispositions + preflight)
+
+One GPU-producing session, TASL-7 only:
+1. New root `~/r1_trackp/runs/p3a_attempt2_<UTC>/`; marker begin; journal/lease log start.
+2. DRYRUN: short Kev-0.8B probes under the reviewed code path (changed A3) in the new root; verify it
+   exercises the A3 path and record cost.
+3. EVIDENCE: `qwen3.5-4b-base` probes only, from attempt-1 `final/saved`; A3 specified rows under the
+   A3-short flag; A4; A5 descriptive; A1/A2 unchanged; template version recorded; no 2k/8k rows.
+4. Budget: attempt 1 (36.318 h) + this run; refuse if projected >45 h; 60-h cap includes attempt 1.
+5. Outputs: per-unit manifests/reports, attempts' journal/lease log; the P.3a report
+   `docs/r1/reports/TRACKP_P3A_<date>.md` + appendix data; STOP 5 review (reviewer recomputes slopes/
+   rule hash).
+6. STOPs: pin/freeze/config/e0/rule/registry mismatch; hostname/boot/driver mismatch; owner process,
+   marker or foreign GPU job; OOM/CPU fallback; non-finite metric; budget rule; any protocol/A3/order
+   change; attempted 2k/8k rows; attempted re-run of completed units. STOP = preserve, report, no retry.
+
+## 3. Must not
+
+- No P.3b/P.4/P.5/P.6; no labels/seeds 7006–7010; no real or sweep-2 tables (D8 lock); no change to
+  `p3_rule_v2`, `e0_v1`, thresholds or the A3 spec; no W2-3/v3/v2/M13/order changes on the Track P code
+  pin; no removal of the pinned non-finite STOPs; no merge of `main` into the host checkout; no other
+  host; no Jev/DeepSeek/API; no deletion (move aside only); no claim of acceptance; no push to `main`;
+  **no re-run of completed attempt-1 units** (only the interrupted 4b probes unit is re-run, in a new
+  root).
+
+## 4. What the reviewer should decide now
+
+Unit A: is the preparation scope complete and sufficient (inventory/M13, amendment record, code-unit
+requirements, A6 request, preflight)? Unit B is not for acceptance yet; it is included to show the
+intended run and its gates. Execution of either unit waits for the independent review; Unit B additionally
+waits for the two code reviews and the M13/A6 dispositions.
