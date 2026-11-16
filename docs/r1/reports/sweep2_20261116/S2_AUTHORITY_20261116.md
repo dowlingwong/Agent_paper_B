@@ -79,3 +79,23 @@ G.0 census.
 - **S2-C3b liveness pass counts as the pre-launch liveness gate only if** its image digest, paper commit, harness
   pin and server settings are the launch's (the unit now records/validates `launch_binding`).
 - R1-SWEEP2-SETTINGS (5)'s 60 GPU-h / 48 h projection cap is unchanged.
+
+## Update — `main` = `16185b0b` (17 Nov 2026)
+
+- **R1-SWEEP-HOST-L40S-SITES:** deepthought2 L40S and NEMO2 L40S are the same GPU model; label runs may use either
+  site. The job requirements now pin the **GPU model (L40S) only** (no site, no CPU family/model); each campaign
+  records site/node/GPU name+UUID/driver/CPU model; both CPU models are allowed and disclosed (job record
+  `site`, `cpu`, `site_disclosure`; runtime `cpu_identity` records any model).
+- **R1-SWEEP2-RESOURCES:** disk and memory = re-measured smoke peak × 1.4 (round up); walltime = 1.5 × the
+  re-measured chunk (ceil), implemented in `s2_c4_pilot.layout` and enforced by `walltime_s == ceil(1.5 *
+  layout_measured_chunk_s)` in the spec validator.
+- **R1-SWEEP2-LAYOUT-AMEND / S2-M1 v4 2h:** no resume path (prior chunk → STOP; killed/non-clean `NumJobStarts > 1`
+  rerun whole in a new dir, old moved aside, disclosed; `periodic_hold = (NumJobStarts > 1)` in the JDL); thinking
+  kwargs byte-identical to the exam (`{"enable_thinking":false}`, no extra spaces); chunk over walltime = STOP;
+  STOP causes take precedence over a rerun; label-conditional `output_use` (EVIDENCE chunks do not carry the
+  ENGINEERING text).
+- **R1-S2C3B-LAUNCH:** liveness must be rerun at the launch commit; the C3b `launch_binding` records image digest,
+  paper commit, harness pin and server-settings sha for the launch checklist (L40S site changes do not affect it).
+- **R1-E1-OPENML-AMEND:** the offline mechanism is being built against the amended identity chain (data id +
+  sweep-1 loaded-data fingerprint recomputed equal + ARFF md5 == OpenML md5_checksum + unchanged per-file SHA-256
+  equal to `OFFLINE_MECHANISM_AUDIT.json`; worker no-network), then e1 on all 16 cases after independent review.
