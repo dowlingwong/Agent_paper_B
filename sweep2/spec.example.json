@@ -40,7 +40,7 @@
   "ctx": 16384,
   "n_gpu_layers": 99,
   "port": 18110,
-  "expected_build": "version: 0.7.0-dev (build 11669, commit 620d2225c)",
+  "expected_build": "0.7.0-dev (build 11669, commit 620d2225c)",
   "extra_args": [
    "--jinja",
    "--chat-template-kwargs",

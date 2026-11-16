@@ -392,7 +392,9 @@ def start_server(spec: dict, model_path: Path, log_path: Path) -> dict:
     except Stop:
         _kill(proc)
         raise
-    if spec["server"]["expected_build"] not in build:
+    expected = spec["server"]["expected_build"]
+    build_ok = build == expected or build == "version: " + expected or expected.endswith(build)
+    if not build_ok:
         _kill(proc)
         raise Stop(f"STOP: llama-server build {build!r} != pinned {spec['server']['expected_build']!r}")
     try:
