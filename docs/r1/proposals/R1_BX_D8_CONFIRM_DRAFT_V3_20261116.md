@@ -11,12 +11,13 @@
 
 ## 1. The row (path B, filled)
 
-Gate v3 is `r1/c3/gate.py` @ `61e8aed79474d11b477132a36a3356714551db60` on `mac-d8-gate-v3-20261116`, SHA-256
-`26de7381e653045594fbb74e88b4263848dc5be7feefff8de9400b56aeb02ed0`. Its review is recorded in
-`reviews/M11_D8_GATE_V3_REVIEW_20261116.md`, and its report is `reports/M11_D8_GATE_V3_20261116.md`.
+Gate v3 is `r1/c3/gate.py` @ `6aa9985c5069c67ab580e19c0d02898ae2c6686d` on `mac-d8-gate-v3-20261116`, SHA-256
+`ffb70d7af9b8238107a4eb5621fc20fadd9f8ccd689edb0b2e33b877737434ee`. Its independent review is
+recorded in `reviews/M11_D8_GATE_V3_REVIEW_20261116.md` (accepted in round 1 at `61e8aed7`; this commit carries the
+round-1 minors, confirmed in round 2), and its report is `reports/M11_D8_GATE_V3_20261116.md`.
 
 ```
-| R1-BX-D8-CONFIRM | Gate code `r1/c3/gate.py` @ `61e8aed79474d11b477132a36a3356714551db60`, sha256 `26de7381e653045594fbb74e88b4263848dc5be7feefff8de9400b56aeb02ed0`, implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. If only some T1 nodes have labels by B.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count. For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. Existing preregistration and analysis gates remain in force. Sweep-2 label tables may be analysed from this row on. |
+| R1-BX-D8-CONFIRM | Gate code `r1/c3/gate.py` @ `6aa9985c5069c67ab580e19c0d02898ae2c6686d`, sha256 `ffb70d7af9b8238107a4eb5621fc20fadd9f8ccd689edb0b2e33b877737434ee`, implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. If only some T1 nodes have labels by B.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count. For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. Existing preregistration and analysis gates remain in force. Sweep-2 label tables may be analysed from this row on. |
 ```
 
 The text is the path-B template of the S2-M4 draft, fixed by the parser; only the commit and the SHA-256 are filled
