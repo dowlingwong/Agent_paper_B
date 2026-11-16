@@ -29,6 +29,7 @@
   }
  },
  "inputs": {
+  "b1_analysis": "07cb62de19e0797f197fc658b6043f1ad0fab1aa51e9bb36e054da514f3edffc",
   "b1_manifests": "dc5cd04dfc31758b26bb9ed5ebdec38e80ef06730b304d491c433da18b510e62",
   "b1_usage": "b5107bcbd5c106531f8176d618ac33d5e01b64bdc9083ebd5443e8b690b122f4"
  },
@@ -38,6 +39,9 @@
   "random_valid": -0.004894844999999999,
   "scripted": -0.0005868580097087378
  },
+ "numpy": "2.4.4",
+ "post_hoc": "not part of the declared X.7(c) decision; computed for the cross-proposer disclosure paragraph",
+ "python": "3.13.18",
  "resamples": 10000,
  "seed": 20261116
 }
