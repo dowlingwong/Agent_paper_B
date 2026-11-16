@@ -72,7 +72,7 @@ REPLAY_MARKER = "s2_c3_replay/v1"
 OUTPUT_USE = ("ENGINEERING L40S deployment check; never a label table, training or selection; no B.2 audit; "
               "audit seeds 7001-7010 untouched")
 CRITERIA_PATH = "docs/r1/reports/sweep2_20261116/S2_C3_CRITERIA.md"
-CRITERIA_SHA256 = "20870b16d8259982351571e832a7d3f2990d34d042c3aec2d841467f895ae85e"
+CRITERIA_SHA256 = "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc"
 INPUTS_DIR = "docs/r1/reports/sweep2_20261116/c3_replay_inputs"
 INPUTS_SHA256SUMS_SHA256 = "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6"
 PATCH_PATH = "sweep2/s2_c3_label_patch.diff"

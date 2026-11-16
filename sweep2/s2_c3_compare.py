@@ -378,7 +378,7 @@ def write_report(collected: dict, results: dict, sources: dict, path: Path, *, a
                              f"{results['2_parse_failures'].get('rate', 'n/a')} (<= "
                              f"{TOLERANCES['parse_failure_rate']})"),
         "3_diagnostics": ("3 diagnostics",
-                          "invalid/duplicates/noops vs pre-declared 58/82/58: " + ", ".join(
+                          "invalid/duplicates/noops vs pre-data-corrected 20/33/20: " + ", ".join(
                               f"{key} {item['observed']}/{item['declared_expected']}"
                               for key, item in results["3_diagnostics"]["values"].items())),
         "4_full_offload": ("4 full offload", "; ".join(

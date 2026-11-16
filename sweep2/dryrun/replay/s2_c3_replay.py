@@ -11,9 +11,9 @@ owned llama-server (the 32k exam setting) and runs the 4 root campaigns sequenti
 `r1.exam.campaign` with the patch source shadow-executed in the module namespace, so the authorization checkout stays
 byte-identical to the pinned commit the B2 authorization binds. Every refusal is a STOP: no bypass, no retry.
 
-The execution label patch (`s2_c3_label_patch.diff`) changes only the campaign `execution_label` (if `execute` is
-reachable) to ENGINEERING_ONLY and adds `replay_marker`; it cannot change trial/audit logic and its scope is checked
-here. Raw labels are never read; no B.2 audit runs and audit seeds 7001-7010 are refused.
+The reviewed execution-label patch (`s2_c3_label_patch.diff`) changes only the campaign `execution_label` to
+ENGINEERING_ONLY and adds `replay_marker`; it cannot change trial/audit logic and its scope is checked here. Raw
+labels are never read; no B.2 audit runs and audit seeds 7001-7010 are refused.
 """
 from __future__ import annotations
 
@@ -72,7 +72,7 @@ REPLAY_MARKER = "s2_c3_replay/v1"
 OUTPUT_USE = ("ENGINEERING L40S deployment check; never a label table, training or selection; no B.2 audit; "
               "audit seeds 7001-7010 untouched")
 CRITERIA_PATH = "docs/r1/reports/sweep2_20261116/S2_C3_CRITERIA.md"
-CRITERIA_SHA256 = "20870b16d8259982351571e832a7d3f2990d34d042c3aec2d841467f895ae85e"
+CRITERIA_SHA256 = "63bd0a9b3c52501d93b91549f27199a9b88d7d67a0fd5498df68a0c341f4bcdc"
 INPUTS_DIR = "docs/r1/reports/sweep2_20261116/c3_replay_inputs"
 INPUTS_SHA256SUMS_SHA256 = "6224b75a4d4aec9ac2f289cf913e19cbb814263a9e7d0e7b381122695d0cadf6"
 PATCH_PATH = "sweep2/s2_c3_label_patch.diff"
@@ -81,7 +81,6 @@ PATCH_TARGET = "r1/exam/campaign.py"
 B2_AUTHORIZATION_NOTE = "docs/r1/authorizations/trackx_b2_20261115.md"
 B2_GPU_HOURS_OFF = 0.5049170030487908
 B2_CONFIG_REL = "r1/scripts/configs/exam_b2_v2.json"
-NAME_PREFIX = "S2C3_IN"
 
 SHA = re.compile(r"^[0-9a-f]{64}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")

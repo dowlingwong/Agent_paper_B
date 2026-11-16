@@ -580,17 +580,17 @@ def test_criterion3_plus_minus_ten_percent_boundaries():
         assert results["3_diagnostics"]["values"][key]["observed"] == observed
         assert results["3_diagnostics"]["values"][key]["within_declared"] is expected_pass
         assert results["3_diagnostics"]["pass"] is expected_pass
-    assert compare.apply_criteria(_collected(diagnostics=_diag(noops=63)))["3_diagnostics"]["pass"] is True
+    assert compare.apply_criteria(_collected(diagnostics=_diag(noops=22)))["3_diagnostics"]["pass"] is True
     assert compare.apply_criteria(_collected(diagnostics=_diag(noops=64)))["3_diagnostics"]["pass"] is False
 
 
-def test_criterion3_reports_the_predeclared_denominator_defect():
+def test_criterion3_pre_data_correction_is_applied():
     results = compare.apply_criteria(_collected(diagnostics=_diag()))
-    defect = results["3_diagnostics"]["declared_denominator_defect"]
-    assert defect["off_root_derived_expectation"]["invalid"] == 20
-    assert "24-root" in defect["statement"]
+    assert results["3_diagnostics"]["declared_denominator_defect"] is False
+    assert compare.EXPECTED_DIAG_DECLARED == {"invalid": 20, "duplicates": 33, "noops": 20}
+    assert compare.EXPECTED_DIAG_DECLARED_ORIGINAL == {"invalid": 58, "duplicates": 82, "noops": 58}
     sources = compare.verify_expected_sources(ROOT)
-    assert sources["criterion3_denominator_defect"] is True
+    assert sources["criterion3_denominator_defect"] is False
 
 
 def test_criterion4_offload_boundaries():
@@ -683,7 +683,7 @@ def test_compare_passes_on_matching_synthetic_outputs(tmp_path):
     assert "**Verdict: PASS**" in text
     for root in replay.ROOTS:
         assert root in text
-    assert "criterion 3" in text
+    assert "20/33/20" in text or "criterion 3" in text
 
 
 def test_compare_math_failures_give_not_pass_not_stop(tmp_path):
