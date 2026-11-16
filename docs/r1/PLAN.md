@@ -1245,6 +1245,12 @@ After B1 run `4b31_20261112_c` stopped at the proposal-integrity guard (report `
 | R1-SWEEP2-STOP-PRECEDENCE | **STOP 优先于重跑：** chunk 若以 STOP 清单中的原因结束（如 OOM 被杀、任一门槛失败、SHA 不符、设置不符），即 STOP，保留现场，等作者决定；整 chunk 重跑只适用于无 STOP 原因的驱逐或基础设施中断（NumJobStarts > 1 等），旧目录移开，披露。 |
 | R1-TRACKP-UNITB | **授权 Track P P.3a attempt 2 的 Unit B：** probes-only，qwen3.5-4b，新 root，先 DRYRUN，GPU 预算 45 h，在 TASL-7 上用交付的代码 D `8662e359`（`trackp-p3a-code-20261116`；host 先验证 HEAD 等于 D、工作树 clean、runner sha）运行；前提是 TASL-7 网络恢复且 D 已交付；按已接受计划的 STOP 执行；A6 按 R1-TRACKP-A6-DEFER 延后并披露。依据：`ops-tasl-20261116` @ `f20f5c1c`（runner 第 3 轮独立审查接受）。 |
 
+### 17 November 2026 — C3 gate confirmation (author)
+
+| ID | Decision |
+|---|---|
+| R1-BX-D8-CONFIRM | Gate code `r1/c3/gate.py` @ `6aa9985c5069c67ab580e19c0d02898ae2c6686d`, sha256 `ffb70d7af9b8238107a4eb5621fc20fadd9f8ccd689edb0b2e33b877737434ee`, implements R1-BX-D8 with the numbers confirmed in R1-BX-PROPOSED-CONFIRM (D8); T0 and T1 pooled with tier as a stratum. If only some T1 nodes have labels by B.7, read the gate on T0 plus the available labelled T1 nodes and disclose the node count. For leave-one-suite-out, each suite must have at least one labelled T1 node, otherwise leave-one-suite-out STOPs; the aggregate gate does not STOP on it. Existing preregistration and analysis gates remain in force. Sweep-2 label tables may be analysed from this row on. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
