@@ -34,12 +34,14 @@ merged with each other or with `main`.
 |---|---|---|
 | 1 | `103f63f0` | merge `mac-int-20261107` @ `a15300ca` (+260 commits); PLAN conflict → mac-int's side, superseded in merge 4 |
 | 2 | `793d8de7` | merge `mac-m3-dryrun-path-20261114` @ `129317d1` (+71); the trial's six conflicts, resolved exactly as in trial step 1 (`d317c7db`) |
-| 3 | `84471430` | `d3ce0d52`'s `offline_eval.py` and its regression test |
+| 3 | `84471430` | `d3ce0d52`'s `offline_eval.py` and its regression test (files re-applied: `d3ce0d52` itself is not an ancestor) |
 | 4 | `162e10cb` | merge `mac-m11-d8-v2-20261114` @ `e3c0921e` (+42), no conflicts |
 | 5 | `f0d02cbf` | merge `author-sweephost-20261116` @ `fd275c53` (+541), 9 conflicts (§2) |
 | 6 | `bc164b2e` | `r1/scripts/HARNESS_PIN_C3` → `a3fedbbd44309b3fdf99d853ad841b9ec2c299e2` |
 
-In total 920 commits are added to `main`: 1,141 files changed, 266 of them under `r1/`.
+In total 921 commits are added to `main`, counting this report's commit: 1,141 files changed, 266 of them under
+`r1/`. Nothing on `main` is deleted. The merges also bring a lot of content that is not on the sweep-2 path, such as
+the exam line and the `_to_delete/` recovery files (11 base64 files).
 
 **Notes on commits 2 and 4.**
 - After commit 2, the `r1/` tree equals the trial's step-1 tree (`d317c7db`) except for IT-1's two files.
@@ -56,7 +58,13 @@ In total 920 commits are added to `main`: 1,141 files changed, 266 of them under
   - from M3: the `worker_runtime` probe, the journal and `stop_on_failure`, with M3's positional caller unchanged.
 
   **Behaviour change for M3's path:** its `rmtree` of the work directory on success is dropped, so audit scratch now
-  accumulates, as the author line's docstring warns. Imports are the union.
+  accumulates, as the author line's docstring warns.
+  - `--required-scratch-bytes` and the floor in `monitor_evidence_resources` must be sized for the whole audit; this
+    matters for S2-C7's job disk request.
+  - Neither line has a unit test of the merged `stop_on_failure` / journal branch. The reviewer's probe covers it
+    (4/4 pass); it should become a regression test in a later unit.
+
+  Imports are the union.
 - **`r1/tests/test_scripted_live_golden.py`.** The author line's retained `tmp_path` fixture, plus `main`'s
   historical-config replay and exact harness-commit assertion (`5cffed38`).
 - **`docs/r1/RUNBOOK.md`.** A row-wise three-way merge: X.3 and X.4 from the author line, X.5–X.7 from mac-int. Each
@@ -101,7 +109,53 @@ In total 920 commits are added to `main`: 1,141 files changed, 266 of them under
 - **One process note.** A first author-line run was cut short when the disk filled, from earlier runs' leftover
   `/tmp/r1_*` test directories. It was discarded and rerun with cleanup.
 
-## 4. Not included, and open items for the author
+## 4. What a push of this branch does and does not enable for sweep 2
+
+**Collection.** The collection code is unchanged by this branch. `r1/headroom` (including `e1b_collect`, which S2-C2
+calls), `branch`, `liveness`, `baselines`, `theory`, `harness.py` and `dryrun_guard` are byte-identical between
+`60ec768e` and the tip. For collection, the push adds authority only:
+- the PLAN rows that `_verify_published` reads from published `main`;
+- the registry document;
+- the pin file.
+
+So S2-C3 and S2-C4 runs at paper `60ec768e` stay representative of the collector.
+
+**B.2 audits and table builds.** These are **not runnable for sweep 2 from this `main`.** The B.2 rules that come with
+M3 are sweep-1 code:
+- `audit.evidence_run` starts with `_require_task_native_runtime_attestation()`, which always raises;
+- `evidence_plan` → `dataset.evidence_classification` accepts only R1-SWEEP1-CLASSIFY, `c3_sweep1_20261027.md`, the
+  sweep-1 index and the sweep-1 pins;
+- the completion record hashes the sweep-1 authorization;
+- `original_sweep_environment` requires the sweep-1 batch.
+
+**More pushes to `main` will follow.** At least two:
+1. the S2-C2 job wrapper with the S2-C5 real-submission switch, which sets `paper.evidence_ready`;
+2. a sweep-2 audit and table binding (authorization, index, pins) together with the task-native runtime attestation,
+   before S2-C7.
+
+The author can push now, so that PLAN authority and the registry doc are published early, or push once later with
+these.
+
+**Side effects of a push.**
+- **The `HARNESS_PIN_C3` change.** No sweep-2 code reads the pin file; S2-C2 checks its own harness commit. But the
+  old deepthought runner (`c3_label_sweep.py`) would now always STOP on a real run: `check_heads` requires the harness
+  at the pin (`a3fedbb`), while `DEEPTHOUGHT_AUTHORIZED_PINS` requires `6adf385`. Its dry run now uses `a3fedbb`. This
+  is consistent with R1-SWEEP-HOST-HTC, under which sweeps no longer run on deepthought.
+- **`_verify_published`.** After the push, every check must run from a checkout at the new `main`. Records pinned to
+  paper root `60ec768e` (the W2 v3 rebuild, the S2-C2 example spec) cannot be re-verified from that root. A unit that
+  runs these checks from `60ec768e` during the push window would STOP.
+- **The sealed root.** `refuse_sealed` refuses only paths with an `r1_sealed` component, and S2-C2's sealed root
+  `/ceph/srv/dwong/paperb/sweep2/` has none. For sweep-2 tables the lock is `guard_table` / `build_from_sweep`
+  requiring R1-BX-D8-CONFIRM. That is adequate, but the sealed path itself is not refused.
+- **Records citing files not on this branch.**
+  - R1-B2-REPAIR-SCOPE-ACK cites the IT-2 review (`mac-answers-20261114` @ `e7f89096`, not merged).
+  - `84471430` cites the trial review `5d8c0274`.
+  - R1-W2-3-STOP cites `w2_runs_total_check.py` (W2 not merged; the featurizer here is still `c3_features/v2`).
+  - R1-EXAM-X7 cites `reports/b2_exec_20261115/` (on `ops-b2-exec-20261115`).
+
+  These records stay on their branches.
+
+## 5. Not included, and open items for the author
 
 - **Not merged.** These accepted lines are not on the sweep-2 path:
   - M4 (`mac-m4-20261109`);
