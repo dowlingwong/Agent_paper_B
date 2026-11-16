@@ -194,16 +194,18 @@ phase: c3_sweep2
   - **Proposed by the agent, not decided** (`<author: adopt | strike>`): a further STOP when a re-measured chunk wall
     (precondition 5) exceeds the signed 12,203 s walltime. An over-walltime job is killed and cannot be resumed, so
     R1-SWEEP2-LAYOUT would need revising first.
-  - The collector's own `--deadline` is the walltime minus 600 s, counted from the collector's start. The smoke spent
-    about 830 s outside the collector. So HTCondor's walltime kill comes before the collector's deadline can stop it
-    cleanly (item 2h).
+  - The collector's `--deadline` is the walltime minus 600 s, counted from the collector's start. It only stops new
+    root campaigns being submitted (`e1b_collect.py`); it never stops roots already running. With 18 instances on 16
+    workers, 16 roots start at once, so the deadline can hold back at most the last 2. It gives no protection against
+    the walltime: the HTCondor walltime is the only real limit (item 2h).
 
 ## Preconditions before launch
 
 1. **S2-M2 integration on `main`.** Done: `9ae6d877`, an ancestor of `025bfc16`.
 2. **S2-C2 wrapper on `main`**, accepted by independent review, with S2-C5.
    - Round 5 (`sweep2-main-20261116` @ `8a8ea832`, minors at `d9a17b86`) covers redraft items 2b–2d and most of 2a
-     and 2e: the 32,768 exam arguments (except the thinking-switch bytes, 2a′), the noise-source binding, the restored gates, the CPU class in requirements and at run
+     and 2e: the 32,768 exam arguments (except the thinking-switch bytes, 2a′), the noise-source binding, the restored
+     gates, the CPU class in requirements and at run
      time, and requests written from the spec. It is not yet on `main`: `<integration commit>`.
    - Still open, each to be accepted by review:
      - **a′. Thinking-switch bytes.** Make the spec byte-identical to the exam's `{"enable_thinking":false}`, or record
@@ -216,8 +218,9 @@ phase: c3_sweep2
        engineering run"` whatever the label. An EVIDENCE chunk record must not carry it. The liveness record's content
        is right, since liveness output never enters a label table, but its `ENGINEERING:` prefix sits under the run's
        label. `<fix>`.
-     - **h. Resumption and walltime**, per the author's choice above. This includes the collector deadline: it
-       should leave room for the post-collector steps before the HTCondor walltime.
+     - **h. Resumption and walltime**, per the author's choice above. The collector deadline does not stop running
+       roots, so protection against the walltime needs either a per-job time budget enforced inside the job, or
+       reliance on the walltime STOP: `<fix or author choice>`.
 3. **The (g)4 liveness unit (S2-C3b)** (R1-SWEEP2-SETTINGS (4), R1-S2C3B-SEEDS). D28 liveness of the pick on all eight
    nodes on NEMO2 L40S, seeds per `sweep1_d28_reuse`, with prompt lengths re-measured with the pick's tokenizer.
    Passed: `<report, review>`. D28's criterion "keep after trial 1 ≥ 1" cannot pass if every worker run fails, so this
@@ -229,7 +232,8 @@ phase: c3_sweep2
    of 240, ± 10 %. Passed: `<report, review>`.
 5. **Re-measurement with successful worker runs.** *Proposed by the agent, not decided* (`<author: adopt | strike>`).
    R1-SWEEP2-LAYOUT bases the note on the smoke measurement as it stands. At least the smoke layout (one node × 2
-   instances × both modes), preferably a full chunk. It must show worker runs succeeding and the gates passing. It yields the chunk wall to
+   instances × both modes), preferably a full chunk. It must show worker runs succeeding and the gates passing. It
+   yields the chunk wall to
    check against the signed 12,203 s and the projection: `<report, review>`.
 6. **S2-C5 real-submission switch** accepted. It includes the seal step comparing image digest and host with the
    values authorized here: `<review>`.
@@ -315,9 +319,9 @@ The liveness seeds (`sweep1_d28_reuse`) are the same as sweep 1's and do not dif
 - an image identity mismatch;
 - incomplete offload or OOM;
 - a liveness or collection gate failing;
-- in-campaign worker runs failing systematically (item 2f);
-- a job that does not finish cleanly, exceeds its walltime, or is restarted by HTCondor (`NumJobStarts` > 1) (see
-  "Resumption");
+- the worker-success gate of item 2f failing (threshold `<author>`);
+- per the author's resumption choice (proposed rule): a job that does not finish cleanly, exceeds its walltime, or is
+  restarted by HTCondor (`NumJobStarts` > 1) (see "Resumption");
 - a label string not matching this note;
 - a projection above 60 GPU-h or 48 h wall;
 - if the author adopts it, a re-measured chunk wall above 12,203 s;
