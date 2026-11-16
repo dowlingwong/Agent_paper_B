@@ -344,6 +344,28 @@ def offload_check(log_text: str) -> dict:
     return {"offloaded_layers": done, "total_layers": total, "cuda_lines": cuda[-5:]}
 
 
+BUILD_LINE = re.compile(r"version:\s*([^\n]+)")
+
+
+def _parse_build(text: str) -> str:
+    mm = BUILD_LINE.search(text)
+    return mm.group(1).strip() if mm else ""
+
+
+def server_build(binary: str) -> str:
+    """llama-server prints its version line only for --version, not on startup."""
+    try:
+        res = subprocess.run([binary, "--version"], capture_output=True, text=True, timeout=90)
+    except OSError as exc:
+        raise Stop(f"STOP: cannot run {binary} --version: {exc}") from None
+    if res.returncode != 0:
+        raise Stop(f"STOP: {binary} --version failed rc={res.returncode}: {res.stderr.strip()[:300]}")
+    build = _parse_build(res.stdout + "\n" + res.stderr)
+    if not build:
+        raise Stop(f"STOP: {binary} --version printed no version line")
+    return build
+
+
 def start_server(spec: dict, model_path: Path, log_path: Path) -> dict:
     argv = build_server_argv(spec, model_path)
     log = log_path.open("wb")
@@ -365,8 +387,11 @@ def start_server(spec: dict, model_path: Path, log_path: Path) -> dict:
     finally:
         log.close()
     text = log_path.read_text(errors="replace")
-    m = re.search(r"version: ([^\n]+)", text)
-    build = m.group(1) if m else ""
+    try:
+        build = server_build(spec["server"]["binary"])
+    except Stop:
+        _kill(proc)
+        raise
     if spec["server"]["expected_build"] not in build:
         _kill(proc)
         raise Stop(f"STOP: llama-server build {build!r} != pinned {spec['server']['expected_build']!r}")

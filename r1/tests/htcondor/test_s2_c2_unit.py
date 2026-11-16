@@ -274,3 +274,8 @@ def test_empty_placeholder_job_record_is_a_fresh_run(tmp_path):
     rec.write_text("not json")
     with pytest.raises(lib.Stop, match="unreadable"):
         lib._resume_state(out, rec)
+
+
+def test_server_build_line_parse():
+    assert lib._parse_build("version: 0.7.0-dev (build 11669, commit 620d2225c)") == "0.7.0-dev (build 11669, commit 620d2225c)"
+    assert lib._parse_build("no version here") == ""
