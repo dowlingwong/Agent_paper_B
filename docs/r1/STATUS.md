@@ -554,6 +554,27 @@ Implementation agent (Claude) on deepthought, branch `dt-sweep1-20261026` from `
 - `trackp-20261026` (`6f67717`, Phases 0–4 independently accepted on the portal, P.3a DRYRUN) merged into `main` after a merge review: `docs/r1/reviews/TRACKP_MERGE_REVIEW_20261026.md` (accepted; one STATUS conflict resolved by keeping both sides; v1 soft labels reproduce `main` exactly; two environment-pinned Track P tests fail off the portal, not code defects).
 - R1-PORTAL-SCHEDULE amended (author): Track X evidence marker `~/r1_locks/trackx_evidence.active` during B1/B2, plus STATUS headings; both runbooks updated (separate commit).
 - Open for the author (from the overnight summary): Phase 5 design (E0 training budget, head fit, learning-rate grid, A3 policy), spec readings, model-wrapper choices, environment pins, harness `6afdb0e` push, secrets before Phase 7.
+## 14 November 2026 — Track X B1 `_d` completed normally (run 7912_20261113_d); marker retired; Track S resume held for review
+
+- Run `7912_20261113_d` (HEAD `7912b7ff…`, model-output fix) completed normally: `b1.exit=0`, batch `COMPLETE`, 260 roots, interruptions 0, no failed units; `batch_state` records no interruption and the host was not rebooted (uptime 43 days). *(rev 2: the earlier "13–14 Nov host network outages" sentence was unsupported and is removed.)*
+- Post-run unit executed: creation receipt matched (sha `a28f0f78…`, marker `60cd40fb…`); marker renamed into `~/r1_locks/_to_delete/trackx_evidence.active.230b602a…` with no deletion; retirement record/rc 0/empty err/note written; watcher logged `marker gone`; `$RUN_DIR` step-5 baseline 17→21 files (only the four `*_after_run.*` additions; final directory 26 files after the step-6 outputs); `$BATCH` baseline scope (the unit's `_to_delete` exclusion) byte-identical — 53,778/53,778 `sha256sum -c` OK, full tree 88,024 files; Track S/smoke STOPs unchanged (mtime-only watcher re-touch at 13:47:35Z predates the run).
+- **Record corrections after independent review round 1 (rev 2, no host action):** capture-format deviation disclosed — the execution-phase capture used `stageA/B/B2/C` logs/exit files, has no `ssh.log`/`ssh.exit`/`stageB.exit`, and its `SHA256SUMS` was generated post-hoc at 2026-11-14T11:30:45 Mac-local; the continuation capture `/private/tmp/b1-d-postrun-report-20261114.z760cvJb/` supplies `ssh.log`/`ssh.exit`/verified `SHA256SUMS` and pulled evidence. The execution-deviation answer now states that the approved unit writes stderr directly to the final `.err` and has no `.err` mv; the failing same-file `mv` was an extra wrapper step outside the approved block (failed attempt has no saved exit code, only `stageB.log`); the retirement result was re-checked and is unaffected.
+- Complete-batch verifier rc 0 (18 rows; finalists `["gemma4_31b"]`; only `scripted` and `gemma4_31b` D28-pass; `gemma4_31b` μ̂ −0.000891, cluster interval [−0.001865, −0.000052]); completion usage rc 1 = **cap check FAIL by design** (`largest proposer completion 16384`, margin 0; 9 truncated proposals, 0 unencodable/context overflow; the 9 truncated rows sit inside the 68 `not_applicable`, not additional); candidate halves rc 0 (descriptive). Report: `reports/B1_D_RUN_20261113.md` (rev 2; independent review requested before publishing the manifests/verifier per the unit).
+- New `_d` rule caught 14 directive/edit mismatches (7 `directive_symbol_differs` + 7 `directive_new_differs`; 11 on olmo31_32b, the class that STOPped `_c`) plus 9 truncated proposals, as invalid proposals/trials — no run STOP.
+- Track S S0.5 remains paused; its reviewed resume unit is held until this record's review is accepted, then resumes `s05_t7_20261113`. B2 not started.
+
+## 13 November 2026 — Track X B1 `_c` STOP at the proposal-integrity guard (not retried; awaiting author decision)
+
+- **Event.** Run `4b31_20261112_c` (HEAD `4b312844962e1106db04d5a60bf996fad0e3e514`, `_c` truncation-fix restart) stopped on 2026-11-13T03:01:55Z in the worker of `olmo31_32b/b1/off/openml_credit_approval__s9002`, trial `…-trial-020`: `STOP: B1 worker directive and structured edit differ` from `b1_proposal_guard` (the objective parsed by the pinned worker and `extra.structured_edit` disagreed). `b1.exit` 1, batch `STOPPED`, 89 completed, one interruption; no failed units; servers/workers exited and the lease was released.
+- **Not the truncation class.** The manager call ended with `finish_reason` `stop`, 100 completion tokens (cap 16,384), `truncated` false. The guard docstring says such a STOP is never automatically resumed.
+- **Record.** `reports/B1_STOP_4B31_20261112.md` (rev 3, accepted: `reviews/B1_STOP_4B31_REVIEW_R3_20261112.md`; round-1/2 reviews committed too) with committed evidence capture `reports/b1_stop_4b31_20261112/`.
+- **State.** Scene preserved (no deletion, no retry, no new run); the Track X marker `~/r1_locks/trackx_evidence.active` is kept (`4b31_20261112_c`, marker sha `f8c8624f…`, receipt `e0da112f…`); no processes, `gpu0.lock` free. The normal-completion post-run retirement unit does not apply.
+- **Consequences.** Track S `digits_mlp` host move to TASL-7 waits for the author (its condition requires a normal end; a STOP explicitly waits for the author). TASL-2 remains unreachable; its S0.5 scene is preserved. The B1 restart/diagnosis route is the author's decision (flow of `proposals/B1_STOP_DIAGNOSIS_PLAN_20261108.md` and `reports/B1_STOP_DIAGNOSIS_20261111.md`).
+
+## 11 November 2026 — Track X B1 restart STOP (AI-assisted)
+
+B1 run `fffa_20261111_b` (checkout `fffa45a12b5b43dbdcc6a8c88b509f71309fbbaa`, launched 11:03:48 UTC) is STOPPED: at 13:51:09 UTC the batch recorded `STOP: root worker exit 1` on `qwen36_27b/b1/on/openml_credit_approval__s9001`, whose recorded `llm_call_failed` is a `LengthFinishReasonError` (completion 31,551 tokens, total 32,768, server `truncated = 1`). 64 root keys had completed; the anchor record is descriptive only and the 7B duplicate rate 0.4959 is inside the pinned interval. The B1 marker is retained, the lease is free, and no B1 process or llama-server remains; no retry, marker retirement or configuration change was made. Preserve all evidence. See `docs/r1/reports/B1_STOP_FFFA_20261111.md`. B2, X.7 and sweep 2 remain gated.
+
 ## 8 November 2026 — Track X B1 STOP (AI-assisted)
 
 B1 run `6835_20261108_a` is STOPPED: `random-valid < scripted cannot be shown; no discriminating power`. At 01:19:49 UTC the retained monitor reported 36 completed roots, exit 1, no current root, the B1 marker retained and no listed GPU compute applications. The B1 log notes that shutdown may append runner/server logs and publish server/batch-state records; preserve those writes and all evidence. No automatic retry, marker retirement or restoration. See `docs/r1/reports/B1_STOP_6835_20261108.md`. B2, X.7 and sweep 2 remain gated.
@@ -1757,3 +1778,15 @@ PLAN §7 is revised. The proposed primary is now a ModernBERT-family encoder dec
 ## 2026-11-08 — Track X B1 running
 
 Run: `6835_20261108_a`; reviewed checkout HEAD: `68357d3d8cd0c9f301005e483a49ecfd05f6e5bb`.
+
+## 2026-11-11 — Track X B1 running
+
+Run: `fffa_20261111_b`; reviewed checkout HEAD: `fffa45a12b5b43dbdcc6a8c88b509f71309fbbaa`.
+
+## 2026-11-12 — Track X B1 running
+
+Run: `4b31_20261112_c`; reviewed checkout HEAD: `4b312844962e1106db04d5a60bf996fad0e3e514`.
+
+## 2026-11-13 — Track X B1 running
+
+Run: `7912_20261113_d`; reviewed checkout HEAD: `7912b7fffb4c1adeb39688bdb3852a919bdc71c8`.

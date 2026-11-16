@@ -1,0 +1,14 @@
+# private capture hashes (not committed)
+handover capture /private/tmp/paper-b-b1-handover-capture-20261111.SsfpmLfo:
+29435dedf0a9ea4f2539664e632bf84336db931c40307f854b9cc6d79c866877  /tmp/b1_handover_fffa_20261111_fffa_20261111_b/handover_pre.sh
+d39a731481d1df5c397863eebf097c9753add5bad87efc9667070f15c490491e  /private/tmp/paper-b-b1-handover-capture-20261111.SsfpmLfo/ssh.log
+launch capture /private/tmp/paper-b-b1-launch-capture-20261111.poqVLDF7:
+cd2e7b488292496a17eb48efa9705ef4453ea3a654ab816a8137510031779931  /tmp/b1_handover_fffa_20261111_fffa_20261111_b/launch_precheck.sh
+0c106e2794f0ebcbae2165920ff857a2b7ad2d45737bf66c6779f253f538bf66  /tmp/b1_handover_fffa_20261111_fffa_20261111_b/launch_start.sh
+6e7bfc7a1619e563ef3790a6298515fac1a48a0d8979f9f0ad032bb11f908d1c  /tmp/b1_handover_fffa_20261111_fffa_20261111_b/start.sh
+95cccd576b6851dbb8cf0805fb4226ae6a263c0c4cc91a2770b9d3b93116926e  /tmp/b1_handover_fffa_20261111_fffa_20261111_b/receipt.sh
+e64f8cf664e19c8724965e3e6f4e605fcc0afc3ff8103126fa7def5fb3982e35  /private/tmp/paper-b-b1-launch-capture-20261111.poqVLDF7/launch.log
+stop census capture /private/tmp/paper-b-stop-census-20261111.I7WLpF9P:
+b27f54e91984c128128369fd312840df7226c2ee1c0d2d800f7817bc44b599e4  /tmp/b1_stop_census_fffa.sh
+395f982f0fe23029449da5a00edcd56f9e4b8fdae0d5bbfcab0ad5ee38faca72  /private/tmp/paper-b-stop-census-20261111.I7WLpF9P/ssh.log
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  /private/tmp/paper-b-stop-census-20261111.I7WLpF9P/ssh.exit
