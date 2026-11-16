@@ -859,6 +859,8 @@ def verify_sweep1_prompt_record(paper_dir: Path) -> dict:
         raise Stop("STOP: the rerun-2 openml_breast_w root ledger has no trial-1 context_sha256")
     liveness_breast_path = (paper / SWEEP1_LIVENESS_PATH / "ledgers"
                             / SWEEP1_LEDGERS["openml_breast_w"]["instance"] / "root_trials.jsonl")
+    if not liveness_breast_path.is_file():
+        raise Stop(f"STOP: sweep-1 liveness openml_breast_w ledger missing: {liveness_breast_path}")
     liveness_breast = None
     for line in liveness_breast_path.read_text().splitlines():
         if not line.strip():
