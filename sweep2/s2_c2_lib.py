@@ -526,13 +526,22 @@ def run_job(spec_path: Path) -> dict:
         _kill(server["proc"])
     record["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     record_path.write_text(json.dumps(record, indent=1) + "\n")
+    _tar_dir(Path("out"), Path("out.tar"))
+    _tar_dir(Path("work"), Path("work.tar"))
     _write_sums(Path("."))
     if record["collector"]["returncode"] != 0:
         raise Stop(f"STOP: collector rc={record['collector']['returncode']}; outputs kept for sealing")
     return record
 
 
-SUMMED_OUTPUTS = ("out", "work", "job_record.json", "llama-server.log")
+SUMMED_OUTPUTS = ("out.tar", "work.tar", "job_record.json", "llama-server.log")
+
+
+def _tar_dir(src: Path, tar: Path) -> None:
+    if src.is_dir():
+        subprocess.run(["tar", "-cf", str(tar), "-C", str(src), "."], check=True)
+    else:
+        subprocess.run(["tar", "-cf", str(tar), "--files-from", "/dev/null"], check=True)
 
 
 def _write_sums(root: Path) -> None:
@@ -590,10 +599,15 @@ def seal(job_output: Path, run_id: str, chunk_id: str) -> dict:
     if target.exists():
         raise Stop(f"STOP: sealed target exists; no overwrite ({target})")
     target.mkdir(parents=True, mode=0o700)
-    for name in ("out", "work", "job_record.json", "SHA256SUMS", "llama-server.log"):
+    for name in ("job_record.json", "SHA256SUMS", "llama-server.log"):
         p = src / name
         if p.exists():
-            (shutil.copytree if p.is_dir() else shutil.copy2)(p, target / name)
+            shutil.copy2(p, target / name)
+    for name in ("out", "work"):
+        tar = src / f"{name}.tar"
+        if tar.exists():
+            (target / name).mkdir(mode=0o700)
+            subprocess.run(["tar", "-xf", str(tar), "-C", str(target / name)], check=True)
     lines = []
     for p in sorted(target.rglob("*")):
         if p.is_file() and p.name != "SHA256SUMS":

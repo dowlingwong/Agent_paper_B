@@ -17,7 +17,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import s2_c2_lib as lib  # noqa: E402
 
-OUTPUTS = "out,work,job_record.json,SHA256SUMS,llama-server.log"
+OUTPUTS = "out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log"
 
 
 def requirements() -> str:

@@ -112,7 +112,7 @@ def test_renderer_pins_container_l40s_cpu_class_and_transfers_outputs(tmp_path):
     assert 'TARGET.CloudSite =?= "BwForCluster-Nemo2"' in jdl
     assert f"Cpus >= {lib.MIN_CPUS}" in jdl and 'Arch == "X86_64"' in jdl and 'OpSys == "LINUX"' in jdl
     assert 'regexp("^g36[0-9]{2}\\.nemo\\.privat$", TARGET.Machine)' in jdl
-    assert "transfer_output_files = out,work,job_record.json,SHA256SUMS,llama-server.log" in jdl
+    assert "transfer_output_files = out.tar,work.tar,job_record.json,SHA256SUMS,llama-server.log" in jdl
     assert "request_disk = 50000000" in jdl and "request_memory = 128000" in jdl
     assert "ProvidesEtpCeph" not in jdl and "docker_image" not in jdl
     assert (stage / "s2_c2_spec.json").is_file() and (stage / "s2_c2_lib.py").is_file()
@@ -260,7 +260,7 @@ def test_seal_verifies_transferred_sums_before_copy(tmp_path, monkeypatch):
 
 def test_job_entry_precreates_the_transferred_outputs():
     text = (ROOT / "sweep2" / "s2_c2_job.sh").read_text()
-    for name in ("out", "work", "job_record.json", "SHA256SUMS", "llama-server.log"):
+    for name in ("out.tar", "work.tar", "job_record.json", "SHA256SUMS", "llama-server.log"):
         assert name in text
     assert "--scratch" not in text  # the rewritten lib takes a spec only
 

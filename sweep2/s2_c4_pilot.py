@@ -100,8 +100,20 @@ def parse_llama_log(text: str) -> dict:
     return out
 
 
+def _materialise(chunk_dir: Path) -> None:
+    """Extract the transferred out/work tars next to the record (the files are read-only evidence)."""
+    import subprocess
+    for name in ("out", "work"):
+        tar = chunk_dir / f"{name}.tar"
+        dest = chunk_dir / name
+        if tar.is_file() and not dest.exists():
+            dest.mkdir(mode=0o700)
+            subprocess.run(["tar", "-xf", str(tar), "-C", str(dest)], check=True)
+
+
 def collect_chunk(chunk_dir: Path) -> dict:
     chunk_dir = Path(chunk_dir)
+    _materialise(chunk_dir)
     record_path = chunk_dir / "job_record.json"
     try:
         record = json.loads(record_path.read_text())
