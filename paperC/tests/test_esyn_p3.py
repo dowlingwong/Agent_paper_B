@@ -327,6 +327,7 @@ def test_table_is_current(table):
     assert table["code_sha256"] == T.code_sha256(), "E-SYN code changed: rebuild with python -m paperc.esyn.table"
     assert set(table["worlds"]) == set(X.WORLDS)
     for name, rec in table["worlds"].items():
+        assert rec["code_sha256"] == table["code_sha256"], f"{name}: built with other code"
         assert rec["world"] == json.loads(json.dumps(X.WORLDS[name].to_dict())), f"{name}: table is stale"
 
 

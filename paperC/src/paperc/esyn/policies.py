@@ -148,9 +148,10 @@ class EvalAlloc:
 
 @dataclass(frozen=True)
 class Schedule:
-    """Track S's 9-threshold schedule (ANALYSIS_NOTES section 5.1): the E1 threshold by budget tercile x tau half,
-    the E2 threshold by budget tercile. The budget position is r = runs used / W (tercile k = min(floor(3 r), 2));
-    the tau half is tau >= tau_split. It nests the static rules (all g equal, all h equal)."""
+    """A 9-threshold schedule after Track S's (ANALYSIS_NOTES section 5.1; not a port): the E1 threshold by budget
+    third x tau half, the E2 threshold by budget third. The budget position is r = runs used / W (third
+    k = min(floor(3 r), 2)); the tau half is tau >= tau_split, a fixed split. It nests the static rules (all g equal,
+    all h equal)."""
     gs: tuple        # 6 execute thresholds, index 2 k + (tau >= tau_split)
     hs: tuple        # 3 keep thresholds, index k
     tau_split: float = 0.02

@@ -14,21 +14,28 @@ static grid extended at its edges) at the best parameter, repeated until (g, h) 
 exactly the best static's decisions on every selection campaign are not eligible as the evaluated member.
 
 * strict_null: ``Dynamic`` with a tau bonus, a budget-dependent keep threshold or a key-novelty bonus (no
-  extension: the null has no channel to find), **and** the 9-threshold ``Schedule`` (a strong falsification test:
-  it can fit selection noise, so its evaluation-block gain must not exceed the tolerance);
+  extension: the null has no channel to find), and the ``Schedule``. In the null the exact DP already dominates
+  every schedule, so the schedule adds no falsification power; the null result rests on the exact DP and on the
+  ``Dynamic`` family's evaluation (``table.null_family_eval``);
 * budget: the exact DP policy only (no search);
 * interaction: ``InteractionAware`` beta (scalar; halved / doubled at the edges); privileged (knows M);
 * shared_error: re-audit count k in {2, ..., max_obs} (natural bounds);
 * eval_allocation: (verify band, verify max, re-audit max, final rule), band halved / doubled at its edges;
-* information: Track S's 9-threshold ``Schedule`` (E1 threshold by budget tercile x tau half, E2 threshold by budget
-  tercile; tau split 0.02 separates P1's size-16 follow-ups), searched by coordinate descent from the best static
-  over the static grid values, grids extended at their edges. (Round 1's key-novelty member showed no gain once the
-  static grid was extended: its apparent gain came from a best static on the grid edge.)
+* information: a 9-threshold ``Schedule`` after Track S's (E1 threshold by budget third x tau half, E2 threshold by
+  budget third; budget position = runs used / W; fixed tau split 0.02, which separates P1's size-16 follow-ups),
+  searched by coordinate descent from the best static over the static grid values, grids extended at their edges.
+  Its gain comes almost entirely from the budget-third dependence (review P3 round 2: about +0.0060 without the tau
+  split, +0.0001 with the tau split alone). Round 1's key-novelty member still gains about +0.0010 over the same
+  best static (review round 2, 100,000 fresh campaigns); the schedule replaced it because its gain is about six
+  times larger.
 * keep_feedback: ``Dynamic`` b_keep (scalar; halved / doubled) and the ``Schedule`` (Track S's schedule found a
   larger keep-feedback gain than a single budget term).
 
 Gains found this way are **lower bounds** on the attainable gain (the best member of a small family), except in
-the budget world, where the member is the exact optimum.
+the budget world, where the member is the exact optimum. The static grid is extended at its edges with doubling
+spacing but never refined near the optimum, so the baseline can be slightly below the best static rule: in
+information a finer grid beats the selected static by 0.00022 +- 0.00008 (review round 2), a bias of a few percent
+on that gain. A refinement pass is an open item before P4 uses these gains as oracle references.
 """
 from __future__ import annotations
 

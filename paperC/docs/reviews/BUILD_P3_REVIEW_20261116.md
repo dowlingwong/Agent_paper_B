@@ -301,3 +301,155 @@ Four issues block acceptance:
 The fixes are cheap: re-run the table after correcting the grids and the target, report the per-action decomposition, and isolate and disclose the privileged field.
 
 Verdict: NOT ACCEPTED
+
+---
+
+# Round 2
+
+- **Reviewer:** the same independent reviewer (Claude subagent, AI-assisted).
+- **Commit:** `8d37ff8` on branch `paperc-build-20261115`, reviewed against `ce4768f`.
+- **Date:** 16 Nov 2026
+- **Label:** ENGINEERING_ONLY
+- **Read:**
+  - the response `BUILD_P3_RESPONSE_R1_20261116.md`;
+  - the code diff `ce4768f..8d37ff8` (`oracle.py`, `families.py`, `policies.py`, `sim.py`, `table.py`, `extra.py`, `dp.py`, `schema.py`, `seeds.py`, the registry);
+  - the revised tests;
+  - the rewritten report and `oracle_table_v1.json`.
+
+## What I ran (round 2)
+
+Scratch scripts are in `/tmp/p3rev/`. The fresh blocks 4,000,000+, 5,000,000+, 6,000,000+ and 7,000,000+ lie outside every block the build uses.
+
+1. **Test suite:** 147 passed, 47 s.
+2. **Full table rebuild** in a copy (`/tmp/p3rev/repo2`, `python -m paperc.esyn.table`): 13 min 16 s on 2 processes.
+   - Every world record, `decomposition`, `calibration`, `code_sha256` and every top-level field is identical to the committed table (only `seconds` differs).
+   - The committed table therefore corresponds to the committed code, even though it was assembled from a full build and a partial one.
+3. **Report numbers against the JSON:** all of them match:
+   - the §3 table (gain, hw, hw/gain, n);
+   - the budget text;
+   - the null family table;
+   - the keep_feedback family comparison;
+   - the §4 decomposition, final-selection and calibration tables;
+   - the §5.2 schedule thresholds.
+4. **keep_feedback against a fine static grid** (n = 20,000; g ∈ {0.00025, 0.0005, 0.00075} × 8 values of h in −0.004 … −0.008):
+   - the best fine static is (0.0005, −0.006);
+   - the member's gain over it is **+0.00159 ± 0.00007**, and over the selected (0.0005, −0.005) it is +0.00162 ± 0.00008. The table has +0.00154 ± 0.00016;
+   - the member search has converged locally: the committed member is the best of its 27 (g, h, b_keep) neighbours on the selection block.
+5. **information** (n = 20,000 unless stated):
+   - The best static on a 6 × 5 fine grid is (0.00175, 0.0005). The schedule's gain over it is +0.00621 ± 0.00052; over the selected static it is +0.00632 ± 0.00053.
+   - The fine static is better than the selected static by **+0.00022 ± 0.00008** (n = 100,000).
+   - A τ-split static rule (different thresholds for the two τ halves, no budget dependence), selected on the selection block, gains only +0.00008 ± 0.00016.
+   - A schedule that depends on the budget third alone (no τ split) gains +0.00598 ± 0.00053.
+   - Round 1's key-novelty member (`dynamic:0.002,0,0,0,0,0.002,0.01`, n = 100,000, block 7,000,000+): **+0.00100 ± 0.00037** over the selected static, +0.00077 ± 0.00038 over the fine-grid static.
+6. **B17 decomposition** (n = 20,000, block 4,000,000+):
+   - verify only: +0.00196 ± 0.00009;
+   - re-audit only: +0.00158 ± 0.00009;
+   - both: +0.00358 ± 0.00010;
+   - final selection (best minus incumbent): −0.000117 ± 0.000031 at W 40 and +0.000200 ± 0.000026 at W 60.
+
+   All agree with the table within its CIs.
+7. **Null:** the Dynamic family's best member gives −0.00049 ± 0.00012, deciding differently on 85 % of campaigns (n = 5,000). This agrees with the table.
+8. **Budget DP**, two paired blocks of 150,000 campaigns each: gain 0.002122 (z = +0.47) and 0.002113 (z = −0.11), against the exact 0.002115. The DP and static means lie within 2.3 se of their exact values.
+9. **Forward compatibility of the schema:** I simulated an eval_allocation campaign (104 rows) and checked it with the P1-accepted validator (`e730a91`). It rejects only the final row that carries candidates, as documented.
+
+## Round-1 findings, re-checked
+
+| # | Round 1 | Round 2 status |
+|---|---|---|
+| 1 | MAJOR: truncated static grid inflated keep_feedback | **Resolved.**<br>• Grids are extended until interior, for statics and members; a test checks every world.<br>• keep_feedback's gain over an interior (and over a fine) static is about +0.0016 (run 4), and the table says so.<br>• Residual on grid resolution: new finding R2-2. |
+| 2 | MAJOR: selection-biased "planted" gain | **Resolved.**<br>• The reference is declared: 0.5 σ_cmp = 0.0033, or the DP gain for the budget world.<br>• The tolerance is an absolute 0.000165, as in Track S, and `hw / gain` is reported (2.4–12.6 %).<br>• "Certified" is defined accordingly in §3, and the one-member deviation from Track S is stated. |
+| 3 | MAJOR: B17 final selection not demonstrated | **Resolved.**<br>• Per-action values are given with CIs on a third block, and my run reproduces them.<br>• Final selection is negative at W 40 and positive at W 60. Its value is known and depends on W, and the report says so.<br>• The re-audit timing restriction is declared. |
+| 4 | MAJOR: privileged M undisclosed and recorded everywhere | **Resolved.**<br>• The forecast `privileged:interaction` is written only for `privileged` policies.<br>• A test asserts that no other policy's rows carry it.<br>• The report discloses that the interaction oracle knows M and calls it an upper reference. |
+| 5 | MINOR: vacuous null row, loose tolerance | **Mostly resolved.**<br>• The tolerance is now Track S's.<br>• A per-family evaluation exists and the row is labelled "exact (DP) + per-family evaluation".<br>• Residual: new finding R2-3. |
+| 6 | MINOR: test gaps | **Resolved.**<br>• Replay test, interaction trace test, Track S loop-equivalence test.<br>• Code fingerprint.<br>• DP agreement checked with the se of each mean.<br>• Strict xfail mechanism.<br>• `Threshold` and `Schedule` are in the record tests.<br>• Residual on the fingerprint's scope: R2-4. |
+| 7 | MINOR: seed bookkeeping | **Resolved.**<br>• Key 60001 is claimed in the registry, with the separation argument.<br>• 128-bit stream seed.<br>• Record → RNG mapping documented and tested; audit seeds declared nominal.<br>• Recorded instances are capped at 9,999. |
+| 8 | MINOR: lower bounds undeclared | **Resolved.**<br>• Declared in code and report; member grids are interior.<br>• Track S's schedule numbers are quoted, and the keep-feedback gap to them is stated as unexplained. |
+| 9 | MINOR: factual slips | **Resolved.**<br>• Resizing sentence removed.<br>• Status counts correct.<br>• Strength wording consistent.<br>• The calibration is stored in the table, and my rebuild reproduces it. |
+| 10 | MINOR: schema amendment | **Resolved.**<br>• Amendment dated.<br>• `to_dict` omits empty candidates (forward-compatible, run 9).<br>• Candidate uniqueness and "was the incumbent, with the record it last had" are checked, with tests including tampering. |
+| 11 | MINOR: shared_error = free re-audits | **Resolved** (stated in `extra.py`, report §2 and §4). |
+| 12 | MINOR: code nits | **Resolved.** `_key_index` range guard, P1 interaction rejected (tested), `dp.inapplicable_reasons`. |
+
+## New findings (round 2)
+
+### R2-1. MINOR — a false explanation of round 1's information gain
+
+**Location:** report §5.2 ("A key-novelty bonus alone has no gain once the static grid is interior"); `families.py` docstring (information bullet); response row 1.
+
+**What I found:**
+- The best static did not change between rounds: it is `static:0.0015,0.001` in both. In round 2 the grid was only extended past h = 0.001.
+- On a fresh block of 100,000, round 1's novelty member still gains **+0.00100 ± 0.00037** over that static, and +0.00077 ± 0.00038 over the best static of a fine grid.
+- Round 1's information gain was therefore not produced by grid truncation. The schedule is simply a much stronger member (+0.0062).
+
+**Impact:** no certified number depends on this sentence, but it misstates the cause of a round-1 result.
+
+**Fix:**
+- Correct the sentence in all three places.
+- Optionally keep the novelty family among information's families; the multi-family certify already supports this.
+
+### R2-2. MINOR — grid resolution near the optimum is coarse
+
+**Location:** `families.extend_static_grid` (spacing doubles outward, with no refinement); report §3 ("Best static (grid)").
+
+**What I found:**
+- The selected static is interior, but only to the grid spacing.
+- In information, a fine-grid static, (0.00175, 0.0005), is better than the selected one by **0.00022 ± 0.00008**, more than the certification tolerance of 0.000165. The gain over a fine static is about 0.0062 rather than 0.0064 (3–4 %).
+- In keep_feedback the effect is about 0.00004.
+- The certified quantity, the gain over the selected grid static, is correctly computed, and the column header says "grid".
+
+**Fix (either option):**
+- run one refinement pass around the selected static (halve the spacing in g and h) before the member search; or
+- add a sentence to §3 saying that the grid's resolution can bias the gain by up to about 0.0002, with the information number.
+
+### R2-3. MINOR — the null's evaluated member is still vacuous (residual of finding 5)
+
+**Location:** `oracle.certify` member eligibility; `test_null_distinct_member_does_not_beat_static`; `families.py` ("a strong falsification test").
+
+**What I found:**
+- The strict null's selected member is a schedule that differs only in the last budget third. With W = 40 not binding, that third is almost never reached.
+- It decides differently on 0 % of 5,000 evaluation campaigns, so the JSON `pass` for strict_null and the test's `o["pass"]` assertion are trivially true.
+- The schedule cannot be a strong falsification test in the null: its inputs (budget position, τ) are functions of (t, w, s), so the exact null DP already dominates every schedule. It can only reveal simulator errors, and its selected member here does not even differ.
+- This does not block, because the null rests on the exact DP and on the Dynamic family's evaluation (85–86 % of campaigns differ, −0.00046 ± 0.00012), and the report labels the row honestly.
+
+**Fix:**
+- In the null, make the evaluated member the best member that differs on at least 10 % of selection campaigns.
+- Soften the docstring.
+
+### R2-4. MINOR — the fingerprint does not cover the table producer (residual of finding 6c)
+
+**Location:** `table.SOURCES`; the merge in `table.main`.
+
+**What I found:**
+- `table.py` is outside `code_sha256`, yet it holds N_MAX, N_SELECT, TOL, `null_family_eval`, the decomposition and the calibration. A change there leaves `test_table_is_current` green.
+- A partial rebuild stamps the new fingerprint over world records from an older build. The fingerprint therefore cannot show that the merged records come from the current code.
+- The current table is consistent: my full rebuild reproduces it exactly (run 2).
+
+**Fix:**
+- Add `table.py` to `SOURCES`.
+- Store `code_sha256` and `n_max` in each world record, and test each record.
+
+### R2-5. MINOR — wording about the information schedule
+
+**Location:** report §1 and §5.2; `policies.Schedule`.
+
+**What I found:**
+- The `Schedule` follows the structure of Track S's 9-threshold schedule but differs from it:
+  - it uses runs-used terciles;
+  - it uses a fixed τ split of 0.02, chosen from P1's follow-up size (declared in `families.py`), not Track S's τ_pred half.
+- My decomposition (run 5) shows that the gain comes almost entirely from the budget-third dependence: +0.0060 without the τ split, +0.0001 for a τ split alone. The schedule executes the early proposals (mostly probes) and then turns strict.
+- §5.2's threshold table by τ half invites the reading that follow-up-specific thresholds matter.
+
+**Fix:**
+- Write "a 9-threshold schedule after Track S's" and state the τ split.
+- Add one sentence saying that the budget-third dependence carries the gain.
+
+## Summary (round 2)
+
+All four round-1 MAJOR findings are resolved, and so are the eight MINOR ones (two with small residuals, R2-3 and R2-4):
+
+- the table reproduces exactly from the committed code;
+- the certified gains are confirmed on fresh blocks: keep_feedback against a fine static, information's schedule, the B17 decomposition including final selection at W 40 and W 60, the null family member, and the budget DP at 300,000 campaigns;
+- "certified" now means what the report says.
+
+The five new findings are MINOR. R2-1 corrects a false explanatory sentence and should be fixed before the report is cited; the others are caveats and hygiene. None of them changes a certified number or the sign of any channel.
+
+Verdict: ACCEPT

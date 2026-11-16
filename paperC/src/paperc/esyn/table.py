@@ -11,7 +11,9 @@ Writes ``paperC/esyn/oracle_table_v1.json`` with:
   selection alone (best minus incumbent at a fixed measurement policy), also at W = 60;
 * ``calibration``: the W sweep that motivated the budgets of the config worlds, rerun with the current code on the
   **selection block** (n = 1,000; selection only, no evaluation);
-* ``code_sha256``: a fingerprint of the E-SYN sources, which the tests compare with the code (a stale table fails).
+* ``code_sha256``: a fingerprint of the E-SYN sources including this producer, which the tests compare with the code
+  (a stale table fails); every world record also stores the fingerprint it was built with, so a partial rebuild
+  cannot pass off older records under a new fingerprint.
 
 Runs the tasks on two processes; about 20 minutes on two CPUs.
 """
@@ -34,7 +36,7 @@ from paperc.esyn.extra import WORLDS
 PKG = Path(__file__).resolve().parent
 OUT = PKG.parents[2] / "esyn" / "oracle_table_v1.json"
 TABLE_SCHEMA = "paperc_esyn_oracle_table/v2"
-SOURCES = ("worlds.py", "extra.py", "sim.py", "policies.py", "families.py", "dp.py", "oracle.py")
+SOURCES = ("worlds.py", "extra.py", "sim.py", "policies.py", "families.py", "dp.py", "oracle.py", "table.py")
 TOL, N_SELECT, N_PILOT, N_MAX = 0.05, 2000, 1000, 400_000
 N_DECOMP, N_CALIB = 20_000, 1000
 CALIBRATION = (("shared_error", 24), ("shared_error", 60), ("eval_allocation", 24), ("eval_allocation", 32),
@@ -71,6 +73,7 @@ def world_task(name: str) -> dict:
         rec["dp_gain_over_selected_static"] = (rec["dp_value"] - rec["dp_selected_static_exact"]
                                                if rec["dp_selected_static_exact"] is not None else None)
     rec["seconds"] = round(time.time() - t0, 1)
+    rec["code_sha256"] = code_sha256()
     return {"kind": "world", "name": name, "rec": rec}
 
 

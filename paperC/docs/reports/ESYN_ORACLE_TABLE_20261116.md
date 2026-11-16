@@ -1,4 +1,4 @@
-# E-SYN worlds and certified oracle gains (build runbook P3; BUILD_LIST B3 + B17; revised after review round 1)
+# E-SYN worlds and certified oracle gains (build runbook P3; BUILD_LIST B3 + B17; revised after review rounds 1 and 2)
 
 **AI-assisted (Claude, chat session, 16 Nov 2026). ENGINEERING_ONLY.** Synthetic worlds are implementation checks
 and oracle gaps; they are never evidence about the real loop (plan §5).
@@ -12,6 +12,12 @@ and oracle gaps; they are never evidence about the real loop (plan §5).
   - keep_feedback fell from +0.0024 to +0.0015, after the static grid was extended;
   - information rose from +0.0010 (uncertified) to +0.0064 (certified), with Track S's schedule as the member;
   - every tolerance is now 5 % of a declared reference gain.
+- **Round 2: ACCEPT**, with 5 MINOR findings, fixed in `reviews/BUILD_P3_RESPONSE_R2_20261116.md`:
+  - corrected explanations of the information member and the null;
+  - a caveat on the coarse static grid;
+  - the fingerprint now covers the table producer.
+
+  The table was rebuilt in full; every number is unchanged.
 
 ## 1. What was built
 
@@ -40,6 +46,10 @@ and oracle gaps; they are never evidence about the real loop (plan §5).
   The tolerance is therefore an absolute precision of 0.000165, as in Track S.
 - **Deviation from Track S.** Only the selected member is certified, not every member.
 - **Lower bounds.** Gains are family-best lower bounds, except in the budget world.
+- **Coarse static grid.** The static grid is extended at its edges but never refined near the optimum, so the
+  baseline can sit slightly below the best static rule. In information, a finer grid beats the selected static by
+  0.00022 ± 0.00008 (review round 2), a few percent of that gain and more than the tolerance. A refinement pass is
+  an open item before P4 uses these gains as oracle references.
 
 ## 2. Worlds
 
@@ -100,7 +110,8 @@ the shared incumbent error. No member exploits the error through E1/E2 decisions
   | Dynamic | `dynamic:0,0.001,0,0.004,0.002,0,0.02` | −0.00046 ± 0.00012 | 86 % |
   | Schedule | `schedule:0,0,0,0,0.0005,0;…` | 0.00000 ± 0.00000 | 0 % |
 
-  No member beats the static rule.
+  No member beats the static rule. The schedule family adds no falsification power here, because the exact DP
+  already dominates every schedule. The null result rests on the exact DP and on the Dynamic family's evaluation.
 
 **Families compared in keep_feedback.** On the selection block, the budget-dependent keep threshold
 (b_keep = 0.016, after the grid was extended) reached +0.00155 and Track S's schedule +0.00140. The former was
@@ -143,8 +154,10 @@ beats the static rule.
 
 1. **Every declared channel shows a certified positive oracle gain** over an interior best static rule. The
    strict null shows none. These are lower bounds from small families, except the budget world's exact DP gain.
-2. **Information has the largest gain** (+0.0064). It comes from Track S's 9-threshold schedule. The selected
-   schedule's E1 thresholds by budget third:
+2. **Information has the largest gain** (+0.0064). It comes from a 9-threshold schedule after Track S's (budget
+   position = runs used / W; a fixed τ split at 0.02). The gain comes almost entirely from the dependence on the
+   budget third: about +0.0060 without the τ split, against +0.0001 for a τ split alone (review round 2). The
+   selected schedule's E1 thresholds by budget third:
 
    | Budget third | Small-τ proposals (probes, fillers) | Large follow-ups |
    |---|---|---|
@@ -152,7 +165,9 @@ beats the static rule.
    | middle | 0.003 (strict) | 0.0005 (lenient) |
    | last | 0.002 | 0.005 (strict) |
 
-   A key-novelty bonus alone has no gain once the static grid is interior.
+   Round 1's key-novelty member still gains about +0.0010 over the same best static (review round 2, 100,000 fresh
+   campaigns). The schedule replaced it because its gain is about six times larger. Round 1's explanation, that the
+   novelty gain vanished once the static grid was interior, was wrong: this world's best static did not change.
 3. **Evaluation control pays only with enough runs.** Verify and re-audit each add value at W = 40, and their sum
    is close to additive. Final selection helps only when re-audits make recorded values reliable (W = 60). At
    W = 24 nothing beats the static rule.
