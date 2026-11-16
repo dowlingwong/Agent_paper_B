@@ -127,7 +127,14 @@ campaign on NEMO2:
 bypassed.** P4 is therefore blocked pending an author decision: either (a) a separately reviewed **replay authorization
 / replay patch** that declares the NEMO2 host/path substitution *and* where the Stage A tables and OpenML caches come
 from (sha-pinned, transferred as job inputs), or (b) run the check elsewhere. The driver is ready to execute once such
-a decision is pinned; the preflight will re-evaluate it with no code change beyond the reviewed patch sha.
+a decision is pinned; the preflight re-evaluates it with no code change beyond the reviewed patch sha.
+
+**Shadow-exec scope limitation (for the author-decision path):** the driver shadow-executes only
+`r1/exam/campaign.py` (the file the pinned label patch touches); `r1/exam/runtime.py` — where `host_check` and the
+committed-config gate live — is imported from the pinned checkout and is *not* shadowed. A future replay-mode decision
+that has to change `runtime.py` would therefore need a reviewed extension of this mechanism (and its own pin), not just
+a bigger `campaign.py` patch. This is recorded rather than implemented, to keep the pre-declared “label-only patch”
+boundary intact.
 
 ## 7. Pre-declared criteria defect (must be fixed before any replay data exists)
 
@@ -144,7 +151,9 @@ before a run. **Recommendation: amend criterion 3 to the 12-root off-root totals
 
 Every criterion 1–6 value, the server's real offload line (expected 61/61 at the B2 setting), the actual wall time,
 parse failures, the label as emitted by a real campaign, and the sealed `/ceph` receipt. The unit's synthetic tests
-prove the machinery and the arithmetic only; they are not a deployment result.
+prove the machinery and the arithmetic only; they are not a deployment result. In particular the run path after a
+passing preflight (owned 32k server + 4 sequential `r1.exam.campaign` roots with the label patch) is implemented and
+reviewable but has never been executed, and criterion 3's pre-declared denominator is internally inconsistent (§7).
 
 ## 9. Exact execution steps (3 jobs) — **not done here; do not submit before the §6 decision**
 
