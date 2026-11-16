@@ -91,6 +91,8 @@ def tune_rungs(world):
         pols["kg"] = L.tune_from_coarse(tuner("kg"), lambda x: L.KGVerify(max(x[0], 0.0), x[1], max(x[2], 0.0)),
                                         [0.0001], [0.0001])
     pols["rawkeep"] = L.tune_from_coarse(tuner("rawkeep"), lambda x: L.RawKeep(max(x[0], 0.0), x[1]), [], [])
+    pols["shrink"] = L.tune_from_coarse(tuner("shrink"), lambda x: L.ShrinkRefit(max(x[0], 0.0), x[1], max(x[2], 0.0)),
+                                        [1.0], [0.5])
     for k, t in tuners.items():
         facts.setdefault(k, {})
         facts[k].update({"charged": len(t.charged), "budget": t.budget})
@@ -126,7 +128,7 @@ def build_world(name: str) -> dict:
         dev_vals = cache.values(p) if k not in ("oracle", "dp") and not k.startswith("random") else None
         d_dev = (dev_vals - cache.values(n1)) if dev_vals is not None else None
         rows_out[k] = {
-            "kind": "reference" if k in refs or k == "rawkeep" else "rung",
+            "kind": "reference" if k in refs or k in ("rawkeep", "shrink") else "rung",
             "policy": p.name, "policy_sha": getattr(p, "sha", None),
             "value": float(res[k][0].mean()), "mean_runs": float(res[k][1].mean()),
             "vs_N1": paired(res[k][0], res["N1"][0]), "gap_to_oracle": paired(res["oracle"][0], res[k][0]),

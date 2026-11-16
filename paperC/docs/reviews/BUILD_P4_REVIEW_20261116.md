@@ -315,3 +315,155 @@ Three findings stop acceptance:
 All three need code changes, a rebuild and report revisions; none needs new infrastructure. The eleven MINOR findings are hygiene, tests and wording.
 
 Verdict: NOT ACCEPTED
+
+---
+
+## Round 2
+
+- **Reviewer:** the same independent reviewer (Claude subagent, AI-assisted).
+- **Commit:** `c31384f` on branch `paperc-build-20261115`. Diffs read against `2e18837`.
+- **Date:** 16 Nov 2026
+- **Label:** ENGINEERING_ONLY
+
+**Read:** the response table `BUILD_P4_RESPONSE_R1_20261116.md`; the new `policies.py`, `runner.py` and `test_ladder_p4.py`; the diffs of `sim.py`, `schema.py`, `seeds.py`, the registry and the BUILD_RUNBOOK amendment; the rewritten ladder report; P3's report §6a; `BUILD_STATUS.md`.
+
+### What I ran (round 2)
+
+Scratch work is under `/tmp/p4rev/` (copy: `/tmp/p4rev/repo2`). The new scripts are `scripts/n2b_budget_r2.py`, `scripts/r2_checks.py` and `scripts/shrink_refit.py`.
+
+1. **Test suite:** 174 passed in 70 s.
+2. **Ladder rebuild** in the copy: 16 min 43 s on 2 processes, with my other checks running in parallel. The result is identical to the committed `ladder_table_v1.json` once `seconds` is ignored.
+3. **Oracle table:**
+   - the committed diff `2e18837 → c31384f` touches only `code_sha256` and `seconds`;
+   - a full rebuild in the copy (8 min 51 s) is identical to the committed table once `seconds` is ignored.
+
+   Both tables match the committed code.
+4. **Report against the JSON:** all seven §2 tables, 608 cells (kind, mean runs, gain and half-width, gap and half-width, dev gain with se, charge): 0 mismatches. I checked the §3 numbers and P3's §6a by hand.
+5. **Instrumentation, budget and eval_allocation** (`r2_checks.py`, n_dev = 200, spy on `sim.run_campaign`):
+   - tuning of all rungs touched only dev instances;
+   - fast and recorded paths agree for every tuned row on 40 campaigns;
+   - `check_campaign` with the registry and replay is clean on 10 recorded campaigns per row;
+   - every N2b and N4 row logs its `policy_sha`.
+6. **`eps_seed` tamper:** setting it to None gives 27 propensity violations; to 60003, 7; to 60999, 4. Replay now uses the logged key.
+7. **N2b in the budget world** (`n2b_budget_r2.py`). I refitted it with the committed code on six disjoint dev blocks of 1,000 campaigns (4,000,000 + 1,000 k, k = 0 … 5, inside the claimed `p4_dev` range). I also ran an ablation with the budget-position weights set to zero and the cut re-tuned by the same procedure (finding R2-1).
+8. **N2b's E1 score per size class** against its tuned cut (inline; R2-1).
+9. **Shrinkage-refit reference** (`shrink_refit.py`, interaction and shared_error; R2-2).
+
+### Status of the round-1 findings
+
+| # | Round 1 | Status |
+|---|---|---|
+| 1 | N3 centring | **Resolved.** Centres come from the best coarse static's eligible dev decisions and are stored per world. N3 in information: +0.00463 ± 0.00091. The report states that my search from N1's point reached +0.0081 and that the number depends on the search procedure. N3 spends the full cap of 80 in every world, so its rows are budget-bound under this procedure; §4 says so |
+| 2 | Unequal budgets | **Resolved,** residual R2-3.<ul><li>Every rung that starts from statics is charged the same coarse grid (tested), and none starts from N1's point.</li><li>Equality is a cap, declared in §4. Charges: N1 48–57, N2 12–18, N3 80, margin 61–80, SPRT 80, race 62, KG 64, RawKeep 49–74, N2b 20–21 (its cut only; see R2-4).</li><li>§3.1 is corrected.</li><li>The null test compares every row with the exact DP at its own interval. That is sound: it is one-sided by design and catches a row that beats the optimum.</li></ul> |
+| 3 | One belief | **Resolved at E2,** residuals R2-1, R2-2, R2-4.<ul><li>N2b's heads now use [1, V\*, τ, r] and [1, m̂, r].</li><li>SPRT and race keep on m̂.</li><li>N0 is the declared exception.</li><li>A RawKeep row and a test were added.</li></ul> |
+| 4 | `eps_seed` ignored | **Resolved:** replay is keyed by the logged seed; a missing seed is caught by the schema rule and by replay; tamper tests added |
+| 5 | Interface | **Resolved:** a Protocol in `policies.py` and a runbook amendment |
+| 6 | Random reference | **Resolved:** calibrated on the test block with the matched row's h. Budget world: `random_N1` 4.5 runs against N1's 4.5; `random_N4` 7.6 against 7.6. Wording residual in R2-5 |
+| 7 | Staleness guard | **Resolved:** per-world stamps; the oracle table's fingerprint and the oracle members are checked; the fingerprint covers schema, seeds and the registry |
+| 8 | Weak tests | **Resolved:** instrumented tuning test, coarse-grid charge test, tamper tests, KG against Monte Carlo, seed-claim test. Residual: the no-raw-increment test covers E2 only (R2-4) |
+| 9 | Over-claims | **Resolved;** new ones are in R2-1, R2-2 and R2-5 |
+| 10 | Policy identity | **Resolved:** `n2b:<sha>:<c>` and `n4:<sha>`; `policy_sha` is logged; weights and the law are stored |
+| 11 | B18 scope | **Resolved** |
+| 12 | N2b details | **Resolved** |
+| 13 | Runner wording and seed claim | **Resolved:** deviations declared; claims merged into `index_ranges`; uniqueness tested |
+| 14 | Overfitting diagnostics | **Resolved:** dev value and dev gain over N1 (with se) for every tuned row |
+
+### New findings
+
+#### R2-1. MAJOR — N2b's budget-world gain (+0.00200) is a dev-draw artefact of tuning its cut on terminal value; as built, N2b is not the single-step control
+
+**Location:** `policies.fit_n2b` (the E1 head includes the budget position r, and the cut c is tuned by coordinate search on dev terminal value); report §3.2.
+
+**Mechanism.** The committed head is w_e1 = (−0.0184, 0.755, 0.080, +0.0135) with cut 0.000828. The E1 score at r = 0, and what it takes for each size class to be executed:
+
+| Size | E1 score at r = 0 | Executed when |
+|---|---|---|
+| 0.4 | 0.000294 | never (would need r ≥ 6) |
+| 1.0 | 0.000819 | r ≥ +0.108 |
+| 2.5 | 0.002830 | always |
+
+The cut sits 0.0000096 above the middle class's score, and the r term is worth 0.0000889 per unit of r. The middle class therefore runs only when the budget is plentiful. That is the structure of the exact DP: medium items are executed only when there is slack.
+
+**Evidence that it is an artefact.** In the budget world, increments are i.i.d. across slots, so the immediate kept gain does not depend on r, and r's fitted weight is noise. Refitted with the same code on six disjoint dev blocks:
+
+| Dev block | w_r (E1) | Gain over N1 (test) | Gain with r-weights zeroed, cut re-tuned |
+|---|---|---|---|
+| 4,000,000 (committed) | +0.0135 | +0.00200 ± 0.00010 | +0.00009 ± 0.00005 |
+| 4,001,000 | +0.0024 | +0.00009 ± 0.00005 | +0.00009 ± 0.00005 |
+| 4,002,000 | −0.0674 | −0.00030 ± 0.00021 | −0.00030 ± 0.00021 |
+| 4,003,000 | +0.0144 | +0.00214 ± 0.00011 | −0.00031 ± 0.00021 |
+| 4,004,000 | +0.0792 | +0.00214 ± 0.00011 | +0.00009 ± 0.00004 |
+| 4,005,000 | −0.0008 | +0.00009 ± 0.00005 | +0.00010 ± 0.00005 |
+
+The committed +0.00200 is one draw from a two-valued outcome. It depends on whether the noise weight comes out positive enough for the cut, tuned on terminal value, to turn it into a budget rule.
+
+**Why it matters:**
+- §3.2 ("it can express a budget-dependent threshold … single-step by its training target and partly multi-step through the tuned cut") presents a dev-draw outcome as a property of the rung. Redrawing dev removes it half the time.
+- By plan §7.0's own criterion ("a threshold rule tuned by black-box search on terminal Y … its level is set by its form"), an E1 rule whose threshold depends on the budget position, with its level tuned on terminal Y, has a non-myopic form.
+- N2b is the plan's single-step control for RL on multi-step returns with the same encoder. If it can reach DP-level budget gains through terminal-value tuning, a later R0/R1 against N2b comparison no longer isolates the multi-step target.
+
+**Fix.** Choose one of two:
+- (a) Keep N2b single-step by form. Do not tune the cut on terminal value while the E1 features contain budget-state terms. Either fix c at the cost-sensitive decision point (execute iff the predicted immediate kept gain is positive), or at N2's tuned price g, so that the only quantity tuned on terminal value is a static price. Alternatively, drop r from the E1 head; the E2 head may keep it, because nothing at E2 is tuned on terminal value.
+- (b) Keep the design, classify N2b as a tuned rule of non-myopic form, and report its spread over at least 5 dev redraws.
+
+Either way, rewrite §3.2. More generally, report the spread over dev redraws for any tuned row whose policy changes discretely, such as a cut sitting at a class boundary.
+
+#### R2-2. MINOR — RawKeep measures one corner of the belief refit, not "the belief-refit effect"
+
+**Location:** report §1 ("measures that belief-refit effect separately"), §3.9 ("hurts where shrinkage protects (interaction −0.00143 …)") and §3.3.
+
+**Evidence.** I built a static rule with N1's g whose keep statistic is a + λk (Δ̂ − a). λ = 1 gives m̂ and λ → ∞ gives the raw increment; a is recovered from m̂, Δ̂, τ and σ. I tuned (λ, h) on the dev block by grid:
+- **Interaction:** the best is λ = 1.5, h = −0.00025, with a test gain over N1 of +0.00053 ± 0.00008, about half the privileged oracle's +0.00110. RawKeep is −0.00143.
+- **Shared_error:** the best is the raw corner (λ = 100, h = −0.003), +0.00058 ± 0.00010, equal to RawKeep.
+
+So in interaction, moderately down-weighting the shrinkage pays, and only removing it hurts. Round 1's N2b ablation showed the same.
+
+**Fix.** Either add the one-parameter shrinkage-refit row, which nests m̂ and RawKeep, or reword §1 and §3.9 to call RawKeep "the no-shrinkage corner". In §3.3, add that a refit of the belief without privileged knowledge captures about half the interaction oracle's gain. That matters for the P7/P8 learners, which read raw state.
+
+#### R2-3. MINOR — The one-standard-error move rule does not stop noise moves; the report should say so
+
+**Location:** `policies.better` and `coordinate_search`; report §1 and §3.1.
+
+**Evidence.** In the strict null, the Bayes rule `static:0,0` is the coarse start for both N1 and N3.
+- N1 moved to `static:0,-3.125e-05`. Its dev gain over `static:0,0` is +0.000069, 2.2 se; on test it is +0.000002 against the DP, so the move is harmless.
+- N3 moved to h_budget = −0.001. On test it loses −0.00007 ± 0.00004 against N1 and the DP, although its dev gain over N1 is +0.00000.
+
+At P(z > 1) ≈ 0.16 per comparison and 20–50 comparisons per rung, false moves are expected. N3 is the most exposed, since it always spends the full cap.
+
+**Fix:**
+- Use a stricter move threshold: for example 2 se, or a threshold that grows with the number of comparisons made. Alternatively, confirm each move on the other half of the dev block.
+- At the least, describe the rule in §1 as a minimal guard, and note in §3.1 that N1 also moved on noise in the null.
+
+#### R2-4. MINOR — "No rung reads the raw increment" is too strong, the test covers E2 only, and the response misdescribes N2b's charge
+
+**Location:** the `policies.py` docstring; report §1; `test_no_rung_reads_the_raw_increment`; response row 2.
+
+**What is wrong:**
+- SPRT and race read `candidate_delta_hat` at the verify epoch, in the log-likelihood ratio and the z-interval; only their keep is on m̂.
+- The test perturbs Δ̂ only at E2.
+- Response row 2 lists "N2b's cut" among the rungs charged the coarse grid. In fact `fit_n2b` charges only its cut search (20–21 candidates), as report §4 correctly says.
+
+**Fix:**
+- State the verify-epoch exception (these tests work on the mean by design), or move the LLR and the interval onto the posterior.
+- Extend the test to the verify epoch, with the exception explicit.
+- Correct the response row; no code change is needed for that.
+
+#### R2-5. MINOR — Report §3.10: random_N1 is not the worst row in keep_feedback
+
+**Evidence.** In keep_feedback, `random_N1` loses −0.01049, while N0 loses −0.01418, N4 −0.01150 and N2 −0.01143. The statement holds for information and budget.
+
+**Fix:** restrict the sentence to information and budget, or write "among the worst".
+
+### Summary (round 2)
+
+All fourteen round-1 findings are resolved; four leave MINOR residuals (R2-2 to R2-5). Both tables reproduce exactly from the committed code, and all 174 tests pass:
+- the dev/test separation is now tested by instrumentation;
+- replay uses the logged key;
+- the tuning budgets are equal caps with charged warm starts;
+- N3 has Track S's centring;
+- no rung keeps on the raw increment;
+- the report's numbers match the JSON.
+
+One new MAJOR finding remains, R2-1. N2b's +0.00200 in the budget world comes from tuning a cut on terminal value over a budget feature whose sign is noise. It appears in 3 of 6 dev draws and disappears without the budget feature. N2b as built therefore does not serve as the plan's single-step control, and §3.2 misreads the result. The fix is one design choice in `fit_n2b` (or the reclassification plus dev-redraw spread), a rebuild and a rewrite of §3.2.
+
+Verdict: NOT ACCEPTED

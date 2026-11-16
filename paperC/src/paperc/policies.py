@@ -13,18 +13,22 @@ logged as ``policy_sha``.
 
 **One belief for every arm** (plan §7.0). Every rung reads the same forecasts (the world's A2-U keyed belief computed
 by the simulator: V*, tau, m_hat) and decision-time features that are not forecaster inputs (budget position,
-slots, keeps). No rung reads the raw observed increment, which would let it refit the belief's shrinkage; the one
-exception is N0, Paper B's default rule (keep iff the observed increment is positive), the declared floor. The
-reference row ``RawKeep`` (a tuned static rule on the raw increment) measures the belief-refit effect separately.
+slots, keeps). No rung's **keep decision** reads the raw observed increment, which would let it refit the belief's
+shrinkage; the one exception is N0, Paper B's default rule (keep iff the observed increment is positive), the
+declared floor. SPRT and racing read the mean increment at the **verify** epoch, as their test statistic; their keep
+decision uses m_hat. Two reference rows measure belief refits: ``ShrinkRefit`` (a static rule keeping on
+a + min(lambda k, 1) (delta_hat - a), lambda tuned: lambda = 1 is the belief's m_hat, a large lambda the raw
+increment) and its no-shrinkage corner ``RawKeep``.
 
 **Ladder** (plan §7.1):
 
 * N0: execute every eligible proposal; keep iff the observed increment is positive;
 * N1: static thresholds (g, h) on the common belief;
 * N2: the myopic one-step rule (keep iff m_hat > 0), g tuned;
-* N2b: single-step learned heads on belief outputs and the budget position: E2 keep by a cost-sensitive logistic
-  head on [1, m_hat, r] (label: true increment > 0, weight |increment|); E1 by a least-squares head on
-  [1, V*, tau, r] predicting the immediate kept gain under that E2 head, with its cut tuned on dev;
+* N2b: single-step learned heads on belief outputs only: E2 keep by a cost-sensitive logistic head on [1, m_hat]
+  (label: true increment > 0, weight |increment|); E1 by a least-squares head on [1, V*, tau] predicting the
+  immediate kept gain under that E2 head, with its cut tuned on dev. No budget features: with them, a cut tuned on
+  terminal value turns the head into a budget rule whose slope is set by single-step labels (P4 review R2-1);
 * N3: Track S's dynamic family (``r1/tracks/a2u.py`` @ ``fab88fc``): E1 execute iff
   V* + b_info (tau - tau_bar) >= g0 - b_budget (r - r1_bar); E2 keep iff m_hat > h0 - h_budget (r - r2_bar), with
   r = runs_left / W - proposals_left / llm_cap and Track S's centring: r1_bar and tau_bar are the mean r and tau of
@@ -33,8 +37,8 @@ reference row ``RawKeep`` (a tuned static rule on the raw increment) measures th
 * N4: the budget DP (stochastic knapsack) on the V* law, rule share and first-trial gain estimated from dev
   campaigns (``LawDP``; keep iff m_hat > 0);
 * references: the P3 oracle member; ``RandomExec`` (execute with probability q, keep with the matched rung's h),
-  q calibrated on the test block to the matched rung's mean runs (run counts are not outcomes); ``RawKeep``; the
-  exact DP where it applies.
+  q calibrated on the test block to the matched rung's mean runs (run counts are not outcomes); ``ShrinkRefit`` and
+  ``RawKeep``; the exact DP where it applies.
 
 **B18 comparators** (worlds with a verify epoch): ``SPRT`` (verify while the log-likelihood ratio of +delta against
 -delta for the mean increment lies between +-log((1 - alpha) / alpha)), ``Race`` (verify while the z-interval of
@@ -47,7 +51,8 @@ selection) and a re-audit comparator.
 most ``TUNE_BUDGET`` candidate policies, counted per rung, each on the same ``N_DEV`` dev campaigns (instances
 ``DEV_BASE`` + i): first the same coarse grid of static rules (charged to every rung; N2 only its h = 0 column),
 then coordinate search over the rung's own parameters from the best coarse static, until the budget is spent or the
-steps vanish. A move is accepted only if its paired dev improvement exceeds one standard error. Dev values are
+steps vanish. A move is accepted only if its paired dev improvement exceeds one standard error (this does not stop
+every noise move: in the strict null N1 and N3 still move off the Bayes rule; P4 review R2-3). Dev values are
 shared across rungs as a cache; the charge is per rung. N2b's head fits and N4's law use the same dev campaigns and
 are recorded as dev fits. Test campaigns (``TEST_BASE`` + i) are never used for tuning.
 """
@@ -138,6 +143,32 @@ class RawKeep:
 
 
 @dataclass(frozen=True)
+class ShrinkRefit:
+    """Reference row (not a rung): keep on a + min(lam k, 1) (delta_hat - a), where k = A / (A + s^2) is the
+    belief's shrinkage and a its prior mean (recovered from m_hat = a + k (delta_hat - a)); lam = 1 reproduces the
+    belief's m_hat, lam >= 1 / k the raw increment."""
+    g: float
+    h: float
+    lam: float
+    version = VERSION
+    stochastic = False
+
+    @property
+    def name(self) -> str:
+        return f"shrink:{self.g!r},{self.h!r},{self.lam!r}"
+
+    def act(self, obs):
+        if obs["epoch"] == "E2":
+            t2, s2 = obs["tau"] ** 2, obs["sigma"] ** 2
+            k = t2 / (t2 + s2)
+            m, d = obs["m_hat"], obs["candidate_delta_hat"]
+            a = (m - k * d) / (1.0 - k)
+            stat = a + min(self.lam * k, 1.0) * (d - a)
+            return ("keep" if stat > self.h else "discard"), 1.0, None
+        return _rest(obs, self.g, self.h)
+
+
+@dataclass(frozen=True)
 class TrackSDynamic:
     """N3: Track S's dynamic family (module docstring)."""
     g0: float
@@ -173,8 +204,8 @@ class TrackSDynamic:
 @dataclass(frozen=True)
 class LearnedHead:
     """N2b (module docstring). Features scaled by ``scale`` (the world's sigma_cmp)."""
-    w_e1: tuple            # [1, V*/s, tau/s, r] -> predicted immediate kept gain / s
-    w_e2: tuple            # [1, m_hat/s, r] -> logit P(increment > 0)
+    w_e1: tuple            # [1, V*/s, tau/s] -> predicted immediate kept gain / s
+    w_e2: tuple            # [1, m_hat/s] -> logit P(increment > 0)
     c: float               # E1 cut on the predicted gain (raw units)
     scale: float
     version = VERSION
@@ -191,10 +222,10 @@ class LearnedHead:
     def act(self, obs):
         ep, s = obs["epoch"], self.scale
         if ep == "E1":
-            x = (1.0, obs["v_star"] / s, obs["tau"] / s, budget_position(obs))
+            x = (1.0, obs["v_star"] / s, obs["tau"] / s)
             return ("execute" if sum(a * b for a, b in zip(self.w_e1, x)) * s >= self.c else "skip"), 1.0, None
         if ep == "E2":
-            x = (1.0, obs["m_hat"] / s, budget_position(obs))
+            x = (1.0, obs["m_hat"] / s)
             return ("keep" if sum(a * b for a, b in zip(self.w_e2, x)) > 0 else "discard"), 1.0, None
         return _rest(obs, 0.0, 0.0)
 
@@ -494,20 +525,18 @@ def dev_trace(world: ESynWorld, instances, *, wide: bool = False) -> list[dict]:
 
 def fit_n2b(world: ESynWorld, trace: list[dict], tuner: Tuner) -> tuple[LearnedHead, dict]:
     """N2b on the world's own dev trace (``wide=False``): one measurement per execute under the behaviour."""
-    s, W, N = world.base.sigma_cmp, world.W, world.llm_cap
+    s = world.base.sigma_cmp
     rows = [e for e in trace if not e["first"] and "m_hat" in e]
-    r1 = np.array([e["runs_left_e1"] / W - e["slots_left_e1"] / N for e in rows])
-    r2 = np.array([(e["runs_left_e1"] - 1) / W - e["slots_left_e1"] / N for e in rows])
     delta = np.array([e["delta"] for e in rows])
-    X2 = np.column_stack([np.ones(len(rows)), [e["m_hat"] / s for e in rows], r2])
+    X2 = np.column_stack([np.ones(len(rows)), [e["m_hat"] / s for e in rows]])
     y, wt = (delta > 0).astype(float), np.abs(delta) / s
 
     def nll(w):
         z = X2 @ w
         return float(np.sum(wt * (np.logaddexp(0.0, z) - y * z))) + 1e-6 * float(w @ w)
-    w2 = minimize(nll, np.zeros(3), method="BFGS").x
+    w2 = minimize(nll, np.zeros(2), method="BFGS").x
     keep = (X2 @ w2) > 0                                         # E1 label: kept gain under N2b's own E2 head
-    X1 = np.column_stack([np.ones(len(rows)), [e["v_star"] / s for e in rows], [e["tau"] / s for e in rows], r1])
+    X1 = np.column_stack([np.ones(len(rows)), [e["v_star"] / s for e in rows], [e["tau"] / s for e in rows]])
     w1 = np.linalg.lstsq(X1, delta * keep / s, rcond=None)[0]
     head = lambda c: LearnedHead(tuple(map(float, w1)), tuple(map(float, w2)), float(c), s)   # noqa: E731
     cur = head(0.0)

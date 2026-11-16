@@ -19,12 +19,12 @@ LADDER = Path(__file__).resolve().parents[1] / "esyn" / "ladder_table_v1.json"
 # ---------------------------------------------------------------- interface and records
 
 def _head():
-    return L.LearnedHead((0.1, 1.0, 0.0, 0.2), (0.0, 1.0, 0.5), 0.0, 0.0066)
+    return L.LearnedHead((0.1, 1.0, 0.0), (0.0, 1.0), 0.0, 0.0066)
 
 
 ALL = [L.N0(), L.TrackSDynamic(0.001, 0.002, 0.1, -0.001, 0.002, 0.0, 0.004, 0.0), L.RandomExec(0.6, -0.001),
        L.SPRT(0.0, -0.001, 0.003), L.Race(0.0, -0.001, 1.0), L.KGVerify(0.0, -0.001, 0.0001),
-       L.BudgetMargin(0.0, -0.001, 0.002), _head(), L.RawKeep(0.0, -0.001),
+       L.BudgetMargin(0.0, -0.001, 0.002), _head(), L.RawKeep(0.0, -0.001), L.ShrinkRefit(0.0, -0.001, 1.5),
        L.LawDP.fit([0.5, 0.5], [0.0005, 0.002], 0.55, -0.0005, 40, 8)]
 
 
@@ -49,13 +49,14 @@ def test_every_row_writes_valid_records(name):
                 assert all(row["policy"]["policy_sha"] == p.sha for row in r.rows)
 
 
-def test_no_rung_reads_the_raw_increment():
-    """One belief for every arm (review P4 finding 3): only N0 and the RawKeep reference read delta_hat at E2."""
+def test_no_rung_keeps_on_the_raw_increment():
+    """One belief for every arm (review P4 finding 3): at the keep decision (E2) only N0 and the belief-refit
+    references read delta_hat (SPRT and racing read it at the verify epoch only)."""
     base = {"epoch": "E2", "W": 40, "llm_cap": 40, "v_star": 0.001, "tau": 0.004, "sigma": 0.0066, "bonus": 0.0,
             "runs_left": 20, "slots_left": 20, "calls_left": 20, "incumbent_obs": 1, "candidate_obs": 1,
             "keeps_so_far": 1, "incumbent_hash": "c0", "key_seen": False, "candidates": [], "m_hat": 0.0005}
     for p in ALL:
-        if isinstance(p, (L.N0, L.RawKeep)):
+        if isinstance(p, (L.N0, L.RawKeep, L.ShrinkRefit)):
             continue
         a1 = p.act({**base, "candidate_delta_hat": -0.05})[0]
         a2 = p.act({**base, "candidate_delta_hat": +0.05})[0]
@@ -141,7 +142,7 @@ def test_tuning_never_runs_test_campaigns(monkeypatch):
     monkeypatch.setattr(L, "N_DEV", 25)
     pols, facts, cache = R.tune_rungs(X.WORLDS["eval_allocation"])
     assert seen and min(seen) >= L.DEV_BASE and max(seen) < L.DEV_BASE + 25
-    assert {"N1", "N2", "N2b", "N3", "N4", "margin", "sprt", "race", "kg", "rawkeep"} <= set(pols)
+    assert {"N1", "N2", "N2b", "N3", "N4", "margin", "sprt", "race", "kg", "rawkeep", "shrink"} <= set(pols)
     for k, f in facts.items():
         if "charged" in f:
             assert f["charged"] <= f["budget"] == L.TUNE_BUDGET, k
@@ -182,7 +183,7 @@ def test_ladder_is_current(ladder):
 def test_ladder_rows(ladder, name):
     rec = ladder["worlds"][name]
     rows = rec["rows"]
-    need = {"N0", "N1", "N2", "N2b", "N3", "N4", "margin", "rawkeep", "oracle", "random_N1"}
+    need = {"N0", "N1", "N2", "N2b", "N3", "N4", "margin", "rawkeep", "shrink", "oracle", "random_N1"}
     if "verify" in X.WORLDS[name].epochs:
         need |= {"sprt", "race", "kg"}
     else:
@@ -209,3 +210,15 @@ def test_budget_world_dp_rungs(ladder):
     w = X.WORLDS["budget"]
     gain = dp.solve(w).value - max(dp.static_value(w, g) for g in dp.size_law(w).v)
     assert abs(rows["N4"]["vs_dp"]["diff"]) <= rows["N4"]["vs_dp"]["half_width"] + 0.05 * gain
+
+
+def test_shrink_refit_corners():
+    """lam = 1 reproduces the belief's keep on m_hat; a large lam keeps on the raw increment."""
+    obs = {"epoch": "E2", "tau": 0.004, "sigma": 0.0066, "W": 40, "llm_cap": 40, "runs_left": 20, "slots_left": 20}
+    k = 0.004 ** 2 / (0.004 ** 2 + 0.0066 ** 2)
+    for a, d in ((-0.0005, 0.003), (0.001, -0.002), (0.0, 0.0004)):
+        m = a + k * (d - a)
+        o = {**obs, "m_hat": m, "candidate_delta_hat": d}
+        for h in (-0.001, 0.0, 0.0005):
+            assert L.ShrinkRefit(0.0, h, 1.0).act(o)[0] == ("keep" if m > h else "discard")
+            assert L.ShrinkRefit(0.0, h, 1e6).act(o)[0] == L.RawKeep(0.0, h).act(o)[0]
