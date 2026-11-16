@@ -1,0 +1,19 @@
+# Independent B1 authorization-order review — 7 November 2026
+
+AI-assisted (Codex). Read-only review of `docs/r1/prompts/MAC_OVERNIGHT_PROMPT_20261107.md` revision 3 and the B1 gate on checkout `8f6fda783efdbb74f0a5187fb14f80f74e7bce3b`. This is a finding about the literal order of the author's instructions, not an author decision, code acceptance or permission to launch. No host, model, GPU, experiment or author note was accessed or changed.
+
+## Evidence and finding
+
+The author conditionally approved the rule and reviewed note subject to the exact final checkout and all reviewed phase/handover gates (prompt §0.3, line 62). The same section then states, at line 66: **“Set `approved: true` in the note, and launch, only when every one of these is true.”** Condition 3 (line 72) requires a clean committed checkout that already contains the approved note and has been independently reviewed and accepted. Condition 5 (line 78) requires the author gate to pass on the committed HEAD and the host pre-flight dry run to pass. Condition 6 (lines 79–83) requires the reviewed handover and specified marker, watcher and Track P safe-point sequence.
+
+The implemented actual `author_gate` first reads the configured note and refuses unless its `approved` field is boolean `true` (`r1/exam/runtime.py:300–309`). It requires the note bytes and PLAN from the clean committed host HEAD (`runtime.py:277–287`). The `dryrun` branch returns before checking the note (`runtime.py:300–301`), so a synthetic dry-run result is not a passing actual author gate. The currently proposed note says `approved: false` (`docs/r1/proposals/AUTH_DRAFT_trackx_b1_20261107.md:7–11`); the configured `docs/r1/authorizations/trackx_b1_20261105.md` was absent in the inspected B1 checkout.
+
+On the literal reading, condition 5 cannot be true before the note has been set to `true`; condition 3 also requires the approved note in the final reviewed commit. Yet line 66 prohibits setting it to `true` before those conditions are true. This is a temporal cycle, not a missing numerical value. A precomputed hash, a mock gate, or an unsigned `false` note does not produce the required committed approved note and real gate result. Creating a `true` candidate note or committed checkout first would be a departure from the literal sequencing; this review does not authorize that departure. The prompt might intend all conditions to hold **at launch**, but that reading changes the stated timing of setting `approved` and requires the author's clarification.
+
+## Concrete author clarification (proposed; not a decision)
+
+If the author wishes to resolve the cycle, one possible instruction is:
+
+> After Q2, the required tests, host checks and reviewed handover prerequisites are satisfied, you may set `approved: true` and commit the candidate B1 note solely to create the final checkout. Obtain independent acceptance of that exact clean HEAD, then pass the actual author gate and host dry run, complete the reviewed handover, and launch only if every condition holds. Any STOP preserves the state and waits for me.
+
+This is one option, not the author's words or authorization. The author may instead specify a different sequence. **Until clarification, keep the candidate `approved: false`; do not launch.** Continue all work that does not depend on this choice. This ordering finding does not replace the independent Q2, test, site, watcher and host-ownership STOPs; each must be closed separately. **Unblock:** author's clarification of note-setting versus final-checkout/gate ordering, followed by exact-checkout review and host verification. **Owner:** author, then implementer and independent reviewer/operator. **Effort:** one author answer, then a bounded checkout/gate review and site-dependent preflight; other unresolved gates may take longer.

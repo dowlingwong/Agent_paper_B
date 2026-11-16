@@ -1,0 +1,26 @@
+REPAIR devstral_small2_24b a0c0ed8a45c2c75c85fd756316a10419b90eb4f3dbe64d00f5c0b8ad4de5209a MATCH True
+REPAIR ministral3_14b 2f545122222db8bb43ca0ea0c49e9185320a8670f7d35575b0da0eb48b1e8970 MATCH True
+REPAIR olmo31_32b 5d275f78a64ad01740b8b65ff5554e624062229348b4f95c930c45a7db820466 MATCH True
+ANCHOR random_valid mismatches []
+ANCHOR scripted mismatches []
+ANCHOR qwen25_coder_7b mismatches []
+name free/schema parse active free/schema reproducibility template min_free offload grammar issues
+qwen25_coder_7b 50 50 50 50 100 55 18042.0 True N/A []
+gemma4_31b 50 50 50 50 100 55 2257.0 True True []
+olmo31_32b 50 50 50 50 100 55 3239.0 True N/A []
+devstral_small2_24b 50 50 50 50 100 55 7041.0 True N/A []
+gemma4_26b_a4b 50 50 50 50 100 55 6363.0 True True []
+laguna_xs21 50 50 50 50 100 55 3171.0 True True []
+gemma4_12b 50 50 50 50 100 55 15353.0 True True []
+ministral3_14b 50 50 50 50 100 55 12921.0 True N/A []
+RESULT 0 issues
+qwen25_coder_7b journal matched 200 /200 extra sequences 0
+gemma4_31b journal matched 200 /200 extra sequences 1
+olmo31_32b journal matched 200 /200 extra sequences 0
+devstral_small2_24b journal matched 200 /200 extra sequences 0
+gemma4_26b_a4b journal matched 200 /200 extra sequences 1
+laguna_xs21 journal matched 200 /200 extra sequences 1
+gemma4_12b journal matched 200 /200 extra sequences 1
+ministral3_14b journal matched 200 /200 extra sequences 0
+errors 0
+

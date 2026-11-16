@@ -58,10 +58,9 @@ def test_evaluate_gate_detects_learnable_gain():
     rows = synth()
     res = OE.evaluate(rows, "instance", 3, g_values=(OE.G_PRIMARY,), noise=NOISE)
     gate = OE.gate_verdict(res)
-    assert gate["g_sigma_units"] == 0.1 and gate["split"] == "instance"
-    for node, x in gate["nodes"].items():
-        assert x["gain_per20"] > 0 and x["ci95"][0] > 0 and x["meets_node_criterion"]
-    assert gate["pass"] and gate["verdict"] == "pass"
+    assert gate["verdict"] == "NOT_AVAILABLE" and "pass" not in gate
+    for x in res["values"]["0.1"]["A3_minus_A2"].values():
+        assert x["gain_per20"] > 0 and x["ci95"][0] > 0
     # A2 skips all inert proposals at g > 0
     assert res["values"]["0.1"]["arms"]["A2"]["nodeA"]["exec_rate"] < 0.8
     lono = OE.evaluate(rows, "lono", g_values=(OE.G_PRIMARY,), noise=NOISE)
@@ -78,7 +77,7 @@ def test_no_gain_when_nothing_is_learnable():
     res = OE.evaluate(rows, "instance", 3, g_values=(OE.G_PRIMARY,), noise=NOISE)
     for x in res["values"]["0.1"]["A3_minus_A2"].values():
         assert abs(x["gain_per20"]) < 0.05
-    assert not OE.gate_verdict(res)["pass"]
+    assert OE.gate_verdict(res)["verdict"] == "NOT_AVAILABLE"
 
 
 def _keys(obj):
@@ -92,7 +91,7 @@ def _keys(obj):
 
 
 def test_declared_g_values_only_and_single_gate():
-    """PLAN §10, g (22 Oct): primary 0.1, sensitivity {0.05, 0.2}; one verdict, at the primary g."""
+    """Declared g values remain; the superseded per-node gate is unavailable."""
     pytest.importorskip("lightgbm")
     assert OE.G_PRIMARY == 0.1 and OE.G_SENSITIVITY == (0.05, 0.2) and OE.G_EVAL == (0.1, 0.05, 0.2)
     rows = synth(n_inst=6, per=10)
@@ -110,8 +109,7 @@ def test_declared_g_values_only_and_single_gate():
     assert not {"pass", "gate_pass", "verdict", "meets_node_criterion"} & set(_keys(sens))
     # theory checks may use g = 0, labelled; they carry no verdict either
     assert "g = 0" in res["theory_checks"]["note"]
-    with pytest.raises(ValueError, match="primary"):
-        OE.gate_verdict(OE.evaluate(rows, "instance", 3, g_values=(0.05,), noise=NOISE))
+    assert OE.gate_verdict(OE.evaluate(rows, "instance", 3, g_values=(0.05,), noise=NOISE))["verdict"] == "NOT_AVAILABLE"
     assert res["run_accounting"]["primary"]["name"] == "skip_credited_at_g"
 
 

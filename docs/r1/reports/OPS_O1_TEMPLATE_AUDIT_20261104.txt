@@ -1,0 +1,9 @@
+qwen25_coder_7b independently recomputed 55 /55
+gemma4_31b independently recomputed 55 /55
+olmo31_32b independently recomputed 55 /55
+devstral_small2_24b independently recomputed 55 /55
+gemma4_26b_a4b independently recomputed 55 /55
+laguna_xs21 independently recomputed 55 /55
+gemma4_12b independently recomputed 55 /55
+ministral3_14b independently recomputed 55 /55
+errors 0 []

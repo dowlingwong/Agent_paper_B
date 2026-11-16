@@ -1,0 +1,216 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+120275|COMPLETED|00:00:02|0:0
+120275.batch|COMPLETED|00:00:02|0:0
+120275.extern|COMPLETED|00:00:02|0:0
+
+===== node =====
+hkn0901.localdomain
+2026-11-04T16:55:35+01:00
+8
+               total        used        free      shared  buff/cache   available
+Mem:             755          46         528           0         184         709
+Swap:              7           1           6
+Model name:                              AMD EPYC 9354 32-Core Processor
+Thread(s) per core:                      2
+Core(s) per socket:                      32
+Socket(s):                               2
+NUMA node(s):                            8
+
+===== slurm env =====
+CUDA_VISIBLE_DEVICES=0
+PROJECT_GROUP=hk-project-p0027888
+PROJECT=/hfs2/data/project/hk-project-p0027888/ka_ir7683
+SLURM_CLUSTER_NAME=hk2
+SLURM_CONF=/etc/slurm/slurm.conf
+SLURM_CPU_BIND_LIST=0x000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000040
+SLURM_CPU_BIND=quiet,mask_cpu:0x000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000040
+SLURM_CPU_BIND_TYPE=mask_cpu:
+SLURM_CPU_BIND_VERBOSE=quiet
+SLURM_CPUS_ON_NODE=8
+SLURM_CPUS_PER_TASK=8
+SLURM_DISTRIBUTION=cyclic
+SLURM_GPUS_ON_NODE=1
+SLURM_GTIDS=0
+SLURM_JOB_ACCOUNT=hk-project-p0027888
+SLURM_JOB_CPUS_PER_NODE=8
+SLURM_JOB_END_TIME=1793808634
+SLURM_JOB_EXCLUSIVE=NO
+SLURM_JOB_GID=44940
+SLURM_JOB_GPUS=3
+SLURM_JOB_GROUP=ka_ekp
+SLURM_JOB_ID=120275
+SLURM_JOBID=120275
+SLURM_JOB_NAME=r1scan
+SLURM_JOB_NODELIST=hkn0901
+SLURM_JOB_NUM_NODES=1
+SLURM_JOB_OVERSUBSCRIBE=NO
+SLURM_JOB_PARTITION=dev-gpu-h100
+SLURM_JOB_QOS=normal
+SLURM_JOB_SLUID=s371M6KJNVXZ00
+SLURM_JOB_START_TIME=1793807734
+SLURM_JOB_UID=504267
+SLURM_JOB_USER=ka_ir7683
+SLURM_LAUNCH_NODE_IPADDR=172.30.1.242
+SLURM_LOCALID=0
+SLURM_MEM_PER_NODE=16384
+SLURM_MPI_TYPE=pmix
+SLURM_NNODES=1
+SLURM_NODEID=0
+SLURM_NODELIST=hkn0901
+SLURM_NPROCS=1
+SLURM_NTASKS=1
+SLURM_OOM_KILL_STEP=0
+SLURM_PMIX_MAPPING_SERV=(vector,(0,1,1))
+SLURM_PMIXP_ABORT_AGENT_PORT=39977
+SLURM_PRIO_PROCESS=0
+SLURM_PROCID=0
+SLURM_PTY_PORT=32977
+SLURM_SRUN_COMM_HOST=172.30.1.242
+SLURM_SRUN_COMM_PORT=42047
+SLURM_STEP_ID=-5
+SLURM_STEPID=-5
+SLURM_STEP_LAUNCHER_PORT=42047
+SLURM_STEP_NODELIST=hk2n1254
+SLURM_STEP_NUM_NODES=1
+SLURM_STEP_NUM_TASKS=1
+SLURM_STEP_TASKS_PER_NODE=1
+SLURM_SUBMIT_DIR=/hfs2/data/home/ka_ekp/ka_ir7683/r1_scan_20261104
+SLURM_SUBMIT_HOST=hk2n1254.localdomain
+SLURM_TASK_PID=2653905
+SLURM_TASKS_PER_NODE=1
+SLURM_TOPOLOGY_ADDR=hk2ibi1.hkibbi4.hkibbi4e1.hkn0901
+SLURM_TOPOLOGY_ADDR_PATTERN=switch.switch.switch.node
+SLURM_TRES_PER_TASK=cpu=8
+TMPDIR=/scratch
+   Priority=12 Nice=0 Account=hk-project-p0027888 QOS=normal
+   RunTime=00:00:01 TimeLimit=00:15:00 TimeMin=N/A
+   Partition=dev-gpu-h100 AllocNode:Sid=hk2n1254:391179
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=hkn0901
+   ReqTRES=cpu=8,mem=16G,node=1,billing=8,gres/gpu=1
+   AllocTRES=cpu=8,mem=16G,node=1,billing=8,gres/gpu=1
+   MinCPUsNode=8 MinMemoryTRES=186720M MinTmpDiskNode=0
+   OverSubscribe=NO Exclusive=NO Contiguous=0 Licenses=(null) LicensesAlloc=(null) Network=(null)
+
+===== gpu =====
+Wed Nov  4 16:55:35 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 615.71.09              KMD Version: 615.71.09     CUDA UMD Version: 13.4     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA H100                    On  |   00000000:C6:00.0 Off |                    0 |
+| N/A   42C    P0             68W /  415W |      27MiB /  95830MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            5076      G   /usr/libexec/Xorg                        17MiB |
++-----------------------------------------------------------------------------------------+
+index, name, uuid, memory.total [MiB], driver_version, compute_cap, compute_mode, mig.mode.current
+0, NVIDIA H100, GPU-edd4b6a8-400e-a138-fa8a-7c92d4dabc33, 95830 MiB, 615.71.09, 9.0, Default, Disabled
+pid, process_name, used_gpu_memory [MiB]
+	[4mGPU0	NIC0	NIC1	NIC2	NIC3	NIC4	NIC5	CPU Affinity	NUMA Affinity	GPU NUMA ID[0m
+GPU0	 X 	SYS	SYS	SYS	SYS	PXB	SYS		4		N/A
+NIC0	SYS	 X 	PIX	SYS	SYS	SYS	SYS				
+NIC1	SYS	PIX	 X 	SYS	SYS	SYS	SYS				
+NIC2	SYS	SYS	SYS	 X 	SYS	SYS	SYS				
+NIC3	SYS	SYS	SYS	SYS	 X 	SYS	SYS				
+NIC4	PXB	SYS	SYS	SYS	SYS	 X 	SYS				
+NIC5	SYS	SYS	SYS	SYS	SYS	SYS	 X 				
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+NIC Legend:
+CUDA Version                                           : 13.4 [Deprecated; will be removed in CUDA 14.0. Use CUDA UMD Version instead]
+    Persistence Mode                                   : Enabled
+    Compute Mode                                       : Default
+
+===== GPUs visible to this job (a 1-GPU job cannot see the node's other GPUs) =====
+GPU 0: NVIDIA H100 (UUID: GPU-edd4b6a8-400e-a138-fa8a-7c92d4dabc33)
+
+===== local scratch =====
+Filesystem     Type  Size  Used Avail Use% Mounted on
+/dev/md125     xfs   3.4T  267G  3.2T   8% /tmp
+/dev/md125     xfs   3.4T  267G  3.2T   8% /scratch
+/dev/md125     xfs   3.4T  267G  3.2T   8% /scratch
+drwx------. 2 ka_ir7683 root 10 Nov  4 16:55 /scratch
+drwx------. 2 ka_ir7683 root 10 Nov  4 16:55 /tmp
+
+===== network from compute node (headers only) =====
+https://huggingface.co 200
+https://pypi.org/simple/ 200
+https://github.com 200
+
+===== can a job submit a job? (test-only, cpu partition) =====
+/usr/bin/sbatch
+sbatch: Job 120351 to start at 2026-11-06T04:36:35 a using 2 processors on nodes hk2n1004 in partition cpu
+
+===== modules inside job =====
+CUDA/
+CUDA/12.6.0
+CUDA/12.8.0
+CUDA/12.9.1
+CUDA/13.0.2
+CUDA/13.1.1
+CUDA/13.2.0
+CUDA/13.3.0
+GCC/
+GCC/12.3.0
+GCC/13.2.0
+GCC/13.3.0
+GCC/14.2.0
+GCC/14.3.0
+GCC/15.2.0
+GCC/16.2.0
+GCCcore/
+GCCcore/12.3.0
+GCCcore/13.2.0
+GCCcore/13.3.0
+GCCcore/14.2.0
+GCCcore/14.3.0
+GCCcore/15.2.0
+GCCcore/16.2.0
+Python/
+Python/2.7.18-GCCcore-12.3.0
+Python/3.11.3-GCCcore-12.3.0
+Python/3.11.5-GCCcore-13.2.0
+Python/3.12.3-GCCcore-13.3.0
+Python/3.13.1-GCCcore-14.2.0
+
+===== python =====
+/usr/bin/python3
+Python 3.9.21
+
+===== end =====
+2026-11-04T16:55:36+01:00
+
+============================= JOB FEEDBACK =============================
+
+Job ID: 120275
+Cluster: hk2
+User/Group: ka_ir7683/ka_ekp
+State: COMPLETED (exit code 0)
+Nodes: 1
+Cores per node: 8
+CPU Utilized: 00:00:01
+CPU Efficiency: 6.25% of 00:00:16 core-walltime
+Job Wall-clock time: 00:00:02
+Memory Utilized: 26.33 MB
+Memory Efficiency: 0.16% of 16.00 GB (16.00 GB/node)

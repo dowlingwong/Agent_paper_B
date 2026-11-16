@@ -1,0 +1,13 @@
+# Independent review: documents integration through `4eb49752` (4 Nov 2026)
+
+AI-assisted independent review by Codex. Scope: the staged tree in `/private/tmp/paper-b-mac-20261104`, based on `8bbdafd4`, integrating `docs/runbooks-04nov` at `4eb49752`, specifically its diff after `c55e2461`. No remote host, GPU, inference, job submission, commit or push was used. The verdict covers this documents-only integration, not the correctness of the historical probe or any experimental authorization.
+
+## Verdict: accepted for integration, with a provenance limitation
+
+The index has exactly the five additions in `git diff --name-status c55e2461 4eb49752`; each staged blob matches `4eb49752` byte-for-byte. There are no unstaged changes. The staged diff from `8bbdafd4` contains only those five additions and therefore preserves the pre-existing integration-branch content. The in-progress merge has `MERGE_HEAD=4eb49752`; `c55e2461` was previously integrated by content rather than being an ancestor, so a plain three-way merge would bring unrelated older changes and conflicts; the staged tree avoids these. The source draft and existing `4e0a00d0` authorization differ only in the three introductory lines: draft designation, commit status, and the author's verbatim 18:06 instruction. Their substantive bodies match.
+
+`status_checks.txt` supports that the ten named jobs were pending at the seven sampled checks, including the last at 17:01 UTC (18:01 CET). `testonly.txt` supports the reported test-only estimates. The report distinguishes those estimates from measured waits and states that no production GPU model or memory was measured. Its historical instructions do not authorize this agent to perform remote checks.
+
+**MINOR — missing raw files and verification limit.** The queue report's “Raw files beside this report” lists `sacct.txt`, `jobs.txt`, the job-output record and many other files, but only `status_checks.txt` and `testonly.txt` exist in the source tree at `4eb49752` and the staged tree. Thus claims dependent on the absent files, including the exact submission time and deadline and session teardown evidence, cannot be independently checked from this integration. The report's list should not be treated as an inventory of files included in Git. Preserve the source bytes; explicitly disclose this limitation in the integration handoff or a separate provenance note. HK0 still requires the author's later actual start times and GPU outputs; this review does not satisfy HK0 or authorize a job.
+
+**NIT — `git diff --cached --check`** reports three trailing CR characters in `testonly.txt`; these are part of the byte-identical raw capture. Preserve them rather than silently altering the evidence.

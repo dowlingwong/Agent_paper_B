@@ -1,0 +1,9 @@
+# Independent review: environment reconstruction and replay draft
+
+AI-assisted independent review (OpenAI Codex), 28 October 2026. **ACCEPTED as a preparation plan only; STOP remains and no job is authorized by this review.**
+
+Read-only inspection of the retained `append_only_summary` root records and trial ledgers confirmed that the smallest-instance-seed campaign for each authorized node has successful recorded budget-index 1 and 2 trials; trial 1 is kept, its primary metric equals trial 2's recorded `current_best_before`, and both configurations can be reconstructed by applying the recorded structured edits to the saved initial files. The selection rule is fixed by node, instance and trial index, not by metric value. The reviewer did not execute any task or edit the batch.
+
+The draft correctly declares zero tolerance before any job, reports the worker seed provenance limitation, retains original artifacts and requires a new CPU-only `ENGINEERING_ONLY` job to be run by the deepthought agent only after the STOP is resolved. The original sweep's root instance seeds are 100–275; all retained trial `training_seed` fields are null, so actual worker seed disjointness must also be supported by the pinned collector and harness seed derivation. The index audit seed list is a pending plan, not an audit already run.
+
+The batch `.venv/bin/python` and `python3` are wrappers to the shared venv. On 28 October the author permitted a plan and review that checks the numerical and orchestration uses of the same actual venv separately and discloses the wrapper topology; this is not a job launch. The draft treats the current 59-package list, 25 October freeze, 26 October installation record and timestamps as supporting evidence, not a launch-bound complete freeze. A 16-case exact replay would support a bounded reproducibility statement and would not prove every historical package or every root's behavior.

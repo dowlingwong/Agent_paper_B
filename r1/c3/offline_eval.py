@@ -14,9 +14,10 @@ the audit seeds).
 Run price g (PLAN §10, "g (22 Oct)", option A): g is declared in units of the
 node's sigma_node. The primary value is ``G_PRIMARY`` = 0.1 sigma_node; the
 declared sensitivity values are ``G_SENSITIVITY`` = (0.05, 0.2) sigma_node. The
-default evaluation computes exactly these three values. The C3 gate is judged
-at the primary g only (``gate_verdict``); the sensitivity values are reported
-under ``sensitivity`` without any pass/fail field. g = 0 appears only inside
+default evaluation computes exactly these three values. The superseded
+per-node C3 gate is unavailable; ``gate_verdict`` reports no pass/fail until
+the independently reviewed D8 aggregate gate is implemented. Sensitivity
+values have no verdict. g = 0 appears only inside
 the theory checks (T4 Proposition 7 threshold gain), labelled as such; it is
 never a gate quantity. g is not tuned on any data.
 
@@ -53,11 +54,9 @@ Splits: ``instance`` = K-fold cross-fitting by instance seed (all nodes
 trained together; every instance is held out once); ``lono`` = leave one node
 out (reported, no gate verdict).
 
-C3 gate (PLAN §10, D18; C3_DESIGN §6), judged once, at g = G_PRIMARY, primary
-run accounting, ``instance`` split: per node, gain = 20 x mean per-proposal
-(r_A3 - r_A2) on held-out proposals; a node meets the criterion iff gain >=
-delta_n and the lower 95 % cluster-bootstrap bound (by instance) > 0; the gate
-passes iff >= 2 nodes meet it.
+C3 gate: PLAN §10 R1-BX-D8 supersedes the older per-node D18 criterion.
+The new aggregate criterion is not implemented here; this module must not
+publish the old criterion as a current B.7 verdict.
 
 Usage:
   python -m r1.c3.offline_eval --table DIR [--audits DIR/audits.jsonl] --out DIR/offline_eval.json
@@ -114,6 +113,19 @@ BOOT = 2000
 SEED = 20261019
 
 
+def _verify_evidence_inputs(table_dir: Path, audits_path: Path, metadata: dict) -> None:
+    """Bind evidence evaluation to the independently completed audit and author decision."""
+    from r1.c3.audit import verify_evidence_completion
+    from r1.harness import REPO
+
+    classification = metadata.get("classification") or {}
+    sweep_index = metadata.get("sweep_index") or {}
+    if not classification.get("path") or not sweep_index.get("path"):
+        raise ValueError("EVIDENCE requires classification and index provenance")
+    verify_evidence_completion(Path(table_dir), Path(audits_path), REPO,
+                               Path(sweep_index["path"]), Path(classification["path"]))
+
+
 def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool = True,
              sigma_mode: str = "se_audit") -> list[dict]:
     """Join proposals with audits.
@@ -130,14 +142,37 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
     existing tables; ``"pooled_node"`` (v2) uses s = sigma_node / sqrt(K_label) and
     records ``soft_version`` on every labelled row.
     """
-    rows = load_table(table_dir)
+    from r1.c3.analysis_guard import guard_table
     audits_path = audits_path or Path(table_dir) / "audits.jsonl"
+    guard_table(table_dir, audits_path, Path(table_dir) / 'proposals.jsonl')
+    meta_path = Path(table_dir) / "build.json"
+    meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+    evidence = meta.get("label") == "EVIDENCE"
+    if meta.get("classification") and not evidence:
+        raise ValueError("classified table must carry an EVIDENCE label")
+    if evidence and not seed_split:
+        raise ValueError("EVIDENCE requires the declared label/evaluation seed split")
+    if evidence:
+        _verify_evidence_inputs(Path(table_dir), Path(audits_path), meta)
+    rows = load_table(table_dir)
     audits = {}
     for line in Path(audits_path).read_text().splitlines():
         if line.strip():
             a = json.loads(line)
+            if evidence:
+                expected = list(range(7001, 7011))
+                if a.get("seeds") != expected:
+                    raise ValueError("EVIDENCE audits require ordered seeds 7001–7010")
+                for key in ("candidate_metrics", "incumbent_metrics"):
+                    values = a.get(key)
+                    if not isinstance(values, list) or len(values) != 10 or any(
+                            not isinstance(x, (int, float)) or isinstance(x, bool) or not np.isfinite(x)
+                            for x in values):
+                        raise ValueError(f"EVIDENCE audit has invalid {key}")
             audits[a["proposal_id"]] = a
-    strata = {(r["source"], r["node"]) for r in rows if r["proposal_id"] in audits}
+    # The complete EVIDENCE population includes no-op/duplicate-only strata.
+    # Pilot tables retain their original sampled-stratum behavior.
+    strata = {(r["source"], r["node"]) for r in rows if evidence or r["proposal_id"] in audits}
     n_non = defaultdict(int)
     n_rand = defaultdict(int)
     for r in rows:
@@ -145,7 +180,7 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
         if k in strata and not rule_skip(r):
             n_non[k] += 1
             a = audits.get(r["proposal_id"])
-            if a and "random" in a["reason"] and a["delta_audit"] is not None:
+            if a and (evidence or ("random" in a["reason"] and a["delta_audit"] is not None)):
                 n_rand[k] += 1
     out = []
     for r in rows:
@@ -153,12 +188,14 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
         if k not in strata:
             continue
         r = dict(r)
+        if evidence:
+            r["_evidence_seed_split"] = True
         if is_noop(r):
             r.update(soft=soft_label(None, None, r["sigma_node"], inert=True), delta_true=0.0,
                      weight=1.0, eval_weight=1.0, audit_reason=None)
         elif is_duplicate(r):
             a = audits.get(r["proposal_id"])
-            if a and a.get("delta_audit") is not None:
+            if a and (evidence or a.get("delta_audit") is not None):
                 if seed_split:
                     ev = split_audit(a)[1]
                 else:
@@ -170,7 +207,7 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
                      audit_reason=a["reason"] if a else None)
         else:
             a = audits.get(r["proposal_id"])
-            if not a or a["delta_audit"] is None:
+            if not a or (not evidence and a["delta_audit"] is None):
                 continue
             ratio = n_non[k] / max(n_rand[k], 1)
             if seed_split:
@@ -184,9 +221,12 @@ def assemble(table_dir: Path, audits_path: Path | None = None, seed_split: bool 
             else:
                 soft = soft_label(lab["delta_audit"], None, r["sigma_node"], sigma_mode=sigma_mode, k_label=lab["k"])
                 r["soft_version"] = soft_label_version(sigma_mode)
-            r.update(soft=soft, delta_true=ev["delta_audit"],
-                     delta_audit_all=a["delta_audit"], se_audit=a["se"], weight=ratio, eval_weight=ratio if "random" in a["reason"] else 0.0,
-                     audit_reason=a["reason"])
+            r.update(soft=soft, delta_true=ev["delta_audit"], weight=ratio,
+                     eval_weight=ratio if evidence or "random" in a["reason"] else 0.0, audit_reason=a["reason"])
+            if evidence:
+                r.update(label_delta_audit=lab["delta_audit"], label_se_audit=lab["se"])
+            else:
+                r.update(delta_audit_all=a["delta_audit"], se_audit=a["se"])
         out.append(r)
     return out
 
@@ -209,8 +249,16 @@ def crossfit(rows, mode="instance", k=3, arms=None):
     for gval in sorted(set(groups.tolist())):
         te = np.where(groups == gval)[0]
         tr = np.where(groups != gval)[0]
-        train = [rows[i] for i in tr]
-        test = [rows[i] for i in te]
+        def model_row(row, *, training):
+            if not row.get("_evidence_seed_split"):
+                return row
+            # Evaluation-only outcomes are never passed to fit or predict.
+            allowed = {"node", "features", "noop", "duplicate", "_evidence_seed_split"}
+            if training:
+                allowed |= {"soft", "weight"}
+            return {key: value for key, value in row.items() if key in allowed}
+        train = [model_row(rows[i], training=True) for i in tr]
+        test = [model_row(rows[i], training=False) for i in te]
         for a, cls in arms.items():
             preds[a][te] = cls().fit(train).predict(test)
     return preds
@@ -442,24 +490,13 @@ def evaluate(rows, mode="instance", k=3, g_values=G_EVAL, noise=None, arms=None)
 
 
 def gate_verdict(evaluation: dict) -> dict:
-    """The C3 gate verdict: g = G_PRIMARY, primary run accounting, the evaluation's split only.
+    """Do not apply the superseded D18 per-node gate as a B.7 verdict.
 
-    This is the only function that produces a gate verdict. A node meets the
-    criterion iff its per-20 gain A3 - A2 >= delta_n and the lower 95 % cluster-
-    bootstrap bound > 0; the gate passes iff >= GATE_MIN_NODES nodes meet it.
+    R1-BX-D8 requires a separately reviewed and preregistered aggregate gate.
+    No input is examined and no pass/fail is returned by this placeholder.
     """
-    key = str(G_PRIMARY)
-    if key not in evaluation["values"]:
-        raise ValueError(f"the primary g = {G_PRIMARY} sigma_node was not evaluated")
-    nodes = {}
-    for node, x in evaluation["values"][key]["A3_minus_A2"].items():
-        nodes[node] = {**x, "meets_node_criterion": bool(x["gain_per20"] >= x["delta_n"] and x["ci95"][0] > 0)}
-    n_meet = sum(v["meets_node_criterion"] for v in nodes.values())
-    return {"g_sigma_units": G_PRIMARY, "run_accounting": RUN_ACCOUNTING["primary"]["name"],
-            "split": evaluation["mode"], "rule": f"pass iff >= {GATE_MIN_NODES} nodes have gain_per20 (A3 - A2) "
-            ">= delta_n with lower 95 % instance-cluster bootstrap bound > 0 (PLAN §10, D18; C3_DESIGN §6)",
-            "nodes": nodes, "nodes_meeting_criterion": n_meet, "pass": bool(n_meet >= GATE_MIN_NODES),
-            "verdict": "pass" if n_meet >= GATE_MIN_NODES else "fail"}
+    return {"verdict": "NOT_AVAILABLE",
+            "reason": "STOP: R1-BX-D8 aggregate gate is not implemented and confirmed"}
 
 
 def sensitivity_view(evaluation: dict) -> dict:
@@ -477,6 +514,8 @@ def sensitivity_view(evaluation: dict) -> dict:
 
 def table_noise(table_path: Path):
     """For pinned sweep tables, verify and load the identical noise source; preserve legacy default."""
+    from r1.c3.analysis_guard import guard_table, refuse_sealed
+    guard_table(table_path)
     meta_path = table_path / "build.json"
     meta = json.loads(meta_path.read_text()) if meta_path.is_file() else {}
     source = meta.get("noise_source")
@@ -489,6 +528,7 @@ def table_noise(table_path: Path):
         if rel.is_absolute() or ".." in rel.parts:
             raise ValueError("table noise source must be repository-relative")
         path = (REPO / rel).resolve()
+        refuse_sealed(REPO / rel, path)
         if not path.is_relative_to(REPO.resolve()) or not path.is_file():
             raise ValueError("table noise source missing or outside repository")
         if hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:
@@ -530,11 +570,7 @@ def main(argv=None) -> int:
     out = Path(args.out) if args.out else Path(args.table) / "offline_eval.json"
     out.write_text(json.dumps(result, indent=1))
     gate = result["gate"]
-    print(json.dumps({"gate_verdict": gate["verdict"], "g_sigma_units": gate["g_sigma_units"],
-                      "split": gate["split"], "seed_split": result["seed_split"],
-                      "nodes": {n: {"gain_per20": round(x["gain_per20"], 5), "ci95": [round(c, 5) for c in x["ci95"]],
-                                    "delta_n": x["delta_n"], "meets": x["meets_node_criterion"]}
-                                for n, x in gate["nodes"].items()}}))
+    print(json.dumps({"gate_verdict": gate["verdict"], "reason": gate["reason"]}))
     return 0
 
 

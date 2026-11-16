@@ -20,6 +20,8 @@ from r1.branch.matching import CampaignUsage
 
 
 def _jsonl(path: Path) -> list[dict]:
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path)
     return [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
 
 

@@ -1,0 +1,23 @@
+{
+ "schema": "hk2_config/v1",
+ "real_submission_enabled": {"value": false, "status": "ruled: overnight author instruction, enable only at HK1 after review"},
+ "comment": "HoreKa 2 tool settings (HOREKA_RUNBOOK_20261104.md rev 3, PLAN R1-HOREKA-RUNBOOK). Every value carries a status: 'ruled: <PLAN row>' (decided), 'measured: <source>' (read from the scan), or 'proposed: <source>' (the runbook's proposed value, an OPEN author item; the tools print and record every proposed key). Change a value only with its status. AI-assisted (Claude, M10, 4 Nov 2026).",
+ "account": {"value": "hk-project-p0027888", "status": "measured: HOREKA_RUNBOOK §0.1 (scan 4 Nov), the only account"},
+ "freeze_F": {"value": "2026-11-20T12:00:00+01:00", "status": "proposed: HOREKA_RUNBOOK §0.5 F; open author item §7 item 3"},
+ "cutoff_C": {"value": "2026-11-20T20:00:00+01:00", "status": "proposed: HOREKA_RUNBOOK §0.5 C; open author item §7 item 3"},
+ "copyback_D": {"value": "2026-11-21T18:00:00+01:00", "status": "proposed: HOREKA_RUNBOOK §0.5 D; open author item §7 item 3"},
+ "campaign_start": {"value": "2026-11-04T00:00:00+01:00", "status": "proposed: Mac agent M10 (the day of R1-T1-HOREKA; the runbook's §0.4 'since the campaign start' names no date); author to confirm"},
+ "budget_ceiling_gpu_h": {"value": 400, "status": "proposed: HOREKA_RUNBOOK §0.4 interpretation of '400GPU小时没问题' as a ceiling; open author item §7 item 4"},
+ "budget_stop_gpu_h": {"value": 300, "status": "proposed: HOREKA_RUNBOOK §0.4 STOP threshold; open author item §7 item 4"},
+ "t_max_hours": {"value": 4, "status": "proposed: HOREKA_RUNBOOK §1 default T_max; fixed by row R1-HOREKA-TMAX after HK0 (§7 item 2)"},
+ "probed_shape": {"value": {"gpus": 1, "cpus_per_task": 32, "mem_mb": 184320}, "status": "proposed: HOREKA_RUNBOOK §1 probed shape (1 GPU, -c <= 32, --mem <= 180G)"},
+ "max_outstanding": {"value": 90, "status": "ruled: R1-HOREKA-RUNBOOK (runbook §3 item 1: more than 90 outstanding refused)"},
+ "dev_partitions": {"value": ["dev-cpu", "dev-gpu-h100"], "status": "measured: HOREKA_RUNBOOK §0.1 (QoS dev, one job at a time per user)"},
+ "dev_max_time": {"value": "01:00:00", "status": "measured: HOREKA_RUNBOOK §0.1 (dev partitions 1 h maximum)"},
+ "agent_partitions": {"value": ["agent"], "status": "measured: HOREKA_RUNBOOK §0.1/§0.2 (the agent session job's partition)"},
+ "gpu_partition_prefix": {"value": "gpu-", "status": "ruled: R1-HOREKA-RUNBOOK (runbook §0.3, §3 item 1: gpu-* jobs)"},
+ "ruling_row_id": {"value": "R1-HOREKA-AGENT-SUBMIT", "status": "ruled: R1-HOREKA-AGENT-SUBMIT (4 Nov 18:00; mac-int-20261104 @ 33988105)"},
+ "results_root": {"value": "/hfs2/data/project/hk-project-p0027888/ka_ir7683/r1/results", "status": "measured: HOREKA_RUNBOOK §0.1/§0.2 ($PROJECT path from the scan)"},
+ "stop_marker": {"value": "/hfs2/data/project/hk-project-p0027888/ka_ir7683/r1/STOP", "status": "proposed: Mac agent M10 (a file there refuses every submission; the HoreKa agent creates it at any §5 STOP, e.g. an NHR@KIT reply restricting agent submission)"},
+ "query_min_interval_s": {"value": 60, "status": "ruled: R1-HOREKA-RUNBOOK (runbook §3 item 2: squeue/sacct at most once every 60 s)"}
+}

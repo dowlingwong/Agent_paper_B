@@ -236,6 +236,8 @@ def write(path: Path = E0_FILE, sha_path: Path = E0_SHA, seed: int = SEED) -> st
 
 
 def load(path: Path = E0_FILE, sha_path: Path = E0_SHA, verify: bool = True) -> list[dict]:
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path, sha_path)
     data = Path(path).read_bytes()
     if verify:
         want = Path(sha_path).read_text().split()[0]

@@ -5,6 +5,15 @@ Supersedes the post-training part of R1-C3-BASE (24 Oct).
 
 > **28 Oct (PLAN §10 R1-C3-POOL, R1-C3-POOL-EXAM, R1-TABPFN):** the decision-model candidates are **Kev-0.8B and Kev-4B**, with the Qwen3.5-0.8B/4B-Base control; **StartLux and Laya are removed**; **TabPFN** is added as a ladder rung (in-context, fine-tuned, R-A0, R-A1; not in P.3a, not in R-B). Where the text below names StartLux or Laya as candidates, these rows control. **Also 28 Oct (R1-CONTEXT-BASELINE):** a context-only rung A1-ctx (node descriptors only, fitted across training nodes per LONO fold) and a context-aware vs context-oblivious prompt ablation on Kev-0.8B at Stage S.
 
+> **4 Nov 2026 (PLAN §10 R1-BX-D1 … D14, R1-BX-REVISIONS).** Where this file conflicts, these rows control:
+> - **Self-control arm = A4** (the Track X pick, zero-shot, isotonic-calibrated). **R-B (§6.4) is an optional "trained self-control" ablation**, no longer the self-control arm of the three-way comparison (R1-BX-D9).
+> - **Wording:** in the paper only R-B is called RL; Stage R-A (§6.3) is called **"decision-focused fine-tuning"** (R1-BX-D9).
+> - **Serialisation order:** the proposal goes **after** the history, immediately before `<decide>`; a new E6 probe (A6, §5.6) compares history-first with proposal-first (R1-BX-REVISIONS (d)).
+> - **Labels:** T0 (CPU nodes) and T1 (GPU label nodes, code-level diffs); per-node σ̂ for every node; divergence is a separate outcome class (§3.4); K = 10 unless an author row puts R1-BX-D3's K = 6 into force (T1 only, proposed). Sweep-2 and T1 label tables are read for analysis only after R1-BX-D8-CONFIRM.
+> - **Generalisation:** leave-one-suite-out is primary; LONO within T0 is secondary (§3.6, §7.2).
+> - **TabPFN:** an information-matched comparison against Kev, TabPFN in regression mode (R1-BX-D13).
+> - **Stage D:** one round on 1–2 T1 nodes only (R1-BX-D11).
+
 > **Later host and scope decisions.** PLAN §10 R1-TASL7-TRACKP moves Track P to TASL-7 after its host-equivalence check; R1-ADA-OVERFLOW permits scoped resumable overflow. R1-JEV-RUNG adopts the Jev rung. R1-LOCAL-TEST-SCOPE permits existing Mac CPU tests under the author's exclusions; Track P read-only analysis and proposals remain allowed. Older portal and optional-Jev wording below is historical. The author resolved bin edges, hard-label diagnostic exceptions, R-A0 and score scaling in PLAN §10 R1-BIN-EDGES, R1-HARD-LABEL-ABLATION, R1-RA0-RULE and R1-RPS-CANONICAL (27 Oct); later scope and H.8 decisions are also recorded there.
 Scope: C3 decision models (A5 / A6), label generation, the decision-model exam, SFT, RL, DAgger, evaluation.
 Runbook counterpart: `docs/r1/RUNBOOK.md` → Track P. Reading list: `docs/r1/references/README.md`. Base-model facts (Kev, StartLux, Laya) are those checked on 25 Oct and recorded in RUNBOOK Track P; P.0 confirms them.
@@ -78,6 +87,8 @@ The action head is optional (absent in Stage S and in the "rule-on-belief" arm).
 
 Shared serialisation: one text template, ≤ 1,024 tokens (Laya's limit), fixed bin names and order.
 
+**Order of the serialised parts (4 Nov, R1-BX-REVISIONS (d)).** For causal (decoder) models, history tokens placed **before** the proposal cannot attend to it, so the readout at `<decide>` sees the history only through the proposal's own tokens. The template therefore reads: task and node context → ledger history → **the proposal** → `<decide>` (and the options, where the family's interface lists them). The template carries a version field. The editor of `r1/c3/train/` (the Mac agent under MAC_LOCAL M13, if the handover row names it) first checks which order the template used in P.3a. If P.3a used proposal-first, its results are recorded with that template version and are not re-labelled; E6 probe A6 measures the difference, and P.3b onward uses the 4 Nov order. *(open: whether P.3a must be re-run under the new order is the author's call after the probe.)*
+
 Every new head (action, cumulative, the E0 linear belief head) reads a LayerNorm-ed state (26 Oct, R1-HEADS-LN). The reserved tokens `<b0>…<b11>`, `<exec>`, `<skip>` are initialised from the mean of the existing token embeddings; those rows are kept and trained in fp32 at a lower lr, 1e-4 (26 Oct, R1-TOKEN-INIT; value confirmed by R1-TRACKP-CHOICES).
 
 ### 2.3 Belief head form (exam factor)
@@ -146,6 +157,8 @@ s_j = σ̂ / √5, where σ̂ is the **pooled** node noise σ (in *z* units σ̂
 
 y_{j,k} = Φ((e_{k+1} − μ_j)/s_j) − Φ((e_k − μ_j)/s_j),  k = 1…11; y_{j,0} = 0.
 
+**4 Nov (R1-BX-REVISIONS (c), R1-BX-D3).** σ̂ is each node's own: from the C1 30-seed table on T0, and from each T1 node's own noise floor, measured on that table's GPU model. If a T1 floor is heavy-tailed, the Student-t form above is declared for that node before labels are built *(proposed)*. A divergent run is a separate outcome class (R1-BX-REVISIONS (c)). *(proposed:* a non-finite loss, or no metric at the fixed budget; it produces no z-value, the proposal is recorded with its divergence count, and it enters neither μ_j nor the bins.*)* With K = 6 on T1 (only once an author row puts R1-BX-D3 into force), s_j = σ̂/√3.
+
 The same construction with seeds 7006–7010 gives `y_eval`. **Candidate training uses soft labels; the author permits the synthetic E0 contrast and one real-label appendix-only hard ablation, never a candidate (R1-HARD-LABEL-ABLATION).**
 
 ### 3.5 Action target
@@ -160,14 +173,16 @@ where keep_j comes from `r1/c3/rules.py` (`keep`) applied to the logged Δ̂_j u
 
 - Primary split by **instance seed** (train / val / test instance blocks). Val is drawn from training instances and uses `y_train` only.
 - Group duplicates and near-duplicates by **edit hash across splits** (the same edit can appear under different instance seeds).
-- **LONO**: leave-one-node-out folds over task nodes.
+- **Leave-one-suite-out (primary since 4 Nov, R1-BX-D1):** train on two suites, test on the third. The CPU pool T0 counts as training data in every fold; it is never the held-out suite *(proposed)*.
+- **LONO** (secondary since 4 Nov, within T0): leave-one-node-out folds over task nodes.
 - The decision-model exam set (§5) is a fixed subset of the training partition and never overlaps the test instances.
 - Tree packing groups branches **within** one split and one state; packing never mixes splits.
 
 ### 3.7 Expansion
 
-- B.6 is deferred under R1-FOCUSED-SCOPE; second-manager generalisation is a deployment check with the Track X pick.
-- C.2: one DAgger round (§6.5).
+- ~~B.6 is deferred under R1-FOCUSED-SCOPE; second-manager generalisation is a deployment check with the Track X pick.~~ Superseded 3 Nov (PLAN R1-MAIN-PROPOSER): the main training data come from sweep 2 with the Track X pick (thinking off); sweep 1 (`qwen2.5-coder:7b`) is the second source; both sources share one instance split, and cross-source duplicates are grouped by (instance, incumbent hash, edit hash). Until sweep 2 exists, Track P work on sweep-1 labels is ENGINEERING_ONLY with label seeds 7001–7005 only.
+- **4 Nov (R1-BX-D11, R1-BX-D1):** B.6 is cut. Label volume beyond the T0 sweeps comes from the T1 GPU label nodes (about 150 audited proposals per node; Track G G.5).
+- C.2: one DAgger round (§6.5), on 1–2 T1 nodes only (R1-BX-D11).
 
 ### 3.8 Label files
 
@@ -287,6 +302,8 @@ Adapted from the Jev probe set (§10, R1). All on the soft-label E0 model unless
 | A4 Width monotonicity | Same prompt, s increased in 5 steps; reference = the label's own std at each step (26 Oct, R1-E0-PROTOCOL) | predicted std non-decreasing wherever the label's std increases, on **≥ 95 % of prompts** (R1-E0-THRESHOLDS; recorded under E6, not disqualifying, as §5.7.1 says — *Track P agent's reading, author to confirm, since the decision set the E0 and A4 thresholds together*) |
 | A5 Slot bias | BinTokenWrapper: permute the order bin tokens are listed in the prompt (canonical order otherwise) | **descriptive only**, read on the readout used for selection (for the Qwen control the fresh head; 26 Oct evening, R1-CONTROL-READOUT); TV distance reported against the former 0.02 |
 
+**A6 Serialisation order (added 4 Nov, R1-BX-REVISIONS (d)).** The same states serialised history-first (proposal immediately before `<decide>`) and proposal-first. Report mean |Δ RPS| and the change in decision utility on the exam set; descriptive, not disqualifying *(proposed)*. It runs once on the E0 model of each candidate, and again on the P.3b finalists.
+
 ### 5.7 Pre-registered selection rule
 
 1. Discard models that fail E0, or fail E4 hard limits (OOM at 1,024 tokens, batch 8 with grad checkpointing; non-deterministic reload). E6 failures are recorded; A1/A2 failures disable packing for that model but do not disqualify it.
@@ -322,6 +339,8 @@ Caveat recorded in the appendix: the exam set is small, so ranking is coarse; it
 
 ### 6.3 Stage R-A — decoupled action head (A6, redefined)
 
+**Name in the paper (4 Nov, R1-BX-D9): "decision-focused fine-tuning".** It is cost-sensitive classification on offline labels, not RL; only R-B is called RL.
+
 Head models (Kev, Qwen control, StartLux if trainable). Exact objectives; no sampling needed.
 
 **Arms**
@@ -351,7 +370,7 @@ Head models (Kev, Qwen control, StartLux if trainable). Exact objectives; no sam
 
 ### 6.4 Stage R-B — reasoning arm (GRPO), belief and action decoupled
 
-This is the "LLM self-control" arm of the self-control vs trained-configurator vs hybrid comparison.
+~~This is the "LLM self-control" arm of the self-control vs trained-configurator vs hybrid comparison.~~ **Since 4 Nov (R1-BX-D9): an optional "trained self-control" ablation.** The self-control arm of the three-way comparison is A4 (the Track X pick, zero-shot, isotonic-calibrated), which does not depend on R-B.
 
 - Eligible models: only bases that can generate text — the Qwen control and Kev (its Qwen3.5 base LM writes the analysis; the pointer head reads the belief). Laya (encoder) and StartLux Instant (single forward pass) are not eligible.
 - Output format: `<analysis> … </analysis>` (≤ 256 tokens, sampled) → belief position (bin-token or pointer logits read, not sampled) → action token `<exec>` / `<skip>` (sampled). The 256 analysis tokens come on top of the ≤ 1,024-token prompt.
@@ -383,7 +402,7 @@ This is the "LLM self-control" arm of the self-control vs trained-configurator v
 1. Run the loop with the current configurator on fresh training instances.
 2. Collect states the configurator visits; audit the newly proposed edits with the same 10-seed protocol (7001–7005 for labels).
 3. Aggregate with existing labels; retrain from the Stage S recipe (and the selected R-A arm).
-4. One round in C.2; report the shift in proposer behaviour (acceptance-history feedback) as evidence of the sequential (DAC) structure.
+4. One round in C.2, **on 1–2 T1 nodes only (R1-BX-D11)**; report the shift in proposer behaviour (acceptance-history feedback) as evidence of state-distribution shift, not of a policy-value gap (PLAN §10 R1-WORDING-30OCT; replaces "evidence of the sequential (DAC) structure").
 
 ---
 
@@ -400,16 +419,18 @@ This is the "LLM self-control" arm of the self-control vs trained-configurator v
 
 ### 7.2 Generalisation
 
-- LONO folds: all metrics per held-out node.
+- **Leave-one-suite-out folds (primary since 4 Nov):** all metrics per held-out suite, then per node within it.
+- LONO folds (secondary, within T0): all metrics per held-out node.
+- **Information-matched TabPFN vs Kev (R1-BX-D13):** one run each on the shared feature view (hand features + PCA-reduced proposal-text embedding), beside their native-input rows.
 - Ablations: Qwen base + LoRA vs Kev (same base) isolates decision pretraining; softmax-12 vs cumulative-11 head; soft vs hard labels (synthetic E0 plus one real-label appendix-only ablation, never a candidate; R1-HARD-LABEL-ABLATION).
 
 ### 7.3 Learning curve
 
-Learning-curve comparisons at 250 / 500 / 1k / 2k labels remain planned; B.6 and its 8k expansion are deferred (R1-FOCUSED-SCOPE).
+Learning-curve comparisons at 250 / 500 / 1k / 2k labels remain planned. ~~B.6 and its 8k expansion are deferred (R1-FOCUSED-SCOPE).~~ B.6 is cut (4 Nov, R1-BX-D11); the curve is drawn on T0 + T1 labels.
 
 ### 7.4 Closed loop (main table)
 
-Fixed budget, fresh instances, ≥ 3 harder benchmarks where available. Compare: theory index (base-rate belief), trained belief + theory rule (R-A0), learned action head (R-A1/2), LLM self-control (R-B and zero-shot tier), hybrid. Report final quality and number of executions.
+Fixed budget, fresh instances, on T0, T1 and T2 nodes (4 Nov). Compare: theory index (base-rate belief), the practitioner baselines (Karpathy default; fixed-r + t-test; R1-BX-D7), trained belief + theory rule (R-A0), learned action head (R-A1/2), **LLM self-control = A4** (zero-shot tier; R-B as an optional ablation, R1-BX-D9), hybrid; with the main proposer, and on T1/T2 also with the API proposer (R1-BX-D6). Report final quality, number of executions and divergences.
 
 ---
 
@@ -423,6 +444,8 @@ Fixed budget, fresh instances, ≥ 3 harder benchmarks where available. Compare:
 ---
 
 ## 9. Open items
+
+- **4 Nov:** which serialisation order P.3a used, and whether P.3a is re-run under the 4 Nov order (author, after E6 A6); the text-embedding model and PCA dimension for the matched TabPFN view; the T1 noise-floor GPU model (Track G G.3).
 
 - Bin edges are fixed by R1-BIN-EDGES; maintain the declared no-op definition and versioned labels.
 - Confirm v_k (keep probability per bin) from the C2 theory.

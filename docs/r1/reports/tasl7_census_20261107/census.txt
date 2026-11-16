@@ -1,0 +1,21 @@
+Sat Nov  7 12:00:32 AM UTC 2026
+TASL-7
+uid=1011(dowling) gid=1011(dowling) groups=1011(dowling)
+total 12
+drwxrwxr-x  3 dowling dowling 4096 Nov  4 08:55 .
+drwxr-xr-x 16 dowling dowling 4096 Nov  4 05:45 ..
+drwxrwxr-x  2 dowling dowling 4096 Nov  4 08:55 bin
+-rw-rw-r--  1 dowling dowling    0 Oct 26 15:50 gpu0.lock
+trks_watch: 1 windows (created Fri Oct 30 04:07:39 2026)
+index, uuid, memory.used [MiB], memory.total [MiB]
+0, GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1, 236 MiB, 24564 MiB
+pid, process_name, used_gpu_memory [MiB]
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p2  1.9T  1.2T  585G  68% /
+tianyu    934891       1 tmux: server
+dowling  1388759       1 tmux: server
+ollama   1786525       1 ollama
+## HEAD (no branch)
+74a0790739b736f98d6bcb13436fb84b7e058000 Bind Stage A portal config to the A1 journal-fix commit
+## trackp-20261026...origin/trackp-20261026
+## HEAD (no branch)

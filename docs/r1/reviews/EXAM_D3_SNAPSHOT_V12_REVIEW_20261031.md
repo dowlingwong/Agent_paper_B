@@ -1,0 +1,5 @@
+# Independent review: Track X D3 engineering snapshot v12 — 31 October 2026
+
+**BLOCK.** All 38 snapshot files passed SHA-256 verification; `SHA256SUMS` SHA-256 `aea7921f2386557a10eaed9abd72feb099cddceda494b4b040985309e0ec20a5`. Production entry, cold-start and GPU lease continuity are unconditionally stopped. The full pytest suite was not independently rerun; no model or GPU was used.
+
+Independent CPU checks reproduced three evidence gaps: the validator accepts a prefill before its `/tokenize` call because it does not enforce cross-journal dependencies; 200 true attempts can all have the wrong route (`/completion`) and still pass; and fabricated census records with an invented method/scope and no observed identities or timestamps pass. Therefore the validator cannot establish the claimed request sequence or actual observations. Real cold-start, service isolation, Linux process visibility and GPU `flock` continuity remain unproven. The snapshot is retained under the local operations archive; it is not authorized to execute.

@@ -1,0 +1,27 @@
+{
+  "/Users/wongdowling/Documents/agent_paper_B/results/r1/engineering/liveness_llm_20261014T140742Z/ledgers/digits_mlp__s104/root_trials.jsonl": {
+    "derived_path": "ledgers/digits_mlp__s104.jsonl",
+    "derived_sha256": "1c598688f2a5cab152476080e58eb92344d6b877f07eb67dd1ebfbafc90e5d2c",
+    "original_sha256": "1c598688f2a5cab152476080e58eb92344d6b877f07eb67dd1ebfbafc90e5d2c"
+  },
+  "/Users/wongdowling/Documents/agent_paper_B/results/r1/engineering/liveness_llm_20261014T140742Z/ledgers/digits_mlp__s114/root_trials.jsonl": {
+    "derived_path": "ledgers/digits_mlp__s114.jsonl",
+    "derived_sha256": "03e7387884c13f3fbab0666758c73cb8af51ef7e0c432b3e99a3d96848f8c26c",
+    "original_sha256": "03e7387884c13f3fbab0666758c73cb8af51ef7e0c432b3e99a3d96848f8c26c"
+  },
+  "/Users/wongdowling/Documents/agent_paper_B/results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots/openml_breast_w__s105/root_trials.jsonl.gz": {
+    "derived_path": "ledgers/openml_breast_w__s105.jsonl",
+    "derived_sha256": "6e38b4593220cf806d91647f8f7118881d2340410e103744d50c68a914a1b6fb",
+    "original_sha256": "9b2f1a3d4908a70f00daf1842d25f61725a9e0491fdb340a57131a2364e79965"
+  },
+  "/Users/wongdowling/Documents/agent_paper_B/results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots/openml_ionosphere__s103/root_trials.jsonl.gz": {
+    "derived_path": "ledgers/openml_ionosphere__s103.jsonl",
+    "derived_sha256": "249c64c96762355a3d0e28aa59bec23dc84683f05652dcc9f82912a65a8916ae",
+    "original_sha256": "b4877af3621ae006a0f778ac0904079b357b363fa8efccc81850d4b53c41a775"
+  },
+  "/Users/wongdowling/Documents/agent_paper_B/results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/ledgers/roots/tabular_mlp__s102/root_trials.jsonl.gz": {
+    "derived_path": "ledgers/tabular_mlp__s102.jsonl",
+    "derived_sha256": "42c3f16c2c129da5c6d58b166ba36bba53ef73ed9155d06280f7f7eaae4b5267",
+    "original_sha256": "9b20a29925897ce8db5558a5f7c4dabd2e5f8e09a3b3ea6ac93613d10af64ece"
+  }
+}

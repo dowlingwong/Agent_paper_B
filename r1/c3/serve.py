@@ -56,6 +56,8 @@ class PinError(RuntimeError):
 
 
 def sha256_file(path: Path | str) -> str:
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(path)
     h = hashlib.sha256()
     with open(path, "rb") as fh:
         for chunk in iter(lambda: fh.read(1 << 20), b""):
@@ -72,6 +74,8 @@ class Pin:
 
     @classmethod
     def load(cls, path: Path | str) -> "Pin":
+        from r1.c3.analysis_guard import refuse_sealed
+        refuse_sealed(path)
         data = json.loads(Path(path).read_text())
         root = Path(path).resolve().parent
         files = {}
@@ -144,6 +148,8 @@ class TorchLoraLoader:
         missing = [k for k in self.PIN_KEYS if k not in pin.files]
         if missing or not pin.model:
             raise PinError(f"a model pin needs files {self.PIN_KEYS} and a 'model' spec (missing: {missing or 'model'})")
+        from r1.c3.analysis_guard import refuse_sealed
+        refuse_sealed(pin.model.get('base_path'))
         import torch
         from r1.c3.train.types import DecisionPrompt
         saved = Path(pin.files["manifest"]["path"]).parent
@@ -278,6 +284,8 @@ def main(argv=None) -> int:
     ap.add_argument("--delay-s", type=float, default=0.0)
     ap.add_argument("--ready-file", default=None, help="write the URL here once serving")
     args = ap.parse_args(argv)
+    from r1.c3.analysis_guard import refuse_sealed
+    refuse_sealed(args.pin, args.fake, args.ready_file)
     try:
         loader = TorchLoraLoader() if args.torch else FakeLoader(json.loads(Path(args.fake).read_text()))
         sidecar = Sidecar(Pin.load(args.pin), loader, delay_s=args.delay_s)
