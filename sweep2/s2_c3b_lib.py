@@ -1157,6 +1157,23 @@ def _write_prompt_outputs(measured: dict, comparison: dict | None,
         (out / "S2_C3B_PROMPT_REPORT.md").write_text(_prompt_report(measured, comparison, cross_check))
 
 
+def audit_worker_logs(bases=("out", "work")) -> dict:
+    """Scan worker run.log files under out/ and work/ (r1.liveness copies ledgers to out/ but writes the worker
+    logs under work/). STOP if none exist or if every run crashed; otherwise record the counts."""
+    logs = []
+    for base in bases:
+        logs.extend(sorted(Path(base).rglob("run.log")))
+    crashed = [p for p in logs if any(m in p.read_text(errors="replace")
+                                      for m in ("Traceback (most recent call last)", "ModuleNotFoundError",
+                                                "ImportError", "SyntaxError"))]
+    audit = {"total_run_logs": len(logs), "crashed": len(crashed), "scanned": list(bases)}
+    if not logs:
+        raise Stop("STOP: no liveness worker run.log found (work/ and out/ scanned); no training evidence")
+    if len(crashed) == len(logs):
+        raise Stop("STOP: all liveness worker runs crashed; no training evidence")
+    return audit
+
+
 def run_liveness_job(spec_path: Path) -> dict:
     validated = validate_spec(load_spec(Path(spec_path)))
     s = validated["spec"]
@@ -1237,16 +1254,10 @@ def run_liveness_job(spec_path: Path) -> dict:
                                   "stdout_tail": result.stdout[-4000:], "stderr_tail": result.stderr[-4000:]}
         if result.returncode != 0:
             stop(f"STOP: r1.liveness rc={result.returncode}; outputs kept")
-        logs = list(Path("out").rglob("run.log")) + list(Path("work").rglob("run.log"))
-        crashed = [p for p in logs if any(m in p.read_text(errors="replace")
-                                          for m in ("Traceback (most recent call last)", "ModuleNotFoundError",
-                                                    "ImportError", "SyntaxError"))]
-        record["worker_audit"] = {"total_run_logs": len(logs), "crashed": len(crashed),
-                                  "scanned": ["out/", "work/"]}
-        if not logs:
-            stop("STOP: no liveness worker run.log found (work/ and out/ scanned); no training evidence")
-        if len(crashed) == len(logs):
-            stop("STOP: all liveness worker runs crashed; no training evidence")
+        try:
+            record["worker_audit"] = audit_worker_logs()
+        except Stop as exc:
+            stop(str(exc))
         try:
             report = json.loads((out / "liveness.json").read_text())
         except (OSError, json.JSONDecodeError) as exc:

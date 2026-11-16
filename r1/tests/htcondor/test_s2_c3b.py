@@ -758,14 +758,18 @@ def test_job_entry_precreates_the_transferred_outputs():
     assert "s2_c3b_lib.py" in text
 
 
-def test_worker_audit_scans_work_and_stops_on_all_crash(tmp_path, monkeypatch):
-    # the liveness worker logs live under work/ (not out/); all-crash must STOP and leave a record
+def test_worker_audit_helper_scans_work_and_out(tmp_path, monkeypatch):
     import s2_c3b_lib as c3b
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "work" / "roots" / "x" / "art" / "trial-001").mkdir(parents=True)
-    (tmp_path / "work" / "roots" / "x" / "art" / "trial-001" / "run.log").write_text(
-        "Traceback (most recent call last):\nModuleNotFoundError: No module named 'numpy'\n")
-    logs = list(__import__("pathlib").Path("out").rglob("run.log")) + \
-        list(__import__("pathlib").Path("work").rglob("run.log"))
-    crashed = [p for p in logs if "ModuleNotFoundError" in p.read_text()]
-    assert len(logs) == 1 and len(crashed) == 1
+    with pytest.raises(c3b.Stop, match="no liveness worker run.log"):
+        c3b.audit_worker_logs()
+    log = tmp_path / "work" / "roots" / "x" / "art" / "trial-001" / "run.log"
+    log.parent.mkdir(parents=True)
+    log.write_text("Traceback (most recent call last):\nModuleNotFoundError: No module named 'numpy'\n")
+    with pytest.raises(c3b.Stop, match="all liveness worker runs crashed"):
+        c3b.audit_worker_logs()
+    other = tmp_path / "out" / "roots" / "x" / "art" / "trial-002" / "run.log"
+    other.parent.mkdir(parents=True)
+    other.write_text("val_score 0.91\n")
+    audit = c3b.audit_worker_logs()
+    assert audit["total_run_logs"] == 2 and audit["crashed"] == 1
