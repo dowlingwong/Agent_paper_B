@@ -14,8 +14,9 @@ All policies are deterministic (probability 1.0) and read only ``sim.obs_from_st
   m_hat > h - b_keep runs_left / W (information and keep-feedback channels; ``b_novel`` is the key-novelty term
   Track S's analysis notes propose, because a tau bonus also rewards P1's large, noisy follow-ups; ``tau_cut``
   keeps the novelty bonus off those follow-ups, whose keys are also unseen when their probe was skipped).
-* ``InteractionAware(g, h, beta)``: E2 keep iff m_hat + beta bonus > h, where bonus is the ``oracle_int`` belief's
-  complement value (interaction channel).
+* ``InteractionAware(g, h, beta)``: E2 keep iff m_hat + beta bonus > h, where bonus is the complement value of the
+  ``privileged:interaction`` forecast, computed from the **true** interaction matrix (an oracle member with
+  privileged world knowledge; ``privileged = True``).
 * ``EvalAlloc(g, h, verify_band, verify_max, reaudit_max, final)``: verify while candidate_obs < verify_max and
   |m_hat - h| < verify_band sigma; re-audit while incumbent_obs < reaudit_max; final ``incumbent`` or ``best``
   (highest recorded value among kept configurations with at least two measurements, else the incumbent).
@@ -99,9 +100,11 @@ class Dynamic:
 
 @dataclass(frozen=True)
 class InteractionAware:
+    """Oracle member: reads the privileged forecast computed from the true interaction matrix."""
     g: float
     h: float = 0.0
     beta: float = 0.5
+    privileged = True
 
     @property
     def name(self) -> str:
@@ -141,3 +144,40 @@ class EvalAlloc:
                     return "select", 1.0, max(ok, key=lambda c: c[1])[0]
             return "select", 1.0, obs["incumbent_hash"]
         return _myopic(obs, self.g, self.h)
+
+
+@dataclass(frozen=True)
+class Schedule:
+    """Track S's 9-threshold schedule (ANALYSIS_NOTES section 5.1): the E1 threshold by budget tercile x tau half,
+    the E2 threshold by budget tercile. The budget position is r = runs used / W (tercile k = min(floor(3 r), 2));
+    the tau half is tau >= tau_split. It nests the static rules (all g equal, all h equal)."""
+    gs: tuple        # 6 execute thresholds, index 2 k + (tau >= tau_split)
+    hs: tuple        # 3 keep thresholds, index k
+    tau_split: float = 0.02
+
+    @property
+    def name(self) -> str:
+        return ("schedule:" + ",".join(f"{x:.6g}" for x in self.gs) + ";" + ",".join(f"{x:.6g}" for x in self.hs)
+                + f";{self.tau_split:.6g}")
+
+    def act(self, obs: dict):
+        r = 1.0 - obs["runs_left"] / obs["W"]
+        k = min(int(3 * r), 2)
+        ep = obs["epoch"]
+        if ep == "E1":
+            j = 1 if obs["tau"] >= self.tau_split else 0
+            return ("execute" if obs["v_star"] >= self.gs[2 * k + j] else "skip"), 1.0, None
+        if ep == "E2":
+            return ("keep" if obs["m_hat"] > self.hs[k] else "discard"), 1.0, None
+        return _myopic(obs, self.gs[0], self.hs[0])
+
+
+def from_name(name: str):
+    """Rebuild a ``Static`` or ``EvalAlloc`` policy from its name (table post-processing)."""
+    kind, _, rest = name.partition(":")
+    parts = rest.split(",")
+    if kind == "static":
+        return Static(float(parts[0]), float(parts[1]))
+    if kind == "evalloc":
+        return EvalAlloc(float(parts[0]), float(parts[1]), float(parts[2]), int(parts[3]), int(parts[4]), parts[5])
+    raise ValueError(f"cannot rebuild {name!r}")

@@ -1,57 +1,152 @@
-"""Policy grids for the E-SYN oracle (build runbook P3, step 5): the static baseline grid and each world's member
-family. AI-assisted (Claude, chat session, 16 Nov 2026). ENGINEERING_ONLY.
+"""Policy grids for the E-SYN oracle (build runbook P3, step 5; revised after review round 1).
 
-The static grid is Paper B's rule class (E1 threshold g on V*, E2 threshold h on m_hat). A world's members are
-the channel's parameters (never all zero, so no member equals a static rule) crossed with the static thresholds
-in the grid neighbourhood of the best static rule (one grid step either way in g and in h); ``certify`` builds
-them after choosing the best static on the selection block. The budget world's member is the exact DP policy.
-The strict null gets the ``Dynamic`` rules whose inputs exist there (tau bonus, budget-dependent keep threshold,
-key novelty), so a positive null gain would expose a simulator or oracle error; its DP collapses exactly to the
-static rule (g = 0), which ``test_esyn_p3`` checks by exact computation rather than by simulation.
+AI-assisted (Claude, chat session, 16 Nov 2026). ENGINEERING_ONLY.
+
+**Static grid** (Paper B's rule class: E1 threshold g on V*, E2 threshold h on m_hat): starts at ``G0`` x ``H0``
+and is **extended** by ``oracle.certify`` whenever the best static lies on an edge that is not a natural bound, until
+it is interior (review P3 finding 1). g = 0 is a natural lower bound, because V* > 0 (every g <= 0 executes
+every proposal); h has no natural bound.
+
+**Member families** (``Family``): a world's channel parameter (a scalar or a discrete option) crossed with the static
+thresholds (g, h). ``certify`` searches them by coordinate ascent on the selection block: the channel parameter at
+the current (g, h), extended at non-natural edges, then the (g, h) neighbourhood (one grid step each way, the
+static grid extended at its edges) at the best parameter, repeated until (g, h) stops moving. Members that make
+exactly the best static's decisions on every selection campaign are not eligible as the evaluated member.
+
+* strict_null: ``Dynamic`` with a tau bonus, a budget-dependent keep threshold or a key-novelty bonus (no
+  extension: the null has no channel to find), **and** the 9-threshold ``Schedule`` (a strong falsification test:
+  it can fit selection noise, so its evaluation-block gain must not exceed the tolerance);
+* budget: the exact DP policy only (no search);
+* interaction: ``InteractionAware`` beta (scalar; halved / doubled at the edges); privileged (knows M);
+* shared_error: re-audit count k in {2, ..., max_obs} (natural bounds);
+* eval_allocation: (verify band, verify max, re-audit max, final rule), band halved / doubled at its edges;
+* information: Track S's 9-threshold ``Schedule`` (E1 threshold by budget tercile x tau half, E2 threshold by budget
+  tercile; tau split 0.02 separates P1's size-16 follow-ups), searched by coordinate descent from the best static
+  over the static grid values, grids extended at their edges. (Round 1's key-novelty member showed no gain once the
+  static grid was extended: its apparent gain came from a best static on the grid edge.)
+* keep_feedback: ``Dynamic`` b_keep (scalar; halved / doubled) and the ``Schedule`` (Track S's schedule found a
+  larger keep-feedback gain than a single budget term).
+
+Gains found this way are **lower bounds** on the attainable gain (the best member of a small family), except in
+the budget world, where the member is the exact optimum.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from itertools import product
+from typing import Callable
 
 from paperc.esyn import dp
 from paperc.esyn import policies as P
 from paperc.esyn.extra import ESynWorld
 
-G_GRID = (0.0, 0.0005, 0.001, 0.0015, 0.002, 0.003)
-H_GRID = (-0.003, -0.002, -0.001, 0.0, 0.001)
+G0 = (0.0, 0.0005, 0.001, 0.0015, 0.002, 0.003)
+H0 = (-0.003, -0.002, -0.001, 0.0, 0.001)
+G_NATURAL_LOW = 0.0
 
 
-def statics(world: ESynWorld) -> list:
-    return [P.Static(g, h) for g, h in product(G_GRID, H_GRID)]
+def statics(g_grid, h_grid) -> list:
+    return [P.Static(g, h) for g, h in product(g_grid, h_grid)]
 
 
-def _near(grid: tuple, x: float) -> tuple:
+def extend_static_grid(g_grid: list, h_grid: list, best: P.Static) -> tuple[list, list, bool]:
+    """Extend the grids beyond any non-natural edge the best static sits on (spacing doubles outward)."""
+    g, h, ext = list(g_grid), list(h_grid), False
+    if best.g == g[-1]:
+        g.append(round(g[-1] + 2 * (g[-1] - g[-2]), 10))
+        ext = True
+    if best.g == g[0] and g[0] > G_NATURAL_LOW:
+        g.insert(0, max(G_NATURAL_LOW, round(g[0] - 2 * (g[1] - g[0]), 10)))
+        ext = True
+    if best.h == h[0]:
+        h.insert(0, round(h[0] - 2 * (h[1] - h[0]), 10))
+        ext = True
+    if best.h == h[-1]:
+        h.append(round(h[-1] + 2 * (h[-1] - h[-2]), 10))
+        ext = True
+    return g, h, ext
+
+
+def static_interior(g_grid, h_grid, best: P.Static) -> bool:
+    g_ok = best.g != g_grid[-1] and (best.g != g_grid[0] or best.g <= G_NATURAL_LOW)
+    h_ok = best.h not in (h_grid[0], h_grid[-1])
+    return g_ok and h_ok
+
+
+def near(grid: list, x: float) -> list:
     i = grid.index(x)
     return grid[max(i - 1, 0): i + 2]
 
 
-def members(world: ESynWorld, best: P.Static) -> list:
+@dataclass
+class Family:
+    name: str
+    build: Callable                       # (g, h, param) -> policy
+    params: list                          # initial channel parameters (scalars or option tuples)
+    extend: Callable[[list, object], list] = field(default=lambda params, best: [])   # new params at an edge
+    search_gh: bool = True                # False: no (g, h) search (the DP member)
+    kind: str = "grid"                    # "schedule": coordinate descent over the 9 thresholds of ``Schedule``
+
+
+def _scalar_extend(floor: float | None = None):
+    def ext(params, best):
+        vals = sorted(params)
+        if best == vals[0]:
+            x = vals[0] / 2
+            return [] if floor is not None and x < floor else [x]
+        if best == vals[-1]:
+            return [vals[-1] * 2]
+        return []
+    return ext
+
+
+def _evalloc_extend(params, best):
+    if best[1] == 1:
+        return []
+    bands = sorted({p[0] for p in params if p[1] > 1})
+    if best[0] == bands[-1]:
+        nb = bands[-1] * 2
+    elif best[0] == bands[0]:
+        nb = bands[0] / 2
+    else:
+        return []
+    rest = sorted({(p[1], p[2], p[3]) for p in params if p[1] > 1})
+    return [(nb, v, r, f) for (v, r, f) in rest]
+
+
+SCHEDULE = Family("schedule", None, [0.02], kind="schedule")
+
+
+def families(world: ESynWorld) -> list[Family]:
+    """All member families searched for ``world``; the oracle takes the best eligible member across them."""
+    if world.channel in ("none", "keep_feedback"):
+        return [family(world), SCHEDULE]
+    return [family(world)]
+
+
+def family(world: ESynWorld) -> Family:
     c = world.channel
-    gh = list(product(_near(G_GRID, best.g), _near(H_GRID, best.h)))
     if c == "budget":
-        return [P.Threshold(dp.solve(world).table)]
+        table = dp.solve(world).table
+        return Family("dp", lambda g, h, p: P.Threshold(table), [None], search_gh=False)
     if c == "none":
-        out = [P.Dynamic(g, h, b_info, 0.004, b_keep, b_novel)
-                for (g, h), (b_info, b_keep, b_novel) in product(gh, ((0.1, 0.0, 0.0), (0.0, 0.002, 0.0),
-                                                                     (0.0, 0.0, 0.001)))]
-        return out
+        return Family("dynamic_null", lambda g, h, p: P.Dynamic(g, h, p[0], 0.004, p[1], p[2], 0.02),
+                      [(0.1, 0.0, 0.0), (0.0, 0.002, 0.0), (0.0, 0.0, 0.01)])
     if c == "interaction":
-        return [P.InteractionAware(g, h, beta) for (g, h), beta in product(gh, (0.25, 0.5, 1.0))]
+        return Family("interaction_beta", lambda g, h, b: P.InteractionAware(g, h, b), [0.25, 0.5, 1.0],
+                      _scalar_extend(floor=0.01))
     if c == "shared_error":
-        return [P.EvalAlloc(g, h, 0.0, 1, k, "incumbent") for (g, h), k in product(gh, (2, 3))]
+        return Family("reaudit_k", lambda g, h, k: P.EvalAlloc(g, h, 0.0, 1, k, "incumbent"),
+                      list(range(2, world.max_obs + 1)))
     if c == "eval_allocation":
-        opts = [(band, vmax, rmax, fin) for band, vmax, rmax, fin in product((1.0, 2.0), (1, 2), (1, 2, 3),
-                                                                            ("incumbent", "best"))
-                if not (vmax == 1 and band != 1.0) and not (vmax == 1 and rmax == 1)]
-        return [P.EvalAlloc(g, h, *o) for (g, h), o in product(gh, opts)]
+        mx = world.max_obs
+        opts = [(band, v, r, f) for band, v, r, f in product((0.5, 1.0, 2.0, 4.0), range(2, mx + 1),
+                                                             range(1, mx + 1), ("incumbent", "best"))]
+        opts += [(1.0, 1, r, f) for r, f in product(range(2, mx + 1), ("incumbent", "best"))]
+        return Family("evalloc", lambda g, h, o: P.EvalAlloc(g, h, *o), opts, _evalloc_extend)
     if c == "information":
-        return [P.Dynamic(g, h, 0.0, 0.0, 0.0, b_novel, tau_cut)
-                for (g, h), b_novel, tau_cut in product(gh, (0.001, 0.002, 0.004, 0.008), (0.01, 0.02))]
+        return SCHEDULE
     if c == "keep_feedback":
-        return [P.Dynamic(g, h, 0.0, 0.0, b_keep) for (g, h), b_keep in product(gh, (0.001, 0.002, 0.004, 0.008))]
+        return Family("keep_budget", lambda g, h, b: P.Dynamic(g, h, 0.0, 0.0, b), [0.002, 0.004, 0.008],
+                      _scalar_extend(floor=0.0005))
     raise ValueError(c)

@@ -47,6 +47,7 @@ class ESynWorld:
     epochs: tuple[str, ...] = ("E1", "E2")
     max_obs: int = 3
     n_audit: int = 5
+    delta_ref: float | None = None      # declared reference gain for the oracle tolerance; None: 0.5 sigma_cmp
     note: str = ""
 
     def __post_init__(self) -> None:
@@ -70,6 +71,8 @@ class ESynWorld:
                 raise ValueError("interaction must be n_keys x n_keys over recurring keys")
             if any(self.interaction[i][j] != self.interaction[j][i] for i in range(n) for j in range(n)):
                 raise ValueError("interaction must be symmetric")
+            if self.base.kind == "P1":
+                raise ValueError("interaction is defined on recurring filler keys; not with P1 probes / follow-ups")
         if self.max_obs < 1 or self.W < 1 or self.run_cost != 1:
             raise ValueError("max_obs >= 1, W >= 1, run_cost == 1")
 
@@ -81,6 +84,11 @@ class ESynWorld:
     def sigma_meas(self) -> float:
         """Config mode: sd of one measurement of a configuration (one paired comparison has sd sigma_cmp)."""
         return self.base.sigma_cmp / 2 ** 0.5
+
+    @property
+    def reference_gain(self) -> float:
+        """Declared reference gain delta_Y for the 5 % oracle tolerance: Track S's 0.5 sigma (sigma_cmp here)."""
+        return self.delta_ref if self.delta_ref is not None else 0.5 * self.base.sigma_cmp
 
     @property
     def code(self) -> int:
@@ -129,10 +137,10 @@ _add(ESynWorld(
          "measurements (at W = 24 none pays for its run)"))
 _add(ESynWorld(
     name="information", channel="information", gain_sign=1, base=WD.make_world("P1", variant="diffuse", strength=16.0),
-    W=10, note="Track S P1-diffuse at its S0.6 calibration (strength = follow-up size 16, W 10): probes open keys "
-               "whose follow-ups are large (information channel)"))
+    W=10, note="Track S P1-diffuse at strength 16 (the follow-up size; Track S ANALYSIS_NOTES section 5.1 grid), W 10: "
+               "probes open keys whose follow-ups are large (information channel)"))
 _add(ESynWorld(
     name="keep_feedback", channel="keep_feedback", gain_sign=1,
     base=WD.make_world("P2+", variant="diffuse", strength=0.012), W=10,
-    note="Track S P2+-diffuse at strength 0.012, W 10 (its S0.6 grid): an early keep raises the theta mean of later "
-         "proposals (keep-feedback channel)"))
+    note="Track S P2+-diffuse at strength 0.012, W 10 (Track S ANALYSIS_NOTES section 5.1 grid): an early keep "
+         "raises the theta mean of later proposals (keep-feedback channel)"))

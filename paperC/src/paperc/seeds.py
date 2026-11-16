@@ -90,6 +90,17 @@ PAPER_C_CAMPAIGN_PREFIX = "pc-"
 PAPER_C_ROLES = {"instance": "paperc_instances", "worker": "paperc_instances", "eps": "paperc_rng_keys",
                  "audit": "paperc_audits", "train": "paperc_train_seeds"}
 
+# Claims inside the Paper C blocks (added 16 Nov 2026 with build runbook P3, review P3 finding 7). A later phase
+# that draws from the same block takes a different key.
+PAPER_C_CLAIMS = (
+    {"name": "esyn_rng_root", "block": "paperc_rng_keys", "value": 60_001, "phase": "P3",
+     "use": "E-SYN campaign generator: SeedSequence([60001, world code, i]). Recorded campaigns i = 0 .. 9999 "
+            "(instance_seed 50000 + i; audit seeds 10,000,000 + n_audit i are nominal labels). Oracle blocks "
+            "i = 1,000,000 + j (selection), 2,000,000 + j (evaluation), 3,000,000 + j (decomposition): numerically "
+            "inside Paper B's tracks_oracle_* ranges, but they enter only this Paper C root key, so their streams "
+            "are disjoint from Track S's."},
+)
+
 
 # ---------------------------------------------------------------- declared sources
 
@@ -484,6 +495,7 @@ def build_registry(repo: Path) -> dict:
         "paper_b": [asdict(b) for b in pb],
         "paper_c": [asdict(b) for b in PAPER_C_BLOCKS],
         "paper_c_roles": PAPER_C_ROLES,
+        "paper_c_claims": list(PAPER_C_CLAIMS),
         "paper_c_campaign_prefix": PAPER_C_CAMPAIGN_PREFIX,
         "paper_b_internal_overlaps": paper_b_overlaps(pb),
         "paper_b_internal_overlaps_worker_seeds": paper_b_overlaps(pb, worker_only=True),
@@ -504,6 +516,7 @@ class Registry:
         self.paper_b = [Block(**b) for b in data["paper_b"]]
         self.paper_c = [Block(**b) for b in data["paper_c"]]
         self.roles = dict(data["paper_c_roles"])
+        self.claims = list(data.get("paper_c_claims", []))
         self.campaign_prefix = data["paper_c_campaign_prefix"]
 
     @classmethod

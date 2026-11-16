@@ -33,7 +33,8 @@ class SizeLaw:
     v: tuple[float, ...]          # V* per size
 
 
-def applicable(world: ESynWorld) -> list[str]:
+def inapplicable_reasons(world: ESynWorld) -> list[str]:
+    """Why the DP does not apply to ``world`` (empty list: it applies)."""
     b = world.base
     why = []
     if b.kind != "N0" or b.n_keys != 0:
@@ -48,7 +49,7 @@ def applicable(world: ESynWorld) -> list[str]:
 
 
 def size_law(world: ESynWorld) -> SizeLaw:
-    why = applicable(world)
+    why = inapplicable_reasons(world)
     if why:
         raise ValueError(f"DP not applicable to {world.name}: {why}")
     b = world.base

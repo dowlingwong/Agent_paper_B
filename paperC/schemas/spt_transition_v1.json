@@ -929,7 +929,7 @@
   "$id": "urn:paperc:spt_transition:v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "Field shapes only. Row and campaign rules (and integer vs float, NaN) are enforced by paperc.schema.validate / check_campaign, which are authoritative.",
+  "description": "Field shapes only. Row and campaign rules (and integer vs float, NaN) are enforced by paperc.schema.validate / check_campaign, which are authoritative. Amended 16 Nov 2026 (build runbook P3, B17): optional state.candidates on final rows.",
   "properties": {
     "action": {
       "$ref": "#/$defs/Action"

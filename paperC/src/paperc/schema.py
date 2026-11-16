@@ -64,10 +64,14 @@ Checks (``check_campaign``) — the plan §4.2 bullets, plus consistency checks 
   trajectory; fork rows have ``fork_id`` and ``replicate >= 1``;
 * ``counters``: ``keeps_so_far``, ``prior_skips`` and ``slots_left`` follow the rows.
 
-**Final-selection candidates** (added with the evaluation-allocation actions, BUILD_LIST B17, build runbook P3):
-``State.candidates`` lists the configurations a ``final`` row chooses among, each with its recorded value and number
-of measurements; it is empty on every other row, and ``Action.selected`` must name one of them when the list is
-non-empty. The field is optional with an empty default, so rows written before it remain valid. Deferred: the A/A replay bullet of plan §4.2 (a continuation whose forced action equals the root's action
+**Amendment of 16 Nov 2026 (build runbook P3; BUILD_LIST B17): final-selection candidates.** ``State.candidates``
+lists the configurations a ``final`` row chooses among, each with its recorded value and number of measurements; it
+is empty on every other row, and ``Action.selected`` must name one of them when the list is non-empty. Compatibility:
+the field is optional with an empty default, so rows written before it remain valid (backward); ``to_dict`` omits
+the field when the list is empty, so every row without candidates is also accepted by the P1 validator of 15 Nov
+(forward). Only final rows that carry candidates need this amendment. ``check_campaign`` (``epoch_sequence``) checks
+that candidate hashes are unique and that every candidate was the incumbent earlier in the trajectory (or its
+ancestors), with the recorded value and count it last had there. Deferred: the A/A replay bullet of plan §4.2 (a continuation whose forced action equals the root's action
 reproduces the root's later rows). It needs A/A fork leaves and the runner's restore path, so it is implemented
 with the SPT runner (BUILD_LIST B11; Track S's ``aa_reproduced``), not on logged rows alone.
 """
@@ -558,7 +562,10 @@ def validate(row) -> list[str]:
 
 
 def to_dict(t: Transition) -> dict:
-    return asdict(t)
+    d = asdict(t)
+    if not d["state"].get("candidates"):           # amendment of 16 Nov: keep rows readable by the 15 Nov validator
+        d["state"].pop("candidates", None)
+    return d
 
 
 def from_dict(row: Mapping) -> Transition:
@@ -636,7 +643,8 @@ def to_json_schema() -> dict:
         "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": SCHEMA_ID,
         "title": "SPT transition record (spt_transition/v1)",
         "description": "Field shapes only. Row and campaign rules (and integer vs float, NaN) are enforced by "
-                       "paperc.schema.validate / check_campaign, which are authoritative.",
+                       "paperc.schema.validate / check_campaign, which are authoritative. Amended 16 Nov 2026 "
+                       "(build runbook P3, B17): optional state.candidates on final rows.",
         "$defs": dict(sorted(defs.items())),
     })
     return root
@@ -851,6 +859,35 @@ def check_campaign(rows: Sequence, *, registry: SeedRegistry | None = None,
                 V("epoch_sequence", key, st, f"{ep} row between an execute and its E2")
         if pending is not None and terminated:     # a missing episode_end is reported by the terminal check
             V("epoch_sequence", key, pending.identity.step_index, "an executed candidate has no E2 row")
+
+        if last.identity.epoch == "final" and last.state.candidates:
+            cands = last.state.candidates
+            if len({c.hash for c in cands}) != len(cands):
+                V("epoch_sequence", key, last.identity.step_index, "state.candidates: duplicate hashes")
+            record, k = {}, key            # hash -> (recorded, obs) it last had as the incumbent, ancestors first
+            chain = []
+            while k in groups:
+                chain.append(k)
+                if not k[1]:
+                    break
+                k = (k[0], k[1][:-1])
+            for kk in reversed(chain):
+                child_first = None if kk == key else \
+                    min(r.identity.step_index for r in groups[chain[chain.index(kk) - 1]])
+                for t in sorted(groups[kk], key=lambda r: r.identity.step_index):
+                    if child_first is not None and t.identity.step_index >= child_first:
+                        break
+                    record[t.state.incumbent_hash] = (t.state.incumbent_recorded, t.state.incumbent_obs)
+            for c in cands:
+                if c.hash not in record:
+                    V("epoch_sequence", key, last.identity.step_index,
+                      f"state.candidates: {c.hash!r} was never the incumbent")
+                    continue
+                rec, obs = record[c.hash]
+                if obs != c.obs or (rec is None) != (c.recorded is None) or \
+                        (rec is not None and abs(rec - c.recorded) > FLOAT_TOL * max(1.0, abs(rec))):
+                    V("epoch_sequence", key, last.identity.step_index,
+                      f"state.candidates: {c.hash!r} does not carry the record it last had as the incumbent")
 
         if last.identity.epoch == "final" and last.action.selected is not None:
             seen, k = set(), key

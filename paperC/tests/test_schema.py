@@ -658,3 +658,31 @@ def test_p3_final_candidates():
     old = copy.deepcopy(rows[0])
     old["state"].pop("candidates", None)          # rows written before the field remain valid
     assert S.validate(old) == []
+
+
+def test_p3_candidate_consistency_checks():
+    """Amendment of 16 Nov (review P3 finding 10): unique candidates that were incumbents with matching records."""
+    rows = valid_campaign()
+    rows[-1]["episode_end"] = rows[-1]["terminal"] = None
+
+    def fin(cands, selected="c0"):
+        r = _row(5, epoch="final", action="select",
+                 st={"candidate_hash": None, "incumbent_hash": "c0", "incumbent_recorded": 0.52, "runs_used": 4,
+                     "calls_used": 3, "slots_left": 3, "keeps_so_far": 1, "prior_skips": 1, "candidates": cands},
+                 out={"next_incumbent_hash": selected}, end={"kind": "terminated", "reason": "W"},
+                 terminal=copy.deepcopy(TERM))
+        r["action"]["selected"] = selected
+        return r
+    ok = [{"hash": "c0", "recorded": 0.52, "obs": 1}]
+    assert S.check_campaign(rows + [fin(ok)]) == []
+    dup = ok + ok
+    assert any("duplicate" in v.message for v in S.check_campaign(rows + [fin(dup)]))
+    never = ok + [{"hash": "c2", "recorded": 0.51, "obs": 1}]
+    assert any("never the incumbent" in v.message for v in S.check_campaign(rows + [fin(never)]))
+    wrong = [{"hash": "c0", "recorded": 0.60, "obs": 1}]
+    assert any("does not carry the record" in v.message for v in S.check_campaign(rows + [fin(wrong)]))
+
+
+def test_p3_to_dict_omits_empty_candidates():
+    t = S.from_dict(valid_campaign()[0])
+    assert "candidates" not in S.to_dict(t)["state"]
